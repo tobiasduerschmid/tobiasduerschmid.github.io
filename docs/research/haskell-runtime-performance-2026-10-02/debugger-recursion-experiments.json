@@ -1,0 +1,40 @@
+[
+  {
+    "mode": "baseline",
+    "startMs": 1817.5,
+    "continueMs": 217.30000001192093,
+    "events": 20,
+    "output": "",
+    "stderr": "MicroHs runtime failed: unreachable\n",
+    "exitCode": 1,
+    "error": "MicroHs runtime failed: unreachable\n"
+  },
+  {
+    "mode": "stack",
+    "startMs": 1813.7999999821186,
+    "continueMs": 3423.199999988079,
+    "events": 304,
+    "output": "150\n",
+    "stderr": "",
+    "exitCode": 0
+  },
+  {
+    "mode": "fast",
+    "startMs": 1836.5,
+    "continueMs": 97.69999998807907,
+    "events": 227,
+    "output": "",
+    "stderr": "MicroHs runtime failed: unreachable\n__SEBOOK_DEBUG_reques\n",
+    "exitCode": 1,
+    "error": "MicroHs runtime failed: unreachable\n__SEBOOK_DEBUG_reques\n"
+  },
+  {
+    "mode": "fast-stack",
+    "startMs": 1825.800000011921,
+    "continueMs": 113,
+    "events": 304,
+    "output": "150\n",
+    "stderr": "",
+    "exitCode": 0
+  }
+]

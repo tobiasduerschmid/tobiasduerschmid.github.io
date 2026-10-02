@@ -1,0 +1,246 @@
+{
+  "recorded_at": "2026-10-02",
+  "purpose": "Exploratory browser-only compiler capability and latency probes; not a cross-device benchmark.",
+  "environment": {
+    "os": "macOS",
+    "node": "22.18.0",
+    "playwright": "1.58.2",
+    "chromium": "145.0.7632.6",
+    "headless": true
+  },
+  "upstream": {
+    "repository": "https://github.com/haskell-wasm/ghc-in-browser",
+    "commit": "c57d8b6e37737d662aed05cab88f867918307053",
+    "url": "https://haskell-wasm.github.io/ghc-in-browser/",
+    "ghc": "9.14.0.20251031"
+  },
+  "payload": {
+    "rootfs_zstd_bytes": 49091550,
+    "rootfs_unpacked_file_bytes": 251151681,
+    "shared_library_bytes": 194910054,
+    "interface_file_bytes": 55218645,
+    "ghc_library_uncompressed_bytes": 134551576,
+    "ghc_library_gzip9_bytes": 31284138
+  },
+  "public_demo_initial_probe": {
+    "startup_ms": 9607,
+    "runs": [
+      {
+        "source": "main = print (sum [1..1000])",
+        "elapsed_ms": 339,
+        "result": "500500"
+      },
+      {
+        "source": "main = print (sum [1..1000])",
+        "elapsed_ms": 43,
+        "result": "500500"
+      },
+      {
+        "source": "main = print (map (+1) [1..5])",
+        "elapsed_ms": 48,
+        "result": "[2,3,4,5,6]"
+      }
+    ]
+  },
+  "probes": {
+    "language": {
+      "date": "2026-10-02T23:22:47.042Z",
+      "url": "https://haskell-wasm.github.io/ghc-in-browser/",
+      "cases": [
+        {
+          "name": "warm-expression",
+          "source": "main = print (sum [1..1000])",
+          "args": "",
+          "ms": 272,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\n500500\n",
+          "stderr": ""
+        },
+        {
+          "name": "changed-expression",
+          "source": "main = print (sum [1..1001])",
+          "args": "",
+          "ms": 21,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\n501501\n",
+          "stderr": ""
+        },
+        {
+          "name": "type-families",
+          "source": "{-# LANGUAGE TypeFamilies #-}\ntype family Result a where\n  Result Int = Bool\nf :: Result Int\nf = True\nmain = print f",
+          "args": "",
+          "ms": 57,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\nTrue\n",
+          "stderr": ""
+        },
+        {
+          "name": "template-haskell",
+          "source": "{-# LANGUAGE TemplateHaskell #-}\nmain = print $( [| 40 + 2 :: Int |] )",
+          "args": "",
+          "ms": 195,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\n42\n",
+          "stderr": ""
+        },
+        {
+          "name": "cpp",
+          "source": "{-# LANGUAGE CPP #-}\n#define ANSWER 42\nmain = print ANSWER",
+          "args": "",
+          "ms": 13,
+          "stdout": "",
+          "stderr": "panic! (the 'impossible' happened)\n  GHC version 9.14.0.20251031:\n\t/tmp/Main.hs:1:1: error:\n    createPipe: unsupported operation (Operation is not supported)\n\nPlease report this as a GHC bug:  https://www.haskell.org/ghc/reportabug\n\n",
+          "error": "RuntimeError: ExitFailure 1"
+        },
+        {
+          "name": "type-error",
+          "source": "main = print (True + (1 :: Int))",
+          "args": "",
+          "ms": 24,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\n",
+          "stderr": "/tmp/Main.hs:1:23: error: [GHC-83865]\n    \u2022 Couldn't match expected type \u2018Bool\u2019 with actual type \u2018Int\u2019\n    \u2022 In the second argument of \u2018(+)\u2019, namely \u2018(1 :: Int)\u2019\n      In the first argument of \u2018print\u2019, namely \u2018(True + (1 :: Int))\u2019\n      In the expression: print (True + (1 :: Int))\n  |\n1 | main = print (True + (1 :: Int))\n  |                       ^^^^^^^^\n\nuser error (load returned Failed)\n",
+          "error": "RuntimeError: ExitFailure 1"
+        },
+        {
+          "name": "after-type-error",
+          "source": "main = print (6 * 7)",
+          "args": "",
+          "ms": 49,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\n42\n",
+          "stderr": ""
+        },
+        {
+          "name": "missing-main",
+          "source": "module Main where\nf x = x + 1",
+          "args": "",
+          "ms": 21,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\n",
+          "stderr": "/tmp/Main.hs:1:1: error: [GHC-67120]\n    The IO action \u2018main\u2019 is not defined in module \u2018Main\u2019\n  |\n1 | module Main where\n  | ^\n\nuser error (load returned Failed)\n",
+          "error": "RuntimeError: ExitFailure 1"
+        },
+        {
+          "name": "interactive-flag",
+          "source": "main = print 42",
+          "args": "--interactive",
+          "ms": 17,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\n42\n",
+          "stderr": ""
+        },
+        {
+          "name": "io-write",
+          "source": "main = writeFile \"/tmp/probe-effect.txt\" \"saved\" >> putStrLn \"write succeeded\"",
+          "args": "",
+          "ms": 20,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\nwrite succeeded\n",
+          "stderr": ""
+        },
+        {
+          "name": "io-read-next-run",
+          "source": "main = readFile \"/tmp/probe-effect.txt\" >>= putStrLn",
+          "args": "",
+          "ms": 18,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\nsaved\n",
+          "stderr": ""
+        },
+        {
+          "name": "nested-type-query",
+          "source": "import GHC\nimport GHC.Utils.Outputable\nimport Control.Monad.IO.Class\nmain = runGhc (Just \"/tmp/hslib/lib\") $ do\n  d <- getSessionDynFlags\n  _ <- setSessionDynFlags d\n  setContext [IIDecl $ simpleImportDecl $ mkModuleName \"Prelude\"]\n  ty <- exprType TM_Inst \"map\"\n  liftIO $ putStrLn (showSDoc d (ppr ty))\n",
+          "args": "-package ghc",
+          "ms": 1092,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\n",
+          "stderr": "/tmp/Main.hs:9:22: error: [GHC-88464]\n    Variable not in scope: showSDoc :: DynFlags -> SDoc -> String\n  |\n9 |   liftIO $ putStrLn (showSDoc d (ppr ty))\n  |                      ^^^^^^^^\n\nuser error (load returned Failed)\n",
+          "error": "RuntimeError: ExitFailure 1"
+        },
+        {
+          "name": "nested-debug",
+          "source": "import GHC\nimport GHC.Driver.Backend (interpreterBackend)\nimport GHC.Driver.Session\nimport Control.Monad.IO.Class\nmain = do\n  writeFile \"/tmp/DebugProbe.hs\" \"module DebugProbe where\\nf :: Int -> Int\\nf x = x + 1\\n\"\n  runGhc (Just \"/tmp/hslib/lib\") $ do\n    d <- getSessionDynFlags\n    _ <- setSessionDynFlags d { backend = interpreterBackend, ghcLink = LinkInMemory, verbosity = 0 }\n    target <- guessTarget \"/tmp/DebugProbe.hs\" Nothing Nothing\n    setTargets [target]\n    _ <- load LoadAllTargets\n    setContext [IIModule (mkModuleName \"DebugProbe\")]\n    r <- execStmt \"f 41\" execOptions { execSingleStep = SingleStep }\n    case r of\n      ExecBreak {} -> do\n        liftIO $ putStrLn \"BREAKPOINT_REACHED\"\n        r2 <- resumeExec RunToCompletion Nothing\n        case r2 of\n          ExecComplete {} -> liftIO $ putStrLn \"RESUMED_COMPLETE\"\n          _ -> liftIO $ putStrLn \"RESUMED_BREAK\"\n      ExecComplete {} -> liftIO $ putStrLn \"NO_BREAKPOINT\"\n",
+          "args": "-package ghc",
+          "ms": 105,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\n",
+          "stderr": "/tmp/Main.hs:13:27: error: [GHC-83865]\n    \u2022 Couldn't match type \u2018ModuleName\u2019\n                     with \u2018GHC.Unit.Types.GenModule Unit\u2019\n      Expected: Module\n        Actual: ModuleName\n    \u2022 In the first argument of \u2018IIModule\u2019, namely\n        \u2018(mkModuleName \"DebugProbe\")\u2019\n      In the expression: IIModule (mkModuleName \"DebugProbe\")\n      In the first argument of \u2018setContext\u2019, namely\n        \u2018[IIModule (mkModuleName \"DebugProbe\")]\u2019\n   |\n13 |     setContext [IIModule (mkModuleName \"DebugProbe\")]\n   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^\n\nuser error (load returned Failed)\n",
+          "error": "RuntimeError: ExitFailure 1"
+        }
+      ],
+      "startupMs": 5894
+    },
+    "multimodule_and_initial_api": {
+      "date": "2026-10-02T23:23:11.343Z",
+      "url": "https://haskell-wasm.github.io/ghc-in-browser/",
+      "cases": [
+        {
+          "name": "multi-module-setup",
+          "source": "main = writeFile \"/tmp/Helper.hs\" \"module Helper where\\nanswer = 42\\n\"",
+          "args": "",
+          "ms": 262,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\n",
+          "stderr": ""
+        },
+        {
+          "name": "multi-module",
+          "source": "import Helper\nmain = print answer",
+          "args": "-i/tmp",
+          "ms": 67,
+          "stdout": "[1 of 3] Compiling Helper           ( /tmp/Helper.hs, interpreted )\n[2 of 3] Compiling Main             ( /tmp/Main.hs, interpreted )\n42\n",
+          "stderr": ""
+        },
+        {
+          "name": "nested-type-query",
+          "source": "import GHC\nimport GHC.Utils.Outputable\nimport GHC.Driver.Ppr (showSDoc)\nimport Control.Monad.IO.Class\nmain = runGhc (Just \"/tmp/hslib/lib\") $ do\n  d <- getSessionDynFlags\n  _ <- setSessionDynFlags d\n  setContext [IIDecl $ simpleImportDecl $ mkModuleName \"Prelude\"]\n  ty <- exprType TM_Inst \"map\"\n  liftIO $ putStrLn (showSDoc d (ppr ty))\n",
+          "args": "-package ghc",
+          "ms": 758,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\n",
+          "stderr": "<no location info>: warning: [-Wmissed-extra-shared-lib]\n    loadDLLs failed: JSException \"Error: findSystemLibrary(liblibdl.so): not found in /tmp/clib,/tmp/hslib/lib/wasm32-wasi-ghc-9.14.0.20251031-inplace,/tmp,/tmp/hslib/lib/../lib/wasm32-wasi-ghc-9.14.0.20251031-inplace\\n    at DyLDBrowserHost.findSystemLibrary (https://haskell-wasm.github.io/ghc-in-browser/dyld.mjs:430:11)\\n    at DyLD.findSystemLibrary (https://haskell-wasm.github.io/ghc-in-browser/dyld.mjs:967:22)\\n    at #downsweep (https://haskell-wasm.github.io/ghc-in-browser/dyld.mjs:1001:22)\\n    at DyLD.loadDLLs (https://haskell-wasm.github.io/ghc-in-browser/dyld.mjs:1043:42)\\n    at ZC3ZCghcizm9zi14zi0zi20251031zminplaceZCGHCiziObjLinkZC (eval at loadDLLs (https://haskell-wasm.github.io/ghc-in-browser/dyld.mjs:1125:9), <anonymous>:3:449)\\n    at libHSghci-9.14.0.20251031-inplace-ghc9.14.0.20251031.so.ghczuwasmzujsffiZC3ZCghcizm9zi14zi0zi20251031zminplaceZCGHCiziObjLinkZC (wasm://wasm/libHSghci-9.14.0.20251031-inplace-ghc9.14.0.20251031.so-00bbed5e:wasm-function[14907]:0x1cb58f)\\n    at libHSghci-9.14.0.20251031-inplace-ghc9.14.0.20251031.so._blk_c4kH (wasm://wasm/libHSghci-9.14.0.20251031-inplace-ghc9.14.0.20251031.so-00bbed5e:wasm-function[14864]:0x1cacdc)\\n    at libHSrts-1.0.3-ghc9.14.0.20251031.so.StgRun (wasm://wasm/libHSrts-1.0.3-ghc9.14.0.20251031.so-001c1f86:wasm-function[712]:0x4720a)\\n    at libHSrts-1.0.3-ghc9.14.0.20251031.so.scheduleWaitThread (wasm://wasm/libHSrts-1.0.3-ghc9.14.0.20251031.so-001c1f86:wasm-function[386]:0x290cb)\\n    at libHSrts-1.0.3-ghc9.14.0.20251031.so.rts_promiseResolveUnit (wasm://wasm/libHSrts-1.0.3-ghc9.14.0.20251031.so-001c1f86:wasm-function[722]:0x475d6)\"\n    It's OK if you don't want to use symbols from it directly.\n    (the package DLL is loaded by the system linker\n     which manages dependencies by itself).\n\npanic! (the 'impossible' happened)\n  GHC version 9.14.0.20251031:\n\t<interactive>:1:1: error: [GHC-22211]\n    Could not load module `Prelude'.\n    There are files missing in the `base-4.22.0.0' package,\n    try running 'ghc-pkg check'.\n    Use -v to see a list of the files searched for.\n\nHasCallStack backtrace:\n  throwIO, called at compiler/GHC/Types/SourceError.hs:32:24 in ghc-9.14.0.20251031-inplace:GHC.Types.SourceError\n\n\nPlease report this as a GHC bug:  https://www.haskell.org/ghc/reportabug\n\n",
+          "error": "RuntimeError: ExitFailure 1"
+        },
+        {
+          "name": "nested-debug",
+          "source": "import GHC\nimport GHC.Driver.Backend (interpreterBackend)\nimport GHC.Driver.Session\nimport Control.Monad.IO.Class\nmain = do\n  writeFile \"/tmp/DebugProbe.hs\" \"module DebugProbe where\\nf :: Int -> Int\\nf x = x + 1\\n\"\n  runGhc (Just \"/tmp/hslib/lib\") $ do\n    d <- getSessionDynFlags\n    _ <- setSessionDynFlags d { backend = interpreterBackend, ghcLink = LinkInMemory, verbosity = 0 }\n    target <- guessTarget \"/tmp/DebugProbe.hs\" Nothing Nothing\n    setTargets [target]\n    _ <- load LoadAllTargets\n    modl <- findModule (mkModuleName \"DebugProbe\") Nothing\n    setContext [IIModule modl]\n    r <- execStmt \"f 41\" execOptions { execSingleStep = SingleStep }\n    case r of\n      ExecBreak {} -> do\n        liftIO $ putStrLn \"BREAKPOINT_REACHED\"\n        r2 <- resumeExec RunToCompletion Nothing\n        case r2 of\n          ExecComplete {} -> liftIO $ putStrLn \"RESUMED_COMPLETE\"\n          _ -> liftIO $ putStrLn \"RESUMED_BREAK\"\n      ExecComplete {} -> liftIO $ putStrLn \"NO_BREAKPOINT\"\n",
+          "args": "-package ghc",
+          "ms": 368,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\n42\nNO_BREAKPOINT\n",
+          "stderr": ""
+        }
+      ],
+      "startupMs": 6280
+    },
+    "corrected_api_and_debugger": {
+      "date": "2026-10-02T23:24:01.790Z",
+      "url": "https://haskell-wasm.github.io/ghc-in-browser/",
+      "cases": [
+        {
+          "name": "nested-type-query",
+          "source": "import GHC\nimport GHC.Utils.Outputable\nimport GHC.Driver.Ppr (showSDoc)\nimport GHC.Driver.Backend (interpreterBackend)\nimport GHC.Driver.Session\nimport Control.Monad.IO.Class\nmain = runGhc (Just \"/tmp/hslib/lib\") $ do\n  d <- getSessionDynFlags\n  _ <- setSessionDynFlags d { backend = interpreterBackend, ghcLink = LinkInMemory }\n  setContext [IIDecl $ simpleImportDecl $ mkModuleName \"Prelude\"]\n  ty <- exprType TM_Inst \"map\"\n  liftIO $ putStrLn (showSDoc d (ppr ty))\n",
+          "args": "-package ghc",
+          "ms": 1290,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\nforall a b. (a -> b) -> [a] -> [b]\n",
+          "stderr": "<no location info>: warning: [-Wmissed-extra-shared-lib]\n    loadDLLs failed: JSException \"Error: findSystemLibrary(liblibdl.so): not found in /tmp/clib,/tmp/hslib/lib/wasm32-wasi-ghc-9.14.0.20251031-inplace,/tmp,/tmp/hslib/lib/../lib/wasm32-wasi-ghc-9.14.0.20251031-inplace\\n    at DyLDBrowserHost.findSystemLibrary (https://haskell-wasm.github.io/ghc-in-browser/dyld.mjs:430:11)\\n    at DyLD.findSystemLibrary (https://haskell-wasm.github.io/ghc-in-browser/dyld.mjs:967:22)\\n    at #downsweep (https://haskell-wasm.github.io/ghc-in-browser/dyld.mjs:1001:22)\\n    at DyLD.loadDLLs (https://haskell-wasm.github.io/ghc-in-browser/dyld.mjs:1043:42)\\n    at ZC3ZCghcizm9zi14zi0zi20251031zminplaceZCGHCiziObjLinkZC (eval at loadDLLs (https://haskell-wasm.github.io/ghc-in-browser/dyld.mjs:1125:9), <anonymous>:3:449)\\n    at libHSghci-9.14.0.20251031-inplace-ghc9.14.0.20251031.so.ghczuwasmzujsffiZC3ZCghcizm9zi14zi0zi20251031zminplaceZCGHCiziObjLinkZC (wasm://wasm/libHSghci-9.14.0.20251031-inplace-ghc9.14.0.20251031.so-00bbed5e:wasm-function[14907]:0x1cb58f)\\n    at libHSghci-9.14.0.20251031-inplace-ghc9.14.0.20251031.so._blk_c4kH (wasm://wasm/libHSghci-9.14.0.20251031-inplace-ghc9.14.0.20251031.so-00bbed5e:wasm-function[14864]:0x1cacdc)\\n    at libHSrts-1.0.3-ghc9.14.0.20251031.so.StgRun (wasm://wasm/libHSrts-1.0.3-ghc9.14.0.20251031.so-001c1f86:wasm-function[712]:0x4720a)\\n    at libHSrts-1.0.3-ghc9.14.0.20251031.so.scheduleWaitThread (wasm://wasm/libHSrts-1.0.3-ghc9.14.0.20251031.so-001c1f86:wasm-function[386]:0x290cb)\\n    at libHSrts-1.0.3-ghc9.14.0.20251031.so.rts_promiseResolveUnit (wasm://wasm/libHSrts-1.0.3-ghc9.14.0.20251031.so-001c1f86:wasm-function[722]:0x475d6)\"\n    It's OK if you don't want to use symbols from it directly.\n    (the package DLL is loaded by the system linker\n     which manages dependencies by itself).\n\n"
+        },
+        {
+          "name": "nested-debug",
+          "source": "import GHC\nimport GHC.Driver.Backend (interpreterBackend)\nimport GHC.Driver.Session\nimport Control.Monad.IO.Class\nmain = do\n  writeFile \"/tmp/DebugProbe.hs\" \"module DebugProbe where\\nf :: Int -> Int\\nf x = x + 1\\n\"\n  runGhc (Just \"/tmp/hslib/lib\") $ do\n    d <- getSessionDynFlags\n    _ <- setSessionDynFlags $ gopt_set (d { backend = interpreterBackend, ghcLink = LinkInMemory, verbosity = 0 }) Opt_InsertBreakpoints\n    target <- guessTarget \"/tmp/DebugProbe.hs\" Nothing Nothing\n    setTargets [target]\n    _ <- load LoadAllTargets\n    modl <- findModule (mkModuleName \"DebugProbe\") Nothing\n    setContext [IIModule modl]\n    r <- execStmt \"f 41\" execOptions { execSingleStep = SingleStep }\n    case r of\n      ExecBreak {} -> do\n        liftIO $ putStrLn \"BREAKPOINT_REACHED\"\n        r2 <- resumeExec RunToCompletion Nothing\n        case r2 of\n          ExecComplete {} -> liftIO $ putStrLn \"RESUMED_COMPLETE\"\n          _ -> liftIO $ putStrLn \"RESUMED_BREAK\"\n      ExecComplete {} -> liftIO $ putStrLn \"NO_BREAKPOINT\"\n",
+          "args": "-package ghc",
+          "ms": 229,
+          "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\nBREAKPOINT_REACHED\n42\nRESUMED_COMPLETE\n",
+          "stderr": ""
+        }
+      ],
+      "startupMs": 5624
+    },
+    "opaque_origin": {
+      "date": "2026-10-02T23:24:23.892Z",
+      "errors": [
+        "Event",
+        "Event",
+        "Event"
+      ],
+      "startupMs": 5940,
+      "env": {
+        "origin": "null",
+        "crossOriginIsolated": false,
+        "sharedArrayBufferAvailable": "undefined"
+      },
+      "run": {
+        "ms": 304,
+        "interrupt": "function",
+        "stdout": "[1 of 2] Compiling Main             ( /tmp/Main.hs, interpreted )\n42\n",
+        "stderr": ""
+      }
+    }
+  }
+}

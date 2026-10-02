@@ -1,0 +1,125 @@
+{
+  "heap": "16",
+  "initialMemoryBytes": 238223360,
+  "finalMemoryBytes": 238223360,
+  "measuredAt": "2026-10-02T23:24:36.201Z",
+  "browser": "145.0.7632.6",
+  "platform": "darwin arm64",
+  "cpu": "Apple M4 Max",
+  "baseURL": "http://127.0.0.1:4018",
+  "iterations": 2,
+  "note": "One fresh browser context; localhost delivery; sequential requests; first means first request of that workload, not a fresh compiler instance. No UI or network-throttle costs.",
+  "summary": [
+    {
+      "scenario": "boot/fresh-browser-context",
+      "samples": 1,
+      "medianMs": 491.40000000596046,
+      "minMs": 491.40000000596046,
+      "maxMs": 491.40000000596046
+    },
+    {
+      "scenario": "run/first",
+      "samples": 1,
+      "medianMs": 1920.800000011921,
+      "minMs": 1920.800000011921,
+      "maxMs": 1920.800000011921
+    },
+    {
+      "scenario": "run/repeated",
+      "samples": 2,
+      "medianMs": 1714.3499999940395,
+      "minMs": 1692.7999999821186,
+      "maxMs": 1735.9000000059605
+    },
+    {
+      "scenario": "evaluate/first",
+      "samples": 1,
+      "medianMs": 1522.9000000059605,
+      "minMs": 1522.9000000059605,
+      "maxMs": 1522.9000000059605
+    },
+    {
+      "scenario": "evaluate/repeated",
+      "samples": 2,
+      "medianMs": 1670.9500000029802,
+      "minMs": 1607.5,
+      "maxMs": 1734.4000000059605
+    },
+    {
+      "scenario": "type-query/first",
+      "samples": 1,
+      "medianMs": 1326.300000011921,
+      "minMs": 1326.300000011921,
+      "maxMs": 1326.300000011921
+    },
+    {
+      "scenario": "type-query/repeated",
+      "samples": 2,
+      "medianMs": 1320.4500000029802,
+      "minMs": 1319.4000000059605,
+      "maxMs": 1321.5
+    }
+  ],
+  "records": [
+    {
+      "scenario": "boot",
+      "phase": "fresh-browser-context",
+      "sample": 0,
+      "elapsedMs": 491.40000000596046
+    },
+    {
+      "scenario": "run",
+      "phase": "first",
+      "sample": 0,
+      "elapsedMs": 1920.800000011921
+    },
+    {
+      "scenario": "run",
+      "phase": "repeated",
+      "sample": 1,
+      "elapsedMs": 1735.9000000059605
+    },
+    {
+      "scenario": "run",
+      "phase": "repeated",
+      "sample": 2,
+      "elapsedMs": 1692.7999999821186
+    },
+    {
+      "scenario": "evaluate",
+      "phase": "first",
+      "sample": 0,
+      "elapsedMs": 1522.9000000059605
+    },
+    {
+      "scenario": "evaluate",
+      "phase": "repeated",
+      "sample": 1,
+      "elapsedMs": 1734.4000000059605
+    },
+    {
+      "scenario": "evaluate",
+      "phase": "repeated",
+      "sample": 2,
+      "elapsedMs": 1607.5
+    },
+    {
+      "scenario": "type-query",
+      "phase": "first",
+      "sample": 0,
+      "elapsedMs": 1326.300000011921
+    },
+    {
+      "scenario": "type-query",
+      "phase": "repeated",
+      "sample": 1,
+      "elapsedMs": 1319.4000000059605
+    },
+    {
+      "scenario": "type-query",
+      "phase": "repeated",
+      "sample": 2,
+      "elapsedMs": 1321.5
+    }
+  ]
+}

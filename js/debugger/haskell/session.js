@@ -70,12 +70,25 @@
         const event = markerIndex < 0 ? null : line.slice(markerIndex + this.marker.length).match(/^(call|return):(\d+)\r?$/);
         if (event) {
           output += line.slice(0, markerIndex);
-          // Let the adapter append preceding user stderr before it publishes
-          // the pause; GETRAW keeps evaluation suspended until this callback.
-          setTimeout(() => this.observe(event[1], Number(event[2])), 0);
+          this.receiveProbe(event[1], Number(event[2]));
         } else output += line + '\n';
       }
       return output;
+    }
+
+    receiveProbe(event, siteId) {
+      const site = this.sites.get(siteId);
+      const mayPause = this.command !== 1 || this.eventCount + 1 >= this.limit ||
+        (event === 'call' && site && this.breakpoints.has(site.file + ':' + site.line));
+      if (mayPause) {
+        // Publish pauses only after the adapter has appended preceding stderr
+        // and the evaluator has unwound into GETRAW's asynchronous input wait.
+        setTimeout(() => this.observe(event, siteId), 0);
+      } else {
+        // Continue can queue its acknowledgement before GETRAW starts polling.
+        // This avoids a 10ms input wait per event; MicroHs still yields normally.
+        this.observe(event, siteId);
+      }
     }
 
     frameFor(site) {

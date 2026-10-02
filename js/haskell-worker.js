@@ -65,6 +65,12 @@ const runtimeOutputByteBuffers = {
 let activeOperation = null;
 let pendingCleanupCommands = [];
 let pendingCleanupFiles = [];
+let compiledScope = null;
+let compiledWorkspace = null;
+let hasStartedOperation = false;
+let expressionScope = null;
+let signatureScope = null;
+const temporarySources = new Map();
 let bootOutput = '';
 let isRuntimeReady = false;
 let hasRuntimeFailed = false;
@@ -137,7 +143,7 @@ function appendRuntimeText(text, channel) {
 
   if (activeOperation) {
     captureOperationOutput(activeOperation, output, channel);
-    finishFailedDebugAfterPrompt(activeOperation);
+    finishOperationAtPrompt(activeOperation);
   }
   announceReadyAfterPrompt();
 }
@@ -288,6 +294,29 @@ function writeWorkspaceFile(path, content) {
   runtimeScope.Module.FS.writeFile(path, String(content));
 }
 
+function ownsTemporaryFile(path) {
+  if (!temporarySources.has(path)) return false;
+  const fs = runtimeScope.Module.FS;
+  try {
+    return fs.isFile(fs.lstat(path).mode) && readWorkspaceFile(path) === temporarySources.get(path);
+  } catch (error) {
+    if (error instanceof fs.ErrnoError) return false;
+    throw error;
+  }
+}
+
+function writeTemporaryFile(path, content) {
+  writeWorkspaceFile(path, content);
+  temporarySources.set(path, content);
+}
+
+function removeTemporaryFile(path) {
+  // A learner may replace a helper through Haskell IO or an editor write.
+  // Reclaim only the exact source that this adapter created.
+  if (ownsTemporaryFile(path)) runtimeScope.Module.FS.unlink(path);
+  temporarySources.delete(path);
+}
+
 function sourceAfterLeadingHaskellTrivia(source) {
   let cursor = 0;
 
@@ -373,23 +402,81 @@ function sendInteractiveCommands(commands) {
   }
 }
 
+// Cache compiler inputs, never evaluated results. MicroHs 0.16.6 translates
+// its cached combinator expressions into fresh runtime values on every query.
+// Inspect MEMFS itself: learner IO can change source without a host write.
+// Large workspaces and symlinks fall back to the compiler's normal reload.
+function snapshotWorkspace() {
+  const fs = runtimeScope.Module.FS;
+  const entries = [];
+  let remaining = 1024 * 1024;
+  let visited = 0;
+  function visit(directory) {
+    for (const name of fs.readdir(directory).sort()) {
+      if (name === '.' || name === '..') continue;
+      if (++visited > 128) return false;
+      const path = directory + '/' + name;
+      const stat = fs.lstat(path);
+      if (fs.isDir(stat.mode)) {
+        if (!visit(path)) return false;
+      } else if (fs.isFile(stat.mode)) {
+        remaining -= stat.size + path.length;
+        if (remaining < 0) return false;
+        entries.push([path, fs.readFile(path)]);
+      } else return false;
+    }
+    return true;
+  }
+  try {
+    return visit(WORKSPACE_ROOT) ? entries : null;
+  } catch (error) {
+    if (error instanceof fs.ErrnoError) return null;
+    throw error;
+  }
+}
+
+function sameWorkspace(left, right) {
+  return left !== null && right !== null && left.length === right.length &&
+    left.every(function (entry, index) {
+      const [path, bytes] = entry;
+      const [previousPath, previousBytes] = right[index];
+      return path === previousPath && bytes.length === previousBytes.length &&
+        bytes.every(function (byte, offset) { return byte === previousBytes[offset]; });
+    });
+}
+
 function startOperation(message, settings) {
   const doneMarker = settings.doneMarker || markerFor('DONE', message.id);
-  // Keep the import through the marker so MicroHs can reuse its translated
-  // environment. Removing it first makes the marker rebuild that environment.
-  // Clean up before the next operation's reload, including after a failed run.
-  const commands = pendingCleanupCommands
-    .concat(settings.commands, settings.inlineCompletion ? [] : [commandForMarker(doneMarker)]);
-  const cleanupFiles = pendingCleanupFiles;
-  pendingCleanupCommands = settings.cleanupCommands || [];
+  const scope = JSON.stringify([settings.sourcePath, settings.imports]);
+  // Reuse a successful compilation only while its complete input is unchanged.
+  // Otherwise reload retained imports once, rather than rebuilding the empty
+  // environment followed by the same imported environment on every request.
+  const reuseImports = scope === compiledScope;
+  const workspace = snapshotWorkspace();
+  const reuseCompilation = reuseImports && sameWorkspace(workspace, compiledWorkspace);
+  const commands = [':set prompt=> '].concat(
+    reuseImports ? [] : pendingCleanupCommands,
+    reuseCompilation ? [] : [':set path=' + settings.sourcePath].concat(hasStartedOperation ? [':reload'] : []),
+    reuseImports ? [] : settings.imports,
+    settings.commands,
+    // Setting a prompt is a REPL control command, so completion does not
+    // compile and evaluate a second Haskell expression for every request.
+    settings.inlineCompletion ? [] : [':set prompt=' + doneMarker]
+  );
+  const cleanupFiles = pendingCleanupFiles.filter(function (path) { return path !== settings.temporaryFile; });
+  pendingCleanupCommands = settings.imports.map(function (line) { return ':delete ' + line; });
   pendingCleanupFiles = settings.temporaryFile ? [settings.temporaryFile] : [];
+  hasStartedOperation = true;
 
   activeOperation = {
     id: message.id,
     kind: settings.kind,
+    scope: scope,
+    workspace: workspace,
     silent: Boolean(message.silent),
     commands: commands,
     doneMarker: doneMarker,
+    promptCompletion: !settings.inlineCompletion,
     passMarker: settings.passMarker || null,
     failMarker: settings.failMarker || null,
     sawTestPass: false,
@@ -419,13 +506,9 @@ function startRun(message) {
 
   startOperation(message, {
     kind: 'run',
-    commands: [
-      ':set path=' + descriptor.sourcePath,
-      ':reload',
-      'import ' + descriptor.moduleName,
-      mainCommand,
-    ],
-    cleanupCommands: [':delete import ' + descriptor.moduleName],
+    sourcePath: descriptor.sourcePath,
+    imports: ['import ' + descriptor.moduleName],
+    commands: [mainCommand],
   });
 }
 
@@ -452,11 +535,16 @@ function interpreterScope(path) {
 
   // A headerless program implicitly exports only main. A private module gives
   // the interpreter access to its definitions without rewriting the editor file.
-  let moduleName, temporaryFile;
-  do {
-    moduleName = 'SEBookExpressionScope' + (++operationSequence);
-    temporaryFile = descriptor.sourcePath + '/' + moduleName + '.hs';
-  } while (runtimeScope.Module.FS.analyzePath(temporaryFile).exists);
+  if (!expressionScope || expressionScope.path !== path ||
+      !ownsTemporaryFile(expressionScope.temporaryFile)) {
+    let moduleName, temporaryFile;
+    do {
+      moduleName = 'SEBookExpressionScope' + (++operationSequence);
+      temporaryFile = descriptor.sourcePath + '/' + moduleName + '.hs';
+    } while (runtimeScope.Module.FS.analyzePath(temporaryFile).exists);
+    expressionScope = { path: path, moduleName: moduleName, temporaryFile: temporaryFile };
+  }
+  const { moduleName, temporaryFile } = expressionScope;
   const insertion = source.length - body.length;
   return {
     moduleName: moduleName,
@@ -482,19 +570,15 @@ function startEvaluate(message) {
       sourceLineOffset: scope.temporaryFile ? 1 : 0,
     });
   }
-  if (scope.temporaryFile) writeWorkspaceFile(scope.temporaryFile, scope.source);
+  if (scope.temporaryFile) writeTemporaryFile(scope.temporaryFile, scope.source);
   // `case` forces MicroHs's expression parser. Plain parenthesizing can still
   // be parsed as a top-level pattern binding; interactive bindings must not leak.
   const expressionCommand = 'case () of { () -> (' + input.expression + ') }';
   startOperation(message, {
     kind: 'evaluate',
-    commands: [
-      ':set path=' + scope.sourcePath,
-      ':reload',
-      'import ' + scope.moduleName,
-      input.inspectType ? ':type (' + input.expression + ')' : expressionCommand,
-    ],
-    cleanupCommands: [':delete import ' + scope.moduleName],
+    sourcePath: scope.sourcePath,
+    imports: ['import ' + scope.moduleName],
+    commands: [input.inspectType ? ':type (' + input.expression + ')' : expressionCommand],
     temporaryFile: scope.temporaryFile,
     mapDiagnostics: scope.mapDiagnostics,
   });
@@ -504,12 +588,18 @@ function startEvaluate(message) {
 // Empty defaults prevent Fractional/RealFrac-polymorphic declarations from
 // defaulting to Double merely because typeOf demands a concrete instance.
 function signatureHelper(descriptor, signature) {
-  let moduleName, path;
-  do {
-    moduleName = 'SEBookSignatureCheck' + (++operationSequence);
-    path = descriptor.sourcePath + '/' + moduleName + '.hs';
-  } while (runtimeScope.Module.FS.analyzePath(path).exists);
-  writeWorkspaceFile(path, [
+  const key = JSON.stringify([descriptor.sourcePath, descriptor.moduleName, signature.name, signature.type]);
+  if (!signatureScope || signatureScope.key !== key ||
+      !ownsTemporaryFile(signatureScope.path)) {
+    let moduleName, path;
+    do {
+      moduleName = 'SEBookSignatureCheck' + (++operationSequence);
+      path = descriptor.sourcePath + '/' + moduleName + '.hs';
+    } while (runtimeScope.Module.FS.analyzePath(path).exists);
+    signatureScope = { key: key, moduleName: moduleName, path: path };
+  }
+  const { moduleName, path } = signatureScope;
+  writeTemporaryFile(path, [
     'module ' + moduleName + ' (matchesSignature) where',
     'import Prelude',
     'import qualified Prelude as P',
@@ -559,14 +649,12 @@ function startRunTest(message) {
     kind: 'test',
     passMarker: passMarker,
     failMarker: failMarker,
-    commands: [
-      ':set path=' + descriptor.sourcePath,
-      ':reload',
+    sourcePath: descriptor.sourcePath,
+    imports: [
       'import ' + descriptor.moduleName,
       ...(helper ? ['import qualified ' + helper.moduleName] : []),
-      testCommand,
     ],
-    cleanupCommands: [':delete import ' + descriptor.moduleName].concat(helper ? [':delete import qualified ' + helper.moduleName] : []),
+    commands: [testCommand],
     temporaryFile: helper && helper.path,
   });
 }
@@ -653,11 +741,9 @@ function startDebug(message) {
       postProtocolMessage(payload);
     },
     resume: function () {
-      setTimeout(function () {
-        if (activeOperation && activeOperation.debug === debug && !debug.finished) {
-          runtimeScope.Module._set_input_char(10);
-        }
-      }, 0);
+      if (activeOperation && activeOperation.debug === debug && !debug.finished) {
+        runtimeScope.Module._set_input_char(10);
+      }
     },
   });
   debug.mapDiagnostics = function (text) {
@@ -681,11 +767,9 @@ function startDebug(message) {
   if (args.length) imports.push('import qualified System.Environment as SEBookEnvironment');
   startOperation(message, {
     kind: 'debug', debug: debug, doneMarker: doneMarker, inlineCompletion: true,
-    commands: [
-      ':set path=' + descriptor.sourcePath,
-      ':reload',
-    ].concat(imports, [entry + ' >> ' + commandForMarker('\\n' + doneMarker)]),
-    cleanupCommands: [':delete import ' + descriptor.moduleName],
+    sourcePath: descriptor.sourcePath,
+    imports: imports,
+    commands: [entry + ' >> ' + commandForMarker('\\n' + doneMarker)],
   });
 }
 
@@ -712,10 +796,22 @@ function flushDebugOutput(operation, final) {
   });
 }
 
-function finishFailedDebugAfterPrompt(operation) {
-  if (!operation.debug || !operation.failed || operation.isFinishing || !bootOutput.endsWith('> ')) return;
+function finishOperationAtPrompt(operation) {
+  if (operation.isFinishing) return;
+  // Match the complete prompt line, not the marker echoed inside :set.
+  const completed = operation.promptCompletion && operation.stdoutLineBuffer === operation.doneMarker;
+  const failedDebug = operation.debug && operation.failed && bootOutput.endsWith('> ');
+  if (!completed && !failedDebug) return;
   operation.isFinishing = true;
-  setTimeout(function () { finishOperation(operation); }, 0);
+  setTimeout(function () {
+    // Output arrives byte by byte. A learner's longer output line may have
+    // temporarily matched the prompt before its remaining bytes arrived.
+    if (completed && operation.stdoutLineBuffer !== operation.doneMarker) {
+      operation.isFinishing = false;
+      return;
+    }
+    finishOperation(operation);
+  }, 0);
 }
 
 function startRunCode(message) {
@@ -732,10 +828,12 @@ function finishOperation(operation) {
   // MicroHs may read a helper while processing its queued :delete import.
   // Delete its file only after the following operation has completed cleanup
   // and reload; removing it at its own marker can strand the next command.
-  operation.cleanupFiles.forEach(function (path) { runtimeScope.Module.FS.unlink(path); });
+  operation.cleanupFiles.forEach(removeTemporaryFile);
   const testFailed = operation.kind === 'test' &&
     (!operation.sawTestPass || operation.sawTestFail);
   const exitCode = operation.failed || testFailed ? 1 : 0;
+  compiledScope = operation.failed ? null : operation.scope;
+  compiledWorkspace = operation.failed ? null : operation.workspace;
 
   if (operation.debug) flushDebugOutput(operation, true);
   if (!operation.debug && !operation.silent && output.stdout) {
@@ -840,6 +938,7 @@ function normalizeLines(lines) {
 function writeFileMessage(message) {
   try {
     const path = normalizeWorkspacePath(message.path);
+    temporarySources.delete(path);
     writeWorkspaceFile(path, message.content || '');
     postProtocolMessage({ type: 'write_ok', id: message.id });
   } catch (error) {
@@ -913,8 +1012,20 @@ if (!isWindowRuntime) {
 
 postLoading('Loading Haskell runtime\u2026');
 
+function configureMicroHsAsyncify() {
+  // Pinned Emscripten glue exposes Asyncify globally. Its 4 KiB default can
+  // overflow when recursive Haskell probes suspend; size the continuation
+  // before callMain allocates it, without changing the compiler/Wasm bundle.
+  const continuation = runtimeScope.Asyncify;
+  if (!continuation || continuation.StackSize !== 4096 || continuation.currData !== null) {
+    throw new Error('Unexpected pinned MicroHs Asyncify state before main');
+  }
+  continuation.StackSize = 256 * 1024;
+}
+
 runtimeScope.Module = {
   arguments: RUNTIME_ARGUMENTS,
+  onRuntimeInitialized: configureMicroHsAsyncify,
   preRun: [function () {
     runtimeScope.Module.FS.init(
       function () { return null; },

@@ -129,6 +129,27 @@ category n
     expect(calls.some(snapshot => snapshot.file === '/tutorial/Helpers.hs' && snapshot.line === 6)).toBe(false);
   });
 
+  test('pauses and resumes a deep recursive demand without exhausting its continuation buffer', async ({ page }) => {
+    await startDebug(page, `module Main where
+count :: Int -> Int
+count 0 = 0
+count n = 1 + count (n - 1)
+main = print (count 150)
+`, { breakpoints: [{ file: '/tutorial/Main.hs', line: 3 }] });
+    await waitForMessage(page, 'paused');
+    const baseCase = lastSnapshot(await command(page, 1));
+    expect(baseCase.line).toBe(3);
+    expect(baseCase.depth).toBe(151);
+    const returned = lastSnapshot(await command(page, 4));
+    expect(returned.event).toBe('return');
+    expect(returned.call_id).toBe(baseCase.call_id);
+    const complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    const messages = await allMessages(page);
+    expect(messages.filter(message => message.type === 'stdout').map(message => message.text).join('')).toBe('150\n');
+    expect(messages.filter(message => message.type === 'stderr').map(message => message.text).join('')).toBe('');
+  });
+
   test('preserves arguments, Unicode output without a newline, and separate stderr', async ({ page }) => {
     await startDebug(page, `module Main where
 import System.Environment (getArgs)
@@ -191,6 +212,52 @@ main = do
     const messages = await allMessages(page);
     expect(messages.filter(message => message.type === 'stdout').map(message => message.text).join('')).toBe('before 42\n');
     expect(messages.filter(message => message.type === 'stderr').map(message => message.text).join('')).toBe('diagnostic \n');
+  });
+
+  test('continuing through many demands records every call and still pauses at the next breakpoint', async ({ page }) => {
+    await startDebug(page, `module Main where
+import System.IO (hPutStrLn, stderr)
+bump :: Int -> Int
+bump n = n + 1
+answer = 999
+main = do
+  hPutStrLn stderr "before the trace"
+  print (map bump [1..150])
+  print answer
+`, { breakpoints: [{ file: '/tutorial/Main.hs', line: 5 }] });
+    await waitForMessage(page, 'paused');
+    const pause = lastSnapshot(await command(page, 1));
+    expect(pause.line).toBe(5);
+    expect(pause.event).toBe('call');
+    const pausedMessages = await allMessages(page);
+    const demands = pausedMessages.flatMap(message => message.snapshots || [])
+      .filter(snapshot => snapshot.line === 4);
+    expect(demands.filter(snapshot => snapshot.event === 'call')).toHaveLength(150);
+    expect(demands.filter(snapshot => snapshot.event === 'return')).toHaveLength(150);
+    const listOutput = '[' + Array.from({ length: 150 }, (_, index) => index + 2).join(',') + ']\n';
+    expect(pausedMessages.filter(message => message.type === 'stdout').map(message => message.text).join('')).toBe(listOutput);
+    expect(pausedMessages.filter(message => message.type === 'stderr').map(message => message.text).join('')).toBe('before the trace\n');
+
+    const complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    const messages = await allMessages(page);
+    expect(messages.filter(message => message.type === 'stdout').map(message => message.text).join('')).toBe(listOutput + '999\n');
+    expect(messages.filter(message => message.type === 'stderr').map(message => message.text).join('')).toBe('before the trace\n');
+  });
+
+  test('continuing stops exactly at the configured history limit', async ({ page }) => {
+    await startDebug(page, `module Main where
+bump :: Int -> Int
+bump n = n + 1
+main = print (map bump [1..20])
+`, { options: { max_history: 8 } });
+    await waitForMessage(page, 'paused');
+    const complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode).toBe(1);
+    expect(complete.error).toMatch(/history limit/i);
+    const messages = await allMessages(page);
+    expect(messages.filter(message => message.type === 'capReached')).toHaveLength(1);
+    expect(messages.flatMap(message => message.snapshots || [])).toHaveLength(8);
   });
 
   test('reports compilation errors as completed debug sessions', async ({ page }) => {

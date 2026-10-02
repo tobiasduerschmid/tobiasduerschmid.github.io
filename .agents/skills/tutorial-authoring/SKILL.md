@@ -1860,8 +1860,8 @@ of finite failure. No new persistence keys are used.
 `haskell` is deliberately a single-backend mode. A hidden
 `sandbox="allow-scripts"` iframe owns a persistent, serialized MicroHs REPL
 session and loads the locally pinned, single-threaded MicroHs 0.16.6.0
-WebAssembly runtime. Its deserializer speeds up expression translation while each execution
-still reloads fresh module state. The local bundle embeds the unchanged
+WebAssembly runtime. Each expression is deserialized into fresh runtime values;
+compiled combinator syntax and type information may be reused. The local bundle embeds the unchanged
 upstream Wasm bytes through `Module.wasmBinary`, followed by the unchanged
 upstream JavaScript loader; see `js/vendor/microhs/README.md` for the pinned
 hashes and packaging recipe. Keep it self-contained so the opaque-origin
@@ -1871,14 +1871,22 @@ parent page talks to that frame through the Worker-like, namespaced
 checks intact. Do not add Haskell to mixed-backend dispatch or enable the
 cross-origin-isolation service worker for it; MicroHs does not use
 `SharedArrayBuffer` or worker threads. Before each Run, the runtime syncs all
-workspace files, reloads the base environment, imports the module derived from
-`run_file` (or the active `.hs` path), and invokes `:main`. Use `Main.hs` as the
-conventional entry point. The adapter keeps that import until its completion
-marker has printed, then removes it before the next Run or test reloads the
-environment. This lets the marker reuse MicroHs's translated imports instead
-of rebuilding them, while retaining fresh-file and module-isolation semantics
-for every request, including after errors. Marker output uses
-`Prelude.putStrLn` so learner definitions cannot shadow it. Author
+workspace files and invokes `:main` in the module derived from `run_file` (or
+the active `.hs` path). Use `Main.hs` as the conventional entry point.
+`js/haskell-worker.js` retains imports and compiled code only after successful
+compilation. It compares complete workspace file bytes before each request,
+including files written by learner IO; changed inputs trigger MicroHs's own
+content-hash/dependency validation through `:reload`. The snapshot is bounded
+at 1 MiB and 128 filesystem entries. Symlinks, oversized workspaces, and
+unreadable entries disable reuse and fall back to reload. Scope changes remove
+old imports; compiler/runtime errors invalidate reuse. Never cache expression
+results or mutable top-level runtime values. MicroHs 0.16.6's `TranslateMap`
+contains `Exp` syntax, and `translateWithMap` deserializes it anew per expression.
+Normal requests finish when a request-specific REPL prompt appears on its own
+line. This avoids compiling a second Haskell expression solely for completion;
+ignore the marker inside its echoed `:set prompt=...` command. Reset the normal
+prompt before the next request. Test pass/fail and live-debug completion still
+use qualified `Prelude.putStrLn` markers. Author
 `files[].path`, `solution.files[].path`, and
 `run_file` as workspace-relative paths such as `Main.hs` or `Helpers/Math.hs`;
 the host adds `/tutorial/` when syncing files. Absolute `/tutorial/...` paths
@@ -1898,8 +1906,10 @@ light/dark theme, including input, transcript, help, and control states.
 - Evaluate one-line Haskell expressions, including calls to functions in the
   active `.hs` file, without adding `main`. Use `:type expression` or `:t expression`
   to inspect a type without evaluating its value.
-- Each request syncs all editor models (including unsaved changes), reloads the
-  active file, and imports its scope. Explicit modules respect their exports;
+- Each request syncs all editor models (including unsaved changes), validates
+  workspace contents, and uses the active file's scope. Unchanged source can
+  reuse compilation; every expression still receives fresh runtime values.
+  Explicit modules respect their exports;
   a headerless `Main.hs` uses a temporary named module so its definitions are
   available without requiring `main`. Temporary source never replaces learner files.
 - Interpreter diagnostics explain unprintable function results and offer a conditional
@@ -1968,7 +1978,11 @@ by default (`max_history` or `max_snapshots`, at most 50,000), with the existing
 Haskell traces demanded equation/guard expressions through weak head normal
 form using instrumentation in `js/debugger/haskell/instrument.js` and the
 existing MicroHs adapter. Evaluation probes use a private runtime input
-handshake to yield and resume. Unused expressions remain unused; argument
+handshake to yield and resume. Ordinary Continue events acknowledge input
+before MicroHs enters its polling wait. Initial pauses, stepping, breakpoint
+sites, and history-limit events remain deferred until stderr has been captured
+and Asyncify has unwound. Do not replace those boundaries with synchronous
+resumption. Unused expressions remain unused; argument
 values are shown as unevaluated rather than forced with `show`. This is an
 evaluation trace, not a GHC debugger: arbitrary watch evaluation, variable
 mutation, conditional breakpoints, and exception breakpoints are unavailable.
@@ -1978,7 +1992,14 @@ statements have no independent pause sites. Explicit module braces, semicolon
 declarations, infix equations, and pattern guards produce actionable
 diagnostics. Compiler diagnostics and trace locations map to original source
 lines. Haskell traces stop at 2,000 events by default (`max_history`, at most
-10,000). Output produced before a pause is available immediately. MicroHs
+10,000). Output produced before a pause is available immediately. The adapter
+sets the pinned loader's Asyncify continuation buffer to 256 KiB in
+`Module.onRuntimeInitialized`, before its first allocation; this avoids the
+upstream 4 KiB buffer's recursive-debug overflow without modifying vendor bytes.
+The hook depends on the pinned generated loader's internal ABI and checks it
+explicitly. Keep the deep-recursion/Step Out regression when upgrading; prefer
+an upstream build-time `ASYNCIFY_STACK_SIZE` setting when rebuilding the bundle.
+MicroHs
 normally yields between reductions, but a demanded cyclic local alias can
 remain inside its indirection-following loop without yielding. Because the
 existing compiler needs an iframe rather than a Worker, that pathological
@@ -2159,11 +2180,14 @@ under the same prefix family as other tutorial state so the global
   Expected types must be one-line monomorphic types available in Prelude; use
   compiler-supported equivalent forms in the learner's declaration. This gate
   is not suitable for requiring a particular polymorphic/constrained interface.
-  Its import is cleaned before the next reload. The temporary source survives
-  that queued cleanup and is removed when the following operation completes,
-  because MicroHs may read it while deleting the import. At most the current
-  and preceding helper exist during execution; the last helper persists until
-  the next Run/Test or runtime disposal. Workspace files are never overwritten.
+  Identical signature requests reuse their temporary helper while it remains
+  adapter-owned; headerless expression scopes follow the same rule. Scope
+  changes defer cleanup until the following operation completes, because MicroHs
+  may read a helper while deleting its import. Never unlink the active helper.
+  Before reusing or deleting a helper, verify it is a readable regular file with
+  the exact source the adapter wrote. An editor write transfers ownership; a
+  replacement made through learner IO must also survive reuse and cleanup.
+  Choose a new collision-free name when ownership is lost.
   Keep `command: "True"` for a signature-only check so the learner module still
   compiles; retain separate behavioral checks for its actual results. A compiler
   error must fail even when the source contains the expected declaration.

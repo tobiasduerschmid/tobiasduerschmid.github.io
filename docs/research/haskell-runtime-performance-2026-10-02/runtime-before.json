@@ -1,0 +1,342 @@
+{
+  "measuredAt": "2026-10-02T23:22:14.787Z",
+  "browser": "145.0.7632.6",
+  "platform": "darwin arm64",
+  "cpu": "Apple M4 Max",
+  "baseURL": "http://127.0.0.1:4018",
+  "iterations": 3,
+  "note": "One fresh browser context; localhost delivery; sequential requests; first means first request of that workload, not a fresh compiler instance. No UI or network-throttle costs.",
+  "summary": [
+    {
+      "scenario": "boot/fresh-browser-context",
+      "samples": 1,
+      "medianMs": 648,
+      "minMs": 648,
+      "maxMs": 648
+    },
+    {
+      "scenario": "run/first",
+      "samples": 1,
+      "medianMs": 1937.9000000059605,
+      "minMs": 1937.9000000059605,
+      "maxMs": 1937.9000000059605
+    },
+    {
+      "scenario": "run/repeated",
+      "samples": 3,
+      "medianMs": 1556.9000000059605,
+      "minMs": 1556.5999999940395,
+      "maxMs": 1557.7999999821186
+    },
+    {
+      "scenario": "evaluate/first",
+      "samples": 1,
+      "medianMs": 1582.5999999940395,
+      "minMs": 1582.5999999940395,
+      "maxMs": 1582.5999999940395
+    },
+    {
+      "scenario": "evaluate/repeated",
+      "samples": 3,
+      "medianMs": 1611.5,
+      "minMs": 1601,
+      "maxMs": 1615.7000000178814
+    },
+    {
+      "scenario": "type-query/first",
+      "samples": 1,
+      "medianMs": 1336.5999999940395,
+      "minMs": 1336.5999999940395,
+      "maxMs": 1336.5999999940395
+    },
+    {
+      "scenario": "type-query/repeated",
+      "samples": 3,
+      "medianMs": 1384.800000011921,
+      "minMs": 1345.0999999940395,
+      "maxMs": 1404.9000000059605
+    },
+    {
+      "scenario": "boolean-test/first",
+      "samples": 1,
+      "medianMs": 1699.300000011921,
+      "minMs": 1699.300000011921,
+      "maxMs": 1699.300000011921
+    },
+    {
+      "scenario": "boolean-test/repeated",
+      "samples": 3,
+      "medianMs": 1723.699999988079,
+      "minMs": 1695.3999999761581,
+      "maxMs": 1788
+    },
+    {
+      "scenario": "signature-test/first",
+      "samples": 1,
+      "medianMs": 2079,
+      "minMs": 2079,
+      "maxMs": 2079
+    },
+    {
+      "scenario": "signature-test/repeated",
+      "samples": 3,
+      "medianMs": 2202.9000000059605,
+      "minMs": 2121,
+      "maxMs": 2243.699999988079
+    },
+    {
+      "scenario": "headerless-evaluate/first",
+      "samples": 1,
+      "medianMs": 2077.0999999940395,
+      "minMs": 2077.0999999940395,
+      "maxMs": 2077.0999999940395
+    },
+    {
+      "scenario": "headerless-evaluate/repeated",
+      "samples": 3,
+      "medianMs": 2073.300000011921,
+      "minMs": 2066.7000000178814,
+      "maxMs": 2149.9000000059605
+    },
+    {
+      "scenario": "imported-evaluate/first",
+      "samples": 1,
+      "medianMs": 2286.300000011921,
+      "minMs": 2286.300000011921,
+      "maxMs": 2286.300000011921
+    },
+    {
+      "scenario": "imported-evaluate/repeated",
+      "samples": 3,
+      "medianMs": 2222.5999999940395,
+      "minMs": 2071.2000000178814,
+      "maxMs": 2695.5999999940395
+    },
+    {
+      "scenario": "module-edit-sync/edited",
+      "samples": 3,
+      "medianMs": 0.09999999403953552,
+      "minMs": 0,
+      "maxMs": 0.20000001788139343
+    },
+    {
+      "scenario": "edited-module-evaluate/edited",
+      "samples": 3,
+      "medianMs": 2628.0999999940395,
+      "minMs": 2548.7000000178814,
+      "maxMs": 2873.2000000178814
+    }
+  ],
+  "records": [
+    {
+      "scenario": "boot",
+      "phase": "fresh-browser-context",
+      "sample": 0,
+      "elapsedMs": 648
+    },
+    {
+      "scenario": "run",
+      "phase": "first",
+      "sample": 0,
+      "elapsedMs": 1937.9000000059605
+    },
+    {
+      "scenario": "run",
+      "phase": "repeated",
+      "sample": 1,
+      "elapsedMs": 1556.9000000059605
+    },
+    {
+      "scenario": "run",
+      "phase": "repeated",
+      "sample": 2,
+      "elapsedMs": 1556.5999999940395
+    },
+    {
+      "scenario": "run",
+      "phase": "repeated",
+      "sample": 3,
+      "elapsedMs": 1557.7999999821186
+    },
+    {
+      "scenario": "evaluate",
+      "phase": "first",
+      "sample": 0,
+      "elapsedMs": 1582.5999999940395
+    },
+    {
+      "scenario": "evaluate",
+      "phase": "repeated",
+      "sample": 1,
+      "elapsedMs": 1601
+    },
+    {
+      "scenario": "evaluate",
+      "phase": "repeated",
+      "sample": 2,
+      "elapsedMs": 1611.5
+    },
+    {
+      "scenario": "evaluate",
+      "phase": "repeated",
+      "sample": 3,
+      "elapsedMs": 1615.7000000178814
+    },
+    {
+      "scenario": "type-query",
+      "phase": "first",
+      "sample": 0,
+      "elapsedMs": 1336.5999999940395
+    },
+    {
+      "scenario": "type-query",
+      "phase": "repeated",
+      "sample": 1,
+      "elapsedMs": 1345.0999999940395
+    },
+    {
+      "scenario": "type-query",
+      "phase": "repeated",
+      "sample": 2,
+      "elapsedMs": 1404.9000000059605
+    },
+    {
+      "scenario": "type-query",
+      "phase": "repeated",
+      "sample": 3,
+      "elapsedMs": 1384.800000011921
+    },
+    {
+      "scenario": "boolean-test",
+      "phase": "first",
+      "sample": 0,
+      "elapsedMs": 1699.300000011921
+    },
+    {
+      "scenario": "boolean-test",
+      "phase": "repeated",
+      "sample": 1,
+      "elapsedMs": 1695.3999999761581
+    },
+    {
+      "scenario": "boolean-test",
+      "phase": "repeated",
+      "sample": 2,
+      "elapsedMs": 1723.699999988079
+    },
+    {
+      "scenario": "boolean-test",
+      "phase": "repeated",
+      "sample": 3,
+      "elapsedMs": 1788
+    },
+    {
+      "scenario": "signature-test",
+      "phase": "first",
+      "sample": 0,
+      "elapsedMs": 2079
+    },
+    {
+      "scenario": "signature-test",
+      "phase": "repeated",
+      "sample": 1,
+      "elapsedMs": 2121
+    },
+    {
+      "scenario": "signature-test",
+      "phase": "repeated",
+      "sample": 2,
+      "elapsedMs": 2202.9000000059605
+    },
+    {
+      "scenario": "signature-test",
+      "phase": "repeated",
+      "sample": 3,
+      "elapsedMs": 2243.699999988079
+    },
+    {
+      "scenario": "headerless-evaluate",
+      "phase": "first",
+      "sample": 0,
+      "elapsedMs": 2077.0999999940395
+    },
+    {
+      "scenario": "headerless-evaluate",
+      "phase": "repeated",
+      "sample": 1,
+      "elapsedMs": 2066.7000000178814
+    },
+    {
+      "scenario": "headerless-evaluate",
+      "phase": "repeated",
+      "sample": 2,
+      "elapsedMs": 2073.300000011921
+    },
+    {
+      "scenario": "headerless-evaluate",
+      "phase": "repeated",
+      "sample": 3,
+      "elapsedMs": 2149.9000000059605
+    },
+    {
+      "scenario": "imported-evaluate",
+      "phase": "first",
+      "sample": 0,
+      "elapsedMs": 2286.300000011921
+    },
+    {
+      "scenario": "imported-evaluate",
+      "phase": "repeated",
+      "sample": 1,
+      "elapsedMs": 2071.2000000178814
+    },
+    {
+      "scenario": "imported-evaluate",
+      "phase": "repeated",
+      "sample": 2,
+      "elapsedMs": 2222.5999999940395
+    },
+    {
+      "scenario": "imported-evaluate",
+      "phase": "repeated",
+      "sample": 3,
+      "elapsedMs": 2695.5999999940395
+    },
+    {
+      "scenario": "module-edit-sync",
+      "phase": "edited",
+      "sample": 0,
+      "elapsedMs": 0.09999999403953552
+    },
+    {
+      "scenario": "edited-module-evaluate",
+      "phase": "edited",
+      "sample": 0,
+      "elapsedMs": 2873.2000000178814
+    },
+    {
+      "scenario": "module-edit-sync",
+      "phase": "edited",
+      "sample": 1,
+      "elapsedMs": 0.20000001788139343
+    },
+    {
+      "scenario": "edited-module-evaluate",
+      "phase": "edited",
+      "sample": 1,
+      "elapsedMs": 2548.7000000178814
+    },
+    {
+      "scenario": "module-edit-sync",
+      "phase": "edited",
+      "sample": 2,
+      "elapsedMs": 0
+    },
+    {
+      "scenario": "edited-module-evaluate",
+      "phase": "edited",
+      "sample": 2,
+      "elapsedMs": 2628.0999999940395
+    }
+  ]
+}

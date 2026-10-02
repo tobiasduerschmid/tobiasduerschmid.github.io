@@ -1,0 +1,12 @@
+{
+  "baselineCommit": "17469cc0",
+  "baselineWorkerSha256": "9ee9aefb68fd8e02cb1de55d063e6d64a4e174dda8e9594bbcfd952426be0d3d",
+  "optimizedSources": {
+    "js/haskell-worker.js": "f4090b074bfb664fbeafd92f6841d26821d9d1a5e6e4d9e8cf38af37cc51ad49",
+    "js/debugger/haskell/session.js": "9c0b88168a6cce3b47d33fde6826aacbb283825030f45c85c8f98764c90527a3",
+    "js/vendor/microhs/mhs-embed.js": "4fcc8fb12f2d5e1b62a483af2073e937f04c20a98d6757045c62d09068528e47",
+    "scripts/benchmark-haskell-runtime.cjs": "798dba6c0e825b315dcb2c0e7cf430fb3552ec283a31751df1f32b005f3697cc",
+    "scripts/benchmark-haskell-debugger.cjs": "0c5b9b3aa7bfa0d5e87fb4f627df784bf12125874f587645bd23e5cd01d15e36"
+  },
+  "notes": "Baseline and final measurements used the same pinned MicroHs bundle and Apple M4 Max/Chromium 145. The debugger A/B record alternates original timers and Continue prefill; final data uses the final adapter including the 256 KiB continuation buffer. Timing is indicative, not a CI threshold."
+}

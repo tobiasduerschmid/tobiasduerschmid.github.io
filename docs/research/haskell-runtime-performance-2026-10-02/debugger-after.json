@@ -1,0 +1,33 @@
+{
+  "measuredAt": "2026-10-02T23:40:00.410Z",
+  "browser": "145.0.7632.6",
+  "platform": "darwin arm64",
+  "cpu": "Apple M4 Max",
+  "baseURL": "http://127.0.0.1:4018",
+  "source": "module Main where\nbump :: Int -> Int\nbump n = n + 1\nmain = print (map bump [1..150])\n",
+  "note": "Fresh sandbox and browser context per sample; localhost delivery; Continue measured from first pause to completion; real compiler and unmodified vendor runtime; no UI or network throttling.",
+  "medianContinueMs": 68.90000000596046,
+  "records": [
+    {
+      "sample": 0,
+      "bootMs": 496.30000001192093,
+      "startMs": 1759,
+      "continueMs": 70.7999999821186,
+      "events": 302
+    },
+    {
+      "sample": 1,
+      "bootMs": 490.59999999403954,
+      "startMs": 1768.5,
+      "continueMs": 68.30000001192093,
+      "events": 302
+    },
+    {
+      "sample": 2,
+      "bootMs": 488.60000002384186,
+      "startMs": 1773.699999988079,
+      "continueMs": 68.90000000596046,
+      "events": 302
+    }
+  ]
+}

@@ -78,6 +78,29 @@ PY
 and the complete packaged bundle. The tutorial backend only needs `base`; a
 future reproducible rebuild may omit CanvHs to reduce the payload further.
 
+## Runtime integration and performance
+
+The adapter reuses unchanged compilation inputs, not evaluated program values.
+For this pinned version, `MicroHs.Translate.TranslateMap` contains `Exp` syntax;
+`translateWithMap` serializes and deserializes fresh values for each expression.
+Check that invariant and the fresh-state regression tests before upgrading.
+Normal request completion uses the REPL's prompt-setting command, avoiding an
+extra compiled expression. See [the performance investigation](../../../docs/haskell-runtime-performance.md)
+for measurements and reproduction commands.
+
+`js/haskell-worker.js` also sizes the Asyncify continuation buffer to 256 KiB
+inside `Module.onRuntimeInitialized`, before `callMain`. The upstream 4 KiB
+buffer can overflow while pausing recursive demand traces. This uses the
+**internal ABI of this pinned, non-modularized loader**: its global
+`Asyncify.StackSize` is writable before the first `allocateData` call. It is
+not a supported `Module` stack-size option. The adapter checks the expected
+initial size and absence of an allocated continuation, and fails clearly if
+an upstream loader changes that contract. Compiler/Wasm bytes and the hashes
+above remain unchanged. A future rebuilt distribution should set
+`-sASYNCIFY_STACK_SIZE=262144` at build time and remove this adapter hook.
+[Emscripten initialization callback](https://emscripten.org/docs/api_reference/module.html#Module.onRuntimeInitialized),
+[Asyncify stack setting](https://emscripten.org/docs/tools_reference/settings_reference.html#asyncify-stack-size).
+
 ## License
 
 MicroHs is Copyright 2023-2026 Lennart Augustsson. CanvHs is Copyright 2026

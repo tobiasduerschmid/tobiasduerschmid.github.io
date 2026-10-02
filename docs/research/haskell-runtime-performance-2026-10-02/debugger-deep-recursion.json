@@ -1,0 +1,20 @@
+[
+  {
+    "mode": "hook",
+    "startMs": 1830.8999999761581,
+    "continueMs": 3651.2000000178814,
+    "events": 304,
+    "output": "150\n",
+    "stderr": "",
+    "exitCode": 0
+  },
+  {
+    "mode": "fast-hook",
+    "startMs": 1808.0999999940395,
+    "continueMs": 108.09999999403954,
+    "events": 304,
+    "output": "150\n",
+    "stderr": "",
+    "exitCode": 0
+  }
+]
