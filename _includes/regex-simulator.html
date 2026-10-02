@@ -4,16 +4,16 @@
     <p>Explore a pattern, then check it against examples you expect to match or reject.</p>
   </div>
 
-  <div class="regex-workspace">
-    <section class="regex-input-panel" aria-labelledby="regex-input-heading">
-      <h2 id="regex-input-heading">Try a pattern</h2>
-      <form id="regex-form">
-        <div class="regex-field">
-          <label for="regex-pattern">Regular expression</label>
-          <textarea id="regex-pattern" name="pattern" rows="3" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="regex-pattern-hint regex-error">\b(?P&lt;word&gt;moss|fern)\b</textarea>
-          <p id="regex-pattern-hint" class="regex-hint">Enter the pattern itself, without <code>/…/</code> delimiters or Python <code>r"…"</code> quotes. Limit: 2,000 characters.</p>
-        </div>
+  <div class="regex-field regex-pattern-bar">
+    <label for="regex-pattern">Regular expression</label>
+    <textarea id="regex-pattern" name="pattern" form="regex-form" rows="2" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="regex-pattern-hint regex-error">\b(?P&lt;word&gt;moss|fern)\b</textarea>
+    <p id="regex-pattern-hint" class="regex-hint">Enter the pattern itself, without <code>/…/</code> delimiters or Python <code>r"…"</code> quotes. Limit: 2,000 characters.</p>
+  </div>
 
+  <div class="regex-workspace">
+    <section class="regex-input-panel" aria-labelledby="regex-input-heading" tabindex="0">
+      <h2 id="regex-input-heading">Inspect one input</h2>
+      <form id="regex-form">
         <div class="regex-field">
           <label for="regex-text">Test text</label>
           <textarea id="regex-text" name="text" rows="6" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="regex-text-hint regex-error">moss fern mossy</textarea>
@@ -81,6 +81,29 @@
       </details>
     </section>
 
+    <section id="regex-cases" class="regex-cases-panel" aria-labelledby="regex-cases-heading" tabindex="0">
+      <h2 id="regex-cases-heading">Test your own examples</h2>
+      <p>Check the current pattern and flags against examples you expect to match or reject.</p>
+      <div class="regex-field">
+        <label for="regex-case-operation">Test-case match mode</label>
+        <select id="regex-case-operation" aria-describedby="regex-case-operation-hint">
+          <option value="fullmatch">Match whole string</option>
+          <option value="search">Search for a match</option>
+        </select>
+        <p id="regex-case-operation-hint" class="regex-hint">Validate whole inputs, or search for a matching substring.</p>
+      </div>
+      <div class="regex-actions">
+        <button id="regex-add-case" type="button">Add test case</button>
+        <button id="regex-run-cases" class="regex-primary" type="button">Run test cases</button>
+      </div>
+      <p id="regex-cases-status" role="status" aria-live="polite">Choose expected outcomes, then run the test cases.</p>
+      <div id="regex-case-list" class="regex-case-list"></div>
+      <details class="regex-case-guidance">
+        <summary>Test-case guidance and limits</summary>
+        <p id="regex-cases-hint" class="regex-hint">Empty text tests the empty string. Add up to 50 cases, with at most 20,000 Unicode code points across their text. The selected match mode applies to every case. Cases stay on this page until you reload or leave.</p>
+      </details>
+    </section>
+
     <div class="regex-result-panel">
       <p class="regex-results-guide">Run a pattern to see highlighted matches, captured groups, and starting positions. Results show the first 200 matches and inspect up to 100 candidate positions.</p>
       <section id="regex-results" aria-labelledby="regex-results-heading" hidden>
@@ -119,26 +142,6 @@
       </section>
     </div>
   </div>
-
-  <section id="regex-cases" class="regex-cases-panel" aria-labelledby="regex-cases-heading">
-    <h2 id="regex-cases-heading">Test your own examples</h2>
-    <p>Use the current regular expression and flags to check several examples together. Mark each example as one that should match or should not match before running.</p>
-    <div class="regex-field">
-      <label for="regex-case-operation">Test-case match mode</label>
-      <select id="regex-case-operation" aria-describedby="regex-case-operation-hint">
-        <option value="fullmatch">Match whole string</option>
-        <option value="search">Search for a match</option>
-      </select>
-      <p id="regex-case-operation-hint" class="regex-hint">Use Match whole string to validate complete inputs. Use Search for a match when finding a matching substring is enough. This mode applies to every test case.</p>
-    </div>
-    <p id="regex-cases-hint" class="regex-hint">Empty text tests the empty string. Add up to 50 cases, with at most 20,000 Unicode code points across their text. Cases stay on this page until you reload or leave.</p>
-    <div id="regex-case-list" class="regex-case-list"></div>
-    <div class="regex-actions">
-      <button id="regex-add-case" type="button">Add test case</button>
-      <button id="regex-run-cases" class="regex-primary" type="button">Run test cases</button>
-    </div>
-    <p id="regex-cases-status" role="status" aria-live="polite">Choose expected outcomes, then run the test cases.</p>
-  </section>
 
   <template id="regex-case-template">
     <fieldset class="regex-case">
