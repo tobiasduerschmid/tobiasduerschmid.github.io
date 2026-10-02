@@ -13148,6 +13148,9 @@
     var step = this.steps[run.stepIndex];
     var tests = step && step.tests;
     if (!tests || !tests.length) return;
+    // Each check batch owns its output; retain every diagnostic within the
+    // batch, but do not append failures to output from an earlier check.
+    this._clearOutput();
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
 
     var runFile = (step && step.run_file) || this.activeFileName ||

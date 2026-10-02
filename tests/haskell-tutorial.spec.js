@@ -206,6 +206,36 @@ for (const slug of TUTORIALS) {
   });
 }
 
+test('rechecking Haskell work replaces stale diagnostics and a new run shows fresh output', async ({ page }) => {
+  test.setTimeout(120_000);
+  const config = loadTutorialConfig('haskell');
+  const step = config.steps.find(step => step.key === 'numeric-price-contract');
+  const signatureTest = step.tests.find(test => test.signature);
+  const solution = step.solution.files.find(file => file.path === step.run_file).content;
+  const inferred = solution.replace(/^canAffordPizza ::.*\n/gm, '');
+  const output = page.getByRole('region', { name: 'Program output' });
+  const declarationDiagnostic = /An explicit top-level declaration for canAffordPizza is required/g;
+  const browserErrors = [];
+  page.on('pageerror', error => browserErrors.push(error.message));
+  await page.goto('/SEBook/tools/haskell-tutorial#numeric-price-contract');
+  await waitForTutorialReady(page, { bootTimeout: BOOT_TIMEOUT });
+  expect(inferred, 'the regression removes the assessed declaration').not.toBe(solution);
+  expect(await setTutorialFileContent(page, step.run_file, inferred)).toBe(true);
+
+  await expectOnlyFailingGate(page, step.tests.length, signatureTest.description);
+  await expect(output).toContainText('An explicit top-level declaration for canAffordPizza is required');
+  await expectOnlyFailingGate(page, step.tests.length, signatureTest.description);
+  expect((await output.textContent()).match(declarationDiagnostic),
+    'the current check reports the declaration failure once, without retaining the previous check').toHaveLength(1);
+  await a11yCheckpoint(page, 'Haskell prices — current check diagnostics', { feature: A11Y_FEATURE });
+
+  await enterSolution(page, step);
+  await runProgram(page);
+  await expect(output).toContainText('False');
+  await expect(output).not.toContainText('An explicit top-level declaration');
+  expect(browserErrors).toEqual([]);
+});
+
 test('the price lesson distinguishes text ordering, numeric contracts, and affordability behavior', async ({ page }) => {
   test.setTimeout(180_000);
   const config = loadTutorialConfig('haskell');

@@ -2,7 +2,8 @@
  * TutorChat — Rule-based hint engine with optional Chrome AI chat.
  *
  * When tests fail, a hint panel appears below the test results with specific,
- * actionable hints derived by comparing the student's code against the solution.
+ * condition-matched hints for each failed check. Authored hints take priority
+ * over generated guidance.
  * If Chrome's Prompt API (Gemini Nano) is available, a chat input also appears
  * so students can ask follow-up questions.
  *
@@ -23,7 +24,7 @@
   var sendBtn = null;
   var statusEl = null;
   var generating = false;
-  var currentHints = [];
+  let currentHintGroups = [];
 
   // ─── Public API ─────────────────────────────────────────────────────────────
 
@@ -34,16 +35,14 @@
     var panel = stepContent && stepContent.querySelector('.tvm-test-panel');
     if (!panel) return;
 
-    var prev = panel.querySelector('.tvm-tutor-chat');
-    if (prev) prev.remove();
+    _removePanel();
 
-    // Generate rule-based hints
-    currentHints = _generateHints(tutorial);
+    currentHintGroups = _generateHintGroups(tutorial);
 
     // Only show if there are actual hints
-    if (currentHints.length === 0) return;
+    if (currentHintGroups.length === 0) return;
 
-    _buildUI(panel, currentHints);
+    _buildUI(panel, currentHintGroups.flatMap(function (group) { return group.hints; }));
 
     if (ENABLE_AI_CHAT) _initAIChat(tutorial);
   };
@@ -53,86 +52,56 @@
 
   // ─── Rule-Based Hint Engine ─────────────────────────────────────────────────
 
-  function _generateHints(tutorial) {
+  function _generateHintGroups(tutorial) {
     var step = tutorial.steps[tutorial.currentStep];
     var tests = step.tests || [];
     var results = tutorial._testResults || [];
     var backend = (tutorial.config && tutorial.config.backend) || tutorial.backend || '';
     var output = (tutorial.outputPre && tutorial.outputPre.textContent) || '';
-    var hints = [];
-
-    // Get failing test info
-    var failingTests = [];
-    tests.forEach(function (t, i) {
-      if (results[i] !== true) failingTests.push(t);
-    });
-
-    if (failingTests.length === 0) return hints;
-
-    if (backend === 'uml-editor') {
-      return _finalizeHints(_umlAssertionHints(tutorial, tests, results));
-    }
-
-    // Get student code from all step files + active file
     var studentCode = _getStudentCode(tutorial, step);
-    var solutionCode = _getSolutionCode(step);
-
-    // --- Hint generators (order = display order, generic first) ---
-
-    // 2. Syntax/runtime error detection (any test matching "runs without errors")
-    var hasRunError = failingTests.some(function (t) {
-      return /runs? without errors|no errors|script runs/i.test(t.description);
-    });
-    if (hasRunError) {
-      hints.push({
-        icon: '\u26A0\uFE0F',
-        title: 'Your code has an error',
-        body: 'Click **\u25B6 Run** to see the error message in the output panel. Read it carefully \u2014 it tells you the line number and what went wrong.'
-      });
-    }
-
-    // 3. Diff-based hints: find what's in the solution but missing from student code
-    var diffHints = _diffHints(studentCode, solutionCode, failingTests);
-    hints = hints.concat(diffHints);
-
-    // 4. Test-description-based hints
-    failingTests.forEach(function (t) {
-      var desc = t.description;
-      var h = _hintFromTestDescription(desc, studentCode);
-      if (h) hints.push(h);
-    });
-
-    // 5. YAML-defined hints (most specific — shown last)
-    failingTests.forEach(function (t) {
-      if (!t.hints || !t.hints.length) return;
-      t.hints.forEach(function (h) {
-        if (_evaluateHintCondition(h.condition, studentCode, backend, output)) {
-          hints.push({
-            icon: '\uD83D\uDCA1',
-            title: h.title || t.description,
-            body: h.text
-          });
-        }
-      });
-    });
-
-    return _finalizeHints(hints);
-  }
-
-  function _umlAssertionHints(tutorial, tests, results) {
-    var records = tutorial._testHintRecords || [];
-    var hints = [];
+    const groups = [];
     tests.forEach(function (test, index) {
       if (results[index] === true) return;
-      _toArray(records[index]).forEach(function (hint) {
-        var normalized = _normalizeHintRecord(hint, 'Naming nudge');
-        if (normalized) hints.push(normalized);
-      });
-      _toArray(test.hints).forEach(function (hint) {
-        var testHint = _normalizeHintRecord(hint, test.description || 'Hint');
-        if (testHint) hints.push(testHint);
-      });
+      let hints = _toArray(test.hints)
+        .filter(function (hint) {
+          return _evaluateHintCondition(hint.condition, studentCode, backend, output);
+        })
+        .map(function (hint) { return _normalizeHintRecord(hint, test.description || 'Hint'); })
+        .filter(Boolean);
+
+      if (backend === 'uml-editor') {
+        const records = tutorial._testHintRecords || [];
+        // Assertion diagnostics are feedback from the actual diagram check,
+        // not a comparison with a model solution. Keep them with their check.
+        const diagnostics = _toArray(records[index])
+          .map(function (hint) { return _normalizeHintRecord(hint, 'Naming nudge'); })
+          .filter(Boolean);
+        hints = diagnostics.concat(hints);
+        // An empty diagram has no useful naming diagnostic yet. Preserve the
+        // UML editor's no-nudge behavior until a check provides guidance.
+        if (hints.length === 0) return;
+      } else if (hints.length === 0) {
+        hints = _fallbackHints(test, studentCode, step);
+      }
+      if (hints.length === 0) hints = [{
+        icon: '\uD83D\uDCA1', title: test.description || 'Hint',
+        body: 'Compare the failing check with the task instructions. Trace a small example through your current attempt and identify where its behavior differs.'
+      }];
+      groups.push({ testIndex: index, description: test.description || 'Check ' + (index + 1),
+        hints: _finalizeHints(hints) });
     });
+    return groups;
+  }
+
+  function _fallbackHints(test, studentCode, step) {
+    let hints = [];
+    if (/runs? without errors|no errors|script runs/i.test(test.description)) hints.push({
+      icon: '\u26A0\uFE0F', title: 'Your code has an error',
+      body: 'Click **\u25B6 Run** to see the error message in the output panel. Read it carefully \u2014 it tells you the line number and what went wrong.'
+    });
+    hints = hints.concat(_diffHints(studentCode, _getSolutionCode(step), [test]));
+    const descriptionHint = _hintFromTestDescription(test.description || '', studentCode);
+    if (descriptionHint) hints.push(descriptionHint);
     return hints;
   }
 
@@ -141,7 +110,7 @@
     if (typeof hint === 'string') {
       return {
         icon: '\uD83D\uDCA1',
-        title: fallbackTitle || 'Hint',
+        title: fallbackTitle || '',
         body: hint
       };
     }
@@ -149,7 +118,7 @@
     if (!body) return null;
     return {
       icon: hint.icon || '\uD83D\uDCA1',
-      title: hint.title || fallbackTitle || 'Hint',
+      title: hint.title || fallbackTitle || '',
       body: body
     };
   }
@@ -160,16 +129,13 @@
   }
 
   function _finalizeHints(hints) {
-    var seen = {};
-    hints = hints.filter(function (h) {
+    const seen = new Set();
+    return hints.filter(function (h) {
       var key = h.title + '\n' + h.body;
-      if (seen[key]) return false;
-      seen[key] = true;
+      if (seen.has(key)) return false;
+      seen.add(key);
       return true;
     });
-
-    // Cap at 3 hints to avoid overwhelming the student
-    return hints.slice(0, 3);
   }
 
   /**
@@ -177,6 +143,8 @@
    */
   function _stripComments(code, backend) {
     switch (backend) {
+      case 'haskell':
+        return _stripHaskellComments(code);
       case 'pyodide':
         return code.replace(/#.*$/gm, '');
       case 'browser':
@@ -201,6 +169,27 @@
           .replace(/\/\/.*$/gm, '')
           .replace(/\/\*[\s\S]*?\*\//g, '');
     }
+  }
+
+  // Use the same tokenizer as the Haskell source analyses. Mask comment gaps
+  // while keeping tokens, strings, line breaks, and regex anchors intact.
+  function _stripHaskellComments(code) {
+    const syntax = window.SEBookHaskellSyntax;
+    if (!syntax) return '';
+    let tokens;
+    try { tokens = syntax.tokenize(code); }
+    catch (error) {
+      if (error instanceof syntax.UnsupportedSyntax) return '';
+      throw error;
+    }
+    let cursor = 0;
+    const pieces = tokens.map(function (token) {
+      const gap = code.slice(cursor, token.offset).replace(/\S/g, ' ');
+      cursor = token.offset + token.text.length;
+      return gap + token.text;
+    });
+    pieces.push(code.slice(cursor).replace(/\S/g, ' '));
+    return pieces.join('');
   }
 
   /**
@@ -489,10 +478,9 @@
     return div.innerHTML;
   }
 
-  function _destroy() {
+  function _removePanel() {
     if (session) { try { session.destroy(); } catch (e) { /* ok */ } }
     session = null;
-    currentHints = [];
     if (chatEl && chatEl.parentNode) chatEl.parentNode.removeChild(chatEl);
     chatEl = null;
     messagesEl = null;
@@ -500,6 +488,11 @@
     sendBtn = null;
     statusEl = null;
     generating = false;
+  }
+
+  function _destroy() {
+    _removePanel();
+    currentHintGroups = [];
   }
 
   // ─── AI Chat (optional — Chrome Prompt API) ────────────────────────────────
@@ -553,8 +546,10 @@
     var studentCode = _getStudentCode(tutorial, step);
 
     // Include the rule-based hints so the LLM can build on them
-    var hintsText = currentHints.map(function (h) {
-      return '- ' + h.title + ': ' + h.body;
+    var hintsText = currentHintGroups.map(function (group) {
+      return group.hints.map(function (hint) {
+        return '- ' + group.description + ': ' + hint.body;
+      }).join('\n');
     }).join('\n');
 
     var instructions = step.instructions || '';

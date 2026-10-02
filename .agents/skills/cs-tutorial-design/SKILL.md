@@ -395,6 +395,50 @@ Effective scaffolding is temporary support that fades as competence grows.
    solutions, not answers)
 4. **Metacognitive:** Promotes reflection ("Rate your confidence before seeing the answer")
 
+### Progressive Hints That Preserve Learner Work
+
+Design each hint sequence around the failed criterion and the reasoning the
+learner is meant to practice. Read the objective, contract, and starter first:
+information already supplied by the task differs from an answer still to derive.
+Use the hint schema and minimum layers in `tutorial-authoring`; each layer must
+add useful support:
+
+1. **Orient:** point to the relevant distinction, overlooked case, or earlier
+   concept. Give the learner something specific to inspect.
+2. **Diagnose or plan:** introduce a discriminating input, short trace, comparison,
+   or subgoal that helps locate the gap. Ask for an observation or prediction.
+3. **Scaffold the next step:** offer a partial case table, field-role worksheet,
+   or incomplete structure. Leave a meaningful relationship, expression, or
+   decision for the learner to derive and check.
+
+In this project's tutorial runtime, make progression **condition-driven**.
+Use `condition:` to respond to the learner's current code or error: orient an
+untouched attempt, diagnose a specific partial attempt, and offer an incomplete
+scaffold when the code shows further progress. Do not replace these conditions
+with a “Show next hint” button or reveal hints merely because of clicks or time.
+Use mutually exclusive conditions where advice would otherwise overlap, and
+verify plausible attempts reach the intended advice. Keep conditions scoped to
+the assessed definition and separate from grading; alternate correct algorithms
+remain valid. See `tutorial-authoring` for supported condition forms.
+
+Every hint should enable a concrete action. Later hints must add information,
+not merely repeat the contract or rephrase an earlier hint. Review the ladder
+cumulatively: three individually incomplete hints can still assemble a complete
+answer. A fully specified algorithm in prose, an exact assessed type, or a
+formula with only a trivial literal blank is still an answer. Put complete
+solutions in the separate solution reveal.
+
+If choosing an operation or API is the assessed skill, naming it can give away
+the task; prompt the learner to compare its behavior with alternatives. If the
+task already requires that operation, help with the remaining reasoning. Retain
+valid alternative implementations and stay within taught prerequisites. Do not
+replace useful support with vague prompts such as “think harder” or pad a ladder
+with redundant hints.
+
+This combines worked-example fading with actionable process and self-regulation
+feedback; see the pedagogical advisor's
+[feedback guidance](../pedagogical-advisor/references/practices/feedback.md).
+
 ### The Fading Imperative
 
 Scaffolding must be progressively removed. A scaffold that never fades becomes a crutch.
@@ -435,6 +479,26 @@ Design assessments using Bloom's taxonomy: ensure you test at multiple levels, n
 just Remember and Apply. Include Analyze ("compare these two approaches"), Evaluate
 ("which design is better for this use case?"), and Create ("design a solution").
 
+### Learner-Facing Test Names Are Part of the Scaffold
+
+A visible test name identifies **what is being checked**, such as a behavior,
+input category, boundary, or declared-interface requirement. It must not supply
+the exact type, expression, formula, branch order, or algorithm the learner is
+being asked to derive. This applies to test descriptions, hint titles, and failure
+headings that repeat them.
+
+For example, use **“canAffordPizza explicitly declares types”** instead of
+“canAffordPizza explicitly declares two Double inputs and a Bool result” when
+writing the signature is the task. Name an input category such as empty input
+rather than disclosing the result the learner is meant to predict.
+
+Keep names diagnostic: “handles empty input” identifies a failed obligation;
+“works correctly” does not. Keep the task's behavioral contract and necessary
+examples explicit in its instructions. Avoiding answer leakage is not a reason
+to hide requirements, edge cases, or grading criteria. Review the test names and
+the full hint ladder together against the objective: after reading them, what
+meaningful reasoning must the learner still do?
+
 ### Safe Failure Simulation
 Deliberately guide learners into making catastrophic errors in sandboxed environments:
 - Force a merge conflict, then teach resolution
@@ -468,6 +532,8 @@ Answer these questions before creating tutorial content:
     framing errors as learning opportunities?
 11. **Can learners skim the instructions?** Are parallel rules/examples/tasks in lists,
     ordered actions numbered, and essential points selectively bolded without losing meaning?
+12. **Do visible test names and cumulative hints preserve the assessed reasoning?** Does
+    each hint add a distinct, actionable step without completing the answer?
 
 ---
 

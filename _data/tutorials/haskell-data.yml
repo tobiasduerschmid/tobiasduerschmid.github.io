@@ -45,6 +45,7 @@ steps:
 
       - Apply constructors to distinguish variants of one type.
       - Analyze each variant with a constructor pattern.
+      - Create a two-variant representation from a short specification.
 
       ### One type, several possibilities
 
@@ -99,6 +100,18 @@ steps:
       - `Heal amount` restores `amount` points.
 
       All event numbers are nonnegative integers. This function reports a change; it does not yet impose a health cap or process a sequence. Change the sample to include a travel distance below four and predict that result before running again.
+
+      ### A model of your own
+
+      Take about five minutes to model a checkpoint. A checkpoint is **either blocked with a reason or open with a distance**, never both at once. A reason is a `String`; a distance is a nonnegative `Integer`.
+
+      1. Declare a type named `Checkpoint`. Choose your own constructor names and the field each alternative needs.
+      2. Write `checkpointMessage`, its type signature, and one equation for each alternative. A blocked checkpoint returns `"Blocked: "` followed by its reason; an open checkpoint returns `"Open: "` followed by its distance as text. Use `show` to turn the distance into a string and `++` to join strings.
+      3. Add your declarations above `main` in the editor. Keep the event sample, change `main` to a `do` block, and add indented `print` calls for your own checkpoint values. Predict each message before using **Run**.
+
+      Try a blocked checkpoint with reason `"flooded bridge"`, one with an empty reason, and open checkpoints at distances 0 and 9. Their messages should be `"Blocked: flooded bridge"`, `"Blocked: "`, `"Open: 0"`, and `"Open: 9"`.
+
+      **Manual check:** the automatic checks assess `eventDelta`, not your chosen representation or checkpoint equations. Check both alternatives and explain why one Checkpoint value cannot select both constructors. Which pattern binds the reason, and which binds the distance? Your constructor names may differ from an instructor's model; the alternatives, payload types, and messages determine correctness.
     files:
       - path: "Main.hs"
         language: haskell
@@ -119,18 +132,24 @@ steps:
     open_file: "Main.hs"
     run_file: "Main.hs"
     tests:
-      - description: "Travel uses whole quarters, including distances below four"
+      - description: "Travel behavior at distance boundaries"
         command: 'map (\distance -> eventDelta (Travel distance)) [0, 3, 4, 5, 11] == [0, 0, 1, 1, 2] && eventDelta (Travel 100000000000000000004) == 25000000000000000001'
         hints:
-          - text: "The number in a Travel event is a distance, not a number of health points."
-          - text: "Count how many complete groups of four fit in that distance. Integer division keeps the result an Integer."
-          - text: "The Travel equation has the shape `eventDelta (Travel distance) = div distance ...`; choose the group size."
-      - description: "Fights lose health while healing restores it"
+          - text: "Start with the Travel branch. What does its bound number measure, and what is eventDelta supposed to report?"
+            condition: "code_matches: /(?:(?:^|\\n)eventDelta\\s+\\(*\\s*Travel\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\1\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)eventDelta\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Compare distances 3, 4, and 5 by hand. Which changes represent a new complete group, and which change only the leftover distance?"
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)eventDelta\\s+\\(*\\s*Travel\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\1\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)eventDelta\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)eventDelta\\b(?![ \\t]*::)[^\\n=]*\\bTravel\\b[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\b(?:div|quot|floor|truncate)\\b)[\\s\\S]*$/"
+          - text: "Compare `div 11 3` with `div 3 11` in the interpreter. Identify which argument is the total and which is the group size. Then choose the operands suited to the Travel contract."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)eventDelta\\s+\\(*\\s*Travel\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\1\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)eventDelta\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)eventDelta\\b(?![ \\t]*::)[^\\n=]*\\bTravel\\b[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\b(?:div|quot|floor|truncate)\\b)[\\s\\S]*$/"
+      - description: "Fight and Heal event interpretation"
         command: 'map eventDelta [Fight 0, Fight 1, Fight 9, Heal 0, Heal 7] == [0, -1, -9, 0, 7] && eventDelta (Fight 100000000000000000001) == (-100000000000000000001) && eventDelta (Heal 101) == 101'
         hints:
-          - text: "An event's constructor carries meaning, but Haskell will not invent the meaning of its number."
-          - text: "A loss is a negative change; a restoration is a positive change."
-          - text: "Keep the two constructor patterns. Write each branch's result using its bound payload and the appropriate sign."
+          - text: "Inspect the Fight and Heal bodies separately. Returning their payloads unchanged treats two different kinds of event the same way."
+            condition: "code_matches: /(?:(?:^|\\n)eventDelta\\s+\\(*\\s*Fight\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\1\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)eventDelta\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Imagine starting with 70 health. For Fight 6 and Heal 6, record the health afterward and the direction of each change before editing either branch."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)eventDelta\\s+\\(*\\s*Fight\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\1\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)eventDelta\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)eventDelta\\b(?![ \\t]*::)[^\\n=]*\\bFight\\b[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?(?:-[ \\t]*damage|\\bnegate\\b|damage[ \\t]*[+*-]))[\\s\\S]*$/"
+          - text: "Make a small table with columns for constructor, payload, and signed change. Include zero and two positive payloads for each constructor; use the pattern in your entries to derive each branch's expression."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)eventDelta\\s+\\(*\\s*Fight\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\1\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)eventDelta\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)eventDelta\\b(?![ \\t]*::)[^\\n=]*\\bFight\\b[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?(?:-[ \\t]*damage|\\bnegate\\b|damage[ \\t]*[+*-]))[\\s\\S]*$/"
     quiz:
       title: Step 1 — Knowledge Check
       min_score: 0.8
@@ -214,6 +233,18 @@ steps:
       explanation: |
         The constructor selects the equation and the pattern gives that rule access to its input. Every equation produces an Integer. The sample now prints `(2,-7,3)`. Constructor names distinguish the alternatives; the equation bodies define their behavior.
 
+        One model for the manually checked checkpoint task is:
+
+        ```haskell
+        data Checkpoint = Blocked String | Open Integer
+
+        checkpointMessage :: Checkpoint -> String
+        checkpointMessage (Blocked reason) = "Blocked: " ++ reason
+        checkpointMessage (Open distance) = "Open: " ++ show distance
+        ```
+
+        Each value selects one alternative. `Blocked "flooded bridge"` stores a String reason; `Open 9` stores an Integer distance. The two patterns cover every constructor and bind the field appropriate to that alternative. The equations interpret those fields as messages. Different constructor names with the same alternatives and behavior are equally valid.
+
   # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, physical pp. 129–138, 143–144.
   # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 2, pp. 3–4: named fields and constructor patterns.
   # Transfer: rebuilding a Hero applies lecture construction and immutability, with supplied health rules.
@@ -280,18 +311,24 @@ steps:
     open_file: "Main.hs"
     run_file: "Main.hs"
     tests:
-      - description: "Healing adds to existing health and preserves the name and original value"
+      - description: "Record contents before and after an ordinary heal"
         command: 'let {observe (Hero name hp) = (name, hp)} in let original = Hero "Fern" 70 in observe (healHero 15 original) == ("Fern", 85) && observe original == ("Fern", 70) && observe (healHero 0 (Hero "Stark" 12)) == ("Stark", 12) && observe (healHero 1 (Hero "" 0)) == ("", 1)'
         hints:
-          - text: "The amount is an increment, not a replacement health value."
-          - text: "Read the health field from the original record before calculating its replacement."
-          - text: "The result has the shape `Hero name (...)`; preserve the bound name and calculate the new health from both amount and hp."
-      - description: "Healing respects the 100-point cap at and around its boundary"
+          - text: "Compare the starter's replacement record with the supplied renameHero example. Which old fields does each result still use?"
+            condition: "code_matches: /(?:(?:^|\\n)healHero\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*Hero\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*Hero\\s*\\)*\\s*\\(*\\s*\\2\\s*\\)*\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)healHero\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Try healing by zero. If health changes, locate the result field whose expression has lost information from the original hero."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)healHero\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*Hero\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*Hero\\s*\\)*\\s*\\(*\\s*\\2\\s*\\)*\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)healHero\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)healHero\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bHero\\b)[\\s\\S]*$/"
+          - text: "For an uncapped heal, fill `old name | old health | amount | new name | new health` using two heroes with different starting health but the same amount. Which inputs must influence each result field?"
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)healHero\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*Hero\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*Hero\\s*\\)*\\s*\\(*\\s*\\2\\s*\\)*\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)healHero\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)healHero\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bHero\\b)[\\s\\S]*$/"
+      - description: "Healing at the upper health boundary"
         command: 'let {observe (Hero name hp) = (name, hp)} in map (\amount -> snd (observe (healHero amount (Hero "Mage" 90)))) [9, 10, 11] == [99, 100, 100] && observe (healHero 5 (Hero "Full" 100)) == ("Full", 100) && observe (healHero 100000000000000000001 (Hero "New" 0)) == ("New", 100) && observe (healHero 0 (Hero "Empty" 0)) == ("Empty", 0)'
         hints:
-          - text: "An ordinary addition is not enough when the result exceeds the maximum."
-          - text: "Compare the candidate health with the cap after adding the healing amount."
-          - text: "The second argument to Hero has the shape `min ... (...)`; one argument is the cap and the other is the proposed health."
+          - text: "First check an ordinary heal; then compare results near the maximum. Which part of the contract is the replacement record missing?"
+            condition: "code_matches: /(?:(?:^|\\n)healHero\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*Hero\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*Hero\\s*\\)*\\s*\\(*\\s*\\2\\s*\\)*\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)healHero\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Use one hero at 90 health and try amounts 9, 10, and 11. Predict all three outputs from the contract, then identify the first case where your current expression disagrees."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)healHero\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*Hero\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*Hero\\s*\\)*\\s*\\(*\\s*\\2\\s*\\)*\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)healHero\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)healHero\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\+)[\\s\\S]*$/"
+          - text: "Write a two-row decision table: proposed health within the permitted range, proposed health beyond it. Fill the required result in each row, then express that decision with a guard or a suitable Prelude operation."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)healHero\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*Hero\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*Hero\\s*\\)*\\s*\\(*\\s*\\2\\s*\\)*\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)healHero\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)healHero\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\+)[\\s\\S]*$/"
     quiz:
       title: Step 2 — Knowledge Check
       min_score: 0.8
@@ -438,18 +475,24 @@ steps:
     open_file: "Main.hs"
     run_file: "Main.hs"
     tests:
-      - description: "Inclusive bounds retain endpoints, interior values, duplicates, and input order"
+      - description: "Range selection across numeric boundaries"
         command: 'withinBand (2, 6) [7, 2, 5, 1, 6, 5] == [2, 5, 6, 5] && withinBand (-3, 0) [-4, -3, -1, 0, 1] == [-3, -1, 0] && withinBand (4, 4) [3, 4, 5, 4] == [4, 4] && withinBand (0, 1) [] == [] && withinBand (0.5 :: Double, 1.5) [2, 0.5, 1, 1.5, 0] == [0.5, 1, 1.5]'
         hints:
-          - text: "A value must satisfy both bounds. Passing just one comparison is not sufficient."
-          - text: "The endpoints count as inside. Keep the inclusive comparisons and connect them with a Boolean operation."
-          - text: "The filter predicate has the shape `value >= low && ...`; compare the same value with the upper bound."
-      - description: "String ranges use lexicographic ordering while retaining empty and repeated values when in range"
+          - text: "The starter already selects some values. Compare its retained values with the full range contract to identify the missing decision."
+            condition: "code_matches: /(?:(?:^|\\n)withinBand\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*,\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*filter\\s*\\)*\\s*\\(*\\s*\\\\\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*->\\s*\\(*\\s*\\4\\s*\\)*\\s*>=\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*\\s*\\(*\\s*\\3\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)withinBand\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "For bounds 2 and 6, classify values 1, 2, 4, 6, and 7 as keep or discard. Pay special attention to the endpoints and the value above the range."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)withinBand\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*,\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*filter\\s*\\)*\\s*\\(*\\s*\\\\\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*->\\s*\\(*\\s*\\4\\s*\\)*\\s*>=\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*\\s*\\(*\\s*\\3\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)withinBand\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)withinBand\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bhigh\\b)[\\s\\S]*$/"
+          - text: "For each of those values, make separate columns for its relation to the lower bound, its relation to the upper bound, and the required keep/discard decision. Derive a predicate that matches the last column; do not change the list's order to repair selection."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)withinBand\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*,\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*filter\\s*\\)*\\s*\\(*\\s*\\\\\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*->\\s*\\(*\\s*\\4\\s*\\)*\\s*>=\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*\\s*\\(*\\s*\\3\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)withinBand\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)withinBand\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bhigh\\b)[\\s\\S]*$/"
+      - description: "Range selection across nonnumeric inputs"
         command: 'withinBand ("G", "M") ["Z", "G", "J", "A", "M", "J"] == ["G", "J", "M", "J"] && withinBand ("", "B") ["C", "", "A", "B"] == ["", "A", "B"] && withinBand (''b'', ''d'') "edbcba" == "dbcb" && withinBand (False, True) [True, False, True] == [True, False, True]'
         hints:
-          - text: "The generic function uses the ordering supplied by the value's type. It should not measure string length."
-          - text: "Filtering chooses existing values; it should neither sort the names nor remove repetitions."
-          - text: "Use the same two comparisons for numeric and string inputs. Retain the `Ord a =>` signature without a conversion."
+          - text: "This check uses ordering beyond numbers. Compare the starter predicate with the range contract before trying a numeric-only repair."
+            condition: "code_matches: /(?:(?:^|\\n)withinBand\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*,\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*filter\\s*\\)*\\s*\\(*\\s*\\\\\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*->\\s*\\(*\\s*\\4\\s*\\)*\\s*>=\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*\\s*\\(*\\s*\\3\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)withinBand\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Compare `\"z\" > \"alpha\"` with `length \"z\" > length \"alpha\"`. Which comparison matches the ordering described in the lesson?"
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)withinBand\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*,\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*filter\\s*\\)*\\s*\\(*\\s*\\\\\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*->\\s*\\(*\\s*\\4\\s*\\)*\\s*>=\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*\\s*\\(*\\s*\\3\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)withinBand\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)withinBand\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\b(?:length|sort|nub|fromIntegral)\\b)[\\s\\S]*$/"
+          - text: "Use bounds `\"\"` and `\"B\"` with `[\"C\",\"\",\"A\",\"B\",\"A\"]`. Mark each original position keep or discard before running. Diagnose missing, reordered, or collapsed entries separately from wrong comparisons."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)withinBand\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*,\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*filter\\s*\\)*\\s*\\(*\\s*\\\\\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*->\\s*\\(*\\s*\\4\\s*\\)*\\s*>=\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*\\s*\\(*\\s*\\3\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)withinBand\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)withinBand\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\b(?:length|sort|nub|fromIntegral)\\b)[\\s\\S]*$/"
     quiz:
       title: Step 3 — Knowledge Check
       min_score: 0.8
@@ -594,18 +637,24 @@ steps:
     open_file: "Main.hs"
     run_file: "Main.hs"
     tests:
-      - description: "Empty, single-stop, and longer lists produce the matching trail structure"
+      - description: "List-to-trail conversion across input sizes"
         command: 'let {names End = []; names (Stop name rest) = name : names rest} in names (fromList []) == [] && names (fromList ["Gate"]) == ["Gate"] && names (fromList ["Lake", "Lake", "Hill"]) == ["Lake", "Lake", "Hill"]'
         hints:
-          - text: "Find the input shape that has no work left. It corresponds to the trail's base constructor."
-          - text: "For a nonempty list, keep its head and recursively convert its tail."
-          - text: "Use one equation for `[]` and another for `(x:xs)`. The latter creates a Stop whose remaining-trail field comes from the recursive result."
-      - description: "The conversion preserves strings, repeated values, and their order"
+          - text: "The starter always returns the same trail. Compare empty, one-stop, and two-stop inputs to see which distinctions it currently ignores."
+            condition: "code_matches: /(?:(?:^|\\n)fromList\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*End\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)fromList\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Read the fields of Stop and the input pattern `(x:xs)`. Identify the field each input piece could supply; one piece is already a name, while the other still has the wrong representation."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)fromList\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*End\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)fromList\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)fromList\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bStop\\b)[\\s\\S]*$/"
+          - text: "Draw the expected constructors for a two-name input without writing equations. Beside each constructor, record which input remains at that point. Use that trace to choose a smaller conversion problem and the value needed when no input remains."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)fromList\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*End\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)fromList\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)fromList\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bStop\\b)[\\s\\S]*$/"
+      - description: "Trail payloads, repetition, and order"
         command: 'let {names End = []; names (Stop name rest) = name : names rest} in names (fromList ["Gate", "Lake", "Gate"]) == ["Gate", "Lake", "Gate"] && names (fromList ["", "North", " ", "South", ""]) == ["", "North", " ", "South", ""] && names (fromList (map show [1..12 :: Int])) == map show [1..12 :: Int]'
         hints:
-          - text: "The conversion changes representation, not the sequence of stops."
-          - text: "Do not compare, sort, or deduplicate payloads; the function preserves each stop name."
-          - text: "Keep the current head as the outer Stop and recurse only on the input tail. That places each stop before the rest of the trail."
+          - text: "A successful conversion preserves the sequence's information. Look for a difference between the input names and the names observed through the result."
+            condition: "code_matches: /(?:(?:^|\\n)fromList\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*End\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)fromList\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Try `[\"\",\"North\",\"North\",\"South\"]`. Track positions as well as names so a lost repetition or reversed pair is visible."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)fromList\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*End\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)fromList\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)fromList\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\b(?:reverse|sort|nub|filter)\\b)[\\s\\S]*$/"
+          - text: "Temporarily label the input positions 0 through 3 on paper. For each output Stop, write the source position of its payload. Find the first missing or out-of-order position and inspect the corresponding construction step."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)fromList\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*End\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)fromList\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)fromList\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\b(?:reverse|sort|nub|filter)\\b)[\\s\\S]*$/"
     quiz:
       title: Step 4 — Knowledge Check
       min_score: 0.8
@@ -742,18 +791,24 @@ steps:
     open_file: "Main.hs"
     run_file: "Main.hs"
     tests:
-      - description: "Deletion removes exactly the indexed stop and preserves the original trail"
+      - description: "Indexed trail deletion and original snapshots"
         command: 'let {names End = []; names (Stop name rest) = name : names rest} in let original = Stop "A" (Stop "B" (Stop "A" (Stop "C" End))) in names (removeStop 0 original) == ["B", "A", "C"] && names (removeStop 1 original) == ["A", "A", "C"] && names (removeStop 2 original) == ["A", "B", "C"] && names (removeStop 3 original) == ["A", "B", "A"] && names original == ["A", "B", "A", "C"] && names (removeStop 1 (Stop "" (Stop "" (Stop "X" End)))) == ["", "X"]'
         hints:
-          - text: "This is deletion by position. Equal payloads elsewhere in the trail must stay."
-          - text: "When the index reaches zero, skip this Stop. Before zero, retain the current value and decrease the index for the recursive call."
-          - text: "The nonzero case reconstructs `Stop x (...)`; the recursive call works on the remaining trail with an index one smaller."
-      - description: "Empty trails and invalid indices remain unchanged"
+          - text: "Identify whether your function is choosing a stop by position or by its name. The repeated-name example distinguishes those decisions."
+            condition: "code_matches: /(?:(?:^|\\n)removeStop\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*\\2\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)removeStop\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "On `[\"A\",\"B\",\"A\",\"C\"]`, trace removal at positions 0 and 2. At each visited stop, record the requested position relative to the remaining trail."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)removeStop\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*\\2\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)removeStop\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)removeStop\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bStop\\b)[\\s\\S]*$/"
+          - text: "For the position-2 trace, draw the result before writing code. Mark unchanged payloads, the missing stop, and each link that now has a different destination. Which fields can come from the old value, and which require a smaller update's result?"
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)removeStop\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*\\2\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)removeStop\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)removeStop\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bStop\\b)[\\s\\S]*$/"
+      - description: "Trail deletion on empty and invalid requests"
         command: 'let {names End = []; names (Stop name rest) = name : names rest} in names (removeStop 0 End) == [] && names (removeStop (-1) (Stop "A" (Stop "B" End))) == ["A", "B"] && names (removeStop (-5) (Stop "A" End)) == ["A"] && names (removeStop 2 (Stop "A" (Stop "B" End))) == ["A", "B"] && names (removeStop 8 (Stop "A" (Stop "B" End))) == ["A", "B"] && names (removeStop 0 (Stop "A" End)) == []'
         hints:
-          - text: "Check the empty, singleton, and just-outside cases separately."
-          - text: "An empty trail has no stop to remove. A negative index has no valid target."
-          - text: "Place the invalid-index and End cases before the recursive Stop case. Reaching End after retaining a prefix must preserve that prefix."
+          - text: "Separate requests with no target from requests that remove a valid stop. A failure here may concern an edge case rather than your ordinary deletion rule."
+            condition: "code_matches: /(?:(?:^|\\n)removeStop\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*\\2\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)removeStop\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Compare an empty trail and a two-stop trail at indices -1, 0, 1, and 2. Label each request valid or invalid before checking its result."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)removeStop\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*\\2\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)removeStop\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)removeStop\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?(?:<[ \\t]*0|\\bEnd\\b))[\\s\\S]*$/"
+          - text: "Trace an out-of-range request until the remaining trail is End. Then inspect the result produced at each earlier call. Where would a retained prefix disappear if one case returned the wrong result? Check a negative request separately so it does not accidentally become a valid index."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)removeStop\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*\\2\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)removeStop\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)removeStop\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?(?:<[ \\t]*0|\\bEnd\\b))[\\s\\S]*$/"
     quiz:
       title: Step 5 — Knowledge Check
       min_score: 0.8
@@ -880,12 +935,14 @@ steps:
 
       The sample root has two labels and three child entries, one of which is `NoRoute`. One child has no labels but leads to a labeled grandchild. Predict the total number of labeled nodes, then predict the starter's output. Run to distinguish its local count from the required whole-tree count.
 
+      Before opening the check, plan the **repaired** traversal. Write the type of `children`, then the type and expected value of `map countLabeled children`. What single count should those recursive results combine into, and where does the root's own contribution belong? These predictions describe the intended recursive function, not the incomplete starter.
+
       <details markdown="1">
       <summary>Check the local and whole-subtree contributions</summary>
 
       The required total is `3`; the starter returns only the root's contribution, `1`. Trace each child separately:
 
-      | Child | Own labeled-node contribution | Whole-subtree contribution |
+      | Child | Own count | Subtree count |
       | --- | --- | --- |
       | Unlabeled node leading to Lake | `0` | `1` |
       | `NoRoute` | `0` | `0` |
@@ -893,13 +950,24 @@ steps:
 
       Lake is reached through a real node whose labels happen to be empty. `NoRoute` has no descendants. An empty payload and an absent node therefore need different reasoning. The recursive child results count whole subtrees, so counting the child-list entries alone cannot replace them.
 
+      The types track each change in representation:
+
+      | Stage at the sample root | Type | Intended value |
+      | --- | --- | --- |
+      | `children` | `[Route]` | The three child routes listed above |
+      | `map countLabeled children` | `[Int]` | `[1,0,1]` |
+      | Combined recursive child counts | `Int` | `2` |
+      | Root contribution plus child total | `Int` | `1 + 2 = 3` |
+
+      `map` produces one subtree count per child; combining those counts produces one number. A fold with addition starting at zero is one way to combine them. A recursive helper can express the same relationship without constructing an intermediate list.
+
       </details>
 
       ### Your turn
 
       Repair `countLabeled :: Route -> Int`. Count every node whose own labels list is nonempty. Do not count `NoRoute`, and do not stop traversing a real node just because its labels list is empty.
 
-      The current-node contribution is already supplied. Decide how to turn the child list into a single additional count. You may use a fold over recursive child counts or an equivalent recursive helper. Before testing, draw up two tiny examples that distinguish “number of labels” from “number of labeled nodes.”
+      The current-node contribution is already supplied. Decide how to turn the child list into a single additional count. You may use a fold over recursive child counts or an equivalent recursive helper. Before testing, draw up two tiny examples that distinguish “number of labels” from “number of labeled nodes,” and predict their intermediate child counts as well as their totals.
     files:
       - path: "Main.hs"
         language: haskell
@@ -924,18 +992,24 @@ steps:
     open_file: "Main.hs"
     run_file: "Main.hs"
     tests:
-      - description: "The count measures labeled nodes rather than individual labels"
+      - description: "Counts across node payload sizes"
         command: 'countLabeled NoRoute == 0 && countLabeled (Route [] []) == 0 && countLabeled (Route ["A", "B", "C"] []) == 1 && countLabeled (Route ["A"] [Route ["B", "C"] [], Route ["D"] []]) == 3 && countLabeled (Route [""] []) == 1'
         hints:
-          - text: "A node contributes either zero or one, regardless of how many labels it stores."
-          - text: "Keep the current-node contribution separate from the sum of child contributions."
-          - text: "The result has the shape `own + ...`; the missing value must summarize recursive calls on the children."
-      - description: "Traversal reaches descendants through unlabeled nodes and handles missing children"
+          - text: "The lesson distinguishes labels from labeled nodes. Check which quantity each part of your expression measures."
+            condition: "code_matches: /(?:(?:^|\\n)countLabeled\\b(?!\\s*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\blet\\s+([a-z_][A-Za-z0-9_\\x27]*)\\s*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bin\\s*\\(*\\s*\\1\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)countLabeled\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Compare three isolated nodes whose payloads are `[]`, `[\"A\"]`, and `[\"A\",\"B\",\"C\"]`. Explain which change should affect the count before testing."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)countLabeled\\b(?!\\s*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\blet\\s+([a-z_][A-Za-z0-9_\\x27]*)\\s*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bin\\s*\\(*\\s*\\1\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)countLabeled\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)countLabeled\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\blength\\b)[\\s\\S]*$/"
+          - text: "Use a root with one label and two children, each with two labels. Write one contribution per node and a separate entry for each whole subtree. Use those entries to diagnose whether your combination counts labels, child entries, or recursive results."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)countLabeled\\b(?!\\s*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\blet\\s+([a-z_][A-Za-z0-9_\\x27]*)\\s*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bin\\s*\\(*\\s*\\1\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)countLabeled\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)countLabeled\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\blength\\b)[\\s\\S]*$/"
+      - description: "Descendant counts through empty payloads and absent nodes"
         command: 'countLabeled (Route ["Gate", "Start"] [Route [] [Route ["Lake"] []], NoRoute, Route ["Tower"] []]) == 3 && countLabeled (Route [] [Route [] [Route ["Deep"] []], NoRoute]) == 1 && countLabeled (Route ["Root"] [NoRoute, NoRoute]) == 1 && countLabeled (Route [] [Route [] [], Route ["A"] [], Route ["B"] [], Route ["C"] [], Route ["D"] []]) == 4 && countLabeled (Route [] [Route [] [Route [] [Route [] [Route [""] []]]]]) == 1'
         hints:
-          - text: "An unlabeled node does not imply an unlabeled subtree."
-          - text: "Visit its children even when its own contribution is zero. NoRoute is the case with no children to visit."
-          - text: "Apply countLabeled to each child and combine the resulting Int values. Check that the empty child list contributes zero."
+          - text: "Locate the first real node with an empty labels list. Is your function treating that node as the end of a branch?"
+            condition: "code_matches: /(?:(?:^|\\n)countLabeled\\b(?!\\s*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\blet\\s+([a-z_][A-Za-z0-9_\\x27]*)\\s*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bin\\s*\\(*\\s*\\1\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)countLabeled\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Compare `NoRoute`, `Route [] []`, and `Route [] [Route [\"Deep\"] []]`. Record what data remains reachable in each case before predicting counts."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)countLabeled\\b(?!\\s*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\blet\\s+([a-z_][A-Za-z0-9_\\x27]*)\\s*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bin\\s*\\(*\\s*\\1\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)countLabeled\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)countLabeled\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?(?:labels[ \\t]*==[ \\t]*\\[\\]|\\bnull[ \\t]+labels\\b))[\\s\\S]*$/"
+          - text: "For the third case, annotate `current contribution | child inputs | child results | combined result`. Fill the last column from the lesson's contract, then identify which missing relationship in your expression prevents it from reaching that value."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)countLabeled\\b(?!\\s*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\blet\\s+([a-z_][A-Za-z0-9_\\x27]*)\\s*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bin\\s*\\(*\\s*\\1\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)countLabeled\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)countLabeled\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?(?:labels[ \\t]*==[ \\t]*\\[\\]|\\bnull[ \\t]+labels\\b))[\\s\\S]*$/"
     quiz:
       title: Step 6 — Knowledge Check
       min_score: 0.8
@@ -1097,18 +1171,24 @@ steps:
     open_file: "Main.hs"
     run_file: "Main.hs"
     tests:
-      - description: "Removing a nested minimum preserves its right child and every unaffected ancestor and branch"
+      - description: "Nested minimum removal and retained search-tree keys"
         command: 'let {keys Tip = []; keys (Fork value left right) = keys left ++ [value] ++ keys right} in let original = Fork 8 (Fork 3 Tip (Fork 5 Tip Tip)) (Fork 12 Tip Tip) in keys (removeSmallest original) == [5, 8, 12] && keys original == [3, 5, 8, 12] && keys (removeSmallest (Fork 9 (Fork 4 (Fork (-2) Tip (Fork 0 Tip Tip)) (Fork 6 Tip Tip)) (Fork 15 Tip Tip))) == [0, 4, 6, 9, 15] && keys (removeSmallest (Fork 10 (Fork 8 (Fork 6 (Fork 4 Tip (Fork 5 Tip Tip)) Tip) Tip) Tip)) == [5, 6, 8, 10]'
         hints:
-          - text: "Returning the root's right child is valid only when the root itself has no left child."
-          - text: "When a left child exists, the current key and right subtree must survive. Only the left subtree needs the recursive update."
-          - text: "Reconstruct `Fork x (...) right`; the missing field is the result of removing the smallest key from left."
-      - description: "Empty trees, singleton trees, roots without left children, and repeated removals reach the right boundary"
+          - text: "Compare the keys before and after the update. If several disappear, inspect the starter's recursive case rather than the supplied stopping cases."
+            condition: "code_matches: /(?:(?:^|\\n)removeSmallest\\s+\\(*\\s*Fork\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\3\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)removeSmallest\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "On the sample, mark the path to the minimum and circle keys outside that path. Which of those circled keys disappear from your result?"
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)removeSmallest\\s+\\(*\\s*Fork\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\3\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)removeSmallest\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)removeSmallest\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bFork\\b)[\\s\\S]*$/"
+          - text: "Draw the result that retains every key except the minimum. At one retained ancestor, label the required key, left field, and right field with their sources: old value or updated result. For a constructor-based approach, use that field worksheet to repair the case."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)removeSmallest\\s+\\(*\\s*Fork\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\3\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)removeSmallest\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)removeSmallest\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\bFork\\b)[\\s\\S]*$/"
+      - description: "Search-tree removal at structural boundaries"
         command: 'let {keys Tip = []; keys (Fork value left right) = keys left ++ [value] ++ keys right} in let pair = Fork 5 (Fork 2 Tip Tip) Tip in keys (removeSmallest Tip) == [] && keys (removeSmallest (Fork 4 Tip Tip)) == [] && keys (removeSmallest (Fork 4 Tip (Fork 9 (Fork 7 Tip Tip) Tip))) == [7, 9] && keys (removeSmallest pair) == [5] && keys (removeSmallest (removeSmallest pair)) == [] && keys (removeSmallest (removeSmallest (removeSmallest pair))) == []'
         hints:
-          - text: "The smallest node can be the root, even when that root has a right subtree."
-          - text: "Removing a node must not remove the keys stored in its right child. An empty tree has no key to remove."
-          - text: "Keep separate patterns for Tip and a Fork with Tip as its left child. Only the remaining Fork pattern recurses."
+          - text: "Check the smallest tree shapes before investigating a long left path: empty, singleton, and a root with only a right child."
+            condition: "code_matches: /(?:(?:^|\\n)removeSmallest\\s+\\(*\\s*Fork\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\3\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)removeSmallest\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "For a root with a right subtree containing two keys, cross out only the minimum key on paper. Compare the remaining keys with what your stopping case returns."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)removeSmallest\\s+\\(*\\s*Fork\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\3\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)removeSmallest\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)removeSmallest\\b(?![ \\t]*::)[^\\n=]*\\bFork[^\\n=]*\\bTip\\b[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\b(?:Tip|Fork|removeSmallest)\\b)[\\s\\S]*$/"
+          - text: "Apply removal repeatedly to a two-key tree and record the expected key set after each call. Match each call's input shape to the equation it selects; identify whether the first mismatch loses keys early or mishandles an exhausted tree."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)removeSmallest\\s+\\(*\\s*Fork\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\3\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)removeSmallest\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)removeSmallest\\b(?![ \\t]*::)[^\\n=]*\\bFork[^\\n=]*\\bTip\\b[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\b(?:Tip|Fork|removeSmallest)\\b)[\\s\\S]*$/"
     quiz:
       title: Step 7 — Knowledge Check
       min_score: 0.8
@@ -1212,6 +1292,8 @@ steps:
 
       Before running, predict the correct value of the sample. Now predict what the starter actually prints: it currently follows only the left child of each compound expression. Which part of the expression disappears from that behavior?
 
+      Reuse the planning habit from Branching Data, this time without a filled table: write the type and predicted value of each child expression's recursive result at the sample's outer constructor, then explain how that constructor combines them. Keep the child expressions separate from their interpreted results.
+
       ### Your turn
 
       Implement `eval :: Expr -> Integer` for every finite expression built from `Number`, `Plus`, and `Times`. A number evaluates to its payload. A compound expression evaluates its child expressions and combines their results using its stated operation.
@@ -1240,18 +1322,24 @@ steps:
     open_file: "Main.hs"
     run_file: "Main.hs"
     tests:
-      - description: "Numbers and each operation have their specified numerical meanings"
+      - description: "Expression meaning for literals and individual operations"
         command: 'map (\n -> eval (Number n)) [-5, 0, 8] == [-5, 0, 8] && eval (Plus (Number 3) (Number 7)) == 10 && eval (Times (Number 3) (Number 7)) == 21 && eval (Times (Number 0) (Number 8)) == 0 && eval (Times (Number (-3)) (Number 4)) == (-12) && eval (Plus (Number (-3)) (Number 4)) == 1 && eval (Number 100000000000000000001) == 100000000000000000001'
         hints:
-          - text: "The payload of a Number is already a result. The payloads of Plus and Times are still expressions."
-          - text: "Convert both child expressions into numerical results before applying the parent operation."
-          - text: "Each compound branch has the shape `eval left <operation> eval right`; choose the operation from the constructor's meaning."
-      - description: "Nested evaluation respects the grouping represented by the tree"
+          - text: "Read the result body for each constructor independently. The starter's compound cases currently ignore one field."
+            condition: "code_matches: /(?:(?:^|\\n)eval\\s+\\(*\\s*(?:Plus|Times)\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*eval\\s*\\)*\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)eval\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Compare `Plus (Number 3) (Number 7)` and `Times (Number 3) (Number 7)`. Keep the children fixed and explain why the intended results differ."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)eval\\s+\\(*\\s*(?:Plus|Times)\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*eval\\s*\\)*\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)eval\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)eval\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?[+*])[\\s\\S]*$/"
+          - text: "For one compound node, fill `constructor | left child data | right child data | meaning of each child | parent meaning`. Distinguish the fields' types from the interpreted results before choosing how to write the body."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)eval\\s+\\(*\\s*(?:Plus|Times)\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*eval\\s*\\)*\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)eval\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)eval\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?[+*])[\\s\\S]*$/"
+      - description: "Expression meaning under nested grouping"
         command: 'eval (Times (Plus (Number 2) (Number 5)) (Number 4)) == 28 && eval (Plus (Number 2) (Times (Number 5) (Number 4))) == 22 && eval (Times (Plus (Number 1) (Number 2)) (Plus (Number 3) (Number 4))) == 21 && eval (Plus (Times (Number 2) (Number 3)) (Times (Number 4) (Number 5))) == 26 && eval (Times (Number 2) (Plus (Number 3) (Times (Number 4) (Number 5)))) == 46 && eval (Plus (Number 7) (Times (Number (-2)) (Plus (Number 4) (Number 1)))) == (-3)'
         hints:
-          - text: "The same small rule must apply to a child even when that child contains another operation."
-          - text: "Do not assume children are Number constructors. Recursive calls handle any valid child expression."
-          - text: "The parent keeps only the children's evaluated Integer results; recursion determines how those results were produced."
+          - text: "The compound starter cases use only one child. Before nesting operations, identify the meaning assigned to each child of one compound node."
+            condition: "code_matches: /(?:(?:^|\\n)eval\\s+\\(*\\s*(?:Plus|Times)\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*eval\\s*\\)*\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)eval\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Compare the grouping in `(2 + 5) * 4` and `2 + (5 * 4)`. Build both trees and locate the first node where their structures differ."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)eval\\s+\\(*\\s*(?:Plus|Times)\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*eval\\s*\\)*\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)eval\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)eval[ \\t]+\\([ \\t]*(?:Plus|Times)[ \\t]+\\([ \\t]*Number\\b)[\\s\\S]*$/"
+          - text: "Choose the compound child in the first tree. Work out its meaning independently, then use that result in a handwritten parent calculation. Your function must reproduce that relationship for a child of any valid shape; inspect where it currently depends on a particular shape."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)eval\\s+\\(*\\s*(?:Plus|Times)\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*\\)*\\s*=\\s*\\(*\\s*\\(*\\s*eval\\s*\\)*\\s*\\(*\\s*\\1\\s*\\)*\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)eval\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)eval[ \\t]+\\([ \\t]*(?:Plus|Times)[ \\t]+\\([ \\t]*Number\\b)[\\s\\S]*$/"
     quiz:
       title: Step 8 — Knowledge Check
       min_score: 0.8
@@ -1389,24 +1477,33 @@ steps:
     open_file: "Main.hs"
     run_file: "Main.hs"
     tests:
-      - description: "Events preserve order, use whole travel quarters, and cap healing in either mode"
+      - description: "Expedition event sequences and restoration limits"
         command: 'journey [] == 100 && journey [Fight 20] == 80 && journey [Fight 20, Travel 3] == 80 && journey [Fight 20, Travel 4] == 81 && journey [Fight 20, Travel 7] == 81 && journey [Fight 20, Heal 19] == 99 && journey [Fight 20, Heal 20] == 100 && journey [Fight 20, Heal 21] == 100 && journey [Fight 20, Travel 100] == 100 && journey [Fight 60, Heal 61] == 100 && journey [Heal 20, Fight 20] == 80 && journey [Fight 20, Travel 76] == 99 && journey [Fight 20, Travel 80] == 100 && journey [Fight 20, Travel 84] == 100 && journey [Travel 0, Fight 0, Heal 0] == 100 && journey [Fight 90, Heal 10] == 20'
         hints:
-          - text: "The result depends on both the remaining event list and the current health. Decide where those two values live in your program."
-          - text: "Separate the effect of one event from the step that continues through the remaining events. Bound each successful restoration by the maximum health."
-          - text: "A recursive helper can have the shape `go currentHealth remainingEvents`; its empty-list case returns currentHealth, and its nonempty case computes the next health first."
-      - description: "The defensive boundary is inclusive and mode changes take effect on the next event"
+          - text: "The placeholder returns the same value for every event list. Compare an empty journey with a one-event journey to identify the first distinction your body needs to represent."
+            condition: "code_matches: /(?:(?:^|\\n)journey\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*100\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)journey\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Trace `[Fight 20, Heal 30, Fight 20]`, recording health after every event. Compare the trace with capping only the final total; locate where those approaches first diverge."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)journey\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*100\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)journey\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)journey\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\b(?:foldl|foldr|scanl|min)\\b)[\\s\\S]*$/"
+          - text: "Make a worksheet with `incoming health | event | outgoing health | remaining events`. Fill it for that trace and for an empty list. Decide which information your helper parameters or fold accumulator must retain, leaving the transition expressions to be derived from the contract."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)journey\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*100\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)journey\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)journey\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?\\b(?:foldl|foldr|scanl|min)\\b)[\\s\\S]*$/"
+      - description: "Expedition mode transitions and threshold cases"
         command: 'journey [Fight 59, Travel 4] == 42 && journey [Fight 60, Travel 4] == 40 && journey [Fight 61, Travel 4] == 39 && journey [Fight 60, Fight 3] == 39 && journey [Fight 59, Fight 3] == 38 && journey [Fight 60, Heal 1, Fight 3] == 38 && journey [Fight 60, Travel 40, Heal 1, Fight 3] == 38 && journey [Fight 60, Heal 0, Fight 1] == 40 && journey [Fight 60, Fight 5] == 38 && journey [Fight 80, Heal 20, Travel 100] == 40 && journey [Fight 80, Heal 21, Travel 4] == 42'
         hints:
-          - text: "Write down the health before each event. That value decides which rule the event uses."
-          - text: "40 belongs to defensive mode. A heal to 41 restores ordinary mode for the following event, while an odd defensive damage amount is rounded down."
-          - text: "Branch on the current health inside the Fight and Travel cases. Do not keep a permanent defensive flag once the explorer has healed above the threshold."
-      - description: "Death ends the journey at zero or below and later healing cannot revive it"
+          - text: "A mode-related failure needs a trace of the starting health for each event, not just the final total."
+            condition: "code_matches: /(?:(?:^|\\n)journey\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*100\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)journey\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Compare `[Fight 60, Fight 3]` with `[Fight 60, Heal 1, Fight 3]`. Write the starting health of the last fight in each sequence and select its rule from the contract."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)journey\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*100\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)journey\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)journey\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?(?:40|\\b(?:Fight|Travel)\\b))[\\s\\S]*$/"
+          - text: "Build a small table for starting health 39, 40, and 41, with columns for Fight 3 and Travel 4. Derive each entry by hand, then compare those entries with your event-transition expressions. This separates threshold choice from odd-damage rounding."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)journey\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*100\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)journey\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)journey\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?(?:40|\\b(?:Fight|Travel)\\b))[\\s\\S]*$/"
+      - description: "Expedition termination and later events"
         command: 'journey [Fight 99] == 1 && journey [Fight 100] == (-1) && journey [Fight 101] == (-1) && journey [Fight 100, Heal 100] == (-1) && journey [Fight 60, Fight 79] == 1 && journey [Fight 60, Fight 80] == (-1) && journey [Fight 60, Fight 81, Heal 100] == (-1) && journey [Fight 60, Fight 82] == (-1)'
         hints:
-          - text: "Check for the end of the expedition when an event's result reaches the death boundary."
-          - text: "Zero is already terminal. Continuing through later events would allow a forbidden revival."
-          - text: "After calculating nextHealth, choose between the terminal result and processing the rest. The terminal branch must not process later healing."
+          - text: "The constant placeholder cannot distinguish fatal and nonfatal events. Predict whether a journey is still active after each event before deciding how to represent its end."
+            condition: "code_matches: /(?:(?:^|\\n)journey\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*100\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)journey\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b))/"
+          - text: "Compare `[Fight 99, Heal 1]` with `[Fight 100, Heal 1]`. Mark the earliest event at which each trace can still continue under the contract."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)journey\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*100\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)journey\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?=[\\s\\S]*(?:^|\\n)journey\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?(?:-[ \\t]*1|<=[ \\t]*0|<[ \\t]*1))[\\s\\S]*$/"
+          - text: "List the decisions needed for an empty input, a nonfatal event result, and a fatal event result. For each row, mark whether inspecting later events is permitted. Use that decision table to locate where your recursion or accumulator admits an extra transition."
+            condition: "code_matches: /^(?![\\s\\S]*(?:(?:^|\\n)journey\\s+\\(*\\s*([a-z_][A-Za-z0-9_\\x27]*)\\s*\\)*\\s*=\\s*\\(*\\s*100\\s*\\)*(?=\\s*(?:\\n[a-zA-Z_]|$))|(?:^|\\n)journey\\b(?!\\s*::)[^\\n=]*=\\s*\\(*\\s*(?:undefined\\b|error\\b)))(?![\\s\\S]*(?:^|\\n)journey\\b(?![ \\t]*::)[^\\n=]*=(?:(?!\\n[a-z_][A-Za-z0-9_\\x27]*\\b)[\\s\\S])*?(?:-[ \\t]*1|<=[ \\t]*0|<[ \\t]*1))[\\s\\S]*$/"
     quiz:
       title: Step 9 — Knowledge Check
       min_score: 0.8

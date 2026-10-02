@@ -375,13 +375,24 @@ the answer. Conventions:
 
 - **Three hints minimum** for any non-trivial test. The first is *least*
   revealing.
-- **Layer 1 — orientation.** Re-state the goal in different words, point at
-  the relevant section of the docs / earlier step. No code.
-- **Layer 2 — strategy.** Name the technique to use ("you'll need a
-  `dict.get()` with a default value") without showing the code.
-- **Layer 3 — structural skeleton.** Show the *shape* of the solution with
-  the interesting parts as `...` or named blanks. Never paste the literal
-  solution.
+- **Layer 1 — orientation.** Identify a relevant concept, earlier example,
+  or question the learner can investigate. Add direction beyond repeating
+  the failed check. No solution code.
+- **Layer 2 — diagnosis or plan.** Offer a concrete input to trace, a
+  comparison to make, or a way to break the problem down. Name a required
+  technique only if selecting it is not itself the learning objective.
+- **Layer 3 — incomplete scaffold.** Support the next reasoning step with
+  a partial trace, question, or skeleton that leaves meaningful decisions
+  to the learner. A full algorithm in prose, exact assessed type, or blank
+  requiring only an obvious literal still gives away the answer.
+- Read the whole ladder cumulatively: each hint must add useful support,
+  and all hints together must still leave the assessed reasoning to the
+  learner. Avoid padding, redundant paraphrases, and untaught prerequisites.
+  Apply the objective-first review in
+  [`cs-tutorial-design`](../cs-tutorial-design/SKILL.md#progressive-hints-that-preserve-learner-work).
+  Learner-visible test descriptions follow its
+  [test-name guidance](../cs-tutorial-design/SKILL.md#learner-facing-test-names-are-part-of-the-scaffold):
+  name the criterion without supplying the answer being assessed.
 - **Title style — describe the *content*, not the layer.** "Orient",
   "Strategy", "Skeleton", "Layer 1", "Layer 2", "Layer 3" (and parenthetical
   variants like `Skeleton (you fill in the blanks)`) are author-side
@@ -401,6 +412,37 @@ the answer. Conventions:
 - Never reveal the literal solution in a hint. Solutions live in
   `solution:` (instructor-mode reveal). Hints lead to thought, solutions
   confirm understanding after the work.
+
+#### Condition-driven progression
+
+Progression comes from `condition:` matching the learner's current code or
+output, not from a **Show next hint** button, click count, or elapsed time.
+For each failed criterion, distinguish an untouched or missing implementation,
+a recognizable partial attempt or misconception, and a more developed attempt.
+Attach the advice appropriate to each state. Prefer mutually exclusive
+conditions when the hints would otherwise repeat or disclose later scaffolds
+prematurely. Scope source patterns to the assessed definition so examples in
+`main`, unrelated helpers, and comments do not masquerade as progress.
+
+Exercise each condition with a starter, a plausible partial attempt, and a
+different developed attempt; also check that deleting the target definition
+still yields useful help. Hints diagnose source patterns; they must not act as
+additional grading rules or require one particular correct implementation.
+Haskell `code_*` conditions use the existing shared tokenizer to mask line and
+nested block comments while preserving string literals, spacing, and line
+anchors. `source_*` conditions intentionally inspect the full source instead.
+
+`js/tutor-chat.js` re-evaluates conditions after each failed test run. Preserve
+the original **Hints** disclosure and flat hint-card layout; opening the collapsed
+panel shows only the applicable advice from failed checks. There is no global three-hint cap,
+manual reveal ladder, or stored reveal depth. Authored guidance takes precedence
+over generated fallback advice. UML checks retain actual assertion diagnostics
+alongside applicable authored hints, and an empty diagnostic result does not
+invent a naming nudge. Passing checks no longer contribute hints.
+
+Keep presentation in `css/tutor-chat.css`. Condition changes and failed-check
+coverage are verified by `tests/tutor-hints.spec.js`; authored source profiles
+are covered by `scripts/tests/haskell-hint-conditions.test.js`.
 
 ### Visuals — create when they earn their place
 
@@ -2162,6 +2204,9 @@ under the same prefix family as other tutorial state so the global
   `assert` statements. A workspace-sync failure must render an indeterminate
   result and settle the active test transaction; never leave the test spinner
   or `_testRunInFlight` waiting for a Haskell request that was never sent.
+  Each Haskell **Test My Work** batch starts with fresh Output, preserving
+  every diagnostic produced in that batch without accumulating errors from
+  earlier checks. A subsequent **Run** likewise displays fresh program output.
   An optional `signature: {name, type}` requires an explicit top-level
   declaration in that same `run_file` and the exact expected monomorphic type.
   The host passes this descriptor to `runTest`; the worker owns both checks

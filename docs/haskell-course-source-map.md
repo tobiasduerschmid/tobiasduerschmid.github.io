@@ -116,6 +116,18 @@ Three sources added through snowballing directly inform these decisions: [Tirron
 
 Quiz revisions target constructor versus value types, recursive subtree counts, source-constructor counts, accumulator types, and noncommutative fold grouping. The independent programming challenges remain intact; the new reveals explain neighboring examples or observable results without supplying their target implementations. Existing selected retrieval prompts and suggested breaks remain. Additional explanation is optional to reveal, and students can record predictions in notes rather than learning a new interaction format.
 
+### Approved follow-up: types, intermediate results, and representation
+
+Five further changes sharpen existing lessons using the same [research report](research/haskell-functional-pedagogy-2026-10-02/report.md):
+
+- **Partial application and type roles:** Foundations distinguishes a checker, its partially applied form, and its Boolean answer. Learners identify which input remains before revealing the explanation. The assessed signature's hints name input and result roles instead of supplying the complete declaration. Direct Haskell application/type findings inform these tasks; specific contrasts remain authored diagnostics (§§2.1, 3.3, 5.4 Lesson A).
+- **Staged inference:** Foundations first removes only the signature while preserving numeric inputs, then separately restores quoted inputs. Learners distinguish a checked inferred interface from the intended numeric contract. This isolates the changed feature instead of conflating annotation and input changes (§§2.1, 5.2).
+- **Contract versus body repairs:** Higher-Order Types pairs an annotation repair with an implementation repair. Learners explain which change satisfies each specification before compiling; successful compilation alone is insufficient (§§2.1, 5.2, 5.5).
+- **Recursive intermediate types:** Branching Data predicts `[Route]` child values, `[Int]` recursive results `[1,0,1]`, and their combined count `2`, before adding the root's `1`. Expression Trees removes the filled table and asks learners to derive child-result types and values. Equivalent recursive helpers remain valid. This adapts adjacent functional-programming evidence and general scaffold-fading principles (§§3.2–3.3, 5.3).
+- **Learner-authored data:** Algebraic Variants adds a short `Checkpoint` model: blocked with a String reason or open with an Integer distance. Learners choose constructor names, write exhaustive message equations, and try their own values. The instructor explanation holds a possible model. Representation choice is a proposed design, not an established widespread learner deficit (§§2.2, 5.2–5.3).
+
+Automatic behavioral expressions, signature requirements, and knowledge-check questions remain unchanged in this follow-up. Predictions, explanations, inference experiments, and checkpoint modeling are manually checked practice; existing checks do not assess those added requirements. No runtime or persistence feature is added. These are research-informed designs, with no claim of measured learning improvement.
+
 ## Haskell 1: fading and diagnostic reasoning (October 2, 2026)
 
 Steps 3–10 now move from completing supplied branches and bindings to writing whole definitions. Support is renewed briefly when recursion is introduced: a worked example and a correct base case remain, while students write the recursive case. The final two tasks provide contracts, type signatures, and runnable placeholders, with implementation choices left to the learner. `TODO` placeholders are explicitly unfinished code, not examples of mistaken reasoning. Worked examples teach a neighboring problem; target-specific implementation clues live in optional hints.
@@ -187,6 +199,13 @@ Tests observe the stated function behavior across boundaries and representative 
 Stable lesson keys use the existing progress-migration mechanism. Saved drafts and completion for matching lessons survive, while old completion for replaced lessons is not transferred. The shared migration notice no longer promises that required checks may be skipped. No storage key or persistence schema is added.
 
 ## Verification
+
+Validation of the approved five-change follow-up on October 2, 2026:
+
+- The isolated Jekyll build succeeds, and the rendered instructions match all three current YAML files. All three content-schema checks pass. Lesson keys, starter files, solution files, executable assessment expressions, and quiz questions remain unchanged by this follow-up.
+- All seven selected browser tests pass: complete learner journeys through all 27 lessons, all three student/instructor print views, and the focused numeric-signature/inference diagnostic. Interactive accessibility checkpoints are enabled.
+- Nine real-MicroHs probes verify partial-application contracts, both rejected type-error examples, both intended repairs, the two misleading compile-only repairs, all four checkpoint messages, and recursive child counts `[1,0,1]` with total `3`.
+- All four scoped screen/print audit tests pass across the six tutorial URLs with zero findings. The five affected lessons also pass open-disclosure keyboard, semantic-table, light/dark accessibility, and 320-pixel reflow checks; print disclosures expand automatically. Existing subtree-table headers are shortened for narrow screens. Visual review covers the revised content in live and print layouts. This verifies the changed surfaces, not whole-site conformance or measured learning gains.
 
 Validation of the October 2, 2026 explicit-signature assessment:
 
