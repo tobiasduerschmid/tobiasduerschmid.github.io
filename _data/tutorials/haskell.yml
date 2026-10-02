@@ -69,7 +69,7 @@ steps:
       ### Predict before you Run!
 
       You and your friends order two pizzas at 12 dollars each from a
-      45-dollar budget. The starter's `pizzaMoneyLeft 45 12` is supposed to
+      45-dollar budget. The starter's `moneyLeftAfterTwoPizzas 45 12` is supposed to
       calculate how much money remains for snacks.
       Will it print `21`, `66`, or a type error? Think about your prediction,
       then choose **Run**.
@@ -84,7 +84,7 @@ steps:
 
       ### Your challenge
 
-      Repair `pizzaMoneyLeft budget pizzaPrice` to subtract the price of
+      Repair `moneyLeftAfterTwoPizzas budget pizzaPrice` to subtract the price of
       two equally priced pizzas from the budget. Inputs are nonnegative
       `Int` values in whole dollars, using the small ranges here; a negative
       result tells you how much extra money you need (`-4` means 4 dollars
@@ -109,16 +109,16 @@ steps:
           remainingMoney :: Int -> Int -> Int
           remainingMoney budget spent = budget - spent
 
-          pizzaMoneyLeft :: Int -> Int -> Int
-          pizzaMoneyLeft budget pizzaPrice = remainingMoney budget pizzaPrice * 2
+          moneyLeftAfterTwoPizzas :: Int -> Int -> Int
+          moneyLeftAfterTwoPizzas budget pizzaPrice = remainingMoney budget pizzaPrice * 2
 
           main :: IO ()
-          main = print (pizzaMoneyLeft 45 12)
+          main = print (moneyLeftAfterTwoPizzas 45 12)
     open_file: Main.hs
     run_file: Main.hs
     tests:
       - description: "Two pizzas leave the correct balance, including free pizzas, exact budget, and a shortfall"
-        command: "pizzaMoneyLeft 45 12 == 21 && pizzaMoneyLeft 30 15 == 0 && pizzaMoneyLeft 20 12 == (-4) && pizzaMoneyLeft 17 0 == 17 && pizzaMoneyLeft 0 3 == (-6)"
+        command: "moneyLeftAfterTwoPizzas 45 12 == 21 && moneyLeftAfterTwoPizzas 30 15 == 0 && moneyLeftAfterTwoPizzas 20 12 == (-4) && moneyLeftAfterTwoPizzas 17 0 == 17 && moneyLeftAfterTwoPizzas 0 3 == (-6)"
         hints:
           - text: "Which amount should come out of the budget: the price of one pizza or the total price of both?"
           - text: "Application groups before multiplication. Parentheses can make a whole expression one argument."
@@ -156,10 +156,10 @@ steps:
             module Main where
             remainingMoney :: Int -> Int -> Int
             remainingMoney budget spent = budget - spent
-            pizzaMoneyLeft :: Int -> Int -> Int
-            pizzaMoneyLeft budget pizzaPrice = remainingMoney budget (pizzaPrice * 2)
+            moneyLeftAfterTwoPizzas :: Int -> Int -> Int
+            moneyLeftAfterTwoPizzas budget pizzaPrice = remainingMoney budget (pizzaPrice * 2)
             main :: IO ()
-            main = print (pizzaMoneyLeft 45 12)
+            main = print (moneyLeftAfterTwoPizzas 45 12)
       explanation: |
         The parentheses make the total price of both pizzas the second argument.
         That leaves `45 - 24 = 21` dollars for snacks. Directly
