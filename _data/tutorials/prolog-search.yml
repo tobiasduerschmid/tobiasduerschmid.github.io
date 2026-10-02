@@ -9,7 +9,7 @@
 # helpers and the final search task support transfer; cut is an optional
 # operational extension, not a prerequisite for the course-aligned exercises.
 title: "Prolog Lists and Search"
-description: "Further practice after the main Prolog tutorial: build list relations, evaluate arithmetic, control goal order, and generate solutions to a small scheduling problem. For programmers comfortable with facts, rules, unification, and recursive membership; allow 100–115 minutes across two sessions."
+description: "Further practice after the main Prolog tutorial: build list relations, evaluate arithmetic, control goal order, and generate solutions to a small scheduling problem. For programmers comfortable with facts, rules, unification, and recursive list relations; allow 100–115 minutes across two sessions."
 learning_objectives:
   - "Apply recursive list relations in construction, checking, and finite splitting modes."
   - "Analyze all answers to a deletion query, including repeated values and overlapping clauses."
@@ -38,7 +38,8 @@ steps:
       - Analyze how the same clauses enumerate every split of a known list.
 
       This tutorial offers further practice after [Prolog: Queries to Programs](/SEBook/tools/prolog-tutorial).
-      You should already be able to trace a recursive membership predicate.
+      You should already be able to match list patterns and trace a recursive
+      list relation, as in the main tutorial's list-construction steps.
       Plan a break after Step 5; return for the second half after some time away.
 
       ### One Relationship, Several Questions
@@ -259,16 +260,18 @@ steps:
 
       ### 🎯 You will learn to
 
-      - Distinguish unification, arithmetic evaluation, and numeric comparison.
+      - Distinguish unification, term identity, arithmetic evaluation, and numeric comparison.
       - Apply arithmetic only after its input values are available.
 
-      ### Three Different Questions
+      ### Four Different Questions
 
-      Try these queries individually, predicting each result first:
+      Treat each row as a fresh query. Predict whether it binds X to a term,
+      binds X to a number, succeeds without binding, or fails before Run:
 
       | Query | Question |
       | --- | --- |
       | `X = 3 + 4` | Can X unify with the compound term 3 + 4? |
+      | `X == 3 + 4` | Is X already identical to that term, without binding it? |
       | `X is 3 + 4` | What number does the right-hand expression evaluate to? |
       | `3 + 4 =:= 7` | Do these two expressions evaluate to equal numbers? |
 
@@ -282,6 +285,21 @@ steps:
       `=\=` means arithmetic inequality; it differs from `\=`, which tests
       whether two terms cannot unify. `==` checks term identity without
       binding variables and without evaluating arithmetic.
+
+      Now predict `X == Y` and `X = Y, X == Y` as separate fresh queries.
+      Does naming two unknowns make them the same variable, or does a goal
+      have to connect them? Run both before opening the explanation.
+
+      <details markdown="1">
+      <summary>After running: distinguish sharing from equality tests</summary>
+
+      `X == Y` fails for two distinct fresh variables. In `X = Y, X == Y`,
+      unification first makes the variables share, so the identity test succeeds
+      without needing a number. Likewise, `X = 3 + 4` binds an expression term;
+      `X == 3 + 4` alone fails, while `X is 3 + 4` binds the number 7.
+      The ground comparison `3 + 4 =:= 7` succeeds after evaluation.
+
+      </details>
 
       ### Thinking Time
 
@@ -305,6 +323,19 @@ steps:
       Test `slot_minutes(lofi, 2, Total)`, `fits_slot(Track, 3)`, and a
       ground check with a deliberately wrong total. Arithmetic results do
       not overwrite an incompatible value already bound to Total.
+
+      <details markdown="1">
+      <summary>Optional reading: relational integer arithmetic in SWI-Prolog</summary>
+
+      SWI-Prolog's [integer-constraint library](https://www.swi-prolog.org/pldoc/man?section=clpfd-intro)
+      offers another contract: after loading `library(clpfd)`, the constraint
+      `X + 4 #= 7` determines `X = 3` without first binding X. This is integer
+      constraint solving, not a solver for arbitrary equations; posting constraints
+      and enumerating solutions are separate operations. That library is unavailable
+      in this Tau Prolog workspace. This optional reading is outside the exercise
+      and its checks.
+
+      </details>
     default_query: "slot_minutes(lofi, 2, Total)"
     files:
       - path: "/tutorial/search-03-arithmetic.pl"
@@ -357,6 +388,21 @@ steps:
             1: "Unification binds X to the unevaluated compound term +(4,5), rather than to the number 9."
             2: "Arithmetic comparison needs both expressions to be evaluable. It does not bind an unknown X to a solution."
           explanation: "Use is when evaluating a known right-hand arithmetic expression into a result. Use =:= when both sides already contain evaluable arithmetic."
+        - type: multiple
+          difficulty: intermediate
+          question: "Select every goal that succeeds. Start each goal with fresh variables."
+          options:
+            - "`X == Y`"
+            - "`X = Y, X == Y`"
+            - "`X = 3 + 4, X == 7`"
+            - "`X is 3 + 4, X == 7`"
+          correct_indices: [1, 3]
+          option_feedback:
+            0: "Two distinct fresh variables are not identical. This test does not bind them together."
+            1: "Unification makes X and Y share before the identity test; they need not have a numeric value."
+            2: "X holds the compound term 3 + 4. The identity test does not evaluate that term to 7."
+            3: "Arithmetic evaluation binds X to 7, so the later identity test compares identical numbers."
+          explanation: "Unification can create sharing; identity only checks what is already there. Arithmetic evaluation produces the number that the final identity test expects."
     solution:
       files:
         - path: "/tutorial/search-03-arithmetic.pl"
@@ -540,7 +586,9 @@ steps:
 
       Then add `fresh_track(Track, Played)`: Track is allowed and is absent
       from Played, a finite list of ground track names. The list library's
-      `member(Item, List)` has the meaning you implemented in the first tutorial.
+      `member(Item, List)` relates an item to any matching list position, with
+      one proof per occurrence. Unlike the main tutorial's ground-only
+      `contains_once/2` helper, it can also enumerate items when Item is unknown.
       Repeated entries in Played must not change which tracks are fresh.
 
       Try `fresh_track(Track, [lofi, lofi])` and
@@ -791,8 +839,10 @@ steps:
       ### A Worked Reverse
 
       The supplied `reverse_slow(Input, Output)` reverses the tail, then appends
-      the original head at the end. Its two body goals have a dependency:
-      `ReversedTail` must become a finite list before append walks it.
+      the original head at the end. In this forward mode, recursion supplies
+      a finite `ReversedTail` before append traverses it. Append also supports
+      other modes, including splitting a known result as in Step 1; this is
+      not an arithmetic-style requirement for a bound first argument.
 
       Thinking time: for `reverse_slow([lofi, jazz], [jazz, ambient])`, will
       Prolog return false, overwrite ambient, or accept the matching jazz
@@ -1108,6 +1158,22 @@ steps:
       still backtrack. A cut inside playlist would risk throwing away valid
       arrangements. It is an operational choice, not a proof that those
       discarded arrangements are false.
+
+      Change the query mode before trusting the name `first_choice`. Predict
+      `first_choice([a,b], b)` and `first_choice([a,b], X), X = b` separately.
+      Will both succeed, both fail, or differ? Identify the binding present
+      when the cut is reached, then Run.
+
+      <details markdown="1">
+      <summary>After running: compare the commitments</summary>
+
+      The ground query succeeds: member searches for b and reaches the cut
+      only after finding it. With X unknown, member first chooses a; the cut
+      removes its b alternative, so the later `X = b` fails. The name describes
+      the generating mode, not a guarantee that every accepted X is the list's
+      first element. Checking one ground case would miss this difference.
+
+      </details>
 
       ### A Spaced Return
 

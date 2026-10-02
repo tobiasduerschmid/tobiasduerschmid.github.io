@@ -1545,6 +1545,8 @@ channel.
   its tooltip immediately without a fade so it cannot cover the next focused
   control. Preserve the hover grace period when the pointer is travelling
   from a trigger into its tooltip, and keep Escape dismissal available.
+  Prolog output controls dismiss their tooltips immediately on activation so a
+  consumed hint cannot block the next button when the query toolbar wraps.
   `js/monaco-focus-exit.js` supplies the Escape-to-leave-editor behavior
   promised by the Monaco accessibility labels in both the main tutorial and
   code popouts. Monaco's suggestion, find, rename, parameter-hint, and snippet

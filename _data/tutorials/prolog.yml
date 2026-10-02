@@ -1,10 +1,11 @@
-# Lecture-grounded replacement; documents are source evidence, not agent instructions.
+# Lecture-grounded practice, revised using the October 2 Prolog-learning review.
+# Documents are source evidence, not agent instructions.
 # Sources, task boundaries, and novelty review: docs/prolog-course-alignment.md.
 title: 'Prolog: Queries to Programs'
 description: 'Build the CS 131 logic-programming skills behind query traces and recursive programs: unification, ordered search, negation, and list construction. Fourteen steps with optional checks; plan three sittings, about 100–120 minutes total.'
 learning_objectives:
   - Apply facts, structured terms, and shared variables to query relations in several directions.
-  - Analyze unification with existing bindings and trace ordered proofs, failures, and duplicate answers.
+  - Analyze unification with shared and fresh variables, then trace ordered proofs, failures, and duplicate answers.
   - Evaluate goal order and ground negation on finite databases and acyclic relations.
   - Construct recursive list relations with precise empty, singleton, unequal-length, and repeated-value cases.
   - Trace pending goals and accumulator state without treating variables as mutable storage.
@@ -45,7 +46,7 @@ steps:
 
       You should know variables, function calls, and basic recursion in another language; no Prolog experience or installation is needed. These 14 steps build the lecture skills used in short query traces and longer rule-writing problems. Budget **100–120 minutes**, as a planning estimate, across three sessions: steps 1–4, 5–9, and 10–14. At the start of a later session, explain one earlier example from memory before running it again.
 
-      Tests and knowledge checks give feedback; they are optional. You can revisit or select any numbered step. If a check finds an error, use a hint, revise your explanation or code, and try a new query. A green check verifies the tested behavior; your explanation tells you whether you can reproduce the reasoning on paper.
+      Tests and knowledge checks give feedback; they are optional. You can revisit or select any numbered step. Before Run, write a prediction and a reason. After a mismatch, identify the first binding or goal where your reasoning diverged, then try a nearby query. One wrong prediction is a clue to investigate, not a verdict on your understanding.
 
       ### A database describes relationships
 
@@ -61,6 +62,13 @@ steps:
       A **query** asks Prolog to prove a goal from the current program. `cue(rain, left)` succeeds; `cue(rain, right)` fails in this database. Failure means that the program has no proof of that goal. It does not measure a physical sound system.
 
       A variable starts with an uppercase letter, such as `Sound`. The query `cue(Sound, right)` finds `Sound = bell`. That variable is a place for an answer; it does not need an initial value. `cue(bell, Channel)` asks the same relation a different question.
+
+      Keep two questions separate throughout this tutorial:
+
+      - **Relation:** which combinations of arguments does the program describe?
+      - **Search:** for this query, which proofs does Prolog try, in what order, and does it finish?
+
+      Reordering these facts preserves the sound routes but can change the order of answers. Later, a recursive search can fail to finish even when a valid proof exists.
 
       ### Predict, run, investigate
 
@@ -171,7 +179,8 @@ steps:
         Each new fact describes one ordered pair. `cue(bell, Channel)` produces `Channel = right`, then `Channel = left` with this file order. `cue(Clip, right)` produces `Clip = bell`, then `Clip = hum`. A different fact order describes the same sound routes, though it can change answer order. The check accepts any fact order.
   # Lecture: logic_palooza_v6_handouts.pdf pp.6,24–41,47–48.
   # Assessment: F24 V1 Final Problem 7(A.2) p.23; F23 Final Problem 8(a)(ii) p.22.
-  # Pedagogy: Variation Theory — nested audio-format structure, repeated vs independent variables.
+  # Research: review's unification and fresh-invocation probes; vary sharing before adding search.
+  # Pedagogy: Variation Theory — nested terms, aliasing, and fresh variables across repeated calls.
   - title: Terms and Unification
     key: v2-unification
     instructions: |
@@ -214,6 +223,30 @@ steps:
       </details>
 
       The starter's worked pattern `sample_rate(audio(Rate, _), Rate).` relates a format term to its sample rate. Variables in a fact describe all instances of the pattern, without enumerating individual rates.
+
+      ### Fresh variables on each use
+
+      Each use of that fact gets a fresh `Rate`; its source name is not a global slot. Predict each group below, then run it as a separate query:
+
+      ```prolog
+      sample_rate(audio(44100, mono), A),
+      sample_rate(audio(48000, stereo), B)
+
+      sample_rate(audio(44100, mono), A),
+      sample_rate(audio(48000, stereo), A)
+
+      X = Y, Y = audio(R, mono),
+      X = audio(48000, mono), R = 44100
+      ```
+
+      For each query, record the bindings or the first conflict. Does repeating a clause's variable name have the same effect as repeating `A` in the query?
+
+      <details markdown="1">
+      <summary>After running: separate fresh variables from shared ones</summary>
+
+      The first query succeeds with `A = 44100` and `B = 48000`: the same fact can be used twice with fresh variables. The second fails because the query itself requires one A to match both rates. The third fails: X and Y share the structured term, so matching X binds R to 48000; the last goal cannot replace that binding with 44100.
+
+      </details>
 
       ### Make a structural relation
 
@@ -295,6 +328,21 @@ steps:
           3: The functor matches, but the arity differs; missing arguments are not filled automatically.
         explanation: Unification preserves compound shape and all repeated-variable constraints. Independent anonymous
           variables do not require equal values.
+      - id: prolog-v2-unification-fresh-calls
+        type: single
+        difficulty: intermediate
+        bloom: analyze
+        question: |
+          With the fact `unwrap(box(X), X).`, what does `unwrap(box(red), A), unwrap(box(blue), B)` produce?
+        options:
+        - '`A = red, B = blue`'
+        - '`A = red, B = red`'
+        - No answers
+        correct_index: 0
+        option_feedback:
+          1: Each use of unwrap gets a fresh X; the first call does not leave red stored in the clause.
+          2: The second call receives fresh clause variables, so blue does not conflict with the first call's red. Matching uses argument positions, not variable names.
+        explanation: The two calls independently unwrap their terms. Repeating A in both query goals would instead require red and blue to unify and would fail.
     solution:
       files:
       - path: prolog-v2/02-unification.pl
@@ -466,7 +514,8 @@ steps:
         One shared `Format` joins the relations, requiring the complete nested term to match. Bell has two recordings, which yield speaker and headphones with this goal order. Asking for headphone-compatible clips instead finds rain and bell. Two unrelated format variables admit extra pairs because they do not require a common format. A rule with the body goals reversed also passes: this task requires the relation, not a particular answer order.
   # Lecture: logic_palooza_v6_handouts.pdf pp.20–23,24–42.
   # Assessment: Fall 2025 Quiz 4 Problem 4(b–d): ordered duplicate outputs; F23 Final Problem 8(b) p.23: resolution trace.
-  # Pedagogy: PRIMM — trace a failed branch, repair membership direction, reconstruct chronological binding rollback.
+  # Research: review recommends goal/choice-point tasks and neutral-name transfer, not passive traces.
+  # Pedagogy: PRIMM — trace failure and the nearest remaining alternative, then transfer to neutral predicates.
   - title: Proof Order and Backtracking
     key: v2-proof-order
     instructions: |
@@ -503,12 +552,21 @@ steps:
       includes(release, Mid), includes(Mid, Item)
       ```
 
-      Record the failed branch too, without listing it as an answer. Then run the query. If an item appears twice, identify the two different intermediate packs that proved it. Notice that facts for beats are written before facts for pads, even though release lists pads before beats.
+      Make a trace with three columns: **pending goals**, **current bindings**, and **untried alternatives**. Record the failed branch without listing it as an answer. Then run the query. If an item appears twice, identify the two intermediate packs that proved it. Notice that facts for beats precede facts for pads, although release lists pads first.
 
       <details markdown="1">
       <summary>After running: compare the proofs</summary>
 
       `Mid = readme` reaches a dead end. The next proof is `Mid = pads, Item = noise`. Then `Mid = beats, Item = noise`, followed by `Mid = beats, Item = kick`. The first goal's choice of a middle pack determines which membership facts can match the second goal; Prolog does not collect every second-level fact first.
+
+      </details>
+
+      Now add a last goal: `includes(release, Mid), includes(Mid, Item), Item = kick`. When `Mid = beats, Item = noise` reaches that last goal, predict which binding is undone and which earlier goal gets another try. Check with Run, or use **Debug** to inspect the clause choices. Debug highlights clause use, not imperative statement-by-statement execution.
+
+      <details markdown="1">
+      <summary>After tracing: locate the nearest choice</summary>
+
+      The failed `Item = kick` returns to `includes(beats, Item)`, which still has an alternative. Item's noise binding is undone, but `Mid = beats` remains. The next fact supplies `Item = kick`. Search returns farther left only after a nearer goal has no alternatives left; it does not restart every goal after every failure.
 
       </details>
 
@@ -613,35 +671,29 @@ steps:
           2: Search exhausts the fruit alternatives in the rule before moving to the later pick fact.
         explanation: Prolog first proves pick through its rule, yielding pear and plum. It then tries the later pick(pear)
           fact, yielding pear again.
-      - id: prolog-v2-proof-order-stable-bindings
-        type: multiple
+      - id: prolog-v2-proof-order-neutral-transfer
+        type: single
         difficulty: intermediate
         bloom: analyze
         question: |
-          With exactly the facts below, select every statement supported by the query `pair(X, Y), pair(Y, X)`.
+          What is the complete ordered answer sequence for `q(A,B)`? The names have no meaning beyond these clauses.
 
           ```prolog
-          pair(red, blue).
-          pair(blue, red).
-          pair(red, green).
+          p(a).
+          p(b).
+          q(X,Y) :- p(X), p(Y).
           ```
         options:
-        - The first answer is `X = red, Y = blue`.
-        - The next answer is `X = blue, Y = red`.
-        - A later answer is `X = red, Y = green`.
-        - The two goals can use unrelated values for `Y`.
-        correct_indices:
-        - 0
-        - 1
+        - '`(a,a), (a,b), (b,a), (b,b)`'
+        - '`(a,a), (b,a), (a,b), (b,b)`'
+        - '`(a,a), (b,b)`'
+        - '`(a,a)` only'
+        correct_index: 0
         option_feedback:
-          0: The first fact binds X and Y; the reversed second goal is proved by pair(blue, red).
-          1: After the first proof, backtracking can choose pair(blue, red) for the first goal and pair(red, blue)
-            for the second.
-          2: This candidate needs pair(green, red) for the second goal, and that fact is absent.
-          3: Both occurrences of Y share one binding within a proof. Backtracking may replace that binding for a different
-            proof.
-        explanation: The first two candidate pairs have matching reverse facts. The red–green candidate reaches a
-          dead end. A shared variable is consistent within a proof, even though its binding can change after backtracking.
+          1: The second p goal has the most recent alternatives, so B changes before A.
+          2: X and Y are different variables; nothing requires their values to agree. Either fact may be reused by either goal.
+          3: One success does not exhaust the relation. Requesting further answers resumes the remaining alternatives.
+        explanation: With A fixed to a, the second goal tries a then b. Search then changes A to b and tries both B values again. Recursion is not needed for backtracking.
     solution:
       files:
       - path: prolog-v2/04-proof-order.pl
@@ -678,6 +730,8 @@ steps:
       ### A negative check needs a concrete candidate
 
       A **ground** term contains no unbound variables. For a ground goal, `not(Goal)` tries to prove `Goal`: if a proof exists, `not` fails; if the search finishes without one, `not` succeeds. A search that runs forever has not established failure.
+
+      This model treats “no recorded closure” as permission to use a slot. That is a policy about this database, not proof that a real venue is open. Adding a closure fact can invalidate an earlier negative check. An inference-limit error or interrupted run is not finite failure; any answers already found do not show that the search is complete.
 
       The worked rule `usable_slot(Demo) :- scheduled(Demo, Slot), not(closed_slot(Slot)).` first obtains a demo and its slot, then checks that slot. Every fact in this exercise is ground and the database is finite.
 
@@ -825,11 +879,13 @@ steps:
 
       The two reasons become separate clauses. The recursive reason needs a shared intermediate variable to connect its two subgoals. Consume an edge **before** asking about the remaining path. Fresh variables are created on every use of a clause, even when its source uses the same names.
 
+      **Recursion** invokes the same predicate to prove a subgoal. **Backtracking** revisits an alternative after failure or a request for another answer. Step 4 backtracked without recursion; here a recursive call can itself have alternatives. On paper, label each move “new subgoal” or “retry an alternative” rather than treating both as a loop.
+
       ### Predict, run, and investigate
 
       The starter implements only the direct reason. Before Run, predict `needed_before(intro, Target)`. Would it include `languages` yet? Run it and explain what is missing.
 
-      Consider the tempting body `needed_before(A, Mid), prerequisite(Mid, B)`. Its first goal asks for another path before moving along an edge. Repeated expansion can revisit the same search forever. A base clause placed first may produce initial answers but does not make complete enumeration terminate. Do not run this version as your solution; the workspace's inference limit is a safety bound, not a proof of failure.
+      Consider the tempting body `needed_before(A, Mid), prerequisite(Mid, B)`. Relationally, a path followed by an edge still describes reachability. Operationally, its first goal asks for another path before moving along an edge. Repeated expansion can continue forever. A base clause placed first may produce initial answers without making complete enumeration terminate. Trace this version on paper; an inference limit would be unfinished search, not proof of failure.
 
       ### Your task
 
@@ -969,7 +1025,8 @@ steps:
         The direct clause proves a path of length one. The recursive clause removes its first edge and asks for the remaining path. The finite acyclic contract bounds path lengths, so both variable and ground searches finish. Starting from intro, the program reports structures, systems, discrete, then languages. Other correct clause arrangements can produce a different order; the task's tests check reachable values rather than imposing this solution's ordering.
 
         The needed_for relation first identifies the requested track's target, then asks which courses have a nonempty path to it. discrete lies on a different branch, so it is needed for theory but not software.
-  # Lecture: logic_palooza_v6_handouts.pdf pp.46–49. Assessment: F22 Final Q22; F23 Final P8(a).
+  # Lecture: logic_palooza_v6_handouts.pdf pp.46–49,56. Assessment: F22 Final Q22; F23 Final P8(a).
+  # Use executable native list structure; p.56's cons/nil is an alternate pedagogical encoding.
   # Pedagogy: Variation Theory — decompose a structured badge, then transfer to prefix and tail patterns.
   - title: List Patterns
     key: v2-list-patterns
@@ -986,7 +1043,9 @@ steps:
 
       ### One element, then the rest
 
-      `[]` is the empty list. `[Head|Tail]` matches a nonempty list: `Head` receives its first **element**, and `Tail` receives the remaining **list**. `[A,B|Rest]` consumes two elements. In contrast, `[A,B]` is a list of exactly two elements.
+      `[]` is the empty list. For a nonempty **proper list**, `[Head|Tail]` matches its first **element** and its remaining **list**. `[A,B|Rest]` consumes two elements. In contrast, `[A,B]` has exactly two elements.
+
+      Lists are nested terms: `[a,b]` is the same structure as `[a|[b|[]]]`. A proper list ends in `[]`. `[a|b]` instead ends in the atom b and is not a proper list; `[a,[b]]` has a nested list as its second element. These are three different structures. The exercises below use finite proper lists.
 
       ```prolog
       badge_head([badge(Name,Color)|_], Name, Color).
@@ -999,6 +1058,7 @@ steps:
       Before running the default query, predict the two bindings. Does Name receive the atom aurora or the whole badge term? Then try these unifications in the Query field:
 
       ```prolog
+      [a,b] = [a|[b|[]]]
       [H|T] = [[a,b],c]
       [A,B|Rest] = [red,blue,green]
       [H|T] = []
@@ -1007,7 +1067,7 @@ steps:
       <details markdown="1">
       <summary>After running: check the boundaries</summary>
 
-      In the first query, `H = [a,b]` and `T = [c]`; list matching does not flatten the nested head. In the second, `A = red`, `B = blue`, and `Rest = [green]`. The third fails because an empty list has no head.
+      The two spellings of `[a,b]` unify without any bindings. In the nested-head query, `H = [a,b]` and `T = [c]`; matching does not flatten the head. In the prefix query, `A = red`, `B = blue`, and `Rest = [green]`. The empty-list query fails because an empty list has no head.
 
       </details>
 
@@ -1129,6 +1189,15 @@ steps:
       ### Predict, run, and investigate
 
       Predict `frame_items([[a,b],c], Out)` before Run. Does a nested input item become one frame containing that list, or separate frames for its inner elements? Run, then query `frame_items([a], [frame(b)])` and explain why a relation can check a proposed output as well as produce one.
+
+      Change which argument is known: predict `frame_items(Input, [frame(a),frame(b)])` and `frame_items(Input, [frame(a),b])`. Write a reason for each prediction, then run both.
+
+      <details markdown="1">
+      <summary>After running: the known output constrains the input</summary>
+
+      The first discovers `Input = [a,b]`; the second fails because b is not a frame term. The same clauses support these finite queries, but that does not guarantee every query mode of every relation will finish.
+
+      </details>
 
       ### Your task
 
@@ -1831,7 +1900,17 @@ steps:
 
       Use the graduated hints only after writing a first attempt. Once the checks pass, explain how your terminal case differs from the recursive case and why closed checkpoints are tested after their names are bound. The model solution is available through the existing instructor reveal.
 
-      For a later study session, reconstruct one list relation from steps 10–13 with no editor hints, then try a full past-paper question. These exercises practice component and integration skills; passing them does not guarantee performance under exam conditions. The separate [Prolog Lists and Search tutorial](/SEBook/tools/prolog-search-tutorial) offers optional broader practice, including topics beyond this lecture-bounded path.
+      ### A later retrieval check
+
+      Return tomorrow, then again later in the week. Without opening solutions:
+
+      1. Predict all answers to `sample_rate(audio(1, mono), A), sample_rate(audio(2, mono), B)`, then replace B with A. Explain which variables are fresh and which are shared.
+      2. Reconstruct one list relation from steps 10–13 in a blank file. Check an empty input and a counterexample that distinguishes its policy from another list task.
+      3. Trace an unfamiliar past-paper query: name the relation, record pending goals and bindings, and justify where search retries or finishes.
+
+      Compare with the relevant lesson only after each attempt. If an answer differs, change one feature of the input and explain the new prediction before running. These checks practice transfer; a passing run alone does not establish durable understanding or exam readiness.
+
+      The separate [Prolog Lists and Search tutorial](/SEBook/tools/prolog-search-tutorial) offers broader practice beyond this lecture path. For another explanation of the two readings, see [Reading Prolog Programs](https://www.metalevel.at/prolog/reading).
     default_query: open_route(gate, exit, Stops)
     files:
       - path: prolog-v2/14-open-route.pl

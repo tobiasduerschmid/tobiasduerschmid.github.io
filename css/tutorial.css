@@ -2842,11 +2842,16 @@ html:not(.dark-mode) .tvm-args-input {
 
 /* Prolog goals share the toolbar's readable size and existing theme colors.
    The flexible width also keeps the Query field usable in narrow workspaces. */
+.tvm-output-actions.tvm-debug-actions:has(.tvm-prolog-query) {
+  /* Debug controls must wrap instead of squeezing the query out of the row. */
+  flex-wrap: wrap;
+}
 .tvm-args-input.tvm-prolog-query {
   display: inline-block;
   flex: 1 1 180px;
-  min-width: 0;
+  min-width: min(180px, 100%);
   width: auto;
+  box-sizing: border-box;
   font: inherit;
 }
 .tvm-args-label.tvm-prolog-query-label {

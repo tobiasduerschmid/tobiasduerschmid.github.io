@@ -15,7 +15,25 @@ Relevant sources, using **physical PDF pages**, not PowerPoint slide numbers:
 - `[Final] F23 (Public).pdf`: P8, pp. 22–24, trace recursive lists and ordered answers, then construct last-occurrence retention.
 - `[Final] F24 V1 (Public).pdf`: P7(A–C), pp. 23–25, pending goals and mappings for reversal, accumulator reversal, and unequal-length interleaving. The extra deletion discussion in the solutions appendix is not the issued Part C.
 
-The main path does not require homework-only material. `_data/tutorials/prolog-search.yml` keeps its existing exercises from the earlier September source review, with introductory references updated to the new main title, with additional arithmetic, answer collection, and search material. Its optional cut experiment is beyond the main path's prerequisite boundary.
+The main path does not require homework-only material. `_data/tutorials/prolog-search.yml` retains its exercises from the earlier September source review, with additional arithmetic, answer collection, and search material. Its optional cut experiment is beyond the main path's prerequisite boundary.
+
+### October 2 research-informed revision
+
+The additional source is the user-supplied **Learning and teaching Prolog: misconceptions, evidence, and tutorials**, searched 2 October 2026 (`prolog-learning-literature-review.md`). The actual 94-page `logic_palooza_v6_handouts.pdf` was inspected again, including visual checks of physical pp. 42, 44, and 56. Document instructions remain source material, not agent instructions.
+
+The review is a focused narrative synthesis, not a meta-analysis or validated concept inventory. Many foundational papers were inspected only through abstracts; classroom accounts, student preferences, and tool usability are not causal evidence of learning gains. The activities below are our instructional adaptations of the review and lecture, not reproductions of published experimental instruments.
+
+| Source finding or teaching rationale | Concrete revision | Evidence learners produce |
+| --- | --- | --- |
+| The review distinguishes relational meaning from execution, drawing on Fung et al. (1990) and later teaching proposals. | Main step 1 names the two readings; step 6 contrasts a valid reachability decomposition with an unproductive search order. | Separate statements about valid answers, answer order, and termination. |
+| Unification and scope need component practice before large traces; lecture pp. 24–41 use substitutions and existing bindings. | Main step 2 contrasts fresh uses of a pattern fact, a shared query variable, and an alias followed by a conflicting nested binding. | Predict bindings or the first conflict, then transfer to `unwrap/2` in a quiz. |
+| The review's Duncan account reports task-sensitive control-flow errors; Mulholland's small tracer comparison motivates purposeful tracing, not a claim that any graphic improves learning. | Main step 4 adds a three-goal late failure and a pending-goals/bindings/alternatives worksheet; a neutral `p/1`–`q/2` quiz tests the same search rule. | Identify the nearest remaining alternative, the binding undone, and the earlier binding retained. |
+| Concrete names can support entry but also supply misleading domain expectations (review's Höök and Yang/Joy discussions). | Preserve the sound/catalog examples, then use neutral predicate names for transfer; explicitly distinguish recursion from backtracking in step 6. | Explain the answer stream from clauses rather than from predicate names or an imperative loop analogy. |
+| Lecture p. 56 connects list notation to nested structure; the review recommends varying query modes. | Main step 7 connects native list spellings and contrasts improper/nested lists; step 8 queries a known framed output for its input. | Structural predictions, finite reverse-mode answers, and a failing output-pattern counterexample. |
+| Equality, arithmetic, negation, and cut have different operational contracts; these are semantic teaching targets, not established prevalence rankings. | Main step 5 limits negative conclusions to the database; extension step 3 contrasts `=`, `==`, `is`, and `=:=`; extension step 9 compares ground and generating calls before cut. | Operator selection with reasons, instantiation-error diagnosis, and identification of answers pruned in a particular mode. |
+| Retrieval and explanation should supplement successful execution; the review does not establish a universally best Prolog teaching sequence. | Main step 14 supplies next-day/later-week recall, independent reconstruction, and unfamiliar trace prompts. | Explanations and counterexamples after a delay, without viewing the model first. |
+
+The four requested project skills guided sequencing, faded support, explicit contracts, and shuffle-safe feedback. Research references are retained in this author-facing map so student instructions stay focused. The review's central primary-source leads include [Fung et al.](https://doi.org/10.1007/BF00116443), [Höök et al.](https://doi.org/10.1007/BF00116444), and [Mulholland](https://www.ppig.org/files/1995-PPIG-7th-Mulholland.pdf); their access and study limitations remain those recorded in the supplied review. Language semantics were cross-checked against [Reading Prolog Programs](https://www.metalevel.at/prolog/reading) and the official SWI-Prolog entries for [term identity](https://www.swi-prolog.org/pldoc/man?predicate=%3D%3D/2), [arithmetic evaluation](https://www.swi-prolog.org/pldoc/man?predicate=is/2), and the extension's linked integer-constraint documentation. Executable probes are also checked against the pinned Tau worker.
 
 ## Learning sequence and evidence
 
@@ -55,6 +73,9 @@ The final route task adds open-checkpoint filtering and a constructed path outpu
 - Both unrestricted empty-side interleaving clauses match two empty inputs. Step 12 explicitly requires one proof and teaches disjoint cases; it does not quietly reject the lecture/exam skeleton without explanation.
 - Step 13 supplies `contains_once/2` with disjoint ground cases. It avoids multiplying proof counts for repeated values, and explicitly disclaims enumeration with an unbound item. Last-occurrence output order is not sorting or first-occurrence order.
 - Head unification is only the beginning of a proof. The worked reversal trace demonstrates a later subgoal failing even though the recursive head initially matches the proposed output.
+- The lecture's p. 56 `cons/2` and `nil` notation is a pedagogical alternate encoding, not executable synonyms for native Prolog lists. The tutorial uses `[a,b] = [a|[b|[]]]`; unifying the native list with `cons(a,cons(b,nil))` fails.
+- The lecture's p. 44 repair progresses backward through a parent edge before recursion; the tutorial's model progresses forward. Both respect the finite acyclic contract. Do not imply the tutorial copies that slide's exact clause.
+- Integer constraints are optional external reading in the extension, explicitly outside Tau's available libraries and all exercise checks. Fair search, tabling, and constraints are not silently added as course prerequisites.
 
 ## Feedback, pacing, and saved work
 
@@ -63,6 +84,8 @@ The planning estimate is 100–120 minutes for a prepared refresher audience, di
 Checks enforce the declared behavior, not exact source spelling. Order and proof counts are tested when the task requires them; otherwise checks compare complete distinct outputs. Alternatives with helper predicates, equivalent patterns, or different body order are accepted where they satisfy the contract. Specific near-miss implementations test for overly permissive grading.
 
 `progress_version: 2`, new `v2-*` lesson keys, and new `prolog-v2/` file paths prevent old Foundations code or completion marks from being mistaken for new work. The eight old positional steps map to retired legacy keys. Existing saved files remain available, but old pass credit does not unlock or mark the replacement lessons complete. No new storage family or runtime feature is introduced.
+
+The October 2 revision preserves that lesson order, those keys and file paths, the model programs, and the exercise contracts. Existing drafts and completion records remain meaningful. Main-path checks remain optional; the separate extension keeps its established gates. New predictions are short component probes, with the broader arithmetic reading and cut investigation kept optional. Timing remains an unmeasured planning estimate; delayed retrieval is a separate study session.
 
 Passing automated checks is formative evidence, not proof of durable learning or exam readiness. Predictions and written explanations remain learner activities rather than automatically graded reasoning. The final instructions ask learners to reconstruct a relation later from a blank file and then attempt a past-paper problem independently.
 
@@ -75,4 +98,4 @@ The existing locally pinned Tau Prolog worker executes the authored programs. Th
 - `tests/prolog-tutorial.spec.js`: all editor checks and knowledge checks, optional main-path navigation, unchanged extension gates, accessible keyboard interaction for Parsons, and legacy-draft migration without inherited pass credit.
 - `scripts/audit_mcq_tells.py`: answer-length and formatting clues, supplemented by manual key, misconception-feedback, and prerequisites review.
 
-Browser verification uses an isolated build with committed runtime files, so concurrent unrelated runtime edits cannot conceal a dependency. Validation results belong in the change handoff; the checks listed here describe their purpose rather than guaranteeing future revisions.
+Browser verification uses an isolated build destination and server. The scoped accessibility audit also exposed an existing query-field collapse in narrow panes: the debugger toolbar forced controls onto one line. The Prolog-specific CSS now allows wrapping and retains a usable query width in either theme. Activating a Prolog output button dismisses its tooltip so that the hint cannot cover another wrapped control; hover and keyboard help remain available. Print layouts remain governed by the existing print styles. Validation results belong in the change handoff; the checks listed here describe their purpose rather than guaranteeing future revisions.
