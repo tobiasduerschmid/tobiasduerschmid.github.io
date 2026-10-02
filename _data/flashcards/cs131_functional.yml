@@ -91,7 +91,7 @@ cards:
     estimated_seconds: 45
     question: Rewrite `applyThen f g x = g (f x)` using three nested single-argument lambdas, preserving argument order.
     answer: '`applyThen = \f -> \g -> \x -> g (f x)`'
-    explanation: Each lambda receives one argument. The inner application must finish `f x` before supplying that result to `g`.
+    explanation: Each lambda receives one argument. The body passes `f x` to `g`; whether that expression is evaluated depends on how `g` uses its argument.
 
   # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 132,141
   # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 4a (define a recursive algebraic type).

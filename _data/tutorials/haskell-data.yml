@@ -33,7 +33,13 @@ steps:
     instructions: |
       ### Why this matters
 
-      A journey can contain travel, fights, and healing. Each event carries a number, but that number means something different for each event. An algebraic data type keeps the meaning attached to the value.
+      A number such as 7 cannot tell you whether it represents distance,
+      damage, or healing. If that meaning lives only in comments or
+      loosely coordinated flags, the wrong rule can be applied to a valid
+      number. **Named variants carry the kind of event with its data** and
+      give your functions explicit cases to handle. This way of modeling
+      alternatives also applies to messages, success-or-error results,
+      and the different forms of an expression in a compiler.
 
       ### 🎯 You will learn to
 
@@ -126,29 +132,68 @@ steps:
           - text: "A loss is a negative change; a restoration is a positive change."
           - text: "Keep the two constructor patterns. Write each branch's result using its bound payload and the appropriate sign."
     quiz:
-      title: "Step 1 — Knowledge Check"
+      title: Step 1 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
-        - type: single
-          difficulty: intermediate
-          question: "What are the types of `Fight` and `Fight 12`, respectively?"
-          options: ["`Integer -> Event`; `Event`", "`Event`; `Event`", "`Integer -> Event`; `Integer`", "`Event`; `Integer -> Event`"]
-          correct_index: 0
-          option_feedback:
-            1: "Fight still needs its Integer argument. Fight 12 has already received that argument and is an Event value."
-            2: "The payload has type Integer, but applying the constructor wraps it in an Event."
-            3: "Application consumes the constructor's argument and produces an Event; it does not turn an Event into a constructor."
-          explanation: "Fight is a constructor function from Integer to Event. Fight 12 is the result of applying that function, just as an ordinary function's result differs from the function itself."
-        - type: single
-          difficulty: intermediate
-          question: "With the repaired function, what does `map eventDelta [Travel 3, Fight 4, Heal 2]` return?"
-          options: ["`[3,-4,2]`", "`[0,4,2]`", "`[0,-4,2]`", "`-2`"]
-          correct_index: 2
-          option_feedback:
-            0: "Three distance units contain no complete group of four. Travel therefore restores zero points."
-            1: "Fight reports a loss, so its contribution is negative."
-            3: "map returns one result per input event. Combining those results into one number would require another operation."
-          explanation: "map preserves the list shape while eventDelta interprets each constructor's payload."
+      - type: single
+        bloom: apply
+        difficulty: intermediate
+        question: Using the repaired event rules, predict `map eventDelta [Travel 7, Fight 5, Heal 2]`. What list
+          results? Give a brief reason before selecting, then compare it with the feedback.
+        options:
+        - '`[7,-5,2]`'
+        - '`[1,5,2]`'
+        - '`[1,-5,2]`'
+        - '`[2,-5,2]`'
+        correct_index: 2
+        option_feedback:
+          0: Travel converts distance into whole groups of four; it does not restore one point per distance unit.
+          1: The Fight branch reports a negative change. The constructor supplies the payload, while the branch
+            supplies the sign.
+          3: Integer division discards the incomplete group. Seven distance units contain one complete group of
+            four.
+        explanation: 'Each event produces one list element: Travel 7 restores 1, Fight 5 loses 5, and Heal 2 restores
+          2. The result is `[1,-5,2]`.'
+      - type: multiple
+        bloom: analyze
+        difficulty: intermediate
+        question: 'Two functions handle the same event: `healthChange (Fight n) = 0 - n` and `fightScore (Fight
+          n) = n`. Which statements correctly separate the event data from its interpretations?'
+        options:
+        - '`Fight 6` has type `Event` in either function call.'
+        - '`Fight 6` stores a negative payload before either call.'
+        - The two calls can return different numbers for `Fight 6`.
+        - '`healthChange` changes the payload later read by `fightScore`.'
+        correct_indices:
+        - 0
+        - 2
+        option_feedback:
+          0: Applying Fight to 6 constructs an Event. The function that later consumes it does not change that
+            type.
+          1: The stored payload is 6. Subtraction occurs in the healthChange equation, not in the constructor.
+          2: 'The branch bodies use the same payload differently: one returns -6 and the other returns 6.'
+          3: Both functions read an immutable value. Returning a health change cannot rewrite the input event.
+        explanation: A constructor records which variant is present and its payload. Separate functions may assign
+          different meanings to that same data without modifying it.
+      - type: single
+        bloom: evaluate
+        difficulty: advanced
+        question: A download result is either a failure with a reason or a success with a byte count. The design
+          must attach only the relevant payload to each alternative. Which representation best meets that criterion?
+        options:
+        - '`data Download = Download Bool String Integer`'
+        - '`data Download = Failed String | Finished Integer`'
+        - '`data Download = Failed String Integer | Finished String Integer`'
+        correct_index: 1
+        option_feedback:
+          0: A flag and both payloads permit combinations such as a success carrying a failure reason. Callers
+            must maintain a relationship the type could express directly.
+          2: Both alternatives still require both payloads. Naming the cases alone does not remove the irrelevant
+            fields.
+        explanation: Separate constructors pair each case with its own payload. Functions can handle a failure
+          reason or a success count by matching the relevant constructor, as in the checkpoint exercise.
     solution:
       files:
         - path: "Main.hs"
@@ -178,7 +223,14 @@ steps:
     instructions: |
       ### Why this matters
 
-      A tuple can hold a hero's name and health, but remembering which position means what gets old quickly. A record names those fields. Updating a record produces another value, so the original remains available for a before-and-after comparison.
+      Changing a shared object can accidentally change what another part
+      of a program sees, making a bug depend on who updated it first.
+      **Producing a new record keeps the previous value available** and
+      makes the intended change something you can compare and test.
+      Named fields also make it clear which information belongs to the
+      value. Reconstructing a hero while preserving unaffected fields
+      practices the update discipline needed for snapshots and reliable
+      state transitions.
 
       ### 🎯 You will learn to
 
@@ -241,29 +293,50 @@ steps:
           - text: "Compare the candidate health with the cap after adding the healing amount."
           - text: "The second argument to Hero has the shape `min ... (...)`; one argument is the cap and the other is the proposed health."
     quiz:
-      title: "Step 2 — Knowledge Check"
+      title: Step 2 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
-        - type: single
-          difficulty: intermediate
-          question: "Given `h = Hero \"Fern\" 70` and `h2 = healHero 15 h`, what is `healthOf h`?"
-          options: ["`85`", "`70`", "`100`", "A constructor-pattern error"]
-          correct_index: 1
-          option_feedback:
-            0: "85 is the health of h2. The update creates a value without changing h."
-            2: "The cap limits the new result; it does not fill either record automatically."
-            3: "The supplied healthOf helper reads the health using a constructor pattern."
-          explanation: "h still refers to the original immutable record. To heal the newer version again, pass h2 explicitly."
-        - type: single
-          difficulty: basic
-          question: "What does `deriving Show` provide for a record whose fields support Show?"
-          options: ["An editable reference to each field", "A comparison ordering for records", "A printable representation of records", "A health validation rule for records"]
-          correct_index: 2
-          option_feedback:
-            0: "Deriving Show does not change immutability or introduce references that can be updated in place."
-            1: "Ordering belongs to Ord. Show concerns converting values into printable text."
-            3: "Validation rules belong in the program's functions; deriving does not infer domain rules from field names."
-          explanation: "Show supplies the representation used by show and print."
+      - type: single
+        bloom: apply
+        difficulty: intermediate
+        question: With the repaired `healHero`, let `h = Hero "Lark" 60`, `a = healHero 30 h`, and `b = healHero
+          30 h`. What is `(healthOf a, healthOf b, healthOf h)`? Give a brief reason before selecting, then compare
+          it with the feedback.
+        options:
+        - '`(90,100,100)`'
+        - '`(90,100,60)`'
+        - '`(30,30,60)`'
+        - '`(90,90,60)`'
+        correct_index: 3
+        option_feedback:
+          0: Neither call modifies h. Both receive the original 60-point record, which remains available afterward.
+          1: The second call receives h, not a. A cumulative second heal would need the newer record as its explicit
+            argument.
+          2: The amount is added to the existing health before applying the cap; it does not replace the health
+            field.
+        explanation: Both calls independently produce a 90-point hero from the same 60-point input. Explicitly
+          passing a newer value is how a pure program carries a change forward.
+      - type: single
+        bloom: analyze
+        difficulty: advanced
+        question: One faulty healer replaces health with `min 100 amount`; another adds the amount but omits the
+          cap. Which single expected-result check distinguishes the correct healer from both faults?
+        options:
+        - Healing 20 points from 0 gives 20.
+        - Healing 20 points from 90 gives 100.
+        - Healing 0 points from 0 gives 0.
+        - Healing 10 points from 40 gives 50.
+        correct_index: 1
+        option_feedback:
+          0: Starting from zero hides the difference between adding and replacing. The uncapped result also stays
+            below 100.
+          2: Both faulty versions return zero here. A boundary value is useful only if it makes the behaviors differ.
+          3: This catches replacement, which returns 10, but the uncapped addition also returns 50.
+        explanation: From 90 with an amount of 20, capped addition returns 100, replacement returns 20, and uncapped
+          addition returns 110. This distinguishes the arithmetic faults; separate checks are still needed for
+          preserving the name and original record.
     solution:
       files:
         - path: "Main.hs"
@@ -298,7 +371,14 @@ steps:
     instructions: |
       ### Why this matters
 
-      An archive can select scores inside a requested interval or names inside an alphabetical range. One generic function can apply both selection rules while recording which operation the values must support.
+      Copying a range-selection function for scores, names, and dates
+      creates several implementations to maintain when the rule changes.
+      **A generic function shares the algorithm; a constraint states what
+      its inputs must support**, such as comparison. Learning to distinguish
+      that requirement from a particular input type helps you design
+      reusable libraries and read their interfaces. It also explains why
+      a helper that only rearranges values needs fewer assumptions than
+      one that orders them.
 
       ### 🎯 You will learn to
 
@@ -371,39 +451,71 @@ steps:
           - text: "Filtering chooses existing values; it should neither sort the names nor remove repetitions."
           - text: "Use the same two comparisons for numeric and string inputs. Retain the `Ord a =>` signature without a conversion."
     quiz:
-      title: "Step 3 — Knowledge Check"
+      title: Step 3 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
-        - type: single
-          difficulty: intermediate
-          question: "Why does `withinBand` require `Ord a`?"
-          options: ["It compares values with the bounds.", "It extracts two fields from a tuple.", "It returns a list of input values.", "It passes its result to print."]
-          correct_index: 0
-          option_feedback:
-            1: "Extracting tuple fields does not require comparing them."
-            2: "Returning a list does not require ordering its elements. The comparisons create the constraint."
-            3: "Printing is main's job. withinBand returns a list without printing it."
-          explanation: "Constraints come from operations performed on the type variable. Comparing values requires an ordering operation."
-        - type: single
-          difficulty: intermediate
-          question: "A function `duplicate x = (x, x)` performs no comparisons. What is its most general type?"
-          options: ["`Ord a => a -> (a, a)`", "`a -> (a, b)`", "`a -> (a, a)`", "`Integer -> (Integer, Integer)`"]
-          correct_index: 2
-          option_feedback:
-            0: "That restriction is unnecessary: constructing a tuple does not use an ordering operation."
-            1: "Both tuple fields contain the input value, so both must share its type."
-            3: "Nothing in duplicate performs an operation specific to Integer."
-          explanation: "The repeated type variable records that both result fields preserve the input's type. No type-class constraint is needed."
-        - type: single
-          difficulty: intermediate
-          question: "For `rate (before, after) elapsed = (after - before) / elapsed`, which signature preserves the generic numeric type?"
-          options: ["`Ord a => (a, a) -> a -> a`", "`Fractional a => a -> (a, a) -> a`", "`Fractional a => (a, a) -> a -> Bool`", "`Fractional a => (a, a) -> a -> a`"]
-          correct_index: 3
-          option_feedback:
-            0: "Ordering permits comparisons; it does not supply fractional division."
-            1: "The first argument is the before/after tuple; the second is the elapsed amount. This signature reverses those argument shapes."
-            2: "Division produces a numeric rate, not a Boolean result."
-          explanation: "The first argument is a pair and the second is one value. Subtraction and division relate their numeric types to the result, and division requires Fractional."
+      - type: single
+        bloom: apply
+        difficulty: intermediate
+        question: For `rate (before, after) elapsed = (after - before) / elapsed`, which signature preserves the
+          generic numeric type? Give a brief reason before selecting, then compare it with the feedback.
+        options:
+        - '`Ord a => (a, a) -> a -> a`'
+        - '`Fractional a => a -> (a, a) -> a`'
+        - '`Fractional a => (a, a) -> a -> Bool`'
+        - '`Fractional a => (a, a) -> a -> a`'
+        correct_index: 3
+        option_feedback:
+          0: Ordering permits comparisons; it does not supply fractional division.
+          1: The first argument is the before/after tuple; the second is the elapsed amount. This signature reverses
+            those argument shapes.
+          2: Division produces a numeric rate, not a Boolean result.
+        explanation: The first argument is a pair and the second is one value. Subtraction and division relate
+          their numeric types to the result, and division requires Fractional.
+      - type: multiple
+        bloom: analyze
+        difficulty: advanced
+        question: Consider `withinBand (2,4) [4,1,2,4,5]`, whose required result is `[4,2,4]`. Which faulty implementations
+          would this check expose?
+        options:
+        - Checking only the lower bound.
+        - Excluding values equal to either bound.
+        - Reversing the list after correct filtering.
+        - Removing repeated values after correct filtering.
+        correct_indices:
+        - 0
+        - 1
+        - 3
+        option_feedback:
+          0: The value 5 is above the upper bound. A lower-bound-only filter wrongly retains it.
+          1: Both 2 and 4 are endpoints, and the contract includes them. Strict comparisons would wrongly remove
+            them.
+          2: 'The required list is a palindrome: reversing [4,2,4] gives the same list. A second case with an asymmetric
+            result is needed to expose reversal.'
+          3: The two occurrences of 4 must both remain. Removing duplicates changes the required result.
+        explanation: A test distinguishes implementations only when their observed results differ. This case checks
+          both endpoints, the upper-bound rejection, and multiplicity, but it cannot establish order preservation
+          on its own.
+      - type: single
+        bloom: evaluate
+        difficulty: advanced
+        question: A library must keep `withinBand` usable for both numbers and strings, using their ordering and
+          only the constraints needed by the filtering body. Which interface choice meets these criteria?
+        options:
+        - Keep `Ord a => (a, a) -> [a] -> [a]`.
+        - Specialize to `(Integer, Integer) -> [Integer] -> [Integer]`.
+        - Use `(a, a) -> [a] -> [a]` with no constraint.
+        - Require `(Ord a, Show a) => (a, a) -> [a] -> [a]`.
+        correct_index: 0
+        option_feedback:
+          1: Specialization excludes the string client, even though the algorithm can use string ordering.
+          2: The predicate compares each value with the bounds. Merely passing it to filter does not remove that
+            ordering requirement.
+          3: The body does not print values. Requiring Show would restrict callers for an operation performed elsewhere.
+        explanation: Ord supplies the comparisons while the repeated a keeps bounds, inputs, and outputs at one
+          type per call. Separate calls may choose different ordered types; printing the result is a separate concern.
     solution:
       files:
         - path: "Main.hs"
@@ -431,7 +543,13 @@ steps:
     instructions: |
       ### Why this matters
 
-      A trail is either finished or has one stop followed by the rest of the trail. That sentence is already a data definition. Recursive types let the structure of the data tell us the structure of its functions.
+      A route can contain more stops than a record with one field per stop
+      can accommodate. **A recursive type describes a
+      structure of arbitrary finite size** using a small set of cases.
+      Those same cases guide the functions that construct and consume it.
+      Building a trail from an ordinary list shows how to design your own
+      representation and preserve information when converting between the
+      forms different parts of a system need.
 
       ### 🎯 You will learn to
 
@@ -489,29 +607,49 @@ steps:
           - text: "Do not compare, sort, or deduplicate payloads; the function preserves each stop name."
           - text: "Keep the current head as the outer Stop and recurse only on the input tail. That places each stop before the rest of the trail."
     quiz:
-      title: "Step 4 — Knowledge Check"
+      title: Step 4 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
-        - type: single
-          difficulty: intermediate
-          question: "When converting a nonempty list to a Trail, what should the remaining-trail field of its outer Stop contain?"
-          options: ["The original built-in list tail", "The converted entire input again", "The recursive conversion of the tail", "End regardless of the input tail"]
-          correct_index: 2
-          option_feedback:
-            0: "The field needs a Trail. The built-in list tail must first be converted."
-            1: "Recursing on the entire input does not reduce the problem and does not place the next stop in the remaining field."
-            3: "End is appropriate only when no input stops remain. Using it here would discard the remaining names."
-          explanation: "The current list head supplies the outer name. Recursively converting the tail supplies a smaller Trail ending in End."
-        - type: single
-          difficulty: intermediate
-          question: 'What is `toList (Stop "Gate" (Stop "Lake" End))`?'
-          options: ['`["Gate","Lake"]`', '`["Lake","Gate"]`', '`[["Gate"],["Lake"]]`', '`["Gate","Lake",""]`']
-          correct_index: 0
-          option_feedback:
-            1: "The current stop is placed before the recursive conversion of the remaining trail."
-            2: "Each Stop holds one payload, and the result is a flat list of those payloads."
-            3: "End marks absence of another stop. It carries no extra stop name."
-          explanation: "Each Stop becomes one cons cell in the built-in list; End becomes []."
+      - type: single
+        bloom: apply
+        difficulty: intermediate
+        question: A trail must preserve an empty string as a stop name. Which value should `fromList ["Arch",""]`
+          construct? Give a brief reason before selecting, then compare it with the feedback.
+        options:
+        - '`Stop "Arch" End`'
+        - '`Stop "Arch" (Stop "" End)`'
+        - '`Stop "" (Stop "Arch" End)`'
+        - '`Stop "Arch" (Stop "" (Stop "" End))`'
+        correct_index: 1
+        option_feedback:
+          0: An empty string is still an input element. Dropping it confuses an empty payload with the absence
+            of a stop.
+          2: Each input head precedes the converted tail. Reversing those positions violates the order requirement.
+          3: End marks the absence of further stops; it does not contribute another empty-string stop.
+        explanation: The input contains two strings, so the result contains two Stop constructors followed by End.
+          The base case concerns the input list being empty, not an individual name being empty.
+      - type: single
+        bloom: analyze
+        difficulty: intermediate
+        question: Assume the supplied `toList` is correct. A faulty `fromList` might reverse the names or keep
+          only the first name. Which round-trip check distinguishes the correct conversion from both faults?
+        options:
+        - '`toList (fromList []) == []`'
+        - '`toList (fromList ["Arch"]) == ["Arch"]`'
+        - '`toList (fromList ["Arch","Dock"]) == ["Arch","Dock"]`'
+        - '`toList (fromList ["Arch","Arch"]) == ["Arch","Arch"]`'
+        correct_index: 2
+        option_feedback:
+          0: Both faulty conversions can handle the empty case correctly. There is no order or remaining name to
+            lose.
+          1: Reversing one name leaves it unchanged, and keeping the first name also produces the whole input.
+          3: This detects losing the second name, but reversal leaves two identical names in the same observable
+            order.
+        explanation: 'Two distinct names expose both ordering and loss: reversal produces ["Dock","Arch"], while
+          keeping only the first produces ["Arch"]. Empty and singleton cases remain useful for checking the base
+          and smallest recursive cases.'
     solution:
       files:
         - path: "Main.hs"
@@ -545,7 +683,14 @@ steps:
     instructions: |
       ### Why this matters
 
-      The party changes its plan, but yesterday's route must stay available. A persistent update returns a new trail while preserving the old value. We can reuse the part after the removed stop because none of its links need to change.
+      Undo and comparisons between alternative plans require earlier
+      versions of data to remain usable after an edit. Copying the entire
+      structure for every small change can be wasteful. **Persistent data
+      structures preserve old versions while sharing unchanged parts**,
+      which is safe because those parts cannot be mutated. Updating a
+      trail lets you reason about exactly what needs reconstruction,
+      connecting immutable programming to the time and space costs you
+      study in data structures.
 
       ### 🎯 You will learn to
 
@@ -610,39 +755,70 @@ steps:
           - text: "An empty trail has no stop to remove. A negative index has no valid target."
           - text: "Place the invalid-index and End cases before the recursive Stop case. Reaching End after retaining a prefix must preserve that prefix."
     quiz:
-      title: "Step 5 — Knowledge Check"
+      title: Step 5 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
-        - type: single
-          difficulty: advanced
-          question: "A direct persistent deletion removes index 2 from a five-stop trail. In the stated constructor model, how many new Stop nodes does its retained prefix need?"
-          options: ["0", "2", "3", "5"]
-          correct_index: 1
-          option_feedback:
-            0: "Only deleting the first stop can return the old tail immediately. Here two retained prefix links must point toward an updated remainder."
-            2: "The removed Stop is skipped. It is not reconstructed as part of the retained prefix."
-            3: "The unaffected suffix can be reused rather than copied."
-          explanation: "The stops at indices 0 and 1 are reconstructed. The result can reuse the suffix that originally followed index 2."
-        - type: single
-          difficulty: intermediate
-          question: "After `new = removeStop 1 old`, which statement follows from immutability?"
-          options: ["old now has one fewer stop.", "new and old have equal contents.", "old still has its original contents.", "Every node in new must be copied."]
-          correct_index: 2
-          option_feedback:
-            0: "removeStop returns a result. It cannot rewrite the existing value bound to old."
-            1: "A valid removal changes the result's contents even though old remains available."
-            3: "Immutability permits sharing unchanged structure; it does not require a deep copy."
-          explanation: "As with the record reconstruction in step 2, the new value and original value can coexist. Unchanged structure can be shared safely."
-        - type: single
-          difficulty: intermediate
-          question: 'After deleting index 1 from `["A","B","A"]`, why must the result still contain two occurrences of "A"?'
-          options: ["Only the indexed stop is removed.", "All repeated names must be retained.", "Only the last stop can be removed.", "The output must have unique names."]
-          correct_index: 0
-          option_feedback:
-            1: "Repetition is not the criterion. Deleting index 0 would remove one of the two A stops."
-            2: "Any valid position can be removed, including the middle one here."
-            3: "This is deletion by position, not duplicate removal. The contract preserves every other stop."
-          explanation: "Index 1 identifies B. Both A stops lie outside that position and retain their relative order."
+      - type: single
+        bloom: apply
+        difficulty: intermediate
+        question: Direct persistent deletion removes index 3 from a six-stop trail. Under the lesson's source-constructor
+          model, how many new Stop constructors are needed for the retained prefix? Give a brief reason before
+          selecting, then compare it with the feedback.
+        options:
+        - '`0`'
+        - '`3`'
+        - '`4`'
+        - '`6`'
+        correct_index: 1
+        option_feedback:
+          0: Three retained stops precede the removed stop. Their links must lead toward the updated remainder.
+          2: The stop at index 3 is skipped, not reconstructed. Only the stops before it form the retained prefix.
+          3: The suffix after the deleted stop can be reused; there is no need to rebuild the whole trail.
+        explanation: The stops at indices 0, 1, and 2 are reconstructed, and the suffix beginning at index 4 can
+          be shared. This is a count in the stated source model, not a measurement of runtime allocation.
+      - type: single
+        bloom: evaluate
+        difficulty: advanced
+        question: An undo feature keeps the old trail while removing its first stop. Under the source-constructor
+          model, which strategy preserves both versions with the fewest new Stop constructors?
+        options:
+        - Copy the entire remaining trail.
+        - Return the existing remaining trail.
+        - Return the whole original trail.
+        correct_index: 1
+        option_feedback:
+          0: Copying can produce the correct contents, but it reconstructs stops whose links already have the required
+            shape.
+          2: Returning the original keeps the stop that the new version must remove. Preserving the old value does
+            not mean the result must have identical contents.
+        explanation: The existing tail already is the desired new trail, and immutability lets both versions share
+          it safely. Keeping the original also keeps its removed first stop reachable; preserving history can retain
+          data that the current version no longer needs.
+      - type: multiple
+        bloom: analyze
+        difficulty: advanced
+        question: A check observes that deleting index 1 from `["A","B","A"]` yields `["A","A"]`, then observes
+          that the original still yields `["A","B","A"]`. What do these observations establish for this input?
+        options:
+        - The result preserves both unselected occurrences of "A".
+        - The original still has its earlier contents after the call.
+        - The result physically shares its last Stop with the original.
+        - The compiled execution allocates exactly one new heap node.
+        correct_indices:
+        - 0
+        - 1
+        option_feedback:
+          0: Both A stops lie outside the selected index. Their presence checks deletion by position rather than
+            duplicate removal.
+          1: Observing the original separately checks that its earlier contents remain available.
+          2: Equal output can come from copying or sharing. These observations do not inspect which runtime nodes
+            are shared.
+          3: Output equality does not measure heap allocation. Even a source-constructor count is a model of a
+            chosen algorithm, not a compiler-allocation measurement.
+        explanation: The observations check contents of both versions for one case. Reasoning about reconstruction
+          needs the definition and its cost model; claims about physical allocation need different evidence.
     solution:
       files:
         - path: "Main.hs"
@@ -681,7 +857,13 @@ steps:
     instructions: |
       ### Why this matters
 
-      A route can branch into several routes. That changes the recursive question: we need a result from every child, then we combine those results. The same pattern powers document searches and nested menus.
+      Searching a directory tree means looking beyond the current folder:
+      a folder with no matching files can still have subfolders containing
+      matches. **Tree processing separates the current node's contribution
+      from the results of processing its children.** Learning to combine
+      those results lets you handle arbitrary nesting without writing a
+      separate loop for every depth. The route exercise builds this skill
+      for searches, summaries, and checks over hierarchical data.
 
       ### 🎯 You will learn to
 
@@ -755,39 +937,51 @@ steps:
           - text: "Visit its children even when its own contribution is zero. NoRoute is the case with no children to visit."
           - text: "Apply countLabeled to each child and combine the resulting Int values. Check that the empty child list contributes zero."
     quiz:
-      title: "Step 6 — Knowledge Check"
+      title: Step 6 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
-        - type: single
-          difficulty: intermediate
-          question: "What should `countLabeled (Route [] [Route [\"A\",\"B\"] [], NoRoute, Route [] [Route [\"C\"] []]])` return?"
-          options: ["0", "2", "3", "4"]
-          correct_index: 1
-          option_feedback:
-            0: "The empty root payload contributes zero, but traversal must still reach both labeled descendants."
-            2: "There are three labels, but A and B belong to one node and contribute only one count."
-            3: "Four real Route nodes occur, but the root and the parent of C have empty labels and do not count."
-          explanation: "The node with A and B contributes one; the deeper node with C contributes one. Both unlabeled nodes are traversed, while NoRoute contributes zero."
-        - type: single
-          difficulty: intermediate
-          question: "After `map countLabeled children`, which operation produces the children's combined contribution?"
-          options: ["`foldl (+) 1`", "`foldl (*) 1`", "`foldl (+) 0`", "`length`"]
-          correct_index: 2
-          option_feedback:
-            0: "Starting at one adds an extra contribution, even when there are no children."
-            1: "Multiplication combines the counts as a product. The required total adds all subtree counts."
-            3: "length counts child entries, regardless of how many labeled nodes each child contains."
-          explanation: "Each recursive result is already a count for a whole subtree. Adding them with foldl combines those disjoint counts; the zero initial value handles an empty child list."
-        - type: single
-          difficulty: intermediate
-          question: "A Route node holds a list of String labels and zero or more child routes. Which two field types complete `Route ... ...`?"
-          options: ["`[String] String`", "`[String] Route`", "`[String] [[String]]`", "`[String] [Route]`"]
-          correct_index: 3
-          option_feedback:
-            0: "The first field correctly stores labels, but a second String field cannot describe recursive child routes."
-            1: "Route would store exactly one child, rather than allowing zero or more children."
-            2: "A list of label lists omits the route structure that represents each child's further descendants."
-          explanation: "The recursive field is a list of values of the same Route type, allowing any finite number of children."
+      - type: single
+        bloom: apply
+        difficulty: intermediate
+        question: Predict `countLabeled (Route ["Root"] [Route [] [Route ["A","B"] []], NoRoute])`. How many labeled
+          nodes does it contain? Give a brief reason before selecting, then compare it with the feedback.
+        options:
+        - '`1`'
+        - '`2`'
+        - '`3`'
+        - '`4`'
+        correct_index: 1
+        option_feedback:
+          0: The root counts, but the traversal must also reach the labeled grandchild through its unlabeled parent.
+          2: There are three labels but only two nodes with labels. A and B occupy the same node.
+          3: NoRoute is not a node to count, and the real node with an empty labels list contributes zero.
+        explanation: The root contributes one and the node holding A and B contributes one. The unlabeled node
+          must still pass on its child's recursive count.
+      - type: multiple
+        bloom: analyze
+        difficulty: advanced
+        question: A faulty traversal returns 0 immediately for any `Route [] children`; its other cases combine
+          recursive counts correctly. Which inputs distinguish it from the required `countLabeled`?
+        options:
+        - '`Route ["Gate"] [Route ["Lake"] []]`'
+        - '`Route [] [Route ["Lake"] []]`'
+        - '`Route ["Gate"] [Route [] [Route ["Tower"] []]]`'
+        - '`Route [] [Route [] [NoRoute]]`'
+        correct_indices:
+        - 1
+        - 2
+        option_feedback:
+          0: Both real nodes are labeled, so neither recursive call hits the faulty empty-label case. Both versions
+            return 2.
+          1: The required result is 1, but the faulty function stops at the unlabeled root and returns 0.
+          2: The required result is 2, but the faulty recursive call discards Tower and leaves only Gate, giving
+            1.
+          3: The faulty function stops early, but every descendant also contributes zero. Both versions return
+            0, so the lost traversal is invisible to this check.
+        explanation: The distinguishing feature is a labeled descendant below an unlabeled real node. An empty
+          labels list describes the current payload; it does not say that the subtree is empty.
     solution:
       files:
         - path: "Main.hs"
@@ -821,7 +1015,14 @@ steps:
     instructions: |
       ### Why this matters
 
-      A scheduler can keep priorities in a search tree. After processing the smallest priority, it needs the remaining tree while retaining the old snapshot for inspection. This update can reuse branches that do not change.
+      Removing the next priority from a scheduler must preserve every
+      other queued item and the ordering that makes future searches work.
+      Keeping an earlier snapshot adds another requirement: the update
+      must leave the old tree usable. **Persistent tree updates meet these
+      needs by rebuilding the affected path and sharing unchanged
+      branches.** This exercise connects correctness invariants with
+      update cost, so you can explain both what an algorithm preserves
+      and how much structure it needs to rebuild.
 
       ### 🎯 You will learn to
 
@@ -909,29 +1110,49 @@ steps:
           - text: "Removing a node must not remove the keys stored in its right child. An empty tree has no key to remove."
           - text: "Keep separate patterns for Tip and a Fork with Tip as its left child. Only the remaining Fork pattern recurses."
     quiz:
-      title: "Step 7 — Knowledge Check"
+      title: Step 7 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
-        - type: single
-          difficulty: intermediate
-          question: "The smallest key is in the root's left subtree. In a direct persistent removal, which structure can the result reuse unchanged?"
-          options: ["The whole original tree", "The original right subtree", "Only the original root node", "No original subtree"]
-          correct_index: 1
-          option_feedback:
-            0: "The result must exclude one old key, so the entire tree cannot remain unchanged."
-            2: "The root must point to the updated left subtree. Its right child needs no change."
-            3: "Unchanged immutable subtrees can be shared safely between versions."
-          explanation: "The recursive change is confined to the left path. The root's right subtree keeps all its original keys and ordering relationships."
-        - type: single
-          difficulty: intermediate
-          question: "The path to the smallest key contains four Fork nodes, including the node removed. In the stated source-constructor model, how many new Fork nodes does direct removal need?"
-          options: ["0", "1", "3", "4"]
-          correct_index: 2
-          option_feedback:
-            0: "Three retained ancestors need links to their updated left children."
-            1: "There are three retained ancestors before the removed node, not just the root."
-            3: "The smallest node is removed and replaced by its existing right child, so it is not reconstructed."
-          explanation: "The three retained ancestors are reconstructed; the removed node's right child and all off-path subtrees can be reused."
+      - type: single
+        bloom: apply
+        difficulty: intermediate
+        question: The leftmost path contains five Fork nodes, including the minimum node being removed. Under the
+          source-constructor model, how many new Fork constructors does direct persistent removal need? Give a
+          brief reason before selecting, then compare it with the feedback.
+        options:
+        - '`0`'
+        - '`1`'
+        - '`4`'
+        - '`5`'
+        correct_index: 2
+        option_feedback:
+          0: Four retained ancestors need updated left-child links. Only removing a root minimum can return an
+            existing child immediately.
+          1: Updating only the root is insufficient when the changed child lies below further retained ancestors.
+          3: The minimum node is replaced by its existing right child. It is removed rather than reconstructed.
+        explanation: The four retained ancestors are reconstructed; their off-path subtrees and the removed node's
+          right child can be reused. The cost follows that path length, which the ordering invariant alone does
+          not keep short.
+      - type: single
+        bloom: evaluate
+        difficulty: advanced
+        question: A proposed deletion replaces the minimum node with Tip, discarding its right child. To judge
+          this proposal against the requirement to preserve every other key, which test is most informative?
+        options:
+        - 'A single root with no children: removing it leaves no keys.'
+        - 'A root minimum with a right child: removing it keeps the child.'
+        - 'An empty tree: removing its smallest key leaves it empty.'
+        correct_index: 1
+        option_feedback:
+          0: Tip is the correct result when the minimum has no children. This case does not expose the unintended
+            loss.
+          2: The empty-tree case never encounters a minimum node with a right child, so both implementations can
+            pass it.
+        explanation: 'A root minimum with a right child isolates the exact preservation obligation: remove the
+          root key while retaining the child''s keys. Passing that case would still leave other obligations, such
+          as rebuilding ancestors and retaining the original version, to check.'
     solution:
       files:
         - path: "Main.hs"
@@ -968,7 +1189,13 @@ steps:
     instructions: |
       ### Why this matters
 
-      The course's language tools manipulate programs as data. Once an expression is a tree, evaluating it becomes another recursive transformation. The tree structure records grouping before evaluation even starts.
+      Compilers and interpreters need a representation of a program that
+      they can inspect and process. **Expression trees make the program's
+      structure explicit**, including which operations are grouped
+      together. Writing an evaluator connects each kind of node to its
+      meaning and uses recursion to handle expressions of arbitrary
+      finite depth. This small interpreter gives you the foundation for
+      understanding how language tools evaluate, check, or transform code.
 
       ### 🎯 You will learn to
 
@@ -1026,29 +1253,49 @@ steps:
           - text: "Do not assume children are Number constructors. Recursive calls handle any valid child expression."
           - text: "The parent keeps only the children's evaluated Integer results; recursion determines how those results were produced."
     quiz:
-      title: "Step 8 — Knowledge Check"
+      title: Step 8 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
-        - type: single
-          difficulty: intermediate
-          question: "What is `Plus (Number 3) (Number 4)` before it is passed to eval?"
-          options: ["An Integer equal to 7", "An Expr containing two children", "An IO action that prints 7", "A function awaiting two numbers"]
-          correct_index: 1
-          option_feedback:
-            0: "The constructor records an addition expression. eval is what interprets that structure as arithmetic."
-            2: "The expression value contains no output action. main separately prints eval's result."
-            3: "Both constructor arguments are already supplied, so this is a complete value."
-          explanation: "Constructors build values of the declared data type. Functions such as eval give those values the behavior required by an application."
-        - type: single
-          difficulty: intermediate
-          question: "What is the type of `Times` before either child is supplied?"
-          options: ["`Integer -> Integer -> Integer`", "`(Expr, Expr) -> Expr`", "`Expr -> Integer`", "`Expr -> Expr -> Expr`"]
-          correct_index: 3
-          option_feedback:
-            0: "Times builds expression data; it does not directly multiply numerical arguments."
-            1: "The constructor takes two curried arguments. A single tuple argument would require a tuple field in its declaration."
-            2: "That is eval's type. Times accepts two expression children and constructs an expression."
-          explanation: "The declaration `Times Expr Expr` produces a constructor that takes two Expr arguments and returns an Expr. Constructor application follows the same curried argument rules practiced earlier."
+      - type: single
+        bloom: apply
+        difficulty: intermediate
+        question: Let `e = Plus (Number 8) (Number 1)` and `doubled = Times e (Number 2)`. With the correct evaluator,
+          which pair gives the type of `doubled` and the value of `eval doubled`? Give a brief reason before selecting,
+          then compare it with the feedback.
+        options:
+        - '`Integer`; `18`'
+        - '`Expr`; `18`'
+        - '`Expr`; `11`'
+        - '`Integer`; `11`'
+        correct_index: 1
+        option_feedback:
+          0: Times constructs expression data of type Expr. The separate eval call produces the Integer result.
+          2: The child e evaluates to 9, and the outer Times multiplies by 2. Adding the outer child results would
+            give 11.
+          3: This both treats construction as evaluation and adds at a Times node. Construction yields Expr; its
+            interpretation uses multiplication.
+        explanation: The constructors preserve the grouping `(8 + 1) * 2` as data. eval recursively obtains 9 and
+          2 from the children, then multiplies them to produce 18.
+      - type: single
+        bloom: evaluate
+        difficulty: advanced
+        question: A tool must calculate an expression's value and later inspect its original grouping. A proposal
+          immediately replaces every input `e` with `Number (eval e)`. Which review best matches both requirements?
+        options:
+        - 'Accept it: the replacement still has type `Expr`.'
+        - 'Keep the tree: evaluation alone loses its grouping.'
+        - 'Keep the tree: replacement changes its arithmetic result.'
+        correct_index: 1
+        option_feedback:
+          0: A valid Expr can carry different information from the original. Number has no child expressions, even
+            when its payload equals the original result.
+          2: With the supplied evaluator, Number (eval e) has the same arithmetic value as e. The information lost
+            is its original grouping, not its numerical result.
+        explanation: The tree supports inspection and evaluation as separate operations on the same immutable data.
+          Replacing it with a Number may preserve the arithmetic result, but it discards the structure needed for
+          the other requirement.
     solution:
       files:
         - path: "Main.hs"
@@ -1082,7 +1329,13 @@ steps:
     instructions: |
       ### Why this matters
 
-      A game can change over time without mutating a variable. A pure simulator receives the events, carries the current state through them, and returns the result. This is where the separate skills become one program.
+      A bug in a game or event-processing system may appear only after a
+      particular sequence of actions. **A pure state transition makes the
+      current state and next event explicit**, letting you test one rule
+      in isolation and replay a sequence to reproduce a failure. The
+      expedition simulator combines that design with rules about limits
+      and when processing must stop. It shows how immutable values can
+      model a changing system while keeping its behavior reproducible.
 
       ### 🎯 You will learn to
 
@@ -1155,39 +1408,69 @@ steps:
           - text: "Zero is already terminal. Continuing through later events would allow a forbidden revival."
           - text: "After calculating nextHealth, choose between the terminal result and processing the rest. The terminal branch must not process later healing."
     quiz:
-      title: "Step 9 — Knowledge Check"
+      title: Step 9 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
-        - type: single
-          difficulty: advanced
-          question: "After `[Fight 60, Heal 1, Fight 3]`, what health should journey return?"
-          options: ["40", "38", "39", "-1"]
-          correct_index: 1
-          option_feedback:
-            0: "Healing from 40 to 41 leaves defensive mode. The next fight therefore subtracts the full three points."
-            2: "The final fight starts at 41, so its damage is not halved. Its result is 38."
-            3: "None of these events takes health to zero or below."
-          explanation: "The states are 100, 40, 41, and 38. Each event reads the mode implied by its starting health."
-        - type: single
-          difficulty: advanced
-          question: "Which list makes `min 100 (100 + foldl (+) 0 (map eventDelta events))`, using step 1's repaired eventDelta, disagree with journey?"
-          options: ["`[Fight 20, Travel 4]`", "`[Fight 20, Heal 4]`", "`[Fight 60, Travel 4]`", "`[Fight 10, Fight 20]`"]
-          correct_index: 2
-          option_feedback:
-            0: "Both calculations return 81: the travel starts at 80, so its ordinary recovery rule applies."
-            1: "Both calculations return 84: healing has the same effect here and does not reach the cap."
-            3: "Both calculations return 70: neither fight starts in defensive mode."
-          explanation: "Fight 60 leaves 40 health, so journey gives the following travel no recovery and returns 40. The independent calculation adds one travel point and returns 41. The event's effect depends on the state reached so far."
-        - type: single
-          difficulty: intermediate
-          question: "Two calls to journey receive the same finite event list. What follows from its pure contract?"
-          options: ["They return the same result.", "The second starts at the first result.", "The second consumes no events.", "They update a shared hero record."]
-          correct_index: 0
-          option_feedback:
-            1: "Each journey starts from the specified 100 points; there is no stored result that changes the next call."
-            2: "The function does not mutate or consume the input list, so both calls receive the same data."
-            3: "The simulator's contract has no externally mutable hero state."
-          explanation: "The result is determined by the input and the fixed rules. Repeating the call does not change those rules or the input."
+      - type: single
+        bloom: apply
+        difficulty: advanced
+        question: Trace the health before each event in `[Fight 58, Fight 3, Fight 5]`. What does the specified
+          journey return? Give a brief reason before selecting, then compare it with the feedback.
+        options:
+        - '`34`'
+        - '`37`'
+        - '`36`'
+        correct_index: 1
+        option_feedback:
+          0: The final fight starts at 39, so defensive mode halves its damage using integer division. It does
+            not subtract the full five.
+          2: The final fight starts at 39, but integer division gives `5 div 2 == 2`, not 3. Rounding that damage
+            upward would lose an extra point.
+        explanation: The health values are 100, 42, 39, and 37. The final fight subtracts `5 div 2`, which is 2;
+          crossing the boundary changes the next event's rule.
+      - type: multiple
+        bloom: analyze
+        difficulty: advanced
+        question: A shortcut computes `min 100 (100 + foldl (+) 0 (map eventDelta events))`, using step 1's repaired
+          eventDelta. Which lists expose a difference from journey? Predict both results before selecting.
+        options:
+        - '`[Fight 60, Travel 4]`'
+        - '`[Fight 100, Heal 20]`'
+        - '`[Heal 10, Fight 10]`'
+        - '`[Fight 20, Heal 4]`'
+        correct_indices:
+        - 0
+        - 1
+        - 2
+        option_feedback:
+          0: journey returns 40 because travel in defensive mode restores nothing. The shortcut adds one travel
+            point and returns 41.
+          1: journey stops at death and returns -1. The shortcut includes the later healing and returns 20.
+          2: journey caps the initial heal at 100, then returns 90 after the fight. The shortcut postpones the
+            cap and returns 100.
+          3: Both calculations return 84. No defensive-mode, death, or intermediate-cap rule changes this sequence.
+        explanation: A sum treats each event as an independent change. The required simulator carries state between
+          events, applies caps at each transition, and stops when the terminal condition occurs.
+      - type: single
+        bloom: evaluate
+        difficulty: advanced
+        question: A review has time for two checks and wants to expose both a wrong 40-point mode boundary and
+          healing after death. Which expected-result pair best targets those requirements?
+        options:
+        - '`journey [Fight 60, Fight 3] == 39`; `journey [Fight 100, Heal 10] == -1`'
+        - '`journey [Fight 59, Fight 3] == 38`; `journey [Fight 90, Heal 10] == 20`'
+        - '`journey [Fight 60, Heal 3] == 43`; `journey [Fight 99, Heal 10] == 11`'
+        correct_index: 0
+        option_feedback:
+          1: The fight begins at 41, so this pair does not test the equality boundary. The healing case begins
+            above zero and cannot detect revival after death.
+          2: Healing behaves the same in both modes, so healing from 40 cannot distinguish the mode boundary. Healing
+            from one remaining point is permitted, not revival.
+        explanation: A fight starting at exactly 40 distinguishes `<= 40` from `< 40`, and healing after health
+          reaches zero tests immediate termination. These targeted cases supplement the other boundary and ordinary-case
+          checks; two passing examples are not a proof of the full contract.
     solution:
       files:
         - path: "Main.hs"

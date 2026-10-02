@@ -59,7 +59,7 @@ The [Python RegEx Simulator & Debugger]({{ '/SEBook/tools/regex-simulator.html' 
 
 # Supplemental Tooling
 
-[Haskell](/SEBook/tools/haskell.html) provides a three-part interactive path through pure expressions, recursion, higher-order functions, laziness, and persistent data, adapted from the CS131 course material. Start with [Haskell 1: Expressions, Types, and Recursion](/SEBook/tools/haskell-tutorial).
+[Haskell](/SEBook/tools/haskell.html) explains pure expressions, types, recursion, higher-order functions, laziness, and persistent data through worked examples. Its three interactive tutorials turn those concepts into practice: [Expressions, Types, and Recursion](/SEBook/tools/haskell-tutorial), [Functions and Laziness](/SEBook/tools/haskell-functions-tutorial), and [Data and Persistent Programs](/SEBook/tools/haskell-data-tutorial).
 
 [Prolog: Queries to Programs]({{ "/SEBook/tools/prolog-tutorial" | relative_url }}) develops the lecture skills used in CS 131 quizzes and exams through new scenarios: predict bindings and proof order, repair rules, then construct recursive list and route relations. Its fourteen steps include Parsons problems, graduated hints, optional checks, and independent programming tasks. Plan three sittings. [Prolog Lists and Search]({{ "/SEBook/tools/prolog-search-tutorial" | relative_url }}) offers further practice, including arithmetic, collected answers, and a playlist-search challenge beyond the main path.
 

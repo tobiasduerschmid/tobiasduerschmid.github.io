@@ -148,30 +148,37 @@ steps:
           - text: "Application groups before multiplication. Parentheses can make a whole expression one argument."
           - text: "Use `remainingMoney budget (...)`, placing the total price of both pizzas in parentheses."
     quiz:
-      title: "Step 1 — Knowledge Check"
+      title: Step 1 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
           difficulty: intermediate
-          question: "With `remainingMoney budget spent = budget - spent`, what is `remainingMoney 18 4 * 2`?"
-          options: ["`28`", "`10`", "A type error"]
+          bloom: apply
+          question: With `remainingMoney budget spent = budget - spent`, predict `remainingMoney 18 4 * 2`. Explain which value is doubled before choosing.
+          options:
+            - "`28`: double the remaining money."
+            - "`10`: double the amount spent."
+            - "`14`: the multiplication is unused."
           correct_index: 0
           option_feedback:
-            1: "That would be `remainingMoney 18 (4 * 2)`. Without those parentheses, multiplication applies to the result."
-            2: "A function result can be used in arithmetic; the call and multiplication both produce compatible numbers."
-          explanation: "The expression groups as `(remainingMoney 18 4) * 2`, giving 14 * 2."
+            1: That groups the spending as `remainingMoney 18 (4 * 2)`. Without those parentheses, multiplication applies to the function result.
+            2: The multiplication is part of the expression and uses the result of the call.
+          explanation: "Application groups more tightly than multiplication: `(remainingMoney 18 4) * 2` gives 28. To double the spending instead, put `4 * 2` inside the second argument."
         - type: single
-          difficulty: basic
-          question: "What does `remainingMoney budget spent = budget - spent` do with budget?"
+          difficulty: intermediate
+          bloom: evaluate
+          question: A budget rule will be used by two screens and checked on many inputs. Which design lets both screens reuse the rule and lets a test inspect its answer directly?
           options:
-            - "Replaces it with the remaining money"
-            - "Defines a result using its value"
-            - "Prints it before subtracting spent"
+            - Copy the calculation into each screen’s display code.
+            - Return the balance from one function; display it separately.
+            - Put the rule only in a function that prints the balance.
           correct_index: 1
           option_feedback:
-            0: "A parameter binding stays the same. The expression computes the function's result."
-            2: "Subtraction is pure; displaying the result requires a separate output action."
-          explanation: "The definition describes a value for each input, without modifying the input."
+            0: Copies can drift when the rule changes. Each screen would need its own check of the same calculation.
+            2: Printing makes the answer available as output, but does not give the caller the numeric result to compare or reuse.
+          explanation: A function that returns the balance can serve both screens and tests; the supplied `main` handles display. Separating these jobs makes the rule easier to reuse, but examples are still needed to check that the rule is correct.
     solution:
       files:
         - path: Main.hs
@@ -378,63 +385,87 @@ steps:
           - text: "The result of >= is Bool. An exact budget must qualify, so the comparison includes equality."
           - text: "The interface is Double -> Double -> Bool. Keep the supplied comparison body; check that the sample values meet this interface."
     quiz:
-      title: "Step 2 — Knowledge Check"
+      title: Step 2 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
           difficulty: intermediate
+          bloom: analyze
           question: |
-            `isSoldOut :: Int -> Bool` checks a slice count. What is wrong with this helper?
+            `isSoldOut :: Int -> Bool` checks a slice count. A teammate says this helper returns the answer because it names the checker. Before choosing a repair, identify the current body’s type and the promised result type.
 
             ```haskell
             orderBlocked :: Int -> Bool
             orderBlocked slices = isSoldOut
             ```
           options:
-            - "`isSoldOut` needs the slice argument"
-            - "`orderBlocked` must return an `Int`"
-            - "`isSoldOut` needs its signature removed"
+            - Use `isSoldOut slices` as the body.
+            - Change the result type to `Int`.
+            - Remove the signature and keep the body.
           correct_index: 0
           option_feedback:
-            1: "The helper is meant to answer a question, so Bool is appropriate. The current body supplies a function instead of its answer."
-            2: "Removing a signature does not apply a function. The checker still needs a slice count."
-          explanation: "isSoldOut has type Int -> Bool; isSoldOut slices has type Bool. Naming the checker does not supply its input or compute its answer."
+            1: The caller needs a Boolean answer, not another count. Changing the result type also does not supply the missing argument.
+            2: Inference would allow a helper that returns a function, but that changes the promised interface rather than producing the Boolean answer.
+          explanation: "`isSoldOut` has type `Int -> Bool`; `isSoldOut slices` has type `Bool`. The parameter must reach the checker before the body can supply the answer."
         - type: single
           difficulty: intermediate
-          question: "Assume price, guests, and budget are Ints. Which signature fits `canBuySnacks price guests budget = price * guests <= budget`?"
+          bloom: apply
+          question: |-
+            A snack checker uses three `Int` inputs:
+
+            ```haskell
+            canBuySnacks price guests budget = price * guests <= budget
+            ```
+
+            Derive the whole function’s type. Which signature records the inputs and the final result?
           options:
             - "`Int -> Int -> Int -> Int`"
             - "`Int -> Int -> Bool -> Bool`"
             - "`Int -> Int -> Int -> Bool`"
           correct_index: 2
           option_feedback:
-            0: "Multiplication produces a number, but the whole body compares that number with budget. The comparison produces Bool."
-            1: "budget is a numeric input being compared with a numeric product. It is the comparison result that has type Bool."
-          explanation: "There are three Int inputs. Follow the whole expression through to the comparison: its result is Bool."
+            0: The intermediate product is numeric, but the whole body compares it with the budget and returns a Boolean.
+            1: The budget is an amount, not a Boolean. Only the final comparison produces a Boolean.
+          explanation: Three numeric inputs feed a comparison, so the result is `Bool`. When deriving a type, follow the whole expression rather than stopping at its first operation.
         - type: single
           difficulty: intermediate
-          question: 'A function has signature `canAffordPizza :: Double -> Double -> Bool`. What happens when it is called as `canAffordPizza "9.50" 12.00`?'
+          bloom: apply
+          question: An affordability checker should compare numeric amounts. With no declared signature, `budget >= price` also accepts strings and can compare their characters. Which change catches accidental text arguments before execution?
           options:
-            - "The text is converted to a number"
-            - "The call is rejected before execution"
-            - "The call runs and then returns False"
-          correct_index: 1
+            - Declare `Double -> Double -> Bool`; quoted inputs are rejected.
+            - Keep inference alone; it will recognize the intended price units.
+            - Declare `Double -> Double -> Bool`; quoted inputs become numbers.
+          correct_index: 0
           option_feedback:
-            0: "A signature requires a compatible value; it does not parse numeric-looking text. The quoted argument is a String."
-            2: "False would answer the numeric affordability question. This call has an input-type conflict, so it never reaches that decision."
-          explanation: "The first argument must have type Double, but double quotes make it a String. The signature does not convert it."
-        - type: single
-          difficulty: basic
-          question: "A working function's type signature is removed. How does Haskell check its types?"
+            1: Inference checks that the operations and values agree in type. Comparing two strings is consistent even when it answers the wrong question.
+            2: A signature checks representations; it does not parse or convert text.
+          explanation: The numeric signature expresses an intended restriction that inference cannot recover from the comparison alone. It sacrifices support for text comparisons to catch accidental text inputs at the boundary.
+        - type: multiple
+          difficulty: intermediate
+          bloom: analyze
+          question: |
+            Consider the intended interface below. Which mistakes can still compile and therefore need examples or other reasoning about behavior? Select all that apply.
+
+            ```haskell
+            canAfford :: Double -> Double -> Bool
+            canAfford budget price = budget >= price
+            ```
           options:
-            - "It waits for the first runtime argument"
-            - "It stops checking that function's types"
-            - "It infers types and checks before running"
-          correct_index: 2
+            - Swapping the numeric budget and price at a call site.
+            - Passing `"9.50"` as the budget at a call site.
+            - Replacing `>=` with `>` in the comparison body.
+            - Returning the numeric budget instead of the comparison.
+          correct_indices:
+            - 0
+            - 2
           option_feedback:
-            0: "Inference uses the definition and its uses without waiting for a first execution."
-            1: "A signature is optional documentation and a checked constraint; static type checking remains when it is omitted."
-          explanation: "Haskell still checks compatible types before execution. An inferred comparison function can accept text as well as numbers; an explicit numeric signature rules out that unintended text interface."
+            0: Both argument positions accept `Double`, so the signature does not distinguish their roles.
+            1: A quoted value has type `String`, which conflicts with the declared input type.
+            2: Both operators produce `Bool`. An exact-budget example is needed to distinguish their behavior.
+            3: The declared result is `Bool`; the budget is a `Double`.
+          explanation: Types rule out incompatible kinds of value, but not swapped roles or the wrong comparison between compatible values. Check a budget below the price and one exactly equal to it; predict both expected answers before running.
     solution:
       files:
         - path: Main.hs
@@ -614,32 +645,43 @@ steps:
     quiz:
       title: Step 3 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
-      - type: single
-        difficulty: intermediate
-        question: Why can moving an `otherwise` guard to the top change a function's result?
-        options:
-        - Every later rule runs first
-        - It always matches immediately
-        - It only matches invalid inputs
-        correct_index: 1
-        option_feedback:
-          0: Guards are considered from top to bottom, not in reverse order.
-          2: otherwise has no built-in notion of invalid input; it is True.
-        explanation: An unconditional true guard at the top prevents later alternatives from being selected.
-      - type: single
-        difficulty: intermediate
-        question: What is wrong with `if locked then 0 else False`?
-        options:
-        - The branches have incompatible types
-        - The condition needs an integer result
-        - The else branch executes before then
-        correct_index: 0
-        option_feedback:
-          1: The condition must be Bool; a Boolean parameter such as locked provides that. The incompatible result
-            branches are the problem.
-          2: Only the selected branch supplies the value. The problem is the branches' types.
-        explanation: One expression must have one consistent type; a numeric result and Bool cannot serve as its alternatives.
+        - type: single
+          difficulty: intermediate
+          bloom: analyze
+          question: |
+            A delivery fee should be zero whenever `waived` is true, even for urgent orders. Which input exposes the priority error in this definition? Predict the required and actual fee for your chosen input.
+
+            ```haskell
+            fee urgent waived
+              | urgent = 5
+              | waived = 0
+              | otherwise = 2
+            ```
+          options:
+            - "`fee True False`"
+            - "`fee False True`"
+            - "`fee True True`"
+          correct_index: 2
+          option_feedback:
+            0: Only the urgent rule applies, so 5 agrees with the requirement.
+            1: The urgent guard fails and the waiver wins, so 0 agrees with the requirement.
+          explanation: Both guards are true for `fee True True`, but the first match returns 5. Moving the waiver before the urgent rule implements the stated priority; neither guard overrides an earlier result.
+        - type: single
+          difficulty: intermediate
+          bloom: apply
+          question: A stock calculation must return an `Int` for later arithmetic; the screen also wants to explain a locked stockroom. Which design preserves that numeric interface?
+          options:
+            - Return `0` when locked and a numeric count otherwise; display the message separately.
+            - Return `"locked"` when locked and a numeric count otherwise; let the caller decide.
+            - Return `False` when locked and a numeric count otherwise; treat it as numeric zero.
+          correct_index: 0
+          option_feedback:
+            1: A `String` and an `Int` cannot be the alternative values of this conditional expression.
+            2: "`False` is a Boolean value, not an alternative spelling of numeric zero."
+          explanation: Both branches of the calculation must have type `Int`. Keeping display separate preserves arithmetic reuse; a count of zero alone does not explain why no stock is available, so the screen still needs the lock condition.
     solution:
       files:
       - path: Main.hs
@@ -792,37 +834,44 @@ steps:
       - text: Use if ... then ... else for discount, with subtotal `div` 4 in the qualifying branch. The function result
           must also account for the fee.
     quiz:
-      title: "Step 4 — Knowledge Check"
+      title: Step 4 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
           difficulty: intermediate
+          bloom: analyze
           question: |
-            What value does this expression produce?
+            A refactoring reverses the two aligned definitions in this binding group. What should a behavior check expect? Explain using the value denoted by each name.
 
             ```haskell
-            let x = 5
-                y = x + 2
-            in x + y
+            let gross = 20
+                net = gross - 3
+            in gross + net
             ```
-          options: ["`12`", "`14`", "`7`"]
+          options:
+            - "`37` in both versions; the names describe related values."
+            - "`34` in both versions; binding `net` changes `gross`."
+            - An error after reordering; definitions execute top to bottom.
           correct_index: 0
           option_feedback:
-            1: "Binding y to x + 2 does not change x; x remains 5."
-            2: "The expression after in adds both bindings; it does not return only the newest binding."
-          explanation: "x denotes 5 and y denotes 7, so their sum is 12. Binding y does not change x."
+            1: "`net` denotes 17 and `gross` still denotes 20. Defining one name does not assign to the other."
+            2: These local definitions form one binding group. Their dependency is expressed by the use of `gross`, not by assignment order.
+          explanation: The result remains `20 + 17`. Compare each name’s meaning before and after a refactoring; the last definition written is not automatically the returned value.
         - type: single
           difficulty: intermediate
-          question: "A local helper needs the enclosing function's parameter. What can it do?"
+          bloom: evaluate
+          question: A helper `cost n = n * unitPrice` is local to `bill unitPrice count`, where it uses `unitPrice`. Two other functions now need the same helper. Which change makes that dependency explicit while allowing each caller its own price?
           options:
-            - "Read that parameter directly"
-            - "Use only global definitions"
-            - "Replace that parameter's value"
-          correct_index: 0
+            - Move `cost n` unchanged to the top level.
+            - Move it as `cost unitPrice n` and pass the price.
+            - Move it with one fixed global `unitPrice` value.
+          correct_index: 1
           option_feedback:
-            1: "Local definitions are in the enclosing lexical scope, so parameters are available."
-            2: "Visibility permits reading a binding, not mutating it."
-          explanation: "The enclosing parameter is visible to local helpers. Later, returning such a helper will let us explore closures."
+            0: At the top level, the helper can no longer see the enclosing function’s parameter.
+            2: A fixed global price removes each caller’s ability to choose its own price.
+          explanation: An explicit parameter carries the dependency across the new scope boundary. A local helper avoids repeating that argument, while a shared helper needs callers to supply it; neither arrangement is best for every use.
     solution:
       files:
       - path: Main.hs
@@ -979,51 +1028,55 @@ steps:
       - text: Use a pair pattern such as (name, score), then form a pair from the original name and a score expression
           that uses the bonus.
     quiz:
-      title: "Step 5 — Knowledge Check"
+      title: Step 5 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
           difficulty: intermediate
-          question: "Which argument fits a parameter of type `(a, a)`?"
-          options: ["`(True, 'x')`", "`('x', 'y')`", "`(\"x\", 'x')`"]
-          correct_index: 1
-          option_feedback:
-            0: "Bool and Char cannot instantiate the same type variable in this pair."
-            2: "String and Char are different types, even when the string has one character."
-          explanation: "Both positions must have the same type. Two Char values meet that requirement."
-        - type: single
-          difficulty: intermediate
-          question: "Given `tagged :: a -> (a, Bool)` and `tagged x = (x, True)`, why can one program use both `tagged True` and `tagged 'x'`?"
+          bloom: apply
+          question: A scoreboard starts with `original = ("Rae", 20)`. `addBonus bonus (name, score) = (name, score + bonus)`. Predict the scores in `addBonus (3 * 2) original` and in `original`, in that order.
           options:
-            - "Each use can choose a suitable type for a"
-            - "Each use converts its input to a shared type"
-            - "Each use postpones type checking until it runs"
+            - "`26` and `20`"
+            - "`26` and `26`"
+            - "`23` and `20`"
           correct_index: 0
           option_feedback:
-            1: "The inputs stay Bool and Char. Polymorphism permits different types at different uses without converting values."
-            2: "Both calls are checked before execution. A type variable expresses a relationship, not a request to defer checking."
-          explanation: "The first call's result has type (Bool, Bool), and the second's has type (Char, Bool). Each use preserves its input type in the first result component."
+            1: Constructing the result pair does not change the pair denoted by `original`.
+            2: The grouped bonus is the complete product `3 * 2`, not just its first number.
+          explanation: The new pair has score 26; the old pair still has score 20. Parentheses group the bonus expression, while the tuple groups the name and score into one argument.
         - type: single
           difficulty: intermediate
-          question: "Recall `remainingMoney budget spent = budget - spent`. What does `remainingMoney 30 (4 * 3)` return?"
-          options: ["`78`", "`26`", "`18`"]
-          correct_index: 2
-          option_feedback:
-            0: "That is `(remainingMoney 30 4) * 3`, with the multiplication outside the second argument."
-            1: "That subtracts only 4. The grouped argument supplies the full product 4 * 3."
-          explanation: "The grouped second argument is 12, leaving 18. Parentheses also group a tuple used as one argument."
-        - type: single
-          difficulty: intermediate
-          question: "Which most general type fits `repeatFirst (x, y) = (x, x)`?"
+          bloom: evaluate
+          question: "A library helper duplicates the first component and ignores the second: `repeatFirst (x, y) = (x, x)`. It should accept mixed-type pairs without changing either component’s representation. Which signature best preserves that flexibility?"
           options:
             - "`(a, a) -> (a, a)`"
             - "`(a, b) -> (a, b)`"
             - "`(a, b) -> (a, a)`"
           correct_index: 2
           option_feedback:
-            0: "Nothing compares or combines x with y, so their input types need not agree. This type is unnecessarily restrictive."
-            1: "Both output positions contain x; the second result has x's type, not the unrelated type of y."
-          explanation: "The input components can have independent types. Reusing x in both output positions requires the same type variable in both."
+            0: Requiring matching input types rules out useful calls such as `repeatFirst (True, 'x')`, even though the body can handle them.
+            1: Both output positions contain `x`, so the second output cannot promise the independent type of `y`.
+          explanation: The input types are independent, while both output positions share the first input’s type. A more restrictive signature may compile but unnecessarily reduce where the helper can be reused.
+        - type: multiple
+          difficulty: intermediate
+          bloom: analyze
+          question: "`tagged :: a -> (a, Bool)` and `tagged x = (x, True)`. Which conclusions follow for uses in one program? Select all that apply."
+          options:
+            - "`tagged True` and `tagged 'q'` can have different result types."
+            - "`tagged True` is invalid because its two result types coincide."
+            - "`tagged 'q'` preserves the character rather than converting it."
+            - Calling `tagged True` fixes `a` as `Bool` for later calls.
+          correct_indices:
+            - 0
+            - 2
+          option_feedback:
+            0: Each use can instantiate `a` independently; the results are `(Bool, Bool)` and `(Char, Bool)`.
+            1: An arbitrary type variable may be `Bool`. Different type expressions do not require different types.
+            2: The same `a` connects the input with the result’s first component.
+            3: A polymorphic function’s first call does not change its signature for later uses.
+          explanation: Type variables express relationships within a use, while independent uses can choose different types. As a self-check, predict the result type of `tagged "q"` and explain how it differs from `tagged 'q'`.
     solution:
       files:
         - path: Main.hs
@@ -1165,27 +1218,37 @@ steps:
           - text: "An extra Eq or Ord requirement narrows the interface even when the displayed examples still work."
           - text: "Keep the supplied a -> [a] -> [a] signature. Construct the front and back while preserving the middle list."
     quiz:
-      title: "Step 6 — Knowledge Check"
+      title: Step 6 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
           difficulty: intermediate
-          question: "What is the result of `\"a\" : [\"bc\"]`?"
-          options: ["`\"abc\"`", "`[\"a\", \"bc\"]`", "`[\"ab\", \"c\"]`"]
+          bloom: analyze
+          question: "A queue must keep each filename as one item. Compare `\"ab\" : [\"cd\"]` with `\"ab\" ++ \"cd\"`. Identify each outer list’s element type before deciding what `length` counts."
+          options:
+            - Both have length 4 because both inputs contain four characters.
+            - The first has length 2; the second has length 4.
+            - The first has length 4; the second has length 2.
           correct_index: 1
           option_feedback:
-            0: "Cons adds the whole string as one element. Joining the characters would require string concatenation."
-            2: "Cons does not split or redistribute the characters inside existing elements."
-          explanation: "The result has two String elements, so its type is [String]."
+            0: "`length` counts the elements of the outer list. Characters inside a filename are not separate queue items."
+            2: Cons puts a whole `String` into a list of strings; concatenating two strings instead joins their characters.
+          explanation: "The queue result is `[\"ab\",\"cd\"] :: [String]`; the text result is `\"abcd\" :: String`. Choosing an operation requires identifying what one element means, not just noticing that both values are lists."
         - type: single
           difficulty: intermediate
-          question: "Which most general type fits `keepWith (x, y) xs = x : xs`?"
-          options: ["`(a, b) -> [a] -> [a]`", "`(a, b) -> [b] -> [b]`", "`(a, a) -> [a] -> [a]`"]
-          correct_index: 0
+          bloom: apply
+          question: A preview must show the first filename, or `"empty"` for an empty queue. Which expression meets both cases without calling `head` on an empty list?
+          options:
+            - "`if null names then head names else \"empty\"`"
+            - "`if null names then \"empty\" else head names`"
+            - "`head names`"
+          correct_index: 1
           option_feedback:
-            1: "The inserted element is x. Its type a must match the list elements; y's type b does not determine them."
-            2: "The unused y can have a different type from x. Requiring both tuple components to have type a restricts valid inputs."
-          explanation: "The tuple components may differ. Cons connects x's type to both the input list's element type and the result's element type."
+            0: "The branches are reversed: this demands a first item precisely when the list is empty and returns the fallback for a nonempty list."
+            2: The empty list contains no first item; `head []` cannot supply a filename.
+          explanation: The conditional selects the fallback before demanding a first item. A list type does not guarantee a nonempty value, so callers of `head` must account for emptiness.
     solution:
       files:
         - path: Main.hs
@@ -1329,31 +1392,41 @@ steps:
     quiz:
       title: Step 7 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
-      - type: single
-        difficulty: intermediate
-        question: 'After matching `(first:second:rest)` against `[[1],[2,3],[]]`, what does `second : rest` construct?'
-        options:
-        - '`[2,3]`'
-        - '`[[2,3],[]]`'
-        - '`[[2,3]]`'
-        correct_index: 1
-        option_feedback:
-          0: second is one list-valued element. Cons places that whole element before rest; it does not flatten it.
-          2: rest still contains the final empty list. Reconstructing the list must preserve that element.
-        explanation: 'second is [2,3] and rest is [[]]. Cons produces a two-element outer list: [[2,3],[]].'
-      - type: single
-        difficulty: intermediate
-        question: A catch-all equation appears before specific list patterns. Which rule applies?
-        options:
-        - Haskell chooses the most specific pattern
-        - Haskell tries each rule until the last match
-        - Haskell chooses the first matching pattern
-        correct_index: 2
-        option_feedback:
-          0: Pattern specificity does not override source order. A catch-all can hide every later equation.
-          1: Selection stops at the first matching equation rather than remembering a later match.
-        explanation: As with the earlier guard example, place specific cases before an unconditional fallback.
+        - type: single
+          difficulty: intermediate
+          bloom: apply
+          question: "A row-editing tool matches `(first:second:rest)` against `[[1],[2,3],[]]` and keeps `second : rest`. Predict the retained rows, including empty ones."
+          options:
+            - "`[2,3]`"
+            - "`[[2,3],[]]`"
+            - "`[[2,3]]`"
+          correct_index: 1
+          option_feedback:
+            0: "`second` is one list-valued element. Cons preserves that whole row instead of flattening it."
+            2: "`rest` still contains the final empty row, which must be preserved."
+          explanation: "`second` is `[2,3]` and `rest` is `[[]]`, so the result is `[[2,3],[]]`. The same element-versus-list distinction applies at each nesting level."
+        - type: single
+          difficulty: intermediate
+          bloom: evaluate
+          question: |
+            A helper should return true for any queue with at least two items. Its author checked a two-item queue and an empty queue. Which additional test most directly challenges the pattern choice?
+
+            ```haskell
+            hasPair [x,y] = True
+            hasPair _ = False
+            ```
+          options:
+            - A different two-item queue; its values might change the pattern.
+            - A three-item queue; its expected result is still `True`.
+            - A one-item queue; its expected result is `False`.
+          correct_index: 1
+          option_feedback:
+            0: The pattern cares about shape rather than these element values. Another two-item queue repeats the already-tested case.
+            2: This is useful boundary coverage, but the fallback already gives the expected answer and does not expose the exact-length error.
+          explanation: "`[x,y]` matches exactly two items, whereas `(x:y:rest)` permits more. Also keep the specific case before `_`: an earlier catch-all would prevent it from being reached."
     solution:
       files:
       - path: Main.hs
@@ -1500,43 +1573,45 @@ steps:
       - text: A recursive case can start `countAtLeast threshold (score:rest) = ...`. Its result must account for the
           current score and a call that receives `rest`. Decide how to combine those amounts.
     quiz:
-      title: "Step 8 — Knowledge Check"
+      title: Step 8 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
           difficulty: intermediate
+          bloom: analyze
           question: |
-            This counter should count every value at least 5. What belongs
-            in the blank so a smaller value does not hide later matches?
+            A counter should count all values at least 5. Two proposals handle a smaller head differently: return `0`, or call `countHits xs`. Which input distinguishes these proposals? Predict both results for your chosen input.
 
             ```haskell
-            countHits :: [Int] -> Int
             countHits [] = 0
             countHits (x:xs)
               | x >= 5 = 1 + countHits xs
-              | otherwise = ______
+              | otherwise = ...
             ```
           options:
-            - "`countHits xs`"
-            - "`0`"
-            - "`countHits (x:xs)`"
-          correct_index: 0
-          option_feedback:
-            1: "Returning zero stops here. On [4,5], it would lose the later qualifying 5."
-            2: "The call receives the same input, so it repeatedly encounters the same nonmatching head and never reaches the base case."
-          explanation: "The head contributes zero, but the tail still needs processing. On [4,5], the result is countHits [5] = 1."
-        - type: single
-          difficulty: intermediate
-          question: "A counter uses `x > threshold`. Which input best reveals the missing equality case?"
-          options:
-            - "`threshold = 5`, `scores = [6]`"
-            - "`threshold = 5`, `scores = [5]`"
-            - "`threshold = 5`, `scores = [4]`"
+            - "`[5,4]`: both proposals count the first item."
+            - "`[4,5]`: only processing the tail finds the later match."
+            - "`[4,3]`: only returning zero rejects both items."
           correct_index: 1
           option_feedback:
-            0: "Both > and >= accept 6, so that input cannot distinguish the rules."
-            2: "Both > and >= reject 4. The disagreement is exactly on the boundary."
-          explanation: "At equality, the required >= rule counts one while > counts zero. This reuses the guard-boundary strategy."
+            0: "Both give 1: the nonmatching item has no later match to reveal premature stopping."
+            2: Both give 0 on this input. Continuing does not require counting values that fail the condition.
+          explanation: On `[4,5]`, stopping gives 0 and recursion on the tail gives 1. Recursing on `(x:xs)` instead would make no progress; a smaller argument and the correct combination of results are separate obligations.
+        - type: single
+          difficulty: intermediate
+          bloom: evaluate
+          question: A sum uses `total [] = 10` and `total (x:xs) = x + total xs`. A teammate says the base value only affects an empty input. Which review argument tests that claim?
+          options:
+            - "Accept it: nonempty calls choose only the second equation."
+            - "Reject it: `total [2,3]` includes the base and returns `15`."
+            - "Reject it: each element adds the base, so `[2,3]` returns `25`."
+          correct_index: 1
+          option_feedback:
+            0: The nonempty equation uses the smaller call’s result, which eventually includes the base result.
+            2: For a finite list, this chain reaches the base once, not once per element.
+          explanation: "`total [2,3] = 2 + (3 + 10)`, so changing the base changes nonempty results too. Explain what the smaller result represents before choosing the base; it participates in the calculation rather than merely stopping calls."
     solution:
       files:
       - path: Main.hs
@@ -1676,33 +1751,40 @@ steps:
     quiz:
       title: Step 9 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
-      - type: single
-        difficulty: intermediate
-        question: What does `[(n,n-1) | n <- [2,4..8], n > 4]` produce?
-        options:
-        - '`[(6,5),(8,7)]`'
-        - '`[(6,5)]`'
-        - '`[(5,4),(6,5),(7,6),(8,7)]`'
-        correct_index: 0
-        option_feedback:
-          1: The endpoint is included when the arithmetic step reaches it; this sequence reaches 8.
-          2: The first two range values set a step of 2. The generator never produces 5 or 7.
-        explanation: The generator gives 2, 4, 6, 8. The qualifier retains 6 and 8, then each becomes a pair with
-          its predecessor.
-      - type: single
-        difficulty: intermediate
-        question: Which result describes `[(name,flag) | flag <- [True,False], name <- ["A","B"]]`?
-        options:
-        - '`[("A",True),("B",False)]`'
-        - '`[("A",True),("B",True),("A",False),("B",False)]`'
-        - '`[("A",True),("A",False),("B",True),("B",False)]`'
-        correct_index: 1
-        option_feedback:
-          0: Two generators enumerate all combinations; they do not pair corresponding positions.
-          2: The rightmost generator varies fastest, so both names are produced for True before moving to False.
-        explanation: The result expression controls the order inside each tuple, but the generators control the order
-          of tuples. For each flag, visit every name.
+        - type: single
+          difficulty: intermediate
+          bloom: analyze
+          question: |
+            A timetable should list both slots for each room before moving to the next room. Write the first two results before deciding whether this comprehension meets that requirement.
+
+            ```haskell
+            [(room,slot) | slot <- [1,2], room <- ["A","B"]]
+            ```
+          options:
+            - "Yes: the tuple puts `room` first, so rooms determine the order."
+            - "No: the first two results are `(\"A\",1)` and `(\"B\",1)`."
+            - "No: it pairs positions and produces only `(\"A\",1)` and `(\"B\",2)`."
+          correct_index: 1
+          option_feedback:
+            0: The output tuple controls each item’s shape, not the order in which generators visit values.
+            2: Two generators enumerate combinations rather than pairing matching positions.
+          explanation: The right generator varies fastest, so both rooms appear for slot 1 before slot 2. Put the room generator first to meet the required room-by-room ordering without changing the tuple shape.
+        - type: single
+          difficulty: intermediate
+          bloom: analyze
+          question: A scheduling helper uses `[2,4..limit]`. A refactoring uses `[2,4..limit-1]`, claiming to produce the same slots. Which pair of limits tests both an endpoint that should be included and an upper bound that is not reached? Predict both original lists before choosing.
+          options:
+            - "`limit = 6` and `limit = 8`"
+            - "`limit = 7` and `limit = 8`"
+            - "`limit = 7` and `limit = 9`"
+          correct_index: 1
+          option_feedback:
+            0: Both endpoints are reached by steps of two. These tests expose the missing endpoint but do not check an upper bound between generated values.
+            2: Neither endpoint is reached by steps of two, so both versions return the same lists. These tests miss the omitted-even-endpoint bug.
+          explanation: "The original gives [2,4,6] for limit 7 and [2,4,6,8] for limit 8. The refactoring drops 8 from the second result: a range already stops before exceeding its bound, and includes the bound when its step reaches it."
     solution:
       files:
       - path: Main.hs
@@ -1822,33 +1904,50 @@ steps:
       - text: Start from `takeBudget budget [] = ...`; use a price comparison for nonempty input. Check what that comparison
           says when both cost and budget are zero.
     quiz:
-      title: "Step 10 — Knowledge Check"
+      title: Step 10 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
-          difficulty: advanced
-          question: "Why does testing `takeBudget 8 [3,4]` alone miss a function that checks each price against 8?"
+          difficulty: intermediate
+          bloom: analyze
+          question: "`takeBudget` must take an affordable prefix and stop at the first unaffordable item. For budget 6 and prices `[4,3,1]`, compare that rule with skipping unaffordable items and with checking every price against the original budget. Work out each result before reading the options."
           options:
-            - "Both strategies buy every item in that input"
-            - "The correct strategy reverses this input list"
-            - "The input has the wrong numeric element type"
+            - "Prefix: `[4]`; skip: `[4,1]`; original budget: `[4,3,1]`."
+            - "Prefix: `[4,1]`; skip: `[4]`; original budget: `[4,3,1]`."
+            - "Prefix: `[4]`; skip: `[4,1]`; original budget: `[4,1]`."
           correct_index: 0
           option_feedback:
-            1: "The specification preserves order. Reversing would be a separate defect."
-            2: "The input has the required type; the issue is that it does not distinguish the two strategies."
-          explanation: "Both items cost at most 8 and their total is only 7. Use an input whose total exceeds the budget to separate the strategies."
+            1: A prefix cannot omit the middle item and then resume. That is the skip strategy.
+            2: Each individual price is at most 6, so comparing each with the original budget accepts all three and overspends.
+          explanation: After spending 4, only 2 remains; the required strategy stops at price 3. Each alternative may suit a different task, but only the prefix rule preserves this wishlist’s stated priority.
         - type: single
           difficulty: intermediate
-          question: "What must remain true after accepting the first cost?"
+          bloom: evaluate
+          question: A proposed optimization stops immediately whenever the remaining budget is zero. Prices may be zero. Which test is the strongest reason to reject this change?
           options:
-            - "The tail receives the original budget"
-            - "The input list is changed in place"
-            - "The tail receives the unspent budget"
-          correct_index: 2
+            - "`takeBudget 0 [0,2]` should return `[0]`."
+            - "`takeBudget 0 [2,0]` should return `[]`."
+            - "`takeBudget 1 [2,0]` should return `[]`."
+          correct_index: 0
           option_feedback:
-            0: "Reusing the original budget can spend the same points more than once."
-            1: "The function builds a new result. Recursion does not require changing the input list."
-          explanation: "Passing the remaining budget carries the needed information into the smaller problem."
+            1: Both the proposed optimization and the correct rule return an empty list here, so this test cannot distinguish them.
+            2: This checks an unaffordable item but never starts with zero budget, so it does not expose the proposed early stop.
+          explanation: Zero budget does not imply that the next item is unaffordable. The stopping decision must consider the next price; boundary tests should include allowed values such as free items.
+        - type: single
+          difficulty: advanced
+          bloom: evaluate
+          question: A new request asks the function to buy the greatest number of snacks, allowing it to skip and reorder prices. A teammate proposes keeping `takeBudget` unchanged because it already respects a budget. Which response best assesses reuse?
+          options:
+            - "Reuse it unchanged: any affordable result meets the new goal."
+            - "Revise the strategy: an affordable prefix can miss more items."
+            - Keep the original order, but skip unaffordable prices.
+          correct_index: 1
+          option_feedback:
+            0: Being affordable is necessary but does not maximize the number bought. The new request changes the selection criterion.
+            2: Skipping only after an item is unaffordable can still spend the budget on an early expensive item. With budget 4 and [4,2,2], it buys one instead of the possible two.
+          explanation: With budget 4 and prices `[4,2,2]`, the prefix buys one item while choosing the last two buys two. This counterexample shows why a correct function for one specification may need a different strategy for another.
     solution:
       files:
       - path: Main.hs

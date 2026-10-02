@@ -35,7 +35,14 @@ steps:
     instructions: |
       ### Why this matters
 
-      A lot of list recursion repeats the same walk through the list. Higher-order functions let us name that walk once and supply the part that changes: what to do with each item.
+      A data-processing task often needs to discard unwanted records and
+      transform the remaining ones. Writing a fresh traversal for every
+      task mixes those decisions with repeated list-handling code.
+      **`map` and `filter` separate the traversal from the rule you supply**,
+      so a reader can see whether a stage changes values or selects them.
+      This lets you reuse a tested operation while concentrating on the
+      application-specific rule, a pattern that also appears in Python
+      and JavaScript collection processing.
 
       ### 🎯 You will learn to
 
@@ -134,41 +141,58 @@ steps:
           - title: "Nested Calls"
             text: "The shape is `map transformation (filter predicate originalScores)`. Match each role to a helper in the file."
     quiz:
-      title: "Step 1 — Knowledge Check"
+      title: Step 1 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
+          bloom: apply
           difficulty: intermediate
-          question: "What is `map null [[],[1],[2,3]]`?"
+          question: |-
+            What value and type result from `map null [["hi"],[],[""]]`?
+
+            Write your predicted value and type before choosing. Compare your reasoning with the feedback afterward.
           options:
-            - "`[True]`"
-            - "`[True,False,False]`"
-            - "`[False,True,True]`"
-          correct_index: 1
+            - '`[False,True,False] :: [Bool]`'
+            - '`[[]] :: [[String]]`'
+            - '`[False,True,True] :: [Bool]`'
+          correct_index: 0
           option_feedback:
-            0: "Map retains every function result, including False. It does not use those results to decide which output items to keep."
-            2: "Null returns True for the empty list and False for each nonempty list. This answer reverses that predicate."
-          explanation: "The three calls to null return True, False, and False. Map can change the element type: here it turns lists into Booleans."
-        - type: single
+            1: Selecting original empty rows is the behavior of filter. Map instead retains one predicate result for every
+              row.
+            2: The last row contains one string, even though that string is empty. Null tests whether the row itself has
+              any elements.
+          explanation: The row lengths are 1, 0, and 1, so their emptiness decisions are False, True, and False. Map keeps
+            all three decisions and changes the element type to Bool.
+        - type: multiple
+          bloom: analyze
           difficulty: intermediate
-          question: |
-            Complete the missing branch so rejected entries do not prevent later ready names from appearing.
+          question: |-
+            Use the taught helpers `qualifies score = score >= 10` and `doublePoints score = score * 2`. Compare these two pipelines. Select every input that makes their results differ.
 
             ```haskell
-            readyNames [] = []
-            readyNames ((name, ready):rest)
-              | ready       = name : readyNames rest
-              | otherwise   = ___
+            selectFirst xs = map doublePoints (filter qualifies xs)
+            changeFirst xs = filter qualifies (map doublePoints xs)
             ```
           options:
-            - "`[]`"
-            - "`readyNames rest`"
-            - "`name : readyNames rest`"
-          correct_index: 1
+            - '`[6]`'
+            - '`[10,12]`'
+            - '`[0,12]`'
+            - '`[4,7]`'
+          correct_indices:
+            - 0
+            - 3
           option_feedback:
-            0: "One unready entry does not imply that every later entry is unready. Continue checking the tail."
-            2: "This emits a name even though its entry is not ready. Only the passing branch should add that name."
-          explanation: "The unready head contributes no name, but the remaining entries still need their own readiness checks."
+            0: A score of 6 is initially ineligible but becomes 12 after doubling. The two pipelines disagree on whether
+              to include it.
+            1: Both original scores already qualify, so both pipelines return [20,24]. A passing test here cannot establish
+              that the stage order is correct.
+            2: Zero fails before and after doubling, while 12 passes both times. Both pipelines return [24].
+            3: Seven crosses the cutoff when doubled, while four does not. The results are [] and [14], exposing selection
+              on changed scores.
+          explanation: A distinguishing input includes an originally ineligible score that becomes eligible after transformation.
+            Keeping types compatible does not guarantee that rearranging stages preserves the contract.
     solution:
       files:
         - path: Main.hs
@@ -205,7 +229,14 @@ steps:
     instructions: |
       ### Why this matters
 
-      Sometimes the behavior passed to `map` is too small to need a separate name. Sometimes that behavior also needs a setting chosen earlier. Lambdas and closures handle both cases.
+      A callback may run after the function that created it has returned,
+      yet still need a setting chosen there, such as which slice of a
+      result list to show. **A closure connects a function to the bindings
+      it needs**, and lexical scope tells you which binding each name uses.
+      Understanding that connection helps you write configurable callbacks
+      and diagnose errors caused by shadowed names. The small functions
+      here isolate the same reasoning you need when reading event handlers
+      and other callback-based code.
 
       ### 🎯 You will learn to
 
@@ -269,30 +300,38 @@ steps:
           - title: "The Window Rule"
             text: "First skip the prefix determined by start. Then keep at most count items from the remaining list; switching those operations can discard the whole window."
     quiz:
-      title: "Step 2 — Knowledge Check"
+      title: Step 2 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
+          bloom: apply
           difficulty: intermediate
-          question: |
+          question: |-
             What is `choose "oak" "saved" ""`?
 
             ```haskell
             choose items tag = \items -> (null items, tag)
             ```
+
+            Identify the binding used by each name before choosing. Compare your reasoning with the feedback afterward.
           options:
             - '`(False,"saved")`'
             - '`(True,"saved")`'
             - '`(True,"oak")`'
           correct_index: 1
           option_feedback:
-            0: "The inner items shadows the first parameter. The returned function receives the empty string, which null recognizes as empty."
-            2: "The tag comes from the second argument, saved. The outer items value oak is unused after the inner parameter shadows its name."
-          explanation: 'The lambda tests its own empty items value and retains the surrounding tag, producing (True,"saved"). The outer items value is unused.'
-        - type: single
-          difficulty: intermediate
-          question: |
-            What is the result of this expression?
+            0: The inner items shadows the first parameter. The returned function receives the empty string, which null
+              recognizes as empty.
+            2: Tag refers to the second argument, "saved". Shadowing items does not redirect the separate tag binding.
+          explanation: The lambda tests its own empty items argument and retains the surrounding tag. The outer items
+            argument is unused.
+        - type: multiple
+          bloom: analyze
+          difficulty: advanced
+          question: |-
+            Each proposed edit is made separately. Select every edit that preserves this expression's result.
 
             ```haskell
             let limit = 2
@@ -300,31 +339,41 @@ steps:
             in let limit = 99 in clip ["p","q","r"]
             ```
           options:
-            - '`["p","q","r"]`'
-            - '`["p","q"]`'
-            - "A duplicate-binding error"
-          correct_index: 1
+            - Rename the inner `limit = 99` binding to `cap = 99`.
+            - Change the outer `limit = 2` binding to `limit = 1`.
+            - Change the inner `limit = 99` binding to `limit = 1`.
+            - Move `clip` into the inner `let` beside `limit = 99`.
+          correct_indices:
+            - 0
+            - 2
           option_feedback:
-            0: "A caller's local name does not replace a free name's binding in an already defined function."
-            2: "The inner let creates a nested scope, so it may shadow the outer limit without redefining that outer binding."
-          explanation: "The body of clip refers to limit in its definition's scope, where it is 2. The inner limit = 99 does not alter that binding."
+            0: The inner limit is unused, so renaming it does not change which binding clip refers to.
+            1: Clip uses the outer limit. Changing it to 1 changes the result to ["p"].
+            2: The caller-side limit does not change the binding captured by clip. The result remains ["p","q"].
+            3: Moving the definition changes its lexical surroundings. Clip would then use 99 and return all three items.
+          explanation: Preserving a closure requires preserving the bindings its free names refer to. A name at the call
+            site and a name at the definition site can have the same spelling but different roles.
         - type: single
+          bloom: apply
           difficulty: intermediate
-          question: |
-            Infer the most general type of `duplicateItems` from its definition.
+          question: |-
+            Infer the most general type of `duplicateItems`.
 
             ```haskell
             duplicateItems items = map (\item -> (item, item)) items
             ```
           options:
-            - "`[a] -> [(a, a)]`"
-            - "`[a] -> [[a]]`"
-            - "`[a] -> [(a, b)]`"
+            - '`[a] -> [(a, a)]`'
+            - '`[a] -> [[a]]`'
+            - '`[a] -> [(a, b)]`'
           correct_index: 0
           option_feedback:
-            1: "The lambda constructs a pair with parentheses, not an inner list with brackets. Map keeps that pair as one output element."
-            2: "Both pair positions contain the same item, so their types must agree. The second component cannot have an unrelated type."
-          explanation: "Each input has type a and becomes a pair (a,a). Mapping over [a] therefore returns [(a,a)]. No arithmetic or comparison constrains a."
+            1: The lambda returns a pair as one output element, rather than an inner list. Map preserves that element
+              structure.
+            2: Both positions contain the same item, so their types agree. An unrelated b would promise independent types
+              that this definition cannot produce.
+          explanation: An input element of type a becomes a pair of type (a,a), giving [a] -> [(a,a)]. No numeric or comparison
+            operation restricts the element type.
     solution:
       files:
         - path: Main.hs
@@ -358,7 +407,13 @@ steps:
     instructions: |
       ### Why this matters
 
-      A function can be configured now and supplied its data later. Reading the remaining function type tells us exactly which arguments are still missing.
+      Several parts of an application may need the same operation with
+      different settings, such as a different fallback for an empty list.
+      **Partial application turns one general function into a configured
+      function** that you can pass on or reuse when data arrives. You can
+      vary the policy without copying the operation's implementation.
+      Reading the remaining type lets you check whether you have produced
+      a result or a function still waiting for input.
 
       ### 🎯 You will learn to
 
@@ -447,35 +502,74 @@ steps:
           - title: "A Named Operand"
             text: "Try giving the lambda parameter the name score. Write the arithmetic rule using score and amount in their required roles."
     quiz:
-      title: "Step 3 — Knowledge Check"
+      title: Step 3 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
+          bloom: apply
           difficulty: intermediate
-          question: "Given `award :: Int -> Int -> [Int] -> [Int]`, what is the type of `award 2`?"
+          question: |-
+            Given `award :: Int -> Int -> [Int] -> [Int]`, what is the type of `award 2`?
+
+            Write the arguments still needed before choosing. Compare your reasoning with the feedback afterward.
           options:
-            - "`(Int, [Int]) -> [Int]`"
-            - "`Int -> [Int] -> [Int]`"
-            - "`[Int] -> [Int]`"
+            - '`(Int, [Int]) -> [Int]`'
+            - '`Int -> [Int] -> [Int]`'
+            - '`[Int] -> [Int]`'
           correct_index: 1
           option_feedback:
-            0: "The original curried interface does not turn the remaining arguments into a tuple. Its arrows stay in place."
-            2: "Only one Int argument has been supplied. The second Int argument is still needed before the list argument."
-          explanation: "The arrows group as Int -> (Int -> ([Int] -> [Int])). Supplying 2 leaves a function awaiting the second Int and then the list; `(award 2) [3,4]` would try to supply that Int with a list."
-        - type: parsons
+            0: Supplying one argument does not convert the remaining curried inputs into a tuple.
+            2: Only one Int argument has been supplied. Another Int is needed before the list argument.
+          explanation: The arrows group as Int -> (Int -> ([Int] -> [Int])). Supplying 2 leaves a function awaiting one
+            Int and then a list.
+        - type: multiple
+          bloom: analyze
           difficulty: intermediate
-          question: |
-            Arrange the five required fragments into an explicitly curried definition of `discountAll :: Int -> [Int] -> [Int]`. It must receive the amount first, then subtract that amount from every score. Discard the fragment that reverses the subtraction.
-          display: inline
-          lines:
-            - 'discountAll = '
-            - '\amount -> '
-            - '\scores -> '
-            - 'map (\score -> score - amount) '
-            - 'scores'
-          distractors:
-            - 'map (\score -> amount - score) '
-          explanation: "The first lambda binds the Int amount, the second binds the score list, and map applies a score-to-discounted-score function. Reversing the lambda order would contradict the stated argument order and type."
+          question: |-
+            Both functions subtract the adjustment from the score. Select every expression that produces `[8,18]`.
+
+            ```haskell
+            adjust amount score = score - amount
+            pairAdjust (amount, score) = score - amount
+            ```
+          options:
+            - '`map (adjust 2) [10,20]`'
+            - '`map pairAdjust [(2,10),(2,20)]`'
+            - '`map (\score -> adjust score 2) [10,20]`'
+            - '`map (\score -> pairAdjust (score,2)) [10,20]`'
+          correct_indices:
+            - 0
+            - 1
+          option_feedback:
+            0: Adjust 2 fixes the amount and leaves the score as the remaining argument. Each mapped result subtracts
+              2 from a score.
+            1: Every pair supplies the adjustment followed by the score, matching pairAdjust's pattern.
+            2: This supplies each score as the adjustment and 2 as the score, producing [-8,-18]. The expression is valid
+              but reverses the intended roles.
+            3: PairAdjust interprets the first component as the adjustment. Swapping components reverses the subtraction
+              even though the pair still type-checks.
+          explanation: Curried and tuple interfaces can express the same operation, but their argument roles must be preserved.
+            Partial application fixes one role; pairing packages both roles together.
+        - type: single
+          bloom: evaluate
+          difficulty: advanced
+          question: A pipeline receives existing `(adjustment, score)` records. Another pipeline receives scores later,
+            after choosing one adjustment. The team wants to avoid rebuilding records in the first pipeline and avoid
+            repeating the setting in the second. Which interface choice best fits those criteria?
+          options:
+            - Use a tuple interface for records and a curried interface for configured callbacks.
+            - Use a curried interface for records and a tuple interface for configured callbacks.
+            - Use a tuple interface for both; omit its score component until each score arrives.
+          correct_index: 0
+          option_feedback:
+            1: 'This reverses the convenient fit: records already supply a pair, while a curried function can retain the
+              setting before scores arrive. Adapters are possible but add the work the criteria seek to avoid.'
+            2: A tuple argument is supplied as one value; leaving out a component is not partial application. A wrapper
+              could build each pair later, but the curried interface already exposes that use.
+          explanation: Neither interface is universally better. Match the existing data shape with the tuple interface
+            and the staged arrival of arguments with the curried interface.
     solution:
       files:
         - path: Main.hs
@@ -510,7 +604,13 @@ steps:
     instructions: |
       ### Why this matters
 
-      A type signature records how values connect. Deriving those connections helps you decide which function can fill a missing argument, even before you run the program.
+      To use a library function that accepts another function, you need to
+      know what it will pass to your code and what your code must return.
+      **Higher-order types describe that connection.** Deriving the types
+      lets you decide whether a callback fits and locate where two stages
+      of a data pipeline disagree, before trying random edits until the
+      compiler accepts them. This is a practical way to read unfamiliar
+      interfaces and design reusable ones of your own.
 
       ### 🎯 You will learn to
 
@@ -570,38 +670,77 @@ steps:
           - title: "Lift to the List"
             text: "Once your lambda handles one pair, map can apply it to every entry. Map preserves the empty case, order, and repeated labels without separate decisions."
     quiz:
-      title: "Step 4 — Knowledge Check"
+      title: Step 4 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
+          bloom: apply
           difficulty: intermediate
-          question: |
+          question: |-
             What is the most general type of `measure`? Recall `length :: [a] -> Int`.
 
             ```haskell
             measure makeList value = length (makeList value)
             ```
+
+            Track the intermediate types before choosing. Compare your reasoning with the feedback afterward.
           options:
-            - "`(a -> [b]) -> a -> Int`"
-            - "`(a -> b) -> [a] -> Int`"
-            - "`([a] -> Int) -> a -> Int`"
+            - '`(a -> [b]) -> a -> Int`'
+            - '`(a -> b) -> [a] -> Int`'
+            - '`([a] -> Int) -> a -> Int`'
           correct_index: 0
           option_feedback:
-            1: "Length needs a list from makeList, so its result type cannot be an unconstrained b. Value itself need not be a list."
-            2: "This makes makeList return Int, which length cannot consume. Length determines the result type after makeList returns its list."
-          explanation: "MakeList receives a value of type a and produces a list of some element type b. Length consumes [b] and returns Int."
-        - type: single
+            1: Length needs a list from makeList, so its result cannot be an unconstrained b. Value itself need not be
+              a list.
+            2: This makes makeList return Int, which length cannot consume. Length determines the result type after makeList
+              returns its list.
+          explanation: MakeList receives a value of type a and returns a list of some element type b. Length consumes
+            that [b] and returns Int.
+        - type: multiple
+          bloom: analyze
           difficulty: intermediate
-          question: "After applying `convertPairs :: (a -> b) -> [(tag, a)] -> [(tag, b)]` to `null :: [x] -> Bool`, what type remains?"
+          question: 'Use `convertPairs :: (a -> b) -> [(tag, a)] -> [(tag, b)]` with `null :: [x] -> Bool`. Select every
+            conclusion supported by those relationships.'
           options:
-            - "`[(tag, [x])] -> [(tag, Bool)]`"
-            - "`[(tag, Bool)] -> [(tag, [x])]`"
-            - "`[([x], tag)] -> [(Bool, tag)]`"
+            - The remaining input has type `[(tag, [x])]`.
+            - The remaining input has type `[(tag, Bool)]`.
+            - The output has type `[(tag, Bool)]`.
+            - The label type must become `Bool` too.
+          correct_indices:
+            - 0
+            - 2
+          option_feedback:
+            0: Null consumes a list, so a is [x] in each input pair. Supplying the converter still leaves the list of
+              pairs to supply.
+            1: Bool is the converter's result type, not its input type. Null cannot consume an arbitrary Boolean.
+            2: The converter returns Bool, which replaces the second field of every output pair.
+            3: Tag is a separate type variable and passes through unchanged. Changing the value field does not constrain
+              the label to the same type.
+          explanation: Substitute [x] for a and Bool for b, preserving tag. The configured function has type [(tag,[x])]
+            -> [(tag,Bool)].
+        - type: single
+          bloom: evaluate
+          difficulty: intermediate
+          question: |-
+            A report must retain each label and replace its word with the word's length. For example, `[('x',"elm")]` must give `[('x',3)]`. Which repair satisfies the contract?
+
+            ```haskell
+            sizes :: [(Char, String)] -> [(Char, String)]
+            sizes entries = convertPairs length entries
+            ``` State which requirement decides your choice before selecting.
+          options:
+            - Change the result annotation to `[(Char, Int)]`.
+            - Keep the annotation; replace `length` with `\word -> word`.
+            - Keep the annotation; replace the body with `entries`.
           correct_index: 0
           option_feedback:
-            1: "Null consumes a list and returns Bool, so these input and output roles are reversed."
-            2: "ConvertPairs transforms the second component. The label stays in the first component on both sides."
-          explanation: "Substitute [x] for a and Bool for b. Supplying null removes the function argument, leaving a function from pairs with list values to pairs with Boolean values."
+            1: Returning each word unchanged can satisfy the original annotation but does not produce the required lengths.
+            2: Returning entries also preserves words instead of measuring them. Agreement with a type annotation alone
+              is insufficient evidence of correctness.
+          explanation: The body already maps each String to an Int while retaining the Char label. The specification therefore
+            calls for repairing the annotation, not changing the body to preserve the mistaken result type.
     solution:
       files:
         - path: Main.hs
@@ -630,7 +769,13 @@ steps:
     instructions: |
       ### Why this matters
 
-      Some list tasks carry a result forward as each item is incorporated. A fold makes that accumulating rule explicit and gives the empty input a deliberate meaning.
+      Turning digits into a number or records into a summary requires each
+      item to contribute to a combined result. **A fold exposes the starting
+      value and the rule for combining the result so far with another
+      item.** Giving that accumulated result a precise meaning lets you
+      explain why the algorithm works, including on empty input. The same
+      reasoning helps you design loop invariants and diagnose incorrect
+      totals or values built in the wrong order.
 
       ### 🎯 You will learn to
 
@@ -712,33 +857,69 @@ steps:
           - title: "Two Arithmetic Operations"
             text: "The reducer needs a multiplication on acc followed by an addition of digit. Choose the multiplier from the number system's base."
     quiz:
-      title: "Step 5 — Knowledge Check"
+      title: Step 5 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
+          bloom: apply
           difficulty: intermediate
-          question: 'Given `step :: [Int] -> String -> [Int]`, what is the type of `foldl step [] ["a","bb"]`?'
+          question: |-
+            What is `foldl (\acc item -> acc - item) 10 [1,2]`?
+
+            Write the grouped subtraction before choosing. Compare your reasoning with the feedback afterward.
           options:
-            - "`[Int]`"
-            - "`[String]`"
-            - "`Int`"
+            - '`7`'
+            - '`9`'
+            - '`11`'
           correct_index: 0
           option_feedback:
-            1: "String is the type of each input item. The reducer returns [Int], so the accumulator and final result have that type."
-            2: "The reducer returns a list of Int values, not a single Int. Foldl preserves the accumulator's whole type."
-          explanation: "In (b -> a -> b), a is String and b is [Int]. The seed [] takes the accumulator type [Int], which is also the result type."
+            1: Nine accounts for the first item only. The second item still contributes another subtraction.
+            2: Eleven comes from 10 - (1 - 2), which associates differently. This fold expands to (10 - 1) - 2.
+          explanation: The fold associates as (10 - 1) - 2, giving 7. These equations describe grouping, without claiming
+            that each intermediate value is evaluated immediately.
+        - type: multiple
+          bloom: analyze
+          difficulty: advanced
+          question: |-
+            A fold should collect one word length per input word in the original order. Compare these reducers, both used with seed `[]`. Select every input that distinguishes them.
+
+            ```haskell
+            appendSize acc word = acc ++ [length word]
+            prependSize acc word = length word : acc
+            ```
+          options:
+            - '`["a","owl"]`'
+            - '`["ox","hi"]`'
+            - '`["","a",""]`'
+            - '`["","to","x"]`'
+          correct_indices:
+            - 0
+            - 3
+          option_feedback:
+            0: The lengths are [1,3]. Appending produces [1,3], while prepending produces [3,1].
+            1: Both lengths are 2, so reversing them remains [2,2]. Equal-length words hide the ordering error.
+            2: The lengths [0,1,0] read the same when reversed. Several items alone do not guarantee an informative test.
+            3: The lengths [0,2,1] become [1,2,0] when prepended. Their asymmetric order exposes the difference.
+          explanation: Both folds have the same input and output types, but only appendSize preserves the word-length
+            order. Unequal, asymmetrically arranged lengths distinguish the behaviors.
         - type: single
+          bloom: analyze
           difficulty: intermediate
-          question: 'What is `foldl (\acc item -> acc - item) 10 [1,2]`?'
+          question: A teammate replaces `digitsToNumber` with `map (\digit -> digit * 10)`, expecting one decimal number.
+            Which mismatch explains why this cannot implement the contract?
           options:
-            - "`7`"
-            - "`9`"
-            - "`11`"
+            - Map returns one result per digit and carries no accumulated prefix.
+            - Map combines the digits but fixes the accumulator seed at ten.
+            - Map preserves the digits but combines their values in reverse order.
           correct_index: 0
           option_feedback:
-            1: "Nine is the accumulator after subtracting the first item. The second item still has to contribute."
-            2: "Eleven can come from 10 - (1 - 2), which groups differently. The stated left fold groups the updates as (10 - 1) - 2."
-          explanation: "The updates are 10 - 1 = 9, then 9 - 2 = 7. Subtraction exposes grouping and operand roles that addition could hide."
+            1: Map has no seed or accumulator parameter. Multiplying each digit cannot make its independent outputs into
+              one accumulated number.
+            2: Map applies the transformation in the same list positions; it does not aggregate or reverse their values.
+          explanation: The contract returns one Integer, while this map returns [Integer]. Place value depends on the
+            prefix built so far, which belongs in the fold accumulator.
     solution:
       files:
         - path: Main.hs
@@ -766,7 +947,13 @@ steps:
     instructions: |
       ### Why this matters
 
-      An accumulator can carry several facts at once. Choosing what it represents lets one recursive traversal build a result that would otherwise need separate passes.
+      A report may need both accepted and rejected record counts, and a
+      parser may need both its current position and the result built so
+      far. **An accumulator makes that evolving state explicit** as inputs
+      to the next recursive call. Choosing what each component means helps
+      you check that every branch updates the right facts and preserves
+      the others. Here, a pair of counts gives you practice reasoning about
+      several related pieces of state in one traversal.
 
       ### 🎯 You will learn to
 
@@ -826,40 +1013,62 @@ steps:
           - title: "Update Before the Tail Call"
             text: "In the otherwise branch, construct a pair with the existing yes count and one more than the current no count. Pass that pair with the unchanged predicate and the tail."
     quiz:
-      title: "Step 6 — Knowledge Check"
+      title: Step 6 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
+          bloom: apply
           difficulty: intermediate
-          question: "Given `tallyFrom :: (Int, Int) -> (a -> Bool) -> [a] -> (Int, Int)` and `null :: [b] -> Bool`, what type remains after `tallyFrom (2,1) null`?"
-          options:
-            - "`[[b]] -> (Int, Int)`"
-            - "`[Bool] -> (Int, Int)`"
-            - "`[b] -> Int`"
-          correct_index: 0
-          option_feedback:
-            1: "Null consumes a list, not a Boolean. Each input item is itself a list, so the outer input has nested-list type."
-            2: "The result remains a pair of counts. Null also requires each input item to have list type, adding the inner list layer."
-          explanation: "The seed and predicate have both been supplied. Null fixes a to [b], leaving a list of such items, [[b]], as the remaining input. The result stays (Int,Int)."
-        - type: single
-          difficulty: intermediate
-          question: |
-            A classifier should count each item exactly once. What pair belongs in the failed-predicate branch?
+          question: |-
+            Given `tallyFrom :: (Int, Int) -> (a -> Bool) -> [a] -> (Int, Int)` and `null :: [b] -> Bool`, what type remains after `tallyFrom (2,1) null`?
 
-            ```haskell
-            tallyFrom (yes, no) predicate (x:xs)
-              | predicate x = tallyFrom (yes + 1, no) predicate xs
-              | otherwise   = tallyFrom ___ predicate xs
-            ```
+            Track the item and result types before choosing. Compare your reasoning with the feedback afterward.
           options:
-            - "`(yes, no + 1)`"
-            - "`(yes + 1, no + 1)`"
-            - "`(0, no + 1)`"
+            - '`[[b]] -> (Int, Int)`'
+            - '`[Bool] -> (Int, Int)`'
+            - '`[b] -> Int`'
           correct_index: 0
           option_feedback:
-            1: "One failed item would be counted in both categories. Only its failure count should increase."
-            2: "This discards successes already accumulated, including a nonzero initial success count."
-          explanation: "A failed item contributes one failure and no success. The recursive call preserves the existing success count and increments the failure count."
+            1: Null consumes a list rather than a Boolean. Each item in the outer input must therefore itself be a list.
+            2: The result remains a pair of counts, and null requires each input item to have list type.
+          explanation: Supplying the seed and predicate leaves only the list argument. Null fixes a to [b], so that remaining
+            argument has type [[b]].
+        - type: single
+          bloom: analyze
+          difficulty: intermediate
+          question: 'A repaired `tallyFrom` passes a test where every input satisfies its predicate. In its failing branch,
+            two proposed bugs remain possible: increment both counts, or reset the success count to zero. Which additional
+            test exposes both bugs?'
+          options:
+            - '`tallyFrom (2,3) null ["x"] == (2,4)`'
+            - '`tallyFrom (0,0) null [""] == (1,0)`'
+            - '`tallyFrom (0,0) null ["x"] == (0,1)`'
+          correct_index: 0
+          option_feedback:
+            1: An empty string takes the successful branch, leaving both suspected failing-branch bugs untested.
+            2: 'This detects incrementing both counts but not resetting the success count: it is already zero.'
+          explanation: 'A failing item with a nonzero success seed checks both requirements: increase only failures, and
+            preserve earlier successes. The proposed bugs would give (3,4) and (0,4) instead.'
+        - type: single
+          bloom: evaluate
+          difficulty: advanced
+          question: A new report must count passing and failing items, retain supplied starting counts, and express both
+            updates in one source-level traversal. A teammate proposes computing each count with a separate `filter` followed
+            by `length`. Which review best fits the requirements?
+          options:
+            - Keep the pair helper; both counts share its recursive traversal.
+            - Use separate filters; immutability makes their traversals shared.
+            - Use separate filters; adding the seed combines their traversals.
+          correct_index: 0
+          option_feedback:
+            1: Immutability concerns changing bindings, not combining source-level passes. The two filter calls describe
+              separate selections.
+            2: Adding the seed can preserve starting counts, but it does not combine the separate source-level traversals.
+          explanation: Separate filters can compute correct counts when the seed is added. A recursive helper carrying
+            both counts directly expresses the requested shared traversal; actual runtime work and memory use may depend
+            on evaluation and compiler optimization.
     solution:
       files:
         - path: Main.hs
@@ -891,7 +1100,13 @@ steps:
     instructions: |
       ### Why this matters
 
-      An unbounded stream can still answer a finite question. To use it safely, we need to reason about what the consumer demands, not just whether the input looks infinite.
+      Finding the first few matches in a large sequence should not require
+      constructing every possible candidate first. **Lazy lists let the
+      requested result drive how much input is explored**, an idea you will
+      also encounter with iterators and generators. But asking for a few
+      results can still require an endless search if enough matches never
+      appear. Reasoning about demand helps you design useful pipelines and
+      explain why an apparently small request does not finish.
 
       ### 🎯 You will learn to
 
@@ -969,36 +1184,71 @@ steps:
           - title: "A Zero Demand"
             text: "The shape is `take count selectedItems`. Take handles a zero count by returning an empty list; let that behavior carry the stopping rule."
     quiz:
-      title: "Step 7 — Knowledge Check"
+      title: Step 7 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
+          bloom: apply
           difficulty: intermediate
-          question: 'What is `take 4 (map (\n -> take n "cat") [0..])`?'
+          question: |-
+            What is `take 4 (map (\n -> take n "cat") [0..])`?
+
+            Write the four predicted results before choosing. Compare your reasoning with the feedback afterward.
           options:
             - '`["","c","ca","cat"]`'
             - '`["c","ca","cat","cat"]`'
             - '`["cat","cat","cat","cat"]`'
           correct_index: 0
           option_feedback:
-            1: "The range begins at zero, so the first prefix has length zero. This answer starts from one instead."
-            2: "Take n selects the requested prefix; it does not return the entire word when n is smaller than its length."
-          explanation: "The four requested prefix lengths are 0, 1, 2 and 3. They produce the empty string, c, ca and cat."
+            1: The range begins at zero, so the first requested prefix is empty. This result begins with a request of
+              one instead.
+            2: Each n sets a prefix length. Requests smaller than the word's length do not return the whole word.
+          explanation: Only requested lengths 0, 1, 2, and 3 are needed, producing the four finite strings. The remainder
+            of the unbounded range is not needed for this result.
         - type: multiple
-          difficulty: intermediate
-          question: 'Select every expression that produces `["","a","ab"]`.'
+          bloom: analyze
+          difficulty: advanced
+          question: Select every expression whose complete result is a finite list. Reason about demand without running
+            the expressions.
           options:
-            - 'take 3 (map (\n -> take n "ab") [0..])'
-            - 'map (\n -> take n "ab") (take 3 [0..])'
-            - 'take 3 (filter null ["","a","ab"])'
-            - 'take 3 (map null ["","a","ab"])'
-          correct_indices: [0, 1]
+            - '`take 0 (filter (\n -> n < 0) ([1..] :: [Integer]))`'
+            - '`take 2 (filter even ([1..] :: [Integer]))`'
+            - '`take 1 (filter (\n -> n < 0) ([1..] :: [Integer]))`'
+            - '`filter even (take 2 ([1..] :: [Integer]))`'
+          correct_indices:
+            - 0
+            - 1
+            - 3
           option_feedback:
-            0: "Mapping the prefix function can supply each result as take requests it. Only requested lengths 0, 1 and 2 are needed."
-            1: "Take first supplies requested lengths [0,1,2]. Mapping the same prefix function over them also gives the three strings."
-            2: "Filtering with null keeps only the empty string, so the result has one item."
-            3: "Mapping null returns [True,False,False], not the original strings."
-          explanation: "Mapping preserves positions, so taking the first three requested lengths before or after this mapping gives the same three prefixes. Filter instead selects items, and mapping null changes their type."
+            0: Zero requested results need no search, so take returns [] without needing filter to find a match.
+            1: The first two even values occur after a finite prefix. Take can return [2,4] after they arrive.
+            2: The positive range contains no negative value. Requesting one match therefore makes the search continue
+              without returning a complete list.
+            3: Take bounds the input to [1,2], so the finite selection returns [2]. It answers a different question from
+              requesting two matches.
+          explanation: A bound on matching outputs needs enough matches to arrive, unless the requested count is zero.
+            Bounding the input positions gives a finite search here, but may return fewer matches.
+        - type: single
+          bloom: evaluate
+          difficulty: advanced
+          question: A preview searches `[1..]` using a predicate `p` that finishes on each number. It must show the first
+            two matches among the first 100 candidates, or fewer if that prefix has fewer matches. It must finish even
+            when nothing matches. Which design meets both the result and search-bound requirements? State which requirement
+            decides your choice before selecting.
+          options:
+            - '`take 2 (filter p (take 100 [1..]))`'
+            - '`take 2 (filter p [1..])`'
+            - '`filter p (take 2 [1..])`'
+          correct_index: 0
+          option_feedback:
+            1: This stops after two matches, but places no bound on how many candidates are searched. If nothing matches,
+              the preview does not finish.
+            2: This searches only two candidates and can omit matches later in the allowed 100-candidate prefix.
+          explanation: 'Bounding candidates first ensures the search ends; filtering then taking two preserves the requested
+            result within that prefix. The trade-off is deliberate: matches beyond candidate 100 are outside the preview
+            contract.'
     solution:
       files:
         - path: Main.hs
@@ -1030,7 +1280,14 @@ steps:
     instructions: |
       ### Why this matters
 
-      A new problem rarely arrives labeled “use filter” or “use a fold.” The next step is to choose operations from the contract and explain how their parts fit together.
+      Reports and search features often combine selection, transformation,
+      and aggregation, and **changing their order can change the answer**.
+      A pipeline can run without errors and still answer a different
+      question from the one its users asked. Building the playlist
+      report practices turning a written requirement into stages whose
+      inputs and outputs you can check separately. That decomposition helps
+      you review and modify data-processing code without losing track of
+      what the whole program is supposed to mean.
 
       ### 🎯 You will learn to
 
@@ -1098,45 +1355,66 @@ steps:
           - title: "The Empty Report"
             text: "Trace your chosen total on an empty selected list. Its base result must be zero; no bonus should be added outside the per-track calculation."
     quiz:
-      title: "Step 8 — Knowledge Check"
+      title: Step 8 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
       questions:
         - type: single
-          difficulty: intermediate
-          question: "Which test best distinguishes an inclusive cutoff from an accidentally strict cutoff?"
-          options:
-            - "A track exactly at the cutoff"
-            - "A track far above the cutoff"
-            - "A track far below the cutoff"
-          correct_index: 0
-          option_feedback:
-            1: "Both > and >= keep a score far above the cutoff, so that example cannot expose this particular error."
-            2: "Both > and >= reject a score far below the cutoff. They disagree at equality."
-          explanation: "At the boundary, >= includes the track and > excludes it. A focused example separates the two candidate rules."
-        - type: single
+          bloom: apply
           difficulty: advanced
-          question: "Which is the most general type of `applyThen f g x = g (f (f x))`?"
+          question: |-
+            Which is the most general type of `applyThen f g x = g (f (f x))`?
+
+            Track the intermediate types before choosing. Compare your reasoning with the feedback afterward.
           options:
-            - "`(a -> b) -> (b -> c) -> a -> c`"
-            - "`(a -> a) -> (a -> b) -> a -> b`"
-            - "`(a -> a) -> (a -> a) -> a -> a`"
+            - '`(a -> b) -> (b -> c) -> a -> c`'
+            - '`(a -> a) -> (a -> b) -> a -> b`'
+            - '`(a -> a) -> (a -> a) -> a -> a`'
           correct_index: 1
           option_feedback:
-            0: "The inner result is passed back into the same f. Its result type must therefore match its argument type, rather than being an unrelated b."
-            2: "G is applied only once, so it may change the type. Requiring its output to match its input would be unnecessarily restrictive."
-          explanation: "The repeated f calls require f :: a -> a. G then receives an a and may return a different type b, giving the whole function its final result type."
+            0: The inner result is fed back into the same f. Its output type must match its input type rather than an
+              unrelated b.
+            2: G is applied only once and may change the type. Requiring its output to match its input would unnecessarily
+              restrict this definition.
+          explanation: 'The repeated calls require f :: a -> a. G then consumes an a and may return b, which becomes the
+            final result.'
         - type: single
-          difficulty: intermediate
-          question: "To get the first two qualifying tracks from an infinite input, which design can finish when those tracks occur after a finite prefix?"
+          bloom: evaluate
+          difficulty: advanced
+          question: A reviewer needs one test of `playlistReport 10 3` that rejects both an accidentally strict cutoff
+            and selection after applying the bonus. Which input and expected result give that evidence?
           options:
-            - "Filter, then take two"
-            - "Take two tracks, then filter"
-            - "Map the predicate, then take two"
+            - '`[("A",8),("B",10)]` should give `(["B"],13)`.'
+            - '`[("A",10),("B",12)]` should give `(["A","B"],28)`.'
+            - '`[("A",8),("B",12)]` should give `(["B"],15)`.'
           correct_index: 0
           option_feedback:
-            1: "The first two input tracks may not qualify. Taking input positions first can miss later qualifying tracks."
-            2: "Mapping the predicate returns Booleans instead of the original tracks. Filter uses those decisions to retain tracks."
-          explanation: "Filtering can produce matching items incrementally, and take can stop after consuming two. This extends the lazy selection pattern from the previous step."
+            1: This checks equality at the cutoff, but both tracks also qualify after the bonus. It cannot expose selection
+              based on adjusted scores.
+            2: This can expose bonus-before-selection, but neither score equals the cutoff. Strict and inclusive comparisons
+              agree on this input.
+          explanation: Score 10 checks inclusion at equality; score 8 checks that a bonus cannot create eligibility. Together
+            they distinguish both specific faulty rules, without claiming to test the entire contract.
+        - type: single
+          bloom: evaluate
+          difficulty: advanced
+          question: 'Two correct playlist reports are available: one names a selected list and derives titles and points
+            from it; another uses one recursive helper carrying both results. The team prioritizes reviewing eligibility
+            separately and reusing that same selection for a future third report. Which recommendation best follows those
+            criteria? State which requirement decides your choice before selecting.'
+          options:
+            - Prefer the named selection; it exposes a reusable stage to review.
+            - Prefer the recursive helper; one traversal guarantees clearer policy.
+            - Prefer the recursive helper; separate reports would mutate the input.
+          correct_index: 0
+          option_feedback:
+            1: A combined helper may be useful for other goals, but traversal count alone does not establish clarity.
+              The stated goal favors an eligibility decision that reviewers can inspect and reuse separately.
+            2: Both designs are pure and can leave the input unchanged. Separate projections do not imply mutation.
+          explanation: The named selection directly serves the stated review and reuse priorities; the combined helper
+            remains a valid design for different priorities. This choice does not establish that either implementation
+            is faster or uses less memory.
     solution:
       files:
         - path: Main.hs
