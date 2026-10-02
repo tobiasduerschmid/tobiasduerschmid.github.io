@@ -67,26 +67,31 @@
       this.section.setAttribute('aria-label', 'Haskell interpreter');
       this.section.hidden = true;
       this.section.innerHTML =
-        '<p class="haskell-interpreter-intro"><strong>Haskell interpreter · MicroHs</strong> ' +
-        'Evaluate expressions using your current editor code.</p>' +
+        '<div class="haskell-interpreter-toolbar"><span>MicroHs</span>' +
+        '<button type="button" data-action="stop" disabled>Stop evaluation</button>' +
+        '<button type="button" data-action="previous" aria-label="Previous command" disabled>↑ Previous</button>' +
+        '<button type="button" data-action="next" aria-label="Next command" disabled>Next ↓</button>' +
+        '<button type="button" data-action="clear">Clear transcript</button></div>' +
         '<details class="haskell-interpreter-help"><summary>Examples and commands</summary>' +
         '<ul><li>Try <code>2 + 3</code>, <code>take 5 [1..]</code>, or call a function from your file.</li>' +
+        '<li>Use ↑/↓ for history, Ctrl+L to clear, and Ctrl+C to interrupt. Tab moves out of the prompt.</li>' +
         '<li>Inspect a type with <code>:type map</code> or <code>:t map</code>.</li>' +
         '<li>Use <code>let x = 3 in x * x</code> for local names. Add reusable definitions to the editor.</li>' +
         '<li>Each command reloads the active Haskell file, including unsaved edits. Definitions do not carry between commands.</li>' +
         '<li>This browser interpreter uses MicroHs. For GHCi locally, install GHC, save your file on your computer, and run <code>ghci Main.hs</code> in your terminal. Use <code>:reload</code> after editing. <a href="https://downloads.haskell.org/ghc/latest/docs/users_guide/ghci.html">GHCi guide</a>.</li></ul></details>' +
+        '<div class="haskell-interpreter-terminal" role="group" aria-label="Haskell terminal">' +
+        '<p class="haskell-interpreter-intro">Enter an expression or <code>:type map</code>. Press Enter to evaluate.</p>' +
         '<div class="haskell-interpreter-log" role="log" aria-label="Haskell interpreter transcript" aria-live="polite" aria-relevant="additions" tabindex="0"></div>' +
         '<form class="haskell-interpreter-form">' +
-        '<label>Haskell expression<span class="haskell-interpreter-prompt"><span aria-hidden="true">λ&gt;</span>' +
-        '<input type="text" name="expression" autocomplete="off" spellcheck="false" placeholder="e.g. take 5 [1..]" required></span></label>' +
-        '<div class="haskell-interpreter-actions"><button type="submit">Evaluate</button>' +
-        '<button type="button" data-action="stop" disabled>Stop evaluation</button>' +
-        '<button type="button" data-action="previous" aria-label="Previous command" disabled>↑ Previous</button>' +
-        '<button type="button" data-action="next" aria-label="Next command" disabled>Next ↓</button>' +
-        '<button type="button" data-action="clear">Clear transcript</button></div></form>';
+        '<label class="haskell-interpreter-prompt"><span class="sr-only">Haskell expression</span>' +
+        '<span class="haskell-interpreter-prompt-marker" aria-hidden="true">λ&gt;</span>' +
+        '<input type="text" name="expression" autocomplete="off" autocapitalize="off" spellcheck="false" required></label>' +
+        '<button type="submit" aria-label="Evaluate" title="Evaluate expression">↵</button></form></div>';
       panel.append(this.section);
       this.input = this.section.querySelector('input');
       this.log = this.section.querySelector('[role="log"]');
+      this.terminal = this.section.querySelector('.haskell-interpreter-terminal');
+      this.promptMarker = this.section.querySelector('.haskell-interpreter-prompt-marker');
       this.submit = this.section.querySelector('[type="submit"]');
       this.stop = this.section.querySelector('[data-action="stop"]');
       this.previous = this.section.querySelector('[data-action="previous"]');
@@ -98,23 +103,54 @@
         event.preventDefault();
         void this.evaluate();
       });
-      listen(this.stop, 'click', () => {
-        this.restoreInputFocus = document.activeElement === this.stop;
-        this.stop.disabled = true;
-        // Terminating the executor also rejects the pending evaluation. Its
-        // completion waits for this restart before accepting another command.
-        host._restartHaskellExecutor().catch(() => {});
+      listen(this.stop, 'click', () => this.interrupt());
+      listen(this.section.querySelector('[data-action="clear"]'), 'click', () => this.clear());
+      listen(this.terminal, 'click', event => {
+        if ((event.target === this.terminal || event.target === this.log) && window.getSelection().isCollapsed) {
+          this.input.focus();
+        }
       });
-      listen(this.section.querySelector('[data-action="clear"]'), 'click', () => this.log.replaceChildren());
       listen(this.previous, 'click', () => this.recall(-1));
       listen(this.next, 'click', () => this.recall(1));
       listen(this.input, 'keydown', event => {
-        if (event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        if (event.isComposing || event.altKey || event.metaKey || event.shiftKey) return;
+        if (event.ctrlKey) {
+          if (event.key.toLowerCase() === 'l') {
+            event.preventDefault();
+            this.clear();
+          } else if (event.key.toLowerCase() === 'c' && this.input.selectionStart === this.input.selectionEnd) {
+            event.preventDefault();
+            if (this.busy) this.interrupt();
+            else {
+              this.append('λ> ' + this.input.value + '^C');
+              this.input.value = '';
+              this.historyIndex = this.history.length;
+              this.draft = '';
+              this.updateHistoryButtons();
+            }
+          }
+          return;
+        }
+        if (this.busy) return;
         if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
           event.preventDefault();
           this.recall(event.key === 'ArrowUp' ? -1 : 1);
         }
       });
+    }
+
+    clear() {
+      this.log.replaceChildren();
+      this.input.focus();
+    }
+
+    interrupt() {
+      if (!this.busy || this.stop.disabled) return;
+      this.restoreInputFocus = document.activeElement === this.stop || document.activeElement === this.input;
+      this.stop.disabled = true;
+      this.append('^C');
+      // The host reports restart failures and rejects the pending evaluation.
+      this.host._restartHaskellExecutor().catch(() => {});
     }
 
     showOutput() {
@@ -139,7 +175,7 @@
       this.log.append(entry);
       // Bound the transcript and command history to this page session.
       while (this.log.children.length > 100) this.log.firstElementChild.remove();
-      this.log.scrollTop = this.log.scrollHeight;
+      this.terminal.scrollTop = this.terminal.scrollHeight;
     }
 
     appendResult(expression, result) {
@@ -159,7 +195,7 @@
       original.textContent = diagnostic.trimEnd();
       details.append(summary, original);
       this.log.append(details);
-      this.log.scrollTop = this.log.scrollHeight;
+      this.terminal.scrollTop = this.terminal.scrollHeight;
     }
 
     recall(direction) {
@@ -171,8 +207,8 @@
     }
 
     updateHistoryButtons() {
-      this.previous.disabled = this.historyIndex === 0;
-      this.next.disabled = this.historyIndex === this.history.length;
+      this.previous.disabled = this.busy || this.historyIndex === 0;
+      this.next.disabled = this.busy || this.historyIndex === this.history.length;
     }
 
     async evaluate() {
@@ -194,7 +230,8 @@
         this.append('Open a Haskell (.hs) file in the editor first.');
         return;
       }
-      this.append('Step ' + (stepIndex + 1) + ' · ' + filename + ' λ> ' + expression);
+      this.append(filename + ' λ> ' + expression);
+      const returnToPrompt = document.activeElement === this.input || document.activeElement === this.submit;
       if (this.history[this.history.length - 1] !== expression) this.history.push(expression);
       if (this.history.length > 100) this.history.shift();
       this.historyIndex = this.history.length;
@@ -202,6 +239,9 @@
       this.input.value = '';
       this.updateHistoryButtons();
       this.busy = true;
+      this.updateHistoryButtons();
+      this.input.readOnly = true;
+      this.promptMarker.textContent = '…';
       this.submit.disabled = true;
       this.stop.disabled = false;
       const run = { kind: 'interpreter', backend: 'haskell', promise: null };
@@ -231,11 +271,16 @@
         }
       }, 'Evaluating…');
       this.busy = false;
+      this.updateHistoryButtons();
+      this.input.readOnly = false;
+      this.promptMarker.textContent = 'λ>';
       this.submit.disabled = false;
       const restoreFocus = this.restoreInputFocus || document.activeElement === this.stop;
       this.restoreInputFocus = false;
       this.stop.disabled = true;
-      if (restoreFocus) this.input.focus();
+      if (!this.section.hidden && (restoreFocus || (returnToPrompt &&
+          (document.activeElement === document.body || document.activeElement === this.input)))) this.input.focus();
+      this.terminal.scrollTop = this.terminal.scrollHeight;
     }
 
     dispose() { this.events.abort(); }

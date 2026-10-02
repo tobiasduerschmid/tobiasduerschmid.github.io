@@ -147,6 +147,62 @@ async function submitExpression(interpreter, expression) {
     .toBeEnabled({ timeout: 30_000 });
 }
 
+test('the shell prompt accepts consecutive commands with Enter and supports clearing and cancelling input', async ({ page }) => {
+  const interpreter = await openInterpreter(page);
+  const input = interpreter.getByRole('textbox', { name: 'Haskell expression', exact: true });
+  const transcript = interpreter.getByRole('log', { name: 'Haskell interpreter transcript' });
+  await input.fill('6 * 7');
+  await input.press('Enter');
+  await expect(transcript.getByText('42', { exact: true })).toBeVisible();
+  await expect(input).toBeEditable();
+  await expect(input).toBeFocused();
+  await input.fill('10 + 5');
+  await input.press('Enter');
+  await expect(transcript.getByText('15', { exact: true })).toBeVisible();
+  await expect(input).toBeEditable();
+  await expect(input).toBeFocused();
+  await input.press('Control+l');
+  await expect(transcript.getByText('42', { exact: true })).toHaveCount(0);
+  await input.press('ArrowUp');
+  await expect(input).toHaveValue('10 + 5');
+  await input.press('Control+c');
+  await expect(input).toHaveValue('');
+  await expect(transcript).toContainText('^C');
+  await input.fill('sum [1..]');
+  await input.press('Enter');
+  await expect(input).not.toBeEditable();
+  await input.press('Control+c');
+  await expect(input).toBeEditable({ timeout: 90_000 });
+  await expect(input).toBeFocused();
+  await expect(transcript).toContainText('Evaluation stopped');
+  await input.fill('6 * 7');
+  await input.press('Enter');
+  await expect(transcript.getByText('42', { exact: true })).toBeVisible();
+  await expect(input).toBeEditable();
+  await input.press('Tab');
+  await expect(interpreter.getByRole('button', { name: 'Evaluate', exact: true })).toBeFocused();
+  await a11yCheckpoint(page, 'Haskell shell prompt', { feature: 'haskell-interpreter' });
+});
+
+test('the terminal prompt stays reachable when the layout becomes narrow', async ({ page }) => {
+  const interpreter = await openInterpreter(page);
+  await page.setViewportSize({ width: 320, height: 800 });
+  const input = interpreter.getByRole('textbox', { name: 'Haskell expression', exact: true });
+  await input.scrollIntoViewIfNeeded();
+  await expect(input).toBeInViewport({ ratio: 1 });
+  await submitExpression(interpreter, '6 * 7');
+  await expect(interpreter.getByRole('log').getByText('42', { exact: true })).toBeVisible();
+
+  await interpreter.getByText('Examples and commands', { exact: true }).click();
+  await input.scrollIntoViewIfNeeded();
+  await expect(input).toBeInViewport({ ratio: 1 });
+  await submitExpression(interpreter, '9 + 1');
+  await expect(interpreter.getByRole('log').getByText('10', { exact: true })).toBeVisible();
+  await a11yCheckpoint(page, 'Haskell interpreter — narrow layout with help', {
+    feature: 'haskell-interpreter', darkMode: true,
+  });
+});
+
 test('the terminal prompt evaluates current editor changes and recovers after an error', async ({ page }) => {
   test.setTimeout(120_000);
   const browserErrors = [];

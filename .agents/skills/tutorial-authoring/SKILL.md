@@ -1888,7 +1888,7 @@ intentionally unsupported; express setup and solutions through workspace files.
 Every `backend: haskell` tutorial automatically offers **Output** and
 **Interpreter** view buttons; no YAML opt-in is needed. The interpreter is
 MicroHs, not GHCi. `js/haskell/interpreter.js` owns the accessible transcript,
-expression form, and bounded, page-session-only history; presentation lives in
+inline shell prompt, and bounded, page-session-only history; presentation lives in
 `css/haskell-interpreter.css`. Its semantic color variables follow the site’s
 light/dark theme, including input, transcript, help, and control states.
 `TutorialCode` loads both alongside cycle diagnostics.
@@ -1914,7 +1914,17 @@ light/dark theme, including input, transcript, help, and control states.
   Stop and the execution deadline restart the sandbox, then permit another
   expression. Type queries bypass value-demand cycle checks; expression checks
   pass `executeExpression: true` to the cycle analyzer to follow known IO demand.
-- Enter evaluates; Up/Down recall history. Visible Previous/Next command buttons
+- Input and output share one scrolling terminal: submitted commands remain in
+  the transcript, results follow them, and a fresh inline prompt becomes editable
+  when execution completes. Keep the input outside the live log to avoid
+  announcing keystrokes, preserve text selection, and let Tab leave the prompt.
+  Keep terminal padding and transcript gaps compact without reducing readable
+  type or button targets; leave room for focus outlines and let controls wrap.
+  At the tutorial’s narrow-screen breakpoint, the interpreter uses natural
+  document flow with bounded terminal scrollback so its prompt cannot collapse.
+- Enter evaluates; Up/Down recall history; Ctrl+L clears the transcript; Ctrl+C
+  interrupts execution or cancels unfinished input (selected text retains Copy).
+  These Ctrl shortcuts also use Ctrl on macOS. Visible Previous/Next command buttons
   offer the same history actions. Keep `/shortcuts/` synchronized. No persistence
   keys are added. The terminal controls are hidden in print.
 - The help includes local GHCi guidance (`ghci Main.hs`). Do not label the browser
