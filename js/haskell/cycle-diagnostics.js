@@ -5,13 +5,21 @@
     constructor(tutorial) {
       this.tutorial = tutorial;
       this.region = tutorial.root.querySelector('[data-haskell-diagnostics]');
-      this.status = this.region.querySelector('[role="status"]');
+      this.status = this.region.querySelector('p');
+      this.announcement = tutorial.root.querySelector('[data-haskell-cycle-announcement]');
       this.list = this.region.querySelector('ul');
       this.timer = null;
     }
     schedule() {
       clearTimeout(this.timer);
       this.timer = setTimeout(() => this.refresh(), 300);
+    }
+    setStatus(message) {
+      this.region.hidden = !message;
+      this.region.setAttribute('aria-label', message || 'Haskell cycle diagnostics');
+      if (this.status.textContent !== message) this.status.textContent = message;
+      // The live region stays exposed even when the visual panel is hidden.
+      if (this.announcement.textContent !== message) this.announcement.textContent = message;
     }
     refresh() {
       if (this.tutorial._destroyed) return;
@@ -26,11 +34,7 @@
           startColumn: item.column, endColumn: item.endColumn, message: item.message,
         })));
       }
-      const status = 'Haskell cycle diagnostics: ' + (findings.length
-        ? findings.length + ' warning(s).'
-        : 'checks cover simple value aliases only.');
-      this.region.setAttribute('aria-label', status);
-      if (this.status.textContent !== status) this.status.textContent = status;
+      this.setStatus(findings.length ? 'Haskell cycle diagnostics: ' + findings.length + ' warning(s).' : '');
       const text = findings.map(item => item.filename + ':' + item.line + ':' + item.column + ' — ' + item.message);
       // Keep the focused region and announcement stable during unrelated edits.
       const signature = text.join('\n');
@@ -49,8 +53,7 @@
       const messages = result.diagnostics.filter(item => item.severity === 'error')
         .map(item => item.filename + ':' + item.line + ':' + item.column + ' — ' + item.message);
       this.tutorial._appendOutput(messages.join('\n') + '\n', 'err');
-      this.status.textContent = 'Haskell cycle diagnostics: execution blocked. Correct the highlighted binding.';
-      this.region.setAttribute('aria-label', this.status.textContent);
+      this.setStatus('Haskell cycle diagnostics: execution blocked. Correct the highlighted binding.');
       return false;
     }
     dispose() { clearTimeout(this.timer); }

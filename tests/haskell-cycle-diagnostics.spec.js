@@ -11,6 +11,7 @@ test('shows a cycle before execution, blocks Run and Debug, and clears it after 
   test.setTimeout(180_000);
   await page.goto('/SEBook/tools/haskell-backend-demo-tutorial');
   await expect(run(page)).toBeEnabled({ timeout: 90_000 });
+  await expect(diagnostics(page)).toBeHidden();
   await setEditorContent(page, 'module Main where\nmain = print (let x = x in (x :: Int))\nbackstop = missingCycleTestName\n');
   // Verify detection before clicking; the undefined backstop also ensures
   // a missing command gate cannot execute this cycle in the test browser.
@@ -37,7 +38,7 @@ test('shows a cycle before execution, blocks Run and Debug, and clears it after 
   await page.getByRole('button', { name: 'Start debugger', exact: true }).press('Enter');
   await expect(page.getByRole('button', { name: 'Start debugger', exact: true })).toBeVisible();
   await setEditorContent(page, 'module Main where\nmain = print (42 :: Int)\n');
-  await expect(diagnostics(page)).not.toContainText('Cyclic value alias');
+  await expect(diagnostics(page)).toBeHidden();
   await run(page).click();
   await expect(output(page)).toContainText('42', { timeout: 30_000 });
   await expect(run(page)).toBeEnabled();

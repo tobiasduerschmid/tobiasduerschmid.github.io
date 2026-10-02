@@ -1943,6 +1943,8 @@ constructor recursion and function recursion are not alias cycles.
 `js/haskell/cycle-diagnostics.js` owns debounced Monaco markers and the readable,
 keyboard-focusable diagnostic region (`css/haskell-diagnostics.css`). It handles
 initial files and later edits, resets, solutions and host-mirrored popout edits.
+The visual region is hidden when there are no findings; there is no idle message.
+An always-mounted live region announces warnings even when the panel first appears.
 
 Warnings alone do not block execution: unused bindings remain lazy. Run and
 Debug check the selected entry's `main`; Test My Work checks each Boolean

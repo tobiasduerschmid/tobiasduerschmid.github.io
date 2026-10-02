@@ -1937,7 +1937,8 @@
           '</div>'
         : '<div class="tvm-editor-tabs" role="group" aria-label="File tabs"></div>') +
       (this.config.backend === 'haskell'
-        ? '<section class="haskell-cycle-diagnostics" data-haskell-diagnostics tabindex="0" aria-label="Haskell cycle diagnostics"><p role="status" aria-live="polite"></p><ul></ul></section>'
+        ? '<div class="sr-only" data-haskell-cycle-announcement role="status" aria-live="polite"></div>' +
+          '<section class="haskell-cycle-diagnostics" data-haskell-diagnostics hidden tabindex="0" aria-label="Haskell cycle diagnostics"><p></p><ul></ul></section>'
         : '') +
       '<div class="tvm-editor-container"></div>' +
       '</div>' +
