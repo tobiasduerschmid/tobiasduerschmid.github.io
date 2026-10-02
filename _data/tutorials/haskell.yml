@@ -29,9 +29,6 @@ steps:
   - title: "Functions as Expressions"
     key: session-time
     instructions: |
-      ### Why this matters
-
-      Haskell asks a different question: what value does this expression describe? Start with one small function, and you can explore that shift without installing anything.
 
       ### 🎯 You will learn to
 
@@ -167,119 +164,213 @@ steps:
         the result, not which helper you use.
 
   # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf pp. 13–15, 25–27.
-  # Assessment: [Midterm] F24 V1 (Public).pdf P3A p. 5 — derive a signature from fixed numeric inputs and a comparison.
-  # Pedagogy: mistake-based familiarization — separate a well-typed numerical bug from a type mismatch.
-  - title: "Types and Numeric Boundaries"
-    key: fractional-shares
+  # Assessment: [Midterm] F24 V1 (Public).pdf P3A p. 5 — derive input and result types from their uses.
+  # Pedagogy: PRIMM + faded worked example — predict type conflicts, repair signatures, transfer to text.
+  - title: "Values and Function Types"
+    key: function-type-contracts
     instructions: |
-      ### Why this matters
-
-      A program can compile and still calculate the wrong answer.
-      Types help you decide what a value can represent, but you still choose the operation.
 
       ### 🎯 You will learn to
 
-      - Apply a numeric type signature to a fractional calculation
-      - Derive a result type from the expression being computed
+      - Read a function signature as input types followed by a result type
+      - Derive a signature from the arguments and the expression in the body
+      - Diagnose a type mismatch without treating a signature as a conversion
 
-      `Int` represents whole numbers, and `Double` represents approximate
-      floating-point numbers, including fractional values.
-      `Bool` has the values `True` and `False`. `'x'` is a `Char`, while
-      `"x"` is a `String`. A type is part of the program even when its
-      signature is omitted: Haskell infers types before executing your code.
+      ### Values have types
 
-      `/` performs fractional division. With a `Double` result, `7 / 2`
-      gives `3.5`. In this exercise, both inputs already have type `Double`;
-      the literal `7` can be used where a `Double` is expected.
+      - `Int`: whole-number counts, such as a number of pizza slices.
+      - `Double`: approximate floating-point numbers, such as a price of `12.5`.
+      - `Bool`: the answers `True` and `False`, not the numbers `1` and `0`.
+      - `Char`: one character in single quotes, such as `'m'`.
+      - `String`: text in double quotes, such as `"mushroom"`. Even `"m"` is a `String`.
 
-      Derive a signature by tracking **input types** and the **whole result**.
-      For `fits first second space = first + second <= space`, assume all
-      three inputs are `Int` values. Addition produces an `Int`, but the
-      comparison produces `Bool`: `fits :: Int -> Int -> Int -> Bool`.
-      The result type describes the comparison's answer, not its operands.
+      Quotation marks matter: `12.5` can be a `Double`, but `"12.5"` is
+      text. Haskell does not automatically turn that text into a number.
+      A numeric literal such as `15` can also be used where a `Double` is
+      expected; its whole-number spelling does not force it to be an `Int`.
 
-      ### Thinking time!
+      ### A worked example: count inputs, Boolean answer
 
-      A team splits seven points between two players. The starter divides
-      by `players + 1`. Will it return `3.5` or about `2.33`? Identify
-      the denominator before running.
+      ```haskell
+      hasEnoughSlices :: Int -> Int -> Bool
+      hasEnoughSlices slices friends = slices >= friends
+      ```
 
-      <details markdown="1"><summary>Check the denominator</summary>
+      For this two-argument function, read the signature in order:
+      `slices` is an `Int`, `friends` is an `Int`, and the result is a
+      `Bool`. The last type describes the result after both arguments
+      are supplied. Thus `hasEnoughSlices 8 6` has type `Bool` and value `True`.
 
-      The starter divides by three, so it returns about `2.33`. Its types
-      are consistent; the numerical rule is wrong.
+      To derive that signature, separate the questions: **what goes in?**
+      Counts. **What comes out?** The answer to a comparison. `>=` asks
+      “at least?” and `==` asks “equal?”; both produce a `Bool`, regardless
+      of whether the values being compared are numbers or text.
+
+      A signature does not convert the body's result. Writing `Int` at
+      the end would not turn `True` into `1`; it would contradict the body.
+
+      ### Predict before you run
+
+      The starter checks whether a budget covers a pizza price and whether
+      two topping names match. Its function bodies and the calls in `main`
+      are correct, but its two signatures contain incorrect types.
+
+      Will **Run** print `True` twice, print `1` twice, or report type errors
+      before either answer is printed? For each signature, point to an
+      argument or result that conflicts with it, then run the starter.
+
+      <details markdown="1"><summary>Explain the type conflicts</summary>
+
+      Haskell rejects the program before it prints either answer.
+      `canAffordPizza` promises an `Int` result, but `>=` produces a `Bool`.
+      Its `Int` inputs also cannot accept the fractional prices in `main`.
+      `sameTopping` promises single-character inputs, but `main` supplies
+      whole strings. The compiler may reveal these conflicts one at a time.
+      Start with the first reported type conflict. A later message about
+      an undefined `main` can follow because the module could not compile.
 
       </details>
 
-      ### Your challenge
+      ### Your challenge: repair the contracts
 
-      Repair `pointsPerPlayer total players` so it returns the fractional
-      share. Assume `total >= 0` and a positive whole-number player count
-      represented as a `Double`. The total may contain a fraction, such as
-      `7.5`. Use the provided types; the checks allow floating-point rounding error.
+      Change only the two function signatures. Keep the bodies and the
+      supplied `main` unchanged. Derive each signature before typing it:
 
-      For a short debugging experiment, replace an argument in `main` with
-      `True` and run. Read the type error, explain the mismatch, then undo
-      that experiment before testing your work. Type errors and incorrect
-      numerical results are two different kinds of feedback.
+      1. `canAffordPizza budget price` accepts two `Double` amounts and
+         answers whether the budget covers the price, including an exact
+         match. What type must the comparison return?
+      2. `sameTopping requested offered` accepts two full topping names and
+         answers whether they are exactly equal, including capitalization.
+         Choose both input types and the result type.
+
+      For each function, explain how every type in its signature matches
+      a parameter or the whole result expression. Use small nonnegative
+      amounts for the price check. Run again after each repair; another
+      type error can point to the next conflict. Once both calls run, choose
+      **Test My Work**. The supplied `main` uses `do` to display the two
+      results in sequence; you do not need to edit that display code.
+
+      ### Investigate: a signature is not a conversion
+
+      After fixing the program, temporarily replace `15.0` in `main` with
+      `"15.0"`. Predict whether the call will still work, then run it and
+      explain the input-type mismatch. Restore the numeric argument.
+
+      Finally, temporarily remove the two function-signature lines and run
+      again. The valid calls still work: Haskell infers compatible types
+      from the definitions and their uses. Type checking still happens
+      before execution. Restore your signatures to document the intended
+      numeric and text interfaces.
     files:
       - path: Main.hs
         language: haskell
         reseed: true
         content: |
           module Main where
-          pointsPerPlayer :: Double -> Double -> Double
-          pointsPerPlayer total players = total / (players + 1)
+
+          -- The bodies are correct. Repair the two type signatures.
+          canAffordPizza :: Int -> Int -> Int
+          canAffordPizza budget price = budget >= price
+
+          sameTopping :: Char -> Char -> Bool
+          sameTopping requested offered = requested == offered
+
           main :: IO ()
-          main = print (pointsPerPlayer 7 2)
+          main = do
+            print (canAffordPizza 15.0 12.5)
+            print (sameTopping "mushroom" "mushroom")
     open_file: Main.hs
     run_file: Main.hs
     tests:
-      - description: "Shares preserve fractional totals, fractional results, exact divisions, and zero totals"
-        command: "abs (pointsPerPlayer 7 2 - 3.5) < 1e-9 && abs (pointsPerPlayer 7.5 3 - 2.5) < 1e-9 && abs (pointsPerPlayer 10 4 - 2.5) < 1e-9 && abs (pointsPerPlayer 9 3 - 3) < 1e-9 && abs (pointsPerPlayer 0 5) < 1e-9 && abs (pointsPerPlayer 1 3 - 1/3) < 1e-9"
+      - description: "The affordability check accepts fractional amounts and returns a Boolean, including exact and insufficient budgets"
+        command: "canAffordPizza (15 :: Double) 12.5 && canAffordPizza 12.5 12.5 && not (canAffordPizza 12 12.5) && canAffordPizza 0 0 && not (canAffordPizza 0 0.5)"
         hints:
-          - text: "Compare the number of players in the story with the number used by the starter."
-          - text: "The numerator is the total to share. The denominator counts the people receiving a share."
-          - text: "Use one division expression with the two supplied parameters; no extra recipient is part of the rule."
+          - text: "Separate the types of the two amounts from the type of the answer to 'can I afford it?'"
+          - text: "Fractional prices need Double inputs. A comparison produces Bool even when it compares numbers."
+          - text: "The shape is `canAffordPizza :: inputType -> inputType -> resultType`. Check each position against the calls and the body."
+      - description: "The topping check accepts full strings and returns whether they match exactly"
+        command: 'sameTopping "mushroom" "mushroom" && not (sameTopping "pineapple" "pepperoni") && not (sameTopping "Mushroom" "mushroom") && sameTopping "" "" && not (sameTopping "" "mushroom")'
+        hints:
+          - text: "The inputs are full topping names, not just their first letters."
+          - text: "Double quotes make a String, even for one letter or empty text. The equality comparison produces Bool."
+          - text: "Derive `sameTopping :: requestedType -> offeredType -> resultType` by labeling both arguments and the comparison."
     quiz:
       title: "Step 2 — Knowledge Check"
       min_score: 0.8
       questions:
         - type: single
-          difficulty: intermediate
-          question: "Assume total, each, and groups are Ints. Which signature fits `leftover total each groups = total - each * groups`?"
-          options: ["`Int -> Int -> Int -> Bool`", "`Int -> Int -> Int -> Int`", "`Int -> Int -> Bool -> Int`"]
+          difficulty: basic
+          question: "Given `isSoldOut :: Int -> Bool`, what is the type of `isSoldOut 0`?"
+          options: ["`Int`", "`Bool`", "`Int -> Bool`"]
           correct_index: 1
           option_feedback:
-            0: "There is no comparison here. Both multiplication and subtraction produce an Int result."
-            2: "groups participates in multiplication and is specified as an Int; it is not a Boolean condition."
-          explanation: "All three inputs are Ints. The final subtraction also returns an Int, so the signature has three Int inputs and an Int result."
+            0: "Int describes the argument. Supplying that argument produces the result described after the arrow."
+            2: "That is the type of the function isSoldOut itself. This expression has already supplied its argument."
+          explanation: "Applying the function to an Int produces a Bool. A function's input and result need not have the same type."
         - type: single
-          difficulty: basic
-          question: "A definition omits its type signature. What does Haskell do?"
+          difficulty: intermediate
+          question: "Assume price, guests, and budget are Ints. Which signature fits `canBuySnacks price guests budget = price * guests <= budget`?"
           options:
-            - "Changes its type on every call"
-            - "Waits for its first runtime value"
-            - "Infers its type before execution"
+            - "`Int -> Int -> Int -> Int`"
+            - "`Int -> Int -> Bool -> Bool`"
+            - "`Int -> Int -> Int -> Bool`"
           correct_index: 2
           option_feedback:
-            0: "Omitting a signature does not make a binding dynamically typed."
-            1: "Inference uses the definition and its constraints; it does not wait for the first call."
-          explanation: "Type inference supplies a static type. Some inferred types can be polymorphic, as later steps explore."
+            0: "Multiplication produces a number, but the whole body compares that number with budget. The comparison produces Bool."
+            1: "budget is a numeric input being compared with a numeric product. It is the comparison result that has type Bool."
+          explanation: "There are three Int inputs. Follow the whole expression through to the comparison: its result is Bool."
+        - type: single
+          difficulty: intermediate
+          question: 'A function has signature `canAffordPizza :: Double -> Double -> Bool`. What happens when it is called as `canAffordPizza "15.0" 12.5`?'
+          options:
+            - "The text is converted to a number"
+            - "The call is rejected before execution"
+            - "The call runs and then returns False"
+          correct_index: 1
+          option_feedback:
+            0: "A signature requires a compatible value; it does not parse numeric-looking text. The quoted argument is a String."
+            2: "False would be an ordinary result for valid inputs and an insufficient budget. This call has an input-type conflict, so it never reaches that decision."
+          explanation: "The first argument must have type Double, but double quotes make it a String. The signature does not convert it."
+        - type: single
+          difficulty: basic
+          question: "A working function's type signature is removed. How does Haskell check its types?"
+          options:
+            - "It waits for the first runtime argument"
+            - "It stops checking that function's types"
+            - "It infers types and checks before running"
+          correct_index: 2
+          option_feedback:
+            0: "Inference uses the definition and its uses without waiting for a first execution."
+            1: "A signature is optional documentation and a checked constraint; static type checking remains when it is omitted."
+          explanation: "Haskell infers compatible types before execution. An explicit signature records the interface you intend and is checked against the definition."
     solution:
       files:
         - path: Main.hs
           language: haskell
           content: |
             module Main where
-            pointsPerPlayer :: Double -> Double -> Double
-            pointsPerPlayer total players = total / players
+
+            canAffordPizza :: Double -> Double -> Bool
+            canAffordPizza budget price = budget >= price
+
+            sameTopping :: String -> String -> Bool
+            sameTopping requested offered = requested == offered
+
             main :: IO ()
-            main = print (pointsPerPlayer 7 2)
+            main = do
+              print (canAffordPizza 15.0 12.5)
+              print (sameTopping "mushroom" "mushroom")
       explanation: |
-        Both operands and the result have type Double. Dividing by the actual
-        player count gives each share; the positive-player precondition avoids
-        division by zero. The signature checks compatibility, not the formula.
+        Both functions return Bool because their bodies are comparisons.
+        Their input types differ: the price check accepts Double amounts,
+        while the topping check accepts String values. Neither function
+        returns the kind of value it receives.
+
+        Changing the signatures makes them agree with the correct bodies
+        and calls; it does not change a comparison into arithmetic, turn text
+        into numbers, or convert True into 1. Both supplied calls print True.
+        Removing the signatures lets Haskell infer more general comparison
+        functions that still support these calls; it does not disable checking.
 
   # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf pp. 20–24.
   # Assessment: [Midterm] F24 V1 (Public).pdf P1 p. 2 — guard selection prerequisite for conditional recursion.
@@ -287,10 +378,6 @@ steps:
   - title: Conditional Values and Guards
     key: stock-adjustment
     instructions: |
-      ### Why this matters
-
-      Several valid conditions can overlap. Guards let you state which rule
-      wins and choose a value without changing a variable in place.
 
       ### 🎯 You will learn to
 
@@ -303,9 +390,29 @@ steps:
       and `||`. Notice the distinction between defining with `=` and
       comparing with `==`.
 
-      Guards can express a calculation with several possible results:
+      For example, a returned item earns a refund of 12 only if it is not
+      damaged. Write the decisions explicitly with nested `if` expressions:
 
       ```haskell
+      refund :: Bool -> Bool -> Int
+      refund returned damaged =
+        if damaged
+          then 0
+          else if returned
+            then 12
+            else 0
+      ```
+
+      Both `damaged` and `returned` are Boolean conditions. The second `if`
+      is the outer `else` expression: check `returned` only when `damaged`
+      is `False`. Each selected branch supplies the function's result;
+      no `return` statement is needed.
+
+      Guards express the same decisions more compactly. This is an alternative
+      definition of the same function:
+
+      ```haskell
+      refund :: Bool -> Bool -> Int
       refund returned damaged
         | damaged = 0
         | returned = 12
@@ -315,6 +422,8 @@ steps:
       Read from the top. The first true guard supplies the result. If both
       Boolean inputs are `True`, the damaged-item rule wins and the refund is 0.
       `otherwise` is the Boolean value `True`, so it provides a final fallback.
+      It corresponds to the final `else 0` above. In either version,
+      `refund True False` returns 12, and `refund False False` returns 0.
 
       ### Thinking time!
 
@@ -411,10 +520,6 @@ steps:
   - title: "Local Bindings"
     key: local-bindings
     instructions: |
-      ### Why this matters
-
-      A long expression can hide a simple idea. Local names let you explain
-      the pieces without turning them into mutable variables.
 
       ### 🎯 You will learn to
 
@@ -542,11 +647,6 @@ steps:
   - title: "Tuples and Type Variables"
     key: tuples
     instructions: |
-      ### Why this matters
-
-      A score usually belongs to someone. A tuple keeps related values
-      together while allowing each position to have its own type.
-
       ### 🎯 You will learn to
 
       - Analyze tuple shapes and polymorphic type variables
@@ -678,10 +778,6 @@ steps:
   - title: "Lists and Strings"
     key: lists
     instructions: |
-      ### Why this matters
-
-      Lists describe collections whose length can vary. Their element type
-      stays consistent, which lets one operation work for songs, numbers, or characters.
 
       ### 🎯 You will learn to
 
@@ -788,10 +884,6 @@ steps:
   - title: Complete List Patterns
     key: swap-front
     instructions: |
-      ### Why this matters
-
-      A list might be empty, short, or much longer than your example.
-      Patterns expose those shapes directly, so missing cases become easier to spot.
 
       ### 🎯 You will learn to
 
@@ -915,10 +1007,6 @@ steps:
   - title: "Structural Recursion"
     key: recursion
     instructions: |
-      ### Why this matters
-
-      You already know how to process one item. Recursion connects that
-      small decision to the rest of a collection, without a loop counter to mutate.
 
       ### 🎯 You will learn to
 
@@ -1047,10 +1135,6 @@ steps:
   - title: List Comprehensions
     key: route-candidates
     instructions: |
-      ### Why this matters
-
-      Sometimes a collection is easiest to describe by the candidates you
-      allow. A comprehension names those candidates, filters them, and builds a result.
 
       ### 🎯 You will learn to
 
@@ -1172,10 +1256,6 @@ steps:
   - title: "The Snack Budget Challenge"
     key: budget
     instructions: |
-      ### Why this matters
-
-      A technique is useful when you can recognize when to use it.
-      This challenge combines the pieces without giving you the next line to write.
 
       ### 🎯 You will learn to
 

@@ -46,11 +46,14 @@ async function enterSolution(page, step) {
   }
 }
 
-async function runProgram(page) {
+/** @param {import('@playwright/test').Page} page
+ * @param {string | RegExp} [expectedOutput]
+ */
+async function runProgram(page, expectedOutput = '✓ Done') {
   await page.getByRole('button', { name: /run$/i }).click();
   await expect(page.getByRole('button', { name: /run$/i })).toBeEnabled({ timeout: RUN_TIMEOUT });
   await expect(page.getByRole('region', { name: 'Program output' }))
-    .toContainText('✓ Done', { timeout: RUN_TIMEOUT });
+    .toContainText(expectedOutput, { timeout: RUN_TIMEOUT });
 }
 
 async function rejectOneQuizAnswer(page) {
@@ -73,7 +76,7 @@ for (const slug of TUTORIALS) {
   test.describe(config.title, () => {
     // Each module is one student journey with a fresh browser context. The
     // steps intentionally depend on the preceding tests and quiz unlocking it.
-    test('every runnable starter needs work, every solution passes, and quizzes unlock the path', async ({ page }) => {
+    test('every starter needs repair, every solution passes, and quizzes unlock the path', async ({ page }) => {
       test.setTimeout(15 * 60_000);
       const browserErrors = [];
       page.on('pageerror', (error) => browserErrors.push(error.message));
@@ -91,7 +94,11 @@ for (const slug of TUTORIALS) {
           await expect(page.getByRole('heading', { level: 2, name: step.title, exact: true })).toBeVisible();
           await expect(page.getByRole('button', { name: /^Next/ })).toBeDisabled();
 
-          await runProgram(page);
+          // The types lesson deliberately starts with incompatible signatures;
+          // all other lessons start with runnable behavioral mistakes.
+          await runProgram(page, step.key === 'function-type-contracts'
+            ? /Cannot satisfy constraint: Bool ~ Int/
+            : '✓ Done');
 
           await expectFailingGate(page, step.tests.length);
           await expect(page.getByRole('button', { name: /^Next/ })).toBeDisabled();
@@ -166,6 +173,40 @@ for (const slug of TUTORIALS) {
     });
   });
 }
+
+test('the types lesson distinguishes signature errors, quoted numbers, and inferred types', async ({ page }) => {
+  test.setTimeout(180_000);
+  const config = loadTutorialConfig('haskell');
+  const step = config.steps.find(step => step.key === 'function-type-contracts');
+  const solution = step.solution.files.find(file => file.path === step.run_file).content;
+  const output = page.getByRole('region', { name: 'Program output' });
+  await page.goto('/SEBook/tools/haskell-tutorial#function-type-contracts');
+  await waitForTutorialReady(page, { bootTimeout: BOOT_TIMEOUT });
+
+  await runProgram(page, /Cannot satisfy constraint: Bool ~ Int/);
+  await expect(output).not.toContainText('✓ Done');
+  await expectFailingGate(page, step.tests.length);
+  await a11yCheckpoint(page, 'Haskell types — incompatible starter signatures', { feature: A11Y_FEATURE });
+
+  await enterSolution(page, step);
+  await runProgram(page);
+  await expect(output).toContainText(/True\s+True/);
+  await expectPassingGate(page, step.tests.length);
+
+  // A signature states a requirement; it does not parse numeric-looking text.
+  expect(await setTutorialFileContent(page, step.run_file,
+    solution.replace('canAffordPizza 15.0 12.5', 'canAffordPizza "15.0" 12.5'))).toBe(true);
+  await runProgram(page, /Cannot satisfy constraint/);
+  await expect(output).not.toContainText('✓ Done');
+
+  // Omitting declarations still permits the valid numeric and text calls.
+  const inferred = solution.replace(/^(?:canAffordPizza|sameTopping) ::.*\n/gm, '');
+  expect(await setTutorialFileContent(page, step.run_file, inferred)).toBe(true);
+  await runProgram(page);
+  await expect(output).toContainText(/True\s+True/);
+  await expectPassingGate(page, step.tests.length);
+  await a11yCheckpoint(page, 'Haskell types — compatible inferred signatures', { feature: A11Y_FEATURE });
+});
 
 test('detached instructions open the required quiz without unlocking the next numbered step early', async ({ page }) => {
   test.setTimeout(150_000);

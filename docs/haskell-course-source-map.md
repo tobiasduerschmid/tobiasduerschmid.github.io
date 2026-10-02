@@ -26,7 +26,7 @@ The source quiz's ambiguous use of “un-curried” is not repeated. Multiple ar
 | Part 1 lesson | Lecture evidence | Assessment relationship |
 | --- | --- | --- |
 | Functions as Expressions | 5–8, 13–18; PPTX 14 for supplied display code | Application grouping needed in F25 Q1 P3b |
-| Types and Numeric Boundaries | 13–15, 25–27 | Input/result constraints as in F24 midterm P3A |
+| Values and Function Types | 13–15, 25–27 | Derive numeric/text input types and Boolean result types as preparation for F24 midterm P3A |
 | Conditional Values and Guards | 20–24 | Preparation for branch selection in F24 midterm P1 |
 | Local Bindings | 25–31; PPTX 39 for integral division | Preparation for the local helper in F25 Q1 P3c |
 | Tuples and Type Variables | 34–35, 63, 72–74 | Tuple/result type shape underlying F23 midterm P3a |
@@ -63,7 +63,7 @@ The source quiz's ambiguous use of “un-curried” is not repeated. Multiple ar
 
 Removed numeric conversion with `fromIntegral`, Haskell `case/of`, record-update syntax, parameterized custom ADTs, composition operators `.`/`$`, detailed `foldr` behavior, strict-fold advice, and demand/error probes. Merely naming `foldr` on handout p. 91 does not teach its behavior. None of these topics remains as a required or optional extension in the learner tutorials.
 
-Part 1 now develops type inference through a concrete input/result procedure, tuple relationships, and list-element constraints. Its fractional-division exercise accepts `Double` inputs directly, so learners need no conversion operation. A missing recursive branch asks students to distinguish continuing after a nonmatch from stopping or recurring on unchanged input.
+Part 1 now develops type inference through a concrete input/result procedure, tuple relationships, and list-element constraints. The types lesson asks students to repair conflicting signatures on correct pizza-order comparisons: fractional amounts require `Double`, full topping names require `String`, and comparisons produce `Bool`. Learners predict compiler errors, repair only the declarations, and investigate why a signature neither converts quoted numbers nor turns off inference when removed. It replaces the fractional-division repair, which assessed arithmetic rather than type reasoning, and uses a new stable lesson key so prior completion does not credit the replacement. A missing recursive branch asks students to distinguish continuing after a nonmatch from stopping or recurring on unchanged input.
 
 Part 2 replaces composition and right-fold lessons with higher-order type derivation and recursive accumulators. Explicit currying includes constructing nested lambdas. Left-fold exercises separate the accumulator's type from the element type and trace argument order. Lazy-list practice stays within ranges, filtering, and taking a finite prefix.
 
@@ -77,7 +77,7 @@ The example review compares the required operation and data shape, not just name
 
 | Lecture example family | Tutorial application |
 | --- | --- |
-| Squaring/tripling and arithmetic application | Remaining time after two scheduled sessions |
+| Squaring/tripling and arithmetic application | Money remaining after buying two pizzas |
 | Grade classification with ordered thresholds | Clamp a signed stock adjustment to a permitted interval |
 | Tuple swapping and first/second list selectors | Duplicate a selected tuple field; swap the first two entries while retaining the rest |
 | Numeric triangle/pair enumeration | Select routes from two supplied candidate lists |
@@ -92,7 +92,7 @@ Foundational notation such as a function arrow, constructor pattern, or the type
 
 ## Learning design and practical limits
 
-The three-part path retains 27 lessons: ten foundations, eight functions, and nine data lessons. It has 39 executable gate groups and 61 knowledge-check questions, including single-answer, multiple-answer, and Parsons formats. Each tutorial has an interactive and print view. The progression is prediction and explanation, a worked neighboring example, a focused repair or completion, and an independent capstone. Knowledge checks retrieve prior concepts while varying input shapes, boundaries, and type relationships. Bloom-level variety comes from tracing, applying, deriving, diagnosing, and independently writing code; recognition items are not labeled as unrestricted creation.
+The three-part path retains 27 lessons: ten foundations, eight functions, and nine data lessons. It has 40 executable gate groups and 63 knowledge-check questions, including single-answer, multiple-answer, and Parsons formats. Each tutorial has an interactive and print view. The progression is prediction and explanation, a worked neighboring example, a focused repair or completion, and an independent capstone. Knowledge checks retrieve prior concepts while varying input shapes, boundaries, and type relationships. Bloom-level variety comes from tracing, applying, deriving, diagnosing, and independently writing code; recognition items are not labeled as unrestricted creation.
 
 The suggested 80–115-minute sessions are planning estimates, not measured student completion times. Learners should split the modules into sittings. Short paper exercises—derive a signature, trace one call, complete a recursive branch—bridge the editor-based feedback to timed assessment. Students still need to attempt complete past-paper problems, including prescribed-helper tasks and larger data transformations. Passing these tutorial checks alone does not demonstrate readiness for an entire exam.
 
@@ -102,7 +102,14 @@ Stable lesson keys use the existing progress-migration mechanism. Saved drafts a
 
 ## Verification
 
-Validation completed on October 1, 2026:
+Validation of the replacement types lesson on October 2, 2026:
+
+- An isolated Jekyll build succeeds, and the rendered tutorial configuration matches the current YAML. The replacement lesson's structure and quiz answer indices are valid; the multiple-choice answer-tell audit flags no questions.
+- The focused browser test verifies that incompatible signatures and quoted numeric inputs fail before output, while the corrected and inferred signatures both run and pass the exercise checks. The complete ten-step foundations journey and both student/instructor print views also pass with interactive accessibility checks enabled.
+- A saved version-2 workspace retains completion for matching lessons and removes old completion for the replacement types lesson. The scoped automated WCAG page audit reports zero findings; this does not certify the whole site.
+- The broader content test currently fails at Step 1 because the foundations lessons no longer open with the literal `### Why this matters` heading required by that test. The two other Haskell modules pass that content test.
+
+Validation of the October 1, 2026 edition (before the replacement types lesson):
 
 - All three tutorial schema checks pass; the multiple-choice answer-tell audit flags no questions.
 - A full isolated Jekyll build succeeds. After the final example revisions, all Haskell pages were rendered again and their embedded configurations compared with the reviewed YAML.
