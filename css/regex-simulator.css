@@ -1,0 +1,463 @@
+/* Python RegEx simulator: presentation stays separate from matching state. */
+#regex-simulator {
+  --regex-control-border: #62788b;
+  --regex-muted: #495e70;
+  --regex-match-bg: #fff0a8;
+  --regex-match-text: #332600;
+  --regex-error-bg: #fff0ef;
+  --regex-error-text: #9c2420;
+  --regex-pass-bg: #edf8f0;
+  --regex-pass-text: #225c36;
+  margin-block: 1.5em 2em;
+  color: var(--color-text, #24292f);
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+  line-height: 1.6;
+}
+
+html.dark-mode #regex-simulator {
+  --regex-control-border: #90a8bc;
+  --regex-muted: #becddc;
+  --regex-match-bg: #574613;
+  --regex-match-text: #fff3bd;
+  --regex-error-bg: #3c2226;
+  --regex-error-text: #ffb7b2;
+  --regex-pass-bg: #193428;
+  --regex-pass-text: #b3e3c1;
+}
+
+#regex-simulator [hidden] {
+  display: none !important;
+}
+
+#regex-simulator .regex-engine-note {
+  padding: 0.8em 1.2em;
+  border-inline-start: 4px solid var(--sebook-blue);
+  border-radius: 0 0.45em 0.45em 0;
+  background: var(--sebook-surface-band);
+  margin-block-end: 1.25em;
+}
+
+#regex-version {
+  color: var(--sebook-navy);
+  font-weight: 700;
+}
+
+#regex-simulator p,
+#regex-simulator ul,
+#regex-simulator dl {
+  margin-block: 0 0.9em;
+  font-size: 1em;
+}
+
+#regex-simulator .regex-engine-note p {
+  margin-block: 0.2em 0;
+}
+
+#regex-simulator .regex-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+  gap: 1.25em;
+  align-items: start;
+}
+
+#regex-simulator .regex-input-panel,
+#regex-simulator .regex-result-panel,
+#regex-simulator .regex-cases-panel {
+  min-width: 0;
+  padding: clamp(0.8em, 2vw, 1.4em);
+  border: 1px solid var(--sebook-border);
+  border-radius: 0.7em;
+  background: var(--sebook-surface);
+}
+
+#regex-simulator h2 {
+  margin-block: 0 0.65em;
+  font-size: 1.4em;
+  line-height: 1.3;
+  text-align: start;
+}
+
+#regex-simulator h2::after {
+  display: none;
+}
+
+#regex-simulator h3 {
+  margin-block: 0 0.5em;
+  font-size: 1.2em;
+  line-height: 1.4;
+  color: var(--sebook-navy);
+}
+
+#regex-simulator .regex-field {
+  display: grid;
+  gap: 0.35em;
+  margin-block-end: 1em;
+  min-width: 0;
+}
+
+#regex-simulator label,
+#regex-simulator legend {
+  margin: 0;
+  color: inherit;
+  font-size: 1em;
+  font-weight: 700;
+}
+
+#regex-simulator input,
+#regex-simulator textarea,
+#regex-simulator select,
+#regex-simulator button {
+  box-sizing: border-box;
+  max-width: 100%;
+  border: 1px solid var(--regex-control-border);
+  border-radius: 0.35em;
+  background: var(--sebook-surface);
+  color: inherit;
+  font: inherit;
+  line-height: 1.5;
+}
+
+#regex-simulator input[type="text"],
+#regex-simulator textarea,
+#regex-simulator select {
+  width: 100%;
+  min-width: 0;
+  padding: 0.55em 0.65em;
+}
+
+#regex-simulator textarea {
+  resize: vertical;
+  min-height: 4.5em;
+}
+
+#regex-simulator textarea,
+#regex-simulator input[type="text"],
+#regex-simulator pre,
+#regex-simulator code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 1em;
+}
+
+#regex-simulator code {
+  overflow-wrap: anywhere;
+}
+
+#regex-simulator .regex-hint,
+#regex-simulator .regex-results-guide {
+  color: var(--regex-muted);
+  font-size: 1em;
+}
+
+#regex-simulator .regex-field .regex-hint {
+  margin: 0;
+}
+
+#regex-simulator details {
+  margin-block: 1em;
+  border-block: 1px solid var(--sebook-border);
+  padding-block: 0.7em;
+}
+
+#regex-simulator summary {
+  cursor: pointer;
+  min-height: 24px;
+  font-size: 1em;
+  font-weight: 700;
+  color: var(--sebook-navy);
+}
+
+#regex-simulator details[open] > summary {
+  margin-block-end: 0.75em;
+}
+
+#regex-simulator fieldset {
+  padding: 0;
+  margin: 0 0 0.75em;
+  border: 0;
+  min-width: 0;
+}
+
+#regex-simulator legend {
+  border: 0;
+  margin-block-end: 0.5em;
+}
+
+#regex-simulator fieldset label {
+  display: flex;
+  gap: 0.65em;
+  align-items: start;
+  padding-block: 0.3em;
+  font-weight: 400;
+}
+
+#regex-simulator input[type="checkbox"] {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  margin: 0.1em 0 0;
+  accent-color: var(--sebook-blue-dark);
+}
+
+#regex-simulator .regex-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55em;
+  margin-block: 0.75em;
+}
+
+#regex-simulator button {
+  padding: 0.5em 0.8em;
+  background: var(--sebook-button-bg);
+  color: var(--sebook-button-text);
+  border-color: var(--sebook-button-border);
+  min-height: 44px;
+  font-weight: 700;
+  white-space: normal;
+  cursor: pointer;
+}
+
+#regex-simulator button:hover:not(:disabled) {
+  background: var(--sebook-button-bg-hover);
+}
+
+#regex-simulator .regex-primary {
+  background: var(--sebook-button-primary-bg);
+  color: var(--sebook-button-primary-text);
+}
+
+#regex-simulator .regex-primary:hover:not(:disabled) {
+  background: #1e5c8a;
+}
+
+#regex-simulator button:disabled {
+  color: var(--regex-muted);
+  border-color: var(--regex-control-border);
+  background: var(--sebook-surface-soft);
+  cursor: not-allowed;
+  border-style: dashed;
+}
+
+#regex-simulator :is(input, textarea, select, button, summary):focus-visible {
+  outline: 3px solid var(--sebook-blue);
+  outline-offset: 3px;
+}
+
+#regex-simulator :is(input, textarea, select, button, summary) {
+  scroll-margin-block: 8em 2em;
+}
+
+#regex-simulator .regex-status {
+  margin-block: 0.8em 0;
+}
+
+#regex-simulator .regex-error {
+  padding: 0.7em;
+  margin-block: 0.8em 0;
+  border-inline-start: 4px solid currentColor;
+  background: var(--regex-error-bg);
+  color: var(--regex-error-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+#regex-simulator pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  padding: 0.8em;
+  margin-block: 0 1em;
+  min-height: 3em;
+  max-width: 100%;
+  background: var(--sebook-surface-soft);
+  color: inherit;
+  border: 1px solid var(--sebook-border);
+  border-radius: 0.35em;
+  line-height: 1.7;
+}
+
+#regex-simulator mark,
+#regex-simulator .regex-empty-match,
+#regex-simulator .regex-cursor {
+  background: var(--regex-match-bg);
+  color: var(--regex-match-text);
+  border-block-end: 2px solid currentColor;
+}
+
+#regex-simulator .regex-empty-match,
+#regex-simulator .regex-cursor {
+  border: 2px solid currentColor;
+  border-radius: 0.15em;
+  padding-inline: 0.1em;
+}
+
+#regex-simulator .regex-match {
+  padding: 0.9em;
+  margin-block: 0.8em;
+  border: 1px solid var(--sebook-border);
+  border-inline-start: 3px solid var(--sebook-blue);
+  border-radius: 0.35em;
+}
+
+#regex-simulator .regex-match-value {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+#regex-simulator .regex-group-list {
+  margin-block: 0.5em 0;
+}
+
+#regex-simulator .regex-group-list dt {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+#regex-simulator .regex-group-list dd {
+  margin-inline: 0;
+  margin-block: 0 0.5em;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+#regex-simulator .regex-debugger,
+#regex-simulator .regex-explanation {
+  margin-block-start: 1.5em;
+  padding-block-start: 1.25em;
+  border-block-start: 1px solid var(--sebook-border);
+}
+
+#regex-explanation {
+  padding-inline-start: 1.3em;
+}
+
+#regex-explanation li {
+  margin-block-end: 0.5em;
+  overflow-wrap: anywhere;
+}
+
+#regex-simulator .regex-explanation-detail {
+  display: block;
+  color: var(--regex-muted);
+}
+
+#regex-simulator .regex-explanation-depth-1 { margin-inline-start: 0.5em; }
+#regex-simulator .regex-explanation-depth-2 { margin-inline-start: 1em; }
+#regex-simulator .regex-explanation-depth-3 { margin-inline-start: 1.5em; }
+#regex-simulator .regex-explanation-depth-4 { margin-inline-start: 2em; }
+#regex-simulator .regex-explanation-depth-5 { margin-inline-start: 2.5em; }
+
+#regex-simulator .regex-cases-panel {
+  margin-block-start: 1.25em;
+}
+
+#regex-simulator .regex-case-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1em;
+}
+
+#regex-simulator .regex-case {
+  padding: 1em;
+  margin: 0;
+  border: 1px solid var(--regex-control-border);
+  border-radius: 0.45em;
+  background: var(--sebook-surface-soft);
+}
+
+#regex-simulator .regex-case legend {
+  width: auto;
+  padding-inline: 0.35em;
+  margin: 0;
+}
+
+#regex-simulator .regex-case label {
+  display: block;
+  padding: 0;
+  font-weight: 700;
+}
+
+#regex-simulator .regex-case-result {
+  padding: 0.65em;
+  border-inline-start: 3px solid var(--regex-control-border);
+  background: var(--sebook-surface);
+  overflow-wrap: anywhere;
+}
+
+#regex-simulator .regex-case-result[data-outcome="pass"] {
+  background: var(--regex-pass-bg);
+  color: var(--regex-pass-text);
+  border-color: currentColor;
+}
+
+#regex-simulator .regex-case-result[data-outcome="fail"],
+#regex-simulator .regex-case-result[data-outcome="error"] {
+  background: var(--regex-error-bg);
+  color: var(--regex-error-text);
+  border-color: currentColor;
+}
+
+@media (max-width: 70em) {
+  #regex-simulator .regex-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 45em) {
+  #regex-simulator .regex-case-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media print {
+  #regex-simulator,
+  html.dark-mode #regex-simulator {
+    --regex-control-border: #555;
+    --regex-muted: #333;
+    --regex-match-bg: #fff;
+    --regex-match-text: #000;
+    --regex-error-bg: #fff;
+    --regex-error-text: #000;
+    --regex-pass-bg: #fff;
+    --regex-pass-text: #000;
+    color: #000;
+  }
+
+  #regex-simulator .regex-workspace {
+    display: block;
+  }
+
+  #regex-simulator .regex-input-panel,
+  #regex-simulator .regex-result-panel,
+  #regex-simulator .regex-cases-panel {
+    margin-block: 1em;
+    border-color: #777;
+    box-shadow: none;
+  }
+
+  #regex-simulator .regex-actions,
+  #regex-simulator .regex-examples,
+  #regex-simulator .regex-case-remove,
+  #regex-status,
+  #regex-stop {
+    display: none;
+  }
+
+  #regex-simulator textarea,
+  #regex-simulator pre {
+    overflow: visible;
+    break-inside: auto;
+  }
+
+  #regex-simulator .regex-match,
+  #regex-simulator .regex-case {
+    break-inside: avoid;
+  }
+
+  #regex-simulator .regex-case-list {
+    display: block;
+  }
+
+  #regex-simulator .regex-case {
+    margin-block: 1em;
+  }
+}

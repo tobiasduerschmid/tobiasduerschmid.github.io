@@ -7,8 +7,12 @@ layout: sebook
 
 This page is a **reference guide** for Regular Expression syntax, engine mechanics, and worked examples. It is designed to be consulted alongside or after the interactive tutorial — not as a replacement for hands-on practice.
 
+Use the [Python RegEx Simulator & Debugger]({{ '/SEBook/tools/regex-simulator.html' | relative_url }}) to test your own patterns, inspect captured groups, and investigate where a match can start.
+
 
 ## Quick Reference
+
+This quick reference uses **Python 3's `re` syntax for string patterns**. Other engines can differ, especially in named groups, character classes, and anchors.
 
 <div class="qr-container">
   <!-- Literal Characters -->
@@ -32,9 +36,9 @@ This page is a **reference guide** for Regular Expression syntax, engine mechani
       <li class="qr-item"><span class="qr-token">.</span><span class="qr-desc">Any character except newline</span></li>
       <li class="qr-item"><span class="qr-token">\s</span><span class="qr-desc">Whitespace</span></li>
       <li class="qr-item"><span class="qr-token">\S</span><span class="qr-desc">Not whitespace</span></li>
-      <li class="qr-item"><span class="qr-token">\d</span><span class="qr-desc">Digit (0-9)</span></li>
+      <li class="qr-item"><span class="qr-token">\d</span><span class="qr-desc">Unicode decimal digit; 0-9 with re.ASCII</span></li>
       <li class="qr-item"><span class="qr-token">\D</span><span class="qr-desc">Not digit</span></li>
-      <li class="qr-item"><span class="qr-token">\w</span><span class="qr-desc">Word character (a-z, A-Z, 0-9, _)</span></li>
+      <li class="qr-item"><span class="qr-token">\w</span><span class="qr-desc">Unicode alphanumeric character or underscore; a-z, A-Z, 0-9, _ with re.ASCII</span></li>
       <li class="qr-item"><span class="qr-token">\W</span><span class="qr-desc">Not word character</span></li>
     </ul>
   </div>
@@ -61,8 +65,8 @@ This page is a **reference guide** for Regular Expression syntax, engine mechani
   <div class="qr-card">
     <h3>Anchors & Boundaries</h3>
     <ul class="qr-list">
-      <li class="qr-item"><span class="qr-token">^</span><span class="qr-desc">Start of string/line</span></li>
-      <li class="qr-item"><span class="qr-token">$</span><span class="qr-desc">End of string/line</span></li>
+      <li class="qr-item"><span class="qr-token">^</span><span class="qr-desc">Start of string; also after each newline with re.MULTILINE</span></li>
+      <li class="qr-item"><span class="qr-token">$</span><span class="qr-desc">End of string or just before its final newline; also before each newline with re.MULTILINE</span></li>
       <li class="qr-item"><span class="qr-token">\b</span><span class="qr-desc">Word boundary</span></li>
       <li class="qr-item"><span class="qr-token">\B</span><span class="qr-desc">Not a word boundary</span></li>
     </ul>
@@ -74,7 +78,7 @@ This page is a **reference guide** for Regular Expression syntax, engine mechani
     <ul class="qr-list">
       <li class="qr-item"><span class="qr-token">(...)</span><span class="qr-desc">Group — treat as a single unit</span></li>
       <li class="qr-item"><span class="qr-token">(a|b)</span><span class="qr-desc">Alternation — matches either a or b</span></li>
-      <li class="qr-item"><span class="qr-token">(?&lt;name&gt;...)</span><span class="qr-desc">Named group — access by name, not number</span></li>
+      <li class="qr-item"><span class="qr-token">(?P&lt;name&gt;...)</span><span class="qr-desc">Python named group — access by name or number</span></li>
       <li class="qr-item"><span class="qr-token">(?:...)</span><span class="qr-desc">Non-capturing group</span></li>
       <li class="qr-item"><span class="qr-token">\1</span><span class="qr-desc">Backreference to group 1</span></li>
     </ul>
@@ -156,9 +160,9 @@ Let's explore the most essential metacharacters and constructs.
 Anchors do not match any actual characters; instead, they constrain a match based on its position in the string.
 
 * `^` (Caret): Asserts the **start** of a string. `^Hello` matches "Hello world" but not "Say Hello".
-* `$` (Dollar Sign): Asserts the **end** of a string. `end$` matches "The end" but not "endless".
+* `$` (Dollar Sign): In Python, asserts the **end** of a string or the position just before a final newline. `end$` matches "The end" but not "endless".
 
-> By default `^` and `$` match the start and end of the entire string. With the **multiline flag** (`m` in JavaScript / `re.M` in Python), they additionally match the start and end of each *line* within the string.
+> In Python, `^` matches the start of the string; `$` matches the end or just before a final newline. With **`re.MULTILINE`** (also called `re.M`), `^` additionally matches immediately after each newline and `$` immediately before each newline. Use `re.fullmatch()` when the entire input must match.
 
 > **Practice this:** [Anchors exercises in the Interactive Tutorial](/SEBook/tools/regex-tutorial.html#anchors)
 
@@ -174,8 +178,8 @@ Character classes (or sets) allow you to match any single character from a speci
 
 ### Metacharacters
 Because certain character sets are used so frequently, RegEx provides handy meta characters:
-* `\d`: Matches any digit. In ASCII-only engines (POSIX, JavaScript without the `u` flag), this is equivalent to `[0-9]`. In Python 3 (and other Unicode-aware engines), `\d` by default matches any Unicode digit (e.g., Devanagari `९`); pass `re.ASCII` to restrict it to `[0-9]`.
-* `\w`: Matches any "word" character. In ASCII-only engines this is `[a-zA-Z0-9_]`; in Unicode-aware engines (Python 3 by default) it also matches accented letters and characters from non-Latin scripts.
+* `\d`: In Python 3 string patterns, matches a Unicode decimal digit (e.g., Devanagari `९`); pass `re.ASCII` to restrict it to `[0-9]`. JavaScript's `\d` matches `[0-9]` even with its `u` flag; POSIX regular expressions do not define `\d`.
+* `\w`: In Python 3 string patterns, matches a Unicode alphanumeric character or underscore. With `re.ASCII`, it matches `[a-zA-Z0-9_]`.
 * `\s`: Matches any whitespace character (spaces, tabs, line breaks).
 * `.` (Dot): The wildcard. Matches *any* single character except a newline (turn on the `s`/DOTALL flag to also match newlines). To match a literal dot, you must escape it with a backslash: `\.`.
 

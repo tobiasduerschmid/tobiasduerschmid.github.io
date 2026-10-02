@@ -275,6 +275,9 @@
   <link rel="stylesheet" href="{{ "/css/rosinfer.css" | prepend: site.baseurl }}?v={{ asset_version }}">
   {% endif %}
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
+  {% if page.regex_simulator %}
+  <link rel="stylesheet" href="{{ '/css/regex-simulator.css' | relative_url }}?v={{ asset_version }}">
+  {% endif %}
   <link rel="stylesheet" href="{{ "/css/print-light.css" | prepend: site.baseurl }}?v={{ asset_version }}">
 
   <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">

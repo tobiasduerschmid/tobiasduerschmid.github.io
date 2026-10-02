@@ -19,6 +19,8 @@ Use the master deck when you want a mixed review of the standalone tools materia
 
 [Regular Expressions](/SEBook/tools/regex.html) covers the pattern language used by tools such as `grep`, `sed`, programming-language libraries, and data-cleaning workflows. The [basic RegEx tutorial](/SEBook/tools/regex-tutorial.html) introduces matching and groups, while the [advanced RegEx tutorial](/SEBook/tools/regex-tutorial-advanced.html) extends the work to lazy quantifiers and lookarounds.
 
+The [Python RegEx Simulator & Debugger]({{ '/SEBook/tools/regex-simulator.html' | relative_url }}) lets you try your own patterns, inspect matches and captured groups, and investigate candidate starting positions with Python's `re` engine.
+
 # Python
 
 [Python](/SEBook/tools/python.html) is the scripting and automation language used throughout many SEBook examples, with emphasis on syntax, data structures, functions, modules, and idiomatic problem solving. The [Python Essentials Tutorial](/SEBook/tools/python-tutorial) builds fluency, and the [Python Debugging Tutorial](/SEBook/tools/python-debugging) practices debugger-driven fault localization.

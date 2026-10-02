@@ -1,0 +1,163 @@
+<div id="regex-simulator" class="regex-simulator" data-worker-url="{{ '/js/regex-simulator-worker.js' | relative_url }}">
+  <div class="regex-engine-note">
+    <span id="regex-version">Python re</span>
+    <p>Explore a pattern, then check it against examples you expect to match or reject.</p>
+  </div>
+
+  <div class="regex-workspace">
+    <section class="regex-input-panel" aria-labelledby="regex-input-heading">
+      <h2 id="regex-input-heading">Try a pattern</h2>
+      <form id="regex-form">
+        <div class="regex-field">
+          <label for="regex-pattern">Regular expression</label>
+          <textarea id="regex-pattern" name="pattern" rows="3" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="regex-pattern-hint regex-error">\b(?P&lt;word&gt;moss|fern)\b</textarea>
+          <p id="regex-pattern-hint" class="regex-hint">Enter the pattern itself, without <code>/…/</code> delimiters or Python <code>r"…"</code> quotes. Limit: 2,000 characters.</p>
+        </div>
+
+        <div class="regex-field">
+          <label for="regex-text">Test text</label>
+          <textarea id="regex-text" name="text" rows="6" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="regex-text-hint regex-error">moss fern mossy</textarea>
+          <p id="regex-text-hint" class="regex-hint">Empty text is a valid test case. Limit: 20,000 characters.</p>
+        </div>
+
+        <div class="regex-field">
+          <label for="regex-operation">Operation</label>
+          <select id="regex-operation" name="operation" aria-describedby="regex-operation-hint">
+            <option value="finditer">Find all matches</option>
+            <option value="search">Search for first match</option>
+            <option value="match">Match at start</option>
+            <option value="fullmatch">Match whole string</option>
+            <option value="sub">Substitute</option>
+          </select>
+          <p id="regex-operation-hint" class="regex-hint">Search can find a substring. Match whole string requires the entire input to match.</p>
+        </div>
+
+        <div id="regex-replacement-field" class="regex-field" hidden>
+          <label for="regex-replacement">Replacement</label>
+          <input id="regex-replacement" name="replacement" type="text" value="&lt;\g&lt;word&gt;&gt;" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="regex-replacement-hint regex-error">
+          <p id="regex-replacement-hint" class="regex-hint">Use Python replacement syntax, such as <code>\g&lt;word&gt;</code> for the group named <code>word</code>. Limit: 2,000 characters.</p>
+        </div>
+
+        <details class="regex-options">
+          <summary>Flags (none selected by default)</summary>
+          <fieldset>
+            <legend>Python matching flags</legend>
+            <label><input type="checkbox" name="regex-flag" value="IGNORECASE"> <span>Ignore case (IGNORECASE)</span></label>
+            <label><input type="checkbox" name="regex-flag" value="MULTILINE"> <span>Line anchors (MULTILINE)</span></label>
+            <label><input type="checkbox" name="regex-flag" value="DOTALL"> <span>Dot matches newline (DOTALL)</span></label>
+            <label><input type="checkbox" name="regex-flag" value="VERBOSE"> <span>Readable pattern (VERBOSE)</span></label>
+            <label><input type="checkbox" name="regex-flag" value="ASCII"> <span>ASCII character classes (ASCII)</span></label>
+          </fieldset>
+          <p class="regex-hint">VERBOSE ignores unescaped whitespace outside character classes and allows <code>#</code> comments. ASCII restricts classes such as <code>\w</code> and <code>\d</code> to ASCII characters.</p>
+        </details>
+
+        <div class="regex-actions">
+          <button id="regex-run" class="regex-primary" type="submit">Run pattern</button>
+          <button id="regex-stop" type="button" disabled>Stop</button>
+        </div>
+        <p id="regex-status" class="regex-status" role="status" aria-live="polite">Ready. Run a pattern to see results.</p>
+        <p id="regex-error" class="regex-error" role="alert" hidden></p>
+      </form>
+
+      <details class="regex-examples">
+        <summary>Explore an example</summary>
+        <div class="regex-field">
+          <label for="regex-example">Example</label>
+          <select id="regex-example">
+            <option value="words">Words and boundaries</option>
+            <option value="greedy">Greedy repetition</option>
+            <option value="lazy">Lazy repetition</option>
+            <option value="groups">Named groups</option>
+            <option value="empty">Empty matches</option>
+          </select>
+        </div>
+        <p class="regex-hint">Loading an example replaces the current inputs. Predict the result, then run it.</p>
+        <button id="regex-load-example" type="button">Load example</button>
+      </details>
+      <details class="regex-limits">
+        <summary>Runtime and result limits</summary>
+        <p>Pattern execution stops after 2 seconds. Stop cancels a run or simulator preparation. Your inputs stay available for another attempt.</p>
+        <p>Results display up to 200 matches and 100 candidate starting positions. To keep the page responsive, a run can return at most 5,000 capture records and 100,000 characters of match and capture text. Substitution output is limited to 100,000 characters. If a result exceeds these limits, try shorter text or fewer capture groups.</p>
+      </details>
+    </section>
+
+    <div class="regex-result-panel">
+      <p class="regex-results-guide">Run a pattern to see highlighted matches, captured groups, and starting positions. Results show the first 200 matches and inspect up to 100 candidate positions.</p>
+      <section id="regex-results" aria-labelledby="regex-results-heading" hidden>
+        <h2 id="regex-results-heading">Match results</h2>
+        <p id="regex-summary"></p>
+        <p class="regex-hint">Offsets start at zero and count Unicode code points. The end offset is excluded. Empty matches occupy a position between characters.</p>
+        <pre id="regex-highlight" role="region" aria-label="Highlighted matches"></pre>
+        <div id="regex-matches"></div>
+
+        <section id="regex-output-field" aria-labelledby="regex-output-heading" hidden>
+          <h3 id="regex-output-heading">Substitution result</h3>
+          <pre id="regex-output"></pre>
+        </section>
+
+        <section class="regex-debugger" aria-labelledby="regex-debugger-heading">
+          <h2 id="regex-debugger-heading">Debug the first match</h2>
+          <p>Inspect candidate starting positions using real Python matches. Each step asks whether the full pattern can match from that position; it does not show the engine's internal backtracking trace.</p>
+          <pre id="regex-probe-text" role="region" aria-label="Current starting position"></pre>
+          <p id="regex-probe-status" role="status" aria-live="polite"></p>
+          <div class="regex-actions">
+            <button id="regex-probe-first" type="button">First position</button>
+            <button id="regex-probe-prev" type="button">Previous position</button>
+            <button id="regex-probe-next" type="button">Next position</button>
+          </div>
+          <p id="regex-probe-limit" class="regex-hint" hidden></p>
+        </section>
+
+        <section class="regex-explanation" aria-labelledby="regex-explanation-heading">
+          <h2 id="regex-explanation-heading">Pattern explanation</h2>
+          <ul id="regex-explanation"></ul>
+          <details class="regex-diagnostics">
+            <summary>Python compiler diagnostics (re.DEBUG)</summary>
+            <pre id="regex-debug"></pre>
+          </details>
+        </section>
+      </section>
+    </div>
+  </div>
+
+  <section id="regex-cases" class="regex-cases-panel" aria-labelledby="regex-cases-heading">
+    <h2 id="regex-cases-heading">Test your own examples</h2>
+    <p>Use the current regular expression and flags to check several examples together. Mark each example as one that should match or should not match before running.</p>
+    <div class="regex-field">
+      <label for="regex-case-operation">Test-case match mode</label>
+      <select id="regex-case-operation" aria-describedby="regex-case-operation-hint">
+        <option value="fullmatch">Match whole string</option>
+        <option value="search">Search for a match</option>
+      </select>
+      <p id="regex-case-operation-hint" class="regex-hint">Use Match whole string to validate complete inputs. Use Search for a match when finding a matching substring is enough. This mode applies to every test case.</p>
+    </div>
+    <p id="regex-cases-hint" class="regex-hint">Empty text tests the empty string. Add up to 50 cases, with at most 20,000 Unicode code points across their text. Cases stay on this page until you reload or leave.</p>
+    <div id="regex-case-list" class="regex-case-list"></div>
+    <div class="regex-actions">
+      <button id="regex-add-case" type="button">Add test case</button>
+      <button id="regex-run-cases" class="regex-primary" type="button">Run test cases</button>
+    </div>
+    <p id="regex-cases-status" role="status" aria-live="polite">Choose expected outcomes, then run the test cases.</p>
+  </section>
+
+  <template id="regex-case-template">
+    <fieldset class="regex-case">
+      <legend class="regex-case-title"></legend>
+      <div class="regex-field">
+        <label data-case-label="text"></label>
+        <textarea class="regex-case-text" rows="2" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="regex-cases-hint regex-error"></textarea>
+      </div>
+      <div class="regex-field">
+        <label data-case-label="expectation"></label>
+        <select class="regex-case-expectation">
+          <option value="match">Should match</option>
+          <option value="no-match">Should not match</option>
+        </select>
+      </div>
+      <p class="regex-case-result">Not run.</p>
+      <button class="regex-case-remove" type="button"></button>
+    </fieldset>
+  </template>
+
+  <noscript><p>This simulator needs JavaScript to run patterns and test cases. The <a href="{{ '/SEBook/tools/regex.html' | relative_url }}">RegEx reference guide</a> is available without JavaScript.</p></noscript>
+</div>
