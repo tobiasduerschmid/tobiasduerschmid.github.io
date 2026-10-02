@@ -1,0 +1,1108 @@
+{
+  "request_url": "https://api.openalex.org/works/https://doi.org/10.25304/rlt.v27.2248",
+  "retrieved": "2026-10-02",
+  "response": {
+    "id": "https://openalex.org/W2956839016",
+    "doi": "https://doi.org/10.25304/rlt.v27.2248",
+    "title": "Learner experiences of a blended course incorporating a MOOC on Haskell functional programming",
+    "display_name": "Learner experiences of a blended course incorporating a MOOC on Haskell functional programming",
+    "publication_year": 2019,
+    "publication_date": "2019-07-10",
+    "ids": {
+      "openalex": "https://openalex.org/W2956839016",
+      "doi": "https://doi.org/10.25304/rlt.v27.2248",
+      "mag": "2956839016"
+    },
+    "language": "en",
+    "primary_location": {
+      "id": "doi:10.25304/rlt.v27.2248",
+      "is_oa": true,
+      "landing_page_url": "https://doi.org/10.25304/rlt.v27.2248",
+      "pdf_url": "https://journal.alt.ac.uk/index.php/rlt/article/download/2248/2532",
+      "source": {
+        "id": "https://openalex.org/S148039198",
+        "display_name": "Research in Learning Technology",
+        "issn_l": "2156-7069",
+        "issn": [
+          "2156-7069",
+          "2156-7077"
+        ],
+        "is_oa": true,
+        "is_in_doaj": true,
+        "is_core": true,
+        "listed_in": [
+          "cwts-core",
+          "doaj",
+          "erih-plus",
+          "jufo-1",
+          "norway-1"
+        ],
+        "host_organization": "https://openalex.org/P4310311749",
+        "host_organization_name": "Association for Learning Technology",
+        "host_organization_lineage": [
+          "https://openalex.org/P4310311749"
+        ],
+        "host_organization_lineage_names": [
+          "Association for Learning Technology"
+        ],
+        "type": "journal"
+      },
+      "license": "cc-by",
+      "license_id": "https://openalex.org/licenses/cc-by",
+      "version": "publishedVersion",
+      "is_accepted": true,
+      "is_published": true,
+      "raw_source_name": "Research in Learning Technology",
+      "raw_type": "journal-article"
+    },
+    "type": "article",
+    "indexed_in": [
+      "crossref",
+      "doaj"
+    ],
+    "open_access": {
+      "is_oa": true,
+      "oa_status": "diamond",
+      "oa_url": "https://journal.alt.ac.uk/index.php/rlt/article/download/2248/2532",
+      "any_repository_has_fulltext": true
+    },
+    "authorships": [
+      {
+        "author_position": "first",
+        "author": {
+          "id": "https://openalex.org/A5085647979",
+          "display_name": "Vicki Harcus Morgan Dale",
+          "orcid": "https://orcid.org/0000-0001-6623-7412",
+          "observed_orcids": [
+            "https://orcid.org/0000-0001-6623-7412"
+          ]
+        },
+        "institutions": [
+          {
+            "id": "https://openalex.org/I7882870",
+            "display_name": "University of Glasgow",
+            "ror": "https://ror.org/00vtgdb53",
+            "country_code": "GB",
+            "type": "education",
+            "lineage": [
+              "https://openalex.org/I7882870"
+            ]
+          }
+        ],
+        "countries": [
+          "GB"
+        ],
+        "is_corresponding": false,
+        "raw_author_name": "Vicki H.M. Dale",
+        "raw_affiliation_strings": [
+          "Learning Enhancement and Academic Development Service, Student and Academic Services, Southpark House, University of Glasgow"
+        ],
+        "raw_orcid": null,
+        "affiliations": [
+          {
+            "raw_affiliation_string": "Learning Enhancement and Academic Development Service, Student and Academic Services, Southpark House, University of Glasgow",
+            "institution_ids": [
+              "https://openalex.org/I7882870"
+            ]
+          }
+        ]
+      },
+      {
+        "author_position": "last",
+        "author": {
+          "id": "https://openalex.org/A5064718447",
+          "display_name": "Jeremy Singer",
+          "orcid": "https://orcid.org/0000-0001-9462-6802",
+          "observed_orcids": [
+            "https://orcid.org/0000-0001-9462-6802"
+          ]
+        },
+        "institutions": [
+          {
+            "id": "https://openalex.org/I7882870",
+            "display_name": "University of Glasgow",
+            "ror": "https://ror.org/00vtgdb53",
+            "country_code": "GB",
+            "type": "education",
+            "lineage": [
+              "https://openalex.org/I7882870"
+            ]
+          }
+        ],
+        "countries": [
+          "GB"
+        ],
+        "is_corresponding": false,
+        "raw_author_name": "Jeremy Singer",
+        "raw_affiliation_strings": [
+          "School of Computing Science, Sir Alwyn Williams Building, University of Glasgow"
+        ],
+        "raw_orcid": null,
+        "affiliations": [
+          {
+            "raw_affiliation_string": "School of Computing Science, Sir Alwyn Williams Building, University of Glasgow",
+            "institution_ids": [
+              "https://openalex.org/I7882870"
+            ]
+          }
+        ]
+      }
+    ],
+    "institutions": [],
+    "countries_distinct_count": 1,
+    "institutions_distinct_count": 1,
+    "corresponding_author_ids": [],
+    "corresponding_institution_ids": [
+      "https://openalex.org/I7882870"
+    ],
+    "apc_list": null,
+    "apc_paid": null,
+    "fwci": 2.5302,
+    "has_fulltext": true,
+    "cited_by_count": 15,
+    "citation_normalized_percentile": {
+      "value": 0.90335899,
+      "is_in_top_1_percent": false,
+      "is_in_top_10_percent": true
+    },
+    "cited_by_percentile_year": {
+      "min": 88,
+      "max": 98
+    },
+    "biblio": {
+      "volume": "27",
+      "issue": "0",
+      "first_page": null,
+      "last_page": null
+    },
+    "is_retracted": false,
+    "is_paratext": false,
+    "is_xpac": false,
+    "primary_topic": {
+      "id": "https://openalex.org/T11122",
+      "display_name": "Online Learning and Analytics",
+      "score": 0.9995999932289124,
+      "subfield": {
+        "id": "https://openalex.org/subfields/1706",
+        "display_name": "Computer Science Applications"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/17",
+        "display_name": "Computer Science"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/3",
+        "display_name": "Physical Sciences"
+      }
+    },
+    "topics": [
+      {
+        "id": "https://openalex.org/T11122",
+        "display_name": "Online Learning and Analytics",
+        "score": 0.9995999932289124,
+        "subfield": {
+          "id": "https://openalex.org/subfields/1706",
+          "display_name": "Computer Science Applications"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/17",
+          "display_name": "Computer Science"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      {
+        "id": "https://openalex.org/T14246",
+        "display_name": "E-Learning and Knowledge Management",
+        "score": 0.9933000206947327,
+        "subfield": {
+          "id": "https://openalex.org/subfields/1706",
+          "display_name": "Computer Science Applications"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/17",
+          "display_name": "Computer Science"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      {
+        "id": "https://openalex.org/T12171",
+        "display_name": "Open Education and E-Learning",
+        "score": 0.9266999959945679,
+        "subfield": {
+          "id": "https://openalex.org/subfields/1706",
+          "display_name": "Computer Science Applications"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/17",
+          "display_name": "Computer Science"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      }
+    ],
+    "keywords": [
+      {
+        "id": "https://openalex.org/keywords/blended-learning",
+        "display_name": "blended learning",
+        "score": 0.8740000128746033
+      },
+      {
+        "id": "https://openalex.org/keywords/moocs",
+        "display_name": "MOOCs",
+        "score": 0.7730000019073486
+      },
+      {
+        "id": "https://openalex.org/keywords/haskell",
+        "display_name": "Haskell",
+        "score": 0.9580000042915344
+      },
+      {
+        "id": "https://openalex.org/keywords/functional-programming",
+        "display_name": "functional programming",
+        "score": 0.925000011920929
+      },
+      {
+        "id": "https://openalex.org/keywords/student-experience",
+        "display_name": "student experience",
+        "score": 0.8109999895095825
+      },
+      {
+        "id": "https://openalex.org/keywords/online-programming-education",
+        "display_name": "online programming education",
+        "score": 0.5090000033378601
+      },
+      {
+        "id": "https://openalex.org/keywords/educational-videos",
+        "display_name": "educational videos",
+        "score": 0.7599999904632568
+      },
+      {
+        "id": "https://openalex.org/keywords/programming-exercises",
+        "display_name": "programming exercises",
+        "score": 0.9139999747276306
+      },
+      {
+        "id": "https://openalex.org/keywords/face-to-face-contact",
+        "display_name": "face-to-face contact",
+        "score": 0.7170000076293945
+      },
+      {
+        "id": "https://openalex.org/keywords/course-design",
+        "display_name": "course design",
+        "score": 0.5139999985694885
+      },
+      {
+        "id": "https://openalex.org/keywords/student-perceptions",
+        "display_name": "student perceptions",
+        "score": 0.34700000286102295
+      }
+    ],
+    "concepts": [
+      {
+        "id": "https://openalex.org/C2780624054",
+        "wikidata": "https://www.wikidata.org/wiki/Q34010",
+        "display_name": "Haskell",
+        "level": 3,
+        "score": 0.9816423654556274
+      },
+      {
+        "id": "https://openalex.org/C41008148",
+        "wikidata": "https://www.wikidata.org/wiki/Q21198",
+        "display_name": "Computer science",
+        "level": 0,
+        "score": 0.743330717086792
+      },
+      {
+        "id": "https://openalex.org/C42383842",
+        "wikidata": "https://www.wikidata.org/wiki/Q193076",
+        "display_name": "Functional programming",
+        "level": 2,
+        "score": 0.6830512285232544
+      },
+      {
+        "id": "https://openalex.org/C2777552389",
+        "wikidata": "https://www.wikidata.org/wiki/Q1962728",
+        "display_name": "Course (navigation)",
+        "level": 2,
+        "score": 0.6525249481201172
+      },
+      {
+        "id": "https://openalex.org/C2777808570",
+        "wikidata": "https://www.wikidata.org/wiki/Q967853",
+        "display_name": "Massive open online course",
+        "level": 2,
+        "score": 0.5697677731513977
+      },
+      {
+        "id": "https://openalex.org/C199360897",
+        "wikidata": "https://www.wikidata.org/wiki/Q9143",
+        "display_name": "Programming language",
+        "level": 1,
+        "score": 0.4987764358520508
+      },
+      {
+        "id": "https://openalex.org/C49774154",
+        "wikidata": "https://www.wikidata.org/wiki/Q131765",
+        "display_name": "Multimedia",
+        "level": 1,
+        "score": 0.4295177161693573
+      },
+      {
+        "id": "https://openalex.org/C145420912",
+        "wikidata": "https://www.wikidata.org/wiki/Q853077",
+        "display_name": "Mathematics education",
+        "level": 1,
+        "score": 0.401147723197937
+      },
+      {
+        "id": "https://openalex.org/C136764020",
+        "wikidata": "https://www.wikidata.org/wiki/Q466",
+        "display_name": "World Wide Web",
+        "level": 1,
+        "score": 0.29935479164123535
+      },
+      {
+        "id": "https://openalex.org/C15744967",
+        "wikidata": "https://www.wikidata.org/wiki/Q9418",
+        "display_name": "Psychology",
+        "level": 0,
+        "score": 0.19270780682563782
+      },
+      {
+        "id": "https://openalex.org/C127413603",
+        "wikidata": "https://www.wikidata.org/wiki/Q11023",
+        "display_name": "Engineering",
+        "level": 0,
+        "score": 0.0919804573059082
+      },
+      {
+        "id": "https://openalex.org/C146978453",
+        "wikidata": "https://www.wikidata.org/wiki/Q3798668",
+        "display_name": "Aerospace engineering",
+        "level": 1,
+        "score": 0.0
+      }
+    ],
+    "mesh": [],
+    "locations_count": 3,
+    "locations": [
+      {
+        "id": "doi:10.25304/rlt.v27.2248",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.25304/rlt.v27.2248",
+        "pdf_url": "https://journal.alt.ac.uk/index.php/rlt/article/download/2248/2532",
+        "source": {
+          "id": "https://openalex.org/S148039198",
+          "display_name": "Research in Learning Technology",
+          "issn_l": "2156-7069",
+          "issn": [
+            "2156-7069",
+            "2156-7077"
+          ],
+          "is_oa": true,
+          "is_in_doaj": true,
+          "is_core": true,
+          "listed_in": [
+            "cwts-core",
+            "doaj",
+            "erih-plus",
+            "jufo-1",
+            "norway-1"
+          ],
+          "host_organization": "https://openalex.org/P4310311749",
+          "host_organization_name": "Association for Learning Technology",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310311749"
+          ],
+          "host_organization_lineage_names": [
+            "Association for Learning Technology"
+          ],
+          "type": "journal"
+        },
+        "license": "cc-by",
+        "license_id": "https://openalex.org/licenses/cc-by",
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Research in Learning Technology",
+        "raw_type": "journal-article"
+      },
+      {
+        "id": "pmh:oai:eprints.gla.ac.uk:195429",
+        "is_oa": true,
+        "landing_page_url": "https://eprints.gla.ac.uk/195429/1/195429.pdf",
+        "pdf_url": "https://eprints.gla.ac.uk/195429/1/195429.pdf",
+        "source": {
+          "id": "https://openalex.org/S4210235606",
+          "display_name": "ENLIGHTEN (Jurnal Bimbingan dan Konseling Islam)",
+          "issn_l": "2622-8912",
+          "issn": [
+            "2622-8912",
+            "2622-8920"
+          ],
+          "is_oa": true,
+          "is_in_doaj": true,
+          "is_core": false,
+          "listed_in": [
+            "doaj"
+          ],
+          "host_organization": null,
+          "host_organization_name": null,
+          "host_organization_lineage": [],
+          "host_organization_lineage_names": [],
+          "type": "journal"
+        },
+        "license": "cc-by-sa",
+        "license_id": "https://openalex.org/licenses/cc-by-sa",
+        "version": "acceptedVersion",
+        "is_accepted": true,
+        "is_published": false,
+        "raw_source_name": "",
+        "raw_type": "Articles"
+      },
+      {
+        "id": "pmh:oai:doaj.org/article:31011b5f6300426a918f1630cf29253b",
+        "is_oa": false,
+        "landing_page_url": "https://doaj.org/article/31011b5f6300426a918f1630cf29253b",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306401280",
+          "display_name": "DOAJ (DOAJ: Directory of Open Access Journals)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": null,
+          "host_organization_name": null,
+          "host_organization_lineage": [],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": "Research in Learning Technology, Vol 27, Iss 0, Pp 1-15 (2019)",
+        "raw_type": "article"
+      }
+    ],
+    "best_oa_location": {
+      "id": "doi:10.25304/rlt.v27.2248",
+      "is_oa": true,
+      "landing_page_url": "https://doi.org/10.25304/rlt.v27.2248",
+      "pdf_url": "https://journal.alt.ac.uk/index.php/rlt/article/download/2248/2532",
+      "source": {
+        "id": "https://openalex.org/S148039198",
+        "display_name": "Research in Learning Technology",
+        "issn_l": "2156-7069",
+        "issn": [
+          "2156-7069",
+          "2156-7077"
+        ],
+        "is_oa": true,
+        "is_in_doaj": true,
+        "is_core": true,
+        "listed_in": [
+          "cwts-core",
+          "doaj",
+          "erih-plus",
+          "jufo-1",
+          "norway-1"
+        ],
+        "host_organization": "https://openalex.org/P4310311749",
+        "host_organization_name": "Association for Learning Technology",
+        "host_organization_lineage": [
+          "https://openalex.org/P4310311749"
+        ],
+        "host_organization_lineage_names": [
+          "Association for Learning Technology"
+        ],
+        "type": "journal"
+      },
+      "license": "cc-by",
+      "license_id": "https://openalex.org/licenses/cc-by",
+      "version": "publishedVersion",
+      "is_accepted": true,
+      "is_published": true,
+      "raw_source_name": "Research in Learning Technology",
+      "raw_type": "journal-article"
+    },
+    "sustainable_development_goals": [
+      {
+        "score": 0.8700000047683716,
+        "display_name": "Quality Education",
+        "id": "https://metadata.un.org/sdg/4"
+      }
+    ],
+    "x_sdgs": [],
+    "study_designs": [],
+    "awards": [],
+    "funders": [
+      {
+        "id": "https://openalex.org/F4320320337",
+        "display_name": "University of Glasgow",
+        "ror": "https://ror.org/00vtgdb53"
+      }
+    ],
+    "has_content": {
+      "pdf": true,
+      "grobid_xml": true
+    },
+    "content_urls": {
+      "pdf": "https://content.openalex.org/works/W2956839016.pdf",
+      "grobid_xml": "https://content.openalex.org/works/W2956839016.grobid-xml"
+    },
+    "referenced_works_count": 27,
+    "referenced_works": [
+      "https://openalex.org/W1550086936",
+      "https://openalex.org/W1566251558",
+      "https://openalex.org/W1766934520",
+      "https://openalex.org/W1979290264",
+      "https://openalex.org/W2052608015",
+      "https://openalex.org/W2059954942",
+      "https://openalex.org/W2131314393",
+      "https://openalex.org/W2159702301",
+      "https://openalex.org/W2165558212",
+      "https://openalex.org/W2211502120",
+      "https://openalex.org/W2331393505",
+      "https://openalex.org/W2441389905",
+      "https://openalex.org/W2562534394",
+      "https://openalex.org/W2613616970",
+      "https://openalex.org/W2614482195",
+      "https://openalex.org/W2728031825",
+      "https://openalex.org/W2747657620",
+      "https://openalex.org/W2783794012",
+      "https://openalex.org/W2800917419",
+      "https://openalex.org/W2802054559",
+      "https://openalex.org/W2895037955",
+      "https://openalex.org/W2914473709",
+      "https://openalex.org/W2946961535",
+      "https://openalex.org/W3100867380",
+      "https://openalex.org/W4235471741",
+      "https://openalex.org/W4238978849",
+      "https://openalex.org/W4256206157"
+    ],
+    "related_works": [
+      "https://openalex.org/W2112263414",
+      "https://openalex.org/W1602185604",
+      "https://openalex.org/W2588045479",
+      "https://openalex.org/W3004782279",
+      "https://openalex.org/W2028779182",
+      "https://openalex.org/W4242678340",
+      "https://openalex.org/W1975276861",
+      "https://openalex.org/W2140654465",
+      "https://openalex.org/W1591331302",
+      "https://openalex.org/W1671914757"
+    ],
+    "abstract_inverted_index": {
+      "There": [
+        0,
+        143
+      ],
+      "is": [
+        1
+      ],
+      "an": [
+        2
+      ],
+      "increasing": [
+        3
+      ],
+      "move": [
+        4
+      ],
+      "in": [
+        5,
+        98,
+        102,
+        159,
+        175
+      ],
+      "higher": [
+        6
+      ],
+      "education": [
+        7
+      ],
+      "to": [
+        8,
+        12,
+        42,
+        146,
+        188,
+        191
+      ],
+      "blend": [
+        9
+      ],
+      "university": [
+        10
+      ],
+      "courses": [
+        11
+      ],
+      "include": [
+        13
+      ],
+      "a": [
+        14,
+        29,
+        33,
+        130,
+        148
+      ],
+      "Massive": [
+        15
+      ],
+      "Open": [
+        16
+      ],
+      "Online": [
+        17
+      ],
+      "Course": [
+        18
+      ],
+      "(MOOC).": [
+        19
+      ],
+      "This": [
+        20
+      ],
+      "article": [
+        21
+      ],
+      "reports": [
+        22
+      ],
+      "on": [
+        23,
+        107
+      ],
+      "the": [
+        24,
+        40,
+        54,
+        62,
+        67,
+        70,
+        74,
+        99,
+        103,
+        124,
+        151,
+        154,
+        157,
+        179
+      ],
+      "learner": [
+        25
+      ],
+      "experiences": [
+        26
+      ],
+      "of": [
+        27,
+        39,
+        69,
+        73,
+        84,
+        120,
+        132,
+        134,
+        156,
+        161,
+        163,
+        167,
+        178,
+        183
+      ],
+      "such": [
+        28
+      ],
+      "course,": [
+        30
+      ],
+      "which": [
+        31,
+        137
+      ],
+      "incorporated": [
+        32
+      ],
+      "purposely": [
+        34
+      ],
+      "designed": [
+        35
+      ],
+      "MOOC": [
+        36,
+        152
+      ],
+      "as": [
+        37,
+        88,
+        96
+      ],
+      "part": [
+        38
+      ],
+      "blend,": [
+        41
+      ],
+      "teach": [
+        43
+      ],
+      "Haskell": [
+        44
+      ],
+      "functional": [
+        45
+      ],
+      "programming.": [
+        46
+      ],
+      "A": [
+        47
+      ],
+      "survey": [
+        48
+      ],
+      "revealed": [
+        49
+      ],
+      "that": [
+        50
+      ],
+      "students": [
+        51,
+        101
+      ],
+      "most": [
+        52
+      ],
+      "valued": [
+        53
+      ],
+      "programming": [
+        55,
+        79
+      ],
+      "exercises,": [
+        56
+      ],
+      "quizzes": [
+        57
+      ],
+      "and": [
+        58,
+        78,
+        153,
+        165
+      ],
+      "instructional": [
+        59
+      ],
+      "videos,": [
+        60,
+        75
+      ],
+      "while": [
+        61
+      ],
+      "follow-up": [
+        63
+      ],
+      "focus": [
+        64,
+        104
+      ],
+      "group": [
+        65,
+        105
+      ],
+      "highlighted": [
+        66
+      ],
+      "flexibility": [
+        68
+      ],
+      "MOOC,": [
+        71
+      ],
+      "usefulness": [
+        72
+      ],
+      "drop-in": [
+        76
+      ],
+      "sessions": [
+        77,
+        136
+      ],
+      "exercises.": [
+        80
+      ],
+      "The": [
+        81,
+        117,
+        181
+      ],
+      "overall": [
+        82
+      ],
+      "mix": [
+        83
+      ],
+      "activities": [
+        85
+      ],
+      "was": [
+        86,
+        123,
+        144
+      ],
+      "regarded": [
+        87
+      ],
+      "particularly": [
+        89,
+        110
+      ],
+      "useful.": [
+        90
+      ],
+      "While": [
+        91
+      ],
+      "discussions": [
+        92
+      ],
+      "were": [
+        93,
+        172
+      ],
+      "not": [
+        94
+      ],
+      "rated": [
+        95
+      ],
+      "highly": [
+        97
+      ],
+      "survey,": [
+        100
+      ],
+      "commented": [
+        106
+      ],
+      "their": [
+        108
+      ],
+      "value,": [
+        109
+      ],
+      "for": [
+        111
+      ],
+      "getting": [
+        112
+      ],
+      "support": [
+        113
+      ],
+      "from": [
+        114
+      ],
+      "external": [
+        115
+      ],
+      "learners.": [
+        116
+      ],
+      "perceived": [
+        118,
+        145
+      ],
+      "lack": [
+        119,
+        131
+      ],
+      "face-to-face": [
+        121
+      ],
+      "contact": [
+        122
+      ],
+      "biggest": [
+        125
+      ],
+      "issue;": [
+        126
+      ],
+      "however,": [
+        127
+      ],
+      "this": [
+        128,
+        184
+      ],
+      "reflected": [
+        129
+      ],
+      "awareness": [
+        133
+      ],
+      "lab": [
+        135
+      ],
+      "could": [
+        138
+      ],
+      "have": [
+        139
+      ],
+      "been": [
+        140
+      ],
+      "better": [
+        141
+      ],
+      "signposted.": [
+        142
+      ],
+      "be": [
+        147
+      ],
+      "gap": [
+        149
+      ],
+      "between": [
+        150
+      ],
+      "rest": [
+        155
+      ],
+      "course": [
+        158
+      ],
+      "terms": [
+        160
+      ],
+      "level": [
+        162
+      ],
+      "difficulty": [
+        164
+      ],
+      "authenticity": [
+        166
+      ],
+      "learning": [
+        168
+      ],
+      "tasks.": [
+        169
+      ],
+      "These": [
+        170
+      ],
+      "issues": [
+        171
+      ],
+      "positively": [
+        173
+      ],
+      "addressed": [
+        174
+      ],
+      "subsequent": [
+        176
+      ],
+      "runs": [
+        177
+      ],
+      "course.": [
+        180
+      ],
+      "outcomes": [
+        182
+      ],
+      "study": [
+        185
+      ],
+      "are": [
+        186
+      ],
+      "relevant": [
+        187
+      ],
+      "educators": [
+        189
+      ],
+      "seeking": [
+        190
+      ],
+      "incorporate": [
+        192
+      ],
+      "MOOCs": [
+        193
+      ],
+      "into": [
+        194
+      ],
+      "blended": [
+        195
+      ],
+      "courses.": [
+        196
+      ]
+    },
+    "counts_by_year": [
+      {
+        "year": 2026,
+        "cited_by_count": 1
+      },
+      {
+        "year": 2025,
+        "cited_by_count": 1
+      },
+      {
+        "year": 2024,
+        "cited_by_count": 3
+      },
+      {
+        "year": 2023,
+        "cited_by_count": 2
+      },
+      {
+        "year": 2022,
+        "cited_by_count": 1
+      },
+      {
+        "year": 2021,
+        "cited_by_count": 6
+      },
+      {
+        "year": 2020,
+        "cited_by_count": 1
+      }
+    ],
+    "updated_date": "2026-09-29T14:09:16.559479",
+    "created_date": "2025-10-10T00:00:00"
+  }
+}

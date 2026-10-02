@@ -1,0 +1,124 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"scholar_result_id\":\"a8a1fd82-568c-49f9-a5f7-93dbc7c40dd7\",\"scholar_title\":\"Haskell teaching studies\",\"scholar_tool_name\":\"search_open_access_works\",\"papers\":[{\"id\":\"https://openalex.org/W1541318173\",\"title\":\"Haskell: The Craft of Functional Programming\",\"citation_info\":\"Simon Thompson\",\"pdf_url\":\"https://kar.kent.ac.uk/30749/1/craft3e.pdf\"},{\"id\":\"https://openalex.org/W2159539728\",\"title\":\"Attitudes towards science: A review of the literature and its implications\",\"citation_info\":\"Jonathan Osborne, Shirley Simon, Sue Collins\",\"pdf_url\":\"https://www.tandfonline.com/doi/pdf/10.1080/0950069032000032199?needAccess=true&role=button\"},{\"id\":\"https://openalex.org/W2842089854\",\"title\":\"CasADi: a software framework for nonlinear optimization and optimal control\",\"citation_info\":\"Joel A.E. Andersson, Joris Gillis, Greg Horn, James B. Rawlings, Moritz Diehl\",\"pdf_url\":\"https://lirias.kuleuven.be/retrieve/b19a85ed-8044-40f1-bff0-b7164c0353f5\"},{\"id\":\"https://openalex.org/W2203258339\",\"title\":\"Understanding beginners' mistakes with Haskell\",\"citation_info\":\"Ville Tirronen, SAMUEL UUSI-MÄKELÄ, Ville Isomöttönen\",\"pdf_url\":\"https://www.cambridge.org/core/services/aop-cambridge-core/content/view/244DB6807F3BD77E14CE7D627514D6D3/S0956796815000179a.pdf/div-class-title-understanding-beginners-mistakes-with-haskell-div.pdf\"},{\"id\":\"https://openalex.org/W2260250034\",\"title\":\"Ask-Elle: an Adaptable Programming Tutor for Haskell Giving Automated Feedback\",\"citation_info\":\"Alex Gerdes, Bastiaan Heeren, Johan T. Jeuring, L. Thomas van Binsbergen\",\"pdf_url\":\"https://link.springer.com/content/pdf/10.1007/s40593-015-0080-x.pdf\"},{\"id\":\"https://openalex.org/W4242126179\",\"title\":\"QuickCheck\",\"citation_info\":\"Koen Claessen, John Hughes\",\"pdf_url\":\"https://dl.acm.org/doi/pdf/10.1145/357766.351266\"},{\"id\":\"https://openalex.org/W1483817851\",\"title\":\"Multiple-View Tracing for Haskell: a New Hat\",\"citation_info\":\"Malcolm Wallace, Olaf Chitil, Thorsten Brehm, Colin Runciman\",\"pdf_url\":\"https://kar.kent.ac.uk/13566/1/multiple-view_tracing_wallace.pdf\"},{\"id\":\"https://openalex.org/W2037052435\",\"title\":\"Teaching Case of Gamification and Visual Technologies for Education\",\"citation_info\":\"Sergi Villagrasa, David Fonseca, Ernesto Redondo Domínguez, Jaume Durán\",\"pdf_url\":\"https://www.igi-global.com/ViewTitle.aspx?TitleId=120703&isxn=9781466657557\"},{\"id\":\"https://openalex.org/W2163873997\",\"title\":\"The risks and benefits of teaching purely functional programming in first year\",\"citation_info\":\"Manuel M. T. Chakravarty, Gabriele Keller\",\"pdf_url\":\"https://www.cambridge.org/core/services/aop-cambridge-core/content/view/39F929A1793B67BCEF316DBDB717F273/S0956796803004805a.pdf/div-class-title-the-risks-and-benefits-of-teaching-purely-functional-programming-in-first-year-div.pdf\"},{\"id\":\"https://openalex.org/W2089939717\",\"title\":\"The beacon openflow controller\",\"citation_info\":\"David Erickson\",\"pdf_url\":\"https://dl.acm.org/doi/pdf/10.1145/2491185.2491189\"},{\"id\":\"https://openalex.org/W2589229055\",\"title\":\"Framework for the design and delivery of organized physical activity sessions for children and adolescents: rationale and description of the ‘SAAFE’ teaching principles\",\"citation_info\":\"David Revalds Lubans, Chris Lonsdale, Kristen E. Cohen, Narelle Eather, Mark R. Beauchamp, Philip James Morgan, Benjamin D. Sylvester, Jordan James Smith\",\"pdf_url\":\"https://ijbnpa.biomedcentral.com/track/pdf/10.1186/s12966-017-0479-x\"},{\"id\":\"https://openalex.org/W2062887328\",\"title\":\"The view from the left\",\"citation_info\":\"Conor Thomas McBride, James McKinna\",\"pdf_url\":\"https://www.cambridge.org/core/services/aop-cambridge-core/content/view/F8A44CAC27CCA178AF69DD84BC585A2D/S0956796803004829a.pdf/div-class-title-the-view-from-the-left-div.pdf\"},{\"id\":\"https://openalex.org/W1499817638\",\"title\":\"Securing a sustainable future for higher education : an independent review of higher education funding and student finance\",\"citation_info\":\"John Patrick Browne\",\"pdf_url\":\"http://dera.ioe.ac.uk/11444/7/10-1208-securing-sustainable-higher-education-browne-report_Redacted.pdf\"},{\"id\":\"https://openalex.org/W2011498830\",\"title\":\"Student Evaluation of Teaching: Methodological Critique\",\"citation_info\":\"Robert A. Sproule\",\"pdf_url\":\"https://epaa.asu.edu/index.php/epaa/article/download/441/564\"},{\"id\":\"https://openalex.org/W1874723777\",\"title\":\"Schema Theory And L2 Reading Comprehension: Implications For Teaching\",\"citation_info\":\"Ahmad Al‐Issa\",\"pdf_url\":\"https://clutejournals.com/index.php/TLC/article/download/1700/1680\"},{\"id\":\"https://openalex.org/W4200436674\",\"title\":\"Strong-Field Gravity Tests with the Double Pulsar\",\"citation_info\":\"M. Kramer, Ingrid H. Stairs, Richard N. Manchester, Norbert Wex, Adam T. Deller, W. A. Coles, Masooma Ali, M. Burgay, Fernando Camilo, Ismaël Cognard, Thibault Damour, G. Desvignes, R. D. Ferdman, Paulo C. C. Freire, S. Grondin, Lucas Guillemot, George B. Hobbs, Gemma H. Janssen, Ramesh Karuppusamy, Duncan R. Lorimer, A. G. Lyne, James W. McKee, M. A. McLaughlin, L. Münch, Benetge B. P. Perera, Nihan S. Pol, Andrea Possenti, John M. Sarkissian, B. W. Stappers, Gilles Theureau\",\"pdf_url\":\"http://link.aps.org/pdf/10.1103/PhysRevX.11.041050\"},{\"id\":\"https://openalex.org/W2956839016\",\"title\":\"Learner experiences of a blended course incorporating a MOOC on Haskell functional programming\",\"citation_info\":\"Vicki Harcus Morgan Dale, Jeremy Singer\",\"pdf_url\":\"https://journal.alt.ac.uk/index.php/rlt/article/download/2248/2532\"},{\"id\":\"https://openalex.org/W2024118209\",\"title\":\"Multiculturalism, universalism, and science education\",\"citation_info\":\"William B. Stanley, Nancy W. Brickhouse\",\"pdf_url\":\"https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/sce.3730780405\"}]}"
+    }
+  ],
+  "structuredContent": {
+    "scholar_result_id": "a8a1fd82-568c-49f9-a5f7-93dbc7c40dd7",
+    "scholar_title": "Haskell teaching studies",
+    "scholar_tool_name": "search_open_access_works",
+    "papers": [
+      {
+        "id": "https://openalex.org/W1541318173",
+        "title": "Haskell: The Craft of Functional Programming",
+        "citation_info": "Simon Thompson",
+        "pdf_url": "https://kar.kent.ac.uk/30749/1/craft3e.pdf"
+      },
+      {
+        "id": "https://openalex.org/W2159539728",
+        "title": "Attitudes towards science: A review of the literature and its implications",
+        "citation_info": "Jonathan Osborne, Shirley Simon, Sue Collins",
+        "pdf_url": "https://www.tandfonline.com/doi/pdf/10.1080/0950069032000032199?needAccess=true&role=button"
+      },
+      {
+        "id": "https://openalex.org/W2842089854",
+        "title": "CasADi: a software framework for nonlinear optimization and optimal control",
+        "citation_info": "Joel A.E. Andersson, Joris Gillis, Greg Horn, James B. Rawlings, Moritz Diehl",
+        "pdf_url": "https://lirias.kuleuven.be/retrieve/b19a85ed-8044-40f1-bff0-b7164c0353f5"
+      },
+      {
+        "id": "https://openalex.org/W2203258339",
+        "title": "Understanding beginners' mistakes with Haskell",
+        "citation_info": "Ville Tirronen, SAMUEL UUSI-MÄKELÄ, Ville Isomöttönen",
+        "pdf_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/244DB6807F3BD77E14CE7D627514D6D3/S0956796815000179a.pdf/div-class-title-understanding-beginners-mistakes-with-haskell-div.pdf"
+      },
+      {
+        "id": "https://openalex.org/W2260250034",
+        "title": "Ask-Elle: an Adaptable Programming Tutor for Haskell Giving Automated Feedback",
+        "citation_info": "Alex Gerdes, Bastiaan Heeren, Johan T. Jeuring, L. Thomas van Binsbergen",
+        "pdf_url": "https://link.springer.com/content/pdf/10.1007/s40593-015-0080-x.pdf"
+      },
+      {
+        "id": "https://openalex.org/W4242126179",
+        "title": "QuickCheck",
+        "citation_info": "Koen Claessen, John Hughes",
+        "pdf_url": "https://dl.acm.org/doi/pdf/10.1145/357766.351266"
+      },
+      {
+        "id": "https://openalex.org/W1483817851",
+        "title": "Multiple-View Tracing for Haskell: a New Hat",
+        "citation_info": "Malcolm Wallace, Olaf Chitil, Thorsten Brehm, Colin Runciman",
+        "pdf_url": "https://kar.kent.ac.uk/13566/1/multiple-view_tracing_wallace.pdf"
+      },
+      {
+        "id": "https://openalex.org/W2037052435",
+        "title": "Teaching Case of Gamification and Visual Technologies for Education",
+        "citation_info": "Sergi Villagrasa, David Fonseca, Ernesto Redondo Domínguez, Jaume Durán",
+        "pdf_url": "https://www.igi-global.com/ViewTitle.aspx?TitleId=120703&isxn=9781466657557"
+      },
+      {
+        "id": "https://openalex.org/W2163873997",
+        "title": "The risks and benefits of teaching purely functional programming in first year",
+        "citation_info": "Manuel M. T. Chakravarty, Gabriele Keller",
+        "pdf_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/39F929A1793B67BCEF316DBDB717F273/S0956796803004805a.pdf/div-class-title-the-risks-and-benefits-of-teaching-purely-functional-programming-in-first-year-div.pdf"
+      },
+      {
+        "id": "https://openalex.org/W2089939717",
+        "title": "The beacon openflow controller",
+        "citation_info": "David Erickson",
+        "pdf_url": "https://dl.acm.org/doi/pdf/10.1145/2491185.2491189"
+      },
+      {
+        "id": "https://openalex.org/W2589229055",
+        "title": "Framework for the design and delivery of organized physical activity sessions for children and adolescents: rationale and description of the ‘SAAFE’ teaching principles",
+        "citation_info": "David Revalds Lubans, Chris Lonsdale, Kristen E. Cohen, Narelle Eather, Mark R. Beauchamp, Philip James Morgan, Benjamin D. Sylvester, Jordan James Smith",
+        "pdf_url": "https://ijbnpa.biomedcentral.com/track/pdf/10.1186/s12966-017-0479-x"
+      },
+      {
+        "id": "https://openalex.org/W2062887328",
+        "title": "The view from the left",
+        "citation_info": "Conor Thomas McBride, James McKinna",
+        "pdf_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/F8A44CAC27CCA178AF69DD84BC585A2D/S0956796803004829a.pdf/div-class-title-the-view-from-the-left-div.pdf"
+      },
+      {
+        "id": "https://openalex.org/W1499817638",
+        "title": "Securing a sustainable future for higher education : an independent review of higher education funding and student finance",
+        "citation_info": "John Patrick Browne",
+        "pdf_url": "http://dera.ioe.ac.uk/11444/7/10-1208-securing-sustainable-higher-education-browne-report_Redacted.pdf"
+      },
+      {
+        "id": "https://openalex.org/W2011498830",
+        "title": "Student Evaluation of Teaching: Methodological Critique",
+        "citation_info": "Robert A. Sproule",
+        "pdf_url": "https://epaa.asu.edu/index.php/epaa/article/download/441/564"
+      },
+      {
+        "id": "https://openalex.org/W1874723777",
+        "title": "Schema Theory And L2 Reading Comprehension: Implications For Teaching",
+        "citation_info": "Ahmad Al‐Issa",
+        "pdf_url": "https://clutejournals.com/index.php/TLC/article/download/1700/1680"
+      },
+      {
+        "id": "https://openalex.org/W4200436674",
+        "title": "Strong-Field Gravity Tests with the Double Pulsar",
+        "citation_info": "M. Kramer, Ingrid H. Stairs, Richard N. Manchester, Norbert Wex, Adam T. Deller, W. A. Coles, Masooma Ali, M. Burgay, Fernando Camilo, Ismaël Cognard, Thibault Damour, G. Desvignes, R. D. Ferdman, Paulo C. C. Freire, S. Grondin, Lucas Guillemot, George B. Hobbs, Gemma H. Janssen, Ramesh Karuppusamy, Duncan R. Lorimer, A. G. Lyne, James W. McKee, M. A. McLaughlin, L. Münch, Benetge B. P. Perera, Nihan S. Pol, Andrea Possenti, John M. Sarkissian, B. W. Stappers, Gilles Theureau",
+        "pdf_url": "http://link.aps.org/pdf/10.1103/PhysRevX.11.041050"
+      },
+      {
+        "id": "https://openalex.org/W2956839016",
+        "title": "Learner experiences of a blended course incorporating a MOOC on Haskell functional programming",
+        "citation_info": "Vicki Harcus Morgan Dale, Jeremy Singer",
+        "pdf_url": "https://journal.alt.ac.uk/index.php/rlt/article/download/2248/2532"
+      },
+      {
+        "id": "https://openalex.org/W2024118209",
+        "title": "Multiculturalism, universalism, and science education",
+        "citation_info": "William B. Stanley, Nancy W. Brickhouse",
+        "pdf_url": "https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/sce.3730780405"
+      }
+    ]
+  },
+  "isError": false
+}

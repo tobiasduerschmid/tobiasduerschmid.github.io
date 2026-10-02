@@ -1,0 +1,291 @@
+{
+  "track": "snowball-misconceptions",
+  "access_date": "2026-10-02",
+  "bounded_pass": true,
+  "source_budget": "Keep cumulative source-derived prose across artifacts below 200 words per source; reuse annotations.",
+  "sources": [
+    {
+      "id": "renggli2025mapfilter",
+      "title": "Map, Filter, and Conquer: A Visual Tool for Learning Higher-Order Functions",
+      "authors": [
+        "Silvan Renggli",
+        "Sverrir Thorgeirsson",
+        "Theo B. Weidmann",
+        "Zhendong Su"
+      ],
+      "year": 2025,
+      "doi": "10.1145/3724363.3729111",
+      "url": "https://doi.org/10.1145/3724363.3729111",
+      "full_text_url": "https://people.inf.ethz.ch/~sverrirt/pdf/mapfilterconquer2025.pdf",
+      "access": "primary_author_full_text_selected_sections",
+      "claim_class": "adjacent_functional_controlled_intervention",
+      "language": "Algot versus Python/Jupyter; Haskell not measured",
+      "sample": {
+        "participants": 27,
+        "completed": 27
+      },
+      "design": "Randomized order, within-subject crossover; two hours; two tutorials up to 45 minutes, four HOFs; first-attempt implementation, behavior questions and Paas effort.",
+      "findings": "Reported effort 4.78 versus 6.04, d=1.03, p<.001; implementation errors 1.33 versus 2.89. Excluding Python syntax errors gives 1.70 and nonsignificant difference, p=.058. Behavioral questions also nonsignificant. Time 16.8 versus 25.6 minutes.",
+      "limitations": "Brief intervention, carryover despite distractor, selected tasks, first-attempt scoring; procedural tool performance is not retention/transfer. Self-reported load; syntax protection confounds conceptual benefit.",
+      "locations": [
+        "§4–6 pp. 3–6",
+        "refs. 14, 15, 22, p. 7"
+      ],
+      "edges": [
+        {
+          "seed": "tirronen2015mistakes",
+          "direction": "forward",
+          "verification": "OpenAlex W2203258339 citing query; candidate primary ref. 22"
+        },
+        {
+          "seed": "rivera2022structural",
+          "direction": "forward",
+          "verification": "OpenAlex W4293813222 citing query; candidate primary ref. 14"
+        },
+        {
+          "seed": "rivera2022planning",
+          "direction": "forward",
+          "verification": "OpenAlex W4289731609 citing query; candidate primary ref. 15"
+        }
+      ],
+      "queries": [
+        "\"Map, Filter, and Conquer\""
+      ]
+    },
+    {
+      "id": "tirronen2015workedtypes",
+      "title": "Teaching types with a cognitively effective worked example format",
+      "authors": [
+        "Ville Tirronen",
+        "Ville Isomöttönen"
+      ],
+      "year": 2015,
+      "doi": "10.1017/S0956796814000021",
+      "venue": "Journal of Functional Programming 25:e23",
+      "url": "https://www.cambridge.org/core/journals/journal-of-functional-programming/article/teaching-types-with-a-cognitively-effective-worked-example-format/D793285CAC3FDC1FAB3B1C846EEEFF54",
+      "full_text_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/D793285CAC3FDC1FAB3B1C846EEEFF54/S0956796814000021a.pdf/teaching-types-with-a-cognitively-effective-worked-example-format.pdf",
+      "access": "primary_publisher_full_text_selected_sections",
+      "claim_class": "direct_haskell_exploratory_intervention",
+      "language": "Haskell",
+      "sample": {
+        "volunteers_reported": 7,
+        "pilot_instructor": 1,
+        "subjects_shown_in_figures": 7,
+        "prototype_analogy_survey": 18
+      },
+      "design": "Repeated single-subject A-B-A; textbook baseline, five worked derivations plus deduction rules, then baseline; early master-level FP course.",
+      "findings": "Specific individuals confused application/abstraction, type-variable scope across signatures, currying and type classes. Beginner gains with derivations had mixed maintenance; advanced students had little scope to improve. Prototype analogy survey 9/18 yes, including explanations.",
+      "limitations": "Exploratory volunteers, no general validation; repeated tasks and stricter intervention scoring, protocol deviations, extra individual correction, omitted hardest questions. Pilot versus volunteer accounting unclear; no long-term retention.",
+      "locations": [
+        "§3.1",
+        "Table 2, p. 8",
+        "§4.2–4.3 pp. 9–13",
+        "§5 p. 14"
+      ],
+      "edges": [
+        {
+          "seed": "tirronen2015mistakes",
+          "direction": "backward",
+          "verification": "Seed bibliography p30 cites this in press; §§7.1/7.3 discuss it"
+        }
+      ],
+      "queries": [
+        "\"Teaching types with a cognitively effective worked example format\"",
+        "\"Teaching types with a cognitively\" pdf"
+      ]
+    },
+    {
+      "id": "krishnamurthi2021behavioral",
+      "title": "Developing Behavioral Concepts of Higher-Order Functions",
+      "authors": [
+        "Shriram Krishnamurthi",
+        "Kathi Fisler"
+      ],
+      "year": 2021,
+      "doi": "10.1145/3446871.3469739",
+      "venue": "ICER 2021:306–318",
+      "url": "https://static.cs.brown.edu/~sk/Publications/Papers/Published/kf-devel-beh-concept-hofs/",
+      "full_text_url": "https://cs.brown.edu/~sk/Publications/Papers/Published/kf-devel-beh-concept-hofs/paper.pdf",
+      "access": "primary_author_full_text_selected_sections",
+      "claim_class": "adjacent_functional_formative_longitudinal",
+      "language": "Racket preparation; Pyret semester; no Haskell comparison",
+      "sample": {
+        "course_completed": 114,
+        "stage_responses": [
+          68,
+          70,
+          76,
+          64,
+          83
+        ]
+      },
+      "design": "Five optional clustering/classification stages; first four over month, fifth three months later; behavioral examples/diagrams.",
+      "findings": "Filter/take-while distinctions remained harder than map/filter; fold's universality complicates classifications. Stage 5 persistence supports targeted behavioral probes. Authors recommend justifications and learner-generated examples; diagram superiority not established.",
+      "limitations": "Changing samples; Stage 4 identities missing; no matched retention estimate or causal instruction comparison. Small HOF set, ambiguous examples, prior exposure, optional participation; recognition not coding or constructing function arguments.",
+      "locations": [
+        "§5–6 pp. 3–4",
+        "§7.3–7.4 pp. 9–11",
+        "§8 pp. 11–12"
+      ],
+      "edges": [
+        {
+          "seed": "rivera2022structural",
+          "direction": "backward",
+          "verification": "Seed §9 identifies primary related work; bibliography DOI"
+        },
+        {
+          "seed": "rivera2022planning",
+          "direction": "backward",
+          "verification": "Seed ref. 23 gives title and DOI"
+        }
+      ],
+      "queries": [
+        "\"Developing Behavioral Concepts of Higher-Order Functions\" pdf"
+      ]
+    },
+    {
+      "id": "rivera2024notations",
+      "title": "Observations on the Design of Program Planning Notations for Students",
+      "authors": [
+        "Elijah Rivera",
+        "Shriram Krishnamurthi",
+        "Kathi Fisler"
+      ],
+      "year": 2024,
+      "doi": "10.1145/3626252.3630901",
+      "venue": "SIGCSE 2024",
+      "url": "https://cs.brown.edu/people/sk/Publications/Papers/Published/rkf-obs-design-prog-plan-notations/",
+      "full_text_url": "https://cs.brown.edu/people/sk/Publications/Papers/Published/rkf-obs-design-prog-plan-notations/paper.pdf",
+      "access": "primary_author_full_text_selected_sections",
+      "claim_class": "adjacent_functional_experience_report",
+      "language": "Data-centric FP table operations, Snap! planning; later Python; exact FP language not named in inspected paper",
+      "sample": {
+        "optional_snap_project_users": 4,
+        "projects": 104,
+        "final_exam_students": 195,
+        "feedback_responses": 138,
+        "mixed_notation_students_invited": 6,
+        "interview_cases_reported": 3
+      },
+      "design": "Two consecutive novice-course offerings: Fall 2022 blocks and Spring 2023 free-form paper; work artifacts, optional feedback and interviews.",
+      "findings": "Earlier experienced-student block-planning success did not carry over cleanly. Novices described rigid/time-consuming planning; many supplied code-like plans or completed plans after coding. Paper plans favored to-do lists; mechanisms for composing subtasks remained underspecified.",
+      "limitations": "Experience report, cohort/task changes and self-selection; no causal learning comparison or complete Spring denominator. Interviews concern selected mixed-notation users; inspect expectations and practical benefit before imposing a planner.",
+      "locations": [
+        "§5–6 pp. 3–5",
+        "§7 p. 6",
+        "ref. 14 p. 7"
+      ],
+      "edges": [
+        {
+          "seed": "rivera2022planning",
+          "direction": "forward",
+          "verification": "OpenAlex W4289731609 citing query; candidate ref. 14 and §6.1 explicitly build on seed"
+        }
+      ],
+      "queries": [
+        "\"Observations on the Design of Program Planning Notations for Students\" pdf"
+      ]
+    },
+    {
+      "id": "tirronen2014typesgap",
+      "title": "Study on difficulties and misconceptions with modern type systems",
+      "authors": [
+        "Ville Tirronen"
+      ],
+      "year": 2014,
+      "doi": "10.1145/2591708.2591726",
+      "venue": "ITiCSE 2014:303–308",
+      "url": "https://doi.org/10.1145/2591708.2591726",
+      "full_text_url": null,
+      "access": "metadata_and_abstract_mirrors_only",
+      "claim_class": "unverified_primary_findings",
+      "language": null,
+      "sample": null,
+      "design": "Mirrored abstract describes multiple-choice items in online introductory FP course; primary methods unavailable.",
+      "findings_verified": null,
+      "abstract_lead_only": "Abstract names polymorphism/subtyping confusion, excessive significance assigned to variable names, and conflating general patterns with special cases. These are leads, not independently verified prevalence claims.",
+      "limitations": "ACM DOI inaccessible; ResearchGate says no full text; OpenAlex no OA location. Primary sample, language, items and coding unverified.",
+      "edges": [
+        {
+          "seed": "tirronen2015mistakes",
+          "direction": "forward_then_backward",
+          "verification": "Seed forward leads Wu2017; Wu primary bibliography contains Tirronen2014. OpenAlex types2014→Wu confirms reverse citation."
+        }
+      ],
+      "queries": [
+        "\"Tirronen\" \"misconceptions\" \"2014\"",
+        "\"Study on difficulties and misconceptions with modern type systems\" pdf",
+        "\"Study on difficulties and misconceptions\" site:jyx.jyu.fi"
+      ],
+      "status": "borderline_primary_full_text_needed"
+    }
+  ],
+  "seed_searches": [
+    {
+      "seed": "tirronen2015mistakes",
+      "backward_primary": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/244DB6807F3BD77E14CE7D627514D6D3/S0956796815000179a.pdf/div-class-title-understanding-beginners-mistakes-with-haskell-div.pdf",
+      "forward_query": "https://api.openalex.org/works?filter=cites:W2203258339&per-page=100&select=id,title,doi,publication_year",
+      "api_meta_count": 56,
+      "note": "Metadata/title screening only; broad handbook chapters and tooling dominate. Count is indexed citing works, not 56 learning studies."
+    },
+    {
+      "seed": "nemeth2019errors",
+      "backward_primary": "https://arxiv.org/pdf/1906.11450",
+      "forward_query": "https://api.openalex.org/works?filter=cites:W2954564487&per-page=100&select=id,title,doi,publication_year,primary_location",
+      "api_meta_count": 0,
+      "additional_web_query": "\"Investigating Compilation Errors of Students Learning Haskell\" -\"Németh\" -\"Nemeth\" -\"ResearchGate\" -\"arxiv\" -\"eptcs\" -\"dblp\"",
+      "note": "Zero indexed results is coverage-limited, not proof no citations. Backward refs. 3–5 duplicates Singer/Helium/Ask-Elle; 6–8 general compiler-message work not new FP learner evidence."
+    },
+    {
+      "seed": "rivera2022structural",
+      "backward_primary": "https://cs.brown.edu/~sk/Publications/Papers/Published/rk-struct-pipe-comp-hof/paper.pdf",
+      "forward_query": "https://api.openalex.org/works?filter=cites:W4293813222&per-page=100&select=id,title,doi,publication_year,primary_location",
+      "api_meta_count": 3,
+      "screened_forward_titles": [
+        "A Grounded Conceptual Model for Ownership Types in Rust",
+        "Plan Composition Using Higher-Order Functions",
+        "Map, Filter, and Conquer: A Visual Tool for Learning Higher-Order Functions"
+      ]
+    },
+    {
+      "seed": "rivera2022planning",
+      "backward_primary": "https://cs.brown.edu/~sk/Publications/Papers/Published/rkg-plan-comp-use-hof/paper.pdf",
+      "forward_query": "https://api.openalex.org/works?filter=cites:W4289731609&per-page=100&select=id,title,doi,publication_year,primary_location",
+      "api_meta_count": 10,
+      "screened_forward_titles": [
+        "Iterative Student Program Planning using Transformer-Driven Feedback",
+        "Observations on the Design of Program Planning Notations for Students",
+        "Mio: A Block-Based Environment for Program Design",
+        "Jigsaw: A Tool for Decomposing and Planning Programming Problems",
+        "Varying Program Input to Assess Code Reading Skills",
+        "Structural versus pipeline composition of higher-order functions (experience report)",
+        "Ferramentas de Visualização de Programas na Compreensão de Funções de Alta-Ordem",
+        "Map, Filter, and Conquer: A Visual Tool for Learning Higher-Order Functions",
+        "Daisy: An Exercise Environment for Learning Information Modeling",
+        "Planning on Paper: Problem Decomposition with Diagrams in Introductory Computing"
+      ],
+      "note": "Selected Map and Observations for primary reading; remaining titles are metadata-screened or duplicates, not counted as verified teaching evidence."
+    }
+  ],
+  "access_gaps": [
+    {
+      "title": "Emergence of automated assignment conceptions in a functional programming course",
+      "authors": [
+        "Tamar Paz",
+        "Tami Lapidot"
+      ],
+      "year": 2004,
+      "doi": "10.1145/1007996.1008044",
+      "alternate_doi": "10.1145/1026487.1008044",
+      "queries": [
+        "\"Emergence of automated assignment conceptions\"",
+        "Paz Lapidot automated assignment conceptions 2004 full text",
+        "\"Emergence of automated assignment\" site:dl.acm.org"
+      ],
+      "status": "No primary full text; abstract mirror only; exact sample/language unverified; no new quantitative claim",
+      "forward_query": "https://api.openalex.org/works?filter=cites:W2070079504&per-page=100&select=id,title,doi,publication_year,primary_location",
+      "api_meta_count": 4,
+      "note": "Forward metadata leads survey 10.15388/infedu.2014.06, assessment paper, curriculum article, Israel research chapter; none substitutes for original primary methods."
+    }
+  ]
+}

@@ -1,0 +1,542 @@
+{
+  "request_url": "https://api.openalex.org/works?filter=cites%3AW4407110619%2Cto_publication_date%3A2026-10-02&per_page=200&sort=publication_date%3Adesc",
+  "parameters": {
+    "filter": "cites:W4407110619,to_publication_date:2026-10-02",
+    "per_page": "200",
+    "sort": "publication_date:desc"
+  },
+  "seed": "chapman",
+  "direction": "forward",
+  "retrieved": "2026-10-02",
+  "response": {
+    "meta": {
+      "count": 1,
+      "db_response_time_ms": 16,
+      "page": 1,
+      "per_page": 200,
+      "groups_count": null,
+      "x_query": {
+        "oql": "works where it cites (W4407110619) and date <= (2026-10-02)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "referenced_works",
+              "value": "W4407110619"
+            },
+            {
+              "column_id": "to_publication_date",
+              "value": "2026-10-02"
+            }
+          ]
+        },
+        "url": "/works?filter=referenced_works:W4407110619,to_publication_date:2026-10-02&per_page=200"
+      },
+      "cost_usd": 0.0001
+    },
+    "results": [
+      {
+        "id": "https://openalex.org/W7160448182",
+        "doi": "https://doi.org/10.1007/978-3-032-22202-2_5",
+        "title": "A Spotlight on the Role of Functional Programming & Haskell in Computing & Software Development",
+        "display_name": "A Spotlight on the Role of Functional Programming & Haskell in Computing & Software Development",
+        "publication_year": 2026,
+        "publication_date": "2026-01-01",
+        "ids": {
+          "openalex": "https://openalex.org/W7160448182",
+          "doi": "https://doi.org/10.1007/978-3-032-22202-2_5"
+        },
+        "language": "en",
+        "primary_location": {
+          "id": "doi:10.1007/978-3-032-22202-2_5",
+          "is_oa": false,
+          "landing_page_url": "https://doi.org/10.1007/978-3-032-22202-2_5",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S2764900261",
+            "display_name": "Communications in computer and information science",
+            "issn_l": "1865-0929",
+            "issn": [
+              "1865-0929",
+              "1865-0937"
+            ],
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": true,
+            "listed_in": [
+              "cwts-core",
+              "jufo-1",
+              "norway-1"
+            ],
+            "host_organization": "https://openalex.org/P4310319900",
+            "host_organization_name": "Springer Science+Business Media",
+            "host_organization_lineage": [
+              "https://openalex.org/P4310319900",
+              "https://openalex.org/P4310319965"
+            ],
+            "host_organization_lineage_names": [
+              "Springer Science+Business Media",
+              "Springer Nature"
+            ],
+            "type": "book series"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": "Communications in Computer and Information Science",
+          "raw_type": "book-chapter"
+        },
+        "type": "conference-paper",
+        "indexed_in": [
+          "crossref"
+        ],
+        "open_access": {
+          "is_oa": false,
+          "oa_status": "closed",
+          "oa_url": null,
+          "any_repository_has_fulltext": false
+        },
+        "authorships": [
+          {
+            "author_position": "first",
+            "author": {
+              "id": "https://openalex.org/A5042110119",
+              "display_name": "Mathias Mbu Fonkam",
+              "orcid": "https://orcid.org/0000-0002-2776-1462",
+              "observed_orcids": [
+                "https://orcid.org/0000-0002-2776-1462"
+              ]
+            },
+            "institutions": [
+              {
+                "id": "https://openalex.org/I130769515",
+                "display_name": "Pennsylvania State University",
+                "ror": "https://ror.org/04p491231",
+                "country_code": "US",
+                "type": "education",
+                "lineage": [
+                  "https://openalex.org/I130769515"
+                ]
+              }
+            ],
+            "countries": [
+              "US"
+            ],
+            "is_corresponding": true,
+            "raw_author_name": "Mathias Fonkam",
+            "raw_affiliation_strings": [
+              "Penn State University, State College, PA, 16083, USA"
+            ],
+            "raw_orcid": null,
+            "affiliations": [
+              {
+                "raw_affiliation_string": "Penn State University, State College, PA, 16083, USA",
+                "institution_ids": [
+                  "https://openalex.org/I130769515"
+                ]
+              }
+            ]
+          },
+          {
+            "author_position": "last",
+            "author": {
+              "id": "https://openalex.org/A5031673704",
+              "display_name": "Narasimha Rao Vajjhala",
+              "orcid": "https://orcid.org/0000-0002-8260-2392",
+              "observed_orcids": [
+                "https://orcid.org/0000-0002-8260-2392"
+              ]
+            },
+            "institutions": [
+              {
+                "id": "https://openalex.org/I178498160",
+                "display_name": "American University in Bulgaria",
+                "ror": "https://ror.org/05n8fe870",
+                "country_code": "BG",
+                "type": "education",
+                "lineage": [
+                  "https://openalex.org/I178498160"
+                ]
+              }
+            ],
+            "countries": [
+              "BG"
+            ],
+            "is_corresponding": false,
+            "raw_author_name": "Narasimha Rao Vajjhala",
+            "raw_affiliation_strings": [
+              "American University of Bulgara, Blagoevgrad, Bulgaria"
+            ],
+            "raw_orcid": null,
+            "affiliations": [
+              {
+                "raw_affiliation_string": "American University of Bulgara, Blagoevgrad, Bulgaria",
+                "institution_ids": [
+                  "https://openalex.org/I178498160"
+                ]
+              }
+            ]
+          }
+        ],
+        "institutions": [],
+        "countries_distinct_count": 2,
+        "institutions_distinct_count": 2,
+        "corresponding_author_ids": [
+          "https://openalex.org/A5042110119"
+        ],
+        "corresponding_institution_ids": [
+          "https://openalex.org/I130769515"
+        ],
+        "apc_list": null,
+        "apc_paid": null,
+        "fwci": 0.0,
+        "has_fulltext": false,
+        "cited_by_count": 0,
+        "citation_normalized_percentile": {
+          "value": 0.432535,
+          "is_in_top_1_percent": false,
+          "is_in_top_10_percent": false
+        },
+        "cited_by_percentile_year": null,
+        "biblio": {
+          "volume": null,
+          "issue": null,
+          "first_page": "56",
+          "last_page": "63"
+        },
+        "is_retracted": false,
+        "is_paratext": false,
+        "is_xpac": false,
+        "primary_topic": {
+          "id": "https://openalex.org/T10126",
+          "display_name": "Logic, programming, and type systems",
+          "score": 0.18729999661445618,
+          "subfield": {
+            "id": "https://openalex.org/subfields/1702",
+            "display_name": "Artificial Intelligence"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/17",
+            "display_name": "Computer Science"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        "topics": [
+          {
+            "id": "https://openalex.org/T10126",
+            "display_name": "Logic, programming, and type systems",
+            "score": 0.18729999661445618,
+            "subfield": {
+              "id": "https://openalex.org/subfields/1702",
+              "display_name": "Artificial Intelligence"
+            },
+            "field": {
+              "id": "https://openalex.org/fields/17",
+              "display_name": "Computer Science"
+            },
+            "domain": {
+              "id": "https://openalex.org/domains/3",
+              "display_name": "Physical Sciences"
+            }
+          },
+          {
+            "id": "https://openalex.org/T10639",
+            "display_name": "Advanced Software Engineering Methodologies",
+            "score": 0.12559999525547028,
+            "subfield": {
+              "id": "https://openalex.org/subfields/1702",
+              "display_name": "Artificial Intelligence"
+            },
+            "field": {
+              "id": "https://openalex.org/fields/17",
+              "display_name": "Computer Science"
+            },
+            "domain": {
+              "id": "https://openalex.org/domains/3",
+              "display_name": "Physical Sciences"
+            }
+          },
+          {
+            "id": "https://openalex.org/T12490",
+            "display_name": "Software Engineering and Design Patterns",
+            "score": 0.07729999721050262,
+            "subfield": {
+              "id": "https://openalex.org/subfields/3303",
+              "display_name": "Development"
+            },
+            "field": {
+              "id": "https://openalex.org/fields/33",
+              "display_name": "Social Sciences"
+            },
+            "domain": {
+              "id": "https://openalex.org/domains/2",
+              "display_name": "Social Sciences"
+            }
+          }
+        ],
+        "keywords": [
+          {
+            "id": "https://openalex.org/keywords/functional-programming",
+            "display_name": "functional programming",
+            "score": 0.871999979019165
+          },
+          {
+            "id": "https://openalex.org/keywords/haskell",
+            "display_name": "Haskell",
+            "score": 0.9959999918937683
+          },
+          {
+            "id": "https://openalex.org/keywords/software-engineering-education",
+            "display_name": "software engineering education",
+            "score": 0.6790000200271606
+          },
+          {
+            "id": "https://openalex.org/keywords/type-theory",
+            "display_name": "type theory",
+            "score": 0.9679999947547913
+          },
+          {
+            "id": "https://openalex.org/keywords/mathematical-reasoning",
+            "display_name": "mathematical reasoning",
+            "score": 0.7480000257492065
+          },
+          {
+            "id": "https://openalex.org/keywords/abstract-thinking",
+            "display_name": "abstract thinking",
+            "score": 0.7480000257492065
+          },
+          {
+            "id": "https://openalex.org/keywords/transfer-learning",
+            "display_name": "transfer learning",
+            "score": 0.703000009059906
+          },
+          {
+            "id": "https://openalex.org/keywords/object-oriented-programming",
+            "display_name": "object-oriented programming",
+            "score": 0.7799999713897705
+          },
+          {
+            "id": "https://openalex.org/keywords/monads",
+            "display_name": "monads",
+            "score": 0.7170000076293945
+          },
+          {
+            "id": "https://openalex.org/keywords/algebraic-data-types",
+            "display_name": "algebraic data types",
+            "score": 0.8989999890327454
+          },
+          {
+            "id": "https://openalex.org/keywords/type-classes",
+            "display_name": "type classes",
+            "score": 0.7329999804496765
+          },
+          {
+            "id": "https://openalex.org/keywords/polymorphism",
+            "display_name": "polymorphism",
+            "score": 0.5680000185966492
+          },
+          {
+            "id": "https://openalex.org/keywords/human-ai-collaboration",
+            "display_name": "human-AI collaboration",
+            "score": 0.7670000195503235
+          },
+          {
+            "id": "https://openalex.org/keywords/ai-generated-code",
+            "display_name": "AI-generated code",
+            "score": 0.5910000205039978
+          }
+        ],
+        "concepts": [
+          {
+            "id": "https://openalex.org/C2780624054",
+            "wikidata": "https://www.wikidata.org/wiki/Q34010",
+            "display_name": "Haskell",
+            "level": 3,
+            "score": 0.9484999775886536
+          },
+          {
+            "id": "https://openalex.org/C41008148",
+            "wikidata": "https://www.wikidata.org/wiki/Q21198",
+            "display_name": "Computer science",
+            "level": 0,
+            "score": 0.8431000113487244
+          },
+          {
+            "id": "https://openalex.org/C42383842",
+            "wikidata": "https://www.wikidata.org/wiki/Q193076",
+            "display_name": "Functional programming",
+            "level": 2,
+            "score": 0.6959999799728394
+          },
+          {
+            "id": "https://openalex.org/C199360897",
+            "wikidata": "https://www.wikidata.org/wiki/Q9143",
+            "display_name": "Programming language",
+            "level": 1,
+            "score": 0.6632000207901001
+          },
+          {
+            "id": "https://openalex.org/C529173508",
+            "wikidata": "https://www.wikidata.org/wiki/Q638608",
+            "display_name": "Software development",
+            "level": 3,
+            "score": 0.5554999709129333
+          },
+          {
+            "id": "https://openalex.org/C128099668",
+            "wikidata": "https://www.wikidata.org/wiki/Q573952",
+            "display_name": "Lazy evaluation",
+            "level": 3,
+            "score": 0.46299999952316284
+          },
+          {
+            "id": "https://openalex.org/C2776542497",
+            "wikidata": "https://www.wikidata.org/wiki/Q5266672",
+            "display_name": "Development (topology)",
+            "level": 2,
+            "score": 0.4512999951839447
+          },
+          {
+            "id": "https://openalex.org/C115903868",
+            "wikidata": "https://www.wikidata.org/wiki/Q80993",
+            "display_name": "Software engineering",
+            "level": 1,
+            "score": 0.4377000033855438
+          },
+          {
+            "id": "https://openalex.org/C2777904410",
+            "wikidata": "https://www.wikidata.org/wiki/Q7397",
+            "display_name": "Software",
+            "level": 2,
+            "score": 0.4178999960422516
+          },
+          {
+            "id": "https://openalex.org/C34165917",
+            "wikidata": "https://www.wikidata.org/wiki/Q188267",
+            "display_name": "Programming paradigm",
+            "level": 2,
+            "score": 0.3172000050544739
+          },
+          {
+            "id": "https://openalex.org/C77781355",
+            "wikidata": "https://www.wikidata.org/wiki/Q223335",
+            "display_name": "Structured programming",
+            "level": 2,
+            "score": 0.27970001101493835
+          },
+          {
+            "id": "https://openalex.org/C139968098",
+            "wikidata": "https://www.wikidata.org/wiki/Q3055454",
+            "display_name": "Development environment",
+            "level": 2,
+            "score": 0.26820001006126404
+          },
+          {
+            "id": "https://openalex.org/C180152950",
+            "wikidata": "https://www.wikidata.org/wiki/Q2904257",
+            "display_name": "Software development process",
+            "level": 4,
+            "score": 0.2563999891281128
+          }
+        ],
+        "mesh": [],
+        "locations_count": 1,
+        "locations": [
+          {
+            "id": "doi:10.1007/978-3-032-22202-2_5",
+            "is_oa": false,
+            "landing_page_url": "https://doi.org/10.1007/978-3-032-22202-2_5",
+            "pdf_url": null,
+            "source": {
+              "id": "https://openalex.org/S2764900261",
+              "display_name": "Communications in computer and information science",
+              "issn_l": "1865-0929",
+              "issn": [
+                "1865-0929",
+                "1865-0937"
+              ],
+              "is_oa": false,
+              "is_in_doaj": false,
+              "is_core": true,
+              "listed_in": [
+                "cwts-core",
+                "jufo-1",
+                "norway-1"
+              ],
+              "host_organization": "https://openalex.org/P4310319900",
+              "host_organization_name": "Springer Science+Business Media",
+              "host_organization_lineage": [
+                "https://openalex.org/P4310319900",
+                "https://openalex.org/P4310319965"
+              ],
+              "host_organization_lineage_names": [
+                "Springer Science+Business Media",
+                "Springer Nature"
+              ],
+              "type": "book series"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Communications in Computer and Information Science",
+            "raw_type": "book-chapter"
+          }
+        ],
+        "best_oa_location": null,
+        "sustainable_development_goals": [
+          {
+            "score": 0.5538087487220764,
+            "id": "https://metadata.un.org/sdg/9",
+            "display_name": "Industry, innovation and infrastructure"
+          }
+        ],
+        "x_sdgs": [],
+        "study_designs": [
+          {
+            "id": "https://openalex.org/study-designs/systematic-review",
+            "display_name": "Systematic Review"
+          }
+        ],
+        "awards": [],
+        "funders": [],
+        "has_content": {
+          "pdf": false,
+          "grobid_xml": false
+        },
+        "content_urls": null,
+        "referenced_works_count": 16,
+        "referenced_works": [
+          "https://openalex.org/W2015725579",
+          "https://openalex.org/W2021291659",
+          "https://openalex.org/W2072225709",
+          "https://openalex.org/W2163873997",
+          "https://openalex.org/W2339508216",
+          "https://openalex.org/W2915788728",
+          "https://openalex.org/W3013431833",
+          "https://openalex.org/W3162430340",
+          "https://openalex.org/W4205241080",
+          "https://openalex.org/W4401379789",
+          "https://openalex.org/W4403334339",
+          "https://openalex.org/W4403334354",
+          "https://openalex.org/W4404667988",
+          "https://openalex.org/W4405318562",
+          "https://openalex.org/W4407110619",
+          "https://openalex.org/W4411456683"
+        ],
+        "related_works": [],
+        "abstract_inverted_index": null,
+        "counts_by_year": [],
+        "updated_date": "2026-09-26T08:19:03.415552",
+        "created_date": "2026-05-07T00:00:00"
+      }
+    ],
+    "group_by": []
+  }
+}

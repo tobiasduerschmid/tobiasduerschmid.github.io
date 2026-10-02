@@ -39,6 +39,12 @@ async function expectFailingGate(page, count) {
     .toHaveText(new RegExp(`^[0-9]+ of ${count} tests passed\\. Failures:`));
 }
 
+async function expectOnlyFailingGate(page, count, description) {
+  await runGate(page);
+  await expect(page.getByRole('status').filter({ hasText: /tests passed\. Failures:/ }))
+    .toHaveText(`${count - 1} of ${count} tests passed. Failures: ${description}.`);
+}
+
 async function enterSolution(page, step) {
   for (const file of step.solution.files) {
     expect(await setTutorialFileContent(page, file.path, file.content),
@@ -94,11 +100,7 @@ for (const slug of TUTORIALS) {
           await expect(page.getByRole('heading', { level: 2, name: step.title, exact: true })).toBeVisible();
           await expect(page.getByRole('button', { name: /^Next/ })).toBeDisabled();
 
-          // The types lesson deliberately starts with incompatible signatures;
-          // all other lessons start with runnable behavioral mistakes.
-          await runProgram(page, step.key === 'function-type-contracts'
-            ? /Cannot satisfy constraint: Bool ~ Int/
-            : '✓ Done');
+          await runProgram(page);
 
           await expectFailingGate(page, step.tests.length);
           await expect(page.getByRole('button', { name: /^Next/ })).toBeDisabled();
@@ -174,38 +176,88 @@ for (const slug of TUTORIALS) {
   });
 }
 
-test('the types lesson distinguishes signature errors, quoted numbers, and inferred types', async ({ page }) => {
+test('the price lesson distinguishes text ordering, numeric contracts, and affordability behavior', async ({ page }) => {
   test.setTimeout(180_000);
   const config = loadTutorialConfig('haskell');
-  const step = config.steps.find(step => step.key === 'function-type-contracts');
+  const step = config.steps.find(step => step.key === 'numeric-price-contract');
+  const signatureTest = step.tests.find(test => test.signature);
+  expect(signatureTest, 'the lesson checks the explicitly declared numeric interface').toBeDefined();
+  const starter = step.files.find(file => file.path === step.run_file).content;
   const solution = step.solution.files.find(file => file.path === step.run_file).content;
   const output = page.getByRole('region', { name: 'Program output' });
-  await page.goto('/SEBook/tools/haskell-tutorial#function-type-contracts');
+  await page.goto('/SEBook/tools/haskell-tutorial#numeric-price-contract');
   await waitForTutorialReady(page, { bootTimeout: BOOT_TIMEOUT });
 
-  await runProgram(page, /Cannot satisfy constraint: Bool ~ Int/);
-  await expect(output).not.toContainText('✓ Done');
+  // The quoted amounts compile, but text ordering gives the wrong decision.
+  await runProgram(page);
+  await expect(output).toContainText('True');
   await expectFailingGate(page, step.tests.length);
-  await a11yCheckpoint(page, 'Haskell types — incompatible starter signatures', { feature: A11Y_FEATURE });
+  await a11yCheckpoint(page, 'Haskell prices — runnable text ordering mistake', { feature: A11Y_FEATURE });
+
+  // Adding a numeric requirement does not convert the existing text inputs.
+  const signatureOnly = starter.replace(/^canAffordPizza budget price =/m,
+    'canAffordPizza :: Double -> Double -> Bool\ncanAffordPizza budget price =');
+  expect(signatureOnly, 'the diagnostic adds the intended numeric signature').not.toBe(starter);
+  expect(await setTutorialFileContent(page, step.run_file, signatureOnly)).toBe(true);
+  await runProgram(page, /Cannot satisfy constraint/);
+  await expect(output).not.toContainText('✓ Done');
+  await a11yCheckpoint(page, 'Haskell prices — signature rejects quoted amounts', { feature: A11Y_FEATURE });
+
+  // Inference still permits Run, but the assignment asks for an explicit interface.
+  const inferred = solution.replace(/^canAffordPizza ::.*\n/gm, '');
+  expect(inferred, 'the inference experiment removes the function declaration').not.toBe(solution);
+  expect(await setTutorialFileContent(page, step.run_file, inferred)).toBe(true);
+  await runProgram(page);
+  await expect(output).toContainText('False');
+  await expectOnlyFailingGate(page, step.tests.length, signatureTest.description);
+  await expect(page.getByRole('button', { name: /^Next/ })).toBeDisabled();
+  await a11yCheckpoint(page, 'Haskell prices — inference works but the declaration is required', { feature: A11Y_FEATURE });
+
+  // Describing a declaration in either comment syntax does not declare a type.
+  const commented = inferred.replace(/^canAffordPizza budget price =/m,
+    '-- canAffordPizza :: Double -> Double -> Bool\n'
+    + '{- canAffordPizza :: Double -> Double -> Bool -}\n'
+    + 'canAffordPizza budget price =');
+  expect(commented, 'the negative case includes declaration-shaped comments').not.toBe(inferred);
+  expect(await setTutorialFileContent(page, step.run_file, commented)).toBe(true);
+  await runProgram(page);
+  await expect(output).toContainText('False');
+  await expectOnlyFailingGate(page, step.tests.length, signatureTest.description);
+
+  // A broader interface handles the samples but does not state the requested Double inputs.
+  const generic = solution.replace(/^canAffordPizza ::.*$/m,
+    'canAffordPizza :: Ord a => a -> a -> Bool');
+  expect(generic, 'the negative case declares an explicitly generic comparison').not.toBe(solution);
+  expect(await setTutorialFileContent(page, step.run_file, generic)).toBe(true);
+  await runProgram(page);
+  await expect(output).toContainText('False');
+  await expectOnlyFailingGate(page, step.tests.length, signatureTest.description);
 
   await enterSolution(page, step);
   await runProgram(page);
-  await expect(output).toContainText(/True\s+True/);
+  await expect(output).toContainText('False');
   await expectPassingGate(page, step.tests.length);
+  await a11yCheckpoint(page, 'Haskell prices — numeric amounts satisfy the contract', { feature: A11Y_FEATURE });
 
-  // A signature states a requirement; it does not parse numeric-looking text.
-  expect(await setTutorialFileContent(page, step.run_file,
-    solution.replace('canAffordPizza 15.0 12.5', 'canAffordPizza "15.0" 12.5'))).toBe(true);
-  await runProgram(page, /Cannot satisfy constraint/);
-  await expect(output).not.toContainText('✓ Done');
-
-  // Omitting declarations still permits the valid numeric and text calls.
-  const inferred = solution.replace(/^(?:canAffordPizza|sameTopping) ::.*\n/gm, '');
-  expect(await setTutorialFileContent(page, step.run_file, inferred)).toBe(true);
+  // Layout and explicit right association preserve the required function type.
+  const formatted = inferred.replace(/^canAffordPizza budget price =/m,
+    'canAffordPizza\n  :: Double\n  -> (Double -> Bool)\ncanAffordPizza budget price =');
+  expect(formatted, 'the accepted declaration uses equivalent multiline formatting').not.toBe(inferred);
+  expect(await setTutorialFileContent(page, step.run_file, formatted)).toBe(true);
   await runProgram(page);
-  await expect(output).toContainText(/True\s+True/);
+  await expect(output).toContainText('False');
   await expectPassingGate(page, step.tests.length);
-  await a11yCheckpoint(page, 'Haskell types — compatible inferred signatures', { feature: A11Y_FEATURE });
+  await expect(page.getByRole('button', { name: /^Next/ })).toBeEnabled();
+  await a11yCheckpoint(page, 'Haskell prices — equivalent declaration restores the complete contract', { feature: A11Y_FEATURE });
+
+  // A compiling, type-correct comparison can still implement the wrong rule.
+  const reversed = solution.replace('budget >= price', 'budget <= price');
+  expect(reversed, 'the negative case reverses the affordability comparison').not.toBe(solution);
+  expect(await setTutorialFileContent(page, step.run_file, reversed)).toBe(true);
+  await runProgram(page);
+  await expect(output).toContainText('True');
+  await expectFailingGate(page, step.tests.length);
+  await a11yCheckpoint(page, 'Haskell prices — type-correct reversed comparison fails checks', { feature: A11Y_FEATURE });
 });
 
 test('detached instructions open the required quiz without unlocking the next numbered step early', async ({ page }) => {
@@ -229,5 +281,7 @@ test('detached instructions open the required quiz without unlocking the next nu
   await expect(popup.getByRole('heading', { level: 2, name: config.steps[1].title, exact: true })).toBeVisible();
   await a11yCheckpoint(popup, 'Haskell — detached instructions after quiz completion', { feature: A11Y_FEATURE });
   await popup.close();
+  // Detaching instructions selects Debug; reopen Steps to inspect synchronized navigation.
+  await page.getByRole('button', { name: /\bSteps$/ }).click();
   await expectActiveStep(page, 1);
 });

@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"id\": \"ea5ae15b61975a3698ad026028480b22\", \"title\": \"Teaching Introductory Functional Programming Using Haskelite\", \"text\": \"Learning functional programming requires learning a substitution-based computational model. While substitution should be a familiar concept from high-school algebra, students often have difficulty applying it to new settings, such as recursive definitions, algebraic data types and higher-order functions. Step-by-step interpreters have been shown to help beginners by clarifying misconceptions and improving understanding. This paper reports on the experience of using a step-by-step tracing interpreter for a subset of Haskell while teaching an introductory functional programming course at the University of Porto. We describe the use of the interpreter, present some feedback obtained from students, reflect on the lessons learned and point directions for further work.\", \"url\": \"https://consensus.app/papers/teaching-introductory-functional-programming-using-vasconcelos/ea5ae15b61975a3698ad026028480b22/?utm_source=chatgpt\", \"metadata\": {\"authors\": \"Pedro Vasconcelos\", \"publish_year\": \"2025\", \"pages\": \"49-66\", \"citation_count\": \"0\"}}"
+    }
+  ],
+  "isError": false
+}

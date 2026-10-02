@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"id\": \"c2664e04658b5f8b9282f2ca16676f7a\", \"title\": \"Evaluating Haskell expressions in a tutoring environment\", \"text\": \"A number of introductory textbooks for Haskell use calculations right from the start to give the reader insight into the evaluation of expressions and the behavior of functional programs. Many programming concepts that are important in the functional programming paradigm, such as recursion, higher-order functions, pattern-matching, and lazy evaluation, can be partially explained by showing a stepwise computation. A student gets a better understanding of these concepts if she performs these evaluation steps herself. Tool support for experimenting with the evaluation of Haskell expressions is currently lacking. In this paper we present a prototype implementation of a stepwise evaluator for Haskell expressions that supports multiple evaluation strategies, specifically targeted at education. Besides performing evaluation steps the tool also diagnoses steps that are submitted by a student, and provides feedback. Instructors can add or change function definitions without knowledge of the tool’s internal implementation. We discuss some preliminary results of a small survey about the tool.\", \"url\": \"https://consensus.app/papers/evaluating-haskell-expressions-in-a-tutoring-environment-olmer-heeren/c2664e04658b5f8b9282f2ca16676f7a/?utm_source=chatgpt\", \"metadata\": {\"authors\": \"Tim Olmer, B. Heeren, J. Jeuring\", \"publish_year\": \"2014\", \"pages\": \"50-66\", \"citation_count\": \"4\"}}"
+    }
+  ],
+  "isError": false
+}

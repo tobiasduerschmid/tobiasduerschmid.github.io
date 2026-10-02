@@ -1,0 +1,647 @@
+{
+  "track": "pedagogy",
+  "date": "2026-10-02",
+  "scope": "Approved end-to-end; bounded primary-paper verification track. No direct Haskell intervention source in this set.",
+  "source_budget_note": "200 source-derived words maximum per source across notes and JSON, including synthesis paraphrases. No verbatim quotations. Keep added report paraphrases within remaining budget or obtain broader licensed/allowed full-text budget.",
+  "queries": [
+    {
+      "id": "Q01",
+      "backend": "web search",
+      "query": "Sentance Waite Kallia PRIMM 2019 study 493 13 schools paper",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q02",
+      "backend": "web search",
+      "query": "Margulieux Morrison Decker subgoal labeled worked examples introductory programming 2020 paper",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q03",
+      "backend": "web search",
+      "query": "Roediger Karpicke 2006 test enhanced learning psychological science full text",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q04",
+      "backend": "web search",
+      "query": "Cepeda 2008 spacing effects learning temporal ridgeline optimal retention full text",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q05",
+      "backend": "web search",
+      "query": "Renkl Atkinson 2003 Structuring transition example study problem solving fading full text",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q06",
+      "backend": "web search",
+      "query": "Becker 2016 effective compiler error message enhancement novice programming PDF",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q07",
+      "backend": "web search",
+      "query": "Sorva 2013 notional machines introductory programming education PDF",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q08",
+      "backend": "web search",
+      "query": "Tshukudu Cutts 2020 understanding conceptual transfer learning new programming languages PDF",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q09",
+      "backend": "web search",
+      "query": "Roediger Karpicke 2006 01693 pdf karpicke",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q10",
+      "backend": "web search",
+      "query": "Naps 2002 exploring role visualization engagement computer science education PDF",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q11",
+      "backend": "web search",
+      "query": "Denny Luxton-Reilly Carpenter 2014 enhancing syntax error messages ineffective paper pdf",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q12",
+      "backend": "web search",
+      "query": "Tshukudu Cutts 2020 conceptual transfer eprints Glasgow 70 Python Java full text",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q13",
+      "backend": "web search",
+      "query": "\"Test-enhanced learning\" \"pdf\" site:karpicke.com",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q14",
+      "backend": "web search",
+      "query": "\"Teaching computer programming with PRIMM\" pdf",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q15",
+      "backend": "web search",
+      "query": "\"Enhancing syntax error messages appears ineffectual\" pdf",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q16",
+      "backend": "web search",
+      "query": "\"Sorva\" \"Notional machines\" \"pdf\" aalto",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q17",
+      "backend": "web search",
+      "query": "Roediger Karpicke 2006 Test Enhanced Learning pdf Purdue",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q18",
+      "backend": "web search",
+      "query": "PRIMM 493 13 2019 Sentance Waite Kallia DOI full text kings repository",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q19",
+      "backend": "web search",
+      "query": "Sorva Karavirta Malmi visual program simulation 2013 learning experiment 2010 article",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q20",
+      "backend": "web search",
+      "query": "programming retrieval practice spacing experimental study computer science 2022 2023 2024",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q21",
+      "backend": "web search",
+      "query": "\"Teaching computer programming with PRIMM\" \"Sentance\" full manuscript",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q22",
+      "backend": "web search",
+      "query": "\"A Spaced, Interleaved Retrieval Practice Tool\" pdf",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q23",
+      "backend": "web search",
+      "query": "\"A Spaced, Interleaved Retrieval Practice Tool\" authors",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q24",
+      "backend": "web search",
+      "query": "\"Students’ ways of experiencing visual program simulation\" pdf sorva",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q25",
+      "backend": "web search",
+      "query": "\"A Spaced, Interleaved Retrieval Practice Tool\" YeckehZaare Resnick Ericson pdf Michigan",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q26",
+      "backend": "web search",
+      "query": "\"Test-Enhanced Learning\" \"2006\" site:learninglab.psych.purdue.edu/downloads/2006",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q27",
+      "backend": "web search",
+      "query": "\"Spacing Effects in Learning\" \"02209\"",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q28",
+      "backend": "web search",
+      "query": "\"From Studying Examples to Solving Problems\" Renkl Atkinson Maier 2000",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q29",
+      "backend": "web search",
+      "query": "\"Students ways experiencing visual program simulation\" site:tandfonline.com/doi",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q30",
+      "backend": "web search",
+      "query": "\"Not the Silver Bullet\" \"3689554\" authors",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q31",
+      "backend": "web search",
+      "query": "\"Spacing Effects in Learning\" \"Cepeda\" DOI 2008",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    },
+    {
+      "id": "Q32",
+      "backend": "web search",
+      "query": "\"Counting days is a spacing incentive\" \"2025\"",
+      "result_count": null,
+      "count_note": "Combined web batches; per-query result counts not reported/preserved. No exhaustiveness claim."
+    }
+  ],
+  "snowball_links": [
+    {
+      "seed": "local skill Renkl/Atkinson 2003 citation",
+      "candidate": "P03",
+      "relationship": "search located original 2000 fading experiment; kept separate from 2003 theory"
+    },
+    {
+      "seed": "P07 References/Introduction",
+      "candidate": "P06",
+      "relationship": "contrasting null enhancement result; separately verified primary full text"
+    },
+    {
+      "seed": "P08 references",
+      "candidate": "Becker et al. 2018 Fix the First, Ignore the Rest",
+      "url": "https://doi.org/10.1145/3159450.3159453",
+      "status": "candidate only; not extracted"
+    },
+    {
+      "seed": "P08 references",
+      "candidate": "Denny et al. 2021 On Designing Programming Error Messages for Novices",
+      "status": "candidate only; not extracted"
+    },
+    {
+      "seed": "P10 and visual simulation search",
+      "candidate": "P11",
+      "relationship": "empirical qualitative complement; abstract only"
+    },
+    {
+      "seed": "2019 retrieval-tool search",
+      "candidate": "P12",
+      "relationship": "later randomized incentive evaluation located; P12 references the 2019 tool paper"
+    },
+    {
+      "seed": "P12 reference 51",
+      "candidate": "A Spaced, Interleaved Retrieval Practice Tool that is Motivating and Effective (2019)",
+      "url": "https://doi.org/10.1145/3291279.3339411",
+      "status": "author synopsis/abstract only; not among extracted sources"
+    }
+  ],
+  "sources": [
+    {
+      "id": "P01",
+      "title": "Teaching computer programming with PRIMM: a sociocultural perspective",
+      "authors": [
+        "Sue Sentance",
+        "Jane Waite",
+        "Maria Kallia"
+      ],
+      "year": 2019,
+      "doi": "10.1080/08993408.2019.1608781",
+      "url": "https://eprints.gla.ac.uk/229013/",
+      "full_text_url": "https://primmportal.com/wp-content/uploads/2020/10/teaching-computer-programming-with-primm-a-sociocultural-perspective.pdf",
+      "evidence_class": "CS education",
+      "access_level": "selected full-text sections of 42-page manuscript: participant recruitment, assessments, results and limitations",
+      "population": "English secondary-school pupils aged 11–14 learning Python",
+      "design": "mixed-methods classroom comparison; volunteer teachers trained in PRIMM; usual school materials in controls; 8–12 weeks",
+      "n": {
+        "experimental": 493,
+        "control": 180
+      },
+      "findings": "PRIMM group had higher post-test scores; reported rank-test effect r=.13. Teacher interviews described practical benefits.",
+      "limitations": "Author-stated: volunteer teachers, insufficient demographic data, nonvalidated assessments, uncontrolled comparator lessons. Reviewer: teacher training/materials/dialogue form a bundle; no randomized Haskell or self-paced university test. Do not repeat the manuscript's interpretation of r=.13 as 13% variance explained.",
+      "locations": "PDF pp.17–19, 23–24, 33–34",
+      "discovered_by": "Q01; full manuscript Q21",
+      "access_date": "2026-10-02",
+      "source_derived_word_budget": 200,
+      "verbatim_quoted_words": 0,
+      "venue": "Computer Science Education",
+      "screening_decision": "include",
+      "haskell_effectiveness_tested": false
+    },
+    {
+      "id": "P02",
+      "title": "Reducing withdrawal and failure rates in introductory programming with subgoal labeled worked examples",
+      "authors": [
+        "Lauren E. Margulieux",
+        "Briana B. Morrison",
+        "Adrienne Decker"
+      ],
+      "year": 2020,
+      "doi": "10.1186/s40594-020-00222-7",
+      "url": "https://link.springer.com/article/10.1186/s40594-020-00222-7",
+      "evidence_class": "CS education",
+      "access_level": "selected publisher full-text sections: Method, Participants, quiz/exam results",
+      "population": "university introductory Java students; five course sections",
+      "design": "semester classroom quasi-experiment comparing conventional versus subgoal-labeled worked examples",
+      "n": {
+        "analyzed": 265,
+        "subgoal": 120,
+        "control": 145,
+        "enrolled": 307
+      },
+      "findings": "Better formative quiz performance, but no statistically significant improvement in average exam performance; lower exam variance and fewer withdrawals/failing exam averages reported.",
+      "limitations": "Section/instructor effects and selection remain possible; one control section online. Outcomes vary by measure. Earlier 2019 design and explanation-response papers reuse this project and are not independent replications.",
+      "locations": "Method; Participants; Exam performance; Withdrawal and failure",
+      "discovered_by": "Q02",
+      "access_date": "2026-10-02",
+      "source_derived_word_budget": 200,
+      "verbatim_quoted_words": 0,
+      "venue": "International Journal of STEM Education",
+      "screening_decision": "include",
+      "haskell_effectiveness_tested": false
+    },
+    {
+      "id": "P03",
+      "title": "From Studying Examples to Solving Problems: Fading Worked-Out Solution Steps Helps Learning",
+      "authors": [
+        "Alexander Renkl",
+        "Robert K. Atkinson",
+        "Uwe H. Maier"
+      ],
+      "year": 2000,
+      "doi": null,
+      "url": "https://escholarship.org/uc/item/81b9j9hs",
+      "full_text_url": "https://escholarship.org/content/qt81b9j9hs/qt81b9j9hs_noSplash_ef3e30a960524adc5157ece2d6fa3130.pdf",
+      "evidence_class": "general learning science",
+      "access_level": "selected full-text sections of six-page Cognitive Science Society proceedings paper",
+      "population": "German ninth-grade physics classes; Mississippi State psychology students learning probability",
+      "design": "classroom quasi-experiment; randomized laboratory fading versus example/problem pairs",
+      "n": {
+        "field": 35,
+        "field_fading": 20,
+        "field_control": 15,
+        "lab": 54,
+        "lab_per_group": 27
+      },
+      "findings": "Fading benefited near-transfer performance in both studies; neither showed a significant far-transfer benefit.",
+      "limitations": "Small samples and immediate domain-specific assessments; different fading directions across studies. Haskell benefit is inferred. Distinct from Renkl/Atkinson 2003 conceptual paper.",
+      "locations": "PDF pp.3–5 (Methods, Results)",
+      "discovered_by": "Q05; Q28 verifies year",
+      "access_date": "2026-10-02",
+      "source_derived_word_budget": 200,
+      "verbatim_quoted_words": 0,
+      "venue": "Proceedings of the Annual Meeting of the Cognitive Science Society",
+      "screening_decision": "include",
+      "haskell_effectiveness_tested": false
+    },
+    {
+      "id": "P04",
+      "title": "Test-Enhanced Learning: Taking Memory Tests Improves Long-Term Retention",
+      "authors": [
+        "Henry L. Roediger III",
+        "Jeffrey D. Karpicke"
+      ],
+      "year": 2006,
+      "doi": "10.1111/j.1467-9280.2006.01693.x",
+      "url": "https://doi.org/10.1111/j.1467-9280.2006.01693.x",
+      "full_text_url": "https://learninglab.psych.purdue.edu/downloads/2006/2006_Roediger_Karpicke_PsychSci.pdf",
+      "evidence_class": "general learning science",
+      "access_level": "selected full-text Methods, Results and General Discussion; author-lab PDF",
+      "population": "Washington University undergraduates aged 18–24",
+      "design": "two experiments: prose study/re-study versus free recall without feedback; immediate and delayed tests",
+      "n": {
+        "experiment1": 120,
+        "experiment2": 180
+      },
+      "findings": "Restudy favored five-minute performance; retrieval favored delayed retention. Experiment 2: repeated-testing group recalled 61% versus repeated-study 40% after one week.",
+      "limitations": "Prose idea-unit recall, not programming construction or type inference. Retrieval and study periods differed in duration; avoid claiming identical practice time in every condition. Not evidence that reading is dispensable.",
+      "locations": "PDF pp.2–5",
+      "discovered_by": "Q03; author PDF Q26",
+      "access_date": "2026-10-02",
+      "source_derived_word_budget": 200,
+      "verbatim_quoted_words": 0,
+      "venue": "Psychological Science",
+      "screening_decision": "include",
+      "haskell_effectiveness_tested": false
+    },
+    {
+      "id": "P05",
+      "title": "Spacing Effects in Learning: A Temporal Ridgeline of Optimal Retention",
+      "authors": [
+        "Nicholas J. Cepeda",
+        "Edward Vul",
+        "Doug Rohrer",
+        "John T. Wixted",
+        "Harold Pashler"
+      ],
+      "year": 2008,
+      "doi": "10.1111/j.1467-9280.2008.02209.x",
+      "url": "https://doi.org/10.1111/j.1467-9280.2008.02209.x",
+      "full_text_url": "https://labs.biology.ucsd.edu/rifkin/courses/bieb100/f14/Cepeda_et_al_2008_Psychological_Science_Spacing_Effects_in_Learning_A_Temporal_Ridgeline_of_Optimal_Retention.pdf",
+      "evidence_class": "general learning science",
+      "access_level": "selected full-text current-study, Methods, Discussion; university-hosted published PDF",
+      "population": "online adult memory panel; ages 18–72, mean 34",
+      "design": "random assignment to 26 gap/retention-interval combinations; 32 trivia facts; recall and recognition",
+      "n": {
+        "reported": 1354
+      },
+      "findings": "Optimal review gap depended on retention interval; performance rose then fell with increasing gap. Approximate optimal ratios: 20–40% for one-week delay, 5–10% for one-year delay.",
+      "limitations": "Trivia retention and completer analysis; attrition increased at longer delays. Not a universal 10–20% schedule or demonstrated programming retention effect.",
+      "locations": "printed pp.1096–1101",
+      "discovered_by": "Q04; university PDF Q31",
+      "access_date": "2026-10-02",
+      "source_derived_word_budget": 200,
+      "verbatim_quoted_words": 0,
+      "venue": "Psychological Science",
+      "screening_decision": "include",
+      "haskell_effectiveness_tested": false
+    },
+    {
+      "id": "P06",
+      "title": "Enhancing Syntax Error Messages Appears Ineffectual",
+      "authors": [
+        "Paul Denny",
+        "Andrew Luxton-Reilly",
+        "Dave Carpenter"
+      ],
+      "year": 2014,
+      "doi": "10.1145/2591708.2591748",
+      "url": "https://doi.org/10.1145/2591708.2591748",
+      "full_text_url": "https://www.cs.auckland.ac.nz/courses/compsci747s2c/lectures/errors.pdf",
+      "evidence_class": "CS education",
+      "access_level": "selected full-text Evaluation, Results and Discussion; university-hosted PDF",
+      "population": "University of Auckland accelerated summer CS1 students learning Java",
+      "design": "random allocation; 10 short CodeWrite method-body exercises over weeks 2–3; raw versus enhanced syntax messages",
+      "n": {
+        "enrolled": 90,
+        "active": 83,
+        "control": 42,
+        "intervention": 41
+      },
+      "findings": "No significant benefit on consecutive noncompiling submissions, overall noncompiling attempts, or correction attempts for common error categories.",
+      "limitations": "Single short course, small tasks and specific enhancement style; no delayed conceptual assessment. Null result does not establish all enhancements ineffective.",
+      "locations": "printed pp.275–277",
+      "discovered_by": "Q11; author university PDF Q15",
+      "access_date": "2026-10-02",
+      "source_derived_word_budget": 200,
+      "verbatim_quoted_words": 0,
+      "venue": "ITiCSE 2014",
+      "screening_decision": "include",
+      "haskell_effectiveness_tested": false
+    },
+    {
+      "id": "P07",
+      "title": "Effective compiler error message enhancement for novice programming students",
+      "authors": [
+        "Brett A. Becker",
+        "Graham Glanville",
+        "Ricardo Iwashima",
+        "Claire McDonnell",
+        "Kyle Goslin",
+        "Catherine Mooney"
+      ],
+      "year": 2016,
+      "doi": "10.1080/08993408.2016.1225464",
+      "url": "https://doi.org/10.1080/08993408.2016.1225464",
+      "full_text_url": "https://www.researchgate.net/publication/308343816_Effective_compiler_error_message_enhancement_for_novice_programming_students",
+      "evidence_class": "CS education",
+      "access_level": "selected full-text author-uploaded original manuscript on ResearchGate; author-site accepted PDF redirected to suspended page",
+      "population": "first-semester Java CS1 students at one Irish institution",
+      "design": "successive-year control/intervention comparison; Decaf raw versus raw plus enhanced messages",
+      "n": {
+        "active_compiler_ids": 212,
+        "control_ids": 108,
+        "intervention_ids": 104
+      },
+      "findings": "Reduced error-frequency and several repeated-error measures under enhancement.",
+      "limitations": "Historical cohorts, no random allocation; compiler IDs approximate students, some duplication/other-tool use possible. Error frequency is not independent mastery. Similar error-rank distributions across languages do not prove equivalent instructional effects.",
+      "locations": "manuscript pp.8–10, 20–22",
+      "discovered_by": "Q06; expanded journal study search result; snowball P06",
+      "access_date": "2026-10-02",
+      "source_derived_word_budget": 200,
+      "verbatim_quoted_words": 0,
+      "venue": "Computer Science Education",
+      "screening_decision": "include",
+      "haskell_effectiveness_tested": false
+    },
+    {
+      "id": "P08",
+      "title": "Not the Silver Bullet: LLM-enhanced Programming Error Messages are Ineffective in Practice",
+      "authors": [
+        "Eddie Antonio Santos",
+        "Brett A. Becker"
+      ],
+      "year": 2024,
+      "doi": "10.1145/3689535.3689554",
+      "url": "https://arxiv.org/abs/2409.18661",
+      "full_text_url": "https://arxiv.org/html/2409.18661v1",
+      "evidence_class": "CS education",
+      "access_level": "selected author full-text HTML: participants, procedure, results and limitations",
+      "population": "European university first-year CS students, second programming semester, C",
+      "design": "within-participant six-task debugging study; task-specific random assignment to GCC, handwritten or GPT-4 explanations",
+      "n": {
+        "recruited": 113,
+        "completed": 106
+      },
+      "findings": "GPT-4 was faster than stock messages on only one task; handwritten explanations generally performed better. Preference for GPT-4 did not imply faster repair.",
+      "limitations": "Six selected bugs, timed repair, permitted web search; same researcher authored bugs and expert messages; GPT-4 also displayed stock messages. No delayed learning measure. Findings cannot establish current-model or Haskell effectiveness.",
+      "locations": "sections 3.1–3.4, 4.1, 5.1",
+      "discovered_by": "Q06 results; recent evidence lead",
+      "access_date": "2026-10-02",
+      "source_derived_word_budget": 200,
+      "verbatim_quoted_words": 0,
+      "venue": "UKICER 2024",
+      "screening_decision": "include",
+      "haskell_effectiveness_tested": false
+    },
+    {
+      "id": "P09",
+      "title": "Understanding Conceptual Transfer for Students Learning New Programming Languages",
+      "authors": [
+        "Ethel Tshukudu",
+        "Quintin Cutts"
+      ],
+      "year": 2020,
+      "doi": "10.1145/3372782.3406270",
+      "url": "https://eprints.gla.ac.uk/230934/",
+      "full_text_url": "https://www.researchgate.net/publication/343517536_Understanding_Conceptual_Transfer_for_Students_Learning_New_Programming_Languages",
+      "evidence_class": "CS education",
+      "access_level": "selected author-uploaded full-text sections: participants, study procedures and results; institutional record has abstract only",
+      "population": "near-novice undergraduates Python→Java; IT masters students Java→Python",
+      "design": "two within-participant paper-based code-comprehension studies; categories of true, false and abstract true carryover",
+      "n": {
+        "study1_analyzed": 70,
+        "study1_consented": 120,
+        "study2_analyzed": 33,
+        "study2_consented": 50
+      },
+      "findings": "Syntax similarity accompanied positive or negative semantic transfer depending on whether meaning carried over; dissimilar syntax impeded recognition of shared concepts.",
+      "limitations": "Observational within-learner comparisons, selected concept categories and different test orders; not an intervention effect or imperative→Haskell result.",
+      "locations": "sections 5.1.1, 5.2.1–5.2.6",
+      "discovered_by": "Q08",
+      "access_date": "2026-10-02",
+      "source_derived_word_budget": 200,
+      "verbatim_quoted_words": 0,
+      "venue": "ICER 2020",
+      "screening_decision": "include",
+      "haskell_effectiveness_tested": false
+    },
+    {
+      "id": "P10",
+      "title": "Notional Machines and Introductory Programming Education",
+      "authors": [
+        "Juha Sorva"
+      ],
+      "year": 2013,
+      "doi": "10.1145/2483710.2483713",
+      "url": "https://research.aalto.fi/en/publications/notional-machines-and-introductory-programming-education/",
+      "full_text_url": "https://www.researchgate.net/publication/259998496_Notional_machines_and_introductory_programming_education",
+      "evidence_class": "CS education conceptual synthesis",
+      "access_level": "selected author-uploaded full-text introduction and conceptual discussion; institutional metadata verified",
+      "population": null,
+      "design": "narrative/conceptual review, not a new intervention experiment",
+      "n": null,
+      "findings": "Proposes making the program-execution model an explicit learning objective and relates this to mental models and programming difficulties.",
+      "limitations": "Framework evidence, not an effect estimate; no new N. A Haskell notional machine must respect non-strict evaluation rather than importing imperative state/line-order semantics.",
+      "locations": "article introduction and notional-machine definition",
+      "discovered_by": "Q07",
+      "access_date": "2026-10-02",
+      "source_derived_word_budget": 200,
+      "verbatim_quoted_words": 0,
+      "venue": "ACM Transactions on Computing Education",
+      "screening_decision": "include",
+      "haskell_effectiveness_tested": false
+    },
+    {
+      "id": "P11",
+      "title": "Students’ ways of experiencing visual program simulation",
+      "authors": [
+        "Juha Sorva",
+        "Jan Lönnberg",
+        "Lauri Malmi"
+      ],
+      "year": 2013,
+      "doi": "10.1080/08993408.2013.807962",
+      "url": "https://www.tandfonline.com/doi/full/10.1080/08993408.2013.807962",
+      "metadata_url": "https://research.aalto.fi/en/publications/students-ways-of-experiencing-visual-program-simulation/",
+      "evidence_class": "CS education",
+      "access_level": "abstract and institutional metadata only; attempted publisher full-text open failed",
+      "population": "novice programmers; precise course/language not verified",
+      "design": "qualitative interviews plus supplementary observation",
+      "n": null,
+      "findings": "Six ways of experiencing simulation reported; some learners failed to attach meaning to visuals or connect them to programming practice.",
+      "limitations": "Abstract-only extraction: no verified N, interview protocol, sampling or coding details. Evidence of differing interpretations, not a causal visualization benefit or prevalence estimate.",
+      "locations": "publisher abstract; author-uploaded abstract",
+      "discovered_by": "Q19; snowball P10",
+      "access_date": "2026-10-02",
+      "source_derived_word_budget": 200,
+      "verbatim_quoted_words": 0,
+      "venue": "Computer Science Education",
+      "screening_decision": "include",
+      "haskell_effectiveness_tested": false
+    },
+    {
+      "id": "P12",
+      "title": "Counting days is a spacing incentive that unlocks the potential of low GPA students",
+      "authors": [
+        "Iman YeckehZaare",
+        "Paul Resnick"
+      ],
+      "year": 2025,
+      "doi": "10.1038/s41539-025-00322-5",
+      "url": "https://www.nature.com/articles/s41539-025-00322-5",
+      "evidence_class": "CS education",
+      "access_level": "selected publisher full-text Methods, Results and Discussion",
+      "population": "university introductory Python; high-school/college Java courses",
+      "design": "individual RCT rewarding practice days versus question counts; instructor-cluster RCT of same incentive",
+      "n": {
+        "study1_randomized": 199,
+        "study1_analyzed": 143,
+        "study2_instructors": 71,
+        "study2_students": 1648
+      },
+      "findings": "Day incentives increased practice days. Within-course exam gains particularly benefited lower-GPA students; second experiment measured practice behavior, not comparable learning outcomes.",
+      "limitations": "Postrandomization exclusions, modeled GPA interaction; same adaptive/interleaving tool in both arms. Incentive effect is not pure spacing mediation causality; similar practice/assessment question types and one-course learning result limit transfer.",
+      "locations": "Methods participant funnel; Experiment 1/2; Discussion",
+      "discovered_by": "Q25 result; citation trail from 2019 retrieval-tool paper; Q32",
+      "access_date": "2026-10-02",
+      "source_derived_word_budget": 200,
+      "verbatim_quoted_words": 0,
+      "venue": "npj Science of Learning",
+      "screening_decision": "include",
+      "haskell_effectiveness_tested": false
+    }
+  ]
+}

@@ -51,6 +51,36 @@ steps:
 
       Commit to a prediction, then use **Run**. Explain which expression in each branch determines the result.
 
+      <details markdown="1">
+      <summary>Check the constructor and result reasoning</summary>
+
+      The starter prints `(10,7,3)`. Each pattern extracts one integer, and each body returns that integer unchanged. `Fight` constructs an event; it does not decide how health changes.
+
+      | Expression | Type | Role |
+      | --- | --- | --- |
+      | `Fight` | `Integer -> Event` | Constructor awaiting a payload |
+      | `Fight 7` | `Event` | One constructed event |
+      | `eventDelta (Fight 7)` | `Integer` | Result of interpreting that event |
+
+      </details>
+
+      A pattern can also select a particular payload. Before reading the check, predict both calls to this neighboring function:
+
+      ```haskell
+      describeEvent (Heal _) = "restoration"
+      describeEvent (Heal 0) = "zero restoration"
+      describeEvent _ = "another event"
+      -- describeEvent (Heal 0)
+      -- describeEvent (Fight 0)
+      ```
+
+      <details markdown="1">
+      <summary>Check which pattern matches first</summary>
+
+      The calls return `"restoration"` and `"another event"`. `(Heal _)` already matches every Heal payload, so the later `(Heal 0)` equation is never selected. It does not match `Fight 0`: the constructor matters as well as the payload. The final `_` covers the remaining events. Move the specific Heal equation before the general one, then predict again.
+
+      </details>
+
       ### Your turn
 
       Repair `eventDelta` so it returns the change in health for one event:
@@ -81,13 +111,13 @@ steps:
     run_file: "Main.hs"
     tests:
       - description: "Travel uses whole quarters, including distances below four"
-        command: "map (\\distance -> eventDelta (Travel distance)) [0, 3, 4, 5, 11] == [0, 0, 1, 1, 2]"
+        command: 'map (\distance -> eventDelta (Travel distance)) [0, 3, 4, 5, 11] == [0, 0, 1, 1, 2] && eventDelta (Travel 100000000000000000004) == 25000000000000000001'
         hints:
           - text: "The number in a Travel event is a distance, not a number of health points."
           - text: "Count how many complete groups of four fit in that distance. Integer division keeps the result an Integer."
           - text: "The Travel equation has the shape `eventDelta (Travel distance) = div distance ...`; choose the group size."
       - description: "Fights lose health while healing restores it"
-        command: "map eventDelta [Fight 0, Fight 1, Fight 9, Heal 0, Heal 7] == [0, -1, -9, 0, 7]"
+        command: 'map eventDelta [Fight 0, Fight 1, Fight 9, Heal 0, Heal 7] == [0, -1, -9, 0, 7] && eventDelta (Fight 100000000000000000001) == (-100000000000000000001) && eventDelta (Heal 101) == 101'
         hints:
           - text: "An event's constructor carries meaning, but Haskell will not invent the meaning of its number."
           - text: "A loss is a negative change; a restoration is a positive change."
@@ -97,15 +127,15 @@ steps:
       min_score: 0.8
       questions:
         - type: single
-          difficulty: basic
-          question: "What is the type of the value `Fight 12`?"
-          options: ["`Event`", "`Fight`", "`Integer`", "`Integer -> Event`"]
+          difficulty: intermediate
+          question: "What are the types of `Fight` and `Fight 12`, respectively?"
+          options: ["`Integer -> Event`; `Event`", "`Event`; `Event`", "`Integer -> Event`; `Integer`", "`Event`; `Integer -> Event`"]
           correct_index: 0
           option_feedback:
-            1: "Fight names a constructor. All three variants produce values of the shared Event type."
-            2: "The integer is a field inside the event; wrapping it with Fight produces an Event."
-            3: "That is the type of the constructor Fight before its integer argument is supplied."
-          explanation: "Applying Fight to an Integer constructs an Event value. A type can have several constructors."
+            1: "Fight still needs its Integer argument. Fight 12 has already received that argument and is an Event value."
+            2: "The payload has type Integer, but applying the constructor wraps it in an Event."
+            3: "Application consumes the constructor's argument and produces an Event; it does not turn an Event into a constructor."
+          explanation: "Fight is a constructor function from Integer to Event. Fight 12 is the result of applying that function, just as an ordinary function's result differs from the function itself."
         - type: single
           difficulty: intermediate
           question: "With the repaired function, what does `map eventDelta [Travel 3, Fight 4, Heal 2]` return?"
@@ -196,13 +226,13 @@ steps:
     run_file: "Main.hs"
     tests:
       - description: "Healing adds to existing health and preserves the name and original value"
-        command: 'let hero = Hero "Fern" 70 in healHero 15 hero == Hero "Fern" 85 && hero == Hero "Fern" 70 && healHero 0 (Hero "Stark" 12) == Hero "Stark" 12'
+        command: 'let {observe (Hero name hp) = (name, hp)} in let original = Hero "Fern" 70 in observe (healHero 15 original) == ("Fern", 85) && observe original == ("Fern", 70) && observe (healHero 0 (Hero "Stark" 12)) == ("Stark", 12) && observe (healHero 1 (Hero "" 0)) == ("", 1)'
         hints:
           - text: "The amount is an increment, not a replacement health value."
           - text: "Read the health field from the original record before calculating its replacement."
           - text: "The result has the shape `Hero name (...)`; preserve the bound name and calculate the new health from both amount and hp."
       - description: "Healing respects the 100-point cap at and around its boundary"
-        command: 'map (\amount -> healthOf (healHero amount (Hero "Mage" 90))) [9, 10, 11] == [99, 100, 100] && healHero 5 (Hero "Full" 100) == Hero "Full" 100 && healthOf (healHero 1 (Hero "New" 0)) == 1'
+        command: 'let {observe (Hero name hp) = (name, hp)} in map (\amount -> snd (observe (healHero amount (Hero "Mage" 90)))) [9, 10, 11] == [99, 100, 100] && observe (healHero 5 (Hero "Full" 100)) == ("Full", 100) && observe (healHero 100000000000000000001 (Hero "New" 0)) == ("New", 100) && observe (healHero 0 (Hero "Empty" 0)) == ("Empty", 0)'
         hints:
           - text: "An ordinary addition is not enough when the result exceeds the maximum."
           - text: "Compare the candidate health with the cap after adding the healing amount."
@@ -280,6 +310,25 @@ steps:
 
       Haskell orders strings lexicographically, comparing characters from the start. For example, `"z" > "alpha"` is true despite `"z"` being shorter.
 
+      Type-variable names express relationships **within a signature**. Consider two separate declarations:
+
+      ```haskell
+      duplicate :: a -> (a, a)
+      duplicate x = (x, x)
+
+      box :: a -> [a]
+      box x = [x]
+      ```
+
+      Predict whether `(duplicate 'x', box True)` has a type error because both signatures use `a`. Explain your choice before opening the check.
+
+      <details markdown="1">
+      <summary>Check what the repeated type name relates</summary>
+
+      The expression is valid and produces `(('x','x'),[True])`. In this use of `duplicate`, `a` is `Char`; in this use of `box`, its independently declared `a` is `Bool`. Renaming box's type variable to `b` changes no relationship. Within `duplicate`'s signature, however, all three occurrences must agree: the input and both output fields share one type.
+
+      </details>
+
       ### Thinking time!
 
       The starter checks only the lower bound. Predict which out-of-range values it incorrectly keeps in each sample. Run, then explain why preserving input order does not by itself implement the requested selection.
@@ -307,13 +356,13 @@ steps:
     run_file: "Main.hs"
     tests:
       - description: "Inclusive bounds retain endpoints, interior values, duplicates, and input order"
-        command: "withinBand (2, 6) [7, 2, 5, 1, 6, 5] == [2, 5, 6, 5] && withinBand (-3, 0) [-4, -3, -1, 0, 1] == [-3, -1, 0] && withinBand (4, 4) [3, 4, 5, 4] == [4, 4] && withinBand (0, 1) [] == []"
+        command: 'withinBand (2, 6) [7, 2, 5, 1, 6, 5] == [2, 5, 6, 5] && withinBand (-3, 0) [-4, -3, -1, 0, 1] == [-3, -1, 0] && withinBand (4, 4) [3, 4, 5, 4] == [4, 4] && withinBand (0, 1) [] == [] && withinBand (0.5 :: Double, 1.5) [2, 0.5, 1, 1.5, 0] == [0.5, 1, 1.5]'
         hints:
           - text: "A value must satisfy both bounds. Passing just one comparison is not sufficient."
           - text: "The endpoints count as inside. Keep the inclusive comparisons and connect them with a Boolean operation."
           - text: "The filter predicate has the shape `value >= low && ...`; compare the same value with the upper bound."
       - description: "String ranges use lexicographic ordering while retaining empty and repeated values when in range"
-        command: 'withinBand ("G", "M") ["Z", "G", "J", "A", "M", "J"] == ["G", "J", "M", "J"] && withinBand ("", "B") ["C", "", "A", "B"] == ["", "A", "B"]'
+        command: 'withinBand ("G", "M") ["Z", "G", "J", "A", "M", "J"] == ["G", "J", "M", "J"] && withinBand ("", "B") ["C", "", "A", "B"] == ["", "A", "B"] && withinBand (''b'', ''d'') "edbcba" == "dbcb" && withinBand (False, True) [True, False, True] == [True, False, True]'
         hints:
           - text: "The generic function uses the ordering supplied by the value's type. It should not measure string length."
           - text: "Filtering chooses existing values; it should neither sort the names nor remove repetitions."
@@ -425,13 +474,13 @@ steps:
     run_file: "Main.hs"
     tests:
       - description: "Empty, single-stop, and longer lists produce the matching trail structure"
-        command: "fromList [] == End && fromList [\"Gate\"] == Stop \"Gate\" End && fromList [\"Lake\", \"Lake\", \"Hill\"] == Stop \"Lake\" (Stop \"Lake\" (Stop \"Hill\" End))"
+        command: 'let {names End = []; names (Stop name rest) = name : names rest} in names (fromList []) == [] && names (fromList ["Gate"]) == ["Gate"] && names (fromList ["Lake", "Lake", "Hill"]) == ["Lake", "Lake", "Hill"]'
         hints:
           - text: "Find the input shape that has no work left. It corresponds to the trail's base constructor."
           - text: "For a nonempty list, keep its head and recursively convert its tail."
           - text: "Use one equation for `[]` and another for `(x:xs)`. The latter creates a Stop whose remaining-trail field comes from the recursive result."
       - description: "The conversion preserves strings, repeated values, and their order"
-        command: 'fromList ["Gate", "Lake", "Gate"] == Stop "Gate" (Stop "Lake" (Stop "Gate" End)) && toList (fromList ["", "North"]) == ["", "North"]'
+        command: 'let {names End = []; names (Stop name rest) = name : names rest} in names (fromList ["Gate", "Lake", "Gate"]) == ["Gate", "Lake", "Gate"] && names (fromList ["", "North", " ", "South", ""]) == ["", "North", " ", "South", ""] && names (fromList (map show [1..12 :: Int])) == map show [1..12 :: Int]'
         hints:
           - text: "The conversion changes representation, not the sequence of stops."
           - text: "Do not compare, sort, or deduplicate payloads; the function preserves each stop name."
@@ -546,13 +595,13 @@ steps:
     run_file: "Main.hs"
     tests:
       - description: "Deletion removes exactly the indexed stop and preserves the original trail"
-        command: 'let original = fromList ["A", "B", "A", "C"] in removeStop 0 original == fromList ["B", "A", "C"] && removeStop 1 original == fromList ["A", "A", "C"] && removeStop 2 original == fromList ["A", "B", "C"] && removeStop 3 original == fromList ["A", "B", "A"] && original == fromList ["A", "B", "A", "C"]'
+        command: 'let {names End = []; names (Stop name rest) = name : names rest} in let original = Stop "A" (Stop "B" (Stop "A" (Stop "C" End))) in names (removeStop 0 original) == ["B", "A", "C"] && names (removeStop 1 original) == ["A", "A", "C"] && names (removeStop 2 original) == ["A", "B", "C"] && names (removeStop 3 original) == ["A", "B", "A"] && names original == ["A", "B", "A", "C"] && names (removeStop 1 (Stop "" (Stop "" (Stop "X" End)))) == ["", "X"]'
         hints:
           - text: "This is deletion by position. Equal payloads elsewhere in the trail must stay."
           - text: "When the index reaches zero, skip this Stop. Before zero, retain the current value and decrease the index for the recursive call."
           - text: "The nonzero case reconstructs `Stop x (...)`; the recursive call works on the remaining trail with an index one smaller."
       - description: "Empty trails and invalid indices remain unchanged"
-        command: "removeStop 0 End == End && removeStop (-1) (fromList [\"A\", \"B\"]) == fromList [\"A\", \"B\"] && removeStop 2 (fromList [\"A\", \"B\"]) == fromList [\"A\", \"B\"] && removeStop 8 (fromList [\"A\", \"B\"]) == fromList [\"A\", \"B\"] && removeStop 0 (fromList [\"A\"]) == End"
+        command: 'let {names End = []; names (Stop name rest) = name : names rest} in names (removeStop 0 End) == [] && names (removeStop (-1) (Stop "A" (Stop "B" End))) == ["A", "B"] && names (removeStop (-5) (Stop "A" End)) == ["A"] && names (removeStop 2 (Stop "A" (Stop "B" End))) == ["A", "B"] && names (removeStop 8 (Stop "A" (Stop "B" End))) == ["A", "B"] && names (removeStop 0 (Stop "A" End)) == []'
         hints:
           - text: "Check the empty, singleton, and just-outside cases separately."
           - text: "An empty trail has no stop to remove. A negative index has no valid target."
@@ -646,6 +695,21 @@ steps:
 
       The sample root has two labels and three child entries, one of which is `NoRoute`. One child has no labels but leads to a labeled grandchild. Predict the total number of labeled nodes, then predict the starter's output. Run to distinguish its local count from the required whole-tree count.
 
+      <details markdown="1">
+      <summary>Check the local and whole-subtree contributions</summary>
+
+      The required total is `3`; the starter returns only the root's contribution, `1`. Trace each child separately:
+
+      | Child | Own labeled-node contribution | Whole-subtree contribution |
+      | --- | --- | --- |
+      | Unlabeled node leading to Lake | `0` | `1` |
+      | `NoRoute` | `0` | `0` |
+      | Tower node with no children | `1` | `1` |
+
+      Lake is reached through a real node whose labels happen to be empty. `NoRoute` has no descendants. An empty payload and an absent node therefore need different reasoning. The recursive child results count whole subtrees, so counting the child-list entries alone cannot replace them.
+
+      </details>
+
       ### Your turn
 
       Repair `countLabeled :: Route -> Int`. Count every node whose own labels list is nonempty. Do not count `NoRoute`, and do not stop traversing a real node just because its labels list is empty.
@@ -676,13 +740,13 @@ steps:
     run_file: "Main.hs"
     tests:
       - description: "The count measures labeled nodes rather than individual labels"
-        command: "countLabeled NoRoute == 0 && countLabeled (Route [] []) == 0 && countLabeled (Route [\"A\", \"B\", \"C\"] []) == 1 && countLabeled (Route [\"A\"] [Route [\"B\", \"C\"] [], Route [\"D\"] []]) == 3"
+        command: 'countLabeled NoRoute == 0 && countLabeled (Route [] []) == 0 && countLabeled (Route ["A", "B", "C"] []) == 1 && countLabeled (Route ["A"] [Route ["B", "C"] [], Route ["D"] []]) == 3 && countLabeled (Route [""] []) == 1'
         hints:
           - text: "A node contributes either zero or one, regardless of how many labels it stores."
           - text: "Keep the current-node contribution separate from the sum of child contributions."
           - text: "The result has the shape `own + ...`; the missing value must summarize recursive calls on the children."
       - description: "Traversal reaches descendants through unlabeled nodes and handles missing children"
-        command: 'countLabeled (Route ["Gate", "Start"] [Route [] [Route ["Lake"] []], NoRoute, Route ["Tower"] []]) == 3 && countLabeled (Route [] [Route [] [Route ["Deep"] []], NoRoute]) == 1 && countLabeled (Route ["Root"] [NoRoute, NoRoute]) == 1'
+        command: 'countLabeled (Route ["Gate", "Start"] [Route [] [Route ["Lake"] []], NoRoute, Route ["Tower"] []]) == 3 && countLabeled (Route [] [Route [] [Route ["Deep"] []], NoRoute]) == 1 && countLabeled (Route ["Root"] [NoRoute, NoRoute]) == 1 && countLabeled (Route [] [Route [] [], Route ["A"] [], Route ["B"] [], Route ["C"] [], Route ["D"] []]) == 4 && countLabeled (Route [] [Route [] [Route [] [Route [] [Route [""] []]]]]) == 1'
         hints:
           - text: "An unlabeled node does not imply an unlabeled subtree."
           - text: "Visit its children even when its own contribution is zero. NoRoute is the case with no children to visit."
@@ -693,14 +757,14 @@ steps:
       questions:
         - type: single
           difficulty: intermediate
-          question: "What should `countLabeled (Route [] [Route [\"A\",\"B\"] []])` return?"
-          options: ["0", "1", "2", "3"]
+          question: "What should `countLabeled (Route [] [Route [\"A\",\"B\"] [], NoRoute, Route [] [Route [\"C\"] []]])` return?"
+          options: ["0", "2", "3", "4"]
           correct_index: 1
           option_feedback:
-            0: "The root contributes zero, but its labeled child must still be visited."
-            2: "The child has two labels but contributes only one labeled node."
-            3: "The function counts labeled nodes, not the sum of nodes and labels."
-          explanation: "There is one labeled node: the child. The empty root payload does not terminate traversal."
+            0: "The empty root payload contributes zero, but traversal must still reach both labeled descendants."
+            2: "There are three labels, but A and B belong to one node and contribute only one count."
+            3: "Four real Route nodes occur, but the root and the parent of C have empty labels and do not count."
+          explanation: "The node with A and B contributes one; the deeper node with C contributes one. Both unlabeled nodes are traversed, while NoRoute contributes zero."
         - type: single
           difficulty: intermediate
           question: "After `map countLabeled children`, which operation produces the children's combined contribution?"
@@ -773,6 +837,23 @@ steps:
 
       The sample stores priorities 3, 5, 8, and 12. Predict the repaired function's output after removing the smallest. Then predict the starter's output: its recursive case returns the root's right subtree and discards the rest. Run and identify the unintended losses.
 
+      <details markdown="1">
+      <summary>Check the retained keys and reconstruction path</summary>
+
+      The repaired result contains `[5,8,12]`; the starter keeps only `[12]`. Removing key 3 must retain its existing right child, key 5. Root 8 needs a new left child, while its right subtree containing 12 needs no change. The original tree still contains `[3,5,8,12]`.
+
+      In the direct constructor-based algorithm, only retained ancestors on that left path need reconstruction. Compare these cases under the source-constructor model:
+
+      | Position of the removed minimum | Retained ancestors | New `Fork` expressions |
+      | --- | --- | --- |
+      | At the root | `0` | `0` |
+      | Below one ancestor | `1` | `1` |
+      | Below two ancestors | `2` | `2` |
+
+      The removed node is replaced by its existing right child, which may be `Tip`. Off-path subtrees can be reused. These counts describe this direct source algorithm; they do not measure GHC or MicroHs allocations or assume the tree is balanced.
+
+      </details>
+
       ### Your turn
 
       Repair `removeSmallest :: SearchTree -> SearchTree`:
@@ -813,13 +894,13 @@ steps:
     run_file: "Main.hs"
     tests:
       - description: "Removing a nested minimum preserves its right child and every unaffected ancestor and branch"
-        command: "let original = Fork 8 (Fork 3 Tip (Fork 5 Tip Tip)) (Fork 12 Tip Tip) in toAscList (removeSmallest original) == [5, 8, 12] && toAscList original == [3, 5, 8, 12] && toAscList (removeSmallest (Fork 9 (Fork 4 (Fork (-2) Tip (Fork 0 Tip Tip)) (Fork 6 Tip Tip)) (Fork 15 Tip Tip))) == [0, 4, 6, 9, 15]"
+        command: 'let {keys Tip = []; keys (Fork value left right) = keys left ++ [value] ++ keys right} in let original = Fork 8 (Fork 3 Tip (Fork 5 Tip Tip)) (Fork 12 Tip Tip) in keys (removeSmallest original) == [5, 8, 12] && keys original == [3, 5, 8, 12] && keys (removeSmallest (Fork 9 (Fork 4 (Fork (-2) Tip (Fork 0 Tip Tip)) (Fork 6 Tip Tip)) (Fork 15 Tip Tip))) == [0, 4, 6, 9, 15] && keys (removeSmallest (Fork 10 (Fork 8 (Fork 6 (Fork 4 Tip (Fork 5 Tip Tip)) Tip) Tip) Tip)) == [5, 6, 8, 10]'
         hints:
           - text: "Returning the root's right child is valid only when the root itself has no left child."
           - text: "When a left child exists, the current key and right subtree must survive. Only the left subtree needs the recursive update."
           - text: "Reconstruct `Fork x (...) right`; the missing field is the result of removing the smallest key from left."
       - description: "Empty trees, singleton trees, roots without left children, and repeated removals reach the right boundary"
-        command: "let pair = Fork 5 (Fork 2 Tip Tip) Tip in toAscList (removeSmallest Tip) == [] && toAscList (removeSmallest (Fork 4 Tip Tip)) == [] && toAscList (removeSmallest (Fork 4 Tip (Fork 7 Tip (Fork 9 Tip Tip)))) == [7, 9] && toAscList (removeSmallest pair) == [5] && toAscList (removeSmallest (removeSmallest pair)) == []"
+        command: 'let {keys Tip = []; keys (Fork value left right) = keys left ++ [value] ++ keys right} in let pair = Fork 5 (Fork 2 Tip Tip) Tip in keys (removeSmallest Tip) == [] && keys (removeSmallest (Fork 4 Tip Tip)) == [] && keys (removeSmallest (Fork 4 Tip (Fork 9 (Fork 7 Tip Tip) Tip))) == [7, 9] && keys (removeSmallest pair) == [5] && keys (removeSmallest (removeSmallest pair)) == [] && keys (removeSmallest (removeSmallest (removeSmallest pair))) == []'
         hints:
           - text: "The smallest node can be the root, even when that root has a right subtree."
           - text: "Removing a node must not remove the keys stored in its right child. An empty tree has no key to remove."
@@ -840,14 +921,14 @@ steps:
           explanation: "The recursive change is confined to the left path. The root's right subtree keeps all its original keys and ordering relationships."
         - type: single
           difficulty: intermediate
-          question: "The path to the smallest key contains three Fork nodes, including the node removed. In the stated source-constructor model, how many new Fork nodes does direct removal need?"
-          options: ["0", "1", "2", "3"]
+          question: "The path to the smallest key contains four Fork nodes, including the node removed. In the stated source-constructor model, how many new Fork nodes does direct removal need?"
+          options: ["0", "1", "3", "4"]
           correct_index: 2
           option_feedback:
-            0: "Two retained ancestors need links to their updated left children."
-            1: "There are two retained ancestors before the removed node, not just the root."
+            0: "Three retained ancestors need links to their updated left children."
+            1: "There are three retained ancestors before the removed node, not just the root."
             3: "The smallest node is removed and replaced by its existing right child, so it is not reconstructed."
-          explanation: "The two ancestors are reconstructed; the removed node's right child and all off-path subtrees can be reused."
+          explanation: "The three retained ancestors are reconstructed; the removed node's right child and all off-path subtrees can be reused."
     solution:
       files:
         - path: "Main.hs"
@@ -930,13 +1011,13 @@ steps:
     run_file: "Main.hs"
     tests:
       - description: "Numbers and each operation have their specified numerical meanings"
-        command: "map (\\n -> eval (Number n)) [-5, 0, 8] == [-5, 0, 8] && eval (Plus (Number 3) (Number 7)) == 10 && eval (Times (Number 3) (Number 7)) == 21 && eval (Times (Number 0) (Number 8)) == 0 && eval (Times (Number (-3)) (Number 4)) == (-12)"
+        command: 'map (\n -> eval (Number n)) [-5, 0, 8] == [-5, 0, 8] && eval (Plus (Number 3) (Number 7)) == 10 && eval (Times (Number 3) (Number 7)) == 21 && eval (Times (Number 0) (Number 8)) == 0 && eval (Times (Number (-3)) (Number 4)) == (-12) && eval (Plus (Number (-3)) (Number 4)) == 1 && eval (Number 100000000000000000001) == 100000000000000000001'
         hints:
           - text: "The payload of a Number is already a result. The payloads of Plus and Times are still expressions."
           - text: "Convert both child expressions into numerical results before applying the parent operation."
           - text: "Each compound branch has the shape `eval left <operation> eval right`; choose the operation from the constructor's meaning."
       - description: "Nested evaluation respects the grouping represented by the tree"
-        command: "eval (Times (Plus (Number 2) (Number 5)) (Number 4)) == 28 && eval (Plus (Number 2) (Times (Number 5) (Number 4))) == 22 && eval (Times (Plus (Number 1) (Number 2)) (Plus (Number 3) (Number 4))) == 21 && eval (Plus (Times (Number 2) (Number 3)) (Times (Number 4) (Number 5))) == 26"
+        command: 'eval (Times (Plus (Number 2) (Number 5)) (Number 4)) == 28 && eval (Plus (Number 2) (Times (Number 5) (Number 4))) == 22 && eval (Times (Plus (Number 1) (Number 2)) (Plus (Number 3) (Number 4))) == 21 && eval (Plus (Times (Number 2) (Number 3)) (Times (Number 4) (Number 5))) == 26 && eval (Times (Number 2) (Plus (Number 3) (Times (Number 4) (Number 5)))) == 46 && eval (Plus (Number 7) (Times (Number (-2)) (Plus (Number 4) (Number 1)))) == (-3)'
         hints:
           - text: "The same small rule must apply to a child even when that child contains another operation."
           - text: "Do not assume children are Number constructors. Recursive calls handle any valid child expression."
@@ -1053,19 +1134,19 @@ steps:
     run_file: "Main.hs"
     tests:
       - description: "Events preserve order, use whole travel quarters, and cap healing in either mode"
-        command: "journey [] == 100 && journey [Fight 20] == 80 && journey [Fight 20, Travel 3] == 80 && journey [Fight 20, Travel 4] == 81 && journey [Fight 20, Travel 7] == 81 && journey [Fight 20, Heal 19] == 99 && journey [Fight 20, Heal 20] == 100 && journey [Fight 20, Heal 21] == 100 && journey [Fight 20, Travel 100] == 100 && journey [Fight 60, Heal 61] == 100 && journey [Heal 20, Fight 20] == 80"
+        command: 'journey [] == 100 && journey [Fight 20] == 80 && journey [Fight 20, Travel 3] == 80 && journey [Fight 20, Travel 4] == 81 && journey [Fight 20, Travel 7] == 81 && journey [Fight 20, Heal 19] == 99 && journey [Fight 20, Heal 20] == 100 && journey [Fight 20, Heal 21] == 100 && journey [Fight 20, Travel 100] == 100 && journey [Fight 60, Heal 61] == 100 && journey [Heal 20, Fight 20] == 80 && journey [Fight 20, Travel 76] == 99 && journey [Fight 20, Travel 80] == 100 && journey [Fight 20, Travel 84] == 100 && journey [Travel 0, Fight 0, Heal 0] == 100 && journey [Fight 90, Heal 10] == 20'
         hints:
           - text: "The result depends on both the remaining event list and the current health. Decide where those two values live in your program."
           - text: "Separate the effect of one event from the step that continues through the remaining events. Bound each successful restoration by the maximum health."
           - text: "A recursive helper can have the shape `go currentHealth remainingEvents`; its empty-list case returns currentHealth, and its nonempty case computes the next health first."
       - description: "The defensive boundary is inclusive and mode changes take effect on the next event"
-        command: "journey [Fight 59, Travel 4] == 42 && journey [Fight 60, Travel 4] == 40 && journey [Fight 61, Travel 4] == 39 && journey [Fight 60, Fight 3] == 39 && journey [Fight 59, Fight 3] == 38 && journey [Fight 60, Heal 1, Fight 3] == 38 && journey [Fight 60, Travel 40, Heal 1, Fight 3] == 38 && journey [Fight 60, Heal 0, Fight 1] == 40"
+        command: 'journey [Fight 59, Travel 4] == 42 && journey [Fight 60, Travel 4] == 40 && journey [Fight 61, Travel 4] == 39 && journey [Fight 60, Fight 3] == 39 && journey [Fight 59, Fight 3] == 38 && journey [Fight 60, Heal 1, Fight 3] == 38 && journey [Fight 60, Travel 40, Heal 1, Fight 3] == 38 && journey [Fight 60, Heal 0, Fight 1] == 40 && journey [Fight 60, Fight 5] == 38 && journey [Fight 80, Heal 20, Travel 100] == 40 && journey [Fight 80, Heal 21, Travel 4] == 42'
         hints:
           - text: "Write down the health before each event. That value decides which rule the event uses."
           - text: "40 belongs to defensive mode. A heal to 41 restores ordinary mode for the following event, while an odd defensive damage amount is rounded down."
           - text: "Branch on the current health inside the Fight and Travel cases. Do not keep a permanent defensive flag once the explorer has healed above the threshold."
       - description: "Death ends the journey at zero or below and later healing cannot revive it"
-        command: "journey [Fight 99] == 1 && journey [Fight 100] == (-1) && journey [Fight 101] == (-1) && journey [Fight 100, Heal 100] == (-1) && journey [Fight 60, Fight 79] == 1 && journey [Fight 60, Fight 80] == (-1) && journey [Fight 60, Fight 81, Heal 100] == (-1)"
+        command: 'journey [Fight 99] == 1 && journey [Fight 100] == (-1) && journey [Fight 101] == (-1) && journey [Fight 100, Heal 100] == (-1) && journey [Fight 60, Fight 79] == 1 && journey [Fight 60, Fight 80] == (-1) && journey [Fight 60, Fight 81, Heal 100] == (-1) && journey [Fight 60, Fight 82] == (-1)'
         hints:
           - text: "Check for the end of the expedition when an event's result reaches the death boundary."
           - text: "Zero is already terminal. Continuing through later events would allow a forbidden revival."

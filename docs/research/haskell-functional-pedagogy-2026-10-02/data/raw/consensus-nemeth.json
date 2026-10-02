@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"id\": \"0dfe2be25e505f2e95a9e58e14b9f6bf\", \"title\": \"Investigating Compilation Errors of Students Learning Haskell\", \"text\": \"While functional programming is an efficient way to express complex software, functional programming languages have a steep learning curve. Haskell can be challenging to learn for students who were only introduced to imperative programming. It is important to look for methods and tools that may reduce the difficulty of learning functional programming. Finding methods to help students requires understanding the errors that students make while learning Haskell. \\nThere are several previous studies revealing data about Haskell compiler errors, but they do not focus on the analysis of the compiler errors or they only study a certain kind of compiler errors. \\nThis study investigates compilation errors of novice Haskell students and make suggestions on how their learning efficiency can be improved. Unlike previous studies we focus on uncovering the root problems with the student solutions by analysing samples of their submissions.\", \"url\": \"https://consensus.app/papers/investigating-compilation-errors-of-students-learning-németh-choi/0dfe2be25e505f2e95a9e58e14b9f6bf/?utm_source=chatgpt\", \"metadata\": {\"authors\": \"Boldizsár Németh, Eunjong Choi, Erina Makihara, Hajimu Iida\", \"publish_year\": \"2019\", \"pages\": \"52-64\", \"citation_count\": \"0\"}}"
+    }
+  ],
+  "isError": false
+}

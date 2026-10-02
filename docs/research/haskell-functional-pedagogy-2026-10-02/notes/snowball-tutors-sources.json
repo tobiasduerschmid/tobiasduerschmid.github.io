@@ -1,0 +1,394 @@
+{
+  "track": "additional_tutor_snowballing",
+  "access_date": "2026-10-02",
+  "scope": "Bounded backward and forward citation retrieval, primary verification of five additions",
+  "source_prose_budget": "Annotations live in Markdown; structured records avoid repeating findings. No causal effectiveness ranking.",
+  "sources": [
+    {
+      "id": "tunnellwilson2018substitution",
+      "note_id": "ST01",
+      "title": "Evaluating the Tracing of Recursion in the Substitution Notional Machine",
+      "authors": [
+        "Preston Tunnell Wilson",
+        "Kathi Fisler",
+        "Shriram Krishnamurthi"
+      ],
+      "year": 2018,
+      "doi": "10.1145/3159450.3159479",
+      "venue": "SIGCSE 2018, 1023–1028",
+      "url": "https://cs.brown.edu/people/sk/Publications/Papers/Published/tfk-eval-trace-rec-subst-nm/",
+      "full_text_url": "https://cs.brown.edu/people/sk/Publications/Papers/Published/tfk-eval-trace-rec-subst-nm/paper.pdf",
+      "claim_class": "adjacent_functional_empirical",
+      "access": "selected_full_text_sections",
+      "design": "Single-course repeated diagnostic quizzes, followed by language/model transition",
+      "population": "Introductory summer course, no prerequisites",
+      "language": [
+        "Pyret",
+        "Python 3"
+      ],
+      "sample": {
+        "course": 19,
+        "tree_question": 15
+      },
+      "outcomes": [
+        "trace_soundness",
+        "trace_completeness",
+        "answer_correctness",
+        "context_retention"
+      ],
+      "follow_up": null,
+      "locations": [
+        "§4.3",
+        "§5 Quiz 4",
+        "§6",
+        "§7"
+      ],
+      "relations": [
+        {
+          "seed": "vasconcelos2025haskelite",
+          "seed_doi": "10.4204/EPTCS.424.3",
+          "direction": "backward",
+          "verified_by": "Seed primary reference [18]"
+        }
+      ],
+      "status": "include",
+      "access_date": "2026-10-02",
+      "annotation": "See notes/snowball-tutors.md ST01",
+      "causal_learning_effect_established": false
+    },
+    {
+      "id": "hameer2019autograding",
+      "note_id": "ST02",
+      "title": "Teaching the Art of Functional Programming using Automated Grading (Experience Report)",
+      "authors": [
+        "Aliya Hameer",
+        "Brigitte Pientka"
+      ],
+      "year": 2019,
+      "doi": "10.1145/3341719",
+      "venue": "PACMPL 3(ICFP), article 115",
+      "url": "https://doi.org/10.1145/3341719",
+      "full_text_url": "https://www.cs.mcgill.ca/~ahamee2/learn-ocaml-icfp19.pdf",
+      "claim_class": "adjacent_functional_teaching_experience",
+      "access": "selected_full_text_sections",
+      "design": "Course experience and grader extension design",
+      "population": "Second-year programming languages course, Fall 2018",
+      "language": [
+        "OCaml"
+      ],
+      "sample": {
+        "assignments": 9,
+        "students": null,
+        "survey_respondents": null
+      },
+      "outcomes": [
+        "observed_grader_use",
+        "survey",
+        "technical_design"
+      ],
+      "follow_up": null,
+      "locations": [
+        "§2.1 Lazy Programming",
+        "§2.2",
+        "§3",
+        "§4"
+      ],
+      "relations": [
+        {
+          "seed": "chapman2025assessment",
+          "seed_doi": "10.1017/S0956796824000182",
+          "direction": "backward",
+          "verified_by": "Seed primary References and §2"
+        }
+      ],
+      "status": "include",
+      "access_date": "2026-10-02",
+      "annotation": "See notes/snowball-tutors.md ST02",
+      "causal_learning_effect_established": false
+    },
+    {
+      "id": "furukawa2019stepping",
+      "note_id": "ST03",
+      "title": "Stepping OCaml",
+      "authors": [
+        "Tsukino Furukawa",
+        "Youyou Cong",
+        "Kenichi Asai"
+      ],
+      "year": 2019,
+      "doi": "10.4204/EPTCS.295.2",
+      "venue": "EPTCS 295, 17–34",
+      "url": "https://arxiv.org/abs/1906.11422",
+      "full_text_url": "https://arxiv.org/html/1906.11422",
+      "claim_class": "adjacent_functional_observational_evaluation",
+      "access": "selected_full_text_sections",
+      "design": "Three annual cohorts with changing tool support and instruction",
+      "population": "Second-year CS, prior C course",
+      "language": [
+        "OCaml"
+      ],
+      "sample": {
+        "annual_approximate": 40,
+        "survey_2018": 38,
+        "enrolled_2018": 42
+      },
+      "duration": "15 weekly labs",
+      "outcomes": [
+        "time_to_correct_submission",
+        "tool_usage",
+        "perceived_usefulness"
+      ],
+      "follow_up": null,
+      "locations": [
+        "§3.1–3.4",
+        "Appendix Table 3"
+      ],
+      "relations": [
+        {
+          "seed": "vasconcelos2025haskelite",
+          "seed_doi": "10.4204/EPTCS.424.3",
+          "direction": "backward",
+          "verified_by": "Seed primary reference [8]"
+        }
+      ],
+      "status": "include",
+      "access_date": "2026-10-02",
+      "annotation": "See notes/snowball-tutors.md ST03",
+      "causal_learning_effect_established": false
+    },
+    {
+      "id": "vasconcelos2024tracing",
+      "note_id": "ST04",
+      "title": "Haskelite: A Tracing Interpreter Based on a Pattern-Matching Calculus",
+      "authors": [
+        "Pedro Vasconcelos",
+        "Rodrigo Marques"
+      ],
+      "year": 2024,
+      "doi": "10.1145/3677999.3678274",
+      "venue": "Haskell Symposium 2024, 1–13",
+      "url": "https://arxiv.org/abs/2407.11831",
+      "full_text_url": "https://arxiv.org/html/2407.11831",
+      "claim_class": "direct_haskell_educational_tool_design",
+      "access": "selected_full_text_sections",
+      "design": "Operational semantics and interpreter design",
+      "population": null,
+      "language": [
+        "Haskell subset"
+      ],
+      "sample": null,
+      "outcomes": [
+        "semantic_correspondence",
+        "implementation"
+      ],
+      "follow_up": null,
+      "locations": [
+        "§3–5",
+        "§6 related work",
+        "§7 Educational assessment"
+      ],
+      "relations": [
+        {
+          "seed": "olmer2014expressions",
+          "seed_doi": "10.4204/EPTCS.170.4",
+          "direction": "forward",
+          "verified_by": "Candidate primary §6 and reference [16]; OpenAlex forward set"
+        },
+        {
+          "seed": "vasconcelos2025haskelite",
+          "seed_doi": "10.4204/EPTCS.424.3",
+          "direction": "backward",
+          "verified_by": "Seed primary reference [17]"
+        }
+      ],
+      "status": "include",
+      "access_date": "2026-10-02",
+      "annotation": "See notes/snowball-tutors.md ST04",
+      "causal_learning_effect_established": false
+    },
+    {
+      "id": "kumamoto2025ladder",
+      "note_id": "ST05",
+      "title": "An Interactive Learning Environment for Program Design",
+      "authors": [
+        "Kouta Kumamoto",
+        "Youyou Cong",
+        "Hidehiko Masuhara"
+      ],
+      "year": 2025,
+      "doi": "10.1145/3758317.3759682",
+      "venue": "SPLASH-E 2025, 9 pages",
+      "url": "https://doi.org/10.1145/3758317.3759682",
+      "full_text_url": "https://prg.is.titech.ac.jp/papers/pdf/splashe2025ladder.pdf",
+      "claim_class": "adjacent_functional_feasibility_study",
+      "access": "selected_full_text_sections",
+      "design": "One-task user study with logs, generated code and questionnaire",
+      "population": "Undergraduate introductory FP course; atomic and nonrecursive algebraic data covered",
+      "language": [
+        "Scala 3"
+      ],
+      "sample": {
+        "participated": 42,
+        "consented": 38,
+        "usable_logs": 33
+      },
+      "duration": null,
+      "outcomes": [
+        "interaction_patterns",
+        "feedback_robustness",
+        "perceptions"
+      ],
+      "follow_up": null,
+      "locations": [
+        "§2.2 and reference [2]",
+        "§3.2",
+        "§5.2–5.3",
+        "§6.3"
+      ],
+      "relations": [
+        {
+          "seed": "gerdes2017askelle",
+          "seed_doi": "10.1007/s40593-015-0080-x",
+          "direction": "forward",
+          "verified_by": "Candidate primary §2.2/reference [2]; OpenAlex forward set"
+        }
+      ],
+      "status": "include",
+      "access_date": "2026-10-02",
+      "annotation": "See notes/snowball-tutors.md ST05",
+      "causal_learning_effect_established": false
+    }
+  ],
+  "coverage": [
+    {
+      "seed": "askelle",
+      "directions": {
+        "backward": {
+          "raw_path": "data/raw/snowball-askelle-backward.json",
+          "request_url": "https://api.openalex.org/works?filter=openalex_id%3AW164716849%7CW173029385%7CW177779199%7CW207841007%7CW832120473%7CW1535989349%7CW1553992341%7CW1581084714%7CW1644672739%7CW1963817399%7CW1994736394%7CW1998875295%7CW2004496903%7CW2007798926%7CW2009103381%7CW2011607672%7CW2014127188%7CW2023427265%7CW2026060067%7CW2035392114%7CW2039113359%7CW2051257341%7CW2051339053%7CW2051379322%7CW2052363833%7CW2055227903%7CW2056693265%7CW2066312808%7CW2070405152%7CW2076039366%7CW2089172953%7CW2092909411%7CW2098614591%7CW2108323846%7CW2128065396%7CW2128407432%7CW2128886782%7CW2137390126%7CW2163640453%7CW2398506085%7CW2405971678%7CW4240127846%7CW6632344291%7CW6636105580%7CW6637745957%7CW6644479547%7CW6650399723%7CW6650565001%7CW6674689637%7CW6694706704%7CW6767099730%7CW6903420846%7CW7006241456%7CW7042839929%2Cto_publication_date%3A2026-10-02&per_page=200&sort=publication_date%3Adesc",
+          "returned_records": 40,
+          "index_count": 40
+        },
+        "forward": {
+          "raw_path": "data/raw/snowball-askelle-forward.json",
+          "request_url": "https://api.openalex.org/works?filter=cites%3AW2260250034%2Cto_publication_date%3A2026-10-02&per_page=200&sort=publication_date%3Adesc",
+          "returned_records": 98,
+          "index_count": 98
+        }
+      }
+    },
+    {
+      "seed": "expression-tutor",
+      "directions": {
+        "backward": {
+          "raw_path": "data/raw/snowball-expression-tutor-backward.json",
+          "request_url": "https://api.openalex.org/works?filter=openalex_id%3AW1490584728%7CW1506127418%7CW1553992341%7CW1666348158%7CW1743041603%7CW1978948468%7CW2001152839%7CW2004843654%7CW2041037071%7CW2044101946%7CW2055608277%7CW2098374496%7CW2128065396%7CW2141591284%7CW2163873997%7CW2295866357%7CW2912949875%7CW2951639165%7CW2998738573%7CW4240127846%7CW4244488020%7CW4245969237%7CW6633827998%7CW6634436890%2Cto_publication_date%3A2026-10-02&per_page=200&sort=publication_date%3Adesc",
+          "returned_records": 21,
+          "index_count": 21
+        },
+        "forward": {
+          "raw_path": "data/raw/snowball-expression-tutor-forward.json",
+          "request_url": "https://api.openalex.org/works?filter=cites%3AW2050152920%2Cto_publication_date%3A2026-10-02&per_page=200&sort=publication_date%3Adesc",
+          "returned_records": 3,
+          "index_count": 3
+        }
+      }
+    },
+    {
+      "seed": "haskelite",
+      "directions": {
+        "backward": {
+          "raw_path": "data/raw/snowball-haskelite-backward.json",
+          "request_url": "https://api.openalex.org/works?filter=openalex_id%3AW587099212%7CW1521965716%7CW1541318173%7CW1553992341%7CW1571471466%7CW1779102629%7CW1984964495%7CW2050152920%7CW2105045857%7CW2318815169%7CW2787993273%7CW2955963392%7CW4214487305%7CW4255736263%7CW4401668736%7CW4406257882%7CW6891556881%2Cto_publication_date%3A2026-10-02&per_page=200&sort=publication_date%3Adesc",
+          "returned_records": 15,
+          "index_count": 15
+        },
+        "forward": {
+          "raw_path": "data/raw/snowball-haskelite-forward.json",
+          "request_url": "https://api.openalex.org/works?filter=cites%3AW4412890909%2Cto_publication_date%3A2026-10-02&per_page=200&sort=publication_date%3Adesc",
+          "returned_records": 0,
+          "index_count": 0
+        }
+      }
+    },
+    {
+      "seed": "chapman",
+      "directions": {
+        "backward": {
+          "raw_path": "data/raw/snowball-chapman-backward.json",
+          "request_url": "https://api.openalex.org/works?filter=openalex_id%3AW1521965716%7CW1556779599%7CW1964560776%7CW1990060255%7CW2002063893%7CW2002715165%7CW2015725579%7CW2082691724%7CW2088963212%7CW2141244172%7CW2163873997%7CW2165281830%7CW2203258339%7CW2209382110%7CW2326640142%7CW2502711386%7CW2524710492%7CW2530309120%7CW2533856174%7CW2593162797%7CW2751258960%7CW2916708654%7CW2963813626%7CW2964516878%7CW3010474812%7CW3036044545%7CW3041442631%7CW3047940318%7CW3194598500%7CW4298052160%7CW4392564540%7CW6794560212%7CW6800222300%2Cto_publication_date%3A2026-10-02&per_page=200&sort=publication_date%3Adesc",
+          "returned_records": 31,
+          "index_count": 31
+        },
+        "forward": {
+          "raw_path": "data/raw/snowball-chapman-forward.json",
+          "request_url": "https://api.openalex.org/works?filter=cites%3AW4407110619%2Cto_publication_date%3A2026-10-02&per_page=200&sort=publication_date%3Adesc",
+          "returned_records": 1,
+          "index_count": 1
+        }
+      }
+    }
+  ],
+  "exact_supplementary_web_queries": [
+    "\"s40593-015-0080-x\"",
+    "\"EPTCS.170.4\"",
+    "\"FPTutor\" Haskell 2023",
+    "\"Experiences of early assessment\" references",
+    "FPTutor functional programming tutor 2023",
+    "\"Evaluating Haskell expressions in a tutoring environment\" arxiv",
+    "\"Ask-Elle\" \"FPTutor\"",
+    "\"Evaluating Haskell expressions\" \"2023\"",
+    "\"Teaching Introductory Functional Programming Using Haskelite\" citations",
+    "\"Experiences of early assessment to teach functional programming\" -site:cambridge.org -site:researchgate.net",
+    "\"FPTutor\"",
+    "\"Ask-Elle\" \"2017\" programming sketches",
+    "\"Ask-Elle\" \"Gerdes\" filetype:pdf",
+    "\"Evaluating the Tracing of Recursion in the Substitution Notional Machine\"",
+    "\"An Interactive Learning Environment for Program Design\" 3759682",
+    "\"Teaching the art of functional programming using automated grading\"",
+    "\"An Interactive Learning Environment for Program Design\"",
+    "\"Trustworthy AI Feedback\" Ask-Elle PDF",
+    "\"On teaching How to design programs\" Ramsey pdf",
+    "\"Kouta Kumamoto\" \"Program Design\"",
+    "\"3759682\" pdf",
+    "\"Stepping OCaml\" 2019 tutor",
+    "\"On Teaching How to Design Programs\" \"data examples\""
+  ],
+  "web_query_counts": null,
+  "access_limits": [
+    "ACM Ladder DOI/PDF failed; author paper recovered.",
+    "Ask-Elle publisher/Utrecht/technical report failed; Royal Holloway manuscript recovered.",
+    "Ramsey author PDF search text accessible, direct fetches failed.",
+    "Chalmers 2026 thesis abstract accessible; PDF and citation relation not verified.",
+    "FPTutor2023 identity not verified."
+  ],
+  "screened_additional_leads": [
+    {
+      "title": "On Teaching How to Design Programs: Observations from a Newcomer",
+      "doi": "10.1145/2628136.2628137",
+      "direction": "backward",
+      "seed": "chapman2025assessment",
+      "status": "borderline_access",
+      "access": "author_search_indexed_partial_text"
+    },
+    {
+      "title": "Haskelite: A Step-By-Step Interpreter for Teaching Functional Programming",
+      "doi": "10.4230/OASIcs.ICPEC.2023.12",
+      "direction": "backward",
+      "seed": "vasconcelos2025haskelite",
+      "status": "not_selected_related_version",
+      "access": "primary_metadata"
+    },
+    {
+      "title": "Trustworthy AI Feedback - A Hybrid Approach to Automated Feedback: Combining Rule-Based Reasoning with Generative AI in Ask-Elle",
+      "year": 2026,
+      "direction": null,
+      "seed": "gerdes2017askelle",
+      "status": "topical_lead_citation_unverified",
+      "access": "primary_repository_abstract",
+      "url": "https://odr.chalmers.se/items/abcc3a1f-f693-4c85-8d84-4c3c5d0c9c74/full"
+    }
+  ],
+  "screened_result_count": null,
+  "annotated_primary_candidate_count": 5
+}

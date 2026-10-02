@@ -1,0 +1,122 @@
+{
+  "accessed": "2026-10-02",
+  "selection": "Purposive contrast of eight resources, not an effectiveness ranking or exhaustive tutorial review",
+  "tutorials": [
+    {
+      "id": "tutorial-helsinki-mooc",
+      "title": "Haskell MOOC",
+      "authors": ["Joel Kaasinen", "John Lång"],
+      "year": null,
+      "venue": "University of Helsinki / Nitor course website",
+      "evidence_class": "tutorial exemplar",
+      "discovery": "Scope-named resource; direct official-site inspection",
+      "urls": ["https://haskell.mooc.fi/", "https://haskell.mooc.fi/part1"],
+      "inspection": "Index; Part 1 contents; sections 1.12–1.14, 1.9, 3.2; selected examples",
+      "outcome_evidence": null,
+      "limits": "No logged-in submission or full-platform accessibility audit; assessment policy is observed design, not learning evidence"
+    },
+    {
+      "id": "tutorial-haskellbook",
+      "title": "Haskell Programming from First Principles",
+      "authors": ["Christopher Allen", "Julie Moronuki"],
+      "year": null,
+      "venue": "Author website / Lorepub",
+      "evidence_class": "tutorial exemplar",
+      "discovery": "Scope-named resource; direct official-site inspection",
+      "urls": ["https://haskellbook.com/", "https://haskellbook.com/img/sample.pdf"],
+      "inspection": "Website contents and author rationale; selected chapter 2 exercises, sections 2.10–2.11, in 96-page public sample",
+      "outcome_evidence": null,
+      "limits": "Full book not inspected; chapter 1 absent from public sample; author instructional claims are not measured learning outcomes"
+    },
+    {
+      "id": "tutorial-hutton-pih2",
+      "title": "Programming in Haskell, second edition",
+      "authors": ["Graham Hutton"],
+      "year": null,
+      "venue": "Cambridge University Press; author University of Nottingham website",
+      "evidence_class": "tutorial exemplar",
+      "discovery": "Scope-named resource; direct official author-site inspection",
+      "urls": ["https://people.cs.nott.ac.uk/pszgmh/pih.html"],
+      "inspection": "Author description, table of contents, exercise/resource availability",
+      "outcome_evidence": null,
+      "limits": "Metadata/contents inspection only; chapter prose, exercise text, solutions, videos, and exams uninspected"
+    },
+    {
+      "id": "tutorial-cis194-2013",
+      "title": "CIS 194: Introduction to Haskell, Spring 2013",
+      "authors": ["Brent Yorgey"],
+      "year": 2013,
+      "venue": "University of Pennsylvania course archive",
+      "evidence_class": "tutorial exemplar",
+      "discovery": "Scope-named resource; direct official university-site inspection",
+      "urls": ["https://www.cis.upenn.edu/~cis1940/spring13/", "https://www.cis.upenn.edu/~cis1940/spring13/lectures.html", "https://www.cis.upenn.edu/~cis1940/spring13/policies.html", "https://www.cis.upenn.edu/~cis1940/spring13/hw/04-higher-order.pdf", "https://www.cis.upenn.edu/~cis1940/spring13/lectures/06-laziness.html", "https://www.cis.upenn.edu/~cis1940/spring13/lectures/08-IO.html"],
+      "inspection": "Course description, schedule, revision/grading policy, homework 4, selected laziness and IO lecture sections",
+      "outcome_evidence": null,
+      "limits": "Archived offering; prerequisites not verified; no actual student submissions or feedback inspected; embedded laziness lecture date says 2012 despite Spring 2013 archive"
+    },
+    {
+      "id": "tutorial-lyah-fork",
+      "title": "Learn You a Haskell for Great Good! (maintained community fork)",
+      "authors": ["Miran Lipovača", "Community fork maintainers"],
+      "year": null,
+      "venue": "Author-authorized community-maintained publication",
+      "evidence_class": "tutorial exemplar",
+      "discovery": "Scope-named resource; original domain failed; successor direct inspection",
+      "urls": ["https://learnyouahaskell.github.io/", "https://learnyouahaskell.github.io/introduction.html", "https://learnyouahaskell.github.io/chapters.html", "https://learnyouahaskell.github.io/higher-order-functions.html"],
+      "inspection": "Fork provenance statement, introduction, contents, selected currying/higher-order chapter sections",
+      "outcome_evidence": null,
+      "limits": "Inspected fork, not original edition; original learnyouahaskell.com and www.learnyouahaskell.com requests timed out"
+    },
+    {
+      "id": "tutorial-wikibook",
+      "title": "Haskell Wikibook",
+      "authors": ["Wikibooks contributors"],
+      "year": null,
+      "venue": "Wikibooks",
+      "evidence_class": "tutorial exemplar",
+      "discovery": "Scope-named resource; direct published-resource inspection",
+      "urls": ["https://en.wikibooks.org/wiki/Haskell", "https://en.wikibooks.org/wiki/Haskell/Lists_III", "https://en.wikibooks.org/wiki/Haskell/Simple_input_and_output"],
+      "inspection": "Contents, selected fold explanations and exercises, selected simple IO discussion",
+      "revision_urls": ["https://en.wikibooks.org/w/index.php?title=Haskell&oldid=4632183", "https://en.wikibooks.org/w/index.php?title=Haskell/Lists_III&oldid=4485942"],
+      "outcome_evidence": null,
+      "limits": "Community document with multiple routes; linked solutions not independently inspected; no platform-wide audit"
+    },
+    {
+      "id": "tutorial-codeworld",
+      "title": "CodeWorld and CodeWorld Haskell",
+      "authors": ["CodeWorld project contributors"],
+      "year": null,
+      "venue": "CodeWorld website and project repository",
+      "evidence_class": "tutorial exemplar",
+      "discovery": "Scope-named resource; official site and project repository/API documentation",
+      "urls": ["https://github.com/google/codeworld", "https://code.world/", "https://code.world/doc-haskell/CodeWorld.html", "https://code.world/doc/Core.html"],
+      "inspection": "README variants and mission; live application's exposed controls; standard Haskell API drawing/animation/activity examples; educational core types",
+      "outcome_evidence": null,
+      "limits": "CodeWorld educational dialect is distinct from standard Haskell mode; guide/doc.html and guide.html failed; no course sequence, independent exercises, or assessment verified"
+    },
+    {
+      "id": "tutorial-exercism-haskell",
+      "title": "Exercism Haskell track",
+      "authors": ["Exercism contributors"],
+      "year": null,
+      "venue": "Exercism",
+      "evidence_class": "tutorial exemplar",
+      "discovery": "Scope-named resource; direct official platform inspection",
+      "urls": ["https://exercism.org/tracks/haskell", "https://exercism.org/tracks/haskell/exercises", "https://exercism.org/tracks/haskell/exercises/leap"],
+      "inspection": "Public track summary, practice listing, Leap specification and examples",
+      "outcome_evidence": null,
+      "limits": "No logged-in runner, automated analysis, or mentoring interaction inspected; advertised features distinguished from observed feedback; prerequisite knowledge not verified"
+    }
+  ],
+  "semantic_authorities": [
+    {"id": "haskell2010-expressions", "title": "Haskell 2010 Report, chapter 3: Expressions", "url": "https://www.haskell.org/onlinereport/haskell2010/haskellch3.html", "inspection": "Sections 3.3, 3.14, selected pattern semantics", "diagnostic_items": [1, 2, 10, 11]},
+    {"id": "haskell2010-declarations", "title": "Haskell 2010 Report, chapter 4: Declarations and Bindings", "url": "https://www.haskell.org/onlinereport/haskell2010/haskellch4.html", "inspection": "Type-expression grammar in section 4.1.2", "diagnostic_items": [2]},
+    {"id": "haskell2010-types", "title": "Haskell 2010 Report, chapter 6: Predefined Types and Classes", "url": "https://www.haskell.org/onlinereport/haskell2010/haskellch6.html", "inspection": "Tuple, IO, non-strict/seq, Monad declarations and laws", "diagnostic_items": [3, 6, 7, 8, 11], "limits": "Historical class hierarchy; do-pattern failure translation predates MonadFail"},
+    {"id": "haskell2010-io", "title": "Haskell 2010 Report, chapter 7: Basic Input/Output", "url": "https://www.haskell.org/onlinereport/haskell2010/haskellch7.html", "inspection": "Action sequencing, IO function signatures, return discussion", "diagnostic_items": [10, 11]},
+    {"id": "haskell2010-prelude", "title": "Haskell 2010 Report, chapter 9: Standard Prelude", "url": "https://www.haskell.org/onlinereport/haskell2010/haskellch9.html", "inspection": "const, foldl/foldr, length/head, list definitions", "diagnostic_items": [4, 5, 6, 7]},
+    {"id": "ghc-deepseq-1.4.1.1", "title": "Control.DeepSeq, GHC-bundled deepseq 1.4.1.1 source documentation", "url": "https://downloads.haskell.org/~ghc/7.10.3/docs/html/libraries/deepseq-1.4.1.1/src/Control-DeepSeq.html", "inspection": "seq/deepseq comparison, NFData Int/list instances, ordering disclaimer", "diagnostic_items": [8, 9], "limits": "Historical explicitly versioned source; no latest-version claim"},
+    {"id": "ghc-ghci-current", "title": "GHC User's Guide: Using GHCi", "url": "https://downloads.haskell.org/ghc/latest/docs/users_guide/ghci.html", "version_observed": "9.14.1", "inspection": "Sections 3.4.1 and 3.4.2; debugger print/force documentation", "diagnostic_items": [12], "limits": "Moving latest URL; version should be pinned in teaching material"}
+  ],
+  "diagnostic_status": "Twelve reviewer-proposed diagnostics derived from inspected authoritative definitions; no compiler execution and no empirical prevalence claim",
+  "failed_requests": ["https://learnyouahaskell.com/chapters", "https://www.learnyouahaskell.com/chapters", "https://code.world/doc.html", "https://code.world/guide.html", "https://github.com/google/codeworld/tree/master/web/help", "https://hackage.haskell.org/package/deepseq-1.5.2.0/docs/Control-DeepSeq.html"]
+}

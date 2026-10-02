@@ -1,0 +1,148 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"scholar_result_id\":\"bca8e700-e114-4447-a81e-0c07b1db25ea\",\"scholar_title\":\"Haskell student misconceptions\",\"scholar_tool_name\":\"search_open_access_works\",\"papers\":[{\"id\":\"https://openalex.org/W2203258339\",\"title\":\"Understanding beginners' mistakes with Haskell\",\"citation_info\":\"Ville Tirronen, SAMUEL UUSI-MÄKELÄ, Ville Isomöttönen\",\"pdf_url\":\"https://www.cambridge.org/core/services/aop-cambridge-core/content/view/244DB6807F3BD77E14CE7D627514D6D3/S0956796815000179a.pdf/div-class-title-understanding-beginners-mistakes-with-haskell-div.pdf\"},{\"id\":\"https://openalex.org/W1946052551\",\"title\":\"The effects of scaffolding in the classroom: support contingency and student independent working time in relation to student achievement, task effort and appreciation of support\",\"citation_info\":\"Janneke van de Pol, Monique L. L. Volman, Frans Jeroen Oort, J.J. Beishuizen\",\"pdf_url\":\"https://link.springer.com/content/pdf/10.1007/s11251-015-9351-z.pdf\"},{\"id\":\"https://openalex.org/W2811256243\",\"title\":\"Best practices in active and student-centered learning in physiology classes\",\"citation_info\":\"Barbara Eason Goodman, Megan Barker, James E. Cooke\",\"pdf_url\":\"https://journals.physiology.org/doi/pdf/10.1152/advan.00064.2018\"},{\"id\":\"https://openalex.org/W2124598811\",\"title\":\"What Teachers Think about Self-Regulated Learning: Investigating Teacher Beliefs and Teacher Behavior of Enhancing Students’ Self-Regulation\",\"citation_info\":\"Charlotte Dignath, Greetje P.C. van der Werf\",\"pdf_url\":\"https://downloads.hindawi.com/journals/edri/2012/741713.pdf\"},{\"id\":\"https://openalex.org/W2737818085\",\"title\":\"Ten misconceptions about mathematics and its history\",\"citation_info\":\"Michael J. Crowe\",\"pdf_url\":\"http://hdl.handle.net/11299/185655\"},{\"id\":\"https://openalex.org/W3130706422\",\"title\":\"Informed-Decision Regarding Global Warming and Climate Change Among High School Students in the United Kingdom\",\"citation_info\":\"Premnadh M. Kurup, Ralph Levinson, Xia Li\",\"pdf_url\":\"https://link.springer.com/content/pdf/10.1007/s42330-020-00123-5.pdf\"},{\"id\":\"https://openalex.org/W3043401174\",\"title\":\"The Role of Direct Strategy Instruction and Indirect Activation of Self-Regulated Learning—Evidence from Classroom Observation Studies\",\"citation_info\":\"Charlotte Dignath, Marcel V. J. Veenman\",\"pdf_url\":\"https://link.springer.com/content/pdf/10.1007/s10648-020-09534-0.pdf\"},{\"id\":\"https://openalex.org/W2163988786\",\"title\":\"Use of mass media campaigns to change health behaviour\",\"citation_info\":\"Melanie A Wakefield, Barbara Loken, Robert Hornik\",\"pdf_url\":\"http://www.thelancet.com/article/S0140673610608094/pdf\"},{\"id\":\"https://openalex.org/W2885898306\",\"title\":\"Using Technology to Support Teaching Computer Science: A Study with Middle School Students\",\"citation_info\":\"Yizhou Qian, James Daniel Lehman\",\"pdf_url\":\"https://www.ejmste.com/download/using-technology-to-support-teaching-computer-science-a-study-with-middle-school-students-5574.pdf\"},{\"id\":\"https://openalex.org/W4381586920\",\"title\":\"Automated Grading and Feedback Tools for Programming Education: A Systematic Review\",\"citation_info\":\"Marcus Messer, Neil C. C. Brown, Michael Kölling, Miaojing Shi\",\"pdf_url\":\"https://dl.acm.org/doi/pdf/10.1145/3636515\"},{\"id\":\"https://openalex.org/W4408085729\",\"title\":\"A comparative study of student perceptions on generative AI in programming education across Sub-Saharan Africa\",\"citation_info\":\"Solomon Sunday Oyelere, Kehinde Aruleba\",\"pdf_url\":\"https://ltu.diva-portal.org/smash/get/diva2:1945601/FULLTEXT01\"},{\"id\":\"https://openalex.org/W2831165\",\"title\":\"The Consequential Validity of Student Ratings: What do Instructors Really Think?\",\"citation_info\":\"Tanya Beran, Jennifer L. Rokosh\",\"pdf_url\":\"https://journalhosting.ucalgary.ca/index.php/ajer/article/download/55342/42379\"},{\"id\":\"https://openalex.org/W4362659486\",\"title\":\"Grounded Copilot: How Programmers Interact with Code-Generating Models\",\"citation_info\":\"Shraddha Barke, Michael B. James, Nadia Polikarpova\",\"pdf_url\":\"https://dl.acm.org/doi/pdf/10.1145/3586030\"},{\"id\":\"https://openalex.org/W4365478763\",\"title\":\"Childhood fever and medical students: A multicentre, educational intervention\",\"citation_info\":\"Gregorio Paolo Milani, Antonio Corsello, Peter Johannes Schulz, Marta Fadda, Maria Lorella Giannì, Ilaria Alberti, Anna Comotti, Paola Marchisio, Elena Chiappini, Diego Giampietro Peroni\",\"pdf_url\":\"https://onlinelibrary.wiley.com/doi/pdfdirect/10.1111/apa.16790\"},{\"id\":\"https://openalex.org/W1755006338\",\"title\":\"Students' understanding of quadratic functions: Learning from students' voices\",\"citation_info\":\"Jennifer Suzanne Stokes Parent\",\"pdf_url\":\"https://scholarworks.uvm.edu/cgi/viewcontent.cgi?article=1375&context=graddis\"},{\"id\":\"https://openalex.org/W2096672110\",\"title\":\"Tracing the effects of teacher inquiry on classroom practice\",\"citation_info\":\"Bradley A. Ermeling\",\"pdf_url\":\"https://www.sciencedirect.com/science/article/pii/S0742051X09000559/pdf\"},{\"id\":\"https://openalex.org/W3100388401\",\"title\":\"Can You Only Diagnose What You Know? The Relation Between Teachers’ Self-Regulation of Learning Concepts and Their Assessment of Students’ Self-Regulation\",\"citation_info\":\"Charlotte Dignath, Lara Sprenger\",\"pdf_url\":\"https://www.frontiersin.org/articles/10.3389/feduc.2020.585683/pdf\"},{\"id\":\"https://openalex.org/W3113108648\",\"title\":\"A review of automated feedback systems for learners: Classification framework, challenges and opportunities\",\"citation_info\":\"Galina Deeva, Daria Bogdanova, Estefanía Serral, Monique Snoeck, Jochen De Weerdt\",\"pdf_url\":\"https://lirias.kuleuven.be/retrieve/a5dc713c-8153-47ac-8df1-2205ff2b7f1a\"},{\"id\":\"https://openalex.org/W2910880405\",\"title\":\"Introductory programming: a systematic literature review\",\"citation_info\":\"Andrew Luxton-Reilly, Simon, Ibrahim Albluwi, Brett A. Becker, Michail N. Giannakos, Amruth N. Kumar, Linda M. Ott, James H. Paterson, Michael Scott, Judy Sheard, Claudia Szabo\",\"pdf_url\":\"https://researchonline.gcu.ac.uk/ws/files/26800146/J.Paterson_ITiCSE_2018_WG3_author_final_noref.pdf\"},{\"id\":\"https://openalex.org/W2890138630\",\"title\":\"Promoting Physical Activity and Exercise\",\"citation_info\":\"Gerald F. Fletcher, Carolyn K. Landolfo, Josef Niebauer, Cemal Ozemek, Ross A Arena, Carl J. Lavie\",\"pdf_url\":\"https://www.sciencedirect.com/science/article/pii/S0735109718381695/pdf\"},{\"id\":\"https://openalex.org/W3113890779\",\"title\":\"Sixth-Grade Students Procedural and Conceptual Understandings of Division Operation in a Real-Life Context\",\"citation_info\":\"Lütfi İncikabı, Perihan Ayanoğlu, Ramazan Uysal\",\"pdf_url\":\"https://iejee.com/index.php/IEJEE/article/download/1158/483/4547\"},{\"id\":\"https://openalex.org/W3016812326\",\"title\":\"Active Commuting and Physical Fitness: A Systematic Review\",\"citation_info\":\"Duarte Henriques‐Neto, Miguel Peralta, Susana Sofia Martins Garradas, Andréia Pelegrini, André de Araújo Pinto, Pedro Antonio Sánchez Miguel, Adilson Marques\",\"pdf_url\":\"https://www.mdpi.com/1660-4601/17/8/2721/pdf?version=1586958193\"}]}"
+    }
+  ],
+  "structuredContent": {
+    "scholar_result_id": "bca8e700-e114-4447-a81e-0c07b1db25ea",
+    "scholar_title": "Haskell student misconceptions",
+    "scholar_tool_name": "search_open_access_works",
+    "papers": [
+      {
+        "id": "https://openalex.org/W2203258339",
+        "title": "Understanding beginners' mistakes with Haskell",
+        "citation_info": "Ville Tirronen, SAMUEL UUSI-MÄKELÄ, Ville Isomöttönen",
+        "pdf_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/244DB6807F3BD77E14CE7D627514D6D3/S0956796815000179a.pdf/div-class-title-understanding-beginners-mistakes-with-haskell-div.pdf"
+      },
+      {
+        "id": "https://openalex.org/W1946052551",
+        "title": "The effects of scaffolding in the classroom: support contingency and student independent working time in relation to student achievement, task effort and appreciation of support",
+        "citation_info": "Janneke van de Pol, Monique L. L. Volman, Frans Jeroen Oort, J.J. Beishuizen",
+        "pdf_url": "https://link.springer.com/content/pdf/10.1007/s11251-015-9351-z.pdf"
+      },
+      {
+        "id": "https://openalex.org/W2811256243",
+        "title": "Best practices in active and student-centered learning in physiology classes",
+        "citation_info": "Barbara Eason Goodman, Megan Barker, James E. Cooke",
+        "pdf_url": "https://journals.physiology.org/doi/pdf/10.1152/advan.00064.2018"
+      },
+      {
+        "id": "https://openalex.org/W2124598811",
+        "title": "What Teachers Think about Self-Regulated Learning: Investigating Teacher Beliefs and Teacher Behavior of Enhancing Students’ Self-Regulation",
+        "citation_info": "Charlotte Dignath, Greetje P.C. van der Werf",
+        "pdf_url": "https://downloads.hindawi.com/journals/edri/2012/741713.pdf"
+      },
+      {
+        "id": "https://openalex.org/W2737818085",
+        "title": "Ten misconceptions about mathematics and its history",
+        "citation_info": "Michael J. Crowe",
+        "pdf_url": "http://hdl.handle.net/11299/185655"
+      },
+      {
+        "id": "https://openalex.org/W3130706422",
+        "title": "Informed-Decision Regarding Global Warming and Climate Change Among High School Students in the United Kingdom",
+        "citation_info": "Premnadh M. Kurup, Ralph Levinson, Xia Li",
+        "pdf_url": "https://link.springer.com/content/pdf/10.1007/s42330-020-00123-5.pdf"
+      },
+      {
+        "id": "https://openalex.org/W3043401174",
+        "title": "The Role of Direct Strategy Instruction and Indirect Activation of Self-Regulated Learning—Evidence from Classroom Observation Studies",
+        "citation_info": "Charlotte Dignath, Marcel V. J. Veenman",
+        "pdf_url": "https://link.springer.com/content/pdf/10.1007/s10648-020-09534-0.pdf"
+      },
+      {
+        "id": "https://openalex.org/W2163988786",
+        "title": "Use of mass media campaigns to change health behaviour",
+        "citation_info": "Melanie A Wakefield, Barbara Loken, Robert Hornik",
+        "pdf_url": "http://www.thelancet.com/article/S0140673610608094/pdf"
+      },
+      {
+        "id": "https://openalex.org/W2885898306",
+        "title": "Using Technology to Support Teaching Computer Science: A Study with Middle School Students",
+        "citation_info": "Yizhou Qian, James Daniel Lehman",
+        "pdf_url": "https://www.ejmste.com/download/using-technology-to-support-teaching-computer-science-a-study-with-middle-school-students-5574.pdf"
+      },
+      {
+        "id": "https://openalex.org/W4381586920",
+        "title": "Automated Grading and Feedback Tools for Programming Education: A Systematic Review",
+        "citation_info": "Marcus Messer, Neil C. C. Brown, Michael Kölling, Miaojing Shi",
+        "pdf_url": "https://dl.acm.org/doi/pdf/10.1145/3636515"
+      },
+      {
+        "id": "https://openalex.org/W4408085729",
+        "title": "A comparative study of student perceptions on generative AI in programming education across Sub-Saharan Africa",
+        "citation_info": "Solomon Sunday Oyelere, Kehinde Aruleba",
+        "pdf_url": "https://ltu.diva-portal.org/smash/get/diva2:1945601/FULLTEXT01"
+      },
+      {
+        "id": "https://openalex.org/W2831165",
+        "title": "The Consequential Validity of Student Ratings: What do Instructors Really Think?",
+        "citation_info": "Tanya Beran, Jennifer L. Rokosh",
+        "pdf_url": "https://journalhosting.ucalgary.ca/index.php/ajer/article/download/55342/42379"
+      },
+      {
+        "id": "https://openalex.org/W4362659486",
+        "title": "Grounded Copilot: How Programmers Interact with Code-Generating Models",
+        "citation_info": "Shraddha Barke, Michael B. James, Nadia Polikarpova",
+        "pdf_url": "https://dl.acm.org/doi/pdf/10.1145/3586030"
+      },
+      {
+        "id": "https://openalex.org/W4365478763",
+        "title": "Childhood fever and medical students: A multicentre, educational intervention",
+        "citation_info": "Gregorio Paolo Milani, Antonio Corsello, Peter Johannes Schulz, Marta Fadda, Maria Lorella Giannì, Ilaria Alberti, Anna Comotti, Paola Marchisio, Elena Chiappini, Diego Giampietro Peroni",
+        "pdf_url": "https://onlinelibrary.wiley.com/doi/pdfdirect/10.1111/apa.16790"
+      },
+      {
+        "id": "https://openalex.org/W1755006338",
+        "title": "Students' understanding of quadratic functions: Learning from students' voices",
+        "citation_info": "Jennifer Suzanne Stokes Parent",
+        "pdf_url": "https://scholarworks.uvm.edu/cgi/viewcontent.cgi?article=1375&context=graddis"
+      },
+      {
+        "id": "https://openalex.org/W2096672110",
+        "title": "Tracing the effects of teacher inquiry on classroom practice",
+        "citation_info": "Bradley A. Ermeling",
+        "pdf_url": "https://www.sciencedirect.com/science/article/pii/S0742051X09000559/pdf"
+      },
+      {
+        "id": "https://openalex.org/W3100388401",
+        "title": "Can You Only Diagnose What You Know? The Relation Between Teachers’ Self-Regulation of Learning Concepts and Their Assessment of Students’ Self-Regulation",
+        "citation_info": "Charlotte Dignath, Lara Sprenger",
+        "pdf_url": "https://www.frontiersin.org/articles/10.3389/feduc.2020.585683/pdf"
+      },
+      {
+        "id": "https://openalex.org/W3113108648",
+        "title": "A review of automated feedback systems for learners: Classification framework, challenges and opportunities",
+        "citation_info": "Galina Deeva, Daria Bogdanova, Estefanía Serral, Monique Snoeck, Jochen De Weerdt",
+        "pdf_url": "https://lirias.kuleuven.be/retrieve/a5dc713c-8153-47ac-8df1-2205ff2b7f1a"
+      },
+      {
+        "id": "https://openalex.org/W2910880405",
+        "title": "Introductory programming: a systematic literature review",
+        "citation_info": "Andrew Luxton-Reilly, Simon, Ibrahim Albluwi, Brett A. Becker, Michail N. Giannakos, Amruth N. Kumar, Linda M. Ott, James H. Paterson, Michael Scott, Judy Sheard, Claudia Szabo",
+        "pdf_url": "https://researchonline.gcu.ac.uk/ws/files/26800146/J.Paterson_ITiCSE_2018_WG3_author_final_noref.pdf"
+      },
+      {
+        "id": "https://openalex.org/W2890138630",
+        "title": "Promoting Physical Activity and Exercise",
+        "citation_info": "Gerald F. Fletcher, Carolyn K. Landolfo, Josef Niebauer, Cemal Ozemek, Ross A Arena, Carl J. Lavie",
+        "pdf_url": "https://www.sciencedirect.com/science/article/pii/S0735109718381695/pdf"
+      },
+      {
+        "id": "https://openalex.org/W3113890779",
+        "title": "Sixth-Grade Students Procedural and Conceptual Understandings of Division Operation in a Real-Life Context",
+        "citation_info": "Lütfi İncikabı, Perihan Ayanoğlu, Ramazan Uysal",
+        "pdf_url": "https://iejee.com/index.php/IEJEE/article/download/1158/483/4547"
+      },
+      {
+        "id": "https://openalex.org/W3016812326",
+        "title": "Active Commuting and Physical Fitness: A Systematic Review",
+        "citation_info": "Duarte Henriques‐Neto, Miguel Peralta, Susana Sofia Martins Garradas, Andréia Pelegrini, André de Araújo Pinto, Pedro Antonio Sánchez Miguel, Adilson Marques",
+        "pdf_url": "https://www.mdpi.com/1660-4601/17/8/2721/pdf?version=1586958193"
+      }
+    ]
+  },
+  "isError": false
+}

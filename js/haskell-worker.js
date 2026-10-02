@@ -13,13 +13,15 @@
  *   { type: 'write',   id, path, content }
  *   { type: 'read',    id, path }
  *   { type: 'run',     id, path, args?, silent? }
- *   { type: 'runTest', id, path, expression, silent? }
+ *   { type: 'runTest', id, path, expression, signature?, silent? }
  *   { type: 'runCode', id }  (rejected; retained only for protocol parity)
  *   { type: 'interrupt', id }
  *
  * `runTest.expression` is a single Haskell Boolean expression evaluated after
  * the module at `path` is imported. Only `True` passes. The legacy `code`
- * field is also accepted by the worker adapter.
+ * field is also accepted by the worker adapter. Optional signature {name,type}
+ * requires an explicit top-level declaration and an exact compiler-resolved
+ * monomorphic type, independently scoped from the student module.
  *
  * Outbound protocol messages (adapter -> tutorial host):
  *   { type: 'loading', message }
@@ -58,6 +60,7 @@ const runtimeOutputByteBuffers = {
 };
 let activeOperation = null;
 let pendingCleanupCommands = [];
+let pendingCleanupFiles = [];
 let bootOutput = '';
 let isRuntimeReady = false;
 let hasRuntimeFailed = false;
@@ -369,7 +372,9 @@ function startOperation(message, settings) {
   // Clean up before the next operation's reload, including after a failed run.
   const commands = pendingCleanupCommands
     .concat(settings.commands, settings.inlineCompletion ? [] : [commandForMarker(doneMarker)]);
+  const cleanupFiles = pendingCleanupFiles;
   pendingCleanupCommands = settings.cleanupCommands || [];
+  pendingCleanupFiles = settings.temporaryFile ? [settings.temporaryFile] : [];
 
   activeOperation = {
     id: message.id,
@@ -387,6 +392,7 @@ function startOperation(message, settings) {
     rawStderr: '',
     stdoutLineBuffer: '',
     debug: settings.debug || null,
+    cleanupFiles: cleanupFiles,
     publishedDebugOutput: { stdout: '', stderr: '' },
   };
 
@@ -414,6 +420,29 @@ function startRun(message) {
   });
 }
 
+// The helper imports the learner qualified and owns its expected type scope.
+// Empty defaults prevent Fractional/RealFrac-polymorphic declarations from
+// defaulting to Double merely because typeOf demands a concrete instance.
+function signatureHelper(descriptor, signature) {
+  let moduleName, path;
+  do {
+    moduleName = 'SEBookSignatureCheck' + (++operationSequence);
+    path = descriptor.sourcePath + '/' + moduleName + '.hs';
+  } while (runtimeScope.Module.FS.analyzePath(path).exists);
+  writeWorkspaceFile(path, [
+    'module ' + moduleName + ' (matchesSignature) where',
+    'import Prelude',
+    'import qualified Prelude as P',
+    'import qualified Data.Typeable as T',
+    'import qualified ' + descriptor.moduleName + ' as Learner',
+    'default ()',
+    'matchesSignature :: Bool',
+    'matchesSignature = T.typeOf Learner.' + signature.name +
+      ' P.== T.typeOf (P.undefined :: ' + signature.type + ')',
+  ].join('\n') + '\n');
+  return { moduleName: moduleName, path: path };
+}
+
 function startRunTest(message) {
   const path = normalizeWorkspacePath(message.path);
   const descriptor = moduleDescriptor(path);
@@ -427,10 +456,23 @@ function startRunTest(message) {
   }
   checkAliasCycles(readWorkspaceFile(path), path, expression);
 
+  let helper = null;
+  if (message.signature) {
+    if (typeof message.signature.type !== 'string' || !message.signature.type.trim() ||
+        /\r|\n/.test(message.signature.type)) {
+      throw new Error('Signature checks require a one-line monomorphic expected type');
+    }
+    if (!runtimeScope.SEBookHaskellSignatures.hasDeclaration(readWorkspaceFile(path), message.signature)) {
+      throw new Error('An explicit top-level declaration for ' + message.signature.name + ' is required');
+    }
+    helper = signatureHelper(descriptor, message.signature);
+  }
+
   const passMarker = markerFor('TEST_PASS', message.id);
   const failMarker = markerFor('TEST_FAIL', message.id);
+  const checkedExpression = helper ? '(' + expression + ') && ' + helper.moduleName + '.matchesSignature' : expression;
   const testCommand =
-    'if (' + expression + ') then ' + commandForMarker(passMarker) +
+    'if (' + checkedExpression + ') then ' + commandForMarker(passMarker) +
     ' else ' + commandForMarker(failMarker);
 
   startOperation(message, {
@@ -441,9 +483,11 @@ function startRunTest(message) {
       ':set path=' + descriptor.sourcePath,
       ':reload',
       'import ' + descriptor.moduleName,
+      ...(helper ? ['import qualified ' + helper.moduleName] : []),
       testCommand,
     ],
-    cleanupCommands: [':delete import ' + descriptor.moduleName],
+    cleanupCommands: [':delete import ' + descriptor.moduleName].concat(helper ? [':delete import qualified ' + helper.moduleName] : []),
+    temporaryFile: helper && helper.path,
   });
 }
 
@@ -600,6 +644,10 @@ function finishOperation(operation) {
     operation.debug.stderrBuffer = '';
   }
   const output = normalizeOperationOutput(operation);
+  // MicroHs may read a helper while processing its queued :delete import.
+  // Delete its file only after the following operation has completed cleanup
+  // and reload; removing it at its own marker can strand the next command.
+  operation.cleanupFiles.forEach(function (path) { runtimeScope.Module.FS.unlink(path); });
   const testFailed = operation.kind === 'test' &&
     (!operation.sawTestPass || operation.sawTestFail);
   const exitCode = operation.failed || testFailed ? 1 : 0;
@@ -770,7 +818,9 @@ registerProtocolMessageHandler(function (message) {
 });
 
 if (!isWindowRuntime) {
+  importScripts('/js/haskell/syntax.js');
   importScripts('/js/haskell/cycle-analysis.js');
+  importScripts('/js/haskell/signature-checks.js');
   importScripts('/js/debugger/haskell/instrument.js', '/js/debugger/haskell/session.js');
 }
 

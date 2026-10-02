@@ -2819,7 +2819,9 @@
         : Promise.resolve();
 
       var haskellAnalysis = self.config.backend === 'haskell'
-        ? loadScript('/js/haskell/cycle-analysis.js').then(function () {
+        ? loadScript('/js/haskell/syntax.js').then(function () {
+            return loadScript('/js/haskell/cycle-analysis.js');
+          }).then(function () {
             return loadScript('/js/haskell/cycle-diagnostics.js');
           })
         : Promise.resolve();
@@ -13132,6 +13134,7 @@
   // Haskell — each test.command is a Boolean expression evaluated after the
   // current module is loaded. The runtime reports success only when the
   // expression evaluates to True; False, compile errors, and exceptions fail.
+  // The worker checks optional explicit declarations and their compiler-resolved types.
   TutorialCode.prototype._runTestsHaskell = function (run) {
     var self = this;
     var step = this.steps[run.stepIndex];
@@ -13179,7 +13182,7 @@
       }, HASKELL_EXECUTION_TIMEOUT_MS);
 
       activeRequestId = self._postWorker(
-        { type: 'runTest', path: runPath, expression: tests[i].command },
+        { type: 'runTest', path: runPath, expression: tests[i].command, signature: tests[i].signature },
         function (msg) {
           if (finished) return;
           activeRequestId = null;

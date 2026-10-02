@@ -1,0 +1,12 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"code\": \"api_access_denied\",\n  \"message\": \"This Elicit account's plan doesn't include API access, so Elicit tools can't run yet. Upgrading to Pro or above at https://elicit.com/pricing?utm_source=mcp&utm_medium=tool_error&utm_campaign=api_access_denied enables them. After upgrading, retry this tool call.\"\n}"
+    }
+  ],
+  "structuredContent": {
+    "error_code": "INVALID_ARGUMENT"
+  },
+  "isError": true
+}

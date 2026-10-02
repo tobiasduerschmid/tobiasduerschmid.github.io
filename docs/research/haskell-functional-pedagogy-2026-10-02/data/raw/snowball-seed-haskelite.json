@@ -1,0 +1,1314 @@
+{
+  "request_url": "https://api.openalex.org/works/https://doi.org/10.4204/EPTCS.424.3",
+  "retrieved": "2026-10-02",
+  "response": {
+    "id": "https://openalex.org/W4412890909",
+    "doi": "https://doi.org/10.4204/eptcs.424.3",
+    "title": "Teaching Introductory Functional Programming Using Haskelite",
+    "display_name": "Teaching Introductory Functional Programming Using Haskelite",
+    "publication_year": 2025,
+    "publication_date": "2025-08-04",
+    "ids": {
+      "openalex": "https://openalex.org/W4412890909",
+      "doi": "https://doi.org/10.4204/eptcs.424.3"
+    },
+    "language": "en",
+    "primary_location": {
+      "id": "doi:10.4204/eptcs.424.3",
+      "is_oa": true,
+      "landing_page_url": "https://doi.org/10.4204/eptcs.424.3",
+      "pdf_url": "https://eptcs.web.cse.unsw.edu.au/paper.cgi?TFPiE2025.3.pdf",
+      "source": {
+        "id": "https://openalex.org/S4210216316",
+        "display_name": "Electronic Proceedings in Theoretical Computer Science",
+        "issn_l": "2075-2180",
+        "issn": [
+          "2075-2180"
+        ],
+        "is_oa": true,
+        "is_in_doaj": true,
+        "is_core": true,
+        "listed_in": [
+          "cwts-core",
+          "doaj",
+          "norway-1"
+        ],
+        "host_organization": "https://openalex.org/P4310318029",
+        "host_organization_name": "Open Publishing Association",
+        "host_organization_lineage": [
+          "https://openalex.org/P4310318029"
+        ],
+        "host_organization_lineage_names": [
+          "Open Publishing Association"
+        ],
+        "type": "journal"
+      },
+      "license": "other-oa",
+      "license_id": "https://openalex.org/licenses/other-oa",
+      "version": "publishedVersion",
+      "is_accepted": true,
+      "is_published": true,
+      "raw_source_name": "Electronic Proceedings in Theoretical Computer Science",
+      "raw_type": "journal-article"
+    },
+    "type": "article",
+    "indexed_in": [
+      "arxiv",
+      "crossref",
+      "datacite",
+      "doaj"
+    ],
+    "open_access": {
+      "is_oa": true,
+      "oa_status": "diamond",
+      "oa_url": "https://eptcs.web.cse.unsw.edu.au/paper.cgi?TFPiE2025.3.pdf",
+      "any_repository_has_fulltext": true
+    },
+    "authorships": [
+      {
+        "author_position": "first",
+        "author": {
+          "id": "https://openalex.org/A5029055440",
+          "display_name": "Pedro B. Vasconcelos",
+          "orcid": "https://orcid.org/0000-0002-8387-9772",
+          "observed_orcids": [
+            "https://orcid.org/0000-0002-8387-9772"
+          ]
+        },
+        "institutions": [
+          {
+            "id": "https://openalex.org/I182534213",
+            "display_name": "Universidade do Porto",
+            "ror": "https://ror.org/043pwc612",
+            "country_code": "PT",
+            "type": "education",
+            "lineage": [
+              "https://openalex.org/I182534213"
+            ]
+          }
+        ],
+        "countries": [
+          "PT"
+        ],
+        "is_corresponding": true,
+        "raw_author_name": "Pedro Vasconcelos",
+        "raw_affiliation_strings": [
+          "University of Porto"
+        ],
+        "raw_orcid": null,
+        "affiliations": [
+          {
+            "raw_affiliation_string": "University of Porto",
+            "institution_ids": [
+              "https://openalex.org/I182534213"
+            ]
+          }
+        ]
+      }
+    ],
+    "institutions": [],
+    "countries_distinct_count": 1,
+    "institutions_distinct_count": 1,
+    "corresponding_author_ids": [
+      "https://openalex.org/A5029055440"
+    ],
+    "corresponding_institution_ids": [
+      "https://openalex.org/I182534213"
+    ],
+    "apc_list": null,
+    "apc_paid": null,
+    "fwci": 0.0,
+    "has_fulltext": true,
+    "cited_by_count": 0,
+    "citation_normalized_percentile": {
+      "value": 0.14749401,
+      "is_in_top_1_percent": false,
+      "is_in_top_10_percent": false
+    },
+    "cited_by_percentile_year": null,
+    "biblio": {
+      "volume": "424",
+      "issue": null,
+      "first_page": "49",
+      "last_page": "66"
+    },
+    "is_retracted": false,
+    "is_paratext": false,
+    "is_xpac": false,
+    "primary_topic": {
+      "id": "https://openalex.org/T10533",
+      "display_name": "Teaching and Learning Programming",
+      "score": 0.9997000098228455,
+      "subfield": {
+        "id": "https://openalex.org/subfields/1706",
+        "display_name": "Computer Science Applications"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/17",
+        "display_name": "Computer Science"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/3",
+        "display_name": "Physical Sciences"
+      }
+    },
+    "topics": [
+      {
+        "id": "https://openalex.org/T10533",
+        "display_name": "Teaching and Learning Programming",
+        "score": 0.9997000098228455,
+        "subfield": {
+          "id": "https://openalex.org/subfields/1706",
+          "display_name": "Computer Science Applications"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/17",
+          "display_name": "Computer Science"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      {
+        "id": "https://openalex.org/T10126",
+        "display_name": "Logic, programming, and type systems",
+        "score": 0.9911999702453613,
+        "subfield": {
+          "id": "https://openalex.org/subfields/1702",
+          "display_name": "Artificial Intelligence"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/17",
+          "display_name": "Computer Science"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      {
+        "id": "https://openalex.org/T12002",
+        "display_name": "Computability, Logic, AI Algorithms",
+        "score": 0.9868000149726868,
+        "subfield": {
+          "id": "https://openalex.org/subfields/1703",
+          "display_name": "Computational Theory and Mathematics"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/17",
+          "display_name": "Computer Science"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      }
+    ],
+    "keywords": [
+      {
+        "id": "https://openalex.org/keywords/functional-programming-education",
+        "display_name": "functional programming education",
+        "score": 0.9459999799728394
+      },
+      {
+        "id": "https://openalex.org/keywords/haskell",
+        "display_name": "Haskell",
+        "score": 0.6669999957084656
+      },
+      {
+        "id": "https://openalex.org/keywords/introductory-programming",
+        "display_name": "introductory programming",
+        "score": 0.5490000247955322
+      },
+      {
+        "id": "https://openalex.org/keywords/list-comprehensions",
+        "display_name": "list comprehensions",
+        "score": 0.5730000138282776
+      },
+      {
+        "id": "https://openalex.org/keywords/recursion",
+        "display_name": "recursion",
+        "score": 0.6539999842643738
+      },
+      {
+        "id": "https://openalex.org/keywords/higher-order-functions",
+        "display_name": "higher-order functions",
+        "score": 0.9549999833106995
+      },
+      {
+        "id": "https://openalex.org/keywords/lazy-evaluation",
+        "display_name": "lazy evaluation",
+        "score": 0.7129999995231628
+      },
+      {
+        "id": "https://openalex.org/keywords/infinite-lists",
+        "display_name": "infinite lists",
+        "score": 0.7440000176429749
+      },
+      {
+        "id": "https://openalex.org/keywords/equational-reasoning",
+        "display_name": "equational reasoning",
+        "score": 0.7170000076293945
+      },
+      {
+        "id": "https://openalex.org/keywords/binary-search-trees",
+        "display_name": "binary search trees",
+        "score": 0.574999988079071
+      },
+      {
+        "id": "https://openalex.org/keywords/avl-trees",
+        "display_name": "AVL trees",
+        "score": 0.675000011920929
+      },
+      {
+        "id": "https://openalex.org/keywords/type-classes",
+        "display_name": "type classes",
+        "score": 0.414000004529953
+      },
+      {
+        "id": "https://openalex.org/keywords/pattern-matching",
+        "display_name": "pattern matching",
+        "score": 0.4050000011920929
+      }
+    ],
+    "concepts": [
+      {
+        "id": "https://openalex.org/C41008148",
+        "wikidata": "https://www.wikidata.org/wiki/Q21198",
+        "display_name": "Computer science",
+        "level": 0,
+        "score": 0.5074540972709656
+      },
+      {
+        "id": "https://openalex.org/C199360897",
+        "wikidata": "https://www.wikidata.org/wiki/Q9143",
+        "display_name": "Programming language",
+        "level": 1,
+        "score": 0.4556562900543213
+      },
+      {
+        "id": "https://openalex.org/C145420912",
+        "wikidata": "https://www.wikidata.org/wiki/Q853077",
+        "display_name": "Mathematics education",
+        "level": 1,
+        "score": 0.4528709948062897
+      },
+      {
+        "id": "https://openalex.org/C42383842",
+        "wikidata": "https://www.wikidata.org/wiki/Q193076",
+        "display_name": "Functional programming",
+        "level": 2,
+        "score": 0.4254770278930664
+      },
+      {
+        "id": "https://openalex.org/C33923547",
+        "wikidata": "https://www.wikidata.org/wiki/Q395",
+        "display_name": "Mathematics",
+        "level": 0,
+        "score": 0.2546655535697937
+      }
+    ],
+    "mesh": [],
+    "locations_count": 3,
+    "locations": [
+      {
+        "id": "doi:10.4204/eptcs.424.3",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.4204/eptcs.424.3",
+        "pdf_url": "https://eptcs.web.cse.unsw.edu.au/paper.cgi?TFPiE2025.3.pdf",
+        "source": {
+          "id": "https://openalex.org/S4210216316",
+          "display_name": "Electronic Proceedings in Theoretical Computer Science",
+          "issn_l": "2075-2180",
+          "issn": [
+            "2075-2180"
+          ],
+          "is_oa": true,
+          "is_in_doaj": true,
+          "is_core": true,
+          "listed_in": [
+            "cwts-core",
+            "doaj",
+            "norway-1"
+          ],
+          "host_organization": "https://openalex.org/P4310318029",
+          "host_organization_name": "Open Publishing Association",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310318029"
+          ],
+          "host_organization_lineage_names": [
+            "Open Publishing Association"
+          ],
+          "type": "journal"
+        },
+        "license": "other-oa",
+        "license_id": "https://openalex.org/licenses/other-oa",
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Electronic Proceedings in Theoretical Computer Science",
+        "raw_type": "journal-article"
+      },
+      {
+        "id": "pmh:oai:arXiv.org:2508.03640",
+        "is_oa": true,
+        "landing_page_url": "http://arxiv.org/abs/2508.03640",
+        "pdf_url": "https://arxiv.org/pdf/2508.03640",
+        "source": {
+          "id": "https://openalex.org/S4306400194",
+          "display_name": "arXiv (Cornell University)",
+          "issn_l": "2331-8422",
+          "issn": [
+            "2331-8422"
+          ],
+          "is_oa": true,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I205783295",
+          "host_organization_name": "Cornell University",
+          "host_organization_lineage": [
+            "https://openalex.org/I205783295"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": "other-oa",
+        "license_id": "https://openalex.org/licenses/other-oa",
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": null,
+        "raw_type": "text"
+      },
+      {
+        "id": "doi:10.48550/arxiv.2508.03640",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.48550/arxiv.2508.03640",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306400194",
+          "display_name": "arXiv (Cornell University)",
+          "issn_l": "2331-8422",
+          "issn": [
+            "2331-8422"
+          ],
+          "is_oa": true,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I205783295",
+          "host_organization_name": "Cornell University",
+          "host_organization_lineage": [
+            "https://openalex.org/I205783295"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": null,
+        "license_id": null,
+        "version": null,
+        "is_accepted": false,
+        "is_published": null,
+        "raw_source_name": null,
+        "raw_type": "Preprint"
+      }
+    ],
+    "best_oa_location": {
+      "id": "doi:10.4204/eptcs.424.3",
+      "is_oa": true,
+      "landing_page_url": "https://doi.org/10.4204/eptcs.424.3",
+      "pdf_url": "https://eptcs.web.cse.unsw.edu.au/paper.cgi?TFPiE2025.3.pdf",
+      "source": {
+        "id": "https://openalex.org/S4210216316",
+        "display_name": "Electronic Proceedings in Theoretical Computer Science",
+        "issn_l": "2075-2180",
+        "issn": [
+          "2075-2180"
+        ],
+        "is_oa": true,
+        "is_in_doaj": true,
+        "is_core": true,
+        "listed_in": [
+          "cwts-core",
+          "doaj",
+          "norway-1"
+        ],
+        "host_organization": "https://openalex.org/P4310318029",
+        "host_organization_name": "Open Publishing Association",
+        "host_organization_lineage": [
+          "https://openalex.org/P4310318029"
+        ],
+        "host_organization_lineage_names": [
+          "Open Publishing Association"
+        ],
+        "type": "journal"
+      },
+      "license": "other-oa",
+      "license_id": "https://openalex.org/licenses/other-oa",
+      "version": "publishedVersion",
+      "is_accepted": true,
+      "is_published": true,
+      "raw_source_name": "Electronic Proceedings in Theoretical Computer Science",
+      "raw_type": "journal-article"
+    },
+    "sustainable_development_goals": [],
+    "x_sdgs": [],
+    "study_designs": [],
+    "awards": [
+      {
+        "id": "https://openalex.org/G8697196972",
+        "display_name": "Laborat\u00f3rio de Intelig\u00eancia Artificial e Ci\u00eancia de Computadores",
+        "funder_award_id": "UIDB/00027/2020",
+        "funder_id": "https://openalex.org/F4320334779",
+        "funder_display_name": "Funda\u00e7\u00e3o para a Ci\u00eancia e a Tecnologia"
+      }
+    ],
+    "funders": [
+      {
+        "id": "https://openalex.org/F4320323642",
+        "display_name": "Minist\u00e9rio da Ci\u00eancia, Tecnologia e Ensino Superior",
+        "ror": "https://ror.org/045b9pr88"
+      },
+      {
+        "id": "https://openalex.org/F4320334779",
+        "display_name": "Funda\u00e7\u00e3o para a Ci\u00eancia e a Tecnologia",
+        "ror": "https://ror.org/00snfqn58"
+      }
+    ],
+    "has_content": {
+      "pdf": true,
+      "grobid_xml": true
+    },
+    "content_urls": {
+      "pdf": "https://content.openalex.org/works/W4412890909.pdf",
+      "grobid_xml": "https://content.openalex.org/works/W4412890909.grobid-xml"
+    },
+    "referenced_works_count": 17,
+    "referenced_works": [
+      "https://openalex.org/W587099212",
+      "https://openalex.org/W1521965716",
+      "https://openalex.org/W1541318173",
+      "https://openalex.org/W1553992341",
+      "https://openalex.org/W1571471466",
+      "https://openalex.org/W1779102629",
+      "https://openalex.org/W1984964495",
+      "https://openalex.org/W2050152920",
+      "https://openalex.org/W2105045857",
+      "https://openalex.org/W2318815169",
+      "https://openalex.org/W2787993273",
+      "https://openalex.org/W2955963392",
+      "https://openalex.org/W4214487305",
+      "https://openalex.org/W4255736263",
+      "https://openalex.org/W4401668736",
+      "https://openalex.org/W4406257882",
+      "https://openalex.org/W6891556881"
+    ],
+    "related_works": [
+      "https://openalex.org/W3136890312",
+      "https://openalex.org/W2259894237",
+      "https://openalex.org/W4312309273",
+      "https://openalex.org/W2132325017",
+      "https://openalex.org/W1923258046",
+      "https://openalex.org/W1671914757",
+      "https://openalex.org/W593478746",
+      "https://openalex.org/W2100079361",
+      "https://openalex.org/W2968873290",
+      "https://openalex.org/W3016342375"
+    ],
+    "abstract_inverted_index": {
+      "Learning": [
+        0
+      ],
+      "functional": [
+        1,
+        71
+      ],
+      "programming": [
+        2,
+        72,
+        266
+      ],
+      "requires": [
+        3
+      ],
+      "learning": [
+        4
+      ],
+      "a": [
+        5,
+        12,
+        58,
+        63,
+        172,
+        285,
+        318
+      ],
+      "substitution-based": [
+        6
+      ],
+      "computational": [
+        7
+      ],
+      "model.While": [
+        8
+      ],
+      "substitution": [
+        9
+      ],
+      "should": [
+        10
+      ],
+      "be": [
+        11
+      ],
+      "familiar": [
+        13
+      ],
+      "concept": [
+        14
+      ],
+      "from": [
+        15,
+        89,
+        118,
+        240
+      ],
+      "high-school": [
+        16
+      ],
+      "algebra,": [
+        17
+      ],
+      "students": [
+        18
+      ],
+      "often": [
+        19
+      ],
+      "have": [
+        20,
+        39
+      ],
+      "difficulty": [
+        21
+      ],
+      "applying": [
+        22
+      ],
+      "it": [
+        23
+      ],
+      "to": [
+        24,
+        42
+      ],
+      "new": [
+        25,
+        296
+      ],
+      "settings,": [
+        26
+      ],
+      "such": [
+        27
+      ],
+      "as": [
+        28,
+        124,
+        171,
+        198,
+        215,
+        302
+      ],
+      "recursive": [
+        29,
+        314
+      ],
+      "definitions,": [
+        30
+      ],
+      "algebraic": [
+        31
+      ],
+      "data": [
+        32,
+        297,
+        309,
+        315
+      ],
+      "types": [
+        33,
+        129,
+        135
+      ],
+      "and": [
+        34,
+        48,
+        96,
+        105,
+        116,
+        133,
+        139,
+        142,
+        150,
+        157,
+        160,
+        213,
+        233,
+        260,
+        304,
+        334
+      ],
+      "higher-order": [
+        35
+      ],
+      "functions.": [
+        36
+      ],
+      "Step-by-step": [
+        37
+      ],
+      "interpreters": [
+        38
+      ],
+      "been": [
+        40
+      ],
+      "shown": [
+        41
+      ],
+      "help": [
+        43
+      ],
+      "beginners": [
+        44
+      ],
+      "by": [
+        45
+      ],
+      "clarifying": [
+        46
+      ],
+      "misconceptions": [
+        47
+      ],
+      "improving": [
+        49
+      ],
+      "understanding.This": [
+        50
+      ],
+      "paper": [
+        51
+      ],
+      "reports": [
+        52
+      ],
+      "on": [
+        53,
+        92,
+        179,
+        265,
+        313
+      ],
+      "the": [
+        54,
+        75,
+        80,
+        83,
+        93,
+        119,
+        183,
+        241,
+        279,
+        291
+      ],
+      "experience": [
+        55
+      ],
+      "of": [
+        56,
+        65,
+        77,
+        82,
+        126,
+        175,
+        200,
+        218,
+        236,
+        273
+      ],
+      "using": [
+        57,
+        147,
+        224,
+        257,
+        331
+      ],
+      "step-by-step": [
+        59
+      ],
+      "tracing": [
+        60
+      ],
+      "interpreter": [
+        61,
+        110
+      ],
+      "for": [
+        62,
+        99,
+        130,
+        136,
+        210,
+        228
+      ],
+      "subset": [
+        64
+      ],
+      "Haskell": [
+        66,
+        108,
+        120
+      ],
+      "while": [
+        67
+      ],
+      "teaching": [
+        68
+      ],
+      "an": [
+        69
+      ],
+      "introductory": [
+        70
+      ],
+      "course": [
+        73
+      ],
+      "at": [
+        74
+      ],
+      "University": [
+        76
+      ],
+      "Porto.We": [
+        78
+      ],
+      "describe": [
+        79
+      ],
+      "use": [
+        81
+      ],
+      "interpreter,": [
+        84
+      ],
+      "present": [
+        85
+      ],
+      "some": [
+        86
+      ],
+      "feedback": [
+        87
+      ],
+      "obtained": [
+        88
+      ],
+      "students,": [
+        90
+      ],
+      "reflect": [
+        91
+      ],
+      "lessons": [
+        94
+      ],
+      "learned": [
+        95
+      ],
+      "point": [
+        97
+      ],
+      "directions": [
+        98
+      ],
+      "further": [
+        100
+      ],
+      "work.Lecture": [
+        101
+      ],
+      "Topics": [
+        102
+      ],
+      "1": [
+        103
+      ],
+      "Expressions": [
+        104
+      ],
+      "values.Step-by-step": [
+        106
+      ],
+      "evaluation.The": [
+        107
+      ],
+      "interactive": [
+        109
+      ],
+      "(GHCi).Some": [
+        111
+      ],
+      "examples": [
+        112
+      ],
+      "with": [
+        113,
+        152,
+        267,
+        307
+      ],
+      "arithmetic": [
+        114
+      ],
+      "operations": [
+        115
+      ],
+      "functions": [
+        117,
+        146,
+        197,
+        209,
+        239
+      ],
+      "Prelude.": [
+        121
+      ],
+      "2": [
+        122
+      ],
+      "Types": [
+        123
+      ],
+      "collections": [
+        125
+      ],
+      "values.Type": [
+        127
+      ],
+      "assignment.Basic": [
+        128
+      ],
+      "numbers,": [
+        131
+      ],
+      "booleans": [
+        132
+      ],
+      "characters.Structured": [
+        134
+      ],
+      "lists,": [
+        137
+      ],
+      "tuples": [
+        138,
+        156
+      ],
+      "functions.Polymorphic": [
+        140
+      ],
+      "functions.Overloading": [
+        141
+      ],
+      "type": [
+        143,
+        251
+      ],
+      "classes.3": [
+        144
+      ],
+      "Defining": [
+        145,
+        295
+      ],
+      "equations.Conditional": [
+        148
+      ],
+      "expressions": [
+        149,
+        159,
+        303
+      ],
+      "guards.Patternmatching": [
+        151
+      ],
+      "multiple": [
+        153
+      ],
+      "equations.Patterns": [
+        154
+      ],
+      "over": [
+        155,
+        188,
+        191
+      ],
+      "lists.Case": [
+        158
+      ],
+      "lambda": [
+        161
+      ],
+      "expressions.4": [
+        162
+      ],
+      "More": [
+        163
+      ],
+      "about": [
+        164,
+        329
+      ],
+      "lists.De-sugaring": [
+        165
+      ],
+      "lists": [
+        166,
+        223,
+        231
+      ],
+      "into": [
+        167
+      ],
+      "constructors.Arithmetic": [
+        168
+      ],
+      "sequences.List": [
+        169
+      ],
+      "comprehensions.Strings": [
+        170
+      ],
+      "special": [
+        173
+      ],
+      "case": [
+        174
+      ],
+      "lists.5": [
+        176
+      ],
+      "Case": [
+        177,
+        263,
+        311
+      ],
+      "study": [
+        178,
+        264,
+        312
+      ],
+      "list": [
+        180
+      ],
+      "comprehensions:": [
+        181
+      ],
+      "implementing": [
+        182,
+        269,
+        317
+      ],
+      "Caesar": [
+        184
+      ],
+      "Cipher.6": [
+        185
+      ],
+      "Recursive": [
+        186
+      ],
+      "definitions.Recursion": [
+        187
+      ],
+      "integers.Structural": [
+        189
+      ],
+      "recursion": [
+        190,
+        202
+      ],
+      "lists.Examples": [
+        192
+      ],
+      "(sum,": [
+        193
+      ],
+      "product,": [
+        194
+      ],
+      "length).7": [
+        195
+      ],
+      "Higher-order": [
+        196
+      ],
+      "abstractions": [
+        199
+      ],
+      "common": [
+        201,
+        282
+      ],
+      "patterns.Some": [
+        203
+      ],
+      "examples:": [
+        204
+      ],
+      "map,": [
+        205
+      ],
+      "filter,": [
+        206
+      ],
+      "takeWhile,": [
+        207
+      ],
+      "dropWhile.Folding": [
+        208
+      ],
+      "lists:": [
+        211
+      ],
+      "foldr": [
+        212
+      ],
+      "foldl.Folds": [
+        214
+      ],
+      "structural": [
+        216
+      ],
+      "transformations": [
+        217
+      ],
+      "lists.8": [
+        219
+      ],
+      "Infinite": [
+        220
+      ],
+      "lists.Producing": [
+        221
+      ],
+      "infinite": [
+        222,
+        230,
+        237
+      ],
+      "numeric": [
+        225
+      ],
+      "sequences.Lazy": [
+        226
+      ],
+      "evaluation": [
+        227
+      ],
+      "processing": [
+        229
+      ],
+      "(e.g.mapping": [
+        232
+      ],
+      "filtering).Recursive": [
+        234
+      ],
+      "definitions": [
+        235
+      ],
+      "lists.Useful": [
+        238
+      ],
+      "Prelude": [
+        242
+      ],
+      "(repeat,": [
+        243
+      ],
+      "cycle,": [
+        244
+      ],
+      "iterate).9": [
+        245
+      ],
+      "Interactive": [
+        246
+      ],
+      "programs.Actions": [
+        247
+      ],
+      "versus": [
+        248
+      ],
+      "values.The": [
+        249
+      ],
+      "IO": [
+        250,
+        253,
+        255
+      ],
+      "constructor.Basic": [
+        252
+      ],
+      "actions.Combining": [
+        254
+      ],
+      "actions": [
+        256
+      ],
+      "do-notation.Complete": [
+        258
+      ],
+      "programs": [
+        259,
+        330
+      ],
+      "batch": [
+        261
+      ],
+      "compilation.10": [
+        262
+      ],
+      "IO:": [
+        268
+      ],
+      "John": [
+        270
+      ],
+      "Conway's": [
+        271
+      ],
+      "Game": [
+        272
+      ],
+      "Life.11": [
+        274
+      ],
+      "Live": [
+        275,
+        287
+      ],
+      "coding": [
+        276,
+        288
+      ],
+      "example:": [
+        277,
+        289
+      ],
+      "determining": [
+        278
+      ],
+      "N": [
+        280
+      ],
+      "most": [
+        281
+      ],
+      "words": [
+        283
+      ],
+      "in": [
+        284,
+        305
+      ],
+      "text.12": [
+        286
+      ],
+      "solving": [
+        290
+      ],
+      "8": [
+        292
+      ],
+      "Queens": [
+        293
+      ],
+      "Puzzle.13": [
+        294
+      ],
+      "types.Declaring": [
+        298
+      ],
+      "enumeration": [
+        299
+      ],
+      "types.Using": [
+        300
+      ],
+      "constructors": [
+        301
+      ],
+      "patterns.Constructors": [
+        306
+      ],
+      "arguments.Recursive": [
+        308
+      ],
+      "types.14": [
+        310
+      ],
+      "types:": [
+        316
+      ],
+      "tautology": [
+        319
+      ],
+      "checker.15": [
+        320
+      ],
+      "Binary": [
+        321
+      ],
+      "search": [
+        322,
+        326
+      ],
+      "trees.16": [
+        323
+      ],
+      "AVL": [
+        324
+      ],
+      "binary": [
+        325
+      ],
+      "trees.17Proving": [
+        327
+      ],
+      "properties": [
+        328
+      ],
+      "equational": [
+        332
+      ],
+      "reasoning": [
+        333
+      ],
+      "induction.": [
+        335
+      ]
+    },
+    "counts_by_year": [],
+    "updated_date": "2026-09-29T14:09:16.559479",
+    "created_date": "2025-10-10T00:00:00"
+  }
+}

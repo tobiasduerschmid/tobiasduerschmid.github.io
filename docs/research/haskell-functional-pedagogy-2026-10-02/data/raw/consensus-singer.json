@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"id\": \"0dbdf00651d25271b2649f1f89490f36\", \"title\": \"Functional Baby Talk: Analysis of Code Fragments from Novice Haskell Programmers\", \"text\": \"What kinds of mistakes are made by novice Haskell developers, as they learn about functional programming? Is it possible to analyze these errors in order to improve the pedagogy of Haskell? In 2016, we delivered a massive open online course which featured an interactive code evaluation environment. We captured and analyzed 161K interactions from learners. We report typical novice developer behavior; for instance, the mean time spent on an interactive tutorial is around eight minutes. Although our environment was restricted, we gain some understanding of Haskell novice errors. Parenthesis mismatches, lexical scoping errors and do block misunderstandings are common. Finally, we make recommendations about how such beginner code evaluation environments might be enhanced.\", \"url\": \"https://consensus.app/papers/functional-baby-talk-analysis-of-code-fragments-from-singer-archibald/0dbdf00651d25271b2649f1f89490f36/?utm_source=chatgpt\", \"metadata\": {\"authors\": \"Jeremy Singer, B. Archibald\", \"publish_year\": \"2018\", \"pages\": \"37-51\", \"citation_count\": \"5\"}}"
+    }
+  ],
+  "isError": false
+}

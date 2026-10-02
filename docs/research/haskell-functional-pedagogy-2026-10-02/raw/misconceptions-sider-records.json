@@ -1,0 +1,426 @@
+{
+  "searches": [
+    {
+      "query": "functional programming learners recursive",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"scholar_result_id\":\"e99dc134-05bc-4ae9-9d46-2e3b366a97d3\",\"scholar_title\":\"Recursion learner empirical studies\",\"scholar_tool_name\":\"search_open_access_works\",\"papers\":[{\"id\":\"https://openalex.org/W1987902506\",\"title\":\"Inductive Logic Programming: Theory and methods\",\"citation_info\":\"Stephen Muggleton, Luc De Raedt\",\"pdf_url\":\"https://lirias.kuleuven.be/retrieve/2bcdb6b4-32b2-41ac-a1e7-71909b3093c0\"},{\"id\":\"https://openalex.org/W2157446241\",\"title\":\"Automatic denoising of functional MRI data: Combining independent component analysis and hierarchical fusion of classifiers\",\"citation_info\":\"Gholamreza Salimi‐Khorshidi, Gwenaëlle Douaud, Christian F. Beckmann, Matthew F. Glasser, Ludovica Griffanti, Stephen M. Smith\",\"pdf_url\":\"https://www.sciencedirect.com/science/article/pii/S1053811913011956\"},{\"id\":\"https://openalex.org/W2183370417\",\"title\":\"A Survey on Teaching and Learning Recursive Programming\",\"citation_info\":\"Christian Rinderknecht\",\"pdf_url\":\"https://infedu.vu.lt/journal/INFEDU/article/420/file/pdf\"},{\"id\":\"https://openalex.org/W2133451174\",\"title\":\"Collaborative writing among second language learners in academic web-based projects\",\"citation_info\":\"Greg Kessler, Dawn Bikowski, Jordan Boggs\",\"pdf_url\":\"https://scholarspace.manoa.hawaii.edu/bitstreams/dfcf827b-601e-4ff8-9d2b-199606ddcb1a/download\"},{\"id\":\"https://openalex.org/W1797402740\",\"title\":\"Development and Distortion of Malaysian Public- Private Partnerships: Patronage, Privatised Profits and Pitfalls DOI: 10.1111/j.1467- 8500.2009.00655.x\",\"citation_info\":\"Loo‐See Beh\",\"pdf_url\":\"https://gredos.usal.es/bitstream/10366/149749/1/Accounting%20%20%20Finance%20-%202009%20-%20Pindado%20-%20Effect%20of%20ownership%20structure%20on%20underinvestment%20and%20overinvestment%20%20empirical.pdf\"},{\"id\":\"https://openalex.org/W2912391306\",\"title\":\"Functional Trees\",\"citation_info\":\"João Manuel Portela da Gama\",\"pdf_url\":\"https://link.springer.com/content/pdf/10.1023/B:MACH.0000027782.67192.13.pdf\"},{\"id\":\"https://openalex.org/W1647622147\",\"title\":\"Pac-learning Recursive Logic Programs: Negative Results\",\"citation_info\":\"William W. Cohen\",\"pdf_url\":\"https://www.jair.org/index.php/jair/article/download/10136/24010\"},{\"id\":\"https://openalex.org/W4393160747\",\"title\":\"ExpeL: LLM Agents Are Experiential Learners\",\"citation_info\":\"Andrew Zhao, Daniel T. Huang, Quentin Xu, Matthieu Gaetan Lin, Yong‐Jin Liu, Gao Ming Huang\",\"pdf_url\":\"https://ojs.aaai.org/index.php/AAAI/article/download/29936/31635\"},{\"id\":\"https://openalex.org/W2022879002\",\"title\":\"Inductive synthesis of recursive logic programs: achievements and prospects\",\"citation_info\":\"Pierre Flener, Serap Yıilmaz\",\"pdf_url\":\"https://www.sciencedirect.com/science/article/pii/S074310669900028X/pdf\"},{\"id\":\"https://openalex.org/W2172074164\",\"title\":\"Pac-Learning Recursive Logic Programs: Efficient Algorithms\",\"citation_info\":\"William W. Cohen\",\"pdf_url\":\"https://www.jair.org/index.php/jair/article/download/10132/23999\"},{\"id\":\"https://openalex.org/W2908791737\",\"title\":\"The Neuro-Symbolic Concept Learner: Interpreting Scenes, Words, and Sentences From Natural Supervision\",\"citation_info\":\"Jiayuan Mao, Chuang Gan, Pushmeet Kohli, Joshua B. Tenenbaum, Jiajun Wu\",\"pdf_url\":\"https://arxiv.org/pdf/1904.12584\"},{\"id\":\"https://openalex.org/W1995814878\",\"title\":\"Identity and a Model of Investment in Applied Linguistics\",\"citation_info\":\"Ron Darvin, Bonny Norton\",\"pdf_url\":\"https://www.cambridge.org/core/services/aop-cambridge-core/content/view/91EE4C7572272B233A16286768E0E5B8/S0267190514000191a.pdf/div-class-title-identity-and-a-model-of-investment-in-applied-linguistics-div.pdf\"},{\"id\":\"https://openalex.org/W2950104027\",\"title\":\"GQA: A New Dataset for Real-World Visual Reasoning and Compositional Question Answering\",\"citation_info\":\"Drew A. Hudson, Christopher D. Manning\",\"pdf_url\":\"https://arxiv.org/pdf/1902.09506\"},{\"id\":\"https://openalex.org/W2130218253\",\"title\":\"Identification of Novel Functional Inhibitors of Acid Sphingomyelinase\",\"citation_info\":\"Johannes Kornhuber, Markus Muehlbacher, Stefan Trapp, Stefanie Pechmann, Astrid Friedl, Martin Reichel, Christiane Mühle, Lothar Terfloth, Teja Wolfgang Groemer, Gudrun Maria Spitzer, Klaus Roman Liedl, Erich Gulbins, Philipp Tripal\",\"pdf_url\":\"https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0023852&type=printable\"},{\"id\":\"https://openalex.org/W81828477\",\"title\":\"An Interactive System to Learn Functional Logic Programs.\",\"citation_info\":\"Francesco Bergadano, Daniele Gunetti\",\"pdf_url\":\"http://hdl.handle.net/2318/122156\"},{\"id\":\"https://openalex.org/W1981403153\",\"title\":\"Learning recursive functions: A survey\",\"citation_info\":\"Thomas Zeugmann, Sandra Zilles\",\"pdf_url\":\"https://www.sciencedirect.com/science/article/pii/S0304397508001400/pdf\"},{\"id\":\"https://openalex.org/W2184336441\",\"title\":\"The development of advanced learner oral proficiency using iPads\",\"citation_info\":\"Franziska Lys\",\"pdf_url\":\"http://hdl.handle.net/10125/44341\"},{\"id\":\"https://openalex.org/W2981731882\",\"title\":\"Explainable Artificial Intelligence (XAI): Concepts, taxonomies, opportunities and challenges toward responsible AI\",\"citation_info\":\"Alejandro Barredo Arrieta, Natalia Díaz-Rodríguez, Javier Del Ser, Adrien Bennetot, Siham Tabik, Alberto Barbado, Salvador García, Sergio Gil-López, Daniel Molina, Richard Benjamins, Raja Chatila, Francisco Herrera\",\"pdf_url\":\"http://hdl.handle.net/20.500.11824/1166\"},{\"id\":\"https://openalex.org/W3140854437\",\"title\":\"Review of deep learning: concepts, CNN architectures, challenges, applications, future directions\",\"citation_info\":\"Laith Alzubaidi, Jinglan Zhang, Amjad J. Humaidi, Ayad Q. Al-Dujaili, Ye Duan, Omran Al-Shamma, José Santamaría, Mohammed Abdulraheem Fadhel, Muthana Al‐Amidie, Laith Farhan\",\"pdf_url\":\"https://journalofbigdata.springeropen.com/counter/pdf/10.1186/s40537-021-00444-8\"},{\"id\":\"https://openalex.org/W2200913422\",\"title\":\"Frege in Space: A Program for Compositional Distributional Semantics\",\"citation_info\":\"Marco Baroni, Raffaella Bernardi, Roberto Zamparelli\",\"pdf_url\":\"https://journals.colorado.edu/index.php/lilt/article/download/1321/1149\"},{\"id\":\"https://openalex.org/W2100677568\",\"title\":\"Learning to Predict by the Methods of Temporal Differences\",\"citation_info\":\"Richard S. Sutton\",\"pdf_url\":\"https://link.springer.com/content/pdf/10.1023/A:1022633531479.pdf\"},{\"id\":\"https://openalex.org/W4387730663\",\"title\":\"ChatGPT in the Classroom. Exploring Its Potential and Limitations in a Functional Programming Course\",\"citation_info\":\"Matei-Dan Popovici\",\"pdf_url\":\"https://arxiv.org/pdf/2401.11166\"},{\"id\":\"https://openalex.org/W1888026739\",\"title\":\"A Primer on Neural Network Models for Natural Language Processing\",\"citation_info\":\"Yoav Goldberg\",\"pdf_url\":\"https://jair.org/index.php/jair/article/download/11030/26198\"}]}"
+            }
+          ],
+          "structuredContent": {
+            "scholar_result_id": "e99dc134-05bc-4ae9-9d46-2e3b366a97d3",
+            "scholar_title": "Recursion learner empirical studies",
+            "scholar_tool_name": "search_open_access_works",
+            "papers": [
+              {
+                "id": "https://openalex.org/W1987902506",
+                "title": "Inductive Logic Programming: Theory and methods",
+                "citation_info": "Stephen Muggleton, Luc De Raedt",
+                "pdf_url": "https://lirias.kuleuven.be/retrieve/2bcdb6b4-32b2-41ac-a1e7-71909b3093c0"
+              },
+              {
+                "id": "https://openalex.org/W2157446241",
+                "title": "Automatic denoising of functional MRI data: Combining independent component analysis and hierarchical fusion of classifiers",
+                "citation_info": "Gholamreza Salimi‐Khorshidi, Gwenaëlle Douaud, Christian F. Beckmann, Matthew F. Glasser, Ludovica Griffanti, Stephen M. Smith",
+                "pdf_url": "https://www.sciencedirect.com/science/article/pii/S1053811913011956"
+              },
+              {
+                "id": "https://openalex.org/W2183370417",
+                "title": "A Survey on Teaching and Learning Recursive Programming",
+                "citation_info": "Christian Rinderknecht",
+                "pdf_url": "https://infedu.vu.lt/journal/INFEDU/article/420/file/pdf"
+              },
+              {
+                "id": "https://openalex.org/W2133451174",
+                "title": "Collaborative writing among second language learners in academic web-based projects",
+                "citation_info": "Greg Kessler, Dawn Bikowski, Jordan Boggs",
+                "pdf_url": "https://scholarspace.manoa.hawaii.edu/bitstreams/dfcf827b-601e-4ff8-9d2b-199606ddcb1a/download"
+              },
+              {
+                "id": "https://openalex.org/W1797402740",
+                "title": "Development and Distortion of Malaysian Public- Private Partnerships: Patronage, Privatised Profits and Pitfalls DOI: 10.1111/j.1467- 8500.2009.00655.x",
+                "citation_info": "Loo‐See Beh",
+                "pdf_url": "https://gredos.usal.es/bitstream/10366/149749/1/Accounting%20%20%20Finance%20-%202009%20-%20Pindado%20-%20Effect%20of%20ownership%20structure%20on%20underinvestment%20and%20overinvestment%20%20empirical.pdf"
+              },
+              {
+                "id": "https://openalex.org/W2912391306",
+                "title": "Functional Trees",
+                "citation_info": "João Manuel Portela da Gama",
+                "pdf_url": "https://link.springer.com/content/pdf/10.1023/B:MACH.0000027782.67192.13.pdf"
+              },
+              {
+                "id": "https://openalex.org/W1647622147",
+                "title": "Pac-learning Recursive Logic Programs: Negative Results",
+                "citation_info": "William W. Cohen",
+                "pdf_url": "https://www.jair.org/index.php/jair/article/download/10136/24010"
+              },
+              {
+                "id": "https://openalex.org/W4393160747",
+                "title": "ExpeL: LLM Agents Are Experiential Learners",
+                "citation_info": "Andrew Zhao, Daniel T. Huang, Quentin Xu, Matthieu Gaetan Lin, Yong‐Jin Liu, Gao Ming Huang",
+                "pdf_url": "https://ojs.aaai.org/index.php/AAAI/article/download/29936/31635"
+              },
+              {
+                "id": "https://openalex.org/W2022879002",
+                "title": "Inductive synthesis of recursive logic programs: achievements and prospects",
+                "citation_info": "Pierre Flener, Serap Yıilmaz",
+                "pdf_url": "https://www.sciencedirect.com/science/article/pii/S074310669900028X/pdf"
+              },
+              {
+                "id": "https://openalex.org/W2172074164",
+                "title": "Pac-Learning Recursive Logic Programs: Efficient Algorithms",
+                "citation_info": "William W. Cohen",
+                "pdf_url": "https://www.jair.org/index.php/jair/article/download/10132/23999"
+              },
+              {
+                "id": "https://openalex.org/W2908791737",
+                "title": "The Neuro-Symbolic Concept Learner: Interpreting Scenes, Words, and Sentences From Natural Supervision",
+                "citation_info": "Jiayuan Mao, Chuang Gan, Pushmeet Kohli, Joshua B. Tenenbaum, Jiajun Wu",
+                "pdf_url": "https://arxiv.org/pdf/1904.12584"
+              },
+              {
+                "id": "https://openalex.org/W1995814878",
+                "title": "Identity and a Model of Investment in Applied Linguistics",
+                "citation_info": "Ron Darvin, Bonny Norton",
+                "pdf_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/91EE4C7572272B233A16286768E0E5B8/S0267190514000191a.pdf/div-class-title-identity-and-a-model-of-investment-in-applied-linguistics-div.pdf"
+              },
+              {
+                "id": "https://openalex.org/W2950104027",
+                "title": "GQA: A New Dataset for Real-World Visual Reasoning and Compositional Question Answering",
+                "citation_info": "Drew A. Hudson, Christopher D. Manning",
+                "pdf_url": "https://arxiv.org/pdf/1902.09506"
+              },
+              {
+                "id": "https://openalex.org/W2130218253",
+                "title": "Identification of Novel Functional Inhibitors of Acid Sphingomyelinase",
+                "citation_info": "Johannes Kornhuber, Markus Muehlbacher, Stefan Trapp, Stefanie Pechmann, Astrid Friedl, Martin Reichel, Christiane Mühle, Lothar Terfloth, Teja Wolfgang Groemer, Gudrun Maria Spitzer, Klaus Roman Liedl, Erich Gulbins, Philipp Tripal",
+                "pdf_url": "https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0023852&type=printable"
+              },
+              {
+                "id": "https://openalex.org/W81828477",
+                "title": "An Interactive System to Learn Functional Logic Programs.",
+                "citation_info": "Francesco Bergadano, Daniele Gunetti",
+                "pdf_url": "http://hdl.handle.net/2318/122156"
+              },
+              {
+                "id": "https://openalex.org/W1981403153",
+                "title": "Learning recursive functions: A survey",
+                "citation_info": "Thomas Zeugmann, Sandra Zilles",
+                "pdf_url": "https://www.sciencedirect.com/science/article/pii/S0304397508001400/pdf"
+              },
+              {
+                "id": "https://openalex.org/W2184336441",
+                "title": "The development of advanced learner oral proficiency using iPads",
+                "citation_info": "Franziska Lys",
+                "pdf_url": "http://hdl.handle.net/10125/44341"
+              },
+              {
+                "id": "https://openalex.org/W2981731882",
+                "title": "Explainable Artificial Intelligence (XAI): Concepts, taxonomies, opportunities and challenges toward responsible AI",
+                "citation_info": "Alejandro Barredo Arrieta, Natalia Díaz-Rodríguez, Javier Del Ser, Adrien Bennetot, Siham Tabik, Alberto Barbado, Salvador García, Sergio Gil-López, Daniel Molina, Richard Benjamins, Raja Chatila, Francisco Herrera",
+                "pdf_url": "http://hdl.handle.net/20.500.11824/1166"
+              },
+              {
+                "id": "https://openalex.org/W3140854437",
+                "title": "Review of deep learning: concepts, CNN architectures, challenges, applications, future directions",
+                "citation_info": "Laith Alzubaidi, Jinglan Zhang, Amjad J. Humaidi, Ayad Q. Al-Dujaili, Ye Duan, Omran Al-Shamma, José Santamaría, Mohammed Abdulraheem Fadhel, Muthana Al‐Amidie, Laith Farhan",
+                "pdf_url": "https://journalofbigdata.springeropen.com/counter/pdf/10.1186/s40537-021-00444-8"
+              },
+              {
+                "id": "https://openalex.org/W2200913422",
+                "title": "Frege in Space: A Program for Compositional Distributional Semantics",
+                "citation_info": "Marco Baroni, Raffaella Bernardi, Roberto Zamparelli",
+                "pdf_url": "https://journals.colorado.edu/index.php/lilt/article/download/1321/1149"
+              },
+              {
+                "id": "https://openalex.org/W2100677568",
+                "title": "Learning to Predict by the Methods of Temporal Differences",
+                "citation_info": "Richard S. Sutton",
+                "pdf_url": "https://link.springer.com/content/pdf/10.1023/A:1022633531479.pdf"
+              },
+              {
+                "id": "https://openalex.org/W4387730663",
+                "title": "ChatGPT in the Classroom. Exploring Its Potential and Limitations in a Functional Programming Course",
+                "citation_info": "Matei-Dan Popovici",
+                "pdf_url": "https://arxiv.org/pdf/2401.11166"
+              },
+              {
+                "id": "https://openalex.org/W1888026739",
+                "title": "A Primer on Neural Network Models for Natural Language Processing",
+                "citation_info": "Yoav Goldberg",
+                "pdf_url": "https://jair.org/index.php/jair/article/download/11030/26198"
+              }
+            ]
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "query": "information sources functional programming",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"scholar_result_id\":\"dcc3c608-ed0a-4af0-9c6b-b9468147beef\",\"scholar_title\":\"Functional programming information sources\",\"scholar_tool_name\":\"search_open_access_works\",\"papers\":[{\"id\":\"https://openalex.org/W3035965352\",\"title\":\"Array programming with NumPy\",\"citation_info\":\"Charles R. Harris, K. Jarrod Millman, Stéfan J. van der Walt, Ralf Gommers, Pauli Virtanen, David Cournapeau, Eric Wieser, Julian Taylor, Sebastian Berg, Nathaniel J. Smith, Robert Kern, Matti Picus, Stephan Hoyer, Marten H. van Kerkwijk, Matthew Brett, Allan Haldane, Jaime Fernández del Río, Mark Wiebe, Pearu Peterson, Pierre Gérard-Marchant, Kevin Sheppard, Tyler Reddy, Warren Weckesser, Hameer Abbasi, Christoph Gohlke, Travis E. Oliphant\",\"pdf_url\":\"https://www.nature.com/articles/s41586-020-2649-2.pdf\"},{\"id\":\"https://openalex.org/W2150220236\",\"title\":\"Software survey: VOSviewer, a computer program for bibliometric mapping\",\"citation_info\":\"Nees Jan van Eck, Ludo Waltman\",\"pdf_url\":\"https://link.springer.com/content/pdf/10.1007/s11192-009-0146-3.pdf\"},{\"id\":\"https://openalex.org/W2120145199\",\"title\":\"QUANTUM ESPRESSO: a modular and open-source software project for quantum simulations of materials\",\"citation_info\":\"Paolo Giannozzi, Stefano Baroni, Nicola Bonini, Matteo Calandra, Roberto Car, Carlo Cavazzoni, Davide Ceresoli, G. Chiarotti, Matteo Cococcioni, Ismaïla Dabo, Andrea Dal Corso, Stefano de Gironcoli, Stefano Fabris, Guido Fratesi, Ralph Gebauer, U. Gerstmann, Christos Gougoussis, Anton Kokalj, Michele Lazzeri, Layla Martin‐Samos, Nicola Marzari, Francesco Mauri, Riccardo Mazzarello, Stefano Paolini, Alfredo Pasquarello, Lorenzo Paulatto, Carlo Sbraccia, Sandro Scandolo, Gabriele Sclauzero, Ari Paavo Seitsonen, Alexander Smogunov, Paolo Umari, Renata M. M. Wentzcovitch\",\"pdf_url\":\"https://iopscience.iop.org/article/10.1088/0953-8984/21/39/395502/pdf\"},{\"id\":\"https://openalex.org/W2513506562\",\"title\":\"VSEARCH: a versatile open source tool for metagenomics\",\"citation_info\":\"Torbjørn Rognes, Tomáš Flouri, Ben Nichols, Christopher Quince, Frédéric Mahé\",\"pdf_url\":\"https://peerj.com/articles/2584.pdf\"},{\"id\":\"https://openalex.org/W1532325895\",\"title\":\"Introduction to information retrieval\",\"citation_info\":\"Christopher D. Manning, Prabhakar Raghavan, Hinrich Schütze\",\"pdf_url\":\"http://nlp.stanford.edu/IR-book/pdf/irbookonlinereading.pdf\"},{\"id\":\"https://openalex.org/W2148080316\",\"title\":\"Special Care Units and Traditional Care in Dementia: Relationship with Behavior, Cognition, Functional Status and Quality of Life - A Review\",\"citation_info\":\"Jeroen S. Kok, Ina J. Berg, Erik Scherder\",\"pdf_url\":\"https://karger.com/dee/article-pdf/3/1/360/2562810/000353441.pdf\"},{\"id\":\"https://openalex.org/W2133465414\",\"title\":\"Bioinformatics enrichment tools: paths toward the comprehensive functional analysis of large gene lists\",\"citation_info\":\"Da Wei Huang, Brad T. Sherman, Richard A. Lempicki\",\"pdf_url\":\"https://academic.oup.com/nar/article-pdf/37/1/1/17059338/gkn923.pdf\"},{\"id\":\"https://openalex.org/W4308834893\",\"title\":\"The STRING database in 2023: protein–protein association networks and functional enrichment analyses for any sequenced genome of interest\",\"citation_info\":\"Damian Szklarczyk, Rebecca L. Kirsch, Mikaela Koutrouli, Katerina C. Nastou, Farrokh Mehryary, Radja Hachilif, Annika L. Gable, Tao Fang, Nadezhda T. Doncheva, Sampo Pyysalo, Peer Bork, Lars Juhl Jensen, Christian von Mering\",\"pdf_url\":\"https://academic.oup.com/nar/article-pdf/51/D1/D638/48440966/gkac1000.pdf\"},{\"id\":\"https://openalex.org/W4220831425\",\"title\":\"DAVID: a web server for functional enrichment analysis and functional annotation of gene lists (2021 update)\",\"citation_info\":\"Brad T. Sherman, Ming Hao, Ju Qiu, Xiaoli Jiao, Michael Baseler, Henry Clifford Lane, Tomozumi Imamichi, Weizhong Chang\",\"pdf_url\":\"https://academic.oup.com/nar/article-pdf/50/W1/W216/44376821/gkac194.pdf\"},{\"id\":\"https://openalex.org/W2132262459\",\"title\":\"CHARMM: The biomolecular simulation program\",\"citation_info\":\"Bernard R. Brooks, Charles L. Brooks, Alexander D. MacKerell, Lennart Nilsson, Robert John Petrella, Benoı̂t Roux, Youngdo Won, Georgios Archontis, Christian Bartels, Stefan Boresch, Amedeo Caflisch, Leo S. D. Caves, Qiang Cui, Aaron R. Dinner, Michael Feig, Stefan Fischer, Jun Gao, Milan Hodošček, Wonpil Im, Krzysztof Kuczera, Themis Lazaridis, Jianpeng Ma, Victor Ovchinnikov, Emanuele Paci, Richard W. Pastor, Carol Beth Post, Jingzhi Pu, Michael R. Schaefer, Bruce Tidor, Richard M. Venable, H. Lee Woodcock, Xiaojing Wu, Wei Yuan Yang, Darrin M. York, Martin Karplus\",\"pdf_url\":\"https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/jcc.21287\"},{\"id\":\"https://openalex.org/W2106578986\",\"title\":\"A program for annotating and predicting the effects of single nucleotide polymorphisms, SnpEff\",\"citation_info\":\"Pablo Cingolani, Adrian E. Platts, Le Lily Wang, Melissa Coon, Tung Thanh Nguyen, Luan Wang, Susan J. Land, Xiangyi Lu, Douglas Mark Ruden\",\"pdf_url\":\"https://www.tandfonline.com/doi/pdf/10.4161/fly.19695?needAccess=true&role=button\"},{\"id\":\"https://openalex.org/W2166073443\",\"title\":\"FieldTrip: Open Source Software for Advanced Analysis of MEG, EEG, and Invasive Electrophysiological Data\",\"citation_info\":\"Robert Oostenveld, Pascal Henry Fries, Eric Maris, Jan‐Mathijs Schoffelen\",\"pdf_url\":\"https://downloads.hindawi.com/journals/cin/2011/156869.pdf\"},{\"id\":\"https://openalex.org/W2113613985\",\"title\":\"STRING 8--a global view on proteins and their functional interactions in 630 organisms\",\"citation_info\":\"Lars Juhl Jensen, Michael Kuhn, M. Stark, Samuel Chaffron, Christopher J. Creevey, Jean Muller, Tobias Doerks, Philippe Julien, Alexander CJ Roth, Milan Simonovic, Peer Bork, Christian von Mering\",\"pdf_url\":\"https://academic.oup.com/nar/article-pdf/37/suppl_1/D412/3276524/gkn760.pdf\"},{\"id\":\"https://openalex.org/W2577537660\",\"title\":\"Stan : A Probabilistic Programming Language\",\"citation_info\":\"Bob Carpenter, Andrew Gelman, Matthew D. Hoffman, Daniel C. Lee, Ben Goodrich, Michael Betancourt, Marcus A. Brubaker, Jiqiang Guo, Peter Li, Allen Beye Riddell\",\"pdf_url\":\"https://www.jstatsoft.org/index.php/jss/article/view/v076i01/v76i01.pdf\"},{\"id\":\"https://openalex.org/W2952481429\",\"title\":\"QuPath: Open source software for digital pathology image analysis\",\"citation_info\":\"Peter Bankhead, Maurice Bernard Loughrey, José A. Fernández, Yvonne Dombrowski, Darragh G. McArt, Philip D. Dunne, Stephen McQuaid, Ronan T. Gray, Liam Murray, Helen G. Coleman, Jacqueline A. James, Manuel Salto‐Tellez, Peter W. Hamilton\",\"pdf_url\":\"https://www.nature.com/articles/s41598-017-17204-5.pdf\"},{\"id\":\"https://openalex.org/W2168420558\",\"title\":\"The MIQE Guidelines: Minimum Information for Publication of Quantitative Real-Time PCR Experiments\",\"citation_info\":\"Stephen Andrew Bustin, Vladimı́r Beneš, Jeremy A. Garson, Jan Hellemans, Jim F. Huggett, Mikael Kubista, Reinhold D. Mueller, Tania Nolan, Michael Walter Pfaffl, Gregory L. Shipley, Jo Vandesompele, Carl T. Wittwer\",\"pdf_url\":\"http://clinchem.aaccjnls.org/content/clinchem/55/4/611.full.pdf\"},{\"id\":\"https://openalex.org/W2110300022\",\"title\":\"Predictive functional profiling of microbial communities using 16S rRNA marker gene sequences\",\"citation_info\":\"Morgan G. I. Langille, Jesse Zaneveld, J. Gregory Caporaso, Daniel T. McDonald, Dan Knights, Joshua A Reyes, José C. Clemente, Deron E. Burkepile, Rebecca L. Vega Thurber, Rob Knight, Robert Gerald Beiko, Curtis Huttenhower\",\"pdf_url\":\"https://escholarship.org/uc/item/6576r3f3\"},{\"id\":\"https://openalex.org/W3003257820\",\"title\":\"SciPy 1.0: fundamental algorithms for scientific computing in Python\",\"citation_info\":\"Pauli Virtanen, Ralf Gommers, Travis E. Oliphant, Matt Haberland, Tyler Reddy, David Cournapeau, Evgeni Burovski, Pearu Peterson, Warren Weckesser, Jonathan Bright, Stéfan J. van der Walt, Matthew Brett, Joshua Wilson, K. Jarrod Millman, Nikolay Mayorov, Andrew R. J. Nelson, Eric Jones, Robert Kern, Eric Larson, C J Carey, İlhan Polat, Yu Feng, Eric W. Moore, Jake VanderPlas, Denis Laxalde, Josef Perktold, Robert Cimrman, Ian Henriksen, Eric Antonio Quintero, Charles R. Harris, Anne M. Archibald, Antônio H. Ribeiro, Fabian Pedregosa, Paul van Mulbregt, SciPy 1.0 Contributors, A. Vijaykumar, Alessandro Pietro Bardelli, Alex Rothberg, Andreas Hilboll, Andreas Kloeckner, Anthony Scopatz, Antony Lee, Ariel Rokem, C. Nathan Woods, Chad Fulton, Charles Masson, Christian Häggström, Clark Fitzgerald, David A. Nicholson, David R. Hagen, Dmitrii V. Ṗasechnik, Emanuele Olivetti, Eric Martin, Eric Wieser, Fabrice Silva, Felix Lenders, Florian Wilhelm, G. Young, Gavin A. Price, Gert‐Ludwig Ingold, Gregory E. Allen, Gregory R. Lee, Hervé Audren, Irvin Probst, Jörg P. Dietrich, Jacob Silterra, James T. Webber, Janko Slavič, Joel Nothman, Johannes Buchner, Johannes Kulick, Johannes L. Schönberger, José Vinícius de Miranda Cardoso, Joscha Reimer, Joseph Harrington, Juan Luis Cano Rodríguez, Juan Nunez-Iglesias, Justin Kuczynski, Kevin Tritz, Martin Thoma, Matthew Newville, Matthias Kümmerer, Maximilian Bolingbroke, Michael Tartre, Mikhail Pak, Nathaniel J. Smith, Nikolai Nowaczyk, Nikolay Shebanov, Oleksandr Pavlyk, Per A. Brodtkorb, Perry Lee, Robert T. McGibbon, Roman Feldbauer, Sam Lewis, Sam Tygier, Scott Sievert, Sebastiano Vigna, Stefan Peterson, Surhud More, Tadeusz Pudlik\",\"pdf_url\":\"http://urn.fi/URN:NBN:fi:jyu-202002192111\"},{\"id\":\"https://openalex.org/W2099540110\",\"title\":\"NIH Image to ImageJ: 25 years of image analysis\",\"citation_info\":\"Caroline A Schneider, Wayne S. Rasband, Kevin W. Eliceiri\",\"pdf_url\":\"https://www.nature.com/articles/nmeth.2089.pdf\"},{\"id\":\"https://openalex.org/W2102304447\",\"title\":\"Identification and analysis of functional elements in 1% of the human genome by the ENCODE pilot project\",\"citation_info\":\"Ewan Birney, Paul Flicek, Damian Keefe, Ari Löytynoja, Simon Whelan, Fabio Pardi, Tim Massingham, Abel Ureta‐Vidal, Benedict Paten, Nick Goldman, Ewan Birney, John A. Stamatoyannopoulos, Robert E. Thurman, Michael S. Kuehn, Shane J. Neph, Nathan Day, Michael O. Dorschner, Jeff Goldy, Andrew K. Haydock, Richard Humbert, Kirsten Lee, Fidencio Jun Neri, Peter J. Sabo, Richard S. Sandstrom, Anthony Shafer, Molly Weaver, William Stafford Noble, Anindya Dutta, Christopher M. Taylor, Ankit Malhotra, Patrick J. Boyle, Neerja Karnani, Gregory C. Lefebvre, Man Yu, Roderic Guigó, Tyler Alioto, France Denoeud, Robert Castelo, Julien Lagarde, Josep F. Abril, Núria López-Bigas, Eduardo Eyras, T Gingeras, Philipp Kapranov, Srinka Ghosh, Sujit Dike, Jill Cheng, Jörg Drenkow, Ian Bell, Sylvain Foissac, Evelyn J. Cheung, Madhavan Ganesh, Sandeep A. Patel, Hari Tammana, David A. Nix, Elliott H. Margulies, Francis S. Collins, E GREEN, James C. Mullikin, Gerard G. Bouffard, Jacquelyn R. Idol, Valerie V. Braden Maduro, Robert W. Blakesley, Zhiping Weng, Yutao Fu, Ulaş Karaöz, Anason S. Halees, Xiaoling Zhang, Mousheng Xu, Jane M. Lin, Hennady P. Shulha, Jaafar N. Sleiman Haidar, Yong Lin Yu, Michael Snyder, Ugrappa Nagalakshmi, Jiaqian Wu, Ghia M. Euskirchen, Stephen E. Hartman, Alexander Eckehart Urban, Peter Kraus, Joel S. Rozowsky, Deyou Zheng, Jan O. Korbel, Olof Emanuelsson, Mark Gerstein, Michael R. Seringhaus, Zhengdong D. Zhang, Emmanouil T. Dermitzakis, Christoph M. Koch, Robert Andrews, N. P. Carter, Gayle K. Clelland, Pawandeep Dhami, Shane C. Dillon, Heike Fiegler, Keith James, David L.P. Vetrie, Sarah Wilcox, Ian Dunham, Adam Frankish\",\"pdf_url\":\"https://www.nature.com/articles/nature05874.pdf\"},{\"id\":\"https://openalex.org/W2900756811\",\"title\":\"Minimal information for studies of extracellular vesicles 2018 (MISEV2018): a position statement of the International Society for Extracellular Vesicles and update of the MISEV2014 guidelines\",\"citation_info\":\"Clotilde Théry, Kenneth Whitaker Witwer, Elena Aïkawa, María José Alcaraz, Johnathon David Anderson, Ramaroson Andriantsitohaina, Anna Antoniou, Tanina Arab, Fabienne Archer, Georgia K. Atkin‐Smith, D. Craig Ayre, Jean‐Marie Bach, Daniel Bachurski, Hossein Baharvand, Leonora Balaj, Shawn Baldacchino, Natalie Norwood Bauer, Amy A. Baxter, Mary Bebawy, Carla J. Beckham, Apolonija Bedina Zavec, Abderrahim Benmoussa, Anna Concetta Berardi, Paolo Bergese, Ewa Bielska, Cherie Blenkiron, Sylwia Bobis‐Wozowicz, Éric Boilard, Wilfrid Boireau, Antonella Bongiovanni, Francesc Enric Borràs, Steffi Bösch, Chantal M. Boulanger, Xandra O. Breakefield, Andrew M. Breglio, Meadhbh Á. Brennan, David R. Brigstock, Alain R. Brisson, Marike L. D. Broekman, Jacqueline Bromberg, Paulina Bryl‐Górecka, Shilpa J. Buch, Amy H. Buck, Dylan E Burger, Sara Busatto, Dominik Buschmann, Benedetta Bussolati, Edit I. Buzás, James Brian Byrd, Giovanni Camussi, David R. F. Carter, Sarah Caruso, Lawrence W. Chamley, Yu‐Ting Chang, Chihchen Chen, Daiwen Chen, Lesley Cheng, Andrew R. Chin, Aled Clayton, Stefano Piatto Clerici, Alex Cocks, Emanuele Cocucci, Robert J. Coffey, Anabela Cordeiro‐da‐Silva, Yvonne Couch, Frank A. W. Coumans, Beth Coyle, Rossella Crescitelli, Miriã Ferreira Criado, Crislyn D’Souza‐Schorey, Saumya Das, Amrita Datta Chaudhuri, Paola de Candia, Eliezer F De Santana, Olivier De Wever, Hernando Antonio Del Portillo, Tanguy Demaret, Sarah Deville, Andrew Devitt, Bert Dhondt, Dolores Di Vizio, Lothar C. Dieterich, Vincenza Dolo, Ana Paula Domínguez Rubio, Massimo Dominici, Maurício Rocha Dourado, Tom A. P. Driedonks, Filipe V. Duarte, Heather M. Duncan, Ramon M. Eichenberger, Karin M. Ekström, Samir EL Andaloussi, Céline Élie-Caille, Uta Erdbrügger, Juan Manuel Falcón‐Pérez, Farah Fatima, Jason E. Fish, Miguel Flores‐Bellver, András I. Försönits, Annie Frelet‐Barrand\",\"pdf_url\":\"https://www.tandfonline.com/doi/pdf/10.1080/20013078.2018.1535750?needAccess=true\"},{\"id\":\"https://openalex.org/W2142437744\",\"title\":\"Functional profiling of the Saccharomyces cerevisiae genome\",\"citation_info\":\"Guri N. Giaever, Angela M. Chu, Li Ni, Carla J. Connelly, Linda Riles, Steeve Véronneau, Sally Dow, Ankuta Lucau-Danila, Keith M. Anderson, Bruno André, Adam P. Arkin, Anna Astromoff, Mohamed El Bakkoury, Rhonda Bangham, Rocí­o Benito, Sophie Brachat, Stefano Campanaro, Matt Curtiss, Karen Davis, Adam M. Deutschbauer, Karl-Dieter Entian, Patrick J. Flaherty, Françoise Foury, David J Garfinkel, Mark Gerstein, Deanna Gotte, Ulrich Güldener, Johannes H. Hegemann, Svenja Hempel, Zelek S. Herman, Daniel F. Jaramillo, Diane E Kelly, Steven L. Kelly, Peter Kötter, Darlene LaBonte, David C. Lamb, Ning Lan, Hong Liang, Hong Liao, Lucy Liu, C. Luo, Marc P. Lussier, Rong Mao, P Ménard, Siew Loon Ooi, José Luis Revuelta, Christopher J. Roberts, Matthias Rose, Petra Ross‐Macdonald, Bart Scherens, Greg Schimmack, Brenda K. Shafer, Daniel D. Shoemaker, Sharon Sookhai-Mahadeo, Reginald K. Storms, Jeffrey N. Strathern, Giorgio Valle, Marleen Voet, Guido Volckaert, Ching‐Yun Wang, Teresa R. Ward, Julie Wilhelmy, Elizabeth A. Winzeler, Yonghong Yang, Grace S. Yen, Elaine M. Youngman, Kexin Yu, Howard Bussey, Jef D. Boeke, Michael Snyder, Peter Philippsen, Ronald W. Davis, Mark Johnston\",\"pdf_url\":\"https://scholarworks.umass.edu/math_faculty_pubs/1273\"},{\"id\":\"https://openalex.org/W2944545583\",\"title\":\"g:Profiler: a web server for functional enrichment analysis and conversions of gene lists (2019 update)\",\"citation_info\":\"Uku Raudvere, Liis Kolberg, Ivan Kuzmin, Tambet Arak, Priit Adler, Hedi Peterson, Jaak Vilo\",\"pdf_url\":\"https://academic.oup.com/nar/article-pdf/47/W1/W191/28879887/gkz369.pdf\"}]}"
+            }
+          ],
+          "structuredContent": {
+            "scholar_result_id": "dcc3c608-ed0a-4af0-9c6b-b9468147beef",
+            "scholar_title": "Functional programming information sources",
+            "scholar_tool_name": "search_open_access_works",
+            "papers": [
+              {
+                "id": "https://openalex.org/W3035965352",
+                "title": "Array programming with NumPy",
+                "citation_info": "Charles R. Harris, K. Jarrod Millman, Stéfan J. van der Walt, Ralf Gommers, Pauli Virtanen, David Cournapeau, Eric Wieser, Julian Taylor, Sebastian Berg, Nathaniel J. Smith, Robert Kern, Matti Picus, Stephan Hoyer, Marten H. van Kerkwijk, Matthew Brett, Allan Haldane, Jaime Fernández del Río, Mark Wiebe, Pearu Peterson, Pierre Gérard-Marchant, Kevin Sheppard, Tyler Reddy, Warren Weckesser, Hameer Abbasi, Christoph Gohlke, Travis E. Oliphant",
+                "pdf_url": "https://www.nature.com/articles/s41586-020-2649-2.pdf"
+              },
+              {
+                "id": "https://openalex.org/W2150220236",
+                "title": "Software survey: VOSviewer, a computer program for bibliometric mapping",
+                "citation_info": "Nees Jan van Eck, Ludo Waltman",
+                "pdf_url": "https://link.springer.com/content/pdf/10.1007/s11192-009-0146-3.pdf"
+              },
+              {
+                "id": "https://openalex.org/W2120145199",
+                "title": "QUANTUM ESPRESSO: a modular and open-source software project for quantum simulations of materials",
+                "citation_info": "Paolo Giannozzi, Stefano Baroni, Nicola Bonini, Matteo Calandra, Roberto Car, Carlo Cavazzoni, Davide Ceresoli, G. Chiarotti, Matteo Cococcioni, Ismaïla Dabo, Andrea Dal Corso, Stefano de Gironcoli, Stefano Fabris, Guido Fratesi, Ralph Gebauer, U. Gerstmann, Christos Gougoussis, Anton Kokalj, Michele Lazzeri, Layla Martin‐Samos, Nicola Marzari, Francesco Mauri, Riccardo Mazzarello, Stefano Paolini, Alfredo Pasquarello, Lorenzo Paulatto, Carlo Sbraccia, Sandro Scandolo, Gabriele Sclauzero, Ari Paavo Seitsonen, Alexander Smogunov, Paolo Umari, Renata M. M. Wentzcovitch",
+                "pdf_url": "https://iopscience.iop.org/article/10.1088/0953-8984/21/39/395502/pdf"
+              },
+              {
+                "id": "https://openalex.org/W2513506562",
+                "title": "VSEARCH: a versatile open source tool for metagenomics",
+                "citation_info": "Torbjørn Rognes, Tomáš Flouri, Ben Nichols, Christopher Quince, Frédéric Mahé",
+                "pdf_url": "https://peerj.com/articles/2584.pdf"
+              },
+              {
+                "id": "https://openalex.org/W1532325895",
+                "title": "Introduction to information retrieval",
+                "citation_info": "Christopher D. Manning, Prabhakar Raghavan, Hinrich Schütze",
+                "pdf_url": "http://nlp.stanford.edu/IR-book/pdf/irbookonlinereading.pdf"
+              },
+              {
+                "id": "https://openalex.org/W2148080316",
+                "title": "Special Care Units and Traditional Care in Dementia: Relationship with Behavior, Cognition, Functional Status and Quality of Life - A Review",
+                "citation_info": "Jeroen S. Kok, Ina J. Berg, Erik Scherder",
+                "pdf_url": "https://karger.com/dee/article-pdf/3/1/360/2562810/000353441.pdf"
+              },
+              {
+                "id": "https://openalex.org/W2133465414",
+                "title": "Bioinformatics enrichment tools: paths toward the comprehensive functional analysis of large gene lists",
+                "citation_info": "Da Wei Huang, Brad T. Sherman, Richard A. Lempicki",
+                "pdf_url": "https://academic.oup.com/nar/article-pdf/37/1/1/17059338/gkn923.pdf"
+              },
+              {
+                "id": "https://openalex.org/W4308834893",
+                "title": "The STRING database in 2023: protein–protein association networks and functional enrichment analyses for any sequenced genome of interest",
+                "citation_info": "Damian Szklarczyk, Rebecca L. Kirsch, Mikaela Koutrouli, Katerina C. Nastou, Farrokh Mehryary, Radja Hachilif, Annika L. Gable, Tao Fang, Nadezhda T. Doncheva, Sampo Pyysalo, Peer Bork, Lars Juhl Jensen, Christian von Mering",
+                "pdf_url": "https://academic.oup.com/nar/article-pdf/51/D1/D638/48440966/gkac1000.pdf"
+              },
+              {
+                "id": "https://openalex.org/W4220831425",
+                "title": "DAVID: a web server for functional enrichment analysis and functional annotation of gene lists (2021 update)",
+                "citation_info": "Brad T. Sherman, Ming Hao, Ju Qiu, Xiaoli Jiao, Michael Baseler, Henry Clifford Lane, Tomozumi Imamichi, Weizhong Chang",
+                "pdf_url": "https://academic.oup.com/nar/article-pdf/50/W1/W216/44376821/gkac194.pdf"
+              },
+              {
+                "id": "https://openalex.org/W2132262459",
+                "title": "CHARMM: The biomolecular simulation program",
+                "citation_info": "Bernard R. Brooks, Charles L. Brooks, Alexander D. MacKerell, Lennart Nilsson, Robert John Petrella, Benoı̂t Roux, Youngdo Won, Georgios Archontis, Christian Bartels, Stefan Boresch, Amedeo Caflisch, Leo S. D. Caves, Qiang Cui, Aaron R. Dinner, Michael Feig, Stefan Fischer, Jun Gao, Milan Hodošček, Wonpil Im, Krzysztof Kuczera, Themis Lazaridis, Jianpeng Ma, Victor Ovchinnikov, Emanuele Paci, Richard W. Pastor, Carol Beth Post, Jingzhi Pu, Michael R. Schaefer, Bruce Tidor, Richard M. Venable, H. Lee Woodcock, Xiaojing Wu, Wei Yuan Yang, Darrin M. York, Martin Karplus",
+                "pdf_url": "https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/jcc.21287"
+              },
+              {
+                "id": "https://openalex.org/W2106578986",
+                "title": "A program for annotating and predicting the effects of single nucleotide polymorphisms, SnpEff",
+                "citation_info": "Pablo Cingolani, Adrian E. Platts, Le Lily Wang, Melissa Coon, Tung Thanh Nguyen, Luan Wang, Susan J. Land, Xiangyi Lu, Douglas Mark Ruden",
+                "pdf_url": "https://www.tandfonline.com/doi/pdf/10.4161/fly.19695?needAccess=true&role=button"
+              },
+              {
+                "id": "https://openalex.org/W2166073443",
+                "title": "FieldTrip: Open Source Software for Advanced Analysis of MEG, EEG, and Invasive Electrophysiological Data",
+                "citation_info": "Robert Oostenveld, Pascal Henry Fries, Eric Maris, Jan‐Mathijs Schoffelen",
+                "pdf_url": "https://downloads.hindawi.com/journals/cin/2011/156869.pdf"
+              },
+              {
+                "id": "https://openalex.org/W2113613985",
+                "title": "STRING 8--a global view on proteins and their functional interactions in 630 organisms",
+                "citation_info": "Lars Juhl Jensen, Michael Kuhn, M. Stark, Samuel Chaffron, Christopher J. Creevey, Jean Muller, Tobias Doerks, Philippe Julien, Alexander CJ Roth, Milan Simonovic, Peer Bork, Christian von Mering",
+                "pdf_url": "https://academic.oup.com/nar/article-pdf/37/suppl_1/D412/3276524/gkn760.pdf"
+              },
+              {
+                "id": "https://openalex.org/W2577537660",
+                "title": "Stan : A Probabilistic Programming Language",
+                "citation_info": "Bob Carpenter, Andrew Gelman, Matthew D. Hoffman, Daniel C. Lee, Ben Goodrich, Michael Betancourt, Marcus A. Brubaker, Jiqiang Guo, Peter Li, Allen Beye Riddell",
+                "pdf_url": "https://www.jstatsoft.org/index.php/jss/article/view/v076i01/v76i01.pdf"
+              },
+              {
+                "id": "https://openalex.org/W2952481429",
+                "title": "QuPath: Open source software for digital pathology image analysis",
+                "citation_info": "Peter Bankhead, Maurice Bernard Loughrey, José A. Fernández, Yvonne Dombrowski, Darragh G. McArt, Philip D. Dunne, Stephen McQuaid, Ronan T. Gray, Liam Murray, Helen G. Coleman, Jacqueline A. James, Manuel Salto‐Tellez, Peter W. Hamilton",
+                "pdf_url": "https://www.nature.com/articles/s41598-017-17204-5.pdf"
+              },
+              {
+                "id": "https://openalex.org/W2168420558",
+                "title": "The MIQE Guidelines: Minimum Information for Publication of Quantitative Real-Time PCR Experiments",
+                "citation_info": "Stephen Andrew Bustin, Vladimı́r Beneš, Jeremy A. Garson, Jan Hellemans, Jim F. Huggett, Mikael Kubista, Reinhold D. Mueller, Tania Nolan, Michael Walter Pfaffl, Gregory L. Shipley, Jo Vandesompele, Carl T. Wittwer",
+                "pdf_url": "http://clinchem.aaccjnls.org/content/clinchem/55/4/611.full.pdf"
+              },
+              {
+                "id": "https://openalex.org/W2110300022",
+                "title": "Predictive functional profiling of microbial communities using 16S rRNA marker gene sequences",
+                "citation_info": "Morgan G. I. Langille, Jesse Zaneveld, J. Gregory Caporaso, Daniel T. McDonald, Dan Knights, Joshua A Reyes, José C. Clemente, Deron E. Burkepile, Rebecca L. Vega Thurber, Rob Knight, Robert Gerald Beiko, Curtis Huttenhower",
+                "pdf_url": "https://escholarship.org/uc/item/6576r3f3"
+              },
+              {
+                "id": "https://openalex.org/W3003257820",
+                "title": "SciPy 1.0: fundamental algorithms for scientific computing in Python",
+                "citation_info": "Pauli Virtanen, Ralf Gommers, Travis E. Oliphant, Matt Haberland, Tyler Reddy, David Cournapeau, Evgeni Burovski, Pearu Peterson, Warren Weckesser, Jonathan Bright, Stéfan J. van der Walt, Matthew Brett, Joshua Wilson, K. Jarrod Millman, Nikolay Mayorov, Andrew R. J. Nelson, Eric Jones, Robert Kern, Eric Larson, C J Carey, İlhan Polat, Yu Feng, Eric W. Moore, Jake VanderPlas, Denis Laxalde, Josef Perktold, Robert Cimrman, Ian Henriksen, Eric Antonio Quintero, Charles R. Harris, Anne M. Archibald, Antônio H. Ribeiro, Fabian Pedregosa, Paul van Mulbregt, SciPy 1.0 Contributors, A. Vijaykumar, Alessandro Pietro Bardelli, Alex Rothberg, Andreas Hilboll, Andreas Kloeckner, Anthony Scopatz, Antony Lee, Ariel Rokem, C. Nathan Woods, Chad Fulton, Charles Masson, Christian Häggström, Clark Fitzgerald, David A. Nicholson, David R. Hagen, Dmitrii V. Ṗasechnik, Emanuele Olivetti, Eric Martin, Eric Wieser, Fabrice Silva, Felix Lenders, Florian Wilhelm, G. Young, Gavin A. Price, Gert‐Ludwig Ingold, Gregory E. Allen, Gregory R. Lee, Hervé Audren, Irvin Probst, Jörg P. Dietrich, Jacob Silterra, James T. Webber, Janko Slavič, Joel Nothman, Johannes Buchner, Johannes Kulick, Johannes L. Schönberger, José Vinícius de Miranda Cardoso, Joscha Reimer, Joseph Harrington, Juan Luis Cano Rodríguez, Juan Nunez-Iglesias, Justin Kuczynski, Kevin Tritz, Martin Thoma, Matthew Newville, Matthias Kümmerer, Maximilian Bolingbroke, Michael Tartre, Mikhail Pak, Nathaniel J. Smith, Nikolai Nowaczyk, Nikolay Shebanov, Oleksandr Pavlyk, Per A. Brodtkorb, Perry Lee, Robert T. McGibbon, Roman Feldbauer, Sam Lewis, Sam Tygier, Scott Sievert, Sebastiano Vigna, Stefan Peterson, Surhud More, Tadeusz Pudlik",
+                "pdf_url": "http://urn.fi/URN:NBN:fi:jyu-202002192111"
+              },
+              {
+                "id": "https://openalex.org/W2099540110",
+                "title": "NIH Image to ImageJ: 25 years of image analysis",
+                "citation_info": "Caroline A Schneider, Wayne S. Rasband, Kevin W. Eliceiri",
+                "pdf_url": "https://www.nature.com/articles/nmeth.2089.pdf"
+              },
+              {
+                "id": "https://openalex.org/W2102304447",
+                "title": "Identification and analysis of functional elements in 1% of the human genome by the ENCODE pilot project",
+                "citation_info": "Ewan Birney, Paul Flicek, Damian Keefe, Ari Löytynoja, Simon Whelan, Fabio Pardi, Tim Massingham, Abel Ureta‐Vidal, Benedict Paten, Nick Goldman, Ewan Birney, John A. Stamatoyannopoulos, Robert E. Thurman, Michael S. Kuehn, Shane J. Neph, Nathan Day, Michael O. Dorschner, Jeff Goldy, Andrew K. Haydock, Richard Humbert, Kirsten Lee, Fidencio Jun Neri, Peter J. Sabo, Richard S. Sandstrom, Anthony Shafer, Molly Weaver, William Stafford Noble, Anindya Dutta, Christopher M. Taylor, Ankit Malhotra, Patrick J. Boyle, Neerja Karnani, Gregory C. Lefebvre, Man Yu, Roderic Guigó, Tyler Alioto, France Denoeud, Robert Castelo, Julien Lagarde, Josep F. Abril, Núria López-Bigas, Eduardo Eyras, T Gingeras, Philipp Kapranov, Srinka Ghosh, Sujit Dike, Jill Cheng, Jörg Drenkow, Ian Bell, Sylvain Foissac, Evelyn J. Cheung, Madhavan Ganesh, Sandeep A. Patel, Hari Tammana, David A. Nix, Elliott H. Margulies, Francis S. Collins, E GREEN, James C. Mullikin, Gerard G. Bouffard, Jacquelyn R. Idol, Valerie V. Braden Maduro, Robert W. Blakesley, Zhiping Weng, Yutao Fu, Ulaş Karaöz, Anason S. Halees, Xiaoling Zhang, Mousheng Xu, Jane M. Lin, Hennady P. Shulha, Jaafar N. Sleiman Haidar, Yong Lin Yu, Michael Snyder, Ugrappa Nagalakshmi, Jiaqian Wu, Ghia M. Euskirchen, Stephen E. Hartman, Alexander Eckehart Urban, Peter Kraus, Joel S. Rozowsky, Deyou Zheng, Jan O. Korbel, Olof Emanuelsson, Mark Gerstein, Michael R. Seringhaus, Zhengdong D. Zhang, Emmanouil T. Dermitzakis, Christoph M. Koch, Robert Andrews, N. P. Carter, Gayle K. Clelland, Pawandeep Dhami, Shane C. Dillon, Heike Fiegler, Keith James, David L.P. Vetrie, Sarah Wilcox, Ian Dunham, Adam Frankish",
+                "pdf_url": "https://www.nature.com/articles/nature05874.pdf"
+              },
+              {
+                "id": "https://openalex.org/W2900756811",
+                "title": "Minimal information for studies of extracellular vesicles 2018 (MISEV2018): a position statement of the International Society for Extracellular Vesicles and update of the MISEV2014 guidelines",
+                "citation_info": "Clotilde Théry, Kenneth Whitaker Witwer, Elena Aïkawa, María José Alcaraz, Johnathon David Anderson, Ramaroson Andriantsitohaina, Anna Antoniou, Tanina Arab, Fabienne Archer, Georgia K. Atkin‐Smith, D. Craig Ayre, Jean‐Marie Bach, Daniel Bachurski, Hossein Baharvand, Leonora Balaj, Shawn Baldacchino, Natalie Norwood Bauer, Amy A. Baxter, Mary Bebawy, Carla J. Beckham, Apolonija Bedina Zavec, Abderrahim Benmoussa, Anna Concetta Berardi, Paolo Bergese, Ewa Bielska, Cherie Blenkiron, Sylwia Bobis‐Wozowicz, Éric Boilard, Wilfrid Boireau, Antonella Bongiovanni, Francesc Enric Borràs, Steffi Bösch, Chantal M. Boulanger, Xandra O. Breakefield, Andrew M. Breglio, Meadhbh Á. Brennan, David R. Brigstock, Alain R. Brisson, Marike L. D. Broekman, Jacqueline Bromberg, Paulina Bryl‐Górecka, Shilpa J. Buch, Amy H. Buck, Dylan E Burger, Sara Busatto, Dominik Buschmann, Benedetta Bussolati, Edit I. Buzás, James Brian Byrd, Giovanni Camussi, David R. F. Carter, Sarah Caruso, Lawrence W. Chamley, Yu‐Ting Chang, Chihchen Chen, Daiwen Chen, Lesley Cheng, Andrew R. Chin, Aled Clayton, Stefano Piatto Clerici, Alex Cocks, Emanuele Cocucci, Robert J. Coffey, Anabela Cordeiro‐da‐Silva, Yvonne Couch, Frank A. W. Coumans, Beth Coyle, Rossella Crescitelli, Miriã Ferreira Criado, Crislyn D’Souza‐Schorey, Saumya Das, Amrita Datta Chaudhuri, Paola de Candia, Eliezer F De Santana, Olivier De Wever, Hernando Antonio Del Portillo, Tanguy Demaret, Sarah Deville, Andrew Devitt, Bert Dhondt, Dolores Di Vizio, Lothar C. Dieterich, Vincenza Dolo, Ana Paula Domínguez Rubio, Massimo Dominici, Maurício Rocha Dourado, Tom A. P. Driedonks, Filipe V. Duarte, Heather M. Duncan, Ramon M. Eichenberger, Karin M. Ekström, Samir EL Andaloussi, Céline Élie-Caille, Uta Erdbrügger, Juan Manuel Falcón‐Pérez, Farah Fatima, Jason E. Fish, Miguel Flores‐Bellver, András I. Försönits, Annie Frelet‐Barrand",
+                "pdf_url": "https://www.tandfonline.com/doi/pdf/10.1080/20013078.2018.1535750?needAccess=true"
+              },
+              {
+                "id": "https://openalex.org/W2142437744",
+                "title": "Functional profiling of the Saccharomyces cerevisiae genome",
+                "citation_info": "Guri N. Giaever, Angela M. Chu, Li Ni, Carla J. Connelly, Linda Riles, Steeve Véronneau, Sally Dow, Ankuta Lucau-Danila, Keith M. Anderson, Bruno André, Adam P. Arkin, Anna Astromoff, Mohamed El Bakkoury, Rhonda Bangham, Rocí­o Benito, Sophie Brachat, Stefano Campanaro, Matt Curtiss, Karen Davis, Adam M. Deutschbauer, Karl-Dieter Entian, Patrick J. Flaherty, Françoise Foury, David J Garfinkel, Mark Gerstein, Deanna Gotte, Ulrich Güldener, Johannes H. Hegemann, Svenja Hempel, Zelek S. Herman, Daniel F. Jaramillo, Diane E Kelly, Steven L. Kelly, Peter Kötter, Darlene LaBonte, David C. Lamb, Ning Lan, Hong Liang, Hong Liao, Lucy Liu, C. Luo, Marc P. Lussier, Rong Mao, P Ménard, Siew Loon Ooi, José Luis Revuelta, Christopher J. Roberts, Matthias Rose, Petra Ross‐Macdonald, Bart Scherens, Greg Schimmack, Brenda K. Shafer, Daniel D. Shoemaker, Sharon Sookhai-Mahadeo, Reginald K. Storms, Jeffrey N. Strathern, Giorgio Valle, Marleen Voet, Guido Volckaert, Ching‐Yun Wang, Teresa R. Ward, Julie Wilhelmy, Elizabeth A. Winzeler, Yonghong Yang, Grace S. Yen, Elaine M. Youngman, Kexin Yu, Howard Bussey, Jef D. Boeke, Michael Snyder, Peter Philippsen, Ronald W. Davis, Mark Johnston",
+                "pdf_url": "https://scholarworks.umass.edu/math_faculty_pubs/1273"
+              },
+              {
+                "id": "https://openalex.org/W2944545583",
+                "title": "g:Profiler: a web server for functional enrichment analysis and conversions of gene lists (2019 update)",
+                "citation_info": "Uku Raudvere, Liis Kolberg, Ivan Kuzmin, Tambet Arak, Priit Adler, Hedi Peterson, Jaak Vilo",
+                "pdf_url": "https://academic.oup.com/nar/article-pdf/47/W1/W191/28879887/gkz369.pdf"
+              }
+            ]
+          },
+          "isError": false
+        }
+      }
+    }
+  ],
+  "doi_lookups": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"scholar_result_id\":\"98819f12-a19b-4c5d-a39f-95a191bb0a1e\",\"scholar_title\":\"Type errors and student repairs metadata\",\"scholar_tool_name\":\"get_open_access_work\",\"papers\":[{\"id\":\"https://openalex.org/W2763702833\",\"title\":\"How type errors were fixed and what students did?\",\"citation_info\":\"Baijun Wu, Sheng Chen\",\"pdf_url\":\"https://doi.org/10.1145/3133929\"}]}"
+          }
+        ],
+        "structuredContent": {
+          "scholar_result_id": "98819f12-a19b-4c5d-a39f-95a191bb0a1e",
+          "scholar_title": "Type errors and student repairs metadata",
+          "scholar_tool_name": "get_open_access_work",
+          "papers": [
+            {
+              "id": "https://openalex.org/W2763702833",
+              "title": "How type errors were fixed and what students did?",
+              "citation_info": "Baijun Wu, Sheng Chen",
+              "pdf_url": "https://doi.org/10.1145/3133929"
+            }
+          ]
+        },
+        "isError": false
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"scholar_result_id\":\"0f146089-14f8-48de-ba40-7213f4c0f7b6\",\"scholar_title\":\"Teaching obstacles full-text locations\",\"scholar_tool_name\":\"get_open_access_work\",\"papers\":[{\"id\":\"https://openalex.org/W3138758592\",\"title\":\"Obstacles when teaching functional programming\",\"citation_info\":\"Yusuf Moosa Motara\",\"pdf_url\":\"https://doi.org/10.1145/3442481.3442510\"}]}"
+          }
+        ],
+        "structuredContent": {
+          "scholar_result_id": "0f146089-14f8-48de-ba40-7213f4c0f7b6",
+          "scholar_title": "Teaching obstacles full-text locations",
+          "scholar_tool_name": "get_open_access_work",
+          "papers": [
+            {
+              "id": "https://openalex.org/W3138758592",
+              "title": "Obstacles when teaching functional programming",
+              "citation_info": "Yusuf Moosa Motara",
+              "pdf_url": "https://doi.org/10.1145/3442481.3442510"
+            }
+          ]
+        },
+        "isError": false
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"scholar_result_id\":\"90010620-0aa6-42cd-a2c5-1d4b54050336\",\"scholar_title\":\"Assignment conception transfer evidence\",\"scholar_tool_name\":\"get_open_access_work\",\"papers\":[{\"id\":\"https://openalex.org/W3029578211\",\"title\":\"Emergence of automated assignment conceptions in a functional programming course\",\"citation_info\":\"Tamar Paz, Tami Lapidot\",\"pdf_url\":\"https://doi.org/10.1145/1026487.1008044\"}]}"
+          }
+        ],
+        "structuredContent": {
+          "scholar_result_id": "90010620-0aa6-42cd-a2c5-1d4b54050336",
+          "scholar_title": "Assignment conception transfer evidence",
+          "scholar_tool_name": "get_open_access_work",
+          "papers": [
+            {
+              "id": "https://openalex.org/W3029578211",
+              "title": "Emergence of automated assignment conceptions in a functional programming course",
+              "citation_info": "Tamar Paz, Tami Lapidot",
+              "pdf_url": "https://doi.org/10.1145/1026487.1008044"
+            }
+          ]
+        },
+        "isError": false
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"scholar_result_id\":\"960542de-3f5b-4e70-9cb2-ad3946556503\",\"scholar_title\":\"Dys-functional student full-text locations\",\"scholar_tool_name\":\"get_open_access_work\",\"papers\":[{\"id\":\"https://openalex.org/W1590243920\",\"title\":\"The Dys-functional student\",\"citation_info\":\"Christopher D. Clack, Colin Myers\",\"pdf_url\":\"https://doi.org/10.1007/3-540-60675-0_51\"}]}"
+          }
+        ],
+        "structuredContent": {
+          "scholar_result_id": "960542de-3f5b-4e70-9cb2-ad3946556503",
+          "scholar_title": "Dys-functional student full-text locations",
+          "scholar_tool_name": "get_open_access_work",
+          "papers": [
+            {
+              "id": "https://openalex.org/W1590243920",
+              "title": "The Dys-functional student",
+              "citation_info": "Christopher D. Clack, Colin Myers",
+              "pdf_url": "https://doi.org/10.1007/3-540-60675-0_51"
+            }
+          ]
+        },
+        "isError": false
+      }
+    }
+  ]
+}

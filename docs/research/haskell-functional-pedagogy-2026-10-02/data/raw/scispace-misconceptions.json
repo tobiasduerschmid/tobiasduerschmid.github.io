@@ -1,0 +1,672 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Found 10 relevant papers on 'What misconceptions and conceptual difficulties do university students encounter when learning Haskell and functional programming, including types, recursion, higher-order functions, laziness, and monadic IO?'.\n\n\n1. Obstacles when teaching functional programming\n   2020 · Yusuf Moosa Motara\n   DOI: 10.1145/3442481.3442510\n   Abstract: This work describes a course in typed functional programming, the obstacles that are often encountered during the teaching of this course, and solutions which have been devised for those obstacles.\n\n2. The Dys-Functional Student\n   1995 · Christopher D. Clack, Colin Myers\n   DOI: 10.1007/3-540-60675-0_51\n   Abstract: Functional languages liberate students from complex syntax, complex semantics and complex memory allocation; allowing them to concentrate on problem-solving However, functional programming is not a universal panacea Students still have problems with language features, program concepts and the legacy of the imperative paradigm This paper aims to assist the lecturer asked to teach a functional language for the first time We present typical student mistakes, attempt to explain why these mistakes arise, and propose possible remedies\n\n3. The Haskell programmer's guide to the IO monad : don't panic\n   2005 · S. Klinger · CTIT technical report series\n   Abstract: Now, that you have started with Haskell, have you written a program doing IO yet, like reading a file or writing on the terminal? Then you have used the IO monad—but do you understand how it works? The standard explanation is, that the IO monad hides the non-functional IO actions —which do have side effects— from the functional world of Haskell. It prevents pollution of the functional programming style with side effects. However, since most beginning Haskell programmers (i.e., everyone I know and including me) lack knowledge about category theory, they have no clue about what a monad really is. Nor how this “hiding? works, apart from having IO actions disappearing beyond the borders of our knowledge.\r\nThis report scratches the surface of category theory, an abstract branch of algebra, just deep enough to find the monad structure. On the way we discuss the relations to the purely functional programming language Haskell. Finally it should become clear how the IO monad keeps Haskell pure. We do not explain how to use the IO monad, nor discuss all the functions available to the programmer. But we do talk about the theory behind it.\r\n\r\nIntended audience: Haskell programmers that stumbled across the IO monad, and now want to look under the hood. Haskell experience and the ability to read math formulae are mandatory.\n\n4. Proceedings Eighth and Ninth International Workshop on Trends in Functional Programming in Education\n   2022 · Hage, Jurriaan\n   DOI: 10.48550/arxiv.2008.08923\n   Abstract: This volume contains five papers, accepted after post-reviewing, based on presentations submitted to TFPIE 2019 and TFPIE 2020 that took places in Vancouver, Canada and Krakow, Poland respectively. TFPIE stands for Trends in Functional Programming in Education, where authors present research and experiences in teaching concepts of functional programming at any level. \n\n5. Proceedings Tenth and Eleventh International Workshop on Trends in Functional Programming In Education, TFPIE 2021 / 2022, Kraków, Poland (online), 16th February 2021 / 16th March 2022\n   2022 · Peter Achten, Elena Machkasova\n   DOI: 10.4204/eptcs.363.0\n   Abstract: This volume contains the papers, accepted after post-reviewing, based on presentations submitted to TFPIE 2021 and TFPIE 2022 that took place online, in collaboration with LambdaDays 2021/22 in Krak\\'ow, Poland. TFPIE stands for Trends in Functional Programming in Education, where authors present research and experiences in teaching concepts of functional programming at any level.\n\n6. Recursive monadic bindings\n   2000 · Levent Erkok, John Launchbury\n   DOI: 10.1145/351240.351257\n   Abstract: Monads have become a popular tool for dealing with computational effects in Haskell for two significant reasons: equational reasoning is retained even in the presence of effects; and program modularity is enhanced by hiding \"plumbing\" issues inside the monadic infrastructure. Unfortunately, not all the facilities provided by the underlying language are readily available for monadic computations. In particular, while recursive monadic computations can be defined directly using Haskell's built-in recursion capabilities, there is no natural way to express recursion over the values of monadic actions. Using examples, we illustrate why this is a problem, and we propose an extension to Haskell's donotation to remedy the situation. It turns out that the structure of monadic value-recursion depends on the structure of the underlying monad. We propose an axiomatization of the recursion operation and provide a catalogue of definitions that satisfy our criteria.\n\n7. Teaching Introductory Functional Programming Using Haskelite\n   2025 · Vasconcelos Pedro\n   DOI: 10.48550/arxiv.2508.03640\n   Abstract: Learning functional programming requires learning a substitution-based computational model. While substitution should be a familiar concept from high-school algebra, students often have difficulty applying it to new settings, such as recursive definitions, algebraic data types and higher-order functions. Step-by-step interpreters have been shown to help beginners by clarifying misconceptions and improving understanding. This paper reports on the experience of using a step-by-step tracing interpreter for a subset of Haskell while teaching an introductory functional programming course at the University of Porto. We describe the use of the interpreter, present some feedback obtained from students, reflect on the lessons learned and point directions for further work. \n\n8. Teaching Introductory Functional Programming Using Haskelite\n   2025 · Pedro Vasconcelos · Electronic proceedings in theoretical computer science\n   DOI: 10.4204/eptcs.424.3\n   Abstract: Learning functional programming requires learning a substitution-based computational model. While substitution should be a familiar concept from high-school algebra, students often have difficulty applying it to new settings, such as recursive definitions, algebraic data types and higher-order functions. Step-by-step interpreters have been shown to help beginners by clarifying misconceptions and improving understanding. This paper reports on the experience of using a step-by-step tracing interpreter for a subset of Haskell while teaching an introductory functional programming course at the University of Porto. We describe the use of the interpreter, present some feedback obtained from students, reflect on the lessons learned and point directions for further work.\n\n9. Structural versus pipeline composition of higher-order functions (experience report)\n   2022 · Elijah Rivera, Shriram Krishnamurthi · Proceedings of the ACM on programming languages\n   DOI: 10.1145/3547633\n   Abstract: In teaching students to program with compositions of higher-order functions, we have encountered a sharp distinction in the difficulty of problems as perceived by students. This distinction especially matters as growing numbers of programmers learn about functional programming for data processing. We have made initial progress on identifying this distinction, which appears counter-intuitive to some. We describe the phenomenon, provide some preliminary evidence of the difference in difficulty, and suggest consequences for functional programming pedagogy.\n\n10. Functional Baby Talk: Analysis of Code Fragments from Novice Haskell Programmers\n   2018 · Jeremy Singer, Blair Archibald · arXiv: Programming Languages\n   DOI: 10.4204/EPTCS.270.3\n   Abstract: What kinds of mistakes are made by novice Haskell developers, as they learn about functional programming? Is it possible to analyze these errors in order to improve the pedagogy of Haskell? In 2016, we delivered a massive open online course which featured an interactive code evaluation environment. We captured and analyzed 161K interactions from learners. We report typical novice developer behavior; for instance, the mean time spent on an interactive tutorial is around eight minutes. Although our environment was restricted, we gain some understanding of Haskell novice errors. Parenthesis mismatches, lexical scoping errors and do block misunderstandings are common. Finally, we make recommendations about how such beginner code evaluation environments might be enhanced."
+    }
+  ],
+  "structuredContent": {
+    "searchTerm": "What misconceptions and conceptual difficulties do university students encounter when learning Haskell and functional programming, including types, recursion, higher-order functions, laziness, and monadic IO?",
+    "papers": [
+      {
+        "id": 3138758592,
+        "title": "Obstacles when teaching functional programming",
+        "is_archived": false,
+        "full_slug": "obstacles-when-teaching-functional-programming-13khexxo87",
+        "journal": null,
+        "conference_series": {
+          "display_name": "Computer Science Education Research Conference",
+          "id": 2626991755,
+          "slug": "computer-science-education-research-conference",
+          "unique_id": "50vexus5",
+          "full_slug": "computer-science-education-research-conference-50vexus5"
+        },
+        "date": "2020-10-19T00:00:00Z",
+        "is_oa": false,
+        "publication_type": "Proceedings Article",
+        "doi": "10.1145/3442481.3442510",
+        "unique_id": "13khexxo87",
+        "abstract": "This work describes a course in typed functional programming, the obstacles that are often encountered during the teaching of this course, and solutions which have been devised for those obstacles.",
+        "authors": {
+          "total": 1,
+          "data": [
+            {
+              "display_name": "Yusuf Moosa Motara",
+              "id": 2595265231,
+              "slug": "yusuf-moosa-motara",
+              "unique_id": "50xewjt7l4",
+              "full_slug": "yusuf-moosa-motara-50xewjt7l4",
+              "affiliation_full_slug": "rhodes-university-2kl78q5r"
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 1,
+          "data": [
+            {
+              "display_name": "Rhodes University",
+              "city": "Grahamstown",
+              "region": null,
+              "country": "South Africa",
+              "id": 203238179,
+              "slug": "rhodes-university",
+              "unique_id": "2kl78q5r",
+              "full_slug": "rhodes-university-2kl78q5r"
+            }
+          ]
+        },
+        "fulltext_url": null,
+        "fulltext_url_no_follow": true,
+        "paper_urls": {
+          "order": [
+            "Html",
+            "Others"
+          ],
+          "data": {
+            "Html": [
+              "https://dl.acm.org/doi/pdf/10.1145/3442481.3442510",
+              "https://doi.org/10.1145/3442481.3442510"
+            ],
+            "Others": [
+              "https://dblp.uni-trier.de/db/conf/cserc/cserc2020.html#Motara20"
+            ]
+          },
+          "is_show": true
+        },
+        "metrics": {
+          "citations": {
+            "total": 1
+          }
+        },
+        "tldr": "The authors describes a course in typed functional programming, the obstacles that are often encountered during the teaching of this course, and solutions which have been devised for those obstacles, as well as the solutions to those obstacles.",
+        "podcast": null,
+        "podcast_generation_allowed": false,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 1590243920,
+        "title": "The Dys-Functional Student",
+        "is_archived": false,
+        "full_slug": "the-dys-functional-student-50w47sfrnk",
+        "journal": null,
+        "conference_series": null,
+        "date": "1995-12-04T00:00:00Z",
+        "is_oa": false,
+        "publication_type": "Book Chapter",
+        "doi": "10.1007/3-540-60675-0_51",
+        "unique_id": "50w47sfrnk",
+        "abstract": "Functional languages liberate students from complex syntax, complex semantics and complex memory allocation; allowing them to concentrate on problem-solving However, functional programming is not a universal panacea Students still have problems with language features, program concepts and the legacy of the imperative paradigm This paper aims to assist the lecturer asked to teach a functional language for the first time We present typical student mistakes, attempt to explain why these mistakes arise, and propose possible remedies",
+        "authors": {
+          "total": 2,
+          "data": [
+            {
+              "display_name": "Christopher D. Clack",
+              "id": 2012438790,
+              "slug": "christopher-d-clack",
+              "unique_id": "20l2mewdnd",
+              "full_slug": "christopher-d-clack-20l2mewdnd",
+              "affiliation_full_slug": "university-college-london-269wra00"
+            },
+            {
+              "display_name": "Colin Myers",
+              "id": 2112530104,
+              "slug": "colin-myers",
+              "unique_id": "1b1tuu0u8c",
+              "full_slug": "colin-myers-1b1tuu0u8c",
+              "affiliation_full_slug": "university-of-westminster-36xll2ck"
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 2,
+          "data": [
+            {
+              "display_name": "University College London",
+              "city": "London",
+              "region": null,
+              "country": "United Kingdom",
+              "id": 45129253,
+              "slug": "university-college-london",
+              "unique_id": "269wra00",
+              "full_slug": "university-college-london-269wra00"
+            },
+            {
+              "display_name": "University of Westminster",
+              "city": "London",
+              "region": null,
+              "country": "United Kingdom",
+              "id": 94951947,
+              "slug": "university-of-westminster",
+              "unique_id": "36xll2ck",
+              "full_slug": "university-of-westminster-36xll2ck"
+            }
+          ]
+        },
+        "fulltext_url": null,
+        "fulltext_url_no_follow": true,
+        "paper_urls": {
+          "order": [
+            "Html",
+            "Others"
+          ],
+          "data": {
+            "Html": [
+              "https://link.springer.com/chapter/10.1007%2F3-540-60675-0_51",
+              "https://rd.springer.com/chapter/10.1007/3-540-60675-0_51"
+            ],
+            "Others": [
+              "https://link.springer.com/10.1007%2F3-540-60675-0_51"
+            ]
+          },
+          "is_show": true
+        },
+        "metrics": {
+          "citations": {
+            "total": 13
+          }
+        },
+        "tldr": "In this article, the lecturer asked to teach a functional language for the first time presented typical student mistakes, attempt to explain why these mistakes arise, and propose possible remedies for them.",
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 1911419940,
+        "title": "The Haskell programmer's guide to the IO monad : don't panic",
+        "is_archived": false,
+        "full_slug": "the-haskell-programmer-s-guide-to-the-io-monad-don-t-panic-5c6s4ivlcy",
+        "journal": {
+          "display_name": "CTIT technical report series",
+          "official_page": null,
+          "issn": "1381-3625",
+          "alias": [
+            "Technical report",
+            "Centre for Telematics and Information Technology technical report series"
+          ],
+          "id": 2764851293,
+          "slug": "ctit-technical-report-series",
+          "unique_id": "qav1a87e",
+          "full_slug": "ctit-technical-report-series-qav1a87e"
+        },
+        "conference_series": null,
+        "date": "2005-11-01T00:00:00Z",
+        "is_oa": true,
+        "publication_type": "Journal Article",
+        "doi": null,
+        "unique_id": "5c6s4ivlcy",
+        "abstract": "Now, that you have started with Haskell, have you written a program doing IO yet, like reading a file or writing on the terminal? Then you have used the IO monad—but do you understand how it works? The standard explanation is, that the IO monad hides the non-functional IO actions —which do have side effects— from the functional world of Haskell. It prevents pollution of the functional programming style with side effects. However, since most beginning Haskell programmers (i.e., everyone I know and including me) lack knowledge about category theory, they have no clue about what a monad really is. Nor how this “hiding? works, apart from having IO actions disappearing beyond the borders of our knowledge.\r\nThis report scratches the surface of category theory, an abstract branch of algebra, just deep enough to find the monad structure. On the way we discuss the relations to the purely functional programming language Haskell. Finally it should become clear how the IO monad keeps Haskell pure. We do not explain how to use the IO monad, nor discuss all the functions available to the programmer. But we do talk about the theory behind it.\r\n\r\nIntended audience: Haskell programmers that stumbled across the IO monad, and now want to look under the hood. Haskell experience and the ability to read math formulae are mandatory.",
+        "authors": {
+          "total": 1,
+          "data": [
+            {
+              "display_name": "S. Klinger",
+              "id": 2655127667,
+              "slug": "s-klinger",
+              "unique_id": "1yzpaph1au",
+              "full_slug": "s-klinger-1yzpaph1au"
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 0,
+          "data": []
+        },
+        "fulltext_url": "/pdf/the-haskell-programmer-s-guide-to-the-io-monad-don-t-panic-5c6s4ivlcy.pdf",
+        "fulltext_url_no_follow": false,
+        "paper_urls": {
+          "order": [
+            "Pdf",
+            "Html"
+          ],
+          "data": {
+            "Html": [
+              "https://research.utwente.nl/en/publications/the-haskell-programmers-guide-to-the-io-monad-dont-panic",
+              "https://utwente-staging.elsevierpure.com/en/publications/the-haskell-programmers-guide-to-the-io-monad-dont-panic"
+            ],
+            "Pdf": [
+              "https://ris.utwente.nl/ws/files/5126345/00000154.pdf"
+            ]
+          },
+          "is_show": true
+        },
+        "metrics": {
+          "citations": {
+            "total": 4
+          }
+        },
+        "tldr": "This report scratches the surface of category theory, an abstract branch of algebra, just deep enough to find the monad structure of the Haskell programming language.",
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 4100007813,
+        "title": "Proceedings Eighth and Ninth International Workshop on Trends in Functional Programming in Education",
+        "is_archived": false,
+        "full_slug": "proceedings-eighth-and-ninth-international-workshop-on-xxtv4500mcf4",
+        "journal": null,
+        "conference_series": null,
+        "date": "2022-02-25T00:00:00Z",
+        "is_oa": null,
+        "publication_type": "Repository",
+        "doi": "10.48550/arxiv.2008.08923",
+        "unique_id": "xxtv4500mcf4",
+        "abstract": "This volume contains five papers, accepted after post-reviewing, based on presentations submitted to TFPIE 2019 and TFPIE 2020 that took places in Vancouver, Canada and Krakow, Poland respectively. TFPIE stands for Trends in Functional Programming in Education, where authors present research and experiences in teaching concepts of functional programming at any level. ",
+        "authors": {
+          "total": 1,
+          "data": [
+            {
+              "display_name": "Hage, Jurriaan",
+              "full_slug": null
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 0,
+          "data": []
+        },
+        "metrics": {
+          "citations": {
+            "total": null
+          }
+        },
+        "tldr": null,
+        "podcast": null,
+        "podcast_generation_allowed": false,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 4004422473,
+        "title": "Proceedings Tenth and Eleventh International Workshop on Trends in Functional Programming In Education, TFPIE 2021 / 2022, Kraków, Poland (online), 16th February 2021 / 16th March 2022",
+        "is_archived": false,
+        "full_slug": "proceedings-tenth-and-eleventh-international-workshop-on-3hyghqkh",
+        "journal": null,
+        "conference_series": null,
+        "date": "2022-07-23T00:00:00Z",
+        "is_oa": true,
+        "publication_type": "Journal Article",
+        "doi": "10.4204/eptcs.363.0",
+        "unique_id": "3hyghqkh",
+        "abstract": "This volume contains the papers, accepted after post-reviewing, based on presentations submitted to TFPIE 2021 and TFPIE 2022 that took place online, in collaboration with LambdaDays 2021/22 in Krak\\'ow, Poland. TFPIE stands for Trends in Functional Programming in Education, where authors present research and experiences in teaching concepts of functional programming at any level.",
+        "authors": {
+          "total": 2,
+          "data": [
+            {
+              "display_name": "Peter Achten",
+              "id": 2008571019,
+              "slug": "peter-achten",
+              "unique_id": "srsltfy1vg",
+              "full_slug": "peter-achten-srsltfy1vg"
+            },
+            {
+              "display_name": "Elena Machkasova",
+              "id": 195262313,
+              "slug": "elena-machkasova",
+              "unique_id": "1907gmayio",
+              "full_slug": "elena-machkasova-1907gmayio"
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 0,
+          "data": []
+        },
+        "fulltext_url": null,
+        "fulltext_url_no_follow": true,
+        "paper_urls": {
+          "order": [
+            "Html"
+          ],
+          "data": {
+            "Html": [
+              "https://doi.org/10.4204/eptcs.363.0"
+            ]
+          },
+          "is_show": true
+        },
+        "metrics": {
+          "citations": {
+            "total": null
+          }
+        },
+        "tldr": "In this paper , the authors present research and experiences in teaching concepts of functional programming at any level, including the TFPIE 2021 and TFPI 2022 conferences. But they do not discuss how to apply these experiences in the real world.",
+        "podcast": null,
+        "podcast_generation_allowed": false,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 2013260261,
+        "title": "Recursive monadic bindings",
+        "is_archived": false,
+        "full_slug": "recursive-monadic-bindings-1i4boo9cua",
+        "journal": null,
+        "conference_series": {
+          "display_name": "International Conference on Functional Programming",
+          "id": 1162793720,
+          "slug": "international-conference-on-functional-programming",
+          "unique_id": "401kpsqk",
+          "full_slug": "international-conference-on-functional-programming-401kpsqk"
+        },
+        "date": "2000-09-01T00:00:00Z",
+        "is_oa": false,
+        "publication_type": "Proceedings Article",
+        "doi": "10.1145/351240.351257",
+        "unique_id": "1i4boo9cua",
+        "abstract": "Monads have become a popular tool for dealing with computational effects in Haskell for two significant reasons: equational reasoning is retained even in the presence of effects; and program modularity is enhanced by hiding \"plumbing\" issues inside the monadic infrastructure. Unfortunately, not all the facilities provided by the underlying language are readily available for monadic computations. In particular, while recursive monadic computations can be defined directly using Haskell's built-in recursion capabilities, there is no natural way to express recursion over the values of monadic actions. Using examples, we illustrate why this is a problem, and we propose an extension to Haskell's donotation to remedy the situation. It turns out that the structure of monadic value-recursion depends on the structure of the underlying monad. We propose an axiomatization of the recursion operation and provide a catalogue of definitions that satisfy our criteria.",
+        "authors": {
+          "total": 2,
+          "data": [
+            {
+              "display_name": "Levent Erkok",
+              "id": 290010642,
+              "slug": "levent-erkok",
+              "unique_id": "o3e570tn6c",
+              "full_slug": "levent-erkok-o3e570tn6c",
+              "affiliation_full_slug": "oregon-health-science-university-wxogfhhg"
+            },
+            {
+              "display_name": "John Launchbury",
+              "id": 343041661,
+              "slug": "john-launchbury",
+              "unique_id": "19ikvt6dn6",
+              "full_slug": "john-launchbury-19ikvt6dn6",
+              "affiliation_full_slug": "oregon-health-science-university-wxogfhhg"
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 1,
+          "data": [
+            {
+              "display_name": "Oregon Health & Science University",
+              "city": "Portland",
+              "region": "Oregon",
+              "country": "United States",
+              "id": 165690674,
+              "slug": "oregon-health-science-university",
+              "unique_id": "wxogfhhg",
+              "full_slug": "oregon-health-science-university-wxogfhhg"
+            }
+          ]
+        },
+        "fulltext_url": null,
+        "fulltext_url_no_follow": true,
+        "paper_urls": {
+          "order": [
+            "Html",
+            "Others"
+          ],
+          "data": {
+            "Html": [
+              "https://core.ac.uk/display/24024433",
+              "https://dblp.uni-trier.de/db/conf/icfp/icfp2000.html#ErkokL00"
+            ],
+            "Others": [
+              "http://dblp.uni-trier.de/db/conf/icfp/icfp2000.html#ErkokL00"
+            ]
+          },
+          "is_show": true
+        },
+        "metrics": {
+          "citations": {
+            "total": 52
+          }
+        },
+        "tldr": "This work proposes an axiomatization of the recursion operation of monadic value-recursion, and provides a catalogue of definitions that satisfy the criteria.",
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 4085277718,
+        "title": "Teaching Introductory Functional Programming Using Haskelite",
+        "is_archived": false,
+        "full_slug": "teaching-introductory-functional-programming-using-haskelite-snlqv5or0qcc",
+        "journal": null,
+        "conference_series": null,
+        "date": "2025-08-21T00:00:00Z",
+        "is_oa": null,
+        "publication_type": "Journal Article",
+        "doi": "10.48550/arxiv.2508.03640",
+        "unique_id": "snlqv5or0qcc",
+        "abstract": "Learning functional programming requires learning a substitution-based computational model. While substitution should be a familiar concept from high-school algebra, students often have difficulty applying it to new settings, such as recursive definitions, algebraic data types and higher-order functions. Step-by-step interpreters have been shown to help beginners by clarifying misconceptions and improving understanding. This paper reports on the experience of using a step-by-step tracing interpreter for a subset of Haskell while teaching an introductory functional programming course at the University of Porto. We describe the use of the interpreter, present some feedback obtained from students, reflect on the lessons learned and point directions for further work. ",
+        "authors": {
+          "total": 1,
+          "data": [
+            {
+              "display_name": "Vasconcelos Pedro",
+              "full_slug": null
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 0,
+          "data": []
+        },
+        "metrics": {
+          "citations": {
+            "total": null
+          }
+        },
+        "tldr": null,
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 4070133462,
+        "title": "Teaching Introductory Functional Programming Using Haskelite",
+        "is_archived": false,
+        "full_slug": "teaching-introductory-functional-programming-using-haskelite-waabgnqsdd3x",
+        "journal": {
+          "display_name": "Electronic proceedings in theoretical computer science",
+          "official_page": "http://eptcs.org/",
+          "issn": "2075-2180",
+          "alias": null,
+          "id": 4000029511,
+          "slug": "electronic-proceedings-in-theoretical-computer-science",
+          "unique_id": "38tr0c69",
+          "full_slug": "electronic-proceedings-in-theoretical-computer-science-38tr0c69"
+        },
+        "conference_series": null,
+        "date": "2025-08-04T00:00:00Z",
+        "is_oa": null,
+        "publication_type": "Journal Article",
+        "doi": "10.4204/eptcs.424.3",
+        "unique_id": "waabgnqsdd3x",
+        "abstract": "Learning functional programming requires learning a substitution-based computational model. While substitution should be a familiar concept from high-school algebra, students often have difficulty applying it to new settings, such as recursive definitions, algebraic data types and higher-order functions. Step-by-step interpreters have been shown to help beginners by clarifying misconceptions and improving understanding. This paper reports on the experience of using a step-by-step tracing interpreter for a subset of Haskell while teaching an introductory functional programming course at the University of Porto. We describe the use of the interpreter, present some feedback obtained from students, reflect on the lessons learned and point directions for further work.",
+        "authors": {
+          "total": 1,
+          "data": [
+            {
+              "display_name": "Pedro Vasconcelos",
+              "full_slug": null
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 0,
+          "data": []
+        },
+        "fulltext_url": "pdf/teaching-introductory-functional-programming-using-haskelite-waabgnqsdd3x.pdf",
+        "fulltext_url_no_follow": false,
+        "paper_urls": {
+          "order": [
+            "Pdf"
+          ],
+          "data": {
+            "Pdf": [
+              "https://export.arxiv.org/pdf/2508.03640v1.pdf"
+            ]
+          },
+          "is_show": true
+        },
+        "metrics": {
+          "citations": {
+            "total": null
+          }
+        },
+        "tldr": "This study explores the effectiveness of a step-by-step tracing interpreter in teaching introductory functional programming using a subset of Haskell, highlighting its potential to clarify misconceptions and improve student understanding of substitution-based computational models.",
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 4000294514,
+        "title": "Structural versus pipeline composition of higher-order functions (experience report)",
+        "is_archived": false,
+        "full_slug": "structural-versus-pipeline-composition-of-higher-order-1yknpoly",
+        "journal": {
+          "display_name": "Proceedings of the ACM on programming languages",
+          "official_page": "https://pacmpl.acm.org/index.cfm",
+          "issn": "2475-1421",
+          "alias": [
+            "Proceedings of ACM on programming languages",
+            "PACMPL"
+          ],
+          "id": 4000076633,
+          "slug": "proceedings-of-the-acm-on-programming-languages",
+          "unique_id": "g3jr7f8m",
+          "full_slug": "proceedings-of-the-acm-on-programming-languages-g3jr7f8m"
+        },
+        "conference_series": null,
+        "date": "2022-08-29T00:00:00Z",
+        "is_oa": true,
+        "publication_type": "Journal Article",
+        "doi": "10.1145/3547633",
+        "unique_id": "1yknpoly",
+        "abstract": "In teaching students to program with compositions of higher-order functions, we have encountered a sharp distinction in the difficulty of problems as perceived by students. This distinction especially matters as growing numbers of programmers learn about functional programming for data processing. We have made initial progress on identifying this distinction, which appears counter-intuitive to some. We describe the phenomenon, provide some preliminary evidence of the difference in difficulty, and suggest consequences for functional programming pedagogy.",
+        "authors": {
+          "total": 2,
+          "data": [
+            {
+              "display_name": "Elijah Rivera",
+              "id": 4000110512,
+              "slug": "elijah-rivera",
+              "unique_id": "3m46xvv0",
+              "full_slug": "elijah-rivera-3m46xvv0"
+            },
+            {
+              "display_name": "Shriram Krishnamurthi",
+              "id": 2133340784,
+              "slug": "shriram-krishnamurthi",
+              "unique_id": "2e2xtxm708",
+              "full_slug": "shriram-krishnamurthi-2e2xtxm708"
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 0,
+          "data": []
+        },
+        "fulltext_url": "/pdf/structural-versus-pipeline-composition-of-higher-order-1yknpoly.pdf",
+        "fulltext_url_no_follow": false,
+        "paper_urls": {
+          "order": [
+            "Pdf"
+          ],
+          "data": {
+            "Pdf": [
+              "https://dl.acm.org/doi/pdf/10.1145/3547633"
+            ]
+          },
+          "is_show": true
+        },
+        "metrics": {
+          "citations": {
+            "total": 2
+          }
+        },
+        "tldr": "In this article , the authors describe the phenomenon of the difference in difficulty of problems as perceived by students and suggest consequences for functional programming pedagogy, and provide some preliminary evidence of the differences in difficulty.",
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 2800917419,
+        "title": "Functional Baby Talk: Analysis of Code Fragments from Novice Haskell Programmers",
+        "is_archived": false,
+        "full_slug": "functional-baby-talk-analysis-of-code-fragments-from-novice-t9bp5rakdc",
+        "journal": {
+          "display_name": "arXiv: Programming Languages",
+          "official_page": null,
+          "issn": null,
+          "alias": null,
+          "id": 2597368653,
+          "slug": "arxiv-programming-languages",
+          "unique_id": "2uabkqd2",
+          "full_slug": "arxiv-programming-languages-2uabkqd2"
+        },
+        "conference_series": null,
+        "date": "2018-05-14T00:00:00Z",
+        "is_oa": true,
+        "publication_type": "Journal Article",
+        "doi": "10.4204/EPTCS.270.3",
+        "unique_id": "t9bp5rakdc",
+        "abstract": "What kinds of mistakes are made by novice Haskell developers, as they learn about functional programming? Is it possible to analyze these errors in order to improve the pedagogy of Haskell? In 2016, we delivered a massive open online course which featured an interactive code evaluation environment. We captured and analyzed 161K interactions from learners. We report typical novice developer behavior; for instance, the mean time spent on an interactive tutorial is around eight minutes. Although our environment was restricted, we gain some understanding of Haskell novice errors. Parenthesis mismatches, lexical scoping errors and do block misunderstandings are common. Finally, we make recommendations about how such beginner code evaluation environments might be enhanced.",
+        "authors": {
+          "total": 2,
+          "data": [
+            {
+              "display_name": "Jeremy Singer",
+              "id": 2166401013,
+              "slug": "jeremy-singer",
+              "unique_id": "1w8lvkstek",
+              "full_slug": "jeremy-singer-1w8lvkstek",
+              "affiliation_full_slug": "university-of-glasgow-1li5yodc"
+            },
+            {
+              "display_name": "Blair Archibald",
+              "id": 2787593181,
+              "slug": "blair-archibald",
+              "unique_id": "2jbod7yxlz",
+              "full_slug": "blair-archibald-2jbod7yxlz",
+              "affiliation_full_slug": "university-of-glasgow-1li5yodc"
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 1,
+          "data": [
+            {
+              "display_name": "University of Glasgow",
+              "city": "Glasgow",
+              "region": null,
+              "country": "United Kingdom",
+              "id": 7882870,
+              "slug": "university-of-glasgow",
+              "unique_id": "1li5yodc",
+              "full_slug": "university-of-glasgow-1li5yodc"
+            }
+          ]
+        },
+        "fulltext_url": "https://arxiv.org/pdf/1805.05126.pdf",
+        "fulltext_url_no_follow": true,
+        "paper_urls": {
+          "order": [
+            "Html"
+          ],
+          "data": {
+            "Html": [
+              "https://arxiv.org/abs/1805.05126"
+            ],
+            "Unknown": [
+              "https://core.ac.uk/display/157769595"
+            ]
+          },
+          "is_show": true
+        },
+        "metrics": {
+          "citations": {
+            "total": null
+          }
+        },
+        "tldr": "In this paper, the authors report typical novice developer behavior; for instance, the mean time spent on an interactive tutorial is around eight minutes, and they make recommendations about how such beginner code evaluation environments might be enhanced.",
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      }
+    ]
+  },
+  "isError": false
+}

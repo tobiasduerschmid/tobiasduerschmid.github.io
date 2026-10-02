@@ -1,0 +1,244 @@
+{
+  "track": "Haskell teaching and digital tutors",
+  "access_date": "2026-10-02",
+  "sources": [
+    {
+      "id": "gerdes2017askelle",
+      "title": "Ask-Elle: an Adaptable Programming Tutor for Haskell Giving Automated Feedback",
+      "authors": [
+        "Alex Gerdes",
+        "Bastiaan Heeren",
+        "Johan Jeuring",
+        "L. Thomas van Binsbergen"
+      ],
+      "year": 2017,
+      "doi": "10.1007/s40593-015-0080-x",
+      "venue": "International Journal of Artificial Intelligence in Education 27:65–100",
+      "url": "https://doi.org/10.1007/s40593-015-0080-x",
+      "full_text_url": "https://pure.royalholloway.ac.uk/ws/files/25913698/compilation.pdf",
+      "claim_class": "direct_haskell_tutor_evaluation",
+      "access": "selected_full_text_sections",
+      "design": "Three technical/user evaluations; model-solution recognition and property-based feedback; no controlled learning comparison.",
+      "population": "University Haskell learners; different course cohorts.",
+      "sample": {
+        "experiment1_programs": 94,
+        "experiment2_users_approx": 100,
+        "experiment2_questionnaire": 40,
+        "experiment3_registered": 285,
+        "experiment3_active": 116,
+        "experiment3_diagnosis_interactions": 3466,
+        "experiment3_attempts": 652
+      },
+      "findings": "Stepwise hints can address partial programs and counterexamples. The 2013 evaluation contains 1,920 compiler-error interactions (55.4% of diagnoses), but 142 of 652 attempts (21.8%) ended in compiler error. These are interaction/attempt denominators, not learner prevalence. Authors explicitly leave learning effects to future work.",
+      "limitations": "Accuracy, coverage and perceived usefulness do not establish retention or transfer. Recognition depends on model solutions and supported strategies; alternative valid programs may be unrecognized.",
+      "locations": [
+        "Experiments 1–3",
+        "Table 2",
+        "§9 discussion"
+      ],
+      "provenance": [
+        "SciSpace interventions search",
+        "Consensus teaching search; result fetched",
+        "Primary author manuscript"
+      ],
+      "status": "include",
+      "notes": "Online publication 2016; journal issue 2017."
+    },
+    {
+      "id": "vasconcelos2025haskelite",
+      "title": "Teaching Introductory Functional Programming Using Haskelite",
+      "authors": [
+        "Pedro Vasconcelos"
+      ],
+      "year": 2025,
+      "doi": "10.4204/EPTCS.424.3",
+      "venue": "EPTCS 424:49–66",
+      "url": "https://doi.org/10.4204/EPTCS.424.3",
+      "full_text_url": "https://arxiv.org/pdf/2508.03640",
+      "claim_class": "direct_haskell_teaching_experience",
+      "access": "selected_full_text_sections",
+      "design": "Teaching experience, voluntary qualitative feedback and historical course results.",
+      "population": "Porto first-year students, mostly prior Python; spring 2024.",
+      "sample": {
+        "enrolled": 143,
+        "forum_respondents": 14,
+        "tool_questionnaire": 6,
+        "distinct_institutional_course_questionnaire": 15
+      },
+      "findings": "Learners reported usefulness for inspecting recursion and higher-order functions. Trace size and unsupported valid Haskell syntax created difficulties; the tool needs explicit subset messages. Distinguish the tool's six-response questionnaire from the separate institutional fifteen-response course survey.",
+      "limitations": "Small self-selected feedback; course changes and historical pass rates cannot identify the tool's causal effect. Tool implements a Haskell subset. Short semantic traces are not an exact account of optimized GHC execution.",
+      "locations": [
+        "Tool design and limitations",
+        "Teaching experience and student feedback",
+        "Discussion"
+      ],
+      "provenance": [
+        "SciSpace interventions search",
+        "Primary arXiv proceedings paper"
+      ],
+      "status": "include"
+    },
+    {
+      "id": "olmer2014expressions",
+      "title": "Evaluating Haskell expressions in a tutoring environment",
+      "authors": [
+        "Tim Olmer",
+        "Bastiaan Heeren",
+        "Johan Jeuring"
+      ],
+      "year": 2014,
+      "doi": "10.4204/EPTCS.170.4",
+      "venue": "EPTCS 170:50–66",
+      "url": "https://doi.org/10.4204/EPTCS.170.4",
+      "full_text_url": "https://arxiv.org/pdf/1412.4879",
+      "claim_class": "direct_haskell_tutor_design",
+      "access": "selected_full_text_sections",
+      "design": "Prototype and small formative usability survey.",
+      "population": "Invited functional-programming teachers and students.",
+      "sample": {
+        "instructor_responses": 7,
+        "instructors_invited": 8,
+        "student_responses": 9,
+        "students_invited": 29
+      },
+      "findings": "The prototype diagnoses learner-entered rewrite steps under different evaluation strategies. Respondents differed over how much strategy choice and detail learners should see.",
+      "limitations": "Feasibility and usability evidence; no controlled learning gains. Small response groups. Multiple strategies may overwhelm beginners, so a default strategy is an instructional choice to test.",
+      "locations": [
+        "§§4–6"
+      ],
+      "provenance": [
+        "SciSpace interventions search",
+        "Consensus teaching discovery; primary independently verified",
+        "Primary arXiv paper"
+      ],
+      "status": "include"
+    },
+    {
+      "id": "chapman2025assessment",
+      "title": "Experiences of early assessment to teach functional programming",
+      "authors": [
+        "Peter Chapman"
+      ],
+      "year": 2025,
+      "doi": "10.1017/S0956796824000182",
+      "venue": "Journal of Functional Programming 35:e4",
+      "url": "https://www.cambridge.org/core/journals/journal-of-functional-programming/article/experiences-of-early-assessment-to-teach-functional-programming/667F18D3611D4A3A7C7C6A2A2FA4FB3C",
+      "claim_class": "direct_haskell_teaching_comparison",
+      "access": "selected_full_text_sections",
+      "design": "Historical-cohort comparison, online first-year course during COVID, 2021 versus 2022.",
+      "population": "First-year discrete-mathematics/Haskell course; students completing both assessments.",
+      "sample": {
+        "before_completers": 78,
+        "after_completers": 40
+      },
+      "findings": "Adding an early summative Use-Modify assessment accompanied a later Create-assessment mean of 62.249 versus 53.256: 8.993 percentage points; one-tailed Wilcoxon p=.0371, reported r=.164. Both cohorts already used formative Use-Modify-Create.",
+      "limitations": "Small reported effect, nonrandom cohorts, completer selection, changed recordings and other context; mathematics means decreased. Association cannot establish causality or delayed transfer.",
+      "locations": [
+        "Study design",
+        "Table 1",
+        "Discussion pp9–12"
+      ],
+      "provenance": [
+        "Direct OpenAlex forward citations from Tirronen2015",
+        "Primary Cambridge HTML and PDF"
+      ],
+      "status": "include"
+    },
+    {
+      "id": "dale2019blended",
+      "title": "Learner experiences of a blended course incorporating a MOOC on Haskell functional programming",
+      "authors": [
+        "Vicki H. M. Dale",
+        "Jeremy Singer"
+      ],
+      "year": 2019,
+      "doi": "10.25304/rlt.v27.2248",
+      "venue": "Research in Learning Technology 27",
+      "url": "https://eprints.gla.ac.uk/195429/",
+      "full_text_url": "https://eprints.gla.ac.uk/195429/1/195429.pdf",
+      "claim_class": "direct_haskell_learner_experience",
+      "access": "selected_full_text_sections",
+      "design": "Survey and focus group in blended honours course; no randomized comparator.",
+      "population": "Fourth-year Glasgow students, 2016–17; first six of ten weeks used a MOOC.",
+      "sample": {
+        "survey": 36,
+        "response_rate_percent": 29,
+        "focus_group": 6
+      },
+      "findings": "Respondents valued flexibility and learning activities but reported poorly signposted support and discontinuity into more advanced work. Integration of help and progression warrants design attention.",
+      "limitations": "Self-selected perceptions, not demonstrated learning effects. One advanced university course; cannot rank MOOCs against classroom teaching.",
+      "locations": [
+        "Methods",
+        "Results",
+        "Discussion"
+      ],
+      "provenance": [
+        "SciSpace interventions search",
+        "Direct OpenAlex Haskell teaching query",
+        "Primary institutional manuscript"
+      ],
+      "status": "include"
+    },
+    {
+      "id": "feijoo2020videos",
+      "title": "Using Student-created Instructional Videos in CS Upper-level Courses: A Successful Strategy in a Functional Programming Course",
+      "authors": [
+        "Pedro Guillermo Feijóo-García",
+        "Christina Gardner-McCune"
+      ],
+      "year": 2020,
+      "doi": "10.5220/0009416404120419",
+      "venue": "CSEDU 2020, volume 1:412–419",
+      "url": "https://doi.org/10.5220/0009416404120419",
+      "full_text_url": "https://www.scitepress.org/Papers/2020/94164/94164.pdf",
+      "claim_class": "functional_programming_teaching",
+      "access": "selected_full_text_sections",
+      "design": "Small uncontrolled pre/post classroom experience with two student-made explanatory videos.",
+      "population": "Senior functional-programming course at Universidad El Bosque, Colombia; ages 18–35.",
+      "sample": {
+        "students": 16
+      },
+      "findings": "Assessment improvement and positive perceptions accompanied students making concept/code explanation videos; participants also found production time-consuming.",
+      "limitations": "No comparator; improvement can reflect normal course learning, practice or selection. Do not equate video production with a demonstrated causal self-explanation effect or transfer to beginner Haskell.",
+      "locations": [
+        "Methods",
+        "Results",
+        "Conclusion"
+      ],
+      "provenance": [
+        "SciSpace interventions discovery",
+        "Primary proceedings PDF"
+      ],
+      "status": "include"
+    },
+    {
+      "id": "chakravarty2004risks",
+      "title": "The risks and benefits of teaching purely functional programming in first year",
+      "authors": [
+        "Manuel M. T. Chakravarty",
+        "Gabriele Keller"
+      ],
+      "year": 2004,
+      "doi": "10.1017/S0956796803004805",
+      "venue": "Journal of Functional Programming 14(1):113–123",
+      "url": "https://www.cambridge.org/core/journals/journal-of-functional-programming/article/risks-and-benefits-of-teaching-purely-functional-programming-in-first-year/39F929A1793B67BCEF316DBDB717F273",
+      "full_text_url": null,
+      "claim_class": "functional_programming_teaching_experience",
+      "access": "publisher_abstract_only",
+      "design": "Teaching experience based on several large first-year classes and surveys; detail not independently extracted.",
+      "population": "First-year classes, reportedly up to 600.",
+      "sample": null,
+      "findings": "Abstract frames functional programming as a means to teach problem solving and computer science rather than paradigm advocacy as an end.",
+      "limitations": "Full text not inspected; no causal claim about benefits or harm, and no extracted effect size.",
+      "locations": [
+        "Publisher abstract"
+      ],
+      "provenance": [
+        "Direct OpenAlex Haskell teaching query",
+        "Backward references from Tirronen2015",
+        "Primary Cambridge abstract"
+      ],
+      "status": "include_context_abstract_only"
+    }
+  ]
+}

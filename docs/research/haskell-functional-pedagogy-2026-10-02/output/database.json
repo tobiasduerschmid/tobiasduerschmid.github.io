@@ -1,0 +1,1943 @@
+{
+  "generated": "2026-10-02",
+  "research_sources": [
+    {
+      "ledger": "notes/misconceptions-sources.json",
+      "source": {
+        "id": "tirronen2015mistakes",
+        "title": "Understanding beginners’ mistakes with Haskell",
+        "authors": [
+          "Ville Tirronen",
+          "Samuel Uusi-Mäkelä",
+          "Ville Isomöttönen"
+        ],
+        "year": 2015,
+        "doi": "10.1017/S0956796815000179",
+        "venue": "Journal of Functional Programming 25:e11",
+        "url": "https://www.cambridge.org/core/journals/journal-of-functional-programming/article/understanding-beginners-mistakes-with-haskell/244DB6807F3BD77E14CE7D627514D6D3",
+        "full_text_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/244DB6807F3BD77E14CE7D627514D6D3/S0956796815000179a.pdf/div-class-title-understanding-beginners-mistakes-with-haskell-div.pdf",
+        "status": "include",
+        "claim_class": "direct_haskell",
+        "access": "selected_full_text_sections",
+        "population": "Mostly second–fourth-year university students with prior introductory programming.",
+        "language": "Haskell",
+        "design": "Eight-week elective; automatic error classification plus instructor/assistant manual session coding.",
+        "sample": {
+          "registered": 88,
+          "active_students": 55,
+          "collected_answers": 4843,
+          "exact_duplicates_removed": 509,
+          "all_sessions": 890,
+          "compiler_runtime_error_sessions": 327
+        },
+        "findings": "CouldntMatch occurred for 53/55 students. Of sessions with that error, 69% involved type confusion and roughly 30% precedence; one-third of type-confusion sessions came from one deliberately type-focused task. Missing recursive cases occurred, but authors did not observe the specific base-case-as-stopping-condition misconception. They reported no conceptual partial-application difficulty and little early laziness difficulty; syntax remained problematic.",
+        "limitations": "Single cohort; coding infers intent from submissions; outside help and exploratory incomplete code possible; task exposure changes over time; no causal instructional comparison.",
+        "locations": [
+          "§3–5 pp5–9",
+          "Table1 p6",
+          "§6.1.1 pp11–12",
+          "Fig6 pp17–18",
+          "§7.1 pp23–24"
+        ],
+        "provenance": [
+          "Targeted web search: Haskell negative transfer students study",
+          "Backward references: Chambers2012, Clack1995, Segal1994, Heeren2003"
+        ],
+        "follow_up_interval": null
+      }
+    },
+    {
+      "ledger": "notes/misconceptions-sources.json",
+      "source": {
+        "id": "nemeth2019errors",
+        "title": "Investigating Compilation Errors of Students Learning Haskell",
+        "authors": [
+          "Boldizsár Németh",
+          "Eunjong Choi",
+          "Erina Makihara",
+          "Hajimu Iida"
+        ],
+        "year": 2019,
+        "doi": "10.4204/EPTCS.295.4",
+        "venue": "EPTCS 295:52–64 (TFPIE 2018)",
+        "url": "https://arxiv.org/abs/1906.11450",
+        "full_text_url": "https://arxiv.org/pdf/1906.11450",
+        "status": "include",
+        "claim_class": "direct_haskell",
+        "access": "selected_full_text_sections",
+        "population": "First-year ELTE undergraduates; basic imperative experience in a statically typed language.",
+        "language": "Haskell/GHC8.0.2",
+        "design": "Submission logs, nine teaching weeks; sampled manual root-cause classification and response/correction times.",
+        "sample": {
+          "course_students_lower_bound": 120,
+          "analyzed_weeks": 9,
+          "root_cause_sample_n": null
+        },
+        "findings": "Among sampled type-related errors: list/scalar/dimensional mismatch 20%; missing argument 8.6%; simple type mismatch 8.6%; wrong operation 8.4%; grouping/precedence 6.7%. Type errors predominated after initial weeks and were slower to repair. Some syntax mistakes produced misleading name/type diagnostics.",
+        "limitations": "Error proportions are not learner prevalence. Anonymous sessions cannot track individuals across semester; instructor coding may misclassify intent; one curriculum. Only eventually fixed errors enter correction-time analysis.",
+        "locations": [
+          "§3 p54",
+          "§4.1.2 pp61–62",
+          "Threats p63"
+        ],
+        "provenance": [
+          "Web query: Haskell students misconceptions empirical learning functional programming difficulties",
+          "Backward references: Singer2018, Heeren2003, AskElle2017"
+        ]
+      }
+    },
+    {
+      "ledger": "notes/misconceptions-sources.json",
+      "source": {
+        "id": "singer2018babytalk",
+        "title": "Functional Baby Talk: Analysis of Code Fragments from Novice Haskell Programmers",
+        "authors": [
+          "Jeremy Singer",
+          "Blair Archibald"
+        ],
+        "year": 2018,
+        "doi": "10.4204/EPTCS.270.3",
+        "venue": "EPTCS 270:37–51 (TFPIE 2017)",
+        "url": "https://doi.org/10.4204/EPTCS.270.3",
+        "full_text_url": "https://dokk.org/library/functional_baby_talk_TFPIE_2017",
+        "status": "include",
+        "claim_class": "direct_haskell",
+        "access": "selected_full_text_sections_of_published_paper_mirror",
+        "population": "2016 Glasgow/FutureLearn MOOC users; prior background heterogeneous, not individually verified.",
+        "language": "Haskell (restricted tryhaskell/mueval expression REPL)",
+        "design": "Logs; expressions reparsed; sessions inferred by IP and ten-minute gaps.",
+        "sample": {
+          "expressions_approx": 161000,
+          "unique_ips_approx": 3300,
+          "sessions_approx": 5700,
+          "unparsable_expressions_approx": 8100
+        },
+        "findings": "Observed parenthesis, let/where, do-block binding/final-expression and range-notation errors. Unsupported data/type/multiline definitions were also attempted. About 100K inputs copied tutorial code versus 60K original, demonstrating why activity counts alone are weak learning measures.",
+        "limitations": "One course, IP proxy and browser/OS selection; tool rejects some valid Haskell. Parsing failures do not establish a stable conceptual misconception or prevalence among unique learners.",
+        "locations": [
+          "§3 pp4–9",
+          "§4 pp8–10"
+        ],
+        "provenance": [
+          "Initial targeted web search",
+          "Backward snowball from Nemeth2019 reference3"
+        ],
+        "notes": "Use publication year 2018; workshop year 2017."
+      }
+    },
+    {
+      "ledger": "notes/misconceptions-sources.json",
+      "source": {
+        "id": "heeren2003helium",
+        "title": "Helium, for Learning Haskell",
+        "authors": [
+          "Bastiaan Heeren",
+          "Daan Leijen",
+          "Arjan van IJzendoorn"
+        ],
+        "year": 2003,
+        "doi": "10.1145/871895.871902",
+        "venue": "ACM SIGPLAN Haskell Workshop:62–71",
+        "url": "https://doi.org/10.1145/871895.871902",
+        "full_text_url": "https://cs.ou.nl/members/bastiaan/heeren-helium.pdf",
+        "status": "include",
+        "claim_class": "direct_haskell",
+        "access": "selected_full_text_sections",
+        "population": "University introductory functional-programming courses; exact student count not extracted.",
+        "language": "Restricted Haskell subset (Helium)",
+        "design": "Compiler/tool experience report and seven-week compilation logs.",
+        "sample": {
+          "students": null,
+          "compilations": 29431,
+          "weeks": 7
+        },
+        "findings": "31.6% of compilation attempts produced type errors; 46.3% were accepted. Undefined names dominated other static errors. Tool supplies source-oriented diagnostics and heuristics for swapped/missing arguments and related-function confusion.",
+        "limitations": "Compiler acceptance is not task correctness or learning. Course/tasks and subset affect frequencies. Positive instructor/student feedback has no controlled learning comparison; undefined names include typos, so they do not establish scope misconceptions.",
+        "locations": [
+          "Fig4 p8",
+          "Logger results pp8–9",
+          "Conclusion p9"
+        ],
+        "provenance": [
+          "Backward reference from Nemeth2019 reference4",
+          "Targeted web query: Haskell types students Helium study"
+        ]
+      }
+    },
+    {
+      "ledger": "notes/misconceptions-sources.json",
+      "source": {
+        "id": "wu2017repairs",
+        "title": "How Type Errors Were Fixed and What Students Did?",
+        "authors": [
+          "Baijun Wu",
+          "Sheng Chen"
+        ],
+        "year": 2017,
+        "doi": "10.1145/3133929",
+        "openalex_id": "https://openalex.org/W2763702833",
+        "venue": "PACMPL 1(OOPSLA), article105",
+        "url": "https://doi.org/10.1145/3133929",
+        "full_text_url": "https://www.researchgate.net/publication/320389668_How_type_errors_were_fixed_and_what_students_did",
+        "status": "include",
+        "claim_class": "direct_haskell",
+        "access": "selected_full_text_sections_of_published_paper_mirror",
+        "population": "Three university Haskell cohorts (2002,2003,2017), including first-year learners.",
+        "language": "Haskell; Helium and GHC",
+        "design": "Retrospective program-sequence and repair analysis; manually identified intended fixes.",
+        "sample": {
+          "programs_by_cohort": [
+            29000,
+            23000,
+            6274
+          ],
+          "course_students_by_cohort": [
+            119,
+            143,
+            33
+          ],
+          "analyzed_ill_typed_by_cohort": [
+            1000,
+            1604,
+            153
+          ]
+        },
+        "findings": "Over 45% of final type-error fixes in each dataset added/removed parentheses or brackets. Wrong annotations appeared in 28%,34.4%,27% of analyzed errors. Actual fixes often differ from the location suggested by diagnostics. Type signatures may be initially wrong or become stale after definition changes.",
+        "limitations": "Not every original ill-typed program analyzed: 1000 sampled of 2000 in first dataset. Approximately 6% lacked usable reference repair and were excluded. Repair sequences support behavior, not direct mental-model diagnoses. Cohort/task/compiler differences.",
+        "locations": [
+          "Fig2 §3.1",
+          "§3.2",
+          "§5–6"
+        ],
+        "provenance": [
+          "Targeted web query: How Type Errors Were Fixed pdf",
+          "Sider DOI lookup confirmed bibliographic record",
+          "Backward references shared Helium/Tirronen corpora"
+        ]
+      }
+    },
+    {
+      "ledger": "notes/misconceptions-sources.json",
+      "source": {
+        "id": "rivera2022structural",
+        "title": "Structural versus Pipeline Composition of Higher-Order Functions (Experience Report)",
+        "authors": [
+          "Elijah Rivera",
+          "Shriram Krishnamurthi"
+        ],
+        "year": 2022,
+        "doi": "10.1145/3547633",
+        "venue": "PACMPL 6(ICFP), article102",
+        "url": "https://doi.org/10.1145/3547633",
+        "full_text_url": "https://cs.brown.edu/~sk/Publications/Papers/Published/rk-struct-pipe-comp-hof/paper.pdf",
+        "status": "include",
+        "claim_class": "adjacent_functional",
+        "access": "selected_full_text_sections",
+        "population": "Accelerated introductory CS students after higher-order-function reading/assignment.",
+        "language": "Racket Advanced Student Language; pure setting",
+        "design": "Seven input-output planning problems; same operator pairs structural/pipeline; partly randomized order; five-day response window.",
+        "sample": {
+          "students": 40,
+          "problems": 7
+        },
+        "findings": "Apparently correct narrative structural compositions:37,31,31; pipeline:22,10 for first two problems. Third pipeline problem admitted an unintended simpler solution. Some students treated map as fold, confused filter/take-while, or could not infer intermediate transformations.",
+        "limitations": "Small single-institution task study; no Haskell/static-checker test. Input-output ambiguity, first structural question fixed, nonmandatory surveillance, and unintended solutions limit generalization. Difficulty comparison is task-specific; pedagogic sequencing remains a hypothesis.",
+        "locations": [
+          "§6.2–7 pp4–9",
+          "§8 pp9–11"
+        ],
+        "provenance": [
+          "Root SciSpace lead",
+          "Primary author manuscript found by exact-title web search",
+          "Reference list traces Krishnamurthi/Fisler2021 and Rivera/Goldstone planning work"
+        ],
+        "transfer_boundary": "Pure list/HOF composition transfers conceptually; Haskell currying/laziness/types were not measured."
+      }
+    },
+    {
+      "ledger": "notes/misconceptions-sources.json",
+      "source": {
+        "id": "rivera2022planning",
+        "title": "Plan Composition Using Higher-Order Functions",
+        "authors": [
+          "Elijah Rivera",
+          "Shriram Krishnamurthi",
+          "Robert Goldstone"
+        ],
+        "year": 2022,
+        "doi": "10.1145/3501385.3543965",
+        "venue": "ICER 2022:84–104",
+        "url": "https://static.cs.brown.edu/~sk/Publications/Papers/Published/rkg-plan-comp-use-hof/",
+        "full_text_url": "https://cs.brown.edu/~sk/Publications/Papers/Published/rkg-plan-comp-use-hof/paper.pdf",
+        "status": "include",
+        "claim_class": "adjacent_functional",
+        "access": "selected_full_text_sections",
+        "population": "Selective US university placement/accelerated CS module; ~90% prior computing, nearly all new to FP.",
+        "language": "Racket; customized Snap! planning interface",
+        "design": "HOF recognition, behavioral explanations, planning then programming; month-long placement module.",
+        "sample": {
+          "recognition_students": 56,
+          "behavior_explanation_students": 55,
+          "planning_students": 101,
+          "analyzed_plans": 402,
+          "implementation_students": 100,
+          "analyzed_implementations": 398
+        },
+        "findings": "Only 10/402 plans were explicitly wrong; most implementations passed instructor tests. Composition-recognition errors often omitted an outer map, treating nested inputs as flattened examples. Understanding single HOFs did not imply identical performance across representations.",
+        "limitations": "No control group or retention/transfer test; high selectivity/prior experience; ceiling effects; author coding and tool affordances affect interpretation. Plan success does not prove planning intervention caused learning.",
+        "locations": [
+          "§5 pp3–4",
+          "§8–10 pp10–12",
+          "§11"
+        ],
+        "provenance": [
+          "Companion/citation-chain search from Rivera2022 structural",
+          "Exact-title primary author page and PDF"
+        ],
+        "transfer_boundary": "HOF planning in Racket; efficacy for Haskell learners untested."
+      }
+    },
+    {
+      "ledger": "notes/misconceptions-sources.json",
+      "source": {
+        "id": "segal1994recursion",
+        "title": "Empirical studies of functional programming learners evaluating recursive functions",
+        "authors": [
+          "Judith Segal"
+        ],
+        "year": 1994,
+        "doi": "10.1007/BF00891962",
+        "venue": "Instructional Science 22:385–411",
+        "url": "https://link.springer.com/article/10.1007/BF00891962",
+        "full_text_url": null,
+        "status": "borderline_full_text_needed",
+        "claim_class": "adjacent_functional",
+        "access": "publisher_abstract_and_references",
+        "population": "Students; exact level/prior knowledge unverified.",
+        "language": "Miranda",
+        "design": "Empirical recursive-function evaluation studies; details unverified.",
+        "sample": null,
+        "findings": "Publisher abstract confirms observations of misconceptions and processing strategies while learners evaluated Miranda recursion. Specific categories, denominators and teaching-effect claims cannot be independently extracted from this abstract.",
+        "limitations": "Full text unavailable in this track; Haskell transfer is indirect. Tirronen2015 reports non-observation of a recursion misconception attributed to this paper.",
+        "locations": [
+          "Publisher abstract"
+        ],
+        "provenance": [
+          "Backward snowball: Tirronen2015 bibliography and discussion",
+          "Primary Springer DOI page"
+        ],
+        "follow_up_interval": null
+      }
+    },
+    {
+      "ledger": "notes/misconceptions-sources.json",
+      "source": {
+        "id": "clack1995dysfunctional",
+        "title": "The Dys-functional student",
+        "authors": [
+          "Chris Clack",
+          "Colin Myers"
+        ],
+        "year": 1995,
+        "doi": "10.1007/3-540-60675-0_51",
+        "openalex_id": "https://openalex.org/W1590243920",
+        "venue": "FPLE 1995, LNCS1022:289–309",
+        "url": "https://link.springer.com/chapter/10.1007/3-540-60675-0_51",
+        "full_text_url": null,
+        "status": "borderline_full_text_needed",
+        "claim_class": "adjacent_functional_language_not_fully_verified",
+        "access": "publisher_abstract_and_references",
+        "population": null,
+        "language": "Miranda/StandardML context indicated by references; study language not verified from full text.",
+        "design": "Teaching experience/mistake catalogue; exact empirical design unverified.",
+        "sample": null,
+        "findings": "Abstract describes observed student mistakes in language features, program concepts and imperative-paradigm legacy, with proposed remedies. Do not infer prevalence, causal negative transfer, or exact misconceptions from abstract.",
+        "limitations": "1995 original copyright/conference year; 2005 online release is not original study year. Author page mentions a PDF but exposed no downloadable link in inspected text; publisher preview only.",
+        "locations": [
+          "Publisher abstract and citation"
+        ],
+        "provenance": [
+          "Root SciSpace lead",
+          "Backward snowball Tirronen2015 and Wu2017",
+          "Sider DOI lookup; publisher and author bibliography verification"
+        ]
+      }
+    },
+    {
+      "ledger": "notes/misconceptions-sources.json",
+      "source": {
+        "id": "motara2020obstacles",
+        "title": "Obstacles when teaching functional programming",
+        "authors": [
+          "Yusuf Moosa Motara"
+        ],
+        "year": 2020,
+        "doi": "10.1145/3442481.3442510",
+        "openalex_id": "https://openalex.org/W3138758592",
+        "venue": "CSERC2020, article14:1–2",
+        "url": "https://doi.org/10.1145/3442481.3442510",
+        "full_text_url": null,
+        "status": "borderline_metadata_only",
+        "claim_class": "unclassified_until_full_text",
+        "access": "metadata",
+        "population": null,
+        "language": null,
+        "design": null,
+        "sample": null,
+        "findings": null,
+        "limitations": "Exact-title searches and DOI access did not provide primary full text. No misconception or outcome claims extracted.",
+        "provenance": [
+          "Root SciSpace lead",
+          "Sider DOI lookup",
+          "Exact-title web search and DOI access attempted"
+        ]
+      }
+    },
+    {
+      "ledger": "notes/misconceptions-sources.json",
+      "source": {
+        "id": "fu2026goanna",
+        "title": "Goanna: a novel approach for automated type error debugging",
+        "authors": [
+          "Shuai Fu",
+          "Tim Dwyer",
+          "Peter J. Stuckey",
+          "John C. Grundy"
+        ],
+        "year": 2026,
+        "doi": "10.1007/s10515-026-00656-3",
+        "venue": "Automated Software Engineering 33, article130",
+        "url": "https://link.springer.com/article/10.1007/s10515-026-00656-3",
+        "full_text_url": "https://link.springer.com/article/10.1007/s10515-026-00656-3",
+        "status": "include_tooling_context",
+        "claim_class": "direct_haskell_corpus_tool_evaluation",
+        "access": "selected_full_text_sections",
+        "population": "Historical Helium student-program corpus; current learner study planned.",
+        "language": "Haskell",
+        "design": "Corpus diagnostic accuracy and generated performance benchmarks; no completed rigorous learner experiment.",
+        "sample": {
+          "programs": 49750,
+          "programs_with_type_errors": 2196,
+          "human_sample": null
+        },
+        "findings": "Reports diagnostic accuracy 81.6% Goanna versus 65.5% Helium and 33.7% GHC. Preliminary workshop reactions were positive; rigorous human evaluation is future work.",
+        "limitations": "Accuracy is a tool-performance outcome, not evidence of conceptual learning, retention, transfer or debugging independence. Historical corpus, supported-language subset, and computational cost constrain applicability.",
+        "locations": [
+          "§6.1",
+          "§8",
+          "§9"
+        ],
+        "provenance": [
+          "Complementary current web query: Haskell types students Helium study",
+          "Publisher primary full text",
+          "Forward citation relationship to Tirronen2015 and Heeren2003 confirmed in references"
+        ],
+        "publication_date": "2026-09-11"
+      }
+    },
+    {
+      "ledger": "notes/misconceptions-sources.json",
+      "source": {
+        "id": "fu2026geckograph",
+        "title": "GeckoGraph: A visual language for polymorphic types",
+        "authors": [
+          "Shuai Fu",
+          "Tim Dwyer",
+          "Peter J. Stuckey",
+          "John C. Grundy"
+        ],
+        "year": 2026,
+        "doi": "10.1016/j.cola.2025.101381",
+        "venue": "Journal of Computer Languages 86, article101381",
+        "url": "https://research.monash.edu/en/publications/geckograph-a-visual-language-for-polymorphic-types/",
+        "full_text_url": "https://nzjohng.github.io/publications/papers/jcl2025.pdf",
+        "status": "include_with_reporting_cautions",
+        "claim_class": "direct_haskell_task_performance",
+        "access": "selected_full_text_sections_author_manuscript",
+        "population": "Haskell Reddit/Discord volunteers; self-rated expertise, not a classroom sample.",
+        "language": "Haskell",
+        "design": "Preregistered ten-task gamified experiment; counterbalanced groups alternate graphical/text notation at odd/even levels.",
+        "sample": {
+          "reported_total": 714,
+          "expertise_counts": [
+            245,
+            216,
+            216,
+            88
+          ],
+          "expertise_count_sum": 765,
+          "verified_n": null
+        },
+        "findings": "No overall significant time/success advantage. Beginner aggregate success95.12% versus92.68%,p=.0431. Task10 beginner success94.9% versus80.4%,p=.0452:14.5 percentage points. Familiar task10 difference11.2points has p=.136.",
+        "limitations": "Reported N contradicts subgroup totals; Shapiro-Wilk interpretation is reversed; familiar task10 rejection claim contradicts p=.136. Repeated-task dependence/multiple comparisons require scrutiny. Artificial tasks, skips, self-selection, ceiling effects; performance with aid is not retained learning.",
+        "locations": [
+          "§4.2–4.6 pp10–12",
+          "§5.1–5.4 pp12–15"
+        ],
+        "provenance": [
+          "Root direct OpenAlex forward citation from Tirronen2015",
+          "Exact-title web search found author manuscript",
+          "Monash institutional record verifies2026 citation year; linked final published PDF returned403"
+        ],
+        "notes": "2024 arXiv preprint presents stronger abstract. Use final-version abstract and retain manuscript reporting caveats; publisher2025 copyright/DOI is not citation year."
+      }
+    },
+    {
+      "ledger": "notes/pedagogy-sources.json",
+      "source": {
+        "id": "P01",
+        "title": "Teaching computer programming with PRIMM: a sociocultural perspective",
+        "authors": [
+          "Sue Sentance",
+          "Jane Waite",
+          "Maria Kallia"
+        ],
+        "year": 2019,
+        "doi": "10.1080/08993408.2019.1608781",
+        "url": "https://eprints.gla.ac.uk/229013/",
+        "full_text_url": "https://primmportal.com/wp-content/uploads/2020/10/teaching-computer-programming-with-primm-a-sociocultural-perspective.pdf",
+        "evidence_class": "CS education",
+        "access_level": "selected full-text sections of 42-page manuscript: participant recruitment, assessments, results and limitations",
+        "population": "English secondary-school pupils aged 11–14 learning Python",
+        "design": "mixed-methods classroom comparison; volunteer teachers trained in PRIMM; usual school materials in controls; 8–12 weeks",
+        "n": {
+          "experimental": 493,
+          "control": 180
+        },
+        "findings": "PRIMM group had higher post-test scores; reported rank-test effect r=.13. Teacher interviews described practical benefits.",
+        "limitations": "Author-stated: volunteer teachers, insufficient demographic data, nonvalidated assessments, uncontrolled comparator lessons. Reviewer: teacher training/materials/dialogue form a bundle; no randomized Haskell or self-paced university test. Do not repeat the manuscript's interpretation of r=.13 as 13% variance explained.",
+        "locations": "PDF pp.17–19, 23–24, 33–34",
+        "discovered_by": "Q01; full manuscript Q21",
+        "access_date": "2026-10-02",
+        "source_derived_word_budget": 200,
+        "verbatim_quoted_words": 0,
+        "venue": "Computer Science Education",
+        "screening_decision": "include",
+        "haskell_effectiveness_tested": false
+      }
+    },
+    {
+      "ledger": "notes/pedagogy-sources.json",
+      "source": {
+        "id": "P02",
+        "title": "Reducing withdrawal and failure rates in introductory programming with subgoal labeled worked examples",
+        "authors": [
+          "Lauren E. Margulieux",
+          "Briana B. Morrison",
+          "Adrienne Decker"
+        ],
+        "year": 2020,
+        "doi": "10.1186/s40594-020-00222-7",
+        "url": "https://link.springer.com/article/10.1186/s40594-020-00222-7",
+        "evidence_class": "CS education",
+        "access_level": "selected publisher full-text sections: Method, Participants, quiz/exam results",
+        "population": "university introductory Java students; five course sections",
+        "design": "semester classroom quasi-experiment comparing conventional versus subgoal-labeled worked examples",
+        "n": {
+          "analyzed": 265,
+          "subgoal": 120,
+          "control": 145,
+          "enrolled": 307
+        },
+        "findings": "Better formative quiz performance, but no statistically significant improvement in average exam performance; lower exam variance and fewer withdrawals/failing exam averages reported.",
+        "limitations": "Section/instructor effects and selection remain possible; one control section online. Outcomes vary by measure. Earlier 2019 design and explanation-response papers reuse this project and are not independent replications.",
+        "locations": "Method; Participants; Exam performance; Withdrawal and failure",
+        "discovered_by": "Q02",
+        "access_date": "2026-10-02",
+        "source_derived_word_budget": 200,
+        "verbatim_quoted_words": 0,
+        "venue": "International Journal of STEM Education",
+        "screening_decision": "include",
+        "haskell_effectiveness_tested": false
+      }
+    },
+    {
+      "ledger": "notes/pedagogy-sources.json",
+      "source": {
+        "id": "P03",
+        "title": "From Studying Examples to Solving Problems: Fading Worked-Out Solution Steps Helps Learning",
+        "authors": [
+          "Alexander Renkl",
+          "Robert K. Atkinson",
+          "Uwe H. Maier"
+        ],
+        "year": 2000,
+        "doi": null,
+        "url": "https://escholarship.org/uc/item/81b9j9hs",
+        "full_text_url": "https://escholarship.org/content/qt81b9j9hs/qt81b9j9hs_noSplash_ef3e30a960524adc5157ece2d6fa3130.pdf",
+        "evidence_class": "general learning science",
+        "access_level": "selected full-text sections of six-page Cognitive Science Society proceedings paper",
+        "population": "German ninth-grade physics classes; Mississippi State psychology students learning probability",
+        "design": "classroom quasi-experiment; randomized laboratory fading versus example/problem pairs",
+        "n": {
+          "field": 35,
+          "field_fading": 20,
+          "field_control": 15,
+          "lab": 54,
+          "lab_per_group": 27
+        },
+        "findings": "Fading benefited near-transfer performance in both studies; neither showed a significant far-transfer benefit.",
+        "limitations": "Small samples and immediate domain-specific assessments; different fading directions across studies. Haskell benefit is inferred. Distinct from Renkl/Atkinson 2003 conceptual paper.",
+        "locations": "PDF pp.3–5 (Methods, Results)",
+        "discovered_by": "Q05; Q28 verifies year",
+        "access_date": "2026-10-02",
+        "source_derived_word_budget": 200,
+        "verbatim_quoted_words": 0,
+        "venue": "Proceedings of the Annual Meeting of the Cognitive Science Society",
+        "screening_decision": "include",
+        "haskell_effectiveness_tested": false
+      }
+    },
+    {
+      "ledger": "notes/pedagogy-sources.json",
+      "source": {
+        "id": "P04",
+        "title": "Test-Enhanced Learning: Taking Memory Tests Improves Long-Term Retention",
+        "authors": [
+          "Henry L. Roediger III",
+          "Jeffrey D. Karpicke"
+        ],
+        "year": 2006,
+        "doi": "10.1111/j.1467-9280.2006.01693.x",
+        "url": "https://doi.org/10.1111/j.1467-9280.2006.01693.x",
+        "full_text_url": "https://learninglab.psych.purdue.edu/downloads/2006/2006_Roediger_Karpicke_PsychSci.pdf",
+        "evidence_class": "general learning science",
+        "access_level": "selected full-text Methods, Results and General Discussion; author-lab PDF",
+        "population": "Washington University undergraduates aged 18–24",
+        "design": "two experiments: prose study/re-study versus free recall without feedback; immediate and delayed tests",
+        "n": {
+          "experiment1": 120,
+          "experiment2": 180
+        },
+        "findings": "Restudy favored five-minute performance; retrieval favored delayed retention. Experiment 2: repeated-testing group recalled 61% versus repeated-study 40% after one week.",
+        "limitations": "Prose idea-unit recall, not programming construction or type inference. Retrieval and study periods differed in duration; avoid claiming identical practice time in every condition. Not evidence that reading is dispensable.",
+        "locations": "PDF pp.2–5",
+        "discovered_by": "Q03; author PDF Q26",
+        "access_date": "2026-10-02",
+        "source_derived_word_budget": 200,
+        "verbatim_quoted_words": 0,
+        "venue": "Psychological Science",
+        "screening_decision": "include",
+        "haskell_effectiveness_tested": false
+      }
+    },
+    {
+      "ledger": "notes/pedagogy-sources.json",
+      "source": {
+        "id": "P05",
+        "title": "Spacing Effects in Learning: A Temporal Ridgeline of Optimal Retention",
+        "authors": [
+          "Nicholas J. Cepeda",
+          "Edward Vul",
+          "Doug Rohrer",
+          "John T. Wixted",
+          "Harold Pashler"
+        ],
+        "year": 2008,
+        "doi": "10.1111/j.1467-9280.2008.02209.x",
+        "url": "https://doi.org/10.1111/j.1467-9280.2008.02209.x",
+        "full_text_url": "https://labs.biology.ucsd.edu/rifkin/courses/bieb100/f14/Cepeda_et_al_2008_Psychological_Science_Spacing_Effects_in_Learning_A_Temporal_Ridgeline_of_Optimal_Retention.pdf",
+        "evidence_class": "general learning science",
+        "access_level": "selected full-text current-study, Methods, Discussion; university-hosted published PDF",
+        "population": "online adult memory panel; ages 18–72, mean 34",
+        "design": "random assignment to 26 gap/retention-interval combinations; 32 trivia facts; recall and recognition",
+        "n": {
+          "reported": 1354
+        },
+        "findings": "Optimal review gap depended on retention interval; performance rose then fell with increasing gap. Approximate optimal ratios: 20–40% for one-week delay, 5–10% for one-year delay.",
+        "limitations": "Trivia retention and completer analysis; attrition increased at longer delays. Not a universal 10–20% schedule or demonstrated programming retention effect.",
+        "locations": "printed pp.1096–1101",
+        "discovered_by": "Q04; university PDF Q31",
+        "access_date": "2026-10-02",
+        "source_derived_word_budget": 200,
+        "verbatim_quoted_words": 0,
+        "venue": "Psychological Science",
+        "screening_decision": "include",
+        "haskell_effectiveness_tested": false
+      }
+    },
+    {
+      "ledger": "notes/pedagogy-sources.json",
+      "source": {
+        "id": "P06",
+        "title": "Enhancing Syntax Error Messages Appears Ineffectual",
+        "authors": [
+          "Paul Denny",
+          "Andrew Luxton-Reilly",
+          "Dave Carpenter"
+        ],
+        "year": 2014,
+        "doi": "10.1145/2591708.2591748",
+        "url": "https://doi.org/10.1145/2591708.2591748",
+        "full_text_url": "https://www.cs.auckland.ac.nz/courses/compsci747s2c/lectures/errors.pdf",
+        "evidence_class": "CS education",
+        "access_level": "selected full-text Evaluation, Results and Discussion; university-hosted PDF",
+        "population": "University of Auckland accelerated summer CS1 students learning Java",
+        "design": "random allocation; 10 short CodeWrite method-body exercises over weeks 2–3; raw versus enhanced syntax messages",
+        "n": {
+          "enrolled": 90,
+          "active": 83,
+          "control": 42,
+          "intervention": 41
+        },
+        "findings": "No significant benefit on consecutive noncompiling submissions, overall noncompiling attempts, or correction attempts for common error categories.",
+        "limitations": "Single short course, small tasks and specific enhancement style; no delayed conceptual assessment. Null result does not establish all enhancements ineffective.",
+        "locations": "printed pp.275–277",
+        "discovered_by": "Q11; author university PDF Q15",
+        "access_date": "2026-10-02",
+        "source_derived_word_budget": 200,
+        "verbatim_quoted_words": 0,
+        "venue": "ITiCSE 2014",
+        "screening_decision": "include",
+        "haskell_effectiveness_tested": false
+      }
+    },
+    {
+      "ledger": "notes/pedagogy-sources.json",
+      "source": {
+        "id": "P07",
+        "title": "Effective compiler error message enhancement for novice programming students",
+        "authors": [
+          "Brett A. Becker",
+          "Graham Glanville",
+          "Ricardo Iwashima",
+          "Claire McDonnell",
+          "Kyle Goslin",
+          "Catherine Mooney"
+        ],
+        "year": 2016,
+        "doi": "10.1080/08993408.2016.1225464",
+        "url": "https://doi.org/10.1080/08993408.2016.1225464",
+        "full_text_url": "https://www.researchgate.net/publication/308343816_Effective_compiler_error_message_enhancement_for_novice_programming_students",
+        "evidence_class": "CS education",
+        "access_level": "selected full-text author-uploaded original manuscript on ResearchGate; author-site accepted PDF redirected to suspended page",
+        "population": "first-semester Java CS1 students at one Irish institution",
+        "design": "successive-year control/intervention comparison; Decaf raw versus raw plus enhanced messages",
+        "n": {
+          "active_compiler_ids": 212,
+          "control_ids": 108,
+          "intervention_ids": 104
+        },
+        "findings": "Reduced error-frequency and several repeated-error measures under enhancement.",
+        "limitations": "Historical cohorts, no random allocation; compiler IDs approximate students, some duplication/other-tool use possible. Error frequency is not independent mastery. Similar error-rank distributions across languages do not prove equivalent instructional effects.",
+        "locations": "manuscript pp.8–10, 20–22",
+        "discovered_by": "Q06; expanded journal study search result; snowball P06",
+        "access_date": "2026-10-02",
+        "source_derived_word_budget": 200,
+        "verbatim_quoted_words": 0,
+        "venue": "Computer Science Education",
+        "screening_decision": "include",
+        "haskell_effectiveness_tested": false
+      }
+    },
+    {
+      "ledger": "notes/pedagogy-sources.json",
+      "source": {
+        "id": "P08",
+        "title": "Not the Silver Bullet: LLM-enhanced Programming Error Messages are Ineffective in Practice",
+        "authors": [
+          "Eddie Antonio Santos",
+          "Brett A. Becker"
+        ],
+        "year": 2024,
+        "doi": "10.1145/3689535.3689554",
+        "url": "https://arxiv.org/abs/2409.18661",
+        "full_text_url": "https://arxiv.org/html/2409.18661v1",
+        "evidence_class": "CS education",
+        "access_level": "selected author full-text HTML: participants, procedure, results and limitations",
+        "population": "European university first-year CS students, second programming semester, C",
+        "design": "within-participant six-task debugging study; task-specific random assignment to GCC, handwritten or GPT-4 explanations",
+        "n": {
+          "recruited": 113,
+          "completed": 106
+        },
+        "findings": "GPT-4 was faster than stock messages on only one task; handwritten explanations generally performed better. Preference for GPT-4 did not imply faster repair.",
+        "limitations": "Six selected bugs, timed repair, permitted web search; same researcher authored bugs and expert messages; GPT-4 also displayed stock messages. No delayed learning measure. Findings cannot establish current-model or Haskell effectiveness.",
+        "locations": "sections 3.1–3.4, 4.1, 5.1",
+        "discovered_by": "Q06 results; recent evidence lead",
+        "access_date": "2026-10-02",
+        "source_derived_word_budget": 200,
+        "verbatim_quoted_words": 0,
+        "venue": "UKICER 2024",
+        "screening_decision": "include",
+        "haskell_effectiveness_tested": false
+      }
+    },
+    {
+      "ledger": "notes/pedagogy-sources.json",
+      "source": {
+        "id": "P09",
+        "title": "Understanding Conceptual Transfer for Students Learning New Programming Languages",
+        "authors": [
+          "Ethel Tshukudu",
+          "Quintin Cutts"
+        ],
+        "year": 2020,
+        "doi": "10.1145/3372782.3406270",
+        "url": "https://eprints.gla.ac.uk/230934/",
+        "full_text_url": "https://www.researchgate.net/publication/343517536_Understanding_Conceptual_Transfer_for_Students_Learning_New_Programming_Languages",
+        "evidence_class": "CS education",
+        "access_level": "selected author-uploaded full-text sections: participants, study procedures and results; institutional record has abstract only",
+        "population": "near-novice undergraduates Python→Java; IT masters students Java→Python",
+        "design": "two within-participant paper-based code-comprehension studies; categories of true, false and abstract true carryover",
+        "n": {
+          "study1_analyzed": 70,
+          "study1_consented": 120,
+          "study2_analyzed": 33,
+          "study2_consented": 50
+        },
+        "findings": "Syntax similarity accompanied positive or negative semantic transfer depending on whether meaning carried over; dissimilar syntax impeded recognition of shared concepts.",
+        "limitations": "Observational within-learner comparisons, selected concept categories and different test orders; not an intervention effect or imperative→Haskell result.",
+        "locations": "sections 5.1.1, 5.2.1–5.2.6",
+        "discovered_by": "Q08",
+        "access_date": "2026-10-02",
+        "source_derived_word_budget": 200,
+        "verbatim_quoted_words": 0,
+        "venue": "ICER 2020",
+        "screening_decision": "include",
+        "haskell_effectiveness_tested": false
+      }
+    },
+    {
+      "ledger": "notes/pedagogy-sources.json",
+      "source": {
+        "id": "P10",
+        "title": "Notional Machines and Introductory Programming Education",
+        "authors": [
+          "Juha Sorva"
+        ],
+        "year": 2013,
+        "doi": "10.1145/2483710.2483713",
+        "url": "https://research.aalto.fi/en/publications/notional-machines-and-introductory-programming-education/",
+        "full_text_url": "https://www.researchgate.net/publication/259998496_Notional_machines_and_introductory_programming_education",
+        "evidence_class": "CS education conceptual synthesis",
+        "access_level": "selected author-uploaded full-text introduction and conceptual discussion; institutional metadata verified",
+        "population": null,
+        "design": "narrative/conceptual review, not a new intervention experiment",
+        "n": null,
+        "findings": "Proposes making the program-execution model an explicit learning objective and relates this to mental models and programming difficulties.",
+        "limitations": "Framework evidence, not an effect estimate; no new N. A Haskell notional machine must respect non-strict evaluation rather than importing imperative state/line-order semantics.",
+        "locations": "article introduction and notional-machine definition",
+        "discovered_by": "Q07",
+        "access_date": "2026-10-02",
+        "source_derived_word_budget": 200,
+        "verbatim_quoted_words": 0,
+        "venue": "ACM Transactions on Computing Education",
+        "screening_decision": "include",
+        "haskell_effectiveness_tested": false
+      }
+    },
+    {
+      "ledger": "notes/pedagogy-sources.json",
+      "source": {
+        "id": "P11",
+        "title": "Students’ ways of experiencing visual program simulation",
+        "authors": [
+          "Juha Sorva",
+          "Jan Lönnberg",
+          "Lauri Malmi"
+        ],
+        "year": 2013,
+        "doi": "10.1080/08993408.2013.807962",
+        "url": "https://www.tandfonline.com/doi/full/10.1080/08993408.2013.807962",
+        "metadata_url": "https://research.aalto.fi/en/publications/students-ways-of-experiencing-visual-program-simulation/",
+        "evidence_class": "CS education",
+        "access_level": "abstract and institutional metadata only; attempted publisher full-text open failed",
+        "population": "novice programmers; precise course/language not verified",
+        "design": "qualitative interviews plus supplementary observation",
+        "n": null,
+        "findings": "Six ways of experiencing simulation reported; some learners failed to attach meaning to visuals or connect them to programming practice.",
+        "limitations": "Abstract-only extraction: no verified N, interview protocol, sampling or coding details. Evidence of differing interpretations, not a causal visualization benefit or prevalence estimate.",
+        "locations": "publisher abstract; author-uploaded abstract",
+        "discovered_by": "Q19; snowball P10",
+        "access_date": "2026-10-02",
+        "source_derived_word_budget": 200,
+        "verbatim_quoted_words": 0,
+        "venue": "Computer Science Education",
+        "screening_decision": "include",
+        "haskell_effectiveness_tested": false
+      }
+    },
+    {
+      "ledger": "notes/pedagogy-sources.json",
+      "source": {
+        "id": "P12",
+        "title": "Counting days is a spacing incentive that unlocks the potential of low GPA students",
+        "authors": [
+          "Iman YeckehZaare",
+          "Paul Resnick"
+        ],
+        "year": 2025,
+        "doi": "10.1038/s41539-025-00322-5",
+        "url": "https://www.nature.com/articles/s41539-025-00322-5",
+        "evidence_class": "CS education",
+        "access_level": "selected publisher full-text Methods, Results and Discussion",
+        "population": "university introductory Python; high-school/college Java courses",
+        "design": "individual RCT rewarding practice days versus question counts; instructor-cluster RCT of same incentive",
+        "n": {
+          "study1_randomized": 199,
+          "study1_analyzed": 143,
+          "study2_instructors": 71,
+          "study2_students": 1648
+        },
+        "findings": "Day incentives increased practice days. Within-course exam gains particularly benefited lower-GPA students; second experiment measured practice behavior, not comparable learning outcomes.",
+        "limitations": "Postrandomization exclusions, modeled GPA interaction; same adaptive/interleaving tool in both arms. Incentive effect is not pure spacing mediation causality; similar practice/assessment question types and one-course learning result limit transfer.",
+        "locations": "Methods participant funnel; Experiment 1/2; Discussion",
+        "discovered_by": "Q25 result; citation trail from 2019 retrieval-tool paper; Q32",
+        "access_date": "2026-10-02",
+        "source_derived_word_budget": 200,
+        "verbatim_quoted_words": 0,
+        "venue": "npj Science of Learning",
+        "screening_decision": "include",
+        "haskell_effectiveness_tested": false
+      }
+    },
+    {
+      "ledger": "notes/snowball-misconceptions-sources.json",
+      "source": {
+        "id": "renggli2025mapfilter",
+        "title": "Map, Filter, and Conquer: A Visual Tool for Learning Higher-Order Functions",
+        "authors": [
+          "Silvan Renggli",
+          "Sverrir Thorgeirsson",
+          "Theo B. Weidmann",
+          "Zhendong Su"
+        ],
+        "year": 2025,
+        "doi": "10.1145/3724363.3729111",
+        "url": "https://doi.org/10.1145/3724363.3729111",
+        "full_text_url": "https://people.inf.ethz.ch/~sverrirt/pdf/mapfilterconquer2025.pdf",
+        "access": "primary_author_full_text_selected_sections",
+        "claim_class": "adjacent_functional_controlled_intervention",
+        "language": "Algot versus Python/Jupyter; Haskell not measured",
+        "sample": {
+          "participants": 27,
+          "completed": 27
+        },
+        "design": "Randomized order, within-subject crossover; two hours; two tutorials up to 45 minutes, four HOFs; first-attempt implementation, behavior questions and Paas effort.",
+        "findings": "Reported effort 4.78 versus 6.04, d=1.03, p<.001; implementation errors 1.33 versus 2.89. Excluding Python syntax errors gives 1.70 and nonsignificant difference, p=.058. Behavioral questions also nonsignificant. Time 16.8 versus 25.6 minutes.",
+        "limitations": "Brief intervention, carryover despite distractor, selected tasks, first-attempt scoring; procedural tool performance is not retention/transfer. Self-reported load; syntax protection confounds conceptual benefit.",
+        "locations": [
+          "§4–6 pp. 3–6",
+          "refs. 14, 15, 22, p. 7"
+        ],
+        "edges": [
+          {
+            "seed": "tirronen2015mistakes",
+            "direction": "forward",
+            "verification": "OpenAlex W2203258339 citing query; candidate primary ref. 22"
+          },
+          {
+            "seed": "rivera2022structural",
+            "direction": "forward",
+            "verification": "OpenAlex W4293813222 citing query; candidate primary ref. 14"
+          },
+          {
+            "seed": "rivera2022planning",
+            "direction": "forward",
+            "verification": "OpenAlex W4289731609 citing query; candidate primary ref. 15"
+          }
+        ],
+        "queries": [
+          "\"Map, Filter, and Conquer\""
+        ]
+      }
+    },
+    {
+      "ledger": "notes/snowball-misconceptions-sources.json",
+      "source": {
+        "id": "tirronen2015workedtypes",
+        "title": "Teaching types with a cognitively effective worked example format",
+        "authors": [
+          "Ville Tirronen",
+          "Ville Isomöttönen"
+        ],
+        "year": 2015,
+        "doi": "10.1017/S0956796814000021",
+        "venue": "Journal of Functional Programming 25:e23",
+        "url": "https://www.cambridge.org/core/journals/journal-of-functional-programming/article/teaching-types-with-a-cognitively-effective-worked-example-format/D793285CAC3FDC1FAB3B1C846EEEFF54",
+        "full_text_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/D793285CAC3FDC1FAB3B1C846EEEFF54/S0956796814000021a.pdf/teaching-types-with-a-cognitively-effective-worked-example-format.pdf",
+        "access": "primary_publisher_full_text_selected_sections",
+        "claim_class": "direct_haskell_exploratory_intervention",
+        "language": "Haskell",
+        "sample": {
+          "volunteers_reported": 7,
+          "pilot_instructor": 1,
+          "subjects_shown_in_figures": 7,
+          "prototype_analogy_survey": 18
+        },
+        "design": "Repeated single-subject A-B-A; textbook baseline, five worked derivations plus deduction rules, then baseline; early master-level FP course.",
+        "findings": "Specific individuals confused application/abstraction, type-variable scope across signatures, currying and type classes. Beginner gains with derivations had mixed maintenance; advanced students had little scope to improve. Prototype analogy survey 9/18 yes, including explanations.",
+        "limitations": "Exploratory volunteers, no general validation; repeated tasks and stricter intervention scoring, protocol deviations, extra individual correction, omitted hardest questions. Pilot versus volunteer accounting unclear; no long-term retention.",
+        "locations": [
+          "§3.1",
+          "Table 2, p. 8",
+          "§4.2–4.3 pp. 9–13",
+          "§5 p. 14"
+        ],
+        "edges": [
+          {
+            "seed": "tirronen2015mistakes",
+            "direction": "backward",
+            "verification": "Seed bibliography p30 cites this in press; §§7.1/7.3 discuss it"
+          }
+        ],
+        "queries": [
+          "\"Teaching types with a cognitively effective worked example format\"",
+          "\"Teaching types with a cognitively\" pdf"
+        ]
+      }
+    },
+    {
+      "ledger": "notes/snowball-misconceptions-sources.json",
+      "source": {
+        "id": "krishnamurthi2021behavioral",
+        "title": "Developing Behavioral Concepts of Higher-Order Functions",
+        "authors": [
+          "Shriram Krishnamurthi",
+          "Kathi Fisler"
+        ],
+        "year": 2021,
+        "doi": "10.1145/3446871.3469739",
+        "venue": "ICER 2021:306–318",
+        "url": "https://static.cs.brown.edu/~sk/Publications/Papers/Published/kf-devel-beh-concept-hofs/",
+        "full_text_url": "https://cs.brown.edu/~sk/Publications/Papers/Published/kf-devel-beh-concept-hofs/paper.pdf",
+        "access": "primary_author_full_text_selected_sections",
+        "claim_class": "adjacent_functional_formative_longitudinal",
+        "language": "Racket preparation; Pyret semester; no Haskell comparison",
+        "sample": {
+          "course_completed": 114,
+          "stage_responses": [
+            68,
+            70,
+            76,
+            64,
+            83
+          ]
+        },
+        "design": "Five optional clustering/classification stages; first four over month, fifth three months later; behavioral examples/diagrams.",
+        "findings": "Filter/take-while distinctions remained harder than map/filter; fold's universality complicates classifications. Stage 5 persistence supports targeted behavioral probes. Authors recommend justifications and learner-generated examples; diagram superiority not established.",
+        "limitations": "Changing samples; Stage 4 identities missing; no matched retention estimate or causal instruction comparison. Small HOF set, ambiguous examples, prior exposure, optional participation; recognition not coding or constructing function arguments.",
+        "locations": [
+          "§5–6 pp. 3–4",
+          "§7.3–7.4 pp. 9–11",
+          "§8 pp. 11–12"
+        ],
+        "edges": [
+          {
+            "seed": "rivera2022structural",
+            "direction": "backward",
+            "verification": "Seed §9 identifies primary related work; bibliography DOI"
+          },
+          {
+            "seed": "rivera2022planning",
+            "direction": "backward",
+            "verification": "Seed ref. 23 gives title and DOI"
+          }
+        ],
+        "queries": [
+          "\"Developing Behavioral Concepts of Higher-Order Functions\" pdf"
+        ]
+      }
+    },
+    {
+      "ledger": "notes/snowball-misconceptions-sources.json",
+      "source": {
+        "id": "rivera2024notations",
+        "title": "Observations on the Design of Program Planning Notations for Students",
+        "authors": [
+          "Elijah Rivera",
+          "Shriram Krishnamurthi",
+          "Kathi Fisler"
+        ],
+        "year": 2024,
+        "doi": "10.1145/3626252.3630901",
+        "venue": "SIGCSE 2024",
+        "url": "https://cs.brown.edu/people/sk/Publications/Papers/Published/rkf-obs-design-prog-plan-notations/",
+        "full_text_url": "https://cs.brown.edu/people/sk/Publications/Papers/Published/rkf-obs-design-prog-plan-notations/paper.pdf",
+        "access": "primary_author_full_text_selected_sections",
+        "claim_class": "adjacent_functional_experience_report",
+        "language": "Data-centric FP table operations, Snap! planning; later Python; exact FP language not named in inspected paper",
+        "sample": {
+          "optional_snap_project_users": 4,
+          "projects": 104,
+          "final_exam_students": 195,
+          "feedback_responses": 138,
+          "mixed_notation_students_invited": 6,
+          "interview_cases_reported": 3
+        },
+        "design": "Two consecutive novice-course offerings: Fall 2022 blocks and Spring 2023 free-form paper; work artifacts, optional feedback and interviews.",
+        "findings": "Earlier experienced-student block-planning success did not carry over cleanly. Novices described rigid/time-consuming planning; many supplied code-like plans or completed plans after coding. Paper plans favored to-do lists; mechanisms for composing subtasks remained underspecified.",
+        "limitations": "Experience report, cohort/task changes and self-selection; no causal learning comparison or complete Spring denominator. Interviews concern selected mixed-notation users; inspect expectations and practical benefit before imposing a planner.",
+        "locations": [
+          "§5–6 pp. 3–5",
+          "§7 p. 6",
+          "ref. 14 p. 7"
+        ],
+        "edges": [
+          {
+            "seed": "rivera2022planning",
+            "direction": "forward",
+            "verification": "OpenAlex W4289731609 citing query; candidate ref. 14 and §6.1 explicitly build on seed"
+          }
+        ],
+        "queries": [
+          "\"Observations on the Design of Program Planning Notations for Students\" pdf"
+        ]
+      }
+    },
+    {
+      "ledger": "notes/snowball-misconceptions-sources.json",
+      "source": {
+        "id": "tirronen2014typesgap",
+        "title": "Study on difficulties and misconceptions with modern type systems",
+        "authors": [
+          "Ville Tirronen"
+        ],
+        "year": 2014,
+        "doi": "10.1145/2591708.2591726",
+        "venue": "ITiCSE 2014:303–308",
+        "url": "https://doi.org/10.1145/2591708.2591726",
+        "full_text_url": null,
+        "access": "metadata_and_abstract_mirrors_only",
+        "claim_class": "unverified_primary_findings",
+        "language": null,
+        "sample": null,
+        "design": "Mirrored abstract describes multiple-choice items in online introductory FP course; primary methods unavailable.",
+        "findings_verified": null,
+        "abstract_lead_only": "Abstract names polymorphism/subtyping confusion, excessive significance assigned to variable names, and conflating general patterns with special cases. These are leads, not independently verified prevalence claims.",
+        "limitations": "ACM DOI inaccessible; ResearchGate says no full text; OpenAlex no OA location. Primary sample, language, items and coding unverified.",
+        "edges": [
+          {
+            "seed": "tirronen2015mistakes",
+            "direction": "forward_then_backward",
+            "verification": "Seed forward leads Wu2017; Wu primary bibliography contains Tirronen2014. OpenAlex types2014→Wu confirms reverse citation."
+          }
+        ],
+        "queries": [
+          "\"Tirronen\" \"misconceptions\" \"2014\"",
+          "\"Study on difficulties and misconceptions with modern type systems\" pdf",
+          "\"Study on difficulties and misconceptions\" site:jyx.jyu.fi"
+        ],
+        "status": "borderline_primary_full_text_needed"
+      }
+    },
+    {
+      "ledger": "notes/snowball-tutors-sources.json",
+      "source": {
+        "id": "tunnellwilson2018substitution",
+        "note_id": "ST01",
+        "title": "Evaluating the Tracing of Recursion in the Substitution Notional Machine",
+        "authors": [
+          "Preston Tunnell Wilson",
+          "Kathi Fisler",
+          "Shriram Krishnamurthi"
+        ],
+        "year": 2018,
+        "doi": "10.1145/3159450.3159479",
+        "venue": "SIGCSE 2018, 1023–1028",
+        "url": "https://cs.brown.edu/people/sk/Publications/Papers/Published/tfk-eval-trace-rec-subst-nm/",
+        "full_text_url": "https://cs.brown.edu/people/sk/Publications/Papers/Published/tfk-eval-trace-rec-subst-nm/paper.pdf",
+        "claim_class": "adjacent_functional_empirical",
+        "access": "selected_full_text_sections",
+        "design": "Single-course repeated diagnostic quizzes, followed by language/model transition",
+        "population": "Introductory summer course, no prerequisites",
+        "language": [
+          "Pyret",
+          "Python 3"
+        ],
+        "sample": {
+          "course": 19,
+          "tree_question": 15
+        },
+        "outcomes": [
+          "trace_soundness",
+          "trace_completeness",
+          "answer_correctness",
+          "context_retention"
+        ],
+        "follow_up": null,
+        "locations": [
+          "§4.3",
+          "§5 Quiz 4",
+          "§6",
+          "§7"
+        ],
+        "relations": [
+          {
+            "seed": "vasconcelos2025haskelite",
+            "seed_doi": "10.4204/EPTCS.424.3",
+            "direction": "backward",
+            "verified_by": "Seed primary reference [18]"
+          }
+        ],
+        "status": "include",
+        "access_date": "2026-10-02",
+        "annotation": "See notes/snowball-tutors.md ST01",
+        "causal_learning_effect_established": false
+      }
+    },
+    {
+      "ledger": "notes/snowball-tutors-sources.json",
+      "source": {
+        "id": "hameer2019autograding",
+        "note_id": "ST02",
+        "title": "Teaching the Art of Functional Programming using Automated Grading (Experience Report)",
+        "authors": [
+          "Aliya Hameer",
+          "Brigitte Pientka"
+        ],
+        "year": 2019,
+        "doi": "10.1145/3341719",
+        "venue": "PACMPL 3(ICFP), article 115",
+        "url": "https://doi.org/10.1145/3341719",
+        "full_text_url": "https://www.cs.mcgill.ca/~ahamee2/learn-ocaml-icfp19.pdf",
+        "claim_class": "adjacent_functional_teaching_experience",
+        "access": "selected_full_text_sections",
+        "design": "Course experience and grader extension design",
+        "population": "Second-year programming languages course, Fall 2018",
+        "language": [
+          "OCaml"
+        ],
+        "sample": {
+          "assignments": 9,
+          "students": null,
+          "survey_respondents": null
+        },
+        "outcomes": [
+          "observed_grader_use",
+          "survey",
+          "technical_design"
+        ],
+        "follow_up": null,
+        "locations": [
+          "§2.1 Lazy Programming",
+          "§2.2",
+          "§3",
+          "§4"
+        ],
+        "relations": [
+          {
+            "seed": "chapman2025assessment",
+            "seed_doi": "10.1017/S0956796824000182",
+            "direction": "backward",
+            "verified_by": "Seed primary References and §2"
+          }
+        ],
+        "status": "include",
+        "access_date": "2026-10-02",
+        "annotation": "See notes/snowball-tutors.md ST02",
+        "causal_learning_effect_established": false
+      }
+    },
+    {
+      "ledger": "notes/snowball-tutors-sources.json",
+      "source": {
+        "id": "furukawa2019stepping",
+        "note_id": "ST03",
+        "title": "Stepping OCaml",
+        "authors": [
+          "Tsukino Furukawa",
+          "Youyou Cong",
+          "Kenichi Asai"
+        ],
+        "year": 2019,
+        "doi": "10.4204/EPTCS.295.2",
+        "venue": "EPTCS 295, 17–34",
+        "url": "https://arxiv.org/abs/1906.11422",
+        "full_text_url": "https://arxiv.org/html/1906.11422",
+        "claim_class": "adjacent_functional_observational_evaluation",
+        "access": "selected_full_text_sections",
+        "design": "Three annual cohorts with changing tool support and instruction",
+        "population": "Second-year CS, prior C course",
+        "language": [
+          "OCaml"
+        ],
+        "sample": {
+          "annual_approximate": 40,
+          "survey_2018": 38,
+          "enrolled_2018": 42
+        },
+        "duration": "15 weekly labs",
+        "outcomes": [
+          "time_to_correct_submission",
+          "tool_usage",
+          "perceived_usefulness"
+        ],
+        "follow_up": null,
+        "locations": [
+          "§3.1–3.4",
+          "Appendix Table 3"
+        ],
+        "relations": [
+          {
+            "seed": "vasconcelos2025haskelite",
+            "seed_doi": "10.4204/EPTCS.424.3",
+            "direction": "backward",
+            "verified_by": "Seed primary reference [8]"
+          }
+        ],
+        "status": "include",
+        "access_date": "2026-10-02",
+        "annotation": "See notes/snowball-tutors.md ST03",
+        "causal_learning_effect_established": false
+      }
+    },
+    {
+      "ledger": "notes/snowball-tutors-sources.json",
+      "source": {
+        "id": "vasconcelos2024tracing",
+        "note_id": "ST04",
+        "title": "Haskelite: A Tracing Interpreter Based on a Pattern-Matching Calculus",
+        "authors": [
+          "Pedro Vasconcelos",
+          "Rodrigo Marques"
+        ],
+        "year": 2024,
+        "doi": "10.1145/3677999.3678274",
+        "venue": "Haskell Symposium 2024, 1–13",
+        "url": "https://arxiv.org/abs/2407.11831",
+        "full_text_url": "https://arxiv.org/html/2407.11831",
+        "claim_class": "direct_haskell_educational_tool_design",
+        "access": "selected_full_text_sections",
+        "design": "Operational semantics and interpreter design",
+        "population": null,
+        "language": [
+          "Haskell subset"
+        ],
+        "sample": null,
+        "outcomes": [
+          "semantic_correspondence",
+          "implementation"
+        ],
+        "follow_up": null,
+        "locations": [
+          "§3–5",
+          "§6 related work",
+          "§7 Educational assessment"
+        ],
+        "relations": [
+          {
+            "seed": "olmer2014expressions",
+            "seed_doi": "10.4204/EPTCS.170.4",
+            "direction": "forward",
+            "verified_by": "Candidate primary §6 and reference [16]; OpenAlex forward set"
+          },
+          {
+            "seed": "vasconcelos2025haskelite",
+            "seed_doi": "10.4204/EPTCS.424.3",
+            "direction": "backward",
+            "verified_by": "Seed primary reference [17]"
+          }
+        ],
+        "status": "include",
+        "access_date": "2026-10-02",
+        "annotation": "See notes/snowball-tutors.md ST04",
+        "causal_learning_effect_established": false
+      }
+    },
+    {
+      "ledger": "notes/snowball-tutors-sources.json",
+      "source": {
+        "id": "kumamoto2025ladder",
+        "note_id": "ST05",
+        "title": "An Interactive Learning Environment for Program Design",
+        "authors": [
+          "Kouta Kumamoto",
+          "Youyou Cong",
+          "Hidehiko Masuhara"
+        ],
+        "year": 2025,
+        "doi": "10.1145/3758317.3759682",
+        "venue": "SPLASH-E 2025, 9 pages",
+        "url": "https://doi.org/10.1145/3758317.3759682",
+        "full_text_url": "https://prg.is.titech.ac.jp/papers/pdf/splashe2025ladder.pdf",
+        "claim_class": "adjacent_functional_feasibility_study",
+        "access": "selected_full_text_sections",
+        "design": "One-task user study with logs, generated code and questionnaire",
+        "population": "Undergraduate introductory FP course; atomic and nonrecursive algebraic data covered",
+        "language": [
+          "Scala 3"
+        ],
+        "sample": {
+          "participated": 42,
+          "consented": 38,
+          "usable_logs": 33
+        },
+        "duration": null,
+        "outcomes": [
+          "interaction_patterns",
+          "feedback_robustness",
+          "perceptions"
+        ],
+        "follow_up": null,
+        "locations": [
+          "§2.2 and reference [2]",
+          "§3.2",
+          "§5.2–5.3",
+          "§6.3"
+        ],
+        "relations": [
+          {
+            "seed": "gerdes2017askelle",
+            "seed_doi": "10.1007/s40593-015-0080-x",
+            "direction": "forward",
+            "verified_by": "Candidate primary §2.2/reference [2]; OpenAlex forward set"
+          }
+        ],
+        "status": "include",
+        "access_date": "2026-10-02",
+        "annotation": "See notes/snowball-tutors.md ST05",
+        "causal_learning_effect_established": false
+      }
+    },
+    {
+      "ledger": "notes/teaching-sources.json",
+      "source": {
+        "id": "gerdes2017askelle",
+        "title": "Ask-Elle: an Adaptable Programming Tutor for Haskell Giving Automated Feedback",
+        "authors": [
+          "Alex Gerdes",
+          "Bastiaan Heeren",
+          "Johan Jeuring",
+          "L. Thomas van Binsbergen"
+        ],
+        "year": 2017,
+        "doi": "10.1007/s40593-015-0080-x",
+        "venue": "International Journal of Artificial Intelligence in Education 27:65–100",
+        "url": "https://doi.org/10.1007/s40593-015-0080-x",
+        "full_text_url": "https://pure.royalholloway.ac.uk/ws/files/25913698/compilation.pdf",
+        "claim_class": "direct_haskell_tutor_evaluation",
+        "access": "selected_full_text_sections",
+        "design": "Three technical/user evaluations; model-solution recognition and property-based feedback; no controlled learning comparison.",
+        "population": "University Haskell learners; different course cohorts.",
+        "sample": {
+          "experiment1_programs": 94,
+          "experiment2_users_approx": 100,
+          "experiment2_questionnaire": 40,
+          "experiment3_registered": 285,
+          "experiment3_active": 116,
+          "experiment3_diagnosis_interactions": 3466,
+          "experiment3_attempts": 652
+        },
+        "findings": "Stepwise hints can address partial programs and counterexamples. The 2013 evaluation contains 1,920 compiler-error interactions (55.4% of diagnoses), but 142 of 652 attempts (21.8%) ended in compiler error. These are interaction/attempt denominators, not learner prevalence. Authors explicitly leave learning effects to future work.",
+        "limitations": "Accuracy, coverage and perceived usefulness do not establish retention or transfer. Recognition depends on model solutions and supported strategies; alternative valid programs may be unrecognized.",
+        "locations": [
+          "Experiments 1–3",
+          "Table 2",
+          "§9 discussion"
+        ],
+        "provenance": [
+          "SciSpace interventions search",
+          "Consensus teaching search; result fetched",
+          "Primary author manuscript"
+        ],
+        "status": "include",
+        "notes": "Online publication 2016; journal issue 2017."
+      }
+    },
+    {
+      "ledger": "notes/teaching-sources.json",
+      "source": {
+        "id": "vasconcelos2025haskelite",
+        "title": "Teaching Introductory Functional Programming Using Haskelite",
+        "authors": [
+          "Pedro Vasconcelos"
+        ],
+        "year": 2025,
+        "doi": "10.4204/EPTCS.424.3",
+        "venue": "EPTCS 424:49–66",
+        "url": "https://doi.org/10.4204/EPTCS.424.3",
+        "full_text_url": "https://arxiv.org/pdf/2508.03640",
+        "claim_class": "direct_haskell_teaching_experience",
+        "access": "selected_full_text_sections",
+        "design": "Teaching experience, voluntary qualitative feedback and historical course results.",
+        "population": "Porto first-year students, mostly prior Python; spring 2024.",
+        "sample": {
+          "enrolled": 143,
+          "forum_respondents": 14,
+          "tool_questionnaire": 6,
+          "distinct_institutional_course_questionnaire": 15
+        },
+        "findings": "Learners reported usefulness for inspecting recursion and higher-order functions. Trace size and unsupported valid Haskell syntax created difficulties; the tool needs explicit subset messages. Distinguish the tool's six-response questionnaire from the separate institutional fifteen-response course survey.",
+        "limitations": "Small self-selected feedback; course changes and historical pass rates cannot identify the tool's causal effect. Tool implements a Haskell subset. Short semantic traces are not an exact account of optimized GHC execution.",
+        "locations": [
+          "Tool design and limitations",
+          "Teaching experience and student feedback",
+          "Discussion"
+        ],
+        "provenance": [
+          "SciSpace interventions search",
+          "Primary arXiv proceedings paper"
+        ],
+        "status": "include"
+      }
+    },
+    {
+      "ledger": "notes/teaching-sources.json",
+      "source": {
+        "id": "olmer2014expressions",
+        "title": "Evaluating Haskell expressions in a tutoring environment",
+        "authors": [
+          "Tim Olmer",
+          "Bastiaan Heeren",
+          "Johan Jeuring"
+        ],
+        "year": 2014,
+        "doi": "10.4204/EPTCS.170.4",
+        "venue": "EPTCS 170:50–66",
+        "url": "https://doi.org/10.4204/EPTCS.170.4",
+        "full_text_url": "https://arxiv.org/pdf/1412.4879",
+        "claim_class": "direct_haskell_tutor_design",
+        "access": "selected_full_text_sections",
+        "design": "Prototype and small formative usability survey.",
+        "population": "Invited functional-programming teachers and students.",
+        "sample": {
+          "instructor_responses": 7,
+          "instructors_invited": 8,
+          "student_responses": 9,
+          "students_invited": 29
+        },
+        "findings": "The prototype diagnoses learner-entered rewrite steps under different evaluation strategies. Respondents differed over how much strategy choice and detail learners should see.",
+        "limitations": "Feasibility and usability evidence; no controlled learning gains. Small response groups. Multiple strategies may overwhelm beginners, so a default strategy is an instructional choice to test.",
+        "locations": [
+          "§§4–6"
+        ],
+        "provenance": [
+          "SciSpace interventions search",
+          "Consensus teaching discovery; primary independently verified",
+          "Primary arXiv paper"
+        ],
+        "status": "include"
+      }
+    },
+    {
+      "ledger": "notes/teaching-sources.json",
+      "source": {
+        "id": "chapman2025assessment",
+        "title": "Experiences of early assessment to teach functional programming",
+        "authors": [
+          "Peter Chapman"
+        ],
+        "year": 2025,
+        "doi": "10.1017/S0956796824000182",
+        "venue": "Journal of Functional Programming 35:e4",
+        "url": "https://www.cambridge.org/core/journals/journal-of-functional-programming/article/experiences-of-early-assessment-to-teach-functional-programming/667F18D3611D4A3A7C7C6A2A2FA4FB3C",
+        "claim_class": "direct_haskell_teaching_comparison",
+        "access": "selected_full_text_sections",
+        "design": "Historical-cohort comparison, online first-year course during COVID, 2021 versus 2022.",
+        "population": "First-year discrete-mathematics/Haskell course; students completing both assessments.",
+        "sample": {
+          "before_completers": 78,
+          "after_completers": 40
+        },
+        "findings": "Adding an early summative Use-Modify assessment accompanied a later Create-assessment mean of 62.249 versus 53.256: 8.993 percentage points; one-tailed Wilcoxon p=.0371, reported r=.164. Both cohorts already used formative Use-Modify-Create.",
+        "limitations": "Small reported effect, nonrandom cohorts, completer selection, changed recordings and other context; mathematics means decreased. Association cannot establish causality or delayed transfer.",
+        "locations": [
+          "Study design",
+          "Table 1",
+          "Discussion pp9–12"
+        ],
+        "provenance": [
+          "Direct OpenAlex forward citations from Tirronen2015",
+          "Primary Cambridge HTML and PDF"
+        ],
+        "status": "include"
+      }
+    },
+    {
+      "ledger": "notes/teaching-sources.json",
+      "source": {
+        "id": "dale2019blended",
+        "title": "Learner experiences of a blended course incorporating a MOOC on Haskell functional programming",
+        "authors": [
+          "Vicki H. M. Dale",
+          "Jeremy Singer"
+        ],
+        "year": 2019,
+        "doi": "10.25304/rlt.v27.2248",
+        "venue": "Research in Learning Technology 27",
+        "url": "https://eprints.gla.ac.uk/195429/",
+        "full_text_url": "https://eprints.gla.ac.uk/195429/1/195429.pdf",
+        "claim_class": "direct_haskell_learner_experience",
+        "access": "selected_full_text_sections",
+        "design": "Survey and focus group in blended honours course; no randomized comparator.",
+        "population": "Fourth-year Glasgow students, 2016–17; first six of ten weeks used a MOOC.",
+        "sample": {
+          "survey": 36,
+          "response_rate_percent": 29,
+          "focus_group": 6
+        },
+        "findings": "Respondents valued flexibility and learning activities but reported poorly signposted support and discontinuity into more advanced work. Integration of help and progression warrants design attention.",
+        "limitations": "Self-selected perceptions, not demonstrated learning effects. One advanced university course; cannot rank MOOCs against classroom teaching.",
+        "locations": [
+          "Methods",
+          "Results",
+          "Discussion"
+        ],
+        "provenance": [
+          "SciSpace interventions search",
+          "Direct OpenAlex Haskell teaching query",
+          "Primary institutional manuscript"
+        ],
+        "status": "include"
+      }
+    },
+    {
+      "ledger": "notes/teaching-sources.json",
+      "source": {
+        "id": "feijoo2020videos",
+        "title": "Using Student-created Instructional Videos in CS Upper-level Courses: A Successful Strategy in a Functional Programming Course",
+        "authors": [
+          "Pedro Guillermo Feijóo-García",
+          "Christina Gardner-McCune"
+        ],
+        "year": 2020,
+        "doi": "10.5220/0009416404120419",
+        "venue": "CSEDU 2020, volume 1:412–419",
+        "url": "https://doi.org/10.5220/0009416404120419",
+        "full_text_url": "https://www.scitepress.org/Papers/2020/94164/94164.pdf",
+        "claim_class": "functional_programming_teaching",
+        "access": "selected_full_text_sections",
+        "design": "Small uncontrolled pre/post classroom experience with two student-made explanatory videos.",
+        "population": "Senior functional-programming course at Universidad El Bosque, Colombia; ages 18–35.",
+        "sample": {
+          "students": 16
+        },
+        "findings": "Assessment improvement and positive perceptions accompanied students making concept/code explanation videos; participants also found production time-consuming.",
+        "limitations": "No comparator; improvement can reflect normal course learning, practice or selection. Do not equate video production with a demonstrated causal self-explanation effect or transfer to beginner Haskell.",
+        "locations": [
+          "Methods",
+          "Results",
+          "Conclusion"
+        ],
+        "provenance": [
+          "SciSpace interventions discovery",
+          "Primary proceedings PDF"
+        ],
+        "status": "include"
+      }
+    },
+    {
+      "ledger": "notes/teaching-sources.json",
+      "source": {
+        "id": "chakravarty2004risks",
+        "title": "The risks and benefits of teaching purely functional programming in first year",
+        "authors": [
+          "Manuel M. T. Chakravarty",
+          "Gabriele Keller"
+        ],
+        "year": 2004,
+        "doi": "10.1017/S0956796803004805",
+        "venue": "Journal of Functional Programming 14(1):113–123",
+        "url": "https://www.cambridge.org/core/journals/journal-of-functional-programming/article/risks-and-benefits-of-teaching-purely-functional-programming-in-first-year/39F929A1793B67BCEF316DBDB717F273",
+        "full_text_url": null,
+        "claim_class": "functional_programming_teaching_experience",
+        "access": "publisher_abstract_only",
+        "design": "Teaching experience based on several large first-year classes and surveys; detail not independently extracted.",
+        "population": "First-year classes, reportedly up to 600.",
+        "sample": null,
+        "findings": "Abstract frames functional programming as a means to teach problem solving and computer science rather than paradigm advocacy as an end.",
+        "limitations": "Full text not inspected; no causal claim about benefits or harm, and no extracted effect size.",
+        "locations": [
+          "Publisher abstract"
+        ],
+        "provenance": [
+          "Direct OpenAlex Haskell teaching query",
+          "Backward references from Tirronen2015",
+          "Primary Cambridge abstract"
+        ],
+        "status": "include_context_abstract_only"
+      }
+    }
+  ],
+  "tutorial_exemplars": [
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "tutorial-helsinki-mooc",
+        "title": "Haskell MOOC",
+        "authors": [
+          "Joel Kaasinen",
+          "John Lång"
+        ],
+        "year": null,
+        "venue": "University of Helsinki / Nitor course website",
+        "evidence_class": "tutorial exemplar",
+        "discovery": "Scope-named resource; direct official-site inspection",
+        "urls": [
+          "https://haskell.mooc.fi/",
+          "https://haskell.mooc.fi/part1"
+        ],
+        "inspection": "Index; Part 1 contents; sections 1.12–1.14, 1.9, 3.2; selected examples",
+        "outcome_evidence": null,
+        "limits": "No logged-in submission or full-platform accessibility audit; assessment policy is observed design, not learning evidence"
+      }
+    },
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "tutorial-haskellbook",
+        "title": "Haskell Programming from First Principles",
+        "authors": [
+          "Christopher Allen",
+          "Julie Moronuki"
+        ],
+        "year": null,
+        "venue": "Author website / Lorepub",
+        "evidence_class": "tutorial exemplar",
+        "discovery": "Scope-named resource; direct official-site inspection",
+        "urls": [
+          "https://haskellbook.com/",
+          "https://haskellbook.com/img/sample.pdf"
+        ],
+        "inspection": "Website contents and author rationale; selected chapter 2 exercises, sections 2.10–2.11, in 96-page public sample",
+        "outcome_evidence": null,
+        "limits": "Full book not inspected; chapter 1 absent from public sample; author instructional claims are not measured learning outcomes"
+      }
+    },
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "tutorial-hutton-pih2",
+        "title": "Programming in Haskell, second edition",
+        "authors": [
+          "Graham Hutton"
+        ],
+        "year": null,
+        "venue": "Cambridge University Press; author University of Nottingham website",
+        "evidence_class": "tutorial exemplar",
+        "discovery": "Scope-named resource; direct official author-site inspection",
+        "urls": [
+          "https://people.cs.nott.ac.uk/pszgmh/pih.html"
+        ],
+        "inspection": "Author description, table of contents, exercise/resource availability",
+        "outcome_evidence": null,
+        "limits": "Metadata/contents inspection only; chapter prose, exercise text, solutions, videos, and exams uninspected"
+      }
+    },
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "tutorial-cis194-2013",
+        "title": "CIS 194: Introduction to Haskell, Spring 2013",
+        "authors": [
+          "Brent Yorgey"
+        ],
+        "year": 2013,
+        "venue": "University of Pennsylvania course archive",
+        "evidence_class": "tutorial exemplar",
+        "discovery": "Scope-named resource; direct official university-site inspection",
+        "urls": [
+          "https://www.cis.upenn.edu/~cis1940/spring13/",
+          "https://www.cis.upenn.edu/~cis1940/spring13/lectures.html",
+          "https://www.cis.upenn.edu/~cis1940/spring13/policies.html",
+          "https://www.cis.upenn.edu/~cis1940/spring13/hw/04-higher-order.pdf",
+          "https://www.cis.upenn.edu/~cis1940/spring13/lectures/06-laziness.html",
+          "https://www.cis.upenn.edu/~cis1940/spring13/lectures/08-IO.html"
+        ],
+        "inspection": "Course description, schedule, revision/grading policy, homework 4, selected laziness and IO lecture sections",
+        "outcome_evidence": null,
+        "limits": "Archived offering; prerequisites not verified; no actual student submissions or feedback inspected; embedded laziness lecture date says 2012 despite Spring 2013 archive"
+      }
+    },
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "tutorial-lyah-fork",
+        "title": "Learn You a Haskell for Great Good! (maintained community fork)",
+        "authors": [
+          "Miran Lipovača",
+          "Community fork maintainers"
+        ],
+        "year": null,
+        "venue": "Author-authorized community-maintained publication",
+        "evidence_class": "tutorial exemplar",
+        "discovery": "Scope-named resource; original domain failed; successor direct inspection",
+        "urls": [
+          "https://learnyouahaskell.github.io/",
+          "https://learnyouahaskell.github.io/introduction.html",
+          "https://learnyouahaskell.github.io/chapters.html",
+          "https://learnyouahaskell.github.io/higher-order-functions.html"
+        ],
+        "inspection": "Fork provenance statement, introduction, contents, selected currying/higher-order chapter sections",
+        "outcome_evidence": null,
+        "limits": "Inspected fork, not original edition; original learnyouahaskell.com and www.learnyouahaskell.com requests timed out"
+      }
+    },
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "tutorial-wikibook",
+        "title": "Haskell Wikibook",
+        "authors": [
+          "Wikibooks contributors"
+        ],
+        "year": null,
+        "venue": "Wikibooks",
+        "evidence_class": "tutorial exemplar",
+        "discovery": "Scope-named resource; direct published-resource inspection",
+        "urls": [
+          "https://en.wikibooks.org/wiki/Haskell",
+          "https://en.wikibooks.org/wiki/Haskell/Lists_III",
+          "https://en.wikibooks.org/wiki/Haskell/Simple_input_and_output"
+        ],
+        "inspection": "Contents, selected fold explanations and exercises, selected simple IO discussion",
+        "revision_urls": [
+          "https://en.wikibooks.org/w/index.php?title=Haskell&oldid=4632183",
+          "https://en.wikibooks.org/w/index.php?title=Haskell/Lists_III&oldid=4485942"
+        ],
+        "outcome_evidence": null,
+        "limits": "Community document with multiple routes; linked solutions not independently inspected; no platform-wide audit"
+      }
+    },
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "tutorial-codeworld",
+        "title": "CodeWorld and CodeWorld Haskell",
+        "authors": [
+          "CodeWorld project contributors"
+        ],
+        "year": null,
+        "venue": "CodeWorld website and project repository",
+        "evidence_class": "tutorial exemplar",
+        "discovery": "Scope-named resource; official site and project repository/API documentation",
+        "urls": [
+          "https://github.com/google/codeworld",
+          "https://code.world/",
+          "https://code.world/doc-haskell/CodeWorld.html",
+          "https://code.world/doc/Core.html"
+        ],
+        "inspection": "README variants and mission; live application's exposed controls; standard Haskell API drawing/animation/activity examples; educational core types",
+        "outcome_evidence": null,
+        "limits": "CodeWorld educational dialect is distinct from standard Haskell mode; guide/doc.html and guide.html failed; no course sequence, independent exercises, or assessment verified"
+      }
+    },
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "tutorial-exercism-haskell",
+        "title": "Exercism Haskell track",
+        "authors": [
+          "Exercism contributors"
+        ],
+        "year": null,
+        "venue": "Exercism",
+        "evidence_class": "tutorial exemplar",
+        "discovery": "Scope-named resource; direct official platform inspection",
+        "urls": [
+          "https://exercism.org/tracks/haskell",
+          "https://exercism.org/tracks/haskell/exercises",
+          "https://exercism.org/tracks/haskell/exercises/leap"
+        ],
+        "inspection": "Public track summary, practice listing, Leap specification and examples",
+        "outcome_evidence": null,
+        "limits": "No logged-in runner, automated analysis, or mentoring interaction inspected; advertised features distinguished from observed feedback; prerequisite knowledge not verified"
+      }
+    }
+  ],
+  "semantic_authorities": [
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "haskell2010-expressions",
+        "title": "Haskell 2010 Report, chapter 3: Expressions",
+        "url": "https://www.haskell.org/onlinereport/haskell2010/haskellch3.html",
+        "inspection": "Sections 3.3, 3.14, selected pattern semantics",
+        "diagnostic_items": [
+          1,
+          2,
+          10,
+          11
+        ]
+      }
+    },
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "haskell2010-declarations",
+        "title": "Haskell 2010 Report, chapter 4: Declarations and Bindings",
+        "url": "https://www.haskell.org/onlinereport/haskell2010/haskellch4.html",
+        "inspection": "Type-expression grammar in section 4.1.2",
+        "diagnostic_items": [
+          2
+        ]
+      }
+    },
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "haskell2010-types",
+        "title": "Haskell 2010 Report, chapter 6: Predefined Types and Classes",
+        "url": "https://www.haskell.org/onlinereport/haskell2010/haskellch6.html",
+        "inspection": "Tuple, IO, non-strict/seq, Monad declarations and laws",
+        "diagnostic_items": [
+          3,
+          6,
+          7,
+          8,
+          11
+        ],
+        "limits": "Historical class hierarchy; do-pattern failure translation predates MonadFail"
+      }
+    },
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "haskell2010-io",
+        "title": "Haskell 2010 Report, chapter 7: Basic Input/Output",
+        "url": "https://www.haskell.org/onlinereport/haskell2010/haskellch7.html",
+        "inspection": "Action sequencing, IO function signatures, return discussion",
+        "diagnostic_items": [
+          10,
+          11
+        ]
+      }
+    },
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "haskell2010-prelude",
+        "title": "Haskell 2010 Report, chapter 9: Standard Prelude",
+        "url": "https://www.haskell.org/onlinereport/haskell2010/haskellch9.html",
+        "inspection": "const, foldl/foldr, length/head, list definitions",
+        "diagnostic_items": [
+          4,
+          5,
+          6,
+          7
+        ]
+      }
+    },
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "ghc-deepseq-1.4.1.1",
+        "title": "Control.DeepSeq, GHC-bundled deepseq 1.4.1.1 source documentation",
+        "url": "https://downloads.haskell.org/~ghc/7.10.3/docs/html/libraries/deepseq-1.4.1.1/src/Control-DeepSeq.html",
+        "inspection": "seq/deepseq comparison, NFData Int/list instances, ordering disclaimer",
+        "diagnostic_items": [
+          8,
+          9
+        ],
+        "limits": "Historical explicitly versioned source; no latest-version claim"
+      }
+    },
+    {
+      "ledger": "notes/tutorial-sources.json",
+      "source": {
+        "id": "ghc-ghci-current",
+        "title": "GHC User's Guide: Using GHCi",
+        "url": "https://downloads.haskell.org/ghc/latest/docs/users_guide/ghci.html",
+        "version_observed": "9.14.1",
+        "inspection": "Sections 3.4.1 and 3.4.2; debugger print/force documentation",
+        "diagnostic_items": [
+          12
+        ],
+        "limits": "Moving latest URL; version should be pinned in teaching material"
+      }
+    }
+  ],
+  "note": "Rich extractions retain source-ledger provenance. Read screening.json for deduplicated discovery records; tutorial exemplars are not effectiveness studies."
+}

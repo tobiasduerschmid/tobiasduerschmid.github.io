@@ -1,0 +1,312 @@
+# Compact annotated bibliography
+
+Capped fragments are previews; consult the linked annotation for the complete appraisal. Access levels and evidence classes remain separate. Borderline records are retained as leads, not appraised inclusions. This is a purposive evidence base, not an exhaustive bibliography.
+
+- **[Understanding beginners’ mistakes with Haskell](https://www.cambridge.org/core/journals/journal-of-functional-programming/article/understanding-beginners-mistakes-with-haskell/244DB6807F3BD77E14CE7D627514D6D3)** — Ville Tirronen, Samuel Uusi-Mäkelä, Ville Isomöttönen (2015), `tirronen2015mistakes`.
+  - Evidence class: `direct_haskell`.
+  - Preview: CouldntMatch occurred for 53/55 students. Of sessions with that error, 69% involved type confusion and roughly 30% precedence; one-third of …
+  - Method preview: Eight-week elective; automatic error classification plus instructor/assistant manual session coding.; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: Single cohort; coding infers intent from submissions; outside help and exploratory incomplete …
+  - Annotation: [notes/misconceptions-sources.json](../notes/misconceptions-sources.json) / `tirronen2015mistakes`.
+- **[Investigating Compilation Errors of Students Learning Haskell](https://arxiv.org/abs/1906.11450)** — Boldizsár Németh, Eunjong Choi, Erina Makihara, Hajimu Iida (2019), `nemeth2019errors`.
+  - Evidence class: `direct_haskell`.
+  - Preview: Among sampled type-related errors: list/scalar/dimensional mismatch 20%; missing argument 8.6%; simple type mismatch 8.6%; wrong operation 8.4%; grouping/precedence 6.7%. Type …
+  - Method preview: Submission logs, nine teaching weeks; sampled manual root-cause classification and response/correction times.; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: Error proportions are not learner prevalence. Anonymous sessions cannot track individuals across …
+  - Annotation: [notes/misconceptions-sources.json](../notes/misconceptions-sources.json) / `nemeth2019errors`.
+- **[Functional Baby Talk: Analysis of Code Fragments from Novice Haskell Programmers](https://doi.org/10.4204/EPTCS.270.3)** — Jeremy Singer, Blair Archibald (2018), `singer2018babytalk`.
+  - Evidence class: `direct_haskell`.
+  - Preview: Observed parenthesis, let/where, do-block binding/final-expression and range-notation errors. Unsupported data/type/multiline definitions were also attempted. About 100K inputs copied tutorial code …
+  - Method preview: Logs; expressions reparsed; sessions inferred by IP and ten-minute gaps.; access: selected_full_text_sections_of_published_paper_mirror.
+  - Source status: `include`.
+  - Limits preview: One course, IP proxy and browser/OS selection; tool rejects some valid Haskell. …
+  - Annotation: [notes/misconceptions-sources.json](../notes/misconceptions-sources.json) / `singer2018babytalk`.
+- **[Helium, for Learning Haskell](https://doi.org/10.1145/871895.871902)** — Bastiaan Heeren, Daan Leijen, Arjan van IJzendoorn (2003), `heeren2003helium`.
+  - Evidence class: `direct_haskell`.
+  - Preview: 31.6% of compilation attempts produced type errors; 46.3% were accepted. Undefined names dominated other static errors. Tool supplies source-oriented diagnostics …
+  - Method preview: Compiler/tool experience report and seven-week compilation logs.; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: Compiler acceptance is not task correctness or learning. Course/tasks and subset affect …
+  - Annotation: [notes/misconceptions-sources.json](../notes/misconceptions-sources.json) / `heeren2003helium`.
+- **[How Type Errors Were Fixed and What Students Did?](https://doi.org/10.1145/3133929)** — Baijun Wu, Sheng Chen (2017), `wu2017repairs`.
+  - Evidence class: `direct_haskell`.
+  - Preview: Over 45% of final type-error fixes in each dataset added/removed parentheses or brackets. Wrong annotations appeared in 28%,34.4%,27% of analyzed …
+  - Method preview: Retrospective program-sequence and repair analysis; manually identified intended fixes.; access: selected_full_text_sections_of_published_paper_mirror.
+  - Source status: `include`.
+  - Limits preview: Not every original ill-typed program analyzed: 1000 sampled of 2000 in first …
+  - Annotation: [notes/misconceptions-sources.json](../notes/misconceptions-sources.json) / `wu2017repairs`.
+- **[Structural versus Pipeline Composition of Higher-Order Functions (Experience Report)](https://doi.org/10.1145/3547633)** — Elijah Rivera, Shriram Krishnamurthi (2022), `rivera2022structural`.
+  - Evidence class: `adjacent_functional`.
+  - Preview: Apparently correct narrative structural compositions:37,31,31; pipeline:22,10 for first two problems. Third pipeline problem admitted an unintended simpler solution. Some students …
+  - Method preview: Seven input-output planning problems; same operator pairs structural/pipeline; partly randomized order; five-day …; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: Small single-institution task study; no Haskell/static-checker test. Input-output ambiguity, first structural question …
+  - Annotation: [notes/misconceptions-sources.json](../notes/misconceptions-sources.json) / `rivera2022structural`.
+- **[Plan Composition Using Higher-Order Functions](https://static.cs.brown.edu/~sk/Publications/Papers/Published/rkg-plan-comp-use-hof/)** — Elijah Rivera, Shriram Krishnamurthi, Robert Goldstone (2022), `rivera2022planning`.
+  - Evidence class: `adjacent_functional`.
+  - Preview: Only 10/402 plans were explicitly wrong; most implementations passed instructor tests. Composition-recognition errors often omitted an outer map, treating nested …
+  - Method preview: HOF recognition, behavioral explanations, planning then programming; month-long placement module.; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: No control group or retention/transfer test; high selectivity/prior experience; ceiling effects; author …
+  - Annotation: [notes/misconceptions-sources.json](../notes/misconceptions-sources.json) / `rivera2022planning`.
+- **[Empirical studies of functional programming learners evaluating recursive functions](https://link.springer.com/article/10.1007/BF00891962)** — Judith Segal (1994), `segal1994recursion`.
+  - Evidence class: `adjacent_functional`.
+  - Preview: Publisher abstract confirms observations of misconceptions and processing strategies while learners evaluated Miranda recursion. Specific categories, denominators and teaching-effect claims …
+  - Method preview: Empirical recursive-function evaluation studies; details unverified.; access: publisher_abstract_and_references.
+  - Source status: `borderline_full_text_needed`.
+  - Limits preview: Full text unavailable in this track; Haskell transfer is indirect. Tirronen2015 reports …
+  - Annotation: [notes/misconceptions-sources.json](../notes/misconceptions-sources.json) / `segal1994recursion`.
+- **[The Dys-functional student](https://link.springer.com/chapter/10.1007/3-540-60675-0_51)** — Chris Clack, Colin Myers (1995), `clack1995dysfunctional`.
+  - Evidence class: `adjacent_functional_language_not_fully_verified`.
+  - Preview: Abstract describes observed student mistakes in language features, program concepts and imperative-paradigm legacy, with proposed remedies. Do not infer prevalence, …
+  - Method preview: Teaching experience/mistake catalogue; exact empirical design unverified.; access: publisher_abstract_and_references.
+  - Source status: `borderline_full_text_needed`.
+  - Limits preview: 1995 original copyright/conference year; 2005 online release is not original study year. …
+  - Annotation: [notes/misconceptions-sources.json](../notes/misconceptions-sources.json) / `clack1995dysfunctional`.
+- **[Obstacles when teaching functional programming](https://doi.org/10.1145/3442481.3442510)** — Yusuf Moosa Motara (2020), `motara2020obstacles`.
+  - Evidence class: `unclassified_until_full_text`.
+  - Preview: see [notes/misconceptions-sources.json](../notes/misconceptions-sources.json) / `motara2020obstacles`
+  - Method preview: not recorded; access: metadata.
+  - Source status: `borderline_metadata_only`.
+  - Limits preview: Exact-title searches and DOI access did not provide primary full text. No …
+  - Annotation: [notes/misconceptions-sources.json](../notes/misconceptions-sources.json) / `motara2020obstacles`.
+- **[Goanna: a novel approach for automated type error debugging](https://link.springer.com/article/10.1007/s10515-026-00656-3)** — Shuai Fu, Tim Dwyer, Peter J. Stuckey, John C. Grundy (2026), `fu2026goanna`.
+  - Evidence class: `direct_haskell_corpus_tool_evaluation`.
+  - Preview: Reports diagnostic accuracy 81.6% Goanna versus 65.5% Helium and 33.7% GHC. Preliminary workshop reactions were positive; rigorous human evaluation is …
+  - Method preview: Corpus diagnostic accuracy and generated performance benchmarks; no completed rigorous learner experiment.; access: selected_full_text_sections.
+  - Source status: `include_tooling_context`.
+  - Limits preview: Accuracy is a tool-performance outcome, not evidence of conceptual learning, retention, transfer …
+  - Annotation: [notes/misconceptions-sources.json](../notes/misconceptions-sources.json) / `fu2026goanna`.
+- **[GeckoGraph: A visual language for polymorphic types](https://research.monash.edu/en/publications/geckograph-a-visual-language-for-polymorphic-types/)** — Shuai Fu, Tim Dwyer, Peter J. Stuckey, John C. Grundy (2026), `fu2026geckograph`.
+  - Evidence class: `direct_haskell_task_performance`.
+  - Preview: No overall significant time/success advantage. Beginner aggregate success95.12% versus92.68%,p=.0431. Task10 beginner success94.9% versus80.4%,p=.0452:14.5 percentage points. Familiar task10 difference11.2points has p=.136.
+  - Method preview: Preregistered ten-task gamified experiment; counterbalanced groups alternate graphical/text notation at odd/even levels.; access: selected_full_text_sections_author_manuscript.
+  - Source status: `include_with_reporting_cautions`.
+  - Limits preview: Reported N contradicts subgroup totals; Shapiro-Wilk interpretation is reversed; familiar task10 rejection …
+  - Annotation: [notes/misconceptions-sources.json](../notes/misconceptions-sources.json) / `fu2026geckograph`.
+- **[Teaching computer programming with PRIMM: a sociocultural perspective](https://eprints.gla.ac.uk/229013/)** — Sue Sentance, Jane Waite, Maria Kallia (2019), `P01`.
+  - Evidence class: `CS education`.
+  - Preview: PRIMM group had higher post-test scores; reported rank-test effect r=.13. Teacher interviews described practical benefits.
+  - Method preview: mixed-methods classroom comparison; volunteer teachers trained in PRIMM; usual school materials in …; access: selected full-text sections of 42-page manuscript: participant recruitment, assessments, results and limitations.
+  - Source status: `include`.
+  - Limits preview: Author-stated: volunteer teachers, insufficient demographic data, nonvalidated assessments, uncontrolled comparator lessons. Reviewer: …
+  - Annotation: [notes/pedagogy-sources.json](../notes/pedagogy-sources.json) / `P01`.
+- **[Reducing withdrawal and failure rates in introductory programming with subgoal labeled worked examples](https://link.springer.com/article/10.1186/s40594-020-00222-7)** — Lauren E. Margulieux, Briana B. Morrison, Adrienne Decker (2020), `P02`.
+  - Evidence class: `CS education`.
+  - Preview: Better formative quiz performance, but no statistically significant improvement in average exam performance; lower exam variance and fewer withdrawals/failing exam …
+  - Method preview: semester classroom quasi-experiment comparing conventional versus subgoal-labeled worked examples; access: selected publisher full-text sections: Method, Participants, quiz/exam results.
+  - Source status: `include`.
+  - Limits preview: Section/instructor effects and selection remain possible; one control section online. Outcomes vary …
+  - Annotation: [notes/pedagogy-sources.json](../notes/pedagogy-sources.json) / `P02`.
+- **[From Studying Examples to Solving Problems: Fading Worked-Out Solution Steps Helps Learning](https://escholarship.org/uc/item/81b9j9hs)** — Alexander Renkl, Robert K. Atkinson, Uwe H. Maier (2000), `P03`.
+  - Evidence class: `general learning science`.
+  - Preview: Fading benefited near-transfer performance in both studies; neither showed a significant far-transfer benefit.
+  - Method preview: classroom quasi-experiment; randomized laboratory fading versus example/problem pairs; access: selected full-text sections of six-page Cognitive Science Society proceedings paper.
+  - Source status: `include`.
+  - Limits preview: Small samples and immediate domain-specific assessments; different fading directions across studies. Haskell …
+  - Annotation: [notes/pedagogy-sources.json](../notes/pedagogy-sources.json) / `P03`.
+- **[Test-Enhanced Learning: Taking Memory Tests Improves Long-Term Retention](https://doi.org/10.1111/j.1467-9280.2006.01693.x)** — Henry L. Roediger III, Jeffrey D. Karpicke (2006), `P04`.
+  - Evidence class: `general learning science`.
+  - Preview: Restudy favored five-minute performance; retrieval favored delayed retention. Experiment 2: repeated-testing group recalled 61% versus repeated-study 40% after one week.
+  - Method preview: two experiments: prose study/re-study versus free recall without feedback; immediate and delayed …; access: selected full-text Methods, Results and General Discussion; author-lab PDF.
+  - Source status: `include`.
+  - Limits preview: Prose idea-unit recall, not programming construction or type inference. Retrieval and study …
+  - Annotation: [notes/pedagogy-sources.json](../notes/pedagogy-sources.json) / `P04`.
+- **[Spacing Effects in Learning: A Temporal Ridgeline of Optimal Retention](https://doi.org/10.1111/j.1467-9280.2008.02209.x)** — Nicholas J. Cepeda, Edward Vul, Doug Rohrer, John T. Wixted, Harold Pashler (2008), `P05`.
+  - Evidence class: `general learning science`.
+  - Preview: Optimal review gap depended on retention interval; performance rose then fell with increasing gap. Approximate optimal ratios: 20–40% for one-week …
+  - Method preview: random assignment to 26 gap/retention-interval combinations; 32 trivia facts; recall and recognition; access: selected full-text current-study, Methods, Discussion; university-hosted published PDF.
+  - Source status: `include`.
+  - Limits preview: Trivia retention and completer analysis; attrition increased at longer delays. Not a …
+  - Annotation: [notes/pedagogy-sources.json](../notes/pedagogy-sources.json) / `P05`.
+- **[Enhancing Syntax Error Messages Appears Ineffectual](https://doi.org/10.1145/2591708.2591748)** — Paul Denny, Andrew Luxton-Reilly, Dave Carpenter (2014), `P06`.
+  - Evidence class: `CS education`.
+  - Preview: No significant benefit on consecutive noncompiling submissions, overall noncompiling attempts, or correction attempts for common error categories.
+  - Method preview: random allocation; 10 short CodeWrite method-body exercises over weeks 2–3; raw versus …; access: selected full-text Evaluation, Results and Discussion; university-hosted PDF.
+  - Source status: `include`.
+  - Limits preview: Single short course, small tasks and specific enhancement style; no delayed conceptual …
+  - Annotation: [notes/pedagogy-sources.json](../notes/pedagogy-sources.json) / `P06`.
+- **[Effective compiler error message enhancement for novice programming students](https://doi.org/10.1080/08993408.2016.1225464)** — Brett A. Becker, Graham Glanville, Ricardo Iwashima, Claire McDonnell, Kyle Goslin, Catherine Mooney (2016), `P07`.
+  - Evidence class: `CS education`.
+  - Preview: Reduced error-frequency and several repeated-error measures under enhancement.
+  - Method preview: successive-year control/intervention comparison; Decaf raw versus raw plus enhanced messages; access: selected full-text author-uploaded original manuscript on ResearchGate; author-site accepted PDF redirected to suspended page.
+  - Source status: `include`.
+  - Limits preview: Historical cohorts, no random allocation; compiler IDs approximate students, some duplication/other-tool use …
+  - Annotation: [notes/pedagogy-sources.json](../notes/pedagogy-sources.json) / `P07`.
+- **[Not the Silver Bullet: LLM-enhanced Programming Error Messages are Ineffective in Practice](https://arxiv.org/abs/2409.18661)** — Eddie Antonio Santos, Brett A. Becker (2024), `P08`.
+  - Evidence class: `CS education`.
+  - Preview: GPT-4 was faster than stock messages on only one task; handwritten explanations generally performed better. Preference for GPT-4 did not …
+  - Method preview: within-participant six-task debugging study; task-specific random assignment to GCC, handwritten or GPT-4 …; access: selected author full-text HTML: participants, procedure, results and limitations.
+  - Source status: `include`.
+  - Limits preview: Six selected bugs, timed repair, permitted web search; same researcher authored bugs …
+  - Annotation: [notes/pedagogy-sources.json](../notes/pedagogy-sources.json) / `P08`.
+- **[Understanding Conceptual Transfer for Students Learning New Programming Languages](https://eprints.gla.ac.uk/230934/)** — Ethel Tshukudu, Quintin Cutts (2020), `P09`.
+  - Evidence class: `CS education`.
+  - Preview: Syntax similarity accompanied positive or negative semantic transfer depending on whether meaning carried over; dissimilar syntax impeded recognition of shared …
+  - Method preview: two within-participant paper-based code-comprehension studies; categories of true, false and abstract true …; access: selected author-uploaded full-text sections: participants, study procedures and results; institutional record has abstract only.
+  - Source status: `include`.
+  - Limits preview: Observational within-learner comparisons, selected concept categories and different test orders; not an …
+  - Annotation: [notes/pedagogy-sources.json](../notes/pedagogy-sources.json) / `P09`.
+- **[Notional Machines and Introductory Programming Education](https://research.aalto.fi/en/publications/notional-machines-and-introductory-programming-education/)** — Juha Sorva (2013), `P10`.
+  - Evidence class: `CS education conceptual synthesis`.
+  - Preview: Proposes making the program-execution model an explicit learning objective and relates this to mental models and programming difficulties.
+  - Method preview: narrative/conceptual review, not a new intervention experiment; access: selected author-uploaded full-text introduction and conceptual discussion; institutional metadata verified.
+  - Source status: `include`.
+  - Limits preview: Framework evidence, not an effect estimate; no new N. A Haskell notional …
+  - Annotation: [notes/pedagogy-sources.json](../notes/pedagogy-sources.json) / `P10`.
+- **[Students’ ways of experiencing visual program simulation](https://www.tandfonline.com/doi/full/10.1080/08993408.2013.807962)** — Juha Sorva, Jan Lönnberg, Lauri Malmi (2013), `P11`.
+  - Evidence class: `CS education`.
+  - Preview: Six ways of experiencing simulation reported; some learners failed to attach meaning to visuals or connect them to programming practice.
+  - Method preview: qualitative interviews plus supplementary observation; access: abstract and institutional metadata only; attempted publisher full-text open failed.
+  - Source status: `include`.
+  - Limits preview: Abstract-only extraction: no verified N, interview protocol, sampling or coding details. Evidence …
+  - Annotation: [notes/pedagogy-sources.json](../notes/pedagogy-sources.json) / `P11`.
+- **[Counting days is a spacing incentive that unlocks the potential of low GPA students](https://www.nature.com/articles/s41539-025-00322-5)** — Iman YeckehZaare, Paul Resnick (2025), `P12`.
+  - Evidence class: `CS education`.
+  - Preview: Day incentives increased practice days. Within-course exam gains particularly benefited lower-GPA students; second experiment measured practice behavior, not comparable learning …
+  - Method preview: individual RCT rewarding practice days versus question counts; instructor-cluster RCT of same …; access: selected publisher full-text Methods, Results and Discussion.
+  - Source status: `include`.
+  - Limits preview: Postrandomization exclusions, modeled GPA interaction; same adaptive/interleaving tool in both arms. Incentive …
+  - Annotation: [notes/pedagogy-sources.json](../notes/pedagogy-sources.json) / `P12`.
+- **[Map, Filter, and Conquer: A Visual Tool for Learning Higher-Order Functions](https://doi.org/10.1145/3724363.3729111)** — Silvan Renggli, Sverrir Thorgeirsson, Theo B. Weidmann, Zhendong Su (2025), `renggli2025mapfilter`.
+  - Evidence class: `adjacent_functional_controlled_intervention`.
+  - Preview: Reported effort 4.78 versus 6.04, d=1.03, p<.001; implementation errors 1.33 versus 2.89. Excluding Python syntax errors gives 1.70 and nonsignificant …
+  - Method preview: Randomized order, within-subject crossover; two hours; two tutorials up to 45 minutes, …; access: primary_author_full_text_selected_sections.
+  - Source status: `annotated inclusion`.
+  - Limits preview: Brief intervention, carryover despite distractor, selected tasks, first-attempt scoring; procedural tool performance …
+  - Annotation: [notes/snowball-misconceptions-sources.json](../notes/snowball-misconceptions-sources.json) / `renggli2025mapfilter`.
+- **[Teaching types with a cognitively effective worked example format](https://www.cambridge.org/core/journals/journal-of-functional-programming/article/teaching-types-with-a-cognitively-effective-worked-example-format/D793285CAC3FDC1FAB3B1C846EEEFF54)** — Ville Tirronen, Ville Isomöttönen (2015), `tirronen2015workedtypes`.
+  - Evidence class: `direct_haskell_exploratory_intervention`.
+  - Preview: Specific individuals confused application/abstraction, type-variable scope across signatures, currying and type classes. Beginner gains with derivations had mixed maintenance; advanced …
+  - Method preview: Repeated single-subject A-B-A; textbook baseline, five worked derivations plus deduction rules, then …; access: primary_publisher_full_text_selected_sections.
+  - Source status: `annotated inclusion`.
+  - Limits preview: Exploratory volunteers, no general validation; repeated tasks and stricter intervention scoring, protocol …
+  - Annotation: [notes/snowball-misconceptions-sources.json](../notes/snowball-misconceptions-sources.json) / `tirronen2015workedtypes`.
+- **[Developing Behavioral Concepts of Higher-Order Functions](https://static.cs.brown.edu/~sk/Publications/Papers/Published/kf-devel-beh-concept-hofs/)** — Shriram Krishnamurthi, Kathi Fisler (2021), `krishnamurthi2021behavioral`.
+  - Evidence class: `adjacent_functional_formative_longitudinal`.
+  - Preview: Filter/take-while distinctions remained harder than map/filter; fold's universality complicates classifications. Stage 5 persistence supports targeted behavioral probes. Authors recommend justifications …
+  - Method preview: Five optional clustering/classification stages; first four over month, fifth three months later; …; access: primary_author_full_text_selected_sections.
+  - Source status: `annotated inclusion`.
+  - Limits preview: Changing samples; Stage 4 identities missing; no matched retention estimate or causal …
+  - Annotation: [notes/snowball-misconceptions-sources.json](../notes/snowball-misconceptions-sources.json) / `krishnamurthi2021behavioral`.
+- **[Observations on the Design of Program Planning Notations for Students](https://cs.brown.edu/people/sk/Publications/Papers/Published/rkf-obs-design-prog-plan-notations/)** — Elijah Rivera, Shriram Krishnamurthi, Kathi Fisler (2024), `rivera2024notations`.
+  - Evidence class: `adjacent_functional_experience_report`.
+  - Preview: Earlier experienced-student block-planning success did not carry over cleanly. Novices described rigid/time-consuming planning; many supplied code-like plans or completed plans …
+  - Method preview: Two consecutive novice-course offerings: Fall 2022 blocks and Spring 2023 free-form paper; …; access: primary_author_full_text_selected_sections.
+  - Source status: `annotated inclusion`.
+  - Limits preview: Experience report, cohort/task changes and self-selection; no causal learning comparison or complete …
+  - Annotation: [notes/snowball-misconceptions-sources.json](../notes/snowball-misconceptions-sources.json) / `rivera2024notations`.
+- **[Study on difficulties and misconceptions with modern type systems](https://doi.org/10.1145/2591708.2591726)** — Ville Tirronen (2014), `tirronen2014typesgap`.
+  - Evidence class: `unverified_primary_findings`.
+  - Preview: see [notes/snowball-misconceptions-sources.json](../notes/snowball-misconceptions-sources.json) / `tirronen2014typesgap`
+  - Method preview: Mirrored abstract describes multiple-choice items in online introductory FP course; primary methods …; access: metadata_and_abstract_mirrors_only.
+  - Source status: `borderline_primary_full_text_needed`.
+  - Limits preview: ACM DOI inaccessible; ResearchGate says no full text; OpenAlex no OA location. …
+  - Annotation: [notes/snowball-misconceptions-sources.json](../notes/snowball-misconceptions-sources.json) / `tirronen2014typesgap`.
+- **[Evaluating the Tracing of Recursion in the Substitution Notional Machine](https://cs.brown.edu/people/sk/Publications/Papers/Published/tfk-eval-trace-rec-subst-nm/)** — Preston Tunnell Wilson, Kathi Fisler, Shriram Krishnamurthi (2018), `tunnellwilson2018substitution`.
+  - Evidence class: `adjacent_functional_empirical`.
+  - Preview: see [Full annotation ST01](../notes/snowball-tutors.md#st01--tunnell-wilson-fisler-and-krishnamurthi-2018); [notes/snowball-tutors-sources.json](../notes/snowball-tutors-sources.json)
+  - Method preview: Single-course repeated diagnostic quizzes, followed by language/model transition; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: see linked full annotation
+  - Annotation: [Full annotation ST01](../notes/snowball-tutors.md#st01--tunnell-wilson-fisler-and-krishnamurthi-2018); [notes/snowball-tutors-sources.json](../notes/snowball-tutors-sources.json).
+- **[Teaching the Art of Functional Programming using Automated Grading (Experience Report)](https://doi.org/10.1145/3341719)** — Aliya Hameer, Brigitte Pientka (2019), `hameer2019autograding`.
+  - Evidence class: `adjacent_functional_teaching_experience`.
+  - Preview: see [Full annotation ST02](../notes/snowball-tutors.md#st02--hameer-and-pientka-2019); [notes/snowball-tutors-sources.json](../notes/snowball-tutors-sources.json)
+  - Method preview: Course experience and grader extension design; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: see linked full annotation
+  - Annotation: [Full annotation ST02](../notes/snowball-tutors.md#st02--hameer-and-pientka-2019); [notes/snowball-tutors-sources.json](../notes/snowball-tutors-sources.json).
+- **[Stepping OCaml](https://arxiv.org/abs/1906.11422)** — Tsukino Furukawa, Youyou Cong, Kenichi Asai (2019), `furukawa2019stepping`.
+  - Evidence class: `adjacent_functional_observational_evaluation`.
+  - Preview: see [Full annotation ST03](../notes/snowball-tutors.md#st03--furukawa-cong-and-asai-2019); [notes/snowball-tutors-sources.json](../notes/snowball-tutors-sources.json)
+  - Method preview: Three annual cohorts with changing tool support and instruction; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: see linked full annotation
+  - Annotation: [Full annotation ST03](../notes/snowball-tutors.md#st03--furukawa-cong-and-asai-2019); [notes/snowball-tutors-sources.json](../notes/snowball-tutors-sources.json).
+- **[Haskelite: A Tracing Interpreter Based on a Pattern-Matching Calculus](https://arxiv.org/abs/2407.11831)** — Pedro Vasconcelos, Rodrigo Marques (2024), `vasconcelos2024tracing`.
+  - Evidence class: `direct_haskell_educational_tool_design`.
+  - Preview: see [Full annotation ST04](../notes/snowball-tutors.md#st04--vasconcelos-and-marques-2024); [notes/snowball-tutors-sources.json](../notes/snowball-tutors-sources.json)
+  - Method preview: Operational semantics and interpreter design; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: see linked full annotation
+  - Annotation: [Full annotation ST04](../notes/snowball-tutors.md#st04--vasconcelos-and-marques-2024); [notes/snowball-tutors-sources.json](../notes/snowball-tutors-sources.json).
+- **[An Interactive Learning Environment for Program Design](https://doi.org/10.1145/3758317.3759682)** — Kouta Kumamoto, Youyou Cong, Hidehiko Masuhara (2025), `kumamoto2025ladder`.
+  - Evidence class: `adjacent_functional_feasibility_study`.
+  - Preview: see [Full annotation ST05](../notes/snowball-tutors.md#st05--kumamoto-cong-and-masuhara-2025-ladder); [notes/snowball-tutors-sources.json](../notes/snowball-tutors-sources.json)
+  - Method preview: One-task user study with logs, generated code and questionnaire; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: see linked full annotation
+  - Annotation: [Full annotation ST05](../notes/snowball-tutors.md#st05--kumamoto-cong-and-masuhara-2025-ladder); [notes/snowball-tutors-sources.json](../notes/snowball-tutors-sources.json).
+- **[Ask-Elle: an Adaptable Programming Tutor for Haskell Giving Automated Feedback](https://doi.org/10.1007/s40593-015-0080-x)** — Alex Gerdes, Bastiaan Heeren, Johan Jeuring, L. Thomas van Binsbergen (2017), `gerdes2017askelle`.
+  - Evidence class: `direct_haskell_tutor_evaluation`.
+  - Preview: Stepwise hints can address partial programs and counterexamples. The 2013 evaluation contains 1,920 compiler-error interactions (55.4% of diagnoses), but 142 …
+  - Method preview: Three technical/user evaluations; model-solution recognition and property-based feedback; no controlled learning comparison.; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: Accuracy, coverage and perceived usefulness do not establish retention or transfer. Recognition …
+  - Annotation: [notes/teaching-sources.json](../notes/teaching-sources.json) / `gerdes2017askelle`.
+- **[Teaching Introductory Functional Programming Using Haskelite](https://doi.org/10.4204/EPTCS.424.3)** — Pedro Vasconcelos (2025), `vasconcelos2025haskelite`.
+  - Evidence class: `direct_haskell_teaching_experience`.
+  - Preview: Learners reported usefulness for inspecting recursion and higher-order functions. Trace size and unsupported valid Haskell syntax created difficulties; the tool …
+  - Method preview: Teaching experience, voluntary qualitative feedback and historical course results.; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: Small self-selected feedback; course changes and historical pass rates cannot identify the …
+  - Annotation: [notes/teaching-sources.json](../notes/teaching-sources.json) / `vasconcelos2025haskelite`.
+- **[Evaluating Haskell expressions in a tutoring environment](https://doi.org/10.4204/EPTCS.170.4)** — Tim Olmer, Bastiaan Heeren, Johan Jeuring (2014), `olmer2014expressions`.
+  - Evidence class: `direct_haskell_tutor_design`.
+  - Preview: The prototype diagnoses learner-entered rewrite steps under different evaluation strategies. Respondents differed over how much strategy choice and detail learners …
+  - Method preview: Prototype and small formative usability survey.; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: Feasibility and usability evidence; no controlled learning gains. Small response groups. Multiple …
+  - Annotation: [notes/teaching-sources.json](../notes/teaching-sources.json) / `olmer2014expressions`.
+- **[Experiences of early assessment to teach functional programming](https://www.cambridge.org/core/journals/journal-of-functional-programming/article/experiences-of-early-assessment-to-teach-functional-programming/667F18D3611D4A3A7C7C6A2A2FA4FB3C)** — Peter Chapman (2025), `chapman2025assessment`.
+  - Evidence class: `direct_haskell_teaching_comparison`.
+  - Preview: Adding an early summative Use-Modify assessment accompanied a later Create-assessment mean of 62.249 versus 53.256: 8.993 percentage points; one-tailed Wilcoxon …
+  - Method preview: Historical-cohort comparison, online first-year course during COVID, 2021 versus 2022.; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: Small reported effect, nonrandom cohorts, completer selection, changed recordings and other context; …
+  - Annotation: [notes/teaching-sources.json](../notes/teaching-sources.json) / `chapman2025assessment`.
+- **[Learner experiences of a blended course incorporating a MOOC on Haskell functional programming](https://eprints.gla.ac.uk/195429/)** — Vicki H. M. Dale, Jeremy Singer (2019), `dale2019blended`.
+  - Evidence class: `direct_haskell_learner_experience`.
+  - Preview: Respondents valued flexibility and learning activities but reported poorly signposted support and discontinuity into more advanced work. Integration of help …
+  - Method preview: Survey and focus group in blended honours course; no randomized comparator.; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: Self-selected perceptions, not demonstrated learning effects. One advanced university course; cannot rank …
+  - Annotation: [notes/teaching-sources.json](../notes/teaching-sources.json) / `dale2019blended`.
+- **[Using Student-created Instructional Videos in CS Upper-level Courses: A Successful Strategy in a Functional Programming Course](https://doi.org/10.5220/0009416404120419)** — Pedro Guillermo Feijóo-García, Christina Gardner-McCune (2020), `feijoo2020videos`.
+  - Evidence class: `functional_programming_teaching`.
+  - Preview: Assessment improvement and positive perceptions accompanied students making concept/code explanation videos; participants also found production time-consuming.
+  - Method preview: Small uncontrolled pre/post classroom experience with two student-made explanatory videos.; access: selected_full_text_sections.
+  - Source status: `include`.
+  - Limits preview: No comparator; improvement can reflect normal course learning, practice or selection. Do …
+  - Annotation: [notes/teaching-sources.json](../notes/teaching-sources.json) / `feijoo2020videos`.
+- **[The risks and benefits of teaching purely functional programming in first year](https://www.cambridge.org/core/journals/journal-of-functional-programming/article/risks-and-benefits-of-teaching-purely-functional-programming-in-first-year/39F929A1793B67BCEF316DBDB717F273)** — Manuel M. T. Chakravarty, Gabriele Keller (2004), `chakravarty2004risks`.
+  - Evidence class: `functional_programming_teaching_experience`.
+  - Preview: Abstract frames functional programming as a means to teach problem solving and computer science rather than paradigm advocacy as an …
+  - Method preview: Teaching experience based on several large first-year classes and surveys; detail not …; access: publisher_abstract_only.
+  - Source status: `include_context_abstract_only`.
+  - Limits preview: Full text not inspected; no causal claim about benefits or harm, and …
+  - Annotation: [notes/teaching-sources.json](../notes/teaching-sources.json) / `chakravarty2004risks`.
+
+## Tutorial exemplars
+
+- [Haskell MOOC](https://haskell.mooc.fi/); inspected scope recorded in `notes/tutorial-sources.json`.
+- [Haskell Programming from First Principles](https://haskellbook.com/); inspected scope recorded in `notes/tutorial-sources.json`.
+- [Programming in Haskell, second edition](https://people.cs.nott.ac.uk/pszgmh/pih.html); inspected scope recorded in `notes/tutorial-sources.json`.
+- [CIS 194: Introduction to Haskell, Spring 2013](https://www.cis.upenn.edu/~cis1940/spring13/); inspected scope recorded in `notes/tutorial-sources.json`.
+- [Learn You a Haskell for Great Good! (maintained community fork)](https://learnyouahaskell.github.io/); inspected scope recorded in `notes/tutorial-sources.json`.
+- [Haskell Wikibook](https://en.wikibooks.org/wiki/Haskell); inspected scope recorded in `notes/tutorial-sources.json`.
+- [CodeWorld and CodeWorld Haskell](https://github.com/google/codeworld); inspected scope recorded in `notes/tutorial-sources.json`.
+- [Exercism Haskell track](https://exercism.org/tracks/haskell); inspected scope recorded in `notes/tutorial-sources.json`.
+
+## Semantic authorities
+
+- [Haskell 2010 Report, chapter 3: Expressions](https://www.haskell.org/onlinereport/haskell2010/haskellch3.html); inspected scope recorded in `notes/tutorial-sources.json`.
+- [Haskell 2010 Report, chapter 4: Declarations and Bindings](https://www.haskell.org/onlinereport/haskell2010/haskellch4.html); inspected scope recorded in `notes/tutorial-sources.json`.
+- [Haskell 2010 Report, chapter 6: Predefined Types and Classes](https://www.haskell.org/onlinereport/haskell2010/haskellch6.html); inspected scope recorded in `notes/tutorial-sources.json`.
+- [Haskell 2010 Report, chapter 7: Basic Input/Output](https://www.haskell.org/onlinereport/haskell2010/haskellch7.html); inspected scope recorded in `notes/tutorial-sources.json`.
+- [Haskell 2010 Report, chapter 9: Standard Prelude](https://www.haskell.org/onlinereport/haskell2010/haskellch9.html); inspected scope recorded in `notes/tutorial-sources.json`.
+- [Control.DeepSeq, GHC-bundled deepseq 1.4.1.1 source documentation](https://downloads.haskell.org/~ghc/7.10.3/docs/html/libraries/deepseq-1.4.1.1/src/Control-DeepSeq.html); inspected scope recorded in `notes/tutorial-sources.json`.
+- [GHC User's Guide: Using GHCi](https://downloads.haskell.org/ghc/latest/docs/users_guide/ghci.html); inspected scope recorded in `notes/tutorial-sources.json`.

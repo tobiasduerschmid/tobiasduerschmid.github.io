@@ -1,0 +1,22 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"scholar_result_id\":\"30ed26ba-9732-448a-8bfb-1a306166c036\",\"scholar_title\":\"Seed record and citation network: Haskell beginners\",\"scholar_tool_name\":\"get_open_access_work\",\"papers\":[{\"id\":\"https://openalex.org/W2203258339\",\"title\":\"Understanding beginners' mistakes with Haskell\",\"citation_info\":\"Ville Tirronen, SAMUEL UUSI-MÄKELÄ, Ville Isomöttönen\",\"pdf_url\":\"https://www.cambridge.org/core/services/aop-cambridge-core/content/view/244DB6807F3BD77E14CE7D627514D6D3/S0956796815000179a.pdf/div-class-title-understanding-beginners-mistakes-with-haskell-div.pdf\"}]}"
+    }
+  ],
+  "structuredContent": {
+    "scholar_result_id": "30ed26ba-9732-448a-8bfb-1a306166c036",
+    "scholar_title": "Seed record and citation network: Haskell beginners",
+    "scholar_tool_name": "get_open_access_work",
+    "papers": [
+      {
+        "id": "https://openalex.org/W2203258339",
+        "title": "Understanding beginners' mistakes with Haskell",
+        "citation_info": "Ville Tirronen, SAMUEL UUSI-MÄKELÄ, Ville Isomöttönen",
+        "pdf_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/244DB6807F3BD77E14CE7D627514D6D3/S0956796815000179a.pdf/div-class-title-understanding-beginners-mistakes-with-haskell-div.pdf"
+      }
+    ]
+  },
+  "isError": false
+}

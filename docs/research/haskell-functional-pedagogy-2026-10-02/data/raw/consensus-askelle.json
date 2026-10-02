@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"id\": \"dda878c30d685373b46e1a825d7256c2\", \"title\": \"Ask-Elle: an Adaptable Programming Tutor for Haskell Giving Automated Feedback\", \"text\": \"Ask-Elle is a tutor for learning the higher-order, strongly-typed functional programming language Haskell. It supports the stepwise development of Haskell programs by verifying the correctness of incomplete programs, and by providing hints. Programming exercises are added to Ask-Elle by providing a task description for the exercise, one or more model solutions, and properties that a solution should satisfy. The properties and model solutions can be annotated with feedback messages, and the amount of flexibility that is allowed in student solutions can be adjusted. The main contribution of our work is the design of a tutor that combines (1) the incremental development of different solutions in various forms to a programming exercise with (2) automated feedback and (3) teacher-specified programming exercises, solutions, and properties. The main functionality is obtained by means of strategy-based model tracing and property-based testing. We have tested the feasibility of our approach in several experiments, in which we analyse both intermediate and final student solutions to programming exercises, amongst others.\", \"url\": \"https://consensus.app/papers/askelle-an-adaptable-programming-tutor-for-haskell-giving-gerdes-heeren/dda878c30d685373b46e1a825d7256c2/?utm_source=chatgpt\", \"metadata\": {\"authors\": \"Alex Gerdes, B. Heeren, J. Jeuring, L. T. van Binsbergen\", \"publish_year\": \"2017\", \"journal\": \"International Journal of Artificial Intelligence in Education\", \"volume\": \"27\", \"pages\": \"65-100\", \"citation_count\": \"104\"}}"
+    }
+  ],
+  "isError": false
+}

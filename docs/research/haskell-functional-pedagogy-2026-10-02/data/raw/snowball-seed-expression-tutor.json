@@ -1,0 +1,1079 @@
+{
+  "request_url": "https://api.openalex.org/works/https://doi.org/10.4204/EPTCS.170.4",
+  "retrieved": "2026-10-02",
+  "response": {
+    "id": "https://openalex.org/W2050152920",
+    "doi": "https://doi.org/10.4204/eptcs.170.4",
+    "title": "Evaluating Haskell expressions in a tutoring environment",
+    "display_name": "Evaluating Haskell expressions in a tutoring environment",
+    "publication_year": 2014,
+    "publication_date": "2014-12-12",
+    "ids": {
+      "openalex": "https://openalex.org/W2050152920",
+      "doi": "https://doi.org/10.4204/eptcs.170.4",
+      "mag": "2050152920"
+    },
+    "language": "en",
+    "primary_location": {
+      "id": "doi:10.4204/eptcs.170.4",
+      "is_oa": true,
+      "landing_page_url": "https://doi.org/10.4204/eptcs.170.4",
+      "pdf_url": "https://arxiv.org/pdf/1412.4879",
+      "source": {
+        "id": "https://openalex.org/S4210216316",
+        "display_name": "Electronic Proceedings in Theoretical Computer Science",
+        "issn_l": "2075-2180",
+        "issn": [
+          "2075-2180"
+        ],
+        "is_oa": true,
+        "is_in_doaj": true,
+        "is_core": true,
+        "listed_in": [
+          "cwts-core",
+          "doaj",
+          "norway-1"
+        ],
+        "host_organization": "https://openalex.org/P4310318029",
+        "host_organization_name": "Open Publishing Association",
+        "host_organization_lineage": [
+          "https://openalex.org/P4310318029"
+        ],
+        "host_organization_lineage_names": [
+          "Open Publishing Association"
+        ],
+        "type": "journal"
+      },
+      "license": "cc-by-nc-nd",
+      "license_id": "https://openalex.org/licenses/cc-by-nc-nd",
+      "version": "publishedVersion",
+      "is_accepted": true,
+      "is_published": true,
+      "raw_source_name": "Electronic Proceedings in Theoretical Computer Science",
+      "raw_type": "journal-article"
+    },
+    "type": "article",
+    "indexed_in": [
+      "arxiv",
+      "crossref",
+      "datacite",
+      "doaj"
+    ],
+    "open_access": {
+      "is_oa": true,
+      "oa_status": "diamond",
+      "oa_url": "https://arxiv.org/pdf/1412.4879",
+      "any_repository_has_fulltext": true
+    },
+    "authorships": [
+      {
+        "author_position": "first",
+        "author": {
+          "id": null,
+          "display_name": "Tim Olmer",
+          "orcid": null,
+          "observed_orcids": []
+        },
+        "institutions": [
+          {
+            "id": "https://openalex.org/I7876267",
+            "display_name": "Open University of the Netherlands",
+            "ror": "https://ror.org/018dfmf50",
+            "country_code": "NL",
+            "type": "education",
+            "lineage": [
+              "https://openalex.org/I7876267"
+            ]
+          }
+        ],
+        "countries": [
+          "NL"
+        ],
+        "is_corresponding": false,
+        "raw_author_name": "Tim Olmer",
+        "raw_affiliation_strings": [
+          "Open University of the Netherlands"
+        ],
+        "raw_orcid": null,
+        "affiliations": [
+          {
+            "raw_affiliation_string": "Open University of the Netherlands",
+            "institution_ids": [
+              "https://openalex.org/I7876267"
+            ]
+          }
+        ]
+      },
+      {
+        "author_position": "middle",
+        "author": {
+          "id": null,
+          "display_name": "Bastiaan Heeren",
+          "orcid": null,
+          "observed_orcids": []
+        },
+        "institutions": [
+          {
+            "id": "https://openalex.org/I7876267",
+            "display_name": "Open University of the Netherlands",
+            "ror": "https://ror.org/018dfmf50",
+            "country_code": "NL",
+            "type": "education",
+            "lineage": [
+              "https://openalex.org/I7876267"
+            ]
+          }
+        ],
+        "countries": [
+          "NL"
+        ],
+        "is_corresponding": false,
+        "raw_author_name": "Bastiaan Heeren",
+        "raw_affiliation_strings": [
+          "Open University of the Netherlands"
+        ],
+        "raw_orcid": null,
+        "affiliations": [
+          {
+            "raw_affiliation_string": "Open University of the Netherlands",
+            "institution_ids": [
+              "https://openalex.org/I7876267"
+            ]
+          }
+        ]
+      },
+      {
+        "author_position": "last",
+        "author": {
+          "id": null,
+          "display_name": "Johan Jeuring",
+          "orcid": null,
+          "observed_orcids": []
+        },
+        "institutions": [
+          {
+            "id": "https://openalex.org/I193662353",
+            "display_name": "Utrecht University",
+            "ror": "https://ror.org/04pp8hn57",
+            "country_code": "NL",
+            "type": "education",
+            "lineage": [
+              "https://openalex.org/I193662353"
+            ]
+          },
+          {
+            "id": "https://openalex.org/I7876267",
+            "display_name": "Open University of the Netherlands",
+            "ror": "https://ror.org/018dfmf50",
+            "country_code": "NL",
+            "type": "education",
+            "lineage": [
+              "https://openalex.org/I7876267"
+            ]
+          }
+        ],
+        "countries": [
+          "NL"
+        ],
+        "is_corresponding": false,
+        "raw_author_name": "Johan Jeuring",
+        "raw_affiliation_strings": [
+          "Universiteit Utrecht and Open University of the Netherlands"
+        ],
+        "raw_orcid": null,
+        "affiliations": [
+          {
+            "raw_affiliation_string": "Universiteit Utrecht and Open University of the Netherlands",
+            "institution_ids": [
+              "https://openalex.org/I193662353",
+              "https://openalex.org/I7876267"
+            ]
+          }
+        ]
+      }
+    ],
+    "institutions": [],
+    "countries_distinct_count": 1,
+    "institutions_distinct_count": 2,
+    "corresponding_author_ids": [],
+    "corresponding_institution_ids": [],
+    "apc_list": null,
+    "apc_paid": null,
+    "fwci": 0.5756,
+    "has_fulltext": true,
+    "cited_by_count": 3,
+    "citation_normalized_percentile": {
+      "value": 0.82596256,
+      "is_in_top_1_percent": false,
+      "is_in_top_10_percent": false
+    },
+    "cited_by_percentile_year": {
+      "min": 89,
+      "max": 94
+    },
+    "biblio": {
+      "volume": "170",
+      "issue": null,
+      "first_page": "50",
+      "last_page": "66"
+    },
+    "is_retracted": false,
+    "is_paratext": false,
+    "is_xpac": false,
+    "primary_topic": {
+      "id": "https://openalex.org/T10533",
+      "display_name": "Teaching and Learning Programming",
+      "score": 0.5009999871253967,
+      "subfield": {
+        "id": "https://openalex.org/subfields/1706",
+        "display_name": "Computer Science Applications"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/17",
+        "display_name": "Computer Science"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/3",
+        "display_name": "Physical Sciences"
+      }
+    },
+    "topics": [
+      {
+        "id": "https://openalex.org/T10533",
+        "display_name": "Teaching and Learning Programming",
+        "score": 0.5009999871253967,
+        "subfield": {
+          "id": "https://openalex.org/subfields/1706",
+          "display_name": "Computer Science Applications"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/17",
+          "display_name": "Computer Science"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      {
+        "id": "https://openalex.org/T10126",
+        "display_name": "Logic, programming, and type systems",
+        "score": 0.29339998960494995,
+        "subfield": {
+          "id": "https://openalex.org/subfields/1702",
+          "display_name": "Artificial Intelligence"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/17",
+          "display_name": "Computer Science"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      {
+        "id": "https://openalex.org/T11450",
+        "display_name": "Model-Driven Software Engineering Techniques",
+        "score": 0.03240000084042549,
+        "subfield": {
+          "id": "https://openalex.org/subfields/1712",
+          "display_name": "Software"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/17",
+          "display_name": "Computer Science"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      }
+    ],
+    "keywords": [
+      {
+        "id": "https://openalex.org/keywords/haskell",
+        "display_name": "Haskell",
+        "score": 0.9679999947547913
+      },
+      {
+        "id": "https://openalex.org/keywords/expression-evaluation",
+        "display_name": "expression evaluation",
+        "score": 0.5849999785423279
+      },
+      {
+        "id": "https://openalex.org/keywords/functional-programming-education",
+        "display_name": "functional programming education",
+        "score": 0.8690000176429749
+      },
+      {
+        "id": "https://openalex.org/keywords/assessment-methods",
+        "display_name": "assessment methods",
+        "score": 0.6330000162124634
+      },
+      {
+        "id": "https://openalex.org/keywords/lazy-evaluation",
+        "display_name": "lazy evaluation",
+        "score": 0.875
+      },
+      {
+        "id": "https://openalex.org/keywords/recursion",
+        "display_name": "recursion",
+        "score": 0.6349999904632568
+      },
+      {
+        "id": "https://openalex.org/keywords/higher-order-functions",
+        "display_name": "higher-order functions",
+        "score": 0.9359999895095825
+      },
+      {
+        "id": "https://openalex.org/keywords/pattern-matching",
+        "display_name": "pattern matching",
+        "score": 0.9890000224113464
+      },
+      {
+        "id": "https://openalex.org/keywords/student-feedback",
+        "display_name": "student feedback",
+        "score": 0.6909999847412109
+      }
+    ],
+    "concepts": [
+      {
+        "id": "https://openalex.org/C2780624054",
+        "wikidata": "https://www.wikidata.org/wiki/Q34010",
+        "display_name": "Haskell",
+        "level": 3,
+        "score": 0.9904000163078308
+      },
+      {
+        "id": "https://openalex.org/C41008148",
+        "wikidata": "https://www.wikidata.org/wiki/Q21198",
+        "display_name": "Computer science",
+        "level": 0,
+        "score": 0.7803000211715698
+      },
+      {
+        "id": "https://openalex.org/C42383842",
+        "wikidata": "https://www.wikidata.org/wiki/Q193076",
+        "display_name": "Functional programming",
+        "level": 2,
+        "score": 0.6837999820709229
+      },
+      {
+        "id": "https://openalex.org/C199360897",
+        "wikidata": "https://www.wikidata.org/wiki/Q9143",
+        "display_name": "Programming language",
+        "level": 1,
+        "score": 0.5623000264167786
+      },
+      {
+        "id": "https://openalex.org/C128099668",
+        "wikidata": "https://www.wikidata.org/wiki/Q573952",
+        "display_name": "Lazy evaluation",
+        "level": 3,
+        "score": 0.5289999842643738
+      },
+      {
+        "id": "https://openalex.org/C14036430",
+        "wikidata": "https://www.wikidata.org/wiki/Q3736076",
+        "display_name": "Function (biology)",
+        "level": 2,
+        "score": 0.44909998774528503
+      },
+      {
+        "id": "https://openalex.org/C154945302",
+        "wikidata": "https://www.wikidata.org/wiki/Q11660",
+        "display_name": "Artificial intelligence",
+        "level": 1,
+        "score": 0.4065000116825104
+      },
+      {
+        "id": "https://openalex.org/C79678938",
+        "wikidata": "https://www.wikidata.org/wiki/Q1481571",
+        "display_name": "Combinatory logic",
+        "level": 2,
+        "score": 0.29600000381469727
+      },
+      {
+        "id": "https://openalex.org/C77781355",
+        "wikidata": "https://www.wikidata.org/wiki/Q223335",
+        "display_name": "Structured programming",
+        "level": 2,
+        "score": 0.26649999618530273
+      },
+      {
+        "id": "https://openalex.org/C204321447",
+        "wikidata": "https://www.wikidata.org/wiki/Q30642",
+        "display_name": "Natural language processing",
+        "level": 1,
+        "score": 0.25209999084472656
+      }
+    ],
+    "mesh": [],
+    "locations_count": 6,
+    "locations": [
+      {
+        "id": "doi:10.4204/eptcs.170.4",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.4204/eptcs.170.4",
+        "pdf_url": "https://arxiv.org/pdf/1412.4879",
+        "source": {
+          "id": "https://openalex.org/S4210216316",
+          "display_name": "Electronic Proceedings in Theoretical Computer Science",
+          "issn_l": "2075-2180",
+          "issn": [
+            "2075-2180"
+          ],
+          "is_oa": true,
+          "is_in_doaj": true,
+          "is_core": true,
+          "listed_in": [
+            "cwts-core",
+            "doaj",
+            "norway-1"
+          ],
+          "host_organization": "https://openalex.org/P4310318029",
+          "host_organization_name": "Open Publishing Association",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310318029"
+          ],
+          "host_organization_lineage_names": [
+            "Open Publishing Association"
+          ],
+          "type": "journal"
+        },
+        "license": "cc-by-nc-nd",
+        "license_id": "https://openalex.org/licenses/cc-by-nc-nd",
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Electronic Proceedings in Theoretical Computer Science",
+        "raw_type": "journal-article"
+      },
+      {
+        "id": "pmh:oai:arXiv.org:1412.4879",
+        "is_oa": true,
+        "landing_page_url": "http://arxiv.org/abs/1412.4879",
+        "pdf_url": "https://arxiv.org/pdf/1412.4879",
+        "source": {
+          "id": "https://openalex.org/S4306400194",
+          "display_name": "arXiv (Cornell University)",
+          "issn_l": "2331-8422",
+          "issn": [
+            "2331-8422"
+          ],
+          "is_oa": true,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I205783295",
+          "host_organization_name": "Cornell University",
+          "host_organization_lineage": [
+            "https://openalex.org/I205783295"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": null,
+        "raw_type": "text"
+      },
+      {
+        "id": "pmh:oai:doaj.org/article:25a4b0f3022248b9bf898b459355da34",
+        "is_oa": true,
+        "landing_page_url": "https://doaj.org/article/25a4b0f3022248b9bf898b459355da34",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306401280",
+          "display_name": "DOAJ (DOAJ: Directory of Open Access Journals)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": null,
+          "host_organization_name": null,
+          "host_organization_lineage": [],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": "cc-by-sa",
+        "license_id": "https://openalex.org/licenses/cc-by-sa",
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": "Electronic Proceedings in Theoretical Computer Science, Vol 170, Iss Proc. TFPIE 2014, Pp 50-66 (2014)",
+        "raw_type": "article"
+      },
+      {
+        "id": "pmh:oai:research.ou.nl:publications/72e5c252-d3b5-43c4-bb12-0a8e6ea31e75",
+        "is_oa": false,
+        "landing_page_url": "https://hdl.handle.net/1820/72e5c252-d3b5-43c4-bb12-0a8e6ea31e75",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306401002",
+          "display_name": "DSpace (Open University in the Netherlands)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I7876267",
+          "host_organization_name": "Open University of the Netherlands",
+          "host_organization_lineage": [
+            "https://openalex.org/I7876267"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": null,
+        "raw_type": "info:eu-repo/semantics/publishedVersion"
+      },
+      {
+        "id": "pmh:ou:oai:research.ou.nl:publications/72e5c252-d3b5-43c4-bb12-0a8e6ea31e75",
+        "is_oa": false,
+        "landing_page_url": "https://research.ou.nl/en/publications/72e5c252-d3b5-43c4-bb12-0a8e6ea31e75",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306401002",
+          "display_name": "DSpace (Open University in the Netherlands)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I7876267",
+          "host_organization_name": "Open University of the Netherlands",
+          "host_organization_lineage": [
+            "https://openalex.org/I7876267"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": "Proceedings 3rd International Workshop on Trends in Functional Programming in Education: Soesterberg, The Netherlands, 25th May 2014, 170, 50 - 66",
+        "raw_type": "info:eu-repo/semantics/conferencepaper"
+      },
+      {
+        "id": "doi:10.48550/arxiv.1412.4879",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.48550/arxiv.1412.4879",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306400194",
+          "display_name": "arXiv (Cornell University)",
+          "issn_l": "2331-8422",
+          "issn": [
+            "2331-8422"
+          ],
+          "is_oa": true,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I205783295",
+          "host_organization_name": "Cornell University",
+          "host_organization_lineage": [
+            "https://openalex.org/I205783295"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": null,
+        "license_id": null,
+        "version": null,
+        "is_accepted": false,
+        "is_published": null,
+        "raw_source_name": null,
+        "raw_type": "article-journal"
+      }
+    ],
+    "best_oa_location": {
+      "id": "doi:10.4204/eptcs.170.4",
+      "is_oa": true,
+      "landing_page_url": "https://doi.org/10.4204/eptcs.170.4",
+      "pdf_url": "https://arxiv.org/pdf/1412.4879",
+      "source": {
+        "id": "https://openalex.org/S4210216316",
+        "display_name": "Electronic Proceedings in Theoretical Computer Science",
+        "issn_l": "2075-2180",
+        "issn": [
+          "2075-2180"
+        ],
+        "is_oa": true,
+        "is_in_doaj": true,
+        "is_core": true,
+        "listed_in": [
+          "cwts-core",
+          "doaj",
+          "norway-1"
+        ],
+        "host_organization": "https://openalex.org/P4310318029",
+        "host_organization_name": "Open Publishing Association",
+        "host_organization_lineage": [
+          "https://openalex.org/P4310318029"
+        ],
+        "host_organization_lineage_names": [
+          "Open Publishing Association"
+        ],
+        "type": "journal"
+      },
+      "license": "cc-by-nc-nd",
+      "license_id": "https://openalex.org/licenses/cc-by-nc-nd",
+      "version": "publishedVersion",
+      "is_accepted": true,
+      "is_published": true,
+      "raw_source_name": "Electronic Proceedings in Theoretical Computer Science",
+      "raw_type": "journal-article"
+    },
+    "sustainable_development_goals": [],
+    "x_sdgs": [],
+    "study_designs": [],
+    "awards": [],
+    "funders": [],
+    "has_content": {
+      "grobid_xml": true,
+      "pdf": true
+    },
+    "content_urls": {
+      "pdf": "https://content.openalex.org/works/W2050152920.pdf",
+      "grobid_xml": "https://content.openalex.org/works/W2050152920.grobid-xml"
+    },
+    "referenced_works_count": 24,
+    "referenced_works": [
+      "https://openalex.org/W1490584728",
+      "https://openalex.org/W1506127418",
+      "https://openalex.org/W1553992341",
+      "https://openalex.org/W1666348158",
+      "https://openalex.org/W1743041603",
+      "https://openalex.org/W1978948468",
+      "https://openalex.org/W2001152839",
+      "https://openalex.org/W2004843654",
+      "https://openalex.org/W2041037071",
+      "https://openalex.org/W2044101946",
+      "https://openalex.org/W2055608277",
+      "https://openalex.org/W2098374496",
+      "https://openalex.org/W2128065396",
+      "https://openalex.org/W2141591284",
+      "https://openalex.org/W2163873997",
+      "https://openalex.org/W2295866357",
+      "https://openalex.org/W2912949875",
+      "https://openalex.org/W2951639165",
+      "https://openalex.org/W2998738573",
+      "https://openalex.org/W4240127846",
+      "https://openalex.org/W4244488020",
+      "https://openalex.org/W4245969237",
+      "https://openalex.org/W6633827998",
+      "https://openalex.org/W6634436890"
+    ],
+    "related_works": [],
+    "abstract_inverted_index": {
+      "A": [
+        0,
+        58
+      ],
+      "number": [
+        1
+      ],
+      "of": [
+        2,
+        21,
+        26,
+        64,
+        81,
+        95,
+        138,
+        148
+      ],
+      "introductory": [
+        3
+      ],
+      "textbooks": [
+        4
+      ],
+      "for": [
+        5,
+        76,
+        99
+      ],
+      "Haskell": [
+        6,
+        82,
+        100
+      ],
+      "use": [
+        7
+      ],
+      "calculations": [
+        8
+      ],
+      "right": [
+        9
+      ],
+      "from": [
+        10
+      ],
+      "the": [
+        11,
+        15,
+        19,
+        24,
+        36,
+        79,
+        115,
+        139,
+        153
+      ],
+      "start": [
+        12
+      ],
+      "to": [
+        13
+      ],
+      "give": [
+        14
+      ],
+      "reader": [
+        16
+      ],
+      "insight": [
+        17
+      ],
+      "into": [
+        18
+      ],
+      "evaluation": [
+        20,
+        71,
+        80,
+        105,
+        113
+      ],
+      "expressions": [
+        22,
+        83,
+        101
+      ],
+      "and": [
+        23,
+        46,
+        126
+      ],
+      "behavior": [
+        25
+      ],
+      "functional": [
+        27,
+        37
+      ],
+      "programs.": [
+        28
+      ],
+      "Many": [
+        29
+      ],
+      "programming": [
+        30,
+        38
+      ],
+      "concepts": [
+        31,
+        66
+      ],
+      "that": [
+        32,
+        102,
+        120
+      ],
+      "are": [
+        33,
+        121
+      ],
+      "important": [
+        34
+      ],
+      "in": [
+        35
+      ],
+      "paradigm,": [
+        39
+      ],
+      "such": [
+        40
+      ],
+      "as": [
+        41
+      ],
+      "recursion,": [
+        42
+      ],
+      "higher-order": [
+        43
+      ],
+      "functions,": [
+        44
+      ],
+      "pattern-matching,": [
+        45
+      ],
+      "lazy": [
+        47
+      ],
+      "evaluation,": [
+        48
+      ],
+      "can": [
+        49,
+        130
+      ],
+      "be": [
+        50
+      ],
+      "partially": [
+        51
+      ],
+      "explained": [
+        52
+      ],
+      "by": [
+        53,
+        123
+      ],
+      "showing": [
+        54
+      ],
+      "a": [
+        55,
+        61,
+        92,
+        96,
+        124,
+        149
+      ],
+      "stepwise": [
+        56,
+        97
+      ],
+      "computation.": [
+        57
+      ],
+      "student": [
+        59
+      ],
+      "gets": [
+        60
+      ],
+      "better": [
+        62
+      ],
+      "understanding": [
+        63
+      ],
+      "these": [
+        65,
+        70
+      ],
+      "if": [
+        67
+      ],
+      "she": [
+        68
+      ],
+      "performs": [
+        69
+      ],
+      "steps": [
+        72,
+        114,
+        119
+      ],
+      "herself.": [
+        73
+      ],
+      "Tool": [
+        74
+      ],
+      "support": [
+        75
+      ],
+      "experimenting": [
+        77
+      ],
+      "with": [
+        78
+      ],
+      "is": [
+        84
+      ],
+      "currently": [
+        85
+      ],
+      "lacking.": [
+        86
+      ],
+      "In": [
+        87
+      ],
+      "this": [
+        88
+      ],
+      "paper": [
+        89
+      ],
+      "we": [
+        90
+      ],
+      "present": [
+        91
+      ],
+      "prototype": [
+        93
+      ],
+      "implementation": [
+        94
+      ],
+      "evaluator": [
+        98
+      ],
+      "supports": [
+        103
+      ],
+      "multiple": [
+        104
+      ],
+      "strategies,": [
+        106
+      ],
+      "specifically": [
+        107
+      ],
+      "targeted": [
+        108
+      ],
+      "at": [
+        109
+      ],
+      "education.": [
+        110
+      ],
+      "Besides": [
+        111
+      ],
+      "performing": [
+        112
+      ],
+      "tool": [
+        116
+      ],
+      "also": [
+        117
+      ],
+      "diagnoses": [
+        118
+      ],
+      "submitted": [
+        122
+      ],
+      "student,": [
+        125
+      ],
+      "provides": [
+        127
+      ],
+      "feedback.": [
+        128
+      ],
+      "Instructors": [
+        129
+      ],
+      "add": [
+        131
+      ],
+      "or": [
+        132
+      ],
+      "change": [
+        133
+      ],
+      "function": [
+        134
+      ],
+      "definitions": [
+        135
+      ],
+      "without": [
+        136
+      ],
+      "knowledge": [
+        137
+      ],
+      "tool's": [
+        140
+      ],
+      "internal": [
+        141
+      ],
+      "implementation.": [
+        142
+      ],
+      "We": [
+        143
+      ],
+      "discuss": [
+        144
+      ],
+      "some": [
+        145
+      ],
+      "preliminary": [
+        146
+      ],
+      "results": [
+        147
+      ],
+      "small": [
+        150
+      ],
+      "survey": [
+        151
+      ],
+      "about": [
+        152
+      ],
+      "tool.": [
+        154
+      ]
+    },
+    "counts_by_year": [
+      {
+        "year": 2025,
+        "cited_by_count": 1
+      },
+      {
+        "year": 2024,
+        "cited_by_count": 1
+      },
+      {
+        "year": 2017,
+        "cited_by_count": 1
+      }
+    ],
+    "updated_date": "2026-09-29T14:09:16.559479",
+    "created_date": "2016-06-24T00:00:00"
+  }
+}

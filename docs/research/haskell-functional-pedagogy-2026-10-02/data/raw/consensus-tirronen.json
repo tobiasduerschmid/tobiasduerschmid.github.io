@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"id\": \"370c4caa244a50c6b4c94b3aa54336e0\", \"title\": \"Understanding beginners' mistakes with Haskell\", \"text\": \"Abstract This article presents an overview of student difficulties in an introductory functional programming (FP) course taught in Haskell. The motivation for this study stems from our belief that many student difficulties can be alleviated by understanding the underlying causes of errors and by modifying the educational approach and, possibly, the teaching language accordingly. We analyze students' exercise submissions and categorize student errors according to compiler error messages and then manually according to the observed underlying cause. Our study complements earlier studies on the topic by applying computer and manual analysis while focusing on providing descriptive statistics of difficulties specific to FP languages. We conclude that the majority of student errors, regardless of cause, are reported by three different compiler error messages that are not well understood by students. In addition, syntactic features, such as precedence, the syntax of function application, and deeply nested statements, cause difficulties throughout the course.\", \"url\": \"https://consensus.app/papers/understanding-beginners-mistakes-with-haskell-tirronen-uusi-mäkelä/370c4caa244a50c6b4c94b3aa54336e0/?utm_source=chatgpt\", \"metadata\": {\"authors\": \"V. Tirronen, Samuel Uusi-Mäkelä, Ville Isomöttönen\", \"publish_year\": \"2015\", \"journal\": \"Journal of Functional Programming\", \"volume\": \"25\", \"citation_count\": \"24\"}}"
+    }
+  ],
+  "isError": false
+}

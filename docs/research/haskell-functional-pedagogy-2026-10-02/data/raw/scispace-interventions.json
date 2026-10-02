@@ -1,0 +1,763 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Found 10 relevant papers on 'Which empirical studies evaluate digital tutors, automated feedback, or step-by-step evaluation tools for students learning Haskell or functional programming?'.\n\n\n1. Ask-Elle: an Adaptable Programming Tutor for Haskell Giving Automated Feedback\n   2017 · Alex Gerdes, Bastiaan Heeren, Johan Jeuring · International Journal of Artificial Intelligence in Education\n   DOI: 10.1007/S40593-015-0080-X\n   Abstract: Ask-Elle is a tutor for learning the higher-order, strongly-typed functional programming language Haskell. It supports the stepwise development of Haskell programs by verifying the correctness of incomplete programs, and by providing hints. Programming exercises are added to Ask-Elle by providing a task description for the exercise, one or more model solutions, and properties that a solution should satisfy. The properties and model solutions can be annotated with feedback messages, and the amount of flexibility that is allowed in student solutions can be adjusted. The main contribution of our work is the design of a tutor that combines (1) the incremental development of different solutions in various forms to a programming exercise with (2) automated feedback and (3) teacher-specified programming exercises, solutions, and properties. The main functionality is obtained by means of strategy-based model tracing and property-based testing. We have tested the feasibility of our approach in several experiments, in which we analyse both intermediate and final student solutions to programming exercises, amongst others.\n\n2. Ask-Elle: an adaptable programming tutor for Haskell giving automated feedback\n   2015 · Alex Gerdes, Bastiaan Heeren, Johan Jeuring\n   Abstract: Ask-Elle is a tutor for learning the higher-order, strongly-typed functional programming language Haskell. It supports the stepwise development of Haskell programs by verifying the correctness of incomplete programs, and by providing hints. Programming exercises are added to Ask-Elle by providing a task description for the exercise, one or more model solutions, and properties that a solution should satisfy. The properties and model solutions can be annotated with feedback messages, and the amount of flexibility that is allowed in student solutions can be adjusted. The main contribution of our work is the design of a tutor that combines (1) the incremental development of di↵erent solutions in various forms to a programming exercise with (2) automated feedback and (3) teacher-specified programming exercises, solutions, and properties. The main functionality is obtained by means of strategy-based model tracing and property-based testing. We have tested the feasibility of our approach in several experiments, in which we analyse both intermediate and final student solutions to programming exercises, amongst others.\n\n3. Automated Grading and Feedback Tools for Programming Education: A Systematic Review\n   2023 · Marcus Messer, Neil C. C. Brown, Michael Kölling · arXiv.org\n   DOI: 10.48550/arXiv.2306.11722\n   Abstract: We conducted a systematic literature review on automated grading and feedback tools for programming education. We analysed 121 research papers from 2017 to 2021 inclusive and categorised them based on skills assessed, grading approach, language paradigm, degree of automation and evaluation techniques. Most papers grade the correctness of object-oriented assignments. Typically, these tools use a dynamic technique, primarily unit testing, to provide grades and feedback to the students. However, compared to correctness grading, few tools assess readability, maintainability, or documentation, focusing solely on the presence of documentation, not documentation quality.\n\n4. Automated Grading and Feedback Tools for Programming Education: A\n  Systematic Review\n   2023\n   DOI: 10.48550/arxiv.2306.11722\n   Abstract: We conducted a systematic literature review on automated grading and feedback tools for programming education. We analysed 121 research papers from 2017 to 2021 inclusive and categorised them based on skills assessed, grading approach, language paradigm, degree of automation and evaluation techniques. Most papers grade the correctness of object-oriented assignments. Typically, these tools use a dynamic technique, primarily unit testing, to provide grades and feedback to the students. However, compared to correctness grading, few tools assess readability, maintainability, or documentation, focusing solely on the presence of documentation, not documentation quality. \n\n5. Evaluating Haskell expressions in a tutoring environment\n   2022 · Heeren Bastiaan, Jeuring Johan\n   DOI: 10.48550/arxiv.1412.4879\n   Abstract: A number of introductory textbooks for Haskell use calculations right from the start to give the reader insight into the evaluation of expressions and the behavior of functional programs. Many programming concepts that are important in the functional programming paradigm, such as recursion, higher-order functions, pattern-matching, and lazy evaluation, can be partially explained by showing a stepwise computation. A student gets a better understanding of these concepts if she performs these evaluation steps herself. Tool support for experimenting with the evaluation of Haskell expressions is currently lacking. In this paper we present a prototype implementation of a stepwise evaluator for Haskell expressions that supports multiple evaluation strategies, specifically targeted at education. Besides performing evaluation steps the tool also diagnoses steps that are submitted by a student, and provides feedback. Instructors can add or change function definitions without knowledge of the tool's internal implementation. We discuss some preliminary results of a small survey about the tool. \n\n6. Evaluating Haskell expressions in a tutoring environment\n   2014 · Tim Olmer, Bastiaan Heeren, Johan Jeuring\n   DOI: 10.4204/EPTCS.170.4\n   Abstract: A number of introductory textbooks for Haskell use calculations right from the start to give the reader insight into the evaluation of expressions and the behavior of functional programs. Many programming concepts that are important in the functional programming paradigm, such as recursion, higher-order functions, pattern-matching, and lazy evaluation, can be partially explained by showing a stepwise computation. A student gets a better understanding of these concepts if she performs these evaluation steps herself. Tool support for experimenting with the evaluation of Haskell expressions is currently lacking. In this paper we present a prototype implementation of a stepwise evaluator for Haskell expressions that supports multiple evaluation strategies, specifically targeted at education. Besides performing evaluation steps the tool also diagnoses steps that are submitted by a student, and provides feedback. Instructors can add or change function definitions without knowledge of the tool’s internal implementation. We discuss some preliminary results of a small survey about the tool.\n\n7. Evaluating Haskell expressions in a tutoring environment\n   2014 · Tim Olmer, Bastiaan Heeren, Johan Jeuring · arXiv: Computers and Society\n   DOI: 10.4204/EPTCS.170.4\n   Abstract: A number of introductory textbooks for Haskell use calculations right from the start to give the reader insight into the evaluation of expressions and the behavior of functional programs. Many programming concepts that are important in the functional programming paradigm, such as recursion, higher-order functions, pattern-matching, and lazy evaluation, can be partially explained by showing a stepwise computation. A student gets a better understanding of these concepts if she performs these evaluation steps herself. Tool support for experimenting with the evaluation of Haskell expressions is currently lacking. In this paper we present a prototype implementation of a stepwise evaluator for Haskell expressions that supports multiple evaluation strategies, specifically targeted at education. Besides performing evaluation steps the tool also diagnoses steps that are submitted by a student, and provides feedback. Instructors can add or change function definitions without knowledge of the tool's internal implementation. We discuss some preliminary results of a small survey about the tool.\n\n8. Automated Grading and Feedback Tools for Programming Education: A Systematic Review.\n   Marcus Messer, Neil C. C. Brown, Michael Kolling\n   DOI: 10.1145/3636515\n   Abstract: We conducted a systematic literature review on automated grading and feedback tools for programming education. We analysed 121 research papers from 2017 to 2021 inclusive and categorised them based on skills assessed, approach, language paradigm, degree of automation, and evaluation techniques. Most papers assess the correctness of assignments in object-oriented languages. Typically, these tools use a dynamic technique, primarily unit testing, to provide grades and feedback to the students or static analysis techniques to compare a submission with a reference solution or with a set of correct student submissions. However, these techniques’ feedback is often limited to whether the unit tests have passed or failed, the expected and actual output, or how they differ from the reference solution. Furthermore, few tools assess the maintainability, readability, or documentation of the source code, with most using static analysis techniques, such as code quality metrics, in conjunction with grading correctness. Additionally, we found that most tools offered fully automated assessment to allow for near-instantaneous feedback and multiple resubmissions, which can increase student satisfaction and provide them with more opportunities to succeed. In terms of techniques used to evaluate the tools’ performance, most papers primarily use student surveys or compare the automatic assessment tools to grades or feedback provided by human graders. However, because the evaluation dataset is frequently unavailable, it is more difficult to reproduce results and compare tools to a collection of common assignments.\n\n9. Step Tutor: Supporting Students through Step-by-Step Example-Based Feedback\n   2020 · Wengran Wang, Yudong Rao, Rui Zhi\n   DOI: 10.1145/3341525.3387411\n   Abstract: Students often get stuck when programming independently, and need help to progress. Existing, automated feedback can help students progress, but it is unclear whether it ultimately leads to learning. We present Step Tutor, which helps struggling students during programming by presenting them with relevant, step-by-step examples. The goal of Step Tutor is to help students progress, and engage them in comparison, reflection, and learning. When a student requests help, Step Tutor adaptively selects an example to demonstrate the next meaningful step in the solution. It engages the student in comparing \"before\" and \"after\" code snapshots, and their corresponding visual output, and guides them to reflect on the changes. Step Tutor is a novel form of help that combines effective aspects of existing support features, such as hints and Worked Examples, to help students both progress and learn. To understand how students use Step Tutor, we asked nine undergraduate students to complete two programming tasks, with its help, and interviewed them about their experience. We present our qualitative analysis of students' experience, which shows us why and how they seek help from Step Tutor, and Step Tutor's affordances. These initial results suggest that students perceived that Step Tutor accomplished its goals of helping them to progress and learn.\n\n10. E-Assessment Tools for Programming Languages: A Review\n   2024 · Sandeep Gupta, Anamika Gupta\n   DOI: 10.60692/s09sa-caa73\n   Abstract: Continuous Evaluation and feedback not only helps in improving learning of a student, but also acts as a constant motivator to put in more efforts.But then, feedback and assessment are very difficult and time consuming in practice.Thus, automating the entire system of assessment, evaluation and feedback will be highly beneficial.But, building such tools for all courses is yet not feasible.However, e-assessment tools for programming courses in Computer Science discipline can be developed.In this paper, we review various grading techniques used by these tools to assess a student's programming assignment.Further, this paper discusses various types and features of tools according to which an appropriate tool should be selected.And, in the end, we will be highlighting the extent to which students and instructors are actually benefited by these tools. "
+    }
+  ],
+  "structuredContent": {
+    "searchTerm": "Which empirical studies evaluate digital tutors, automated feedback, or step-by-step evaluation tools for students learning Haskell or functional programming?",
+    "papers": [
+      {
+        "id": 2344752727,
+        "title": "Ask-Elle: an Adaptable Programming Tutor for Haskell Giving Automated Feedback",
+        "is_archived": false,
+        "full_slug": "ask-elle-an-adaptable-programming-tutor-for-haskell-giving-31nc6fysti",
+        "journal": {
+          "display_name": "International Journal of Artificial Intelligence in Education",
+          "official_page": "https://link.springer.com/journal/40593",
+          "issn": "1560-4292",
+          "alias": null,
+          "id": 171267539,
+          "slug": "international-journal-of-artificial-intelligence-in",
+          "unique_id": "ohkb8lx1",
+          "full_slug": "international-journal-of-artificial-intelligence-in-ohkb8lx1"
+        },
+        "conference_series": null,
+        "date": "2017-03-01T00:00:00Z",
+        "is_oa": true,
+        "publication_type": "Journal Article",
+        "doi": "10.1007/S40593-015-0080-X",
+        "unique_id": "31nc6fysti",
+        "abstract": "Ask-Elle is a tutor for learning the higher-order, strongly-typed functional programming language Haskell. It supports the stepwise development of Haskell programs by verifying the correctness of incomplete programs, and by providing hints. Programming exercises are added to Ask-Elle by providing a task description for the exercise, one or more model solutions, and properties that a solution should satisfy. The properties and model solutions can be annotated with feedback messages, and the amount of flexibility that is allowed in student solutions can be adjusted. The main contribution of our work is the design of a tutor that combines (1) the incremental development of different solutions in various forms to a programming exercise with (2) automated feedback and (3) teacher-specified programming exercises, solutions, and properties. The main functionality is obtained by means of strategy-based model tracing and property-based testing. We have tested the feasibility of our approach in several experiments, in which we analyse both intermediate and final student solutions to programming exercises, amongst others.",
+        "authors": {
+          "total": 4,
+          "data": [
+            {
+              "display_name": "Alex Gerdes",
+              "id": 2165782749,
+              "slug": "alex-gerdes",
+              "unique_id": "3innzi4z4s",
+              "full_slug": "alex-gerdes-3innzi4z4s",
+              "affiliation_full_slug": "chalmers-university-of-technology-5yhxtx41"
+            },
+            {
+              "display_name": "Bastiaan Heeren",
+              "id": 1995464277,
+              "slug": "bastiaan-heeren",
+              "unique_id": "4r13tss9iv",
+              "full_slug": "bastiaan-heeren-4r13tss9iv",
+              "affiliation_full_slug": "open-university-in-the-netherlands-38kg808r"
+            },
+            {
+              "display_name": "Johan Jeuring",
+              "id": 2138360243,
+              "slug": "johan-jeuring",
+              "unique_id": "s1agogrww5",
+              "full_slug": "johan-jeuring-s1agogrww5",
+              "affiliation_full_slug": "open-university-in-the-netherlands-38kg808r"
+            },
+            {
+              "display_name": "L. Thomas van Binsbergen",
+              "id": 880337652,
+              "slug": "l-thomas-van-binsbergen",
+              "unique_id": "yg2houeti9",
+              "full_slug": "l-thomas-van-binsbergen-yg2houeti9",
+              "affiliation_full_slug": "royal-holloway-university-of-london-zwblhonl"
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 3,
+          "data": [
+            {
+              "display_name": "Chalmers University of Technology",
+              "city": "Gothenburg",
+              "region": null,
+              "country": "Sweden",
+              "id": 66862912,
+              "slug": "chalmers-university-of-technology",
+              "unique_id": "5yhxtx41",
+              "full_slug": "chalmers-university-of-technology-5yhxtx41"
+            },
+            {
+              "display_name": "Open University in the Netherlands",
+              "city": "Heerlen",
+              "region": null,
+              "country": "Netherlands",
+              "id": 7876267,
+              "slug": "open-university-in-the-netherlands",
+              "unique_id": "38kg808r",
+              "full_slug": "open-university-in-the-netherlands-38kg808r"
+            },
+            {
+              "display_name": "Royal Holloway, University of London",
+              "city": "Egham",
+              "region": "Surrey",
+              "country": "United Kingdom",
+              "id": 184558857,
+              "slug": "royal-holloway-university-of-london",
+              "unique_id": "zwblhonl",
+              "full_slug": "royal-holloway-university-of-london-zwblhonl"
+            }
+          ]
+        },
+        "fulltext_url": "/pdf/ask-elle-an-adaptable-programming-tutor-for-haskell-giving-31nc6fysti.pdf",
+        "fulltext_url_no_follow": false,
+        "paper_urls": {
+          "order": [
+            "Pdf",
+            "Html"
+          ],
+          "data": {
+            "Html": [
+              "https://eric.ed.gov/?id=EJ1126615",
+              "https://link.springer.com/article/10.1007/s40593-015-0080-x"
+            ],
+            "Pdf": [
+              "https://link.springer.com/content/pdf/10.1007%2Fs40593-015-0080-x.pdf",
+              "http://www.cs.uu.nl/research/techreps/repo/CS-2015/2015-019.pdf"
+            ]
+          },
+          "is_show": true
+        },
+        "metrics": {
+          "citations": {
+            "total": 99
+          }
+        },
+        "tldr": "The design of a tutor that combines the incremental development of different solutions in various forms to a programming exercise with automated feedback and teacher-specified programming exercises, solutions, and properties is designed.",
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 2260250034,
+        "title": "Ask-Elle: an adaptable programming tutor for Haskell giving automated feedback",
+        "is_archived": false,
+        "full_slug": "ask-elle-an-adaptable-programming-tutor-for-haskell-giving-569lqtkqe6",
+        "journal": null,
+        "conference_series": null,
+        "date": "2015-01-01T00:00:00Z",
+        "is_oa": true,
+        "publication_type": "Book",
+        "doi": null,
+        "unique_id": "569lqtkqe6",
+        "abstract": "Ask-Elle is a tutor for learning the higher-order, strongly-typed functional programming language Haskell. It supports the stepwise development of Haskell programs by verifying the correctness of incomplete programs, and by providing hints. Programming exercises are added to Ask-Elle by providing a task description for the exercise, one or more model solutions, and properties that a solution should satisfy. The properties and model solutions can be annotated with feedback messages, and the amount of flexibility that is allowed in student solutions can be adjusted. The main contribution of our work is the design of a tutor that combines (1) the incremental development of di↵erent solutions in various forms to a programming exercise with (2) automated feedback and (3) teacher-specified programming exercises, solutions, and properties. The main functionality is obtained by means of strategy-based model tracing and property-based testing. We have tested the feasibility of our approach in several experiments, in which we analyse both intermediate and final student solutions to programming exercises, amongst others.",
+        "authors": {
+          "total": 4,
+          "data": [
+            {
+              "display_name": "Alex Gerdes",
+              "id": 2165782749,
+              "slug": "alex-gerdes",
+              "unique_id": "3innzi4z4s",
+              "full_slug": "alex-gerdes-3innzi4z4s"
+            },
+            {
+              "display_name": "Bastiaan Heeren",
+              "id": 1995464277,
+              "slug": "bastiaan-heeren",
+              "unique_id": "4r13tss9iv",
+              "full_slug": "bastiaan-heeren-4r13tss9iv"
+            },
+            {
+              "display_name": "Johan Jeuring",
+              "id": 2138360243,
+              "slug": "johan-jeuring",
+              "unique_id": "s1agogrww5",
+              "full_slug": "johan-jeuring-s1agogrww5"
+            },
+            {
+              "display_name": "L. Thomas van Binsbergen",
+              "id": 880337652,
+              "slug": "l-thomas-van-binsbergen",
+              "unique_id": "yg2houeti9",
+              "full_slug": "l-thomas-van-binsbergen-yg2houeti9"
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 0,
+          "data": []
+        },
+        "fulltext_url": null,
+        "fulltext_url_no_follow": true,
+        "paper_urls": {
+          "order": [
+            "Html",
+            "Others"
+          ],
+          "data": {
+            "Html": [
+              "https://www.narcis.nl/publication/RecordID/oai%3Adspace.library.uu.nl%3A1874%2F325989",
+              "https://dspace.library.uu.nl/handle/1874/325989"
+            ],
+            "Others": [
+              "https://dspace.library.uu.nl/bitstream/1874/325989/1/ask.pdf"
+            ]
+          },
+          "is_show": true
+        },
+        "metrics": {
+          "citations": {
+            "total": 56
+          }
+        },
+        "tldr": "Ask-Elle as discussed by the authors is a tutor for learning the higher-order, strongly-typed functional programming language Haskell, which supports the stepwise development of Haskell programs by verifying the correctness of incomplete programs, and by providing hints.",
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 4001721380,
+        "title": "Automated Grading and Feedback Tools for Programming Education: A Systematic Review",
+        "is_archived": false,
+        "full_slug": "automated-grading-and-feedback-tools-for-programming-209ttonl",
+        "journal": {
+          "display_name": "arXiv.org",
+          "official_page": null,
+          "issn": "2331-8422",
+          "alias": [
+            "ArXiv"
+          ],
+          "id": 4000147193,
+          "slug": "arxiv-org",
+          "unique_id": "bl5k1ptr",
+          "full_slug": "arxiv-org-bl5k1ptr"
+        },
+        "conference_series": null,
+        "date": "2023-06-20T00:00:00Z",
+        "is_oa": false,
+        "publication_type": "Journal Article",
+        "doi": "10.48550/arXiv.2306.11722",
+        "unique_id": "209ttonl",
+        "abstract": "We conducted a systematic literature review on automated grading and feedback tools for programming education. We analysed 121 research papers from 2017 to 2021 inclusive and categorised them based on skills assessed, grading approach, language paradigm, degree of automation and evaluation techniques. Most papers grade the correctness of object-oriented assignments. Typically, these tools use a dynamic technique, primarily unit testing, to provide grades and feedback to the students. However, compared to correctness grading, few tools assess readability, maintainability, or documentation, focusing solely on the presence of documentation, not documentation quality.",
+        "authors": {
+          "total": 4,
+          "data": [
+            {
+              "display_name": "Marcus Messer",
+              "id": 4002539438,
+              "slug": "marcus-messer",
+              "unique_id": "3k6b0gmm",
+              "full_slug": "marcus-messer-3k6b0gmm"
+            },
+            {
+              "display_name": "Neil C. C. Brown",
+              "id": 2122071634,
+              "slug": "neil-c-c-brown",
+              "unique_id": "vzuvdazw9b",
+              "full_slug": "neil-c-c-brown-vzuvdazw9b"
+            },
+            {
+              "display_name": "Michael Kölling",
+              "id": 2160310640,
+              "slug": "michael-kolling",
+              "unique_id": "34pma8k5th",
+              "full_slug": "michael-kolling-34pma8k5th"
+            },
+            {
+              "display_name": "Miaojing Shi",
+              "id": 2138603126,
+              "slug": "miaojing-shi",
+              "unique_id": "2umr235ad5",
+              "full_slug": "miaojing-shi-2umr235ad5"
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 0,
+          "data": []
+        },
+        "metrics": {
+          "citations": {
+            "total": 27
+          }
+        },
+        "tldr": "This article conducted a systematic literature review on automated grading and feedback tools for programming education and found that most papers grade the correctness of object-oriented assignments using a dynamic technique, primarily unit testing, to provide grades and feedback to the students.",
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 4018185213,
+        "title": "Automated Grading and Feedback Tools for Programming Education: A\n  Systematic Review",
+        "is_archived": false,
+        "full_slug": "automated-grading-and-feedback-tools-for-programming-3dxbmkc0",
+        "journal": null,
+        "conference_series": null,
+        "date": "2023-06-20T00:00:00Z",
+        "is_oa": true,
+        "publication_type": "Posted Content",
+        "doi": "10.48550/arxiv.2306.11722",
+        "unique_id": "3dxbmkc0",
+        "abstract": "We conducted a systematic literature review on automated grading and feedback tools for programming education. We analysed 121 research papers from 2017 to 2021 inclusive and categorised them based on skills assessed, grading approach, language paradigm, degree of automation and evaluation techniques. Most papers grade the correctness of object-oriented assignments. Typically, these tools use a dynamic technique, primarily unit testing, to provide grades and feedback to the students. However, compared to correctness grading, few tools assess readability, maintainability, or documentation, focusing solely on the presence of documentation, not documentation quality. ",
+        "fulltext_url": "/pdf/automated-grading-and-feedback-tools-for-programming-3dxbmkc0.pdf",
+        "fulltext_url_no_follow": false,
+        "paper_urls": {
+          "order": [
+            "Pdf"
+          ],
+          "data": {
+            "Pdf": [
+              "http://arxiv.org/pdf/2306.11722"
+            ]
+          },
+          "is_show": true
+        },
+        "metrics": {
+          "citations": {
+            "total": 32
+          }
+        },
+        "tldr": "This article conducted a systematic literature review on automated grading and feedback tools for programming education and found that most papers grade the correctness of object-oriented assignments using a dynamic technique, primarily unit testing, to provide grades and feedback to the students.",
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 4093866154,
+        "title": "Evaluating Haskell expressions in a tutoring environment",
+        "is_archived": false,
+        "full_slug": "evaluating-haskell-expressions-in-a-tutoring-environment-s2ica3y62z0p",
+        "journal": null,
+        "conference_series": null,
+        "date": "2022-03-08T00:00:00Z",
+        "is_oa": null,
+        "publication_type": "Repository",
+        "doi": "10.48550/arxiv.1412.4879",
+        "unique_id": "s2ica3y62z0p",
+        "abstract": "A number of introductory textbooks for Haskell use calculations right from the start to give the reader insight into the evaluation of expressions and the behavior of functional programs. Many programming concepts that are important in the functional programming paradigm, such as recursion, higher-order functions, pattern-matching, and lazy evaluation, can be partially explained by showing a stepwise computation. A student gets a better understanding of these concepts if she performs these evaluation steps herself. Tool support for experimenting with the evaluation of Haskell expressions is currently lacking. In this paper we present a prototype implementation of a stepwise evaluator for Haskell expressions that supports multiple evaluation strategies, specifically targeted at education. Besides performing evaluation steps the tool also diagnoses steps that are submitted by a student, and provides feedback. Instructors can add or change function definitions without knowledge of the tool's internal implementation. We discuss some preliminary results of a small survey about the tool. ",
+        "authors": {
+          "total": 2,
+          "data": [
+            {
+              "display_name": "Heeren Bastiaan",
+              "full_slug": null
+            },
+            {
+              "display_name": "Jeuring Johan",
+              "full_slug": null
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 0,
+          "data": []
+        },
+        "metrics": {
+          "citations": {
+            "total": null
+          }
+        },
+        "tldr": null,
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 2050152920,
+        "title": "Evaluating Haskell expressions in a tutoring environment",
+        "is_archived": false,
+        "full_slug": "evaluating-haskell-expressions-in-a-tutoring-environment-2fdu4yxmlf",
+        "journal": null,
+        "conference_series": {
+          "display_name": "Trends in Functional Programming",
+          "id": 1148841876,
+          "slug": "trends-in-functional-programming",
+          "unique_id": "1hn37oq3",
+          "full_slug": "trends-in-functional-programming-1hn37oq3"
+        },
+        "date": "2014-06-18T00:00:00Z",
+        "is_oa": true,
+        "publication_type": "Journal Article",
+        "doi": "10.4204/EPTCS.170.4",
+        "unique_id": "2fdu4yxmlf",
+        "abstract": "A number of introductory textbooks for Haskell use calculations right from the start to give the reader insight into the evaluation of expressions and the behavior of functional programs. Many programming concepts that are important in the functional programming paradigm, such as recursion, higher-order functions, pattern-matching, and lazy evaluation, can be partially explained by showing a stepwise computation. A student gets a better understanding of these concepts if she performs these evaluation steps herself. Tool support for experimenting with the evaluation of Haskell expressions is currently lacking. In this paper we present a prototype implementation of a stepwise evaluator for Haskell expressions that supports multiple evaluation strategies, specifically targeted at education. Besides performing evaluation steps the tool also diagnoses steps that are submitted by a student, and provides feedback. Instructors can add or change function definitions without knowledge of the tool’s internal implementation. We discuss some preliminary results of a small survey about the tool.",
+        "authors": {
+          "total": 3,
+          "data": [
+            {
+              "display_name": "Tim Olmer",
+              "id": 2569555216,
+              "slug": "tim-olmer",
+              "unique_id": "3gm5f11vje",
+              "full_slug": "tim-olmer-3gm5f11vje",
+              "affiliation_full_slug": "open-university-in-the-netherlands-38kg808r"
+            },
+            {
+              "display_name": "Bastiaan Heeren",
+              "id": 1995464277,
+              "slug": "bastiaan-heeren",
+              "unique_id": "4r13tss9iv",
+              "full_slug": "bastiaan-heeren-4r13tss9iv"
+            },
+            {
+              "display_name": "Johan Jeuring",
+              "id": 2138360243,
+              "slug": "johan-jeuring",
+              "unique_id": "s1agogrww5",
+              "full_slug": "johan-jeuring-s1agogrww5",
+              "affiliation_full_slug": "utrecht-university-jkaqeuew"
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 2,
+          "data": [
+            {
+              "display_name": "Open University in the Netherlands",
+              "city": "Heerlen",
+              "region": null,
+              "country": "Netherlands",
+              "id": 7876267,
+              "slug": "open-university-in-the-netherlands",
+              "unique_id": "38kg808r",
+              "full_slug": "open-university-in-the-netherlands-38kg808r"
+            },
+            {
+              "display_name": "Utrecht University",
+              "city": "Utrecht",
+              "region": "Utrecht",
+              "country": "Netherlands",
+              "id": 193662353,
+              "slug": "utrecht-university",
+              "unique_id": "jkaqeuew",
+              "full_slug": "utrecht-university-jkaqeuew"
+            }
+          ]
+        },
+        "fulltext_url": "http://www.cs.uu.nl/research/techreps/repo/CS-2014/2014-021.pdf",
+        "fulltext_url_no_follow": true,
+        "paper_urls": {
+          "order": [
+            "Pdf",
+            "Html",
+            "Others"
+          ],
+          "data": {
+            "Pdf": [
+              "http://www.open.ou.nl/bhr/Hee.pdf"
+            ],
+            "Html": [
+              "https://arxiv.org/abs/1412.4879",
+              "http://dspace.library.uu.nl/handle/1874/306341"
+            ],
+            "Others": [
+              "https://dblp.uni-trier.de/db/series/eptcs/eptcs170.html#OlmerHJ14"
+            ]
+          },
+          "is_show": true
+        },
+        "metrics": {
+          "citations": {
+            "total": 1
+          }
+        },
+        "tldr": "In this article, the authors present a prototype implementation of a stepwise evaluator for Haskell expressions that supports multiple evaluation strategies, specifically targeted at education, and also diagnoses steps that are submitted by a student, and provides feedback.",
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 2949568645,
+        "title": "Evaluating Haskell expressions in a tutoring environment",
+        "is_archived": false,
+        "full_slug": "evaluating-haskell-expressions-in-a-tutoring-environment-4p1b3iw948",
+        "journal": {
+          "display_name": "arXiv: Computers and Society",
+          "official_page": null,
+          "issn": null,
+          "alias": null,
+          "id": 2596565815,
+          "slug": "arxiv-computers-and-society",
+          "unique_id": "1f8yywhn",
+          "full_slug": "arxiv-computers-and-society-1f8yywhn"
+        },
+        "conference_series": null,
+        "date": "2014-12-16T00:00:00Z",
+        "is_oa": true,
+        "publication_type": "Journal Article",
+        "doi": "10.4204/EPTCS.170.4",
+        "unique_id": "4p1b3iw948",
+        "abstract": "A number of introductory textbooks for Haskell use calculations right from the start to give the reader insight into the evaluation of expressions and the behavior of functional programs. Many programming concepts that are important in the functional programming paradigm, such as recursion, higher-order functions, pattern-matching, and lazy evaluation, can be partially explained by showing a stepwise computation. A student gets a better understanding of these concepts if she performs these evaluation steps herself. Tool support for experimenting with the evaluation of Haskell expressions is currently lacking. In this paper we present a prototype implementation of a stepwise evaluator for Haskell expressions that supports multiple evaluation strategies, specifically targeted at education. Besides performing evaluation steps the tool also diagnoses steps that are submitted by a student, and provides feedback. Instructors can add or change function definitions without knowledge of the tool's internal implementation. We discuss some preliminary results of a small survey about the tool.",
+        "authors": {
+          "total": 3,
+          "data": [
+            {
+              "display_name": "Tim Olmer",
+              "id": 2569555216,
+              "slug": "tim-olmer",
+              "unique_id": "3gm5f11vje",
+              "full_slug": "tim-olmer-3gm5f11vje",
+              "affiliation_full_slug": "open-university-3bbiwlzz"
+            },
+            {
+              "display_name": "Bastiaan Heeren",
+              "id": 1995464277,
+              "slug": "bastiaan-heeren",
+              "unique_id": "4r13tss9iv",
+              "full_slug": "bastiaan-heeren-4r13tss9iv",
+              "affiliation_full_slug": "open-university-3bbiwlzz"
+            },
+            {
+              "display_name": "Johan Jeuring",
+              "id": 2138360243,
+              "slug": "johan-jeuring",
+              "unique_id": "s1agogrww5",
+              "full_slug": "johan-jeuring-s1agogrww5",
+              "affiliation_full_slug": "utrecht-university-jkaqeuew"
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 2,
+          "data": [
+            {
+              "display_name": "Open University",
+              "city": "Milton Keynes",
+              "region": null,
+              "country": "United Kingdom",
+              "id": 204136569,
+              "slug": "open-university",
+              "unique_id": "3bbiwlzz",
+              "full_slug": "open-university-3bbiwlzz"
+            },
+            {
+              "display_name": "Utrecht University",
+              "city": "Utrecht",
+              "region": "Utrecht",
+              "country": "Netherlands",
+              "id": 193662353,
+              "slug": "utrecht-university",
+              "unique_id": "jkaqeuew",
+              "full_slug": "utrecht-university-jkaqeuew"
+            }
+          ]
+        },
+        "fulltext_url": "https://arxiv.org/pdf/1412.4879.pdf",
+        "fulltext_url_no_follow": true,
+        "paper_urls": {
+          "order": [
+            "Html"
+          ],
+          "data": {
+            "Html": [
+              "https://arxiv.org/abs/1412.4879"
+            ]
+          },
+          "is_show": true
+        },
+        "metrics": {
+          "citations": {
+            "total": 1
+          }
+        },
+        "tldr": "This paper presents a prototype implementation of a stepwise evaluator for Haskell expressions that supports multiple evaluation strategies, specifically targeted at education, and discusses some preliminary results of a small survey about the tool.",
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 4064567574,
+        "title": "Automated Grading and Feedback Tools for Programming Education: A Systematic Review.",
+        "is_archived": false,
+        "full_slug": "automated-grading-and-feedback-tools-for-programming-6lebpifm4xzs",
+        "journal": null,
+        "conference_series": null,
+        "date": null,
+        "is_oa": null,
+        "publication_type": null,
+        "doi": "10.1145/3636515",
+        "unique_id": "6lebpifm4xzs",
+        "abstract": "We conducted a systematic literature review on automated grading and feedback tools for programming education. We analysed 121 research papers from 2017 to 2021 inclusive and categorised them based on skills assessed, approach, language paradigm, degree of automation, and evaluation techniques. Most papers assess the correctness of assignments in object-oriented languages. Typically, these tools use a dynamic technique, primarily unit testing, to provide grades and feedback to the students or static analysis techniques to compare a submission with a reference solution or with a set of correct student submissions. However, these techniques’ feedback is often limited to whether the unit tests have passed or failed, the expected and actual output, or how they differ from the reference solution. Furthermore, few tools assess the maintainability, readability, or documentation of the source code, with most using static analysis techniques, such as code quality metrics, in conjunction with grading correctness. Additionally, we found that most tools offered fully automated assessment to allow for near-instantaneous feedback and multiple resubmissions, which can increase student satisfaction and provide them with more opportunities to succeed. In terms of techniques used to evaluate the tools’ performance, most papers primarily use student surveys or compare the automatic assessment tools to grades or feedback provided by human graders. However, because the evaluation dataset is frequently unavailable, it is more difficult to reproduce results and compare tools to a collection of common assignments.",
+        "authors": {
+          "total": 4,
+          "data": [
+            {
+              "display_name": "Marcus Messer",
+              "full_slug": null
+            },
+            {
+              "display_name": "Neil C. C. Brown",
+              "full_slug": null
+            },
+            {
+              "display_name": "Michael Kolling",
+              "full_slug": null
+            },
+            {
+              "display_name": "Miaojing Shi",
+              "full_slug": null
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 0,
+          "data": []
+        },
+        "metrics": {
+          "citations": {
+            "total": null
+          }
+        },
+        "tldr": "This systematic review of 121 papers (2017-2021) on automated grading and feedback tools for programming education finds most tools assess correctness in object-oriented languages, with limited feedback on maintainability, readability, and documentation.",
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 3034086986,
+        "title": "Step Tutor: Supporting Students through Step-by-Step Example-Based Feedback",
+        "is_archived": false,
+        "full_slug": "step-tutor-supporting-students-through-step-by-step-example-uxhkp03o9z",
+        "journal": null,
+        "conference_series": {
+          "display_name": "Integrating Technology into Computer Science Education",
+          "id": 1167012292,
+          "slug": "integrating-technology-into-computer-science-education",
+          "unique_id": "27os7gei",
+          "full_slug": "integrating-technology-into-computer-science-education-27os7gei"
+        },
+        "date": "2020-06-15T00:00:00Z",
+        "is_oa": false,
+        "publication_type": "Proceedings Article",
+        "doi": "10.1145/3341525.3387411",
+        "unique_id": "uxhkp03o9z",
+        "abstract": "Students often get stuck when programming independently, and need help to progress. Existing, automated feedback can help students progress, but it is unclear whether it ultimately leads to learning. We present Step Tutor, which helps struggling students during programming by presenting them with relevant, step-by-step examples. The goal of Step Tutor is to help students progress, and engage them in comparison, reflection, and learning. When a student requests help, Step Tutor adaptively selects an example to demonstrate the next meaningful step in the solution. It engages the student in comparing \"before\" and \"after\" code snapshots, and their corresponding visual output, and guides them to reflect on the changes. Step Tutor is a novel form of help that combines effective aspects of existing support features, such as hints and Worked Examples, to help students both progress and learn. To understand how students use Step Tutor, we asked nine undergraduate students to complete two programming tasks, with its help, and interviewed them about their experience. We present our qualitative analysis of students' experience, which shows us why and how they seek help from Step Tutor, and Step Tutor's affordances. These initial results suggest that students perceived that Step Tutor accomplished its goals of helping them to progress and learn.",
+        "authors": {
+          "total": 6,
+          "data": [
+            {
+              "display_name": "Wengran Wang",
+              "id": 3009149275,
+              "slug": "wengran-wang",
+              "unique_id": "5bunmt3kko",
+              "full_slug": "wengran-wang-5bunmt3kko",
+              "affiliation_full_slug": "north-carolina-state-university-11nweljb"
+            },
+            {
+              "display_name": "Yudong Rao",
+              "id": 3033821781,
+              "slug": "yudong-rao",
+              "unique_id": "q4n6zj0q3b",
+              "full_slug": "yudong-rao-q4n6zj0q3b",
+              "affiliation_full_slug": "north-carolina-state-university-11nweljb"
+            },
+            {
+              "display_name": "Rui Zhi",
+              "id": 2597116744,
+              "slug": "rui-zhi",
+              "unique_id": "4kxaug0qkr",
+              "full_slug": "rui-zhi-4kxaug0qkr",
+              "affiliation_full_slug": "north-carolina-state-university-11nweljb"
+            },
+            {
+              "display_name": "Samiha Marwan",
+              "id": 2508702870,
+              "slug": "samiha-marwan",
+              "unique_id": "tipg7b51u9",
+              "full_slug": "samiha-marwan-tipg7b51u9",
+              "affiliation_full_slug": "north-carolina-state-university-11nweljb"
+            },
+            {
+              "display_name": "Ge Gao",
+              "id": 3033193994,
+              "slug": "ge-gao",
+              "unique_id": "3wfe6d328d",
+              "full_slug": "ge-gao-3wfe6d328d",
+              "affiliation_full_slug": "north-carolina-state-university-11nweljb"
+            },
+            {
+              "display_name": "Thomas W. Price",
+              "id": 2223192664,
+              "slug": "thomas-w-price",
+              "unique_id": "5fv9cxgc1q",
+              "full_slug": "thomas-w-price-5fv9cxgc1q",
+              "affiliation_full_slug": "north-carolina-state-university-11nweljb"
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 1,
+          "data": [
+            {
+              "display_name": "North Carolina State University",
+              "city": "Raleigh",
+              "region": "North Carolina",
+              "country": "United States",
+              "id": 137902535,
+              "slug": "north-carolina-state-university",
+              "unique_id": "11nweljb",
+              "full_slug": "north-carolina-state-university-11nweljb"
+            }
+          ]
+        },
+        "fulltext_url": null,
+        "fulltext_url_no_follow": true,
+        "paper_urls": {
+          "order": [
+            "Html"
+          ],
+          "data": {
+            "Html": [
+              "https://dblp.uni-trier.de/db/conf/iticse/iticse2020.html#WangRZMGP20"
+            ]
+          },
+          "is_show": true
+        },
+        "metrics": {
+          "citations": {
+            "total": 29
+          }
+        },
+        "tldr": "Step Tutor is a novel form of help that combines effective aspects of existing support features, such as hints and Worked Examples, to help students both progress and learn.",
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      },
+      {
+        "id": 4088029509,
+        "title": "E-Assessment Tools for Programming Languages: A Review",
+        "is_archived": false,
+        "full_slug": "e-assessment-tools-for-programming-languages-a-review-pxqsrcu6c7kd",
+        "journal": null,
+        "conference_series": null,
+        "date": "2024-06-06T00:00:00Z",
+        "is_oa": null,
+        "publication_type": "Repository",
+        "doi": "10.60692/s09sa-caa73",
+        "unique_id": "pxqsrcu6c7kd",
+        "abstract": "Continuous Evaluation and feedback not only helps in improving learning of a student, but also acts as a constant motivator to put in more efforts.But then, feedback and assessment are very difficult and time consuming in practice.Thus, automating the entire system of assessment, evaluation and feedback will be highly beneficial.But, building such tools for all courses is yet not feasible.However, e-assessment tools for programming courses in Computer Science discipline can be developed.In this paper, we review various grading techniques used by these tools to assess a student's programming assignment.Further, this paper discusses various types and features of tools according to which an appropriate tool should be selected.And, in the end, we will be highlighting the extent to which students and instructors are actually benefited by these tools. ",
+        "authors": {
+          "total": 2,
+          "data": [
+            {
+              "display_name": "Sandeep Gupta",
+              "full_slug": null
+            },
+            {
+              "display_name": "Anamika Gupta",
+              "full_slug": null
+            }
+          ]
+        },
+        "affiliations": {
+          "total": 0,
+          "data": []
+        },
+        "metrics": {
+          "citations": {
+            "total": null
+          }
+        },
+        "tldr": null,
+        "podcast": null,
+        "podcast_generation_allowed": true,
+        "entity_type": "PAPER"
+      }
+    ]
+  },
+  "isError": false
+}

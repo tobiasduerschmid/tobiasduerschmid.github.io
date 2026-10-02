@@ -1,0 +1,3 @@
+# Preserve this review's evidence despite the repository-wide notes/ rule.
+!notes/
+!notes/**

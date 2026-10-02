@@ -1,0 +1,1333 @@
+{
+  "request_url": "https://api.openalex.org/works/https://doi.org/10.1007/s40593-015-0080-x",
+  "retrieved": "2026-10-02",
+  "response": {
+    "id": "https://openalex.org/W2260250034",
+    "doi": "https://doi.org/10.1007/s40593-015-0080-x",
+    "title": "Ask-Elle: an Adaptable Programming Tutor for Haskell Giving Automated Feedback",
+    "display_name": "Ask-Elle: an Adaptable Programming Tutor for Haskell Giving Automated Feedback",
+    "publication_year": 2016,
+    "publication_date": "2016-02-05",
+    "ids": {
+      "openalex": "https://openalex.org/W2260250034",
+      "doi": "https://doi.org/10.1007/s40593-015-0080-x",
+      "mag": "2260250034"
+    },
+    "language": "en",
+    "primary_location": {
+      "id": "doi:10.1007/s40593-015-0080-x",
+      "is_oa": true,
+      "landing_page_url": "https://doi.org/10.1007/s40593-015-0080-x",
+      "pdf_url": "https://link.springer.com/content/pdf/10.1007/s40593-015-0080-x.pdf",
+      "source": {
+        "id": "https://openalex.org/S171267539",
+        "display_name": "International Journal of Artificial Intelligence in Education",
+        "issn_l": "1560-4292",
+        "issn": [
+          "1560-4292",
+          "1560-4306"
+        ],
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": true,
+        "listed_in": [
+          "cwts-core",
+          "erih-plus",
+          "jufo-1",
+          "norway-1"
+        ],
+        "host_organization": "https://openalex.org/P4310319900",
+        "host_organization_name": "Springer Science+Business Media",
+        "host_organization_lineage": [
+          "https://openalex.org/P4310319900",
+          "https://openalex.org/P4310319965"
+        ],
+        "host_organization_lineage_names": [
+          "Springer Science+Business Media",
+          "Springer Nature"
+        ],
+        "type": "journal"
+      },
+      "license": "cc-by-nc-nd",
+      "license_id": "https://openalex.org/licenses/cc-by-nc-nd",
+      "version": "publishedVersion",
+      "is_accepted": true,
+      "is_published": true,
+      "raw_source_name": "International Journal of Artificial Intelligence in Education",
+      "raw_type": "journal-article"
+    },
+    "type": "article",
+    "indexed_in": [
+      "crossref"
+    ],
+    "open_access": {
+      "is_oa": true,
+      "oa_status": "hybrid",
+      "oa_url": "https://link.springer.com/content/pdf/10.1007/s40593-015-0080-x.pdf",
+      "any_repository_has_fulltext": true
+    },
+    "authorships": [
+      {
+        "author_position": "first",
+        "author": {
+          "id": "https://openalex.org/A5031504715",
+          "display_name": "Alex Gerdes",
+          "orcid": "https://orcid.org/0000-0002-7445-211X",
+          "observed_orcids": [
+            "https://orcid.org/0000-0002-7445-211X"
+          ]
+        },
+        "institutions": [
+          {
+            "id": "https://openalex.org/I66862912",
+            "display_name": "Chalmers University of Technology",
+            "ror": "https://ror.org/040wg7k59",
+            "country_code": "SE",
+            "type": "education",
+            "lineage": [
+              "https://openalex.org/I66862912"
+            ]
+          }
+        ],
+        "countries": [
+          "SE"
+        ],
+        "is_corresponding": true,
+        "raw_author_name": "Alex Gerdes",
+        "raw_affiliation_strings": [
+          "Chalmers University of Technology, Gothenburg, Sweden"
+        ],
+        "raw_orcid": null,
+        "affiliations": [
+          {
+            "raw_affiliation_string": "Chalmers University of Technology, Gothenburg, Sweden",
+            "institution_ids": [
+              "https://openalex.org/I66862912"
+            ]
+          }
+        ]
+      },
+      {
+        "author_position": "middle",
+        "author": {
+          "id": "https://openalex.org/A5040746546",
+          "display_name": "Bastiaan Heeren",
+          "orcid": "https://orcid.org/0000-0001-6647-6130",
+          "observed_orcids": [
+            "https://orcid.org/0000-0001-6647-6130"
+          ]
+        },
+        "institutions": [
+          {
+            "id": "https://openalex.org/I7876267",
+            "display_name": "Open University of the Netherlands",
+            "ror": "https://ror.org/018dfmf50",
+            "country_code": "NL",
+            "type": "education",
+            "lineage": [
+              "https://openalex.org/I7876267"
+            ]
+          }
+        ],
+        "countries": [
+          "NL"
+        ],
+        "is_corresponding": false,
+        "raw_author_name": "Bastiaan Heeren",
+        "raw_affiliation_strings": [
+          "Open Universiteit Nederland, Heerlen, Netherlands"
+        ],
+        "raw_orcid": null,
+        "affiliations": [
+          {
+            "raw_affiliation_string": "Open Universiteit Nederland, Heerlen, Netherlands",
+            "institution_ids": [
+              "https://openalex.org/I7876267"
+            ]
+          }
+        ]
+      },
+      {
+        "author_position": "middle",
+        "author": {
+          "id": "https://openalex.org/A5011892251",
+          "display_name": "Johan T. Jeuring",
+          "orcid": "https://orcid.org/0000-0001-5645-7681",
+          "observed_orcids": [
+            "https://orcid.org/0000-0001-5645-7681"
+          ]
+        },
+        "institutions": [
+          {
+            "id": "https://openalex.org/I193662353",
+            "display_name": "Utrecht University",
+            "ror": "https://ror.org/04pp8hn57",
+            "country_code": "NL",
+            "type": "education",
+            "lineage": [
+              "https://openalex.org/I193662353"
+            ]
+          },
+          {
+            "id": "https://openalex.org/I7876267",
+            "display_name": "Open University of the Netherlands",
+            "ror": "https://ror.org/018dfmf50",
+            "country_code": "NL",
+            "type": "education",
+            "lineage": [
+              "https://openalex.org/I7876267"
+            ]
+          }
+        ],
+        "countries": [
+          "NL"
+        ],
+        "is_corresponding": false,
+        "raw_author_name": "Johan Jeuring",
+        "raw_affiliation_strings": [
+          "Utrecht University and Open Universiteit Nederland, Utrecht, Netherlands"
+        ],
+        "raw_orcid": null,
+        "affiliations": [
+          {
+            "raw_affiliation_string": "Utrecht University and Open Universiteit Nederland, Utrecht, Netherlands",
+            "institution_ids": [
+              "https://openalex.org/I193662353",
+              "https://openalex.org/I7876267"
+            ]
+          }
+        ]
+      },
+      {
+        "author_position": "last",
+        "author": {
+          "id": "https://openalex.org/A5062351836",
+          "display_name": "L. Thomas van Binsbergen",
+          "orcid": "https://orcid.org/0000-0001-8113-2221",
+          "observed_orcids": [
+            "https://orcid.org/0000-0001-8113-2221"
+          ]
+        },
+        "institutions": [
+          {
+            "id": "https://openalex.org/I184558857",
+            "display_name": "Royal Holloway University of London",
+            "ror": "https://ror.org/04g2vpn86",
+            "country_code": "GB",
+            "type": "education",
+            "lineage": [
+              "https://openalex.org/I124357947",
+              "https://openalex.org/I184558857"
+            ]
+          }
+        ],
+        "countries": [
+          "GB"
+        ],
+        "is_corresponding": false,
+        "raw_author_name": "L. Thomas van Binsbergen",
+        "raw_affiliation_strings": [
+          "Royal Holloway, University of London, Egham, UK"
+        ],
+        "raw_orcid": null,
+        "affiliations": [
+          {
+            "raw_affiliation_string": "Royal Holloway, University of London, Egham, UK",
+            "institution_ids": [
+              "https://openalex.org/I184558857"
+            ]
+          }
+        ]
+      }
+    ],
+    "institutions": [],
+    "countries_distinct_count": 3,
+    "institutions_distinct_count": 4,
+    "corresponding_author_ids": [
+      "https://openalex.org/A5031504715"
+    ],
+    "corresponding_institution_ids": [
+      "https://openalex.org/I66862912"
+    ],
+    "apc_list": {
+      "value": 3190,
+      "currency": "USD",
+      "value_usd": 3190
+    },
+    "apc_paid": {
+      "value": 3190,
+      "currency": "USD",
+      "value_usd": 3190
+    },
+    "fwci": 35.7106,
+    "has_fulltext": true,
+    "cited_by_count": 98,
+    "citation_normalized_percentile": {
+      "value": 0.99584264,
+      "is_in_top_1_percent": true,
+      "is_in_top_10_percent": true
+    },
+    "cited_by_percentile_year": {
+      "min": 96,
+      "max": 100
+    },
+    "biblio": {
+      "volume": "27",
+      "issue": "1",
+      "first_page": "65",
+      "last_page": "100"
+    },
+    "is_retracted": false,
+    "is_paratext": false,
+    "is_xpac": false,
+    "primary_topic": {
+      "id": "https://openalex.org/T10260",
+      "display_name": "Software Engineering Research",
+      "score": 0.9965000152587891,
+      "subfield": {
+        "id": "https://openalex.org/subfields/1710",
+        "display_name": "Information Systems"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/17",
+        "display_name": "Computer Science"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/3",
+        "display_name": "Physical Sciences"
+      }
+    },
+    "topics": [
+      {
+        "id": "https://openalex.org/T10260",
+        "display_name": "Software Engineering Research",
+        "score": 0.9965000152587891,
+        "subfield": {
+          "id": "https://openalex.org/subfields/1710",
+          "display_name": "Information Systems"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/17",
+          "display_name": "Computer Science"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      {
+        "id": "https://openalex.org/T10126",
+        "display_name": "Logic, programming, and type systems",
+        "score": 0.9957000017166138,
+        "subfield": {
+          "id": "https://openalex.org/subfields/1702",
+          "display_name": "Artificial Intelligence"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/17",
+          "display_name": "Computer Science"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      {
+        "id": "https://openalex.org/T10533",
+        "display_name": "Teaching and Learning Programming",
+        "score": 0.994700014591217,
+        "subfield": {
+          "id": "https://openalex.org/subfields/1706",
+          "display_name": "Computer Science Applications"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/17",
+          "display_name": "Computer Science"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      }
+    ],
+    "keywords": [
+      {
+        "id": "https://openalex.org/keywords/haskell",
+        "display_name": "Haskell",
+        "score": 0.984000027179718
+      },
+      {
+        "id": "https://openalex.org/keywords/functional-programming-education",
+        "display_name": "functional programming education",
+        "score": 0.8859999775886536
+      },
+      {
+        "id": "https://openalex.org/keywords/automatic-feedback",
+        "display_name": "automated feedback",
+        "score": 0.9850000143051147
+      },
+      {
+        "id": "https://openalex.org/keywords/model-tracing",
+        "display_name": "model tracing",
+        "score": 0.5429999828338623
+      },
+      {
+        "id": "https://openalex.org/keywords/property-based-testing",
+        "display_name": "property-based testing",
+        "score": 0.9539999961853027
+      },
+      {
+        "id": "https://openalex.org/keywords/hints",
+        "display_name": "hints",
+        "score": 0.3160000145435333
+      },
+      {
+        "id": "https://openalex.org/keywords/strongly-typed-languages",
+        "display_name": "strongly typed languages",
+        "score": 0.6240000128746033
+      },
+      {
+        "id": "https://openalex.org/keywords/higher-order-programming",
+        "display_name": "higher-order programming",
+        "score": 0.5709999799728394
+      }
+    ],
+    "concepts": [
+      {
+        "id": "https://openalex.org/C2780624054",
+        "wikidata": "https://www.wikidata.org/wiki/Q34010",
+        "display_name": "Haskell",
+        "level": 3,
+        "score": 0.9557127952575684
+      },
+      {
+        "id": "https://openalex.org/C41008148",
+        "wikidata": "https://www.wikidata.org/wiki/Q21198",
+        "display_name": "Computer science",
+        "level": 0,
+        "score": 0.771628737449646
+      },
+      {
+        "id": "https://openalex.org/C2778371403",
+        "wikidata": "https://www.wikidata.org/wiki/Q7672049",
+        "display_name": "TUTOR",
+        "level": 2,
+        "score": 0.7218203544616699
+      },
+      {
+        "id": "https://openalex.org/C42383842",
+        "wikidata": "https://www.wikidata.org/wiki/Q193076",
+        "display_name": "Functional programming",
+        "level": 2,
+        "score": 0.6383400559425354
+      },
+      {
+        "id": "https://openalex.org/C55439883",
+        "wikidata": "https://www.wikidata.org/wiki/Q360812",
+        "display_name": "Correctness",
+        "level": 2,
+        "score": 0.6042260527610779
+      },
+      {
+        "id": "https://openalex.org/C199360897",
+        "wikidata": "https://www.wikidata.org/wiki/Q9143",
+        "display_name": "Programming language",
+        "level": 1,
+        "score": 0.5700833797454834
+      },
+      {
+        "id": "https://openalex.org/C90329073",
+        "wikidata": "https://www.wikidata.org/wiki/Q914232",
+        "display_name": "Ask price",
+        "level": 2,
+        "score": 0.5231379270553589
+      },
+      {
+        "id": "https://openalex.org/C2780451532",
+        "wikidata": "https://www.wikidata.org/wiki/Q759676",
+        "display_name": "Task (project management)",
+        "level": 2,
+        "score": 0.48008638620376587
+      },
+      {
+        "id": "https://openalex.org/C2780598303",
+        "wikidata": "https://www.wikidata.org/wiki/Q65921492",
+        "display_name": "Flexibility (engineering)",
+        "level": 2,
+        "score": 0.47678235173225403
+      },
+      {
+        "id": "https://openalex.org/C154945302",
+        "wikidata": "https://www.wikidata.org/wiki/Q11660",
+        "display_name": "Artificial intelligence",
+        "level": 1,
+        "score": 0.3997423052787781
+      },
+      {
+        "id": "https://openalex.org/C107457646",
+        "wikidata": "https://www.wikidata.org/wiki/Q207434",
+        "display_name": "Human\u2013computer interaction",
+        "level": 1,
+        "score": 0.39025866985321045
+      },
+      {
+        "id": "https://openalex.org/C33923547",
+        "wikidata": "https://www.wikidata.org/wiki/Q395",
+        "display_name": "Mathematics",
+        "level": 0,
+        "score": 0.07841217517852783
+      },
+      {
+        "id": "https://openalex.org/C187736073",
+        "wikidata": "https://www.wikidata.org/wiki/Q2920921",
+        "display_name": "Management",
+        "level": 1,
+        "score": 0.0
+      },
+      {
+        "id": "https://openalex.org/C136264566",
+        "wikidata": "https://www.wikidata.org/wiki/Q159810",
+        "display_name": "Economy",
+        "level": 1,
+        "score": 0.0
+      },
+      {
+        "id": "https://openalex.org/C162324750",
+        "wikidata": "https://www.wikidata.org/wiki/Q8134",
+        "display_name": "Economics",
+        "level": 0,
+        "score": 0.0
+      },
+      {
+        "id": "https://openalex.org/C105795698",
+        "wikidata": "https://www.wikidata.org/wiki/Q12483",
+        "display_name": "Statistics",
+        "level": 1,
+        "score": 0.0
+      }
+    ],
+    "mesh": [],
+    "locations_count": 9,
+    "locations": [
+      {
+        "id": "doi:10.1007/s40593-015-0080-x",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.1007/s40593-015-0080-x",
+        "pdf_url": "https://link.springer.com/content/pdf/10.1007/s40593-015-0080-x.pdf",
+        "source": {
+          "id": "https://openalex.org/S171267539",
+          "display_name": "International Journal of Artificial Intelligence in Education",
+          "issn_l": "1560-4292",
+          "issn": [
+            "1560-4292",
+            "1560-4306"
+          ],
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": true,
+          "listed_in": [
+            "cwts-core",
+            "erih-plus",
+            "jufo-1",
+            "norway-1"
+          ],
+          "host_organization": "https://openalex.org/P4310319900",
+          "host_organization_name": "Springer Science+Business Media",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310319900",
+            "https://openalex.org/P4310319965"
+          ],
+          "host_organization_lineage_names": [
+            "Springer Science+Business Media",
+            "Springer Nature"
+          ],
+          "type": "journal"
+        },
+        "license": "cc-by-nc-nd",
+        "license_id": "https://openalex.org/licenses/cc-by-nc-nd",
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "International Journal of Artificial Intelligence in Education",
+        "raw_type": "journal-article"
+      },
+      {
+        "id": "pmh:oai:research.ou.nl:publications/19c1eaa3-ec0d-435c-a5d6-aacc5ff46b88",
+        "is_oa": false,
+        "landing_page_url": "https://research.ou.nl/en/publications/19c1eaa3-ec0d-435c-a5d6-aacc5ff46b88",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306401002",
+          "display_name": "DSpace (Open University in the Netherlands)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I7876267",
+          "host_organization_name": "Open University of the Netherlands",
+          "host_organization_lineage": [
+            "https://openalex.org/I7876267"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Gerdes, A, Heeren, B, Jeuring, J & van Binsbergen, L T 2017, 'Ask-Elle : an Adaptable Programming Tutor for Haskell Giving Automated Feedback', International Journal of Artificial Intelligence in Education, vol. 27, no. 1, pp. 65-100. https://doi.org/10.1007/s40593-015-0080-x",
+        "raw_type": "info:eu-repo/semantics/article"
+      },
+      {
+        "id": "pmh:oai:dspace.library.uu.nl:1874/325989",
+        "is_oa": true,
+        "landing_page_url": "https://dspace.library.uu.nl/handle/1874/325989",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306401649",
+          "display_name": "Utrecht University Repository (Utrecht University)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I193662353",
+          "host_organization_name": "Utrecht University",
+          "host_organization_lineage": [
+            "https://openalex.org/I193662353"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": "other-oa",
+        "license_id": "https://openalex.org/licenses/other-oa",
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": null,
+        "raw_type": "Report"
+      },
+      {
+        "id": "pmh:oai:dspace.library.uu.nl:1874/347913",
+        "is_oa": true,
+        "landing_page_url": "https://dspace.library.uu.nl/handle/1874/347913",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306401649",
+          "display_name": "Utrecht University Repository (Utrecht University)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I193662353",
+          "host_organization_name": "Utrecht University",
+          "host_organization_lineage": [
+            "https://openalex.org/I193662353"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": "other-oa",
+        "license_id": "https://openalex.org/licenses/other-oa",
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": null,
+        "raw_type": "Article"
+      },
+      {
+        "id": "pmh:oai:research.chalmers.se:231779",
+        "is_oa": false,
+        "landing_page_url": "https://research.chalmers.se/en/publication/231779",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306402469",
+          "display_name": "Chalmers Research (Chalmers University of Technology)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I66862912",
+          "host_organization_name": "Chalmers University of Technology",
+          "host_organization_lineage": [
+            "https://openalex.org/I66862912"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": "",
+        "raw_type": null
+      },
+      {
+        "id": "pmh:ou:oai:research.ou.nl:publications/19c1eaa3-ec0d-435c-a5d6-aacc5ff46b88",
+        "is_oa": false,
+        "landing_page_url": "https://research.ou.nl/en/publications/19c1eaa3-ec0d-435c-a5d6-aacc5ff46b88",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306401002",
+          "display_name": "DSpace (Open University in the Netherlands)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I7876267",
+          "host_organization_name": "Open University of the Netherlands",
+          "host_organization_lineage": [
+            "https://openalex.org/I7876267"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": "International Journal of Artificial Intelligence in Education, 27(1), 65 - 100. Springer",
+        "raw_type": "info:eu-repo/semantics/article"
+      },
+      {
+        "id": "pmh:uu:oai:dspace.library.uu.nl:1874/325989",
+        "is_oa": true,
+        "landing_page_url": "https://dspace.library.uu.nl/handle/1874/325989",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306401649",
+          "display_name": "Utrecht University Repository (Utrecht University)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I193662353",
+          "host_organization_name": "Utrecht University",
+          "host_organization_lineage": [
+            "https://openalex.org/I193662353"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": "other-oa",
+        "license_id": "https://openalex.org/licenses/other-oa",
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": "Technical Report Series. UU BETA ICS Departement Informatica",
+        "raw_type": "info:eu-repo/semantics/other"
+      },
+      {
+        "id": "pmh:uu:oai:dspace.library.uu.nl:1874/347913",
+        "is_oa": false,
+        "landing_page_url": "https://dspace.library.uu.nl/handle/1874/347913",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306401649",
+          "display_name": "Utrecht University Repository (Utrecht University)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "listed_in": [],
+          "host_organization": "https://openalex.org/I193662353",
+          "host_organization_name": "Utrecht University",
+          "host_organization_lineage": [
+            "https://openalex.org/I193662353"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": "International Journal of Artificial Intelligence in Education, 27(1), 65. IOS Press",
+        "raw_type": "info:eu-repo/semantics/article"
+      },
+      {
+        "id": "mag:2260250034",
+        "is_oa": false,
+        "landing_page_url": "https://dspace.library.uu.nl/bitstream/1874/325989/1/ask.pdf",
+        "pdf_url": null,
+        "source": null,
+        "license": null,
+        "license_id": null,
+        "version": null,
+        "is_accepted": false,
+        "is_published": null,
+        "raw_source_name": "UU BETA ICS Departement Informatica eBooks",
+        "raw_type": null
+      }
+    ],
+    "best_oa_location": {
+      "id": "doi:10.1007/s40593-015-0080-x",
+      "is_oa": true,
+      "landing_page_url": "https://doi.org/10.1007/s40593-015-0080-x",
+      "pdf_url": "https://link.springer.com/content/pdf/10.1007/s40593-015-0080-x.pdf",
+      "source": {
+        "id": "https://openalex.org/S171267539",
+        "display_name": "International Journal of Artificial Intelligence in Education",
+        "issn_l": "1560-4292",
+        "issn": [
+          "1560-4292",
+          "1560-4306"
+        ],
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": true,
+        "listed_in": [
+          "cwts-core",
+          "erih-plus",
+          "jufo-1",
+          "norway-1"
+        ],
+        "host_organization": "https://openalex.org/P4310319900",
+        "host_organization_name": "Springer Science+Business Media",
+        "host_organization_lineage": [
+          "https://openalex.org/P4310319900",
+          "https://openalex.org/P4310319965"
+        ],
+        "host_organization_lineage_names": [
+          "Springer Science+Business Media",
+          "Springer Nature"
+        ],
+        "type": "journal"
+      },
+      "license": "cc-by-nc-nd",
+      "license_id": "https://openalex.org/licenses/cc-by-nc-nd",
+      "version": "publishedVersion",
+      "is_accepted": true,
+      "is_published": true,
+      "raw_source_name": "International Journal of Artificial Intelligence in Education",
+      "raw_type": "journal-article"
+    },
+    "sustainable_development_goals": [
+      {
+        "display_name": "Quality Education",
+        "score": 0.800000011920929,
+        "id": "https://metadata.un.org/sdg/4"
+      }
+    ],
+    "x_sdgs": [],
+    "study_designs": [],
+    "awards": [],
+    "funders": [],
+    "has_content": {
+      "pdf": true,
+      "grobid_xml": true
+    },
+    "content_urls": {
+      "pdf": "https://content.openalex.org/works/W2260250034.pdf",
+      "grobid_xml": "https://content.openalex.org/works/W2260250034.grobid-xml"
+    },
+    "referenced_works_count": 54,
+    "referenced_works": [
+      "https://openalex.org/W164716849",
+      "https://openalex.org/W173029385",
+      "https://openalex.org/W177779199",
+      "https://openalex.org/W207841007",
+      "https://openalex.org/W832120473",
+      "https://openalex.org/W1535989349",
+      "https://openalex.org/W1553992341",
+      "https://openalex.org/W1581084714",
+      "https://openalex.org/W1644672739",
+      "https://openalex.org/W1963817399",
+      "https://openalex.org/W1994736394",
+      "https://openalex.org/W1998875295",
+      "https://openalex.org/W2004496903",
+      "https://openalex.org/W2007798926",
+      "https://openalex.org/W2009103381",
+      "https://openalex.org/W2011607672",
+      "https://openalex.org/W2014127188",
+      "https://openalex.org/W2023427265",
+      "https://openalex.org/W2026060067",
+      "https://openalex.org/W2035392114",
+      "https://openalex.org/W2039113359",
+      "https://openalex.org/W2051257341",
+      "https://openalex.org/W2051339053",
+      "https://openalex.org/W2051379322",
+      "https://openalex.org/W2052363833",
+      "https://openalex.org/W2055227903",
+      "https://openalex.org/W2056693265",
+      "https://openalex.org/W2066312808",
+      "https://openalex.org/W2070405152",
+      "https://openalex.org/W2076039366",
+      "https://openalex.org/W2089172953",
+      "https://openalex.org/W2092909411",
+      "https://openalex.org/W2098614591",
+      "https://openalex.org/W2108323846",
+      "https://openalex.org/W2128065396",
+      "https://openalex.org/W2128407432",
+      "https://openalex.org/W2128886782",
+      "https://openalex.org/W2137390126",
+      "https://openalex.org/W2163640453",
+      "https://openalex.org/W2398506085",
+      "https://openalex.org/W2405971678",
+      "https://openalex.org/W4240127846",
+      "https://openalex.org/W6632344291",
+      "https://openalex.org/W6636105580",
+      "https://openalex.org/W6637745957",
+      "https://openalex.org/W6644479547",
+      "https://openalex.org/W6650399723",
+      "https://openalex.org/W6650565001",
+      "https://openalex.org/W6674689637",
+      "https://openalex.org/W6694706704",
+      "https://openalex.org/W6767099730",
+      "https://openalex.org/W6903420846",
+      "https://openalex.org/W7006241456",
+      "https://openalex.org/W7042839929"
+    ],
+    "related_works": [
+      "https://openalex.org/W3034067725",
+      "https://openalex.org/W2770088778",
+      "https://openalex.org/W2395564637",
+      "https://openalex.org/W1530680153",
+      "https://openalex.org/W2109352777",
+      "https://openalex.org/W1990390207",
+      "https://openalex.org/W2303032977",
+      "https://openalex.org/W16483339",
+      "https://openalex.org/W2705594858",
+      "https://openalex.org/W2016956335",
+      "https://openalex.org/W2181924625",
+      "https://openalex.org/W2147621305",
+      "https://openalex.org/W2338453076",
+      "https://openalex.org/W3105322051",
+      "https://openalex.org/W3162978696",
+      "https://openalex.org/W1556466138",
+      "https://openalex.org/W2157678478",
+      "https://openalex.org/W2066031375",
+      "https://openalex.org/W1531450877",
+      "https://openalex.org/W960428438"
+    ],
+    "abstract_inverted_index": {
+      "Ask-Elle": [
+        0,
+        37
+      ],
+      "is": [
+        1,
+        75,
+        89,
+        126
+      ],
+      "a": [
+        2,
+        40,
+        54,
+        93,
+        108
+      ],
+      "tutor": [
+        3,
+        94
+      ],
+      "for": [
+        4,
+        43
+      ],
+      "learning": [
+        5
+      ],
+      "the": [
+        6,
+        15,
+        23,
+        44,
+        70,
+        90,
+        98,
+        140
+      ],
+      "higher-order,": [
+        7
+      ],
+      "strongly-typed": [
+        8
+      ],
+      "functional": [
+        9
+      ],
+      "programming": [
+        10,
+        109,
+        118,
+        159
+      ],
+      "language": [
+        11
+      ],
+      "Haskell.": [
+        12
+      ],
+      "It": [
+        13
+      ],
+      "supports": [
+        14
+      ],
+      "stepwise": [
+        16
+      ],
+      "development": [
+        17,
+        100
+      ],
+      "of": [
+        18,
+        25,
+        72,
+        86,
+        92,
+        101,
+        130,
+        142
+      ],
+      "Haskell": [
+        19
+      ],
+      "programs": [
+        20
+      ],
+      "by": [
+        21,
+        29,
+        38,
+        128
+      ],
+      "verifying": [
+        22
+      ],
+      "correctness": [
+        24
+      ],
+      "incomplete": [
+        26
+      ],
+      "programs,": [
+        27
+      ],
+      "and": [
+        28,
+        51,
+        60,
+        69,
+        115,
+        121,
+        134,
+        154
+      ],
+      "providing": [
+        30,
+        39
+      ],
+      "hints.": [
+        31
+      ],
+      "Programming": [
+        32
+      ],
+      "exercises": [
+        33
+      ],
+      "are": [
+        34
+      ],
+      "added": [
+        35
+      ],
+      "to": [
+        36,
+        107,
+        158
+      ],
+      "task": [
+        41
+      ],
+      "description": [
+        42
+      ],
+      "exercise,": [
+        45
+      ],
+      "one": [
+        46
+      ],
+      "or": [
+        47
+      ],
+      "more": [
+        48
+      ],
+      "model": [
+        49,
+        61,
+        132
+      ],
+      "solutions,": [
+        50,
+        120
+      ],
+      "properties": [
+        52,
+        59
+      ],
+      "that": [
+        53,
+        74,
+        95
+      ],
+      "solution": [
+        55
+      ],
+      "should": [
+        56
+      ],
+      "satisfy.": [
+        57
+      ],
+      "The": [
+        58,
+        83,
+        123
+      ],
+      "solutions": [
+        62,
+        79,
+        103,
+        157
+      ],
+      "can": [
+        63,
+        80
+      ],
+      "be": [
+        64,
+        81
+      ],
+      "annotated": [
+        65
+      ],
+      "with": [
+        66,
+        111
+      ],
+      "feedback": [
+        67,
+        114
+      ],
+      "messages,": [
+        68
+      ],
+      "amount": [
+        71
+      ],
+      "flexibility": [
+        73
+      ],
+      "allowed": [
+        76
+      ],
+      "in": [
+        77,
+        104,
+        145,
+        148
+      ],
+      "student": [
+        78,
+        156
+      ],
+      "adjusted.": [
+        82
+      ],
+      "main": [
+        84,
+        124
+      ],
+      "contribution": [
+        85
+      ],
+      "our": [
+        87,
+        143
+      ],
+      "work": [
+        88
+      ],
+      "design": [
+        91
+      ],
+      "combines": [
+        96
+      ],
+      "(1)": [
+        97
+      ],
+      "incremental": [
+        99
+      ],
+      "different": [
+        102
+      ],
+      "various": [
+        105
+      ],
+      "forms": [
+        106
+      ],
+      "exercise": [
+        110
+      ],
+      "(2)": [
+        112
+      ],
+      "automated": [
+        113
+      ],
+      "(3)": [
+        116
+      ],
+      "teacher-specified": [
+        117
+      ],
+      "exercises,": [
+        119,
+        160
+      ],
+      "properties.": [
+        122
+      ],
+      "functionality": [
+        125
+      ],
+      "obtained": [
+        127
+      ],
+      "means": [
+        129
+      ],
+      "strategy-based": [
+        131
+      ],
+      "tracing": [
+        133
+      ],
+      "property-based": [
+        135
+      ],
+      "testing.": [
+        136
+      ],
+      "We": [
+        137
+      ],
+      "have": [
+        138
+      ],
+      "tested": [
+        139
+      ],
+      "feasibility": [
+        141
+      ],
+      "approach": [
+        144
+      ],
+      "several": [
+        146
+      ],
+      "experiments,": [
+        147
+      ],
+      "which": [
+        149
+      ],
+      "we": [
+        150
+      ],
+      "analyse": [
+        151
+      ],
+      "both": [
+        152
+      ],
+      "intermediate": [
+        153
+      ],
+      "final": [
+        155
+      ],
+      "amongst": [
+        161
+      ],
+      "others.": [
+        162
+      ]
+    },
+    "counts_by_year": [
+      {
+        "year": 2026,
+        "cited_by_count": 2
+      },
+      {
+        "year": 2025,
+        "cited_by_count": 7
+      },
+      {
+        "year": 2024,
+        "cited_by_count": 9
+      },
+      {
+        "year": 2023,
+        "cited_by_count": 8
+      },
+      {
+        "year": 2022,
+        "cited_by_count": 10
+      },
+      {
+        "year": 2021,
+        "cited_by_count": 11
+      },
+      {
+        "year": 2020,
+        "cited_by_count": 12
+      },
+      {
+        "year": 2019,
+        "cited_by_count": 17
+      },
+      {
+        "year": 2018,
+        "cited_by_count": 11
+      },
+      {
+        "year": 2017,
+        "cited_by_count": 8
+      },
+      {
+        "year": 2016,
+        "cited_by_count": 3
+      }
+    ],
+    "updated_date": "2026-09-29T14:09:16.559479",
+    "created_date": "2025-10-10T00:00:00"
+  }
+}

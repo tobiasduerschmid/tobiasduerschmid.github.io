@@ -1092,6 +1092,12 @@ steps:
           #   assert "expected" in output`
           # cpp: complete C++17 harness with its own main; include current
           #   learner files using /tutorial as the include root. Exit 0 passes.
+        signature:                           # Haskell only; optional explicit
+          name: canAffordPizza                # top-level declaration in run_file.
+          type: "Double -> Double -> Bool"    # Compiler-resolved exact monomorphic type.
+                                             # Keep command as a Boolean check;
+                                             # use "True" for declaration/type checking
+                                             # with successful compilation.
         assertions:                          # uml-editor backend only:
                                              # structural checks against the
                                              # current ArchUML source. Each
@@ -1935,8 +1941,9 @@ section-collapse, and popout storage families; there are no new storage keys.
 
 #### Haskell alias-cycle preflight
 
-Haskell always loads `js/haskell/cycle-analysis.js` independently of the
-debugger and Python linter flags. The pure, bounded analyzer recognizes named
+Haskell always loads `js/haskell/syntax.js` followed by
+`js/haskell/cycle-analysis.js`, independently of the debugger and Python
+linter flags. The pure, bounded analyzer recognizes named
 value aliases in top-level, `let`, and `where` groups with lexical binding
 identity. Self/mutual cycles get source-location diagnostics; productive
 constructor recursion and function recursion are not alias cycles.
@@ -2080,6 +2087,36 @@ under the same prefix family as other tutorial state so the global
   `assert` statements. A workspace-sync failure must render an indeterminate
   result and settle the active test transaction; never leave the test spinner
   or `_testRunInFlight` waiting for a Haskell request that was never sent.
+  An optional `signature: {name, type}` requires an explicit top-level
+  declaration in that same `run_file` and the exact expected monomorphic type.
+  The host passes this descriptor to `runTest`; the worker owns both checks
+  against the synced source. `js/haskell/signature-checks.js` locates the named
+  declaration with the shared tokenizer/layout rules; an inferred type,
+  expression annotation, local declaration, comment, or string does not count.
+  It does not parse or compare types. MicroHs resolves the actual declaration,
+  including local, parameterized and imported synonyms, shared-name signatures,
+  formatting, comments and redundant parentheses.
+  The worker creates a collision-free temporary module beside the learner's
+  module. It imports the learner qualified and compares `Data.Typeable.typeOf`
+  with the authored expected type in its own Prelude scope, preventing learner
+  aliases from changing the expected meaning. `default ()` in this checking
+  module rejects generic numeric declarations that could otherwise default to
+  Double. It does not change default declarations in the learner module.
+  Expected types must be one-line monomorphic types available in Prelude; use
+  compiler-supported equivalent forms in the learner's declaration. This gate
+  is not suitable for requiring a particular polymorphic/constrained interface.
+  Its import is cleaned before the next reload. The temporary source survives
+  that queued cleanup and is removed when the following operation completes,
+  because MicroHs may read it while deleting the import. At most the current
+  and preceding helper exist during execution; the last helper persists until
+  the next Run/Test or runtime disposal. Workspace files are never overwritten.
+  Keep `command: "True"` for a signature-only check so the learner module still
+  compiles; retain separate behavioral checks for its actual results. A compiler
+  error must fail even when the source contains the expected declaration.
+  Pair failures with layered hints distinguishing explicit-interface practice
+  from inference. These checks do not measure whether a learner can explain the
+  signature. Load `js/haskell/syntax.js` before cycle analysis and declaration
+  checking in the runtime frame/worker; the host only needs cycle diagnostics.
 - **Prolog** (`prolog`): each `tests[].command` is repository-authored JavaScript
   with `assert(condition, message)`, `await __query(goal)`,
   `await __consult(source)`, and `__read_file(path)`. Each test starts with a

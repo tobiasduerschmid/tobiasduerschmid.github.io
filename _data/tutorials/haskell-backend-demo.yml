@@ -65,8 +65,8 @@ steps:
     run_file: "Main.hs"
 
     tests:
-      - description: "doubleScores doubles each score in the sample list"
-        command: "doubleScores [1, 2, 3] == [2, 4, 6]"
+      - description: "doubleScores handles empty, singleton, and longer lists"
+        command: "doubleScores [] == [] && doubleScores [4] == [8] && doubleScores [1, 2, 3] == [2, 4, 6] && doubleScores [3, 1, 3, 2] == [6, 2, 6, 4]"
         hints:
           - text: "Treat the list as one input value and describe the transformation that should happen to each element."
           - text: "`map` applies the same function to every element without mutating the original list."
