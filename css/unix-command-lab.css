@@ -152,7 +152,8 @@ html.dark-mode .unix-lab__arrow { color: #b0bac6; }
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.03em;
-  text-transform: lowercase;
+  /* No text-transform: labels are authored in lowercase, and file names
+     (README.md, Main.hs) must be shown exactly as they are spelled. */
   background-color: #f1f3f5;
   border-bottom: 1px solid #d8dde2;
   color: #5a6573;

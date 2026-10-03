@@ -4,6 +4,12 @@ layout: sebook
 mermaid: true
 ---
 
+<script src="/js/unix-command-lab.js" defer></script>
+<script src="/js/program-output-lab.js" defer></script>
+<link rel="stylesheet" href="/css/unix-command-lab.css">
+<link rel="stylesheet" href="/css/program-output-lab.css">
+<link rel="stylesheet" href="/css/print-light.css">
+
 > **Want to practice?** Work through the [Python Essentials interactive tutorial](/SEBook/tools/python-tutorial) — run Python in your browser, repair programs, and check your reasoning with tests and quizzes.
 
 # Python from C++
@@ -1220,6 +1226,200 @@ Allocate a fresh container in the body when omission means independent state. Pr
 ### 10. Use `is` for `None` Comparisons
 
 Use identity for the `None` singleton and equality for domain values. A customizable `__eq__` does not change what `is` means.
+
+# Puzzles
+
+Each program below is only a few lines long, and each one behaves differently from what a C++ reading suggests. The puzzles mix rules from across the chapter (bindings and mutation from [Objects](#objects) and [Collections](#collections), name lookup from the LEGB rule, and default arguments from [Calls & Inheritance](#calls--inheritance)) with three operators that work differently from their C++ counterparts. Because the topics are mixed, part of each puzzle is deciding which rule applies.
+
+Commit to a prediction before you press **Run**. Where a box is provided, write the exact output; otherwise, say your prediction to yourself, line by line. When the result surprises you, name the rule you were relying on before you read the explanation under the output. Correcting a confident wrong prediction tends to stick better than reading the right answer cold.
+
+## Puzzle 1: Two Ways to Extend a List
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "python",
+  "file": "plans.py",
+  "code": "north = [\"M31\"]\nsouth = north\nnorth += [\"M13\"]\nnorth = north + [\"M42\"]\nprint(south)\nprint(north)",
+  "description": "`south` is a second name for the list that `north` refers to. The program then extends `north` twice, using two spellings that look interchangeable.",
+  "predict": true,
+  "predictPrompt": "Write the two lines this program prints.",
+  "output": {
+    "stdout": "['M31', 'M13']\n['M31', 'M13', 'M42']"
+  },
+  "notice": "For a list, `north += [\"M13\"]` extends the existing object in place, so the alias `south` sees the change. `north = north + [\"M42\"]` builds a new list and rebinds only `north`; `south` still refers to the old one. A string behaves differently: it cannot change, so `+=` on a string always rebinds."
+}
+</script>
+</div>
+
+## Puzzle 2: Extending a List Inside a Tuple
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "python",
+  "file": "pair.py",
+  "code": "pair = ([\"dust\"], \"north\")\ntry:\n    pair[0] += [\"glare\"]\nexcept TypeError:\n    print(\"TypeError\")\nprint(pair)",
+  "description": "A tuple's slots cannot be reassigned, but the list stored in a slot can still change. The `try` block applies `+=` to that slot.",
+  "predict": true,
+  "predictPrompt": "Write both lines this program prints.",
+  "output": {
+    "stdout": "TypeError\n(['dust', 'glare'], 'north')"
+  },
+  "notice": "Both things happen. `pair[0] += [\"glare\"]` first extends the list in place, which succeeds, and then stores the result back with `pair[0] = …`, which a tuple forbids. The exception arrives after the mutation. Write `pair[0].extend([\"glare\"])` when mutation is what you mean: it never assigns to the tuple's slot."
+}
+</script>
+</div>
+
+## Puzzle 3: Functions Defined in a Loop
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "python",
+  "file": "alerts.py",
+  "code": "alerts = []\nfor dome in [\"north\", \"south\", \"east\"]:\n    def alert():\n        return f\"close {dome}\"\n    alerts.append(alert)\n\nfor alert in alerts:\n    print(alert())",
+  "description": "Each pass through the first loop defines a function named `alert` and appends it to `alerts`. The second loop calls the stored functions.",
+  "predict": true,
+  "predictPrompt": "Write the three lines this program prints.",
+  "output": {
+    "stdout": "close east\nclose east\nclose east"
+  },
+  "notice": "A function body looks up `dome` when the function *runs*, not when it is defined. By the time the second loop calls the functions, the first loop has finished, and because a `for` loop does not create its own scope, `dome` is still bound to its last value. To capture each value, make it a default argument: `def alert(dome=dome):`. Default values are evaluated once, when `def` executes: the same rule that makes a mutable default shared between calls."
+}
+</script>
+</div>
+
+## Puzzle 4: Removing Items in a Loop
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "python",
+  "file": "readings.py",
+  "code": "readings = [7, 3, 3, 9]\nfor value in readings:\n    if value == 3:\n        readings.remove(value)\nprint(readings)",
+  "description": "The loop is meant to discard every reading equal to `3`.",
+  "predict": false,
+  "output": {
+    "stdout": "[7, 3, 9]"
+  },
+  "notice": "A `for` loop over a list steps through positions 0, 1, 2, and so on. Removing the `3` at position 1 shifts the second `3` into that position, which the loop has already visited, so the next step lands on `9`. Build a new list instead, `readings = [value for value in readings if value != 3]`, or loop over a copy, `readings[:]`."
+}
+</script>
+</div>
+
+## Puzzle 5: `or` and `and`
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "python",
+  "file": "defaults.py",
+  "code": "print(0 or \"default\")\nprint(\"M31\" and 42)\nprint([] and \"unused\")",
+  "description": "In C++, `||` and `&&` always produce a `bool`.",
+  "predict": true,
+  "predictPrompt": "Write the three lines this program prints.",
+  "output": {
+    "stdout": "default\n42\n[]"
+  },
+  "notice": "`or` returns its first truthy operand (or the last operand if none is truthy), and `and` returns its first falsy operand (or the last one). Neither converts its result to `bool`. That makes `value or fallback` a common default idiom, but it also replaces valid falsy values such as `0` or `\"\"`. Test `value is None` when only a missing value should trigger the fallback."
+}
+</script>
+</div>
+
+## Puzzle 6: Counting Calls
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "python",
+  "file": "tally.py",
+  "code": "count = 0\n\ndef record():\n    count += 1\n\nprint(\"before\")\nrecord()\nprint(\"after\")",
+  "description": "In C++, a function can increment a global `int` with `count += 1`. This program prints a line, calls `record()`, and then prints another line.",
+  "predict": true,
+  "predictPrompt": "Write each line the program prints. If it raises an exception, end with the exception's name.",
+  "output": {
+    "stdout": "before",
+    "stderr": "Traceback (most recent call last):\n  File \"/home/user/tally.py\", line 7, in <module>\n    record()\n    ~~~~~~^^\n  File \"/home/user/tally.py\", line 4, in record\n    count += 1\n    ^^^^^\nUnboundLocalError: cannot access local variable 'count' where it is not associated with a value"
+  },
+  "notice": "Assigning to `count` anywhere in `record` makes `count` local to the *whole* function; Python decides this when it compiles the function, not line by line. `count += 1` must read the local `count` before it has a value, so it raises `UnboundLocalError`. The uncaught exception ends the program with exit status 1, so `after` never prints. Declare `global count` to rebind the module-level name, or, often clearer, return the new value."
+}
+</script>
+</div>
+
+## Puzzle 7: One Starting Value for Every Key
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "python",
+  "file": "logs.py",
+  "code": "logs = dict.fromkeys([\"north\", \"south\"], [])\nlogs[\"north\"].append(\"dust\")\nprint(logs)",
+  "description": "`dict.fromkeys` creates a dictionary whose keys all start with the same value. Here, that value is an empty list.",
+  "predict": false,
+  "output": {
+    "stdout": "{'north': ['dust'], 'south': ['dust']}"
+  },
+  "notice": "`fromkeys` evaluates `[]` once and stores that *same* list under every key, just as `[[0]] * 3` repeats one inner list. A dictionary comprehension evaluates its value once per key: `{dome: [] for dome in [\"north\", \"south\"]}`. A shared immutable default such as `0` is harmless, because `+=` on an integer entry rebinds that entry instead of mutating a shared object."
+}
+</script>
+</div>
+
+## Puzzle 8: Chained Comparisons
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "python",
+  "file": "compare.py",
+  "code": "print(3 > 2 > 1)\nprint((3 > 2) > 1)",
+  "description": "Both lines compare the same three numbers. The only difference is the parentheses.",
+  "predict": false,
+  "output": {
+    "stdout": "True\nFalse"
+  },
+  "notice": "Python chains comparisons: `3 > 2 > 1` means `3 > 2 and 2 > 1`, which is `True`. With parentheses, `(3 > 2)` becomes `True` first, and `True > 1` compares `1 > 1`, which is `False`. C++ always evaluates the parenthesized form, so there `3 > 2 > 1` is `false`. Chaining lets range checks read naturally: `0 <= index < len(items)`."
+}
+</script>
+</div>
+
+## Puzzle 9: Sorting a List
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "python",
+  "file": "targets.py",
+  "code": "targets = [\"Vega\", \"Altair\", \"Deneb\"]\nordered = targets.sort()\nprint(ordered)\nprint(targets)",
+  "description": "Lists have a `sort()` method, and Python also has a built-in `sorted()` function. This program uses the method.",
+  "predict": true,
+  "predictPrompt": "Write the two lines this program prints.",
+  "output": {
+    "stdout": "None\n['Altair', 'Deneb', 'Vega']"
+  },
+  "notice": "`list.sort()` reorders the existing list in place and returns `None`, the usual Python signal that a method mutated its object rather than producing a new one. So `ordered` is `None`, while `targets` itself is now sorted. Use `ordered = sorted(targets)` when you need a new sorted list and want to keep the original order."
+}
+</script>
+</div>
+
+## Puzzle 10: Rounding Halves
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "python",
+  "file": "halves.py",
+  "code": "for value in [0.5, 1.5, 2.5, 3.5]:\n    print(value, round(value))",
+  "description": "Each value lies exactly halfway between two integers.",
+  "predict": false,
+  "output": {
+    "stdout": "0.5 0\n1.5 2\n2.5 2\n3.5 4"
+  },
+  "notice": "Python's `round()` resolves exact ties toward the nearest *even* integer, so 0.5 and 2.5 round down while 1.5 and 3.5 round up. C++'s `std::round` rounds ties away from zero, giving 1, 2, 3, and 4. Rounding ties to even avoids a systematic upward bias when many rounded values are added together."
+}
+</script>
+</div>
+
 
 # Practice
 

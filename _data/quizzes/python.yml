@@ -709,3 +709,234 @@ questions:
       1: "The second inner list remains shared, so its append is visible through snapshot too."
       2: "Slot replacement stays local to one outer list, while mutation of a shared inner list is visible from both."
     explanation: "A shallow snapshot preserves its own outer sequence of references, not independent copies of the objects they reach. The old first inner list remains reachable from snapshot; the second inner list is still shared and changes."
+
+  - id: 30
+    type: single
+    difficulty: intermediate
+    question: |
+      What does this program print?
+      ```python
+      def add_flat(frames):
+          frames += ["flat"]
+          frames = frames + ["bias"]
+
+      session = ["dark"]
+      add_flat(session)
+      print(session)
+      ```
+    options:
+      - "`['dark']`"
+      - "`['dark', 'flat']`"
+      - "`['dark', 'flat', 'bias']`"
+      - "`['flat', 'bias']`"
+    correct_index: 1
+    option_feedback:
+      0: "For a list, `frames += [\"flat\"]` extends the caller's list in place. It is not a rebinding like `frames = frames + [...]`."
+      2: "`frames = frames + [\"bias\"]` builds a new list and rebinds only the local parameter, so the caller never sees `\"bias\"`."
+      3: "Neither statement removes `\"dark\"`: in-place extension keeps the existing elements, and concatenation copies them into the new list."
+    explanation: "Augmented assignment on a list mutates the object that both names share, so `session` gains `\"flat\"`. The concatenation then creates a separate list that only the local name `frames` refers to; it is discarded when the function returns."
+
+  - id: 31
+    type: single
+    difficulty: advanced
+    question: |
+      What does this program print?
+      ```python
+      record = ("M31", [1, 2])
+      record[1].append(3)
+      try:
+          record[1] += [4]
+      except TypeError:
+          print("rejected")
+      print(record)
+      ```
+    options:
+      - "`rejected`, then `('M31', [1, 2, 3, 4])`"
+      - "`rejected`, then `('M31', [1, 2, 3])`"
+      - "Only `('M31', [1, 2, 3, 4])`, with no `rejected`"
+      - "Nothing: `append` raises an uncaught `TypeError`"
+    correct_index: 0
+    option_feedback:
+      1: "The in-place extension happens before the failing store into the tuple slot, so `4` is already in the list when the exception is raised."
+      2: "After extending the list, `+=` still assigns the result back to `record[1]`. A tuple rejects that assignment even though the value is the same list object."
+      3: "A tuple's immutability is shallow: it fixes which objects occupy its slots, not their contents. `append` mutates the list without assigning to the tuple."
+    explanation: "`record[1] += [4]` runs in two steps: extend the list in place, then assign the result to `record[1]`. The second step fails because tuples do not support item assignment, but the list has already changed. `append` performs only a mutation, so it succeeds."
+
+  - id: 32
+    type: single
+    difficulty: advanced
+    question: |
+      The loop is meant to discard every `"bad"` code. What does this program print?
+      ```python
+      codes = ["ok", "bad", "bad", "bad", "ok"]
+      for code in codes:
+          if code == "bad":
+              codes.remove(code)
+      print(codes)
+      ```
+    options:
+      - "`['ok', 'ok']`"
+      - "`['ok', 'bad', 'ok']`"
+      - "`['ok', 'bad', 'bad', 'ok']`"
+      - "A `RuntimeError` about the list changing size"
+    correct_index: 1
+    option_feedback:
+      0: "Each removal shifts the remaining items left, so the item that moves into the position just checked is never examined."
+      2: "The loop removes a `\"bad\"` twice: at position 1, and again at position 2, which a later `\"bad\"` has shifted into. Only one `\"bad\"` escapes."
+      3: "Dictionaries and sets raise `RuntimeError` when their size changes during iteration, but a list iterator simply keeps advancing by position."
+    explanation: "A list iterator tracks an index. Each `remove` shifts later elements left, so the element that moves into the just-visited index is skipped. Filtering into a new list avoids the problem: `[code for code in codes if code != \"bad\"]`."
+
+  - id: 33
+    type: single
+    difficulty: advanced
+    question: |
+      Each stored function compares its argument with `limit`. What does this program print?
+      ```python
+      checks = []
+      for limit in [10, 20, 30]:
+          def check(value, limit=limit):
+              return value < limit
+          checks.append(check)
+
+      print([check(15) for check in checks])
+      ```
+    options:
+      - "`[False, True, True]`"
+      - "`[True, True, True]`"
+      - "`[False, False, False]`"
+      - "`[True, False, False]`"
+    correct_index: 0
+    option_feedback:
+      1: "Without `limit=limit`, every function would read the loop variable after the loop ends, when it is 30. The default argument instead stores each pass's value when `def` runs."
+      2: "Each `def` statement evaluates its default separately, so the three functions keep 10, 20, and 30 rather than sharing the first value."
+      3: "`check(15)` asks whether 15 is less than the stored limit. That is false for 10 and true for 20 and 30."
+    explanation: "Default values are evaluated when `def` executes, here once per loop pass, so each function captures that pass's `limit`. Calling each function with 15 then compares it with 10, 20, and 30."
+
+  - id: 34
+    type: single
+    difficulty: advanced
+    question: |
+      What happens when this program runs?
+      ```python
+      total = 0
+
+      def add(amount):
+          print(total)
+          total = total + amount
+
+      add(5)
+      ```
+    options:
+      - "It prints `0`, then raises `UnboundLocalError`"
+      - "It raises `UnboundLocalError` before printing anything"
+      - "It prints `0`, and the global `total` becomes `5`"
+      - "It prints `0`, and the global `total` stays `0`"
+    correct_index: 1
+    option_feedback:
+      0: "Python decides that `total` is local when it compiles `add`, so the local name is already in effect on the `print` line, before any assignment has run."
+      2: "Without a `global total` declaration, the assignment creates a local name; it cannot update the module-level `total`."
+      3: "The `print` call cannot fall back to the global `total`, because the later assignment makes `total` local throughout the function body."
+    explanation: "An assignment to a name anywhere inside a function makes that name local for the entire function body. The first line of `add` reads the local `total` before it has a value, so the call fails immediately. Declaring `global total` would make both lines use the module-level name."
+
+  - id: 35
+    type: single
+    difficulty: intermediate
+    question: |
+      A configuration helper uses `or` to supply a default. What does this program print?
+      ```python
+      def effective_limit(limit):
+          return limit or 100
+
+      print(effective_limit(25), effective_limit(0), effective_limit(None))
+      ```
+    options:
+      - "`25 100 100`"
+      - "`25 0 100`"
+      - "`True False False`"
+      - "`25 0 None`"
+    correct_index: 0
+    option_feedback:
+      1: "`0` is falsy, so `limit or 100` skips it just as it skips `None`. Test `limit is None` when a limit of zero must be kept."
+      2: "Python's `or` returns one of its operands, not a `bool`, so the results are numbers."
+      3: "`or` falls through to its right operand whenever the left one is falsy, which includes both `0` and `None`."
+    explanation: "`a or b` evaluates to `a` when `a` is truthy and to `b` otherwise. Both `0` and `None` are falsy, so a deliberately configured limit of zero is silently replaced by the default."
+
+  - id: 36
+    type: single
+    difficulty: intermediate
+    question: |
+      What does this program print?
+      ```python
+      low, value, high = 1, 5, 3
+      print(low < value < high)
+      print((low < value) < high)
+      ```
+    options:
+      - "`False`, then `True`"
+      - "`True`, then `True`"
+      - "`False`, then `False`"
+    correct_index: 0
+    option_feedback:
+      1: "A chained comparison checks every adjacent pair. `low < value` is true, but `value < high` (`5 < 3`) is false, so the chain is false."
+      2: "With parentheses, `low < value` is evaluated first to `True`, which compares as `1`, and `1 < 3` is true."
+    explanation: "`low < value < high` means `low < value and value < high`, so a value outside the range yields `False`. The parenthesized form compares the Boolean `True` (equal to 1) with `high`. C++ reads the unparenthesized form the same way as the parenthesized one."
+
+  - id: 37
+    type: single
+    difficulty: advanced
+    question: |
+      What does this program print?
+      ```python
+      print(round(4.5), round(5.5))
+      ```
+    options:
+      - "`4 6`"
+      - "`5 6`"
+      - "`4 5`"
+    correct_index: 0
+    option_feedback:
+      1: "Python's `round()` sends an exact tie to the nearest even integer, so 4.5 becomes 4. Rounding halves upward is what C++'s `std::round` does for positive numbers."
+      2: "Ties go to the even neighbor, not always downward: 5.5 lies between 5 and 6, and 6 is even."
+    explanation: "Python rounds exact halves to the nearest even integer, which avoids a systematic upward bias when many rounded values are summed. C++'s `std::round` rounds halves away from zero instead."
+
+  - id: 38
+    type: single
+    difficulty: intermediate
+    question: |
+      What happens when this program runs?
+      ```python
+      names = ["Vega", "Altair"]
+      names = names.sort()
+      print(names[0])
+      ```
+    options:
+      - "It prints `Altair`, the first name after sorting"
+      - "It prints `Vega`, because the list was not sorted"
+      - "It raises `TypeError`, because `names` is `None`"
+      - "It prints `None`, the value returned by `sort()`"
+    correct_index: 2
+    option_feedback:
+      0: "`names.sort()` does sort the list, but it returns `None`, and the assignment rebinds `names` to that `None`. The sorted list is no longer reachable through `names`."
+      1: "The list's order no longer matters: after the assignment, `names` refers to `None`, not to any list."
+      3: "`names` is `None`, but nothing is printed: indexing `None` with `[0]` raises an exception before `print` runs."
+    explanation: "`list.sort()` sorts in place and returns `None`. Assigning that result rebinds `names` to `None`, and `None[0]` raises `TypeError: 'NoneType' object is not subscriptable`. Call `names.sort()` on its own line, or write `names = sorted(names)`."
+
+  - id: 39
+    type: single
+    difficulty: advanced
+    question: |
+      `dict.fromkeys` stores one shared value object under every key. What does this program print?
+      ```python
+      tallies = dict.fromkeys(["north", "south"], 0)
+      tallies["north"] += 1
+      print(tallies)
+      ```
+    options:
+      - "`{'north': 1, 'south': 0}`"
+      - "`{'north': 1, 'south': 1}`"
+      - "`{'north': 0, 'south': 0}`"
+    correct_index: 0
+    option_feedback:
+      1: "Sharing matters only for mutation. An integer cannot change, so `+= 1` computes a new integer and rebinds only the `\"north\"` entry."
+      2: "`tallies[\"north\"] += 1` stores the new integer back into the dictionary under `\"north\"`, so that entry changes."
+    explanation: "Both entries start as references to the same `0`, but integers are immutable. Augmented assignment on a dictionary entry computes `0 + 1` and stores the result under that one key. A shared list default behaves differently, because `append` mutates the one object that every key refers to."

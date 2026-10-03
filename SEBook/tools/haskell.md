@@ -3,6 +3,12 @@ layout: sebook
 title: Haskell
 ---
 
+<script src="/js/unix-command-lab.js" defer></script>
+<script src="/js/program-output-lab.js" defer></script>
+<link rel="stylesheet" href="/css/unix-command-lab.css">
+<link rel="stylesheet" href="/css/program-output-lab.css">
+<link rel="stylesheet" href="/css/print-light.css">
+
 <!-- Authoring sources: CS131 intro_to_functional_programming_and_haskell_v10_handouts.pdf,
 physical pages 5–149; docs/haskell-course-source-map.md; the three haskell tutorial YAML
 files; docs/research/haskell-functional-pedagogy-2026-10-02/report.md. The research
@@ -30,7 +36,7 @@ Use the chapter for explanations and the tutorials for implementation practice. 
 2. **[Functions and Laziness](/SEBook/tools/haskell-functions-tutorial)** — 8 steps, about 80–100 minutes. Pipelines, closures, currying, higher-order types, accumulators, and finite observations of infinite lists. [Part 2 print view](/SEBook/tools/haskell-functions-tutorial/print).
 3. **[Data and Persistent Programs](/SEBook/tools/haskell-data-tutorial)** — 9 steps, about 100–115 minutes. Variants, records, constraints, recursive data, persistent updates, and a pure event simulator. [Part 3 print view](/SEBook/tools/haskell-data-tutorial/print).
 
-The [flashcards](#flashcards) and [quiz](#quiz) at the end provide additional retrieval and reasoning practice.
+The [puzzles](#puzzles), [flashcards](#flashcards), and [quiz](#quiz) at the end provide additional prediction, retrieval, and reasoning practice.
 
 # Expressions
 
@@ -522,11 +528,203 @@ An update can produce a new document without altering the version needed for und
 
 </details>
 
+# Puzzles
+
+Each program below is only a few lines long, and each one tests a rule where Haskell differs from C++ or Python: how function application groups, what a second `let` does to a name, when an expression is evaluated, and how a fold groups its operations. The puzzles mix ideas from [Expressions](#expressions), [Lists](#lists), [Functions](#functions), [Demand](#demand), and [Data](#data), so part of each puzzle is deciding which rule applies. The cards show GHC's `runghc` command; the tutorials' MicroHs workspace prints the same results.
+
+Commit to a prediction before you press **Run**. Where a box is provided, write the exact output; otherwise, say your prediction to yourself, line by line. When the result surprises you, name the rule you were relying on before you read the explanation under the output. Correcting a confident wrong prediction tends to stick better than reading the right answer cold.
+
+## Puzzle 1: A Function and an Operator
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "haskell",
+  "file": "Discount.hs",
+  "code": "discount :: Int -> Int\ndiscount price = price - 5\n\nmain :: IO ()\nmain = do\n  print (discount 20 * 2)\n  print (discount (20 * 2))",
+  "description": "`discount` takes 5 off a price. Both lines combine `discount` with a multiplication.",
+  "predict": true,
+  "predictPrompt": "Write the two lines this program prints.",
+  "output": {
+    "stdout": "30\n35"
+  },
+  "notice": "Function application binds more tightly than any operator, so `discount 20 * 2` means `(discount 20) * 2`: 15, doubled. To pass the product as a single argument, parenthesize it: `discount (20 * 2)` is `40 - 5`. Read the space between a function and its argument as the strongest glue in an expression."
+}
+</script>
+</div>
+
+## Puzzle 2: Building a String
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "haskell",
+  "file": "Star.hs",
+  "code": "main :: IO ()\nmain = do\n  putStrLn ('s' : \"tar\")\n  print ('s' : \"tar\")\n  print (length (\"ab\" ++ \"cd\"))",
+  "description": "`:` puts one element on the front of a list, and `++` joins two lists. The first two lines output the same value in two different ways.",
+  "predict": true,
+  "predictPrompt": "Write the three lines this program prints.",
+  "output": {
+    "stdout": "star\n\"star\"\n4"
+  },
+  "notice": "A `String` is a list of `Char`, so `:` can put the character `'s'` on the front of `\"tar\"`, and `length` counts the characters of the joined list. `putStrLn` writes the characters themselves, while `print` writes the value as Haskell source text (its `show`), which includes the quotation marks."
+}
+</script>
+</div>
+
+## Puzzle 3: Operators With One Operand
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "haskell",
+  "file": "Sections.hs",
+  "code": "main :: IO ()\nmain = do\n  print (map (10 -) [1, 2, 3])\n  print (map (subtract 10) [11, 12, 13])\n  print (map (`div` 2) [7, 8, 9])",
+  "description": "Each line maps an operator or function that is missing one argument over a list.",
+  "predict": true,
+  "predictPrompt": "Write the three lines this program prints.",
+  "output": {
+    "stdout": "[9,8,7]\n[1,2,3]\n[3,4,4]"
+  },
+  "notice": "An operator in parentheses with one operand is a *section*: a function waiting for the missing operand. `(10 -)` fills the left side, so it computes `10 - x`, not `x - 10`. The opposite section cannot be written `(- 10)`, because Haskell reads that as the number -10; `subtract 10` is the standard way to take 10 away. Writing `div` between backticks turns it into an operator, so the third section divides each number by 2, rounding down."
+}
+</script>
+</div>
+
+## Puzzle 4: Guards in Order
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "haskell",
+  "file": "Parcels.hs",
+  "code": "parcelClass :: Int -> String\nparcelClass weight\n  | weight > 0  = \"standard\"\n  | weight > 20 = \"freight\"\n  | otherwise   = \"invalid\"\n\nmain :: IO ()\nmain = print (map parcelClass [5, 30, 0])",
+  "description": "`parcelClass` labels a parcel by its weight using guards.",
+  "predict": false,
+  "output": {
+    "stdout": "[\"standard\",\"standard\",\"invalid\"]"
+  },
+  "notice": "Guards are tested from top to bottom, and the first one that holds chooses the result. Every positive weight satisfies `weight > 0`, so the `\"freight\"` guard can never be reached, and 30 is labeled `\"standard\"`. Order guards from the most specific condition to the most general, and end with `otherwise`. The compiler accepts the unreachable guard, because it cannot decide in general that one numeric condition implies another."
+}
+</script>
+</div>
+
+## Puzzle 5: Binding a Name Twice
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "haskell",
+  "file": "Totals.hs",
+  "code": "main :: IO ()\nmain = do\n  let total = 10\n  let addTotal x = x + total\n  let total = 100\n  print (addTotal 1)\n  print total",
+  "description": "The block binds `total`, defines `addTotal` in terms of it, and then binds `total` again.",
+  "predict": true,
+  "predictPrompt": "Write the two lines this program prints.",
+  "output": {
+    "stdout": "11\n100"
+  },
+  "notice": "A `let` never changes an existing binding. The second `let total = 100` creates a *new* `total` that hides the old one from later lines, but `addTotal` was defined while `total` meant 10 and keeps referring to that binding. A Python function that read a reassigned global `total` would instead see 100 and return 101."
+}
+</script>
+</div>
+
+## Puzzle 6: Values Nobody Asks For
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "haskell",
+  "file": "Demand.hs",
+  "code": "main :: IO ()\nmain = do\n  print (length [error \"first\", error \"second\"])\n  print (fst (3, error \"never needed\"))\n  print (take 3 [10, 20 ..])",
+  "description": "`error` stops the program with a message when it is evaluated, and `[10, 20 ..]` is an infinite list.",
+  "predict": true,
+  "predictPrompt": "Write the three lines this program prints.",
+  "output": {
+    "stdout": "2\n3\n[10,20,30]"
+  },
+  "notice": "Haskell evaluates an expression only when a result needs its value. `length` counts list cells without inspecting the elements, `fst` never looks at the second component, and `take 3` asks the infinite list for only three elements. In C++ or Python, arguments are evaluated before the call, so the `error` calls would fail first."
+}
+</script>
+</div>
+
+## Puzzle 7: Two Generators
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "haskell",
+  "file": "Pairs.hs",
+  "code": "pairs :: [(Int, Int)]\npairs = [ (x, y) | x <- [1 .. 3]\n                 , y <- [x .. 3]\n                 , x /= y ]\n\nmain :: IO ()\nmain = print pairs",
+  "description": "A list comprehension with two generators and a guard.",
+  "predict": false,
+  "output": {
+    "stdout": "[(1,2),(1,3),(2,3)]"
+  },
+  "notice": "Generators behave like nested loops, with the later generator varying fastest. The second generator uses `x`, so for each `x` the values of `y` start at that `x`. The guard `x /= y` then removes `(1,1)`, `(2,2)`, and `(3,3)`."
+}
+</script>
+</div>
+
+## Puzzle 8: Folding With Subtraction
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "haskell",
+  "file": "Folds.hs",
+  "code": "main :: IO ()\nmain = do\n  print (foldl (-) 100 [10, 20, 30])\n  print (foldr (-) 100 [10, 20, 30])",
+  "description": "`foldl` and `foldr` both combine a list's elements with an operator, starting from an initial value. Here the operator is subtraction.",
+  "predict": true,
+  "predictPrompt": "Write the two lines this program prints.",
+  "output": {
+    "stdout": "40\n-80"
+  },
+  "notice": "`foldl` groups from the left and starts with the initial value: `((100 - 10) - 20) - 30` is 40. `foldr` groups from the right and puts the initial value at the far end: `10 - (20 - (30 - 100))` is -80. Regrouping and reordering cannot change a sum, so with `+` both folds agree; with `-` they do not."
+}
+</script>
+</div>
+
+## Puzzle 9: Functions That Remember
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "haskell",
+  "file": "Scalers.hs",
+  "code": "scaleBy :: Int -> (Int -> Int)\nscaleBy factor = \\x -> x * factor\n\nmain :: IO ()\nmain = do\n  let scalers = [scaleBy f | f <- [1, 2, 3]]\n  print [scale 10 | scale <- scalers]",
+  "description": "`scaleBy f` returns a function that multiplies its argument by `f`. The comprehension builds three of them before any is called.",
+  "predict": false,
+  "output": {
+    "stdout": "[10,20,30]"
+  },
+  "notice": "Each call `scaleBy f` returns a closure that holds that call's `factor`. A Haskell binding is never reassigned, so the three closures keep 1, 2, and 3. Compare a Python loop that defines functions reading the loop variable: there, every function sees the variable's final value."
+}
+</script>
+</div>
+
+## Puzzle 10: Updating a Record
+
+<div data-program-output-lab>
+<script type="application/json">
+{
+  "language": "haskell",
+  "file": "Sensor.hs",
+  "code": "data Sensor = Sensor\n  { label   :: String\n  , reading :: Int\n  }\n\ncalibrate :: Int -> Sensor -> Sensor\ncalibrate offset sensor =\n  sensor { reading = reading sensor + offset }\n\nmain :: IO ()\nmain = do\n  let raw = Sensor \"dome\" 50\n      adjusted = calibrate 25 raw\n  print (reading raw)\n  print (reading adjusted)",
+  "description": "`calibrate` returns a sensor whose reading has been adjusted.",
+  "predict": false,
+  "output": {
+    "stdout": "50\n75"
+  },
+  "notice": "A record update such as `sensor { reading = … }` builds a new `Sensor` with the changed field and the other fields copied; it never modifies `sensor`. So `raw` still reads 50, and both versions remain available. In C++, updating the member through a reference would have changed the only copy."
+}
+</script>
+</div>
+
 # Practice {#a-useful-study-loop}
 
 Before running an example, commit to a prediction and a reason. Compare the result with that prediction, explain the gap, then change one thing. When a check passes, invent an input that would reject a tempting wrong approach. For example, an empty list tests a recursive base case; a price crossing the fee boundary distinguishes pipeline orders; a minimum node with a right child tests preservation of tree contents.
 
-Use the [first tutorial](/SEBook/tools/haskell-tutorial) to practice expressions and recursive cases, the [second](/SEBook/tools/haskell-functions-tutorial) for higher-order interfaces and demand, and the [third](/SEBook/tools/haskell-data-tutorial) for data models and persistent transitions. The knowledge checks ask you to apply the concepts and explain design consequences. The decks below add practice with types, list shape, recursion, currying, pipelines, folds, and recursive data; use the tutorial checks as well for records, laziness, and persistence.
+Use the [first tutorial](/SEBook/tools/haskell-tutorial) to practice expressions and recursive cases, the [second](/SEBook/tools/haskell-functions-tutorial) for higher-order interfaces and demand, and the [third](/SEBook/tools/haskell-data-tutorial) for data models and persistent transitions. The knowledge checks ask you to apply the concepts and explain design consequences. The decks below add practice with types, list shape, recursion, currying, pipelines, folds, laziness, records, and recursive data; use the tutorial checks as well for persistence.
 
 Return the next day and recreate a small function from memory. A week later, solve a related problem with different data before consulting your notes. Away from the editor, derive a function's type, explain a recursive result, and choose a counterexample to a proposed implementation. Then attempt a full course problem combining those skills. Passing individual checks gives evidence about those cases; it does not by itself establish readiness for a timed, multi-part exam.
 

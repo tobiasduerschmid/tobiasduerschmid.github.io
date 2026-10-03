@@ -39,13 +39,22 @@
  *                     "before": "old content", "action": "overwrite|append|create" } ],
  *       "env":    [ { "name": "MY_VAR", "value": "hi", "action": "set|unset|modified" } ]
  *     },
- *     "notice": "one-sentence callout after reveal — 'notice that…'"
+ *     "notice": "one-sentence callout after reveal — 'notice that…'",
+ *     "accept": ["line1\nline2"],       // optional: the only predictions that
+ *                                       // count as a match (replaces the
+ *                                       // default stdout/file comparison)
+ *     "placeholder": "string"           // optional: text shown before Run
  *   }
  *
  * Usage:
  *   <div data-unix-command-lab>
  *     <script type="application/json"> { … spec … } </script>
  *   </div>
+ *
+ * Front ends for programs (see program-output-lab.js) reuse this card
+ * via `UnixCommandLab.create(container, spec, { decorateFileBody })`, where
+ * `decorateFileBody(file, preElement)` may restyle an input file's content
+ * (e.g. syntax colouring) without changing the shared card behaviour.
  */
 (function () {
   'use strict';
@@ -160,9 +169,10 @@
     return p;
   }
 
-  function fileInputPanel(file) {
+  function fileInputPanel(file, decorateFileBody) {
     var p = makePanel('file-in', 'file · ' + file.name, '\uD83D\uDCC4'); // 📄
-    appendBody(p, file.content);
+    var body = appendBody(p, file.content);
+    if (decorateFileBody) decorateFileBody(file, body);
     if (file.hint) {
       var hint = document.createElement('div');
       hint.className = 'unix-lab__panel-hint';
@@ -389,10 +399,58 @@
     setTimeout(function () { if (host.parentNode) host.parentNode.removeChild(host); }, 1700);
   }
 
+  // Decide whether a student's prediction "matches" the run, and name what
+  // it matched (shown in the "Nailed it" badge), or return null.
+  //
+  // When the spec lists `accept`, those are the only correct predictions —
+  // front ends use this when stdout alone is not the whole answer (e.g. a
+  // Python program that prints a line and then crashes).
+  //
+  // Otherwise: if the command printed to stdout the student is predicting
+  // stdout. If stdout is empty but the command wrote to exactly one file
+  // (typical `cmd > out.txt` pattern), the student is predicting the file
+  // content — the prompt usually says so explicitly ("What will X contain?").
+  //
+  // Additional fallback for "expected outcome is empty" cases (most notably
+  // the `sort data.txt > data.txt` clobber card): if the actual result is an
+  // empty string and the student's prose answer mentions the words "nothing"
+  // or "empty" (a perfectly valid way to describe the outcome), accept that
+  // as a match too. This rewards students who understood the
+  // destructive-open-before-run behaviour even if they didn't literally type
+  // an empty string.
+  function predictionMatchTarget(user, spec) {
+    var output = spec.output || {};
+    var normUser = normalizeForCompare(user);
+    if (spec.accept) {
+      var accepted = spec.accept.some(function (answer) {
+        return normUser === normalizeForCompare(answer);
+      });
+      return accepted ? 'the expected output' : null;
+    }
+    var printedNothing = output.stdout == null || output.stdout === '';
+    var mentionsEmpty = /\b(nothing|empty)\b/i.test(user);
+    var singleFile = output.files && output.files.length === 1 ? output.files[0] : null;
+    if (!printedNothing && normUser === normalizeForCompare(output.stdout)) {
+      return 'stdout';
+    }
+    if (printedNothing && singleFile && normUser === normalizeForCompare(singleFile.content)) {
+      return singleFile.name;
+    }
+    if (mentionsEmpty && printedNothing && singleFile &&
+        (singleFile.content === '' || singleFile.content == null)) {
+      return singleFile.name + ' (empty)';
+    }
+    if (mentionsEmpty && printedNothing && !singleFile) {
+      return 'stdout (empty)';
+    }
+    return null;
+  }
+
   // ---------------------------------------------------------------------------
   // Card controller.
   // ---------------------------------------------------------------------------
-  function makeCard(container, spec) {
+  function makeCard(container, spec, options) {
+    options = options || {};
     container.innerHTML = '';
     container.classList.add('unix-lab');
 
@@ -443,7 +501,7 @@
     var stdinP = stdinPanel(input.stdin);
     if (stdinP) inCol.appendChild(stdinP);
     if (input.files) {
-      input.files.forEach(function (f) { inCol.appendChild(fileInputPanel(f)); });
+      input.files.forEach(function (f) { inCol.appendChild(fileInputPanel(f, options.decorateFileBody)); });
     }
     if (!inCol.children.length) {
       // Still render a tiny placeholder so the pipeline stays visually balanced;
@@ -494,9 +552,9 @@
 
     var placeholder = document.createElement('div');
     placeholder.className = 'unix-lab__placeholder';
-    placeholder.textContent = spec.predict
+    placeholder.textContent = spec.placeholder || (spec.predict
       ? 'Write your prediction above, then press Run to reveal the output.'
-      : 'Press Run to see what the command produces.';
+      : 'Press Run to see what the command produces.');
     outCol.appendChild(placeholder);
 
     // Notice (revealed after run, below pipeline).
@@ -528,40 +586,7 @@
           pShow.innerHTML = '<span class="unix-lab__prediction-label">Your prediction</span>' +
             '<pre>' + escapeHtml(user) + '</pre>';
 
-          // What does "matching" mean? If the command printed to stdout the
-          // student is predicting stdout. If stdout is empty but the command
-          // wrote to exactly one file (typical `cmd > out.txt` pattern), the
-          // student is predicting the file content — the prompt usually says
-          // so explicitly ("What will X contain?").
-          //
-          // Additional fallback for "expected outcome is empty" cases (most
-          // notably the `sort data.txt > data.txt` clobber card): if the
-          // actual result is an empty string and the student's prose answer
-          // mentions the words "nothing" or "empty" (a perfectly valid way
-          // to describe the outcome), accept that as a match too. This
-          // rewards students who understood the destructive-open-before-run
-          // behaviour even if they didn't literally type an empty string.
-          var normUser = normalizeForCompare(user);
-          var matchTarget = null;                       // 'stdout' | file name
-          var mentionsEmpty = /\b(nothing|empty)\b/i.test(user);
-          var singleFile = output.files && output.files.length === 1 ? output.files[0] : null;
-          if ((output.stdout || '') !== '' &&
-              normUser === normalizeForCompare(output.stdout)) {
-            matchTarget = 'stdout';
-          } else if ((!output.stdout || output.stdout === '') &&
-                     singleFile &&
-                     normUser === normalizeForCompare(singleFile.content)) {
-            matchTarget = singleFile.name;
-          } else if (mentionsEmpty &&
-                     (!output.stdout || output.stdout === '') &&
-                     singleFile &&
-                     (singleFile.content === '' || singleFile.content == null)) {
-            matchTarget = singleFile.name + ' (empty)';
-          } else if (mentionsEmpty &&
-                     (output.stdout === '' || output.stdout === null || output.stdout === undefined) &&
-                     !singleFile) {
-            matchTarget = 'stdout (empty)';
-          }
+          var matchTarget = predictionMatchTarget(user, spec);
           if (matchTarget) {
             pShow.classList.add('unix-lab__prediction-show--match');
             var match = document.createElement('div');
@@ -721,6 +746,7 @@
   window.UnixCommandLab = {
     create: makeCard,
     initFrom: initFrom,
+    readSpec: readSpec,
   };
 
   if (document.readyState === 'loading') {

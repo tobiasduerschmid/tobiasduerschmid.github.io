@@ -1,5 +1,5 @@
 title: 'CS 131: Functional Programming and Haskell'
-description: Produce short recursive solutions and type derivations, then explain the key step.
+description: Produce short recursive solutions, type derivations, and output predictions, then explain the key step.
 active: true
 # All items are newly authored. Times are planning estimates, not learner-calibrated limits.
 cards:
@@ -117,3 +117,112 @@ cards:
       total (Link value next) = value + total next
       ```
     explanation: The empty structure contributes zero; each link contributes its own integer plus the result for its tail.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 16, 43 (main, strings as lists)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-card-puzzle-print-versus-putstrln
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: |-
+      Predict the three lines this program prints.
+
+      ```haskell
+      main = do
+        print "ok"
+        putStrLn "ok"
+        print (length "hi!")
+      ```
+    answer: '`"ok"`, then `ok`, then `3`.'
+    explanation: '`print` shows a value as Haskell source text, so a string keeps its quotation marks; `putStrLn` writes the characters themselves. A `String` is a list of `Char`, so `length` counts its three characters.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 22, 113–117 (prefix operators, partial application)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-card-puzzle-negative-section
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 45
+    question: Why is `map (- 3) [10, 20]` rejected, and how can you subtract 3 from each element instead?
+    answer: '`(- 3)` is the number negative three, not a section, so it cannot be applied as a function. `map (subtract 3) [10, 20]` gives `[7,17]`.'
+    explanation: Haskell reads a minus sign at the start of parentheses as negation. `subtract 3` is the function that takes 3 away from its argument; the lambda `\x -> x - 3` also works.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 57–59 (infinite lists)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-card-puzzle-stop-on-infinite-list
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: What is `takeWhile (< 10) (map (* 3) [1 ..])`? Why would `filter (< 10)` in place of `takeWhile (< 10)` never finish?
+    answer: '`[3,6,9]`. `takeWhile` stops at the first element that fails its test, 12.'
+    explanation: '`filter` cannot know that no later element is below 10, so after producing 3, 6, and 9 it keeps examining the infinite list forever. Laziness lets a consumer stop early only when the consumer itself has a stopping rule.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 51–56 (comprehensions)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-card-puzzle-generator-order
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |-
+      Predict the result.
+
+      ```haskell
+      [(c, n) | n <- [1, 2], c <- "xy"]
+      ```
+    answer: "`[('x',1),('y',1),('x',2),('y',2)]`"
+    explanation: Generators run like nested loops in the order they are written. `n` is the outer loop and `c` the inner one, so `c` varies fastest. The order of the components inside each tuple does not change the loop order.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 102–110 (closures)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-card-puzzle-closure-keeps-binding
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: |-
+      Predict the output.
+
+      ```haskell
+      main = do
+        let k = 2
+            times = (* k)
+        let k = 50
+        print (times 4)
+      ```
+    answer: Prints `8`.
+    explanation: '`times` refers to the binding `k = 2`. The second `let` introduces a new `k` without changing the first, so the section still multiplies by 2.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 91–96 (reducers, foldl)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-card-puzzle-folds-build-lists
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      Predict both lines.
+
+      ```haskell
+      main = do
+        print (foldr (:) [] [1, 2, 3])
+        print (foldl (\acc x -> x : acc) [] [1, 2, 3])
+      ```
+    answer: '`[1,2,3]`, then `[3,2,1]`.'
+    explanation: '`foldr (:) []` rebuilds the list from the right, preserving its order. `foldl` processes 1 first and puts each later element in front of the accumulator, so the last element ends up first.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 57–59 (lazy evaluation of lists)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-card-puzzle-demand-undefined
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 60
+    question: Which of `snd (undefined, 7)`, `length [undefined]`, and `sum [undefined, 1]` can be evaluated, and why?
+    answer: '`snd (undefined, 7)` is `7` and `length [undefined]` is `1`; `sum [undefined, 1]` fails.'
+    explanation: Laziness evaluates a component only when a result needs it. `snd` ignores the first component, and `length` counts list cells without inspecting elements, but `sum` must add every element, so it forces `undefined`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 19–20 (calling functions)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-card-puzzle-negative-argument
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 30
+    question: Why does `abs -3` fail to type-check, and how do you fix it?
+    answer: It parses as `abs - 3`, which subtracts 3 from the function `abs`. Write `abs (-3)`, which is `3`.
+    explanation: A minus sign between two expressions is subtraction, and function application binds more tightly than any operator. Parenthesize a negative argument.

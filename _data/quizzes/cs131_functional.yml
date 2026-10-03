@@ -1,5 +1,5 @@
 title: 'CS 131: Functional Programming and Haskell'
-description: Complete recursion, infer types, trace folds, and assemble short Haskell expressions.
+description: Complete recursion, infer types, trace folds, predict evaluation results, and assemble short Haskell expressions.
 active: true
 # All items are newly authored. Times are planning estimates, not learner-calibrated limits.
 questions:
@@ -373,3 +373,183 @@ questions:
       0: A zero-weight node with no children really does have total 0, so it hides the defect.
       1: A nonzero leaf uses the general case and returns its own weight correctly.
     explanation: A zero-weight parent can still have nonzero descendants. The first pattern discards the children instead of recursively summing them.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 19–20 (calling functions)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-application-binds-first
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |-
+      What does `half 10 + 4` evaluate to?
+
+      ```haskell
+      half :: Int -> Int
+      half n = n `div` 2
+      ```
+    options:
+      - '`9`'
+      - '`7`'
+      - 'A type error: `10 + 4` needs parentheses'
+    correct_index: 0
+    option_feedback:
+      1: Application binds more tightly than `+`, so the expression is `(half 10) + 4`. It would be 7 only as `half (10 + 4)`.
+      2: The expression is well typed without parentheses. `half 10` is an `Int`, and adding 4 to it is fine.
+    explanation: Function application has higher precedence than every infix operator. `half 10 + 4` computes `half 10`, which is 5, and then adds 4.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 22, 113–117 (prefix operators, partial application)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-left-section
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: What does `map (2 ^) [1, 2, 3]` evaluate to?
+    options:
+      - '`[2,4,8]`'
+      - '`[1,4,9]`'
+      - '`[2,4,6]`'
+    correct_index: 0
+    option_feedback:
+      1: That result squares each element, which is the section `(^ 2)`. In `(2 ^)` the supplied operand is the base, and each element becomes the exponent.
+      2: '`^` is exponentiation, not multiplication; `(2 *)` would double each element.'
+    explanation: The left section `(2 ^)` is the function `\x -> 2 ^ x`. Mapping it over `[1, 2, 3]` computes `2 ^ 1`, `2 ^ 2`, and `2 ^ 3`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 25–27 (guards)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-guard-order
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      What does `map grade [95, 70, 40]` evaluate to?
+
+      ```haskell
+      grade :: Int -> Char
+      grade score
+        | score >= 60 = 'D'
+        | score >= 90 = 'A'
+        | otherwise   = 'F'
+      ```
+    options:
+      - '`"DDF"`'
+      - '`"ADF"`'
+      - "A compile error: the `'A'` guard is unreachable"
+    correct_index: 0
+    option_feedback:
+      1: "Guards are tried from top to bottom, and 95 already satisfies `score >= 60`, so the `'A'` guard is never consulted."
+      2: "The compiler cannot decide in general that one numeric guard makes a later one unreachable, so the program compiles and never returns `'A'`."
+    explanation: The first guard that holds selects the result. Because `score >= 60` comes before `score >= 90`, every passing score becomes `'D'`. The result is displayed as a string because a list of `Char` is a `String`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 57–59 (infinite lists)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-lazy-search
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: What does `head (filter (> 10) [1 ..])` evaluate to?
+    options:
+      - '`11`'
+      - 'Nothing: `filter` never finishes the infinite list'
+      - '`[11]`'
+    correct_index: 0
+    option_feedback:
+      1: '`head` needs only the first element that `filter` produces, so evaluation stops once 11 is found. The rest of the infinite list is never examined.'
+      2: '`head` returns the first element itself, not a one-element list.'
+    explanation: Lazy evaluation computes only what the consumer demands. `head` demands one element, so `filter` tests 1 through 11 and stops.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 91–96 (reducers, foldl)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-fold-direction
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 75
+    question: What do `foldr (-) 0 [5, 3, 1]` and `foldl (-) 0 [5, 3, 1]` evaluate to, in that order?
+    options:
+      - '`3` and `-9`'
+      - '`-9` and `3`'
+      - '`1` and `1`'
+      - '`3` and `3`'
+    correct_index: 0
+    option_feedback:
+      1: The values are swapped. `foldr` nests to the right, `5 - (3 - (1 - 0))`, while `foldl` starts from the left, `((0 - 5) - 3) - 1`.
+      2: '`1` is `5 - 3 - 1` without the initial value. Both folds also apply `-` to the starting value 0.'
+      3: Subtraction is not associative, so the two groupings produce different results.
+    explanation: '`foldr f z [a, b, c]` is `f a (f b (f c z))`, and `foldl f z [a, b, c]` is `f (f (f z a) b) c`. With subtraction, these groupings give 3 and -9.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 5–7, 29–33 (immutability, let)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-let-shadowing
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      What is the value of `result`?
+
+      ```haskell
+      result :: Int
+      result =
+        let rate = 3
+            scale x = x * rate
+        in let rate = 10 in scale 2
+      ```
+    options:
+      - '`6`'
+      - '`20`'
+      - 'A compile error: `rate` is defined twice'
+    correct_index: 0
+    option_feedback:
+      1: '`scale` uses the `rate` that was in scope where `scale` was defined. The inner `let` creates a different `rate` that only later expressions can see.'
+      2: Nested `let` expressions may reuse a name. The inner binding hides the outer one instead of conflicting with it.
+    explanation: Haskell scope is lexical, and bindings never change. The inner `rate = 10` is a new binding, so `scale 2` still computes `2 * 3`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 118–128 (currying)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-curried-map
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 60
+    question: What does `map (\f -> f 3) (map (*) [1, 2, 3])` evaluate to?
+    options:
+      - '`[3,6,9]`'
+      - '`[1,2,3]`'
+      - 'A type error: `(*)` needs two arguments'
+    correct_index: 0
+    option_feedback:
+      1: '`map (*) [1, 2, 3]` produces the functions `(1 *)`, `(2 *)`, and `(3 *)`. Applying each one to 3 multiplies rather than returning the stored number.'
+      2: Every Haskell function takes one argument at a time. Applying `(*)` to one number is valid and returns a function waiting for the second.
+    explanation: Because `(*)` is curried, mapping it over numbers yields a list of partially applied functions. The lambda then supplies 3 to each one, producing 3, 6, and 9.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 131–148 (algebraic data types, immutable structures)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-record-update
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |-
+      What does the last line print?
+
+      ```haskell
+      data Point = Point { px :: Int, py :: Int }
+
+      main = do
+        let p = Point 1 2
+            q = p { px = 5 }
+        print (px p, px q)
+      ```
+    options:
+      - '`(1,5)`'
+      - '`(5,5)`'
+      - 'A compile error: record fields cannot change'
+    correct_index: 0
+    option_feedback:
+      1: A record update builds a new value; it does not modify `p`. Only `q` has the new `px`.
+      2: Record update syntax is allowed. It creates a modified copy instead of assigning to the existing record.
+    explanation: '`p { px = 5 }` constructs a new `Point` whose `px` is 5 and whose other fields come from `p`. The original `p` is unchanged, so both versions remain available.'

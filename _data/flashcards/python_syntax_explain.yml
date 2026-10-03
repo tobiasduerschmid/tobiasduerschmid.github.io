@@ -224,3 +224,115 @@ cards:
       print(second.readings, third.readings)
       ```
     answer: "Prints `[6] []`. The None default prevents accidental reuse of an omitted list argument. This constructor deliberately keeps any supplied list, so the first two batches share supplied. The third batch creates its own list. To forbid that deliberate sharing too, the constructor would need a different ownership contract and an appropriate copy."
+  - id: 19
+    difficulty: intermediate
+    question: |
+      Predict the output and explain why the two aliases differ.
+      ```python
+      label = "dark"
+      saved_label = label
+      label += " frame"
+
+      frames = ["dark"]
+      saved_frames = frames
+      frames += ["flat"]
+      print(saved_label, saved_frames)
+      ```
+    answer: "Prints `dark ['dark', 'flat']`. A string cannot change, so `label += \" frame\"` builds a new string and rebinds only `label`. A list supports in-place extension, so `frames += [\"flat\"]` mutates the object that `saved_frames` also names. The same `+=` spelling has different effects on immutable and mutable objects."
+  - id: 20
+    difficulty: intermediate
+    question: |
+      Predict the output. Does the tuple prevent the change?
+      ```python
+      batch = ([], "north")
+      batch[0].append("dust")
+      print(batch)
+      ```
+    answer: "Prints `(['dust'], 'north')` without an error. A tuple fixes which objects occupy its slots, not whether those objects can change; `append` mutates the list and never assigns to the tuple. By contrast, `batch[0] += [\"dust\"]` would extend the list and then raise `TypeError` when it tried to store the result back into the tuple's slot."
+  - id: 21
+    difficulty: advanced
+    question: |
+      Predict the output and explain it.
+      ```python
+      squares = []
+      for n in range(3):
+          def square():
+              return n * n
+          squares.append(square)
+      print(squares[0]())
+      ```
+    answer: "Prints `4`, not `0`. The body of `square` looks up `n` when it is called. By then the loop has finished and `n` is still bound to `2`, because a `for` loop does not create a scope. Capture the current value with a default argument, `def square(n=n):`, because defaults are evaluated when `def` executes."
+  - id: 22
+    difficulty: intermediate
+    question: |
+      Predict the output. Why does this loop remove every `3`?
+      ```python
+      readings = [7, 3, 3, 9]
+      for value in readings[:]:
+          if value == 3:
+              readings.remove(value)
+      print(readings)
+      ```
+    answer: "Prints `[7, 9]`. `readings[:]` makes a shallow copy, so the loop steps through a list that never changes while `remove` edits the original. Looping over `readings` itself would print `[7, 3, 9]`: each removal shifts later items into positions the loop has already visited."
+  - id: 23
+    difficulty: intermediate
+    question: |
+      Predict both lines of output.
+      ```python
+      temps = [3, 1, 2]
+      print(sorted(temps), temps)
+      print(temps.sort(), temps)
+      ```
+    answer: "Prints `[1, 2, 3] [3, 1, 2]`, then `None [1, 2, 3]`. `sorted()` returns a new list and leaves `temps` alone. `temps.sort()` reorders `temps` in place and returns `None`, the usual sign of a mutating method. The second argument is evaluated after that call, so it shows the sorted list."
+  - id: 24
+    difficulty: intermediate
+    question: |
+      Predict the output. What would happen without the `global` line?
+      ```python
+      count = 0
+
+      def record():
+          global count
+          count += 1
+
+      record()
+      record()
+      print(count)
+      ```
+    answer: "Prints `2`. Without `global count`, the assignment in `count += 1` would make `count` local to the whole function, and reading it before it has a value would raise `UnboundLocalError`. The declaration makes the function rebind the module-level name instead. Returning the new value is often clearer than relying on a global."
+  - id: 25
+    difficulty: intermediate
+    question: |
+      Predict the output. Why is there no `ZeroDivisionError`?
+      ```python
+      print("" or "anonymous", "Ann" or "anonymous")
+      print(0 and 10 / 0)
+      ```
+    answer: "Prints `anonymous Ann`, then `0`. `or` returns its first truthy operand and `and` returns its first falsy one; neither converts the result to `bool`. `0 and 10 / 0` stops at the falsy `0`, so the division never runs."
+  - id: 26
+    difficulty: advanced
+    question: |
+      Predict the output.
+      ```python
+      print(round(0.5), round(1.5), round(-2.5))
+      ```
+    answer: "Prints `0 2 -2`. `round()` resolves exact halves to the nearest even integer, for negative values too. C++'s `std::round` rounds halves away from zero and would give 1, 2, and -3."
+  - id: 27
+    difficulty: intermediate
+    question: |
+      Predict the output.
+      ```python
+      x = 7
+      print(1 < x < 10, 10 > x > 8)
+      ```
+    answer: "Prints `True False`. A chained comparison checks each adjacent pair and combines the results with `and`: `1 < x and x < 10` is true, while `10 > x and x > 8` is false. C++ would instead compare the Boolean result of the first comparison with the third operand."
+  - id: 28
+    difficulty: intermediate
+    question: |
+      Predict the output. How would `dict.fromkeys` change it?
+      ```python
+      logs = {dome: [] for dome in ["north", "south"]}
+      logs["north"].append("dust")
+      print(logs)
+      ```
+    answer: "Prints `{'north': ['dust'], 'south': []}`. A comprehension evaluates `[]` once per key, so each dome gets its own list. `dict.fromkeys([\"north\", \"south\"], [])` would store one shared list under both keys, and the append would appear under both."

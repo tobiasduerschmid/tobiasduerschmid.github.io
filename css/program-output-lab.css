@@ -1,0 +1,49 @@
+/*
+ * ProgramOutputLab — program front end over the UnixCommandLab card.
+ * Load after unix-command-lab.css: the card layout, prediction box, reveal
+ * burst, confetti, reduced-motion rules, and print rules all come from
+ * there. This module only colours the program source panel.
+ *
+ * Token colours are decorative (the code is fully readable without them)
+ * and each meets 4.5:1 against its panel background:
+ *   light (#ffffff): keyword 7.2, string 6.6, number 6.4, comment 5.9,
+ *                    builtin 6.8, type 6.0
+ *   dark  (#1c2533): keyword 7.9, string 9.8, number 8.8, comment 6.2,
+ *                    builtin 7.9, type 8.8
+ * Dark-mode printouts are flattened to black on white by print-light.css.
+ */
+
+/* Indentation is syntax in Python and Haskell, so source lines never wrap:
+   a wrapped continuation would start at column 0 and read as a dedent. Long
+   lines scroll instead; accessibility-fixes.js makes an overflowing panel
+   keyboard-focusable. Printouts cannot scroll, so they wrap. The second
+   selector outranks sebook-theme.css, which sets pre-wrap on every <pre>
+   in SEBook content through an ID selector. */
+.program-lab__source,
+body.sebook-layout #main-content .program-lab__source {
+  tab-size: 4;
+  white-space: pre;
+  word-break: normal;
+  overflow-x: auto;
+}
+@media print {
+  .program-lab__source,
+  body.sebook-layout #main-content .program-lab__source {
+    white-space: pre-wrap;
+    overflow: visible;
+  }
+}
+
+.program-lab__tok--keyword { color: #8a2c9e; }
+.program-lab__tok--string  { color: #0f6b33; }
+.program-lab__tok--number  { color: #9c4500; }
+.program-lab__tok--comment { color: #5a6573; font-style: italic; }
+.program-lab__tok--builtin { color: #1e5f8d; }
+.program-lab__tok--type    { color: #0b6e75; }
+
+html.dark-mode .program-lab__tok--keyword { color: #d2a8ff; }
+html.dark-mode .program-lab__tok--string  { color: #7ee2a8; }
+html.dark-mode .program-lab__tok--number  { color: #f2b880; }
+html.dark-mode .program-lab__tok--comment { color: #9aa6b2; }
+html.dark-mode .program-lab__tok--builtin { color: #79c0ff; }
+html.dark-mode .program-lab__tok--type    { color: #6fd3d8; }

@@ -14,6 +14,7 @@
     '.tvm-output-container',
     '.tvm-diagram-content',
     '.git-command-lab__rebase-file',
+    '.program-lab__source',
   ].join(', ');
 
   const MEASURED_SCROLLABLE_SELECTOR = [
@@ -21,6 +22,7 @@
     '.highlighter-rouge .highlight pre',
     'pre.highlight',
     '.git-command-lab__rebase-file',
+    '.program-lab__source',
   ].join(', ');
 
   function isScrollable(el) {
