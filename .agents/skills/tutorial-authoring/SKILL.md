@@ -640,6 +640,10 @@ remove entries by hand. Things to know:
       changed runtime behavior, add or update a Playwright spec under
       `tests/`. Existing examples: `tests/python-tutorial.spec.js`,
       `tests/git-tutorial.spec.js`.
+- [ ] **Prolog query surfaces stay independent.** Run and Debug execute
+      the step's `default_query`; free-form queries belong in the Interpreter
+      view. Check that interpreter drafts, history, and transcript survive
+      ordinary Run/Test actions without changing the authored query.
 - [ ] **Update this SKILL.md** if you added a new YAML field, new
       backend, new popout, new test runner, new quiz / hint mechanic, new
       autosave mode, new debugger capability, or any architectural change.
@@ -689,8 +693,9 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | uml-edi
 # webcontainer  — Node.js + npm + dev server (StackBlitz). Needs COOP/COEP.
 # react         — React + Vite + live preview iframe + Playwright-compat.
 # prolog        — Single-backend Tau Prolog 0.3.4 worker, locally pinned under
-#                 js/vendor/tau-prolog/0.3.4/. A Query field runs goals against
-#                 the step's run_file. Supports the course not/1 alias for \+/1.
+#                 js/vendor/tau-prolog/0.3.4/. Run executes default_query against
+#                 the step's run_file; the separate Interpreter view accepts
+#                 free-form goals. Supports the course not/1 alias for \+/1.
 # haskell       — Haskell in a hidden, sandboxed runtime frame through the
 #                 repository's locally pinned MicroHs WebAssembly runtime.
 #                 Uses the output panel rather than a shell, is single-backend
@@ -1060,19 +1065,20 @@ steps:
                                              # uses the `tests:` block) — set
                                              # only one to avoid two test
                                              # buttons on screen.
-    has_args: boolean                        # pyodide / webcontainer / prolog
+    has_args: boolean                        # pyodide / webcontainer
                                              # only. Show a command-line argv
                                              # field next to the Run button.
                                              # Pyodide passes it as `sys.argv`,
                                              # webcontainer appends it to the
                                              # `node <run_file>` invocation as
-                                             # `process.argv.slice(2)`, prolog
-                                             # uses it as the goal query.
-    default_query: string                    # prolog only. Initial Query field
-                                             # value on each step load. Write a
-                                             # goal without the ?- prompt; its
-                                             # final period is optional. The
-                                             # field is always shown for Prolog.
+                                             # `process.argv.slice(2)`.
+    default_query: string                    # prolog only. Authored goal used by
+                                             # Run and Debug, independent of the
+                                             # Interpreter prompt and history.
+                                             # Write a goal without the ?- prompt;
+                                             # its final period is optional.
+                                             # An absent/empty goal makes Run
+                                             # consult the entry file only.
     default_args: string                     # webcontainer only. Initial
                                              # value the argv field shows on
                                              # step load. Useful so the first
@@ -1400,7 +1406,10 @@ synchronizes with the main tutorial via `BroadcastChannel` (see
   claiming all tests or knowledge checks passed. Instructions snapshots and
   navigation messages include `hasUnpassedQuiz` so the final step's Next
   control can still open its knowledge check in the popout.
-- `tutorial-output-popup.html` — stdout / stderr / preview iframe.
+- `tutorial-output-popup.html` — stdout / stderr / preview iframe. Prolog's
+  Run output remains detachable; its separate Interpreter view and query
+  history stay usable in the main tutorial. The main Output mode then shows
+  a detached-output notice and a Reattach Output control.
 - `tutorial-debugger-popup.html` — shared debugger UI for enabled backends.
 - `tutorial-pane-popup.html` — single editor pane (test or code file).
 - `tutorial-tab-popup.html` — single code file in Monaco.
@@ -1587,8 +1596,6 @@ channel.
   its tooltip immediately without a fade so it cannot cover the next focused
   control. Preserve the hover grace period when the pointer is travelling
   from a trigger into its tooltip, and keep Escape dismissal available.
-  Prolog output controls dismiss their tooltips immediately on activation so a
-  consumed hint cannot block the next button when the query toolbar wraps.
   `js/monaco-focus-exit.js` supplies the Escape-to-leave-editor behavior
   promised by the Monaco accessibility labels in both the main tutorial and
   code popouts. Monaco's suggestion, find, rename, parameter-hint, and snippet
@@ -1880,7 +1887,9 @@ consequences (per-backend setup commands, no Run button, no v86 prewarm).
 
 `prolog` is a single-backend worker mode. Run consults the step's `run_file`
 (falling back to the active editor file) as source text in a fresh session,
-then executes the Query field. Prolog `files[].path`, `solution.files[].path`,
+then executes that step's `default_query`. It never reads the separate
+Interpreter prompt or command history. An absent or empty `default_query`
+loads the program without submitting a goal. Prolog `files[].path`, `solution.files[].path`,
 `open_file`, and `run_file` accept either workspace-relative paths (`main.pl`)
 or absolute paths below `/tutorial/` (`/tutorial/main.pl`). The constructor
 normalizes these to one relative editor identity without mutating the supplied
@@ -1947,13 +1956,55 @@ the host adds `/tutorial/` when syncing files. Absolute `/tutorial/...` paths
 are not a supported Haskell authoring form. Haskell `setup_commands` and `solution.commands` are
 intentionally unsupported; express setup and solutions through workspace files.
 
+#### Prolog query interpreter
+
+Every `backend: prolog` tutorial automatically offers **Output** and
+**Interpreter** view buttons, following the Haskell interaction model.
+`js/prolog/interpreter.js` owns the accessible query transcript, inline `?-`
+prompt, and bounded, page-session-only command history. Its light, dark, and
+print presentation shares `css/tutorial-interpreter.css` with Haskell; `TutorialCode`
+loads and disposes the component with the tutorial.
+
+- **Run** and **Debug** use the step's authored `default_query` and designated
+  `run_file`. **Test My Work** also checks that designated entry file. These
+  actions never consume the Interpreter draft or previous query. Run displays
+  ordinary Output; returning to Interpreter preserves its draft and transcript.
+- Interpreter queries use the active Prolog editor file, including
+  unsaved changes. Each submission consults that file afresh, so query-created
+  facts and bindings do not persist into the next command. Reusable facts and
+  rules belong in the editor. An optional trailing period is accepted, and all
+  answers are requested automatically within the existing worker limits.
+- The existing worker `{ type: 'run', id, path, query }` protocol remains in
+  use. While the exclusive interpreter execution transaction is active, its
+  `onOutput` callback receives Prolog stdout/stderr for the transcript; other
+  execution output follows the normal Output path. Keep interpreter output
+  separate from ordinary Run, debugger output, and exercise checks.
+- Interpreter execution shares the host guard with Run, checks, step loading,
+  and the debugger. Stop and timeout use the existing disposable-worker
+  recovery path, restoring the current workspace before another query runs.
+- Submitted commands and results share a scrolling terminal with a fresh inline
+  prompt. Keep the input outside the live log, preserve text selection, and
+  let Tab leave the prompt. Enter evaluates; Up/Down recall commands; Ctrl+L
+  clears the transcript; Ctrl+C interrupts or cancels unfinished input while
+  selected text retains Copy. These Ctrl shortcuts also use Ctrl on macOS.
+  Visible Previous query, Next query, Clear transcript, and Stop evaluation controls
+  provide pointer alternatives; keep `/shortcuts/` synchronized.
+- The history and transcript add no browser storage keys. The Output popout
+  remains an Output surface; it has no Prolog query textbox and does not mirror
+  the Interpreter. The terminal controls are hidden in print.
+
+Keep the Prolog interpreter UI tests, existing Prolog tutorial tests, worker
+contract tests, and language-debugger tests passing. Verify default-query Run
+remains independent of interpreter edits, active-file queries use fresh source,
+history restores unfinished drafts, and errors or Stop permit another query.
+
 #### Haskell expression interpreter
 
 Every `backend: haskell` tutorial automatically offers **Output** and
 **Interpreter** view buttons; no YAML opt-in is needed. The interpreter is
 MicroHs, not GHCi. `js/haskell/interpreter.js` owns the accessible transcript,
 inline shell prompt, and bounded, page-session-only history; presentation lives in
-`css/haskell-interpreter.css`. Its semantic color variables follow the site’s
+`css/tutorial-interpreter.css`, shared with Prolog. Its semantic color variables follow the site's
 light/dark theme, including input, transcript, help, and control states.
 `TutorialCode` loads both alongside cycle diagnostics.
 
@@ -2012,7 +2063,8 @@ the isolation service worker solely for their debugger flag.
 
 Each debug session owns a separate Prolog worker or sandboxed Haskell frame.
 It receives the current editor files and the same step `run_file` as Run;
-Prolog receives the Query field as one complete goal string. Stop destroys
+Prolog receives the step's `default_query` as one complete goal string,
+independently of the Interpreter prompt and history. Stop destroys
 that executor. Normal Run and Test keep their own runtime and file state.
 The host applies a 120-second boot watchdog and a 30-second execution
 watchdog by default (`debugger_options.execution_timeout_ms` overrides the

@@ -922,16 +922,6 @@
             // Keyboard / focus path: immediate, no delay.
             showTooltip(this);
           })
-          .on('click.a11yTooltip', function () {
-            var header = this.closest('.tvm-output-header');
-            if (this.tagName !== 'BUTTON' || !header || !header.querySelector('.tvm-prolog-query')) return;
-            // A used control's hint must not cover the next wrapped query control.
-            var $trigger = jQuery(this);
-            clearShowTimer($trigger);
-            clearHideTimer($trigger);
-            getTip($trigger).removeClass('fade');
-            $trigger.tooltip('hide');
-          })
           .on('mouseleave.a11yTooltip', function () {
             var $trigger = jQuery(this);
             clearShowTimer($trigger);

@@ -1,0 +1,170 @@
+/* Shared Haskell/Prolog terminal presentation. Each runtime owns its behavior. */
+:is(.haskell-interpreter-views, .prolog-interpreter-views),
+.prolog-interpreter-detached-output,
+:is(.haskell-interpreter, .prolog-interpreter) {
+  --interpreter-surface: #ffffff;
+  --interpreter-chrome: #f3f4f6;
+  --interpreter-control: #ffffff;
+  --interpreter-transcript: #f8fafc;
+  --interpreter-text: #242a35;
+  --interpreter-muted: #59616f;
+  --interpreter-border: #747d8c;
+  --interpreter-accent: #075f9c;
+  --interpreter-selected: #e5f1fc;
+  --interpreter-hover: #edf2f7;
+  --interpreter-focus: #0969da;
+  --interpreter-code: #174b6f;
+  background: var(--interpreter-surface);
+  color: var(--interpreter-text);
+  font-size: var(--font-size-readable-min, 16px);
+  font-weight: 400;
+  line-height: 1.5;
+}
+:is(.haskell-interpreter-views, .prolog-interpreter-views) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25em;
+  padding: .25em .5em;
+  background: var(--interpreter-chrome);
+  border-bottom: 1px solid var(--interpreter-border);
+}
+:is(.haskell-interpreter-views, .prolog-interpreter-views) button,
+.prolog-interpreter-detached-output button,
+:is(.haskell-interpreter, .prolog-interpreter) button,
+:is(.haskell-interpreter, .prolog-interpreter) input {
+  font: inherit;
+  color: inherit;
+  background: var(--interpreter-control);
+  border: 1px solid var(--interpreter-border);
+  border-radius: .25em;
+  padding: .2em .5em;
+  min-height: 2em;
+}
+:is(.haskell-interpreter-views, .prolog-interpreter-views) button[aria-pressed="true"] {
+  background: var(--interpreter-selected);
+  border-color: var(--interpreter-accent);
+  font-weight: bold;
+}
+:is(.haskell-interpreter-views, .prolog-interpreter-views) button:hover,
+.prolog-interpreter-detached-output button:hover,
+:is(.haskell-interpreter, .prolog-interpreter) button:not(:disabled):hover { background: var(--interpreter-hover); }
+:is(.haskell-interpreter, .prolog-interpreter) button:disabled { color: var(--interpreter-muted); background: var(--interpreter-chrome); cursor: default; }
+:is(.haskell-interpreter-views, .prolog-interpreter-views) button:focus-visible,
+.prolog-interpreter-detached-output :focus-visible,
+:is(.haskell-interpreter, .prolog-interpreter) :focus-visible { outline: 2px solid var(--interpreter-focus); outline-offset: 2px; }
+.prolog-interpreter-detached-output { padding: .5em; }
+.prolog-interpreter-detached-output p { font: inherit; margin: 0 0 .5em; }
+:is(.haskell-interpreter, .prolog-interpreter) {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  margin: 0;
+  padding: .25em .5em;
+  gap: .25em;
+}
+:is(.haskell-interpreter, .prolog-interpreter)[hidden],
+.tvm-output-container[hidden] { display: none; }
+:is(.haskell-interpreter, .prolog-interpreter) :is(.haskell-interpreter-intro, .prolog-interpreter-intro) { font: inherit; margin: 0 0 .25em; color: var(--interpreter-muted); }
+:is(.haskell-interpreter, .prolog-interpreter) :is(.haskell-interpreter-intro, .prolog-interpreter-intro) code { font: inherit; color: inherit; background: transparent; padding: 0; border: 0; }
+:is(.haskell-interpreter-toolbar, .prolog-interpreter-toolbar) { display: flex; flex-wrap: wrap; align-items: center; gap: .25em; flex-shrink: 0; }
+:is(.haskell-interpreter-toolbar, .prolog-interpreter-toolbar) > span { margin-right: .25em; font-weight: 600; }
+:is(.haskell-interpreter-help, .prolog-interpreter-help) { flex-shrink: 0; margin: 0; padding: 0; }
+:is(.haskell-interpreter, .prolog-interpreter) :is(.haskell-interpreter-help, .prolog-interpreter-help) summary { cursor: pointer; color: var(--interpreter-accent); font-weight: 600; margin: 0; }
+:is(.haskell-interpreter-help, .prolog-interpreter-help) ul { margin: .5em 0; padding-left: 1.5em; }
+:is(.haskell-interpreter-help, .prolog-interpreter-help) li { font: inherit; }
+:is(.haskell-interpreter, .prolog-interpreter) :is(.haskell-interpreter-help, .prolog-interpreter-help) code { color: var(--interpreter-code); background: transparent; font-size: 1em; }
+:is(.haskell-interpreter, .prolog-interpreter) :is(.haskell-interpreter-help, .prolog-interpreter-help) a,
+:is(.haskell-interpreter, .prolog-interpreter) :is(.haskell-interpreter-help, .prolog-interpreter-help) a:visited { color: var(--interpreter-accent); text-decoration: underline; }
+:is(.haskell-interpreter, .prolog-interpreter) :is(.haskell-interpreter-help, .prolog-interpreter-help) a:is(:hover, :focus) {
+  color: var(--interpreter-accent);
+  background: var(--interpreter-hover);
+}
+:is(.haskell-interpreter-terminal, .prolog-interpreter-terminal) {
+  flex: 1 1 auto;
+  min-height: 6em;
+  overflow: auto;
+  background: var(--interpreter-transcript);
+  color: var(--interpreter-text);
+  border: 1px solid var(--interpreter-border);
+  padding: .4em;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  cursor: text;
+}
+:is(.haskell-interpreter-log, .prolog-interpreter-log) { min-height: 0; }
+
+:is(.haskell-interpreter, .prolog-interpreter) :is(.haskell-interpreter-log, .prolog-interpreter-log) pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  color: inherit;
+  background: transparent;
+  padding: 0;
+  border: 0;
+  margin: 0;
+}
+:is(.haskell-interpreter-log, .prolog-interpreter-log) details { margin: .5em 0; padding: 0; }
+:is(.haskell-interpreter, .prolog-interpreter) :is(.haskell-interpreter-log, .prolog-interpreter-log) summary { color: var(--interpreter-accent); cursor: pointer; }
+:is(.haskell-interpreter-form, .prolog-interpreter-form) { display: flex; align-items: center; gap: .4em; margin: 0; }
+:is(.haskell-interpreter, .prolog-interpreter) :is(.haskell-interpreter-prompt, .prolog-interpreter-prompt) {
+  display: flex;
+  align-items: baseline;
+  flex: 1;
+  min-width: 0;
+  gap: .5em;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+}
+:is(.haskell-interpreter-prompt-marker, .prolog-interpreter-prompt-marker) { color: var(--interpreter-accent); font-weight: 600; }
+:is(.haskell-interpreter, .prolog-interpreter) :is(.haskell-interpreter-prompt, .prolog-interpreter-prompt) input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: .15em 0;
+  box-shadow: none;
+}
+:is(.haskell-interpreter, .prolog-interpreter) :is(.haskell-interpreter-prompt, .prolog-interpreter-prompt) input:focus-visible {
+  outline: 0;
+  box-shadow: 0 2px 0 var(--interpreter-focus);
+}
+:is(.haskell-interpreter-form, .prolog-interpreter-form) button { flex-shrink: 0; }
+html.dark-mode :is(.haskell-interpreter, .prolog-interpreter),
+html.dark-mode .prolog-interpreter-detached-output,
+html.dark-mode :is(.haskell-interpreter-views, .prolog-interpreter-views) {
+  --interpreter-surface: #141414;
+  --interpreter-chrome: #1c1c1c;
+  --interpreter-control: #252525;
+  --interpreter-transcript: #141414;
+  --interpreter-text: #eeeeee;
+  --interpreter-muted: #bfbfbf;
+  --interpreter-border: #858585;
+  --interpreter-accent: #bed8ff;
+  --interpreter-selected: #364f73;
+  --interpreter-hover: #364f73;
+  --interpreter-focus: #fbd975;
+  --interpreter-code: #dfebff;
+}
+/* Narrow tutorial layouts use document flow instead of fixed-height panes. */
+@media screen and (max-width: 900px) {
+  :is(.haskell-interpreter, .prolog-interpreter) {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+  :is(.haskell-interpreter-terminal, .prolog-interpreter-terminal) {
+    flex: 0 0 auto;
+    max-height: 24em;
+  }
+}
+@media print {
+  .prolog-interpreter-detached-output,
+  :is(.haskell-interpreter, .prolog-interpreter),
+  :is(.haskell-interpreter-views, .prolog-interpreter-views) { display: none !important; }
+}

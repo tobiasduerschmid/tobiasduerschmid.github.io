@@ -263,6 +263,7 @@
       content: meta.content || '',
       previewGeneration: meta.previewGeneration,
       darkMode: !!meta.darkMode,
+      controls: meta.controls || {},
     });
   };
 

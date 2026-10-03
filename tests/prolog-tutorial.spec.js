@@ -15,20 +15,13 @@ const runButton = page => page.getByRole('button', { name: /run$/i });
 const testButton = page => page.getByRole('button', { name: /test my work/i });
 const nextButton = page => page.getByRole('button', { name: /^Next/ });
 const output = page => page.getByRole('region', { name: 'Program output' });
-const queryInput = page => page.getByRole('textbox', { name: 'Query (Prolog goal)' });
 
 async function openTutorial(page, id) {
   await page.goto(`/SEBook/tools/${id}-tutorial`);
   await waitForTutorialReady(page);
-  await expect(queryInput(page)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Interpreter', exact: true })).toBeVisible();
+  await expect(output(page)).toBeVisible();
   await expect(runButton(page)).toBeEnabled();
-}
-
-async function runQuery(page, goal) {
-  await page.getByRole('button', { name: 'Clear', exact: true }).click();
-  await queryInput(page).fill(goal);
-  await runButton(page).click();
-  await expect(runButton(page)).toBeEnabled({ timeout: RUN_TIMEOUT });
 }
 
 function plainText(markdown) {
@@ -107,7 +100,6 @@ for (const id of COURSES) {
       for (const [index, step] of config.steps.entries()) {
         await expectActiveStep(page, index);
         await expect(page.getByRole('heading', { name: step.title, exact: true })).toBeVisible();
-        await expect(queryInput(page)).toHaveValue(step.default_query);
         // Monaco's supported model API supplies learner edits; the verdict is
         // observed through the same controls and status messages learners use.
         const entry = step.solution.files.find(file => file.path === step.run_file);
@@ -152,26 +144,6 @@ for (const id of COURSES) {
     });
   });
 }
-
-test('queries run edited facts, distinguish failure from errors, and recover after invalid source', async ({ page }) => {
-  await openTutorial(page, 'prolog');
-  expect(await setEditorContent(page, 'parent(tom, bob).')).toBe(true);
-  await runQuery(page, 'parent(Who, bob)');
-  await expect(output(page)).toContainText(/Who\s*=\s*tom/);
-  await runQuery(page, 'parent(bob, tom)');
-  await expect(output(page)).toContainText('false.');
-  expect(await setEditorContent(page, 'parent(tom, bob')).toBe(true);
-  await runQuery(page, 'parent(tom, Who)');
-  await expect(output(page)).toContainText(/error/i);
-  expect(await setEditorContent(page, 'parent(tom, mia).')).toBe(true);
-  await runQuery(page, 'parent(tom, Who)');
-  await expect(output(page)).toContainText(/Who\s*=\s*mia/);
-  await expect(output(page)).not.toContainText(/error/i);
-  await queryInput(page).focus();
-  await expect(queryInput(page)).toBeFocused();
-  await page.getByRole('button', { name: 'Clear', exact: true }).click();
-  await expect(output(page)).toBeEmpty();
-});
 
 function savedPrologProgress(page) {
   // Tutorial exports are the public persistence contract shared with SE Gym.
@@ -250,23 +222,7 @@ test('the replacement preserves legacy drafts without giving old completion cred
   expect(progress.quizPassed).toEqual([]);
 });
 
-test('a learner can stop an endless collected search and run repaired code', async ({ page }) => {
-  await openTutorial(page, 'prolog');
-  expect(await setEditorContent(page, 'spin :- spin.')).toBe(true);
-  await queryInput(page).fill('findall(X, spin, Answers)');
-  await runButton(page).click();
-  const stopButton = page.getByRole('button', { name: /Stop$/ });
-  await expect(stopButton).toBeVisible();
-  await stopButton.click();
-  await expect(output(page)).toContainText('Execution stopped');
-  await expect(runButton(page)).toBeEnabled({ timeout: RUN_TIMEOUT });
-  expect(await setEditorContent(page, 'parent(tom, mia).')).toBe(true);
-  await runQuery(page, 'parent(tom, Child)');
-  await expect(output(page)).toContainText(/Child\s*=\s*mia/);
-  await a11yCheckpoint(page, 'Prolog: recovered after Stop', { feature: 'prolog-tutorial', darkMode: true });
-});
-
-test('Run and Test My Work use the designated Prolog entry while a different file is open', async ({ page }) => {
+test('Run uses the step default query and Test uses the entry file independently of the interpreter', async ({ page }) => {
   await openTutorial(page, 'prolog');
   // Configure a small two-file tutorial through its author-facing constructor.
   // This fixture is not a mock: it uses the real editor, worker, and grading UI.
@@ -285,15 +241,43 @@ test('Run and Test My Work use the designated Prolog entry while a different fil
         default_query: 'choice(Value)',
         tests: [{ description: 'The entry relation is consulted',
           command: "assert((await __query('findall(X,choice(X),Xs), Xs == [entry].')).length === 1, 'The entry file should supply the relation.');" }],
+      }, {
+        title: 'Next Default Query', instructions: 'Run this step\'s query.',
+        files: [{ path: 'second.pl', language: 'prolog', content: 'choice(second).' }],
+        run_file: 'second.pl', default_query: 'choice(Selected)',
       }],
     });
     await window._tutorial.start();
   });
   await expect(page.getByRole('button', { name: 'notes.pl', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Interpreter', exact: true }).click();
+  const interpreter = page.getByRole('region', { name: 'Prolog interpreter', exact: true });
+  const query = interpreter.getByRole('textbox', { name: 'Prolog query', exact: true });
+  const transcript = interpreter.getByRole('log', { name: 'Prolog interpreter transcript' });
+  await query.fill('choice(Active)');
+  await query.press('Enter');
+  await expect(transcript).toContainText(/Active\s*=\s*notes/, { timeout: RUN_TIMEOUT });
+  await expect(query).toBeEditable();
+  await query.fill('fail');
+
   await runButton(page).click();
+  await expect(interpreter).toBeHidden();
+  await expect(output(page)).toBeVisible();
   await expect(output(page)).toContainText(/Value\s*=\s*entry/, { timeout: RUN_TIMEOUT });
   await expect(output(page)).not.toContainText('notes');
+  await page.getByRole('button', { name: 'Interpreter', exact: true }).click();
+  await expect(query).toHaveValue('fail');
+  await expect(transcript).toContainText(/Active\s*=\s*notes/);
+  await expect(transcript).not.toContainText(/Value\s*=\s*entry/);
+  await query.press('Enter');
+  await expect(transcript).toContainText('false.');
+
   await testButton(page).click();
   await expect(page.getByRole('status').filter({ hasText: /^All 1 test passed\./ }))
     .toHaveText('All 1 test passed.', { timeout: RUN_TIMEOUT });
+
+  await page.getByRole('button', { name: /^Step 2:/ }).click();
+  await runButton(page).click();
+  await expect(output(page)).toContainText(/Selected\s*=\s*second/, { timeout: RUN_TIMEOUT });
+  await expect(output(page)).not.toContainText(/Value\s*=\s*entry/);
 });

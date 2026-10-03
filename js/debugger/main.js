@@ -3124,6 +3124,7 @@
     var model = this.t.editorModels[filename] && this.t.editorModels[filename].model;
     if (!model) { this.setStatus('Cannot locate code for ' + filename + '. Open the program file and try again.'); return; }
     var code = model.getValue();
+    if (this.t._prologInterpreter) this.t._prologInterpreter.showOutput();
     if (backend === 'haskell' && !this.t._haskellCycles.check(filename)) {
       this.setStatus('Execution blocked by a Haskell alias cycle. Check the editor diagnostics.');
       return;
@@ -3207,7 +3208,7 @@
         breakpoints: this.collectBreakpointsForRun(),
         watches: this.session.watches,
         args: this.session.args || [],
-        query: (this.t.root.querySelector('.tvm-args-input') || {}).value || '',
+        query: backend === 'prolog' ? (step.default_query || '') : '',
         options: this.opts,
         serverMode: !!(step && step.http_client),
         overrides: this.session.replayOverrides || [],

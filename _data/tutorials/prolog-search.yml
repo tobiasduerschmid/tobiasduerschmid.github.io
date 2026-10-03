@@ -55,7 +55,7 @@ steps:
       - Three splits, including the two empty-list splits.
       - An error because two arguments are unknown.
 
-      Run, then inspect every answer. Empty lists count as lists!
+      Run, then inspect every answer. Empty lists count as lists! **Run** evaluates the step's supplied query in **Output**. To try another query, select **Interpreter**, enter a goal at the `?-` prompt, and press Enter or select **Evaluate query**. Each interpreter query uses the open Prolog file, including your latest edits; earlier queries and answers remain in its transcript.
       Now try `append([lofi], [jazz], Whole)` and
       `append([lofi], [jazz], [jazz, lofi])`.
 
@@ -266,7 +266,7 @@ steps:
       ### Four Different Questions
 
       Treat each row as a fresh query. Predict whether it binds X to a term,
-      binds X to a number, succeeds without binding, or fails before Run:
+      binds X to a number, succeeds without binding, or fails before submitting it in **Interpreter**:
 
       | Query | Question |
       | --- | --- |
@@ -275,7 +275,7 @@ steps:
       | `X is 3 + 4` | What number does the right-hand expression evaluate to? |
       | `3 + 4 =:= 7` | Do these two expressions evaluate to equal numbers? |
 
-      Run and compare. `is` evaluates its **right** side, then unifies its
+      Evaluate each query and compare. `is` evaluates its **right** side, then unifies its
       left side with the resulting number. `=:=` evaluates both sides and
       compares them. Neither is an equation solver: `7 is X + 4` raises an
       instantiation error when X is still unknown.
@@ -288,7 +288,7 @@ steps:
 
       Now predict `X == Y` and `X = Y, X == Y` as separate fresh queries.
       Does naming two unknowns make them the same variable, or does a goal
-      have to connect them? Run both before opening the explanation.
+      have to connect them? Evaluate both in **Interpreter** before opening the explanation.
 
       <details markdown="1">
       <summary>After running: distinguish sharing from equality tests</summary>
@@ -716,7 +716,7 @@ steps:
       answer before running: `[lofi, jazz]`, `[lofi, jazz, lofi]`, or failure
       because lofi appears twice?
 
-      After Run, try these complete queries:
+      After Run, try these complete queries in **Interpreter**:
 
       - `findall(T, request(_, T), Bag), sort(Bag, Unique)`
       - `sum_list([3, 5, 3], Total)`

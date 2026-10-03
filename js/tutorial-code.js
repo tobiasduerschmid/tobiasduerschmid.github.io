@@ -1495,6 +1495,7 @@
     this._destroyed = true;
     if (this._haskellCycles) this._haskellCycles.dispose();
     if (this._haskellInterpreter) this._haskellInterpreter.dispose();
+    if (this._prologInterpreter) this._prologInterpreter.dispose();
     if (this._debuggerCtl && this._debuggerCtl.channel) this._debuggerCtl.channel.dispose();
     this._stopFileWatch();
     this._stopGuestClockSync();
@@ -2830,9 +2831,13 @@
         : Promise.resolve();
       if (self.config.backend === 'haskell') {
         loadCSS('/css/haskell-diagnostics.css');
-        loadCSS('/css/haskell-interpreter.css');
       }
-      return Promise.all([v86Promise, monacoPromise, playwrightPromise, haskellAnalysis]);
+      var prologInterpreter = self.config.backend === 'prolog'
+        ? loadScript('/js/prolog/interpreter.js') : Promise.resolve();
+      if (self.config.backend === 'haskell' || self.config.backend === 'prolog') {
+        loadCSS('/css/tutorial-interpreter.css');
+      }
+      return Promise.all([v86Promise, monacoPromise, playwrightPromise, haskellAnalysis, prologInterpreter]);
     });
   };
 
@@ -5510,6 +5515,12 @@
 
   /** Append text to the output panel. type: 'stdout' | 'stderr' | 'info' */
   TutorialCode.prototype._appendOutput = function (text, type) {
+    // An exclusive interpreter transaction owns its output, including host
+    // recovery messages; ordinary Run/test/debug output keeps its own pane.
+    if (this._activeRunTransaction && this._activeRunTransaction.onOutput) {
+      this._activeRunTransaction.onOutput(text, type);
+      return;
+    }
     if (!this.outputPre) return;
     var wrapper = document.createElement('span');
     wrapper.className = 'tvm-out-' + (type || 'stdout');
@@ -5743,8 +5754,12 @@
 
   TutorialCode.prototype._runCurrentFile = function () {
     if (this._activeRunTransaction) return this._activeRunTransaction.promise;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell') && this._testRunInFlight) return Promise.resolve(false);
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog') && this._testRunInFlight) return Promise.resolve(false);
     if (this._haskellInterpreter) this._haskellInterpreter.showOutput();
+    if (this._prologInterpreter) {
+      if (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session)) return Promise.resolve(false);
+      this._prologInterpreter.showOutput();
+    }
 
     var stepIndex = this.currentStep >= 0 ? this.currentStep : 0;
     var step = this.steps[stepIndex];
@@ -5844,9 +5859,8 @@
       return this._syncFileToBackend(filename).then(function () {
         self._clearOutput();
         self._appendOutput('\u25b6 ' + filename + '\n', 'info');
-        var query = '';
-        var argsInp = self.root.querySelector('.tvm-args-input');
-        if (argsInp) query = argsInp.value.trim();
+        var query = (step.default_query || '').trim();
+        if (query) self._appendOutput('?- ' + query + '\n', 'info');
         return self._runWorkerExecution(
           { type: 'run', path: plPath, query: query },
           '\u23f3 Running\u2026'
@@ -6732,6 +6746,10 @@
    * host-owned deadline can terminate even a Worker blocked in a tight loop.
    */
   TutorialCode.prototype._stopExecution = function () {
+    if (this._prologInterpreter && this._prologInterpreter.busy) {
+      this._prologInterpreter.interrupt();
+      return;
+    }
     if (this.config.backend === 'haskell' && this._worker) {
       this._appendOutput('\nExecution stopped; restarting the Haskell runtime.\n', 'info');
       this._restartHaskellExecutor().catch(function () {});
@@ -7462,6 +7480,11 @@
         this._haskellCycles = new window.SEBookHaskellCycleDiagnostics(this);
         this._haskellInterpreter = new window.SEBookHaskellInterpreter(this);
       }
+      if (this.config.backend === 'prolog' && !this._prologInterpreter) {
+        this._prologInterpreter = new window.SEBookPrologInterpreter(this);
+        this.root.querySelectorAll('.tvm-args-input, .tvm-args-label').forEach(function (element) { element.remove(); });
+        this._refreshOutputDetachedState();
+      }
       model.onDidChangeContent(function () {
         if (self._haskellCycles) self._haskellCycles.schedule();
         // Lint + gutter reflect CURRENT content, regardless of who changed
@@ -8106,6 +8129,7 @@
     if (!this._popoutManager || !this._popoutManager.isAvailable()) return;
     var meta = this._outputMeta();
     if (!meta) return;
+    meta.controls = this._collectOutputControlsState();
     var win = this._popoutManager.detachOutput(meta);
     if (!win) {
       this._showPopupBlockedToast('Popup blocked — click to detach output',
@@ -8276,14 +8300,17 @@
       || this.root.querySelector('.tvm-preview-panel')
     );
     if (!panel) return;
-    panel.classList.toggle('tvm-output-detached', !!detached);
+    // Prolog's separate Interpreter stays local when ordinary Output detaches.
+    var hidePanel = !!detached && !this._prologInterpreter;
+    panel.classList.toggle('tvm-output-detached', hidePanel);
     var workspace = this.root.querySelector('.tvm-workspace');
-    if (workspace) workspace.classList.toggle('tvm-workspace-output-detached', !!detached);
+    if (workspace) workspace.classList.toggle('tvm-workspace-output-detached', hidePanel);
+    if (this._prologInterpreter) this._prologInterpreter.setOutputDetached(!!detached);
 
     // Floating reattach chip — anchored to the workspace corner. Replaces
     // the in-panel indicator since the panel itself is now display: none.
     var chip = workspace && workspace.querySelector(':scope > .tvm-output-detached-chip');
-    if (detached) {
+    if (hidePanel) {
       if (workspace && !chip) {
         chip = document.createElement('div');
         chip.className = 'tvm-output-detached-chip';
@@ -10542,6 +10569,9 @@
     var step = this.steps[this.currentStep];
     if (!step || !step.solution) return;
     var self = this;
+    if (this._prologInterpreter && this._prologInterpreter.busy) {
+      return this._prologInterpreter.stopForWorkspaceChange().then(function () { return self.applySolution(); });
+    }
     if (this._mixedBackendMode) {
       var requestedBackend = this._stepRequestedBackend(step);
       if (this.config.backend !== this._effectiveBackend(requestedBackend)) {
@@ -10986,6 +11016,9 @@
     var step = this.steps[this.currentStep];
     if (!step) return;
     var self = this;
+    if (this._prologInterpreter && this._prologInterpreter.busy) {
+      return this._prologInterpreter.stopForWorkspaceChange().then(function () { return self.resetStep(); });
+    }
     if (this._mixedBackendMode) {
       var requestedBackend = this._stepRequestedBackend(step);
       if (this.config.backend !== this._effectiveBackend(requestedBackend)) {
@@ -11796,6 +11829,9 @@
         return committed;
       });
     };
+    if (this._prologInterpreter && this._prologInterpreter.busy) {
+      return this._prologInterpreter.stopForWorkspaceChange().then(load);
+    }
     if (!this._mixedBackendMode) return load();
 
     if (!this._backendReady[requestedBackend]) {
@@ -12014,26 +12050,6 @@
       stepReadyPromise = stepReadyPromise.then(function () {
         return self._runStepDir(step);
       });
-    }
-
-    // Configure query input for Prolog backend
-    if (this.config.backend === 'prolog') {
-      var plArgsInp = this.root.querySelector('.tvm-args-input');
-      var plArgsLbl = this.root.querySelector('.tvm-args-label');
-      if (plArgsInp) {
-        plArgsInp.removeAttribute('style');
-        plArgsInp.classList.add('tvm-prolog-query');
-        plArgsInp.placeholder = 'e.g. parent(tom, X)';
-        plArgsInp.value = step.default_query || '';
-        plArgsInp.setAttribute('aria-label', 'Query (Prolog goal)');
-        plArgsInp.setAttribute('data-original-title', 'Query (Prolog goal; trailing period optional)');
-        plArgsInp.removeAttribute('title');
-      }
-      if (plArgsLbl) {
-        plArgsLbl.removeAttribute('style');
-        plArgsLbl.classList.add('tvm-prolog-query-label');
-        plArgsLbl.textContent = 'Query ?-';
-      }
     }
 
     // Configure args and filter visibility
@@ -12862,7 +12878,8 @@
     // results return. Without this guard, the second run can replace the
     // pending test buffer/state and produce ghost results in the panel.
     if (this._testRunInFlight) return;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell') && this._activeRunTransaction) return;
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog') && this._activeRunTransaction) return;
+    if (this.config.backend === 'prolog' && (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session))) return;
     var stepIndex = this.currentStep;
     var step = this.steps[stepIndex];
     if (!step || !this._stepHasTests(step)) return;

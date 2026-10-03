@@ -32,11 +32,26 @@ const pausedStatus = page => page.getByRole('status').filter({ hasText: /paused/
 async function openProgram(page, program) {
   await page.goto(`/SEBook/tools/${program.backend}-tutorial`);
   await expect(runButton(page)).toBeEnabled({ timeout: 90_000 });
-  // Use the editor's model as setup plumbing; all debugger actions and oracles
-  // below go through the same controls and visible results as a learner.
-  expect(await setEditorContent(page, program.source)).toBe(true);
   if (program.query) {
-    await page.getByRole('textbox', { name: 'Query (Prolog goal)' }).fill(program.query);
+    // Prolog Run and Debug use the authored default query. Configure that
+    // contract through the author-facing constructor, using the real backend.
+    await page.evaluate(async (program) => {
+      window._tutorial.destroy();
+      window._tutorial = new window.TutorialCode('#tutorial-container', {
+        backend: 'prolog', tutorialId: 'prolog-debugger-test', autosaveType: 'none',
+        disableQuiz: true, debugger: true,
+        steps: [{
+          title: 'Debug a Prolog relation', instructions: 'Trace the default query.',
+          files: [{ path: program.file, language: 'prolog', content: program.source }],
+          run_file: program.file, default_query: program.query,
+        }],
+      });
+      await window._tutorial.start();
+    }, program);
+  } else {
+    // The editor's supported model API is setup only; debugger actions and
+    // assertions use the same controls and visible results as a learner.
+    expect(await setEditorContent(page, program.source)).toBe(true);
   }
   await expect(startButton(page)).toBeEnabled();
 }
@@ -50,8 +65,12 @@ for (const program of PROGRAMS) {
       await openProgram(page, program);
       expect(await page.evaluate(() => crossOriginIsolated), 'these backends must work without isolation').toBe(false);
 
+      if (program.backend === 'prolog') {
+        await page.getByRole('button', { name: 'Interpreter', exact: true }).click();
+      }
       await startButton(page).press('Enter');
       await expect(pausedStatus(page)).toBeVisible({ timeout: 90_000 });
+      await expect(outputPanel(page)).toBeVisible();
       await expect(historySlider(page)).toHaveValue('0');
       await expect(page.getByRole('region', { name: 'Call Stack', exact: true }))
         .toContainText(new RegExp(program.file.replace('.', '\\.') + ':\\d+'));
