@@ -1,0 +1,412 @@
+{
+  "version": 1,
+  "adapters": [
+    {
+      "path": "../../smalltalk/protocol.js",
+      "sha256": "fcaba99cc5ae548eba8d353b76888ccd5f4b74dbff130bb62c18ceaaeda2fb0d"
+    },
+    {
+      "path": "../../smalltalk/filesystem.js",
+      "sha256": "918562da20a2fe30956e94c4c96d6ff9d8698fc51a32966cec82f43793ba9998"
+    },
+    {
+      "path": "../../smalltalk/checkpoint.js",
+      "sha256": "66c28f424138095b122f1102fad559140f60afd0bd8d4871e0223b07daf4ff07"
+    },
+    {
+      "path": "../../smalltalk/source-watch.js",
+      "sha256": "62381ef0e6b707d3a68a69fb4f527aa88847fa3f7ba69f7eaca42e50023815e7"
+    },
+    {
+      "path": "../../smalltalk/structural-guard.js",
+      "sha256": "f0538950db196a17f440b0b9e75ef160307749cf032398a6b38a709ceaddd108"
+    },
+    {
+      "path": "../../smalltalk/worker.js",
+      "sha256": "f979433bc49bca43409205d097d74e19b975a42156f9fef0f3908bc82321f9f3"
+    }
+  ],
+  "runtimeOrder": [
+    "runtime/squeak_headless_bundle.js",
+    "runtime/vm.plugins.file.browser.js",
+    "runtime/vm.plugins.obsolete.js",
+    "runtime/MiscPrimitivePlugin.js",
+    "runtime/LargeIntegers.js",
+    "runtime/FloatArrayPlugin.js",
+    "runtime/BitBltPlugin.js",
+    "runtime/ZipPlugin.js"
+  ],
+  "squeakJS": {
+    "file": "squeakjs.tar.gz",
+    "url": "https://codeload.github.com/codefrau/SqueakJS/tar.gz/284b7dacd385cfd3258c6337d41fc875459816ea",
+    "sha256": "029ca3d42db0dfa6adfe72ddd992f6c5759c228ec596ecf990cc1fed567f3a06",
+    "version": "1.3.3",
+    "commit": "284b7dacd385cfd3258c6337d41fc875459816ea"
+  },
+  "image": {
+    "build": 22104,
+    "path": "sebook.image"
+  },
+  "refactoringBrowser": {
+    "version": "3.1",
+    "groups": [
+      "Core",
+      "Tests"
+    ],
+    "packages": [
+      {
+        "file": "ConfigurationOfRefactoringBrowser-ct.81.mcz",
+        "url": "https://www.squeaksource.com/MetacelloRepository/ConfigurationOfRefactoringBrowser-ct.81.mcz",
+        "sha256": "795ece2a66d4736fa42e8157a87836530056aea7328d359e8906967ed8904cd9",
+        "name": "ConfigurationOfRefactoringBrowser-ct.81"
+      },
+      {
+        "file": "AST-Core-mt.98.mcz",
+        "url": "https://www.squeaksource.com/rb/AST-Core-mt.98.mcz",
+        "sha256": "4627abe03b62b8bd05f74586098248deaf4d06d98b83789cd0ce5bd403187a00",
+        "name": "AST-Core-mt.98"
+      },
+      {
+        "file": "AST-Semantic-lr.15.mcz",
+        "url": "https://www.squeaksource.com/rb/AST-Semantic-lr.15.mcz",
+        "sha256": "62d9c1a7a96d0a1d05c92fce7960b339dd30ba6a9807829fe511cec663ff631f",
+        "name": "AST-Semantic-lr.15"
+      },
+      {
+        "file": "Refactoring-Environment-mt.12.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Environment-mt.12.mcz",
+        "sha256": "d94ff25fff36a0f16bae562159aa97294b67f6c049d1ea751762b5b453d0cd96",
+        "name": "Refactoring-Environment-mt.12"
+      },
+      {
+        "file": "Refactoring-Changes-mt.24.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Changes-mt.24.mcz",
+        "sha256": "a530200f8f2549883a30e6f511c499f0a8541c1420898558e91a38a4dbcaa6e0",
+        "name": "Refactoring-Changes-mt.24"
+      },
+      {
+        "file": "Refactoring-Core-eem.166.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Core-eem.166.mcz",
+        "sha256": "393ad0e248fd0f4a00d76c3b9b93df7705b3094cd6514105082ce62b01590b3c",
+        "name": "Refactoring-Core-eem.166"
+      },
+      {
+        "file": "Refactoring-Critics-mt.22.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Critics-mt.22.mcz",
+        "sha256": "a909cb3440eb2b41e716f66116d4eba5db765262554296e89103a93d6740eb39",
+        "name": "Refactoring-Critics-mt.22"
+      },
+      {
+        "file": "Refactoring-Spelling-ul.30.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Spelling-ul.30.mcz",
+        "sha256": "fa3a4ea62d93c2225e2e53c419dc3abbeb4ca9537c2b3a99454fc6a26446570d",
+        "name": "Refactoring-Spelling-ul.30"
+      },
+      {
+        "file": "AST-Tests-Core-eem.15.mcz",
+        "url": "https://www.squeaksource.com/rb/AST-Tests-Core-eem.15.mcz",
+        "sha256": "0399cca19ef4f19ed1851cd77c7e59c90795ec32a2c2ad7a1542da96a7c40fb1",
+        "name": "AST-Tests-Core-eem.15"
+      },
+      {
+        "file": "AST-Tests-Semantic-cwp.4.mcz",
+        "url": "https://www.squeaksource.com/rb/AST-Tests-Semantic-cwp.4.mcz",
+        "sha256": "ca6c804f3fdb29551a61983c4e16ba63d0d95715d91b36bedb6450dcc69615fe",
+        "name": "AST-Tests-Semantic-cwp.4"
+      },
+      {
+        "file": "Refactoring-Tests-Environment-mt.6.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Tests-Environment-mt.6.mcz",
+        "sha256": "53578294c7d4ee16098fa6fd815f728ca51bca2ac4e2d250f8b947c27494e51a",
+        "name": "Refactoring-Tests-Environment-mt.6"
+      },
+      {
+        "file": "Refactoring-Tests-Changes-mt.17.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Tests-Changes-mt.17.mcz",
+        "sha256": "3f04f9b75da63ca036d2ce330d19ba71e304da2b1724c48168a3b7219e6d2fa5",
+        "name": "Refactoring-Tests-Changes-mt.17"
+      },
+      {
+        "file": "Refactoring-Tests-Core-lr.56.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Tests-Core-lr.56.mcz",
+        "sha256": "3a6d72fbab45e1e74d823d1090b8b1dc426d43434881f1980a21babd70b465ed",
+        "name": "Refactoring-Tests-Core-lr.56"
+      },
+      {
+        "file": "Refactoring-Tests-Critics-lr.4.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Tests-Critics-lr.4.mcz",
+        "sha256": "d9798ed049af6600379c9634dbcc09aaf23b8c3e1f3031f63e63ad618afc422b",
+        "name": "Refactoring-Tests-Critics-lr.4"
+      },
+      {
+        "file": "Refactoring-Tests-Spelling-mt.10.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Tests-Spelling-mt.10.mcz",
+        "sha256": "975e25ee9bb13af54620c2111cf1a0ada78d1d43e7053304fc5037f3ae6ab667",
+        "name": "Refactoring-Tests-Spelling-mt.10"
+      }
+    ]
+  },
+  "buildVM": {
+    "file": "vm-stack-202606270913.dmg",
+    "url": "https://github.com/OpenSmalltalk/opensmalltalk-vm/releases/download/202606270913/squeak.stack.spur_macos64ARMv8.dmg",
+    "sha256": "c0df5fa77b660478acd22c87c62f29e6f83b2f5a2f728aff62f8066ce017ba73",
+    "platform": "darwin-arm64",
+    "version": "202606270913",
+    "executable": "Squeak.app/Contents/MacOS/Squeak",
+    "flags": [
+      "-headless"
+    ]
+  },
+  "inputsSha256": "8d7d134c3bab246328afb5d79187c26f02cdfe116b18006c566793e058174fc2",
+  "semanticProbe": {
+    "features": {
+      "refactorings": false
+    },
+    "hasCompiler": true,
+    "hasSpellingDictionary": false,
+    "hasSystemSources": true,
+    "imageBuild": 22104,
+    "objectMethodSource": "yourself\r\t\"Answer self.\"\r\t^self",
+    "packageVersions": [
+      "Refactoring-Tests-Spelling-mt.10",
+      "Refactoring-Tests-Changes-mt.17",
+      "AST-Core-mt.98",
+      "Refactoring-Tests-Critics-lr.4",
+      "Refactoring-Environment-mt.12",
+      "AST-Semantic-lr.15",
+      "Refactoring-Tests-Environment-mt.6",
+      "Refactoring-Tests-Core-lr.56",
+      "Refactoring-Spelling-ul.30",
+      "AST-Tests-Semantic-cwp.4",
+      "Refactoring-Critics-mt.22",
+      "Refactoring-Changes-mt.24",
+      "Refactoring-Core-eem.166",
+      "AST-Tests-Core-eem.15"
+    ],
+    "refactoringBrowser": "3.1"
+  },
+  "artifacts": [
+    {
+      "path": "SqueakV60.sources",
+      "kind": "sources",
+      "bytes": 54972153,
+      "sha256": "166a1f0b2a2dabc00d43c84dfc31192424228d20ac04b6265b950b2c125998a1"
+    },
+    {
+      "path": "licenses/Squeak-LICENSE",
+      "kind": "notice",
+      "bytes": 2215,
+      "sha256": "5ceeb96277526801a522f77921b07ae74675cf02ea9083d70924e5f433994a36"
+    },
+    {
+      "path": "licenses/SqueakJS-LICENSE",
+      "kind": "notice",
+      "bytes": 1138,
+      "sha256": "29183cc56cbc9599f1f2176bfd071fd25202a635d0f216b1cc8b4ace3d7edcf9"
+    },
+    {
+      "path": "packages/AST-Core-mt.98.mcz",
+      "kind": "package",
+      "bytes": 112885,
+      "sha256": "4627abe03b62b8bd05f74586098248deaf4d06d98b83789cd0ce5bd403187a00"
+    },
+    {
+      "path": "packages/AST-Semantic-lr.15.mcz",
+      "kind": "package",
+      "bytes": 8345,
+      "sha256": "62d9c1a7a96d0a1d05c92fce7960b339dd30ba6a9807829fe511cec663ff631f"
+    },
+    {
+      "path": "packages/AST-Tests-Core-eem.15.mcz",
+      "kind": "package",
+      "bytes": 19968,
+      "sha256": "0399cca19ef4f19ed1851cd77c7e59c90795ec32a2c2ad7a1542da96a7c40fb1"
+    },
+    {
+      "path": "packages/AST-Tests-Semantic-cwp.4.mcz",
+      "kind": "package",
+      "bytes": 5576,
+      "sha256": "ca6c804f3fdb29551a61983c4e16ba63d0d95715d91b36bedb6450dcc69615fe"
+    },
+    {
+      "path": "packages/ConfigurationOfRefactoringBrowser-ct.81.mcz",
+      "kind": "package",
+      "bytes": 16359,
+      "sha256": "795ece2a66d4736fa42e8157a87836530056aea7328d359e8906967ed8904cd9"
+    },
+    {
+      "path": "packages/Refactoring-Changes-mt.24.mcz",
+      "kind": "package",
+      "bytes": 18087,
+      "sha256": "a530200f8f2549883a30e6f511c499f0a8541c1420898558e91a38a4dbcaa6e0"
+    },
+    {
+      "path": "packages/Refactoring-Core-eem.166.mcz",
+      "kind": "package",
+      "bytes": 104384,
+      "sha256": "393ad0e248fd0f4a00d76c3b9b93df7705b3094cd6514105082ce62b01590b3c"
+    },
+    {
+      "path": "packages/Refactoring-Critics-mt.22.mcz",
+      "kind": "package",
+      "bytes": 64299,
+      "sha256": "a909cb3440eb2b41e716f66116d4eba5db765262554296e89103a93d6740eb39"
+    },
+    {
+      "path": "packages/Refactoring-Environment-mt.12.mcz",
+      "kind": "package",
+      "bytes": 22579,
+      "sha256": "d94ff25fff36a0f16bae562159aa97294b67f6c049d1ea751762b5b453d0cd96"
+    },
+    {
+      "path": "packages/Refactoring-Spelling-ul.30.mcz",
+      "kind": "package",
+      "bytes": 11719,
+      "sha256": "fa3a4ea62d93c2225e2e53c419dc3abbeb4ca9537c2b3a99454fc6a26446570d"
+    },
+    {
+      "path": "packages/Refactoring-Tests-Changes-mt.17.mcz",
+      "kind": "package",
+      "bytes": 7682,
+      "sha256": "3f04f9b75da63ca036d2ce330d19ba71e304da2b1724c48168a3b7219e6d2fa5"
+    },
+    {
+      "path": "packages/Refactoring-Tests-Core-lr.56.mcz",
+      "kind": "package",
+      "bytes": 73692,
+      "sha256": "3a6d72fbab45e1e74d823d1090b8b1dc426d43434881f1980a21babd70b465ed"
+    },
+    {
+      "path": "packages/Refactoring-Tests-Critics-lr.4.mcz",
+      "kind": "package",
+      "bytes": 8262,
+      "sha256": "d9798ed049af6600379c9634dbcc09aaf23b8c3e1f3031f63e63ad618afc422b"
+    },
+    {
+      "path": "packages/Refactoring-Tests-Environment-mt.6.mcz",
+      "kind": "package",
+      "bytes": 7252,
+      "sha256": "53578294c7d4ee16098fa6fd815f728ca51bca2ac4e2d250f8b947c27494e51a"
+    },
+    {
+      "path": "packages/Refactoring-Tests-Spelling-mt.10.mcz",
+      "kind": "package",
+      "bytes": 6538,
+      "sha256": "975e25ee9bb13af54620c2111cf1a0ada78d1d43e7053304fc5037f3ae6ab667"
+    },
+    {
+      "path": "runtime/BitBltPlugin.js",
+      "kind": "runtime",
+      "bytes": 121006,
+      "sha256": "a78175f26caf8b27e6570f829f5ad0ee465770146cd846a032b124981b20aa75"
+    },
+    {
+      "path": "runtime/FloatArrayPlugin.js",
+      "kind": "runtime",
+      "bytes": 14533,
+      "sha256": "d1a1921f0ee43a6081ea534f5de8bc46bd65879405784afc429e03d5e9701f8b"
+    },
+    {
+      "path": "runtime/LargeIntegers.js",
+      "kind": "runtime",
+      "bytes": 56366,
+      "sha256": "87f78c1ffaf15e4eeb8856cfc504d3c2b0ca2824d8da1bb9a4473cc9bbf86fd7"
+    },
+    {
+      "path": "runtime/MiscPrimitivePlugin.js",
+      "kind": "runtime",
+      "bytes": 15195,
+      "sha256": "515c853cfd2060d749260e5b66681e86f1776a575c8546d2224adf74ae710c25"
+    },
+    {
+      "path": "runtime/ZipPlugin.js",
+      "kind": "runtime",
+      "bytes": 37544,
+      "sha256": "915b46215d03c8e9fb335276cf09bb0ffb03c03a924474f3263bd5f25073c69c"
+    },
+    {
+      "path": "runtime/squeak_headless_bundle.js",
+      "kind": "runtime",
+      "bytes": 456273,
+      "sha256": "f43e45552ca95c9afd11142f28caa5dc2d37e65cb589673a85c1f3c2148ae2fb"
+    },
+    {
+      "path": "runtime/vm.plugins.file.browser.js",
+      "kind": "runtime",
+      "bytes": 16075,
+      "sha256": "db7958a44fb1d66450f80bd6ad8de7f6b6052e09ae6bb738531e0c0c5c7011c3"
+    },
+    {
+      "path": "runtime/vm.plugins.obsolete.js",
+      "kind": "runtime",
+      "bytes": 11556,
+      "sha256": "2671c59f5381bb28d07e8c6f8aa9407487702a85631a651f9b00c8fccfd4279e"
+    },
+    {
+      "path": "sebook.changes",
+      "kind": "changes",
+      "bytes": 1459993,
+      "sha256": "fd6ed097c9fc7f1878ebef319c9338732aee2e720b9c28591103ec5267c95fc9"
+    },
+    {
+      "path": "sebook.image",
+      "kind": "image",
+      "bytes": 54055512,
+      "sha256": "ab67b8339df2a996fbba8dd0cbca8b47a3b713e0a93f03167f5a1b3e6b6d89c4"
+    },
+    {
+      "path": "source/SEBookBrowser.st",
+      "kind": "notice",
+      "bytes": 9844,
+      "sha256": "072614c71da356577f2c7462275511f4a5bfe5b55076472c3861b75748cdcba9"
+    },
+    {
+      "path": "source/SEBookChanges.st",
+      "kind": "notice",
+      "bytes": 30097,
+      "sha256": "f6883cf35f8f47da6f0666195dc030afa4e2dc7c250c129e8a5f16b913c7e5a7"
+    },
+    {
+      "path": "source/SEBookInspector.st",
+      "kind": "notice",
+      "bytes": 2768,
+      "sha256": "85c2c46da7fbfb10bbe226a26a4f90ea8336838d8e8068cb0d43d38e243eef47"
+    },
+    {
+      "path": "source/SEBookRefactorings.st",
+      "kind": "notice",
+      "bytes": 44502,
+      "sha256": "bd0b9652b3e4abbe66a4b056c4a9f32fdfcf6c76bee5ced9a5e2f1ef2acd131a"
+    },
+    {
+      "path": "source/SEBookService.st",
+      "kind": "notice",
+      "bytes": 15028,
+      "sha256": "426757eb6be7782a8e5804fa9f9581e494c569795fb1e1153d715696b4943edc"
+    },
+    {
+      "path": "source/SEBookStructuralGuard.st",
+      "kind": "notice",
+      "bytes": 9786,
+      "sha256": "2b05a5bc7092a9e668c0874333694c755d251975bd29675e7c69ce97a4962a84"
+    },
+    {
+      "path": "source/SEBookTransactions.st",
+      "kind": "notice",
+      "bytes": 3163,
+      "sha256": "a69f68a5ca67d937f71b8d8247e528c59cc06ee04aa96f0ed59413471a37b15e"
+    },
+    {
+      "path": "source/SEBookWorkspace.st",
+      "kind": "notice",
+      "bytes": 5319,
+      "sha256": "6dad8896f22f15e65ef67ce2a0750f27274734da3f0cbd0401d343ccd7758ab3"
+    },
+    {
+      "path": "source/prepare.st",
+      "kind": "notice",
+      "bytes": 2038,
+      "sha256": "504eb646b41aae1c67e1a1d7ad131e4c6a94712ab1e4e13b639e658dbe7b9b44"
+    }
+  ]
+}

@@ -4,6 +4,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pane &mdash; Tutorial</title>
   {% include ai-training-opt-out-meta.html %}
   <script>
@@ -16,6 +17,7 @@
   <link rel="stylesheet" href="{{ '/js/debugger/debugger.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/tutorial-popouts.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/debugger-controls.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/smalltalk-browser.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
 <body>
@@ -39,10 +41,19 @@
   <script src="{{ '/js/tutorial-refactorings.js' | relative_url }}"></script>
   <script src="{{ '/js/debugger/sync.js' | relative_url }}"></script>
   <script src="{{ '/js/debugger/editor-attach.js' | relative_url }}"></script>
+  <script src="{{ '/js/smalltalk/protocol.js' | relative_url }}"></script>
+  <script src="{{ '/js/smalltalk/workspace.js' | relative_url }}"></script>
+  <script src="{{ '/js/smalltalk/popup.js' | relative_url }}"></script>
+  <script src="{{ '/js/smalltalk/source-views.js' | relative_url }}"></script>
+  <script src="{{ '/js/smalltalk/refactorings.js' | relative_url }}"></script>
+  <script src="{{ '/js/smalltalk/refactoring-view.js' | relative_url }}"></script>
+  <script src="{{ '/js/smalltalk/browser.js' | relative_url }}"></script>
+  <script src="{{ '/js/smalltalk/inspector.js' | relative_url }}"></script>
   <script src="{{ '/js/popout/shared-editor.js' | relative_url }}"></script>
   <script src="{{ '/js/vendor/monaco-editor/0.44.0/min/vs/loader.js' | relative_url }}"></script>
   <script>
     SebookSharedEditor.bootForRole({
+      smalltalk: new URLSearchParams(location.search).get('smalltalk') === '1',
       kind: 'pane',
       pane: new URLSearchParams(location.search).get('pane') || '',
       els: {

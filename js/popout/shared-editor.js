@@ -23,7 +23,8 @@
  *   });
  *
  * Returns nothing — the bootstrap is fire-and-forget. The popup window then
- * communicates with main exclusively via the BroadcastChannel.
+ * uses BroadcastChannel for ordinary files; Smalltalk uses a private port to
+ * the existing Workspace owner.
  *
  * Adding a new editor feature here automatically delivers it to ALL editor
  * popups, no further wiring needed.
@@ -502,12 +503,99 @@
     }
   }
 
+  // Smalltalk composes the production views against a remote Workspace. Monaco
+  // registration stays shared with ordinary popups; no runtime host is loaded.
+  function smalltalkEditor(options) {
+    var changing = false;
+    var model = monaco.editor.createModel(options.value, options.language);
+    var editor = monaco.editor.create(options.element, Object.assign({}, DEFAULT_OPTIONS, {
+      model: model, fontSize: Math.max(17, parseFloat(getComputedStyle(options.element).fontSize) || 17),
+      ariaLabel: options.ariaLabel, theme: pickTheme(document.documentElement.classList.contains('dark-mode')),
+    }));
+    window.SebookMonacoFocusExit.attach(editor);
+    var changes = model.onDidChangeContent(function () { if (!changing) options.onChange(model.getValue()); });
+    return { getValue: function () { return model.getValue(); },
+      setValue: function (value) { changing = true; try { model.setValue(value); } finally { changing = false; } },
+      getSelection: function () { var selection = editor.getSelection(); return { start: model.getOffsetAt(selection.getStartPosition()), end: model.getOffsetAt(selection.getEndPosition()) }; },
+      dispose: function () { changes.dispose(); editor.dispose(); model.dispose(); } };
+  }
+  async function bootSmalltalk(opts) {
+    var api = window.SEBookSmalltalk, els = opts.els, params = new URLSearchParams(location.search);
+    var role = opts.kind === 'pane' ? 'pane:' + opts.pane : 'tab:' + opts.filename;
+    var workspace, views = [], disposed = false, watch;
+    var themeChannel = new BroadcastChannel(params.get('channel'));
+    document.documentElement.classList.add('smalltalk-popout');
+    if (els.tabBar) els.tabBar.hidden = true;
+    if (els.paneName) els.paneName.textContent = 'System Browser';
+    if (els.filename) els.filename.textContent = opts.filename;
+    document.title = (opts.kind === 'pane' ? 'System Browser' : opts.filename) + ' — Smalltalk tutorial';
+    [els.close, els.exit].filter(Boolean).forEach(function (control) { control.addEventListener('click', function () { window.close(); }); });
+    function disconnected(message) {
+      clearInterval(watch); themeChannel.close();
+      els.status.textContent = message || 'Workspace disconnected. Keep or download source drafts before closing.';
+      els.overlay.hidden = true;
+    }
+    function dispose() {
+      if (disposed) return; disposed = true; clearInterval(watch); themeChannel.close();
+      if (workspace) workspace.dispose();
+      views.forEach(function (view) { view.dispose(); });
+    }
+    window.addEventListener('pagehide', dispose);
+    themeChannel.onmessage = function (event) {
+      var message = event.data;
+      if (message.sessionId !== params.get('session') || message.type !== 'dark-mode') return;
+      document.documentElement.classList.toggle('dark-mode', !!message.enabled);
+      if (window.monaco) monaco.editor.setTheme(pickTheme(message.enabled));
+    };
+    try {
+      var handshake = await new Promise(function (resolve, reject) {
+        var nonce = crypto.randomUUID();
+        function receive(event) {
+          if (event.source !== window.opener || event.origin !== location.origin || !event.data || event.data.type !== 'smalltalk-port' || event.data.nonce !== nonce || event.ports.length !== 1) return;
+          clearTimeout(deadline); window.removeEventListener('message', receive); resolve({ port: event.ports[0], sessionId: event.data.sessionId, target: event.data.target });
+        }
+        var deadline = setTimeout(function () { window.removeEventListener('message', receive); reject(new Error('Workspace connection unavailable. Close this window and detach again.')); }, 15000);
+        window.addEventListener('message', receive);
+        if (window.opener) window.opener.postMessage({ type: 'smalltalk-connect', sessionId: params.get('session'), role: role, nonce: nonce }, location.origin);
+      });
+      workspace = await api.PopupWorkspace.connect(handshake);
+      workspace.subscribe(function (event) { if (event.type === 'runtime' && event.detail.type === 'disconnected') disconnected(event.detail.message); });
+      watch = setInterval(function () { if (!window.opener || window.opener.closed) workspace.dispose(); }, 1000);
+      await new Promise(function (resolve) { loadMonaco(resolve); });
+      if (disposed) { workspace.dispose(); return; }
+      els.overlay.hidden = true; els.status.textContent = 'Connected to the tutorial live image';
+      if (opts.kind === 'pane') {
+        var browser = api.Browser.mount({ root: els.editor, workspace: workspace, createEditor: smalltalkEditor, refactorings: api.FEATURES.refactorings ? api.Refactorings.create(workspace) : null });
+        views.push(browser); await browser.ready;
+        if (handshake.target) await browser.navigate(handshake.target);
+        views.push(api.Inspector.mount({ root: els.editor, workspace: workspace, createEditor: smalltalkEditor }));
+        var run = document.createElement('button'); run.type = 'button'; run.className = 'tvm-btn'; run.textContent = 'Run';
+        run.addEventListener('click', async function () {
+          run.disabled = true; els.status.textContent = 'Running accepted code in the tutorial…';
+          try { await workspace.run(); els.status.textContent = 'Run finished. See Program output in the tutorial.'; }
+          catch (error) { els.status.textContent = error.message; }
+          finally { run.disabled = false; }
+        });
+        els.exit.parentElement.prepend(run);
+      } else {
+        var root = document.createElement('section'); root.className = 'smalltalk-browser';
+        var heading = document.createElement('h2'); heading.textContent = 'Source file'; root.append(heading); els.editor.append(root);
+        var source = api.SourceViews.mount({ root: root, workspace: workspace, createEditor: smalltalkEditor, onClose: function () { window.close(); } });
+        views.push(source); source.open({ path: opts.filename });
+      }
+    } catch (error) {
+      if (workspace) workspace.dispose();
+      disconnected(error.message);
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // Public dispatcher
   // ─────────────────────────────────────────────────────────────────────────
 
   function bootForRole(opts) {
     if (!opts || !opts.kind) throw new Error('SebookSharedEditor.bootForRole: kind required');
+    if (opts.smalltalk) return bootSmalltalk(opts);
     if (opts.kind === 'tab') return bootTab(opts);
     if (opts.kind === 'pane') return bootPane(opts);
     throw new Error('SebookSharedEditor.bootForRole: unknown kind ' + opts.kind);

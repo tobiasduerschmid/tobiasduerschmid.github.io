@@ -5,6 +5,14 @@ description: Authoring guide and architecture reference for the SEBook in-browse
 
 # SEBook tutorial authoring & architecture
 
+Shared tutorial splitters report the measured pane percentage through
+`aria-valuenow`, including responsive layout changes. `_makeDraggable` observes
+the pane and its parent with `ResizeObserver`; `TutorialCode.destroy()` disconnects
+those observers. Preserve existing drag and keyboard size semantics when changing
+this lifecycle. `playwright.smalltalk.config.js` imports shared server/use settings
+and runs explicit Chromium, Firefox and WebKit projects; individual deferred
+refactoring cases use the production capability helper and remain reported skips.
+
 This is the canonical guide for **building, editing, and extending** the
 SEBook in-browser tutorial system. It covers two layers:
 
@@ -739,7 +747,7 @@ exclude_from_index: boolean            # If true, /SEBook/tutorials hides
                                        # and any non-student-facing tutorial.
 
 # === Backend selection ===
-backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | uml-editor | multiple
+backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smalltalk | uml-editor | multiple
                                        # default: v86
 
 # v86           — full Linux VM (shell, gcc, git, etc.). Most tutorials.
@@ -759,6 +767,18 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | uml-edi
 #                 repository's locally pinned MicroHs WebAssembly runtime.
 #                 Uses the output panel rather than a shell, is single-backend
 #                 only, and does not require cross-origin isolation.
+# smalltalk     — Single-backend native Squeak image in a verified SqueakJS
+#                 Worker. System Browser, multiline terminal and Run share one
+#                 persistent Workspace. Run evaluates run_command in that image;
+#                 it neither boots a new image nor reloads files. Drafts are
+#                 excluded until native Accept succeeds. Restart session keeps
+#                 accepted code and clears live objects/bindings.
+#                 Every individual Boolean check gets a disposable fresh image
+#                 loaded from one frozen accepted Program snapshot for its batch.
+#                 Only Smalltalk true passes; strings/numbers/errors do not.
+#                 Current legacy file saves restore as unaccepted file drafts;
+#                 Browser method drafts are session-only until typed persistence
+#                 lands. Do not treat a restored generic file draft as accepted.
 # uml-editor    — ArchUML visual editor workspace for diagramming tutorials.
 #                 The standard instruction panel renders on the left, the UML
 #                 editor renders on the right, and `tests[].assertions`
@@ -1035,6 +1055,10 @@ steps:
         content: |
           # File content
         language: python                     # Monaco language id.
+        smalltalk_format: filein | doit       # Smalltalk only. Default: filein.
+                                             # Omitted language + .st infers
+                                             # Smalltalk; explicit other languages
+                                             # are resources and never execute.
         pane: editor | tests | preview       # Which Monaco pane to load
                                              # the file into. default: editor.
         print_language: python               # Override syntax highlight in
@@ -1059,6 +1083,56 @@ steps:
                                              # overwrites the model + VM copy and
                                              # ignores the autosaved override.
 
+    # Smalltalk uses api.normalizeProgram in js/smalltalk/fresh-runner.js.
+    # Ordered files load with run_file last once when a live/fresh image starts;
+    # run_command is then evaluated in the persistent live image by Run. Missing
+    # run_command reports successful loading. Keep runner/check selector names
+    # stable across refactors. TutorialAdapter composes Workspace + FreshRunner;
+    # TutorialAdapter.getWorkspace() exposes the accepted Program/draft owner.
+    # run({acceptDrafts,signal}) evaluates in that Workspace; Accept and Run
+    # rejects stale drafts before accepting, chains native commit revisions,
+    # and never executes the entry after a failed acceptance. Earlier successful
+    # draft commits remain accepted if a later draft fails. runTests forwards
+    # its signal to independently owned fresh leases and reports batch revision.
+    # Each normal check row includes error:null; failed rows include RuntimeError.
+    # Stop recovery failures remain visible and block reuse until a successful
+    # Workspace recovered event (including terminal Restart) repairs the gate.
+    # A recovered event cannot dismiss a still-pending later recovery attempt.
+    # TutorialCode also announces recovery errors through a scoped alert region.
+    # Successful Reset/Apply Solution clears current-step drafts after accepted
+    # replacement; failed replacement and ordinary Restart preserve drafts.
+    # progress.js encodes accepted Program and Draft[] separately under the
+    # existing progress record's smalltalk_workspace:{version:1,steps:{[stepKey]:
+    # {program,drafts}}}. Both full and targeted saves use native snapshots,
+    # preserving generated definitions/removals instead of declared-file filters.
+    # Restore decodes accepted source/drafts before Workspace/view creation.
+    # Legacy declared-file overrides become drafts, never accepted code.
+    # Legacy keys use the same workspace-path normalizer (including /tutorial/).
+    # Alias choice prefers the exact canonical key, then stable code-unit order.
+    # Conflicting source stays in the original files record for export; warnings
+    # recur while unresolved aliases remain. Transient migratedLegacyFiles is
+    # held only by the adapter's step map and excluded from encoded progress;
+    # a successful save removes only original keys with matching migrated text.
+    # Explicit deleteSavedProgress clears remembered steps before current reset.
+    # Disabling Auto-save with No keeps both disk and live/session work.
+    # Unvisited malformed/future records retain source-only data plus optional
+    # invalid:string quarantine reason; decode warns and loads the starter,
+    # retaining valid drafts. A new version1 envelope cannot promote quarantine.
+    # No live images/objects/bindings/handles/checkpoints/undo history are saved.
+    # Existing Auto-save preference, quota status, deletion and whole-record
+    # SE Gym transfer apply; there is no second persistence key/cache.
+    # TutorialCode mounts Browser/Inspector views around the adapter's Workspace.
+    # Its dynamic loader loads source-views.js before browser.js; Browser owns
+    # the composed raw source, draft and accepted-change presentation module.
+    # FreshRunner.create({host}) shares the adapter's RuntimeHost;
+    # dispose aborts only its own withFreshSession leases. Without host, create
+    # acquires/owns verified assets and dispose owns host cleanup. All fresh work
+    # uses exclusive host.withFreshSession, never host.stop('fresh').
+    run_command: string                      # Optional Smalltalk entry expression.
+    smalltalk_target:                         # Optional initial native Browser target.
+      kind: class                            # EntityRef, passed to Browser.navigate.
+      className: SEBookCounter
+      side: instance                         # instance | class
     open_file: string                        # Which file to focus on load.
     run_file: string                         # Which file the toolbar Run button
                                              # executes. In Pyodide tutorials
@@ -2628,3 +2702,241 @@ SEBook/tools/<slug>-tutorial/print.md      # layout: print-tutorial
 ```
 
 …and you're done. The `/SEBook/tutorials` index will pick it up automatically.
+
+### Smalltalk Browser refactoring and Versions views
+
+`Browser.mount({root,workspace,createEditor,refactorings})` optionally composes
+`RefactoringView.mount({root,workspace,refactorings,onApplied})`. TutorialCode loads
+`refactorings.js` then `refactoring-view.js` before Browser and injects the native
+facade. The Refactor button browses the native catalog; typed text/source, Boolean,
+string-list and integer-list controls come from its declared metadata. Preview shows
+all native before/after entries, warnings, consequences and the captured revision.
+Apply consumes one native token. Changed options require another preview; a changed
+accepted revision disables Apply with explicit stale guidance. Modal Cancel/Escape
+abandons the token and returns focus to Refactor or the available Browser region.
+Late Prepare tokens returned after dismissal/disposal are canceled through the
+original facade; late completion never moves focus. Undo/Redo and their explanation follow the
+Workspace history event, retaining owned keyboard focus on an available history
+action or Browser when an action becomes disabled; recovery resets live handles. No preview/history state is
+persisted and no general tutorial textual refactoring machinery is used.
+
+Browser editors display LF-normalized retained native source. Before opening Refactor,
+the editor must equal that accepted representation at the captured Workspace revision;
+drafts require Accept/Revert first. Browser maps Monaco's UTF-16 boundaries back to
+retained native CRLF/CR source, preserving astral code units. Selection actions require
+a nonempty selection made before opening the dialog. This map is EOL representation
+conversion, not a parser or refactoring implementation.
+
+Versions queries native ChangeSet history for the selected method. Select version
+shows native source and query revision. Restore version uses Workspace.commit with
+`action:'restoreVersion'`, captured target/source/revision and method protocol; this is
+a new accepted edit and ends refactoring Undo history. Captured targets survive later
+navigation; existing method drafts require Accept/Revert first. Missing native history remains
+unavailable. Refresh Versions after a restore or stale rejection. Source provenance is
+never reconstructed from textual edits or external files.
+
+### Smalltalk runtime ownership and recovery
+
+Keep accepted source policy in `js/smalltalk/workspace.js`; public Program contains code,
+not image bytes or object state. `SEBookChanges.st` owns native source capture/export and
+file rebase, while `SEBookTransactions.st` owns stable mutation IDs and acknowledgment.
+`checkpoint.js` retains actual image/filesystem/scheduling state through private host
+records. Failed Accept restores that graph, preserves the draft and changes inspector
+handle generation. Never replace this recovery with source replay.
+
+`source-watch.js` compares native-rooted source metadata before invoking full native
+reconciliation. It is a pinned VM adapter, not a Smalltalk parser. Cold source text is
+read from immutable verified assets through bounded byte-range primitives and the native
+chunk reader. Keep all adapters, native source inventory, prepared image and manifest
+coherent when rebuilding. Ordinary warm Evaluate does not checkpoint or reload code.
+`RuntimeHost` budgets each `loadProgram` initialization with `bootMs` (120 seconds
+by default), as it loads definitions/overlays and captures the native source baseline.
+Asset acquisition and image boot each use the same finite startup budget. Ordinary
+foreground requests retain `operationMs` (30 seconds); explicit Run/check retains
+`runMs` (60 seconds). Loading remains cancellable; do not increase all request limits
+to accommodate initialization.
+
+Fresh grading and raw-file rebase share `RuntimeHost.withFreshSession`; a cancelled
+queued job must not stop another job's Worker. Browser and terminal use the one live
+Workspace, including its draft/revision events and recovery announcements.
+
+Workspace disposal must abort its own lifetime, including pending boot/recovery and
+queued fresh rebase, without reviving an image or stopping a newer owner. Use exact
+session cleanup; role-wide stop is reserved for explicit host-wide controls. Accept
+clears only the submitted draft token, preserving edits made while acknowledgment is
+pending. Native export must consume retained method/comment text, not mutable source
+files that learner code may have overwritten after the compiler notification.
+
+Native refactoring ownership lives in `smalltalk/image/SEBookRefactorings.st`: the
+catalog's typed, labeled inputs and native constructors form one declaration. The
+JavaScript facade in `js/smalltalk/refactorings.js` exposes catalog/prepare/cancel
+through the Workspace queue and Apply/Undo/Redo through its acknowledged checkpoint
+transaction. Native `primitiveExecute` builds a separate full-image model; only Apply
+executes its saved change. Show every affected definition and warnings for changes
+outside the selected target package and undiscoverable dynamic sends. There is no
+package access-control policy.
+
+Browser current method/comment source, native model ASTs, and native inverse method
+changes read the same retained source ledger. Selections are zero-based UTF-16,
+end-exclusive; native conversion rejects split surrogate positions. Preview tokens
+and native undo/redo are session-only. Successful ordinary Accept operations (including
+comments, raw source files, and resources) clear native history at the accepted-program
+boundary. Reconciled source or metadata changes from evaluation/background execution
+also clear it; object-only evaluation and source inspection preserve it. This policy
+is stricter than the upstream manager's comment/recategorization notification filter.
+Failed mutations restore native history with the image, live graph, and ephemeral files.
+
+The native catalog declares 24 enabled operations: rename class/method/instance variable/
+class variable/temporary/argument; extract method/temporary; inline method/temporary;
+move method/local variable definition; pull up or push down method/variable; add/remove/
+reorder parameters; add/remove class/method; and create accessors. `splitClass` is listed
+but unavailable: native split loses retained values, leaves components uninitialized,
+and lacks verified reverse migration for Undo. Keep that reason visible.
+
+Parameter reordering and removal reject complex caller arguments whose evaluation would
+move or disappear; first extract those expressions to temporaries. Temporary inlining
+accepts immutable immediate literals or a sole immediately following return use. The
+inline-method expression option explicitly warns that substitution can repeat or defer
+effects. Hierarchy field moves can discard values, and Code Undo cannot recover them.
+Class-removal Undo recreates source and metadata, not the original class identity or
+obsolete instances. Instance-variable rename retains declaration order and native slot
+values through a local native change adapter; it does not promise arbitrary reflective
+or retained-activation equivalence.
+
+Native changes and every returned inverse use the existing RB history manager and the
+retained source adapters. Cumulative native export stages inherited layouts, installs
+methods, removes obsolete methods, and finalizes class definitions in superclass order.
+The real-image matrix is in `tests/smalltalk-refactorings.spec.js` and its catalog fixture
+files. Catalog fixture success alone does not prove scheduling isolation: production
+Apply/Undo/Redo must also satisfy the separately verified native safe-application gate.
+
+The current distribution explicitly defers refactoring: the single frozen
+`SEBookSmalltalk.FEATURES.refactorings` capability in verified `protocol.js` is false.
+Browser and popup composition hide refactoring actions. Native catalog/preview/cancel
+and Apply/Undo/Redo requests fail with `REFRACTORING_UNAVAILABLE`; history remains
+queryable for Workspace lifecycle compatibility. The worker skips guard attachment,
+the native service skips trusted-code capture, and native notification/definition
+overrides remain uninstalled. Class definition Accept retains its validation and
+transaction/checkpoint path while executing through the ordinary workspace compiler
+with ordinary scheduling. Source, native packages, and capability-gated refactoring
+tests remain preserved for a deliberate later release. Do not advertise compound
+isolation while this capability is disabled.
+
+`structural-guard.js` and `SEBookStructuralGuard.st` provide that narrow execution
+capability. The VM adapter pins the reviewed VM artifact and binds exclusion to the
+existing applying transaction and native Process. Pristine cold startup captures
+CompiledCode provenance before ready or learner file-in; checkpoint restoration reuses
+those original rooted snapshots and must never recapture learner-modified code. Native
+class-definition execution admits only the exact validated definition method for that
+mutation. Layout-changing operations conservatively reject retained affected receiver
+contexts/closures and unsupported representations. Deferred native notifications replay
+after the complete change, inside RB manager history suppression. Failure while held
+requires full host checkpoint replacement; never release into a partial image. Ordinary
+method Accept, terminal Evaluate and raw-file execution retain ordinary scheduling and
+do not promise compound isolation. Keep the guard's real-image tests and supported
+domain evidence current when changing the VM, compiler, class builder or notification
+paths; it is a language-tool capability, not a security boundary against image reflection.
+
+### Smalltalk popups share the current Workspace owner
+
+`Browser.mount` accepts optional `onDetach(target)` and `onDetachFile(path)` hooks.
+The visible Detach System Browser action opens the pane shell; Source views offers
+Detach source file for raw authored source. `SourceViews.open({path})` selects that
+file. `shared-editor.js` reuses Monaco registration and composes the production
+Browser, SourceViews, Inspector and RefactoringView against `PopupWorkspace`.
+Popup pages load no RuntimeHost and never create an image. Popup Run calls the
+opener's existing TutorialCode Run transaction; its output remains in the tutorial.
+
+`js/smalltalk/popup.js` exposes `PopupWorkspace.connect({port,sessionId})` and the
+opener-side `PopupWorkspaceOwner.serve`. TutorialPopoutManager authenticates the
+handshake against the registered popup WindowProxy, origin and tab session, then
+transfers a private MessagePort with a fresh connection identity. Every command
+includes request ID, connection session ID, step key and base revision. This
+identity is independent of the reload-persistent BroadcastChannel tab nonce.
+BroadcastChannel carries theme only for Smalltalk editor popups; generic file-edit,
+final file snapshots and apply-refactor-edits never accept Smalltalk code.
+
+The facade mirrors synchronous snapshots/drafts/history and forwards asynchronous
+Workspace operations. Draft messages are ordered before Accept. Pending local edits
+overlay owner events until their matching acknowledgment, preserving newer typed
+source while another accepted-program event arrives. Browser mirrors selected draft
+updates and retains a renamed/removed target's original draft and base revision for
+recovery. Stale Accept reports changed source; it never silently rebases the target.
+Revert explicitly drops that draft and reconciles every subscribed Browser with its
+current accepted source, using native navigation fallback for an obsolete target.
+Connection teardown preserves already-received draft edits independently of pending
+native work, without executing queued Accepts or reviving a disposed Workspace.
+
+Each connection owns only its returned evaluation/inspection handles and prepared
+preview tokens. Workspace evaluation and Prepare results include captured native
+`sessionId`; inspection already does. Cleanup passes that identity to
+`releaseHandles` or `refactoringQuery('cancelRefactoring',payload,{sessionId})`;
+Workspace checks it inside its queue so delayed cleanup cannot affect a newer image.
+Connection closure releases/cancels both delivered results and results arriving after
+close. Closing a connection never disposes Workspace. Workspace disposal emits one
+`runtime` event with `detail.type:'disposed'` before clearing subscriptions, letting
+the facade reject pending requests. Tutorial step/view disposal and opener pagehide
+also disconnect ports. Popup closure restores the detach control's focus where it
+still exists. No new persistence keys, native image storage, or shortcuts are added.
+
+### Smalltalk Browser creation and variable references
+
+Browser's Create package form uses the existing Workspace `createPackage` transaction
+at its captured revision. The retained Add/remove class and method implementation
+uses the native refactoring preview and Apply flow when that capability is enabled.
+An empty package is a native `addClass` catalog
+target: the catalog supplies `superclassName: Object`, the selected package category,
+and an empty immediate-subclass list. Existing-class creation keeps its selected
+superclass. Native input defaults populate controls only when the request does not
+supply that option; explicit false, empty strings and empty lists retain precedence.
+No Browser control parses Smalltalk or owns a second acceptance controller.
+
+`browse({kind:'variables',target,...})` returns native variable descriptors on each
+item: `variable:{kind:'instance'|'class',name}` and a `declaringClass` EntityRef.
+Reference navigation submits the explicit additive query
+`{kind:'variableReferences',target:<class EntityRef>,variable,offset,limit,search?}`.
+`search` remains a result-label filter. The native Browser resolves the declaring
+instance-slot hierarchy before its compiled-method access scan, and resolves actual
+class-pool association identity for class-variable references across both method
+sides. Unrelated same-spelled variables are excluded. Results carry native method
+targets and a `scope` explanation. Browser Back/Forward uses those targets unchanged.
+The print source preview is exposed once when CSS hides its editing control.
+
+
+### Deferred Smalltalk refactorings
+
+The single production capability declaration is the frozen
+`SEBookSmalltalk.FEATURES.refactorings` in `js/smalltalk/protocol.js`; it is currently
+`false`. Tutorial and detached Browser composition do not initialize the refactoring
+facade or view while disabled. Refactor, Add/remove class and method, Undo/Redo, and
+refactoring history controls are not exposed. Their implementation and native tests
+remain for future activation; capability-dependent tests declare the deferral
+explicitly instead of weakening their assertions.
+
+Create package uses its ordinary Workspace transaction. Native browsing queries,
+Back/Forward, class-side navigation, Versions, and method/class/comment source
+Accept remain active. Full Smalltalk terminal evaluation and source-file editing
+remain the available routes for defining or removing classes and methods. Do not
+add a replacement refactoring path or advertise the deferred GUI controls.
+
+### Smalltalk workspace layout
+
+`js/smalltalk/layout.js` owns only transient tutorial layout state. The right-hand
+Output / terminal dock starts at 204px on laptop screens and offers Collapse and
+Expand; Focus source editor temporarily hides instructions and browsing controls
+and collapses the dock. Restore layout preserves the prior dock state. These
+actions retain mounted Monaco editors, drafts, selection, terminal history and the
+same Workspace/image. Recovery announcements remain outside the collapsible body.
+There is no layout persistence or additional keyboard shortcut.
+
+Tutorial Browser composition uses compact native Search and Browser tools
+disclosures; standalone and detached tools retain their existing composition.
+Native queries replace the pane lists while open, with synchronous focus transfer
+from the closing tools disclosure. The terminal keeps its expression, Evaluate and
+latest result visible; history, Transcript and help are disclosed on demand.
+Opening terminal details or an inspected object expands the dock without rebuilding
+views. CSS owns geometry, both themes and print. Below 901px wide or 650px high the
+workspace returns to document flow; print exposes output even if its dock was
+collapsed. Preserve paragraph-size controls and heading sizes when changing this
+layout, and measure actual unoccluded Monaco rows rather than editor rectangle
+height alone (`tests/smalltalk-workspace-layout.spec.js`).

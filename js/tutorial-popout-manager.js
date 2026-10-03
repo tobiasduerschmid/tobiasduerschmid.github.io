@@ -93,6 +93,7 @@
     this.storageKey = STORAGE_PREFIX + this.pathname + '-' + this.sessionId;
 
     this.channel = null;
+    this._smalltalkConnections = new Map();
     this._popups = {};         // role -> {window, openedAt}
     this._fileVersions = {};   // filename -> integer version counter
     this._closePollTimer = null;
@@ -118,6 +119,9 @@
     // If there is leftover popup state from a previous main-window session,
     // restore the detached-file content into our mirror so reattach is instant.
     this._restoreStateMirror();
+    this._smalltalkMessage = function (event) { self._connectSmalltalkPopup(event); };
+    window.addEventListener('message', this._smalltalkMessage);
+    window.addEventListener('pagehide', function () { self.disconnectSmalltalk(); });
   };
 
   TutorialPopoutManager.prototype.isAvailable = function () { return this._available; };
@@ -146,6 +150,7 @@
     if (!this._available) return null;
     var role = 'tab:' + filename;
     var existing = this._popups[role];
+    if (existing && existing.smalltalk && !this._smalltalkConnections.has(role) && existing.window && !existing.window.closed) existing.window.close();
     if (existing && existing.window && !existing.window.closed) {
       existing.window.focus();
       // Re-broadcast the snapshot so the popup can rebuild if it was reloaded.
@@ -159,10 +164,11 @@
       + '&session=' + encodeURIComponent(this.sessionId)
       + '&filename=' + encodeURIComponent(filename)
       + '&dark=' + (darkMode ? '1' : '0')
+      + (this.hooks.getSmalltalkWorkspace && this.hooks.getSmalltalkWorkspace() ? '&smalltalk=1' : '')
       + (this.tutorialTitle ? '&title=' + encodeURIComponent(this.tutorialTitle) : '');
     var w = window.open(url, winName, 'width=900,height=700,resizable=yes,scrollbars=yes');
     if (!w) return null;
-    this._popups[role] = { window: w, openedAt: Date.now() };
+    this._popups[role] = { window: w, openedAt: Date.now(), returnFocus: document.activeElement };
     // Initial snapshot — popup will also send 'hello' once loaded; both are safe.
     var self = this;
     setTimeout(function () { self._sendFileSnapshot(filename, fileMeta); }, 50);
@@ -178,6 +184,7 @@
     if (!this._available) return null;
     var role = 'pane:' + pane;
     var existing = this._popups[role];
+    if (existing && existing.smalltalk && !this._smalltalkConnections.has(role) && existing.window && !existing.window.closed) existing.window.close();
     if (existing && existing.window && !existing.window.closed) {
       existing.window.focus();
       this._sendPaneSnapshot(pane, meta);
@@ -191,10 +198,11 @@
       + '&session=' + encodeURIComponent(this.sessionId)
       + '&pane=' + encodeURIComponent(pane)
       + '&dark=' + (darkMode ? '1' : '0')
+      + (this.hooks.getSmalltalkWorkspace && this.hooks.getSmalltalkWorkspace() ? '&smalltalk=1' : '')
       + (this.tutorialTitle ? '&title=' + encodeURIComponent(this.tutorialTitle) : '');
     var w = window.open(url, winName, 'width=1000,height=720,resizable=yes,scrollbars=yes');
     if (!w) return null;
-    this._popups[role] = { window: w, openedAt: Date.now(), pane: pane };
+    this._popups[role] = { window: w, openedAt: Date.now(), pane: pane, target: meta && meta.target, returnFocus: document.activeElement };
     var self = this;
     setTimeout(function () { self._sendPaneSnapshot(pane, meta); }, 50);
     this._notifyPopupOpened(role);
@@ -400,6 +408,7 @@
   TutorialPopoutManager.prototype.requestPopupClose = function (role) {
     var p = this._popups[role];
     if (!p) return;
+    this._closeSmalltalk(role);
     this._post('force-close', { targetRole: role });
     // Best-effort direct close too (allowed for windows we opened).
     if (p.window && !p.window.closed) {
@@ -448,6 +457,8 @@
   // ---------------------------------------------------------------------------
   TutorialPopoutManager.prototype._onMessage = function (msg) {
     if (!msg || msg.sessionId !== this.sessionId || msg.sourceId === this.sourceId) return;
+    if (this.hooks.getSmalltalkWorkspace && this.hooks.getSmalltalkWorkspace() &&
+        ['file-edit', 'apply-refactor-edits', 'popup-closing'].indexOf(msg.type) >= 0) return;
     switch (msg.type) {
       case 'hello': this._handleHello(msg); break;
       case 'file-edit': this._handleFileEdit(msg); break;
@@ -648,6 +659,7 @@
       var p = this._popups[role];
       if (!p) continue;
       if (p.window && p.window.closed) {
+        this._closeSmalltalk(role);
         delete this._popups[role];
         this._safeHook('onPopupClosed', role, null);
         changed = true;
@@ -738,6 +750,37 @@
   // changes are merged into normal autosave.
   TutorialPopoutManager.prototype.clearStateMirror = function () {
     try { localStorage.removeItem(this.storageKey); } catch (e) { /* ignore */ }
+  };
+
+  // Private Smalltalk capability ports are bound to the actual WindowProxy and
+  // current Workspace generation, independently of reload-persistent channels.
+  TutorialPopoutManager.prototype._connectSmalltalkPopup = function (event) {
+    var message = event.data;
+    if (event.origin !== window.location.origin || !message || message.type !== 'smalltalk-connect' || message.sessionId !== this.sessionId) return;
+    var popup = this._popups[message.role];
+    if (!popup || !popup.window || event.source !== popup.window) return;
+    var workspace = this.hooks.getSmalltalkWorkspace && this.hooks.getSmalltalkWorkspace();
+    if (!workspace || !window.SEBookSmalltalk.PopupWorkspaceOwner) return;
+    this._closeSmalltalk(message.role, false);
+    var channel = new MessageChannel(), sessionId = randomSessionId(), self = this;
+    var connection = window.SEBookSmalltalk.PopupWorkspaceOwner.serve({ port: channel.port1, sessionId: sessionId, workspace: workspace, run: this.hooks.runSmalltalk,
+      onClose: function () {
+        if (self._smalltalkConnections.get(message.role) === connection) self._smalltalkConnections.delete(message.role);
+      } });
+    this._smalltalkConnections.set(message.role, connection);
+    popup.smalltalk = true;
+    popup.window.postMessage({ type: 'smalltalk-port', sessionId: sessionId, nonce: message.nonce, target: popup.target || null }, event.origin, [channel.port2]);
+  };
+  TutorialPopoutManager.prototype._closeSmalltalk = function (role, restoreFocus) {
+    var connection = this._smalltalkConnections.get(role);
+    if (connection) { connection.close(); this._smalltalkConnections.delete(role); }
+    var popup = this._popups[role];
+    var control = popup && popup.returnFocus;
+    if (popup && popup.smalltalk && restoreFocus !== false && control && control.isConnected && !control.disabled) control.focus();
+  };
+  TutorialPopoutManager.prototype.disconnectSmalltalk = function () {
+    var self = this;
+    Array.from(this._smalltalkConnections.keys()).forEach(function (role) { self._closeSmalltalk(role, false); });
   };
 
   window.TutorialPopoutManager = TutorialPopoutManager;

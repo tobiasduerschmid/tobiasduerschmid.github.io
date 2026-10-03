@@ -1,22 +1,29 @@
 # Smalltalk tutorial backend and live System Browser
 
-Status: proposed design for user review; implementation has not started.
+## Current release scope — user update, 2026-10-03
+
+The user explicitly asked to preserve the implemented refactoring work and deactivate it so the Browser and live-programming workspace can be finished now. The earlier refactoring design below remains the deferred roadmap, not an active release promise. The distributed default must disable native refactoring UI and protocol operations and omit expensive guard initialization/trusted-code capture. Keep implementations and their feature-gated tests for later reactivation. Ordinary Browser method/class acceptance, native queries, source views, Versions, Inspector, live terminal, persistent Run, independent fresh checks and popup draft ownership remain in scope. Class-definition acceptance uses ordinary Smalltalk scheduling and the existing checkpoint recovery; it does not claim the deferred compound-refactoring exclusion capability. Creation/removal toolbar actions implemented through the deferred refactoring engine are inactive; classes and methods can still be authored through Smalltalk source and the live image.
+
+One verified protocol capability, `SEBookSmalltalk.FEATURES.refactorings`, defaults to false and coordinates the UI, worker and native bridge. Re-enabling it is future development, requiring completion of the preserved native/UX validation and performance work. Do not delete the plan workspace because it contains deferred implementation evidence and the optional rename exercise. Current release validation covers active capabilities, explicit disabled-feature rejection, cold/warm latency, focused cross-browser behavior and accessibility. Native catalog/structural-guard/rename-exercise gates remain deferred rather than passed or silently discarded.
+
+
+Status: implementation in progress; updated for the user’s persistent Run and live terminal requests on 2026-10-02.
 
 ## Outcome and agreed choices
 
 Add `backend: smalltalk` to SEBook using SqueakJS, with a System Browser inspired by the supplied screenshot. Learners can browse and change real Smalltalk classes and methods, evaluate code against live objects, inspect those objects, and apply language-aware refactorings in the browser.
 
-The user selected SqueakJS and a fresh image for each Run. The subsequent request adds a System Browser, live programming, and broad refactoring support. These requirements coexist through two explicit execution modes:
+The user selected SqueakJS, a System Browser, live programming, broad refactoring support, and a terminal connected to the image. After observing excessive Run latency, the user changed the earlier fresh-per-Run choice: Run and terminal commands now share the persistent live image; grading remains isolated.
 
 | Action | Image state | Source used |
 | --- | --- | --- |
 | Accept a method/class edit; Evaluate in the live workspace; Inspect | Persistent live session for the current tutorial step | The accepted program, updated immediately on successful acceptance |
-| Run | Fresh image for every invocation | One frozen snapshot of the current accepted program and runnable source |
+| Run and terminal Evaluate | The same persistent live session as the System Browser | Current accepted code; ordinary object state and terminal bindings persist |
 | Each authored test | Fresh image for every individual check | The same frozen program snapshot for the entire check batch |
 | Restart live session | Fresh image, then replay accepted code | Accepted code survives; live objects and workspace bindings reset |
 | Reset step | Fresh live image and starter program | Existing SEBook reset semantics, including its draft handling |
 
-“Fresh image” resets objects, class mutations, processes, files, and globals; it does not discard accepted source changes. Live workspace evaluations do not become setup actions for Run or grading.
+“Fresh image” resets objects, class mutations, processes, files, and globals; it does not discard accepted source changes. Terminal evaluations and Run share live state. Live object mutations do not become setup actions for isolated grading.
 
 ## Language and runtime baseline
 
@@ -46,15 +53,15 @@ Dirty drafts are keyed by class, side, and selector. Changing selection never si
 
 ## Live programming and inspection
 
-Provide a live workspace with Evaluate, Inspect result, Transcript, and Restart session. Evaluation bindings persist within the live session. An accepted method replacement affects subsequent sends to existing instances. An activation already executing the old method may finish using that method; accepting source is not a rewind of the call stack.
+Provide a real Smalltalk terminal with multiline code input, Evaluate, command history, results, Transcript output, Inspect result, Stop, and Restart session. It executes native Smalltalk through the same Workspace and image as the System Browser and ordinary Run. Evaluation bindings persist within the live session. Bound history/output in page memory; do not introduce a separate evaluator or runtime. An accepted method replacement affects subsequent sends to existing instances. An activation already executing the old method may finish using that method; accepting source is not a rewind of the call stack.
 
-The image service handles browser requests at VM scheduling boundaries while learner processes can remain alive. Serialize code-change transactions, not the entire lifetime of every forked learner process. Ordinary method replacement must not require terminating those processes. Structural changes and refactorings require a safe application point; if the runtime cannot obtain one within its deadline, refuse the change rather than silently resetting live state.
+The image service handles browser requests at VM scheduling boundaries while learner processes can remain alive. Serialize code-change transactions, not the entire lifetime of every forked learner process. Ordinary method replacement must not require terminating those processes. Host-managed refactorings and explicit Browser class-definition edits require a safe application point; if the runtime cannot obtain one within its deadline, refuse the change rather than silently resetting live state. Arbitrary terminal code and raw source file-in retain ordinary Smalltalk scheduling semantics, including reflective structural operations: their whole execution is not advertised as an isolated refactoring composite. Transactional raw-file failure still restores its full checkpoint, and reflective accepted-source capture still applies. This boundary preserves ordinary Smalltalk execution instead of rejecting arbitrary user method calls or blocking do-its merely because they came from a source file.
 
 The inspector exposes named instance variables, indexed slots, class information, and bounded previews. Objects remain inside the VM and are represented to the page by session-scoped handles. Expand lazily rather than recursively traversing the object graph. Stale handles are rejected after a restart. Evaluating `printString` or a user expression is bounded and cancellable because either can run arbitrary Smalltalk code.
 
 Class-layout changes use Squeak’s class-building and instance-migration machinery. If a change cannot be performed safely, show the engine’s precondition failure. Do not silently restart the session to make an incompatible live change appear successful.
 
-Stopping a stuck live evaluation terminates its Worker. The browser then offers/reconstructs the accepted program in a fresh live image and announces that live objects were reset. Stopping Run or a test only disposes that fresh execution image. Browser queries and editing stay responsive while fresh execution runs.
+Stopping a stuck live evaluation terminates its Worker. The browser then offers/reconstructs the accepted program in a fresh live image and announces that live objects were reset. Stopping a live Run follows that same recovery rule. Stopping a check disposes only its isolated execution image. Browser queries and editing stay responsive while isolated checks run.
 
 ## One accepted program, with revision tracking
 
@@ -66,7 +73,9 @@ Browser edits, file edits, and refactorings commit through this same controller.
 
 File-in can execute arbitrary do-it chunks before a later chunk fails. Its recovery checkpoint therefore covers the live image and ephemeral filesystem, not only method source. Retain recovery state until both the VM operation and host source commit are acknowledged. A lost acknowledgment triggers reconciliation/recovery before further mutations are accepted. External effects, if a program invokes an available external service, cannot be rolled back; do not describe image recovery as undoing those effects.
 
-Compilation or class changes performed from Evaluate are captured through the image's native change notifications and exported into the same accepted program. They advance its revision and invalidate old tests/previews. Ordinary object mutations and workspace variable bindings remain live-session state. This distinction prevents a method created in the workspace from disappearing silently on fresh Run.
+Compilation or class changes performed from Evaluate are captured through the image's native change notifications and exported into the same accepted program. They advance its revision and invalidate old tests/previews. Ordinary object mutations and workspace variable bindings remain live-session state. This distinction preserves methods created in the terminal across restart and in isolated grading without serializing ordinary live objects.
+
+This reflective source ledger covers class and metaclass definitions and methods. Standalone Trait definitions and Trait-owned methods created only in the terminal remain live-session code; put them in authored source files for restart and isolated-check replay. Native Smalltalk can execute Traits. The terminal help and runtime validation record must make this source-saving boundary explicit rather than promising arbitrary reflective-code persistence.
 
 Unaccepted method drafts are distinct from accepted code. Run and tests must visibly identify when drafts are excluded; failed compilation must never look like the invalid draft executed. Accepted changes and drafts follow the existing autosave preference. Reload restores code/drafts, then creates a new live image; it does not restore arbitrary live objects.
 
@@ -80,9 +89,9 @@ Use Squeak’s actual compiler for workspace do-its and the native file-in reade
 
 Separate definition loading from entry evaluation. Dependencies load in authored `steps[].files` order, with the designated `run_file` loaded last and exactly once in that definition phase. Apply accepted browser change exports after all source loading. Then evaluate `steps[].run_command` as the entry do-it, if supplied; when it is absent, report successful program loading. In particular, a chunk `run_file` must never be filed in again after browser changes, which would overwrite accepted methods. Only declared source dependencies are auto-loaded; resource files remain available in the in-memory workspace. Missing files, ambiguous formats, and invalid dependency configuration produce actionable errors.
 
-The same ordered loading and accepted-code overlay populate the live image and every fresh check. Keep application entry actions in `run_command`, rather than running them prematurely as definition-file initialization. Code can still create or compile classes dynamically using ordinary Smalltalk; mutations made during a disposable Run/test belong to that disposable image.
+The same ordered loading and accepted-code overlay populate the live image and every fresh check. Keep application entry actions in `run_command`, rather than running them prematurely as definition-file initialization. Code can still create or compile classes dynamically using ordinary Smalltalk; mutations made during an isolated check belong to that disposable image. Ordinary Run and terminal mutations remain in the live session, with code changes exported through the accepted-program controller.
 
-Run snapshots the accepted source revision once at invocation. Unaccepted drafts are visibly identified and excluded; provide an explicit Accept and Run action for compiling drafts before starting a fresh execution. Compilation failure prevents that execution and preserves the draft. Later accepted edits belong to the next Run. Stream Transcript as plain text and show the final entry do-it value separately. Chunk file-in success is reported as file-in completion rather than pretending the stream object is a program result.
+Run evaluates the entry do-it in the existing live image without booting, reloading files, or replaying accepted source on each invocation. Unaccepted drafts are visibly identified and excluded; provide an explicit Accept and Run action for compiling drafts before evaluation. Compilation failure prevents that evaluation and preserves the draft. Source operations remain serialized through Workspace. Stream Transcript as plain text and show the final entry do-it value separately. Chunk file-in success is reported as file-in completion rather than pretending the stream object is a program result.
 
 Each `tests[].command` is ordinary Smalltalk evaluated after loading that check’s fresh program. It must return the Boolean `true` to pass. `false`, non-Boolean results, compiler/file-in errors, exceptions, timeouts, cancellation, and output-limit failures cannot pass. SUnit remains usable within a command; authors can finish successful assertions with `true`.
 
@@ -98,11 +107,13 @@ Use Squeak’s Refactoring Browser engine, parser/model, preconditions, and chan
 | Extract and inline | Extract method, extract expression to temporary, inline method, inline temporary |
 | Move and inheritance | Move method, move variable definition where supported, pull up/push down methods, pull up/push down variables |
 | Method signatures | Add parameter, remove parameter, reorder/rename parameters through selector transformation |
-| Class organization | Add/remove class or method with checks, create accessors, split class using the native operation |
+| Class organization | Add/remove class or method with checks, create accessors |
+
+The catalog also reports `splitClass` as unavailable, with its concrete native limitation. The stock operation does not meet the live instance-state migration and inverse-change contract; the verified scheduling prototype does not establish that missing migration. A state-preserving split is deferred rather than presented as supported. The remaining 24 actions require native behavior, inverse, replay, and applicability coverage before enablement.
 
 “Most refactorings” means this explicit catalog, not an unrestricted claim that every transformation in every Smalltalk IDE is supported. Each enabled action requires real integration coverage. If an engine operation proves unavailable or cannot run headlessly, surface that gap for a scope decision rather than providing a textual approximation or a decorative menu item.
 
-The interaction is Select target → supply parameters → check preconditions → preview all affected definitions/call sites → Apply or Cancel. Preview does not mutate the live image or accepted source. The engine's `primitiveExecute` builds changes on an `RBNamespace` model; applying those changes is a separate action. Supply its interaction options through structured browser controls instead of invoking native dialogs. Show collisions, inheritance effects, references outside the writable scope, and dynamic sends such as `perform:` that prevent a complete static guarantee. Do not claim that every dynamic reference has been found. Preserve native restrictions, including rejection of move-method requests involving primitives or `super` sends.
+The interaction is Select target → supply parameters → check preconditions → preview all affected definitions/call sites → Apply or Cancel. Preview does not mutate the live image or accepted source. The engine's `primitiveExecute` builds changes on an `RBNamespace` model; applying those changes is a separate action. Supply its interaction options through structured browser controls instead of invoking native dialogs. Show collisions, inheritance effects, affected definitions outside the selected target package, and dynamic sends such as `perform:` that prevent a complete static guarantee. Do not claim that every dynamic reference has been found. Preserve native restrictions, including rejection of move-method requests involving primitives or `super` sends.
 
 Bind each preview to its code revision. Applying a stale preview requires regeneration. Apply the native composite change as one serialized operation, then publish its source change transaction. Keep a pre-apply recovery checkpoint so a failed structural change restores the prior program/live session rather than leaving half-applied source. Checkpoint/restore behavior must be demonstrated with the selected image before this contract is considered implemented.
 
@@ -131,7 +142,7 @@ Provide an ephemeral filesystem for tutorial resources and the image’s source/
 | Checked-in Smalltalk image-service sources | Compilation, browsing, object handles, native refactoring and code export |
 | `js/smalltalk/workspace.js` | Accepted program/draft revisions and serialized source transactions |
 | `js/smalltalk/browser.js` | Browser selection, source editing, queries and navigation |
-| `js/smalltalk/inspector.js` | Live workspace and object inspection views |
+| `js/smalltalk/inspector.js` | Persistent Smalltalk terminal and object inspection views |
 | `js/smalltalk/refactorings.js` | Native engine capability mapping, previews, apply and undo integration |
 | `css/smalltalk-browser.css` | Browser/inspector presentation in light, dark and print modes |
 | `js/tutorial-code.js` and tutorial layouts | Narrow backend/panel lifecycle hooks; no general backend-registry rewrite |
@@ -152,14 +163,15 @@ Any new HTML entry/runtime page includes the site’s AI-training opt-out metada
 
 Vendor exact runtime, image, sources, refactoring packages, and required plugins with provenance, actual license notices, and SHA-256 manifests. Keep the repository adapter outside unchanged vendor sources. Image preparation is a checked-in script with pinned inputs and a pinned build VM. Users of the site need only their browser.
 
-The prepared image starts at the tutorial service, with graphical startup disabled and no previous learner state. Record compressed transfer size, steady-state memory, cold boot time, fresh-run time, and live-edit latency from actual measurements. No performance claim follows merely from using JavaScript or an image snapshot.
+The prepared image starts at the tutorial service, with graphical startup disabled and no previous learner state. Record compressed transfer size, steady-state memory, cold boot time, warm Run and terminal evaluation time, isolated-check time, and live-edit latency from actual measurements. No performance claim follows merely from using JavaScript or an image snapshot.
 
 Integrate a minimal Smalltalk workspace/example through the existing live/print tutorial route convention so the backend and Browser can be exercised. This is an integration example, not a new multi-lesson course. A full curriculum and a step-through debugger are separate additions.
 
 ## Validation required before completion
 
 - Real compiler/VM cases: classes/metaclasses, inheritance and `super`, blocks/nonlocal returns, fractions/large integers, collections, exceptions, reflection, `become:`, processes/semaphores, and native chunk imports including escaped exclamation marks and Unicode.
-- Fresh-state cases: repeated Run, removed definitions, mutated globals, altered core methods, changed files, forked processes, independent tests, and edits made during an active batch.
+- Live-state cases: repeated Run and terminal commands retain bindings, objects, globals, and accepted methods in the same image; Restart clears live state and restores accepted code.
+- Fresh-state cases: removed definitions, mutated globals, altered core methods, changed files, forked processes, independent checks, and edits made during an active batch.
 - Live-programming case: retain an object, accept a new method implementation, send the same message to that same object, and observe the new behavior without rerunning construction.
 - Draft and code consistency: failed Accept leaves prior behavior intact; selection/popout navigation preserves drafts; accepted browser changes run identically in fresh execution; stale previews/replies cannot overwrite new code; reload respects autosave settings.
 - Browser behavior: class/side/protocol/method selection, actual senders/implementors, hierarchy and variable references, bounded inspectors, versions, and reset/teardown.

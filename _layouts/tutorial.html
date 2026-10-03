@@ -272,6 +272,9 @@
 
   <!-- Tutorial styles -->
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
+  {% if tutorial_backend == 'smalltalk' %}
+  <link rel="stylesheet" href="{{ '/css/smalltalk-browser.css' | relative_url }}">
+  {% endif %}
   <link rel="stylesheet" href="{{ '/css/tutor-chat.css' | relative_url }}">
 
   <!-- Mermaid.js — themed via SebookMermaid to match the ArchUML visual language.
@@ -572,8 +575,7 @@
           if (modalYes) {
             modalYes.addEventListener('click', function () {
               closeAutosaveConfirmModal();
-              localStorage.removeItem(tutorial._storageKey());
-              tutorial.resetStep();
+              tutorial.deleteSavedProgress();
             });
           }
           if (modalNo) {

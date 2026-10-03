@@ -423,6 +423,13 @@ test('WCAG bypass audit requires a skip link only before repeated page chrome', 
 async function settleLoadedPage(page) {
   await page.waitForLoadState('load', { timeout: 5_000 }).catch(() => {});
   await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
+  if (/\/SEBook\/tools\/smalltalk-tutorial(?:\.html|\/)?$/.test(new URL(page.url()).pathname)) {
+    // Asset fetch completion precedes native image startup. Audit the mounted
+    // workspace rather than treating its loading screen as the finished page.
+    await expect(page.getByRole('button', { name: 'Run', exact: true })).toBeEnabled({ timeout: 90000 });
+    await expect(page.getByRole('region', { name: 'Smalltalk System Browser', exact: true })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Smalltalk live terminal', exact: true })).toBeVisible();
+  }
   await waitForAnimationFrames(page, 4);
 }
 

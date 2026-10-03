@@ -1287,9 +1287,11 @@
         }
       })
       .catch(function (err) {
+        if (self._destroyed) return;
         var message = restoreErrorMessage
           ? restoreErrorMessage
           : 'Failed to start tutorial: ' + (err && err.message || err);
+        if (self._smalltalkAdapter) self._smalltalkAdapter.dispose();
         self._showError(message);
         console.error('TutorialCode error:', err);
         throw err;
@@ -1493,6 +1495,14 @@
 
   TutorialCode.prototype.destroy = function () {
     this._destroyed = true;
+    (this._splitterObservers || []).forEach(function (observer) { observer.disconnect(); });
+    this._splitterObservers = [];
+    if (this._smalltalkInitController) this._smalltalkInitController.abort();
+    this._disposeSmalltalkViews();
+    if (this._smalltalkLayout) this._smalltalkLayout.dispose();
+    if (this._smalltalkRecoveryStatus) this._smalltalkRecoveryStatus.remove();
+    if (this._smalltalkProgressStatus) this._smalltalkProgressStatus.remove();
+    if (this._smalltalkAdapter) this._smalltalkAdapter.dispose();
     if (this._haskellCycles) this._haskellCycles.dispose();
     if (this._haskellInterpreter) this._haskellInterpreter.dispose();
     if (this._prologInterpreter) this._prologInterpreter.dispose();
@@ -1598,6 +1608,7 @@
   // ---------------------------------------------------------------------------
   TutorialCode.prototype._buildUI = function () {
     this.root.classList.add('tvm-root');
+    if (this.config.backend === 'smalltalk') this.root.classList.add('smalltalk-tutorial');
     if (this.editorSplitSupported && this._splitActive) {
       this.root.classList.add('tvm-split-layout-three-col');
     }
@@ -2441,6 +2452,15 @@
       var testRunBtn = this.root.querySelector('.tvm-test-run-btn');
       var stopBtn = this.root.querySelector('.tvm-stop-btn');
       var clearBtn = this.root.querySelector('.tvm-clear-btn');
+      if (this.config.backend === 'smalltalk' && runBtn) {
+        this._renderRunButtonLabel(runBtn, '\u25b6 ' + this._effectiveRunLabel());
+        runBtn.setAttribute('data-original-title', 'Run accepted entry in the live image');
+        var acceptRunBtn = document.createElement('button');
+        acceptRunBtn.type = 'button'; acceptRunBtn.className = 'tvm-run-btn tvm-smalltalk-accept-run-btn';
+        acceptRunBtn.textContent = 'Accept and Run';
+        acceptRunBtn.addEventListener('click', function () { self._runCurrentFile({ acceptDrafts: true }); });
+        runBtn.after(acceptRunBtn);
+      }
       if (runBtn) runBtn.addEventListener('click', function () { self._runCurrentFile(); });
       if (testRunBtn) testRunBtn.addEventListener('click', function () { self._runTestFile(); });
       if (stopBtn) stopBtn.addEventListener('click', function () { self._stopExecution(); });
@@ -2737,6 +2757,16 @@
       if (self.editor2) self.editor2.layout();
     }
     updateSeparatorValue();
+    if (window.ResizeObserver) {
+      var observer = new window.ResizeObserver(function () {
+        if (self._destroyed || !splitter.isConnected) { observer.disconnect(); return; }
+        updateSeparatorValue();
+      });
+      observer.observe(beforeEl);
+      observer.observe(beforeEl.parentElement);
+      if (!self._splitterObservers) self._splitterObservers = [];
+      self._splitterObservers.push(observer);
+    }
     function onMouseDown(e) {
       e.preventDefault();
       startPos = direction === 'vertical' ? e.clientX : e.clientY;
@@ -2837,7 +2867,24 @@
       if (self.config.backend === 'haskell' || self.config.backend === 'prolog') {
         loadCSS('/css/tutorial-interpreter.css');
       }
-      return Promise.all([v86Promise, monacoPromise, playwrightPromise, haskellAnalysis, prologInterpreter]);
+      var smalltalkRuntime = self.config.backend === 'smalltalk'
+        ? loadScript('/js/smalltalk/protocol.js').then(function () {
+            return loadScript('/js/smalltalk/runtime-host.js');
+          }).then(function () { return loadScript('/js/smalltalk/fresh-runner.js'); })
+          .then(function () { return loadScript('/js/smalltalk/progress.js'); })
+          .then(function () { return loadScript('/js/smalltalk/workspace.js'); })
+          .then(function () { return loadScript('/js/smalltalk/popup.js'); })
+          .then(function () { return loadScript('/js/smalltalk/tutorial-adapter.js'); })
+          .then(function () { return loadScript('/js/smalltalk/source-views.js'); })
+          .then(function () {
+            if (!window.SEBookSmalltalk.FEATURES.refactorings) return;
+            return loadScript('/js/smalltalk/refactorings.js').then(function () { return loadScript('/js/smalltalk/refactoring-view.js'); });
+          })
+          .then(function () { return loadScript('/js/smalltalk/browser.js'); })
+          .then(function () { return loadScript('/js/smalltalk/inspector.js'); })
+          .then(function () { return loadScript('/js/smalltalk/layout.js'); })
+        : Promise.resolve();
+      return Promise.all([v86Promise, monacoPromise, playwrightPromise, haskellAnalysis, prologInterpreter, smalltalkRuntime]);
     });
   };
 
@@ -3457,7 +3504,7 @@
 
   TutorialCode.prototype._applyTheme = function (isDark) {
     var theme = isDark ? THEMES.dark : THEMES.light;
-    if (this.editor) monaco.editor.setTheme(theme.monaco);
+    if (this.editor || this._smalltalkBrowser || this._smalltalkInspector) monaco.editor.setTheme(theme.monaco);
     if (this.term) {
       if (typeof this.term.setOption === 'function') this.term.setOption('theme', theme.xterm);
       else this.term.options.theme = theme.xterm;
@@ -3606,7 +3653,157 @@
     if (backend === 'java') return this._initJava();
     if (backend === 'cpp') return this._initCPP(setupCommandsOverride, loadingOptions);
     if (backend === 'haskell') return this._initHaskell();
+    if (backend === 'smalltalk') return this._initSmalltalk();
     return Promise.reject(new Error('Unknown backend: ' + backend));
+  };
+
+  // One live Workspace backs Run, Browser and terminal. FreshRunner isolates checks.
+  TutorialCode.prototype._initSmalltalk = function () {
+    var self = this;
+    if (self._destroyed) return Promise.reject(new Error('Tutorial was destroyed'));
+    self._showLoading('Loading verified Smalltalk image…');
+    self._smalltalkInitController = new AbortController();
+    return window.SEBookSmalltalk.TutorialAdapter.create({ signal: self._smalltalkInitController.signal, onEvent: function (event) {
+      if (self._destroyed) return;
+      if (event.type === 'program') self._invalidateSmalltalkCredit();
+      if (event.type === 'program' || event.type === 'drafts') self._autoSaveProgress();
+      if (event.type === 'progressWarning') self._smalltalkProgressWarnings = event.detail.warnings;
+      if (event.type === 'recoveryFailed') {
+        var message = 'Session recovery failed: ' + event.detail.message + '. Select Restart session to retry.';
+        self._appendOutput(message + '\n', 'err');
+        self._smalltalkRecoveryStatus.textContent = message;
+      }
+      if (event.type === 'runtime' && event.detail.type === 'recovered' && self._smalltalkRecoveryStatus) self._smalltalkRecoveryStatus.textContent = '';
+      if (event.type === 'runtime' && event.detail.type === 'output' && self._activeRunTransaction) {
+        self._appendOutput(event.detail.payload.text, event.detail.payload.stream === 'stderr' ? 'err' : 'out');
+      }
+    } }).then(function (adapter) {
+      if (self._destroyed) { adapter.dispose(); throw new Error('Tutorial was destroyed'); }
+      self._smalltalkAdapter = adapter;
+      self.booted = true;
+    });
+  };
+  TutorialCode.prototype._disposeSmalltalkViews = function () {
+    if (this._popoutManager) this._popoutManager.disconnectSmalltalk();
+    if (this._smalltalkBrowser) this._smalltalkBrowser.dispose();
+    if (this._smalltalkInspector) this._smalltalkInspector.dispose();
+    this._smalltalkBrowser = null; this._smalltalkInspector = null;
+  };
+  TutorialCode.prototype._mountSmalltalkViews = function (workspace, step) {
+    var self = this;
+    self._disposeSmalltalkViews();
+    self.editorContainerEl.replaceChildren();
+    self.editorContainerEl.classList.add('smalltalk-tutorial-workspace');
+    var browserRoot = document.createElement('section');
+    var inspectorRoot = document.createElement('section');
+    self.editorContainerEl.append(browserRoot);
+    self.outputPanel.classList.add('smalltalk-tutorial-output');
+    if (!self._smalltalkProgressStatus) {
+      self._smalltalkProgressStatus = document.createElement('div');
+      self._smalltalkProgressStatus.className = 'sr-only';
+      self._smalltalkProgressStatus.setAttribute('role', 'alert');
+      self._smalltalkProgressStatus.setAttribute('aria-label', 'Smalltalk progress restoration');
+      self.outputPanel.append(self._smalltalkProgressStatus);
+    }
+    self._smalltalkProgressStatus.textContent = '';
+    if (self._smalltalkProgressWarnings && self._smalltalkProgressWarnings.length) {
+      var warning = self._smalltalkProgressWarnings.join('\n');
+      self._appendOutput(warning + '\n', 'err');
+      self._smalltalkProgressStatus.textContent = warning;
+    }
+    if (!self._smalltalkRecoveryStatus) {
+      self._smalltalkRecoveryStatus = document.createElement('div');
+      self._smalltalkRecoveryStatus.className = 'sr-only';
+      self._smalltalkRecoveryStatus.setAttribute('role', 'alert');
+      self._smalltalkRecoveryStatus.setAttribute('aria-label', 'Smalltalk session recovery');
+      self._smalltalkRecoveryStatus.setAttribute('aria-atomic', 'true');
+      self.outputPanel.append(self._smalltalkRecoveryStatus);
+    }
+    if (!self._smalltalkInspectorRoot) { self._smalltalkInspectorRoot = inspectorRoot; self.outputPanel.append(inspectorRoot); }
+    else inspectorRoot = self._smalltalkInspectorRoot;
+    inspectorRoot.replaceChildren();
+    if (!self._smalltalkLayout) self._smalltalkLayout = window.SEBookSmalltalk.Layout.mount({ root: self.root, outputPanel: self.outputPanel });
+    function createEditor(options) {
+      var opts = self._monacoEditorOptions();
+      opts.value = options.value || ''; opts.language = options.language || 'smalltalk';
+      opts.ariaLabel = options.ariaLabel + '. ' + opts.ariaLabel;
+      opts.fontSize = Math.max(16, self.config.fontSize, parseFloat(getComputedStyle(options.element).fontSize) || 16);
+      var editor = monaco.editor.create(options.element, opts);
+      window.SebookMonacoFocusExit.attach(editor);
+      var settingValue = false;
+      var changes = editor.onDidChangeModelContent(function () { if (!settingValue && options.onChange) options.onChange(editor.getValue()); });
+      return {
+        getValue: function () { return editor.getValue(); },
+        setValue: function (value) { settingValue = true; try { editor.setValue(value); } finally { settingValue = false; } },
+        getSelection: function () {
+          var selection = editor.getSelection(); var model = editor.getModel();
+          return { start: model.getOffsetAt(selection.getStartPosition()), end: model.getOffsetAt(selection.getEndPosition()) };
+        },
+        dispose: function () { changes.dispose(); var model = editor.getModel(); editor.dispose(); if (model) model.dispose(); },
+      };
+    }
+    self._smalltalkBrowser = window.SEBookSmalltalk.Browser.mount({ root: browserRoot, workspace: workspace, createEditor: createEditor, compact: true, focusControl: self._smalltalkLayout.focusControl, refactorings: window.SEBookSmalltalk.FEATURES.refactorings ? window.SEBookSmalltalk.Refactorings.create(workspace) : null,
+      onDetach: function (target) { if (self._popoutManager) self._popoutManager.detachPane('smalltalk', { target: target }); },
+      onDetachFile: function (path) { if (self._popoutManager) self._popoutManager.detachFile(path, { language: 'smalltalk' }); },
+    });
+    self._smalltalkInspector = window.SEBookSmalltalk.Inspector.mount({ root: inspectorRoot, workspace: workspace, createEditor: createEditor, compact: true, onInspect: self._smalltalkLayout.revealDetails });
+    return Promise.resolve(self._smalltalkBrowser.ready).then(function () {
+      if (step.smalltalk_target) return self._smalltalkBrowser.navigate(step.smalltalk_target);
+    });
+  };
+  TutorialCode.prototype._invalidateSmalltalkCredit = function () {
+    this._stepsPassed.delete(this.currentStep);
+    this._testResults = [];
+    var panel = this.stepContentEl && this.stepContentEl.querySelector('.tvm-test-panel');
+    if (panel) panel.replaceChildren();
+    this._renderStepNav();
+  };
+  TutorialCode.prototype._runSmalltalk = function (run) {
+    var self = this;
+    return Promise.resolve(this._stepSetupPromise).then(function () {
+      if (self.currentStep !== run.stepIndex || self._destroyed) return false;
+      self._clearOutput();
+      var workspace = self._smalltalkAdapter.getWorkspace();
+      if (!run.acceptDrafts && self._smalltalkAdapter.workspace.getDrafts().length) self._appendOutput('Draft changes excluded; Run uses accepted source.\n', 'info');
+      return self._smalltalkAdapter.run({ acceptDrafts: run.acceptDrafts }).then(function (result) {
+        var value = result.result && result.result.value;
+        // This output is text-only; the terminal owns its separately inspectable
+        // results. Release this receipt even when navigation discards its text.
+        var release = value && value.handle ? workspace.releaseHandles([value.handle]).catch(function (error) {
+          if (!self._destroyed && self._smalltalkAdapter.getWorkspace() === workspace) throw error;
+        }) : Promise.resolve();
+        return release.then(function () {
+          if (self.currentStep !== run.stepIndex || self._destroyed) return false;
+          self._appendOutput(value ? 'Result: ' + value.text + '\n' : 'Program loaded successfully; no run_command configured.\n', 'out');
+          return true;
+        });
+      });
+    });
+  };
+  TutorialCode.prototype._replaceSmalltalkFiles = function (files) {
+    var self = this;
+    var step = this.steps[this.currentStep];
+    return Promise.resolve(self._stepSetupPromise).then(function () { return self._smalltalkAdapter.replaceFiles(files); }).then(function () {
+      self._invalidateSmalltalkCredit();
+      return self._mountSmalltalkViews(self._smalltalkAdapter.workspace, step);
+    }).catch(function (error) { self._appendOutput('Acceptance failed: ' + error.message + '\n', 'err'); });
+  };
+  TutorialCode.prototype._runTestsSmalltalk = function (run) {
+    var self = this;
+    var tests = this.steps[run.stepIndex].tests;
+    run.smalltalkProgram = null;
+    run.smalltalkLoad = this._stepLoadSequence;
+    this._setRunTransactionControls('running', 'Checking…');
+    Promise.resolve(this._stepSetupPromise).then(function () {
+      if (self.currentStep !== run.stepIndex || self._stepLoadSequence !== run.smalltalkLoad) throw new Error('Step changed');
+      run.smalltalkProgram = self._smalltalkAdapter.getProgram();
+      run.smalltalkEpoch = self._smalltalkAdapter.programEpoch;
+      return self._smalltalkAdapter.runTests(tests, { program: run.smalltalkProgram });
+    }).then(function (result) {
+      self._renderTestResults(tests, result.results.map(function (item) { return item.passed; }), run);
+    }, function () { self._renderTestResults(tests, new Array(tests.length).fill(false), run); }).finally(function () {
+      if (!self._activeRunTransaction && !self._destroyed) self._setRunTransactionControls('idle');
+    });
   };
 
   // ---- v86 backend ----------------------------------------------------------
@@ -5658,15 +5855,17 @@
   };
 
   TutorialCode.prototype._setRunTransactionControls = function (state, label) {
+    var acceptRunBtn = this.root && this.root.querySelector('.tvm-smalltalk-accept-run-btn');
+    if (acceptRunBtn) acceptRunBtn.disabled = state === 'running' || state === 'unavailable' || state === 'restarting';
     var runBtn = this.root && this.root.querySelector('.tvm-run-btn');
     var testRunBtn = this.root && this.root.querySelector('.tvm-test-run-btn');
     var stopBtn = this.root && this.root.querySelector('.tvm-stop-btn');
     if (state === 'running' || state === 'restarting') {
       if (runBtn) {
         runBtn.disabled = true;
-        runBtn.textContent = label || (state === 'restarting'
+        this._renderRunButtonLabel(runBtn, label || (state === 'restarting'
           ? '\u23f3 Restarting\u2026'
-          : '\u23f3 Running\u2026');
+          : '\u23f3 Running\u2026'));
       }
       if (testRunBtn) {
         testRunBtn.disabled = true;
@@ -5681,7 +5880,7 @@
     if (state === 'unavailable') {
       if (runBtn) {
         runBtn.disabled = true;
-        runBtn.textContent = 'Runtime unavailable';
+        this._renderRunButtonLabel(runBtn, 'Runtime unavailable');
       }
       if (testRunBtn) testRunBtn.disabled = true;
       if (stopBtn) stopBtn.style.display = 'none';
@@ -5689,7 +5888,7 @@
     }
     if (runBtn && (!this._debuggerCtl || !this._debuggerCtl.session)) {
       runBtn.disabled = false;
-      runBtn.textContent = '\u25b6 ' + this._effectiveRunLabel();
+      this._renderRunButtonLabel(runBtn, '\u25b6 ' + this._effectiveRunLabel());
     }
     if (testRunBtn) {
       testRunBtn.disabled = false;
@@ -5752,9 +5951,9 @@
     return run.promise;
   };
 
-  TutorialCode.prototype._runCurrentFile = function () {
+  TutorialCode.prototype._runCurrentFile = function (options) {
     if (this._activeRunTransaction) return this._activeRunTransaction.promise;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog') && this._testRunInFlight) return Promise.resolve(false);
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk') && this._testRunInFlight) return Promise.resolve(false);
     if (this._haskellInterpreter) this._haskellInterpreter.showOutput();
     if (this._prologInterpreter) {
       if (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session)) return Promise.resolve(false);
@@ -5764,10 +5963,11 @@
     var stepIndex = this.currentStep >= 0 ? this.currentStep : 0;
     var step = this.steps[stepIndex];
     var runFiles = this._stepRunFiles(step);
-    if (!this.activeFileName && !runFiles.length) return Promise.resolve(false);
+    if (this.config.backend !== 'smalltalk' && !this.activeFileName && !runFiles.length) return Promise.resolve(false);
     var run = {
       id: ++this._runSequence,
       kind: 'run-file',
+      acceptDrafts: !!(options && options.acceptDrafts),
       stepIndex: stepIndex,
       step: step,
       runFiles: runFiles,
@@ -5799,6 +5999,8 @@
     run.backend = backend;
     var runFiles = run.runFiles;
     var filename = run.filename;
+
+    if (backend === 'smalltalk') return this._runSmalltalk(run);
 
     if (backend === 'v86') {
       return this._syncFileToBackend(filename).then(function () { return false; });
@@ -6258,6 +6460,18 @@
     return this._runLabel;
   };
 
+  TutorialCode.prototype._renderRunButtonLabel = function (button, text) {
+    if (this.config.backend !== 'smalltalk') { button.textContent = text; return; }
+    var icon = /^[\u25b6\u23f3]\s*/.exec(text);
+    var label = icon ? text.slice(icon[0].length) : text;
+    button.setAttribute('aria-label', label);
+    if (icon) {
+      var decoration = document.createElement('span');
+      decoration.setAttribute('aria-hidden', 'true'); decoration.textContent = icon[0].trim();
+      button.replaceChildren(decoration, document.createTextNode(' ' + label));
+    } else button.textContent = label;
+  };
+
   // Refresh the Run button text in place. Called whenever the active file
   // changes so the label can flip between "Run" and "Test" as the student
   // switches tabs in pytest-mode tutorials.
@@ -6265,7 +6479,7 @@
     if (!this.root) return;
     var btn = this.root.querySelector('.tvm-run-btn');
     if (!btn || btn.disabled) return; // don't clobber "\u23f3 Running\u2026"
-    btn.textContent = '\u25b6 ' + this._effectiveRunLabel();
+    this._renderRunButtonLabel(btn, '\u25b6 ' + this._effectiveRunLabel());
   };
 
   // ---- WebContainers backend -------------------------------------------------
@@ -6746,6 +6960,11 @@
    * host-owned deadline can terminate even a Worker blocked in a tight loop.
    */
   TutorialCode.prototype._stopExecution = function () {
+    if (this._smalltalkAdapter) {
+      this._smalltalkAdapter.stop();
+      this._appendOutput('Execution stopped; live session resets before its next use.\n', 'info');
+      return;
+    }
     if (this._prologInterpreter && this._prologInterpreter.busy) {
       this._prologInterpreter.interrupt();
       return;
@@ -7229,6 +7448,7 @@
     java: { id: 'java', label: 'Java' },
     cpp: { id: 'cpp', label: 'C++' },
     haskell: { id: 'haskell', label: 'Haskell' },
+    smalltalk: { id: 'smalltalk', label: 'Smalltalk' },
     sql: { id: 'sql', label: 'SQL' },
     v86: { id: 'shell-sebook', label: 'Shell' },
   };
@@ -7370,6 +7590,10 @@
 
   TutorialCode.prototype._initEditor = function () {
     var self = this;
+    if (this.config.backend === 'smalltalk') {
+      this.editorTabsEl.hidden = true;
+      return Promise.resolve();
+    }
     // Pane labels passed to Monaco so screen-reader users know which editor
     // they're in when there's a left/right split (the right pane is
     // typically tests, the left typically code).
@@ -8844,6 +9068,8 @@
       debuggerPopupUrl: this.config.debuggerPopupUrl || '/tutorial-debugger-popup.html',
       tutorialTitle: this.config.tutorialTitle || this._deriveTutorialTitle(),
       hooks: {
+        getSmalltalkWorkspace: function () { return self._smalltalkAdapter && self._smalltalkAdapter.workspace; },
+        runSmalltalk: function () { return self._runCurrentFile(); },
         onStepChangeRequest: function (idx) {
           if (typeof idx === 'number') self.loadStep(idx);
         },
@@ -10581,6 +10807,7 @@
       }
     }
     var solution = step.solution;
+    if (this.config.backend === 'smalltalk') return this._replaceSmalltalkFiles(solution.files || []);
 
     var p = this._stepSetupPromise || Promise.resolve();
 
@@ -10847,6 +11074,16 @@
       quizPassed: Array.from(this._quizPassed)
     };
     try {
+      if (this._smalltalkAdapter && this._smalltalkAdapter.workspace) {
+        data.smalltalk_workspace = this._smalltalkAdapter.encodeProgress(prev && prev.smalltalk_workspace);
+        // Remove only original keys whose exact source is represented in the
+        // native record. Conflicting aliases and concurrently changed text
+        // remain recoverable; the combined write is atomic on quota failure.
+        var migrated = this._smalltalkAdapter.getMigratedLegacyFiles();
+        Object.keys(migrated).forEach(function (key) {
+          if (files[key] && files[key].content === migrated[key]) delete files[key];
+        });
+      }
       localStorage.setItem(this._storageKey(), JSON.stringify(this._withProgressIdentity(data)));
       return true;
     } catch (e) {
@@ -10864,6 +11101,7 @@
    */
   TutorialCode.prototype._saveFile = function (filename) {
     if (!this.autosaveType) return false;
+    if (this._smalltalkAdapter && this._smalltalkAdapter.workspace) return this.saveProgress();
     var entry = this.editorModels[filename];
     if (!entry) return false;
     var current = entry.model.getValue();
@@ -10913,6 +11151,12 @@
    */
   TutorialCode.prototype._applySavedFiles = function (files, activeFile) {
     if (!files) return Promise.resolve();
+    if (this._smalltalkAdapter) {
+      // Native accepted source and legacy file drafts were restored together
+      // before Workspace creation; generic file restoration must not reapply
+      // stale overrides over the accepted/draft representation.
+      return Promise.resolve();
+    }
     var self = this;
     // Only restore files that belong to the current step. Each step's
     // `files` array defines its visible tabs; saved overrides for files
@@ -11012,9 +11256,16 @@
    * When resetType is "commands", replays all prior solutions + setup_commands
    * (like the autosave restore) before applying the current step's starter files.
    */
+  TutorialCode.prototype.deleteSavedProgress = function () {
+    localStorage.removeItem(this._storageKey());
+    if (this._smalltalkAdapter) this._smalltalkAdapter.clearSavedProgress();
+    return this.resetStep();
+  };
+
   TutorialCode.prototype.resetStep = function () {
     var step = this.steps[this.currentStep];
     if (!step) return;
+    if (this.config.backend === 'smalltalk') return this._replaceSmalltalkFiles(step.files || []);
     var self = this;
     if (this._prologInterpreter && this._prologInterpreter.busy) {
       return this._prologInterpreter.stopForWorkspaceChange().then(function () { return self.resetStep(); });
@@ -11908,18 +12159,20 @@
     // Pull autosaved overrides so re-opening a file shows the student's
     // last saved edits instead of the YAML starter content.
     var savedOverrides = {};
+    var smalltalkProgress = null;
     if (this.autoSaveEnabled) {
       try {
         var raw = localStorage.getItem(this._storageKey());
         if (raw) {
           var parsed = JSON.parse(raw);
           if (parsed && parsed.files) savedOverrides = parsed.files;
+          if (parsed) smalltalkProgress = parsed.smalltalk_workspace;
         }
       } catch (e) { /* ignore */ }
     }
 
     var stepFileSyncs = [];
-    if (step.files) {
+    if (step.files && this.config.backend !== 'smalltalk') {
       var autoSaveSuppressedBeforeFileLoad = self._suppressAutoSave;
       self._suppressAutoSave = true;
       step.files.forEach(function (f) {
@@ -11950,7 +12203,7 @@
       });
       self._suppressAutoSave = autoSaveSuppressedBeforeFileLoad;
     }
-    if (step.open_file) { self._setActiveFile(step.open_file); self._renderTabs(); }
+    if (step.open_file && this.config.backend !== 'smalltalk') { self._setActiveFile(step.open_file); self._renderTabs(); }
 
     // Broadcast step change to any open popups (instructions popup updates content,
     // tab popups detect orphaned files via fileList).
@@ -11960,6 +12213,13 @@
     // read those files, so every later preparation phase is chained after this
     // barrier rather than being launched independently.
     var stepReadyPromise = Promise.all(stepFileSyncs);
+    if (self._smalltalkAdapter) {
+      self._invalidateSmalltalkCredit();
+      stepReadyPromise = stepReadyPromise.then(function () {
+        self._disposeSmalltalkViews();
+        return self._smalltalkAdapter.loadStep(step, { progress: smalltalkProgress, legacyFiles: savedOverrides });
+      }).then(function (workspace) { return self._mountSmalltalkViews(workspace, step); });
+    }
     if (!self._isBackgroundSyncPaused()) {
       stepReadyPromise = stepReadyPromise.then(function () {
         return self._updateUserCmdListener(step);
@@ -12878,7 +13138,7 @@
     // results return. Without this guard, the second run can replace the
     // pending test buffer/state and produce ghost results in the panel.
     if (this._testRunInFlight) return;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog') && this._activeRunTransaction) return;
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk') && this._activeRunTransaction) return;
     if (this.config.backend === 'prolog' && (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session))) return;
     var stepIndex = this.currentStep;
     var step = this.steps[stepIndex];
@@ -12919,6 +13179,7 @@
     else if (backend === 'java') this._runTestsJava(run);
     else if (backend === 'cpp') this._runTestsCPP(run);
     else if (backend === 'haskell') this._runTestsHaskell(run);
+    else if (backend === 'smalltalk') this._runTestsSmalltalk(run);
     else {
       run.completed = true;
       this._activeTestRun = null;
@@ -13818,7 +14079,10 @@
     // stale results prevents it from painting, passing, or unlocking the step
     // the learner is viewing now. `completed` also makes timeout/worker races
     // idempotent when two completion paths arrive for one run.
-    if (!isActiveRun || this.currentStep !== run.stepIndex) {
+    var staleSmalltalk = run.smalltalkProgram && (this._destroyed || this._stepLoadSequence !== run.smalltalkLoad || this._smalltalkAdapter.programEpoch !== run.smalltalkEpoch ||
+      this._smalltalkAdapter.getProgram().revision !== run.smalltalkProgram.revision ||
+      this._smalltalkAdapter.getProgram().stepKey !== run.smalltalkProgram.stepKey);
+    if (!isActiveRun || this.currentStep !== run.stepIndex || staleSmalltalk) {
       return;
     }
 

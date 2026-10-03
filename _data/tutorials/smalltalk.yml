@@ -1,0 +1,214 @@
+title: Smalltalk Live Workspace
+description: "Explore one counter through live method edits and independent checks. Familiarity with objects in another language is enough; plan 10–15 minutes."
+learning_objectives:
+  - Analyze a method that updates an object's state.
+  - Apply an accepted method change to a retained object.
+  - Compare retained state with new objects in the same live image.
+  - Check accumulating state and independent objects.
+
+# This deliberately short student-facing integration example stays discoverable
+# on the tutorial index, as required by the Smalltalk integration plan.
+backend: smalltalk
+require_tests: false
+require_quiz: false
+allow_skip_steps: true
+autosave_type: files
+reset_type: files
+progress_version: 1
+
+steps:
+  # Pedagogy: PRIMM — Predict and investigate retained state, then modify behavior.
+  # One integration exercise; explanatory prompts are reviewed manually.
+  - title: Live Objects and Independent Checks
+    key: counter-live-fresh-v1
+    smalltalk_target:
+      kind: class
+      className: SEBookCounter
+      side: instance
+    instructions: |
+      ### Why this matters
+
+      A Smalltalk image holds objects and their class definitions. Accepting a
+      method edit changes what an existing object does on its next message.
+      The System Browser and Smalltalk terminal share one live image.
+
+      ### 🎯 You will learn to
+
+      - Analyze the state of an object across a live method edit.
+      - Accept a method change and evaluate it on a retained object.
+      - Compare live state with independently checked counter behavior.
+
+      **Read the methods.** `:=` assigns, `^` returns, and `self` is the receiver.
+      `SEBookCounter new` initializes a counter's `count` to zero. The semicolon
+      in `counter increment; value` sends both messages to the same counter;
+      the final message supplies the expression's result.
+
+      1. In **System Browser**, select the instance methods `initialize`,
+         `increment`, and `value` of `SEBookCounter`. Predict the result after
+         one increment, then select **Run**. Run evaluates the class-side entry
+         `SEBookCounter runExample` in the current live image.
+      2. In the **Smalltalk terminal**, **Evaluate** `counter := SEBookCounter new`.
+         Then evaluate `counter increment; value`. Keep this object for the
+         next action; the terminal retains its bindings between evaluations.
+      3. Select `increment` in Browser. Edit its method source so each message
+         adds **two** to the current count; keep `^ self`. Before selecting
+         **Accept**, select **Run** and explain why it still uses the old method.
+         Typing creates a draft. Accept uses the native compiler; a compilation
+         error preserves both the draft and the previous accepted method.
+         **Accept and Run** compiles current drafts before evaluating the entry;
+         a compilation error prevents that evaluation.
+      4. After **Accept**, predict whether evaluating `counter increment; value`
+         again will give **two or three**. Explain what happened to the object's
+         old state when its method changed. **Inspect result** lets you inspect
+         a counter after evaluating `counter` itself.
+      5. Select **Run** twice. Both runs reuse the live image, but `runExample`
+         creates a **new counter** each time. Compare its results with the
+         retained terminal counter. Explain why a new counter is different
+         from restarting the entire image.
+      6. Select **Test My Work**. Each optional Boolean check loads accepted
+         code into its own fresh image. The checks test one update, repeated
+         updates, and an untouched second object. Only Smalltalk `true` passes;
+         passing these checks alone does not show that your terminal counter
+         retained its identity.
+
+      **Restart session** keeps accepted code and clears live objects and
+      terminal bindings. **Reset Current Step** restores the increment-by-one
+      starter. With **Auto-save** enabled, accepted code and unaccepted drafts
+      survive reloading this page. Live objects and terminal bindings restart;
+      they are not saved. Method drafts also remain while you navigate Browser.
+
+    files:
+      - path: Counter.st
+        language: smalltalk
+        content: |
+          Object subclass: #SEBookCounter
+              instanceVariableNames: 'count'
+              classVariableNames: ''
+              poolDictionaries: ''
+              category: 'SEBook-Smalltalk'!
+          !SEBookCounter methodsFor: 'initialization'!
+          initialize
+              super initialize.
+              count := 0
+          ! !
+          !SEBookCounter methodsFor: 'counting'!
+          increment
+              count := count + 1.
+              ^ self
+          !
+          value
+              ^ count
+          ! !
+          !SEBookCounter class methodsFor: 'tutorial entry points'!
+          runExample
+              ^ self new increment; value
+          !
+          checkIncrement
+              | counter |
+              counter := self new.
+              ^ (counter increment == counter) and: [counter value = 2]
+          !
+          checkRepeatedIncrement
+              | counter |
+              counter := self new.
+              counter increment.
+              counter increment.
+              ^ counter value = 4
+          !
+          checkIndependentCounters
+              | counter other |
+              counter := self new.
+              other := self new.
+              counter increment.
+              ^ other value = 0
+          ! !
+    open_file: Counter.st
+    run_file: Counter.st
+    run_command: SEBookCounter runExample
+    tests:
+      - description: One message updates the counter.
+        command: SEBookCounter checkIncrement
+        hints:
+          - title: Accepted Behavior
+            text: Check whether the increment edit is accepted or still a draft. Run and checks exclude drafts.
+          - title: Assignment and Return
+            text: Read the assignment separately from the return. Which line changes count, and which line keeps the receiver available?
+          - title: A State Trace
+            text: Write down the starting count and the required count after one message. Use that change to derive the update expression.
+      - description: Repeated messages accumulate state.
+        command: SEBookCounter checkRepeatedIncrement
+        hints:
+          - title: The Same Receiver
+            text: Both messages go to one counter. Check whether your method uses that counter's current count.
+          - title: The Second Message
+            text: Trace the field immediately before and after the second message. Compare an update with assigning a fixed final value.
+          - title: The Old and New Counts
+            text: Make a two-row trace for the two sends, with a column for the old count and one for the new count. Identify the relationship that both rows share.
+      - description: Separate counters keep separate state.
+        command: SEBookCounter checkIndependentCounters
+        hints:
+          - title: Per-Object State
+            text: Inspect two newly created counters. Their count fields should belong to the individual objects.
+          - title: An Untouched Counter
+            text: Send the update only to the first counter, then read the second counter's value. Which object received the message?
+          - title: Initialization and Updates
+            text: Trace where count first receives a value and where it changes later. Check that creating or updating one object cannot reset or change the other.
+    solution:
+      files:
+        - path: Counter.st
+          language: smalltalk
+          content: |
+            Object subclass: #SEBookCounter
+                instanceVariableNames: 'count'
+                classVariableNames: ''
+                poolDictionaries: ''
+                category: 'SEBook-Smalltalk'!
+            !SEBookCounter methodsFor: 'initialization'!
+            initialize
+                super initialize.
+                count := 0
+            ! !
+            !SEBookCounter methodsFor: 'counting'!
+            increment
+                count := count + 2.
+                ^ self
+            !
+            value
+                ^ count
+            ! !
+            !SEBookCounter class methodsFor: 'tutorial entry points'!
+            runExample
+                ^ self new increment; value
+            !
+            checkIncrement
+                | counter |
+                counter := self new.
+                ^ (counter increment == counter) and: [counter value = 2]
+            !
+            checkRepeatedIncrement
+                | counter |
+                counter := self new.
+                counter increment.
+                counter increment.
+                ^ counter value = 4
+            !
+            checkIndependentCounters
+                | counter other |
+                counter := self new.
+                other := self new.
+                counter increment.
+                ^ other value = 0
+            ! !
+      explanation: |
+        `count := count + 2` uses the receiver's current field, so a retained
+        counter whose count was one advances to three. Returning `self` keeps
+        the receiver available; `value` reads its field without changing it.
+
+        Run reuses the live image. Its `runExample` entry creates a new counter
+        starting at zero, so accepted increment-by-two code produces two each
+        time. The terminal counter keeps its existing state until the session
+        restarts. An untouched second counter stays at zero because each object
+        owns its own `count` field.
+
+        Each grading check runs in a separate fresh image loaded with accepted
+        code. This makes its result independent of terminal objects and bindings.

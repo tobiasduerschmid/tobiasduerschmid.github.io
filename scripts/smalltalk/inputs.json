@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "squeakJS": {
+    "file": "squeakjs.tar.gz",
+    "url": "https://codeload.github.com/codefrau/SqueakJS/tar.gz/284b7dacd385cfd3258c6337d41fc875459816ea",
+    "sha256": "029ca3d42db0dfa6adfe72ddd992f6c5759c228ec596ecf990cc1fed567f3a06",
+    "version": "1.3.3",
+    "commit": "284b7dacd385cfd3258c6337d41fc875459816ea"
+  },
+  "image": {
+    "file": "image.zip",
+    "url": "https://files.squeak.org/6.0/Squeak6.0-22104-64bit/Squeak6.0-22104-64bit.zip",
+    "sha256": "d90f07a28f79c93be663410c5a8ce3a41072072af27c33458c3e68d20fcac785",
+    "build": 22104
+  },
+  "buildVM": {
+    "file": "vm-stack-202606270913.dmg",
+    "url": "https://github.com/OpenSmalltalk/opensmalltalk-vm/releases/download/202606270913/squeak.stack.spur_macos64ARMv8.dmg",
+    "sha256": "c0df5fa77b660478acd22c87c62f29e6f83b2f5a2f728aff62f8066ce017ba73",
+    "platform": "darwin-arm64",
+    "version": "202606270913",
+    "executable": "Squeak.app/Contents/MacOS/Squeak",
+    "flags": [
+      "-headless"
+    ]
+  },
+  "refactoringBrowser": {
+    "version": "3.1",
+    "groups": [
+      "Core",
+      "Tests"
+    ],
+    "packages": [
+      {
+        "file": "ConfigurationOfRefactoringBrowser-ct.81.mcz",
+        "url": "https://www.squeaksource.com/MetacelloRepository/ConfigurationOfRefactoringBrowser-ct.81.mcz",
+        "sha256": "795ece2a66d4736fa42e8157a87836530056aea7328d359e8906967ed8904cd9",
+        "name": "ConfigurationOfRefactoringBrowser-ct.81"
+      },
+      {
+        "file": "AST-Core-mt.98.mcz",
+        "url": "https://www.squeaksource.com/rb/AST-Core-mt.98.mcz",
+        "sha256": "4627abe03b62b8bd05f74586098248deaf4d06d98b83789cd0ce5bd403187a00",
+        "name": "AST-Core-mt.98"
+      },
+      {
+        "file": "AST-Semantic-lr.15.mcz",
+        "url": "https://www.squeaksource.com/rb/AST-Semantic-lr.15.mcz",
+        "sha256": "62d9c1a7a96d0a1d05c92fce7960b339dd30ba6a9807829fe511cec663ff631f",
+        "name": "AST-Semantic-lr.15"
+      },
+      {
+        "file": "Refactoring-Environment-mt.12.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Environment-mt.12.mcz",
+        "sha256": "d94ff25fff36a0f16bae562159aa97294b67f6c049d1ea751762b5b453d0cd96",
+        "name": "Refactoring-Environment-mt.12"
+      },
+      {
+        "file": "Refactoring-Changes-mt.24.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Changes-mt.24.mcz",
+        "sha256": "a530200f8f2549883a30e6f511c499f0a8541c1420898558e91a38a4dbcaa6e0",
+        "name": "Refactoring-Changes-mt.24"
+      },
+      {
+        "file": "Refactoring-Core-eem.166.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Core-eem.166.mcz",
+        "sha256": "393ad0e248fd0f4a00d76c3b9b93df7705b3094cd6514105082ce62b01590b3c",
+        "name": "Refactoring-Core-eem.166"
+      },
+      {
+        "file": "Refactoring-Critics-mt.22.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Critics-mt.22.mcz",
+        "sha256": "a909cb3440eb2b41e716f66116d4eba5db765262554296e89103a93d6740eb39",
+        "name": "Refactoring-Critics-mt.22"
+      },
+      {
+        "file": "Refactoring-Spelling-ul.30.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Spelling-ul.30.mcz",
+        "sha256": "fa3a4ea62d93c2225e2e53c419dc3abbeb4ca9537c2b3a99454fc6a26446570d",
+        "name": "Refactoring-Spelling-ul.30"
+      },
+      {
+        "file": "AST-Tests-Core-eem.15.mcz",
+        "url": "https://www.squeaksource.com/rb/AST-Tests-Core-eem.15.mcz",
+        "sha256": "0399cca19ef4f19ed1851cd77c7e59c90795ec32a2c2ad7a1542da96a7c40fb1",
+        "name": "AST-Tests-Core-eem.15"
+      },
+      {
+        "file": "AST-Tests-Semantic-cwp.4.mcz",
+        "url": "https://www.squeaksource.com/rb/AST-Tests-Semantic-cwp.4.mcz",
+        "sha256": "ca6c804f3fdb29551a61983c4e16ba63d0d95715d91b36bedb6450dcc69615fe",
+        "name": "AST-Tests-Semantic-cwp.4"
+      },
+      {
+        "file": "Refactoring-Tests-Environment-mt.6.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Tests-Environment-mt.6.mcz",
+        "sha256": "53578294c7d4ee16098fa6fd815f728ca51bca2ac4e2d250f8b947c27494e51a",
+        "name": "Refactoring-Tests-Environment-mt.6"
+      },
+      {
+        "file": "Refactoring-Tests-Changes-mt.17.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Tests-Changes-mt.17.mcz",
+        "sha256": "3f04f9b75da63ca036d2ce330d19ba71e304da2b1724c48168a3b7219e6d2fa5",
+        "name": "Refactoring-Tests-Changes-mt.17"
+      },
+      {
+        "file": "Refactoring-Tests-Core-lr.56.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Tests-Core-lr.56.mcz",
+        "sha256": "3a6d72fbab45e1e74d823d1090b8b1dc426d43434881f1980a21babd70b465ed",
+        "name": "Refactoring-Tests-Core-lr.56"
+      },
+      {
+        "file": "Refactoring-Tests-Critics-lr.4.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Tests-Critics-lr.4.mcz",
+        "sha256": "d9798ed049af6600379c9634dbcc09aaf23b8c3e1f3031f63e63ad618afc422b",
+        "name": "Refactoring-Tests-Critics-lr.4"
+      },
+      {
+        "file": "Refactoring-Tests-Spelling-mt.10.mcz",
+        "url": "https://www.squeaksource.com/rb/Refactoring-Tests-Spelling-mt.10.mcz",
+        "sha256": "975e25ee9bb13af54620c2111cf1a0ada78d1d43e7053304fc5037f3ae6ab667",
+        "name": "Refactoring-Tests-Spelling-mt.10"
+      }
+    ]
+  }
+}

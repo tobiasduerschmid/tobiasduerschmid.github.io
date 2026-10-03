@@ -1,0 +1,6 @@
+# Preserve hashes and the image's byte offsets into its source archives.
+js/vendor/smalltalk/** -text
+js/smalltalk/*.js -text
+js/vendor/smalltalk/*.sources binary
+js/vendor/smalltalk/*.changes binary
+js/vendor/smalltalk/*.image binary

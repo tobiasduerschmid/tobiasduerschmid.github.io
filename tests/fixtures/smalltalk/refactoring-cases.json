@@ -1,0 +1,888 @@
+[
+  {
+    "action": "renameClass",
+    "target": {
+      "kind": "class",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog"
+    },
+    "options": {
+      "newName": "SECatalogRenamed"
+    },
+    "postcondition": "(Smalltalk includesKey: #SECatalogTarget) not and: [SECatalogRenamed new catAnswer = 42] and: [SECatalogCaller new catClass = SECatalogRenamed]",
+    "expectedTargets": [
+      "SECatalogCaller.instance>>catClass",
+      "SECatalogTarget.instance"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "newName": "Object"
+      }
+    },
+    "replay": "(Smalltalk includesKey: #SECatalogTarget) not and: [SECatalogRenamed new catAnswer = 42]",
+    "undo": "(Smalltalk includesKey: #SECatalogRenamed) not and: [SECatalogTarget new catAnswer = 42]",
+    "repeatHistory": true
+  },
+  {
+    "action": "renameMethod",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catAnswer"
+    },
+    "options": {
+      "newSelector": "catRenamed"
+    },
+    "postcondition": "SECatalogTarget new catRenamed = 42 and: [(SECatalogCaller new catCall: SECatalogChild new) = 42]",
+    "expectedTargets": [
+      "SECatalogCaller.instance>>catCall:",
+      "SECatalogTarget.instance>>catAnswer",
+      "SECatalogTarget.instance>>catInline",
+      "SECatalogTarget.instance>>catRenamed"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "newSelector": "catCollision"
+      }
+    },
+    "undo": "SECatalogTarget new catAnswer = 42 and: [(SECatalogTarget includesSelector: #catRenamed) not]"
+  },
+  {
+    "action": "renameInstanceVariable",
+    "target": {
+      "kind": "class",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog"
+    },
+    "options": {
+      "oldName": "stored",
+      "newName": "retained"
+    },
+    "postcondition": "(SECatalogTarget instVarNames = #('retained' 'spare') and: [object == alias and: [child == childAlias and: [child catStored == object and: [object catStored = 73 and: [object catLiteral = 'catAnswer stored SharedValue local']]]]]) and: [(object instVarAt: 1) = 73 and: [(object instVarAt: 2) = 11 and: [(child instVarAt: 1) == object and: [(child instVarAt: 2) = 12 and: [(child instVarAt: 3) == object]]]]]",
+    "expectedTargets": [
+      "SECatalogTarget.instance",
+      "SECatalogTarget.instance>>catStored",
+      "SECatalogTarget.instance>>catStored:"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "oldName": "missing",
+        "newName": "retained"
+      }
+    },
+    "setup": "object := SECatalogTarget new. object catStored: 73. alias := object. child := SECatalogChild new. child catStored: object. childAlias := child. object instVarAt: 2 put: 11. child instVarAt: 2 put: 12. child instVarAt: 3 put: object",
+    "undo": "(object == alias and: [child == childAlias and: [child catStored == object and: [object catStored = 73 and: [SECatalogTarget instVarNames = #('stored' 'spare')]]]]) and: [(object instVarAt: 1) = 73 and: [(object instVarAt: 2) = 11 and: [(child instVarAt: 1) == object and: [(child instVarAt: 2) = 12 and: [(child instVarAt: 3) == object]]]]]",
+    "repeatHistory": true
+  },
+  {
+    "action": "renameClassVariable",
+    "target": {
+      "kind": "class",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog"
+    },
+    "options": {
+      "oldName": "SharedValue",
+      "newName": "KeptValue"
+    },
+    "postcondition": "object catShared = 73 and: [object catLiteral = 'catAnswer stored SharedValue local']",
+    "expectedTargets": [
+      "SECatalogTarget.instance",
+      "SECatalogTarget.instance>>catShared",
+      "SECatalogTarget.instance>>catShared:"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "oldName": "missing",
+        "newName": "KeptValue"
+      }
+    },
+    "setup": "object := SECatalogTarget new. object catShared: 73",
+    "undo": "object catShared = 73 and: [SECatalogTarget classVarNames = #(#SharedValue)]",
+    "repeatHistory": true
+  },
+  {
+    "action": "renameTemporary",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catLocal"
+    },
+    "options": {
+      "newName": "renamed"
+    },
+    "postcondition": "SECatalogTarget new catLocal = 42",
+    "expectedTargets": [
+      "SECatalogTarget.instance>>catLocal"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "select": "local |",
+    "invalid": {
+      "options": {
+        "newName": "self"
+      }
+    },
+    "selectionLength": 5,
+    "sourceContains": [
+      "renamed",
+      "local stays in this comment",
+      "'local' stays in the literal"
+    ]
+  },
+  {
+    "action": "renameArgument",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catArgument:"
+    },
+    "options": {
+      "newName": "input"
+    },
+    "postcondition": "(SECatalogTarget new catArgument: 40) = 42",
+    "expectedTargets": [
+      "SECatalogTarget.instance>>catArgument:"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "select": "value",
+    "invalid": {
+      "options": {
+        "newName": "self"
+      }
+    },
+    "sourceContains": [
+      "input"
+    ]
+  },
+  {
+    "action": "extractMethod",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catExtract"
+    },
+    "options": {
+      "newSelector": "catExtracted",
+      "extractAssignment": false,
+      "useExistingMethod": false
+    },
+    "postcondition": "SECatalogTarget new catExtract = 42 and: [SECatalogTarget new catExtracted = 42]",
+    "expectedTargets": [
+      "SECatalogTarget.instance>>catExtract",
+      "SECatalogTarget.instance>>catExtracted"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "select": "40 + 2",
+    "invalid": {
+      "options": {
+        "newSelector": "catAnswer",
+        "extractAssignment": false,
+        "useExistingMethod": false
+      }
+    },
+    "sourceContains": [
+      "self catExtracted"
+    ]
+  },
+  {
+    "action": "extractTemporary",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catExtract"
+    },
+    "options": {
+      "newName": "answer"
+    },
+    "postcondition": "SECatalogTarget new catExtract = 42",
+    "expectedTargets": [
+      "SECatalogTarget.instance>>catExtract"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "select": "40 + 2",
+    "invalid": {
+      "options": {
+        "newName": "self"
+      }
+    },
+    "sourceContains": [
+      "answer"
+    ]
+  },
+  {
+    "action": "inlineMethod",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catInline"
+    },
+    "options": {
+      "inlineExpression": false
+    },
+    "postcondition": "SECatalogTarget new catInline = 42 and: [SECatalogTarget new catAnswer = 42]",
+    "expectedTargets": [
+      "SECatalogTarget.instance>>catInline"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "select": "self catAnswer",
+    "invalid": {
+      "selection": {
+        "start": 0,
+        "end": 3
+      }
+    },
+    "sourceExcludes": [
+      "self catAnswer"
+    ]
+  },
+  {
+    "action": "inlineTemporary",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catTemporary"
+    },
+    "options": {},
+    "postcondition": "SECatalogTarget new catTemporary = 42",
+    "expectedTargets": [
+      "SECatalogTarget.instance>>catTemporary"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "select": "answer := 40 + 2",
+    "invalid": {
+      "selection": {
+        "start": 0,
+        "end": 3
+      }
+    },
+    "sourceExcludes": [
+      "answer"
+    ]
+  },
+  {
+    "action": "moveMethod",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catMove:"
+    },
+    "options": {
+      "receiverVariable": "component",
+      "destinationClasses": [
+        "SECatalogComponent"
+      ],
+      "newSelector": "catMoved",
+      "selfArgumentName": "original"
+    },
+    "postcondition": "(SECatalogTarget new catMove: SECatalogComponent new) = 42",
+    "expectedTargets": [
+      "SECatalogComponent.instance>>catMoved",
+      "SECatalogTarget.instance>>catMove:"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "receiverVariable": "missing",
+        "destinationClasses": [
+          "SECatalogComponent"
+        ],
+        "newSelector": "catMoved",
+        "selfArgumentName": "original"
+      }
+    },
+    "sourceContains": [
+      "catMoved"
+    ]
+  },
+  {
+    "action": "moveVariable",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catBind"
+    },
+    "options": {},
+    "postcondition": "SECatalogTarget new catBind = #(41 42) and: [(RBParser parseMethod: (SECatalogTarget sourceCodeAt: #catBind)) body temporaries isEmpty]",
+    "expectedTargets": [
+      "SECatalogTarget.instance>>catBind"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "select": "count |",
+    "invalid": {
+      "selection": {
+        "start": 0,
+        "end": 3
+      }
+    },
+    "selectionLength": 5
+  },
+  {
+    "action": "pullUpMethod",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catPull"
+    },
+    "options": {},
+    "postcondition": "SECatalogParent new catPull = 42 and: [SECatalogTarget new catPull = 42]",
+    "expectedTargets": [
+      "SECatalogParent.instance>>catPull",
+      "SECatalogTarget.instance>>catPull"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "target": {
+        "kind": "method",
+        "className": "SECatalogMissing",
+        "side": "instance",
+        "packageName": "SEBook-Catalog",
+        "selector": "catPull"
+      }
+    }
+  },
+  {
+    "action": "pushDownMethod",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogAbstract",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catPush"
+    },
+    "options": {},
+    "postcondition": "SECatalogConcrete new catPush = 42 and: [(SECatalogAbstract includesSelector: #catPush) not]",
+    "expectedTargets": [
+      "SECatalogAbstract.instance>>catPush",
+      "SECatalogConcrete.instance>>catPush"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "target": {
+        "kind": "method",
+        "className": "SECatalogMissing",
+        "side": "instance",
+        "packageName": "SEBook-Catalog",
+        "selector": "catPush"
+      }
+    }
+  },
+  {
+    "action": "pullUpVariable",
+    "target": {
+      "kind": "class",
+      "className": "SECatalogVarParent",
+      "side": "instance",
+      "packageName": "SEBook-Catalog"
+    },
+    "options": {
+      "variableName": "number",
+      "classVariable": false
+    },
+    "postcondition": "object catNumber isNil and: [object catNumber: 42. object catNumber = 42]",
+    "expectedTargets": [
+      "SECatalogVarChild.instance",
+      "SECatalogVarParent.instance"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "variableName": "missing",
+        "classVariable": false
+      }
+    },
+    "setup": "object := SECatalogVarChild new. object catNumber: 73",
+    "replay": "(SECatalogVarChild new catNumber: 42; catNumber) = 42",
+    "undo": "object catNumber: 42. object catNumber = 42"
+  },
+  {
+    "action": "pushDownVariable",
+    "target": {
+      "kind": "class",
+      "className": "SECatalogPushParent",
+      "side": "instance",
+      "packageName": "SEBook-Catalog"
+    },
+    "options": {
+      "variableName": "number",
+      "classVariable": false
+    },
+    "postcondition": "object catNumber isNil and: [object catNumber: 42. object catNumber = 42]",
+    "expectedTargets": [
+      "SECatalogPushChild.instance",
+      "SECatalogPushParent.instance"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "variableName": "missing",
+        "classVariable": false
+      }
+    },
+    "setup": "object := SECatalogPushChild new. object catNumber: 73",
+    "replay": "(SECatalogPushChild new catNumber: 42; catNumber) = 42",
+    "undo": "object catNumber: 42. object catNumber = 42"
+  },
+  {
+    "action": "addParameter",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catArgument:"
+    },
+    "options": {
+      "newSelector": "catArgument:extra:",
+      "initializer": "7"
+    },
+    "postcondition": "(SECatalogTarget new catArgument: 40 extra: 7) = 42",
+    "expectedTargets": [
+      "SECatalogTarget.instance>>catArgument:",
+      "SECatalogTarget.instance>>catArgument:extra:"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "newSelector": "invalid",
+        "initializer": "7"
+      }
+    }
+  },
+  {
+    "action": "removeParameter",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catUnused:with:"
+    },
+    "options": {
+      "argumentName": "unused"
+    },
+    "postcondition": "(SECatalogTarget new catUnused: 40) = 42 and: [(SECatalogCaller new catUnusedCall: SECatalogTarget new) = 42]",
+    "expectedTargets": [
+      "SECatalogCaller.instance>>catUnusedCall:",
+      "SECatalogTarget.instance>>catUnused:",
+      "SECatalogTarget.instance>>catUnused:with:"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "argumentName": "first"
+      }
+    }
+  },
+  {
+    "action": "reorderParameters",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catPair:with:"
+    },
+    "options": {
+      "newSelector": "catPair:with:",
+      "permutation": [
+        2,
+        1
+      ]
+    },
+    "postcondition": "(SECatalogTarget new catEffects: effects) = 42 and: [effects asArray = #(4 2) and: [(SECatalogCaller new catPairCall: SECatalogTarget new) = 42]]",
+    "expectedTargets": [
+      "SECatalogCaller.instance>>catPairCall:",
+      "SECatalogTarget.instance>>catEffects:",
+      "SECatalogTarget.instance>>catPair:with:"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "newSelector": "catPair:with:",
+        "permutation": [
+          1,
+          1
+        ]
+      }
+    },
+    "setup": "effects := OrderedCollection new",
+    "redoSetup": "effects removeAll"
+  },
+  {
+    "action": "addClass",
+    "target": {
+      "kind": "class",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog"
+    },
+    "options": {
+      "newName": "SECatalogNew",
+      "subclasses": [],
+      "category": "SEBook-Catalog"
+    },
+    "postcondition": "SECatalogNew superclass = SECatalogTarget and: [SECatalogNew new catAnswer = 42]",
+    "expectedTargets": [
+      "SECatalogNew.instance"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "newName": "Object",
+        "subclasses": [],
+        "category": "SEBook-Catalog"
+      }
+    },
+    "undo": "(Smalltalk includesKey: #SECatalogNew) not",
+    "repeatHistory": true
+  },
+  {
+    "action": "removeClass",
+    "target": {
+      "kind": "class",
+      "className": "SECatalogRemovable",
+      "side": "instance",
+      "packageName": "SEBook-Catalog"
+    },
+    "options": {},
+    "postcondition": "(Smalltalk includesKey: #SECatalogRemovable) not",
+    "expectedTargets": [
+      "SECatalogRemovable.instance"
+    ],
+    "before": "SECatalogRemovable new catRemovedSource = 'original ! 😀' and: [SECatalogRemovable catRemovedClassSource = 42 and: [SECatalogRemovable comment = 'Original comment ! 😀' and: [(SECatalogRemovable organization categories includes: #'empty instance protocol') and: [SECatalogRemovable class organization categories includes: #'empty class protocol']]]]",
+    "invalid": {
+      "target": {
+        "kind": "class",
+        "className": "SECatalogMissing",
+        "side": "instance",
+        "packageName": "SEBook-Catalog"
+      }
+    },
+    "repeatHistory": true,
+    "setup": "SECatalogRemovable organization addCategory: #'empty instance protocol'. SECatalogRemovable class organization addCategory: #'empty class protocol'. SECatalogRemovable comment: 'Original comment ! 😀'",
+    "observeTargets": [
+      {
+        "kind": "method",
+        "className": "SECatalogRemovable",
+        "side": "instance",
+        "packageName": "SEBook-Catalog",
+        "selector": "catRemovedSource"
+      },
+      {
+        "kind": "method",
+        "className": "SECatalogRemovable",
+        "side": "class",
+        "packageName": "SEBook-Catalog",
+        "selector": "catRemovedClassSource"
+      }
+    ]
+  },
+  {
+    "action": "addMethod",
+    "target": {
+      "kind": "class",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog"
+    },
+    "options": {
+      "source": "catAdded ^ 42",
+      "protocols": [
+        "catalog"
+      ]
+    },
+    "postcondition": "SECatalogTarget new catAdded = 42",
+    "expectedTargets": [
+      "SECatalogTarget.instance>>catAdded"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "source": "catAnswer ^ 1",
+        "protocols": [
+          "catalog"
+        ]
+      }
+    },
+    "undo": "(SECatalogTarget includesSelector: #catAdded) not",
+    "repeatHistory": true
+  },
+  {
+    "action": "removeMethod",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catUncalled"
+    },
+    "options": {},
+    "postcondition": "(SECatalogTarget includesSelector: #catUncalled) not",
+    "expectedTargets": [
+      "SECatalogTarget.instance>>catUncalled"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "target": {
+        "kind": "method",
+        "className": "SECatalogMissing",
+        "side": "instance",
+        "packageName": "SEBook-Catalog",
+        "selector": "catUncalled"
+      }
+    },
+    "repeatHistory": true
+  },
+  {
+    "action": "createAccessors",
+    "target": {
+      "kind": "class",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog"
+    },
+    "options": {
+      "variableName": "spare",
+      "classVariable": false
+    },
+    "postcondition": "(SECatalogTarget new spare: 42; spare) = 42",
+    "expectedTargets": [
+      "SECatalogTarget.instance>>spare",
+      "SECatalogTarget.instance>>spare:"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "variableName": "missing",
+        "classVariable": false
+      }
+    },
+    "undo": "(SECatalogTarget includesSelector: #spare) not and: [(SECatalogTarget includesSelector: #spare:) not]"
+  },
+  {
+    "action": "pullUpVariable",
+    "target": {
+      "kind": "class",
+      "className": "SECatalogClassVarParent",
+      "side": "instance",
+      "packageName": "SEBook-Catalog"
+    },
+    "options": {
+      "variableName": "ClassNumber",
+      "classVariable": true
+    },
+    "postcondition": "object catNumber isNil and: [object catNumber: 42. object catNumber = 42]",
+    "expectedTargets": [
+      "SECatalogClassVarChild.instance",
+      "SECatalogClassVarParent.instance"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "variableName": "missing",
+        "classVariable": true
+      }
+    },
+    "setup": "object := SECatalogClassVarChild new. object catNumber: 73",
+    "replay": "(SECatalogClassVarChild new catNumber: 42; catNumber) = 42",
+    "undo": "object catNumber: 42. object catNumber = 42",
+    "variant": "class variable"
+  },
+  {
+    "action": "pushDownVariable",
+    "target": {
+      "kind": "class",
+      "className": "SECatalogClassPushParent",
+      "side": "instance",
+      "packageName": "SEBook-Catalog"
+    },
+    "options": {
+      "variableName": "ClassNumber",
+      "classVariable": true
+    },
+    "postcondition": "object catNumber isNil and: [object catNumber: 42. object catNumber = 42]",
+    "expectedTargets": [
+      "SECatalogClassPushChild.instance",
+      "SECatalogClassPushParent.instance"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "variableName": "missing",
+        "classVariable": true
+      }
+    },
+    "setup": "object := SECatalogClassPushChild new. object catNumber: 73",
+    "replay": "(SECatalogClassPushChild new catNumber: 42; catNumber) = 42",
+    "undo": "object catNumber: 42. object catNumber = 42",
+    "variant": "class variable"
+  },
+  {
+    "action": "renameTemporary",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catScopes"
+    },
+    "options": {
+      "newName": "renamed"
+    },
+    "postcondition": "SECatalogTarget new catScopes = #(41 42)",
+    "expectedTargets": [
+      "SECatalogTarget.instance>>catScopes"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "select": "local |",
+    "invalid": {
+      "options": {
+        "newName": "self"
+      }
+    },
+    "selectionLength": 5,
+    "variant": "sibling block scopes",
+    "sourceContains": [
+      "renamed",
+      ":local"
+    ]
+  },
+  {
+    "action": "createAccessors",
+    "target": {
+      "kind": "class",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog"
+    },
+    "options": {
+      "variableName": "SharedValue",
+      "classVariable": true
+    },
+    "postcondition": "(SECatalogTarget sharedValue: 42; sharedValue) = 42",
+    "expectedTargets": [
+      "SECatalogTarget.class>>sharedValue",
+      "SECatalogTarget.class>>sharedValue:"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "invalid": {
+      "options": {
+        "variableName": "missing",
+        "classVariable": false
+      }
+    },
+    "undo": "(SECatalogTarget class includesSelector: #sharedValue) not and: [(SECatalogTarget class includesSelector: #sharedValue:) not]",
+    "variant": "class variable"
+  },
+  {
+    "action": "inlineTemporary",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "packageName": "SEBook-Catalog",
+      "selector": "catLiteralTemporary"
+    },
+    "options": {},
+    "postcondition": "SECatalogTarget new catLiteralTemporary = 42",
+    "expectedTargets": [
+      "SECatalogTarget.instance>>catLiteralTemporary"
+    ],
+    "before": "SECatalogTarget new catAnswer = 42",
+    "select": "answer := 21",
+    "invalid": {
+      "selection": {
+        "start": 0,
+        "end": 3
+      }
+    },
+    "sourceExcludes": [
+      "answer"
+    ],
+    "variant": "repeated immutable literal"
+  },
+  {
+    "action": "renameInstanceVariable",
+    "variant": "class-side ordered storage",
+    "target": {
+      "kind": "class",
+      "className": "SECatalogClassStorage",
+      "side": "class",
+      "packageName": "SEBook-Catalog"
+    },
+    "options": {
+      "oldName": "classStored",
+      "newName": "retained"
+    },
+    "setup": "SECatalogClassStorage catMetaStored: 73. SECatalogClassStorageChild catMetaStored: 42. SECatalogClassStorage instVarNamed: 'classSpare' put: 11. SECatalogClassStorageChild instVarNamed: 'classSpare' put: 12. classAlias := SECatalogClassStorage. childClassAlias := SECatalogClassStorageChild",
+    "before": "SECatalogClassStorage == classAlias and: [SECatalogClassStorageChild == childClassAlias and: [SECatalogClassStorage catMetaStored = 73 and: [SECatalogClassStorageChild catMetaStored = 42 and: [(SECatalogClassStorage instVarNamed: 'classSpare') = 11 and: [(SECatalogClassStorageChild instVarNamed: 'classSpare') = 12]]]]]",
+    "postcondition": "SECatalogClassStorage class instVarNames = #('retained' 'classSpare') and: [SECatalogClassStorage == classAlias and: [SECatalogClassStorageChild == childClassAlias and: [SECatalogClassStorage catMetaStored = 73 and: [SECatalogClassStorageChild catMetaStored = 42 and: [(SECatalogClassStorage instVarNamed: 'classSpare') = 11 and: [(SECatalogClassStorageChild instVarNamed: 'classSpare') = 12]]]]]]",
+    "undo": "SECatalogClassStorage class instVarNames = #('classStored' 'classSpare') and: [SECatalogClassStorage == classAlias and: [SECatalogClassStorageChild == childClassAlias and: [SECatalogClassStorage catMetaStored = 73 and: [SECatalogClassStorageChild catMetaStored = 42 and: [(SECatalogClassStorage instVarNamed: 'classSpare') = 11 and: [(SECatalogClassStorageChild instVarNamed: 'classSpare') = 12]]]]]]",
+    "expectedTargets": [
+      "SECatalogClassStorage.class",
+      "SECatalogClassStorage.class>>catMetaStored",
+      "SECatalogClassStorage.class>>catMetaStored:"
+    ],
+    "invalid": {
+      "options": {
+        "oldName": "missing",
+        "newName": "retained"
+      }
+    },
+    "repeatHistory": true,
+    "replay": "SECatalogClassStorage catMetaStored: 73. SECatalogClassStorageChild catMetaStored: 42. SECatalogClassStorage class instVarNames = #('retained' 'classSpare') and: [SECatalogClassStorage catMetaStored = 73 and: [SECatalogClassStorageChild catMetaStored = 42]]"
+  },
+  {
+    "action": "inlineMethod",
+    "variant": "effectful argument evaluated once",
+    "target": {
+      "kind": "method",
+      "className": "SECatalogTarget",
+      "side": "instance",
+      "selector": "catInlineWith:",
+      "packageName": "SEBook-Catalog"
+    },
+    "options": {
+      "inlineExpression": false
+    },
+    "select": "self catDouble: (log add: 21)",
+    "before": "SECatalogTarget new catAnswer = 42",
+    "postcondition": "effects := OrderedCollection new. (SECatalogTarget new catInlineWith: effects) = 42 and: [effects asArray = #(21)]",
+    "expectedTargets": [
+      "SECatalogTarget.instance>>catInlineWith:"
+    ],
+    "invalid": {
+      "selection": {
+        "start": 0,
+        "end": 1
+      }
+    }
+  }
+]

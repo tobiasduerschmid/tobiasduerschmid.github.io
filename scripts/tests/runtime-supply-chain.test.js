@@ -542,3 +542,9 @@ test('VM regeneration and deployed snapshots match their pinned compatibility in
   assert.match(read('js/tutorial-code.js'), /memoryMB: options\.memoryMB \|\| 192/);
   assert.match(read('js/tutorial-code.js'), /vga_memory_size: 2 \* 1024 \* 1024/);
 });
+
+// Smalltalk uses its structured manifest inventory rather than SHA256SUMS.
+test('Smalltalk pinned runtime distribution has a complete verified manifest', async () => {
+  const { verifyDistribution } = await import('../smalltalk/build-image.mjs');
+  await verifyDistribution();
+});

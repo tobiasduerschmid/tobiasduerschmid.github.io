@@ -23,7 +23,7 @@
     makefile: 'makefile', Makefile: 'makefile',
     pl: 'prolog', pro: 'prolog',
     java: 'java',
-    hs: 'haskell', lhs: 'haskell',
+    hs: 'haskell', lhs: 'haskell', st: 'smalltalk',
   };
 
   function detectLanguage(filename) {
@@ -37,6 +37,32 @@
     if (!monaco || !monaco.languages) return;
     if (monaco.__sebookRegistered) return;
     monaco.__sebookRegistered = true;
+
+    // Lexical highlighting only; the native image compiles Smalltalk source.
+    monaco.languages.register({ id: 'smalltalk' });
+    monaco.languages.setLanguageConfiguration('smalltalk', {
+      comments: { blockComment: ['"', '"'] },
+      brackets: [['(', ')'], ['[', ']'], ['{', '}']],
+      autoClosingPairs: [{ open: '(', close: ')' }, { open: '[', close: ']' }, { open: "'", close: "'" }],
+    });
+    monaco.languages.setMonarchTokensProvider('smalltalk', {
+      tokenizer: {
+        root: [
+          [/"/, 'comment', '@comment'],
+          [/'/, 'string', '@string'],
+          [/\b(self|super|nil|true|false|thisContext)\b/, 'keyword'],
+          [/#(?:[a-zA-Z_]\w*:?|[+*\/=<>~-]+)/, 'string'],
+          [/\$./, 'string'],
+          [/\b\d+(?:r[0-9a-zA-Z]+|\.\d+)?\b/, 'number'],
+          [/[A-Z]\w*/, 'type.identifier'],
+          [/[a-zA-Z_]\w*:?/, 'identifier'],
+          [/:=|[\^;!|+*\/=<>~-]/, 'operator'],
+          [/[()[\]{}]/, '@brackets'],
+        ],
+        comment: [[/[^" ]+| /, 'comment'], [/"/, 'comment', '@pop']],
+        string: [[/''/, 'string'], [/[^']+/, 'string'], [/'/, 'string', '@pop']],
+      },
+    });
 
     // ---- Custom shell language ----
     monaco.languages.register({ id: 'shell-sebook' });
