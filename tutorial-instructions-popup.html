@@ -14,6 +14,7 @@
   </script>
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/tutorial-popouts.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/object-reference-lab.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
 <body>
@@ -42,6 +43,9 @@
           integrity="sha384-T/0lMUdJpd2S1ZHtRiofG3htU3xPCrFVeAQ1UUE2TJwlEJSV5NUwn30kP28n238E"
           crossorigin="anonymous"></script>
   <script src="{{ '/js/mermaid-theme.js' | relative_url }}"></script>
+  <script src="{{ '/js/object-reference-graph.js' | relative_url }}"></script>
+  <script src="{{ '/js/object-reference-print.js' | relative_url }}"></script>
+  <script src="{{ '/js/object-reference-lab.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-quiz.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-inline-markdown.js' | relative_url }}"></script>
@@ -63,6 +67,8 @@
     // Mirror of the most recent state snapshot — populated on first
     // state-snapshot, mutated on step-change / nav-state / test-result.
     var snapshot = null;
+    var renderedStepIndex = null;
+    var renderedStepHTML = null;
 
     var client = SebookPopoutClient.connect({
       role: 'instructions',
@@ -171,16 +177,25 @@
       }, 1000);
     }
 
-    function renderContent(stepData) {
-      if (!stepData) { els.stepContent.innerHTML = ''; return; }
-      els.stepContent.innerHTML = '<h2>' + (stepData.titleHTML || renderInlineMarkdown(stepData.title || '')) + '</h2>'
-        + '<div class="tvm-step-instructions">' + (stepData.instructionsHTML || '') + '</div>';
-      els.stepContent.scrollTop = 0;
-      // Render inline ```mermaid blocks via the shared SebookMermaid theme
-      // (same renderer as the main page — visual parity with ArchUML diagrams).
-      if (window.SebookMermaid) window.SebookMermaid.render(els.stepContent);
+    function renderContent(stepData, stepIndex) {
+      var html = stepData
+        ? '<h2>' + (stepData.titleHTML || renderInlineMarkdown(stepData.title || '')) + '</h2>'
+          + '<div class="tvm-step-instructions">' + (stepData.instructionsHTML || '') + '</div>'
+        : '';
+      // Progress messages refresh controls without discarding edits or playback
+      // in an embedded lab. A different step or revised content mounts afresh.
+      if (stepIndex !== renderedStepIndex || html !== renderedStepHTML) {
+        if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(els.stepContent);
+        els.stepContent.innerHTML = html;
+        renderedStepIndex = stepIndex;
+        renderedStepHTML = html;
+        els.stepContent.scrollTop = 0;
+        // Use the same diagram renderers as the main instructions panel.
+        if (window.SebookMermaid) window.SebookMermaid.render(els.stepContent);
+        if (window.ObjectReferenceLab) void window.ObjectReferenceLab.initFrom(els.stepContent);
+      }
       // Re-attach last test result panel if one was broadcast on this step.
-      if (snapshot && snapshot.lastTestResultHTML) showTestPanel(snapshot.lastTestResultHTML);
+      if (stepData && snapshot && snapshot.lastTestResultHTML) showTestPanel(snapshot.lastTestResultHTML);
     }
 
     function showTestPanel(innerHtml) {
@@ -204,7 +219,7 @@
         document.documentElement.classList.toggle('dark-mode', snap.darkMode);
       }
       renderNav(snap.steps || [], snap.currentStep, snap.stepsUnlocked || []);
-      renderContent((snap.steps || [])[snap.currentStep]);
+      renderContent((snap.steps || [])[snap.currentStep], snap.currentStep);
       renderControls(snap);
       client.markConnected();
     }

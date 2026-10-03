@@ -1495,6 +1495,7 @@
 
   TutorialCode.prototype.destroy = function () {
     this._destroyed = true;
+    if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(this.root);
     (this._splitterObservers || []).forEach(function (observer) { observer.disconnect(); });
     this._splitterObservers = [];
     if (this._smalltalkInitController) this._smalltalkInitController.abort();
@@ -11611,6 +11612,7 @@
     this._renderTabs();
     this._updateStepHash(index);
 
+    if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(this.stepContentEl);
     this.stepContentEl.innerHTML =
       '<h2>' + this._renderInlineMarkdown(step.title || '') + '</h2>' +
       '<div class="tvm-timed-practice-lockout" role="status" aria-live="polite" aria-atomic="true">' +
@@ -12131,6 +12133,7 @@
     var html = '<h2>' + this._renderInlineMarkdown(step.title || '') + '</h2>';
     html += '<div class="tvm-step-instructions">' +
       this._stepInstructionsHTML(step) + '</div>';
+    if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(this.stepContentEl);
     this.stepContentEl.innerHTML = html;
     this._prepareInstructionScrollables(this.stepContentEl);
     this._initTooltips(this.stepContentEl);
@@ -12139,6 +12142,9 @@
     // Render any inline UML diagrams embedded in the instructions markdown
     if (window.UMLShared && UMLShared.renderAll) UMLShared.renderAll();
     this._renderInlineMermaid(this.stepContentEl);
+    const instructionLabsReady = window.ObjectReferenceLab
+      ? window.ObjectReferenceLab.initFrom(this.stepContentEl)
+      : Promise.resolve();
     // Initialize any inline GitCommandLab widgets embedded in the instructions
     if (window.GitCommandLab) {
       if (GitCommandLab.initFrom) GitCommandLab.initFrom(this.stepContentEl);
@@ -12212,7 +12218,7 @@
     // File writes define the first phase of step readiness. Setup commands may
     // read those files, so every later preparation phase is chained after this
     // barrier rather than being launched independently.
-    var stepReadyPromise = Promise.all(stepFileSyncs);
+    var stepReadyPromise = Promise.all(stepFileSyncs.concat([instructionLabsReady]));
     if (self._smalltalkAdapter) {
       self._invalidateSmalltalkCredit();
       stepReadyPromise = stepReadyPromise.then(function () {

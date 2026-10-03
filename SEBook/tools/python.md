@@ -4,6 +4,10 @@ layout: sebook
 mermaid: true
 ---
 
+<script src="/js/object-reference-graph.js" defer></script>
+<script src="/js/object-reference-print.js" defer></script>
+<script src="/js/object-reference-lab.js" defer></script>
+<link rel="stylesheet" href="/css/object-reference-lab.css">
 <script src="/js/unix-command-lab.js" defer></script>
 <script src="/js/program-output-lab.js" defer></script>
 <link rel="stylesheet" href="/css/unix-command-lab.css">
@@ -361,27 +365,23 @@ print(night)   # [15, 30, 45, 60]
 
 ### Nested Lists: Mutation and Rebinding
 
-**Predict:** does replacing `late` redirect the second member of `schedule`?
+Predict which object changes and which stored reference moves in the lab below.
+After the append, inspect both board slots; after the assignment, compare them
+again. Printing the same contents twice does not establish that there are two
+inner objects.
 
-```python
-early = [10, 20]
-late = [30]
-schedule = [early, late]
-early[1] = 25
-late.append(45)
-late = [90]
-print(schedule)
-print(late)
-```
+Use **Forward** and **Back** to inspect recorded states. After predicting the
+variation under **Try one change**, edit the code and choose **Trace
+Python**. Primitive values appear in place to reduce clutter; they are still
+Python objects, with identities retained in **Reference details**.
 
-<details markdown="1">
-<summary>Follow each stored reference</summary>
+{% include object-reference-lab.html example="shared_slots" editor="inline" %}
 
-The output is `[[10, 25], [30, 45]]`, then `[90]`. Element assignment changes the original early list. Appending changes the original late list. Rebinding the name `late` does not change the reference already stored in `schedule[1]`.
-
-</details>
-
-The same alias can occupy more than one slot. `rows = [[0]] * 3` repeats a reference to one inner list, so `rows[0][0] = 7` is visible through all three slots. To create independent inner lists, evaluate the list construction separately, for example `rows = [[0] for _ in range(3)]`.
+The same issue arises with repetition: `rows = [[0]] * 3` repeats a reference
+to one inner list. Before trying `rows[0].append(7)`, predict how many slots
+will display the added value. Independent rows require evaluating a list
+construction separately for each row; [List Comprehensions](#list-comprehensions)
+returns to that distinction.
 
 ### Sets (C++ Equivalent: `std::unordered_set`)
 
@@ -433,6 +433,13 @@ for position, target in enumerate(["M31", "M13"], start=1):
 
 `enumerate` yields an index and an element together. Here the displayed numbering begins at 1; list indexing still begins at zero.
 
+A Python loop name is a separate binding, not an alias for a container's element
+slot as in a C++ `auto&` loop. Predict what the following loop changes. Follow
+`batch` at the start and end of each iteration, then try the `clear()` variation:
+that method empties the list it is called on.
+
+{% include object-reference-lab.html example="loop_rebinding" editor="inline" %}
+
 ## Substring Operations and Slicing
 
 `sequence[start:stop:step]` selects a slice. The start is included, the stop is excluded, and the default step is 1. Negative indices count from the end.
@@ -474,6 +481,21 @@ print(long_exposures)  # [9000, 12000]
 ```
 
 The general form is `[expression for name in iterable if condition]`. Prefer it for a simple transformation. Use a regular loop when several steps, side effects, or complicated branches would make the comprehension harder to read.
+
+**Transfer check:** compare `rows = [[0]] * 2`, `rows = [row for _ in range(2)]`
+after `row = [0]`, and `rows = [[0] for _ in range(2)]`. Before running them,
+predict each result after `rows[0].append(1)`. Does using a comprehension by
+itself guarantee separate inner objects?
+
+<details markdown="1">
+<summary>Check the construction, not just the syntax</summary>
+
+The first two print `[[0, 1], [0, 1]]`. They keep references to one inner list;
+the second evaluates the same name twice. Only the third prints `[[0, 1], [0]]`,
+because `[0]` constructs a new list on each iteration. The expression inside
+the comprehension determines which objects are created or reused.
+
+</details>
 
 ### Generator Expressions: Lazy Comprehensions
 
@@ -580,6 +602,12 @@ The Observation initializer stores a reference to the supplied camera, so both c
 
 </details>
 
+Follow the method call below into `add`. Identify the object reached by `self`,
+then follow `self.files` and `second.files`. After `first.files` is replaced,
+explain why a new Folder and a new files list are separate construction choices.
+
+{% include object-reference-lab.html example="member_sharing" editor="inline" %}
+
 ## Dunder Methods: `__str__` vs. `operator<<`
 
 Special methods integrate custom classes with language operations. `print(obj)` uses the string representation produced through `str(obj)`; define `__str__` to supply useful display text:
@@ -678,29 +706,16 @@ flowchart TB
 
 ## A Shared Mutable Attribute
 
-**Predict:** do these observations keep separate rejection lists?
+Before the append, locate `items` on the class. After the append, check whether
+an instance attribute has appeared. Only then step over the assignment and
+compare the lookup paths of the two instances. This separates mutating a found
+object from assigning an attribute on a particular receiver.
 
-```python
-class ReviewBatch:
-    rejected = []
+{% include object-reference-lab.html example="class_attributes" editor="inline" %}
 
-    def reject(self, filename):
-        self.rejected.append(filename)
-
-north = ReviewBatch()
-south = ReviewBatch()
-north.reject("blurred_018.fits")
-print(south.rejected)
-```
-
-<details markdown="1">
-<summary>Distinguish lookup from assignment</summary>
-
-It prints `['blurred_018.fits']`. Looking up `self.rejected` finds the list on the class. `append` then mutates that list; it does not create an instance attribute. Both batches therefore reach the same list.
-
-For independent lists, remove the class-level list and initialize `self.rejected = []` in `__init__`. This is the same ownership decision as the per-observation notes list. Shared mutable class state is appropriate only when the sharing is deliberate.
-
-</details>
+For independent lists from construction, put `self.items = []` in `__init__`.
+A shared mutable class attribute is useful when that sharing is intentional;
+it is not a substitute for each instance's own state.
 
 # Copies & Equality
 
@@ -764,37 +779,23 @@ The shallow observation has its own `target` binding, so rebinding `original.tar
 
 For lists, `items.copy()` and `items[:]` make shallow copies. A shallow copy is often exactly right when you want a new sequence of references but still intend to share the referenced objects.
 
+Before the first mutation in this lab, count the outer and inner objects.
+Then follow every slot that reaches each changed inner list. In particular,
+predict whether the two slots *within* the deep copy can still affect one another.
+Try replacing the shallow copy's slot instead of mutating its referent.
+
+{% include object-reference-lab.html example="shallow_copy" editor="inline" %}
+
 A deep copy is **not** a promise that every reachable value is physically duplicated or that every resource can be cloned. Immutable objects may be reused, classes can customize copying, and files or external resources require their own policies. Deep copying also remembers objects already visited, supporting cycles and preserving repeated references within the copied graph. See the [copy module's contract](https://docs.python.org/3/library/copy.html).
-
-**Predict:** if two original slots share a camera, will a deep copy produce one copied camera or two independent copies?
-
-```python
-shared = Camera(700)
-source = [shared, shared]
-duplicate = copy.deepcopy(source)
-print(duplicate[0] is duplicate[1])
-print(duplicate[0] is shared)
-```
-
-<details markdown="1">
-<summary>Check the copied graph</summary>
-
-The output is `True`, then `False`. The two copied slots share one copied camera, distinct from the source camera. Deep copy preserves that internal relationship; it does not blindly clone an object once per reference.
-
-</details>
 
 ## Identity and Value Equality
 
-Two objects can represent the same value while remaining distinct objects:
+Two objects can represent the same value while remaining distinct objects.
+Before the comparisons below, count list objects and predict which names will
+observe a mutation through `alias`. Use the arrows to explain why equal contents
+alone cannot answer that question.
 
-```python
-left = [15, 30]
-right = [15, 30]
-alias = left
-print(left == right)  # True: equal list contents
-print(left is right)  # False: distinct list objects
-print(left is alias)  # True: one object, two names
-```
+{% include object-reference-lab.html example="identity_equality" editor="inline" %}
 
 `is` always asks about identity and cannot be customized. `==` follows the objects' equality behavior. A plain user-defined class inheriting `object` and defining no equality method does not automatically compare its attributes: with our `Camera`, `Camera(200) == Camera(200)` is false. Some classes inherit or generate value equality, so “every class without its own `__eq__` compares by identity” is too broad.
 
@@ -836,6 +837,12 @@ This distinction explains both halves of the rule:
 - Mutating an object reached through a parameter can be observed through the caller's references to the same object.
 
 It resembles passing a pointer value in C++ in that both sides can reach the same object, but Python does not expose pointer arithmetic or let a parameter assignment rebind the caller's local variable.
+
+Pause inside `revise` after its append and after its assignment. Compare the
+caller name `draft` with the parameter `labels` in each state. Predict which
+object will be returned before stepping back to the assignment to `result`.
+
+{% include object-reference-lab.html example="parameter_rebinding" editor="inline" %}
 
 ### Six Calls, One Rule
 
@@ -942,20 +949,34 @@ print(plan)  # [15, 30, 45]
 
 For a built-in list, `plan += [45]` extends the list in place, so aliases observe its new member. For a string, `label += " Survey"` cannot mutate the string and instead rebinds the name. The same augmented-assignment spelling does not imply the same object-level effect for every type.
 
+**One more contrast:** return to the nested-list lab and choose **Reset example**.
+Replace `board[0].append(1)`
+first with `board[0] += [1]`, then with `board[0] = board[0] + [1]`.
+Predict `row` in each run before tracing. Do both statements move the slot?
+
+<details markdown="1">
+<summary>Check the two list operations</summary>
+
+`+=` extends the shared list and assigns that same object back to slot 0;
+`row` becomes `[0, 1]`. `+` constructs a new list, and the assignment changes
+slot 0 to reach it; `row` stays `[0]`. The assignment syntax alone does not
+tell you whether the right-hand operation retained the original list.
+
+</details>
+
 ### Mutable Default Arguments
 
-Default expressions are evaluated when the function definition executes, not afresh for each call. A mutable default can therefore keep state between calls:
+Predict whether a second call can change a result returned by the first call.
+Pause on entry to that second call and compare its `basket` parameter with
+`first`. The diagram omits the function object and its default-storage edge;
+the visible parameter and result arrows let you check the resulting sharing.
 
-```python
-def remember_target(target, targets=[]):
-    targets.append(target)
-    return targets
+{% include object-reference-lab.html example="mutable_default" editor="inline" %}
 
-print(remember_target("M31"))  # ['M31']
-print(remember_target("M13"))  # ['M31', 'M13']
-```
-
-Both calls omitted the argument and received the same default list. The list stays reachable through the function's stored defaults. This affects dictionaries, sets, and mutable custom objects too; it is not a special exception to parameter passing.
+Default expressions are evaluated when the function definition executes, not
+afresh for each call. The function retains its default list, and calls omitting
+that argument receive the same object. Dictionaries, sets, and mutable custom
+objects follow the same rule. Returning the object does not freeze its state.
 
 Use a sentinel when omitted input should create a fresh container:
 

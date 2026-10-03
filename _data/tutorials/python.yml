@@ -1268,40 +1268,22 @@ steps:
 
       CPython, the implementation underlying this tutorial's Python runtime, uses a dynamically allocated array of object references. Its capacity can grow; this is not a C++ array of inline, fixed-type values. The language-level lesson is which objects are shared, independent of the implementation's allocation details.
 
-      ### Predict, Run, Investigate
+      ### Predict and Trace the References
 
-      ```python
-      opening = ["Lantern"]
-      sets = [opening, opening]
-      sets[0].append("Afterglow")
-      opening = ["Side Stage"]
-      print(sets)
-      print(opening)
-      ```
+      Here `[0]` and `[1]` select list slots; `append` adds one element to
+      the list it is called on. Write the lab's prediction before using
+      **Forward**. Stop after the
+      append, then after the slot assignment: name the object that changed
+      and the reference that moved. **Back** lets you compare those states.
 
-      Predict whether `sets` shows two changed lists, only one changed list, or two `"Side Stage"` lists. Write your prediction and run this snippet before opening the explanation.
+      This lab has its own editable code. After inspecting the prepared
+      trace, make a new prediction for **Try one change** and
+      choose **Trace Python**. Then return to the tutorial editor for the
+      independent running-order task. Primitive values appear in place to
+      reduce clutter; they are still Python objects, with their identities
+      retained in **Reference details**.
 
-      <details markdown="1">
-      <summary>Explain the two list slots after predicting</summary>
-
-      Both slots initially refer to the same list, so mutation through either slot is visible through both. Rebinding the name `opening` does not rewrite either slot.
-
-      **After the original snippet:** follow each list slot separately. The two slot arrows end at one object, even though printing the outer list displays that object's contents twice. Values inside the list boxes abbreviate references to strings.
-
-      ```mermaid
-      %% caption: Rebinding opening leaves both slots of sets pointing to the same changed list.
-      flowchart TB
-        accTitle: A nested list keeps two references to one inner list
-        accDescr: The name sets refers to an outer list. Its index 0 and index 1 both refer to a single inner list containing Lantern and Afterglow. The name opening now refers to a separate list containing Side Stage.
-        sets["name:<br/>sets"] --> outer("list object<br/>two slots")
-        outer -->|index 0| shared("list object<br/>Lantern, Afterglow")
-        outer -->|index 1| shared
-        opening["name:<br/>opening"] --> fresh("list object<br/>Side Stage")
-      ```
-
-      </details>
-
-      Try replacing the rebinding line with `sets[0] = ["Side Stage"]`; predict which slot changes before running again.
+      <div data-object-reference-example="shared_slots" data-object-reference-editor="inline"></div>
 
       ### One Object or Many Elements?
 
@@ -1557,6 +1539,13 @@ steps:
       ```
 
       </details>
+
+      **Trace a member reference:** step into `first.add` below and identify
+      the list reached through `self.files`. After `first.files` is replaced,
+      follow `second.files` again. Explain which operation changes a shared
+      object and which redirects one attribute before returning to the playlist task.
+
+      <div data-object-reference-example="member_sharing" data-object-reference-editor="inline"></div>
 
       ### Task: Shared Artist, Separate Queues
 
@@ -1852,6 +1841,13 @@ steps:
 
       A mutable class attribute has another consequence: `notes = []` in a class body creates one shared list. `self.notes.append(...)` can find that list through fallback lookup and mutate it; it does not create an instance list. Create `self.notes = []` in `__init__` when each instance should own its notes.
 
+      **Trace lookup and assignment:** after the append, look for `items`
+      on the class and on each instance. After the assignment, identify the
+      new instance attribute. Predict whether assigning to `Shelf.items`
+      instead would change the other shelf's lookup, then test that variation.
+
+      <div data-object-reference-example="class_attributes" data-object-reference-editor="inline"></div>
+
       ### Task: One Issuer, Independent Passes
 
       Repair `BackstagePass` in `class_passes.py`:
@@ -2052,52 +2048,30 @@ steps:
       - Apply the same copying rules to nested lists and objects with member objects.
       - Explain why a deep copy can preserve sharing inside its own object graph.
 
-      ### Predict Before You Run
-
-      Open `copy_studio.py`. The first example starts with **two references to one inner list**, then makes an alias, a shallow copy, and a deep copy. Before running, choose a prediction: appending `"Orbit"` through `shallow[0]` changes (a) only `shallow`, (b) `lineup`, `alias`, and `shallow`, or (c) all four outer lists, including `deep`.
-
-      Run the file. Explain why **both slots** in the original show the added track. Here, `is` asks whether two expressions refer to the very same object; the next step explores that operator in more detail.
-
-      <details markdown="1">
-      <summary>Explain the shared inner list</summary>
-
-      The alias is the original outer list. The shallow copy has a new outer list, but its slots refer to the original inner list. Both slots in each list still reach that one inner list, so both display `["Pulse", "Orbit"]`. The deep copy has its own inner list and still displays `[["Pulse"], ["Pulse"]]`.
-
-      **After appending through `shallow[0]`:** compare the outer lists before following their slots. Each arrow labeled "slots 0 and 1" abbreviates two references with the same destination. String values are abbreviated inside the inner list.
-
-      ```mermaid
-      %% caption: A shallow copy separates the outer list while keeping its member references shared.
-      flowchart TB
-        accTitle: Alias and shallow copy share one mutable inner list
-        accDescr: Names lineup and alias both refer to the original outer list. Name shallow refers to a different outer list. Slots 0 and 1 in each outer list all refer to one inner list containing Pulse and Orbit.
-        lineup["name:<br/>lineup"] --> original("original list object")
-        alias["name:<br/>alias"] --> original
-        shallow["name:<br/>shallow"] --> copied("new list object")
-        original -->|slots 0 and 1| shared("inner list object<br/>Pulse, Orbit")
-        copied -->|slots 0 and 1| shared
-      ```
-
-      ```mermaid
-      %% caption: Deep copying separates mutable state while preserving repeated references inside the copy.
-      flowchart TB
-        accTitle: The deep copy preserves internal sharing
-        accDescr: Name deep refers to a third outer list. Both its index 0 and index 1 refer to one new inner list containing only Pulse. Neither list is one of the mutable objects in the preceding alias and shallow-copy diagram.
-        deep["name:<br/>deep"] --> outer("new outer list object")
-        outer -->|index 0| inner("new inner list object<br/>Pulse")
-        outer -->|index 1| inner
-      ```
-
-      </details>
-
       ### The Copying Boundary
 
       `import copy` makes Python's copying module available.
+      For a built-in list, `plan.copy()` makes a shallow copy, like `copy.copy(plan)`.
 
       | Operation | Outer object | Referenced member objects |
       |---|---|---|
       | `alias = original` | The same object | The same objects |
       | `copy.copy(original)` | A new ordinary object or list | Existing references are reused |
       | `copy.deepcopy(original)` | A new ordinary object or list | Supported nested state is copied recursively |
+
+      ### Predict the Copying Boundary
+
+      The lab separates two questions: which lists are new, and which
+      references inside them still have the same destination? Before the
+      first append, count the outer and inner list objects. After each
+      append, identify every path that reaches the changed inner list.
+      Predict whether the two slots inside the deep copy remain linked.
+
+      <div data-object-reference-example="shallow_copy" data-object-reference-editor="inline"></div>
+
+      Try the slot assignment under **Try one change**. Then open
+      `copy_studio.py`: predict its list example without replaying the lab,
+      and use **Run** to check whether the same rule explains it.
 
       Inspect the second worked example. `Show` has a `Mixer` member object. `rehearsal.mixer.level = 7` reaches the mixer that `live` also uses. In contrast, `rehearsal.title = "Soundcheck"` changes an attribute **on the copied Show**. It does not change `live.title`. Predict the live and archived mixer levels, then compare with Run.
 
@@ -2373,7 +2347,14 @@ steps:
 
       `left is right` always checks **identity**. A class cannot overload `is`. `left == right` uses the objects' equality behavior, which classes can define with the special method `__eq__`. Lists and strings already have useful value comparisons; ordinary classes need a policy when the default does not fit.
 
-      Here is a separate worked example of that policy:
+      **Separate equality from sharing:** before the first print in the lab,
+      count objects, then predict which mutation will be visible through
+      each name. Equal values alone are not enough to make that prediction.
+      Try the alias-assignment variation before returning to custom equality.
+
+      <div data-object-reference-example="identity_equality" data-object-reference-editor="inline"></div>
+
+      Here is a separate worked example of a custom equality policy:
 
       ```python
       class Seat:
@@ -2605,17 +2586,6 @@ steps:
 
       In C++, a reference parameter can alias a caller's variable. A Python parameter has its **own binding**: assigning a new object to it does not retarget the caller's name. Mutating an object shared by those bindings can still affect the caller. Return a new object when the caller should choose whether to replace its own binding.
 
-      **Pause inside `extend_locally`, just after its assignment:** the caller and the function have separate names, even though both are spelled `tracks`. At function entry both referred to the original list; only the local binding moves after concatenation.
-
-      ```mermaid
-      %% caption: Rebinding a parameter changes the function's local name, leaving the caller's binding intact.
-      flowchart TB
-        accTitle: Caller and local parameter after list concatenation
-        accDescr: The caller's tracks name still refers to the original list containing Pulse. Inside extend_locally, the parameter tracks now refers to a new list containing Pulse and Finale. The original list was not mutated.
-        caller["caller name:<br/>tracks"] --> original("original list object<br/>Pulse")
-        local["local parameter:<br/>tracks"] --> fresh("new list object<br/>Pulse, Finale")
-      ```
-
       <details>
       <summary>Check the six predictions</summary>
 
@@ -2623,9 +2593,25 @@ steps:
 
       </details>
 
+      **Trace the caller and parameter together:** pause after the append,
+      then after the local assignment. Locate `draft` and `labels` each time.
+      Explain why one operation is visible through the caller's existing
+      reference while the other is not. Follow the returned object to `result`.
+
+      <div data-object-reference-example="parameter_rebinding" data-object-reference-editor="inline"></div>
+
       ### A Default Is Also a Stored Reference
 
       Compare your guest-call prediction with the final two output lines. In the starter, `guests=[]` is evaluated **once when the `def` statement executes**, and the function keeps a reference to that list. Each call omitting `guests` binds its parameter to the same object. Mutation therefore survives between calls. Dictionaries, sets, and ordinary mutable objects can cause the same problem.
+
+      **Trace a later call changing an earlier result:** before the second
+      call below, predict what `first` will show afterward. On entry to that
+      call, compare `basket` with `first`. The diagram omits the function's
+      stored-default reference; the repeated parameter binding and returned
+      aliases show the resulting sharing. Try supplying a fresh list in just
+      the second call before reading the general repair below.
+
+      <div data-object-reference-example="mutable_default" data-object-reference-editor="inline"></div>
 
       Here is the repair pattern in a separate helper:
 
@@ -3579,7 +3565,12 @@ steps:
 
       ### Transfer Note: C++ Range-Based Loops → Python `for`
 
-      If you have used modern C++ range-based `for` (`for (auto& x : vec)`), Python's iteration model will feel familiar — Python just makes it the *default*. The key habit to build: reach for `for x in collection` first, not `for i in range(len(...))`.
+      Prefer `for x in collection` when you need each object, and `enumerate`
+      when you also need its position. Each iteration binds the Python name
+      `x` to the next object. Unlike C++ `for (auto& x : vec)`, it does not
+      make `x` an alias for the container's element slot: assigning `x = ...`
+      will not replace that slot. Mutating the object reached through `x`
+      can still change what the collection contains.
 
       ## Tuple Unpacking
 
@@ -3650,6 +3641,15 @@ steps:
       result.clear()    # Empties the entire list (result is now [])
                         # C++: vec.clear();
       ```
+
+      ### Revisit References Inside a Loop
+
+      Predict whether the following loop empties the original inner lists.
+      Follow the loop name across both iterations, then explain why its
+      final value alone does not tell you what happened to `batches`.
+      Try `clear` in place of assignment after making a second prediction.
+
+      <div data-object-reference-example="loop_rebinding" data-object-reference-editor="inline"></div>
 
       ### ⚠️ Two Operator Traps from C++
 
@@ -3951,6 +3951,25 @@ steps:
 
       List comprehensions are preferred when the transformation is simple — they are a
       recognized Python idiom that experienced readers understand at a glance.
+
+      ### Revisit Shared Rows
+
+      Predict which construction makes independent inner lists:
+      `rows = [[0]] * 2`, `rows = [row for _ in range(2)]` after `row = [0]`,
+      or `rows = [[0] for _ in range(2)]`. For each, predict `rows` after
+      `rows[0].append(1)`, then check in the editor. Do this before opening
+      the explanation; a comprehension does not automatically copy its results.
+
+      <details markdown="1">
+      <summary>Check which expression constructs a list each time</summary>
+
+      The first two produce `[[0, 1], [0, 1]]`: repetition and repeatedly
+      evaluating the name `row` retain the same reference. Only the third
+      produces `[[0, 1], [0]]`, because evaluating `[0]` on each iteration
+      constructs a new inner list. Count evaluations of the construction,
+      not how many rows the printed result appears to contain.
+
+      </details>
 
       ### Predict Before You Code
 

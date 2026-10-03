@@ -632,6 +632,10 @@ students are confused" reports.
       instead.
 - [ ] Diagrams added where they earn their place; type & syntax chosen
       via the `diagrams` skill; pedagogy checked via `good-diagrams`.
+- [ ] Inline object-reference labs use a prepared example key in an
+      `instructions:` HTML marker (see §3.4). Verify forward/backward playback,
+      edited-code tracing, cleanup on step changes, the instructions popout,
+      and the print transcript. Lab exploration does not award exercise credit.
 
 ### Page wiring (the page-pair convention)
 
@@ -1430,6 +1434,175 @@ test output):
 Combine multiple hints with different conditions to form a **graduated
 help ladder** that responds to the student's actual mistake.
 
+### 3.4 Inline Python object-reference labs
+
+**Use an object-reference lab when a mistaken model of identity or sharing
+would change the learner's prediction and the diagram can reveal why.** Use it
+for assignment mistaken for copying, mutation confused with rebinding, nested
+members assumed independent, parameters or loop names mistaken for caller or
+container slots, equality mistaken for identity, shared defaults across calls,
+and class state confused with instance state. Choose the learner's likely
+reasoning error first; a matching Python keyword is not sufficient.
+
+Apply an editorial test before embedding:
+
+- State the competing predictions and the visible reference that distinguishes
+  them. A correct printed result alone can be consistent with a wrong model.
+- Check that the compact view actually displays that distinction. Primitive-only
+  examples abbreviate values in place, so they cannot visually distinguish
+  reference sharing from value copying; prefer the existing brief code or
+  explicit object snapshot for that purpose.
+- Replace a redundant static walkthrough of the same state rather than stacking
+  prose, code, a snapshot, and another full lab. Keep a later independent task
+  or a different object shape as transfer practice.
+- Teach one contrast at a time. Start with append versus explicit assignment;
+  use `+=` versus `+` as later synthesis. Avoid combining receiver rebinding,
+  nested helpers, replacement construction, and returning an instance in a
+  first member lesson. Neutral titles should not give away the prediction.
+
+Place the lab beside the relevant explanation in `instructions:`, before the
+independent task. Use this teaching sequence:
+
+1. Ask for a prediction about an intermediate relationship and the eventual
+   output: which two expressions reach one object, or which slot will move?
+2. Give one inspection goal, such as following both list slots or comparing the
+   caller's name with the local parameter after assignment. Use **Forward** and
+   **Back** to compare specific states. Clicking through is not the learning goal.
+3. Offer one controlled code change and ask for a new prediction before **Trace
+   Python**. Put that prompt in `variation`, separately from the prepared answer.
+   Put the changed case's reason and output in `variation_explanation`, revealed
+   only through **Check the suggested change**. The visible **Try one change**
+   prompt stays available while editing; reset closes the answer disclosure.
+4. Return to the independent task in the tutorial editor. Explain on first use
+   that the lab has its own editor. A worked lab does not complete the tutorial's
+   task or replace its tests, quiz, or independent transfer question.
+
+For copying, distinguish independence from the source from sharing *inside* a
+deep copy. For a mutable default, compare an earlier returned alias with the
+parameter on the next call: the compact view omits function/default-storage
+edges, so explain definition-time retention in prose rather than claiming that
+edge is drawn. A short later prediction about repeated construction or loop
+binding can check transfer without adding a lab to every Python lesson.
+
+The selection rationale and review of each previous placement are recorded in
+`docs/object-reference-teaching-review.md`; research provenance, study limits,
+and lecture-slide mappings are in `docs/object-reference-pedagogy-research.md`.
+Treat Python-specific language traps inferred from the lecture/documentation
+separately from empirically observed student models. Do not claim that the
+examples are validated interventions or that all targets are the most frequent
+errors without corresponding learner evidence.
+
+An `instructions:` Markdown block can embed a prepared, editable Python lab:
+
+```yaml
+instructions: |
+  Predict which references change, then step through the example.
+
+  <div data-object-reference-example="shared_slots" data-object-reference-editor="inline"></div>
+```
+
+The marker is ordinary authored HTML, not a new step field or a code fence.
+Place it beside the concept it explains. Prepared definitions live in
+`_data/object_reference_examples.yml`, keyed by example name, with `title`,
+`code`, `prediction`, and `explanation`. Optional `variation` contains the
+controlled-edit question; optional `variation_explanation` supplies its separate
+answer disclosure. Both are plain text like the other prose fields. Keep the
+question free of its answer and specify that it starts from the prepared code.
+Printing an unchanged prepared example includes both the variation and its
+answer. Printing arbitrary edited code omits prepared explanations and variation
+feedback, so an old answer cannot describe a new program. Generated
+`_data/object_reference_labs.json` adds `trace` using the same Python tracer
+as the browser lab. The generated data is exposed at
+`/assets/object-reference-labs.json` by `object-reference-lab-examples.json`.
+Keep source definitions and generated traces synchronized after editing code:
+run `python3 scripts/build-object-reference-traces.py`, then validate with
+`python3 scripts/build-object-reference-traces.py --check`. New examples must
+complete without trace errors or omitted state.
+The chapter include `{% include object-reference-lab.html example="shared_slots" %}`
+embeds that same record directly in a static SEBook page; use the HTML marker
+inside tutorial YAML because its content is not processed as a Liquid template.
+
+Use `data-object-reference-editor="inline"` for labs integrated into the main
+instruction flow so learners can edit the example directly; the editor stays
+visible through tracing and reset. Omitting the attribute uses a collapsed
+editor, which is suitable for optional compact embeds. Static chapter includes
+select inline presentation with `editor="inline"`.
+
+The Python tutorial currently uses eight inline labs across seven lessons:
+
+| Step key | Example | Mental-model contrast |
+| --- | --- | --- |
+| `lists` | `shared_slots` | A changed inner object versus a replaced outer-list slot. |
+| `members` | `member_sharing` | Distinct instances can share a member; mutation differs from replacing one attribute. |
+| `classes` | `class_attributes` | Class lookup and mutation do not create an instance attribute; assignment can. |
+| `copies` | `shallow_copy` | Shallow members stay shared; deep copying separates source state but preserves internal aliases. |
+| `equality` | `identity_equality` | Equal list values do not imply shared identity or shared mutation. |
+| `calls-defaults` | `parameter_rebinding` | Caller and parameter have separate bindings; return supplies the call-site assignment. |
+| `calls-defaults` | `mutable_default` | Separate omitted-argument calls can reuse one list, including an earlier returned result. |
+| `loops` | `loop_rebinding` | A loop name is a binding to an object, not an alias for a container slot. |
+
+The Python chapter uses these same eight records beside their relevant concepts.
+The primitive-only `names_rebinding` and combined `returned_member_alias` scenes
+were removed from the teaching set; nested-call and primitive-display behavior
+remain covered by runtime tests. The comprehension lesson uses a short
+prediction contrasting repetition, repeated evaluation of a name, and repeated
+list construction rather than another widget.
+
+Both editor presentations use the same tracer and support forward/backward
+playback.
+
+The lab shows recorded scopes, objects, and references alongside editable
+Python. **Forward**, **Back**, and **Play** use one filtered timeline without executing
+the program again. The Python tracer marks definition-only bookkeeping with
+`skipPlayback: true`; the controller omits those stops and numbers the visible
+steps consecutively. Raw traces retain every recorded event. Skip ordinary
+function/class headers and class-entry/exit scaffolding, but keep executable
+class-body assignments, called bodies, function returns, and errors. Potentially
+effectful defaults, decorators, bases, and annotations stay visible conservatively.
+Definitions still execute; skipping a playback stop does not bypass Python code. **Trace Python** records the edited code in a separate disposable
+Pyodide worker; it does not execute the tutorial editor's files or change the
+tutorial's own Python interpreter. Prepared examples work without starting that
+worker. Labels describe snapshots before the next line or at call/return events;
+object IDs are diagram identities, not memory addresses. Collection timing is
+not represented as a guarantee. Bounded source, execution, output, and graph
+limits report incomplete traces rather than silently presenting them as complete.
+
+The compact diagram follows the lecture's individual name/reference-slot layout,
+without enclosing global/local scope panels. Primitive literals appear in place
+at names, indices, and members. Explain on first use that this is a display
+abbreviation: these values are still Python objects, and **Reference details**
+retains their identities. Do not imply separate Python value/reference semantics
+for primitives. Shared containers retain stable object labels;
+member reference buttons focus their target card. Alias arrows stay beside
+their objects; every displayed nonprimitive member/slot reference has an actual
+arrow routed through reserved space outside the stacked cards. Shared targets share a routing bus;
+independent crossings use bridge marks, including for cyclic graphs. The pure
+planner ships inside
+`js/object-reference-graph.js`; no separate routing script or global is needed.
+See `docs/object-reference-layout.md` for the layout constraints and tradeoffs.
+Function/module objects and classes without displayed data attributes are omitted
+from this visual view. The Reference details disclosure and each printed state’s
+text alternative preserve its complete graph, including primitive identities and
+scope information; they describe that state, not every skipped execution event.
+The source pane scrolls independently and follows the current execution line;
+the resizable editor remains visible for inline chapter embeds.
+
+Edits and playback are local to the mounted lab. They add no saved-progress
+fields, storage keys, tests, or completion credit. Ordinary tutorial files,
+assessments, and progress retain their existing behavior. The print view includes
+code and the same object cards, inline primitive values, and routed arrows for
+each visible playback state, with a text alternative. `js/object-reference-print.js`
+owns printable history and uses the shared graph renderer in static mode. Print
+geometry must be measured at the visible print width, not while the history is
+`display: none`; synchronous preparation at the print boundary includes the gutter
+remeasurement. Static snapshots do not retain per-graph observers or animation.
+Printable diagrams cap at 160mm in all print states to preserve wrapping on
+A4/Letter with ordinary margins, without scaling down text; static member-route
+SVGs anchor to the right edge. Verify actual PDF pagination as well as print
+media screenshots, because paper layout can narrow after `beforeprint`.
+The dedicated tutorial print page shows this history on screen as well as paper;
+print always uses the light palette, including from a dark live session.
+
 ---
 
 ## 4. Architecture map
@@ -1463,6 +1636,23 @@ fences on `DOMContentLoaded`, opens its instructional disclosures, and awaits
 that Promise before `autoprint=1` opens the print dialog. Live prediction
 reveals remain closed. Its existing `print-light-mode` policy also applies
 to the diagrams.
+
+The live, instructions-popout, and print layouts also load
+`js/object-reference-graph.js`, `js/object-reference-print.js`, then
+`js/object-reference-lab.js`, plus `css/object-reference-lab.css` for the inline
+labs in §3.4. Load their stylesheet
+before `css/print-light.css`. Dynamic instruction rendering calls
+`ObjectReferenceLab.destroyWithin(root)` before replacing its content, then
+`ObjectReferenceLab.initFrom(root)` after inserting the Markdown HTML. The
+initializer returns a Promise and renders lookup/mount failures inside the
+affected lab. Main step readiness and automatic printing await that Promise;
+printing opens newly mounted explanation disclosures after initialization.
+Tutorial destruction disposes active lab resources. Page hiding cancels a
+pending run and pauses replay while retaining controls for browser history
+restoration. In the instructions popout, navigation/progress snapshots refresh
+the controls and test panel without replacing an unchanged step's HTML; this
+preserves edits and replay position. A changed step index or instruction body
+disposes the prior lab and initializes the new content.
 
 For Mermaid instruction fences, a leading `%% caption: ...` line becomes a
 visible figure caption and the image's accessible name. Add `accTitle:` and
@@ -1794,6 +1984,16 @@ channel.
   button.
 - **`js/tutorial-popout-manager.js`** / **`js/tutorial-popout-client.js`** —
   popout lifecycle and IPC.
+- **`js/object-reference-lab.js`** — reusable inline Python lab controller.
+  `initFrom(root)` mounts named or inline-JSON examples; `destroyWithin(root)`
+  stops workers/playback and releases views before instruction replacement.
+  `js/object-reference-graph.js` owns graph layout, rendering, and textual state
+  descriptions. `js/object-reference-print.js` reuses that renderer for static
+  printable history and releases its resources with the lab.
+  `js/object-reference-worker.js` runs the bounded
+  `js/object-reference-tracer.py` with the locally pinned Pyodide runtime in a
+  worker separate from the tutorial backend. Worker lifetime and cancellation
+  belong to the individual lab, not to the tutorial's main debugger.
 - **`js/tutorial-refactorings.js`** — Monaco refactoring helpers
   (rename, extract, inline) used by the refactoring tutorials.
 - **`js/debugger/*.js`** — time-travel debugger: `sync.js`,

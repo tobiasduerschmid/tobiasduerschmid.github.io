@@ -1,0 +1,13 @@
+{% assign lab = site.data.object_reference_labs[include.example] %}
+<div data-object-reference-lab data-object-reference-editor="{{ include.editor | default: 'collapsed' | escape }}" class="object-reference-lab" role="region" aria-label="Object reference lab: {{ lab.title | escape }}">
+  <script type="application/json">{{ lab | jsonify | replace: '</', '<\/' }}</script>
+  <div class="object-reference-lab__fallback">
+    <p><strong>Object reference lab: {{ lab.title | escape }}</strong></p>
+    <p>{{ lab.prediction | escape }}</p>
+    <pre><code class="language-python">{{ lab.code | escape }}</code></pre>
+    <details>
+      <summary>Check the references</summary>
+      <p>{{ lab.explanation | escape }}</p>
+    </details>
+  </div>
+</div>

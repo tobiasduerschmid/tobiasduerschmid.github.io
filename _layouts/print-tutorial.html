@@ -12,6 +12,7 @@
         crossorigin="anonymous">
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/tutorial-print.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/object-reference-lab.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js"
           integrity="sha384-T/0lMUdJpd2S1ZHtRiofG3htU3xPCrFVeAQ1UUE2TJwlEJSV5NUwn30kP28n238E"
@@ -19,6 +20,9 @@
   <script src="{{ '/js/mermaid-theme.js' | relative_url }}" defer></script>
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
+  <script src="{{ '/js/object-reference-graph.js' | relative_url }}" defer></script>
+  <script src="{{ '/js/object-reference-print.js' | relative_url }}" defer></script>
+  <script src="{{ '/js/object-reference-lab.js' | relative_url }}" defer></script>
   <script src="{{ '/js/tutorial-inline-markdown.js' | relative_url }}"></script>
   <script src="{{ '/js/keyboard-shortcut-labels.js' | relative_url }}"></script>
   <script>
@@ -124,7 +128,15 @@
         makeScrollableCodeFocusable();
         renderInlineSummaryMarkdown();
         renderUmlDiagrams();
-        const diagramsReady = window.SebookMermaid.render(document);
+        const diagramsReady = Promise.all([
+          window.SebookMermaid.render(document),
+          window.ObjectReferenceLab.initFrom(document)
+        ]).then(function () {
+          document.querySelectorAll('main details').forEach(function (details) {
+            details.open = true;
+          });
+          makeScrollableCodeFocusable();
+        });
         if (window.location.search.indexOf('autoprint=1') !== -1) {
           const printWhenReady = function () {
             diagramsReady.then(function () { window.print(); });

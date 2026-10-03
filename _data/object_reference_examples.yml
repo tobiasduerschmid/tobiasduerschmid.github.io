@@ -1,0 +1,259 @@
+# Editable source examples. Generated object_reference_labs.json adds recorded
+# states from the same Python tracer used by the live lab.
+# Selection and evidence: docs/object-reference-teaching-review.md.
+shared_slots:
+  title: Changing a row or replacing a slot
+  prediction: >-
+    Predict board and row after the append, then after the slot assignment. Does
+    board contain two independent rows, or two references to one row? Before the
+    first print, identify which arrow moved.
+  code: |
+    row = [0]
+    board = [row, row]
+    board[0].append(1)
+    board[1] = [2]
+    print(board)
+    print(row)
+  explanation: >-
+    The output is [[0, 1], [2]], then [0, 1]. Both slots initially reach one
+    row, so appending through slot 0 changes what both slots see. Assigning
+    board[1] redirects just that slot to a new list. The name row and slot 0
+    still reach the original object. If you expected two independent rows from
+    [row, row], count the inner objects before the append: there is only one.
+  variation: >-
+    Starting from the prepared code, replace board[1] = [2] with row = [2].
+    Predict both outputs and which arrow moves, then choose Trace Python.
+  variation_explanation: >-
+    The variation prints [[0, 1], [0, 1]], then [2]. Rebinding row leaves both
+    stored slots reaching the original mutated list; it moves only the separate
+    name.
+
+member_sharing:
+  title: Do separate folders have separate contents?
+  prediction: >-
+    Predict both printed lists. When first.add runs, which Folder does self
+    reach, and which other reference reaches the same files list? After
+    first.files is assigned a new list, does second.files follow it?
+  code: |
+    class Folder:
+        def __init__(self, files):
+            self.files = files
+
+        def add(self, name):
+            self.files.append(name)
+
+    shared = ["draft"]
+    first = Folder(shared)
+    second = Folder(shared)
+    first.add("review")
+    first.files = ["final"]
+    print(first.files)
+    print(second.files)
+  explanation: >-
+    The output is ['final'], then ['draft', 'review']. The two Folder objects
+    are distinct, but their files attributes initially reach the same list.
+    Inside add, self refers to first. Appending through self.files changes that
+    shared list; assigning first.files later redirects only first's attribute. A
+    new outer instance does not imply new member objects.
+  variation: >-
+    Starting from the prepared code, change second = Folder(shared) to second =
+    Folder([]). Predict both outputs and count the member lists before calling
+    add. Then trace.
+  variation_explanation: >-
+    The outputs become ['final'] and []. The second constructor receives a
+    separately constructed list, so first.add cannot reach it. Distinct Folder
+    objects can have shared or separate member lists, depending on which objects
+    their initializers receive.
+
+class_attributes:
+  title: Which list does each instance find?
+  prediction: >-
+    Predict the two printed lists. After append, does first have its own items
+    attribute? After first.items = ["map"], follow second through its class to
+    find the list that second.items will use.
+  code: |
+    class Shelf:
+        items = []
+
+    first = Shelf()
+    second = Shelf()
+    first.items.append("atlas")
+    first.items = ["map"]
+    print(first.items)
+    print(second.items)
+  explanation: >-
+    The output is ['map'], then ['atlas']. Initially both instances find
+    Shelf.items through class lookup; no items list is copied into either
+    instance. append mutates that shared list without creating an instance
+    attribute. The later assignment creates first's own items attribute, which
+    shadows the class attribute. second still finds the class list.
+  variation: >-
+    Starting from the prepared code, change first.items = ["map"] to Shelf.items
+    = ["map"]. Predict both outputs and where each items lookup will succeed.
+    Then trace.
+  variation_explanation: >-
+    Both outputs become ['map'], because neither instance has an items attribute
+    of its own. Both lookups find the replaced class attribute. For independent
+    lists from construction, create self.items = [] inside __init__ instead of
+    placing a list in the class body.
+
+shallow_copy:
+  title: Which references survive a copy?
+  prediction: >-
+    After both copies are made, count the outer lists and the inner lists.
+    Predict all three outputs. Does a change through shallow reach plan? Does
+    changing archived[0] also change archived[1], even though archived is a deep
+    copy?
+  code: |
+    import copy
+
+    row = ["draft"]
+    plan = [row, row]
+    shallow = plan.copy()
+    archived = copy.deepcopy(plan)
+    shallow[0].append("review")
+    archived[0].append("private")
+    print(plan)
+    print(shallow)
+    print(archived)
+  explanation: >-
+    There are three outer lists but only two inner lists after copying. plan and
+    shallow both print [['draft', 'review'], ['draft', 'review']]. Their four
+    slots all reach the original row. archived prints [['draft', 'private'],
+    ['draft', 'private']]: it has one new inner list, reached by both of its
+    slots. Deep copy separates this mutable state from the source while
+    preserving the repeated reference within the copy.
+  variation: >-
+    Starting from the prepared code, replace shallow[0].append("review") with
+    shallow[0] = ["review"]. Predict all three outputs. Which object owns the
+    slot that changes? Then trace.
+  variation_explanation: >-
+    plan retains two ['draft'] entries; shallow becomes [['review'], ['draft']];
+    archived still prints [['draft', 'private'], ['draft', 'private']]. The
+    assignment replaces a slot in the shallow outer list. It does not mutate the
+    inner row still reached through plan and shallow[1].
+
+identity_equality:
+  title: Equal contents, shared identity?
+  prediction: >-
+    Predict the three Booleans, then the two lists after the append. Before the
+    first print, count list objects rather than names. Which comparison tells
+    you whether a change through alias can also be seen through right?
+  code: |
+    left = ["draft"]
+    right = ["draft"]
+    alias = left
+    print(left == right)
+    print(left is right)
+    print(left is alias)
+    alias.append("review")
+    print(left)
+    print(right)
+  explanation: >-
+    The output is True, False, True, then ['draft', 'review'] and ['draft']. Two
+    list constructions create two objects with equal contents. alias adds a
+    second name for left's object; it creates no third list. Equality does not
+    establish sharing, so the mutation leaves right unchanged.
+  variation: >-
+    Starting from the prepared code, replace right = ["draft"] with right =
+    left. Predict all three Booleans and both lists after append. Then trace and
+    explain which construction disappeared.
+  variation_explanation: >-
+    All three Booleans become True and both lists print ['draft', 'review'].
+    Only one list is constructed; left, right, and alias all reach it. For this
+    mutation, identity reveals sharing; equal contents alone did not establish
+    it in the original.
+
+parameter_rebinding:
+  title: Mutation, local assignment, and a return
+  prediction: >-
+    Predict draft and result at the end. Pause after append and again after
+    labels is assigned a new list. Which operation changes the caller's existing
+    list? Does returning labels redirect draft, or bind result?
+  code: |
+    def revise(labels):
+        labels.append("review")
+        labels = ["final"]
+        return labels
+
+    draft = ["draft"]
+    result = revise(draft)
+    print(draft)
+    print(result)
+  explanation: >-
+    The output is ['draft', 'review'], then ['final']. At entry, labels is a new
+    local name for the list also reached by draft. append mutates that shared
+    object. Assignment then moves only labels to a new list; a Python parameter
+    is not an alias for the caller's variable slot. return supplies the object
+    to the call-site assignment, which binds result and leaves draft alone.
+  variation: >-
+    Starting from the prepared code, replace labels = ["final"] with labels[0] =
+    "final". Predict both outputs and whether draft and result will share one
+    list. Then trace.
+  variation_explanation: >-
+    Both outputs become ['final', 'review']. This version mutates a slot in the
+    shared list instead of rebinding labels. The returned object is the same
+    list reached by draft, so result becomes another name for it.
+
+mutable_default:
+  title: Does the next call start with an empty list?
+  prediction: >-
+    Predict both lists and the final Boolean. At entry to the second collect
+    call, compare basket with first. Does the first result stay a snapshot of
+    the first call, or can a later call change what first sees?
+  code: |
+    def collect(item, basket=[]):
+        basket.append(item)
+        return basket
+
+    first = collect("red")
+    second = collect("blue")
+    print(first)
+    print(second)
+    print(first is second)
+  explanation: >-
+    Both lists print ['red', 'blue'], followed by True. The default [] is
+    evaluated once when def runs, and the function retains that list. Omitting
+    basket on each call binds the parameter to this same object. Returning it
+    does not create a snapshot: first still reaches it when the second call
+    appends blue. The compact diagram omits the function and its default-storage
+    reference; compare the parameter with first during the second call to see
+    the sharing.
+  variation: >-
+    Starting from the prepared code, change only the second call to
+    collect("blue", []). Predict both lists and the final Boolean. At entry to
+    that call, will basket still share with first? Then trace.
+  variation_explanation: >-
+    The outputs become ['red'], ['blue'], and False. An explicit new list is
+    supplied for the second call, so it does not use the function's stored
+    default. The first result remains shared with that default. A None sentinel
+    and list construction inside the function can instead provide a fresh list
+    whenever the argument is omitted.
+
+loop_rebinding:
+  title: Does assigning the loop name replace a list entry?
+  prediction: >-
+    Predict batches and batch after the loop. On each iteration, follow batch
+    before and after batch = []. Does that assignment move an arrow stored in
+    batches, or only the loop name's arrow?
+  code: |
+    batches = [["draft"], ["review"]]
+    for batch in batches:
+        batch = []
+    print(batches)
+    print(batch)
+  explanation: >-
+    The output is [['draft'], ['review']], then []. Each iteration binds batch
+    to the next inner list. batch = [] then rebinds that name; it does not
+    assign to a slot in batches. Unlike a C++ auto& loop variable, this Python
+    name is not a reference to the container's element slot.
+  variation: >-
+    Starting from the prepared code, replace batch = [] with batch.clear().
+    Predict batches and batch again. Does the loop name itself show enough to
+    distinguish the two programs? Then trace.
+  variation_explanation: >-
+    batches becomes [[], []], and batch is still []. clear mutates each actual
+    inner list, so the changes are visible through the unchanged slots in
+    batches. The loop name's final value was empty in both versions; the outer
+    list and reference paths distinguish them. To replace an element object,
+    assign to batches[index] using its index.

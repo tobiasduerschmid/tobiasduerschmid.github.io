@@ -1,0 +1,5 @@
+---
+layout: null
+permalink: /assets/object-reference-labs.json
+---
+{{ site.data.object_reference_labs | jsonify }}
