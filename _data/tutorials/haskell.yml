@@ -731,10 +731,19 @@ steps:
     instructions: |
       ### Why this matters
 
-      A long expression can hide which piece of a bill or score is wrong.
-      **Naming intermediate results** makes the calculation easier to explain
-      and inspect, while local bindings keep those details close to the function
-      that uses them.
+      A pure Haskell function describes its result with an expression. In
+      Python or C++, you might calculate a bill by assigning a subtotal to a
+      variable, then updating that variable with a discount and a fee. In
+      Haskell, **a binding names a value; it is not a variable you can later
+      reassign in the same scope**. `let` and `where` let you name intermediate
+      values and helper functions, then use them in the result expression.
+
+      These names let you **break a large calculation into understandable
+      parts** and reuse a value without repeating its expression. Keeping them
+      local also lets them use the enclosing function's parameters without
+      exposing those implementation details to the rest of the program. Each
+      function call has its own bindings; calculating a new result does not
+      overwrite a value from an earlier call.
 
       ### 🎯 You will learn to
 
@@ -764,7 +773,9 @@ steps:
       ```
 
       Both versions give `minutesAfter 1 35 == 95`. The conversion factor
-      gets a name, so the calculation explains itself.
+      gets a name, so the calculation explains itself. **Local bindings are
+      optional:** `hours * 60 + minutes` works too. Use them when naming a
+      value or helper makes the calculation clearer or avoids repetition.
 
       The difference is **placement and scope** (where a name is available),
       not the arithmetic or the order of execution:
