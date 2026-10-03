@@ -1,0 +1,2589 @@
+title: 'Java Concepts for CS131'
+description: >-
+  For CS131 students who know C++ or Python: practice types, references, parameter passing,
+  polymorphism, casts, iterators, and exceptions through predictions and small Java programs. Plan
+  roughly 100–120 minutes across three sessions; allow more time if Java is new to you.
+learning_objectives:
+  - Analyze primitive values, reference aliases, and pass-by-value calls.
+  - Distinguish identity, logical equality, declared types, and runtime classes.
+  - Predict evaluation order, short-circuiting, and exception control flow.
+  - Apply interface contracts and distinguish overriding from overloading.
+  - Use generic storage and iterator contracts without concrete-class assumptions.
+  - Create and explain a small client that preserves its behavioral contract.
+backend: java
+require_tests: false
+require_quiz: false
+allow_skip_steps: true
+autosave_type: files
+reset_type: files
+progress_version: 1
+steps:
+  # Pedagogy: worked example with fading — primitive-copy prediction, then boundary repair
+  - title: Static Types and Execution Stages
+    key: static-types
+    instructions: >
+      ### Why this matters
+
+
+      A Java declaration tells you which values and operations are allowed before the program runs.
+      That does not eliminate runtime failures: checking a program and executing it answer different
+      questions.
+
+
+      ### 🎯 You will learn to
+
+
+      - Distinguish a compile-time type error from a runtime failure.
+
+      - Apply primitive types in a small Java method.
+
+
+      ### Your CS131 Practice Route
+
+
+      This tutorial assumes C++ or Python, functions, arrays, and basic classes. Allow roughly
+      **100–120 minutes**, with extra time if Java is new to you, across three sessions: steps
+      **1–5**, **6–9**, and **10–12**. Choose any step; tests
+      and knowledge checks are optional feedback, and skipping them does not record a pass.
+
+
+      This is course-concept practice. The separate [Java tutorial with
+      UML](/SEBook/tools/java-tutorial) covers broader Java design, and the [Java
+      reference](/SEBook/tools/java) provides syntax help.
+
+
+      **Execution note:** this page uses a Java-subset runner, not a full Java compiler or virtual
+      machine. The supplied runnable exercises use its supported behavior. **Compiler reasoning**
+      cards and quizzes describe standard Java; the Run button cannot establish static type safety,
+      overload resolution, or checked-cast errors. For those experiments, save a file locally and
+      use `javac FileName.java` followed by `java FileName` with a Java development kit.
+
+
+      ### The Small Syntax Bridge
+
+
+      - `int` stores an integer, `boolean` stores `true` or `false`, and `String` is a reference
+      type for text.
+
+      - A method declares its result type before its name. `return` supplies a value of that type.
+
+      - `static` methods can be called through a class without constructing an object.
+
+      - `public static void main(String[] args)` is the entry point used here. Its body runs when
+      you select **Run**; `System.out.println` prints a line.
+
+
+      ### Predict, Run, Explain
+
+
+      Before running the starter, predict the first two lines: **12 and 15**, **15 and 15**, or **12
+      and 12**. Which assignment copies a primitive value? Run, then explain the difference between
+      the two variables.
+
+
+      ### Compiler Reasoning
+
+
+      In standard Java, `int seats = "twelve";` is rejected before execution. `String title = null;
+      title.length();` passes type checking but fails during execution. `null` denotes no object.
+      Java is statically typed even when a program contains a runtime check.
+
+
+      ### Your Task
+
+
+      Implement `canReserve(credits, cost)` for **nonnegative integer inputs up to 1000**. Return
+      whether the credits cover the cost; an exact match and a zero cost both qualify. Keep the
+      signature. Predict the last line of `main` after your repair, then test it. No input/output
+      code is needed inside the method.
+    files:
+      - path: StaticTypes.java
+        language: java
+        content: |
+          public class StaticTypes {
+              public static boolean canReserve(int credits, int cost) {
+                  return false;
+              }
+              public static void main(String[] args) {
+                  int credits = 12;
+                  int saved = credits;
+                  credits = credits + 3;
+                  System.out.println(saved);
+                  System.out.println(credits);
+                  System.out.println(canReserve(12, 12));
+              }
+          }
+    open_file: StaticTypes.java
+    run_file: StaticTypes.java
+    tests:
+      - description: Reservation eligibility at and around the cost boundary
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  if (!StaticTypes.canReserve(12,12) || StaticTypes.canReserve(11,12) || !StaticTypes.canReserve(13,12)) throw new RuntimeException("Check below, at, and above the cost.");
+                  if (!StaticTypes.canReserve(0,0) || !StaticTypes.canReserve(8,0) || StaticTypes.canReserve(0,1)) throw new RuntimeException("Check zero credits and zero cost.");
+              }
+          }
+        hints:
+          - title: A Boolean Result
+            text: >-
+              The result describes a relationship between the two input values. Which comparison has
+              the same meaning as covering a cost?
+            condition: 'code_not_matches: /canReserve\s*\([^)]*\)\s*\{(?!\s*return\s+false\s*;\s*\})/'
+          - title: The Boundary Case
+            text: >-
+              Trace equal inputs separately from having extra credits. Does the current expression
+              treat the exact match as eligible?
+            condition: >-
+              code_matches:
+              /canReserve\s*\([^)]*\)\s*\{(?!\s*return\s+false\s*;\s*\})(?![^}]*credits)/
+          - title: Three Rows
+            text: >-
+              Write rows for credits below, equal to, and above cost. Fill in the expected Boolean
+              column before revising the comparison.
+            condition: >-
+              code_matches:
+              /canReserve\s*\([^)]*\)\s*\{(?!\s*return\s+false\s*;\s*\})(?=[^}]*credits)/
+    solution:
+      files:
+        - path: StaticTypes.java
+          language: java
+          content: |
+            public class StaticTypes {
+                public static boolean canReserve(int credits, int cost) {
+                    return credits >= cost;
+                }
+                public static void main(String[] args) {
+                    int credits = 12;
+                    int saved = credits;
+                    credits = credits + 3;
+                    System.out.println(saved);
+                    System.out.println(credits);
+                    System.out.println(canReserve(12, 12));
+                }
+            }
+      explanation: >
+        The comparison returns a Boolean directly. Equality belongs to the eligible case. Primitive
+        assignment in main copies 12, so changing credits later leaves saved at 12. Java normally
+        compiles source to bytecode for execution by the Java Virtual Machine; the browser runner
+        here is a different, limited execution tool.
+    quiz:
+      title: Step 1 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      questions:
+        - id: java-types-copy
+          type: single
+          difficulty: intermediate
+          question: |
+            What does this standard Java code print?
+
+            ```java
+            int lives = 4;
+            int saved = lives;
+            lives = 1;
+            System.out.println(saved);
+            ```
+          options:
+            - '`1`, because both names share the same variable.'
+            - '`4`, because assignment copied the integer value.'
+            - A compile error, because integers cannot be copied.
+          correct_index: 1
+          option_feedback:
+            '0': >-
+              A primitive assignment copies the current value. Changing `lives` does not change the
+              separate variable `saved`.
+            '2': >-
+              Java permits assignment between these `int` variables; the copy does not require a
+              special operation.
+          explanation: '`saved` receives the value 4. The later assignment changes only `lives`.'
+        - id: java-types-error-time
+          type: single
+          difficulty: intermediate
+          question: >
+            In standard Java, when is each problem detected? Treat the snippets as separate
+            programs.
+
+
+            ```java
+
+            // Snippet 1
+
+            boolean ready = 8;
+
+            // Snippet 2
+
+            String label = null;
+
+            System.out.println(label.length());
+
+            ```
+          options:
+            - Both problems are rejected before either program runs.
+            - Both programs compile, then fail when executed.
+            - The assignment fails to compile; the method call fails at runtime.
+          correct_index: 2
+          option_feedback:
+            '0': >-
+              The method call is well typed. Java checks whether its receiver is null when that call
+              executes.
+            '1': >-
+              Java does not implicitly convert an integer to a boolean; the assignment violates the
+              variable’s declared type.
+          explanation: >-
+            Static type checking rejects the incompatible assignment. A correctly typed method call
+            can still fail at runtime when its receiver is null.
+  # Pedagogy: PRIMM — contrast alias mutation with an independent copy
+  - title: Values and Object References
+    key: reference-aliases
+    instructions: >
+      ### Why this matters
+
+
+      A copied reference still identifies the same object. A saved snapshot therefore needs
+      different work from an extra name for live data.
+
+
+      ### 🎯 You will learn to
+
+
+      - Analyze aliasing after assignment and mutation.
+
+      - Create an independent array copy.
+
+
+      ### One Object, Two References
+
+
+      An array is an object. `int[] b = a;` copies the reference value; it does not copy the array's
+      elements. Both variables can then reach the same array. Assigning `b = new int[]{7};` changes
+      only what `b` refers to.
+
+
+      ### Predict Before Running
+
+
+      The starter changes `alias[0]`, then changes `original[1]`. Predict its two printed values.
+      Does the name `snapshot` actually guarantee a snapshot? Run and compare with your prediction.
+
+
+      ### Your Task
+
+
+      Implement `snapshot(source)` for any non-null integer array:
+
+
+      - Return a **new array** of the same length with the same values in the same order.
+
+      - Leave `source` unchanged.
+
+      - Subsequent mutation of either array must not change the other. Empty input still returns a
+      distinct empty array.
+
+
+      `new int[n]` creates an array of length `n`; `a.length` gives its size, and `a[i]` accesses an
+      element. Use a loop or another equivalent copy approach. After the repair, predict which
+      printed line changes and explain why.
+
+
+      **Investigate:** reassign `alias` to a new array before its mutation. Explain which object
+      changes. A `final` reference would forbid rebinding the variable, but would not freeze the
+      array's elements. An object can become eligible for garbage collection when no live reference
+      can reach it; losing one alias is not enough, and collection timing is not promised.
+    files:
+      - path: ReferenceCopies.java
+        language: java
+        content: |
+          public class ReferenceCopies {
+              public static int[] snapshot(int[] source) {
+                  return source;
+              }
+              public static void main(String[] args) {
+                  int[] original = {4, 8};
+                  int[] alias = original;
+                  alias[0] = 9;
+                  System.out.println(original[0]);
+                  int[] saved = snapshot(original);
+                  original[1] = 20;
+                  System.out.println(saved[1]);
+              }
+          }
+    open_file: ReferenceCopies.java
+    run_file: ReferenceCopies.java
+    tests:
+      - description: Snapshot values, empty input, and independence
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  int[] source = {4,-2,4};
+                  int[] saved = ReferenceCopies.snapshot(source);
+                  if (saved == source || saved.length != 3 || saved[0] != 4 || saved[1] != -2 || saved[2] != 4) throw new RuntimeException("Preserve every element in a distinct array.");
+                  if (source[0] != 4 || source[1] != -2 || source[2] != 4) throw new RuntimeException("Snapshot must preserve all source values.");
+                  saved[0] = 99;
+                  if (source[0] != 4) throw new RuntimeException("Editing the snapshot changed its source.");
+                  source[1] = 77;
+                  if (saved[1] != -2) throw new RuntimeException("Editing the source changed its snapshot.");
+                  int[] empty = new int[0];
+                  int[] copy = ReferenceCopies.snapshot(empty);
+                  if (copy == empty || copy.length != 0) throw new RuntimeException("Check the empty snapshot.");
+              }
+          }
+        hints:
+          - title: Names and Objects
+            text: >-
+              Returning the parameter copies a reference. Compare the number of array objects before
+              and after the call.
+            condition: 'code_not_matches: /snapshot\s*\([^)]*\)\s*\{(?!\s*return\s+source\s*;\s*\})/'
+          - title: An Uneven Input
+            text: >-
+              Trace {4, -2, 4}. For each position, record the source value and the value that
+              reaches the result. Repeated values still occupy separate positions.
+            condition: >-
+              code_matches:
+              /snapshot\s*\([^)]*\)\s*\{(?!\s*return\s+source\s*;\s*\})(?![^}]*new\s+int)/
+          - title: Separate State
+            text: >-
+              After the call, imagine changing only the returned array. Which allocation and element
+              assignments determine whether the source changes too?
+            condition: >-
+              code_matches:
+              /snapshot\s*\([^)]*\)\s*\{(?!\s*return\s+source\s*;\s*\})(?=[^}]*new\s+int)/
+    solution:
+      files:
+        - path: ReferenceCopies.java
+          language: java
+          content: |
+            public class ReferenceCopies {
+                public static int[] snapshot(int[] source) {
+                    int[] result = new int[source.length];
+                    for (int i = 0; i < source.length; i++) result[i] = source[i];
+                    return result;
+                }
+                public static void main(String[] args) {
+                    int[] original = {4, 8};
+                    int[] alias = original;
+                    alias[0] = 9;
+                    System.out.println(original[0]);
+                    int[] saved = snapshot(original);
+                    original[1] = 20;
+                    System.out.println(saved[1]);
+                }
+            }
+      explanation: >
+        The allocation creates independent storage; copying each integer preserves values and order.
+        The starter prints 9 and 20. After repair it prints 9 and 8. Returning an alias passes a
+        value-equality check initially but fails the later independence checks.
+    quiz:
+      title: Step 2 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      questions:
+        - id: java-references-new-object
+          type: single
+          difficulty: intermediate
+          question: |
+            What does this standard Java code print?
+
+            ```java
+            int[] draft = {6};
+            int[] shared = draft;
+            draft = new int[] {3};
+            shared[0] = 8;
+            System.out.println(draft[0] + " " + shared[0]);
+            ```
+          options:
+            - '`8 8`'
+            - '`3 6`'
+            - '`3 8`'
+          correct_index: 2
+          option_feedback:
+            '0': >-
+              The reassignment makes `draft` refer to a new array. The two variables no longer reach
+              the same array.
+            '1': >-
+              `shared` still refers to the original array, and its element assignment changes that
+              array from 6 to 8.
+          explanation: >-
+            Initially the variables alias one array. After `draft` is reassigned, the two references
+            reach different arrays.
+        - id: java-final-reference
+          type: single
+          difficulty: intermediate
+          question: |
+            In standard Java, what does `final` prevent here?
+
+            ```java
+            final int[] scores = {4, 6};
+            ```
+          options:
+            - Changing an element of the array.
+            - Assigning another array to `scores`.
+            - Creating another reference to the array.
+          correct_index: 1
+          option_feedback:
+            '0': >-
+              The final modifier fixes the variable’s reference value, not the array’s element
+              values.
+            '2': Other variables may still copy this reference and reach the same array.
+          explanation: >-
+            A final reference cannot be rebound, but its object can remain mutable and can have
+            aliases.
+  # Pedagogy: negative-transfer callout — copied references versus C++ reference parameters
+  - title: Pass-by-Value Parameters
+    key: parameter-values
+    instructions: >
+      ### Why this matters
+
+
+      Calling a method creates new parameter variables. Separating those variables from the objects
+      they reach explains why mutation can escape a call while rebinding does not.
+
+
+      ### 🎯 You will learn to
+
+
+      - Predict primitive, mutation, and rebinding effects across a method call.
+
+      - Implement an explicit mutation contract.
+
+
+      ### The Rule
+
+
+      Java passes **every argument by value**. For an object argument, the copied value is a
+      reference. The caller and parameter can reach one shared object, but they are still separate
+      variables. This resembles Python's object-sharing behavior; it is not a C++ reference
+      parameter that aliases the caller's variable.
+
+
+      `this.points` means the current object's field. The constructor initializes that field from
+      its parameter; `new PointsBadge(6)` creates a badge.
+
+
+      ### Predict, Then Run
+
+
+      After `experiment(badge, delta)`, predict the first two lines: **10 and 4**, **100 and 0**, or
+      **6 and 4**. Trace three actions separately: field mutation, parameter rebinding, and integer
+      assignment. Run to check.
+
+
+      ### Your Task
+
+
+      Implement `award(badge, delta)`. Inputs are a non-null badge and a nonnegative increment, with
+      values small enough to avoid overflow.
+
+
+      - Increase the **existing badge's** points by `delta`.
+
+      - Return its previous points.
+
+      - An alias held by the caller must observe the increase.
+
+
+      The method must not replace the badge with a fresh object. Do not change `experiment`; it is
+      the worked contrast. After solving, explain why returning the old value needs a different kind
+      of copy from step 2's array snapshot.
+    files:
+      - path: ParameterValues.java
+        language: java
+        content: |
+          class PointsBadge {
+              public int points;
+              public PointsBadge(int points) { this.points = points; }
+          }
+          public class ParameterValues {
+              public static void experiment(PointsBadge badge, int delta) {
+                  badge.points = badge.points + delta;
+                  badge = new PointsBadge(100);
+                  delta = 0;
+              }
+              public static int award(PointsBadge badge, int delta) {
+                  return -1;
+              }
+              public static void main(String[] args) {
+                  PointsBadge badge = new PointsBadge(6);
+                  int delta = 4;
+                  experiment(badge, delta);
+                  System.out.println(badge.points);
+                  System.out.println(delta);
+                  System.out.println(award(badge, 3));
+              }
+          }
+    open_file: ParameterValues.java
+    run_file: ParameterValues.java
+    tests:
+      - description: Award return value and caller-visible mutation
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  PointsBadge badge = new PointsBadge(6);
+                  PointsBadge alias = badge;
+                  if (ParameterValues.award(badge,4) != 6 || alias.points != 10) throw new RuntimeException("Return the prior value and update the shared badge.");
+                  if (ParameterValues.award(badge,0) != 10 || badge.points != 10) throw new RuntimeException("A zero increment preserves the value.");
+                  PointsBadge other = new PointsBadge(2);
+                  if (ParameterValues.award(other,3) != 2 || other.points != 5 || badge.points != 10) throw new RuntimeException("Keep separate badges independent.");
+              }
+          }
+        hints:
+          - title: Two Places to Store a Value
+            text: >-
+              The parameter is a local reference, while points belongs to the object. Which
+              assignment can an alias in the caller observe?
+            condition: 'code_not_matches: /award\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})/'
+          - title: Before and After
+            text: >-
+              For a badge holding 6 and an increment of 4, write separate cells for the required
+              return value and the final field value.
+            condition: >-
+              code_matches:
+              /award\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})(?![^}]*badge\.points)/
+          - title: A Value Worth Keeping
+            text: >-
+              Mark when the old field value stops being available. What could retain that primitive
+              value while the object changes?
+            condition: >-
+              code_matches:
+              /award\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})(?=[^}]*badge\.points)/
+    solution:
+      files:
+        - path: ParameterValues.java
+          language: java
+          content: |
+            class PointsBadge {
+                public int points;
+                public PointsBadge(int points) { this.points = points; }
+            }
+            public class ParameterValues {
+                public static void experiment(PointsBadge badge, int delta) {
+                    badge.points = badge.points + delta;
+                    badge = new PointsBadge(100);
+                    delta = 0;
+                }
+                public static int award(PointsBadge badge, int delta) {
+                    int previous = badge.points;
+                    badge.points = badge.points + delta;
+                    return previous;
+                }
+                public static void main(String[] args) {
+                    PointsBadge badge = new PointsBadge(6);
+                    int delta = 4;
+                    experiment(badge, delta);
+                    System.out.println(badge.points);
+                    System.out.println(delta);
+                    System.out.println(award(badge, 3));
+                }
+            }
+      explanation: >
+        Save the primitive field value, mutate the shared object, then return the saved value.
+        experiment prints 10 and 4: replacing its local reference does not replace the caller's
+        badge, and changing its integer parameter does not change delta in main.
+    quiz:
+      title: Step 3 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      questions:
+        - id: java-references-parameter
+          type: single
+          difficulty: intermediate
+          question: |
+            What does this standard Java code print after `edit` returns?
+
+            ```java
+            static void edit(int[] values) {
+                values[0] = 7;
+                values = new int[] {9};
+            }
+            // In main:
+            int[] ratings = {2};
+            edit(ratings);
+            System.out.println(ratings[0]);
+            ```
+          options:
+            - '`7`'
+            - '`2`'
+            - '`9`'
+          correct_index: 0
+          option_feedback:
+            '1': >-
+              The parameter's copied reference still reaches the original array, so its element
+              assignment affects that array.
+            '2': >-
+              Reassigning the parameter changes only the method's local reference. It does not
+              reassign the caller's `ratings` variable.
+          explanation: >-
+            Java passes the reference value by value. Mutation through that copied reference is
+            visible to the caller; rebinding the parameter is not.
+        - id: java-primitive-parameter
+          type: single
+          difficulty: intermediate
+          question: |
+            What does this standard Java code print?
+
+            ```java
+            static void clear(int count) { count = 0; }
+            // In main:
+            int remaining = 9;
+            clear(remaining);
+            System.out.println(remaining);
+            ```
+          options:
+            - '`0`'
+            - '`9`'
+            - A compile error.
+          correct_index: 1
+          option_feedback:
+            '0': >-
+              The parameter is a separate variable initialized with a copy of 9. Assigning to it
+              does not change the caller’s variable.
+            '2': >-
+              Assigning a new value to an ordinary parameter is legal; that change stays within the
+              method.
+          explanation: >-
+            Java passes primitive values by value too. The method changes only its local parameter,
+            leaving remaining equal to 9.
+  # Pedagogy: Variation Theory — same object versus separate objects with equal text
+  - title: Identity and Value Equality
+    key: identity-equality
+    instructions: >
+      ### Why this matters
+
+
+      Two separate objects can represent the same text. Choosing identity when a task asks about
+      content makes results depend on how objects were created.
+
+
+      ### 🎯 You will learn to
+
+
+      - Distinguish reference identity from String content equality.
+
+      - Apply content equality to a search.
+
+
+      ### What Is Being Compared?
+
+
+      For references, `==` asks whether both values identify the same object (or both are null).
+      `String.equals` compares text. `.equals` is a method whose meaning depends on the class:
+      `Object`'s default uses identity, while String supplies content equality. Do not assume every
+      class already defines the equality your application needs.
+
+
+      ### Predict, Run, Investigate
+
+
+      Predict the starter's first three Boolean lines. The two `new String` calls intentionally
+      create distinct objects. Run, then replace `second`'s text with `outro` and explain which
+      comparisons change.
+
+
+      ### Your Task
+
+
+      Implement `countLabel(labels, target)`: count all positions whose string content equals
+      `target`.
+
+
+      - The array, every element, and `target` are non-null.
+
+      - Match text exactly, including case; duplicates count separately.
+
+      - Empty arrays produce a count of zero; do not modify the array.
+
+
+      Use `text.equals(other)` for content comparison. This task assesses recognizing **which
+      relation the contract requires**, not memorizing a method name. Contrast an alias with an
+      independently constructed equal string when you test your work.
+    files:
+      - path: LabelSearch.java
+        language: java
+        content: |
+          public class LabelSearch {
+              public static int countLabel(String[] labels, String target) {
+                  return -1;
+              }
+              public static void main(String[] args) {
+                  String first = new String("encore");
+                  String second = new String("encore");
+                  String alias = first;
+                  System.out.println(first == alias);
+                  System.out.println(first == second);
+                  System.out.println(first.equals(second));
+                  String[] labels = {first, second, "intro"};
+                  System.out.println(countLabel(labels, "encore"));
+              }
+          }
+    open_file: LabelSearch.java
+    run_file: LabelSearch.java
+    tests:
+      - description: Label counts for equal objects, case, duplicates, and empty input
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  String[] labels = {new String("mix"), new String("mix"), "Mix", "solo"};
+                  String first = labels[0], second = labels[1], third = labels[2], fourth = labels[3];
+                  if (LabelSearch.countLabel(labels,new String("mix")) != 2) throw new RuntimeException("Count equal text even in different objects.");
+                  if (LabelSearch.countLabel(labels,"Mix") != 1 || LabelSearch.countLabel(labels,"absent") != 0) throw new RuntimeException("Use exact, case-sensitive text.");
+                  if (LabelSearch.countLabel(new String[0],"mix") != 0) throw new RuntimeException("Check an empty input.");
+                  if (labels[0] != first || labels[1] != second || labels[2] != third || labels[3] != fourth) throw new RuntimeException("The search must not modify labels.");
+              }
+          }
+        hints:
+          - title: Two Different Questions
+            text: >-
+              Identity and content can disagree. Construct a fresh target string with the same
+              characters as an element; what should the contract count?
+            condition: 'code_not_matches: /countLabel\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})/'
+          - title: Repeated Matches
+            text: >-
+              Trace two matching positions followed by a nonmatch. Does your method finish after the
+              first match or account for all positions?
+            condition: >-
+              code_matches:
+              /countLabel\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})(?![^}]*equals\s*\()/
+          - title: A Running Count
+            text: >-
+              Write the count before and after each element in {"mix", "mix", "Mix"}. Which rows
+              should change it, and what must remain unchanged?
+            condition: >-
+              code_matches:
+              /countLabel\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})(?=[^}]*equals\s*\()/
+    solution:
+      files:
+        - path: LabelSearch.java
+          language: java
+          content: |
+            public class LabelSearch {
+                public static int countLabel(String[] labels, String target) {
+                    int count = 0;
+                    for (String label : labels) {
+                        if (label.equals(target)) count++;
+                    }
+                    return count;
+                }
+                public static void main(String[] args) {
+                    String first = new String("encore");
+                    String second = new String("encore");
+                    String alias = first;
+                    System.out.println(first == alias);
+                    System.out.println(first == second);
+                    System.out.println(first.equals(second));
+                    String[] labels = {first, second, "intro"};
+                    System.out.println(countLabel(labels, "encore"));
+                }
+            }
+      explanation: >
+        The three predictions are true, false, true. The loop counts positions, not distinct objects
+        or distinct spellings. Using == would make the result depend on whether references happen to
+        be shared.
+    quiz:
+      title: Step 4 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      questions:
+        - id: java-strings-identity
+          type: single
+          difficulty: intermediate
+          question: |
+            What does this standard Java code print?
+
+            ```java
+            String a = new String("remix");
+            String b = new String("remix");
+            System.out.println(a == b);
+            System.out.println(a.equals(b));
+            ```
+          options:
+            - '`true`, then `true`'
+            - '`false`, then `true`'
+            - '`false`, then `false`'
+          correct_index: 1
+          option_feedback:
+            '0': >-
+              Matching text does not make these two separately constructed objects identical. `==`
+              compares their reference values.
+            '2': >-
+              `String.equals` compares the character sequence, so these two strings are equal
+              despite being distinct objects.
+          explanation: >-
+            The two `new` expressions create distinct strings with equal contents: reference
+            identity is false and string value equality is true.
+        - id: java-strings-parameter-retrieval
+          type: single
+          difficulty: intermediate
+          question: |
+            In standard Java, what remains true after this call?
+
+            ```java
+            static void rename(String text) { text = "later"; }
+            // In main:
+            String title = new String("now");
+            rename(title);
+            ```
+          options:
+            - '`title.equals("later")`, because the parameter aliases `title`.'
+            - '`title == null`, because the local reference no longer exists.'
+            - '`title.equals("now")`, because parameter rebinding is local.'
+          correct_index: 2
+          option_feedback:
+            '0': >-
+              The parameter receives a copy of the caller's reference value. Rebinding that
+              parameter does not rebind the caller's variable.
+            '1': >-
+              The caller's variable remains in scope and still refers to its string after the method
+              returns.
+          explanation: >-
+            As with array parameters, changing which object a parameter refers to does not change
+            the caller's reference. `title` still refers to the original string.
+  # Pedagogy: PRIMM — trace skipped operands, then construct ordered guards
+  - title: Evaluation and Short-Circuiting
+    key: short-circuit
+    instructions: >
+      ### Why this matters
+
+
+      A guard is useful only if it runs before the operation it protects. Java defines left-to-right
+      evaluation, and its conditional Boolean operators can skip an operand entirely.
+
+
+      ### 🎯 You will learn to
+
+
+      - Trace evaluated and skipped operands.
+
+      - Construct a safe predicate using ordered guards.
+
+
+      ### Ordering Rules
+
+
+      Java evaluates operands left to right. `left && right` skips `right` when `left` is false;
+      `left || right` skips it when `left` is true. On booleans, `&` and `|` evaluate both operands.
+      **Associativity** describes grouping; it is not the rule that determines operand execution
+      order.
+
+
+      ### Predict Before Running
+
+
+      Write the numeric labels you expect `main` to print. Will 2 or 4 appear? Run, then swap the
+      arguments to the first `&&` expression and predict again.
+
+
+      ### Your Task
+
+
+      Implement `hasOpening(slots, index)`. Return true exactly when:
+
+
+      - `slots` is not null;
+
+      - `index` is at least zero and less than the array length;
+
+      - the element at that index is positive.
+
+
+      Return false for every other case. **Do not throw or mutate the array.** Use a short-circuit
+      expression or sequential guard clauses; either can express the same safe ordering. Think about
+      which values are safe to inspect before using `slots.length` or `slots[index]`.
+
+
+      **Retrieve:** does checking `slots != null` ask about the array's contents or its reference
+      value? Explain using step 4's distinction.
+    files:
+      - path: SafeLookup.java
+        language: java
+        content: |
+          public class SafeLookup {
+              public static boolean hasOpening(int[] slots, int index) {
+                  return false;
+              }
+              public static boolean mark(int label, boolean value) {
+                  System.out.println(label);
+                  return value;
+              }
+              public static void main(String[] args) {
+                  System.out.println(mark(1, false) && mark(2, true));
+                  System.out.println(mark(3, true) || mark(4, false));
+                  System.out.println(hasOpening(new int[]{0, 2}, 1));
+              }
+          }
+    open_file: SafeLookup.java
+    run_file: SafeLookup.java
+    tests:
+      - description: Safe lookup on null, boundary indices, and slot values
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  if (SafeLookup.hasOpening(null,0) || SafeLookup.hasOpening(new int[0],0)) throw new RuntimeException("Null and empty input are unavailable.");
+                  int[] slots = {0,2,-1};
+                  if (SafeLookup.hasOpening(slots,-1) || SafeLookup.hasOpening(slots,3)) throw new RuntimeException("Reject both out-of-range boundaries.");
+                  if (SafeLookup.hasOpening(slots,0) || !SafeLookup.hasOpening(slots,1) || SafeLookup.hasOpening(slots,2)) throw new RuntimeException("Only positive slots qualify.");
+                  if (slots[0] != 0 || slots[1] != 2 || slots[2] != -1) throw new RuntimeException("Lookup must preserve the input.");
+              }
+          }
+        hints:
+          - title: Safety Before Access
+            text: >-
+              List the operations that require an existing array or a valid index. Which earlier
+              conditions can make those operations safe?
+            condition: 'code_not_matches: /hasOpening\s*\([^)]*\)\s*\{(?!\s*return\s+false\s*;\s*\})/'
+          - title: The First Dangerous Operation
+            text: >-
+              Trace null with index 0, then a length-3 array with index 3. Stop at the first
+              array-dependent operation and check its prerequisites.
+            condition: >-
+              code_matches:
+              /hasOpening\s*\([^)]*\)\s*\{(?!\s*return\s+false\s*;\s*\})(?![^}]*slots)/
+          - title: A Dependency Order
+            text: >-
+              Make three cards: object exists, position exists, value qualifies. Arrange them so
+              evaluating one card never needs a fact you have not yet established.
+            condition: >-
+              code_matches:
+              /hasOpening\s*\([^)]*\)\s*\{(?!\s*return\s+false\s*;\s*\})(?=[^}]*slots)/
+    solution:
+      files:
+        - path: SafeLookup.java
+          language: java
+          content: |
+            public class SafeLookup {
+                public static boolean hasOpening(int[] slots, int index) {
+                    return slots != null && index >= 0 && index < slots.length && slots[index] > 0;
+                }
+                public static boolean mark(int label, boolean value) {
+                    System.out.println(label);
+                    return value;
+                }
+                public static void main(String[] args) {
+                    System.out.println(mark(1, false) && mark(2, true));
+                    System.out.println(mark(3, true) || mark(4, false));
+                    System.out.println(hasOpening(new int[]{0, 2}, 1));
+                }
+            }
+      explanation: >
+        Each guard establishes what the next operation needs. Sequential if-return guards are
+        equally valid. The original trace prints 1, false, 3, true before the task result; labels 2
+        and 4 are skipped. Reversing guards may preserve a truth table for valid inputs while
+        breaking safety on null or invalid indices.
+    quiz:
+      title: Step 5 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      questions:
+        - id: java-short-circuit-null
+          type: single
+          difficulty: intermediate
+          question: >
+            In standard Java, `name` may be null. Which expression safely tests whether it is a
+            nonempty string?
+          options:
+            - '`name.length() > 0 && name != null`'
+            - '`name != null && name.length() > 0`'
+            - '`name != null & name.length() > 0`'
+          correct_index: 1
+          option_feedback:
+            '0': >-
+              Java evaluates the left operand first, so this version calls `length()` before
+              checking for null.
+            '2': Boolean `&` evaluates both operands. It still calls `length()` when `name` is null.
+          explanation: >-
+            `&&` evaluates from left to right and skips its right operand when the left operand is
+            false. The null check therefore guards the method call.
+        - id: java-guard-equality-retrieval
+          type: single
+          difficulty: intermediate
+          question: |
+            What does this standard Java code print?
+
+            ```java
+            String saved = new String("gold");
+            String current = saved;
+            current = new String("silver");
+            System.out.println(saved != null && saved.equals("gold"));
+            ```
+          options:
+            - '`false`, because reassigning `current` changes `saved`.'
+            - '`false`, because distinct strings cannot have equal content.'
+            - '`true`, because `saved` still refers to the original text.'
+          correct_index: 2
+          option_feedback:
+            '0': Reassigning one reference variable leaves the other reference unchanged.
+            '1': String.equals compares text, so separate String objects can be equal.
+          explanation: >-
+            The null guard succeeds. The original string remains reachable through saved, and its
+            content equals gold. This combines short-circuit evaluation with reference rebinding and
+            value equality.
+  # Pedagogy: worked example with fading — use a supplied interface without concrete-class branches
+  - title: Interfaces and Subtyping
+    key: interface-contracts
+    instructions: >
+      ### Why this matters
+
+
+      Clients can use a common operation without knowing which class supplies it. Java makes that
+      agreement explicit with an interface and declared implementation relationships.
+
+
+      ### 🎯 You will learn to
+
+
+      - Apply an interface contract across different classes.
+
+      - Separate a reference variable’s declared type from an object’s class.
+
+
+      ### The Common Contract
+
+
+      `Admission` promises `int cost()`. Both classes declare `implements Admission` and provide
+      that public method. The interface names behavior; the classes choose implementations. A
+      matching method name alone does not establish this Java subtype relationship, unlike duck
+      typing.
+
+
+      `private` fields belong to the implementation. Clients call `cost()` rather than reaching into
+      each class's data. **Compiler reasoning:** an `Admission` variable permits operations declared
+      by its type, even when its current object has additional methods. The browser runner does not
+      enforce that restriction.
+
+
+      ### Predict and Run
+
+
+      For `Admission entry = new PairAdmission(7);`, does `entry.cost()` use the variable's
+      interface name or the actual object's implementation? Predict its result, then run.
+
+
+      ### Your Task
+
+
+      Complete `total(entries)` for a non-null array of non-null Admission objects, with totals
+      within the integer range. Return the sum of each element's `cost()`, including repeated
+      references. Return zero for an empty array. Leave the array and objects unchanged.
+
+
+      Work through the **interface**; the client must keep working for another implementation. The
+      checks include an unfamiliar class. Use the supplied classes as examples, without copying a
+      separate branch for each class.
+
+
+      **Retrieve:** if the same entry appears twice, are there necessarily two objects? Why should
+      both positions still contribute to this sum?
+    files:
+      - path: InterfaceClient.java
+        language: java
+        content: |
+          interface Admission {
+              int cost();
+          }
+          class SingleAdmission implements Admission {
+              private int price;
+              public SingleAdmission(int price) { this.price = price; }
+              public int cost() { return price; }
+          }
+          class PairAdmission implements Admission {
+              private int personPrice;
+              public PairAdmission(int personPrice) { this.personPrice = personPrice; }
+              public int cost() { return 2 * personPrice; }
+          }
+          public class InterfaceClient {
+              public static int total(Admission[] entries) {
+                  return -1;
+              }
+              public static void main(String[] args) {
+                  Admission entry = new PairAdmission(7);
+                  System.out.println(entry.cost());
+                  Admission[] entries = {new SingleAdmission(5), entry};
+                  System.out.println(total(entries));
+              }
+          }
+    open_file: InterfaceClient.java
+    run_file: InterfaceClient.java
+    tests:
+      - description: Interface client with mixed and unfamiliar implementations
+        command: |
+          class SurpriseAdmission implements Admission { public int cost() { return 11; } }
+          public class __Test {
+              public static void main(String[] args) {
+                  Admission a = new SingleAdmission(5);
+                  Admission b = new PairAdmission(7);
+                  Admission[] entries = {a,b,a};
+                  if (InterfaceClient.total(entries) != 24 || entries[0] != a || entries[1] != b || entries[2] != a || a.cost() != 5 || b.cost() != 14) throw new RuntimeException("Sum every position without modifying inputs.");
+                  if (InterfaceClient.total(new Admission[0]) != 0) throw new RuntimeException("Check the empty sum.");
+                  if (InterfaceClient.total(new Admission[]{new SurpriseAdmission()}) != 11) throw new RuntimeException("Use the shared contract for unfamiliar implementations.");
+              }
+          }
+        hints:
+          - title: One Promised Operation
+            text: >-
+              What operation is available on every element regardless of its concrete class? The
+              client only needs that contract.
+            condition: 'code_not_matches: /total\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})/'
+          - title: A New Implementation
+            text: >-
+              Imagine a class with no price field but a cost() method returning a computed result.
+              Which assumption in your client would still work?
+            condition: 'code_matches: /total\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})(?![^}]*cost\s*\()/'
+          - title: Positions and Objects
+            text: >-
+              Trace [a, b, a] and record each contribution separately. Two positions may refer to
+              one object without making one position disappear.
+            condition: 'code_matches: /total\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})(?=[^}]*cost\s*\()/'
+    solution:
+      files:
+        - path: InterfaceClient.java
+          language: java
+          content: |
+            interface Admission {
+                int cost();
+            }
+            class SingleAdmission implements Admission {
+                private int price;
+                public SingleAdmission(int price) { this.price = price; }
+                public int cost() { return price; }
+            }
+            class PairAdmission implements Admission {
+                private int personPrice;
+                public PairAdmission(int personPrice) { this.personPrice = personPrice; }
+                public int cost() { return 2 * personPrice; }
+            }
+            public class InterfaceClient {
+                public static int total(Admission[] entries) {
+                    int sum = 0;
+                    for (Admission entry : entries) sum += entry.cost();
+                    return sum;
+                }
+                public static void main(String[] args) {
+                    Admission entry = new PairAdmission(7);
+                    System.out.println(entry.cost());
+                    Admission[] entries = {new SingleAdmission(5), entry};
+                    System.out.println(total(entries));
+                }
+            }
+      explanation: >
+        The loop invokes cost on every reference; each object supplies its implementation.
+        PairAdmission contributes 14. The client needs neither casts nor concrete class tests.
+        Declared interfaces support static checking, while instance method bodies are chosen through
+        dynamic dispatch.
+    quiz:
+      title: Step 6 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      questions:
+        - id: java-interface-static-member
+          type: single
+          difficulty: intermediate
+          question: >
+            In standard Java, `Playable` declares only `play()`. `Clip` implements it and also
+            defines `trim()`. Which statement describes this code?
+
+
+            ```java
+
+            Playable item = new Clip();
+
+            item.trim();
+
+            ```
+          options:
+            - 'It is rejected: `Playable` does not declare `trim()`.'
+            - 'It runs: the object belongs to a class with `trim()`.'
+            - 'It compiles, then fails: interfaces cannot hold objects.'
+          correct_index: 0
+          option_feedback:
+            '1': >-
+              The compiler checks a member access against the expression's declared type. An extra
+              method on `Clip` is not automatically available through `Playable`.
+            '2': >-
+              An interface-typed variable can refer to an object of a class that implements the
+              interface. The invalid member call is detected before execution.
+          explanation: >-
+            The declared reference type controls which operations the compiler permits. Here the
+            `Playable` contract exposes `play`, not `trim`.
+        - id: java-interface-substitution
+          type: single
+          difficulty: intermediate
+          question: >
+            `Playable` declares `void play()`. A method accepts a `Playable` and calls `play()`. In
+            standard Java, what lets a new `Radio` class work with that method?
+          options:
+            - Give `Radio` a method named `play`, without declaring the interface.
+            - Declare `Radio implements Playable` and provide its public `play` method.
+            - Change the method's parameter to `Radio`, leaving its body as written.
+          correct_index: 1
+          option_feedback:
+            '0': >-
+              Having a matching method alone does not establish this Java subtype relationship. The
+              class must implement the interface, directly or through inheritance.
+            '2': >-
+              Changing the parameter would replace the general contract with one concrete type and
+              would no longer accept other `Playable` implementations.
+          explanation: >-
+            Implementing the declared interface makes `Radio` usable wherever this `Playable`
+            contract is expected. Its public `play` method supplies the required behavior.
+  # Pedagogy: contrasting cases — runtime overriding versus compile-time overloading
+  - title: Overriding and Overloading
+    key: method-dispatch
+    instructions: >
+      ### Why this matters
+
+
+      Two calls with the same method name need not use the same selection rule. Java selects an
+      overload using compile-time types, then dispatches an overridable instance method using the
+      receiver object.
+
+
+      ### 🎯 You will learn to
+
+
+      - Implement an override that preserves inherited initialization.
+
+      - Distinguish overload selection from dynamic dispatch.
+
+
+      ### The Runnable Override
+
+
+      `WeekendEntry extends BaseEntry` inherits behavior and specializes `price()`. Its constructor
+      calls `super(base)` to initialize the inherited part before setting `extra`. Constructors are
+      not inherited. `super.price()` requests the superclass implementation; an ordinary
+      `entry.price()` can dispatch to an override.
+
+
+      `@Override` asks a standard compiler to check that a method really overrides one. The browser
+      runner ignores annotations, so this check belongs to compiler reasoning. A `final` method
+      cannot be overridden; that does not make the receiver object immutable.
+
+
+      ### Your Task
+
+
+      Complete the no-argument `WeekendEntry.price()` so it returns the inherited base price
+      **plus** its extra fee. Inputs are nonnegative and sums fit in an int. Do not change object
+      state. Predict `main`'s output before testing; then change the constructor arguments and check
+      the same rule.
+
+
+      ### Compiler Reasoning: An Overload Is Different
+
+
+      Read this card without running it in the browser:
+
+
+      ```java
+
+      static String label(Object x) { return "object"; }
+
+      static String label(String x) { return "text"; }
+
+      Object value = "demo";
+
+      System.out.println(label(value));
+
+      ```
+
+
+      Standard Java chooses `label(Object)` because `value` has declared type Object. Overloading
+      means different parameter lists; overriding replaces an inherited instance implementation with
+      the same signature. Changing `value` to declared type String changes the overload selected,
+      even though the object is still a String.
+
+
+      **Explain:** why can `BaseEntry entry = new WeekendEntry(...)` use WeekendEntry's `price()`
+      while the card chooses the Object overload?
+    files:
+      - path: DispatchDemo.java
+        language: java
+        content: |
+          class BaseEntry {
+              private int base;
+              public BaseEntry(int base) { this.base = base; }
+              public int price() { return base; }
+          }
+          class WeekendEntry extends BaseEntry {
+              private int extra;
+              public WeekendEntry(int base, int extra) {
+                  super(base);
+                  this.extra = extra;
+              }
+              @Override
+              public int price() {
+                  return -1;
+              }
+          }
+          public class DispatchDemo {
+              public static void main(String[] args) {
+                  BaseEntry entry = new WeekendEntry(8,3);
+                  System.out.println(entry.price());
+              }
+          }
+    open_file: DispatchDemo.java
+    run_file: DispatchDemo.java
+    tests:
+      - description: Overridden price through a base reference
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  BaseEntry base = new BaseEntry(8);
+                  BaseEntry weekend = new WeekendEntry(8,3);
+                  if (base.price() != 8 || weekend.price() != 11 || weekend.price() != 11) throw new RuntimeException("Dispatch through the base type without accumulating the fee.");
+                  if (new WeekendEntry(2,0).price() != 2 || new WeekendEntry(0,9).price() != 9) throw new RuntimeException("Check independent base and extra values.");
+              }
+          }
+        hints:
+          - title: Two Implementations
+            text: >-
+              The inherited method already knows the base price. What distinguishes its behavior
+              from the weekend requirement?
+            condition: >-
+              code_not_matches:
+              /class\s+WeekendEntry\b[\s\S]*?public\s+int\s+price\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})/
+          - title: An Accumulating Fee
+            text: >-
+              Call price twice on the same object. A query should report a price, not increase a
+              stored price on each call.
+            condition: >-
+              code_matches:
+              /class\s+WeekendEntry\b[\s\S]*?public\s+int\s+price\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})(?![^}]*super\.price)/
+          - title: A Qualified Call
+            text: >-
+              Compare price() on this object with super.price(). Which one would return to the
+              method you are currently completing?
+            condition: >-
+              code_matches:
+              /class\s+WeekendEntry\b[\s\S]*?public\s+int\s+price\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})(?=[^}]*super\.price)/
+    solution:
+      files:
+        - path: DispatchDemo.java
+          language: java
+          content: |
+            class BaseEntry {
+                private int base;
+                public BaseEntry(int base) { this.base = base; }
+                public int price() { return base; }
+            }
+            class WeekendEntry extends BaseEntry {
+                private int extra;
+                public WeekendEntry(int base, int extra) {
+                    super(base);
+                    this.extra = extra;
+                }
+                @Override
+                public int price() {
+                    return super.price() + extra;
+                }
+            }
+            public class DispatchDemo {
+                public static void main(String[] args) {
+                    BaseEntry entry = new WeekendEntry(8,3);
+                    System.out.println(entry.price());
+                }
+            }
+      explanation: >
+        The override combines the inherited query result and its own extra value without mutation.
+        Calling price() recursively inside itself would not request the base implementation.
+        Overload selection and runtime overriding are separate decisions; the worked compiler card
+        prints object.
+    quiz:
+      title: Step 7 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      questions:
+        - id: java-overload-static-type
+          type: single
+          difficulty: advanced
+          question: >
+            In standard Java, `Badge` overloads `label(Object)` and `label(String)`, printing
+            `object` and `string` respectively. What is printed?
+
+
+            ```java
+
+            Object text = "guest";
+
+            new Badge().label(text);
+
+            ```
+          options:
+            - '`string`, because the argument refers to a string object.'
+            - A runtime error, because an `Object` cannot refer to a string.
+            - '`object`, because the argument expression has type `Object`.'
+          correct_index: 2
+          option_feedback:
+            '0': >-
+              Overload selection uses compile-time argument types. The runtime class of this
+              argument does not switch the selected overload.
+            '1': >-
+              A `String` is an `Object`, so this assignment is valid. The declared type affects
+              which overload is selected.
+          explanation: >-
+            The compiler selects `label(Object)` using the declared type of `text`. This is overload
+            selection, not runtime selection between argument types.
+        - id: java-overload-then-override
+          type: single
+          difficulty: advanced
+          question: >
+            In standard Java, `Screen.show(Object)` prints `base`. `Banner` extends `Screen`,
+            overrides `show(Object)` to print `child`, and overloads `show(String)` to print `text`.
+            What is printed?
+
+
+            ```java
+
+            Screen view = new Banner();
+
+            view.show("hello");
+
+            ```
+          options:
+            - '`base`'
+            - '`child`'
+            - '`text`'
+          correct_index: 1
+          option_feedback:
+            '0': >-
+              After the compiler selects the `show(Object)` signature, runtime dispatch uses the
+              `Banner` override of that instance method.
+            '2': >-
+              The compiler sees the methods available through `Screen`. The overload declared only
+              by `Banner` is not considered for this call.
+          explanation: >-
+            The compiler selects `Screen.show(Object)`. The receiver is a `Banner`, so its override
+            of that signature executes.
+  # Pedagogy: PRIMM — distinguish declared type, runtime class, and guarded access
+  - title: Checked Casts and Runtime Classes
+    key: checked-casts
+    instructions: >
+      ### Why this matters
+
+
+      A broader reference type can hide operations an object supports. A cast changes the type of
+      the expression used to access that object; it does not turn the object into a different class.
+
+
+      ### 🎯 You will learn to
+
+
+      - Distinguish a cast from object conversion or construction.
+
+      - Guard a specialized operation using a runtime class check.
+
+
+      ### The Two Types
+
+
+      `Object item = new BonusToken(9);` has declared type Object and runtime class BonusToken. The
+      upcast to Object does not allocate another object. In standard Java, `item.bonus()` does not
+      compile because Object does not declare bonus.
+
+
+      `item instanceof BonusToken` checks whether this object is a BonusToken (or a subtype); it is
+      false for null. After a successful check, `((BonusToken) item).bonus()` accesses the
+      specialized operation.
+
+
+      ### Predict and Modify
+
+
+      Predict the first line of `main`. Change its object to `new PlainToken()` and predict again,
+      then restore it. Does the assignment to an Object variable erase or replace the object's
+      actual class?
+
+
+      ### Your Task
+
+
+      Implement `bonusOf(item)`: return a BonusToken's bonus, or zero for **null or any other
+      object**. Do not mutate the argument. Use the class test before the downcast. Assume bonus
+      amounts are nonnegative and fit in an int.
+
+
+      ### Compiler Reasoning
+
+
+      In standard Java, `(BonusToken) new Object()` passes the cast's compile-time check but throws
+      `ClassCastException` at runtime. The browser subset does **not** enforce reference casts, so
+      it cannot demonstrate that failure faithfully. The runnable task checks your guarded behavior;
+      use the quiz or a standard compiler/runtime for cast-failure reasoning.
+
+
+      If all objects could expose the required operation through one interface, prefer that common
+      contract over a growing collection of casts. Here the task deliberately models mixed objects
+      with an optional specialized capability.
+    files:
+      - path: CheckedTypes.java
+        language: java
+        content: |
+          class BonusToken {
+              private int amount;
+              public BonusToken(int amount) { this.amount = amount; }
+              public int bonus() { return amount; }
+          }
+          class PlainToken { }
+          public class CheckedTypes {
+              public static int bonusOf(Object item) {
+                  return -1;
+              }
+              public static void main(String[] args) {
+                  Object item = new BonusToken(9);
+                  System.out.println(item instanceof BonusToken);
+                  System.out.println(bonusOf(item));
+                  System.out.println(bonusOf(new PlainToken()));
+              }
+          }
+    open_file: CheckedTypes.java
+    run_file: CheckedTypes.java
+    tests:
+      - description: Specialized bonus and unrelated or null objects
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  BonusToken token = new BonusToken(9);
+                  if (CheckedTypes.bonusOf(token) != 9 || token.bonus() != 9 || CheckedTypes.bonusOf(new BonusToken(0)) != 0) throw new RuntimeException("Read the bonus without changing the token.");
+                  if (CheckedTypes.bonusOf(null) != 0 || CheckedTypes.bonusOf(new PlainToken()) != 0 || CheckedTypes.bonusOf("hello") != 0) throw new RuntimeException("Unrelated and absent objects have no bonus.");
+              }
+          }
+        hints:
+          - title: A Hidden Operation
+            text: >-
+              The broad parameter type does not promise bonus(). Which fact about the actual object
+              makes that operation meaningful?
+            condition: 'code_not_matches: /bonusOf\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})/'
+          - title: An Unrelated Object
+            text: >-
+              Trace a PlainToken and null before tracing a BonusToken. Where can your code establish
+              which path is valid?
+            condition: 'code_matches: /bonusOf\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})(?![^}]*instanceof)/'
+          - title: Three Rows, Two Paths
+            text: >-
+              List null, a PlainToken, and a BonusToken. Group the rows by whether the specialized
+              operation is available; only one group should reach it.
+            condition: 'code_matches: /bonusOf\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})(?=[^}]*instanceof)/'
+    solution:
+      files:
+        - path: CheckedTypes.java
+          language: java
+          content: |
+            class BonusToken {
+                private int amount;
+                public BonusToken(int amount) { this.amount = amount; }
+                public int bonus() { return amount; }
+            }
+            class PlainToken { }
+            public class CheckedTypes {
+                public static int bonusOf(Object item) {
+                    if (item instanceof BonusToken) return ((BonusToken) item).bonus();
+                    return 0;
+                }
+                public static void main(String[] args) {
+                    Object item = new BonusToken(9);
+                    System.out.println(item instanceof BonusToken);
+                    System.out.println(bonusOf(item));
+                    System.out.println(bonusOf(new PlainToken()));
+                }
+            }
+      explanation: >
+        The class check separates the specialized case before the cast and call. No new object is
+        constructed by casting. The fallback covers null and every unrelated class; an unchecked
+        call would fail on those cases.
+    quiz:
+      title: Step 8 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      questions:
+        - id: java-cast-failure
+          type: single
+          difficulty: intermediate
+          question: |
+            In standard Java, what happens when this method body executes?
+
+            ```java
+            Object item = new Object();
+            BonusToken token = (BonusToken) item;
+            ```
+          options:
+            - The compiler rejects the cast before execution.
+            - The cast compiles, then throws ClassCastException.
+            - The cast succeeds and changes the object’s class.
+          correct_index: 1
+          option_feedback:
+            '0': >-
+              The declared Object type could refer to a BonusToken, so the cast is allowed at
+              compile time. The actual object is checked when execution reaches the cast.
+            '2': A reference cast cannot change an object’s class. This object is not a BonusToken.
+          explanation: >-
+            The cast is permitted at compile time, but the runtime object does not belong to
+            BonusToken or a subtype, so the checked cast fails.
+        - id: java-cast-null-guard
+          type: single
+          difficulty: intermediate
+          question: >-
+            In standard Java, item may be null or refer to any object. Which condition is true
+            exactly when item refers to a BonusToken or one of its subclasses?
+          options:
+            - '`item != null`'
+            - '`item instanceof BonusToken`'
+            - '`(BonusToken) item != null`'
+          correct_index: 1
+          option_feedback:
+            '0': >-
+              A non-null value can still refer to an object of an unrelated class. The null check
+              does not establish the required runtime type.
+            '2': >-
+              This downcast can throw for an unrelated object. A class test checks the condition
+              without requiring the cast to succeed first.
+          explanation: >-
+            instanceof tests the runtime type and returns false for null. It can establish when the
+            later downcast is safe.
+  # Pedagogy: spaced retrieval — old/new reference state in a generic holder
+  - title: Parametric Polymorphism
+    key: parametric-types
+    instructions: >
+      ### Why this matters
+
+
+      A reusable holder should preserve the relationship between the type stored and the type
+      returned. A type parameter expresses that relationship without a separate holder class for
+      each element type.
+
+
+      ### 🎯 You will learn to
+
+
+      - Implement type-independent storage behavior.
+
+      - Distinguish parametric polymorphism from subtyping and overloads.
+
+
+      ### One Implementation, Related Types
+
+
+      `TypedShelf<T>` uses a type variable. With `TypedShelf<String>`, constructor inputs, get's
+      result, and replace's input/result are Strings. An Object-based holder accepts broadly but
+      requires callers to recover a narrower result type. The generic holder expresses the
+      relationship for the compiler.
+
+
+      A type variable does not permit arbitrary operations such as `item.bonus()`: the generic
+      definition must be valid for its allowed types. This differs from assuming a C++ template can
+      use whatever members happen to exist in one instantiation.
+
+
+      ### Your Task
+
+
+      Complete `exchange(next)`:
+
+
+      - Replace the stored reference with `next` and return the **previously stored reference**.
+      Future get/exchange calls use the replacement.
+
+      - Accept null as an ordinary stored reference.
+
+      - Preserve reference identity; do not clone the stored object.
+
+
+      Predict both lines of `main` after repair. Then trace replacing twice and explain which old
+      value each call returns. This is the step 3 old/new-value pattern with a reusable element
+      type.
+
+
+      ### Compiler Reasoning
+
+
+      `TypedShelf<String>` and `TypedShelf<Object>` are not interchangeable. Allowing the first
+      where the second is required could let a client insert a non-String into a String shelf.
+      Standard Java rejects that assignment. It also rejects a wrong element type. The browser
+      runner erases generic information and does **not** check these restrictions.
+
+
+      Java generics use reference type arguments: `Integer` is the wrapper used for integer values,
+      rather than `TypedShelf<int>`. Type erasure does not mean the standard compiler skips checking
+      your source.
+    files:
+      - path: GenericStorage.java
+        language: java
+        content: |
+          class TypedShelf<T> {
+              private T item;
+              public TypedShelf(T item) { this.item = item; }
+              public T get() { return item; }
+              public T exchange(T next) {
+                  return null;
+              }
+          }
+          public class GenericStorage {
+              public static void main(String[] args) {
+                  TypedShelf<String> shelf = new TypedShelf<String>("intro");
+                  System.out.println(shelf.exchange("encore"));
+                  System.out.println(shelf.get());
+              }
+          }
+    open_file: GenericStorage.java
+    run_file: GenericStorage.java
+    tests:
+      - description: Generic replacement, repeated calls, identity, and null
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  TypedShelf<String> text = new TypedShelf<String>("intro");
+                  if (!text.exchange("encore").equals("intro") || !text.get().equals("encore")) throw new RuntimeException("Return old and retain new text.");
+                  Object first = new Object();
+                  Object next = new Object();
+                  TypedShelf<Object> objects = new TypedShelf<Object>(first);
+                  if (objects.exchange(next) != first || objects.get() != next) throw new RuntimeException("Preserve object identity.");
+                  if (objects.exchange(null) != next || objects.get() != null || objects.exchange(first) != null || objects.get() != first) throw new RuntimeException("Check both directions of null replacement.");
+              }
+          }
+        hints:
+          - title: One Type Relationship
+            text: >-
+              The same T appears in the stored field, argument, and result. What old/new-state
+              operation works without knowing anything about T?
+            condition: 'code_not_matches: /exchange\s*\([^)]*\)\s*\{(?!\s*return\s+null\s*;\s*\})/'
+          - title: Two Calls in a Row
+            text: >-
+              Trace a shelf holding intro, replaced by encore, then by outro. Record each return
+              separately from the final stored value.
+            condition: 'code_matches: /exchange\s*\([^)]*\)\s*\{(?!\s*return\s+null\s*;\s*\})(?![^}]*item)/'
+          - title: A Reference to Keep
+            text: >-
+              Before overwriting the field, identify which value the caller still needs. No copy of
+              the referenced object is required.
+            condition: 'code_matches: /exchange\s*\([^)]*\)\s*\{(?!\s*return\s+null\s*;\s*\})(?=[^}]*item)/'
+    solution:
+      files:
+        - path: GenericStorage.java
+          language: java
+          content: |
+            class TypedShelf<T> {
+                private T item;
+                public TypedShelf(T item) { this.item = item; }
+                public T get() { return item; }
+                public T exchange(T next) {
+                    T previous = item;
+                    item = next;
+                    return previous;
+                }
+            }
+            public class GenericStorage {
+                public static void main(String[] args) {
+                    TypedShelf<String> shelf = new TypedShelf<String>("intro");
+                    System.out.println(shelf.exchange("encore"));
+                    System.out.println(shelf.get());
+                }
+            }
+      explanation: >
+        The method saves the old reference, replaces the field, and returns that saved reference. It
+        never needs operations specific to String or another concrete type. The behavioral checks
+        establish storage behavior; static type restrictions are assessed separately.
+    quiz:
+      title: Step 9 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      questions:
+        - id: java-generics-invariance
+          type: single
+          difficulty: advanced
+          question: >
+            A mutable `Slot<T>` provides `put(T value)` and `T get()`. Why does standard Java reject
+            this assignment?
+
+
+            ```java
+
+            Slot<String> names = new Slot<String>();
+
+            Slot<Object> anything = names;
+
+            ```
+          options:
+            - The wider alias could insert a non-string into the same slot.
+            - A generic object must contain a primitive rather than a reference.
+            - A string stops being an object when used as a type argument.
+          correct_index: 0
+          option_feedback:
+            '1': >-
+              Java generic type arguments are reference types, so `String` is an appropriate type
+              argument.
+            '2': >-
+              `String` remains a subtype of `Object`. That relationship does not make `Slot<String>`
+              a subtype of `Slot<Object>`.
+          explanation: >-
+            If the assignment were allowed, `anything.put(new Object())` could violate the promise
+            that `names.get()` yields a `String`. These generic instantiations are invariant.
+        - id: java-generics-type-preservation
+          type: single
+          difficulty: intermediate
+          question: >
+            A plain holder has `Object get()`. A generic holder has `T get()`. In standard Java,
+            what does a `Holder<String>` let the compiler establish at a call to `get()`?
+          options:
+            - A read returns `Object`, so callers must still cast it.
+            - A read has type `String`, so callers need no downcast.
+            - A read can use any result type chosen by the caller.
+          correct_index: 1
+          option_feedback:
+            '0': >-
+              For a `Holder<String>`, substituting the type argument makes the declared result type
+              `String`; the caller does not need a downcast.
+            '2': >-
+              The holder's type argument fixes this result type. Assigning a result to a different
+              type does not change the generic contract.
+          explanation: >-
+            The type parameter preserves the relationship between the holder's element type and its
+            method's result type. Returning plain `Object` loses that static information.
+  # Pedagogy: worked example with fading — supplied cursor, independently written client
+  - title: Iterables and Iterator State
+    key: iterator-state
+    instructions: >
+      ### Why this matters
+
+
+      A collection or sequence describes what can be visited; an iterator records one traversal’s
+      position. Keeping those roles separate makes independent traversals possible.
+
+
+      ### 🎯 You will learn to
+
+
+      - Trace independent iterators and non-consuming availability checks.
+
+      - Consume an iterator through its public contract.
+
+
+      ### The Supplied Cursor
+
+
+      The worked `BeatRange` represents every second integer from start (inclusive) to end
+      (exclusive). Each `iterator()` creates a fresh `BeatCursor`. `hasNext()` inspects availability
+      without consuming; `next()` returns one value and advances. Calling next after exhaustion
+      throws `NoSuchElementException`.
+
+
+      `Iterable<Integer>` provides iterator(); `Iterator<Integer>` provides hasNext() and next().
+      The Integer wrapper lets these generic interfaces carry integers; Java boxes and unboxes
+      values as needed. The cursor implementation is supplied so the task can focus on the client
+      contract.
+
+
+      ### Predict and Run
+
+
+      Trace the two hasNext calls, first.next(), and second.next() in main. Does asking twice
+      consume anything? Does second resume where first stopped? Commit to the four results before
+      running.
+
+
+      ### Your Task
+
+
+      Implement `sum(cursor)` for any non-null Iterator of non-null Integers:
+
+
+      - Sum **all remaining values**, leaving the cursor exhausted.
+
+      - Return zero if it is already exhausted; values and total fit in an int.
+
+      - Use only the Iterator contract. Do not assume the starting value, spacing, length, or
+      concrete cursor class.
+
+
+      The tests supply both the worked BeatCursor and a different iterator. Afterward, explain why
+      passing the same iterator to sum twice differs from passing two fresh iterators.
+
+
+      **Standard Java connection:** enhanced `for` over an Iterable obtains an iterator and
+      repeatedly checks/advances it. The browser subset does not support enhanced-for over custom
+      Iterable implementations; use the explicit calls here.
+    files:
+      - path: IteratorClient.java
+        language: java
+        content: |
+          import java.util.Iterator;
+          import java.util.NoSuchElementException;
+          class BeatCursor implements Iterator<Integer> {
+              private int current;
+              private int end;
+              public BeatCursor(int start, int end) { this.current = start; this.end = end; }
+              public boolean hasNext() { return current < end; }
+              public Integer next() {
+                  if (!hasNext()) throw new NoSuchElementException("exhausted");
+                  int result = current;
+                  current = current + 2;
+                  return result;
+              }
+          }
+          class BeatRange implements Iterable<Integer> {
+              private int start;
+              private int end;
+              public BeatRange(int start, int end) { this.start = start; this.end = end; }
+              public Iterator<Integer> iterator() { return new BeatCursor(start,end); }
+          }
+          public class IteratorClient {
+              public static int sum(Iterator<Integer> cursor) {
+                  return -1;
+              }
+              public static void main(String[] args) {
+                  BeatRange beats = new BeatRange(2,7);
+                  Iterator<Integer> first = beats.iterator();
+                  Iterator<Integer> second = beats.iterator();
+                  System.out.println(first.hasNext());
+                  System.out.println(first.hasNext());
+                  System.out.println(first.next());
+                  System.out.println(second.next());
+                  System.out.println(sum(first));
+              }
+          }
+    open_file: IteratorClient.java
+    run_file: IteratorClient.java
+    tests:
+      - description: Remaining-value sum and exhausted cursor state
+        command: |
+          import java.util.Iterator;
+          import java.util.ArrayList;
+          public class __Test {
+              public static void main(String[] args) {
+                  Iterator<Integer> beats = new BeatRange(2,7).iterator();
+                  beats.next();
+                  if (IteratorClient.sum(beats) != 10 || beats.hasNext() || IteratorClient.sum(beats) != 0) throw new RuntimeException("Consume only the remaining 4 and 6, then stay exhausted.");
+                  ArrayList<Integer> values = new ArrayList<Integer>();
+                  values.add(-3); values.add(8); values.add(0);
+                  Iterator<Integer> other = values.iterator();
+                  if (IteratorClient.sum(other) != 5 || other.hasNext()) throw new RuntimeException("Use the contract for a different iterator.");
+                  if (IteratorClient.sum(new BeatRange(5,5).iterator()) != 0) throw new RuntimeException("Check an initially empty traversal.");
+              }
+          }
+        hints:
+          - title: Availability and Consumption
+            text: >-
+              Which interface method reports whether a value exists, and which changes the traversal
+              position? Both roles matter.
+            condition: 'code_not_matches: /sum\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})/'
+          - title: A Partly Used Cursor
+            text: >-
+              Start with the cursor already past its first element. Your client receives its current
+              state, not the original sequence description.
+            condition: 'code_matches: /sum\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})(?![^}]*next\s*\()/'
+          - title: A Loop Trace
+            text: >-
+              For each iteration, write availability, value consumed, and running total. What must
+              change so the next availability check can eventually be false?
+            condition: 'code_matches: /sum\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})(?=[^}]*next\s*\()/'
+    solution:
+      files:
+        - path: IteratorClient.java
+          language: java
+          content: |
+            import java.util.Iterator;
+            import java.util.NoSuchElementException;
+            class BeatCursor implements Iterator<Integer> {
+                private int current;
+                private int end;
+                public BeatCursor(int start, int end) { this.current = start; this.end = end; }
+                public boolean hasNext() { return current < end; }
+                public Integer next() {
+                    if (!hasNext()) throw new NoSuchElementException("exhausted");
+                    int result = current;
+                    current = current + 2;
+                    return result;
+                }
+            }
+            class BeatRange implements Iterable<Integer> {
+                private int start;
+                private int end;
+                public BeatRange(int start, int end) { this.start = start; this.end = end; }
+                public Iterator<Integer> iterator() { return new BeatCursor(start,end); }
+            }
+            public class IteratorClient {
+                public static int sum(Iterator<Integer> cursor) {
+                    int total = 0;
+                    while (cursor.hasNext()) total += cursor.next();
+                    return total;
+                }
+                public static void main(String[] args) {
+                    BeatRange beats = new BeatRange(2,7);
+                    Iterator<Integer> first = beats.iterator();
+                    Iterator<Integer> second = beats.iterator();
+                    System.out.println(first.hasNext());
+                    System.out.println(first.hasNext());
+                    System.out.println(first.next());
+                    System.out.println(second.next());
+                    System.out.println(sum(first));
+                }
+            }
+      explanation: >
+        The client loops while a value is available and consumes exactly one on each iteration. It
+        does not reconstruct the source sequence. The predicted lines are true, true, 2, 2;
+        sum(first) then returns 10, while second has its own position.
+    quiz:
+      title: Step 10 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      questions:
+        - id: java-iterator-peek
+          type: single
+          difficulty: intermediate
+          question: >
+            `it` is a fresh iterator over the integers 4, 6, in that order. What does the last line
+            print?
+
+
+            ```java
+
+            it.hasNext();
+
+            it.hasNext();
+
+            System.out.println(it.next());
+
+            ```
+          options:
+            - '`4`'
+            - '`6`'
+            - It throws because both elements were consumed.
+          correct_index: 0
+          option_feedback:
+            '1': '`hasNext()` reports whether another element exists; it does not consume an element.'
+            '2': >-
+              Repeated checks do not advance the iterator. The first call to `next()` still returns
+              its first element.
+          explanation: >-
+            next() returns and consumes the next element. hasNext() can be called repeatedly without
+            advancing the iterator, so next() still returns 4.
+        - id: java-iterator-alias-and-fresh
+          type: single
+          difficulty: advanced
+          question: >
+            `beats` is a BeatRange containing 3, 5, 7. Each iterator() call creates a fresh cursor.
+            What is printed?
+
+
+            ```java
+
+            Iterator<Integer> a = beats.iterator();
+
+            Iterator<Integer> b = a;
+
+            Iterator<Integer> c = beats.iterator();
+
+            a.next();
+
+            System.out.println(b.next() + " " + c.next());
+
+            ```
+          options:
+            - '`3 3`'
+            - '`5 5`'
+            - '`5 3`'
+          correct_index: 2
+          option_feedback:
+            '0': b is an alias of a, so it observes the position reached by a.next().
+            '1': c is a separate iterator with its own position. Advancing a does not advance c.
+          explanation: >-
+            a and b refer to one cursor, now positioned at 5. c refers to a fresh cursor, still
+            positioned at 3. The iterator state follows object identity.
+  # Pedagogy: PRIMM — trace abrupt completion, then repair cleanup
+  - title: Exceptions and Cleanup
+    key: exception-flow
+    instructions: >
+      ### Why this matters
+
+
+      An exception skips the rest of the current path while searching for a matching handler.
+      Cleanup must cover both ordinary returns and exceptional exits.
+
+
+      ### 🎯 You will learn to
+
+
+      - Trace return, throw, catch, and finally paths.
+
+      - Implement recovery with unconditional cleanup.
+
+
+      ### A Worked Control-Flow Trace
+
+
+      ```java
+
+      try {
+          System.out.println("start");
+          throw new IllegalArgumentException("bad request");
+      } catch (IllegalArgumentException problem) {
+          System.out.println("recover");
+      } finally {
+          System.out.println("finish");
+      }
+
+      ```
+
+
+      The trace is start, recover, finish. `throw` transfers control; catch handles a matching
+      exception, and finally runs when leaving the try/catch, including through return. This assumes
+      normal program execution, not forced process termination. A finally block that itself returns
+      or throws can replace a pending result; do not do that in this task.
+
+
+      ### Your Task
+
+
+      Complete `quote(seats)` using the supplied `validate` method:
+
+
+      - For valid input, return validate's result.
+
+      - If validate throws `IllegalArgumentException`, return -1.
+
+      - Increment `completed` **exactly once on either path**. Try expressing the shared cleanup
+      with finally.
+
+
+      Inputs are small integers, so arithmetic overflow is outside this task. `completed` is a
+      static field shared by calls; it is a visible stand-in for a cleanup action. Predict all three
+      lines in main before running your completed method. Trace where a return value waits while
+      finally executes.
+
+
+      After the tests pass, inspect your code: is the single cleanup increment inside `finally`?
+      Explain why it runs after either return. The tests check behavior; this inspection checks
+      how you expressed the shared cleanup.
+
+
+      ### Compiler Reasoning
+
+
+      A **checked exception** is a compiler-enforced handling obligation; a **checked cast** from
+      step 8 performs a runtime type check. These are different uses of “checked”.
+
+
+      A checked exception must be caught or declared with `throws`. RuntimeException and its
+      subclasses, including IllegalArgumentException, are unchecked. `throws` describes possible
+      propagation; it does not throw or catch anything. The browser runner does not enforce
+      checked-exception declarations, and this exercise uses a single catch type.
+    files:
+      - path: ExceptionFlow.java
+        language: java
+        content: |
+          public class ExceptionFlow {
+              public static int completed = 0;
+              public static int validate(int seats) {
+                  if (seats < 0) throw new IllegalArgumentException("negative seats");
+                  return seats * 2;
+              }
+              public static int quote(int seats) {
+                  return -99;
+              }
+              public static void main(String[] args) {
+                  System.out.println(quote(3));
+                  System.out.println(quote(-1));
+                  System.out.println(completed);
+              }
+          }
+    open_file: ExceptionFlow.java
+    run_file: ExceptionFlow.java
+    tests:
+      - description: Quote results and cleanup on both exit paths
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  ExceptionFlow.completed = 0;
+                  if (ExceptionFlow.quote(3) != 6 || ExceptionFlow.completed != 1) throw new RuntimeException("Check the successful result and one cleanup.");
+                  if (ExceptionFlow.quote(-1) != -1 || ExceptionFlow.completed != 2) throw new RuntimeException("Check recovery and one cleanup after failure.");
+                  if (ExceptionFlow.quote(0) != 0 || ExceptionFlow.completed != 3) throw new RuntimeException("Zero is a valid input and still cleans up.");
+              }
+          }
+        hints:
+          - title: Two Exit Paths
+            text: >-
+              Follow validate once with 3 and once with -1. Where does control leave the ordinary
+              path in each case?
+            condition: 'code_not_matches: /quote\s*\([^)]*\)\s*\{(?!\s*return\s+-99\s*;\s*\})/'
+          - title: Cleanup After Return
+            text: >-
+              An assignment after a return is unreachable. Which language construct was introduced
+              specifically for work that must happen as a path exits?
+            condition: >-
+              code_matches:
+              /quote\s*\([^)]*\)\s*\{(?!\s*return\s+-99\s*;\s*\})(?!(?:(?!public\s+static\s+void\s+main)[\s\S])*\bfinally\b)/
+          - title: A Pending Result
+            text: >-
+              Draw a three-column trace: pending result, handler (if any), cleanup count. Fill both
+              the valid and invalid rows before placing the return statements.
+            condition: >-
+              code_matches:
+              /quote\s*\([^)]*\)\s*\{(?!\s*return\s+-99\s*;\s*\})(?=(?:(?!public\s+static\s+void\s+main)[\s\S])*\bfinally\b)/
+    solution:
+      files:
+        - path: ExceptionFlow.java
+          language: java
+          content: |
+            public class ExceptionFlow {
+                public static int completed = 0;
+                public static int validate(int seats) {
+                    if (seats < 0) throw new IllegalArgumentException("negative seats");
+                    return seats * 2;
+                }
+                public static int quote(int seats) {
+                    try {
+                        return validate(seats);
+                    } catch (IllegalArgumentException problem) {
+                        return -1;
+                    } finally {
+                        completed++;
+                    }
+                }
+                public static void main(String[] args) {
+                    System.out.println(quote(3));
+                    System.out.println(quote(-1));
+                    System.out.println(completed);
+                }
+            }
+      explanation: >
+        The return value is determined in try or catch, then finally increments completed before
+        control returns to the caller. Main prints 6, -1, 2. Tests check observable results and
+        cleanup counts; use your explanation and the stated task to review the use of finally
+        itself.
+    quiz:
+      title: Step 11 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      questions:
+        - id: java-exceptions-unwind
+          type: single
+          difficulty: intermediate
+          question: |
+            `load()` throws an `IllegalArgumentException`. What does this standard Java code print?
+
+            ```java
+            try {
+                load();
+                System.out.print("A");
+            } catch (IllegalArgumentException ex) {
+                System.out.print("B");
+            } finally {
+                System.out.print("C");
+            }
+            ```
+          options:
+            - '`ABC`'
+            - '`C`'
+            - '`BC`'
+          correct_index: 2
+          option_feedback:
+            '0': >-
+              Throwing leaves the remaining statements in the `try` block; execution does not resume
+              at the print of `A`.
+            '1': >-
+              The thrown exception matches this catch type, so the catch body executes before the
+              `finally` body.
+          explanation: The exception skips `A`, the matching catch prints `B`, and `finally` prints `C`.
+        - id: java-exceptions-checked
+          type: single
+          difficulty: intermediate
+          question: >-
+            In standard Java, readSetlist() declares `throws ShowException`, a checked exception. A
+            caller has neither a matching catch nor a throws declaration. What happens?
+          options:
+            - The caller fails to compile because the exception is checked.
+            - The caller compiles and catches the exception automatically.
+            - The caller compiles; handling is checked only if a throw occurs.
+          correct_index: 0
+          option_feedback:
+            '1': >-
+              Java does not insert a catch. The caller must handle this checked exception or declare
+              that it can propagate.
+            '2': >-
+              The compiler checks this obligation even if a particular execution would not throw.
+              This differs from an unchecked exception such as `IllegalArgumentException`.
+          explanation: >-
+            Because ShowException is checked, the caller must catch it or declare a compatible
+            exception in its own throws clause. Declaring it does not itself throw or handle it.
+  # Pedagogy: independent transfer — combine contracts, guards, equality, and dispatch
+  - title: Semantic Integration
+    key: semantic-integration
+    instructions: >
+      ### Why this matters
+
+
+      Transfer means choosing the right rule when the prompt no longer names it for you. This final
+      client combines shared objects, a common contract, and content-based selection.
+
+
+      ### 🎯 You will learn to
+
+
+      - Create an interface-based client from a behavioral contract.
+
+      - Explain how reference state, equality, and dispatch combine.
+
+
+      ### Independent Challenge
+
+
+      Read the starter's interface and constructor. Implement `minutesFor(items, wanted)` without
+      looking at earlier solutions:
+
+
+      - `items` and `wanted` are non-null; items may contain null entries.
+
+      - Every non-null entry has a non-null label and a nonnegative duration. Totals fit in an int.
+
+      - Sum minutes for entries whose label **content** exactly matches wanted, including case.
+
+      - Skip null entries. Count every matching position, even repeated references to one object.
+
+      - Return zero for an empty array or no matches. Do not mutate or reorder anything.
+
+      - Work for any implementation of SessionItem, not only FixedSession.
+
+
+      Predict main's result, implement the method, then test. Create a second small example of your
+      own before viewing the solution. The automatic checks sample behavior; they cannot assess your
+      explanation.
+
+
+      ### Explain Your Decisions
+
+
+      1. Which rule prevents a null dereference?
+
+      2. Which equality relation matches the requirement?
+
+      3. Which type determines the operations the client may call, and which object determines the
+      method body?
+
+      4. If the same object appears twice, why is it counted twice?
+
+
+      ### A Behavioral Contract Check
+
+
+      A replacement SessionItem must preserve the promised non-null label and nonnegative duration.
+      Merely having the right method signatures does not guarantee those behaviors. A subtype must
+      not demand stronger preconditions than its client was promised or weaken the promised
+      postconditions.
+
+
+      ### Return Later
+
+
+      Tomorrow, reconstruct the difference between rebinding a parameter and mutating its object
+      before rerunning step 3. Later this week, redo this challenge with a different selection rule
+      from your own written contract. Explain one example of each: **overloading**, **subtype
+      polymorphism**, and **parametric polymorphism**.
+
+
+      For further practice, the [Java tutorial with UML](/SEBook/tools/java-tutorial) explores
+      broader Java design. Synchronization, bounded generics, and lambda capture are useful
+      follow-ups; they are not prerequisites for this practice path.
+    files:
+      - path: SessionSummary.java
+        language: java
+        content: |
+          interface SessionItem {
+              String label();
+              int minutes();
+          }
+          class FixedSession implements SessionItem {
+              private String name;
+              private int length;
+              public FixedSession(String name, int length) { this.name = name; this.length = length; }
+              public String label() { return name; }
+              public int minutes() { return length; }
+          }
+          public class SessionSummary {
+              public static int minutesFor(SessionItem[] items, String wanted) {
+                  return -1;
+              }
+              public static void main(String[] args) {
+                  SessionItem one = new FixedSession(new String("lab"),12);
+                  SessionItem two = new FixedSession(new String("lab"),8);
+                  SessionItem[] items = {one, null, two, one};
+                  System.out.println(minutesFor(items,"lab"));
+              }
+          }
+    open_file: SessionSummary.java
+    run_file: SessionSummary.java
+    tests:
+      - description: Summary selection, aliases, nulls, and new implementations
+        command: >
+          class ComputedSession implements SessionItem { public String label() { return "lab"; }
+          public int minutes() { return 3 + 4; } }
+
+          public class __Test {
+              public static void main(String[] args) {
+                  SessionItem a = new FixedSession(new String("lab"),12);
+                  SessionItem b = new FixedSession(new String("lab"),8);
+                  SessionItem c = new FixedSession("Lab",50);
+                  SessionItem[] items = {a,null,b,a,c};
+                  if (SessionSummary.minutesFor(items,new String("lab")) != 32) throw new RuntimeException("Combine exact content matching, skipped nulls, and repeated positions.");
+                  if (SessionSummary.minutesFor(items,"absent") != 0 || SessionSummary.minutesFor(new SessionItem[0],"lab") != 0) throw new RuntimeException("Check no matches and empty input.");
+                  if (items[0] != a || items[1] != null || items[2] != b || items[3] != a || items[4] != c || a.minutes() != 12 || b.minutes() != 8 || c.minutes() != 50 || !a.label().equals("lab") || !b.label().equals("lab") || !c.label().equals("Lab")) throw new RuntimeException("Preserve the input array and its objects.");
+                  if (SessionSummary.minutesFor(new SessionItem[]{new ComputedSession()},"lab") != 7) throw new RuntimeException("Use the interface for a new implementation.");
+              }
+          }
+        hints:
+          - title: Separate the Decisions
+            text: >-
+              Treat eligibility and contribution as separate questions. What must you know before
+              asking either one about an entry?
+            condition: 'code_not_matches: /minutesFor\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})/'
+          - title: A Counterexample Set
+            text: >-
+              Try null, a fresh object with equal text, the same reference twice, and a class you
+              have never seen. Which assumption does each case challenge?
+            condition: >-
+              code_matches:
+              /minutesFor\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})(?![^}]*label\s*\()/
+          - title: One Row Per Position
+            text: >-
+              Make a trace with columns for reference present, label matches, and contribution. Fill
+              a row for each position, even when two rows share an object.
+            condition: >-
+              code_matches:
+              /minutesFor\s*\([^)]*\)\s*\{(?!\s*return\s+-1\s*;\s*\})(?=[^}]*label\s*\()/
+    solution:
+      files:
+        - path: SessionSummary.java
+          language: java
+          content: |
+            interface SessionItem {
+                String label();
+                int minutes();
+            }
+            class FixedSession implements SessionItem {
+                private String name;
+                private int length;
+                public FixedSession(String name, int length) { this.name = name; this.length = length; }
+                public String label() { return name; }
+                public int minutes() { return length; }
+            }
+            public class SessionSummary {
+                public static int minutesFor(SessionItem[] items, String wanted) {
+                    int total = 0;
+                    for (SessionItem item : items) {
+                        if (item != null && item.label().equals(wanted)) total += item.minutes();
+                    }
+                    return total;
+                }
+                public static void main(String[] args) {
+                    SessionItem one = new FixedSession(new String("lab"),12);
+                    SessionItem two = new FixedSession(new String("lab"),8);
+                    SessionItem[] items = {one, null, two, one};
+                    System.out.println(minutesFor(items,"lab"));
+                }
+            }
+      explanation: >
+        The guard avoids calling methods on null. String equality selects by content, and interface
+        dispatch supplies each duration. Iterating positions preserves multiplicity without changing
+        the inputs. Main prints 32. Compile-time permissions, runtime dispatch, and reference
+        identity answer different questions.
+    quiz:
+      title: Step 12 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      questions:
+        - id: java-transfer-alias-dispatch
+          type: single
+          difficulty: advanced
+          question: >
+            In standard Java, `Ticket` has an instance field `int uses = 0` and an instance method
+            `use()` that adds 1 to `uses`. `Pass` extends `Ticket` and overrides `use()` to add 2
+            instead. What is printed?
+
+
+            ```java
+
+            Ticket first = new Pass();
+
+            Ticket second = first;
+
+            first.use();
+
+            second.use();
+
+            System.out.println(first.uses);
+
+            ```
+          options:
+            - '`2`'
+            - '`1`'
+            - '`4`'
+          correct_index: 2
+          option_feedback:
+            '0': >-
+              The two references alias one object, and both calls dispatch to `Pass.use()`. The
+              increment is applied twice to the same field.
+            '1': >-
+              Assigning `first` to `second` does not clone the object, and a `Ticket` reference does
+              not force the base implementation of an overridden instance method.
+          explanation: >-
+            There is one `Pass` object. Both references reach it, and both calls add 2 through its
+            override, leaving `uses` equal to 4.
+        - id: java-transfer-static-safety
+          type: single
+          difficulty: advanced
+          question: >
+            A standard Java method accepts a `Playable` and calls only its declared `play()`
+            operation. A proposed revision accepts `Object`, casts it to `Playable`, then calls
+            `play()`. What protection is lost?
+          options:
+            - The compiler's rejection of arguments outside the `Playable` contract.
+            - Runtime dispatch to the actual object's implementation of `play()`.
+            - The ability for two variables to refer to the same playable object.
+          correct_index: 0
+          option_feedback:
+            '1': >-
+              After a successful cast, the instance method call still uses dynamic dispatch. The
+              change affects when an unsuitable argument is rejected.
+            '2': Changing a parameter type does not stop references from aliasing the same object.
+          explanation: >-
+            The `Playable` parameter rejects incompatible arguments at compile time. An `Object`
+            parameter accepts them and may fail later when the cast executes.
+        - id: java-integration-selection
+          type: single
+          difficulty: intermediate
+          question: >-
+            A SessionItem object returns `new String("studio")` from label() and 12 from minutes().
+            The array holds that object, null, and the same object again. What must
+            minutesFor(items, `"studio"`) return under this tutorial’s contract?
+          options:
+            - '`12`'
+            - '`0`'
+            - '`24`'
+          correct_index: 2
+          option_feedback:
+            '0': >-
+              The contract counts matching array positions, including repeated references. It does
+              not deduplicate objects.
+            '1': >-
+              String content matches even when the label is a distinct String object. The null
+              position is skipped.
+          explanation: >-
+            Two positions have matching label content, and each contributes 12. Null guards, value
+            equality, and repeated aliases all matter.
+        - id: java-integration-behavioral-contract
+          type: single
+          difficulty: advanced
+          question: >-
+            SessionItem promises a non-null label and nonnegative minutes, with no required
+            preparation call. Which implementation preserves that client contract?
+          options:
+            - Returns a label and zero minutes for a free session.
+            - Requires prepare() before its label() call is allowed.
+            - Returns a label and negative minutes until scheduled.
+          correct_index: 0
+          option_feedback:
+            '1': >-
+              The new preparation requirement strengthens a precondition that clients were never
+              asked to satisfy.
+            '2': >-
+              Negative minutes violate the promised result even when the method has the correct Java
+              return type.
+          explanation: >-
+            Zero satisfies the nonnegative-duration promise. Correct method signatures alone do not
+            establish behavioral substitutability.

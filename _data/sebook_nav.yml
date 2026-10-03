@@ -202,6 +202,8 @@ topics:
         url: /SEBook/tools/java.html
       - name: Java Tutorial
         url: /SEBook/tools/java-tutorial.html
+      - name: Java Concepts for CS131
+        url: /SEBook/tools/java-cs131-tutorial
       - name: C Programming
         url: /SEBook/tools/c.html
       - name: C for C++ Programmers Tutorial

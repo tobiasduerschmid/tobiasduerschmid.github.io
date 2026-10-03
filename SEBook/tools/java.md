@@ -5,6 +5,8 @@ layout: sebook
 
 This is a **reference page** for Java, designed to be kept open alongside the [Java Tutorial](/SEBook/tools/java-tutorial). Use it to look up syntax, concepts, and comparisons while you work through the hands-on exercises.
 
+For CS131, use [Java Concepts for CS131](/SEBook/tools/java-cs131-tutorial) to practice types, references, parameter passing, polymorphism, iterators, and exceptions. The [Java tutorial with UML](/SEBook/tools/java-tutorial) remains a separate practice path.
+
 > **New to Java?** Start with the [interactive tutorial](/SEBook/tools/java-tutorial) first — it teaches these concepts through practice with immediate feedback. This page is a reference, not a teaching resource.
 
 # Basics

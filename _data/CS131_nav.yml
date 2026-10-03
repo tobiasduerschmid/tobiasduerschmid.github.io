@@ -2,6 +2,9 @@ topics:
   - name: Python & C++ Refresher
     icon: null
     url: /SEBook/tools/cs131-refresher-tutorial
+  - name: "Java Concepts for CS131"
+    icon: null
+    url: /SEBook/tools/java-cs131-tutorial
   - name: Haskell
     icon: null
     url: /SEBook/tools/haskell.html
