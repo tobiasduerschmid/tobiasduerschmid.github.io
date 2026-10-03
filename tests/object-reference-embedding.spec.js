@@ -61,7 +61,7 @@ async function expectSharedReferenceArrows(lab) {
   }), { message: 'both list slots must have connected arrows in a visible reserved gutter' }).toEqual([]);
 }
 
-test('the documented three-script embed draws shared references through replay and narrow theme changes', async ({ page }) => {
+test('the documented standalone embed draws shared references through replay and narrow theme changes', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -76,6 +76,7 @@ test('the documented three-script embed draws shared references through replay a
     <div data-object-reference-example="shared_slots" data-object-reference-editor="inline"></div>
     </main></body></html>`);
   await page.addScriptTag({ url: '/js/object-reference-graph.js' });
+  await page.addScriptTag({ url: '/js/object-reference-code.js' });
   await page.addScriptTag({ url: '/js/object-reference-print.js' });
   await page.addScriptTag({ url: '/js/object-reference-lab.js' });
 

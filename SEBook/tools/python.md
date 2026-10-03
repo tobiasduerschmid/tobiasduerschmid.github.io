@@ -5,6 +5,7 @@ mermaid: true
 ---
 
 <script src="/js/object-reference-graph.js" defer></script>
+<script src="/js/object-reference-code.js" defer></script>
 <script src="/js/object-reference-print.js" defer></script>
 <script src="/js/object-reference-lab.js" defer></script>
 <link rel="stylesheet" href="/css/object-reference-lab.css">

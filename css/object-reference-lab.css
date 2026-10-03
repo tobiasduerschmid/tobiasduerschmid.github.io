@@ -16,6 +16,11 @@
   --orl-divider: var(--color-border, #d8dde2);
   --orl-primary: var(--color-primary, #2774ae);
   --orl-primary-text: var(--color-text-on-primary, #fff);
+  --orl-syntax-keyword: #7134a0;
+  --orl-syntax-string: #176336;
+  --orl-syntax-number: #924500;
+  --orl-syntax-builtin: #005587;
+  --orl-code-current: #edf4fc;
   margin: 1.8em 0 2.4em;
   padding: 0;
   min-width: 0;
@@ -40,6 +45,11 @@ html.dark-mode .object-reference-lab {
   --orl-divider: var(--color-border, #333);
   --orl-primary: var(--color-primary, #8bb8e8);
   --orl-primary-text: var(--color-text-on-primary, #0a0a14);
+  --orl-syntax-keyword: #d7adff;
+  --orl-syntax-string: #9bd7ad;
+  --orl-syntax-number: #ffc18a;
+  --orl-syntax-builtin: #9fcbff;
+  --orl-code-current: #263648;
 }
 
 .object-reference-lab .orl-title {
@@ -148,31 +158,152 @@ html.dark-mode .object-reference-lab {
   scroll-margin-block: 180px 2em;
 }
 
-.object-reference-lab .orl-editor {
-  display: block;
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 10em;
-  resize: vertical;
-  padding: 0.85em 1em;
-  border: 1px solid var(--orl-border);
-  border-radius: 0 0 var(--radius-md, 8px) var(--radius-md, 8px);
-  background: var(--orl-surface);
-  color: var(--orl-text);
-  tab-size: 4;
-  white-space: pre;
-  overflow: auto;
+.orl-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 1em;
 }
 
-.object-reference-lab .orl-editor-label {
+.orl-code-panel,
+.orl-diagram-panel {
+  min-width: 0;
+  border: 1px solid var(--orl-divider);
+  border-radius: var(--radius-md, 8px);
+  background: var(--orl-surface);
+}
+
+.orl-code-header,
+.object-reference-lab .orl-diagram-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3em 1em;
   margin: 0;
-  padding: 0.45em 1em;
-  border: 1px solid var(--orl-border);
-  border-bottom: 0;
+  padding: 0.6em 0.85em;
+  border-bottom: 1px solid var(--orl-divider);
   border-radius: var(--radius-md, 8px) var(--radius-md, 8px) 0 0;
   background: var(--orl-panel);
-  color: var(--orl-edge);
+  color: var(--orl-text);
+  font-weight: 700;
+}
+
+.object-reference-lab .orl-editor-label { margin: 0; }
+.orl-code-position { color: var(--orl-edge); font-weight: 400; }
+
+.orl-code-body {
+  display: grid;
+  grid-template-columns: 3.5em minmax(0, 1fr);
+  border-radius: 0 0 var(--radius-md, 8px) var(--radius-md, 8px);
+  overflow: hidden;
+}
+
+.orl-code-gutter {
+  position: relative;
+  overflow: hidden;
+  border-right: 1px solid var(--orl-divider);
+  background: var(--orl-surface-alt);
+  color: var(--orl-muted);
+  user-select: none;
+}
+
+.orl-line-numbers {
+  position: absolute;
+  inset: 0 0 auto;
+  padding-block: 0.75em;
   font-family: var(--font-mono, monospace);
+}
+
+.orl-line-number {
+  display: block;
+  position: relative;
+  padding-right: 0.65em;
+  text-align: right;
+  white-space: pre;
+}
+
+.orl-line-number.is-current {
+  color: var(--orl-highlight-text);
+  background: var(--orl-highlight);
+}
+
+.orl-line-number.is-current::before {
+  content: "➜";
+  position: absolute;
+  left: 0.15em;
+}
+
+.orl-code-input { position: relative; min-width: 0; }
+.orl-code-mirror { position: absolute; inset: 0 auto auto 0; overflow: hidden; pointer-events: none; }
+
+/* The native input and its inert mirror must share every text metric. Tokens
+ * change color only: bold/italic syntax would shift the caret and selection. */
+.object-reference-lab :is(.orl-editor, .orl-highlighted-source) {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.75em 0.9em;
+  border: 0;
+  border-radius: 0;
+  font: inherit;
+  font-family: var(--font-mono, monospace);
+  font-variant-ligatures: none;
+  font-weight: 400;
+  tab-size: 4;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  letter-spacing: inherit;
+  text-align: left;
+  text-transform: none;
+  box-shadow: none;
+}
+
+.object-reference-lab .orl-highlighted-source {
+  position: relative;
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+  overflow: visible;
+  background: transparent;
+  color: var(--orl-text);
+}
+
+.orl-source-line {
+  display: block;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.orl-source-line.is-current { background: var(--orl-code-current); }
+.orl-syntax-keyword { color: var(--orl-syntax-keyword); }
+.orl-syntax-string { color: var(--orl-syntax-string); }
+.orl-syntax-number { color: var(--orl-syntax-number); }
+.orl-syntax-builtin { color: var(--orl-syntax-builtin); }
+.orl-syntax-comment { color: var(--orl-muted); }
+
+.object-reference-lab .orl-editor {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 10em;
+  max-height: 36em;
+  resize: vertical;
+  overflow: auto;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--orl-text);
+  -webkit-text-fill-color: transparent;
+}
+
+.object-reference-lab .orl-editor::selection {
+  background: var(--orl-highlight);
+  color: var(--orl-highlight-text);
+  -webkit-text-fill-color: var(--orl-highlight-text);
+}
+
+.object-reference-lab .orl-editor:focus-visible {
+  outline-offset: -3px;
 }
 
 .object-reference-lab .orl-panel-title {
@@ -180,57 +311,15 @@ html.dark-mode .object-reference-lab {
   font-weight: 700;
 }
 
-.orl-columns {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1.25em;
-}
-
-.object-reference-lab .orl-code {
-  margin: 0;
-  padding: 0.65em 0.65em 0.65em 3em;
-  border: 1px solid var(--orl-divider);
-  border-radius: var(--radius-md, 8px);
-  background: var(--orl-surface-alt);
-  color: var(--orl-text);
-  font-family: var(--font-mono, monospace);
-  max-height: 18em;
-  overflow: auto;
-}
-
-.orl-code li {
-  min-height: 1.6em;
-  padding: 0 0.3em;
-  border-inline-start: 3px solid transparent;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.orl-code li::marker { color: var(--orl-muted); }
-
-.object-reference-lab .orl-code code {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  background: transparent;
-  color: inherit;
-  white-space: inherit;
-  overflow-wrap: inherit;
-}
-
-.orl-code li.is-current {
-  border-inline-start-color: currentColor;
-  background: var(--orl-highlight);
-  color: var(--orl-highlight-text);
-  font-weight: 700;
-  border-radius: 0 var(--radius-sm, 4px) var(--radius-sm, 4px) 0;
-}
-
-.orl-code li.is-current::after {
-  content: " ← " attr(data-position-label);
-  white-space: normal;
-  font-family: var(--font-body, sans-serif);
+/* A single native text layer is preferable to an overlay in forced colors. */
+@media (forced-colors: active) {
+  .orl-code-mirror { visibility: hidden; }
+  .object-reference-lab .orl-editor {
+    color: CanvasText;
+    caret-color: CanvasText;
+    -webkit-text-fill-color: CanvasText;
+  }
+  .orl-line-number.is-current { outline: 2px solid Highlight; outline-offset: -2px; }
 }
 
 .object-reference-lab .orl-status {
@@ -262,6 +351,11 @@ html.dark-mode .object-reference-lab {
   border: 1px solid var(--orl-divider);
   border-radius: var(--radius-md, 8px);
   background: var(--orl-surface);
+}
+
+.orl-diagram-panel .orl-graph-scroll {
+  border: 0;
+  border-radius: 0 0 var(--radius-md, 8px) var(--radius-md, 8px);
 }
 
 .orl-graph {
@@ -543,7 +637,7 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
   overflow-wrap: anywhere;
 }
 
-.object-reference-lab :is(.orl-details, .orl-explanation, .orl-limits, .orl-edit) {
+.object-reference-lab :is(.orl-details, .orl-explanation, .orl-limits) {
   margin: 0.65em 0;
   padding: 0;
   border: 0;
@@ -629,12 +723,11 @@ html:is(.print-light-mode, .orl-print-preparing) .object-reference-lab .orl-prin
 }
 
 @container (min-width: 48em) {
-  .orl-columns { grid-template-columns: minmax(14em, 1fr) minmax(0, 2fr); }
+  .orl-columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
 }
 
 @media (max-width: 480px) {
   .orl-toolbar button { flex: 1 1 auto; }
-  .object-reference-lab .orl-editor { padding: 0.6em; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -656,6 +749,10 @@ html:is(.print-light-mode, .orl-print-preparing) .object-reference-lab {
   --orl-edge: #005587;
   --orl-error: #b81e2c;
   --orl-divider: #d8dde2;
+  --orl-syntax-keyword: #7134a0;
+  --orl-syntax-string: #176336;
+  --orl-syntax-number: #924500;
+  --orl-syntax-builtin: #005587;
   background: #fff;
   color: #111;
 }
@@ -671,6 +768,10 @@ html:is(.print-light-mode, .orl-print-preparing) .object-reference-lab {
     --orl-edge: #005587;
     --orl-error: #b81e2c;
     --orl-divider: #d8dde2;
+    --orl-syntax-keyword: #7134a0;
+    --orl-syntax-string: #176336;
+    --orl-syntax-number: #924500;
+    --orl-syntax-builtin: #005587;
     background: #fff !important;
     color: #111 !important;
     box-shadow: none;

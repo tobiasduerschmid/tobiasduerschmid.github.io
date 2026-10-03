@@ -6,7 +6,7 @@
  * variation_explanation?, trace?} as application/json
  * inside <div data-object-reference-lab>. Trace Python records an edited program
  * in a disposable worker; Forward/Back replay snapshots without re-execution.
- * Set data-object-reference-editor="inline" to keep the code editor visible.
+ * The source editor also displays the current execution position.
  *
  * Dynamic instruction renderers must call destroyWithin(root) before replacing
  * content and await initFrom(root) afterward. No learner code is persisted.
@@ -44,7 +44,6 @@
     constructor(host, example) {
       this.host = host;
       this.example = example;
-      this.inlineEditor = host.dataset.objectReferenceEditor === 'inline';
       this.trace = null;
       this.steps = [];
       this.index = 0;
@@ -67,7 +66,6 @@
       this.host.append(element('p', 'orl-prediction', this.example.prediction || 'Predict which references each line will change.'));
       this.screen = element('div', 'orl-screen');
       this.host.append(this.screen);
-      this.buildEditor();
       this.buildControls();
       this.buildStateViews();
       this.buildExplanation();
@@ -83,31 +81,21 @@
     }
 
     buildEditor() {
-      const instructions = element('p', 'orl-instructions',
-        this.inlineEditor
-          ? 'Edit the Python code below, then choose Trace Python. Use Forward and Back to follow the resulting execution.'
-          : 'Use Forward and Back to follow execution. Open Edit Python code to try a change, then choose Trace Python.');
-      instructions.id = this.id + '-instructions';
-      const label = element('label', 'orl-editor-label', 'Python code');
-      label.htmlFor = this.id + '-editor';
-      this.editor = element('textarea', 'orl-editor');
-      this.editor.id = label.htmlFor;
-      this.editor.rows = Math.min(8, Math.max(6, this.example.code.trimEnd().split('\n').length));
-      this.editor.spellcheck = false;
-      this.editor.autocomplete = 'off';
-      this.editor.setAttribute('aria-describedby', instructions.id);
-      this.editor.addEventListener('input', () => this.invalidate(), { signal: this.listeners.signal });
-      this.screen.append(instructions);
-      if (this.inlineEditor) {
-        this.screen.append(label, this.editor);
-      } else {
-        this.editDetails = element('details', 'orl-edit');
-        this.editDetails.append(element('summary', '', 'Edit Python code'), label, this.editor);
-        this.screen.append(this.editDetails);
-      }
+      this.codePanel = element('div', 'orl-code-panel');
+      this.codeEditor = new window.ObjectReferenceCode.Editor(this.codePanel, {
+        id: this.id + '-editor',
+        rows: Math.min(12, Math.max(6, this.example.code.trimEnd().split('\n').length)),
+        describedBy: this.id + '-instructions ' + this.status.id,
+        onInput: () => this.invalidate()
+      });
+      this.editor = this.codeEditor.input;
     }
 
     buildControls() {
+      const instructions = element('p', 'orl-instructions',
+        'Use Forward and Back to follow the marked line. Edit that same code, then choose Trace Python to record your change.');
+      instructions.id = this.id + '-instructions';
+      this.screen.append(instructions);
       const toolbar = element('div', 'orl-toolbar');
       toolbar.setAttribute('role', 'group');
       toolbar.setAttribute('aria-label', 'Trace and playback controls');
@@ -129,6 +117,7 @@
         toolbar.append(button);
       });
       this.status = element('p', 'orl-status');
+      this.status.id = this.id + '-status';
       this.status.setAttribute('role', 'status');
       this.status.setAttribute('aria-atomic', 'true');
       this.error = element('p', 'orl-error');
@@ -141,21 +130,16 @@
       this.screen.append(element('p', 'orl-legend',
         'Arrows show references; primitive values appear in place. Select a labeled reference to follow it. A bridge means two arrows pass without joining.'));
       const columns = element('div', 'orl-columns');
-      const codePanel = element('div', 'orl-code-panel');
-      codePanel.append(element('p', 'orl-panel-title', 'Execution position'));
-      this.code = element('ol', 'orl-code');
-      this.code.setAttribute('aria-label', 'Recorded Python source');
-      this.code.tabIndex = 0;
-      codePanel.append(this.code);
+      this.buildEditor();
       const diagramPanel = element('div', 'orl-diagram-panel');
-      diagramPanel.append(element('p', 'orl-panel-title', 'Object references'));
+      diagramPanel.append(element('p', 'orl-diagram-title', 'Object references'));
       const scroll = element('div', 'orl-graph-scroll');
       scroll.setAttribute('role', 'region');
       scroll.setAttribute('aria-label', 'Object reference diagram');
       this.graphHost = element('div', 'orl-graph');
       scroll.append(this.graphHost);
       diagramPanel.append(scroll);
-      columns.append(codePanel, diagramPanel);
+      columns.append(this.codePanel, diagramPanel);
       this.details = element('details', 'orl-details');
       this.details.append(element('summary', '', 'Reference details'));
       this.stateText = element('pre', 'orl-reference-text');
@@ -202,7 +186,6 @@
       this.cancelRun();
       this.pause();
       this.editor.value = this.example.code.trimEnd();
-      if (this.editDetails) this.editDetails.open = false;
       this.explanation.hidden = false;
       this.explanation.open = false;
       if (this.variationFeedback) this.variationFeedback.open = false;
@@ -220,15 +203,6 @@
       this.status.textContent = 'Code changed. Choose Trace Python to record the edited program.';
     }
 
-    renderCode() {
-      this.code.replaceChildren();
-      this.editor.value.split('\n').forEach(line => {
-        const item = element('li', '');
-        item.append(element('code', '', line || ' '));
-        this.code.append(item);
-      });
-    }
-
     setTrace(trace) {
       this.trace = trace;
       // Python classifies execution events; never infer Python syntax from
@@ -236,7 +210,7 @@
       this.steps = trace ? trace.steps.filter(step => !step.skipPlayback) : [];
       this.index = 0;
       this.graph.reset();
-      this.renderCode();
+      this.codeEditor.refresh();
       this.renderPrint();
       if (this.steps.length) {
         this.showStep();
@@ -265,22 +239,7 @@
       this.graph.render(step);
       this.stateText.textContent = window.ObjectReferenceGraph.describeState(step);
       this.output.textContent = step.output || '(no output yet)';
-      Array.from(this.code.children).forEach((line, index) => {
-        const current = index + 1 === step.line;
-        line.classList.toggle('is-current', current);
-        if (current) {
-          line.setAttribute('aria-current', 'step');
-          line.dataset.positionLabel = step.event === 'line' ? 'next' : step.event;
-        }
-        else line.removeAttribute('aria-current');
-      });
-      const currentLine = this.code.querySelector('.is-current');
-      if (currentLine) {
-        const pane = this.code.getBoundingClientRect();
-        const line = currentLine.getBoundingClientRect();
-        if (line.top < pane.top) this.code.scrollTop -= pane.top - line.top;
-        else if (line.bottom > pane.bottom) this.code.scrollTop += line.bottom - pane.bottom;
-      }
+      this.codeEditor.setPosition(step.line, eventLabel(step));
       this.status.textContent = 'Step ' + (this.index + 1) + ' of ' + this.steps.length + ' · ' + eventLabel(step)
         + (step.note ? '. ' + step.note : '');
       this.updateControls();
@@ -315,7 +274,6 @@
       this.pause();
       this.error.hidden = true;
       this.setTrace(null);
-      if (this.editDetails) this.editDetails.open = false;
       this.status.textContent = 'Loading Python… You can stop this run.';
       try {
         this.worker = new Worker(workerURL);
@@ -390,6 +348,7 @@
       this.cancelRun();
       this.pause();
       this.listeners.abort();
+      this.codeEditor.destroy();
       this.graph.destroy();
       this.printHistory.destroy();
       instances.delete(this.host);

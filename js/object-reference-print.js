@@ -53,7 +53,9 @@
     render({ code, steps, labelStep, explanation, variation, variationExplanation, error }) {
       this.width = 0;
       this.height = 0;
-      this.host.replaceChildren(element('p', 'orl-panel-title', 'Python code'), element('pre', 'orl-print-source', code));
+      const source = element('pre', 'orl-print-source');
+      source.append(window.ObjectReferenceCode.highlight(code));
+      this.host.replaceChildren(element('p', 'orl-panel-title', 'Python code'), source);
       const lines = code.split('\n');
       this.snapshots = steps.map((step, index) => this.appendSnapshot(step, index, lines, labelStep));
       if (!steps.length) {
@@ -77,7 +79,9 @@
       block.setAttribute('aria-labelledby', caption.id);
       block.append(caption);
       if (step.line > 0 && lines[step.line - 1] !== undefined) {
-        block.append(element('pre', 'orl-print-line', lines[step.line - 1]));
+        const sourceLine = element('pre', 'orl-print-line');
+        sourceLine.append(window.ObjectReferenceCode.highlight(lines[step.line - 1]));
+        block.append(sourceLine);
       }
       const description = window.ObjectReferenceGraph.describeState(step);
       const diagram = element('div', 'orl-print-diagram');

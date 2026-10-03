@@ -16,7 +16,6 @@ async function openLab(page) {
 
 async function openEditor(lab) {
   const editor = lab.getByRole('textbox', { name: 'Python code', exact: true });
-  if (!await editor.isVisible()) await lab.getByText('Edit Python code', { exact: true }).click();
   await expect(editor).toBeVisible();
   return editor;
 }
@@ -208,6 +207,7 @@ test.describe('Python object reference lab', () => {
       <script type="application/json">{"title":"Minimal example","code":"items = [1]"}</script>
       </div></main></body></html>`);
     await page.addScriptTag({ url: '/js/object-reference-graph.js' });
+    await page.addScriptTag({ url: '/js/object-reference-code.js' });
     await page.addScriptTag({ url: '/js/object-reference-print.js' });
     await page.addScriptTag({ url: '/js/object-reference-lab.js' });
     const lab = page.getByRole('region', { name: 'Object reference lab: Minimal example', exact: true });
@@ -428,7 +428,9 @@ test.describe('Python object reference lab', () => {
     expect(dimensions.width).toBeLessThanOrEqual(dimensions.viewport);
     expect(dimensions.diagramWidth).toBeLessThanOrEqual(dimensions.graphWidth + 1);
     expect(dimensions.editorFont).toBeGreaterThanOrEqual(dimensions.paragraphFont);
-    await expect(lab.getByRole('list', { name: 'Recorded Python source', exact: true })).toHaveAttribute('tabindex', '0');
+    const editor = lab.getByRole('textbox', { name: 'Python code', exact: true });
+    await editor.focus();
+    await expect(editor, 'the displayed source remains keyboard accessible').toBeFocused();
   });
 
   test('reduced motion keeps manual stepping available with no CSS animation', async ({ page }) => {

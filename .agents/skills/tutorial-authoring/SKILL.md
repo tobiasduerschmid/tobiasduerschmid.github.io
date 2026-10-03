@@ -1522,11 +1522,11 @@ The chapter include `{% include object-reference-lab.html example="shared_slots"
 embeds that same record directly in a static SEBook page; use the HTML marker
 inside tutorial YAML because its content is not processed as a Liquid template.
 
-Use `data-object-reference-editor="inline"` for labs integrated into the main
-instruction flow so learners can edit the example directly; the editor stays
-visible through tracing and reset. Omitting the attribute uses a collapsed
-editor, which is suitable for optional compact embeds. Static chapter includes
-select inline presentation with `editor="inline"`.
+Every lab now has one always-visible **Python code** editor beside the diagram.
+It combines editing, Python syntax highlighting, line numbers, and the current
+execution marker. The old `data-object-reference-editor="inline"` and include
+`editor="inline"` options remain harmless compatibility attributes; omitting
+them no longer hides the editor. Do not add a separate read-only source pane.
 
 The Python tutorial currently uses eight inline labs across seven lessons:
 
@@ -1584,13 +1584,19 @@ Function/module objects and classes without displayed data attributes are omitte
 from this visual view. The Reference details disclosure and each printed state’s
 text alternative preserve its complete graph, including primitive identities and
 scope information; they describe that state, not every skipped execution event.
-The source pane scrolls independently and follows the current execution line;
-the resizable editor remains visible for inline chapter embeds.
+The resizable native textarea scrolls independently and follows the execution
+line without changing selection. `js/object-reference-code.js` owns the inert,
+aria-hidden syntax mirror and line-number gutter; the textarea remains the only
+editable/accessibility source. Native typing, selection, undo, IME, and Tab
+navigation are preserved. Editing clears the old execution marker and trace.
+Keep mirror/input font metrics identical; tokens may change color, not glyph
+width. Forced-colors mode uses plain native input text and a gutter marker.
+Syntax is a lexical aid (f-string interiors stay string-colored), not a parser.
 
 Edits and playback are local to the mounted lab. They add no saved-progress
 fields, storage keys, tests, or completion credit. Ordinary tutorial files,
 assessments, and progress retain their existing behavior. The print view includes
-code and the same object cards, inline primitive values, and routed arrows for
+syntax-highlighted code and the same object cards, inline primitive values, and routed arrows for
 each visible playback state, with a text alternative. `js/object-reference-print.js`
 owns printable history and uses the shared graph renderer in static mode. Print
 geometry must be measured at the visible print width, not while the history is
@@ -1638,7 +1644,8 @@ reveals remain closed. Its existing `print-light-mode` policy also applies
 to the diagrams.
 
 The live, instructions-popout, and print layouts also load
-`js/object-reference-graph.js`, `js/object-reference-print.js`, then
+`js/object-reference-graph.js`, `js/object-reference-code.js`,
+`js/object-reference-print.js`, then
 `js/object-reference-lab.js`, plus `css/object-reference-lab.css` for the inline
 labs in §3.4. Load their stylesheet
 before `css/print-light.css`. Dynamic instruction rendering calls
@@ -1988,7 +1995,9 @@ channel.
   `initFrom(root)` mounts named or inline-JSON examples; `destroyWithin(root)`
   stops workers/playback and releases views before instruction replacement.
   `js/object-reference-graph.js` owns graph layout, rendering, and textual state
-  descriptions. `js/object-reference-print.js` reuses that renderer for static
+  descriptions. `js/object-reference-code.js` owns the unified native editor and
+  shared Python syntax presentation. `js/object-reference-print.js` reuses those
+  graph and syntax renderers for static
   printable history and releases its resources with the lab.
   `js/object-reference-worker.js` runs the bounded
   `js/object-reference-tracer.py` with the locally pinned Pyodide runtime in a

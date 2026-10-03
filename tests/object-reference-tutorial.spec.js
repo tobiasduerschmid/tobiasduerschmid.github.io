@@ -149,7 +149,7 @@ test('the populated member lab fits narrow instructions and remains accessible i
   await expect(lab.getByRole('region', { name: 'Program output', exact: true })).toHaveText(memberExample.output);
   await labButton(lab, 'Reset example').focus();
   await page.keyboard.press('Tab');
-  await expect(lab.getByRole('list', { name: 'Recorded Python source', exact: true })).toBeFocused();
+  await expect(lab.getByRole('textbox', { name: 'Python code', exact: true })).toBeFocused();
   const measurements = await lab.evaluate(region => ({
     viewport: window.innerWidth,
     pageWidth: document.documentElement.scrollWidth,
