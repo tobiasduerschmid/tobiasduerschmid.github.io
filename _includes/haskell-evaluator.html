@@ -1,0 +1,25 @@
+<section class="haskell-evaluator" data-haskell-evaluator data-example="{{ include.expression | escape }}"{% if include.prelude %} data-prelude-only{% endif %} hidden>
+  <p class="haskell-evaluator-title">Try an expression</p>
+  <p class="haskell-evaluator-context">{% if include.prelude %}Uses Haskell’s standard functions.{% else %}Uses the definitions in this code example.{% endif %}</p>
+  <div class="haskell-evaluator-log" role="log" aria-label="Expression transcript" aria-live="polite" aria-relevant="additions" tabindex="-1"></div>
+  <div class="haskell-evaluator-loading" role="progressbar" aria-label="Evaluating Haskell expression" hidden><span class="haskell-evaluator-spinner" aria-hidden="true"></span><span>Evaluating…</span></div>
+  <form class="haskell-evaluator-form">
+    <label><span>Haskell expression</span><input type="text" name="expression" autocomplete="off" autocapitalize="off" spellcheck="false" required></label>
+    <div class="haskell-evaluator-actions">
+      <button type="submit">Evaluate</button>
+      <button type="button" data-action="stop" hidden>Stop evaluation</button>
+    </div>
+  </form>
+  <p class="haskell-evaluator-status" role="status">Predict the result, then press Enter or Evaluate.</p>
+  <details class="haskell-evaluator-help">
+    <summary>History and help</summary>
+    <div class="haskell-evaluator-actions">
+      <button type="button" data-action="previous" disabled>Previous command</button>
+      <button type="button" data-action="next" disabled>Next command</button>
+      <button type="button" data-action="clear">Clear transcript</button>
+    </div>
+    <p>Change the expression to explore this example. Use <code>:type</code> (or <code>:t</code>) before an expression to inspect its type. Use <code>let x = 3 in x * x</code> for local definitions; names do not carry between commands or examples.</p>
+    <p>↑/↓ recall commands, Ctrl+L clears the transcript, and Ctrl+C stops evaluation or clears unfinished input. These Ctrl shortcuts also use Ctrl on macOS. Tab leaves the prompt.</p>
+    <p>{% if include.prelude %}The adjacent signatures are a read-only reference. {% else %}Edit the adjacent code to experiment; Reset code restores the original example. Edits last until you reload this page. {% endif %}Evaluation runs locally with the same MicroHs runtime as the <a href="{{ '/SEBook/tools/haskell-tutorial' | relative_url }}">Haskell tutorial</a>. Editing prepares the runtime; later expressions reuse it.</p>
+  </details>
+</section>

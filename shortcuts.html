@@ -82,12 +82,13 @@ info_nav_title: "Keyboard shortcuts"
   </table>
 
   <h2 id="haskell-interpreter">Haskell terminal</h2>
-  <p class="shortcuts-note">Open Terminal in a Haskell tutorial. These keys work while the Haskell expression field has focus; visible buttons provide the same actions.</p>
+  <p class="shortcuts-note">Open Terminal in a Haskell tutorial, or use an expression evaluator beside a Haskell example in the SEBook. These keys work while the Haskell expression field has focus; visible buttons provide the same actions.</p>
   <table class="shortcuts-table">
     <caption>Evaluate expressions and recall commands in the Haskell terminal.</caption>
     <thead><tr><th scope="col">Keys</th><th scope="col">Action</th></tr></thead>
     <tbody>
-      <tr><td class="shortcuts-keys-cell"><kbd>Enter</kbd></td><td>Evaluate the expression using the current editor code.</td></tr>
+      <tr><td class="shortcuts-keys-cell"><kbd>Enter</kbd></td><td>Evaluate the expression using the current tutorial editor code or the adjacent SEBook example, including your edits.</td></tr>
+      <tr><td class="shortcuts-keys-cell"><kbd>Tab</kbd></td><td>Move to the next control. In SEBook example code editors, Tab leaves the editor; use spaces to indent.</td></tr>
       <tr><td class="shortcuts-keys-cell"><kbd>↑</kbd><span class="key-sep">/</span><kbd>↓</kbd></td><td>Recall the previous or next command. Moving past the newest command restores your unfinished input.</td></tr>
       <tr><td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>L</kbd></td><td>Clear the Haskell terminal transcript while keeping command history. This terminal shortcut uses Ctrl on macOS too.</td></tr>
       <tr><td class="shortcuts-keys-cell"><kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>C</kbd></td><td>Interrupt evaluation or cancel unfinished input in the Haskell prompt. Selected input still uses the normal Copy action. This terminal shortcut uses Ctrl on macOS too.</td></tr>

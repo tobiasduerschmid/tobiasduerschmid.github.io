@@ -5,8 +5,10 @@ title: Haskell
 
 <script src="/js/unix-command-lab.js" defer></script>
 <script src="/js/program-output-lab.js" defer></script>
+<script type="module" src="/js/haskell/chapter-evaluator.js"></script>
 <link rel="stylesheet" href="/css/unix-command-lab.css">
 <link rel="stylesheet" href="/css/program-output-lab.css">
+<link rel="stylesheet" href="/css/haskell-evaluator.css">
 <link rel="stylesheet" href="/css/print-light.css">
 
 <!-- Authoring sources: CS131 intro_to_functional_programming_and_haskell_v10_handouts.pdf,
@@ -50,6 +52,8 @@ smallOrder :: Int
 smallOrder = deliveryCost 5 2
 ```
 
+{% include haskell-evaluator.html expression='deliveryCost 5 2' %}
+
 Read `::` as “has type”. `deliveryCost` takes two `Int` arguments and produces an `Int`; `smallOrder` names the result `11`. The `=` introduces a definition. It does not update a storage location each time execution reaches that line.
 
 The function has no hidden discount setting or changing counter. Given the same arguments, its result is the same. That makes a failing calculation reproducible: a test can supply `5` and `2` without recreating a sequence of global-state changes. Purity does not establish that the pricing rule is correct; a consistently wrong formula is still pure.
@@ -70,6 +74,8 @@ double x = 2 * x
 -- deliveryCost 5 2 = (deliveryCost 5) 2
 ```
 
+{% include haskell-evaluator.html expression='double (3 + 1)' %}
+
 Application groups to the **left**: `f x y` means `(f x) y`. Parentheses change grouping; they are not a general requirement around an argument list. `deliveryCost (5, 2)` supplies one tuple and therefore does not match this function's interface.
 
 Grouping describes the expression's structure, **not an instruction to evaluate arguments from left to right**. In `double (3 + 1)`, the argument to `double` is the expression `3 + 1`. How much of an argument must be evaluated depends on how the function uses it; we will revisit that under demand.
@@ -88,6 +94,8 @@ ticketPrice age
   | age < 18  = 8
   | otherwise = 12
 ```
+
+{% include haskell-evaluator.html expression='ticketPrice 17' %}
 
 An `if` is an expression: it needs both branches, and the branches must have the same type. Returning `0` on one path and `"free"` on another mixes a number and text. Decide whether the function should compute a price or describe one before changing the annotation.
 
@@ -118,6 +126,8 @@ invoiceWithLet unitPrice quantity =
   in subtotal + fee
 ```
 
+{% include haskell-evaluator.html expression='invoice 12 4' %}
+
 `where` attaches local bindings to a definition; `let ... in ...` is itself an expression. Both versions give names to intermediate ideas without exposing them as global definitions. The local expressions can refer to the enclosing parameters. Indentation groups the bindings, so align `subtotal` and `fee`.
 
 # Types
@@ -136,6 +146,8 @@ submission = ("parser.hs", 12)
 -- snd submission = 12
 ```
 
+{% include haskell-evaluator.html expression='fst submission' %}
+
 `fst` and `snd` select the components of a **pair**, not an arbitrary-size tuple. A list can have varying length but requires one element type. `[("a.hs", 12), ("b.hs", 9)]` is a list of `(String, Int)` pairs; `["a.hs", 12]` is not such a list.
 
 The compiler can infer types from definitions. Explicit signatures still communicate the intended interface and make disagreements easier to locate. Consider:
@@ -144,6 +156,8 @@ The compiler can infer types from definitions. Explicit signatures still communi
 label :: Int -> String
 label n = show n
 ```
+
+{% include haskell-evaluator.html expression='label 12' %}
 
 Removing `show` would leave a body that returns the input number. Changing the signature to `Int -> Int` would make that version type-check, but it would also change the interface. If the caller needs display text, the conversion belongs in the implementation.
 
@@ -156,6 +170,8 @@ swap (x, y) = (y, x)
 duplicate :: a -> (a, a)
 duplicate x = (x, x)
 ```
+
+{% include haskell-evaluator.html expression='swap (True, 7)' %}
 
 Lowercase type variables stand for types. Within one use of `duplicate`, both output fields have the same type as the input. Separate uses can choose different types: `duplicate True` and `duplicate 'q'` are both valid. In `swap`, `a` and `b` may be different types, but they are also allowed to be the same.
 
@@ -170,6 +186,8 @@ same x y = x == y
 larger :: Ord a => a -> a -> a
 larger x y = if x >= y then x else y
 ```
+
+{% include haskell-evaluator.html expression='larger 12 9' %}
 
 Read `Eq a =>` as “for types `a` that support equality”. `Ord` supports ordering and includes equality. Other familiar constraints include `Num` for numeric operations, `Fractional` for `/`, and `Show` for conversion to display text. A type class describes supported operations; it is not an object-oriented class containing instances with mutable fields.
 
@@ -195,6 +213,8 @@ If scores are quantities, represent validated scores as numbers before ranking t
 -- "ab" ++ "cd"   = "abcd"
 ```
 
+{% include haskell-evaluator.html expression='[1,2] : [[3]]' %}
+
 `(:)` adds **one element** to the front of a list. `(++)` joins **two lists** with the same element type. In the third example, the elements are themselves lists. Predict the type as well as the printed value; that exposes a nesting error before it reaches a later function.
 
 Ranges such as `[2..5]` include the endpoint when it is reached; `[2,4..10]` uses the first two values to establish the step. `length` counts a finite list, `take n` keeps a prefix, and `drop n` skips one. `head` and `tail` require a nonempty list. Pattern matching often makes that boundary clearer than calling a partial operation and hoping its precondition holds.
@@ -208,6 +228,8 @@ totalSquares :: [Int] -> Int
 totalSquares [] = 0
 totalSquares (x:xs) = x * x + totalSquares xs
 ```
+
+{% include haskell-evaluator.html expression='totalSquares [2,3]' %}
 
 For a finite list, `xs` is smaller than `x:xs`. Assume the recursive call gives the sum of squares of the remaining elements. The current case contributes `x * x` and combines it with that result. The base result `0` contributes nothing to a sum; it is chosen for that meaning, not because all recursion should return zero.
 
@@ -235,6 +257,8 @@ nearbyPairs = [(x,y) | x <- [1..3], y <- [x..3], x /= y]
 -- Result: [(1,2),(1,3),(2,3)]
 ```
 
+{% include haskell-evaluator.html expression='nearbyPairs' %}
+
 Read this as: choose `x`; for each `x`, choose `y` from its dependent range; keep candidates where `x /= y`; produce `(x,y)`. The leftmost generator supplies the outer grouping of results. The expression before `|` determines the output element type.
 
 Use a comprehension when the candidate sources and conditions make the relationship easy to read. Use structural recursion when the next step depends on the remaining structure or accumulated state. For instance, “keep every affordable item” differs from “stop at the first item that would exceed a running budget”. A filter over independent items cannot express that second rule by itself.
@@ -247,6 +271,8 @@ Use a comprehension when the candidate sources and conditions make the relations
 map    :: (a -> b) -> [a] -> [b]
 filter :: (a -> Bool) -> [a] -> [a]
 ```
+
+{% include haskell-evaluator.html expression=':type map' prelude=true %}
 
 These are library signatures, not definitions to add to your program. `map` transforms each element and may change its type. `filter` selects elements using a predicate and preserves their type. A **higher-order function** accepts or returns a function; both `map` and `filter` accept one as an argument.
 
@@ -263,6 +289,8 @@ finalPrices = filter affordable (map addFee [6,9])
 -- map addFee [6,9] = [9,12]
 -- finalPrices = [9]
 ```
+
+{% include haskell-evaluator.html expression='finalPrices' %}
 
 The order encodes a requirement. `map addFee (filter affordable [6,9])` gives `[9,12]`: it selects using the original price. Both pipelines type-check. Choose the first if the final charged price must be at most `10`; choose the second if eligibility is based on the original price. An intermediate value and a boundary example explain more than the claim that one order “looks cleaner”.
 
@@ -284,6 +312,8 @@ shadowExample = let amount = 100 in addFive 2
 -- Result: 7
 ```
 
+{% include haskell-evaluator.html expression='shadowExample' %}
+
 `makeAdder` is higher-order because it returns a function. `addFive` is a function value that retains access to the `amount` bound when it was created. This combination of behavior and its lexical environment is a **closure**. The unrelated local `amount` at the call site does not change it. This matters when configuring callbacks: the place where a function is defined determines which binding it refers to.
 
 Name a helper when the name explains a reusable idea. A short lambda can make a local transformation readable; a large anonymous body can hide that idea.
@@ -302,6 +332,8 @@ addTuple (x,y) = x + y
 -- addTuple (5,2) :: Int
 ```
 
+{% include haskell-evaluator.html expression='add 5 2' %}
+
 Function arrows group to the **right**: `Int -> Int -> Int` means `Int -> (Int -> Int)`. `add` is equivalent to `\x -> (\y -> x + y)`. Representing a multi-argument operation as successive one-argument functions is **currying**. Supplying only some arguments, as in `add 5`, is **partial application**: the result awaits the remaining argument. The tuple version instead accepts one pair.
 
 Argument order becomes an interface decision. A function taking configuration first lets callers reuse a configured function, such as `deliveryCost 5`, across many quantities. A tuple interface may suit data already stored as pairs, but `addTuple 5` does not partially configure it.
@@ -312,6 +344,8 @@ To derive a higher-order type, follow the flow of values:
 through :: (a -> b) -> (b -> c) -> a -> c
 through f g x = g (f x)
 ```
+
+{% include haskell-evaluator.html expression=':type through' %}
 
 Start with `x :: a`. Because `f` accepts `x`, write `f :: a -> b`. Because `g` accepts the result of `f`, write `g :: b -> c`. The whole result is `c`. The shared `b` is the connection between the stages; forcing `a`, `b`, and `c` to be the same type would restrict a useful interface.
 
@@ -334,6 +368,8 @@ totalFrom acc [] = acc
 totalFrom acc (x:xs) = totalFrom (acc + x) xs
 ```
 
+{% include haskell-evaluator.html expression='totalFrom 10 [2,3]' %}
+
 The accumulator represents the initial amount plus the elements already processed. The remaining list represents work still to do. At the empty case, no work remains, so return the accumulator. `totalFrom 10 [2,3]` therefore gives `15`. An accumulator need not be numeric: it might hold a count and a total in a pair, or a record of a simulated system.
 
 `foldl` packages this pattern for a list:
@@ -345,6 +381,8 @@ The accumulator represents the initial amount plus the elements already processe
 -- foldl (+) 10 [2,3] = 15
 -- foldl (-) 10 [2,3] = (10 - 2) - 3 = 5
 ```
+
+{% include haskell-evaluator.html expression='foldl (-) 10 [2,3]' %}
 
 The combining function receives the accumulator first and the next element second, then returns the next accumulator. The seed and final result have type `b`; elements have type `a`. They need not be the same type.
 
@@ -359,6 +397,8 @@ positive = [1..]
 negative :: Integer -> Bool
 negative n = n < 0
 ```
+
+{% include haskell-evaluator.html expression='take 2 (filter even positive)' %}
 
 `positive` describes an unbounded sequence. A program need not construct the entire sequence before a consumer can use its prefix. Conversely, asking to display the entire list cannot finish.
 
@@ -398,6 +438,8 @@ deliveryLabel Collect = "Collect at desk"
 deliveryLabel (Ship address) = "Ship to " ++ address
 ```
 
+{% include haskell-evaluator.html expression='deliveryLabel Collect' %}
+
 `Priority` is a type with two constructor values. `Delivery` has alternatives with different shapes: `Collect` has no payload; `Ship` carries a `String`. `Ship :: String -> Delivery` is a constructor function, while `Ship "West Hall" :: Delivery` is a constructed value. Type and constructor names start with uppercase letters.
 
 A type built from alternatives and their fields in this way is an **algebraic data type**. The declaration makes its possible shapes explicit.
@@ -418,6 +460,8 @@ addCredits :: Int -> Account -> Account
 addCredits amount (Account name balance) =
   Account name (balance + amount)
 ```
+
+{% include haskell-evaluator.html expression='addCredits 5 (Account "Ada" 20)' %}
 
 The field declarations provide selectors such as `owner :: Account -> String` and `credits :: Account -> Int`. The pattern binds the old fields; the final expression constructs the result. For `old = Account "Ada" 20` and `new = addCredits 5 old`, `credits old` remains `20` and `credits new` is `25`.
 
@@ -442,6 +486,8 @@ exampleExpr = Times (Plus (Number 2) (Number 3)) (Number 4)
 -- evaluate exampleExpr = 20
 ```
 
+{% include haskell-evaluator.html expression='evaluate exampleExpr' %}
+
 `Plus` and `Times` hold child expressions. The interpreter follows that shape: one base case and one recursive equation for each compound constructor. This is the same reasoning used for list recursion, applied to a branching structure. Compilers, formula editors, and configuration languages need this distinction between a representation and a computation over it.
 
 **Extend the model:** if you add `Negate Expr`, what equation must `evaluate` gain? Which existing example would fail to reveal a missing new case?
@@ -462,6 +508,8 @@ data Folder = Folder String [Folder]
 folderCount :: Folder -> Int
 folderCount (Folder _ children) = 1 + sum (map folderCount children)
 ```
+
+{% include haskell-evaluator.html expression='folderCount (Folder "root" [])' %}
 
 `map folderCount children` produces one count per child folder. `sum` adds those counts, and `1` includes the current folder. A leaf has an empty child list, so its count is `1 + sum []`, or `1`. The base case is carried by the empty list; this model does not need a separate leaf constructor.
 
@@ -488,6 +536,8 @@ original = Stop "A" (Stop "B" (Stop "C" End))
 updated :: Trail
 updated = removeStop 1 original
 ```
+
+{% include haskell-evaluator.html expression='updated' %}
 
 The contract uses a zero-based position; negative and out-of-range positions leave the sequence of stops unchanged. Removing position `1` keeps A, removes B, and returns the suffix beginning at C. The retained prefix must point to the new tail, so the definition reconstructs that prefix instead of changing the old one.
 

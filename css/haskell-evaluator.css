@@ -1,0 +1,199 @@
+/* Chapter examples pair a native, highlighted editor with a lightweight prompt. */
+.haskell-example {
+  --he-surface: #f5f8fc;
+  --he-input: #fff;
+  --he-text: #18354a;
+  --he-muted: #465a6b;
+  --he-border: #687e90;
+  --he-accent: #07598d;
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: start;
+  gap: 1em;
+  margin-block: 1em 1.5em;
+}
+html.dark-mode .haskell-example {
+  --he-surface: #182532;
+  --he-input: #101923;
+  --he-text: #eef5fc;
+  --he-muted: #c0cedb;
+  --he-border: #8d9fae;
+  --he-accent: #8cd2ff;
+}
+.haskell-example > .language-haskell { min-width: 0; margin: 0; }
+.haskell-example > .language-haskell pre { margin: 0; }
+#main-content .haskell-evaluator {
+  min-width: 0;
+  margin: 0;
+  padding: 1em;
+  border: 1px solid var(--he-border);
+  border-radius: 6px;
+  background: var(--he-surface);
+  color: var(--he-text);
+  font-size: inherit;
+}
+.haskell-evaluator[hidden], .haskell-evaluator [hidden] { display: none !important; }
+#main-content .haskell-evaluator p { color: inherit; font-size: 1em; margin: 0 0 .65em; line-height: 1.5; }
+#main-content .haskell-evaluator .haskell-evaluator-title { font-weight: 700; }
+#main-content .haskell-evaluator .haskell-evaluator-context,
+#main-content .haskell-evaluator .haskell-evaluator-status { color: var(--he-muted); font-size: .9em; }
+.haskell-evaluator-form label { display: block; font: inherit; margin: 0; }
+.haskell-evaluator-form label > span { display: block; margin-bottom: .35em; }
+.haskell-evaluator input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: .5em;
+  border: 1px solid var(--he-border);
+  border-radius: 4px;
+  background: var(--he-input);
+  color: var(--he-text);
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+.haskell-evaluator-actions { display: flex; flex-wrap: wrap; gap: .5em; margin-block: .65em; }
+.haskell-example button {
+  font: inherit;
+  padding: .4em .7em;
+  min-height: 2.25em;
+  border: 1px solid var(--he-border);
+  border-radius: 4px;
+  background: var(--he-input);
+  color: var(--he-accent);
+  cursor: pointer;
+}
+.haskell-example button:hover:not(:disabled) { text-decoration: underline; }
+.haskell-example button:disabled { color: var(--he-muted); cursor: default; }
+.haskell-example :is(input, textarea, button, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--he-accent);
+  outline-offset: 3px;
+}
+.haskell-example :is(input, textarea, button, summary, [tabindex]) { scroll-margin-block: 8em 2em; }
+.haskell-evaluator-log:empty { margin-bottom: 0; }
+.haskell-evaluator-log { max-height: 14em; overflow: auto; margin-bottom: .75em; }
+#main-content .haskell-evaluator-log pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  font-size: 1em;
+  line-height: 1.5;
+  padding: .35em 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: var(--he-text);
+}
+#main-content .haskell-evaluator-help { margin: .5em 0 0; }
+.haskell-evaluator-help summary { cursor: pointer; min-height: 1.5em; }
+.haskell-evaluator-help p { overflow-wrap: anywhere; }
+.haskell-evaluator-help a { color: var(--he-accent); text-decoration: underline; }
+.haskell-evaluator-loading { display: flex; align-items: center; gap: .65em; margin-block: .75em; }
+.haskell-evaluator-spinner {
+  display: inline-block;
+  width: 1.2em;
+  height: 1.2em;
+  flex: 0 0 auto;
+  border: 3px solid var(--he-border);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: haskell-evaluator-spin .8s linear infinite;
+}
+@keyframes haskell-evaluator-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .haskell-evaluator-spinner { animation: none; }
+}
+.haskell-source { color: var(--he-text); font-size: inherit; }
+.haskell-source-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5em; }
+.haskell-source-header label { font: inherit; font-weight: 700; margin: 0; }
+#main-content .haskell-source-hint { font-size: .9em; line-height: 1.5; margin: .5em 0; color: var(--he-muted); }
+.haskell-source-body { position: relative; background: var(--he-input); border: 1px solid var(--he-border); border-radius: 4px; }
+#main-content .haskell-source-mirror { position: absolute; inset: 0; overflow: hidden; pointer-events: none; margin: 0; background: transparent; }
+#main-content .haskell-source :is(textarea, pre, code) {
+  box-sizing: border-box;
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  line-height: 1.55;
+  letter-spacing: normal;
+  tab-size: 8;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  background: transparent;
+  text-shadow: none;
+}
+#main-content .haskell-source :is(textarea, pre) { padding: .8em; }
+body #main-content .haskell-example .haskell-source pre { overflow: visible; width: max-content; min-width: 100%; max-width: none; }
+body #main-content .haskell-example .haskell-source code {
+  display: block;
+  padding: 0;
+  max-width: none;
+  color: var(--he-text);
+  /* The chapter's narrow-screen rule forces wrapping on static code. Native
+     textarea and mirror must instead scroll together without reflowing tokens. */
+  white-space: pre !important;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+#main-content .haskell-source textarea {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 7em;
+  resize: vertical;
+  color: transparent;
+  caret-color: var(--he-text);
+}
+.haskell-source textarea::selection { background: #165d91; color: #fff; }
+.haskell-source .haskell-token-comment { color: #356435; }
+.haskell-source .haskell-token-keyword { color: #6334a5; }
+.haskell-source :is(.haskell-token-string, .haskell-token-number) { color: #006747; }
+.haskell-source .haskell-token-type { color: #075b7b; }
+html.dark-mode .haskell-source .haskell-token-comment { color: #a4c793; }
+html.dark-mode .haskell-source .haskell-token-keyword { color: #d3afff; }
+html.dark-mode .haskell-source :is(.haskell-token-string, .haskell-token-number) { color: #8fe0b5; }
+html.dark-mode .haskell-source .haskell-token-type { color: #90d7f3; }
+@media (forced-colors: active) {
+  #main-content .haskell-source textarea { color: CanvasText; caret-color: CanvasText; }
+  #main-content .haskell-source-mirror { visibility: hidden; }
+}
+@media (max-width: 1100px) {
+  .haskell-example { grid-template-columns: minmax(0, 1fr); }
+}
+@media print {
+  .haskell-example-print-group { break-inside: avoid; }
+  /* Flatten the screen grid; print the full source without editor scrollbars. */
+  .haskell-example, .haskell-source, .haskell-source-body,
+  #main-content .haskell-source-mirror { display: block; }
+  #main-content :is(h1, h2, h3, p):has(+ .haskell-example),
+  #main-content :is(h1, h2, h3):has(+ p + .haskell-example) { break-after: avoid; }
+  .haskell-example .haskell-evaluator { display: none !important; }
+  .haskell-source-header, #main-content .haskell-source-hint,
+  #main-content .haskell-source textarea { display: none !important; }
+  .haskell-source-body { border: 0; background: #fff; }
+  #main-content .haskell-source-mirror {
+    position: static;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible;
+    visibility: visible;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  body #main-content .haskell-example .haskell-source pre {
+    width: auto;
+    min-width: 0;
+    transform: none !important;
+    padding: .5em;
+    margin: .75em 0 !important;
+    border: 1px solid #ddd !important;
+    break-before: avoid;
+    break-inside: avoid;
+  }
+  body #main-content .haskell-example .haskell-source :is(pre, code) { white-space: pre-wrap !important; overflow-wrap: anywhere; }
+  body #main-content .haskell-example .haskell-source code, #main-content .haskell-source code span { color: #000 !important; }
+}

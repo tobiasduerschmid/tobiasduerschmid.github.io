@@ -106,6 +106,20 @@ If you must rename one of these, either pin the new heading with `## New Title {
 
 ## Standard page furniture
 
+**Haskell expression companions.** Add
+`{% include haskell-evaluator.html expression='shadowExample' %}` immediately
+after a complete `haskell` fence. Load `/js/haskell/chapter-evaluator.js` as a
+module and `/css/haskell-evaluator.css` before `/css/print-light.css`. Each prompt
+uses only the adjacent fence plus Prelude; `prelude=true` supports library
+signature reference blocks without treating those signatures as definitions.
+Choose a finite starting expression without revealing an unanswered exercise.
+Native textareas keep examples editable with syntax highlighting and Reset code;
+library signature references stay read-only. One sandboxed MicroHs runtime starts
+on actual editing or the first Evaluate and reuses the tutorial adapter's compilation
+cache. History and edits are session-only; print shows the complete current source
+and hides interactive controls. See `docs/haskell-chapter-evaluator.md` for
+lifecycle, limits, and verification. Do not auto-enhance quiz or puzzle code.
+
 Front matter — minimal:
 
 ```yaml
