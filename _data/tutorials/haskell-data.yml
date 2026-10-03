@@ -1,5 +1,5 @@
 title: "Haskell 3: Data and Persistent Programs"
-description: "Build recursive data structures and a pure expedition simulator. For programmers who have completed the first two Haskell tutorials; allow about 100–115 minutes, with breaks between steps."
+description: "Build recursive data structures and a pure expedition simulator. For programmers who have completed the first two Haskell tutorials; allow about 100–115 minutes, with breaks between steps. Optional written rehearsals add about 10 minutes."
 learning_objectives:
   - "Apply algebraic variants and record fields to represent different kinds of values."
   - "Analyze type variables and the constraints required by operations on generic function arguments."
@@ -905,6 +905,7 @@ steps:
 
   # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, physical pp. 87–94, 129–142.
   # Assessment: CS131 Fall 25 Quiz 1 v1.docx, Problem 4(a,b): define an n-ary tree and count nonempty nodes.
+  # Assessment: [Final] F23 (Public).pdf, Problem 1(c), p. 5: recover nested ADT declarations from constructor uses.
   # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 2, pp. 3–4: traverse children even when this node does not match.
   # Pedagogy: worked-example fading and interleaving — tree recursion plus a fold.
   - title: "Branching Data"
@@ -924,6 +925,7 @@ steps:
 
       - Analyze the difference between a node's payload and its children.
       - Combine recursive results across an arbitrary number of children.
+      - Reconstruct nested and recursive data declarations from their uses.
 
       ### Two lists with different jobs
 
@@ -968,6 +970,42 @@ steps:
       Repair `countLabeled :: Route -> Int`. Count every node whose own labels list is nonempty. Do not count `NoRoute`, and do not stop traversing a real node just because its labels list is empty.
 
       The current-node contribution is already supplied. Decide how to turn the child list into a single additional count. You may use a fold over recursive child counts or an equivalent recursive helper. Before testing, draw up two tiny examples that distinguish “number of labels” from “number of labeled nodes,” and predict their intermediate child counts as well as their totals.
+
+      ### Optional written rehearsal: recover the representation
+
+      Allow about three minutes. The following consumers and sample have lost their two `data` declarations. **Write complete declarations for `Load` and `Store` before using Run or opening the model.** Use exactly the constructors shown, in the field order their uses require. Counts have type `Integer`; labels have type `String`. Include `deriving Show` for each type.
+
+      ```haskell
+      loadUnits :: Load -> Integer
+      loadUnits (Singles n) = n
+      loadUnits (Bundle label n) = n
+
+      storedUnits :: Store -> Integer
+      storedUnits Vacant = 0
+      storedUnits (Rack load children) =
+        loadUnits load + foldl (+) 0 (map storedUnits children)
+
+      stock :: Store
+      stock = Rack (Bundle "glass" 4) [Vacant, Rack (Singles 5) []]
+      ```
+
+      For each constructor, record its field types and result type. Explain why the children of `Rack` must be stores rather than loads, and why `Bundle` is nested inside a field instead of being another Store alternative. Predict `storedUnits stock` and `storedUnits Vacant`.
+
+      Then add your declarations and the supplied code above `main`. Change `main` to print `(storedUnits stock, storedUnits Vacant)` and use **Run**. **Manual check:** expect `(9,0)`; also check the constructor types against every pattern and the sample. **Test My Work** checks `countLabeled`, not these declarations or your written reasoning.
+
+      <details markdown="1">
+      <summary>Compare the representation after writing your answer</summary>
+
+      ```haskell
+      data Load = Singles Integer | Bundle String Integer
+        deriving Show
+      data Store = Vacant | Rack Load [Store]
+        deriving Show
+      ```
+
+      `Singles :: Integer -> Load` and `Bundle :: String -> Integer -> Load` construct payloads. `Vacant :: Store` represents no storage node; `Rack :: Load -> [Store] -> Store` constructs one node with any number of child stores. The recursive `[Store]` field permits arbitrary finite depth. `Rack` receives one Load value, which may choose either Load constructor. Equivalent declarations with these constructor interfaces are valid; layout and ordering of alternatives do not affect the result.
+
+      </details>
     files:
       - path: "Main.hs"
         language: haskell
@@ -1262,7 +1300,8 @@ steps:
 
   # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, physical pp. 129–142.
   # Assessment: [Final] S23 V1 (Public).pdf, Problem 2(B), p. 6: recursively transform expression trees.
-  # Transfer: evaluation practices its constructor/child recursion prerequisite; it is not the full optimizer task.
+  # Transfer: evaluation practices constructor/child recursion; optional group reordering
+  # makes the parent decision depend on transformed children without copying the optimizer.
   # Pedagogy: transfer with faded scaffolding — new domain, familiar recursive structure.
   - title: "Expression Trees"
     key: expression-trees
@@ -1281,6 +1320,7 @@ steps:
 
       - Analyze how constructors represent expression grouping.
       - Create an evaluator from the meaning of each constructor.
+      - Transform a tree using the results of transforming its children.
 
       ### Data that describes a computation
 
@@ -1299,6 +1339,65 @@ steps:
       Implement `eval :: Expr -> Integer` for every finite expression built from `Number`, `Plus`, and `Times`. A number evaluates to its payload. A compound expression evaluates its child expressions and combines their results using its stated operation.
 
       Keep the constructors as supplied; choose your own helper structure. Test a number alone, one operation, and nested operations with different grouping. Then explain why adding special cases for the displayed sample would miss the purpose of a recursive evaluator.
+
+      ### Optional written rehearsal: transform children before deciding
+
+      Allow about seven minutes after completing `eval`. A display groups numbered cards into pairs:
+
+      ```haskell
+      data Layout = Card Integer | Beside Layout Layout deriving Show
+
+      firstCard :: Layout -> Integer
+      firstCard (Card n) = n
+      firstCard (Beside left right) = firstCard left
+
+      cards :: Layout -> [Integer]
+      cards (Card n) = [n]
+      cards (Beside left right) = cards left ++ cards right
+      ```
+
+      **Write `arrange :: Layout -> Layout` on paper before using Run or revealing the model.** Assume a finite layout. Keep a lone card unchanged. At every `Beside`, arrange both children first, then put the child whose **arranged first card is smaller** on the left. If those numbers are equal, retain the children's order. Only swap whole children: preserve every card, including duplicates, and retain the grouping within each child apart from its own recursive swaps. Do not flatten and rebuild the layout as a globally sorted list.
+
+      Start by predicting the arranged tree and its `cards` list for each input:
+
+      ```haskell
+      display = Beside (Beside (Card 9) (Card 2))
+                       (Beside (Card 4) (Card 3))
+      tied = Beside (Card 5) (Beside (Card 7) (Card 5))
+      ```
+
+      Explain why comparing the original first cards, 9 and 4, would make the wrong decision at the root of `display`. Your implementation may use helper equations, guards, and local bindings; helper names and layout are your choice.
+
+      Add the supplied declarations and your function above `main`, keeping `Expr` and `eval`. Then use a `main = do` block with indented `print` calls for `arrange display`, `(cards display, cards (arrange display))`, and `arrange tied`. **Manual check:** compare both structure and contents with these expected results:
+
+      ```haskell
+      Beside (Beside (Card 2) (Card 9)) (Beside (Card 3) (Card 4))
+      ([9,2,4,3],[2,9,3,4])
+      Beside (Card 5) (Beside (Card 5) (Card 7))
+      ```
+
+      The first output retains both groups even though 9 still precedes 3. The second retains all original cards and shows that `display` remains unchanged. The third checks a tie that appears only after arranging a child. Also try `Card (-4)`, which must remain unchanged, and `Beside (Card 8) (Card 2)`, which must swap its children. **Test My Work** checks the expression evaluator only; it does not assess `arrange` or these predictions.
+
+      <details markdown="1">
+      <summary>Compare one model after writing and checking your transformation</summary>
+
+      ```haskell
+      arrange :: Layout -> Layout
+      arrange (Card n) = Card n
+      arrange (Beside left right) =
+        let arrangedLeft = arrange left
+            arrangedRight = arrange right
+        in orderChildren arrangedLeft arrangedRight
+
+      orderChildren :: Layout -> Layout -> Layout
+      orderChildren left right
+        | firstCard left <= firstCard right = Beside left right
+        | otherwise = Beside right left
+      ```
+
+      Each recursive call returns a Layout, not a number. At the root of `display`, the arranged children begin with 2 and 3, so their order stays as it is. In `tied`, they both begin with 5, so the original left child remains first. The helper examines the transformed children and returns them whole, preserving cards and group structure. A solution that satisfies the same rules with different helpers or equations is equally valid.
+
+      </details>
     files:
       - path: "Main.hs"
         language: haskell

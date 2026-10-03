@@ -6,7 +6,7 @@
 # Pedagogical arc: distinguish transformations → bind behavior → infer types →
 # reduce data → repair recursive accumulators → choose a pipeline independently.
 title: "Haskell 2: Functions and Laziness"
-description: "An interactive course for programmers who have completed Haskell 1 or can use lists, tuples, pattern matching, and recursion. Build higher-order functions, derive types, and trace accumulators and finite lazy-list results. Plan about 80–100 minutes."
+description: "An interactive course for programmers who have completed Haskell 1 or can use lists, tuples, pattern matching, and recursion. Build higher-order functions, derive types, and trace accumulators and finite lazy-list results. Plan about 80–100 minutes. Optional written rehearsals add about 11 minutes."
 learning_objectives:
   - "Apply map and filter according to whether a task transforms or selects values."
   - "Analyze lambda bindings, lexical scope, and the types of partially applied functions."
@@ -685,6 +685,51 @@ steps:
       For example, `convertPairs length [("a","hi"),("a","")]` returns `[("a",2),("a",0)]`. In another call, labels could be Booleans and values could be lists of integers.
 
       First write its most general type signature, using separate type variables for the label, original value, and converted value. Then implement it with `map` and a lambda that unpacks a pair. Add one example where the conversion changes the value's type. The checks also accept an equivalent recursive implementation.
+
+      ### Optional Rehearsal: Derive the Whole Interface
+
+      Allow about six minutes. Write your answers **before Run or opening the feedback**. This function transforms each row, then renders the transformed list:
+
+      ```haskell
+      describeRows transform render rows =
+        render (map transform rows) ++ "!"
+
+      sizeReport = describeRows length (\sizes -> show sizes)
+      ```
+
+      1. Derive the most general type of `describeRows`. Name the type of `rows`, of `map transform rows`, and of `render`'s result. Then write the same function type with all the result arrows explicitly grouped.
+      2. Derive `sizeReport`'s remaining type. Must its rows be strings? Predict its results for `["oak", ""]` and `[[], [True, False]]`.
+      3. In a separate copy, replace `map transform rows` with `map transform (rows ++ [""])`. Derive the new most general interface. Which input type does that one extra expression constrain, and which type remains flexible?
+
+      **Manual check:** Test My Work assesses `convertPairs`, not these written derivations. After committing to your answers, compare the reasoning below. You can add the functions and your signatures above `main` to check both predictions, then restore the main exercise. A compiling specialized signature alone does not establish that you found the most general type.
+
+      <details markdown="1">
+      <summary>Check the linked types and specialization</summary>
+
+      Give each original row type `a` and each transformed row type `b`. Then `rows :: [a]`, `transform :: a -> b`, and the mapped list has type `[b]`. Appending `"!"` requires the result of `render` to be a `String`, so `render :: [b] -> String`.
+
+      ```haskell
+      describeRows :: (a -> b) -> ([b] -> String) -> [a] -> String
+
+      -- The same type, with result arrows grouped:
+      describeRows ::
+        (a -> b) -> (([b] -> String) -> ([a] -> String))
+
+      sizeReport :: [[a]] -> String
+      ```
+
+      `length` accepts a list of any element type and returns an `Int`. Thus each original row becomes `[a]`, each transformed row becomes `Int`, and the renderer receives `[Int]`. The two predictions are `"[3,0]!"` and `"[0,2]!"`. Boolean rows work too; nothing inspects their elements.
+
+      In the changed body, `rows ++ [""]` makes `rows` a list of strings. The transformation's result is still unconstrained:
+
+      ```haskell
+      describeRows ::
+        (String -> b) -> ([b] -> String) -> [String] -> String
+      ```
+
+      The two `describeRows` signatures in the first block are alternative notations, not declarations to paste together. Write one per definition.
+
+      </details>
     files:
       - path: Main.hs
         language: haskell
@@ -1032,6 +1077,21 @@ steps:
       For example, `tallyFrom (2,1) null ["","oak",""]` returns `(4,2)`: two more empty strings and one more nonempty string. The same function must also accept predicates on numbers, Boolean values, or lists.
 
       Keep the call recursive and pass the updated pair to the tail call. Explain why each branch updates exactly one count. Then write the type of `tallyFrom (2,1) null` in a comment. The count pair is fixed, but the element type of each list tested by `null` remains arbitrary.
+
+      Also derive the type of `tallyFrom (2,1)` with **only the seed supplied**. What arguments are still missing? Write your answer before opening the check. This is a manual type exercise; Test My Work checks the counting behavior.
+
+      <details markdown="1">
+      <summary>Check the type after supplying only the seed</summary>
+
+      The remaining function still accepts a predicate and then a list:
+
+      ```haskell
+      tallyFrom (2,1) :: (a -> Bool) -> [a] -> (Int, Int)
+      ```
+
+      The predicate's input and the list's element must share `a`. Supplying `null :: [b] -> Bool` next makes that `a` a list type `[b]`, leaving `[[b]] -> (Int, Int)`. Fixing the numeric seed alone does not make the input items numeric.
+
+      </details>
     files:
       - path: Main.hs
         language: haskell
@@ -1207,6 +1267,36 @@ steps:
       ### A Bound Still Needs Matches
 
       A finite requested output is not a guarantee of termination: searching the growing "road" prefixes for one longer than four characters will never find its first match. `take` stops after enough results arrive; it cannot make a predicate find a match that does not exist.
+
+      ### Optional Rehearsal: A List of Functions
+
+      Allow about five minutes. A supplied interval function passes its two endpoints to a function you choose. The endpoint values become a pair, a number, or another result only when that chosen function uses them:
+
+      ```haskell
+      interval start = \use -> use start (start + 2)
+      intervals = map interval [0..]
+      ```
+
+      **Write before Run or opening the feedback:** implement `bounds item` to obtain an endpoint pair from one interval, and `midpoint item` to obtain its integer midpoint. Each helper must call `item` with a suitable lambda; use `div` for integer division. Then write expressions that obtain the first three endpoint pairs and the midpoints of the next two intervals after skipping three. Predict both resulting lists. Explain what kind of value `head intervals` is before either helper calls it.
+
+      **Manual check:** Test My Work assesses `firstMatches`, not this rehearsal. Compare your two callbacks, list-operation order, and predictions with the feedback. You may temporarily add the definitions above `main` and print the two finite observations. Restore the main exercise afterward.
+
+      <details markdown="1">
+      <summary>Check how the interval functions produce results</summary>
+
+      ```haskell
+      bounds item = item (\start finish -> (start, finish))
+      midpoint item = item (\start finish -> (start + finish) `div` 2)
+
+      firstBounds = take 3 (map bounds intervals)
+      laterMidpoints = take 2 (map midpoint (drop 3 intervals))
+      ```
+
+      The lists are `[(0,2),(1,3),(2,4)]` and `[4,5]`. `head intervals` is a function awaiting a consumer. It is neither an endpoint pair nor a midpoint yet. For example, `bounds (interval 0)` passes the pair-making lambda to the interval; the interval calls it with `0` and `2`.
+
+      Each lambda binds `start` and `finish` to those supplied values. Choosing a different callback changes the interpretation without changing the interval. `map bounds` or `map midpoint` applies that interpretation to each function in the list. `drop 3` skips starts 0, 1, and 2; `take 2` then requests only starts 3 and 4. These finite observations need only a finite prefix of the unbounded input.
+
+      </details>
     files:
       - path: Main.hs
         language: haskell
