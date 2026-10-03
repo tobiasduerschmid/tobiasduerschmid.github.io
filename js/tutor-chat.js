@@ -42,7 +42,9 @@
     // Only show if there are actual hints
     if (currentHintGroups.length === 0) return;
 
-    _buildUI(panel, currentHintGroups.flatMap(function (group) { return group.hints; }));
+    // Several small checks may share the same advice. Keep their criterion
+    // groups for context, but show each identical hint only once in the panel.
+    _buildUI(panel, _finalizeHints(currentHintGroups.flatMap(function (group) { return group.hints; })));
 
     if (ENABLE_AI_CHAT) _initAIChat(tutorial);
   };
@@ -111,7 +113,8 @@
       return {
         icon: '\uD83D\uDCA1',
         title: fallbackTitle || '',
-        body: hint
+        body: hint,
+        dedupeKey: '\n' + hint
       };
     }
     var body = hint.body || hint.text || hint.message || '';
@@ -119,7 +122,10 @@
     return {
       icon: hint.icon || '\uD83D\uDCA1',
       title: hint.title || fallbackTitle || '',
-      body: body
+      body: body,
+      // An explicit title can distinguish advice with the same body. A title
+      // inherited from the test description must not duplicate shared advice.
+      dedupeKey: (hint.title || '') + '\n' + body
     };
   }
 
@@ -131,7 +137,7 @@
   function _finalizeHints(hints) {
     const seen = new Set();
     return hints.filter(function (h) {
-      var key = h.title + '\n' + h.body;
+      var key = h.dedupeKey || h.title + '\n' + h.body;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;

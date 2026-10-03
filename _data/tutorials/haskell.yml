@@ -141,9 +141,9 @@ steps:
     open_file: Main.hs
     run_file: Main.hs
     tests:
-      - description: "Pizza balances cover free orders, exact budgets, and shortfalls"
-        command: "moneyLeftAfterTwoPizzas 45 12 == 21 && moneyLeftAfterTwoPizzas 30 15 == 0 && moneyLeftAfterTwoPizzas 20 12 == (-4) && moneyLeftAfterTwoPizzas 17 0 == 17 && moneyLeftAfterTwoPizzas 0 3 == (-6)"
-        hints:
+      - description: "Pizza balance: an affordable order"
+        command: "moneyLeftAfterTwoPizzas 45 12 == 21"
+        hints: &session_time_hints_0
           # Across ladders, cosmetic formatting and undefined/error placeholders stay at orientation.
           # Later stages recognize a specific partial attempt, then other developed attempts.
           # Stages: original grouping; ungrouped call still multiplied; other changed calculations.
@@ -153,6 +153,15 @@ steps:
             text: "Parenthesize the existing expression according to application precedence, without changing it yet. Is multiplication acting on a pizza price or on the balance returned by remainingMoney?"
           - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)moneyLeftAfterTwoPizzas\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)moneyLeftAfterTwoPizzas\\b[^\\n]*=\\s*(?:\\(\\s*)*remainingMoney\\s+[a-z_]\\w*\\s+[a-z_]\\w*\\s*\\*\\s*2(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)moneyLeftAfterTwoPizzas\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)moneyLeftAfterTwoPizzas\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?=[ \\t]*remainingMoney[ \\t]+\\w+[ \\t]+\\w+[ \\t]*\\*)[\\s\\S]*$/"
             text: "Try the incomplete call `remainingMoney budget (...)`. Decide what amount belongs in that argument, then use a free-pizza example to check that the budget itself is not being scaled."
+      - description: "Pizza balance: an exactly spent budget"
+        command: "moneyLeftAfterTwoPizzas 30 15 == 0"
+        hints: *session_time_hints_0
+      - description: "Pizza balance: a shortfall stays negative"
+        command: "moneyLeftAfterTwoPizzas 20 12 == (-4) && moneyLeftAfterTwoPizzas 0 3 == (-6)"
+        hints: *session_time_hints_0
+      - description: "Pizza balance: free pizzas"
+        command: "moneyLeftAfterTwoPizzas 17 0 == 17"
+        hints: *session_time_hints_0
     quiz:
       title: Step 1 — Knowledge Check
       min_score: 0.8
@@ -370,10 +379,10 @@ steps:
     run_file: Main.hs
     tests:
       - description: "canAffordPizza explicitly declares types"
+        command: "True"
         signature:
           name: canAffordPizza
           type: "Double -> Double -> Bool"
-        command: "True"
         hints:
           # Stages: no function declaration; whole-number/text restriction; other declared interfaces.
           - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)canAffordPizza\\b[ \\t]*(?:::|\\n[ \\t]+::))|(?=[\\s\\S]*(?:(?!)|(?:^|\\n)canAffordPizza\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
@@ -382,9 +391,9 @@ steps:
             text: "Read the definition from left to right: identify the two parameter roles, then follow the whole body to its result. Annotating a sample value does not declare this function."
           - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)canAffordPizza\\b[ \\t]*(?:::|\\n[ \\t]+::))(?![\\s\\S]*(?:(?!)|(?:^|\\n)canAffordPizza\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)canAffordPizza\\b[ \\t]*::[^\\n]*\\b(?:Int|Integer|Float|String)\\b)[\\s\\S]*$/"
             text: "Use `canAffordPizza :: <first input> -> <second input> -> <whole result>` as a planning scaffold. Replace each role using the contract; the angle-bracket labels are not Haskell syntax."
-      - description: "Price samples match the intended interface and comparison"
-        command: "(sampleBudget :: Double) == 9.50 && (samplePrice :: Double) == 12.00 && not (canAffordPizza sampleBudget samplePrice)"
-        hints:
+      - description: "Price samples: the supplied fractional amounts"
+        command: "(sampleBudget :: Double) == 9.50 && (samplePrice :: Double) == 12.00"
+        hints: &numeric_price_contract_hints_1
           # Stages: quoted starter without declaration; quoted sample after edits; numeric sample attempts.
           - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)sample(?:Budget|Price)[ \\t]*=)|(?=[\\s\\S]*(?:^(?![\\s\\S]*(?:^|\\n)canAffordPizza\\b[ \\t]*(?:::|\\n[ \\t]+::))(?=[\\s\\S]*(?:^|\\n)sampleBudget\\b[ \\t]*=\\s*(?:\\(\\s*)*\")(?=[\\s\\S]*(?:^|\\n)samplePrice\\b[ \\t]*=\\s*(?:\\(\\s*)*\")|(?:^|\\n)sampleBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
             text: "Inspect how each sample amount is represented before investigating the comparison. A value can look like a price to a person while having a different type."
@@ -392,9 +401,12 @@ steps:
             text: "Read the first compiler type conflict: match its required input type with the definition of the supplied sample. A signature checks compatibility; it does not parse the sample."
           - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)sample(?:Budget|Price)[ \\t]*=)(?![\\s\\S]*(?:^(?![\\s\\S]*(?:^|\\n)canAffordPizza\\b[ \\t]*(?:::|\\n[ \\t]+::))(?=[\\s\\S]*(?:^|\\n)sampleBudget\\b[ \\t]*=\\s*(?:\\(\\s*)*\")(?=[\\s\\S]*(?:^|\\n)samplePrice\\b[ \\t]*=\\s*(?:\\(\\s*)*\")|(?:^|\\n)sampleBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:(?:^|\\n)sampleBudget\\b[ \\t]*=\\s*(?:\\(\\s*)*\"|(?:^|\\n)samplePrice\\b[ \\t]*=\\s*(?:\\(\\s*)*\"))[\\s\\S]*$/"
             text: "Check each sample literal against its stated amount and any explicit annotation. Contrast `3.25` with `\"3.25\"` if a type conflict remains, then check both samples through the declared interface."
-      - description: "Affordability covers fractional amounts and budget boundaries"
-        command: "canAffordPizza (15 :: Double) 12.5 && canAffordPizza 12.5 12.5 && not (canAffordPizza 12 12.5) && canAffordPizza 0 0 && not (canAffordPizza 0 0.5)"
-        hints:
+      - description: "Price samples: affordability of the sample order"
+        command: "not (canAffordPizza sampleBudget samplePrice)"
+        hints: *numeric_price_contract_hints_1
+      - description: "Affordability: budget above the price"
+        command: "canAffordPizza (15 :: Double) 12.5"
+        hints: &numeric_price_contract_hints_2
           # Stages: interface still inferred; restriction/conversion loses fractional values; other comparison attempts.
           - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)canAffordPizza\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:^(?![\\s\\S]*(?:^|\\n)canAffordPizza\\b[ \\t]*(?:::|\\n[ \\t]+::))(?=[\\s\\S]*(?:^|\\n)canAffordPizza\\b[^\\n]*=\\s*(?:\\(\\s*)*budget[ \\t]*>=[ \\t]*price(?:\\s*\\))*[ \\t]*(?:\\n|$))|(?:^|\\n)canAffordPizza\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
             text: "Separate an input-type failure from a wrong comparison result. Does the function compile for the fractional test input before you inspect its answer?"
@@ -402,6 +414,12 @@ steps:
             text: "Trace one call with an explicit fractional budget through your declaration, sample values, and comparison. Check where a declaration restricts the test input or a conversion changes its value."
           - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)canAffordPizza\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:^(?![\\s\\S]*(?:^|\\n)canAffordPizza\\b[ \\t]*(?:::|\\n[ \\t]+::))(?=[\\s\\S]*(?:^|\\n)canAffordPizza\\b[^\\n]*=\\s*(?:\\(\\s*)*budget[ \\t]*>=[ \\t]*price(?:\\s*\\))*[ \\t]*(?:\\n|$))|(?:^|\\n)canAffordPizza\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:(?:^|\\n)canAffordPizza\\b[ \\t]*::[^\\n]*\\b(?:Int|Integer|Float|String)\\b|(?:^|\\n)canAffordPizza\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\b(?:floor|round|truncate|ceiling)\\b))[\\s\\S]*$/"
             text: "Keep the price at 12.50 and predict results for budgets 12.49, 12.50, and 12.51. Compare the three outcomes with the task contract to isolate a type restriction from an equality-boundary bug."
+      - description: "Affordability: budget equal to the price"
+        command: "canAffordPizza 12.5 12.5 && canAffordPizza 0 0"
+        hints: *numeric_price_contract_hints_2
+      - description: "Affordability: budget below the price"
+        command: "not (canAffordPizza 12 12.5) && not (canAffordPizza 0 0.5)"
+        hints: *numeric_price_contract_hints_2
     quiz:
       title: Step 2 — Knowledge Check
       min_score: 0.8
@@ -606,7 +624,8 @@ steps:
 
       `main` runs and prints sample calls to both functions so you can inspect
       their results. You may add sample calls, but completing this step requires
-      fixing **both `matchCoins` and `adjustStock`** and passing both checks.
+      fixing **both `matchCoins` and `adjustStock`**. The checks report progress
+      on each function and boundary case separately.
     files:
     - path: Main.hs
       language: haskell
@@ -630,29 +649,44 @@ steps:
     open_file: Main.hs
     run_file: Main.hs
     tests:
-    - description: "Match rewards follow mode and outcome rules"
-      command: matchCoins True False == 12 && matchCoins True True == 0 && matchCoins False False == 0 && matchCoins
-        False True == 0
-      hints:
-        # Stages: supplied guards; win guard still precedes practice guard; other reward decisions.
-        - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)matchCoins\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)matchCoins\\b[ \\t]+won[ \\t]+practiceMode\\s*\\|\\s*(?:\\(\\s*)*won(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*12(?:\\s*\\))*\\s*\\|\\s*(?:\\(\\s*)*practiceMode(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*\\s*\\|\\s*otherwise\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*|(?:^|\\n)matchCoins\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
-          text: "Focus on the case where the two reward rules overlap. Which result does the task require for that case?"
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)matchCoins\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)matchCoins\\b[ \\t]+won[ \\t]+practiceMode\\s*\\|\\s*(?:\\(\\s*)*won(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*12(?:\\s*\\))*\\s*\\|\\s*(?:\\(\\s*)*practiceMode(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*\\s*\\|\\s*otherwise\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*|(?:^|\\n)matchCoins\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)matchCoins\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\|[ \\t]*won\\b(?:(?!\\n\\S)[\\s\\S])*\\|[ \\t]*practiceMode\\b)[\\s\\S]*$/"
-          text: "For a practice win, mark each guard as true or false, then stop at the first true guard. Compare the chosen result with your prediction."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)matchCoins\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)matchCoins\\b[ \\t]+won[ \\t]+practiceMode\\s*\\|\\s*(?:\\(\\s*)*won(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*12(?:\\s*\\))*\\s*\\|\\s*(?:\\(\\s*)*practiceMode(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*\\s*\\|\\s*otherwise\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*|(?:^|\\n)matchCoins\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)matchCoins\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\|[ \\t]*won\\b(?:(?!\\n\\S)[\\s\\S])*\\|[ \\t]*practiceMode\\b)[\\s\\S]*$/"
-          text: "Build a four-row table for the two Boolean inputs and the required rewards. Use the overlapping row to decide guard priority, then check that your change preserves the other rows."
-    - description: "Stock adjustments cover both limits and interior counts"
-      command: adjustStock 8 5 10 == 10 && adjustStock 2 (-5) 10 == 0 && adjustStock 3 4 10 == 7 && adjustStock 3 (-3)
-        10 == 0 && adjustStock 3 7 10 == 10 && adjustStock 6 0 10 == 6 && adjustStock 0 4 0 == 0 && adjustStock 0 (-4)
-        0 == 0 && adjustStock 6 (-2) 10 == 4 && adjustStock 4 (-1) 6 == 3 && adjustStock 1 1 1 == 1
-      hints:
-        # Stages: supplied lower guard/fallback; comparison uses original stock; other clamp attempts.
-        - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)adjustStock\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)adjustStock\\b[ \\t]+stock[ \\t]+change[ \\t]+capacity\\s*\\|\\s*(?:\\(\\s*)*(?:\\(\\s*)*stock\\s*\\+\\s*change(?:\\s*\\))*\\s*<\\s*(?:\\(\\s*)*0(?:\\s*\\))*(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*\\s*\\|\\s*otherwise\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*|(?:^|\\n)adjustStock\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
-          text: "Find whether the failing input is below the permitted range, above it, or still inside it. The supplied lower-limit case does not distinguish the other two situations."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)adjustStock\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)adjustStock\\b[ \\t]+stock[ \\t]+change[ \\t]+capacity\\s*\\|\\s*(?:\\(\\s*)*(?:\\(\\s*)*stock\\s*\\+\\s*change(?:\\s*\\))*\\s*<\\s*(?:\\(\\s*)*0(?:\\s*\\))*(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*\\s*\\|\\s*otherwise\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*|(?:^|\\n)adjustStock\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)adjustStock\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bstock[ \\t]*(?:<=|>=|<|>))[\\s\\S]*$/"
-          text: "Write down stock, change, proposed count, and capacity for one failing input. Check whether each condition examines the original stock or the proposed count."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)adjustStock\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)adjustStock\\b[ \\t]+stock[ \\t]+change[ \\t]+capacity\\s*\\|\\s*(?:\\(\\s*)*(?:\\(\\s*)*stock\\s*\\+\\s*change(?:\\s*\\))*\\s*<\\s*(?:\\(\\s*)*0(?:\\s*\\))*(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*\\s*\\|\\s*otherwise\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*|(?:^|\\n)adjustStock\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)adjustStock\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bstock[ \\t]*(?:<=|>=|<|>))[\\s\\S]*$/"
-          text: "Keep the supplied branch and draft the remaining guards as `| <condition> = <result>`. Fill them from your input table, then try exact-limit cases and an interior case to detect a fallback that hides a missing decision."
+      - description: "matchCoins: a win outside practice mode"
+        command: "matchCoins True False == 12"
+        hints: &stock_adjustment_hints_0
+          # Stages: supplied guards; win guard still precedes practice guard; other reward decisions.
+          - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)matchCoins\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)matchCoins\\b[ \\t]+won[ \\t]+practiceMode\\s*\\|\\s*(?:\\(\\s*)*won(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*12(?:\\s*\\))*\\s*\\|\\s*(?:\\(\\s*)*practiceMode(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*\\s*\\|\\s*otherwise\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*|(?:^|\\n)matchCoins\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
+            text: "Focus on the case where the two reward rules overlap. Which result does the task require for that case?"
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)matchCoins\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)matchCoins\\b[ \\t]+won[ \\t]+practiceMode\\s*\\|\\s*(?:\\(\\s*)*won(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*12(?:\\s*\\))*\\s*\\|\\s*(?:\\(\\s*)*practiceMode(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*\\s*\\|\\s*otherwise\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*|(?:^|\\n)matchCoins\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)matchCoins\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\|[ \\t]*won\\b(?:(?!\\n\\S)[\\s\\S])*\\|[ \\t]*practiceMode\\b)[\\s\\S]*$/"
+            text: "For a practice win, mark each guard as true or false, then stop at the first true guard. Compare the chosen result with your prediction."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)matchCoins\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)matchCoins\\b[ \\t]+won[ \\t]+practiceMode\\s*\\|\\s*(?:\\(\\s*)*won(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*12(?:\\s*\\))*\\s*\\|\\s*(?:\\(\\s*)*practiceMode(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*\\s*\\|\\s*otherwise\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*|(?:^|\\n)matchCoins\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)matchCoins\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\|[ \\t]*won\\b(?:(?!\\n\\S)[\\s\\S])*\\|[ \\t]*practiceMode\\b)[\\s\\S]*$/"
+            text: "Build a four-row table for the two Boolean inputs and the required rewards. Use the overlapping row to decide guard priority, then check that your change preserves the other rows."
+      - description: "matchCoins: a loss outside practice mode"
+        command: "matchCoins False False == 0"
+        hints: *stock_adjustment_hints_0
+      - description: "matchCoins: practice mode for either outcome"
+        command: "matchCoins True True == 0 && matchCoins False True == 0"
+        hints: *stock_adjustment_hints_0
+      - description: "adjustStock: increases and decreases inside the limits"
+        command: "adjustStock 3 4 10 == 7 && adjustStock 6 (-2) 10 == 4 && adjustStock 4 (-1) 6 == 3"
+        hints: &stock_adjustment_hints_1
+          # Stages: supplied lower guard/fallback; comparison uses original stock; other clamp attempts.
+          - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)adjustStock\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)adjustStock\\b[ \\t]+stock[ \\t]+change[ \\t]+capacity\\s*\\|\\s*(?:\\(\\s*)*(?:\\(\\s*)*stock\\s*\\+\\s*change(?:\\s*\\))*\\s*<\\s*(?:\\(\\s*)*0(?:\\s*\\))*(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*\\s*\\|\\s*otherwise\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*|(?:^|\\n)adjustStock\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
+            text: "Find whether the failing input is below the permitted range, above it, or still inside it. The supplied lower-limit case does not distinguish the other two situations."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)adjustStock\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)adjustStock\\b[ \\t]+stock[ \\t]+change[ \\t]+capacity\\s*\\|\\s*(?:\\(\\s*)*(?:\\(\\s*)*stock\\s*\\+\\s*change(?:\\s*\\))*\\s*<\\s*(?:\\(\\s*)*0(?:\\s*\\))*(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*\\s*\\|\\s*otherwise\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*|(?:^|\\n)adjustStock\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)adjustStock\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bstock[ \\t]*(?:<=|>=|<|>))[\\s\\S]*$/"
+            text: "Write down stock, change, proposed count, and capacity for one failing input. Check whether each condition examines the original stock or the proposed count."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)adjustStock\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)adjustStock\\b[ \\t]+stock[ \\t]+change[ \\t]+capacity\\s*\\|\\s*(?:\\(\\s*)*(?:\\(\\s*)*stock\\s*\\+\\s*change(?:\\s*\\))*\\s*<\\s*(?:\\(\\s*)*0(?:\\s*\\))*(?:\\s*\\))*\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*\\s*\\|\\s*otherwise\\s*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*|(?:^|\\n)adjustStock\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)adjustStock\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bstock[ \\t]*(?:<=|>=|<|>))[\\s\\S]*$/"
+            text: "Keep the supplied branch and draft the remaining guards as `| <condition> = <result>`. Fill them from your input table, then try exact-limit cases and an interior case to detect a fallback that hides a missing decision."
+      - description: "adjustStock: at or below the lower limit"
+        command: "adjustStock 2 (-5) 10 == 0 && adjustStock 3 (-3) 10 == 0"
+        hints: *stock_adjustment_hints_1
+      - description: "adjustStock: at or above the supplied capacity"
+        command: "adjustStock 8 5 10 == 10 && adjustStock 3 7 10 == 10 && adjustStock 1 1 1 == 1"
+        hints: *stock_adjustment_hints_1
+      - description: "adjustStock: no change in stock"
+        command: "adjustStock 6 0 10 == 6"
+        hints: *stock_adjustment_hints_1
+      - description: "adjustStock: zero capacity"
+        command: "adjustStock 0 4 0 == 0 && adjustStock 0 (-4) 0 == 0"
+        hints: *stock_adjustment_hints_1
     quiz:
       title: Step 3 — Knowledge Check
       min_score: 0.8
@@ -887,17 +921,28 @@ steps:
     open_file: Main.hs
     run_file: Main.hs
     tests:
-    - description: "Snack bills cover discount eligibility, rounding, and fees"
-      command: snackBill 4 8 3 == 27 && snackBill 3 8 3 == 27 && snackBill 5 7 2 == 29 && snackBill 0 9 4 == 4 && snackBill
-        4 0 2 == 2 && snackBill 2 5 0 == 10 && snackBill 4 3 2 == 11 && snackBill 3 12 2 == 38
-      hints:
-        # Stages: result placeholder; result changed but discount still zero; other billing attempts.
-        - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)snackBill\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)snackBill\\b[^\\n]*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)snackBill\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
-          text: "Choose one failing bill and calculate its subtotal, discount, and fee separately. Which named amount first disagrees with the billing rule?"
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)snackBill\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)snackBill\\b[^\\n]*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)snackBill\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)snackBill\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bdiscount[ \\t]*=[ \\t]*0(?:[ \\t]*\\n|$))[\\s\\S]*$/"
-          text: "Compare orders just below and at the discount threshold. The order count selects eligibility, while the subtotal determines the discount amount; neither binding updates the other."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)snackBill\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)snackBill\\b[^\\n]*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)snackBill\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)snackBill\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bdiscount[ \\t]*=[ \\t]*0(?:[ \\t]*\\n|$))[\\s\\S]*$/"
-          text: "For an eligible order whose subtotal is not divisible by four, use the integral-division example to choose a numerator and divisor. Then vary only the fee by one and check how your final combination responds."
+      - description: "Snack bill: quantities below the discount threshold"
+        command: "snackBill 3 8 3 == 27 && snackBill 3 12 2 == 38"
+        hints: &local_bindings_hints_0
+          # Stages: result placeholder; result changed but discount still zero; other billing attempts.
+          - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)snackBill\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)snackBill\\b[^\\n]*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)snackBill\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
+            text: "Choose one failing bill and calculate its subtotal, discount, and fee separately. Which named amount first disagrees with the billing rule?"
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)snackBill\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)snackBill\\b[^\\n]*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)snackBill\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)snackBill\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bdiscount[ \\t]*=[ \\t]*0(?:[ \\t]*\\n|$))[\\s\\S]*$/"
+            text: "Compare orders just below and at the discount threshold. The order count selects eligibility, while the subtotal determines the discount amount; neither binding updates the other."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)snackBill\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)snackBill\\b[^\\n]*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)snackBill\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)snackBill\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bdiscount[ \\t]*=[ \\t]*0(?:[ \\t]*\\n|$))[\\s\\S]*$/"
+            text: "For an eligible order whose subtotal is not divisible by four, use the integral-division example to choose a numerator and divisor. Then vary only the fee by one and check how your final combination responds."
+      - description: "Snack bill: quantity at the discount threshold"
+        command: "snackBill 4 8 3 == 27"
+        hints: *local_bindings_hints_0
+      - description: "Snack bill: discount rounding with leftover units"
+        command: "snackBill 5 7 2 == 29 && snackBill 4 3 2 == 11"
+        hints: *local_bindings_hints_0
+      - description: "Snack bill: the fee when snacks cost nothing"
+        command: "snackBill 0 9 4 == 4 && snackBill 4 0 2 == 2"
+        hints: *local_bindings_hints_0
+      - description: "Snack bill: no service fee"
+        command: "snackBill 2 5 0 == 10"
+        hints: *local_bindings_hints_0
     quiz:
       title: Step 4 — Knowledge Check
       min_score: 0.8
@@ -1096,18 +1141,25 @@ steps:
     open_file: Main.hs
     run_file: Main.hs
     tests:
-    - description: "Bonus results preserve tuple fields across names and signs"
-      command: addBonus 5 ("Mina", 40) == ("Mina", 45) && addBonus (-3) ("Noor", 12) == ("Noor", 9) && addBonus 0 ("",
-        0) == ("", 0) && addBonus 8 ("Kai", -2) == ("Kai", 6) && addBonus 0 ("Lee", 9) == ("Lee", 9)
-        && addBonus 5 ("", 7) == ("", 12) && addBonus (-8) ("Kai", 3) == ("Kai", -5) && original == ("Mina", 40)
-      hints:
-        # Stages: pass-through pair; negative bonus clamped or made positive; other tuple reconstructions.
-        - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)addBonus\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)addBonus\\b[^\\n]*=\\s*(?:\\(\\s*)*entry(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)addBonus\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
-          text: "Read the input pair field by field. Which field should be reused, and which field needs a calculation involving the separate bonus argument?"
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)addBonus\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)addBonus\\b[^\\n]*=\\s*(?:\\(\\s*)*entry(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)addBonus\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)addBonus\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\b(?:abs|max)\\b)[\\s\\S]*$/"
-          text: "Trace a negative bonus on a pair with a different name. Compare the input components with the returned components to locate a field-selection or arithmetic error."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)addBonus\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)addBonus\\b[^\\n]*=\\s*(?:\\(\\s*)*entry(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)addBonus\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)addBonus\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\b(?:abs|max)\\b)[\\s\\S]*$/"
-          text: "Try the incomplete equation `addBonus bonus (name, score) = (..., ...)`. Choose each result component yourself, then compare the printed original with the new result."
+      - description: "Bonus: positive changes to the score"
+        command: "addBonus 5 (\"Mina\", 40) == (\"Mina\", 45) && addBonus 8 (\"Kai\", -2) == (\"Kai\", 6) && addBonus 5 original == (\"Mina\", 45) && original == (\"Mina\", 40)"
+        hints: &tuples_hints_0
+          # Stages: pass-through pair; negative bonus clamped or made positive; other tuple reconstructions.
+          - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)addBonus\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)addBonus\\b[^\\n]*=\\s*(?:\\(\\s*)*entry(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)addBonus\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
+            text: "Read the input pair field by field. Which field should be reused, and which field needs a calculation involving the separate bonus argument?"
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)addBonus\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)addBonus\\b[^\\n]*=\\s*(?:\\(\\s*)*entry(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)addBonus\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)addBonus\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\b(?:abs|max)\\b)[\\s\\S]*$/"
+            text: "Trace a negative bonus on a pair with a different name. Compare the input components with the returned components to locate a field-selection or arithmetic error."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)addBonus\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)addBonus\\b[^\\n]*=\\s*(?:\\(\\s*)*entry(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)addBonus\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)addBonus\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\b(?:abs|max)\\b)[\\s\\S]*$/"
+            text: "Try the incomplete equation `addBonus bonus (name, score) = (..., ...)`. Choose each result component yourself, then compare the printed original with the new result."
+      - description: "Bonus: negative changes to the score"
+        command: "addBonus (-3) (\"Noor\", 12) == (\"Noor\", 9) && addBonus (-8) (\"Kai\", 3) == (\"Kai\", -5)"
+        hints: *tuples_hints_0
+      - description: "Bonus: a zero change"
+        command: "addBonus 0 (\"\", 0) == (\"\", 0) && addBonus 0 (\"Lee\", 9) == (\"Lee\", 9)"
+        hints: *tuples_hints_0
+      - description: "Bonus: an empty name remains valid"
+        command: "addBonus 5 (\"\", 7) == (\"\", 12)"
+        hints: *tuples_hints_0
     quiz:
       title: Step 5 — Knowledge Check
       min_score: 0.8
@@ -1312,9 +1364,9 @@ steps:
     open_file: Main.hs
     run_file: Main.hs
     tests:
-      - description: "Bookends cover ordering, empty inputs, and nested elements"
-        command: "bookend (9 :: Int) [1,2] == [9,1,2,9] && bookend True [] == [True,True] && bookend '!' \"hi\" == \"!hi!\" && bookend \"intro\" [\"song\",\"outro\"] == [\"intro\",\"song\",\"outro\",\"intro\"] && bookend (0 :: Int) [0] == [0,0,0]"
-        hints:
+      - description: "Bookends: both ends and the interior order"
+        command: "bookend (9 :: Int) [1,2] == [9,1,2,9]"
+        hints: &lists_hints_0
           # Stages: empty placeholder; concatenation treats item as a list; other outer-list constructions.
           - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)bookend\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)bookend\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)bookend\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
             text: "Identify one outer-list element in the failing example. If the item is a string, its characters do not become separate playlist entries."
@@ -1322,10 +1374,17 @@ steps:
             text: "Compare what cons and concatenation expect on each side. Decide whether each piece you are joining is one element or a list before choosing an operator."
           - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)bookend\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)bookend\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)bookend\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)bookend\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?(?:\\bitem[ \\t]*\\+\\+|\\+\\+[ \\t]*item\\b))[\\s\\S]*$/"
             text: "Try `bookend item items = item : ...` and work out what list must fill the gap. Check your draft with an empty middle and a list-valued item to catch a missing final item or accidental flattening."
-      - description: "Bookends retain element-type flexibility"
-        command: >-
-          let result = bookend ((+1) :: Int -> Int) [(*2)] in
-          length result == 3 && head result 3 == 4 && head (tail result) 3 == 6 && head (drop 2 result) 3 == 4
+      - description: "Bookends: an empty input"
+        command: "bookend True [] == [True,True]"
+        hints: *lists_hints_0
+      - description: "Bookends: repeated elements"
+        command: "bookend (0 :: Int) [0] == [0,0,0]"
+        hints: *lists_hints_0
+      - description: "Bookends: character and list-valued elements"
+        command: "bookend '!' \"hi\" == \"!hi!\" && bookend \"intro\" [\"song\",\"outro\"] == [\"intro\",\"song\",\"outro\",\"intro\"]"
+        hints: *lists_hints_0
+      - description: "Bookends: function-valued elements"
+        command: "let result = bookend ((+1) :: Int -> Int) [(*2)] in length result == 3 && head result 3 == 4 && head (tail result) 3 == 6 && head (drop 2 result) 3 == 4"
         hints:
           # Stages: empty placeholder; value comparison/constraint; other element-type restrictions.
           - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)bookend\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)bookend\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)bookend\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
@@ -1512,30 +1571,38 @@ steps:
     open_file: Main.hs
     run_file: Main.hs
     tests:
-    - description: "Front swaps cover short inputs, repeated entries, and tails"
-      command: 'swapFront ([] :: [Int]) == [] && swapFront [5 :: Int] == [5] && swapFront [5 :: Int,7] == [7,5] && swapFront
-        [5 :: Int,7,9,11] == [7,5,9,11] && swapFront "abcd" == "bacd" && swapFront ["Ada","Bo","Cy"] == ["Bo","Ada","Cy"]
-        && swapFront [True,True,False] == [True,True,False]'
-      hints:
-        # Stages: empty placeholder; two-element reconstruction drops tail; other pattern attempts.
-        - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)swapFront\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)swapFront\\b[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)swapFront\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
-          text: "Sort your trial inputs by length: empty, singleton, two elements, and longer. Which shape first exposes the failure?"
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)swapFront\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)swapFront\\b[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)swapFront\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)swapFront\\b[^\\n]*\\([^\\n]*:[^\\n]*:[^\\n]*\\)[^\\n]*=[ \\t]*\\[[^\\]\\n]*\\][ \\t]*(?:\\n|$))[\\s\\S]*$/"
-          text: "Trace a three-element input through the chosen equation. Distinguish the leading elements from the remaining list, and check whether your result loses any tail entries."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)swapFront\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)swapFront\\b[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)swapFront\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)swapFront\\b[^\\n]*\\([^\\n]*:[^\\n]*:[^\\n]*\\)[^\\n]*=[ \\t]*\\[[^\\]\\n]*\\][ \\t]*(?:\\n|$))[\\s\\S]*$/"
-          text: "A longer-input equation can start `swapFront (first:second:rest) = ...`. Decide how those pieces belong in the result and choose separate coverage for the short inputs."
-    - description: "Front swaps retain element-type flexibility"
-      command: >-
-        let result = swapFront [(+1) :: Int -> Int, (*2), (\x -> x - 1)] in
-        length result == 3 && head result 3 == 6 && head (tail result) 3 == 4 && head (drop 2 result) 3 == 2
-      hints:
-        # Stages: empty placeholder; value comparison/constraint; other element-type restrictions.
-        - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)swapFront\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)swapFront\\b[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)swapFront\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
-          text: "This check uses function-valued elements. First replace the placeholder with a positional reconstruction, then ask whether any decision inspects an element value."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)swapFront\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)swapFront\\b[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)swapFront\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:(?:^|\\n)swapFront\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?(?:==|/=|<=|>=|(?<![-<$])>(?![=>])|(?<![<$])<(?![=>$]))|(?:^|\\n)swapFront\\b[ \\t]*::[^\\n]*\\b(?:Eq|Ord)\\b))[\\s\\S]*$/"
-          text: "An equality or ordering requirement can come from a comparison even when numeric examples pass. Trace the comparison back to the output-position choice it controls."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)swapFront\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)swapFront\\b[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)swapFront\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:(?:^|\\n)swapFront\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?(?:==|/=|<=|>=|(?<![-<$])>(?![=>])|(?<![<$])<(?![=>$]))|(?:^|\\n)swapFront\\b[ \\t]*::[^\\n]*\\b(?:Eq|Ord)\\b))[\\s\\S]*$/"
-          text: "If no value-based decision remains, trace the result positions with function-valued elements. Sketch a list pattern and result using the same element type throughout, and inspect the declaration for a restriction. Check equal leading values alongside two distinct ones without inspecting their contents."
+      - description: "Front swap: an empty input"
+        command: "swapFront ([] :: [Int]) == []"
+        hints: &swap_front_hints_0
+          # Stages: empty placeholder; two-element reconstruction drops tail; other pattern attempts.
+          - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)swapFront\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)swapFront\\b[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)swapFront\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
+            text: "Sort your trial inputs by length: empty, singleton, two elements, and longer. Which shape first exposes the failure?"
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)swapFront\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)swapFront\\b[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)swapFront\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)swapFront\\b[^\\n]*\\([^\\n]*:[^\\n]*:[^\\n]*\\)[^\\n]*=[ \\t]*\\[[^\\]\\n]*\\][ \\t]*(?:\\n|$))[\\s\\S]*$/"
+            text: "Trace a three-element input through the chosen equation. Distinguish the leading elements from the remaining list, and check whether your result loses any tail entries."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)swapFront\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)swapFront\\b[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)swapFront\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)swapFront\\b[^\\n]*\\([^\\n]*:[^\\n]*:[^\\n]*\\)[^\\n]*=[ \\t]*\\[[^\\]\\n]*\\][ \\t]*(?:\\n|$))[\\s\\S]*$/"
+            text: "A longer-input equation can start `swapFront (first:second:rest) = ...`. Decide how those pieces belong in the result and choose separate coverage for the short inputs."
+      - description: "Front swap: a singleton"
+        command: "swapFront [5 :: Int] == [5]"
+        hints: *swap_front_hints_0
+      - description: "Front swap: exactly two elements"
+        command: "swapFront [5 :: Int,7] == [7,5]"
+        hints: *swap_front_hints_0
+      - description: "Front swap: the remaining tail stays in order"
+        command: "swapFront [5 :: Int,7,9,11] == [7,5,9,11] && swapFront \"abcd\" == \"bacd\" && swapFront [\"Ada\",\"Bo\",\"Cy\"] == [\"Bo\",\"Ada\",\"Cy\"]"
+        hints: *swap_front_hints_0
+      - description: "Front swap: repeated elements"
+        command: "swapFront [True,True,False] == [True,True,False]"
+        hints: *swap_front_hints_0
+      - description: "Front swap: function-valued elements"
+        command: "let result = swapFront [(+1) :: Int -> Int, (*2), (\\x -> x - 1)] in length result == 3 && head result 3 == 6 && head (tail result) 3 == 4 && head (drop 2 result) 3 == 2"
+        hints:
+          # Stages: empty placeholder; value comparison/constraint; other element-type restrictions.
+          - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)swapFront\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)swapFront\\b[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)swapFront\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
+            text: "This check uses function-valued elements. First replace the placeholder with a positional reconstruction, then ask whether any decision inspects an element value."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)swapFront\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)swapFront\\b[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)swapFront\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:(?:^|\\n)swapFront\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?(?:==|/=|<=|>=|(?<![-<$])>(?![=>])|(?<![<$])<(?![=>$]))|(?:^|\\n)swapFront\\b[ \\t]*::[^\\n]*\\b(?:Eq|Ord)\\b))[\\s\\S]*$/"
+            text: "An equality or ordering requirement can come from a comparison even when numeric examples pass. Trace the comparison back to the output-position choice it controls."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)swapFront\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)swapFront\\b[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)swapFront\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:(?:^|\\n)swapFront\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?(?:==|/=|<=|>=|(?<![-<$])>(?![=>])|(?<![<$])<(?![=>$]))|(?:^|\\n)swapFront\\b[ \\t]*::[^\\n]*\\b(?:Eq|Ord)\\b))[\\s\\S]*$/"
+            text: "If no value-based decision remains, trace the result positions with function-valued elements. Sketch a list pattern and result using the same element type throughout, and inspect the declaration for a restriction. Check equal leading values alongside two distinct ones without inspecting their contents."
     quiz:
       title: Step 7 — Knowledge Check
       min_score: 0.8
@@ -1728,18 +1795,31 @@ steps:
     open_file: Main.hs
     run_file: Main.hs
     tests:
-    - description: "Score counts cover threshold boundaries, repetition, and negative values"
-      command: countAtLeast 60 [] == 0 && countAtLeast 60 [59] == 0 && countAtLeast 60 [60] == 1 && countAtLeast 60
-        [60,59,60] == 2 && countAtLeast (-2) [-3,-2,0,-2] == 3 && countAtLeast 0 [0,1,2] == 3 && countAtLeast 9 [1,2,3]
-        == 0 && countAtLeast (-2) [-5,-3,-2,-1] == 2 && countAtLeast 0 [-1,0] == 1
-      hints:
-        # Stages: nonempty placeholder; changed case without recursive call; other counting attempts.
-        - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)countAtLeast\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)countAtLeast\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)countAtLeast\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
-          text: "Check a failing list one score at a time. A score that does not qualify gives no information about whether a later score will qualify."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)countAtLeast\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)countAtLeast\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)countAtLeast\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*^(?![\\s\\S]*(?:^|\\n)countAtLeast\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bcountAtLeast[ \\t]+))[\\s\\S]*$/"
-          text: "For [60,59,60] at threshold 60, write the meaning of the count for the remaining list at each call. Identify which part of your result handles the current score and which handles the remainder."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)countAtLeast\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)countAtLeast\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)countAtLeast\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*^(?![\\s\\S]*(?:^|\\n)countAtLeast\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bcountAtLeast[ \\t]+))[\\s\\S]*$/"
-          text: "Start a nonempty equation with `countAtLeast threshold (score:rest) = ...`. Choose how to combine the current contribution with a smaller result; then use a singleton exactly at the threshold to check the comparison boundary."
+      - description: "Score count: an empty input"
+        command: "countAtLeast 60 [] == 0"
+        hints: &recursion_hints_0
+          # Stages: nonempty placeholder; changed case without recursive call; other counting attempts.
+          - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)countAtLeast\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)countAtLeast\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)countAtLeast\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
+            text: "Check a failing list one score at a time. A score that does not qualify gives no information about whether a later score will qualify."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)countAtLeast\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)countAtLeast\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)countAtLeast\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*^(?![\\s\\S]*(?:^|\\n)countAtLeast\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bcountAtLeast[ \\t]+))[\\s\\S]*$/"
+            text: "For [60,59,60] at threshold 60, write the meaning of the count for the remaining list at each call. Identify which part of your result handles the current score and which handles the remainder."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)countAtLeast\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)countAtLeast\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*0(?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)countAtLeast\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*^(?![\\s\\S]*(?:^|\\n)countAtLeast\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bcountAtLeast[ \\t]+))[\\s\\S]*$/"
+            text: "Start a nonempty equation with `countAtLeast threshold (score:rest) = ...`. Choose how to combine the current contribution with a smaller result; then use a singleton exactly at the threshold to check the comparison boundary."
+      - description: "Score count: values at and just below the threshold"
+        command: "countAtLeast 60 [59] == 0 && countAtLeast 60 [60] == 1 && countAtLeast 0 [-1,0] == 1"
+        hints: *recursion_hints_0
+      - description: "Score count: every qualifying occurrence"
+        command: "countAtLeast 60 [60,59,60] == 2 && countAtLeast (-2) [-3,-2,0,-2] == 3"
+        hints: *recursion_hints_0
+      - description: "Score count: all scores qualify"
+        command: "countAtLeast 0 [0,1,2] == 3"
+        hints: *recursion_hints_0
+      - description: "Score count: no scores qualify"
+        command: "countAtLeast 9 [1,2,3] == 0"
+        hints: *recursion_hints_0
+      - description: "Score count: a negative threshold"
+        command: "countAtLeast (-2) [-5,-3,-2,-1] == 2"
+        hints: *recursion_hints_0
     quiz:
       title: Step 8 — Knowledge Check
       min_score: 0.8
@@ -1920,20 +2000,31 @@ steps:
     open_file: Main.hs
     run_file: Main.hs
     tests:
-    - description: "Route candidates cover validity, traversal order, and repeated entries"
-      command: routeCandidates ["Cedar","","Bay"] [3,0,1] == [(3,"Cedar"),(1,"Cedar"),(3,"Bay"),(1,"Bay")] && routeCandidates
-        [] [1,2] == [] && routeCandidates ["Bay"] [] == [] && routeCandidates ["","Bay"] [-2,0] == [] && routeCandidates
-        [""] [4] == [] && routeCandidates ["Bay","Bay"] [2,2] == [(2,"Bay"),(2,"Bay"),(2,"Bay"),(2,"Bay")] && routeCandidates
-        ["Zoo","Ash"] [5,2] == [(5,"Zoo"),(2,"Zoo"),(5,"Ash"),(2,"Ash")] && routeCandidates [" Bay ",""] [1]
-        == [(1," Bay ")]
-      hints:
-        # Stages: empty placeholder; platform traversal precedes route traversal; other candidate attempts.
-        - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)routeCandidates\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)routeCandidates\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)routeCandidates\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
-          text: "Classify the failing output: wrong pair shape, wrong order, or invalid candidates. Work on one category before changing the whole comprehension."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)routeCandidates\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)routeCandidates\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)routeCandidates\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)routeCandidates\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?<-[ \\t]*platforms\\b(?:(?!\\n\\S)[\\s\\S])*<-[ \\t]*routes\\b)[\\s\\S]*$/"
-          text: "Trace a two-route, two-platform input by hand. Record the order of candidates separately from the order of fields inside each result pair."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)routeCandidates\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)routeCandidates\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)routeCandidates\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)routeCandidates\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?<-[ \\t]*platforms\\b(?:(?!\\n\\S)[\\s\\S])*<-[ \\t]*routes\\b)[\\s\\S]*$/"
-          text: "Use `[<result> | <outer generator>, <inner generator>, <qualifiers>]` as a planning scaffold. Fill the roles from your trace and validity rules, then test one empty input and one invalid entry; the labels are not Haskell syntax."
+      - description: "Route candidates: either input is empty"
+        command: "routeCandidates [] [1,2] == [] && routeCandidates [\"Bay\"] [] == []"
+        hints: &route_candidates_hints_0
+          # Stages: empty placeholder; platform traversal precedes route traversal; other candidate attempts.
+          - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)routeCandidates\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)routeCandidates\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)routeCandidates\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
+            text: "Classify the failing output: wrong pair shape, wrong order, or invalid candidates. Work on one category before changing the whole comprehension."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)routeCandidates\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)routeCandidates\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)routeCandidates\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)routeCandidates\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?<-[ \\t]*platforms\\b(?:(?!\\n\\S)[\\s\\S])*<-[ \\t]*routes\\b)[\\s\\S]*$/"
+            text: "Trace a two-route, two-platform input by hand. Record the order of candidates separately from the order of fields inside each result pair."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)routeCandidates\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)routeCandidates\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)routeCandidates\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)routeCandidates\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?<-[ \\t]*platforms\\b(?:(?!\\n\\S)[\\s\\S])*<-[ \\t]*routes\\b)[\\s\\S]*$/"
+            text: "Use `[<result> | <outer generator>, <inner generator>, <qualifiers>]` as a planning scaffold. Fill the roles from your trace and validity rules, then test one empty input and one invalid entry; the labels are not Haskell syntax."
+      - description: "Route candidates: mixed valid and invalid inputs"
+        command: "routeCandidates [\"Cedar\",\"\",\"Bay\"] [3,0,1] == [(3,\"Cedar\"),(1,\"Cedar\"),(3,\"Bay\"),(1,\"Bay\")]"
+        hints: *route_candidates_hints_0
+      - description: "Route candidates: no positive platforms"
+        command: "routeCandidates [\"\",\"Bay\"] [-2,0] == []"
+        hints: *route_candidates_hints_0
+      - description: "Route candidates: empty names and whitespace names"
+        command: "routeCandidates [\"\"] [4] == [] && routeCandidates [\" Bay \",\"\"] [1] == [(1,\" Bay \")]"
+        hints: *route_candidates_hints_0
+      - description: "Route candidates: repeated route and platform occurrences"
+        command: "routeCandidates [\"Bay\",\"Bay\"] [2,2] == [(2,\"Bay\"),(2,\"Bay\"),(2,\"Bay\"),(2,\"Bay\")]"
+        hints: *route_candidates_hints_0
+      - description: "Route candidates: routes and platforms keep their input order"
+        command: "routeCandidates [\"Zoo\",\"Ash\"] [5,2] == [(5,\"Zoo\"),(2,\"Zoo\"),(5,\"Ash\"),(2,\"Ash\")]"
+        hints: *route_candidates_hints_0
     quiz:
       title: Step 9 — Knowledge Check
       min_score: 0.8
@@ -2096,28 +2187,38 @@ steps:
     open_file: Main.hs
     run_file: Main.hs
     tests:
-    - description: "Budget selection covers cumulative cost and ordered prefixes"
-      command: takeBudget 7 [3,4,1] == [3,4] && takeBudget 5 [2,4,1] == [2] && takeBudget 5 [6,1,1] == [] && takeBudget
-        20 [3,4,1] == [3,4,1] && takeBudget 4 [2,2,2] == [2,2]
-      hints:
-        # Stages: empty placeholder; unchanged recursive budget or filtering; other prefix attempts.
-        - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
-          text: "Contrast a prefix with a selection that skips an item. Find the first position where your output no longer follows the task specification."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?(?:\\btakeBudget[ \\t]+budget\\b|\\bfilter\\b))[\\s\\S]*$/"
-          text: "Trace budget 5 with costs [2,4,1], recording the remaining money and list position after each decision. Check for reused money or a filter that keeps looking after the first refusal."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?(?:\\btakeBudget[ \\t]+budget\\b|\\bfilter\\b))[\\s\\S]*$/"
-          text: "In the branch that keeps an item, sketch a smaller call as `takeBudget (...) rest`. Work out its budget argument and how its result relates to the kept item; separately check what should happen when that branch is unavailable."
-    - description: "Budget selection covers empty inputs and zero-cost boundaries"
-      command: takeBudget 5 [] == [] && takeBudget 0 [] == [] && takeBudget 0 [0,0,2] == [0,0] && takeBudget 2 [2,0,0,1]
-        == [2,0,0] && takeBudget 0 [1,0] == []
-      hints:
-        # Stages: empty placeholder; zero budget used as unconditional stop; other empty/zero-cost attempts.
-        - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
-          text: "Separate an empty list from an empty budget when locating the failing case. They describe different information about what remains to process."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+0\\b[^\\n]*=[ \\t]*\\[\\]|(?:^|\\n)takeBudget\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bbudget[ \\t]*(?:==|<=|<)[ \\t]*0))[\\s\\S]*$/"
-          text: "Compare budget 0 with costs [0] and then [1]. Predict both outcomes from the contract before tracing the condition that selects your stopping case."
-        - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+0\\b[^\\n]*=[ \\t]*\\[\\]|(?:^|\\n)takeBudget\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bbudget[ \\t]*(?:==|<=|<)[ \\t]*0))[\\s\\S]*$/"
-          text: "Try costs [2,0,0,1] with budget 2 and record each smaller problem. Inspect any condition that stops solely because the budget has become zero; decide whether it correctly handles the next listed cost."
+      - description: "Budget prefix: an empty input"
+        command: "takeBudget 5 [] == [] && takeBudget 0 [] == []"
+        hints: &budget_hints_1
+          # Stages: empty placeholder; zero budget used as unconditional stop; other empty/zero-cost attempts.
+          - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
+            text: "Separate an empty list from an empty budget when locating the failing case. They describe different information about what remains to process."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+0\\b[^\\n]*=[ \\t]*\\[\\]|(?:^|\\n)takeBudget\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bbudget[ \\t]*(?:==|<=|<)[ \\t]*0))[\\s\\S]*$/"
+            text: "Compare budget 0 with costs [0] and then [1]. Predict both outcomes from the contract before tracing the condition that selects your stopping case."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+0\\b[^\\n]*=[ \\t]*\\[\\]|(?:^|\\n)takeBudget\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bbudget[ \\t]*(?:==|<=|<)[ \\t]*0))[\\s\\S]*$/"
+            text: "Try costs [2,0,0,1] with budget 2 and record each smaller problem. Inspect any condition that stops solely because the budget has become zero; decide whether it correctly handles the next listed cost."
+      - description: "Budget prefix: every item fits"
+        command: "takeBudget 20 [3,4,1] == [3,4,1]"
+        hints: &budget_hints_0
+          # Stages: empty placeholder; unchanged recursive budget or filtering; other prefix attempts.
+          - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
+            text: "Contrast a prefix with a selection that skips an item. Find the first position where your output no longer follows the task specification."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?(?:\\btakeBudget[ \\t]+budget\\b|\\bfilter\\b))[\\s\\S]*$/"
+            text: "Trace budget 5 with costs [2,4,1], recording the remaining money and list position after each decision. Check for reused money or a filter that keeps looking after the first refusal."
+          - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?(?:\\btakeBudget[ \\t]+budget\\b|\\bfilter\\b))[\\s\\S]*$/"
+            text: "In the branch that keeps an item, sketch a smaller call as `takeBudget (...) rest`. Work out its budget argument and how its result relates to the kept item; separately check what should happen when that branch is unavailable."
+      - description: "Budget prefix: cumulative spending reaches the budget"
+        command: "takeBudget 7 [3,4,1] == [3,4] && takeBudget 4 [2,2,2] == [2,2]"
+        hints: *budget_hints_0
+      - description: "Budget prefix: stop at the first unaffordable item"
+        command: "takeBudget 5 [2,4,1] == [2] && takeBudget 5 [6,1,1] == []"
+        hints: *budget_hints_0
+      - description: "Budget prefix: free items when no budget remains"
+        command: "takeBudget 0 [0,0,2] == [0,0] && takeBudget 2 [2,0,0,1] == [2,0,0]"
+        hints: *budget_hints_1
+      - description: "Budget prefix: later free items cannot bypass a rejected item"
+        command: "takeBudget 0 [1,0] == []"
+        hints: *budget_hints_1
     quiz:
       title: Step 10 — Knowledge Check
       min_score: 0.8

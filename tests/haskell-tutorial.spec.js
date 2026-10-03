@@ -341,3 +341,59 @@ test('detached instructions let students skip the knowledge check without passin
   await page.getByRole('button', { name: /\bSteps$/ }).click();
   await expectActiveStep(page, 1);
 });
+
+test('individual Haskell checks show progress after fixing one function', async ({ page }) => {
+  test.setTimeout(180_000);
+  const config = loadTutorialConfig('haskell');
+  const stepIndex = config.steps.findIndex(step => step.key === 'stock-adjustment');
+  const step = config.steps[stepIndex];
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  await page.goto('/SEBook/tools/haskell-tutorial');
+  await waitForTutorialReady(page, { bootTimeout: BOOT_TIMEOUT });
+  await stepButton(page, stepIndex).click();
+  await expectActiveStep(page, stepIndex);
+
+  // Independent partial implementations: the reward ignores practice mode;
+  // the stock update handles ordinary changes and the lower limit only.
+  const partial = `module Main where
+matchCoins :: Bool -> Bool -> Int
+matchCoins won practiceMode = if won then 12 else 0
+adjustStock :: Int -> Int -> Int -> Int
+adjustStock stock change capacity = max 0 (stock + change)
+main :: IO ()
+main = print (matchCoins True True, adjustStock 8 5 10)
+`;
+  const rewardFixed = partial.replace('if won then 12 else 0',
+    'if won && not practiceMode then 12 else 0');
+  const bothFixed = rewardFixed.replace('max 0 (stock + change)',
+    'min capacity (max 0 (stock + change))');
+  const capacityFailures = [
+    'adjustStock: at or above the supplied capacity',
+    'adjustStock: zero capacity',
+  ];
+  for (const [source, failures] of [
+    [partial, ['matchCoins: practice mode for either outcome', ...capacityFailures]],
+    [rewardFixed, capacityFailures],
+    [bothFixed, []],
+  ]) {
+    expect(await setTutorialFileContent(page, step.run_file, source)).toBe(true);
+    await runGate(page);
+    const passed = step.tests.length - failures.length;
+    const announcement = failures.length
+      ? `${passed} of ${step.tests.length} tests passed. Failures: ${failures.join('; ')}.`
+      : `All ${step.tests.length} tests passed.`;
+    await expect(page.getByRole('status').filter({ hasText: /tests passed\./ }))
+      .toHaveText(announcement);
+    for (const check of step.tests) {
+      const result = page.getByRole('listitem').filter({
+        has: page.getByText(check.description, { exact: true }),
+      });
+      await expect(result).toHaveText((failures.includes(check.description) ? '✗' : '✓') + check.description);
+    }
+    await a11yCheckpoint(page, `Haskell individual progress — ${passed} criteria passed`,
+      { feature: A11Y_FEATURE });
+  }
+  expect(errors, 'the progress feedback remains free of browser errors').toEqual([]);
+});

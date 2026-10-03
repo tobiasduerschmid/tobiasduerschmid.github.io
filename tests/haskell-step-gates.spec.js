@@ -36,6 +36,7 @@ for (const [slug, cases] of courses) {
 
       test(`${step.title}: accepts equivalent solutions and rejects plausible mistakes`, async ({ page }) => {
         await startRuntime(page);
+        const partialProgressCases = [];
         for (const [category, variants] of [['correct', entry.correct], ['incorrect', entry.incorrect]]) {
           for (const variant of variants) {
             await test.step(`${category}: ${variant.name}`, async () => {
@@ -63,9 +64,18 @@ for (const [slug, cases] of courses) {
                 expect(failures, 'Every gate must accept this valid implementation').toEqual([]);
               } else {
                 expect(failures.length, 'At least one gate must expose this mistake').toBeGreaterThan(0);
+                if (!variant.gateErrorExpected && !variant.compileErrorExpected &&
+                    failures.length < outcomes.length) {
+                  partialProgressCases.push(variant.name);
+                }
               }
             });
           }
+        }
+        if (slug !== 'haskell-backend-demo') {
+          expect(partialProgressCases,
+            'A runnable partial solution must earn passes for completed criteria while unfinished criteria fail')
+            .not.toEqual([]);
         }
       });
     }

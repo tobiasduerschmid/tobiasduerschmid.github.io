@@ -130,6 +130,41 @@ test('all matching authored hints retain their order without a shared cap', asyn
   await expect(page.locator('.tvm-tutor-hints').getByRole('button')).toHaveCount(0);
 });
 
+test('small failing checks share identical advice without repeating it', async ({ page }) => {
+  const sharedHints = [
+    { condition: 'code_contains: phase_a', text: 'Trace the proposed value before applying either limit.' },
+    { condition: 'code_contains: phase_b', text: 'Compare the proposed value with the applicable limit.' },
+  ];
+  await openHintsFixture(page, { tests: [
+    { description: 'Upper capacity', hints: sharedHints },
+    { description: 'Zero capacity', hints: sharedHints },
+    { description: 'Unchanged input', hints: [{ text: 'This completed criterion needs no advice.' }] },
+    { description: 'Another unfinished rule', hints: [{ text: 'Trace this separate rule too.' }] },
+  ], results: [false, false, true, false] });
+  await openHints(page);
+  await expect(page.getByText(sharedHints[0].text, { exact: true })).toHaveCount(1);
+  await expect(page.getByText('Trace this separate rule too.', { exact: true })).toBeVisible();
+  await expect(page.getByText('This completed criterion needs no advice.', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Advance code attempt', exact: true }).click();
+  await page.getByRole('button', { name: 'Retest', exact: true }).click();
+  await openHints(page);
+  await expect(page.getByText(sharedHints[0].text, { exact: true })).toHaveCount(0);
+  await expect(page.getByText(sharedHints[1].text, { exact: true })).toHaveCount(1);
+  await a11yCheckpoint(page, 'shared advice for individual checks', { feature: 'tutor-hints' });
+});
+
+test('explicit hint titles preserve distinct context for identical advice text', async ({ page }) => {
+  const text = 'Trace both boundary inputs.';
+  await openHintsFixture(page, { tests: [
+    { description: 'Capacity', hints: [{ title: 'Stock capacity', text }] },
+    { description: 'Eligibility', hints: [{ title: 'Reward eligibility', text }] },
+  ], results: [false, false] });
+  await openHints(page);
+  await expect(page.getByText(/Stock capacity$/)).toBeVisible();
+  await expect(page.getByText(/Reward eligibility$/)).toBeVisible();
+  await expect(page.getByText(text, { exact: true })).toHaveCount(2);
+});
+
 test('matching authored hints replace solution and description generated guidance', async ({ page }) => {
   await openHintsFixture(page, { tests: [{ description: 'Script runs without errors using a variable',
     hints: [{ condition: 'code_contains: phase_a', text: 'Inspect the failing boundary case.' },

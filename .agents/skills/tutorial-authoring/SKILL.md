@@ -358,6 +358,53 @@ Concrete heuristics:
 Pair every test with **multi-layered hints** (see §3.3) so a failing student
 gets graduated help, not a wall.
 
+#### Small checks make partial progress visible
+
+Every assessed step should have **small, individually reported checks**, each
+covering one meaningful behavior from the task contract. A learner who fixes
+one requirement should be able to see that check pass while unfinished
+requirements still fail. Split checks by function, branch, output component,
+or input partition where these represent separate goals. Do not bundle an
+entire exercise into one Boolean conjunction or one assertion script.
+
+- **One reason to fail per check, not one assertion per check.** Several
+  examples of the same rule may belong together: just below, at, and above a
+  cap can form one boundary check. Separate unrelated rules, such as a match
+  reward and a stock update, or addition and multiplication in an evaluator.
+- **Name the criterion students can act on.** Use descriptions such as
+  "Stock: at or above the supplied capacity" or "Front swap: an empty input".
+  Do not put the solution formula, exact assessed type, or algorithm in the
+  description. Order checks from simple cases toward combinations and transfer.
+- **Preserve coverage when splitting.** Map every stated rule to checks, then
+  include representative valid inputs, empty/singleton cases where applicable,
+  and boundary neighbors. Retain checks for order, repeated occurrences,
+  payload preservation, and type flexibility when the contract requires them.
+  An always-passing scaffold check or a compilation-only check is not evidence
+  that a behavioral requirement is implemented.
+- **Make each check safe on its own.** Do not rely on an earlier assertion's
+  short-circuit to guard a partial observation. For example, inspect a Haskell
+  list with a complete `case` and return `False` for the wrong shape before
+  applying a selected function-valued element. A wrong learner result should
+  produce a failed criterion, not an exception in the authored test itself.
+- **Avoid both under-fitting and over-fitting.** Assert the full specified
+  result for each chosen case; use additional inputs to reject hard-coded
+  sample answers. Accept equivalent algorithms, helper names, formatting,
+  and allowed types. Check syntax or a declared interface only when the task
+  explicitly requires it. Source patterns used for hints are not grading rules.
+- **Verify partial progress and correctness independently.** Run the starter,
+  the model, at least two independently written correct alternatives, and
+  plausible mistakes against the authored checks. Include a runnable partial
+  solution that passes its completed criteria and fails its unfinished ones;
+  confirm the student UI shows both and updates after a focused correction.
+  Do not require every check to fail on the starter when some behavior is
+  deliberately supplied. Use the [test-design skill](../test-design/SKILL.md)
+  for oracle strength and mutation-style validation.
+- **Keep the list useful and fast.** There is no fixed test-count quota.
+  Avoid one row per arbitrary literal or duplicate sample, and measure a full
+  test run in the real backend. Keep condition-driven hints relevant to each
+  failed criterion; YAML anchors may share an identical hint ladder within a
+  file when the advice applies to all of those checks.
+
 The legacy regex tutorials in `js/regex-tutorial.js` and
 `js/regex-tutorial-advanced.js` define their exercises in JavaScript rather
 than tutorial YAML. Their test cases use `shouldMatch` for presence and
@@ -439,6 +486,12 @@ manual reveal ladder, or stored reveal depth. Authored guidance takes precedence
 over generated fallback advice. UML checks retain actual assertion diagnostics
 alongside applicable authored hints, and an empty diagnostic result does not
 invent a naming nudge. Passing checks no longer contribute hints.
+When several failed checks share an identical hint body and authored title,
+the flat panel shows that advice once, using the first applicable title.
+Different fallback titles derived from test descriptions do not duplicate the
+advice; distinct explicit hint titles preserve their separate context. The
+criterion groups remain available internally, and retesting recalculates both
+applicable advice and duplicates from the current results and source.
 
 Keep presentation in `css/tutor-chat.css`. Condition changes and failed-check
 coverage are verified by `tests/tutor-hints.spec.js`; authored source profiles
@@ -556,6 +609,12 @@ students are confused" reports.
       behavior** — see "Tests should be precise" above. Mentally run 3
       wrong solutions and 2 alternative correct solutions against each
       test.
+- [ ] **Small checks expose partial progress.** Each assessed step reports
+      meaningful criteria separately, with boundary coverage and useful names.
+      Run a partial solution to verify that completed criteria pass while
+      unfinished criteria fail; verify a focused correction updates the UI.
+      Run the model and independent correct/incorrect alternatives in the
+      actual backend, and keep the total check time practical.
 - [ ] **In-tutorial quizzes**: recall + spaced + higher-Bloom only. Never
       introduce new content in a quiz. Re-quiz at least one earlier-step
       concept by step 5+.
@@ -1132,8 +1191,9 @@ steps:
     commands: [string]                       # Example commands shown to
                                              # student (display only).
 
-    tests:                                   # Step gate (when require_tests).
-      - description: "What this verifies"
+    tests:                                   # One reported row per criterion;
+                                             # step gate when require_tests.
+      - description: "One behavior this verifies"
         command: |                           # The assertion code.
           # bash for v86: `test -f /tutorial/foo.py`
           # python for pyodide: `output = __run_capture('/tutorial/x.py');
@@ -2397,6 +2457,13 @@ under the same prefix family as other tutorial state so the global
 Failure surfaces inline in `.tvm-test-panel` below the instructions
 (green/red/yellow), with all matching `hints[].condition` hints
 auto-expanded.
+
+The result list and pass count use the individual `tests:` entries. Assertions
+inside one entry share one result: a large conjunction hides which requirement
+already works. Author separate entries for separate criteria (see §1, "Small
+checks make partial progress visible"); this needs no additional runtime flag.
+Shared applicable hints are deduplicated in the flat panel by authored title
+and body; this does not merge test results or discard their criterion groups.
 
 Code-test success records `stepsPassed` independently from navigation access.
 `_isNextStepLocked` allows a passed step to open its knowledge check, while

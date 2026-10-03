@@ -134,10 +134,9 @@ steps:
             print (qualifiedScores [9,10,12])
     run_file: Main.hs
     tests:
-      - description: "Score selection at the cutoff, with stable order and repeated values"
-        command: |
-          qualifiedScores [] == [] && qualifiedScores ([9,10,11] :: [Int]) == [20,22] && qualifiedScores [15,-4,10,15,0] == [30,20,30] && qualifiedScores [1,4,9] == []
-        hints:
+      - description: "Qualified scores: an empty input"
+        command: "qualifiedScores [] == []"
+        hints: &map_filter_hints_0
           # Conditions: unchanged transformation; selection after transformation; other attempted selection.
           - title: "An Unexpected Output Length"
             condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)qualifiedScores\\b(?![^\\n]*::))|(?=[\\s\\S]*(?:(?:^|\\n)qualifiedScores\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*map\\s+[A-Za-z_]\\w*\\s+[A-Za-z_]\\w*\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)qualifiedScores\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$))))/"
@@ -148,6 +147,15 @@ steps:
           - title: "The Missing Input List"
             condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)qualifiedScores\\b(?![^\\n]*::))(?![\\s\\S]*(?:(?:^|\\n)qualifiedScores\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*map\\s+[A-Za-z_]\\w*\\s+[A-Za-z_]\\w*\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)qualifiedScores\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)qualifiedScores\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*(?:filter\\s+qualifies\\s*\\(?\\s*map\\s+doublePoints))/"
             text: "One possible outer stage is `map doublePoints (...)`. Decide what list belongs in the blank and how the existing helpers could produce it. Check that a score immediately below the cutoff cannot enter that stage."
+      - description: "Qualified scores: the cutoff and transformation"
+        command: "qualifiedScores ([9,10,11] :: [Int]) == [20,22]"
+        hints: *map_filter_hints_0
+      - description: "Qualified scores: order and repeated occurrences"
+        command: "qualifiedScores [15,-4,10,15,0] == [30,20,30]"
+        hints: *map_filter_hints_0
+      - description: "Qualified scores: all original scores are ineligible"
+        command: "qualifiedScores [1,4,9] == []"
+        hints: *map_filter_hints_0
     quiz:
       title: Step 1 — Knowledge Check
       min_score: 0.8
@@ -316,10 +324,9 @@ steps:
             print (makeWindow 1 2 ["sun","fog","rain","snow"])
     run_file: Main.hs
     tests:
-      - description: "Configured windows, short inputs, and independent calls"
-        command: |
-          let first = makeWindow (1 :: Int) (2 :: Int); second = makeWindow 2 1 in first ["sun","fog","rain","snow"] == ["fog","rain"] && second ["sun","fog","rain","snow"] == ["rain"] && first ["a","a","b","c"] == ["a","b"] && makeWindow 0 2 ["first","first","last"] == ["first","first"] && makeWindow 0 0 [True,False] == [] && makeWindow 4 2 [1,2 :: Int] == [] && makeWindow 1 5 [True,False] == [False] && makeWindow 1 2 ([] :: [Int]) == [] && (let [chosen] = makeWindow 1 1 [(\n -> n), (\n -> n + 2), (\n -> n + 3)] in chosen 5 == 7)
-        hints:
+      - description: "Window: different captured starts and lengths"
+        command: "let first = makeWindow (1 :: Int) (2 :: Int); second = makeWindow 2 1 in first [\"sun\",\"fog\",\"rain\",\"snow\"] == [\"fog\",\"rain\"] && second [\"sun\",\"fog\",\"rain\",\"snow\"] == [\"rain\"]"
+        hints: &captured_settings_hints_0
           # Conditions: unused start; dropping after an already bounded prefix; other window attempts.
           - title: "A Setting with No Effect"
             condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)makeWindow\\b(?![^\\n]*::))|(?=[\\s\\S]*(?:(?:^|\\n)makeWindow\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*\\\\[A-Za-z_]\\w*\\s*->\\s*take\\s+[A-Za-z_]\\w*\\s+[A-Za-z_]\\w*\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)makeWindow\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$))))/"
@@ -330,6 +337,24 @@ steps:
           - title: "Complete the Lambda's Input"
             condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)makeWindow\\b(?![^\\n]*::))(?![\\s\\S]*(?:(?:^|\\n)makeWindow\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*\\\\[A-Za-z_]\\w*\\s*->\\s*take\\s+[A-Za-z_]\\w*\\s+[A-Za-z_]\\w*\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)makeWindow\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)makeWindow\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*(?:drop\\s+start\\s*\\(?\\s*take\\s+count))/"
             text: "The starter's `\\items -> take count (...)` can be completed with an expression using the captured start setting and the lambda's items parameter. Choose that expression from the marked positions; then call two differently configured windows in alternating order to check their captured settings."
+      - description: "Window: reuse a configured function with new input"
+        command: "let first = makeWindow (1 :: Int) (2 :: Int); second = makeWindow 2 1 in first [\"a\",\"a\",\"b\",\"c\"] == [\"a\",\"b\"]"
+        hints: *captured_settings_hints_0
+      - description: "Window: a zero start and repeated elements"
+        command: "let first = makeWindow (1 :: Int) (2 :: Int); second = makeWindow 2 1 in makeWindow 0 2 [\"first\",\"first\",\"last\"] == [\"first\",\"first\"]"
+        hints: *captured_settings_hints_0
+      - description: "Window: a zero length"
+        command: "let first = makeWindow (1 :: Int) (2 :: Int); second = makeWindow 2 1 in makeWindow 0 0 [True,False] == []"
+        hints: *captured_settings_hints_0
+      - description: "Window: no elements at the requested start"
+        command: "let first = makeWindow (1 :: Int) (2 :: Int); second = makeWindow 2 1 in makeWindow 4 2 [1,2 :: Int] == [] && makeWindow 1 2 ([] :: [Int]) == []"
+        hints: *captured_settings_hints_0
+      - description: "Window: fewer remaining elements than requested"
+        command: "let first = makeWindow (1 :: Int) (2 :: Int); second = makeWindow 2 1 in makeWindow 1 5 [True,False] == [False]"
+        hints: *captured_settings_hints_0
+      - description: "Window: function-valued elements"
+        command: "case makeWindow 1 1 [(\\n -> n), (\\n -> n + 2), (\\n -> n + 3)] of { [chosen] -> chosen 5 == 7; _ -> False }"
+        hints: *captured_settings_hints_0
     quiz:
       title: Step 2 — Knowledge Check
       min_score: 0.8
@@ -526,10 +551,9 @@ steps:
             print (discountAll 10 [2,12])
     run_file: Main.hs
     tests:
-      - description: "Reusable discounts on empty, repeated, and signed scores"
-        command: |
-          let discount = discountAll (10 :: Int) in discount ([2,12] :: [Int]) == [-8,2] && discount [] == [] && discount [10,10,-2] == [0,0,-12] && discountAll 0 [3,-1] == [3,-1] && discountAll (-2) [0,3] == [2,5]
-        hints:
+      - description: "Discount: an empty input"
+        command: "let discount = discountAll (10 :: Int) in discount [] == []"
+        hints: &currying_hints_0
           # Conditions: unchanged subtraction; a clamp or absolute value; other one-score arithmetic.
           - title: "Separate Arithmetic from Currying"
             condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)discountAll\\b(?![^\\n]*::))|(?=[\\s\\S]*(?:(?:^|\\n)discountAll\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*map\\s*\\(\\s*\\\\[A-Za-z_]\\w*\\s*->\\s*[A-Za-z_]\\w*\\s*-\\s*[A-Za-z_]\\w*\\s*\\)\\s+[A-Za-z_]\\w*\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)discountAll\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$))))/"
@@ -540,6 +564,18 @@ steps:
           - title: "One Score Arrives Later"
             condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)discountAll\\b(?![^\\n]*::))(?![\\s\\S]*(?:(?:^|\\n)discountAll\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*map\\s*\\(\\s*\\\\[A-Za-z_]\\w*\\s*->\\s*[A-Za-z_]\\w*\\s*-\\s*[A-Za-z_]\\w*\\s*\\)\\s+[A-Za-z_]\\w*\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)discountAll\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)discountAll\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*(?:\\b(?:max|abs)\\b))/"
             text: "Complete the body of `\\score -> ...` using that score and the amount from the surrounding definition. Map supplies only the score to this lambda. Check your expression on the same score with two different amounts before placing it inside the list transformation."
+      - description: "Discount: scores on either side of the discount amount"
+        command: "let discount = discountAll (10 :: Int) in discount ([2,12] :: [Int]) == [-8,2]"
+        hints: *currying_hints_0
+      - description: "Discount: reuse with repeated and negative scores"
+        command: "let discount = discountAll (10 :: Int) in discount [10,10,-2] == [0,0,-12]"
+        hints: *currying_hints_0
+      - description: "Discount: a zero amount"
+        command: "let discount = discountAll (10 :: Int) in discountAll 0 [3,-1] == [3,-1]"
+        hints: *currying_hints_0
+      - description: "Discount: a negative amount"
+        command: "let discount = discountAll (10 :: Int) in discountAll (-2) [0,3] == [2,5]"
+        hints: *currying_hints_0
     quiz:
       title: Step 3 — Knowledge Check
       min_score: 0.8
@@ -798,10 +834,9 @@ steps:
             print (convertPairs null [(True,[1]),(False,[])] :: [(Bool, Bool)])
     run_file: Main.hs
     tests:
-      - description: "Pair conversion across distinct value types, with stable labels and order"
-        command: |
-          convertPairs length [("a","hi"),("a",""),("b","cat")] == [("a",2),("a",0),("b",3)] && convertPairs null [(True,[1 :: Int]),(False,[]),(True,[2,3])] == [(True,False),(False,True),(True,False)] && convertPairs (\n -> [n,n]) [(1,True),(2,False)] == [(1,[True,True]),(2,[False,False])] && convertPairs length ([] :: [(Bool, String)]) == ([] :: [(Bool, Int)]) && (let [(tag, converted)] = convertPairs (\n -> \m -> n + m) [((\n -> n * 2), 3 :: Int)] in tag 4 == 8 && converted 5 == 8) && (let [(tag, converted)] = convertPairs (\f -> f True) [("call", (\flag -> if flag then "yes" else "no"))] in tag == "call" && converted == "yes")
-        hints:
+      - description: "Pair conversion: an empty input"
+        command: "convertPairs length ([] :: [(Bool, String)]) == ([] :: [(Bool, Int)])"
+        hints: &higher_order_types_hints_0
           # Conditions: empty placeholder; applying the converter to a label; other pair-conversion attempts.
           - title: "Begin with One Entry"
             condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)convertPairs\\b(?![^\\n]*::))|(?=[\\s\\S]*(?:(?:^|\\n)convertPairs\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*\\[\\s*\\]\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)convertPairs\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$))))/"
@@ -812,6 +847,21 @@ steps:
           - title: "Fill the Two Output Fields"
             condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)convertPairs\\b(?![^\\n]*::))(?![\\s\\S]*(?:(?:^|\\n)convertPairs\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*\\[\\s*\\]\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)convertPairs\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)convertPairs\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*(?:\\bconvert\\s+(?:label|fst\\b)))/"
             text: "One possible scaffold is `map (\\(label, value) -> (..., ...)) entries`. Fill each output field from the contract, leaving the label usable even when it is a function. A recursive implementation can make the same one-pair decision before processing the tail."
+      - description: "Pair conversion: labels, order, and repeated labels"
+        command: "convertPairs length [(\"a\",\"hi\"),(\"a\",\"\"),(\"b\",\"cat\")] == [(\"a\",2),(\"a\",0),(\"b\",3)]"
+        hints: *higher_order_types_hints_0
+      - description: "Pair conversion: a Boolean result type"
+        command: "convertPairs null [(True,[1 :: Int]),(False,[]),(True,[2,3])] == [(True,False),(False,True),(True,False)]"
+        hints: *higher_order_types_hints_0
+      - description: "Pair conversion: a list result type"
+        command: "convertPairs (\\n -> [n,n]) [(1,True),(2,False)] == [(1,[True,True]),(2,[False,False])]"
+        hints: *higher_order_types_hints_0
+      - description: "Pair conversion: function-valued labels and results"
+        command: "case convertPairs (\\n -> \\m -> n + m) [((\\n -> n * 2), 3 :: Int)] of { [(tag, converted)] -> tag 4 == 8 && converted 5 == 8; _ -> False }"
+        hints: *higher_order_types_hints_0
+      - description: "Pair conversion: function-valued input fields"
+        command: "case convertPairs (\\f -> f True) [(\"call\", (\\flag -> if flag then \"yes\" else \"no\"))] of { [(tag, converted)] -> tag == \"call\" && converted == \"yes\"; _ -> False }"
+        hints: *higher_order_types_hints_0
     quiz:
       title: Step 4 — Knowledge Check
       min_score: 0.8
@@ -993,10 +1043,9 @@ steps:
             print (digitsToNumber [3,0,7])
     run_file: Main.hs
     tests:
-      - description: "Decimal prefixes, leading zeroes, and empty digit lists"
-        command: |
-          digitsToNumber [] == 0 && digitsToNumber [0] == 0 && digitsToNumber [7] == 7 && digitsToNumber [4,0] == 40 && digitsToNumber [3,0,7] == 307 && digitsToNumber [0,0,4,2] == 42 && digitsToNumber [1,0,2] == 102 && digitsToNumber ([9,8,7,6,5,4,3,2,1,0,1,2,3,4,5,6,7,8,9,0] :: [Integer]) == 98765432101234567890
-        hints:
+      - description: "Digits: an empty input"
+        command: "digitsToNumber [] == 0"
+        hints: &left_folds_hints_0
           # Conditions: unchanged sum; reversed fold or digit place contribution; other prefix updates.
           - title: "A Digit's Position Matters"
             condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)digitsToNumber\\b(?![^\\n]*::))|(?=[\\s\\S]*(?:(?:^|\\n)digitsToNumber\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*foldl\\s*\\(\\s*\\\\[A-Za-z_]\\w*\\s+[A-Za-z_]\\w*\\s*->\\s*[A-Za-z_]\\w*\\s*\\+\\s*[A-Za-z_]\\w*\\s*\\)\\s*0\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)digitsToNumber\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$))))/"
@@ -1007,6 +1056,21 @@ steps:
           - title: "Separate the Two Contributions"
             condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)digitsToNumber\\b(?![^\\n]*::))(?![\\s\\S]*(?:(?:^|\\n)digitsToNumber\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*foldl\\s*\\(\\s*\\\\[A-Za-z_]\\w*\\s+[A-Za-z_]\\w*\\s*->\\s*[A-Za-z_]\\w*\\s*\\+\\s*[A-Za-z_]\\w*\\s*\\)\\s*0\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)digitsToNumber\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)digitsToNumber\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*(?:\\bfoldr\\b|\\bdigit\\s*\\*|\\^\\s*digit\\b))/"
             text: "A partial reducer is `\\acc digit -> movedPrefix + digit`. Derive movedPrefix from the accumulated prefix's new place in the decimal number; do not replace it with a constant. Test your choice with a zero next digit and with leading zeroes."
+      - description: "Digits: a single digit"
+        command: "digitsToNumber [0] == 0 && digitsToNumber [7] == 7"
+        hints: *left_folds_hints_0
+      - description: "Digits: a trailing zero"
+        command: "digitsToNumber [4,0] == 40"
+        hints: *left_folds_hints_0
+      - description: "Digits: place value and interior zeroes"
+        command: "digitsToNumber [3,0,7] == 307 && digitsToNumber [1,0,2] == 102"
+        hints: *left_folds_hints_0
+      - description: "Digits: leading zeroes"
+        command: "digitsToNumber [0,0,4,2] == 42"
+        hints: *left_folds_hints_0
+      - description: "Digits: values beyond machine-sized integers"
+        command: "digitsToNumber ([9,8,7,6,5,4,3,2,1,0,1,2,3,4,5,6,7,8,9,0] :: [Integer]) == 98765432101234567890"
+        hints: *left_folds_hints_0
     quiz:
       title: Step 5 — Knowledge Check
       min_score: 0.8
@@ -1190,10 +1254,9 @@ steps:
             print (tallyFrom (0,0) null [[],[1],[]])
     run_file: Main.hs
     tests:
-      - description: "Seeded classification counts for mixed and repeated items"
-        command: |
-          tallyFrom (2,1) null ["","oak",""] == (4,2) && tallyFrom (3,4) null ([] :: [String]) == (3,4) && tallyFrom (0,0) (\n -> n < 0) [-1,0,1,-1 :: Int] == (2,2) && tallyFrom (1,2) (\flag -> flag) [False,True,False] == (2,4) && tallyFrom (0,0) null [[],[1],[]] == (2,1) && tallyFrom (0,0) (\_ -> True) [1,2,3 :: Int] == (3,0) && tallyFrom (0,0) (\_ -> False) [1,2,3 :: Int] == (0,3) && tallyFrom (2,3) (\f -> f 0 == 1) [(\n -> n + 1), (\n -> n), (\n -> n + 1)] == (4,4)
-        hints:
+      - description: "Tally: an empty input keeps the seed"
+        command: "tallyFrom (3,4) null ([] :: [String]) == (3,4)"
+        hints: &recursive_accumulators_hints_0
           # Conditions: unchanged failure branch; discarded supplied counts; other branch updates.
           - title: "A Plausible Total Can Hide Wrong Categories"
             condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)tallyFrom\\b(?![^\\n]*::))|(?=[\\s\\S]*(?:(?:^|\\n)tallyFrom\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*otherwise\\s*=\\s*tallyFrom\\s*\\(\\s*yes\\s*\\+\\s*1\\s*,\\s*no\\s*\\)|(?:^|\\n)tallyFrom\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$))))/"
@@ -1204,6 +1267,24 @@ steps:
           - title: "Complete the Pair in the Tail Call"
             condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)tallyFrom\\b(?![^\\n]*::))(?![\\s\\S]*(?:(?:^|\\n)tallyFrom\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*otherwise\\s*=\\s*tallyFrom\\s*\\(\\s*yes\\s*\\+\\s*1\\s*,\\s*no\\s*\\)|(?:^|\\n)tallyFrom\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)tallyFrom\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*(?:\\btallyFrom\\s*\\(\\s*0\\s*,\\s*0\\s*\\)|\\[\\s*\\]\\s*=\\s*\\(\\s*0\\s*,\\s*0\\s*\\)))/"
             text: "Use `tallyFrom (...) predicate xs` as a partial recursive call. For the branch you are repairing, decide each component of the missing pair separately: which has a contribution from this item, and which must retain its current value? Check an input containing only that branch's category."
+      - description: "Tally: both counts grow from their supplied seeds"
+        command: "tallyFrom (2,1) null [\"\",\"oak\",\"\"] == (4,2) && tallyFrom (1,2) (\\flag -> flag) [False,True,False] == (2,4)"
+        hints: *recursive_accumulators_hints_0
+      - description: "Tally: repeated items are counted separately"
+        command: "tallyFrom (0,0) (\\n -> n < 0) [-1,0,1,-1 :: Int] == (2,2)"
+        hints: *recursive_accumulators_hints_0
+      - description: "Tally: every item satisfies the predicate"
+        command: "tallyFrom (0,0) (\\_ -> True) [1,2,3 :: Int] == (3,0)"
+        hints: *recursive_accumulators_hints_0
+      - description: "Tally: no item satisfies the predicate"
+        command: "tallyFrom (0,0) (\\_ -> False) [1,2,3 :: Int] == (0,3)"
+        hints: *recursive_accumulators_hints_0
+      - description: "Tally: list-valued elements"
+        command: "tallyFrom (0,0) null [[],[1],[]] == (2,1)"
+        hints: *recursive_accumulators_hints_0
+      - description: "Tally: function-valued elements"
+        command: "tallyFrom (2,3) (\\f -> f 0 == 1) [(\\n -> n + 1), (\\n -> n), (\\n -> n + 1)] == (4,4)"
+        hints: *recursive_accumulators_hints_0
     quiz:
       title: Step 6 — Knowledge Check
       min_score: 0.8
@@ -1399,10 +1480,9 @@ steps:
             print (firstMatches 2 longEnough prefixes)
     run_file: Main.hs
     tests:
-      - description: "Bounded matching results on finite and productive infinite inputs"
-        command: |
-          firstMatches 3 even ([1..] :: [Integer]) == [2,4,6] && firstMatches 3 even [1,2,3] == [2] && firstMatches 2 even [1,2,4,6] == [2,4] && firstMatches 0 even [2,4] == [] && firstMatches 0 (\_ -> False) ([1..] :: [Integer]) == [] && firstMatches 2 even ([] :: [Int]) == [] && firstMatches 3 even [1,3,5] == [] && firstMatches 2 null ["go","","team",""] == ["",""] && (let [chosen] = firstMatches 1 (\f -> f 0 > 0) [(\n -> n), (\n -> n + 2), (\n -> n + 3)] in chosen 5 == 7)
-        hints:
+      - description: "Matching prefix: no matches in a finite input"
+        command: "firstMatches 2 even ([] :: [Int]) == [] && firstMatches 3 even [1,3,5] == []"
+        hints: &lazy_lists_hints_0
           # Conditions: unchanged input prefix; filtering only a bounded prefix; other matching-prefix attempts.
           - title: "Early Nonmatches"
             condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)firstMatches\\b(?![^\\n]*::))|(?=[\\s\\S]*(?:(?:^|\\n)firstMatches\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*take\\s+[A-Za-z_]\\w*\\s+[A-Za-z_]\\w*\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)firstMatches\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$))))/"
@@ -1413,6 +1493,24 @@ steps:
           - title: "Choose the Inner and Outer Operations"
             condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)firstMatches\\b(?![^\\n]*::))(?![\\s\\S]*(?:(?:^|\\n)firstMatches\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*take\\s+[A-Za-z_]\\w*\\s+[A-Za-z_]\\w*\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)firstMatches\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)firstMatches\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*(?:filter\\s+predicate\\s*\\(?\\s*take\\s+n))/"
             text: "A partial nested-call design is `outer n (inner predicate items)`. Use the list operations' signatures to choose the missing functions, then check whether the inner stage supplies original items or Boolean decisions. Also test n = 0 without forcing a search for a match."
+      - description: "Matching prefix: fewer matches than requested"
+        command: "firstMatches 3 even [1,2,3] == [2]"
+        hints: *lazy_lists_hints_0
+      - description: "Matching prefix: the limit counts matches, not input positions"
+        command: "firstMatches 2 even [1,2,4,6] == [2,4]"
+        hints: *lazy_lists_hints_0
+      - description: "Matching prefix: a zero limit needs no matching element"
+        command: "firstMatches 0 even [2,4] == [] && firstMatches 0 (\\_ -> False) ([1..] :: [Integer]) == []"
+        hints: *lazy_lists_hints_0
+      - description: "Matching prefix: a finite answer from an infinite input"
+        command: "firstMatches 3 even ([1..] :: [Integer]) == [2,4,6]"
+        hints: *lazy_lists_hints_0
+      - description: "Matching prefix: repeated matching elements"
+        command: "firstMatches 2 null [\"go\",\"\",\"team\",\"\"] == [\"\",\"\"]"
+        hints: *lazy_lists_hints_0
+      - description: "Matching prefix: function-valued elements"
+        command: "case firstMatches 1 (\\f -> f 0 > 0) [(\\n -> n), (\\n -> n + 2), (\\n -> n + 3)] of { [chosen] -> chosen 5 == 7; _ -> False }"
+        hints: *lazy_lists_hints_0
     quiz:
       title: Step 7 — Knowledge Check
       min_score: 0.8
@@ -1582,10 +1680,9 @@ steps:
           main = print (playlistReport 10 3 [("Intro",8),("Loop",10),("Loop",12)])
     run_file: Main.hs
     tests:
-      - description: "Playlist eligibility boundaries, title order, and repeated occurrences"
-        command: |
-          fst (playlistReport (10 :: Int) (3 :: Int) ([("Intro",8),("Loop",10),("Loop",12)] :: [(String, Int)])) == ["Loop","Loop"] && fst (playlistReport 5 20 [("last",6),("skip",4),("first",5)]) == ["last","first"] && fst (playlistReport (-2) 0 [("a",-3),("b",-2),("c",0)]) == ["b","c"] && fst (playlistReport 10 0 []) == [] && playlistReport 0 0 [("",0),("keep",1),("",-1),("",2)] == (["","keep",""],3)
-        hints:
+      - description: "Playlist titles: the eligibility boundary"
+        command: "fst (playlistReport (10 :: Int) (3 :: Int) ([(\"Intro\",8),(\"Loop\",10),(\"Loop\",12)] :: [(String, Int)])) == [\"Loop\",\"Loop\"] && fst (playlistReport (-2) 0 [(\"a\",-3),(\"b\",-2),(\"c\",0)]) == [\"b\",\"c\"]"
+        hints: &playlist_hints_0
           # Conditions: empty report placeholder; bonus inside eligibility; other title-selection attempts.
           - title: "A Lost Connection Between Fields"
             condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)playlistReport\\b(?![^\\n]*::))|(?=[\\s\\S]*(?:(?:^|\\n)playlistReport\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*\\(\\s*\\[\\s*\\]\\s*,\\s*0\\s*\\)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)playlistReport\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$))))/"
@@ -1596,10 +1693,18 @@ steps:
           - title: "Complete the Two Result Components"
             condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)playlistReport\\b(?![^\\n]*::))(?![\\s\\S]*(?:(?:^|\\n)playlistReport\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*\\(\\s*\\[\\s*\\]\\s*,\\s*0\\s*\\)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)playlistReport\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)playlistReport\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*(?:\\b(?:score|points)\\s*\\+\\s*bonus\\s*(?:>=|>)))/"
             text: "Sketch `report = (titlePart, pointsPart)` and name the source data each part needs. Keep enough information for both parts until their own transformations are complete. Check the title part on repeated titles in different positions. Two views of a shared selection or one traversal with two accumulators can both work."
-      - description: "Playlist point totals for repeated selections, empty results, and signed values"
-        command: |
-          snd (playlistReport 10 3 [("Intro",8),("Loop",10),("Loop",12)]) == 28 && snd (playlistReport 5 20 [("last",6),("skip",4),("first",5)]) == 51 && snd (playlistReport (-2) (-3) [("a",-3),("b",-2),("c",0)]) == -8 && playlistReport 10 5 [] == ([],0) && playlistReport 10 5 [("skip",9)] == ([],0)
-        hints:
+      - description: "Playlist titles: bonus does not change eligibility"
+        command: "fst (playlistReport 5 20 [(\"last\",6),(\"skip\",4),(\"first\",5)]) == [\"last\",\"first\"]"
+        hints: *playlist_hints_0
+      - description: "Playlist titles: an empty input"
+        command: "fst (playlistReport 10 0 []) == []"
+        hints: *playlist_hints_0
+      - description: "Playlist titles: empty titles and repeated occurrences"
+        command: "playlistReport 0 0 [(\"\",0),(\"keep\",1),(\"\",-1),(\"\",2)] == ([\"\",\"keep\",\"\"],3)"
+        hints: *playlist_hints_0
+      - description: "Playlist total: a bonus for every selected occurrence"
+        command: "fst (playlistReport 0 0 [(\"\",0),(\"keep\",1),(\"\",-1),(\"\",2)]) == [\"\",\"keep\",\"\"]"
+        hints: &playlist_hints_1
           # Conditions: empty report placeholder; one bonus for the whole sum; other per-selection totals.
           - title: "Where the Bonus Enters the Calculation"
             condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)playlistReport\\b(?![^\\n]*::))|(?=[\\s\\S]*(?:(?:^|\\n)playlistReport\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*\\(\\s*\\[\\s*\\]\\s*,\\s*0\\s*\\)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)playlistReport\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$))))/"
@@ -1610,6 +1715,12 @@ steps:
           - title: "Complete an Accumulating Rule"
             condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)playlistReport\\b(?![^\\n]*::))(?![\\s\\S]*(?:(?:^|\\n)playlistReport\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*\\(\\s*\\[\\s*\\]\\s*,\\s*0\\s*\\)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)|(?:^|\\n)playlistReport\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:--[^\\n]*)?(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)playlistReport\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*(?:\\bsum\\b[^\\n]*\\+\\s*bonus\\b))/"
             text: "For a fold-based design, use `foldl reducer seed selected` as an incomplete scaffold. Derive seed from an empty selection. In reducer, separate the contribution of earlier selections from the current track's contribution, then choose the field access and arithmetic. Equivalent recursion can carry the same accumulator meaning."
+      - description: "Playlist total: negative scores and bonuses"
+        command: "snd (playlistReport (-2) (-3) [(\"a\",-3),(\"b\",-2),(\"c\",0)]) == -8 && snd (playlistReport 0 0 [(\"\",0),(\"keep\",1),(\"\",-1),(\"\",2)]) == 3"
+        hints: *playlist_hints_1
+      - description: "Playlist report: no selected songs"
+        command: "playlistReport 10 5 [] == ([],0) && playlistReport 10 5 [(\"skip\",9)] == ([],0)"
+        hints: *playlist_hints_1
     quiz:
       title: Step 8 — Knowledge Check
       min_score: 0.8
