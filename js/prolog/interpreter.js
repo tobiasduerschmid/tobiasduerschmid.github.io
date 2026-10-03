@@ -23,18 +23,18 @@
       views.setAttribute('role', 'group');
       views.setAttribute('aria-label', 'Prolog runtime view');
       views.innerHTML = '<button type="button" aria-pressed="true">Output</button>' +
-        '<button type="button" aria-pressed="false">Interpreter</button>';
+        '<button type="button" aria-pressed="false">Terminal</button>';
       panel.querySelector('.tvm-output-header').after(views);
       [this.outputButton, this.interpreterButton] = views.children;
       this.detachedOutput = document.createElement('div');
       this.detachedOutput.className = 'prolog-interpreter-detached-output';
       this.detachedOutput.hidden = true;
-      this.detachedOutput.innerHTML = '<p>Output is open in a separate window. You can keep using Interpreter here.</p>' +
+      this.detachedOutput.innerHTML = '<p>Output is open in a separate window. You can keep using Terminal here.</p>' +
         '<button type="button">Reattach Output</button>';
       panel.append(this.detachedOutput);
       this.section = document.createElement('section');
       this.section.className = 'prolog-interpreter';
-      this.section.setAttribute('aria-label', 'Prolog interpreter');
+      this.section.setAttribute('aria-label', 'Prolog terminal');
       this.section.hidden = true;
       this.section.innerHTML =
         '<div class="prolog-interpreter-toolbar"><span>Tau Prolog</span>' +
@@ -47,10 +47,10 @@
         '<li>Each query consults the open Prolog file, including unsaved edits. All solutions are shown automatically, up to the answer limit; no semicolons are needed.</li>' +
         '<li>Facts and bindings created by a query do not carry into the next query. Add reusable facts and rules to the editor.</li>' +
         '<li>Use ↑/↓ for history, Ctrl+L to clear, and Ctrl+C to interrupt. Tab moves out of the prompt.</li>' +
-        '<li>Run and Debug use the lesson’s default query. Interpreter queries do not change it.</li></ul></details>' +
+        '<li>Run and Debug use the lesson’s default query. Terminal queries do not change it.</li></ul></details>' +
         '<div class="prolog-interpreter-terminal" role="group" aria-label="Prolog terminal">' +
         '<p class="prolog-interpreter-intro">Enter a query at <code>?-</code>. Press Enter to evaluate.</p>' +
-        '<div class="prolog-interpreter-log" role="log" aria-label="Prolog interpreter transcript" aria-live="polite" aria-relevant="additions" tabindex="0"></div>' +
+        '<div class="prolog-interpreter-log" role="log" aria-label="Prolog terminal transcript" aria-live="polite" aria-relevant="additions" tabindex="0"></div>' +
         '<form class="prolog-interpreter-form">' +
         '<label class="prolog-interpreter-prompt"><span class="sr-only">Prolog query</span>' +
         '<span class="prolog-interpreter-prompt-marker" aria-hidden="true">?-</span>' +

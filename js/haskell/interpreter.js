@@ -59,12 +59,12 @@
       views.setAttribute('role', 'group');
       views.setAttribute('aria-label', 'Haskell runtime view');
       views.innerHTML = '<button type="button" aria-pressed="true">Output</button>' +
-        '<button type="button" aria-pressed="false">Interpreter</button>';
+        '<button type="button" aria-pressed="false">Terminal</button>';
       panel.querySelector('.tvm-output-header').after(views);
       [this.outputButton, this.interpreterButton] = views.children;
       this.section = document.createElement('section');
       this.section.className = 'haskell-interpreter';
-      this.section.setAttribute('aria-label', 'Haskell interpreter');
+      this.section.setAttribute('aria-label', 'Haskell terminal');
       this.section.hidden = true;
       this.section.innerHTML =
         '<div class="haskell-interpreter-toolbar"><span>MicroHs</span>' +
@@ -81,7 +81,7 @@
         '<li>This browser interpreter uses MicroHs. For GHCi locally, install GHC, save your file on your computer, and run <code>ghci Main.hs</code> in your terminal. Use <code>:reload</code> after editing. <a href="https://downloads.haskell.org/ghc/latest/docs/users_guide/ghci.html">GHCi guide</a>.</li></ul></details>' +
         '<div class="haskell-interpreter-terminal" role="group" aria-label="Haskell terminal">' +
         '<p class="haskell-interpreter-intro">Enter an expression or <code>:type map</code>. Press Enter to evaluate.</p>' +
-        '<div class="haskell-interpreter-log" role="log" aria-label="Haskell interpreter transcript" aria-live="polite" aria-relevant="additions" tabindex="0"></div>' +
+        '<div class="haskell-interpreter-log" role="log" aria-label="Haskell terminal transcript" aria-live="polite" aria-relevant="additions" tabindex="0"></div>' +
         '<form class="haskell-interpreter-form">' +
         '<label class="haskell-interpreter-prompt"><span class="sr-only">Haskell expression</span>' +
         '<span class="haskell-interpreter-prompt-marker" aria-hidden="true">λ&gt;</span>' +

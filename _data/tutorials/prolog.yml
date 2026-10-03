@@ -74,7 +74,7 @@ steps:
 
       In the starter database, predict both `cue(Clip, left)` and `cue(clip, left)`. Will both find rain, both fail, or behave differently? Explain what each first argument means before running them.
 
-      **Run** evaluates the step's supplied query and shows its answers in **Output**. For your own queries, select **Interpreter**, enter a goal at the `?-` prompt, and press Enter or select **Evaluate query**. Enter just the goal; the final period is optional here. Try each prediction as a separate query.
+      **Run** evaluates the step's supplied query and shows its answers in **Output**. For your own queries, select **Terminal**, enter a goal at the `?-` prompt, and press Enter or select **Evaluate query**. Enter just the goal; the final period is optional here. Try each prediction as a separate query.
 
       The interpreter consults the open Prolog file, including your latest edits, afresh for each query and automatically requests successive answers, so you do not need to type semicolons. Earlier queries and answers remain in the transcript; use the arrow keys or **Previous query** / **Next query** buttons to recall a query. Changing the query does not add a fact to the file or change what **Run** evaluates.
 
@@ -87,7 +87,7 @@ steps:
 
       ### Make a small database
 
-      Keep the two starter facts. Add exactly these two relationships: **bell also plays through left; hum plays through right**. Use one fact per relationship, each appearing once. Then ask for all of bell's channels and all clips playing through right in **Interpreter**. Before evaluating each query, write down the bindings you expect; use **Test My Work** to check the database when ready.
+      Keep the two starter facts. Add exactly these two relationships: **bell also plays through left; hum plays through right**. Use one fact per relationship, each appearing once. Then ask for all of bell's channels and all clips playing through right in **Terminal**. Before evaluating each query, write down the bindings you expect; use **Test My Work** to check the database when ready.
 
       The lectures use SWI-Prolog. This workspace uses Tau Prolog for the course features practiced here; implementation-specific extensions and error wording can differ.
     default_query: cue(Clip, left)
@@ -254,7 +254,7 @@ steps:
 
       Define **`same_format(Clip1, Clip2)`**. Each argument must have the shape `clip(Name, audio(Rate, Channels))`. The relation should succeed exactly when both sample rates and both channel layouts unify; clip names may differ. It must also discover a missing rate or layout through unification. A single pattern fact is enough.
 
-      Try two differently named clips with the same format, two clips with the same rate but different layouts, and a query with one unknown rate in **Interpreter**. Write down the expected bindings before evaluating each query. Then explain why matching only the rate would accept too much.
+      Try two differently named clips with the same format, two clips with the same rate but different layouts, and a query with one unknown rate in **Terminal**. Write down the expected bindings before evaluating each query. Then explain why matching only the rate would accept too much.
     default_query: sample_rate(audio(44100, stereo), Rate)
     files:
     - path: prolog-v2/02-unification.pl
@@ -388,7 +388,7 @@ steps:
 
       ### Predict, run, investigate
 
-      Predict all rates found by `available_rate(bell, Rate)` from the starter file. Then inspect the unfinished `playable_on/2` rule: it uses separate variables `F1` and `F2`. Predict whether `playable_on(rain, mono_speaker)` succeeds even though the rate agrees but the channel layout differs. Evaluate both queries in **Interpreter** and explain why the result exposes a bug.
+      Predict all rates found by `available_rate(bell, Rate)` from the starter file. Then inspect the unfinished `playable_on/2` rule: it uses separate variables `F1` and `F2`. Predict whether `playable_on(rain, mono_speaker)` succeeds even though the rate agrees but the channel layout differs. Evaluate both queries in **Terminal** and explain why the result exposes a bug.
 
       <details markdown="1">
       <summary>After running: inspect the connection</summary>
@@ -565,7 +565,7 @@ steps:
 
       </details>
 
-      Now add a last goal: `includes(release, Mid), includes(Mid, Item), Item = kick`. When `Mid = beats, Item = noise` reaches that last goal, predict which binding is undone and which earlier goal gets another try. Check the extended query in **Interpreter**. Use **Debug** to inspect the clause choices for the step's original supplied query. Debug highlights clause use, not imperative statement-by-statement execution.
+      Now add a last goal: `includes(release, Mid), includes(Mid, Item), Item = kick`. When `Mid = beats, Item = noise` reaches that last goal, predict which binding is undone and which earlier goal gets another try. Check the extended query in **Terminal**. Use **Debug** to inspect the clause choices for the step's original supplied query. Debug highlights clause use, not imperative statement-by-statement execution.
 
       <details markdown="1">
       <summary>After tracing: locate the nearest choice</summary>
@@ -1078,7 +1078,7 @@ steps:
 
       ### Predict, run, and investigate
 
-      Before running the default query, predict the two bindings. Does Name receive the atom aurora or the whole badge term? Then try each of these unifications as a separate query in **Interpreter**:
+      Before running the default query, predict the two bindings. Does Name receive the atom aurora or the whole badge term? Then try each of these unifications as a separate query in **Terminal**:
 
       ```prolog
       [a,b] = [a|[b|[]]]

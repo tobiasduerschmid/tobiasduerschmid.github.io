@@ -126,8 +126,8 @@ test('type queries do not demand a cyclic value, but evaluating it reports the c
 async function openInterpreter(page) {
   await page.goto('/SEBook/tools/haskell-tutorial');
   await waitForTutorialReady(page, { bootTimeout: 90_000 });
-  await page.getByRole('button', { name: 'Interpreter', exact: true }).click();
-  return page.getByRole('region', { name: 'Haskell interpreter', exact: true });
+  await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+  return page.getByRole('region', { name: 'Haskell terminal', exact: true });
 }
 
 async function editMainWithoutSaving(page, source) {
@@ -150,7 +150,7 @@ async function submitExpression(interpreter, expression) {
 test('the shell prompt accepts consecutive commands with Enter and supports clearing and cancelling input', async ({ page }) => {
   const interpreter = await openInterpreter(page);
   const input = interpreter.getByRole('textbox', { name: 'Haskell expression', exact: true });
-  const transcript = interpreter.getByRole('log', { name: 'Haskell interpreter transcript' });
+  const transcript = interpreter.getByRole('log', { name: 'Haskell terminal transcript' });
   await input.fill('6 * 7');
   await input.press('Enter');
   await expect(transcript.getByText('42', { exact: true })).toBeVisible();
@@ -208,7 +208,7 @@ test('the terminal prompt evaluates current editor changes and recovers after an
   const browserErrors = [];
   page.on('pageerror', (error) => browserErrors.push(error.message));
   const interpreter = await openInterpreter(page);
-  const transcript = interpreter.getByRole('log', { name: 'Haskell interpreter transcript' });
+  const transcript = interpreter.getByRole('log', { name: 'Haskell terminal transcript' });
   await editMainWithoutSaving(page, 'module Main where\nboost n = n + 5\n');
 
   await submitExpression(interpreter, 'boost 10');
@@ -232,7 +232,7 @@ test('the terminal prompt evaluates current editor changes and recovers after an
 test('tuple-style calls explain separate arguments and preserve compiler details', async ({ page }) => {
   test.setTimeout(120_000);
   const interpreter = await openInterpreter(page);
-  const transcript = interpreter.getByRole('log', { name: 'Haskell interpreter transcript' });
+  const transcript = interpreter.getByRole('log', { name: 'Haskell terminal transcript' });
   await editMainWithoutSaving(page, 'canAffordPizza budget price = budget >= price\n');
 
   await submitExpression(interpreter, 'canAffordPizza(9,12)');
@@ -256,7 +256,7 @@ test('students can recall terminal commands and clear the transcript with keyboa
   test.setTimeout(120_000);
   const interpreter = await openInterpreter(page);
   const input = interpreter.getByRole('textbox', { name: 'Haskell expression', exact: true });
-  const transcript = interpreter.getByRole('log', { name: 'Haskell interpreter transcript' });
+  const transcript = interpreter.getByRole('log', { name: 'Haskell terminal transcript' });
   await submitExpression(interpreter, '6 * 7');
   await expect(transcript.getByText('42', { exact: true })).toBeVisible();
   await submitExpression(interpreter, '9 + 1');
@@ -293,7 +293,7 @@ test('stopping a nonterminating expression restores keyboard focus and permits a
   await expect(evaluateButton).toBeEnabled({ timeout: 90_000 });
   await expect(input).toBeFocused();
   await submitExpression(interpreter, '6 * 7');
-  await expect(interpreter.getByRole('log', { name: 'Haskell interpreter transcript' })
+  await expect(interpreter.getByRole('log', { name: 'Haskell terminal transcript' })
     .getByText('42', { exact: true })).toBeVisible();
   await a11yCheckpoint(page, 'Haskell interpreter — stopped and recovered', {
     feature: 'haskell-interpreter',
@@ -305,7 +305,7 @@ test('a nonterminating expression times out and the restarted interpreter evalua
   // executor restart. An immediate Stop click only tests cancellation at startup.
   test.setTimeout(90_000);
   const interpreter = await openInterpreter(page);
-  const transcript = interpreter.getByRole('log', { name: 'Haskell interpreter transcript' });
+  const transcript = interpreter.getByRole('log', { name: 'Haskell terminal transcript' });
   const evaluateButton = interpreter.getByRole('button', { name: 'Evaluate', exact: true });
   await interpreter.getByRole('textbox', { name: 'Haskell expression', exact: true }).fill('sum [1..]');
 

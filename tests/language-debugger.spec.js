@@ -66,7 +66,7 @@ for (const program of PROGRAMS) {
       expect(await page.evaluate(() => crossOriginIsolated), 'these backends must work without isolation').toBe(false);
 
       if (program.backend === 'prolog') {
-        await page.getByRole('button', { name: 'Interpreter', exact: true }).click();
+        await page.getByRole('button', { name: 'Terminal', exact: true }).click();
       }
       await startButton(page).press('Enter');
       await expect(pausedStatus(page)).toBeVisible({ timeout: 90_000 });

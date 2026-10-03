@@ -6,13 +6,13 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 const RUN_TIMEOUT = 30_000;
 const firstFile = loadTutorialConfig('prolog').steps[0].run_file;
 const queryInput = interpreter => interpreter.getByRole('textbox', { name: 'Prolog query', exact: true });
-const transcript = interpreter => interpreter.getByRole('log', { name: 'Prolog interpreter transcript' });
+const transcript = interpreter => interpreter.getByRole('log', { name: 'Prolog terminal transcript' });
 
 async function openInterpreter(page) {
   await page.goto('/SEBook/tools/prolog-tutorial');
   await waitForTutorialReady(page);
-  await page.getByRole('button', { name: 'Interpreter', exact: true }).click();
-  const interpreter = page.getByRole('region', { name: 'Prolog interpreter', exact: true });
+  await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+  const interpreter = page.getByRole('region', { name: 'Prolog terminal', exact: true });
   await expect(queryInput(interpreter)).toBeFocused();
   return interpreter;
 }
@@ -275,8 +275,8 @@ test('grading waits for interpreter execution and keeps its output out of the tr
     });
     await window._tutorial.start();
   });
-  await page.getByRole('button', { name: 'Interpreter', exact: true }).click();
-  const interpreter = page.getByRole('region', { name: 'Prolog interpreter', exact: true });
+  await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+  const interpreter = page.getByRole('region', { name: 'Prolog terminal', exact: true });
   const input = queryInput(interpreter);
   const log = transcript(interpreter);
   const testButton = page.getByRole('button', { name: /test my work/i });
@@ -298,7 +298,7 @@ test('grading waits for interpreter execution and keeps its output out of the tr
   await page.getByRole('button', { name: 'Output', exact: true }).click();
   const output = page.getByRole('region', { name: 'Program output' });
   await expect(output).toContainText('grader_marker');
-  await page.getByRole('button', { name: 'Interpreter', exact: true }).click();
+  await page.getByRole('button', { name: 'Terminal', exact: true }).click();
   await submitQuery(interpreter, 'write(learner_marker), nl');
   await expect(log).toContainText('learner_marker');
   await expect(log).not.toContainText('grader_marker');

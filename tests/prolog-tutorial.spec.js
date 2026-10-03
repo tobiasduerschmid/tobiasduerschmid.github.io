@@ -19,7 +19,7 @@ const output = page => page.getByRole('region', { name: 'Program output' });
 async function openTutorial(page, id) {
   await page.goto(`/SEBook/tools/${id}-tutorial`);
   await waitForTutorialReady(page);
-  await expect(page.getByRole('button', { name: 'Interpreter', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Terminal', exact: true })).toBeVisible();
   await expect(output(page)).toBeVisible();
   await expect(runButton(page)).toBeEnabled();
 }
@@ -250,10 +250,10 @@ test('Run uses the step default query and Test uses the entry file independently
     await window._tutorial.start();
   });
   await expect(page.getByRole('button', { name: 'notes.pl', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Interpreter', exact: true }).click();
-  const interpreter = page.getByRole('region', { name: 'Prolog interpreter', exact: true });
+  await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+  const interpreter = page.getByRole('region', { name: 'Prolog terminal', exact: true });
   const query = interpreter.getByRole('textbox', { name: 'Prolog query', exact: true });
-  const transcript = interpreter.getByRole('log', { name: 'Prolog interpreter transcript' });
+  const transcript = interpreter.getByRole('log', { name: 'Prolog terminal transcript' });
   await query.fill('choice(Active)');
   await query.press('Enter');
   await expect(transcript).toContainText(/Active\s*=\s*notes/, { timeout: RUN_TIMEOUT });
@@ -265,7 +265,7 @@ test('Run uses the step default query and Test uses the entry file independently
   await expect(output(page)).toBeVisible();
   await expect(output(page)).toContainText(/Value\s*=\s*entry/, { timeout: RUN_TIMEOUT });
   await expect(output(page)).not.toContainText('notes');
-  await page.getByRole('button', { name: 'Interpreter', exact: true }).click();
+  await page.getByRole('button', { name: 'Terminal', exact: true }).click();
   await expect(query).toHaveValue('fail');
   await expect(transcript).toContainText(/Active\s*=\s*notes/);
   await expect(transcript).not.toContainText(/Value\s*=\s*entry/);
