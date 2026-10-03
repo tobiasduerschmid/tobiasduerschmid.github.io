@@ -79,14 +79,17 @@ steps:
 
       ### Thinking Time!
 
-      The first two lines of `main` use the same predicate and the same input. Predict both outputs before selecting **Run**. Each request is a pair `(needed, available)`. Does mapping the `fits` predicate produce requests or Boolean decisions?
+      The first two lines of `main` use the same predicate and the same input. Predict both outputs from the code. Each request is a pair `(needed, available)`. Does mapping the `fits` predicate produce requests or Boolean decisions?
 
-      After running, explain why one output has three items while the other has two. The function's result means “replacement value” to `map` and “keep this item?” to `filter`.
+      Explain why one output has three items while the other has two. The function's result means “replacement value” to `map` and “keep this item?” to `filter`.
 
-      Record each result's **value and element type**, then compare with the reveal.
+      Record each result's **value and element type**.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
 
       <details markdown="1">
-      <summary>Check the map/filter prediction</summary>
+      <summary>Show answer and explanation</summary>
 
       With `requests = [(3,5),(4,2),(0,0)] :: [(Int, Int)]`, the results are:
 
@@ -98,6 +101,7 @@ steps:
       Both call `fits` on pairs. Map keeps its Boolean results; filter uses those decisions to keep original pairs. The predicate's result type is therefore different from filter's element type.
 
       </details>
+
 
       ### Your Turn
 
@@ -263,7 +267,26 @@ steps:
 
       ### Thinking Time!
 
-      Predict `scopeProbe ["oak"]` from the starter. Does the lambda test the outer nonempty list or its own empty-list argument? Commit to a Boolean result, run it, and point to the binder for each occurrence of `items`.
+      Predict `scopeProbe ["oak"]` from the starter. Does the lambda test the outer nonempty list or its own empty-list argument? Commit to a Boolean result and point to the binder for each occurrence of `items`.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **`scopeProbe ["oak"]` returns `True`.** The outer parameter
+      `items` receives `["oak"]`, but the lambda introduces a new parameter
+      also named `items`. The occurrence in `null items` refers to that
+      nearest, inner binder.
+
+      The lambda is applied to `[]`, so it tests `null []`, which is
+      `True`. The outer nonempty list is unused. Renaming the inner
+      parameter to `innerItems` would make this clearer without changing
+      the result.
+
+      </details>
+
 
       ### Your Turn
 
@@ -452,12 +475,15 @@ steps:
 
       ### Thinking Time!
 
-      Predict `map (withFallback '?') ["","ink"]` before running. First write the type of `withFallback '?'`, then its two results. Explain why `pairFallback '?'` would be a type error: the pair interface needs the fallback and the list together.
+      Predict `map (withFallback '?') ["","ink"]` from the definitions. First write the type of `withFallback '?'`, then its two results. Explain why `pairFallback '?'` would be a type error: the pair interface needs the fallback and the list together.
 
-      Write the fully grouped arrow type and application separately before opening the reveal.
+      Write the fully grouped arrow type and application separately.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
 
       <details markdown="1">
-      <summary>Check the grouping and remaining function</summary>
+      <summary>Show answer and explanation</summary>
 
       - Grouped arrow type: `a -> ([a] -> [a])`.
       - Grouped application: `(withFallback '?') "ink"`.
@@ -468,6 +494,7 @@ steps:
       Right-grouped arrows describe the function returned after an argument; left-grouped application supplies the next argument to that function. `pairFallback ('?', "ink")` supplies one pair instead.
 
       </details>
+
 
       ### Your Turn
 
@@ -676,7 +703,33 @@ steps:
 
       Predict both `main` outputs for a correct `convertPairs`. For the first call, identify the types of a label, an input value, and a converted value. Repeat for the second call. Which of these types does the function have to keep the same?
 
-      The starter returns an empty list for both calls. Run it to confirm the missing behavior, then compare that result with your predictions.
+      Also predict both outputs of the unchanged starter. Which part of its definition explains the difference from the required behavior?
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **A correct `convertPairs` prints `[("a",2),("a",0)]` and then
+      `[(True,False),(False,True)]`.** The starter prints `[]` twice
+      because it ignores its arguments.
+
+      - In the first call, labels are `String`, input values are `String`,
+        and converted values are `Int`: `length "hi"` is 2 and `length ""`
+        is 0.
+      - In the second call, labels are `Bool`, input values are numeric
+        lists, and converted values are `Bool`: `null [1]` is `False` and
+        `null []` is `True`.
+
+      Within each call, the label's type is preserved from input to
+      output. The conversion's input type must match the original value's
+      type, and its output type must match the converted field's type.
+      The original and converted value types need not be the same; nor
+      must either match the label type. Repeated labels stay repeated.
+
+      </details>
+
 
       ### Your Turn
 
@@ -885,7 +938,7 @@ steps:
 
       ### Thinking Time!
 
-      Predict the first `main` output before running. Starting with "", the reducer wraps the current text in parentheses before appending each new label. Write the accumulator after "a", then after "b". Is the result "(()a)b" or "(a)(b)"?
+      Predict the first `main` output from the reducer. Starting with "", the reducer wraps the current text in parentheses before appending each new label. Write the accumulator after "a", then after "b". Is the result "(()a)b" or "(a)(b)"?
 
       Now contrast the accumulator and item types in a second fold:
 
@@ -896,8 +949,11 @@ steps:
 
       Predict its value and type. Identify `a` and `b` in the `foldl` signature; they name the item and accumulator roles, rather than particular values.
 
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
       <details markdown="1">
-      <summary>Check the accumulator traces and types</summary>
+      <summary>Show answer and explanation</summary>
 
       The wrapping fold carries "", then "()a", then "(()a)b". Each call receives the whole previous accumulator; it does not wrap each label separately.
 
@@ -912,6 +968,7 @@ steps:
       The seed, each updated accumulator, and the final result have the same type. These traces describe how calls associate; they do not require each update to be evaluated immediately.
 
       </details>
+
 
       ### Your Turn
 
@@ -1068,7 +1125,29 @@ steps:
 
       ### Thinking Time!
 
-      In the starter, `tallyFrom (yes, no) predicate items` should count items that pass and fail a predicate, starting from the supplied counts. Trace the two branches on `["","oak",""]` with predicate `null`. The starter increments the same count in both branches. Predict its output before running, then compare it with the required result.
+      In the starter, `tallyFrom (yes, no) predicate items` should count items that pass and fail a predicate, starting from the supplied counts. Trace the two branches on `["","oak",""]` with predicate `null`. The starter increments the same count in both branches. Predict its output from those branches, then compare it with the required result.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **For the first call in `main`, the starter returns `(5,1)`;
+      the required result is `(4,2)`.** Starting at `(2,1)`, the predicate
+      `null` gives `True`, `False`, and `True` for `["","oak",""]`.
+
+      - Starter counts: `(2,1)` → `(3,1)` → `(4,1)` → `(5,1)`.
+      - Required counts: `(2,1)` → `(3,1)` → `(3,2)` → `(4,2)`.
+
+      The empty strings should increase `yes`; `"oak"` should increase
+      `no`. The starter incorrectly increases `yes` in both branches.
+      Each item must contribute to exactly one count. For the second
+      call in `main`, starting at `(0,0)`, the same mistake gives `(3,0)`
+      instead of `(2,1)`.
+
+      </details>
+
 
       ### Your Turn
 
@@ -1234,12 +1313,15 @@ steps:
 
       ### Thinking Time!
 
-      Predict the first two outputs in `main` before running. Does selecting prefixes of length at least two before taking two results give the same result as taking two prefixes before selecting? Write the two intermediate lists or prefixes that support your prediction.
+      Predict the first two outputs in `main` from the order of `take` and `filter`. Does selecting prefixes of length at least two before taking two results give the same result as taking two prefixes before selecting? Write the two intermediate lists or prefixes that support your prediction.
 
-      Record which input prefixes must be inspected to obtain two matching outputs, then open the reveal.
+      Record which input prefixes must be inspected to obtain two matching outputs.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
 
       <details markdown="1">
-      <summary>Check the finite search through growing prefixes</summary>
+      <summary>Show answer and explanation</summary>
 
       For `take 2 (filter longEnough prefixes)`, the needed part of the search is:
 
@@ -1255,6 +1337,7 @@ steps:
       Reversing the nesting gives `filter longEnough (take 2 prefixes)`. Take supplies only `["","r"]`, so filter returns `[]`. A bound on input positions and a bound on matching outputs ask different questions.
 
       </details>
+
 
       ### Your Turn
 
@@ -1454,7 +1537,25 @@ steps:
 
       For a cutoff of 10 and a bonus of 3, predict the report for `[("Intro",8),("Loop",10),("Loop",12)]`. Should the repeated title appear once or twice? Should the score 8 receive a bonus that makes it eligible?
 
-      Write the exact expected pair in a comment. The starter currently returns an empty report; run it to see the gap before implementing your design.
+      Write down the exact expected pair. Compare it with the starter's empty report and identify which required information is missing.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **The report is `(["Loop","Loop"],28)`.** The original scores 10
+      and 12 meet the cutoff, including equality. Their adjusted scores
+      are 13 and 15, which sum to 28. Both selected entries retain their
+      title, so `"Loop"` appears twice.
+
+      `"Intro"` is excluded because its original score is 8. Applying
+      the bonus before selection would incorrectly make it eligible.
+      The starter's `([],0)` is only an unfinished placeholder.
+
+      </details>
+
 
       ### Your Turn
 

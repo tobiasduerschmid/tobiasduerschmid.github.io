@@ -57,24 +57,11 @@ steps:
 
       ### Thinking time!
 
-      Look at the starter before running it. Will its tuple contain `(2,-7,3)`, `(10,7,3)`, or a type error? Does naming a constructor `Fight` automatically subtract anything?
+      Read the starter. Will its tuple contain `(2,-7,3)`, `(10,7,3)`, or a type error? Does naming a constructor `Fight` automatically subtract anything?
 
-      Commit to a prediction, then use **Run**. Explain which expression in each branch determines the result.
+      Commit to a prediction and explain which expression in each branch determines the result.
 
-      <details markdown="1">
-      <summary>Check the constructor and result reasoning</summary>
-
-      The starter prints `(10,7,3)`. Each pattern extracts one integer, and each body returns that integer unchanged. `Fight` constructs an event; it does not decide how health changes.
-
-      | Expression | Type | Role |
-      | --- | --- | --- |
-      | `Fight` | `Integer -> Event` | Constructor awaiting a payload |
-      | `Fight 7` | `Event` | One constructed event |
-      | `eventDelta (Fight 7)` | `Integer` | Result of interpreting that event |
-
-      </details>
-
-      A pattern can also select a particular payload. Before reading the check, predict both calls to this neighboring function:
+      A pattern can also select a particular payload. Also predict both calls to this neighboring function:
 
       ```haskell
       describeEvent (Heal _) = "restoration"
@@ -84,12 +71,24 @@ steps:
       -- describeEvent (Fight 0)
       ```
 
-      <details markdown="1">
-      <summary>Check which pattern matches first</summary>
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
 
-      The calls return `"restoration"` and `"another event"`. `(Heal _)` already matches every Heal payload, so the later `(Heal 0)` equation is never selected. It does not match `Fight 0`: the constructor matters as well as the payload. The final `_` covers the remaining events. Move the specific Heal equation before the general one, then predict again.
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      The starter prints `(10,7,3)`. Each pattern extracts one integer, and each body returns that integer unchanged. `Fight` constructs an event; it does not decide how health changes.
+
+      | Expression | Type | Role |
+      | --- | --- | --- |
+      | `Fight` | `Integer -> Event` | Constructor awaiting a payload |
+      | `Fight 7` | `Event` | One constructed event |
+      | `eventDelta (Fight 7)` | `Integer` | Result of interpreting that event |
+
+      The calls return `"restoration"` and `"another event"`. `(Heal _)` already matches every Heal payload, so the later `(Heal 0)` equation is never selected. It does not match `Fight 0`: the constructor matters as well as the payload. The final `_` covers the remaining events. Moving the specific Heal equation before the general one changes the first result to `"zero restoration"`; the Fight result stays `"another event"`.
 
       </details>
+
 
       ### Your turn
 
@@ -276,7 +275,25 @@ steps:
 
       ### Thinking time!
 
-      The starter attempts to heal Fern by 15 points. Will it print health values `(85,70)`, `(15,70)`, or `(15,15)`? Read the constructor expression, commit to an answer, then run it.
+      The starter attempts to heal Fern by 15 points. Will it print health values `(85,70)`, `(15,70)`, or `(15,15)`? Read the constructor expression, commit to an answer, and explain which value supplies the new health.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **The starter prints `(15,70)`.** Its result expression
+      `Hero name amount` uses the healing amount, 15, as the new health
+      rather than adding it to the old health, 70.
+
+      `after` denotes that new hero, while `before` still denotes
+      `Hero "Fern" 70`. Constructing another record does not change the
+      original. Correct healing would give `(85,70)`; `(15,15)` would
+      incorrectly imply that the original record was mutated.
+
+      </details>
+
 
       ### Your turn
 
@@ -451,7 +468,25 @@ steps:
 
       ### Thinking time!
 
-      The starter checks only the lower bound. Predict which out-of-range values it incorrectly keeps in each sample. Run, then explain why preserving input order does not by itself implement the requested selection.
+      The starter checks only the lower bound. Predict which out-of-range values it incorrectly keeps in each sample. Explain why preserving input order does not by itself implement the requested selection.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **The starter prints `[7,2,5,6,5]` and `["Z","G","J","M"]`.**
+      It incorrectly keeps 7, which exceeds the upper bound 6, and
+      `"Z"`, which comes after `"M"` in lexicographic order.
+
+      The required results are `[2,5,6,5]` and `["G","J","M"]`.
+      `filter` preserves the order and repetitions of whatever its
+      predicate accepts. That alone cannot fix an incomplete predicate:
+      each retained value must satisfy both inclusive bounds.
+
+      </details>
+
 
       ### Your turn
 
@@ -607,7 +642,25 @@ steps:
 
       ### Thinking time!
 
-      Predict `toList (Stop "Gate" (Stop "Lake" End))`. Then predict the starter's round trip `toList (fromList ["Gate","Lake"])`. Will the two results agree? Run and explain the difference.
+      Predict `toList (Stop "Gate" (Stop "Lake" End))`. Then predict the starter's round trip `toList (fromList ["Gate","Lake"])`. Will the two results agree? Explain the difference from the definitions.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **The direct conversion returns `["Gate","Lake"]`, while the
+      starter's round trip returns `[]`.** `toList` reads each `Stop`,
+      keeps its name, and continues until `End`.
+
+      The starter's `fromList` returns `End` for every input, discarding
+      both names before `toList` gets them. A correct conversion must
+      represent each input item with a `Stop` in the same order; then
+      the round trip will agree with the original list.
+
+      </details>
+
 
       ### Your turn
 
@@ -754,7 +807,27 @@ steps:
 
       ### Thinking time!
 
-      Predict both lists in the starter's printed tuple. Does calling `removeStop` alter `original` even if the return value is discarded? Run it, then connect your answer to the record reconstruction from step 2.
+      Predict both lists in the starter's printed tuple. Does calling `removeStop` alter `original` even if the return value is discarded? Connect your prediction to the record reconstruction from step 2.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **The starter prints `(["Gate","Lake","Tower"],["Gate","Lake","Tower"])`.**
+      Its `removeStop` returns the original trail unchanged, so both
+      conversions see the same three stops.
+
+      A correct removal of index 1 would instead print
+      `(["Gate","Tower"],["Gate","Lake","Tower"])`. It returns an
+      updated trail; it does not change `original`. Discarding the
+      returned value therefore leaves no updated trail for the caller
+      to use. This is the same principle as record reconstruction in
+      step 2: a new value preserves the old one.
+
+      </details>
+
 
       ### Your turn
 
@@ -935,12 +1008,15 @@ steps:
 
       ### Thinking time!
 
-      The sample root has two labels and three child entries, one of which is `NoRoute`. One child has no labels but leads to a labeled grandchild. Predict the total number of labeled nodes, then predict the starter's output. Run to distinguish its local count from the required whole-tree count.
+      The sample root has two labels and three child entries, one of which is `NoRoute`. One child has no labels but leads to a labeled grandchild. Predict the total number of labeled nodes, then predict the starter's output. Explain how its local count differs from the required whole-tree count.
 
-      Before opening the check, plan the **repaired** traversal. Write the type of `children`, then the type and expected value of `map countLabeled children`. What single count should those recursive results combine into, and where does the root's own contribution belong? These predictions describe the intended recursive function, not the incomplete starter.
+      Plan the **repaired** traversal. Write the type of `children`, then the type and expected value of `map countLabeled children`. What single count should those recursive results combine into, and where does the root's own contribution belong? These predictions describe the intended recursive function, not the incomplete starter.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
 
       <details markdown="1">
-      <summary>Check the local and whole-subtree contributions</summary>
+      <summary>Show answer and explanation</summary>
 
       The required total is `3`; the starter returns only the root's contribution, `1`. Trace each child separately:
 
@@ -964,6 +1040,7 @@ steps:
       `map` produces one subtree count per child; combining those counts produces one number. A fold with addition starting at zero is one way to combine them. A recursive helper can express the same relationship without constructing an intermediate list.
 
       </details>
+
 
       ### Your turn
 
@@ -1151,10 +1228,13 @@ steps:
 
       ### Thinking time!
 
-      The sample stores priorities 3, 5, 8, and 12. Predict the repaired function's output after removing the smallest. Then predict the starter's output: its recursive case returns the root's right subtree and discards the rest. Run and identify the unintended losses.
+      The sample stores priorities 3, 5, 8, and 12. Predict the repaired function's output after removing the smallest. Then predict the starter's output: its recursive case returns the root's right subtree and discards the rest. Identify the unintended losses.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
 
       <details markdown="1">
-      <summary>Check the retained keys and reconstruction path</summary>
+      <summary>Show answer and explanation</summary>
 
       The repaired result contains `[5,8,12]`; the starter keeps only `[12]`. Removing key 3 must retain its existing right child, key 5. Root 8 needs a new left child, while its right subtree containing 12 needs no change. The original tree still contains `[3,5,8,12]`.
 
@@ -1169,6 +1249,7 @@ steps:
       The removed node is replaced by its existing right child, which may be `Tip`. Off-path subtrees can be reused. These counts describe this direct source algorithm; they do not measure GHC or MicroHs allocations or assume the tree is balanced.
 
       </details>
+
 
       ### Your turn
 
@@ -1330,9 +1411,36 @@ steps:
 
       ### Thinking time!
 
-      Before running, predict the correct value of the sample. Now predict what the starter actually prints: it currently follows only the left child of each compound expression. Which part of the expression disappears from that behavior?
+      Predict the correct value of the sample. Now predict what the starter actually prints: it currently follows only the left child of each compound expression. Which part of the expression disappears from that behavior?
 
       Reuse the planning habit from Branching Data, this time without a filled table: write the type and predicted value of each child expression's recursive result at the sample's outer constructor, then explain how that constructor combines them. Keep the child expressions separate from their interpreted results.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **The correct value is `28`; the starter prints `2`.** The tree
+      represents `(2 + 5) * 4`. The starter follows the left child of
+      `Times`, then the left child of `Plus`, and finally reads
+      `Number 2`. It ignores both the addition of 5 and multiplication
+      by 4.
+
+      At the outer `Times` constructor, both child expressions have
+      type `Expr`. With a correct evaluator:
+
+      - The left child's recursive result is `7 :: Integer`.
+      - The right child's recursive result is `4 :: Integer`.
+      - `Times` combines those two interpreted values by multiplication,
+        producing `28 :: Integer`.
+
+      The child trees describe computations; their recursive results
+      are the numbers those computations mean. Constructing a `Times`
+      node alone does not multiply anything.
+
+      </details>
+
 
       ### Your turn
 

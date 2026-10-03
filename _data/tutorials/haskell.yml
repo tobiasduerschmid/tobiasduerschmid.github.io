@@ -533,6 +533,9 @@ steps:
       - Analyze guard conditions at a boundary
       - Create a complete calculation with lower and upper limits
 
+      **Your task is to change both `matchCoins` AND `adjustStock` in `Main.hs`.**
+      Repair the reward calculation and complete the inventory calculation.
+
       Unlike in Python or C++ where an `if` is a statement, in Haskell an `if` is always an expression: `if locked then 0 else available`.
       It needs both branches, and **their types must agree**.
 
@@ -540,74 +543,53 @@ steps:
       - **Boolean combinations:** `&&` and `||`.
       - **Definition versus comparison:** `=` defines; `==` compares.
 
-      Your game awards coins according to these rules:
+      Guards are another way to choose a function's result. Each guard has the
+      form `| condition = result`.
+
+      - **Read from the top:** the first true guard supplies the result.
+      - **Order matters:** a later true guard does not overwrite that result.
+      - **Fallback:** `otherwise` is the Boolean value `True`, so a final
+        `otherwise` guard covers any cases not handled earlier.
+      - **Result:** the selected expression supplies the function's value;
+        no `return` statement is needed.
+
+      ### Part 1: repair `matchCoins`
+
+      `matchCoins won practiceMode` calculates how many coins a player earns
+      from one match. `won` says whether the player won; `practiceMode` says
+      whether this was a practice match. Both inputs are `Bool` values, and
+      the result is an `Int` coin reward. The required behavior is:
 
       - **Win a regular match:** earn 12 coins.
       - **Play a practice match:** earn 0, even if you win.
       - **Lose:** earn 0.
 
-      Write those decisions explicitly with nested `if` expressions:
-
-      ```haskell
-      matchCoins :: Bool -> Bool -> Int
-      matchCoins won practiceMode =
-        if practiceMode
-          then 0
-          else if won
-            then 12
-            else 0
-      ```
-
-      - **Conditions:** both `practiceMode` and `won` are Boolean values.
-      - **Nesting:** the second `if` is the outer `else` expression. Check `won`
-        only when `practiceMode` is `False`.
-      - **Result:** the selected branch supplies the function's value;
-        no `return` statement is needed.
-
-      Guards express the **same decisions** more compactly. This is an alternative
-      definition of the same function:
-
-      ```haskell
-      matchCoins :: Bool -> Bool -> Int
-      matchCoins won practiceMode
-        | practiceMode = 0
-        | won = 12
-        | otherwise = 0
-      ```
-
-      - **Read from the top:** the first true guard supplies the result.
-      - **Order matters:** if both Boolean inputs are `True`, the practice-mode
-        rule wins, so victory earns 0 coins.
-      - **Fallback:** `otherwise` is the Boolean value `True`. Here it corresponds
-        to the final `else 0` above.
-
-      Examples that work the same way in either version:
-
-      - `matchCoins True False` returns 12.
-      - `matchCoins False False` returns 0.
-
-      ### Thinking time! Diagnose overlapping guards
-
-      The starter's `matchCoins` puts the win rule before the practice-mode rule.
-      Its author expects the practice rule to override a win whenever both apply.
+      The starter does not satisfy all of these rules.
 
       1. **Predict before running:** what will it return for `True False` and
          `True True`? Compare those predictions with the reward rules.
       2. Run the starter. Identify the first true guard for each call.
-      3. Repair the definition and explain why a later true guard does not
-         overwrite an earlier result. Check a loss as well as both kinds of win.
+      3. Change `matchCoins` to satisfy every reward rule. Explain how your
+         definition handles overlapping conditions, and check all four
+         combinations of the two Boolean inputs.
 
-      ### Your challenge: complete the remaining branches
+      ### Part 2: complete `adjustStock`
+
+      `adjustStock stock change capacity` calculates the new number of healing
+      potions in a backpack after collecting or using some. `stock` is the
+      current count, `change` is the amount collected (positive) or used
+      (negative), and `capacity` is the most the backpack can hold. The function
+      returns the new count, keeping it between zero and capacity.
 
       Your game backpack holds at most 10 healing potions. You already have
       8 and collect 5 more; extras cannot fit. **Predict the allowed new count**
-      before completing `adjustStock stock change capacity`.
+      before changing `adjustStock`.
 
-      Use the **proposed count**, `stock + change`, with these rules:
+      The required behavior is:
 
-      - **Below 0:** return 0; this branch is supplied.
-      - **Above capacity:** return `capacity`; write this decision yourself.
-      - **Within the limits:** return the proposed count; write this result yourself.
+      - Collecting more than fits leaves the backpack full; extras are discarded.
+      - Using more than you have leaves the backpack empty.
+      - Otherwise, the new count reflects the full amount collected or used.
 
       Input and result requirements:
 
@@ -621,6 +603,10 @@ steps:
       Complete the missing branches, using guards or an equivalent nested `if`.
       **Test exact limits as well as crossing each limit.** Explain why a
       within-limits result must include the change even though no clamping is needed.
+
+      `main` runs and prints sample calls to both functions so you can inspect
+      their results. You may add sample calls, but completing this step requires
+      fixing **both `matchCoins` and `adjustStock`** and passing both checks.
     files:
     - path: Main.hs
       language: haskell
@@ -758,7 +744,9 @@ steps:
       Your study playlist is 1 hour and 35 minutes long. To compare it with
       your study time, convert that to minutes.
 
-      A **`let` expression** binds names and uses them after `in`:
+      A **`let ... in ...` expression** puts local definitions **before** the
+      expression that uses them. The expression after `in` determines the
+      value of the whole `let` expression:
 
       ```haskell
       minutesAfter hours minutes =
@@ -766,8 +754,9 @@ steps:
         in hours * perHour + minutes
       ```
 
-      A **`where` clause** attaches local definitions to an equation, including
-      its guards:
+      A **`where` clause** puts local definitions **after** the function equation
+      they support. Write the result expression first, then explain its local
+      names below it. There is **no `in`**:
 
       ```haskell
       minutesAfter hours minutes = hours * perHour + minutes
@@ -776,6 +765,23 @@ steps:
 
       Both versions give `minutesAfter 1 35 == 95`. The conversion factor
       gets a name, so the calculation explains itself.
+
+      The difference is **placement and scope** (where a name is available),
+      not the arithmetic or the order of execution:
+
+      - **`let` belongs to an expression.** You can use it wherever an expression
+        is allowed, such as one branch of an `if` or an argument to a function.
+        Its names are available within that binding group and the expression
+        after `in`, but not outside the whole `let` expression. A name introduced
+        by a `let` inside the `then` branch is not available in the `else` branch.
+      - **`where` belongs to the enclosing equation.** Its names are available
+        in that equation's result and all of its guards, as well as within the
+        local definitions themselves. This is useful when several guards need
+        the same intermediate value. A `where` clause cannot stand alone as
+        an expression, and its names do not extend to other equations for the
+        same function.
+      - **Neither makes names global.** In both versions above, `perHour` is
+        local to that definition; `main` cannot refer to it directly.
 
       - **Alignment matters:** keep definitions in the same block aligned;
         indentation is meaningful.
@@ -803,10 +809,30 @@ steps:
       in score
       ```
 
-      1. **Predict its value**, then temporarily print the expression in `main`.
-      2. Change only the expression after `in` to `nextScore` and run again.
+      1. **Predict the value of the expression shown above.**
+      2. Now imagine replacing only `in score` with `in nextScore`. Predict
+         the new value without changing the editor.
       3. Explain which name denotes each value. Would moving the two aligned
          definitions into the opposite order turn either one into an assignment?
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **The original expression returns `40`; changing `in score` to
+      `in nextScore` returns `45`.** `score` denotes 40, while `nextScore`
+      denotes the separate value `score + 5`. The expression after `in`
+      chooses which value the whole expression returns.
+
+      Reversing the two aligned definitions does not change either result.
+      Names in the same binding group can refer to one another regardless
+      of their written order. Neither definition assigns a new value to
+      `score`.
+
+      </details>
+
 
       ### Your challenge: complete the local calculation
 
@@ -825,8 +851,10 @@ steps:
 
       1. Complete the `discount` binding and the function's result expression.
          The two zero values marked `TODO` are placeholders, not a faulty billing rule.
-      2. Restore the snack-bill call in `main` and run the checks.
-      3. Rewrite the definition using **`let ... in` instead of `where`** and check again.
+      2. Use the supplied snack-bill call in `main` and run the checks.
+      3. Rewrite the definition using **`let ... in` instead of `where`**:
+         put the local definitions after `let` and the result expression after
+         `in`. Keep both local names in scope for that result, then check again.
       4. Explain why moving a definition inside the same binding group preserves
          its meaning, but moving it outside the function can lose access to parameters.
 
@@ -998,6 +1026,21 @@ steps:
       **Predict both pairs after your implementation is complete.** Should their
       scores be the same? Explain which expression denotes the old pair and which
       will construct a new one.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **The completed program prints `("Mina",45)` and then `("Mina",40)`.**
+      `addBonus 5 original` constructs a new pair with the same name and a
+      score five points higher. `original` still denotes the old pair.
+      Returning a new pair does not mutate the input, so the two scores
+      differ. The unchanged starter instead prints the old pair twice.
+
+      </details>
+
 
       ### Your challenge: write the whole definition
 
@@ -1175,7 +1218,7 @@ steps:
 
       Your snack-list app must count **items, not letters**.
 
-      1. Predict the lengths of `"tea"`, `["tea"]`, and `[]`, then use `main` to check.
+      1. Predict the lengths of `"tea"`, `["tea"]`, and `[]`.
       2. Explain what counts as one element in each case.
 
       A teammate tries to put one opening clip onto a playlist:
@@ -1185,12 +1228,40 @@ steps:
       addOpening clip clips = clip ++ clips
       ```
 
-      **Before trying it**, identify the types on both sides of `++`. Should this
-      compile, or does it confuse a clip's characters with the playlist's elements?
-      Write a corrected definition. You can put it above `bookend` and temporarily
-      print `addOpening "intro" ["song"]` to check; keep the supplied type signature.
+      Identify the types on both sides of `++`. Should this compile, or does it
+      confuse a clip's characters with the playlist's elements? Write a corrected
+      definition that keeps the supplied type signature, then predict the result
+      of `addOpening "intro" ["song"]`.
       Explain your correction in terms of **one element versus a list of elements**,
       not just which operator changed.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **The lengths are `3`, `1`, and `0`.** `"tea"` contains three `Char`
+      elements; `["tea"]` contains one `String` element; `[]` contains none.
+
+      The proposed `addOpening` does **not** compile. Its left operand,
+      `clip`, has type `String` (`[Char]`), while `clips` has type `[String]`
+      (`[[Char]]`). Both operands of `++` must be lists with the same
+      element type.
+
+      One corrected definition is:
+
+      ```haskell
+      addOpening clip clips = clip : clips
+      ```
+
+      Here `clip` is one element of a list of strings. Another valid form
+      is `addOpening clip clips = [clip] ++ clips`: `[clip]` and `clips`
+      are both lists of strings. Either gives `["intro","song"]` for the
+      sample call.
+
+      </details>
+
 
       ### Your challenge: construct the complete result
 
@@ -1359,13 +1430,37 @@ steps:
       atLeastTwo _ = False
       ```
 
-      1. **Predict before running:** what does it return for `["Ada","Bo"]`
+      1. **Predict both results:** what does it return for `["Ada","Bo"]`
          and `["Ada","Bo","Cy"]`?
       2. Explain why the second result disagrees with "at least two."
       3. Identify what the first pattern assumes about the entire input, not
          just its beginning.
-      4. Repair this helper and check empty, singleton, two-person, and longer
-         queues. Then write the different transformation below yourself.
+      4. Propose a repair and predict its results for empty, singleton,
+         two-person, and longer queues.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **The proposed helper returns `True` for two people and `False` for
+      three.** `[first,second]` matches the entire list of exactly two
+      elements; it requires the list to end after `second`.
+
+      To accept any remaining tail, use an at-least-two pattern:
+
+      ```haskell
+      atLeastTwo (_:_:rest) = True
+      atLeastTwo _ = False
+      ```
+
+      The first pattern consumes two elements and allows `rest` to be
+      empty or nonempty. Empty and singleton queues therefore return
+      `False`; two-person and longer queues return `True`.
+
+      </details>
+
 
       ### Your challenge
 
@@ -1556,7 +1651,27 @@ steps:
       Suppose `joinRows` used `[0]` as its base result instead of `[]`.
 
       - Would `joinRows [[4],[],[2,3]]` produce `[4,2,3]` or `[4,2,3,0]`?
-      - Explain where the extra element enters the result **before running**.
+      - Explain where the extra element enters the result **before opening the reveal**.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **The changed function produces `[4,2,3,0]`.** Once recursion reaches
+      the empty outer list, the changed base case supplies `[0]`. The
+      recursive calls concatenate their rows onto that result:
+
+      ```haskell
+      [4] ++ ([] ++ ([2,3] ++ [0]))
+      ```
+
+      The zero comes from the base result, not the empty inner row.
+      Using `[]` as the base result adds no extra element.
+
+      </details>
+
 
       ### Your challenge
 
@@ -1728,7 +1843,24 @@ steps:
 
       1. Predict `[(word,c) | word <- ["go","!"], c <- word]`.
       2. Explain how many pairs each word contributes and each pair's second-component type.
-      3. Print the expression to compare with your prediction.
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **The result is `[("go",'g'),("go",'o'),("!",'!')]`.** For each
+      `word`, the second generator visits every character of that word
+      before the first generator moves on. `"go"` contributes two pairs
+      and `"!"` contributes one.
+
+      Each pair has type `(String, Char)`, so the whole result has type
+      `[(String, Char)]`. The second component is one character, not a
+      one-character string.
+
+      </details>
+
 
       ### Your challenge
 
@@ -1887,15 +2019,41 @@ steps:
          could disagree with the specification. Invent one more input that
          would reveal that difference.
 
-      **This time you design the complete function.** The starter supplies its
-      type and a display harness. The `[]` result is an unfinished placeholder;
-      replace the whole equation with your implementation.
-
-      Before writing code, make a short plan in your own words:
+      Make a short plan in your own words:
 
       - What situations must your function distinguish?
       - What information would a smaller version of this problem need?
       - Which example would show that your stopping rule is wrong?
+
+      Make your prediction, then click **Show answer and explanation** to
+      compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **The required result is `[2]`.** After buying the first snack,
+      3 remains. The next price, 4, does not fit, so processing stops.
+      `[2,1]` skips an item and is not a prefix; `[2,4]` costs more than 5.
+      The unchanged starter returns `[]` because it is a placeholder.
+
+      Checking prices independently against the original budget can
+      overspend and ignore the stopping rule. For example,
+      `takeBudget 5 [3,3]` must return `[3]`, even though each price is
+      individually at most 5.
+
+      A suitable plan distinguishes an empty wishlist, an unaffordable
+      next item, and an affordable next item. In the last case, keep that
+      item and solve the smaller problem using the remaining budget and
+      remaining prices. Stop at the first unaffordable item. Free items
+      still fit when the remaining budget is zero.
+
+      </details>
+
+      ### Your implementation
+
+      **This time you design the complete function.** The starter supplies its
+      type and a display harness. The `[]` result is an unfinished placeholder;
+      replace the whole equation with your implementation.
 
       Implement your plan, then run your own examples and the supplied checks.
       You may use helpers or library functions; the checks measure the stated
