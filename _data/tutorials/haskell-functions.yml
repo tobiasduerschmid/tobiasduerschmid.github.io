@@ -49,6 +49,13 @@ steps:
       - Analyze the difference between transforming values and selecting values.
       - Apply `map` and `filter` to a score list without changing the original.
 
+      ### What this program does
+
+      A game report keeps qualifying scores and then doubles their points.
+      Qualification uses the original score, so the order of selection and
+      transformation matters. Small supplied predicates and transformations let
+      you examine each part separately.
+
       This is Part II of the Haskell course. You should be comfortable with functions, lists, tuples, and `(x:xs)` patterns. Plan about 80–100 minutes; after Higher-Order Types is a good stopping point. This is an estimate, not a time limit.
 
       Code checks verify results and the type relationships they exercise. Review your predictions, explanations, and requested lambda or recursion forms yourself; a passing result does not assess those parts.
@@ -58,7 +65,9 @@ steps:
       A **higher-order function** accepts a function or returns a function. Haskell functions are **first-class values**: we can give them names, pass them around, and return them.
 
       ```haskell
+      -- | Apply a function to every list element, preserving their order.
       map    :: (a -> b)    -> [a] -> [b]
+      -- | Keep the list elements satisfying a predicate, preserving their order.
       filter :: (a -> Bool) -> [a] -> [a]
       ```
 
@@ -69,6 +78,7 @@ steps:
       This recursive example selects ready entries and projects just their names:
 
       ```haskell
+      -- | Return names whose ready flag is True, preserving their order.
       readyNames [] = []
       readyNames ((name, ready):rest)
         | ready       = name : readyNames rest
@@ -115,18 +125,24 @@ steps:
         content: |
           module Main where
 
+          -- | Test whether an original score reaches the qualifying threshold of 10.
           qualifies :: Int -> Bool
           qualifies score = score >= 10
 
+          -- | Return twice the supplied score.
           doublePoints :: Int -> Int
           doublePoints score = score * 2
 
+          -- | Test whether the available amount covers the needed amount in a pair.
           fits :: (Int, Int) -> Bool
           fits (needed, available) = needed <= available
 
+          -- | Target (starter needs repair): Double each original score that qualifies,
+          -- preserving order and repeated scores.
           qualifiedScores :: [Int] -> [Int]
           qualifiedScores scores = map doublePoints scores
 
+          -- | Display mapping and filtering examples and the qualifying doubled scores.
           main :: IO ()
           main = do
             print (map fits [(3,5),(4,2),(0,0)])
@@ -216,18 +232,24 @@ steps:
           content: |
             module Main where
 
+            -- | Test whether an original score reaches the qualifying threshold of 10.
             qualifies :: Int -> Bool
             qualifies score = score >= 10
 
+            -- | Return twice the supplied score.
             doublePoints :: Int -> Int
             doublePoints score = score * 2
 
+            -- | Test whether the available amount covers the needed amount in a pair.
             fits :: (Int, Int) -> Bool
             fits (needed, available) = needed <= available
 
+            -- | Double each original score that qualifies, preserving order and repeated
+            -- scores.
             qualifiedScores :: [Int] -> [Int]
             qualifiedScores scores = map doublePoints (filter qualifies scores)
 
+            -- | Display mapping and filtering examples and the qualifying doubled scores.
             main :: IO ()
             main = do
               print (map fits [(3,5),(4,2),(0,0)])
@@ -259,9 +281,17 @@ steps:
       - Analyze which binding a name refers to inside a lambda.
       - Create a function that retains the settings supplied when it was created.
 
+      ### What this program does
+
+      A preview tool needs reusable list windows: choose a starting position and a
+      maximum length once, then apply that window to different lists. The scope
+      example helps you distinguish those saved settings from parameters
+      introduced by an inner function.
+
       ### Small Functions, Right Where We Need Them
 
       ```haskell
+      -- | Pair a word with its number of characters.
       withSize word = (word, length word)
       -- The same transformation without a function name:
       -- \word -> (word, length word)
@@ -269,7 +299,15 @@ steps:
 
       The backslash introduces a **lambda**, `word` is its parameter, and the expression after `->` is its result. For example, `map (\word -> (word, length word)) ["","elm"]` produces `[("",0),("elm",3)]`.
 
-      A lambda can also use a name from its surrounding definition. In `skip start = \items -> drop start items`, the inner function uses `start` from outside its own parameters. A **closure** keeps a function together with the environment its free names need. A free name is a name used by the function but bound outside its own parameters or local definitions.
+      A lambda can also use a name from its surrounding definition:
+
+      ```haskell
+      -- | Return a function that skips the first start items of a list;
+      -- a nonpositive start skips none, and a short list has nothing left.
+      skip start = \items -> drop start items
+      ```
+
+      The inner function uses `start` from outside its own parameters. A **closure** keeps a function together with the environment its free names need. A free name is a name used by the function but bound outside its own parameters or local definitions.
 
       Haskell uses **lexical scope**: the definition's nesting determines those bindings. An inner parameter with the same spelling **shadows** an outer name.
 
@@ -312,12 +350,17 @@ steps:
         content: |
           module Main where
 
+          -- | Check a locally bound list for emptiness to illustrate parameter shadowing.
           scopeProbe :: [a] -> Bool
           scopeProbe items = (\items -> null items) []
 
+          -- | Target (starter needs repair): Return a function selecting at most count
+          -- items from zero-based start; both settings are nonnegative, and short inputs
+          -- yield only available items.
           makeWindow :: Int -> Int -> ([a] -> [a])
           makeWindow start count = \items -> take count items
 
+          -- | Display a scope check and sample list windows.
           main :: IO ()
           main = do
             print (scopeProbe ["oak"])
@@ -437,16 +480,22 @@ steps:
           content: |
             module Main where
 
+            -- | Check a locally bound list for emptiness to illustrate parameter shadowing.
             scopeProbe :: [a] -> Bool
             scopeProbe items = (\items -> null items) []
 
+            -- | Return a function selecting at most count items from zero-based start; both
+            -- settings are nonnegative, and short inputs yield only available items.
             makeWindow :: Int -> Int -> ([a] -> [a])
             makeWindow start count = \items -> take count (drop start items)
 
+            -- | Display a scope check and sample list windows.
             main :: IO ()
             main = do
               print (scopeProbe ["oak"])
+              -- | Select at most two items starting at index 1 of a supplied list.
               let middle = makeWindow 1 2
+                  -- | Select at most one item starting at index 2 of a supplied list.
                   later = makeWindow 2 1
               print (middle ["sun","fog","rain","snow"])
               print (later ["sun","fog","rain","snow"])
@@ -476,14 +525,25 @@ steps:
       - Analyze the type left after a function receives some of its arguments.
       - Rewrite a function as nested one-parameter lambdas without changing its behavior.
 
+      ### What this program does
+
+      A score-reporting tool applies the same deduction to every score in a group.
+      You will make that adjustment reusable with different deductions and groups.
+      The fallback examples show how supplying part of a function's input produces
+      a function ready for the rest.
+
       ### One Argument at a Time
 
       These two interfaces supply a fallback item when a list is empty, but receive their arguments differently:
 
       ```haskell
+      -- | Keep a nonempty list, or return a one-item list containing the fallback;
+      -- accept the inputs separately.
       withFallback :: a -> [a] -> [a]
       withFallback fallback items = if null items then [fallback] else items
 
+      -- | Keep a nonempty list, or return a one-item list containing the fallback;
+      -- accept both inputs in one pair.
       pairFallback :: (a, [a]) -> [a]
       pairFallback (fallback, items) = if null items then [fallback] else items
       ```
@@ -493,6 +553,8 @@ steps:
       **Currying** represents a multiple-input operation as successive single-argument functions. Haskell's `withFallback fallback items = ...` already has curried form. Writing the lambdas makes that structure visible:
 
       ```haskell
+      -- | Keep a nonempty list, or return a one-item list containing the fallback;
+      -- accept the inputs separately.
       withFallback = \fallback -> (\items -> if null items then [fallback] else items)
       ```
 
@@ -535,15 +597,22 @@ steps:
         content: |
           module Main where
 
+          -- | Keep a nonempty list, or return a one-item list containing the fallback;
+          -- accept the inputs separately.
           withFallback :: a -> [a] -> [a]
           withFallback fallback items = if null items then [fallback] else items
 
+          -- | Keep a nonempty list, or return a one-item list containing the fallback;
+          -- accept both inputs in one pair.
           pairFallback :: (a, [a]) -> [a]
           pairFallback (fallback, items) = if null items then [fallback] else items
 
+          -- | Target (starter needs repair): Subtract the supplied amount from every
+          -- score, preserving order and negative results.
           discountAll :: Int -> [Int] -> [Int]
           discountAll amount scores = map (\score -> amount - score) scores
 
+          -- | Display fallback examples and score adjustments.
           main :: IO ()
           main = do
             print (withFallback '?' "", pairFallback ('?', ""))
@@ -652,15 +721,22 @@ steps:
           content: |
             module Main where
 
+            -- | Keep a nonempty list, or return a one-item list containing the fallback;
+            -- accept the inputs separately.
             withFallback :: a -> [a] -> [a]
             withFallback fallback items = if null items then [fallback] else items
 
+            -- | Keep a nonempty list, or return a one-item list containing the fallback;
+            -- accept both inputs in one pair.
             pairFallback :: (a, [a]) -> [a]
             pairFallback (fallback, items) = if null items then [fallback] else items
 
+            -- | Subtract the supplied amount from every score, preserving order and negative
+            -- results.
             discountAll :: Int -> [Int] -> [Int]
             discountAll = \amount -> \scores -> map (\score -> score - amount) scores
 
+            -- | Display fallback examples and score adjustments.
             main :: IO ()
             main = do
               print (withFallback '?' "", pairFallback ('?', ""))
@@ -692,11 +768,19 @@ steps:
       - Derive a higher-order function's type from how it uses its arguments.
       - Apply a function to one field of each pair while preserving the other field.
 
+      ### What this program does
+
+      A reporting tool stores labeled values and converts each value while
+      preserving its label. The conversion might turn text into a length or a list
+      into an emptiness flag. Your function should support these different uses
+      without depending on one particular label or value type.
+
       ### Follow One Value
 
       Consider `applyOne f value = f value`. Give `value` the type `a`. Because `f` receives it, `f` must take an `a`; call its result type `b`. Therefore:
 
       ```haskell
+      -- | Apply the supplied function to one input value and return its result.
       applyOne :: (a -> b) -> a -> b
       ```
 
@@ -711,6 +795,7 @@ steps:
       **Row size:** return one integer count, so `["oak", ""]` gives `2` and `[]` gives `0`.
 
       ```haskell
+      -- | Target: return the number of rows. Diagnose the declared result type.
       rowSize :: [a] -> [Int]
       rowSize rows = length rows
       ```
@@ -718,6 +803,8 @@ steps:
       **Row flags:** return one emptiness decision for every row, preserving order. `[[], [1], [2,3]]` gives `[True,False,False]`; no rows gives `[]`.
 
       ```haskell
+      -- | Target: report whether each row is empty, in order. Diagnose this
+      -- definition.
       rowFlags :: [[a]] -> [Bool]
       rowFlags rows = filter null rows
       ```
@@ -780,9 +867,12 @@ steps:
       Allow about six minutes. Write your answers **before Run or opening the feedback**. This function transforms each row, then renders the transformed list:
 
       ```haskell
+      -- | Transform each row, render the resulting list as text, and append an
+      -- exclamation mark.
       describeRows transform render rows =
         render (map transform rows) ++ "!"
 
+      -- | Render the list of row lengths as text followed by an exclamation mark.
       sizeReport = describeRows length (\sizes -> show sizes)
       ```
 
@@ -798,12 +888,15 @@ steps:
       Give each original row type `a` and each transformed row type `b`. Then `rows :: [a]`, `transform :: a -> b`, and the mapped list has type `[b]`. Appending `"!"` requires the result of `render` to be a `String`, so `render :: [b] -> String`.
 
       ```haskell
+      -- | Transform each row, render the resulting list as text, and append an
+      -- exclamation mark.
       describeRows :: (a -> b) -> ([b] -> String) -> [a] -> String
 
       -- The same type, with result arrows grouped:
       describeRows ::
         (a -> b) -> (([b] -> String) -> ([a] -> String))
 
+      -- | Render the list of row lengths as text followed by an exclamation mark.
       sizeReport :: [[a]] -> String
       ```
 
@@ -812,6 +905,8 @@ steps:
       In the changed body, `rows ++ [""]` makes `rows` a list of strings. The transformation's result is still unconstrained:
 
       ```haskell
+      -- | Add an empty row, transform all rows, render the results as text, and
+      -- append an exclamation mark.
       describeRows ::
         (String -> b) -> ([b] -> String) -> [String] -> String
       ```
@@ -826,8 +921,11 @@ steps:
         content: |
           module Main where
 
+          -- | Target (starter needs repair): Convert each pair's second field with the
+          -- supplied function; preserve first fields, order, and repeats.
           convertPairs convert entries = []
 
+          -- | Display conversions of labeled values using different functions.
           main :: IO ()
           main = do
             print (convertPairs length [("a","hi"),("a","")] :: [(String, Int)])
@@ -941,10 +1039,13 @@ steps:
           content: |
             module Main where
 
+            -- | Convert each pair's second field with the supplied function; preserve first
+            -- fields, order, and repeats.
             convertPairs :: (a -> b) -> [(tag, a)] -> [(tag, b)]
             convertPairs convert entries =
               map (\(label, value) -> (label, convert value)) entries
 
+            -- | Display conversions of labeled values using different functions.
             main :: IO ()
             main = do
               print (convertPairs length [("a","hi"),("a","")] :: [(String, Int)])
@@ -975,9 +1076,18 @@ steps:
       - Analyze a left fold by expanding its accumulator updates.
       - Create a reducer whose accumulator represents the prefix processed so far.
 
+      ### What this program does
+
+      The program reads a decimal code supplied as a list of digits and returns
+      the number it represents. Digit order and place value matter; an empty digit
+      list represents zero. The word-length example introduces an accumulator
+      before you choose one for digits.
+
       ### A Result Built from a Prefix
 
       ```haskell
+      -- | Update an accumulator from left to right with each list element, starting
+      -- from a seed.
       foldl :: (b -> a -> b) -> b -> [a] -> b
       -- foldl step seed [x,y] = step (step seed x) y
       ```
@@ -993,6 +1103,7 @@ steps:
       Now contrast the accumulator and item types in a second fold:
 
       ```haskell
+      -- | Append the word's length to the accumulated list of lengths.
       collect acc word = acc ++ [length word]
       foldl collect [] ["oak", ""]
       ```
@@ -1034,9 +1145,12 @@ steps:
         content: |
           module Main where
 
+          -- | Target (starter needs repair): Return the integer represented by decimal
+          -- digits in most-significant-first order; an empty list gives zero.
           digitsToNumber :: [Integer] -> Integer
           digitsToNumber = foldl (\acc digit -> acc + digit) 0
 
+          -- | Display a fold example and a number assembled from digits.
           main :: IO ()
           main = do
             print (foldl (\acc label -> "(" ++ acc ++ ")" ++ label) "" ["a","b"])
@@ -1142,9 +1256,12 @@ steps:
           content: |
             module Main where
 
+            -- | Return the integer represented by decimal digits in most-significant-first
+            -- order; an empty list gives zero.
             digitsToNumber :: [Integer] -> Integer
             digitsToNumber = foldl (\acc digit -> acc * 10 + digit) 0
 
+            -- | Display a fold example and a number assembled from digits.
             main :: IO ()
             main = do
               print (foldl (\acc label -> "(" ++ acc ++ ")" ++ label) "" ["a","b"])
@@ -1175,11 +1292,20 @@ steps:
       - Repair a recursive helper that carries two related counts through a list.
       - Infer the function type that remains after fixing the initial counts and predicate.
 
+      ### What this program does
+
+      A batch classifier keeps two running counts: items that pass a supplied test
+      and items that fail it. Processing another batch adds to the supplied
+      counts, so the same function can classify strings, lists, or other values
+      without discarding earlier totals.
+
       ### An Accumulator Is a Parameter
 
       Here is a function that wraps a piece of text in a succession of named layers:
 
       ```haskell
+      -- | Wrap the supplied text in successive labels, with later labels outside
+      -- earlier ones; no labels leaves the text unchanged.
       nestFrom inside [] = inside
       nestFrom inside (label:labels) =
         nestFrom (label ++ "(" ++ inside ++ ")") labels
@@ -1242,12 +1368,16 @@ steps:
         content: |
           module Main where
 
+          -- | Target (starter needs repair): Add each predicate match to the first
+          -- supplied count and each rejection to the second; an empty list preserves
+          -- both counts.
           tallyFrom :: (Int, Int) -> (a -> Bool) -> [a] -> (Int, Int)
           tallyFrom counts predicate [] = counts
           tallyFrom (yes, no) predicate (x:xs)
             | predicate x = tallyFrom (yes + 1, no) predicate xs
             | otherwise   = tallyFrom (yes + 1, no) predicate xs
 
+          -- | Display classification counts for sample batches.
           main :: IO ()
           main = do
             print (tallyFrom (2,1) null ["","oak",""])
@@ -1349,6 +1479,8 @@ steps:
           content: |
             module Main where
 
+            -- | Add each predicate match to the first supplied count and each rejection to
+            -- the second; an empty list preserves both counts.
             tallyFrom :: (Int, Int) -> (a -> Bool) -> [a] -> (Int, Int)
             tallyFrom counts predicate [] = counts
             tallyFrom (yes, no) predicate (x:xs)
@@ -1356,6 +1488,7 @@ steps:
               | otherwise   = tallyFrom (yes, no + 1) predicate xs
 
             -- tallyFrom (2,1) null :: [[b]] -> (Int, Int)
+            -- | Display classification counts for sample batches.
             main :: IO ()
             main = do
               print (tallyFrom (2,1) null ["","oak",""])
@@ -1385,6 +1518,13 @@ steps:
 
       - Predict the finite prefix produced from an unbounded range.
       - Create a bounded selection that works on finite and infinite lists.
+
+      ### What this program does
+
+      A search tool returns a requested number of matching items from a sequence
+      that may be very long or infinite. It should count matches toward the limit,
+      preserving their order. The interval examples show how a stream can also
+      contain functions representing values.
 
       ### Demand Drives Evaluation
 
@@ -1437,6 +1577,8 @@ steps:
       Allow about five minutes. A supplied interval function passes its two endpoints to a function you choose. The endpoint values become a pair, a number, or another result only when that chosen function uses them:
 
       ```haskell
+      -- | Represent the interval from start to start + 2 as a function that passes
+      -- both bounds to a supplied consumer.
       interval start = \use -> use start (start + 2)
       intervals = map interval [0..]
       ```
@@ -1449,7 +1591,10 @@ steps:
       <summary>Check how the interval functions produce results</summary>
 
       ```haskell
+      -- | Extract the start and finish of a function-represented interval as a pair.
       bounds item = item (\start finish -> (start, finish))
+      -- | Return the integer midpoint of a function-represented interval, rounded
+      -- down.
       midpoint item = item (\start finish -> (start + finish) `div` 2)
 
       firstBounds = take 3 (map bounds intervals)
@@ -1468,12 +1613,16 @@ steps:
         content: |
           module Main where
 
+          -- | Target (starter needs repair): Return up to n matching items in input
+          -- order, or all matches if a finite input has fewer; n is nonnegative.
           firstMatches :: Int -> (a -> Bool) -> [a] -> [a]
           firstMatches n predicate items = take n items
 
+          -- | Display selection-order examples and matching prefixes of string lists.
           main :: IO ()
           main = do
             let prefixes = map (\n -> take n "road") [0..]
+                -- | Test whether a word has at least two characters.
                 longEnough word = length word >= 2
             print (take 2 (filter longEnough prefixes))
             print (filter longEnough (take 2 prefixes))
@@ -1584,12 +1733,16 @@ steps:
           content: |
             module Main where
 
+            -- | Return up to n matching items in input order, or all matches if a finite
+            -- input has fewer; n is nonnegative.
             firstMatches :: Int -> (a -> Bool) -> [a] -> [a]
             firstMatches n predicate items = take n (filter predicate items)
 
+            -- | Display selection-order examples and matching prefixes of string lists.
             main :: IO ()
             main = do
               let prefixes = map (\n -> take n "road") [0..]
+                  -- | Test whether a word has at least two characters.
                   longEnough word = length word >= 2
               print (take 2 (filter longEnough prefixes))
               print (filter longEnough (take 2 prefixes))
@@ -1621,6 +1774,13 @@ steps:
 
       - Create a pipeline that selects, transforms, and aggregates structured data.
       - Evaluate a solution using boundary examples and type relationships.
+
+      ### What this program does
+
+      The program builds a playlist summary from song titles and scores. It
+      reports the titles whose original scores meet a cutoff and the total of
+      their scores after a bonus. Both parts of the report must describe the same
+      selected entries.
 
       ### The Contract
 
@@ -1665,7 +1825,14 @@ steps:
 
       Tomorrow, close these instructions and rebuild the report from its contract. Replace the domain with `(snack, price)` pairs and a maximum-price rule. Explain which parts change and which list-processing patterns stay the same.
 
-      For one final type connection, reason about `twice f x = f (f x)`: the result of the inner `f` is an input to the outer `f`. That relationship forces `f` to consume and produce the same type. The last knowledge check asks you to use that connection.
+      For one final type connection, reason about this helper:
+
+      ```haskell
+      -- | Apply the supplied function twice in succession to the initial value.
+      twice f x = f (f x)
+      ```
+
+      The result of the inner `f` is an input to the outer `f`. That relationship forces `f` to consume and produce the same type. The last knowledge check asks you to use that connection.
     files:
       - path: Main.hs
         language: haskell
@@ -1673,9 +1840,13 @@ steps:
         content: |
           module Main where
 
+          -- | Target (starter needs repair): Return qualifying titles in input order and
+          -- their total score with a bonus per entry; qualification uses original scores
+          -- and retains repeats.
           playlistReport :: Int -> Int -> [(String, Int)] -> ([String], Int)
           playlistReport minimumScore bonus tracks = ([], 0)
 
+          -- | Display the selected titles and adjusted score total for a sample playlist.
           main :: IO ()
           main = print (playlistReport 10 3 [("Intro",8),("Loop",10),("Loop",12)])
     run_file: Main.hs
@@ -1789,6 +1960,8 @@ steps:
           content: |
             module Main where
 
+            -- | Return qualifying titles in input order and their total score with a bonus
+            -- per entry; qualification uses original scores and retains repeats.
             playlistReport :: Int -> Int -> [(String, Int)] -> ([String], Int)
             playlistReport minimumScore bonus tracks = (titles, total)
               where
@@ -1796,6 +1969,7 @@ steps:
                 titles = map fst selected
                 total = foldl (\acc (_, score) -> acc + score + bonus) 0 selected
 
+            -- | Display the selected titles and adjusted score total for a sample playlist.
             main :: IO ()
             main = do
               print (playlistReport 10 3 [("Intro",8),("Loop",10),("Loop",12)])

@@ -47,6 +47,13 @@ steps:
       - Analyze each variant with a constructor pattern.
       - Create a two-variant representation from a short specification.
 
+      ### What this program does
+
+      A game records travel, fights, and healing as distinct kinds of event. This
+      first program translates one event into a signed health change,
+      independently of the explorer's current health; later steps will add
+      state-dependent rules.
+
       ### One type, several possibilities
 
       `data Event = Travel Integer | Fight Integer | Heal Integer` says that an `Event` is one of three alternatives. `Fight 7` is a value of type `Event`. `Fight` is its constructor, with type `Integer -> Event`.
@@ -64,6 +71,8 @@ steps:
       A pattern can also select a particular payload. Also predict both calls to this neighboring function:
 
       ```haskell
+      -- | Return a short event description using the first matching constructor
+      -- pattern.
       describeEvent (Heal _) = "restoration"
       describeEvent (Heal 0) = "zero restoration"
       describeEvent _ = "another event"
@@ -121,11 +130,15 @@ steps:
           data Event = Travel Integer | Fight Integer | Heal Integer
             deriving Show
 
+          -- | Target (starter needs repair): Return a single event's health change: travel
+          -- restores distance div 4, fighting loses damage, and healing restores its
+          -- amount; payloads are nonnegative.
           eventDelta :: Event -> Integer
           eventDelta (Travel distance) = distance
           eventDelta (Fight damage) = damage
           eventDelta (Heal amount) = amount
 
+          -- | Display the health changes for sample travel, fight, and heal events.
           main :: IO ()
           main = print (eventDelta (Travel 10), eventDelta (Fight 7), eventDelta (Heal 3))
     open_file: "Main.hs"
@@ -231,11 +244,15 @@ steps:
             data Event = Travel Integer | Fight Integer | Heal Integer
               deriving Show
 
+            -- | Return a single event's health change: travel restores distance div 4,
+            -- fighting loses damage, and healing restores its amount; payloads are
+            -- nonnegative.
             eventDelta :: Event -> Integer
             eventDelta (Travel distance) = distance `div` 4
             eventDelta (Fight damage) = 0 - damage
             eventDelta (Heal amount) = amount
 
+            -- | Display the health changes for sample travel, fight, and heal events.
             main :: IO ()
             main = print (eventDelta (Travel 10), eventDelta (Fight 7), eventDelta (Heal 3))
       explanation: |
@@ -246,6 +263,8 @@ steps:
         ```haskell
         data Checkpoint = Blocked String | Open Integer
 
+        -- | Describe a blocked checkpoint with its reason, or an open checkpoint with
+        -- its distance.
         checkpointMessage :: Checkpoint -> String
         checkpointMessage (Blocked reason) = "Blocked: " ++ reason
         checkpointMessage (Open distance) = "Open: " ++ show distance
@@ -276,9 +295,20 @@ steps:
       - Apply constructor patterns and record construction.
       - Analyze which fields a transformation should preserve.
 
+      ### What this program does
+
+      The program heals a named game character and returns the updated character
+      record. Healing must preserve the name, respect the health cap, and leave
+      the original record available. Supplied helpers show how to read health and
+      change a name independently.
+
       ### Named fields
 
       The declaration `data Hero = Hero {heroName :: String, hitPoints :: Integer}` names the constructor and its fields. Both `Hero "Fern" 70` and `Hero {heroName = "Fern", hitPoints = 70}` construct the same value. The supplied sample uses `healthOf h` to read a hero's health; the supplied `healthOf` helper extracts this field with a constructor pattern.
+
+      The declaration also provides field-reading functions: `heroName` returns
+      a hero's name, and `hitPoints` returns the current health. Both accept one
+      `Hero` and leave it unchanged.
 
       The supplied `renameHero` is a worked example. Its pattern `(Hero oldName hp)` extracts the two fields. Its result `Hero newName hp` constructs a hero with the new name and the original health. The original record stays unchanged. Reconstructing a value requires preserving each field that should stay the same.
 
@@ -318,18 +348,24 @@ steps:
         content: |
           module Main where
 
+          -- | Field readers: heroName returns the name; hitPoints returns current health.
           data Hero = Hero {heroName :: String, hitPoints :: Integer}
             deriving (Eq, Show)
 
+          -- | Read a hero's current hit points.
           healthOf :: Hero -> Integer
           healthOf (Hero _ hp) = hp
 
+          -- | Return a hero with the supplied name and unchanged hit points.
           renameHero :: String -> Hero -> Hero
           renameHero newName (Hero oldName hp) = Hero newName hp
 
+          -- | Target (starter needs repair): Return the hero with nonnegative healing
+          -- added up to 100 hit points; preserve the name and original record.
           healHero :: Integer -> Hero -> Hero
           healHero amount (Hero name hp) = Hero name amount
 
+          -- | Display the healed hero and the unchanged original hero.
           main :: IO ()
           main = let before = Hero "Fern" 70
                      after = healHero 15 before
@@ -419,18 +455,24 @@ steps:
           content: |
             module Main where
 
+            -- | Field readers: heroName returns the name; hitPoints returns current health.
             data Hero = Hero {heroName :: String, hitPoints :: Integer}
               deriving (Eq, Show)
 
+            -- | Read a hero's current hit points.
             healthOf :: Hero -> Integer
             healthOf (Hero _ hp) = hp
 
+            -- | Return a hero with the supplied name and unchanged hit points.
             renameHero :: String -> Hero -> Hero
             renameHero newName (Hero oldName hp) = Hero newName hp
 
+            -- | Return the hero with nonnegative healing added up to 100 hit points;
+            -- preserve the name and original record.
             healHero :: Integer -> Hero -> Hero
             healHero amount (Hero name hp) = Hero name (min 100 (hp + amount))
 
+            -- | Display the healed hero and the unchanged original hero.
             main :: IO ()
             main = let before = Hero "Fern" 70
                        after = healHero 15 before
@@ -460,6 +502,13 @@ steps:
       - Analyze the relationship between input and output type variables.
       - Apply an `Ord` constraint when a generic function compares values.
 
+      ### What this program does
+
+      A search panel keeps values inside an inclusive range, such as scores
+      between two bounds or names within an alphabetical band. The same function
+      should work for any values that can be ordered and preserve their original
+      sequence.
+
       ### One rule, several types
 
       `withinBand :: Ord a => (a, a) -> [a] -> [a]` accepts a pair of bounds and a list of values. Both bounds and every list element have the same type; the returned list keeps that element type. `Ord a =>` requires that the values support ordering. It does not convert values to a common type.
@@ -471,9 +520,11 @@ steps:
       Type-variable names express relationships **within a signature**. Consider two separate declarations:
 
       ```haskell
+      -- | Return a pair containing two copies of the supplied value.
       duplicate :: a -> (a, a)
       duplicate x = (x, x)
 
+      -- | Return a one-element list containing the supplied value.
       box :: a -> [a]
       box x = [x]
       ```
@@ -521,9 +572,13 @@ steps:
         content: |
           module Main where
 
+          -- | Target (starter needs repair): Keep values between the supplied lower and
+          -- upper bounds inclusively, preserving order and repeats; assume ordered
+          -- bounds.
           withinBand :: Ord a => (a, a) -> [a] -> [a]
           withinBand (low, high) values = filter (\value -> value >= low) values
 
+          -- | Display range-filtered number and string examples.
           main :: IO ()
           main = do
             print (withinBand (2, 6) [7, 2, 5, 1, 6, 5] :: [Integer])
@@ -637,10 +692,13 @@ steps:
           content: |
             module Main where
 
+            -- | Keep values between the supplied lower and upper bounds inclusively,
+            -- preserving order and repeats; assume ordered bounds.
             withinBand :: Ord a => (a, a) -> [a] -> [a]
             withinBand (low, high) values =
               filter (\value -> value >= low && value <= high) values
 
+            -- | Display range-filtered number and string examples.
             main :: IO ()
             main = do
               print (withinBand (2, 6) [7, 2, 5, 1, 6, 5] :: [Integer])
@@ -669,6 +727,13 @@ steps:
 
       - Apply base and recursive cases to a user-defined list.
       - Create a conversion that preserves stop names and order.
+
+      ### What this program does
+
+      An itinerary represents a route as a chain of named stops ending at `End`.
+      The program converts between that representation and an ordinary list of
+      names, allowing the route to be built from a list and displayed as a list
+      again.
 
       ### A trail inside a trail
 
@@ -712,13 +777,17 @@ steps:
 
           data Trail = End | Stop String Trail deriving (Eq, Show)
 
+          -- | Return all stop names in route order; End becomes an empty list.
           toList :: Trail -> [String]
           toList End = []
           toList (Stop x rest) = x : toList rest
 
+          -- | Target (starter needs repair): Build a trail with the supplied names in
+          -- order, retaining empty and repeated names; an empty list becomes End.
           fromList :: [String] -> Trail
           fromList xs = End
 
+          -- | Display a supplied trail and one constructed from a list.
           main :: IO ()
           main = do
             print (toList (Stop "Gate" (Stop "Lake" End)))
@@ -809,14 +878,18 @@ steps:
 
             data Trail = End | Stop String Trail deriving (Eq, Show)
 
+            -- | Return all stop names in route order; End becomes an empty list.
             toList :: Trail -> [String]
             toList End = []
             toList (Stop x rest) = x : toList rest
 
+            -- | Build a trail with the supplied names in order, retaining empty and repeated
+            -- names; an empty list becomes End.
             fromList :: [String] -> Trail
             fromList [] = End
             fromList (x:xs) = Stop x (fromList xs)
 
+            -- | Display a supplied trail and one constructed from a list.
             main :: IO ()
             main = do
               print (toList (Stop "Gate" (Stop "Lake" End)))
@@ -846,6 +919,13 @@ steps:
 
       - Create a recursive deletion that preserves the remaining order.
       - Evaluate which part of an immutable trail needs reconstruction.
+
+      ### What this program does
+
+      An itinerary editor removes one stop by its position while keeping the
+      previous itinerary available. The program displays the revised and original
+      routes side by side; the supplied conversions make their contents easy to
+      inspect.
 
       ### An update with a boundary
 
@@ -895,17 +975,24 @@ steps:
 
           data Trail = End | Stop String Trail deriving (Eq, Show)
 
+          -- | Build a trail with the supplied names in order, retaining empty and repeated
+          -- names; an empty list becomes End.
           fromList :: [String] -> Trail
           fromList [] = End
           fromList (x:xs) = Stop x (fromList xs)
 
+          -- | Return all stop names in route order; End becomes an empty list.
           toList :: Trail -> [String]
           toList End = []
           toList (Stop x rest) = x : toList rest
 
+          -- | Target (starter needs repair): Remove the stop at a zero-based index,
+          -- preserving all others and the original trail; an invalid index leaves an
+          -- equal trail.
           removeStop :: Int -> Trail -> Trail
           removeStop index trail = trail
 
+          -- | Display the edited itinerary alongside the original.
           main :: IO ()
           main = let original = fromList ["Gate", "Lake", "Tower"]
                  in print (toList (removeStop 1 original), toList original)
@@ -1019,20 +1106,26 @@ steps:
 
             data Trail = End | Stop String Trail deriving (Eq, Show)
 
+            -- | Build a trail with the supplied names in order, retaining empty and repeated
+            -- names; an empty list becomes End.
             fromList :: [String] -> Trail
             fromList [] = End
             fromList (x:xs) = Stop x (fromList xs)
 
+            -- | Return all stop names in route order; End becomes an empty list.
             toList :: Trail -> [String]
             toList End = []
             toList (Stop x rest) = x : toList rest
 
+            -- | Remove the stop at a zero-based index, preserving all others and the
+            -- original trail; an invalid index leaves an equal trail.
             removeStop :: Int -> Trail -> Trail
             removeStop index trail | index < 0 = trail
             removeStop _ End = End
             removeStop 0 (Stop _ rest) = rest
             removeStop index (Stop x rest) = Stop x (removeStop (index - 1) rest)
 
+            -- | Display the edited itinerary alongside the original.
             main :: IO ()
             main = let original = fromList ["Gate", "Lake", "Tower"]
                    in print (toList (removeStop 1 original), toList original)
@@ -1062,6 +1155,13 @@ steps:
       - Analyze the difference between a node's payload and its children.
       - Combine recursive results across an arbitrary number of children.
       - Reconstruct nested and recursive data declarations from their uses.
+
+      ### What this program does
+
+      A route directory is a tree: each node can have labels and any number of
+      child routes. The program counts nodes with at least one label across the
+      whole directory, including labeled descendants reached through unlabeled
+      nodes.
 
       ### Two lists with different jobs
 
@@ -1116,10 +1216,13 @@ steps:
       Allow about three minutes. The following consumers and sample have lost their two `data` declarations. **Write complete declarations for `Load` and `Store` before using Run or opening the model.** Use exactly the constructors shown, in the field order their uses require. Counts have type `Integer`; labels have type `String`. Include `deriving Show` for each type.
 
       ```haskell
+      -- | Read the unit count from either kind of load, ignoring any label.
       loadUnits :: Load -> Integer
       loadUnits (Singles n) = n
       loadUnits (Bundle label n) = n
 
+      -- | Return the total units in a finite store tree, including all child stores;
+      -- Vacant contributes zero.
       storedUnits :: Store -> Integer
       storedUnits Vacant = 0
       storedUnits (Rack load children) =
@@ -1155,6 +1258,9 @@ steps:
 
           data Route = NoRoute | Route [String] [Route] deriving Show
 
+          -- | Target (starter needs repair): Count nodes with nonempty labels throughout a
+          -- finite route tree; NoRoute counts as zero, and unlabeled nodes may have
+          -- labeled descendants.
           countLabeled :: Route -> Int
           countLabeled NoRoute = 0
           countLabeled (Route labels children) =
@@ -1165,6 +1271,7 @@ steps:
           sample = Route ["Gate", "Start"]
             [Route [] [Route ["Lake"] []], NoRoute, Route ["Tower"] []]
 
+          -- | Display the number of labeled nodes in the sample route tree.
           main :: IO ()
           main = print (countLabeled sample)
     open_file: "Main.hs"
@@ -1258,6 +1365,8 @@ steps:
 
             data Route = NoRoute | Route [String] [Route] deriving Show
 
+            -- | Count nodes with nonempty labels throughout a finite route tree; NoRoute
+            -- counts as zero, and unlabeled nodes may have labeled descendants.
             countLabeled :: Route -> Int
             countLabeled NoRoute = 0
             countLabeled (Route labels children) =
@@ -1268,6 +1377,7 @@ steps:
             sample = Route ["Gate", "Start"]
               [Route [] [Route ["Lake"] []], NoRoute, Route ["Tower"] []]
 
+            -- | Display the number of labeled nodes in the sample route tree.
             main :: IO ()
             main = print (countLabeled sample)
       explanation: |
@@ -1295,6 +1405,13 @@ steps:
 
       - Apply constructor patterns to locate the smallest key.
       - Analyze which subtrees a persistent deletion must preserve.
+
+      ### What this program does
+
+      A priority collection stores unique numbers in an ordered search tree. The
+      program removes the smallest priority while preserving all the others and
+      the original tree. An inspection helper converts each tree to its ordered
+      list of priorities.
 
       ### The ordering contract
 
@@ -1351,10 +1468,14 @@ steps:
           data SearchTree = Tip | Fork Integer SearchTree SearchTree
             deriving Show
 
+          -- | Return the keys of a valid search tree in ascending order; Tip gives an
+          -- empty list.
           toAscList :: SearchTree -> [Integer]
           toAscList Tip = []
           toAscList (Fork x left right) = toAscList left ++ [x] ++ toAscList right
 
+          -- | Target (starter needs repair): Return a search tree without its smallest
+          -- key, preserving all other keys and the ordering; an empty tree stays empty.
           removeSmallest :: SearchTree -> SearchTree
           removeSmallest Tip = Tip
           removeSmallest (Fork _ Tip right) = right
@@ -1363,6 +1484,7 @@ steps:
           sample :: SearchTree
           sample = Fork 8 (Fork 3 Tip (Fork 5 Tip Tip)) (Fork 12 Tip Tip)
 
+          -- | Display ordered priorities after removal and in the original tree.
           main :: IO ()
           main = print (toAscList (removeSmallest sample), toAscList sample)
     open_file: "Main.hs"
@@ -1452,10 +1574,14 @@ steps:
             data SearchTree = Tip | Fork Integer SearchTree SearchTree
               deriving Show
 
+            -- | Return the keys of a valid search tree in ascending order; Tip gives an
+            -- empty list.
             toAscList :: SearchTree -> [Integer]
             toAscList Tip = []
             toAscList (Fork x left right) = toAscList left ++ [x] ++ toAscList right
 
+            -- | Return a search tree without its smallest key, preserving all other keys and
+            -- the ordering; an empty tree stays empty.
             removeSmallest :: SearchTree -> SearchTree
             removeSmallest Tip = Tip
             removeSmallest (Fork _ Tip right) = right
@@ -1464,6 +1590,7 @@ steps:
             sample :: SearchTree
             sample = Fork 8 (Fork 3 Tip (Fork 5 Tip Tip)) (Fork 12 Tip Tip)
 
+            -- | Display ordered priorities after removal and in the original tree.
             main :: IO ()
             main = print (toAscList (removeSmallest sample), toAscList sample)
       explanation: |
@@ -1492,6 +1619,13 @@ steps:
       - Analyze how constructors represent expression grouping.
       - Create an evaluator from the meaning of each constructor.
       - Transform a tree using the results of transforming its children.
+
+      ### What this program does
+
+      A tiny calculator stores arithmetic expressions as trees of numbers,
+      additions, and multiplications. The program evaluates the stored expression
+      according to its grouping; building the tree and calculating its answer are
+      separate operations.
 
       ### Data that describes a computation
 
@@ -1545,10 +1679,12 @@ steps:
       ```haskell
       data Layout = Card Integer | Beside Layout Layout deriving Show
 
+      -- | Return the number on the leftmost card in a layout.
       firstCard :: Layout -> Integer
       firstCard (Card n) = n
       firstCard (Beside left right) = firstCard left
 
+      -- | Return every card number in left-to-right order, retaining repeated numbers.
       cards :: Layout -> [Integer]
       cards (Card n) = [n]
       cards (Beside left right) = cards left ++ cards right
@@ -1580,6 +1716,8 @@ steps:
       <summary>Compare one model after writing and checking your transformation</summary>
 
       ```haskell
+      -- | Arrange children recursively, then place the child with the smaller first
+      -- card on the left; preserve pair grouping and keep tied children in order.
       arrange :: Layout -> Layout
       arrange (Card n) = Card n
       arrange (Beside left right) =
@@ -1587,6 +1725,8 @@ steps:
             arrangedRight = arrange right
         in orderChildren arrangedLeft arrangedRight
 
+      -- | Pair two layouts with the smaller first card on the left; preserve their
+      -- order on a tie.
       orderChildren :: Layout -> Layout -> Layout
       orderChildren left right
         | firstCard left <= firstCard right = Beside left right
@@ -1606,6 +1746,8 @@ steps:
           data Expr = Number Integer | Plus Expr Expr | Times Expr Expr
             deriving Show
 
+          -- | Target (starter needs repair): Return the integer meaning of a finite
+          -- expression tree, respecting its addition, multiplication, and grouping.
           eval :: Expr -> Integer
           eval (Number n) = n
           eval (Plus left right) = eval left
@@ -1614,6 +1756,7 @@ steps:
           sample :: Expr
           sample = Times (Plus (Number 2) (Number 5)) (Number 4)
 
+          -- | Display the value of the sample arithmetic expression tree.
           main :: IO ()
           main = print (eval sample)
     open_file: "Main.hs"
@@ -1703,6 +1846,8 @@ steps:
             data Expr = Number Integer | Plus Expr Expr | Times Expr Expr
               deriving Show
 
+            -- | Return the integer meaning of a finite expression tree, respecting its
+            -- addition, multiplication, and grouping.
             eval :: Expr -> Integer
             eval (Number n) = n
             eval (Plus left right) = eval left + eval right
@@ -1711,6 +1856,7 @@ steps:
             sample :: Expr
             sample = Times (Plus (Number 2) (Number 5)) (Number 4)
 
+            -- | Display the value of the sample arithmetic expression tree.
             main :: IO ()
             main = print (eval sample)
       explanation: |
@@ -1738,6 +1884,13 @@ steps:
 
       - Create a pure simulator from a complete behavioral contract.
       - Evaluate boundary cases before trusting a successful sample run.
+
+      ### What this program does
+
+      The program simulates an explorer's health across an ordered journey of
+      travel, fights, and healing. Each event can change how the next one behaves.
+      The result reports the surviving health, or a terminal failure value if the
+      explorer falls during the journey.
 
       ### The expedition contract
 
@@ -1778,9 +1931,13 @@ steps:
           data Event = Travel Integer | Fight Integer | Heal Integer
             deriving Show
 
+          -- | Target (starter needs repair): Simulate events in order from 100 health
+          -- under the expedition rules; return surviving health or -1 at the first fatal
+          -- event.
           journey :: [Event] -> Integer
           journey events = 100
 
+          -- | Display the sample expedition's surviving health or failure value.
           main :: IO ()
           main = print (journey [Fight 60, Travel 40, Heal 1, Fight 3])
     open_file: "Main.hs"
@@ -1914,14 +2071,20 @@ steps:
             data Event = Travel Integer | Fight Integer | Heal Integer
               deriving Show
 
+            -- | Simulate events in order from 100 health under the expedition rules; return
+            -- surviving health or -1 at the first fatal event.
             journey :: [Event] -> Integer
             journey events = go 100 events
               where
+                -- | Continue a journey from positive health through the remaining events,
+                -- returning final health or -1 at the first fatal event.
                 go hp [] = hp
                 go hp (event:rest) =
                   let next = applyEvent hp event
                   in if next <= 0 then -1 else go next rest
 
+                -- | Return health after one event using the incoming health mode and a cap of
+                -- 100; a nonpositive result signals a fatal event to the caller.
                 applyEvent hp (Travel distance)
                   | hp <= 40 = hp
                   | otherwise = min 100 (hp + distance `div` 4)
@@ -1929,6 +2092,7 @@ steps:
                   hp - (if hp <= 40 then damage `div` 2 else damage)
                 applyEvent hp (Heal amount) = min 100 (hp + amount)
 
+            -- | Display the sample expedition's surviving health or failure value.
             main :: IO ()
             main = print (journey [Fight 60, Travel 40, Heal 1, Fight 3])
       explanation: |

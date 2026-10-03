@@ -45,6 +45,12 @@ steps:
       - Analyze how function calls group with arithmetic
       - Modify a pure function while keeping output in `main`
 
+      ### What this program does
+
+      This program checks a movie-night pizza budget: after buying two equally
+      priced pizzas, how much money remains for snacks? A negative result means
+      the group is short of money; `main` displays one sample balance.
+
       This is Part 1 of a three-part path.
 
       - **Prerequisites:** functions, conditionals, and lists from Python or C++; no Haskell needed.
@@ -57,6 +63,8 @@ steps:
       left after a purchase. All amounts here are whole dollars.
 
       ```haskell
+      -- | Return the budget left after spending an amount; a negative balance is a
+      -- shortfall.
       remainingMoney :: Int -> Int -> Int
       remainingMoney budget spent = budget - spent
       ```
@@ -130,12 +138,17 @@ steps:
         content: |
           module Main where
 
+          -- | Return the budget left after spending an amount; a negative balance is a
+          -- shortfall.
           remainingMoney :: Int -> Int -> Int
           remainingMoney budget spent = budget - spent
 
+          -- | Target (starter needs repair): Return the balance after buying two pizzas at
+          -- the supplied price per pizza.
           moneyLeftAfterTwoPizzas :: Int -> Int -> Int
           moneyLeftAfterTwoPizzas budget pizzaPrice = remainingMoney budget pizzaPrice * 2
 
+          -- | Display the sample balance after buying two pizzas.
           main :: IO ()
           main = print (moneyLeftAfterTwoPizzas 45 12)
     open_file: Main.hs
@@ -200,10 +213,14 @@ steps:
           language: haskell
           content: |
             module Main where
+            -- | Return the budget left after spending an amount; a negative balance is a
+            -- shortfall.
             remainingMoney :: Int -> Int -> Int
             remainingMoney budget spent = budget - spent
+            -- | Return the balance after buying two pizzas at the supplied price per pizza.
             moneyLeftAfterTwoPizzas :: Int -> Int -> Int
             moneyLeftAfterTwoPizzas budget pizzaPrice = remainingMoney budget (pizzaPrice * 2)
+            -- | Display the sample balance after buying two pizzas.
             main :: IO ()
             main = print (moneyLeftAfterTwoPizzas 45 12)
       explanation: |
@@ -233,6 +250,12 @@ steps:
       - Distinguish numeric values from numeric-looking text
       - Explain how a signature checks inputs without converting them
 
+      ### What this program does
+
+      This checkout program decides whether a budget covers one pizza, including
+      prices with cents. Its result is a yes/no answer that another part of an app
+      could use to enable an order; the sample driver displays that answer.
+
       ### Values have types
 
       - **`Int`:** whole-number counts, such as a number of pizza slices.
@@ -252,6 +275,7 @@ steps:
       for every friend to have one:
 
       ```haskell
+      -- | Test whether there is at least one slice for every friend.
       hasEnoughSlices :: Int -> Int -> Bool
       hasEnoughSlices slices friends = slices >= friends
       ```
@@ -275,6 +299,8 @@ steps:
       sampleBudget = "9.50"
       samplePrice = "12.00"
 
+      -- | Target (diagnose this version): Test whether a numeric budget covers the
+      -- pizza price, including an exact match.
       canAffordPizza budget price = budget >= price
       ```
 
@@ -371,8 +397,11 @@ steps:
           sampleBudget = "9.50"
           samplePrice = "12.00"
 
+          -- | Target (starter needs repair): Test whether a numeric budget covers the
+          -- pizza price, including an exact match.
           canAffordPizza budget price = budget >= price
 
+          -- | Display whether the sample budget covers the sample pizza price.
           main :: IO ()
           main = print (canAffordPizza sampleBudget samplePrice)
     open_file: Main.hs
@@ -512,9 +541,12 @@ steps:
             sampleBudget = 9.50
             samplePrice = 12.00
 
+            -- | Test whether a numeric budget covers the pizza price, including an exact
+            -- match.
             canAffordPizza :: Double -> Double -> Bool
             canAffordPizza budget price = budget >= price
 
+            -- | Display whether the sample budget covers the sample pizza price.
             main :: IO ()
             main = print (canAffordPizza sampleBudget samplePrice)
       explanation: |
@@ -550,6 +582,13 @@ steps:
 
       - Analyze guard conditions at a boundary
       - Create a complete calculation with lower and upper limits
+
+      ### What this program does
+
+      These are two rules for a game: award coins after a match, and update the
+      number of healing potions in a backpack. Each function returns a new number
+      for the game to use. You will repair both rules, and `main` displays
+      examples of each.
 
       **Your task is to change both `matchCoins` AND `adjustStock` in `Main.hs`.**
       Repair the reward calculation and complete the inventory calculation.
@@ -632,16 +671,21 @@ steps:
       reseed: true
       content: |
         module Main where
+        -- | Target (starter needs repair): Return 12 coins for a regular-match win and
+        -- zero for a loss or any practice match.
         matchCoins :: Bool -> Bool -> Int
         matchCoins won practiceMode
           | won = 12
           | practiceMode = 0
           | otherwise = 0
+        -- | Target (starter needs repair): Return stock after a signed change, limited
+        -- to zero through the nonnegative capacity.
         adjustStock :: Int -> Int -> Int -> Int
         adjustStock stock change capacity
           | stock + change < 0 = 0
           -- TODO: handle the upper limit and the within-limits result.
           | otherwise = 0
+        -- | Display sample match rewards and the updated potion count.
         main :: IO ()
         main = do
           print (matchCoins True False, matchCoins True True)
@@ -733,16 +777,21 @@ steps:
         language: haskell
         content: |
           module Main where
+          -- | Return 12 coins for a regular-match win and zero for a loss or any practice
+          -- match.
           matchCoins :: Bool -> Bool -> Int
           matchCoins won practiceMode
             | practiceMode = 0
             | won = 12
             | otherwise = 0
+          -- | Return stock after a signed change, limited to zero through the nonnegative
+          -- capacity.
           adjustStock :: Int -> Int -> Int -> Int
           adjustStock stock change capacity
             | stock + change < 0 = 0
             | stock + change > capacity = capacity
             | otherwise = stock + change
+          -- | Display sample match rewards and the updated potion count.
           main :: IO ()
           main = do
             print (matchCoins True False, matchCoins True True)
@@ -784,6 +833,12 @@ steps:
       - Apply `let` and `where` to name intermediate results
       - Analyze a calculation as a set of relationships
 
+      ### What this program does
+
+      The program calculates a group snack order: item charges, a quantity
+      discount, and a fee produce one final bill. The time-conversion examples
+      introduce local names before you use them to organize the bill calculation.
+
       Your study playlist is 1 hour and 35 minutes long. To compare it with
       your study time, convert that to minutes.
 
@@ -792,6 +847,7 @@ steps:
       value of the whole `let` expression:
 
       ```haskell
+      -- | Return the total minutes represented by an hours-and-minutes duration.
       minutesAfter hours minutes =
         let perHour = 60
         in hours * perHour + minutes
@@ -802,6 +858,7 @@ steps:
       names below it. There is **no `in`**:
 
       ```haskell
+      -- | Return the total minutes represented by an hours-and-minutes duration.
       minutesAfter hours minutes = hours * perHour + minutes
         where perHour = 60
       ```
@@ -911,11 +968,15 @@ steps:
       reseed: true
       content: |
         module Main where
+        -- | Target (starter needs repair): Return the bill for count items at unitCost:
+        -- discount one quarter of the subtotal (rounded down) for at least four items,
+        -- then add the fee once.
         snackBill :: Int -> Int -> Int -> Int
         snackBill count unitCost fee = 0 -- TODO: combine the named amounts.
           where
             subtotal = count * unitCost
             discount = 0 -- TODO: define the conditional group discount.
+        -- | Display the sample snack bill.
         main :: IO ()
         main = print (snackBill 4 8 3)
     open_file: Main.hs
@@ -988,11 +1049,14 @@ steps:
         language: haskell
         content: |
           module Main where
+          -- | Return the bill for count items at unitCost: discount one quarter of the
+          -- subtotal (rounded down) for at least four items, then add the fee once.
           snackBill :: Int -> Int -> Int -> Int
           snackBill count unitCost fee = subtotal - discount + fee
             where
               subtotal = count * unitCost
               discount = if count >= 4 then subtotal `div` 4 else 0
+          -- | Display the sample snack bill.
           main :: IO ()
           main = print (snackBill 4 8 3)
       explanation: |
@@ -1026,6 +1090,13 @@ steps:
       - Analyze tuple shapes and polymorphic type variables
       - Create a new tuple that preserves one field and changes another
 
+      ### What this program does
+
+      A leaderboard stores each player as a name-and-score pair. The program
+      creates a revised entry after a bonus and displays both entries so you can
+      check that the name and original entry are preserved. The watchlist example
+      demonstrates updating one field of a different kind of pair.
+
       Mina finishes a rhythm-game round with 40 points. Her leaderboard entry,
       `("Mina", 40)`, has type `(String, Int)` when its score is an `Int`.
 
@@ -1037,6 +1108,7 @@ steps:
       with a watched flag:
 
       ```haskell
+      -- | Preserve the first field of a pair and replace its second field with True.
       markSeen :: (a, b) -> (a, Bool)
       markSeen (value, label) = (value, True)
       ```
@@ -1127,13 +1199,17 @@ steps:
       reseed: true
       content: |
         module Main where
+        -- | Preserve the first field of a pair and replace its second field with True.
         markSeen :: (a, b) -> (a, Bool)
         markSeen (value, label) = (value, True)
+        -- | Target (starter needs repair): Return a name-and-score pair with the signed
+        -- bonus added; preserve the name.
         addBonus :: Int -> (String, Int) -> (String, Int)
         -- TODO: replace this pass-through with your complete definition.
         addBonus bonus entry = entry
         original :: (String, Int)
         original = ("Mina", 40)
+        -- | Display the revised score entry and the unchanged original entry.
         main :: IO ()
         main = do
           print (addBonus 5 original)
@@ -1216,12 +1292,15 @@ steps:
           language: haskell
           content: |
             module Main where
+            -- | Preserve the first field of a pair and replace its second field with True.
             markSeen :: (a, b) -> (a, Bool)
             markSeen (value, label) = (value, True)
+            -- | Return a name-and-score pair with the signed bonus added; preserve the name.
             addBonus :: Int -> (String, Int) -> (String, Int)
             addBonus bonus (name, score) = (name, score + bonus)
             original :: (String, Int)
             original = ("Mina", 40)
+            -- | Display the revised score entry and the unchanged original entry.
             main :: IO ()
             main = do
               print (addBonus 5 original)
@@ -1247,6 +1326,13 @@ steps:
 
       - Distinguish cons from list concatenation
       - Apply a polymorphic list transformation to strings and other lists
+
+      ### What this program does
+
+      The program adds a matching opening and closing item around a sequence, such
+      as clips around a playlist or punctuation around a message. The same
+      function should work for both because it preserves the existing elements
+      without inspecting their contents.
 
       The snack-run list is `["tea", "mochi"]`: two strings, two things to
       pick up. `[2, 4, 6]` is a list of numbers.
@@ -1287,6 +1373,8 @@ steps:
       A teammate tries to put one opening clip onto a playlist:
 
       ```haskell
+      -- | Target (diagnose this version): Prepend one whole clip name to a playlist,
+      -- preserving the existing clips.
       addOpening :: String -> [String] -> [String]
       addOpening clip clips = clip ++ clips
       ```
@@ -1315,6 +1403,7 @@ steps:
       One corrected definition is:
 
       ```haskell
+      -- | Prepend one whole clip name to a playlist, preserving the existing clips.
       addOpening clip clips = clip : clips
       ```
 
@@ -1353,9 +1442,12 @@ steps:
       reseed: true
       content: |
         module Main where
+        -- | Target (starter needs repair): Put the supplied item at both ends of a list,
+        -- preserving its contents; an empty list gets two copies.
         bookend :: a -> [a] -> [a]
         -- TODO: replace this placeholder with your complete definition.
         bookend item items = []
+        -- | Display list-length examples and bookended character and string lists.
         main :: IO ()
         main = do
           print (length "tea", length ["tea"], length ([] :: [Int]))
@@ -1431,8 +1523,11 @@ steps:
           language: haskell
           content: |
             module Main where
+            -- | Put the supplied item at both ends of a list, preserving its contents; an
+            -- empty list gets two copies.
             bookend :: a -> [a] -> [a]
             bookend item items = item : (items ++ [item])
+            -- | Display list-length examples and bookended character and string lists.
             main :: IO ()
             main = do
               print (length "tea", length ["tea"], length ([] :: [Int]))
@@ -1462,6 +1557,13 @@ steps:
       - Analyze exact-length and nonempty-list patterns
       - Write complete equations that reconstruct a list while preserving its tail
 
+      ### What this program does
+
+      A queue manager lets the first two people exchange places while everyone
+      else keeps their position. Your function must also handle queues too short
+      for a swap. The supplied playlist helper demonstrates changing the front of
+      a list while preserving the rest.
+
       Compare a list's construction with its decomposition:
 
       - `x : xs` **constructs** a list.
@@ -1472,6 +1574,7 @@ steps:
       track of an existing playlist, but leaves an empty playlist empty:
 
       ```haskell
+      -- | Replace the first element and preserve the rest; leave an empty list empty.
       replaceHead replacement [] = []
       replaceHead replacement (_:rest) = replacement : rest
       ```
@@ -1496,6 +1599,8 @@ steps:
       people:
 
       ```haskell
+      -- | Target (diagnose this version): Test whether a list contains at least two
+      -- elements.
       atLeastTwo [first,second] = True
       atLeastTwo _ = False
       ```
@@ -1521,6 +1626,7 @@ steps:
       To accept any remaining tail, use an at-least-two pattern:
 
       ```haskell
+      -- | Test whether a list contains at least two elements.
       atLeastTwo (_:_:rest) = True
       atLeastTwo _ = False
       ```
@@ -1560,12 +1666,16 @@ steps:
       reseed: true
       content: |
         module Main where
+        -- | Replace the first element and preserve the rest; leave an empty list empty.
         replaceHead :: a -> [a] -> [a]
         replaceHead replacement [] = []
         replaceHead replacement (_:rest) = replacement : rest
+        -- | Target (starter needs repair): Swap the first two elements; preserve the
+        -- rest and leave shorter lists unchanged.
         swapFront :: [a] -> [a]
         -- TODO: Replace this placeholder equation with your complete definition.
         swapFront values = []
+        -- | Display the sample queue after swapping its first two people.
         main :: IO ()
         main = print (swapFront ["Ada", "Bo", "Cy"])
     open_file: Main.hs
@@ -1647,13 +1757,17 @@ steps:
         language: haskell
         content: |
           module Main where
+          -- | Replace the first element and preserve the rest; leave an empty list empty.
           replaceHead :: a -> [a] -> [a]
           replaceHead replacement [] = []
           replaceHead replacement (_:rest) = replacement : rest
+          -- | Swap the first two elements; preserve the rest and leave shorter lists
+          -- unchanged.
           swapFront :: [a] -> [a]
           swapFront [] = []
           swapFront [x] = [x]
           swapFront (x:y:rest) = y : x : rest
+          -- | Display the sample queue after swapping its first two people.
           main :: IO ()
           main = print (swapFront ["Ada", "Bo", "Cy"])
       explanation: |
@@ -1684,11 +1798,19 @@ steps:
       - Analyze the base case and progress of a recursive definition
       - Write a recursive case from the meaning of a smaller problem's result
 
+      ### What this program does
+
+      The program counts how many game scores meet a qualifying threshold,
+      counting each occurrence separately. A supplied helper that combines
+      friends' song lists provides a smaller example of processing a list
+      recursively.
+
       Friends send picks for a shared playlist. Each number identifies a song;
       each row holds one friend's picks. `joinRows` combines the rows in order,
       so nobody's picks jump the queue:
 
       ```haskell
+      -- | Join all rows into one list, preserving row order and element order.
       joinRows [] = []
       joinRows (row:rows) = row ++ joinRows rows
       ```
@@ -1783,13 +1905,17 @@ steps:
       reseed: true
       content: |
         module Main where
+        -- | Join all rows into one list, preserving row order and element order.
         joinRows :: [[Int]] -> [Int]
         joinRows [] = []
         joinRows (row:rows) = row ++ joinRows rows
+        -- | Target (starter needs repair): Count each score at or above the threshold;
+        -- count repeated scores separately.
         countAtLeast :: Int -> [Int] -> Int
         countAtLeast threshold [] = 0
         -- TODO: Replace this placeholder with your recursive case.
         countAtLeast threshold scores = 0
+        -- | Display how many sample scores reach the threshold.
         main :: IO ()
         main = print (countAtLeast 60 [60, 59, 60])
     open_file: Main.hs
@@ -1866,13 +1992,17 @@ steps:
         language: haskell
         content: |
           module Main where
+          -- | Join all rows into one list, preserving row order and element order.
           joinRows :: [[Int]] -> [Int]
           joinRows [] = []
           joinRows (row:rows) = row ++ joinRows rows
+          -- | Count each score at or above the threshold; count repeated scores
+          -- separately.
           countAtLeast :: Int -> [Int] -> Int
           countAtLeast threshold [] = 0
           countAtLeast threshold (x:xs) = contribution + countAtLeast threshold xs
             where contribution = if x >= threshold then 1 else 0
+          -- | Display how many sample scores reach the threshold.
           main :: IO ()
           main = print (countAtLeast 60 [60, 59, 60])
       explanation: |
@@ -1903,6 +2033,13 @@ steps:
 
       - Analyze generator order and inclusive numeric ranges
       - Write a complete comprehension from ordering and selection requirements
+
+      ### What this program does
+
+      A station planner lists possible route-and-platform assignments for a
+      timetable. It must exclude empty route names and nonpositive platform
+      numbers, while keeping the routes and their candidate platforms in the order
+      supplied.
 
       A playlist picker should skip blank names and show the length of each
       remaining name:
@@ -1992,9 +2129,13 @@ steps:
       reseed: true
       content: |
         module Main where
+        -- | Target (starter needs repair): Return every positive-platform/nonempty-route
+        -- pair, routes first in input order and platforms in input order within each
+        -- route; retain repeats.
         routeCandidates :: [String] -> [Int] -> [(Int, String)]
         -- TODO: Replace this placeholder equation with your implementation.
         routeCandidates routes platforms = []
+        -- | Display candidate assignments for sample routes and platforms.
         main :: IO ()
         main = print (routeCandidates ["Cedar","","Bay"] [3,0,1])
     open_file: Main.hs
@@ -2068,8 +2209,11 @@ steps:
         language: haskell
         content: |
           module Main where
+          -- | Return every positive-platform/nonempty-route pair, routes first in input
+          -- order and platforms in input order within each route; retain repeats.
           routeCandidates :: [String] -> [Int] -> [(Int, String)]
           routeCandidates routes platforms = [(platform,route) | route <- routes, platform <- platforms, length route > 0, platform > 0]
+          -- | Display candidate assignments for sample routes and platforms.
           main :: IO ()
           main = print (routeCandidates ["Cedar","","Bay"] [3,0,1])
       explanation: |
@@ -2095,6 +2239,12 @@ steps:
 
       - Create a recursive solution from a behavioral specification
       - Evaluate a stopping rule using contrasting inputs
+
+      ### What this program does
+
+      The program chooses how much of an ordered snack wishlist the group can buy.
+      Earlier snacks have priority: when the next snack is unaffordable, the
+      shopping plan ends even if a cheaper item appears later.
 
       ### Your challenge
 
@@ -2178,10 +2328,14 @@ steps:
       reseed: true
       content: |
         module Main where
+        -- | Target (starter needs repair): Return the longest affordable prefix of
+        -- nonnegative costs, stopping at the first cost that does not fit the
+        -- remaining nonnegative budget.
         takeBudget :: Int -> [Int] -> [Int]
         -- TODO: Design and write the complete function from the specification.
         -- This empty result is only a runnable placeholder.
         takeBudget budget costs = []
+        -- | Display the affordable prefix of the sample snack wishlist.
         main :: IO ()
         main = print (takeBudget 5 [2,4,1])
     open_file: Main.hs
@@ -2270,11 +2424,14 @@ steps:
         language: haskell
         content: |
           module Main where
+          -- | Return the longest affordable prefix of nonnegative costs, stopping at the
+          -- first cost that does not fit the remaining nonnegative budget.
           takeBudget :: Int -> [Int] -> [Int]
           takeBudget budget [] = []
           takeBudget budget (cost:rest)
             | cost <= budget = cost : takeBudget (budget - cost) rest
             | otherwise = []
+          -- | Display the affordable prefix of the sample snack wishlist.
           main :: IO ()
           main = print (takeBudget 5 [2,4,1])
       explanation: |
