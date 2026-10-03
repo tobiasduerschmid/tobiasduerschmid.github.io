@@ -544,6 +544,8 @@ steps:
 
       Facts and rules are alternatives for proving a predicate. Multiple rules with the same head name and arity act as alternative ways to prove it; a successful rule does not erase later alternatives. Different proofs can yield the same final bindings, and Prolog keeps those duplicate answers.
 
+      **Unification** matches two terms and finds consistent variable bindings. A **resolution step** uses unification to match the selected goal with a fresh copy of a clause head, then replaces that goal with the clause's body goals. A fact has no body goals. Repeating these steps through the ordered search produces answers; matching one head alone does not prove its remaining goals.
+
       ### Predict, run, investigate
 
       In the editor, `includes(Pack, Item)` describes **direct** membership in an audio catalog. A pack can include another pack; different packs can include the same item. Predict the sequence of `Mid` and `Item` bindings for this query before Run:
@@ -624,6 +626,25 @@ steps:
       min_score: 0.8
       shuffle_questions: false
       questions:
+      - id: prolog-v2-unification-resolution
+        type: single
+        difficulty: intermediate
+        bloom: analyze
+        question: |
+          A query `ready(bell)` matches the head of this rule. Which statement describes what has happened?
+
+          ```prolog
+          ready(X) :- loaded(X), audible(X).
+          ```
+        options:
+        - 'Unification binds X to bell; resolution continues with both body goals.'
+        - 'Unification proves ready(bell); the body goals only find more answers.'
+        - 'Resolution binds X to bell; unification searches all remaining clauses.'
+        correct_index: 0
+        option_feedback:
+          1: Matching the head is only a possible proof. Both loaded(bell) and audible(bell) must still succeed.
+          2: Unification supplies the term bindings. Resolution uses that match to derive the remaining goals; unification is not the whole search.
+        explanation: 'Head unification gives X = bell. The resolution step replaces ready(bell) with loaded(bell), audible(bell), in that order. Their success is still to be established.'
       - id: prolog-v2-proof-order-rollback
         type: parsons
         difficulty: intermediate
@@ -1899,6 +1920,61 @@ steps:
       ### After the independent attempt
 
       Use the graduated hints only after writing a first attempt. Once the checks pass, explain how your terminal case differs from the recursive case and why closed checkpoints are tested after their names are bound. The model solution is available through the existing instructor reveal.
+
+      ### Optional paper-first exam rehearsal
+
+      Set aside **8–12 additional minutes** as a planning estimate, now or in a later session. Write answers and reasons before using Run, Debug, hints, or the reveals. These short programs combine earlier skills in the form used by the supplied quizzes and finals. They are separate from `open_route/3`: to check your written answers, append the snippets below your route program without replacing it, then evaluate each listed goal using step 1's instructions for entering your own queries.
+
+      **Trace 1 — multiple clauses and repeated answers.** Treat these names as atoms; only the clauses determine their meaning.
+
+      ```prolog
+      feed(bus, hall).
+      feed(mic, bus).
+      feed(mic, hall).
+      feed(deck, bus).
+      feed(deck, mic).
+      heard(S, D) :- feed(S, D).
+      heard(S, D) :- feed(S, M), feed(M, D).
+      ```
+
+      1. List **every answer in order**, including duplicates, for `heard(deck, D)` and for `heard(S, hall)`.
+      2. List only the **first two** `(S,D)` pairs for `heard(S,D)`.
+      3. For one repeated answer, name both proofs. Identify which clause must be exhausted before the next clause is tried.
+
+      <details markdown="1">
+      <summary>After writing your answers: compare the clause search</summary>
+
+      `heard(deck,D)` yields **bus, mic, hall, bus, hall**. The direct clause gives bus and mic. The two-link clause then chooses bus as the middle, yielding hall, followed by mic as the middle, yielding bus and hall. Hall repeats through two different middles; bus has both a direct proof and a proof through mic.
+
+      `heard(S,hall)` yields **bus, mic, mic, deck, deck**. Direct proofs come first. The two-link proofs then follow the feed facts in order: mic through bus, deck through bus, and deck through mic. The first two pairs for the fully variable query are **(bus,hall)** and **(mic,bus)**: the direct clause still has answers before the two-link clause is reached.
+
+      If the answers are correct but their order differs, mark the nearest untried alternative at each success and trace again. If a duplicate is missing, record proofs separately even when they produce the same bindings. Review step 4 before retrying with the first two feed facts swapped.
+
+      </details>
+
+      **Trace 2 — recursive patterns and a known output.** Read this complete program, then predict the three queries below. Explain bindings or the first failure; do not assume every argument can act as a freely interchangeable input or output.
+
+      ```prolog
+      samples_of(_, [], []).
+      samples_of(K, [sample(K,V)|T], [V|R]) :- samples_of(K, T, R).
+      samples_of(K, [sample(Other,_)|T], R) :-
+          K \= Other, samples_of(K, T, R).
+      ```
+
+      - `samples_of(voice, [sample(noise,low),sample(voice,high),sample(voice,low)], Out)`
+      - `samples_of(K, [sample(voice,high)], [high])`
+      - `samples_of(K, [sample(noise,low),sample(voice,high)], [high])`
+
+      <details markdown="1">
+      <summary>After tracing: compare the recursive matches</summary>
+
+      The first query gives **Out = [high,low]**: skip the noise record, then keep both voice values. The second gives **K = voice**: matching the keep clause connects the record's kind and value to the known output.
+
+      The third query **fails**. At the first record, the keep clause would require low to match the output head high, so that head match fails. The skip clause then tests `K \= noise` while K is unbound. Those terms can unify, so the test fails immediately; it does not store a constraint for later. The deeper voice record is never reached. Supplying `K = voice` before the call makes the query succeed.
+
+      For finite ground record lists, the predicate filters by a supplied kind, but it is not a general generator of kinds. If you expected the last query to discover voice, revisit step 5's “cannot unify now” rule. If you lost an output value or added nesting, revisit steps 7–8 and trace the output head and tail separately.
+
+      </details>
 
       ### A later retrieval check
 
