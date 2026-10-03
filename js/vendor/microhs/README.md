@@ -101,6 +101,21 @@ above remain unchanged. A future rebuilt distribution should set
 [Emscripten initialization callback](https://emscripten.org/docs/api_reference/module.html#Module.onRuntimeInitialized),
 [Asyncify stack setting](https://emscripten.org/docs/tools_reference/settings_reference.html#asyncify-stack-size).
 
+The same initialization hook redirects **zero-delay** `safeSetTimeout` calls
+through the adapter's `MessageChannel` task queue. The pinned loader uses this
+function for `emscripten_sleep`: ordinary compiler yields otherwise become
+one-second waits when Chrome throttles the hidden sandbox frame. The adapter
+preserves the loader's `callUserCallback` wrapper and leaves positive delays,
+including idle input polling, unchanged. Completion callbacks use the same task
+queue. Do not substitute microtasks: the host must still be able to deliver Stop
+and other messages between evaluator slices. Both loader globals are checked
+before main; this is another pinned internal ABI dependency, not a documented
+Emscripten `Module` option. Vendor bytes remain unchanged.
+
+`tests/haskell-scheduling.spec.js` tests the actual tutorial with normal Chromium
+background throttling restored. Playwright's default launch flags disable that
+throttling and therefore conceal the original production slowdown.
+
 ## License
 
 MicroHs is Copyright 2023-2026 Lennart Augustsson. CanvHs is Copyright 2026

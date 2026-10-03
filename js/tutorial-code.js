@@ -4936,37 +4936,37 @@
     this._showLoading('Loading Haskell runtime\u2026 (first load may take a moment)');
     return new Promise(function (resolve, reject) {
       var initialized = false;
-      var bootTimer = setTimeout(function () {
-        if (initialized) return;
-        if (self._worker) self._worker.terminate();
-        self._worker = null;
-        reject(new Error('Haskell runtime initialization timed out'));
+      var worker = self._createHaskellExecutor();
+      self._worker = worker;
+      var initialization = self._trackWorkerInitialization(worker, resolve, reject);
+      initialization.timer = setTimeout(function () {
+        if (self._worker !== worker || initialized) return;
+        var message = 'Haskell runtime initialization timed out';
+        initialization.finish(new Error(message));
+        self._terminateWorker(message);
       }, HASKELL_BOOT_TIMEOUT_MS);
-      self._worker = self._createHaskellExecutor();
 
-      self._worker.onmessage = function (e) {
+      worker.onmessage = function (e) {
+        if (self._worker !== worker) return;
         var msg = e.data;
         if (msg.type === 'loading') { self._showLoading(msg.message); return; }
         if (msg.type === 'ready') {
           if (self.setupCommands && self.setupCommands.length > 0) {
-            clearTimeout(bootTimer);
-            reject(new Error(
+            initialization.finish(new Error(
               'The Haskell backend does not support setup_commands; provide starter files instead.'
             ));
             return;
           }
           initialized = true;
-          clearTimeout(bootTimer);
           self.booted = true;
-          resolve();
+          initialization.finish();
           return;
         }
         if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
         if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
         if (msg.type === 'error') {
-          clearTimeout(bootTimer);
           if (!initialized) {
-            reject(new Error(msg.message));
+            initialization.finish(new Error(msg.message));
           } else {
             self._appendOutput('\nHaskell runtime error: ' + msg.message + '\n', 'err');
             self._restartHaskellExecutor().catch(function () {});
@@ -4976,9 +4976,9 @@
         self._routeWorkerResponse(msg);
       };
 
-      self._worker.onerror = function (err) {
-        clearTimeout(bootTimer);
-        reject(new Error('Haskell worker error: ' + (err.message || err)));
+      worker.onerror = function (err) {
+        if (self._worker !== worker) return;
+        initialization.finish(new Error('Haskell worker error: ' + (err.message || err)));
       };
     });
   };

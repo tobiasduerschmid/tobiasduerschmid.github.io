@@ -76,6 +76,20 @@ let isRuntimeReady = false;
 let hasRuntimeFailed = false;
 let operationSequence = 0;
 
+// The runtime frame is intentionally hidden. Browsers can throttle its timers
+// to one per second, so zero-delay compiler yields must use a task queue, not
+// timers. A task (rather than a microtask) still lets Stop and host messages run.
+const runtimeTasks = new MessageChannel();
+const pendingRuntimeTasks = [];
+runtimeTasks.port1.onmessage = function () {
+  pendingRuntimeTasks.shift()();
+};
+
+function deferRuntimeTask(callback) {
+  pendingRuntimeTasks.push(callback);
+  runtimeTasks.port2.postMessage(null);
+}
+
 function parentOriginFromReferrer() {
   if (!hasParentFrame || !document.referrer) return null;
   try {
@@ -196,9 +210,9 @@ function observeOperationLine(operation, line) {
 
   if (normalizedLine === operation.doneMarker && !operation.isFinishing) {
     operation.isFinishing = true;
-    setTimeout(function () {
+    deferRuntimeTask(function () {
       finishOperation(operation);
-    }, 0);
+    });
   }
 }
 
@@ -803,7 +817,7 @@ function finishOperationAtPrompt(operation) {
   const failedDebug = operation.debug && operation.failed && bootOutput.endsWith('> ');
   if (!completed && !failedDebug) return;
   operation.isFinishing = true;
-  setTimeout(function () {
+  deferRuntimeTask(function () {
     // Output arrives byte by byte. A learner's longer output line may have
     // temporarily matched the prompt before its remaining bytes arrived.
     if (completed && operation.stdoutLineBuffer !== operation.doneMarker) {
@@ -811,7 +825,7 @@ function finishOperationAtPrompt(operation) {
       return;
     }
     finishOperation(operation);
-  }, 0);
+  });
 }
 
 function startRunCode(message) {
@@ -1012,7 +1026,7 @@ if (!isWindowRuntime) {
 
 postLoading('Loading Haskell runtime\u2026');
 
-function configureMicroHsAsyncify() {
+function configureMicroHsRuntime() {
   // Pinned Emscripten glue exposes Asyncify globally. Its 4 KiB default can
   // overflow when recursive Haskell probes suspend; size the continuation
   // before callMain allocates it, without changing the compiler/Wasm bundle.
@@ -1021,11 +1035,27 @@ function configureMicroHsAsyncify() {
     throw new Error('Unexpected pinned MicroHs Asyncify state before main');
   }
   continuation.StackSize = 256 * 1024;
+
+  // The pinned glue routes emscripten_sleep through this global hook. Preserve
+  // its callback/error handling and real delays (including idle input polling);
+  // only a zero-delay cooperative yield belongs on the runtime task queue.
+  const scheduleTimer = runtimeScope.safeSetTimeout;
+  const invokeCallback = runtimeScope.callUserCallback;
+  if (typeof scheduleTimer !== 'function' || typeof invokeCallback !== 'function') {
+    throw new Error('Unexpected pinned MicroHs scheduler before main');
+  }
+  runtimeScope.safeSetTimeout = function (callback, delay) {
+    if (delay === 0) {
+      deferRuntimeTask(function () { invokeCallback(callback); });
+    } else {
+      return scheduleTimer(callback, delay);
+    }
+  };
 }
 
 runtimeScope.Module = {
   arguments: RUNTIME_ARGUMENTS,
-  onRuntimeInitialized: configureMicroHsAsyncify,
+  onRuntimeInitialized: configureMicroHsRuntime,
   preRun: [function () {
     runtimeScope.Module.FS.init(
       function () { return null; },

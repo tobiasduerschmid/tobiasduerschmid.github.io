@@ -1927,7 +1927,19 @@ contains `Exp` syntax, and `translateWithMap` deserializes it anew per expressio
 Normal requests finish when a request-specific REPL prompt appears on its own
 line. This avoids compiling a second Haskell expression solely for completion;
 ignore the marker inside its echoed `:set prompt=...` command. Reset the normal
-prompt before the next request. Test pass/fail and live-debug completion still
+prompt before the next request. Compiler zero-delay yields and adapter completion
+callbacks use a `MessageChannel` task queue: timers are throttled in the hidden
+sandbox and can exhaust an otherwise finite program's execution deadline. The
+initialization hook replaces the pinned loader's `safeSetTimeout` only for a
+zero delay, preserves `callUserCallback`, and leaves positive waits such as idle
+input polling unchanged. Keep real task boundaries so Stop and incoming messages
+can run; microtasks alone would starve them. The hook checks these internal
+loader globals, just as the Asyncify stack hook below checks its pinned ABI.
+Verify scheduling through `tests/haskell-scheduling.spec.js`, which restores
+Chromium's normal background throttling; default Playwright launch flags mask
+this failure. Haskell boot uses the shared worker-initialization owner so
+termination clears the boot timer and rejects readiness; messages from a replaced
+frame cannot settle a newer startup. Test pass/fail and live-debug completion still
 use qualified `Prelude.putStrLn` markers. Author
 `files[].path`, `solution.files[].path`, and
 `run_file` as workspace-relative paths such as `Main.hs` or `Helpers/Math.hs`;

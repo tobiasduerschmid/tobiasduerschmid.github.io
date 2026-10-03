@@ -12,6 +12,65 @@ MicroHs remains an extended Haskell subset with a teaching debugger, not full
 GHC/GHCi compatibility. No smaller replacement meeting all those requirements
 was established.
 
+## Hidden-frame scheduling correction
+
+A subsequent production-style reproduction found that the measurements below
+missed a browser scheduling problem: the old benchmark displayed its runtime
+iframe, and Playwright's default Chromium launch flags disabled background
+timer throttling. The actual tutorial hides its sandboxed runtime frame.
+Chrome can delay timers in that frame, turning MicroHs's zero-delay cooperative
+compiler yields into one-second waits. Compilation can then exhaust the host
+deadline even for a small, finite program. This is unrelated to the CanvHs
+animation-frame import, which ordinary compilation did not call.
+
+Controlled diagnostic runs on Chrome 154.0.8037.93, macOS arm64, Apple M4 found
+that the same small program's first Run took 1,196 ms in a visible frame with
+normal scheduling; the hidden-frame Run did not complete within the diagnostic
+12-second bound. Both visible and hidden frames completed in about 1.1 seconds
+with Playwright's default throttling-disabling flags. These are individual
+diagnostic samples, not cross-device performance guarantees.
+
+The corrected adapter's [sequential hidden-frame measurements](research/haskell-runtime-performance-2026-10-02/runtime-hidden-scheduling-after.json)
+on the same browser/device completed every workload: first Run took 1,350 ms,
+and three repeated Runs had a median of 1,004 ms (219–1,025 ms). Repeated
+evaluation, type queries, and checks were generally about one second. Positive
+input-polling delays still account for waits between requests, so these results
+do not imply that all repeated requests take the earlier visible-frame timings.
+
+The adapter now schedules zero-delay yields and completion callbacks through
+a `MessageChannel` task queue. Real task boundaries preserve host-message and
+Stop delivery; a microtask loop would not. The pinned Emscripten
+`safeSetTimeout` hook retains `callUserCallback` and leaves all positive delays,
+including idle input polling, unchanged. The compiler, Wasm, sandbox, execution
+deadline and download size are unchanged. See the
+[vendor integration contract](../js/vendor/microhs/README.md) for the internal
+loader ABI dependency. Browser suspension of an entire background tab remains
+outside this adapter's control.
+
+`tests/haskell-scheduling.spec.js` exercises step 1 of the main Haskell tutorial
+with normal Chromium background scheduling restored. Before the change, its
+starter program failed to produce `66` within 30 seconds. After the change,
+the starter produced `66` and the edited solution produced `21`; the entire
+test, including boot and light/dark accessibility checkpoints, took 8.2 seconds
+in the local run. The regression does
+not raise the normal 30-second execution deadline. Startup cancellation also
+now clears its own boot timer and ignores stale frame messages, covered by
+the tutorial lifecycle tests.
+
+`scripts/benchmark-haskell-runtime.cjs` now uses the hidden frame and removes
+these Playwright defaults so future measurements exercise production scheduling:
+
+```text
+--disable-background-timer-throttling
+--disable-backgrounding-occluded-windows
+--disable-renderer-backgrounding
+```
+
+The earlier measurements below remain evidence for compilation reuse under
+their original conditions; they did not establish performance in a normally
+throttled hidden frame. Chrome's general timer behavior is documented in
+[its timer-throttling explainer](https://developer.chrome.com/blog/timer-throttling-in-chrome-88/).
+
 ## Measured changes
 
 Indicative local medians on an Apple M4 Max, macOS arm64, Chromium
@@ -103,9 +162,11 @@ that every Haskell algorithm executes 49 times faster.
   [8M](research/haskell-runtime-performance-2026-10-02/heap-8M.json),
   [16M](research/haskell-runtime-performance-2026-10-02/heap-16M.json),
   [32M](research/haskell-runtime-performance-2026-10-02/heap-32M.json).
-- **MessageChannel instead of timers:** the debugger's 302-event workload stayed
+- **MessageChannel for debugger callbacks alone:** the debugger's 302-event workload stayed
   around 3.4 seconds because the underlying 10 ms input poll remained. The
-  additional scheduler was discarded. [A/B samples](research/haskell-runtime-performance-2026-10-02/debugger-scheduler-ab.json).
+  additional scheduler in that earlier experiment was discarded. The later
+  hidden-frame correction above addresses the compiler's zero-delay yields,
+  which this experiment did not change. [A/B samples](research/haskell-runtime-performance-2026-10-02/debugger-scheduler-ab.json).
 - **Only retaining imports while reloading every request:** warm latency still
   stayed around 1.5 seconds. Avoiding redundant reloads required checking actual
   workspace contents and establishing the fresh-runtime-value invariant.
@@ -132,8 +193,11 @@ Run benchmarks sequentially, with other browser workloads idle. These scripts
 verify results and preserve all individual samples; elapsed times are not CI
 pass/fail thresholds.
 
-Validation completed with **71 real-browser tests** across compilation-cache,
+The hidden-frame correction passed **114 browser tests** across compilation-cache,
 course-backend, signature-backend, interpreter, debugger, and cycle-diagnostics
-suites. Interactive accessibility checkpoints were enabled. **69 Node tests**
+suites, the real lesson scheduling regression, and tutorial lifecycle coverage.
+Interactive accessibility checkpoints were enabled. The focused WCAG audit
+reported zero findings on the main Haskell tutorial and runtime frame;
+automated checks do not by themselves establish full WCAG conformance. **69 Node tests**
 covered debugger logic, signature/cycle analysis and supply-chain integrity.
 The unchanged compiler payload still matches all pinned SHA-256 checks.

@@ -1031,6 +1031,77 @@ test.describe('tutorial asynchronous lifecycle', () => {
     });
   });
 
+  test('cancelling Haskell startup cannot later terminate a ready replacement', async ({ page }) => {
+    await loadTutorialRuntime(page);
+    await page.clock.install();
+
+    await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([], { backend: 'haskell' });
+      tutorial.booted = false;
+      const executors = [];
+      // Control only the runtime transport: startup may be cancelled before
+      // the frame emits ready, while the host's real watchdog remains active.
+      tutorial._createHaskellExecutor = () => {
+        const executor = {
+          terminate() { this.terminated = true; },
+          postMessage(message) {
+            if (!this.terminated) this.onmessage({ data: { type: 'read_ok', id: message.id, content: 'learner draft' } });
+          },
+        };
+        executors.push(executor);
+        return executor;
+      };
+      let cancelled = 'pending';
+      tutorial._initHaskell().then(
+        () => { cancelled = 'unexpectedly ready'; },
+        error => { cancelled = error.reason || error.message; },
+      );
+      tutorial._terminateWorker('Haskell startup cancelled');
+      const replacement = tutorial._initHaskell();
+      executors[1].onmessage({ data: { type: 'ready' } });
+      await replacement;
+      window.haskellStartupRecovery = { tutorial, cancellation: () => cancelled };
+    });
+
+    await page.clock.fastForward(90_001);
+    const state = await page.evaluate(async () => {
+      const { tutorial, cancellation } = window.haskellStartupRecovery;
+      const read = await tutorial._requestWorker({ type: 'read', path: '/tutorial/Main.hs' })
+        .then(result => result.content, error => error.message);
+      return { cancellation: cancellation(), read };
+    });
+    expect(state.cancellation).toBe('terminated');
+    expect(state.read).toBe('learner draft');
+  });
+
+  test('a late ready message from cancelled Haskell startup cannot release its replacement', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([], { backend: 'haskell' });
+      tutorial.booted = false;
+      const executors = [];
+      tutorial._createHaskellExecutor = () => {
+        const executor = { terminate() {}, postMessage() {} };
+        executors.push(executor);
+        return executor;
+      };
+      const cancelled = tutorial._initHaskell().then(
+        () => 'unexpectedly ready', error => error.reason || error.message,
+      );
+      tutorial._terminateWorker('Haskell startup cancelled');
+      const replacement = tutorial._initHaskell();
+      executors[0].onmessage({ data: { type: 'ready' } });
+      const readyBeforeReplacement = tutorial.booted;
+      executors[1].onmessage({ data: { type: 'ready' } });
+      await replacement;
+      return { readyBeforeReplacement, cancellation: await cancelled };
+    });
+
+    expect(state.readyBeforeReplacement).toBe(false);
+    expect(state.cancellation).toBe('terminated');
+  });
+
   test('a timed-out Haskell Run restarts and settles the shared Run transaction', async ({ page }) => {
     await loadTutorialRuntime(page);
 
@@ -1041,6 +1112,7 @@ test.describe('tutorial asynchronous lifecycle', () => {
         open_file: 'Main.hs',
       }], { backend: 'haskell', requireTests: false });
       tutorial._syncFileToBackend = () => Promise.resolve();
+      tutorial._haskellCycles = { check: () => true };
       await tutorial.loadStep(0);
       tutorial.root.insertAdjacentHTML('beforeend', [
         '<button type="button" class="tvm-run-btn">Run</button>',

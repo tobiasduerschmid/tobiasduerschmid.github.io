@@ -2,7 +2,8 @@
 'use strict';
 
 // Measures the real sandbox-frame protocol, including compiler work and message
-// delivery, without the tutorial UI, polling, network throttling, or mocked Wasm.
+// delivery, with the production hidden frame and normal browser scheduling.
+// Excludes tutorial UI, network throttling and mocked Wasm.
 // Serve the site first; source JS assets must reflect the revision being measured.
 // node scripts/benchmark-haskell-runtime.cjs --base-url http://127.0.0.1:4018 \
 //   --iterations 3 --output /tmp/haskell-runtime.json
@@ -37,6 +38,7 @@ async function bootRuntime(page) {
   return page.evaluate(({ namespace, timeoutMs }) => new Promise((resolve, reject) => {
     const frame = document.createElement('iframe');
     frame.title = 'Haskell runtime benchmark';
+    frame.hidden = true;
     frame.sandbox = 'allow-scripts';
     frame.src = '/haskell-runtime-frame.html';
     const pending = new Map();
@@ -155,7 +157,17 @@ function summarize(records) {
 
 async function main() {
   const options = optionsFromArguments();
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({
+    ...(process.env.PLAYWRIGHT_CHROME_EXECUTABLE
+      ? { executablePath: process.env.PLAYWRIGHT_CHROME_EXECUTABLE } : {}),
+    // Playwright normally disables the throttling that affects our hidden
+    // sandbox in a user's browser. A performance measurement must retain it.
+    ignoreDefaultArgs: [
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
+    ],
+  });
   const records = [];
   try {
     const context = await browser.newContext({ baseURL: options.baseURL });
@@ -168,7 +180,7 @@ async function main() {
       measuredAt: new Date().toISOString(), browser: browser.version(),
       platform: `${os.platform()} ${os.arch()}`, cpu: os.cpus()[0]?.model,
       baseURL: options.baseURL, iterations: options.iterations,
-      note: 'One fresh browser context; localhost delivery; sequential requests; first means first request of that workload, not a fresh compiler instance. No UI or network-throttle costs.',
+      note: 'One fresh browser context; hidden sandbox frame; normal browser background throttling; localhost delivery; sequential requests; first means first request of that workload, not a fresh compiler instance. No UI or network-throttle costs.',
       summary: summarize(records), records,
     };
     const json = JSON.stringify(report, null, 2) + '\n';
