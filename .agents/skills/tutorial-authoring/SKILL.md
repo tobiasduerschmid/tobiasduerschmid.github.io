@@ -1600,6 +1600,14 @@ vertical layers; retain the synchronous external-channel planner for very narrow
 panes or optimizer failure. Shared targets may share stems, independent crossings
 use bridges, and cycles keep their real direction. Never shrink diagram text to
 fit. A scrollable diagram must remain keyboard accessible.
+Arrowheads use fixed user-space dimensions with their tips exactly on the target
+border; trim the painted shaft underneath the head to prevent endpoint blobs.
+Keep card/edge clearance large enough for heads and crossing bridges. Smooth
+bridges inherit the owning reference's stroke and selection/change state, with
+background clearance around their arches. Name arrows use measured model ports
+at rest so hidden print snapshots retain correct geometry, and displayed ports
+during motion. Verify actual painted geometry in both themes, including selected
+and changed references, not just the route's abstract endpoint coordinates.
 
 Use previous positions for interactive layering, ordering, and placement. Seed
 new objects near their neighbors. Compare incremental and compact candidates

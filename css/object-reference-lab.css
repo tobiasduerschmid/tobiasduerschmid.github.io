@@ -405,7 +405,7 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
   stroke: var(--orl-edge);
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
-  stroke-linecap: round;
+  stroke-linecap: butt;
   stroke-linejoin: round;
 }
 
@@ -421,7 +421,9 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
 .orl-edge-bridge-mask {
   fill: none;
   stroke: var(--orl-surface);
-  stroke-width: 8;
+  stroke-width: 6;
+  stroke-linecap: butt;
+  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
 }
 
@@ -567,7 +569,7 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
 }
 
 .orl-binding.is-updated { border-radius: 3px; }
-.object-reference-lab :is(.orl-reference-edge, .orl-binding-edge).is-updated {
+.object-reference-lab :is(.orl-reference-edge, .orl-binding-edge, .orl-edge-bridge).is-updated {
   stroke-width: 3;
   filter: drop-shadow(0 0 3px var(--orl-highlight));
 }

@@ -18,6 +18,26 @@ preserving the order of surviving nodes. Shared targets use one landing port and
 independent crossings receive bridge marks. These are optimization heuristics,
 not a promise of globally minimal length or zero crossings.
 
+Arrow painting retains an exact logical endpoint on the object boundary. The
+9px head uses SVG user-space units so selection and change highlighting cannot
+enlarge it. The shaft stops underneath the head's wide section; a butt cap cannot
+poke through the pointed tip. Remove redundant collinear vertices before rounding
+elbows, which otherwise creates tiny steps in apparently straight connectors.
+At rest, name connectors use measured model ports, including in hidden print
+snapshots; during interpolation their origins follow the displayed names.
+
+Reserve 20px between routes and cards and 16px between routing lanes; the 56px
+minimum layer gap accommodates two lanes without later moving existing columns.
+Crossing bridges use two cubic curves with horizontal entry/exit tangents and a
+background clearance mask along both the replaced straight section and the arch.
+Their stroke and highlight state follow the owning reference, including keyboard
+selection. This separates independent paths without a thickness jump or a bridge
+colliding with a nearby arrowhead. These choices follow the [SVG marker and stroke
+model](https://www.w3.org/TR/SVG2/painting.html#MarkerElement) and ELK's
+[edge-to-node](https://eclipse.dev/elk/reference/options/org-eclipse-elk-layered-spacing-edgeNodeBetweenLayers.html)
+and [edge-to-edge](https://eclipse.dev/elk/reference/options/org-eclipse-elk-layered-spacing-edgeEdgeBetweenLayers.html)
+spacing constraints.
+
 Incremental placement uses previous coordinates for layer assignment, ordering,
 and node placement, with new nodes seeded near their uses. Compare this result
 with compact, order-preserving placement and select the fitting candidate with
@@ -143,4 +163,5 @@ actual A4/Letter PDFs as well as print-media geometry.
 - **Replacement:** after `board[1] = [2]`, slot 1 must visibly reach the separate replacement list, while slot 0 and `row` still refer to the original list. Check endpoints and actual SVG paths, not just the button text.
 - **Graph structure:** include empty graphs, one edge, several aliases, self-loops, mutual cycles, `K3,3`, many targets, and deterministic randomized stacked-card fixtures. Assert edge coverage, identity, orthogonal geometry, obstacle clearance, and crossing treatment without pinning an arbitrary exact lane order.
 - **Lifecycle and responsive geometry:** advance/backtrack rapidly, reveal a previously hidden embed, resize after drawing, change text size, use long labels, restore a page from browser history, and test the popup and print surfaces. Check that the final displayed state owns the routes, that no arrow is clipped, and that both themes preserve visible line/focus contrast.
+- **Painted arrow geometry:** inspect shared-string copy/mutation crossings in both themes. The head tip meets the target border, the shaft remains inside its head, highlighting preserves head size, and bridges have tangent joins, matching stroke weights, and clearance from arrowheads. Verify the final rendered SVG geometry, not only the abstract route points.
 - **Human evaluation:** ask learners to follow one alias through a mutation and a rebinding, identify sharing, and trace a returned member through nested calls. Compare errors and completion time alongside movement/crossing metrics. A visually stable diagram or a passing geometric test does not by itself demonstrate improved learning.

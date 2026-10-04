@@ -14,7 +14,7 @@
    * See docs/object-reference-layout.md for constraints and research rationale.
    */
   function planReferences(nodes, references, options = {}) {
-    const clearance = options.clearance || 12;
+    const clearance = options.clearance || 20;
     const laneGap = options.laneGap || 18;
     const byId = new Map(nodes.map(node => [node.id, node]));
     const right = Math.max(0, ...nodes.map(node => node.x + node.width));
@@ -23,7 +23,7 @@
       const target = byId.get(reference.target);
       const source = byId.get(reference.source);
       if (!source || !target) throw new Error('Reference endpoint is missing: ' + reference.id);
-      const landing = { x: target.x + target.width + 2, y: target.y + Math.min(20, target.height / 2) };
+      const landing = { x: target.x + target.width, y: target.y + Math.min(20, target.height / 2) };
       if (!groups.has(target.id)) groups.set(target.id, { target: target.id, landing, references: [] });
       groups.get(target.id).references.push(reference);
     });
@@ -99,13 +99,23 @@
   // Round only inside the reserved orthogonal corridor. Endpoints stay exact,
   // and short segments limit the radius rather than cutting across a card.
   function roundedRoute(points, offsetX = 0) {
+    const clean = [];
+    points.forEach(point => {
+      const last = clean.at(-1), before = clean.at(-2);
+      if (last && Math.hypot(point.x - last.x, point.y - last.y) < 0.001) return;
+      if (before && Math.abs((last.x - before.x) * (point.y - last.y)
+          - (last.y - before.y) * (point.x - last.x)) < 0.001
+          && (last.x - before.x) * (point.x - last.x) + (last.y - before.y) * (point.y - last.y) >= 0) clean.pop();
+      clean.push(point);
+    });
+    points = clean;
     const point = p => (p.x - offsetX) + ' ' + p.y;
     let path = 'M ' + point(points[0]);
     for (let index = 1; index < points.length - 1; index += 1) {
       const before = points[index - 1], corner = points[index], after = points[index + 1];
       const incoming = Math.hypot(corner.x - before.x, corner.y - before.y);
       const outgoing = Math.hypot(after.x - corner.x, after.y - corner.y);
-      const radius = Math.min(7, incoming / 2, outgoing / 2);
+      const radius = Math.min(6, incoming / 2, outgoing / 2);
       if (!radius) { path += ' L ' + point(corner); continue; }
       const start = { x: corner.x + (before.x - corner.x) * radius / incoming,
         y: corner.y + (before.y - corner.y) * radius / incoming };
@@ -114,6 +124,14 @@
       path += ' L ' + point(start) + ' Q ' + point(corner) + ' ' + point(end);
     }
     return path + ' L ' + point(points[points.length - 1]);
+  }
+
+  function paintArrow(path, points) {
+    path.setAttribute('d', roundedRoute(points));
+    // The marker tip is the logical endpoint. Stop the shaft under the wide
+    // part of the head, otherwise even a butt cap protrudes through its tip.
+    const length = path.getTotalLength();
+    path.setAttribute('stroke-dasharray', Math.max(0, length - 7) + ' ' + (length + 7));
   }
 
   // Match bends by distance along the line, not array index. Inserting/removing
@@ -299,8 +317,11 @@
     return { views, model: { id: 'references', children, edges, layoutOptions: {
       'elk.algorithm': 'layered', 'elk.direction': 'RIGHT', 'elk.edgeRouting': 'ORTHOGONAL',
       'elk.padding': '[top=14,left=14,bottom=14,right=14]',
-      'elk.spacing.nodeNode': '24', 'elk.layered.spacing.nodeNodeBetweenLayers': '36',
-      'elk.layered.spacing.edgeNodeBetweenLayers': '12', 'elk.spacing.edgeEdge': '10',
+      // Two lanes need 20px of card clearance on each side plus 16px between
+      // edges. Reserve that space before an append adds a crossing.
+      'elk.spacing.nodeNode': '24', 'elk.layered.spacing.nodeNodeBetweenLayers': '56',
+      'elk.layered.spacing.edgeNodeBetweenLayers': '20', 'elk.spacing.edgeEdge': '16',
+      'elk.layered.spacing.edgeEdgeBetweenLayers': '16',
       'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
       'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
       'elk.layered.mergeEdges': 'true', 'elk.randomSeed': '1'
@@ -465,7 +486,7 @@
 
   function crossings(routes) {
     const segments = routes.flatMap(route => route.points.slice(1).map((to, index) =>
-      ({ from: route.points[index], to, target: route.target })));
+      ({ from: route.points[index], to, target: route.target, route })));
     const bridges = new Map();
     segments.filter(edge => Math.abs(edge.from.y - edge.to.y) < 0.01).forEach(horizontal => {
       segments.filter(edge => Math.abs(edge.from.x - edge.to.x) < 0.01).forEach(vertical => {
@@ -474,7 +495,7 @@
         if (x > Math.min(horizontal.from.x, horizontal.to.x) + 6
             && x < Math.max(horizontal.from.x, horizontal.to.x) - 6
             && y > Math.min(vertical.from.y, vertical.to.y) + 6
-            && y < Math.max(vertical.from.y, vertical.to.y) - 6) bridges.set(x + ':' + y, { x, y });
+            && y < Math.max(vertical.from.y, vertical.to.y) - 6) bridges.set(x + ':' + y, { x, y, route: horizontal.route });
       });
     });
     return Array.from(bridges.values());
@@ -505,9 +526,9 @@
       this.motionObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
       this.referenceArrow = this.prefix + '-arrow';
       this.overlay = svgElement('svg', { class: 'orl-reference-edges', 'aria-hidden': 'true' });
-      const marker = svgElement('marker', { id: this.referenceArrow, viewBox: '0 0 10 10', refX: 9, refY: 5,
-        markerWidth: 5, markerHeight: 5, orient: 'auto-start-reverse' });
-      marker.append(svgElement('path', { d: 'M 0 0 L 10 5 L 0 10 z' }));
+      const marker = svgElement('marker', { id: this.referenceArrow, viewBox: '0 0 9 8', refX: 9, refY: 4,
+        markerUnits: 'userSpaceOnUse', markerWidth: 9, markerHeight: 8, orient: 'auto-start-reverse' });
+      marker.append(svgElement('path', { d: 'M 0 0 L 9 4 L 0 8 z' }));
       const defs = svgElement('defs', {});
       defs.append(marker);
       this.referencePaths = svgElement('g', {});
@@ -759,18 +780,33 @@
             y: tr.top - bounds.top + last.y - target.y - target.cardTop };
         }
         route.renderedPoints = points;
-        route.path.setAttribute('d', roundedRoute(points));
+        paintArrow(route.path, points);
       });
       this.bridges.replaceChildren();
-      if (progress === 1) (this.layoutBridges || crossings(Array.from(this.routes.values()))).forEach(({ x, y }) => {
+      if (progress === 1) (this.layoutBridges || crossings(Array.from(this.routes.values()))).forEach(({ x, y, route }) => {
+        const owner = route || Array.from(this.routes.values()).find(candidate => candidate.points.some((point, index) => {
+          const end = candidate.points[index + 1];
+          return end && point.y === y && end.y === y && x > Math.min(point.x, end.x) && x < Math.max(point.x, end.x);
+        }));
+        const d = `M ${x - 5} ${y} C ${x - 2} ${y} ${x - 3} ${y - 5} ${x} ${y - 5}`
+          + ` C ${x + 3} ${y - 5} ${x + 2} ${y} ${x + 5} ${y}`;
+        const bridge = svgElement('path', { class: 'orl-edge-bridge', d,
+          'data-reference-id': owner?.id || '' });
+        bridge.classList.toggle('is-updated', Boolean(owner?.path.classList.contains('is-updated')));
+        bridge.classList.toggle('is-selected', Boolean(owner?.path.classList.contains('is-selected')));
         this.bridges.append(svgElement('path', { class: 'orl-edge-bridge-mask', d: `M ${x - 5} ${y} H ${x + 5}` }),
-          svgElement('path', { class: 'orl-edge-bridge', d: `M ${x - 5} ${y} Q ${x} ${y - 7} ${x + 5} ${y}` }));
+          svgElement('path', { class: 'orl-edge-bridge-mask', d }), bridge);
       });
       this.bindings.forEach((binding, id) => {
-        const slot = binding.label.querySelector('.orl-name-slot').getBoundingClientRect();
-        const card = this.objects.get(binding.target).card.getBoundingClientRect();
-        const start = { x: slot.right - bounds.left, y: slot.top + slot.height / 2 - bounds.top };
-        let end = { x: card.right - bounds.left - 12, y: card.top - bounds.top - 2 };
+        const view = this.objects.get(binding.target);
+        let start = { x: view.x + binding.port.x, y: view.y + binding.port.y };
+        let end = { x: view.x + view.width - 12, y: view.y + view.cardTop };
+        if (progress < 1) {
+          const slot = binding.label.querySelector('.orl-name-slot').getBoundingClientRect();
+          const card = view.card.getBoundingClientRect();
+          start = { x: slot.right - bounds.left, y: slot.top + slot.height / 2 - bounds.top };
+          end = { x: card.right - bounds.left - 12, y: card.top - bounds.top };
+        }
         const old = previousBindings.get(id);
         // A rebound name keeps its visual identity. Its origin moves with the
         // name; its arrowhead travels from the old landing to the new landing.
@@ -779,7 +815,7 @@
           end = { x: from.x + (end.x - from.x) * progress, y: from.y + (end.y - from.y) * progress };
         }
         binding.points = [start, { x: end.x, y: start.y }, end];
-        binding.path.setAttribute('d', roundedRoute(binding.points));
+        paintArrow(binding.path, binding.points);
         binding.path.style.opacity = old ? '1' : String(progress);
       });
     }
@@ -830,6 +866,13 @@
 
     highlight(referenceId) {
       this.routes.forEach(route => route.path.classList.toggle('is-selected', route.id === referenceId));
+      this.syncBridgeSelection();
+    }
+
+    syncBridgeSelection() {
+      this.bridges.querySelectorAll('.orl-edge-bridge').forEach(bridge => {
+        bridge.classList.toggle('is-selected', Boolean(this.routes.get(bridge.dataset.referenceId)?.path.classList.contains('is-selected')));
+      });
     }
 
     follow(identity) {
@@ -837,6 +880,7 @@
       if (!target) return;
       this.objects.forEach((view, id) => view.card.classList.toggle('is-selected', id === identity));
       this.routes.forEach(route => route.path.classList.toggle('is-selected', route.target === identity));
+      this.syncBridgeSelection();
       target.card.focus({ preventScroll: true });
       target.card.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
     }
