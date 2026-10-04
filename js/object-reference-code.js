@@ -114,13 +114,13 @@
       this.syncScroll();
     }
 
-    setPosition(lineNumber, label) {
+    setPosition(lineNumber, label, { reveal = true } = {}) {
       this.position.textContent = label;
       [this.source, this.numbers].forEach(parent => {
         Array.from(parent.children).forEach((line, index) => line.classList.toggle('is-current', index + 1 === lineNumber));
       });
       const line = this.source.children[lineNumber - 1];
-      if (line) {
+      if (line && reveal) {
         const top = line.offsetTop;
         const bottom = top + line.offsetHeight;
         if (top < this.input.scrollTop) this.input.scrollTop = top;

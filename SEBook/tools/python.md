@@ -372,9 +372,11 @@ again. Printing the same contents twice does not establish that there are two
 inner objects.
 
 Use **Forward** and **Back** to inspect recorded states. After predicting the
-variation under **Try one change**, edit the code and choose **Trace
-Python**. Primitive values appear in place to reduce clutter; they are still
-Python objects, with identities retained in **Reference details**.
+variation under **Try one change**, edit the code. It retraces automatically
+and returns to the same step number (or the last available step). Each object
+has its own card, including strings and numbers: a name and a list slot can
+point to the same value object. **Restart** returns to step 1 with your code;
+**Restore original code** brings back the prepared example.
 
 {% include object-reference-lab.html example="shared_slots" editor="inline" %}
 
@@ -950,7 +952,7 @@ print(plan)  # [15, 30, 45]
 
 For a built-in list, `plan += [45]` extends the list in place, so aliases observe its new member. For a string, `label += " Survey"` cannot mutate the string and instead rebinds the name. The same augmented-assignment spelling does not imply the same object-level effect for every type.
 
-**One more contrast:** return to the nested-list lab and choose **Reset example**.
+**One more contrast:** return to the nested-list lab and choose **Restore original code**.
 Replace `board[0].append(1)`
 first with `board[0] += [1]`, then with `board[0] = board[0] + [1]`.
 Predict `row` in each run before tracing. Do both statements move the slot?

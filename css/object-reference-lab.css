@@ -14,8 +14,6 @@
   --orl-highlight-text: var(--color-text-on-accent, #000);
   --orl-panel: color-mix(in srgb, var(--orl-edge) 5%, var(--orl-surface));
   --orl-divider: var(--color-border, #d8dde2);
-  --orl-primary: var(--color-primary, #2774ae);
-  --orl-primary-text: var(--color-text-on-primary, #fff);
   --orl-syntax-keyword: #7134a0;
   --orl-syntax-string: #176336;
   --orl-syntax-number: #924500;
@@ -43,8 +41,6 @@ html.dark-mode .object-reference-lab {
   --orl-edge: var(--color-primary-strong, #8bb8e8);
   --orl-error: var(--color-error, #ff8585);
   --orl-divider: var(--color-border, #333);
-  --orl-primary: var(--color-primary, #8bb8e8);
-  --orl-primary-text: var(--color-text-on-primary, #0a0a14);
   --orl-syntax-keyword: #d7adff;
   --orl-syntax-string: #9bd7ad;
   --orl-syntax-number: #ffc18a;
@@ -116,18 +112,6 @@ html.dark-mode .object-reference-lab {
   border-color: var(--orl-edge);
   background: var(--orl-panel);
   box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
-}
-
-.orl-toolbar button[data-action="trace"] {
-  border-color: var(--orl-primary);
-  background: var(--orl-primary);
-  color: var(--orl-primary-text);
-  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
-}
-
-.orl-toolbar button[data-action="trace"]:hover:not(:disabled) {
-  border-color: var(--color-primary-hover);
-  background: var(--color-primary-hover);
 }
 
 .orl-toolbar button[data-action="forward"]:not(:disabled) {
@@ -360,39 +344,39 @@ html.dark-mode .object-reference-lab {
 
 .orl-graph {
   position: relative;
-  container-type: inline-size;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75em;
-  min-width: calc(8em + var(--orl-route-gutter, 0px) + 1.4em);
-  padding: 0.75em;
-  padding-inline-end: calc(0.7em + var(--orl-route-gutter, 0px));
+  min-height: 4em;
   color: var(--orl-text);
 }
 
-.orl-atoms {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5em 1.25em;
+/* Real text is measured before layout; no font scaling or guessed line heights.
+ * The candidate is inert and invisible, outside the live/print scene. */
+.object-reference-lab .orl-measure {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: max-content;
+  visibility: hidden;
+  pointer-events: none;
+  contain: layout;
 }
 
 .orl-object-row {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 10em) minmax(0, 1fr);
-  align-items: center;
-  gap: 2em;
-  min-width: 0;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1em;
+  width: max-content;
+  min-width: 7em;
+  max-width: 13em;
 }
 
-.orl-object-row:not(.has-aliases) {
-  grid-template-columns: minmax(0, 1fr);
+.orl-measure .orl-object-row {
+  position: relative;
 }
 
 .orl-aliases:empty { display: none; }
+.orl-empty-state { padding: 0.75em; }
 
 .object-reference-lab :is(.orl-local-edges, .orl-reference-edges) {
   position: absolute;
@@ -408,12 +392,6 @@ html.dark-mode .object-reference-lab {
 
 /* Reference stems cross only the clear padding beside their own slot. */
 .object-reference-lab .orl-reference-edges { z-index: 2; }
-.object-reference-lab .orl-reference-edges.is-static {
-  left: auto;
-  right: 0;
-  width: auto;
-}
-
 /* Local connectors already use the theme palette; global SVG inversion
  * would invert their colors a second time. */
 html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.orl-reference-edges) {
@@ -428,6 +406,7 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .orl-local-edges marker path,
@@ -442,18 +421,16 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
 .orl-edge-bridge-mask {
   fill: none;
   stroke: var(--orl-surface);
-  stroke-width: 12;
+  stroke-width: 8;
   vector-effect: non-scaling-stroke;
 }
 
 .orl-aliases {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 0.4em;
-  min-width: 0;
+  align-items: flex-start;
+  gap: 0.3em;
+  padding-inline-end: 1.5em;
 }
 
 .orl-binding {
@@ -463,8 +440,6 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
   gap: 0.2em 0.4em;
   min-width: 0;
 }
-
-.orl-aliases .orl-binding { justify-content: flex-end; }
 
 .orl-reference-name,
 .orl-primitive,
@@ -484,22 +459,12 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
   background: var(--orl-surface);
 }
 
-.orl-inline-arrow { color: var(--orl-edge); }
-
-.orl-primitive {
-  padding: 0.1em 0.35em;
-  border: 1px solid var(--orl-divider);
-  border-radius: var(--radius-sm, 4px);
-  background: var(--orl-surface-alt);
-  color: var(--orl-text);
-}
-
 .object-reference-lab .orl-object {
   position: relative;
   z-index: 1;
   min-width: 0;
   margin: 0;
-  padding: 0.5em 0.65em;
+  padding: 0.45em 0.55em;
   border: 1px solid var(--orl-border);
   border-radius: var(--radius-md, 8px);
   background: var(--orl-surface);
@@ -524,10 +489,9 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
 .object-reference-lab .orl-value { margin: 0; }
 
 .orl-entries {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  gap: 0.35em 0.65em;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.25em;
 }
 
 .orl-entry {
@@ -538,29 +502,18 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
   min-width: 0;
 }
 
-.orl-sequence { gap: 0; }
-.orl-sequence .orl-entry {
-  padding: 0.2em 0.4em;
-  border: 1px solid var(--orl-border);
-}
-.orl-sequence .orl-primitive {
-  border: 0;
-  padding: 0;
-  background: transparent;
-}
-
 .orl-entry.has-reference {
   flex-basis: 100%;
   justify-content: space-between;
 }
-
+.orl-entry + .orl-entry { border-top: 1px solid var(--orl-divider); }
 .orl-entry.has-reference > .orl-reference-target { margin-inline-start: auto; }
 
 .object-reference-lab .orl-reference-target {
-  min-width: 44px;
-  min-height: 44px;
+  min-width: 32px;
+  min-height: 32px;
   max-width: 100%;
-  padding: 0.25em 0.5em;
+  padding: 0.1em 0.3em;
   border: 1px solid var(--orl-border);
   border-radius: var(--radius-sm, 4px);
   background: var(--orl-panel);
@@ -575,15 +528,6 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
 .orl-reference-target:hover {
   border-color: var(--orl-edge);
   text-decoration: underline;
-}
-
-.orl-object.is-changed { border-color: var(--orl-edge); }
-
-.orl-binding.is-changed .orl-reference-name {
-  background: var(--orl-highlight);
-  color: var(--orl-highlight-text);
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
 }
 
 .orl-object.is-selected {
@@ -610,19 +554,6 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
 .object-reference-lab .orl-empty {
   margin: 0;
   color: var(--orl-muted);
-}
-
-@container (max-width: 28em) {
-  .orl-object-row {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1.2em;
-  }
-  .orl-aliases {
-    flex-direction: column;
-    align-items: stretch;
-    padding-inline-end: 1.2em;
-  }
-  .orl-aliases .orl-binding { justify-content: flex-end; }
 }
 
 .object-reference-lab .orl-output,
@@ -657,6 +588,7 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
 .orl-details dt { margin-top: 0.5em; }
 .orl-details dd { margin-inline-start: 1em; }
 .orl-print { display: none; }
+.orl-print :is(.orl-object, .orl-entries, .orl-binding) { animation: none; }
 
 .object-reference-lab .orl-print-step {
   margin: 1.4em 0;
@@ -690,6 +622,7 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
 
 .orl-print-diagram {
   display: none;
+  overflow-x: auto;
   /* A physical diagram width keeps line wrapping identical before and during
    * pagination on A4/Letter with ordinary margins. Type is never scaled down;
    * narrow on-screen print previews still use their available column width. */
@@ -706,7 +639,7 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
 }
 
 /* Static reference labels retain their ports without button-sized tap targets. */
-.object-reference-lab .orl-print .orl-reference-target {
+.object-reference-lab :is(.orl-print, .orl-static-measure) .orl-reference-target {
   display: inline-flex;
   align-items: center;
   min-height: 0;
@@ -738,6 +671,14 @@ html:is(.print-light-mode, .orl-print-preparing) .object-reference-lab .orl-prin
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+html.prm-reduce .object-reference-lab *,
+html.prm-reduce .object-reference-lab *::before,
+html.prm-reduce .object-reference-lab *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
 }
 
 html:is(.print-light-mode, .orl-print-preparing) .object-reference-lab {
@@ -790,4 +731,5 @@ html:is(.print-light-mode, .orl-print-preparing) .object-reference-lab {
     color: #111 !important;
   }
   .object-reference-lab .orl-print svg { filter: none !important; }
+  .orl-print-diagram { overflow: visible; }
 }

@@ -21,8 +21,9 @@ shared_slots:
     still reach the original object. If you expected two independent rows from
     [row, row], count the inner objects before the append: there is only one.
   variation: >-
-    Starting from the prepared code, replace board[1] = [2] with row = [2].
-    Predict both outputs and which arrow moves, then choose Trace Python.
+    Before editing the prepared code, predict both outputs and which arrow
+    would move if board[1] = [2] became row = [2]. Then make the change and
+    inspect the automatically updated trace.
   variation_explanation: >-
     The variation prints [[0, 1], [0, 1]], then [2]. Rebinding row leaves both
     stored slots reaching the original mutated list; it moves only the separate
@@ -56,9 +57,9 @@ member_sharing:
     shared list; assigning first.files later redirects only first's attribute. A
     new outer instance does not imply new member objects.
   variation: >-
-    Starting from the prepared code, change second = Folder(shared) to second =
-    Folder([]). Predict both outputs and count the member lists before calling
-    add. Then trace.
+    Before editing the prepared code, predict both outputs and the number of
+    member lists before add if second = Folder(shared) became second =
+    Folder([]). Then make the change and inspect the automatically updated trace.
   variation_explanation: >-
     The outputs become ['final'] and []. The second constructor receives a
     separately constructed list, so first.add cannot reach it. Distinct Folder
@@ -88,9 +89,9 @@ class_attributes:
     attribute. The later assignment creates first's own items attribute, which
     shadows the class attribute. second still finds the class list.
   variation: >-
-    Starting from the prepared code, change first.items = ["map"] to Shelf.items
-    = ["map"]. Predict both outputs and where each items lookup will succeed.
-    Then trace.
+    Before editing the prepared code, predict both outputs and where each items
+    lookup would succeed if first.items = ["map"] became Shelf.items = ["map"].
+    Then make the change and inspect the automatically updated trace.
   variation_explanation: >-
     Both outputs become ['map'], because neither instance has an items attribute
     of its own. Both lookups find the replaced class attribute. For independent
@@ -124,9 +125,10 @@ shallow_copy:
     slots. Deep copy separates this mutable state from the source while
     preserving the repeated reference within the copy.
   variation: >-
-    Starting from the prepared code, replace shallow[0].append("review") with
-    shallow[0] = ["review"]. Predict all three outputs. Which object owns the
-    slot that changes? Then trace.
+    Before editing the prepared code, predict all three outputs if
+    shallow[0].append("review") became shallow[0] = ["review"]. Which object
+    would own the changed slot? Then make the change and inspect the
+    automatically updated trace.
   variation_explanation: >-
     plan retains two ['draft'] entries; shallow becomes [['review'], ['draft']];
     archived still prints [['draft', 'private'], ['draft', 'private']]. The
@@ -155,9 +157,10 @@ identity_equality:
     second name for left's object; it creates no third list. Equality does not
     establish sharing, so the mutation leaves right unchanged.
   variation: >-
-    Starting from the prepared code, replace right = ["draft"] with right =
-    left. Predict all three Booleans and both lists after append. Then trace and
-    explain which construction disappeared.
+    Before editing the prepared code, predict all three Booleans and both lists
+    after append if right = ["draft"] became right = left. Then make the change,
+    inspect the automatically updated trace, and explain which construction
+    disappeared.
   variation_explanation: >-
     All three Booleans become True and both lists print ['draft', 'review'].
     Only one list is constructed; left, right, and alias all reach it. For this
@@ -187,9 +190,9 @@ parameter_rebinding:
     is not an alias for the caller's variable slot. return supplies the object
     to the call-site assignment, which binds result and leaves draft alone.
   variation: >-
-    Starting from the prepared code, replace labels = ["final"] with labels[0] =
-    "final". Predict both outputs and whether draft and result will share one
-    list. Then trace.
+    Before editing the prepared code, predict both outputs and whether draft
+    and result would share one list if labels = ["final"] became labels[0] =
+    "final". Then make the change and inspect the automatically updated trace.
   variation_explanation: >-
     Both outputs become ['final', 'review']. This version mutates a slot in the
     shared list instead of rebinding labels. The returned object is the same
@@ -220,9 +223,10 @@ mutable_default:
     reference; compare the parameter with first during the second call to see
     the sharing.
   variation: >-
-    Starting from the prepared code, change only the second call to
-    collect("blue", []). Predict both lists and the final Boolean. At entry to
-    that call, will basket still share with first? Then trace.
+    Before editing the prepared code, predict both lists and the final Boolean
+    if only the second call became collect("blue", []). At entry to that call,
+    would basket still share with first? Then make the change and inspect the
+    automatically updated trace.
   variation_explanation: >-
     The outputs become ['red'], ['blue'], and False. An explicit new list is
     supplied for the second call, so it does not use the function's stored
@@ -248,9 +252,9 @@ loop_rebinding:
     assign to a slot in batches. Unlike a C++ auto& loop variable, this Python
     name is not a reference to the container's element slot.
   variation: >-
-    Starting from the prepared code, replace batch = [] with batch.clear().
-    Predict batches and batch again. Does the loop name itself show enough to
-    distinguish the two programs? Then trace.
+    Before editing the prepared code, predict batches and batch if batch = []
+    became batch.clear(). Would the loop name itself show enough to distinguish
+    the programs? Then make the change and inspect the automatically updated trace.
   variation_explanation: >-
     batches becomes [[], []], and batch is still []. clear mutates each actual
     inner list, so the changes are visible through the unchanged slots in

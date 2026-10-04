@@ -76,8 +76,8 @@ test('print view shows the same object shapes and reflows arrows when text grows
   await expect(history.getByRole('img').last()).toBeVisible();
   await expect(lab.locator('.orl-screen')).toBeHidden();
   const finalSnapshot = history.locator('.orl-print-step').last();
-  await expect(finalSnapshot.locator('.orl-object')).toHaveCount(5);
-  await expect(finalSnapshot.locator('.orl-reference-edge')).toHaveCount(6);
+  await expect(finalSnapshot.locator('.orl-object')).toHaveCount(8);
+  await expect(finalSnapshot.locator('.orl-reference-edge')).toHaveCount(10);
   await expect(finalSnapshot.getByRole('img')).toHaveAccessibleName(/Global names:.*archived/);
   await expectConnectedPrintArrows(history);
   const diagramWidth = (await finalSnapshot.getByRole('img').boundingBox()).width;
@@ -104,21 +104,22 @@ test('edited and reset programs replace printable graphs without retaining old o
   const lab = labs(page).first();
   const editor = lab.getByRole('textbox', { name: 'Python code', exact: true });
   await editor.fill('solo = [7]\nprint(solo)');
+  // Printing immediately must not pair the edited source with the old history.
   await page.emulateMedia({ media: 'print' });
   const history = lab.locator('.orl-print');
   await expect(history).toContainText('No recorded execution');
   await expect(history.getByRole('img')).toHaveCount(0);
   await page.emulateMedia({ media: 'screen' });
-  await control(lab, 'Trace Python').click();
+  await editor.fill('solo = [7]\nprint(solo)\n');
   await expect(control(lab, 'Forward')).toBeEnabled({ timeout: 90_000 });
   await page.emulateMedia({ media: 'print' });
   const finalSnapshot = history.locator('.orl-print-step').last();
-  await expect(finalSnapshot.locator('.orl-object')).toHaveCount(1);
+  await expect(finalSnapshot.locator('.orl-object')).toHaveCount(2);
   await expect(finalSnapshot.getByRole('img')).toHaveAccessibleName(/Global names: solo →/);
   await expect(finalSnapshot).toContainText('Output:\n[7]');
   await expect(history).not.toContainText('board');
   await page.emulateMedia({ media: 'screen' });
-  await control(lab, 'Reset example').click();
+  await control(lab, 'Restore original code').click();
   await page.emulateMedia({ media: 'print' });
   await expect(history).not.toContainText('solo');
   await expect(history.locator('.orl-print-step').last().getByRole('img')).toHaveAccessibleName(/Global names:.*board/);

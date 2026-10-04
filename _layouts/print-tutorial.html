@@ -140,7 +140,8 @@
         });
         if (window.location.search.indexOf('autoprint=1') !== -1) {
           const printWhenReady = function () {
-            diagramsReady.then(function () { window.print(); });
+            diagramsReady.then(function () { return window.ObjectReferencePrint.prepareAll(); })
+              .then(function () { window.print(); });
           };
           if (document.readyState === 'complete') printWhenReady();
           else window.addEventListener('load', printWhenReady, { once: true });

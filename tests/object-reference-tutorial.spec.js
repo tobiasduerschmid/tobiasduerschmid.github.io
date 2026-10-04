@@ -147,7 +147,7 @@ test('the populated member lab fits narrow instructions and remains accessible i
   await advanceToEnd(lab);
   await expectPaintedReferenceArrows(lab);
   await expect(lab.getByRole('region', { name: 'Program output', exact: true })).toHaveText(memberExample.output);
-  await labButton(lab, 'Reset example').focus();
+  await labButton(lab, 'Restore original code').focus();
   await page.keyboard.press('Tab');
   await expect(lab.getByRole('textbox', { name: 'Python code', exact: true })).toBeFocused();
   const measurements = await lab.evaluate(region => ({
@@ -196,19 +196,19 @@ test('leaving a running instruction lab permits a fresh trace on return', async 
   // A blocking built-in keeps the worker active until navigation cancels it.
   await expect(editor).toBeVisible();
   await editor.fill('import time\ntime.sleep(60)');
-  await labButton(lab, 'Trace Python').click();
+
   await expect(lab.getByRole('status')).toContainText('Recording execution', { timeout: 90_000 });
-  await expect(labButton(lab, 'Stop')).toBeEnabled();
+  await expect(lab.getByRole('status')).toContainText(/Code changed|Loading|Recording/);
 
   await page.getByRole('button', { name: 'Step 1: Hello, Python!', exact: true }).click();
   await expect(lab).toHaveCount(0);
   await listsStep(page).click();
   await expect(lab.getByRole('status')).toContainText(/Step 1 of \d+/);
   await expect(editor).toHaveValue(/board = \[row, row\]/);
-  await expect(labButton(lab, 'Stop')).toBeDisabled();
+  await expect(labButton(lab, 'Stop')).toHaveCount(0);
   await expect(editor).toBeVisible();
   await editor.fill('samples = [7]\nprint(samples)');
-  await labButton(lab, 'Trace Python').click();
+
   await expect(labButton(lab, 'Forward')).toBeEnabled({ timeout: 90_000 });
   // This journey verifies worker disposal/restart, independently of playback's
   // real-time interval (covered by the dedicated playback tests).
@@ -241,11 +241,10 @@ test('detached instructions preserve independent labs when tutorial test results
   await editor.fill('channels = [[42]]\nprint(channels)');
   await labButton(sibling, 'Forward').click();
   await expect(sibling.getByRole('status')).toContainText(/Step 2 of \d+/);
-  await expect(labButton(lab, 'Forward')).toBeDisabled();
   await popup.getByRole('button', { name: /Test My Work/ }).click();
   await expect(popup.getByRole('status').filter({ hasText: /tests passed/ })).toBeVisible({ timeout: 30_000 });
   await expect(editor).toHaveValue('channels = [[42]]\nprint(channels)');
-  await expect(lab.getByRole('status')).toContainText('Code changed');
+  await expect(lab.getByRole('status')).toContainText(/Step 1 of \d+/, { timeout: 90_000 });
   await expect(sibling.getByRole('status')).toContainText(/Step 2 of \d+/);
   await popup.getByRole('button', { name: 'Step 1: Hello, Python!', exact: true }).click();
   await expect(lab).toHaveCount(0);

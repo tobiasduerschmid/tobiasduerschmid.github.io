@@ -1277,11 +1277,13 @@ steps:
       and the reference that moved. **Back** lets you compare those states.
 
       This lab has its own editable code. After inspecting the prepared
-      trace, make a new prediction for **Try one change** and
-      choose **Trace Python**. Then return to the tutorial editor for the
-      independent running-order task. Primitive values appear in place to
-      reduce clutter; they are still Python objects, with their identities
-      retained in **Reference details**.
+      trace, make a new prediction for **Try one change**, then edit the lab
+      code. It retraces automatically and returns to the same step number
+      (or the last available step). Then return to the tutorial editor for the
+      independent running-order task. Strings and numbers have object cards
+      too: follow the arrows to see when a name and a list slot share one object.
+      **Restart** returns to step 1 without changing your code; **Restore original
+      code** brings back the prepared example.
 
       <div data-object-reference-example="shared_slots" data-object-reference-editor="inline"></div>
 

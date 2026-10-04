@@ -2,11 +2,50 @@
 
 Research and implementation review: 2026-10-03. This is an engineering note, not a published SEBook chapter.
 
-## Recommendation
+## Current approach: compact ports, proximity, and temporal consistency
 
-Keep the inline lab's object cards in stable identity order, with a measured source port for each list slot or attribute and a reserved routing channel outside the cards. Treat placement, routing, rendering, and asset loading as separate responsibilities. This restricted layout is a useful fit for narrow teaching pages: labels remain readable, object identities stay easy to find, and routes can be checked against simple geometric invariants. A general force-directed layout would give up those properties without solving fixed-port routing by itself.
+The original fixed, full-width rows made routes unnecessarily long. The current
+renderer uses ELK Layered 0.12.0, served from local pinned assets, with measured
+card dimensions and fixed member ports. Each Python identity gets one node,
+including primitive objects. Aliases sit immediately above their target card;
+this avoids an extra global-names column. Cards size to their text, without
+scaling text down. Container slots keep their Python order.
 
-This is a constrained one-dimensional placement problem followed by orthogonal channel routing. It is not an implementation of the optimal visibility-graph/A* algorithm in the routing literature, and it cannot promise zero crossings for arbitrary Python graphs.
+Layout first tries left-to-right layers, then a narrower top-to-bottom variant.
+When neither fits, a deterministic vertical channel layout retains all arrows
+and readable text. Two bounded insertion sweeps place new fallback nodes near their uses while
+preserving the order of surviving nodes. Shared targets use one landing port and may share stems;
+independent crossings receive bridge marks. These are optimization heuristics,
+not a promise of globally minimal length or zero crossings.
+
+Incremental placement uses previous coordinates for layer assignment, ordering,
+and node placement, with new nodes seeded near their uses. Compare this result
+with compact, order-preserving placement and select the fitting candidate with
+lower displacement plus a small size penalty. Translate a whole scene (including
+routes) back toward its previous anchor where padding and available width permit;
+never move individual cards after routing. Keep the existing horizontal/vertical
+orientation while it fits. Geometry-equivalent states reuse their layout even if
+values changed; a per-lab geometry cache restores Back/Forward positions exactly.
+New layers, larger cards, and narrower viewports can still require movement.
+
+This uses ELK's [interactive node placer](https://github.com/eclipse-elk/elk/blob/master/plugins/org.eclipse.elk.alg.layered/src/org/eclipse/elk/alg/layered/p4nodes/InteractiveNodePlacer.java),
+which retains previous vertical positions subject to overlap removal, alongside
+interactive layering and ordering. Position stability is a preference subject to
+readability and correct routing, not a promise that coordinates never change.
+
+Candidates are measured in an inert, invisible container. The current diagram
+stays on screen until the replacement is ready; generation numbers discard
+stale asynchronous layouts. Unchanged graphs (including output-only steps) do
+not replace nodes, paths, or restart animation. Surviving DOM cards stay mounted;
+only changed content is replaced. Movement lasts 420 ms with attached endpoints,
+without fading the existing graph. Either the OS preference or the SEBook reduced-motion setting disables the
+transition. Enabling either during motion immediately settles the complete frame;
+no card interpolation, SVG interpolation, fades, or smooth scrolling remain.
+
+This applies the port-aware layered approach described by [ELK Layered](https://eclipse.dev/elk/reference/algorithms/org-eclipse-elk-layered.html)
+and its [semi-interactive ordering constraint](https://eclipse.dev/elk/reference/options/org-eclipse-elk-layered-crossingMinimization-semiInteractive.html).
+Choosing proximity plus stable order for this teaching task is an engineering
+judgment, not evidence of improved learning outcomes by itself.
 
 ## What the research supports
 
@@ -20,7 +59,7 @@ This is a constrained one-dimensional placement problem followed by orthogonal c
 
 ## Hard invariants and heuristic goals
 
-The hard contract applies to every reference presented as a nonprimitive reference in the compact diagram; the complete Reference details view retains the trace's full recorded graph.
+The hard contract applies to every visible reference in the compact diagram; the complete Reference details view retains the trace's full recorded graph.
 
 | Hard invariant | Why it matters |
 | --- | --- |
@@ -36,29 +75,28 @@ Crossing count, total length, bends, gutter width, and movement between steps ar
 
 Zero crossings is not a valid universal invariant. Three source lists, each referencing the same three distinct target objects, contain a `K3,3` graph. For a simple planar bipartite graph, `e ≤ 2v − 4`; here `9 > 8`. Fixed card order and fixed ports can impose further restrictions even for graphs that are planar under unconstrained placement. Bridges or gaps clarify independent crossings; they do not eliminate them mathematically.
 
-## Concrete layout and update pipeline
+## Layout pipeline and failure behavior
 
-1. **Build the semantic scene.** Keep object IDs separate from displayed values. Order surviving cards by identity, retain source entry order, and give each member reference a stable key such as object ID plus entry label. Rebinding changes a target; it does not rename or recreate the old target object.
-2. **Measure boxes and ports.** Cards occupy disjoint vertical rows with aligned right boundaries. A reference row spans the card so its source port can exit directly through that boundary. Measure text-driven dimensions; do not infer height from an assumed number of characters or a fixed font size.
-3. **Allocate external channels.** Group references by target. A group's vertical interval covers its source ports and its target landing. Intervals that overlap require distinct lanes; disjoint intervals may reuse a lane. Route source → lane → target landing with horizontal/vertical segments. This construction handles self-loops and mutual cycles without traversing a card.
-4. **Resolve visual ambiguity.** Separate independent overlapping routes and mark independent intersections with crossing bridges. Merge only genuine same-target paths, retaining every source branch and reference key. Focusing a member should identify its complete route and destination. Crossing decorations need their own clearance and bounds checks.
-5. **Commit a complete scene.** Batch resize and step changes, reserve the computed gutter, then remeasure if that reservation changes the card geometry. Replace the SVG paths together only for the latest state. A zero-sized hidden host should defer drawing until it is measurable. If drawing is asynchronous, discard results from obsolete state versions. Libavoid's explicit batch transactions provide a relevant architectural precedent, though this lab uses its own smaller planner. [Router transaction documentation](https://www.adaptagrams.org/documentation/classAvoid_1_1Router.html).
+1. Build one node per visible trace identity, including strings, numbers, Boolean
+   values, and None. Never merge equal values; use actual Python identity.
+2. Measure the actual card, aliases, and each slot's button. Supply fixed outgoing
+   ports and a shared incoming port to ELK. Runtime functions/modules remain in
+   Reference details but are omitted from the compact data diagram.
+3. Use previous positions as ordering hints; position newcomers near neighbors.
+   Route around whole measured nodes, including their alias labels.
+4. Select a layout that fits the available width. Narrow fallback cards use
+   external channels; shared targets alone share a bus.
+5. Commit cards and routes together, rejecting obsolete results. Cache completed
+   snapshots for reversible playback. Interpolate movement with source/target
+   endpoints attached to the moving cards.
 
-The existing interval-based lane assignment is deterministic for a given geometry, but deterministic recomputation is not the same as temporal stability: inserting one interval can change later lane assignments. A future refinement should prefer an existing target's lane when still legal, then use deterministic placement for conflicts. Reclaiming every spare lane on each step may save width while making unchanged references jump. Likewise, keeping the gutter from shrinking during a run can reduce horizontal movement at the expense of some whitespace. These are design options to evaluate, not claims that the current planner implements a general incremental optimizer.
-
-## Alternatives and the point at which to use them
-
-| Approach | Appropriate use | Trade-off for this lab |
-| --- | --- | --- |
-| Stable stacked cards + external channels | Responsive inline labs with readable member rows | Small, testable geometry; long upward/downward references and unavoidable channel crossings remain possible. |
-| ELK Layered with fixed ports and prior positions/order | A future wider, freely arranged heap view | Handles placement as well as routing. Requires explicit stability choices across several phases and careful treatment of cycles. |
-| Libavoid with connection pins | Free placement, dragging, or many independently positioned obstacles | Designed for obstacle-aware orthogonal routing, but still needs node placement, runtime integration, route styling, and validation. |
-| Constrained stress layout with ports | Larger diagrams where global structure and compactness outweigh a simple reading order | A more substantial layout system. Port-aware research reports compactness and structural advantages over layering, not Python-learning or universal usability superiority. |
-| Graphviz `splines=ortho` | Diagrams without required member ports | Its official documentation says this routing mode does not handle ports, making it a poor match for slot-level references. |
-
-ELK separates cycle breaking, layer assignment, crossing minimization, placement, and routing; interactive strategies can reuse previous positions. Its cycle-breaking reversals are layout machinery: the displayed reference direction must remain the original Python direction. Supplying prior positions or model order is not automatically a guarantee that every phase preserves them. [ELK layered overview](https://eclipse.dev/elk/blog/posts/2025/25-08-21-layered.html), [constraining the model](https://eclipse.dev/elk/blog/posts/2023/23-01-09-constraining-the-model.html).
-
-The alternative comparison also draws on the primary [port-aware constrained-stress paper](https://arxiv.org/abs/1408.4626) and [Graphviz orthogonal-routing documentation](https://graphviz.org/docs/attrs/splines/). None of these sources establishes a single best engine for this teaching task. The recommendation is an engineering judgment based on this component's fixed rows, semantic ports, and limited page width.
+The renderer loads its pinned ELK API and worker relative to its own script URL.
+A lexical CommonJS-to-ESM adapter prevents Monaco’s AMD loader from capturing the
+anonymous API module, without modifying the upstream API body or global loader.
+The documented embedding still needs no extra script tag. A load/layout failure
+keeps the synchronous channel planner available, so an unavailable optimizer
+cannot silently remove reference arrows. The pure fallback planner's Node
+export remains tested independently of rendering.
 
 ## The missing-arrow incident is a separate failure
 
@@ -68,23 +106,21 @@ Ship the planner with `object-reference-graph.js` as one browser asset, retainin
 
 ## Printed snapshots
 
-`object-reference-print.js` reuses `ReferenceGraph` in static mode for every
-visible playback step. Static graphs have no interaction handlers, animation,
-or per-graph observers; synchronous layout reserves the gutter and remeasures
-before the renderer is released. The history owns one shared resize observer
-for its width and height changes. Its accessible image description retains the
-full recorded state, including the identities abbreviated in the visual view.
+PrintHistory uses the same renderer in static mode and starts layout preparation
+when a small trace is installed, before printing. Histories totaling more than
+300 object snapshots defer that work until the print view is visible to avoid
+thousands of hidden cards. Cards are measured in an inert
+container at the print text metrics, even if the history is hidden. Every static
+snapshot immediately has a complete channel layout; compact layouts replace it
+as they become ready. This synchronous fallback also covers immediate native
+Print, whose beforeprint event cannot await promises. Programmatic autoprint
+awaits ObjectReferencePrint.prepareAll().
 
-Actual PDF pagination can narrow a document after `beforeprint` without giving
-JavaScript another layout event. A print-media screenshot alone missed this:
-cards fitted the page while the measured global SVG routes remained beyond its
-right edge. Printable diagrams now use a consistent 160mm maximum layout width
-in the print page, preparation state, and paper output. This keeps wrapping
-stable on A4 and Letter with ordinary margins, without shrinking paragraph-size
-text. Narrow screen previews still use their available width. Static member
-routes occupy a small SVG anchored at the graph's right edge; live graph
-coordinates are unchanged. Verify actual A4 and Letter PDFs as well as DOM
-geometry whenever changing this pipeline.
+Print diagrams cap at 160mm and use the light palette. Each graph watches measured
+text sizes to handle font/spacing changes and releases its observer on history
+replacement or unmount. Static graphs have no motion. Accessible image descriptions
+retain the full recorded state, including omitted incidental objects. Validate
+actual A4/Letter PDFs as well as print-media geometry.
 
 ## Regression and evaluation contract
 

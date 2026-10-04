@@ -39,7 +39,7 @@ test('the editable source carries execution position, preserves selection, and i
   await expect(editor).toHaveValue(original);
   await editor.press('Tab');
   await expect(lab.getByText('Reference details', { exact: true }), 'Tab must leave the editor without stopping on its decorative syntax layer').toBeFocused();
-  await lab.getByRole('button', { name: 'Reset example', exact: true }).click();
+  await lab.getByRole('button', { name: 'Restore original code', exact: true }).click();
   await expect(editor).toHaveValue(original);
   await expect(lab.getByRole('button', { name: 'Forward', exact: true })).toBeEnabled();
 });

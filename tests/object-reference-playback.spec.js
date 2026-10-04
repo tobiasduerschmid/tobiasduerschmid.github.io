@@ -73,7 +73,7 @@ test('edited definitions execute, called bodies are stepped, and a definition er
     'class Broken(missing_base):',
     '    pass'
   ].join('\n'));
-  await action(lab, 'Trace Python').click();
+
   await expect(action(lab, 'Forward')).toBeEnabled({ timeout: 120_000 });
   await action(lab, 'Forward').click();
   await expect(lab.getByRole('status')).toContainText('Next: line 6');

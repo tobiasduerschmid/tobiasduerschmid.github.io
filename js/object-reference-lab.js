@@ -4,7 +4,7 @@
  * Embed a prepared example: <div data-object-reference-example="shared_slots"></div>
  * Or embed {title, code, prediction?, explanation?, variation?,
  * variation_explanation?, trace?} as application/json
- * inside <div data-object-reference-lab>. Trace Python records an edited program
+ * inside <div data-object-reference-lab>. Edits automatically record a program
  * in a disposable worker; Forward/Back replay snapshots without re-execution.
  * The source editor also displays the current execution position.
  *
@@ -22,6 +22,7 @@
   const mounts = new WeakMap();
   let examplesPromise;
   let labNumber = 0;
+  const EDIT_DELAY_MS = 650;
 
   function element(tag, className, text) {
     const node = document.createElement(tag);
@@ -47,9 +48,15 @@
       this.trace = null;
       this.steps = [];
       this.index = 0;
+      // The requested playback position survives pending edits and errors.
+      // It is a visible step index, not a source line or Python object identity.
+      this.resumeIndex = 0;
+      this.dirty = false;
       this.worker = null;
       this.playTimer = 0;
       this.runTimer = 0;
+      this.editTimer = 0;
+      this.composing = false;
       this.id = 'object-reference-lab-' + (++labNumber);
       this.listeners = new AbortController();
       this.build();
@@ -89,11 +96,20 @@
         onInput: () => this.invalidate()
       });
       this.editor = this.codeEditor.input;
+      this.editor.addEventListener('compositionstart', () => {
+        this.composing = true;
+        this.cancelRun();
+        this.updateControls();
+      }, { signal: this.listeners.signal });
+      this.editor.addEventListener('compositionend', () => {
+        this.composing = false;
+        this.invalidate();
+      }, { signal: this.listeners.signal });
     }
 
     buildControls() {
       const instructions = element('p', 'orl-instructions',
-        'Use Forward and Back to follow the marked line. Edit that same code, then choose Trace Python to record your change.');
+        'Use Forward and Back to follow the marked line. Edits retrace automatically after a short pause and return to the same step number, or the last step if the new trace is shorter.');
       instructions.id = this.id + '-instructions';
       this.screen.append(instructions);
       const toolbar = element('div', 'orl-toolbar');
@@ -101,12 +117,11 @@
       toolbar.setAttribute('aria-label', 'Trace and playback controls');
       this.buttons = {};
       const actions = [
-        ['trace', 'Trace Python', () => this.run()],
-        ['stop', 'Stop', () => this.stop('Run stopped. Edit the code or choose Trace Python to try again.')],
+        ['restart', 'Restart', () => this.restart()],
         ['back', 'Back', () => this.move(-1)],
         ['forward', 'Forward', () => this.move(1)],
         ['play', 'Play', () => this.togglePlay()],
-        ['reset', 'Reset example', () => this.restoreExample()]
+        ['reset', 'Restore original code', () => this.restoreExample()]
       ];
       actions.forEach(([action, label, handler]) => {
         const button = element('button', '', label);
@@ -128,7 +143,7 @@
 
     buildStateViews() {
       this.screen.append(element('p', 'orl-legend',
-        'Arrows show references; primitive values appear in place. Select a labeled reference to follow it. A bridge means two arrows pass without joining.'));
+        'Each box is one object, including strings and numbers. Names and members point to these objects. Select a labeled reference to follow it. A bridge means two arrows pass without joining.'));
       const columns = element('div', 'orl-columns');
       this.buildEditor();
       const diagramPanel = element('div', 'orl-diagram-panel');
@@ -160,9 +175,9 @@
       const limits = element('details', 'orl-limits');
       limits.append(element('summary', '', 'What the trace shows'));
       limits.append(element('p', '',
-        'At a “Next: line” step, the highlighted line is about to execute. Playback skips function/class declaration bookkeeping and continues to statements; those definitions still execute. Class-body assignments, called function bodies, returns, and errors remain visible. Local parameter names appear beside their objects. Only this program’s source is stepped through; built-in operations and imported code execute between steps. Individual names have reference slots; cards contain objects. Primitive values appear directly at names and members, but still follow Python’s object-reference rules. Repeated literals do not imply separate objects. Function/module objects and classes without displayed data attributes are omitted from the diagram; Reference details retains the full recorded identities and scopes of the displayed state. Object labels identify objects within this run, not memory addresses. Collection and reference counts are not modeled.'));
+        'At a “Next: line” step, the highlighted line is about to execute. Playback skips function/class declaration bookkeeping and continues to statements; those definitions still execute. Class-body assignments, called function bodies, returns, and errors remain visible. Local parameter names appear beside their objects. Only this program’s source is stepped through; built-in operations and imported code execute between steps. Individual names have reference slots; cards contain objects. Strings, numbers, and other primitive values have their own object cards, so shared references remain visible. Repeated literals do not imply separate objects. Function/module objects and classes without displayed data attributes are omitted from the diagram; Reference details retains the full recorded identities and scopes of the displayed state. Object labels identify objects within this run, not memory addresses. Collection and reference counts are not modeled.'));
       limits.append(element('p', '',
-        'Edited code runs in your browser. Trace Python executes the program before playback begins; Back restores recorded views without undoing external side effects. Stop cancels a run. Small programs work best: execution stops after 10 seconds or at the trace limit, and any omitted graph details or output are reported. Some built-in or extension objects are shown without internals. The initial Python download may take longer. input() and interactive programs are not supported. Edits are kept only while this lab is open.'));
+        'Edited code runs automatically in your browser after you pause typing. Each update executes the whole program again and displays your previous step number; it does not continue a running Python process. That number may describe a different statement if you change the control flow. The previous diagram stays visible while the update runs. Temporary errors retain your requested position for the next correction. Restart returns to step 1 without changing your code. Restore original code returns to the prepared example. Editing again replaces any running update. Back restores recorded views without undoing external side effects. Small programs work best: execution stops after 10 seconds or at the trace limit, and any omitted graph details or output are reported. Some built-in or extension objects are shown without internals. The initial Python download may take longer. input() and interactive programs are not supported. Edits are kept only while this lab is open.'));
       this.screen.append(limits);
     }
 
@@ -185,13 +200,28 @@
     restoreExample() {
       this.cancelRun();
       this.pause();
+      this.resumeIndex = 0;
+      this.composing = false;
       this.editor.value = this.example.code.trimEnd();
       this.explanation.hidden = false;
       this.explanation.open = false;
       if (this.variationFeedback) this.variationFeedback.open = false;
       this.error.hidden = true;
       this.setTrace(this.example.trace || null);
-      if (!this.trace) this.status.textContent = 'Choose Trace Python to record this example.';
+      if (!this.trace) this.invalidate();
+    }
+
+    restart() {
+      this.pause();
+      this.resumeIndex = 0;
+      if (this.dirty) {
+        // The pending edit will select step 1 once its replacement is ready.
+        this.status.textContent = 'Updating automatically at step 1… Showing the previous run until ready.';
+        if (!this.worker && !this.editTimer && !this.composing) this.run();
+      } else if (this.steps.length) {
+        this.index = 0;
+        this.showStep();
+      }
     }
 
     invalidate() {
@@ -199,21 +229,28 @@
       this.pause();
       this.error.hidden = true;
       this.explanation.hidden = this.editor.value.trimEnd() !== this.example.code.trimEnd();
-      this.setTrace(null);
-      this.status.textContent = 'Code changed. Choose Trace Python to record the edited program.';
+      this.dirty = true;
+      this.codeEditor.setPosition(0, 'Updating…');
+      // The last completed graph/output remains visible until its replacement
+      // is ready. Printing never pairs those old states with the edited source.
+      this.renderPrint();
+      this.status.textContent = 'Code changed. Updating automatically at step ' + (this.resumeIndex + 1) + '…'
+        + (this.trace ? ' Showing the previous run until ready.' : '');
+      if (!this.composing) this.editTimer = setTimeout(() => this.run(), EDIT_DELAY_MS);
+      this.updateControls();
     }
 
-    setTrace(trace) {
+    setTrace(trace, { index = 0, reveal = true } = {}) {
       this.trace = trace;
+      this.dirty = false;
       // Python classifies execution events; never infer Python syntax from
       // source text here. One timeline keeps Back, Play, and print consistent.
-      this.steps = trace ? trace.steps.filter(step => !step.skipPlayback) : [];
-      this.index = 0;
-      this.graph.reset();
+      this.steps = trace ? trace.steps.filter(step => !step.skipPlayback && !(step.event === 'line' && step.line === 0)) : [];
+      this.index = Math.max(0, Math.min(index, this.steps.length - 1));
       this.codeEditor.refresh();
       this.renderPrint();
       if (this.steps.length) {
-        this.showStep();
+        this.showStep(reveal);
       } else {
         this.graph.render({ scopes: [], objects: [] });
         this.stateText.textContent = 'No recorded execution yet.';
@@ -223,23 +260,21 @@
     }
 
     updateControls() {
-      const busy = Boolean(this.worker);
+      const busy = Boolean(this.worker || this.editTimer || this.composing);
       const steps = this.steps.length;
-      this.buttons.trace.disabled = busy;
-      this.buttons.stop.disabled = !busy;
-      this.buttons.back.disabled = busy || !steps || this.index === 0;
-      this.buttons.forward.disabled = busy || !steps || this.index >= steps - 1;
-      this.buttons.play.disabled = busy || !steps || (this.index >= steps - 1 && !this.playTimer);
+      this.buttons.restart.disabled = !steps && !this.dirty;
+      this.buttons.back.disabled = busy || this.dirty || !steps || this.index === 0;
+      this.buttons.forward.disabled = busy || this.dirty || !steps || this.index >= steps - 1;
+      this.buttons.play.disabled = busy || this.dirty || !steps || (this.index >= steps - 1 && !this.playTimer);
       this.buttons.play.textContent = this.playTimer ? 'Pause' : 'Play';
-      this.editor.readOnly = busy;
     }
 
-    showStep() {
+    showStep(reveal = true) {
       const step = this.steps[this.index];
       this.graph.render(step);
       this.stateText.textContent = window.ObjectReferenceGraph.describeState(step);
       this.output.textContent = step.output || '(no output yet)';
-      this.codeEditor.setPosition(step.line, eventLabel(step));
+      this.codeEditor.setPosition(step.line, eventLabel(step), { reveal });
       this.status.textContent = 'Step ' + (this.index + 1) + ' of ' + this.steps.length + ' · ' + eventLabel(step)
         + (step.note ? '. ' + step.note : '');
       this.updateControls();
@@ -247,16 +282,18 @@
 
     move(delta) {
       this.pause();
-      if (!this.trace) return;
+      if (!this.trace || this.dirty) return;
       this.index = Math.max(0, Math.min(this.steps.length - 1, this.index + delta));
+      this.resumeIndex = this.index;
       this.showStep();
     }
 
     togglePlay() {
       if (this.playTimer) { this.pause(); return; }
-      if (!this.trace || this.index >= this.steps.length - 1) return;
+      if (!this.trace || this.dirty || this.index >= this.steps.length - 1) return;
       this.playTimer = window.setInterval(() => {
         this.index += 1;
+        this.resumeIndex = this.index;
         this.showStep();
         if (this.index === this.steps.length - 1) this.pause();
       }, 1600);
@@ -273,8 +310,7 @@
       this.cancelRun();
       this.pause();
       this.error.hidden = true;
-      this.setTrace(null);
-      this.status.textContent = 'Loading Python… You can stop this run.';
+      this.status.textContent = 'Loading Python…' + (this.trace ? ' Showing the previous run until ready.' : '');
       try {
         this.worker = new Worker(workerURL);
       } catch (error) {
@@ -282,27 +318,45 @@
         return;
       }
       this.updateControls();
-      this.runTimer = setTimeout(() => this.stop('Python loading timed out. Choose Trace Python to retry.'), 60000);
-      this.worker.onmessage = event => this.receive(event.data);
-      this.worker.onerror = event => this.fail('Python could not run. ' + (event.message || 'Please retry.'));
+      this.runTimer = setTimeout(() => this.stop('Python loading timed out. Edit the code to retry.'), 60000);
+      const worker = this.worker;
+      // Edits can replace a worker while it is loading or executing. Only the
+      // current worker may publish results, errors, or timeout transitions.
+      worker.onmessage = event => { if (this.worker === worker) this.receive(event.data); };
+      worker.onerror = event => {
+        if (this.worker === worker) this.fail('Python could not run. ' + (event.message || 'Please retry.'));
+      };
       this.worker.postMessage({ type: 'trace', code: this.editor.value });
     }
 
     receive(message) {
       if (message.type === 'ready') {
         clearTimeout(this.runTimer);
-        this.runTimer = setTimeout(() => this.stop('Execution stopped after 10 seconds. Shorten the program and trace again.'), 10000);
-        this.status.textContent = 'Recording execution… You can stop this run.';
+        this.runTimer = setTimeout(() => this.stop('Execution stopped after 10 seconds. Shorten the program to retry.'), 10000);
+        this.status.textContent = 'Recording execution…' + (this.trace ? ' Showing the previous run until ready.' : '');
       } else if (message.type === 'result') {
         this.cancelRun();
         if (!message.trace || !message.trace.steps.length) {
           this.fail(message.error || (message.trace && message.trace.error) || 'Python could not produce a trace.');
           return;
         }
-        this.setTrace(message.trace);
+        if (message.trace.error && !message.trace.steps.some(step => step.event === 'line' && step.line > 0)) {
+          // Incomplete syntax has no replacement diagram. Retain the last
+          // completed image and the saved position while the learner repairs it.
+          this.fail(message.trace.error);
+          return;
+        }
+        const requestedIndex = this.resumeIndex;
+        this.setTrace(message.trace, { index: requestedIndex, reveal: document.activeElement !== this.editor });
+        // A temporary syntax/runtime error must not erase the position the
+        // learner was inspecting. A successful shorter trace clamps it.
+        if (!message.trace.error) this.resumeIndex = this.index;
+        if (this.index < requestedIndex && !message.trace.error) {
+          this.status.textContent += ' · The new trace ends before step ' + (requestedIndex + 1) + '.';
+        }
         if (message.trace.error) this.showError(message.trace.error);
       } else if (message.type === 'error') {
-        this.fail(message.error || 'Python could not load. Choose Trace Python to retry.');
+        this.fail(message.error || 'Python could not load. Edit the code to retry.');
       }
     }
 
@@ -314,30 +368,38 @@
     fail(message) {
       this.cancelRun();
       this.showError(message);
-      this.status.textContent = 'Trace unavailable. Edit the code or try again.';
+      this.codeEditor.setPosition(0, 'Update failed');
+      this.status.textContent = 'Could not update. Edit the code to retry.' + (this.trace ? ' Showing the previous run.' : '');
+      this.renderPrint();
       this.updateControls();
     }
 
     stop(message) {
       this.cancelRun();
       this.status.textContent = message;
+      if (this.dirty && this.trace) this.status.textContent += ' Showing the previous run.';
       this.updateControls();
     }
 
     cancelRun() {
+      clearTimeout(this.editTimer);
+      this.editTimer = 0;
       clearTimeout(this.runTimer);
-      if (this.worker) this.worker.terminate();
+      if (this.worker) {
+        this.worker.onmessage = null;
+        this.worker.onerror = null;
+        this.worker.terminate();
+      }
       this.worker = null;
-      this.editor.readOnly = false;
     }
 
     renderPrint() {
       const prepared = this.editor.value.trimEnd() === this.example.code.trimEnd();
       this.printHistory.render({
         code: this.editor.value,
-        steps: this.steps,
+        steps: this.dirty ? [] : this.steps,
         labelStep: eventLabel,
-        error: this.trace && this.trace.error,
+        error: this.dirty ? (this.error.hidden ? undefined : this.error.textContent) : this.trace && this.trace.error,
         explanation: prepared ? this.example.explanation : undefined,
         variation: prepared ? this.example.variation : undefined,
         variationExplanation: prepared ? this.example.variation_explanation : undefined
@@ -416,7 +478,7 @@
   });
   window.addEventListener('pagehide', () => instances.forEach(lab => {
     lab.pause();
-    if (lab.worker) lab.stop('Run stopped when leaving the page. Choose Trace Python to retry.');
+    if (lab.worker || lab.editTimer) lab.stop('Run stopped when leaving the page. Edit the code to retry.');
   }));
   window.addEventListener('beforeprint', () => instances.forEach(lab => lab.pause()));
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => initFrom());

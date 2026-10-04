@@ -13,11 +13,9 @@ async function expectSharedReferenceArrows(lab) {
   await expect.poll(() => lab.evaluate(host => {
     const graph = host.querySelector('.orl-graph');
     const viewport = host.querySelector('[aria-label="Object reference diagram"]');
-    const cards = Array.from(graph.querySelectorAll('section[aria-label]'));
     const target = graph.querySelector('[aria-label="o1: list"]');
     const viewportBounds = viewport.getBoundingClientRect();
     const targetBounds = target.getBoundingClientRect();
-    const cardsRight = Math.max(...cards.map(card => card.getBoundingClientRect().right));
     const nearBoundary = (point, box) => {
       const within = point.x >= box.left - 5 && point.x <= box.right + 5
         && point.y >= box.top - 5 && point.y <= box.bottom + 5;
@@ -46,7 +44,6 @@ async function expectSharedReferenceArrows(lab) {
       }
       if (!nearBoundary(start, source.getBoundingClientRect())) failures.push(entry + ': source is disconnected');
       if (!nearBoundary(end, targetBounds)) failures.push(entry + ': target o1 is disconnected');
-      if (routeBounds.right <= cardsRight + 3) failures.push(entry + ': no exterior routing space');
       if (routeBounds.right > viewportBounds.right + 1 || routeBounds.left < viewportBounds.left - 1) {
         failures.push(entry + ': arrow is clipped horizontally');
       }
@@ -58,7 +55,7 @@ async function expectSharedReferenceArrows(lab) {
       }
     }
     return failures;
-  }), { message: 'both list slots must have connected arrows in a visible reserved gutter' }).toEqual([]);
+  }), { message: 'both list slots must have connected, unclipped arrows' }).toEqual([]);
 }
 
 test('the documented standalone embed draws shared references through replay and narrow theme changes', async ({ page }) => {

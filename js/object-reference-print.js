@@ -1,7 +1,6 @@
 /** Printable object-reference histories, using the screen graph renderer.
- * Hosts keep textual snapshots until print layout is visible. Each static
- * graph is measured synchronously and then released; no graph observers or
- * animation frames remain attached to the printable history.
+ * Histories prepare layouts ahead of printing. A complete synchronous channel
+ * layout covers immediate native printing while compact layouts are calculated.
  */
 (function () {
   'use strict';
@@ -23,43 +22,32 @@
   }
 
   function prepareAll() {
-    histories.forEach(history => history.prepare());
+    return Promise.all(Array.from(histories.values(), history => history.prepare()));
   }
-
-  // One size observer serves all histories; static snapshot graphs have none.
-  // Height changes also catch text spacing or font changes at a fixed width.
-  const sizes = new ResizeObserver(entries => {
-    entries.forEach(entry => {
-      const history = histories.get(entry.target);
-      if (history && (Math.abs(entry.contentRect.width - history.width) > 0.5
-          || Math.abs(entry.contentRect.height - history.height) > 0.5)) history.prepare();
-    });
-  });
 
   class PrintHistory {
     constructor(host) {
       this.host = host;
       this.id = 'orl-print-history-' + (++historyNumber);
       this.snapshots = [];
-      this.width = 0;
-      this.height = 0;
       histories.set(host, this);
-      sizes.observe(host);
     }
 
     /** Replace the history with already-filtered playback steps. labelStep(step)
      * supplies the same execution-position wording as the interactive view.
      * Prepared guidance is optional; callers omit it for edited programs. */
     render({ code, steps, labelStep, explanation, variation, variationExplanation, error }) {
-      this.width = 0;
-      this.height = 0;
+      this.snapshots.forEach(snapshot => snapshot.graph?.destroy());
       const source = element('pre', 'orl-print-source');
       source.append(window.ObjectReferenceCode.highlight(code));
       this.host.replaceChildren(element('p', 'orl-panel-title', 'Python code'), source);
       const lines = code.split('\n');
+      // Do not build thousands of hidden cards for a long edited trace.
+      // Native printing still prepares every requested state synchronously.
+      this.prewarm = steps.reduce((count, step) => count + step.objects.length, 0) <= 300;
       this.snapshots = steps.map((step, index) => this.appendSnapshot(step, index, lines, labelStep));
       if (!steps.length) {
-        this.host.append(element('p', '', 'No recorded execution. Trace this code before printing to include its reference states.'));
+        this.host.append(element('p', '', 'No recorded execution for this edit yet. Wait for the automatic update before printing its reference states.'));
       }
       if (error) this.host.append(element('p', 'orl-error', error));
       if (explanation) this.host.append(element('p', '', explanation));
@@ -93,39 +81,27 @@
       block.append(diagram, element('pre', 'orl-print-description', description));
       if (step.output) block.append(element('pre', 'orl-output', 'Output:\n' + step.output));
       this.host.append(block);
-      return { step, block, graphHost };
+      return { step, block, graphHost, graph: null };
     }
 
-    /** Synchronous: beforeprint cannot await animation frames. Calling again
-     * safely rebuilds measured paths after a paper-size or font-size change. */
+    /** Ready layouts are reused by native beforeprint; callers that initiate
+     * printing programmatically can await prepareAll() for the compact view. */
     prepare() {
-      if (!printIsVisible() || !this.host.isConnected) return;
-      const width = this.host.getBoundingClientRect().width;
-      if (!width) return;
-      this.snapshots.forEach(({ step, block, graphHost }, index) => {
-        graphHost.replaceChildren();
-        const graph = new window.ObjectReferenceGraph.ReferenceGraph(graphHost, { interactive: false });
-        try {
-          graph.reset();
-          // Preserve the same changed-object signals as sequential playback.
-          if (index) graph.render(this.snapshots[index - 1].step);
-          graph.render(step);
-          block.classList.add('has-visual');
-          graph.layout();
-        } finally {
-          graph.destroy();
+      if (!this.host.isConnected || (!this.prewarm && !printIsVisible())) return Promise.resolve();
+      const pending = this.snapshots.map(snapshot => {
+        if (!snapshot.graph) {
+          snapshot.graph = new window.ObjectReferenceGraph.ReferenceGraph(snapshot.graphHost, { interactive: false });
+          snapshot.block.classList.add('has-visual');
+          return snapshot.graph.render(snapshot.step);
         }
+        return snapshot.graph.layout();
       });
-      // Capture the resulting size, not the pre-layout height, so the observer
-      // does not redraw in response to this preparation's own layout changes.
-      const bounds = this.host.getBoundingClientRect();
-      this.width = bounds.width;
-      this.height = bounds.height;
+      return Promise.all(pending);
     }
 
     destroy() {
-      sizes.unobserve(this.host);
       histories.delete(this.host);
+      this.snapshots.forEach(snapshot => snapshot.graph?.destroy());
       this.snapshots = [];
     }
   }
@@ -141,5 +117,5 @@
   });
   printMedia.addEventListener('change', event => { if (event.matches) prepareAll(); });
   if (document.fonts) document.fonts.ready.then(prepareAll);
-  window.ObjectReferencePrint = { PrintHistory };
+  window.ObjectReferencePrint = { PrintHistory, prepareAll };
 }());

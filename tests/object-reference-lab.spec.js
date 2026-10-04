@@ -23,8 +23,13 @@ async function openEditor(lab) {
 async function traceCode(lab, code) {
   await (await openEditor(lab)).fill(code);
   await expect(button(lab, 'Forward')).toBeDisabled();
-  await button(lab, 'Trace Python').click();
-  await expect(button(lab, 'Forward')).toBeEnabled({ timeout: TRACE_TIMEOUT });
+
+  await expect(lab.getByRole('status')).toContainText(/Step \d+ of/, { timeout: TRACE_TIMEOUT });
+  // These graph journeys deliberately inspect the new program from its start.
+  // Automatic position restoration is covered by object-reference-auto-trace.
+  for (let step = 0; step < 100 && await button(lab, 'Back').isEnabled(); step += 1) {
+    await button(lab, 'Back').click();
+  }
   await expect(lab.getByRole('status')).toContainText(/Step 1 of \d+/);
 }
 
@@ -129,7 +134,7 @@ test.describe('Python object reference lab', () => {
     await advanceToEnd(lab);
     await expect(lab.getByLabel('Program output', { exact: true })).toHaveText('[3, 5] [8]');
 
-    await button(lab, 'Reset example').click();
+    await button(lab, 'Restore original code').click();
     await expect(lab.getByRole('textbox', { name: 'Python code', exact: true })).toBeVisible();
   });
 
@@ -143,7 +148,7 @@ test.describe('Python object reference lab', () => {
     await expect(button(lab, 'Back')).toBeDisabled();
     await expect(button(lab, 'Play')).toBeDisabled();
 
-    await button(lab, 'Reset example').click();
+    await button(lab, 'Restore original code').click();
     await expect(editor).toBeVisible();
     await expect(editor).toHaveValue(original);
     await expect(lab.getByRole('status')).toContainText(/Step 1 of \d+/);
@@ -179,7 +184,7 @@ test.describe('Python object reference lab', () => {
     await page.keyboard.press('Enter');
     await expect(answer).toBeHidden();
     await reveal.click();
-    await button(lab, 'Reset example').click();
+    await button(lab, 'Restore original code').click();
     await expect(prompt).toBeVisible();
     await expect(answer, 'reset returns the suggested-change feedback to its closed state').toBeHidden();
 
@@ -212,7 +217,7 @@ test.describe('Python object reference lab', () => {
     await page.addScriptTag({ url: '/js/object-reference-lab.js' });
     const lab = page.getByRole('region', { name: 'Object reference lab: Minimal example', exact: true });
     await expect(lab.getByRole('textbox', { name: 'Python code', exact: true })).toHaveValue('items = [1]');
-    await expect(button(lab, 'Trace Python')).toBeEnabled();
+    await expect(lab.getByRole('button', { name: 'Trace Python', exact: true })).toHaveCount(0);
     await expect(lab.getByText('Try one change', { exact: true })).toHaveCount(0);
     await expect(lab.getByText('Check the suggested change', { exact: true })).toHaveCount(0);
     await expect(lab.getByRole('alert')).toBeHidden();
@@ -271,7 +276,7 @@ test.describe('Python object reference lab', () => {
     await expect(diagram).not.toContainText('function');
   });
 
-  test('primitive values stay in place without separate object cards', async ({ page }) => {
+  test('primitive values have distinct object cards', async ({ page }) => {
     test.setTimeout(TRACE_TIMEOUT + 30_000);
     const lab = await openLab(page);
     await traceCode(lab, 'destination = "Oslo"\nqueued = destination + " via Paris"\ndestination = "Rome"');
@@ -279,7 +284,7 @@ test.describe('Python object reference lab', () => {
     const diagram = lab.getByRole('region', { name: 'Object reference diagram', exact: true });
     await expect(diagram).toContainText("'Oslo via Paris'");
     await expect(diagram).toContainText("'Rome'");
-    await expect(diagram.locator('.orl-object')).toHaveCount(0);
+    await expect(diagram.locator('.orl-object')).toHaveCount(2);
   });
 
   test('every list slot has a routed arrow to its object after replacement and resize', async ({ page }) => {
@@ -296,7 +301,7 @@ test.describe('Python object reference lab', () => {
       await expect.poll(() => diagram.evaluate(region => {
         const buttons = [...region.querySelectorAll('[data-reference-target]')];
         const paths = [...region.querySelectorAll('.orl-reference-edge')];
-        if (buttons.length !== 2 || paths.length !== buttons.length) return false;
+        if (buttons.length !== 5 || paths.length !== buttons.length) return false;
         const cards = [...region.querySelectorAll('.orl-object-row')].map(row => ({
           id: row.dataset.objectId, rect: row.querySelector('.orl-object').getBoundingClientRect()
         }));
@@ -310,7 +315,7 @@ test.describe('Python object reference lab', () => {
           const first = path.getPointAtLength(0).matrixTransform(matrix);
           const last = path.getPointAtLength(length).matrixTransform(matrix);
           if (Math.abs(first.x - source.right) > 2 || Math.abs(first.y - (source.top + source.height / 2)) > 2
-              || Math.abs(last.x - target.right - 2) > 2 || last.y < target.top || last.y > target.bottom) return false;
+              || last.x < target.left - 3 || last.x > target.right + 3 || last.y < target.top - 3 || last.y > target.bottom + 3) return false;
           for (let distance = 0; distance <= length; distance += 2) {
             const point = path.getPointAtLength(distance).matrixTransform(matrix);
             if (cards.some(card => card.id !== path.dataset.sourceObject && card.id !== path.dataset.targetObject
@@ -337,9 +342,9 @@ test.describe('Python object reference lab', () => {
       test.setTimeout(TRACE_TIMEOUT + 30_000);
       const lab = await openLab(page);
       await (await openEditor(lab)).fill(example.code);
-      await button(lab, 'Trace Python').click();
+
       await expect(lab.getByRole('alert')).toContainText(example.error, { timeout: TRACE_TIMEOUT });
-      await expect(button(lab, 'Stop')).toBeDisabled();
+      await expect(button(lab, 'Stop')).toHaveCount(0);
 
       await traceCode(lab, 'fixed = [7]\nprint(fixed)');
       await advanceToEnd(lab);
@@ -348,17 +353,14 @@ test.describe('Python object reference lab', () => {
     });
   }
 
-  test('Stop cancels running Python and the next run starts cleanly', async ({ page }) => {
+  test('editing replaces running Python and the next run starts cleanly', async ({ page }) => {
     test.setTimeout(TRACE_TIMEOUT + 30_000);
     const lab = await openLab(page);
     await traceCode(lab, 'ready = [1]');
     await (await openEditor(lab)).fill('total = sum(range(10**12))');
-    await button(lab, 'Trace Python').click();
-    await expect(button(lab, 'Stop')).toBeEnabled();
+
     await expect(lab.getByRole('status')).toContainText('Recording execution', { timeout: TRACE_TIMEOUT });
-    await button(lab, 'Stop').click();
-    await expect(lab.getByRole('status')).toContainText(/stop|cancel/i);
-    await expect(button(lab, 'Stop')).toBeDisabled();
+    await expect(button(lab, 'Stop')).toHaveCount(0);
 
     await traceCode(lab, 'result = [6]\nprint(result)');
     await advanceToEnd(lab);

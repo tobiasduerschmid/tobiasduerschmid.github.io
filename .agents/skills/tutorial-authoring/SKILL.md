@@ -1468,8 +1468,8 @@ independent task. Use this teaching sequence:
 2. Give one inspection goal, such as following both list slots or comparing the
    caller's name with the local parameter after assignment. Use **Forward** and
    **Back** to compare specific states. Clicking through is not the learning goal.
-3. Offer one controlled code change and ask for a new prediction before **Trace
-   Python**. Put that prompt in `variation`, separately from the prepared answer.
+3. Offer one controlled code change and ask for a new prediction **before editing**
+   because edits retrace automatically. Put that prompt in `variation`, separately from the prepared answer.
    Put the changed case's reason and output in `variation_explanation`, revealed
    only through **Check the suggested change**. The visible **Try one change**
    prompt stays available while editing; reset closes the answer disclosure.
@@ -1548,8 +1548,7 @@ remain covered by runtime tests. The comprehension lesson uses a short
 prediction contrasting repetition, repeated evaluation of a name, and repeated
 list construction rather than another widget.
 
-Both editor presentations use the same tracer and support forward/backward
-playback.
+The unified editor supports automatic retracing and forward/backward playback.
 
 The lab shows recorded scopes, objects, and references alongside editable
 Python. **Forward**, **Back**, and **Play** use one filtered timeline without executing
@@ -1559,36 +1558,77 @@ steps consecutively. Raw traces retain every recorded event. Skip ordinary
 function/class headers and class-entry/exit scaffolding, but keep executable
 class-body assignments, called bodies, function returns, and errors. Potentially
 effectful defaults, decorators, bases, and annotations stay visible conservatively.
-Definitions still execute; skipping a playback stop does not bypass Python code. **Trace Python** records the edited code in a separate disposable
-Pyodide worker; it does not execute the tutorial editor's files or change the
+Definitions still execute; skipping a playback stop does not bypass Python code.
+Edits automatically record the current code after 650 ms without further input,
+using a fresh disposable Pyodide worker; it does not execute the tutorial editor's files or change the
 tutorial's own Python interpreter. Prepared examples work without starting that
-worker. Labels describe snapshots before the next line or at call/return events;
+worker. There is no Trace Python button; editing is the execution trigger.
+Each update reruns
+the whole program and restores the same visible step number, clamping to the
+last available step if the successful trace is shorter. This is not execution
+continuation or source-line matching: a control-flow change can change which
+statement that step describes. Syntax/runtime errors retain the requested
+position through correction; explicit Back/Forward/Play select a new position.
+**Restart** returns to step 1 without changing the current code. **Restore original
+code** restores the prepared source and trace at step 1. There is no Stop button;
+a new edit cancels the previous run, and execution retains its time limit.
+
+Typing stays enabled during loading/execution. A new edit cancels the pending
+debounce and terminates the old worker; worker identity guards reject stale
+messages. Do not execute during IME composition. Restore original code cancels
+queued/running work. Restart during an update selects step 1 when it is ready. Dispose queued work
+as well as workers when instructions unmount or the page is left. Do not steal
+focus, selection, or editor scroll on an automatic result while it is focused.
+Labels describe snapshots before the next line or at call/return events;
 object IDs are diagram identities, not memory addresses. Collection timing is
 not represented as a guarantee. Bounded source, execution, output, and graph
 limits report incomplete traces rather than silently presenting them as complete.
 
-The compact diagram follows the lecture's individual name/reference-slot layout,
-without enclosing global/local scope panels. Primitive literals appear in place
-at names, indices, and members. Explain on first use that this is a display
-abbreviation: these values are still Python objects, and **Reference details**
-retains their identities. Do not imply separate Python value/reference semantics
-for primitives. Shared containers retain stable object labels;
-member reference buttons focus their target card. Alias arrows stay beside
-their objects; every displayed nonprimitive member/slot reference has an actual
-arrow routed through reserved space outside the stacked cards. Shared targets share a routing bus;
-independent crossings use bridge marks, including for cyclic graphs. The pure
-planner ships inside
-`js/object-reference-graph.js`; no separate routing script or global is needed.
-See `docs/object-reference-layout.md` for the layout constraints and tradeoffs.
-Function/module objects and classes without displayed data attributes are omitted
-from this visual view. The Reference details disclosure and each printed state’s
-text alternative preserve its complete graph, including primitive identities and
-scope information; they describe that state, not every skipped execution event.
+The diagram keeps individual name/reference slots beside their objects, without
+scope panels. **Every visible data identity has one card, including strings,
+numbers, Boolean values, and None.** Never inline primitive values at each use
+or merge equal literals: both hide sharing. For `t = "draft"; row = [t]`, the
+name and slot point to the same string card. Member reference buttons focus
+the target card. Function/module objects and classes without displayed data
+attributes remain omitted; Reference details retains the complete recorded state.
+
+`js/object-reference-graph.js` loads its pinned local ELK 0.12.0 API and worker;
+the ESM adapter isolates its API from Monaco’s AMD loader. No extra script tag
+is needed in embeddings. Text-sized cards and fixed member
+ports feed layered placement and orthogonal routing. Try horizontal, then narrower
+vertical layers; retain the synchronous external-channel planner for very narrow
+panes or optimizer failure. Shared targets may share stems, independent crossings
+use bridges, and cycles keep their real direction. Never shrink diagram text to
+fit. A scrollable diagram must remain keyboard accessible.
+
+Use previous positions for interactive layering, ordering, and placement. Seed
+new objects near their neighbors. Compare incremental and compact candidates
+using displacement plus a small size penalty; preserve the current orientation
+while it fits. Anchor whole scenes without moving individual cards after routing.
+Cache geometry-equivalent scenes so content-only updates and Back/Forward keep
+the same positions. Correct ports and obstacle avoidance take precedence over
+minimum movement. See `docs/object-reference-layout.md` for the research rationale,
+constraints, fallback, and verification contract.
 The resizable native textarea scrolls independently and follows the execution
 line without changing selection. `js/object-reference-code.js` owns the inert,
 aria-hidden syntax mirror and line-number gutter; the textarea remains the only
 editable/accessibility source. Native typing, selection, undo, IME, and Tab
-navigation are preserved. Editing clears the old execution marker and trace.
+navigation are preserved. Editing clears the old source marker while retaining
+the desired playback position and the previous diagram, reference details, and
+output. Status text explicitly identifies this as the previous run until the
+replacement is ready; playback controls are disabled meanwhile. Pending code
+must not print an older program’s states. Completion replaces the screen state
+and print history together.
+
+The graph rounds orthogonal bends and uses small arrowheads. Measure candidates
+in an inert, invisible container; keep the old diagram mounted until the complete
+replacement is ready. Reject stale layout results. Reuse unchanged cards and
+paths, skip identical graph states (such as output-only steps), and do not fade
+surviving objects. Position changes animate for 420 ms with attached arrow
+endpoints; another step cancels interrupted motion. Either the system or SEBook
+reduced-motion preference requires still frames. Observe preference changes and
+settle any active card/SVG transition immediately; a site override cannot enable
+animation while the OS requests reduced motion. Static print uses immediate geometry. Test actual intermediate frames as well as rest.
 Keep mirror/input font metrics identical; tokens may change color, not glyph
 width. Forced-colors mode uses plain native input text and a gutter marker.
 Syntax is a lexical aid (f-string interiors stay string-colored), not a parser.
@@ -1596,16 +1636,18 @@ Syntax is a lexical aid (f-string interiors stay string-colored), not a parser.
 Edits and playback are local to the mounted lab. They add no saved-progress
 fields, storage keys, tests, or completion credit. Ordinary tutorial files,
 assessments, and progress retain their existing behavior. The print view includes
-syntax-highlighted code and the same object cards, inline primitive values, and routed arrows for
-each visible playback state, with a text alternative. `js/object-reference-print.js`
-owns printable history and uses the shared graph renderer in static mode. Print
-geometry must be measured at the visible print width, not while the history is
-`display: none`; synchronous preparation at the print boundary includes the gutter
-remeasurement. Static snapshots do not retain per-graph observers or animation.
-Printable diagrams cap at 160mm in all print states to preserve wrapping on
-A4/Letter with ordinary margins, without scaling down text; static member-route
-SVGs anchor to the right edge. Verify actual PDF pagination as well as print
-media screenshots, because paper layout can narrow after `beforeprint`.
+syntax-highlighted code and the same object cards and routed arrows for each
+visible playback state, with a text alternative. `js/object-reference-print.js`
+owns printable history and prewarms static layouts for histories of at most 300
+object snapshots. Larger histories prepare when print is visible, avoiding a
+large hidden DOM for edited programs.
+An inert measuring container supplies real print text metrics even when the
+history is hidden. A complete synchronous channel layout covers immediate native
+Print while the compact layout is calculated. Programmatic autoprint awaits
+`ObjectReferencePrint.prepareAll()`. Print graphs have no animation and release
+their resize observers on history replacement/unmount.
+Printable diagrams cap at 160mm to preserve readable type on A4/Letter. Test
+actual PDFs, font/spacing changes, and print-media geometry, not screenshots alone.
 The dedicated tutorial print page shows this history on screen as well as paper;
 print always uses the light palette, including from a dark live session.
 

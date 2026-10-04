@@ -96,6 +96,26 @@
     return node;
   }
 
+  // Round only inside the reserved orthogonal corridor. Endpoints stay exact,
+  // and short segments limit the radius rather than cutting across a card.
+  function roundedRoute(points, offsetX = 0) {
+    const point = p => (p.x - offsetX) + ' ' + p.y;
+    let path = 'M ' + point(points[0]);
+    for (let index = 1; index < points.length - 1; index += 1) {
+      const before = points[index - 1], corner = points[index], after = points[index + 1];
+      const incoming = Math.hypot(corner.x - before.x, corner.y - before.y);
+      const outgoing = Math.hypot(after.x - corner.x, after.y - corner.y);
+      const radius = Math.min(7, incoming / 2, outgoing / 2);
+      if (!radius) { path += ' L ' + point(corner); continue; }
+      const start = { x: corner.x + (before.x - corner.x) * radius / incoming,
+        y: corner.y + (before.y - corner.y) * radius / incoming };
+      const end = { x: corner.x + (after.x - corner.x) * radius / outgoing,
+        y: corner.y + (after.y - corner.y) * radius / outgoing };
+      path += ' L ' + point(start) + ' Q ' + point(corner) + ' ' + point(end);
+    }
+    return path + ' L ' + point(points[points.length - 1]);
+  }
+
   function objectTitle(object) {
     return object.id + ' · ' + object.type;
   }
@@ -125,35 +145,338 @@
   const PRIMITIVES = new Set(['str', 'bytes', 'int', 'float', 'complex', 'bool', 'NoneType']);
   const INCIDENTAL = new Set(['function', 'builtin_function_or_method', 'method', 'module']);
 
-  /** The compact view changes presentation only; describeState retains every
-   * recorded identity, scope, and edge for the text and print alternatives. */
+  // The engine is a local, pinned asset. Embedders still load this one renderer;
+  // its dependency cannot silently disappear from an older page's script list.
+  const assetRoot = new URL('.', document.currentScript.src);
+  let enginePromise;
+  function layoutEngine() {
+    if (!enginePromise) enginePromise = import(new URL('vendor/elk/0.12.0/elk-api.mjs', assetRoot).href)
+      .then(({ default: ELK }) => new ELK({
+        workerUrl: new URL('vendor/elk/0.12.0/elk-worker.min.js', assetRoot).href,
+        algorithms: ['layered']
+      })).catch(error => { enginePromise = null; throw error; });
+    return enginePromise;
+  }
+
+  const layouts = new Map();
+  async function arrange(model) {
+    const key = JSON.stringify(model);
+    if (!layouts.has(key)) {
+      const pending = new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('Layout timed out.')), 7000);
+        layoutEngine().then(engine => engine.layout(model)).then(resolve, reject)
+          .finally(() => clearTimeout(timer));
+      });
+      layouts.set(key, pending);
+      pending.catch(() => layouts.delete(key));
+      if (layouts.size > 128) layouts.delete(layouts.keys().next().value);
+    }
+    return layouts.get(key);
+  }
+
+  function visibleObjects(step) {
+    const hidden = new Set(step.objects.filter(object => INCIDENTAL.has(object.type)).map(object => object.id));
+    step.objects.filter(object => object.type.startsWith('class ')).forEach(object => {
+      if (object.entries && !object.entries.some(entry => !hidden.has(entry.target))) hidden.add(object.id);
+    });
+    return step.objects.filter(object => !hidden.has(object.id));
+  }
+
+  function makeView(object, bindings, nodes, interactive) {
+    const row = element('div', 'orl-object-row');
+    row.dataset.objectId = object.id;
+    const aliases = element('div', 'orl-aliases');
+    bindings.forEach(({ binding, scope }) => {
+      const label = element('span', 'orl-binding');
+      label.append(element('span', 'orl-reference-name', binding.name));
+      if (scope.id !== 'global') label.append(element('span', 'orl-scope-label', '(' + scope.name + ')'));
+      const slot = element('span', 'orl-name-slot');
+      slot.setAttribute('aria-hidden', 'true');
+      label.append(slot, element('span', 'sr-only', ' refers to ' + object.id));
+      aliases.append(label);
+    });
+    const card = element('section', 'orl-object');
+    card.classList.toggle('orl-scalar', PRIMITIVES.has(object.type));
+    card.setAttribute('aria-label', object.id + ': ' + object.type);
+    if (interactive) card.tabIndex = -1;
+    const title = element('p', 'orl-object-title');
+    title.append(element('span', 'orl-object-id', object.id), element('span', 'orl-object-type', object.type));
+    card.append(title);
+    const entries = element('div', 'orl-entries');
+    (object.entries || []).forEach(entry => {
+      const target = nodes.get(entry.target);
+      if (!target) return;
+      const item = element('div', 'orl-entry has-reference');
+      item.append(element('span', 'orl-reference-name', entry.label === '__class__' ? 'class' : entry.label));
+      const follow = element(interactive ? 'button' : 'span', 'orl-reference-target', '→ ' + entry.target);
+      if (interactive) follow.type = 'button';
+      follow.dataset.referenceTarget = entry.target;
+      follow.dataset.referenceId = object.id + ':' + entry.label;
+      follow.setAttribute('aria-label', 'Follow ' + entry.label + ' to ' + entry.target + ': ' + target.type);
+      item.append(follow);
+      entries.append(item);
+    });
+    if (entries.childElementCount) card.append(entries);
+    else if (object.entries) card.append(element('p', 'orl-empty', 'Empty'));
+    if (object.value !== undefined) card.append(element('p', 'orl-value', String(object.value)));
+    if (object.note) card.append(element('p', 'orl-empty', object.note));
+    row.append(aliases, card);
+    return { row, aliases, card, signature: JSON.stringify([object, bindings.map(({ binding, scope }) => [binding, scope.id, scope.name])]) };
+  }
+
+  /** Measure an inert candidate away from the live scene. Nothing visible is
+   * removed or faded while ELK runs, and stale asynchronous results cannot win. */
+  function measureScene(host, step, interactive) {
+    const objects = visibleObjects(step);
+    const nodes = new Map(objects.map(object => [object.id, object]));
+    const bindings = new Map(objects.map(object => [object.id, []]));
+    step.scopes.forEach(scope => scope.bindings.forEach(binding => {
+      bindings.get(binding.target)?.push({ binding, scope });
+    }));
+    const stage = element('div', 'orl-measure' + (interactive ? '' : ' orl-static-measure'));
+    stage.inert = true;
+    stage.setAttribute('aria-hidden', 'true');
+    const views = new Map(objects.map(object => [object.id, makeView(object, bindings.get(object.id), nodes, interactive)]));
+    views.forEach(view => stage.append(view.row));
+    host.closest('.object-reference-lab').append(stage);
+    const children = [], edges = [];
+    views.forEach((view, id) => {
+      const bounds = view.row.getBoundingClientRect();
+      const card = view.card.getBoundingClientRect();
+      view.width = bounds.width;
+      view.height = bounds.height;
+      view.cardTop = card.top - bounds.top;
+      view.namePorts = Array.from(view.aliases.querySelectorAll('.orl-name-slot'), slot => {
+        const box = slot.getBoundingClientRect();
+        return { x: box.right - bounds.left, y: box.top + box.height / 2 - bounds.top };
+      });
+      const ports = [{ id: id + ':in', x: 0, y: view.cardTop + 18, width: 0, height: 0,
+        layoutOptions: { 'elk.port.side': 'WEST' } }];
+      view.ports = new Map();
+      view.card.querySelectorAll('[data-reference-target]').forEach(button => {
+        const rect = button.getBoundingClientRect();
+        const port = { id: button.dataset.referenceId, x: bounds.width,
+          y: rect.top + rect.height / 2 - bounds.top, width: 0, height: 0,
+          layoutOptions: { 'elk.port.side': 'EAST' } };
+        ports.push(port);
+        view.ports.set(port.id, { x: rect.right - bounds.left, y: port.y });
+        edges.push({ id: port.id, sources: [port.id], targets: [button.dataset.referenceTarget + ':in'] });
+      });
+      children.push({ id, width: bounds.width, height: bounds.height, ports,
+        layoutOptions: { 'elk.portConstraints': 'FIXED_POS' } });
+    });
+    stage.remove();
+    return { views, model: { id: 'references', children, edges, layoutOptions: {
+      'elk.algorithm': 'layered', 'elk.direction': 'RIGHT', 'elk.edgeRouting': 'ORTHOGONAL',
+      'elk.padding': '[top=14,left=14,bottom=14,right=14]',
+      'elk.spacing.nodeNode': '24', 'elk.layered.spacing.nodeNodeBetweenLayers': '36',
+      'elk.layered.spacing.edgeNodeBetweenLayers': '12', 'elk.spacing.edgeEdge': '10',
+      'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
+      'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
+      'elk.layered.mergeEdges': 'true', 'elk.randomSeed': '1'
+    } } };
+  }
+
+  function seedPositions(model, previous) {
+    if (!previous.size) return model;
+    const positions = new Map(Array.from(previous, ([id, view]) => [id, { x: view.x, y: view.y }]));
+    const known = model.children.filter(node => positions.has(node.id));
+    if (!known.length) return model;
+    const ports = new Map(model.children.flatMap(node => node.ports.map(port => [port.id, { node, port }])));
+    model.children.forEach((node, index) => {
+      if (positions.has(node.id)) return;
+      const neighbors = model.edges.flatMap(edge => {
+        const source = ports.get(edge.sources[0]), target = ports.get(edge.targets[0]);
+        if (target.node.id === node.id && positions.has(source.node.id)) {
+          const from = positions.get(source.node.id);
+          return [{ x: from.x + source.node.width + 36, y: from.y + source.port.y - target.port.y }];
+        }
+        if (source.node.id === node.id && positions.has(target.node.id)) {
+          const to = positions.get(target.node.id);
+          return [{ x: to.x - node.width - 36, y: to.y + target.port.y - source.port.y }];
+        }
+        return [];
+      });
+      positions.set(node.id, neighbors.length ? {
+        x: neighbors.reduce((sum, point) => sum + point.x, 0) / neighbors.length,
+        y: neighbors.reduce((sum, point) => sum + point.y, 0) / neighbors.length
+      } : { x: 14, y: Math.max(...Array.from(positions.values(), point => point.y)) + 100 + index });
+    });
+    return { ...model, children: model.children.map(node => {
+      const position = positions.get(node.id);
+      return { ...node, ...position, layoutOptions: { ...node.layoutOptions,
+        'elk.position': '(' + position.x + ',' + position.y + ')' } };
+    }), layoutOptions: { ...model.layoutOptions,
+      'elk.layered.layering.strategy': 'INTERACTIVE',
+      'elk.layered.crossingMinimization.strategy': 'INTERACTIVE',
+      'elk.layered.nodePlacement.strategy': 'INTERACTIVE',
+      'elk.layered.interactiveReferencePoint': 'TOP_LEFT',
+      'elk.layered.crossingMinimization.greedySwitch.type': 'OFF',
+      'elk.separateConnectedComponents': 'false'
+    } };
+  }
+
+  // ELK normalizes each result to its padding. Undo gratuitous whole-diagram
+  // translation where there is room, moving routes and nodes as one rigid scene.
+  function anchorScene(layout, previous, available) {
+    const survivors = layout.children.filter(node => previous.has(node.id));
+    if (!survivors.length) return layout;
+    const median = values => values.sort((a, b) => a - b)[Math.floor(values.length / 2)];
+    const points = layout.edges.flatMap(edge => edge.sections.flatMap(section =>
+      [section.startPoint, ...(section.bendPoints || []), section.endPoint]));
+    const minX = Math.min(...layout.children.map(node => node.x), ...points.map(point => point.x));
+    const minY = Math.min(...layout.children.map(node => node.y), ...points.map(point => point.y));
+    const dx = Math.min(Math.max(14 - minX,
+      median(survivors.map(node => previous.get(node.id).x - node.x))), Math.max(0, available - layout.width));
+    const dy = Math.max(14 - minY, median(survivors.map(node => previous.get(node.id).y - node.y)));
+    const translate = point => ({ ...point, x: point.x + dx, y: point.y + dy });
+    return { ...layout, width: layout.width + dx, height: layout.height + dy,
+      children: layout.children.map(translate), edges: layout.edges.map(edge => ({ ...edge,
+        sections: edge.sections.map(section => ({ ...section,
+          startPoint: translate(section.startPoint), endPoint: translate(section.endPoint),
+          bendPoints: section.bendPoints?.map(translate)
+        })) })) };
+  }
+
+  function placementCost(layout, previous) {
+    const survivors = layout.children.filter(node => previous.has(node.id));
+    // Existing objects are landmarks. A little spare space is preferable to
+    // moving them, but a very tall frozen arrangement should still compact.
+    const movement = survivors.reduce((sum, node) => {
+      const old = previous.get(node.id);
+      return sum + Math.hypot(node.x - old.x, node.y - old.y);
+    }, 0);
+    return movement + 0.15 * (layout.width + layout.height);
+  }
+
+  async function incrementalLayout(model, previous, available, direction) {
+    const directed = { ...model, layoutOptions: { ...model.layoutOptions, 'elk.direction': direction } };
+    const seeded = seedPositions(directed, previous);
+    if (!previous.size) return { ...await arrange(directed), kind: direction };
+    // Compare constrained placement with a compact, order-preserving alternative.
+    // Both retain ELK's obstacle-safe routes; never shift individual cards after routing.
+    const compact = { ...seeded, layoutOptions: { ...seeded.layoutOptions,
+      'elk.layered.layering.strategy': 'NETWORK_SIMPLEX',
+      'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
+      'elk.layered.crossingMinimization.semiInteractive': 'true',
+      'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX'
+    } };
+    const choices = (await Promise.all([arrange(seeded), arrange(compact)]))
+      .map(layout => ({ ...anchorScene(layout, previous, available), kind: direction }));
+    choices.sort((a, b) => Number(a.width > available + 1) - Number(b.width > available + 1)
+      || placementCost(a, previous) - placementCost(b, previous));
+    return choices[0];
+  }
+
+  // Bounded insertion sweeps reduce wire length in the narrow fallback. Ties
+  // retain trace order; this is a heuristic, never a claim of a global optimum.
+  function neighborOrder(model, previous = []) {
+    let order = model.children;
+    const byId = new Map(order.map(node => [node.id, node]));
+    const survivors = previous.filter(id => byId.has(id));
+    if (survivors.length) order = [...survivors.map(id => byId.get(id)), ...order.filter(node => !survivors.includes(node.id))];
+    const endpoints = model.edges.map(edge => [edge.sources[0].split(':')[0], edge.targets[0].split(':')[0]]);
+    const cost = nodes => {
+      let y = 0;
+      const centers = new Map(nodes.map(node => {
+        const center = y + node.height / 2;
+        y += node.height + 24;
+        return [node.id, center];
+      }));
+      return endpoints.reduce((sum, [source, target]) => sum + Math.abs(centers.get(source) - centers.get(target)), 0);
+    };
+    let best = cost(order);
+    for (let sweep = 0; sweep < 2; sweep += 1) {
+      for (const node of [...order]) {
+        if (survivors.includes(node.id)) continue;
+        const without = order.filter(item => item !== node);
+        for (let at = 0; at <= without.length; at += 1) {
+          const candidate = [...without.slice(0, at), node, ...without.slice(at)];
+          const value = cost(candidate);
+          if (value < best - 1) { order = candidate; best = value; }
+        }
+      }
+    }
+    return order;
+  }
+
+  /** Narrow layouts use the same identities/ports but a vertical reading order.
+   * The deterministic channel fallback also keeps print available if ELK fails. */
+  function stackedScene(candidate, width) {
+    let y = 14;
+    const right = Math.max(...candidate.model.children.map(node => node.width), 0) + 14;
+    const children = neighborOrder(candidate.model, candidate.previousOrder).map(node => {
+      const result = { ...node, x: right - node.width, y };
+      y += node.height + 24;
+      return result;
+    });
+    const nodes = children.map(node => ({ ...node, y: node.y + candidate.views.get(node.id).cardTop,
+      height: node.height - candidate.views.get(node.id).cardTop }));
+    const references = candidate.model.edges.map(edge => {
+      const source = children.find(node => node.ports.some(port => port.id === edge.id));
+      const port = source.ports.find(port => port.id === edge.id);
+      return { id: edge.id, source: source.id, target: edge.targets[0].slice(0, -3),
+        start: { x: source.x + source.width, y: source.y + port.y } };
+    });
+    const routing = planReferences(nodes, references);
+    return { kind: 'stacked', children, width: Math.max(width, right + routing.gutter + 14), height: y - 10,
+      edges: routing.routes.map(route => ({ id: route.id, sources: [route.id], targets: [route.target + ':in'],
+        sections: [{ startPoint: route.points[0], bendPoints: route.points.slice(1, -1), endPoint: route.points.at(-1) }] })),
+      bridges: routing.bridges };
+  }
+
+  function crossings(routes) {
+    const segments = routes.flatMap(route => route.points.slice(1).map((to, index) =>
+      ({ from: route.points[index], to, target: route.target })));
+    const bridges = new Map();
+    segments.filter(edge => Math.abs(edge.from.y - edge.to.y) < 0.01).forEach(horizontal => {
+      segments.filter(edge => Math.abs(edge.from.x - edge.to.x) < 0.01).forEach(vertical => {
+        if (horizontal.target === vertical.target) return;
+        const x = vertical.from.x, y = horizontal.from.y;
+        if (x > Math.min(horizontal.from.x, horizontal.to.x) + 6
+            && x < Math.max(horizontal.from.x, horizontal.to.x) - 6
+            && y > Math.min(vertical.from.y, vertical.to.y) + 6
+            && y < Math.max(vertical.from.y, vertical.to.y) - 6) bridges.set(x + ':' + y, { x, y });
+      });
+    });
+    return Array.from(bridges.values());
+  }
+
   class ReferenceGraph {
     constructor(host, { interactive = true } = {}) {
       this.host = host;
       this.interactive = interactive;
       this.prefix = 'orl-graph-' + (++graphNumber);
       this.objects = new Map();
-      this.previous = new Map();
-      this.previousBindings = new Map();
-      this.selected = null;
-      this.gutter = 0;
+      this.routes = new Map();
+      this.scenes = new Map();
+      this.version = 0;
       this.frame = 0;
+      this.animations = new Set();
       this.listeners = new AbortController();
-      this.referenceArrow = this.prefix + '-reference-arrow';
+      this.motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+      const syncMotion = () => {
+        if (this.reduceMotion() && (this.frame || this.animations.size)) {
+          this.finishMotion();
+          this.draw();
+        }
+      };
+      this.motionPreference.addEventListener('change', syncMotion, { signal: this.listeners.signal });
+      this.motionObserver = new MutationObserver(syncMotion);
+      this.motionObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+      this.referenceArrow = this.prefix + '-arrow';
       this.overlay = svgElement('svg', { class: 'orl-reference-edges', 'aria-hidden': 'true' });
-      this.overlay.classList.toggle('is-static', !interactive);
-      const marker = svgElement('marker', {
-        id: this.referenceArrow, viewBox: '0 0 10 10', refX: 9, refY: 5,
-        markerWidth: 6, markerHeight: 6, orient: 'auto-start-reverse'
-      });
+      const marker = svgElement('marker', { id: this.referenceArrow, viewBox: '0 0 10 10', refX: 9, refY: 5,
+        markerWidth: 5, markerHeight: 5, orient: 'auto-start-reverse' });
       marker.append(svgElement('path', { d: 'M 0 0 L 10 5 L 0 10 z' }));
       const defs = svgElement('defs', {});
       defs.append(marker);
       this.referencePaths = svgElement('g', {});
-      this.overlay.append(defs, this.referencePaths);
+      this.localPaths = svgElement('g', { class: 'orl-local-edges' });
+      this.bridges = svgElement('g', {});
+      this.overlay.append(defs, this.referencePaths, this.bridges, this.localPaths);
       this.host.append(this.overlay);
       if (interactive) {
-        this.host.removeAttribute('aria-hidden');
         this.host.addEventListener('click', event => {
           const button = event.target.closest('[data-reference-target]');
           if (button && this.host.contains(button)) this.follow(button.dataset.referenceTarget);
@@ -161,302 +484,265 @@
         this.host.addEventListener('focusin', event => {
           if (event.target.dataset.referenceId) this.highlight(event.target.dataset.referenceId);
         }, { signal: this.listeners.signal });
-        this.resizeObserver = new ResizeObserver(() => this.drawEdges());
-        this.resizeObserver.observe(host);
-      } else {
-        this.host.setAttribute('aria-hidden', 'true');
-      }
+      } else this.host.setAttribute('aria-hidden', 'true');
+      this.resize = new ResizeObserver(() => {
+        if (this.step && host.getBoundingClientRect().width) this.render(this.step);
+      });
+      this.resize.observe(host.parentElement);
     }
 
     reset() {
-      cancelAnimationFrame(this.frame);
+      this.signature = null;
+      this.step = null;
+      this.layoutKind = null;
+      this.version += 1;
+      this.finishMotion();
       this.objects.clear();
-      this.previous.clear();
-      this.previousBindings.clear();
-      this.selected = null;
-      this.gutter = 0;
-      this.host.style.setProperty('--orl-route-gutter', '0px');
+      this.routes.clear();
+      this.scenes.clear();
       this.referencePaths.replaceChildren();
+      this.localPaths.replaceChildren();
+      this.bridges.replaceChildren();
       this.host.replaceChildren(this.overlay);
+      this.host.style.removeProperty('height');
+      this.host.style.removeProperty('min-width');
     }
 
     render(step) {
-      this.nodes = new Map(step.objects.map(object => [object.id, object]));
-      // Methods and runtime namespaces distract from data sharing. A class
-      // remains visible when it actually contributes data attributes.
-      this.hidden = new Set(step.objects.filter(object => INCIDENTAL.has(object.type)).map(object => object.id));
-      step.objects.filter(object => object.type.startsWith('class ')).forEach(object => {
-        if (object.entries && !object.entries.some(entry => !this.hidden.has(entry.target))) this.hidden.add(object.id);
-      });
-      const aliases = new Map();
-      const atoms = element('div', 'orl-atoms');
-      const currentBindings = new Map();
-      step.scopes.forEach(scope => scope.bindings.forEach(binding => {
-        const target = this.nodes.get(binding.target);
-        if (!target || this.hidden.has(target.id)) return;
-        const key = scope.id + ':' + binding.name;
-        currentBindings.set(key, binding.target);
-        const label = this.bindingLabel(binding, scope, key);
-        if (PRIMITIVES.has(target.type)) {
-          label.append(element('span', 'orl-inline-arrow', '→'), this.primitive(target));
-          atoms.append(label);
-        } else {
-          const slot = element('span', 'orl-name-slot');
-          slot.setAttribute('aria-hidden', 'true');
-          label.append(slot, element('span', 'sr-only', ' refers to ' + target.id));
-          if (!aliases.has(target.id)) aliases.set(target.id, []);
-          aliases.get(target.id).push(label);
+      this.step = step;
+      const candidate = measureScene(this.host, step, this.interactive);
+      const pageWidth = this.host.parentElement.clientWidth || this.host.closest('.object-reference-lab').clientWidth;
+      const available = this.interactive ? pageWidth : Math.min(160 * 96 / 25.4, pageWidth || 160 * 96 / 25.4);
+      const geometryKey = JSON.stringify([candidate.model, Math.round(available)]);
+      const signature = JSON.stringify([geometryKey, Array.from(candidate.views, ([id, view]) => [id, view.signature])]);
+      if (this.signature === signature) return this.ready || Promise.resolve();
+      this.signature = signature;
+      const saved = this.scenes.get(geometryKey);
+      const version = ++this.version;
+      this.host.setAttribute('aria-busy', 'true');
+      if (saved) {
+        this.commit(candidate, saved, this.interactive);
+        this.host.setAttribute('aria-busy', 'false');
+        return this.ready = Promise.resolve();
+      }
+      const previous = new Map(Array.from(this.objects, ([id, view]) => [id, { x: view.x, y: view.y }]));
+      const direction = this.layoutKind === 'DOWN' ? 'DOWN' : 'RIGHT';
+      candidate.previousOrder = this.layoutKind === 'stacked'
+        ? Array.from(this.objects).sort((a, b) => a[1].y - b[1].y).map(([id]) => id) : [];
+      // A synchronous complete fallback is needed for immediate native Print.
+      // Interactive views always keep the last completed diagram while waiting.
+      if (!this.interactive) this.commit(candidate, stackedScene(candidate, available), false);
+      this.ready = (async () => {
+        let layout;
+        try {
+          layout = await incrementalLayout(candidate.model, previous, available, direction);
+          if (layout.width > available && candidate.model.children.length > 1) {
+            const alternative = await incrementalLayout(candidate.model, previous, available,
+              direction === 'RIGHT' ? 'DOWN' : 'RIGHT');
+            if (alternative.width < layout.width) layout = alternative;
+          }
+          if (layout.width > available + 1) layout = stackedScene(candidate, available);
+        } catch (error) {
+          layout = stackedScene(candidate, available);
+          // References remain usable on a failed dependency; the text view is
+          // always complete. A future render retries loading instead of caching failure.
+          if (version === this.version) this.signature = null;
         }
-      }));
-      const visible = step.objects.filter(object => !PRIMITIVES.has(object.type) && !this.hidden.has(object.id));
-      // Stable identity order avoids reordering survivors when a name moves.
-      visible.sort((left, right) => Number(left.id.slice(1)) - Number(right.id.slice(1)));
-      const live = new Set(visible.map(object => object.id));
+        if (version !== this.version) return;
+        this.scenes.set(geometryKey, layout);
+        if (this.scenes.size > 512) this.scenes.delete(this.scenes.keys().next().value);
+        this.commit(candidate, layout, this.interactive);
+        this.host.setAttribute('aria-busy', 'false');
+      })();
+      return this.ready;
+    }
+
+    commit(candidate, layout, animate) {
+      const focused = this.host.contains(document.activeElement) ? document.activeElement : null;
+      const focusIdentity = focused?.closest('[data-object-id]')?.dataset.objectId;
+      const focusReference = focused?.dataset.referenceId;
+      const before = new Map(Array.from(this.objects, ([id, view]) => [id, view.row.getBoundingClientRect()]));
+      this.finishMotion();
+      const live = new Set(layout.children.map(node => node.id));
       this.objects.forEach((view, id) => {
-        if (!live.has(id)) { view.row.remove(); this.objects.delete(id); }
+        if (!live.has(id)) { this.resize.unobserve(view.row); view.row.remove(); this.objects.delete(id); }
       });
-      this.host.querySelector('.orl-atoms')?.remove();
       this.host.querySelector('.orl-empty-state')?.remove();
-      if (atoms.childElementCount) this.host.prepend(atoms);
-      visible.forEach(object => this.renderObject(object, aliases.get(object.id) || []));
-      if (!visible.length && !atoms.childElementCount) {
-        this.host.append(element('p', 'orl-empty orl-empty-state', 'No data references to show yet.'));
-      }
-      this.previous = new Map(step.objects.map(object => [object.id, JSON.stringify(object)]));
-      this.previousBindings = currentBindings;
-      if (!live.has(this.selected)) this.selected = null;
-      cancelAnimationFrame(this.frame);
-      if (this.interactive) this.frame = requestAnimationFrame(() => this.drawEdges());
-    }
-
-    bindingLabel(binding, scope, key) {
-      const label = element('span', 'orl-binding');
-      label.append(element('span', 'orl-reference-name', binding.name));
-      if (scope.id !== 'global') label.append(element('span', 'orl-scope-label', '(' + scope.name + ')'));
-      const previous = this.previousBindings.get(key);
-      label.classList.toggle('is-changed', previous !== undefined && previous !== binding.target);
-      return label;
-    }
-
-    primitive(object) {
-      return element('span', 'orl-primitive', String(object.value));
-    }
-
-    createObject(object) {
-      const row = element('div', 'orl-object-row');
-      row.dataset.objectId = object.id;
-      const svg = svgElement('svg', { class: 'orl-local-edges', 'aria-hidden': 'true' });
-      const markerId = this.prefix + '-' + object.id + '-arrow';
-      const marker = svgElement('marker', {
-        id: markerId, viewBox: '0 0 10 10', refX: 9, refY: 5,
-        markerWidth: 6, markerHeight: 6, orient: 'auto-start-reverse'
-      });
-      marker.append(svgElement('path', { d: 'M 0 0 L 10 5 L 0 10 z', class: 'orl-arrowhead' }));
-      const defs = svgElement('defs', {});
-      defs.append(marker);
-      const paths = svgElement('g', {});
-      svg.append(defs, paths);
-      const aliases = element('div', 'orl-aliases');
-      const card = element('section', 'orl-object');
-      card.id = this.prefix + '-' + object.id;
-      if (this.interactive) card.tabIndex = -1;
-      row.append(svg, aliases, card);
-      const view = { row, aliases, card, svg, paths, markerId };
-      this.objects.set(object.id, view);
-      return view;
-    }
-
-    renderObject(object, aliases) {
-      const view = this.objects.get(object.id) || this.createObject(object);
-      this.host.append(view.row);
-      view.aliases.replaceChildren(...aliases);
-      view.row.classList.toggle('has-aliases', aliases.length > 0);
-      view.card.setAttribute('aria-label', object.id + ': ' + object.type);
-      const previous = this.previous.get(object.id);
-      const changed = previous !== undefined && previous !== JSON.stringify(object);
-      view.card.classList.toggle('is-new', previous === undefined);
-      view.card.classList.toggle('is-changed', changed);
-      view.card.classList.toggle('is-selected', this.selected === object.id);
-      const title = element('p', 'orl-object-title');
-      title.append(element('span', 'orl-object-id', object.id), element('span', 'orl-object-type', object.type));
-      if (changed) title.append(element('span', 'orl-badge', 'changed'));
-      view.card.replaceChildren(title);
-      const entries = element('div', 'orl-entries');
-      entries.classList.toggle('orl-sequence', object.type === 'list' || object.type === 'tuple');
-      (object.entries || []).forEach(entry => {
-        const target = this.nodes.get(entry.target);
-        if (!target || this.hidden.has(entry.target)) return;
-        const row = element('div', 'orl-entry');
-        row.append(element('span', 'orl-reference-name', entry.label === '__class__' ? 'class' : entry.label));
-        if (PRIMITIVES.has(target.type)) row.append(this.primitive(target));
-        else {
-          row.classList.add('has-reference');
-          const follow = element(this.interactive ? 'button' : 'span', 'orl-reference-target', '→ ' + entry.target);
-          if (this.interactive) follow.type = 'button';
-          follow.dataset.referenceTarget = entry.target;
-          follow.dataset.referenceId = object.id + ':' + entry.label;
-          follow.setAttribute('aria-label', 'Follow ' + entry.label + ' to ' + entry.target + ': ' + target.type);
-          row.append(follow);
+      // DOM order follows the diagram's rows, then left to right for keyboard use.
+      const ordered = [...layout.children].sort((a, b) => a.y - b.y || a.x - b.x);
+      ordered.forEach(node => {
+        const next = candidate.views.get(node.id);
+        let view = this.objects.get(node.id);
+        if (!view) {
+          view = next;
+          view.card.id = this.prefix + '-' + node.id;
+          this.objects.set(node.id, view);
+          this.resize.observe(view.row);
+        } else if (view.signature !== next.signature) {
+          // Preserve the card and row (including focus); replace only content
+          // whose semantic state changed. Unchanged steps touch neither.
+          view.aliases.replaceChildren(...next.aliases.childNodes);
+          view.card.replaceChildren(...next.card.childNodes);
+          view.card.className = next.card.className;
+          view.card.setAttribute('aria-label', next.card.getAttribute('aria-label'));
+          Object.assign(view, { signature: next.signature, ports: next.ports, namePorts: next.namePorts,
+            cardTop: next.cardTop, width: next.width, height: next.height });
         }
-        entries.append(row);
+        Object.assign(view, { ports: next.ports, namePorts: next.namePorts, cardTop: next.cardTop,
+          width: next.width, height: next.height });
+        view.x = node.x; view.y = node.y;
+        view.row.style.left = node.x + 'px'; view.row.style.top = node.y + 'px';
+        view.row.style.width = node.width + 'px';
+        this.host.append(view.row);
       });
-      if (entries.childElementCount) view.card.append(entries);
-      else if (object.entries) view.card.append(element('p', 'orl-empty', 'Empty'));
-      if (object.value !== undefined) view.card.append(element('p', 'orl-value', String(object.value)));
-      if (object.note) view.card.append(element('p', 'orl-empty', object.note));
-      if (this.interactive && (changed || previous === undefined) && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        view.card.animate([{ opacity: 0.55 }, { opacity: 1 }], { duration: 220 });
+      this.host.style.height = Math.max(layout.height, 64) + 'px';
+      this.host.style.minWidth = layout.width + 'px';
+      this.overlay.setAttribute('width', layout.width);
+      this.overlay.setAttribute('height', Math.max(layout.height, 64));
+      if (!live.size) this.host.append(element('p', 'orl-empty orl-empty-state', 'No data references to show yet.'));
+      this.layoutKind = layout.kind;
+      this.layoutBridges = layout.bridges;
+      const previousRoutes = this.routes;
+      this.routes = new Map(layout.edges.map(edge => {
+        const section = edge.sections[0];
+        const source = layout.children.find(node => node.ports.some(port => port.id === edge.id));
+        const local = this.objects.get(source.id).ports.get(edge.id);
+        return [edge.id, { id: edge.id, source: source.id, target: edge.targets[0].slice(0, -3),
+          points: [{ x: source.x + local.x, y: source.y + local.y }, section.startPoint,
+            ...(section.bendPoints || []), section.endPoint] }];
+      }));
+      this.syncPaths();
+      if (focused && document.activeElement !== focused) {
+        const view = this.objects.get(focusIdentity);
+        const sameReference = view && Array.from(view.card.querySelectorAll('[data-reference-id]'))
+          .find(port => port.dataset.referenceId === focusReference);
+        if (view) (sameReference || view.card).focus({ preventScroll: true });
       }
+      this.draw(1, previousRoutes);
+      if (animate && !this.reduceMotion()) {
+        this.animate(before, previousRoutes);
+      }
+      const scroll = this.host.parentElement;
+      if (layout.width > scroll.clientWidth + 1 && scroll.clientWidth) scroll.tabIndex = 0;
+      else scroll.removeAttribute('tabindex');
+    }
+
+    syncPaths() {
+      const existing = new Map(Array.from(this.referencePaths.children, path => [path.dataset.referenceId, path]));
+      existing.forEach((path, id) => { if (!this.routes.has(id)) path.remove(); });
+      this.routes.forEach(route => {
+        let path = existing.get(route.id);
+        if (!path) {
+          path = svgElement('path', { class: 'orl-reference-edge', 'data-reference-id': route.id,
+            'marker-end': 'url(#' + this.referenceArrow + ')' });
+          this.referencePaths.append(path);
+        }
+        path.dataset.sourceObject = route.source;
+        path.dataset.targetObject = route.target;
+        route.path = path;
+      });
+    }
+
+    draw(progress = 1, previousRoutes = this.routes) {
+      const bounds = this.host.getBoundingClientRect();
+      this.routes.forEach(route => {
+        const old = previousRoutes.get(route.id);
+        const points = route.points.map((point, index) => {
+          const previous = old?.points[Math.min(index, old.points.length - 1)] || point;
+          return { x: previous.x + (point.x - previous.x) * progress,
+            y: previous.y + (point.y - previous.y) * progress };
+        });
+        if (progress < 1) {
+          const source = this.objects.get(route.source), target = this.objects.get(route.target);
+          const sr = source.row.getBoundingClientRect(), tr = target.row.getBoundingClientRect();
+          const port = source.ports.get(route.id);
+          points[0] = { x: sr.left - bounds.left + port.x, y: sr.top - bounds.top + port.y };
+          points[1] = { x: sr.right - bounds.left, y: points[0].y };
+          const last = route.points.at(-1);
+          points[points.length - 1] = { x: tr.left - bounds.left + last.x - target.x,
+            y: tr.top - bounds.top + last.y - target.y };
+        }
+        route.path.setAttribute('d', roundedRoute(points));
+      });
+      this.bridges.replaceChildren();
+      if (progress === 1) (this.layoutBridges || crossings(Array.from(this.routes.values()))).forEach(({ x, y }) => {
+        this.bridges.append(svgElement('path', { class: 'orl-edge-bridge-mask', d: `M ${x - 5} ${y} H ${x + 5}` }),
+          svgElement('path', { class: 'orl-edge-bridge', d: `M ${x - 5} ${y} Q ${x} ${y - 7} ${x + 5} ${y}` }));
+      });
+      this.localPaths.replaceChildren();
+      this.objects.forEach(view => {
+        const rect = view.row.getBoundingClientRect();
+        const x = progress < 1 ? rect.left - bounds.left : view.x;
+        const y = progress < 1 ? rect.top - bounds.top : view.y;
+        view.namePorts.forEach(port => {
+          const targetX = view.width - 12;
+          this.localPaths.append(svgElement('path', { class: 'orl-edge',
+            d: roundedRoute([{ x: x + port.x, y: y + port.y }, { x: x + targetX, y: y + port.y },
+              { x: x + targetX, y: y + view.cardTop - 2 }]),
+            'marker-end': 'url(#' + this.referenceArrow + ')' }));
+        });
+      });
+    }
+
+    animate(before, previousRoutes) {
+      let moved = false;
+      this.objects.forEach((view, id) => {
+        const old = before.get(id), current = view.row.getBoundingClientRect();
+        const dx = old ? old.left - current.left : 0, dy = old ? old.top - current.top : 8;
+        if (Math.abs(dx) + Math.abs(dy) < 0.5) return;
+        moved = true;
+        const animation = view.row.animate([
+          { transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0, 0)' }
+        ], { duration: 420, easing: 'linear' });
+        this.animations.add(animation);
+      });
+      const changed = Array.from(this.routes).some(([id, route]) =>
+        JSON.stringify(route.points) !== JSON.stringify(previousRoutes.get(id)?.points));
+      if (!moved && !changed) return;
+      const started = performance.now();
+      const tick = () => {
+        if (this.reduceMotion()) { this.finishMotion(); this.draw(); return; }
+        const t = Math.min(1, (performance.now() - started) / 420);
+        this.draw(t, previousRoutes);
+        if (t < 1) this.frame = requestAnimationFrame(tick);
+        else this.finishMotion();
+      };
+      tick();
+    }
+
+    finishMotion() {
+      cancelAnimationFrame(this.frame);
+      this.frame = 0;
+      this.animations.forEach(animation => animation.cancel());
+      this.animations.clear();
+    }
+
+    reduceMotion() {
+      // Either preference is sufficient, including an OS change during playback.
+      return this.motionPreference.matches || document.documentElement.classList.contains('prm-reduce')
+        || (typeof window.__prefersReducedMotion === 'function' && window.__prefersReducedMotion());
+    }
+
+    layout() { return this.step ? this.render(this.step) : Promise.resolve(); }
+
+    highlight(referenceId) {
+      this.routes.forEach(route => route.path.classList.toggle('is-selected', route.id === referenceId));
     }
 
     follow(identity) {
       const target = this.objects.get(identity);
       if (!target) return;
-      this.selected = identity;
       this.objects.forEach((view, id) => view.card.classList.toggle('is-selected', id === identity));
-      this.referencePaths.querySelectorAll('.orl-reference-edge').forEach(path => {
-        path.classList.toggle('is-selected', path.dataset.targetObject === identity);
-      });
+      this.routes.forEach(route => route.path.classList.toggle('is-selected', route.target === identity));
       target.card.focus({ preventScroll: true });
       target.card.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
     }
 
-    /** Measure a static snapshot synchronously after its print layout is visible.
-     * Gutter reservation can change card wrapping, so remeasure until stable.
-     * Each pass can add at most one of the finite target-object routing lanes. */
-    layout() {
-      cancelAnimationFrame(this.frame);
-      if (!this.host.getBoundingClientRect().width) return;
-      for (let pass = 0; pass <= this.objects.size; pass += 1) {
-        if (this.drawEdges()) break;
-      }
-    }
-
-    drawEdges() {
-      if (!this.host.getBoundingClientRect().width) return true;
-      // Alias arrows stay local to their object; member arrows are routed in
-      // the reserved exterior gutter by drawReferences below.
-      this.objects.forEach(view => {
-        const bounds = view.row.getBoundingClientRect();
-        const card = view.card.getBoundingClientRect();
-        view.svg.setAttribute('width', bounds.width);
-        view.svg.setAttribute('height', bounds.height);
-        view.paths.replaceChildren();
-        const slots = Array.from(view.aliases.querySelectorAll('.orl-name-slot'));
-        const aliases = view.aliases.getBoundingClientRect();
-        if (slots.length && aliases.bottom <= card.top) {
-          // A shared rail stays outside the labels when aliases stack. Branches
-          // merge here instead of sending diagonal lines through other names.
-          const railX = aliases.right - bounds.left - 4;
-          const railY = (aliases.bottom + card.top) / 2 - bounds.top;
-          const targetX = card.left + card.width / 2 - bounds.left;
-          const targetY = card.top - bounds.top - 2;
-          const starts = slots.map(slot => {
-            const source = slot.getBoundingClientRect();
-            return [source.right - bounds.left, source.top + source.height / 2 - bounds.top];
-          });
-          starts.forEach(([x, y]) => view.paths.append(svgElement('path', {
-            class: 'orl-edge', d: 'M ' + x + ' ' + y + ' H ' + railX
-          })));
-          view.paths.append(svgElement('path', {
-            class: 'orl-edge',
-            d: 'M ' + railX + ' ' + Math.min(...starts.map(point => point[1]))
-              + ' V ' + railY + ' H ' + targetX + ' V ' + targetY,
-            'marker-end': 'url(#' + view.markerId + ')'
-          }));
-          return;
-        }
-        slots.forEach(slot => {
-          const source = slot.getBoundingClientRect();
-          const horizontal = source.right <= card.left;
-          const x1 = (horizontal ? source.right : source.left + source.width / 2) - bounds.left;
-          const y1 = (horizontal ? source.top + source.height / 2 : source.bottom) - bounds.top;
-          const x2 = (horizontal ? card.left - 2 : card.left + card.width / 2) - bounds.left;
-          const y2 = (horizontal ? card.top + card.height / 2 : card.top - 2) - bounds.top;
-          const middleX = (x1 + x2) / 2;
-          const middleY = (y1 + y2) / 2;
-          const curve = horizontal
-            ? [middleX, y1, middleX, y2, x2, y2]
-            : [x1, middleY, x2, middleY, x2, y2];
-          view.paths.append(svgElement('path', {
-            class: 'orl-edge', d: 'M ' + x1 + ' ' + y1 + ' C ' + curve.join(' '),
-            'marker-end': 'url(#' + view.markerId + ')'
-          }));
-        });
-      });
-      return this.drawReferences();
-    }
-
-    highlight(referenceId) {
-      this.referencePaths.querySelectorAll('.orl-reference-edge').forEach(path => {
-        path.classList.toggle('is-selected', path.dataset.referenceId === referenceId);
-      });
-    }
-
-    drawReferences() {
-      const bounds = this.host.getBoundingClientRect();
-      if (!bounds.width) return true;
-      const nodes = Array.from(this.objects, ([id, view]) => {
-        const rect = view.card.getBoundingClientRect();
-        return { id, x: rect.left - bounds.left, y: rect.top - bounds.top,
-          width: rect.width, height: rect.height };
-      });
-      const references = Array.from(this.host.querySelectorAll('[data-reference-target]'), button => {
-        const rect = button.getBoundingClientRect();
-        return { id: button.dataset.referenceId,
-          source: button.closest('.orl-object-row').dataset.objectId,
-          target: button.dataset.referenceTarget,
-          start: { x: rect.right - bounds.left, y: rect.top + rect.height / 2 - bounds.top } };
-      });
-      const routing = planReferences(nodes, references);
-      // Keep gutter width stable while stepping; a reset starts fresh.
-      if (routing.gutter > this.gutter) {
-        this.gutter = routing.gutter;
-        this.host.style.setProperty('--orl-route-gutter', this.gutter + 'px');
-        cancelAnimationFrame(this.frame);
-        if (this.interactive) this.frame = requestAnimationFrame(() => this.drawEdges());
-        return false;
-      }
-      // A print page can narrow after beforeprint without dispatching resize.
-      // Static ports are right-aligned, so their small SVG keeps a right-edge
-      // coordinate origin instead of retaining the screen viewport's width.
-      const left = this.interactive || !routing.routes.length ? 0
-        : Math.min(...routing.routes.flatMap(route => route.points.map(point => point.x))) - 2;
-      this.overlay.setAttribute('width', bounds.width - left);
-      this.overlay.setAttribute('height', bounds.height);
-      this.referencePaths.replaceChildren();
-      routing.routes.forEach(route => {
-        const path = svgElement('path', {
-          class: 'orl-reference-edge',
-          d: route.points.map((point, index) => (index ? 'L ' : 'M ') + (point.x - left) + ' ' + point.y).join(' '),
-          'marker-end': 'url(#' + this.referenceArrow + ')',
-          'data-reference-id': route.id, 'data-source-object': route.source,
-          'data-target-object': route.target
-        });
-        path.classList.toggle('is-selected', this.selected === route.target);
-        this.referencePaths.append(path);
-      });
-      routing.bridges.forEach(({ x, y }) => {
-        x -= left;
-        this.referencePaths.append(svgElement('path', {
-          class: 'orl-edge-bridge-mask', d: 'M ' + (x - 7) + ' ' + y + ' H ' + (x + 7)
-        }));
-        this.referencePaths.append(svgElement('path', {
-          class: 'orl-edge-bridge',
-          d: 'M ' + (x - 7) + ' ' + y + ' Q ' + x + ' ' + (y - 9) + ' ' + (x + 7) + ' ' + y
-        }));
-      });
-      if (this.interactive) {
-        const scroll = this.host.parentElement;
-        if (scroll.scrollWidth > scroll.clientWidth + 1) scroll.tabIndex = 0;
-        else scroll.removeAttribute('tabindex');
-      }
-      return true;
-    }
-
     destroy() {
-      cancelAnimationFrame(this.frame);
-      if (this.resizeObserver) this.resizeObserver.disconnect();
+      this.version += 1;
+      this.finishMotion();
+      this.resize.disconnect();
+      this.motionObserver.disconnect();
       this.listeners.abort();
     }
   }
