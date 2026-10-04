@@ -143,7 +143,7 @@
 
     buildStateViews() {
       this.screen.append(element('p', 'orl-legend',
-        'Each box is one object, including strings and numbers. Names and members point to these objects. Select a labeled reference to follow it. A bridge means two arrows pass without joining.'));
+        'Each box is one object, including strings and numbers. Names and members point to these objects. Glow marks changes at this step. Select a labeled reference to follow it. A bridge means two arrows pass without joining.'));
       const columns = element('div', 'orl-columns');
       this.buildEditor();
       const diagramPanel = element('div', 'orl-diagram-panel');

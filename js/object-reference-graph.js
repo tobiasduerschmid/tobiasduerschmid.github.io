@@ -116,6 +116,31 @@
     return path + ' L ' + point(points[points.length - 1]);
   }
 
+  // Match bends by distance along the line, not array index. Inserting/removing
+  // an elbow must not truncate the old shape or teleport part of the connector.
+  function interpolateRoute(from, to, progress) {
+    if (!from || progress >= 1) return to;
+    const parameterize = points => {
+      const lengths = [0];
+      points.slice(1).forEach((point, i) => lengths.push(lengths[i]
+        + Math.hypot(point.x - points[i].x, point.y - points[i].y)));
+      const total = lengths.at(-1) || 1;
+      return { points, stops: lengths.map(length => length / total) };
+    };
+    const old = parameterize(from), next = parameterize(to);
+    const sample = (route, t) => {
+      let i = 1;
+      while (i < route.stops.length - 1 && route.stops[i] < t) i += 1;
+      const a = route.points[i - 1], b = route.points[i];
+      const part = (t - route.stops[i - 1]) / (route.stops[i] - route.stops[i - 1] || 1);
+      return { x: a.x + (b.x - a.x) * part, y: a.y + (b.y - a.y) * part };
+    };
+    return [...new Set([...old.stops, ...next.stops])].sort((a, b) => a - b).map(t => {
+      const a = sample(old, t), b = sample(next, t);
+      return { x: a.x + (b.x - a.x) * progress, y: a.y + (b.y - a.y) * progress };
+    });
+  }
+
   function objectTitle(object) {
     return object.id + ' · ' + object.type;
   }
@@ -188,6 +213,7 @@
     const aliases = element('div', 'orl-aliases');
     bindings.forEach(({ binding, scope }) => {
       const label = element('span', 'orl-binding');
+      label.dataset.bindingId = JSON.stringify([scope.id, binding.name]);
       label.append(element('span', 'orl-reference-name', binding.name));
       if (scope.id !== 'global') label.append(element('span', 'orl-scope-label', '(' + scope.name + ')'));
       const slot = element('span', 'orl-name-slot');
@@ -220,8 +246,11 @@
     else if (object.entries) card.append(element('p', 'orl-empty', 'Empty'));
     if (object.value !== undefined) card.append(element('p', 'orl-value', String(object.value)));
     if (object.note) card.append(element('p', 'orl-empty', object.note));
+    // A reserved annotation line keeps change labels from resizing a card.
+    card.append(element('div', 'orl-change-status'));
     row.append(aliases, card);
-    return { row, aliases, card, signature: JSON.stringify([object, bindings.map(({ binding, scope }) => [binding, scope.id, scope.name])]) };
+    return { row, aliases, card, objectSignature: JSON.stringify(object),
+      signature: JSON.stringify([object, bindings.map(({ binding, scope }) => [binding, scope.id, scope.name])]) };
   }
 
   /** Measure an inert candidate away from the live scene. Nothing visible is
@@ -248,7 +277,8 @@
       view.cardTop = card.top - bounds.top;
       view.namePorts = Array.from(view.aliases.querySelectorAll('.orl-name-slot'), slot => {
         const box = slot.getBoundingClientRect();
-        return { x: box.right - bounds.left, y: box.top + box.height / 2 - bounds.top };
+        return { id: slot.parentElement.dataset.bindingId,
+          x: box.right - bounds.left, y: box.top + box.height / 2 - bounds.top };
       });
       const ports = [{ id: id + ':in', x: 0, y: view.cardTop + 18, width: 0, height: 0,
         layoutOptions: { 'elk.port.side': 'WEST' } }];
@@ -279,7 +309,12 @@
 
   function seedPositions(model, previous) {
     if (!previous.size) return model;
-    const positions = new Map(Array.from(previous, ([id, view]) => [id, { x: view.x, y: view.y }]));
+    // Anchor the object, not the enclosing row: adding a name above a card
+    // should consume available space above it instead of pushing the card down.
+    const positions = new Map(model.children.filter(node => previous.has(node.id)).map(node => {
+      const old = previous.get(node.id);
+      return [node.id, { x: old.x, y: old.y + old.cardTop - (node.ports[0].y - 18) }];
+    }));
     const known = model.children.filter(node => positions.has(node.id));
     if (!known.length) return model;
     const ports = new Map(model.children.flatMap(node => node.ports.map(port => [port.id, { node, port }])));
@@ -328,7 +363,10 @@
     const minY = Math.min(...layout.children.map(node => node.y), ...points.map(point => point.y));
     const dx = Math.min(Math.max(14 - minX,
       median(survivors.map(node => previous.get(node.id).x - node.x))), Math.max(0, available - layout.width));
-    const dy = Math.max(14 - minY, median(survivors.map(node => previous.get(node.id).y - node.y)));
+    const dy = Math.max(14 - minY, median(survivors.map(node => {
+      const old = previous.get(node.id);
+      return old.y + old.cardTop - node.y - (node.ports[0].y - 18);
+    })));
     const translate = point => ({ ...point, x: point.x + dx, y: point.y + dy });
     return { ...layout, width: layout.width + dx, height: layout.height + dy,
       children: layout.children.map(translate), edges: layout.edges.map(edge => ({ ...edge,
@@ -344,7 +382,7 @@
     // moving them, but a very tall frozen arrangement should still compact.
     const movement = survivors.reduce((sum, node) => {
       const old = previous.get(node.id);
-      return sum + Math.hypot(node.x - old.x, node.y - old.y);
+      return sum + Math.hypot(node.x - old.x, node.y + node.ports[0].y - 18 - old.y - old.cardTop);
     }, 0);
     return movement + 0.15 * (layout.width + layout.height);
   }
@@ -449,6 +487,7 @@
       this.prefix = 'orl-graph-' + (++graphNumber);
       this.objects = new Map();
       this.routes = new Map();
+      this.bindings = new Map();
       this.scenes = new Map();
       this.version = 0;
       this.frame = 0;
@@ -499,6 +538,7 @@
       this.finishMotion();
       this.objects.clear();
       this.routes.clear();
+      this.bindings.clear();
       this.scenes.clear();
       this.referencePaths.replaceChildren();
       this.localPaths.replaceChildren();
@@ -509,13 +549,17 @@
     }
 
     render(step) {
+      const newStep = step !== this.step;
       this.step = step;
       const candidate = measureScene(this.host, step, this.interactive);
       const pageWidth = this.host.parentElement.clientWidth || this.host.closest('.object-reference-lab').clientWidth;
       const available = this.interactive ? pageWidth : Math.min(160 * 96 / 25.4, pageWidth || 160 * 96 / 25.4);
       const geometryKey = JSON.stringify([candidate.model, Math.round(available)]);
       const signature = JSON.stringify([geometryKey, Array.from(candidate.views, ([id, view]) => [id, view.signature])]);
-      if (this.signature === signature) return this.ready || Promise.resolve();
+      if (this.signature === signature) {
+        if (newStep) this.clearChanges();
+        return this.ready || Promise.resolve();
+      }
       this.signature = signature;
       const saved = this.scenes.get(geometryKey);
       const version = ++this.version;
@@ -525,7 +569,8 @@
         this.host.setAttribute('aria-busy', 'false');
         return this.ready = Promise.resolve();
       }
-      const previous = new Map(Array.from(this.objects, ([id, view]) => [id, { x: view.x, y: view.y }]));
+      const previous = new Map(Array.from(this.objects, ([id, view]) => [id,
+        { x: view.x, y: view.y, cardTop: view.cardTop }]));
       const direction = this.layoutKind === 'DOWN' ? 'DOWN' : 'RIGHT';
       candidate.previousOrder = this.layoutKind === 'stacked'
         ? Array.from(this.objects).sort((a, b) => a[1].y - b[1].y).map(([id]) => id) : [];
@@ -561,7 +606,12 @@
       const focused = this.host.contains(document.activeElement) ? document.activeElement : null;
       const focusIdentity = focused?.closest('[data-object-id]')?.dataset.objectId;
       const focusReference = focused?.dataset.referenceId;
-      const before = new Map(Array.from(this.objects, ([id, view]) => [id, view.row.getBoundingClientRect()]));
+      const before = new Map(Array.from(this.objects, ([id, view]) => [id, view.card.getBoundingClientRect()]));
+      const previousBindings = this.bindings;
+      const bindingBounds = new Map(Array.from(previousBindings, ([id, binding]) => [id, binding.label.getBoundingClientRect()]));
+      // Capture the frame actually on screen, including an interrupted transition.
+      const previousRoutes = new Map(Array.from(this.routes, ([id, route]) => [id,
+        { ...route, points: route.renderedPoints || route.points }]));
       this.finishMotion();
       const live = new Set(layout.children.map(node => node.id));
       this.objects.forEach((view, id) => {
@@ -573,6 +623,7 @@
       ordered.forEach(node => {
         const next = candidate.views.get(node.id);
         let view = this.objects.get(node.id);
+        const change = !view ? 'Added' : view.objectSignature !== next.objectSignature ? 'Changed' : '';
         if (!view) {
           view = next;
           view.card.id = this.prefix + '-' + node.id;
@@ -585,7 +636,7 @@
           view.card.replaceChildren(...next.card.childNodes);
           view.card.className = next.card.className;
           view.card.setAttribute('aria-label', next.card.getAttribute('aria-label'));
-          Object.assign(view, { signature: next.signature, ports: next.ports, namePorts: next.namePorts,
+          Object.assign(view, { signature: next.signature, objectSignature: next.objectSignature, ports: next.ports, namePorts: next.namePorts,
             cardTop: next.cardTop, width: next.width, height: next.height });
         }
         Object.assign(view, { ports: next.ports, namePorts: next.namePorts, cardTop: next.cardTop,
@@ -593,6 +644,7 @@
         view.x = node.x; view.y = node.y;
         view.row.style.left = node.x + 'px'; view.row.style.top = node.y + 'px';
         view.row.style.width = node.width + 'px';
+        this.markChange(view.card, this.interactive ? change : '');
         this.host.append(view.row);
       });
       this.host.style.height = Math.max(layout.height, 64) + 'px';
@@ -602,7 +654,6 @@
       if (!live.size) this.host.append(element('p', 'orl-empty orl-empty-state', 'No data references to show yet.'));
       this.layoutKind = layout.kind;
       this.layoutBridges = layout.bridges;
-      const previousRoutes = this.routes;
       this.routes = new Map(layout.edges.map(edge => {
         const section = edge.sections[0];
         const source = layout.children.find(node => node.ports.some(port => port.id === edge.id));
@@ -612,15 +663,23 @@
             ...(section.bendPoints || []), section.endPoint] }];
       }));
       this.syncPaths();
+      this.routes.forEach(route => {
+        const old = previousRoutes.get(route.id);
+        const changed = this.interactive && (!old || old.target !== route.target);
+        route.path.classList.toggle('is-updated', changed);
+        const port = this.objects.get(route.source).card.querySelector('[data-reference-id="' + CSS.escape(route.id) + '"]');
+        port.classList.toggle('is-updated', changed);
+      });
+      this.syncBindings(previousBindings);
       if (focused && document.activeElement !== focused) {
         const view = this.objects.get(focusIdentity);
         const sameReference = view && Array.from(view.card.querySelectorAll('[data-reference-id]'))
           .find(port => port.dataset.referenceId === focusReference);
         if (view) (sameReference || view.card).focus({ preventScroll: true });
       }
-      this.draw(1, previousRoutes);
+      this.draw(1, previousRoutes, previousBindings);
       if (animate && !this.reduceMotion()) {
-        this.animate(before, previousRoutes);
+        this.animate(before, previousRoutes, bindingBounds, previousBindings);
       }
       const scroll = this.host.parentElement;
       if (layout.width > scroll.clientWidth + 1 && scroll.clientWidth) scroll.tabIndex = 0;
@@ -643,25 +702,63 @@
       });
     }
 
-    draw(progress = 1, previousRoutes = this.routes) {
+    syncBindings(previous) {
+      this.bindings = new Map();
+      this.objects.forEach((view, target) => {
+        view.namePorts.forEach(port => {
+          const replacement = Array.from(view.aliases.children).find(label => label.dataset.bindingId === port.id);
+          const old = previous.get(port.id);
+          const label = old?.label || replacement;
+          if (label !== replacement) {
+            label.replaceChildren(...replacement.childNodes);
+            replacement.replaceWith(label);
+          }
+          const path = old?.path || svgElement('path', { class: 'orl-edge orl-binding-edge',
+            'data-binding-id': port.id, 'marker-end': 'url(#' + this.referenceArrow + ')' });
+          path.dataset.targetObject = target;
+          const change = this.interactive ? (!old ? 'Added' : old.target !== target ? 'Changed' : '') : '';
+          this.markChange(label, change);
+          label.title = change ? change + ' reference' : '';
+          path.classList.toggle('is-updated', Boolean(change));
+          this.localPaths.append(path);
+          this.bindings.set(port.id, { label, path, target, port });
+        });
+      });
+      previous.forEach((binding, id) => { if (!this.bindings.has(id)) binding.path.remove(); });
+    }
+
+    markChange(node, change) {
+      node.classList.toggle('is-updated', Boolean(change));
+      node.dataset.change = change.toLowerCase();
+      const status = node.querySelector('.orl-change-status');
+      if (status) {
+        status.replaceChildren();
+        if (change) status.append(element('span', 'orl-badge', change));
+      }
+    }
+
+    clearChanges() {
+      this.objects.forEach(view => this.markChange(view.card, ''));
+      this.bindings.forEach(binding => { this.markChange(binding.label, ''); binding.label.title = ''; });
+      this.host.querySelectorAll('.is-updated').forEach(node => node.classList.remove('is-updated'));
+    }
+
+    draw(progress = 1, previousRoutes = this.routes, previousBindings = this.bindings) {
       const bounds = this.host.getBoundingClientRect();
       this.routes.forEach(route => {
         const old = previousRoutes.get(route.id);
-        const points = route.points.map((point, index) => {
-          const previous = old?.points[Math.min(index, old.points.length - 1)] || point;
-          return { x: previous.x + (point.x - previous.x) * progress,
-            y: previous.y + (point.y - previous.y) * progress };
-        });
+        const points = interpolateRoute(old?.points, route.points, progress).map(point => ({ ...point }));
         if (progress < 1) {
           const source = this.objects.get(route.source), target = this.objects.get(route.target);
-          const sr = source.row.getBoundingClientRect(), tr = target.row.getBoundingClientRect();
+          const sr = source.card.getBoundingClientRect(), tr = target.card.getBoundingClientRect();
           const port = source.ports.get(route.id);
-          points[0] = { x: sr.left - bounds.left + port.x, y: sr.top - bounds.top + port.y };
+          points[0] = { x: sr.left - bounds.left + port.x, y: sr.top - bounds.top + port.y - source.cardTop };
           points[1] = { x: sr.right - bounds.left, y: points[0].y };
           const last = route.points.at(-1);
           points[points.length - 1] = { x: tr.left - bounds.left + last.x - target.x,
-            y: tr.top - bounds.top + last.y - target.y };
+            y: tr.top - bounds.top + last.y - target.y - target.cardTop };
         }
+        route.renderedPoints = points;
         route.path.setAttribute('d', roundedRoute(points));
       });
       this.bridges.replaceChildren();
@@ -669,33 +766,39 @@
         this.bridges.append(svgElement('path', { class: 'orl-edge-bridge-mask', d: `M ${x - 5} ${y} H ${x + 5}` }),
           svgElement('path', { class: 'orl-edge-bridge', d: `M ${x - 5} ${y} Q ${x} ${y - 7} ${x + 5} ${y}` }));
       });
-      this.localPaths.replaceChildren();
-      this.objects.forEach(view => {
-        const rect = view.row.getBoundingClientRect();
-        const x = progress < 1 ? rect.left - bounds.left : view.x;
-        const y = progress < 1 ? rect.top - bounds.top : view.y;
-        view.namePorts.forEach(port => {
-          const targetX = view.width - 12;
-          this.localPaths.append(svgElement('path', { class: 'orl-edge',
-            d: roundedRoute([{ x: x + port.x, y: y + port.y }, { x: x + targetX, y: y + port.y },
-              { x: x + targetX, y: y + view.cardTop - 2 }]),
-            'marker-end': 'url(#' + this.referenceArrow + ')' }));
-        });
+      this.bindings.forEach((binding, id) => {
+        const slot = binding.label.querySelector('.orl-name-slot').getBoundingClientRect();
+        const card = this.objects.get(binding.target).card.getBoundingClientRect();
+        const start = { x: slot.right - bounds.left, y: slot.top + slot.height / 2 - bounds.top };
+        let end = { x: card.right - bounds.left - 12, y: card.top - bounds.top - 2 };
+        const old = previousBindings.get(id);
+        // A rebound name keeps its visual identity. Its origin moves with the
+        // name; its arrowhead travels from the old landing to the new landing.
+        if (progress < 1 && old?.points && old.target !== binding.target) {
+          const from = old.points.at(-1);
+          end = { x: from.x + (end.x - from.x) * progress, y: from.y + (end.y - from.y) * progress };
+        }
+        binding.points = [start, { x: end.x, y: start.y }, end];
+        binding.path.setAttribute('d', roundedRoute(binding.points));
+        binding.path.style.opacity = old ? '1' : String(progress);
       });
     }
 
-    animate(before, previousRoutes) {
+    animate(before, previousRoutes, bindingBounds, previousBindings) {
       let moved = false;
-      this.objects.forEach((view, id) => {
-        const old = before.get(id), current = view.row.getBoundingClientRect();
+      const animateElement = (element, old) => {
+        const current = element.getBoundingClientRect();
         const dx = old ? old.left - current.left : 0, dy = old ? old.top - current.top : 8;
         if (Math.abs(dx) + Math.abs(dy) < 0.5) return;
         moved = true;
-        const animation = view.row.animate([
-          { transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0, 0)' }
+        const animation = element.animate([
+          { transform: `translate(${dx}px, ${dy}px)`, opacity: old ? 1 : 0 },
+          { transform: 'translate(0, 0)', opacity: 1 }
         ], { duration: 420, easing: 'linear' });
         this.animations.add(animation);
-      });
+      };
+      this.objects.forEach((view, id) => animateElement(view.card, before.get(id)));
+      this.bindings.forEach((binding, id) => animateElement(binding.label, bindingBounds.get(id)));
       const changed = Array.from(this.routes).some(([id, route]) =>
         JSON.stringify(route.points) !== JSON.stringify(previousRoutes.get(id)?.points));
       if (!moved && !changed) return;
@@ -703,7 +806,7 @@
       const tick = () => {
         if (this.reduceMotion()) { this.finishMotion(); this.draw(); return; }
         const t = Math.min(1, (performance.now() - started) / 420);
-        this.draw(t, previousRoutes);
+        this.draw(t, previousRoutes, previousBindings);
         if (t < 1) this.frame = requestAnimationFrame(tick);
         else this.finishMotion();
       };

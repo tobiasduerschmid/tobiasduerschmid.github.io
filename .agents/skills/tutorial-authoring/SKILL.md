@@ -1605,6 +1605,8 @@ Use previous positions for interactive layering, ordering, and placement. Seed
 new objects near their neighbors. Compare incremental and compact candidates
 using displacement plus a small size penalty; preserve the current orientation
 while it fits. Anchor whole scenes without moving individual cards after routing.
+Anchor object cards, not their enclosing name rows, so adding an alias can use
+space above its target without moving the object.
 Cache geometry-equivalent scenes so content-only updates and Back/Forward keep
 the same positions. Correct ports and obstacle avoidance take precedence over
 minimum movement. See `docs/object-reference-layout.md` for the research rationale,
@@ -1625,7 +1627,18 @@ in an inert, invisible container; keep the old diagram mounted until the complet
 replacement is ready. Reject stale layout results. Reuse unchanged cards and
 paths, skip identical graph states (such as output-only steps), and do not fade
 surviving objects. Position changes animate for 420 ms with attached arrow
-endpoints; another step cancels interrupted motion. Either the system or SEBook
+endpoints. Track names by `(scope, name)` independently of their target object;
+retain their label/path nodes across rebinding and animate pointer origins with
+the names. Animate cards independently: identical start/end card coordinates
+must not produce card motion. New elements can enter, while interrupted motion
+continues from the actual displayed frame. Match route bends by normalized arc
+length when connector shapes have different numbers of bends.
+
+Reserve a stable annotation line for screen-only Added/Changed object badges.
+Highlight changed data, new objects, and redirected/new name or member references
+separately with a static glow; adding an alias must not mark its object as changed.
+Clear cues on an unchanged next state without changing geometry. Print omits these
+transient comparison cues. Either the system or SEBook
 reduced-motion preference requires still frames. Observe preference changes and
 settle any active card/SVG transition immediately; a site override cannot enable
 animation while the OS requests reduced motion. Static print uses immediate geometry. Test actual intermediate frames as well as rest.

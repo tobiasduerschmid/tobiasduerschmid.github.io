@@ -545,10 +545,35 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
   white-space: nowrap;
 }
 
-.is-changed .orl-badge {
+.is-updated .orl-badge {
   border-color: var(--orl-highlight-text);
   background: var(--orl-highlight);
   color: var(--orl-highlight-text);
+}
+
+.orl-change-status {
+  height: calc(1.4em + 2px);
+  margin-top: 0.2em;
+  line-height: 1.4;
+  font-size: 0.9em;
+}
+
+.orl-static-measure .orl-change-status,
+.orl-print .orl-change-status { display: none; }
+
+.object-reference-lab :is(.orl-object, .orl-binding, .orl-reference-target).is-updated {
+  border-color: var(--orl-edge);
+  box-shadow: 0 0 0 2px var(--orl-highlight), 0 0 12px 2px color-mix(in srgb, var(--orl-highlight) 45%, transparent);
+}
+
+.orl-binding.is-updated { border-radius: 3px; }
+.object-reference-lab :is(.orl-reference-edge, .orl-binding-edge).is-updated {
+  stroke-width: 3;
+  filter: drop-shadow(0 0 3px var(--orl-highlight));
+}
+
+@media print {
+  .object-reference-lab .is-updated { box-shadow: none; filter: none; }
 }
 
 .object-reference-lab .orl-empty {

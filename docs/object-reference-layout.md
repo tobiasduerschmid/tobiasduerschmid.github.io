@@ -26,6 +26,8 @@ routes) back toward its previous anchor where padding and available width permit
 never move individual cards after routing. Keep the existing horizontal/vertical
 orientation while it fits. Geometry-equivalent states reuse their layout even if
 values changed; a per-lab geometry cache restores Back/Forward positions exactly.
+Object-card coordinates, rather than row origins, are the position anchors: a new
+name can occupy space above an existing card without pushing that object down.
 New layers, larger cards, and narrower viewports can still require movement.
 
 This uses ELK's [interactive node placer](https://github.com/eclipse-elk/elk/blob/master/plugins/org.eclipse.elk.alg.layered/src/org/eclipse/elk/alg/layered/p4nodes/InteractiveNodePlacer.java),
@@ -38,7 +40,20 @@ stays on screen until the replacement is ready; generation numbers discard
 stale asynchronous layouts. Unchanged graphs (including output-only steps) do
 not replace nodes, paths, or restart animation. Surviving DOM cards stay mounted;
 only changed content is replaced. Movement lasts 420 ms with attached endpoints,
-without fading the existing graph. Either the OS preference or the SEBook reduced-motion setting disables the
+without fading the existing graph. Names have stable identities `(scope, name)`
+independent of their current targets. Their DOM labels and SVG paths survive
+rebinding; animate labels separately from cards and move pointer origins with
+them. A stationary card gets no transform animation. Newly added elements enter;
+interrupted transitions resume from the actual displayed frame. Route morphing
+matches polyline bends by normalized arc length, retaining the old and new shapes
+when their bend counts differ.
+
+Screen states show Added/Changed object badges in a reserved annotation line so
+cues never change card size. Glow marks changed data, new objects, and new or
+redirected references separately. Adding a name does not mark its target object
+as mutated. Cues persist for that step, clear on a subsequent unchanged state,
+and remain static under reduced motion. Printed snapshots omit these transient
+comparison cues. Either the OS preference or the SEBook reduced-motion setting disables the
 transition. Enabling either during motion immediately settles the complete frame;
 no card interpolation, SVG interpolation, fades, or smooth scrolling remain.
 
