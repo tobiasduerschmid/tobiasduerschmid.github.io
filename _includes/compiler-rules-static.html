@@ -1,0 +1,8 @@
+{% assign rules_config = include.config %}
+<div class="compiler-lab-table-scroll" role="region" aria-label="Tokenizer rules table" tabindex="0">
+  <table class="compiler-lab-rules-table compiler-lab-rules-static">
+    <caption>Tokenizer rules</caption>
+    <thead><tr><th scope="col">Token name</th><th scope="col">Regular expression</th><th scope="col">Skip</th></tr></thead>
+    <tbody>{% for rule in rules_config.tokenRules %}<tr><td><code>{{ rule.name | escape }}</code></td><td><code>{{ rule.pattern | escape }}</code></td><td>{% if rule.skip %}Yes{% else %}No{% endif %}</td></tr>{% endfor %}</tbody>
+  </table>
+</div>

@@ -604,6 +604,11 @@ students are confused" reports.
       `run_file` containing a C++17 program with `main`. Use files for setup
       and solutions, and complete C++ harnesses for automatic checks; do not
       author shell commands or rely on a C++ compiler in the v86 VM.
+- [ ] **Compiler labs use `backend: compiler`** with three declared
+      `compiler_files` paths, explicit AST projection, and `tests[].compiler`
+      checks. Use different step directories to preserve drafts. Verify every
+      expected AST alternative, lexical/syntax counterexamples, and resource-limit
+      diagnostics; Run alone never awards completion credit. See §3.5.
 - [ ] **Progression policy is deliberate.** Self-directed review may use
       `require_tests: false` and `require_quiz: false`; verify skipped checks
       stay unpassed, including after reload and in the instructions popout.
@@ -751,7 +756,7 @@ exclude_from_index: boolean            # If true, /SEBook/tutorials hides
                                        # and any non-student-facing tutorial.
 
 # === Backend selection ===
-backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smalltalk | uml-editor | multiple
+backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smalltalk | compiler | uml-editor | multiple
                                        # default: v86
 
 # v86           — full Linux VM (shell, gcc, git, etc.). Most tutorials.
@@ -761,6 +766,11 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smallta
 #                 cross-origin isolation is required. Supports mixed cpp /
 #                 pyodide tutorials. See §4.6 for limits and §4.8 for checks.
 # pyodide       — Python in-browser, no shell; supports `debugger: true`.
+# compiler      — Regex tokenizer + EBNF parser + declarative AST projection.
+#                 Single-backend, disposable local Worker; all complete parse
+#                 trees and distinct AST alternatives within explicit bounds.
+#                 Reads the three compiler_files from Monaco, with no VM or
+#                 execution of the parsed language. See §3.5.
 # webcontainer  — Node.js + npm + dev server (StackBlitz). Needs COOP/COEP.
 # react         — React + Vite + live preview iframe + Playwright-compat.
 # prolog        — Single-backend Tau Prolog 0.3.4 worker, locally pinned under
@@ -1674,6 +1684,121 @@ print always uses the light palette, including from a dark live session.
 
 ---
 
+### 3.5 Compiler labs and reusable chapter embeds
+
+`backend: compiler` uses the ordinary tutorial editors, file autosave, Reset,
+Solution, hints, progress, and printable lesson files. It has no shell, debugger,
+setup commands, or solution commands. Each Run creates a disposable Worker;
+Stop or the four-second deadline terminates it. Run is independent of grading.
+The interactive result remains in the main tutorial; output detaching is not
+offered because the text-only output transport cannot retain the tree selector.
+Instructions and grammar/source-file popouts remain available. The tokenizer
+file uses the shared rules-table editor; its JSON model remains the autosave
+and solution format, and it does not open in a raw-code popout.
+Every tokenizer row has a leading native drag handle with an insertion marker.
+Move up/down buttons remain the keyboard, touch, and assistive-technology
+alternative. A drop moves all fields together through the existing file model;
+cancellation does not modify it. Reordering announces the new position and
+focuses the moved row's name. Preserve hidden settings and Reset/Solution sync.
+The three file tabs display **Tokenizer rules**, **Grammar (EBNF)**, and
+**Source**, keeping per-step persistence paths out of the editing controls.
+The source also has a persistent labeled textarea bound to its file model, so
+editing the grammar or tokenizer does not hide the source. Desktop compiler
+layout places instructions above the work area, with source/rules left and syntax-tree
+results right; splitter axes rotate with this layout. Smaller screens stack
+the same controls in document order. Editing an input marks existing results as
+out of date once; Run replaces the notice and the results together.
+
+Each step may select its three files (defaults are the same root filenames):
+
+```yaml
+compiler_files:
+  tokens: compilers/01/tokens.json
+  grammar: compilers/01/grammar.ebnf
+  source: compilers/01/source.txt
+tests:
+  - description: "An identifier retains its complete lexeme"
+    compiler:
+      source: "score42"
+      tokens: [{type: NAME, value: score42}]
+    hints: [{text: "Compare the first character with later characters."}]
+```
+
+The optional step field `compiler_focus: tokens` shows the token stream directly
+and omits trees for a tokenizer lesson. By default, results show one syntax-tree
+view, Previous/Next controls for distinct alternatives, and a secondary Tokens
+disclosure. Do not ask beginning learners to distinguish representations or edit
+projection policies; keep the activity on token boundaries and grammar grouping.
+
+The JSON file contains `{tokenRules, ast?, startRule?}`; grammar/source are text.
+Token rules are ordered `{name, pattern, skip?}` records. Patterns are Unicode
+JavaScript regular-expression bodies without `/` delimiters. Longest complete
+matching prefix wins (including inside alternation/lazy quantifiers); order
+breaks ties. No zero-width tokens, anchors, lookaround, word boundaries, or
+backreferences. Authors escape backslashes in the JSON file; learners enter
+raw regex bodies in the table's Regex cells. The table provides token names,
+skip flags, and add/remove/reorder controls. Supplied AST/start-rule settings stay
+under the hood; table edits preserve them and other configuration metadata.
+
+EBNF supports `name = sequence | alternative ;`, quoted token lexemes, named
+tokens/nonterminals, grouping `()`, optional `[]`, repetition `{}`, empty
+sequences, and `#`/`//` comments. All input must be consumed. Consuming direct
+and indirect left recursion is supported, including the lecture's ambiguous
+`expr = expr operator expr | IDENTIFIER | LITERAL_NUM`. Cycles that can recur
+over the same span and nullable repetition are rejected because they permit
+unbounded derivations. Alternatives enumerate all parses, not ordered choice.
+
+AST policy is explicit: `discardTokens` removes punctuation; `inlineRules`
+collapses a rule with one retained child; `foldRules: {sum: left, power: right}`
+constructs `BinaryExpression` nodes from alternating operand/operator sequences.
+The operator lexeme is `value`; ordered operands are `children`. Plain token
+leaves keep their type/value. EBNF scaffolding is flattened in parse trees;
+without projection, a grammar does not uniquely specify abstract syntax.
+
+Each `tests[].compiler` accepts optional `source` (otherwise the source file),
+`tokens` (complete ordered type/value pairs), `ast` (exactly one AST matching
+the supplied type/value/children pattern), `asts` (complete unordered set of
+patterns), or `error` (required diagnostic stage). `{}` checks full acceptance.
+Omitted AST fields are unconstrained; source spans are ignored. A syntax-error
+check cannot pass on invalid tokenizer/grammar configuration. Use one criterion
+per check with normal graduated hints. A batch snapshots all three files;
+edits, cancellation, or navigation cannot award credit to stale work.
+
+`js/compiler-lab-core.js` exposes `CompilerLabCore.compile(config)` and CommonJS
+`require`, with no DOM, tutorial, persistence, network, or source evaluation.
+It returns `tokens`, all `parseTrees`, distinct `asts`, `astParseTreeIndices`,
+first-tree aliases `parseTree`/`ast`, `ok`, `incomplete`, and `diagnostics`.
+Limits include cumulative intermediate parser storage as well as work and final
+forest size. They return `ok:false,incomplete:true` with empty tree arrays; never
+describe an exhausted search as complete. Native regex execution needs the disposable
+Worker watchdog in `js/compiler-lab-client.js`; core operation counts alone
+cannot bound it. `js/compiler-tutorial-adapter.js` owns file/check adaptation;
+`js/compiler-tutorial-editor.js` binds the rules table and persistent source
+field to the existing file models and responds to Reset/Solution changes. `js/compiler-lab-view.js` owns
+shared rule tables, connected record cards, Previous/Next tree controls,
+alternative selectors, and complete structural text. `css/compiler-lab.css` owns both
+themes, reflow, and light print presentation.
+
+Outside tutorials, load the client and view scripts plus the compiler CSS
+before `print-light.css`, then use `{% include compiler-lab.html
+config=page.compiler_lab %}` or `CompilerLabView.mount(host, config)`.
+The chapter playgrounds use `ast: 'auto'` and omit `startRule`, so replacing a
+grammar starts from its first production without retaining old rule-name
+dependencies. Auto mode compacts a complete recognized arithmetic tree; other
+structures retain all named productions and token leaves. Explicit policies
+remain supported and are still used by tutorial grading.
+`CompilerLabView.render(host, result, {focus: 'tokens'})` renders an already
+computed result in token-focused mode; omit the third argument for syntax trees.
+Standalone mounts can set `config.focus` to the same value.
+`CompilerLabView.markStale(host)` adds one update notice to existing results;
+repeated edits do not produce repeated live announcements.
+`CompilerLabView.createRulesEditor(host, settings, {onChange})` returns
+`getValue()`, `setValue(settings)`, and `destroy()`; programmatic `setValue`
+does not emit a change. Chapter tokenizer settings are initially collapsed.
+JSON markers under `[data-compiler-lab]` auto-initialize; dynamic owners call
+`destroyWithin` before replacement and `initFrom` afterward. Inline edits are
+session-only. See `docs/compiler-lab.md` for limits, examples, and lecture mapping.
+
 ## 4. Architecture map
 
 ### 4.1 Layouts
@@ -1880,6 +2005,22 @@ detached panes it opens reuse the normal `ttsync-<path>` tutorial popout
 channel.
 
 ### 4.5 JavaScript runtime
+
+- **Compiler lab modules** — `compiler-lab-core.js` is the independent regex,
+  EBNF, and AST engine. `compiler-lab-worker.js` and `compiler-lab-client.js`
+  isolate and bound each request. `compiler-tutorial-adapter.js` snapshots the
+  three editor files and assesses declarative checks. `compiler-tutorial-editor.js`
+  binds the rules table and persistent source field to those file models. `compiler-lab-view.js`
+  renders tokens and every distinct tree for both tutorial and chapter hosts.
+  Compiler print views parse the authored tokenizer JSON with the
+  `compiler_settings` Liquid filter and render `compiler-rules-static.html` as
+  a read-only token table, for both starter and solution files. The
+  `compiler-file-label.html` include gives those files the same human-readable
+  names as the editor tabs, without exposing JSON paths or projection settings.
+  The chapter fallback uses the same table, so regexes and token order
+  come from the original settings instead of a second authored copy.
+  The tutorial runtime owns controls, draft persistence, and progression;
+  these modules do not duplicate those responsibilities. See §3.5.
 
 - **`js/tutorial-code.js`** — the unified tutorial runtime. Editor
   management, file I/O, test execution, autosave / restore, step
@@ -2234,17 +2375,18 @@ snapshot-input, or checksum drift.
 
 ### 4.6 Backends — what each supports
 
-| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor |
-|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|
-| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         |
-| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         |
-| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         |
-| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
-| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         |
-| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         |
-| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         |
-| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         |
-| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         |
+| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor | compiler |
+|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|----------|
+| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ |
+| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         | ❌ |
+| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ |
+| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ |
+| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ |
+| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         | ❌ |
+| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ |
+| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         | ❌ |
+| Regex / EBNF / AST checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 Mixed-backend tutorials support `v86`, `cpp`, `pyodide`, `react`, `webcontainer`,
 and `browser`. They are for author-controlled backend switches between steps,
@@ -2642,6 +2784,11 @@ under the same prefix family as other tutorial state so the global
 
 ### 4.8 Test execution
 
+- **Compiler front end** (`compiler`): `tests[].compiler` is declarative, not
+  executable assertion code. Check full acceptance, complete token streams,
+  one AST, all AST alternatives, or a specific error phase (§3.5). Every check
+  uses the frozen current rules in a fresh Worker. Shared test results, hints,
+  progression, autosave, and popout reporting remain owned by TutorialCode.
 - **bash** (v86 / webcontainer): `command:` is shell. Exit 0 = pass.
 - **C++** (`cpp`): every `tests[].command` is a complete C++17 harness
   translation unit with its own `main`, compiled against the current learner

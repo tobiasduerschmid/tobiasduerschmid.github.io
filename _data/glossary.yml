@@ -37,7 +37,17 @@
 - term: AST
   definition: Abstract Syntax Tree
   description: A tree representation of source code structure used by compilers, interpreters, linters, refactoring tools, and code-analysis systems.
-  related: [OOP]
+  related: [CST, EBNF]
+
+- term: CST
+  definition: Concrete Syntax Tree
+  description: A parse tree that records how grammar productions derive a token sequence, including punctuation and grammar helper rules that an abstract syntax tree may omit.
+  related: [AST, EBNF]
+
+- term: EBNF
+  definition: Extended Backus–Naur Form
+  description: A notation for grammar productions with sequences, alternatives, optional parts, and repetition. A grammar defines valid syntax; explicit tree-building rules determine its abstract syntax trees.
+  related: [AST, CST, RegEx]
 
 - term: CAP
   definition: Consistency, Availability, Partition tolerance

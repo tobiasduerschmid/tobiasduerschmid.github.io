@@ -1,0 +1,238 @@
+/* Shared compiler inputs/results: chapter embeds and the tutorial backend. */
+.compiler-lab {
+  --compiler-surface: #fff;
+  --compiler-subtle: #f4f7fa;
+  --compiler-text: #202830;
+  --compiler-muted: #4c5760;
+  --compiler-border: #647482;
+  --compiler-accent: #005587;
+  --compiler-error: #ab1727;
+  min-width: 0;
+  max-width: 100%;
+  margin: 1.2em 0;
+  color: var(--compiler-text);
+  background: var(--compiler-surface);
+  font-size: 1em;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  container-type: inline-size;
+}
+
+html.dark-mode .compiler-lab {
+  --compiler-surface: #1e252d;
+  --compiler-subtle: #28333e;
+  --compiler-text: #edf2f7;
+  --compiler-muted: #bccbd7;
+  --compiler-border: #9bafc0;
+  --compiler-accent: #a2cefa;
+  --compiler-error: #ffadad;
+}
+
+.compiler-lab :is(p, li, label, button, input, textarea, summary, pre, code, caption, th, td, select, dt, dd) {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.compiler-lab :is(button, input, textarea, select) { font: inherit; }
+.compiler-lab :is(code, pre, textarea) { font-family: var(--font-mono, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace); }
+.compiler-lab :is(pre, code) { white-space: pre-wrap; overflow-wrap: anywhere; }
+.compiler-lab :is(p, figure, ul) { max-width: 100%; }
+.compiler-lab-panel-title { margin: 0 0 0.5em; }
+.compiler-lab .compiler-lab-hint { color: var(--compiler-muted); margin: 0.35em 0 0.6em; }
+.compiler-lab-editors { display: grid; gap: 1em; grid-template-columns: minmax(0, 1fr); }
+.compiler-lab-workbench { display: grid; gap: 1.3em; grid-template-columns: minmax(0, 1fr); align-items: start; }
+.compiler-lab-input-panel, .compiler-lab-results { min-width: 0; }
+.compiler-lab-field { min-width: 0; }
+.compiler-lab-field > label { display: block; font-weight: 700; }
+.compiler-lab textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 6em;
+  max-width: 100%;
+  padding: 0.65em;
+  border: 1px solid var(--compiler-border);
+  border-radius: 0.3em;
+  resize: vertical;
+  background: var(--compiler-surface);
+  color: var(--compiler-text);
+  tab-size: 2;
+}
+.compiler-lab textarea[aria-invalid="true"] { border: 2px solid var(--compiler-error); }
+.compiler-lab textarea[rows="2"] { min-height: 3.8em; }
+.compiler-lab-toolbar { display: flex; flex-wrap: wrap; gap: 0.6em; margin: 1em 0; }
+.compiler-lab-input-panel > .compiler-lab-toolbar { position: sticky; bottom: 0; padding: 0.5em 0; background: var(--compiler-surface); z-index: 2; }
+.compiler-lab [hidden] { display: none; }
+.compiler-lab :is(button, select) {
+  min-height: 44px;
+  min-width: 44px;
+  max-width: 100%;
+  padding: 0.35em 0.8em;
+  border: 1px solid var(--compiler-border);
+  border-radius: 0.35em;
+  background: var(--compiler-surface);
+  color: var(--compiler-text);
+}
+.compiler-lab button { cursor: pointer; }
+.compiler-lab button:hover:not(:disabled) { background: var(--compiler-subtle); border-color: var(--compiler-accent); }
+.compiler-lab button:disabled { color: var(--compiler-muted); background: var(--compiler-subtle); cursor: not-allowed; }
+.compiler-lab .compiler-lab-run-primary,
+.compiler-tutorial .compiler-tutorial-actions .tvm-run-btn { background: var(--compiler-accent); color: var(--compiler-surface); border-color: var(--compiler-accent); font-weight: 700; }
+.compiler-lab .compiler-lab-run-primary:hover:not(:disabled),
+.compiler-tutorial .compiler-tutorial-actions .tvm-run-btn:hover:not(:disabled) { background: var(--compiler-accent); color: var(--compiler-surface); box-shadow: 0 0 0 2px var(--compiler-border); }
+.compiler-lab :is(button, input, textarea, select, summary, [tabindex]) { scroll-margin-block: 180px 2em; }
+.compiler-lab :is(button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--compiler-accent);
+  outline-offset: 3px;
+}
+.compiler-lab-status { border-inline-start: 3px solid var(--compiler-accent); padding: 0.45em 0.7em; }
+.compiler-lab-stale { padding: 0.55em 0.75em; border-inline-start: 3px solid var(--compiler-accent); background: var(--compiler-subtle); }
+.compiler-lab-diagnostics { padding: 0.6em; border: 2px solid var(--compiler-error); color: var(--compiler-error); }
+.compiler-lab-diagnostics ul { padding-inline-start: 1.25em; }
+.compiler-lab-result { margin: 1em 0 0; container-type: normal; }
+.compiler-tutorial .tvm-output-container {
+  min-width: 0;
+  font-family: inherit;
+  font-size: max(1em, 16px);
+}
+.compiler-tutorial .tvm-output-pre { font-size: inherit; }
+.compiler-tutorial .tvm-output-pre:empty { display: none; }
+.compiler-tutorial-results { min-width: 0; max-width: 100%; }
+.compiler-tutorial-results .compiler-lab-tree-figure { margin-block: 0.5em; }
+.compiler-lab-selection-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; padding: 0; margin: -1px; border: 0; }
+.compiler-tutorial .compiler-tutorial-source { flex: 0 0 auto; margin: 0; padding: 0.7em 1em; font-size: max(1em, 16px); }
+.compiler-tutorial-source > label { display: block; font-weight: 600; }
+.compiler-tutorial .compiler-tutorial-source textarea { min-height: 3.4em; padding-block: 0.35em; line-height: 1.4; }
+.compiler-tutorial-actions { display: flex; flex-wrap: wrap; gap: 0.5em; margin-top: 0.5em; }
+.compiler-tutorial-rules { flex: 1; min-height: 0; overflow: auto; padding: 1em; font-size: max(1em, 16px); }
+.compiler-tutorial-rules[hidden], .compiler-tutorial .tvm-editor-container[hidden] { display: none; }
+.compiler-lab .compiler-lab-rules-editor { margin: 0; container-type: normal; }
+.compiler-lab .compiler-lab-rules-disclosure {
+  margin: 0 0 1em;
+  padding: 0.65em;
+  border: 1px solid var(--compiler-border);
+  border-radius: 0.4em;
+  background: var(--compiler-surface);
+  box-shadow: none;
+}
+.compiler-lab .compiler-lab-rules-disclosure > summary { min-height: 44px; padding: 0.4em 0; color: var(--compiler-accent); cursor: pointer; font-weight: 600; }
+.compiler-lab .compiler-lab-rules-table { width: 100%; font: inherit; border-collapse: collapse; margin: 0.5em 0; }
+.compiler-lab-rules-table caption { text-align: start; font-weight: 600; color: var(--compiler-text); }
+.compiler-lab-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--compiler-border);
+  border-radius: 0.35em;
+  color: var(--compiler-muted);
+  background: var(--compiler-surface);
+  cursor: grab;
+  user-select: none;
+}
+.compiler-lab-drag-handle:hover { color: var(--compiler-accent); border-color: var(--compiler-accent); }
+.compiler-lab-dragging { background: var(--compiler-subtle); }
+.compiler-lab-dragging .compiler-lab-drag-handle { cursor: grabbing; }
+.compiler-lab-rules-table .compiler-lab-drop-before > td { box-shadow: inset 0 3px var(--compiler-accent); }
+.compiler-lab-rules-table .compiler-lab-drop-after > td { box-shadow: inset 0 -3px var(--compiler-accent); }
+.compiler-lab .compiler-lab-rules-table :is(th, td) { padding: 0.5em; border-bottom: 1px solid var(--compiler-border); text-align: start; }
+.compiler-lab .compiler-lab-rules-static :is(th, td):is(:first-child, :last-child),
+.compiler-lab .compiler-lab-rules-static td:first-child code { white-space: nowrap; overflow-wrap: normal; }
+.compiler-lab .compiler-lab-rules-static td:nth-child(2) { overflow-wrap: anywhere; }
+.compiler-lab input:not([type="checkbox"]) { box-sizing: border-box; width: 100%; min-width: 6em; min-height: 44px; padding: 0.3em 0.5em; border: 1px solid var(--compiler-border); border-radius: 0.3em; color: var(--compiler-text); background: var(--compiler-surface); }
+.compiler-lab-rules-table input[aria-label^="Regular expression"] { min-width: 11em; font-family: var(--font-mono, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace); }
+.compiler-lab input[type="checkbox"] { width: 24px; height: 24px; accent-color: var(--compiler-accent); }
+.compiler-lab-row-actions { display: flex; gap: 0.3em; min-width: 11.5em; }
+.compiler-lab-row-actions button { padding-inline: 0.5em; }
+.compiler-lab-table-scroll { min-width: 0; max-width: 100%; overflow-x: auto; }
+.compiler-lab .compiler-lab-tokens { width: 100%; border-collapse: collapse; margin: 0.5em 0 1em; font: inherit; }
+.compiler-lab-tokens caption { text-align: start; font-weight: 700; padding: 0.4em 0; color: var(--compiler-text); }
+.compiler-lab .compiler-lab-tokens :is(th, td) { padding: 0.45em; text-align: start; border: 1px solid var(--compiler-border); color: var(--compiler-text); }
+.compiler-lab .compiler-lab-tokens th { background: var(--compiler-subtle); }
+.compiler-lab-tree-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em; margin: 0.6em 0; }
+.compiler-lab-tree-picker select { width: auto; }
+.compiler-lab-tree-navigation { display: flex; flex-wrap: wrap; gap: 0.6em 1em; align-items: center; margin: 0.6em 0; }
+.compiler-lab-tree-navigation > :is(.compiler-lab-tree-picker, .compiler-lab-toolbar) { margin: 0; }
+.compiler-lab-tree-figure { margin: 1em 0; }
+.compiler-lab-tree-scroll { min-width: 0; max-width: 100%; overflow: auto; border: 1px solid var(--compiler-border); border-radius: 0.5em; background: var(--compiler-subtle); }
+.compiler-lab-tree-scene { position: relative; margin-inline: auto; }
+.compiler-lab-record { position: absolute; z-index: 1; width: 10.5em; box-sizing: border-box; padding: 0.55em; border: 1px solid var(--compiler-accent); border-radius: 0.45em; background: var(--compiler-surface); color: var(--compiler-text); line-height: 1.4; box-shadow: 0 2px 5px rgb(0 0 0 / 8%); }
+.compiler-lab .compiler-lab-record-fields { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.2em 0.35em; margin: 0; }
+.compiler-lab-record-fields dt { font-weight: 500; color: var(--compiler-muted); }
+.compiler-lab .compiler-lab-record-fields dd { margin: 0; padding: 0.1em 0.3em; overflow-wrap: anywhere; }
+.compiler-lab .compiler-lab-record-fields .compiler-lab-record-value { font-size: 1.35em; font-weight: 700; }
+.compiler-lab .compiler-lab-record code { padding: 0; border: 0; background: transparent; color: inherit; }
+.compiler-lab-record-children { display: flex; gap: 0.5em; margin-top: 0.4em; }
+.compiler-lab-child-port { flex: 1; min-width: 0; border: 1px solid var(--compiler-border); background: var(--compiler-subtle); text-align: center; overflow-wrap: anywhere; }
+.compiler-lab-tree-edges { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; overflow: visible; pointer-events: none; }
+.compiler-lab-tree-edge { stroke: var(--compiler-accent); stroke-width: 2; fill: none; }
+.compiler-lab-arrowhead { fill: var(--compiler-accent); stroke: none; }
+html.dark-mode .post-content .compiler-lab svg.compiler-lab-tree-edges { filter: none; }
+.compiler-lab :is(.compiler-lab-tree-text, .compiler-lab-tokens-details) { margin: 1em 0; border: 0; padding: 0; background: transparent; box-shadow: none; }
+.compiler-lab :is(.compiler-lab-tree-text, .compiler-lab-tokens-details) summary { min-height: 44px; padding: 0.4em 0; cursor: pointer; color: var(--compiler-accent); }
+.compiler-lab .compiler-lab-structure,
+.compiler-lab .compiler-lab-structure ul { margin: 0.4em 0; padding-inline-start: 1em; }
+/* Explicit parent numbers preserve meaning after indentation stops growing. */
+.compiler-lab .compiler-lab-structure ul ul ul ul { padding-inline-start: 0; list-style-position: inside; }
+.compiler-lab-print-source { display: none; }
+
+@container (min-width: 54em) {
+  .compiler-lab-workbench { grid-template-columns: minmax(20em, 0.85fr) minmax(27em, 1.15fr); }
+  .compiler-lab-workbench .compiler-lab-result { margin-top: 0; }
+}
+
+/* Compiler work keeps grammar/source beside the tree; divider axes match the runtime. */
+@media screen and (min-width: 901px) {
+  .compiler-tutorial .tvm-container { flex-direction: column; }
+  .compiler-tutorial .tvm-instructions-panel { flex: 0 0 26%; min-height: 0; }
+  .compiler-tutorial .tvm-step-content-wrap { padding-block: 0.6em; }
+  .compiler-tutorial .tvm-workspace { flex-direction: row; }
+  .compiler-tutorial .tvm-editor-panel { flex: 0 0 44%; min-width: 0; }
+  .compiler-tutorial .tvm-output-panel { flex: 1 1 0; min-width: 0; }
+  .compiler-tutorial .tvm-hsplitter { margin-inline: 0; margin-block: var(--tvm-splitter-hit-overhang); cursor: row-resize; --tvm-splitter-rail-direction: to bottom; }
+  .compiler-tutorial .tvm-hsplitter::before { left: 0; right: 0; top: 50%; bottom: auto; width: auto; height: var(--tvm-splitter-line-size); transform: translateY(-50%); }
+  .compiler-tutorial .tvm-hsplitter::after { left: 50%; top: 50%; width: var(--tvm-splitter-handle-length); height: var(--tvm-splitter-handle-thickness); }
+  .compiler-tutorial .tvm-vsplitter { margin-block: 0; margin-inline-start: 0; margin-inline-end: var(--tvm-splitter-row-before-overhang); cursor: col-resize; --tvm-splitter-rail-direction: to right; }
+  .compiler-tutorial .tvm-vsplitter::before { top: 0; bottom: 0; left: 0; right: auto; width: var(--tvm-splitter-line-size); height: auto; transform: none; }
+  .compiler-tutorial .tvm-vsplitter::after { left: calc(var(--tvm-splitter-handle-thickness) / 2); top: 50%; width: var(--tvm-splitter-handle-thickness); height: var(--tvm-splitter-handle-length); }
+}
+
+html.print-light-mode .compiler-lab,
+html.dark-mode.print-light-mode .compiler-lab {
+  --compiler-surface: #fff;
+  --compiler-subtle: #f4f7fa;
+  --compiler-text: #202830;
+  --compiler-muted: #4c5760;
+  --compiler-border: #647482;
+  --compiler-accent: #005587;
+  --compiler-error: #ab1727;
+}
+html.print-light-mode .compiler-lab :is(.compiler-lab-editors, .compiler-lab-toolbar, .compiler-lab-rules-disclosure) { display: none; }
+html.print-light-mode .compiler-lab-print-source { display: block; }
+
+@media print {
+  .compiler-lab-drag-handle { display: none; }
+  .compiler-lab,
+  html.dark-mode .compiler-lab {
+    --compiler-surface: #fff;
+    --compiler-subtle: #f4f7fa;
+    --compiler-text: #202830;
+    --compiler-muted: #4c5760;
+    --compiler-border: #647482;
+    --compiler-accent: #005587;
+    --compiler-error: #ab1727;
+    background: #fff;
+    color: #202830;
+    container-type: normal;
+  }
+  .compiler-lab :is(.compiler-lab-editors, .compiler-lab-toolbar, .compiler-lab-tree-picker, .compiler-lab-rules-disclosure) { display: none; }
+  .compiler-lab-workbench { display: block; }
+  .compiler-lab-print-source { display: block; }
+  .compiler-lab-table-scroll { overflow: visible; }
+  .compiler-lab pre { white-space: pre-wrap !important; overflow-wrap: anywhere; }
+  .compiler-lab-tree-scroll { display: none; }
+  .compiler-lab-tree-text::details-content,
+  .compiler-lab-tokens-details::details-content { display: block; content-visibility: visible; }
+  .compiler-lab-tree-text > ul { display: block; }
+}

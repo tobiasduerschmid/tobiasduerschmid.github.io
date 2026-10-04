@@ -1,0 +1,1177 @@
+# Lecture mapping and language subset: docs/compiler-lab.md.
+title: 'Compilers Lab: A Small Go Front End'
+exclude_from_index: true
+description: 'Four short Go exercises: tokenize names, resolve ambiguous expressions, add parentheses, and parse assignments. Basic regex and trees; about 10–15 minutes.'
+learning_objectives:
+  - Recognize complete identifiers with regex.
+  - Use grammar levels to control arithmetic grouping.
+  - Extend a grammar to support parenthesized expressions and assignment sequences.
+  - Distinguish lexical errors, syntax errors, and semantic questions.
+backend: compiler
+require_tests: false
+require_quiz: false
+allow_skip_steps: true
+autosave_type: files
+progress_version: 2
+run_label: Run
+steps:
+  # Pedagogy: Predict token boundaries; repair one regex.
+  - title: Identifier Boundaries
+    key: go-token-boundaries
+    instructions: |
+      ### Why this matters
+
+      A tokenizer must recognize `total2` as one name before a parser can use it.
+
+      ### 🎯 You will learn to
+
+      - Recognize a complete identifier with regex.
+
+      This **10–15 minute** lab parses a small subset of [Go expressions and assignments](https://go.dev/ref/spec). You need basic regex and trees; no installation is required. Each step asks you to repair one rule.
+
+      **Predict → Run:** Will the starter recognize `total2` as one token? Inspect the token names and matched text.
+
+      <details markdown="1">
+      <summary>After running: compare</summary>
+
+      It emits `IDENT("total")` and `NUMBER("2")`: the identifier pattern stops before digits.
+
+      </details>
+
+      **Modify:** Edit only `IDENT` in **Tokenizer rules**:
+
+      - First character: an ASCII letter or underscore.
+      - Later characters: letters, underscores, or digits.
+
+      Enter raw regex without slash delimiters. The lexer takes the longest match; row order breaks ties. Supplied rules handle numbers, keywords, punctuation, and whitespace.
+
+      Try `_x9` and `@x`, then **Test My Work**. This step checks tokens; statement structure comes later.
+    compiler_files:
+      tokens: compilers/go-v2/go-token-boundaries/tokens.json
+      grammar: compilers/go-v2/go-token-boundaries/grammar.ebnf
+      source: compilers/go-v2/go-token-boundaries/source.txt
+    files:
+      - path: compilers/go-v2/go-token-boundaries/tokens.json
+        language: json
+        content: |
+          {
+            "tokenRules": [
+              {
+                "name": "RESERVED",
+                "pattern": "break|default|func|interface|select|case|defer|go|map|struct|chan|else|goto|package|switch|const|fallthrough|if|range|type|continue|for|import|return|var"
+              },
+              {
+                "name": "IDENT",
+                "pattern": "[A-Za-z_]+"
+              },
+              {
+                "name": "NUMBER",
+                "pattern": "0|[1-9][0-9]*"
+              },
+              {
+                "name": "ASSIGN",
+                "pattern": "="
+              },
+              {
+                "name": "PLUS",
+                "pattern": "\\+"
+              },
+              {
+                "name": "MINUS",
+                "pattern": "-"
+              },
+              {
+                "name": "STAR",
+                "pattern": "\\*"
+              },
+              {
+                "name": "LPAREN",
+                "pattern": "\\("
+              },
+              {
+                "name": "RPAREN",
+                "pattern": "\\)"
+              },
+              {
+                "name": "SEMI",
+                "pattern": ";"
+              },
+              {
+                "name": "SPACE",
+                "pattern": "[ \\t\\r\\n]+",
+                "skip": true
+              }
+            ],
+            "ast": {
+              "discardTokens": [],
+              "inlineRules": [],
+              "foldRules": {}
+            },
+            "startRule": "program"
+          }
+      - path: compilers/go-v2/go-token-boundaries/grammar.ebnf
+        language: plaintext
+        content: |
+          program = { IDENT | NUMBER | ASSIGN | PLUS | MINUS | STAR | LPAREN | RPAREN | SEMI } ;
+      - path: compilers/go-v2/go-token-boundaries/source.txt
+        language: plaintext
+        content: |
+          total2 = base + 3 * 7
+    open_file: compilers/go-v2/go-token-boundaries/tokens.json
+    tests:
+      - description: Trailing digits stay in the identifier
+        compiler:
+          source: total2=base+37
+          tokens:
+            - type: IDENT
+              value: total2
+            - type: ASSIGN
+              value: '='
+            - type: IDENT
+              value: base
+            - type: PLUS
+              value: +
+            - type: NUMBER
+              value: '37'
+        hints:
+          - title: Find the token boundary
+            text: Compare the token values with the original name. At which character does recognition stop?
+            condition: 'source_matches: /"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"\[A-Za-z_\]\+"|^(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*")/'
+          - title: Trace a short name
+            text: Try x and x2 separately. What must be allowed after the first letter?
+            condition: 'source_matches: /^(?=[\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*")(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"\[A-Za-z_\]\+")(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*[0-9][^\"]*")/'
+          - title: Separate the two positions
+            text: List which characters may begin a name and which may continue it. Check your regex treats those positions differently.
+            condition: 'source_matches: /^(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"\[A-Za-z_\]\+")(?=[\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*[0-9][^\"]*")/'
+      - description: Underscores and uppercase letters remain part of a name
+        compiler:
+          source: _Total_9
+          tokens:
+            - type: IDENT
+              value: _Total_9
+        hints:
+          - title: Inspect each character class
+            text: Trace the underscore, uppercase letter, and digit separately. All belong to this identifier.
+            condition: 'source_matches: /"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"\[A-Za-z_\]\+"|^(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*")/'
+          - title: Try three smaller cases
+            text: Compare _x, X, and x9. Which case does the current IDENT rule split or reject?
+            condition: 'source_matches: /^(?=[\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*")(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"\[A-Za-z_\]\+")(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*[0-9][^\"]*")/'
+          - title: Preserve the full name
+            text: 'A later underscore is also legal: try x_9. Check both character classes and the repetition, rather than adding a separate underscore token.'
+            condition: 'source_matches: /^(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"\[A-Za-z_\]\+")(?=[\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*[0-9][^\"]*")/'
+      - description: A leading digit begins a number token
+        compiler:
+          source: 2total
+          tokens:
+            - type: NUMBER
+              value: '2'
+            - type: IDENT
+              value: total
+        hints:
+          - title: Locate the first match
+            text: Read the first token type for 2total. Compare it with the rule for starting an identifier.
+            condition: 'source_matches: /"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"\[A-Za-z_\]\+"|^(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*")/'
+          - title: Compare order and length
+            text: Trace 2 and total separately. An identifier rule must not claim the digit just because it can match a longer string.
+            condition: 'source_matches: /^(?=[\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*")(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"\[A-Za-z_\]\+")(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*[0-9][^\"]*")/'
+          - title: Constrain the first character
+            text: Digits belong in the continuation set, not the initial set. Check which part of your pattern is allowed to match at the current source position.
+            condition: 'source_matches: /^(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"\[A-Za-z_\]\+")(?=[\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*[0-9][^\"]*")/'
+      - description: An unsupported character causes a lexical error
+        compiler:
+          source: total@2
+          error: lexical
+        hints:
+          - title: Inspect the unsupported character
+            text: Find which token rule, if any, claims @. It has no role in this fragment.
+            condition: 'source_matches: /"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"\[A-Za-z_\]\+"|^(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*")/'
+          - title: Check the identifier set
+            text: Try total and total@2. The second input should stop at @ rather than absorb it into a name.
+            condition: 'source_matches: /^(?=[\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*")(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"\[A-Za-z_\]\+")(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*[0-9][^\"]*")/'
+          - title: Avoid matching arbitrary characters
+            text: Inspect any dot, negated class, or broad range in IDENT. Derive the allowed set from letters, underscores, and digits instead.
+            condition: 'source_matches: /^(?![\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"\[A-Za-z_\]\+")(?=[\s\S]*"name"\s*:\s*"IDENT"\s*,\s*"pattern"\s*:\s*"[^\"]*[0-9][^\"]*")/'
+    solution:
+      files:
+        - path: compilers/go-v2/go-token-boundaries/tokens.json
+          language: json
+          content: |
+            {
+              "tokenRules": [
+                {
+                  "name": "RESERVED",
+                  "pattern": "break|default|func|interface|select|case|defer|go|map|struct|chan|else|goto|package|switch|const|fallthrough|if|range|type|continue|for|import|return|var"
+                },
+                {
+                  "name": "IDENT",
+                  "pattern": "[A-Za-z_][A-Za-z0-9_]*"
+                },
+                {
+                  "name": "NUMBER",
+                  "pattern": "0|[1-9][0-9]*"
+                },
+                {
+                  "name": "ASSIGN",
+                  "pattern": "="
+                },
+                {
+                  "name": "PLUS",
+                  "pattern": "\\+"
+                },
+                {
+                  "name": "MINUS",
+                  "pattern": "-"
+                },
+                {
+                  "name": "STAR",
+                  "pattern": "\\*"
+                },
+                {
+                  "name": "LPAREN",
+                  "pattern": "\\("
+                },
+                {
+                  "name": "RPAREN",
+                  "pattern": "\\)"
+                },
+                {
+                  "name": "SEMI",
+                  "pattern": ";"
+                },
+                {
+                  "name": "SPACE",
+                  "pattern": "[ \\t\\r\\n]+",
+                  "skip": true
+                }
+              ],
+              "ast": {
+                "discardTokens": [],
+                "inlineRules": [],
+                "foldRules": {}
+              },
+              "startRule": "program"
+            }
+        - path: compilers/go-v2/go-token-boundaries/grammar.ebnf
+          language: plaintext
+          content: |
+            program = { IDENT | NUMBER | ASSIGN | PLUS | MINUS | STAR | LPAREN | RPAREN | SEMI } ;
+        - path: compilers/go-v2/go-token-boundaries/source.txt
+          language: plaintext
+          content: |
+            total2 = base + 3 * 7
+      explanation: |
+        The first character class requires a letter or underscore. Repetition permits letters, underscores, or digits afterward. Longest-match tokenization therefore keeps total2 together but begins 2total with a NUMBER.
+    compiler_focus: tokens
+  # Pedagogy: Compare ambiguous groupings; repair one precedence rule.
+  - title: Operator Precedence
+    key: go-precedence
+    instructions: |
+      ### Why this matters
+
+      The same tokens can describe different groupings when a grammar is ambiguous.
+
+      ### 🎯 You will learn to
+
+      - Repair an expression grammar using precedence levels.
+
+      **Predict → Run:** For `base + 3 * 7`, which operators could be the root under the starter grammar? Inspect every syntax tree.
+
+      <details markdown="1">
+      <summary>After running: compare</summary>
+
+      Both `base + (3 * 7)` and `(base + 3) * 7` are possible. The starter does not enforce multiplication precedence.
+
+      </details>
+
+      **Read the rules:** EBNF uses `=` to define a production and `;` to end it. Adjacent items form a sequence, `|` offers alternatives, and `{ ... }` repeats zero or more times. The supplied `term` recognizes multiplication; `addop` recognizes addition/subtraction.
+
+      **Modify:** Change only `expression` so multiplication binds more tightly than addition/subtraction. Build on the supplied rules. The lab already applies Go's left-to-right grouping at each operator level.
+
+      Compare `base * 3 + 7` and `15 - 6 - 2`, then check your work. For subtraction, explain which operation is nested inside the other.
+    compiler_files:
+      tokens: compilers/go-v2/go-precedence/tokens.json
+      grammar: compilers/go-v2/go-precedence/grammar.ebnf
+      source: compilers/go-v2/go-precedence/source.txt
+    files:
+      - path: compilers/go-v2/go-precedence/tokens.json
+        language: json
+        content: |
+          {
+            "tokenRules": [
+              {
+                "name": "RESERVED",
+                "pattern": "break|default|func|interface|select|case|defer|go|map|struct|chan|else|goto|package|switch|const|fallthrough|if|range|type|continue|for|import|return|var"
+              },
+              {
+                "name": "IDENT",
+                "pattern": "[A-Za-z_][A-Za-z0-9_]*"
+              },
+              {
+                "name": "NUMBER",
+                "pattern": "0|[1-9][0-9]*"
+              },
+              {
+                "name": "ASSIGN",
+                "pattern": "="
+              },
+              {
+                "name": "PLUS",
+                "pattern": "\\+"
+              },
+              {
+                "name": "MINUS",
+                "pattern": "-"
+              },
+              {
+                "name": "STAR",
+                "pattern": "\\*"
+              },
+              {
+                "name": "LPAREN",
+                "pattern": "\\("
+              },
+              {
+                "name": "RPAREN",
+                "pattern": "\\)"
+              },
+              {
+                "name": "SEMI",
+                "pattern": ";"
+              },
+              {
+                "name": "SPACE",
+                "pattern": "[ \\t\\r\\n]+",
+                "skip": true
+              }
+            ],
+            "ast": {
+              "discardTokens": [
+                "LPAREN",
+                "RPAREN"
+              ],
+              "inlineRules": [
+                "factor",
+                "addop",
+                "operator"
+              ],
+              "foldRules": {
+                "expression": "left",
+                "term": "left"
+              }
+            },
+            "startRule": "expression"
+          }
+      - path: compilers/go-v2/go-precedence/grammar.ebnf
+        language: plaintext
+        content: |
+          expression = expression operator expression | term ;
+          term = factor { STAR factor } ;
+          factor = IDENT | NUMBER ;
+          addop = PLUS | MINUS ;
+          operator = PLUS | MINUS | STAR ;
+      - path: compilers/go-v2/go-precedence/source.txt
+        language: plaintext
+        content: |
+          base + 3 * 7
+    open_file: compilers/go-v2/go-precedence/grammar.ebnf
+    tests:
+      - description: Multiplication forms the addition operand
+        compiler:
+          source: base + 3 * 7
+          ast:
+            type: BinaryExpression
+            value: +
+            children:
+              - type: IDENT
+                value: base
+                children: []
+              - type: BinaryExpression
+                value: '*'
+                children:
+                  - type: NUMBER
+                    value: '3'
+                    children: []
+                  - type: NUMBER
+                    value: '7'
+                    children: []
+        hints:
+          - title: Find the competing groupings
+            text: Compare the roots of the displayed alternatives. Which subtree keeps the multiplication together?
+            condition: 'source_matches: /expression\s*=\s*expression\s+operator\s+expression\s*\|\s*term\s*;|^(?![\s\S]*expression\s*=[^;]*;)/'
+          - title: Follow the multiplication rule
+            text: Trace the tokens 3 * 7 through term. What can expression combine without splitting that complete unit?
+            condition: 'source_matches: /^(?=[\s\S]*expression\s*=[^;]*;)(?![\s\S]*expression\s*=\s*expression\s+operator\s+expression\s*\|\s*term\s*;)(?![\s\S]*expression\s*=[^;]*\bterm\b[^;]*;)/'
+          - title: Check the chain boundary
+            text: Try one term, then two terms separated by addition. Identify the first required unit and what must travel together in each continuation.
+            condition: 'source_matches: /^(?![\s\S]*expression\s*=\s*expression\s+operator\s+expression\s*\|\s*term\s*;)(?=[\s\S]*expression\s*=[^;]*\bterm\b[^;]*;)/'
+      - description: Precedence also holds in the other source order
+        compiler:
+          source: base * 3 + 7
+          ast:
+            type: BinaryExpression
+            value: +
+            children:
+              - type: BinaryExpression
+                value: '*'
+                children:
+                  - type: IDENT
+                    value: base
+                    children: []
+                  - type: NUMBER
+                    value: '3'
+                    children: []
+              - type: NUMBER
+                value: '7'
+                children: []
+        hints:
+          - title: Compare both operator orders
+            text: Use base * 3 + 7 and base + 3 * 7. Swapping the order should not swap precedence.
+            condition: 'source_matches: /expression\s*=\s*expression\s+operator\s+expression\s*\|\s*term\s*;|^(?![\s\S]*expression\s*=[^;]*;)/'
+          - title: Separate the grammar levels
+            text: Inspect which production combines factors and which combines terms. Which level should be allowed to span the plus token?
+            condition: 'source_matches: /^(?=[\s\S]*expression\s*=[^;]*;)(?![\s\S]*expression\s*=\s*expression\s+operator\s+expression\s*\|\s*term\s*;)(?![\s\S]*expression\s*=[^;]*\bterm\b[^;]*;)/'
+          - title: Trace two complete terms
+            text: Mark the tokens belonging to each term before combining them. Check that the grammar cannot move an addition inside a multiplication operand without parentheses.
+            condition: 'source_matches: /^(?![\s\S]*expression\s*=\s*expression\s+operator\s+expression\s*\|\s*term\s*;)(?=[\s\S]*expression\s*=[^;]*\bterm\b[^;]*;)/'
+      - description: Subtraction associates to the left
+        compiler:
+          source: 15 - 6 - 2
+          ast:
+            type: BinaryExpression
+            value: '-'
+            children:
+              - type: BinaryExpression
+                value: '-'
+                children:
+                  - type: NUMBER
+                    value: '15'
+                    children: []
+                  - type: NUMBER
+                    value: '6'
+                    children: []
+              - type: NUMBER
+                value: '2'
+                children: []
+        hints:
+          - title: Compare the two subtraction trees
+            text: Locate the subtree containing 15 and 6, then the one containing 6 and 2. Which grouping follows Go?
+            condition: 'source_matches: /expression\s*=\s*expression\s+operator\s+expression\s*\|\s*term\s*;|^(?![\s\S]*expression\s*=[^;]*;)/'
+          - title: Inspect recursive choices
+            text: Can either side of expression consume another subtraction? That freedom can preserve two interpretations even after tokenization succeeds.
+            condition: 'source_matches: /^(?=[\s\S]*expression\s*=[^;]*;)(?![\s\S]*expression\s*=\s*expression\s+operator\s+expression\s*\|\s*term\s*;)(?![\s\S]*expression\s*=[^;]*\bterm\b[^;]*;)/'
+          - title: Keep one operator level
+            text: Describe the subtraction as an ordered chain of complete terms. Go groups that chain leftward; check whether the grammar still offers a competing nested expression.
+            condition: 'source_matches: /^(?![\s\S]*expression\s*=\s*expression\s+operator\s+expression\s*\|\s*term\s*;)(?=[\s\S]*expression\s*=[^;]*\bterm\b[^;]*;)/'
+      - description: An operator still requires its right operand
+        compiler:
+          source: base +
+          error: syntax
+        hints:
+          - title: Find the missing operand
+            text: The lexer recognizes the final plus token. Inspect what the grammar requires after it.
+            condition: 'source_matches: /expression\s*=\s*expression\s+operator\s+expression\s*\|\s*term\s*;|^(?![\s\S]*expression\s*=[^;]*;)/'
+          - title: Trace a shorter valid expression
+            text: Compare base with base + 2. Which items were added together in the second case?
+            condition: 'source_matches: /^(?=[\s\S]*expression\s*=[^;]*;)(?![\s\S]*expression\s*=\s*expression\s+operator\s+expression\s*\|\s*term\s*;)(?![\s\S]*expression\s*=[^;]*\bterm\b[^;]*;)/'
+          - title: Do not make the operand optional
+            text: Inspect optional or repeated parts around an operator. Every accepted continuation must consume an operand as well as its operator.
+            condition: 'source_matches: /^(?![\s\S]*expression\s*=\s*expression\s+operator\s+expression\s*\|\s*term\s*;)(?=[\s\S]*expression\s*=[^;]*\bterm\b[^;]*;)/'
+    solution:
+      files:
+        - path: compilers/go-v2/go-precedence/tokens.json
+          language: json
+          content: |
+            {
+              "tokenRules": [
+                {
+                  "name": "RESERVED",
+                  "pattern": "break|default|func|interface|select|case|defer|go|map|struct|chan|else|goto|package|switch|const|fallthrough|if|range|type|continue|for|import|return|var"
+                },
+                {
+                  "name": "IDENT",
+                  "pattern": "[A-Za-z_][A-Za-z0-9_]*"
+                },
+                {
+                  "name": "NUMBER",
+                  "pattern": "0|[1-9][0-9]*"
+                },
+                {
+                  "name": "ASSIGN",
+                  "pattern": "="
+                },
+                {
+                  "name": "PLUS",
+                  "pattern": "\\+"
+                },
+                {
+                  "name": "MINUS",
+                  "pattern": "-"
+                },
+                {
+                  "name": "STAR",
+                  "pattern": "\\*"
+                },
+                {
+                  "name": "LPAREN",
+                  "pattern": "\\("
+                },
+                {
+                  "name": "RPAREN",
+                  "pattern": "\\)"
+                },
+                {
+                  "name": "SEMI",
+                  "pattern": ";"
+                },
+                {
+                  "name": "SPACE",
+                  "pattern": "[ \\t\\r\\n]+",
+                  "skip": true
+                }
+              ],
+              "ast": {
+                "discardTokens": [
+                  "LPAREN",
+                  "RPAREN"
+                ],
+                "inlineRules": [
+                  "factor",
+                  "addop",
+                  "operator"
+                ],
+                "foldRules": {
+                  "expression": "left",
+                  "term": "left"
+                }
+              },
+              "startRule": "expression"
+            }
+        - path: compilers/go-v2/go-precedence/grammar.ebnf
+          language: plaintext
+          content: |
+            expression = term { addop term } ;
+            term = factor { STAR factor } ;
+            factor = IDENT | NUMBER ;
+            addop = PLUS | MINUS ;
+            operator = PLUS | MINUS | STAR ;
+        - path: compilers/go-v2/go-precedence/source.txt
+          language: plaintext
+          content: |
+            base + 3 * 7
+      explanation: |
+        Expression combines complete terms, so multiplication remains nested inside addition/subtraction. The lab builds left-associated trees for each operator level: 15 - 6 - 2 groups as (15 - 6) - 2.
+  # Pedagogy: Extend one grammar rule to recognize grouping.
+  - title: Parenthesized Expressions
+    key: go-parenthesized-expressions
+    instructions: |
+      ### Why this matters
+
+      Parentheses let a programmer request a different grouping.
+
+      ### 🎯 You will learn to
+
+      - Extend a grammar to recognize parenthesized expressions.
+
+      **Predict → Run:** The starter accepts `(3)`. Will it also accept `(base + 3) * 7`? Inspect `factor` before running.
+
+      <details markdown="1">
+      <summary>After running: compare</summary>
+
+      Tokenization succeeds, but parsing fails. The parenthesized alternative allows only a number, so it cannot contain `base + 3`.
+
+      </details>
+
+      **Modify:** Change only `factor` so parentheses can enclose any expression. Keep ordinary names and numbers valid, and require both delimiters.
+
+      Run `(base + 3) * 7` again. Predict its root, then follow the left branch. Compare it with `base + 3 * 7`: what changed the grouping?
+
+      Try `15 - (6 - 2)` and an expression with a missing closing parenthesis, then check your work. Explain why the first should produce a tree and the second should fail.
+    compiler_files:
+      tokens: compilers/go-v2/go-parenthesized-expressions/tokens.json
+      grammar: compilers/go-v2/go-parenthesized-expressions/grammar.ebnf
+      source: compilers/go-v2/go-parenthesized-expressions/source.txt
+    files:
+      - path: compilers/go-v2/go-parenthesized-expressions/tokens.json
+        language: json
+        content: |
+          {
+            "tokenRules": [
+              {
+                "name": "RESERVED",
+                "pattern": "break|default|func|interface|select|case|defer|go|map|struct|chan|else|goto|package|switch|const|fallthrough|if|range|type|continue|for|import|return|var"
+              },
+              {
+                "name": "IDENT",
+                "pattern": "[A-Za-z_][A-Za-z0-9_]*"
+              },
+              {
+                "name": "NUMBER",
+                "pattern": "0|[1-9][0-9]*"
+              },
+              {
+                "name": "ASSIGN",
+                "pattern": "="
+              },
+              {
+                "name": "PLUS",
+                "pattern": "\\+"
+              },
+              {
+                "name": "MINUS",
+                "pattern": "-"
+              },
+              {
+                "name": "STAR",
+                "pattern": "\\*"
+              },
+              {
+                "name": "LPAREN",
+                "pattern": "\\("
+              },
+              {
+                "name": "RPAREN",
+                "pattern": "\\)"
+              },
+              {
+                "name": "SEMI",
+                "pattern": ";"
+              },
+              {
+                "name": "SPACE",
+                "pattern": "[ \\t\\r\\n]+",
+                "skip": true
+              }
+            ],
+            "ast": {
+              "discardTokens": [
+                "LPAREN",
+                "RPAREN"
+              ],
+              "inlineRules": [
+                "factor",
+                "addop"
+              ],
+              "foldRules": {
+                "expression": "left",
+                "term": "left"
+              }
+            },
+            "startRule": "expression"
+          }
+      - path: compilers/go-v2/go-parenthesized-expressions/grammar.ebnf
+        language: plaintext
+        content: |
+          expression = term { addop term } ;
+          term = factor { STAR factor } ;
+          factor = IDENT | NUMBER | LPAREN NUMBER RPAREN ;
+          addop = PLUS | MINUS ;
+      - path: compilers/go-v2/go-parenthesized-expressions/source.txt
+        language: plaintext
+        content: |
+          (base + 3) * 7
+    open_file: compilers/go-v2/go-parenthesized-expressions/grammar.ebnf
+    tests:
+      - description: An addition can appear inside a multiplication operand
+        compiler:
+          source: (base + 3) * 7
+          ast:
+            type: BinaryExpression
+            value: '*'
+            children:
+              - type: BinaryExpression
+                value: +
+                children:
+                  - type: IDENT
+                    value: base
+                    children: []
+                  - type: NUMBER
+                    value: '3'
+                    children: []
+              - type: NUMBER
+                value: '7'
+                children: []
+        hints:
+          - title: Read the parenthesized alternative
+            text: Compare what factor accepts between LPAREN and RPAREN with the tokens inside (base + 3).
+            condition: 'source_matches: /factor\s*=\s*IDENT\s*\|\s*NUMBER\s*\|\s*LPAREN\s+NUMBER\s+RPAREN\s*;|^(?![\s\S]*factor\s*=[^;]*;)/'
+          - title: Use the existing language structure
+            text: Which supplied production already recognizes a name combined with an addition? Trace it before deciding what belongs between the delimiters.
+            condition: 'source_matches: /^(?=[\s\S]*factor\s*=[^;]*;)(?![\s\S]*factor\s*=\s*IDENT\s*\|\s*NUMBER\s*\|\s*LPAREN\s+NUMBER\s+RPAREN\s*;)(?![\s\S]*factor\s*=[^;]*\bexpression\b[^;]*;)/'
+          - title: Preserve the outer boundary
+            text: For (base + 3) * 7, mark the tokens inside the parentheses and the tokens outside. The closing delimiter must finish the factor before multiplication continues.
+            condition: 'source_matches: /^(?![\s\S]*factor\s*=\s*IDENT\s*\|\s*NUMBER\s*\|\s*LPAREN\s+NUMBER\s+RPAREN\s*;)(?=[\s\S]*factor\s*=[^;]*\bexpression\b[^;]*;)/'
+      - description: Parentheses can change subtraction grouping
+        compiler:
+          source: 15 - (6 - 2)
+          ast:
+            type: BinaryExpression
+            value: '-'
+            children:
+              - type: NUMBER
+                value: '15'
+                children: []
+              - type: BinaryExpression
+                value: '-'
+                children:
+                  - type: NUMBER
+                    value: '6'
+                    children: []
+                  - type: NUMBER
+                    value: '2'
+                    children: []
+        hints:
+          - title: Locate the requested group
+            text: In 15 - (6 - 2), identify which subtraction the parentheses enclose.
+            condition: 'source_matches: /factor\s*=\s*IDENT\s*\|\s*NUMBER\s*\|\s*LPAREN\s+NUMBER\s+RPAREN\s*;|^(?![\s\S]*factor\s*=[^;]*;)/'
+          - title: Test a parenthesized chain
+            text: Try (6 - 2) by itself. A rule that permits only numbers or only products cannot recognize it.
+            condition: 'source_matches: /^(?=[\s\S]*factor\s*=[^;]*;)(?![\s\S]*factor\s*=\s*IDENT\s*\|\s*NUMBER\s*\|\s*LPAREN\s+NUMBER\s+RPAREN\s*;)(?![\s\S]*factor\s*=[^;]*\bexpression\b[^;]*;)/'
+          - title: Allow nesting within the group
+            text: Try 15 - ((6 - 2)). Follow the grammar from the outer factor back to a complete expression while keeping each pair of delimiters required.
+            condition: 'source_matches: /^(?![\s\S]*factor\s*=\s*IDENT\s*\|\s*NUMBER\s*\|\s*LPAREN\s+NUMBER\s+RPAREN\s*;)(?=[\s\S]*factor\s*=[^;]*\bexpression\b[^;]*;)/'
+      - description: Missing punctuation still prevents parsing
+        compiler:
+          source: base + (3 * 7
+          error: syntax
+        hints:
+          - title: Check both delimiters
+            text: An opening parenthesis creates an obligation to find its matching closing delimiter.
+            condition: 'source_matches: /factor\s*=\s*IDENT\s*\|\s*NUMBER\s*\|\s*LPAREN\s+NUMBER\s+RPAREN\s*;|^(?![\s\S]*factor\s*=[^;]*;)/'
+          - title: Compare one-character variants
+            text: Run (3) and (3. They differ only in whether the factor has been completed.
+            condition: 'source_matches: /^(?=[\s\S]*factor\s*=[^;]*;)(?![\s\S]*factor\s*=\s*IDENT\s*\|\s*NUMBER\s*\|\s*LPAREN\s+NUMBER\s+RPAREN\s*;)(?![\s\S]*factor\s*=[^;]*\bexpression\b[^;]*;)/'
+          - title: Keep the closing boundary required
+            text: Inspect brackets, alternatives, or repetition around RPAREN. A branch that can finish without it admits incomplete source.
+            condition: 'source_matches: /^(?![\s\S]*factor\s*=\s*IDENT\s*\|\s*NUMBER\s*\|\s*LPAREN\s+NUMBER\s+RPAREN\s*;)(?=[\s\S]*factor\s*=[^;]*\bexpression\b[^;]*;)/'
+      - description: A lone identifier remains its own leaf
+        compiler:
+          source: base
+          ast:
+            type: IDENT
+            value: base
+            children: []
+        hints:
+          - title: Preserve existing factors
+            text: Adding parentheses should not remove the original name and number cases.
+            condition: 'source_matches: /factor\s*=\s*IDENT\s*\|\s*NUMBER\s*\|\s*LPAREN\s+NUMBER\s+RPAREN\s*;|^(?![\s\S]*factor\s*=[^;]*;)/'
+          - title: Compare the alternatives
+            text: Try base, 3, and (3). Which alternatives did the starter provide before your edit?
+            condition: 'source_matches: /^(?=[\s\S]*factor\s*=[^;]*;)(?![\s\S]*factor\s*=\s*IDENT\s*\|\s*NUMBER\s*\|\s*LPAREN\s+NUMBER\s+RPAREN\s*;)(?![\s\S]*factor\s*=[^;]*\bexpression\b[^;]*;)/'
+          - title: Localize the extension
+            text: Keep the independent simple-factor cases and extend the parenthesized case. Do not require every expression to begin with LPAREN.
+            condition: 'source_matches: /^(?![\s\S]*factor\s*=\s*IDENT\s*\|\s*NUMBER\s*\|\s*LPAREN\s+NUMBER\s+RPAREN\s*;)(?=[\s\S]*factor\s*=[^;]*\bexpression\b[^;]*;)/'
+    solution:
+      files:
+        - path: compilers/go-v2/go-parenthesized-expressions/tokens.json
+          language: json
+          content: |
+            {
+              "tokenRules": [
+                {
+                  "name": "RESERVED",
+                  "pattern": "break|default|func|interface|select|case|defer|go|map|struct|chan|else|goto|package|switch|const|fallthrough|if|range|type|continue|for|import|return|var"
+                },
+                {
+                  "name": "IDENT",
+                  "pattern": "[A-Za-z_][A-Za-z0-9_]*"
+                },
+                {
+                  "name": "NUMBER",
+                  "pattern": "0|[1-9][0-9]*"
+                },
+                {
+                  "name": "ASSIGN",
+                  "pattern": "="
+                },
+                {
+                  "name": "PLUS",
+                  "pattern": "\\+"
+                },
+                {
+                  "name": "MINUS",
+                  "pattern": "-"
+                },
+                {
+                  "name": "STAR",
+                  "pattern": "\\*"
+                },
+                {
+                  "name": "LPAREN",
+                  "pattern": "\\("
+                },
+                {
+                  "name": "RPAREN",
+                  "pattern": "\\)"
+                },
+                {
+                  "name": "SEMI",
+                  "pattern": ";"
+                },
+                {
+                  "name": "SPACE",
+                  "pattern": "[ \\t\\r\\n]+",
+                  "skip": true
+                }
+              ],
+              "ast": {
+                "discardTokens": [
+                  "LPAREN",
+                  "RPAREN"
+                ],
+                "inlineRules": [
+                  "factor",
+                  "addop"
+                ],
+                "foldRules": {
+                  "expression": "left",
+                  "term": "left"
+                }
+              },
+              "startRule": "expression"
+            }
+        - path: compilers/go-v2/go-parenthesized-expressions/grammar.ebnf
+          language: plaintext
+          content: |
+            expression = term { addop term } ;
+            term = factor { STAR factor } ;
+            factor = IDENT | NUMBER | LPAREN expression RPAREN ;
+            addop = PLUS | MINUS ;
+        - path: compilers/go-v2/go-parenthesized-expressions/source.txt
+          language: plaintext
+          content: |
+            (base + 3) * 7
+      explanation: |
+        A factor may contain a complete expression between parentheses. This lets addition become one multiplication operand, or lets subtraction group on the right. Both delimiters are required; names and numbers remain valid factors.
+  # Pedagogy: Transfer repetition to a statement sequence.
+  - title: Statement Sequences
+    key: go-assignment-sequence
+    instructions: |
+      ### Why this matters
+
+      A small assignment rule can reuse an expression grammar.
+
+      ### 🎯 You will learn to
+
+      - Extend a grammar to recognize a sequence of assignments.
+
+      The supplied assignment accepts a name, `=`, and an expression. This fragment requires explicit semicolons **between assignments**; Go's automatic semicolon insertion is outside the lab.
+
+      **Predict → Run:** The source contains two assignments. Will tokenization fail, or does the grammar reject the sequence?
+
+      <details markdown="1">
+      <summary>After running: compare</summary>
+
+      The tokens are valid, but `program` accepts only one assignment. The remaining tokens cause a syntax error.
+
+      </details>
+
+      **Modify:** Change only `program` to accept one or more assignments separated by semicolons. Empty input and trailing separators remain invalid.
+
+      Try one assignment, three assignments, and a missing separator. Inspect the statement order in the syntax tree, then check your work.
+
+      **Explain:** Why is `@total = 3` a lexical error, while `total = 3 +` is a syntax error? A tree for `total = unknown + 1` does not establish that `unknown` is declared; that requires semantic analysis.
+    compiler_files:
+      tokens: compilers/go-v2/go-assignment-sequence/tokens.json
+      grammar: compilers/go-v2/go-assignment-sequence/grammar.ebnf
+      source: compilers/go-v2/go-assignment-sequence/source.txt
+    files:
+      - path: compilers/go-v2/go-assignment-sequence/tokens.json
+        language: json
+        content: |
+          {
+            "tokenRules": [
+              {
+                "name": "RESERVED",
+                "pattern": "break|default|func|interface|select|case|defer|go|map|struct|chan|else|goto|package|switch|const|fallthrough|if|range|type|continue|for|import|return|var"
+              },
+              {
+                "name": "IDENT",
+                "pattern": "[A-Za-z_][A-Za-z0-9_]*"
+              },
+              {
+                "name": "NUMBER",
+                "pattern": "0|[1-9][0-9]*"
+              },
+              {
+                "name": "ASSIGN",
+                "pattern": "="
+              },
+              {
+                "name": "PLUS",
+                "pattern": "\\+"
+              },
+              {
+                "name": "MINUS",
+                "pattern": "-"
+              },
+              {
+                "name": "STAR",
+                "pattern": "\\*"
+              },
+              {
+                "name": "LPAREN",
+                "pattern": "\\("
+              },
+              {
+                "name": "RPAREN",
+                "pattern": "\\)"
+              },
+              {
+                "name": "SEMI",
+                "pattern": ";"
+              },
+              {
+                "name": "SPACE",
+                "pattern": "[ \\t\\r\\n]+",
+                "skip": true
+              }
+            ],
+            "ast": {
+              "discardTokens": [
+                "LPAREN",
+                "RPAREN",
+                "ASSIGN",
+                "SEMI"
+              ],
+              "inlineRules": [
+                "factor",
+                "addop"
+              ],
+              "foldRules": {
+                "expression": "left",
+                "term": "left"
+              }
+            },
+            "startRule": "program"
+          }
+      - path: compilers/go-v2/go-assignment-sequence/grammar.ebnf
+        language: plaintext
+        content: |
+          program = assignment ;
+          assignment = IDENT ASSIGN expression ;
+          expression = term { addop term } ;
+          term = factor { STAR factor } ;
+          factor = IDENT | NUMBER | LPAREN expression RPAREN ;
+          addop = PLUS | MINUS ;
+      - path: compilers/go-v2/go-assignment-sequence/source.txt
+        language: plaintext
+        content: |
+          total2 = base + 3 * 7; result = (total2 - 2) * 4
+    open_file: compilers/go-v2/go-assignment-sequence/grammar.ebnf
+    tests:
+      - description: Several assignments retain source order and expression structure
+        compiler:
+          source: total2 = base + 3 * 7; result = (total2 - 2) * 4; count = 1
+          ast:
+            type: program
+            children:
+              - type: assignment
+                children:
+                  - type: IDENT
+                    value: total2
+                    children: []
+                  - type: BinaryExpression
+                    value: +
+                    children:
+                      - type: IDENT
+                        value: base
+                        children: []
+                      - type: BinaryExpression
+                        value: '*'
+                        children:
+                          - type: NUMBER
+                            value: '3'
+                            children: []
+                          - type: NUMBER
+                            value: '7'
+                            children: []
+              - type: assignment
+                children:
+                  - type: IDENT
+                    value: result
+                    children: []
+                  - type: BinaryExpression
+                    value: '*'
+                    children:
+                      - type: BinaryExpression
+                        value: '-'
+                        children:
+                          - type: IDENT
+                            value: total2
+                            children: []
+                          - type: NUMBER
+                            value: '2'
+                            children: []
+                      - type: NUMBER
+                        value: '4'
+                        children: []
+              - type: assignment
+                children:
+                  - type: IDENT
+                    value: count
+                    children: []
+                  - type: NUMBER
+                    value: '1'
+                    children: []
+        hints:
+          - title: Locate the unconsumed statement
+            text: Compare the end of the first assignment with the tokens that follow it.
+            condition: 'source_matches: /program\s*=\s*assignment\s*;|^(?![\s\S]*program\s*=[^;]*;)/'
+          - title: Trace a continuation
+            text: After the first assignment, identify the separator and the next complete assignment. Then locate the same pair for a third statement.
+            condition: 'source_matches: /^(?=[\s\S]*program\s*=[^;]*;)(?![\s\S]*program\s*=\s*assignment\s*;)(?![\s\S]*program\s*=[^;]*\{[^;]*;)/'
+          - title: Allow repeated continuations
+            text: Compare two assignments with three. A rule that permits only one extra statement needs a continuation that can occur more than once.
+            condition: 'source_matches: /^(?![\s\S]*program\s*=\s*assignment\s*;)(?=[\s\S]*program\s*=[^;]*\{[^;]*;)/'
+      - description: One assignment needs no separator
+        compiler:
+          source: answer = 7
+          ast:
+            type: program
+            children:
+              - type: assignment
+                children:
+                  - type: IDENT
+                    value: answer
+                    children: []
+                  - type: NUMBER
+                    value: '7'
+                    children: []
+        hints:
+          - title: Check the shortest program
+            text: One complete assignment already satisfies the requested language.
+            condition: 'source_matches: /program\s*=\s*assignment\s*;|^(?![\s\S]*program\s*=[^;]*;)/'
+          - title: Distinguish required and repeated parts
+            text: Trace answer = 7 with no separator. Does your grammar demand an additional statement?
+            condition: 'source_matches: /^(?=[\s\S]*program\s*=[^;]*;)(?![\s\S]*program\s*=\s*assignment\s*;)(?![\s\S]*program\s*=[^;]*\{[^;]*;)/'
+          - title: Permit zero continuations
+            text: The first assignment must be present, but the continuation may occur zero times. Inspect where that boundary falls in your rule.
+            condition: 'source_matches: /^(?![\s\S]*program\s*=\s*assignment\s*;)(?=[\s\S]*program\s*=[^;]*\{[^;]*;)/'
+      - description: Adjacent assignments require a separator
+        compiler:
+          source: first = 1 second = 2
+          error: syntax
+        hints:
+          - title: Inspect the boundary between assignments
+            text: A valid first assignment does not automatically allow another name to follow it.
+            condition: 'source_matches: /program\s*=\s*assignment\s*;|^(?![\s\S]*program\s*=[^;]*;)/'
+          - title: Compare with a valid sequence
+            text: Insert one semicolon between the assignments, then remove it again. Which grammar part should distinguish the two cases?
+            condition: 'source_matches: /^(?=[\s\S]*program\s*=[^;]*;)(?![\s\S]*program\s*=\s*assignment\s*;)(?![\s\S]*program\s*=[^;]*\{[^;]*;)/'
+          - title: Keep the separator with its continuation
+            text: An optional separator can let assignments run together. Check that every continuation consumes the separator before its assignment.
+            condition: 'source_matches: /^(?![\s\S]*program\s*=\s*assignment\s*;)(?=[\s\S]*program\s*=[^;]*\{[^;]*;)/'
+      - description: This fragment requires at least one assignment
+        compiler:
+          source: ''
+          error: syntax
+        hints:
+          - title: Check the empty case
+            text: This fragment requires at least one assignment; whitespace alone should not satisfy program.
+            condition: 'source_matches: /program\s*=\s*assignment\s*;|^(?![\s\S]*program\s*=[^;]*;)/'
+          - title: Inspect the minimum repetition count
+            text: Braces permit zero repetitions. Does your rule place the entire program inside them?
+            condition: 'source_matches: /^(?=[\s\S]*program\s*=[^;]*;)(?![\s\S]*program\s*=\s*assignment\s*;)(?![\s\S]*program\s*=[^;]*\{[^;]*;)/'
+          - title: Require a first statement
+            text: Separate the initial assignment from any later continuations. Only the continuation may be absent.
+            condition: 'source_matches: /^(?![\s\S]*program\s*=\s*assignment\s*;)(?=[\s\S]*program\s*=[^;]*\{[^;]*;)/'
+      - description: A final separator must not create an empty statement
+        compiler:
+          source: x = 1;
+          error: syntax
+        hints:
+          - title: Distinguish the two semicolons
+            text: 'The semicolon ending an EBNF production belongs to the grammar notation. A SEMI token belongs to the source: what should come after it?'
+            condition: 'source_matches: /program\s*=\s*assignment\s*;|^(?![\s\S]*program\s*=[^;]*;)/'
+          - title: Compare complete and incomplete sequences
+            text: Trace x = 1; y = 2, then x = 1;. What is missing after the last separator in the second source?
+            condition: 'source_matches: /^(?=[\s\S]*program\s*=[^;]*;)(?![\s\S]*program\s*=\s*assignment\s*;)(?![\s\S]*program\s*=[^;]*\{[^;]*;)/'
+          - title: Inspect the end of the production
+            text: Check whether an optional delimiter or an empty final statement can remain after the repeated continuations. A separator without another assignment must prevent completion.
+            condition: 'source_matches: /^(?![\s\S]*program\s*=\s*assignment\s*;)(?=[\s\S]*program\s*=[^;]*\{[^;]*;)/'
+    solution:
+      files:
+        - path: compilers/go-v2/go-assignment-sequence/tokens.json
+          language: json
+          content: |
+            {
+              "tokenRules": [
+                {
+                  "name": "RESERVED",
+                  "pattern": "break|default|func|interface|select|case|defer|go|map|struct|chan|else|goto|package|switch|const|fallthrough|if|range|type|continue|for|import|return|var"
+                },
+                {
+                  "name": "IDENT",
+                  "pattern": "[A-Za-z_][A-Za-z0-9_]*"
+                },
+                {
+                  "name": "NUMBER",
+                  "pattern": "0|[1-9][0-9]*"
+                },
+                {
+                  "name": "ASSIGN",
+                  "pattern": "="
+                },
+                {
+                  "name": "PLUS",
+                  "pattern": "\\+"
+                },
+                {
+                  "name": "MINUS",
+                  "pattern": "-"
+                },
+                {
+                  "name": "STAR",
+                  "pattern": "\\*"
+                },
+                {
+                  "name": "LPAREN",
+                  "pattern": "\\("
+                },
+                {
+                  "name": "RPAREN",
+                  "pattern": "\\)"
+                },
+                {
+                  "name": "SEMI",
+                  "pattern": ";"
+                },
+                {
+                  "name": "SPACE",
+                  "pattern": "[ \\t\\r\\n]+",
+                  "skip": true
+                }
+              ],
+              "ast": {
+                "discardTokens": [
+                  "LPAREN",
+                  "RPAREN",
+                  "ASSIGN",
+                  "SEMI"
+                ],
+                "inlineRules": [
+                  "factor",
+                  "addop"
+                ],
+                "foldRules": {
+                  "expression": "left",
+                  "term": "left"
+                }
+              },
+              "startRule": "program"
+            }
+        - path: compilers/go-v2/go-assignment-sequence/grammar.ebnf
+          language: plaintext
+          content: |
+            program = assignment { SEMI assignment } ;
+            assignment = IDENT ASSIGN expression ;
+            expression = term { addop term } ;
+            term = factor { STAR factor } ;
+            factor = IDENT | NUMBER | LPAREN expression RPAREN ;
+            addop = PLUS | MINUS ;
+        - path: compilers/go-v2/go-assignment-sequence/source.txt
+          language: plaintext
+          content: |
+            total2 = base + 3 * 7; result = (total2 - 2) * 4
+      explanation: |
+        One required assignment followed by repeated separator-and-assignment pairs admits a nonempty sequence. Statement order remains visible in the tree. Tokenization recognizes symbols, parsing checks structure, and semantic analysis would check names and types; the lab implements only the first two.

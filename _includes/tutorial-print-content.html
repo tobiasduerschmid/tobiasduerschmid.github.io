@@ -19,6 +19,7 @@
 {% endif %}
 
 {% for step in tutorial_data.steps %}
+{% assign compiler_tokens_path = step.compiler_files.tokens | default: 'tokens.json' %}
 <div class="step">
   <div class="step-header">
     <span class="step-number">{{ forloop.index }}</span>
@@ -34,9 +35,12 @@
     <div class="starter-files-label">Starter files</div>
     {% for file in step.files %}
     <div class="starter-file">
-      <div class="starter-file-name">{{ file.path }}</div>
+      <div class="starter-file-name">{% if tutorial_data.backend == 'compiler' %}{% include compiler-file-label.html step=step path=file.path %}{% else %}{{ file.path }}{% endif %}</div>
       {% assign print_lang = file.print_language | default: file.language %}
-      {% if print_lang %}
+      {% if tutorial_data.backend == 'compiler' and file.path == compiler_tokens_path %}
+        {% assign print_compiler_settings = file.content | compiler_settings %}
+        <div class="starter-file-content compiler-lab">{% include compiler-rules-static.html config=print_compiler_settings %}</div>
+      {% elsif print_lang %}
         {% capture fenced_content %}~~~{{ print_lang }}
 {{ file.content }}~~~{% endcapture %}
         <div class="starter-file-content">{{ fenced_content | markdownify | replace: ' id="', ' data-print-id="' }}</div>
@@ -57,9 +61,12 @@
     {% if step.solution.files %}
     {% for file in step.solution.files %}
     <div class="starter-file">
-      <div class="starter-file-name">{{ file.path }}</div>
+      <div class="starter-file-name">{% if tutorial_data.backend == 'compiler' %}{% include compiler-file-label.html step=step path=file.path %}{% else %}{{ file.path }}{% endif %}</div>
       {% assign sol_lang = file.language %}
-      {% if sol_lang %}
+      {% if tutorial_data.backend == 'compiler' and file.path == compiler_tokens_path %}
+        {% assign print_compiler_settings = file.content | compiler_settings %}
+        <div class="starter-file-content compiler-lab">{% include compiler-rules-static.html config=print_compiler_settings %}</div>
+      {% elsif sol_lang %}
         {% capture sol_fenced %}~~~{{ sol_lang }}
 {{ file.content }}~~~{% endcapture %}
         <div class="starter-file-content">{{ sol_fenced | markdownify | replace: ' id="', ' data-print-id="' }}</div>

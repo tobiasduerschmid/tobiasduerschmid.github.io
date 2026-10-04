@@ -141,6 +141,12 @@ html.dark-mode .blog-entry-rule {
   margin: 8px 0;
 }
 
+/* Text links remain identifiable without color in both themes and print. */
+footer a:not(.footer-social-link) {
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+
 /* AI training opt-out notice: fine print that stays readable. The capped
    measure wraps the centered sentence into short lines. Color is inherited
    from the footer, so dark mode and print need no overrides. */

@@ -292,6 +292,9 @@
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/object-reference-lab.css' | relative_url }}">
+  {% if tutorial_backend == 'compiler' %}
+  <link rel="stylesheet" href="{{ '/css/compiler-lab.css' | relative_url }}">
+  {% endif %}
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 
   <!-- Tutorial engine — unified (v86 / pyodide / webcontainer) -->

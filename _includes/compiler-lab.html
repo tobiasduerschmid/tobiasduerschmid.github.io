@@ -1,0 +1,14 @@
+{% assign compiler_example = include.config | default: site.data.compiler_labs[include.example] %}
+<div data-compiler-lab class="compiler-lab" role="region" aria-label="Compiler lab: {{ compiler_example.title | default: 'Explore tokens and syntax trees' | escape }}">
+  <script type="application/json">{{ compiler_example | jsonify | replace: '</', '<\/' }}</script>
+  <div class="compiler-lab-fallback">
+    <p><strong>{{ compiler_example.title | default: 'Compiler lab' | escape }}</strong></p>
+    {% if compiler_example.prediction %}<p>{{ compiler_example.prediction | escape }}</p>{% endif %}
+    {% include compiler-rules-static.html config=compiler_example %}
+    <p><strong>Grammar (EBNF)</strong></p>
+    <pre><code>{{ compiler_example.grammar | escape }}</code></pre>
+    <p><strong>Source program</strong></p>
+    <pre><code>{{ compiler_example.source | escape }}</code></pre>
+    <p>Enable JavaScript to edit these rules and generate the token stream and syntax trees.</p>
+  </div>
+</div>

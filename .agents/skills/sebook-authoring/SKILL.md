@@ -106,6 +106,19 @@ If you must rename one of these, either pin the new heading with `## New Title {
 
 ## Standard page furniture
 
+**Compiler labs.** Use `{% include compiler-lab.html config=page.compiler_lab %}`
+with a configuration containing `tokenRules`, `grammar`, and `source`. For a
+freely editable grammar, use `ast: auto` and omit `startRule`: parsing starts
+from the first production and tree construction has no old rule-name dependencies.
+Explicit tree policies remain available for fixed examples. Load `/js/compiler-lab-client.js` before
+`/js/compiler-lab-view.js`, and `/css/compiler-lab.css` before `print-light.css`.
+The include has escaped no-JavaScript source fallbacks. The reusable view offers
+editable grammar/source, a collapsible tokenizer rules table with drag handles
+and move buttons, tokens, connected syntax-tree record cards, Previous/Next tree cycling, and complete
+structural text; regex execution occurs in a cancellable Worker. Edits are
+session-only. See `docs/compiler-lab.md` and tutorial-authoring §3.5 for the
+DOM-free core API, supported EBNF dialect, projection policy, and explicit limits.
+
 **Haskell expression companions.** Add
 `{% include haskell-evaluator.html expression='shadowExample' %}` immediately
 after a complete `haskell` fence. Load `/js/haskell/chapter-evaluator.js` as a

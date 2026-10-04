@@ -560,6 +560,7 @@
     if (backend === 'webcontainer') return 'Node.js';
     if (backend === 'browser') return 'Browser Node sandbox';
     if (backend === 'haskell') return 'Haskell';
+    if (backend === 'compiler') return 'Compiler lab';
     if (backend === 'v86') return 'Linux VM';
     return backend;
   }
@@ -1495,6 +1496,9 @@
 
   TutorialCode.prototype.destroy = function () {
     this._destroyed = true;
+    if (this._compilerAdapter) this._compilerAdapter.destroy();
+    if (this._compilerRulesEditor) this._compilerRulesEditor.destroy();
+    if (this._compilerSourceEditor) this._compilerSourceEditor.destroy();
     if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(this.root);
     (this._splitterObservers || []).forEach(function (observer) { observer.disconnect(); });
     this._splitterObservers = [];
@@ -1615,6 +1619,10 @@
     }
 
     var outputContainerHtml = '<div class="tvm-output-container" tabindex="0" role="region" aria-label="Program output"><pre class="tvm-output-pre"></pre></div>';
+    if (this.config.backend === 'compiler') {
+      this.root.classList.add('compiler-tutorial');
+      outputContainerHtml = '<div class="tvm-output-container" tabindex="0" role="region" aria-label="Compiler results"><pre class="tvm-output-pre"></pre><div class="compiler-tutorial-results"></div></div>';
+    }
     // tabindex="0" makes this container focusable so keyboard users can pan
     // and zoom the diagram; without role+aria-label the WCAG 4.1.2 audit
     // flags it as an interactive element missing an accessible name.
@@ -1753,7 +1761,7 @@
         '<button class="tvm-test-run-btn" data-original-title="Run the test file" style="display:none;">&#10003; Test</button>' +
         '<button class="tvm-stop-btn" data-original-title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" data-original-title="Clear output">Clear</button>' +
-        '<button class="tvm-output-popout-btn" data-original-title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>' +
+        (this.config.backend === 'compiler' ? '' : '<button class="tvm-output-popout-btn" data-original-title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>') +
         '</div></div>' +
         outputContainerHtml;
 
@@ -1939,6 +1947,9 @@
       '<div class="tvm-editor-panel' +
         (this.editorSplitSupported ? ' tvm-editor-split-supported' : '') +
         (this.editorSplitSupported && this._splitActive ? ' tvm-editor-split-active' : '') + '">' +
+      (this.config.backend === 'compiler'
+        ? '<section class="compiler-tutorial-source compiler-lab" aria-label="Source and parsing controls"><label>Source program<textarea rows="2" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea></label><div class="compiler-tutorial-actions"></div></section>'
+        : '') +
       '<div class="tvm-editor-body">' +
       '<div class="tvm-editor-pane tvm-editor-pane-left">' +
       (this.editorSplitSupported
@@ -1955,6 +1966,7 @@
           '<section class="haskell-cycle-diagnostics" data-haskell-diagnostics hidden tabindex="0" aria-label="Haskell cycle diagnostics"><p></p><ul></ul></section>'
         : '') +
       '<div class="tvm-editor-container"></div>' +
+      (this.config.backend === 'compiler' ? '<div class="compiler-tutorial-rules compiler-lab" hidden></div>' : '') +
       '</div>' +
       (this.editorSplitSupported
         ? '<div class="tvm-editor-pane-divider" data-original-title="Drag to resize"></div>' +
@@ -2642,7 +2654,7 @@
     var hsplitter = this.root.querySelector('.tvm-hsplitter');
     var instructions = this.root.querySelector('.tvm-instructions-panel');
     var workspace = this.root.querySelector('.tvm-workspace');
-    this._makeDraggable(hsplitter, 'vertical', instructions, workspace);
+    this._makeDraggable(hsplitter, this.config.backend === 'compiler' ? 'horizontal' : 'vertical', instructions, workspace);
 
     // Workspace vsplitter — sits between the editor panel (top) and whatever
     // happens to be in the workspace bottom slot. Find that bottom element by
@@ -2667,7 +2679,7 @@
       }
     }
     if (vsplitter && editorPanel && workspaceBottom) {
-      this._makeDraggable(vsplitter, 'horizontal', editorPanel, workspaceBottom);
+      this._makeDraggable(vsplitter, this.config.backend === 'compiler' ? 'vertical' : 'horizontal', editorPanel, workspaceBottom);
     } else if (vsplitter) {
       // No bottom panel exists (workspace is editor-only because Output was
       // hoisted away and no UML pane took its place) — hide the vsplitter so
@@ -2865,6 +2877,12 @@
       }
       var prologInterpreter = self.config.backend === 'prolog'
         ? loadScript('/js/prolog/interpreter.js') : Promise.resolve();
+      var compilerRuntime = self.config.backend === 'compiler'
+        ? loadScript('/js/compiler-lab-client.js')
+          .then(function () { return loadScript('/js/compiler-lab-view.js'); })
+          .then(function () { return loadScript('/js/compiler-tutorial-adapter.js'); })
+          .then(function () { return loadScript('/js/compiler-tutorial-editor.js'); })
+        : Promise.resolve();
       if (self.config.backend === 'haskell' || self.config.backend === 'prolog') {
         loadCSS('/css/tutorial-interpreter.css');
       }
@@ -2885,7 +2903,7 @@
           .then(function () { return loadScript('/js/smalltalk/inspector.js'); })
           .then(function () { return loadScript('/js/smalltalk/layout.js'); })
         : Promise.resolve();
-      return Promise.all([v86Promise, monacoPromise, playwrightPromise, haskellAnalysis, prologInterpreter, smalltalkRuntime]);
+      return Promise.all([v86Promise, monacoPromise, playwrightPromise, haskellAnalysis, prologInterpreter, smalltalkRuntime, compilerRuntime]);
     });
   };
 
@@ -3655,7 +3673,70 @@
     if (backend === 'cpp') return this._initCPP(setupCommandsOverride, loadingOptions);
     if (backend === 'haskell') return this._initHaskell();
     if (backend === 'smalltalk') return this._initSmalltalk();
+    if (backend === 'compiler') return this._initCompiler();
     return Promise.reject(new Error('Unknown backend: ' + backend));
+  };
+
+  // Compiler files stay in Monaco; each request uses a disposable worker.
+  TutorialCode.prototype._initCompiler = function () {
+    if (this.setupCommands.length) return Promise.reject(new Error('Compiler labs use files, not setup_commands.'));
+    this._compilerResultHost = this.root.querySelector('.compiler-tutorial-results');
+    this._compilerRulesEditor = new window.CompilerTutorialEditor(
+      this.root.querySelector('.compiler-tutorial-rules'), this.editorContainerEl
+    );
+    this._compilerSourceEditor = new window.CompilerTutorialSource(this.root.querySelector('.compiler-tutorial-source textarea'));
+    const actions = this.root.querySelector('.compiler-tutorial-actions');
+    this.root.querySelectorAll('.tvm-run-btn, .tvm-stop-btn, .tvm-clear-btn').forEach(button => actions.append(button));
+    this.root.querySelector('.tvm-run-btn').setAttribute('data-original-title', 'Parse the source using the current tokenizer and grammar');
+    const outputTitle = this.root.querySelector('.tvm-output-header > span');
+    if (outputTitle) outputTitle.textContent = 'Syntax trees';
+    this._compilerAdapter = new window.CompilerTutorial.Adapter({
+      getFile: path => this.editorModels[path] && this.editorModels[path].model.getValue(),
+      client: new window.CompilerLabClient(),
+    });
+    this.booted = true;
+    return Promise.resolve();
+  };
+
+  TutorialCode.prototype._runCompiler = async function (run) {
+    this._clearOutput();
+    const loadSequence = this._stepLoadSequence;
+    const { config, result } = await this._compilerAdapter.run(run.step);
+    if (this._destroyed || this.currentStep !== run.stepIndex || this._stepLoadSequence !== loadSequence) return false;
+    if (!this._compilerAdapter.isCurrent(run.step, config)) {
+      this._appendOutput('Files changed during parsing. Run again to visualize the current files.\n', 'info');
+      return false;
+    }
+    if (!result.cancelled) window.CompilerLabView.render(this._compilerResultHost, result, { focus: run.step.compiler_focus });
+    return result.ok;
+  };
+
+  TutorialCode.prototype._runTestsCompiler = async function (run) {
+    const step = this.steps[run.stepIndex];
+    const tests = step.tests;
+    const loadSequence = this._stepLoadSequence;
+    this._clearOutput();
+    this._showTestPanel('<div class="tvm-test-running">Checking compiler rules…</div>');
+    this._setRunTransactionControls('running', 'Checking…');
+    let results = new Array(tests.length).fill(null);
+    try {
+      const checked = await this._compilerAdapter.check(step, tests);
+      if (this._stepLoadSequence === loadSequence && this._compilerAdapter.isCurrent(step, checked.config)) {
+        results = checked.results;
+        checked.diagnostics.forEach((diagnostic, index) => {
+          if (results[index] === false && diagnostic) this._appendOutput(tests[index].description + ': ' + diagnostic + '\n', 'err');
+        });
+      } else if (this.currentStep === run.stepIndex && !this._destroyed) {
+        this._appendOutput('Files changed during the checks. Test again to check the current files.\n', 'info');
+      }
+    } catch (error) {
+      if (this.currentStep === run.stepIndex && !this._destroyed) this._appendOutput(error.message + '\n', 'err');
+    } finally {
+      if (!this._destroyed) {
+        this._renderTestResults(tests, results, run);
+        if (!this._activeRunTransaction) this._setRunTransactionControls('idle');
+      }
+    }
   };
 
   // One live Workspace backs Run, Browser and terminal. FreshRunner isolates checks.
@@ -5691,7 +5772,7 @@
       message = { type: 'runProlog', code: commands.join('\n'), silent: true };
     } else if (this.config.backend === 'sql') {
       message = { type: 'runSQL', sql: commands.join('\n'), silent: true };
-    } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp') {
+    } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp' || this.config.backend === 'compiler') {
       return Promise.reject(new Error(
         backendLabel(this.config.backend) + ' does not support setup_commands; provide step files instead.'
       ));
@@ -5853,6 +5934,7 @@
 
   TutorialCode.prototype._clearOutput = function () {
     if (this.outputPre) this.outputPre.innerHTML = '';
+    if (this._compilerResultHost) this._compilerResultHost.replaceChildren();
   };
 
   TutorialCode.prototype._setRunTransactionControls = function (state, label) {
@@ -5896,6 +5978,10 @@
       testRunBtn.textContent = '\u2713 Test';
     }
     if (stopBtn) stopBtn.style.display = 'none';
+    if (this._compilerRestoreRunFocus && runBtn && !runBtn.disabled) {
+      this._compilerRestoreRunFocus = false;
+      runBtn.focus();
+    }
   };
 
   TutorialCode.prototype._handleRunTransactionFailure = function (run, error) {
@@ -5954,7 +6040,8 @@
 
   TutorialCode.prototype._runCurrentFile = function (options) {
     if (this._activeRunTransaction) return this._activeRunTransaction.promise;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk') && this._testRunInFlight) return Promise.resolve(false);
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler') && this._testRunInFlight) return Promise.resolve(false);
+    if (this.config.backend === 'compiler' && this._activeStepLoadRequest) return Promise.resolve(false);
     if (this._haskellInterpreter) this._haskellInterpreter.showOutput();
     if (this._prologInterpreter) {
       if (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session)) return Promise.resolve(false);
@@ -6002,6 +6089,7 @@
     var filename = run.filename;
 
     if (backend === 'smalltalk') return this._runSmalltalk(run);
+    if (backend === 'compiler') return this._runCompiler(run);
 
     if (backend === 'v86') {
       return this._syncFileToBackend(filename).then(function () { return false; });
@@ -6961,6 +7049,12 @@
    * host-owned deadline can terminate even a Worker blocked in a tight loop.
    */
   TutorialCode.prototype._stopExecution = function () {
+    if (this._compilerAdapter) {
+      this._compilerRestoreRunFocus = document.activeElement === this.root.querySelector('.tvm-stop-btn');
+      this._compilerAdapter.cancel();
+      this._appendOutput('Compiler run stopped. You can edit the rules and run again.\n', 'info');
+      return;
+    }
     if (this._smalltalkAdapter) {
       this._smalltalkAdapter.stop();
       this._appendOutput('Execution stopped; live session resets before its next use.\n', 'info');
@@ -7449,6 +7543,7 @@
     java: { id: 'java', label: 'Java' },
     cpp: { id: 'cpp', label: 'C++' },
     haskell: { id: 'haskell', label: 'Haskell' },
+    compiler: { id: 'plaintext', label: 'Compiler rules' },
     smalltalk: { id: 'smalltalk', label: 'Smalltalk' },
     sql: { id: 'sql', label: 'SQL' },
     v86: { id: 'shell-sebook', label: 'Shell' },
@@ -7726,6 +7821,13 @@
           gutterTimer = setTimeout(function () { self._refreshGitGutter(filename); }, 300);
         }
         if (self._suppressAutoSave) return;
+        if (self.config.backend === 'compiler') {
+          // Table, source field, and Monaco edits share these persisted models.
+          // This backend has no filesystem to sync and its forms have no Save key.
+          window.CompilerLabView.markStale(self._compilerResultHost);
+          self._autoSaveProgress();
+          return;
+        }
         clearTimeout(saveTimer);
         saveTimer = setTimeout(function () {
           self._syncFileToBackend(filename).then(function () {
@@ -7786,6 +7888,10 @@
     var entry = this.editorModels[filename];
     if (!entry) return;
     this.activeFileName = filename;
+    if (this._compilerRulesEditor) {
+      if (this._isCompilerRulesFile(filename)) this._compilerRulesEditor.activate(entry.model);
+      else this._compilerRulesEditor.hide();
+    }
     if (this._splitActive && this.editor2) {
       var pane = this._paneForFile(filename);
       if (pane === 'left') {
@@ -7807,6 +7913,22 @@
     this._refreshRunButtonLabel();
   };
 
+  TutorialCode.prototype._isCompilerRulesFile = function (filename) {
+    if (this.config.backend !== 'compiler') return false;
+    const step = this.steps[this.currentStep];
+    return !!step && filename === ((step.compiler_files && step.compiler_files.tokens) || 'tokens.json');
+  };
+
+  TutorialCode.prototype._compilerFileLabel = function (filename) {
+    if (this.config.backend !== 'compiler') return filename;
+    const step = this.steps[this.currentStep];
+    const files = (step && step.compiler_files) || {};
+    if (filename === (files.tokens || 'tokens.json')) return 'Tokenizer rules';
+    if (filename === (files.grammar || 'grammar.ebnf')) return 'Grammar (EBNF)';
+    if (filename === (files.source || 'source.txt')) return 'Source';
+    return filename;
+  };
+
   TutorialCode.prototype._renderTabs = function () {
     var self = this;
     this.editorTabsEl.innerHTML = '';
@@ -7818,17 +7940,18 @@
 
     function makeTab(filename, isActive) {
       var detached = self._popoutManager && self._popoutManager.isDetached('tab:' + filename);
+      var fileLabel = self._compilerFileLabel(filename);
       var tab = document.createElement('div');
       tab.className = 'tvm-tab'
         + (isActive && !detached ? ' active' : '')
         + (detached ? ' detached' : '');
       tab.setAttribute('role', 'presentation');
-      tab.setAttribute('data-original-title', detached ? filename + ' (open in popup window \u2014 click to focus)' : filename);
+      tab.setAttribute('data-original-title', detached ? fileLabel + ' (open in popup window \u2014 click to focus)' : fileLabel);
       tab.removeAttribute('title');
       var label = document.createElement('button');
       label.type = 'button';
       label.className = 'tvm-tab-label';
-      label.textContent = detached ? (filename + ' \u2937') : filename;
+      label.textContent = detached ? (fileLabel + ' \u2937') : fileLabel;
       label.setAttribute('tabindex', isActive && !detached ? '0' : '-1');
       label.setAttribute('aria-current', isActive && !detached ? 'true' : 'false');
       tab.appendChild(label);
@@ -7891,13 +8014,13 @@
         reattachOnly.appendChild(reattachIcon);
         reattachOnly.setAttribute('data-original-title', 'Bring file back to this window');
         reattachOnly.removeAttribute('title');
-        reattachOnly.setAttribute('aria-label', 'Bring ' + filename + ' back to this window');
+        reattachOnly.setAttribute('aria-label', 'Bring ' + fileLabel + ' back to this window');
         reattachOnly.addEventListener('click', function (e) {
           e.stopPropagation();
           self._popoutManager.requestPopupClose('tab:' + filename);
         });
         tab.appendChild(reattachOnly);
-      } else if (!splitMode) {
+      } else if (!splitMode && !self._isCompilerRulesFile(filename)) {
         // Pop-out button (mirrors UML's \u29c9 control)
         var pop = document.createElement('button');
         pop.type = 'button';
@@ -7908,7 +8031,7 @@
         pop.appendChild(popIcon);
         pop.setAttribute('data-original-title', 'Open file in separate window');
         pop.removeAttribute('title');
-        pop.setAttribute('aria-label', 'Open ' + filename + ' in a separate window');
+        pop.setAttribute('aria-label', 'Open ' + fileLabel + ' in a separate window');
         pop.addEventListener('click', function (e) {
           e.stopPropagation();
           self._popoutFile(filename);
@@ -10892,7 +11015,7 @@
             }, resolve);
           });
         });
-      } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp') {
+      } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp' || this.config.backend === 'compiler') {
         p = p.then(function () {
           return Promise.reject(new Error(
             backendLabel(self.config.backend) + ' solutions support file replacements, not solution commands.'
@@ -11991,6 +12114,7 @@
   TutorialCode.prototype.loadStep = function (index) {
     if (index < 0 || index >= this.steps.length) return Promise.resolve();
     if (!this.instructorMode && !this._stepsUnlocked.has(index)) return Promise.resolve();
+    if (this._compilerAdapter) this._compilerAdapter.cancel();
 
     var resolveRequest;
     var rejectRequest;
@@ -12210,6 +12334,13 @@
       self._suppressAutoSave = autoSaveSuppressedBeforeFileLoad;
     }
     if (step.open_file && this.config.backend !== 'smalltalk') { self._setActiveFile(step.open_file); self._renderTabs(); }
+    if (self._compilerSourceEditor) {
+      const sourcePath = (step.compiler_files && step.compiler_files.source) || 'source.txt';
+      const source = self.editorModels[sourcePath];
+      if (source) self._compilerSourceEditor.activate(source.model);
+      const outputTitle = self.root.querySelector('.tvm-output-header > span');
+      if (outputTitle) outputTitle.textContent = step.compiler_focus === 'tokens' ? 'Tokens' : 'Syntax trees';
+    }
 
     // Broadcast step change to any open popups (instructions popup updates content,
     // tab popups detect orphaned files via fileList).
@@ -12376,7 +12507,7 @@
     }
 
     // Clear output panel between steps
-    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell') this._clearOutput();
+    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'compiler') this._clearOutput();
     // Rebuild React preview when a new step is loaded
     if (this.config.backend === 'react') {
       var stepSelf = this;
@@ -13144,7 +13275,8 @@
     // results return. Without this guard, the second run can replace the
     // pending test buffer/state and produce ghost results in the panel.
     if (this._testRunInFlight) return;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk') && this._activeRunTransaction) return;
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler') && this._activeRunTransaction) return;
+    if (this.config.backend === 'compiler' && this._activeStepLoadRequest) return;
     if (this.config.backend === 'prolog' && (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session))) return;
     var stepIndex = this.currentStep;
     var step = this.steps[stepIndex];
@@ -13186,6 +13318,7 @@
     else if (backend === 'cpp') this._runTestsCPP(run);
     else if (backend === 'haskell') this._runTestsHaskell(run);
     else if (backend === 'smalltalk') this._runTestsSmalltalk(run);
+    else if (backend === 'compiler') this._runTestsCompiler(run);
     else {
       run.completed = true;
       this._activeTestRun = null;

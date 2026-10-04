@@ -1,0 +1,9 @@
+{%- assign compiler_token_file = include.step.compiler_files.tokens | default: 'tokens.json' -%}
+{%- assign compiler_grammar_file = include.step.compiler_files.grammar | default: 'grammar.ebnf' -%}
+{%- assign compiler_source_file = include.step.compiler_files.source | default: 'source.txt' -%}
+{%- case include.path -%}
+  {%- when compiler_token_file -%}Tokenizer rules
+  {%- when compiler_grammar_file -%}Grammar (EBNF)
+  {%- when compiler_source_file -%}Source program
+  {%- else -%}{{ include.path | escape }}
+{%- endcase -%}
