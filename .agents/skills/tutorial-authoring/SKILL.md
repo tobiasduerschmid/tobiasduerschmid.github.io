@@ -3185,6 +3185,17 @@ add a replacement refactoring path or advertise the deferred GUI controls.
 
 ### Smalltalk workspace layout
 
+Browser class and method searches use the whole image when submitted with nonempty
+text; empty searches remain scoped to the selected package or class/protocol.
+Method search respects the current instance/class side and labels image-wide
+results with their defining class. Pagination retains that search scope, and
+selecting a result restores its package, class, protocol and source context.
+The `*` protocol choice lists all methods on the current class side. It is a
+Browser navigation target (`allProtocols: true`), translated to an ordinary class
+target before native queries; Back/Forward retains this choice. Re-clicking the
+selected class, or pressing Enter while its Classes list has focus, reopens the
+class definition without discarding method navigation history.
+
 `js/smalltalk/layout.js` owns only transient tutorial layout state. The right-hand
 Output / terminal dock starts at 204px on laptop screens and offers Collapse and
 Expand; Focus source editor temporarily hides instructions and browsing controls

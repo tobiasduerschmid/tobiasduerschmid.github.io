@@ -86,7 +86,7 @@
     [selector := class compile: source classified: protocol notifying: self] on: Error do: [:error |
         diagnostic ifNotNil: [SEBookRuntimeError signalDetails: diagnostic]. error pass].
     selector ifNil: [self error: 'COMPILE_ERROR'].
-    ^ selector! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-WNk8ZR/image/SEBookWorkspace.st----!ChangeSet subclass: #SEBookCodeChangeSet	instanceVariableNames: 'sourceClasses sourceReader stagingDefinitions'	classVariableNames: ''	poolDictionaries: ''	category: 'SEBook-Runtime'!ChangeSet subclass: #SEBookCodeChangeSet
+    ^ selector! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-IhL2tX/image/SEBookWorkspace.st----!ChangeSet subclass: #SEBookCodeChangeSet	instanceVariableNames: 'sourceClasses sourceReader stagingDefinitions'	classVariableNames: ''	poolDictionaries: ''	category: 'SEBook-Runtime'!ChangeSet subclass: #SEBookCodeChangeSet
     instanceVariableNames: 'sourceClasses sourceReader stagingDefinitions' classVariableNames: '' poolDictionaries: '' category: 'SEBook-Runtime'!SEBookCodeChangeSet methodsFor: 'native export compatibility'!!SEBookCodeChangeSet methodsFor: 'native export compatibility'!fileOutOn: stream
     "Stage inherited storage, install methods, remove obsolete methods, then finalize roots first."
     | list classes traits |
@@ -473,7 +473,7 @@
         count := count * 2
     ] repeat! !SEBookChanges methodsFor: 'current retained source'!!SEBookChanges methodsFor: 'current retained source'!sourceFor: selector in: class
     ^ self methodSource: selector state: (self stateOf: class)! !!SEBookChanges methodsFor: 'current retained source'!commentFor: class
-    ^ self commentText: (self stateOf: class theNonMetaClass)! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-WNk8ZR/image/SEBookChanges.st----!Object subclass: #SEBookTransactions	instanceVariableNames: 'service records pending'	classVariableNames: ''	poolDictionaries: ''	category: 'SEBook-Runtime'!Object subclass: #SEBookTransactions
+    ^ self commentText: (self stateOf: class theNonMetaClass)! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-IhL2tX/image/SEBookChanges.st----!Object subclass: #SEBookTransactions	instanceVariableNames: 'service records pending'	classVariableNames: ''	poolDictionaries: ''	category: 'SEBook-Runtime'!Object subclass: #SEBookTransactions
     instanceVariableNames: 'service records pending'
     classVariableNames: '' poolDictionaries: '' category: 'SEBook-Runtime'!SEBookTransactions methodsFor: 'lifecycle'!!SEBookTransactions methodsFor: 'lifecycle'!service: aService
     service := aService. records := Dictionary new! !!SEBookTransactions methodsFor: 'lifecycle'!prepare: payload revision: revision
@@ -522,7 +522,7 @@
     ^ pending notNil! !SEBookTransactions methodsFor: 'structural exclusion identity'!!SEBookTransactions methodsFor: 'structural exclusion identity'!structuralMutationIdentity
     pending ifNil: [self error: 'PRECONDITION_FAILED'].
     ((records at: pending) at: 'state') = 'applying' ifFalse: [self error: 'PRECONDITION_FAILED'].
-    ^ pending! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-WNk8ZR/image/SEBookTransactions.st----!Object subclass: #SEBookInspector	instanceVariableNames: 'handles serial generation pageLimit previewLimit'	classVariableNames: ''	poolDictionaries: ''	category: 'SEBook-Runtime'!Object subclass: #SEBookInspector
+    ^ pending! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-IhL2tX/image/SEBookTransactions.st----!Object subclass: #SEBookInspector	instanceVariableNames: 'handles serial generation pageLimit previewLimit'	classVariableNames: ''	poolDictionaries: ''	category: 'SEBook-Runtime'!Object subclass: #SEBookInspector
     instanceVariableNames: 'handles serial generation pageLimit previewLimit'
     classVariableNames: '' poolDictionaries: '' category: 'SEBook-Runtime'!SEBookInspector methodsFor: 'initialization'!!SEBookInspector methodsFor: 'initialization'!initialize
     super initialize.
@@ -564,7 +564,7 @@
     released := 0.
     (payload at: 'handles') do: [:handle |
         (handles includesKey: handle) ifTrue: [handles removeKey: handle. released := released + 1]].
-    ^ Dictionary new at: 'released' put: released; yourself! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-WNk8ZR/image/SEBookInspector.st----!Object subclass: #SEBookBrowser	instanceVariableNames: 'pageLimit sourceReader'	classVariableNames: ''	poolDictionaries: ''	category: 'SEBook-Runtime'!Object subclass: #SEBookBrowser
+    ^ Dictionary new at: 'released' put: released; yourself! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-IhL2tX/image/SEBookInspector.st----!Object subclass: #SEBookBrowser	instanceVariableNames: 'pageLimit sourceReader'	classVariableNames: ''	poolDictionaries: ''	category: 'SEBook-Runtime'!Object subclass: #SEBookBrowser
     instanceVariableNames: 'pageLimit sourceReader'
     classVariableNames: '' poolDictionaries: '' category: 'SEBook-Runtime'!SEBookBrowser methodsFor: 'configuration'!!SEBookBrowser methodsFor: 'configuration'!pageLimit: count
     pageLimit := count! !!SEBookBrowser methodsFor: 'configuration'!sourceReader: reader
@@ -606,11 +606,23 @@
     target := query at: 'target'.
     ^ (self classFor: target) organization categories collect: [:category |
         self item: category asString target: (target copy at: 'kind' put: 'protocol'; at: 'protocol' put: category asString; yourself)]! !!SEBookBrowser methodsFor: 'queries'!queryMethods: query
-    | target class |
-    target := query at: 'target'. class := self classFor: target.
+    (query includesKey: 'target') ifFalse: [^ self imageMethodItems: query].
+    ^ self methodItemsIn: (self classFor: (query at: 'target')) matching: (query at: 'target')! !!SEBookBrowser methodsFor: 'queries'!methodItemsIn: class matching: target
     ^ (class selectors select: [:selector | (target includesKey: 'protocol') not or: [
         (class organization categoryOfElement: selector) = (target at: 'protocol') asSymbol]])
-        collect: [:selector | self item: selector asString target: (self methodTarget: selector class: class)]! !!SEBookBrowser methodsFor: 'queries'!querySource: query
+        collect: [:selector | self item: selector asString target: (self methodTarget: selector class: class)]! !!SEBookBrowser methodsFor: 'queries'!imageMethodItems: query
+    | search side items |
+    search := (query at: 'search' ifAbsent: ['']) asString.
+    search isEmpty ifTrue: [self error: 'PRECONDITION_FAILED'].
+    side := query at: 'side' ifAbsent: [nil].
+    items := OrderedCollection new.
+    Smalltalk allClassesAndTraitsDo: [:class | {class. class class} do: [:methodClass |
+        (side isNil or: [methodClass isMeta = (side = 'class')]) ifTrue: [
+            methodClass selectorsDo: [:selector |
+                (selector asString includesSubstring: search caseSensitive: false) ifTrue: [
+                    items add: (self item: (methodClass name, '>>', selector asString)
+                        target: (self methodTarget: selector class: methodClass))]]]]].
+    ^ items! !!SEBookBrowser methodsFor: 'queries'!querySource: query
     | target class |
     target := query at: 'target'.
     (target at: 'kind') = 'file' ifTrue: [^ FileStream readOnlyFileNamed: (target at: 'path') do: [:stream | stream contents]].
@@ -696,7 +708,7 @@
         owner := self instanceVariableOwner: name in: class.
         ^ 'Instance slot ', name, ': ', owner name, ' declaration hierarchy (declaring class and descendants).'].
     owner := self classVariableOwner: name in: class.
-    ^ 'Class variable ', name, ': references to the ', owner name, ' binding across the image, on both sides.'! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-WNk8ZR/image/SEBookBrowser.st----!RBNamespace subclass: #SEBookRefactoringModel	instanceVariableNames: 'sourceReader'	classVariableNames: ''	poolDictionaries: ''	category: 'SEBook-Runtime'!"Local source adapters keep RB AST positions and inverse changes on the retained source cut."
+    ^ 'Class variable ', name, ': references to the ', owner name, ' binding across the image, on both sides.'! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-IhL2tX/image/SEBookBrowser.st----!RBNamespace subclass: #SEBookRefactoringModel	instanceVariableNames: 'sourceReader'	classVariableNames: ''	poolDictionaries: ''	category: 'SEBook-Runtime'!"Local source adapters keep RB AST positions and inverse changes on the retained source cut."
 RBNamespace subclass: #SEBookRefactoringModel
     instanceVariableNames: 'sourceReader' classVariableNames: '' poolDictionaries: '' category: 'SEBook-Runtime'!RBClass subclass: #SEBookRefactoringClass	instanceVariableNames: ''	classVariableNames: ''	poolDictionaries: ''	category: 'SEBook-Runtime'!RBClass subclass: #SEBookRefactoringClass
     instanceVariableNames: '' classVariableNames: '' poolDictionaries: '' category: 'SEBook-Runtime'!RBMetaclass subclass: #SEBookRefactoringMetaclass	instanceVariableNames: ''	classVariableNames: ''	poolDictionaries: ''	category: 'SEBook-Runtime'!RBMetaclass subclass: #SEBookRefactoringMetaclass
@@ -1162,7 +1174,7 @@ RBNamespace subclass: #SEBookRefactoringModel
     organization := value! !!SEBookOrganizationChange methodsFor: 'native inverse metadata'!asUndoOperation
     ^ self class new changeClass: self changeClass; organization: self changeClass organization copy; yourself! !!SEBookOrganizationChange methodsFor: 'native inverse metadata'!primitiveExecute
     self changeClass organization: organization copy! !!SEBookOrganizationChange methodsFor: 'native inverse metadata'!changeString
-    ^ 'Restore protocol organization for ', self displayClassName! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-WNk8ZR/image/SEBookRefactorings.st----!Object subclass: #SEBookStructuralGuard	instanceVariableNames: ''	classVariableNames: 'ClassOf Copy Enumeration Generated OriginalTrigger Queue Slot'	poolDictionaries: ''	category: 'SEBook-Runtime'!Object subclass: #SEBookStructuralGuard
+    ^ 'Restore protocol organization for ', self displayClassName! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-IhL2tX/image/SEBookRefactorings.st----!Object subclass: #SEBookStructuralGuard	instanceVariableNames: ''	classVariableNames: 'ClassOf Copy Enumeration Generated OriginalTrigger Queue Slot'	poolDictionaries: ''	category: 'SEBook-Runtime'!Object subclass: #SEBookStructuralGuard
     instanceVariableNames: ''
     classVariableNames: 'Queue OriginalTrigger Enumeration Slot ClassOf Copy Generated'
     poolDictionaries: '' category: 'SEBook-Runtime'!SEBookStructuralGuard class methodsFor: 'image preparation'!!SEBookStructuralGuard class methodsFor: 'image preparation'!enabled
@@ -1301,7 +1313,7 @@ RBNamespace subclass: #SEBookRefactoringModel
             (names asArray = class instVarNames and: [superclass == class superclass])
                 ifFalse: [classes add: class].
             superclass == class superclass ifFalse: [classes add: class class]]].
-    ^ self during: [self evaluateDefinition: source notifying: requestor] layoutClasses: classes! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-WNk8ZR/image/SEBookStructuralGuard.st----!Object subclass: #SEBookService	instanceVariableNames: 'revision workspace inspector activeOperation requests limits generation browser changes transactions baselineId refactorings'	classVariableNames: ''	poolDictionaries: ''	category: 'SEBook-Runtime'!Object subclass: #SEBookService
+    ^ self during: [self evaluateDefinition: source notifying: requestor] layoutClasses: classes! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-IhL2tX/image/SEBookStructuralGuard.st----!Object subclass: #SEBookService	instanceVariableNames: 'revision workspace inspector activeOperation requests limits generation browser changes transactions baselineId refactorings'	classVariableNames: ''	poolDictionaries: ''	category: 'SEBook-Runtime'!Object subclass: #SEBookService
     instanceVariableNames: 'revision workspace inspector activeOperation requests limits generation browser changes transactions baselineId refactorings'
     classVariableNames: ''
     poolDictionaries: ''
@@ -1517,4 +1529,4 @@ RBNamespace subclass: #SEBookRefactoringModel
     refactorings ordinarySourceAccepted.
     revision := revision + 1.
     ^ Dictionary new at: 'revision' put: revision; at: 'changes' put: changes bundle; at: 'history' put: refactorings history; yourself! !SEBookService methodsFor: 'structural exclusion identity'!!SEBookService methodsFor: 'structural exclusion identity'!structuralMutationIdentity
-    ^ transactions structuralMutationIdentity! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-WNk8ZR/image/SEBookService.st----!----QUIT----{3 October 2026 . 9:07:52 am} sebook.image priorSource: 25424!
+    ^ transactions structuralMutationIdentity! !----End fileIn of /var/folders/9q/3khmxmmj62nc4w2pf41wm9t80000gn/T/sebook-smalltalk-build-IhL2tX/image/SEBookService.st----!----QUIT----{3 October 2026 . 6:00:50 pm} sebook.image priorSource: 25424!

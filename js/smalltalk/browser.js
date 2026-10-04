@@ -5,6 +5,29 @@
   const paneKinds = ['packages', 'classes', 'protocols', 'methods'];
   const paneNames = ['Packages', 'Classes', 'Protocols', 'Methods'];
   const sameEntity = (left, right) => !!left && !!right && api.entityKey(left) === api.entityKey(right);
+  // NUL cannot be typed as a protocol name, so this value cannot collide with one.
+  const allProtocolsOptionId = '\u0000*';
+  const isAllProtocols = target => !!target && target.allProtocols === true;
+  function allProtocolsNavigationTarget(classTarget, methodSide) {
+    return {
+      kind: 'protocol', className: classTarget.className,
+      ...(classTarget.packageName ? { packageName: classTarget.packageName } : {}),
+      side: methodSide, allProtocols: true,
+    };
+  }
+  function imageTarget(navigationTarget, methodSide) {
+    if (!isAllProtocols(navigationTarget)) return navigationTarget;
+    return { kind: 'class', className: navigationTarget.className, side: navigationTarget.side || methodSide || 'instance' };
+  }
+  function labelContainsSearch(label, search) {
+    return search === '' || label.toLowerCase().includes(search.toLowerCase());
+  }
+  function protocolsWithAllMethods(items, classTarget, search) {
+    const protocols = items.filter(item => item.id !== allProtocolsOptionId);
+    if (!labelContainsSearch('*', search)) return protocols;
+    const choice = { id: allProtocolsOptionId, label: '*', target: allProtocolsNavigationTarget(classTarget, classTarget.side || 'instance') };
+    return [choice, ...protocols];
+  }
   function element(tag, className, text) {
     const node = document.createElement(tag);
     if (className) node.className = className;
@@ -84,16 +107,42 @@
       const searchButton = button('Search', () => {}); searchButton.type = 'submit'; form.append(searchLabel, search, searchButton);
       const listLabel = element('label', '', paneNames[index]); const list = element('select', 'smalltalk-pane-list');
       list.id = id + '-' + kind; listLabel.htmlFor = list.id; list.size = 3;
-      const next = button('Next', () => run(loadPane(index, panes[index].parent, panes[index].nextOffset)));
+      const next = button('Next', () => {
+        const current = panes[index];
+        run(loadPane(index, current.parent, current.nextOffset, { imageWide: current.imageWide === true }));
+      });
       next.classList.add('smalltalk-pane-next');
       next.setAttribute('aria-label', 'Next ' + kind);
       next.hidden = true;
-      const pane = { kind, section, search, list, next, items: [], parent: null, nextOffset: null, request: 0 };
-      panes.push(pane); form.addEventListener('submit', event => { event.preventDefault(); run(loadPane(index, pane.parent)); });
+      const pane = { kind, section, search, list, next, items: [], parent: null, nextOffset: null, request: 0, searchRevision: 0, imageWide: false };
+      panes.push(pane); form.addEventListener('submit', event => {
+        event.preventDefault();
+        pane.searchRevision++;
+        run(loadPane(index, pane.parent, 0, { imageWide: searchesWholeImage(pane) }));
+      });
       list.addEventListener('change', () => {
         const item = pane.items.find(entry => entry.id === list.value);
         if (item && item.target) run(navigate(item.target));
       });
+      // A listbox does not fire change when the chosen option is already selected.
+      // Re-activating that class is how the browser returns from a method to its definition.
+      let valueBeforePointer = null;
+      list.addEventListener('pointerdown', () => { valueBeforePointer = list.value; });
+      list.addEventListener('click', event => {
+        if (list.value !== valueBeforePointer) return;
+        if (!clickedSelectedOption(event, list)) return;
+        reopenSelectedClass();
+      });
+      list.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' || event.altKey || event.metaKey || event.ctrlKey || event.shiftKey) return;
+        reopenSelectedClass();
+      });
+      function reopenSelectedClass() {
+        const item = pane.items.find(entry => entry.id === list.value);
+        if (!item || !item.target || item.target.kind !== 'class') return;
+        if (target && sameEntity(item.target, target)) return;
+        run(navigate(item.target));
+      }
       const paneHeader = element('div', 'smalltalk-pane-header'); paneHeader.append(listLabel, next);
       if (compact) {
         const nextIcon = element('span', '', '›'); nextIcon.setAttribute('aria-hidden', 'true'); next.replaceChildren(nextIcon);
@@ -184,16 +233,38 @@
     function run(promise) { promise.catch(showError); }
     function showError(error) { if (!disposed) compilation.textContent = 'Compilation error: ' + (error.message || String(error)); }
     function showPane(index) { panes.forEach((pane, position) => pane.section.classList.toggle('is-current-pane', position === index)); }
+    function clickedSelectedOption(event, list) {
+      const chosen = event.target instanceof HTMLOptionElement ? event.target : document.elementFromPoint(event.clientX, event.clientY);
+      if (chosen instanceof HTMLOptionElement) return chosen.value === list.value && list.contains(chosen);
+      if (event.target !== list) return false;
+      return [...list.options].some(option => {
+        if (option.value !== list.value) return false;
+        const box = option.getBoundingClientRect();
+        return box.width > 0 && box.height > 0 && event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
+      });
+    }
     function clearPane(index, message) {
       const pane = panes[index]; pane.request++; pane.items = []; pane.list.replaceChildren(new Option(message, '')); pane.list.disabled = true; pane.next.hidden = true;
     }
-    async function loadPane(index, parent, offset = 0) {
+    function searchesWholeImage(pane) {
+      return pane.search.value !== '' && (pane.kind === 'classes' || pane.kind === 'methods');
+    }
+    function browseQuery(pane, parent, offset, imageWide) {
+      const query = { kind: pane.kind, search: pane.search.value, offset, limit: 100 };
+      if (imageWide && pane.kind === 'methods') query.side = side;
+      else if (!imageWide && parent) query.target = parent;
+      return query;
+    }
+    async function loadPane(index, parent, offset = 0, options = {}) {
       const pane = panes[index]; const request = ++pane.request; pane.parent = parent;
-      const result = await workspace.browse({ kind: pane.kind, ...(parent ? { target: parent } : {}), search: pane.search.value, offset, limit: 100 });
+      const imageWide = options.imageWide === true;
+      const result = await workspace.browse(browseQuery(pane, parent, offset, imageWide));
       if (disposed || request !== pane.request) return;
+      pane.imageWide = imageWide;
       const ownedFocus = document.activeElement === pane.next;
       const selectedId = offset ? pane.list.value : '';
       pane.items = offset ? [...new Map(pane.items.concat(result.items).map(item => [item.id, item])).values()] : result.items;
+      if (!offset && index === 2 && parent && parent.className) pane.items = protocolsWithAllMethods(pane.items, parent, pane.search.value);
       pane.list.replaceChildren(...pane.items.map(item => new Option(item.label, item.id)));
       if (!pane.items.length) pane.list.append(new Option('No matching ' + pane.kind, ''));
       pane.list.disabled = !pane.items.length; pane.list.value = selectedId;
@@ -202,14 +273,16 @@
     }
     function selectPane(index, selectedTarget) {
       const pane = panes[index]; let item = pane.items.find(entry => sameEntity(entry.target, selectedTarget));
-      if (!item && selectedTarget && selectedTarget.kind === ['package', 'class', 'protocol', 'method'][index]) {
+      if (!item && selectedTarget && !isAllProtocols(selectedTarget) && selectedTarget.kind === ['package', 'class', 'protocol', 'method'][index]) {
         const label = selectedTarget.selector || selectedTarget.protocol || selectedTarget.className || selectedTarget.packageName;
         if (label) { item = { id: label, label, target: { ...selectedTarget } }; pane.items.unshift(item); pane.list.prepend(new Option(label, label)); pane.list.disabled = false; }
       }
       if (item) pane.list.value = item.id;
     }
     async function navigate(nextTarget, { record = true } = {}) {
+      if (record && isAllProtocols(nextTarget) && isAllProtocols(target) && sameEntity(target, nextTarget)) return;
       const generation = ++navigationGeneration;
+      const searchRevisions = panes.map(pane => pane.searchRevision);
       editorHost.inert = true; sourceRegion.setAttribute('aria-busy', 'true'); sourceTarget = null; updateSourceState();
       const previousTarget = target;
       target = Object.fromEntries(Object.entries(nextTarget).filter(([, value]) => value !== undefined));
@@ -223,20 +296,21 @@
       side = target.side || side;
       sideGroup.querySelectorAll('input').forEach(radio => { radio.checked = radio.value === side; });
       if (record) { history = history.slice(0, historyIndex + 1); history.push({ ...target }); historyIndex = history.length - 1; updateHistory(); }
-      breadcrumb.textContent = [target.packageName, target.className, target.className && side + ' side', target.protocol, target.selector].filter(Boolean).join(' → ');
+      breadcrumb.textContent = [target.packageName, target.className, target.className && side + ' side', isAllProtocols(target) ? '*' : target.protocol, target.selector].filter(Boolean).join(' → ');
       updateQueryButtons();
       const packageItem = panes[0].items.find(item => item.id === panes[0].list.value);
       const knownClass = panes[1].items.some(item => sameEntity(item.target, { kind: 'class', className: target.className, side: 'instance' }));
       const packageScope = target.packageName ? { kind: 'package', packageName: target.packageName } : knownClass && packageItem ? packageItem.target : null;
       const scopeTargets = [packageScope,
         target.className ? { kind: 'class', className: target.className, ...(target.packageName ? { packageName: target.packageName } : {}), side } : null,
-        target.protocol ? { kind: 'protocol', className: target.className, side, protocol: target.protocol } : target.className ? { kind: 'class', className: target.className, side } : null];
+        isAllProtocols(target) ? allProtocolsNavigationTarget(target, side) : target.protocol ? { kind: 'protocol', className: target.className, side, protocol: target.protocol } : target.className ? { kind: 'class', className: target.className, side } : null];
       if (scopeTargets[0]) selectPane(0, scopeTargets[0]);
       for (let index = 1; index < 4; index++) {
-        const parent = scopeTargets[index - 1];
+        const parent = index === 3 && scopeTargets[2] ? imageTarget(scopeTargets[2], side) : scopeTargets[index - 1];
         if (!parent && index === 1 && target.className) { await loadPane(index); selectPane(index, scopeTargets[index]); continue; }
         if (!parent) { clearPane(index, 'Choose ' + paneNames[index - 1].toLowerCase() + ' first.'); continue; }
-        await loadPane(index, parent);
+        // A search submitted during earlier pane loads must keep its image-wide scope.
+        await loadPane(index, parent, 0, { imageWide: panes[index].searchRevision !== searchRevisions[index] && searchesWholeImage(panes[index]) });
         if (disposed || generation !== navigationGeneration) return;
         selectPane(index, index === 3 ? target : scopeTargets[index]);
       }
@@ -370,7 +444,7 @@
       queryButtons.forEach(({ control, kind }) => { control.disabled = !target || (['senders', 'implementors', 'versions'].includes(kind) ? !target.selector : !target.className); });
       definition.disabled = !target.className; comment.disabled = !target.className;
     }
-    async function openClassSource(kind) { await navigate({ ...target, kind, selector: undefined, protocol: undefined }); }
+    async function openClassSource(kind) { await navigate({ ...target, kind, selector: undefined, protocol: undefined, allProtocols: undefined }); }
     let selectedVersion = null;
     const versionRegion = element('section', 'smalltalk-version-preview'); versionRegion.setAttribute('aria-label', 'Selected method version'); versionRegion.hidden = true;
     const versionHeading = element('h3'); const versionSource = element('pre'); const versionState = element('p');
@@ -403,7 +477,7 @@
         if (ownsFocus) queryRegion.focus();
       }
       queryStatus.textContent = 'Searching the image…'; if (!offset) { queryNext.hidden = true; selectedVersion = null; versionRegion.hidden = true; restoreVersion.disabled = true; }
-      const result = await workspace.browse({ kind, target: kind === 'variableReferences' ? { kind: 'class', className: queryTarget.className, side: queryTarget.side || side } : queryTarget, ...(querySessionVariable ? { variable: querySessionVariable } : {}), offset, limit: 100 });
+      const result = await workspace.browse({ kind, target: kind === 'variableReferences' ? { kind: 'class', className: queryTarget.className, side: queryTarget.side || side } : imageTarget(queryTarget, side), ...(querySessionVariable ? { variable: querySessionVariable } : {}), offset, limit: 100 });
       if (disposed || generation !== queryGeneration) return;
       const ownedFocus = document.activeElement === queryNext;
       let firstAction = null;

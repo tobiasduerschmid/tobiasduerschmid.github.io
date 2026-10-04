@@ -4,7 +4,35 @@ This record describes the 2026-10-03 candidate on macOS 26.6.2 (25G83), ARM64. I
 
 The active scope is the System Browser, ordinary class/method source acceptance, queries, Versions, live terminal and Inspector, Run, independent fresh checks, source views and popouts. Refactoring controls, refactoring-backed Add/Remove actions and the rename lesson are deferred. No compound structural-exclusion guarantee is made for unrestricted terminal or raw-file execution.
 
-## Candidate identity and reproducibility
+## Browser search follow-up, 2026-10-03
+
+The updated distribution manifest SHA-256 is
+`26575d097f74e96068e8eee70b78ca2bae07d80e58afccc4e82f0b3b50bbc5d6`.
+The native image was rebuilt with image-wide method search, and all 37 artifacts
+verify. The image is now 54,231,280 bytes and its changes archive is 1,460,947 bytes;
+the initial-release transfer measurements below describe the previous build.
+
+This follow-up adds image-wide class/method search, the `*` all-protocol view,
+selected-class reactivation by click or Enter, and theme-aware control styling.
+A native query trace caught an older navigation overwriting a newer image-wide
+search with scoped results. Navigation now retains the newer search's scope.
+
+The final unit run passed 727/727. A focused Chromium rerun passed the method-search
+regression, all-protocol navigation and mounted live-workspace behavior with
+`A11Y_INTERACTIVE_CHECKS=1`. Its accessibility checkpoints covered the all-methods
+view and the mounted workspace in light, narrow dark and print states. These are
+automated checks, not a manual screen-reader or full-site conformance claim.
+The focused six-case matrix has passing evidence in Chromium, Firefox and WebKit
+across the initial run and targeted reruns. WebKit's native listbox test now clicks
+the visible row through its owning listbox because individual option hit-testing
+is unavailable. The initial WebKit workspace run could not find Program output
+after clicking Run; its isolated traced rerun passed, including enabled
+accessibility checkpoints. That intermittent failure has not been assigned a
+confirmed cause, so this is not a claim of a clean single-pass matrix.
+The preview used current frontend and rebuilt native assets at port 4209 with the
+isolated tutorial HTML from the original release build.
+
+## Initial release identity and reproducibility
 
 The manifest SHA-256 is `f6ad2996d2efb1be5cbe3473e7928e8dcd170b88ba56aa53f494d48277480c27`. The runtime pins SqueakJS 1.3.3 at `284b7dacd385cfd3258c6337d41fc875459816ea`, Squeak 6 build 22104, and Refactoring Browser 3.1 inputs. `node scripts/smalltalk/build-image.mjs --verify` verified all 37 distributed artifacts. All six served adapter hashes matched the manifest on the coherent local preview at port 4198. The existing preview at port 4000 was verified earlier but was no longer listening at the final check. Integrity checking remains enabled. Build inputs and licenses are described in [the runtime README](../scripts/smalltalk/README.md). Git attributes preserve exact distribution/adapter bytes and treat offset-addressed image/source archives as binary. Authored-file whitespace checks pass; original whitespace in the hash-pinned upstream JavaScript is retained unchanged.
 

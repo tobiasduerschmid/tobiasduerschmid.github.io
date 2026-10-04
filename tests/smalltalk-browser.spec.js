@@ -68,6 +68,28 @@ test('Native query results navigate system methods and preserve browser history'
 });
 module.exports = { program, selectCounter, replaceSource };
 
+test('clicking the selected class again opens its definition', async ({ page }) => {
+  const cleanup = await mountSmalltalkFixture(page, { program });
+  try {
+    await selectCounter(page);
+    const classes = page.getByRole('listbox', { name: 'Classes', exact: true });
+    const source = page.getByRole('region', { name: 'Method source', exact: true });
+    await expect(classes.getByRole('option')).toHaveText(['SEBookCounter']);
+    // WebKit renders native options without individual hit-test rectangles.
+    // Click the single visible row through its owning listbox.
+    await classes.click({ position: { x: 20, y: 15 } });
+    await expect(source.getByRole('heading', { name: 'Class definition', exact: true })).toBeVisible();
+    await expect(source).toContainText('subclass:');
+    await page.getByRole('button', { name: 'Back', exact: true }).click();
+    await expect(source.getByRole('heading', { name: 'Method source', exact: true })).toBeVisible();
+    await expect(source).toContainText('value ^ 1');
+    await classes.focus();
+    await classes.press('Enter');
+    await expect(source.getByRole('heading', { name: 'Class definition', exact: true })).toBeVisible();
+    await expect(source).toContainText('subclass:');
+  } finally { await cleanup(); }
+});
+
 test('Closing Hierarchy results after collapsing queries focuses visible source', async ({ page }) => {
   const cleanup = await mountSmalltalkFixture(page, { program });
   try {

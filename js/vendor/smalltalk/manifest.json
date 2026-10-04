@@ -3,7 +3,7 @@
   "adapters": [
     {
       "path": "../../smalltalk/protocol.js",
-      "sha256": "fcaba99cc5ae548eba8d353b76888ccd5f4b74dbff130bb62c18ceaaeda2fb0d"
+      "sha256": "3794cf5f1ba03dad43930aeb38cd731045f46c5d24e56347d363038489570a01"
     },
     {
       "path": "../../smalltalk/filesystem.js",
@@ -345,20 +345,20 @@
     {
       "path": "sebook.changes",
       "kind": "changes",
-      "bytes": 1459993,
-      "sha256": "fd6ed097c9fc7f1878ebef319c9338732aee2e720b9c28591103ec5267c95fc9"
+      "bytes": 1460947,
+      "sha256": "e29a76c601e44d65c8b50099508f1a8b79fb7c7e243a538edce01bb907099fec"
     },
     {
       "path": "sebook.image",
       "kind": "image",
-      "bytes": 54055512,
-      "sha256": "ab67b8339df2a996fbba8dd0cbca8b47a3b713e0a93f03167f5a1b3e6b6d89c4"
+      "bytes": 54231280,
+      "sha256": "87559cc95aeb21fbca6640a930bda3f84d19d60ae8cffa79ea54b247310dd760"
     },
     {
       "path": "source/SEBookBrowser.st",
       "kind": "notice",
-      "bytes": 9844,
-      "sha256": "072614c71da356577f2c7462275511f4a5bfe5b55076472c3861b75748cdcba9"
+      "bytes": 10718,
+      "sha256": "b5d884d1385bbdf908f1c7cb267e14932dc1f6c14a273f03f18672f5233ed84c"
     },
     {
       "path": "source/SEBookChanges.st",

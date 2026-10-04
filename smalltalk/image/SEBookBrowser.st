@@ -51,11 +51,25 @@ queryProtocols: query
     ^ (self classFor: target) organization categories collect: [:category |
         self item: category asString target: (target copy at: 'kind' put: 'protocol'; at: 'protocol' put: category asString; yourself)]!
 queryMethods: query
-    | target class |
-    target := query at: 'target'. class := self classFor: target.
+    (query includesKey: 'target') ifFalse: [^ self imageMethodItems: query].
+    ^ self methodItemsIn: (self classFor: (query at: 'target')) matching: (query at: 'target')!
+methodItemsIn: class matching: target
     ^ (class selectors select: [:selector | (target includesKey: 'protocol') not or: [
         (class organization categoryOfElement: selector) = (target at: 'protocol') asSymbol]])
         collect: [:selector | self item: selector asString target: (self methodTarget: selector class: class)]!
+imageMethodItems: query
+    | search side items |
+    search := (query at: 'search' ifAbsent: ['']) asString.
+    search isEmpty ifTrue: [self error: 'PRECONDITION_FAILED'].
+    side := query at: 'side' ifAbsent: [nil].
+    items := OrderedCollection new.
+    Smalltalk allClassesAndTraitsDo: [:class | {class. class class} do: [:methodClass |
+        (side isNil or: [methodClass isMeta = (side = 'class')]) ifTrue: [
+            methodClass selectorsDo: [:selector |
+                (selector asString includesSubstring: search caseSensitive: false) ifTrue: [
+                    items add: (self item: (methodClass name, '>>', selector asString)
+                        target: (self methodTarget: selector class: methodClass))]]]]].
+    ^ items!
 querySource: query
     | target class |
     target := query at: 'target'.

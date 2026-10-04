@@ -56,7 +56,9 @@
           if (target.kind === kind && (typeof target[field] !== 'string' || !target[field])) reject();
         }
       }
-      if (['protocols', 'methods', 'hierarchy', 'variables', 'variableReferences', 'versions', 'source'].includes(payload.kind) && !target) reject();
+      if (['protocols', 'hierarchy', 'variables', 'variableReferences', 'versions', 'source'].includes(payload.kind) && !target) reject();
+      if (payload.kind === 'methods' && !target && (typeof payload.search !== 'string' || payload.search === '')) reject();
+      if (payload.kind === 'methods' && payload.side !== undefined && !['instance', 'class'].includes(payload.side)) reject();
       if (payload.kind === 'variableReferences' && (!target || target.kind !== 'class' || !payload.variable ||
           !['instance', 'class'].includes(payload.variable.kind) || typeof payload.variable.name !== 'string' || !payload.variable.name)) reject();
       if (['senders', 'implementors'].includes(payload.kind) && !(target && typeof target.selector === 'string') && !payload.search) reject();
