@@ -508,6 +508,7 @@ steps:
 
       - Apply `grep`, `wc`, `sort`, `uniq`, `cut`, and `head` individually on real text data.
       - Create multi-stage pipelines that compose these tools to answer real questions.
+      - Observe input flowing through a running pipeline into a file before the input ends.
       - Analyze the difference between `stdout`, `stderr`, and the redirection operators (`>`, `>>`, `<`, `2>`).
 
       But before you connect tools, you need to know what each one does
@@ -608,6 +609,52 @@ steps:
       wc -l < info_only.txt                          # read from file
       ```
 
+      ### Watch a stream arrive
+
+      A text box often holds your whole draft until you submit it. Can a
+      pipeline write part of your input to a file while you are still
+      supplying the rest? Try it with a transformation you can see:
+      `tr 'a-z' 'A-Z'` changes lowercase English letters to uppercase.
+
+      **Predict first:** Will the file change with each keystroke, after
+      each press of Enter, or only when you finish all input?
+
+      1. Open the provided `stream_notes.txt` tab in the editor. Keep it
+         visible, then focus the **terminal** to enter this command:
+
+         ```bash
+         cat | stdbuf -oL tr 'a-z' 'A-Z' > stream_notes.txt
+         ```
+
+         With no filename, `cat` reads your terminal input. The pipe `|`
+         sends its output to `tr`; `>` redirects `tr`'s output to the file.
+         `stdbuf -oL` makes `tr` write each completed output line immediately
+         instead of holding later lines in a buffer.
+         Running this command again clears the file before writing.
+      2. Type `first message` **in the terminal**, but pause before pressing
+         Enter. Inspect the file, then press **Enter** in the terminal and
+         inspect it again. Allow a moment for the editor to refresh.
+      3. Keep the command running. Type a different lowercase line and
+         press **Enter**. What changed in the file? Use the editor to
+         observe the file; enter your input in the terminal throughout.
+      4. Recall step 1: with the terminal focused, press **Ctrl+D on the
+         empty input line** to finish input. Use **Control**, including on
+         macOS. `cat` finishes, then `tr` finishes when its input ends, and
+         the shell prompt returns. The file keeps the text already written.
+
+      **Compare with your prediction:** Here, the terminal delivers each
+      completed line when you press Enter. `cat` copies it, `tr` transforms
+      it, and the file grows while the pipeline is still running. Enter
+      sends another line; Ctrl+D on an empty line says there is no more input.
+      The lowercase text in the terminal is your input being echoed; the
+      uppercase text in the file is the pipeline's output.
+
+      Streams carry a sequence of bytes, not an editable draft. This terminal
+      supplies lines, but other sources can supply different-sized chunks,
+      and some programs wait for more input before producing output.
+      Once a line has reached the file, can Backspace in the terminal edit
+      that earlier line? Explain using what you observed.
+
       ### Where do errors go? (stderr)
 
       Every program has **two** output streams: **stdout** (normal
@@ -696,6 +743,8 @@ steps:
           08:30:00 INFO health check passed
           08:31:44 ERROR out of memory on worker-3
           08:32:01 INFO worker-3 restarted
+      - path: "stream_notes.txt"
+        content: ""
     open_file: "server_log.txt"
     solution:
       commands:
