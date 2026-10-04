@@ -85,7 +85,9 @@ cat /etc/motd > /dev/ttyS0 2>/dev/null
 # mounted filesystems and background services.
 while true; do
     log "starting $SHELL_BIN"
-    "$SHELL_BIN" -l -i < /dev/ttyS0 > /dev/ttyS0 2>&1
+    # Give Bash its own session and controlling terminal so keyboard signals
+    # reach its foreground job, while PID 1 remains outside that session.
+    setsid -c "$SHELL_BIN" -l -i < /dev/ttyS0 > /dev/ttyS0 2>&1
     shell_status=$?
     echo "Shell exited (status $shell_status). Starting a new shell; your files are unchanged." > /dev/ttyS0
     # Avoid a busy loop if the shell cannot start.

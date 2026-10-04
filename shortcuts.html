@@ -10,7 +10,7 @@ info_nav_title: "Keyboard shortcuts"
 
   <div class="shortcuts-intro">
     <p>Most interactive widgets on this site can be operated entirely from the keyboard. This page lists every custom keyboard shortcut. Standard browser shortcuts (<kbd>Tab</kbd> to move focus, <kbd>Enter</kbd> to activate buttons and links, <kbd>Space</kbd> to toggle controls, etc.) are not repeated here.</p>
-    <p>On macOS, use <kbd>Cmd</kbd> wherever you see <kbd>Ctrl</kbd>. Both modifiers work everywhere.</p>
+    <p>On macOS, use <kbd>Cmd</kbd> wherever you see <kbd>Ctrl</kbd>, except for terminal shortcuts that explicitly require Control.</p>
   </div>
 
   <nav class="shortcuts-toc" aria-label="Sections on this page">
@@ -178,6 +178,7 @@ info_nav_title: "Keyboard shortcuts"
   </table>
 
   <h2 id="tutorial-terminal">Embedded tutorial terminal</h2>
+  <p class="shortcuts-note">In the Shell Scripting tutorial, focus the terminal and use <kbd>Ctrl</kbd>+<kbd>C</kbd> to request an interrupt. If a command such as <code>cut</code> is waiting for input and the interrupt does not work, use <kbd>Ctrl</kbd>+<kbd>D</kbd> on an empty input line to finish input; press Enter first if you have typed text. This does not stop an infinite loop. Both shortcuts use Control on macOS too.</p>
   <p class="shortcuts-note">The Python tutorials embed a small in-browser terminal under the editor for git, filesystem, and python commands. The terminal must be focused for these to take effect. macOS users can use <kbd>Option</kbd> wherever you see <kbd>Alt</kbd>. <kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>W</kbd> and <kbd>Ctrl</kbd><span class="key-sep">+</span><kbd>T</kbd> are claimed by the browser on Linux and Windows (close tab / new tab) — use the <kbd>Alt</kbd> alternatives there.</p>
   <table class="shortcuts-table">
     <caption>Line editing and history shortcuts in the embedded terminal.</caption>

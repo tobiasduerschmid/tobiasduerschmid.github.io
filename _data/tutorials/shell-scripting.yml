@@ -115,6 +115,52 @@ steps:
         first, captures its output, and injects the result into your string.
         Any command can go inside `$(...)` — this is one of Bash's most
         useful features.
+
+      ### Practice getting your prompt back
+
+      Before moving to step 2, try these two commands **directly in the
+      terminal**. Keep the terminal focused when using the shortcuts below;
+      use the **Control** key even on a Mac.
+
+      **1. Interrupt a command with Ctrl+C.** Run this loop:
+
+      ```bash
+      while true; do echo "Still running"; sleep 1; done
+      ```
+
+      It prints a message once per second and will keep going indefinitely.
+      After a few messages, press **Ctrl+C**. The messages should stop and
+      the shell prompt should return. You do not need to understand the loop
+      syntax yet; the skill to practice here is stopping a running command.
+
+      **2. Finish input with Ctrl+D.** Now run:
+
+      ```bash
+      cat
+      ```
+
+      With no filename, `cat` waits for input from the terminal. Type
+      `hello` and press Enter: `cat` prints the same line back and waits
+      for more. On the new, empty input line, press **Ctrl+D**. This signals
+      end-of-input, so `cat` finishes and the shell prompt returns. If you
+      have typed text on that line, press Enter before Ctrl+D.
+
+      Confirm that you can run another command:
+
+      ```bash
+      echo "Ready to continue"
+      ```
+
+      **The difference:** Ctrl+C requests an interruption; Ctrl+D tells a
+      command reading terminal input that there is no more input. Ctrl+D
+      will not stop the infinite loop above. Use it while `cat` is waiting,
+      since pressing Ctrl+D at an empty shell prompt can exit the shell.
+
+      > **Later, if a command seems stuck:** A command such as `cut` without
+      > an input filename may be waiting for terminal input rather than
+      > reporting an error. Try Ctrl+C, or finish its input with Ctrl+D on
+      > an empty line, then correct and rerun the command without refreshing.
+      > Stopping a command does not undo file changes it already made.
     files:
       - path: "morning.sh"
         print_language: bash

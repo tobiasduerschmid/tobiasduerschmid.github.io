@@ -2317,6 +2317,12 @@ update. Repositories and generated file metadata remain live inputs, so the
 rootfs is not claimed to be byte-for-byte reproducible.
 
 The guest `/init` remains PID 1 and supervises an interactive login shell.
+Each shell starts with `setsid -c` on `/dev/ttyS0`, giving Bash its own session
+and controlling terminal so Ctrl+C interrupts its foreground job. Ctrl+D on
+an empty input line ends input for commands such as `cat`; it is not a general
+interrupt. Keep this behavior after shell restarts and in published snapshots.
+`scripts/tests/v86-shell-control.test.js` checks both startup paths, interruption,
+end-of-input, and file preservation before and after a shell restart.
 Exiting that shell, including through `set -e` enabled by sourcing a learner's
 script, starts a fresh shell without discarding the guest filesystem or
 panicking the kernel. Shell-local learner variables and options reset normally.

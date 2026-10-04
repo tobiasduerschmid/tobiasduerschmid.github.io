@@ -469,9 +469,9 @@
     });
   }
 
-  // Version 6 excludes snapshots where the learner shell was PID 1, including
+  // Version 7 also excludes shells without a controlling terminal. This covers
   // cold-boot caches whose identity has no downloaded snapshot asset validator.
-  var V86_SNAPSHOT_CACHE_VERSION = 6;
+  var V86_SNAPSHOT_CACHE_VERSION = 7;
   var V86_SILENT_COMMAND_TIMEOUT_MS = 240000;
   // Instructor solution batches can contain multi-command Git workflows; keep
   // applySolution() pending until those scripts have a real chance to finish.
