@@ -7,6 +7,8 @@
   'use strict';
   const syntax = typeof module !== 'undefined' && module.exports
     ? require('../../haskell/syntax') : scope.SEBookHaskellSyntax;
+  const callSites = typeof module !== 'undefined' && module.exports
+    ? require('./call-sites') : scope.SEBookHaskellCallSites;
   const DECLARATIONS = new Set(['module', 'import', 'data', 'newtype', 'type',
     'class', 'instance', 'infix', 'infixl', 'infixr', 'foreign', 'default', 'deriving']);
   const variable = text => /^[a-z_][A-Za-z0-9_']*$/.test(text) && text !== '_';
@@ -210,6 +212,7 @@
       if (groups.at(-1)?.[0].name === equation.name) groups.at(-1).push(equation);
       else groups.push([equation]);
     }
+    const functions = new Map(groups.map(equations => [equations[0].name, equations[0].patterns.length]));
     const sites = [], edits = [];
     function site(equation, extra = {}) {
       const value = { id: firstId + sites.length, function: equation.name, file: filename,
@@ -253,6 +256,11 @@
         add('    _sebookTry' + i + ' = SEBookTrace.step "try" ' + eq.site.id + ' ' + context + ' SEBookTrace.$ _sebookChoose' + i + callArgs, eq.first.line);
         const start = eq.first.offset, end = endOf(eq.block.at(-1));
         const localEdits = [{ offset: 0, end: eq.first.text.length, text: '_sebookChoose' + i }];
+        for (const call of callSites.find(eq.block.slice(eq.block.indexOf(eq.delimiter) + 1), source, functions, eq.bindings)) {
+          const application = site(eq, { kind: 'application', callee: call.callee, arguments: call.arguments });
+          localEdits.push({ offset: call.start - start, text: '(SEBookTrace.application ' + application.id + ' ' + context + ' (' });
+          localEdits.push({ offset: call.end - start, text: '))' });
+        }
         for (const rhs of eq.rhss) {
           let selectedSite = eq.site;
           if (rhs.guard) {

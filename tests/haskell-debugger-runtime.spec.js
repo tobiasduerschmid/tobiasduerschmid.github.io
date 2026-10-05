@@ -110,9 +110,36 @@ main = print (countAtLeast 60 [60,59,60])
     expect(returned.at(-1).stack.at(-1).locals.x.repr).toBe('60');
     expect(returned.at(-1).stack.at(-1).locals.xs.repr).toBe('[59, 60]');
     expect(trace.filter(s => s.event === 'true' || s.event === 'false').map(s => s.event)).toEqual(['true', 'false', 'true']);
-    // Earlier snapshots must not acquire values learned later in the run.
-    expect(calls[0].stack.at(-1).arguments.map(a => a.repr)).toEqual(['_', '_']);
+    // Supplied arguments are useful before matching, without pretending that
+    // the computation has demanded them or borrowing observations from later.
+    expect(calls.map(s => s.stack.at(-1).arguments.map(a => a.repr))).toEqual([
+      ['60', '[60, 59, 60]'], ['60', '[59, 60]'], ['60', '[60]'], ['60', '[]'],
+    ]);
+    expect(calls[0].stack.at(-1).arguments.map(a => a.observed_repr)).toEqual(['_', '_']);
   });
+
+  for (const [expression, output, callCount] of [
+    ['joinRows [[4],[],[2,3]]', '[4,2,3]\n', 4],
+    ['take 1 (joinRows [[4],[],[2,3]])', '[4]\n', 1],
+  ]) {
+    test(`tutorial demand comparison: ${expression}`, async ({ page }) => {
+      await startDebug(page, `module Main where
+joinRows :: [[Int]] -> [Int]
+joinRows [] = []
+joinRows (row:rows) = row ++ joinRows rows
+main = print (${expression})
+`);
+      await waitForMessage(page, 'paused');
+      const complete = await command(page, 1, 'debugComplete');
+      expect(complete.exitCode, complete.error).toBe(0);
+      const messages = await allMessages(page);
+      expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe(output);
+      const calls = messages.flatMap(m => m.snapshots || [])
+        .filter(s => s.event === 'call' && s.stack.at(-1).function === 'joinRows');
+      expect(calls).toHaveLength(callCount);
+      expect(calls[0].stack.at(-1).arguments[0].repr).toBe('[[4], [], [2, 3]]');
+    });
+  }
 
   test('records an early catch-all and never claims that later equations were tried', async ({ page }) => {
     await startDebug(page, `module Main where
@@ -127,7 +154,8 @@ main = print (count (error "unused list"))
     const trace = (await allMessages(page)).flatMap(m => m.snapshots || []);
     const result = trace.find(s => s.event === 'return' && s.stack.at(-1).function === 'count');
     expect(result.return_value.repr).toBe('0');
-    expect(result.stack.at(-1).arguments[0].repr).toBe('_');
+    expect(result.stack.at(-1).arguments[0].repr).toBe('error "unused list"');
+    expect(result.stack.at(-1).arguments[0].observed_repr).toBe('_');
     expect(result.stack.at(-1).equations.map(e => e.status)).toEqual(['selected', 'not reached']);
   });
 
@@ -153,7 +181,9 @@ main = print (ignore (error "unused"), first (9 : error "tail"), left (5, error 
     expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe('(7,9,5,True,[1,1,1])\n');
     const returns = messages.flatMap(m => m.snapshots || []).filter(s => s.event === 'return');
     expect(returns.find(s => s.stack.at(-1).function === 'first').stack.at(-1).arguments[0].repr).toBe('9 : _');
-    expect(returns.find(s => s.stack.at(-1).function === 'left').stack.at(-1).arguments[0].repr).toBe('(5, _)');
+    const leftArgument = returns.find(s => s.stack.at(-1).function === 'left').stack.at(-1).arguments[0];
+    expect(leftArgument.repr).toBe('(5, error "right")');
+    expect(leftArgument.observed_repr).toBe('(5, _)');
     expect(returns.find(s => s.stack.at(-1).function === 'present').stack.at(-1).arguments[0].repr).toBe('Just (_)');
   });
 
@@ -205,6 +235,28 @@ main = print (identity (unwrap (Count True)), field (Record False), label "no", 
     expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe('(True,False,False,5)\n');
   });
 
+  test('shows supplied computations without evaluating them early or confusing shadowed names', async ({ page }) => {
+    await startDebug(page, `module Main where
+identity :: Int -> Int
+identity x = x
+invoke :: Int -> Int
+invoke x = identity 99
+  where identity y = x + y
+main = print (identity (20 + 22), invoke 1)
+`);
+    await waitForMessage(page, 'paused');
+    const complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    const messages = await allMessages(page);
+    expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe('(42,100)\n');
+    const trace = messages.flatMap(m => m.snapshots || []);
+    const entries = trace.filter(s => s.event === 'call' && s.stack.at(-1).function === 'identity');
+    expect(entries).toHaveLength(1);
+    expect(entries[0].stack.at(-1).arguments[0]).toMatchObject({ repr: '20 + 22', observed_repr: '_', note: 'supplied' });
+    const returned = trace.find(s => s.event === 'return' && s.call_id === entries[0].call_id);
+    expect(returned.stack.at(-1).arguments[0]).toMatchObject({ repr: '42', observed_repr: '42', note: '' });
+  });
+
   test('labels a delayed condition with its captured call and keeps earlier partial results intact', async ({ page }) => {
     await startDebug(page, `module Main where
 scores :: Int -> [Int] -> [Int]
@@ -239,7 +291,7 @@ main = print (fac 3)
     const recursion = lastSnapshot(await command(page, 1));
     expect(recursion.line).toBe(3);
     expect(recursion.stack.at(-1).function).toBe('fac');
-    expect(recursion.stack.at(-1).locals.n.repr).toContain('evaluated');
+    expect(recursion.stack.at(-1).locals.n).toMatchObject({ repr: '3', note: 'supplied' });
     await send(page, { type: 'breakpoints', changes: [{ op: 'remove', file: '/tutorial/Main.hs', line: 3 }] });
     const returned = lastSnapshot(await command(page, 4));
     expect(returned.event).toBe('return');

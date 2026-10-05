@@ -269,6 +269,15 @@ main = print (countAtLeast 60 [60,59,60])
   await expect(variables).toContainText('selected');
   await expect(variables).toContainText('x >= threshold → True');
   await expect(variables).toContainText('Result: 2');
+  // Rewinding to the first call must still show its actual supplied arguments,
+  // rather than needing to advance until the computation has demanded them.
+  const firstCall = page.getByRole('button', { name: /Demand countAtLeast/ }).first();
+  await firstCall.press('Enter');
+  await expect(page.getByRole('region', { name: 'Call Stack', exact: true }))
+    .toContainText('countAtLeast 60 [60, 59, 60]');
+  await expect(variables).toContainText('[60, 59, 60]');
+  await expect(variables).toContainText('(supplied)');
+  await result.press('Enter');
   await page.getByText('How to read these values', { exact: true }).press('Enter');
   await expect(variables).toContainText('not observed yet');
   await a11yCheckpoint(page, 'Haskell equation trace and values', { feature: 'language-debugger' });

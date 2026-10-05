@@ -1783,6 +1783,7 @@ steps:
   # CS131 Fall 25 Quiz 1 v2.docx P3b — base case and recursion on the list tail.
   # Pedagogy: predict the smaller call's result and explain how it combines with the current input;
   # worked recursion example and supplied base case; learner writes the recursive case.
+  # Debugger callout: PRIMM + contrasting demand (whole list vs. one item), followed by self-explanation.
   - title: "Structural Recursion"
     key: recursion
     instructions: |
@@ -1871,6 +1872,41 @@ steps:
       Using `[]` as the base result adds no extra element.
 
       </details>
+
+      > **Use the debugger: what work does the result demand?**
+      >
+      > Before the challenge, investigate the supplied `joinRows` without changing
+      > its equations. Temporarily replace the `main = ...` line with:
+      >
+      > ```text
+      > main = print (joinRows [[4],[],[2,3]])
+      > ```
+      >
+      > 1. Choose **Debug**, then **Step Into** until you reach `joinRows`.
+      >    Follow **Equations** until a matching equation is selected. Then compare
+      >    its **Call Stack** arguments with **Pattern bindings**: what do `row`
+      >    and `rows` name in this call? Each recursive
+      >    call has its own bindings; it does not assign new values to the caller's names.
+      > 2. Use **Continue** to finish, then inspect the calls in **History**.
+      >    Now **predict before debugging again**: if `main` requests only the first
+      >    song, must `joinRows` still visit every remaining row and its base case?
+      >    Change only `main` to:
+      >
+      >    ```text
+      >    main = print (take 1 (joinRows [[4],[],[2,3]]))
+      >    ```
+      >
+      > 3. Debug again and compare the calls with your prediction. Explain which
+      >    recursive calls disappeared and what the caller needed from the result.
+      >
+      > **Read the trace as demand-driven evaluation:** Haskell evaluates expressions
+      > as their results are needed. Equation order determines which matching case
+      > applies; source-line order does not mean every expression runs immediately.
+      > A returned list can still contain delayed parts. **Supplied** arguments show
+      > what was passed, not proof that it was evaluated; `_` means the debugger has
+      > not observed that part and has no supplied expression to show.
+      >
+      > Restore `main = print (countAtLeast 60 [60, 59, 60])` before the challenge.
 
 
       ### Your challenge

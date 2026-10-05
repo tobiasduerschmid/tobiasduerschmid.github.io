@@ -29,6 +29,36 @@ function names with every value hidden cannot answer these questions.
 These sources motivate design choices; they do not establish that this specific
 interface has been validated with students.
 
+## Pedagogical design follow-up
+
+Discovery used Sider Scholar and SciSpace, followed by checking the primary
+sources. [Stepping Lazy Programs (Chang et al., 2011)](https://arxiv.org/abs/1108.4706)
+explains why imperative stepping can obscure lazy evaluation and presents a
+semantically justified algebraic stepper. This is a semantic design result, not
+evidence of learning gains for our interface. We retain actual runtime events
+and explain demand, equation selection, and partial returns; we do not label
+our trace a complete algebraic reduction sequence.
+
+[Teaching Introductory Functional Programming Using Haskelite (Vasconcelos,
+2025)](https://arxiv.org/html/2508.03640v1) reports classroom use, recommends small
+examples, and warns against relying exclusively on operational tracing.
+Feedback came from 14 forum participants and six questionnaire respondents;
+historical pass-rate differences cannot establish a causal benefit.
+
+Our resulting design choices are deliberately small:
+
+- Show supplied arguments at entry, and distinguish them from observations.
+- Explain the current call, selected equation, or partial return beside the
+  relevant values rather than requiring students to infer meaning from arrows.
+- Keep one guided activity in Structural Recursion: predict and compare the same
+  `joinRows` definition under whole-list printing and `take 1`. Learners explain
+  why demand changes the calls, while each call retains its own bindings.
+- Keep the existing equational reasoning and independent implementation task;
+  the debugger supplements reasoning rather than replacing it with clicking.
+
+These are research-informed design decisions. Student usability and learning
+outcomes for this debugger still require direct evaluation.
+
 ## Implementation contract
 
 `instrument.js` turns each top-level equation into a local alternative with the
@@ -54,6 +84,25 @@ results in immutable snapshots. An observed cons cell does not imply that its
 head or tail has been used. An IO action reaching its outer representation does
 not imply completion of its effects. Delayed conditions can resume an earlier
 call's captured scope; the UI labels this instead of inventing another call.
+
+Call-entry previews also retain **supplied expressions**, separately from
+observed values. `call-sites.js` records direct saturated calls to functions in
+the same module. An application marker associates that source call with the
+actual demanded invocation; it does not speculate that every source call runs.
+Literal lists/pairs and forwarded pattern bindings retain their supplied
+structure. Thus the first call shows `countAtLeast 60 [60, 59, 60]` immediately,
+and recursive calls show the remaining lists even before matching starts.
+Arithmetic and arbitrary calls remain expressions until their values are
+observed. The UI labels previews containing supplied expressions, and each
+argument retains its separate `observed_repr` for the observation contract.
+No expression is executed merely to produce a preview, and history never
+borrows observations from a later step.
+
+This source annotation deliberately avoids ambiguous lexical scopes (`let`,
+lambda, `case`, binding generators, and potentially shadowing `where` names),
+partial applications, and imported callees. Those calls still get their ordinary
+runtime observations. Source previews and structural copying are bounded;
+unknown or oversized portions remain opaque or abbreviated.
 
 The renderer shares these views between the tutorial and debugger popout. Calls
 show argument previews; equation rows pair source with textual status; conditions

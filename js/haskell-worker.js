@@ -993,7 +993,7 @@ if (!isWindowRuntime) {
   importScripts('/js/haskell/syntax.js');
   importScripts('/js/haskell/cycle-analysis.js');
   importScripts('/js/haskell/signature-checks.js');
-  importScripts('/js/debugger/haskell/instrument.js', '/js/debugger/haskell/helper-source.js', '/js/debugger/haskell/session.js');
+  importScripts('/js/debugger/haskell/call-sites.js', '/js/debugger/haskell/instrument.js', '/js/debugger/haskell/helper-source.js', '/js/debugger/haskell/session.js');
 }
 
 postLoading('Loading Haskell runtime\u2026');

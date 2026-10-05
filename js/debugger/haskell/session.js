@@ -6,7 +6,7 @@
     if (depth > 12) return '…';
     const value = nodes.get(path);
     if (!value) return '_';
-    if (value.kind === 'scalar') return value.value;
+    if (value.kind === 'scalar' || value.kind === 'expression') return value.value;
     if (value.kind === 'nil') return '[]';
     if (value.kind === 'opaque') return '<evaluated; no value preview>';
     if (value.kind === 'pair') return '(' + preview(nodes, path + '.0', depth + 1) + ', ' + preview(nodes, path + '.1', depth + 1) + ')';
@@ -24,6 +24,37 @@
     return '_';
   }
   const valueFor = (repr, type = '') => ({ kind: 'primitive', type, repr });
+
+  function knownValues(frame) {
+    const nodes = new Map(frame.supplied);
+    for (const [path, value] of frame.values) {
+      if (value.kind !== 'opaque' || !nodes.has(path)) nodes.set(path, value);
+    }
+    return nodes;
+  }
+
+  /** Substitute only recorded bindings and syntax for constructed data.
+   * Arithmetic, function calls, errors, and infinite ranges remain expressions.
+   */
+  function supply(nodes, path, expression, callerValues) {
+    if (nodes.size >= 512 || path.length > 80) return;
+    if (expression.kind === 'reference' && callerValues.has(expression.path)) {
+      for (const [key, value] of callerValues) {
+        if (nodes.size >= 512) break;
+        if (key === expression.path || key.startsWith(expression.path + '.')) nodes.set(path + key.slice(expression.path.length), value);
+      }
+    } else if (expression.kind === 'list') {
+      expression.items.forEach((item, i) => {
+        const tail = path + '.t'.repeat(i);
+        nodes.set(tail, { kind: 'cons' });
+        supply(nodes, tail + '.h', item, callerValues);
+      });
+      nodes.set(path + '.t'.repeat(expression.items.length), { kind: 'nil' });
+    } else if (expression.kind === 'pair') {
+      nodes.set(path, { kind: 'pair' });
+      expression.items.forEach((item, i) => supply(nodes, path + '.' + i, item, callerValues));
+    } else nodes.set(path, { kind: 'expression', value: expression.text });
+  }
 
   class HaskellDebugSession {
     constructor({ sites, options = {}, breakpoints = [], watches = [], send, resume, marker }) {
@@ -90,12 +121,15 @@
         this.stderrBuffer = this.stderrBuffer.slice(newline + 1);
         const markerIndex = line.indexOf(this.marker);
         const match = markerIndex < 0 ? null : line.slice(markerIndex + this.marker.length)
-          .match(/^(call|return|try|match|reject|select|test|true|false|value):(\d+):(\d+):(\[[\d, ]*\])\r?$/);
+          .match(/^(call|return|try|match|reject|select|test|true|false|value|application|applied):(\d+):(\d+):(\[[\d, ]*\])\r?$/);
         if (!match) { output += line + '\n'; continue; }
         output += line.slice(0, markerIndex);
         const [, event, site, context, encoded] = match;
         const payload = JSON.parse(encoded).map(code => String.fromCodePoint(code)).join('');
-        if (event === 'value') this.recordValue(Number(context), payload);
+        if (event === 'application') this.pendingApplication = { site: Number(site), context: Number(context) };
+        else if (event === 'applied') {
+          if (this.pendingApplication?.site === Number(site) && this.pendingApplication.context === Number(context)) this.pendingApplication = null;
+        } else if (event === 'value') this.recordValue(Number(context), payload);
         else this.receiveProbe(event, Number(site), Number(context));
       }
       return output;
@@ -121,16 +155,20 @@
     frameFor(site, context) {
       return { function: site.function, file: site.file, line: site.line,
         first_line: site.first_line, call_id: context, entry: site,
-        values: new Map(), bindings: {}, decisions: [],
+        values: new Map(), supplied: new Map(), bindings: {}, decisions: [],
         equations: (site.equations || []).map(eq => ({ ...eq, status: 'not reached' })) };
     }
 
     snapshotFrame(frame) {
+      const known = knownValues(frame);
       const args = Array.from({ length: frame.entry.arity || 0 }, (_, i) => ({
-        name: 'argument ' + (i + 1), ...valueFor(preview(frame.values, 'arg' + i), frame.entry.argument_types?.[i] || '') }));
+        name: 'argument ' + (i + 1), ...valueFor(preview(known, 'arg' + i), frame.entry.argument_types?.[i] || ''),
+        observed_repr: preview(frame.values, 'arg' + i),
+        note: preview(known, 'arg' + i) !== preview(frame.values, 'arg' + i) ? 'supplied' : '' }));
       const locals = {};
       for (const [name, path] of Object.entries(frame.bindings)) {
-        locals[name] = valueFor(path ? preview(frame.values, path) : '<bound by pattern; no value preview>');
+        locals[name] = valueFor(path ? preview(known, path) : '<bound by pattern; no value preview>');
+        if (path && preview(known, path) !== preview(frame.values, path)) locals[name].note = 'supplied';
       }
       return { function: frame.function, file: frame.file, line: frame.line,
         first_line: frame.first_line, call_id: frame.call_id, locals,
@@ -153,6 +191,14 @@
       if (!site) return;
       if (event === 'call') {
         const frame = this.frameFor(site, context);
+        const application = this.pendingApplication;
+        this.pendingApplication = null;
+        const origin = this.sites.get(application?.site);
+        if (origin?.callee === site.function && origin.file === site.file) {
+          const caller = this.calls.get(application.context);
+          const known = caller ? knownValues(caller) : new Map();
+          origin.arguments.forEach((argument, i) => supply(frame.supplied, 'arg' + i, argument, known));
+        }
         this.calls.set(context, frame);
         this.frames.push(frame);
       }

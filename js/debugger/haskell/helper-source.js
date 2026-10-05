@@ -31,6 +31,13 @@ call site observer body = unsafePerformIO (do
   let value = observer context "result" (body context)
   seq value (pause "return" site context "")
   return value)
+-- The wrapper runs only when the original application is demanded. The closing
+-- marker also clears metadata if sharing means there is no new call event.
+application :: Int -> Int -> a -> a
+application site context value = unsafePerformIO (do
+  emit "application" site context ""
+  seq value (emit "applied" site context "")
+  return value)
 step :: String -> Int -> Int -> a -> a
 step event site context value = unsafePerformIO (do
   pause event site context ""

@@ -2655,8 +2655,17 @@ structure. Unrecognized/custom types, polymorphic fields, and potentially
 shadowed Prelude types stay opaque without adding type-class constraints.
 Integer is not a primitive Int. Function-valued results remain functions.
 An underscore means “not observed yet”, not proof of global unevaluatedness.
-Argument observations, pattern bindings, equation status, and condition outcomes
-are frozen in each history snapshot. A delayed condition may resume the scope
+`js/debugger/haskell/call-sites.js` also retains supplied argument expressions
+for direct saturated calls in an unambiguous same-module scope. Application
+markers associate these with actual demanded calls. Literal list/pair syntax
+and forwarded pattern bindings appear immediately; arbitrary computations stay
+expressions until observed. Previews using source information are labeled
+“supplied”, separately from each argument's `observed_repr`. Do not evaluate
+source expressions in JavaScript or force Haskell arguments to fill this view.
+Ambiguous local scopes, partial applications, and imported callees fall back to
+ordinary observations. Source previews and structural copying are bounded.
+Argument observations, supplied expressions, pattern bindings, equation status,
+and condition outcomes are frozen in each history snapshot. A delayed condition may resume the scope
 of a call that already returned; the view labels that explicitly.
 
 Shared main/popout rendering shows calls with arguments, ordered equation

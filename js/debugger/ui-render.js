@@ -376,6 +376,12 @@
     const escape = helpers.escape;
     const current = frame.call_id === snap.call_id;
     let html = current ? '<p class="tvm-debug-haskell-step"><strong>' + escape(snap.description) + '</strong></p>' : '';
+    const explanation = {
+      call: 'This result is needed now. Its arguments need not be evaluated first.',
+      select: 'Use the selected equation with these pattern bindings. Each call has its own bindings.',
+      return: 'The outer result is available. Parts inside a list or other structure may still be delayed.',
+    }[snap.event];
+    if (current && explanation) html += '<p class="tvm-debug-language-note">' + escape(explanation) + '</p>';
     if (current && snap.deferred) html += '<p class="tvm-debug-language-note">A delayed expression is using this earlier call’s bindings.</p>';
     if (frame.arguments && frame.arguments.length) {
       const args = Object.fromEntries(frame.arguments.map(arg => [arg.name, arg]));
@@ -400,9 +406,11 @@
       html += '<p class="tvm-debug-haskell-result"><strong>Result:</strong> <code>' + escape(snap.return_value.repr) + '</code></p>';
     }
     html += '<details class="tvm-debug-haskell-guide"><summary>How to read these values</summary>' +
-      '<p><code>_</code> means not observed yet. Values fill in as this call uses them; inspecting this panel does not evaluate them. ' +
+      '<p>Calls show supplied arguments immediately when their call site is available. “Supplied” means the preview includes source expressions or forwarded bindings, not evidence that they were evaluated. ' +
+      'Computed expressions are replaced by observed values as the program uses them.</p>' +
+      '<p><code>_</code> means not observed yet, with no supplied expression available. Inspecting this panel does not evaluate arguments. ' +
       '<code>…</code> marks the preview limit. Step Back shows only what was known at that earlier step.</p>' +
-      '<p>Concrete previews use supported type signatures: Int, Word, Bool, Char, Float, Double, lists, pairs, and Maybe. ' +
+      '<p>Observed value previews use supported type signatures: Int, Word, Bool, Char, Float, Double, lists, pairs, and Maybe. ' +
       'Other types can show “evaluated; no value preview”. This does not mean their value is unknown to Haskell.</p>' +
       '<p>A returned list may still have delayed elements. An IO action becoming ready does not mean its effects have finished. ' +
       'Arbitrary watches and variable edits are unavailable.</p></details>';
@@ -517,7 +525,8 @@
     var typeHtml = '<span class="tvm-debug-var-type">' + helpers.escape(val.type || (val.kind === 'primitive' ? '' : val.kind) || '') + '</span>';
     var editAttr = editKey ? ' data-edit-key="' + helpers.escape(editKey) + '" data-original-title="Click to edit"' : '';
     var valueHtml = '<span class="tvm-debug-var-value' + (editKey ? ' tvm-debug-var-editable' : '') + '"' + editAttr +
-                    '>' + helpers.escape(val.repr || val.preview || '') + '</span>';
+                    '>' + helpers.escape(val.repr || val.preview || '') +
+                    (val.note ? ' <span class="tvm-debug-var-type">(' + helpers.escape(val.note) + ')</span>' : '') + '</span>';
     var hasChildren = val.kind === 'collection' || (val.kind === 'object' && val.attrs && Object.keys(val.attrs).length);
     var expander = hasChildren
       ? '<button type="button" class="tvm-debug-expander" data-expanded="false" aria-expanded="false" aria-label="Expand ' + helpers.escape(name) + '">▶</button>'
