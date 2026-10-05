@@ -1986,6 +1986,30 @@ steps:
             0: The nonempty equation uses the smaller call’s result, which eventually includes the base result.
             2: For a finite list, this chain reaches the base once, not once per element.
           explanation: "`total [2,3] = 2 + (3 + 10)`, so changing the base changes nonempty results too. Explain what the smaller result represents before choosing the base; it participates in the calculation rather than merely stopping calls."
+        - type: single
+          difficulty: intermediate
+          bloom: analyze
+          question: |
+            A working counter had its nonempty-list equation first and its
+            catch-all equation last. A refactor swaps the two equations:
+
+            ```haskell
+            countAtLeast _ _ = 0
+            countAtLeast threshold (score:rest)
+              | score >= threshold = 1 + countAtLeast threshold rest
+              | otherwise = countAtLeast threshold rest
+            ```
+
+            Predict `countAtLeast 60 [60,59,75]`. What happens, and why?
+          options:
+            - "It returns `0`: the first equation matches every call."
+            - "It returns `2`: the more specific list pattern wins."
+            - "It fails to compile: overlapping patterns are forbidden."
+          correct_index: 0
+          option_feedback:
+            1: Haskell tries equations in source order; it does not choose the most specific pattern. The catch-all matches before the nonempty-list equation is reached.
+            2: Overlapping patterns are allowed. A compiler may warn about an unreachable equation, but the definition still has a result.
+          explanation: "`countAtLeast _ _ = 0` matches every threshold and list, so the recursive equation is never reached. Moving the catch-all below the nonempty-list equation restores the result `2`. In contrast, swapping an empty-list pattern `[]` with a nonempty-list pattern `(x:xs)` alone would not cause this bug: those patterns do not overlap."
     solution:
       files:
       - path: Main.hs
@@ -2232,12 +2256,13 @@ steps:
 
       Real tasks combine decisions about **what to keep, when to stop, and what
       information to carry forward**. Turning an ordered snack wishlist into an
-      affordable prefix brings together guards, list patterns, and recursion,
-      an approach you can reuse whenever earlier choices affect what is possible next.
+      affordable prefix brings together guards, list patterns, and recursion.
+      A helper defined in `where` keeps the list-building work local to the
+      function that needs it.
 
       ### 🎯 You will learn to
 
-      - Create a recursive solution from a behavioral specification
+      - Create a result list with a recursive helper defined in `where`
       - Evaluate a stopping rule using contrasting inputs
 
       ### What this program does
@@ -2249,13 +2274,17 @@ steps:
       ### Your challenge
 
       The group chat has ranked its movie-night snacks. How far down the
-      wishlist will the shared budget stretch? Write `takeBudget budget costs`.
+      wishlist will the shared budget stretch? Write `takeBudget budget costs`
+      with a **recursive helper in a `where` clause**.
 
       - Walk the snack prices **in the given order** and return the longest
         **prefix** you can afford in total.
       - **Stop** once the next snack costs more than the remaining budget.
         Do not skip it to buy cheaper snacks later.
       - Budgets and prices are **nonnegative integers**, and free snacks are allowed.
+      - Let `takeBudget` start the computation. Define the recursive helper
+        locally in its `where` clause, and build the returned list in that helper.
+        Use `(:)` to place a kept price at the front of the remaining result.
 
       Examples of the specification:
 
@@ -2275,6 +2304,8 @@ steps:
 
       - What situations must your function distinguish?
       - What information would a smaller version of this problem need?
+      - Which helper arguments must change between recursive calls, even though
+        the enclosing function's `budget` binding stays the same?
       - Which example would show that your stopping rule is wrong?
 
       Make your prediction, then click **Show answer and explanation** to
@@ -2293,6 +2324,10 @@ steps:
       `takeBudget 5 [3,3]` must return `[3]`, even though each price is
       individually at most 5.
 
+      The helper can see the enclosing `budget`, but that value does not
+      shrink as recursion proceeds. Pass the changing state through the
+      helper's arguments, such as remaining money or total spent so far.
+
       A suitable plan distinguishes an empty wishlist, an unaffordable
       next item, and an affordable next item. In the last case, keep that
       item and solve the smaller problem using the remaining budget and
@@ -2305,17 +2340,24 @@ steps:
 
       **This time you design the complete function.** The starter supplies its
       type and a display harness. The `[]` result is an unfinished placeholder;
-      replace the whole equation with your implementation.
+      replace the whole equation with your implementation and its `where` clause.
+
+      Your helper should handle the empty list, decide whether the next price
+      fits, and construct the result list. Its recursive calls should stay
+      inside the helper; the outer function provides the starting state.
+      Recall that `where` attaches to an equation and introduces local
+      definitions. It does not use `in`.
 
       Implement your plan, then run your own examples and the supplied checks.
-      You may use helpers or library functions; the checks measure the stated
-      behavior. **Try a complete plan before opening hints or a solution.**
+      The checks measure the stated behavior. Also review your code: is the
+      recursive helper local to `takeBudget`, and where does it build the list?
+      **Try a complete plan before opening hints or a solution.**
 
       ### A short return visit
 
       Tomorrow:
 
-      1. Recreate this function **without looking at today's code**.
+      1. Recreate this function and its local helper **without looking at today's code**.
       2. Explain why its stopping rule differs from selecting every individually cheap snack.
       3. If you study with someone, exchange one input that would expose the other's
          likely bug and explain it.
@@ -2332,7 +2374,7 @@ steps:
         -- nonnegative costs, stopping at the first cost that does not fit the
         -- remaining nonnegative budget.
         takeBudget :: Int -> [Int] -> [Int]
-        -- TODO: Design and write the complete function from the specification.
+        -- TODO: Define a recursive helper in where and use it to build the prefix.
         -- This empty result is only a runnable placeholder.
         takeBudget budget costs = []
         -- | Display the affordable prefix of the sample snack wishlist.
@@ -2350,7 +2392,7 @@ steps:
           - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+0\\b[^\\n]*=[ \\t]*\\[\\]|(?:^|\\n)takeBudget\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bbudget[ \\t]*(?:==|<=|<)[ \\t]*0))[\\s\\S]*$/"
             text: "Compare budget 0 with costs [0] and then [1]. Predict both outcomes from the contract before tracing the condition that selects your stopping case."
           - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+0\\b[^\\n]*=[ \\t]*\\[\\]|(?:^|\\n)takeBudget\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?\\bbudget[ \\t]*(?:==|<=|<)[ \\t]*0))[\\s\\S]*$/"
-            text: "Try costs [2,0,0,1] with budget 2 and record each smaller problem. Inspect any condition that stops solely because the budget has become zero; decide whether it correctly handles the next listed cost."
+            text: "Try costs [2,0,0,1] with budget 2 and record each call to your local helper. Inspect any condition that stops solely because the remaining budget has become zero; decide whether it correctly handles the next listed cost."
       - description: "Budget prefix: every item fits"
         command: "takeBudget 20 [3,4,1] == [3,4,1]"
         hints: &budget_hints_0
@@ -2358,9 +2400,9 @@ steps:
           - condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))|(?=[\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$))))[\\s\\S]*$/"
             text: "Contrast a prefix with a selection that skips an item. Find the first position where your output no longer follows the task specification."
           - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?(?:\\btakeBudget[ \\t]+budget\\b|\\bfilter\\b))[\\s\\S]*$/"
-            text: "Trace budget 5 with costs [2,4,1], recording the remaining money and list position after each decision. Check for reused money or a filter that keeps looking after the first refusal."
+            text: "Trace budget 5 with costs [2,4,1], recording the helper arguments after each decision. Does the next recursive call account for money already spent? Check whether it keeps looking after the first refusal."
           - condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)[^\\n]*(?:=|\\n[ \\t]+\\|))(?![\\s\\S]*(?:(?:^|\\n)takeBudget\\b[ \\t]+[a-z_][\\w']*[ \\t]+[a-z_][\\w']*[ \\t]*=\\s*(?:\\(\\s*)*\\[\\](?:\\s*\\))*[ \\t]*(?:\\n|$)|(?:^|\\n)takeBudget\\b(?:[ \\t]+[a-z_][\\w']*)*[ \\t]*=\\s*(?:\\(\\s*)*(?:undefined|_|error[ \\t]+\"[^\"\\n]*\")(?:\\s*\\))*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)takeBudget\\b(?![ \\t]*::)(?:(?!\\n\\S)[\\s\\S])*?(?:\\btakeBudget[ \\t]+budget\\b|\\bfilter\\b))[\\s\\S]*$/"
-            text: "In the branch that keeps an item, sketch a smaller call as `takeBudget (...) rest`. Work out its budget argument and how its result relates to the kept item; separately check what should happen when that branch is unavailable."
+            text: "In the branch that keeps an item, sketch a recursive call to your local helper on the remaining prices. Work out which argument records the new spending state and how to build a list from the kept price and the smaller result. What should the other branch return?"
       - description: "Budget prefix: cumulative spending reaches the budget"
         command: "takeBudget 7 [3,4,1] == [3,4] && takeBudget 4 [2,2,2] == [2,2]"
         hints: *budget_hints_0
@@ -2427,15 +2469,24 @@ steps:
           -- | Return the longest affordable prefix of nonnegative costs, stopping at the
           -- first cost that does not fit the remaining nonnegative budget.
           takeBudget :: Int -> [Int] -> [Int]
-          takeBudget budget [] = []
-          takeBudget budget (cost:rest)
-            | cost <= budget = cost : takeBudget (budget - cost) rest
-            | otherwise = []
+          takeBudget budget costs = collect budget costs
+            where
+              collect remaining [] = []
+              collect remaining (cost:rest)
+                | cost <= remaining = cost : collect (remaining - cost) rest
+                | otherwise = []
           -- | Display the affordable prefix of the sample snack wishlist.
           main :: IO ()
           main = print (takeBudget 5 [2,4,1])
       explanation: |
-        Empty input gives an empty prefix. Buying an affordable snack reduces
-        the budget for the recursive tail. An unaffordable snack ends the
-        prefix immediately, so later cheap items cannot sneak into the result.
-        A zero budget can still buy a zero-priced snack.
+        `takeBudget` starts `collect` with the original budget and wishlist.
+        The `where` clause keeps `collect` local; its `remaining` argument
+        records the money available for each recursive call without changing
+        the enclosing `budget` binding.
+
+        Empty input gives an empty list. For an affordable snack, `cost : ...`
+        constructs a result list with that price at the front and the helper
+        call's result as its tail. That call receives less money and the
+        remaining prices. An unaffordable snack returns `[]` immediately,
+        so later cheap items cannot sneak into the prefix. A zero budget can
+        still buy a zero-priced snack.
