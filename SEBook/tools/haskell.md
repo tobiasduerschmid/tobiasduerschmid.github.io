@@ -35,7 +35,7 @@ Bring experience with functions, conditionals, lists, and basic recursion in Pyt
 Use the chapter for explanations and the tutorials for implementation practice. Take the three parts in order, preferably across separate study sessions; the times are estimates, not deadlines.
 
 1. **[Expressions, Types, and Recursion](/SEBook/tools/haskell-tutorial)** — 10 steps, about 90–110 minutes. Function application, type and boundary errors, tuples, lists, patterns, and recursion. [Part 1 print view](/SEBook/tools/haskell-tutorial/print).
-2. **[Functions and Laziness](/SEBook/tools/haskell-functions-tutorial)** — 8 steps, about 80–100 minutes. Pipelines, closures, currying, higher-order types, accumulators, and finite observations of infinite lists. [Part 2 print view](/SEBook/tools/haskell-functions-tutorial/print).
+2. **[Functions and Laziness](/SEBook/tools/haskell-functions-tutorial)** — 9 steps, about 95–115 minutes. Pipelines, closures, currying, higher-order types, accumulators, finite observations of infinite lists, and deferred work traced in the debugger. [Part 2 print view](/SEBook/tools/haskell-functions-tutorial/print).
 3. **[Data and Persistent Programs](/SEBook/tools/haskell-data-tutorial)** — 9 steps, about 100–115 minutes. Variants, records, constraints, recursive data, persistent updates, and a pure event simulator. [Part 3 print view](/SEBook/tools/haskell-data-tutorial/print).
 
 The [puzzles](#puzzles), [flashcards](#flashcards), and [quiz](#quiz) at the end provide additional prediction, retrieval, and reasoning practice.

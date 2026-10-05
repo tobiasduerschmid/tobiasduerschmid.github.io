@@ -2634,7 +2634,15 @@ breakpoints stop at selection; guard/condition breakpoints stop before the test.
 Step Into also visits attempts and failures. Nested local functions and IO
 statements have no independent call frames. Explicit module braces, semicolon
 declarations, infix equations, and pattern guards produce actionable diagnostics.
-Compiler diagnostics and trace locations map to original source lines.
+Trace locations map to original source lines. `instrument()` also records each
+generated character's source offset (`origins`) and returns `locate(line,
+column)`. The worker rewrites compiler diagnostics (`"file": line L, col C`) and
+runtime error locations (`"file",L:C`, e.g. from `error`) to the learner's line
+and column, matching an uninstrumented Run. MicroHs counts columns in code
+points with tab stops every 8 columns; a column inside generated debugger code
+keeps only its mapped line rather than a guessed column. Generated code must
+stay byte-identical when changing origin tracking; verify every origin names
+the same source character.
 
 `js/debugger/haskell/helper-source.js` supplies lazy Haskell observers and the
 private GETRAW handshake. Observers reveal values **only when demanded through

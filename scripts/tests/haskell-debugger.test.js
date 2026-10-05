@@ -90,6 +90,29 @@ test('Haskell generated line maps retain original compiler diagnostic locations'
   assert.equal(result.lineMap[generatedLine], 3);
 });
 
+test('Haskell generated positions locate learner columns and never invent one', () => {
+  // MicroHs counts code points and advances a tab to the next multiple of 8.
+  const source = 'module Main where\nlabel :: Int -> String\nlabel n\n\t| n > 0 =\t"é" ++ missing\n'
+    + '\t| otherwise = error "boom"\nmain = putStrLn (label 1)\n';
+  const result = instrument(source, '/tutorial/Main.hs');
+  const columnOf = (text, index) => {
+    let column = 1;
+    for (let i = 0; i < index; i++) column = text[i] === '\t' ? column + 8 - (column - 1) % 8 : column + 1;
+    return column;
+  };
+  // Line 4: the second tab advances from column 18 to 25, so `"é" ++ ` ends at 31.
+  // Line 5: `| otherwise = ` starts at column 9 after the tab.
+  for (const [token, line, column] of [['missing', 4, 32], ['error', 5, 23]]) {
+    const generated = result.code.split('\n');
+    const generatedLine = generated.findIndex(text => text.includes(token)) + 1;
+    const generatedColumn = columnOf(generated[generatedLine - 1], generated[generatedLine - 1].indexOf(token));
+    assert.notDeepEqual([generatedLine, generatedColumn], [line, column], 'the fixture moves the token');
+    assert.deepEqual(result.locate(generatedLine, generatedColumn), { line, column }, token);
+  }
+  const wrapperLine = result.code.split('\n').findIndex(text => text.includes('SEBookTrace.call')) + 1;
+  assert.deepEqual(result.locate(wrapperLine, 1), { line: 3 }, 'generated wrapper text keeps only its line');
+});
+
 test('local previews specialize only when every use proves the same type', () => {
   const result = instrument(`module Main where
 score :: Int -> Int

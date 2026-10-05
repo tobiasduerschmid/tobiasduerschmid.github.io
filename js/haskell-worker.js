@@ -677,7 +677,7 @@ function prepareDebugFiles(message) {
   const files = Object.assign({}, message.files || {});
   files[message.filename] = message.code;
   const sites = [];
-  const sourceMaps = new Map();
+  const locators = new Map();
   Object.keys(files).forEach(function (filename) {
     const path = normalizeWorkspacePath(filename);
     if (path.endsWith('/SEBookDebug.hs')) {
@@ -688,10 +688,10 @@ function prepareDebugFiles(message) {
     if (!path.endsWith('.hs')) { writeWorkspaceFile(path, source); return; }
     const result = runtimeScope.SEBookHaskellInstrument.instrument(source, path, sites.length);
     sites.push.apply(sites, result.sites);
-    sourceMaps.set(path, result.lineMap);
+    locators.set(path, result.locate);
     writeWorkspaceFile(path, result.code);
   });
-  return { sites: sites, sourceMaps: sourceMaps };
+  return { sites: sites, locators: locators };
 }
 
 function checkAliasCycles(source, filename, expression, options = {}) {
@@ -732,17 +732,31 @@ function startDebug(message) {
       }
     },
   });
-  debug.mapDiagnostics = function (text) {
-    return text.replace(/("([^"\n]+\.hs)": line\s+)(\d+)/g, function (match, prefix, file, line) {
-      const path = file.startsWith('/') ? file : descriptor.sourcePath + '/' + file;
-      const segments = [];
-      path.split('/').forEach(function (part) {
-        if (part === '..') segments.pop();
-        else if (part && part !== '.') segments.push(part);
-      });
-      const lineMap = prepared.sourceMaps.get('/' + segments.join('/'));
-      return lineMap && lineMap[Number(line)] ? prefix + lineMap[Number(line)] : match;
+  function locate(file, line, column) {
+    const path = file.startsWith('/') ? file : descriptor.sourcePath + '/' + file;
+    const segments = [];
+    path.split('/').forEach(function (part) {
+      if (part === '..') segments.pop();
+      else if (part && part !== '.') segments.push(part);
     });
+    const locator = prepared.locators.get('/' + segments.join('/'));
+    return locator ? locator(Number(line), column === undefined ? undefined : Number(column)) : null;
+  }
+  // Compiler diagnostics use `"file": line L, col C`; runtime errors such as
+  // `error` calls use `"file",L:C`. Report learner source positions in both,
+  // omitting a column that points into generated debugger code.
+  debug.mapDiagnostics = function (text) {
+    return text
+      .replace(/("([^"\n]+\.hs)": line\s+)(\d+)(, col\s+(\d+))?/g, function (match, prefix, file, line, columnText, column) {
+        const place = locate(file, line, column);
+        if (!place) return match;
+        return prefix + place.line + (column === undefined ? '' : place.column ? ', col ' + place.column : '');
+      })
+      .replace(/("([^"\n]+\.hs)",)(\d+):(\d+)/g, function (match, prefix, file, line, column) {
+        const place = locate(file, line, column);
+        if (!place) return match;
+        return prefix + place.line + (place.column ? ':' + place.column : '');
+      });
   };
   const args = Array.isArray(message.args) ? message.args.map(String) : [];
   const main = descriptor.moduleName + '.main';

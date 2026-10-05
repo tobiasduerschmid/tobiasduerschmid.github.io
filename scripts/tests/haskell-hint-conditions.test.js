@@ -103,6 +103,8 @@ for (const [name, key, before, after] of [
     'firstMatches count test xs = take count xs'],
   ['undefined pair-conversion placeholder', 'higher-order-types',
     'convertPairs convert entries = []', 'convertPairs convert entries = undefined'],
+  ['renamed queue placeholder', 'deferred-work',
+    'queueForRide ride queued songs = queued', 'queueForRide r q s = q'],
 ]) {
   test(`${name} retains orientation support`, () => {
     const step = stepFor('haskell-functions', key);
@@ -129,6 +131,23 @@ for (const [name, key, source, expectedLevel] of [
   test(`${name} selects ${expectedLevel === 1 ? 'diagnostic tracing' : 'an incomplete scaffold'}`, () => {
     const check = stepFor('haskell-functions', key).tests[0];
     assert.deepEqual(applicableHints(check, 'module Main where\n' + source + '\n'), [expectedLevel]);
+  });
+}
+
+// Both deferred-work ladders separate totaling every song from checking the
+// song list before the ride; each applies to the value and demand checks.
+for (const [name, source, expectedLevel] of [
+  ['totaling every song before stopping',
+    'queueForRide ride queued songs = min (minutesPlayed queued songs) ride', 1],
+  ['matching the song list before checking the ride',
+    'queueForRide ride queued [] = queued\nqueueForRide ride queued (song:songs)\n'
+    + '  | queued >= ride = queued\n  | otherwise = queueForRide ride (queued + song) songs', 2],
+]) {
+  test(`${name} selects the same support level for every queue check`, () => {
+    for (const check of stepFor('haskell-functions', 'deferred-work').tests) {
+      assert.deepEqual(applicableHints(check, 'module Main where\n' + source + '\n'), [expectedLevel],
+        check.description);
+    }
   });
 }
 

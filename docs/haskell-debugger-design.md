@@ -53,6 +53,14 @@ Our resulting design choices are deliberately small:
 - Keep one guided activity in Structural Recursion: predict and compare the same
   `joinRows` definition under whole-list printing and `take 1`. Learners explain
   why demand changes the calls, while each call retains its own bindings.
+- Add one guided activity in Demand-Driven Evaluation (Functions and Laziness):
+  learners predict the third call's accumulator in `minutesPlayed 10 [2, 3]`.
+  The trace shows the supplied `played + song` at every call and the values
+  `10`, `12`, and `15` together when the base case returns. This contradicts
+  the imperative model of a running total updated at each call. Learners then
+  write a function whose guard demands each total and that must not ask for
+  songs that are still downloading, so equation order becomes visible demand.
+  The runtime contract test checks the walkthrough against the shipped lesson.
 - Keep the existing equational reasoning and independent implementation task;
   the debugger supplements reasoning rather than replacing it with clicking.
 
@@ -144,7 +152,9 @@ own call frames. Arbitrary watch evaluation and variable mutation remain disable
 The real MicroHs contract suite covers the motivating repeated-score example,
 early catch-alls, false guards, imported modules, source mapping, stepping,
 non-exhaustive/runtime errors, unused exceptions, infinite lists, partial tuples,
-custom types, polymorphism, function-valued results, and source layout. Browser
+custom types, polymorphism, function-valued results, and source layout. Compiler
+and runtime error locations in a debug session must equal the locations an
+uninstrumented Run reports, including tab stops and non-ASCII text. Browser
 coverage exercises the displayed explanation, history, keyboard controls,
 popout synchronization, and accessibility. Tests compare concrete results and
 observations, not the spelling of generated helper names.

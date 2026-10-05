@@ -4,15 +4,17 @@
 # [Midterm] F23 (Public).pdf Problems 3/4; [Midterm] F24 V1 (Public).pdf Problem 3;
 # [Final] F24 V1 (Public).pdf Problem 1. Exercises are original, not past questions.
 # Pedagogical arc: distinguish transformations → bind behavior → infer types →
-# reduce data → repair recursive accumulators → choose a pipeline independently.
+# reduce data → repair recursive accumulators → bound lazy searches →
+# observe deferred work in the debugger → choose a pipeline independently.
 title: "Haskell 2: Functions and Laziness"
-description: "An interactive course for programmers who have completed Haskell 1 or can use lists, tuples, pattern matching, and recursion. Build higher-order functions, derive types, and trace accumulators and finite lazy-list results. Plan about 80–100 minutes. Optional written rehearsals add about 11 minutes."
+description: "An interactive course for programmers who have completed Haskell 1 or can use lists, tuples, pattern matching, and recursion. Build higher-order functions, derive types, trace accumulators and finite lazy-list results, and step through deferred work in the debugger. Plan about 95–115 minutes. Optional written rehearsals add about 11 minutes."
 learning_objectives:
   - "Apply map and filter according to whether a task transforms or selects values."
   - "Analyze lambda bindings, lexical scope, and the types of partially applied functions."
   - "Derive higher-order function types from relationships between arguments and results."
   - "Apply left folds and complete recursive helpers with structured accumulators."
   - "Predict finite results obtained by mapping, filtering, and taking from infinite ranges."
+  - "Analyze when demand evaluates deferred work, using the debugger to compare deferred and demanded totals."
   - "Create a tested data-processing pipeline from an input and output contract."
 backend: haskell
 debugger: true
@@ -1752,6 +1754,328 @@ steps:
       explanation: |
         Take consumes only the needed prefix of filter's output. Filter inspects enough input to produce those matches; it does not build an entire intermediate list first. A zero count returns []. Reversing the order to filter after take would limit input positions and could miss required matches.
 
+  # Course alignment: the laziness lecture pages and CS131 Fall 25 Quiz 3 v2.docx Problem 2
+  # (reason about evaluation demand) cited for Lazy Lists; the chapter section "Give the
+  # accumulator a meaning" states that grouping does not promise eager accumulator evaluation.
+  # Pedagogy: PRIMM — predict a deferred accumulator, Run it in the debugger, Investigate the
+  # call stack, then Make a variant whose guard creates demand. Negative-transfer callout:
+  # Python and C++ evaluate arguments before a call. Variation: the same accumulator shape,
+  # first without and then with demand at each step.
+  # Debugger callout: every claim in "Step Through It" matches the recorded MicroHs trace;
+  # tests/haskell-debugger-runtime.spec.js keeps the deferred-total walkthrough contract.
+  - title: "Demand-Driven Evaluation"
+    key: deferred-work
+    instructions: |
+      ### Why this matters
+
+      In Python or C++, `total = total + song` adds the numbers on that line.
+      A Haskell call such as `minutesPlayed (played + song) songs` passes the
+      expression `played + song` instead: **the numbers are added only when
+      something needs the total**. Knowing when work actually happens explains
+      why a long running total can hold memory, why an error can surface late
+      or never, and how a program can stop before asking for data it does not
+      need.
+
+      ### 🎯 You will learn to
+
+      - Analyze when a deferred running total is computed by stepping through it in the debugger.
+      - Create a recursive function whose stopping test runs before it examines more input.
+
+      ### What this program does
+
+      A music app queues songs for a bus ride. `minutesPlayed played songs` adds
+      each song's minutes to the minutes already played.
+      `queueForRide ride queued songs` should keep adding songs until the queued
+      minutes cover the ride. Songs download one at a time, so the list can
+      continue with songs that do not exist yet: `stillDownloading` stops the
+      program if anything asks for them.
+
+      ### A Running Total That Waits
+
+      The supplied function reads like a loop that updates `played`:
+
+      ```haskell
+      -- | Add each song's minutes to the minutes already played.
+      minutesPlayed :: Int -> [Int] -> Int
+      minutesPlayed played [] = played
+      minutesPlayed played (song:songs) = minutesPlayed (played + song) songs
+      ```
+
+      `main` first prints `minutesPlayed 10 [2, 3]`. That makes three calls:
+      on `[2, 3]`, on `[3]`, and on `[]`.
+
+      ### Thinking Time!
+
+      When the third call, `minutesPlayed played []`, starts, what is its `played` argument?
+
+      - **(a)** `15`: each call adds its song before making the next call.
+      - **(b)** `10`: every call shares the first call's `played`.
+      - **(c)** Not a number yet: it is still `played + song`, which nothing has needed.
+
+      Commit to a letter, then test your prediction in the debugger.
+
+      ### Step Through It
+
+      1. Choose **Debug**. The first few steps evaluate `main` to an `IO`
+         action; running that action is what prints. Choose **Step Into**
+         until the step description reads **Demand minutesPlayed**.
+      2. Keep choosing **Step Into**. At each **Demand minutesPlayed**, read
+         **Arguments**. The second call receives `played + song`, marked
+         *supplied*: the call starts before its argument is computed.
+      3. Stop at **Use equation 1: minutesPlayed played []**. Starting with the
+         oldest call at the bottom of **Call Stack**, select each call and read
+         `played` and `song` under **Pattern bindings**. A supplied expression
+         uses the names of the call that wrote it. Rewrite the third call's
+         `played` using only numbers.
+      4. Choose **Step Into** once more to see the result, `15`. Select the
+         calls again: their `played` values are now `10`, `12`, and `15`.
+
+      Make your prediction and finish the walkthrough, then click **Show answer and explanation** to compare your reasoning.
+
+      <details markdown="1">
+      <summary>Show answer and explanation</summary>
+
+      **(c).** The third call's `played` stands for `(10 + 2) + 3`, and no
+      addition has run when that call starts. Each call passed the next one an
+      unevaluated expression rather than a number, and matching the plain name
+      `played` does not need its value.
+
+      The base case returns `played`, and `print` needs its digits. The outer
+      `+` then needs its left operand, the previous call's `played + song`,
+      which needs `10 + 2`. All three totals appear in one step because that
+      single demand evaluated the whole chain of pending additions.
+
+      - **(a)** describes languages that evaluate arguments before every call, as Python and C++ do.
+      - **(b)** merges separate calls: each call has its own `played`, and no call changes the first call's binding.
+
+      Pending additions occupy memory until they run: totaling a million songs
+      this way keeps about a million additions waiting. Programs that expect
+      long inputs demand each new total as they go, as `foldl'` from
+      `Data.List` does. An optimizing compiler such as GHC may also compute a
+      total like this earlier when it can prove the result is needed; the
+      printed result is the same. The debugger shows the lazy evaluation that
+      this tutorial's MicroHs runtime performs.
+
+      </details>
+
+      ### Your Turn
+
+      Replace the placeholder definition of `queueForRide`. Add songs to
+      `queued` in order. As soon as `queued` is at least `ride`, return
+      `queued` **without examining `songs` again**, not even to check whether
+      another song exists: asking for the next song waits for its download. If
+      the songs run out first, return the minutes queued so far. Minutes are
+      never negative.
+
+      - `queueForRide 20 0 [8, 9, 7, 6]` returns `24`: the totals are 8, 17, and then 24, which covers the ride. The 6 is never needed.
+      - `queueForRide 17 0 [8, 9, 5]` returns `17`: a total equal to the ride covers it.
+      - `queueForRide 20 25 stillDownloading` returns `25` without asking for a song.
+      - `queueForRide 30 12 []` returns `12`.
+
+      `main` also queues three downloaded songs followed by `stillDownloading`.
+      When your function is correct, Run prints `24` on its second line. The
+      message *asked for a song that is still downloading* means that an
+      equation looked further than it needed to.
+
+      Then debug your solution and compare it with `minutesPlayed`. When is
+      each call's `queued` observed now, and what demands it? Which of your
+      equations could ask for `stillDownloading`?
+    files:
+      - path: Main.hs
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          -- | Add each song's minutes to the minutes already played.
+          minutesPlayed :: Int -> [Int] -> Int
+          minutesPlayed played [] = played
+          minutesPlayed played (song:songs) = minutesPlayed (played + song) songs
+
+          -- | Target (starter needs repair): Add songs in order until the queued
+          -- minutes cover the ride, then return them without examining any later
+          -- song; if the songs run out first, return the minutes queued so far.
+          queueForRide :: Int -> Int -> [Int] -> Int
+          queueForRide ride queued songs = queued
+
+          -- | Songs that have not finished downloading: asking for them stops the
+          -- program with a message.
+          stillDownloading :: [Int]
+          stillDownloading = error "asked for a song that is still downloading"
+
+          -- | Display a deferred total, then a queue for a 20-minute ride whose
+          -- fourth song is still downloading.
+          main :: IO ()
+          main = do
+            print (minutesPlayed 10 [2, 3])
+            print (queueForRide 20 0 ([8, 9, 7] ++ stillDownloading))
+    run_file: Main.hs
+    tests:
+      - description: "Queue: the songs run out before the ride is covered"
+        command: "queueForRide 30 12 [] == 12 && queueForRide 40 5 [10, 10] == 25"
+        hints: &deferred_work_hints_0
+          # Conditions: unchanged placeholder; a whole-list total; other attempts.
+          - title: "Two Ways a Queue Ends"
+            condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)queueForRide\\b(?![^\\n]*::))|(?=[\\s\\S]*(?:(?:^|\\n)queueForRide[ \\t]+[A-Za-z_][\\w']*[ \\t]+(?<queued>[A-Za-z_][\\w']*)[ \\t]+[A-Za-z_][\\w']*[ \\t]*=\\s*\\(*\\s*\\k<queued>\\s*\\)*[ \\t]*(?:\\n|$)|(?:^|\\n)queueForRide\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:\\n|$))))/"
+            text: "The queue ends either because the queued minutes cover the ride or because the songs run out. For each example in the contract, write which reason ends it and the queued minutes at that moment."
+          - title: "A Whole-List Total Keeps Adding"
+            condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)queueForRide\\b(?![^\\n]*::))(?![\\s\\S]*(?:(?:^|\\n)queueForRide[ \\t]+[A-Za-z_][\\w']*[ \\t]+(?<queued>[A-Za-z_][\\w']*)[ \\t]+[A-Za-z_][\\w']*[ \\t]*=\\s*\\(*\\s*\\k<queued>\\s*\\)*[ \\t]*(?:\\n|$)|(?:^|\\n)queueForRide\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)queueForRide\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*\\b(?:minutesPlayed|sum|foldl'?|foldr|length|last|reverse|maximum|product)\\b)/"
+            text: "Trace `queueForRide 20 0 [8, 9, 7, 6]` by hand and write the queued minutes after each song. A total of every song keeps adding after the ride is covered: after which song should the total stop growing?"
+          - title: "Check the Ride, Then Add One Song"
+            condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)queueForRide\\b(?![^\\n]*::))(?![\\s\\S]*(?:(?:^|\\n)queueForRide[ \\t]+[A-Za-z_][\\w']*[ \\t]+(?<queued>[A-Za-z_][\\w']*)[ \\t]+[A-Za-z_][\\w']*[ \\t]*=\\s*\\(*\\s*\\k<queued>\\s*\\)*[ \\t]*(?:\\n|$)|(?:^|\\n)queueForRide\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)queueForRide\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*\\b(?:minutesPlayed|sum|foldl'?|foldr|length|last|reverse|maximum|product)\\b)/"
+            text: "Give each call one decision: return `queued` because it covers `ride`, return `queued` because no songs remain, or add one song and recurse on the rest. Which comparison makes `queueForRide 17 0 [8, 9, 5]` stop at 17, and which decision must come first?"
+      - description: "Queue: adds songs in order until the ride is covered"
+        command: "queueForRide 20 0 [8, 9, 7, 6] == 24 && queueForRide 15 4 [3, 3, 3, 3, 3] == 16"
+        hints: *deferred_work_hints_0
+      - description: "Queue: a total equal to the ride covers it"
+        command: "queueForRide 17 0 [8, 9, 5] == 17 && queueForRide 10 10 [4] == 10"
+        hints: *deferred_work_hints_0
+      - description: "Queue: a covered ride never needs a later song's minutes"
+        command: "queueForRide 20 0 [8, 9, 7, error \"a later song's minutes were needed\"] == 24"
+        hints: &deferred_work_hints_1
+          # Conditions: unchanged placeholder; a whole-list total; other attempts.
+          - title: "Errors Mark Songs That Do Not Exist Yet"
+            condition: "code_matches: /^(?:(?![\\s\\S]*(?:^|\\n)queueForRide\\b(?![^\\n]*::))|(?=[\\s\\S]*(?:(?:^|\\n)queueForRide[ \\t]+[A-Za-z_][\\w']*[ \\t]+(?<queued>[A-Za-z_][\\w']*)[ \\t]+[A-Za-z_][\\w']*[ \\t]*=\\s*\\(*\\s*\\k<queued>\\s*\\)*[ \\t]*(?:\\n|$)|(?:^|\\n)queueForRide\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:\\n|$))))/"
+            text: "These checks put `error` where a song or the rest of the list would be; demanding it stops the check with that message. Once the queued minutes cover the ride, which parts of the input may your function still need?"
+          - title: "A Whole-List Total Needs Every Song"
+            condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)queueForRide\\b(?![^\\n]*::))(?![\\s\\S]*(?:(?:^|\\n)queueForRide[ \\t]+[A-Za-z_][\\w']*[ \\t]+(?<queued>[A-Za-z_][\\w']*)[ \\t]+[A-Za-z_][\\w']*[ \\t]*=\\s*\\(*\\s*\\k<queued>\\s*\\)*[ \\t]*(?:\\n|$)|(?:^|\\n)queueForRide\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:\\n|$)))(?=[\\s\\S]*(?:^|\\n)queueForRide\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*\\b(?:minutesPlayed|sum|foldl'?|foldr|length|last|reverse|maximum|product)\\b)/"
+            text: "`minutesPlayed`, `sum`, and similar functions need every song, including songs after the ride is covered. Stop the traversal once the ride is covered instead of totaling everything first."
+          - title: "Which Equation Asks for the Next Song?"
+            condition: "code_matches: /^(?=[\\s\\S]*(?:^|\\n)queueForRide\\b(?![^\\n]*::))(?![\\s\\S]*(?:(?:^|\\n)queueForRide[ \\t]+[A-Za-z_][\\w']*[ \\t]+(?<queued>[A-Za-z_][\\w']*)[ \\t]+[A-Za-z_][\\w']*[ \\t]*=\\s*\\(*\\s*\\k<queued>\\s*\\)*[ \\t]*(?:\\n|$)|(?:^|\\n)queueForRide\\b(?![^\\n]*::)[^\\n]*=\\s*\\(*\\s*(?:undefined|error\\s+\"[^\"\\n]*\"|_)\\s*\\)*[ \\t]*(?:\\n|$)))(?![\\s\\S]*(?:^|\\n)queueForRide\\b(?![^\\n]*::)(?:(?!\\n[A-Za-z_]\\w*\\s*(?:::|[^\\n]*=))[\\s\\S])*\\b(?:minutesPlayed|sum|foldl'?|foldr|length|last|reverse|maximum|product)\\b)/"
+            text: "Trace `queueForRide 20 25 notYet` through your equations from top to bottom. To decide whether `[]` or `(song:rest)` matches, Haskell must evaluate `notYet`. Try a first equation whose patterns are plain names and whose guard checks the ride; when no guard holds, Haskell tries the next equation."
+      - description: "Queue: a covered ride does not ask for another song"
+        command: "queueForRide 20 25 (error \"the song list was examined\") == 25 && queueForRide 20 0 ([8, 9, 7] ++ error \"another song was requested\") == 24"
+        hints: *deferred_work_hints_1
+    quiz:
+      title: Step 8 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          bloom: apply
+          difficulty: intermediate
+          question: |-
+            What does this program print? Predict before checking the feedback.
+
+            ```haskell
+            -- | Keep the most recent song's minutes.
+            latest :: Int -> [Int] -> Int
+            latest current [] = current
+            latest current (song:songs) = latest song songs
+
+            main :: IO ()
+            main = print (latest 0 [error "corrupt download", 7])
+            ```
+          options:
+            - '`7`'
+            - 'It stops with the message `corrupt download`.'
+            - '`0`'
+          correct_index: 0
+          option_feedback:
+            1: The corrupt value becomes the second call's `current`, but that call passes `7` forward instead. Nothing
+              needs the replaced value, so its `error` is never evaluated.
+            2: Each call passes its own `song` forward as the next `current`, so the seed `0` is replaced by the first
+              recursive call.
+          explanation: Arguments are passed unevaluated. The `error` expression is bound to `current` in one call and then
+            dropped, and the base case returns the last song, `7`. A language that evaluates arguments before every call
+            would stop at the corrupt value.
+        - type: single
+          bloom: analyze
+          difficulty: advanced
+          question: |-
+            For the call `topUp 5 (error "offline")`, which version returns `5` instead of stopping with `offline`?
+
+            ```haskell
+            -- Version 1
+            topUp :: Int -> [Int] -> Int
+            topUp total [] = total
+            topUp total (x:xs)
+              | total >= 5 = total
+              | otherwise = topUp (total + x) xs
+
+            -- Version 2
+            topUp :: Int -> [Int] -> Int
+            topUp total xs | total >= 5 = total
+            topUp total [] = total
+            topUp total (x:xs) = topUp (total + x) xs
+            ```
+          options:
+            - Only Version 2
+            - Both versions
+            - Only Version 1
+            - Neither version
+          correct_index: 0
+          option_feedback:
+            1: Version 1 must decide whether the list matches `[]` before any guard runs, and that check evaluates the
+              error. A guard belongs to an equation whose patterns have already matched.
+            2: Version 1 checks the list first, so it evaluates the error before its guard can see the total. Version 2
+              can match its first equation without looking at the list.
+            3: Version 2's first equation has only plain-name patterns, which match without evaluating anything. Its guard
+              needs only `total`, so it returns `5` without touching the list.
+          explanation: Equations are tried from top to bottom, and a pattern such as `[]` or `(x:xs)` evaluates the list
+            far enough to choose. Version 2 first tries an equation whose patterns are plain names, so its guard decides
+            using `total` alone.
+        - type: single
+          bloom: understand
+          difficulty: intermediate
+          question: |-
+            `foldl` follows the same accumulator pattern as `minutesPlayed`:
+
+            ```haskell
+            foldl f acc [] = acc
+            foldl f acc (x:xs) = foldl f (f acc x) xs
+            ```
+
+            Under lazy evaluation, what does the accumulator hold when `foldl (-) 10 [2, 3]` reaches the empty list, before anything needs a number?
+          options:
+            - '`(10 - 2) - 3`, a pending expression'
+            - '`10 - (2 - 3)`, a pending expression'
+            - '`5`, computed one step at a time'
+          correct_index: 0
+          option_feedback:
+            1: This grouping subtracts the later elements first, as a right fold would. A left fold applies `f` to the
+              accumulator and the next element, so the earliest subtraction is innermost.
+            2: The value `5` appears only when something needs the result, such as `print`. Until then, each call passes
+              `f acc x` unevaluated, just as `minutesPlayed` passes `played + song`.
+          explanation: Each step wraps the previous accumulator, giving `10`, then `10 - 2`, then `(10 - 2) - 3`. Demanding
+            the final result evaluates this chain and gives `5`. The grouping is the one from Left Folds; laziness decides
+            when it is computed.
+    solution:
+      files:
+        - path: Main.hs
+          language: haskell
+          content: |
+            module Main where
+
+            -- | Add each song's minutes to the minutes already played.
+            minutesPlayed :: Int -> [Int] -> Int
+            minutesPlayed played [] = played
+            minutesPlayed played (song:songs) = minutesPlayed (played + song) songs
+
+            -- | Add songs in order until the queued minutes cover the ride, then return
+            -- them without examining any later song; if the songs run out first, return
+            -- the minutes queued so far.
+            queueForRide :: Int -> Int -> [Int] -> Int
+            queueForRide ride queued songs
+              | queued >= ride = queued
+            queueForRide ride queued [] = queued
+            queueForRide ride queued (song:songs) = queueForRide ride (queued + song) songs
+
+            -- | Songs that have not finished downloading: asking for them stops the
+            -- program with a message.
+            stillDownloading :: [Int]
+            stillDownloading = error "asked for a song that is still downloading"
+
+            -- | Display a deferred total, then a queue for a 20-minute ride whose
+            -- fourth song is still downloading.
+            main :: IO ()
+            main = do
+              print (minutesPlayed 10 [2, 3])
+              print (queueForRide 20 0 ([8, 9, 7] ++ stillDownloading))
+      explanation: |
+        The first equation's patterns are plain names, so trying it examines nothing, and its guard needs only `queued` and `ride`. When that guard is False, Haskell tries the next equation, which has to inspect `songs`. With the list equations first, the call after the third song would ask for `stillDownloading` even though 24 minutes already cover the ride. Because the guard needs each total, the debugger shows every `queued` as a number when its call checks the ride, instead of a chain of additions that runs at the end. An `if` that checks the ride before inspecting the songs is an equivalent design.
+
   # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 34,86,88,91–94,106–107,114.
   # Assessment: [Midterm] F23 (Public).pdf, Problem 3a–c, pp. 6–7 (select/project/combine);
   # [Final] F24 V1 (Public).pdf, Problem 1A.1, p. 2 (derive relationships between function types).
@@ -1893,7 +2217,7 @@ steps:
         command: "playlistReport 10 5 [] == ([],0) && playlistReport 10 5 [(\"skip\",9)] == ([],0)"
         hints: *playlist_hints_1
     quiz:
-      title: Step 8 — Knowledge Check
+      title: Step 9 — Knowledge Check
       min_score: 0.8
       shuffle_questions: false
       shuffle_options: true

@@ -52,9 +52,12 @@ test('Haskell version 2 saves preserve drafts and matching credit without credit
 
 // Published numeric saves must not credit replacement exercises, including
 // changed contracts and lessons that previously taught unsupported topics.
+// Unversioned saves keep only positions that name the same lesson in both
+// layouts. Inserting Demand-Driven Evaluation moved the Functions capstone, so
+// its old position and the new final position now require rechecking.
 for (const [slug, replacedIndices, resumeReplacement] of [
   ['haskell', [0, 1, 2, 6, 8], 6],
-  ['haskell-functions', [1, 3, 5], 1],
+  ['haskell-functions', [1, 3, 5, 7, 8], 1],
   ['haskell-data', [2, 6], 6],
 ]) {
   test(`${slug} preserves drafts and matching progress without crediting replacement lessons`, async ({ page }) => {

@@ -356,6 +356,84 @@ firstMatches count predicate items = take count (filter predicate items)
     ],
   },
   {
+    key: 'deferred-work',
+    correct: [
+      {
+        name: 'a guard-only first equation falls through to the list cases',
+        source: mainProgram(String.raw`
+queueForRide :: Int -> Int -> [Int] -> Int
+queueForRide ride queued songs
+  | queued >= ride = queued
+queueForRide ride queued [] = queued
+queueForRide ride queued (song:rest) = queueForRide ride (queued + song) rest
+`),
+      },
+      {
+        name: 'guards test emptiness only after the ride check',
+        source: mainProgram(String.raw`
+queueForRide :: Int -> Int -> [Int] -> Int
+queueForRide ride queued songs
+  | queued >= ride = queued
+  | null songs = queued
+  | otherwise = queueForRide ride (queued + head songs) (tail songs)
+`),
+      },
+      {
+        name: 'the first covering running total from a lazy scan',
+        source: mainProgram(String.raw`
+queueForRide :: Int -> Int -> [Int] -> Int
+queueForRide ride queued songs =
+  case dropWhile (< ride) (scanl (+) queued songs) of
+    covered:_ -> covered
+    [] -> queued + sum songs
+`),
+      },
+    ],
+    incorrect: [
+      {
+        name: 'matches the song list before checking the ride',
+        gateErrorExpected: true,
+        source: mainProgram(String.raw`
+queueForRide :: Int -> Int -> [Int] -> Int
+queueForRide ride queued [] = queued
+queueForRide ride queued (song:rest)
+  | queued >= ride = queued
+  | otherwise = queueForRide ride (queued + song) rest
+`),
+      },
+      {
+        name: 'caps a total of every song at the ride length',
+        gateErrorExpected: true,
+        source: mainProgram(String.raw`
+queueForRide :: Int -> Int -> [Int] -> Int
+queueForRide ride queued songs = min ride (queued + sum songs)
+`),
+      },
+      {
+        name: 'requires the queue to exceed the ride length',
+        source: mainProgram(String.raw`
+queueForRide :: Int -> Int -> [Int] -> Int
+queueForRide ride queued songs
+  | queued > ride = queued
+queueForRide ride queued [] = queued
+queueForRide ride queued (song:rest) = queueForRide ride (queued + song) rest
+`),
+      },
+      {
+        name: 'returns the total before the song that covers the ride',
+        source: mainProgram(String.raw`
+queueForRide :: Int -> Int -> [Int] -> Int
+queueForRide ride queued songs
+  | queued >= ride = queued
+queueForRide ride queued [] = queued
+queueForRide ride queued (song:rest)
+  | queued + song >= ride = queued
+  | otherwise = queueForRide ride (queued + song) rest
+`),
+      },
+    ],
+  },
+  {
     key: 'playlist',
     correct: [
       {

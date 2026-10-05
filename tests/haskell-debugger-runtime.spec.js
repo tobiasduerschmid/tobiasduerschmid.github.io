@@ -1,5 +1,8 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const fs = require('node:fs');
+const path = require('node:path');
+const yaml = require('js-yaml');
 
 // Integration-level contract: real sandboxed adapter/compiler, observed only
 // through its public message protocol. The host document is test-owned.
@@ -583,8 +586,104 @@ main = print (map bump [1..20])
     const complete = await waitForMessage(page, 'debugComplete');
     expect(complete.exitCode).toBe(1);
     expect(complete.error).toMatch(/undefined value.*unknownValue/i);
-    expect(complete.error).toMatch(/Main\.hs": line 2,/);
+    expect(complete.error).toMatch(/Main\.hs": line 2, col 14:/);
     expect(complete.errorReported).toBe(true);
+  });
+
+  // Instrumentation moves learner code; error locations must still name the
+  // learner's line and column, exactly as the uninstrumented Run does.
+  for (const [name, code, compiles] of [
+    ['runtime error inside a guard', 'module Main where\nqueue :: Int -> Int\nqueue n\n\t| n > 0 =\terror "still downloading"\n'
+      + '\t| otherwise = 0\nmain :: IO ()\nmain = print (queue 1)\n', true],
+    ['compilation error after Unicode text', 'module Main where\nlabel :: Int -> String\n'
+      + 'label n = "é" ++ missingName\nmain :: IO ()\nmain = putStrLn (label 1)\n', false],
+  ]) {
+    test(`debug and Run report the same source location for a ${name}`, async ({ page }) => {
+      const written = await send(page, { type: 'write', id: 1, path: '/tutorial/Main.hs', content: code });
+      await waitForMessage(page, 'write_ok', written);
+      const run = await waitForMessage(page, 'run_done', await send(page, { type: 'run', id: 2, path: '/tutorial/Main.hs' }));
+      const location = run.stderr.match(/"\/tutorial\/Main\.hs"(?:,\d+:\d+|: line \d+, col \d+)/)?.[0];
+      expect(location, run.stderr).toBeTruthy();
+      const cursor = await startDebug(page, code);
+      if (compiles) await waitForMessage(page, 'paused', cursor);
+      const complete = compiles ? await command(page, 1, 'debugComplete') : await waitForMessage(page, 'debugComplete', cursor);
+      expect(complete.exitCode).toBe(1);
+      expect(complete.error).toContain(location);
+    });
+  }
+
+  // The Demand-Driven Evaluation lesson asks learners to verify these exact
+  // observations. Read its shipped starter and solution, not a copy.
+  test('the deferred-work lesson walkthrough matches the recorded demand trace', async ({ page }) => {
+    const lesson = yaml.load(fs.readFileSync(path.join(__dirname, '../_data/tutorials/haskell-functions.yml'), 'utf8'))
+      .steps.find(step => step.key === 'deferred-work');
+    const starter = lesson.files.find(file => file.path === lesson.run_file).content;
+    const solution = lesson.solution.files.find(file => file.path === lesson.run_file).content;
+    const describe = snapshot => snapshot.description;
+
+    // Step Into reaches the first demanded total right after main's IO action is ready.
+    const opening = [lastSnapshot(await waitForMessage(page, 'paused', await startDebug(page, starter)))];
+    while (opening.at(-1).description !== 'Demand minutesPlayed' && opening.length < 10) {
+      opening.push(lastSnapshot(await command(page, 2)));
+    }
+    expect(opening.map(describe)).toEqual(['Demand main', 'Try equation 1: main', 'Use equation 1: main',
+      'Result of main: <IO action ready>', 'Demand minutesPlayed']);
+    let complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    let messages = await allMessages(page);
+    expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe('15\n0\n');
+    let trace = messages.flatMap(m => m.snapshots || []);
+    const totals = trace.filter(s => s.stack.at(-1)?.function === 'minutesPlayed');
+    const calls = totals.filter(s => s.event === 'call');
+    expect(calls.map(s => s.stack.at(-1).arguments.map(a => [a.repr, a.observed_repr]))).toEqual([
+      [['10', '_'], ['[2, 3]', '_']],
+      [['played + song', '_'], ['[3]', '_']],
+      [['played + song', '_'], ['[]', '_']],
+    ]);
+    const baseCase = totals.findIndex(s => s.description === 'Use equation 1: minutesPlayed played []');
+    const frames = totals[baseCase].stack.filter(frame => frame.function === 'minutesPlayed');
+    expect(frames.map(frame => [frame.locals.played?.repr, frame.locals.song?.repr])).toEqual([
+      ['10', '2'], ['played + song', '3'], ['played + song', undefined],
+    ]);
+    // The very next step returns 15, and only then are the pending additions observed.
+    const result = totals[baseCase + 1];
+    expect(result.event).toBe('return');
+    expect(result.return_value.repr).toBe('15');
+    expect(result.stack.map(frame => [frame.locals.played.repr, frame.locals.played.note || ''])).toEqual([
+      ['10', ''], ['12', ''], ['15', ''],
+    ]);
+
+    // A guard that needs each total observes it during the descent, and no
+    // equation asks for the songs after the ride is covered.
+    await waitForMessage(page, 'paused', await startDebug(page, solution));
+    complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    messages = await allMessages(page);
+    expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe('15\n0\n15\n24\n');
+    trace = messages.flatMap(m => m.snapshots || []).slice(trace.length);
+    const decisions = trace.filter(s => ['true', 'false'].includes(s.event) && s.stack.at(-1).function === 'queueForRide');
+    expect(decisions.map(s => [s.event, s.stack.at(-1).locals.queued.repr, s.stack.at(-1).locals.queued.note || '']))
+      .toEqual([['false', '0', ''], ['false', '8', ''], ['false', '17', ''], ['true', '24', '']]);
+    expect(trace.some(s => s.stack.some(frame => frame.function === 'stillDownloading'))).toBe(false);
+    expect(trace.at(-1).stack.at(0).arguments[2].repr).toBe('8 : 9 : 7 : _');
+
+    // Checking the song list first demands the download that does not exist yet;
+    // the debugger reports the learner's line and column for that error.
+    const listFirst = starter.replace('queueForRide ride queued songs = queued',
+      'queueForRide ride queued [] = queued\nqueueForRide ride queued (song:rest)\n'
+      + '  | queued >= ride = queued\n  | otherwise = queueForRide ride (queued + song) rest');
+    expect(listFirst).not.toBe(starter);
+    const listFirstCursor = await startDebug(page, listFirst);
+    await waitForMessage(page, 'paused', listFirstCursor);
+    complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode).toBe(1);
+    const lines = listFirst.split('\n');
+    const errorLine = lines.findIndex(line => line.startsWith('stillDownloading = error')) + 1;
+    const errorColumn = lines[errorLine - 1].indexOf('error') + 1;
+    expect(complete.error).toContain(`"/tutorial/Main.hs",${errorLine}:${errorColumn}: asked for a song that is still downloading`);
+    trace = (await allMessages(page)).slice(listFirstCursor).flatMap(m => m.snapshots || []);
+    const demanded = trace.findIndex(s => s.event === 'call' && s.stack.at(-1).function === 'stillDownloading');
+    expect(trace[demanded - 1].description).toBe('Try equation 1: queueForRide ride queued []');
   });
 
   test('reports runtime exceptions without waiting forever for a completion marker', async ({ page }) => {

@@ -153,27 +153,71 @@
       bindings: Object.assign({}, ...patterns.map((p, i) => patternBindings(p, 'arg' + i))) };
   }
 
-  /** Edits may supply a per-line source map for generated declarations. */
+  /** Edits may supply a per-line source map for generated declarations.
+   * `origins` gives each generated UTF-16 unit's source offset, or -1 for
+   * generated text; edits may supply origins for text copied from the source.
+   */
   function applyEdits(source, edits) {
     let code = '', cursor = 0, originalLine = 1;
-    const lineMap = [null, 1];
-    function append(text, mapped) {
+    const lineMap = [null, 1], origins = [];
+    function append(text, mapped, textOrigins) {
       code += text;
+      for (let i = 0; i < text.length; i++) origins.push(textOrigins?.[i] ?? -1);
       let index = 1;
       for (const ch of text) if (ch === '\n') {
         if (!mapped) originalLine++;
         lineMap.push(mapped ? mapped[++index] || originalLine : originalLine);
       }
     }
+    const copied = (start, end) => Array.from({ length: end - start }, (_, i) => start + i);
     for (const edit of edits.sort((a, b) => a.offset - b.offset)) {
-      append(source.slice(cursor, edit.offset));
-      append(edit.text, edit.lineMap || [null, originalLine]);
+      append(source.slice(cursor, edit.offset), null, copied(cursor, edit.offset));
+      append(edit.text, edit.lineMap || [null, originalLine], edit.origins);
       const end = edit.end ?? edit.offset;
       originalLine += (source.slice(edit.offset, end).match(/\n/g) || []).length;
       cursor = end;
     }
-    append(source.slice(cursor));
-    return { code, lineMap };
+    append(source.slice(cursor), null, copied(cursor, source.length));
+    return { code, lineMap, origins };
+  }
+
+  // MicroHs reports 1-based columns in code points; a tab advances to the next
+  // multiple of eight. Never report a column whose generated text has no origin.
+  function nextColumn(text, index, column) {
+    return text.codePointAt(index) === 9 ? column + 8 - (column - 1) % 8 : column + 1;
+  }
+
+  function lineStarts(text) {
+    const starts = [0];
+    for (let i = 0; i < text.length; i++) if (text[i] === '\n') starts.push(i + 1);
+    return starts;
+  }
+
+  /** Map a generated line and optional column to the learner's source. */
+  function locator(source, generated) {
+    const sourceStarts = lineStarts(source), generatedStarts = lineStarts(generated.code);
+    return function locate(line, column) {
+      const mappedLine = generated.lineMap[line];
+      let index = generatedStarts[line - 1];
+      if (index === undefined || !mappedLine) return null;
+      if (column === undefined) return { line: mappedLine };
+      let at = 1;
+      while (at < column && index < generated.code.length && generated.code[index] !== '\n') {
+        at = nextColumn(generated.code, index, at);
+        index += generated.code.codePointAt(index) > 0xffff ? 2 : 1;
+      }
+      // The column may lie inside a tab or beyond the line's last character.
+      if (at !== column) return { line: mappedLine };
+      const origin = generated.origins[index];
+      if (!(origin >= 0)) return { line: mappedLine };
+      let sourceLine = sourceStarts.length;
+      while (sourceStarts[sourceLine - 1] > origin) sourceLine--;
+      let sourceColumn = 1;
+      for (let i = sourceStarts[sourceLine - 1]; i < origin; i += source.codePointAt(i) > 0xffff ? 2 : 1) {
+        sourceColumn = nextColumn(source, i, sourceColumn);
+      }
+      return { line: sourceLine, column: sourceColumn };
+    };
   }
 
   function instrument(source, filename, firstId = 0) {
@@ -240,10 +284,18 @@
       const args = raw.map((_, i) => '_sebookArg' + i);
       const context = '_sebookContext';
       const callArgs = args.length ? ' ' + args.join(' ') : '';
-      const rows = [], mapping = [null];
+      const rows = [], mapping = [null], rowOrigins = [];
       const base = ' '.repeat(first.first.indent - 1);
-      function add(text, line) {
-        text.split('\n').forEach(part => { rows.push((rows.length ? base : '') + part); mapping.push(line); });
+      function add(text, line, textOrigins = []) {
+        let offset = 0;
+        text.split('\n').forEach(part => {
+          const prefix = rows.length ? base : '';
+          rows.push(prefix + part);
+          rowOrigins.push([...Array(prefix.length).fill(-1),
+            ...Array.from({ length: part.length }, (_, i) => textOrigins[offset + i] ?? -1)]);
+          offset += part.length + 1;
+          mapping.push(line);
+        });
       }
       add(first.name + (raw.length ? ' ' + raw.join(' ') : '') + ' = SEBookTrace.call ' + entry.id + ' ' + observerFor(types.length === arity + 1 ? types[arity] : null, shadowed) + ' SEBookTrace.$ \\' + context + ' ->', first.first.line);
       add('  let', first.first.line);
@@ -305,18 +357,23 @@
           }
         }
         const local = applyEdits(source.slice(start, end), localEdits);
+        let localOffset = 0;
         local.code.split('\n').forEach((line, lineIndex) => {
           // Expand indentation only. Literal tabs remain literal tabs.
-          const expanded = line.replace(/^[ \t]+/, whitespace => {
-            let col = 0; for (const ch of whitespace) col += ch === '\t' ? 8 - col % 8 : 1;
-            return ' '.repeat(Math.max(0, col - (lineIndex ? first.first.indent - 1 : 0)));
-          });
-          add('    ' + expanded, eq.first.line + local.lineMap[lineIndex + 1] - 1);
+          const whitespace = line.match(/^[ \t]*/)[0];
+          let col = 0; for (const ch of whitespace) col += ch === '\t' ? 8 - col % 8 : 1;
+          const indent = whitespace ? ' '.repeat(Math.max(0, col - (lineIndex ? first.first.indent - 1 : 0))) : '';
+          const lineOrigins = local.origins.slice(localOffset + whitespace.length, localOffset + line.length)
+            .map(origin => origin < 0 ? -1 : start + origin);
+          localOffset += line.length + 1;
+          add('    ' + indent + line.slice(whitespace.length), eq.first.line + local.lineMap[lineIndex + 1] - 1,
+            [...Array(4 + indent.length).fill(-1), ...lineOrigins]);
         });
         if (arity) add('    _sebookChoose' + i + ' ' + raw.map(() => '_').join(' ') + ' = SEBookTrace.step "reject" ' + eq.site.id + ' ' + context + ' SEBookTrace.$ ' + next, eq.first.line);
       });
       add('  in _sebookTry0', first.first.line);
-      edits.push({ offset: first.first.offset, end: endOf(last.block.at(-1)), text: rows.join('\n'), lineMap: mapping });
+      edits.push({ offset: first.first.offset, end: endOf(last.block.at(-1)), text: rows.join('\n'), lineMap: mapping,
+        origins: rowOrigins.flatMap((origins, row) => row ? [-1, ...origins] : origins) });
     }
     if (sites.length) {
       const indentation = ' '.repeat(body[0].indent - 1);
@@ -324,7 +381,8 @@
       const inline = explicitModule && body[0].line === tokens.find(t => t.text === 'where').line;
       edits.push({ offset: importOffset, text: (explicitModule ? '\n' + indentation : '') + 'import qualified SEBookDebug as SEBookTrace\n' + (inline ? ' '.repeat(Math.max(0, body[0].indent - 1 - (body[0].offset - importOffset))) : '') });
     }
-    return { ...applyEdits(source, edits), sites };
+    const generated = applyEdits(source, edits);
+    return { ...generated, sites, locate: locator(source, generated) };
   }
   const api = { instrument };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
