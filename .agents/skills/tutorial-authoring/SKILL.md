@@ -1077,25 +1077,15 @@ steps:
                                              # the file into. default: editor.
         print_language: python               # Override syntax highlight in
                                              # the print view.
-        reseed: true                         # Re-load THIS step's `content` even
-                                             # if a model for `path` already
-                                             # exists from an earlier step. By
-                                             # default a file is seeded only on
-                                             # first creation, so a same-named
-                                             # file carries its content forward
-                                             # across steps (correct when the
-                                             # student edits one file cycle after
-                                             # cycle, e.g. TDD). Set `reseed: true`
-                                             # on author-provided scaffolding that
-                                             # EVOLVES between steps and that the
-                                             # student does NOT edit — e.g. a
-                                             # service module that gains a new
-                                             # class in a later step. Without it,
-                                             # the later step silently keeps the
-                                             # earlier version and its tests fail
-                                             # to import the new symbol. Reseed
-                                             # overwrites the model + VM copy and
-                                             # ignores the autosaved override.
+        reseed: true                         # Give this step its own version of
+                                             # the file. First entry uses this
+                                             # starter; revisits restore the
+                                             # learner's draft for this step.
+                                             # Same-named files without reseed
+                                             # keep shared cross-step edits
+                                             # (e.g. an evolving TDD program).
+                                             # Reset Step explicitly restores
+                                             # the current step's starter.
 
     # Smalltalk uses api.normalizeProgram in js/smalltalk/fresh-runner.js.
     # Ordered files load with run_file last once when a live/fresh image starts;
@@ -2761,6 +2751,7 @@ Per-tutorial localStorage key: `tutorial-progress-<tutorialId>` →
   "stepsUnlocked": [0, 1, 2],
   "stepsVisited": [0, 1],
   "files": { "example.py": { "content": "...", "language": "python" } },
+  "stepFiles": { "key:hello": { "Main.hs": { "content": "...", "language": "haskell" } } },
   "activeFile": "example.py",
   "progressVersion": 2,
   "stepKeys": ["hello", "references", "functions"]
@@ -2799,7 +2790,19 @@ identity metadata, so reload does not migrate a second time. No check becomes
 mandatory. Python has no legacy timed-practice/cooldown records to migrate;
 reordering other timed tutorials requires separately handling those stores.
 
-SE Gym's import/export preserves each progress object, including this metadata,
+Navigation snapshots editor models synchronously before closing or reseeding them.
+Session drafts survive step changes independently of Auto-save; Auto-save controls
+disk persistence. Shared files remain under `files`; `reseed: true` drafts live under
+`stepFiles`, keyed by `key:<step.key>` (or `index:<n>` when no key exists). Use stable
+unique step keys when lessons may move. Empty drafts are valid. Returning to starter
+content removes that override; session tombstones prevent older disk edits from
+reappearing after a failed write. Full and explicit saves share this snapshot path.
+Legacy path-only saves are attributed only to their recorded resume lesson, never
+copied to all same-named lesson files. Reset saves the current lesson's starter after
+its setup completes, preserving other drafts. Delete clears remembered drafts too.
+Smalltalk continues using its native accepted-source/draft owner.
+
+SE Gym's import/export preserves each progress object, including `stepFiles` and this metadata,
 without changing its export envelope. Fresh saves do not show a migration notice.
 
 `TutorialCode.saveProgress()` returns `true` only after `localStorage`

@@ -681,6 +681,7 @@
     //            "commands" = replay all prior solutions + setup_commands (like autosave restore)
     this.resetType = options.resetType || 'files';
     this.autoSaveEnabled = this.allowAutosave;             // toggled from navbar
+    this._sessionDrafts = { files: {}, stepFiles: {} };
     this._originalContent = {};           // tracks original file content for dirty detection
     this.booted = false;
     this._httpEnabled = this.steps.some(function (s) { return s.http_client; });
@@ -11149,6 +11150,65 @@
     return this._withProgressIdentity(remapped);
   };
 
+  // Ordinary files share one workspace; reseeded files belong to a lesson.
+  // Stable authored keys keep those drafts attached when lessons are reordered.
+  TutorialCode.prototype._draftStepKey = function (index) {
+    const step = this.steps[index];
+    return step && step.key ? 'key:' + step.key : 'index:' + index;
+  };
+
+  TutorialCode.prototype._rememberEditorDrafts = function () {
+    if (this.currentStep < 0 || this._smalltalkAdapter) return;
+    const step = this.steps[this.currentStep];
+    const stepKey = this._draftStepKey(this.currentStep);
+    for (const [name, entry] of Object.entries(this.editorModels)) {
+      const file = step && (step.files || []).find(file => file.path === name);
+      const scope = file && file.reseed
+        ? (this._sessionDrafts.stepFiles[stepKey] ||= {}) : this._sessionDrafts.files;
+      const content = entry.model.getValue();
+      // A null entry remembers an explicit return to the starter, overriding
+      // an older disk draft even if persistence is disabled or fails.
+      scope[name] = content === this._originalContent[name] ? null
+        : { content: content, language: entry.model.getLanguageId() };
+    }
+  };
+
+  TutorialCode.prototype._draftProgress = function (readStored = this.autoSaveEnabled) {
+    const saved = readStored ? this._loadSavedProgress(false) : null;
+    const data = saved || {};
+    const legacyFiles = data.stepFiles === undefined;
+    data.files = Object.assign({}, data.files);
+    data.stepFiles = Object.assign({}, data.stepFiles);
+    // Old saves had only one version per path. Attribute it solely to the
+    // recorded resume lesson, never to every lesson that reuses that path.
+    const savedStep = this.steps[data.step];
+    if (legacyFiles && savedStep) {
+      const key = this._draftStepKey(data.step);
+      for (const file of savedStep.files || []) {
+        if (!file.reseed || !Object.hasOwn(data.files, file.path)) continue;
+        data.stepFiles[key] = Object.assign({}, data.stepFiles[key]);
+        if (!Object.hasOwn(data.stepFiles[key], file.path)) {
+          data.stepFiles[key][file.path] = data.files[file.path];
+        }
+        delete data.files[file.path];
+      }
+    }
+    Object.assign(data.files, this._sessionDrafts.files);
+    for (const [key, files] of Object.entries(this._sessionDrafts.stepFiles)) {
+      data.stepFiles[key] = Object.assign({}, data.stepFiles[key], files);
+    }
+    return data;
+  };
+
+  TutorialCode.prototype._draftsForStep = function (data, index) {
+    const files = Object.assign({}, data.files);
+    const local = (data.stepFiles || {})[this._draftStepKey(index)] || {};
+    for (const file of (this.steps[index] || {}).files || []) {
+      if (file.reseed) files[file.path] = local[file.path];
+    }
+    return files;
+  };
+
   /**
    * Full save: persists step, unlock state, and only files changed from original.
    *
@@ -11156,41 +11216,20 @@
    */
   TutorialCode.prototype.saveProgress = function () {
     if (!this.autosaveType) return false;
-    // Start from the previously persisted overrides so files that aren't
-    // currently open as tabs (closed during a step transition) keep their
-    // saved edits. Only files that are still in the editor get re-evaluated
-    // against their original starter content here.
-    var files = {};
-    try {
-      var prevRaw = localStorage.getItem(this._storageKey());
-      if (prevRaw) {
-        var prev = JSON.parse(prevRaw);
-        if (prev && prev.files) {
-          for (var k in prev.files) {
-            if (prev.files.hasOwnProperty(k)) files[k] = prev.files[k];
-          }
-        }
-      }
-    } catch (e) { /* ignore */ }
-    var self = this;
-    for (var name in this.editorModels) {
-      if (this.editorModels.hasOwnProperty(name)) {
-        var current = this.editorModels[name].model.getValue();
-        var original = self._originalContent[name];
-        if (original === undefined || current !== original) {
-          files[name] = {
-            content: current,
-            language: this.editorModels[name].model.getLanguageId()
-          };
-        } else {
-          // Open file matches starter — drop any stale override for it.
-          delete files[name];
-        }
+    this._rememberEditorDrafts();
+    const prev = this._draftProgress(true);
+    const files = prev.files;
+    const stepFiles = prev.stepFiles;
+    // Starter tombstones are session-only; disk keeps changed source only.
+    for (const scope of [files, ...Object.values(stepFiles)]) {
+      for (const name of Object.keys(scope)) {
+        if (scope[name] === null) delete scope[name];
       }
     }
     var data = {
       step: this.currentStep,
       files: files,
+      stepFiles: stepFiles,
       activeFile: this.activeFileName,
       stepsUnlocked: Array.from(this._stepsUnlocked),
       stepsVisited: Array.from(this._stepsVisited),
@@ -11217,48 +11256,30 @@
   };
 
   /**
-   * Targeted save: updates one file override plus the current step, removing
-   * the override when the file has returned to its starter content.
-   * Used by auto-save on Ctrl+S to avoid re-serializing everything.
+   * Explicit file save uses the complete draft snapshot, including closed
+   * files retained during this session.
    *
    * @returns {boolean} true only when localStorage accepted the write.
    */
   TutorialCode.prototype._saveFile = function (filename) {
-    if (!this.autosaveType) return false;
     if (this._smalltalkAdapter && this._smalltalkAdapter.workspace) return this.saveProgress();
-    var entry = this.editorModels[filename];
-    if (!entry) return false;
-    var current = entry.model.getValue();
-    var original = this._originalContent[filename];
-
-    try {
-      var raw = localStorage.getItem(this._storageKey());
-      var data = raw ? this._remapSavedProgress(JSON.parse(raw)) : {};
-      if (!data.files) data.files = {};
-      if (original !== undefined && current === original) {
-        delete data.files[filename];
-      } else {
-        data.files[filename] = { content: current, language: entry.model.getLanguageId() };
-      }
-      data.step = this.currentStep;
-      data.activeFile = this.activeFileName;
-      localStorage.setItem(this._storageKey(), JSON.stringify(this._withProgressIdentity(data)));
-      return true;
-    } catch (e) {
-      console.warn('TutorialCode: could not save file', e);
-      return false;
-    }
+    if (!this.editorModels[filename]) return false;
+    // Use the same snapshot contract for explicit and automatic saves so
+    // lesson-local files cannot accidentally be written as shared files.
+    return this.saveProgress();
   };
 
   /**
-   * Load saved progress from localStorage. Returns the parsed object or null.
+   * Load saved progress from localStorage. Draft merging can retain files even
+   * when a removed lesson makes the stored resume index invalid.
    */
-  TutorialCode.prototype._loadSavedProgress = function () {
+  TutorialCode.prototype._loadSavedProgress = function (requireValidStep = true) {
     try {
       var raw = localStorage.getItem(this._storageKey());
       if (!raw) return null;
       var data = this._remapSavedProgress(JSON.parse(raw));
-      if (typeof data.step !== 'number' || data.step < 0 || data.step >= this.steps.length) return null;
+      if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+      if (requireValidStep && (typeof data.step !== 'number' || data.step < 0 || data.step >= this.steps.length)) return null;
       return data;
     } catch (e) {
       return null;
@@ -11275,6 +11296,7 @@
    */
   TutorialCode.prototype._applySavedFiles = function (files, activeFile) {
     if (!files) return Promise.resolve();
+    files = this._draftsForStep(Object.assign({}, this._draftProgress(), { files: files }), this.currentStep);
     if (this._smalltalkAdapter) {
       // Native accepted source and legacy file drafts were restored together
       // before Workspace creation; generic file restoration must not reapply
@@ -11296,7 +11318,7 @@
     self._suppressAutoSave = true;
     var syncs = [];
     for (var name in files) {
-      if (files.hasOwnProperty(name)) {
+      if (files.hasOwnProperty(name) && files[name]) {
         if (stepPaths && !stepPaths[name]) continue;
         self.openFile(name, files[name].content, files[name].language);
         syncs.push(Promise.resolve(self._syncFileToBackend(name)));
@@ -11382,6 +11404,7 @@
    */
   TutorialCode.prototype.deleteSavedProgress = function () {
     localStorage.removeItem(this._storageKey());
+    this._sessionDrafts = { files: {}, stepFiles: {} };
     if (this._smalltalkAdapter) this._smalltalkAdapter.clearSavedProgress();
     return this.resetStep();
   };
@@ -11428,7 +11451,7 @@
     // Default "files" reset: just reload starter files (persistent files keep
     // their current editor content and get synced back to the VM).
     if (!step.files) return;
-    self._syncStepFiles(step).then(function () {
+    return self._syncStepFiles(step).then(function () {
       self._renderTabs();
       // UML: force refresh after resetting files
       self._scheduleUMLRefresh(true);
@@ -11439,6 +11462,9 @@
       return self._runPostFileloadSetup(step);
     }).then(function () {
       return self._updateUserCmdListener(step);
+    }).then(function () {
+      self._rememberEditorDrafts();
+      self._autoSaveProgress();
     });
   };
 
@@ -12242,6 +12268,8 @@
     // succeeds, so a half-prepared step can never become the persisted resume
     // point or suppress its own setup on retry.
     var autoSaveSuppressedBeforeStepLoad = this._suppressAutoSave;
+    const previousStep = this.steps[this.currentStep];
+    if (!autoSaveSuppressedBeforeStepLoad) this._rememberEditorDrafts();
     if (this.autoSaveEnabled && !autoSaveSuppressedBeforeStepLoad) {
       this._autoSaveProgress();
     }
@@ -12286,47 +12314,21 @@
     // read those files.
     this._closeNonStepFiles(step);
 
-    // Pull autosaved overrides so re-opening a file shows the student's
-    // last saved edits instead of the YAML starter content.
-    var savedOverrides = {};
-    var smalltalkProgress = null;
-    if (this.autoSaveEnabled) {
-      try {
-        var raw = localStorage.getItem(this._storageKey());
-        if (raw) {
-          var parsed = JSON.parse(raw);
-          if (parsed && parsed.files) savedOverrides = parsed.files;
-          if (parsed) smalltalkProgress = parsed.smalltalk_workspace;
-        }
-      } catch (e) { /* ignore */ }
-    }
+    const draftProgress = this._draftProgress();
+    const savedOverrides = this._draftsForStep(draftProgress, index);
+    const smalltalkProgress = draftProgress.smalltalk_workspace;
 
     var stepFileSyncs = [];
     if (step.files && this.config.backend !== 'smalltalk') {
       var autoSaveSuppressedBeforeFileLoad = self._suppressAutoSave;
       self._suppressAutoSave = true;
       step.files.forEach(function (f) {
-        if (!self.editorModels[f.path]) {
-          var override = savedOverrides[f.path];
-          var content = (override && typeof override.content === 'string')
-            ? override.content
-            : f.content;
+        const previousFile = previousStep && (previousStep.files || []).find(file => file.path === f.path);
+        if (!self.editorModels[f.path] || f.reseed || (previousFile && previousFile.reseed)) {
+          const override = savedOverrides[f.path];
+          const content = override && typeof override.content === 'string'
+            ? override.content : f.content;
           self.openFile(f.path, content, f.language, f);
-          stepFileSyncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
-          self._originalContent[f.path] = f.content || '';
-        } else if (f.reseed) {
-          // `reseed: true` opts a provided file out of cross-step carry-over.
-          // The guard above only seeds a file the first time its model is
-          // created, so a file that also appears in an earlier step keeps that
-          // earlier content forever — correct for files the student edits and
-          // carries forward (e.g. TDD's evolving scorer.py), wrong for author-
-          // provided scaffolding that the step replaces. Reseed overwrites the
-          // carried-over model + VM copy with THIS step's content on entry, e.g.
-          // test-doubles' quest_service.py, which gains DailyQuestService in
-          // step 2, a reward ledger in step 3, and a push-notifier in step 5.
-          // Reseed files are author-owned, not student-edited, so the autosaved
-          // override is intentionally ignored.
-          self.openFile(f.path, f.content, f.language, f);
           stepFileSyncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
           self._originalContent[f.path] = f.content || '';
         }

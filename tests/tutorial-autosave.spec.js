@@ -169,3 +169,13 @@ test.describe('tutorial autosave persistence contract', () => {
     });
   });
 });
+
+test('saving preserves closed drafts even when an older resume step no longer exists', async ({ page }) => {
+  await installAutosaveHarness(page);
+  await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({
+    step: 99, files: { 'retired.js': { content: 'recoverable old work', language: 'javascript' } },
+  })), PROGRESS_KEY);
+  await page.evaluate(() => window.__autosaveTutorial.saveProgress());
+  const stored = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), PROGRESS_KEY);
+  expect(stored.files['retired.js'].content).toBe('recoverable old work');
+});

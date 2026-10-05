@@ -3780,6 +3780,7 @@ layout: sebook
           if (raw === null) return;
           var parsed;
           try { parsed = JSON.parse(raw); } catch (e) { parsed = raw; }
+          // Preserve the whole record, including shared files and lesson-local stepFiles.
           payload.entries[key] = {
             title: getTitleForStorageKey(key),
             value: parsed

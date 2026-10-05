@@ -2421,3 +2421,171 @@ test.describe('tutorial asynchronous lifecycle', () => {
     });
   });
 });
+
+// Navigation exercises the real step lifecycle; editor/backend adapters are
+// lightweight here so this contract does not require a language runtime.
+for (const autosaveType of ['files', 'none']) {
+  for (const reseed of [true, false]) {
+    test(`navigation retains ${reseed ? 'lesson-local' : 'closed-file'} drafts with autosave ${autosaveType}`, async ({ page }) => {
+      await loadTutorialRuntime(page);
+      const result = await page.evaluate(async ({ autosaveType, reseed }) => {
+        const steps = ['first', 'second'].map((key, index) => ({
+          key, title: key, instructionsHTML: '',
+          files: [{ path: reseed ? 'Main.hs' : `${key}.hs`, content: `starter ${index}`, language: 'haskell', reseed }],
+        }));
+        const tutorial = window.__installTutorialHarness(steps, { autosaveType, requireTests: false });
+        tutorial.instructorMode = true;
+        tutorial._syncFileToBackend = () => Promise.resolve();
+        await tutorial.loadStep(0);
+        tutorial.editorModels[steps[0].files[0].path].model.setValue('first learner draft');
+        await tutorial.loadStep(1);
+        const secondStarter = tutorial.editorModels[steps[1].files[0].path].model.getValue();
+        tutorial.editorModels[steps[1].files[0].path].model.setValue('');
+        await tutorial.loadStep(0);
+        const firstDraft = tutorial.editorModels[steps[0].files[0].path].model.getValue();
+        await tutorial.loadStep(1);
+        const secondDraft = tutorial.editorModels[steps[1].files[0].path].model.getValue();
+        return { secondStarter, firstDraft, secondDraft };
+      }, { autosaveType, reseed });
+      expect(result).toEqual({ secondStarter: 'starter 1', firstDraft: 'first learner draft', secondDraft: '' });
+    });
+  }
+}
+
+async function installDraftTutorial(page, steps, options = {}) {
+  await loadTutorialRuntime(page);
+  await page.evaluate(({ steps, options }) => {
+    const tutorial = window.__installTutorialHarness(steps, { autosaveType: 'files', requireTests: false, ...options });
+    tutorial.instructorMode = true;
+    tutorial._syncFileToBackend = () => Promise.resolve();
+    window.__draftTutorial = tutorial;
+  }, { steps, options });
+}
+
+const draftSteps = ['first', 'second'].map((key, index) => ({
+  key, title: key, instructionsHTML: '',
+  files: [{ path: 'Main.hs', content: `starter ${index}`, language: 'haskell', reseed: true }],
+}));
+
+test('lesson drafts survive reload and lesson reordering', async ({ page }) => {
+  await installDraftTutorial(page, draftSteps);
+  await page.evaluate(async () => {
+    const t = window.__draftTutorial;
+    await t.loadStep(0);
+    t.editorModels['Main.hs'].model.setValue('first draft');
+    await t.loadStep(1);
+    t.editorModels['Main.hs'].model.setValue('second draft');
+    t.saveProgress();
+  });
+  await installDraftTutorial(page, [...draftSteps].reverse());
+  const drafts = await page.evaluate(async () => {
+    const t = window.__draftTutorial;
+    await t.loadStep(0);
+    const second = t.editorModels['Main.hs'].model.getValue();
+    await t.loadStep(1);
+    return [t.editorModels['Main.hs'].model.getValue(), second];
+  });
+  expect(drafts).toEqual(['first draft', 'second draft']);
+});
+
+test('legacy path-only code restores only to its recorded lesson', async ({ page }) => {
+  await installDraftTutorial(page, draftSteps);
+  await page.evaluate(() => localStorage.setItem('tutorial-progress-async-lifecycle-test', JSON.stringify({
+    step: 1, files: { 'Main.hs': { content: 'legacy draft', language: 'haskell' } },
+  })));
+  const drafts = await page.evaluate(async () => {
+    const t = window.__draftTutorial;
+    await t.loadStep(0);
+    const first = t.editorModels['Main.hs'].model.getValue();
+    await t.loadStep(1);
+    return [first, t.editorModels['Main.hs'].model.getValue()];
+  });
+  expect(drafts).toEqual(['starter 0', 'legacy draft']);
+});
+
+test('shared workspace files still carry edits forward', async ({ page }) => {
+  await installDraftTutorial(page, draftSteps.map(step => ({ ...step, files: step.files.map(file => ({ ...file, reseed: false })) })));
+  const drafts = await page.evaluate(async () => {
+    const t = window.__draftTutorial;
+    await t.loadStep(0);
+    t.editorModels['Main.hs'].model.setValue('evolving program');
+    await t.loadStep(1);
+    const second = t.editorModels['Main.hs'].model.getValue();
+    await t.loadStep(0);
+    return [t.editorModels['Main.hs'].model.getValue(), second];
+  });
+  expect(drafts).toEqual(['evolving program', 'evolving program']);
+});
+
+test('reset replaces only the current lesson draft across reload', async ({ page }) => {
+  await installDraftTutorial(page, draftSteps);
+  await page.evaluate(async () => {
+    const t = window.__draftTutorial;
+    await t.loadStep(0);
+    t.editorModels['Main.hs'].model.setValue('first draft');
+    await t.loadStep(1);
+    t.editorModels['Main.hs'].model.setValue('second draft');
+    t.saveProgress();
+    await t.resetStep();
+  });
+  await installDraftTutorial(page, draftSteps);
+  const drafts = await page.evaluate(async () => {
+    const t = window.__draftTutorial;
+    await t.loadStep(1);
+    const second = t.editorModels['Main.hs'].model.getValue();
+    await t.loadStep(0);
+    return [t.editorModels['Main.hs'].model.getValue(), second];
+  });
+  expect(drafts).toEqual(['first draft', 'starter 1']);
+});
+
+test('storage failure preserves drafts while navigating in the same session', async ({ page }) => {
+  await installDraftTutorial(page, draftSteps);
+  const drafts = await page.evaluate(async () => {
+    const t = window.__draftTutorial;
+    await t.loadStep(0);
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (key.startsWith('tutorial-progress-')) throw new DOMException('Full', 'QuotaExceededError');
+      return setItem.call(this, key, value);
+    };
+    t.editorModels['Main.hs'].model.setValue('unsaved first draft');
+    await t.loadStep(1);
+    t.editorModels['Main.hs'].model.setValue('unsaved second draft');
+    await t.loadStep(0);
+    const first = t.editorModels['Main.hs'].model.getValue();
+    Storage.prototype.setItem = setItem;
+    t.saveProgress();
+    await t.loadStep(1);
+    return [first, t.editorModels['Main.hs'].model.getValue()];
+  });
+  expect(drafts).toEqual(['unsaved first draft', 'unsaved second draft']);
+});
+
+for (const sharedDraft of ['shared draft', 'starter 0']) {
+  test(`shared and lesson-local versions stay independent (${sharedDraft})`, async ({ page }) => {
+    const steps = draftSteps.map((step, index) => ({ ...step, files: step.files.map(file => ({ ...file, reseed: index === 1 })) }));
+    await installDraftTutorial(page, steps);
+    const drafts = await page.evaluate(async (sharedDraft) => {
+      const t = window.__draftTutorial;
+      await t.loadStep(0);
+      t.editorModels['Main.hs'].model.setValue(sharedDraft);
+      await t.loadStep(1);
+      t.editorModels['Main.hs'].model.setValue('local draft');
+      await t.loadStep(0);
+      const shared = t.editorModels['Main.hs'].model.getValue();
+      await t.loadStep(1);
+      return [shared, t.editorModels['Main.hs'].model.getValue()];
+    }, sharedDraft);
+    expect(drafts).toEqual([sharedDraft, 'local draft']);
+    await installDraftTutorial(page, steps);
+    const restored = await page.evaluate(async () => {
+      const t = window.__draftTutorial;
+      await t.loadStep(1);
+      const local = t.editorModels['Main.hs'].model.getValue();
+      await t.loadStep(0);
+      return [t.editorModels['Main.hs'].model.getValue(), local];
+    });
+    expect(restored).toEqual([sharedDraft, 'local draft']);
+  });
+}
