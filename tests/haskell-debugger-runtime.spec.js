@@ -39,8 +39,10 @@ async function send(page, message) {
 }
 
 async function waitForMessage(page, type, cursor = 0) {
-  await page.waitForFunction(({ type, cursor }) => window.haskellDebugContract.messages.slice(cursor).some(message => message.type === type), { type, cursor }, { timeout: 30_000 });
-  return page.evaluate(({ type, cursor }) => window.haskellDebugContract.messages.slice(cursor).find(message => message.type === type), { type, cursor });
+  await page.waitForFunction(({ type, cursor }) => window.haskellDebugContract.messages.slice(cursor).some(message => message.type === type || (type === 'paused' && message.type === 'debugComplete')), { type, cursor }, { timeout: 30_000 });
+  const result = await page.evaluate(({ type, cursor }) => window.haskellDebugContract.messages.slice(cursor).find(message => message.type === type || (type === 'paused' && message.type === 'debugComplete')), { type, cursor });
+  expect(result.type, result.error || 'runtime response').toBe(type);
+  return result;
 }
 
 async function startDebug(page, code, options = {}) {
@@ -78,6 +80,151 @@ test.describe('Haskell live demand debugger', () => {
     });
   }
 
+  test('explains equation selection, recursive arguments, and if decisions without forcing previews', async ({ page }) => {
+    await startDebug(page, `module Main where
+countAtLeast :: Int -> [Int] -> Int
+countAtLeast threshold [] = 0
+countAtLeast threshold (x:xs) = contribution + countAtLeast threshold xs
+  where contribution = if x >= threshold then 1 else 0
+joinRows :: [[Int]] -> [Int]
+joinRows [] = []
+joinRows (row:rows) = row ++ joinRows rows
+main :: IO ()
+main = print (countAtLeast 60 [60,59,60])
+`);
+    await waitForMessage(page, 'paused');
+    const complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    const messages = await allMessages(page);
+    expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe('2\n');
+    const trace = messages.flatMap(m => m.snapshots || []);
+    const calls = trace.filter(s => s.event === 'call' && s.stack.at(-1).function === 'countAtLeast');
+    expect(calls).toHaveLength(4);
+    const firstCall = trace.filter(s => s.call_id === calls[0].call_id);
+    expect(firstCall.filter(s => ['try', 'reject', 'select'].includes(s.event)).map(s => [s.event, s.line]))
+      .toEqual([['try', 3], ['reject', 3], ['try', 4], ['select', 4]]);
+    const returned = trace.filter(s => s.event === 'return' && s.stack.at(-1).function === 'countAtLeast');
+    expect(returned.map(s => s.return_value.repr)).toEqual(['0', '1', '1', '2']);
+    expect(returned.map(s => s.stack.at(-1).arguments[1].repr)).toEqual(['[]', '[60]', '[59, 60]', '[60, 59, 60]']);
+    expect(returned.at(-1).stack.at(-1).locals.threshold.repr).toBe('60');
+    expect(returned.at(-1).stack.at(-1).locals.x.repr).toBe('60');
+    expect(returned.at(-1).stack.at(-1).locals.xs.repr).toBe('[59, 60]');
+    expect(trace.filter(s => s.event === 'true' || s.event === 'false').map(s => s.event)).toEqual(['true', 'false', 'true']);
+    // Earlier snapshots must not acquire values learned later in the run.
+    expect(calls[0].stack.at(-1).arguments.map(a => a.repr)).toEqual(['_', '_']);
+  });
+
+  test('records an early catch-all and never claims that later equations were tried', async ({ page }) => {
+    await startDebug(page, `module Main where
+count :: [Int] -> Int
+count _ = 0
+count (x:xs) = 1 + count xs
+main = print (count (error "unused list"))
+`);
+    await waitForMessage(page, 'paused');
+    const complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    const trace = (await allMessages(page)).flatMap(m => m.snapshots || []);
+    const result = trace.find(s => s.event === 'return' && s.stack.at(-1).function === 'count');
+    expect(result.return_value.repr).toBe('0');
+    expect(result.stack.at(-1).arguments[0].repr).toBe('_');
+    expect(result.stack.at(-1).equations.map(e => e.status)).toEqual(['selected', 'not reached']);
+  });
+
+  test('observes only demanded fields of typed lists, tuples, and optional values', async ({ page }) => {
+    await startDebug(page, `module Main where
+ignore :: Int -> Int
+ignore _ = 7
+first :: [Int] -> Int
+first (x:_) = x
+left :: (Int,Int) -> Int
+left (x,_) = x
+present :: Maybe Int -> Bool
+present Nothing = False
+present (Just _) = True
+ones :: [Int]
+ones = 1 : ones
+main = print (ignore (error "unused"), first (9 : error "tail"), left (5, error "right"), present (Just (error "inside")), take 3 ones)
+`);
+    await waitForMessage(page, 'paused');
+    const complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    const messages = await allMessages(page);
+    expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe('(7,9,5,True,[1,1,1])\n');
+    const returns = messages.flatMap(m => m.snapshots || []).filter(s => s.event === 'return');
+    expect(returns.find(s => s.stack.at(-1).function === 'first').stack.at(-1).arguments[0].repr).toBe('9 : _');
+    expect(returns.find(s => s.stack.at(-1).function === 'left').stack.at(-1).arguments[0].repr).toBe('(5, _)');
+    expect(returns.find(s => s.stack.at(-1).function === 'present').stack.at(-1).arguments[0].repr).toBe('Just (_)');
+  });
+
+  test('records false guards before a later guard succeeds and preserves where scope', async ({ page }) => {
+    await startDebug(page, `module Main where
+choose :: Int -> [Int] -> Int
+choose cutoff (x:xs)
+  | x < cutoff = x
+  | otherwise = replacement
+  where replacement = 99
+choose _ [] = 0
+main = print (choose 10 [20])
+`);
+    await waitForMessage(page, 'paused');
+    const complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    const messages = await allMessages(page);
+    expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe('99\n');
+    const trace = messages.flatMap(m => m.snapshots || []);
+    expect(trace.filter(s => ['true', 'false'].includes(s.event)).map(s => [s.event, s.line])).toEqual([['false', 4], ['true', 5]]);
+    const result = trace.find(s => s.event === 'return' && s.stack.at(-1).function === 'choose');
+    expect(result.stack.at(-1).equations.map(e => e.status)).toEqual(['selected', 'not reached']);
+    expect(result.return_value.repr).toBe('99');
+  });
+
+  test('preserves polymorphic functions, custom types, records, and literal patterns', async ({ page }) => {
+    await startDebug(page, `module Main where
+import Prelude hiding (Int)
+import qualified Prelude
+data Int = Count Bool
+data Record = Record { item :: Bool }
+identity :: a -> a
+identity x = x
+adder :: Prelude.Int -> Prelude.Int -> Prelude.Int
+adder x = (x +)
+constantFunction :: Prelude.Int -> Prelude.Int
+constantFunction = adder 1
+unwrap :: Int -> Bool
+unwrap (Count value) = value
+field Record{item = flag} = flag
+label "yes" = True
+label _ = False
+main = print (identity (unwrap (Count True)), field (Record False), label "no", constantFunction 4)
+`);
+    await waitForMessage(page, 'paused');
+    const complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    const messages = await allMessages(page);
+    expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe('(True,False,False,5)\n');
+  });
+
+  test('labels a delayed condition with its captured call and keeps earlier partial results intact', async ({ page }) => {
+    await startDebug(page, `module Main where
+scores :: Int -> [Int] -> [Int]
+scores cutoff xs = [if x >= cutoff then x else 0 | x <- xs]
+main = print (scores 60 [60,59,60])
+`);
+    await waitForMessage(page, 'paused');
+    const complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    const messages = await allMessages(page);
+    expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe('[60,0,60]\n');
+    const trace = messages.flatMap(m => m.snapshots || []);
+    const returned = trace.find(s => s.event === 'return' && s.stack.at(-1).function === 'scores');
+    expect(returned.return_value.repr).toBe('_ : _');
+    const decisions = trace.filter(s => ['true', 'false'].includes(s.event));
+    expect(decisions.map(s => s.event)).toEqual(['true', 'false', 'true']);
+    expect(decisions.every(s => s.deferred && s.call_id === returned.call_id)).toBe(true);
+    expect(decisions.at(-1).stack.at(-1).arguments[0].repr).toBe('60');
+  });
+
   test('pauses recursive evaluation at original source lines and steps out of the live demand stack', async ({ page }) => {
     await startDebug(page, `module Main where
 fac 0 = 1
@@ -92,7 +239,7 @@ main = print (fac 3)
     const recursion = lastSnapshot(await command(page, 1));
     expect(recursion.line).toBe(3);
     expect(recursion.stack.at(-1).function).toBe('fac');
-    expect(recursion.stack.at(-1).locals.n.repr).toContain('not inspected');
+    expect(recursion.stack.at(-1).locals.n.repr).toContain('evaluated');
     await send(page, { type: 'breakpoints', changes: [{ op: 'remove', file: '/tutorial/Main.hs', line: 3 }] });
     const returned = lastSnapshot(await command(page, 4));
     expect(returned.event).toBe('return');
@@ -103,7 +250,7 @@ main = print (fac 3)
     expect(messages.filter(message => message.type === 'stdout').map(message => message.text).join('')).toBe('6\n');
     const snapshots = messages.filter(message => message.snapshots).flatMap(message => message.snapshots);
     expect(Math.max(...snapshots.map(snapshot => snapshot.depth))).toBe(4);
-    expect(snapshots.filter(snapshot => snapshot.event === 'call' && snapshot.line === 3)).toHaveLength(3);
+    expect(snapshots.filter(snapshot => snapshot.event === 'select' && snapshot.line === 3)).toHaveLength(3);
   });
 
   test('keeps infinite lists and unused exceptional arguments lazy while tracing imported guards', async ({ page }) => {
@@ -123,7 +270,7 @@ category n
     expect(complete.exitCode, complete.error).toBe(0);
     const messages = await allMessages(page);
     expect(messages.filter(message => message.type === 'stdout').map(message => message.text).join('')).toBe('(42,[1,1,1,1],"negative")\n');
-    const calls = messages.filter(message => message.snapshots).flatMap(message => message.snapshots).filter(snapshot => snapshot.event === 'call');
+    const calls = messages.filter(message => message.snapshots).flatMap(message => message.snapshots).filter(snapshot => snapshot.event === 'select');
     expect(calls.some(snapshot => snapshot.file === '/tutorial/Main.hs' && snapshot.line === 3)).toBe(false);
     expect(calls.some(snapshot => snapshot.file === '/tutorial/Helpers.hs' && snapshot.line === 5)).toBe(true);
     expect(calls.some(snapshot => snapshot.file === '/tutorial/Helpers.hs' && snapshot.line === 6)).toBe(false);
@@ -228,11 +375,11 @@ main = do
     await waitForMessage(page, 'paused');
     const pause = lastSnapshot(await command(page, 1));
     expect(pause.line).toBe(5);
-    expect(pause.event).toBe('call');
+    expect(pause.event).toBe('select');
     const pausedMessages = await allMessages(page);
     const demands = pausedMessages.flatMap(message => message.snapshots || [])
       .filter(snapshot => snapshot.line === 4);
-    expect(demands.filter(snapshot => snapshot.event === 'call')).toHaveLength(150);
+    expect(demands.filter(snapshot => snapshot.event === 'select')).toHaveLength(150);
     expect(demands.filter(snapshot => snapshot.event === 'return')).toHaveLength(150);
     const listOutput = '[' + Array.from({ length: 150 }, (_, index) => index + 2).join(',') + ']\n';
     expect(pausedMessages.filter(message => message.type === 'stdout').map(message => message.text).join('')).toBe(listOutput);

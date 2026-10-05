@@ -372,9 +372,49 @@
 
   // -- Variables ------------------------------------------------------------
 
+  function renderHaskellFrame(frame, snap, helpers) {
+    const escape = helpers.escape;
+    const current = frame.call_id === snap.call_id;
+    let html = current ? '<p class="tvm-debug-haskell-step"><strong>' + escape(snap.description) + '</strong></p>' : '';
+    if (current && snap.deferred) html += '<p class="tvm-debug-language-note">A delayed expression is using this earlier call’s bindings.</p>';
+    if (frame.arguments && frame.arguments.length) {
+      const args = Object.fromEntries(frame.arguments.map(arg => [arg.name, arg]));
+      html += renderSubsection('haskell-arguments', 'Arguments',
+        renderVarTable({}, snap, 0, 'arguments', args, helpers), helpers);
+    }
+    if (frame.equations && frame.equations.length) {
+      const equations = '<ol class="tvm-debug-haskell-equations">' + frame.equations.map(eq =>
+        '<li class="' + (eq.status === 'selected' ? 'is-selected' : '') + '">' +
+        '<code>' + escape(eq.header) + '</code><span>Line ' + eq.line + ' · ' + escape(eq.status) + '</span></li>'
+      ).join('') + '</ol>';
+      html += renderSubsection('haskell-equations', 'Equations · tried from top to bottom', equations, helpers);
+    }
+    if (Object.keys(frame.locals || {}).length) html += renderSubsection('locals', 'Pattern bindings',
+      renderVarTable({}, snap, 0, 'locals', frame.locals, helpers), helpers);
+    if (frame.decisions && frame.decisions.length) html += renderSubsection('haskell-decisions', 'Guards and conditions',
+      '<ul class="tvm-debug-haskell-decisions">' + frame.decisions.map(d =>
+        '<li><code>' + escape(d.expression) + ' → ' + escape(d.result) + '</code>' +
+        (d.kind === 'condition' ? '<span>' + (d.result === 'True' ? 'then branch' : 'else branch') + '</span>' : '') + '</li>'
+      ).join('') + '</ul>', helpers);
+    if (current && snap.event === 'return' && snap.return_value) {
+      html += '<p class="tvm-debug-haskell-result"><strong>Result:</strong> <code>' + escape(snap.return_value.repr) + '</code></p>';
+    }
+    html += '<details class="tvm-debug-haskell-guide"><summary>How to read these values</summary>' +
+      '<p><code>_</code> means not observed yet. Values fill in as this call uses them; inspecting this panel does not evaluate them. ' +
+      '<code>…</code> marks the preview limit. Step Back shows only what was known at that earlier step.</p>' +
+      '<p>Concrete previews use supported type signatures: Int, Word, Bool, Char, Float, Double, lists, pairs, and Maybe. ' +
+      'Other types can show “evaluated; no value preview”. This does not mean their value is unknown to Haskell.</p>' +
+      '<p>A returned list may still have delayed elements. An IO action becoming ready does not mean its effects have finished. ' +
+      'Arbitrary watches and variable edits are unavailable.</p></details>';
+    return html;
+  }
+
   function renderVariables(view, state, dispatch, helpers) {
     if (!view) return;
     helpers = defaultHelpers(helpers);
+    const viewRoot = view.closest('.tvm-debug-view');
+    if (viewRoot) viewRoot.classList.toggle('tvm-debug-haskell', state.backend === 'haskell');
+    const guideWasOpen = Boolean(view.querySelector('.tvm-debug-haskell-guide[open]'));
     var hi = state.historyIdx;
     if (hi == null || hi < 0 || !state.history || !state.history[hi]) {
       view.innerHTML = '<div class="tvm-debug-empty">Start debugging to see variables.</div>';
@@ -401,11 +441,13 @@
              helpers.escape(snap.return_value.repr || '') + '</div>' + html;
     }
     if (state.backend === 'haskell') {
-      html = '<p class="tvm-debug-language-note">Recorded events mark demanded right-hand sides. Arguments are shown without forcing their values.</p>' + html;
+      html = renderHaskellFrame(frame, snap, helpers);
     } else if (state.backend === 'prolog') {
       html = '<p class="tvm-debug-language-note">Resolution goals and query bindings show the current search state.</p>' + html;
     }
     view.innerHTML = html;
+    const guide = view.querySelector('.tvm-debug-haskell-guide');
+    if (guide) guide.open = guideWasOpen;
     wireExpanders(view);
     wireSubsectionToggles(view, helpers);
     wireVarEdits(view, dispatch);
@@ -472,7 +514,7 @@
   function renderVarRow(name, val, aliasBadge, depth, editKey, helpers) {
     if (!val) return '';
     var nameHtml = '<span class="tvm-debug-var-name">' + helpers.escape(name) + '</span>';
-    var typeHtml = '<span class="tvm-debug-var-type">' + helpers.escape(val.type || val.kind || '') + '</span>';
+    var typeHtml = '<span class="tvm-debug-var-type">' + helpers.escape(val.type || (val.kind === 'primitive' ? '' : val.kind) || '') + '</span>';
     var editAttr = editKey ? ' data-edit-key="' + helpers.escape(editKey) + '" data-original-title="Click to edit"' : '';
     var valueHtml = '<span class="tvm-debug-var-value' + (editKey ? ' tvm-debug-var-editable' : '') + '"' + editAttr +
                     '>' + helpers.escape(val.repr || val.preview || '') + '</span>';
@@ -645,7 +687,7 @@
       var f = displayFrameForSnapshot(snap, i);
       var cls = 'tvm-debug-frame' + (i === selectedIdx ? ' active' : '');
       rows.push('<button type="button" class="' + cls + '" data-frame-idx="' + i + '" aria-pressed="' + (i === selectedIdx) + '">' +
-                '<span class="tvm-debug-frame-fn">' + helpers.escape(f.function) + '</span>' +
+                '<span class="tvm-debug-frame-fn">' + helpers.escape(f.invocation || f.function) + '</span>' +
                 '<span class="tvm-debug-frame-loc">' + helpers.escape(helpers.basename(f.file)) + ':' + f.line + '</span>' +
                 '</button>');
     }
@@ -667,7 +709,7 @@
     if (!view) return;
     helpers = defaultHelpers(helpers);
     if (state.backend === 'haskell') {
-      view.innerHTML = '<p class="tvm-debug-language-note">Haskell values remain unevaluated; watches and variable edits are unavailable.</p>';
+      view.innerHTML = '<p class="tvm-debug-language-note">Values are recorded in Arguments and Pattern bindings. Open “How to read these values” for details.</p>';
       return;
     }
     var isProlog = state.backend === 'prolog';
@@ -1053,6 +1095,7 @@
               '<span class="tvm-debug-history-i">' + (i + 1) + '</span>' +
               '<span class="tvm-debug-history-ev" aria-hidden="true">' + ev + '</span>' +
               '<span class="tvm-debug-history-loc">' + helpers.escape(helpers.basename(loc.file)) + ':' + loc.line + '</span>' +
+              (s.description ? '<span class="tvm-debug-history-description">' + helpers.escape(s.description) + '</span>' : '') +
               '</button>';
     }
     html += '</div>';

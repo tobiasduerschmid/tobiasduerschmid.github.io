@@ -2635,23 +2635,42 @@ proof of finite failure. The pinned vendor interpreter is unchanged. Prolog caps
 by default (`max_history` or `max_snapshots`, at most 50,000), with the existing
 100-answer and 100,000-inferences-per-answer bounds.
 
-Haskell traces demanded equation/guard expressions through weak head normal
-form using instrumentation in `js/debugger/haskell/instrument.js` and the
-existing MicroHs adapter. Evaluation probes use a private runtime input
-handshake to yield and resume. Ordinary Continue events acknowledge input
-before MicroHs enters its polling wait. Initial pauses, stepping, breakpoint
-sites, and history-limit events remain deferred until stderr has been captured
-and Asyncify has unwound. Do not replace those boundaries with synchronous
-resumption. Unused expressions remain unused; argument
-values are shown as unevaluated rather than forced with `show`. This is an
-evaluation trace, not a GHC debugger: arbitrary watch evaluation, variable
-mutation, conditional breakpoints, and exception breakpoints are unavailable.
-Supported pause sites are top-level named prefix equations and Boolean
-guards, including imported workspace modules. Nested local bindings and IO
-statements have no independent pause sites. Explicit module braces, semicolon
-declarations, infix equations, and pattern guards produce actionable
-diagnostics. Compiler diagnostics and trace locations map to original source
-lines. Haskell traces stop at 2,000 events by default (`max_history`, at most
+Haskell debugging instruments top-level equation alternatives in
+`js/debugger/haskell/instrument.js`. MicroHs performs the original pattern
+matches in source order; fallbacks record failed matches. The trace exposes
+attempts, matching patterns, selected equations, Boolean guards, and `if`
+conditions (including conditions in an equation's `where` scope). Equation
+breakpoints stop at selection; guard/condition breakpoints stop before the test.
+Step Into also visits attempts and failures. Nested local functions and IO
+statements have no independent call frames. Explicit module braces, semicolon
+declarations, infix equations, and pattern guards produce actionable diagnostics.
+Compiler diagnostics and trace locations map to original source lines.
+
+`js/debugger/haskell/helper-source.js` supplies lazy Haskell observers and the
+private GETRAW handshake. Observers reveal values **only when demanded through
+the observed call**; never use `show` on arbitrary arguments or traverse lazy
+fields to populate the panel. Explicit signatures support Int, Word, Bool, Char,
+Float, Double, lists, pairs, and Maybe; unannotated list patterns support list
+structure. Unrecognized/custom types, polymorphic fields, and potentially
+shadowed Prelude types stay opaque without adding type-class constraints.
+Integer is not a primitive Int. Function-valued results remain functions.
+An underscore means “not observed yet”, not proof of global unevaluatedness.
+Argument observations, pattern bindings, equation status, and condition outcomes
+are frozen in each history snapshot. A delayed condition may resume the scope
+of a call that already returned; the view labels that explicitly.
+
+Shared main/popout rendering shows calls with arguments, ordered equation
+choices, condition results, and descriptive history entries. The expandable
+value guide explains partial values and preview limits. Haskell hides the
+unavailable Watch section and omits empty Globals. Arbitrary watch evaluation,
+mutation, conditional breakpoints, and exception breakpoints remain unavailable.
+See [`docs/haskell-debugger-design.md`](../../../docs/haskell-debugger-design.md)
+for the GHCi, Hat, HOOD, and Haskelite research behind these choices.
+
+Ordinary Continue events acknowledge input before MicroHs enters its polling
+wait. Initial pauses, stepping, breakpoint sites, and history-limit events remain
+deferred until stderr has been captured and Asyncify has unwound. Do not replace
+those boundaries with synchronous resumption. Haskell traces stop at 2,000 events by default (`max_history`, at most
 10,000). Output produced before a pause is available immediately. The adapter
 sets the pinned loader's Asyncify continuation buffer to 256 KiB in
 `Module.onRuntimeInitialized`, before its first allocation; this avoids the

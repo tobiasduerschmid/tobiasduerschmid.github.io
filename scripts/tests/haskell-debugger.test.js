@@ -14,10 +14,10 @@ category n
 main = print (fac 3)
 `;
   const result = instrument(source, '/tutorial/Main.hs');
-  assert.deepEqual(result.sites.map(({ function: name, line }) => [name, line]),
-    [['fac', 3], ['fac', 4], ['category', 6], ['category', 7], ['main', 8]]);
-  assert.deepEqual(result.sites[1].bindings, ['n']);
-  assert.match(result.code, /fac n = SEBookTrace\.probe 1 SEBookTrace\.\$\n\s+n \* fac \(n - 1\)/);
+  assert.deepEqual(result.sites.filter(site => site.kind === 'equation' || site.kind === 'guard').map(({ function: name, line }) => [name, line]),
+    [['fac', 3], ['fac', 4], ['category', 5], ['category', 6], ['category', 7], ['main', 8]]);
+  assert.equal(result.sites.find(site => site.kind === 'equation' && site.line === 4).bindings.n, 'arg0');
+  assert.ok(result.sites.find(site => site.kind === 'entry' && site.function === 'fac').equations.length === 2);
   assert.doesNotMatch(result.code, /show n/);
   assert.match(result.code, /module Main where\nimport qualified SEBookDebug as SEBookTrace/);
 });
@@ -34,7 +34,7 @@ main = do
   print (choose (left p))
 `;
   const result = instrument(source, '/tutorial/Main.hs');
-  assert.deepEqual(result.sites.map(site => site.function), ['average', 'choose', 'main']);
+  assert.deepEqual(result.sites.filter(site => site.kind === 'entry').map(site => site.function), ['average', 'choose', 'main']);
   assert.match(result.code, /total \/ 2 where total = x \+ y/);
   assert.match(result.code, /Pair \{ left = 2, right = 3 \}/);
 });
@@ -46,7 +46,7 @@ f x | ok = x
   where ok = x > 0
 main = print (f 2)
 `, '/tutorial/Main.hs');
-  assert.deepEqual(result.sites.map(site => site.line), [2, 3, 5]);
+  assert.deepEqual(result.sites.filter(site => site.kind === 'guard').map(site => site.line), [2, 3]);
   assert.match(result.code, /where ok = x > 0/);
 });
 
@@ -58,7 +58,7 @@ test('Haskell debugger rejects unsupported declaration layout with an actionable
 
 test('Haskell dashed comments and infix binding diagnostics do not create false source locations', () => {
   const result = instrument('module Main where\n--- equals = a comment\nmain = print "done"\n', '/tutorial/Main.hs');
-  assert.deepEqual(result.sites.map(site => site.line), [3]);
+  assert.deepEqual(result.sites.filter(site => site.kind === 'entry').map(site => site.line), [3]);
   assert.throws(() => instrument('module Main where\nx +++ y = x + y\nmain = print (1 +++ 2)\n', '/tutorial/Main.hs'), /named prefix equations/);
 });
 
@@ -68,16 +68,16 @@ test('Haskell breakpoints reject unsupported source lines and honor live removal
   const messages = [];
   let resumed = 0;
   const session = new HaskellDebugSession({
-    sites: [{ id: 0, function: 'f', file: '/tutorial/Main.hs', line: 2, first_line: 2, bindings: ['x'] }],
+    sites: [{ id: 0, function: 'f', file: '/tutorial/Main.hs', line: 2, first_line: 2, bindings: { x: 'arg0' }, kind: 'entry', arity: 1, equations: [{ id: 1, line: 2, header: 'f x' }] }, { id: 1, function: 'f', file: '/tutorial/Main.hs', line: 2, kind: 'equation', index: 0, header: 'f x', bindings: { x: 'arg0' } }],
     breakpoints: [{ file: '/tutorial/Main.hs', line: 5 }],
     send: message => messages.push(message), resume: () => { resumed += 1; }, marker: 'test',
   });
   assert.match(messages[0].error, /top-level equation/);
-  session.observe('call', 0);
+  session.observe('call', 0, 1);
   session.handleMessage({ type: 'command', command: 1 });
   session.updateBreakpoints([{ op: 'add', file: '/tutorial/Main.hs', line: 2 }]);
   session.updateBreakpoints([{ op: 'remove', file: '/tutorial/Main.hs', line: 2 }]);
-  session.observe('call', 0);
+  session.observe('select', 1, 1);
   assert.equal(messages.filter(message => message.type === 'paused').length, 1);
   assert.equal(resumed, 2);
 });

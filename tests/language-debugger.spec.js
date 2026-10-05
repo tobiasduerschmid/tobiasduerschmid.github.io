@@ -80,7 +80,8 @@ for (const program of PROGRAMS) {
       await page.getByRole('button', { name: 'Variables', exact: true }).press('Enter');
 
       if (program.backend === 'haskell') {
-        await expect(page.getByText('Haskell values remain unevaluated; watches and variable edits are unavailable.')).toBeVisible();
+        await expect(page.getByText('How to read these values', { exact: true })).toBeVisible();
+        await expect(page.getByRole('region', { name: 'Watch', exact: true })).toBeHidden();
         await expect(page.getByRole('textbox', { name: /watch/i })).toHaveCount(0);
       } else {
         await expect(page.getByRole('textbox', { name: 'Query variable to watch' })).toBeVisible();
@@ -241,4 +242,42 @@ test('a detached Prolog debugger steps and rewinds the same execution as the tut
   await popup.getByRole('button', { name: 'Stop', exact: true }).click();
   await expect(runButton(page)).toBeEnabled();
   await popup.close();
+});
+
+
+test('Haskell trace explains recursive arguments, equation order, and results in the main view and popout', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await openProgram(page, { ...PROGRAMS[1], source: `module Main where
+countAtLeast :: Int -> [Int] -> Int
+countAtLeast threshold [] = 0
+countAtLeast threshold (x:xs) = contribution + countAtLeast threshold xs
+  where contribution = if x >= threshold then 1 else 0
+main = print (countAtLeast 60 [60,59,60])
+` });
+  await startButton(page).press('Enter');
+  await expect(pausedStatus(page)).toBeVisible({ timeout: 90_000 });
+  await page.getByRole('button', { name: 'Continue', exact: true }).press('Enter');
+  await expect(outputPanel(page)).toContainText('2', { timeout: 30_000 });
+  const result = page.getByRole('button', { name: /Result of countAtLeast: 2/ });
+  await expect(result).toBeVisible();
+  await result.press('Enter');
+  const variables = page.getByRole('region', { name: 'Variables', exact: true });
+  await expect(variables).toContainText('[60, 59, 60]');
+  await expect(variables).toContainText('pattern did not match');
+  await expect(variables).toContainText('selected');
+  await expect(variables).toContainText('x >= threshold → True');
+  await expect(variables).toContainText('Result: 2');
+  await page.getByText('How to read these values', { exact: true }).press('Enter');
+  await expect(variables).toContainText('not observed yet');
+  await a11yCheckpoint(page, 'Haskell equation trace and values', { feature: 'language-debugger' });
+
+  const popupPromise = page.waitForEvent('popup');
+  await page.getByRole('button', { name: 'Open debugger in a separate window', exact: true }).click();
+  const popup = await popupPromise;
+  await expect(popup.getByRole('region', { name: 'Variables', exact: true })).toContainText('[60, 59, 60]');
+  await expect(popup.getByRole('region', { name: 'Variables', exact: true })).toContainText('Result: 2');
+  await popup.close();
+  expect(errors).toEqual([]);
 });

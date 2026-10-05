@@ -159,3 +159,36 @@ html:not(.dark-mode) .monaco-editor :is(.tvm-debug-current-line-rewound, .tvm-de
     outline-color: #111;
   }
 }
+
+/* Haskell values and matching decisions share the debugger's theme palette.
+   Status words carry meaning even without the selected equation's border. */
+.tvm-debug-haskell [data-section="watch"] { display: none; }
+.tvm-debug-haskell .tvm-debug-frame { align-items: baseline; gap: 0.7em; }
+.tvm-debug-haskell .tvm-debug-frame-fn {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.tvm-debug-haskell .tvm-debug-frame-loc { flex-shrink: 0; }
+.tvm-debug-haskell-step,
+.tvm-debug-haskell-result { margin: 0.75em; line-height: 1.5; }
+.tvm-debug-haskell-equations,
+.tvm-debug-haskell-decisions { margin: 0.6em 0.8em; padding-left: 1.5em; }
+.tvm-debug-haskell-equations li,
+.tvm-debug-haskell-decisions li { margin: 0.65em 0; padding: 0.25em; line-height: 1.5; }
+.tvm-debug-haskell-equations li.is-selected { border-left: 0.25em solid currentColor; padding-left: 0.5em; }
+.tvm-debug-haskell-equations span,
+.tvm-debug-haskell-decisions span { display: block; }
+.tvm-debug-haskell :is(code, li, p, summary) { font-size: inherit; color: inherit; }
+.tvm-debug-haskell code { white-space: pre-wrap; overflow-wrap: anywhere; background: transparent; }
+.tvm-debug-haskell-guide { margin: 0.8em; line-height: 1.5; }
+.tvm-debug-haskell-guide summary { cursor: pointer; min-height: 28px; }
+.tvm-debug-haskell-guide summary:focus-visible { outline: 2px solid #075985; }
+html.dark-mode .tvm-debug-haskell-guide summary:focus-visible { outline-color: #ffe066; }
+.tvm-debug-haskell-guide p { margin: 0.6em 0; }
+.tvm-debug-haskell .tvm-debug-history-item { flex-wrap: wrap; }
+.tvm-debug-history-description { flex-basis: 100%; white-space: normal; overflow-wrap: anywhere; }
+@media print {
+  .tvm-debug-haskell-guide summary:focus-visible,
+  html.dark-mode .tvm-debug-haskell-guide summary:focus-visible { outline-color: #111; }
+}

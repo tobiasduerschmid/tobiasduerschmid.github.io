@@ -1,6 +1,29 @@
-/** Adapt real MicroHs demand events to the shared debugger snapshot protocol. */
+/** Adapt MicroHs equation decisions and lazy observations to debugger snapshots. */
 (function (scope) {
   'use strict';
+
+  function preview(nodes, path, depth = 0) {
+    if (depth > 12) return '…';
+    const value = nodes.get(path);
+    if (!value) return '_';
+    if (value.kind === 'scalar') return value.value;
+    if (value.kind === 'nil') return '[]';
+    if (value.kind === 'opaque') return '<evaluated; no value preview>';
+    if (value.kind === 'pair') return '(' + preview(nodes, path + '.0', depth + 1) + ', ' + preview(nodes, path + '.1', depth + 1) + ')';
+    if (value.kind === 'just') return 'Just (' + preview(nodes, path + '.0', depth + 1) + ')';
+    if (value.kind === 'cons') {
+      const items = [];
+      let tail = path;
+      while (nodes.get(tail)?.kind === 'cons' && items.length < 12) {
+        items.push(preview(nodes, tail + '.h', depth + 1));
+        tail += '.t';
+      }
+      if (nodes.get(tail)?.kind === 'nil') return '[' + items.join(', ') + ']';
+      return items.map(item => item.includes(' : ') ? '(' + item + ')' : item).join(' : ') + ' : ' + (items.length === 12 ? '…' : preview(nodes, tail, depth + 1));
+    }
+    return '_';
+  }
+  const valueFor = (repr, type = '') => ({ kind: 'primitive', type, repr });
 
   class HaskellDebugSession {
     constructor({ sites, options = {}, breakpoints = [], watches = [], send, resume, marker }) {
@@ -9,12 +32,12 @@
       this.resume = resume;
       this.marker = marker;
       this.frames = [];
+      this.calls = new Map();
       this.buffer = [];
       this.breakpoints = new Map();
       this.watches = watches;
       this.command = 2;
       this.stopDepth = 0;
-      this.callSequence = 0;
       this.eventCount = 0;
       this.limit = Math.max(1, Math.min(Number(options.max_history) || 2000, 10000));
       this.paused = false;
@@ -33,7 +56,7 @@
           this.breakpoints.set(key, { ...breakpoint, hits: 0 });
           if (![...this.sites.values()].some(site => site.file === file && site.line === breakpoint.line)) {
             this.send({ type: 'breakpointError', file, line: breakpoint.line,
-              error: 'Haskell breakpoints require a top-level equation or Boolean guard line.' });
+              error: 'Haskell breakpoints require a top-level equation, guard, or if condition.' });
           }
           if (breakpoint.condition) this.send({ type: 'breakpointError', file,
             line: breakpoint.line, error: 'Haskell demand breakpoints do not evaluate conditions.' });
@@ -58,90 +81,138 @@
       }
     }
 
-    /** Return user stderr, consuming only complete, session-specific probe records. */
+    /** Probe payloads are Unicode code points, avoiding Haskell/JSON escapes. */
     consumeStderr(text) {
       this.stderrBuffer += text;
-      let output = '';
-      let newline;
+      let output = '', newline;
       while ((newline = this.stderrBuffer.indexOf('\n')) >= 0) {
         const line = this.stderrBuffer.slice(0, newline);
         this.stderrBuffer = this.stderrBuffer.slice(newline + 1);
         const markerIndex = line.indexOf(this.marker);
-        const event = markerIndex < 0 ? null : line.slice(markerIndex + this.marker.length).match(/^(call|return):(\d+)\r?$/);
-        if (event) {
-          output += line.slice(0, markerIndex);
-          this.receiveProbe(event[1], Number(event[2]));
-        } else output += line + '\n';
+        const match = markerIndex < 0 ? null : line.slice(markerIndex + this.marker.length)
+          .match(/^(call|return|try|match|reject|select|test|true|false|value):(\d+):(\d+):(\[[\d, ]*\])\r?$/);
+        if (!match) { output += line + '\n'; continue; }
+        output += line.slice(0, markerIndex);
+        const [, event, site, context, encoded] = match;
+        const payload = JSON.parse(encoded).map(code => String.fromCodePoint(code)).join('');
+        if (event === 'value') this.recordValue(Number(context), payload);
+        else this.receiveProbe(event, Number(site), Number(context));
       }
       return output;
     }
 
-    receiveProbe(event, siteId) {
-      const site = this.sites.get(siteId);
-      const mayPause = this.command !== 1 || this.eventCount + 1 >= this.limit ||
-        (event === 'call' && site && this.breakpoints.has(site.file + ':' + site.line));
-      if (mayPause) {
-        // Publish pauses only after the adapter has appended preceding stderr
-        // and the evaluator has unwound into GETRAW's asynchronous input wait.
-        setTimeout(() => this.observe(event, siteId), 0);
-      } else {
-        // Continue can queue its acknowledgement before GETRAW starts polling.
-        // This avoids a 10ms input wait per event; MicroHs still yields normally.
-        this.observe(event, siteId);
-      }
+    recordValue(context, payload) {
+      const frame = this.calls.get(context);
+      if (!frame) return;
+      const [path, kind, ...value] = payload.split('\t');
+      // Observers bound structural depth; also cap records per call defensively.
+      if (frame.values.size < 512 || frame.values.has(path)) frame.values.set(path, { kind, value: value.join('\t') });
     }
 
-    frameFor(site) {
-      const locals = {};
-      for (const name of site.bindings) {
-        locals[name] = { kind: 'primitive', type: 'Haskell value',
-          repr: '<not inspected: preserves lazy evaluation>' };
-      }
+    receiveProbe(event, siteId, context) {
+      const site = this.sites.get(siteId);
+      const mayPause = this.command !== 1 || this.eventCount + 1 >= this.limit ||
+        (['select', 'test'].includes(event) && site && this.breakpoints.has(site.file + ':' + site.line));
+      // Publish pauses only after stderr is appended and GETRAW has unwound.
+      if (mayPause) setTimeout(() => this.observe(event, siteId, context), 0);
+      else this.observe(event, siteId, context);
+    }
+
+    frameFor(site, context) {
       return { function: site.function, file: site.file, line: site.line,
-        first_line: site.first_line, locals, globals: {}, closure: {},
-        call_id: ++this.callSequence };
+        first_line: site.first_line, call_id: context, entry: site,
+        values: new Map(), bindings: {}, decisions: [],
+        equations: (site.equations || []).map(eq => ({ ...eq, status: 'not reached' })) };
+    }
+
+    snapshotFrame(frame) {
+      const args = Array.from({ length: frame.entry.arity || 0 }, (_, i) => ({
+        name: 'argument ' + (i + 1), ...valueFor(preview(frame.values, 'arg' + i), frame.entry.argument_types?.[i] || '') }));
+      const locals = {};
+      for (const [name, path] of Object.entries(frame.bindings)) {
+        locals[name] = valueFor(path ? preview(frame.values, path) : '<bound by pattern; no value preview>');
+      }
+      return { function: frame.function, file: frame.file, line: frame.line,
+        first_line: frame.first_line, call_id: frame.call_id, locals,
+        arguments: args, invocation: frame.function + args.map(arg => {
+          const atomic = /^(?:_|True|False|[0-9]+(?:\.[0-9]+)?|\[.*\]|\(.*\)|'.*')$/.test(arg.repr);
+          return ' ' + (atomic ? arg.repr : '(' + arg.repr + ')');
+        }).join(''),
+        equations: frame.equations.map(eq => ({ ...eq })), decisions: frame.decisions.map(d => ({ ...d })) };
     }
 
     watchResults() {
       const result = {};
-      for (const expression of this.watches) {
-        result[expression] = { error: 'Haskell demand tracing does not evaluate watch expressions.' };
-      }
+      for (const expression of this.watches) result[expression] = { error: 'Inspect the recorded arguments and bindings; arbitrary watch evaluation is unavailable.' };
       return result;
     }
 
-    observe(event, siteId) {
+    observe(event, siteId, context) {
       if (this.finished) return;
       const site = this.sites.get(siteId);
       if (!site) return;
-      if (event === 'call') this.frames.push(this.frameFor(site));
-      const top = this.frames[this.frames.length - 1];
-      if (!top) return;
-      const snapshot = { event, file: site.file, line: site.line,
-        depth: this.frames.length, call_id: top.call_id,
-        stack: this.frames.map(frame => ({ ...frame })), watches: this.watchResults() };
+      if (event === 'call') {
+        const frame = this.frameFor(site, context);
+        this.calls.set(context, frame);
+        this.frames.push(frame);
+      }
+      const frame = this.calls.get(context);
+      if (!frame) return;
+      if (event !== 'return') frame.line = site.line;
+      const equation = frame.equations.find(eq => eq.id === site.id || eq.id === site.equation);
+      let description = '';
+      switch (event) {
+        case 'call': description = 'Demand ' + site.function; break;
+        case 'try':
+          equation.status = 'checking patterns'; frame.bindings = {};
+          description = 'Try equation ' + (site.index + 1) + ': ' + site.header; break;
+        case 'match':
+          equation.status = 'patterns matched; checking guards'; frame.bindings = site.bindings;
+          description = 'Patterns match: ' + site.header; break;
+        case 'select':
+          equation.status = 'selected'; frame.bindings = site.bindings;
+          description = 'Use equation ' + (site.index + 1) + ': ' + site.header; break;
+        case 'reject':
+          equation.status = equation.status === 'checking patterns' ? 'pattern did not match' : 'no guard succeeded';
+          description = equation.status + ': ' + site.header; break;
+        case 'test': description = 'Check ' + (site.kind === 'guard' ? 'guard' : 'if') + ': ' + site.expression; break;
+        case 'true': case 'false': {
+          const decision = { line: site.line, expression: site.expression, result: event === 'true' ? 'True' : 'False', kind: site.kind };
+          frame.decisions.push(decision);
+          description = site.expression + ' → ' + decision.result + (site.kind === 'condition' ? (event === 'true' ? '; take then branch' : '; take else branch') : '');
+          break;
+        }
+        case 'return': description = 'Result of ' + frame.function + ': ' + preview(frame.values, 'result'); break;
+      }
+      // A condition in a lazy field can be demanded after its enclosing call
+      // returned. Show that captured scope without inventing a new invocation.
+      const deferred = !this.frames.includes(frame);
+      const stack = deferred ? [...this.frames, frame] : this.frames;
+      const snapshot = { event, file: site.file, line: event === 'return' ? frame.line : site.line,
+        depth: stack.length, call_id: context, description,
+        deferred, stack: stack.map(f => this.snapshotFrame(f)), watches: this.watchResults() };
       if (event === 'return') {
-        snapshot.return_value = { kind: 'primitive', type: 'Haskell value',
-          repr: '<evaluated to weak head normal form>' };
+        const result = /^IO\b/.test(frame.entry.result_type) ? '<IO action ready>' : preview(frame.values, 'result');
+        snapshot.return_value = valueFor(result, frame.entry.result_type);
+        snapshot.description = 'Result of ' + frame.function + ': ' + result;
         this.frames.pop();
       }
       this.buffer.push(snapshot);
-      this.eventCount += 1;
+      this.eventCount++;
       if (this.eventCount >= this.limit) {
         this.flushPause(snapshot);
         this.send({ type: 'capReached', limit: this.limit });
-        this.send({ type: 'debugComplete', exitCode: 1,
-          error: 'Haskell debugging stopped at the ' + this.limit + '-event history limit.' });
+        this.send({ type: 'debugComplete', exitCode: 1, error: 'Haskell debugging stopped at the ' + this.limit + '-event history limit.' });
         this.finished = true;
       } else if (this.shouldPause(snapshot)) this.flushPause(snapshot);
       else this.resume();
     }
 
     shouldPause(snapshot) {
-      if (snapshot.event === 'call') {
+      if (['select', 'test'].includes(snapshot.event)) {
         const breakpoint = this.breakpoints.get(snapshot.file + ':' + snapshot.line);
         if (breakpoint) {
-          breakpoint.hits += 1;
+          breakpoint.hits++;
           if (!breakpoint.hitCount || breakpoint.hits >= breakpoint.hitCount) return true;
         }
       }

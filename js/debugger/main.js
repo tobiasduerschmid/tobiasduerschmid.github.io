@@ -3469,7 +3469,7 @@
       if (this.snapshotBreakpointMatch(liveSnap)) {
         this.setStatus('paused at breakpoint at ' + this.basename(liveSnap.file) + ':' + liveSnap.line);
       } else {
-        this.setStatus('paused at line ' + liveSnap.line);
+        this.setStatus(liveSnap.description ? 'paused: ' + liveSnap.description : 'paused at line ' + liveSnap.line);
       }
     }
     this.renderAll(!preservedReverseCursor);

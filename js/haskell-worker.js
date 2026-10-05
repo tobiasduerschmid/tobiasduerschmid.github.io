@@ -673,34 +673,6 @@ function startRunTest(message) {
   });
 }
 
-/**
- * GETRAW is MicroHs's existing browser readline primitive. It uses Asyncify
- * while waiting for _set_input_char; ordinary Haskell getLine reads MEMFS
- * stdin (EOF), and threadDelay blocks this browser build instead of yielding.
- * The probe demands exactly WHNF, as its caller already did; it never shows
- * arguments or traverses a lazy result merely to populate debugger variables.
- */
-function debugHelperSource(marker) {
-  return [
-    'module SEBookDebug (probe, ($)) where',
-    'import System.IO.Unsafe (unsafePerformIO)',
-    'import System.IO (hPutStrLn, hFlush, stdout, stderr)',
-    'foreign import ccall "GETRAW" getDebugCommand :: IO Int',
-    'pause event site = do',
-    '  hFlush stdout',
-    '  hPutStrLn stderr (' + JSON.stringify(marker) + ' ++ event ++ ":" ++ show site)',
-    '  hFlush stderr',
-    '  _ <- getDebugCommand',
-    '  return ()',
-    'probe :: Int -> a -> a',
-    'probe site value = unsafePerformIO (do',
-    '  pause "call" site',
-    '  value `seq` pause "return" site',
-    '  return value)',
-    '',
-  ].join('\n');
-}
-
 function prepareDebugFiles(message) {
   const files = Object.assign({}, message.files || {});
   files[message.filename] = message.code;
@@ -744,7 +716,7 @@ function startDebug(message) {
   const descriptor = moduleDescriptor(path);
   const marker = markerFor('DEBUG', message.id);
   const doneMarker = markerFor('DONE', message.id);
-  writeWorkspaceFile(descriptor.sourcePath + '/SEBookDebug.hs', debugHelperSource(marker));
+  writeWorkspaceFile(descriptor.sourcePath + '/SEBookDebug.hs', runtimeScope.SEBookHaskellHelper.source(marker));
   const debug = new runtimeScope.SEBookHaskellDebug.HaskellDebugSession({
     sites: sites, marker: marker, options: message.options,
     breakpoints: message.breakpoints, watches: message.watches,
@@ -1021,7 +993,7 @@ if (!isWindowRuntime) {
   importScripts('/js/haskell/syntax.js');
   importScripts('/js/haskell/cycle-analysis.js');
   importScripts('/js/haskell/signature-checks.js');
-  importScripts('/js/debugger/haskell/instrument.js', '/js/debugger/haskell/session.js');
+  importScripts('/js/debugger/haskell/instrument.js', '/js/debugger/haskell/helper-source.js', '/js/debugger/haskell/session.js');
 }
 
 postLoading('Loading Haskell runtime\u2026');
