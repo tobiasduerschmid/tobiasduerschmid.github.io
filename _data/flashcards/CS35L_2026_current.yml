@@ -9,9 +9,9 @@ decks:
   - shell_pipes
   - regex_basics
   - regex_examples
-other:
   - python_syntax_explain
   - python_syntax_generate
+other:
   - git_basic
   - nodejs_syntax_explain
   - nodejs_syntax_generate

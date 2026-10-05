@@ -7,8 +7,8 @@ decks:
   - shell
   - regex
   - shell_parson
-other:
   - python
+other:
   - git_basic
   - nodejs
   - react
