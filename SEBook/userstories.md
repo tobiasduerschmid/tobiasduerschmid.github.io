@@ -98,34 +98,47 @@ This criterion matters for several fundamental reasons:
 
 **How to Evaluate It**
 To determine if a user story is independent, ask:
-1. **Does this story overlap with another story?** If two stories share underlying capabilities (e.g., both involve "sending a message"), they have overlap dependency—the most painful form {% cite Wake2003INVESTinGoodStories %}.
+1. **Does this story overlap with another story?** If two stories promise some of the same user-visible behavior (e.g., both include searching a library catalogue by author), their scope overlaps. This makes it unclear which story owns that behavior {% cite Wake2003INVESTinGoodStories %}. Sharing implementation code alone does not mean the stories overlap.
 2. **Must this story be implemented before or after another?** If so, there is an order dependency. While less harmful than overlap (the business often naturally schedules these correctly), it still constrains planning {% cite Wake2003INVESTinGoodStories %}.
 3. **Was this story split along technical boundaries?** If one story covers the UI layer and another covers the database layer for the same feature, they are interdependent and neither delivers value alone {% cite cohn2004user %}.
 
 **How to Improve It**
 If stories violate the Independent criterion, you can improve them using these techniques:
 * **Combine Interdependent Stories:** If two stories are too entangled to estimate separately, merge them into a single story. For example, instead of separate stories for Visa, MasterCard, and American Express payments, combine them: "A company can pay for a job posting with a credit card" {% cite cohn2004user %}.
-* **Partition Along Different Dimensions:** If combining makes the story too large, re-split along a different dimension. For overlapping email stories like "Team member sends and receives messages" and "Team member sends and replies to messages", repartition by action: "Team member sends message", "Team member receives message", "Team member replies to message" {% cite Wake2003INVESTinGoodStories %}.
+* **Partition Along Different Dimensions:** If combining makes the story too large, re-split along a different dimension {% cite Wake2003INVESTinGoodStories %}. For example, replace overlapping catalogue-search stories covering "title or author" and "author or subject" with separate stories for title search, author search, and subject search. Check that each delivers a useful result without requiring another new story; the worked example below makes that context explicit.
 * **Slice Vertically:** When stories have been split along technical layers (UI vs. database), re-slice them as vertical "slices of cake" that cut through all layers. Instead of "Job Seeker fills out a resume form" and "Resume data is written to the database", write "Job Seeker can submit a resume with basic information" {% cite cohn2004user %}.
 
 ### Examples of Stories Violating the Independent Criterion
 
 **Example 1: Overlap Dependency**
-> Story A: *"**As a** team member, **I want to** send and receive messages **so that** I can communicate with my colleagues."*
-> * **Given** I am on the messaging page, **When** I compose a message and click "Send", **Then** the message appears in the recipient's inbox.
-> * **Given** a colleague has sent me a message, **When** I open my inbox, **Then** I can read the message.
->
-> Story B: *"**As a** team member, **I want to** reply to messages **so that** I can indicate which message I am responding to."*
-> * **Given** I have received a message, **When** I click the "Reply" button and submit my response, **Then** the reply is sent to the original sender.
-> * **Given** the reply has been received, **When** the original sender views the message, **Then** it is displayed as a reply to the original message.
 
-* **Negotiable:** Yes. Neither story dictates a messaging protocol, database, or service boundary.
-* **Valuable:** Yes. Communication features are clearly valuable to users.
-* **Estimable:** Difficult. Because both stories share the "send" capability, whichever story is implemented second has unpredictable effort—parts of it may already be done, making estimates unreliable.
-* **Small:** Yes. Each story is a manageable chunk of work that fits within a sprint.
-* **Testable:** Yes. Clear acceptance criteria can be written for sending, receiving, and replying.
-* **Why it violates Independent:** Both stories include "sending a message"—this is an *overlap dependency*, the most harmful form of story dependency {% cite Wake2003INVESTinGoodStories %}. If Story A is implemented first, parts of Story B are already done. If Story B is implemented first, parts of Story A are already done. This creates confusion about what is covered and makes estimation unreliable.
-* **How to fix it:** Make the dependency *explicit* (e.g., User story B depends on user story A). Merging them into one story is not an option as it would violate the small criterion, splitting them into three stories (sending, receiving and replying) is not an option as it would still violate the independent criterion and also violate valuable for just sending without receiving. So the best thing we can do is to accept that we cannot always create perfectly independent user stories and instead document this dependency so that when scheduling the implementation of user stories we can directly see that they have to be implemented in a specific order and when estimating user stories we can assume that the functionality in user story A has already been implemented. ==**Hidden dependencies are bad. Full independence is perfect but not always achievable. Explicit dependencies are the pragmatic workaround that addresses the core problem of hidden dependencies while still acknowledging practicality**==.
+**Context:** A library catalogue already lets readers browse book records containing titles, authors, and subjects. The team is adding searches of these existing records, one field at a time.
+
+> Story A: *"**As a** library reader, **I want to** search for books by title or author **so that** I can find a particular book or works by a writer I know."*
+> * **Given** the catalogue contains books with "gardening" in their titles, **When** I search titles for "gardening", **Then** I see those book records and no records whose titles lack that word.
+> * **Given** the catalogue contains books by Octavia Butler, **When** I search by that author, **Then** I see her book records and no records by other authors.
+>
+> Story B: *"**As a** library reader, **I want to** search for books by author or subject **so that** I can discover reading that matches my interests."*
+> * **Given** the catalogue contains books by Octavia Butler, **When** I search by that author, **Then** I see her book records and no records by other authors.
+> * **Given** the catalogue contains books tagged with the subject "astronomy", **When** I search by that subject, **Then** I see those book records and no records without that subject.
+
+* **Negotiable:** Yes. Neither story dictates a search algorithm, database, or service boundary.
+* **Valuable:** Yes. Each helps readers find books they want to read.
+* **Estimable:** Overlap complicates estimation: both stories include author search, so the team must decide which one covers that work.
+* **Small:** Assume the team can complete either story within an iteration using the existing catalogue.
+* **Testable:** Yes. The acceptance criteria specify which book records each search should return.
+* **Why it violates Independent:** Both stories promise the same author search, even repeating its acceptance criterion. This is an *overlap dependency* {% cite Wake2003INVESTinGoodStories %}: implementing either story completes part of the other, leaving duplicated scope to track and estimate.
+* **How to fix it:** Replace the overlapping stories with three complete searches:
+
+1. **Title search:** "**As a** library reader, **I want to** search for books by title **so that** I can locate a particular book."
+2. **Author search:** "**As a** library reader, **I want to** search for books by author **so that** I can find works by a writer I want to read."
+3. **Subject search:** "**As a** library reader, **I want to** search for books by subject **so that** I can discover books about a topic that interests me."
+
+Move each corresponding acceptance criterion to its new story, including the author criterion only once. Each story covers the complete interaction from entering a query to seeing matching book records, including a clear message when none match.
+
+**Why this split works:** Each search uses records that already exist and delivers its own useful result. A reader can find a book by title even if author and subject search never ship; the same holds for each of the other searches. The team can implement and release them in any order. They may reuse search code, but none requires another search story to be completed first. Include any shared setup work in the estimate for whichever story is scheduled first.
+
+**Independence is not always achievable.** In a new messaging system, replying to an in-app message requires a working way to send and read messages. Splitting those actions into separate stories does not remove that dependency or make each part independently valuable. If combining them is too large and no alternative split preserves both independence and value, document the dependency and use it when scheduling and estimating the stories. ==**Aim for independent, valuable stories; when that is not possible, make the dependencies explicit.**==
 
 **Example 2: Technical (Horizontal) Splitting**
 > Story A: *"**As a** job seeker, **I want to** fill out a resume form **so that** I can enter my information."*
