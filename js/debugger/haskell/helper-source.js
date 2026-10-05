@@ -38,6 +38,13 @@ application site context value = unsafePerformIO (do
   emit "application" site context ""
   seq value (emit "applied" site context "")
   return value)
+-- Observing a local RHS preserves its sharing and runs only on demand.
+binding :: Int -> Int -> String -> (Int -> String -> a -> a) -> a -> a
+binding site context path observer original = unsafePerformIO (do
+  pause "binding" site context ""
+  let value = observer context path original
+  seq value (pause "bound" site context "")
+  return value)
 step :: String -> Int -> Int -> a -> a
 step event site context value = unsafePerformIO (do
   pause event site context ""

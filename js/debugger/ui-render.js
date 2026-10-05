@@ -397,6 +397,8 @@
     }
     if (Object.keys(frame.locals || {}).length) html += renderSubsection('locals', 'Pattern bindings',
       renderVarTable({}, snap, 0, 'locals', frame.locals, helpers), helpers);
+    if (Object.keys(frame.local_bindings || {}).length) html += renderSubsection('haskell-locals', 'Local bindings',
+      renderVarTable({}, snap, 0, 'local-bindings', frame.local_bindings, helpers), helpers);
     if (frame.decisions && frame.decisions.length) html += renderSubsection('haskell-decisions', 'Guards and conditions',
       '<ul class="tvm-debug-haskell-decisions">' + frame.decisions.map(d =>
         '<li><code>' + escape(d.expression) + ' → ' + escape(d.result) + '</code>' +
@@ -412,6 +414,7 @@
       '<code>…</code> marks the preview limit. Step Back shows only what was known at that earlier step.</p>' +
       '<p>Observed value previews use supported type signatures: Int, Word, Bool, Char, Float, Double, lists, pairs, and Maybe. ' +
       'Other types can show “evaluated; no value preview”. This does not mean their value is unknown to Haskell.</p>' +
+      '<p>Local bindings show their defining expression until demand is observed, then the observed value. Unused definitions are not evaluated for display.</p>' +
       '<p>A returned list may still have delayed elements. An IO action becoming ready does not mean its effects have finished. ' +
       'Arbitrary watches and variable edits are unavailable.</p></details>';
     return html;
@@ -718,7 +721,7 @@
     if (!view) return;
     helpers = defaultHelpers(helpers);
     if (state.backend === 'haskell') {
-      view.innerHTML = '<p class="tvm-debug-language-note">Values are recorded in Arguments and Pattern bindings. Open “How to read these values” for details.</p>';
+      view.innerHTML = '<p class="tvm-debug-language-note">Values are recorded in Arguments, Pattern bindings, and Local bindings. Open “How to read these values” for details.</p>';
       return;
     }
     var isProlog = state.backend === 'prolog';

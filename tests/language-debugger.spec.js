@@ -269,6 +269,8 @@ main = print (countAtLeast 60 [60,59,60])
   await expect(variables).toContainText('selected');
   await expect(variables).toContainText('x >= threshold → True');
   await expect(variables).toContainText('Result: 2');
+  await expect(variables.getByRole('button', { name: 'Local bindings', exact: true })).toBeVisible();
+  await expect(variables).toContainText('contribution');
   // Rewinding to the first call must still show its actual supplied arguments,
   // rather than needing to advance until the computation has demanded them.
   const firstCall = page.getByRole('button', { name: /Demand countAtLeast/ }).first();

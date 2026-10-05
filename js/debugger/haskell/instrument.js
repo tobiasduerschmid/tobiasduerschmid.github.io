@@ -9,6 +9,8 @@
     ? require('../../haskell/syntax') : scope.SEBookHaskellSyntax;
   const callSites = typeof module !== 'undefined' && module.exports
     ? require('./call-sites') : scope.SEBookHaskellCallSites;
+  const localBindings = typeof module !== 'undefined' && module.exports
+    ? require('./local-bindings') : scope.SEBookHaskellLocalBindings;
   const DECLARATIONS = new Set(['module', 'import', 'data', 'newtype', 'type',
     'class', 'instance', 'infix', 'infixl', 'infixr', 'foreign', 'default', 'deriving']);
   const variable = text => /^[a-z_][A-Za-z0-9_']*$/.test(text) && text !== '_';
@@ -195,7 +197,8 @@
         ['Int', 'Word', 'Bool', 'Char', 'Float', 'Double', 'String', 'Maybe'].forEach(name => shadowed.add(name));
       }
       const colon = block.findIndex(t => t.text === '::' && t.depth === 0);
-      if (colon >= 0 && !DECLARATIONS.has(block[0].text)) {
+      if (colon >= 0 && !DECLARATIONS.has(block[0].text) &&
+          !block.slice(0, colon).some(t => t.depth === 0 && ['=', '|'].includes(t.text))) {
         let type = block.slice(colon + 1);
         const context = type.findIndex(t => t.text === '=>' && t.depth === 0);
         if (context >= 0) type = type.slice(context + 1);
@@ -212,6 +215,8 @@
       if (groups.at(-1)?.[0].name === equation.name) groups.at(-1).push(equation);
       else groups.push([equation]);
     }
+    const allowPreludeOperators = !/\b(?:NoImplicitPrelude|RebindableSyntax)\b/.test(source) &&
+      !blocks.some(block => block[0].text === 'import' && block[1]?.text !== 'qualified');
     const functions = new Map(groups.map(equations => [equations[0].name, equations[0].patterns.length]));
     const sites = [], edits = [];
     function site(equation, extra = {}) {
@@ -256,6 +261,19 @@
         add('    _sebookTry' + i + ' = SEBookTrace.step "try" ' + eq.site.id + ' ' + context + ' SEBookTrace.$ _sebookChoose' + i + callArgs, eq.first.line);
         const start = eq.first.offset, end = endOf(eq.block.at(-1));
         const localEdits = [{ offset: 0, end: eq.first.text.length, text: '_sebookChoose' + i }];
+        eq.site.local_bindings = localBindings.analyze(eq, source,
+          types.length === arity + 1 ? types[arity] : null, allowPreludeOperators).map(binding => {
+          const bindingSite = site(eq, { kind: 'binding', line: binding.line,
+            equation: eq.site.id, name: binding.name, expression: binding.expression });
+          const path = 'local' + bindingSite.id;
+          bindingSite.path = path;
+          localEdits.push({ offset: binding.rhs[0].offset - start,
+            text: 'SEBookTrace.binding ' + bindingSite.id + ' ' + context + ' ' + quoted(path) + ' ' +
+              observerFor(binding.typeTokens, shadowed) + ' SEBookTrace.$ (' });
+          localEdits.push({ offset: endOf(binding.rhs.at(-1)) - start, text: ')' });
+          return { name: binding.name, path, expression: binding.expression,
+            type: binding.typeTokens?.map(token => token.text).join(' ') || '' };
+        });
         for (const call of callSites.find(eq.block.slice(eq.block.indexOf(eq.delimiter) + 1), source, functions, eq.bindings)) {
           const application = site(eq, { kind: 'application', callee: call.callee, arguments: call.arguments });
           localEdits.push({ offset: call.start - start, text: '(SEBookTrace.application ' + application.id + ' ' + context + ' (' });

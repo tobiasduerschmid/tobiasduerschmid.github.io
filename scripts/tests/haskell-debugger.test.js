@@ -35,7 +35,7 @@ main = do
 `;
   const result = instrument(source, '/tutorial/Main.hs');
   assert.deepEqual(result.sites.filter(site => site.kind === 'entry').map(site => site.function), ['average', 'choose', 'main']);
-  assert.match(result.code, /total \/ 2 where total = x \+ y/);
+  assert.equal(result.sites.find(site => site.kind === 'binding' && site.name === 'total').expression, 'x + y');
   assert.match(result.code, /Pair \{ left = 2, right = 3 \}/);
 });
 
@@ -47,7 +47,7 @@ f x | ok = x
 main = print (f 2)
 `, '/tutorial/Main.hs');
   assert.deepEqual(result.sites.filter(site => site.kind === 'guard').map(site => site.line), [2, 3]);
-  assert.match(result.code, /where ok = x > 0/);
+  assert.equal(result.sites.find(site => site.kind === 'binding' && site.name === 'ok').expression, 'x > 0');
 });
 
 test('Haskell debugger rejects unsupported declaration layout with an actionable error', () => {
@@ -88,4 +88,32 @@ test('Haskell generated line maps retain original compiler diagnostic locations'
   const result = instrument(source, '/tutorial/Main.hs');
   const generatedLine = result.code.split('\n').findIndex(line => line.includes('print unknownValue')) + 1;
   assert.equal(result.lineMap[generatedLine], 3);
+});
+
+test('local previews specialize only when every use proves the same type', () => {
+  const result = instrument(`module Main where
+score :: Int -> Int
+score n = contribution + contribution
+  where contribution = if n > 0 then 1 else 0
+mixed :: (Int,Double)
+mixed = (value,value)
+  where
+    value :: Num a => a
+    value = 2
+`, '/tutorial/Main.hs');
+  const score = result.sites.find(s => s.kind === 'equation' && s.function === 'score');
+  assert.equal(score.local_bindings[0].type, 'Int');
+  const mixed = result.sites.find(s => s.kind === 'equation' && s.function === 'mixed');
+  assert.equal(mixed.local_bindings[0].type, 'Num a => a');
+});
+
+test('rebindable if syntax does not imply a local branch has its result type', () => {
+  const result = instrument(`{-# LANGUAGE RebindableSyntax #-}
+module Main where
+f :: Int
+f = if True then contribution else False
+  where contribution = True
+`, '/tutorial/Main.hs');
+  const equation = result.sites.find(s => s.kind === 'equation');
+  assert.equal(equation.local_bindings[0].type, '');
 });

@@ -116,6 +116,13 @@ main = print (countAtLeast 60 [60,59,60])
       ['60', '[60, 59, 60]'], ['60', '[59, 60]'], ['60', '[60]'], ['60', '[]'],
     ]);
     expect(calls[0].stack.at(-1).arguments.map(a => a.observed_repr)).toEqual(['_', '_']);
+    const bindings = trace.filter(s => s.event === 'bound' && s.stack.at(-1).function === 'countAtLeast');
+    expect(bindings.map(s => s.stack.at(-1).local_bindings.contribution.repr)).toEqual(['1', '0', '1']);
+    expect(new Set(bindings.map(s => s.call_id)).size).toBe(3);
+    const selected = trace.find(s => s.event === 'select' && s.line === 4);
+    expect(selected.stack.at(-1).local_bindings.contribution).toMatchObject({
+      repr: 'if x >= threshold then 1 else 0', note: 'not observed',
+    });
   });
 
   for (const [expression, output, callCount] of [
@@ -140,6 +147,118 @@ main = print (${expression})
       expect(calls[0].stack.at(-1).arguments[0].repr).toBe('[[4], [], [2, 3]]');
     });
   }
+
+  test('local observation preserves unused errors, sharing, and polymorphic helpers', async ({ page }) => {
+    await startDebug(page, `module Main where
+score :: Int -> Int
+score n = contribution + contribution
+  where
+    contribution = n + 1
+    unused :: Int
+    unused = error "unused local"
+    identity x = x
+    ignoredPair = (identity True, identity n)
+main = print (score 4)
+`);
+    await waitForMessage(page, 'paused');
+    const complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    const messages = await allMessages(page);
+    expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe('10\n');
+    const trace = messages.flatMap(m => m.snapshots || []);
+    const demanded = trace.filter(s => s.event === 'bound');
+    expect(demanded).toHaveLength(1);
+    expect(demanded[0].stack.at(-1).local_bindings.contribution.repr).toBe('5');
+    expect(demanded[0].stack.at(-1).local_bindings.unused).toMatchObject({
+      repr: 'error "unused local"', note: 'not observed',
+    });
+  });
+
+  test('local values retain partial structures and captured scopes after return', async ({ page }) => {
+    await startDebug(page, `module Main where
+make :: Int -> [Int]
+make n = [contribution]
+  where
+    contribution :: Int
+    contribution = n + 1
+headOnly :: Int
+headOnly = head items
+  where
+    items :: [Int]
+    items = 3 : error "unused tail"
+main = print (head (make 6), headOnly)
+`);
+    await waitForMessage(page, 'paused');
+    const complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    const messages = await allMessages(page);
+    expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe('(7,3)\n');
+    const trace = messages.flatMap(m => m.snapshots || []);
+    const contribution = trace.find(s => s.event === 'bound' && s.stack.at(-1).function === 'make');
+    expect(contribution.deferred).toBe(true);
+    expect(contribution.stack.at(-1).local_bindings.contribution.repr).toBe('7');
+    const result = trace.find(s => s.event === 'return' && s.stack.at(-1).function === 'headOnly');
+    expect(result.stack.at(-1).local_bindings.items.repr).toBe('3 : _');
+  });
+
+  test('local shadowing and unsupported local types do not alter accepted programs', async ({ page }) => {
+    await startDebug(page, `module Main where
+choose :: Int -> Int
+choose n = (let contribution = 7 in contribution) + n
+  where contribution = error "shadowed local"
+combine :: Int
+combine = identity 4 + (if identity True then 1 else 0)
+  where identity x = x
+main = print (choose 2, combine)
+`);
+    await waitForMessage(page, 'paused');
+    const complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    const messages = await allMessages(page);
+    expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe('(9,5)\n');
+    const result = messages.flatMap(m => m.snapshots || []).find(s => s.event === 'return' && s.stack.at(-1).function === 'choose');
+    expect(result.stack.at(-1).local_bindings.contribution).toBeUndefined();
+  });
+
+  test('observing locals preserves polymorphic values and locally redefined operators', async ({ page }) => {
+    await startDebug(page, `module Main where
+mixed :: (Int,Double)
+mixed = (value, value)
+  where
+    value :: Num a => a
+    value = 2
+custom :: Int
+custom = contribution + True
+  where
+    contribution = False
+    (+) a b = if a == b then 0 else 9
+main = print (mixed, custom)
+`);
+    await waitForMessage(page, 'paused');
+    const complete = await command(page, 1, 'debugComplete');
+    expect(complete.exitCode, complete.error).toBe(0);
+    const messages = await allMessages(page);
+    expect(messages.filter(m => m.type === 'stdout').map(m => m.text).join('')).toBe('((2,2.0),9)\n');
+  });
+
+  test('a local binding breakpoint stops on demand and steps to its observed value', async ({ page }) => {
+    await startDebug(page, `module Main where
+score :: Int -> Int
+score n = contribution + 1
+  where
+    contribution = n + 2
+main = print (score 3)
+`, { breakpoints: [{ file: '/tutorial/Main.hs', line: 5 }] });
+    await waitForMessage(page, 'paused');
+    const demand = lastSnapshot(await command(page, 1));
+    expect(demand.event).toBe('binding');
+    expect(demand.line).toBe(5);
+    expect(demand.stack.at(-1).local_bindings.contribution).toMatchObject({ repr: 'n + 2', note: 'not observed' });
+    const observed = lastSnapshot(await command(page, 2));
+    expect(observed.event).toBe('bound');
+    expect(observed.stack.at(-1).local_bindings.contribution.repr).toBe('5');
+    expect((await command(page, 1, 'debugComplete')).exitCode).toBe(0);
+  });
 
   test('records an early catch-all and never claims that later equations were tried', async ({ page }) => {
     await startDebug(page, `module Main where

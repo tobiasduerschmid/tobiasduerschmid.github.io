@@ -2658,6 +2658,17 @@ Argument observations, supplied expressions, pattern bindings, equation status,
 and condition outcomes are frozen in each history snapshot. A delayed condition may resume the scope
 of a call that already returned; the view labels that explicitly.
 
+`js/debugger/haskell/local-bindings.js` discovers direct simple `where` value
+bindings. Their original RHS is wrapped lazily, preserving sharing and scope.
+The Local bindings section shows the defining expression marked “not observed”
+until demand, then observed values/partial structures. Concrete observers use
+explicit local signatures or conservative type-equivalent use contexts; never
+add `Show` constraints or guess a numeric type from literals. Unknown types
+remain opaque. Binding-demand and binding-result events preserve the owning
+call's context, including after its outer result returned; history stays frozen.
+Nested local functions, destructuring bindings, and `let` scopes are not exposed
+as local value definitions. Binding breakpoints stop on demand, not declaration.
+
 Shared main/popout rendering shows calls with arguments, ordered equation
 choices, condition results, and descriptive history entries. The expandable
 value guide explains partial values and preview limits. Haskell hides the

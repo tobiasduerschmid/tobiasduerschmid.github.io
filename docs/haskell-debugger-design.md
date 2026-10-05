@@ -85,6 +85,30 @@ head or tail has been used. An IO action reaching its outer representation does
 not imply completion of its effects. Delayed conditions can resume an earlier
 call's captured scope; the UI labels this instead of inventing another call.
 
+Local `where` values follow the same observation contract as arguments. A lazy
+wrapper stays on the original binding RHS; demanding a shared binding records
+its outer result once. It never evaluates unused definitions or list fields to
+populate the panel. Each declaration has a distinct observation path within its
+call context. A delayed local can be observed after its enclosing result returns;
+that event displays the captured call rather than assigning it to another call.
+
+The **Local bindings** section separates declarations from pattern bindings.
+Before observation it displays the source expression with “not observed”; this
+means no observation through this binding, not a claim about global heap state.
+After demand it displays the observed value or partial structure. Snapshots do
+not acquire information from future events. These choices follow
+[HOOD's observation model](https://www.haskell.org/hugs/pages/users_guide/observe.html)
+and [GHCi's distinction between non-forcing inspection and forcing](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/ghci.html#the-ghci-debugger).
+They retain the earlier Haskelite-inspired focus on explaining source bindings.
+
+`local-bindings.js` discovers direct, simple `where` value declarations. Concrete
+observers use explicit local signatures or conservative type-equivalent uses in
+an explicitly typed result. Inferred observers require every reference to prove
+the same concrete type, preserving polymorphic uses. Redefined/imported operators
+and rebindable conditionals disable the corresponding inference. Unknown types
+remain opaque; instrumentation adds no `Show` constraint. Nested local functions, destructuring declarations, and
+`let` scopes are not exposed as local value definitions by this analysis.
+
 Call-entry previews also retain **supplied expressions**, separately from
 observed values. `call-sites.js` records direct saturated calls to functions in
 the same module. An application marker associates that source call with the

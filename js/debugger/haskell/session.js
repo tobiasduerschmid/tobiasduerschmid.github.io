@@ -87,7 +87,7 @@
           this.breakpoints.set(key, { ...breakpoint, hits: 0 });
           if (![...this.sites.values()].some(site => site.file === file && site.line === breakpoint.line)) {
             this.send({ type: 'breakpointError', file, line: breakpoint.line,
-              error: 'Haskell breakpoints require a top-level equation, guard, or if condition.' });
+              error: 'Haskell breakpoints require a top-level equation, local binding, guard, or if condition.' });
           }
           if (breakpoint.condition) this.send({ type: 'breakpointError', file,
             line: breakpoint.line, error: 'Haskell demand breakpoints do not evaluate conditions.' });
@@ -121,7 +121,7 @@
         this.stderrBuffer = this.stderrBuffer.slice(newline + 1);
         const markerIndex = line.indexOf(this.marker);
         const match = markerIndex < 0 ? null : line.slice(markerIndex + this.marker.length)
-          .match(/^(call|return|try|match|reject|select|test|true|false|value|application|applied):(\d+):(\d+):(\[[\d, ]*\])\r?$/);
+          .match(/^(call|return|try|match|reject|select|test|true|false|value|application|applied|binding|bound):(\d+):(\d+):(\[[\d, ]*\])\r?$/);
         if (!match) { output += line + '\n'; continue; }
         output += line.slice(0, markerIndex);
         const [, event, site, context, encoded] = match;
@@ -146,7 +146,7 @@
     receiveProbe(event, siteId, context) {
       const site = this.sites.get(siteId);
       const mayPause = this.command !== 1 || this.eventCount + 1 >= this.limit ||
-        (['select', 'test'].includes(event) && site && this.breakpoints.has(site.file + ':' + site.line));
+        (['select', 'test', 'binding'].includes(event) && site && this.breakpoints.has(site.file + ':' + site.line));
       // Publish pauses only after stderr is appended and GETRAW has unwound.
       if (mayPause) setTimeout(() => this.observe(event, siteId, context), 0);
       else this.observe(event, siteId, context);
@@ -155,7 +155,7 @@
     frameFor(site, context) {
       return { function: site.function, file: site.file, line: site.line,
         first_line: site.first_line, call_id: context, entry: site,
-        values: new Map(), supplied: new Map(), bindings: {}, decisions: [],
+        values: new Map(), supplied: new Map(), bindings: {}, localDefinitions: [], decisions: [],
         equations: (site.equations || []).map(eq => ({ ...eq, status: 'not reached' })) };
     }
 
@@ -170,8 +170,14 @@
         locals[name] = valueFor(path ? preview(known, path) : '<bound by pattern; no value preview>');
         if (path && preview(known, path) !== preview(frame.values, path)) locals[name].note = 'supplied';
       }
+      const local_bindings = Object.create(null);
+      for (const binding of frame.localDefinitions) {
+        const observed = frame.values.has(binding.path);
+        local_bindings[binding.name] = { ...valueFor(observed ? preview(frame.values, binding.path) : binding.expression, binding.type),
+          note: observed ? '' : 'not observed', expression: binding.expression };
+      }
       return { function: frame.function, file: frame.file, line: frame.line,
-        first_line: frame.first_line, call_id: frame.call_id, locals,
+        first_line: frame.first_line, call_id: frame.call_id, locals, local_bindings,
         arguments: args, invocation: frame.function + args.map(arg => {
           const atomic = /^(?:_|True|False|[0-9]+(?:\.[0-9]+)?|\[.*\]|\(.*\)|'.*')$/.test(arg.repr);
           return ' ' + (atomic ? arg.repr : '(' + arg.repr + ')');
@@ -206,11 +212,15 @@
       if (!frame) return;
       if (event !== 'return') frame.line = site.line;
       const equation = frame.equations.find(eq => eq.id === site.id || eq.id === site.equation);
+      if (['match', 'select', 'binding', 'bound'].includes(event)) {
+        const definition = this.sites.get(site.equation ?? site.id);
+        frame.localDefinitions = definition.local_bindings || [];
+      }
       let description = '';
       switch (event) {
         case 'call': description = 'Demand ' + site.function; break;
         case 'try':
-          equation.status = 'checking patterns'; frame.bindings = {};
+          equation.status = 'checking patterns'; frame.bindings = {}; frame.localDefinitions = [];
           description = 'Try equation ' + (site.index + 1) + ': ' + site.header; break;
         case 'match':
           equation.status = 'patterns matched; checking guards'; frame.bindings = site.bindings;
@@ -221,6 +231,8 @@
         case 'reject':
           equation.status = equation.status === 'checking patterns' ? 'pattern did not match' : 'no guard succeeded';
           description = equation.status + ': ' + site.header; break;
+        case 'binding': description = 'Demand local binding ' + site.name; break;
+        case 'bound': description = site.name + ' = ' + preview(frame.values, site.path); break;
         case 'test': description = 'Check ' + (site.kind === 'guard' ? 'guard' : 'if') + ': ' + site.expression; break;
         case 'true': case 'false': {
           const decision = { line: site.line, expression: site.expression, result: event === 'true' ? 'True' : 'False', kind: site.kind };
@@ -255,7 +267,7 @@
     }
 
     shouldPause(snapshot) {
-      if (['select', 'test'].includes(snapshot.event)) {
+      if (['select', 'test', 'binding'].includes(snapshot.event)) {
         const breakpoint = this.breakpoints.get(snapshot.file + ':' + snapshot.line);
         if (breakpoint) {
           breakpoint.hits++;
