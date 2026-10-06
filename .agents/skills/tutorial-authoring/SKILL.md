@@ -280,6 +280,38 @@ tutorial (i.e. `exclude_from_index: true` is not set) has a top-level
 `learning_objectives:` list of 4–8 Bloom-verb statements. See §3.1 for
 schema. Currently authoring-only metadata; runtime ignores it.
 
+### Instructions must be readable and skimmable
+
+Optimize every tutorial's instructions for finding the concept, rule, and next
+action quickly. Apply this to the whole path, not just its introductory step.
+Use `cs-tutorial-design` for the learning sequence and these encoding rules:
+
+- **Short context paragraphs:** keep one idea per paragraph; retain the reason
+  and causal explanation that make the example meaningful. Cut repetition.
+- **Bullets for parallel information:** contracts, inputs, results, boundary
+  cases, alternatives, and example mappings. Give each item a brief label when
+  it helps scanning, such as **Inputs**, **Empty input**, or **Preserve**.
+- **Number the tasks:** present genuinely ordered actions as a numbered list,
+  with a short bold action word: **Predict**, **Implement**, **Check**, **Explain**.
+  Keep prediction before running or revealing feedback. Do not number unrelated
+  facts or turn every explanatory sentence into a separate action.
+- **Bold selectively:** emphasize the key distinction, constraint, or action,
+  not entire paragraphs. Keep code in code spans or fenced blocks beside its
+  explanation; formatting must clarify the reasoning, not replace it.
+- **Preserve the learning contract:** retain requirements, edge cases, accepted
+  approaches, manual self-checks, and the intended amount of scaffolding. Keep
+  solutions behind their existing reveal or in `solution:`. Do not make tasks
+  easier by leaking the target algorithm during a readability rewrite.
+- **Useful humor:** relatable examples may be playful when the metaphor maps
+  accurately to the concept. Explain its limit when needed (an unavailable-data
+  sentinel is not an actual download). Avoid slang that hides technical meaning.
+- **Respect the length budget:** restructure and replace prose rather than
+  appending explanations. For a no-growth request, compare instruction word
+  counts and check that requirements and exercises have not disappeared.
+- **Verify rendered structure:** separate lists and headings with blank lines,
+  indent continuation lines correctly, and inspect live and print views.
+  Use semantic Markdown; never shrink typography to make instructions fit.
+
 ### In-tutorial quizzes are *recall and transfer*, not new content
 
 Quizzes that appear between steps (the `quiz:` block on a step) should be
@@ -2646,6 +2678,18 @@ breakpoints stop at selection; guard/condition breakpoints stop before the test.
 Step Into also visits attempts and failures. Nested local functions and IO
 statements have no independent call frames. Explicit module braces, semicolon
 declarations, infix equations, and pattern guards produce actionable diagnostics.
+Trace events and frames also carry `source_focus`: a semantic `role`, original
+`text`, and a one-based Monaco `range` with an exclusive end column. Its columns
+count UTF-16 units (a tab occupies one unit), unlike compiler diagnostic columns.
+Pattern attempts focus the equation header; selection and return focus the
+chosen body; tests focus their condition; local demand focuses the binding RHS.
+Known suspended callers focus the application that demanded the current call.
+History freezes these spans along with values. Main and detached editors box
+the exact span only while its text still matches the editor model; a labeled
+source excerpt provides a non-color cue in the main/debugger-popout panel.
+This adds source precision to existing events, not a step for every primitive
+arithmetic reduction. Never force values to populate a highlight or preview.
+
 Trace locations map to original source lines. `instrument()` also records each
 generated character's source offset (`origins`) and returns `locate(line,
 column)`. The worker rewrites compiler diagnostics (`"file": line L, col C`) and

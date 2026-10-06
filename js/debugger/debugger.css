@@ -469,6 +469,31 @@
 .tvm-debug-current-line {
   background: rgba(255, 193, 7, 0.36);
 }
+/* A box identifies the exact source range even without color perception.
+   Override token colors inside it so all syntax stays readable. */
+.monaco-editor .tvm-debug-current-expression-range {
+  background: #fff0b3;
+  outline: 2px solid #9a6400;
+  outline-offset: -1px;
+  border-radius: 2px;
+}
+.monaco-editor .tvm-debug-current-expression { color: #201a00 !important; }
+html.dark-mode .monaco-editor .tvm-debug-current-expression-range {
+  background: #684f00;
+  outline-color: #ffe083;
+}
+html.dark-mode .monaco-editor .tvm-debug-current-expression { color: #fff7d6 !important; }
+@media print {
+  .monaco-editor .tvm-debug-current-expression,
+  html.dark-mode .monaco-editor .tvm-debug-current-expression {
+    color: #000 !important;
+  }
+  .monaco-editor .tvm-debug-current-expression-range,
+  html.dark-mode .monaco-editor .tvm-debug-current-expression-range {
+    background: #fff;
+    outline-color: #000;
+  }
+}
 .tvm-debug-current-glyph {
   /* OUTLINE-only pentagonal arrow pointing right. Sized larger than the
      line height so it pops out into the surrounding rows visually.

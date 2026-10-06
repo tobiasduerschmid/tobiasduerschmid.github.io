@@ -58,9 +58,9 @@ steps:
 
       ### A tiny worked example
 
-      The group chat has agreed on a movie. Now comes the harder part: the
-      pizza budget. Start with a function that computes how much money is
-      left after a purchase. All amounts here are whole dollars.
+      The group chat finally picked a movie. Budgeting cannot also run on vibes:
+      `remainingMoney` subtracts a purchase from the budget. Same inputs, same
+      balance—even if someone sends the receipt twice. Amounts are whole dollars.
 
       ```haskell
       -- | Return the budget left after spending an amount; a negative balance is a
@@ -99,7 +99,7 @@ steps:
       - `66`
       - A type error
 
-      Commit to a prediction, then choose **Run**.
+      Mark the arguments, predict, then choose **Run**.
 
       <details markdown="1"><summary>Click for explanation</summary>
 
@@ -118,9 +118,9 @@ steps:
       - **Result:** a negative balance reports the shortfall; `-4` means 4 dollars short.
       - **Cases to try:** free pizzas and an order that exceeds your budget.
 
-      1. Repair the calculation.
-      2. Try the cases above and compare the results with your predictions.
-      3. Choose **Test My Work**.
+      1. **Repair** the calculation.
+      2. **Try** the cases above and compare the results with your predictions.
+      3. **Choose** **Test My Work**.
 
       Keep these runtime details in mind:
 
@@ -327,7 +327,7 @@ steps:
       3. **Now fix the bug in the sample values**, keeping the amounts 9.50 and 12.00.
          Supply numeric literals rather than text; no text-parsing function
          is needed for these values written directly in the source.
-      4. Predict the corrected output, run again, then choose **Test My Work**.
+      4. **Predict** the corrected output, run again, then choose **Test My Work**.
 
       The numeric interface must also handle **an exact budget**, an insufficient
       budget, and a free pizza. For an exact budget, the answer is `True`.
@@ -625,8 +625,8 @@ steps:
 
       1. **Predict before running:** what will it return for `True False` and
          `True True`? Compare those predictions with the reward rules.
-      2. Run the starter. Identify the first true guard for each call.
-      3. Change `matchCoins` to satisfy every reward rule. Explain how your
+      2. **Debug** both calls: which guard wins, and which stays untested?
+      3. **Change** `matchCoins` to satisfy every reward rule. Explain how your
          definition handles overlapping conditions, and check all four
          combinations of the two Boolean inputs.
 
@@ -638,9 +638,9 @@ steps:
       (negative), and `capacity` is the most the backpack can hold. The function
       returns the new count, keeping it between zero and capacity.
 
-      Your game backpack holds at most 10 healing potions. You already have
-      8 and collect 5 more; extras cannot fit. **Predict the allowed new count**
-      before changing `adjustStock`.
+      The backpack has ten potion slots, despite your heroic hoarding ambitions.
+      You have 8 potions and collect 5; extras cannot fit. **Predict the new
+      count** before changing `adjustStock`.
 
       The required behavior is:
 
@@ -657,9 +657,10 @@ steps:
       - **No mutation:** return a new count; do not modify the arguments.
 
       The `TODO` result is a **temporary placeholder**, not a proposed algorithm.
-      Complete the missing branches, using guards or an equivalent nested `if`.
-      **Test exact limits as well as crossing each limit.** Explain why a
-      within-limits result must include the change even though no clamping is needed.
+
+      1. **Complete** the missing branches with guards or an equivalent nested `if`.
+      2. **Test** exact limits and cases crossing each limit.
+      3. **Explain** why a within-limits result includes the change without clamping.
 
       `main` runs and prints sample calls to both functions so you can inspect
       their results. You may add sample calls, but completing this step requires
@@ -814,19 +815,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      A pure Haskell function describes its result with an expression. In
-      Python or C++, you might calculate a bill by assigning a subtotal to a
-      variable, then updating that variable with a discount and a fee. In
-      Haskell, **a binding names a value; it is not a variable you can later
-      reassign in the same scope**. `let` and `where` let you name intermediate
-      values and helper functions, then use them in the result expression.
-
-      These names let you **break a large calculation into understandable
-      parts** and reuse a value without repeating its expression. Keeping them
-      local also lets them use the enclosing function's parameters without
-      exposing those implementation details to the rest of the program. Each
-      function call has its own bindings; calculating a new result does not
-      overwrite a value from an earlier call.
+      A bill combines item charges, discounts, and fees. **Local bindings name
+      those parts without reassigning them**, making the calculation easier to
+      read and reuse. Each call has its own bindings; a later call does not
+      overwrite an earlier call's values.
 
       ### 🎯 You will learn to
 
@@ -839,8 +831,8 @@ steps:
       discount, and a fee produce one final bill. The time-conversion examples
       introduce local names before you use them to organize the bill calculation.
 
-      Your study playlist is 1 hour and 35 minutes long. To compare it with
-      your study time, convert that to minutes.
+      Your “quick study playlist” lasts 1 hour and 35 minutes.
+      Convert it to minutes; naming it “quick” changes nothing.
 
       A **`let ... in ...` expression** puts local definitions **before** the
       expression that uses them. The expression after `in` determines the
@@ -914,7 +906,7 @@ steps:
       1. **Predict the value of the expression shown above.**
       2. Now imagine replacing only `in score` with `in nextScore`. Predict
          the new value without changing the editor.
-      3. Explain which name denotes each value. Would moving the two aligned
+      3. **Explain** which name denotes each value. Would moving the two aligned
          definitions into the opposite order turn either one into an assignment?
 
       Make your prediction, then click **Show answer and explanation** to
@@ -951,13 +943,13 @@ steps:
       For four snacks at 8 points each with a 3-point delivery fee, **calculate
       all three named amounts before coding**.
 
-      1. Complete the `discount` binding and the function's result expression.
+      1. **Complete** the `discount` binding and the function's result expression.
          The two zero values marked `TODO` are placeholders, not a faulty billing rule.
-      2. Use the supplied snack-bill call in `main` and run the checks.
-      3. Rewrite the definition using **`let ... in` instead of `where`**:
+      2. **Debug** the bill: which highlighted expression needs `subtotal`? Then run checks.
+      3. **Rewrite** the definition using **`let ... in` instead of `where`**:
          put the local definitions after `let` and the result expression after
          `in`. Keep both local names in scope for that result, then check again.
-      4. Explain why moving a definition inside the same binding group preserves
+      4. **Explain** why moving a definition inside the same binding group preserves
          its meaning, but moving it outside the function can lose access to parameters.
 
       The supplied layout supports this attempt. You choose the conditional expression
@@ -1179,11 +1171,11 @@ steps:
       - **Allow negative bonuses.**
       - **Preserve the original pair:** constructing a new result does not mutate it.
 
-      1. Replace the entire placeholder equation. **Choose your own parameter
+      1. **Replace** the entire placeholder equation. **Choose your own parameter
          pattern and result expression**; `markSeen` is a related worked example.
-      2. Run the supplied two-print display harness and compare both pairs with
+      2. **Run** the supplied two-print display harness and compare both pairs with
          your prediction. Leave that `do` block intact; it only displays the results.
-      3. Add one negative-bonus example of your own, predict it, then run the checks.
+      3. **Add** one negative-bonus example of your own, predict it, then run the checks.
 
       Unlike the previous step, no part of the target calculation is supplied.
       The placeholder only returns its input so the starter can run.
@@ -1367,8 +1359,8 @@ steps:
 
       Your snack-list app must count **items, not letters**.
 
-      1. Predict the lengths of `"tea"`, `["tea"]`, and `[]`.
-      2. Explain what counts as one element in each case.
+      1. **Predict** the lengths of `"tea"`, `["tea"]`, and `[]`.
+      2. **Explain** what counts as one element in each case.
 
       A teammate tries to put one opening clip onto a playlist:
 
@@ -1417,25 +1409,21 @@ steps:
 
       ### Your challenge: construct the complete result
 
-      Now write `bookend item items` yourself, starting from its type and contract:
+      Write `bookend item items` from its type and contract:
 
-      - Place `item` at **both ends**.
-      - Preserve every existing element in its original order.
-      - Give empty input **two copies** of the item.
-      - Work for **any element type**, including an element that is itself a list.
+      - Put `item` at **both ends**, preserving every existing element's order.
+      - Give **empty input two copies** of the item.
+      - Work for **any element type**, including elements that are lists.
       - Leave the original input unchanged.
 
-      The starter's `[]` is only a **placeholder**. Replace the entire equation
-      with your definition; no construction steps are supplied this time.
-
-      Before running, predict the **value and type** of each result:
-
-      - `bookend '!' "hi"` — matching punctuation around a message.
-      - `bookend "intro" ["song"]` — matching opening and closing clips.
-      - An empty-input example of your own.
-
-      Run your examples and the checks. Explain why the same definition handles
-      both characters and whole strings without changing either input type.
+      1. **Implement:** replace the entire placeholder equation. Its `[]` supplies
+         no construction steps; design your own definition.
+      2. **Predict values and types** before running:
+         - `bookend '!' "hi"` — matching punctuation around a message.
+         - `bookend "intro" ["song"]` — matching opening and closing clips.
+         - An empty-input example of your own.
+      3. **Check:** run your examples and the checks. Explain why one definition
+         handles characters and whole strings without changing either input type.
     files:
     - path: Main.hs
       language: haskell
@@ -1559,10 +1547,10 @@ steps:
 
       ### What this program does
 
-      A queue manager lets the first two people exchange places while everyone
-      else keeps their position. Your function must also handle queues too short
-      for a swap. The supplied playlist helper demonstrates changing the front of
-      a list while preserving the rest.
+      Ada and Bo both claim the karaoke opener. Swap their queue positions;
+      the rest of the group refuses another negotiation. Empty and one-person
+      queues need no swap. The playlist helper changes a list's front while
+      preserving its tail.
 
       Compare a list's construction with its decomposition:
 
@@ -1607,7 +1595,7 @@ steps:
 
       1. **Predict both results:** what does it return for `["Ada","Bo"]`
          and `["Ada","Bo","Cy"]`?
-      2. Explain why the second result disagrees with "at least two."
+      2. **Explain** why the second result disagrees with "at least two."
       3. Identify what the first pattern assumes about the entire input, not
          just its beginning.
       4. Propose a repair and predict its results for empty, singleton,
@@ -1653,10 +1641,10 @@ steps:
       proposed solution. Replace the **whole placeholder equation** with your
       implementation, keeping the supplied type signature.
 
-      1. Write down the input shapes your equations need to cover.
-      2. Implement the function and predict its results on an empty list, one
+      1. **Write** down the input shapes your equations need to cover.
+      2. **Implement** the function and predict its results on an empty list, one
          item, exactly two items, and a longer list.
-      3. Run the checks, then explain how your code keeps the tail intact.
+      3. Check, then explain why the tail is a list, even when empty.
 
       Pattern matching is the practice focus; behaviorally equivalent solutions
       are accepted. Use the hints if you need help turning your plan into equations.
@@ -1806,9 +1794,9 @@ steps:
       friends' song lists provides a smaller example of processing a list
       recursively.
 
-      Friends send picks for a shared playlist. Each number identifies a song;
-      each row holds one friend's picks. `joinRows` combines the rows in order,
-      so nobody's picks jump the queue:
+      Friends submit song IDs: `[4]`, `[]`, and `[2,3]`. The friend who
+      “likes everything” submitted nothing. `joinRows` preserves everyone's order;
+      one empty submission does not end the whole playlist:
 
       ```haskell
       -- | Join all rows into one list, preserving row order and element order.
@@ -1883,10 +1871,10 @@ steps:
       > ```
       >
       > 1. Choose **Debug**, then **Step Into** until you reach `joinRows`.
-      >    Follow **Equations** until a matching equation is selected. Then compare
-      >    its **Call Stack** arguments with **Pattern bindings**: what do `row`
-      >    and `rows` name in this call? Each recursive
-      >    call has its own bindings; it does not assign new values to the caller's names.
+      >    Predict which equation matches; step to check the boxed source.
+      >    Compare **Call Stack** arguments with **Pattern bindings**: why is `row`
+      >    a list, but `rows` a list of lists? Each call has its own bindings;
+      >    later calls do not overwrite the caller's names.
       > 2. Use **Continue** to finish, then inspect the calls in **History**.
       >    Now **predict before debugging again**: if `main` requests only the first
       >    song, must `joinRows` still visit every remaining row and its base case?
@@ -1924,13 +1912,13 @@ steps:
       starter equation is an unfinished placeholder, not a counting strategy.
       Replace that whole equation with your own definition for nonempty input.
 
-      1. Describe what the answer to a **smaller version of this problem** means.
+      1. **Describe** what the answer to a **smaller version of this problem** means.
          Decide which information changes between calls and which stays the same.
-      2. Write your recursive case. Use the meaning of that smaller result to
+      2. **Write** your recursive case. Use the meaning of that smaller result to
          decide what to do with the current score.
       3. **Before testing**, trace `[60,59,60]` with threshold 60. Explain whether
          the middle score should prevent the final score from being considered.
-      4. Run the checks. Explain how each recursive call moves toward the base case.
+      4. **Run** the checks. Explain how each recursive call moves toward the base case.
 
       Recursion is the practice focus; any behaviorally equivalent implementation
       passes. If a program keeps running, use **Stop**, then check whether the
@@ -2129,8 +2117,8 @@ steps:
       A later generator can use an earlier value. Remember that a String is a
       list of characters.
 
-      1. Predict `[(word,c) | word <- ["go","!"], c <- word]`.
-      2. Explain how many pairs each word contributes and each pair's second-component type.
+      1. **Predict** `[(word,c) | word <- ["go","!"], c <- word]`.
+      2. **Explain** how many pairs each word contributes and each pair's second-component type.
 
       Make your prediction, then click **Show answer and explanation** to
       compare your reasoning.
@@ -2174,11 +2162,11 @@ steps:
       placeholder equation with your implementation. Its `[]` result merely lets
       the unfinished file run; no generators or filters have been chosen for you.
 
-      1. Draft your comprehension from the specification.
+      1. **Draft** your comprehension from the specification.
       2. Before running it, write the expected result for
          `routeCandidates ["Zoo","Ash"] [5,2]`. Use that example to check
          the distinction between **tuple shape** and **result order**.
-      3. Run the checks, then explain which part of your code handles each
+      3. **Run** the checks, then explain which part of your code handles each
          input rule and why an empty input yields no combinations.
 
       Comprehensions are the practice focus; equivalent recursive solutions
@@ -2332,7 +2320,7 @@ steps:
 
       1. **Before editing**, predict `takeBudget 5 [2,4,1]`. Choose `[2]`, `[2,1]`,
          or `[2,4]`, and justify it from the word **prefix**.
-      2. Explain why checking each individual price against the original budget
+      2. **Explain** why checking each individual price against the original budget
          could disagree with the specification. Invent one more input that
          would reveal that difference.
 
@@ -2374,19 +2362,18 @@ steps:
 
       ### Your implementation
 
-      **This time you design the complete function.** The starter supplies its
-      type and a display harness. The `[]` result is an unfinished placeholder;
-      replace the whole equation with your implementation and its `where` clause.
+      **Design the complete function.** The starter supplies its type and display
+      harness; replace the placeholder equation and its `[]` result.
 
-      Your helper should handle the empty list, decide whether the next price
-      fits, and construct the result list. Its recursive calls should stay
-      inside the helper; the outer function provides the starting state.
-      Recall that `where` attaches to an equation and introduces local
-      definitions. It does not use `in`.
+      1. **Plan:** have a recursive helper handle empty input, decide whether the
+         next price fits, and construct the result list. Keep its recursive calls
+         inside the helper; the outer function provides the starting state.
+      2. **Implement:** put the helper in `takeBudget`'s `where` clause.
+         Remember: `where` attaches to an equation and does not use `in`.
+      3. **Check:** run your examples and the supplied checks. Then inspect your
+         code: is the helper local, and where does it build the list? Behavior
+         checks do not answer those structural questions.
 
-      Implement your plan, then run your own examples and the supplied checks.
-      The checks measure the stated behavior. Also review your code: is the
-      recursive helper local to `takeBudget`, and where does it build the list?
       **Try a complete plan before opening hints or a solution.**
 
       ### A short return visit
@@ -2394,7 +2381,7 @@ steps:
       Tomorrow:
 
       1. Recreate this function and its local helper **without looking at today's code**.
-      2. Explain why its stopping rule differs from selecting every individually cheap snack.
+      2. **Explain** why its stopping rule differs from selecting every individually cheap snack.
       3. If you study with someone, exchange one input that would expose the other's
          likely bug and explain it.
 

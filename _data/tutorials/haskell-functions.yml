@@ -36,14 +36,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      A data-processing task often needs to discard unwanted records and
-      transform the remaining ones. Writing a fresh traversal for every
-      task mixes those decisions with repeated list-handling code.
-      **`map` and `filter` separate the traversal from the rule you supply**,
-      so a reader can see whether a stage changes values or selects them.
-      This lets you reuse a tested operation while concentrating on the
-      application-specific rule, a pattern that also appears in Python
-      and JavaScript collection processing.
+      A data pipeline may select records, transform them, or both. **Map changes
+      values; filter selects them.** Separating traversal from your rule makes
+      that choice visible and lets you reuse familiar list operations, as in
+      Python or JavaScript.
 
       ### 🎯 You will learn to
 
@@ -52,10 +48,9 @@ steps:
 
       ### What this program does
 
-      A game report keeps qualifying scores and then doubles their points.
-      Qualification uses the original score, so the order of selection and
-      transformation matters. Small supplied predicates and transformations let
-      you examine each part separately.
+      A game awards double points to qualifying scores. Doubling first would
+      let an underqualified score sneak past the bouncer. Qualification uses
+      the original score; inspect selection and transformation separately.
 
       This is Part II of the Haskell course. You should be comfortable with functions, lists, tuples, and `(x:xs)` patterns. Plan about 80–100 minutes; after Higher-Order Types is a good stopping point. This is an estimate, not a time limit.
 
@@ -76,7 +71,7 @@ steps:
 
       Two useful predicates: `even n` returns whether an integer is divisible by 2, and `null xs` returns whether a list is empty. Each returns a Boolean, so either can serve as the decision passed to `filter`.
 
-      This recursive example selects ready entries and projects just their names:
+      The squad says “ready.” This roster believes only `True` flags:
 
       ```haskell
       -- | Return names whose ready flag is True, preserving their order.
@@ -86,7 +81,9 @@ steps:
         | otherwise   = readyNames rest
       ```
 
-      Both branches continue with the tail. A passing entry contributes its name, not its Boolean flag or the whole pair. Selection and transformation are separate decisions even when one recursive function performs both.
+      For `[("StillLoading",False),("SnackGoblin",True)]`, predict the names returned.
+      Both branches continue through the tail. Each accepted pair contributes
+      its name: selection decides **whether**; transformation decides **what**.
 
       ### Thinking Time!
 
@@ -116,9 +113,16 @@ steps:
 
       ### Your Turn
 
-      Fix `qualifiedScores`. It must keep scores **at least 10**, double each kept score, and return them in their original order. Keep repeated scores. For example, `[9,10,12]` should become `[20,24]`; an empty list should stay empty.
+      Fix `qualifiedScores` with this contract:
 
-      The named helpers already describe the two decisions. Before combining them, write the value and type of the selected list for `[9,10,12]`, then the value and type after doubling. Use those intermediate results to decide which operation must see the original scores. Add a boundary example of your own to `main` before testing.
+      - **Select:** keep original scores **at least 10**.
+      - **Transform:** double each kept score, preserving order and repeats.
+      - **Examples:** `[9,10,12]` becomes `[20,24]`; `[]` stays `[]`.
+
+      1. **Predict:** write the selected list's value and type for `[9,10,12]`,
+         then its value and type after doubling.
+      2. **Combine** the supplied helpers. Which operation needs the original scores?
+      3. **Check:** add your own boundary example to `main` before testing.
     files:
       - path: Main.hs
         language: haskell
@@ -268,14 +272,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      A callback may run after the function that created it has returned,
-      yet still need a setting chosen there, such as which slice of a
-      result list to show. **A closure connects a function to the bindings
-      it needs**, and lexical scope tells you which binding each name uses.
-      Understanding that connection helps you write configurable callbacks
-      and diagnose errors caused by shadowed names. The small functions
-      here isolate the same reasoning you need when reading event handlers
-      and other callback-based code.
+      A callback can outlive the call that created it while retaining settings
+      chosen there. **A closure retains access to its bindings**; lexical scope
+      decides which binding a name means. This helps you configure callbacks
+      and diagnose shadowed-name mistakes.
 
       ### 🎯 You will learn to
 
@@ -337,13 +337,25 @@ steps:
 
       ### Your Turn
 
-      Fix `makeWindow start count` so it returns a function that skips the first `start` items of its input and keeps at most the next `count` items. Both settings are nonnegative. The result preserves order and repeated items; short or empty inputs simply provide fewer items.
+      Fix `makeWindow start count` to return a function with this contract:
 
-      Recall `drop n` skips the first n items, while `take n` keeps at most n items. For example, the window made with `1` and `2` maps `["sun","fog","rain","snow"]` to `["fog","rain"]`. A count of zero gives an empty window. Items may have any type; only their list positions determine the window.
+      - **Positions:** skip the first `start` items; keep at most the next `count`.
+      - **Settings:** both are nonnegative; zero count gives an empty window.
+      - **Preserve** order and repeats, for any element type. Short or empty
+        inputs provide fewer items.
 
-      Store two differently configured windows in local names in `main`, then call them on the same list. Explain why creating the second window cannot change the first one's settings. In the returned lambda, identify the bound parameter and the two settings captured from makeWindow. Keep `scopeProbe` as a reminder that a repeated name is not necessarily the same binding.
+      Recall: `drop n` skips n items; `take n` keeps at most n.
+      A window configured with `1` and `2` maps
+      `["sun","fog","rain","snow"]` to `["fog","rain"]`.
 
-      For type inference, start with one element rather than guessing a whole signature. In `map (\x -> (x, True))`, call the input element's type `a`. The lambda returns `(a, Bool)`, so substitute that result type for `b` in `map :: (a -> b) -> [a] -> [b]`. The function still awaits a list.
+      1. **Implement**, then name two differently configured windows locally
+         in `main` and call both on the same list.
+      2. **Explain** why creating the second cannot change the first's settings.
+         Identify the returned lambda's parameter and its two captured settings.
+         Keep `scopeProbe`: a repeated name need not denote the same binding.
+      3. **Derive a type:** in `map (\x -> (x, True))`, call the element type
+         `a`. The lambda returns `(a, Bool)`; substitute this for `b` in
+         `map :: (a -> b) -> [a] -> [b]`. What type of list is still needed?
     files:
       - path: Main.hs
         language: haskell
@@ -586,11 +598,18 @@ steps:
 
       ### Your Turn
 
-      Fix `discountAll amount scores` to subtract `amount` from **each score**. Keep the order and repeats; do not clamp negative results. For example, discounting `[2,12]` by 10 should produce `[-8,2]`.
+      Fix `discountAll amount scores`:
 
-      Keep its curried interface so that `discountAll 10` can be reused as a list transformation. Repair the lambda's operand order, then rewrite the definition as `discountAll = ...` using one lambda for `amount` and another for `scores`. These are two spellings of the same interface; the tests check behavior rather than a particular spelling.
+      - Subtract `amount` from **each score**, preserving order and repeats.
+      - **Keep negative results:** subtracting 10 from `[2,12]` gives `[-8,2]`.
+      - Keep the **curried interface**: `discountAll 10` is a reusable list transformation.
 
-      Add a call that passes `discountAll 3` directly to `map` over a list of score lists. Determine the remaining function type and the result type before running.
+      1. **Repair** the lambda's operand order.
+      2. **Rewrite** as `discountAll = ...`: one lambda for `amount`, another
+         for `scores`. These spellings have the same interface; checks assess
+         behavior, not spelling.
+      3. **Predict types**, then pass `discountAll 3` directly to `map` over
+         score lists. Write its remaining function type and the result type before running.
     files:
       - path: Main.hs
         language: haskell
@@ -756,13 +775,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      To use a library function that accepts another function, you need to
-      know what it will pass to your code and what your code must return.
-      **Higher-order types describe that connection.** Deriving the types
-      lets you decide whether a callback fits and locate where two stages
-      of a data pipeline disagree, before trying random edits until the
-      compiler accepts them. This is a practical way to read unfamiliar
-      interfaces and design reusable ones of your own.
+      A callback's type connects what a library supplies to what your code
+      must return. **Deriving these relationships** helps you choose compatible
+      functions and locate disagreements between pipeline stages before making
+      random compiler-driven edits.
 
       ### 🎯 You will learn to
 
@@ -857,11 +873,22 @@ steps:
 
       ### Your Turn
 
-      Implement `convertPairs convert entries`. Given pairs `(label, value)`, return `(label, convert value)` for every pair in the same order. Keep repeated labels. The label stays unchanged, while the converted value may have a different type. These fields may have any type, including function values; carry labels through without comparing them. Empty input returns `[]`.
+      Implement `convertPairs convert entries`:
 
-      For example, `convertPairs length [("a","hi"),("a","")]` returns `[("a",2),("a",0)]`. In another call, labels could be Booleans and values could be lists of integers.
+      - **Transform:** replace each `(label, value)` with `(label, convert value)`.
+      - **Preserve:** order, repeated labels, and labels themselves.
+      - **Types:** all fields may have any type, including functions. Carry labels
+        through without comparing them; converted values may have a different type.
+      - **Empty input:** return `[]`.
 
-      First write its most general type signature, using separate type variables for the label, original value, and converted value. Then implement it with `map` and a lambda that unpacks a pair. Add one example where the conversion changes the value's type. The checks also accept an equivalent recursive implementation.
+      For example, `convertPairs length [("a","hi"),("a","")]` returns
+      `[("a",2),("a",0)]`. Another call could use Boolean labels and integer lists.
+
+      1. **Derive** the most general signature, with separate type variables for
+         label, original value, and converted value.
+      2. **Implement** using `map` and a pair-unpacking lambda. Equivalent recursion
+         also passes the checks.
+      3. **Check** an example where conversion changes the value's type.
 
       ### Optional Rehearsal: Derive the Whole Interface
 
@@ -1064,13 +1091,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      Turning digits into a number or records into a summary requires each
-      item to contribute to a combined result. **A fold exposes the starting
-      value and the rule for combining the result so far with another
-      item.** Giving that accumulated result a precise meaning lets you
-      explain why the algorithm works, including on empty input. The same
-      reasoning helps you design loop invariants and diagnose incorrect
-      totals or values built in the wrong order.
+      A fold combines items using **a seed and a combining rule**. Giving the
+      accumulator a precise meaning explains how each item contributes, why
+      empty input works, and why order matters. The same habit helps you
+      reason about loop invariants.
 
       ### 🎯 You will learn to
 
@@ -1095,7 +1119,12 @@ steps:
 
       The reducer takes the **accumulator first**, then an item, and returns the next accumulator. Its type `b` can differ from the element type `a`. For example, a fold could consume characters and build an integer count.
 
-      For example, the reducer `\acc word -> word ++ "/" ++ acc` builds a path by placing each new label before the existing path. Starting at "root", labels "oak" then "leaf" produce "oak/root" and then "leaf/oak/root". An empty list leaves the starting path unchanged. These are equations about grouping; they do not claim that every intermediate value is evaluated immediately.
+      The reducer `\acc label -> label ++ "/" ++ acc` builds a version path.
+      Start at "draft"; labels "final" then "FINAL" produce "final/draft" and
+      "FINAL/final/draft". Apparently “final” was optimistic. Each label wraps
+      the previous result; an empty list keeps the seed. Predict what reversing
+      the labels changes. These equations describe grouping, not when each
+      intermediate value is evaluated.
 
       ### Thinking Time!
 
@@ -1134,11 +1163,17 @@ steps:
 
       ### Your Turn
 
-      Fix `digitsToNumber` to turn a finite list of decimal digits into its integer value. Inputs contain only digits 0 through 9. `[3,0,7]` means 307, leading zeroes are allowed, and `[]` means 0.
+      Fix `digitsToNumber`:
 
-      Derive the reducer from this invariant: **the accumulator is the number represented by the prefix already consumed**. If that prefix represents 30, what must happen when the next digit is 7? Change the reducer, then write the accumulator values for `[1,0,2]` in a comment before testing.
+      - **Input:** a finite list of digits 0 through 9; leading zeroes are allowed.
+      - **Meaning:** `[3,0,7]` represents 307; `[]` represents 0.
 
-      Retrieval pause: why does `map` alone not produce this one-number result? Explain using the type of `map` from memory before revisiting Step 1.
+      1. **Derive** the reducer: the accumulator represents the prefix already
+         consumed. If it represents 30, what must happen when 7 arrives?
+      2. **Implement**, then record accumulator values for `[1,0,2]` in a comment
+         **before testing**.
+      3. **Recall:** why can `map` alone not produce this one-number result?
+         Explain using its type from memory before revisiting Step 1.
     files:
       - path: Main.hs
         language: haskell
@@ -1280,13 +1315,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      A report may need both accepted and rejected record counts, and a
-      parser may need both its current position and the result built so
-      far. **An accumulator makes that evolving state explicit** as inputs
-      to the next recursive call. Choosing what each component means helps
-      you check that every branch updates the right facts and preserves
-      the others. Here, a pair of counts gives you practice reasoning about
-      several related pieces of state in one traversal.
+      One traversal can track several facts, such as accepted and rejected
+      counts. **An accumulator passes that state explicitly** to the next call.
+      Choosing each component's meaning helps you update the right count while
+      preserving the other.
 
       ### 🎯 You will learn to
 
@@ -1342,13 +1374,23 @@ steps:
 
       ### Your Turn
 
-      Fix `tallyFrom`. Its accumulator is a pair of `Int` counts `(yes, no)`. For each input item, add one to `yes` if the predicate returns `True`; otherwise add one to `no`. Leave the other count unchanged. Empty input returns the initial pair. Initial counts are nonnegative, and repeated items count separately.
+      Fix `tallyFrom` using the accumulator `(yes, no) :: (Int, Int)`:
 
-      For example, `tallyFrom (2,1) null ["","oak",""]` returns `(4,2)`: two more empty strings and one more nonempty string. The same function must also accept predicates on numbers, Boolean values, or lists.
+      - **True predicate:** add one to `yes`; otherwise add one to `no`.
+      - **Preserve** the other count; count repeated items separately.
+      - **Empty input:** return the initial pair. Initial counts are nonnegative.
+      - **Generic inputs:** support predicates on numbers, Booleans, and lists.
 
-      Keep the call recursive and pass the updated pair to the tail call. Explain why each branch updates exactly one count. Then write the type of `tallyFrom (2,1) null` in a comment. The count pair is fixed, but the element type of each list tested by `null` remains arbitrary.
+      For example, `tallyFrom (2,1) null ["","oak",""]` returns `(4,2)`:
+      two more empty strings and one more nonempty string.
 
-      Also derive the type of `tallyFrom (2,1)` with **only the seed supplied**. What arguments are still missing? Write your answer before opening the check. This is a manual type exercise; Test My Work checks the counting behavior.
+      1. **Implement** recursively, passing the updated pair to the tail call.
+         Explain why each branch changes exactly one count.
+      2. **Derive** `tallyFrom (2,1) null`'s type in a comment. The count pair is
+         fixed; the element type of each list tested by `null` remains arbitrary.
+      3. **Derive** `tallyFrom (2,1)`'s type with **only the seed supplied**.
+         Which arguments remain? Write before opening the check. This type exercise
+         is manual; Test My Work checks counting behavior.
 
       <details markdown="1">
       <summary>Check the type after supplying only the seed</summary>
@@ -1507,13 +1549,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      Finding the first few matches in a large sequence should not require
-      constructing every possible candidate first. **Lazy lists let the
-      requested result drive how much input is explored**, an idea you will
-      also encounter with iterators and generators. But asking for a few
-      results can still require an endless search if enough matches never
-      appear. Reasoning about demand helps you design useful pipelines and
-      explain why an apparently small request does not finish.
+      **Demand controls how much of a lazy list is explored**, so requesting a
+      few results need not construct the whole input. But a search can still
+      run forever if enough matches never appear. Reasoning about both demand
+      and available matches explains that difference.
 
       ### 🎯 You will learn to
 
@@ -1529,7 +1568,10 @@ steps:
 
       ### Demand Drives Evaluation
 
-      Haskell is **lazy**: it evaluates expressions when their values are needed. `[1..]` describes an unbounded list, while `take 3 [1..]` only needs `[1,2,3]`. Printing the entire unbounded list or computing its length cannot finish.
+      An endless feed, but with a stopping rule: `take 3 [1..]` needs only
+      `[1,2,3]`. Haskell is **lazy**: demand drives evaluation. Printing all of
+      `[1..]` or computing its length cannot finish. Predict what remains
+      unneeded when you request three items.
 
       `take n` asks for at most `n` items. We can use each number in `[0..]` as a requested prefix length: `map (\n -> take n "road") [0..]` begins `["","r","ro","roa","road",...]`. Once the requested length exceeds the word length, each later prefix is still "road". Taking a finite number of these prefixes gives a finite result.
 
@@ -1563,11 +1605,23 @@ steps:
 
       ### Your Turn
 
-      Fix `firstMatches n predicate items`. It must return up to the first `n` matching items in input order. It must stop once it has enough matches, even when the input continues forever. The count `n` is nonnegative; a count of zero returns `[]`, even if an infinite input has no matches: zero requested results require no search. If a finite input runs out, return the matches found so far.
+      Fix `firstMatches n predicate items`:
 
-      For example, requesting two prefixes of length at least two from the growing "road" prefixes should give `["ro","roa"]`. From the finite input `["a","oak","b"]`, requesting three strings of length at least two gives only `["oak"]`.
+      - Return up to the first `n` **matching items**, preserving input order.
+      - **Stop when enough match**, even if the input continues forever.
+      - `n` is nonnegative. **Zero returns `[]` without searching**, even on an
+        infinite input with no matches.
+      - If finite input runs out, return the matches found.
 
-      Decide whether the bound applies before or after selection. Add a finite example with fewer matches than requested and a zero-count example to `main`. For positive counts, the checks use infinite inputs only when enough matches occur after a finite prefix.
+      Examples for strings of length at least two:
+
+      - Two matches from growing "road" prefixes: `["ro","roa"]`.
+      - Three requested from `["a","oak","b"]`: only `["oak"]`.
+
+      1. **Decide** whether to bound before or after selection, then implement.
+      2. **Check** a finite input with too few matches and a zero-count case in `main`.
+         Positive-count tests use infinite inputs only when enough matches occur
+         within a finite prefix.
 
       ### A Bound Still Needs Matches
 
@@ -1767,13 +1821,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      In Python or C++, `total = total + song` adds the numbers on that line.
-      A Haskell call such as `minutesPlayed (played + song) songs` passes the
-      expression `played + song` instead: **the numbers are added only when
-      something needs the total**. Knowing when work actually happens explains
-      why a long running total can hold memory, why an error can surface late
-      or never, and how a program can stop before asking for data it does not
-      need.
+      In Python or C++, `total = total + song` computes a sum immediately.
+      A Haskell call can pass `played + song` **without computing it yet**.
+      Understanding demand explains retained memory, delayed errors, and why
+      unneeded input can remain untouched.
 
       ### 🎯 You will learn to
 
@@ -1782,12 +1833,12 @@ steps:
 
       ### What this program does
 
-      A music app queues songs for a bus ride. `minutesPlayed played songs` adds
-      each song's minutes to the minutes already played.
-      `queueForRide ride queued songs` should keep adding songs until the queued
-      minutes cover the ride. Songs download one at a time, so the list can
-      continue with songs that do not exist yet: `stillDownloading` stops the
-      program if anything asks for them.
+      The bus playlist needs twenty minutes of music, not your entire
+      musical identity. `minutesPlayed played songs` totals song durations.
+      `queueForRide ride queued songs` should stop adding songs once the queued
+      minutes cover the ride. The remaining list can include unavailable songs:
+      `stillDownloading` fails if demanded. That error stands in for unavailable
+      data; it does not perform an actual download.
 
       ### A Running Total That Waits
 
@@ -1815,18 +1866,18 @@ steps:
 
       ### Step Through It
 
-      1. Choose **Debug**. The first few steps evaluate `main` to an `IO`
+      1. **Choose** **Debug**. The first few steps evaluate `main` to an `IO`
          action; running that action is what prints. Choose **Step Into**
          until the step description reads **Demand minutesPlayed**.
-      2. Keep choosing **Step Into**. At each **Demand minutesPlayed**, read
-         **Arguments**. The second call receives `played + song`, marked
-         *supplied*: the call starts before its argument is computed.
+      2. At the second **Demand minutesPlayed**, read **Arguments**, then select
+         its caller: the box marks the call. `played + song` is marked
+         *supplied*, not computed. Predict before stepping again.
       3. Stop at **Use equation 1: minutesPlayed played []**. Starting with the
          oldest call at the bottom of **Call Stack**, select each call and read
          `played` and `song` under **Pattern bindings**. A supplied expression
          uses the names of the call that wrote it. Rewrite the third call's
          `played` using only numbers.
-      4. Choose **Step Into** once more to see the result, `15`. Select the
+      4. **Choose** **Step Into** once more to see the result, `15`. Select the
          calls again: their `played` values are now `10`, `12`, and `15`.
 
       Make your prediction and finish the walkthrough, then click **Show answer and explanation** to compare your reasoning.
@@ -1859,26 +1910,28 @@ steps:
 
       ### Your Turn
 
-      Replace the placeholder definition of `queueForRide`. Add songs to
-      `queued` in order. As soon as `queued` is at least `ride`, return
-      `queued` **without examining `songs` again**, not even to check whether
-      another song exists: asking for the next song waits for its download. If
-      the songs run out first, return the minutes queued so far. Minutes are
-      never negative.
+      Replace `queueForRide`'s placeholder using this contract:
 
-      - `queueForRide 20 0 [8, 9, 7, 6]` returns `24`: the totals are 8, 17, and then 24, which covers the ride. The 6 is never needed.
-      - `queueForRide 17 0 [8, 9, 5]` returns `17`: a total equal to the ride covers it.
-      - `queueForRide 20 25 stillDownloading` returns `25` without asking for a song.
+      - Add songs to `queued` **in order**; minutes are nonnegative.
+      - When `queued >= ride`, return `queued` **without examining `songs` again**,
+        even to check whether another song exists.
+      - If songs run out first, return the minutes queued so far.
+
+      Examples:
+
+      - `queueForRide 20 0 [8, 9, 7, 6]` returns `24`: totals 8, 17, 24 cover
+        the ride. The 6 is never needed.
+      - `queueForRide 17 0 [8, 9, 5]` returns `17`: equality covers the ride.
+      - `queueForRide 20 25 stillDownloading` returns `25` without requesting a song.
       - `queueForRide 30 12 []` returns `12`.
 
-      `main` also queues three downloaded songs followed by `stillDownloading`.
-      When your function is correct, Run prints `24` on its second line. The
-      message *asked for a song that is still downloading* means that an
-      equation looked further than it needed to.
-
-      Then debug your solution and compare it with `minutesPlayed`. When is
-      each call's `queued` observed now, and what demands it? Which of your
-      equations could ask for `stillDownloading`?
+      1. **Implement**, then run `main`: three downloaded songs precede
+         `stillDownloading`. A correct solution prints `24` on its second line.
+         *Asked for a song that is still downloading* means a pattern or condition
+         demanded too much input.
+      2. **Debug and compare** with `minutesPlayed`: when is each call's `queued`
+         observed, and what demands it? Which equation could request
+         `stillDownloading`? Use the boxed source to explain your answer.
     files:
       - path: Main.hs
         language: haskell
@@ -2084,14 +2137,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      Reports and search features often combine selection, transformation,
-      and aggregation, and **changing their order can change the answer**.
-      A pipeline can run without errors and still answer a different
-      question from the one its users asked. Building the playlist
-      report practices turning a written requirement into stages whose
-      inputs and outputs you can check separately. That decomposition helps
-      you review and modify data-processing code without losing track of
-      what the whole program is supposed to mean.
+      Selection, transformation, and aggregation can form a useful pipeline—or
+      answer the wrong question in the wrong order. **Check each stage's input
+      and output against the requirement.** This makes a whole report easier
+      to explain, test, and modify.
 
       ### 🎯 You will learn to
 
@@ -2140,9 +2189,17 @@ steps:
 
       ### Your Turn
 
-      Implement `playlistReport` using the techniques you can now choose among. The signature and a sample input are provided; the decomposition is yours. A tuple pattern such as `(title, score)` lets a helper access both fields. Alternatively, `fst` and `snd` obtain the first and second components of a pair.
+      Implement `playlistReport`. The signature and sample are supplied;
+      **you choose the decomposition**.
 
-      Before selecting **Test My Work**, add two examples to `main`: one that would expose a wrong cutoff boundary, and one that would expose counting each title only once. Add a short comment explaining the types between your chosen stages and why no input binding changes.
+      - A tuple pattern `(title, score)` exposes both fields to a helper.
+      - Alternatively, `fst` and `snd` obtain the first and second components.
+
+      1. **Implement** using the techniques you can now choose among.
+      2. **Add two examples** to `main`: one exposing a wrong cutoff boundary,
+         another exposing counting each title only once.
+      3. **Explain** the types between stages and why no input binding changes
+         in a short comment; then select **Test My Work**.
 
       ### A Later Retrieval Check
 

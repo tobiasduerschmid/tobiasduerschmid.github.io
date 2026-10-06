@@ -126,6 +126,23 @@ main = print (countAtLeast 60 [60,59,60])
     expect(selected.stack.at(-1).local_bindings.contribution).toMatchObject({
       repr: 'if x >= threshold then 1 else 0', note: 'not observed',
     });
+    // Source focus belongs to this recorded event, even after later calls and
+    // results are collected. Caller focus names the demanded application.
+    expect(selected.source_focus).toMatchObject({
+      role: 'body', text: 'contribution + countAtLeast threshold xs',
+    });
+    expect(calls[0].source_focus).toMatchObject({ role: 'definition', text: 'countAtLeast' });
+    expect(calls[1].stack.at(-2).source_focus).toMatchObject({
+      role: 'application', text: 'countAtLeast threshold xs',
+    });
+    expect(trace.find(s => s.event === 'test').source_focus).toMatchObject({
+      role: 'condition', text: 'x >= threshold',
+      range: { startLineNumber: 5, startColumn: 27, endLineNumber: 5, endColumn: 41 },
+    });
+    expect(bindings[0].source_focus).toMatchObject({
+      role: 'binding', text: 'if x >= threshold then 1 else 0',
+    });
+    expect(returned.at(-1).source_focus).toEqual(selected.source_focus);
   });
 
   for (const [expression, output, callCount] of [

@@ -4382,7 +4382,7 @@
     var frameIdx = this.selectedFrameIdx >= 0 ? this.selectedFrameIdx : (snap.stack.length - 1);
     var frame = this.displayFrameForSnapshot(snap, frameIdx);
     if (!frame) { this.clearCurrentLineDecoration(); return; }
-    var line = frame.line;
+    var line = frame.source_focus ? frame.source_focus.range.startLineNumber : frame.line;
     // Map worker filename (`/tutorial/foo.py`) to Monaco model URI
     var fname = frame.file.replace(/^\/tutorial\//, '');
     var activeBefore = this.t.activeFileName;
@@ -4427,6 +4427,8 @@
         },
       },
     ];
+    var expression = window.SEBookDebuggerEditor.sourceFocusDecoration(model, frame.source_focus);
+    if (expression) deco.push(expression);
     this.clearCurrentLineDecoration();
     var prev = editor._dbgCurrentLineIds || [];
     editor._dbgCurrentLineIds = editor.deltaDecorations(prev, deco);

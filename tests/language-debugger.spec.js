@@ -269,12 +269,16 @@ main = print (countAtLeast 60 [60,59,60])
   await expect(variables).toContainText('selected');
   await expect(variables).toContainText('x >= threshold → True');
   await expect(variables).toContainText('Result: 2');
+  await expect(page.getByRole('status', { name: 'Source focus' }))
+    .toContainText('contribution + countAtLeast threshold xs');
   await expect(variables.getByRole('button', { name: 'Local bindings', exact: true })).toBeVisible();
   await expect(variables).toContainText('contribution');
   // Rewinding to the first call must still show its actual supplied arguments,
   // rather than needing to advance until the computation has demanded them.
   const firstCall = page.getByRole('button', { name: /Demand countAtLeast/ }).first();
   await firstCall.press('Enter');
+  await expect(page.getByRole('status', { name: 'Source focus' }))
+    .toContainText('Demanded function');
   await expect(page.getByRole('region', { name: 'Call Stack', exact: true }))
     .toContainText('countAtLeast 60 [60, 59, 60]');
   await expect(variables).toContainText('[60, 59, 60]');
@@ -289,6 +293,60 @@ main = print (countAtLeast 60 [60,59,60])
   const popup = await popupPromise;
   await expect(popup.getByRole('region', { name: 'Variables', exact: true })).toContainText('[60, 59, 60]');
   await expect(popup.getByRole('region', { name: 'Variables', exact: true })).toContainText('Result: 2');
+  await expect(popup.getByRole('status', { name: 'Source focus' }))
+    .toContainText('contribution + countAtLeast threshold xs');
   await popup.close();
   expect(errors).toEqual([]);
 });
+
+for (const dark of [false, true]) {
+  test(`Haskell expression focus follows history and detached editors in ${dark ? 'dark' : 'light'} mode`, async ({ page }) => {
+    test.setTimeout(180_000);
+    await openProgram(page, { ...PROGRAMS[1], source: `module Main where
+score :: Int -> Int
+score n
+  | n < 0 = 0
+  | otherwise =
+      subtotal
+        + 1
+  where
+    subtotal = if n > 4 then n * 2 else n + 2
+main = print (score 5)
+` });
+    const theme = page.getByRole('checkbox', { name: 'Toggle dark mode', exact: true });
+    if (dark) await theme.press('Space');
+    await expect(theme).toBeChecked({ checked: dark });
+    await startButton(page).click();
+    await expect(pausedStatus(page)).toBeVisible({ timeout: 90_000 });
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await expect(outputPanel(page)).toContainText('11');
+    // Completion retains the final recorded result. Its label must describe
+    // a result, not suggest another expression is waiting to be evaluated.
+    const highlights = target => target.locator('.monaco-editor .tvm-debug-current-expression');
+    const highlightedText = async target => (await highlights(target).allTextContents()).join('').replace(/\s/g, '');
+    await expect(page.getByRole('status', { name: 'Source focus' })).toContainText('Result expression');
+    await expect.poll(() => highlightedText(page)).toBe('subtotal+1');
+    await page.getByRole('button', { name: /Use equation 1: score n/ }).click();
+    await expect(page.getByRole('status', { name: 'Source focus' })).toContainText('lines 6–7');
+    await expect.poll(() => highlightedText(page)).toBe('subtotal+1');
+    const condition = page.getByRole('button', { name: /Check if: n > 4/ });
+    await condition.click();
+    await expect.poll(() => highlightedText(page)).toBe('n>4');
+    await expect(page.getByRole('status', { name: 'Source focus' }))
+      .toContainText('line 9, columns 19–23');
+    await a11yCheckpoint(page, `Haskell source focus ${dark ? 'dark' : 'light'}`, { feature: 'language-debugger' });
+
+    const popupPromise = page.waitForEvent('popup');
+    await page.getByRole('button', { name: 'Open Main.hs in a separate window', exact: true }).click();
+    const popup = await popupPromise;
+    await expect.poll(() => highlightedText(popup)).toBe('n>4');
+    await page.getByRole('button', { name: /Check guard: n < 0/ }).click();
+    await expect.poll(() => highlightedText(popup)).toBe('n<0');
+    await popup.close();
+
+    // After source edits, an old range must not box unrelated replacement text.
+    expect(await setEditorContent(page, 'module Main where\nmain = print (99 :: Int)\n')).toBe(true);
+    await condition.click();
+    await expect(highlights(page)).toHaveCount(0);
+  });
+}
