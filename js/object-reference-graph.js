@@ -244,19 +244,19 @@
     card.setAttribute('aria-label', object.id + ': ' + object.type);
     if (interactive) card.tabIndex = -1;
     const title = element('p', 'orl-object-title');
-    title.append(element('span', 'orl-object-id', object.id), element('span', 'orl-object-type', object.type));
+    title.append(element('span', 'orl-object-type', object.type));
     card.append(title);
     const entries = element('div', 'orl-entries');
     (object.entries || []).forEach(entry => {
       const target = nodes.get(entry.target);
       if (!target) return;
-      const item = element('div', 'orl-entry has-reference');
-      item.append(element('span', 'orl-reference-name', entry.label === '__class__' ? 'class' : entry.label));
-      const follow = element(interactive ? 'button' : 'span', 'orl-reference-target', '→ ' + entry.target);
+      const item = element('div', 'orl-entry');
+      const label = entry.label === '__class__' ? 'class' : entry.label;
+      const follow = element(interactive ? 'button' : 'span', 'orl-reference-name orl-reference-target', label);
       if (interactive) follow.type = 'button';
       follow.dataset.referenceTarget = entry.target;
       follow.dataset.referenceId = object.id + ':' + entry.label;
-      follow.setAttribute('aria-label', 'Follow ' + entry.label + ' to ' + entry.target + ': ' + target.type);
+      follow.setAttribute('aria-label', 'Follow ' + label + ' to ' + entry.target + ': ' + target.type);
       item.append(follow);
       entries.append(item);
     });

@@ -482,11 +482,6 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
   margin: 0 0 0.3em;
 }
 
-.orl-object-id {
-  color: var(--orl-edge);
-  font-family: var(--font-mono, monospace);
-}
-
 .orl-object-type { font-weight: 600; }
 .object-reference-lab .orl-value { margin: 0; }
 
@@ -504,31 +499,28 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
   min-width: 0;
 }
 
-.orl-entry.has-reference {
-  flex-basis: 100%;
-  justify-content: space-between;
-}
 .orl-entry + .orl-entry { border-top: 1px solid var(--orl-divider); }
-.orl-entry.has-reference > .orl-reference-target { margin-inline-start: auto; }
 
 .object-reference-lab .orl-reference-target {
-  min-width: 32px;
+  display: inline-flex;
+  align-items: center;
+  min-width: 24px;
   min-height: 32px;
   max-width: 100%;
-  padding: 0.1em 0.3em;
-  border: 1px solid var(--orl-border);
-  border-radius: var(--radius-sm, 4px);
-  background: var(--orl-panel);
-  color: var(--orl-edge);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--orl-text);
   font-family: var(--font-mono, monospace);
-  font-weight: 600;
+  font-weight: inherit;
+  text-align: start;
   white-space: normal;
   overflow-wrap: anywhere;
   cursor: pointer;
 }
 
 .orl-reference-target:hover {
-  border-color: var(--orl-edge);
   text-decoration: underline;
 }
 
@@ -563,7 +555,7 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
 .orl-static-measure .orl-change-status,
 .orl-print .orl-change-status { display: none; }
 
-.object-reference-lab :is(.orl-object, .orl-binding, .orl-reference-target).is-updated {
+.object-reference-lab :is(.orl-object, .orl-binding).is-updated {
   border-color: var(--orl-edge);
   box-shadow: 0 0 0 2px var(--orl-highlight), 0 0 12px 2px color-mix(in srgb, var(--orl-highlight) 45%, transparent);
 }
@@ -671,7 +663,7 @@ html.dark-mode .post-content .object-reference-lab :is(svg.orl-local-edges, svg.
   align-items: center;
   min-height: 0;
   min-width: 0;
-  padding: 0.15em 0.4em;
+  padding: 0;
   cursor: default;
 }
 
