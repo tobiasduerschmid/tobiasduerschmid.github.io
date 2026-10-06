@@ -185,7 +185,7 @@ html.dark-mode .post-content .compiler-lab svg.compiler-lab-tree-edges { filter:
 /* Compiler work keeps grammar/source beside the tree; divider axes match the runtime. */
 @media screen and (min-width: 901px) {
   .compiler-tutorial .tvm-container { flex-direction: column; }
-  .compiler-tutorial .tvm-instructions-panel { flex: 0 0 26%; min-height: 0; }
+  .compiler-tutorial .tvm-instructions-panel { flex: 0 0 36%; min-height: 0; }
   .compiler-tutorial .tvm-step-content-wrap { padding-block: 0.6em; }
   .compiler-tutorial .tvm-workspace { flex-direction: row; }
   .compiler-tutorial .tvm-editor-panel { flex: 0 0 44%; min-width: 0; }
