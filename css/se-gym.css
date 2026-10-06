@@ -2410,7 +2410,7 @@
 
     /* Chrome profile sync download */
     #se-gym-app .gym-profile-sync {
-      margin: 0 0 var(--sp-xl, 24px);
+      margin: 30px 0 0;
       padding: var(--sp-lg, 16px);
       border: 1px solid var(--color-border, #d8dde2);
       border-radius: var(--radius-lg, 12px);
