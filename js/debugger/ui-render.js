@@ -372,13 +372,39 @@
 
   // -- Variables ------------------------------------------------------------
 
+  function renderHaskellFocus(frame, snap, current, escape) {
+    const focus = frame.source_focus;
+    if (!focus) return '';
+    const labels = {
+      definition: 'Demanded function', pattern: 'Equation patterns', body: 'Selected body',
+      guard: 'Guard expression', condition: 'If condition', binding: 'Local binding expression',
+      application: 'Demanded call in this frame',
+    };
+    const range = focus.range;
+    const location = range.startLineNumber === range.endLineNumber
+      ? 'line ' + range.startLineNumber + ', columns ' + range.startColumn + '–' + (range.endColumn - 1)
+      : 'lines ' + range.startLineNumber + '–' + range.endLineNumber;
+    const excerpt = focus.text.length > 400;
+    const text = excerpt ? focus.text.slice(0, 397) + '…' : focus.text;
+    const label = current && snap.event === 'return' ? 'Result expression'
+      : labels[focus.role] || 'Source expression';
+    return '<div class="tvm-debug-source-focus" role="status" aria-label="Source focus" aria-atomic="true">' +
+      '<strong>' + escape(label) + '</strong>' +
+      '<span>' + escape(location) + (excerpt ? ' · excerpt' : '') +
+      (!current ? ' · suspended frame' : '') + '</span>' +
+      '<code>' + escape(text) + '</code></div>';
+  }
+
   function renderHaskellFrame(frame, snap, helpers) {
     const escape = helpers.escape;
     const current = frame.call_id === snap.call_id;
     let html = current ? '<p class="tvm-debug-haskell-step"><strong>' + escape(snap.description) + '</strong></p>' : '';
+    html += renderHaskellFocus(frame, snap, current, escape);
     const explanation = {
       call: 'This result is needed now. Its arguments need not be evaluated first.',
-      select: 'Use the selected equation with these pattern bindings. Each call has its own bindings.',
+      select: 'Use this body with the current call’s bindings. Highlighting the body does not mean every part is evaluated.',
+      test: 'The condition is needed to choose a branch. Predict True or False before stepping.',
+      binding: 'This local value is needed now. Its definition was not an assignment executed earlier.',
       return: 'The outer result is available. Parts inside a list or other structure may still be delayed.',
     }[snap.event];
     if (current && explanation) html += '<p class="tvm-debug-language-note">' + escape(explanation) + '</p>';
@@ -408,6 +434,9 @@
       html += '<p class="tvm-debug-haskell-result"><strong>Result:</strong> <code>' + escape(snap.return_value.repr) + '</code></p>';
     }
     html += '<details class="tvm-debug-haskell-guide"><summary>How to read these values</summary>' +
+      '<p>The boxed source marks the expression or patterns for this recorded event. This is a demand trace, not a step for every arithmetic operation. ' +
+      'Before stepping, predict which equation applies or which value is needed; afterward, explain what the event tells you. ' +
+      'Use a small input and Step Back to compare calls: each call has its own immutable bindings.</p>' +
       '<p>Calls show supplied arguments immediately when their call site is available. “Supplied” means the preview includes source expressions or forwarded bindings, not evidence that they were evaluated. ' +
       'Computed expressions are replaced by observed values as the program uses them.</p>' +
       '<p><code>_</code> means not observed yet, with no supplied expression available. Inspecting this panel does not evaluate arguments. ' +

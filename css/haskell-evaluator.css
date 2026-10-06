@@ -87,7 +87,8 @@ html.dark-mode .haskell-example {
 #main-content .haskell-evaluator-help { margin: .5em 0 0; }
 .haskell-evaluator-help summary { cursor: pointer; min-height: 1.5em; }
 .haskell-evaluator-help p { overflow-wrap: anywhere; }
-.haskell-evaluator-help a { color: var(--he-accent); text-decoration: underline; }
+.haskell-evaluator-help a,
+.haskell-evaluator-help a:visited { color: var(--he-accent); text-decoration: underline; }
 .haskell-evaluator-loading { display: flex; align-items: center; gap: .65em; margin-block: .75em; }
 .haskell-evaluator-spinner {
   display: inline-block;

@@ -177,6 +177,7 @@
           note: observed ? '' : 'not observed', expression: binding.expression };
       }
       return { function: frame.function, file: frame.file, line: frame.line,
+        source_focus: frame.source_focus,
         first_line: frame.first_line, call_id: frame.call_id, locals, local_bindings,
         arguments: args, invocation: frame.function + args.map(arg => {
           const atomic = /^(?:_|True|False|[0-9]+(?:\.[0-9]+)?|\[.*\]|\(.*\)|'.*')$/.test(arg.repr);
@@ -202,6 +203,7 @@
         const origin = this.sites.get(application?.site);
         if (origin?.callee === site.function && origin.file === site.file) {
           const caller = this.calls.get(application.context);
+          if (caller) caller.source_focus = origin.source_focus;
           const known = caller ? knownValues(caller) : new Map();
           origin.arguments.forEach((argument, i) => supply(frame.supplied, 'arg' + i, argument, known));
         }
@@ -211,6 +213,9 @@
       const frame = this.calls.get(context);
       if (!frame) return;
       if (event !== 'return') frame.line = site.line;
+      if (event === 'select') frame.result_focus = site.body_focus;
+      frame.source_focus = event === 'return' ? frame.result_focus
+        : event === 'select' ? site.body_focus : site.source_focus;
       const equation = frame.equations.find(eq => eq.id === site.id || eq.id === site.equation);
       if (['match', 'select', 'binding', 'bound'].includes(event)) {
         const definition = this.sites.get(site.equation ?? site.id);
@@ -247,6 +252,7 @@
       const deferred = !this.frames.includes(frame);
       const stack = deferred ? [...this.frames, frame] : this.frames;
       const snapshot = { event, file: site.file, line: event === 'return' ? frame.line : site.line,
+        source_focus: frame.source_focus,
         depth: stack.length, call_id: context, description,
         deferred, stack: stack.map(f => this.snapshotFrame(f)), watches: this.watchResults() };
       if (event === 'return') {

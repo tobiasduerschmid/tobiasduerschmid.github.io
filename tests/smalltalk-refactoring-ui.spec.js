@@ -4,6 +4,7 @@ const expect = standardExpect.configure({ timeout: 30000 });
 const fs = require('node:fs');
 const { mountSmalltalkFixture } = require('./helpers/smalltalk-runtime');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
 test.setTimeout(180000);
 const source = fs.readFileSync(require('node:path').join(__dirname, 'fixtures/smalltalk/refactorings.st'), 'utf8');
 const program = { version: 1, revision: 0, files: [{ path: '/fixture.st', kind: 'source', format: 'filein', content: source }], changes: { version: 1, source: '', entries: [] }, runCommand: null };
@@ -219,7 +220,7 @@ test('Versions preserves a method draft and restores its captured target after n
     await page.getByRole('button', { name: 'Versions', exact: true }).click();
     await page.getByRole('button', { name: /^Select version 1(?:\s|$)/ }).click();
     const editor = page.getByRole('textbox', { name: /^Smalltalk method source/ });
-    await editor.focus(); await editor.press('ControlOrMeta+A');
+    await editor.focus(); await selectAllInMonaco(editor);
     await expect.poll(() => editor.evaluate(input => input.value.length > 0 && input.selectionStart === 0 && input.selectionEnd === input.value.length), { message: 'Monaco select-all is ready before replacing source' }).toBe(true);
     await page.keyboard.insertText('oldSelector ^ 81');
     await page.getByRole('button', { name: 'Restore version', exact: true }).click();

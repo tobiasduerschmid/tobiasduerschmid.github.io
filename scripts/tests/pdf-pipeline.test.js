@@ -29,6 +29,7 @@ const {
   configuredNavPaths,
 } = require('../pdf-pipeline-config');
 const { assertPdfToolsAvailable } = require('../pdf-tools');
+const { chromiumLaunchOptions } = require('../chromium-launch-options');
 
 const repositoryRoot = path.resolve(__dirname, '../..');
 
@@ -216,7 +217,7 @@ test('PDF headers escape navigation categories and rendered page titles', async 
 });
 
 test('PDF intro puts a readable, aligned table of contents directly after its title', async (t) => {
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(chromiumLaunchOptions());
   t.after(() => browser.close());
   const page = await browser.newPage();
   await page.route('https://fonts.googleapis.com/**', route => route.abort());

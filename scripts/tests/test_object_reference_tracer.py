@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 import runpy
+import sys
 import textwrap
 import unittest
 
@@ -88,27 +89,35 @@ class ObjectReferenceTracerTests(unittest.TestCase):
                 self.assertTrue(definition.get("skipPlayback"))
                 self.assertFalse(body.get("skipPlayback", False))
 
-    def test_playback_keeps_effectful_defaults_annotations_decorators_and_bases(self):
+    def assert_definition_effect_stays_visible(self, definition):
+        result = trace("events = []\ndef effect(value):\n    events.append(value)\n    return value\n"
+                       + definition)
+        self.assertIsNone(result["error"])
+        effect_header = next(step for step in result["steps"] if step["event"] == "line"
+                             and step["line"] == 5 and len(step["scopes"]) == 1)
+        self.assertFalse(effect_header.get("skipPlayback", False))
+        effect_body = [step for step in result["steps"] if step["event"] == "line"
+                       and step["scopes"][-1]["name"] == "effect"]
+        self.assertTrue(effect_body)
+        self.assertTrue(all(not step.get("skipPlayback") for step in effect_body))
+        self.assertEqual(len(entries(result["steps"][-1], bindings(result["steps"][-1])["events"])), 1)
+
+    def test_playback_keeps_effectful_defaults_decorators_and_bases(self):
         definitions = (
             "def sample(value=effect(3)):\n    return value",
-            "def sample(value: effect(int)):\n    return value",
             "@effect\ndef sample():\n    return 3",
             "class Sample(effect(object)):\n    pass",
             "@effect\nclass Sample:\n    pass",
         )
         for definition in definitions:
             with self.subTest(definition=definition):
-                result = trace("events = []\ndef effect(value):\n    events.append(value)\n    return value\n"
-                               + definition)
-                self.assertIsNone(result["error"])
-                effect_header = next(step for step in result["steps"] if step["event"] == "line"
-                                     and step["line"] == 5 and len(step["scopes"]) == 1)
-                self.assertFalse(effect_header.get("skipPlayback", False))
-                effect_body = [step for step in result["steps"] if step["event"] == "line"
-                               and step["scopes"][-1]["name"] == "effect"]
-                self.assertTrue(effect_body)
-                self.assertTrue(all(not step.get("skipPlayback") for step in effect_body))
-                self.assertEqual(len(entries(result["steps"][-1], bindings(result["steps"][-1])["events"])), 1)
+                self.assert_definition_effect_stays_visible(definition)
+
+    # The lab's Pyodide 0.27 runs Python 3.12, which evaluates annotations when
+    # the def executes. From 3.14 (PEP 649) they run only on first access.
+    @unittest.skipIf(sys.version_info >= (3, 14), "annotations are not evaluated at definition time")
+    def test_playback_keeps_effectful_annotations(self):
+        self.assert_definition_effect_stays_visible("def sample(value: effect(int)):\n    return value")
 
     def test_playback_skips_decorated_function_entry_but_preserves_decorator_execution(self):
         result = trace("""

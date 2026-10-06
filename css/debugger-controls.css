@@ -192,3 +192,33 @@ html.dark-mode .tvm-debug-haskell-guide summary:focus-visible { outline-color: #
   .tvm-debug-haskell-guide summary:focus-visible,
   html.dark-mode .tvm-debug-haskell-guide summary:focus-visible { outline-color: #111; }
 }
+.tvm-debug-source-focus {
+  display: grid;
+  gap: 0.3em;
+  margin-block: 0.6em;
+  padding: 0.6em;
+  border: 2px solid #9a6400;
+  border-radius: 4px;
+  background: #fff8dc;
+  color: #201a00;
+}
+.tvm-debug-source-focus code {
+  font-size: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: inherit;
+  background: transparent;
+}
+html.dark-mode .tvm-debug-source-focus {
+  border-color: #ffe083;
+  background: #302800;
+  color: #fff7d6;
+}
+@media print {
+  .tvm-debug-source-focus,
+  html.dark-mode .tvm-debug-source-focus {
+    border-color: #000;
+    background: #fff;
+    color: #000;
+  }
+}

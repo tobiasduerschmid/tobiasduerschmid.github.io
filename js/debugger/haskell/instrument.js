@@ -193,6 +193,42 @@
     return starts;
   }
 
+  // Monaco columns count UTF-16 units, including a tab as one unit. These
+  // ranges describe original source, independently of compiler diagnostics.
+  function sourceFocus(source) {
+    const starts = lineStarts(source);
+    function position(offset) {
+      let low = 0, high = starts.length;
+      while (low + 1 < high) {
+        const middle = (low + high) >>> 1;
+        if (starts[middle] <= offset) low = middle;
+        else high = middle;
+      }
+      return { line: low + 1, column: offset - starts[low] + 1 };
+    }
+    return function focus(start, end, role) {
+      while (start < end && /\s/.test(source[start])) start++;
+      while (end > start && /\s/.test(source[end - 1])) end--;
+      const from = position(start), to = position(end);
+      return { role, text: source.slice(start, end), range: {
+        startLineNumber: from.line, startColumn: from.column,
+        endLineNumber: to.line, endColumn: to.column,
+      } };
+    };
+  }
+
+  function bodyTokens(equation, rhs) {
+    const start = equation.block.indexOf(rhs.equals) + 1;
+    const next = equation.rhss[equation.rhss.indexOf(rhs) + 1];
+    const limit = next ? equation.block.indexOf(next.guard[0]) - 1 : equation.block.length;
+    const tokens = equation.block.slice(start, limit);
+    const where = tokens.findIndex(t => t.text === 'where' && t.depth === 0);
+    // A nested case/let can own a where clause too. Without parsing its layout,
+    // retain the full body and local scope rather than cut an expression short.
+    if (where >= 0 && tokens.slice(0, where).some(t => ['case', 'let', 'do', '\\'].includes(t.text))) return tokens;
+    return where < 0 ? tokens : tokens.slice(0, where);
+  }
+
   /** Map a generated line and optional column to the learner's source. */
   function locator(source, generated) {
     const sourceStarts = lineStarts(source), generatedStarts = lineStarts(generated.code);
@@ -222,6 +258,7 @@
 
   function instrument(source, filename, firstId = 0) {
     const tokens = syntax.tokenize(source);
+    const focus = sourceFocus(source);
     if (tokens.some(t => t.text === 'SEBookTrace' || t.text.startsWith('_sebook'))) throw new Error('The Haskell debugger reserves SEBookTrace and names starting with _sebook.');
     let body = tokens, importOffset = tokens[0]?.offset || 0;
     if (tokens[0]?.text === 'module') {
@@ -277,9 +314,11 @@
       const types = signatures.get(first.name) || [];
       const entry = site(first, { kind: 'entry', arity, argument_types: types.slice(0, arity).map(ts => source.slice(ts[0].offset, endOf(ts.at(-1)))), result_type: types.slice(arity).map(part => part.map(t => t.text).join(' ')).join(' -> ') });
       entry.equations = equations.map((eq, i) => {
-        eq.site = site(eq, { kind: 'equation', index: i, header: eq.header });
+        eq.site = site(eq, { kind: 'equation', index: i, header: eq.header,
+          source_focus: focus(eq.first.offset, eq.delimiter.offset, 'pattern') });
         return { id: eq.site.id, line: eq.first.line, header: eq.header };
       });
+      entry.source_focus = focus(first.first.offset, endOf(first.first), 'definition');
       const raw = Array.from({ length: arity }, (_, i) => '_sebookRaw' + i);
       const args = raw.map((_, i) => '_sebookArg' + i);
       const context = '_sebookContext';
@@ -316,7 +355,8 @@
         eq.site.local_bindings = localBindings.analyze(eq, source,
           types.length === arity + 1 ? types[arity] : null, allowPreludeOperators).map(binding => {
           const bindingSite = site(eq, { kind: 'binding', line: binding.line,
-            equation: eq.site.id, name: binding.name, expression: binding.expression });
+            equation: eq.site.id, name: binding.name, expression: binding.expression,
+            source_focus: focus(binding.rhs[0].offset, endOf(binding.rhs.at(-1)), 'binding') });
           const path = 'local' + bindingSite.id;
           bindingSite.path = path;
           localEdits.push({ offset: binding.rhs[0].offset - start,
@@ -327,19 +367,25 @@
             type: binding.typeTokens?.map(token => token.text).join(' ') || '' };
         });
         for (const call of callSites.find(eq.block.slice(eq.block.indexOf(eq.delimiter) + 1), source, functions, eq.bindings)) {
-          const application = site(eq, { kind: 'application', callee: call.callee, arguments: call.arguments });
+          const application = site(eq, { kind: 'application', callee: call.callee, arguments: call.arguments,
+            source_focus: focus(call.start, call.end, 'application') });
           localEdits.push({ offset: call.start - start, text: '(SEBookTrace.application ' + application.id + ' ' + context + ' (' });
           localEdits.push({ offset: call.end - start, text: '))' });
         }
         for (const rhs of eq.rhss) {
+          const body = bodyTokens(eq, rhs);
+          const bodyFocus = body.length ? focus(body[0].offset, endOf(body.at(-1)), 'body') : null;
           let selectedSite = eq.site;
           if (rhs.guard) {
-            selectedSite = site(eq, { kind: 'body', line: rhs.line, equation: eq.site.id, index: i, header: eq.header });
+            selectedSite = site(eq, { kind: 'body', line: rhs.line, equation: eq.site.id, index: i, header: eq.header,
+              source_focus: bodyFocus });
             const guardSite = site(eq, { kind: 'guard', line: rhs.line, equation: eq.site.id,
+              source_focus: focus(rhs.guard[0].offset, endOf(rhs.guard.at(-1)), 'guard'),
               expression: source.slice(rhs.guard[0].offset, endOf(rhs.guard.at(-1))).trim() });
             localEdits.push({ offset: rhs.guard[0].offset - start, text: 'SEBookTrace.condition ' + guardSite.id + ' ' + context + ' (' });
             localEdits.push({ offset: endOf(rhs.guard.at(-1)) - start, text: ')' });
           }
+          selectedSite.body_focus = bodyFocus;
           localEdits.push({ offset: endOf(rhs.equals) - start, text: ' SEBookTrace.step "select" ' + selectedSite.id + ' ' + context + ' SEBookTrace.$\n' + ' '.repeat(rhs.equals.indent) });
         }
         if (eq.delimiter.text === '|') localEdits.push({ offset: eq.delimiter.offset - start,
@@ -350,7 +396,9 @@
           if (token.text === 'if' && !/\bRebindableSyntax\b/.test(source)) pending.push(token);
           if (token.text === 'then' && pending.length) {
             const begin = pending.pop();
+            const condition = eq.block.slice(eq.block.indexOf(begin) + 1, eq.block.indexOf(token));
             const conditional = site(eq, { kind: 'condition', line: begin.line, equation: eq.site.id,
+              source_focus: condition.length ? focus(condition[0].offset, endOf(condition.at(-1)), 'condition') : null,
               expression: source.slice(endOf(begin), token.offset).trim() });
             localEdits.push({ offset: endOf(begin) - start, text: ' SEBookTrace.condition ' + conditional.id + ' ' + context + ' (' });
             localEdits.push({ offset: token.offset - start, text: ') ' });

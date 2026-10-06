@@ -2762,12 +2762,13 @@
     var mouth = svg.querySelector('[data-hero-slot="mouth-style"][display="inline"]');
     if (!head || !proportions || !mouth) return;
     var samples = [];
-    mouth.querySelectorAll('path').forEach(function (path) {
-      var matrix = localSvgMatrix(path, proportions);
-      var length = path.getTotalLength();
+    // Every painted shape counts: a soft lip shadow can sit below the lip paths.
+    mouth.querySelectorAll('path, ellipse, circle, rect').forEach(function (shape) {
+      var matrix = localSvgMatrix(shape, proportions);
+      var length = shape.getTotalLength();
       var steps = Math.max(2, Math.ceil(length / 3));
       for (var i = 0; i <= steps; i++) {
-        var point = path.getPointAtLength(length * i / steps);
+        var point = shape.getPointAtLength(length * i / steps);
         samples.push(new DOMPoint(point.x, point.y).matrixTransform(matrix));
       }
     });

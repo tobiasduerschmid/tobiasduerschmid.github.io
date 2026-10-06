@@ -1,10 +1,10 @@
 // @ts-check
 const { defineConfig, devices } = require('@playwright/test');
+const { chromiumLaunchOptions } = require('./scripts/chromium-launch-options');
 
 const requestedJekyllPort = process.env.JEKYLL_PORT || '4000';
 const jekyllPort = /^\d+$/.test(requestedJekyllPort) ? requestedJekyllPort : '4000';
 const jekyllHost = '127.0.0.1';
-const localChromeExecutable = process.env.PLAYWRIGHT_CHROME_EXECUTABLE;
 const defaultWebServerTimeoutMs = 10 * 60 * 1000;
 const requestedWebServerTimeoutMs = process.env.PLAYWRIGHT_WEB_SERVER_TIMEOUT_MS;
 const parsedWebServerTimeoutMs = Number(requestedWebServerTimeoutMs);
@@ -44,7 +44,7 @@ module.exports = defineConfig({
     baseURL: `http://${jekyllHost}:${jekyllPort}`,
     // Fail fast on page errors
     actionTimeout: 10000,
-    launchOptions: localChromeExecutable ? { executablePath: localChromeExecutable } : undefined,
+    launchOptions: chromiumLaunchOptions(),
   },
   projects: [
     {

@@ -120,9 +120,15 @@ exclude:
   - tmp
   - test-results
   - playwright-report
+  # Gitignored local material (private notes, generated PDFs, LaTeX output)
+  # never deploys, so local builds and their page audits must not publish it.
+  - notes
+  - pdfs
+  - latex
   # Render source for the SE Book teaser video; only the rendered files in
   # assets/video/ ship with the site.
   - scripts/sebook-teaser
+  - chrome-extension
 
 # Build settings
 strongdown: kramdown

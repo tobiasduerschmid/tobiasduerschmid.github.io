@@ -11131,6 +11131,9 @@
     const remapIndex = index => Number.isInteger(index) && index >= 0
       ? currentKeys.indexOf(trustedKeys[index]) : -1;
     const remapped = Object.assign({}, data);
+    // Attribute path-only drafts through the trusted mapping now: the resume
+    // fallback below can name a lesson that never contained this code.
+    if (data.stepFiles === undefined) this._attributeLegacyDrafts(remapped, remapIndex(data.step));
     ['stepsUnlocked', 'stepsVisited', 'stepsPassed', 'quizPassed'].forEach(field => {
       const indices = Array.isArray(data[field]) ? data[field] : [];
       remapped[field] = [...new Set(indices.map(remapIndex).filter(index => index >= 0))];
@@ -11174,26 +11177,29 @@
     }
   };
 
+  // Old saves had only one version per path. Attribute it solely to the lesson
+  // it was saved in, never to every lesson that reuses that path. When that
+  // lesson no longer exists, the draft stays preserved under `files`, where no
+  // reseeded lesson shows it.
+  TutorialCode.prototype._attributeLegacyDrafts = function (data, lessonIndex) {
+    data.files = Object.assign({}, data.files);
+    data.stepFiles = {};
+    const lesson = this.steps[lessonIndex];
+    const key = this._draftStepKey(lessonIndex);
+    for (const file of (lesson && lesson.files) || []) {
+      if (!file.reseed || !Object.hasOwn(data.files, file.path)) continue;
+      data.stepFiles[key] = Object.assign({}, data.stepFiles[key], { [file.path]: data.files[file.path] });
+      delete data.files[file.path];
+    }
+  };
+
   TutorialCode.prototype._draftProgress = function (readStored = this.autoSaveEnabled) {
     const saved = readStored ? this._loadSavedProgress(false) : null;
     const data = saved || {};
-    const legacyFiles = data.stepFiles === undefined;
+    // Versioned tutorials attribute these while remapping lessons.
+    if (data.stepFiles === undefined) this._attributeLegacyDrafts(data, data.step);
     data.files = Object.assign({}, data.files);
     data.stepFiles = Object.assign({}, data.stepFiles);
-    // Old saves had only one version per path. Attribute it solely to the
-    // recorded resume lesson, never to every lesson that reuses that path.
-    const savedStep = this.steps[data.step];
-    if (legacyFiles && savedStep) {
-      const key = this._draftStepKey(data.step);
-      for (const file of savedStep.files || []) {
-        if (!file.reseed || !Object.hasOwn(data.files, file.path)) continue;
-        data.stepFiles[key] = Object.assign({}, data.stepFiles[key]);
-        if (!Object.hasOwn(data.stepFiles[key], file.path)) {
-          data.stepFiles[key][file.path] = data.files[file.path];
-        }
-        delete data.files[file.path];
-      }
-    }
     Object.assign(data.files, this._sessionDrafts.files);
     for (const [key, files] of Object.entries(this._sessionDrafts.stepFiles)) {
       data.stepFiles[key] = Object.assign({}, data.stepFiles[key], files);

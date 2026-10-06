@@ -2,6 +2,7 @@ const { test, expect: standardExpect } = require('@playwright/test');
 const expect = standardExpect.configure({ timeout: 30000 });
 const { mountSmalltalkFixture } = require('./helpers/smalltalk-runtime');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
 test.setTimeout(180000);
 const program = { version: 1, stepKey: 'browser', revision: 0, files: [{ path: '/counter.st', kind: 'source', format: 'filein', content: "Object subclass: #SEBookCounter instanceVariableNames: 'saved' classVariableNames: '' poolDictionaries: '' category: 'SEBook-Tests'!\n!SEBookCounter methodsFor: 'accessing'!\nvalue ^ 1!\nsaved: value saved := value!\nsaved ^ saved! !" }], changes: { version: 1, source: '', entries: [] }, runCommand: null };
 async function selectCounter(page) {
@@ -40,7 +41,7 @@ test('Browser preserves an invalid method draft across navigation', async ({ pag
     await page.getByRole('button', { name: 'Revert', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Method source', exact: true })).toContainText('value ^ 2');
     const expression = page.getByRole('textbox', { name: /Smalltalk expression/ });
-    await expression.focus(); await expression.press('ControlOrMeta+A'); await page.keyboard.insertText('SEBookCounter new value');
+    await expression.focus(); await selectAllInMonaco(expression); await page.keyboard.insertText('SEBookCounter new value');
     await page.getByRole('button', { name: 'Evaluate', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Evaluation result', exact: true })).toHaveText('2');
   } finally { await cleanup(); }
@@ -115,14 +116,14 @@ test('native terminal compilation refreshes clean Browser source and preserves s
   try {
     await selectCounter(page);
     const expression = page.getByRole('textbox', { name: /Smalltalk expression/ });
-    await expression.focus(); await expression.press('ControlOrMeta+A');
+    await expression.focus(); await selectAllInMonaco(expression);
     await page.keyboard.insertText("SEBookCounter compile: 'value ^ 4' classified: 'accessing'. true");
     await page.getByRole('button', { name: 'Evaluate', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Evaluation result', exact: true })).toHaveText('true');
     await expect(page.getByRole('region', { name: 'Method source', exact: true })).toContainText('value ^ 4');
     await expect(page.getByRole('button', { name: 'Accept', exact: true })).toBeDisabled();
     await replaceSource(page, 'value ^ ) "crossViewDraft"');
-    await expression.focus(); await expression.press('ControlOrMeta+A');
+    await expression.focus(); await selectAllInMonaco(expression);
     await page.keyboard.insertText("SEBookCounter compile: 'value ^ 5' classified: 'accessing'. true");
     await page.getByRole('button', { name: 'Evaluate', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Evaluation result', exact: true })).toHaveText('true');
@@ -141,7 +142,7 @@ async function openSourceViews(page) {
 }
 async function replaceFileSource(page, value) {
   const editor = page.getByRole('textbox', { name: /Smalltalk file or saved draft source/ });
-  await editor.focus(); await editor.press('ControlOrMeta+A'); await editor.press('Backspace'); await page.keyboard.insertText(value);
+  await editor.focus(); await selectAllInMonaco(editor); await editor.press('Backspace'); await page.keyboard.insertText(value);
 }
 async function readDownload(page, action) {
   const downloadPromise = page.waitForEvent('download'); await action();

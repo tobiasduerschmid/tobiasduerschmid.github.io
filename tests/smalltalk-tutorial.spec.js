@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const { loadTutorialConfig } = require('./tutorial-helpers');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
 const config = loadTutorialConfig('smalltalk');
 const output = page => page.getByRole('region', { name: 'Program output', exact: true });
 const runButton = page => page.getByRole('button', { name: 'Run', exact: true });
@@ -54,7 +55,7 @@ async function ready(page) {
 async function typeSource(page, label, text) {
   const input = page.getByRole('textbox', { name: new RegExp('^' + label) });
   await input.focus();
-  await input.press('ControlOrMeta+A');
+  await selectAllInMonaco(input);
   await input.press('Backspace');
   await page.keyboard.insertText(text);
 }

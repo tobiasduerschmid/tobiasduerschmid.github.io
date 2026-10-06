@@ -1,4 +1,4 @@
-# Haskell debugger: values and equation decisions
+# Haskell debugger: values, equation decisions, and source focus
 
 The learning task is to explain calls such as `countAtLeast 60 [60,59,60]`:
 which equation applies, what names its patterns bind, which branch a condition
@@ -68,6 +68,60 @@ These are research-informed design decisions. Student usability and learning
 outcomes for this debugger still require direct evaluation.
 
 ## Implementation contract
+
+### Expression focus and the October 2026 teaching revision
+
+The earlier debugger already explained events, equation choices, and observed
+values. The new behavior is **expression-level source focus** instead of only a
+whole-line marker. This follows the source-expression emphasis of
+[GHCi's `:list`](https://downloads.haskell.org/ghc/latest/docs/users_guide/ghci.html#the-ghci-debugger)
+while using the existing demand events. It does not add primitive-reduction
+steps or force a value to make the display more complete.
+
+- Box the exact equation patterns, condition, simple local-binding RHS, or
+  selected body. Preserve multiline ranges and the surrounding source.
+- Retain each event's focus in history. A known suspended caller highlights
+  the application that demanded the current call; returning restores the
+  selected body instead of leaving the last condition highlighted.
+- Pair the box with a short, labeled source excerpt and location, including in
+  the debugger popout. The box is not a claim that the entire body or all its
+  fields have been evaluated. Completed execution retains its final recorded
+  event, labeled **Result expression** rather than pending work. Choosing
+  another recorded event restores that event's historical focus.
+- Keep source text with every range. After source edits, a mismatched range
+  must not highlight unrelated code. Main and detached editors share this
+  check. Columns use Monaco's UTF-16 units; diagnostic mapping still follows
+  the compiler's distinct column convention.
+- With nested layout scopes that make a `where` boundary ambiguous, retain
+  the full body and local scope rather than truncate a nested expression.
+
+The bounded follow-up used Sider Scholar, SciSpace, and three OpenAlex queries;
+Elicit was attempted twice but returned `INVALID_ARGUMENT`. The
+[OpenAlex notes and cached results](research/haskell-debugger-focus-2026-10-06/openalex-notes.md)
+record primary-source access and evidence limits. This was a targeted design
+search, not a systematic literature review.
+
+[Understanding beginners' mistakes with Haskell (Tirronen et al., 2015)](https://doi.org/10.1017/S0956796815000179)
+motivates attention to application grouping and missing or shadowed patterns.
+It also explicitly cautions against assumed universal misconceptions: laziness
+was not a major early obstacle in that course. The
+[Haskell Expression Evaluator (Olmer et al., 2014)](https://arxiv.org/pdf/1412.4879)
+and [Haskelite classroom report (Vasconcelos, 2025)](https://arxiv.org/html/2508.03640v1)
+inform prediction, feedback, and manageable trace context. Their tool designs
+and classroom reports do not demonstrate learning gains for this interface.
+
+Across the three Haskell tutorials, existing prose is replaced with numbered
+predict/implement/check/explain tasks, labeled contracts, and selective emphasis.
+Prompts now connect the source box to equation order, nested list shape, and
+deferred arguments. Playful examples retain the concepts: empty playlist
+submissions distinguish inner and outer lists; optimistic “final” version paths
+expose fold nesting; an endless feed illustrates bounded demand; a hero's
+before screenshot models immutable records. The download metaphor explicitly
+identifies its error sentinel as a simulation. Instruction word counts decrease;
+exercise code, checks, quizzes, lesson keys, and saved-progress semantics stay
+unchanged.
+
+### Runtime observations
 
 `instrument.js` turns each top-level equation into a local alternative with the
 same patterns and `where` scope. A separate fallback records failure and proceeds

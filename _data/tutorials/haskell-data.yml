@@ -33,13 +33,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      A number such as 7 cannot tell you whether it represents distance,
-      damage, or healing. If that meaning lives only in comments or
-      loosely coordinated flags, the wrong rule can be applied to a valid
-      number. **Named variants carry the kind of event with its data** and
-      give your functions explicit cases to handle. This way of modeling
-      alternatives also applies to messages, success-or-error results,
-      and the different forms of an expression in a compiler.
+      The number 7 could mean distance, damage, or healing. **A named variant
+      carries that meaning with its data**, giving functions explicit cases to
+      handle. The same approach models messages, success-or-error results,
+      and the different forms of a program expression.
 
       ### 🎯 You will learn to
 
@@ -101,21 +98,26 @@ steps:
 
       ### Your turn
 
-      Repair `eventDelta` so it returns the change in health for one event:
+      Repair `eventDelta` to report one event's health change:
 
-      - `Travel distance` restores one point per four whole distance units: use integer division, rounding down.
-      - `Fight damage` loses `damage` points, so the change is negative.
-      - `Heal amount` restores `amount` points.
+      - **Travel:** one point per four whole distance units, using integer division
+        rounded down.
+      - **Fight:** lose `damage` points; the change is negative.
+      - **Heal:** restore `amount` points.
 
-      All event numbers are nonnegative integers. This function reports a change; it does not yet impose a health cap or process a sequence. Change the sample to include a travel distance below four and predict that result before running again.
+      All payloads are nonnegative integers. Report a change only: no health
+      cap or sequence processing yet.
+
+      1. **Repair** the equations.
+      2. **Predict** a travel distance below four; add it to the sample and run again.
 
       ### A model of your own
 
       Take about five minutes to model a checkpoint. A checkpoint is **either blocked with a reason or open with a distance**, never both at once. A reason is a `String`; a distance is a nonnegative `Integer`.
 
       1. Declare a type named `Checkpoint`. Choose your own constructor names and the field each alternative needs.
-      2. Write `checkpointMessage`, its type signature, and one equation for each alternative. A blocked checkpoint returns `"Blocked: "` followed by its reason; an open checkpoint returns `"Open: "` followed by its distance as text. Use `show` to turn the distance into a string and `++` to join strings.
-      3. Add your declarations above `main` in the editor. Keep the event sample, change `main` to a `do` block, and add indented `print` calls for your own checkpoint values. Predict each message before using **Run**.
+      2. **Write** `checkpointMessage`, its type signature, and one equation for each alternative. A blocked checkpoint returns `"Blocked: "` followed by its reason; an open checkpoint returns `"Open: "` followed by its distance as text. Use `show` to turn the distance into a string and `++` to join strings.
+      3. **Add** your declarations above `main` in the editor. Keep the event sample, change `main` to a `do` block, and add indented `print` calls for your own checkpoint values. Predict each message before using **Run**.
 
       Try a blocked checkpoint with reason `"flooded bridge"`, one with an empty reason, and open checkpoints at distances 0 and 9. Their messages should be `"Blocked: flooded bridge"`, `"Blocked: "`, `"Open: 0"`, and `"Open: 9"`.
 
@@ -281,14 +283,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      Changing a shared object can accidentally change what another part
-      of a program sees, making a bug depend on who updated it first.
-      **Producing a new record keeps the previous value available** and
-      makes the intended change something you can compare and test.
-      Named fields also make it clear which information belongs to the
-      value. Reconstructing a hero while preserving unaffected fields
-      practices the update discipline needed for snapshots and reliable
-      state transitions.
+      **A new record preserves the previous value**, so changes are easy to
+      compare and test. Healing a hero while preserving their name practices
+      this discipline: each reconstructed field must either change deliberately
+      or retain its old value.
 
       ### 🎯 You will learn to
 
@@ -297,10 +295,10 @@ steps:
 
       ### What this program does
 
-      The program heals a named game character and returns the updated character
-      record. Healing must preserve the name, respect the health cap, and leave
-      the original record available. Supplied helpers show how to read health and
-      change a name independently.
+      Fern drank a potion. Their “before” screenshot stubbornly still shows
+      70 health: **healing constructs a new Hero**. Preserve the name, cap
+      health at 100, and keep the original record. Helpers read health and
+      change names independently.
 
       ### Named fields
 
@@ -310,7 +308,11 @@ steps:
       a hero's name, and `hitPoints` returns the current health. Both accept one
       `Hero` and leave it unchanged.
 
-      The supplied `renameHero` is a worked example. Its pattern `(Hero oldName hp)` extracts the two fields. Its result `Hero newName hp` constructs a hero with the new name and the original health. The original record stays unchanged. Reconstructing a value requires preserving each field that should stay the same.
+      The supplied `renameHero` supports a dramatic rebrand without bonus health.
+      Its pattern `(Hero oldName hp)` extracts both fields; `Hero newName hp`
+      constructs the new value. Predict which field differs between
+      `renameHero "FinalBossOfNaps" (Hero "Fern" 70)` and the original.
+      Reconstructing a value must preserve every unaffected field.
 
       ### Thinking time!
 
@@ -336,11 +338,17 @@ steps:
 
       ### Your turn
 
-      Repair `healHero amount hero` to add the healing amount to the existing health, stopping at 100. Use the supplied constructor pattern to access the fields and return a new Hero. Preserve the name. The original hero must still represent its original values.
+      Repair `healHero amount hero`:
 
-      You can express the cap with a guard or with `min x y`, which returns the smaller of two ordered values.
+      - **Add** healing to existing health, capped at 100.
+      - **Preserve** the name and the original hero; construct a new `Hero`.
+      - **Inputs:** health between 0 and 100 inclusive; nonnegative healing.
 
-      Assume the original health is between 0 and 100, inclusive, and the amount is nonnegative. Try an ordinary heal, an amount that reaches exactly 100, and an amount that would exceed 100. Explain why using the same hero as the input twice does not apply two cumulative heals.
+      1. **Implement** using the supplied constructor pattern. A guard or
+         `min x y` (the smaller value) can express the cap.
+      2. **Check** an ordinary heal, exactly reaching 100, and exceeding 100.
+      3. **Explain** why using the same original hero twice does not apply
+         two cumulative heals.
     files:
       - path: "Main.hs"
         language: haskell
@@ -562,9 +570,17 @@ steps:
 
       ### Your turn
 
-      Repair `withinBand bounds values` to keep exactly the values between the two bounds, including both endpoints. Preserve the original order and repeated values. An empty list produces an empty list. Assume the lower bound is no greater than the upper bound. Keep the generic signature so the same function handles integers and strings.
+      Repair `withinBand bounds values`:
 
-      Repair the predicate supplied to `filter`, or use equivalent list recursion. Try values below, exactly on, between, and above the bounds. Explain why specializing the signature to `(Integer, Integer) -> [Integer] -> [Integer]` would exclude the names example.
+      - Keep values **between the bounds, including both endpoints**.
+      - Preserve order and repeats; empty input gives an empty list.
+      - Assume the lower bound is no greater than the upper bound.
+      - Keep the **generic signature** so integers and strings both work.
+
+      1. **Repair** the predicate given to `filter`, or use equivalent list recursion.
+      2. **Check** values below, on, between, and above the bounds.
+      3. **Explain** why `(Integer, Integer) -> [Integer] -> [Integer]`
+         would exclude the names example.
     files:
       - path: "Main.hs"
         language: haskell
@@ -765,9 +781,16 @@ steps:
 
       ### Your turn
 
-      Implement `fromList :: [String] -> Trail`. It must produce one stop for each input value in the original order and finish with `End`. An empty input produces `End`.
+      Implement `fromList :: [String] -> Trail`:
 
-      Keep `toList` as the supplied observation function. The exercise is to derive the conversion in the other direction. Test both one-stop and longer trails, and write down how the empty-list pattern corresponds to a constructor with no remaining stops.
+      - Produce **one stop per input value**, in order, finishing with `End`.
+      - Empty input produces `End`.
+
+      1. **Derive and implement** this conversion; keep the supplied `toList`
+         for observing results in the opposite direction.
+      2. **Test** one-stop and longer trails.
+      3. **Explain** how the empty-list pattern corresponds to the constructor
+         with no remaining stops.
     files:
       - path: "Main.hs"
         language: haskell
@@ -922,10 +945,10 @@ steps:
 
       ### What this program does
 
-      An itinerary editor removes one stop by its position while keeping the
-      previous itinerary available. The program displays the revised and original
-      routes side by side; the supplied conversions make their contents easy to
-      inspect.
+      The group chat changed the itinerary. Again. `removeStop` returns a
+      revised route while yesterday's plan remains available for receipts.
+      Compare both routes using the supplied conversions: an update creates
+      a new value, preserving the original.
 
       ### An update with a boundary
 
@@ -961,11 +984,14 @@ steps:
 
       Implement `removeStop :: Int -> Trail -> Trail`:
 
-      - Remove exactly the stop at the requested zero-based index.
-      - Preserve every other value in its original order.
-      - For a negative index or an index outside the trail, return an equal, unchanged trail.
+      - Remove exactly the stop at the **zero-based index**.
+      - Preserve every other value and its order.
+      - A negative or out-of-range index returns an equal, unchanged trail.
 
-      The conversions are supplied for inspecting results. Aim to process `End` and `Stop` directly so you can explain where sharing is possible. Equivalent results pass the checks; inspect your own definition to judge the reconstruction cost.
+      1. **Implement** directly with `End` and `Stop` to reason about sharing.
+      2. **Check** results using the supplied conversions.
+      3. **Explain** reconstruction cost from your definition. Equivalent results
+         pass checks; those checks do not establish sharing.
     files:
       - path: "Main.hs"
         language: haskell
@@ -1207,9 +1233,17 @@ steps:
 
       ### Your turn
 
-      Repair `countLabeled :: Route -> Int`. Count every node whose own labels list is nonempty. Do not count `NoRoute`, and do not stop traversing a real node just because its labels list is empty.
+      Repair `countLabeled :: Route -> Int`:
 
-      The current-node contribution is already supplied. Decide how to turn the child list into a single additional count. You may use a fold over recursive child counts or an equivalent recursive helper. Before testing, draw up two tiny examples that distinguish “number of labels” from “number of labeled nodes,” and predict their intermediate child counts as well as their totals.
+      - Count **nodes with nonempty label lists**, not individual labels.
+      - Count `NoRoute` as zero.
+      - Still visit descendants of real nodes whose label lists are empty.
+
+      1. **Plan** how the children's counts combine into one additional count.
+         The current-node contribution is supplied.
+      2. **Implement** with a fold over recursive child counts or an equivalent helper.
+      3. **Predict before testing:** create two tiny examples that distinguish
+         label count from labeled-node count. Predict child counts and totals.
 
       ### Optional written rehearsal: recover the representation
 
@@ -1392,14 +1426,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      Removing the next priority from a scheduler must preserve every
-      other queued item and the ordering that makes future searches work.
-      Keeping an earlier snapshot adds another requirement: the update
-      must leave the old tree usable. **Persistent tree updates meet these
-      needs by rebuilding the affected path and sharing unchanged
-      branches.** This exercise connects correctness invariants with
-      update cost, so you can explain both what an algorithm preserves
-      and how much structure it needs to rebuild.
+      Removing the next priority must preserve other queued items and the
+      search-tree ordering. **A persistent update also preserves the old tree**
+      by rebuilding the affected path and sharing unchanged branches. You can
+      then explain both correctness and reconstruction cost.
 
       ### 🎯 You will learn to
 
@@ -1450,14 +1480,20 @@ steps:
 
       Repair `removeSmallest :: SearchTree -> SearchTree`:
 
-      - An empty tree stays empty.
-      - A nonempty tree loses exactly its smallest key.
-      - Every other key remains in the result, with the ordering rule intact.
-      - The original tree remains available unchanged.
+      - **Empty tree:** stays empty.
+      - **Nonempty tree:** loses exactly its smallest key.
+      - Preserve all other keys, their ordering, and the original tree.
 
-      The two stopping cases are supplied. Repair the remaining case by following the left child. Explain which right subtrees can be reused, including the removed node's own right child.
+      1. **Repair** the recursive case by following the left child; stopping
+         cases are supplied.
+      2. **Explain** which right subtrees are reusable, including the removed
+         node's right child.
+      3. **Account for cost:** with `k` ancestors before the removed node,
+         the direct algorithm reconstructs those `k` ancestors and reuses
+         off-path children. It creates no replacement for the removed node.
 
-      Use the same source-constructor cost model as the trail lesson. If the path reaches the removed node after `k` ancestors, the direct algorithm reconstructs those `k` ancestors and can reuse their off-path children. It creates no replacement for the removed node. The checks establish the keys and order, not physical compiler allocations.
+      Use the trail lesson's **source-constructor model**. Checks establish keys
+      and ordering, not physical compiler allocations.
     files:
       - path: "Main.hs"
         language: haskell
@@ -1622,10 +1658,9 @@ steps:
 
       ### What this program does
 
-      A tiny calculator stores arithmetic expressions as trees of numbers,
-      additions, and multiplications. The program evaluates the stored expression
-      according to its grouping; building the tree and calculating its answer are
-      separate operations.
+      The snack receipt says `(2 + 5) * 4`. Its tree is an order ticket,
+      not a cooked answer: `Plus` and `Times` store structure; `eval`
+      interprets it. Grouping decides the bill, regardless of anyone's budget vibes.
 
       ### Data that describes a computation
 
@@ -1668,9 +1703,17 @@ steps:
 
       ### Your turn
 
-      Implement `eval :: Expr -> Integer` for every finite expression built from `Number`, `Plus`, and `Times`. A number evaluates to its payload. A compound expression evaluates its child expressions and combines their results using its stated operation.
+      Implement `eval :: Expr -> Integer` for finite expression trees:
 
-      Keep the constructors as supplied; choose your own helper structure. Test a number alone, one operation, and nested operations with different grouping. Then explain why adding special cases for the displayed sample would miss the purpose of a recursive evaluator.
+      - **Number:** return its payload.
+      - **Plus / Times:** combine the children's interpreted results with the
+        constructor's operation.
+
+      1. **Implement**, keeping the supplied constructors; choose your helpers.
+      2. **Test** a number alone, one operation, and nested operations with
+         different grouping.
+      3. **Explain** why special-casing the displayed sample misses the purpose
+         of a recursive evaluator.
 
       ### Optional written rehearsal: transform children before deciding
 
@@ -1690,7 +1733,15 @@ steps:
       cards (Beside left right) = cards left ++ cards right
       ```
 
-      **Write `arrange :: Layout -> Layout` on paper before using Run or revealing the model.** Assume a finite layout. Keep a lone card unchanged. At every `Beside`, arrange both children first, then put the child whose **arranged first card is smaller** on the left. If those numbers are equal, retain the children's order. Only swap whole children: preserve every card, including duplicates, and retain the grouping within each child apart from its own recursive swaps. Do not flatten and rebuild the layout as a globally sorted list.
+      **Write `arrange :: Layout -> Layout` on paper before Run or revealing the model.**
+      Assume a finite layout:
+
+      - **Lone card:** keep it unchanged.
+      - **At each `Beside`:** arrange both children first; put the child with
+        the **smaller arranged first card** on the left. Preserve order on ties.
+      - **Swap whole children:** preserve every card, including duplicates,
+        and each child's grouping except for its own recursive swaps.
+      - **No global sort:** do not flatten and rebuild the layout.
 
       Start by predicting the arranged tree and its `cards` list for each input:
 
@@ -1872,13 +1923,10 @@ steps:
     instructions: |
       ### Why this matters
 
-      A bug in a game or event-processing system may appear only after a
-      particular sequence of actions. **A pure state transition makes the
-      current state and next event explicit**, letting you test one rule
-      in isolation and replay a sequence to reproduce a failure. The
-      expedition simulator combines that design with rules about limits
-      and when processing must stop. It shows how immutable values can
-      model a changing system while keeping its behavior reproducible.
+      A game bug may require a particular sequence of events. **Pure state
+      transitions expose the current state and next event**, so you can test
+      one rule and replay the sequence. Immutable values can model change
+      without losing reproducibility.
 
       ### 🎯 You will learn to
 
@@ -1911,8 +1959,8 @@ steps:
 
       This integration task combines earlier skills using the game rules above. Write the simulator using the supplied type and entry function. Allow about 15–20 minutes and work in two checkpoints:
 
-      1. Decide how one event changes a supplied health value. Use constructor patterns and guards, and try health 40 and 41 before adding list recursion.
-      2. Carry that health through the event list. Decide when to return the final health, when to process another event, and when to return the terminal result.
+      1. **Decide** how one event changes a supplied health value. Use constructor patterns and guards, and try health 40 and 41 before adding list recursion.
+      2. **Carry** that health through the event list. Decide when to return the final health, when to process another event, and when to return the terminal result.
 
       A helper can receive the health that the public function's signature intentionally hides. Choose recursion or an equivalent folding strategy. Preserve `main` as a sample driver, or change its inputs while experimenting.
 

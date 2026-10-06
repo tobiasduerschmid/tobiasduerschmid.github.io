@@ -223,7 +223,7 @@
       if (!frame || !frame.file || !frame.line) return null;
       return {
         path: frame.file,
-        line: frame.line,
+        line: frame.source_focus ? frame.source_focus.range.startLineNumber : frame.line,
       };
     }
 
@@ -339,7 +339,7 @@
         editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], []);
         return;
       }
-      var line = frame.line;
+      var line = frame.source_focus ? frame.source_focus.range.startLineNumber : frame.line;
       if (!line || line < 1 || line > model.getLineCount()) {
         editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], []);
         return;
@@ -354,7 +354,7 @@
       if (!afterLine && bps[line]) {
         glyph = rewound ? 'tvm-debug-current-glyph-rewound-on-bp' : 'tvm-debug-current-glyph-on-bp';
       }
-      editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], [
+      var decorations = [
         {
           range: new monaco.Range(line, 1, line, 1),
           options: { isWholeLine: true, className: cls },
@@ -363,7 +363,10 @@
           range: new monaco.Range(line, 1, line, 1),
           options: { isWholeLine: false, glyphMarginClassName: glyph },
         },
-      ]);
+      ];
+      var expression = sourceFocusDecoration(model, frame.source_focus);
+      if (expression) decorations.push(expression);
+      editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], decorations);
       if (revealLine && editor.revealLineInCenterIfOutsideViewport) {
         editor.revealLineInCenterIfOutsideViewport(line);
       }
@@ -514,6 +517,19 @@
     return null;
   }
 
+  /** Only decorate a range whose source still matches this editor model.
+   * History remains readable after edits, but stale coordinates must not point
+   * at unrelated code. Used by the main editor and detached editor alike.
+   */
+  function sourceFocusDecoration(model, focus) {
+    if (!focus || !focus.range || model.getValueInRange(focus.range) !== focus.text) return null;
+    return { range: focus.range, options: {
+      className: 'tvm-debug-current-expression-range',
+      inlineClassName: 'tvm-debug-current-expression',
+      stickiness: 1,
+    } };
+  }
+
   window.SEBookDebuggerEditor = {
     attach: attachDebuggerToEditor,
     breakpointMouseHit: getBreakpointMouseHit,
@@ -521,5 +537,6 @@
     installBreakpointHoverPreview: installBreakpointHoverPreview,
     registerHoverProvider: registerHoverProvider,
     resolveVar: resolveVar,
+    sourceFocusDecoration: sourceFocusDecoration,
   };
 })();

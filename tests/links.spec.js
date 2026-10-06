@@ -69,7 +69,10 @@ test.describe('Broken Link Checker', () => {
           continue;
         }
 
-        if (!visited.has(resolvedPath) && !toVisit.includes(resolvedPath)) {
+        // Only HTML documents have links to crawl. Downloads, PDFs, and other
+        // resources pass with the status check above.
+        const isPage = (response.headers()['content-type'] || '').startsWith('text/html');
+        if (isPage && !visited.has(resolvedPath) && !toVisit.includes(resolvedPath)) {
           toVisit.push(resolvedPath);
         }
       }

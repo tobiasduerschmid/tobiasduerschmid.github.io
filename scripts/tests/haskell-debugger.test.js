@@ -3,6 +3,59 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { instrument } = require('../../js/debugger/haskell/instrument');
 
+test('source focus distinguishes patterns, guards, multiline bodies and local expressions', () => {
+  const source = `module Main where
+score x
+  | x < 0 = 0
+  | otherwise =
+      subtotal + 1 -- leave the comment out of the range
+  where
+    subtotal = if x > 4 then x * 2 else x + 2
+main = print (score 5)
+`;
+  const { sites } = instrument(source, '/tutorial/Main.hs');
+  const focus = (kind, line) => sites.find(s => s.kind === kind && s.line === line).source_focus;
+  assert.equal(focus('equation', 2).text, 'score x');
+  assert.equal(focus('guard', 3).text, 'x < 0');
+  assert.equal(focus('body', 4).text, 'subtotal + 1');
+  assert.equal(focus('binding', 7).text, 'if x > 4 then x * 2 else x + 2');
+  assert.equal(focus('condition', 7).text, 'x > 4');
+  assert.deepEqual(focus('body', 4).range, {
+    startLineNumber: 5, startColumn: 7, endLineNumber: 5, endColumn: 19,
+  });
+  assert.equal(sites.find(s => s.kind === 'application').source_focus.text, 'score 5');
+});
+
+test('source focus uses editor UTF-16 columns rather than compiler tab-stop columns', () => {
+  const source = 'module Main where\nf x = ("😀", if\tx > 0 then 1 else 0)\n';
+  const { sites } = instrument(source, '/tutorial/Main.hs');
+  const focus = sites.find(s => s.kind === 'condition').source_focus;
+  const line = source.split('\n')[1];
+  assert.equal(focus.text, 'x > 0');
+  assert.equal(focus.range.startColumn, line.indexOf('x > 0') + 1);
+  assert.equal(focus.range.endColumn, line.indexOf('x > 0') + 6);
+});
+
+test('source focus preserves nested scope and omits comments around a multiline condition', () => {
+  const source = `module Main where
+choose x = case x of
+  Just n -> y where y = n + 1
+  Nothing -> 0
+check n = if -- condition starts below
+  n > 0 &&
+  n < 10 -- condition ends here
+  then 1 else 0
+`;
+  const { sites } = instrument(source, '/tutorial/Main.hs');
+  const body = sites.find(s => s.kind === 'equation' && s.function === 'choose').body_focus;
+  assert.equal(body.text, 'case x of\n  Just n -> y where y = n + 1\n  Nothing -> 0');
+  const condition = sites.find(s => s.kind === 'condition').source_focus;
+  assert.equal(condition.text, 'n > 0 &&\n  n < 10');
+  assert.deepEqual(condition.range, {
+    startLineNumber: 6, startColumn: 3, endLineNumber: 7, endColumn: 9,
+  });
+});
+
 test('Haskell probes describe original equation and guard locations without evaluating arguments', () => {
   const source = `module Main where
 -- equals = inside comments are not code
