@@ -151,6 +151,11 @@
   description: Automatic memory management that reclaims objects no longer reachable by a program, reducing manual allocation errors at the cost of runtime overhead.
   related: [JVM, RAII]
 
+- term: GIL
+  definition: Global Interpreter Lock
+  description: A lock in standard CPython builds that generally permits one thread at a time to execute Python bytecode. It does not replace application synchronization; optional free-threaded builds can disable it.
+  related: [CPU, I/O]
+
 - term: GoF
   definition: Gang of Four
   description: The four authors of the 1994 book "Design Patterns" — Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides — and, by extension, the catalog of 23 object-oriented design patterns the book described.
@@ -275,6 +280,11 @@
   definition: Liskov Substitution Principle
   description: The SOLID principle that objects of a subtype should be usable anywhere the supertype is expected without breaking the program's promised behavior.
   related: [SOLID, OOP]
+
+- term: MRO
+  definition: Method Resolution Order
+  description: The order in which Python searches classes for inherited attributes and methods. Cooperative super calls continue along the receiving class's order, which can include another branch of multiple inheritance.
+  related: [OOP, ABC]
 
 - term: MVC
   definition: Model-View-Controller

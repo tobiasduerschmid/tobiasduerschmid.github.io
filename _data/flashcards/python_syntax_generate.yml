@@ -1,5 +1,5 @@
 title: "Python — Write the Code"
-description: "Recall Python syntax and build small functions and classes with deliberate ownership and copying."
+description: "Write small functions, classes, closures, generators, and async tasks with deliberate ownership and copying."
 active: true
 cards:
   - id: 1
@@ -181,3 +181,94 @@ cards:
           station.calibration = Calibration(offset)
       ```
     explanation: "Replace the member reference on the supplied station. Assigning station = ... would only rebind a local name; changing station.calibration.offset would mutate the old shared collaborator. Other aliases of this same station still see its newly selected member."
+
+  # Source concepts: CS131 course archive: Essential Python; Homework PYTHON1–5; Week 1/4/10 worksheets; Function and Control Palooza notes.
+  - id: python-course-write-independent-grid
+    difficulty: intermediate
+    question: Create three independently mutable rows, each containing two zeros.
+    answer: '`rows = [[0, 0] for _ in range(3)]`'
+    explanation: The inner list literal is evaluated once per row. Repeating one constructed row with multiplication would share it.
+
+  - id: python-course-write-dictionary-default
+    difficulty: intermediate
+    question: Write remember(label, counts=None) that increments a per-label count and returns the dictionary. Omitted input must start fresh; supplied empty dictionaries must be mutated.
+    answer: |-
+      ```python
+      def remember(label, counts=None):
+          if counts is None:
+              counts = {}
+          counts[label] = counts.get(label, 0) + 1
+          return counts
+      ```
+    explanation: The sentinel distinguishes absent input from an empty caller-owned dictionary. The function returns the same dictionary it updated.
+
+  - id: python-course-write-closure
+    difficulty: intermediate
+    question: Write make_offset(offset), returning a function that adds offset to its one argument.
+    answer: |-
+      ```python
+      def make_offset(offset):
+          return lambda value: value + offset
+      ```
+    explanation: Each factory call creates a closure over its own offset binding. An ordinary nested def with a return statement is equivalent.
+
+  - id: python-course-write-generator
+    difficulty: intermediate
+    question: Write positive(values), a generator that yields only values greater than zero, in input order. It must not build a result list.
+    answer: |-
+      ```python
+      def positive(values):
+          for value in values:
+              if value > 0:
+                  yield value
+      ```
+    explanation: The function pauses at each yield. Reaching its end exhausts the generator; there is no need to raise StopIteration inside it.
+
+  - id: python-course-write-iterator
+    difficulty: intermediate
+    question: Complete __next__ for an iterator with self.items and self.position, initially zero. It must return each value once and signal exhaustion, including on empty input.
+    answer: |-
+      ```python
+      def __next__(self):
+          if self.position >= len(self.items):
+              raise StopIteration
+          value = self.items[self.position]
+          self.position += 1
+          return value
+      ```
+    explanation: Check the boundary before indexing. None cannot serve as the exhaustion signal because it may be an ordinary element. A complete iterator also implements __iter__ returning self.
+
+  - id: python-course-write-recursive-count
+    difficulty: intermediate
+    question: Write count_leaves(tree) for a finite acyclic nest of lists whose leaves are integers. Return the number of integer leaves without changing the input.
+    answer: |-
+      ```python
+      def count_leaves(tree):
+          if isinstance(tree, int):
+              return 1
+          return sum(count_leaves(child) for child in tree)
+      ```
+    explanation: Each integer contributes one; an empty list contributes zero. Recursive calls handle smaller child trees, and the contract excludes cycles.
+
+  - id: python-course-write-safe-lookup
+    difficulty: intermediate
+    question: Write lookup(environment, name) that returns the stored value, including zero or None, and raises NameError only if the key is absent.
+    answer: |-
+      ```python
+      def lookup(environment, name):
+          if name not in environment:
+              raise NameError(name)
+          return environment[name]
+      ```
+    explanation: Key membership measures whether a binding exists. A truthiness check or get(name) is None would reject some valid stored values.
+
+  - id: python-course-write-concurrent-tasks
+    difficulty: intermediate
+    question: Inside an async function, call independent async functions read_left() and read_right(), schedule both before waiting, and return their two results. Assume asyncio is imported.
+    answer: |-
+      ```python
+      left = asyncio.create_task(read_left())
+      right = asyncio.create_task(read_right())
+      return await left, await right
+      ```
+    explanation: Both operations are scheduled before the first await. asyncio.gather(read_left(), read_right()) is another option; creating raw coroutine objects alone does not schedule them.

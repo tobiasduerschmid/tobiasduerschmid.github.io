@@ -2,6 +2,56 @@ title: "Python — Explain the Code"
 description: "Predict Python results and explain the bindings, shared objects, and language rules behind them."
 active: true
 cards:
+  - id: python-course-card-super-order
+    difficulty: intermediate
+    question: |-
+      Does super() inside Fast go directly to Storage? Predict the output.
+
+      ```python
+      class Storage:
+          def path(self): return "store"
+      class Fast(Storage):
+          def path(self): return "fast>" + super().path()
+      class Logged(Storage):
+          def path(self): return "log>" + super().path()
+      class Service(Fast, Logged):
+          pass
+      print(Service().path())
+      ```
+    answer: '`fast>log>store`. The call continues through Logged in Service''s method resolution order.'
+    explanation: Another branch of a diamond can come next. Inspect the receiving class's __mro__; directly naming a base bypasses cooperative lookup.
+
+  - id: python-course-card-purity-boundary
+    difficulty: intermediate
+    question: |-
+      For a list of integers, explain why this local mutation has no external effect. What changes if the slice is removed?
+
+      ```python
+      def enlarged(values):
+          local = values[:]
+          local.append(5)
+          return local
+      ```
+    answer: Yes, if that list is fresh and the function has no other external effects or varying external inputs. If the local name aliases a caller's list, the append is an external mutation.
+    explanation: Local assignment syntax alone does not establish ownership. Trace how the list was obtained, including whether a shallow copy still shares a mutated child.
+
+  - id: python-course-card-abstract-versus-error
+    difficulty: intermediate
+    question: |-
+      Compare Plain and Contract: when does each reject its incomplete implementation?
+
+      ```python
+      from abc import ABC, abstractmethod
+      class Plain:
+          def read(self):
+              raise NotImplementedError
+      class Contract(ABC):
+          @abstractmethod
+          def read(self):
+              raise NotImplementedError
+      ```
+    answer: An ordinary method raises when called. An unimplemented abstract method prevents ordinary instance construction with TypeError.
+    explanation: Neither mechanism proves a replacement method's behavior. Abstract-method enforcement and behavioral substitutability are separate contracts.
   - id: 1
     difficulty: basic
     question: |
@@ -336,3 +386,165 @@ cards:
       print(logs)
       ```
     answer: "Prints `{'north': ['dust'], 'south': []}`. A comprehension evaluates `[]` once per key, so each dome gets its own list. `dict.fromkeys([\"north\", \"south\"], [])` would store one shared list under both keys, and the append would appear under both."
+
+  # Source concepts: CS131 course archive: Homework PYTHON1; Data, Function, OOP, and Control Palooza notes; public finals on closures, iterators, and exceptions.
+  - id: python-course-card-local-before-assignment
+    difficulty: intermediate
+    question: |-
+      Why does this raise UnboundLocalError instead of printing the global value?
+
+      ```python
+      score = 5
+      def update():
+          print(score)
+          score = 6
+      update()
+      ```
+    answer: Assignment to score makes score local throughout update; its first read happens before that local has a value.
+    explanation: Returning a computed result or declaring a deliberate global update are different repairs with different interfaces.
+
+  - id: python-course-card-variadic-child
+    difficulty: intermediate
+    question: |-
+      Predict the output. Does the new argument tuple copy its elements?
+
+      ```python
+      def flag(*items, enabled=False):
+          items[0].append(6)
+          return len(items), enabled
+      values = []
+      result = flag(values, enabled=True)
+      print(values, result)
+      ```
+    answer: '`[6] (1, True)`'
+    explanation: The tuple is new, but its first member refers to the caller’s list. The named enabled parameter is keyword-only.
+
+  - id: python-course-card-closure-mutation
+    difficulty: intermediate
+    question: |-
+      Does this closure need nonlocal events? Explain the result.
+
+      ```python
+      def recorder():
+          events = []
+          def add(event):
+              events.append(event)
+              return events[:]
+          return add
+      add = recorder()
+      add("open")
+      print(add("close"))
+      ```
+    answer: It prints `['open', 'close']` and needs no nonlocal declaration.
+    explanation: The closure mutates the captured list. It never assigns a new object to the enclosing events name.
+
+  - id: python-course-card-generator-observes-mutation
+    difficulty: intermediate
+    question: |-
+      Predict the output. Is creating this generator a snapshot?
+
+      ```python
+      def each(values):
+          yield from values
+      source = [3]
+      pending = each(source)
+      source.append(5)
+      print(list(pending))
+      ```
+    answer: '`[3, 5]`'
+    explanation: The generator retains the input list reference. Its body begins after the append, so it traverses the updated list.
+
+  - id: python-course-card-iterable-iterator
+    difficulty: basic
+    question: |-
+      Explain why the second traversal of values differs from the second traversal of pending.
+
+      ```python
+      values = [2, 5]
+      pending = (value * 2 for value in values)
+      print(list(values), list(values))
+      print(list(pending), list(pending))
+      ```
+    answer: |-
+      ```text
+      [2, 5] [2, 5]
+      [4, 10] []
+      ```
+      A list supplies a fresh iterator for each traversal; a generator is its own iterator with one advancing execution state.
+    explanation: iter(generator) returns that same generator. Calling the generator function again creates new state.
+
+  - id: python-course-card-classmethod
+    difficulty: basic
+    question: |-
+      Predict the output and explain what cls refers to.
+
+      ```python
+      class Base:
+          @classmethod
+          def build(cls):
+              return cls()
+      class Child(Base):
+          pass
+      print(type(Child.build()).__name__)
+      ```
+    answer: '`Child`. The cls parameter refers to Child, so the inherited factory constructs a Child.'
+    explanation: A classmethod receives a class receiver, even when its code was defined in a base class. An instance method receives an instance as self.
+
+  - id: python-course-card-finally-return
+    difficulty: intermediate
+    question: |-
+      Predict the order of the printed lines.
+
+      ```python
+      def attempt():
+          try:
+              raise ValueError("failed")
+          except ValueError:
+              return "handled"
+          finally:
+              print("cleanup")
+      print(attempt())
+      ```
+    answer: '`cleanup`, then `handled`.'
+    explanation: The matching handler selects its return value, but finally runs before that return reaches the caller.
+
+  - id: python-course-card-coroutine-task
+    difficulty: intermediate
+    question: |-
+      In this script, which assignment schedules a task? Does creating pending alone execute fetch?
+
+      ```python
+      import asyncio
+      async def fetch():
+          return 4
+      async def main():
+          pending = fetch()
+          task = asyncio.create_task(fetch())
+          print(await pending, await task)
+      asyncio.run(main())
+      ```
+    answer: '`4 4`. Creating pending only makes a coroutine object; create_task schedules the other coroutine as a task.'
+    explanation: Awaiting a coroutine can run it; merely constructing and discarding one does not. Await task completion so errors and results are handled.
+
+  - id: python-course-card-runtime-types
+    difficulty: intermediate
+    question: |-
+      Predict both booleans. Which check fits an interpreter that must reject booleans as integers?
+
+      ```python
+      print(isinstance(True, int), type(True) is int)
+      ```
+    answer: '`True False`. bool subclasses int, but True has the exact type bool. Use `type(value) is int` for that exact-type requirement.'
+    explanation: The host language’s subtype relation need not match the type rules of a language implemented in it.
+
+  - id: python-course-card-import-environment
+    difficulty: basic
+    question: |-
+      A terminal and editor run the same file but disagree about an installed package. How can these terminal commands help diagnose the difference?
+
+      ```bash
+      python --version
+      python -m pip --version
+      ```
+    answer: They may use different Python environments. Compare the selected interpreters and the environment reported by `python -m pip --version`.
+    explanation: A virtual environment isolates installed packages. It does not change Python name binding or copy semantics.

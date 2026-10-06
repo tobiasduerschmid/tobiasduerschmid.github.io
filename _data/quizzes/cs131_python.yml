@@ -1,5 +1,5 @@
 title: 'CS 131: Python Object Semantics'
-description: Predict short object traces, check copy boundaries, and assemble small reference-safe functions.
+description: Trace shared objects, list slots, copy boundaries, parameter binding, and default arguments; choose repairs that preserve the caller's contract.
 active: true
 # All items are newly authored. Times are planning estimates, not learner-calibrated limits.
 questions:
@@ -440,3 +440,319 @@ questions:
       0: Returning `saved` passes back the original reference, not a copy.
       1: Only the local name `values` is rebound to `[0]`; `saved` keeps the original reference.
     explanation: The local assignment does not affect `saved` or `original`. The returned list is the original object, so the later append changes it.
+
+  # Source concepts: Homework Problems, PYTHON2; Essential Python handouts pp. 22–24.
+  - id: cs131-python-holder-rebinding
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      class Meter:
+          def __init__(self, value):
+              self.value = value
+      def lower(value, meter):
+          value -= 3
+          meter.value -= 3
+          meter = Meter(0)
+          return value
+      number = 11
+      meter = Meter(number)
+      result = lower(number, meter)
+      print(number, meter.value, result)
+      ```
+    options:
+    - '`8 8 8`'
+    - '`11 8 8`'
+    - '`11 0 8`'
+    correct_index: 1
+    option_feedback:
+      0: Rebinding the integer parameter does not rebind the caller’s number.
+      2: The final assignment changes only the parameter meter; the caller retains the mutated original instance.
+    explanation: The integer parameter is rebound to 8, the shared Meter receives an attribute update to 8, and the return supplies 8 separately.
+
+  # Source concepts: Essential Python pp. 17–21; Quiz 1 Problem 2C–D (slot replacement).
+  - id: cs131-python-slice-write
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      slots = [2, 4, 6]
+      alias = slots
+      tail = slots[1:]
+      slots[1:] = [9]
+      tail[0] = 7
+      print(alias, tail)
+      ```
+    options:
+    - '`[2, 9] [7, 6]`'
+    - '`[2, 4, 6] [7, 6]`'
+    - '`[2, 7, 6] [7, 6]`'
+    correct_index: 0
+    option_feedback:
+      1: Slice assignment edits the existing slots list, which alias still names.
+      2: The tail slice has its own slots; assigning tail[0] does not edit slots.
+    explanation: A slice expression constructs a shallow list; slice assignment mutates its target list. Replacing integer slots in the two outer lists is independent.
+
+  # Source concepts: Essential Python pp. 17–21; Quiz 1 Problem 2C–D.
+  - id: cs131-python-comprehension-shares-row
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      row = [4]
+      repeated = [row for _ in range(2)]
+      fresh = [[4] for _ in range(2)]
+      repeated[1].append(9)
+      fresh[1].append(9)
+      print(repeated, fresh)
+      ```
+    options:
+    - '`[[4], [4, 9]] [[4], [4, 9]]`'
+    - '`[[4, 9], [4, 9]] [[4, 9], [4, 9]]`'
+    - '`[[4, 9], [4, 9]] [[4], [4, 9]]`'
+    correct_index: 2
+    option_feedback:
+      0: Evaluating the name row twice retains two references to one list.
+      1: The literal [4] is evaluated separately on each iteration, creating distinct rows in fresh.
+    explanation: Comprehension syntax alone does not ensure independent children. Its element expression either reuses an object or constructs one.
+
+  # Source concepts: Homework PYTHON4; Midterm F24 V1 Problem 4, pp. 7–8.
+  - id: cs131-python-tuple-child-copy
+    type: single
+    difficulty: advanced
+    question: |-
+      What does this program print?
+
+      ```python
+      from copy import copy, deepcopy
+      source = {"entry": ("ok", [6])}
+      draft = copy(source)
+      saved = deepcopy(source)
+      source["entry"][1].append(8)
+      source["entry"] = ("new", [])
+      print(draft["entry"], saved["entry"])
+      ```
+    options:
+    - '`(''new'', []) (''ok'', [6])`'
+    - '`(''ok'', [6, 8]) (''ok'', [6])`'
+    - '`(''ok'', [6, 8]) (''ok'', [6, 8])`'
+    correct_index: 1
+    option_feedback:
+      0: The shallow dictionary has its own entry slot, so replacing the source slot does not redirect it.
+      2: The deep copy owns a separate mutable child list.
+    explanation: The shallow dictionary retains the earlier tuple, including its shared list. The deep copy preserves the list’s earlier contents.
+
+  # Source concepts: Essential Python pp. 25–27 (default evaluation and mutation).
+  - id: cs131-python-default-dictionary-rebind
+    type: single
+    difficulty: advanced
+    question: |-
+      What does this program print?
+
+      ```python
+      def count(label, totals={}):
+          totals[label] = totals.get(label, 0) + 1
+          result = totals
+          totals = {}
+          return result
+      first = count("x")
+      separate = count("x", {})
+      last = count("x")
+      print(first["x"], separate["x"], last["x"], first is last)
+      ```
+    options:
+    - '`1 1 1 False`'
+    - '`2 2 2 True`'
+    - '`2 1 2 True`'
+    correct_index: 2
+    option_feedback:
+      0: Rebinding the local parameter does not replace the default retained by the function.
+      1: The explicit empty dictionary belongs only to the middle call.
+    explanation: Calls omitting totals share its definition-time dictionary. The first result remains an alias and observes the later increment.
+
+  # Source concepts: Essential Python pp. 25–28; Function Palooza notes, Default Parameters.
+  - id: cs131-python-immutable-default-time
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      rate = 3
+      def cost(units, rate=rate):
+          return units * rate
+      rate = 8
+      print(cost(2), cost(2, rate))
+      ```
+    options:
+    - '`6 16`'
+    - '`16 16`'
+    - '`6 6`'
+    correct_index: 0
+    option_feedback:
+      1: The omitted argument uses the object saved when def executed, not a new lookup of the global rate.
+      2: The explicit argument is evaluated at the later call and supplies 8.
+    explanation: Definition-time evaluation applies to immutable defaults too. Mutability determines whether later operations can change that saved object.
+
+  # Source concepts: Essential Python pp. 25–27; class/member-reference concepts pp. 6–10.
+  - id: cs131-python-constructor-default-sharing
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      class Folder:
+          def __init__(self, labels=[]):
+              self.labels = labels
+      first = Folder()
+      second = Folder()
+      third = Folder([])
+      first.labels.append("draft")
+      print(len(second.labels), len(third.labels))
+      ```
+    options:
+    - '`0 0`'
+    - '`1 0`'
+    - '`1 1`'
+    correct_index: 1
+    option_feedback:
+      0: Calling the initializer again does not reevaluate its default list expression.
+      2: The explicit [] constructs a distinct list for third.
+    explanation: The two omitted arguments share the initializer’s default. Separate outer instances do not guarantee separate member objects.
+
+  # Source concepts: Essential Python pp. 25–27 (repair); transfer to an explicit ownership contract.
+  - id: cs131-python-none-default-contract
+    type: single
+    difficulty: intermediate
+    question: A function must create a new dictionary for omitted or None input, but mutate any supplied dictionary, including an empty one. Which initialization meets that contract?
+    options:
+    - '`counts = counts or {}`'
+    - '`counts = dict(counts or {})`'
+    - '`if counts is None: counts = {}`'
+    correct_index: 2
+    option_feedback:
+      0: An empty supplied dictionary is falsy, so this expression silently replaces it.
+      1: This creates a new dictionary even when the caller supplied one that should be updated.
+    explanation: Identity with None distinguishes absence from an intentionally supplied empty container.
+
+  # Source concepts: Essential Python p. 10; Homework PYTHON4 (copy-depth transfer).
+  - id: cs131-python-deepcopy-operation-boundary
+    type: single
+    difficulty: advanced
+    question: |-
+      What does this program print?
+
+      ```python
+      from copy import deepcopy
+      item = {"marks": []}
+      pair = deepcopy([item, item])
+      singles = [deepcopy(item), deepcopy(item)]
+      pair[0]["marks"].append(5)
+      singles[0]["marks"].append(7)
+      print(pair[1]["marks"], singles[1]["marks"], item["marks"])
+      ```
+    options:
+    - '`[5] [] []`'
+    - '`[] [] []`'
+    - '`[5] [7] [5, 7]`'
+    correct_index: 0
+    option_feedback:
+      1: One deepcopy remembers that both original slots reached the same dictionary, preserving that sharing within pair.
+      2: Separate copying calls do not share their copies, and none of these mutations reaches the original.
+    explanation: A deep copy isolates the copied graph from the original while preserving repeated references within one copying operation.
+
+  # Source concepts: Midterm F23 Problem 1, pp. 2–3 (returned member aliases).
+  - id: cs131-python-returned-list-detaches
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      class Inbox:
+          def __init__(self):
+              self.messages = ["a", "b"]
+          def drain(self):
+              result = self.messages
+              self.messages = []
+              return result
+      box = Inbox()
+      watching = box.messages
+      batch = box.drain()
+      batch.pop(0)
+      box.messages.append("c")
+      print(watching, box.messages)
+      ```
+    options:
+    - '`[''b'', ''c''] [''b'', ''c'']`'
+    - '`[''a'', ''b''] [''c'']`'
+    - '`[''b''] [''c'']`'
+    correct_index: 2
+    option_feedback:
+      0: drain installs a new member list; the returned reference still reaches the old one.
+      1: watching and batch share the old list, so the pop is visible through watching.
+    explanation: An earlier alias keeps its object alive after member replacement. It does not follow the member’s later binding.
+
+  # Source concepts: Homework PYTHON3; Midterm S23 V1 Problem 6, pp. 6–7.
+  - id: cs131-python-shallow-parameter-records
+    type: single
+    difficulty: advanced
+    question: |-
+      What does this program print?
+
+      ```python
+      from copy import copy
+      def revise(rows):
+          rows = copy(rows)
+          rows[1]["n"] += 4
+          rows[0] = {"n": 0}
+          return rows
+      original = [{"n": 2}, {"n": 3}]
+      edited = revise(original)
+      edited.append({"n": 9})
+      print([r["n"] for r in original], [r["n"] for r in edited])
+      ```
+    options:
+    - '`[0, 7, 9] [0, 7, 9]`'
+    - '`[2, 7] [0, 7, 9]`'
+    - '`[2, 3] [0, 7, 9]`'
+    correct_index: 1
+    option_feedback:
+      0: The local outer copy isolates slot replacement and appending from the original list.
+      2: Both outer lists still reach the second dictionary, so its field mutation is shared.
+    explanation: 'Identify the object being mutated at each line: an outer list and a dictionary stored inside it have different copying boundaries.'
+
+  # Source concepts: Function Palooza notes, Exception Handling; reference-model integration.
+  - id: cs131-python-error-keeps-mutation
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      def replace(values):
+          values.append(8)
+          raise ValueError("stop")
+      saved = [2]
+      try:
+          replace(saved)
+      except ValueError:
+          pass
+      print(saved)
+      ```
+    options:
+    - '`[2, 8]`'
+    - '`[2]`'
+    - '`[]`'
+    correct_index: 0
+    option_feedback:
+      1: Exception propagation does not roll back mutations already completed.
+      2: Catching an exception does not clear objects passed to the failing function.
+    explanation: The append completes before the raise. The caller still reaches that same list after recovery.

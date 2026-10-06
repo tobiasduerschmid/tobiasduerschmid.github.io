@@ -1,7 +1,68 @@
 title: "Python Concepts Quiz"
-description: "Practice Python's object model and scripting idioms: distinguish shared state, copying, equality, call behavior, and method dispatch."
+description: "Practice Python's object model, calls, closures, iteration, exceptions, and concurrency with output predictions and contract checks."
 active: true
 questions:
+  # Source concepts: Homework OOP5; OOP lecture (multiple inheritance and mixins).
+  - id: python-course-cooperative-super
+    type: single
+    difficulty: advanced
+    question: |-
+      What does this program print?
+
+      ```python
+      class End:
+          def route(self):
+              return "end"
+      class Checked(End):
+          def route(self):
+              return "check>" + super().route()
+      class Cached(End):
+          def route(self):
+              return "cache>" + super().route()
+      class Request(Checked, Cached):
+          pass
+      print(Request().route())
+      ```
+    options:
+      - '`check>end`'
+      - '`check>cache>end`'
+      - '`cache>check>end`'
+    correct_index: 1
+    option_feedback:
+      0: '`super()` in Checked continues through Request''s method resolution order, so Cached participates before End.'
+      2: Request declares Checked before Cached; the method resolution order respects that local ordering.
+    explanation: 'The order is Request, Checked, Cached, End, object. Each cooperative call continues along that order, rather than jumping directly to the class''s written base.'
+
+  # Source concepts: Homework HASKELL7 (purity in Python).
+  - id: python-course-local-mutation-purity
+    type: single
+    difficulty: intermediate
+    question: |-
+      For an ordinary list of integers, which function body returns an extended list without an external mutation or input/output effect?
+    options:
+      - '`result = values; result.append(2); return result`'
+      - '`values.append(2); return values[:]`'
+      - '`result = values[:]; result.append(2); return result`'
+    correct_index: 2
+    option_feedback:
+      0: Assignment makes result an alias, so the append mutates the caller's list.
+      1: Copying after the append does not undo the earlier mutation of the argument.
+    explanation: A shallow copy is sufficient for a list of integers when only the new outer list is extended. Mutating fresh local data does not by itself make a function impure.
+
+  # Source concepts: Homework OOP6 C (explicit interfaces in dynamic languages).
+  - id: python-course-abstract-contract
+    type: single
+    difficulty: intermediate
+    question: A Python class inherits from ABC and declares read with @abstractmethod. A subclass implements read with an incompatible parameter list. What does the abstract-method mechanism alone guarantee?
+    options:
+      - That the implementation returns the documented result.
+      - That construction fails while read remains abstract.
+      - That calls use a statically checked parameter list.
+    correct_index: 1
+    option_feedback:
+      0: Replacing an abstract method does not prove its behavioral contract.
+      2: The abc module does not check method signature compatibility or perform static argument checking.
+    explanation: The mechanism prevents ordinary construction while abstract methods remain. Signature compatibility, result semantics, and substitution still need separate validation.
   - id: 1
     difficulty: intermediate
     question: "Python is **dynamically** typed AND **strongly** typed. JavaScript is dynamically typed AND **weakly** typed. What is the practical difference for a developer?"
@@ -940,3 +1001,466 @@ questions:
       1: "Sharing matters only for mutation. An integer cannot change, so `+= 1` computes a new integer and rebinds only the `\"north\"` entry."
       2: "`tallies[\"north\"] += 1` stores the new integer back into the dictionary under `\"north\"`, so that entry changes."
     explanation: "Both entries start as references to the same `0`, but integers are immutable. Augmented assignment on a dictionary entry computes `0 + 1` and stores the result under that one key. A shared list default behaves differently, because `append` mutates the one object that every key refers to."
+
+  # Source concepts: Homework PYTHON1 (environment setup).
+  - id: python-course-environment
+    type: single
+    difficulty: intermediate
+    question: An editor imports a package successfully, but running the file in a terminal raises ModuleNotFoundError. What should be checked first?
+    options:
+    - Whether both tools use the same Python environment
+    - Whether every function needs a global declaration
+    - Whether the package must be copied into every file
+    correct_index: 0
+    option_feedback:
+      1: Name-scope declarations do not control which packages are installed.
+      2: Imports load modules through the interpreter’s search path; copying source into each file is unnecessary.
+    explanation: Check the selected interpreter and its package installation. A virtual environment separates package sets, and python -m pip targets the chosen interpreter.
+
+  # Source concepts: Function Palooza notes, Variadic Functions.
+  - id: python-course-variadic-sharing
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      def collect(*items, flag=False, **options):
+          items[0].append(options["step"])
+          return len(items), flag
+      data = []
+      result = collect(data, "label", flag=True, step=4)
+      print(data, result)
+      ```
+    options:
+    - '`[] (2, True)`'
+    - '`[4] (4, False)`'
+    - '`[4] (2, True)`'
+    correct_index: 2
+    option_feedback:
+      0: The argument tuple holds the supplied list reference; tuple immutability does not freeze that list.
+      1: flag is keyword-only and step is collected in options, so neither becomes an extra positional item.
+    explanation: The two positional arguments form items. Its first element still reaches data, and the keyword arguments are bound separately.
+
+  # Source concepts: Control Palooza notes, Expression Evaluation.
+  - id: python-course-evaluation-order
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      log = []
+      def mark(value):
+          log.append(value)
+          return len(log)
+      def combine(left, right):
+          log.append("body")
+          return left - right
+      answer = combine(mark("left"), mark("right"))
+      print(answer, log)
+      ```
+    options:
+    - '`-1 [''left'', ''right'', ''body'']`'
+    - '`1 [''right'', ''left'', ''body'']`'
+    - '`0 [''body'', ''left'', ''right'']`'
+    correct_index: 0
+    option_feedback:
+      1: Python evaluates these argument expressions left to right.
+      2: Both argument expressions finish before combine starts executing its body.
+    explanation: The argument results are 1 and 2. The body then appends its marker and subtracts those already computed values.
+
+  # Source concepts: Function Palooza notes, Closures; Midterm F22 Problem 4.
+  - id: python-course-closure-state
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      def counter(start):
+          total = start
+          def step():
+              nonlocal total
+              total += 2
+              return total
+          return step
+      a = counter(1)
+      b = a
+      c = counter(1)
+      print(a(), b(), c())
+      ```
+    options:
+    - '`3 3 3`'
+    - '`3 5 3`'
+    - '`3 5 7`'
+    correct_index: 1
+    option_feedback:
+      0: a and b name the same closure, so the second call observes its updated total.
+      2: c was created by a separate factory call and has a separate enclosing binding.
+    explanation: A function alias shares closure state; a new factory invocation creates new state.
+
+  # Source concepts: Function Palooza notes, First-Class Functions; Final F23 Problem 1 (currying).
+  - id: python-course-curry-call
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      def attach(prefix):
+          return lambda text: prefix + text
+      decorate = attach("#")
+      print(decorate("one"), attach("@")("two"))
+      ```
+    options:
+    - '`#one @two`'
+    - '`one two`'
+    - '`@one @two`'
+    correct_index: 0
+    option_feedback:
+      1: Each returned function retains and prepends its enclosing prefix.
+      2: The second factory call does not rebind the first closure’s prefix.
+    explanation: Each call to attach returns a one-argument function with its own captured prefix. The second expression creates and immediately calls such a function.
+
+  # Source concepts: Week 4 Worksheet Problem 6; Final F22 Problem 1 comprehension item.
+  - id: python-course-comprehension-order
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      rows = [[3, 1], [], [2]]
+      pairs = [(row_index, value) for row_index, row in enumerate(rows)
+               for value in row if value > 1]
+      print(pairs)
+      ```
+    options:
+    - '`[(0, 3), (1, 2)]`'
+    - '`[(0, 3), (2, 2)]`'
+    - '`[(2, 2), (0, 3)]`'
+    correct_index: 1
+    option_feedback:
+      0: enumerate counts every input row, including the empty one.
+      2: The clauses traverse rows and then their values in input order.
+    explanation: The outer enumeration supplies row indices 0, 1, and 2. The inner loop and filter select 3 and 2 without renumbering the rows.
+
+  # Source concepts: Functional Programming notes, higher-order functions; Control Palooza, Iterators.
+  - id: python-course-lazy-map
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      values = map(lambda n: n * 3, [2, 4])
+      print(next(values), list(values), list(values))
+      ```
+    options:
+    - '`6 [6, 12] [6, 12]`'
+    - '`6 [12] [12]`'
+    - '`6 [12] []`'
+    correct_index: 2
+    option_feedback:
+      0: next consumes the first result; list receives only the remaining results.
+      1: The first list conversion exhausts this one iterator.
+    explanation: map returns a lazy iterator. All three expressions consume the same traversal from left to right.
+
+  # Source concepts: Control Palooza notes, Iterable vs Iterator; Final F24 Problem 6.
+  - id: python-course-iterator-alias
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      words = ["red", "blue", "gold"]
+      first = iter(words)
+      alias = first
+      fresh = iter(words)
+      print(next(first), next(alias), next(fresh))
+      ```
+    options:
+    - '`red blue red`'
+    - '`red red red`'
+    - '`red blue gold`'
+    correct_index: 0
+    option_feedback:
+      1: first and alias share a traversal position.
+      2: fresh is a separate iterator beginning at the first list element.
+    explanation: A list can create multiple independent iterators; assignment of one iterator creates another reference to its existing position.
+
+  # Source concepts: Control Palooza notes, Generators: Execution Flow.
+  - id: python-course-generator-suspension
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      def values():
+          print("start")
+          yield 4
+          print("resume")
+          yield 9
+      work = values()
+      print("ready")
+      print(next(work))
+      print(list(work))
+      ```
+    options:
+    - '`start / ready / 4 / resume / [9]`'
+    - '`ready / start / 4 / resume / [9]`'
+    - '`ready / start / resume / 4 / [4, 9]`'
+    correct_index: 1
+    option_feedback:
+      0: Calling a generator function creates its generator without executing the body.
+      2: The first yield suspends before the resume message, and its value is already consumed by next.
+    explanation: The body begins at next, pauses at yield 4, then resumes during list. Slashes in the choices separate output lines.
+
+  # Source concepts: Control Palooza notes, Class-Based Approach; Final F24 Problem 6C.
+  - id: python-course-iterator-contract
+    type: single
+    difficulty: basic
+    question: A finite custom iterator has reached its end. What must its next operation do?
+    options:
+    - Return None once and start over
+    - Raise StopIteration and stay exhausted
+    - Return an empty list for every call
+    correct_index: 1
+    option_feedback:
+      0: None is a valid sequence value and does not signal exhaustion to a for loop.
+      2: An empty list is also a normal value; returning it would keep the loop running.
+    explanation: __next__ signals exhaustion with StopIteration. The iterator’s __iter__ returns itself; a reusable collection creates fresh iterators.
+
+  # Source concepts: Function Palooza notes, Exception Handling; Final S23 Problem 6.
+  - id: python-course-finally-order
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      def parse(text):
+          try:
+              value = int(text)
+          except ValueError:
+              print("bad")
+              return 0
+          else:
+              print("good")
+              return value
+          finally:
+              print("done")
+      print(parse("?"))
+      ```
+    options:
+    - '`bad / 0`'
+    - '`bad / good / done / 0`'
+    - '`bad / done / 0`'
+    correct_index: 2
+    option_feedback:
+      0: finally executes before the pending return completes.
+      1: else runs after a successful try suite, not after recovery in except.
+    explanation: Conversion fails, the matching handler selects 0, and cleanup runs before the caller prints that returned value. Slashes separate output lines.
+
+  # Source concepts: OOP Palooza notes, Accessors and Mutators; Week 8 Worksheet Problem 1.
+  - id: python-course-property-validation
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      class Level:
+          def __init__(self):
+              self._value = 2
+          @property
+          def value(self):
+              return self._value
+          @value.setter
+          def value(self, value):
+              if value < 0:
+                  raise ValueError("negative")
+              self._value = value
+      level = Level()
+      try:
+          level.value = -1
+      except ValueError:
+          pass
+      print(level.value)
+      ```
+    options:
+    - '`2`'
+    - '`-1`'
+    - '`None`'
+    correct_index: 0
+    option_feedback:
+      1: Assignment invokes the setter, which raises before writing _value.
+      2: The handler does not erase the previous attribute value.
+    explanation: A property can validate a state update behind attribute syntax. The old state survives because this setter validates before mutating.
+
+  # Source concepts: OOP Palooza notes, Class Variables and Functions.
+  - id: python-course-classmethod-subclass
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      class Record:
+          def __init__(self, value):
+              self.value = value
+          @classmethod
+          def load(cls, text):
+              return cls(int(text))
+      class Special(Record):
+          pass
+      item = Special.load("8")
+      print(type(item).__name__, item.value)
+      ```
+    options:
+    - '`Record 8`'
+    - '`Special 8`'
+    - '`Special 0`'
+    correct_index: 1
+    option_feedback:
+      0: The inherited class method receives Special as cls.
+      2: Special inherits the initializer, which stores the parsed integer.
+    explanation: The class receiver is the class used to call load. Construction with cls preserves that class when its initializer supports the argument.
+
+  # Source concepts: Final F24 Problem 5B (custom operators); Function Palooza, polymorphism.
+  - id: python-course-custom-addition
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      class Amount:
+          def __init__(self, value):
+              self.value = value
+          def __add__(self, other):
+              return Amount(self.value + other.value)
+      first = Amount(4)
+      alias = first
+      first += Amount(3)
+      print(first.value, alias.value, first is alias)
+      ```
+    options:
+    - '`7 7 True`'
+    - '`4 4 True`'
+    - '`7 4 False`'
+    correct_index: 2
+    option_feedback:
+      0: There is no __iadd__ here; __add__ returns a new Amount instead of mutating the old one.
+      1: The returned object is assigned back to first, so its value becomes 7.
+    explanation: For this class, augmented assignment falls back to addition and rebinding. The alias keeps the original object.
+
+  # Source concepts: Intro notes (interpreter projects); Data Palooza, Variables and Values.
+  - id: python-course-environment-zero
+    type: single
+    difficulty: intermediate
+    question: 'An interpreter stores {"count": 0} in its environment dictionary. Which test determines whether the name count is defined, even when its value is falsy?'
+    options:
+    - '`bool(environment.get("count"))`'
+    - '`"count" in environment`'
+    - '`environment.get("count") != 0`'
+    correct_index: 1
+    option_feedback:
+      0: A present value of 0 is falsy; truthiness cannot distinguish it from absence.
+      2: A legitimate zero value does not make the name undefined.
+    explanation: Key membership asks whether a binding exists. Value truthiness is a separate language decision.
+
+  # Source concepts: Functional Programming handouts, Pattern Matching in Other Languages.
+  - id: python-course-match-capture
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      expected = "ok"
+      match "wait":
+          case expected:
+              print(expected)
+      ```
+    options:
+    - '`ok`'
+    - '`wait`'
+    - '`Nothing is printed`'
+    correct_index: 1
+    option_feedback:
+      0: A bare name in a pattern captures the matched value; it is not a comparison to its earlier value.
+      2: A bare capture pattern matches the value and binds the name.
+    explanation: Use a literal such as case "ok" when a constant string comparison is intended.
+
+  # Source concepts: Control Palooza notes, Async Syntax in Python and JavaScript.
+  - id: python-course-async-schedule
+    type: single
+    difficulty: intermediate
+    question: Two independent async requests should both be scheduled before the caller waits for their results. Which approach expresses that?
+    options:
+    - Await the first request, then create the second coroutine
+    - Call both async functions and ignore their return values
+    - Create two tasks, then await their results
+    correct_index: 2
+    option_feedback:
+      0: The second request does not begin until the first await finishes.
+      1: Calling async functions creates coroutine objects; it does not schedule their execution.
+    explanation: Creating tasks schedules both coroutines in the running loop. Awaiting handles completion and propagates errors; blocking work still blocks the event-loop thread.
+
+  # Source concepts: Control Palooza notes, Multithreading in Python; current Python threading documentation.
+  - id: python-course-gil-contract
+    type: single
+    difficulty: intermediate
+    question: Which statement correctly qualifies the Global Interpreter Lock in CPython?
+    options:
+    - It makes every multi-step shared update atomic
+    - It prevents all input/output overlap between threads
+    - It limits bytecode parallelism in standard builds
+    correct_index: 2
+    option_feedback:
+      0: Application-level read–modify–write invariants still require synchronization.
+      1: Threads can overlap blocking input/output, and native operations may release the lock.
+    explanation: Standard builds generally allow one thread at a time to execute Python bytecode. Optional free-threaded builds differ, so this is not a universal property of the Python language.
+
+  # Source concepts: Midterm F23 Problem 1 driver; Homework PYTHON1 and project preparation.
+  - id: python-course-module-entry
+    type: single
+    difficulty: intermediate
+    question: 'A file defines main and ends with if __name__ == "__main__": main(). What happens when another module imports that file normally for the first time?'
+    options:
+    - Its definitions execute, but the guarded call is skipped
+    - Every statement waits until main is explicitly called
+    - The guarded call runs once for every imported name
+    correct_index: 0
+    option_feedback:
+      1: The module’s top-level code executes on first import, including def statements.
+      2: On normal import, __name__ is the module name rather than __main__.
+    explanation: The guard distinguishes an entry module from an imported module. It does not suppress unrelated top-level side effects.
+
+  # Source concepts: Week 1 Worksheet recursive-list problems; interpreter-project preparation.
+  - id: python-course-recursive-leaves
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      def leaves(tree):
+          if isinstance(tree, int):
+              return 1
+          return sum(leaves(child) for child in tree)
+      print(leaves([4, [], [7, [9, 2]]]))
+      ```
+    options:
+    - '`22`'
+    - '`4`'
+    - '`5`'
+    correct_index: 1
+    option_feedback:
+      0: The base case returns a count of one rather than the integer’s value.
+      2: An empty list contributes sum over no children, which is zero.
+    explanation: The recursion counts four integer leaves. Each call reduces the problem to child trees; empty lists add nothing.

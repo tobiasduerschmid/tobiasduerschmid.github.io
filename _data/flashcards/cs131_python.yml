@@ -132,3 +132,149 @@ cards:
       ```
     answer: '`return values + [9]`'
     explanation: The append mutates the shared object. Concatenation then constructs the distinct returned list, keeping 9 out of the caller's original list.
+
+  # Source concepts: Essential Python pp. 10, 17–28; Homework PYTHON2–4; Midterms F23 Problem 1, F24 Problem 4; Quiz 1 Problem 2.
+  - id: cs131-python-card-default-snapshot
+    difficulty: intermediate
+    question: |-
+      Predict the output. When was the omitted argument chosen?
+
+      ```python
+      limit = 6
+      def after_one(limit=limit):
+          return limit - 1
+      limit = 13
+      print(after_one(), after_one(limit))
+      ```
+    answer: '`5 12`'
+    explanation: The default stores 6 when the function is defined. The explicit argument supplies the later value 13.
+
+  - id: cs131-python-card-default-set
+    difficulty: intermediate
+    question: |-
+      Predict the output. Does assigning a new local set reset the default?
+
+      ```python
+      def remember(label, seen=set()):
+          seen.add(label)
+          result = seen
+          seen = set()
+          return result
+      first = remember("oak")
+      last = remember("elm")
+      print(len(first), len(last), first is last)
+      ```
+    answer: '`2 2 True`'
+    explanation: Both calls mutate the same retained set. Rebinding seen afterward changes only that invocation’s local parameter.
+
+  - id: cs131-python-card-supplied-empty
+    difficulty: intermediate
+    question: |-
+      Repair this initializer so omitted input creates a fresh list and supplied input, including an empty list, retains its identity.
+
+      ```python
+      def __init__(self, entries=[]):
+          self.entries = entries or []
+      ```
+    answer: |-
+      ```python
+      def __init__(self, entries=None):
+          self.entries = [] if entries is None else entries
+      ```
+    explanation: The sentinel selects a new list only for absence. Copying every supplied list would implement a different ownership contract.
+
+  - id: cs131-python-card-holder-local
+    difficulty: intermediate
+    question: |-
+      Explain why the number stays unchanged while the holder changes.
+
+      ```python
+      def spend(number, holder):
+          number -= 4
+          holder["number"] -= 4
+      number = 10
+      holder = {"number": number}
+      spend(number, holder)
+      print(number, holder["number"])
+      ```
+    answer: '`10 6`. The integer parameter is rebound, while the shared holder dictionary is mutated.'
+    explanation: The caller and function begin with references to the same objects in both cases. The operations differ; there is no separate primitive-parameter rule.
+
+  - id: cs131-python-card-slice-ownership
+    difficulty: intermediate
+    question: Write one statement that replaces all members of tasks with ["done"] while preserving the identity seen by aliases.
+    answer: '`tasks[:] = ["done"]`'
+    explanation: Slice assignment mutates the existing outer list. tasks = ["done"] would rebind only one name.
+
+  - id: cs131-python-card-tuple-replace
+    difficulty: basic
+    question: For pair = ([2], "west"), explain why pair[0].append(6) succeeds but pair[0] = [2, 6] fails.
+    answer: The append changes the list already stored in the tuple. The assignment tries to replace a tuple slot and raises TypeError.
+    explanation: Tuple immutability fixes its member references, not the state of objects reached through those references.
+
+  - id: cs131-python-card-copy-dictionary-boundary
+    difficulty: intermediate
+    question: |-
+      Predict the output and identify the shared object.
+
+      ```python
+      from copy import copy
+      source = {"samples": [5]}
+      snapshot = copy(source)
+      source["samples"].append(7)
+      source["samples"] = [9]
+      print(snapshot["samples"], source["samples"])
+      ```
+    answer: '`[5, 7] [9]`'
+    explanation: The new dictionary initially shares its list value with source. The append reaches that list before source replaces its own field.
+
+  - id: cs131-python-card-independent-deep-items
+    difficulty: advanced
+    question: A list contains the same mutable record twice. You need an independent clone for each position, with no shared nested lists between the two clones. Why is deepcopy(records) insufficient, and what expression works for ordinary dictionaries and lists?
+    answer: Use `[deepcopy(record) for record in records]` with deepcopy imported.
+    explanation: One deep-copy operation preserves repeated references inside the copied graph. Separate calls use separate copy records and produce independently mutable items.
+
+  - id: cs131-python-card-returned-alias-repair
+    difficulty: intermediate
+    question: A getter returns a list of mutable lists directly. Callers must be able to edit both the result’s outer list and its rows without affecting the object. Write the getter body, assuming deepcopy is imported.
+    answer: '`return deepcopy(self.rows)`'
+    explanation: return self.rows[:] isolates outer-list edits but still shares rows. This contract specifically requires nested isolation.
+
+  - id: cs131-python-card-copy-not-depth
+    difficulty: intermediate
+    question: Does copy(copy(rows)) isolate changes to each inner list? Give a counterexample after rows = [[8]].
+    answer: No. With `other = copy(copy(rows))`, `other[0].clear()` also makes rows equal to `[[]]`.
+    explanation: Both copying operations duplicate only an outer list. Neither clones the shared row.
+
+  - id: cs131-python-card-two-parameter-child
+    difficulty: advanced
+    question: |-
+      Predict the output and explain why a locally rebound parameter still changes input.
+
+      ```python
+      def change(a, b):
+          a = a + [9]
+          b.append(8)
+          a[0].append(3)
+          return a
+      data = [[1]]
+      result = change(data, data)
+      print(data, result)
+      ```
+    answer: '`[[1, 3], 8] [[1, 3], 9]`'
+    explanation: Concatenation creates another outer list but retains the inner list reference. The two outer appends/rebindings are separate; nested mutation remains shared.
+
+  - id: cs131-python-card-cycle-copy
+    difficulty: advanced
+    question: |-
+      After the following setup, predict both booleans without printing the cyclic lists.
+
+      ```python
+      from copy import deepcopy
+      chain = []
+      chain.append(chain)
+      clone = deepcopy(chain)
+      print(clone is chain, clone[0] is clone)
+      ```
+    answer: '`False True`'
+    explanation: The deep copy creates another outer object, remembers it, and redirects the back-reference to that copied object.

@@ -21,7 +21,9 @@ mermaid: true
 
 You already know variables, functions, loops, and classes from C++. Python lets you use those ideas with less declaration syntax, but similar-looking code can behave differently. The durable rule is this: **names, collection elements, and object attributes hold references to objects; assignment and mutation are different operations**.
 
-This chapter uses a robotic observatory to make those differences concrete. By the end, you should be able to trace shared objects, choose an appropriate copying strategy, explain function-call effects, and write a small script that processes observation files. Read the examples in order on a first pass; use the section links as a reference afterward. When you meet a prediction prompt, commit to an answer before opening its explanation.
+The observatory examples establish that model; later examples use work queues, inventory, and recursive data to practice transferring it. By the end, you should be able to trace shared objects, choose a copying boundary, explain calls and defaults, and use Python's functions, classes, iteration, and error handling in a larger program. When you meet a prediction prompt, commit to an answer before opening its explanation.
+
+For CS131, read in three passes: **Objects through Calls & Inheritance** for reference semantics; **Functions & Iteration** for closures, recursive programs, and lazy traversal; then **Scripting** for environments, modules, exceptions, and concurrency. The examples practice the kinds of reasoning used in the course's lectures, homework, and assessments with new programs. The [course practice](#practice) includes both output prediction and writing small repairs.
 
 ## The Execution Model: Scripts vs. Binaries
 
@@ -82,6 +84,25 @@ print(location)
 ```
 
 The output is `console`, `control room`, then `observatory`, each on its own line. Assigning a bare name in a function normally makes it local to that function. Use `nonlocal` to rebind a name in an enclosing function or `global` to rebind a module-level name. Merely *reading* an outer binding needs neither declaration. Mutating an object reached through an outer binding is different again: it does not itself rebind the name.
+
+### When a Local Name Exists but Has No Value
+
+Python determines ordinary function-local names from assignments in the function body, before running that body. It does not fall back to a global just because the local has not been assigned yet:
+
+```python
+quota = 8
+
+def reserve():
+    print(quota)
+    quota = 3
+
+try:
+    reserve()
+except UnboundLocalError:
+    print("The local quota has no value yet")
+```
+
+Removing the assignment makes the read use the global `quota`. Adding `global quota` explicitly permits rebinding the module name; returning a new quota is often a clearer interface. A Python 3 comprehension also has its own iteration-variable scope: after `n = 9; squares = [n * n for n in range(3)]`, the outer `n` is still 9. This differs from an ordinary `for` statement.
 
 ## Defining Functions with `def`
 
@@ -386,6 +407,50 @@ will display the added value. Independent rows require evaluating a list
 construction separately for each row; [List Comprehensions](#list-comprehensions)
 returns to that distinction.
 
+### Arrays of References: Slots Are Separate from Their Objects
+
+The course's Python “array” examples use **lists**. A list is not a fixed-size C++ array of embedded objects: replacing a slot, changing a referenced object, and rebinding the list's name are three different operations. The standard-library `array.array` instead stores constrained numeric values; a NumPy array has its own slicing and view rules. Apply the rules here to built-in lists.
+
+**Predict:** how many distinct inner lists remain, and what does each name print?
+
+```python
+row = [4, 6]
+grid = [row, row]
+saved = grid[:]
+grid[0] = [9]
+grid[1][0] = 7
+row = [0]
+print(grid)
+print(saved)
+print(row)
+```
+
+<details markdown="1">
+<summary>Separate the outer slots from the inner list</summary>
+
+```text
+[[9], [7, 6]]
+[[7, 6], [7, 6]]
+[0]
+```
+
+The slice creates another outer list, initially with two references to the same row. Replacing `grid[0]` moves only that slot. Assigning `grid[1][0]` edits the old row, which both slots in `saved` still reach. Finally, rebinding `row` changes neither container. Three inner lists are now reachable: `[9]`, `[7, 6]`, and `[0]`.
+
+</details>
+
+Contrast a **slice expression** with a **slice assignment**:
+
+```python
+tasks = ["read", "check", "save"]
+alias = tasks
+snapshot = tasks[1:]
+tasks[1:] = ["send"]
+print(alias)     # ['read', 'send']
+print(snapshot)  # ['check', 'save']
+```
+
+`tasks[1:]` builds a new shallow list. `tasks[1:] = ...` mutates the existing list and can change its length. Likewise, `tasks[:] = []` empties the shared list, whereas `tasks = []` only changes one name. Indexing outside a list raises `IndexError`; a slice such as `tasks[:100]` clips its bounds. A slice step of zero raises `ValueError`.
+
 ### Sets (C++ Equivalent: `std::unordered_set`)
 
 Sets contain unique **hashable** elements and do not promise an iteration order. Hash-based membership is O(1) on average under ordinary hashing assumptions, not a worst-case guarantee.
@@ -512,6 +577,18 @@ print(sum(squared))  # 0: the generator is exhausted
 
 A generator retains the state needed to produce values on demand. It avoids storing the whole output sequence, but is not “zero memory”: its iterator and referenced inputs still occupy memory. Use one when a single traversal is enough.
 
+### Nested Comprehensions and Their Order
+
+Read the `for` clauses from left to right as nested loops. Put a filter after the variables it uses have been bound:
+
+```python
+rows = [[2, -3], [5, 0, 8]]
+positive = [value for row in rows for value in row if value > 0]
+print(positive)  # [2, 5, 8]
+```
+
+This corresponds to an outer loop over rows and an inner loop over each row's values. It flattens **one level**; arbitrary nesting needs recursion. `{value for ...}` builds a set, and `{key: value for ...}` builds a dictionary. These constructions can still share mutable elements with their inputs. For example, `[row for row in rows]` makes a new outer list and retains the old rows.
+
 # Instances
 
 ## Object-Oriented Programming: Explicit `self` and "Duck Typing"
@@ -631,7 +708,70 @@ print(f"{summary!s}")  # M81: 18 seconds
 
 The method must return a string. The explicit `!s` conversion uses `str`; an ordinary f-string replacement field uses the formatting protocol discussed earlier. The inherited default formatter delegates an empty format specification to `str`, but a class can define its own `__format__` behavior.
 
-# Class Objects
+## Properties and Naming Conventions
+
+`_name` marks an attribute as nonpublic by convention. `__name` inside a class triggers **name mangling** to reduce accidental subclass collisions; it is not an access-control or security boundary. Neither spelling makes an object immutable. Encapsulation still requires a deliberate interface and ownership policy.
+
+A property lets attribute syntax invoke an accessor or mutator. The decorator `@property` wraps the following method as a property; `@minutes.setter` supplies its assignment behavior:
+
+```python
+class Timer:
+    def __init__(self, minutes):
+        self.minutes = minutes
+
+    @property
+    def minutes(self):
+        return self._minutes
+
+    @minutes.setter
+    def minutes(self, value):
+        if value < 0:
+            raise ValueError("minutes must be nonnegative")
+        self._minutes = value
+
+timer = Timer(6)
+timer.minutes = 9
+print(timer.minutes)  # 9
+```
+
+The initializer uses the setter too. A failed assignment leaves the earlier value in place because validation precedes the write. Use a property for a state query or update; use an ordinary method for an action such as starting a timer.
+
+## Operator Methods and Duck Typing
+
+Special methods connect objects to language operations: `str(x)` uses `__str__`, `len(x)` uses `__len__`, and addition can use `__add__`. An operator method can return a new object or have side effects; do not assume custom classes behave like built-in integers or lists.
+
+```python
+class Distance:
+    def __init__(self, meters):
+        self.meters = meters
+
+    def __add__(self, other):
+        if not isinstance(other, Distance):
+            return NotImplemented
+        return Distance(self.meters + other.meters)
+
+walk = Distance(120)
+combined = walk + Distance(30)
+print(walk.meters, combined.meters)  # 120 150
+```
+
+Python's operator protocol can also try a reflected method such as `__radd__`; unsupported combinations eventually raise `TypeError`. `+=` first tries `__iadd__`, then falls back to ordinary addition and assignment. Defining two ordinary functions with the same name does **not** provide C++-style overload selection by parameter types: the later definition rebinds the name.
+
+Duck typing asks whether an object supports the required operations, without requiring a shared base class. When absence of an operation is an expected case, keep exception handling narrow:
+
+```python
+def close_if_supported(resource):
+    try:
+        close = resource.close
+    except AttributeError:
+        return False
+    close()
+    return True
+```
+
+An `AttributeError` raised *inside* an existing `close()` is allowed to propagate. Wrapping both lookup and execution in the same handler could disguise a bug inside the method as a missing method. The interface still needs a behavioral contract: sharing a method name alone does not guarantee substitutable behavior.
+
+## Class Objects
 
 ## A Class Is a Callable Object
 
@@ -648,6 +788,29 @@ print(type(Camera) is type)           # True
 ```
 
 `CameraFactory` is another name for the class, not a subclass and not an instance. A class can be passed as an argument or stored in a collection. For this ordinary class, the class object's own type is `type`; more advanced metaclass machinery is not needed to use this model.
+
+### Instance, Class, and Static Methods
+
+An instance method receives `self`. A `@classmethod` receives the class as `cls`, and a `@staticmethod` receives neither automatically:
+
+```python
+class Reading:
+    def __init__(self, value):
+        self.value = value
+
+    @classmethod
+    def from_text(cls, text):
+        return cls(float(text))
+
+    @staticmethod
+    def valid(value):
+        return value >= 0
+
+reading = Reading.from_text("2.5")
+print(reading.value, Reading.valid(reading.value))  # 2.5 True
+```
+
+`cls(...)` lets an inherited alternate constructor create an instance of the calling subclass, provided its initializer accepts that argument. A static method is a namespaced function; it does not receive class state implicitly. Decorators transform the definition they precede—these three method forms express different receiver contracts.
 
 ## Shared Counters, Individual Identifiers
 
@@ -790,6 +953,65 @@ Try replacing the shallow copy's slot instead of mutating its referent.
 {% include object-reference-lab.html example="shallow_copy" editor="inline" %}
 
 A deep copy is **not** a promise that every reachable value is physically duplicated or that every resource can be cloned. Immutable objects may be reused, classes can customize copying, and files or external resources require their own policies. Deep copying also remembers objects already visited, supporting cycles and preserving repeated references within the copied graph. See the [copy module's contract](https://docs.python.org/3/library/copy.html).
+
+### Copy Depth Across a Dictionary, List, and Tuple
+
+An immutable tuple can contain a mutable list. Copy depth describes which **objects** are copied, not how many indexing expressions appear in the code.
+
+```python
+from copy import copy, deepcopy
+
+live = {"bins": [[2], [5]], "label": ("west", ["checked"])}
+draft = copy(live)
+archive = deepcopy(live)
+
+live["bins"][0].append(7)
+live["label"][1].append("sealed")
+live["label"] = ("east", [])
+
+print(draft["bins"])
+print(draft["label"])
+print(archive)
+```
+
+<details markdown="1">
+<summary>Trace the boundary of each copy</summary>
+
+```text
+[[2, 7], [5]]
+('west', ['checked', 'sealed'])
+{'bins': [[2], [5]], 'label': ('west', ['checked'])}
+```
+
+`draft` has its own dictionary but initially shares both values. The nested mutations reach those shared objects. Replacing `live["label"]` later changes only the original dictionary's slot, so `draft` retains the earlier tuple and its mutated list. `archive` keeps its independent nested lists.
+
+</details>
+
+**One-change check:** replace the second mutation with `live["label"][1] = ["sealed"]`. That raises `TypeError`: it tries to replace a tuple slot. Calling `.append()` on the list in that slot does not replace the slot. The [tuple puzzle](#puzzle-2-extending-a-list-inside-a-tuple) explores why `+=` can mutate that list *before* a tuple assignment fails.
+
+### More Shallow Copies Do Not Mean a Deeper Copy
+
+```python
+from copy import copy, deepcopy
+
+sample = [3]
+source = [sample, sample]
+twice = copy(copy(source))
+together = deepcopy(source)
+separate = [deepcopy(item) for item in source]
+
+twice[0].append(4)
+together[0].append(8)
+print(source)                        # [[3, 4], [3, 4]]
+print(together)                      # [[3, 8], [3, 8]]
+print(separate)                      # [[3], [3]]
+print(together[0] is together[1])     # True
+print(separate[0] is separate[1])     # False
+```
+
+Each shallow copy constructs another outer list without copying its children. One deep-copy operation preserves repeated references **within** its new graph. Two independent deep-copy calls use separate copying records and can split that sharing. Choose according to the contract: an isolated snapshot and independent items are different requirements.
+
+Deep copying can also preserve a cycle: after `loop = []; loop.append(loop); saved = deepcopy(loop)`, `saved is not loop` and `saved[0] is saved` are both true. A cycle is not infinite stored data; it is a finite set of objects with a reference back to an already visited object.
 
 ## Identity and Value Equality
 
@@ -967,6 +1189,116 @@ tell you whether the right-hand operation retained the original list.
 
 </details>
 
+### An Integer and a Mutable Holder
+
+Wrapping an immutable value in a mutable holder gives a function an attribute it can update. It does **not** change Python's parameter-passing rule or make integers mutable:
+
+```python
+class Stock:
+    def __init__(self, count):
+        self.count = count
+
+def consume(count, stock):
+    count -= 2
+    stock.count -= 2
+    stock = Stock(100)
+    return count
+
+count = 7
+stock = Stock(count)
+remaining = consume(count, stock)
+print(count, stock.count, remaining)  # 7 5 5
+```
+
+The parameter `count` is rebound; the original Stock object's `count` attribute is updated; the later assignment to `stock` changes only the parameter. The returned integer changes no caller binding until the caller stores it. This mutable-holder technique is sometimes called **boxing** in parameter-passing examples; Python's integers were already objects before being wrapped.
+
+The corresponding C++ distinctions are: an `int` parameter receives a value copy; a `Stock` parameter normally receives a copy according to the class's copy behavior; a `Stock*` parameter copies a pointer and can mutate the pointed-to object; a `Stock&` parameter aliases the caller's object. A Python parameter assignment never becomes assignment through a C++ reference to the caller's variable.
+
+### Two Parameters Can Reach the Same List
+
+**Predict:** after `left` moves, which list does `right` still reach?
+
+```python
+def revise(left, right):
+    left = left + ["local"]
+    right.append("shared")
+    left[0].append(6)
+    return left
+
+items = [[2]]
+result = revise(items, items)
+print(items)
+print(result)
+```
+
+<details markdown="1">
+<summary>Follow both parameters and their shared child</summary>
+
+```text
+[[2, 6], 'shared']
+[[2, 6], 'local']
+```
+
+Both parameters initially reach `items`. Concatenation gives `left` a different outer list; `right` still mutates the caller's original outer list. Concatenation copied the reference to the inner list, so the final nested append is visible through both outer lists. A locally rebound parameter can still reach shared children.
+
+</details>
+
+### Returned References Survive Attribute Replacement
+
+A getter returns a reference to an object, not a live link to the attribute that happened to hold it:
+
+```python
+class Queue:
+    def __init__(self):
+        self.jobs = ["scan", "index"]
+
+    def take_batch(self):
+        previous = self.jobs
+        self.jobs = []
+        return previous
+
+queue = Queue()
+watching = queue.jobs
+batch = queue.take_batch()
+batch.pop()
+queue.jobs.append("publish")
+print(watching, batch, queue.jobs)
+```
+
+The output is `['scan'] ['scan'] ['publish']`. `watching` and `batch` reach the old list. The attribute reaches a new list. Replacing an attribute neither destroys the old object nor redirects references previously returned to callers.
+
+### Combining a Parameter with a Shallow Copy
+
+Now combine the rules. Treat this as a fresh run; the dictionary represents an item record.
+
+```python
+from copy import copy
+
+def prepare(records):
+    records = copy(records)
+    records[0]["tags"].append("reviewed")
+    records[1] = {"tags": ["replacement"]}
+    return records
+
+incoming = [{"tags": []}, {"tags": ["hold"]}]
+outgoing = prepare(incoming)
+outgoing.append({"tags": ["extra"]})
+print(incoming)
+print(outgoing)
+```
+
+<details markdown="1">
+<summary>Check which changes cross the copy boundary</summary>
+
+```text
+[{'tags': ['reviewed']}, {'tags': ['hold']}]
+[{'tags': ['reviewed']}, {'tags': ['replacement']}, {'tags': ['extra']}]
+```
+
+The outer copy isolates replacement and append operations on that outer list. It still shares the first dictionary and its tags list. To isolate this example's nested mutation too, use `deepcopy(records)` at the start. If records must retain their identities, deep copying would violate that different requirement.
+
+</details>
+
 ### Mutable Default Arguments
 
 Predict whether a second call can change a result returned by the first call.
@@ -998,6 +1330,68 @@ print(provided)                           # ['M57']
 ```
 
 The function's contract now distinguishes omitted/`None` input from an explicitly supplied list, which it deliberately mutates. `if not targets` would also replace a caller-supplied empty list, breaking that contract. The `is None` test is an ownership decision, not just a style preference. The [Python tutorial on defaults](https://docs.python.org/3/tutorial/controlflow.html#default-argument-values) documents the definition-time evaluation rule.
+
+### Default Evaluation, Mutation, and Explicit Arguments
+
+The timing rule applies even to immutable defaults. Here `limit=limit` binds the then-current integer when `def` executes:
+
+```python
+limit = 4
+
+def remaining(used, limit=limit):
+    return limit - used
+
+limit = 10
+print(remaining(1), remaining(1, limit))  # 3 9
+```
+
+For a mutable default, separate the function's retained object from a parameter that is later rebound. Predict the output of this independent example:
+
+```python
+def record(event, counts={}):
+    counts[event] = counts.get(event, 0) + 1
+    previous = counts
+    counts = {}
+    return previous
+
+first = record("open")
+provided = {}
+second = record("close", provided)
+third = record("open")
+print(first, second, third)
+print(first is third, second is provided)
+```
+
+<details markdown="1">
+<summary>Find the function's retained default</summary>
+
+```text
+{'open': 2} {'close': 1} {'open': 2}
+True True
+```
+
+The first and third calls mutate the same default dictionary. The explicit argument directs the second call to `provided`. Assigning `counts = {}` does not replace the function's stored default, undo a prior mutation, or detach `previous`. The first returned result changes when the third call mutates its object.
+
+</details>
+
+The same issue appears with `set()` or a custom instance in a default. In a constructor such as `def __init__(self, entries=[]): self.entries = entries`, separately constructed instances can share that default list. Using `None` and creating `[]` inside the body gives omitted arguments fresh lists; whether to copy an explicitly supplied list remains a separate ownership choice.
+
+**Write a repair:** change `record` so omitted/`None` input starts a new dictionary, while a supplied empty dictionary is deliberately updated. Keep the existing return behavior.
+
+<details markdown="1">
+<summary>Compare an ownership-preserving repair</summary>
+
+```python
+def record(event, counts=None):
+    if counts is None:
+        counts = {}
+    counts[event] = counts.get(event, 0) + 1
+    return counts
+```
+
+Using `counts = counts or {}` would silently replace a supplied empty dictionary. The identity check distinguishes absence from an empty but intentionally shared object.
+
+</details>
 
 ## Inheritance, Initialization, and Dispatch
 
@@ -1053,7 +1447,308 @@ If the subclass removed `super().__init__(name)`, the base initialization messag
 
 `super()` follows the method resolution order; in this single-inheritance example, that means the base class. Ordinary overridden instance methods dispatch dynamically without a C++-style `virtual` declaration. Inherited method code does not “freeze” `self` to the base type. See [Python's inheritance documentation](https://docs.python.org/3/tutorial/classes.html#inheritance).
 
+### Multiple Inheritance and Cooperative `super()`
+
+With multiple bases, Python uses a **method resolution order (MRO)**, visible as `Class.__mro__`. It respects the declared base order and inherited ordering constraints; it is not simply a depth-first walk. `super()` continues after the class containing the method in the actual receiver's MRO.
+
+```python
+class Shipment:
+    def describe(self):
+        return "base"
+
+class Stamped(Shipment):
+    def describe(self):
+        return "stamp>" + super().describe()
+
+class Insured(Shipment):
+    def describe(self):
+        return "insure>" + super().describe()
+
+class Parcel(Stamped, Insured):
+    pass
+
+print(Parcel().describe())  # stamp>insure>base
+print([cls.__name__ for cls in Parcel.__mro__])
+# ['Parcel', 'Stamped', 'Insured', 'Shipment', 'object']
+```
+
+For this Parcel, `super()` inside Stamped reaches Insured before Shipment. Swapping Parcel's base order swaps the two prefixes. Directly calling `Shipment.describe(self)` would bypass the cooperative chain. Methods participating in such a chain need compatible argument contracts and deliberate use of `super()`; inconsistent ordering constraints can make class creation fail with `TypeError`.
+
+A **mixin** is a class used to contribute a focused behavior through inheritance. Python uses ordinary multiple inheritance for this pattern, without a separate `mixin` keyword. An object can instead delegate to a helper stored in an attribute when inheritance is not the right relationship.
+
+### Explicit Interfaces in a Dynamic Language
+
+Duck typing does not prevent declaring an explicit interface. The `abc` module can reject construction of a subclass that still has abstract methods:
+
+```python
+from abc import ABC, abstractmethod
+
+class Source(ABC):
+    @abstractmethod
+    def read(self):
+        raise NotImplementedError
+
+class ConstantSource(Source):
+    def read(self):
+        return 7
+
+print(ConstantSource().read())  # 7
+```
+
+`Source()` raises `TypeError` at runtime; a subclass that leaves `read` abstract cannot be instantiated either. An ordinary method that merely raises `NotImplementedError` does not by itself prevent construction. Abstract-method checks do not prove compatible signatures or correct behavior. Clients still depend on a behavioral contract, whether an interface is explicit or implicit. See [Python's abstract base class documentation](https://docs.python.org/3/library/abc.html).
+
+# Functions & Iteration
+
+## Positional, Keyword, and Variadic Arguments
+
+An argument is the object supplied by a call; a parameter is the local name bound by that call. Ordinary parameters can receive positional or keyword arguments. `*args` collects extra positional arguments in a tuple, and `**kwargs` collects extra keyword arguments in a dictionary:
+
+```python
+def summarize(title, *readings, unit="ms", **metadata):
+    return title, sum(readings), unit, metadata
+
+values = [4, 7]
+options = {"unit": "s", "site": "roof"}
+print(summarize("latency", *values, **options))
+# ('latency', 11, 's', {'site': 'roof'})
+```
+
+At the call site, `*` expands an iterable and `**` expands a mapping into arguments. In this definition, `unit` is keyword-only because it follows `*readings`. The new argument tuple and dictionary still contain references to supplied objects; packing arguments does not deep-copy them. Supplying the same parameter twice, for example `summarize("x", title="y")`, raises `TypeError` before the body runs.
+
+Python evaluates argument expressions from left to right before entering an ordinary function. If `mark()` prints a message and returns a number, both calls in `combine(mark(), mark())` run before `combine` starts. Contrast that with a function receiving another function to call later.
+
+## First-Class Functions, Closures, and Currying
+
+Functions are objects: store them, pass them, and return them. `operation` supplies a function object; `operation()` calls it. A `lambda` defines a function with one expression; an ordinary `def` supports a multi-statement body.
+
+```python
+def transform(values, operation):
+    return [operation(value) for value in values]
+
+print(transform([2, 5], lambda value: value + 3))  # [5, 8]
+```
+
+`map(operation, values)` provides a lazy iterator of transformed values; `filter(predicate, values)` lazily selects values; `functools.reduce(combine, values, initial)` accumulates a result. Prefer a comprehension or `sum` when it expresses the computation more directly. These operations are not automatically pure: a supplied function can mutate state.
+
+A **pure function** computes its result from its inputs and immutable constants without observable external effects. Reading a clock or file can make the same explicit inputs produce different results; printing or mutating a caller's object is an external effect. Rebinding a local name is not such an effect. Under a list-of-integers contract, this helper leaves its input untouched while building a result:
+
+```python
+def extended(values):
+    result = values + [0]
+    result.append(1)
+    return result
+
+original = [4]
+print(extended(original), original)  # [4, 0, 1] [4]
+```
+
+The append affects only the newly created result. Replacing `result = values + [0]` with `result = values` would make the later append an external mutation. Purity depends on effects and data dependencies, not on whether the body contains any assignment or method call.
+
+A **closure** retains access to the enclosing bindings its body uses, even after the enclosing call has returned:
+
+```python
+def make_counter(start):
+    total = start
+
+    def advance(step):
+        nonlocal total
+        total += step
+        return total
+
+    return advance
+
+east = make_counter(10)
+alias = east
+west = make_counter(10)
+print(east(2), alias(3), west(1))  # 12 15 11
+```
+
+`east` and `alias` name one function with one captured `total`; `west` comes from a separate factory call and has a separate binding. `nonlocal` permits rebinding the enclosing name. Merely reading it, or mutating a captured list without rebinding that name, needs no such declaration. A closure retains the bindings it needs, not a deep-copied snapshot of every object in the surrounding scope.
+
+This also explains the [functions-in-a-loop puzzle](#puzzle-3-functions-defined-in-a-loop): a free name is looked up when the body executes. A default such as `lambda value, factor=factor: value * factor` instead saves the current factor object when the lambda is defined. Saving a mutable object that way still shares it.
+
+**Currying** represents a multi-argument computation as a chain of one-argument functions. **Partial application** fixes some arguments of an existing function:
+
+```python
+from functools import partial
+
+def add_fee(fee, price):
+    return fee + price
+
+curried = lambda fee: lambda price: fee + price
+with_service = partial(add_fee, 3)
+print(curried(3)(12), with_service(12))  # 15 15
+```
+
+These are different interfaces to the same calculation. The inner lambda closes over `fee`; `partial` retains the supplied argument. Neither changes Python's eager evaluation of ordinary calls.
+
+## Recursion and Structured Data
+
+A recursive function needs a base case and progress toward it. In a tree, “progress” can mean visiting a smaller child rather than decrementing a number. This example totals integers in a finite, acyclic nest of lists without modifying the input:
+
+```python
+def total_leaves(tree):
+    if isinstance(tree, int):
+        return tree
+    return sum(total_leaves(child) for child in tree)
+
+print(total_leaves([2, [4, [7]], []]))  # 13
+```
+
+The integer case is the base case; an empty list contributes zero. The contract excludes other types and cycles. Each call has its own locals, while referenced input objects may be shared. CPython does not eliminate tail calls, so an iterative approach is safer for very deep input. Recursive slicing, such as repeatedly passing `items[1:]`, also allocates new shallow lists.
+
+For project work, separate **the Python program's rules** from **the rules of the language or data format it processes**. An environment might be a dictionary mapping names to values; a parsed node might expose a kind plus child references. Reading a missing key can raise a Python `KeyError`, but the project may require a particular language-level error instead. Translate errors at that boundary deliberately, and distinguish `name in environment` from a truthiness check: stored values such as `0`, `False`, or `""` are still present.
+
+If environments are stored in a list of dictionaries, lookup order is a language-design decision. Searching inner scopes before outer scopes implements shadowing, but searching every active caller's locals would accidentally expose names outside a function's lexical environment. Python data structures make either algorithm possible; they do not automatically enforce the interpreted language's scope rules.
+
+`match`/`case` (Python 3.10+) can dispatch by data shape, as in this small command formatter:
+
+```python
+def describe(command):
+    match command:
+        case ("wait", seconds) if seconds >= 0:
+            return f"wait {seconds} seconds"
+        case ("repeat", count, text):
+            return text * count
+        case _:
+            raise ValueError("unsupported command")
+
+print(describe(("repeat", 2, "go ")))  # go go
+```
+
+Assume the wait duration and repetition count are numbers of the intended types. A pattern can bind names; a guard filters a successful match; `_` is a wildcard. A bare name in a pattern captures a value rather than comparing with an existing variable of that name. `isinstance(value, int)` includes Boolean objects because `bool` subclasses `int`; use `type(value) is int` when a language you implement explicitly requires integers and excludes booleans.
+
+## Iterables and Independent Iterators
+
+An **iterable** supplies an iterator through `iter(value)`, normally using `__iter__`. An **iterator** tracks a traversal, returns values through `next(iterator)`/`__next__`, and raises `StopIteration` when exhausted. An iterator's `__iter__` returns itself. A `for` loop uses this protocol and handles exhaustion for you.
+
+```python
+labels = ["pack", "ship", "deliver"]
+first = iter(labels)
+same = first
+second = iter(labels)
+print(next(first), next(same), next(second))  # pack ship pack
+print(list(first))                           # ['deliver']
+print(next(first, "done"))                   # done
+```
+
+Two calls to `iter` on a list create independent traversal positions. Assigning an iterator to another name shares its position. Iterators generally do not snapshot mutable input; define what mutation during traversal means for any custom container.
+
+Here is a finite iterator that computes its values without storing a list:
+
+```python
+class Countdown:
+    def __init__(self, start):
+        self.current = start
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.current <= 0:
+            raise StopIteration
+        result = self.current
+        self.current -= 1
+        return result
+
+countdown = Countdown(3)
+print(list(countdown))  # [3, 2, 1]
+print(list(countdown))  # []
+```
+
+For a reusable iterable, keep the collection separate and have each `__iter__` call return a fresh iterator. Do not reset an existing iterator inside its own `__iter__`: nested loops would then interfere with each other's position.
+
+## Generators: Execution Pauses at `yield`
+
+A function containing `yield` creates a generator when called. Its body starts on the first request for a value, resumes after each yield, and terminates on `return` or reaching the end. It is both an iterable and its own iterator.
+
+**Predict the complete output**, including messages, before running this example:
+
+```python
+def stages():
+    print("begin")
+    yield "wash"
+    print("resume")
+    yield "dry"
+
+work = stages()
+print("created")
+print(next(work))
+print(list(work))
+print(list(work))
+```
+
+<details markdown="1">
+<summary>Trace creation, suspension, and exhaustion</summary>
+
+```text
+created
+begin
+wash
+resume
+['dry']
+[]
+```
+
+Construction runs no body statements. `next` starts the generator; `list` consumes the remainder. Calling `iter(work)` would return that same generator, not rewind it. Call `stages()` again for a new traversal.
+
+</details>
+
+`yield from iterable` delegates a sequence of yields. A generator can flatten a matrix row by row, including empty rows:
+
+```python
+def cells(rows):
+    for row in rows:
+        yield from row
+
+print(list(cells([[2, 4], [], [7]])))  # [2, 4, 7]
+```
+
+**Completion check:** write a generator that yields `start`, `start + step`, and so on while the next value is below `stop`; assume `step > 0`. Keep only the current value, rather than building a result list.
+
+<details markdown="1">
+<summary>Compare a finite, lazy progression</summary>
+
+```python
+def progression(start, stop, step):
+    current = start
+    while current < stop:
+        yield current
+        current += step
+
+print(list(progression(3, 12, 4)))  # [3, 7, 11]
+```
+
+The generator keeps constant-size traversal state here. The caller's `list(...)` still stores every yielded value. For an unbounded generator, consume a finite prefix, for example with `itertools.islice`, rather than converting the entire sequence to a list.
+
+</details>
+
 # Scripting
+
+## Environments, Imports, and Program Entry
+
+A virtual environment isolates a project's installed packages. It uses an existing Python installation; creating a `venv` does not download a requested Python version or isolate the program from the operating system. Use the course's required Python version and select the same environment in your editor and terminal.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python --version
+python -m pip --version
+```
+
+The activation command above is for a POSIX-style shell. In Windows PowerShell, use `.venv\Scripts\Activate.ps1`. Activation changes command lookup for that shell; it does not change Python's object semantics. See the [virtual environment documentation](https://docs.python.org/3/library/venv.html).
+
+Python files can serve as modules. `import math` binds a module object; `from math import sqrt` binds an exported object in the importing scope. Import does not paste a second copy of the module's classes into the caller. Top-level module code normally executes on first import in a process, and subsequent imports reuse the cached module.
+
+```python
+def main():
+    print("Report ready")
+
+if __name__ == "__main__":
+    main()
+```
+
+The guard runs `main()` when the file is executed as the entry module, while allowing another module to import its definitions without running that driver. Plain `input()` returns a string; convert explicitly with `int(...)` or another appropriate parser when numeric input is required.
 
 ## Exception Handling: `try` / `except`
 
@@ -1101,6 +1796,33 @@ Do not make blanket performance claims about “cheap Python exceptions”. More
 | `FileNotFoundError` | A requested filesystem path does not exist |
 | `ZeroDivisionError` | A division or modulo divisor is zero |
 | `AttributeError` | The requested attribute is unavailable |
+
+### Propagation, `else`, and `finally`
+
+When an exception is raised, the remaining statements in that `try` block are skipped. Python searches outward for a matching handler, unwinding calls as needed. A handler for a base exception class also catches its subclasses, so put more specific handlers first. A bare `raise` inside a handler re-raises the current exception.
+
+```python
+def parse_count(text):
+    try:
+        count = int(text)
+        if count < 0:
+            raise ValueError("negative count")
+    except ValueError:
+        print("invalid")
+        return None
+    else:
+        print("accepted")
+        return count
+    finally:
+        print("finished")
+
+print(parse_count("5"))
+print(parse_count("bad"))
+```
+
+The output is `accepted`, `finished`, `5`, then `invalid`, `finished`, `None`, on separate lines. `else` runs only after normal completion of the `try` suite. `finally` executes as control leaves this construct, including when a return or propagating exception is pending; it is not protection against forced process termination. Avoid returning from `finally`, which can replace a pending result or suppress an exception.
+
+An exception does not roll back earlier mutations. If a function appends to a shared list and then raises, the append remains unless the program explicitly restores the state. Use validation before mutation or an appropriate transaction policy when partial changes are unacceptable. For domain-specific errors, define a subclass such as `class InvalidRecord(ValueError): pass` and catch it at a boundary that can recover meaningfully.
 
 ## Reading Files with `open()` and `with`
 
@@ -1186,6 +1908,33 @@ print(re.sub(r"frame=\d+", "frame=hidden", log))
 ```
 
 `search` returns the first match object or `None`; `findall` returns all matches, with the result shape affected by capturing groups; `sub` returns replaced text. Raw string literals such as `r"\d+"` keep Python's string parser from interpreting those backslashes before the pattern parser sees them. Raw strings are usually clearer for regular expressions, although a pattern without backslashes does not require one.
+
+## Concurrency: Threads and Async Tasks
+
+Concurrency lets tasks make progress during overlapping periods; parallelism means work actually executes simultaneously. In a standard CPython build, the **Global Interpreter Lock (GIL)** generally permits one thread at a time to execute Python bytecode. Threads can still overlap blocking input/output, and some native libraries release the lock. Optional free-threaded CPython builds can disable it; the lecture's timing intuition is not a universal Python guarantee. See [Python's threading documentation](https://docs.python.org/3/library/threading.html#gil-and-performance-considerations).
+
+Creating `threading.Thread(target=work)` constructs a thread object; `.start()` schedules its execution; `.join()` waits for it to finish. Shared mutable state requires an explicit synchronization policy. A lock around the complete read–modify–write operation protects an invariant; the GIL is not a substitute for that policy. Do not predict an exact race outcome or a fixed speedup from the number of threads alone.
+
+`asyncio` uses cooperative scheduling. Calling an `async def` function creates a coroutine object; it does not by itself run the body. `asyncio.create_task(...)` schedules a coroutine in a running event loop. `await` waits for a result and can suspend the current task when the awaited operation is not ready. In this example the waits stand in for two independent input/output operations:
+
+```python
+import asyncio
+
+async def fetch_label(label):
+    await asyncio.sleep(0)
+    return label.upper()
+
+async def main():
+    left = asyncio.create_task(fetch_label("east"))
+    right = asyncio.create_task(fetch_label("west"))
+    print(await left, await right)
+
+asyncio.run(main())  # EAST WEST
+```
+
+Both tasks are scheduled before either is awaited. Writing `left = await fetch_label("east")` followed by the second await instead waits sequentially. A blocking `time.sleep(...)` or CPU-heavy loop inside a coroutine blocks that event-loop thread. `await` does not promise a context switch when the result is already available. Await the tasks you start so their results and exceptions are handled; this driver belongs in a script, not inside an event loop that is already running. See the [coroutine and task reference](https://docs.python.org/3/library/asyncio-task.html).
+
+**Transfer check:** can two async tasks lose an update even on one thread? Yes: if each reads a shared count, then suspends before writing its computed result, both can write from the same stale value. Cooperative scheduling changes where interleaving occurs, not the need to reason about shared state.
 
 ## OpenCL Sidebar: Parallel Work on Many Elements
 
@@ -1447,6 +2196,8 @@ Commit to a prediction before you press **Run**. Where a box is provided, write 
 
 # Practice
 
+First predict without running the code. Then explain the reference path or execution rule that determines the answer. Return later for a mixed workout: recognizing whether a problem is about copy depth, a binding, or suspended execution is part of the skill.
+
 Before opening the cards, explain three contrasts without looking back: rebinding versus mutation; a shallow copy versus a deep copy; and class state versus instance state. Then trace one function call in which a mutable argument **does not** change. Return to these questions after a break, and use the [interactive Python tutorial](/SEBook/tools/python-tutorial) to test the same ideas with different examples.
 
 {% include flashcards.html id="python_syntax_explain" %}
@@ -1454,3 +2205,11 @@ Before opening the cards, explain three contrasts without looking back: rebindin
 {% include flashcards.html id="python_syntax_generate" %}
 
 {% include quiz.html id="python" %}
+
+## CS131 Reference Practice
+
+These shorter course-focused sets revisit object references, nested arrays, parameter passing, and defaults in different contexts. Attempt the writing prompts before revealing the answers.
+
+{% include flashcards.html id="cs131_python" %}
+
+{% include quiz.html id="cs131_python" %}
