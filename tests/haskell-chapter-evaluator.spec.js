@@ -4,6 +4,8 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 
 const chapter = '/SEBook/tools/haskell.html';
 const terminal = (page, topic) => page.getByRole('region', { name: `Haskell evaluator: ${topic}`, exact: true });
+const PARTIAL = 'Partial application specializes a function';
+const RANGES = 'Ranges and infinite lists';
 
 async function evaluate(panel, expression) {
   const input = panel.getByRole('textbox', { name: 'Haskell expression', exact: true });
@@ -21,32 +23,32 @@ test('chapter expressions use adjacent definitions, with a lazy shared runtime',
   });
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(chapter);
-  const lambdas = terminal(page, 'Lambdas and lexical scope');
-  await expect(lambdas).toBeVisible();
+  const partial = terminal(page, PARTIAL);
+  await expect(partial).toBeVisible();
   expect(runtimeLoads).toHaveLength(0);
 
   const firstStart = Date.now();
-  await evaluate(lambdas, 'shadowExample');
+  await evaluate(partial, 'studentPrice 50');
   const firstEvaluationMs = Date.now() - firstStart;
-  await expect(lambdas.getByRole('log').getByText('7', { exact: true })).toBeVisible();
+  await expect(partial.getByRole('log').getByText('40', { exact: true })).toBeVisible();
   const warmStart = Date.now();
-  await evaluate(lambdas, 'makeAdder 20 3');
+  await evaluate(partial, 'applyDiscount 50 30');
   const warmEvaluationMs = Date.now() - warmStart;
-  await expect(lambdas.getByRole('log').getByText('23', { exact: true })).toBeVisible();
-  await evaluate(lambdas, ':type makeAdder');
-  await expect(lambdas.getByRole('log')).toContainText(/Int\s*->\s*Int\s*->\s*Int/);
+  await expect(partial.getByRole('log').getByText('15', { exact: true })).toBeVisible();
+  await evaluate(partial, ':type applyDiscount');
+  await expect(partial.getByRole('log')).toContainText(/Int\s*->\s*Int\s*->\s*Int/);
 
-  const definitions = terminal(page, 'Definitions describe values');
-  await evaluate(definitions, 'deliveryCost 8 4');
-  await expect(definitions.getByRole('log').getByText('20', { exact: true })).toBeVisible();
-  await evaluate(definitions, 'addFive 2');
+  const definitions = terminal(page, 'Define and call a function');
+  await evaluate(definitions, 'fahrenheit 25');
+  await expect(definitions.getByRole('log').getByText('77.0', { exact: true })).toBeVisible();
+  await evaluate(definitions, 'studentPrice 2');
   await expect(definitions.getByRole('log')).toContainText(/not in scope|unbound|undefined/i);
-  await evaluate(lambdas, 'addFive 4');
-  await expect(lambdas.getByRole('log').getByText('9', { exact: true })).toBeVisible();
+  await evaluate(partial, 'studentPrice 15');
+  await expect(partial.getByRole('log').getByText('12', { exact: true })).toBeVisible();
   expect(runtimeLoads).toHaveLength(1);
   expect(errors).toEqual([]);
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.getByRole('heading', { name: 'Lambdas and lexical scope', exact: true }).evaluate(heading => heading.scrollIntoView({ block: 'start' }));
+  await page.getByRole('heading', { name: PARTIAL, exact: true }).evaluate(heading => heading.scrollIntoView({ block: 'start' }));
   await page.screenshot({ path: testInfo.outputPath('haskell-example.png') });
   await testInfo.attach('local-evaluation-timings', {
     body: JSON.stringify({ firstEvaluationMs, warmEvaluationMs }), contentType: 'application/json',
@@ -57,21 +59,21 @@ test('chapter expressions use adjacent definitions, with a lazy shared runtime',
 test('history preserves a draft, compiler errors recover, and controls work by keyboard', async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto(chapter);
-  const panel = terminal(page, 'Lambdas and lexical scope');
+  const panel = terminal(page, PARTIAL);
   const input = panel.getByRole('textbox', { name: 'Haskell expression' });
-  await evaluate(panel, 'addFive 8');
+  await evaluate(panel, 'studentPrice 50');
   await expect(input).toBeFocused();
   await input.fill('unfinished');
   await input.press('ArrowUp');
-  await expect(input).toHaveValue('addFive 8');
+  await expect(input).toHaveValue('studentPrice 50');
   await input.press('ArrowDown');
   await expect(input).toHaveValue('unfinished');
   await input.press('Control+c');
   await expect(input).toHaveValue('');
   await evaluate(panel, '1 + True');
   await expect(panel.getByRole('log')).toContainText(/Bool|type|Num/);
-  await evaluate(panel, 'addFive 9');
-  await expect(panel.getByRole('log').getByText('14', { exact: true })).toBeVisible();
+  await evaluate(panel, 'studentPrice 15');
+  await expect(panel.getByRole('log').getByText('12', { exact: true })).toBeVisible();
   await input.press('Control+l');
   await expect(panel.getByRole('log')).toBeEmpty();
   await input.press('Tab');
@@ -82,10 +84,10 @@ test('history preserves a draft, compiler errors recover, and controls work by k
 test('Stop releases an evaluation and the runtime can be used again', async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto(chapter);
-  const panel = terminal(page, 'Demand determines how much work is needed');
-  await evaluate(panel, 'take 3 positive');
-  await expect(panel.getByRole('log').getByText('[1,2,3]', { exact: true })).toBeVisible();
-  await panel.getByRole('textbox').fill('sum positive');
+  const panel = terminal(page, RANGES);
+  await evaluate(panel, 'take 3 evens');
+  await expect(panel.getByRole('log').getByText('[0,2,4]', { exact: true })).toBeVisible();
+  await panel.getByRole('textbox').fill('length evens');
   await panel.getByRole('button', { name: 'Evaluate', exact: true }).click();
   await expect(panel.getByRole('progressbar', { name: 'Evaluating Haskell expression' })).toBeVisible();
   const stop = panel.getByRole('button', { name: 'Stop evaluation', exact: true });
@@ -94,13 +96,13 @@ test('Stop releases an evaluation and the runtime can be used again', async ({ p
   await expect(panel.getByRole('log')).toContainText('Evaluation stopped');
   await expect(panel.getByRole('progressbar')).toHaveCount(0);
   await expect(panel.getByRole('textbox')).toBeFocused();
-  await evaluate(panel, 'take 2 positive');
-  await expect(panel.getByRole('log').getByText('[1,2]', { exact: true })).toBeVisible();
+  await evaluate(panel, 'take 2 evens');
+  await expect(panel.getByRole('log').getByText('[0,2]', { exact: true })).toBeVisible();
 });
 
 test('evaluators reflow, support both themes, and leave readable code in print', async ({ page }) => {
   await page.goto(chapter);
-  const panel = terminal(page, 'Lambdas and lexical scope');
+  const panel = terminal(page, PARTIAL);
   await expect(panel).toBeVisible();
   for (const dark of [false, true]) {
     await page.evaluate(dark => document.documentElement.classList.toggle('dark-mode', dark), dark);
@@ -113,36 +115,36 @@ test('evaluators reflow, support both themes, and leave readable code in print',
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   await page.emulateMedia({ media: 'print' });
   await expect(panel).toBeHidden();
-  await expect(page.getByText('makeAdder amount', { exact: false }).first()).toBeVisible();
+  await expect(page.getByText('applyDiscount percent price', { exact: false }).first()).toBeVisible();
 });
 
 test('edited definitions are evaluated and Reset restores the worked example', async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto(chapter);
-  const example = page.getByRole('group', { name: 'Haskell example: Lambdas and lexical scope', exact: true });
-  const editor = example.getByRole('textbox', { name: 'Haskell code: Lambdas and lexical scope' });
+  const example = page.getByRole('group', { name: `Haskell example: ${PARTIAL}`, exact: true });
+  const editor = example.getByRole('textbox', { name: `Haskell code: ${PARTIAL}` });
   const original = await editor.inputValue();
-  await editor.fill(original.replace('makeAdder 5', 'makeAdder 10'));
+  await editor.fill(original.replace('applyDiscount 20', 'applyDiscount 50'));
   await editor.press('Tab');
   await expect(editor).not.toBeFocused();
-  const panel = terminal(page, 'Lambdas and lexical scope');
-  await evaluate(panel, 'shadowExample');
-  await expect(panel.getByRole('log').getByText('12', { exact: true })).toBeVisible();
+  const panel = terminal(page, PARTIAL);
+  await evaluate(panel, 'studentPrice 50');
+  await expect(panel.getByRole('log').getByText('25', { exact: true })).toBeVisible();
   await editor.fill('answer = "<script>literal</script>"\n');
   await evaluate(panel, 'answer');
   await expect(panel.getByRole('log').getByText('"<script>literal</script>"', { exact: true })).toBeVisible();
-  await evaluate(panel, 'shadowExample');
+  await evaluate(panel, 'studentPrice 50');
   await expect(panel.getByRole('log')).toContainText(/not in scope|unbound|undefined/i);
   await example.getByRole('button', { name: 'Reset code' }).click();
   await expect(editor).toHaveValue(original);
   await expect(editor).toBeFocused();
-  await evaluate(panel, 'shadowExample');
-  await expect(panel.getByRole('log').getByText('7', { exact: true })).toBeVisible();
+  await evaluate(panel, 'studentPrice 50');
+  await expect(panel.getByRole('log').getByText('40', { exact: true })).toBeVisible();
 });
 
 test('print includes every line of the edited code without editor controls', async ({ page }, testInfo) => {
   await page.goto(chapter);
-  const example = page.getByRole('group', { name: 'Haskell example: Lambdas and lexical scope', exact: true });
+  const example = page.getByRole('group', { name: `Haskell example: ${PARTIAL}`, exact: true });
   const editor = example.getByRole('textbox');
   const source = Array.from({ length: 40 }, (_, index) => `value${index} = ${index}`).join('\n') + '\nlastValue = "printed in full"';
   await editor.fill(source);
@@ -164,21 +166,26 @@ test('print includes every line of the edited code without editor controls', asy
 });
 
 test('every authored starting expression evaluates with its own example', async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(300_000);
   await page.goto(chapter);
   const examples = [
-    ['deliveryCost 5 2', '11'], ['double (3 + 1)', '8'], ['ticketPrice 17', '8'],
-    ['invoice 12 4', '53'], ['fst submission', '"parser.hs"'], ['label 12', '"12"'],
-    ['swap (True, 7)', '(7,True)'], ['larger 12 9', '12'], ['[1,2] : [[3]]', '[[1,2],[3]]'],
-    ['totalSquares [2,3]', '13'], ['nearbyPairs', '[(1,2),(1,3),(2,3)]'],
-    [':type map', /\(\w+ -> \w+\) -> \[\w+\] -> \[\w+\]/],
-    ['finalPrices', '[9]'], ['shadowExample', '7'], ['add 5 2', '7'],
-    [':type through', /\(\w+ -> \w+\) -> \(\w+ -> \w+\) -> \w+ -> \w+/],
-    ['totalFrom 10 [2,3]', '15'], ['foldl (-) 10 [2,3]', '5'],
-    ['take 2 (filter even positive)', '[2,4]'], ['deliveryLabel Collect', '"Collect at desk"'],
-    ['addCredits 5 (Account "Ada" 20)', /Account.*Ada.*25/],
-    ['evaluate exampleExpr', '20'], ['folderCount (Folder "root" [])', '1'],
-    ['updated', 'Stop "A" (Stop "C" End)'],
+    ['ticket 100 3', '103'], ['total 4', '20'], ['shippingNote 2500', '"arrives in 4 days"'],
+    ['fahrenheit 25', '77.0'], [':type needsCoat', /Int\s*->\s*Bool\s*->\s*Bool/], ['square (inc 3)', '16'],
+    ['(-) 10 4', '6'], ['lateFee 3', '6'], ['windAdvice 45', '"secure loose items"'], ['triangle 4', '10'],
+    ['commuteMinutes 30 60', '35'], ['isSquare 49', 'True'], ['fst reading', '"Lima"'], ['length weeks', '3'],
+    ['take 2 temps', '[18,21]'], ['take 4 evens', '[0,2,4,6]'], ['"Al" : queue', '["Al","Bo","Cy"]'],
+    ['head motto', "'K'"], ['countShort ["fig", "kiwi", "yam"]', '2'], ['oddSquares', '[1,9,25,49,81]'],
+    ['sieve [2 .. 30]', '[2,3,5,7,11,13,17,19,23,29]'], ['statusText 404', '"Not Found"'],
+    ['splitFirst [10, 20, 30]', '(10,[20,30])'], ['podium ["Ana", "Ben"]', '"Ana beat Ben"'],
+    ['countShort ["fig", "kiwi", "yam"]', '2'],
+    // The unfinished exercise reports its placeholder until the learner completes it.
+    ['stutter "ab"', /undefined/], ['firstOr 0 [7, 8]', '7'], ['clamp 0 10 15', '10'], ['twice addTen 1', '21'],
+    ['gradeScale True 75', '"P"'], ['map addShipping [10, 25]', '[14,29]'],
+    ['filter isShort ["fig", "kiwi", "yam"]', '["fig","yam"]'], ['foldl longer 0 ["fig", "banana", "kiwi"]', '6'],
+    ['shippedTotal', '50'], ['map (\\s -> s + 5) scores', '[77,100,93,66]'], ['inTeens 15', 'True'],
+    ['studentPrice 50', '40'], ['rentalCost 20 15 3', '65'], ['boardingGroup (Ticket 12 Window)', '2'],
+    ['loanDays (Book "Dune" 600)', '28'], ['countSongs mix', '2'],
+    ['insert 5 small', 'Node (Node Leaf 2 Leaf) 4 (Node (Node Leaf 5 Leaf) 8 Leaf)'],
   ];
   const panels = page.getByRole('region', { name: /^Haskell evaluator:/ });
   await expect(panels).toHaveCount(examples.length);
@@ -194,14 +201,14 @@ test('every authored starting expression evaluates with its own example', async 
 test('a timed-out expression releases all prompts and allows another evaluation', async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto(chapter);
-  const panel = terminal(page, 'Demand determines how much work is needed');
-  await evaluate(panel, 'take 1 positive');
-  await panel.getByRole('textbox').fill('sum positive');
+  const panel = terminal(page, RANGES);
+  await evaluate(panel, 'take 1 evens');
+  await panel.getByRole('textbox').fill('length evens');
   await panel.getByRole('button', { name: 'Evaluate', exact: true }).click();
-  await expect(terminal(page, 'Lambdas and lexical scope').getByRole('button', { name: 'Evaluate', exact: true })).toBeDisabled();
+  await expect(terminal(page, PARTIAL).getByRole('button', { name: 'Evaluate', exact: true })).toBeDisabled();
   await expect(panel.getByRole('log')).toContainText('Evaluation timed out', { timeout: 45_000 });
-  await evaluate(panel, 'take 2 positive');
-  await expect(panel.getByRole('log').getByText('[1,2]', { exact: true })).toBeVisible();
+  await evaluate(panel, 'take 2 evens');
+  await expect(panel.getByRole('log').getByText('[0,2]', { exact: true })).toBeVisible();
 });
 
 test('loading can be stopped and retried with a fresh runtime', async ({ page }) => {
@@ -209,20 +216,22 @@ test('loading can be stopped and retried with a fresh runtime', async ({ page })
   // Deliberately unavailable runtime: error-path network fault injection only.
   await page.route('**/haskell-runtime-frame.html', route => route.abort());
   await page.goto(chapter);
-  const panel = terminal(page, 'Lambdas and lexical scope');
+  const panel = terminal(page, PARTIAL);
   await panel.getByRole('button', { name: 'Evaluate', exact: true }).click();
   await expect(panel.getByRole('button', { name: 'Stop evaluation', exact: true })).toBeVisible();
   await panel.getByRole('button', { name: 'Stop evaluation', exact: true }).click();
   await expect(panel.getByRole('log')).toContainText('Evaluation stopped');
   await page.unroute('**/haskell-runtime-frame.html');
-  await evaluate(panel, 'shadowExample');
-  await expect(panel.getByRole('log').getByText('7', { exact: true })).toBeVisible();
+  await evaluate(panel, 'studentPrice 50');
+  await expect(panel.getByRole('log').getByText('40', { exact: true })).toBeVisible();
 });
 
 test('the combined book also loads a working expression companion', async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto('/SEBook/all.html', { waitUntil: 'domcontentloaded' });
-  const panel = terminal(page, 'Lambdas and lexical scope');
-  await evaluate(panel, 'shadowExample');
-  await expect(panel.getByRole('log').getByText('7', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: PARTIAL, exact: true })).toBeVisible({ timeout: 90_000 });
+  const panel = terminal(page, PARTIAL);
+  await expect(panel).toBeVisible({ timeout: 90_000 });
+  await evaluate(panel, 'studentPrice 50');
+  await expect(panel.getByRole('log').getByText('40', { exact: true })).toBeVisible();
 });

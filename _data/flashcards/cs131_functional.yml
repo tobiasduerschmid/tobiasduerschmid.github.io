@@ -1,124 +1,185 @@
 title: 'CS 131: Functional Programming and Haskell'
-description: Produce short recursive solutions, type derivations, and output predictions, then explain the key step.
+description: Recall the ideas behind functional programming, then produce short Haskell definitions, types, and predictions and explain the key step.
 active: true
-# All items are newly authored. Times are planning estimates, not learner-calibrated limits.
+# Source: intro_to_functional_programming_and_haskell_td.pptx; each card cites its slides.
+# Examples deliberately differ from the lecture's own. Every Haskell answer was checked with the
+# site's MicroHs runtime. "Assessment:" lines name the past problem whose style a card mirrors.
+# Times are planning estimates, not learner-calibrated limits. Cards appear in lecture order.
 cards:
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 67–69
-  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (recursive base cases).
-  - id: cs131-v2-functional-card-empty-and-singleton-cases
-    difficulty: intermediate
-    bloom: apply
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 5–6 (pure functions)
+  - id: cs131-functional-card-pure-function-properties
+    difficulty: basic
+    bloom: remember
     estimated_seconds: 30
-    question: A function sums consecutive pairs and retains a final unpaired item. Write its two base cases for `[]` and `[x]`, using the name `pairSums`.
-    answer: '`pairSums [] = []` and `pairSums [x] = [x]`.'
-    explanation: The recursive two-element pattern cannot handle lists shorter than two. The two base cases preserve the stated behavior on both lengths.
+    question: What two properties make a function pure?
+    answer: Given the same arguments, it always returns the same result, and it computes that result only from its arguments, without reading or changing mutable state outside itself.
+    explanation: A change to state outside a function, such as incrementing a global counter or printing, is a side effect. Pure functions are also called referentially transparent.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 67–69
-  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (bounded recursive production).
-  - id: cs131-v2-functional-card-write-alternating-selection
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 8 (order of evaluation)
+  - id: cs131-functional-card-evaluation-order
     difficulty: intermediate
-    bloom: create
-    estimated_seconds: 60
-    question: Write `keepFirstOfPairs`, which keeps the first item of each consecutive pair and retains an unpaired last item. For example, `[1,2,3,4,5]` becomes `[1,3,5]`. Use pattern matching.
-    answer: |-
-      ```haskell
-      keepFirstOfPairs [] = []
-      keepFirstOfPairs [x] = [x]
-      keepFirstOfPairs (x:_:xs) = x : keepFirstOfPairs xs
-      ```
-    explanation: The recursive pattern consumes two inputs while producing one. Either zero or one input remains at the base case.
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 73–74,86
-  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 3B, p. 5 (polymorphic map type inference).
-  - id: cs131-v2-functional-card-infer-duplicate-map-type
-    difficulty: intermediate
-    bloom: apply
+    bloom: understand
     estimated_seconds: 45
-    question: |-
-      Infer the most general type of `twins` and explain why its output is a list of tuples.
+    question: Why can Haskell evaluate expressions in whatever order their values are needed, or skip some entirely, while C++ must follow the order of its statements?
+    answer: Haskell expressions have no side effects, so evaluating them earlier, later, or not at all cannot change any result. A C++ call may change shared state, so reordering calls could change what the program computes.
+    explanation: That is why `fst (1, error "unused")` is `1` in Haskell. Evaluating only what a result needs is called lazy evaluation.
 
-      ```haskell
-      twins xs = map (\x -> (x,x)) xs
-      ```
-    answer: '`twins :: [a] -> [(a,a)]`. Each input element produces one tuple containing that element twice.'
-    explanation: The two tuple components have the same type because both are the same bound variable. `map` collects those tuples into a list.
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 91–94
-  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3c (accumulator recursion).
-  - id: cs131-v2-functional-card-fold-working-steps
-    difficulty: intermediate
-    bloom: apply
-    estimated_seconds: 30
-    question: List the accumulator after each input element in `foldl (\acc x -> 2*acc + x) 1 [3,4]`, then give the result.
-    answer: 'After 3: `2*1+3 = 5`. After 4: `2*5+4 = 14`. The result is 14.'
-    explanation: Each update receives the previous accumulator, not the original seed.
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 86,88,106–107
-  # Assessment: [Midterm] F23 (Public).pdf, Problem 3a–b, p. 6 (map and filter construction).
-  - id: cs131-v2-functional-card-pipeline-debugging
-    difficulty: intermediate
-    bloom: analyze
-    estimated_seconds: 45
-    question: A student wants only the strings whose length exceeds 2 but writes `map (\s -> length s > 2) words`. Replace one function name and explain the result-type change.
-    answer: Use `filter (\s -> length s > 2) words`. The result changes from `[Bool]` to `[String]`.
-    explanation: '`map` collects predicate results. `filter` uses the predicate to select original strings.'
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 114,122–123
-  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3c; [Midterm] F24 V1 (Public).pdf, Problem 3B, p. 5 (infer a partially applied function).
-  - id: cs131-v2-functional-card-partial-application-higher-order
-    difficulty: intermediate
-    bloom: apply
-    estimated_seconds: 45
-    question: 'Given `map :: (a -> b) -> [a] -> [b]` and `length :: [a] -> Int`, infer the most general type of `map length`.'
-    answer: '`map length :: [[a]] -> [Int]`.'
-    explanation: The mapping function accepts a list and returns its length. Therefore each element of the outer input list is itself a list.
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 120–123
-  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 5 (currying and function-valued arguments).
-  - id: cs131-v2-functional-card-preserve-function-argument
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 5, 7 (immutable bindings)
+  - id: cs131-functional-card-definition-not-assignment
     difficulty: basic
     bloom: understand
     estimated_seconds: 30
-    question: Add parentheses to expose right-associative arrows in `(Int -> Bool) -> Int -> Bool`. Which parentheses cannot be removed without changing the type?
-    answer: '`(Int -> Bool) -> (Int -> Bool)`. The parentheses around the first `Int -> Bool` must remain.'
-    explanation: The first argument is itself a function. The parentheses on the result side merely make the default arrow grouping explicit.
+    question: What does `=` mean in a Haskell definition such as `rate = 5`, and how does that differ from C++?
+    answer: It binds the name `rate` to a value once. It is a definition, not an assignment, so `rate` can never change, and defining `rate` again in the same scope is an error.
+    explanation: '`let rate = 6 in …` creates a new local name that hides the outer one; it does not modify the original binding.'
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 120–123
-  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 3D, p. 6 (explicitly curry a function).
-  - id: cs131-v2-functional-card-curried-function-production
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 7 (imperative versus functional programming)
+  - id: cs131-functional-card-imperative-versus-functional
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 45
+    question: Give three ways a functional program differs from an imperative one.
+    answer: Values never change instead of variables being updated; recursion and function calls replace loops and statements; and evaluation order matters little, because expressions have no side effects.
+    explanation: Because shared values cannot change, threads cannot race on them, which makes parallel programs easier to get right.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 4, 130 (history)
+  - id: cs131-functional-card-history
+    difficulty: basic
+    bloom: remember
+    estimated_seconds: 45
+    question: Name the formal model behind functional programming, the first functional programming language, and the person Haskell is named after.
+    answer: Alonzo Church's lambda calculus from the 1930s, John McCarthy's Lisp from 1958, and the logician Haskell Curry.
+    explanation: In 1937, Turing showed that the lambda calculus and Turing machines compute the same functions. Lisp introduced garbage collection, and algebraic data types came from the 1970s language Hope.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 10–13 (the Haskell compiler and interpreter)
+  - id: cs131-functional-card-ghci-commands
+    difficulty: basic
+    bloom: remember
+    estimated_seconds: 30
+    question: In GHCi, what do `:load`, `:r`, and `:t` do, and how do you enter a definition that spans several lines?
+    answer: '`:load` loads a source file, `:r` reloads it after an edit, and `:t` shows the type of an expression. A multi-line definition goes between `:{` and `:}`.'
+    explanation: GHCi is the interpreter that comes with the Glasgow Haskell Compiler. The compiler builds programs from `.hs` files; GHCi evaluates expressions interactively.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 11, 13 (REPL and Prelude)
+  - id: cs131-functional-card-repl-and-prelude
+    difficulty: basic
+    bloom: remember
+    estimated_seconds: 30
+    question: What does REPL stand for, and what is the Prelude?
+    answer: Read–Eval–Print Loop, an interpreter that reads an expression, evaluates it, prints the result, and repeats. The Prelude is the standard module that every Haskell program imports automatically.
+    explanation: Functions such as `length`, `map`, `fst`, and `show` come from the Prelude, which is why the GHCi prompt can read `Prelude>`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 15–17 (function definitions and signatures)
+  - id: cs131-functional-card-read-signature
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: 'For `plan :: Int -> Bool -> String`, name the parameter types, the result type, and the type of `plan 3 True`.'
+    answer: The parameters are an `Int` and then a `Bool`, and the result is a `String`, so `plan 3 True` is a `String`.
+    explanation: The last type in a signature is the result. Arguments follow the function name, separated by spaces.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 18 (type inference)
+  - id: cs131-functional-card-inference-is-static
     difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 45
+    question: Haskell infers most types, so signatures are optional. Does that make Haskell dynamically typed?
+    answer: No. Every expression still has one fixed type, which the compiler infers and checks before the program runs.
+    explanation: 'For example, `(2 :: Int) + (0.5 :: Double)` is rejected, because Haskell never converts numbers automatically.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 19–21 (calling functions)
+  - id: cs131-functional-card-translate-call
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 30
+    question: Write `f(x, g(y, z))` in Haskell with as few parentheses as possible.
+    answer: '`f x (g y z)`'
+    explanation: Arguments are separated by spaces. Parentheses are needed only to make the inner call a single argument; `f x g y z` would pass four separate arguments to `f`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 19–20 (calling functions)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-card-puzzle-negative-argument
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 30
+    question: Why does `abs -3` fail to type-check, and how do you fix it?
+    answer: It parses as `abs - 3`, which subtracts 3 from the function `abs`. Write `abs (-3)`, which is `3`.
+    explanation: A minus sign between two expressions is subtraction, and function application binds more tightly than any operator. Parenthesize a negative argument.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 22, 40 (prefix and infix notation)
+  - id: cs131-functional-card-prefix-and-infix
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 30
+    question: Rewrite `7 - 2` as a prefix call and `mod 17 5` as an infix expression. What are their values?
+    answer: '`(-) 7 2` is `5`, and ``17 `mod` 5`` is `2`.'
+    explanation: Parentheses turn an operator into an ordinary function; backticks turn a two-argument function into an operator.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 25–26 (guards)
+  - id: cs131-functional-card-guard-syntax
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: In a definition with guards, where do the `=` signs go, and which guard's result is used?
+    answer: Each guard line has its own `=`, as in `| condition = result`, and the function head before the guards has none. The first guard whose condition is `True`, from top to bottom, supplies the result.
+    explanation: '`otherwise` is simply `True`, so it belongs last as the catch-all case.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 30–32 (let versus where)
+  - id: cs131-functional-card-let-or-where
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 30
+    question: When must you use `where` instead of `let … in` for a local binding?
+    answer: When several guards of the same equation share the binding. A `where` clause scopes over the whole equation, while `let … in` covers a single expression.
+    explanation: For a binding used in only one expression, either form works.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 36–38 (tuples and lists)
+  - id: cs131-functional-card-tuple-or-list
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: Contrast a Haskell tuple with a Haskell list.
+    answer: A tuple has a fixed number of components, which may have different types, such as `("Lima", 19.5)`. A list may have any length, but all of its elements share one type.
+    explanation: '`fst` and `snd` work only on pairs; list functions such as `head` and `length` work only on lists.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 42 (: and ++)
+  - id: cs131-functional-card-cons-and-append
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 30
+    question: Write expressions that add `0` to the front and `9` to the end of the list `xs`.
+    answer: '`0 : xs` and `xs ++ [9]`.'
+    explanation: '`:` puts one element in front of a list. `++` joins two lists, so the single element must be wrapped as `[9]`.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 41 (ranges)
+  - id: cs131-functional-card-ranges
+    difficulty: basic
     bloom: apply
     estimated_seconds: 45
-    question: Rewrite `applyThen f g x = g (f x)` using three nested single-argument lambdas, preserving argument order.
-    answer: '`applyThen = \f -> \g -> \x -> g (f x)`'
-    explanation: Each lambda receives one argument. The body passes `f x` to `g`; whether that expression is evaluated depends on how `g` uses its argument.
+    question: Write a range for the multiples of 5 from 5 to 50, and an expression for the first four multiples of 5 that uses an infinite range.
+    answer: '`[5, 10 .. 50]` and `take 4 [5, 10 ..]`, which is `[5,10,15,20]`.'
+    explanation: The first two values set the step. An infinite range is safe as long as only a finite part of it is demanded.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 132,141
-  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 4a (define a recursive algebraic type).
-  - id: cs131-v2-functional-card-constructor-recursive-field
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 8, 41 (infinite lists and demand)
+  - id: cs131-functional-card-finite-demand
     difficulty: intermediate
-    bloom: create
-    estimated_seconds: 30
-    question: Define a Haskell type `Folder` with one constructor `FolderNode` that stores a string name and a list of child folders.
-    answer: '`data Folder = FolderNode String [Folder]`'
-    explanation: The child field is a list of the type being defined, allowing zero, one, or many nested folders.
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 132,139–142
-  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 4b (recursive aggregation).
-  - id: cs131-v2-functional-card-recursive-total-completion
-    difficulty: intermediate
-    bloom: create
+    bloom: analyze
     estimated_seconds: 45
-    question: 'For `data Chain = End | Link Int Chain`, write `total :: Chain -> Int` using one equation for each constructor.'
-    answer: |-
-      ```haskell
-      total :: Chain -> Int
-      total End = 0
-      total (Link value next) = value + total next
-      ```
-    explanation: The empty structure contributes zero; each link contributes its own integer plus the result for its tail.
+    question: Why does `take 3 (filter even [1 ..])` finish, while `length (filter even [1 ..])` never does?
+    answer: '`take 3` demands only three elements, so filtering stops after finding 2, 4, and 6. `length` must reach the end of the list, and an infinite list has no end.'
+    explanation: Laziness lets a computation stop early only when the consumer itself needs just a finite part of the result.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 16, 43 (main, strings as lists)
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 8 (evaluation follows need)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-card-puzzle-demand-undefined
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 60
+    question: Which of `snd (undefined, 7)`, `length [undefined]`, and `sum [undefined, 1]` can be evaluated, and why?
+    answer: '`snd (undefined, 7)` is `7` and `length [undefined]` is `1`; `sum [undefined, 1]` fails.'
+    explanation: Laziness evaluates a component only when a result needs it. `snd` ignores the first component, and `length` counts list cells without inspecting elements, but `sum` must add every element, so it forces `undefined`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 16, 43 (main, strings as lists)
   # Assessment: none; prediction card paired with the chapter's Puzzles section.
   - id: cs131-v2-functional-card-puzzle-print-versus-putstrln
     difficulty: basic
@@ -136,27 +197,41 @@ cards:
     answer: '`"ok"`, then `ok`, then `3`.'
     explanation: '`print` shows a value as Haskell source text, so a string keeps its quotation marks; `putStrLn` writes the characters themselves. A `String` is a list of `Char`, so `length` counts its three characters.'
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 22, 113–117 (prefix operators, partial application)
-  # Assessment: none; prediction card paired with the chapter's Puzzles section.
-  - id: cs131-v2-functional-card-puzzle-negative-section
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 66–71 (list patterns)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (recursive base cases).
+  - id: cs131-v2-functional-card-empty-and-singleton-cases
     difficulty: intermediate
-    bloom: understand
-    estimated_seconds: 45
-    question: Why is `map (- 3) [10, 20]` rejected, and how can you subtract 3 from each element instead?
-    answer: '`(- 3)` is the number negative three, not a section, so it cannot be applied as a function. `map (subtract 3) [10, 20]` gives `[7,17]`.'
-    explanation: Haskell reads a minus sign at the start of parentheses as negation. `subtract 3` is the function that takes 3 away from its argument; the lambda `\x -> x - 3` also works.
+    bloom: apply
+    estimated_seconds: 30
+    question: A function sums consecutive pairs and retains a final unpaired item. Write its two base cases for `[]` and `[x]`, using the name `pairSums`.
+    answer: '`pairSums [] = []` and `pairSums [x] = [x]`.'
+    explanation: The recursive two-element pattern cannot handle lists shorter than two. The two base cases preserve the stated behavior on both lengths.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 57–59 (infinite lists)
-  # Assessment: none; prediction card paired with the chapter's Puzzles section.
-  - id: cs131-v2-functional-card-puzzle-stop-on-infinite-list
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 66–71 (list patterns)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (bounded recursive production).
+  - id: cs131-v2-functional-card-write-alternating-selection
     difficulty: intermediate
-    bloom: analyze
-    estimated_seconds: 45
-    question: What is `takeWhile (< 10) (map (* 3) [1 ..])`? Why would `filter (< 10)` in place of `takeWhile (< 10)` never finish?
-    answer: '`[3,6,9]`. `takeWhile` stops at the first element that fails its test, 12.'
-    explanation: '`filter` cannot know that no later element is below 10, so after producing 3, 6, and 9 it keeps examining the infinite list forever. Laziness lets a consumer stop early only when the consumer itself has a stopping rule.'
+    bloom: create
+    estimated_seconds: 60
+    question: Write `keepFirstOfPairs`, which keeps the first item of each consecutive pair and retains an unpaired last item. For example, `[1,2,3,4,5]` becomes `[1,3,5]`. Use pattern matching.
+    answer: |-
+      ```haskell
+      keepFirstOfPairs [] = []
+      keepFirstOfPairs [x] = [x]
+      keepFirstOfPairs (x:_:xs) = x : keepFirstOfPairs xs
+      ```
+    explanation: The recursive pattern consumes two inputs while producing one. Either zero or one input remains at the base case.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 51–56 (comprehensions)
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 51–56 (comprehensions)
+  - id: cs131-functional-card-write-comprehension
+    difficulty: intermediate
+    bloom: create
+    estimated_seconds: 45
+    question: Write a list comprehension for the squares of the even numbers from 1 to 10.
+    answer: '`[x * x | x <- [1 .. 10], even x]`, which is `[4,16,36,64,100]`.'
+    explanation: '`x <- [1 .. 10]` is the generator, `even x` is the guard, and `x * x` builds each output element. `map (\x -> x * x) (filter even [1 .. 10])` expresses the same idea.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 57–59 (multiple generators)
   # Assessment: none; prediction card paired with the chapter's Puzzles section.
   - id: cs131-v2-functional-card-puzzle-generator-order
     difficulty: intermediate
@@ -171,7 +246,113 @@ cards:
     answer: "`[('x',1),('y',1),('x',2),('y',2)]`"
     explanation: Generators run like nested loops in the order they are written. `n` is the outer loop and `c` the inner one, so `c` varies fastest. The order of the components inside each tuple does not change the loop order.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 102–110 (closures)
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 66–70 (list pattern cheat sheet)
+  - id: cs131-functional-card-list-pattern-shapes
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 45
+    question: Which lists does each pattern match? `[]`, `[x]`, `(x:xs)`, and `(x:y:rest)`.
+    answer: '`[]` matches only the empty list, `[x]` exactly one element, `(x:xs)` one or more elements, and `(x:y:rest)` two or more.'
+    explanation: Against a two-element list, `(x:y:rest)` binds `rest` to `[]`. The colon in a pattern takes a list apart the way `:` builds one.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 73–75, 87–88 (type variables, map)
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 3B, p. 5 (polymorphic map type inference).
+  - id: cs131-v2-functional-card-infer-duplicate-map-type
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |-
+      Infer the most general type of `twins` and explain why its output is a list of tuples.
+
+      ```haskell
+      twins xs = map (\x -> (x,x)) xs
+      ```
+    answer: '`twins :: [a] -> [(a,a)]`. Each input element produces one tuple containing that element twice.'
+    explanation: The two tuple components have the same type because both are the same bound variable. `map` collects those tuples into a list.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 76 (type classes)
+  - id: cs131-functional-card-ord-constraint
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: 'What does `Ord a =>` mean in `smaller :: Ord a => a -> a -> a`?'
+    answer: It restricts the type variable `a` to types whose values can be ordered with operators such as `<` and `>`, so `smaller` works for numbers, characters, and strings.
+    explanation: '`Ord` is a type class: a named group of types that share operations. Haskell infers such constraints from the operations a body uses; dividing with `/` adds `Fractional`, for example.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 78–82 (first-class and higher-order functions)
+  - id: cs131-functional-card-first-class-functions
+    difficulty: basic
+    bloom: remember
+    estimated_seconds: 30
+    question: What four things can a program do with a first-class function, and what is a higher-order function?
+    answer: It can pass the function as an argument, return it from another function, store it in a variable, and store it in a data structure. A higher-order function takes a function as an argument or returns one.
+    explanation: Sort comparators, event callbacks, and thread entry points use the same idea in C++, JavaScript, and Java.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 83–86 (mappers, filters, and reducers)
+  - id: cs131-functional-card-mapper-filter-reducer
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 45
+    question: Distinguish a mapper, a filter, and a reducer, and name a Haskell function for each.
+    answer: A mapper transforms each element one-to-one (`map`), a filter keeps the elements that satisfy a predicate (`filter`), and a reducer collapses a list into one value (`foldl`).
+    explanation: Data processing typically filters and maps, then reduces, as in `foldl (+) 0 (map (* 2) (filter odd xs))`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 83–90 (map and filter)
+  # Assessment: [Midterm] F23 (Public).pdf, Problem 3a–b, p. 6 (map and filter construction).
+  - id: cs131-v2-functional-card-pipeline-debugging
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: A student wants only the strings whose length exceeds 2 but writes `map (\s -> length s > 2) words`. Replace one function name and explain the result-type change.
+    answer: Use `filter (\s -> length s > 2) words`. The result changes from `[Bool]` to `[String]`.
+    explanation: '`map` collects predicate results. `filter` uses the predicate to select original strings.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 91–95 (foldl trace-through)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3c (accumulator recursion).
+  - id: cs131-v2-functional-card-fold-working-steps
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 30
+    question: List the accumulator after each input element in `foldl (\acc x -> 2*acc + x) 1 [3,4]`, then give the result.
+    answer: 'After 3: `2*1+3 = 5`. After 4: `2*5+4 = 14`. The result is 14.'
+    explanation: Each update receives the previous accumulator, not the original seed.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 91–96 (foldl and foldr)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-card-puzzle-folds-build-lists
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      Predict both lines.
+
+      ```haskell
+      main = do
+        print (foldr (:) [] [1, 2, 3])
+        print (foldl (\acc x -> x : acc) [] [1, 2, 3])
+      ```
+    answer: '`[1,2,3]`, then `[3,2,1]`.'
+    explanation: '`foldr (:) []` rebuilds the list from the right, preserving its order. `foldl` processes 1 first and puts each later element in front of the accumulator, so the last element ends up first.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 97–99 (map-reduce at industrial scale)
+  - id: cs131-functional-card-mapreduce-parallelism
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 45
+    question: Why can a MapReduce system run the map step on thousands of machines at once?
+    answer: Each call of the mapping function depends only on its own input element and changes no shared state, so the calls can run independently and in any order.
+    explanation: The framework splits the data, maps the pieces in parallel, groups related results, and then reduces each group.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 102–107 (closures)
+  - id: cs131-functional-card-closure-definition
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 45
+    question: What is a closure? In `\x -> x * k`, which variable is bound and which is free?
+    answer: A closure is a function together with the values of the free variables it uses, captured when the function is created. `x` is bound, because it is the lambda's parameter; `k` is free.
+    explanation: '`scaleBy k = \x -> x * k` returns a separate closure for each `k`, so `scaleBy 2 5` is `10` and `scaleBy 3 5` is `15`.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 102–107 (closures capture bindings)
   # Assessment: none; prediction card paired with the chapter's Puzzles section.
   - id: cs131-v2-functional-card-puzzle-closure-keeps-binding
     difficulty: intermediate
@@ -190,39 +371,112 @@ cards:
     answer: Prints `8`.
     explanation: '`times` refers to the binding `k = 2`. The second `let` introduces a new `k` without changing the first, so the section still multiplies by 2.'
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 91–96 (reducers, foldl)
-  # Assessment: none; prediction card paired with the chapter's Puzzles section.
-  - id: cs131-v2-functional-card-puzzle-folds-build-lists
-    difficulty: advanced
-    bloom: analyze
-    estimated_seconds: 60
-    question: |-
-      Predict both lines.
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 113–117 (partial function application)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3c; [Midterm] F24 V1 (Public).pdf, Problem 3B, p. 5 (infer a partially applied function).
+  - id: cs131-v2-functional-card-partial-application-higher-order
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: 'Given `map :: (a -> b) -> [a] -> [b]` and `length :: [a] -> Int`, infer the most general type of `map length`.'
+    answer: '`map length :: [[a]] -> [Int]`.'
+    explanation: The mapping function accepts a list and returns its length. Therefore each element of the outer input list is itself a list.
 
-      ```haskell
-      main = do
-        print (foldr (:) [] [1, 2, 3])
-        print (foldl (\acc x -> x : acc) [] [1, 2, 3])
-      ```
-    answer: '`[1,2,3]`, then `[3,2,1]`.'
-    explanation: '`foldr (:) []` rebuilds the list from the right, preserving its order. `foldl` processes 1 first and puts each later element in front of the accumulator, so the last element ends up first.'
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 57–59 (lazy evaluation of lists)
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 22, 116–117 (operators as partially applied functions)
   # Assessment: none; prediction card paired with the chapter's Puzzles section.
-  - id: cs131-v2-functional-card-puzzle-demand-undefined
-    difficulty: advanced
-    bloom: analyze
-    estimated_seconds: 60
-    question: Which of `snd (undefined, 7)`, `length [undefined]`, and `sum [undefined, 1]` can be evaluated, and why?
-    answer: '`snd (undefined, 7)` is `7` and `length [undefined]` is `1`; `sum [undefined, 1]` fails.'
-    explanation: Laziness evaluates a component only when a result needs it. `snd` ignores the first component, and `length` counts list cells without inspecting elements, but `sum` must add every element, so it forces `undefined`.
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 19–20 (calling functions)
-  # Assessment: none; prediction card paired with the chapter's Puzzles section.
-  - id: cs131-v2-functional-card-puzzle-negative-argument
+  - id: cs131-v2-functional-card-puzzle-negative-section
     difficulty: intermediate
     bloom: understand
+    estimated_seconds: 45
+    question: Why is `map (- 3) [10, 20]` rejected, and how can you subtract 3 from each element instead?
+    answer: '`(- 3)` is the number negative three, not a section, so it cannot be applied as a function. `map (subtract 3) [10, 20]` gives `[7,17]`.'
+    explanation: Haskell reads a minus sign at the start of parentheses as negation. `subtract 3` is the function that takes 3 away from its argument; the lambda `\x -> x - 3` also works.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 80, 125 (function-valued parameters in curried types)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 5 (currying and function-valued arguments).
+  - id: cs131-v2-functional-card-preserve-function-argument
+    difficulty: basic
+    bloom: understand
     estimated_seconds: 30
-    question: Why does `abs -3` fail to type-check, and how do you fix it?
-    answer: It parses as `abs - 3`, which subtracts 3 from the function `abs`. Write `abs (-3)`, which is `3`.
-    explanation: A minus sign between two expressions is subtraction, and function application binds more tightly than any operator. Parenthesize a negative argument.
+    question: Add parentheses to expose right-associative arrows in `(Int -> Bool) -> Int -> Bool`. Which parentheses cannot be removed without changing the type?
+    answer: '`(Int -> Bool) -> (Int -> Bool)`. The parentheses around the first `Int -> Bool` must remain.'
+    explanation: The first argument is itself a function. The parentheses on the result side merely make the default arrow grouping explicit.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 122–124 (currying by hand)
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 3D, p. 6 (explicitly curry a function).
+  - id: cs131-v2-functional-card-curried-function-production
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: Rewrite `applyThen f g x = g (f x)` using three nested single-argument lambdas, preserving argument order.
+    answer: '`applyThen = \f -> \g -> \x -> g (f x)`'
+    explanation: Each lambda receives one argument. The body passes `f x` to `g`; whether that expression is evaluated depends on how `g` uses its argument.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 123–129 (currying challenge)
+  - id: cs131-functional-card-uncurry-lambdas
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: Rewrite `f = \a -> (\b -> a - b * 2)` as an ordinary definition with two parameters, and give the type of `f` if `a` and `b` are `Int` values.
+    answer: '`f a b = a - b * 2`, with `f :: Int -> Int -> Int`, which means `Int -> (Int -> Int)`.'
+    explanation: Each nested lambda contributes one parameter in order, so the outer lambda's parameter becomes the first argument.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 131–135 (defining algebraic data types)
+  - id: cs131-functional-card-define-variants
+    difficulty: intermediate
+    bloom: create
+    estimated_seconds: 45
+    question: 'Define a type `Payment` that `print` can display, with three variants: `Cash` with no fields, `Card` with a `String`, and `Transfer` with a `String` and an `Int`.'
+    answer: '`data Payment = Cash | Card String | Transfer String Int deriving Show`'
+    explanation: 'Each variant is a constructor. `Cash` has no fields, while the others are functions such as `Transfer :: String -> Int -> Payment`. `deriving Show` generates the code that displays a value.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 130 (sum and product types)
+  - id: cs131-functional-card-sum-and-product
+    difficulty: advanced
+    bloom: understand
+    estimated_seconds: 45
+    question: Why are algebraic data types described as sums and products?
+    answer: A type with several constructors is a sum, because a value is exactly one of them. A constructor with several fields is a product, because a value holds all of them at once.
+    explanation: '`data Payment = Cash | Card String | Transfer String Int` is a sum of three variants, and `Transfer` is a product of a `String` and an `Int`.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 143–145 (recursive algebraic types)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 4a (define a recursive algebraic type).
+  - id: cs131-v2-functional-card-constructor-recursive-field
+    difficulty: intermediate
+    bloom: create
+    estimated_seconds: 30
+    question: Define a Haskell type `Folder` with one constructor `FolderNode` that stores a string name and a list of child folders.
+    answer: '`data Folder = FolderNode String [Folder]`'
+    explanation: The child field is a list of the type being defined, allowing zero, one, or many nested folders.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 143–145 (processing a list built from an algebraic type)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 4b (recursive aggregation).
+  - id: cs131-v2-functional-card-recursive-total-completion
+    difficulty: intermediate
+    bloom: create
+    estimated_seconds: 45
+    question: 'For `data Chain = End | Link Int Chain`, write `total :: Chain -> Int` using one equation for each constructor.'
+    answer: |-
+      ```haskell
+      total :: Chain -> Int
+      total End = 0
+      total (Link value next) = value + total next
+      ```
+    explanation: The empty structure contributes zero; each link contributes its own integer plus the result for its tail.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 143–145 (adding to an immutable list)
+  - id: cs131-functional-card-append-cost
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: 'Why is `x : xs` cheap for an immutable list, while `xs ++ [x]` takes time proportional to the length of `xs`?'
+    answer: '`x : xs` creates one new node that points to the existing `xs`, which is shared unchanged. Appending must change the last node''s link, and because no node can change, every node of `xs` is rebuilt.'
+    explanation: Only the list cells that lead to the end are rebuilt; the elements themselves are not copied.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 146–147 (immutable trees, garbage collection)
+  - id: cs131-functional-card-tree-path-copying
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: When you insert a value into an immutable, balanced binary search tree with n nodes, which nodes are new, which are shared, and what happens to the old version's unused nodes?
+    answer: The nodes on the path from the root to the new leaf are rebuilt, about log₂ n of them, plus the new leaf itself. Every other subtree is shared with the old tree. Old nodes that nothing refers to anymore are reclaimed by garbage collection.
+    explanation: Garbage collection reclaims memory automatically without changing the insertion's logarithmic cost.

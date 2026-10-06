@@ -1,9 +1,414 @@
 title: 'CS 131: Functional Programming and Haskell'
-description: Complete recursion, infer types, trace folds, predict evaluation results, and assemble short Haskell expressions.
+description: Explain pure functional ideas, predict Haskell expressions and types, and reason about recursion, higher-order functions, and immutable data.
 active: true
-# All items are newly authored. Times are planning estimates, not learner-calibrated limits.
+# Source: intro_to_functional_programming_and_haskell_td.pptx; each item cites its slides.
+# Examples deliberately differ from the lecture's own, so answers require transfer rather than
+# recall. Every Haskell answer and distractor outcome was checked with the site's MicroHs runtime.
+# "Assessment:" lines name the past problem whose style an item mirrors. Times are planning
+# estimates, not learner-calibrated limits. Items appear in lecture order; the quiz shuffles them.
 questions:
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 67–69
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 5–6 (pure functions, side effects)
+  - id: cs131-functional-identify-pure-function
+    type: single
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 45
+    question: |-
+      Which of these C++ functions is pure? Assume that other code may change the globals.
+
+      ```cpp
+      int calls = 0;
+      double rate = 1.1;
+      ```
+    options:
+      - '`int area(int w, int h) { return w * h; }`'
+      - '`int next(int x) { return x + calls++; }`'
+      - '`double scaled(double x) { return x * rate; }`'
+      - '`int echo(int x) { std::cout << x; return x; }`'
+    correct_index: 0
+    option_feedback:
+      1: '`calls++` changes a variable outside the function, so a second call with the same argument returns a different result.'
+      2: '`scaled` changes nothing, but it reads `rate`, which other code may change, so the same argument can give different results.'
+      3: Printing to the console is a side effect, even though the returned value depends only on `x`.
+    explanation: A pure function computes its result only from its arguments and neither reads nor changes mutable state outside itself. Only `area` meets both conditions.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 6 (why purity matters)
+  - id: cs131-functional-purity-benefits
+    type: multiple
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 45
+    question: Which benefits follow from a function being pure? Select all that apply.
+    options:
+      - A test can call it without first setting up global state.
+      - A compiler may reuse an earlier result for the same arguments.
+      - Independent calls can run in parallel without changing results.
+      - The function is guaranteed to be free of type errors.
+    correct_indices:
+      - 0
+      - 1
+      - 2
+    option_feedback:
+      0: The result depends only on the arguments, so supplying them is the whole setup.
+      1: The same arguments always produce the same result, so a cached result stays correct.
+      2: Calls that share no mutable state cannot interfere with one another.
+      3: Purity concerns dependencies and effects. A pure function can still be ill-typed; Haskell checks types separately.
+    explanation: Purity makes a call's result depend only on its arguments, which supports testing, caching, parallel evaluation, and reasoning about programs. It says nothing about whether the types are correct.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 5, 7 (immutable bindings)
+  - id: cs131-functional-binding-twice
+    type: single
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 30
+    question: |-
+      A Haskell module contains these two lines. What happens when it is loaded?
+
+      ```haskell
+      limit = 10
+      limit = 20
+      ```
+    options:
+      - The module is rejected because `limit` is defined twice.
+      - '`limit` becomes 20 because the later line overwrites it.'
+      - '`limit` stays 10 because the first definition wins.'
+    correct_index: 0
+    option_feedback:
+      1: In Haskell, `=` defines a name rather than assigning to a variable, so there is nothing to overwrite.
+      2: Haskell does not choose between conflicting definitions; it reports the conflict.
+    explanation: A name is bound once and its value never changes, so two top-level definitions of `limit` are a duplicate-definition error.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 8 (evaluation follows need)
+  - id: cs131-functional-unused-binding
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      What does `classify 5` evaluate to?
+
+      ```haskell
+      classify n = if n > 0 then label else failure
+        where
+          label = "positive " ++ show doubled
+          doubled = 2 * n
+          failure = error "not positive"
+      ```
+    options:
+      - '`"positive 10"`'
+      - An error, because `failure` is defined in the `where` block
+      - An error, because `doubled` is used before it is defined
+    correct_index: 0
+    option_feedback:
+      1: A binding is evaluated only when a result needs its value; for a positive `n`, nothing demands `failure`.
+      2: The bindings after `where` are equations, not statements, so their order does not matter.
+    explanation: The condition selects `label`, which needs `doubled`, so the result is `"positive 10"`. `failure` is never demanded, so its error is never raised.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 19–20 (application groups to the left)
+  - id: cs131-functional-nested-call-syntax
+    type: single
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 45
+    question: |-
+      With these definitions, which expression computes `triple(add1(4))`, that is, 15?
+
+      ```haskell
+      triple n = 3 * n
+      add1 n = n + 1
+      ```
+    options:
+      - '`triple (add1 4)`'
+      - '`triple add1 4`'
+      - '`triple add1(4)`'
+    correct_index: 0
+    option_feedback:
+      1: Application groups to the left, so this means `(triple add1) 4`, which passes the function `add1` to `triple`.
+      2: Parentheses around a lone argument change nothing, so this still means `(triple add1) 4`.
+    explanation: A function is applied to the argument immediately after it. To pass the result of `add1 4` as a single argument, parenthesize that call.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 19–20 (calling functions)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-application-binds-first
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |-
+      What does `half 10 + 4` evaluate to?
+
+      ```haskell
+      half :: Int -> Int
+      half n = n `div` 2
+      ```
+    options:
+      - '`9`'
+      - '`7`'
+      - 'A type error: `10 + 4` needs parentheses'
+    correct_index: 0
+    option_feedback:
+      1: Application binds more tightly than `+`, so the expression is `(half 10) + 4`. It would be 7 only as `half (10 + 4)`.
+      2: The expression is well typed without parentheses. `half 10` is an `Int`, and adding 4 to it is fine.
+    explanation: Function application has higher precedence than every infix operator. `half 10 + 4` computes `half 10`, which is 5, and then adds 4.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 19–21 (nested calls with few parentheses)
+  - id: cs131-functional-equivalent-groupings
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: '`scale :: Int -> Int -> Int` takes two arguments. Which expressions compute `scale(x, abs(y) + 1)`? Select all that apply.'
+    options:
+      - '`scale x (abs y + 1)`'
+      - '`scale x ((abs y) + 1)`'
+      - '`scale x abs y + 1`'
+      - '`scale (x, abs y + 1)`'
+    correct_indices:
+      - 0
+      - 1
+    option_feedback:
+      0: '`abs y` binds before `+`, so the parentheses only need to enclose the second argument.'
+      1: The extra parentheses around `abs y` are redundant but harmless; the grouping is unchanged.
+      2: Application groups to the left, so this tries to pass the function `abs` as `scale`'s second `Int` argument.
+      3: Parentheses with a comma build one tuple argument, but `scale` takes its two arguments separately.
+    explanation: Application binds more tightly than `+`, so `abs y + 1` means `(abs y) + 1`. Wrapping it in parentheses makes it the second argument of `scale`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 24 (if is an expression)
+  - id: cs131-functional-if-needs-else
+    type: single
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: Why does Haskell reject `bonus n = if n > 100 then 5` unless an `else` branch is added?
+    options:
+      - The `if` is an expression, so it needs a value when the test fails.
+      - An `if` statement must always end with a `return` statement.
+      - '`else` is required only when the two branches have different types.'
+    correct_index: 0
+    option_feedback:
+      1: Haskell's `if` is not a statement, and there is no `return` here; the whole `if` is the function's result.
+      2: The two branches must have the same type, and the `else` branch is required in every case.
+    explanation: Every Haskell expression has a value, including `if`. Without `else`, `bonus 50` would have no value, so the branch is mandatory, as in C++'s `? :` operator.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 25–26 (guards)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-guard-order
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      What does `map grade [95, 70, 40]` evaluate to?
+
+      ```haskell
+      grade :: Int -> Char
+      grade score
+        | score >= 60 = 'D'
+        | score >= 90 = 'A'
+        | otherwise   = 'F'
+      ```
+    options:
+      - '`"DDF"`'
+      - '`"ADF"`'
+      - "A compile error: the `'A'` guard is unreachable"
+    correct_index: 0
+    option_feedback:
+      1: "Guards are tried from top to bottom, and 95 already satisfies `score >= 60`, so the `'A'` guard is never consulted."
+      2: "The compiler cannot decide in general that one numeric guard makes a later one unreachable, so the program compiles and never returns `'A'`."
+    explanation: The first guard that holds selects the result. Because `score >= 60` comes before `score >= 90`, every passing score becomes `'D'`. The result is displayed as a string because a list of `Char` is a `String`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 27–28 (recursion with guards, trace-through)
+  - id: cs131-functional-recursion-digit-count
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      What is `digits 4096`?
+
+      ```haskell
+      digits :: Int -> Int
+      digits n
+        | n < 10    = 1
+        | otherwise = 1 + digits (n `div` 10)
+      ```
+    options:
+      - '`4`'
+      - '`3`'
+      - '`1`'
+    correct_index: 0
+    option_feedback:
+      1: The base case also contributes 1, for the last remaining digit.
+      2: Each recursive step adds 1 to the result for the shorter number, so the ones accumulate.
+    explanation: The calls handle 4096, 409, 40, and 4. The base case gives 1 for 4, and each of the three recursive steps adds 1, for a total of 4.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 30–32 (let versus where)
+  - id: cs131-functional-where-across-guards
+    type: single
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 45
+    question: |-
+      Why does this definition use `where` instead of `let … in` for `ratio`?
+
+      ```haskell
+      grade score total
+        | ratio >= 0.9 = "A"
+        | ratio >= 0.8 = "B"
+        | otherwise    = "C"
+        where
+          ratio = score / total
+      ```
+    options:
+      - All guards can see a `where` binding; `let … in` covers one expression.
+      - '`where` bindings are computed before the guards, and `let` ones after.'
+      - '`where` makes `ratio` available to other top-level functions.'
+    correct_index: 0
+    option_feedback:
+      1: Neither form fixes an evaluation order; a binding is computed when a result needs it.
+      2: A `where` binding is local to the equation it belongs to.
+    explanation: A guarded equation has several result expressions. A `where` clause scopes over all of them, while `let … in` can wrap only a single expression.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 33–34 (nested functions in where)
+  - id: cs131-functional-helper-sees-parameter
+    type: single
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 45
+    question: |-
+      Which statement about the helper `describe` is true?
+
+      ```haskell
+      label item price = describe price
+        where
+          describe p = item ++ ": " ++ show p
+      ```
+    options:
+      - It can use `item` because it is defined inside `label`.
+      - It must receive `item` as a parameter before it can use it.
+      - Any other top-level function can call it.
+    correct_index: 0
+    option_feedback:
+      1: A function defined in `where` can already see the parameters of the equation it belongs to.
+      2: A `where` helper is local; it exists only inside the definition of `label`.
+    explanation: 'Nested functions see the enclosing function''s parameters, so `label "pen" 3` is `"pen: 3"` without passing `item` to `describe`.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 36–37 (tuples, fst and snd)
+  - id: cs131-functional-tuple-selection
+    type: multiple
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: Which expressions evaluate to `"Oslo"`? Select all that apply.
+    options:
+      - '`fst ("Oslo", 4)`'
+      - '`fst (fst (("Oslo", 4), True))`'
+      - '`fst ("Oslo", 4, True)`'
+      - '`head ("Oslo", 4)`'
+    correct_indices:
+      - 0
+      - 1
+    option_feedback:
+      0: '`fst` takes the first component of a pair, so this is `"Oslo"`.'
+      1: The inner `fst` extracts the pair `("Oslo", 4)`, and the outer `fst` takes its first component.
+      2: '`fst` works only on pairs; a three-component tuple has a different type, so this is a type error.'
+      3: A tuple is not a list, so list functions such as `head` do not apply to it.
+    explanation: '`fst` and `snd` select the components of a pair. Tuples of other sizes are taken apart with patterns instead.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 38 (lists hold one element type)
+  - id: cs131-functional-valid-lists
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: Which of these are valid Haskell lists? Select all that apply.
+    options:
+      - '`[[1, 2], []]`'
+      - '`[("a", 1), ("b", 2)]`'
+      - '`[1, "two"]`'
+      - '`[(1, ''a''), (2, "b")]`'
+    correct_indices:
+      - 0
+      - 1
+    option_feedback:
+      0: Both elements are lists of numbers; the empty list fits any element type.
+      1: Both elements are pairs of a string and a number, so they share one type.
+      2: A number and a string have different types, and every element of a list must have the same type.
+      3: The first pair holds a character and the second a string, so the two pairs have different types.
+    explanation: A list may have any length but only one element type. Tuples inside a list must agree component by component.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 39–40 (list operations)
+  - id: cs131-functional-zip-after-drop
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: What does `zip "abc" (drop 1 [10, 20, 30])` evaluate to?
+    options:
+      - "`[('a',20),('b',30)]`"
+      - "`[('a',10),('b',20),('c',30)]`"
+      - "`[('b',20),('c',30)]`"
+    correct_index: 0
+    option_feedback:
+      1: '`drop 1` removes the first number before `zip` ever sees the list.'
+      2: '`drop 1` applies only to the number list; `zip` still starts with `''a''`.'
+    explanation: '`drop 1 [10, 20, 30]` is `[20,30]`. `zip` pairs elements in order and stops at the end of the shorter list, so `''c''` has no partner.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 41 (ranges)
+  - id: cs131-functional-range-step
+    type: single
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 30
+    question: What does `[3, 7 .. 20]` evaluate to?
+    options:
+      - '`[3,7,11,15,19]`'
+      - '`[3,7,11,15,19,23]`'
+      - '`[3,7,11,15,19,20]`'
+    correct_index: 0
+    option_feedback:
+      1: A range stops before passing its bound, and 23 would exceed 20.
+      2: The bound is a limit, not an element that is always included; 20 is not 3 plus a multiple of the step 4.
+    explanation: The first two values set the step, 7 − 3 = 4. The range continues with 11, 15, and 19, and stops because 23 would pass 20.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 8, 41 (infinite lists)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-lazy-search
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: What does `head (filter (> 10) [1 ..])` evaluate to?
+    options:
+      - '`11`'
+      - 'Nothing: `filter` never finishes the infinite list'
+      - '`[11]`'
+    correct_index: 0
+    option_feedback:
+      1: '`head` needs only the first element that `filter` produces, so evaluation stops once 11 is found. The rest of the infinite list is never examined.'
+      2: '`head` returns the first element itself, not a one-element list.'
+    explanation: Lazy evaluation computes only what the consumer demands. `head` demands one element, so `filter` tests 1 through 11 and stops.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 42 (: and ++)
+  - id: cs131-functional-append-one-element
+    type: single
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 45
+    question: 'Given `drinks = ["milk", "juice"]`, which expression produces `["milk","juice","tea"]`?'
+    options:
+      - '`drinks ++ ["tea"]`'
+      - '`drinks ++ "tea"`'
+      - '`drinks : "tea"`'
+      - '`"tea" : drinks`'
+    correct_index: 0
+    option_feedback:
+      1: '`"tea"` is a list of characters, but `drinks` is a list of strings, so `++` cannot join them.'
+      2: '`:` puts one element in front of a list; it cannot attach anything at the end.'
+      3: This puts `"tea"` at the front, giving `["tea","milk","juice"]`.
+    explanation: '`++` joins two lists of the same type, so a single element must first be wrapped in its own list: `drinks ++ ["tea"]`.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 44–48, 66–71 (list recursion)
   # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (complete recursion on a count and list).
   - id: cs131-v2-functional-skip-recursive-step
     type: single
@@ -28,7 +433,7 @@ questions:
       2: Decreasing the count without removing the head eventually returns the original list.
     explanation: Each recursive step removes one input item and consumes one unit of the count. When the count reaches zero, the unprocessed suffix is returned.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 67–69
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 66–71 (list patterns in recursion)
   # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 1, p. 2 (trace list recursion and base cases).
   - id: cs131-v2-functional-pairwise-recursion-trace
     type: single
@@ -53,7 +458,7 @@ questions:
       2: The singleton case retains an unpaired final element instead of discarding it.
     explanation: The calls process `[2,5]`, then `[4,1]`, then the singleton `[8]`. Their contributions are 7, 5, and 8.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 67–69,89
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 44–48, 66–69 (list recursion)
   # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (recursive completion).
   - id: cs131-v2-functional-recursive-selection-repair
     type: single
@@ -79,7 +484,90 @@ questions:
       1: This repeats the same input and cannot progress past a nonpositive head.
     explanation: Dropping the current head is only one step. The remaining tail still needs the same selection rule.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 35,65–68
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 51–56 (comprehensions with a guard)
+  - id: cs131-functional-comprehension-guard
+    type: single
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 45
+    question: What does `[x * 10 | x <- [1 .. 6], even x]` evaluate to?
+    options:
+      - '`[20,40,60]`'
+      - '`[10,30,50]`'
+      - '`[10,20,30,40,50,60]`'
+    correct_index: 0
+    option_feedback:
+      1: The guard keeps the values for which `even x` is `True`, not those for which it is `False`.
+      2: The guard tests the drawn value `x`, not the output `x * 10`. Testing the output would keep everything, because every multiple of 10 is even.
+    explanation: The generator supplies 1 to 6, the guard keeps 2, 4, and 6, and the expression before `|` multiplies each kept value by 10.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 57–59 (multiple and dependent generators)
+  - id: cs131-functional-dependent-generator-count
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: How many pairs does `[(a, b) | a <- [1 .. 4], b <- [a .. 4]]` contain?
+    options:
+      - '`10`'
+      - '`16`'
+      - '`6`'
+    correct_index: 0
+    option_feedback:
+      1: Sixteen would require every `b` to range over 1 to 4; here `b` starts at the current `a`.
+      2: '`b` may equal `a`, so pairs such as `(2,2)` are included.'
+    explanation: 'The second generator depends on the first: `a = 1` gives four pairs, `a = 2` three, `a = 3` two, and `a = 4` one, for 10 in total.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 60 (quicksort with comprehensions)
+  - id: cs131-functional-quicksort-duplicates
+    type: single
+    difficulty: advanced
+    bloom: evaluate
+    estimated_seconds: 90
+    question: |-
+      What does `qsort [3, 1, 3, 2]` return with this definition?
+
+      ```haskell
+      qsort [] = []
+      qsort (p:rest) =
+        qsort [x | x <- rest, x < p] ++ [p] ++ qsort [x | x <- rest, x > p]
+      ```
+    options:
+      - '`[1,2,3]`'
+      - '`[1,2,3,3]`'
+      - It never finishes, because the partitions do not get smaller
+    correct_index: 0
+    option_feedback:
+      1: The second 3 is neither less than nor greater than the pivot 3, so neither comprehension keeps it.
+      2: Both comprehensions draw only from `rest`, which excludes the pivot, so each recursive call receives a shorter list.
+    explanation: Elements equal to the pivot satisfy neither guard and are dropped, so this version silently removes duplicates. A correct quicksort sends them to one side, for example with `x >= p` in the second comprehension.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 63–65 (patterns with constants; first match wins)
+  - id: cs131-functional-literal-pattern-order
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: |-
+      What is `fare 0 "senior"`?
+
+      ```haskell
+      fare :: Int -> String -> Int
+      fare 0 _        = 0
+      fare _ "senior" = 2
+      fare age _      = if age < 12 then 1 else 3
+      ```
+    options:
+      - '`0`'
+      - '`2`'
+      - '`1`'
+    correct_index: 0
+    option_feedback:
+      1: Equations are tried from top to bottom, and the first one already matches, so the `"senior"` equation is never consulted.
+      2: The catch-all equation is reached only when neither earlier equation matches.
+    explanation: The first equation requires an age of `0` and accepts any second argument with `_`, so it matches and the result is `0`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 66–70 (list pattern cheat sheet)
   # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (list patterns in recursive code).
   - id: cs131-v2-functional-nested-pattern-bindings
     type: multiple
@@ -103,7 +591,75 @@ questions:
       3: The tail keeps the outer list level; pattern matching does not flatten it.
     explanation: Each colon removes one element from the outer list. `rest` contains whatever outer elements remain, retaining their nested structure.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 86,88
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 73–75 (type variables)
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 3B–C, p. 5 (infer polymorphic higher-order types).
+  - id: cs131-v2-functional-same-element-type-constraint
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      What is the most general type of this function?
+
+      ```haskell
+      collect f x = [x, f x]
+      ```
+    options:
+      - '`(a -> b) -> a -> [b]`'
+      - '`(a -> a) -> a -> [a]`'
+      - '`a -> (a -> a) -> [a]`'
+    correct_index: 1
+    option_feedback:
+      0: Both `x` and `f x` occupy one homogeneous list, so they must have the same type.
+      2: The first parameter is applied as a function; the second is its argument.
+    explanation: 'If `x :: a`, the list forces `f x :: a` too. Thus `f :: a -> a`, and the result is `[a]`.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 76 (type classes inferred from operations)
+  - id: cs131-functional-infer-fractional
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: What is the most general type of `half x = x / 2`?
+    options:
+      - '`Fractional a => a -> a`'
+      - '`Num a => a -> a`'
+      - '`Int -> Int`'
+      - '`a -> a`'
+    correct_index: 0
+    option_feedback:
+      1: '`Num` provides `+`, `-`, and `*`, but not `/`; division requires `Fractional`.'
+      2: '`Int` does not support `/`, which is not integer division; `div` divides integers.'
+      3: An unconstrained `a` would allow any type, including `Bool`, which cannot be divided.
+    explanation: The `/` operator belongs to the `Fractional` type class, so the inferred type works for every fractional type, such as `Double`. Some tools also list `Num a`, which every `Fractional` type already satisfies.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 78–81 (returning functions)
+  - id: cs131-functional-return-function-type
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      Which type completes the signature?
+
+      ```haskell
+      pick :: Bool -> ___
+      pick loud = if loud then shout else whisper
+        where
+          shout s = s ++ "!"
+          whisper s = "(" ++ s ++ ")"
+      ```
+    options:
+      - '`(String -> String)`'
+      - '`String`'
+      - '`(Bool -> String)`'
+    correct_index: 0
+    option_feedback:
+      1: '`pick` returns one of the helper functions itself, not the result of calling it.'
+      2: "The `Bool` is `pick`'s own parameter; each returned helper takes a `String`."
+    explanation: Both branches of the `if` are functions from `String` to `String`, so `pick` is a higher-order function that returns one. For example, `pick True "hi"` is `"hi!"`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 83–90 (mappers and filters)
   # Assessment: [Midterm] F23 (Public).pdf, Problem 3a–b, p. 6 (choose map versus filter).
   - id: cs131-v2-functional-map-boolean-results
     type: single
@@ -127,7 +683,7 @@ questions:
       2: '`filter` returns the original elements for which the predicate succeeds, not the returned Booleans.'
     explanation: Mapping transforms all three elements into Booleans. Filtering retains two original integers.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 86,88,106–107
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 83–90, 97 (map-filter-reduce pipelines)
   # Assessment: [Midterm] F23 (Public).pdf, Problem 3, pp. 6–7 (compose selection and transformation).
   - id: cs131-v2-functional-pipeline-order-counterexample
     type: single
@@ -145,7 +701,7 @@ questions:
       1: The first expression removes -2 before `abs` ever receives it.
     explanation: Selection tests different values in the two pipelines. A negative input supplies a counterexample to freely swapping these stages.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 91–94
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 91–95 (foldl and its accumulator)
   # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3c and Problem 4b (accumulator recursion and folding).
   - id: cs131-v2-functional-fold-positional-accumulator
     type: single
@@ -168,7 +724,7 @@ questions:
       2: '`foldl` processes the input left to right, so 2 contributes before 4 and 1.'
     explanation: The accumulator takes the values 0, 2, 24, and 241. Its update rule determines the result, not merely the presence of a fold.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 39–40,91–94
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 42, 91–96 (foldl that builds a list)
   # Assessment: [Midterm] F23 (Public).pdf, Problem 3d, p. 7 (build a list with a fold).
   - id: cs131-v2-functional-fold-string-order
     type: single
@@ -191,30 +747,140 @@ questions:
       2: The new word is concatenated with the existing accumulator; it does not replace it.
     explanation: The successive accumulators are `"go"`, `"upgo"`, and `"nowupgo"`. Left-to-right folding can still build output in reverse order.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 35,73–74,86
-  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 3B–C, p. 5 (infer polymorphic higher-order types).
-  - id: cs131-v2-functional-same-element-type-constraint
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 91–96 (foldl and foldr)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-fold-direction
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 75
+    question: What do `foldr (-) 0 [5, 3, 1]` and `foldl (-) 0 [5, 3, 1]` evaluate to, in that order?
+    options:
+      - '`3` and `-9`'
+      - '`-9` and `3`'
+      - '`1` and `1`'
+      - '`3` and `3`'
+    correct_index: 0
+    option_feedback:
+      1: The values are swapped. `foldr` nests to the right, `5 - (3 - (1 - 0))`, while `foldl` starts from the left, `((0 - 5) - 3) - 1`.
+      2: '`1` is `5 - 3 - 1` without the initial value. Both folds also apply `-` to the starting value 0.'
+      3: Subtraction is not associative, so the two groupings produce different results.
+    explanation: '`foldr f z [a, b, c]` is `f a (f b (f c z))`, and `foldl f z [a, b, c]` is `f (f (f z a) b) c`. With subtraction, these groupings give 3 and -9.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 83–96 (filter, map, then reduce)
+  # Assessment: [Midterm] F23 (Public).pdf, Problem 3, pp. 6–7 (compose map, filter and fold).
+  - id: cs131-v2-functional-assemble-select-square-sum
+    type: parsons
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 75
+    question: Arrange one expression that sums the squares of only the positive integers in `values`. Negative integers must be discarded before squaring. Use all four required fragments.
+    display: inline
+    lines:
+      - 'foldl (+) 0 '
+      - '(map (\x -> x*x) '
+      - '(filter (\x -> x > 0) '
+      - values))
+    distractors:
+      - '(map (\x -> x+x) '
+      - '(filter (\x -> x*x > 0) '
+    explanation: The innermost filter removes nonpositive inputs, map squares what remains, and fold adds the squares. Squaring before checking positivity would incorrectly admit negative inputs.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 29–30, 102–107 (let, closures)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-let-shadowing
     type: single
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 60
     question: |-
-      What is the most general type of this function?
+      What is the value of `result`?
 
       ```haskell
-      collect f x = [x, f x]
+      result :: Int
+      result =
+        let rate = 3
+            scale x = x * rate
+        in let rate = 10 in scale 2
       ```
     options:
-      - '`(a -> b) -> a -> [b]`'
-      - '`(a -> a) -> a -> [a]`'
-      - '`a -> (a -> a) -> [a]`'
-    correct_index: 1
+      - '`6`'
+      - '`20`'
+      - 'A compile error: `rate` is defined twice'
+    correct_index: 0
     option_feedback:
-      0: Both `x` and `f x` occupy one homogeneous list, so they must have the same type.
-      2: The first parameter is applied as a function; the second is its argument.
-    explanation: 'If `x :: a`, the list forces `f x :: a` too. Thus `f :: a -> a`, and the result is `[a]`.'
+      1: '`scale` uses the `rate` that was in scope where `scale` was defined. The inner `let` creates a different `rate` that only later expressions can see.'
+      2: Nested `let` expressions may reuse a name. The inner binding hides the outer one instead of conflicting with it.
+    explanation: Haskell scope is lexical, and bindings never change. The inner `rate = 10` is a new binding, so `scale 2` still computes `2 * 3`.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 91–92,114,122–123
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 106–107 (free and bound variables)
+  - id: cs131-functional-free-and-bound
+    type: single
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 45
+    question: |-
+      In the lambda returned by `markup`, which variables are free and which are bound?
+
+      ```haskell
+      markup pct = \price -> price + price * pct / 100
+      ```
+    options:
+      - '`price` is bound, and `pct` is free.'
+      - '`pct` is bound, and `price` is free.'
+      - Both are bound, because both are parameters.
+    correct_index: 0
+    option_feedback:
+      1: A lambda's own parameter, here `price`, is bound; `pct` comes from the enclosing `markup`, so it is free in the lambda.
+      2: '`pct` is a parameter of `markup`, not of the lambda, so inside the lambda it is free and must be captured by the closure.'
+    explanation: A bound variable is a parameter or local of the function itself; a free variable comes from outside it. The closure created by `markup 20` captures the free variable `pct` with the value 20.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 110 (lambdas and closures challenge)
+  - id: cs131-functional-lambda-shadows-parameter
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      What is `boost 2 10 3`?
+
+      ```haskell
+      boost x y = \x -> x * y
+      ```
+    options:
+      - '`30`'
+      - '`20`'
+      - '`60`'
+    correct_index: 0
+    option_feedback:
+      1: The lambda's own parameter `x` hides the outer `x`, so the 2 is never used in the body.
+      2: Only two values meet in the body, the lambda's `x` and the captured `y`; the outer `x` takes no part.
+    explanation: '`boost 2 10` returns `\x -> x * 10`, a closure that captures only `y`. Applying it to 3 gives 30.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 113–117 (partial function application)
+  - id: cs131-functional-partial-application-type
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |-
+      Which expression has type `Double -> Double`?
+
+      ```haskell
+      tax :: Double -> Double -> Double
+      tax rate price = price * (1 + rate)
+      ```
+    options:
+      - '`tax 0.5`'
+      - '`tax 0.5 20`'
+      - '`tax (0.5, 20)`'
+    correct_index: 0
+    option_feedback:
+      1: Supplying both arguments completes the call, so the result is a `Double`, `30.0`.
+      2: A tuple is a single argument, so this passes one pair where `tax` expects a `Double`; it is a type error.
+    explanation: Supplying only the rate partially applies `tax`. The result is a new function that still waits for a price.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 91–95, 113–117 (partially applied fold)
   # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3c (type after partial application of accumulator recursion).
   - id: cs131-v2-functional-partially-applied-fold-type
     type: single
@@ -239,7 +905,43 @@ questions:
       2: The accumulator is a list, but each input element is the second argument of `combine`, an `Int`.
     explanation: The accumulator type `b` is `[Int]`, and the element type `a` is `Int`. Supplying the function and seed leaves `[Int] -> [Int]`.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 122–123
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 22, 116–117 (operators as partially applied functions)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-left-section
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: What does `map (2 ^) [1, 2, 3]` evaluate to?
+    options:
+      - '`[2,4,8]`'
+      - '`[1,4,9]`'
+      - '`[2,4,6]`'
+    correct_index: 0
+    option_feedback:
+      1: That result squares each element, which is the section `(^ 2)`. In `(2 ^)` the supplied operand is the base, and each element becomes the exponent.
+      2: '`^` is exponentiation, not multiplication; `(2 *)` would double each element.'
+    explanation: The left section `(2 ^)` is the function `\x -> 2 ^ x`. Mapping it over `[1, 2, 3]` computes `2 ^ 1`, `2 ^ 2`, and `2 ^ 3`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 118–128 (currying)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  - id: cs131-v2-functional-puzzle-curried-map
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 60
+    question: What does `map (\f -> f 3) (map (*) [1, 2, 3])` evaluate to?
+    options:
+      - '`[3,6,9]`'
+      - '`[1,2,3]`'
+      - 'A type error: `(*)` needs two arguments'
+    correct_index: 0
+    option_feedback:
+      1: '`map (*) [1, 2, 3]` produces the functions `(1 *)`, `(2 *)`, and `(3 *)`. Applying each one to 3 multiplies rather than returning the stored number.'
+      2: Every Haskell function takes one argument at a time. Applying `(*)` to one number is valid and returns a function waiting for the second.
+    explanation: Because `(*)` is curried, mapping it over numbers yields a list of partially applied functions. The lambda then supplies 3 to each one, producing 3, 6, and 9.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 80, 125 (function-valued parameters in curried types)
   # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 5 (remove only redundant curry parentheses).
   - id: cs131-v2-functional-function-argument-parentheses
     type: single
@@ -257,7 +959,7 @@ questions:
       2: This groups a different function type as an argument and changes the contract.
     explanation: Arrows associate to the right. Parentheses around the result function are redundant, while those around the function-valued first argument are necessary.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 120–123
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 122–124 (currying by hand)
   # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 3D, p. 6 (write an explicitly curried body).
   - id: cs131-v2-functional-assemble-explicit-currying
     type: parsons
@@ -277,7 +979,61 @@ questions:
       - f suffix
     explanation: Each arrow introduces exactly the next argument. The body must apply `f` to `x` before appending `suffix`; swapping those roles changes the function.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 132,141
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 131–135 (algebraic data types and constructors)
+  - id: cs131-functional-adt-values
+    type: multiple
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      Which expressions are complete values of type `Drink`? Select all that apply.
+
+      ```haskell
+      data Drink = Water | Coffee Int | Juice String Int
+      ```
+    options:
+      - '`Water`'
+      - '`Coffee 2`'
+      - '`Juice "apple"`'
+      - '`Juice 300 "lime"`'
+    correct_indices:
+      - 0
+      - 1
+    option_feedback:
+      0: A constructor without fields, such as `Water`, is already a complete value.
+      1: '`Coffee` needs one `Int`, and `2` supplies it.'
+      2: '`Juice` takes two fields, so with only the string it is still a function, of type `Int -> Drink`.'
+      3: The fields must come in their declared order, a `String` and then an `Int`.
+    explanation: Each constructor is a function from its fields to a `Drink`, and a value is complete only when every field has been supplied in order.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 136–142 (pattern matching on variants; first match wins)
+  - id: cs131-functional-constructor-pattern-order
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      What is `describe (Dog "Rex" 0)`?
+
+      ```haskell
+      data Pet = Cat String | Dog String Int
+
+      describe :: Pet -> String
+      describe (Dog name _) = name ++ " is a dog"
+      describe (Dog name 0) = name ++ " is a puppy"
+      describe (Cat name)   = name ++ " is a cat"
+      ```
+    options:
+      - '`"Rex is a dog"`'
+      - '`"Rex is a puppy"`'
+      - An error, because two equations match the value
+    correct_index: 0
+    option_feedback:
+      1: Haskell does not prefer the more specific pattern; it uses the first equation that matches, and `(Dog name _)` matches every dog.
+      2: Overlapping equations are allowed. Haskell uses the first match, so the puppy equation can never be reached.
+    explanation: Equations are tried from top to bottom. To reach the puppy case, put `describe (Dog name 0)` before the general `Dog` equation.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 143–145 (a list built from an algebraic type)
   # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 4a; [Midterm] F23 (Public).pdf, Problem 2a, p. 4 (construct a recursive algebraic value).
   - id: cs131-v2-functional-recursive-constructor-values
     type: multiple
@@ -305,51 +1061,7 @@ questions:
       3: Supplying only the string leaves a function expecting its `Chain` argument.
     explanation: The constructor has type `String -> Chain -> Chain`. A complete node supplies both fields, ending eventually in `End` for these finite examples.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 91–92,132,141–142
-  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 4b (combine the current node with recursive child results).
-  - id: cs131-v2-functional-tree-fold-recursive-contribution
-    type: single
-    difficulty: intermediate
-    bloom: analyze
-    estimated_seconds: 75
-    question: |-
-      Complete `total`, which sums the integer weights of a finite tree.
-
-      ```haskell
-      data Tree = Branch Int [Tree]
-      total (Branch weight children) =
-        foldl (\acc child -> ___) weight children
-      ```
-    options:
-      - '`acc + total child`'
-      - '`weight + total child`'
-      - '`total child`'
-    correct_index: 0
-    option_feedback:
-      1: Using the original weight each time discards earlier children's accumulated contributions.
-      2: Returning only the current child's total loses the parent and previously processed children.
-    explanation: The seed counts the current node once. Each fold step adds one child subtree's total to the accumulated sum.
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 86,88,91–94,106–107
-  # Assessment: [Midterm] F23 (Public).pdf, Problem 3, pp. 6–7 (compose map, filter and fold).
-  - id: cs131-v2-functional-assemble-select-square-sum
-    type: parsons
-    difficulty: intermediate
-    bloom: apply
-    estimated_seconds: 75
-    question: Arrange one expression that sums the squares of only the positive integers in `values`. Negative integers must be discarded before squaring. Use all four required fragments.
-    display: inline
-    lines:
-      - 'foldl (+) 0 '
-      - '(map (\x -> x*x) '
-      - '(filter (\x -> x > 0) '
-      - values))
-    distractors:
-      - '(map (\x -> x+x) '
-      - '(filter (\x -> x*x > 0) '
-    explanation: The innermost filter removes nonpositive inputs, map squares what remains, and fold adds the squares. Squaring before checking positivity would incorrectly admit negative inputs.
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 132,139–142
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 136–145 (recursion over an algebraic type)
   # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 2, pp. 3–4 (skip a node's own contribution but still visit descendants).
   - id: cs131-v2-functional-tree-pruning-counterexample
     type: single
@@ -374,182 +1086,91 @@ questions:
       1: A nonzero leaf uses the general case and returns its own weight correctly.
     explanation: A zero-weight parent can still have nonzero descendants. The first pattern discards the children instead of recursively summing them.
 
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 19–20 (calling functions)
-  # Assessment: none; prediction item paired with the chapter's Puzzles section.
-  - id: cs131-v2-functional-puzzle-application-binds-first
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 131–135, 143–145 (records; updates build new values)
+  - id: cs131-functional-immutable-point-update
     type: single
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
     question: |-
-      What does `half 10 + 4` evaluate to?
-
-      ```haskell
-      half :: Int -> Int
-      half n = n `div` 2
-      ```
-    options:
-      - '`9`'
-      - '`7`'
-      - 'A type error: `10 + 4` needs parentheses'
-    correct_index: 0
-    option_feedback:
-      1: Application binds more tightly than `+`, so the expression is `(half 10) + 4`. It would be 7 only as `half (10 + 4)`.
-      2: The expression is well typed without parentheses. `half 10` is an `Int`, and adding 4 to it is fine.
-    explanation: Function application has higher precedence than every infix operator. `half 10 + 4` computes `half 10`, which is 5, and then adds 4.
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 22, 113–117 (prefix operators, partial application)
-  # Assessment: none; prediction item paired with the chapter's Puzzles section.
-  - id: cs131-v2-functional-puzzle-left-section
-    type: single
-    difficulty: intermediate
-    bloom: apply
-    estimated_seconds: 45
-    question: What does `map (2 ^) [1, 2, 3]` evaluate to?
-    options:
-      - '`[2,4,8]`'
-      - '`[1,4,9]`'
-      - '`[2,4,6]`'
-    correct_index: 0
-    option_feedback:
-      1: That result squares each element, which is the section `(^ 2)`. In `(2 ^)` the supplied operand is the base, and each element becomes the exponent.
-      2: '`^` is exponentiation, not multiplication; `(2 *)` would double each element.'
-    explanation: The left section `(2 ^)` is the function `\x -> 2 ^ x`. Mapping it over `[1, 2, 3]` computes `2 ^ 1`, `2 ^ 2`, and `2 ^ 3`.
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 25–27 (guards)
-  # Assessment: none; prediction item paired with the chapter's Puzzles section.
-  - id: cs131-v2-functional-puzzle-guard-order
-    type: single
-    difficulty: intermediate
-    bloom: analyze
-    estimated_seconds: 60
-    question: |-
-      What does `map grade [95, 70, 40]` evaluate to?
-
-      ```haskell
-      grade :: Int -> Char
-      grade score
-        | score >= 60 = 'D'
-        | score >= 90 = 'A'
-        | otherwise   = 'F'
-      ```
-    options:
-      - '`"DDF"`'
-      - '`"ADF"`'
-      - "A compile error: the `'A'` guard is unreachable"
-    correct_index: 0
-    option_feedback:
-      1: "Guards are tried from top to bottom, and 95 already satisfies `score >= 60`, so the `'A'` guard is never consulted."
-      2: "The compiler cannot decide in general that one numeric guard makes a later one unreachable, so the program compiles and never returns `'A'`."
-    explanation: The first guard that holds selects the result. Because `score >= 60` comes before `score >= 90`, every passing score becomes `'D'`. The result is displayed as a string because a list of `Char` is a `String`.
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 57–59 (infinite lists)
-  # Assessment: none; prediction item paired with the chapter's Puzzles section.
-  - id: cs131-v2-functional-puzzle-lazy-search
-    type: single
-    difficulty: intermediate
-    bloom: apply
-    estimated_seconds: 45
-    question: What does `head (filter (> 10) [1 ..])` evaluate to?
-    options:
-      - '`11`'
-      - 'Nothing: `filter` never finishes the infinite list'
-      - '`[11]`'
-    correct_index: 0
-    option_feedback:
-      1: '`head` needs only the first element that `filter` produces, so evaluation stops once 11 is found. The rest of the infinite list is never examined.'
-      2: '`head` returns the first element itself, not a one-element list.'
-    explanation: Lazy evaluation computes only what the consumer demands. `head` demands one element, so `filter` tests 1 through 11 and stops.
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 91–96 (reducers, foldl)
-  # Assessment: none; prediction item paired with the chapter's Puzzles section.
-  - id: cs131-v2-functional-puzzle-fold-direction
-    type: single
-    difficulty: advanced
-    bloom: analyze
-    estimated_seconds: 75
-    question: What do `foldr (-) 0 [5, 3, 1]` and `foldl (-) 0 [5, 3, 1]` evaluate to, in that order?
-    options:
-      - '`3` and `-9`'
-      - '`-9` and `3`'
-      - '`1` and `1`'
-      - '`3` and `3`'
-    correct_index: 0
-    option_feedback:
-      1: The values are swapped. `foldr` nests to the right, `5 - (3 - (1 - 0))`, while `foldl` starts from the left, `((0 - 5) - 3) - 1`.
-      2: '`1` is `5 - 3 - 1` without the initial value. Both folds also apply `-` to the starting value 0.'
-      3: Subtraction is not associative, so the two groupings produce different results.
-    explanation: '`foldr f z [a, b, c]` is `f a (f b (f c z))`, and `foldl f z [a, b, c]` is `f (f (f z a) b) c`. With subtraction, these groupings give 3 and -9.'
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 5–7, 29–33 (immutability, let)
-  # Assessment: none; prediction item paired with the chapter's Puzzles section.
-  - id: cs131-v2-functional-puzzle-let-shadowing
-    type: single
-    difficulty: intermediate
-    bloom: analyze
-    estimated_seconds: 60
-    question: |-
-      What is the value of `result`?
-
-      ```haskell
-      result :: Int
-      result =
-        let rate = 3
-            scale x = x * rate
-        in let rate = 10 in scale 2
-      ```
-    options:
-      - '`6`'
-      - '`20`'
-      - 'A compile error: `rate` is defined twice'
-    correct_index: 0
-    option_feedback:
-      1: '`scale` uses the `rate` that was in scope where `scale` was defined. The inner `let` creates a different `rate` that only later expressions can see.'
-      2: Nested `let` expressions may reuse a name. The inner binding hides the outer one instead of conflicting with it.
-    explanation: Haskell scope is lexical, and bindings never change. The inner `rate = 10` is a new binding, so `scale 2` still computes `2 * 3`.
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 118–128 (currying)
-  # Assessment: none; prediction item paired with the chapter's Puzzles section.
-  - id: cs131-v2-functional-puzzle-curried-map
-    type: single
-    difficulty: advanced
-    bloom: analyze
-    estimated_seconds: 60
-    question: What does `map (\f -> f 3) (map (*) [1, 2, 3])` evaluate to?
-    options:
-      - '`[3,6,9]`'
-      - '`[1,2,3]`'
-      - 'A type error: `(*)` needs two arguments'
-    correct_index: 0
-    option_feedback:
-      1: '`map (*) [1, 2, 3]` produces the functions `(1 *)`, `(2 *)`, and `(3 *)`. Applying each one to 3 multiplies rather than returning the stored number.'
-      2: Every Haskell function takes one argument at a time. Applying `(*)` to one number is valid and returns a function waiting for the second.
-    explanation: Because `(*)` is curried, mapping it over numbers yields a list of partially applied functions. The lambda then supplies 3 to each one, producing 3, 6, and 9.
-
-  # Lecture: intro_to_functional_programming_and_haskell_v10.pptx, slides 131–148 (algebraic data types, immutable structures)
-  # Assessment: none; prediction item paired with the chapter's Puzzles section.
-  - id: cs131-v2-functional-puzzle-record-update
-    type: single
-    difficulty: intermediate
-    bloom: apply
-    estimated_seconds: 45
-    question: |-
-      What does the last line print?
+      What is `(px p, px q)`?
 
       ```haskell
       data Point = Point { px :: Int, py :: Int }
 
-      main = do
-        let p = Point 1 2
-            q = p { px = 5 }
-        print (px p, px q)
+      moveRight :: Point -> Point
+      moveRight (Point x y) = Point (x + 1) y
+
+      p = Point 1 2
+      q = moveRight p
       ```
     options:
-      - '`(1,5)`'
-      - '`(5,5)`'
-      - 'A compile error: record fields cannot change'
+      - '`(1,2)`'
+      - '`(2,2)`'
+      - '`(1,1)`'
     correct_index: 0
     option_feedback:
-      1: A record update builds a new value; it does not modify `p`. Only `q` has the new `px`.
-      2: Record update syntax is allowed. It creates a modified copy instead of assigning to the existing record.
-    explanation: '`p { px = 5 }` constructs a new `Point` whose `px` is 5 and whose other fields come from `p`. The original `p` is unchanged, so both versions remain available.'
+      1: '`moveRight` builds a new `Point`; it cannot modify `p`, so `px p` is still 1.'
+      2: Immutability means `p` is unchanged, not that `moveRight` does nothing. It returns a new point whose `px` is 2.
+    explanation: '`px` reads the first field. `p` keeps its original value, and `q` is a separate point built from it, so the pair is `(1,2)`.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 144–145 (adding to the end of an immutable list)
+  - id: cs131-functional-append-cost
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: For an immutable linked list with n nodes, which operation must build about n new nodes?
+    options:
+      - Adding an element at the end
+      - Adding an element at the front
+      - Removing the first element
+    correct_index: 0
+    option_feedback:
+      1: The new front node can point to the existing list, which is shared unchanged, so only one node is created.
+      2: The rest of the list already exists as the tail, so it can be returned without building anything.
+    explanation: 'The last node''s link must change to reach the new element, and no node can be modified, so every node on the way is rebuilt. That is why `xs ++ [x]` takes time proportional to the length of `xs`, while `x : xs` takes constant time.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 146 (inserting into an immutable binary search tree)
+  - id: cs131-functional-bst-path-copy
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: Inserting one value into a balanced, immutable binary search tree of about 1,000,000 nodes creates roughly how many new nodes?
+    options:
+      - About 20
+      - About 1,000,000
+      - About 500,000
+      - Exactly 1
+    correct_index: 0
+    option_feedback:
+      1: Only the nodes on the path from the root to the new leaf change; every other subtree is shared with the old tree.
+      2: An insertion follows one path down the tree; it does not touch half of the nodes.
+      3: The new leaf alone is not enough, because every ancestor must be rebuilt to point to its updated child.
+    explanation: A balanced tree's height is about log₂ n, and log₂ 1,000,000 is about 20. The insertion rebuilds that path and reuses everything else.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 147–150 (garbage collection; pros and cons of immutability)
+  - id: cs131-functional-immutability-tradeoffs
+    type: multiple
+    difficulty: intermediate
+    bloom: evaluate
+    estimated_seconds: 60
+    question: Which statements about immutable data structures are true? Select all that apply.
+    options:
+      - Threads can share them without data races.
+      - A value cannot change unexpectedly while you debug.
+      - Old versions remain available, which simplifies undo.
+      - Every update is faster than an in-place update.
+      - The programmer must free each unused old version.
+    correct_indices:
+      - 0
+      - 1
+      - 2
+    option_feedback:
+      0: A data race needs a write to shared memory, and an immutable value is never written after it is created.
+      1: Only the code that created a value determines it, so no distant code can change it behind your back.
+      2: An update returns a new version and leaves the old one intact.
+      3: Some updates, such as appending to a list, rebuild part of the structure and cost more than an in-place change.
+      4: Garbage collection reclaims versions that nothing refers to anymore.
+    explanation: Immutability trades some update cost for safety and simpler reasoning, and functional languages rely on garbage collection to reclaim old versions.

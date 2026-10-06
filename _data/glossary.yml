@@ -384,6 +384,11 @@
   description: A pattern language for matching, validating, searching, or transforming text.
   related: []
 
+- term: REPL
+  definition: Read–Eval–Print Loop
+  description: An interactive programming environment that reads one expression or command, evaluates it, prints the result, and then waits for the next input. GHCi and the Python interpreter prompt are REPLs.
+  related: [GHCi]
+
 - term: REST
   definition: Representational State Transfer
   description: An architectural style for distributed hypermedia systems. REST APIs expose resources at predictable URLs and use HTTP methods (GET, POST, PUT, DELETE) for the standard operations on them.
@@ -562,6 +567,7 @@
 - term: GHCi
   definition: Glasgow Haskell Compiler interactive environment
   description: The interactive Haskell environment supplied with GHC. It evaluates expressions, displays types, and loads source files. The tutorial browser interpreter uses MicroHs, a separate Haskell implementation.
+  related: [GHC, REPL]
 
 - term: GHC
   definition: Glasgow Haskell Compiler
