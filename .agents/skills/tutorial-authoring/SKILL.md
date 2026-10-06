@@ -1677,6 +1677,9 @@ length when connector shapes have different numbers of bends.
 Reserve a stable annotation line for screen-only Added/Changed object badges.
 Highlight changed data, new objects, and redirected/new name or member references
 separately with a static glow; adding an alias must not mark its object as changed.
+Compute cues against the previously requested step, not the last committed
+diagram: rapid steps can reject intermediate layouts, while motion still starts
+from the displayed frame. A same-step re-render (resize) keeps its cues.
 Clear cues on an unchanged next state without changing geometry. Print omits these
 transient comparison cues. Either the system or SEBook
 reduced-motion preference requires still frames. Observe preference changes and

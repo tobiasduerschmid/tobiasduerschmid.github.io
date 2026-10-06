@@ -70,6 +70,20 @@ test('a loop name enters without moving its unchanged target, then the same name
   await expect(diagram(lab).getByRole('region', { name: 'o6: list', exact: true }).getByText('Added', { exact: true })).toBeVisible();
 });
 
+test('change cues compare with the previous step when quick steps supersede its layout', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/SEBook/tools/python.html?reduce-motion=1');
+  const lab = page.getByRole('region', { name: 'Object reference lab: Changing a row or replacing a slot', exact: true });
+  await expect(control(lab, 'Forward')).toBeEnabled();
+  // A held key or fast clicking requests steps before each layout finishes.
+  await control(lab, 'Forward').evaluate(button => { for (let i = 0; i < 4; i++) button.click(); });
+  await still(lab);
+  await expect(lab.getByRole('status').filter({ hasText: /^Step 5 of/ })).toBeVisible();
+  // Step 5 appended to the row; the board already existed at step 4.
+  await expect(diagram(lab).getByRole('region', { name: 'o1: list', exact: true }).getByText('Changed', { exact: true })).toBeVisible();
+  await expect(diagram(lab).getByRole('region', { name: 'o3: list', exact: true }).getByText('Added', { exact: true })).toHaveCount(0);
+});
+
 for (const theme of ['light', 'dark']) {
   test(`change cues distinguish data mutation from name rebinding in ${theme} reduced-motion frames`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });

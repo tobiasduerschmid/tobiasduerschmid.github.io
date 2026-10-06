@@ -461,6 +461,23 @@
 
   /** Narrow layouts use the same identities/ports but a vertical reading order.
    * The deterministic channel fallback also keeps print available if ELK fails. */
+  const NO_FACTS = { objects: new Map(), references: new Map(), names: new Map() };
+
+  /** What a measured step shows, by stable id, for "changed at this step" cues. */
+  function sceneFacts(candidate) {
+    const facts = { objects: new Map(), references: new Map(), names: new Map() };
+    candidate.views.forEach((view, id) => {
+      facts.objects.set(id, view.objectSignature);
+      view.namePorts.forEach(port => facts.names.set(port.id, id));
+    });
+    candidate.model.edges.forEach(edge => facts.references.set(edge.id, edge.targets[0].slice(0, -':in'.length)));
+    return facts;
+  }
+
+  function changeCue(before, id, now) {
+    return !before.has(id) ? 'Added' : before.get(id) !== now ? 'Changed' : '';
+  }
+
   function stackedScene(candidate, width) {
     let y = 14;
     const right = Math.max(...candidate.model.children.map(node => node.width), 0) + 14;
@@ -554,6 +571,7 @@
     reset() {
       this.signature = null;
       this.step = null;
+      this.stepFacts = this.cueBaseline = null;
       this.layoutKind = null;
       this.version += 1;
       this.finishMotion();
@@ -573,6 +591,10 @@
       const newStep = step !== this.step;
       this.step = step;
       const candidate = measureScene(this.host, step, this.interactive);
+      // Cues compare with the previously requested step, even when a faster
+      // request superseded its layout before that diagram was committed.
+      if (newStep) this.cueBaseline = this.stepFacts;
+      this.stepFacts = sceneFacts(candidate);
       const pageWidth = this.host.parentElement.clientWidth || this.host.closest('.object-reference-lab').clientWidth;
       const available = this.interactive ? pageWidth : Math.min(160 * 96 / 25.4, pageWidth || 160 * 96 / 25.4);
       const geometryKey = JSON.stringify([candidate.model, Math.round(available)]);
@@ -644,7 +666,7 @@
       ordered.forEach(node => {
         const next = candidate.views.get(node.id);
         let view = this.objects.get(node.id);
-        const change = !view ? 'Added' : view.objectSignature !== next.objectSignature ? 'Changed' : '';
+        const change = changeCue((this.cueBaseline || NO_FACTS).objects, node.id, next.objectSignature);
         if (!view) {
           view = next;
           view.card.id = this.prefix + '-' + node.id;
@@ -685,8 +707,8 @@
       }));
       this.syncPaths();
       this.routes.forEach(route => {
-        const old = previousRoutes.get(route.id);
-        const changed = this.interactive && (!old || old.target !== route.target);
+        const changed = this.interactive
+          && Boolean(changeCue((this.cueBaseline || NO_FACTS).references, route.id, route.target));
         route.path.classList.toggle('is-updated', changed);
         const port = this.objects.get(route.source).card.querySelector('[data-reference-id="' + CSS.escape(route.id) + '"]');
         port.classList.toggle('is-updated', changed);
@@ -737,7 +759,7 @@
           const path = old?.path || svgElement('path', { class: 'orl-edge orl-binding-edge',
             'data-binding-id': port.id, 'marker-end': 'url(#' + this.referenceArrow + ')' });
           path.dataset.targetObject = target;
-          const change = this.interactive ? (!old ? 'Added' : old.target !== target ? 'Changed' : '') : '';
+          const change = this.interactive ? changeCue((this.cueBaseline || NO_FACTS).names, port.id, target) : '';
           this.markChange(label, change);
           label.title = change ? change + ' reference' : '';
           path.classList.toggle('is-updated', Boolean(change));
