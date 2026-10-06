@@ -118,8 +118,32 @@
     color: #17324d;
     min-height: 40px;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     justify-content: center;
+    gap: 10px;
+  }
+
+  /* Code blocks in cards stay left-aligned and full width instead of
+     inheriting the card's centered text and sitting beside the prose. */
+  .flashcard-question .highlighter-rouge,
+  .flashcard-answer .highlighter-rouge,
+  .flashcard-explanation .highlighter-rouge {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    text-align: left;
+  }
+
+  .flashcard-question pre,
+  .flashcard-answer pre,
+  .flashcard-explanation pre {
+    display: block;
+    max-width: 100%;
+    margin: 0;
+    overflow-x: auto;
+    white-space: pre;
+    text-align: left;
   }
 
   /* Difficulty chip — color-coded with text label so meaning never depends
