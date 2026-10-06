@@ -120,6 +120,68 @@
     return output;
   }
 
+  function typeText(tokens, source) {
+    if (!tokens) return '';
+    if (tokens.synthetic) return tokens.synthetic;
+    if (!tokens.length) return '';
+    return source.slice(tokens[0].offset, endOf(tokens.at(-1))).replace(/\s+/g, ' ').trim();
+  }
+
+  function unwrapType(tokens) {
+    let current = tokens || [];
+    while (current[0]?.text === '(' && current.at(-1)?.text === ')' &&
+           current.slice(1, -1).every(token => token.depth > current[0].depth)) {
+      current = current.slice(1, -1);
+    }
+    return current;
+  }
+
+  function projectPatternType(patternTokens, typeTokens, source, shadowed, output) {
+    const pattern = unparen(patternTokens);
+    if (!pattern.length) return;
+    const annotation = pattern.findIndex((token, index) => index > 0 && token.text === '::' && token.depth === pattern[0].depth);
+    if (annotation > 0 && variable(pattern[0].text)) {
+      const annotated = typeText(pattern.slice(annotation + 1), source);
+      if (annotated) output[pattern[0].text] = annotated;
+      return;
+    }
+    const type = unwrapType(typeTokens);
+    if (pattern.length === 1 && variable(pattern[0].text)) {
+      const text = typeText(type, source);
+      if (text) output[pattern[0].text] = text;
+      return;
+    }
+    if (pattern[1]?.text === '@' && variable(pattern[0].text)) {
+      const text = typeText(type, source);
+      if (text) output[pattern[0].text] = text;
+      projectPatternType(pattern.slice(2), type, source, shadowed, output);
+      return;
+    }
+    const cons = split(pattern, ':');
+    const list = type[0]?.text === '[' && type.at(-1)?.text === ']';
+    const stringType = type.length === 1 && type[0].text === 'String' && !shadowed.has('String');
+    if (cons.length > 1 && (list || stringType)) {
+      projectPatternType(cons[0], list ? type.slice(1, -1) : { synthetic: 'Char' }, source, shadowed, output);
+      const tailStart = pattern.indexOf(cons[1][0]);
+      projectPatternType(pattern.slice(tailStart), type, source, shadowed, output);
+      return;
+    }
+    const patternTuple = split(pattern, ',');
+    const typeTuple = split(type, ',');
+    if (patternTuple.length > 1 && typeTuple.length === patternTuple.length && type.some(token => token.text === ',')) {
+      patternTuple.forEach((part, index) => projectPatternType(part, typeTuple[index], source, shadowed, output));
+      return;
+    }
+    if (pattern[0]?.text === '[' && pattern.at(-1)?.text === ']' && list) {
+      const element = type.slice(1, -1);
+      split(pattern.slice(1, -1), ',').forEach(part => { if (part.length) projectPatternType(part, element, source, shadowed, output); });
+      return;
+    }
+    if (pattern[0]?.text === 'Just' && type[0]?.text === 'Maybe' && !shadowed.has('Maybe') && type.length > 1) {
+      projectPatternType(pattern.slice(1), type.slice(1), source, shadowed, output);
+    }
+  }
+
   function parseEquation(block, source, filename) {
     const first = block[0];
     if (DECLARATIONS.has(first.text)) return null;
@@ -303,7 +365,7 @@
     function site(equation, extra = {}) {
       const value = { id: firstId + sites.length, function: equation.name, file: filename,
         line: equation.first.line, first_line: equation.first.line,
-        bindings: equation.bindings, ...extra };
+        bindings: equation.bindings, binding_types: equation.binding_types || {}, ...extra };
       sites.push(value);
       return value;
     }
@@ -312,11 +374,15 @@
       const arity = first.patterns.length;
       if (equations.some(eq => eq.patterns.length !== arity)) throw new Error('Equations for ' + first.name + ' must have the same number of arguments.');
       const types = signatures.get(first.name) || [];
+      for (const eq of equations) {
+        eq.binding_types = {};
+        eq.patterns.forEach((pattern, index) => projectPatternType(pattern, types[index] || [], source, shadowed, eq.binding_types));
+      }
       const entry = site(first, { kind: 'entry', arity, argument_types: types.slice(0, arity).map(ts => source.slice(ts[0].offset, endOf(ts.at(-1)))), result_type: types.slice(arity).map(part => part.map(t => t.text).join(' ')).join(' -> ') });
       entry.equations = equations.map((eq, i) => {
         eq.site = site(eq, { kind: 'equation', index: i, header: eq.header,
           source_focus: focus(eq.first.offset, eq.delimiter.offset, 'pattern') });
-        return { id: eq.site.id, line: eq.first.line, header: eq.header };
+        return { id: eq.site.id, line: eq.first.line, header: eq.header, source_focus: eq.site.source_focus };
       });
       entry.source_focus = focus(first.first.offset, endOf(first.first), 'definition');
       const raw = Array.from({ length: arity }, (_, i) => '_sebookRaw' + i);

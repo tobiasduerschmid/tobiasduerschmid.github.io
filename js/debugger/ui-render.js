@@ -372,81 +372,19 @@
 
   // -- Variables ------------------------------------------------------------
 
-  function renderHaskellFocus(frame, snap, current, escape) {
-    const focus = frame.source_focus;
-    if (!focus) return '';
-    const labels = {
-      definition: 'Demanded function', pattern: 'Equation patterns', body: 'Selected body',
-      guard: 'Guard expression', condition: 'If condition', binding: 'Local binding expression',
-      application: 'Demanded call in this frame',
-    };
-    const range = focus.range;
-    const location = range.startLineNumber === range.endLineNumber
-      ? 'line ' + range.startLineNumber + ', columns ' + range.startColumn + '–' + (range.endColumn - 1)
-      : 'lines ' + range.startLineNumber + '–' + range.endLineNumber;
-    const excerpt = focus.text.length > 400;
-    const text = excerpt ? focus.text.slice(0, 397) + '…' : focus.text;
-    const label = current && snap.event === 'return' ? 'Result expression'
-      : labels[focus.role] || 'Source expression';
-    return '<div class="tvm-debug-source-focus" role="status" aria-label="Source focus" aria-atomic="true">' +
-      '<strong>' + escape(label) + '</strong>' +
-      '<span>' + escape(location) + (excerpt ? ' · excerpt' : '') +
-      (!current ? ' · suspended frame' : '') + '</span>' +
-      '<code>' + escape(text) + '</code></div>';
-  }
 
-  function renderHaskellFrame(frame, snap, helpers) {
-    const escape = helpers.escape;
-    const current = frame.call_id === snap.call_id;
-    let html = current ? '<p class="tvm-debug-haskell-step"><strong>' + escape(snap.description) + '</strong></p>' : '';
-    html += renderHaskellFocus(frame, snap, current, escape);
-    const explanation = {
-      call: 'This result is needed now. Its arguments need not be evaluated first.',
-      select: 'Use this body with the current call’s bindings. Highlighting the body does not mean every part is evaluated.',
-      test: 'The condition is needed to choose a branch. Predict True or False before stepping.',
-      binding: 'This local value is needed now. Its definition was not an assignment executed earlier.',
-      return: 'The outer result is available. Parts inside a list or other structure may still be delayed.',
-    }[snap.event];
-    if (current && explanation) html += '<p class="tvm-debug-language-note">' + escape(explanation) + '</p>';
-    if (current && snap.deferred) html += '<p class="tvm-debug-language-note">A delayed expression is using this earlier call’s bindings.</p>';
-    if (frame.arguments && frame.arguments.length) {
-      const args = Object.fromEntries(frame.arguments.map(arg => [arg.name, arg]));
-      html += renderSubsection('haskell-arguments', 'Arguments',
-        renderVarTable({}, snap, 0, 'arguments', args, helpers), helpers);
+  function renderHaskellBindings(frame, snap, frameIdx, helpers) {
+    function section(key, label, dict, scope, empty) {
+      const hasNames = dict && Object.keys(dict).length;
+      const body = hasNames
+        ? renderVarTable({}, snap, frameIdx, scope, dict, helpers)
+        : '<p class="tvm-debug-language-note">' + empty + '</p>';
+      return renderSubsection(key, label, body, helpers);
     }
-    if (frame.equations && frame.equations.length) {
-      const equations = '<ol class="tvm-debug-haskell-equations">' + frame.equations.map(eq =>
-        '<li class="' + (eq.status === 'selected' ? 'is-selected' : '') + '">' +
-        '<code>' + escape(eq.header) + '</code><span>Line ' + eq.line + ' · ' + escape(eq.status) + '</span></li>'
-      ).join('') + '</ol>';
-      html += renderSubsection('haskell-equations', 'Equations · tried from top to bottom', equations, helpers);
-    }
-    if (Object.keys(frame.locals || {}).length) html += renderSubsection('locals', 'Pattern bindings',
-      renderVarTable({}, snap, 0, 'locals', frame.locals, helpers), helpers);
-    if (Object.keys(frame.local_bindings || {}).length) html += renderSubsection('haskell-locals', 'Local bindings',
-      renderVarTable({}, snap, 0, 'local-bindings', frame.local_bindings, helpers), helpers);
-    if (frame.decisions && frame.decisions.length) html += renderSubsection('haskell-decisions', 'Guards and conditions',
-      '<ul class="tvm-debug-haskell-decisions">' + frame.decisions.map(d =>
-        '<li><code>' + escape(d.expression) + ' → ' + escape(d.result) + '</code>' +
-        (d.kind === 'condition' ? '<span>' + (d.result === 'True' ? 'then branch' : 'else branch') + '</span>' : '') + '</li>'
-      ).join('') + '</ul>', helpers);
-    if (current && snap.event === 'return' && snap.return_value) {
-      html += '<p class="tvm-debug-haskell-result"><strong>Result:</strong> <code>' + escape(snap.return_value.repr) + '</code></p>';
-    }
-    html += '<details class="tvm-debug-haskell-guide"><summary>How to read these values</summary>' +
-      '<p>The boxed source marks the expression or patterns for this recorded event. This is a demand trace, not a step for every arithmetic operation. ' +
-      'Before stepping, predict which equation applies or which value is needed; afterward, explain what the event tells you. ' +
-      'Use a small input and Step Back to compare calls: each call has its own immutable bindings.</p>' +
-      '<p>Calls show supplied arguments immediately when their call site is available. “Supplied” means the preview includes source expressions or forwarded bindings, not evidence that they were evaluated. ' +
-      'Computed expressions are replaced by observed values as the program uses them.</p>' +
-      '<p><code>_</code> means not observed yet, with no supplied expression available. Inspecting this panel does not evaluate arguments. ' +
-      '<code>…</code> marks the preview limit. Step Back shows only what was known at that earlier step.</p>' +
-      '<p>Observed value previews use supported type signatures: Int, Word, Bool, Char, Float, Double, lists, pairs, and Maybe. ' +
-      'Other types can show “evaluated; no value preview”. This does not mean their value is unknown to Haskell.</p>' +
-      '<p>Local bindings show their defining expression until demand is observed, then the observed value. Unused definitions are not evaluated for display.</p>' +
-      '<p>A returned list may still have delayed elements. An IO action becoming ready does not mean its effects have finished. ' +
-      'Arbitrary watches and variable edits are unavailable.</p></details>';
-    return html;
+    return section('argument-bindings', 'Argument bindings', frame.locals, 'argument-bindings',
+        'None yet. A matched pattern adds the names bound from the arguments.') +
+      section('haskell-locals', 'Local bindings', frame.local_bindings, 'local-bindings',
+        'None in this equation.');
   }
 
   function renderVariables(view, state, dispatch, helpers) {
@@ -454,10 +392,11 @@
     helpers = defaultHelpers(helpers);
     const viewRoot = view.closest('.tvm-debug-view');
     if (viewRoot) viewRoot.classList.toggle('tvm-debug-haskell', state.backend === 'haskell');
-    const guideWasOpen = Boolean(view.querySelector('.tvm-debug-haskell-guide[open]'));
     var hi = state.historyIdx;
     if (hi == null || hi < 0 || !state.history || !state.history[hi]) {
-      view.innerHTML = '<div class="tvm-debug-empty">Start debugging to see variables.</div>';
+      view.innerHTML = '<div class="tvm-debug-empty">' +
+        (state.backend === 'haskell' ? 'Start debugging to see bindings.' : 'Start debugging to see variables.') +
+        '</div>';
       return;
     }
     var snap = state.history[hi];
@@ -466,6 +405,11 @@
       : (snap.stack.length - 1);
     var frame = snap.stack[frameIdx];
     if (!frame) { view.innerHTML = '<div class="tvm-debug-empty">No frame.</div>'; return; }
+    if (state.backend === 'haskell') {
+      view.innerHTML = renderHaskellBindings(frame, snap, frameIdx, helpers);
+      wireSubsectionToggles(view, helpers);
+      return;
+    }
     var html = renderSubsection('locals', 'Locals · ' + helpers.escape(frame.function),
       renderVarTable(state, snap, frameIdx, 'locals', frame.locals, helpers), helpers);
     if (frame.globals) {
@@ -480,14 +424,10 @@
       html = '<div class="tvm-debug-return">→ returned ' +
              helpers.escape(snap.return_value.repr || '') + '</div>' + html;
     }
-    if (state.backend === 'haskell') {
-      html = renderHaskellFrame(frame, snap, helpers);
-    } else if (state.backend === 'prolog') {
+    if (state.backend === 'prolog') {
       html = '<p class="tvm-debug-language-note">Resolution goals and query bindings show the current search state.</p>' + html;
     }
     view.innerHTML = html;
-    const guide = view.querySelector('.tvm-debug-haskell-guide');
-    if (guide) guide.open = guideWasOpen;
     wireExpanders(view);
     wireSubsectionToggles(view, helpers);
     wireVarEdits(view, dispatch);
@@ -750,7 +690,7 @@
     if (!view) return;
     helpers = defaultHelpers(helpers);
     if (state.backend === 'haskell') {
-      view.innerHTML = '<p class="tvm-debug-language-note">Values are recorded in Arguments, Pattern bindings, and Local bindings. Open “How to read these values” for details.</p>';
+      view.innerHTML = '<p class="tvm-debug-language-note">Hover a pattern name in the source to see its type and value. While an equation is being chosen, the editor lists the arguments and every equation.</p>';
       return;
     }
     var isProlog = state.backend === 'prolog';

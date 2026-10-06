@@ -163,6 +163,10 @@ html:not(.dark-mode) .monaco-editor :is(.tvm-debug-current-line-rewound, .tvm-de
 /* Haskell values and matching decisions share the debugger's theme palette.
    Status words carry meaning even without the selected equation's border. */
 .tvm-debug-haskell [data-section="watch"] { display: none; }
+.tvm-debug-haskell .tvm-debug-var-type {
+  font-size: inherit;
+  font-style: normal;
+}
 .tvm-debug-haskell .tvm-debug-frame { align-items: baseline; gap: 0.7em; }
 .tvm-debug-haskell .tvm-debug-frame-fn {
   white-space: normal;

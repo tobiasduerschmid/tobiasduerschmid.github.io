@@ -83,11 +83,19 @@ steps or force a value to make the display more complete.
 - Retain each event's focus in history. A known suspended caller highlights
   the application that demanded the current call; returning restores the
   selected body instead of leaving the last condition highlighted.
-- Pair the box with a short, labeled source excerpt and location, including in
-  the debugger popout. The box is not a claim that the entire body or all its
-  fields have been evaluated. Completed execution retains its final recorded
-  event, labeled **Result expression** rather than pending work. Choosing
-  another recorded event restores that event's historical focus.
+- The editor box is not a claim that the entire body or all its fields have
+  been evaluated. History keeps each event's description. Completed execution
+  retains its final recorded event. Choosing another recorded event restores
+  that event's historical focus.
+- While the recorded event is choosing an equation, or on the selection step
+  itself, show the call's arguments and every equation in a view zone under
+  those lines. Box each header, and put a distinct gutter arrow on tried, not
+  matched, matched, and not reached. The words in the list carry the state.
+  The overlay leaves on the next event. On the selection step the chosen body
+  stays highlighted beside the equation list.
+  Pattern-binding types come from the signature, list and tuple structure, and
+  inline annotations. Hovering a name in the source shows that type and value.
+  Variables lists argument bindings and local bindings, not the equation list.
 - Keep source text with every range. After source edits, a mismatched range
   must not highlight unrelated code. Main and detached editors share this
   check. Columns use Monaco's UTF-16 units; diagnostic mapping still follows
@@ -190,11 +198,11 @@ partial applications, and imported callees. Those calls still get their ordinary
 runtime observations. Source previews and structural copying are bounded;
 unknown or oversized portions remain opaque or abbreviated.
 
-The renderer shares these views between the tutorial and debugger popout. Calls
-show argument previews; equation rows pair source with textual status; conditions
-show True/False and the selected branch. History entries describe their event.
-Unavailable Watch and empty Globals sections do not consume space. An expandable
-value guide explains underscores, preview limits, and type coverage.
+The renderer shares these views between the tutorial and debugger popout. While
+an equation is being chosen, and on the selection step, the editor lists the
+arguments and every equation. Hovering a name shows a pattern or local binding.
+History entries describe their event. Haskell hides Watch. Variables lists
+argument bindings and local bindings.
 
 No compiler bytes, persistence families, or keyboard shortcuts change. Existing
 source-layout diagnostics, history limits, and cooperative-runtime cancellation

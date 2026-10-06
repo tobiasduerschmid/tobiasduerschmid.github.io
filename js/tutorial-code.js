@@ -5940,6 +5940,10 @@
   };
 
   TutorialCode.prototype._setRunTransactionControls = function (state, label) {
+    if (state === 'running' && this._debuggerCtl && this._debuggerCtl.session &&
+        this._activeRunTransaction && this._activeRunTransaction.kind === 'interpreter') {
+      return;
+    }
     var acceptRunBtn = this.root && this.root.querySelector('.tvm-smalltalk-accept-run-btn');
     if (acceptRunBtn) acceptRunBtn.disabled = state === 'running' || state === 'unavailable' || state === 'restarting';
     var runBtn = this.root && this.root.querySelector('.tvm-run-btn');
@@ -5971,8 +5975,9 @@
       if (stopBtn) stopBtn.style.display = 'none';
       return;
     }
-    if (runBtn && (!this._debuggerCtl || !this._debuggerCtl.session)) {
-      runBtn.disabled = false;
+    if (runBtn) {
+      var debugging = this._debuggerCtl && this._debuggerCtl.session;
+      runBtn.disabled = !!debugging;
       this._renderRunButtonLabel(runBtn, '\u25b6 ' + this._effectiveRunLabel());
     }
     if (testRunBtn) {
@@ -7650,6 +7655,7 @@
       // modules are also loaded by tutorial-debugger-popup.html so popouts
       // share the exact same code path.
       var sharedScripts = Promise.all([
+        window.SEBookHaskellEquationSearch ? null : loadScriptOnce('/js/debugger/haskell/equation-search.js?v=' + dbgAssetVersion),
         window.DebuggerSync ? null : loadScriptOnce('/js/debugger/sync.js?v=' + dbgAssetVersion),
         window.SEBookDebuggerEditor ? null : loadScriptOnce('/js/debugger/editor-attach.js?v=' + dbgAssetVersion),
         window.SEBookDebuggerUI ? null : loadScriptOnce('/js/debugger/ui-render.js?v=' + dbgAssetVersion),

@@ -20,6 +20,8 @@ main = print (score 5)
   assert.equal(focus('body', 4).text, 'subtotal + 1');
   assert.equal(focus('binding', 7).text, 'if x > 4 then x * 2 else x + 2');
   assert.equal(focus('condition', 7).text, 'x > 4');
+  const score = sites.find(site => site.kind === 'entry' && site.function === 'score');
+  assert.equal(score.equations[0].source_focus.text, 'score x');
   assert.deepEqual(focus('body', 4).range, {
     startLineNumber: 5, startColumn: 7, endLineNumber: 5, endColumn: 19,
   });
@@ -192,4 +194,61 @@ f = if True then contribution else False
 `, '/tutorial/Main.hs');
   const equation = result.sites.find(s => s.kind === 'equation');
   assert.equal(equation.local_bindings[0].type, '');
+});
+
+const search = require('../../js/debugger/haskell/equation-search');
+
+test('pattern bindings take types from the signature, list structure, and annotations', () => {
+  const { sites } = instrument(`module Main where
+countAtLeast :: Int -> [Int] -> Int
+countAtLeast threshold [] = 0
+countAtLeast threshold (x:xs) = x
+pair :: (String, Int) -> String
+pair (name, n) = name
+opt :: Maybe Int -> Int
+opt (Just k) = k
+text :: String -> String
+text (c:cs) = cs
+marked (k :: Int) = k
+main = print (countAtLeast 1 [])
+`, '/tutorial/Main.hs');
+  const equations = name => sites.filter(site => site.kind === 'equation' && site.function === name);
+  assert.deepEqual(equations('countAtLeast')[0].binding_types, { threshold: 'Int' });
+  assert.deepEqual(equations('countAtLeast')[1].binding_types, { threshold: 'Int', x: 'Int', xs: '[Int]' });
+  assert.deepEqual(equations('pair')[0].binding_types, { name: 'String', n: 'Int' });
+  assert.deepEqual(equations('opt')[0].binding_types, { k: 'Int' });
+  assert.deepEqual(equations('text')[0].binding_types, { c: 'Char', cs: 'String' });
+  assert.deepEqual(equations('marked')[0].binding_types, { k: 'Int' });
+});
+
+test('equation search stays visible on the matched step and lists arguments', () => {
+  const frame = {
+    call_id: 1,
+    line: 2,
+    equations: [
+      { line: 2, header: 'f []', status: 'pattern did not match', source_focus: { text: 'f []', range: { startLineNumber: 2, startColumn: 1, endLineNumber: 2, endColumn: 5 } } },
+      { line: 3, header: 'f (x:xs)', status: 'checking patterns', source_focus: { text: 'f (x:xs)', range: { startLineNumber: 3, startColumn: 1, endLineNumber: 3, endColumn: 10 } } },
+    ],
+  };
+  const snap = { event: 'try', call_id: 1 };
+  assert.equal(search.active(frame, snap), true);
+  assert.deepEqual(search.rows(frame).map(row => row.label), ['not matched', 'tried']);
+  assert.equal(search.coversLine(frame, 3), true);
+  assert.equal(search.anchorLine(frame), 3);
+  assert.equal(search.decorations(frame, () => 'stale').length, 0);
+  assert.equal(search.decorations(frame, range => range.startLineNumber === 2 ? 'f []' : 'f (x:xs)').length, 2);
+  frame.equations[1].status = 'patterns matched; checking guards';
+  assert.equal(search.labelFor(frame.equations[1].status), 'matched');
+  assert.equal(search.active(frame, { event: 'match', call_id: 1 }), true);
+  frame.equations[1].status = 'selected';
+  assert.equal(search.active(frame, { event: 'select', call_id: 1 }), true);
+  assert.equal(search.labelFor(frame.equations[1].status), 'matched');
+  assert.equal(search.active(frame, { event: 'binding', call_id: 1 }), false);
+  frame.arguments = [{ repr: '60', type: 'Int' }, { repr: '[60, 59, 60]', type: '[Int]' }];
+  assert.deepEqual(search.argumentsOf(frame), [
+    { repr: '60', type: 'Int' },
+    { repr: '[60, 59, 60]', type: '[Int]' },
+  ]);
+  assert.equal(search.labelFor('no guard succeeded'), 'not matched');
+  assert.equal(search.labelFor('not reached'), 'not reached');
 });

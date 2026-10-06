@@ -184,6 +184,7 @@
     monaco.languages.register({ id: 'haskell' });
     monaco.languages.setLanguageConfiguration('haskell', {
       comments: { lineComment: '--', blockComment: ['{-', '-}'] },
+      wordPattern: /[A-Za-z_][\w']*/g,
       brackets: [['(', ')'], ['[', ']'], ['{', '}']],
       autoClosingPairs: [
         { open: '(', close: ')' }, { open: '[', close: ']' },

@@ -2618,7 +2618,10 @@ light/dark theme, including input, transcript, help, and control states.
 - Worker protocol: `{ type: 'evaluate', id, path, expression, silent: true }`
   returns `{ type: 'run_done', id, exitCode, stdout, stderr }`. Results stay in
   the interpreter transcript, separate from program output and exercise checks.
-- Evaluation shares the host execution guard with Run, checks, and the debugger.
+- Evaluation shares the host execution guard with Run and checks. A paused
+  Haskell debug session does not block the terminal: the expression runs in the
+  main runtime, separate from the debugger's executor, and does not step or
+  change the trace. Names that exist only in the paused call are not in scope.
   Stop and the execution deadline restart the sandbox, then permit another
   expression. Type queries bypass value-demand cycle checks; expression checks
   pass `executeExpression: true` to the cycle analyzer to follow known IO demand.
@@ -2688,8 +2691,17 @@ Pattern attempts focus the equation header; selection and return focus the
 chosen body; tests focus their condition; local demand focuses the binding RHS.
 Known suspended callers focus the application that demanded the current call.
 History freezes these spans along with values. Main and detached editors box
-the exact span only while its text still matches the editor model; a labeled
-source excerpt provides a non-color cue in the main/debugger-popout panel.
+the exact span only while its text still matches the editor model. While the
+current event is choosing an equation (`call`, `try`, `match`, or `reject`),
+and on the selection step itself, the editor lists the call's arguments and
+every equation in a view zone and boxes each header. Gutter arrows use a
+distinct shape for tried, not matched, matched, and not reached; words in the
+list carry the same states. On the selection step the chosen body stays
+highlighted beside that list. The overlay leaves on the following event.
+Haskell does not show the equation list in Variables; that list is the editor
+overlay. Variables shows argument bindings and local bindings, including
+pattern-binding types. Hovering a pattern or local name
+shows its type and current value.
 This adds source precision to existing events, not a step for every primitive
 arithmetic reduction. Never force values to populate a highlight or preview.
 
@@ -2727,8 +2739,8 @@ of a call that already returned; the view labels that explicitly.
 
 `js/debugger/haskell/local-bindings.js` discovers direct simple `where` value
 bindings. Their original RHS is wrapped lazily, preserving sharing and scope.
-The Local bindings section shows the defining expression marked “not observed”
-until demand, then observed values/partial structures. Concrete observers use
+The Local bindings are still recorded. Hovering the name shows the defining
+expression until demand, then the observed value. Concrete observers use
 explicit local signatures or conservative type-equivalent use contexts; never
 add `Show` constraints or guess a numeric type from literals. Unknown types
 remain opaque. Binding-demand and binding-result events preserve the owning
@@ -2736,10 +2748,10 @@ call's context, including after its outer result returned; history stays frozen.
 Nested local functions, destructuring bindings, and `let` scopes are not exposed
 as local value definitions. Binding breakpoints stop on demand, not declaration.
 
-Shared main/popout rendering shows calls with arguments, ordered equation
-choices, condition results, and descriptive history entries. The expandable
-value guide explains partial values and preview limits. Haskell hides the
-unavailable Watch section and omits empty Globals. Arbitrary watch evaluation,
+Shared main/popout rendering shows the call stack and descriptive history
+entries. Equation arguments and choices appear in the editor overlay through
+the selection step. Hovering a name shows its type and value. Haskell hides
+Watch. Variables lists argument bindings and local bindings. Arbitrary watch evaluation,
 mutation, conditional breakpoints, and exception breakpoints remain unavailable.
 See [`docs/haskell-debugger-design.md`](../../../docs/haskell-debugger-design.md)
 for the GHCi, Hat, HOOD, and Haskelite research behind these choices.

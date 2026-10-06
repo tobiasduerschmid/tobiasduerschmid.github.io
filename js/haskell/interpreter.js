@@ -78,6 +78,7 @@
         '<li>Inspect a type with <code>:type map</code> or <code>:t map</code>.</li>' +
         '<li>Use <code>let x = 3 in x * x</code> for local names. Add reusable definitions to the editor.</li>' +
         '<li>Each command reloads the active Haskell file, including unsaved edits. Definitions do not carry between commands.</li>' +
+        '<li>The terminal stays available while debugging. It evaluates the current file in a separate run, so it does not step the debugger or change its trace. Names that exist only inside the paused call are not in scope; call a function from the file instead.</li>' +
         '<li>This browser interpreter uses MicroHs. For GHCi locally, install GHC, save your file on your computer, and run <code>ghci Main.hs</code> in your terminal. Use <code>:reload</code> after editing. <a href="https://downloads.haskell.org/ghc/latest/docs/users_guide/ghci.html">GHCi guide</a>.</li></ul></details>' +
         '<div class="haskell-interpreter-terminal" role="group" aria-label="Haskell terminal">' +
         '<p class="haskell-interpreter-intro">Enter an expression or <code>:type map</code>. Press Enter to evaluate.</p>' +
@@ -219,8 +220,8 @@
         this.append('The Haskell runtime is loading. Try again when it is ready.');
         return;
       }
-      if (host._activeRunTransaction || host._testRunInFlight || (host._debuggerCtl && host._debuggerCtl.session)) {
-        this.append('Finish or stop the current run, tests, or debugging session before evaluating an expression.');
+      if (host._activeRunTransaction || host._testRunInFlight) {
+        this.append('Finish or stop the current run or tests before evaluating an expression.');
         return;
       }
       const filename = host.activeFileName;

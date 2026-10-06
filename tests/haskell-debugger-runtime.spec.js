@@ -109,9 +109,9 @@ main = print (countAtLeast 60 [60,59,60])
     const returned = trace.filter(s => s.event === 'return' && s.stack.at(-1).function === 'countAtLeast');
     expect(returned.map(s => s.return_value.repr)).toEqual(['0', '1', '1', '2']);
     expect(returned.map(s => s.stack.at(-1).arguments[1].repr)).toEqual(['[]', '[60]', '[59, 60]', '[60, 59, 60]']);
-    expect(returned.at(-1).stack.at(-1).locals.threshold.repr).toBe('60');
-    expect(returned.at(-1).stack.at(-1).locals.x.repr).toBe('60');
-    expect(returned.at(-1).stack.at(-1).locals.xs.repr).toBe('[59, 60]');
+    expect(returned.at(-1).stack.at(-1).locals.threshold).toMatchObject({ repr: '60', type: 'Int' });
+    expect(returned.at(-1).stack.at(-1).locals.x).toMatchObject({ repr: '60', type: 'Int' });
+    expect(returned.at(-1).stack.at(-1).locals.xs).toMatchObject({ repr: '[59, 60]', type: '[Int]' });
     expect(trace.filter(s => s.event === 'true' || s.event === 'false').map(s => s.event)).toEqual(['true', 'false', 'true']);
     // Supplied arguments are useful before matching, without pretending that
     // the computation has demanded them or borrowing observations from later.
@@ -640,11 +640,11 @@ main = print (map bump [1..20])
 
     // Step Into reaches the first demanded total right after main's IO action is ready.
     const opening = [lastSnapshot(await waitForMessage(page, 'paused', await startDebug(page, starter)))];
-    while (opening.at(-1).description !== 'Demand minutesPlayed' && opening.length < 10) {
+    while (opening.at(-1).description !== 'Find minutesPlayed' && opening.length < 10) {
       opening.push(lastSnapshot(await command(page, 2)));
     }
-    expect(opening.map(describe)).toEqual(['Demand main', 'Try equation 1: main', 'Use equation 1: main',
-      'Result of main: <IO action ready>', 'Demand minutesPlayed']);
+    expect(opening.map(describe)).toEqual(['Find main', 'Try equation 1: main', 'Use equation 1: main',
+      'Result of main: <IO action ready>', 'Find minutesPlayed']);
     let complete = await command(page, 1, 'debugComplete');
     expect(complete.exitCode, complete.error).toBe(0);
     let messages = await allMessages(page);

@@ -1868,8 +1868,8 @@ steps:
 
       1. **Choose** **Debug**. The first few steps evaluate `main` to an `IO`
          action; running that action is what prints. Choose **Step Into**
-         until the step description reads **Demand minutesPlayed**.
-      2. At the second **Demand minutesPlayed**, read **Arguments**, then select
+         until the step description reads **Find minutesPlayed**.
+      2. At the second **Find minutesPlayed**, read **Arguments**, then select
          its caller: the box marks the call. `played + song` is marked
          *supplied*, not computed. Predict before stepping again.
       3. Stop at **Use equation 1: minutesPlayed played []**. Starting with the

@@ -435,7 +435,7 @@
         getActiveFile: function () { return self._activeFileForEditor(self.t.editor2); },
       }));
     }
-    window.SEBookDebuggerEditor.registerHoverProvider(window.monaco, this.sync, { languages: ['python', 'javascript', 'typescript'] });
+    window.SEBookDebuggerEditor.registerHoverProvider(window.monaco, this.sync, { languages: ['python', 'javascript', 'typescript', 'haskell'] });
     // Repaint when the tutorial's active file changes (Monaco's onDidChangeModel
     // already covers per-editor file swaps; this covers other state changes).
   };
@@ -4411,6 +4411,8 @@
     if (!afterLine && bpsForFile && bpsForFile.has(line)) {
       glyph = rewound ? 'tvm-debug-current-glyph-rewound-on-bp' : 'tvm-debug-current-glyph-on-bp';
     }
+    var search = window.SEBookHaskellEquationSearch;
+    var searching = search && search.active(frame, snap);
     var deco = [
       {
         range: new monaco.Range(line, 1, line, 1),
@@ -4419,20 +4421,29 @@
           className: cls,
         },
       },
-      {
+    ];
+    if (!searching || !search.coversLine(frame, line)) {
+      deco.push({
         range: new monaco.Range(line, 1, line, 1),
         options: {
           isWholeLine: false,
           glyphMarginClassName: glyph,
         },
-      },
-    ];
-    var expression = window.SEBookDebuggerEditor.sourceFocusDecoration(model, frame.source_focus);
-    if (expression) deco.push(expression);
+      });
+    }
+    // Equation boxes cover the patterns being compared. The selection step
+    // also evaluates the chosen body, so that expression stays highlighted.
+    if (!searching || (frame.source_focus && frame.source_focus.role === 'body')) {
+      var expression = window.SEBookDebuggerEditor.sourceFocusDecoration(model, frame.source_focus);
+      if (expression) deco.push(expression);
+    }
     this.clearCurrentLineDecoration();
     var prev = editor._dbgCurrentLineIds || [];
     editor._dbgCurrentLineIds = editor.deltaDecorations(prev, deco);
     this.currentLineDecoIds = editor._dbgCurrentLineIds;
+    if (window.SEBookDebuggerEditor.syncEquationSearch) {
+      window.SEBookDebuggerEditor.syncEquationSearch(editor, frame, snap);
+    }
     if (revealLine && editor.revealLineInCenterIfOutsideViewport) {
       editor.revealLineInCenterIfOutsideViewport(line);
     }
@@ -4466,6 +4477,9 @@
       var editor = editors[i];
       if (!editor) continue;
       editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], []);
+      if (window.SEBookDebuggerEditor && window.SEBookDebuggerEditor.clearEquationSearch) {
+        window.SEBookDebuggerEditor.clearEquationSearch(editor);
+      }
     }
     this.currentLineDecoIds = [];
   };

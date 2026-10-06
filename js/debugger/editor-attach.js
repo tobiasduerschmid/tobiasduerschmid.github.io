@@ -312,18 +312,21 @@
         if (editor._dbgCurrentLineIds && editor._dbgCurrentLineIds.length) {
           editor._dbgCurrentLineIds = [];
         }
+        clearEquationSearch(editor);
         return;
       }
-      var fname = getActiveFile(); if (!fname) return;
+      var fname = getActiveFile(); if (!fname) { clearEquationSearch(editor); return; }
       var path = normalizePath(fname);
       var s = sync.state;
       if (s.historyIdx == null || s.historyIdx < 0 || !s.history || !s.history.length) {
         editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], []);
+        clearEquationSearch(editor);
         return;
       }
       var snap = s.history[s.historyIdx];
       if (!snap || !snap.stack || !snap.stack.length) {
         editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], []);
+        clearEquationSearch(editor);
         return;
       }
       var frameIdx = (s.selectedFrameIdx != null && s.selectedFrameIdx >= 0)
@@ -332,16 +335,19 @@
       var frame = displayFrameForSnapshot(snap, frameIdx);
       if (!frame) {
         editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], []);
+        clearEquationSearch(editor);
         return;
       }
       // Only paint if this editor is showing the file the frame is in.
       if (frame.file !== path) {
         editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], []);
+        clearEquationSearch(editor);
         return;
       }
       var line = frame.source_focus ? frame.source_focus.range.startLineNumber : frame.line;
       if (!line || line < 1 || line > model.getLineCount()) {
         editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], []);
+        clearEquationSearch(editor);
         return;
       }
       var rewound = s.historyIdx < (s.liveIdx == null ? -1 : s.liveIdx);
@@ -354,19 +360,29 @@
       if (!afterLine && bps[line]) {
         glyph = rewound ? 'tvm-debug-current-glyph-rewound-on-bp' : 'tvm-debug-current-glyph-on-bp';
       }
+      var search = window.SEBookHaskellEquationSearch;
+      var searching = search && search.active(frame, snap);
       var decorations = [
         {
           range: new monaco.Range(line, 1, line, 1),
           options: { isWholeLine: true, className: cls },
         },
-        {
+      ];
+      // The equation arrow occupies the gutter while a function is searched.
+      if (!searching || !search.coversLine(frame, line)) {
+        decorations.push({
           range: new monaco.Range(line, 1, line, 1),
           options: { isWholeLine: false, glyphMarginClassName: glyph },
-        },
-      ];
-      var expression = sourceFocusDecoration(model, frame.source_focus);
-      if (expression) decorations.push(expression);
+        });
+      }
+      // Equation boxes cover the patterns being compared. The selection step
+      // also evaluates the chosen body, so that expression stays highlighted.
+      if (!searching || (frame.source_focus && frame.source_focus.role === 'body')) {
+        var expression = sourceFocusDecoration(model, frame.source_focus);
+        if (expression) decorations.push(expression);
+      }
       editor._dbgCurrentLineIds = editor.deltaDecorations(editor._dbgCurrentLineIds || [], decorations);
+      syncEquationSearch(editor, frame, snap);
       if (revealLine && editor.revealLineInCenterIfOutsideViewport) {
         editor.revealLineInCenterIfOutsideViewport(line);
       }
@@ -436,6 +452,7 @@
       paintBreakpoints: paintBreakpoints,
       paintCurrentLine: paintCurrentLine,
       dispose: function () {
+        clearEquationSearch(editor);
         for (var i = 0; i < disposers.length; i++) {
           try { disposers[i](); } catch (e) {}
         }
@@ -478,11 +495,17 @@
           var frame = snap.stack[frameIdx];
           if (!frame) return null;
           var name = word.word;
+          var languageId = model.getLanguageId ? model.getLanguageId() : '';
           var resolved = resolveVar(s, snap, frameIdx, 'locals', name)
                       || resolveVar(s, snap, frameIdx, 'globals', name);
+          if (!resolved && languageId === 'haskell') resolved = resolveVar(s, snap, frameIdx, 'local_bindings', name);
           if (!resolved) return null;
-          var md = '**`' + name + '`** _' + (resolved.type || resolved.kind || '') + '_\n\n' +
-                   '```python\n' + (resolved.repr || resolved.preview || '') + '\n```';
+          var md = languageId === 'haskell'
+            ? '`' + name + (resolved.type ? ' :: ' + resolved.type : '') + '`' +
+              (resolved.repr || resolved.preview ? '\n\n' + (resolved.repr || resolved.preview) : '') +
+              (resolved.note ? '\n\n' + resolved.note : '')
+            : '**`' + name + '`** _' + (resolved.type || resolved.kind || '') + '_\n\n' +
+              '```python\n' + (resolved.repr || resolved.preview || '') + '\n```';
           return {
             range: new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
             contents: [{ value: md }],
@@ -517,6 +540,124 @@
     return null;
   }
 
+  function clearEquationSearch(editor) {
+    if (!editor) return;
+    if (editor._dbgEqSearchMeasure) {
+      cancelAnimationFrame(editor._dbgEqSearchMeasure);
+      editor._dbgEqSearchMeasure = 0;
+    }
+    if (editor._dbgEqSearchIds && editor._dbgEqSearchIds.length && editor.deltaDecorations) {
+      editor._dbgEqSearchIds = editor.deltaDecorations(editor._dbgEqSearchIds, []);
+    }
+    if (editor._dbgEqSearchZone != null && editor.changeViewZones) {
+      var zone = editor._dbgEqSearchZone;
+      editor._dbgEqSearchZone = null;
+      try { editor.changeViewZones(function (accessor) { accessor.removeZone(zone); }); } catch (e) {}
+    }
+    editor._dbgEqSearchHeight = 0;
+  }
+
+  function fillEquationSearch(dom, frame) {
+    var rows = window.SEBookHaskellEquationSearch.rows(frame);
+    dom.replaceChildren();
+    var title = document.createElement('p');
+    title.className = 'tvm-eq-search-title';
+    title.textContent = 'Equations · tried from top to bottom';
+    var list = document.createElement('ol');
+    list.className = 'tvm-eq-search-list';
+    rows.forEach(function (row) {
+      var item = document.createElement('li');
+      item.className = 'tvm-eq-search-item is-' + row.label.replace(/ /g, '-');
+      var code = document.createElement('code');
+      code.textContent = row.header;
+      var meta = document.createElement('span');
+      meta.textContent = 'Line ' + row.line + ' · ' + row.label;
+      item.append(code, meta);
+      list.append(item);
+    });
+    dom.append(title);
+    var args = window.SEBookHaskellEquationSearch.argumentsOf(frame);
+    if (args.length) {
+      var argsBlock = document.createElement('div');
+      argsBlock.className = 'tvm-eq-search-arguments';
+      var argsTitle = document.createElement('p');
+      argsTitle.textContent = 'Arguments';
+      var argsList = document.createElement('ul');
+      args.forEach(function (argument) {
+        var item = document.createElement('li');
+        var code = document.createElement('code');
+        code.textContent = argument.repr;
+        item.append(code);
+        if (argument.type) {
+          var type = document.createElement('span');
+          type.textContent = ' :: ' + argument.type;
+          item.append(type);
+        }
+        argsList.append(item);
+      });
+      argsBlock.append(argsTitle, argsList);
+      dom.append(argsBlock);
+    }
+    dom.append(list);
+  }
+
+  function placeEquationZone(editor, afterLine, remeasure) {
+    var dom = editor._dbgEqSearchDom;
+    if (editor._dbgEqSearchMeasure) {
+      cancelAnimationFrame(editor._dbgEqSearchMeasure);
+      editor._dbgEqSearchMeasure = 0;
+    }
+    var height = editor._dbgEqSearchHeight || Math.max(dom.offsetHeight, 36 + dom.querySelectorAll('li').length * 84);
+    editor._dbgEqSearchAfter = afterLine;
+    editor.changeViewZones(function (accessor) {
+      if (editor._dbgEqSearchZone != null) accessor.removeZone(editor._dbgEqSearchZone);
+      editor._dbgEqSearchZone = accessor.addZone({
+        afterLineNumber: afterLine,
+        heightInPx: height,
+        domNode: dom,
+        suppressMouseDown: true,
+      });
+    });
+    if (!remeasure) return;
+    editor._dbgEqSearchMeasure = requestAnimationFrame(function () {
+      editor._dbgEqSearchMeasure = 0;
+      if (!editor._dbgEqSearchDom || editor._dbgEqSearchZone == null) return;
+      var needed = editor._dbgEqSearchDom.offsetHeight;
+      if (needed > 0 && Math.abs(needed - height) > 4) {
+        editor._dbgEqSearchHeight = needed;
+        placeEquationZone(editor, afterLine, false);
+      }
+    });
+  }
+
+  function syncEquationSearch(editor, frame, snap) {
+    var search = window.SEBookHaskellEquationSearch;
+    if (!editor || !search || !search.active(frame, snap)) {
+      clearEquationSearch(editor);
+      return;
+    }
+    var model = editor.getModel && editor.getModel();
+    if (!model) { clearEquationSearch(editor); return; }
+    var descriptors = search.decorations(frame, function (range) { return model.getValueInRange(range); });
+    var decorations = descriptors.map(function (descriptor) {
+      var range = descriptor.range;
+      return {
+        range: new monaco.Range(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn),
+        options: descriptor.options,
+      };
+    });
+    editor._dbgEqSearchIds = editor.deltaDecorations(editor._dbgEqSearchIds || [], decorations);
+    if (!editor._dbgEqSearchDom) {
+      editor._dbgEqSearchDom = document.createElement('div');
+      editor._dbgEqSearchDom.className = 'tvm-eq-search';
+      editor._dbgEqSearchDom.setAttribute('role', 'status');
+      editor._dbgEqSearchDom.setAttribute('aria-live', 'polite');
+      editor._dbgEqSearchDom.setAttribute('aria-atomic', 'true');
+    }
+    fillEquationSearch(editor._dbgEqSearchDom, frame);
+    placeEquationZone(editor, search.anchorLine(frame), true);
+  }
+
   /** Only decorate a range whose source still matches this editor model.
    * History remains readable after edits, but stale coordinates must not point
    * at unrelated code. Used by the main editor and detached editor alike.
@@ -538,5 +679,7 @@
     registerHoverProvider: registerHoverProvider,
     resolveVar: resolveVar,
     sourceFocusDecoration: sourceFocusDecoration,
+    syncEquationSearch: syncEquationSearch,
+    clearEquationSearch: clearEquationSearch,
   };
 })();

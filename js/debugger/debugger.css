@@ -494,6 +494,159 @@ html.dark-mode .monaco-editor .tvm-debug-current-expression { color: #fff7d6 !im
     outline-color: #000;
   }
 }
+
+/* Equation search: every candidate is boxed, and the gutter arrow's shape
+   names its state. The list sits in a view zone under the equations and
+   leaves once one equation is selected. */
+.monaco-editor .tvm-eq-search-range {
+  outline: 2px dashed #3f3f46;
+  outline-offset: -1px;
+  border-radius: 2px;
+}
+.monaco-editor .tvm-eq-tried {
+  outline-style: solid;
+  outline-color: #9a6400;
+  background: #fff0b3;
+}
+.monaco-editor .tvm-eq-not-matched {
+  outline-style: solid;
+  outline-color: #8f2d24;
+  background: #fde8e6;
+}
+.monaco-editor .tvm-eq-matched {
+  outline: 3px solid #0f6b3a;
+  background: #e7f6ec;
+}
+.monaco-editor .tvm-eq-text-tried { color: #201a00 !important; }
+.monaco-editor .tvm-eq-text-not-matched { color: #3f1210 !important; }
+.monaco-editor .tvm-eq-text-matched { color: #0d2818 !important; }
+html.dark-mode .monaco-editor .tvm-eq-search-range { outline-color: #d0d7de; }
+html.dark-mode .monaco-editor .tvm-eq-tried {
+  outline-color: #ffe083;
+  background: #684f00;
+}
+html.dark-mode .monaco-editor .tvm-eq-not-matched {
+  outline-color: #ffb4a8;
+  background: #4a1c18;
+}
+html.dark-mode .monaco-editor .tvm-eq-matched {
+  outline-color: #8ee0b0;
+  background: #143524;
+}
+html.dark-mode .monaco-editor .tvm-eq-text-tried { color: #fff7d6 !important; }
+html.dark-mode .monaco-editor .tvm-eq-text-not-matched { color: #ffd6d1 !important; }
+html.dark-mode .monaco-editor .tvm-eq-text-matched { color: #d8ffe8 !important; }
+.tvm-eq-arrow {
+  background-repeat: no-repeat !important;
+  background-position: left center !important;
+  background-size: 26px 26px !important;
+  width: 28px !important;
+  height: 26px !important;
+  margin-left: var(--tvm-debug-glyph-safe-offset) !important;
+  margin-top: -3px !important;
+  overflow: visible !important;
+  filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.66));
+}
+.tvm-eq-arrow-not-reached {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='2,4 12,4 20,11 12,18 2,18' fill='none' stroke='%233f3f46' stroke-width='3.4' stroke-linejoin='round'/><polygon points='2,4 12,4 20,11 12,18 2,18' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linejoin='round'/></svg>") !important;
+}
+.tvm-eq-arrow-tried {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='2,4 12,4 20,11 12,18 2,18' fill='%23fbbf24' stroke='%233f3f46' stroke-width='2' stroke-linejoin='round'/></svg>") !important;
+}
+.tvm-eq-arrow-not-matched {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='2,4 12,4 20,11 12,18 2,18' fill='none' stroke='%233f3f46' stroke-width='3.4' stroke-linejoin='round'/><polygon points='2,4 12,4 20,11 12,18 2,18' fill='none' stroke='%23e63946' stroke-width='2' stroke-linejoin='round'/><path d='M7 8 L13 14 M13 8 L7 14' fill='none' stroke='%23e63946' stroke-width='2.2' stroke-linecap='round'/></svg>") !important;
+}
+.tvm-eq-arrow-matched {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><polygon points='2,4 12,4 20,11 12,18 2,18' fill='%23146c36' stroke='%233f3f46' stroke-width='2' stroke-linejoin='round'/><path d='M6.5 11.2 L9.2 13.8 L14.2 8.2' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>") !important;
+}
+.tvm-eq-search {
+  box-sizing: border-box;
+  width: min(40em, 100%);
+  margin: 0;
+  padding: 0.6em 0.75em 0.75em;
+  border: 2px solid #64748b;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+  line-height: 1.45;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.16);
+}
+.tvm-eq-search-title {
+  margin: 0 0 0.45em;
+  font-size: inherit;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.tvm-eq-search-arguments { margin: 0 0 0.7em; }
+.tvm-eq-search-arguments p { margin: 0 0 0.25em; font-weight: 700; }
+.tvm-eq-search-arguments ul { margin: 0; padding-left: 1.3em; }
+.tvm-eq-search-arguments li { margin: 0.3em 0; }
+.tvm-eq-search-arguments code { border-style: solid; }
+.tvm-container .monaco-hover .monaco-hover-content,
+.ttp-wrap .monaco-hover .monaco-hover-content,
+.tpp-wrap .monaco-hover .monaco-hover-content {
+  font-size: max(16px, var(--font-size-readable-min, 16px));
+  line-height: 1.45;
+}
+.tvm-eq-search-item { margin: 0.55em 0; }
+.tvm-eq-search code {
+  display: inline-block;
+  margin-top: 0.15em;
+  padding: 0.12em 0.45em;
+  border: 2px dashed #3f3f46;
+  border-radius: 6px;
+  background: #fff;
+  color: #201a00;
+  font-size: inherit;
+}
+.tvm-eq-search-item span { display: block; }
+.tvm-eq-search .is-tried code { border-style: solid; border-color: #9a6400; background: #fff0b3; }
+.tvm-eq-search .is-not-matched code { border-style: solid; border-color: #8f2d24; background: #fde8e6; color: #3f1210; }
+.tvm-eq-search .is-matched code { border-style: solid; border-width: 3px; border-color: #0f6b3a; background: #e7f6ec; color: #0d2818; }
+html.dark-mode .tvm-eq-search {
+  border-color: #94a3b8;
+  background: #1c2430;
+  color: #e6edf3;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+html.dark-mode .tvm-eq-search code {
+  border-color: #d0d7de;
+  background: #111820;
+  color: #fff7d6;
+}
+html.dark-mode .tvm-eq-search .is-tried code { border-color: #ffe083; background: #684f00; color: #fff7d6; }
+html.dark-mode .tvm-eq-search .is-not-matched code { border-color: #ffb4a8; background: #4a1c18; color: #ffd6d1; }
+html.dark-mode .tvm-eq-search .is-matched code { border-color: #8ee0b0; background: #143524; color: #d8ffe8; }
+@media print {
+  .tvm-eq-search,
+  html.dark-mode .tvm-eq-search,
+  .tvm-eq-search code,
+  html.dark-mode .tvm-eq-search code,
+  html.dark-mode .tvm-eq-search .is-tried code,
+  html.dark-mode .tvm-eq-search .is-not-matched code,
+  html.dark-mode .tvm-eq-search .is-matched code {
+    background: #fff;
+    color: #000;
+    border-color: #000;
+    box-shadow: none;
+  }
+  .monaco-editor .tvm-eq-search-range,
+  html.dark-mode .monaco-editor .tvm-eq-search-range,
+  html.dark-mode .monaco-editor .tvm-eq-tried,
+  html.dark-mode .monaco-editor .tvm-eq-not-matched,
+  html.dark-mode .monaco-editor .tvm-eq-matched {
+    background: #fff;
+    outline-color: #000;
+  }
+  .monaco-editor .tvm-eq-search-text,
+  html.dark-mode .monaco-editor .tvm-eq-text-tried,
+  html.dark-mode .monaco-editor .tvm-eq-text-not-matched,
+  html.dark-mode .monaco-editor .tvm-eq-text-matched {
+    color: #000 !important;
+  }
+}
 .tvm-debug-current-glyph {
   /* OUTLINE-only pentagonal arrow pointing right. Sized larger than the
      line height so it pops out into the surrounding rows visually.

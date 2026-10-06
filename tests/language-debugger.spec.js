@@ -74,16 +74,18 @@ for (const program of PROGRAMS) {
       await expect(historySlider(page)).toHaveValue('0');
       await expect(page.getByRole('region', { name: 'Call Stack', exact: true }))
         .toContainText(new RegExp(program.file.replace('.', '\\.') + ':\\d+'));
-      await expect(page.getByRole('button', { name: 'Variables', exact: true })).toHaveAttribute('aria-expanded', 'true');
-      await page.getByRole('button', { name: 'Variables', exact: true }).press('Enter');
-      await expect(page.getByRole('button', { name: 'Variables', exact: true })).toHaveAttribute('aria-expanded', 'false');
-      await page.getByRole('button', { name: 'Variables', exact: true }).press('Enter');
-
       if (program.backend === 'haskell') {
-        await expect(page.getByText('How to read these values', { exact: true })).toBeVisible();
+        const variables = page.getByRole('region', { name: 'Variables', exact: true });
+        await expect(variables).toBeVisible();
+        await expect(variables.getByRole('button', { name: 'Argument bindings', exact: true })).toBeVisible();
+        await expect(variables.getByRole('button', { name: 'Local bindings', exact: true })).toBeVisible();
         await expect(page.getByRole('region', { name: 'Watch', exact: true })).toBeHidden();
         await expect(page.getByRole('textbox', { name: /watch/i })).toHaveCount(0);
       } else {
+        await expect(page.getByRole('button', { name: 'Variables', exact: true })).toHaveAttribute('aria-expanded', 'true');
+        await page.getByRole('button', { name: 'Variables', exact: true }).press('Enter');
+        await expect(page.getByRole('button', { name: 'Variables', exact: true })).toHaveAttribute('aria-expanded', 'false');
+        await page.getByRole('button', { name: 'Variables', exact: true }).press('Enter');
         await expect(page.getByRole('textbox', { name: 'Query variable to watch' })).toBeVisible();
       }
       await expect(page.getByRole('button', { name: 'Add Exception Breakpoint', exact: true })).toHaveCount(0);
@@ -245,6 +247,25 @@ test('a detached Prolog debugger steps and rewinds the same execution as the tut
 });
 
 
+test('the Haskell terminal evaluates during a paused debug session without moving the trace', async ({ page }) => {
+  test.setTimeout(180_000);
+  await openProgram(page, PROGRAMS[1]);
+  await startButton(page).press('Enter');
+  await expect(pausedStatus(page)).toBeVisible({ timeout: 90_000 });
+  await expect(historySlider(page)).toHaveValue('0');
+  await page.getByRole('button', { name: 'Terminal', exact: true }).click();
+  const interpreter = page.getByRole('region', { name: 'Haskell terminal', exact: true });
+  const input = interpreter.getByRole('textbox', { name: 'Haskell expression', exact: true });
+  await expect(input).toBeEditable();
+  await input.fill('double 21');
+  await input.press('Enter');
+  await expect(interpreter.getByRole('log').getByText('42', { exact: true })).toBeVisible({ timeout: 60_000 });
+  await expect(historySlider(page)).toHaveValue('0');
+  await expect(pausedStatus(page)).toBeVisible();
+  await page.getByRole('button', { name: 'Step Into', exact: true }).press('Enter');
+  await expect(historySlider(page)).toHaveValue('1');
+});
+
 test('Haskell trace explains recursive arguments, equation order, and results in the main view and popout', async ({ page }) => {
   test.setTimeout(180_000);
   const errors = [];
@@ -264,37 +285,59 @@ main = print (countAtLeast 60 [60,59,60])
   await expect(result).toBeVisible();
   await result.press('Enter');
   const variables = page.getByRole('region', { name: 'Variables', exact: true });
-  await expect(variables).toContainText('[60, 59, 60]');
-  await expect(variables).toContainText('pattern did not match');
-  await expect(variables).toContainText('selected');
-  await expect(variables).toContainText('x >= threshold → True');
-  await expect(variables).toContainText('Result: 2');
-  await expect(page.getByRole('status', { name: 'Source focus' }))
-    .toContainText('contribution + countAtLeast threshold xs');
+  await expect(variables.getByRole('button', { name: 'Argument bindings', exact: true })).toBeVisible();
   await expect(variables.getByRole('button', { name: 'Local bindings', exact: true })).toBeVisible();
+  await expect(variables).toContainText('threshold');
+  await expect(variables).toContainText('Int');
   await expect(variables).toContainText('contribution');
-  // Rewinding to the first call must still show its actual supplied arguments,
-  // rather than needing to advance until the computation has demanded them.
-  const firstCall = page.getByRole('button', { name: /Demand countAtLeast/ }).first();
-  await firstCall.press('Enter');
-  await expect(page.getByRole('status', { name: 'Source focus' }))
-    .toContainText('Demanded function');
   await expect(page.getByRole('region', { name: 'Call Stack', exact: true }))
     .toContainText('countAtLeast 60 [60, 59, 60]');
-  await expect(variables).toContainText('[60, 59, 60]');
-  await expect(variables).toContainText('(supplied)');
+  // Rewinding to the first call shows the supplied arguments in the equation overlay.
+  const firstCall = page.getByRole('button', { name: /Find countAtLeast/ }).first();
+  await firstCall.press('Enter');
+  const equationSearch = page.getByRole('status', { name: /Equations/ });
+  await expect(equationSearch).toBeVisible();
+  await expect(equationSearch).toContainText('countAtLeast threshold []');
+  await expect(equationSearch).toContainText('countAtLeast threshold (x:xs)');
+  await expect(equationSearch).toContainText('Line 3 · not reached');
+  await expect(equationSearch).toContainText('Line 4 · not reached');
+  await expect(equationSearch).toContainText('60');
+  await expect(equationSearch).toContainText('[60, 59, 60]');
+  await expect(equationSearch).toContainText(':: Int');
+  await expect(equationSearch).toContainText(':: [Int]');
+  await expect(page.locator('.monaco-editor .tvm-eq-arrow-not-reached')).toHaveCount(2);
+  await expect(page.locator('.monaco-editor .tvm-eq-not-reached')).toHaveCount(2);
+  await page.getByRole('button', { name: /Try equation 1: countAtLeast threshold \[\]/ }).first().click();
+  await expect(equationSearch).toContainText('Line 3 · tried');
+  await expect(page.locator('.monaco-editor .tvm-eq-arrow-tried')).toHaveCount(1);
+  await expect(page.locator('.monaco-editor .tvm-eq-arrow-not-reached')).toHaveCount(1);
+  await page.getByRole('button', { name: /pattern did not match: countAtLeast threshold \[\]/ }).first().click();
+  await expect(equationSearch).toContainText('Line 3 · not matched');
+  await expect(page.locator('.monaco-editor .tvm-eq-arrow-not-matched')).toHaveCount(1);
+  await page.getByRole('button', { name: /Use equation 2: countAtLeast threshold \(x:xs\)/ }).first().click();
+  await expect(equationSearch).toContainText('Line 4 · matched');
+  await expect(page.locator('.monaco-editor .tvm-eq-arrow-matched')).toHaveCount(1);
+  await expect(page.locator('.monaco-editor .tvm-eq-arrow-not-matched')).toHaveCount(1);
+  await expect.poll(async () => (await page.locator('.monaco-editor .tvm-debug-current-expression').allTextContents()).join('').replace(/\s/g, ''))
+    .toBe('contribution+countAtLeastthresholdxs');
+  const threshold = page.locator('.view-line').filter({ hasText: 'threshold (x:xs)' }).getByText('threshold', { exact: true });
+  await threshold.hover();
+  await expect(page.locator('.monaco-hover')).toContainText('threshold :: Int');
+  await expect(page.locator('.monaco-hover')).toContainText('60');
+  await page.getByRole('button', { name: /Find local binding contribution/ }).first().click();
+  await expect(equationSearch).toHaveCount(0);
+  await expect(page.locator('.monaco-editor .tvm-eq-arrow')).toHaveCount(0);
   await result.press('Enter');
-  await page.getByText('How to read these values', { exact: true }).press('Enter');
-  await expect(variables).toContainText('not observed yet');
   await a11yCheckpoint(page, 'Haskell equation trace and values', { feature: 'language-debugger' });
 
   const popupPromise = page.waitForEvent('popup');
   await page.getByRole('button', { name: 'Open debugger in a separate window', exact: true }).click();
   const popup = await popupPromise;
-  await expect(popup.getByRole('region', { name: 'Variables', exact: true })).toContainText('[60, 59, 60]');
-  await expect(popup.getByRole('region', { name: 'Variables', exact: true })).toContainText('Result: 2');
-  await expect(popup.getByRole('status', { name: 'Source focus' }))
-    .toContainText('contribution + countAtLeast threshold xs');
+  await expect(popup.getByRole('region', { name: 'Variables', exact: true })).toContainText('threshold');
+  await expect(popup.getByRole('region', { name: 'Variables', exact: true })).toContainText('contribution');
+  await expect(popup.getByRole('button', { name: /Result of countAtLeast: 2/ })).toBeVisible();
+  await expect(popup.getByRole('region', { name: 'Call Stack', exact: true }))
+    .toContainText('[60, 59, 60]');
   await popup.close();
   expect(errors).toEqual([]);
 });
@@ -320,20 +363,29 @@ main = print (score 5)
     await expect(pausedStatus(page)).toBeVisible({ timeout: 90_000 });
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await expect(outputPanel(page)).toContainText('11');
-    // Completion retains the final recorded result. Its label must describe
-    // a result, not suggest another expression is waiting to be evaluated.
+    const demand = page.getByRole('button', { name: /Find score/ }).first();
+    await demand.click();
+    const equationSearch = page.getByRole('status', { name: /Equations/ });
+    await expect(equationSearch).toContainText('score n');
+    await expect(equationSearch).toContainText('not reached');
+    await expect(equationSearch).toContainText('5');
+    await expect(equationSearch).toContainText(':: Int');
+    await expect(page.locator('.monaco-editor .tvm-eq-arrow-not-reached')).toHaveCount(1);
+    await page.getByRole('button', { name: /Patterns match: score n/ }).click();
+    await expect(equationSearch).toContainText('matched');
+    await expect(page.locator('.monaco-editor .tvm-eq-arrow-matched')).toHaveCount(1);
+    await a11yCheckpoint(page, `Haskell equation search ${dark ? 'dark' : 'light'}`, { feature: 'language-debugger' });
+    await page.getByRole('button', { name: /Result of score/ }).click();
     const highlights = target => target.locator('.monaco-editor .tvm-debug-current-expression');
     const highlightedText = async target => (await highlights(target).allTextContents()).join('').replace(/\s/g, '');
-    await expect(page.getByRole('status', { name: 'Source focus' })).toContainText('Result expression');
     await expect.poll(() => highlightedText(page)).toBe('subtotal+1');
     await page.getByRole('button', { name: /Use equation 1: score n/ }).click();
-    await expect(page.getByRole('status', { name: 'Source focus' })).toContainText('lines 6–7');
+    await expect(equationSearch).toContainText('matched');
+    await expect(equationSearch).toContainText('5');
     await expect.poll(() => highlightedText(page)).toBe('subtotal+1');
-    const condition = page.getByRole('button', { name: /Check if: n > 4/ });
-    await condition.click();
+    await page.getByRole('button', { name: /Check if: n > 4/ }).click();
+    await expect(equationSearch).toHaveCount(0);
     await expect.poll(() => highlightedText(page)).toBe('n>4');
-    await expect(page.getByRole('status', { name: 'Source focus' }))
-      .toContainText('line 9, columns 19–23');
     await a11yCheckpoint(page, `Haskell source focus ${dark ? 'dark' : 'light'}`, { feature: 'language-debugger' });
 
     const popupPromise = page.waitForEvent('popup');
@@ -346,7 +398,7 @@ main = print (score 5)
 
     // After source edits, an old range must not box unrelated replacement text.
     expect(await setEditorContent(page, 'module Main where\nmain = print (99 :: Int)\n')).toBe(true);
-    await condition.click();
+    await page.getByRole('button', { name: /Check if: n > 4/ }).click();
     await expect(highlights(page)).toHaveCount(0);
   });
 }

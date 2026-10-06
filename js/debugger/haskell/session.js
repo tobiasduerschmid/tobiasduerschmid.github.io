@@ -155,7 +155,7 @@
     frameFor(site, context) {
       return { function: site.function, file: site.file, line: site.line,
         first_line: site.first_line, call_id: context, entry: site,
-        values: new Map(), supplied: new Map(), bindings: {}, localDefinitions: [], decisions: [],
+        values: new Map(), supplied: new Map(), bindings: {}, bindingTypes: {}, localDefinitions: [], decisions: [],
         equations: (site.equations || []).map(eq => ({ ...eq, status: 'not reached' })) };
     }
 
@@ -167,7 +167,7 @@
         note: preview(known, 'arg' + i) !== preview(frame.values, 'arg' + i) ? 'supplied' : '' }));
       const locals = {};
       for (const [name, path] of Object.entries(frame.bindings)) {
-        locals[name] = valueFor(path ? preview(known, path) : '<bound by pattern; no value preview>');
+        locals[name] = valueFor(path ? preview(known, path) : '<bound by pattern; no value preview>', frame.bindingTypes?.[name] || '');
         if (path && preview(known, path) !== preview(frame.values, path)) locals[name].note = 'supplied';
       }
       const local_bindings = Object.create(null);
@@ -223,20 +223,22 @@
       }
       let description = '';
       switch (event) {
-        case 'call': description = 'Demand ' + site.function; break;
+        case 'call': description = 'Find ' + site.function; break;
         case 'try':
-          equation.status = 'checking patterns'; frame.bindings = {}; frame.localDefinitions = [];
+          equation.status = 'checking patterns'; frame.bindings = {}; frame.bindingTypes = {}; frame.localDefinitions = [];
           description = 'Try equation ' + (site.index + 1) + ': ' + site.header; break;
         case 'match':
           equation.status = 'patterns matched; checking guards'; frame.bindings = site.bindings;
+          frame.bindingTypes = site.binding_types || {};
           description = 'Patterns match: ' + site.header; break;
         case 'select':
           equation.status = 'selected'; frame.bindings = site.bindings;
+          frame.bindingTypes = site.binding_types || {};
           description = 'Use equation ' + (site.index + 1) + ': ' + site.header; break;
         case 'reject':
           equation.status = equation.status === 'checking patterns' ? 'pattern did not match' : 'no guard succeeded';
           description = equation.status + ': ' + site.header; break;
-        case 'binding': description = 'Demand local binding ' + site.name; break;
+        case 'binding': description = 'Find local binding ' + site.name; break;
         case 'bound': description = site.name + ' = ' + preview(frame.values, site.path); break;
         case 'test': description = 'Check ' + (site.kind === 'guard' ? 'guard' : 'if') + ': ' + site.expression; break;
         case 'true': case 'false': {
