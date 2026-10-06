@@ -2109,7 +2109,7 @@ Use identity for the `None` singleton and equality for domain values. A customiz
 
 Each program below is only a few lines long, and each one behaves differently from what a C++ reading suggests. The puzzles mix rules from across the chapter (bindings and mutation from [Objects](#objects) and [Collections](#collections), name lookup from the LEGB rule, and default arguments from [Calls & Inheritance](#calls--inheritance)) with three operators that work differently from their C++ counterparts. Because the topics are mixed, part of each puzzle is deciding which rule applies.
 
-Commit to a prediction before you press **Run**. Where a box is provided, type the program's output; otherwise, say your prediction to yourself. Each program prints only the values needed to distinguish the behaviors being tested. When the result surprises you, name the rule you were relying on before you read the explanation under the output. Correcting a confident wrong prediction tends to stick better than reading the right answer cold.
+Type the program's output before you press **Run**. Each program prints only the values needed to distinguish the behaviors being tested. When your prediction differs from the output, an object reference lab appears inside the yellow Explanation box, after the explanation, with that same program. Use **Forward** and **Back** to find the first line where execution differs from what you expected, then name the rule that explains it.
 
 ## Puzzle 1: Two Ways to Extend a List
 
@@ -2177,7 +2177,8 @@ Commit to a prediction before you press **Run**. Where a box is provided, type t
   "file": "readings.py",
   "code": "readings = [7, 3, 3, 9]\nfor value in readings:\n    if value == 3:\n        readings.remove(value)\nprint(len(readings))",
   "description": "The loop is meant to discard every reading equal to `3`. Predict how many readings remain.",
-  "predict": false,
+  "predict": true,
+  "predictPrompt": "Predict the one number printed:",
   "output": {
     "stdout": "3"
   },
@@ -2233,7 +2234,8 @@ Commit to a prediction before you press **Run**. Where a box is provided, type t
   "file": "logs.py",
   "code": "logs = dict.fromkeys([\"north\", \"south\"], [])\nlogs[\"north\"].append(\"dust\")\nprint(len(logs[\"south\"]))",
   "description": "`dict.fromkeys` creates a dictionary whose keys all start with the same value. Here, that value is an empty list. Predict the size of the south log after updating the north log.",
-  "predict": false,
+  "predict": true,
+  "predictPrompt": "Predict the one number printed:",
   "output": {
     "stdout": "1"
   },
@@ -2251,7 +2253,8 @@ Commit to a prediction before you press **Run**. Where a box is provided, type t
   "file": "compare.py",
   "code": "print(3 > 2 > 1, (3 > 2) > 1)",
   "description": "Both expressions compare the same three numbers. The only difference is the parentheses.",
-  "predict": false,
+  "predict": true,
+  "predictPrompt": "Predict the two Boolean values, separated by a space:",
   "output": {
     "stdout": "True False"
   },
@@ -2288,7 +2291,8 @@ Commit to a prediction before you press **Run**. Where a box is provided, type t
   "file": "halves.py",
   "code": "print(round(0.5), round(1.5), round(2.5), round(3.5))",
   "description": "Each value lies exactly halfway between two integers.",
-  "predict": false,
+  "predict": true,
+  "predictPrompt": "Predict the four numbers, separated by spaces:",
   "output": {
     "stdout": "0 2 2 4"
   },

@@ -8,6 +8,9 @@
  * and print behaviour. This module adds only what depends on the language:
  * the run command, syntax colouring, and — for languages that report a crash
  * on stderr — what counts as a correct prediction of that crash.
+ * Non-empty incorrect Python predictions reveal an ObjectReferenceLab for the
+ * exact source, inside the explanation's notice box. Python pages must load the reference
+ * graph, code editor, print, and lab scripts/styles before this module.
  *
  * Spec:
  *   {
@@ -168,6 +171,55 @@
     body.appendChild(language.highlight(file.content));
   }
 
+  function pythonPredictionFeedback(spec) {
+    let traceHost = null;
+
+    function clearTrace() {
+      if (!traceHost) return;
+      if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(traceHost);
+      traceHost.remove();
+      traceHost = null;
+    }
+
+    function showTrace({ prediction, matchTarget, feedbackContainer }) {
+      if (!prediction || matchTarget) {
+        clearTrace();
+        return;
+      }
+      if (traceHost) return;
+      const host = document.createElement('div');
+      host.setAttribute('data-object-reference-lab', '');
+      host.setAttribute('data-object-reference-editor', 'inline');
+      const example = document.createElement('script');
+      example.type = 'application/json';
+      example.textContent = JSON.stringify({
+        title: 'Why this output is correct (' + (spec.file || LANGUAGES.python.defaultFile) + ')',
+        code: spec.code,
+        prediction: 'Compare each step with your prediction. Find the first line where the program behaves differently from what you expected.',
+        explanation: 'This is the same program as the puzzle above. Follow the highlighted line, the object references, and Program output to explain the difference.'
+      });
+      host.appendChild(example);
+      feedbackContainer.appendChild(host);
+      traceHost = host;
+      if (!window.ObjectReferenceLab) {
+        showTraceError(host);
+        return;
+      }
+      window.ObjectReferenceLab.initFrom(host).catch(() => showTraceError(host));
+    }
+
+    return { onPredictionResult: showTrace, onReset: clearTrace };
+  }
+
+  function showTraceError(host) {
+    if (!host.isConnected) return;
+    const message = document.createElement('p');
+    message.className = 'orl-error';
+    message.setAttribute('role', 'alert');
+    message.textContent = 'The step-through lab could not load. Reload this page to try again.';
+    host.appendChild(message);
+  }
+
   // ---------------------------------------------------------------------------
   // Spec translation.
   // ---------------------------------------------------------------------------
@@ -219,9 +271,9 @@
       el.setAttribute('data-program-lab-init', '1');
       try {
         var spec = window.UnixCommandLab.readSpec(el, 'data-program-output-lab');
-        window.UnixCommandLab.create(el, toCommandLabSpec(spec), {
-          decorateFileBody: decorateSourceFile,
-        });
+        const options = { decorateFileBody: decorateSourceFile };
+        if (spec.language === 'python') Object.assign(options, pythonPredictionFeedback(spec));
+        window.UnixCommandLab.create(el, toCommandLabSpec(spec), options);
         el.classList.add('program-lab', 'program-lab--' + spec.language);
       } catch (e) {
         console.error('ProgramOutputLab init failed:', e, el);

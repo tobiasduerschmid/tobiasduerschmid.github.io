@@ -52,9 +52,13 @@
  *   </div>
  *
  * Front ends for programs (see program-output-lab.js) reuse this card
- * via `UnixCommandLab.create(container, spec, { decorateFileBody })`, where
- * `decorateFileBody(file, preElement)` may restyle an input file's content
- * (e.g. syntax colouring) without changing the shared card behaviour.
+ * via `UnixCommandLab.create(container, spec, options)`. Optional hooks:
+ *   decorateFileBody(file, preElement) — render language-specific highlighting.
+ *   onPredictionResult({ prediction, matchTarget, feedbackContainer }) — after a normal reveal;
+ *     prediction is trimmed, matchTarget is the matched output name or null.
+ *     feedbackContainer is the notice box, or the card if it has no notice.
+ *     Print-only reveals do not submit a prediction.
+ *   onReset() — clear any additional feedback when outputs are cleared.
  */
 (function () {
   'use strict';
@@ -562,7 +566,7 @@
     if (spec.notice) {
       notice = document.createElement('div');
       notice.className = 'unix-lab__notice';
-      notice.innerHTML = '<strong>Notice:</strong> ' + mdToHtml(spec.notice).replace(/^<p>|<\/p>$/g, '');
+      notice.innerHTML = '<strong>Explanation:</strong> ' + mdToHtml(spec.notice).replace(/^<p>|<\/p>$/g, '');
       notice.style.display = 'none';
       container.appendChild(notice);
     }
@@ -656,6 +660,7 @@
       outCol.innerHTML = '';
       outCol.appendChild(placeholder);
       if (notice) notice.style.display = 'none';
+      if (options.onReset) options.onReset();
     }
 
     function update() {
@@ -676,17 +681,35 @@
       }
     }
 
-    btn.addEventListener('click', function () {
-      revealed = !revealed;
+    function revealPrediction() {
+      revealed = true;
       update();
+      if (options.onPredictionResult) {
+        const prediction = predictInput ? predictInput.value.trim() : '';
+        options.onPredictionResult({
+          prediction: prediction,
+          matchTarget: prediction ? predictionMatchTarget(prediction, spec) : null,
+          feedbackContainer: notice || container
+        });
+      }
+    }
+
+    function resetPrediction() {
+      revealed = false;
+      update();
+    }
+
+    btn.addEventListener('click', function () {
+      if (revealed) resetPrediction();
+      else revealPrediction();
     });
 
     update();
 
     var controller = {
       button: btn,
-      reset: function () { revealed = false; update(); },
-      reveal: function () { revealed = true; update(); },
+      reset: resetPrediction,
+      reveal: revealPrediction,
       // Print-only state: reveal outputs (so the printout is useful) but
       // keep the button showing the original command rather than "Reset".
       // The "Reset" label is meaningless on paper and hides information the

@@ -280,9 +280,9 @@ html.dark-mode .unix-lab__arrow { color: #b0bac6; }
   font-weight: 700;
   margin-top: 2px;
 }
-.unix-lab__exit--ok  { background-color: #e6f4ea; color: #1a7d5a; border: 1px solid #b6e0c4; }
+.unix-lab__exit--ok  { background-color: #e6f4ea; color: #16704c; border: 1px solid #b6e0c4; }
 .unix-lab__exit--err { background-color: #fde8e8; color: #b03a2e; border: 1px solid #f1948a; }
-.unix-lab__exit-label { opacity: 0.7; font-weight: 500; }
+.unix-lab__exit-label { font-weight: 500; }
 .unix-lab__exit-icon { font-size: 13px; line-height: 1; }
 
 /* ----- Placeholder (before reveal) and no-inputs note ----- */
