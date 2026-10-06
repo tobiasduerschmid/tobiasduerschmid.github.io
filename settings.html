@@ -10,8 +10,10 @@ info_nav_title: "My Settings"
 
   <div class="settings-intro">
     <p>
-      Make this site work the way you like it. Everything here is private to
-      this browser — your choices stay on your device and aren't sent anywhere.
+      Make this site work the way you like it. Your choices stay on this
+      device. This site does not receive them. If you install the Chrome
+      profile sync extension, those saved choices are also copied into your
+      Chrome profile.
     </p>
     <p>
       Power users who want to peek at or wipe the raw saved data can use
@@ -544,6 +546,33 @@ info_nav_title: "My Settings"
     </fieldset>
 
     <fieldset class="settings-section">
+      <legend class="sr-only">On your other computers</legend>
+      <h2 class="settings-section-title">On your other computers</h2>
+      <div class="settings-list">
+        <div class="setting-row setting-row-full">
+          <div>
+            <p class="setting-name">Chrome profile sync</p>
+            <p class="setting-description">
+              Optional Chrome extension. After you install it, this site's
+              cookies and localStorage are copied into your Chrome profile
+              automatically, and Chrome can sync that profile across devices
+              where you are signed in. The copy lives in the extension's
+              Chrome profile storage, not in a site cookie or localStorage key.
+              This site does not receive it. Very large tutorial files may stay
+              in the browser where they were saved, because Chrome profile sync
+              holds about 100 kilobytes.
+            </p>
+            <p class="setting-description">
+              <a href="{{ '/se-gym/#chrome-profile-sync' | relative_url }}">Download the extension from SE Gym</a>.
+            </p>
+            <p class="setting-description" id="profile-sync-status" role="status"></p>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+    <script src="{{ '/js/profile-sync-page.js' | relative_url }}" defer></script>
+
+    <fieldset class="settings-section">
       <legend class="sr-only">What each tutorial remembers</legend>
       <h2 class="settings-section-title">What each tutorial remembers</h2>
       <div class="settings-list">
@@ -1020,3 +1049,4 @@ info_nav_title: "My Settings"
   }
 })();
 </script>
+

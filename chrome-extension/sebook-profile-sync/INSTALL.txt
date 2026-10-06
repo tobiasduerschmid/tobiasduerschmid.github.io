@@ -1,0 +1,23 @@
+SEBook Chrome profile sync
+
+This extension copies cookies and localStorage from
+https://tobiasduerschmid.github.io into your Chrome profile. After it is
+installed, syncing is automatic.
+
+Install
+1. Unzip this archive. The folder inside is named sebook-chrome-profile-sync.
+2. Open Chrome and go to chrome://extensions
+3. Turn on Developer mode.
+4. Choose Load unpacked and select the sebook-chrome-profile-sync folder.
+
+Install the extension on each computer. Turn on Chrome profile sync and
+sign in to the same Chrome profile. The site itself does not receive the
+saved data. Chrome may store the profile copy with your Chrome account
+when profile sync is on.
+
+Do not save passwords or confidential code on the site if you use this
+extension. Chrome profile sync holds about 100 kilobytes, so very large
+tutorial files stay in the browser where they were saved. In-browser Linux
+machine snapshots are not copied.
+
+Private browsing does not write into the synced profile copy.

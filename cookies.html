@@ -14,7 +14,8 @@ info_nav_title: "Browser storage"
       This site keeps a few small things in your browser so it remembers what you were doing &mdash;
       your <strong>theme</strong>, <strong>tutorial progress</strong>, <strong>bookmarks</strong>,
       audio settings, and similar {% include abbr.html term="UI" %} preferences. Those saved preferences and progress stay in
-      your browser. This site does not run analytics or advertising trackers. Node.js tutorials
+      your browser unless you install the optional Chrome profile sync extension, which copies them into your Chrome profile.
+      This site does not run analytics or advertising trackers. Node.js tutorials
       that use WebContainers are the exception to the otherwise local-only tutorial runtimes:
       their workspace files and commands are passed to a StackBlitz-controlled runtime that
       executes in your browser. Do not enter secrets or confidential code in those tutorials.
@@ -569,11 +570,29 @@ info_nav_title: "Browser storage"
       Portfolio videos and presentation slides are external links; YouTube and SlideShare
       are loaded only when you follow those links.
     </li>
+    <li>
+      <strong>Chrome profile sync extension</strong> &mdash; optional. If you install it from the
+      <a href="{{ '/se-gym/#chrome-profile-sync' | relative_url }}">SE Gym page</a>, it copies this
+      site's cookies and <code>localStorage</code> into your Chrome profile so Chrome can sync them
+      across computers where you are signed in to the same profile. The site does not receive that
+      copy. Chrome may store it with your Chrome account when profile sync is turned on. The extension
+      does not add a cookie or <code>localStorage</code> key on this site. A saved key added later is copied automatically. A key the site stops using is listed as retired in the profile-sync catalog so the extension deletes it instead of restoring an older copy. It does not copy
+      <code>sessionStorage</code>, the tutorial VM snapshot database, or the VM asset cache.
+      Private browsing does not write into the synced profile copy.
+      <p id="profile-sync-status" role="status"></p>
+      <p>
+        While the extension is installed and syncing, <strong>Delete everything</strong> on this page
+        also deletes the synced copy. You can pause syncing, or delete the profile copy while keeping
+        this browser's data, from the extension's toolbar button.
+      </p>
+    </li>
   </ul>
 
 </div>
 
 <div id="cookies-toast" class="cookies-toast" role="status" aria-live="polite"></div>
+
+<script src="{{ '/js/profile-sync-page.js' | relative_url }}" defer></script>
 
 <script>
 (function () {
@@ -913,7 +932,8 @@ info_nav_title: "Browser storage"
     if (!confirm(
       'Delete EVERY cookie and browser-storage entry this site has stored?\n\n' +
       'This will sign you out of any preferences, lose your tutorial progress, and clear ' +
-      'bookmarks/SE Gym data. It cannot be undone.'
+      'bookmarks/SE Gym data. If the Chrome profile sync extension is installed and syncing, ' +
+      'the synced copy is deleted too. It cannot be undone.'
     )) return;
 
     deleteAllButton.disabled = true;

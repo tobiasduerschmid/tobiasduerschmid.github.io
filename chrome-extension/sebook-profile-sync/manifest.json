@@ -1,0 +1,63 @@
+{
+  "manifest_version": 3,
+  "name": "SEBook Chrome profile sync",
+  "version": "1.0.0",
+  "description": "Copies SEBook preferences and progress into your Chrome profile so they sync across your devices.",
+  "minimum_chrome_version": "111",
+  "incognito": "split",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu6RT4bdQ0i1hqnScR7bPcvl7srM3D/JTW0lclgJdayuJIkPqUpdNp66IZ+8aPclOMZ0/fB16HzwS5Z9uVuxaox7PUAwTP/KF+/SC2ePrGkeYx6F2czKklQtAVbYk0Za4Ley+ZzLn2IQZIRaxRDZoPe2NArTfk7EkgFUL2Ldxdu7bvLeP/FwYqVTySa/JBE7yG7rwOxS/VyTwXqRPc/Z0abirtnyKaDj7xcHULA+Yvw6ALBr8FYS3PW3vE5K7ct1tqCGdFQoYsyVLZIC9P5Amh10/9PpeSIN/26yxLCG5KZ0jCpiKwckW5OYXW9BNN7Mpvtf3I6aNISgvPmDOPA09WwIDAQAB",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://tobiasduerschmid.github.io/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://tobiasduerschmid.github.io/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": ["page-bridge.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://tobiasduerschmid.github.io/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": ["content-script.js"],
+      "css": ["pending.css"],
+      "run_at": "document_start"
+    }
+  ],
+  "externally_connectable": {
+    "matches": [
+      "https://tobiasduerschmid.github.io/*",
+      "http://localhost/*",
+      "http://127.0.0.1/*"
+    ]
+  },
+  "action": {
+    "default_title": "SEBook profile sync",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

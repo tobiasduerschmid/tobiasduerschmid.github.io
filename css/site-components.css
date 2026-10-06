@@ -248,3 +248,16 @@ footer a:not(.footer-social-link) {
   font-size: 1.1em;
   line-height: 1.2;
 }
+
+/* The Chrome profile sync extension hides the page until saved
+   preferences have been copied in, so the first paint is not the
+   unsynced theme. Print never waits on that copy. */
+html.sebook-profile-sync-pending body {
+  visibility: hidden;
+}
+
+@media print {
+  html.sebook-profile-sync-pending body {
+    visibility: visible;
+  }
+}

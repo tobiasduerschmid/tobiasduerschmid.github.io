@@ -128,8 +128,8 @@
       // Re-activating that class is how the browser returns from a method to its definition.
       let valueBeforePointer = null;
       list.addEventListener('pointerdown', () => { valueBeforePointer = list.value; });
-      list.addEventListener('click', event => {
-        if (list.value !== valueBeforePointer) return;
+      list.addEventListener('pointerup', event => {
+        if (event.button !== 0 || list.value !== valueBeforePointer) return;
         if (!clickedSelectedOption(event, list)) return;
         reopenSelectedClass();
       });

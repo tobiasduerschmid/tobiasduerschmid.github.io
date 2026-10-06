@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SEBook profile sync</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <h1>SEBook profile sync</h1>
+  <p id="summary">Copies saved preferences and progress from SEBook into this Chrome profile. Sync runs automatically.</p>
+  <p id="status" role="status"></p>
+  <p id="detail"></p>
+  <div class="actions">
+    <button type="button" id="pause">Pause syncing</button>
+    <button type="button" id="wipe">Delete synced copy and pause</button>
+    <button type="button" id="discard" hidden>Discard previous values kept on this computer</button>
+  </div>
+  <p class="note">Install this extension on each computer, and turn on Chrome profile sync for the same Chrome profile. This site does not receive the saved data. Chrome may store the profile copy with your Chrome account. In-browser Linux machine snapshots are not copied.</p>
+  <script src="popup.js"></script>
+</body>
+</html>

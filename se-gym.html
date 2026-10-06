@@ -40,6 +40,24 @@ layout: sebook
         your
         own study gym by adding quizzes and flashcard sets, then start a workout to review the cards you practiced least recently.</p>
       <p class="gym-subtitle">For hands-on course practice, try the <a href="/SEBook/tools/java-cs131-tutorial">CS131 Java concepts tutorial</a> or browse <a href="/SEBook/tutorials">all programming tutorials</a>.</p>
+      <section id="chrome-profile-sync" class="gym-profile-sync" aria-labelledby="chrome-profile-sync-heading">
+        <h2 id="chrome-profile-sync-heading"><i class="fa-solid fa-arrows-rotate section-heading-icon" aria-hidden="true"></i> Sync across your computers</h2>
+        <p>Install the Chrome extension to copy this site's cookies and localStorage into your Chrome profile. Sync then runs on its own. Your gym, bookmarks, tutorial progress, and other saved preferences follow you to other computers where you are signed in to the same Chrome profile and have installed the extension.</p>
+        <p>This site does not receive that data. If Chrome profile sync is turned on, Chrome may store the copy with your Chrome account. Do not save passwords or confidential code on this site if you use the extension. Chrome can sync about 100 kilobytes; larger tutorial files stay in the browser where they were saved. In-browser Linux machine snapshots are not copied.</p>
+        <div class="gym-profile-sync-actions">
+          <a class="gym-btn secondary" href="{{ '/downloads/sebook-chrome-profile-sync.zip' | relative_url }}" download="sebook-chrome-profile-sync.zip">Download the Chrome extension</a>
+          <button type="button" class="gym-btn secondary" id="profile-sync-copy-extensions">Copy chrome://extensions</button>
+        </div>
+        <ol>
+          <li>Download the extension and unzip it. The folder inside is named <code>sebook-chrome-profile-sync</code>.</li>
+          <li>Open Chrome's extensions page. Use <strong>Copy chrome://extensions</strong>, then paste that address into the address bar.</li>
+          <li>Turn on <strong>Developer mode</strong>.</li>
+          <li>Choose <strong>Load unpacked</strong> and select the unzipped folder.</li>
+        </ol>
+        <p>Install the extension on each computer. In Chrome settings, turn on profile sync and sign in to the same profile. Saving on the site updates the profile copy automatically.</p>
+        <p id="profile-sync-status" role="status"></p>
+      </section>
+      <script src="{{ '/js/profile-sync-page.js' | relative_url }}" defer></script>
       {% if site.gym_hero_animation %}
       <!-- ==================== HERO CUSTOMIZER ENTRY ==================== -->
       <div id="hero-customizer-section">
@@ -98,7 +116,7 @@ layout: sebook
                   rotate limited workouts toward cards you practiced least recently. This
                   will track your
                   performance across quizzes and flash cards across the entire site, not just this page. Your personal
-                  data remains on your local device and is not shared with the provider of the site.</span>
+                  data is not sent to the provider of this site. It stays in this browser unless you install the Chrome profile sync extension, which copies it into your Chrome profile.</span>
             </span>
             <label class="switch">
               <span class="sr-only">Toggle performance analysis</span>
@@ -305,7 +323,7 @@ layout: sebook
 
         <!-- Shown only when performance tracking is off: unlocks the three sections above -->
         <div id="srs-locked-prompt" class="gym-locked-prompt is-hidden">
-          <p class="gym-locked-text"><i class="fa-solid fa-lock" aria-hidden="true"></i> Turn on performance tracking to unlock spaced-repetition reviews and stats insights. Your stats stay in this browser.</p>
+          <p class="gym-locked-text"><i class="fa-solid fa-lock" aria-hidden="true"></i> Turn on performance tracking to unlock spaced-repetition reviews and stats insights. Your stats stay in this browser unless you install Chrome profile sync.</p>
           <button id="enable-tracking-btn" class="gym-btn secondary">Enable performance tracking</button>
         </div>
 

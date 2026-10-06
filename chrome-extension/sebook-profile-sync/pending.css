@@ -1,0 +1,9 @@
+html.sebook-profile-sync-pending body {
+  visibility: hidden;
+}
+
+@media print {
+  html.sebook-profile-sync-pending body {
+    visibility: visible;
+  }
+}

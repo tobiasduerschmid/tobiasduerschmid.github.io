@@ -2408,6 +2408,51 @@
     }
     .gym-challenge-status { font-weight: 600; }
 
+    /* Chrome profile sync download */
+    #se-gym-app .gym-profile-sync {
+      margin: 0 0 var(--sp-xl, 24px);
+      padding: var(--sp-lg, 16px);
+      border: 1px solid var(--color-border, #d8dde2);
+      border-radius: var(--radius-lg, 12px);
+      background: var(--color-surface, #ffffff);
+      color: var(--color-text, #111111);
+    }
+
+    #se-gym-app .gym-profile-sync h2 {
+      margin-top: 0;
+    }
+
+    #se-gym-app .gym-profile-sync ol {
+      margin: 0 0 var(--sp-md, 12px);
+      padding-left: 1.4em;
+    }
+
+    #se-gym-app .gym-profile-sync li {
+      margin-bottom: var(--sp-xs, 4px);
+    }
+
+    #se-gym-app .gym-profile-sync code {
+      font-size: 1em;
+      overflow-wrap: anywhere;
+    }
+
+    .gym-profile-sync-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--sp-sm, 8px);
+      margin: var(--sp-md, 12px) 0;
+    }
+
+    #se-gym-app .gym-profile-sync a.gym-btn {
+      text-decoration: none;
+    }
+
+    #se-gym-app .gym-profile-sync :is(a, button):focus-visible {
+      outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+      outline-offset: var(--focus-offset, 2px);
+    }
+
     /* Toggle label */
     .toggle-label {
       font-weight: 600;

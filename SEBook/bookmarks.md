@@ -11,7 +11,7 @@ layout: sebook
     <div class="bookmarks-toggle-row">
       <span class="bookmarks-info">
         <span class="toggle-label">Activate Bookmarks</span>
-        <button type="button" class="bookmarks-info-btn" aria-expanded="false" aria-label="Info about bookmarks">?<span class="bookmarks-info-tooltip">When activated, a bookmark icon appears in the toolbar of every SEBook page. Click it to add or remove the page from your bookmarks list. Bookmarks are stored in a local browser cookie and are not shared with any server.</span></button>
+        <button type="button" class="bookmarks-info-btn" aria-expanded="false" aria-label="Info about bookmarks">?<span class="bookmarks-info-tooltip">When activated, a bookmark icon appears in the toolbar of every SEBook page. Click it to add or remove the page from your bookmarks list. Bookmarks are stored in a local browser cookie. This site does not receive them.</span></button>
       </span>
       <label class="switch">
         <span class="sr-only">Toggle bookmarks activation</span>

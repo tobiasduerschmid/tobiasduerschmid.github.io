@@ -54,7 +54,7 @@ You MUST update `cookies.html` whenever any of the following happens. Use the ta
 | New `BroadcastChannel` | Update the BroadcastChannel bullet with the new channel name. |
 | New File System Access call | Add a section (the page currently asserts these aren't used). |
 | Renamed key | Rename the row's `data-key` and the displayed `<td class="storage-key">`. |
-| Removed key (feature deleted) | **Delete the row.** Stale entries in the inventory are also a privacy violation. |
+| Removed key (feature deleted) | **Delete the row.** Stale entries in the inventory are also a privacy violation. Add the removed key or prefix to `retired` in [`js/profile-sync-catalog.js`](../../../js/profile-sync-catalog.js) so the Chrome profile sync extension deletes the old copy instead of restoring it. New keys do not need a catalog entry: the extension copies every cookie and `localStorage` item it finds. |
 | New dynamic key pattern (e.g. `myfeature-{id}-...`) | Add it to `DYNAMIC_PREFIXES` in the page's `<script>` and to the prefix legend AND to the relevant "Delete all" button's `data-clear-prefixes` so bulk-delete still wipes everything. |
 | Changed cookie expiry / `path` / `SameSite` / `Secure` / `HttpOnly` / domain | Update the row's purpose blurb if the change is user-visible (session vs persistent, scope expansion, etc.). |
 | Swapped backends (e.g. cookie → localStorage) | Move the row to the right table AND update its `data-storage` attribute. |
@@ -102,7 +102,7 @@ If you add a new layout, include `{% include cookie-notice.html %}` near the foo
 ## Quick checklist before you finish a change
 
 - [ ] Did I touch any storage API or helper from the table above? → ran the workflow.
-- [ ] Did I add/rename/remove a key? → updated `cookies.html` (row added / renamed / **deleted**).
+- [ ] Did I add/rename/remove a key? → updated `cookies.html` (row added / renamed / **deleted**). A removed key or prefix is also added to `retired` in `js/profile-sync-catalog.js`. A new key is copied by the Chrome profile sync extension without a catalog entry.
 - [ ] Did I add/rename/remove a user-facing setting? → updated `settings.html` with a visible label, control or explanatory row, and storage key/prefix.
 - [ ] Did I touch a *dynamic* key pattern? → updated `DYNAMIC_PREFIXES`, the legend text, AND the `data-clear-prefixes` on the bulk-delete button.
 - [ ] Did I introduce `sessionStorage` (persistent), `IndexedDB`, Cache API, Service Worker that caches, File System Access, or `BroadcastChannel` with a new name? → rewrote the corresponding bullet in "Where else does this site store data?"
@@ -152,6 +152,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - `BroadcastChannel` — channel names `ttsync-<path>-<session>`, `uml-sync-<path>`, and `v86-inbrowser-<n>` (v86 VM networking); messages are in-memory only
 - Third-party processing — the local `@webcontainer/api` wrapper opens StackBlitz's versioned cross-origin headless runtime and passes it WebContainer tutorial workspace files and commands; this boundary and StackBlitz's privacy policy are disclosed on `/cookies/` and in the site-wide notice
 - Cross-origin storage/cookies — third-party frames (including StackBlitz's WebContainer runtime) may use storage scoped to their own origins; `/cookies/` directs users to browser site-data controls because this origin cannot inspect or delete it. Portfolio YouTube videos and SlideShare presentations use external links, so those services load only after following a link
+- Optional Chrome profile sync extension — when installed, copies this origin's cookies and `localStorage` into `chrome.storage.sync` for the signed-in Chrome profile. New keys are copied without an extension update. Keys listed in `retired` inside `js/profile-sync-catalog.js` are deleted from the browser and from the profile copy. The extension does not add a site cookie or `localStorage` key. `sessionStorage`, the VM snapshot database, and the VM asset cache are not copied. `/cookies/` and `/settings/` describe it; the extension popup pauses or deletes the profile copy
 
 **User-facing settings currently represented in `/settings/`:**
 - Dark mode: `dark-mode`

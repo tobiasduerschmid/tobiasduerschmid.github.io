@@ -1,6 +1,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="{{ '/js/profile-sync-catalog.js' | prepend: site.baseurl }}?v={{ site.asset_version }}"></script>
 
   {% if page.url == '/se-gym/' %}
   <script>
@@ -10,51 +11,62 @@
   </script>
   {% endif %}
 
-  <!-- Early display-preference initialization to prevent blinking -->
+  <!-- Early display-preference initialization to prevent blinking.
+       The Chrome profile sync extension can call this again after it
+       copies saved preferences into this browser. -->
   <script>
     (function () {
-      var nameEQ = "show-highlights=";
-      var darkEQ = "dark-mode=";
-      var confettiEQ = "more-confetti=";
-      var blogCitationsEQ = "blog-show-citations=";
-      var ca = document.cookie.split(';');
-      var show = true;
-      var dark = false;
-      var moreConfetti = true;
-      var blogCitations = true;
-      for (var i = 0; i < ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) == 0) {
-          show = c.substring(nameEQ.length, c.length) === 'true';
+      function applyDisplayPreferences() {
+        var nameEQ = "show-highlights=";
+        var darkEQ = "dark-mode=";
+        var confettiEQ = "more-confetti=";
+        var blogCitationsEQ = "blog-show-citations=";
+        var ca = document.cookie.split(';');
+        var show = true;
+        var dark = false;
+        var moreConfetti = true;
+        var blogCitations = true;
+        for (var i = 0; i < ca.length; i++) {
+          var c = ca[i];
+          while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+          if (c.indexOf(nameEQ) == 0) {
+            show = c.substring(nameEQ.length, c.length) === 'true';
+          }
+          if (c.indexOf(darkEQ) == 0) {
+            dark = c.substring(darkEQ.length, c.length) === 'true';
+          }
+          if (c.indexOf(confettiEQ) == 0) {
+            moreConfetti = c.substring(confettiEQ.length, c.length) !== 'false';
+          }
+          if (c.indexOf(blogCitationsEQ) == 0) {
+            blogCitations = c.substring(blogCitationsEQ.length) !== 'false';
+          }
         }
-        if (c.indexOf(darkEQ) == 0) {
-          dark = c.substring(darkEQ.length, c.length) === 'true';
+        document.documentElement.classList.toggle('highlights-disabled', !show);
+        if (!document.documentElement.classList.contains('print-light-mode')) {
+          document.documentElement.classList.toggle('dark-mode', dark);
         }
-        if (c.indexOf(confettiEQ) == 0) {
-          moreConfetti = c.substring(confettiEQ.length, c.length) !== 'false';
-        }
-        if (c.indexOf(blogCitationsEQ) == 0) {
-          blogCitations = c.substring(blogCitationsEQ.length) !== 'false';
-        }
+        document.documentElement.classList.toggle('more-confetti-enabled', moreConfetti);
+        document.documentElement.classList.toggle('blog-citations-disabled', !blogCitations);
+        try {
+          document.documentElement.classList.toggle(
+            'abbr-underlines-disabled',
+            localStorage.getItem('abbr-underlines') === 'false'
+          );
+        } catch (e) {}
+        if (window.__sebookApplyReducedMotion) window.__sebookApplyReducedMotion();
       }
-      if (!show) {
-        document.documentElement.classList.add('highlights-disabled');
+
+      function revealProfileSync() {
+        if (!window.__sebookProfileSyncApplied) return;
+        if (typeof window.__sebookApplyReducedMotion !== 'function') return;
+        document.documentElement.classList.remove('sebook-profile-sync-pending');
       }
-      if (dark) {
-        document.documentElement.classList.add('dark-mode');
-      }
-      if (moreConfetti) {
-        document.documentElement.classList.add('more-confetti-enabled');
-      }
-      if (!blogCitations) {
-        document.documentElement.classList.add('blog-citations-disabled');
-      }
-      try {
-        if (localStorage.getItem('abbr-underlines') === 'false') {
-          document.documentElement.classList.add('abbr-underlines-disabled');
-        }
-      } catch (e) {}
+
+      applyDisplayPreferences();
+      window.__sebookApplyDisplayPreferences = applyDisplayPreferences;
+      window.__sebookRevealProfileSync = revealProfileSync;
+      revealProfileSync();
     })();
   </script>
 
@@ -180,11 +192,10 @@
           writeStore(forced);   // persist the explicit choice
         }
       } catch (e) {}
-      var stored = readStore();
       var mq = (window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null);
       function active() {
         if (forced !== null) return forced;   // current-page URL wins
-        if (stored) return true;              // persistent override
+        if (readStore()) return true;         // persistent override, re-read so profile sync can update it
         return !!(mq && mq.matches);          // OS preference
       }
       function sync() {
@@ -201,6 +212,8 @@
       // window.matchMedia directly so the URL override, stored override
       // and OS pref are honoured uniformly.
       window.__prefersReducedMotion = active;
+      window.__sebookApplyReducedMotion = sync;
+      if (window.__sebookRevealProfileSync) window.__sebookRevealProfileSync();
     })();
   </script>
 

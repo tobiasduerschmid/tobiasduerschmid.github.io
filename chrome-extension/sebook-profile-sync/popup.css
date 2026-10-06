@@ -1,0 +1,79 @@
+:root {
+  color-scheme: light dark;
+  --popup-text: #111111;
+  --popup-bg: #ffffff;
+  --popup-muted: #595959;
+  --popup-border: #767676;
+  --popup-button: #f4f6f8;
+  --popup-focus: #2774AE;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --popup-text: #e6edf3;
+    --popup-bg: #1e1e1e;
+    --popup-muted: #b0b0b0;
+    --popup-border: #8BB8E8;
+    --popup-button: #2a2a2a;
+    --popup-focus: #8BB8E8;
+  }
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  width: 24rem;
+  max-width: 100%;
+  padding: 16px;
+  background: var(--popup-bg);
+  color: var(--popup-text);
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+p {
+  margin: 0 0 12px;
+}
+
+.note,
+#detail {
+  color: var(--popup-muted);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+button {
+  font: inherit;
+  text-align: left;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 2px solid var(--popup-border);
+  border-radius: 8px;
+  background: var(--popup-button);
+  color: var(--popup-text);
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 3px solid var(--popup-focus);
+  outline-offset: 2px;
+}
+
+button[hidden] {
+  display: none;
+}
