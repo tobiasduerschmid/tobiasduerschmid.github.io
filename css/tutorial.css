@@ -199,6 +199,11 @@ html, body {
   border-right: 1px solid #2a2a2e;
 }
 
+/* Haskell's debugger lives in this column. One third leaves the editor the rest. */
+.haskell-tutorial .tvm-instructions-panel {
+  flex: 0 0 33.333%;
+}
+
 /* Left-panel tab switcher (Steps / UML Diagram) */
 .tvm-left-tab-bar {
   display: flex;
@@ -3946,7 +3951,8 @@ body.tutorial-layout #navnav .navbar-right > #tts-read-btn {
 ─────────────────────────────────────────── */
 @media (max-width: 900px) {
   .tvm-container { flex-direction: column; }
-  .tvm-instructions-panel { flex: 0 0 45%; border-right: none; border-bottom: 1px solid #2a2a2e; }
+  .tvm-instructions-panel,
+  .haskell-tutorial .tvm-instructions-panel { flex: 0 0 45%; border-right: none; border-bottom: 1px solid #2a2a2e; }
   .tvm-hsplitter {
     margin-inline: 0;
     margin-block: var(--tvm-splitter-hit-overhang);

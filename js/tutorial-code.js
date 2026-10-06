@@ -1615,6 +1615,7 @@
   TutorialCode.prototype._buildUI = function () {
     this.root.classList.add('tvm-root');
     if (this.config.backend === 'smalltalk') this.root.classList.add('smalltalk-tutorial');
+    if (this.config.backend === 'haskell') this.root.classList.add('haskell-tutorial');
     if (this.editorSplitSupported && this._splitActive) {
       this.root.classList.add('tvm-split-layout-three-col');
     }
