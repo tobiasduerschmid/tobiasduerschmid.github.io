@@ -2323,6 +2323,18 @@ Each update atomically replaces one file and sources it in the current shell;
 initial setup, clock synchronization, terminal sizing, and learner commands are
 not replayed on shell restart. Persist only runtime-owned shell initialization
 there; tutorial setup commands may have destructive or non-idempotent effects.
+The Git prompt hook starts its asynchronous FIFO notifier inside a subshell,
+keeping it out of the learner shell's job table. Redirecting notifier output
+alone does not suppress Bash's job-completion notices. Preserve normal job
+control and Ctrl+C; Git refreshes must not print notices, change command
+history, or inject serial commands while the learner types or recalls input.
+Prompt-triggered refreshes request fresh Git state over RPC if a pushed update
+was missed; cached rendering alone is not a recovery mechanism. RPC returns the
+state directly, avoiding a shared-file race. Opening the graph requests fresh
+state immediately; pushed updates cancel redundant prompt refreshes. Commands
+finishing during a refresh schedule one follow-up instead of being dropped.
+Transport failures preserve the
+last valid graph; a successful empty response clears it for a missing repository.
 This image upgrade also invalidates older initial/step VM reset caches through
 `V86_SNAPSHOT_CACHE_VERSION`, including cold-boot caches without an asset
 validator, so restoring a cache cannot bring back the old PID 1 learner shell.

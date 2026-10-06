@@ -3997,7 +3997,7 @@
             if (/[#$] $/.test(self._promptDetectBuf)) {
               self._promptDetectBuf = '';
               self._pollWatchedFiles();
-              if (self._currentView === 'git_graph' && !self._gitGraphRefreshing) {
+              if (self._currentView === 'git_graph') {
                 self._maybeAutoRefreshGitGraph();
               }
               if (self.makeDagPath) {
@@ -4474,6 +4474,7 @@
         this._gitGraphRefreshPending = true;
         return;
       }
+      clearTimeout(this._gitGraphAutoRefreshTimer);
       this._lastGitGraphStateText = state;
       if (this._currentView === 'git_graph' && this.booted && window.GitGraph) {
         this._renderGitGraphFromText(state);
@@ -14411,11 +14412,9 @@
       }
       // Immediately show the last cached graph (avoids "No commits yet" flash)
       this._lightRefreshGitGraph();
-      // Then schedule a full dump+read for fresh data
-      setTimeout(function () {
-        self2._refreshGitGraph();
-        setTimeout(function () { self2._refreshGitGraph(); }, 1500);
-      }, 800);
+      // Fetch fresh state immediately; delayed duplicate refreshes add work
+      // and can repaint an older state over a newer pushed update.
+      this._refreshGitGraph();
     } else if (view === 'make_dag' && dagPanel) {
       editorPanel.style.display = 'none';
       if (graphPanel) graphPanel.style.display = 'none';
@@ -14474,12 +14473,15 @@
       }
       var hookCmd;
       if (rpcAvail) {
+        // Launch from a subshell so the notifier never enters the learner's
+        // job table. Redirecting its output alone still lets interactive Bash
+        // print "Done" notices. Keep the learner's job-control settings intact.
         hookCmd =
           '__gg_repo=' + shellQuote(p) + '; ' +
           '__gg_fifo=/run/gg/tick.fifo; ' +
-          '__gg_kick() { ' +
+          '__gg_kick() ( ' +
           '( [ -p "$__gg_fifo" ] && printf "%s\\n" "$__gg_repo" > "$__gg_fifo" ) >/dev/null 2>&1 & ' +
-          '}; ' +
+          '); ' +
           '__gg_prompt() { __gg_kick; }; ' +
           'case ";$PROMPT_COMMAND;" in *";__gg_prompt;"*) ;; *) PROMPT_COMMAND="__gg_prompt${PROMPT_COMMAND:+;$PROMPT_COMMAND}";; esac';
       } else {
@@ -14669,32 +14671,22 @@
   };
 
   /**
-   * Run git state commands out-of-band, writing output to a known file on the
-   * 9p-mounted filesystem so we can read it via read_file(). If RPC is not
-   * available after the terminal is interactive, skip the serial fallback so
-   * background graph refreshes never steal or mute the student's shell input.
+   * Read Git state over RPC, without a shared-file handoff or terminal input.
+   * Legacy snapshots can still use their state file, but must never inject
+   * refresh commands into an interactive learner shell.
    */
   TutorialCode.prototype._dumpGitState = function () {
     var p = this.gitGraphPath || '/tutorial';
-    // Mirrors the prompt-hook guard at _installGitGraphPromptHook: if .git/
-    // doesn't exist (e.g. user cleared reproduce.sh and reset), skip the
-    // dump entirely. The redirection target lives inside .git/, so without
-    // this guard the redirect fails silently and any stale state file
-    // disappears with the directory — _refreshGitGraph's read_file then
-    // rejects and the catch handler renders the empty graph.
-    var cmd = '( cd ' + shellQuote(p) + ' && [ -d .git ] && { GIT_OPTIONAL_LOCKS=0; export GIT_OPTIONAL_LOCKS; echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; echo "===STATUS==="; git status --porcelain=v1 2>/dev/null; echo "===STASH==="; git stash list 2>/dev/null; } > ' + shellQuote(p + '/.git/gitgraph_state') + ' 2>/dev/null )';
+    var cmd = '( cd ' + shellQuote(p) + ' 2>/dev/null && git rev-parse --git-dir >/dev/null 2>&1 && { GIT_OPTIONAL_LOCKS=0; export GIT_OPTIONAL_LOCKS; echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; echo "===STATUS==="; git status --porcelain=v1 2>/dev/null; echo "===STASH==="; git stash list 2>/dev/null; } )';
     var self = this;
-    // RPC path: daemon runs the dump, gitgraph_state is fresh when the
-    // returned Promise resolves. The cmd's stdout is empty (everything is
-    // redirected to gitgraph_state), so we don't use the resp content —
-    // we only need the "done" signal that the daemon finished.
     return self._probeRPCDaemon().then(function (avail) {
       if (avail) return self._runRPC(cmd);
       if (!self._canRunLegacyBackgroundSerial()) {
         self._logLegacyBackgroundSerialSkip('git graph refresh');
-        return Promise.resolve();
+        return;
       }
-      return self._runSilent(cmd);
+      return self._runSilent(cmd + ' > ' + shellQuote(p + '/.git/gitgraph_state') + ' 2>/dev/null')
+        .then(function () { return undefined; });
     });
   };
 
@@ -14803,11 +14795,11 @@
   /**
    * FULL refresh: producer-driven dump. Used for: Refresh button clicks,
    * initial _setView, step loads. Backend dispatch:
-   *   v86       → _dumpGitState() (RPC or pre-reveal serial) + render cached state
+   *   v86       → direct RPC state (legacy snapshots fall back to their state file)
    *   pyodide   → worker.gitGetState → GitGraph.fromStructured
    * Other backends with gitGraphPath unset are no-ops.
    */
-  TutorialCode.prototype._refreshGitGraph = function () {
+  TutorialCode.prototype._refreshGitGraph = function (options) {
     if (this._isBackgroundSyncPaused()) {
       this._gitGraphRefreshPending = true;
       return;
@@ -14816,9 +14808,13 @@
     // git gutter. Covers step transitions, apply-solution, setup commands,
     // and external Refresh-button clicks — none of which go through
     // _dispatchGitTermLine where the gutter hook used to live.
-    if (this.config.enableGitGutter) this._refreshAllGitGutters();
+    if (this.config.enableGitGutter && !(options && options.fromPrompt)) this._refreshAllGitGutters();
     if (!this.booted || !window.GitGraph) return;
-    if (this._gitGraphRefreshing) return;
+    if (this._gitGraphRefreshing) {
+      this._gitGraphRefreshPending = true;
+      return;
+    }
+    this._gitGraphRefreshPending = false;
     var backend = this.config.backend;
     if (backend !== 'v86' && backend !== 'pyodide') return;
     this._gitGraphRefreshing = true;
@@ -14829,33 +14825,33 @@
     }, 10000);
 
     if (backend === 'v86') {
-      var stateReadPath = (self.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.git/gitgraph_state';
       this._ensureGitGraphPromptHook()
         .then(function () { return self._dumpGitState(); })
-        .then(function () { return new Promise(function (resolve) { setTimeout(resolve, 150); }); })
-        .then(function () { return self.emulator.read_file(stateReadPath); })
-        .then(function (buf) {
+        .then(function (text) {
+          if (typeof text === 'string') return text;
+          var statePath = (self.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.git/gitgraph_state';
+          return self.emulator.read_file(statePath).then(function (buf) {
+            return new TextDecoder('utf-8').decode(buf);
+          });
+        })
+        .then(function (text) {
           if (generation !== self._gitGraphRefreshGeneration || self._isBackgroundSyncPaused()) return;
           clearTimeout(safetyTimer);
           self._gitGraphRefreshing = false;
-          var text = new TextDecoder('utf-8').decode(buf);
+          var refreshPending = self._gitGraphRefreshPending;
           self._lastGitGraphStateText = text;
           self._gitGraphStateDirty = false;
           self._gitGraphRefreshPending = false;
           self._renderGitGraphFromText(text);
+          if (refreshPending) self._refreshGitGraph({ fromPrompt: true });
         })
         .catch(function () {
           clearTimeout(safetyTimer);
           if (generation !== self._gitGraphRefreshGeneration) return;
           self._gitGraphRefreshing = false;
-          // Common cause: .git/ doesn't exist (e.g. user cleared reproduce.sh
-          // and reset, so post_fileload_setup's `bash` was a no-op and never
-          // ran `git init`). Render an empty graph rather than leave the
-          // previous render on screen.
-          self._lastGitGraphStateText = '';
-          self._gitGraphStateDirty = false;
-          self._gitGraphRefreshPending = false;
-          self._renderGitGraphFromText('');
+          // A failed transport is not evidence of an empty repository.
+          // Preserve the last valid graph and retry at the next prompt.
+          self._gitGraphRefreshPending = true;
         });
       return;
     }
@@ -16116,19 +16112,19 @@
   /**
    * Auto-refresh: called from the serial output listener when a shell
    * prompt is detected. In daemon mode the graph usually updates first via
-   * a pushed G frame on virtio-console; this light read is a low-cost fallback
-   * for legacy snapshots and missed notifications.
+   * a pushed G frame on virtio-console. Request fresh state as a fallback
+   * rather than redrawing the cache when a notification is missed.
    */
   TutorialCode.prototype._maybeAutoRefreshGitGraph = function () {
     if (this._isBackgroundSyncPaused()) return;
     if (this._currentView === 'git_graph' && this.booted) {
       var self = this;
       clearTimeout(this._gitGraphAutoRefreshTimer);
-      // Short delay to let legacy 9p prompt writes propagate. Keep it low so
-      // graph view still feels immediate when the daemon push is unavailable.
+      // Give the pushed update a brief head start; it cancels this fallback.
+      // Prompt refreshes already have a separate gutter refresh scheduled.
       this._gitGraphAutoRefreshTimer = setTimeout(function () {
-        self._lightRefreshGitGraph();
-      }, 50);
+        self._refreshGitGraph({ fromPrompt: true });
+      }, 150);
     }
   };
 
