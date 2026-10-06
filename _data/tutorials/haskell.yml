@@ -113,6 +113,7 @@ steps:
 
       Repair `moneyLeftAfterTwoPizzas budget pizzaPrice` to subtract the price of
       **two equally priced pizzas** from the budget.
+      Use the Terminal to test your repaired function with different budgets and pizza prices.
 
       - **Inputs:** nonnegative `Int` values in whole dollars, using the small ranges here.
       - **Result:** a negative balance reports the shortfall; `-4` means 4 dollars short.
