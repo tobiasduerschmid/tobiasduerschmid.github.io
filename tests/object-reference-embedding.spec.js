@@ -83,18 +83,18 @@ test('the documented standalone embed draws shared references through replay and
   const back = lab.getByRole('button', { name: 'Back', exact: true });
   await expect(lab.getByRole('textbox', { name: 'Python code', exact: true })).toBeVisible();
   await expect(forward).toBeEnabled();
-  // Before line 3, row and both board slots reference the original list o1.
+  // After line 2, row and both board slots reference the original list o1.
   await forward.click();
   await forward.click();
   await forward.click();
-  await expect(lab.getByRole('status')).toContainText(/Step 4 of \d+ · Next: line 3/);
+  await expect(lab.getByRole('status')).toContainText(/Step 4 of \d+ · Line 2/);
   await expectSharedReferenceArrows(lab);
 
   await forward.click();
-  await expect(lab.getByRole('status')).toContainText(/Next: line 4/);
+  await expect(lab.getByRole('status')).toContainText(/Line 3/);
   await expectSharedReferenceArrows(lab);
   await back.click();
-  await expect(lab.getByRole('status')).toContainText(/Step 4 of \d+ · Next: line 3/);
+  await expect(lab.getByRole('status')).toContainText(/Step 4 of \d+ · Line 2/);
   await expectSharedReferenceArrows(lab);
 
   await page.setViewportSize({ width: 320, height: 720 });

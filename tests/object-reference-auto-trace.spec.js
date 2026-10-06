@@ -10,7 +10,7 @@ async function openAtStepFive(page, query = '') {
   await page.goto('/SEBook/tools/python.html' + query);
   const lab = page.getByRole('region', { name: 'Object reference lab: Changing a row or replacing a slot', exact: true });
   for (let step = 1; step < 5; step += 1) await action(lab, 'Forward').click();
-  await expect(lab.getByRole('status')).toContainText(/Step 5 of \d+ · Next: line 4/);
+  await expect(lab.getByRole('status')).toContainText(/Step 5 of \d+ · Line 3/);
   await expect(lab.getByRole('region', { name: 'Object reference diagram', exact: true }).locator('.orl-graph'))
     .toHaveAttribute('aria-busy', 'false');
   return lab;
@@ -22,14 +22,14 @@ test('editing automatically retraces at the same step and keeps editing focus, s
   const code = (await editor.inputValue()).replace('append(1)', 'append(9)');
   await editor.fill(code);
   const selection = await editor.evaluate(input => [input.selectionStart, input.selectionEnd]);
-  await expect(lab.getByRole('status')).toContainText(/Step 5 of \d+ · Next: line 4/, { timeout: 120_000 });
+  await expect(lab.getByRole('status')).toContainText(/Step 5 of \d+ · Line 3/, { timeout: 120_000 });
   await expect(editor).toBeFocused();
   expect(await editor.evaluate(input => [input.selectionStart, input.selectionEnd])).toEqual(selection);
   await expect(lab.getByRole('region', { name: 'Object reference diagram', exact: true }).getByText('9', { exact: true })).toBeVisible();
   await action(lab, 'Back').click();
-  await expect(lab.getByRole('status')).toContainText(/Step 4 of \d+ · Next: line 3/);
+  await expect(lab.getByRole('status')).toContainText(/Step 4 of \d+ · Line 2/);
   await action(lab, 'Forward').click();
-  await expect(lab.getByRole('status')).toContainText(/Step 5 of \d+ · Next: line 4/);
+  await expect(lab.getByRole('status')).toContainText(/Step 5 of \d+ · Line 3/);
   await auditInteractiveState(page, 'Automatically updated Python reference state', { include: '.object-reference-lab' });
   await page.emulateMedia({ media: 'print' });
   await expect(lab.locator('.orl-print-step').last()).toContainText('Output:\n[[0, 9], [2]]\n[0, 9]');
@@ -43,7 +43,7 @@ test('temporary syntax errors preserve the requested step across correction', as
   await expect(lab.getByRole('alert')).toContainText('SyntaxError', { timeout: 120_000 });
   await expect(editor).toBeEditable();
   await editor.fill(original.replace('append(1)', 'append(8)'));
-  await expect(lab.getByRole('status')).toContainText(/Step 5 of \d+ · Next: line 4/, { timeout: 120_000 });
+  await expect(lab.getByRole('status')).toContainText(/Step 5 of \d+ · Line 3/, { timeout: 120_000 });
   await expect(lab.getByRole('alert')).toBeHidden();
   await expect(lab.getByRole('region', { name: 'Object reference diagram', exact: true }).getByText('8', { exact: true })).toBeVisible();
 });
@@ -76,7 +76,7 @@ test('editing during execution replaces the running program and returns to the s
   await expect(diagram).toHaveText(oldDiagram, { useInnerText: true });
   await editor.fill(original.replace('append(1)', 'append(7)'));
   await expect(diagram).toHaveText(oldDiagram, { useInnerText: true });
-  await expect(lab.getByRole('status')).toContainText(/Step 5 of \d+ · Next: line 4/, { timeout: 120_000 });
+  await expect(lab.getByRole('status')).toContainText(/Step 5 of \d+ · Line 3/, { timeout: 120_000 });
   await expect(lab.getByRole('region', { name: 'Object reference diagram', exact: true }).getByText('7', { exact: true })).toBeVisible();
   await expect(lab.getByRole('alert')).toBeHidden();
   await expect(action(lab, 'Stop')).toHaveCount(0);

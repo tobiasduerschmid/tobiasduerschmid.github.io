@@ -37,6 +37,8 @@
      * supplies the same execution-position wording as the interactive view.
      * Prepared guidance is optional; callers omit it for edited programs. */
     render({ code, steps, labelStep, explanation, variation, variationExplanation, error }) {
+      this.timeline?.cancel();
+      this.timeline = new window.ObjectReferenceGraph.ReferenceTimeline(steps);
       this.snapshots.forEach(snapshot => snapshot.graph?.destroy());
       const source = element('pre', 'orl-print-source');
       source.append(window.ObjectReferenceCode.highlight(code));
@@ -66,9 +68,9 @@
       caption.id = this.id + '-step-' + index;
       block.setAttribute('aria-labelledby', caption.id);
       block.append(caption);
-      if (step.line > 0 && lines[step.line - 1] !== undefined) {
+      if (step.visualizedLine > 0 && lines[step.visualizedLine - 1] !== undefined) {
         const sourceLine = element('pre', 'orl-print-line');
-        sourceLine.append(window.ObjectReferenceCode.highlight(lines[step.line - 1]));
+        sourceLine.append(window.ObjectReferenceCode.highlight(lines[step.visualizedLine - 1]));
         block.append(sourceLine);
       }
       const description = window.ObjectReferenceGraph.describeState(step);
@@ -91,6 +93,7 @@
       const pending = this.snapshots.map(snapshot => {
         if (!snapshot.graph) {
           snapshot.graph = new window.ObjectReferenceGraph.ReferenceGraph(snapshot.graphHost, { interactive: false });
+          snapshot.graph.setTimeline(this.timeline);
           snapshot.block.classList.add('has-visual');
           return snapshot.graph.render(snapshot.step);
         }
@@ -100,6 +103,7 @@
     }
 
     destroy() {
+      this.timeline?.cancel();
       histories.delete(this.host);
       this.snapshots.forEach(snapshot => snapshot.graph?.destroy());
       this.snapshots = [];

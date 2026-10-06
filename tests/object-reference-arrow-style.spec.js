@@ -6,14 +6,38 @@ for (const theme of ['light', 'dark']) {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/SEBook/tools/python.html');
     if (theme === 'dark') await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
-    const lab = page.getByRole('region', { name: 'Object reference lab: Which references survive a copy?', exact: true });
-    // The reported case: the original and copied row share the string object,
-    // and appending review creates a crossing near a newly highlighted arrowhead.
-    const graph = lab.getByRole('region', { name: 'Object reference diagram', exact: true }).locator('.orl-graph');
-    for (let i = 0; i < 7; i++) {
-      await lab.getByRole('button', { name: 'Forward', exact: true }).click();
-      await expect(graph).toHaveAttribute('aria-busy', 'false');
-    }
+    await page.waitForFunction(() => Boolean(window.ObjectReferenceGraph));
+    // K3,3 is nonplanar: three lists each refer to all three string objects.
+    // Bridges must remain legible even when a better layout removes every
+    // crossing from the smaller, planar examples in the Python chapter.
+    await page.evaluate(async () => {
+      const sources = ['a', 'b', 'c'], targets = ['x', 'y', 'z'];
+      const step = {
+        scopes: [{ id: 'global', name: 'Global names', bindings: sources.map(id => ({ name: id, target: id })) }],
+        objects: [
+          ...sources.map(id => ({ id, type: 'list', entries: targets.map((target, index) => ({ label: '[' + index + ']', target })) })),
+          ...targets.map(id => ({ id, type: 'str', value: "'" + id + "'" }))
+        ]
+      };
+      const fixture = document.createElement('div');
+      fixture.className = 'object-reference-lab';
+      fixture.setAttribute('role', 'region');
+      fixture.setAttribute('aria-label', 'Crossing reference fixture');
+      const scroll = document.createElement('div');
+      scroll.className = 'orl-graph-scroll';
+      const host = document.createElement('div');
+      host.className = 'orl-graph';
+      scroll.append(host); fixture.append(scroll); document.querySelector('main').prepend(fixture);
+      const graph = new window.ObjectReferenceGraph.ReferenceGraph(host);
+      await graph.render(step);
+      // An unchanged following step clears creation emphasis, so focus can
+      // visibly distinguish one reference from the unselected arrows.
+      await graph.render({ ...step });
+    });
+    const fixture = page.getByRole('region', { name: 'Crossing reference fixture', exact: true });
+    const graph = fixture.locator('.orl-graph');
+    await expect(graph).toHaveAttribute('aria-busy', 'false');
+    await expect(fixture.getByRole('button', { name: /^Follow \[\d\] to [xyz]: str$/ })).toHaveCount(9);
     await expect(graph.locator('.orl-edge-bridge').first()).toBeVisible();
     async function inspect() {
       return graph.evaluate(root => {
@@ -68,8 +92,20 @@ for (const theme of ['light', 'dark']) {
       });
     }
     expect(await inspect()).toEqual([]);
-    const owner = await graph.locator('.orl-edge-bridge').first().getAttribute('data-reference-id');
-    await graph.evaluate((root, id) => [...root.querySelectorAll('[data-reference-target]')].find(node => node.dataset.referenceId === id).focus(), owner);
+    const bridge = graph.locator('.orl-edge-bridge').first();
+    const owner = await bridge.getAttribute('data-reference-id');
+    const originalThickness = await bridge.evaluate(node => getComputedStyle(node).strokeWidth);
+    const { label, source } = await graph.evaluate((root, id) => ({
+      label: [...root.querySelectorAll('[data-reference-target]')]
+        .find(node => node.dataset.referenceId === id).getAttribute('aria-label'),
+      source: [...root.querySelectorAll('.orl-reference-edge')]
+        .find(path => path.dataset.referenceId === id).dataset.sourceObject
+    }), owner);
+    const reference = fixture.getByRole('region', { name: source + ': list', exact: true })
+      .getByRole('button', { name: label, exact: true });
+    await reference.focus();
+    await expect(reference).toBeFocused();
+    await expect(bridge, 'keyboard focus visibly highlights the crossing reference').not.toHaveCSS('stroke-width', originalThickness);
     expect(await inspect(), 'keyboard highlighting keeps bridges and arrowheads consistent').toEqual([]);
   });
 }

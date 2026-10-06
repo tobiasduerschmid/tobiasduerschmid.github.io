@@ -42,13 +42,13 @@ async function advanceToEnd(lab) {
   await expect(forward, 'short programs must reach the final trace state').toBeDisabled();
 }
 
-async function advanceToLine(lab, line) {
-  const nextLine = new RegExp('Next: line ' + line + '(?:\\D|$)');
+async function advanceToVisualizedLine(lab, line) {
+  const visualizedLine = new RegExp('Line ' + line + '(?:\\D|$)');
   const status = lab.getByRole('status');
-  for (let step = 0; step < 100 && !nextLine.test(await status.innerText()); step += 1) {
+  for (let step = 0; step < 100 && !visualizedLine.test(await status.innerText()); step += 1) {
     await button(lab, 'Forward').click();
   }
-  await expect(status).toContainText(nextLine);
+  await expect(status).toContainText(visualizedLine);
 }
 
 async function openReferenceDetails(lab) {
@@ -104,12 +104,12 @@ test.describe('Python object reference lab', () => {
     await expect(lab.getByRole('textbox', { name: 'Python code', exact: true })).toBeVisible();
     const details = await openReferenceDetails(lab);
 
-    await advanceToLine(lab, 3);
+    await advanceToVisualizedLine(lab, 2);
     await expect(details).toContainText(/alias\s*→\s*o\d+/);
     const shared = await details.innerText();
     expect(referencedObject(shared, 'items')).toBe(referencedObject(shared, 'alias'));
 
-    await advanceToLine(lab, 4);
+    await advanceToVisualizedLine(lab, 3);
     const mutated = await details.innerText();
     expect(referencedObject(mutated, 'items')).toBe(referencedObject(shared, 'items'));
     expect(referencedObject(mutated, 'alias')).toBe(referencedObject(shared, 'items'));
@@ -118,7 +118,7 @@ test.describe('Python object reference lab', () => {
     expect(appendedEntry, 'mutation adds index 1 to the shared list').not.toBeNull();
     await expect(details).toContainText(new RegExp(appendedEntry[1] + ' · int; 5(?:\\n|$)'));
 
-    await advanceToLine(lab, 5);
+    await advanceToVisualizedLine(lab, 4);
     const rebound = await details.innerText();
     expect(referencedObject(rebound, 'items')).not.toBe(referencedObject(rebound, 'alias'));
     expect(referencedObject(rebound, 'alias')).toBe(referencedObject(shared, 'alias'));

@@ -18,6 +18,7 @@ test('the editable source carries execution position, preserves selection, and i
   await editor.focus();
   await editor.evaluate(input => input.setSelectionRange(4, 10));
   await lab.getByRole('button', { name: 'Forward', exact: true }).click();
+  await lab.getByRole('button', { name: 'Forward', exact: true }).click();
   // These visual hooks identify the current source line and gutter marker,
   // both of which must be inside the editable panel, not a second code view.
   const panel = lab.locator('.orl-code-panel');
@@ -96,6 +97,7 @@ test('forced colors retains native editable text and the execution marker', asyn
   const lab = await openLab(page);
   await page.emulateMedia({ forcedColors: 'active' });
   const editor = lab.getByRole('textbox', { name: 'Python code', exact: true });
+  await lab.getByRole('button', { name: 'Forward', exact: true }).click();
   await lab.getByRole('button', { name: 'Forward', exact: true }).click();
   await expect(editor).toBeEditable();
   const color = await editor.evaluate(input => getComputedStyle(input).webkitTextFillColor);

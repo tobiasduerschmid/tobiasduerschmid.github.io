@@ -56,13 +56,16 @@ test('surviving objects keep their relative order, Back restores positions, and 
   const lab = page.getByRole('region', { name: 'Object reference lab: Which references survive a copy?', exact: true });
   let before = await geometry(lab);
   let sawObjects = false;
+  const checkedAppendLines = new Set();
   while (await control(lab, 'Forward').isEnabled()) {
     await control(lab, 'Forward').click();
     const after = await geometry(lab);
     sawObjects ||= Object.keys(after).length > 4;
     const survivors = Object.keys(before).filter(id => after[id]);
     const position = await lab.getByRole('status').innerText();
-    if (/Next: line (8|9)\b/.test(position)) {
+    const appendedLine = position.match(/Line (7|8)\b/);
+    if (appendedLine) {
+      checkedAppendLines.add(Number(appendedLine[1]));
       // Appending one new value to either copy does not require reordering or
       // moving existing objects into other columns. Extra height is available.
       for (const id of survivors) {
@@ -82,6 +85,7 @@ test('surviving objects keep their relative order, Back restores positions, and 
     before = after;
   }
   expect(sawObjects).toBe(true);
+  expect([...checkedAppendLines], 'both append operations exercise the stability assertions').toEqual([7, 8]);
   const diagram = diagramFor(lab);
   const finalGeometry = await geometry(lab);
   // End-of-execution and the preceding print have the same graph.

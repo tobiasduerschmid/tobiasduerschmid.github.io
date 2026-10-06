@@ -15,11 +15,11 @@ test('Forward, Back, and Play visit statements rather than function declaration 
   const lab = await example(page, 'Mutation, local assignment, and a return');
   const status = lab.getByRole('status');
   await action(lab, 'Forward').click();
-  await expect(status).toContainText('Next: line 6'); // draft = ["draft"]
+  await expect(status).toContainText('Before first statement');
   await action(lab, 'Forward').click();
-  await expect(status).toContainText('Next: line 7'); // result = revise(draft)
+  await expect(status).toContainText('Line 6'); // draft = ["draft"] has executed.
   await action(lab, 'Forward').click();
-  await expect(status).toContainText('Next: line 2'); // labels.append("review")
+  await expect(status).toContainText('Line 7'); // revise(draft) has bound its argument.
   await lab.getByText('Reference details', { exact: true }).click();
   const details = lab.locator('.orl-details'); // Public text alternative for the diagram.
   await expect(details).toContainText(/labels\s*→\s*o\d+/);
@@ -31,9 +31,9 @@ test('Forward, Back, and Play visit statements rather than function declaration 
   expect(labels[1]).toBe(draft[1]);
 
   await action(lab, 'Back').click();
-  await expect(status).toContainText('Next: line 7');
+  await expect(status).toContainText('Line 6');
   await action(lab, 'Back').click();
-  await expect(status).toContainText('Next: line 6');
+  await expect(status).toContainText('Before first statement');
   await action(lab, 'Back').click();
   await expect(status).toContainText('Before execution');
   await expect(action(lab, 'Back')).toBeDisabled();
@@ -42,20 +42,20 @@ test('Forward, Back, and Play visit statements rather than function declaration 
   await page.clock.install();
   await action(lab, 'Play').click();
   await page.clock.runFor(1600);
-  await expect(status).toContainText('Next: line 6');
+  await expect(status).toContainText('Before first statement');
   await action(lab, 'Pause').click();
 });
 
 test('class declaration scaffolding is skipped but executable class state remains visible', async ({ page }) => {
   const lab = await example(page, 'Which list does each instance find?');
   await action(lab, 'Forward').click();
-  await expect(lab.getByRole('status')).toContainText('Next: line 2'); // items = []
+  await expect(lab.getByRole('status')).toContainText('Before first statement');
   await action(lab, 'Forward').click();
-  await expect(lab.getByRole('status')).toContainText('Next: line 4'); // first = Shelf()
+  await expect(lab.getByRole('status')).toContainText('Line 2'); // items = [] is now a class attribute.
   await lab.getByText('Reference details', { exact: true }).click();
   await expect(lab.locator('.orl-details')).toContainText(/class Shelf;.*items → o\d+/);
   await action(lab, 'Back').click();
-  await expect(lab.getByRole('status')).toContainText('Next: line 2');
+  await expect(lab.getByRole('status')).toContainText('Before first statement');
 });
 
 test('edited definitions execute, called bodies are stepped, and a definition error is retained', async ({ page }) => {
@@ -76,9 +76,9 @@ test('edited definitions execute, called bodies are stepped, and a definition er
 
   await expect(action(lab, 'Forward')).toBeEnabled({ timeout: 120_000 });
   await action(lab, 'Forward').click();
-  await expect(lab.getByRole('status')).toContainText('Next: line 6');
+  await expect(lab.getByRole('status')).toContainText('Before first statement');
   await action(lab, 'Forward').click();
-  await expect(lab.getByRole('status')).toContainText('Next: line 5');
+  await expect(lab.getByRole('status')).toContainText('Line 6'); // Box() has entered __init__ and bound self.
   for (let count = 0; count < 20 && await action(lab, 'Forward').isEnabled(); count += 1) {
     await action(lab, 'Forward').click();
   }

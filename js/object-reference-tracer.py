@@ -197,6 +197,55 @@ class _TraceLimit(BaseException):
     pass
 
 
+class _VisualizedLines:
+    """Attribute snapshots to source work already reflected in their state.
+
+    A line callback precedes execution. Each frame therefore remembers its
+    previous meaningful line; callees start at their caller's active call site.
+    Keeping positions per frame also preserves assignments completed on return.
+    """
+
+    def __init__(self):
+        self.positions = {}
+        self.skipped_frames = set()
+        self.module_frame = None
+
+    @staticmethod
+    def _caller(frame):
+        caller = frame.f_back
+        while caller is not None and caller.f_code.co_filename != SOURCE_FILENAME:
+            caller = caller.f_back
+        return caller
+
+    def advance(self, frame, event, skip_playback):
+        if frame.f_code.co_name == "<module>":
+            self.module_frame = frame
+        if event == "call":
+            line = self.positions.get(self._caller(frame), 0)
+            self.positions[frame] = line
+            return line
+        if event == "line":
+            line = self.positions.get(frame, 0)
+            if skip_playback:
+                self.skipped_frames.add(frame)
+            else:
+                self.skipped_frames.discard(frame)
+                self.positions[frame] = frame.f_lineno
+            return line
+        if event == "return" and skip_playback:
+            # Passive class headers should expose their body assignments when
+            # the completed class becomes visible in its enclosing scope.
+            line = self.positions.get(frame, 0)
+            caller = self._caller(frame)
+            if caller in self.skipped_frames:
+                self.positions[caller] = line
+            return line
+        return frame.f_lineno
+
+    def final_line(self):
+        return self.positions.get(self.module_frame, 0)
+
+
 class _CapturedOutput(io.TextIOBase):
     """One bounded stream preserves the ordering of stdout and stderr."""
 
@@ -339,11 +388,13 @@ class _ExecutionTrace:
         self.frame_ids = {}
         self.pending_exceptions = set()
         self.playback = None
+        self.visualized_lines = _VisualizedLines()
         self.line_events = 0
         self.truncated = False
         self.error = None
 
-    def record(self, event, line=0, frame=None, note=None, returned=None, skip_playback=False):
+    def record(self, event, line=0, frame=None, note=None, returned=None, skip_playback=False,
+               *, visualized_line=0):
         graph = _ObjectGraph(self.identities)
         scopes = self._scopes(frame, graph, returned)
         objects = graph.finish()
@@ -353,7 +404,8 @@ class _ExecutionTrace:
         if self.output.truncated:
             notes.append("Output is limited to " + str(MAX_OUTPUT_LENGTH) + " characters.")
         self.truncated = self.truncated or bool(graph.notes) or self.output.truncated
-        step = {"line": line, "event": event, "scopes": scopes, "objects": objects, "output": self.output.text}
+        step = {"line": line, "visualizedLine": visualized_line, "event": event,
+                "scopes": scopes, "objects": objects, "output": self.output.text}
         if notes:
             step["note"] = " ".join(notes)
         if skip_playback:
@@ -434,7 +486,9 @@ class _ExecutionTrace:
         elif event == "exception":
             self.pending_exceptions.add(id(frame))
             note = _error_text(argument[1]) + " (the program may handle this exception)."
-        self.record(event, frame.f_lineno, frame, note, returned, skip_playback)
+        visualized_line = self.visualized_lines.advance(frame, event, skip_playback)
+        self.record(event, frame.f_lineno, frame, note, returned, skip_playback,
+                    visualized_line=visualized_line)
 
     def execute(self, source):
         self.record("initial", note="Before execution; no user names are bound.")
@@ -450,10 +504,12 @@ class _ExecutionTrace:
         except BaseException as error:
             self.error = _error_text(error)
             error_line = self._error_line(error)
-            self.record("error", error_line, note=self.error)
+            self.record("error", error_line, note=self.error, visualized_line=error_line)
         finally:
             sys.settrace(previous_trace)
-        self.record("final", note="Execution stopped." if self.error else "Execution finished.")
+        final_line = error_line if self.error else self.visualized_lines.final_line()
+        self.record("final", note="Execution stopped." if self.error else "Execution finished.",
+                    visualized_line=final_line)
         return {"steps": self.steps, "error": self.error, "truncated": self.truncated}
 
     @staticmethod
@@ -472,8 +528,11 @@ class _ExecutionTrace:
 def trace_code(source):
     """Execute source and return bounded JSON snapshots; errors retain partial work.
 
-    Line events show the state BEFORE the indicated line executes. Call/return
-    events expose local bindings. Optional skipPlayback hints identify definition
+    Raw line events show the state BEFORE their line executes. visualizedLine
+    identifies the source operation already reflected in each snapshot (zero
+    before any visible work). Calls point to the call site; returns and failures
+    point to their own source line. Call/return events expose local bindings.
+    Optional skipPlayback hints identify definition
     scaffolding; every raw state is retained. The final event always has line 0. Builtin
     containers, ordinary instance dictionaries, and class attributes are drawn;
     unsupported internals stay opaque. Logical IDs describe actual interpreter

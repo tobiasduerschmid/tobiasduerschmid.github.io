@@ -75,8 +75,123 @@
   }
 
 
+  const cardTop = node => node.ports[0].y - 18;
+  const variantKey = (edge, port, node) => JSON.stringify([edge.id, edge.targets[0], port.y - cardTop(node)]);
+
+  /** Reserve the largest measured card and alias area in a bounded trace window.
+   * A slot can change target or vertical position; each such variant needs its
+   * own route. Nothing here mutates the recorded steps or invents object IDs. */
+  function temporalModel(models) {
+    const nodes = new Map(), variants = new Map(), edges = [];
+    models.forEach(model => model.children.forEach(node => {
+      const top = cardTop(node), old = nodes.get(node.id);
+      if (!old) nodes.set(node.id, { ...node, top, bodyHeight: node.height - top, ports: [], variants: new Map() });
+      else {
+        old.top = Math.max(old.top, top);
+        old.bodyHeight = Math.max(old.bodyHeight, node.height - top);
+        old.width = Math.max(old.width, node.width);
+      }
+    }));
+    models.forEach(model => {
+      const ports = new Map(model.children.flatMap(node => node.ports.map(port => [port.id, { node, port }])));
+      model.edges.forEach(edge => {
+        const { node, port } = ports.get(edge.sources[0]);
+        const key = variantKey(edge, port, node);
+        if (variants.has(key)) return;
+        const id = node.id + ':future-' + variants.size, reserved = nodes.get(node.id);
+        variants.set(key, id);
+        reserved.variants.set(id, { ...port, id, x: reserved.width, y: reserved.top + port.y - cardTop(node) });
+        edges.push({ ...edge, id, sources: [id] });
+      });
+    });
+    const children = Array.from(nodes.values(), node => {
+      const { top, bodyHeight, variants: ports, ...rest } = node;
+      return { ...rest, height: top + bodyHeight, ports: [
+        { id: node.id + ':in', x: 0, y: top + 18, width: 0, height: 0, layoutOptions: { 'elk.port.side': 'WEST' } },
+        ...ports.values()
+      ] };
+    });
+    return { variants, model: { ...models[0], children, edges } };
+  }
+
+  /** Project a routed reservation onto one real state. Card tops and shared
+   * routes stay fixed; unused outer space and future objects are omitted. */
+  function projectTimeline(model, plan, layout) {
+    const reserved = new Map(layout.children.map(node => [node.id, node]));
+    const routes = new Map(layout.edges.map(edge => [edge.id, edge]));
+    const ports = new Map(model.children.flatMap(node => node.ports.map(port => [port.id, { node, port }])));
+    const children = model.children.map(node => {
+      const future = reserved.get(node.id);
+      return { ...node, reservedTop: cardTop(future),
+        x: future.x, y: future.y + cardTop(future) - cardTop(node) };
+    });
+    const edges = model.edges.map(edge => {
+      const { node, port } = ports.get(edge.sources[0]);
+      const route = routes.get(plan.variants.get(variantKey(edge, port, node)));
+      if (layout.kind !== 'stacked') return { ...route, ...edge };
+      const target = children.find(child => child.id === edge.targets[0].slice(0, -3));
+      return { ...route, ...edge, sections: route.sections.map(section => ({ ...section,
+        endPoint: { ...section.endPoint, x: target.x + target.width }
+      })) };
+    });
+    const points = edges.flatMap(edge => edge.sections.flatMap(section =>
+      [section.startPoint, ...(section.bendPoints || []), section.endPoint]));
+    return { kind: layout.kind, children, edges,
+      width: 14 + Math.max(0, ...children.map(node => node.x + node.width), ...points.map(point => point.x)),
+      height: 14 + Math.max(0, ...children.map(node => node.y + node.height), ...points.map(point => point.y)) };
+  }
+
+  /** Remove empty coordinate bands, moving nodes AND route bends together.
+   * Each axis map is monotone and rigid inside occupied intervals: rectangles
+   * keep their measured size, port offsets and route topology are preserved.
+   * This cheap compaction is O((nodes + bends) log(nodes + bends)), not a fresh
+   * graph optimization. Protect 10px around bends/heads plus a 24px corridor. */
+  function compactTimelineScene(scene) {
+    if (!scene.children.length) return scene;
+    const points = scene.edges.flatMap(edge => edge.sections.flatMap(section =>
+      [section.startPoint, ...(section.bendPoints || []), section.endPoint]));
+    const axisMap = (axis, size) => {
+      const intervals = [
+        // Keep the small alias reservation above surviving objects: adding a
+        // name alone should not push its unchanged target down the diagram.
+        ...scene.children.map(node => [node[axis] - (axis === 'y'
+          ? Math.max(0, (node.reservedTop ?? cardTop(node)) - cardTop(node)) : 0), node[axis] + node[size]]),
+        ...points.map(point => [point[axis] - 10, point[axis] + 10])
+      ].sort((a, b) => a[0] - b[0]);
+      const gaps = [];
+      let end = intervals[0][1], removed = intervals[0][0] - 14;
+      intervals.slice(1).forEach(([start, stop]) => {
+        if (start - end > 24) {
+          removed += start - end - 24;
+          gaps.push({ start, removed });
+        }
+        end = Math.max(end, stop);
+      });
+      return value => {
+        let low = 0, high = gaps.length;
+        while (low < high) {
+          const middle = (low + high) >>> 1;
+          if (gaps[middle].start <= value) low = middle + 1;
+          else high = middle;
+        }
+        return value - (low ? gaps[low - 1].removed : intervals[0][0] - 14);
+      };
+    };
+    const x = axisMap('x', 'width'), y = axisMap('y', 'height');
+    const translate = point => ({ ...point, x: x(point.x), y: y(point.y) });
+    const children = scene.children.map(translate);
+    const edges = scene.edges.map(edge => ({ ...edge, sections: edge.sections.map(section => ({ ...section,
+      startPoint: translate(section.startPoint), endPoint: translate(section.endPoint),
+      bendPoints: section.bendPoints?.map(translate)
+    })) }));
+    const moved = points.map(translate);
+    return { ...scene, children, edges,
+      width: 14 + Math.max(...children.map(node => node.x + node.width), ...moved.map(point => point.x)),
+      height: 14 + Math.max(...children.map(node => node.y + node.height), ...moved.map(point => point.y)) };
+  }
+
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { plan: planReferences };
+    module.exports = { plan: planReferences, temporalModel, projectTimeline, compactTimelineScene };
     return;
   }
   if (window.ObjectReferenceGraph) return;
@@ -501,6 +616,129 @@
       bridges: routing.bridges };
   }
 
+  const yieldLayout = () => new Promise(resolve => setTimeout(resolve, 0));
+
+  /** One bounded lookahead plan can serve every screen or print state in its
+   * window. Measure only unique states, yield between batches, and run the
+   * optimizer in the existing worker. Old traces can cancel unstarted work. */
+  class ReferenceTimeline {
+    constructor(steps) {
+      this.windows = new Map();
+      this.plans = new Map();
+      this.cancelled = false;
+      let windowSteps = [], identities = new Set(), references = new Set();
+      steps.forEach(step => {
+        const objects = visibleObjects(step);
+        const ids = objects.map(object => object.id);
+        const refs = objects.flatMap(object => (object.entries || []).map(entry =>
+          JSON.stringify([object.id, entry.label, entry.target])));
+        if (windowSteps.length && (windowSteps.length >= 24
+            || new Set([...identities, ...ids]).size > 32
+            || new Set([...references, ...refs]).size > 96)) {
+          windowSteps = []; identities = new Set(); references = new Set();
+        }
+        ids.forEach(id => identities.add(id)); refs.forEach(id => references.add(id));
+        windowSteps.push(step);
+        this.windows.set(step, windowSteps);
+      });
+    }
+
+    cancel() { this.cancelled = true; this.plans.clear(); }
+
+    async layout(step, host, interactive, available, previous, candidate) {
+      const steps = this.windows.get(step);
+      if (!steps || this.cancelled) return null;
+      const style = getComputedStyle(host);
+      const key = JSON.stringify([Math.round(available), interactive, style.font, style.lineHeight, style.letterSpacing]);
+      let cache = this.plans.get(steps);
+      if (!cache) { cache = new Map(); this.plans.set(steps, cache); }
+      let pending = cache.get(key);
+      if (!pending) {
+        pending = this.prepare(steps, host, interactive, available, previous);
+        cache.set(key, pending);
+        pending.catch(() => cache.delete(key));
+        if (cache.size > 3) cache.delete(cache.keys().next().value);
+        if (this.plans.size > 8) this.plans.delete(this.plans.keys().next().value);
+      }
+      const prepared = await pending;
+      if (!prepared || this.cancelled) return null;
+      // ResizeObserver also catches text-spacing overrides on nested controls.
+      // A changed measurement invalidates the whole reservation, not one card.
+      if (prepared.keys.get(step) !== JSON.stringify(candidate.model)) {
+        cache.delete(key);
+        return null;
+      }
+      return prepared.scenes.get(prepared.keys.get(step));
+    }
+
+    async prepare(steps, host, interactive, available, previous) {
+      const models = [], keys = new Map(), measured = new Map();
+      let batchStart = performance.now();
+      for (const step of steps) {
+        if (this.cancelled || !host.isConnected) return null;
+        const objects = visibleObjects(step);
+        if (objects.length > 32 || objects.reduce((sum, object) => sum + (object.entries?.length || 0), 0) > 96) return null;
+        const stateKey = JSON.stringify([step.objects, step.scopes]);
+        let model = measured.get(stateKey);
+        if (!model) {
+          model = measureScene(host, step, interactive).model;
+          measured.set(stateKey, model);
+          models.push(model);
+        }
+        keys.set(step, JSON.stringify(model));
+        if (performance.now() - batchStart >= 4) { await yieldLayout(); batchStart = performance.now(); }
+      }
+      const plan = temporalModel(models);
+      if (this.cancelled || plan.model.children.length > 32 || plan.model.edges.length > 96) return null;
+      const candidate = { model: plan.model,
+        views: new Map(plan.model.children.map(node => [node.id, { cardTop: cardTop(node) }])) };
+      const fallback = stackedScene(candidate, 0);
+      const choices = await Promise.all([
+        ['RIGHT', 'NETWORK_SIMPLEX'], ['RIGHT', 'BRANDES_KOEPF'], ['DOWN', 'NETWORK_SIMPLEX']
+      ].map(async ([direction, placement]) => {
+        if (this.cancelled) return fallback;
+        const layout = await arrange({ ...plan.model,
+          layoutOptions: { ...plan.model.layoutOptions, 'elk.direction': direction,
+            'elk.layered.nodePlacement.strategy': placement,
+            'elk.layered.nodePlacement.bk.fixedAlignment': 'BALANCED' } });
+        return { ...anchorScene(layout, previous, available), kind: direction };
+      }));
+      choices.push(fallback);
+      choices.push(stackedScene({ ...candidate, previousOrder: plan.model.children.map(node => node.id) }, 0));
+      const scored = [];
+      for (const layout of choices) {
+        let cost = 0, overflow = 0, prior = previous;
+        const scenes = new Map();
+        // Only simultaneously visible references can cross. Scoring the union
+        // would penalize paths that belong to mutually exclusive Python states.
+        for (const model of models) {
+          const projected = projectTimeline(model, plan, layout);
+          const compact = compactTimelineScene(projected);
+          const quality = scene => Math.max(available, scene.width) * scene.height + 80 * placementCost(scene, prior);
+          const scene = quality(compact) < quality(projected) ? compact : projected;
+          scenes.set(JSON.stringify(model), scene);
+          const routes = scene.edges.map(edge => ({ target: edge.targets[0], points: [
+            edge.sections[0].startPoint, ...(edge.sections[0].bendPoints || []), edge.sections[0].endPoint
+          ] }));
+          const length = routes.reduce((sum, route) => sum + route.points.slice(1).reduce((total, point, i) =>
+            total + Math.abs(point.x - route.points[i].x) + Math.abs(point.y - route.points[i].y), 0), 0);
+          // The panel occupies its full width regardless of the drawing's
+          // bounds. Rewarding a narrow bounding box chooses tall single-file
+          // stacks beside acres of unused space on a wide screen.
+          cost += quality(scene) + 30000 * crossings(routes).length + 20 * length;
+          overflow = Math.max(overflow, scene.width - available - 1);
+          prior = new Map(scene.children.map(node => [node.id, { x: node.x, y: node.y, cardTop: cardTop(node) }]));
+          if (performance.now() - batchStart >= 4) { await yieldLayout(); batchStart = performance.now(); }
+          if (this.cancelled) return null;
+        }
+        scored.push({ scenes, overflow, cost: cost / models.length });
+      }
+      scored.sort((a, b) => Number(a.overflow > 0) - Number(b.overflow > 0)
+        || a.cost - b.cost);
+      return { scenes: scored[0].scenes, keys };
+    }
+  }
+
   function crossings(routes) {
     const segments = routes.flatMap(route => route.points.slice(1).map((to, index) =>
       ({ from: route.points[index], to, target: route.target, route })));
@@ -568,6 +806,17 @@
       this.resize.observe(host.parentElement);
     }
 
+    /** Supply the complete filtered playback trace before rendering its steps.
+     * Print snapshots may share a ReferenceTimeline, whose owner cancels it. */
+    setTimeline(steps) {
+      if (this.ownsTimeline) this.timeline?.cancel();
+      this.ownsTimeline = !(steps instanceof ReferenceTimeline);
+      this.timeline = this.ownsTimeline ? new ReferenceTimeline(steps) : steps;
+      this.signature = null;
+      this.scenes.clear();
+      this.version += 1;
+    }
+
     reset() {
       this.signature = null;
       this.step = null;
@@ -614,6 +863,15 @@
       }
       const previous = new Map(Array.from(this.objects, ([id, view]) => [id,
         { x: view.x, y: view.y, cardTop: view.cardTop }]));
+      const planned = this.timeline?.layout(step, this.host, this.interactive, available, previous, candidate);
+      // Preparing future states must not delay the empty first frame. Consume
+      // failures here as well because no one awaits this prewarm promise.
+      if (!candidate.model.children.length) {
+        planned?.catch(() => {});
+        this.commit(candidate, { children: [], edges: [], width: 28, height: 28 }, false);
+        this.host.setAttribute('aria-busy', 'false');
+        return this.ready = Promise.resolve();
+      }
       const direction = this.layoutKind === 'DOWN' ? 'DOWN' : 'RIGHT';
       candidate.previousOrder = this.layoutKind === 'stacked'
         ? Array.from(this.objects).sort((a, b) => a[1].y - b[1].y).map(([id]) => id) : [];
@@ -623,13 +881,16 @@
       this.ready = (async () => {
         let layout;
         try {
-          layout = await incrementalLayout(candidate.model, previous, available, direction);
-          if (layout.width > available && candidate.model.children.length > 1) {
+          const anticipated = await planned;
+          if (version !== this.version) return;
+          layout = anticipated;
+          if (!layout) layout = await incrementalLayout(candidate.model, previous, available, direction);
+          if (!anticipated && layout.width > available && candidate.model.children.length > 1) {
             const alternative = await incrementalLayout(candidate.model, previous, available,
               direction === 'RIGHT' ? 'DOWN' : 'RIGHT');
             if (alternative.width < layout.width) layout = alternative;
           }
-          if (layout.width > available + 1) layout = stackedScene(candidate, available);
+          if (!anticipated && layout.width > available + 1) layout = stackedScene(candidate, available);
         } catch (error) {
           layout = stackedScene(candidate, available);
           // References remain usable on a failed dependency; the text view is
@@ -690,7 +951,7 @@
         this.markChange(view.card, this.interactive ? change : '');
         this.host.append(view.row);
       });
-      this.host.style.height = Math.max(layout.height, 64) + 'px';
+      this.host.style.height = live.size ? Math.max(layout.height, 64) + 'px' : 'auto';
       this.host.style.minWidth = layout.width + 'px';
       this.overlay.setAttribute('width', layout.width);
       this.overlay.setAttribute('height', Math.max(layout.height, 64));
@@ -725,7 +986,8 @@
         this.animate(before, previousRoutes, bindingBounds, previousBindings);
       }
       const scroll = this.host.parentElement;
-      if (layout.width > scroll.clientWidth + 1 && scroll.clientWidth) scroll.tabIndex = 0;
+      if (scroll.clientWidth && (scroll.scrollWidth > scroll.clientWidth + 1
+          || scroll.scrollHeight > scroll.clientHeight + 1)) scroll.tabIndex = 0;
       else scroll.removeAttribute('tabindex');
     }
 
@@ -909,6 +1171,7 @@
 
     destroy() {
       this.version += 1;
+      if (this.ownsTimeline) this.timeline?.cancel();
       this.finishMotion();
       this.resize.disconnect();
       this.motionObserver.disconnect();
@@ -916,5 +1179,5 @@
     }
   }
 
-  window.ObjectReferenceGraph = { ReferenceGraph, describeState };
+  window.ObjectReferenceGraph = { ReferenceGraph, ReferenceTimeline, describeState };
 }());

@@ -671,8 +671,10 @@ students are confused" reports.
       via the `diagrams` skill; pedagogy checked via `good-diagrams`.
 - [ ] Inline object-reference labs use a prepared example key in an
       `instructions:` HTML marker (see §3.4). Verify forward/backward playback,
-      edited-code tracing, cleanup on step changes, the instructions popout,
-      and the print transcript. Lab exploration does not award exercise credit.
+      future growth without premature content, bounded preparation and responsive
+      stepping, source highlights matching the displayed state through loops/calls,
+      errors and completion, edited-code tracing, cleanup on step changes, the
+      instructions popout, and the print transcript. Lab exploration does not award exercise credit.
 
 ### Page wiring (the page-pair convention)
 
@@ -1480,10 +1482,10 @@ Apply an editorial test before embedding:
 
 - State the competing predictions and the visible reference that distinguishes
   them. A correct printed result alone can be consistent with a wrong model.
-- Check that the compact view actually displays that distinction. Primitive-only
-  examples abbreviate values in place, so they cannot visually distinguish
-  reference sharing from value copying; prefer the existing brief code or
-  explicit object snapshot for that purpose.
+- Check that the compact view actually displays that distinction. Primitive
+  identities have separate cards too: verify that shared uses reach one card
+  and equal-but-distinct values remain separate. Do not rely on equal displayed
+  values alone to establish sharing.
 - Replace a redundant static walkthrough of the same state rather than stacking
   prose, code, a snapshot, and another full lab. Keep a later independent task
   or a different object shape as transfer practice.
@@ -1555,8 +1557,8 @@ embeds that same record directly in a static SEBook page; use the HTML marker
 inside tutorial YAML because its content is not processed as a Liquid template.
 
 Every lab now has one always-visible **Python code** editor beside the diagram.
-It combines editing, Python syntax highlighting, line numbers, and the current
-execution marker. The old `data-object-reference-editor="inline"` and include
+It combines editing, Python syntax highlighting, line numbers, and a marker for
+the operation represented by the displayed state. The old `data-object-reference-editor="inline"` and include
 `editor="inline"` options remain harmless compatibility attributes; omitting
 them no longer hides the editor. Do not add a separate read-only source pane.
 
@@ -1611,9 +1613,20 @@ messages. Do not execute during IME composition. Restore original code cancels
 queued/running work. Restart during an update selects step 1 when it is ready. Dispose queued work
 as well as workers when instructions unmount or the page is left. Do not steal
 focus, selection, or editor scroll on an automatic result while it is focused.
-Labels describe snapshots before the next line or at call/return events;
-object IDs are diagram identities, not memory addresses. Collection timing is
-not represented as a guarantee. Bounded source, execution, output, and graph
+The tracer's additive `visualizedLine` identifies the operation represented by
+that snapshot, separately from the raw Python event's `line`. Ordinary pre-line
+events highlight the previously executed line in that frame; call entry highlights
+the call site that bound its arguments; resuming a caller highlights its call or
+assignment. Return, exception, and error events identify their own source line.
+Passive declaration bookkeeping is excluded from highlights. Initial states have
+no marker, and final states retain the last represented operation or error.
+The editor, status label, and printed source excerpt all use `visualizedLine`.
+Ordinary status labels say `Line N`, or `Before first statement` when no operation
+has run; special event labels retain their entry/return/error description. Keep
+raw events, `line`, and `skipPlayback` unchanged so source metadata does not alter
+recorded scopes, values, or filtering. Object IDs are diagram identities, not
+memory addresses. Collection timing is not represented as a guarantee.
+Bounded source, execution, output, and graph
 limits report incomplete traces rather than silently presenting them as complete.
 
 The diagram keeps individual name/reference slots beside their objects, without
@@ -1627,9 +1640,9 @@ attributes remain omitted; Reference details retains the complete recorded state
 `js/object-reference-graph.js` loads its pinned local ELK 0.12.0 API and worker;
 the ESM adapter isolates its API from Monaco’s AMD loader. No extra script tag
 is needed in embeddings. Text-sized cards and fixed member
-ports feed layered placement and orthogonal routing. Try horizontal, then narrower
-vertical layers; retain the synchronous external-channel planner for very narrow
-panes or optimizer failure. Shared targets may share stems, independent crossings
+ports feed layered placement and orthogonal routing. Compare horizontal and
+vertical layers with the external-channel planner; retain its synchronous path
+for very narrow panes or optimizer failure. Shared targets may share stems, independent crossings
 use bridges, and cycles keep their real direction. Never shrink diagram text to
 fit. A scrollable diagram must remain keyboard accessible.
 Arrowheads use fixed user-space dimensions with their tips exactly on the target
@@ -1641,16 +1654,46 @@ at rest so hidden print snapshots retain correct geometry, and displayed ports
 during motion. Verify actual painted geometry in both themes, including selected
 and changed references, not just the route's abstract endpoint coordinates.
 
-Use previous positions for interactive layering, ordering, and placement. Seed
-new objects near their neighbors. Compare incremental and compact candidates
-using displacement plus a small size penalty; preserve the current orientation
-while it fits. Anchor whole scenes without moving individual cards after routing.
-Anchor object cards, not their enclosing name rows, so adding an alias can use
-space above its target without moving the object.
-Cache geometry-equivalent scenes so content-only updates and Back/Forward keep
-the same positions. Correct ports and obstacle avoidance take precedence over
-minimum movement. See `docs/object-reference-layout.md` for the research rationale,
-constraints, fallback, and verification contract.
+The controller supplies the filtered playback steps through
+`graph.setTimeline(steps)`. A `ReferenceTimeline` plans bounded windows of at most
+24 steps, 32 identities, and 96 reference variants. It measures each identity's
+largest future card and alias area, retaining distinct target/port-position
+variants. Each preparation compares three ELK worker candidates: RIGHT with NETWORK_SIMPLEX,
+RIGHT with balanced BRANDES_KOEPF, and DOWN with NETWORK_SIMPLEX. Also consider
+synchronous channel layouts in neighbor and birth order. Render only the current
+objects, names, values, and edges; future reservations never appear as content.
+
+Prepare each candidate's states in forward order. Projection aligns card tops
+across the reservation; `compactTimelineScene` can remove empty coordinate bands
+when the space saving outweighs movement. Keep measured node intervals rigid,
+protect 10px around route points, and cap vacant bands at 24px. Apply the same
+ordered axis mapping to nodes and route points so ports, orthogonality, and
+crossing order survive; never move an individual card independently of its route.
+Compare projected and compacted frames using panel footprint plus a soft
+surviving-card movement cost. Footprint is
+`max(availableWidth, scene.width) * scene.height`, favoring shorter arrangements
+that use the available width. Card tops, not alias-row origins, are motion anchors;
+existing cards may move inside a window when layout improves. Score each routed
+candidate's chosen frames for footprint, movement, visible crossings, and wire
+length. References that never coexist must not count as a visible crossing.
+These weights and bounded compaction are engineering adaptations, not a verbatim
+implementation or performance guarantee from the research in the architecture note.
+
+Preparation yields between measurements and scored states when its 4 ms work
+slice is spent; one operation can exceed that scheduling budget. A timeline caches
+plans for up to eight windows with three width/text-metric configurations each, and the
+renderer retains up to 512 completed geometry scenes. Ordinary steps retrieve
+prepared frames without rerunning ELK or compaction. Keep an empty initial state
+immediately available while preparation runs. Replacing a trace or disposing its
+owner invalidates pending work; obsolete results cannot commit. Changed text
+metrics, width, invalidation, or cache eviction can require fresh preparation. An
+over-budget state or measured union of port-position variants uses previous
+positions for incremental placement, with new objects seeded near neighbors.
+Correct ports and obstacle clearance take priority over continuity. While plans
+remain cached and geometry/width are unchanged, content-only changes and
+Back/Forward restore the same positions. See `docs/object-reference-layout.md` for
+research evidence, scoring details, limits, fallback behavior, and the geometry
+and latency verification contract.
 The resizable native textarea scrolls independently and follows the execution
 line without changing selection. `js/object-reference-code.js` owns the inert,
 aria-hidden syntax mirror and line-number gutter; the textarea remains the only
@@ -1695,8 +1738,10 @@ assessments, and progress retain their existing behavior. The print view include
 syntax-highlighted code and the same object cards and routed arrows for each
 visible playback state, with a text alternative. `js/object-reference-print.js`
 owns printable history and prewarms static layouts for histories of at most 300
-object snapshots. Larger histories prepare when print is visible, avoiding a
-large hidden DOM for edited programs.
+object snapshots. Static graphs share one `ReferenceTimeline` per history so a
+window's measurement and layout work is reused across its snapshots. Larger
+histories prepare when print is visible, avoiding a large hidden DOM for edited
+programs.
 An inert measuring container supplies real print text metrics even when the
 history is hidden. A complete synchronous channel layout covers immediate native
 Print while the compact layout is calculated. Programmatic autoprint awaits
@@ -2224,7 +2269,10 @@ channel.
   `initFrom(root)` mounts named or inline-JSON examples; `destroyWithin(root)`
   stops workers/playback and releases views before instruction replacement.
   `js/object-reference-graph.js` owns graph layout, rendering, and textual state
-  descriptions. `js/object-reference-code.js` owns the unified native editor and
+  descriptions. Its `ReferenceTimeline` reserves future geometry in bounded
+  playback windows; the controller supplies the filtered trace with
+  `graph.setTimeline(steps)`, and print graphs share a timeline per history.
+  `js/object-reference-code.js` owns the unified native editor and
   shared Python syntax presentation. `js/object-reference-print.js` reuses those
   graph and syntax renderers for static
   printable history and releases its resources with the lab.

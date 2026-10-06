@@ -32,13 +32,14 @@
   }
 
   function eventLabel(step) {
+    const line = step.visualizedLine;
     if (step.event === 'initial') return 'Before execution';
-    if (step.event === 'final') return 'End of execution';
-    if (step.event === 'error') return 'Execution stopped with an error';
-    if (step.event === 'exception') return 'Exception at line ' + step.line;
-    if (step.event === 'call') return 'Entering a scope at line ' + step.line;
-    if (step.event === 'return') return 'Leaving a scope at line ' + step.line;
-    return 'Next: line ' + step.line;
+    if (step.event === 'final') return 'End of execution' + (line ? ' · Line ' + line : '');
+    if (step.event === 'error') return 'Execution stopped with an error' + (line ? ' at line ' + line : '');
+    if (step.event === 'exception') return 'Exception at line ' + line;
+    if (step.event === 'call') return line ? 'Entering a scope from line ' + line : 'Entering a scope';
+    if (step.event === 'return') return line ? 'Leaving a scope at line ' + line : 'Leaving a scope';
+    return line ? 'Line ' + line : 'Before first statement';
   }
 
   class Lab {
@@ -175,7 +176,7 @@
       const limits = element('details', 'orl-limits');
       limits.append(element('summary', '', 'What the trace shows'));
       limits.append(element('p', '',
-        'At a “Next: line” step, the highlighted line is about to execute. Playback skips function/class declaration bookkeeping and continues to statements; those definitions still execute. Class-body assignments, called function bodies, returns, and errors remain visible. Local parameter names appear beside their objects. Only this program’s source is stepped through; built-in operations and imported code execute between steps. Individual names have reference slots; cards contain objects. Strings, numbers, and other primitive values have their own object cards, so shared references remain visible. Repeated literals do not imply separate objects. Function/module objects and classes without displayed data attributes are omitted from the diagram; Reference details retains the full recorded identities and scopes of the displayed state. Arrows show which object each reference points to. Object labels in Reference details identify objects within this run, not memory addresses. Collection and reference counts are not modeled.'));
+        'The highlighted line is the operation represented by the displayed state. When a call binds local parameters, the call site is highlighted; returning to the caller highlights the completed call there. Before the first statement, no line is highlighted. The final state retains the last visualized line. Playback skips function/class declaration bookkeeping; those definitions still execute. Class-body assignments, called function bodies, returns, and errors remain visible. Local parameter names appear beside their objects. Only this program’s source is stepped through; built-in operations and imported code execute between steps. Individual names have reference slots; cards contain objects. Strings, numbers, and other primitive values have their own object cards, so shared references remain visible. Repeated literals do not imply separate objects. Function/module objects and classes without displayed data attributes are omitted from the diagram; Reference details retains the full recorded identities and scopes of the displayed state. Arrows show which object each reference points to. Object labels in Reference details identify objects within this run, not memory addresses. Collection and reference counts are not modeled.'));
       limits.append(element('p', '',
         'Edited code runs automatically in your browser after you pause typing. Each update executes the whole program again and displays your previous step number; it does not continue a running Python process. That number may describe a different statement if you change the control flow. The previous diagram stays visible while the update runs. Temporary errors retain your requested position for the next correction. Restart returns to step 1 without changing your code. Restore original code returns to the prepared example. Editing again replaces any running update. Back restores recorded views without undoing external side effects. Small programs work best: execution stops after 10 seconds or at the trace limit, and any omitted graph details or output are reported. Some built-in or extension objects are shown without internals. The initial Python download may take longer. input() and interactive programs are not supported. Edits are kept only while this lab is open.'));
       this.screen.append(limits);
@@ -246,9 +247,9 @@
       // Python classifies execution events; never infer Python syntax from
       // source text here. One timeline keeps Back, Play, and print consistent.
       this.steps = trace ? trace.steps.filter(step => !step.skipPlayback && !(step.event === 'line' && step.line === 0)) : [];
+      this.graph.setTimeline(this.steps);
       this.index = Math.max(0, Math.min(index, this.steps.length - 1));
       this.codeEditor.refresh();
-      this.renderPrint();
       if (this.steps.length) {
         this.showStep(reveal);
       } else {
@@ -256,6 +257,7 @@
         this.stateText.textContent = 'No recorded execution yet.';
         this.output.textContent = '(no output yet)';
       }
+      this.renderPrint();
       this.updateControls();
     }
 
@@ -274,7 +276,7 @@
       this.graph.render(step);
       this.stateText.textContent = window.ObjectReferenceGraph.describeState(step);
       this.output.textContent = step.output || '(no output yet)';
-      this.codeEditor.setPosition(step.line, eventLabel(step), { reveal });
+      this.codeEditor.setPosition(step.visualizedLine, eventLabel(step), { reveal });
       this.status.textContent = 'Step ' + (this.index + 1) + ' of ' + this.steps.length + ' · ' + eventLabel(step)
         + (step.note ? '. ' + step.note : '');
       this.updateControls();

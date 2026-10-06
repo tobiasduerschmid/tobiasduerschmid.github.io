@@ -166,6 +166,91 @@ class ObjectReferenceTracerTests(unittest.TestCase):
         self.assertEqual(bindings(final)["first"], bindings(final)["second"])
         self.assertEqual((final["event"], final["line"]), ("final", 0))
 
+    def test_visualized_line_follows_the_assignment_or_output_already_in_the_snapshot(self):
+        result = trace("first = []\nsecond = first\nprint(second)")
+        steps = result["steps"]
+        self.assertEqual(steps[0].get("visualizedLine"), 0)
+        before_first = next(step for step in steps if step["event"] == "line" and step["line"] == 1)
+        after_first = next(step for step in steps if set(bindings(step)) == {"first"})
+        after_alias = next(step for step in steps if set(bindings(step)) == {"first", "second"})
+        self.assertEqual(before_first.get("visualizedLine"), 0)
+        self.assertEqual(after_first.get("visualizedLine"), 1)
+        self.assertEqual(after_alias.get("visualizedLine"), 2)
+        self.assertEqual(steps[-1]["output"], "[]\n")
+        self.assertEqual(steps[-1].get("visualizedLine"), 3)
+
+    def test_visualized_line_follows_executed_loop_order_including_back_edges(self):
+        result = trace("items = [1, 2]\nfor item in items:\n    items_seen = item\nfinished = True")
+        lines = [step for step in result["steps"] if step["event"] == "line"]
+        self.assertEqual([(step["line"], step.get("visualizedLine")) for step in lines],
+                         [(1, 0), (2, 1), (3, 2), (2, 3), (3, 2), (2, 3), (4, 2)])
+        self.assertEqual(result["steps"][-1].get("visualizedLine"), 4)
+
+    def test_visualized_line_tracks_each_frame_through_nested_calls_and_returned_assignments(self):
+        result = trace("""
+            def inner(item):
+                item.append(2)
+                return item
+            def outer(item):
+                value = inner(item)
+                return value
+            source = [1]
+            answer = outer(source)
+            finished = True
+        """)
+        body = [step for step in result["steps"] if step["event"] == "line" and len(step["scopes"]) > 1]
+        self.assertEqual([(step["line"], step.get("visualizedLine")) for step in body],
+                         [(5, 8), (2, 5), (3, 2), (6, 5)])
+        returned = [step for step in result["steps"] if step["event"] == "return"]
+        self.assertEqual([(step["line"], step.get("visualizedLine")) for step in returned], [(3, 3), (6, 6)])
+        assigned = next(step for step in result["steps"] if "answer" in bindings(step))
+        self.assertEqual(assigned.get("visualizedLine"), 8)
+        self.assertEqual(bindings(assigned)["source"], bindings(assigned)["answer"])
+        self.assertEqual(result["steps"][-1].get("visualizedLine"), 9)
+
+    def test_visualized_line_skips_passive_definitions_but_retains_class_attribute_work(self):
+        result = trace('''
+            class Shelf:
+                "Shared items."
+                pass
+                items = []
+                def add(self, item):
+                    self.items.append(item)
+            shelf = Shelf()
+        ''')
+        first_assignment = next(step for step in result["steps"] if step["line"] == 4)
+        completed_class = next(step for step in result["steps"] if "Shelf" in bindings(step))
+        self.assertEqual(first_assignment.get("visualizedLine"), 0)
+        self.assertEqual(completed_class.get("visualizedLine"), 4)
+        self.assertEqual(result["steps"][-1].get("visualizedLine"), 7)
+        for source in ("", "def unused():\n    return 7", "class Empty:\n    pass"):
+            with self.subTest(source=source):
+                self.assertTrue(all(step.get("visualizedLine") == 0 for step in trace(source)["steps"]))
+
+    def test_visualized_line_for_generator_entry_and_resumption_is_the_current_callsite(self):
+        result = trace("def generate():\n    yield [3]\n    yield [8]\nitems = generate()\nfirst = next(items)\nsecond = next(items)")
+        entries = [step for step in result["steps"] if step["event"] == "call"]
+        bodies = [step for step in result["steps"] if step["event"] == "line" and len(step["scopes"]) > 1]
+        self.assertEqual([step.get("visualizedLine") for step in entries], [5, 6])
+        self.assertEqual([step.get("visualizedLine") for step in bodies], [5, 6])
+        yielded = [step for step in result["steps"] if step["event"] == "return"]
+        self.assertEqual([step.get("visualizedLine") for step in yielded], [2, 3])
+        self.assertEqual(result["steps"][-1].get("visualizedLine"), 6)
+
+    def test_visualized_line_identifies_failures_and_the_state_after_a_handler(self):
+        for source, failure_line in (("saved = [1]\nresult = 1 / 0", 2),
+                                     ("def broken():\n    return 1 / 0\nanswer = broken()", 2),
+                                     ("saved = 1\nif True print('no')", 2)):
+            with self.subTest(source=source):
+                steps = trace(source)["steps"]
+                failures = [step for step in steps if step["event"] in ("exception", "error", "return")]
+                self.assertTrue(failures)
+                self.assertTrue(all(step.get("visualizedLine") == step["line"] for step in failures))
+                self.assertEqual(steps[-1].get("visualizedLine"), failure_line)
+        handled = trace("try:\n    answer = 1 / 0\nexcept ZeroDivisionError:\n    answer = 42\nfinished = True")
+        assigned = next(step for step in handled["steps"] if "answer" in bindings(step))
+        self.assertEqual(assigned.get("visualizedLine"), 4)
+
     def test_mutation_is_shared_but_rebinding_changes_only_one_name(self):
         result = trace("original = [4]\nalias = original\noriginal.append(9)\noriginal = [7]")
         before_rebinding = next(step for step in result["steps"] if step["line"] == 4)
