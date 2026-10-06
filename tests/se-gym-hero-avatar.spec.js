@@ -479,13 +479,13 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.goto(GYM_URL);
 
     const placement = await page.evaluate(() => {
-      const intro = Array.from(document.querySelectorAll('#gym-entrance .gym-subtitle'))
-        .find((node) => node.textContent.includes('own study gym by adding quizzes and flashcard sets'));
       const heroSection = document.getElementById('hero-customizer-section');
       const startRow = document.querySelector('#gym-entrance .gym-start-row');
+      // The intro copy is every subtitle paragraph, whichever comes last.
+      const precedingElement = heroSection && heroSection.previousElementSibling;
       return {
         heroHeading: heroSection && heroSection.querySelector('h2') ? heroSection.querySelector('h2').textContent.trim() : '',
-        directlyAfterIntro: Boolean(intro && heroSection && intro.nextElementSibling === heroSection),
+        directlyAfterIntro: Boolean(precedingElement && precedingElement.matches('#gym-entrance .gym-subtitle')),
         beforeStartButton: Boolean(
           heroSection &&
           startRow &&

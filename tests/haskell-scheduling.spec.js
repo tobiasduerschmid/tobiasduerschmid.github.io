@@ -2,14 +2,14 @@
 const { test, expect } = require('@playwright/test');
 const { loadTutorialConfig, waitForTutorialReady, setEditorContent } = require('./tutorial-helpers');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { chromiumLaunchOptions } = require('../scripts/chromium-launch-options');
 
 // Playwright normally disables the browser throttling that caused the hidden
 // Haskell frame to spend its execution deadline waiting on compiler yields.
 // Keep normal browser scheduling for this regression; use the real tutorial,
 // sandbox, compiler and host deadline without replacing any runtime assets.
 test.use({ launchOptions: {
-  ...(process.env.PLAYWRIGHT_CHROME_EXECUTABLE
-    ? { executablePath: process.env.PLAYWRIGHT_CHROME_EXECUTABLE } : {}),
+  ...chromiumLaunchOptions(),
   ignoreDefaultArgs: [
     '--disable-background-timer-throttling',
     '--disable-backgrounding-occluded-windows',

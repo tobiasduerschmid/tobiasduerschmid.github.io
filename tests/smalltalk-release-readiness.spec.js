@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
 test.setTimeout(180000);
 
 test('Smalltalk Run accessible name follows its visible label after Run and checks', async ({ page }) => {
@@ -43,10 +44,7 @@ test('mounted Smalltalk workspace retains terminal state through Run and remains
   async function evaluate(source, expected) {
     const input = terminal.getByRole('textbox', { name: /^Smalltalk expression/ });
     await input.focus();
-    // Monaco uses the emulated user-agent platform; ControlOrMeta instead uses
-    // the test host, which can select only its textarea on a different platform.
-    const selectAll = await page.evaluate(() => /Macintosh/.test(navigator.userAgent) ? 'Meta+A' : 'Control+A');
-    await input.press(selectAll);
+    await selectAllInMonaco(input);
     await expect(input).toBeFocused();
     await page.keyboard.press('Backspace');
     await expect(input).toHaveValue('');

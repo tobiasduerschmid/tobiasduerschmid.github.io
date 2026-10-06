@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { writeFile } = require('node:fs/promises');
+const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
 
 test.setTimeout(180000);
 const terminal = page => page.getByRole('region', { name: 'Smalltalk live terminal', exact: true });
@@ -18,9 +19,7 @@ async function ready(page) {
 async function typeSource(page, label, text) {
   const input = page.getByRole('textbox', { name: new RegExp('^' + label) });
   await input.focus();
-  // Monaco chooses its modifier from the emulated platform, not the test host.
-  const selectAll = await page.evaluate(() => /Macintosh/.test(navigator.userAgent) ? 'Meta+A' : 'Control+A');
-  await input.press(selectAll);
+  await selectAllInMonaco(input);
   await expect(input).toBeFocused();
   await page.keyboard.press('Backspace');
   await expect(input).toHaveValue('');
@@ -34,8 +33,7 @@ async function typeSource(page, label, text) {
 async function expectEditorValue(page, label, text) {
   const input = page.getByRole('textbox', { name: new RegExp('^' + label) });
   await input.focus();
-  const selectAll = await page.evaluate(() => /Macintosh/.test(navigator.userAgent) ? 'Meta+A' : 'Control+A');
-  await input.press(selectAll);
+  await selectAllInMonaco(input);
   await expect(input).toHaveValue(text);
 }
 
@@ -184,7 +182,9 @@ test('keyboard dock and source focus controls preserve drafts and the live count
   await expect(page.getByRole('button', { name: 'Restore layout', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('listbox', { name: 'Methods', exact: true })).toBeHidden();
   await expect(terminal(page).getByRole('textbox', { name: /^Smalltalk expression/ })).toBeHidden();
-  expect((await editorGeometry(source(page))).visibleRows).toBeGreaterThanOrEqual(20);
+  // Monaco re-lays out after the focus layout applies, in a later frame.
+  await expect.poll(async () => (await editorGeometry(source(page))).visibleRows,
+    { message: 'source focus gives the method editor at least 20 visible rows' }).toBeGreaterThanOrEqual(20);
   await expect(source(page)).toContainText('count + 2');
   await usableControl(source(page).getByRole('button', { name: 'Accept', exact: true }));
   await page.screenshot({ path: testInfo.outputPath('source-focus.png'), fullPage: true });

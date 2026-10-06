@@ -38,7 +38,8 @@ test('tutorial autoprint waits for captioned, described diagrams in light mode',
   await page.addInitScript(() => {
     // Observe the actual print boundary without opening a system print dialog.
     window.print = () => {
-      const diagrams = Array.from(document.querySelectorAll('[role="img"]'))
+      // Object-reference labs print their own figures; object-reference-print.spec.js covers them.
+      const diagrams = Array.from(document.querySelectorAll('.mermaid[role="img"]'))
         .filter(image => image.querySelector('svg'));
       document.body.dataset.printedDiagrams = String(diagrams.length);
       document.body.dataset.printedSourceBlocks = String(
@@ -64,12 +65,14 @@ test('tutorial autoprint waits for captioned, described diagrams in light mode',
   );
   await expect(page.getByText(caption, { exact: true })).toBeVisible();
   const revealedDiagram = page.getByRole('img', {
-    name: 'A shallow copy separates the outer list while keeping its member references shared.',
+    name: "Sharing an artist does not require sharing the playlists' track queues.",
     exact: true,
   });
   await expect(revealedDiagram).toBeVisible();
   await expect(revealedDiagram.locator('svg')).toBeVisible();
-  await expectParagraphSizeDiagramText(page.getByRole('figure').filter({ has: page.getByRole('img') }));
+  const mermaidFigures = page.getByRole('figure').filter({ has: page.locator('.mermaid[role="img"]') });
+  await expect(mermaidFigures).toHaveCount(expectedDiagrams);
+  await expectParagraphSizeDiagramText(mermaidFigures);
   await expect(diagram.locator('svg')).toHaveCSS('filter', 'none');
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
   expect(pageErrors, 'print diagrams should render without JavaScript errors').toEqual([]);

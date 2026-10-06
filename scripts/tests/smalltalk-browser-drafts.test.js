@@ -1,7 +1,8 @@
 const { test, before, after } = require('node:test');
 const { chromium, expect } = require('@playwright/test');
+const { chromiumLaunchOptions } = require('../chromium-launch-options');
 let browser;
-before(async () => { browser = await chromium.launch(process.env.PLAYWRIGHT_CHROME_EXECUTABLE ? { executablePath: process.env.PLAYWRIGHT_CHROME_EXECUTABLE } : {}); });
+before(async () => { browser = await chromium.launch(chromiumLaunchOptions()); });
 after(async () => { if (browser) await browser.close(); });
 
 // Presentation control: real DOM, Workspace, private MessageChannel and Browser.

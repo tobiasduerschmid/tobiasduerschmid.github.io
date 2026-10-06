@@ -1,5 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -73,30 +74,26 @@ function isInExcludedSubtree(fullPath) {
 // correctly already (see `_sass/_base.scss` → `a, a:visited`).
 const SOURCE_EXTENSIONS = new Set(['.css', '.html', '.md']);
 
-/** @returns {string[]} */
-function collectSourceFiles(dir) {
-  /** @type {string[]} */
-  const out = [];
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    if (entry.name.startsWith('.') && !['.gitignore'].includes(entry.name)) {
-      // .git / .claude / .agents / etc. are excluded above; other dotfiles too.
-      if (EXCLUDED_DIRS.has(entry.name)) continue;
-    }
-    const full = path.join(dir, entry.name);
-    if (isInExcludedSubtree(full)) continue;
-    if (entry.isDirectory()) {
-      if (EXCLUDED_DIRS.has(entry.name)) continue;
-      out.push(...collectSourceFiles(full));
-      continue;
-    }
-    const ext = path.extname(entry.name).toLowerCase();
-    if (!SOURCE_EXTENSIONS.has(ext)) continue;
-    const rel = path.relative(ROOT, full);
-    if (EXCLUDED_FILES.has(rel)) continue;
-    out.push(full);
-  }
-  return out;
+/**
+ * Project source is what the repository versions: tracked files plus new
+ * files that are not ignored. Ignored local material (build output, private
+ * notes, tool scratch directories) is never audited.
+ *
+ * @returns {string[]}
+ */
+function collectSourceFiles(root) {
+  const listing = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'], {
+    cwd: root,
+    encoding: 'utf8',
+  });
+  return listing.split('\0').filter(Boolean)
+    .filter((relativePath) =>
+      SOURCE_EXTENSIONS.has(path.extname(relativePath).toLowerCase()) &&
+      !EXCLUDED_FILES.has(relativePath) &&
+      !relativePath.split('/').slice(0, -1).some((directory) => EXCLUDED_DIRS.has(directory)))
+    .map((relativePath) => path.join(root, relativePath))
+    // A tracked file may be deleted in the working tree before staging.
+    .filter((fullPath) => !isInExcludedSubtree(fullPath) && fs.existsSync(fullPath));
 }
 
 /**
@@ -164,28 +161,48 @@ function findRules(css) {
 const ANCHOR_SELECTOR_RE =
   /(^|[\s>+~,()])a(?=[\s,.#:[{]|$)/;
 const VISITED_RE = /:visited\b/;
-// Matches any selector that ENDS in an interactive state pseudo —
-// e.g. `a:hover`, `.foo a:focus`, `a.bar:active`, `:where(a):focus-visible`.
-// State-only rules apply on top of both :link and :visited, so they
-// inherit the base color from the unvisited+visited pair.
-const STATE_PSEUDO_TAIL_RE =
-  /:(?:hover|focus|active|focus-visible|focus-within)(?:\s*[,>+~]|\s*$)?/;
+const STATE_PSEUDO = '(?:hover|focus|active|focus-visible|focus-within)';
+// A selector ending in an interactive state pseudo-class, written directly
+// (`a:hover`, `:where(a):focus-visible`) or as the only arguments of
+// :is()/:where() (`a:is(:hover, :focus)`).
+const STATE_TAIL_RE = new RegExp(
+  `(?::${STATE_PSEUDO}|:(?:is|where)\\(\\s*:${STATE_PSEUDO}(?:\\s*,\\s*:${STATE_PSEUDO})*\\s*\\))\\s*$`,
+);
 const COLOR_RE = /(^|[;{\s])color\s*:/;
 
 /**
- * Decide whether a rule is "interactive-state-only" — i.e. every
- * comma-separated selector ends in :hover / :focus / :active /
- * :focus-visible / :focus-within. Such rules apply on top of both
- * :link and :visited, so they do NOT need their own :visited companion.
+ * Split a selector list at its top-level commas; commas inside :is(),
+ * :where(), or :not() arguments belong to a single selector.
+ *
+ * @param {string} selector
+ */
+function splitSelectorList(selector) {
+  const parts = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < selector.length; i++) {
+    if (selector[i] === '(') depth++;
+    else if (selector[i] === ')') depth--;
+    else if (selector[i] === ',' && depth === 0) {
+      parts.push(selector.slice(start, i));
+      start = i + 1;
+    }
+  }
+  parts.push(selector.slice(start));
+  return parts.map((part) => part.trim()).filter(Boolean);
+}
+
+/**
+ * Decide whether a rule is "interactive-state-only" — i.e. every selector in
+ * the list ends in :hover / :focus / :active / :focus-visible /
+ * :focus-within. Such rules apply on top of both :link and :visited, so they
+ * do NOT need their own :visited companion.
  *
  * @param {string} selector
  */
 function isStateOnlyRule(selector) {
-  const parts = selector.split(',').map((s) => s.trim()).filter(Boolean);
-  if (parts.length === 0) return false;
-  return parts.every((part) =>
-    /:(?:hover|focus|active|focus-visible|focus-within)\b\s*$/.test(part),
-  );
+  const parts = splitSelectorList(selector);
+  return parts.length > 0 && parts.every((part) => STATE_TAIL_RE.test(part));
 }
 
 function selectorMentionsAnchor(selector) {

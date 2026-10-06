@@ -2829,7 +2829,10 @@ unique step keys when lessons may move. Empty drafts are valid. Returning to sta
 content removes that override; session tombstones prevent older disk edits from
 reappearing after a failed write. Full and explicit saves share this snapshot path.
 Legacy path-only saves are attributed only to their recorded resume lesson, never
-copied to all same-named lesson files. Reset saves the current lesson's starter after
+copied to all same-named lesson files. Versioned tutorials resolve that lesson through
+the trusted key mapping before choosing a resume fallback; when the recorded lesson
+was replaced, its draft stays under `files`, preserved but shown by no reseeded
+lesson, so the fallback lesson never opens with another exercise's code. Reset saves the current lesson's starter after
 its setup completes, preserving other drafts. Delete clears remembered drafts too.
 Smalltalk continues using its native accepted-source/draft owner.
 

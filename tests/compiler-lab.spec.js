@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint, auditInteractiveState } = require('./a11y-helpers');
+const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
 
 const chapterURL = '/SEBook/tools/compilers.html';
 const tutorialURL = '/SEBook/tools/compilers-tutorial';
@@ -25,7 +26,7 @@ async function editFile(page, filename, text) {
     .getByRole('button', { name: filename.endsWith('grammar.ebnf') ? 'Grammar (EBNF)' : 'Source', exact: true }).click();
   const editor = page.getByRole('textbox', { name: /code editor\./ });
   await editor.focus();
-  await editor.press('ControlOrMeta+A');
+  await selectAllInMonaco(editor);
   await editor.press('Backspace');
   await page.keyboard.insertText(text);
 }
