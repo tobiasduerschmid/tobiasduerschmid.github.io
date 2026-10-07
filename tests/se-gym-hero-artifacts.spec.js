@@ -36,7 +36,7 @@ async function openPortrait(page) {
 // The documented art slots identify materials to inspect, never their authored
 // path structure. Rasterize real paint with its complete ancestry, so a future
 // wrapper, path rewrite, or fitting algorithm preserves these behavioral checks.
-async function inspectPortrait(svg, { appearance, fineTune, surfaceSelector, targetSelectors, checkClipping = false, alphaThreshold = 8, crownCoverage = false }) {
+async function inspectPortrait(svg, { appearance, fineTune, surfaceSelector, targetSelectors, checkClipping = false, alphaThreshold = 8, crownCoverage = false, jawCoverage = false }) {
   const avatar = structuredClone(window.HeroAvatar.DEFAULTS);
   Object.assign(avatar.appearance, { hairStyle: 'bald' }, appearance);
   Object.assign(avatar.fineTune, fineTune);
@@ -194,7 +194,28 @@ async function inspectPortrait(svg, { appearance, fineTune, surfaceSelector, tar
         }
       }
     }
-    results.push({ painted, overlap, exterior, components, detachedComponents, clippedAwayPixels, crownPixels, uncoveredCrownPixels });
+    let jawContourPixels = 0;
+    let uncoveredJawPixels = 0;
+    if (jawCoverage) {
+      const top = Math.floor(surface.findIndex(Boolean) / width);
+      const bottom = Math.floor(surface.findLastIndex(Boolean) / width);
+      for (let x = 0; x < width; x++) {
+        let y = height - 1;
+        while (y >= 0 && !surface[y * width + x]) y--;
+        if (y < top + (bottom - top) * 0.9) continue;
+        jawContourPixels++;
+        let covered = false;
+        // The ink rim and antialiasing may sit just outside a close-trimmed
+        // beard. Two portrait units allow that rim, but expose a bare jaw band.
+        for (let dy = -4; dy <= 4 && !covered; dy++) {
+          for (let dx = -4; dx <= 4 && !covered; dx++) {
+            covered = !!paint[(y + dy) * width + x + dx];
+          }
+        }
+        if (!covered) uncoveredJawPixels++;
+      }
+    }
+    results.push({ painted, overlap, exterior, components, detachedComponents, clippedAwayPixels, crownPixels, uncoveredCrownPixels, jawContourPixels, uncoveredJawPixels });
   }
   return results;
 }
@@ -334,6 +355,34 @@ test('Full-coverage hair caps cover the upper scalp when hair proportions are mi
       const context = `${headStyle}, ${hairStyle}`;
       expect(hair.crownPixels, `${context}: the upper scalp is in view`).toBeGreaterThan(0);
       expect(hair.uncoveredCrownPixels, `${context}: opaque hair covers the scalp; a translucent shadow does not suffice`).toBe(0);
+    }
+  }
+});
+
+test('Beards remain attached across the selected jaw instead of floating below it', async ({ page }) => {
+  test.setTimeout(120_000);
+  const svg = await openPortrait(page);
+  for (const headStyle of ['default', 'broad', 'compact-round', 'square', 'narrow', 'long-tapered-jaw', 'soft-v-jaw']) {
+    for (const { facialHair, boundaries } of [
+      { facialHair: 'stubble', boundaries: [0] },
+      { facialHair: 'soft-beard-shadow', boundaries: [0] },
+      { facialHair: 'fine-mustache-stubble', boundaries: [0] },
+      { facialHair: 'short-beard', boundaries: [0, 20, 0] },
+      { facialHair: 'chin-strap', boundaries: [0, -20, 20, 0] },
+    ]) {
+      for (const boundary of boundaries) {
+        const [paint] = await svg.evaluate(inspectPortrait, {
+          appearance: { headStyle, facialHair },
+          fineTune: { facialHair: { vertical: boundary, width: boundary, height: boundary, spread: boundary } },
+          surfaceSelector: headSelector(headStyle),
+          targetSelectors: [`[data-hero-slot="facial-hair"][data-hero-option="${facialHair}"]`],
+          jawCoverage: true,
+        });
+        const context = `${headStyle}, ${facialHair}, adjustment ${boundary}`;
+        expect(paint.jawContourPixels, `${context}: lower jaw is in view`).toBeGreaterThan(20);
+        expect(paint.uncoveredJawPixels, `${context}: beard must meet the lower jaw without a bare-skin gap`).toBe(0);
+        expect(paint.painted, `${context}: selected beard remains visible`).toBeGreaterThan(100);
+      }
     }
   }
 });

@@ -2073,7 +2073,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(previewMetrics.bottom).toBeLessThanOrEqual(previewMetrics.modalBottom + 1);
   });
 
-  test('Random avatar generation keeps traits independent, valid, and varied', async ({ page }) => {
+  test('Random avatar generation keeps compatible traits valid and varied', async ({ page }) => {
     await page.goto(GYM_URL);
 
     const summary = await page.evaluate(() => {
@@ -4760,7 +4760,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const noCheeksState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
       noCheeksState.appearance.blushStyle = 'none';
       window.HeroAvatar.applyToSvg(svg, noCheeksState);
-      const hiddenCheekOpacities = Array.from(svg.querySelectorAll('ellipse[fill*="--hero-cheek"]'))
+      const cheekSelector = '[data-hero-cheek-blush] ellipse, [data-hero-slot="head-features"][display="inline"] ellipse[fill*="--hero-cheek"]';
+      const hiddenCheekOpacities = Array.from(svg.querySelectorAll(cheekSelector))
         .map((node) => Number(getComputedStyle(node).opacity));
       if (!hiddenCheekOpacities.length || hiddenCheekOpacities.some((opacity) => opacity !== 0)) {
         failures.push({ slot: 'cheek', value: 'none', opacities: hiddenCheekOpacities });
@@ -4770,7 +4771,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       frecklesNoCheeksState.appearance.blushStyle = 'none';
       frecklesNoCheeksState.appearance.faceFeature = 'freckles';
       window.HeroAvatar.applyToSvg(svg, frecklesNoCheeksState);
-      const stillHiddenCheeks = Array.from(svg.querySelectorAll('ellipse[fill*="--hero-cheek"]'))
+      const stillHiddenCheeks = Array.from(svg.querySelectorAll(cheekSelector))
         .every((node) => Number(getComputedStyle(node).opacity) === 0);
       if (!visibleSlot('face-feature', 'freckles') || !stillHiddenCheeks) {
         failures.push({ slot: 'face-feature', value: 'freckles', stillHiddenCheeks });
@@ -4779,7 +4780,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const visibleCheeksState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
       visibleCheeksState.appearance.blushStyle = 'natural';
       window.HeroAvatar.applyToSvg(svg, visibleCheeksState);
-      const visibleCheekOpacity = Math.max(...Array.from(svg.querySelectorAll('ellipse[fill*="--hero-cheek"]'))
+      const visibleCheekOpacity = Math.max(...Array.from(svg.querySelectorAll(cheekSelector))
         .map((node) => Number(getComputedStyle(node).opacity)));
       if (!(visibleCheekOpacity > 0)) failures.push({ slot: 'cheek', value: 'natural', visibleCheekOpacity });
 

@@ -1194,7 +1194,26 @@
     weightedValue(['wired-earbuds', 'campus-lanyard'], 2)
   ];
   var FACIAL_HAIR_STYLES = ['none', 'clean-shaven', 'stubble', 'soft-mustache', 'neat-mustache', 'fine-mustache-stubble', 'mustache', 'light-goatee', 'goatee', 'rounded-goatee', 'soul-patch', 'sideburns', 'chin-strap', 'short-beard', 'trimmed-beard', 'full-beard', 'soft-beard-shadow'];
-  // Random generation samples independent appearance families. Category-level
+  // These are random styling preferences, not identity labels or validation
+  // rules. Manual choices and saved avatars may combine any of these traits.
+  const RANDOM_FACIAL_HAIR_COMPATIBILITY = {
+    hairStylesWithoutFacialHair: [
+      'pixie', 'bob', 'layered-bob', 'wavy-lob', 'side-part-lob', 'flipped-lob',
+      'sleek-bob-bangs', 'butterfly-layers', 'curtain-bangs', 'soft-bangs',
+      'low-pony-bangs', 'long-straight', 'long-layers', 'straight-long-layers',
+      'loose-waves', 'shoulder-length', 'long', 'wavy', 'curly-bob', 'curly-layers',
+      'voluminous-curls', 'coily-puff', 'double-puffs', 'french-braid', 'side-braid',
+      'braided-pony', 'braided-bun', 'low-twist-bun', 'bun', 'space-buns',
+      'low-bun', 'messy-bun', 'high-pony', 'sleek-low-pony', 'claw-clip-updo',
+      'half-up', 'pigtails'
+    ],
+    eyelashStylesWithoutFacialHair: [
+      'soft-fan', 'balanced-fan', 'delicate-long', 'soft-lift', 'full-upper',
+      'long-classic', 'long-doll', 'long-glam', 'winged', 'dense'
+    ]
+  };
+  // Random generation samples appearance families before applying the narrow
+  // styling preferences above. Category-level
   // weighting prevents the larger straight/short catalog from drowning out
   // textured hair, protective styles, long hair, or bald heads.
   function choiceGroupOptionValues(choiceKey, groupKey) {
@@ -1221,6 +1240,7 @@
     hairFamilies: RANDOM_HAIR_FAMILY_VALUES,
     bodyFamilies: RANDOM_BODY_FAMILY_VALUES,
     facialHairStyles: FACIAL_HAIR_STYLES.slice(),
+    facialHairCompatibility: RANDOM_FACIAL_HAIR_COMPATIBILITY,
     bodyTypes: Object.keys(RANDOM_BODY_FAMILY_VALUES).reduce(function (values, key) {
       return values.concat(RANDOM_BODY_FAMILY_VALUES[key]);
     }, []),
@@ -1476,6 +1496,15 @@
       .filter(function (accessory) { return !RANDOM_EXCLUDED_ACCESSORIES[accessory]; });
   }
 
+  function compatibleRandomFacialHair(appearance) {
+    const policy = RANDOM_FACIAL_HAIR_COMPATIBILITY;
+    if (policy.hairStylesWithoutFacialHair.indexOf(appearance.hairStyle) !== -1
+        || policy.eyelashStylesWithoutFacialHair.indexOf(appearance.eyelashStyle) !== -1) {
+      return 'none';
+    }
+    return appearance.facialHair;
+  }
+
   function randomMouthStyle(recipe) {
     var seen = {};
     var styles = (recipe && recipe.mouthStyles && recipe.mouthStyles.length ? recipe.mouthStyles : ['smile']).slice();
@@ -1632,6 +1661,7 @@
         emblem: ''
       }
     };
+    avatar.appearance.facialHair = compatibleRandomFacialHair(avatar.appearance);
     return normalizeAvatar(avatar);
   }
 
@@ -2344,13 +2374,31 @@
     };
   }
 
+  function beardHeadSurfaceTransform(svg, headStyle) {
+    const head = svg.querySelector('[data-hero-slot="head-shape"][data-hero-option="' + headStyle + '"] > path');
+    const reference = svg.querySelector('[data-hero-slot="head-shape"][data-hero-option="default"] > path');
+    if (!head || !reference || head === reference) return '';
+    const jaw = head.getBBox();
+    const original = reference.getBBox();
+    const cheekY = 185;
+    const scaleY = (jaw.y + jaw.height - cheekY) / (original.y + original.height - cheekY);
+    const referenceY = 216;
+    const targetY = cheekY + (referenceY - cheekY) * scaleY;
+    const width = headEdgeAt(head, targetY, 'right') - headEdgeAt(head, targetY, 'left');
+    const originalWidth = headEdgeAt(reference, referenceY, 'right') - headEdgeAt(reference, referenceY, 'left');
+    return affineFitTransform({ scaleX: width / originalWidth, scaleY: scaleY }, 400, cheekY);
+  }
+
   function applyFacialHairFit(svg, mouthStyle, headStyle) {
     var normalizedMouth = canonicalChoiceValue('mouthStyle', mouthStyle || 'smile');
     var normalizedHead = canonicalChoiceValue('headStyle', headStyle || 'default');
+    const jawTransform = beardHeadSurfaceTransform(svg, normalizedHead);
     var groups = svg.querySelectorAll('[data-hero-slot="facial-hair"]');
     for (var i = 0; i < groups.length; i++) {
       var normalizedStyle = canonicalChoiceValue('facialHair', groups[i].getAttribute('data-hero-option') || 'none');
-      var transform = affineFitTransform(facialHairFitForMouth(normalizedMouth, normalizedHead, normalizedStyle), 400, 224);
+      const followsJaw = BEARD_CONTOUR_FACIAL_HAIR_STYLES[normalizedStyle] || normalizedStyle === 'sideburns';
+      var transform = affineFitTransform(facialHairFitForMouth(normalizedMouth, followsJaw ? 'default' : normalizedHead, normalizedStyle), 400, 224);
+      if (followsJaw) transform = appendTransform(jawTransform, transform);
       setGroupTransform(groups[i], transform, 'data-hero-mouth-fit', normalizedMouth);
       groups[i].setAttribute('data-hero-head-fit', normalizedHead);
     }
@@ -2560,6 +2608,8 @@
     fitEyepatchToEye(svg);
     keepMouthOnFace(svg);
     keepNoseAboveMouth(svg);
+    keepFacialHairAttachedToJaw(svg);
+    fitCloseFacialHairToJaw(svg);
     fitChinDetails(svg);
     fitMustacheToUpperLip(svg);
     counterHeadTuningForBodyAccessories(svg);
@@ -2837,6 +2887,88 @@
       top: Math.min.apply(null, points.map(function (point) { return point.y; })),
       bottom: Math.max.apply(null, points.map(function (point) { return point.y; }))
     };
+  }
+
+  function smoothContourPath(points) {
+    let path = 'M ' + fmtPathNumber(points[0].x) + ' ' + fmtPathNumber(points[0].y);
+    for (let index = 0; index < points.length - 1; index++) {
+      const previous = points[Math.max(0, index - 1)];
+      const start = points[index];
+      const end = points[index + 1];
+      const next = points[Math.min(points.length - 1, index + 2)];
+      path += ' C ' + fmtPathNumber(start.x + (end.x - previous.x) / 6) + ' ' + fmtPathNumber(start.y + (end.y - previous.y) / 6)
+        + ', ' + fmtPathNumber(end.x - (next.x - start.x) / 6) + ' ' + fmtPathNumber(end.y - (next.y - start.y) / 6)
+        + ', ' + fmtPathNumber(end.x) + ' ' + fmtPathNumber(end.y);
+    }
+    return path;
+  }
+
+  function fitCloseFacialHairToJaw(svg) {
+    const band = svg.querySelector('[data-hero-slot="facial-hair"][display="inline"] [data-hero-jaw-band]');
+    const head = svg.querySelector('[data-hero-slot="head-shape"][display="inline"] > path');
+    const frame = svg.querySelector('[data-hero-head-proportions]');
+    if (!band || !head || !frame) return;
+    const toHead = localSvgMatrix(band, frame);
+    const authoredStart = Number(band.getAttribute('data-hero-jaw-start-y'));
+    const authoredDepth = Number(band.getAttribute('data-hero-jaw-depth'));
+    const startY = clampNumber(new DOMPoint(400, authoredStart).matrixTransform(toHead).y, 198, 224);
+    const depth = clampNumber(authoredDepth * toHead.d, 2.5, 10);
+    const jaw = head.getBBox();
+    const chinY = jaw.y + jaw.height;
+    const outer = [{ x: headEdgeAt(head, startY, 'right'), y: startY }];
+    const length = head.getTotalLength();
+    const steps = Math.ceil(length / 3);
+    for (let index = 0; index <= steps; index++) {
+      const point = head.getPointAtLength(length * index / steps);
+      if (point.y > startY) outer.push({ x: point.x, y: point.y });
+    }
+    outer.push({ x: headEdgeAt(head, startY, 'left'), y: startY });
+    // A narrow band follows the selected jaw, including a square chin. Move
+    // both edges just inside skin so no disconnected triangle hangs below it.
+    const inside = outer.map(point => ({ x: 400 + (point.x - 400) * 0.985, y: point.y - 0.5 }));
+    const inner = inside.map((point, index) => {
+      const taper = Math.sin(Math.PI * index / (inside.length - 1));
+      const scale = 1 - depth * taper / (chinY - startY);
+      return { x: 400 + (point.x - 400) * scale, y: startY + (point.y - startY) * scale };
+    }).reverse();
+    const inverse = toHead.inverse();
+    const local = inside.concat(inner).map(point => new DOMPoint(point.x, point.y).matrixTransform(inverse));
+    band.setAttribute('d', smoothContourPath(local) + ' Z');
+  }
+
+  function keepFacialHairAttachedToJaw(svg) {
+    const hair = svg.querySelector('[data-hero-slot="facial-hair"][display="inline"]');
+    const head = svg.querySelector('[data-hero-slot="head-shape"][display="inline"] > path');
+    const frame = svg.querySelector('[data-hero-head-proportions]');
+    if (!hair || !head || !frame) return;
+    const style = hair.getAttribute('data-hero-option');
+    if (hair.querySelector('[data-hero-jaw-band]') || (!BEARD_CONTOUR_FACIAL_HAIR_STYLES[style] && style !== 'sideburns')) return;
+    const silhouettes = Array.from(hair.querySelectorAll(':scope > path')).slice(0, style === 'sideburns' ? 2 : 1);
+    const roots = [];
+    silhouettes.forEach(shape => {
+      const matrix = localSvgMatrix(shape, frame);
+      const length = shape.getTotalLength();
+      const steps = Math.ceil(length / 1.5);
+      for (let i = 0; i <= steps; i++) {
+        const point = shape.getPointAtLength(length * i / steps);
+        if (shape.isPointInFill({ x: point.x, y: point.y - 0.35 }) || !shape.isPointInFill({ x: point.x, y: point.y + 0.35 })) continue;
+        roots.push(new DOMPoint(point.x, point.y + 0.6).matrixTransform(matrix));
+      }
+    });
+    if (!roots.length) return;
+    let best;
+    let cost = Infinity;
+    for (let shrink = 0; shrink <= 30; shrink++) {
+      const scaleX = 1 - shrink * 0.01;
+      for (let lift = 0; lift <= 24; lift += 0.5) {
+        if (shrink + lift >= cost) continue;
+        if (!roots.every(point => head.isPointInFill({ x: 400 + (point.x - 400) * scaleX, y: point.y - lift }))) continue;
+        best = new DOMMatrix([scaleX, 0, 0, 1, 400 * (1 - scaleX), -lift]);
+        cost = shrink + lift;
+        break;
+      }
+    }
+    if (best && cost) prependTransformInSvgFrame(hair, frame, best);
   }
 
   function fitChinDetails(svg) {
