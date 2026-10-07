@@ -2795,6 +2795,7 @@
     keepNoseAboveMouth(svg);
     keepFacialHairAttachedToJaw(svg);
     fitCloseFacialHairToJaw(svg);
+    fitSideburnsToCheeks(svg);
     fitChinDetails(svg);
     fitMustacheToUpperLip(svg);
     counterHeadTuningForBodyAccessories(svg);
@@ -3155,16 +3156,61 @@
     band.setAttribute('d', smoothContourPath(local) + ' Z');
   }
 
+  // Sideburns grow down from the temple hairline in front of each ear and
+  // taper along the selected cheek. Their outer edge is the head contour
+  // itself, so they never hang past the face or float on the cheek.
+  function fitSideburnsToCheeks(svg) {
+    const group = svg.querySelector('[data-hero-slot="facial-hair"][data-hero-option="sideburns"][display="inline"]');
+    const head = svg.querySelector('[data-hero-slot="head-shape"][display="inline"] > path');
+    const frame = svg.querySelector('[data-hero-head-proportions]');
+    if (!group || !head || !frame) return;
+    ['left', 'right'].forEach(function (side) {
+      const burn = group.querySelector('[data-hero-sideburn="' + side + '"]');
+      if (!burn) return;
+      const toHead = localSvgMatrix(burn, frame);
+      // Authored temple and earlobe heights carry the facial-hair tuning.
+      const topY = clampNumber(new DOMPoint(400, 168).matrixTransform(toHead).y, 152, 186);
+      const bottomY = clampNumber(new DOMPoint(400, 209).matrixTransform(toHead).y, topY + 20, headContourBottom(head) - 18);
+      const width = clampNumber(6.4 * Math.abs(toHead.a), 3.2, 10);
+      const inward = side === 'left' ? 1 : -1;
+      const outer = [];
+      const inner = [];
+      const shade = [];
+      const strand = [];
+      const steps = 10;
+      for (let index = 0; index <= steps; index++) {
+        const t = index / steps;
+        const y = topY + (bottomY - topY) * t;
+        const edge = headEdgeAt(head, y, side) + inward * 0.5;
+        // Full width under the hairline, then a soft taper to a rounded tip.
+        const w = width * (t < 0.35 ? 1 : Math.pow(Math.cos((t - 0.35) / 0.65 * Math.PI / 2), 0.7)) + 0.6;
+        outer.push({ x: edge, y: y });
+        inner.push({ x: edge + inward * w, y: y + (t === 0 ? 2.6 : 0) });
+        shade.push({ x: edge + inward * w * 0.62, y: y + (t === 0 ? 1.6 : 0) });
+        if (t >= 0.12 && t <= 0.78) strand.push({ x: edge + inward * w * 0.38, y: y });
+      }
+      const inverse = toHead.inverse();
+      const local = function (points) {
+        return points.map(function (point) { return new DOMPoint(point.x, point.y).matrixTransform(inverse); });
+      };
+      burn.setAttribute('d', smoothContourPath(local(outer.concat(inner.slice().reverse()))) + ' Z');
+      const shading = group.querySelector('[data-hero-sideburn-shade="' + side + '"]');
+      if (shading) shading.setAttribute('d', smoothContourPath(local(shade.concat(inner.slice().reverse()))) + ' Z');
+      const strands = group.querySelector('[data-hero-sideburn-strands="' + side + '"]');
+      if (strands && strand.length > 1) strands.setAttribute('d', smoothContourPath(local(strand)));
+    });
+  }
+
   function keepFacialHairAttachedToJaw(svg) {
     const hair = svg.querySelector('[data-hero-slot="facial-hair"][display="inline"]');
     const head = svg.querySelector('[data-hero-slot="head-shape"][display="inline"] > path');
     const frame = svg.querySelector('[data-hero-head-proportions]');
     if (!hair || !head || !frame) return;
     const style = hair.getAttribute('data-hero-option');
-    if (hair.querySelector('[data-hero-jaw-band]') || (!BEARD_CONTOUR_FACIAL_HAIR_STYLES[style] && style !== 'sideburns')) return;
+    if (hair.querySelector('[data-hero-jaw-band]') || !BEARD_CONTOUR_FACIAL_HAIR_STYLES[style]) return;
     const authoredRoots = Array.from(hair.querySelectorAll('[data-hero-beard-root]'));
     const silhouettes = authoredRoots.length ? authoredRoots
-      : Array.from(hair.querySelectorAll(':scope > path')).slice(0, style === 'sideburns' ? 2 : 1);
+      : Array.from(hair.querySelectorAll(':scope > path')).slice(0, 1);
     const roots = [];
     silhouettes.forEach(shape => {
       const matrix = localSvgMatrix(shape, frame);
