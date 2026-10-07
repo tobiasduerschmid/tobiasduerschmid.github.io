@@ -4219,7 +4219,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(preview.locator('[data-hero-slot="accessory"][data-hero-option="glasses"]'))
       .toHaveAttribute('display', 'inline');
 
-    const tokens = await preview.evaluate((svg) => {
+    const tokens = await preview.evaluate(async (svg) => {
       const styles = getComputedStyle(svg);
       function renderedPaint(element, property, tokenName) {
         if (!element) return '';
@@ -4228,6 +4228,45 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         return styles.getPropertyValue(tokenName).trim();
       }
       const roundFrame = svg.querySelector('[data-hero-slot="accessory"][data-hero-option="glasses"] circle');
+      async function framePaintContrast(frame) {
+        // Read the painted rim, including material gradients, instead of
+        // treating a paint-server URL as a solid CSS color.
+        const imageSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        imageSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        imageSvg.setAttribute('style', svg.getAttribute('style') || '');
+        imageSvg.setAttribute('width', '128');
+        imageSvg.setAttribute('height', '128');
+        imageSvg.style.width = '128px';
+        imageSvg.style.height = '128px';
+        const bounds = frame.getBBox();
+        imageSvg.setAttribute('viewBox', `${bounds.x - 4} ${bounds.y - 4} ${bounds.width + 8} ${bounds.height + 8}`);
+        svg.querySelectorAll(':scope > defs').forEach(defs => imageSvg.appendChild(defs.cloneNode(true)));
+        const copy = frame.cloneNode(true);
+        const frameStyle = getComputedStyle(frame);
+        for (const property of ['stroke', 'stroke-width', 'stroke-opacity', 'opacity']) {
+          copy.style.setProperty(property, frameStyle.getPropertyValue(property)
+            .replace(/url\(["']?[^#)]*#([^"')]+)["']?\)/g, 'url(#$1)'));
+        }
+        copy.style.fill = 'none';
+        imageSvg.appendChild(copy);
+        const image = new Image();
+        image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(imageSvg))}`;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 128;
+        const context = canvas.getContext('2d');
+        context.drawImage(image, 0, 0);
+        const rgba = context.getImageData(0, 0, 128, 128).data;
+        const colors = [];
+        for (let index = 0; index < rgba.length; index += 4) {
+          // Exclude the antialiased edge, whose apparent color depends on
+          // partial pixel coverage rather than the material's actual pigment.
+          if (rgba[index + 3] < 250) continue;
+          colors.push('#' + [...rgba.slice(index, index + 3)]
+            .map(channel => channel.toString(16).padStart(2, '0')).join(''));
+        }
+        return { paintedPixels: colors.length, colors: [...new Set(colors)] };
+      }
       const gradientStop = svg.querySelector('linearGradient[id^="hair-grad-"] stop');
       const nose = svg.querySelector('[data-hero-slot="nose-shape"][data-hero-option="soft"] [data-hero-face-detail="nose"]');
       const smileLine = svg.querySelector('[data-hero-slot="mouth-style"][data-hero-option="full-lips"] path[stroke*="--hero-mouth-line"]');
@@ -4267,7 +4306,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         jawLineOpacity: styles.getPropertyValue('--hero-jaw-line-opacity').trim(),
         neckShadowOpacity: styles.getPropertyValue('--hero-neck-shadow-opacity').trim(),
         smileLineStroke: renderedPaint(smileLine, 'stroke', '--hero-mouth-line'),
-        roundGlassesStroke: renderedPaint(roundFrame, 'stroke', '--hero-glasses-frame'),
+        roundGlassesPaint: await framePaintContrast(roundFrame),
         gradientStop: gradientStop ? gradientStop.getAttribute('stop-color') : '',
         polishAfterFaceClear: Boolean(
           faceClear &&
@@ -4295,7 +4334,9 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(tokens.skinMid.toLowerCase()).not.toBe(tokens.skin.toLowerCase());
     expect(contrastRatio(tokens.glassesFrame, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.glassesFrameDark, tokens.skin)).toBeGreaterThanOrEqual(3);
-    expect(contrastRatio(tokens.roundGlassesStroke, tokens.skin)).toBeGreaterThanOrEqual(3);
+    expect(tokens.roundGlassesPaint.paintedPixels, 'the glasses rim must paint').toBeGreaterThan(100);
+    expect(Math.min(...tokens.roundGlassesPaint.colors.map(color => contrastRatio(color, tokens.skin))),
+      'the painted frame material must remain distinct from deep skin').toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.hairRim, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.faceLine, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.faceMark, tokens.skin)).toBeGreaterThanOrEqual(3);

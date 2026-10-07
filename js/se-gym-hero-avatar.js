@@ -2345,7 +2345,17 @@
     const clip = svg.querySelector('[data-hero-face-surface-clip]');
     // Share the selected silhouette across lighting, skin details, and cheek shading.
     // Older exported templates may not contain this fitted surface clip.
-    if (surface && clip) clip.setAttribute('d', surface.getAttribute('d'));
+    if (!surface || !clip) return;
+    clip.setAttribute('d', surface.getAttribute('d'));
+    // Keep the side planes on the cheeks and seat the chin volume on the
+    // selected jaw, including broader faces and longer head silhouettes.
+    const bounds = surface.getBBox();
+    if (!bounds.width || !bounds.height) return;
+    const form = svg.querySelector('[data-hero-face-form]');
+    const chin = svg.querySelector('[data-hero-chin-form]');
+    const width = fmtTransformNumber(bounds.width / 86);
+    if (form) form.setAttribute('transform', 'translate(400 0) scale(' + width + ' 1) translate(-400 0)');
+    if (chin) chin.setAttribute('transform', 'translate(400 ' + fmtTransformNumber(bounds.y + bounds.height - 240) + ') scale(' + width + ' 1) translate(-400 0)');
   }
 
   function fitEyeReflections(svg, eyeShape) {
@@ -3185,11 +3195,51 @@
     }
   }
 
+  function fitPrimaryBeltToTorso(svg, belt, band) {
+    belt.removeAttribute('transform');
+    if (svg.getAttribute('data-hero-kind') !== 'human') return;
+    var torso = svg.querySelector('[data-hero-slot="body-shape"][display="inline"]')
+      || svg.querySelector('[data-hero-default-torso]');
+    if (!torso) return;
+    var waist = boundsInSvgFrame(band, svg);
+    var centerY = (waist.top + waist.bottom) / 2;
+    var centerX = (waist.left + waist.right) / 2;
+    var edges = [];
+    torso.querySelectorAll('path').forEach(function (surface) {
+      if (surface.getAttribute('fill') === 'none') return;
+      var inverse = localSvgMatrix(surface, svg).inverse();
+      function contains(x) {
+        return surface.isPointInFill(new DOMPoint(x, centerY).matrixTransform(inverse));
+      }
+      // Sleeve bridges and decorative planes do not reach the waist center.
+      if (!contains(centerX)) return;
+      var bounds = boundsInSvgFrame(surface, svg);
+      [bounds.left - 1, bounds.right + 1].forEach(function (outside) {
+        var inside = centerX;
+        for (var step = 0; step < 12; step++) {
+          var middle = (inside + outside) / 2;
+          if (contains(middle)) inside = middle;
+          else outside = middle;
+        }
+        edges.push(inside);
+      });
+    });
+    if (!edges.length || waist.right <= waist.left) return;
+    var left = Math.min.apply(null, edges);
+    var right = Math.max.apply(null, edges);
+    var scale = (right - left) / (waist.right - waist.left);
+    prependTransformInSvgFrame(belt, svg, new DOMMatrix([scale, 0, 0, 1,
+      (left + right) / 2 - centerX * scale, 0]));
+  }
+
   function fitUtilityBeltToWaist(svg) {
     var original = svg.querySelector('[data-hero-default-belt]');
     var waistBand = svg.querySelector('[data-hero-belt-band="default"]');
     if (!original || !waistBand) return;
     original.setAttribute('display', 'inline');
+    // The shared body-rig scale is deliberately conservative; the actual
+    // torso contour is the belt anchor for petite and fuller frames alike.
+    fitPrimaryBeltToTorso(svg, original, waistBand);
     var utility = svg.querySelector('[data-hero-slot="accessory"][data-hero-option="utility-belt"][display="inline"]');
     var utilityBand = utility && utility.querySelector('[data-hero-belt-band="utility"]');
     if (!utilityBand) return;

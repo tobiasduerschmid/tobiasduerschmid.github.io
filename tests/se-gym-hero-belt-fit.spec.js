@@ -34,12 +34,27 @@ test('The utility belt replaces the original belt and stays at the fitted waist'
         const base = svg.querySelector('[data-hero-default-belt]');
         const waist = svg.querySelector('[data-hero-belt-band="default"]').getBoundingClientRect();
         if (!base.getClientRects().length) failures.push({ body, boundary, reason: 'original belt did not return' });
+        const torso = svg.querySelector('[data-hero-slot="body-shape"][display="inline"]')
+          || svg.querySelector('[data-hero-default-torso]');
+        const surfaces = [...torso.querySelectorAll('path')].filter(path => path.getAttribute('fill') !== 'none');
+        const torsoBounds = torso.getBoundingClientRect();
+        const waistCenter = waist.y + waist.height / 2;
+        const filled = [];
+        for (let x = Math.floor(torsoBounds.left); x <= Math.ceil(torsoBounds.right); x++) {
+          if (surfaces.some(path => path.isPointInFill(new DOMPoint(x, waistCenter)
+            .matrixTransform(path.getScreenCTM().inverse())))) filled.push(x);
+        }
+        if (!filled.length) throw new Error(`${body}: belt does not cross the torso`);
+        const torsoLeft = filled[0];
+        const torsoRight = filled[filled.length - 1];
+        if (Math.abs(waist.left - torsoLeft) > 5 || Math.abs(waist.right - torsoRight) > 5) {
+          failures.push({ body, boundary, reason: 'primary belt overhangs or leaves the torso edges' });
+        }
         state.outfit.accessories = ['utility-belt'];
         state.outfit.accessory = 'utility-belt';
         window.HeroAvatar.applyToSvg(svg, state);
         const belt = svg.querySelector('[data-hero-belt-band="utility"]').getBoundingClientRect();
         if (base.getClientRects().length) failures.push({ body, boundary, reason: 'two belts are painted' });
-        const waistCenter = waist.y + waist.height / 2;
         if (belt.width < waist.width * .85 || belt.width > waist.width * 1.15
           || waistCenter < belt.top || waistCenter > belt.bottom) {
           failures.push({ body, boundary, reason: 'utility belt left the waist' });

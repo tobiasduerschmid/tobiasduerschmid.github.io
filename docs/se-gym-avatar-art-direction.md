@@ -16,6 +16,14 @@ The hero should read as a friendly, dimensional illustration at both the full-pa
 
 The illustration sources are working design precedents and practitioner guidance, not controlled evidence of improved learning. The interview study concerns avatar identity representation; it does not establish that a particular SVG style improves student attainment or represents every student's preferences. These recommendations adapt that evidence to the SE Gym context.
 
+## Reference-level finish
+
+Judge humans beside Prof and Bruin at the same face scale and at the normal page size. Geometry checks establish attachment and containment; they do not establish illustration quality. Extra strands, seams, or gradient stops cannot make up for simplified anatomy.
+
+The human construction now uses shaped eye apertures with lid thickness and partly occluded irises; bridge, alar, tip, and nostril volumes for each nose; an upper lip, rounded lower lip, and curved enamel arch for open smiles; and broad complexion-relative forehead, cheek, and jaw light. Hands, ears, hair locks, and garment folds need comparable structural treatment. Radial surface light must reach transparent at the painted boundary, so a shaded volume never becomes a visible oval patch. Keep the positive expression and avoid adding age lines as a substitute for form.
+
+The portrait has its own skin material. Broad temple and cheek-side planes establish the head's depth; cheekbone light, lower-cheek shadow and a rounded chin establish its anatomy. The renderer fits the side planes to the selected face width and seats the chin on the actual jaw boundary. Keep plane transitions soft, especially at exposed temples and on pale skin; preserve hue and visible volume on deep skin. Closed-mouth styles need tapered lip masses as well as a seam. Glasses need a shaded frame bevel and contained reflections that leave the eyes readable.
+
 ## Visual system
 
 - **One light direction.** Use a broad upper-left key light, a restrained lower-right form shadow, and small highlights where the material warrants them. Skin is soft; hair has grouped sheen; glass and metal receive sharper reflections.
