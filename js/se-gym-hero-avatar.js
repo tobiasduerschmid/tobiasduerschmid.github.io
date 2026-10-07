@@ -728,24 +728,24 @@
   var DEEP_SET_EYE_SHAPES = { 'deep-set': true };
   var ANGLED_ALMOND_EYE_SHAPES = { 'relaxed-almond': true, 'tapered-almond': true, 'upturned-almond': true, 'downturned-soft': true };
   var EYELASH_STYLE_GEOMETRY = {
-    'short-soft': { count: 4, length: 2.3, reach: 0.86, strokeWidth: 0.48, opacity: 0.34 },
-    'short-dense': { count: 6, length: 2.2, reach: 0.96, strokeWidth: 0.48, opacity: 0.36 },
-    'barely-there': { count: 3, length: 2.75, reach: 0.64, strokeWidth: 0.54, opacity: 0.34 },
-    subtle: { count: 4, length: 2.95, reach: 0.88, strokeWidth: 0.56, opacity: 0.38 },
-    'short-natural': { count: 4, length: 2.72, reach: 0.86, strokeWidth: 0.54, opacity: 0.36 },
-    'short-corner': { count: 3, length: 2.8, reach: 0.62, strokeWidth: 0.54, opacity: 0.36 },
-    'short-upper': { count: 5, length: 2.85, reach: 0.92, strokeWidth: 0.54, opacity: 0.38 },
-    'outer-corner': { count: 3, length: 3.55, reach: 0.66, strokeWidth: 0.58, opacity: 0.38 },
-    'soft-fan': { count: 5, length: 3.75, reach: 0.94, strokeWidth: 0.58, opacity: 0.4 },
-    'balanced-fan': { count: 5, length: 3.45, reach: 0.92, strokeWidth: 0.56, opacity: 0.39 },
-    'delicate-long': { count: 5, length: 4.15, reach: 0.84, strokeWidth: 0.52, opacity: 0.38, outerBoost: 0.12 },
-    'soft-lift': { count: 4, length: 3.7, reach: 0.78, strokeWidth: 0.56, opacity: 0.4, outerBoost: 0.32 },
-    'full-upper': { count: 6, length: 3.95, reach: 0.96, strokeWidth: 0.6, opacity: 0.42 },
-    'long-classic': { count: 7, length: 4.35, reach: 0.96, strokeWidth: 0.62, opacity: 0.42 },
-    'long-doll': { count: 7, length: 4.6, reach: 0.96, strokeWidth: 0.64, opacity: 0.42, outerBoost: 0.18 },
-    'long-glam': { count: 8, length: 4.9, reach: 0.96, strokeWidth: 0.66, opacity: 0.42, outerBoost: 0.35 },
-    winged: { count: 4, length: 4.4, reach: 0.74, strokeWidth: 0.62, opacity: 0.42, outerBoost: 0.55 },
-    dense: { count: 7, length: 4.05, reach: 0.96, strokeWidth: 0.6, opacity: 0.4 }
+    'short-soft': { count: 4, length: 2.3, reach: 0.86, strokeWidth: 0.48, opacity: 0.51 },
+    'short-dense': { count: 6, length: 2.2, reach: 0.96, strokeWidth: 0.48, opacity: 0.54 },
+    'barely-there': { count: 3, length: 2.75, reach: 0.64, strokeWidth: 0.54, opacity: 0.51 },
+    subtle: { count: 4, length: 2.95, reach: 0.88, strokeWidth: 0.56, opacity: 0.57 },
+    'short-natural': { count: 4, length: 2.72, reach: 0.86, strokeWidth: 0.54, opacity: 0.54 },
+    'short-corner': { count: 3, length: 2.8, reach: 0.62, strokeWidth: 0.54, opacity: 0.54 },
+    'short-upper': { count: 5, length: 2.85, reach: 0.92, strokeWidth: 0.54, opacity: 0.57 },
+    'outer-corner': { count: 3, length: 3.55, reach: 0.66, strokeWidth: 0.58, opacity: 0.57 },
+    'soft-fan': { count: 5, length: 3.75, reach: 0.94, strokeWidth: 0.58, opacity: 0.6 },
+    'balanced-fan': { count: 5, length: 3.45, reach: 0.92, strokeWidth: 0.56, opacity: 0.58 },
+    'delicate-long': { count: 5, length: 4.15, reach: 0.84, strokeWidth: 0.52, opacity: 0.57, outerBoost: 0.12 },
+    'soft-lift': { count: 4, length: 3.7, reach: 0.78, strokeWidth: 0.56, opacity: 0.6, outerBoost: 0.32 },
+    'full-upper': { count: 6, length: 3.95, reach: 0.96, strokeWidth: 0.6, opacity: 0.63 },
+    'long-classic': { count: 7, length: 4.35, reach: 0.96, strokeWidth: 0.62, opacity: 0.63 },
+    'long-doll': { count: 7, length: 4.6, reach: 0.96, strokeWidth: 0.64, opacity: 0.63, outerBoost: 0.18 },
+    'long-glam': { count: 8, length: 4.9, reach: 0.96, strokeWidth: 0.66, opacity: 0.63, outerBoost: 0.35 },
+    winged: { count: 4, length: 4.4, reach: 0.74, strokeWidth: 0.62, opacity: 0.63, outerBoost: 0.55 },
+    dense: { count: 7, length: 4.05, reach: 0.96, strokeWidth: 0.6, opacity: 0.6 }
   };
   // Curated, deliberately uneven root positions create small lash tufts rather
   // than the mechanical picket-fence effect of uniformly sampled geometry.
@@ -2550,7 +2550,67 @@
     };
   }
 
-  function lashSampleForFamily(familyGeometry, u) {
+  // Samples the selected eye's upper-lid edge, from its outer corner to its
+  // inner corner, so lash roots sit on the authored aperture of every shape.
+  function upperLidSamplesFromSurface(d) {
+    var numbers = String(d || '').match(/-?\d*\.?\d+(?:e-?\d+)?/gi);
+    if (!numbers || !/^\s*M/i.test(d) || /[LHVQSTA]/i.test(d)) return null;
+    numbers = numbers.map(Number);
+    var start = [numbers[0], numbers[1]];
+    var segments = [];
+    for (var i = 2; i + 5 < numbers.length; i += 6) {
+      var from = segments.length ? segments[segments.length - 1][3] : start;
+      segments.push([from, [numbers[i], numbers[i + 1]], [numbers[i + 2], numbers[i + 3]], [numbers[i + 4], numbers[i + 5]]]);
+    }
+    if (segments.length < 2) return null;
+    var innerIndex = 0;
+    for (var s = 1; s < segments.length; s++) {
+      if (segments[s][3][0] > segments[innerIndex][3][0]) innerIndex = s;
+    }
+    var samples = [];
+    var length = 0;
+    for (var k = 0; k <= innerIndex; k++) {
+      var seg = segments[k];
+      for (var step = k === 0 ? 0 : 1; step <= 24; step++) {
+        var t = step / 24;
+        var mt = 1 - t;
+        var point = {
+          x: mt * mt * mt * seg[0][0] + 3 * mt * mt * t * seg[1][0] + 3 * mt * t * t * seg[2][0] + t * t * t * seg[3][0],
+          y: mt * mt * mt * seg[0][1] + 3 * mt * mt * t * seg[1][1] + 3 * mt * t * t * seg[2][1] + t * t * t * seg[3][1]
+        };
+        if (samples.length) {
+          var previous = samples[samples.length - 1];
+          length += Math.sqrt(Math.pow(point.x - previous.x, 2) + Math.pow(point.y - previous.y, 2));
+        }
+        point.length = length;
+        samples.push(point);
+      }
+    }
+    return length > 0 ? samples : null;
+  }
+
+  function lashSampleOnLid(lidSamples, familyGeometry, u) {
+    var total = lidSamples[lidSamples.length - 1].length;
+    // Leave the tear duct and the outer canthus bare, as real lash lines do.
+    var target = total * (0.05 + 0.88 * u);
+    var index = 1;
+    while (index < lidSamples.length - 1 && lidSamples[index].length < target) index++;
+    var a = lidSamples[index - 1];
+    var b = lidSamples[index];
+    var span = (b.length - a.length) || 1;
+    var f = clampNumber((target - a.length) / span, 0, 1);
+    var tangent = normalizeVector(b.x - a.x, b.y - a.y);
+    // Lashes leave the lid along its upward normal, lean toward the outer
+    // corner, and never point at the nose near the tear duct.
+    var direction = normalizeVector(
+      tangent.y - 0.34 - (familyGeometry.fanBias || 0) * (1 - u),
+      -tangent.x - 0.25 - (familyGeometry.riseBias || 0)
+    );
+    return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, direction: direction };
+  }
+
+  function lashSampleForFamily(familyGeometry, u, lidSamples) {
+    if (lidSamples) return lashSampleOnLid(lidSamples, familyGeometry, u);
     if (familyGeometry.kind === 'ellipse') {
       var angle = (familyGeometry.startAngle + (familyGeometry.endAngle - familyGeometry.startAngle) * u) * Math.PI / 180;
       var x = familyGeometry.cx + Math.cos(angle) * familyGeometry.rx;
@@ -2584,7 +2644,7 @@
     };
   }
 
-  function buildEyelashPath(style, family, underFrames, tuning) {
+  function buildEyelashPath(style, family, underFrames, tuning, lidSamples) {
     var config = EYELASH_STYLE_GEOMETRY[style];
     var familyGeometry = EYELASH_FAMILY_GEOMETRY[family] || EYELASH_FAMILY_GEOMETRY.almond;
     if (!config) return '';
@@ -2599,17 +2659,19 @@
       var u = Math.max(0, Math.min(1, slot * reach));
       var values = tuning || {};
       var fan = 1 + (values.spread || 0) * 0.01;
-      var sample = lashSampleForFamily(familyGeometry, clampNumber(u * fan, 0, 1));
+      var sample = lashSampleForFamily(familyGeometry, clampNumber(u * fan, 0, 1), lidSamples);
       var tuftScale = i % 3 === 0 ? 1.08 : (i % 3 === 1 ? 0.82 : 0.95);
       var taper = (1 - slot * 0.12) * tuftScale;
       var outerBoost = config.outerBoost ? Math.max(0, 1 - slot * 1.6) * config.outerBoost : 0;
       var length = (config.length + outerBoost) * (familyGeometry.lengthScale || 1) * taper * frameLengthScale;
       var reachX = sample.direction.x * length * (1 + (values.width || 0) * 0.01);
       var reachY = sample.direction.y * length * (1 + (values.height || 0) * 0.01) + (values.vertical || 0) * 0.035;
-      var endX = sample.x + reachX;
-      var endY = sample.y + reachY;
-      var controlX = sample.x + reachX * 0.58 + (i % 2 ? 0.12 : -0.12);
-      var controlY = sample.y + reachY * 0.48 - 0.1;
+      // Each lash leaves the lid along its direction and curls up at the tip.
+      var tip = normalizeVector(sample.direction.x, sample.direction.y - 0.32);
+      var endX = sample.x + tip.x * length * (1 + (values.width || 0) * 0.01);
+      var endY = sample.y + tip.y * length * (1 + (values.height || 0) * 0.01) + (values.vertical || 0) * 0.035;
+      var controlX = sample.x + reachX * 0.55 + (i % 2 ? 0.08 : -0.08);
+      var controlY = sample.y + reachY * 0.55;
       var segment = { sx: sample.x, sy: sample.y, cx: controlX, cy: controlY, ex: endX, ey: endY };
       segments.push(segment, mirrorLashSegment(segment));
     }
@@ -2622,7 +2684,12 @@
     }).join(' ');
   }
 
-  function updateEyelashGeometry(group, family, underFrames) {
+  function eyeLidSamples(svg, eyeShape) {
+    var surface = svg.querySelector('[data-hero-slot="eye-shape"][data-hero-option="' + canonicalChoiceValue('eyeShape', eyeShape || 'round') + '"] [data-hero-eye-surface="left"]');
+    return surface ? upperLidSamplesFromSurface(surface.getAttribute('d')) : null;
+  }
+
+  function updateEyelashGeometry(group, family, underFrames, lidSamples) {
     var style = group.getAttribute('data-hero-option') || 'none';
     var path = group.querySelector('[data-hero-lash-path]');
     if (!path) return;
@@ -2635,7 +2702,7 @@
       return;
     }
 
-    path.setAttribute('d', buildEyelashPath(style, family, underFrames));
+    path.setAttribute('d', buildEyelashPath(style, family, underFrames, null, lidSamples));
     path.setAttribute('data-hero-lash-family', family);
     path.setAttribute('data-hero-lash-fit', underFrames ? 'under-frames' : 'open');
     path.setAttribute('display', 'inline');
@@ -2649,10 +2716,11 @@
       return FACE_ACCESSORIES.indexOf(accessory) !== -1;
     });
     svg.setAttribute('data-hero-eye-family', fit.family);
+    var lidSamples = eyeLidSamples(svg, eyeShape);
     var groups = svg.querySelectorAll('[data-hero-slot="eyelash-style"]');
     for (var i = 0; i < groups.length; i++) {
       setBaseTransform(groups[i], '');
-      updateEyelashGeometry(groups[i], fit.family, underFrames);
+      updateEyelashGeometry(groups[i], fit.family, underFrames, lidSamples);
     }
   }
 
@@ -3275,13 +3343,15 @@
   }
 
   function tuneAttachedEyelashes(svg, tuning) {
+    var eyes = svg.querySelector('[data-hero-slot="eye-shape"][display="inline"]');
+    var lidSamples = eyes ? eyeLidSamples(svg, eyes.getAttribute('data-hero-option')) : null;
     var groups = svg.querySelectorAll('[data-hero-slot="eyelash-style"]');
     for (var i = 0; i < groups.length; i++) {
       var path = groups[i].querySelector('[data-hero-lash-path]');
       if (!path || !path.hasAttribute('data-hero-lash-family')) continue;
       var family = path.getAttribute('data-hero-lash-family');
       var underFrames = path.getAttribute('data-hero-lash-fit') === 'under-frames';
-      path.setAttribute('d', buildEyelashPath(groups[i].getAttribute('data-hero-option'), family, underFrames, tuning));
+      path.setAttribute('d', buildEyelashPath(groups[i].getAttribute('data-hero-option'), family, underFrames, tuning, lidSamples));
     }
   }
 
@@ -3642,11 +3712,13 @@
     var eyebrowTokens = eyebrowColor === appearance.hairColor
       ? hairTokens : avatarContrastTokens(appearance.skin, eyebrowColor);
     // Preserve the chosen hair pigment; a fine edge supplies local definition.
-    // Eyelashes keep their existing hair-derived contrast color on the SVG root.
     svg.querySelectorAll('[data-hero-slot="eyebrow"]').forEach(function (group) {
       group.style.setProperty('--hero-eyebrow', eyebrowColor);
       group.style.setProperty('--hero-eyebrow-rim', eyebrowTokens.eyebrow);
     });
+    // Lashes grow from the dark lid line. The brow contrast token may turn
+    // light on similar skin and hair, which reads as rays instead of lashes.
+    svg.style.setProperty('--hero-eyelash', mix(mix(hairTokens.faceEdgeInk, darken(eyebrowColor, 0.5), 0.45), '#0b0706', 0.35));
   }
 
   function applyAvatarColorTokens(svg, state, contrastTokens) {

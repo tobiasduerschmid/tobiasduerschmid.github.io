@@ -215,6 +215,49 @@
     <clipPath id="hair-volume-clip-long-center-part-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 355 151 C 353.5 154.3 348.8 160 346 171 C 343.2 182 339.5 202.7 338 217 C 336.5 231.3 337.5 244.8 337 257 C 336.5 269.2 335.5 277.8 335 290 C 334.5 302.2 334.3 316 334 330 C 333.7 344 333.2 366.7 333 374 C 334 377 336 377 337 374 C 338.5 366.7 343.3 344 346 330 C 348.7 316 350.5 302.2 353 290 C 355.5 277.8 359.2 269.2 361 257 C 362.8 244.8 361.5 231.3 364 217 C 366.5 202.7 374.2 182 376 171 C 377.8 160 375.2 154.3 375 151 C 375 148 355 148 355 151 Z"/><path d="M 425 151 C 424.8 154.5 422.2 160.8 424 172 C 425.8 183.2 433.5 203.7 436 218 C 438.5 232.3 437.2 245.8 439 258 C 440.8 270.2 444.5 278.8 447 291 C 449.5 303.2 451.3 317 454 331 C 456.7 345 461.5 367.7 463 375 C 464 378 466 378 467 375 C 466.8 367.7 466.3 345 466 331 C 465.7 317 465.5 303.2 465 291 C 464.5 278.8 463.5 270.2 463 258 C 462.5 245.8 463.5 232.3 462 218 C 460.5 203.7 456.8 183.2 454 172 C 451.2 160.8 446.5 154.5 445 151 C 445 148 425 148 425 151 Z"/><path d="M 351 180 C 348 168 350 151 359 138 C 369 126 386 122 399 127 C 410 123 426 126 438 139 C 448 151 451 169 449 181 C 442 175 438 169 432 164 C 422 157 411 154 400 148 C 391 154 380 157 371 164 C 362 170 358 176 351 180 Z"/></clipPath>
     <clipPath id="hair-volume-clip-shag-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 355 151 C 353.5 154.3 348.8 160.3 346 171 C 343.2 181.7 338.8 202.3 338 215 C 337.2 227.7 341.8 236.7 341 247 C 340.2 257.3 335 266.5 333 277 C 331 287.5 328.3 299.8 329 310 C 329.7 320.2 336.1 329.5 337 338 C 337.9 346.5 334.7 357.2 334.2 361 C 335 364 337 364 337.8 361 C 339.3 357.2 345.8 346.5 347 338 C 348.2 329.5 343.7 320.2 345 310 C 346.3 299.8 351.3 287.5 355 277 C 358.7 266.5 365.5 257.3 367 247 C 368.5 236.7 362.5 227.7 364 215 C 365.5 202.3 374.2 181.7 376 171 C 377.8 160.3 375.2 154.3 375 151 C 375 148 355 148 355 151 Z"/><path d="M 425 151 C 424.8 153.5 422.2 156.2 424 166 C 425.8 175.8 434.5 197.3 436 210 C 437.5 222.7 431.5 231.7 433 242 C 434.5 252.3 441.3 261.5 445 272 C 448.7 282.5 453.7 294.8 455 305 C 456.3 315.2 451.8 324.5 453 333 C 454.2 341.5 460.7 352.2 462.2 356 C 463 359 465 359 465.8 356 C 465.3 352.2 462.1 341.5 463 333 C 463.9 324.5 470.3 315.2 471 305 C 471.7 294.8 469 282.5 467 272 C 465 261.5 459.8 252.3 459 242 C 458.2 231.7 462.8 222.7 462 210 C 461.2 197.3 456.8 175.8 454 166 C 451.2 156.2 446.5 153.5 445 151 C 445 148 425 148 425 151 Z"/><path d="M 352 176 C 344 136, 366 106, 400 104 C 434 106, 456 136, 448 176 C 434 162, 416 156, 400 158 C 384 156, 366 162, 352 176 Z"/></clipPath>
     <clipPath id="hair-volume-clip-locs-bun-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/><ellipse cx="400" cy="160" rx="40" ry="11"/><ellipse cx="400" cy="96" rx="29" ry="22"/></clipPath>
+    <!-- Interior shading plates stay inside their own foreground hair silhouette; the foreground hairline clone would otherwise paint them over the face. -->
+    <clipPath id="hair-plate-clip-bantu-knots-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 350 178 C 348 146, 370 120, 400 118 C 430 120, 452 146, 450 178 C 436 164, 418 157, 400 158 C 382 157, 364 164, 350 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-clean-taper-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 174 C 352 148, 369 126, 400 122 C 431 126, 448 148, 446 174 C 432 165, 418 160, 400 160 C 382 160, 368 165, 354 174 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-coils-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 343 178 C 337 175 339 169 336 165 C 331 162 333 154 337 152 C 331 148 335 139 340 138 C 337 133 339 126 346 126 C 343 118 351 112 357 116 C 359 107 367 108 372 111 C 375 103 384 104 388 109 C 394 101 403 104 405 110 C 412 103 422 107 423 115 C 431 111 440 117 438 124 C 446 122 452 130 449 137 C 457 139 459 146 453 151 C 459 157 458 164 452 167 C 455 173 450 180 445 178 C 439 179 435 174 434 170 C 429 174 422 171 421 167 C 415 173 408 174 405 170 C 399 176 390 175 387 170 C 381 175 372 171 369 169 C 363 174 359 172 356 176 C 352 181 346 184 343 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-crew-cut-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 348 178 C 340 140, 363 126, 400 122 C 437 126, 460 140, 452 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 348 178 Z"/><path d="M 350 178 C 347 162 351 148 360 140 C 366 134 373 133 378 134 C 382 128 389 125 396 127 C 402 122 411 124 416 130 C 424 131 432 137 438 149 C 445 160 448 169 444 178 C 435 168 421 164 409 166 C 404 170 397 170 391 166 C 377 166 362 170 350 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-curtain-bangs-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 352 176 C 342 134, 366 103, 400 101 C 434 103, 458 134, 448 176 C 434 162, 418 156, 402 158 C 386 156, 368 162, 352 176 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-fade-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 348 178 C 340 140, 363 120, 400 116 C 437 120, 460 140, 452 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 348 178 Z"/><path d="M 350 178 C 345 154, 352 143, 360 132 C 366 124, 373 127, 375 134 C 380 118, 390 118, 394 131 C 400 113, 410 115, 413 132 C 419 122, 430 129, 438 143 C 447 157, 451 164, 444 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 350 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-ivy-league-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 350 178 C 345 154, 352 139, 360 128 C 366 120, 373 123, 375 130 C 380 114, 390 114, 394 127 C 400 109, 410 111, 413 128 C 419 118, 430 125, 438 139 C 447 153, 451 164, 444 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 350 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-low-pony-bangs-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/><path d="M 446 178 C 442 184 432 192 426 196 C 422 200 426 206 434 206 C 442 206 448 200 448 188 C 448 182 448 178 446 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-neat-straight-fringe-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 352 176 C 346 143, 366 113, 400 111 C 434 113, 454 143, 448 176 C 436 164, 420 158, 400 158 C 380 158, 364 164, 352 176 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-pixie-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 151, 364 124, 398 120 C 434 124, 452 150, 446 178 C 434 164, 418 158, 402 158 C 388 158, 374 161, 364 167 C 358 171, 356 175, 354 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-pompadour-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 356 178 C 350 150, 368 126, 400 122 C 432 126, 450 150, 444 178 C 432 164, 416 158, 400 158 C 384 158, 368 164, 356 178 Z"/><path d="M 358 156 C 368 124, 386 98, 410 96 C 432 98, 446 116, 440 138 C 428 128, 410 126, 394 136 C 382 144, 370 154, 358 156 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-shag-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 352 176 C 344 136, 366 106, 400 104 C 434 106, 456 136, 448 176 C 434 162, 416 156, 400 158 C 384 156, 366 162, 352 176 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-short-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 349 179 C 343 165 344 145 351 133 C 357 121 369 116 378 117 C 387 107 402 108 409 116 C 420 109 437 121 440 134 C 450 143 451 163 446 178 C 440 175 437 168 435 159 C 433 164 428 168 424 168 C 427 161 427 153 424 148 C 420 157 413 163 405 165 C 408 160 409 153 406 149 C 399 160 389 168 380 171 C 383 165 386 158 386 154 C 376 163 365 169 358 178 C 355 184 350 185 349 179 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-sleek-bob-bangs-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 352 176 C 344 136, 366 106, 400 104 C 434 106, 456 136, 448 176 C 434 162, 416 156, 400 158 C 384 156, 366 162, 352 176 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-slick-back-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 350 178 C 345 154, 352 139, 360 128 C 366 120, 373 123, 375 130 C 380 114, 390 114, 394 127 C 400 109, 410 111, 413 128 C 419 118, 430 125, 438 139 C 447 153, 451 164, 444 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 350 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-soft-bangs-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 352 176 C 344 136, 366 106, 400 104 C 434 106, 456 136, 448 176 C 434 162, 416 156, 400 158 C 384 156, 366 162, 352 176 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-soft-crop-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 350 178 C 345 161 348 144 356 133 C 365 120 377 117 389 119 C 400 112 415 117 421 123 C 436 125 447 144 448 160 C 449 168 447 174 444 178 C 438 175 435 167 433 161 C 429 167 424 169 419 168 C 422 163 422 157 420 153 C 415 161 407 168 400 169 C 404 164 405 158 403 155 C 396 162 386 167 378 168 C 381 163 382 159 382 157 C 370 165 360 173 354 180 C 352 181 351 180 350 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-soft-rounded-fringe-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 348 178 C 343 154, 350 139, 360 128 C 366 120, 373 123, 375 130 C 380 114, 390 114, 394 127 C 400 109, 410 111, 413 128 C 419 118, 430 125, 438 139 C 447 153, 451 164, 446 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 348 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-soft-two-block-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 348 176 C 342 145, 358 119, 382 112 C 390 109, 396 110, 400 114 C 404 110, 410 109, 418 112 C 442 119, 458 145, 452 176 C 440 166, 424 160, 400 160 C 376 160, 360 166, 348 176 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-straight-fringe-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 348 178 C 343 154, 350 137, 360 126 C 366 118, 373 121, 375 128 C 380 112, 390 112, 394 125 C 400 107, 410 109, 413 126 C 419 116, 430 123, 438 137 C 447 151, 451 164, 446 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 348 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-undercut-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 352 178 C 344 140, 363 120, 400 116 C 437 120, 456 140, 448 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 352 178 Z"/><path d="M 354 178 C 349 154, 356 143, 360 132 C 366 124, 373 127, 375 134 C 380 118, 390 118, 394 131 C 400 113, 410 115, 413 132 C 419 122, 430 129, 438 143 C 447 157, 451 164, 440 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 354 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-wispy-crop-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 350 179 C 345 164 346 146 355 132 C 363 121 374 119 384 120 C 386 114 396 112 403 119 C 413 115 423 120 427 128 C 441 132 449 154 447 171 C 447 175 445 178 443 179 C 438 176 435 169 433 165 C 426 170 421 171 419 168 C 418 166 420 162 420 160 C 412 164 406 174 400 175 C 397 174 398 170 398 167 C 390 169 385 175 380 174 C 378 173 380 169 381 167 C 369 169 361 176 356 181 C 353 183 351 182 350 179 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-braided-bun-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-braided-pony-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/><path d="M 446 174 C 440 168 426 168 420 174 C 420 182 426 188 434 188 C 442 188 446 184 446 174 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-bun-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-claw-clip-updo-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/><path d="M 386 142 C 378 126, 382 112, 392 102 C 382 92, 390 78, 402 84 C 410 72, 424 80, 420 94 C 434 102, 428 120, 416 126 C 410 134, 408 142, 410 150 C 402 154, 392 152, 386 142 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-half-up-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/><path d="M 381 116 C 377 106, 383 96, 393 94 C 400 86, 412 90, 414 100 C 424 105, 422 117, 412 122 C 402 127, 387 124, 381 116 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-high-pony-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/><path d="M 438 130 C 430 124 416 124 410 130 C 408 138 412 146 422 148 C 432 148 442 142 444 134 C 444 130 442 128 438 130 Z"/><path d="M 432 130 C 446 134 460 146 470 168 C 478 192 482 224 478 258 C 474 284 466 300 458 308 C 454 312 446 310 446 304 C 448 286 452 266 452 244 C 452 214 448 188 442 168 C 438 152 434 140 432 132 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-locs-bun-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-low-bun-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-low-twist-bun-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/><path d="M 432 145 C 440 134, 458 132, 468 144 C 478 156, 472 176, 458 182 C 446 186, 432 178, 428 166 C 426 158, 428 151, 432 145 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-messy-bun-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/><path d="M 378 104 C 370 94, 378 84, 390 88 C 390 76, 404 72, 410 82 C 420 76, 432 86, 426 98 C 438 106, 430 120, 418 118 C 410 126, 394 124, 390 116 C 380 118, 372 112, 378 104 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-middle-part-flow-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 348 178 C 343 154, 350 135, 360 124 C 366 116, 373 119, 375 126 C 380 110, 390 110, 394 123 C 400 105, 410 107, 413 124 C 419 114, 430 121, 438 135 C 447 149, 451 164, 446 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 348 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-neat-side-swept-fringe-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 348 178 C 343 154, 350 135, 360 124 C 366 116, 373 119, 375 126 C 380 110, 390 110, 394 123 C 400 105, 410 107, 413 124 C 419 114, 430 121, 438 135 C 447 149, 451 164, 446 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 348 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-pigtails-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/><path d="M 354 174 C 360 168 374 168 380 174 C 380 182 374 188 366 188 C 358 188 354 184 354 174 Z"/><path d="M 446 174 C 440 168 426 168 420 174 C 420 182 426 188 434 188 C 442 188 446 184 446 174 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-ponytail-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/><path d="M 446 174 C 440 168 426 168 420 174 C 420 182 426 188 434 188 C 442 188 446 184 446 174 Z"/><path d="M 446 178 C 458 188 466 212 470 244 C 474 280 472 314 464 348 C 460 362 456 368 452 370 C 448 372 444 368 444 362 C 446 334 450 306 450 276 C 450 242 446 214 442 196 C 440 188 440 180 446 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-side-parted-short-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 350 178 C 345 154, 352 137, 360 126 C 366 118, 373 121, 375 128 C 380 112, 390 112, 394 125 C 400 107, 410 109, 413 126 C 419 116, 430 123, 438 137 C 447 151, 451 164, 444 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 350 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-sleek-low-pony-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/><path d="M 446 178 C 442 184 432 192 426 196 C 422 200 426 206 434 206 C 442 206 448 200 448 188 C 448 182 448 178 446 178 Z"/><path d="M 442 198 C 450 208 458 230 460 258 C 462 290 460 320 454 348 C 451 360 448 366 446 366 C 442 368 440 364 442 358 C 444 332 446 306 446 280 C 446 252 444 230 440 214 C 438 206 438 200 442 198 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-space-buns-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-textured-fringe-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 346 178 C 341 154, 348 133, 360 122 C 366 114, 373 117, 375 124 C 380 108, 390 108, 394 121 C 400 103, 410 105, 413 122 C 419 112, 430 119, 438 133 C 447 147, 451 164, 448 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 346 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-thick-side-swept-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 344 178 C 339 154, 346 129, 360 118 C 366 110, 373 113, 375 120 C 380 104, 390 104, 394 117 C 400 99, 410 101, 413 118 C 419 108, 430 115, 438 129 C 447 143, 451 164, 450 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 344 178 Z"/></clipPath>
+    <clipPath id="hair-plate-clip-top-knot-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z"/><path d="M 390 112 C 388 104, 390 96, 394 90 C 386 82, 392 70, 402 72 C 410 68, 418 76, 414 86 C 422 92, 418 104, 410 108 C 409 112, 409 115, 410 118 C 404 122, 396 120, 390 112 Z"/></clipPath>
     <linearGradient id="facial-hair-grad-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="365" y1="208" x2="432" y2="258">
       <stop offset="0" stop-color="color-mix(in srgb, var(--hero-facial-hair-light, var(--hero-hair-light, #4a3220)) 30%, var(--hero-facial-hair, var(--hero-hair, #1f140c)))"/>
       <stop offset=".4" stop-color="var(--hero-facial-hair, var(--hero-hair, #1f140c))"/>
@@ -3545,7 +3588,7 @@
       <g data-hero-slot="hair" data-hero-option="short">
         <!-- Continuous silhouette; asymmetric clumps carry the texture at thumbnail size. -->
         <path d="M 349 179 C 343 165 344 145 351 133 C 357 121 369 116 378 117 C 387 107 402 108 409 116 C 420 109 437 121 440 134 C 450 143 451 163 446 178 C 440 175 437 168 435 159 C 433 164 428 168 424 168 C 427 161 427 153 424 148 C 420 157 413 163 405 165 C 408 160 409 153 406 149 C 399 160 389 168 380 171 C 383 165 386 158 386 154 C 376 163 365 169 358 178 C 355 184 350 185 349 179 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.72" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M 420 116 C 440 132 448 153 442 174 C 434 166 426 163 414 165 C 426 148 429 133 420 116 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-short-{{ hero_variant }})"><path d="M 420 116 C 440 132 448 153 442 174 C 434 166 426 163 414 165 C 426 148 429 133 420 116 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/></g>
         <path d="M 354 149 C 359 128 381 115 404 117 C 414 118 420 124 421 131 C 404 126 389 132 377 139 C 367 145 360 149 354 149 Z" fill="url(#hair-comic-highlight-{{ hero_variant }})" opacity=".62"/>
 
 
@@ -3568,7 +3611,7 @@
       <g data-hero-slot="hair" data-hero-option="soft-crop" display="none">
         <!-- Continuous silhouette; asymmetric clumps carry the texture at thumbnail size. -->
         <path d="M 350 178 C 345 161 348 144 356 133 C 365 120 377 117 389 119 C 400 112 415 117 421 123 C 436 125 447 144 448 160 C 449 168 447 174 444 178 C 438 175 435 167 433 161 C 429 167 424 169 419 168 C 422 163 422 157 420 153 C 415 161 407 168 400 169 C 404 164 405 158 403 155 C 396 162 386 167 378 168 C 381 163 382 159 382 157 C 370 165 360 173 354 180 C 352 181 351 180 350 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.72" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M 420 116 C 440 132 448 153 442 174 C 434 166 426 163 414 165 C 426 148 429 133 420 116 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-soft-crop-{{ hero_variant }})"><path d="M 420 116 C 440 132 448 153 442 174 C 434 166 426 163 414 165 C 426 148 429 133 420 116 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/></g>
         <path d="M 354 149 C 359 128 381 115 404 117 C 414 118 420 124 421 131 C 404 126 389 132 377 139 C 367 145 360 149 354 149 Z" fill="url(#hair-comic-highlight-{{ hero_variant }})" opacity=".62"/>
 
 
@@ -3610,7 +3653,7 @@
       <g data-hero-slot="hair" data-hero-option="wispy-crop" display="none">
         <!-- Continuous silhouette; asymmetric clumps carry the texture at thumbnail size. -->
         <path d="M 350 179 C 345 164 346 146 355 132 C 363 121 374 119 384 120 C 386 114 396 112 403 119 C 413 115 423 120 427 128 C 441 132 449 154 447 171 C 447 175 445 178 443 179 C 438 176 435 169 433 165 C 426 170 421 171 419 168 C 418 166 420 162 420 160 C 412 164 406 174 400 175 C 397 174 398 170 398 167 C 390 169 385 175 380 174 C 378 173 380 169 381 167 C 369 169 361 176 356 181 C 353 183 351 182 350 179 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.72" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M 420 116 C 440 132 448 153 442 174 C 434 166 426 163 414 165 C 426 148 429 133 420 116 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-wispy-crop-{{ hero_variant }})"><path d="M 420 116 C 440 132 448 153 442 174 C 434 166 426 163 414 165 C 426 148 429 133 420 116 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/></g>
         <path d="M 354 149 C 359 128 381 115 404 117 C 414 118 420 124 421 131 C 404 126 389 132 377 139 C 367 145 360 149 354 149 Z" fill="url(#hair-comic-highlight-{{ hero_variant }})" opacity=".62"/>
         <path d="M 356 146 C 364 131 380 123 393 125 M 378 154 C 389 143 399 132 408 128 M 416 155 C 426 146 430 139 430 134" fill="none" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity=".34"/>
 
@@ -3627,12 +3670,11 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="clean-taper" display="none">
-        <path d="M 352 178 C 346 148, 366 124, 400 120 C 434 124, 454 148, 448 178 C 436 170, 420 166, 400 166 C 380 166, 364 170, 352 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".46"/>
         <path d="M 354 174 C 352 148, 369 126, 400 122 C 431 126, 448 148, 446 174 C 432 165, 418 160, 400 160 C 382 160, 368 165, 354 174 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.72" stroke-linejoin="round"/>
-        <path d="M 354 151 C 358 139, 364 132, 372 128 C 371 142, 370 157, 368 171 C 362 172, 358 174, 354 176 Z M 446 151 C 442 139, 436 132, 428 128 C 429 142, 430 157, 432 171 C 438 172, 442 174, 446 176 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".72"/>
-        <path d="M 370 139 C 380 121, 406 116, 432 130 C 414 129, 394 136, 377 151 C 372 155, 368 155, 366 152 C 366 147, 367 143, 370 139 Z" fill="color-mix(in srgb, var(--hero-hair-light, #4a3220) 58%, var(--hero-hair, #1f140c))" opacity=".46"/>
-        <path d="M 374 132 C 390 122, 414 123, 430 132 M 372 148 C 390 137, 414 138, 430 146 M 356 158 L 369 157 M 444 158 L 431 157" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
-        <path d="M 380 126 C 394 121, 414 123, 426 130" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-clean-taper-{{ hero_variant }})"><path d="M 354 151 C 358 139, 364 132, 372 128 C 371 142, 370 157, 368 171 C 362 172, 358 174, 354 176 Z M 446 151 C 442 139, 436 132, 428 128 C 429 142, 430 157, 432 171 C 438 172, 442 174, 446 176 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".72"/></g>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-clean-taper-{{ hero_variant }})"><path d="M 370 139 C 380 121, 406 116, 432 130 C 414 129, 394 136, 377 151 C 372 155, 368 155, 366 152 C 366 147, 367 143, 370 139 Z" fill="color-mix(in srgb, var(--hero-hair-light, #4a3220) 58%, var(--hero-hair, #1f140c))" opacity=".46"/></g>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-clean-taper-{{ hero_variant }})"><path d="M 374 132 C 390 122, 414 123, 430 132 M 372 148 C 390 137, 414 138, 430 146 M 356 158 L 369 157 M 444 158 L 431 157" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/></g>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-clean-taper-{{ hero_variant }})"><path d="M 380 126 C 394 121, 414 123, 426 130" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/></g>
 
         <path d="M 376 140 C 380 133 387 129 394 129 M 422 145 C 426 149 429 154 430 157" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round" opacity=".3"/>
         <path d="M 384 134 C 389 131 394 130 398 131 M 371 145 C 373 142 375 140 377 139" fill="none" stroke="var(--hero-hair-specular, #98785d)" stroke-width=".95" stroke-linecap="round" stroke-linejoin="round" opacity=".38"/>
@@ -3685,12 +3727,11 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="textured-fringe" display="none">
-        <path d="M 344 178 C 336 140, 363 110, 400 106 C 437 110, 464 140, 456 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 344 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".4"/>
         <path d="M 346 178 C 341 154, 348 133, 360 122 C 366 114, 373 117, 375 124 C 380 108, 390 108, 394 121 C 400 103, 410 105, 413 122 C 419 112, 430 119, 438 133 C 447 147, 451 164, 448 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 346 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
         <path d="M 358 164 C 372 154, 389 151, 401 154 C 416 152, 433 157, 444 168 C 432 157, 416 151, 400 151 C 384 149, 371 153, 363 159 C 360 161, 358 163, 358 164 Z" fill="var(--hero-hair, #1f140c)" opacity=".38"/>
         <path d="M 365 132 C 376 121, 388 118, 397 123 C 405 119, 418 123, 429 134 C 416 126, 404 126, 391 130 C 380 134, 371 136, 365 132 Z" fill="color-mix(in srgb, var(--hero-hair-light, #4a3220) 58%, var(--hero-hair, #1f140c))" opacity=".56"/>
         <path d="M 370 126 C 386 116, 410 118, 426 128 M 366 150 C 380 142, 392 140, 400 146 C 410 140, 424 144, 436 152" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .4)"/>
-        <path d="M 372 120 C 388 114, 412 115, 428 122" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-textured-fringe-{{ hero_variant }})"><path d="M 372 120 C 388 114, 412 115, 428 122" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/></g>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
 
         <path d="M 377 136 C 374 145 376 155 381 161 M 405 132 C 401 142 403 151 408 161" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round" opacity=".3"/>
@@ -3704,11 +3745,10 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="straight-fringe" display="none">
-        <path d="M 346 178 C 338 140, 363 114, 400 110 C 437 114, 462 140, 454 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 346 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".4"/>
         <path d="M 348 178 C 343 154, 350 137, 360 126 C 366 118, 373 121, 375 128 C 380 112, 390 112, 394 125 C 400 107, 410 109, 413 126 C 419 116, 430 123, 438 137 C 447 151, 451 164, 446 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 348 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
-        <path d="M 354 150 C 374 134, 426 134, 446 150 C 442 164, 425 169, 400 167 C 375 169, 358 164, 354 150 Z" fill="var(--hero-hair, #1f140c)" opacity=".42"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-straight-fringe-{{ hero_variant }})"><path d="M 354 150 C 374 134, 426 134, 446 150 C 442 164, 425 169, 400 167 C 375 169, 358 164, 354 150 Z" fill="var(--hero-hair, #1f140c)" opacity=".42"/></g>
         <path d="M 360 160 C 378 154, 422 154, 440 160" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.75" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .38)"/>
-        <path d="M 372 124 C 388 118, 412 119, 428 126" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-straight-fringe-{{ hero_variant }})"><path d="M 372 124 C 388 118, 412 119, 428 126" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/></g>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
 
         <path d="M 380 140 C 378 147 379 156 381 161 M 413 143 C 415 151 417 157 419 161" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round" opacity=".3"/>
@@ -3720,9 +3760,8 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="neat-straight-fringe" display="none">
-        <path d="M 348 178 C 340 140, 363 118, 400 114 C 437 118, 460 140, 452 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 348 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".4"/>
         <path d="M 352 176 C 346 143, 366 113, 400 111 C 434 113, 454 143, 448 176 C 436 164, 420 158, 400 158 C 380 158, 364 164, 352 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
-        <path d="M 354 150 C 374 134, 426 134, 446 150 C 442 164, 425 169, 400 167 C 375 169, 358 164, 354 150 Z" fill="var(--hero-hair, #1f140c)" opacity=".42"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-neat-straight-fringe-{{ hero_variant }})"><path d="M 354 150 C 374 134, 426 134, 446 150 C 442 164, 425 169, 400 167 C 375 169, 358 164, 354 150 Z" fill="var(--hero-hair, #1f140c)" opacity=".42"/></g>
         <path d="M 360 160 C 378 154, 422 154, 440 160" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.75" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .38)"/>
         <path d="M 372 128 C 388 122, 412 123, 428 130" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
@@ -3736,12 +3775,11 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="soft-rounded-fringe" display="none">
-        <path d="M 346 178 C 338 140, 363 116, 400 112 C 437 116, 462 140, 454 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 346 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".4"/>
         <path d="M 348 178 C 343 154, 350 139, 360 128 C 366 120, 373 123, 375 130 C 380 114, 390 114, 394 127 C 400 109, 410 111, 413 128 C 419 118, 430 125, 438 139 C 447 153, 451 164, 446 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 348 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
         <path d="M 358 164 C 372 154, 389 151, 401 154 C 416 152, 433 157, 444 168 C 432 157, 416 151, 400 151 C 384 149, 371 153, 363 159 C 360 161, 358 163, 358 164 Z" fill="var(--hero-hair, #1f140c)" opacity=".38"/>
-        <path d="M 365 132 C 376 121, 388 118, 397 123 C 405 119, 418 123, 429 134 C 416 126, 404 126, 391 130 C 380 134, 371 136, 365 132 Z" fill="color-mix(in srgb, var(--hero-hair-light, #4a3220) 58%, var(--hero-hair, #1f140c))" opacity=".56"/>
-        <path d="M 370 126 C 386 116, 410 118, 426 128 M 366 150 C 380 142, 392 140, 400 146 C 410 140, 424 144, 436 152" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .4)"/>
-        <path d="M 372 126 C 388 120, 412 121, 428 128" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-soft-rounded-fringe-{{ hero_variant }})"><path d="M 365 132 C 376 121, 388 118, 397 123 C 405 119, 418 123, 429 134 C 416 126, 404 126, 391 130 C 380 134, 371 136, 365 132 Z" fill="color-mix(in srgb, var(--hero-hair-light, #4a3220) 58%, var(--hero-hair, #1f140c))" opacity=".56"/></g>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-soft-rounded-fringe-{{ hero_variant }})"><path d="M 370 126 C 386 116, 410 118, 426 128 M 366 150 C 380 142, 392 140, 400 146 C 410 140, 424 144, 436 152" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .4)"/></g>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-soft-rounded-fringe-{{ hero_variant }})"><path d="M 372 126 C 388 120, 412 121, 428 128" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/></g>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
 
         <path d="M 377 137 C 374 146 377 155 382 160 M 409 138 C 409 147 414 157 420 161" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round" opacity=".3"/>
@@ -3755,11 +3793,10 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="side-parted-short" display="none">
-        <path d="M 348 178 C 340 140, 363 114, 400 110 C 437 114, 460 140, 452 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 348 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".4"/>
         <path d="M 350 178 C 345 154, 352 137, 360 126 C 366 118, 373 121, 375 128 C 380 112, 390 112, 394 125 C 400 107, 410 109, 413 126 C 419 116, 430 123, 438 137 C 447 151, 451 164, 444 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 350 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
         <path d="M 358 154 C 372 124, 402 110, 438 134 C 418 129, 394 136, 375 152 C 367 158, 361 164, 356 170 C 355 164, 355 158, 358 154 Z" fill="var(--hero-hair, #1f140c)" opacity=".46"/>
-        <path d="M 378 126 C 397 116, 420 119, 434 130 M 374 145 C 397 134, 421 136, 438 148" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.85" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
-        <path d="M 372 124 C 388 118, 412 119, 428 126" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-side-parted-short-{{ hero_variant }})"><path d="M 378 126 C 397 116, 420 119, 434 130 M 374 145 C 397 134, 421 136, 438 148" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.85" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/></g>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-side-parted-short-{{ hero_variant }})"><path d="M 372 124 C 388 118, 412 119, 428 126" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/></g>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
 
         <path d="M 418 133 C 407 135 398 141 390 148 M 421 140 C 427 146 432 154 434 161" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round" opacity=".3"/>
@@ -3773,11 +3810,10 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="neat-side-swept-fringe" display="none">
-        <path d="M 346 178 C 338 140, 363 112, 400 108 C 437 112, 462 140, 454 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 346 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".4"/>
         <path d="M 348 178 C 343 154, 350 135, 360 124 C 366 116, 373 119, 375 126 C 380 110, 390 110, 394 123 C 400 105, 410 107, 413 124 C 419 114, 430 121, 438 135 C 447 149, 451 164, 446 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 348 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
         <path d="M 358 154 C 372 124, 402 110, 438 134 C 418 129, 394 136, 375 152 C 367 158, 361 164, 356 170 C 355 164, 355 158, 358 154 Z" fill="var(--hero-hair, #1f140c)" opacity=".46"/>
-        <path d="M 378 126 C 397 116, 420 119, 434 130 M 374 145 C 397 134, 421 136, 438 148" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.85" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
-        <path d="M 372 122 C 388 116, 412 117, 428 124" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-neat-side-swept-fringe-{{ hero_variant }})"><path d="M 378 126 C 397 116, 420 119, 434 130 M 374 145 C 397 134, 421 136, 438 148" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.85" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/></g>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-neat-side-swept-fringe-{{ hero_variant }})"><path d="M 372 122 C 388 116, 412 117, 428 124" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/></g>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
 
         <path d="M 419 131 C 406 135 395 144 387 153 M 425 143 C 430 149 433 155 434 161" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round" opacity=".3"/>
@@ -3791,11 +3827,10 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="thick-side-swept" display="none">
-        <path d="M 342 178 C 334 140, 363 106, 400 102 C 437 106, 466 140, 458 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 342 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".4"/>
         <path d="M 344 178 C 339 154, 346 129, 360 118 C 366 110, 373 113, 375 120 C 380 104, 390 104, 394 117 C 400 99, 410 101, 413 118 C 419 108, 430 115, 438 129 C 447 143, 451 164, 450 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 344 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
         <path d="M 358 154 C 372 124, 402 110, 438 134 C 418 129, 394 136, 375 152 C 367 158, 361 164, 356 170 C 355 164, 355 158, 358 154 Z" fill="var(--hero-hair, #1f140c)" opacity=".46"/>
         <path d="M 378 126 C 397 116, 420 119, 434 130 M 374 145 C 397 134, 421 136, 438 148" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.85" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
-        <path d="M 372 116 C 388 110, 412 111, 428 118" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-thick-side-swept-{{ hero_variant }})"><path d="M 372 116 C 388 110, 412 111, 428 118" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/></g>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
 
         <path d="M 422 127 C 408 128 391 137 382 149 M 427 140 C 433 148 436 155 437 163" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round" opacity=".3"/>
@@ -3809,11 +3844,10 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="ivy-league" display="none">
-        <path d="M 348 178 C 340 140, 363 116, 400 112 C 437 116, 460 140, 452 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 348 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".4"/>
         <path d="M 350 178 C 345 154, 352 139, 360 128 C 366 120, 373 123, 375 130 C 380 114, 390 114, 394 127 C 400 109, 410 111, 413 128 C 419 118, 430 125, 438 139 C 447 153, 451 164, 444 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 350 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
-        <path d="M 358 154 C 372 124, 402 110, 438 134 C 418 129, 394 136, 375 152 C 367 158, 361 164, 356 170 C 355 164, 355 158, 358 154 Z" fill="var(--hero-hair, #1f140c)" opacity=".46"/>
-        <path d="M 378 126 C 397 116, 420 119, 434 130 M 374 145 C 397 134, 421 136, 438 148" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.85" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
-        <path d="M 372 126 C 388 120, 412 121, 428 128" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-ivy-league-{{ hero_variant }})"><path d="M 358 154 C 372 124, 402 110, 438 134 C 418 129, 394 136, 375 152 C 367 158, 361 164, 356 170 C 355 164, 355 158, 358 154 Z" fill="var(--hero-hair, #1f140c)" opacity=".46"/></g>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-ivy-league-{{ hero_variant }})"><path d="M 378 126 C 397 116, 420 119, 434 130 M 374 145 C 397 134, 421 136, 438 148" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.85" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/></g>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-ivy-league-{{ hero_variant }})"><path d="M 372 126 C 388 120, 412 121, 428 128" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/></g>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
 
         <path d="M 419 135 C 409 136 398 143 390 151 M 427 145 C 431 150 433 155 434 160" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round" opacity=".3"/>
@@ -3827,9 +3861,8 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="soft-two-block" display="none">
-        <path d="M 344 178 C 336 142, 360 112, 400 108 C 440 112, 464 142, 456 178 C 442 168, 424 162, 400 162 C 376 162, 358 168, 344 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".44"/>
         <path d="M 348 176 C 342 145, 358 119, 382 112 C 390 109, 396 110, 400 114 C 404 110, 410 109, 418 112 C 442 119, 458 145, 452 176 C 440 166, 424 160, 400 160 C 376 160, 360 166, 348 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round"/>
-        <path d="M 350 154 C 360 142, 374 136, 394 136 C 393 148, 388 161, 378 174 C 368 171, 358 171, 348 176 C 350 168, 351 160, 350 154 Z M 450 154 C 440 142, 426 136, 406 136 C 407 148, 412 161, 422 174 C 432 171, 442 171, 452 176 C 450 168, 449 160, 450 154 Z" fill="var(--hero-hair, #1f140c)" opacity=".72"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-soft-two-block-{{ hero_variant }})"><path d="M 350 154 C 360 142, 374 136, 394 136 C 393 148, 388 161, 378 174 C 368 171, 358 171, 348 176 C 350 168, 351 160, 350 154 Z M 450 154 C 440 142, 426 136, 406 136 C 407 148, 412 161, 422 174 C 432 171, 442 171, 452 176 C 450 168, 449 160, 450 154 Z" fill="var(--hero-hair, #1f140c)" opacity=".72"/></g>
         <path d="M 362 126 C 378 116, 390 116, 400 124 C 410 116, 422 116, 438 126 M 360 145 C 374 137, 386 136, 397 142 M 440 145 C 426 137, 414 136, 403 142" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.75" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .44)"/>
         <path d="M 368 120 C 380 115, 390 116, 398 122 M 432 120 C 420 115, 410 116, 402 122" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
 
@@ -3846,11 +3879,10 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="middle-part-flow" display="none">
-        <path d="M 346 178 C 338 140, 363 112, 400 108 C 437 112, 462 140, 454 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 346 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".4"/>
         <path d="M 348 178 C 343 154, 350 135, 360 124 C 366 116, 373 119, 375 126 C 380 110, 390 110, 394 123 C 400 105, 410 107, 413 124 C 419 114, 430 121, 438 135 C 447 149, 451 164, 446 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 348 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
         <path d="M 358 150 C 374 124, 392 118, 399 132 C 407 118, 426 124, 442 150 C 426 142, 411 145, 400 160 C 389 145, 374 142, 358 150 Z" fill="var(--hero-hair, #1f140c)" opacity=".42"/>
         <path d="M 400 116 C 398 132, 398 148, 400 164 M 368 140 C 382 130, 392 130, 398 140 M 402 140 C 416 130, 428 132, 438 142" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.75" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .44)"/>
-        <path d="M 372 122 C 388 116, 412 117, 428 124" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-middle-part-flow-{{ hero_variant }})"><path d="M 372 122 C 388 116, 412 117, 428 124" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/></g>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
 
         <path d="M 393 136 C 385 140 377 148 373 158 M 408 137 C 417 141 425 149 430 158" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round" opacity=".3"/>
@@ -3866,11 +3898,10 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="slick-back" display="none">
-        <path d="M 348 178 C 340 140, 363 116, 400 112 C 437 116, 460 140, 452 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 348 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".4"/>
         <path d="M 350 178 C 345 154, 352 139, 360 128 C 366 120, 373 123, 375 130 C 380 114, 390 114, 394 127 C 400 109, 410 111, 413 128 C 419 118, 430 125, 438 139 C 447 153, 451 164, 444 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 350 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
-        <path d="M 364 146 C 378 124, 392 116, 400 116 C 408 116, 422 124, 436 146 C 418 138, 382 138, 364 146 Z" fill="var(--hero-hair, #1f140c)" opacity=".38"/>
-        <path d="M 372 132 C 390 122, 410 122, 428 132 M 370 146 C 390 137, 410 137, 430 146 M 372 158 C 390 151, 410 151, 428 158" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.7" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
-        <path d="M 372 126 C 388 120, 412 121, 428 128" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-slick-back-{{ hero_variant }})"><path d="M 364 146 C 378 124, 392 116, 400 116 C 408 116, 422 124, 436 146 C 418 138, 382 138, 364 146 Z" fill="var(--hero-hair, #1f140c)" opacity=".38"/></g>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-slick-back-{{ hero_variant }})"><path d="M 372 132 C 390 122, 410 122, 428 132 M 370 146 C 390 137, 410 137, 430 146 M 372 158 C 390 151, 410 151, 428 158" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.7" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/></g>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-slick-back-{{ hero_variant }})"><path d="M 372 126 C 388 120, 412 121, 428 128" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/></g>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
 
         <path d="M 377 145 C 382 134 390 128 396 126 M 413 131 C 421 140 425 148 427 157" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round" opacity=".3"/>
@@ -3888,7 +3919,7 @@
       <g data-hero-slot="hair" data-hero-option="fade" display="none">
         <path d="M 348 178 C 340 140, 363 120, 400 116 C 437 120, 460 140, 452 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 348 178 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
         <path d="M 350 178 C 345 154, 352 143, 360 132 C 366 124, 373 127, 375 134 C 380 118, 390 118, 394 131 C 400 113, 410 115, 413 132 C 419 122, 430 129, 438 143 C 447 157, 451 164, 444 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 350 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
-        <path d="M 360 166 C 376 156, 424 156, 440 166 C 432 174, 416 178, 400 178 C 384 178, 368 174, 360 166 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-fade-{{ hero_variant }})"><path d="M 360 166 C 376 156, 424 156, 440 166 C 432 174, 416 178, 400 178 C 384 178, 368 174, 360 166 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/></g>
         <path d="M 368 138 C 384 128, 416 128, 432 138 M 366 158 C 382 151, 418 151, 434 158" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .36)"/>
         <path d="M 372 130 C 388 124, 412 125, 428 132" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
 
@@ -3905,7 +3936,7 @@
       <g data-hero-slot="hair" data-hero-option="crew-cut" display="none">
         <path d="M 348 178 C 340 140, 363 126, 400 122 C 437 126, 460 140, 452 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 348 178 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
         <path d="M 350 178 C 347 162 351 148 360 140 C 366 134 373 133 378 134 C 382 128 389 125 396 127 C 402 122 411 124 416 130 C 424 131 432 137 438 149 C 445 160 448 169 444 178 C 435 168 421 164 409 166 C 404 170 397 170 391 166 C 377 166 362 170 350 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
-        <path d="M 360 166 C 376 156, 424 156, 440 166 C 432 174, 416 178, 400 178 C 384 178, 368 174, 360 166 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-crew-cut-{{ hero_variant }})"><path d="M 360 166 C 376 156, 424 156, 440 166 C 432 174, 416 178, 400 178 C 384 178, 368 174, 360 166 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/></g>
         <path d="M 368 138 C 384 128, 416 128, 432 138 M 366 158 C 382 151, 418 151, 434 158" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .36)"/>
         <path d="M 372 136 C 388 130, 412 131, 428 138" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
 
@@ -3920,7 +3951,6 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="buzz" display="none">
-        <path d="M 350 178 C 344 146, 362 116, 400 112 C 438 116, 456 146, 450 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 350 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".46"/>
         <path d="M 354 178 C 350 142, 370 112, 400 110 C 430 112, 450 142, 446 178 C 434 164, 418 158, 400 158 C 382 158, 366 164, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.71" stroke-linejoin="round" stroke-linecap="round" opacity=".84"/>
         <g clip-path="url(#comic-crown-hair-clip-{{ hero_variant }})">
           <path d="M 365 146 C 365 144 366 142 367 141 M 369 143 C 369 141 370 139 371 138 M 386 127 C 387 126 388 125 389 125 M 391 126 C 392 125 393 124 394 124 M 403 136 C 404 135 405 134 405 133 M 421 138 C 422 139 423 141 423 142 M 424 135 C 425 136 426 138 426 139 M 380 147 C 381 145 382 144 383 144" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width=".9" stroke-linecap="round" stroke-linejoin="round" opacity=".3"/>
@@ -4249,7 +4279,7 @@
 
 <path d="M 400 106 C 399 118, 399 132, 400 144" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".38" />
 
-<path d="M 354 148 C 375 131, 425 131, 446 148 C 443 159, 436 167, 424 170 C 414 162, 405 158, 400 160 C 392 157, 379 160, 362 170 C 357 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".7" />
+<g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-curtain-bangs-{{ hero_variant }})"><path d="M 354 148 C 375 131, 425 131, 446 148 C 443 159, 436 167, 424 170 C 414 162, 405 158, 400 160 C 392 157, 379 160, 362 170 C 357 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".7" /></g>
 
 <path d="M 366 126 C 382 116, 418 116, 434 126 C 420 121, 400 121, 380 124 C 373 126, 368 127, 366 126 Z" fill="color-mix(in srgb, var(--hero-hair-light, #4a3220) 58%, var(--hero-hair, #1f140c))" opacity=".5" />
 
@@ -4321,7 +4351,7 @@
 </g>
 <path d="M 352 176 C 344 136, 366 106, 400 104 C 434 106, 456 136, 448 176 C 434 162, 416 156, 400 158 C 384 156, 366 162, 352 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.71" stroke-linejoin="round" stroke-linecap="round" />
 
-<path d="M 354 148 C 375 131, 425 131, 446 148 C 443 159, 436 167, 424 170 C 414 162, 405 158, 400 160 C 392 157, 379 160, 362 170 C 357 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".7" />
+<g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-soft-bangs-{{ hero_variant }})"><path d="M 354 148 C 375 131, 425 131, 446 148 C 443 159, 436 167, 424 170 C 414 162, 405 158, 400 160 C 392 157, 379 160, 362 170 C 357 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".7" /></g>
 
 <path d="M 366 126 C 382 116, 418 116, 434 126 C 420 121, 400 121, 380 124 C 373 126, 368 127, 366 126 Z" fill="color-mix(in srgb, var(--hero-hair-light, #4a3220) 58%, var(--hero-hair, #1f140c))" opacity=".5" />
 
@@ -4493,7 +4523,7 @@
       <g data-hero-slot="hair" data-hero-option="coils" display="none">
         <!-- Continuous silhouette; asymmetric clumps carry the texture at thumbnail size. -->
         <path d="M 343 178 C 337 175 339 169 336 165 C 331 162 333 154 337 152 C 331 148 335 139 340 138 C 337 133 339 126 346 126 C 343 118 351 112 357 116 C 359 107 367 108 372 111 C 375 103 384 104 388 109 C 394 101 403 104 405 110 C 412 103 422 107 423 115 C 431 111 440 117 438 124 C 446 122 452 130 449 137 C 457 139 459 146 453 151 C 459 157 458 164 452 167 C 455 173 450 180 445 178 C 439 179 435 174 434 170 C 429 174 422 171 421 167 C 415 173 408 174 405 170 C 399 176 390 175 387 170 C 381 175 372 171 369 169 C 363 174 359 172 356 176 C 352 181 346 184 343 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.72" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M 421 111 C 445 121 459 143 455 172 C 445 178 435 165 425 167 C 438 145 432 127 421 111 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-coils-{{ hero_variant }})"><path d="M 421 111 C 445 121 459 143 455 172 C 445 178 435 165 425 167 C 438 145 432 127 421 111 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/></g>
         <path d="M 345 143 C 347 125 365 111 383 113 C 389 108 401 110 409 118 C 402 126 394 124 387 127 C 374 132 363 128 358 140 C 354 145 350 147 345 143 Z" fill="url(#hair-comic-highlight-{{ hero_variant }})" opacity=".28"/>
 
 
@@ -4873,7 +4903,7 @@
       <g data-hero-slot="hair" data-hero-option="braided-pony" display="none">
         <!-- Crown hair. -->
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round"/>
-        <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-braided-pony-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/></g>
         <!-- Connector panel: crown to gather. -->
         <path d="M 446 174 C 440 168 426 168 420 174 C 420 182 426 188 434 188 C 442 188 446 184 446 174 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.2" stroke-linejoin="round"/>
         <g data-hero-hair-layer="back">
@@ -4948,7 +4978,7 @@
       <g data-hero-slot="hair" data-hero-option="braided-bun" display="none">
         <!-- Crown hair (gathered toward the top). -->
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round"/>
-        <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-braided-bun-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/></g>
         <!-- Bun base ellipse. -->
         <ellipse cx="400" cy="96" rx="26" ry="18" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.67"/>
         <!-- Braid weave on bun: coiled braid pattern. -->
@@ -5285,7 +5315,7 @@
         <path d="M 358 121 C 365 127 377 121 375 114 M 389 106 C 397 113 410 106 410 99 M 423 119 C 429 126 440 121 439 115 M 377 140 C 382 145 391 140 390 135 M 409 139 C 414 145 423 141 423 136" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity=".34"/>
         <path d="M 359 115 C 362 109 369 108 372 112 M 390 101 C 395 94 403 94 406 97 M 376 136 C 378 132 382 131 385 132" fill="none" stroke="var(--hero-hair-specular, #98785d)" stroke-width=".95" stroke-linecap="round" stroke-linejoin="round" opacity=".38"/>
 
-        <path d="M 377 112 C 382 121 374 130 364 127 C 370 126 375 120 374 115 Z M 410 95 C 421 105 412 119 399 116 C 407 113 411 105 408 99 Z M 440 112 C 449 121 440 131 430 128 C 437 125 440 120 437 115 Z M 390 132 C 399 140 389 151 381 148 C 387 145 391 139 388 134 Z M 423 132 C 433 142 421 152 414 148 C 421 145 424 139 421 134 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".14"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-bantu-knots-{{ hero_variant }})"><path d="M 377 112 C 382 121 374 130 364 127 C 370 126 375 120 374 115 Z M 410 95 C 421 105 412 119 399 116 C 407 113 411 105 408 99 Z M 440 112 C 449 121 440 131 430 128 C 437 125 440 120 437 115 Z M 390 132 C 399 140 389 151 381 148 C 387 145 391 139 388 134 Z M 423 132 C 433 142 421 152 414 148 C 421 145 424 139 421 134 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".14"/></g>
 
         <g data-hero-hair-volume="bantu-knots" clip-path="url(#hair-volume-clip-bantu-knots-{{ hero_variant }})">
 <path d="M 360.61 118.16 C 360.94 111.31, 372.24 111.55, 378.08 120.6 C 374.96 107.55, 356.86 103.89, 355.79 117.84 Z" fill="url(#hair-lock-material-{{ hero_variant }})" opacity=".78"/>
@@ -5312,7 +5342,7 @@
       </g>
       <g data-hero-slot="hair" data-hero-option="bun" display="none">
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round"/>
-        <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-bun-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/></g>
 
         <ellipse cx="400" cy="96" rx="24" ry="17" fill="url(#hair-clump-material-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.67"/>
 
@@ -5334,7 +5364,7 @@
       </g>
       <g data-hero-slot="hair" data-hero-option="space-buns" display="none">
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round"/>
-        <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-space-buns-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/></g>
 
         <ellipse cx="360" cy="104" rx="22" ry="18" fill="url(#hair-clump-material-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.66"/>
         <ellipse cx="440" cy="104" rx="22" ry="18" fill="url(#hair-clump-material-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.66"/>
@@ -5366,7 +5396,7 @@
           <path d="M 437 184 C 440 179 445 177 449 178" fill="none" stroke="var(--hero-hair-specular, #98785d)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity=".4"/>
       </g>
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round"/>
-        <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-low-bun-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/></g>
         <path d="M 367 145 C 381 128 406 123 429 139 M 379 151 C 398 139 419 141 439 159 M 365 165 C 384 153 413 151 435 168" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
 
         <path d="M 406 136 C 419 142 430 151 437 161" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" opacity=".34"/>
@@ -5389,7 +5419,7 @@
       </g>
       <g data-hero-slot="hair" data-hero-option="low-twist-bun" display="none">
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round"/>
-        <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-low-twist-bun-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/></g>
         <path d="M 432 145 C 440 134, 458 132, 468 144 C 478 156, 472 176, 458 182 C 446 186, 432 178, 428 166 C 426 158, 428 151, 432 145 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.67" stroke-linejoin="round"/>
         <path d="M 438 148 C 450 140, 464 146, 466 158 C 466 170, 450 178, 438 170 C 430 164, 432 152, 444 148 C 454 146, 462 152, 460 160" stroke="var(--hero-hair-light, #4a3220)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".58"/>
         <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 382 154, 410 154, 434 164 M 420 134 C 432 140, 438 148, 438 158" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .44)"/>
@@ -5412,7 +5442,7 @@
       </g>
       <g data-hero-slot="hair" data-hero-option="messy-bun" display="none">
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round"/>
-        <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-messy-bun-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/></g>
         <path d="M 378 104 C 370 94, 378 84, 390 88 C 390 76, 404 72, 410 82 C 420 76, 432 86, 426 98 C 438 106, 430 120, 418 118 C 410 126, 394 124, 390 116 C 380 118, 372 112, 378 104 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.67" stroke-linejoin="round"/>
         <path d="M 384 102 C 394 88, 414 86, 422 100 M 388 112 C 400 104, 414 106, 420 114" stroke="var(--hero-hair-light, #4a3220)" stroke-width="2.1" fill="none" stroke-linecap="round" opacity=".56"/>
         <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 376 157, 388 154, 400 156 C 412 154, 424 157, 438 166 M 378 106 C 368 102, 362 106, 360 114 M 426 96 C 438 92, 444 98, 442 108 M 370 150 C 360 144, 354 148, 352 156" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .48)"/>
@@ -5439,7 +5469,7 @@
       </g>
       <g data-hero-slot="hair" data-hero-option="claw-clip-updo" display="none">
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round"/>
-        <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-claw-clip-updo-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/></g>
         <path d="M 386 142 C 378 126, 382 112, 392 102 C 382 92, 390 78, 402 84 C 410 72, 424 80, 420 94 C 434 102, 428 120, 416 126 C 410 134, 408 142, 410 150 C 402 154, 392 152, 386 142 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.67" stroke-linejoin="round"/>
         <path d="M 394 134 C 390 120, 398 110, 410 104 C 418 98, 420 90, 416 84 M 396 146 C 402 136, 410 128, 418 122" stroke="var(--hero-hair-light, #4a3220)" stroke-width="2.1" fill="none" stroke-linecap="round" opacity=".56"/>
         <path d="M 408 122 L 424 116 L 430 130 L 414 136 Z" fill="url(#gold-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.8" stroke-linejoin="round"/>
@@ -5465,7 +5495,7 @@
       <g data-hero-slot="hair" data-hero-option="ponytail" display="none">
         <!-- Crown hair. -->
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round"/>
-        <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-ponytail-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/></g>
         <!-- Connector panel: bridges crown to gather (always attached). -->
         <path d="M 446 174 C 440 168 426 168 420 174 C 420 182 426 188 434 188 C 442 188 446 184 446 174 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.2" stroke-linejoin="round"/>
         <!-- Tail: filled tapered teardrop falling down behind the shoulder. -->
@@ -5507,7 +5537,7 @@
       <g data-hero-slot="hair" data-hero-option="high-pony" display="none">
         <!-- Crown hair. -->
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round"/>
-        <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-high-pony-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/></g>
         <!-- Connector panel: bridges crown to gather (always attached). -->
         <path d="M 438 130 C 430 124 416 124 410 130 C 408 138 412 146 422 148 C 432 148 442 142 444 134 C 444 130 442 128 438 130 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.2" stroke-linejoin="round"/>
         <!-- Tail: filled tapered teardrop arcing outward and down. -->
@@ -5548,7 +5578,7 @@
       <g data-hero-slot="hair" data-hero-option="sleek-low-pony" display="none">
         <!-- Crown hair (sleek, hugs head). -->
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round"/>
-        <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-sleek-low-pony-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/></g>
         <!-- Connector panel from crown to low nape gather. -->
         <path d="M 446 178 C 442 184 432 192 426 196 C 422 200 426 206 434 206 C 442 206 448 200 448 188 C 448 182 448 178 446 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.2" stroke-linejoin="round"/>
         <!-- Sleek slim tail emerging from low nape area. -->
@@ -5593,10 +5623,10 @@
 <path d="M 464 219 C 464.9 225.5 468.7 245.7 469.2 258 C 469.7 270.3 467.4 287.2 467 293" fill="none" stroke="var(--hero-hair-specular, #98785d)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.24"/></g>
 <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round" />
 
-<ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82" />
+<g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-low-pony-bangs-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82" /></g>
 
 
-<path d="M 354 148 C 376 132, 424 132, 446 148 C 444 157, 438 165, 426 170 C 416 162, 406 158, 400 160 C 390 158, 376 162, 360 170 C 356 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".82" />
+<g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-low-pony-bangs-{{ hero_variant }})"><path d="M 354 148 C 376 132, 424 132, 446 148 C 444 157, 438 165, 426 170 C 416 162, 406 158, 400 160 C 390 158, 376 162, 360 170 C 356 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".82" /></g>
 
 
 <path d="M 446 178 C 442 184 432 192 426 196 C 422 200 426 206 434 206 C 442 206 448 200 448 188 C 448 182 448 178 446 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.2" stroke-linejoin="round" />
@@ -5631,7 +5661,7 @@
 </g>
 <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round" />
 
-<ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82" />
+<g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-half-up-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82" /></g>
 
 <path d="M 381 116 C 377 106, 383 96, 393 94 C 400 86, 412 90, 414 100 C 424 105, 422 117, 412 122 C 402 127, 387 124, 381 116 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.45" stroke-linejoin="round" />
 
@@ -5664,7 +5694,7 @@
 </g>
 <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round" />
 
-<ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82" />
+<g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-pigtails-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82" /></g>
 
 
 <path d="M 354 174 C 360 168 374 168 380 174 C 380 182 374 188 366 188 C 358 188 354 184 354 174 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.2" stroke-linejoin="round" />
@@ -5733,7 +5763,7 @@
       <g data-hero-slot="hair" data-hero-option="undercut" display="none">
         <path d="M 352 178 C 344 140, 363 120, 400 116 C 437 120, 456 140, 448 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 352 178 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
         <path d="M 354 178 C 349 154, 356 143, 360 132 C 366 124, 373 127, 375 134 C 380 118, 390 118, 394 131 C 400 113, 410 115, 413 132 C 419 122, 430 129, 438 143 C 447 157, 451 164, 440 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
-        <path d="M 360 166 C 376 156, 424 156, 440 166 C 432 174, 416 178, 400 178 C 384 178, 368 174, 360 166 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-undercut-{{ hero_variant }})"><path d="M 360 166 C 376 156, 424 156, 440 166 C 432 174, 416 178, 400 178 C 384 178, 368 174, 360 166 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/></g>
         <path d="M 368 138 C 384 128, 416 128, 432 138 M 366 158 C 382 151, 418 151, 434 158" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .36)"/>
         <path d="M 372 130 C 388 124, 412 125, 428 132" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
@@ -5750,7 +5780,7 @@
       </g>
       <g data-hero-slot="hair" data-hero-option="top-knot" display="none">
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round"/>
-        <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-top-knot-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/></g>
         <path d="M 390 112 C 388 104, 390 96, 394 90 C 386 82, 392 70, 402 72 C 410 68, 418 76, 414 86 C 422 92, 418 104, 410 108 C 409 112, 409 115, 410 118 C 404 122, 396 120, 390 112 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.67" stroke-linejoin="round"/>
         <path d="M 396 104 C 394 94, 400 86, 408 82 M 396 114 C 402 106, 410 100, 414 94" stroke="var(--hero-hair-light, #4a3220)" stroke-width="2.1" fill="none" stroke-linecap="round" opacity=".58"/>
         <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 376 157, 388 154, 400 156 C 412 154, 424 157, 438 166 M 392 116 C 394 110, 406 110, 410 116" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .44)"/>
@@ -5778,11 +5808,10 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="pixie" display="none">
-        <path d="M 350 178 C 342 140, 363 124, 400 120 C 437 124, 458 140, 450 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 350 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".4"/>
         <path d="M 354 178 C 348 151, 364 124, 398 120 C 434 124, 452 150, 446 178 C 434 164, 418 158, 402 158 C 388 158, 374 161, 364 167 C 358 171, 356 175, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
         <path d="M 358 164 C 372 154, 389 151, 401 154 C 416 152, 433 157, 444 168 C 432 157, 416 151, 400 151 C 384 149, 371 153, 363 159 C 360 161, 358 163, 358 164 Z" fill="var(--hero-hair, #1f140c)" opacity=".38"/>
-        <path d="M 365 132 C 376 121, 388 118, 397 123 C 405 119, 418 123, 429 134 C 416 126, 404 126, 391 130 C 380 134, 371 136, 365 132 Z" fill="color-mix(in srgb, var(--hero-hair-light, #4a3220) 58%, var(--hero-hair, #1f140c))" opacity=".56"/>
-        <path d="M 370 126 C 386 116, 410 118, 426 128 M 366 150 C 380 142, 392 140, 400 146 C 410 140, 424 144, 436 152" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .4)"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-pixie-{{ hero_variant }})"><path d="M 365 132 C 376 121, 388 118, 397 123 C 405 119, 418 123, 429 134 C 416 126, 404 126, 391 130 C 380 134, 371 136, 365 132 Z" fill="color-mix(in srgb, var(--hero-hair-light, #4a3220) 58%, var(--hero-hair, #1f140c))" opacity=".56"/></g>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-pixie-{{ hero_variant }})"><path d="M 370 126 C 386 116, 410 118, 426 128 M 366 150 C 380 142, 392 140, 400 146 C 410 140, 424 144, 436 152" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .4)"/></g>
         <path d="M 372 134 C 388 128, 412 129, 428 136" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
 
@@ -5848,7 +5877,6 @@
         </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="bowl-cut" display="none">
-        <path d="M 346 178 C 338 140, 363 120, 400 116 C 437 120, 462 140, 454 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 346 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".4"/>
         <path d="M 348 184 C 344 151, 361 116, 400 113 C 439 116, 456 151, 452 184 C 449 174, 442 168, 430 168 C 410 169, 390 169, 370 168 C 358 168, 351 174, 348 184 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.73" stroke-linejoin="round" stroke-linecap="round"/>
         <path d="M 354 150 C 374 134, 426 134, 446 150 C 442 164, 425 169, 400 167 C 375 169, 358 164, 354 150 Z" fill="var(--hero-hair, #1f140c)" opacity=".42"/>
         <path d="M 360 160 C 378 154, 422 154, 440 160" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.75" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .38)"/>
@@ -5940,7 +5968,7 @@
 <path d="M 352 176 C 344 136, 366 106, 400 104 C 434 106, 456 136, 448 176 C 434 162, 416 156, 400 158 C 384 156, 366 162, 352 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.71" stroke-linejoin="round" stroke-linecap="round" />
 
 
-<path d="M 354 148 C 375 131, 425 131, 446 148 C 443 159, 436 167, 424 170 C 414 162, 405 158, 400 160 C 392 157, 379 160, 362 170 C 357 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".82" />
+<g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-sleek-bob-bangs-{{ hero_variant }})"><path d="M 354 148 C 375 131, 425 131, 446 148 C 443 159, 436 167, 424 170 C 414 162, 405 158, 400 160 C 392 157, 379 160, 362 170 C 357 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".82" /></g>
 
 
 <path d="M 368 152 C 384 144, 416 144, 432 152" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".3" />
@@ -6043,7 +6071,7 @@
       </g>
       <g data-hero-slot="hair" data-hero-option="pompadour" display="none">
         <path d="M 356 178 C 350 150, 368 126, 400 122 C 432 126, 450 150, 444 178 C 432 164, 416 158, 400 158 C 384 158, 368 164, 356 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.72" stroke-linejoin="round"/>
-        <path d="M 358 156 C 368 124, 386 98, 410 96 C 432 98, 446 116, 440 138 C 428 128, 410 126, 394 136 C 382 144, 370 154, 358 156 Z" fill="var(--hero-hair, #1f140c)" opacity=".9"/>
+        <path d="M 358 156 C 368 124, 386 98, 410 96 C 432 98, 446 116, 440 138 C 428 128, 410 126, 394 136 C 382 144, 370 154, 358 156 Z" fill="var(--hero-hair, #1f140c)" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.72" stroke-linejoin="round" data-hero-hair-crest/>
         <path d="M 366 146 C 378 124, 392 110, 410 106 C 426 104, 438 114, 440 130 M 374 158 C 390 149, 412 149, 430 158" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.05" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .5)"/>
         <path d="M 374 122 C 392 107, 416 107, 432 122" stroke="color-mix(in srgb, var(--hero-hair-specular, #98785d) 68%, var(--hero-hair, #1f140c))" stroke-width="2.3" fill="none" stroke-linecap="round" opacity=".3"/>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
@@ -6051,7 +6079,7 @@
         <path d="M 392 133 C 405 124 419 122 432 128 M 405 103 C 416 100 430 108 434 117" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" opacity=".34"/>
         <path d="M 376 129 C 381 122 387 118 392 116 M 396 112 C 401 109 406 108 410 108" fill="none" stroke="var(--hero-hair-specular, #98785d)" stroke-width=".95" stroke-linecap="round" stroke-linejoin="round" opacity=".38"/>
 
-        <path d="M 371 139 C 381 121 397 108 410 108 C 400 111 391 120 385 127 C 381 132 377 136 371 139 Z" fill="var(--hero-hair-rim, #4a3220)" opacity=".2"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-pompadour-{{ hero_variant }})"><path d="M 371 139 C 381 121 397 108 410 108 C 400 111 391 120 385 127 C 381 132 377 136 371 139 Z" fill="var(--hero-hair-rim, #4a3220)" opacity=".2"/></g>
 
         <g data-hero-hair-volume="pompadour" clip-path="url(#hair-volume-clip-pompadour-{{ hero_variant }})">
 <path d="M 409.26 102.66 C 389.06 104.78, 375.22 121.99, 366 146 C 380.78 126.01, 394.94 115.22, 410.74 109.34 Z" fill="url(#hair-lock-material-{{ hero_variant }})" opacity=".78"/>
@@ -6178,7 +6206,7 @@
 </g>
 <path d="M 352 176 C 344 136, 366 106, 400 104 C 434 106, 456 136, 448 176 C 434 162, 416 156, 400 158 C 384 156, 366 162, 352 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.71" stroke-linejoin="round" stroke-linecap="round" />
 
-<path d="M 354 148 C 375 131, 425 131, 446 148 C 443 159, 436 167, 424 170 C 414 162, 405 158, 400 160 C 392 157, 379 160, 362 170 C 357 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".7" />
+<g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-shag-{{ hero_variant }})"><path d="M 354 148 C 375 131, 425 131, 446 148 C 443 159, 436 167, 424 170 C 414 162, 405 158, 400 160 C 392 157, 379 160, 362 170 C 357 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".7" /></g>
 
 <path d="M 366 126 C 382 116, 418 116, 434 126 C 420 121, 400 121, 380 124 C 373 126, 368 127, 366 126 Z" fill="color-mix(in srgb, var(--hero-hair-light, #4a3220) 58%, var(--hero-hair, #1f140c))" opacity=".5" />
 
@@ -6201,7 +6229,7 @@
       <g data-hero-slot="hair" data-hero-option="locs-bun" display="none">
         <!-- Crown hair (gathered upward). -->
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.69" stroke-linejoin="round"/>
-        <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <g data-hero-hair-plate-clip clip-path="url(#hair-plate-clip-locs-bun-{{ hero_variant }})"><ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/></g>
         <!-- Bun base ellipse. -->
         <ellipse cx="400" cy="96" rx="29" ry="22" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.67"/>
         <!-- Loc strands wrapping the bun (visible as curving rope shapes). -->
@@ -7895,58 +7923,58 @@
         <g transform="translate(-400 -185)">
       <g data-hero-slot="eyelash-style" data-hero-option="none"></g>
       <g data-hero-slot="eyelash-style" data-hero-option="short-soft" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="short-dense" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="barely-there" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="subtle" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="short-natural" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="short-corner" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="short-upper" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="outer-corner" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="soft-fan" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="balanced-fan" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="delicate-long" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="soft-lift" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="full-upper" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="long-classic" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="long-doll" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="long-glam" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="winged" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="dense" display="none">
-        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+        <path data-hero-lash-path stroke="var(--hero-eyelash, #2a1a14)" stroke-linecap="round" fill="none"/>
       </g>
         </g>
       </g>
