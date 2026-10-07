@@ -5958,3 +5958,28 @@
         display: none;
       }
     }
+
+/* These native fieldsets preserve per-control locks when hero kinds change. */
+fieldset.hero-cust-control[data-hero-human-only] {
+  border: 0;
+  padding: 0;
+  min-inline-size: 0;
+}
+fieldset.hero-cust-tune-row {
+  margin-inline: 0;
+  min-inline-size: 0;
+}
+[data-hero-human-only]:disabled {
+  background-color: #f1f3f5;
+}
+html.dark-mode [data-hero-human-only]:disabled {
+  background-color: #202734;
+}
+[data-hero-human-only]:disabled :is(button, input, select) {
+  cursor: not-allowed;
+  opacity: .55;
+}
+@media print {
+  html.dark-mode [data-hero-human-only]:disabled,
+  [data-hero-human-only]:disabled { background-color: #f1f3f5; }
+}

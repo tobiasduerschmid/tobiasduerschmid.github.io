@@ -4473,8 +4473,10 @@
 
       for (var i = 0; i < FINE_TUNE_TARGETS.length; i++) {
         var target = FINE_TUNE_TARGETS[i];
-        var row = document.createElement('div');
+        var row = document.createElement('fieldset');
         row.className = 'hero-cust-tune-row';
+        row.setAttribute('aria-label', target.label + ' fine tuning');
+        if (target.key !== 'mascot') row.setAttribute('data-hero-human-only', '');
         row.setAttribute('data-hero-tune-row', target.key);
 
         var name = document.createElement('span');
@@ -4676,15 +4678,7 @@
       setPathValue(state, definition.path, value);
       if (definition.key === 'heroKind' && value === 'bruin') {
         state.appearance.skin = BRUIN_DEFAULTS.skin;
-        state.appearance.hairColor = BRUIN_DEFAULTS.hairColor;
-        state.appearance.hairStyle = 'bald';
         state.appearance.eyeColor = BRUIN_DEFAULTS.eyeColor;
-        state.appearance.facialHair = 'none';
-        state.appearance.faceFeature = 'none';
-        state.body.type = BRUIN_DEFAULTS.bodyType;
-        state.outfit.style = BRUIN_DEFAULTS.outfitStyle;
-        state.outfit.accessory = 'none';
-        state.outfit.accessories = [];
       }
       return normalizeAvatar(state);
     }
@@ -5960,19 +5954,9 @@
     }
 
     function applyBruinFormDefaults() {
+      // Only initialize colors used by the mascot; retain inactive human choices.
       if ($('hero-cust-skin')) updateColorInput($('hero-cust-skin'), BRUIN_DEFAULTS.skin, null, true);
-      if ($('hero-cust-hair-color')) updateColorInput($('hero-cust-hair-color'), BRUIN_DEFAULTS.hairColor, null, true);
       if ($('hero-cust-eye-color')) updateColorInput($('hero-cust-eye-color'), BRUIN_DEFAULTS.eyeColor, null, true);
-      if ($('hero-cust-hair-style')) $('hero-cust-hair-style').value = 'bald';
-      if ($('hero-cust-ear-shape')) $('hero-cust-ear-shape').value = 'oval';
-      if ($('hero-cust-eyelash-style')) $('hero-cust-eyelash-style').value = 'none';
-      if ($('hero-cust-facial-hair')) $('hero-cust-facial-hair').value = 'none';
-      if ($('hero-cust-face-feature')) $('hero-cust-face-feature').value = 'none';
-      var bodySelect = $('hero-cust-body-type');
-      if (bodySelect) bodySelect.value = BRUIN_DEFAULTS.bodyType;
-      if ($('hero-cust-outfit-style')) $('hero-cust-outfit-style').value = BRUIN_DEFAULTS.outfitStyle;
-      var checkboxes = modal.querySelectorAll('input[name="hero-cust-accessory"]');
-      for (var i = 0; i < checkboxes.length; i++) checkboxes[i].checked = false;
     }
 
     function refreshPreview() {
@@ -5994,6 +5978,12 @@
         button.hidden = fixed;
         button.disabled = fixed;
       });
+      // Native fieldsets disable every alternative input (previews, swatches,
+      // sliders and reset buttons) without overwriting each control's own locks.
+      modal.querySelectorAll('[data-hero-human-only]').forEach(function (fieldset) {
+        fieldset.disabled = kind === 'bruin';
+      });
+      $('hero-cust-bruin-note').hidden = kind !== 'bruin';
       $('hero-cust-fixed-note').hidden = !fixed;
     }
 
@@ -6077,7 +6067,7 @@
       var visible = [];
       for (var i = 0; i < focusables.length; i++) {
         var el = focusables[i];
-        if (!el.disabled && el.offsetParent !== null && !el.hidden) visible.push(el);
+        if (!el.matches(':disabled') && el.offsetParent !== null && !el.hidden) visible.push(el);
       }
       if (visible.length === 0) return;
       var first = visible[0], last = visible[visible.length - 1];

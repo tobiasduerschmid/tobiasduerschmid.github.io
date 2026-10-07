@@ -570,6 +570,7 @@ layout: sebook
                 <label for="hero-cust-kind">Hero type</label>
                 <select id="hero-cust-kind" data-hero-choice="heroKind"></select>
               </div>
+              <p id="hero-cust-bruin-note" class="hero-cust-hint" role="status" hidden>For the Bruin, skin tone changes fur and suit color changes the medallion backing. Unavailable controls apply only to human heroes.</p>
               <p id="hero-cust-fixed-note" class="hero-cust-hint" role="status" hidden>Prof has a fixed appearance. Hero animations and training progress effects stay active.</p>
             </fieldset>
             <fieldset class="hero-cust-fieldset" data-hero-customization>
@@ -578,66 +579,66 @@ layout: sebook
                 <label for="hero-cust-skin">Skin tone</label>
                 <input type="color" id="hero-cust-skin" value="#cf9e82">
               </div>
-              <div class="hero-cust-control">
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-hair-color">Hair color</label>
                 <input type="color" id="hero-cust-hair-color" value="#1f140c">
-              </div>
-              <div class="hero-cust-control">
+              </fieldset>
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-hair-style">Hair style</label>
                 <select id="hero-cust-hair-style" data-hero-choice="hairStyle"></select>
-              </div>
+              </fieldset>
               <div class="hero-cust-control">
                 <label for="hero-cust-eye-color">Eye color</label>
                 <input type="color" id="hero-cust-eye-color" value="#1f140c">
               </div>
-              <div class="hero-cust-control">
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-eye-shape">Eye shape</label>
                 <select id="hero-cust-eye-shape" data-hero-choice="eyeShape"></select>
-              </div>
-              <div class="hero-cust-control">
+              </fieldset>
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-ear-shape">Ears</label>
                 <select id="hero-cust-ear-shape" data-hero-choice="earShape"></select>
-              </div>
-              <div class="hero-cust-control">
+              </fieldset>
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-eyelash-style">Eyelashes</label>
                 <select id="hero-cust-eyelash-style" data-hero-choice="eyelashStyle"></select>
-              </div>
-              <div class="hero-cust-control">
+              </fieldset>
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-eyebrow">Eyebrows</label>
                 <select id="hero-cust-eyebrow" data-hero-choice="eyebrowStyle"></select>
-              </div>
-              <div class="hero-cust-control">
+              </fieldset>
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-nose-shape">Nose shape</label>
                 <select id="hero-cust-nose-shape" data-hero-choice="noseShape"></select>
-              </div>
-              <div class="hero-cust-control">
+              </fieldset>
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-mouth-style">Mouth</label>
                 <select id="hero-cust-mouth-style" data-hero-choice="mouthStyle"></select>
-              </div>
-              <div class="hero-cust-control">
+              </fieldset>
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-blush-style">Cheek tint</label>
                 <select id="hero-cust-blush-style" data-hero-choice="blushStyle"></select>
-              </div>
-              <div class="hero-cust-control">
+              </fieldset>
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-facial-hair">Facial hair</label>
                 <select id="hero-cust-facial-hair" data-hero-choice="facialHair"></select>
-              </div>
-              <div class="hero-cust-control">
+              </fieldset>
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-face-feature">Facial details</label>
                 <select id="hero-cust-face-feature" data-hero-choice="faceFeature"></select>
-              </div>
-              <div class="hero-cust-control">
+              </fieldset>
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-head-style">Head shape</label>
                 <select id="hero-cust-head-style" data-hero-choice="headStyle"></select>
-              </div>
+              </fieldset>
             </fieldset>
 
             <fieldset class="hero-cust-fieldset" data-hero-customization>
               <legend>Body</legend>
-              <div class="hero-cust-control">
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-body-type">Body frame</label>
                 <select id="hero-cust-body-type" data-hero-choice="bodyType"></select>
-              </div>
+              </fieldset>
             </fieldset>
 
             <fieldset class="hero-cust-fieldset" data-hero-customization>
@@ -646,10 +647,10 @@ layout: sebook
                 <label for="hero-cust-suit">Suit color</label>
                 <input type="color" id="hero-cust-suit" value="#1F6EBD">
               </div>
-              <div class="hero-cust-control">
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-outfit-style">Outfit style</label>
                 <select id="hero-cust-outfit-style" data-hero-choice="outfitStyle"></select>
-              </div>
+              </fieldset>
               <div class="hero-cust-control">
                 <label for="hero-cust-cape-outer">Cape/headwear color</label>
                 <input type="color" id="hero-cust-cape-outer" value="#15538f">
@@ -658,11 +659,11 @@ layout: sebook
                 <label for="hero-cust-cape-inner">Cape lining/accent</label>
                 <input type="color" id="hero-cust-cape-inner" value="#FFD100">
               </div>
-              <div class="hero-cust-control hero-cust-control-stacked">
+              <fieldset class="hero-cust-control hero-cust-control-stacked" data-hero-human-only>
                 <span id="hero-cust-accessories-label" class="hero-cust-control-label">Accessories and headwear</span>
                 <div class="hero-cust-checkbox-group" role="group" aria-labelledby="hero-cust-accessories-label" data-hero-choice="accessory"></div>
-              </div>
-              <div class="hero-cust-control">
+              </fieldset>
+              <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-emblem">Vector emblem</label>
                 <div class="hero-cust-emblem-row">
                   <select id="hero-cust-emblem" aria-describedby="hero-cust-emblem-hint">
@@ -691,7 +692,7 @@ layout: sebook
                   <button type="button" class="hero-cust-quickbtn" data-emblem-quickpick="🌟" aria-label="Star"><svg viewBox="-24 -24 48 48" aria-hidden="true" focusable="false"><path d="M 0 -21 L 6 -7 L 21 -6 L 10 4 L 13 19 L 0 11 L -13 19 L -10 4 L -21 -6 L -6 -7 Z"/></svg></button>
                   <button type="button" class="hero-cust-quickbtn" data-emblem-quickpick="🦾" aria-label="Mechanical arm"><svg viewBox="-24 -24 48 48" aria-hidden="true" focusable="false"><path d="M -18 15 C -11 12,-9 5,-8 -2 L -3 -7 L 2 -3 L 6 -13 L 13 -9 L 9 2 C 17 3,20 8,19 15 C 11 20,-6 21,-18 15 Z M -7 1 C -1 5,4 6,10 3 M 2 -3 L 9 2"/></svg></button>
                 </div>
-              </div>
+              </fieldset>
             </fieldset>
 
             <fieldset class="hero-cust-fieldset" data-hero-customization>
