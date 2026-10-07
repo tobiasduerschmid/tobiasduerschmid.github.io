@@ -607,6 +607,17 @@ layout: sebook
                 <label for="hero-cust-eyebrow">Eyebrows</label>
                 <select id="hero-cust-eyebrow" data-hero-choice="eyebrowStyle"></select>
               </fieldset>
+              <fieldset class="hero-cust-control hero-cust-control-stacked" data-hero-human-only>
+                <legend>Eyebrow color</legend>
+                <label class="hero-cust-match-hair" for="hero-cust-eyebrow-match">
+                  <input type="checkbox" id="hero-cust-eyebrow-match" aria-label="Match hair color for eyebrows" checked>
+                  Match hair color
+                </label>
+                <fieldset class="hero-cust-control hero-cust-linked-color" id="hero-cust-eyebrow-custom" hidden disabled>
+                  <label for="hero-cust-eyebrow-color">Custom eyebrow color</label>
+                  <input type="color" id="hero-cust-eyebrow-color" value="#1f140c">
+                </fieldset>
+              </fieldset>
               <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-nose-shape">Nose shape</label>
                 <select id="hero-cust-nose-shape" data-hero-choice="noseShape"></select>
@@ -622,6 +633,17 @@ layout: sebook
               <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-facial-hair">Facial hair</label>
                 <select id="hero-cust-facial-hair" data-hero-choice="facialHair"></select>
+              </fieldset>
+              <fieldset class="hero-cust-control hero-cust-control-stacked" data-hero-human-only>
+                <legend>Facial hair color</legend>
+                <label class="hero-cust-match-hair" for="hero-cust-facial-hair-match">
+                  <input type="checkbox" id="hero-cust-facial-hair-match" aria-label="Match hair color for facial hair" checked>
+                  Match hair color
+                </label>
+                <fieldset class="hero-cust-control hero-cust-linked-color" id="hero-cust-facial-hair-custom" hidden disabled>
+                  <label for="hero-cust-facial-hair-color">Custom facial hair color</label>
+                  <input type="color" id="hero-cust-facial-hair-color" value="#1f140c">
+                </fieldset>
               </fieldset>
               <fieldset class="hero-cust-control" data-hero-human-only>
                 <label for="hero-cust-face-feature">Facial details</label>

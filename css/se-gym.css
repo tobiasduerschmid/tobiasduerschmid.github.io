@@ -438,6 +438,32 @@
     .hero-cust-control-stacked {
       align-items: stretch;
     }
+    .hero-cust-control > legend {
+      padding: 0;
+      font: inherit;
+    }
+    .hero-cust-control .hero-cust-match-hair {
+      display: flex;
+      align-items: center;
+      gap: .55em;
+      min-block-size: 44px;
+      cursor: pointer;
+    }
+    .hero-cust-match-hair input {
+      inline-size: 1.25em;
+      block-size: 1.25em;
+      flex: none;
+    }
+    .hero-cust-linked-color {
+      border: 0;
+      padding: 0;
+      margin: 0;
+      min-inline-size: 0;
+      flex: 1 1 100%;
+    }
+    .hero-cust-linked-color[hidden] {
+      display: none;
+    }
     .hero-cust-control label,
     .hero-cust-control-label {
       flex: 1 1 8em;

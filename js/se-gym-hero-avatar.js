@@ -150,6 +150,7 @@
       preview: 'eyebrows',
       groups: [
         choiceGroup('Eyebrows', [
+          choice('none', 'No eyebrows'),
           choice('arched', 'Arched'),
           choice('straight', 'Straight'),
           choice('soft-arched', 'Soft arched'),
@@ -507,6 +508,7 @@
         ]),
         choiceGroup('Hearing aids', [
           choice('hearing-aid-left', 'Left hearing aid'),
+          choice('hearing-aid-right', 'Right hearing aid'),
           choice('hearing-aids', 'Hearing aids')
         ]),
         choiceGroup('Jewelry and details', [
@@ -659,7 +661,7 @@
   var HAIR_CLIP_CONCEALING_ACCESSORIES = { headwrap: true, 'draped-scarf': true, hijab: true, turban: true, 'wrapped-dastar': true, 'embroidered-prayer-cap': true, beanie: true, 'baseball-cap': true, 'bucket-hat': true, bandana: true };
   var HAIR_CLIP_INCOMPATIBLE_STYLES = { bald: true, mohawk: true };
   var FOREHEAD_DETAIL_CONCEALING_ACCESSORIES = { beanie: true, 'baseball-cap': true, 'bucket-hat': true };
-  var CONCEALED_AUDIO_ACCESSORIES = { 'wireless-earbuds': true, 'wired-earbuds': true, 'hearing-aid-left': true, 'hearing-aids': true };
+  var CONCEALED_AUDIO_ACCESSORIES = { 'wireless-earbuds': true, 'wired-earbuds': true, 'hearing-aid-left': true, 'hearing-aid-right': true, 'hearing-aids': true };
   var EAR_CONCEALING_AUDIO_ACCESSORIES = { 'over-ear-headphones': true, 'headset-mic': true };
   // Looser wraps may reveal a small hairline. Full coverings never synthesize
   // one, regardless of the hairstyle saved underneath.
@@ -676,7 +678,7 @@
     halo: true,
     monocle: true,
     eyepatch: true,
-    'hearing-aid-left': true,
+    'hearing-aid-left': true, 'hearing-aid-right': true,
     'hearing-aids': true,
     mask: true,
     'forehead-jewel': true,
@@ -736,20 +738,20 @@
     'deep-set': { kind: 'curve', p0: [369.4, 184.2], p1: [382, 173.9], p2: [394.8, 184.2], startT: 0.02, endT: 0.98, lengthScale: 0.92, fanBias: 0.3, riseBias: 0.22 }
   };
   var FACE_ACCESSORIES = ['glasses', 'rectangular-glasses', 'thin-rectangular-glasses', 'semi-rimless-glasses', 'wireframe-glasses', 'round-rim-glasses', 'safety-goggles', 'tech-visor', 'visor', 'spectacles', 'monocle', 'mask', 'eyepatch'];
-  var DETAIL_ACCESSORIES = ['earrings', 'stud-earrings', 'hoop-earrings', 'hair-clips', 'over-ear-headphones', 'headset-mic', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aids', 'chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp', 'forehead-jewel', 'crown', 'halo'];
+  var DETAIL_ACCESSORIES = ['earrings', 'stud-earrings', 'hoop-earrings', 'hair-clips', 'over-ear-headphones', 'headset-mic', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aid-right', 'hearing-aids', 'chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp', 'forehead-jewel', 'crown', 'halo'];
   var HEADWEAR_ACCESSORIES = ['headband', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'headwrap', 'draped-scarf', 'hijab', 'turban', 'embroidered-prayer-cap', 'wrapped-dastar'];
   var FACE_ACCESSORY_PRIORITY = ['mask', 'eyepatch', 'tech-visor', 'visor', 'safety-goggles', 'round-rim-glasses', 'semi-rimless-glasses', 'thin-rectangular-glasses', 'wireframe-glasses', 'rectangular-glasses', 'glasses', 'spectacles', 'monocle'];
   var HEAD_ACCESSORY_PRIORITY = ['hijab', 'wrapped-dastar', 'headwrap', 'draped-scarf', 'turban', 'embroidered-prayer-cap', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'crown', 'headband'];
   var EAR_ACCESSORY_PRIORITY = ['hoop-earrings', 'stud-earrings', 'earrings'];
-  var AUDIO_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aids'];
+  var AUDIO_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aid-right', 'hearing-aids'];
   var NECK_ACCESSORY_PRIORITY = ['chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard'];
   var BAG_ACCESSORY_PRIORITY = ['backpack-straps', 'messenger-bag'];
   var BODY_BOUND_ACCESSORIES = ['chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp'];
   ACCESSORY_COMPATIBILITY.bodyBoundAccessories = BODY_BOUND_ACCESSORIES.slice();
-  var DETAIL_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aids', 'hair-clips', 'chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp', 'forehead-jewel', 'halo'];
+  var DETAIL_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aid-right', 'hearing-aids', 'hair-clips', 'chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp', 'forehead-jewel', 'halo'];
   var HEADWEAR_FIT_ACCESSORIES = lookupValues(HEADWEAR_ACCESSORIES.concat(['visor', 'crown', 'halo', 'headset-mic', 'over-ear-headphones', 'hair-clips']));
   var FACE_FIT_ACCESSORIES = lookupValues(FACE_ACCESSORIES.concat(['forehead-jewel']));
-  var SIDE_FIT_ACCESSORIES = lookupValues(['earrings', 'stud-earrings', 'hoop-earrings', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aids']);
+  var SIDE_FIT_ACCESSORIES = lookupValues(['earrings', 'stud-earrings', 'hoop-earrings', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aid-right', 'hearing-aids']);
   var HAIR_CAP_REQUIRED_STYLES = lookupValues([]);
   var PARTIAL_HEAD_COVERAGE_HAIR_STYLES = lookupValues(['bald', 'mohawk', 'none', 'tousled-wispy-fringe']);
   // Per-style vertical nudges keep bangs out of the brow band without pushing updos into the bar.
@@ -1013,6 +1015,8 @@
     appearance: {
       skin: '#cf9e82',
       hairColor: '#1f140c',
+      eyebrowColor: null,
+      facialHairColor: null,
       hairStyle: 'short',
       eyeColor: '#1f140c',
       eyebrowStyle: 'arched',
@@ -1078,6 +1082,8 @@
   var COLOR_CONTROLS = [
     { id: 'hero-cust-skin', palette: 'skin', swatchLabel: 'skin', paletteLabel: 'Preset swatches for skin', hslLabel: 'HSL sliders for skin' },
     { id: 'hero-cust-hair-color', palette: 'hair', swatchLabel: 'hair', paletteLabel: 'Preset swatches for hair', hslLabel: 'HSL sliders for hair' },
+    { id: 'hero-cust-eyebrow-color', palette: 'hair', swatchLabel: 'eyebrows', paletteLabel: 'Preset swatches for eyebrows', hslLabel: 'HSL sliders for eyebrows', matchId: 'hero-cust-eyebrow-match', customId: 'hero-cust-eyebrow-custom' },
+    { id: 'hero-cust-facial-hair-color', palette: 'hair', swatchLabel: 'facial hair', paletteLabel: 'Preset swatches for facial hair', hslLabel: 'HSL sliders for facial hair', matchId: 'hero-cust-facial-hair-match', customId: 'hero-cust-facial-hair-custom' },
     { id: 'hero-cust-eye-color', palette: 'eye', swatchLabel: 'eyes', paletteLabel: 'Preset swatches for eyes', hslLabel: 'HSL sliders for eyes' },
     { id: 'hero-cust-suit', palette: 'suit', swatchLabel: 'suit', paletteLabel: 'Preset swatches for suit', hslLabel: 'HSL sliders for suit' },
     { id: 'hero-cust-cape-outer', palette: 'cape', swatchLabel: 'cape and headwear', paletteLabel: 'Preset swatches for cape and headwear', hslLabel: 'HSL sliders for cape and headwear' },
@@ -1597,6 +1603,9 @@
       // Accept legacy identity metadata during validation, then migrate it out
       // of the trait-only model before rendering or saving again.
       delete obj.appearance.presentation;
+      // Missing colors in version 1 saves retain the original match-hair behavior.
+      if (obj.appearance.eyebrowColor === undefined) obj.appearance.eyebrowColor = null;
+      if (obj.appearance.facialHairColor === undefined) obj.appearance.facialHairColor = null;
       obj.appearance.hairStyle = canonicalChoiceValue('hairStyle', obj.appearance.hairStyle);
       if (obj.appearance.eyeShape !== undefined) obj.appearance.eyeShape = canonicalChoiceValue('eyeShape', obj.appearance.eyeShape);
       if (obj.appearance.headStyle === undefined) obj.appearance.headStyle = 'default';
@@ -2605,6 +2614,7 @@
     keepHairOnCrown(svg);
     keepOpaqueHatsAboveEyes(svg);
     fitOpaqueHatHairClips(svg);
+    fitEyewearToEyes(svg);
     fitEyepatchToEye(svg);
     keepMouthOnFace(svg);
     keepNoseAboveMouth(svg);
@@ -2613,6 +2623,7 @@
     fitChinDetails(svg);
     fitMustacheToUpperLip(svg);
     counterHeadTuningForBodyAccessories(svg);
+    fitUtilityBeltToWaist(svg);
     fitWiredEarbudCables(svg);
   }
 
@@ -2671,6 +2682,39 @@
       // Move the complete hat, including the rim and decoration. Its hair
       // envelope is fitted next, so lifting the brim cannot strand the hair.
       if (lift > 0) prependTransformInSvgFrame(hat, frame, new DOMMatrix().translate(0, -lift));
+    });
+  }
+
+  function fitEyewearToEyes(svg) {
+    var frame = svg.querySelector('[data-hero-head-proportions]');
+    var eyes = selectedEyeSurfaces(svg);
+    if (!frame || !eyes.length) return;
+    function centerOf(shape) {
+      var bounds = boundsInSvgFrame(shape, frame);
+      return { x: (bounds.left + bounds.right) / 2, y: (bounds.top + bounds.bottom) / 2 };
+    }
+    svg.querySelectorAll('[data-hero-slot="accessory"][display="inline"]').forEach(function (eyewear) {
+      var lenses = eyewear.querySelectorAll('[data-hero-lens], [data-hero-eye-opening]');
+      if (!lenses.length) return;
+      var shiftX = 0;
+      var shiftY = 0;
+      var count = 0;
+      lenses.forEach(function (lens) {
+        var side = lens.getAttribute('data-hero-lens') || lens.getAttribute('data-hero-eye-opening');
+        var lensCenter = centerOf(lens);
+        Array.prototype.forEach.call(eyes, function (eye) {
+          if (side !== 'both' && eye.getAttribute('data-hero-eye-surface') !== side) return;
+          var eyeCenter = centerOf(eye);
+          shiftX += eyeCenter.x - lensCenter.x;
+          shiftY += eyeCenter.y - lensCenter.y;
+          count++;
+        });
+      });
+      // Frame proportions remain adjustable, but its optical center follows
+      // the eyes instead of drifting onto the forehead or cheeks. Move the
+      // complete accessory so bridge, temples and reflections stay joined.
+      if (count) prependTransformInSvgFrame(eyewear, frame,
+        new DOMMatrix().translate(shiftX / count, shiftY / count));
     });
   }
 
@@ -3141,6 +3185,29 @@
     }
   }
 
+  function fitUtilityBeltToWaist(svg) {
+    var original = svg.querySelector('[data-hero-default-belt]');
+    var waistBand = svg.querySelector('[data-hero-belt-band="default"]');
+    if (!original || !waistBand) return;
+    original.setAttribute('display', 'inline');
+    var utility = svg.querySelector('[data-hero-slot="accessory"][data-hero-option="utility-belt"][display="inline"]');
+    var utilityBand = utility && utility.querySelector('[data-hero-belt-band="utility"]');
+    if (!utilityBand) return;
+    var waist = boundsInSvgFrame(waistBand, svg);
+    var belt = boundsInSvgFrame(utilityBand, svg);
+    var waistWidth = waist.right - waist.left;
+    var beltWidth = belt.right - belt.left;
+    if (waistWidth <= 0 || beltWidth <= 0) return;
+    var correction = new DOMMatrix()
+      .translate((waist.left + waist.right) / 2, (waist.top + waist.bottom) / 2)
+      .scale(waistWidth / beltWidth, 1)
+      .translate(-(belt.left + belt.right) / 2, -(belt.top + belt.bottom) / 2);
+    prependTransformInSvgFrame(utility, svg, correction);
+    // This is an alternative belt, seated on the body's actual waist after
+    // tuning. Painting the original beneath it creates a second floating belt.
+    original.setAttribute('display', 'none');
+  }
+
   function normalizeMilestoneTier(value) {
     var normalized = String(value || 'none').toLowerCase().replace(/^milestone-/, '');
     return MILESTONE_TIERS.indexOf(normalized) !== -1 ? normalized : 'none';
@@ -3401,6 +3468,36 @@
     applyBodyAccessoryFit(svg, bodyType);
   }
 
+  function applyHairMaterialTokens(target, prefix, color, tokens) {
+    target.style.setProperty(prefix, color);
+    target.style.setProperty(prefix + '-light', tokens.hairHighlight);
+    target.style.setProperty(prefix + '-specular', tokens.hairSpecular);
+    target.style.setProperty(prefix + '-dark', darken(color, 0.35));
+    target.style.setProperty(prefix + '-rim', tokens.hairRim);
+    target.style.setProperty(prefix + '-shadow', tokens.hairShadow);
+    target.style.setProperty(prefix + '-detail-opacity', tokens.hairDetailOpacity);
+  }
+
+  function applyIndependentHairColors(svg, appearance, hairTokens) {
+    var beardColor = appearance.facialHairColor || appearance.hairColor;
+    var beardTokens = beardColor === appearance.hairColor
+      ? hairTokens : avatarContrastTokens(appearance.skin, beardColor);
+    // Paint servers live in defs, so their colors must also exist on the SVG.
+    applyHairMaterialTokens(svg, '--hero-facial-hair', beardColor, beardTokens);
+    svg.querySelectorAll('[data-hero-slot="facial-hair"]').forEach(function (group) {
+      applyHairMaterialTokens(group, '--hero-hair', beardColor, beardTokens);
+    });
+    var eyebrowColor = appearance.eyebrowColor || appearance.hairColor;
+    var eyebrowTokens = eyebrowColor === appearance.hairColor
+      ? hairTokens : avatarContrastTokens(appearance.skin, eyebrowColor);
+    // Preserve the chosen hair pigment; a fine edge supplies local definition.
+    // Eyelashes keep their existing hair-derived contrast color on the SVG root.
+    svg.querySelectorAll('[data-hero-slot="eyebrow"]').forEach(function (group) {
+      group.style.setProperty('--hero-eyebrow', eyebrowColor);
+      group.style.setProperty('--hero-eyebrow-rim', eyebrowTokens.eyebrow);
+    });
+  }
+
   function applyAvatarColorTokens(svg, state, contrastTokens) {
     contrastTokens = contrastTokens || avatarContrastTokens(state.appearance.skin, state.appearance.hairColor);
     svg.style.setProperty('--hero-skin-light', state.appearance.skin);
@@ -3427,13 +3524,8 @@
     svg.style.setProperty('--hero-lip-fill', contrastTokens.lipFill);
     svg.style.setProperty('--hero-lip-shadow', contrastTokens.lipShadow);
     svg.style.setProperty('--hero-lip-highlight', contrastTokens.lipHighlight);
-    svg.style.setProperty('--hero-hair', state.appearance.hairColor);
-    svg.style.setProperty('--hero-hair-light', contrastTokens.hairHighlight);
-    svg.style.setProperty('--hero-hair-specular', contrastTokens.hairSpecular);
-    svg.style.setProperty('--hero-hair-dark', darken(state.appearance.hairColor, 0.35));
-    svg.style.setProperty('--hero-hair-rim', contrastTokens.hairRim);
-    svg.style.setProperty('--hero-hair-shadow', contrastTokens.hairShadow);
-    svg.style.setProperty('--hero-hair-detail-opacity', contrastTokens.hairDetailOpacity);
+    applyHairMaterialTokens(svg, '--hero-hair', state.appearance.hairColor, contrastTokens);
+    applyIndependentHairColors(svg, state.appearance, contrastTokens);
     svg.style.setProperty('--hero-eye', state.appearance.eyeColor);
     svg.style.setProperty('--hero-eye-light', lighten(state.appearance.eyeColor, 0.38));
     svg.style.setProperty('--hero-eye-dark', darken(state.appearance.eyeColor, 0.54));
@@ -3711,6 +3803,8 @@
     if (obj.kind !== undefined && !inEnum(obj.kind, 'heroKind')) return { ok: false, error: 'Invalid hero type.' };
     if (!isHex(a.skin)) return { ok: false, error: 'Invalid skin color (expected #rrggbb).' };
     if (!isHex(a.hairColor)) return { ok: false, error: 'Invalid hair color.' };
+    if (a.eyebrowColor != null && !isHex(a.eyebrowColor)) return { ok: false, error: 'Invalid eyebrow color.' };
+    if (a.facialHairColor != null && !isHex(a.facialHairColor)) return { ok: false, error: 'Invalid facial hair color.' };
     if (!isHex(a.eyeColor)) return { ok: false, error: 'Invalid eye color.' };
     if (a.presentation !== undefined && LEGACY_PRESENTATION_VALUES.indexOf(a.presentation) === -1) return { ok: false, error: 'Invalid presentation.' };
     if (!inEnum(a.hairStyle, 'hairStyle')) return { ok: false, error: 'Invalid hair style.' };
@@ -4152,9 +4246,42 @@
     }
 
     function syncAllColorTools() {
+      syncMatchingHairColors();
       for (var i = 0; i < COLOR_CONTROLS.length; i++) {
         syncColorTool($(COLOR_CONTROLS[i].id));
       }
+    }
+
+    function syncMatchingHairColors() {
+      var hairInput = $('hero-cust-hair-color');
+      if (!hairInput) return;
+      COLOR_CONTROLS.forEach(function (config) {
+        if (!config.matchId) return;
+        var match = $(config.matchId);
+        var input = $(config.id);
+        var custom = $(config.customId);
+        if (!match || !input || !custom) return;
+        custom.hidden = match.checked;
+        custom.disabled = match.checked;
+        if (match.checked && input.value !== hairInput.value) {
+          input.value = hairInput.value;
+          resetColorHslFromInput(input);
+          syncColorTool(input);
+        }
+      });
+    }
+
+    function readOptionalHairColor(inputId, matchId) {
+      var match = $(matchId);
+      var input = $(inputId);
+      return !match || match.checked || !input ? null : input.value;
+    }
+
+    function writeOptionalHairColor(inputId, matchId, color, hairColor) {
+      var match = $(matchId);
+      var input = $(inputId);
+      if (match) match.checked = color == null;
+      if (input) input.value = color || hairColor;
     }
 
     function resetColorHslFromInput(input) {
@@ -5820,6 +5947,8 @@
         appearance: {
           skin: $('hero-cust-skin').value,
           hairColor: $('hero-cust-hair-color').value,
+          eyebrowColor: readOptionalHairColor('hero-cust-eyebrow-color', 'hero-cust-eyebrow-match'),
+          facialHairColor: readOptionalHairColor('hero-cust-facial-hair-color', 'hero-cust-facial-hair-match'),
           hairStyle: $('hero-cust-hair-style').value,
           eyeColor: $('hero-cust-eye-color').value,
           eyebrowStyle: $('hero-cust-eyebrow').value,
@@ -5851,6 +5980,8 @@
       if ($('hero-cust-kind')) $('hero-cust-kind').value = normalizeHeroKind(state.kind);
       $('hero-cust-skin').value = state.appearance.skin;
       $('hero-cust-hair-color').value = state.appearance.hairColor;
+      writeOptionalHairColor('hero-cust-eyebrow-color', 'hero-cust-eyebrow-match', state.appearance.eyebrowColor, state.appearance.hairColor);
+      writeOptionalHairColor('hero-cust-facial-hair-color', 'hero-cust-facial-hair-match', state.appearance.facialHairColor, state.appearance.hairColor);
       $('hero-cust-hair-style').value = canonicalChoiceValue('hairStyle', state.appearance.hairStyle);
       $('hero-cust-eye-color').value = state.appearance.eyeColor;
       $('hero-cust-eyebrow').value = state.appearance.eyebrowStyle;
@@ -5973,6 +6104,7 @@
     }
 
     function refreshPreview() {
+      syncMatchingHairColors();
       var s = readForm();
       syncCustomizationAvailability(s.kind);
       var preview = modal.querySelector('[data-gym-hero-svg]');
@@ -6165,6 +6297,10 @@
 
     initChoiceControls();
     initColorTools();
+    COLOR_CONTROLS.forEach(function (config) {
+      var match = config.matchId && $(config.matchId);
+      if (match) match.addEventListener('change', function () { commitPreviewEdit(); });
+    });
     buildFineTuneControls();
 
     var choicePreviewScrollRoot = modal.querySelector('.hero-cust-box');

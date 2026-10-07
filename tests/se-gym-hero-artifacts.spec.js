@@ -229,6 +229,23 @@ function expectAttached(result, context) {
   expect(result.overlap, `${context}: physical surfaces must overlap, without a background gap`).toBeGreaterThan(0);
 }
 
+test('Teeth stay inside the smile opening instead of floating on the skin', async ({ page }) => {
+  const svg = await openPortrait(page);
+  const smiles = await svg.evaluate(element => [...element.querySelectorAll('[data-hero-slot="mouth-style"]')]
+    .filter(group => group.querySelector('[data-hero-teeth]'))
+    .map(group => group.getAttribute('data-hero-option')));
+  expect(smiles.length, 'The selected artwork must include tooth-bearing smiles').toBeGreaterThan(0);
+  for (const mouthStyle of smiles) {
+    const [result] = await svg.evaluate(inspectPortrait, {
+      appearance: { mouthStyle },
+      surfaceSelector: `[data-hero-slot="mouth-style"][data-hero-option="${mouthStyle}"] [data-hero-mouth-opening]`,
+      targetSelectors: [`[data-hero-slot="mouth-style"][data-hero-option="${mouthStyle}"] [data-hero-teeth]`],
+    });
+    expect(result.painted, `${mouthStyle}: teeth remain visible`).toBeGreaterThan(0);
+    expect(result.exterior, `${mouthStyle}: enamel stays within the mouth cavity`).toBe(0);
+  }
+});
+
 test('Every head remains joined to the neck at each head control boundary', async ({ page }) => {
   test.setTimeout(180_000);
   const svg = await openPortrait(page);
@@ -443,7 +460,12 @@ test('Mustaches stay attached to the upper lip when mouth and facial-hair contro
             const lipBox = lip.getBoundingClientRect();
             const scale = lip.getScreenCTM().d;
             return { gap: (lipBox.top - hairBox.bottom) / scale, height: hairBox.height / scale,
-              visible: [...hair.querySelectorAll('path')].every(path => getComputedStyle(path).fill !== 'none' && Number(getComputedStyle(path).opacity) > 0) };
+              visible: [...hair.querySelectorAll('path')].every(path => {
+                const style = getComputedStyle(path);
+                const filled = style.fill !== 'none' && Number(style.fillOpacity) > 0;
+                const stroked = style.stroke !== 'none' && Number(style.strokeOpacity) > 0 && parseFloat(style.strokeWidth) > 0;
+                return (filled || stroked) && Number(style.opacity) > 0;
+              }) };
           }, { headStyle, facialHair, mouthStyle, direction });
           const context = `${headStyle}, ${facialHair}, ${mouthStyle}, boundary ${direction}`;
           expect(result.visible, `${context}: mustache paint remains present`).toBe(true);
