@@ -81,7 +81,7 @@ html.dark-mode .object-reference-lab {
   font-weight: 700;
 }
 
-.object-reference-lab :is(.orl-screen, .orl-columns) {
+.object-reference-lab :is(.orl-screen, .orl-columns, .orl-code-column) {
   min-width: 0;
 }
 
@@ -343,6 +343,7 @@ html.dark-mode .object-reference-lab {
 }
 
 .orl-graph {
+  --orl-compact-padding: 0px;
   position: relative;
   min-height: 4em;
   color: var(--orl-text);
@@ -676,6 +677,17 @@ html:is(.print-light-mode, .orl-print-preparing) .object-reference-lab .orl-prin
 
 @container (min-width: 48em) {
   .orl-columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
+}
+
+@media screen {
+  @container (max-width: 30em) {
+    /* Reclaim unused future layout space without scaling text or tap targets.
+     * Static print snapshots retain their independently measured geometry. */
+    .orl-interactive { --orl-compact-padding: 8px; }
+    :is(.orl-interactive, .orl-measure:not(.orl-static-measure)) .orl-object-row { min-width: 5.5em; gap: 0.65em; }
+    :is(.orl-interactive, .orl-measure:not(.orl-static-measure)) .orl-object { padding: 0.35em 0.45em; }
+    :is(.orl-interactive, .orl-measure:not(.orl-static-measure)) .orl-object-title { margin-bottom: 0.15em; }
+  }
 }
 
 @media (max-width: 480px) {

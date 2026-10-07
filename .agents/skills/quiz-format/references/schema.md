@@ -133,7 +133,7 @@ Standalone decks and `decks:` masters use the same format. The shared head detec
     General explanation, shown for both correct and incorrect outcomes.
 ```
 
-`difficulty` is optional and only applies to standalone SEBook + SEGym quizzes (not tutorial-step quizzes). Permitted values are `basic`, `intermediate`, `advanced`, `expert` (case-insensitive). The same field is supported on flashcards in `_data/flashcards/*.yml`. SEBook embeds always show the difficulty as a color-coded chip with text label; SEGym lets the learner toggle whether the chip shows during the question (the chip always shows on the explanation panel) and lets them check off levels to exclude from the next workout.
+`difficulty` is optional and only applies to standalone SEBook + SEGym quizzes (not tutorial-step quizzes). Permitted values are `basic`, `intermediate`, `advanced`, `expert` (case-insensitive). The same field is supported on flashcards in `_data/flashcards/*.yml`. SEBook embeds and write-in questions always show the difficulty as a color-coded chip with a text label. For other card types, SEGym lets the learner toggle whether the chip shows during the question; it always appears after submission. The difficulty filter applies to all card types when choosing the next workout.
 
 ### `type: multiple`
 

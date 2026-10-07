@@ -21,7 +21,7 @@ questions:
 
   - id: python-output-copy-depth
     type: write-in
-    difficulty: intermediate
+    difficulty: advanced
     question: "Which score does each copy keep after the original row changes?"
     program:
       language: python
@@ -59,7 +59,7 @@ questions:
 
   - id: python-output-default
     type: write-in
-    difficulty: intermediate
+    difficulty: advanced
     question: "How many events does the first returned list contain after all three calls?"
     program:
       language: python

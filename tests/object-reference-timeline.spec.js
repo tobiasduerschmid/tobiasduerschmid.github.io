@@ -1,6 +1,58 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
+for (const width of [320, 390]) {
+  test(`mobile playback reclaims empty diagram margins at ${width}px`, async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/SEBook/tools/python.html');
+    const lab = page.getByRole('region', { name: 'Object reference lab: Changing a row or replacing a slot', exact: true });
+    // Entering/exiting the generator creates temporary aliases whose future
+    // reservations used to leave large blank bands above and between cards.
+    await lab.getByRole('textbox', { name: 'Python code', exact: true }).fill(
+      'numbers = [1, 3, 5]\nodds = (n for n in numbers)\nshared = odds\nnext(odds)\nnext(shared)\nprint(next(odds))');
+    await expect(lab.getByRole('status')).toContainText('Step 1 of 17', { timeout: 90_000 });
+    const graph = lab.getByRole('region', { name: 'Object reference diagram', exact: true }).locator('.orl-graph');
+    const geometry = async () => {
+      await expect(graph).toHaveAttribute('aria-busy', 'false');
+      return graph.evaluate(root => {
+        const box = root.getBoundingClientRect();
+        const rows = [...root.querySelectorAll('.orl-object-row')].map(row => {
+          const card = row.getBoundingClientRect();
+          return { x: card.left - box.left, y: card.top - box.top, width: card.width, height: card.height };
+        });
+        const occupied = [...root.querySelectorAll('.orl-object-row, .orl-reference-edge')]
+          .map(element => element.getBoundingClientRect());
+        return { rows, top: Math.min(...occupied.map(r => r.top)) - box.top,
+          bottom: box.bottom - Math.max(...occupied.map(r => r.bottom)),
+          pageOverflow: document.documentElement.scrollWidth - innerWidth };
+      });
+    };
+    for (let step = 2; step <= 17; step++) {
+      await lab.getByRole('button', { name: 'Forward', exact: true }).click();
+      const bounds = await geometry();
+      if (step === 2) {
+        // The first line event is before the first assignment executes.
+        await expect(graph).toHaveText('No data references to show yet.');
+        continue;
+      }
+      expect(bounds.rows.length).toBeGreaterThan(0);
+      expect(bounds.top, `step ${step} has no unused future alias margin`).toBeLessThanOrEqual(22);
+      expect(bounds.top, 'cards and routes retain an inset').toBeGreaterThanOrEqual(0);
+      expect(bounds.bottom, 'no unused space after the last card or route').toBeLessThanOrEqual(22);
+      expect(bounds.bottom).toBeGreaterThanOrEqual(0);
+      expect(bounds.pageOverflow, 'the diagram must not widen the page').toBeLessThanOrEqual(1);
+      if (step === 14) {
+        await lab.getByRole('button', { name: 'Back', exact: true }).click();
+        await geometry();
+        await lab.getByRole('button', { name: 'Forward', exact: true }).click();
+        expect(await geometry(), 'revisiting the step restores the compact scene').toEqual(bounds);
+      }
+    }
+  });
+}
+
 test('future-aware playback retains object order while reclaiming unused space', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/SEBook/tools/python.html');

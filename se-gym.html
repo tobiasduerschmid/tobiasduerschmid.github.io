@@ -154,7 +154,7 @@ layout: sebook
               <span class="toggle-icon" aria-hidden="true"><i class="fa-solid fa-gauge-high"></i></span>
               <span class="toggle-label">Show difficulty during question</span>
               <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about difficulty visibility" aria-describedby="show-difficulty-tooltip">?</button>
-              <span id="show-difficulty-tooltip" role="tooltip" class="info-tooltip">When on, each question shows its difficulty level (basic, intermediate, advanced, expert) before you answer. The difficulty is always shown after you submit, on the explanation panel.</span>
+              <span id="show-difficulty-tooltip" role="tooltip" class="info-tooltip">When on, each question shows its difficulty level (basic, intermediate, advanced, expert) before you answer. Write-in puzzles always show their difficulty. Other questions reveal it after you submit.</span>
             </span>
             <label class="switch">
               <span class="sr-only">Toggle difficulty visibility during question</span>
@@ -2833,9 +2833,9 @@ layout: sebook
         var allowed = { basic: 1, intermediate: 1, advanced: 1, expert: 1 };
         if (!allowed[level]) return '';
         var label = level.charAt(0).toUpperCase() + level.slice(1);
-        // `is-pre-answer` makes the chip CSS-hidden until the explanation is
-        // revealed (when toggle is off). Removed when the answer is shown.
-        var preAnswerClass = PersonalGym.isShowDifficulty() ? '' : ' is-pre-answer';
+        // Write-in puzzles always display their level; other cards follow
+        // the preference until the answer reveals it.
+        var preAnswerClass = data.type === 'write-in' || PersonalGym.isShowDifficulty() ? '' : ' is-pre-answer';
         return '<span class="quiz-difficulty quiz-difficulty-' + level + preAnswerClass +
           '" data-difficulty="' + level + '" aria-label="Difficulty: ' + label + '">' +
           '<span class="quiz-difficulty-prefix">Difficulty:</span> ' +

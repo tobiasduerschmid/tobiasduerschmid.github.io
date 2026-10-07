@@ -74,8 +74,8 @@
       this.host.append(element('p', 'orl-prediction', this.example.prediction || 'Predict which references each line will change.'));
       this.screen = element('div', 'orl-screen');
       this.host.append(this.screen);
-      this.buildControls();
-      this.buildStateViews();
+      const toolbar = this.buildControls();
+      this.buildStateViews(toolbar);
       this.buildExplanation();
       this.print = element('div', 'orl-print');
       this.host.append(this.print);
@@ -139,14 +139,17 @@
       this.error = element('p', 'orl-error');
       this.error.setAttribute('role', 'alert');
       this.error.hidden = true;
-      this.screen.append(toolbar, this.status, this.error);
+      this.screen.append(this.status, this.error);
+      return toolbar;
     }
 
-    buildStateViews() {
+    buildStateViews(toolbar) {
       this.screen.append(element('p', 'orl-legend',
         'Each box is one object, including strings and numbers. Names and members point to these objects. Glow marks changes at this step. Select a labeled reference to follow it. A bridge means two arrows pass without joining.'));
       const columns = element('div', 'orl-columns');
       this.buildEditor();
+      const codeColumn = element('div', 'orl-code-column');
+      codeColumn.append(this.codePanel, toolbar);
       const diagramPanel = element('div', 'orl-diagram-panel');
       diagramPanel.append(element('p', 'orl-diagram-title', 'Object references'));
       const scroll = element('div', 'orl-graph-scroll');
@@ -155,7 +158,7 @@
       this.graphHost = element('div', 'orl-graph');
       scroll.append(this.graphHost);
       diagramPanel.append(scroll);
-      columns.append(this.codePanel, diagramPanel);
+      columns.append(codeColumn, diagramPanel);
       this.details = element('details', 'orl-details');
       this.details.append(element('summary', '', 'Reference details'));
       this.stateText = element('pre', 'orl-reference-text');

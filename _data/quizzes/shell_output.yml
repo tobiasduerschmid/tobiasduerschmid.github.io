@@ -20,7 +20,7 @@ questions:
 
   - id: shell-output-pipeline
     type: write-in
-    difficulty: intermediate
+    difficulty: basic
     question: "How many lines match the filter?"
     program:
       language: shell
@@ -79,7 +79,7 @@ questions:
 
   - id: shell-output-overwrite
     type: write-in
-    difficulty: intermediate
+    difficulty: basic
     question: "Both commands write to the same file. What does the final command print?"
     program:
       language: shell

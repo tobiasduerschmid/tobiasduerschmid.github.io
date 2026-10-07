@@ -34,7 +34,7 @@ questions:
   - id: 1                       # optional, used for analytics
     type: single                # 'single' (default), 'multiple', or 'parsons'
     difficulty: intermediate    # OPTIONAL: basic | intermediate | advanced | expert
-                                # SEBook embeds always show; SEGym is user-toggleable
+                                # SEBook and write-in quizzes always show; other SEGym cards are toggleable
     question: "Markdown question text"
     options:
       - "Option A"
@@ -216,6 +216,8 @@ If you need to debug rendering rather than authoring:
 `type: write-in` is supported in **SEBook embeds and SE Gym**, including master decks, saved workouts, review, and performance tracking. It is not supported in tutorial-step gates. See `references/schema.md` for the shape.
 
 Use a short, self-contained program and ask for its actual output. Keep typing small (ideally one or two numbers or short words, separated by spaces); do not replace output with answer-choice letters. The source appears full width above the input and standard Submit Answer button. Non-empty submissions score once; whitespace is normalized but case and punctuation matter. A wrong Python answer reveals the exact-code object reference lab inside the explanation, with Next buttons before and after it. Native Enter submits the answer form; choice shortcuts do not apply while typing.
+
+Write-in questions always display their assigned difficulty before and after answering, including in SE Gym. Other Gym card types follow the existing difficulty-visibility preference.
 
 Scored write-in questions use the standard Gym confetti, respecting More confetti and reduced-motion preferences; unscored chapter puzzles retain their existing celebration.
 

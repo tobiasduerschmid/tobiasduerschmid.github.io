@@ -146,7 +146,7 @@
    * keep their measured size, port offsets and route topology are preserved.
    * This cheap compaction is O((nodes + bends) log(nodes + bends)), not a fresh
    * graph optimization. Protect 10px around bends/heads plus a 24px corridor. */
-  function compactTimelineScene(scene) {
+  function compactTimelineScene(scene, { preserveAliasSpace = true, padding = 14 } = {}) {
     if (!scene.children.length) return scene;
     const points = scene.edges.flatMap(edge => edge.sections.flatMap(section =>
       [section.startPoint, ...(section.bendPoints || []), section.endPoint]));
@@ -154,12 +154,12 @@
       const intervals = [
         // Keep the small alias reservation above surviving objects: adding a
         // name alone should not push its unchanged target down the diagram.
-        ...scene.children.map(node => [node[axis] - (axis === 'y'
+        ...scene.children.map(node => [node[axis] - (preserveAliasSpace && axis === 'y'
           ? Math.max(0, (node.reservedTop ?? cardTop(node)) - cardTop(node)) : 0), node[axis] + node[size]]),
         ...points.map(point => [point[axis] - 10, point[axis] + 10])
       ].sort((a, b) => a[0] - b[0]);
       const gaps = [];
-      let end = intervals[0][1], removed = intervals[0][0] - 14;
+      let end = intervals[0][1], removed = intervals[0][0] - padding;
       intervals.slice(1).forEach(([start, stop]) => {
         if (start - end > 24) {
           removed += start - end - 24;
@@ -174,7 +174,7 @@
           if (gaps[middle].start <= value) low = middle + 1;
           else high = middle;
         }
-        return value - (low ? gaps[low - 1].removed : intervals[0][0] - 14);
+        return value - (low ? gaps[low - 1].removed : intervals[0][0] - padding);
       };
     };
     const x = axisMap('x', 'width'), y = axisMap('y', 'height');
@@ -185,9 +185,9 @@
       bendPoints: section.bendPoints?.map(translate)
     })) }));
     const moved = points.map(translate);
-    return { ...scene, children, edges,
-      width: 14 + Math.max(...children.map(node => node.x + node.width), ...moved.map(point => point.x)),
-      height: 14 + Math.max(...children.map(node => node.y + node.height), ...moved.map(point => point.y)) };
+    return { ...scene, children, edges, bridges: scene.bridges?.map(translate),
+      width: padding + Math.max(...children.map(node => node.x + node.width), ...moved.map(point => point.x)),
+      height: padding + Math.max(...children.map(node => node.y + node.height), ...moved.map(point => point.y)) };
   }
 
   if (typeof module !== 'undefined' && module.exports) {
@@ -760,6 +760,7 @@
     constructor(host, { interactive = true } = {}) {
       this.host = host;
       this.interactive = interactive;
+      this.host.classList.toggle('orl-interactive', interactive);
       this.prefix = 'orl-graph-' + (++graphNumber);
       this.objects = new Map();
       this.routes = new Map();
@@ -906,7 +907,13 @@
       return this.ready;
     }
 
-    commit(candidate, layout, animate) {
+    commit(candidate, preparedLayout, animate) {
+      // Narrow diagrams spend space only on the current state. Move cards,
+      // routes, and crossing marks together without changing the cached plan.
+      const padding = this.interactive
+        ? parseFloat(getComputedStyle(this.host).getPropertyValue('--orl-compact-padding')) : 0;
+      const layout = padding > 0
+        ? compactTimelineScene(preparedLayout, { preserveAliasSpace: false, padding }) : preparedLayout;
       const focused = this.host.contains(document.activeElement) ? document.activeElement : null;
       const focusIdentity = focused?.closest('[data-object-id]')?.dataset.objectId;
       const focusReference = focused?.dataset.referenceId;

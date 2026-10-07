@@ -76,6 +76,15 @@ measured size, retains the future alias area above each surviving card, protects
 change their crossing order, or scale text. It costs `O(k log k)` time and `O(k)`
 space for `k` node intervals and route points.
 
+Narrow interactive embeds compact the chosen scene once more before painting,
+without reserving space for future aliases. This removes empty leading space
+and unused internal bands on mobile, at the cost of some extra movement when
+names appear. The inset is 8px; card padding and minimum widths are smaller,
+while text sizes, reference targets, route clearances, and relative object order
+are preserved. Crossing marks move with the routes. The cached plan remains
+unchanged, so Back/Forward reproduces the same compact scene. Desktop and static
+print layouts retain the future-alias reservation policy.
+
 The planner processes states in forward order and chooses the projected or
 compacted version using footprint plus `80 * placementCost`. Placement cost is
 surviving-card displacement plus `0.15 * (width + height)`; displacement anchors

@@ -44,6 +44,26 @@ test('compaction keeps room for future names above an unchanged object', () => {
     'adding a name must not nudge its unchanged object');
 });
 
+test('compact mobile scenes reclaim future alias space while preserving cards and reference geometry', () => {
+  const scene = { width: 250, height: 650, kind: 'stacked',
+    children: [{ ...node('a'), reservedTop: 100, x: 30, y: 114 },
+      { ...node('b'), reservedTop: 120, x: 30, y: 500 }],
+    edges: [{ ...edge('a', '[0]', 'b'), sections: [{ startPoint: { x: 130, y: 164 },
+      bendPoints: [{ x: 180, y: 164 }, { x: 180, y: 518 }], endPoint: { x: 130, y: 518 } }] }],
+    bridges: [{ x: 180, y: 164 }] };
+  const result = compactTimelineScene(scene, { preserveAliasSpace: false, padding: 8 });
+  const [a, b] = result.children;
+  assert.equal(a.y, 8, 'the first current object starts below a small safety inset');
+  assert.ok(result.height < 260, 'future aliases must not reserve empty rows on mobile');
+  assert.equal(a.height, 100);
+  assert.equal(b.height, 100);
+  const section = result.edges[0].sections[0];
+  assert.deepEqual(section.startPoint, { x: a.x + a.width, y: a.y + 50 });
+  assert.deepEqual(section.endPoint, { x: b.x + b.width, y: b.y + 18 });
+  assert.deepEqual(result.bridges[0], section.bendPoints[0], 'crossing decorations move with their routes');
+  assert.equal(scene.children[0].y, 114, 'the reusable scene is not mutated');
+});
+
 test('rebinding and reordered slots retain their actual target and departure height', () => {
   const early = frame([node('list', { slots: ['[0]', '[1]'] }), node('a'), node('b')],
     [edge('list', '[0]', 'a'), edge('list', '[1]', 'b')]);

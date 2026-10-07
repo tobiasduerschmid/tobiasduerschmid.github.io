@@ -10,6 +10,7 @@ const shell = load('shell_output');
 const active = quiz => quiz.locator('.quiz-question-card.active');
 const input = card => card.getByRole('textbox', { name: 'Output (use spaces):', exact: true });
 const check = card => card.getByRole('button', { name: 'Submit Answer', exact: true });
+const difficulty = (card, question) => card.getByLabel('Difficulty: ' + question.difficulty[0].toUpperCase() + question.difficulty.slice(1), { exact: true });
 
 test.use({ reducedMotion: 'reduce' });
 test.setTimeout(150_000);
@@ -27,6 +28,7 @@ test('embedded Python output questions require text, accept whitespace, score on
   for (const question of python.questions) {
     const card = active(quiz);
     await expect(card.getByText(question.question, { exact: true })).toBeVisible();
+    await expect(difficulty(card, question)).toBeVisible();
     await input(card).fill('  ' + question.answer.replace(/ /g, '   ') + '  ');
     await input(card).press('Enter');
     await expect(card.getByText('Correct.', { exact: true })).toBeVisible();
@@ -56,6 +58,7 @@ test('shell output feedback, review, and print preserve quiz scoring and answer 
   await expect(input(active(quiz))).toHaveValue('2 1');
   for (const [index, question] of shell.questions.entries()) {
     const card = active(quiz);
+    await expect(difficulty(card, question)).toBeVisible();
     await input(card).fill(index === 0 ? '21' : question.answer);
     await check(card).click();
     if (index === 0) {
@@ -85,6 +88,7 @@ for (const width of [320, 390]) {
       const questionText = (await card.locator('.question-text').innerText()).trim();
       const question = shell.questions.find(q => q.question === questionText);
       expect(question).toBeTruthy();
+      await expect(difficulty(card, question)).toBeVisible();
       await expect(input(card)).toHaveAttribute('autocapitalize', 'off');
       const box = await input(card).boundingBox();
       const source = await card.locator('.program-lab__source').boundingBox();
@@ -98,6 +102,7 @@ for (const width of [320, 390]) {
       await input(card).pressSequentially(question.answer);
       await input(card).press('Enter');
       await expect(card.getByText('Correct.', { exact: true })).toBeVisible();
+      await expect(difficulty(card, question)).toBeVisible();
       if (index === 0 && width === 320) await auditInteractiveState(page, 'Mobile write-in answer feedback', { include: '.workout-quiz-card' });
       await card.getByRole('button', { name: 'Next', exact: true }).click();
     }
@@ -126,6 +131,7 @@ for (const viewport of [{ width: 320, height: 667 }, { width: 390, height: 844 }
       expect(await source.evaluate(element => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
       const text = (await card.locator('.question-text').innerText()).trim();
       const question = python.questions.find(q => q.question === text);
+      await expect(difficulty(card, question)).toBeVisible();
       await input(card).fill(question.answer);
       await check(card).click();
       await expect(card.getByText('Correct.', { exact: true })).toBeVisible();
@@ -152,6 +158,16 @@ test('an incorrect Python write-in answer offers its exact trace inside the expl
   await expect(next).toHaveCount(2);
   await expect(lab.getByRole('textbox', { name: 'Python code', exact: true })).toHaveValue(question.program.code.trimEnd());
   await expect(lab.getByRole('button', { name: 'Forward', exact: true })).toBeEnabled({ timeout: 120_000 });
+  const editor = lab.getByRole('textbox', { name: 'Python code', exact: true });
+  const controls = lab.getByRole('group', { name: 'Trace and playback controls', exact: true });
+  const editorBox = await editor.boundingBox();
+  const controlsBox = await controls.boundingBox();
+  const diagramBox = await lab.getByRole('region', { name: 'Object reference diagram', exact: true }).boundingBox();
+  expect(controlsBox.y).toBeGreaterThanOrEqual(editorBox.y + editorBox.height);
+  expect(controlsBox.y + controlsBox.height).toBeLessThanOrEqual(diagramBox.y);
+  await editor.focus();
+  await editor.press('Tab');
+  await expect(controls.getByRole('button', { name: 'Restart', exact: true })).toBeFocused();
   await lab.getByRole('button', { name: 'Forward', exact: true }).click();
   await expect(lab.getByRole('status')).toContainText('Step 2 of');
   const traceBox = await lab.boundingBox();
