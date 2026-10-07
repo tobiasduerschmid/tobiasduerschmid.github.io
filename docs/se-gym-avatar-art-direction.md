@@ -24,6 +24,10 @@ The human construction now uses shaped eye apertures with lid thickness and part
 
 The portrait has its own skin material. Broad temple and cheek-side planes establish the head's depth; cheekbone light, lower-cheek shadow and a rounded chin establish its anatomy. The renderer fits the side planes to the selected face width and seats the chin on the actual jaw boundary. Keep plane transitions soft, especially at exposed temples and on pale skin; preserve hue and visible volume on deep skin. Closed-mouth styles need tapered lip masses as well as a seam. Glasses need a shaded frame bevel and contained reflections that leave the eyes readable.
 
+Naturalness must preserve differences. Fuller cheeks have a shallower hollow than angular cheeks; use the head's `cheekDepth` to retain that fullness without changing its silhouette. Nose widths and bridges remain distinct, with short recessed nostrils rather than scalloped outlines. Avoid continuous light eyebrow rims, flat blush disks and decorative second jaw lines. Review varied face and body shapes across the skin palette; matching Prof's finish must not mean making every student resemble Prof.
+
+Expand morphology along independent dimensions: eyelid folds and crease height, bridge width versus alar width, tip direction, upper/lower lip balance, ear projection and lobe attachment, cheek height and lower-jaw width. Small natural asymmetries are options, not random distortions. The human form-light material makes light-facing planes more legible without changing the chosen midtone or applying a light outline to every feature. Review combinations relevant to East Asian, South Asian, Black and Latino students across multiple complexions and hair textures; no single combination defines any of these groups.
+
 ## Visual system
 
 - **One light direction.** Use a broad upper-left key light, a restrained lower-right form shadow, and small highlights where the material warrants them. Skin is soft; hair has grouped sheen; glass and metal receive sharper reflections.
@@ -62,6 +66,8 @@ Review the artwork at full size and thumbnail size, in light and dark themes, wi
 Both static thumbnails and the live fallback must paint the represented option. A correctly drawn barbell or background cannot stand in for a missing character. The Bruin fallback regression measures paint from the mascot itself, guarding against template pruning that removes the alternate character before it is selected.
 
 Detached and hidden preview templates need real layout before group bounds can be measured. The renderer mounts them synchronously in an invisible measuring host and restores their original parent, sibling position, dimensions and visibility in a `finally` block. A regression compares detached and mounted paint, requires visible artwork, and checks that no measuring host or ownership change remains.
+
+Unselected head contours also need measurable geometry. Firefox returns empty bounds for a `display:none` reference head, so beard fitting measures a temporary invisible copy and caches the authored contour bounds. The focused Firefox project verifies actual lower-face paint after manual beard selection as well as jaw attachment and hidden-template rendering; a selected choice tile alone does not establish that the beard rendered.
 
 This check cannot certify visual taste, complete representation, every accessory combination, or WCAG conformance. Continue the existing interaction, geometry, color-contrast, persistence, and accessibility suites alongside a human visual review. The current standing barbell pose also cannot express every mobility experience; representation remains an ongoing design responsibility.
 

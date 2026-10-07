@@ -139,6 +139,57 @@ test('Natural and dyed eyebrow colors remain visible as the chosen color on ligh
   }
 });
 
+test('Selecting a beard paints the lower face with a bun, long lashes and a nondefault jaw', async ({ page, context }) => {
+  await context.addCookies([{ name: 'se-gym-active', value: 'true', domain: '127.0.0.1', path: '/' }]);
+  await page.goto('/se-gym/');
+  await page.waitForFunction(() => Boolean(window.HeroAvatar));
+  await page.evaluate(() => {
+    const avatar = structuredClone(window.HeroAvatar.DEFAULTS);
+    Object.assign(avatar.appearance, {
+      skin: '#f8dfcf', hairColor: '#1f140c', hairStyle: 'messy-bun',
+      eyelashStyle: 'long-glam', headStyle: 'soft-square', facialHair: 'none'
+    });
+    window.HeroAvatar.saveAvatar(avatar);
+  });
+  await page.reload();
+  await page.getByRole('button', { name: 'Customize Hero', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Customize your hero' });
+  // The decorative preview has no accessible role. Its include's preview hook
+  // identifies the actual artwork, separate from choice-button thumbnails.
+  const preview = dialog.locator('.hero-cust-preview svg');
+  async function lowerFacePaint() {
+    return preview.evaluate(async svg => {
+      const copy = svg.cloneNode(true);
+      copy.querySelectorAll('animate, animateTransform, animateMotion, set').forEach(node => node.remove());
+      copy.setAttribute('viewBox', '345 195 110 90');
+      copy.setAttribute('width', '220');
+      copy.setAttribute('height', '180');
+      copy.style.cssText = svg.style.cssText + ';width:220px;height:180px;display:block;visibility:visible;opacity:1';
+      const image = new Image();
+      image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(copy))}`;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = 220;
+      canvas.height = 180;
+      const context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0);
+      const pixels = context.getImageData(0, 0, 220, 180).data;
+      return Array.from({ length: 220 * 180 }, (_, index) => pixels[index * 4] + pixels[index * 4 + 1] + pixels[index * 4 + 2]);
+    });
+  }
+  const cleanFace = await lowerFacePaint();
+  for (const label of ['Trimmed beard', 'Full beard']) {
+    const choice = dialog.getByRole('button', { name: `Choose Facial hair: ${label}`, exact: true });
+    await choice.click();
+    await expect(choice).toHaveAttribute('aria-pressed', 'true');
+    const beard = await lowerFacePaint();
+    const darkerPixels = beard.filter((value, index) => cleanFace[index] - value > 90).length;
+    // A selected tile alone cannot prove a beard is on the face. In Firefox,
+    // a hidden reference-head box once inverted the beard into the hairline.
+    expect(darkerPixels, `${label} must visibly cover part of the lower face`).toBeGreaterThan(400);
+  }
+});
+
 test('Customizer saves, exports and imports separate hair colors and representation choices', async ({ page, context }) => {
   // Two axe passes traverse the complete customizer as well as this save/import flow.
   if (interactiveA11yEnabled('se-gym-hero-avatar')) test.slow();

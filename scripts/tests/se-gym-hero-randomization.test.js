@@ -108,6 +108,21 @@ test('manual combinations retain facial hair through validation, normalization, 
   }
 });
 
+test('random generation reaches every selectable facial structure without tying it to one complexion', () => {
+  const api = loadAvatarApi();
+  const avatars = sampleAvatars(api);
+  for (const key of ['headStyle', 'eyeShape', 'noseShape', 'mouthStyle', 'earShape']) {
+    const expected = api.CHOICE_SETS[key].groups.flatMap(group => group.options.map(option => option.value));
+    const seen = new Set(avatars.map(avatar => avatar.appearance[key]));
+    assert.deepEqual([...seen].sort(), [...expected].sort(), `every ${key} choice must be reachable`);
+    for (const value of expected) {
+      const complexions = new Set(avatars.filter(avatar => avatar.appearance[key] === value)
+        .map(avatar => avatar.appearance.skin));
+      assert.ok(complexions.size > 1, `${key} ${value} must be available across complexions`);
+    }
+  }
+});
+
 test('random Bruin mascots retain their established appearance', () => {
   const api = loadAvatarApi();
   for (let index = 0; index < 32; index++) {

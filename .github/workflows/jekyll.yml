@@ -39,8 +39,8 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Install Playwright browser for static rendering
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright browsers for rendering and avatar regression
+        run: npx playwright install --with-deps chromium firefox
 
       - name: Pre-render hero choice previews
         run: make hero-choice-previews
@@ -51,6 +51,11 @@ jobs:
         run: bundle exec jekyll build --strict_front_matter
         env:
           JEKYLL_ENV: production
+
+      - name: Verify Firefox avatar rendering
+        run: npx playwright test --project=avatar-firefox
+        env:
+          PLAYWRIGHT_SERVE_BUILT_SITE: '1'
 
       - name: Upload Pages artifact
         if: github.event_name == 'push'

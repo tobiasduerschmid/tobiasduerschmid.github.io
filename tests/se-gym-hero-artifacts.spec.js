@@ -361,7 +361,7 @@ test('Full-coverage hair caps cover the upper scalp when hair proportions are mi
   test.setTimeout(180_000);
   const svg = await openPortrait(page);
   for (const headStyle of ['default', 'narrow', 'broad', 'oblong']) {
-    for (const hairStyle of ['clean-taper', 'buzz', 'crew-cut', 'fade', 'bun', 'ponytail', 'coily-puff', 'double-puffs']) {
+    for (const hairStyle of ['clean-taper', 'buzz', 'crew-cut', 'fade', 'bun', 'ponytail', 'coily-puff', 'double-puffs', 'tapered-coils', 'cropped-twists', 'short-locs', 'braided-bob', 'cheek-length-sidelocks']) {
       const [hair] = await svg.evaluate(inspectPortrait, {
         appearance: { headStyle, hairStyle },
         fineTune: { hair: { vertical: 20, width: -20, height: -20, spread: -20 } },
@@ -377,14 +377,18 @@ test('Full-coverage hair caps cover the upper scalp when hair proportions are mi
 });
 
 test('Beards remain attached across the selected jaw instead of floating below it', async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(300_000);
   const svg = await openPortrait(page);
-  for (const headStyle of ['default', 'broad', 'compact-round', 'square', 'narrow', 'long-tapered-jaw', 'soft-v-jaw']) {
+  for (const headStyle of ['default', 'broad', 'compact-round', 'square', 'soft-square', 'narrow', 'long-tapered-jaw', 'soft-v-jaw', 'high-cheek-oval', 'broad-lower-jaw', 'compact-soft-square', 'long-full-cheek']) {
     for (const { facialHair, boundaries } of [
       { facialHair: 'stubble', boundaries: [0] },
       { facialHair: 'soft-beard-shadow', boundaries: [0] },
       { facialHair: 'fine-mustache-stubble', boundaries: [0] },
       { facialHair: 'short-beard', boundaries: [0, 20, 0] },
+      { facialHair: 'boxed-beard', boundaries: [-20, 0, 20] },
+      { facialHair: 'long-rounded-beard', boundaries: [-20, 0, 20] },
+      { facialHair: 'curly-beard', boundaries: [-20, 0, 20] },
+      { facialHair: 'ducktail-beard', boundaries: [-20, 0, 20] },
       { facialHair: 'chin-strap', boundaries: [0, -20, 20, 0] },
     ]) {
       for (const boundary of boundaries) {
@@ -399,6 +403,25 @@ test('Beards remain attached across the selected jaw instead of floating below i
         expect(paint.jawContourPixels, `${context}: lower jaw is in view`).toBeGreaterThan(20);
         expect(paint.uncoveredJawPixels, `${context}: beard must meet the lower jaw without a bare-skin gap`).toBe(0);
         expect(paint.painted, `${context}: selected beard remains visible`).toBeGreaterThan(100);
+      }
+    }
+  }
+});
+
+test('Full beard shapes stay below the eyes at facial-hair adjustment limits', async ({ page }) => {
+  const svg = await openPortrait(page);
+  for (const headStyle of ['narrow', 'broad-lower-jaw']) {
+    for (const facialHair of ['curly-beard', 'boxed-beard', 'long-rounded-beard', 'ducktail-beard']) {
+      for (const boundary of [-20, 0, 20]) {
+        const [paint] = await svg.evaluate(inspectPortrait, {
+          appearance: { headStyle, facialHair },
+          fineTune: { facialHair: { vertical: boundary, width: boundary, height: boundary, spread: boundary } },
+          surfaceSelector: '[data-hero-slot="eye-shape"][display="inline"] [data-hero-eye-surface]',
+          targetSelectors: [`[data-hero-slot="facial-hair"][data-hero-option="${facialHair}"]`],
+        });
+        const context = `${headStyle}, ${facialHair}, adjustment ${boundary}`;
+        expect(paint.painted, `${context}: the selected beard must remain visible`).toBeGreaterThan(100);
+        expect(paint.overlap, `${context}: beard growth must not enter the eyes`).toBe(0);
       }
     }
   }
@@ -440,10 +463,10 @@ test('Small chin-hair styles stay visible below the lips and on the chin at adju
 });
 
 test('Mustaches stay attached to the upper lip when mouth and facial-hair controls disagree', async ({ page }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(300_000);
   const svg = await openPortrait(page);
   const mouths = await page.evaluate(() => window.HeroAvatar.ENUMS.mouthStyle);
-  const styles = ['soft-mustache', 'neat-mustache', 'fine-mustache-stubble', 'mustache', 'goatee', 'rounded-goatee', 'light-goatee', 'full-beard'];
+  const styles = ['soft-mustache', 'neat-mustache', 'fine-mustache-stubble', 'mustache', 'goatee', 'rounded-goatee', 'light-goatee', 'full-beard', 'boxed-beard', 'long-rounded-beard', 'curly-beard', 'ducktail-beard'];
   for (const headStyle of HEAD_BOUNDARIES) {
     for (const facialHair of styles) {
       for (const mouthStyle of mouths) {
@@ -730,8 +753,12 @@ test('Cheek tints stay beneath opaque facial hair', async ({ page }) => {
     const frame = svg.querySelector('[data-hero-head-proportions]');
     const beard = svg.querySelector('[data-hero-slot="facial-hair"][data-hero-option="full-beard"]');
     // Locate painted surfaces by their material, allowing the artwork to use any SVG geometry.
-    const cheeks = [...svg.querySelectorAll('[fill*="--hero-cheek"]')].filter(shape =>
-      typeof shape.isPointInFill === 'function' && !shape.closest('[display="none"]'));
+    const cheekPaints = new Set([...svg.querySelectorAll('linearGradient,radialGradient,pattern')]
+      .filter(paint => paint.outerHTML.includes('--hero-cheek,'))
+      .map(paint => `url(#${paint.id})`));
+    const cheeks = [...svg.querySelectorAll('[fill]')].filter(shape =>
+      (shape.getAttribute('fill').includes('--hero-cheek,') || cheekPaints.has(shape.getAttribute('fill')))
+      && typeof shape.isPointInFill === 'function' && !shape.closest('[display="none"]'));
     const opaqueBeard = [...beard.querySelectorAll('path,ellipse,circle,rect,polygon')].filter(shape => {
       const style = getComputedStyle(shape);
       return style.fill !== 'none' && Number(style.opacity) >= 0.99 && Number(style.fillOpacity) >= 0.99;

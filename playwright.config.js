@@ -5,6 +5,7 @@ const { chromiumLaunchOptions } = require('./scripts/chromium-launch-options');
 const requestedJekyllPort = process.env.JEKYLL_PORT || '4000';
 const jekyllPort = /^\d+$/.test(requestedJekyllPort) ? requestedJekyllPort : '4000';
 const jekyllHost = '127.0.0.1';
+const serveBuiltSite = process.env.PLAYWRIGHT_SERVE_BUILT_SITE === '1';
 const defaultWebServerTimeoutMs = 10 * 60 * 1000;
 const requestedWebServerTimeoutMs = process.env.PLAYWRIGHT_WEB_SERVER_TIMEOUT_MS;
 const parsedWebServerTimeoutMs = Number(requestedWebServerTimeoutMs);
@@ -18,7 +19,9 @@ module.exports = defineConfig({
 
   webServer: {
     // The command to start your local server
-    command: `make test-run JEKYLL_PORT=${jekyllPort}`,
+    command: serveBuiltSite
+      ? `python3 -m http.server ${jekyllPort} --bind ${jekyllHost} --directory _site`
+      : `make test-run JEKYLL_PORT=${jekyllPort}`,
 
     // The URL Playwright will ping to check if the server is ready.
     // It waits for a 200 OK response before starting tests.
@@ -50,6 +53,14 @@ module.exports = defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'avatar-firefox',
+      testMatch: /se-gym-hero-(artifacts|representation)\.spec\.js/,
+      grep: /Selecting a beard paints|Beards remain attached|Full beard shapes stay below|Detached and hidden avatar templates/,
+      // Hidden SVG geometry differs between engines; exercise the beard fix
+      // in Firefox without duplicating the entire site's Chromium suite.
+      use: { ...devices['Desktop Firefox'], launchOptions: {} },
     },
   ],
 });
