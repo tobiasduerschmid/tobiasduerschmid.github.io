@@ -895,38 +895,20 @@ test('Skin freckles stay beneath opaque eyes', async ({ page }) => {
     HeroAvatar.applyToSvg(svg, state);
     svg.pauseAnimations();
     svg.setCurrentTime(0);
-    const marks = svg.querySelector('[data-hero-slot="face-feature"][data-hero-option="forehead-freckles"]');
-    const eyes = svg.querySelector('[data-hero-slot="eye-shape"][data-hero-option="round"]');
-    const paintedShapes = root => [...root.querySelectorAll('*')].filter(shape => {
-      if (typeof shape.isPointInFill !== 'function' || shape.closest('[display="none"]')) return false;
-      const style = getComputedStyle(shape);
-      return style.fill !== 'none' && Number(style.opacity) > 0 && Number(style.fillOpacity) > 0;
-    });
-    const markShapes = paintedShapes(marks);
-    const opaqueEyes = paintedShapes(eyes).filter(shape => {
-      const style = getComputedStyle(shape);
-      return Number(style.opacity) >= .99 && Number(style.fillOpacity) >= .99;
-    });
-    const inShape = (shape, x, y) => shape.isPointInFill(new DOMPoint(x, y).matrixTransform(
-      shape.getScreenCTM().inverse().multiply(marks.getScreenCTM())
-    ));
-    const offsets = [[0, 0], [-.6, 0], [.6, 0], [0, -.6], [0, .6]];
-    const covered = [], exposed = [];
-    const box = marks.getBBox();
-    const toRoot = svg.getScreenCTM().inverse().multiply(marks.getScreenCTM());
-    // Sample actual painted detail shapes; no path count, point coordinates, or painter order is prescribed.
-    for (let y = box.y; y <= box.y + box.height; y += .25) for (let x = box.x; x <= box.x + box.width; x += .25) {
-      if (!markShapes.some(shape => inShape(shape, x, y))) continue;
-      const hit = offsets.map(([dx, dy]) => opaqueEyes.some(shape => inShape(shape, x + dx, y + dy)));
-      const point = new DOMPoint(x, y).matrixTransform(toRoot);
-      if (hit.every(Boolean)) covered.push(point);
-      else if (hit.every(value => !value)) exposed.push(point);
-    }
+    const marksSelector = '[data-hero-slot="face-feature"][data-hero-option="forehead-freckles"]';
+    const eyesSelector = '[data-hero-slot="eye-shape"][data-hero-option="round"]';
     const vb = svg.viewBox.baseVal;
     const width = Math.round(vb.width * 2), height = Math.round(vb.height * 2);
-    async function render() {
+    async function render(isolatedLayer) {
       const clone = svg.cloneNode(true);
       clone.querySelectorAll('[display="none"],animate,animateTransform,animateMotion,set').forEach(node => node.remove());
+      if (isolatedLayer) {
+        // Keep the real clipping, gradients, and ancestor opacity. A shape with
+        // opacity=1 can still paint translucent orbital or eyelid shading.
+        clone.querySelectorAll('path,ellipse,circle,rect,polygon,polyline,line,text,use,image').forEach(shape => {
+          if (!shape.closest('defs') && !shape.closest(isolatedLayer)) shape.remove();
+        });
+      }
       clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
       clone.setAttribute('width', width);
       clone.setAttribute('height', height);
@@ -945,15 +927,27 @@ test('Skin freckles stay beneath opaque eyes', async ({ page }) => {
         return context.getImageData(0, 0, width, height).data;
       } finally { URL.revokeObjectURL(url); }
     }
+    const eyePaint = await render(eyesSelector);
+    const markPaint = await render(marksSelector);
+    const covered = [], exposed = [];
+    // Inspect actual opaque eye pixels, with a one-pixel interior margin to
+    // exclude antialiasing; translucent skin planes may show freckles through.
+    for (let y = 1; y < height - 1; y++) for (let x = 1; x < width - 1; x++) {
+      const offset = (y * width + x) * 4;
+      if (markPaint[offset + 3] < 8) continue;
+      const alpha = [];
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        alpha.push(eyePaint[((y + dy) * width + x + dx) * 4 + 3]);
+      }
+      if (alpha.every(value => value === 255)) covered.push(offset);
+      else if (alpha.every(value => value === 0)) exposed.push(offset);
+    }
     const originalColor = svg.style.getPropertyValue('--hero-face-mark');
     const before = await render();
     svg.style.setProperty('--hero-face-mark', '#00ffff');
     const after = await render();
     svg.style.setProperty('--hero-face-mark', originalColor);
-    const maximumDifference = points => Math.max(0, ...points.map(point => {
-      const x = Math.round((point.x - vb.x) * width / vb.width);
-      const y = Math.round((point.y - vb.y) * height / vb.height);
-      const offset = (y * width + x) * 4;
+    const maximumDifference = offsets => Math.max(0, ...offsets.map(offset => {
       return Math.max(...[0, 1, 2].map(channel => Math.abs(before[offset + channel] - after[offset + channel])));
     }));
     return {
@@ -967,4 +961,21 @@ test('Skin freckles stay beneath opaque eyes', async ({ page }) => {
   expect(result.exposedSamples, 'Freckles must also remain visible on skin').toBeGreaterThan(0);
   expect(result.maximumEyeChange, 'Skin paint must not tint opaque eye interiors').toBeLessThanOrEqual(1);
   expect(result.maximumVisibleFreckleChange, 'The visible skin freckles must respond to the color change').toBeGreaterThan(20);
+});
+
+
+test('Rear loc and braid lighting does not become a foreground forehead patch', async ({ page }) => {
+  const svg = await openPortrait(page);
+  for (const hairStyle of ['two-strand-twists', 'locs', 'loose-locs', 'box-braids', 'knotless-braids']) {
+    for (const headStyle of ['default', 'broad', 'narrow']) {
+      const foreground = `[data-hero-slot="hairline"][data-hero-option="${hairStyle}"]`;
+      const [result] = await svg.evaluate(inspectPortrait, {
+        appearance: { hairStyle, headStyle, skin: '#512d22', hairColor: '#eee7dd' },
+        surfaceSelector: `${foreground} [data-hero-hair-crown]`,
+        targetSelectors: [`${foreground} [data-hero-hair-volume]`],
+      });
+      expect(result.painted, `${hairStyle}/${headStyle}: crown lighting renders`).toBeGreaterThan(20);
+      expect(result.exterior, `${hairStyle}/${headStyle}: foreground lighting belongs to the crown`).toBe(0);
+    }
+  }
 });

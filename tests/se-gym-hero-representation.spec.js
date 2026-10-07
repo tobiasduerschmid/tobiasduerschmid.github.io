@@ -235,3 +235,52 @@ test('Customizer saves, exports and imports separate hair colors and representat
   await expect(beardMatch).not.toBeChecked();
   await expect(modal.getByRole('textbox', { name: 'Hex color for facial hair', exact: true })).toHaveValue('#B7BDC8');
 });
+
+
+test('Hearing-aid receivers stay on the selected ears under independent proportion changes', async ({ page }) => {
+  test.setTimeout(180_000);
+  await openRenderer(page);
+  const result = await page.evaluate(() => {
+    const api = window.HeroAvatar;
+    const svg = document.querySelector('[data-gym-hero-svg]');
+    svg.style.cssText = 'display:block;width:460px;height:440px;opacity:1;visibility:visible';
+    const tune = value => ({ vertical: value, width: value, height: value, spread: value });
+    const failures = [];
+    let checked = 0;
+    for (const headStyle of ['narrow', 'broad', 'long-tapered-jaw']) {
+      for (const earShape of api.ENUMS.earShape) {
+        for (const aid of ['hearing-aid-left', 'hearing-aid-right', 'hearing-aids']) {
+          for (const boundary of [-20, 0, 20]) {
+            const avatar = structuredClone(api.DEFAULTS);
+            Object.assign(avatar.appearance, { headStyle, earShape, hairStyle: 'bald' });
+            avatar.outfit.accessories = [aid, 'wireframe-glasses'];
+            avatar.fineTune.head = { width: boundary, height: -boundary };
+            avatar.fineTune.ears = tune(-boundary);
+            avatar.fineTune.accessories = tune(boundary);
+            api.applyToSvg(svg, avatar);
+            const group = svg.querySelector(`[data-hero-slot="accessory"][data-hero-option="${aid}"]`);
+            const receivers = [...group.querySelectorAll('[data-hero-ear-receiver]')];
+            if (receivers.length !== (aid === 'hearing-aids' ? 2 : 1) || group.getAttribute('display') !== 'inline') {
+              failures.push({ headStyle, earShape, aid, boundary, reason: 'selected receivers must remain visible' });
+            }
+            for (const receiver of receivers) {
+              const side = receiver.closest('[data-hero-ear-attachment]').getAttribute('data-hero-ear-attachment');
+              const ear = svg.querySelector(`[data-hero-slot="ear-shape"][display="inline"] [data-hero-face-detail="ear-${side}"]`);
+              const box = receiver.getBBox();
+              const center = new DOMPoint(box.x + box.width / 2, box.y + box.height / 2)
+                .matrixTransform(receiver.getScreenCTM());
+              const attached = [...ear.querySelectorAll('path,ellipse,circle')].some(surface =>
+                getComputedStyle(surface).fill !== 'none'
+                && surface.isPointInFill(center.matrixTransform(surface.getScreenCTM().inverse())));
+              if (!attached || box.width <= 0 || box.height <= 0) failures.push({ headStyle, earShape, aid, boundary, side });
+              checked++;
+            }
+          }
+        }
+      }
+    }
+    return { checked, failures };
+  });
+  expect(result.checked, 'all selected hearing-aid receivers are inspected').toBeGreaterThan(100);
+  expect(result.failures, 'an in-ear receiver must stay seated on the ear, including alongside glasses').toEqual([]);
+});

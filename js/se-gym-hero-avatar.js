@@ -773,7 +773,8 @@
   var FACE_ACCESSORY_PRIORITY = ['mask', 'eyepatch', 'tech-visor', 'visor', 'safety-goggles', 'round-rim-glasses', 'semi-rimless-glasses', 'thin-rectangular-glasses', 'wireframe-glasses', 'rectangular-glasses', 'glasses', 'spectacles', 'monocle'];
   var HEAD_ACCESSORY_PRIORITY = ['hijab', 'wrapped-dastar', 'headwrap', 'draped-scarf', 'turban', 'embroidered-prayer-cap', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'crown', 'headband'];
   var EAR_ACCESSORY_PRIORITY = ['hoop-earrings', 'stud-earrings', 'earrings'];
-  var AUDIO_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aid-right', 'hearing-aids'];
+  var HEARING_AID_ACCESSORY_PRIORITY = ['hearing-aid-left', 'hearing-aid-right', 'hearing-aids'];
+  var AUDIO_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds'].concat(HEARING_AID_ACCESSORY_PRIORITY);
   var NECK_ACCESSORY_PRIORITY = ['chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard'];
   var BAG_ACCESSORY_PRIORITY = ['backpack-straps', 'messenger-bag'];
   var BODY_BOUND_ACCESSORIES = ['chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp'];
@@ -1465,6 +1466,17 @@
     return null;
   }
 
+  function isHearingAid(accessory) {
+    return HEARING_AID_ACCESSORY_PRIORITY.indexOf(accessory) !== -1;
+  }
+
+  function hearingAidCanRemainUnderAudio(first, second) {
+    return Boolean(
+      (isHearingAid(first) && EAR_CONCEALING_AUDIO_ACCESSORIES[second])
+      || (isHearingAid(second) && EAR_CONCEALING_AUDIO_ACCESSORIES[first])
+    );
+  }
+
   function exclusiveAccessoryFamily(accessory) {
     if (FACE_ACCESSORY_PRIORITY.indexOf(accessory) !== -1) return FACE_ACCESSORY_PRIORITY;
     if (HEAD_ACCESSORY_PRIORITY.indexOf(accessory) !== -1) return HEAD_ACCESSORY_PRIORITY;
@@ -1528,6 +1540,19 @@
       if (selected.indexOf(detail) !== -1) composited.push(detail);
     }
     return composited;
+  }
+
+  function getRetainedAccessories(accessories, hairStyle) {
+    var selected = cleanAccessories(accessories);
+    var retained = getCompositedAccessories(selected, hairStyle);
+    var aid = firstSelected(selected, HEARING_AID_ACCESSORY_PRIORITY);
+    var audio = firstSelected(selected, AUDIO_ACCESSORY_PRIORITY);
+    // Covering an assistive device changes its visibility, not the saved choice.
+    // Earbuds still occupy the same ear placement and remain mutually exclusive.
+    if (aid && (audio === aid || hearingAidCanRemainUnderAudio(aid, audio)) && retained.indexOf(aid) === -1) {
+      retained.push(aid);
+    }
+    return retained;
   }
 
   function randomSkinTone() {
@@ -1673,7 +1698,7 @@
       if (obj.appearance.faceFeature === undefined) obj.appearance.faceFeature = 'none';
       obj.appearance.faceFeature = canonicalChoiceValue('faceFeature', obj.appearance.faceFeature);
     }
-    var accessories = getCompositedAccessories(
+    var accessories = getRetainedAccessories(
       getAccessories(obj.outfit),
       obj.appearance && obj.appearance.hairStyle
     );
@@ -3379,6 +3404,17 @@
       // Follow both relative ear tuning and the final contour correction.
       // Mirror transforms stay inside the wrapper; device widths stay intact.
       var moved = new DOMPoint(fitted.x - original.x, fitted.y - original.y);
+      var receiver = attachment.querySelector('[data-hero-ear-receiver]');
+      if (receiver) {
+        // A hearing aid can change size, but its receiver remains inserted in
+        // the lower concha rather than following accessory-wide translation.
+        var receiverBounds = receiver.getBBox();
+        var receiverCenter = new DOMPoint(receiverBounds.x + receiverBounds.width / 2,
+          receiverBounds.y + receiverBounds.height / 2).matrixTransform(localSvgMatrix(receiver, proportions));
+        var socket = new DOMPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height * 0.75)
+          .matrixTransform(localSvgMatrix(ear, proportions));
+        moved = new DOMPoint(socket.x - receiverCenter.x, socket.y - receiverCenter.y);
+      }
       var accessoryParent = localSvgMatrix(attachment.parentElement, proportions);
       var inverseDirection = new DOMMatrix([
         accessoryParent.a, accessoryParent.b, accessoryParent.c, accessoryParent.d, 0, 0
@@ -6202,7 +6238,7 @@
 
     function writeAccessoriesForm(state) {
       var selected = {};
-      var accessories = getCompositedAccessories(getAccessories(state.outfit), state.appearance.hairStyle);
+      var accessories = getRetainedAccessories(getAccessories(state.outfit), state.appearance.hairStyle);
       for (var i = 0; i < accessories.length; i++) selected[accessories[i]] = true;
       var checkboxes = modal.querySelectorAll('input[name="hero-cust-accessory"]');
       for (var c = 0; c < checkboxes.length; c++) {
@@ -6625,7 +6661,7 @@
           );
           var selectedHeadwear = firstSelected(selectedValues, HEAD_ACCESSORY_PRIORITY);
           var selectedAudio = firstSelected(selectedValues, AUDIO_ACCESSORY_PRIORITY);
-          if (accessoryIsConcealedByWearables(el.value, selectedHeadwear, selectedAudio)) {
+          if (!isHearingAid(el.value) && accessoryIsConcealedByWearables(el.value, selectedHeadwear, selectedAudio)) {
             el.checked = false;
             setStatus('The selected headwear or audio gear conceals this accessory.', true);
             commitPreviewEdit();
@@ -6637,7 +6673,10 @@
           var checkboxes = modal.querySelectorAll('input[name="hero-cust-accessory"]');
           for (var i = 0; i < checkboxes.length; i++) {
             var checkbox = checkboxes[i];
-            if (checkbox !== el && family && family.indexOf(checkbox.value) !== -1) checkbox.checked = false;
+            if (
+              checkbox !== el && family && family.indexOf(checkbox.value) !== -1
+              && !hearingAidCanRemainUnderAudio(el.value, checkbox.value)
+            ) checkbox.checked = false;
           }
           var activeValues = Array.prototype.map.call(
             modal.querySelectorAll('input[name="hero-cust-accessory"]:checked'),
@@ -6651,6 +6690,7 @@
             if (
               activeCheckbox !== el
               && activeCheckbox.checked
+              && !isHearingAid(activeCheckbox.value)
               && accessoryIsConcealedByWearables(activeCheckbox.value, activeHeadwear, activeAudio)
             ) {
               activeCheckbox.checked = false;
@@ -6662,6 +6702,11 @@
               ? 'Removed one accessory because the selected gear conceals it.'
               : 'Removed ' + concealedCount + ' accessories because the selected gear conceals them.';
           }
+        }
+        var retainedAccessories = readAccessoriesForm();
+        var retainedAid = firstSelected(retainedAccessories, HEARING_AID_ACCESSORY_PRIORITY);
+        if (retainedAid && getCompositedAccessories(retainedAccessories, selectedHairStyle).indexOf(retainedAid) === -1) {
+          compatibilityMessage += (compatibilityMessage ? ' ' : '') + 'Your hearing aid selection is kept while covered.';
         }
         setStatus(compatibilityMessage);
         commitPreviewEdit();
