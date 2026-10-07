@@ -8387,9 +8387,11 @@
         <path d="M 375 141 L 377 140 M 397 141 L 399 140 M 419 141 L 421 140" fill="none" stroke="#ffffff" stroke-width="1.0" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/>
       </g>
       <g data-hero-slot="accessory" data-hero-option="halo" display="none">
-        <ellipse cx="400" cy="100" rx="38" ry="8" fill="none" stroke="#FFE470" stroke-width="4.50"/>
-        <ellipse cx="400" cy="100" rx="38" ry="8" fill="none" stroke="#FFD100" stroke-width="1.50" opacity=".7"/>
-        <path d="M 367 99 C 373 94 390 92 404 93" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/>
+        <!-- The ring hovers at the crown, below the raised bar, so the whole loop stays visible. -->
+        <ellipse cx="400" cy="109" rx="34" ry="6.5" fill="none" stroke="#b88a00" stroke-width="5.6" opacity=".55"/>
+        <ellipse cx="400" cy="109" rx="34" ry="6.5" fill="none" stroke="#FFE470" stroke-width="4.2"/>
+        <ellipse cx="400" cy="109" rx="34" ry="6.5" fill="none" stroke="#FFD100" stroke-width="1.4" opacity=".75"/>
+        <path d="M 369 107 C 375 103.2 389 101.6 402 102" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
       </g>
       <g data-hero-slot="accessory" data-hero-option="utility-belt" display="none">
         <path data-hero-belt-band="utility" d="M 320 404 L 480 404 L 474 430 L 326 430 Z" fill="var(--hero-glasses-frame, #123047)" stroke="var(--hero-cape-inner, #FFD100)" stroke-width="2.70" stroke-linejoin="round" opacity=".92"/>
@@ -9003,6 +9005,9 @@
         <path d="M 382 223 C 391 226.1 409 226.1 418 223 C 412 231.6 405 233.2 400 233.2 C 395 233.2 388 231.6 382 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".87"/>
         <path data-hero-lip-edge d="M 408.251 231.497 C 405.261 232.831 402.4 233.2 400 233.2 C 397.6 233.2 394.739 232.831 391.749 231.497" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 382 223 C 391 226.1 409 226.1 418 223 C 409 227.5 391 227.5 382 223 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
+        <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
+        <path data-hero-smile-lift d="M 382.65 224.2 C 381.65 223.9, 380.8 223.3, 380.4 222.1 M 417.35 224.2 C 418.35 223.9, 419.2 223.3, 419.6 222.1" fill="none" stroke="var(--hero-skin-highlight-soft, #dfa07a)" stroke-width=".7" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-smile-tuck d="M 383.1 223.55 C 382.1 223.25, 381.25 222.65, 380.85 221.45 M 416.9 223.55 C 417.9 223.25, 418.75 222.65, 419.15 221.45" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".75" stroke-linecap="round" opacity=".72"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="full-lower-lip" display="none">
         <ellipse cx="400" cy="232.45" rx="10.5" ry="1.4" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".55"/>
@@ -9012,6 +9017,9 @@
         <path d="M 382.5 223 C 391.6 225.8 408.4 225.8 417.5 223 C 411 230.9 405.5 232.6 400 232.6 C 394.5 232.6 389 230.9 382.5 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".86"/>
         <path data-hero-lip-edge d="M 408.031 230.927 C 405.28 232.208 402.64 232.6 400 232.6 C 397.36 232.6 394.72 232.208 391.969 230.927" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 382.5 223 C 391.6 225.8 408.4 225.8 417.5 223 C 408.4 227.2 391.6 227.2 382.5 223 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
+        <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
+        <path data-hero-smile-lift d="M 383.15 224.2 C 382.15 223.9, 381.3 223.3, 380.9 222.1 M 416.85 224.2 C 417.85 223.9, 418.7 223.3, 419.1 222.1" fill="none" stroke="var(--hero-skin-highlight-soft, #dfa07a)" stroke-width=".7" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-smile-tuck d="M 383.6 223.55 C 382.6 223.25, 381.75 222.65, 381.35 221.45 M 416.4 223.55 C 417.4 223.25, 418.25 222.65, 418.65 221.45" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".75" stroke-linecap="round" opacity=".72"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="wide-soft-lips" display="none">
         <ellipse cx="400" cy="231.5" rx="13.5" ry="1.4" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".55"/>
@@ -9021,6 +9029,9 @@
         <path d="M 377.5 223 C 389 226.7 411 226.7 422.5 223 C 414 230.6 406.5 231.65 400 231.65 C 393.5 231.65 386 230.6 377.5 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".67"/>
         <path data-hero-lip-edge d="M 410.051 230.316 C 406.47 231.408 403.12 231.65 400 231.65 C 396.88 231.65 393.53 231.408 389.949 230.316" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 377.5 223 C 389 226.7 411 226.7 422.5 223 C 411 228.1 389 228.1 377.5 223 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
+        <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
+        <path data-hero-smile-lift d="M 378.15 224.2 C 377.15 223.9, 376.3 223.3, 375.9 222.1 M 421.85 224.2 C 422.85 223.9, 423.7 223.3, 424.1 222.1" fill="none" stroke="var(--hero-skin-highlight-soft, #dfa07a)" stroke-width=".7" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-smile-tuck d="M 378.6 223.55 C 377.6 223.25, 376.75 222.65, 376.35 221.45 M 421.4 223.55 C 422.4 223.25, 423.25 222.65, 423.65 221.45" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".75" stroke-linecap="round" opacity=".72"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="asymmetric-soft-smile" display="none">
         <ellipse cx="400" cy="231.3" rx="11.7" ry="1.4" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".55"/>
@@ -9030,6 +9041,9 @@
         <path d="M 380.5 223.7 C 390 228.3 410.5 227.4 419.5 222.4 C 411.5 230.2 404.2 231.5 399 231.45 C 393.3 231.4 386 229.4 380.5 223.7 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".57"/>
         <path data-hero-lip-edge d="M 407.785 230.019 C 404.476 231.187 401.496 231.474 399 231.45 C 396.264 231.426 393.159 230.953 390.062 229.837" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 380.5 223.7 C 390 228.3 410.5 227.4 419.5 222.4 C 410.5 228.8 390 229.7 380.5 223.7 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
+        <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
+        <path data-hero-smile-lift d="M 381.15 224.9 C 380.15 224.6, 379.3 224, 378.9 222.8 M 418.85 223.6 C 419.85 223.3, 420.7 222.7, 421.1 221.5" fill="none" stroke="var(--hero-skin-highlight-soft, #dfa07a)" stroke-width=".7" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-smile-tuck d="M 381.6 224.25 C 380.6 223.95, 379.75 223.35, 379.35 222.15 M 418.4 222.95 C 419.4 222.65, 420.25 222.05, 420.65 220.85" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".75" stroke-linecap="round" opacity=".72"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="smile">
         <g data-hero-lip-form transform="translate(400 223.5) scale(0.84 .88) translate(-400 -226)">
@@ -9063,6 +9077,9 @@
         <path d="M 380.5 223.2 C 390.64 228 409.36 228 419.5 223.2 C 412.48 228.48 405.85 229.2 400 229.2 C 394.15 229.2 387.52 228.48 380.5 223.2 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".54"/>
         <path data-hero-lip-edge d="M 408.92 228.278 C 405.796 229.034 402.808 229.2 400 229.2 C 397.192 229.2 394.204 229.034 391.08 228.278" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 380.5 223.2 C 390.64 228 409.36 228 419.5 223.2 C 410.14 228.9 389.86 228.9 380.5 223.2 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
+        <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
+        <path data-hero-smile-lift d="M 381.15 224.4 C 380.15 224.1, 379.3 223.5, 378.9 222.3 M 418.85 224.4 C 419.85 224.1, 420.7 223.5, 421.1 222.3" fill="none" stroke="var(--hero-skin-highlight-soft, #dfa07a)" stroke-width=".7" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-smile-tuck d="M 381.6 223.75 C 380.6 223.45, 379.75 222.85, 379.35 221.65 M 418.4 223.75 C 419.4 223.45, 420.25 222.85, 420.65 221.65" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".75" stroke-linecap="round" opacity=".72"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="small-smile" display="none">
         <!-- Tapered lip masses meet at a narrow seam; soft occlusion seats them in the face. -->
@@ -9073,6 +9090,9 @@
         <path d="M 386.5 223.5 C 393.52 227.2 406.48 227.2 413.5 223.5 C 408.64 227.68 404.05 228.28 400 228.28 C 395.95 228.28 391.36 227.68 386.5 223.5 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".5"/>
         <path data-hero-lip-edge d="M 406.175 227.536 C 404.012 228.142 401.944 228.28 400 228.28 C 398.056 228.28 395.988 228.142 393.825 227.536" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 386.5 223.5 C 393.52 227.2 406.48 227.2 413.5 223.5 C 407.02 228.1 392.98 228.1 386.5 223.5 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
+        <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
+        <path data-hero-smile-lift d="M 387.15 224.7 C 386.15 224.4, 385.3 223.8, 384.9 222.6 M 412.85 224.7 C 413.85 224.4, 414.7 223.8, 415.1 222.6" fill="none" stroke="var(--hero-skin-highlight-soft, #dfa07a)" stroke-width=".7" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-smile-tuck d="M 387.6 224.05 C 386.6 223.75, 385.75 223.15, 385.35 221.95 M 412.4 224.05 C 413.4 223.75, 414.25 223.15, 414.65 221.95" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".75" stroke-linecap="round" opacity=".72"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="grin" display="none">
         <g data-hero-lip-form transform="translate(400 223.5) scale(0.84 .88) translate(-400 -226)">
@@ -9105,6 +9125,9 @@
         <path d="M 380.6 223.2 C 390.69 230 409.31 230 419.4 223.2 C 412.42 230.05 405.82 230.8 400 230.8 C 394.18 230.8 387.58 230.05 380.6 223.2 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".58"/>
         <path data-hero-lip-edge d="M 408.876 229.69 C 405.767 230.627 402.794 230.8 400 230.8 C 397.206 230.8 394.233 230.627 391.124 229.69" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 380.6 223.2 C 390.69 230 409.31 230 419.4 223.2 C 410.09 230.9 389.91 230.9 380.6 223.2 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
+        <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
+        <path data-hero-smile-lift d="M 381.25 224.4 C 380.25 224.1, 379.4 223.5, 379 222.3 M 418.75 224.4 C 419.75 224.1, 420.6 223.5, 421 222.3" fill="none" stroke="var(--hero-skin-highlight-soft, #dfa07a)" stroke-width=".7" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-smile-tuck d="M 381.7 223.75 C 380.7 223.45, 379.85 222.85, 379.45 221.65 M 418.3 223.75 C 419.3 223.45, 420.15 222.85, 420.55 221.65" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".75" stroke-linecap="round" opacity=".72"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="neutral" display="none">
         <!-- Tapered lip masses meet at a narrow seam; soft occlusion seats them in the face. -->
@@ -9115,6 +9138,9 @@
         <path d="M 385.8 225.4 C 393.18 227.1 406.82 227.1 414.2 225.4 C 409.09 228.15 404.26 228.78 400 228.78 C 395.74 228.78 390.91 228.15 385.8 225.4 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".48"/>
         <path data-hero-lip-edge d="M 406.496 228.18 C 404.221 228.635 402.045 228.78 400 228.78 C 397.955 228.78 395.779 228.635 393.504 228.18" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 385.8 225.4 C 393.18 227.1 406.82 227.1 414.2 225.4 C 407.38 228 392.62 228 385.8 225.4 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
+        <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
+        <path data-hero-smile-lift d="M 386.12 226.43 C 385.42 226.23, 384.83 225.81, 384.55 224.96 M 413.88 226.43 C 414.58 226.23, 415.17 225.81, 415.45 224.96" fill="none" stroke="var(--hero-skin-highlight-soft, #dfa07a)" stroke-width=".7" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-smile-tuck d="M 386.57 225.78 C 385.87 225.58, 385.28 225.16, 385 224.31 M 413.43 225.78 C 414.13 225.58, 414.72 225.16, 415 224.31" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".75" stroke-linecap="round" opacity=".72"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="full-lips" display="none">
         <!-- Tapered lip masses meet at a narrow seam; soft occlusion seats them in the face. -->
@@ -9125,6 +9151,9 @@
         <path d="M 382.2 222.5 C 391.46 225.3 408.54 225.3 417.8 222.5 C 411.39 228.45 405.34 230.1 400 230.1 C 394.66 230.1 388.61 228.45 382.2 222.5 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".92"/>
         <path data-hero-lip-edge d="M 408.142 228.666 C 405.29 229.72 402.563 230.1 400 230.1 C 397.437 230.1 394.71 229.72 391.858 228.666" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 382.2 222.5 C 391.46 225.3 408.54 225.3 417.8 222.5 C 409.26 226.2 390.74 226.2 382.2 222.5 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
+        <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
+        <path data-hero-smile-lift d="M 382.85 223.7 C 381.85 223.4, 381 222.8, 380.6 221.6 M 417.15 223.7 C 418.15 223.4, 419 222.8, 419.4 221.6" fill="none" stroke="var(--hero-skin-highlight-soft, #dfa07a)" stroke-width=".7" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-smile-tuck d="M 383.3 223.05 C 382.3 222.75, 381.45 222.15, 381.05 220.95 M 416.7 223.05 C 417.7 222.75, 418.55 222.15, 418.95 220.95" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".75" stroke-linecap="round" opacity=".72"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="soft-full-lips" display="none">
         <!-- Tapered lip masses meet at a narrow seam; soft occlusion seats them in the face. -->
@@ -9135,6 +9164,9 @@
         <path d="M 383.2 222.5 C 391.94 225.1 408.06 225.1 416.8 222.5 C 410.75 227.6 405.04 228.95 400 228.95 C 394.96 228.95 389.25 227.6 383.2 222.5 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".76"/>
         <path data-hero-lip-edge d="M 407.684 227.751 C 404.993 228.639 402.419 228.95 400 228.95 C 397.581 228.95 395.007 228.639 392.316 227.751" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 383.2 222.5 C 391.94 225.1 408.06 225.1 416.8 222.5 C 408.74 226 391.26 226 383.2 222.5 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
+        <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
+        <path data-hero-smile-lift d="M 383.85 223.7 C 382.85 223.4, 382 222.8, 381.6 221.6 M 416.15 223.7 C 417.15 223.4, 418 222.8, 418.4 221.6" fill="none" stroke="var(--hero-skin-highlight-soft, #dfa07a)" stroke-width=".7" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-smile-tuck d="M 384.3 223.05 C 383.3 222.75, 382.45 222.15, 382.05 220.95 M 415.7 223.05 C 416.7 222.75, 417.55 222.15, 417.95 220.95" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".75" stroke-linecap="round" opacity=".72"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="bright-smile" display="none">
         <g data-hero-lip-form transform="translate(400 223.5) scale(0.84 .88) translate(-400 -226)">
@@ -9271,6 +9303,9 @@
         <path d="M 378.2 223 C 389.54 230 410.46 230 421.8 223 C 413.95 230.07 406.54 230.85 400 230.85 C 393.46 230.85 386.05 230.07 378.2 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".6"/>
         <path data-hero-lip-edge d="M 409.971 229.702 C 406.479 230.67 403.139 230.85 400 230.85 C 396.861 230.85 393.521 230.67 390.029 229.702" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 378.2 223 C 389.54 230 410.46 230 421.8 223 C 411.34 230.9 388.66 230.9 378.2 223 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
+        <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
+        <path data-hero-smile-lift d="M 378.85 224.2 C 377.85 223.9, 377 223.3, 376.6 222.1 M 421.15 224.2 C 422.15 223.9, 423 223.3, 423.4 222.1" fill="none" stroke="var(--hero-skin-highlight-soft, #dfa07a)" stroke-width=".7" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-smile-tuck d="M 379.3 223.55 C 378.3 223.25, 377.45 222.65, 377.05 221.45 M 420.7 223.55 C 421.7 223.25, 422.55 222.65, 422.95 221.45" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".75" stroke-linecap="round" opacity=".72"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="soft-open-grin" display="none">
         <g data-hero-lip-form transform="translate(400 223.5) scale(0.84 .88) translate(-400 -226)">

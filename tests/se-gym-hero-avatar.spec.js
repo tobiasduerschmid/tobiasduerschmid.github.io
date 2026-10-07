@@ -3047,7 +3047,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
         if (!visibleSlot('eyelash-style', style)) failures.push({ slot: 'eyelash-style', style, reason: 'selected style is not visible' });
         const group = svg.querySelector(`[data-hero-slot="eyelash-style"][data-hero-option="${style}"]`);
-        const lashPaths = group ? Array.from(group.querySelectorAll('path[stroke*="--hero-eyebrow"]')) : [];
+        const lashPaths = group ? Array.from(group.querySelectorAll('[data-hero-lash-path]')) : [];
         if (style !== 'none' && lashPaths.length === 0) failures.push({ slot: 'eyelash-style', style, reason: 'style has no lash paths' });
         const lashSegmentCount = lashPaths.reduce((total, path) => total + quadraticLashSegments(path.getAttribute('d') || '').length, 0);
         if (style !== 'none' && (lashSegmentCount < 6 || lashSegmentCount > 16)) {
@@ -3944,7 +3944,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         { name: 'left upper scalp', x: 365, y: 146 },
         { name: 'center upper scalp', x: 400, y: 140 },
         { name: 'right upper scalp', x: 435, y: 146 },
-        { name: 'forehead cap', x: 400, y: 158 },
+        // Just above the front hairline; lower points are forehead skin at brow height.
+        { name: 'front hairline', x: 400, y: 144 },
       ];
 
       return points.map((point) => {

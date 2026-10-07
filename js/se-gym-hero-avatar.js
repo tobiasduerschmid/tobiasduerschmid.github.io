@@ -529,7 +529,7 @@
           choice('wireframe-glasses', 'Wireframe glasses'),
           choice('round-rim-glasses', 'Round-rim glasses'),
           choice('safety-goggles', 'Safety goggles'),
-          choice('spectacles', 'Round spectacles'),
+          choice('spectacles', 'Metal-frame spectacles'),
           choice('visor', 'Visor'),
           choice('tech-visor', 'Tech visor'),
           choice('mask', 'Hero mask'),
