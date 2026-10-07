@@ -17,7 +17,12 @@
     correct_indices: {{ q.correct_indices | jsonify }},
     optional_indices: {{ q.optional_indices | jsonify }},
     option_feedback: { {% if q.option_feedback %}{% for fb in q.option_feedback %}{{ fb[0] | append: '' | jsonify }}: {{ fb[1] | markdownify | jsonify }},{% endfor %}{% endif %} },
-    explanation: {{ q.explanation | default: "" | markdownify | jsonify }},
+    explanation: {% if q.type == 'write-in' %}{{ q.explanation | default: "" | jsonify }}{% else %}{{ q.explanation | default: "" | markdownify | jsonify }}{% endif %},
+    {% if q.type == 'write-in' %}
+    program: {{ q.program | jsonify }},
+    answer: {{ q.answer | jsonify }},
+    answer_prompt: {{ q.answer_prompt | jsonify }},
+    {% endif %}
     lines: {{ q.lines | jsonify | default: "null" }},
     distractors: {{ q.distractors | jsonify | default: "null" }},
     display: {{ q.display | default: "block" | jsonify }},
@@ -41,7 +46,12 @@
     correct_indices: {{ q.correct_indices | jsonify }},
     optional_indices: {{ q.optional_indices | jsonify }},
     option_feedback: { {% if q.option_feedback %}{% for fb in q.option_feedback %}{{ fb[0] | append: '' | jsonify }}: {{ fb[1] | markdownify | jsonify }},{% endfor %}{% endif %} },
-    explanation: {{ q.explanation | default: "" | markdownify | jsonify }},
+    explanation: {% if q.type == 'write-in' %}{{ q.explanation | default: "" | jsonify }}{% else %}{{ q.explanation | default: "" | markdownify | jsonify }}{% endif %},
+    {% if q.type == 'write-in' %}
+    program: {{ q.program | jsonify }},
+    answer: {{ q.answer | jsonify }},
+    answer_prompt: {{ q.answer_prompt | jsonify }},
+    {% endif %}
     lines: {{ q.lines | jsonify | default: "null" }},
     distractors: {{ q.distractors | jsonify | default: "null" }},
     display: {{ q.display | default: "block" | jsonify }},

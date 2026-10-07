@@ -36,6 +36,11 @@
  *   <div data-program-output-lab>
  *     <script type="application/json"> { … spec … } </script>
  *   </div>
+ *
+ * Dynamic quizzes call create(container, spec, options). UnixCommandLab's
+ * answerMode: 'quiz' gives a vertical source/answer/feedback layout and locks
+ * each submitted attempt. Its onPredictionResult hook runs after this module
+ * has mounted any Python trace; reset clears that trace before onReset runs.
  */
 (function () {
   'use strict';
@@ -60,6 +65,17 @@
   // Per-language data. Patterns are regular-expression source strings; the
   // tokenizer tries comment, string, number, then identifier at each position.
   var LANGUAGES = {
+    shell: {
+      defaultFile: 'example.sh',
+      command: function (file) { return 'sh ' + file; },
+      comment: '#[^\\n]*',
+      string: '"(?:\\\\.|[^"\\\\])*"|\'[^\']*\'',
+      identifier: '[A-Za-z_]\\w*',
+      keywords: ['if', 'then', 'else', 'elif', 'fi', 'for', 'in', 'do', 'done', 'while', 'case', 'esac'],
+      builtins: ['printf', 'echo', 'read', 'set', 'unset', 'export', 'true', 'false', 'test'],
+      capitalizedAreTypes: false,
+      crashPredictions: null,
+    },
     python: {
       defaultFile: 'main.py',
       command: function (file) { return 'python3 ' + file; },
@@ -260,6 +276,25 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Both authored puzzles and scored quizzes use this mounting boundary.
+  function create(container, spec, options = {}) {
+    const feedback = spec.language === 'python' ? pythonPredictionFeedback(spec) : {};
+    const controller = window.UnixCommandLab.create(container, toCommandLabSpec(spec), {
+      ...options,
+      decorateFileBody: decorateSourceFile,
+      onPredictionResult(result) {
+        if (feedback.onPredictionResult) feedback.onPredictionResult(result);
+        if (options.onPredictionResult) options.onPredictionResult(result);
+      },
+      onReset() {
+        if (feedback.onReset) feedback.onReset();
+        if (options.onReset) options.onReset();
+      }
+    });
+    container.classList.add('program-lab', 'program-lab--' + spec.language);
+    return controller;
+  }
+
   function initFrom(root) {
     if (!window.UnixCommandLab) {
       console.error('ProgramOutputLab needs unix-command-lab.js to load first.');
@@ -271,10 +306,7 @@
       el.setAttribute('data-program-lab-init', '1');
       try {
         var spec = window.UnixCommandLab.readSpec(el, 'data-program-output-lab');
-        const options = { decorateFileBody: decorateSourceFile };
-        if (spec.language === 'python') Object.assign(options, pythonPredictionFeedback(spec));
-        window.UnixCommandLab.create(el, toCommandLabSpec(spec), options);
-        el.classList.add('program-lab', 'program-lab--' + spec.language);
+        create(el, spec);
       } catch (e) {
         console.error('ProgramOutputLab init failed:', e, el);
       }
@@ -282,6 +314,7 @@
   }
 
   window.ProgramOutputLab = {
+    create: create,
     initFrom: initFrom,
     toCommandLabSpec: toCommandLabSpec,
     highlight: function (language, source) { return LANGUAGES[language].highlight(source); },

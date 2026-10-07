@@ -291,6 +291,10 @@
   {% if page.regex_simulator %}
   <link rel="stylesheet" href="{{ '/css/regex-simulator.css' | relative_url }}?v={{ asset_version }}">
   {% endif %}
+  {% comment %}Load once per page, including composite chapters with several quiz embeds.{% endcomment %}
+  {% if page.program_output_labs or content contains 'data-write-in-question=' or page.url == '/se-gym/' %}
+  {% include quiz-write-in-assets.html %}
+  {% endif %}
   <link rel="stylesheet" href="{{ "/css/print-light.css" | prepend: site.baseurl }}?v={{ asset_version }}">
 
   <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">

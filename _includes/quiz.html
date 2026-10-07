@@ -60,7 +60,15 @@ Data source: _data/quizzes/{{ include.id }}.yml
       </span>
       {% endif %}
       <div class="question-text">{{ q.question | markdownify }}</div>
-      {% if q.type == 'parsons' %}
+      {% if q.type == 'write-in' %}
+      {% assign write_in_deck_id = include.id %}
+      {% for source_id in quiz_data.decks %}
+        {% if site.data.quizzes[source_id].questions contains q %}
+          {% assign write_in_deck_id = source_id %}{% break %}
+        {% endif %}
+      {% endfor %}
+      <div data-write-in-deck="{{ write_in_deck_id }}" data-write-in-question="{{ q | jsonify | escape }}"></div>
+      {% elsif q.type == 'parsons' %}
       <div class="parsons-container{% if q.display == 'inline' %} parsons-inline{% endif %}">
         <div class="parsons-label">{% if q.display == 'inline' %}Drag fragments into the answer area in the correct order{% else %}Drag lines into the solution area in the correct order{% endif %}{% if q.distractors.size > 0 %} (some items are distractors that should not be used){% endif %}. Keyboard: focus a line and press Space or Enter to move it between the bank and the answer area. Use Arrow Up or Arrow Down to reorder within the answer area.</div>
         <div class="parsons-bank" role="list"
@@ -124,11 +132,13 @@ Data source: _data/quizzes/{{ include.id }}.yml
         <span class="correct-labels"></span>
       </div>
       {% endif %}
+      {% unless q.type == 'write-in' %}
       <div class="quiz-explanation hidden" aria-live="polite">
         <div class="explanation-title">Explanation</div>
         <div class="explanation-text">{{ q.explanation | markdownify }}</div>
         <button type="button" class="next-btn">Next Question</button>
       </div>
+      {% endunless %}
     </div>
     {% endfor %}
   </div>
@@ -331,6 +341,29 @@ Data source: _data/quizzes/{{ include.id }}.yml
     let isReviewMode = false;
     let reviewQueue = [];
     let reviewStep = 0;
+    const writeInControllers = new Map();
+
+    function mountWriteInQuestions() {
+      cards.forEach(card => {
+        const host = card.querySelector('[data-write-in-question]');
+        if (!host) return;
+        const question = JSON.parse(host.dataset.writeInQuestion);
+        writeInControllers.set(card, window.WriteInQuiz.create(host, question, {
+          onNext: nextQuestion,
+          onAnswer(correct) {
+            if (correct) score++;
+            else incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
+            if (window.PersonalGym && PersonalGym.isAnalyzePerformance()) {
+              const key = PersonalGym.cardStatsKey('quiz', host.dataset.writeInDeck, question);
+              PersonalGym.recordResult(key, correct);
+            }
+            announce(correct ? 'Correct.' : 'Incorrect. See the output and explanation.');
+          }
+        }));
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountWriteInQuestions);
+    else mountWriteInQuestions();
 
     function updateProgress() {
       const total = cards.length;
@@ -533,6 +566,10 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
     function resetCard(index) {
       const card = cards[index];
+      if (writeInControllers.has(card)) {
+        writeInControllers.get(card).reset();
+        return;
+      }
       const options = card.querySelectorAll('.quiz-option');
       const explanation = card.querySelector('.quiz-explanation');
       const submitBtn = card.querySelector('.submit-answer-btn');

@@ -355,7 +355,7 @@ html.dark-mode .unix-lab__prediction-label { color: #4a9fd9; }
   border-color: #b6e0c4;
 }
 .unix-lab__prediction-show--match .unix-lab__prediction-label,
-.unix-lab__prediction-show--match pre { color: #1a7d5a; }
+.unix-lab__prediction-show--match pre { color: #16704c; }
 
 .unix-lab__prediction-match {
   display: inline-flex;

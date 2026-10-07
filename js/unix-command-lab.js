@@ -59,6 +59,8 @@
  *     feedbackContainer is the notice box, or the card if it has no notice.
  *     Print-only reveals do not submit a prediction.
  *   onReset() — clear any additional feedback when outputs are cleared.
+ *   answerMode: 'quiz' — require a non-empty, single-line prediction; submit
+ *     with the button or native form Enter, then lock until controller.reset().
  */
 (function () {
   'use strict';
@@ -200,8 +202,8 @@
     return p;
   }
 
-  function stdoutPanel(stdout) {
-    var p = makePanel('stdout', 'stdout', '\u2192');  // right arrow
+  function stdoutPanel(stdout, label) {
+    var p = makePanel('stdout', label || 'stdout', '\u2192');  // right arrow
     if (stdout == null || stdout === '') {
       appendEmptyNote(p, '(empty — nothing printed)');
     } else {
@@ -455,6 +457,7 @@
   // ---------------------------------------------------------------------------
   function makeCard(container, spec, options) {
     options = options || {};
+    const quizMode = options.answerMode === 'quiz';
     container.innerHTML = '';
     container.classList.add('unix-lab');
 
@@ -474,17 +477,26 @@
     var predictInput = null;
     var predictReadout = null;
     if (spec.predict) {
-      predictWrap = document.createElement('div');
+      predictWrap = document.createElement(quizMode ? 'form' : 'div');
       predictWrap.className = 'unix-lab__predict';
       var plabel = document.createElement('label');
       plabel.className = 'unix-lab__predict-label';
       plabel.innerHTML = mdInline(spec.predictPrompt || 'Predict what will appear on stdout:');
-      predictInput = document.createElement('textarea');
+      predictInput = document.createElement(quizMode ? 'input' : 'textarea');
       predictInput.className = 'unix-lab__predict-input';
-      predictInput.rows = 2;
-      predictInput.placeholder = 'Type your guess here, then run the command to compare…';
+      if (quizMode) {
+        predictInput.type = 'text';
+        predictInput.autocomplete = 'off';
+        predictInput.setAttribute('autocapitalize', 'off');
+        predictInput.setAttribute('enterkeyhint', 'done');
+        predictInput.spellcheck = false;
+      } else {
+        predictInput.rows = 2;
+      }
+      predictInput.placeholder = quizMode ? 'Type the output' : 'Type your guess here, then run the command to compare…';
       plabel.htmlFor = 'unix-lab-predict-' + Math.random().toString(36).slice(2, 9);
       predictInput.id = plabel.htmlFor;
+      predictWrap.id = predictInput.id + '-form';
       predictWrap.appendChild(plabel);
       predictWrap.appendChild(predictInput);
       container.appendChild(predictWrap);
@@ -534,11 +546,15 @@
     btnIcon.className = 'unix-lab__btn-icon';
     btnIcon.setAttribute('aria-hidden', 'true');
     btnIcon.textContent = '\u25B6';
-    var btnCmd = document.createElement('code');
+    var btnCmd = document.createElement(quizMode ? 'span' : 'code');
     btnCmd.className = 'unix-lab__btn-cmd';
     btnCmd.textContent = spec.command;
     btn.appendChild(btnIcon);
     btn.appendChild(btnCmd);
+    if (quizMode) {
+      btn.type = 'submit';
+      btn.setAttribute('form', predictWrap.id);
+    }
     midCol.appendChild(btn);
 
     var arrowOut = document.createElement('div');
@@ -561,6 +577,22 @@
       : 'Press Run to see what the command produces.');
     outCol.appendChild(placeholder);
 
+    // Scored quizzes read vertically: full-width source, answer, then feedback.
+    // Keep the command pipeline for the chapter's unscored command labs.
+    if (quizMode) {
+      btn.className = 'submit-answer-btn';
+      btn.removeAttribute('aria-pressed');
+      btnIcon.className = 'fa-solid fa-check';
+      btnIcon.textContent = '';
+      btnCmd.className = '';
+      btnCmd.textContent = 'Submit Answer';
+      var actions = document.createElement('div');
+      actions.className = 'quiz-action-row';
+      actions.appendChild(btn);
+      predictWrap.appendChild(actions);
+      pipeline.replaceWith(inCol, predictWrap, outCol);
+    }
+
     // Notice (revealed after run, below pipeline).
     var notice = null;
     if (spec.notice) {
@@ -572,9 +604,11 @@
     }
 
     var revealed = false;
+    let quizStateBeforePrint = null;
 
     function populateOutputs() {
       outCol.innerHTML = '';
+      if (quizMode) outCol.classList.remove('is-hidden');
 
       // If there was a prediction, show it as a muted read-only line at the
       // top of outputs so the student self-compares (research: generating a
@@ -582,7 +616,8 @@
       // matches stdout exactly (after whitespace normalisation), attach a
       // celebratory thumbs-up badge — positive reinforcement without
       // punishing misses (no red X on wrong answers, per the user's call).
-      if (predictInput) {
+      // Quizzes retain the answer in the field, so a second copy wastes space.
+      if (predictInput && !quizMode) {
         var user = predictInput.value.trim();
         if (user.length) {
           var pShow = document.createElement('div');
@@ -623,7 +658,7 @@
       var predictionPanel = outCol.querySelector('.unix-lab__prediction-show');
       if (predictionPanel) bursts.push(predictionPanel);
 
-      var sOut = stdoutPanel(output.stdout);
+      var sOut = stdoutPanel(output.stdout, quizMode ? 'Correct output' : 'stdout');
       outCol.appendChild(sOut);
       bursts.push(sOut);
 
@@ -643,9 +678,11 @@
         if (envP) { outCol.appendChild(envP); bursts.push(envP); }
       }
 
-      var badge = exitBadge(output.exit);
-      outCol.appendChild(badge);
-      bursts.push(badge);
+      if (!quizMode || output.exit) {
+        var badge = exitBadge(output.exit);
+        outCol.appendChild(badge);
+        bursts.push(badge);
+      }
 
       if (notice) notice.style.display = '';
 
@@ -659,11 +696,20 @@
     function clearOutputs() {
       outCol.innerHTML = '';
       outCol.appendChild(placeholder);
+      if (quizMode) outCol.classList.add('is-hidden');
       if (notice) notice.style.display = 'none';
       if (options.onReset) options.onReset();
     }
 
     function update() {
+      if (quizMode) {
+        if (revealed) populateOutputs();
+        else clearOutputs();
+        predictInput.readOnly = revealed;
+        btn.disabled = revealed || !predictInput.value.trim();
+        btn.hidden = revealed;
+        return;
+      }
       if (revealed) {
         populateOutputs();
         btnIcon.textContent = '\u21BA';
@@ -682,6 +728,7 @@
     }
 
     function revealPrediction() {
+      if (quizMode && (revealed || !predictInput.value.trim())) return;
       revealed = true;
       update();
       if (options.onPredictionResult) {
@@ -699,10 +746,20 @@
       update();
     }
 
-    btn.addEventListener('click', function () {
-      if (revealed) resetPrediction();
-      else revealPrediction();
-    });
+    if (quizMode) {
+      predictWrap.addEventListener('submit', event => {
+        event.preventDefault();
+        revealPrediction();
+      });
+      predictInput.addEventListener('input', () => {
+        if (!revealed) btn.disabled = !predictInput.value.trim();
+      });
+    } else {
+      btn.addEventListener('click', function () {
+        if (revealed) resetPrediction();
+        else revealPrediction();
+      });
+    }
 
     update();
 
@@ -716,13 +773,22 @@
       // reader of a printed page actually wants — which command produced
       // this output.
       printReveal: function () {
+        if (quizMode && quizStateBeforePrint === null) quizStateBeforePrint = revealed;
         if (!revealed) { revealed = true; populateOutputs(); if (predictInput) predictInput.readOnly = true; }
-        btnIcon.textContent = '\u25B6';
-        btnCmd.textContent = spec.command;
-        btn.classList.remove('unix-lab__btn--reset');
+        if (!quizMode) {
+          btnIcon.textContent = '\u25B6';
+          btnCmd.textContent = spec.command;
+          btn.classList.remove('unix-lab__btn--reset');
+        }
       },
       // Restore the normal revealed/unrevealed look after printing finishes.
-      exitPrintMode: function () { update(); },
+      exitPrintMode: function () {
+        if (quizMode && quizStateBeforePrint !== null) {
+          revealed = quizStateBeforePrint;
+          quizStateBeforePrint = null;
+        }
+        update();
+      },
     };
     container._unixLab = controller;
     return controller;

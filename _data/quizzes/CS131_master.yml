@@ -3,6 +3,7 @@ description: "Concept practice across programming languages, grouped by topic."
 active: true
 decks:
   - cs131_python
+  - python_output
   - cs131_foundations
   - cs131_implementation
 other:

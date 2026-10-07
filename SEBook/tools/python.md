@@ -2,18 +2,8 @@
 title: Python
 layout: sebook
 mermaid: true
+program_output_labs: true
 ---
-
-<script src="/js/object-reference-graph.js" defer></script>
-<script src="/js/object-reference-code.js" defer></script>
-<script src="/js/object-reference-print.js" defer></script>
-<script src="/js/object-reference-lab.js" defer></script>
-<link rel="stylesheet" href="/css/object-reference-lab.css">
-<script src="/js/unix-command-lab.js" defer></script>
-<script src="/js/program-output-lab.js" defer></script>
-<link rel="stylesheet" href="/css/unix-command-lab.css">
-<link rel="stylesheet" href="/css/program-output-lab.css">
-<link rel="stylesheet" href="/css/print-light.css">
 
 > **Want to practice?** Work through the [Python Essentials interactive tutorial](/SEBook/tools/python-tutorial) — run Python in your browser, repair programs, and check your reasoning with tests and quizzes.
 
@@ -2311,6 +2301,8 @@ Before opening the cards, explain three contrasts without looking back: rebindin
 {% include flashcards.html id="python_syntax_explain" %}
 
 {% include flashcards.html id="python_syntax_generate" %}
+
+{% include quiz.html id="python_output" %}
 
 {% include quiz.html id="python" %}
 

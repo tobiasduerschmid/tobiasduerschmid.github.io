@@ -85,6 +85,9 @@ for (const [label, answer] of [
     if (label.startsWith('correct')) {
       await expect(puzzle.getByText('Nailed it — your prediction matches stdout', { exact: true })).toBeVisible();
     }
+    if (label === 'correct') {
+      await auditInteractiveState(page, 'Correct Python prediction feedback', { include: '.unix-lab__prediction-show--match' });
+    }
   });
 }
 

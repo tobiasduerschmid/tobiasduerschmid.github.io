@@ -1,0 +1,92 @@
+title: "Shell Output Puzzles"
+description: "Predict these short shell scripts. Type only the output: letters, numbers, and spaces."
+active: true
+questions:
+  - id: shell-output-quoting
+    type: write-in
+    difficulty: intermediate
+    question: "How many positional arguments does each expansion produce?"
+    program:
+      language: shell
+      file: words.sh
+      code: |
+        items="red blue"
+        set -- $items
+        printf '%s ' "$#"
+        set -- "$items"
+        printf '%s\n' "$#"
+    answer: "2 1"
+    explanation: "Unquoted `$items` is split into two words. Quoted `\"$items\"` stays one argument containing a space. `set --` replaces the positional arguments each time; `$#` reports their count."
+
+  - id: shell-output-pipeline
+    type: write-in
+    difficulty: intermediate
+    question: "How many lines match the filter?"
+    program:
+      language: shell
+      file: matches.sh
+      code: |
+        printf 'a\nb\na\n' |
+            grep -c '^a$'
+    answer: "2"
+    explanation: "The pipe sends three lines to `grep`. The pattern matches a whole line containing only `a`, and `-c` prints the number of matching lines: two."
+
+  - id: shell-output-conditionals
+    type: write-in
+    difficulty: intermediate
+    question: "Which letters reach the output when a command fails?"
+    program:
+      language: shell
+      file: branches.sh
+      code: |
+        false && printf 'x '
+        printf 'a '
+        false || printf 'b\n'
+    answer: "a b"
+    explanation: "`false` reports failure. `&&` skips its right-hand command after failure, while `||` runs its right-hand command. The independent middle command still prints `a`."
+
+  - id: shell-output-loop
+    type: write-in
+    difficulty: intermediate
+    question: "What total does this loop print?"
+    program:
+      language: shell
+      file: total.sh
+      code: |
+        total=0
+        for n in 2 4 6; do
+            total=$((total + n))
+        done
+        printf '%s\n' "$total"
+    answer: "12"
+    explanation: "The loop adds each word from `2 4 6` once. Arithmetic expansion computes the updated total, giving `2`, then `6`, then `12`."
+
+  - id: shell-output-subshell
+    type: write-in
+    difficulty: intermediate
+    question: "Which assignments survive a command group?"
+    program:
+      language: shell
+      file: groups.sh
+      code: |
+        n=1
+        (n=7)
+        printf '%s ' "$n"
+        { n=3; }
+        printf '%s\n' "$n"
+    answer: "1 3"
+    explanation: "Parentheses run the assignment in a subshell, leaving the parent shell's `n` at `1`. Braces group commands in the current shell, so the second assignment persists as `3`."
+
+  - id: shell-output-overwrite
+    type: write-in
+    difficulty: intermediate
+    question: "Both commands write to the same file. What does the final command print?"
+    program:
+      language: shell
+      file: replace.sh
+      code: |
+        printf 'a\n' > marks.txt
+        printf 'b\n' > marks.txt
+        cat marks.txt
+    answer: "b"
+    explanation: "Each `>` truncates the file before writing. The second command replaces the first line, leaving only `b`. Using `>>` for the second command would append instead."

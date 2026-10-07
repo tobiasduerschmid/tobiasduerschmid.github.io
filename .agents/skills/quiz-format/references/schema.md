@@ -62,6 +62,7 @@ Pick the type that matches the cognitive level you're testing. The wrong type qu
 | Apply | Use a concept on a *novel* scenario | `single` or `multiple` with a fresh scenario in the stem and distractors that encode procedure-misuse |
 | Analyze | Discriminate across a set of items | `multiple` forcing exhaustive selection across the set |
 | Procedural sequencing | Arrange steps into a working solution | `parsons` |
+| Apply / Analyze (execution tracing) | Predict a short program's actual output | `write-in` (SEBook and SE Gym only) |
 | Apply / Create (writing code) | Produce code from scratch | **Not a quiz.** Use a coding exercise (the tutorial's code editor + assertions). |
 
 **Two diagnostic questions to ask before drafting:**
@@ -82,6 +83,34 @@ The stem (`question:` field) is what the student reads first and holds in workin
 For code stems specifically, the **cognitive-load budget** is set in `pedagogy.md` Principle 4: keep the stem ≤5 lines when options also contain code, and aim for options that differ along *one* dimension.
 
 ## Question shapes
+
+### `type: write-in` (SEBook + SE Gym only)
+
+```yaml
+- id: alias-length
+  type: write-in
+  difficulty: intermediate
+  question: "What does the program print?"
+  program:
+    language: python           # python | shell | haskell
+    file: queue.py
+    code: |
+      queue = [2]
+      saved = queue
+      queue.append(5)
+      print(len(saved))
+  answer: "2"                  # required string: actual stdout, not a choice label
+  answer_prompt: "Predict the output:"  # optional; default allows spaces between values
+  explanation: |
+    Both names refer to the same list. Appending through `queue` changes
+    the list that `saved` refers to, so it contains two elements.
+```
+
+Do not supply `options`, `correct_index`, or `option_feedback`. Programs must be deterministic and self-contained; `program.code` is displayed rather than run for grading. Validate the authored answer with the real interpreter. Separate printed values with spaces and minimize punctuation or long text without removing the concept being practiced. Leading/trailing whitespace and runs of whitespace are ignored; case, value order, and punctuation are significant.
+
+The shared renderer shows full-width highlighted source, a single-line answer field, and Submit Answer. Blank input does not submit; a non-empty answer locks the attempt and reveals output plus explanation. Incorrect Python answers add the exact-code object reference lab inside that explanation, between two Next buttons. Review/restart clears the field and lab. Printing reveals the answer key without scoring or consuming an unanswered attempt. No typed predictions are added to persistent storage: the existing quiz result/progress contracts apply.
+
+Standalone decks and `decks:` masters use the same format. The shared head detects rendered write-in question markup and loads `_includes/quiz-write-in-assets.html` once, including on composite pages and SE Gym. Chapters that also use standalone program labs set `program_output_labs: true` in front matter. `_includes/se-gym-card-data.html` preserves the program and raw Markdown explanation. **Do not use this type in `_data/tutorials/`: its quiz engine does not implement write-in questions.**
 
 ### `type: single` (default)
 

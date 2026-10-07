@@ -1,14 +1,14 @@
 ---
 title: Shell Scripting - Automating the Command Line
 layout: sebook
+program_output_labs: true
 ---
 
 <script src="/js/ArchUML/uml-bundle.js"></script>
 <script src="/js/fs-command-lab.js"></script>
-<script src="/js/unix-command-lab.js"></script>
 
 <link rel="stylesheet" href="/css/fs-command-lab.css">
-<link rel="stylesheet" href="/css/unix-command-lab.css">
+<link rel="stylesheet" href="/css/print-light.css">
 
 > **Start here:** If you are new to shell scripting, begin with the [Interactive Shell Scripting Tutorial](/SEBook/tools/shell-tutorial.html) — hands-on exercises in a real Linux system. This article is a **reference** to deepen your understanding afterward.
 
@@ -1609,6 +1609,10 @@ RegEx allows you to match sub-strings in a longer sequence. Critical to this are
 Shell scripting is an indispensable skill for anyone working in tech. By viewing the shell as a set of modular tools (the "Infinity Stones" of your development environment), you can combine simple operations to perform massive, complex tasks with minimal effort. Start small by automating a daily chore on your machine, and before you know it, you will be weaving complex UNIX tools together with ease!
 
 ## Practice
+
+Predict the output of these short scripts before checking. Each answer uses only letters, numbers, and spaces; type the actual output, with spaces between values. The explanation shows which shell rule determines the result.
+
+{% include quiz.html id="shell_output" %}
 
 {% include flashcards.html id="shell_commands_reference" %}
 

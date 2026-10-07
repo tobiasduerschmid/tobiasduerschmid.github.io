@@ -205,10 +205,21 @@ Before merging a quiz file with new `option_feedback`:
 If you need to debug rendering rather than authoring:
 
 - Quiz engine for tutorials: `js/tutorial-quiz.js` (used by `js/tutorial-code.js` and the popup).
-- Quiz engine for SEBook + SEGym: `_includes/quiz.html` (Liquid template + inline JS + inline CSS).
+- Quiz engines for SEBook + SEGym: `_includes/quiz.html` and `se-gym.html` (Liquid + inline JS); `_includes/se-gym-card-data.html` serializes deck data.
 - Tutorial print layout: `_layouts/print-tutorial.html` (separate page; uses `.print-quiz-*` classes).
 - Tutorial quiz CSS: `css/tutorial.css` under `.tvm-quiz-panel`.
-- SEBook/SEGym quiz CSS: inline `<style>` block in `_includes/quiz.html`.
+- SEBook/SEGym quiz CSS: `css/sebook-quiz.css` and `css/se-gym.css`.
+- Write-in output quizzes: `js/quiz-write-in.js`, using `ProgramOutputLab.create` and `UnixCommandLab`'s `answerMode: 'quiz'`; assets in `_includes/quiz-write-in-assets.html`, layout in `css/quiz-write-in.css`.
+
+## Write-in program output questions
+
+`type: write-in` is supported in **SEBook embeds and SE Gym**, including master decks, saved workouts, review, and performance tracking. It is not supported in tutorial-step gates. See `references/schema.md` for the shape.
+
+Use a short, self-contained program and ask for its actual output. Keep typing small (ideally one or two numbers or short words, separated by spaces); do not replace output with answer-choice letters. The source appears full width above the input and standard Submit Answer button. Non-empty submissions score once; whitespace is normalized but case and punctuation matter. A wrong Python answer reveals the exact-code object reference lab inside the explanation, with Next buttons before and after it. Native Enter submits the answer form; choice shortcuts do not apply while typing.
+
+Scored write-in questions use the standard Gym confetti, respecting More confetti and reduced-motion preferences; unscored chapter puzzles retain their existing celebration.
+
+Quote `answer:` values in YAML, execute each example to verify its answer, and explain the causal distinction the learner must trace. Use a fresh example rather than copying a lecture or homework item. Current examples live in `python_output.yml` and `shell_output.yml`.
 
 ## When in doubt
 

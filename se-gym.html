@@ -2779,6 +2779,17 @@ layout: sebook
         var navbar = document.getElementById('navnav');
         var navHeight = navbar ? navbar.offsetHeight : 50;
         var app = document.getElementById('se-gym-app');
+        var writeInCard = app.querySelector('.workout-quiz-card[data-type="write-in"]');
+        if (window.matchMedia('(max-width: 760px)').matches && writeInCard && writeInCard.getClientRects().length) {
+          // Let the previous answer's removal settle before positioning the
+          // new question; otherwise browser scroll anchoring can move it again.
+          requestAnimationFrame(function () {
+            if (!writeInCard.isConnected) return;
+            var top = writeInCard.getBoundingClientRect().top + window.pageYOffset;
+            window.scrollTo({ top: top - navHeight - 10, behavior: motionSafeScrollBehavior() });
+          });
+          return;
+        }
         var y = app.getBoundingClientRect().top + window.pageYOffset - navHeight - 10;
         window.scrollTo({ top: y, behavior: motionSafeScrollBehavior() });
       }
@@ -2840,6 +2851,7 @@ layout: sebook
       function renderQuizCard(card, workoutIndex) {
         var q = card.data;
         var type = q.type || 'single';
+        if (type === 'write-in') { renderWriteInCard(card); return; }
         if (type === 'parsons') { renderParsonsCard(card, workoutIndex); return; }
         var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -3047,6 +3059,31 @@ layout: sebook
           options[idx].click();
         });
         focusFirstAnswerOption(div);
+      }
+
+      function renderWriteInCard(card) {
+        var q = card.data;
+        var div = document.createElement('div');
+        div.className = 'workout-quiz-card';
+        div.setAttribute('data-type', 'write-in');
+        div.innerHTML = '<div class="quiz-card-meta"><span class="workout-source-badge quiz-badge">'
+          + escapeHtml(card.source) + '</span>' + difficultyBadgeHtml(q) + '</div>'
+          + '<div class="question-text">' + q.question + '</div>';
+        var host = document.createElement('div');
+        div.appendChild(host);
+        workoutCardArea.appendChild(div);
+        window.WriteInQuiz.create(host, q, {
+          nextLabel: 'Next',
+          onNext: nextWorkoutCard,
+          onAnswer: function (correct) {
+            if (correct) workoutScore++;
+            else workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
+            recordDifficultyResult(card, correct);
+            PersonalGym.recordResult(cardStatsKey(card.cardType, card.deckId, q), correct);
+            saveAnsweredWorkoutProgress();
+            revealDifficulty(div);
+          }
+        });
       }
 
       // ---- PARSONS CARD RENDERING ----
@@ -3932,7 +3969,10 @@ layout: sebook
       migrateStatsKeys();
       setWorkoutMode(false);
       refreshLibrary();
-      startRequestedWorkout();
+      // Output quizzes share deferred puzzle assets. Direct quiz links must
+      // wait for those scripts just as clicks after page load naturally do.
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startRequestedWorkout, { once: true });
+      else startRequestedWorkout();
 
     })();
   </script>

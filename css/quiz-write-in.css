@@ -1,0 +1,69 @@
+/* A vertical quiz layout using the chapter puzzles' source and feedback panels. */
+.quiz-write-in { min-width: 0; }
+.quiz-write-in .unix-lab { margin: 0; }
+.quiz-write-in :is(.unix-lab__panel-header, .unix-lab__exit,
+  .unix-lab__notice, .unix-lab__predict-label) { font-size: inherit; }
+.quiz-write-in .unix-lab__predict-input {
+  font: inherit;
+  font-family: var(--font-mono, monospace);
+  min-height: 48px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.quiz-write-in .unix-lab__predict { margin: 1em 0; }
+.quiz-write-in .quiz-action-row { margin-top: 1em; }
+.quiz-write-in .submit-answer-btn { min-height: 48px; font: inherit; font-weight: 700; }
+.quiz-write-in .submit-answer-btn[hidden] { display: none; }
+.quiz-write-in-result { margin: 1em 0; font: inherit; }
+.quiz-write-in-result:empty { display: none; }
+.quiz-write-in .quiz-write-in-next {
+  display: block;
+  min-height: 48px;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  font: inherit;
+  font-weight: 700;
+}
+.quiz-write-in .quiz-write-in-next.is-hidden { display: none; }
+
+/* Workouts already explain the answer. Keep their trace focused on the code
+   and state; the chapter labs retain the introductory guidance. The editor's
+   accessible description can still reference its hidden instructions. */
+.workout-quiz-card .object-reference-lab :is(.orl-prediction, .orl-instructions,
+  .orl-legend, .orl-explanation, .orl-limits) { display: none; }
+
+/* Full-width controls leave room for a comfortable mobile touch target. */
+@media (max-width: 760px) {
+  .quiz-write-in .submit-answer-btn { width: 100%; justify-content: center; }
+  .quiz-write-in .quiz-write-in-next { width: 100%; }
+
+  .workout-quiz-card[data-type="write-in"] .unix-lab__predict {
+    margin: 8px 0;
+    padding: 8px;
+  }
+  .workout-quiz-card[data-type="write-in"] .quiz-action-row,
+  .workout-quiz-card[data-type="write-in"] .submit-answer-btn { margin-top: 0; }
+  .workout-quiz-card[data-type="write-in"] .unix-lab__panel-header { padding: 4px 8px; }
+  .workout-quiz-card[data-type="write-in"] .unix-lab__panel-body {
+    padding: 6px 8px;
+    line-height: 1.4;
+  }
+  .workout-quiz-card[data-type="write-in"] .unix-lab__notice { padding: 8px; }
+  .workout-quiz-card[data-type="write-in"] .quiz-write-in-result { margin: 8px 0; }
+  .workout-quiz-card[data-type="write-in"] .quiz-write-in-next { margin-block: 8px; }
+  .workout-quiz-card .object-reference-lab { margin-block: 12px; }
+  .workout-quiz-card .object-reference-lab .orl-title { font-size: 1.2em; }
+  .workout-quiz-card .orl-toolbar { gap: 6px; margin-block: 8px; }
+  .workout-quiz-card .orl-toolbar button { padding: 6px 8px; }
+  .workout-quiz-card .object-reference-lab .orl-status { margin-block: 8px; }
+  .workout-quiz-card .orl-columns { gap: 8px; }
+  .workout-quiz-card .orl-code-header,
+  .workout-quiz-card .object-reference-lab .orl-diagram-title { padding: 6px 8px; }
+}
+
+/* Remaining theme and reduced-motion rules come from the shared puzzle modules. */
+@media print {
+  .quiz-write-in .unix-lab__predict,
+  .quiz-write-in .quiz-write-in-next,
+  .quiz-write-in-result { display: none !important; }
+}

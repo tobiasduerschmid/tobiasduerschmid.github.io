@@ -5,9 +5,11 @@ decks:
   - user_stories
   - effective_learning
   - shell
+  - shell_output
   - regex
   - shell_parson
   - python
+  - python_output
 other:
   - git_basic
   - nodejs

@@ -178,7 +178,7 @@ test.describe('Interactive Quiz Verification', () => {
   });
 
   test('Optional indices are accepted when selected in SEBook quizzes', async ({ page }) => {
-    await page.goto('/SEBook/userstories/?noshuffle=1');
+    await page.goto('/SEBook/userstories.html?noshuffle=1');
 
     for (let i = 0; i < 4; i++) {
       const card = page.locator('.quiz-question-card.active');
