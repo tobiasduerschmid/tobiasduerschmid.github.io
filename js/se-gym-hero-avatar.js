@@ -3230,6 +3230,18 @@
     }
   }
 
+  function applyBruinMuscleStrength(svg, strength) {
+    // Shared definitions drive both mirrored arms. Always interpolate from the
+    // authored baseline so rank changes, uploads and preview rerenders cannot drift.
+    const weight = strength / 100;
+    svg.querySelectorAll('[data-hero-bruin-muscle-max]').forEach(function (path) {
+      rememberMuscleTemplatePath(path);
+      const baseline = path.getAttribute('data-hero-template-d');
+      const maximum = path.getAttribute('data-hero-bruin-muscle-max');
+      path.setAttribute('d', weight ? interpolatePathData(baseline, maximum, weight) : baseline);
+    });
+  }
+
   function applyMuscleStrengthToSvg(svg, value) {
     if (!svg) return;
     var strength = normalizeMuscleStrength(value);
@@ -3242,6 +3254,7 @@
     svg.style.setProperty('--hero-muscle-bulk', formatMuscleNumber(strength / 100));
     svg.style.setProperty('--hero-muscle-definition', formatMuscleNumber(Math.max(0, (strength - 20) / 80)));
     svg.style.setProperty('--hero-muscle-separation', formatMuscleNumber(Math.max(0, (strength - 55) / 45)));
+    applyBruinMuscleStrength(svg, strength);
 
     var groups = svg.querySelectorAll('[data-hero-slot="muscle-strength"]');
     var bodyType = svg.getAttribute('data-hero-body') || 'average';
