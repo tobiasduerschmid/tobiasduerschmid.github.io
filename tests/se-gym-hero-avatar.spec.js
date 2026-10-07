@@ -4369,12 +4369,14 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const cheekContrast = tokens.cheekPaint.colors.map(color => contrastRatio(color, tokens.skin));
     expect(Math.max(...cheekContrast), 'cheek warmth must paint without a harsh patch').toBeGreaterThan(1.01);
     expect(Math.max(...cheekContrast)).toBeLessThanOrEqual(1.8);
-    expect(contrastRatio(tokens.lipFill, tokens.skin)).toBeLessThanOrEqual(2.1);
+    expect(contrastRatio(tokens.lipFill, tokens.skin)).toBeLessThanOrEqual(2.8);
     expect(contrastRatio(tokens.lipHighlight, tokens.lipFill)).toBeLessThanOrEqual(1.6);
     expect(contrastRatio(tokens.mouthLine, tokens.skin)).toBeGreaterThanOrEqual(3);
     const lipContrast = tokens.lipPaint.colors.map(color => contrastRatio(color, tokens.skin));
-    expect(Math.max(...lipContrast), 'lip volume remains visible').toBeGreaterThan(1.1);
-    expect(Math.max(...lipContrast), 'lip lighting remains complexion-relative').toBeLessThanOrEqual(2.2);
+    expect(Math.max(...lipContrast), 'lip volume remains visible').toBeGreaterThan(1.4);
+    // Deep skin needs a stronger local lip light after compositing. This is
+    // still a warm pigment, rather than a white outline around the mouth.
+    expect(Math.max(...lipContrast), 'lip lighting remains complexion-relative').toBeLessThanOrEqual(3.1);
     expect(Math.max(...tokens.smileLinePaint.colors.map(color => contrastRatio(color, tokens.lipFill))),
       'the closed lip seam stays distinct from the lip pigment').toBeGreaterThan(1.1);
     // The nose plane is form shading, not an ink outline. It should remain

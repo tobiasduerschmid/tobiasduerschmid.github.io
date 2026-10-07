@@ -2047,27 +2047,37 @@
     var mouthLine = darkSkin
       ? firstContrastColorAgainstAll(['#f1c27d', '#e0a080', '#fff2b8', '#ffffff', '#3a1408', '#000000'], skinRamp, compactTarget)
       : firstContrastColorAgainstAll(['#3a1408', '#000000', '#ffffff'], skinRamp, compactTarget);
+    // Small facial surfaces need their own lit pigment. Keeping every accent
+    // close to the base skin color loses the nose and closed lips once the
+    // SVG gradients, masks, and antialiasing are composited at hero size.
     var lipFill = darkSkin
-      ? skinRelativeAccent(skin, '#8f5148', deepSkin ? 0.52 : 0.42, 2.05)
+      ? skinRelativeAccent(skin, '#b27b70', deepSkin ? 0.52 : 0.38, 2.7)
       : skinRelativeAccent(skin, '#b85a55', skinLum > 0.65 ? 0.42 : 0.34, 2.2);
-    var lipShadow = darkSkin ? mix(lipFill, skinShadow, 0.42) : mix(lipFill, '#7a2e2e', 0.42);
+    var lipShadow = darkSkin ? mix(lipFill, skinShadow, 0.3) : mix(lipFill, '#7a2e2e', 0.42);
     var lipHighlight = darkSkin
-      ? skinRelativeAccent(lipFill, warmHighlight, 0.3, 1.55)
+      ? skinRelativeAccent(lipFill, warmHighlight, 0.78, 1.9)
       : skinRelativeAccent(lipFill, '#ffd0bc', 0.34, 1.55);
+    // A thin closed lip needs a compact reflection that survives subpixel
+    // coverage; wider lip surfaces keep the softer pigment highlight above.
+    var lipReflection = darkSkin
+      ? skinRelativeAccent(lipHighlight, '#ffe6cc', 0.14, 1.25)
+      : lipHighlight;
     var eyebrow = contrastRatio(hair, skin) < 3
       ? firstContrastColorAgainstAll([hairRim, faceLine, lighten(hair, 0.58), mix(hair, '#f1c27d', 0.38), darken(hair, 0.5)], skinRamp, featureTarget)
       : hair;
     var skinHighlightSoft = darkSkin
-      ? mix(skin, warmHighlight, deepSkin ? 0.36 : 0.3)
+      ? mix(skin, warmHighlight, deepSkin ? 0.52 : 0.4)
       : mix(skin, '#fff2df', 0.2);
     // Local form light separates the human cheek, bridge and forehead planes
     // while the larger midtone and shadow areas retain the chosen complexion.
     var faceFormLight = darkSkin
-      ? mix(skin, warmHighlight, deepSkin ? 0.46 : 0.38)
+      ? mix(skin, warmHighlight, deepSkin ? 0.78 : 0.6)
       : mix(skin, '#fff2df', 0.26);
     var handHighlight = skinRelativeAccent(skin, skinHighlightSoft, deepSkin ? 0.34 : 0.42, 1.45);
     var noseFill = mix(skin, faceLine, darkSkin ? 0.38 : 0.46);
-    var noseHighlight = skinRelativeAccent(skin, warmHighlight, deepSkin ? 0.18 : 0.24, 1.38);
+    var noseHighlight = darkSkin
+      ? mix(skin, warmHighlight, deepSkin ? 0.9 : 0.75)
+      : skinRelativeAccent(skin, warmHighlight, 0.24, 1.38);
     var hairSpecular = darkHair
       ? mix(hairHighlight, '#fff4e8', 0.12)
       : mix(hairHighlight, '#ffffff', 0.2);
@@ -2109,6 +2119,8 @@
       lipFill: lipFill,
       lipShadow: lipShadow,
       lipHighlight: lipHighlight,
+      lipReflection: lipReflection,
+      lipSurfaceGain: darkSkin ? (deepSkin ? '1.6' : '1.3') : '1',
       eyebrow: eyebrow,
       hairHighlight: hairHighlight,
       hairSpecular: hairSpecular,
@@ -3832,6 +3844,8 @@
     svg.style.setProperty('--hero-lip-fill', contrastTokens.lipFill);
     svg.style.setProperty('--hero-lip-shadow', contrastTokens.lipShadow);
     svg.style.setProperty('--hero-lip-highlight', contrastTokens.lipHighlight);
+    svg.style.setProperty('--hero-lip-reflection', contrastTokens.lipReflection);
+    svg.style.setProperty('--hero-lip-surface-gain', contrastTokens.lipSurfaceGain);
     applyHairMaterialTokens(svg, '--hero-hair', state.appearance.hairColor, contrastTokens);
     applyIndependentHairColors(svg, state.appearance, contrastTokens);
     svg.style.setProperty('--hero-eye', state.appearance.eyeColor);

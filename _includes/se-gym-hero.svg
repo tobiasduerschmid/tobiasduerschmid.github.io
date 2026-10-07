@@ -79,7 +79,7 @@
     <linearGradient id="human-nose-volume-{{ hero_variant }}" x1=".04" y1=".15" x2=".94" y2=".55"><stop offset="0" stop-color="var(--hero-skin-light, #dfa07a)" stop-opacity="0"/><stop offset=".24" stop-color="var(--hero-face-form-light, #dfa07a)" stop-opacity=".54"/><stop offset=".45" stop-color="var(--hero-face-form-light, #dfa07a)" stop-opacity=".86"/><stop offset=".62" stop-color="var(--hero-skin-light, #dfa07a)" stop-opacity=".66"/><stop offset=".85" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".55"/><stop offset="1" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity="0"/></linearGradient>
     <radialGradient id="human-nose-tip-{{ hero_variant }}" cx=".32" cy=".22" r=".8"><stop offset="0" stop-color="var(--hero-nose-highlight, #fff1dc)" stop-opacity=".84"/><stop offset=".48" stop-color="var(--hero-skin-light, #dfa07a)" stop-opacity=".45"/><stop offset="1" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".14"/></radialGradient>
     <radialGradient id="human-lip-volume-{{ hero_variant }}" cx=".42" cy=".35" r=".72"><stop offset="0" stop-color="var(--hero-lip-highlight, #ffb0a0)"/><stop offset=".26" stop-color="color-mix(in srgb, var(--hero-lip-highlight, #ffb0a0) 42%, var(--hero-lip-fill, #b44a4a))"/><stop offset=".6" stop-color="var(--hero-lip-fill, #b44a4a)"/><stop offset="1" stop-color="var(--hero-lip-shadow, #8f3232)"/></radialGradient>
-    <radialGradient id="human-quiet-lip-volume-{{ hero_variant }}" cx=".5" cy=".7" r=".66"><stop offset="0" stop-color="var(--hero-lip-highlight, #d68b75)"/><stop offset=".36" stop-color="var(--hero-lip-highlight, #d68b75)"/><stop offset=".7" stop-color="var(--hero-lip-fill, #a96351)"/><stop offset="1" stop-color="var(--hero-lip-shadow, #703a30)"/></radialGradient>
+    <radialGradient id="human-quiet-lip-volume-{{ hero_variant }}" cx=".5" cy=".7" r=".66"><stop offset="0" stop-color="var(--hero-lip-reflection, #d68b75)"/><stop offset=".36" stop-color="var(--hero-lip-reflection, #d68b75)"/><stop offset=".7" stop-color="var(--hero-lip-fill, #a96351)"/><stop offset="1" stop-color="var(--hero-lip-shadow, #703a30)"/></radialGradient>
     <linearGradient id="human-upper-lip-{{ hero_variant }}" x1=".25" y1="0" x2=".75" y2="1"><stop offset="0" stop-color="var(--hero-lip-fill, #b44a4a)"/><stop offset=".55" stop-color="var(--hero-lip-shadow, #8f3232)"/><stop offset="1" stop-color="color-mix(in srgb, var(--hero-lip-shadow, #8f3232) 78%, var(--hero-mouth-fill, #5a2418))"/></linearGradient>
     <radialGradient id="human-mouth-soft-shadow-{{ hero_variant }}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".46"/><stop offset=".4" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".2"/><stop offset="1" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity="0"/></radialGradient>
     <radialGradient id="human-mouth-recess-{{ hero_variant }}" cx=".5" cy="1" r=".94"><stop offset="0" stop-color="var(--hero-lip-shadow, #8f3232)"/><stop offset=".55" stop-color="var(--hero-mouth-fill, #5a2418)"/><stop offset="1" stop-color="color-mix(in srgb, var(--hero-mouth-fill, #5a2418) 66%, #14100d)"/></radialGradient>
@@ -9085,7 +9085,7 @@
         <ellipse cx="383.3" cy="224.2" rx="2.8" ry="2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".62"/>
         <ellipse cx="416.7" cy="224.2" rx="2.8" ry="2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <path d="M 382 223 C 388 222.2 392.8 216.7 397.5 218.7 C 398.7 219.2 399 220 400 220 C 401 220 401.3 219.2 402.5 218.7 C 407.2 216.7 412 222.2 418 223 C 409 226.1 391 226.1 382 223 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".87"/>
-        <path d="M 382 223 C 391 226.1 409 226.1 418 223 C 412 231.6 405 233.2 400 233.2 C 395 233.2 388 231.6 382 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".87"/>
+        <path d="M 382 223 C 391 226.1 409 226.1 418 223 C 412 231.6 405 233.2 400 233.2 C 395 233.2 388 231.6 382 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.87 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 408.251 231.497 C 405.261 232.831 402.4 233.2 400 233.2 C 397.6 233.2 394.739 232.831 391.749 231.497" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 382 223 C 391 226.1 409 226.1 418 223 C 409 227.5 391 227.5 382 223 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
         <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
@@ -9097,7 +9097,7 @@
         <ellipse cx="383.8" cy="224.2" rx="2.8" ry="2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".62"/>
         <ellipse cx="416.2" cy="224.2" rx="2.8" ry="2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <path d="M 382.5 223 C 389 222.8 395 221.5 398.4 222.4 C 399.5 223 400.5 223 401.6 222.4 C 405 221.5 411 222.8 417.5 223 C 408.4 225.8 391.6 225.8 382.5 223 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".86"/>
-        <path d="M 382.5 223 C 391.6 225.8 408.4 225.8 417.5 223 C 411 230.9 405.5 232.6 400 232.6 C 394.5 232.6 389 230.9 382.5 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".86"/>
+        <path d="M 382.5 223 C 391.6 225.8 408.4 225.8 417.5 223 C 411 230.9 405.5 232.6 400 232.6 C 394.5 232.6 389 230.9 382.5 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.86 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 408.031 230.927 C 405.28 232.208 402.64 232.6 400 232.6 C 397.36 232.6 394.72 232.208 391.969 230.927" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 382.5 223 C 391.6 225.8 408.4 225.8 417.5 223 C 408.4 227.2 391.6 227.2 382.5 223 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
         <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
@@ -9109,7 +9109,7 @@
         <ellipse cx="378.8" cy="224.2" rx="2.8" ry="2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".62"/>
         <ellipse cx="421.2" cy="224.2" rx="2.8" ry="2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <path d="M 377.5 223 C 385 222.7 393 220.2 398 221.55 C 399.2 222.3 400.8 222.3 402 221.55 C 407 220.2 415 222.7 422.5 223 C 411 226.7 389 226.7 377.5 223 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".67"/>
-        <path d="M 377.5 223 C 389 226.7 411 226.7 422.5 223 C 414 230.6 406.5 231.65 400 231.65 C 393.5 231.65 386 230.6 377.5 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".67"/>
+        <path d="M 377.5 223 C 389 226.7 411 226.7 422.5 223 C 414 230.6 406.5 231.65 400 231.65 C 393.5 231.65 386 230.6 377.5 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.67 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 410.051 230.316 C 406.47 231.408 403.12 231.65 400 231.65 C 396.88 231.65 393.53 231.408 389.949 230.316" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 377.5 223 C 389 226.7 411 226.7 422.5 223 C 411 228.1 389 228.1 377.5 223 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
         <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
@@ -9121,7 +9121,7 @@
         <ellipse cx="381.8" cy="224.9" rx="2.8" ry="2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".62"/>
         <ellipse cx="418.2" cy="223.6" rx="2.8" ry="2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <path d="M 380.5 223.7 C 388 224.5 394.6 224.8 398.3 225.2 C 399.2 225.6 400.2 225.6 401.4 225.1 C 407 224.2 413.4 223.5 419.5 222.4 C 410.5 227.4 390 228.3 380.5 223.7 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".57"/>
-        <path d="M 380.5 223.7 C 390 228.3 410.5 227.4 419.5 222.4 C 411.5 230.2 404.2 231.5 399 231.45 C 393.3 231.4 386 229.4 380.5 223.7 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".57"/>
+        <path d="M 380.5 223.7 C 390 228.3 410.5 227.4 419.5 222.4 C 411.5 230.2 404.2 231.5 399 231.45 C 393.3 231.4 386 229.4 380.5 223.7 Z" fill="url(#human-quiet-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.57 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 407.785 230.019 C 404.476 231.187 401.496 231.474 399 231.45 C 396.264 231.426 393.159 230.953 390.062 229.837" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 380.5 223.7 C 390 228.3 410.5 227.4 419.5 222.4 C 410.5 228.8 390 229.7 380.5 223.7 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
         <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
@@ -9135,7 +9135,7 @@
         <ellipse cx="376.1" cy="221.2" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="423.9" cy="221.2" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 374.8 219.5 C 383.37 220.5 393.95 222.6 400 221.9 C 406.55 222.7 417.14 219.7 425.2 219.2 C 415.12 226.3 407.06 226.7 400 226 C 392.44 226.6 384.38 225.9 374.8 219.5 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
-        <path d="M 374.8 219.5 C 384.38 233.35 392.44 233.6 400 233.6 C 407.56 233.6 415.62 233.35 425.2 219.5 C 415.62 236.1 408.57 237.2 400 237.1 C 391.43 237.2 384.38 236.1 374.8 219.5 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".68"/>
+        <path d="M 374.8 219.5 C 384.38 233.35 392.44 233.6 400 233.6 C 407.56 233.6 415.62 233.35 425.2 219.5 C 415.62 236.1 408.57 237.2 400 237.1 C 391.43 237.2 384.38 236.1 374.8 219.5 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.68 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 411.738 234.833 C 407.877 236.92 404.114 237.148 400 237.1 C 395.886 237.148 392.123 236.92 388.262 234.833" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Happy lens-shaped smile with corner dimples (contained above chin). -->
@@ -9157,7 +9157,7 @@
         <ellipse cx="381.8" cy="224.9" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="418.2" cy="224.9" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 380.5 223.2 C 389.47 224 392.98 224.6 398 225.55 C 399 226.2 401 226.2 402 225.55 C 407.02 224.6 410.53 224 419.5 223.2 C 409.36 228 390.64 228 380.5 223.2 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".54"/>
-        <path d="M 380.5 223.2 C 390.64 228 409.36 228 419.5 223.2 C 412.48 228.48 405.85 229.2 400 229.2 C 394.15 229.2 387.52 228.48 380.5 223.2 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".54"/>
+        <path d="M 380.5 223.2 C 390.64 228 409.36 228 419.5 223.2 C 412.48 228.48 405.85 229.2 400 229.2 C 394.15 229.2 387.52 228.48 380.5 223.2 Z" fill="url(#human-quiet-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.54 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 408.92 228.278 C 405.796 229.034 402.808 229.2 400 229.2 C 397.192 229.2 394.204 229.034 391.08 228.278" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 380.5 223.2 C 390.64 228 409.36 228 419.5 223.2 C 410.14 228.9 389.86 228.9 380.5 223.2 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
         <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
@@ -9170,9 +9170,9 @@
         <ellipse cx="387.8" cy="225.2" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="412.2" cy="225.2" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 386.5 223.5 C 392.71 224.3 395.14 224.08 398 225.03 C 399 225.68 401 225.68 402 225.03 C 404.86 224.08 407.29 224.3 413.5 223.5 C 406.48 227.2 393.52 227.2 386.5 223.5 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".5"/>
-        <path d="M 386.5 223.5 C 393.52 227.2 406.48 227.2 413.5 223.5 C 408.64 227.68 404.05 228.28 400 228.28 C 395.95 228.28 391.36 227.68 386.5 223.5 Z" fill="url(#human-quiet-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".96"/>
+        <path d="M 386.5 223.5 C 393.52 227.2 406.48 227.2 413.5 223.5 C 408.64 227.68 404.05 228.28 400 228.28 C 395.95 228.28 391.36 227.68 386.5 223.5 Z" fill="url(#human-quiet-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.96 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 406.175 227.536 C 404.012 228.142 401.944 228.28 400 228.28 C 398.056 228.28 395.988 228.142 393.825 227.536" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
-        <path data-hero-lip-reflection d="M 393.8 227.05 C 397.1 227.55 402.6 227.6 406.2 227.05 C 403.4 228.15 396.7 228.15 393.8 227.05 Z" fill="var(--hero-lip-highlight, #d68b75)" opacity=".72"/>
+        <path data-hero-lip-reflection d="M 392.5 227.05 C 396 227.5 404 227.5 407.5 227.05 C 404 228.4 396 228.4 392.5 227.05 Z" fill="var(--hero-lip-reflection, #d68b75)" opacity="calc(.72 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-mouth-seam d="M 386.5 223.5 C 393.52 227.2 406.48 227.2 413.5 223.5 C 407.02 228.1 392.98 228.1 386.5 223.5 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
         <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
         <path data-hero-smile-lift d="M 387.15 224.7 C 386.15 224.4, 385.3 223.8, 384.9 222.6 M 412.85 224.7 C 413.85 224.4, 414.7 223.8, 415.1 222.6" fill="none" stroke="var(--hero-skin-highlight-soft, #dfa07a)" stroke-width=".7" stroke-linecap="round" opacity=".5"/>
@@ -9185,7 +9185,7 @@
         <ellipse cx="378.5" cy="222.3" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="421.5" cy="222.3" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 377.2 220.6 C 384.95 221.6 394.53 223.7 400 223 C 405.93 223.8 415.5 220.8 422.8 220.3 C 413.68 227.4 406.38 227.8 400 227.1 C 393.16 227.7 385.86 227 377.2 220.6 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
-        <path d="M 377.2 220.6 C 385.86 232.95 393.16 233.2 400 233.2 C 406.84 233.2 414.14 232.95 422.8 220.6 C 414.14 235.7 407.75 236.8 400 236.7 C 392.25 236.8 385.86 235.7 377.2 220.6 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".68"/>
+        <path d="M 377.2 220.6 C 385.86 232.95 393.16 233.2 400 233.2 C 406.84 233.2 414.14 232.95 422.8 220.6 C 414.14 235.7 407.75 236.8 400 236.7 C 392.25 236.8 385.86 235.7 377.2 220.6 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.68 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 410.621 234.599 C 407.127 236.52 403.72 236.748 400 236.7 C 396.28 236.748 392.873 236.52 389.379 234.599" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Happy grin: lens shape with teeth. -->
@@ -9206,7 +9206,7 @@
         <ellipse cx="381.9" cy="224.9" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="418.1" cy="224.9" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 380.6 223.2 C 389.52 224 393.02 226.1 398 227.05 C 399 227.7 401 227.7 402 227.05 C 406.98 226.1 410.48 224 419.4 223.2 C 409.31 230 390.69 230 380.6 223.2 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".58"/>
-        <path d="M 380.6 223.2 C 390.69 230 409.31 230 419.4 223.2 C 412.42 230.05 405.82 230.8 400 230.8 C 394.18 230.8 387.58 230.05 380.6 223.2 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".58"/>
+        <path d="M 380.6 223.2 C 390.69 230 409.31 230 419.4 223.2 C 412.42 230.05 405.82 230.8 400 230.8 C 394.18 230.8 387.58 230.05 380.6 223.2 Z" fill="url(#human-quiet-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.58 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 408.876 229.69 C 405.767 230.627 402.794 230.8 400 230.8 C 397.206 230.8 394.233 230.627 391.124 229.69" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 380.6 223.2 C 390.69 230 409.31 230 419.4 223.2 C 410.09 230.9 389.91 230.9 380.6 223.2 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
         <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
@@ -9219,9 +9219,9 @@
         <ellipse cx="387.1" cy="227.1" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="412.9" cy="227.1" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 385.8 225.4 C 392.33 226.2 394.89 224.48 398 225.43 C 399 226.08 401 226.08 402 225.43 C 405.11 224.48 407.67 226.2 414.2 225.4 C 406.82 227.1 393.18 227.1 385.8 225.4 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".48"/>
-        <path d="M 385.8 225.4 C 393.18 227.1 406.82 227.1 414.2 225.4 C 409.09 228.15 404.26 228.78 400 228.78 C 395.74 228.78 390.91 228.15 385.8 225.4 Z" fill="url(#human-quiet-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".96"/>
+        <path d="M 385.8 225.4 C 393.18 227.1 406.82 227.1 414.2 225.4 C 409.09 228.15 404.26 228.78 400 228.78 C 395.74 228.78 390.91 228.15 385.8 225.4 Z" fill="url(#human-quiet-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.96 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 406.496 228.18 C 404.221 228.635 402.045 228.78 400 228.78 C 397.955 228.78 395.779 228.635 393.504 228.18" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
-        <path data-hero-lip-reflection d="M 393.7 227.05 C 397.2 227.55 402.8 227.55 406.3 227.05 C 403.7 228.25 396.3 228.25 393.7 227.05 Z" fill="var(--hero-lip-highlight, #d68b75)" opacity=".72"/>
+        <path data-hero-lip-reflection d="M 392.4 227.05 C 396 227.5 404 227.5 407.6 227.05 C 404 228.5 396 228.5 392.4 227.05 Z" fill="var(--hero-lip-reflection, #d68b75)" opacity="calc(.72 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-mouth-seam d="M 385.8 225.4 C 393.18 227.1 406.82 227.1 414.2 225.4 C 407.38 228 392.62 228 385.8 225.4 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
         <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
         <path data-hero-smile-lift d="M 386.12 226.43 C 385.42 226.23, 384.83 225.81, 384.55 224.96 M 413.88 226.43 C 414.58 226.23, 415.17 225.81, 415.45 224.96" fill="none" stroke="var(--hero-skin-highlight-soft, #dfa07a)" stroke-width=".7" stroke-linecap="round" opacity=".5"/>
@@ -9233,7 +9233,7 @@
         <ellipse cx="383.5" cy="224.2" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="416.5" cy="224.2" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 382.2 222.5 C 389 222 394 218.5 398 220.3 C 399.2 221.4 400.8 221.4 402 220.3 C 406 218.5 411 222 417.8 222.5 C 408.54 225.3 391.46 225.3 382.2 222.5 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".92"/>
-        <path d="M 382.2 222.5 C 391.46 225.3 408.54 225.3 417.8 222.5 C 411.39 228.45 405.34 230.1 400 230.1 C 394.66 230.1 388.61 228.45 382.2 222.5 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".92"/>
+        <path d="M 382.2 222.5 C 391.46 225.3 408.54 225.3 417.8 222.5 C 411.39 228.45 405.34 230.1 400 230.1 C 394.66 230.1 388.61 228.45 382.2 222.5 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.92 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 408.142 228.666 C 405.29 229.72 402.563 230.1 400 230.1 C 397.437 230.1 394.71 229.72 391.858 228.666" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 382.2 222.5 C 391.46 225.3 408.54 225.3 417.8 222.5 C 409.26 226.2 390.74 226.2 382.2 222.5 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
         <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
@@ -9246,7 +9246,7 @@
         <ellipse cx="384.5" cy="224.2" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="415.5" cy="224.2" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 383.2 222.5 C 390 222.2 394.4 220 398 221.05 C 399.2 221.9 400.8 221.9 402 221.05 C 405.6 220 410 222.2 416.8 222.5 C 408.06 225.1 391.94 225.1 383.2 222.5 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".76"/>
-        <path d="M 383.2 222.5 C 391.94 225.1 408.06 225.1 416.8 222.5 C 410.75 227.6 405.04 228.95 400 228.95 C 394.96 228.95 389.25 227.6 383.2 222.5 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".76"/>
+        <path d="M 383.2 222.5 C 391.94 225.1 408.06 225.1 416.8 222.5 C 410.75 227.6 405.04 228.95 400 228.95 C 394.96 228.95 389.25 227.6 383.2 222.5 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.76 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 407.684 227.751 C 404.993 228.639 402.419 228.95 400 228.95 C 397.581 228.95 395.007 228.639 392.316 227.751" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 383.2 222.5 C 391.94 225.1 408.06 225.1 416.8 222.5 C 408.74 226 391.26 226 383.2 222.5 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
         <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
@@ -9260,7 +9260,7 @@
         <ellipse cx="375.4" cy="220.6" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="424.6" cy="220.6" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 374.1 218.9 C 382.91 219.9 393.78 222 400 221.3 C 406.73 222.1 417.61 219.1 425.9 218.6 C 415.54 225.7 407.25 226.1 400 225.4 C 392.23 226 383.94 225.3 374.1 218.9 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
-        <path d="M 374.1 218.9 C 383.94 234.05 392.23 234.3 400 234.3 C 407.77 234.3 416.06 234.05 425.9 218.9 C 416.06 236.8 408.81 237.9 400 237.8 C 391.19 237.9 383.94 236.8 374.1 218.9 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".68"/>
+        <path d="M 374.1 218.9 C 383.94 234.05 392.23 234.3 400 234.3 C 407.77 234.3 416.06 234.05 425.9 218.9 C 416.06 236.8 408.81 237.9 400 237.8 C 391.19 237.9 383.94 236.8 374.1 218.9 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.68 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 412.067 235.389 C 408.098 237.62 404.229 237.848 400 237.8 C 395.771 237.848 391.902 237.62 387.933 235.389" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Bright happy smile: bigger lens with corner dimples. -->
@@ -9283,7 +9283,7 @@
         <ellipse cx="372" cy="220.5" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="428" cy="220.5" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 370.7 218.8 C 380.66 219.8 392.97 221.9 400 221.2 C 407.62 222 419.92 219 429.3 218.5 C 417.58 225.6 408.2 226 400 225.3 C 391.21 225.9 381.83 225.2 370.7 218.8 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
-        <path d="M 370.7 218.8 C 381.83 235.15 391.21 235.4 400 235.4 C 408.79 235.4 418.17 235.15 429.3 218.8 C 418.17 237.9 409.96 239 400 238.9 C 390.04 239 381.83 237.9 370.7 218.8 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".68"/>
+        <path d="M 370.7 218.8 C 381.83 235.15 391.21 235.4 400 235.4 C 408.79 235.4 418.17 235.15 429.3 218.8 C 418.17 237.9 409.96 239 400 238.9 C 390.04 239 381.83 237.9 370.7 218.8 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.68 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 413.649 236.357 C 409.158 238.72 404.781 238.948 400 238.9 C 395.219 238.948 390.842 238.72 386.351 236.357" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Wide happy smile with prominent dimples. -->
@@ -9306,7 +9306,7 @@
         <ellipse cx="377.7" cy="221.5" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="422.3" cy="221.5" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 376.4 219.8 C 384.42 220.8 394.34 222.9 400 222.2 C 406.14 223 416.05 220 423.6 219.5 C 414.16 226.6 406.61 227 400 226.3 C 392.92 226.9 385.37 226.2 376.4 219.8 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
-        <path d="M 376.4 219.8 C 385.37 233.05 392.92 233.3 400 233.3 C 407.08 233.3 414.63 233.05 423.6 219.8 C 414.63 235.8 408.02 236.9 400 236.8 C 391.98 236.9 385.37 235.8 376.4 219.8 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".68"/>
+        <path d="M 376.4 219.8 C 385.37 233.05 392.92 233.3 400 233.3 C 407.08 233.3 414.63 233.05 423.6 219.8 C 414.63 235.8 408.02 236.9 400 236.8 C 391.98 236.9 385.37 235.8 376.4 219.8 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.68 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 410.991 234.599 C 407.374 236.62 403.85 236.848 400 236.8 C 396.15 236.848 392.626 236.62 389.009 234.599" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Toothy smile with prominent teeth + soft gum line. -->
@@ -9331,7 +9331,7 @@
         <ellipse cx="381.5" cy="222.6" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="418.5" cy="222.6" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 380.2 220.9 C 386.93 221.9 395.25 224 400 223.3 C 405.15 224.1 413.46 221.1 419.8 220.6 C 411.88 227.7 405.54 228.1 400 227.4 C 394.06 228 387.72 227.3 380.2 220.9 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
-        <path d="M 380.2 220.9 C 387.72 232.55 394.06 232.8 400 232.8 C 405.94 232.8 412.28 232.55 419.8 220.9 C 412.28 235.3 406.73 236.4 400 236.3 C 393.27 236.4 387.72 235.3 380.2 220.9 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".68"/>
+        <path d="M 380.2 220.9 C 387.72 232.55 394.06 232.8 400 232.8 C 405.94 232.8 412.28 232.55 419.8 220.9 C 412.28 235.3 406.73 236.4 400 236.3 C 393.27 236.4 387.72 235.3 380.2 220.9 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.68 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 409.224 234.276 C 406.189 236.12 403.23 236.348 400 236.3 C 396.77 236.348 393.811 236.12 390.776 234.276" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Toothy bright smile: full happy expression with cheek dimples. -->
@@ -9359,7 +9359,7 @@
         <ellipse cx="373.8" cy="221.1" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="426.2" cy="221.1" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 372.5 219.4 C 381.85 220.4 393.4 222.5 400 221.8 C 407.15 222.6 418.7 219.6 427.5 219.1 C 416.5 226.2 407.7 226.6 400 225.9 C 391.75 226.5 382.95 225.8 372.5 219.4 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
-        <path d="M 372.5 219.4 C 382.95 233.55 391.75 233.8 400 233.8 C 408.25 233.8 417.05 233.55 427.5 219.4 C 417.05 236.3 409.35 237.4 400 237.3 C 390.65 237.4 382.95 236.3 372.5 219.4 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".68"/>
+        <path d="M 372.5 219.4 C 382.95 233.55 391.75 233.8 400 233.8 C 408.25 233.8 417.05 233.55 427.5 219.4 C 417.05 236.3 409.35 237.4 400 237.3 C 390.65 237.4 382.95 236.3 372.5 219.4 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.68 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 412.81 235 C 408.596 237.12 404.488 237.348 400 237.3 C 395.512 237.348 391.404 237.12 387.19 235" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Photo smile: big confident grin with full teeth + lower-lip shine. -->
@@ -9385,7 +9385,7 @@
         <ellipse cx="379.5" cy="224.7" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="420.5" cy="224.7" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 378.2 223 C 388.23 223.8 392.15 226.05 398 227 C 399 227.65 401 227.65 402 227 C 407.85 226.05 411.77 223.8 421.8 223 C 410.46 230 389.54 230 378.2 223 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".6"/>
-        <path d="M 378.2 223 C 389.54 230 410.46 230 421.8 223 C 413.95 230.07 406.54 230.85 400 230.85 C 393.46 230.85 386.05 230.07 378.2 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".6"/>
+        <path d="M 378.2 223 C 389.54 230 410.46 230 421.8 223 C 413.95 230.07 406.54 230.85 400 230.85 C 393.46 230.85 386.05 230.07 378.2 223 Z" fill="url(#human-quiet-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.6 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 409.971 229.702 C 406.479 230.67 403.139 230.85 400 230.85 C 396.861 230.85 393.521 230.67 390.029 229.702" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
         <path data-hero-mouth-seam d="M 378.2 223 C 389.54 230 410.46 230 421.8 223 C 411.34 230.9 388.66 230.9 378.2 223 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
         <!-- Corner tucks lift the closed lips into a gentle, friendly smile. -->
@@ -9399,7 +9399,7 @@
         <ellipse cx="377.9" cy="222.5" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="422.1" cy="222.5" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 376.6 220.8 C 384.56 221.8 394.38 223.9 400 223.2 C 406.08 224 415.91 221 423.4 220.5 C 414.04 227.6 406.55 228 400 227.3 C 392.98 227.9 385.49 227.2 376.6 220.8 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
-        <path d="M 376.6 220.8 C 385.49 232.85 392.98 233.1 400 233.1 C 407.02 233.1 414.51 232.85 423.4 220.8 C 414.51 235.6 407.96 236.7 400 236.6 C 392.04 236.7 385.49 235.6 376.6 220.8 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".68"/>
+        <path d="M 376.6 220.8 C 385.49 232.85 392.98 233.1 400 233.1 C 407.02 233.1 414.51 232.85 423.4 220.8 C 414.51 235.6 407.96 236.7 400 236.6 C 392.04 236.7 385.49 235.6 376.6 220.8 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.68 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 410.903 234.532 C 407.317 236.42 403.821 236.648 400 236.6 C 396.179 236.648 392.683 236.42 389.097 234.532" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Soft happy grin with peek of teeth. -->
@@ -9423,7 +9423,7 @@
         <ellipse cx="377" cy="221.9" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="423" cy="221.9" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 375.7 220.2 C 383.96 221.2 394.17 223.3 400 222.6 C 406.32 223.4 416.52 220.4 424.3 219.9 C 414.58 227 406.8 227.4 400 226.7 C 392.71 227.3 384.93 226.6 375.7 220.2 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
-        <path d="M 375.7 220.2 C 384.93 233.85 392.71 234.1 400 234.1 C 407.29 234.1 415.07 233.85 424.3 220.2 C 415.07 236.6 408.26 237.7 400 237.6 C 391.74 237.7 384.93 236.6 375.7 220.2 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".68"/>
+        <path d="M 375.7 220.2 C 384.93 233.85 392.71 234.1 400 234.1 C 407.29 234.1 415.07 233.85 424.3 220.2 C 415.07 236.6 408.26 237.7 400 237.6 C 391.74 237.7 384.93 236.6 375.7 220.2 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.68 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 411.32 235.355 C 407.596 237.42 403.965 237.648 400 237.6 C 396.035 237.648 392.404 237.42 388.68 235.355" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Cheerful grin: bright happy expression with corner dimples. -->
@@ -9446,7 +9446,7 @@
         <ellipse cx="383" cy="223.4" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="417" cy="223.4" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 381.7 221.7 C 387.92 222.7 395.61 224.8 400 224.1 C 404.76 224.9 412.44 221.9 418.3 221.4 C 410.98 228.5 405.12 228.9 400 228.2 C 394.51 228.8 388.65 228.1 381.7 221.7 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
-        <path d="M 381.7 221.7 C 388.65 234.55 394.51 234.8 400 234.8 C 405.49 234.8 411.35 234.55 418.3 221.7 C 411.35 237.3 406.22 238.4 400 238.3 C 393.78 238.4 388.65 237.3 381.7 221.7 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".68"/>
+        <path d="M 381.7 221.7 C 388.65 234.55 394.51 234.8 400 234.8 C 405.49 234.8 411.35 234.55 418.3 221.7 C 411.35 237.3 406.22 238.4 400 238.3 C 393.78 238.4 388.65 237.3 381.7 221.7 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.68 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 408.525 236.144 C 405.72 238.12 402.986 238.348 400 238.3 C 397.014 238.348 394.28 238.12 391.475 236.144" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Open happy smile with visible lower lip. -->
@@ -9469,7 +9469,7 @@
         <ellipse cx="380.1" cy="222.4" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <ellipse cx="419.9" cy="222.4" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 378.8 220.7 C 386.01 221.7 394.91 223.8 400 223.1 C 405.51 223.9 414.42 220.9 421.2 220.4 C 412.72 227.5 405.94 227.9 400 227.2 C 393.64 227.8 386.86 227.1 378.8 220.7 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
-        <path d="M 378.8 220.7 C 386.86 235.95 393.64 236.2 400 236.2 C 406.36 236.2 413.14 235.95 421.2 220.7 C 413.14 238.7 407.21 239.8 400 239.7 C 392.79 239.8 386.86 238.7 378.8 220.7 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity=".68"/>
+        <path d="M 378.8 220.7 C 386.86 235.95 393.64 236.2 400 236.2 C 406.36 236.2 413.14 235.95 421.2 220.7 C 413.14 238.7 407.21 239.8 400 239.7 C 392.79 239.8 386.86 238.7 378.8 220.7 Z" fill="url(#human-lip-volume-{{ hero_variant }})" mask="url(#human-lip-transition-{{ hero_variant }})" opacity="calc(.68 * var(--hero-lip-surface-gain, 1))"/>
         <path data-hero-lip-edge d="M 409.875 237.278 C 406.627 239.52 403.461 239.748 400 239.7 C 396.539 239.748 393.373 239.52 390.125 237.278" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Excited happy mouth: tall open with prominent lip + dimples. -->

@@ -979,3 +979,77 @@ test('Rear loc and braid lighting does not become a foreground forehead patch', 
     }
   }
 });
+
+test('Deep-skin noses and closed lips remain distinguishable at small portrait sizes', async ({ page }) => {
+  const portrait = await openPortrait(page);
+  const cases = [
+    { noseShape: 'soft', mouthStyle: 'small-smile', headStyle: 'soft-oval' },
+    { noseShape: 'broad', mouthStyle: 'closed-smile', headStyle: 'round' },
+    { noseShape: 'soft-low-bridge', mouthStyle: 'soft-smile', headStyle: 'broad-lower-jaw' },
+  ];
+  for (const skin of ['#291713', '#35241f', '#452a2b', '#512d22', '#633f2b']) {
+    for (const features of cases) {
+      for (const width of [128, 200]) {
+        const results = await portrait.evaluate(async (svg, { skin, features, width }) => {
+          const state = structuredClone(HeroAvatar.DEFAULTS);
+          Object.assign(state.appearance, { skin, hairStyle: 'bald', facialHair: 'none' }, features);
+          state.outfit.accessories = [];
+          state.outfit.accessory = 'none';
+          HeroAvatar.applyToSvg(svg, state);
+          const height = Math.round(width * 1.2);
+          async function pixels(hiddenSlot) {
+            const clone = svg.cloneNode(true);
+            clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            clone.setAttribute('viewBox', '290 72 220 264');
+            clone.setAttribute('width', String(width));
+            clone.setAttribute('height', String(height));
+            clone.style.width = `${width}px`;
+            clone.style.height = `${height}px`;
+            if (hiddenSlot) clone.querySelectorAll(`[data-hero-slot="${hiddenSlot}"]`)
+              .forEach(node => node.setAttribute('display', 'none'));
+            const image = new Image();
+            image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(clone))}`;
+            await image.decode();
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const context = canvas.getContext('2d');
+            context.drawImage(image, 0, 0);
+            return context.getImageData(0, 0, width, height).data;
+          }
+          const luminance = (rgba, offset) => [0.2126, 0.7152, 0.0722].reduce((sum, weight, channel) => {
+            const value = rgba[offset + channel] / 255;
+            return sum + weight * (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+          }, 0);
+          const complete = await pixels();
+          const results = [];
+          for (const slot of ['nose-shape', 'mouth-style']) {
+            const skinOnly = await pixels(slot);
+            let distinctPixels = 0;
+            for (let offset = 0; offset < complete.length; offset += 4) {
+              if (complete[offset + 3] < 250 || skinOnly[offset + 3] < 250) continue;
+              const difference = Math.max(...[0, 1, 2].map(channel =>
+                Math.abs(complete[offset + channel] - skinOnly[offset + channel])));
+              const a = luminance(complete, offset) + 0.05;
+              const b = luminance(skinOnly, offset) + 0.05;
+              // A rendered-art visibility floor, not a WCAG text threshold:
+              // require several substantial pixels after masks, gradients,
+              // skin lighting, and downsampling, rather than token contrast.
+              if (difference >= 15 && Math.max(a, b) / Math.min(a, b) >= 1.5) distinctPixels++;
+            }
+            results.push({ slot, distinctPixels });
+          }
+          return results;
+        }, { skin, features, width });
+        // A visible patch occupies proportionally fewer pixels when reduced;
+        // preserve the same minimum area instead of pinning one raster size.
+        const minimumDistinctPixels = Math.ceil(4 * (width / 200) ** 2);
+        for (const result of results) {
+          expect(result.distinctPixels,
+            `${skin}, ${features.headStyle}, ${features.noseShape}/${features.mouthStyle}, ${width}px: ${result.slot} remains visible`)
+            .toBeGreaterThanOrEqual(minimumDistinctPixels);
+        }
+      }
+    }
+  }
+});
