@@ -173,6 +173,8 @@
 
     /* ===== Hero customizer modal ===== */
     .hero-cust-modal[hidden] { display: none; }
+    /* Native hidden states apply in both themes and in print. */
+    .hero-cust-modal [hidden] { display: none !important; }
     #customize-hero-btn[hidden] { display: none !important; }
     body.hero-cust-modal-open { overflow: hidden; }
     body.hero-cust-modal-open #gym-entrance [data-gym-hero-svg],

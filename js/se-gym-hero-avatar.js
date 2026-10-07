@@ -34,7 +34,8 @@
       groups: [
         choiceGroup('Hero type', [
           choice('human', 'Human hero'),
-          choice('bruin', 'Bruin mascot')
+          choice('bruin', 'Bruin mascot'),
+          choice('tobias', 'Prof')
         ])
       ]
     },
@@ -1498,7 +1499,21 @@
 
 
   function normalizeHeroKind(value) {
-    return value === 'bruin' ? 'bruin' : 'human';
+    return ENUMS.heroKind.indexOf(value) !== -1 ? value : 'human';
+  }
+
+  // The fixed portrait uses the shared rig without inheriting editable traits.
+  // Preserve form traits so switching back to Human restores them.
+  function tobiasAvatar() {
+    var state = JSON.parse(JSON.stringify(DEFAULTS));
+    state.kind = 'tobias';
+    state.appearance.skin = '#edbea5';
+    state.appearance.hairColor = '#897257';
+    state.appearance.hairStyle = 'bald';
+    state.appearance.eyeColor = '#698b94';
+    state.outfit.suit = '#009bb7';
+    state.outfit.capeOuter = '#075973';
+    return state;
   }
 
 
@@ -1582,6 +1597,7 @@
 
   function randomAvatar(_legacyPresentation, kind) {
     var heroKind = normalizeHeroKind(kind);
+    if (heroKind === 'tobias') return tobiasAvatar();
     // `presentation` remains in the call signature for backward compatibility,
     // but no trait is selected from a gender-coded bundle.
     var recipe = INCLUSIVE_FACE_RECIPE;
@@ -3169,7 +3185,9 @@
     var groups = svg.querySelectorAll('[data-hero-kind-layer]');
     for (var i = 0; i < groups.length; i++) {
       var group = groups[i];
-      group.setAttribute('display', group.getAttribute('data-hero-kind-layer') === heroKind ? 'inline' : 'none');
+      var visible = group.getAttribute('data-hero-kind-layer') === heroKind
+        || group.getAttribute('data-hero-also-kind') === heroKind;
+      group.setAttribute('display', visible ? 'inline' : 'none');
     }
   }
 
@@ -3386,6 +3404,7 @@
   }
 
   function renderAvatarToSvg(svg, state) {
+    if (state.kind === 'tobias') state = tobiasAvatar();
     var heroKind = normalizeHeroKind(state.kind);
     var bodyType = canonicalChoiceValue('bodyType', state.body.type);
     var hairStyle = canonicalChoiceValue('hairStyle', state.appearance.hairStyle);
@@ -5826,10 +5845,24 @@
 
     function refreshPreview() {
       var s = readForm();
+      syncCustomizationAvailability(s.kind);
       var preview = modal.querySelector('[data-gym-hero-svg]');
       if (preview) applyToSvg(preview, s);
       syncAllChoiceControls();
       refreshChoicePreviews(s);
+    }
+
+    function syncCustomizationAvailability(kind) {
+      var fixed = kind === 'tobias';
+      modal.querySelectorAll('[data-hero-customization]').forEach(function (fieldset) {
+        fieldset.hidden = fixed;
+        fieldset.disabled = fixed;
+      });
+      modal.querySelectorAll('[data-hero-cust-action="randomize"]').forEach(function (button) {
+        button.hidden = fixed;
+        button.disabled = fixed;
+      });
+      $('hero-cust-fixed-note').hidden = !fixed;
     }
 
     function commitPreviewEdit(previousState) {
