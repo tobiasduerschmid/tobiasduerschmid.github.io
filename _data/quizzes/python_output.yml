@@ -77,7 +77,7 @@ questions:
 
   - id: python-output-repeated-row
     type: write-in
-    difficulty: intermediate
+    difficulty: expert
     question: "A small board starts with two rows. What is the sum of the second row after this update?"
     program:
       language: python
