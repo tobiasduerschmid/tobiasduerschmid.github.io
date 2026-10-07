@@ -2260,6 +2260,16 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
             if (skinBand) facialHairSkinBands.add(skinBand);
           }
         }
+
+        // Keep the distribution checks above on the same 640-avatar sample.
+        // Catalog reachability needs a larger sample: an individual short cut
+        // has less than a 1% chance now, and beards also pass styling filters.
+        // Match the bounded coverage sample in the public-API unit tests.
+        for (let i = 640; i < 16000; i++) {
+          const avatar = window.HeroAvatar.randomAvatar();
+          sampledHairStyles.add(avatar.appearance.hairStyle);
+          sampledFacialHairStyles.add(avatar.appearance.facialHair);
+        }
       } finally {
         Math.random = originalRandom;
       }
@@ -3434,180 +3444,186 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     ).toEqual([]);
   });
 
-  test('Every selectable hair style has complete visible behavior across face shapes, coverings, and opaque hats', async ({ page }) => {
-    test.setTimeout(EXHAUSTIVE_GEOMETRY_TIMEOUT_MS);
-    const geometryHero = await installGeometryHero(page);
+  // Keep the complete catalog matrix within the per-test budget as choices grow.
+  // Disjoint slices cover every style with every head, covering, and opaque hat.
+  const hairBehaviorPartitions = 3;
+  for (let partition = 0; partition < hairBehaviorPartitions; partition++) {
+    test(`Every selectable hair style has complete visible behavior across face shapes, coverings, and opaque hats (group ${partition + 1} of ${hairBehaviorPartitions})`, async ({ page }) => {
+      test.setTimeout(EXHAUSTIVE_GEOMETRY_TIMEOUT_MS);
+      const geometryHero = await installGeometryHero(page);
 
-    const hairFailures = await geometryHero.evaluate(async (svg) => {
-      const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
-      const hairStyles = Array.from(document.querySelectorAll('#hero-cust-hair-style option'))
-        .map((node) => node.value)
-        .filter(Boolean);
-      const headStyles = Array.from(document.querySelectorAll('#hero-cust-head-style option'))
-        .map((node) => node.value)
-        .filter(Boolean);
-      const coveringHeadwear = window.HeroAvatar.ACCESSORY_COMPATIBILITY.hairCoverings;
-      const opaqueHats = window.HeroAvatar.ACCESSORY_COMPATIBILITY.opaqueHats;
-      const hairlineVisibleCoverings = new Set(
-        window.HeroAvatar.ACCESSORY_COMPATIBILITY.hairlineVisibleCoverings
-      );
-      const protectedFacePoints = [
-        { name: 'left eye outer', x: 374, y: 185 },
-        { name: 'left eye center', x: 381, y: 185 },
-        { name: 'right eye center', x: 419, y: 185 },
-        { name: 'right eye outer', x: 426, y: 185 },
-        { name: 'nose bridge', x: 400, y: 198 },
-        { name: 'nose tip', x: 400, y: 214 },
-        { name: 'left cheek', x: 368, y: 208 },
-        { name: 'right cheek', x: 432, y: 208 },
-        { name: 'mouth', x: 400, y: 226 },
-        { name: 'chin', x: 400, y: 240 },
-      ];
-      const failures = [];
+      const hairFailures = await geometryHero.evaluate(async (svg, { partition, partitionCount }) => {
+        const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
+        const hairStyles = Array.from(document.querySelectorAll('#hero-cust-hair-style option'))
+          .map((node) => node.value)
+          .filter(Boolean)
+          .filter((_style, index) => index % partitionCount === partition);
+        const headStyles = Array.from(document.querySelectorAll('#hero-cust-head-style option'))
+          .map((node) => node.value)
+          .filter(Boolean);
+        const coveringHeadwear = window.HeroAvatar.ACCESSORY_COMPATIBILITY.hairCoverings;
+        const opaqueHats = window.HeroAvatar.ACCESSORY_COMPATIBILITY.opaqueHats;
+        const hairlineVisibleCoverings = new Set(
+          window.HeroAvatar.ACCESSORY_COMPATIBILITY.hairlineVisibleCoverings
+        );
+        const protectedFacePoints = [
+          { name: 'left eye outer', x: 374, y: 185 },
+          { name: 'left eye center', x: 381, y: 185 },
+          { name: 'right eye center', x: 419, y: 185 },
+          { name: 'right eye outer', x: 426, y: 185 },
+          { name: 'nose bridge', x: 400, y: 198 },
+          { name: 'nose tip', x: 400, y: 214 },
+          { name: 'left cheek', x: 368, y: 208 },
+          { name: 'right cheek', x: 432, y: 208 },
+          { name: 'mouth', x: 400, y: 226 },
+          { name: 'chin', x: 400, y: 240 },
+        ];
+        const failures = [];
 
-      baseState.outfit.accessory = 'none';
-      baseState.outfit.accessories = [];
+        baseState.outfit.accessory = 'none';
+        baseState.outfit.accessories = [];
 
-      function visibleSlot(slot, option) {
-        const group = svg.querySelector(`[data-hero-slot="${slot}"][data-hero-option="${option}"]`);
-        return group && group.getAttribute('display') === 'inline';
-      }
-
-      function bboxArea(slot, option) {
-        const group = svg.querySelector(`[data-hero-slot="${slot}"][data-hero-option="${option}"]`);
-        if (!group || group.getAttribute('display') !== 'inline' || typeof group.getBBox !== 'function') return 0;
-        try {
-          const box = group.getBBox();
-          return box.width * box.height;
-        } catch (e) {
-          return 0;
-        }
-      }
-
-      function hitSlot(point) {
-        const svgPoint = svg.createSVGPoint();
-        svgPoint.x = point.x;
-        svgPoint.y = point.y;
-        const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
-        const element = document.elementFromPoint(screenPoint.x, screenPoint.y);
-        const slot = element && element.closest('[data-hero-slot]');
-        return {
-          point: point.name,
-          slot: slot && slot.getAttribute('data-hero-slot'),
-          option: slot && slot.getAttribute('data-hero-option'),
-        };
-      }
-
-      for (const hairStyle of hairStyles) {
-        const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
-        state.appearance.hairStyle = hairStyle;
-        state.appearance.headStyle = 'default';
-        window.HeroAvatar.applyToSvg(svg, state);
-
-        if (!visibleSlot('hair', hairStyle)) {
-          failures.push({ hairStyle, reason: 'selected hair slot is not visible' });
-        }
-        if (hairStyle !== 'bald' && bboxArea('hair', hairStyle) < 24) {
-          failures.push({ hairStyle, reason: 'selected hair slot has no visible geometry' });
+        function visibleSlot(slot, option) {
+          const group = svg.querySelector(`[data-hero-slot="${slot}"][data-hero-option="${option}"]`);
+          return group && group.getAttribute('display') === 'inline';
         }
 
-        for (const headStyle of headStyles) {
-          const shapedState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
-          shapedState.appearance.hairStyle = hairStyle;
-          shapedState.appearance.headStyle = headStyle;
-          window.HeroAvatar.applyToSvg(svg, shapedState);
-
-          for (const hit of protectedFacePoints.map(hitSlot)) {
-            if (['hair', 'hair-cap', 'hairline', 'hair-root'].includes(hit.slot)) {
-              failures.push(Object.assign({ hairStyle, headStyle, reason: 'hair covers protected facial feature' }, hit));
-            }
+        function bboxArea(slot, option) {
+          const group = svg.querySelector(`[data-hero-slot="${slot}"][data-hero-option="${option}"]`);
+          if (!group || group.getAttribute('display') !== 'inline' || typeof group.getBBox !== 'function') return 0;
+          try {
+            const box = group.getBBox();
+            return box.width * box.height;
+          } catch (e) {
+            return 0;
           }
         }
 
-        for (const headwear of coveringHeadwear) {
-          const coveredState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
-          coveredState.appearance.hairStyle = hairStyle;
-          coveredState.outfit.accessory = headwear;
-          coveredState.outfit.accessories = [headwear];
-          window.HeroAvatar.applyToSvg(svg, coveredState);
-
-          if (!visibleSlot('hair', 'bald')) {
-            failures.push({ hairStyle, headwear, reason: 'covering headwear should switch hair layer to bald' });
-          }
-          if (!visibleSlot('accessory', headwear)) {
-            failures.push({ hairStyle, headwear, reason: 'covering headwear accessory is not visible' });
-          }
-          const shouldRevealHairline = hairStyle !== 'bald' && hairlineVisibleCoverings.has(headwear);
-          if (visibleSlot('hair-cap', 'head-covering') !== shouldRevealHairline) {
-            failures.push({ hairStyle, headwear, reason: 'covering uses the wrong hairline visibility policy' });
-          }
-          if (shouldRevealHairline && bboxArea('hair-cap', 'head-covering') < 24) {
-            failures.push({ hairStyle, headwear, reason: 'visible covering hairline has no rendered geometry' });
-          }
-          for (const slot of ['hair', 'hairline', 'hair-root']) {
-            if (hairStyle !== 'bald' && visibleSlot(slot, hairStyle)) {
-              failures.push({ hairStyle, headwear, slot, reason: 'covered hair detail remains visible' });
-            }
-          }
+        function hitSlot(point) {
+          const svgPoint = svg.createSVGPoint();
+          svgPoint.x = point.x;
+          svgPoint.y = point.y;
+          const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+          const element = document.elementFromPoint(screenPoint.x, screenPoint.y);
+          const slot = element && element.closest('[data-hero-slot]');
+          return {
+            point: point.name,
+            slot: slot && slot.getAttribute('data-hero-slot'),
+            option: slot && slot.getAttribute('data-hero-option'),
+          };
         }
 
-        for (const headwear of opaqueHats) {
-          const coveredState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
-          coveredState.appearance.hairStyle = hairStyle;
-          coveredState.outfit.accessory = headwear;
-          coveredState.outfit.accessories = [headwear];
-          window.HeroAvatar.applyToSvg(svg, coveredState);
+        for (const hairStyle of hairStyles) {
+          const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+          state.appearance.hairStyle = hairStyle;
+          state.appearance.headStyle = 'default';
+          window.HeroAvatar.applyToSvg(svg, state);
 
           if (!visibleSlot('hair', hairStyle)) {
-            failures.push({ hairStyle, headwear, reason: 'opaque hat should preserve the selected authored hair geometry' });
+            failures.push({ hairStyle, reason: 'selected hair slot is not visible' });
           }
-          if (!visibleSlot('accessory', headwear)) {
-            failures.push({ hairStyle, headwear, reason: 'opaque hat accessory is not visible' });
+          if (hairStyle !== 'bald' && bboxArea('hair', hairStyle) < 24) {
+            failures.push({ hairStyle, reason: 'selected hair slot has no visible geometry' });
           }
-          if (visibleSlot('hair-cap', 'head-covering')) {
-            failures.push({ hairStyle, headwear, reason: 'opaque hat should not use the crown-shaped covering hair cap' });
-          }
-          const activeHair = svg.querySelector(`[data-hero-slot="hair"][data-hero-option="${hairStyle}"]`);
-          const activeHairline = svg.querySelector(`[data-hero-slot="hairline"][data-hero-option="${hairStyle}"]`);
-          const clip = svg.querySelector('[data-hero-under-hat-hair-clip]');
-          const hairlineClip = svg.querySelector('[data-hero-under-hat-hairline-clip]');
-          const activeClip = activeHair ? activeHair.style.getPropertyValue('clip-path') : '';
-          const activeHairlineClip = activeHairline ? activeHairline.style.getPropertyValue('clip-path') : '';
-          if (hairStyle !== 'bald' && (!clip || !activeClip.includes(clip.id))) {
-            failures.push({ hairStyle, headwear, reason: 'opaque hat should clip only the hidden crown while preserving lower authored hair' });
-          }
-          if (hairStyle !== 'bald' && (!hairlineClip || !activeHairlineClip.includes(hairlineClip.id))) {
-            failures.push({ hairStyle, headwear, reason: 'opaque hat should keep foreground hair inside the face-safe lower crown' });
-          }
-          for (const point of [
-            { name: 'upper-left crown', x: 360, y: 112 },
-            { name: 'upper crown', x: 400, y: 92 },
-            { name: 'upper-right crown', x: 440, y: 112 },
-            { name: 'hat crown edge', x: 400, y: 148 },
-          ]) {
-            const hit = hitSlot(point);
-            if (['hair', 'hairline', 'hair-root'].includes(hit.slot)) {
-              failures.push(Object.assign({ hairStyle, headwear, reason: 'authored crown geometry protrudes above an opaque hat' }, hit));
+
+          for (const headStyle of headStyles) {
+            const shapedState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+            shapedState.appearance.hairStyle = hairStyle;
+            shapedState.appearance.headStyle = headStyle;
+            window.HeroAvatar.applyToSvg(svg, shapedState);
+
+            for (const hit of protectedFacePoints.map(hitSlot)) {
+              if (['hair', 'hair-cap', 'hairline', 'hair-root'].includes(hit.slot)) {
+                failures.push(Object.assign({ hairStyle, headStyle, reason: 'hair covers protected facial feature' }, hit));
+              }
             }
           }
-          for (const point of protectedFacePoints.slice(0, 4)) {
-            const hit = hitSlot(point);
-            if (hit.slot === 'accessory' && hit.option === headwear) {
-              failures.push(Object.assign({ hairStyle, headwear, reason: 'opaque hat obscures an eye' }, hit));
+
+          for (const headwear of coveringHeadwear) {
+            const coveredState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+            coveredState.appearance.hairStyle = hairStyle;
+            coveredState.outfit.accessory = headwear;
+            coveredState.outfit.accessories = [headwear];
+            window.HeroAvatar.applyToSvg(svg, coveredState);
+
+            if (!visibleSlot('hair', 'bald')) {
+              failures.push({ hairStyle, headwear, reason: 'covering headwear should switch hair layer to bald' });
             }
-            if (['hair', 'hairline', 'hair-root'].includes(hit.slot)) {
-              failures.push(Object.assign({ hairStyle, headwear, reason: 'opaque-hat hair obscures an eye' }, hit));
+            if (!visibleSlot('accessory', headwear)) {
+              failures.push({ hairStyle, headwear, reason: 'covering headwear accessory is not visible' });
+            }
+            const shouldRevealHairline = hairStyle !== 'bald' && hairlineVisibleCoverings.has(headwear);
+            if (visibleSlot('hair-cap', 'head-covering') !== shouldRevealHairline) {
+              failures.push({ hairStyle, headwear, reason: 'covering uses the wrong hairline visibility policy' });
+            }
+            if (shouldRevealHairline && bboxArea('hair-cap', 'head-covering') < 24) {
+              failures.push({ hairStyle, headwear, reason: 'visible covering hairline has no rendered geometry' });
+            }
+            for (const slot of ['hair', 'hairline', 'hair-root']) {
+              if (hairStyle !== 'bald' && visibleSlot(slot, hairStyle)) {
+                failures.push({ hairStyle, headwear, slot, reason: 'covered hair detail remains visible' });
+              }
             }
           }
+
+          for (const headwear of opaqueHats) {
+            const coveredState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+            coveredState.appearance.hairStyle = hairStyle;
+            coveredState.outfit.accessory = headwear;
+            coveredState.outfit.accessories = [headwear];
+            window.HeroAvatar.applyToSvg(svg, coveredState);
+
+            if (!visibleSlot('hair', hairStyle)) {
+              failures.push({ hairStyle, headwear, reason: 'opaque hat should preserve the selected authored hair geometry' });
+            }
+            if (!visibleSlot('accessory', headwear)) {
+              failures.push({ hairStyle, headwear, reason: 'opaque hat accessory is not visible' });
+            }
+            if (visibleSlot('hair-cap', 'head-covering')) {
+              failures.push({ hairStyle, headwear, reason: 'opaque hat should not use the crown-shaped covering hair cap' });
+            }
+            const activeHair = svg.querySelector(`[data-hero-slot="hair"][data-hero-option="${hairStyle}"]`);
+            const activeHairline = svg.querySelector(`[data-hero-slot="hairline"][data-hero-option="${hairStyle}"]`);
+            const clip = svg.querySelector('[data-hero-under-hat-hair-clip]');
+            const hairlineClip = svg.querySelector('[data-hero-under-hat-hairline-clip]');
+            const activeClip = activeHair ? activeHair.style.getPropertyValue('clip-path') : '';
+            const activeHairlineClip = activeHairline ? activeHairline.style.getPropertyValue('clip-path') : '';
+            if (hairStyle !== 'bald' && (!clip || !activeClip.includes(clip.id))) {
+              failures.push({ hairStyle, headwear, reason: 'opaque hat should clip only the hidden crown while preserving lower authored hair' });
+            }
+            if (hairStyle !== 'bald' && (!hairlineClip || !activeHairlineClip.includes(hairlineClip.id))) {
+              failures.push({ hairStyle, headwear, reason: 'opaque hat should keep foreground hair inside the face-safe lower crown' });
+            }
+            for (const point of [
+              { name: 'upper-left crown', x: 360, y: 112 },
+              { name: 'upper crown', x: 400, y: 92 },
+              { name: 'upper-right crown', x: 440, y: 112 },
+              { name: 'hat crown edge', x: 400, y: 148 },
+            ]) {
+              const hit = hitSlot(point);
+              if (['hair', 'hairline', 'hair-root'].includes(hit.slot)) {
+                failures.push(Object.assign({ hairStyle, headwear, reason: 'authored crown geometry protrudes above an opaque hat' }, hit));
+              }
+            }
+            for (const point of protectedFacePoints.slice(0, 4)) {
+              const hit = hitSlot(point);
+              if (hit.slot === 'accessory' && hit.option === headwear) {
+                failures.push(Object.assign({ hairStyle, headwear, reason: 'opaque hat obscures an eye' }, hit));
+              }
+              if (['hair', 'hairline', 'hair-root'].includes(hit.slot)) {
+                failures.push(Object.assign({ hairStyle, headwear, reason: 'opaque-hat hair obscures an eye' }, hit));
+              }
+            }
+          }
+          await new Promise((resolve) => requestAnimationFrame(resolve));
         }
-        await new Promise((resolve) => requestAnimationFrame(resolve));
-      }
 
-      return failures;
+        return failures;
+      }, { partition, partitionCount: hairBehaviorPartitions });
+
+      expect(hairFailures).toEqual([]);
     });
-
-    expect(hairFailures).toEqual([]);
-  });
+  }
 
   test('Front-heavy hair styles keep fitted hairlines across varied head shapes', async ({ page }) => {
     test.setTimeout(EXHAUSTIVE_GEOMETRY_TIMEOUT_MS);
@@ -4228,9 +4244,9 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         return styles.getPropertyValue(tokenName).trim();
       }
       const roundFrame = svg.querySelector('[data-hero-slot="accessory"][data-hero-option="glasses"] circle');
-      async function framePaintContrast(frame) {
-        // Read the painted rim, including material gradients, instead of
-        // treating a paint-server URL as a solid CSS color.
+      async function materialPaint(element, property, background) {
+        // Sample rendered pigment, including gradients and translucency.
+        // Surface shading is compared after compositing it onto its skin/lip.
         const imageSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         imageSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
         imageSvg.setAttribute('style', svg.getAttribute('style') || '');
@@ -4238,16 +4254,21 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         imageSvg.setAttribute('height', '128');
         imageSvg.style.width = '128px';
         imageSvg.style.height = '128px';
-        const bounds = frame.getBBox();
+        const bounds = element.getBBox();
         imageSvg.setAttribute('viewBox', `${bounds.x - 4} ${bounds.y - 4} ${bounds.width + 8} ${bounds.height + 8}`);
         svg.querySelectorAll(':scope > defs').forEach(defs => imageSvg.appendChild(defs.cloneNode(true)));
-        const copy = frame.cloneNode(true);
-        const frameStyle = getComputedStyle(frame);
-        for (const property of ['stroke', 'stroke-width', 'stroke-opacity', 'opacity']) {
-          copy.style.setProperty(property, frameStyle.getPropertyValue(property)
+        if (background) {
+          const backdrop = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          for (const [key, value] of Object.entries({ x: bounds.x - 4, y: bounds.y - 4, width: bounds.width + 8, height: bounds.height + 8, fill: background })) backdrop.setAttribute(key, value);
+          imageSvg.appendChild(backdrop);
+        }
+        const copy = element.cloneNode(true);
+        const elementStyle = getComputedStyle(element);
+        for (const paintProperty of ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-opacity', 'opacity']) {
+          copy.style.setProperty(paintProperty, elementStyle.getPropertyValue(paintProperty)
             .replace(/url\(["']?[^#)]*#([^"')]+)["']?\)/g, 'url(#$1)'));
         }
-        copy.style.fill = 'none';
+        copy.style.setProperty(property === 'stroke' ? 'fill' : 'stroke', 'none');
         imageSvg.appendChild(copy);
         const image = new Image();
         image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(imageSvg))}`;
@@ -4269,10 +4290,12 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       }
       const gradientStop = svg.querySelector('linearGradient[id^="hair-grad-"] stop');
       const nose = svg.querySelector('[data-hero-slot="nose-shape"][data-hero-option="soft"] [data-hero-face-detail="nose"]');
-      const smileLine = svg.querySelector('[data-hero-slot="mouth-style"][data-hero-option="full-lips"] path[stroke*="--hero-mouth-line"]');
-      const cheek = svg.querySelector('ellipse[fill*="--hero-cheek"]');
-      const lipFill = svg.querySelector('[data-hero-slot="mouth-style"][data-hero-option="full-lips"] path[fill*="--hero-lip-fill"]');
-      const lipHighlight = svg.querySelector('[data-hero-slot="mouth-style"][data-hero-option="full-lips"] path[stroke*="--hero-lip-highlight"]');
+      const mouth = svg.querySelector('[data-hero-slot="mouth-style"][data-hero-option="full-lips"]');
+      const smileLine = mouth.querySelector('path[fill*="--hero-mouth-fill"]');
+      const cheek = svg.querySelector('[data-hero-polish="face"] ellipse[fill*="human-cheek-warmth"]');
+      const lip = mouth.querySelector('path[fill*="human-lip-volume"]');
+      const skinColor = styles.getPropertyValue('--hero-skin-light').trim();
+      const lipColor = styles.getPropertyValue('--hero-lip-fill').trim();
       const faceClear = svg.querySelector('[data-hero-slot="face-clear"][data-hero-option="oblong"]');
       const facePolish = svg.querySelector('[data-hero-polish="face"]');
       const eyebrow = svg.querySelector('[data-hero-slot="eyebrow"][data-hero-option="arched"]');
@@ -4290,10 +4313,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         faceMark: styles.getPropertyValue('--hero-face-mark').trim(),
         mouthLine: styles.getPropertyValue('--hero-mouth-line').trim(),
         eyebrow: styles.getPropertyValue('--hero-eyebrow').trim(),
-        cheekFill: renderedPaint(cheek, 'fill', '--hero-cheek'),
-        cheekOpacity: cheek ? getComputedStyle(cheek).opacity.trim() : '',
-        lipFill: renderedPaint(lipFill, 'fill', '--hero-lip-fill'),
-        lipHighlight: renderedPaint(lipHighlight, 'stroke', '--hero-lip-highlight'),
+        cheekPaint: await materialPaint(cheek, 'fill', skinColor),
+        lipFill: lipColor,
+        lipHighlight: styles.getPropertyValue('--hero-lip-highlight').trim(),
+        lipPaint: await materialPaint(lip, 'fill', skinColor),
         glassesFrame: styles.getPropertyValue('--hero-glasses-frame').trim(),
         glassesFrameDark: styles.getPropertyValue('--hero-glasses-frame-dark').trim(),
         noseFill: renderedPaint(nose, 'fill', '--hero-face-line'),
@@ -4305,8 +4328,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         faceFormShadowOpacity: styles.getPropertyValue('--hero-face-form-shadow-opacity').trim(),
         jawLineOpacity: styles.getPropertyValue('--hero-jaw-line-opacity').trim(),
         neckShadowOpacity: styles.getPropertyValue('--hero-neck-shadow-opacity').trim(),
-        smileLineStroke: renderedPaint(smileLine, 'stroke', '--hero-mouth-line'),
-        roundGlassesPaint: await framePaintContrast(roundFrame),
+        smileLinePaint: await materialPaint(smileLine, 'fill', lipColor),
+        roundGlassesPaint: await materialPaint(roundFrame, 'stroke'),
         gradientStop: gradientStop ? gradientStop.getAttribute('stop-color') : '',
         polishAfterFaceClear: Boolean(
           faceClear &&
@@ -4342,11 +4365,17 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(contrastRatio(tokens.faceMark, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.facePlaneShadow, tokens.skin)).toBeLessThanOrEqual(1.8);
     expect(contrastRatio(tokens.skinScatter, tokens.skin)).toBeLessThanOrEqual(1.75);
-    expect(contrastRatio(tokens.cheekFill, tokens.skin)).toBeLessThanOrEqual(1.8);
+    const cheekContrast = tokens.cheekPaint.colors.map(color => contrastRatio(color, tokens.skin));
+    expect(Math.max(...cheekContrast), 'cheek warmth must paint without a harsh patch').toBeGreaterThan(1.01);
+    expect(Math.max(...cheekContrast)).toBeLessThanOrEqual(1.8);
     expect(contrastRatio(tokens.lipFill, tokens.skin)).toBeLessThanOrEqual(2.1);
     expect(contrastRatio(tokens.lipHighlight, tokens.lipFill)).toBeLessThanOrEqual(1.6);
     expect(contrastRatio(tokens.mouthLine, tokens.skin)).toBeGreaterThanOrEqual(3);
-    expect(contrastRatio(tokens.smileLineStroke, tokens.skin)).toBeGreaterThanOrEqual(3);
+    const lipContrast = tokens.lipPaint.colors.map(color => contrastRatio(color, tokens.skin));
+    expect(Math.max(...lipContrast), 'lip volume remains visible').toBeGreaterThan(1.1);
+    expect(Math.max(...lipContrast), 'lip lighting remains complexion-relative').toBeLessThanOrEqual(2.2);
+    expect(Math.max(...tokens.smileLinePaint.colors.map(color => contrastRatio(color, tokens.lipFill))),
+      'the closed lip seam stays distinct from the lip pigment').toBeGreaterThan(1.1);
     // The nose plane is form shading, not an ink outline. It should remain
     // visible on deep skin without becoming a harsh vertical stripe; nostrils
     // and other semantic marks are covered by the higher-contrast faceMark token.
@@ -4358,7 +4387,6 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(Number(tokens.noseOpacity)).toBeLessThanOrEqual(0.6);
     expect(Number(tokens.noseHighlightOpacity)).toBeGreaterThanOrEqual(0.28);
     expect(Number(tokens.noseHighlightOpacity)).toBeLessThanOrEqual(0.36);
-    expect(Number(tokens.cheekOpacity)).toBeLessThanOrEqual(0.22);
     expect(Number(tokens.contourOpacity)).toBeLessThanOrEqual(0.4);
     expect(Number(tokens.hairDetailOpacity)).toBeGreaterThanOrEqual(0.35);
     expect(Number(tokens.hairDetailOpacity)).toBeLessThanOrEqual(0.55);

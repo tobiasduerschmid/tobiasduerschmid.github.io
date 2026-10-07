@@ -43,7 +43,7 @@ test('random avatars keep the designated hairstyles and glam lashes free of faci
   const avatars = sampleAvatars(api);
   // Independent examples pin the requested behavior even if a policy entry
   // accidentally disappears from the production compatibility catalog.
-  const hairExamples = ['pixie', 'bob', 'long-straight', 'pigtails', 'claw-clip-updo', 'coily-puff'];
+  const hairExamples = ['pixie', 'bob', 'long-straight', 'pigtails', 'claw-clip-updo', 'coily-puff', 'braided-bob', 'cheek-length-sidelocks'];
   const lashExamples = ['full-upper', 'long-glam', 'winged', 'dense'];
   for (const [key, examples] of [['hairStyle', hairExamples], ['eyelashStyle', lashExamples]]) {
     for (const value of examples) {
@@ -94,7 +94,7 @@ test('random compatibility rules preserve hair, facial-hair, skin-tone, and body
 
 test('manual combinations retain facial hair through validation, normalization, saving, and loading', () => {
   const api = loadAvatarApi();
-  for (const hairStyle of ['bob', 'pigtails', 'coily-puff']) {
+  for (const hairStyle of ['bob', 'pigtails', 'coily-puff', 'braided-bob', 'cheek-length-sidelocks']) {
     const avatar = structuredClone(api.DEFAULTS);
     Object.assign(avatar.appearance, { hairStyle, eyelashStyle: 'long-glam', facialHair: 'full-beard' });
     assert.equal(api.validateAvatar(avatar).ok, true, `${hairStyle} plus a beard is a valid manual choice`);

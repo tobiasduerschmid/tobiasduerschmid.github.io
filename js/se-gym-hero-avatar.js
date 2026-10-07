@@ -1259,7 +1259,7 @@
       'voluminous-curls', 'coily-puff', 'double-puffs', 'french-braid', 'side-braid',
       'braided-pony', 'braided-bun', 'low-twist-bun', 'bun', 'space-buns',
       'low-bun', 'messy-bun', 'high-pony', 'sleek-low-pony', 'claw-clip-updo',
-      'half-up', 'pigtails'
+      'half-up', 'pigtails', 'braided-bob', 'cheek-length-sidelocks'
     ],
     eyelashStylesWithoutFacialHair: [
       'soft-fan', 'balanced-fan', 'delicate-long', 'soft-lift', 'full-upper',
