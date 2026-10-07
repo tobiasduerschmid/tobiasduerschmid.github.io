@@ -514,7 +514,7 @@
       .se-gym-hero-svg-{{ hero_variant }} [data-hero-slot="hair"] path[stroke="#ffffff"],
       .se-gym-hero-svg-{{ hero_variant }} [data-hero-slot="hairline"] path[stroke="#ffffff"]{stroke:var(--hero-hair-specular, #c6a98d);}
       .se-gym-hero-svg-{{ hero_variant }} [data-hero-slot="eye-shape"] > ellipse[fill="#ffffff"],
-      .se-gym-hero-svg-{{ hero_variant }} [data-hero-slot="eye-shape"] > path[fill="#ffffff"]{fill:url(#human-sclera-{{ hero_variant }});stroke:var(--hero-face-line, #7a4a2a);stroke-width:.45;stroke-opacity:.14;paint-order:stroke fill;}
+      .se-gym-hero-svg-{{ hero_variant }} [data-hero-slot="eye-shape"] > path[fill="#ffffff"]{fill:url(#human-sclera-{{ hero_variant }});}
       .se-gym-hero-svg-{{ hero_variant }} [data-hero-slot="eye-shape"] g[clip-path] > circle[fill*="--hero-eye"]{fill:url(#iris-depth-{{ hero_variant }});stroke:var(--hero-eye-dark, #0b0704);stroke-width:.48;paint-order:stroke fill;}
       .se-gym-hero-svg-{{ hero_variant }} [data-hero-slot="eye-shape"] g[clip-path] circle[fill="#ffffff"]{opacity:0;}
       .se-gym-hero-svg-{{ hero_variant }} .hero-milestone-shoe-plate{fill:url(#milestone-metal-{{ hero_variant }});stroke:var(--hero-milestone-metal-dark, #6b3e1d);stroke-linejoin:round;}
@@ -2325,7 +2325,7 @@
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
                     </g>
         </g>
@@ -2336,7 +2336,7 @@
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
                     </g>
         </g>
@@ -2349,7 +2349,7 @@
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
                     </g>
         </g>
@@ -2360,7 +2360,7 @@
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
                     </g>
         </g>
@@ -2373,7 +2373,7 @@
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
                     </g>
         </g>
@@ -2384,55 +2384,55 @@
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
                     </g>
         </g>
       </g>
       <g data-hero-slot="ear-shape" data-hero-option="oval">
         <g data-hero-face-detail="ear-left">
-          <ellipse cx="352" cy="190" rx="7" ry="10" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56"/>
+          <ellipse cx="352" cy="190" rx="7" ry="10" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58"/>
           <g transform="translate(352 190) scale(1 1)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
         <g data-hero-face-detail="ear-right">
-          <ellipse cx="448" cy="190" rx="7" ry="10" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56"/>
+          <ellipse cx="448" cy="190" rx="7" ry="10" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58"/>
           <g transform="translate(448 190) scale(-1 1)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
       </g>
       <g data-hero-slot="ear-shape" data-hero-option="small-round" display="none">
         <g data-hero-face-detail="ear-left">
-          <ellipse cx="353" cy="191" rx="5.8" ry="8.1" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56"/>
+          <ellipse cx="353" cy="191" rx="5.8" ry="8.1" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58"/>
           <g transform="translate(353 191) scale(0.72 0.78)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
         <g data-hero-face-detail="ear-right">
-          <ellipse cx="447" cy="191" rx="5.8" ry="8.1" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56"/>
+          <ellipse cx="447" cy="191" rx="5.8" ry="8.1" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58"/>
           <g transform="translate(447 191) scale(-0.72 0.78)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
@@ -2445,7 +2445,7 @@
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
@@ -2456,31 +2456,31 @@
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
       </g>
       <g data-hero-slot="ear-shape" data-hero-option="broad-round" display="none">
         <g data-hero-face-detail="ear-left">
-          <ellipse cx="351" cy="190" rx="8.6" ry="10.6" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56"/>
+          <ellipse cx="351" cy="190" rx="8.6" ry="10.6" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58"/>
           <g transform="translate(351 190) scale(1.15 1.06)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
         <g data-hero-face-detail="ear-right">
-          <ellipse cx="449" cy="190" rx="8.6" ry="10.6" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56"/>
+          <ellipse cx="449" cy="190" rx="8.6" ry="10.6" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58"/>
           <g transform="translate(449 190) scale(-1.15 1.06)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
@@ -2493,7 +2493,7 @@
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
@@ -2504,55 +2504,55 @@
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
       </g>
       <g data-hero-slot="ear-shape" data-hero-option="narrow" display="none">
         <g data-hero-face-detail="ear-left">
-          <path d="M 353 180 C 347 184, 347 198, 353 202 C 358 198, 358 184, 353 180 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56"/>
+          <path d="M 353 180 C 347 184, 347 198, 353 202 C 358 198, 358 184, 353 180 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58"/>
           <g transform="translate(353 191) scale(0.58 1.05)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
         <g data-hero-face-detail="ear-right">
-          <path d="M 447 180 C 453 184, 453 198, 447 202 C 442 198, 442 184, 447 180 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56"/>
+          <path d="M 447 180 C 453 184, 453 198, 447 202 C 442 198, 442 184, 447 180 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58"/>
           <g transform="translate(447 191) scale(-0.58 1.05)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
       </g>
       <g data-hero-slot="ear-shape" data-hero-option="attached-lobe" display="none">
         <g data-hero-face-detail="ear-left">
-          <path d="M 352 180 C 346 184, 346 198, 352 203 C 358 199, 359 185, 352 180 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56"/>
+          <path d="M 352 180 C 346 184, 346 198, 352 203 C 358 199, 359 185, 352 180 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58"/>
           <g transform="translate(352 191) scale(0.66 1.05)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
         <g data-hero-face-detail="ear-right">
-          <path d="M 448 180 C 454 184, 454 198, 448 203 C 442 199, 441 185, 448 180 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56"/>
+          <path d="M 448 180 C 454 184, 454 198, 448 203 C 442 199, 441 185, 448 180 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58"/>
           <g transform="translate(448 191) scale(-0.66 1.05)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
@@ -2565,7 +2565,7 @@
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
@@ -2576,79 +2576,79 @@
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
       </g>
       <g data-hero-slot="ear-shape" data-hero-option="free-lobe" display="none">
         <g data-hero-face-detail="ear-left">
-          <path d="M 352 180 C 346 184, 347 197, 352 201 C 350 205, 353 209, 357 205 C 361 198, 360 184, 352 180 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56"/>
+          <path d="M 352 180 C 346 184, 347 197, 352 201 C 350 205, 353 209, 357 205 C 361 198, 360 184, 352 180 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58"/>
           <g transform="translate(353 192) scale(0.7 1.1)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
         <g data-hero-face-detail="ear-right">
-          <path d="M 448 180 C 454 184, 453 197, 448 201 C 450 205, 447 209, 443 205 C 439 198, 440 184, 448 180 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56"/>
+          <path d="M 448 180 C 454 184, 453 197, 448 201 C 450 205, 447 209, 443 205 C 439 198, 440 184, 448 180 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58"/>
           <g transform="translate(447 192) scale(-0.7 1.1)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
       </g>
       <g data-hero-slot="ear-shape" data-hero-option="prominent" display="none">
         <g data-hero-face-detail="ear-left">
-          <path d="M 350 178 C 340 183, 341 202, 351 207 C 362 201, 362 184, 350 178 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56"/>
+          <path d="M 350 178 C 340 183, 341 202, 351 207 C 362 201, 362 184, 350 178 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58"/>
           <g transform="translate(351 192) scale(1.13 1.34)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
         <g data-hero-face-detail="ear-right">
-          <path d="M 450 178 C 460 183, 459 202, 449 207 C 438 201, 438 184, 450 178 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56"/>
+          <path d="M 450 178 C 460 183, 459 202, 449 207 C 438 201, 438 184, 450 178 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58"/>
           <g transform="translate(449 192) scale(-1.13 1.34)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
       </g>
       <g data-hero-slot="ear-shape" data-hero-option="soft-angled" display="none">
         <g data-hero-face-detail="ear-left">
-          <path d="M 353 179 L 347 187 C 346 197, 352 205, 358 201 L 356 185 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56" stroke-linejoin="round"/>
+          <path d="M 353 179 L 347 187 C 346 197, 352 205, 358 201 L 356 185 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58" stroke-linejoin="round"/>
           <g transform="translate(352 191) scale(0.65 1.03)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
         <g data-hero-face-detail="ear-right">
-          <path d="M 447 179 L 453 187 C 454 197, 448 205, 442 201 L 444 185 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.50" stroke-opacity=".56" stroke-linejoin="round"/>
+          <path d="M 447 179 L 453 187 C 454 197, 448 205, 442 201 L 444 185 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width="1.50" stroke-opacity=".58" stroke-linejoin="round"/>
           <g transform="translate(448 191) scale(-0.65 1.03)" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 2 -5 C -1 -6 -3 -3 -2 0 C -2 3 0 5 2 5 C 4 4 4 1 2 0 C 0 -1 0 -2 2 -3 C 3 -3 3 -4 2 -5 Z" fill="url(#human-ear-concha-{{ hero_variant }})"/>
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
@@ -2661,7 +2661,7 @@
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
@@ -2672,7 +2672,7 @@
             <path d="M 2 -7 C -2 -9 -5 -5 -5 0 C -5 4 -3 7 -1 7" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width="1.15" opacity=".54"/>
             <path d="M 1 -5 C -2 -4 -3 -1 -1 2 M -1 -2 C 0 -4 1 -5 3 -4" fill="none" stroke="var(--hero-skin-light, #dfa07a)" stroke-width="1.1" opacity=".82"/>
             <path d="M 3 0 C 1 -1 0 1 1 2 C 2 4 3 4 4 3 C 4 2 4 1 3 0 Z" fill="var(--hero-skin-light, #dfa07a)"/>
-            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".65" opacity=".45"/>
+            <path d="M 1 3 C 1 5 0 6 -1 6" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".8" opacity=".58"/>
             <path d="M -1 8 C 0 9 2 8 3 6" fill="none" stroke="var(--hero-skin-highlight-soft, #f4c8a5)" stroke-width=".85" opacity=".4"/>
           </g>
         </g>
@@ -7252,8 +7252,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="14" ry="8.745" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 407.4 185.9 C 415.04 175.846, 424.94 175.7, 430.8 185.35 C 424.94 178.2, 415.04 178.346, 408 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 408 186 C 414.16 190.987, 424.28 191.4, 430 185.5 C 424.28 193.9, 414.16 193.487, 408.3 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 370 185.5 C 375.06 178.2, 384.96 178.346, 392 186 C 385.84 190.987, 375.72 191.4, 370 185.5 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 408 186 C 415.04 178.346, 424.94 178.2, 430 185.5 C 424.28 191.4, 414.16 190.987, 408 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 370 185.5 C 375.06 178.2, 384.96 178.346, 392 186 C 385.84 190.987, 375.72 191.4, 370 185.5 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 408 186 C 415.04 178.346, 424.94 178.2, 430 185.5 C 424.28 191.4, 414.16 190.987, 408 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-round-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="5.35" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.646 186.21 Q 385.519 186.471, 386.191 186.972 M 383.825 187.45 Q 384.391 188.054, 384.757 188.899 M 382.767 188.024 Q 382.983 188.758, 382.999 189.731 M 381.187 188.01 Q 380.919 188.67, 380.452 189.569 M 380.067 187.351 Q 379.486 187.759, 378.705 188.406 M 379.37 186.256 Q 378.623 186.297, 377.677 186.577" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7282,8 +7282,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="14.25" ry="8.42" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 407.15 185.9 C 414.95 176.336, 425.075 176.2, 431.05 185.2 C 425.075 178.7, 414.95 178.836, 407.75 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 407.75 186 C 414.05 190.336, 424.4 190.7, 430.25 185.35 C 424.4 193.2, 414.05 192.836, 408.05 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 369.75 185.35 C 374.925 178.7, 385.05 178.836, 392.25 186 C 385.95 190.336, 375.6 190.7, 369.75 185.35 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 407.75 186 C 414.95 178.836, 425.075 178.7, 430.25 185.35 C 424.4 190.7, 414.05 190.336, 407.75 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 369.75 185.35 C 374.925 178.7, 385.05 178.836, 392.25 186 C 385.95 190.336, 375.6 190.7, 369.75 185.35 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 407.75 186 C 414.95 178.836, 425.075 178.7, 430.25 185.35 C 424.4 190.7, 414.05 190.336, 407.75 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-gentle-round-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="5.15" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.547 186.178 Q 385.391 186.424, 386.035 186.911 M 383.757 187.371 Q 384.306 187.949, 384.654 188.766 M 382.738 187.924 Q 382.95 188.626, 382.962 189.568 M 381.217 187.911 Q 380.963 188.541, 380.51 189.411 M 380.14 187.276 Q 379.584 187.664, 378.828 188.292 M 379.468 186.222 Q 378.753 186.257, 377.838 186.531" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7312,8 +7312,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="15" ry="7.9" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 406.4 185.9 C 414.68 177.12, 425.48 177, 431.8 185 C 425.48 179.5, 414.68 179.62, 407 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 407 186 C 413.72 189.406, 424.76 189.7, 431 185.15 C 424.76 192.2, 413.72 191.906, 407.3 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 369 185.15 C 374.52 179.5, 385.32 179.62, 393 186 C 386.28 189.406, 375.24 189.7, 369 185.15 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 407 186 C 414.68 179.62, 425.48 179.5, 431 185.15 C 424.76 189.7, 413.72 189.406, 407 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 369 185.15 C 374.52 179.5, 385.32 179.62, 393 186 C 386.28 189.406, 375.24 189.7, 369 185.15 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 407 186 C 414.68 179.62, 425.48 179.5, 431 185.15 C 424.76 189.7, 413.72 189.406, 407 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-almond-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.8" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.374 186.121 Q 385.167 186.343, 385.76 186.805 M 383.638 187.234 Q 384.156 187.764, 384.474 188.534 M 382.688 187.749 Q 382.892 188.395, 382.897 189.281 M 381.27 187.737 Q 381.041 188.316, 380.611 189.135 M 380.266 187.145 Q 379.755 187.499, 379.044 188.092 M 379.64 186.163 Q 378.981 186.187, 378.121 186.451" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7342,8 +7342,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="15" ry="7.445" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 406.4 185.9 C 414.68 177.806, 425.48 177.7, 431.8 185.2 C 425.48 180.2, 414.68 180.306, 407 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 407 186 C 413.72 189.313, 424.76 189.6, 431 185.35 C 424.76 192.1, 413.72 191.813, 407.3 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 369 185.35 C 374.52 180.2, 385.32 180.306, 393 186 C 386.28 189.313, 375.24 189.6, 369 185.35 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 407 186 C 414.68 180.306, 425.48 180.2, 431 185.35 C 424.76 189.6, 413.72 189.313, 407 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 369 185.35 C 374.52 180.2, 385.32 180.306, 393 186 C 386.28 189.313, 375.24 189.6, 369 185.35 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 407 186 C 414.68 180.306, 425.48 180.2, 431 185.35 C 424.76 189.6, 413.72 189.313, 407 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-soft-almond-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.65" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.3 186.097 Q 385.071 186.308, 385.643 186.759 M 383.586 187.175 Q 384.091 187.685, 384.397 188.434 M 382.666 187.674 Q 382.868 188.296, 382.869 189.158 M 381.293 187.662 Q 381.074 188.22, 380.654 189.017 M 380.32 187.089 Q 379.828 187.428, 379.136 188.006 M 379.714 186.137 Q 379.078 186.157, 378.242 186.417" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7372,8 +7372,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="15" ry="7.12" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 406.4 185.9 C 414.68 178.296, 425.48 178.2, 431.8 185.35 C 425.48 180.7, 414.68 180.796, 407 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 407 186 C 413.72 188.941, 424.76 189.2, 431 185.5 C 424.76 191.7, 413.72 191.441, 407.3 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 369 185.5 C 374.52 180.7, 385.32 180.796, 393 186 C 386.28 188.941, 375.24 189.2, 369 185.5 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 407 186 C 414.68 180.796, 425.48 180.7, 431 185.5 C 424.76 189.2, 413.72 188.941, 407 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 369 185.5 C 374.52 180.7, 385.32 180.796, 393 186 C 386.28 188.941, 375.24 189.2, 369 185.5 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 407 186 C 414.68 180.796, 425.48 180.7, 431 185.5 C 424.76 189.2, 413.72 188.941, 407 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-relaxed-almond-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.55" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.25 186.081 Q 385.007 186.285, 385.565 186.729 M 383.552 187.136 Q 384.049 187.632, 384.345 188.368 M 382.652 187.624 Q 382.851 188.23, 382.85 189.076 M 381.308 187.613 Q 381.096 188.155, 380.683 188.938 M 380.356 187.052 Q 379.877 187.381, 379.198 187.949 M 379.763 186.12 Q 379.143 186.137, 378.323 186.394" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7402,8 +7402,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="16" ry="7.77" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 405.4 185.9 C 414.32 177.316, 426.02 177.2, 432.8 184.85 C 426.02 179.7, 414.32 179.816, 406 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 406 186 C 413.28 189.22, 425.24 189.5, 432 185 C 425.24 192, 413.28 191.72, 406.3 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 368 185 C 373.98 179.7, 385.68 179.816, 394 186 C 386.72 189.22, 374.76 189.5, 368 185 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 406 186 C 414.32 179.816, 426.02 179.7, 432 185 C 425.24 189.5, 413.28 189.22, 406 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 368 185 C 373.98 179.7, 385.68 179.816, 394 186 C 386.72 189.22, 374.76 189.5, 368 185 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 406 186 C 414.32 179.816, 426.02 179.7, 432 185 C 425.24 189.5, 413.28 189.22, 406 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-tapered-almond-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.7" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.324 186.105 Q 385.103 186.32, 385.682 186.775 M 383.603 187.195 Q 384.113 187.711, 384.422 188.467 M 382.674 187.699 Q 382.876 188.329, 382.878 189.199 M 381.285 187.687 Q 381.063 188.252, 380.64 189.056 M 380.302 187.108 Q 379.804 187.451, 379.106 188.035 M 379.689 186.146 Q 379.046 186.167, 378.202 186.428" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7432,8 +7432,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="15.5" ry="7.9" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 405.9 185.9 C 414.5 177.12, 425.75 177, 432.3 183.95 C 425.75 179.5, 414.5 179.62, 406.5 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 406.5 186 C 413.5 189.499, 425 189.8, 431.5 184.1 C 425 192.3, 413.5 191.999, 406.8 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 368.5 184.1 C 374.25 179.5, 385.5 179.62, 393.5 186 C 386.5 189.499, 375 189.8, 368.5 184.1 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 406.5 186 C 414.5 179.62, 425.75 179.5, 431.5 184.1 C 425 189.8, 413.5 189.499, 406.5 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 368.5 184.1 C 374.25 179.5, 385.5 179.62, 393.5 186 C 386.5 189.499, 375 189.8, 368.5 184.1 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 406.5 186 C 414.5 179.62, 425.75 179.5, 431.5 184.1 C 425 189.8, 413.5 189.499, 406.5 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-upturned-almond-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.8" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.374 186.121 Q 385.167 186.343, 385.76 186.805 M 383.638 187.234 Q 384.156 187.764, 384.474 188.534 M 382.688 187.749 Q 382.892 188.395, 382.897 189.281 M 381.27 187.737 Q 381.041 188.316, 380.611 189.135 M 380.266 187.145 Q 379.755 187.499, 379.044 188.092 M 379.64 186.163 Q 378.981 186.187, 378.121 186.451" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7462,8 +7462,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="15.5" ry="7.77" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 405.9 185.9 C 414.5 177.316, 425.75 177.2, 432.3 186.55 C 425.75 179.7, 414.5 179.816, 406.5 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 406.5 186 C 413.5 189.592, 425 189.9, 431.5 186.7 C 425 192.4, 413.5 192.092, 406.8 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 368.5 186.7 C 374.25 179.7, 385.5 179.816, 393.5 186 C 386.5 189.592, 375 189.9, 368.5 186.7 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 406.5 186 C 414.5 179.816, 425.75 179.7, 431.5 186.7 C 425 189.9, 413.5 189.592, 406.5 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 368.5 186.7 C 374.25 179.7, 385.5 179.816, 393.5 186 C 386.5 189.592, 375 189.9, 368.5 186.7 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 406.5 186 C 414.5 179.816, 425.75 179.7, 431.5 186.7 C 425 189.9, 413.5 189.592, 406.5 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-downturned-soft-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.8" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.374 186.121 Q 385.167 186.343, 385.76 186.805 M 383.638 187.234 Q 384.156 187.764, 384.474 188.534 M 382.688 187.749 Q 382.892 188.395, 382.897 189.281 M 381.27 187.737 Q 381.041 188.316, 380.611 189.135 M 380.266 187.145 Q 379.755 187.499, 379.044 188.092 M 379.64 186.163 Q 378.981 186.187, 378.121 186.451" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7492,8 +7492,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="15" ry="6.47" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 406.4 185.9 C 414.68 179.276, 425.48 179.2, 431.8 185.2 C 425.48 181.7, 414.68 181.776, 407 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 407 186 C 413.72 188.29, 424.76 188.5, 431 185.35 C 424.76 191, 413.72 190.79, 407.3 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 369 185.35 C 374.52 181.7, 385.32 181.776, 393 186 C 386.28 188.29, 375.24 188.5, 369 185.35 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 407 186 C 414.68 181.776, 425.48 181.7, 431 185.35 C 424.76 188.5, 413.72 188.29, 407 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 369 185.35 C 374.52 181.7, 385.32 181.776, 393 186 C 386.28 188.29, 375.24 188.5, 369 185.35 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 407 186 C 414.68 181.776, 425.48 181.7, 431 185.35 C 424.76 188.5, 413.72 188.29, 407 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-single-eyelid-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.15" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.052 186.017 Q 384.752 186.192, 385.251 186.608 M 383.416 186.979 Q 383.877 187.421, 384.139 188.103 M 382.595 187.424 Q 382.785 187.967, 382.775 188.749 M 381.369 187.414 Q 381.184 187.898, 380.799 188.623 M 380.501 186.902 Q 380.073 187.192, 379.444 187.721 M 379.96 186.053 Q 379.403 186.057, 378.647 186.302" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7520,8 +7520,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="15" ry="6.925" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 406.4 185.9 C 414.68 178.59, 425.48 178.5, 431.8 185.25 C 425.48 181, 414.68 181.09, 407 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 407 186 C 413.72 188.848, 424.76 189.1, 431 185.4 C 424.76 191.6, 413.72 191.348, 407.3 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 369 185.4 C 374.52 181, 385.32 181.09, 393 186 C 386.28 188.848, 375.24 189.1, 369 185.4 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 407 186 C 414.68 181.09, 425.48 181, 431 185.4 C 424.76 189.1, 413.72 188.848, 407 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 369 185.4 C 374.52 181, 385.32 181.09, 393 186 C 386.28 188.848, 375.24 189.1, 369 185.4 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 407 186 C 414.68 181.09, 425.48 181, 431 185.4 C 424.76 189.1, 413.72 188.848, 407 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-soft-single-eyelid-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.35" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.151 186.049 Q 384.88 186.239, 385.408 186.668 M 383.484 187.057 Q 383.963 187.526, 384.242 188.235 M 382.623 187.524 Q 382.818 188.098, 382.813 188.913 M 381.339 187.513 Q 381.14 188.027, 380.741 188.78 M 380.429 186.977 Q 379.975 187.286, 379.321 187.835 M 379.861 186.086 Q 379.273 186.097, 378.485 186.348" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7548,8 +7548,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="17" ry="7.055" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 404.4 185.9 C 413.96 178.394, 426.56 178.3, 433.8 185.15 C 426.56 180.8, 413.96 180.894, 405 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 405 186 C 412.84 188.755, 425.72 189, 433 185.3 C 425.72 191.5, 412.84 191.255, 405.3 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 367 185.3 C 373.44 180.8, 386.04 180.894, 395 186 C 387.16 188.755, 374.28 189, 367 185.3 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 405 186 C 413.96 180.894, 426.56 180.8, 433 185.3 C 425.72 189, 412.84 188.755, 405 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 367 185.3 C 373.44 180.8, 386.04 180.894, 395 186 C 387.16 188.755, 374.28 189, 367 185.3 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 405 186 C 413.96 180.894, 426.56 180.8, 433 185.3 C 425.72 189, 412.84 188.755, 405 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-wide-single-eyelid-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.4" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.176 186.057 Q 384.912 186.25, 385.447 186.684 M 383.501 187.077 Q 383.984 187.553, 384.268 188.268 M 382.631 187.549 Q 382.826 188.131, 382.822 188.953 M 381.331 187.538 Q 381.129 188.059, 380.727 188.82 M 380.411 186.996 Q 379.95 187.31, 379.29 187.864 M 379.837 186.095 Q 379.241 186.107, 378.444 186.359" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7576,8 +7576,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="14.5" ry="6.925" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 406.9 185.9 C 414.86 177.99, 425.21 177.9, 431.3 185.2 C 425.21 181, 414.86 181.09, 407.5 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 407.5 186 C 413.94 189.592, 424.52 189.9, 430.5 185.35 C 424.52 192.4, 413.94 192.092, 407.8 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 369.5 185.35 C 374.79 181, 385.14 181.09, 392.5 186 C 386.06 189.592, 375.48 189.9, 369.5 185.35 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 407.5 186 C 414.86 181.09, 425.21 181, 430.5 185.35 C 424.52 189.9, 413.94 189.592, 407.5 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 369.5 185.35 C 374.79 181, 385.14 181.09, 392.5 186 C 386.06 189.592, 375.48 189.9, 369.5 185.35 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 407.5 186 C 414.86 181.09, 425.21 181, 430.5 185.35 C 424.52 189.9, 413.94 189.592, 407.5 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-hooded-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.8" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.374 186.121 Q 385.167 186.343, 385.76 186.805 M 383.638 187.234 Q 384.156 187.764, 384.474 188.534 M 382.688 187.749 Q 382.892 188.395, 382.897 189.281 M 381.27 187.737 Q 381.041 188.316, 380.611 189.135 M 380.266 187.145 Q 379.755 187.499, 379.044 188.092 M 379.64 186.163 Q 378.981 186.187, 378.121 186.451" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7606,8 +7606,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="15.5" ry="7.77" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 405.9 185.9 C 414.5 176.716, 425.75 176.6, 432.3 185 C 425.75 179.7, 414.5 179.816, 406.5 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 406.5 186 C 413.5 189.778, 425 190.1, 431.5 185.15 C 425 192.6, 413.5 192.278, 406.8 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 368.5 185.15 C 374.25 179.7, 385.5 179.816, 393.5 186 C 386.5 189.778, 375 190.1, 368.5 185.15 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 406.5 186 C 414.5 179.816, 425.75 179.7, 431.5 185.15 C 425 190.1, 413.5 189.778, 406.5 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 368.5 185.15 C 374.25 179.7, 385.5 179.816, 393.5 186 C 386.5 189.778, 375 190.1, 368.5 185.15 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 406.5 186 C 414.5 179.816, 425.75 179.7, 431.5 185.15 C 425 190.1, 413.5 189.778, 406.5 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-deep-set-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.8" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.374 186.121 Q 385.167 186.343, 385.76 186.805 M 383.638 187.234 Q 384.156 187.764, 384.474 188.534 M 382.688 187.749 Q 382.892 188.395, 382.897 189.281 M 381.27 187.737 Q 381.041 188.316, 380.611 189.135 M 380.266 187.145 Q 379.755 187.499, 379.044 188.092 M 379.64 186.163 Q 378.981 186.187, 378.121 186.451" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7636,8 +7636,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="14" ry="7.12" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 407.4 185.9 C 415.04 178.296, 424.94 178.2, 430.8 184.85 C 424.94 180.7, 415.04 180.796, 408 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 408 186 C 414.16 187.546, 424.28 187.7, 430 185 C 424.28 190.2, 414.16 190.046, 408.3 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 370 185 C 375.06 180.7, 384.96 180.796, 392 186 C 385.84 187.546, 375.72 187.7, 370 185 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 408 186 C 415.04 180.796, 424.94 180.7, 430 185 C 424.28 187.7, 414.16 187.546, 408 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 370 185 C 375.06 180.7, 384.96 180.796, 392 186 C 385.84 187.546, 375.72 187.7, 370 185 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 408 186 C 415.04 180.796, 424.94 180.7, 430 185 C 424.28 187.7, 414.16 187.546, 408 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-smiling-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.35" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.151 186.049 Q 384.88 186.239, 385.408 186.668 M 383.484 187.057 Q 383.963 187.526, 384.242 188.235 M 382.623 187.524 Q 382.818 188.098, 382.813 188.913 M 381.339 187.513 Q 381.14 188.027, 380.741 188.78 M 380.429 186.977 Q 379.975 187.286, 379.321 187.835 M 379.861 186.086 Q 379.273 186.097, 378.485 186.348" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7666,8 +7666,8 @@
         <ellipse data-hero-eye-form="orbit" cx="420" cy="183.5" rx="15.25" ry="9.265" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 407.15 185.9 C 415.59 175.062, 426.615 174.9, 433.05 185.35 C 426.615 177.4, 415.59 177.562, 407.75 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 407.75 186 C 414.61 191.359, 425.88 191.8, 432.25 185.5 C 425.88 194.3, 414.61 193.859, 408.05 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 367.75 185.5 C 373.385 177.4, 384.41 177.562, 392.25 186 C 385.39 191.359, 374.12 191.8, 367.75 185.5 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 407.75 186 C 415.59 177.562, 426.615 177.4, 432.25 185.5 C 425.88 191.8, 414.61 191.359, 407.75 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 367.75 185.5 C 373.385 177.4, 384.41 177.562, 392.25 186 C 385.39 191.359, 374.12 191.8, 367.75 185.5 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 407.75 186 C 415.59 177.562, 426.615 177.4, 432.25 185.5 C 425.88 191.8, 414.61 191.359, 407.75 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-wide-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="5.85" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.893 186.29 Q 385.838 186.587, 386.583 187.123 M 383.996 187.646 Q 384.605 188.318, 385.015 189.23 M 382.838 188.274 Q 383.066 189.088, 383.093 190.141 M 381.111 188.259 Q 380.809 188.991, 380.307 189.963 M 379.887 187.538 Q 379.242 187.995, 378.397 188.692 M 379.124 186.34 Q 378.298 186.396, 377.273 186.692" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7696,8 +7696,8 @@
         <ellipse data-hero-eye-form="orbit" cx="420" cy="183.5" rx="15.5" ry="9.395" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 406.9 185.9 C 415.5 174.866, 426.75 174.7, 433.3 185.25 C 426.75 177.2, 415.5 177.366, 407.5 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 407.5 186 C 414.5 191.638, 426 192.1, 432.5 185.4 C 426 194.6, 414.5 194.138, 407.8 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 367.5 185.4 C 373.25 177.2, 384.5 177.366, 392.5 186 C 385.5 191.638, 374 192.1, 367.5 185.4 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 407.5 186 C 415.5 177.366, 426.75 177.2, 432.5 185.4 C 426 192.1, 414.5 191.638, 407.5 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 367.5 185.4 C 373.25 177.2, 384.5 177.366, 392.5 186 C 385.5 191.638, 374 192.1, 367.5 185.4 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 407.5 186 C 415.5 177.366, 426.75 177.2, 432.5 185.4 C 426 192.1, 414.5 191.638, 407.5 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-bright-wide-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="5.95" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.943 186.306 Q 385.902 186.61, 386.661 187.153 M 384.03 187.685 Q 384.648 188.371, 385.067 189.297 M 382.853 188.324 Q 383.082 189.153, 383.111 190.223 M 381.095 188.309 Q 380.787 189.055, 380.278 190.042 M 379.851 187.576 Q 379.193 188.042, 378.336 188.749 M 379.075 186.357 Q 378.233 186.416, 377.192 186.715" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7726,8 +7726,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="14.5" ry="8.81" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 406.9 185.9 C 414.86 175.748, 425.21 175.6, 431.3 185.25 C 425.21 178.1, 414.86 178.248, 407.5 186 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 407.5 186 C 413.94 190.615, 424.52 191, 430.5 185.4 C 424.52 193.5, 413.94 193.115, 407.8 186.5 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 369.5 185.4 C 374.79 178.1, 385.14 178.248, 392.5 186 C 386.06 190.615, 375.48 191, 369.5 185.4 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 407.5 186 C 414.86 178.248, 425.21 178.1, 430.5 185.4 C 424.52 191, 413.94 190.615, 407.5 186 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 369.5 185.4 C 374.79 178.1, 385.14 178.248, 392.5 186 C 386.06 190.615, 375.48 191, 369.5 185.4 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 407.5 186 C 414.86 178.248, 425.21 178.1, 430.5 185.4 C 424.52 191, 413.94 190.615, 407.5 186 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-clear-round-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="5.45" fill="var(--hero-eye, #1f140c)"/>
           <path d="M 384.695 186.226 Q 385.582 186.494, 386.27 187.002 M 383.859 187.489 Q 384.434 188.107, 384.809 188.965 M 382.781 188.074 Q 383 188.824, 383.018 189.813 M 381.171 188.06 Q 380.897 188.734, 380.423 189.648 M 380.031 187.389 Q 379.437 187.806, 378.644 188.463 M 379.32 186.273 Q 378.558 186.316, 377.596 186.6" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7756,8 +7756,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="15" ry="7.6" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 431.4 184.95 C 425.9 178.3 415.6 177.7 409.5 181.7 C 408.2 183.1 407.7 184.8 407.35 186 C 408.2 185.2 408.7 184.1 409.5 183.5 C 415.6 180 425.9 180.6 431 185.1 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 407.65 186 C 414.1 189.35 424.7 189.7 431 185.1 C 424.7 191.7 414.1 191.35 407.45 186.2 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 369 185.1 C 374.1 180.6 384.4 180 390.5 183.5 C 391.3 184.1 391.8 185.2 392.35 186 C 385.9 189.35 375.3 189.7 369 185.1 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 431 185.1 C 425.9 180.6 415.6 180 409.5 183.5 C 408.7 184.1 408.2 185.2 407.65 186 C 414.1 189.35 424.7 189.7 431 185.1 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 369 185.1 C 374.1 180.6 384.4 180 390.5 183.5 C 391.3 184.1 391.8 185.2 392.35 186 C 385.9 189.35 375.3 189.7 369 185.1 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 431 185.1 C 425.9 180.6 415.6 180 409.5 183.5 C 408.7 184.1 408.2 185.2 407.65 186 C 414.1 189.35 424.7 189.7 431 185.1 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-tapered-inner-fold-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.45" fill="var(--hero-eye, #1f140c)"/>
         <path d="M 384.224 185.989 Q 384.703 186.042 385.421 186.334 M 383.645 186.977 Q 383.968 187.296 384.531 187.854 M 382.507 187.608 Q 382.523 188.096 382.78 188.824 M 381.252 187.54 Q 380.93 188.009 380.849 188.719 M 380.294 186.913 Q 379.714 187.214 379.375 187.755 M 379.797 186.059 Q 379.084 186.13 378.611 186.441" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7788,8 +7788,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="15" ry="7.6" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 431.4 185.65 C 427 176.7 416.2 176.6 410 180.9 C 407.8 182.8 406.8 184.8 408.2 186.7 C 407.3 185.2 408.3 183.8 410 182.7 C 416.2 178.9 427 179 431 185.8 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 408.5 186.7 C 414.4 190.8 424.7 190.3 431 185.8 C 424.7 192.3 414.4 192.8 408.3 186.9 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 369 185.8 C 373 179 383.8 178.9 390 182.7 C 391.7 183.8 392.7 185.2 391.5 186.7 C 385.6 190.8 375.3 190.3 369 185.8 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 431 185.8 C 427 179 416.2 178.9 410 182.7 C 408.3 183.8 407.3 185.2 408.5 186.7 C 414.4 190.8 424.7 190.3 431 185.8 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 369 185.8 C 373 179 383.8 178.9 390 182.7 C 391.7 183.8 392.7 185.2 391.5 186.7 C 385.6 190.8 375.3 190.3 369 185.8 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 431 185.8 C 427 179 416.2 178.9 410 182.7 C 408.3 183.8 407.3 185.2 408.5 186.7 C 414.4 190.8 424.7 190.3 431 185.8 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-rounded-inner-fold-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="5" fill="var(--hero-eye, #1f140c)"/>
         <path d="M 384.499 186.069 Q 385.051 186.142 385.844 186.455 M 383.848 187.179 Q 384.226 187.551 384.844 188.163 M 382.569 187.887 Q 382.603 188.45 382.876 189.253 M 381.159 187.81 Q 380.813 188.353 380.707 189.135 M 380.083 187.106 Q 379.447 187.459 379.05 188.052 M 379.525 186.147 Q 378.739 186.242 378.193 186.576" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7818,8 +7818,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="15" ry="7.6" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 431.7 185.65 C 425.4 178.9 414.6 179.5 409 182.65 C 407.5 184 406.9 185.1 406.6 186 C 407.4 185.5 408 185 409 184.45 C 414.6 181.8 425.4 181.2 431.3 185.8 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 406.9 186 C 413.6 190.25 424.9 190.5 431.3 185.8 C 424.9 192.5 413.6 192.25 406.7 186.2 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 368.7 185.8 C 374.6 181.2 385.4 181.8 391 184.45 C 392 185 392.6 185.5 393.1 186 C 386.4 190.25 375.1 190.5 368.7 185.8 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 431.3 185.8 C 425.4 181.2 414.6 181.8 409 184.45 C 408 185 407.4 185.5 406.9 186 C 413.6 190.25 424.9 190.5 431.3 185.8 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 368.7 185.8 C 374.6 181.2 385.4 181.8 391 184.45 C 392 185 392.6 185.5 393.1 186 C 386.4 190.25 375.1 190.5 368.7 185.8 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 431.3 185.8 C 425.4 181.2 414.6 181.8 409 184.45 C 408 185 407.4 185.5 406.9 186 C 413.6 190.25 424.9 190.5 431.3 185.8 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-low-crease-hooded-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.65" fill="var(--hero-eye, #1f140c)"/>
         <path d="M 384.324 186.018 Q 384.829 186.078 385.575 186.378 M 383.719 187.051 Q 384.062 187.388 384.645 187.966 M 382.53 187.709 Q 382.552 188.224 382.815 188.98 M 381.218 187.638 Q 380.888 188.134 380.797 188.87 M 380.217 186.983 Q 379.617 187.303 379.257 187.863 M 379.698 186.091 Q 378.959 186.171 378.459 186.49" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -7846,8 +7846,8 @@
         <ellipse data-hero-eye-form="orbit" cx="419" cy="183.5" rx="15" ry="7.6" fill="url(#eye-orbit-{{ hero_variant }})"/>
         <path d="M 431.4 185.25 C 425.8 176.8 415.7 176.2 409.5 181.5 C 408.1 183 407.4 184.6 407.2 185.8 C 407.9 185 408.6 184 409.5 183.3 C 415.7 178.5 425.8 179.1 431 185.4 Z" fill="url(#eye-upper-lid-{{ hero_variant }})"/>
         <path d="M 407.5 185.8 C 413.8 190.5 424.4 191.1 431 185.4 C 424.4 193.1 413.8 192.5 407.3 186 Z" fill="url(#eye-lower-lid-{{ hero_variant }})"/>
-        <path data-hero-eye-surface="left" d="M 369 185.4 C 374.2 179.1 384.3 178.5 390.5 183.3 C 391.4 184 392.1 185 392.5 185.8 C 386.2 190.5 375.6 191.1 369 185.4 Z" fill="#ffffff"/>
-        <path data-hero-eye-surface="right" d="M 431 185.4 C 425.8 179.1 415.7 178.5 409.5 183.3 C 408.6 184 407.9 185 407.5 185.8 C 413.8 190.5 424.4 191.1 431 185.4 Z" fill="#ffffff"/>
+        <path data-hero-eye-surface="left" d="M 369 185.4 C 374.2 179.1 384.3 178.5 390.5 183.3 C 391.4 184 392.1 185 392.5 185.8 C 386.2 190.5 375.6 191.1 369 185.4 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
+        <path data-hero-eye-surface="right" d="M 431 185.4 C 425.8 179.1 415.7 178.5 409.5 183.3 C 408.6 184 407.9 185 407.5 185.8 C 413.8 190.5 424.4 191.1 431 185.4 Z" fill="#ffffff" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".75" stroke-opacity=".38" paint-order="stroke fill"/>
         <g clip-path="url(#eye-parallel-lid-crease-left-{{ hero_variant }})">
           <circle cx="382" cy="185.35" r="4.85" fill="var(--hero-eye, #1f140c)"/>
         <path d="M 384.424 186.047 Q 384.956 186.115 385.729 186.422 M 383.793 187.124 Q 384.156 187.481 384.758 188.079 M 382.552 187.811 Q 382.581 188.353 382.85 189.136 M 381.185 187.737 Q 380.845 188.259 380.746 189.022 M 380.14 187.054 Q 379.52 187.392 379.139 187.971 M 379.599 186.123 Q 378.833 186.211 378.307 186.54" fill="none" stroke="var(--hero-eye-light, #756659)" stroke-width=".32" stroke-linecap="round" opacity=".4"/>
@@ -8397,266 +8397,266 @@
         <path d="M 394.9 184 C 392.9 192 397.23 199 394.77 203.2 C 391.58 204.7 391.58 208.7 395.4 209.5 C 398.15 210.2 401.67 210.35 404.68 209.35 C 408.27 208.9 408.19 204.3 404.84 202.8 C 402.4 198.5 407.1 191 405.1 185 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 403.31 188 C 406.1 195 402.29 200.8 405.15 204 C 407.57 206 406.24 209.3 403.51 209.35 C 403.33 207.6 401.3 204.3 401.11 201.5 C 401.3 197 402.53 192 403.31 188 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.65" cy="206" rx="3.7" ry="3.55" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 392.75 207 C 392.04 208.8 393.29 209.65 394.85 209.6 M 407.33 206.9 C 407.96 208.65 406.71 209.55 405.15 209.5" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".48" stroke-linecap="round" opacity=".24"/>
-        <path d="M 394.98 209.03 C 395.66 208.38 397.01 208.39 397.69 209.08 C 396.97 209.28 395.72 209.29 394.98 209.03 Z M 402.31 208.96 C 402.99 208.31 404.34 208.32 405.02 209.01 C 404.3 209.21 403.06 209.22 402.31 208.96 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 392.75 207 C 392.04 208.8 393.29 209.65 394.85 209.6 M 407.33 206.9 C 407.96 208.65 406.71 209.55 405.15 209.5" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 394.98 209.03 C 395.66 208.38 397.01 208.39 397.69 209.08 C 396.97 209.28 395.72 209.29 394.98 209.03 Z M 402.31 208.96 C 402.99 208.31 404.34 208.32 405.02 209.01 C 404.3 209.21 403.06 209.22 402.31 208.96 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="208.95" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 398.15 204.5 C 399.26 203.85 401.3 204.05 402.11 204.8" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".5" stroke-linecap="round" opacity=".28"/>
+        <path d="M 398.15 204.5 C 399.26 203.85 401.3 204.05 402.11 204.8" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="low-bridge-projected-tip" display="none">
         <!-- Low bridge, projected tip: bridge, tip and wing proportions are independently authored. -->
         <path d="M 397.6 196 C 395.6 204 396.55 199 394.77 203.2 C 391.58 204.7 391.58 209.2 395.4 210 C 397.7 210.7 402.07 210.85 404.68 209.85 C 408.27 209.4 408.19 204.3 404.84 202.8 C 402.99 198.5 404.4 203 402.4 197 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.56 200 C 403.4 207 402.85 200.8 405.15 204 C 407.57 206 406.24 209.8 403.51 209.85 C 404.14 207.6 401.61 204.3 401.38 201.5 C 401.3 197 401.72 204 401.56 200 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.65" cy="205.9" rx="4.6" ry="4.5" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 392.75 207.45 C 392.04 209.25 393.29 210.1 394.85 210.05 M 407.33 207.35 C 407.96 209.1 406.71 210 405.15 209.95" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".48" stroke-linecap="round" opacity=".24"/>
-        <path d="M 394.98 209.48 C 395.66 208.83 397.01 208.84 397.69 209.53 C 396.97 209.73 395.72 209.74 394.98 209.48 Z M 402.31 209.41 C 402.99 208.76 404.34 208.77 405.02 209.46 C 404.3 209.66 403.06 209.67 402.31 209.41 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 392.75 207.45 C 392.04 209.25 393.29 210.1 394.85 210.05 M 407.33 207.35 C 407.96 209.1 406.71 210 405.15 209.95" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 394.98 209.48 C 395.66 208.83 397.01 208.84 397.69 209.53 C 396.97 209.73 395.72 209.74 394.98 209.48 Z M 402.31 209.41 C 402.99 208.76 404.34 208.77 405.02 209.46 C 404.3 209.66 403.06 209.67 402.31 209.41 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.7" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.7 204.4 C 399.08 203.75 401.61 203.95 402.62 204.7" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".5" stroke-linecap="round" opacity=".28"/>
+        <path d="M 397.7 204.4 C 399.08 203.75 401.61 203.95 402.62 204.7" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="narrow-bridge-wide-base" display="none">
         <!-- Narrow bridge, wide base: bridge, tip and wing proportions are independently authored. -->
         <path d="M 398.35 185 C 396.35 193 396.55 199 392.5 203.2 C 387.9 204.7 387.9 209.3 393.39 210.1 C 397.7 210.8 402.07 210.95 406.72 209.95 C 411.87 209.5 411.76 204.3 406.94 202.8 C 402.99 198.5 403.65 192 401.65 186 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.07 189 C 402.65 196 402.85 200.8 407.39 204 C 410.86 206 408.96 209.9 405.04 209.95 C 404.14 207.6 401.61 204.3 401.38 201.5 C 401.3 197 401.5 193 401.07 189 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.65" cy="205.8" rx="4.6" ry="3.4" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 389.58 207.35 C 388.58 209.15 390.37 210 392.61 209.95 M 410.53 207.25 C 411.42 209 409.63 209.9 407.39 209.85" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".48" stroke-linecap="round" opacity=".24"/>
-        <path d="M 392.79 209.38 C 393.76 208.73 395.71 208.74 396.68 209.43 C 395.65 209.63 393.86 209.64 392.79 209.38 Z M 403.32 209.31 C 404.29 208.66 406.24 208.67 407.21 209.36 C 406.17 209.56 404.39 209.57 403.32 209.31 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 389.58 207.35 C 388.58 209.15 390.37 210 392.61 209.95 M 410.53 207.25 C 411.42 209 409.63 209.9 407.39 209.85" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 392.79 209.38 C 393.76 208.73 395.71 208.74 396.68 209.43 C 395.65 209.63 393.86 209.64 392.79 209.38 Z M 403.32 209.31 C 404.29 208.66 406.24 208.67 407.21 209.36 C 406.17 209.56 404.39 209.57 403.32 209.31 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="208.6" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.7 204.3 C 399.08 203.65 401.61 203.85 402.62 204.6" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".5" stroke-linecap="round" opacity=".28"/>
+        <path d="M 397.7 204.3 C 399.08 203.65 401.61 203.85 402.62 204.6" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="soft-downturned-tip" display="none">
         <!-- Soft downturned tip: bridge, tip and wing proportions are independently authored. -->
         <path d="M 397.35 183 C 395.35 191 397.38 199 395.51 203.2 C 392.76 204.7 392.76 211.1 396.05 211.9 C 398.25 212.6 401.57 212.75 404.02 211.75 C 407.1 211.3 407.04 204.3 404.15 202.8 C 402.27 198.5 404.65 190 402.65 184 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.72 187 C 403.65 194 402.17 200.8 404.42 204 C 406.5 206 405.36 211.7 403.01 211.75 C 403.15 207.6 401.23 204.3 401.05 201.5 C 401.3 197 401.8 191 401.72 187 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.65" cy="207.4" rx="3.5" ry="4.45" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 393.77 206.65 C 393.17 208.45 394.24 209.3 395.58 209.25 M 406.3 206.55 C 406.83 208.3 405.76 209.2 404.42 209.15" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".48" stroke-linecap="round" opacity=".24"/>
-        <path d="M 395.69 208.68 C 396.27 208.03 397.43 208.04 398.02 208.73 C 397.4 208.93 396.33 208.94 395.69 208.68 Z M 401.98 208.61 C 402.57 207.96 403.73 207.97 404.31 208.66 C 403.69 208.86 402.62 208.87 401.98 208.61 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 393.77 206.65 C 393.17 208.45 394.24 209.3 395.58 209.25 M 406.3 206.55 C 406.83 208.3 405.76 209.2 404.42 209.15" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 395.69 208.68 C 396.27 208.03 397.43 208.04 398.02 208.73 C 397.4 208.93 396.33 208.94 395.69 208.68 Z M 401.98 208.61 C 402.57 207.96 403.73 207.97 404.31 208.66 C 403.69 208.86 402.62 208.87 401.98 208.61 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="211.25" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 398.25 205.9 C 399.3 205.25 401.23 205.45 402 206.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".5" stroke-linecap="round" opacity=".28"/>
+        <path d="M 398.25 205.9 C 399.3 205.25 401.23 205.45 402 206.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="gentle-offset-bridge" display="none">
         <!-- Gently offset bridge: bridge, tip and wing proportions are independently authored. -->
         <path d="M 396.55 184 C 395.2 192 398.07 199 394.64 203.2 C 391.36 204.7 391.36 209.3 395.28 210.1 C 399.15 210.8 403.24 210.95 404.8 209.95 C 408.48 209.5 408.4 204.3 404.96 202.8 C 404.1 198.5 404.8 191 402.15 185 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.82 188 C 405.1 195 403.97 200.8 405.28 204 C 407.76 206 406.4 209.9 403.6 209.95 C 405.17 207.6 402.81 204.3 402.59 201.5 C 402.6 197 401.84 192 401.82 188 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="400.95" cy="206.4" rx="4.3" ry="3.7" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 392.56 207.4 C 391.84 209.2 393.12 210.05 394.72 210 M 407.52 207.3 C 408.16 209.05 406.88 209.95 405.28 209.9" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".48" stroke-linecap="round" opacity=".24"/>
-        <path d="M 395.15 209.43 C 395.84 208.78 397.24 208.79 397.93 209.48 C 397.19 209.68 395.91 209.69 395.15 209.43 Z M 402.67 209.36 C 403.36 208.71 404.75 208.72 405.45 209.41 C 404.71 209.61 403.43 209.62 402.67 209.36 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 392.56 207.4 C 391.84 209.2 393.12 210.05 394.72 210 M 407.52 207.3 C 408.16 209.05 406.88 209.95 405.28 209.9" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 395.15 209.43 C 395.84 208.78 397.24 208.79 397.93 209.48 C 397.19 209.68 395.91 209.69 395.15 209.43 Z M 402.67 209.36 C 403.36 208.71 404.75 208.72 405.45 209.41 C 404.71 209.61 403.43 209.62 402.67 209.36 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="401.3" cy="209.5" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 399.15 204.9 C 400.44 204.25 402.81 204.45 403.75 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".5" stroke-linecap="round" opacity=".28"/>
+        <path d="M 399.15 204.9 C 400.44 204.25 402.81 204.45 403.75 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="soft">
         <path d="M 397.6 187 C 396.6 195 396.6 198.7 394 203.7 C 390.77 205.8 391.52 209.7 395.12 210.2 C 397 211.7 404 211.9 405.7 209.8 C 409.15 208.2 407.88 205 405.02 202.7 C 402.4 197.7 404.4 193 402.4 188 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.44 192 C 403.4 200 403.4 201.7 405.4 204.7 C 407.35 206.7 406.82 209.2 404.5 209.7 C 404.95 207.3 402.77 205.7 402.4 203.4 C 401 198.7 402 196 401.44 192 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="4.35" ry="3.5" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 393.1 207 C 391.52 209.1 393.7 210.7 396.18 210 M 406.6 206.9 C 408.18 209.1 406.3 210.5 404.05 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 394.83 209.58 C 395.58 208.96 397.08 208.96 397.83 209.63 C 397.29 209.86 395.37 209.89 394.83 209.58 Z M 402.40 209.53 C 403.13 208.91 404.60 208.91 405.33 209.58 C 404.80 209.81 402.93 209.84 402.40 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 393.1 207 C 391.52 209.1 393.7 210.7 396.18 210 M 406.6 206.9 C 408.18 209.1 406.3 210.5 404.05 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 394.83 209.58 C 395.58 208.96 397.08 208.96 397.83 209.63 C 397.29 209.86 395.37 209.89 394.83 209.58 Z M 402.40 209.53 C 403.13 208.91 404.60 208.91 405.33 209.58 C 404.80 209.81 402.93 209.84 402.40 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.82 204.8 C 399.1 203.9 401.12 204.2 402.1 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.82 204.8 C 399.1 203.9 401.12 204.2 402.1 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="rounded" display="none">
         <path d="M 397.5 189 C 396.5 197 396.5 198.7 393.44 203.7 C 389.91 205.8 390.73 209.7 394.67 210.2 C 397 211.7 404 211.9 406.23 209.8 C 410 208.2 408.61 205 405.49 202.7 C 402.5 197.7 404.5 195 402.5 190 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.5 194 C 403.5 202 403.5 201.7 405.9 204.7 C 408.04 206.7 407.46 209.2 404.92 209.7 C 405.41 207.3 403.03 205.7 402.62 203.4 C 401 198.7 402 198 401.5 194 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="4.76" ry="4.3" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 392.46 207 C 390.73 209.1 393.11 210.7 395.82 210 M 407.22 206.9 C 408.94 209.1 406.89 210.5 404.43 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 394.33 209.58 C 395.16 208.96 396.81 208.96 397.64 209.63 C 397.04 209.86 394.93 209.89 394.33 209.58 Z M 402.61 209.53 C 403.42 208.91 405.03 208.91 405.84 209.58 C 405.26 209.81 403.19 209.84 402.61 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 392.46 207 C 390.73 209.1 393.11 210.7 395.82 210 M 407.22 206.9 C 408.94 209.1 406.89 210.5 404.43 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 394.33 209.58 C 395.16 208.96 396.81 208.96 397.64 209.63 C 397.04 209.86 394.93 209.89 394.33 209.58 Z M 402.61 209.53 C 403.42 208.91 405.03 208.91 405.84 209.58 C 405.26 209.81 403.19 209.84 402.61 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.62 204.8 C 399.02 203.9 401.23 204.2 402.3 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.62 204.8 C 399.02 203.9 401.23 204.2 402.3 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="broad" display="none">
         <path d="M 396.5 190 C 395.5 198 395.5 198.7 391.44 203.7 C 386.84 205.8 387.91 209.7 393.05 210.2 C 397 211.7 404 211.9 408.13 209.8 C 413.05 208.2 411.24 205 407.17 202.7 C 403.5 197.7 405.5 196 403.5 191 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 402.1 195 C 404.5 203 404.5 201.7 407.7 204.7 C 410.49 206.7 409.74 209.2 406.42 209.7 C 407.06 207.3 403.96 205.7 403.42 203.4 C 401 198.7 402 199 402.1 195 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="6.21" ry="4.2" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 390.16 207 C 387.91 209.1 391.01 210.7 394.54 210 M 409.42 206.9 C 411.66 209.1 408.99 210.5 405.78 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 392.55 209.58 C 393.65 208.96 395.86 208.96 396.96 209.63 C 396.17 209.86 393.34 209.89 392.55 209.58 Z M 403.36 209.53 C 404.43 208.91 406.59 208.91 407.66 209.58 C 406.89 209.81 404.13 209.84 403.36 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 390.16 207 C 387.91 209.1 391.01 210.7 394.54 210 M 409.42 206.9 C 411.66 209.1 408.99 210.5 405.78 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 392.55 209.58 C 393.65 208.96 395.86 208.96 396.96 209.63 C 396.17 209.86 393.34 209.89 392.55 209.58 Z M 403.36 209.53 C 404.43 208.91 406.59 208.91 407.66 209.58 C 406.89 209.81 404.13 209.84 403.36 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 396.9 204.8 C 398.72 203.9 401.61 204.2 403 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 396.9 204.8 C 398.72 203.9 401.61 204.2 403 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="medium-broad-soft-tip" display="none">
         <path d="M 397 185 C 396 193 396 198.7 392.64 203.7 C 388.68 205.8 389.6 209.7 394.02 210.2 C 397 211.7 404 211.9 406.99 209.8 C 411.22 208.2 409.66 205 406.16 202.7 C 403 197.7 405 191 403 186 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.8 190 C 404 198 404 201.7 406.62 204.7 C 409.02 206.7 408.37 209.2 405.52 209.7 C 406.07 207.3 403.4 205.7 402.94 203.4 C 401 198.7 402 194 401.8 190 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="5.34" ry="3.8" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 391.54 207 C 389.6 209.1 392.27 210.7 395.31 210 M 408.1 206.9 C 410.03 209.1 407.73 210.5 404.97 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 393.62 209.58 C 394.56 208.96 396.43 208.96 397.37 209.63 C 396.69 209.86 394.30 209.89 393.62 209.58 Z M 402.91 209.53 C 403.82 208.91 405.66 208.91 406.57 209.58 C 405.91 209.81 403.57 209.84 402.91 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 391.54 207 C 389.6 209.1 392.27 210.7 395.31 210 M 408.1 206.9 C 410.03 209.1 407.73 210.5 404.97 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 393.62 209.58 C 394.56 208.96 396.43 208.96 397.37 209.63 C 396.69 209.86 394.30 209.89 393.62 209.58 Z M 402.91 209.53 C 403.82 208.91 405.66 208.91 406.57 209.58 C 405.91 209.81 403.57 209.84 402.91 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.33 204.8 C 398.9 203.9 401.38 204.2 402.58 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.33 204.8 C 398.9 203.9 401.38 204.2 402.58 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="narrow" display="none">
         <path d="M 398.2 184 C 397.2 192 397.2 198.7 395.52 203.7 C 393.11 205.8 393.67 209.7 396.36 210.2 C 397 211.7 404 211.9 404.26 209.8 C 406.83 208.2 405.88 205 403.75 202.7 C 401.8 197.7 403.8 190 401.8 185 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.08 189 C 402.8 197 402.8 201.7 404.03 204.7 C 405.49 206.7 405.1 209.2 403.36 209.7 C 403.7 207.3 402.07 205.7 401.79 203.4 C 401 198.7 402 193 401.08 189 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="3.25" ry="3.0" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 394.85 207 C 393.67 209.1 395.3 210.7 397.14 210 M 404.93 206.9 C 406.1 209.1 404.7 210.5 403.02 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 396.17 209.58 C 396.71 208.96 397.80 208.96 398.34 209.63 C 397.95 209.86 396.56 209.89 396.17 209.58 Z M 401.83 209.53 C 402.36 208.91 403.41 208.91 403.94 209.58 C 403.56 209.81 402.21 209.84 401.83 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 394.85 207 C 393.67 209.1 395.3 210.7 397.14 210 M 404.93 206.9 C 406.1 209.1 404.7 210.5 403.02 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 396.17 209.58 C 396.71 208.96 397.80 208.96 398.34 209.63 C 397.95 209.86 396.56 209.89 396.17 209.58 Z M 401.83 209.53 C 402.36 208.91 403.41 208.91 403.94 209.58 C 403.56 209.81 402.21 209.84 401.83 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 398.38 204.8 C 399.33 203.9 400.84 204.2 401.57 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 398.38 204.8 C 399.33 203.9 400.84 204.2 401.57 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="straight-narrow" display="none">
         <path d="M 398.1 182 C 397.1 190 397.1 198.7 395.2 203.7 C 392.62 205.8 393.22 209.7 396.1 210.2 C 397 211.7 404 211.9 404.56 209.8 C 407.32 208.2 406.3 205 404.02 202.7 C 401.9 197.7 403.9 188 401.9 183 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.14 187 C 402.9 195 402.9 201.7 404.32 204.7 C 405.88 206.7 405.46 209.2 403.6 209.7 C 403.96 207.3 402.22 205.7 401.92 203.4 C 401 198.7 402 191 401.14 187 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="3.48" ry="3.1" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 394.48 207 C 393.22 209.1 394.96 210.7 396.94 210 M 405.28 206.9 C 406.54 209.1 405.04 210.5 403.24 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 395.89 209.58 C 396.48 208.96 397.64 208.96 398.23 209.63 C 397.81 209.86 396.31 209.89 395.89 209.58 Z M 401.95 209.53 C 402.52 208.91 403.66 208.91 404.23 209.58 C 403.82 209.81 402.36 209.84 401.95 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 394.48 207 C 393.22 209.1 394.96 210.7 396.94 210 M 405.28 206.9 C 406.54 209.1 405.04 210.5 403.24 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 395.89 209.58 C 396.48 208.96 397.64 208.96 398.23 209.63 C 397.81 209.86 396.31 209.89 395.89 209.58 Z M 401.95 209.53 C 402.52 208.91 403.66 208.91 404.23 209.58 C 403.82 209.81 402.36 209.84 401.95 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 398.26 204.8 C 399.28 203.9 400.9 204.2 401.68 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 398.26 204.8 C 399.28 203.9 400.9 204.2 401.68 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="slender-straight-soft-tip" display="none">
         <path d="M 398.2 184 C 397.2 192 397.2 198.7 395.04 203.7 C 392.37 205.8 392.99 209.7 395.97 210.2 C 397 211.7 404 211.9 404.71 209.8 C 407.56 208.2 406.51 205 404.15 202.7 C 401.8 197.7 403.8 190 401.8 185 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.08 189 C 402.8 197 402.8 201.7 404.46 204.7 C 406.08 206.7 405.64 209.2 403.72 209.7 C 404.09 207.3 402.29 205.7 401.98 203.4 C 401 198.7 402 193 401.08 189 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="3.6" ry="3.5" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 394.3 207 C 392.99 209.1 394.79 210.7 396.84 210 M 405.46 206.9 C 406.76 209.1 405.21 210.5 403.35 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 395.75 209.58 C 396.36 208.96 397.57 208.96 398.18 209.63 C 397.74 209.86 396.19 209.89 395.75 209.58 Z M 402.01 209.53 C 402.60 208.91 403.79 208.91 404.38 209.58 C 403.95 209.81 402.44 209.84 402.01 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 394.3 207 C 392.99 209.1 394.79 210.7 396.84 210 M 405.46 206.9 C 406.76 209.1 405.21 210.5 403.35 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 395.75 209.58 C 396.36 208.96 397.57 208.96 398.18 209.63 C 397.74 209.86 396.19 209.89 395.75 209.58 Z M 402.01 209.53 C 402.60 208.91 403.79 208.91 404.38 209.58 C 403.95 209.81 402.44 209.84 402.01 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 398.2 204.8 C 399.26 203.9 400.93 204.2 401.74 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 398.2 204.8 C 399.26 203.9 400.93 204.2 401.74 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="prominent-straight" display="none">
         <path d="M 397.4 181 C 396.4 189 396.4 198.7 393.84 203.7 C 390.53 205.8 391.3 209.7 395 210.2 C 397 211.7 404 211.9 405.85 209.8 C 409.39 208.2 408.08 205 405.16 202.7 C 402.6 197.7 404.6 187 402.6 182 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.56 186 C 403.6 194 403.6 201.7 405.54 204.7 C 407.55 206.7 407.01 209.2 404.62 209.7 C 405.08 207.3 402.85 205.7 402.46 203.4 C 401 198.7 402 190 401.56 186 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="4.47" ry="4.0" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 392.92 207 C 391.3 209.1 393.53 210.7 396.07 210 M 406.78 206.9 C 408.39 209.1 406.47 210.5 404.16 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 394.68 209.58 C 395.45 208.96 397.00 208.96 397.77 209.63 C 397.21 209.86 395.24 209.89 394.68 209.58 Z M 402.46 209.53 C 403.21 208.91 404.72 208.91 405.47 209.58 C 404.93 209.81 403.00 209.84 402.46 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 392.92 207 C 391.3 209.1 393.53 210.7 396.07 210 M 406.78 206.9 C 408.39 209.1 406.47 210.5 404.16 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 394.68 209.58 C 395.45 208.96 397.00 208.96 397.77 209.63 C 397.21 209.86 395.24 209.89 394.68 209.58 Z M 402.46 209.53 C 403.21 208.91 404.72 208.91 405.47 209.58 C 404.93 209.81 403.00 209.84 402.46 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.77 204.8 C 399.08 203.9 401.15 204.2 402.16 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.77 204.8 C 399.08 203.9 401.15 204.2 402.16 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="button" display="none">
         <path d="M 397.7 194 C 396.7 202 396.7 198.7 394.48 203.7 C 391.51 205.8 392.2 209.7 395.51 210.2 C 397 211.7 404 211.9 405.24 209.8 C 408.42 208.2 407.25 205 404.62 202.7 C 402.3 197.7 404.3 200 402.3 195 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.38 199 C 403.3 207 403.3 201.7 404.97 204.7 C 406.76 206.7 406.28 209.2 404.14 209.7 C 404.55 207.3 402.55 205.7 402.21 203.4 C 401 198.7 402 203 401.38 199 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="4" ry="3.8" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 393.65 207 C 392.2 209.1 394.2 210.7 396.48 210 M 406.07 206.9 C 407.52 209.1 405.8 210.5 403.73 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 395.25 209.58 C 395.94 208.96 397.31 208.96 397.99 209.63 C 397.50 209.86 395.74 209.89 395.25 209.58 Z M 402.22 209.53 C 402.89 208.91 404.22 208.91 404.89 209.58 C 404.41 209.81 402.70 209.84 402.22 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 393.65 207 C 392.2 209.1 394.2 210.7 396.48 210 M 406.07 206.9 C 407.52 209.1 405.8 210.5 403.73 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 395.25 209.58 C 395.94 208.96 397.31 208.96 397.99 209.63 C 397.50 209.86 395.74 209.89 395.25 209.58 Z M 402.22 209.53 C 402.89 208.91 404.22 208.91 404.89 209.58 C 404.41 209.81 402.70 209.84 402.22 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 398 204.8 C 399.17 203.9 401.04 204.2 401.93 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 398 204.8 C 399.17 203.9 401.04 204.2 401.93 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="defined-bridge" display="none">
         <path d="M 397.3 181 C 396.3 189 396.3 198.7 394.08 203.7 C 390.9 205.8 391.64 209.7 395.19 210.2 C 397 211.7 404 211.9 405.62 209.8 C 409.03 208.2 407.77 205 404.96 202.7 C 402.7 197.7 404.7 187 402.7 182 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.62 186 C 403.7 194 403.7 201.7 405.33 204.7 C 407.25 206.7 406.73 209.2 404.44 209.7 C 404.88 207.3 402.74 205.7 402.37 203.4 C 401 198.7 402 190 401.62 186 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="4.29" ry="3.5" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 393.19 207 C 391.64 209.1 393.78 210.7 396.23 210 M 406.51 206.9 C 408.07 209.1 406.22 210.5 404 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 394.90 209.58 C 395.64 208.96 397.11 208.96 397.85 209.63 C 397.32 209.86 395.43 209.89 394.90 209.58 Z M 402.37 209.53 C 403.09 208.91 404.53 208.91 405.25 209.58 C 404.73 209.81 402.89 209.84 402.37 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 393.19 207 C 391.64 209.1 393.78 210.7 396.23 210 M 406.51 206.9 C 408.07 209.1 406.22 210.5 404 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 394.90 209.58 C 395.64 208.96 397.11 208.96 397.85 209.63 C 397.32 209.86 395.43 209.89 394.90 209.58 Z M 402.37 209.53 C 403.09 208.91 404.53 208.91 405.25 209.58 C 404.73 209.81 402.89 209.84 402.37 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.85 204.8 C 399.11 203.9 401.11 204.2 402.07 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.85 204.8 C 399.11 203.9 401.11 204.2 402.07 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="long-soft-bridge" display="none">
         <path d="M 397.8 182 C 396.8 190 396.8 198.7 394.4 203.7 C 391.39 205.8 392.09 209.7 395.45 210.2 C 397 211.7 404 211.9 405.32 209.8 C 408.54 208.2 407.35 205 404.69 202.7 C 402.2 197.7 404.2 188 402.2 183 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.32 187 C 403.2 195 403.2 201.7 405.04 204.7 C 406.86 206.7 406.37 209.2 404.2 209.7 C 404.62 207.3 402.59 205.7 402.24 203.4 C 401 198.7 402 191 401.32 187 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="4.06" ry="3.5" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 393.56 207 C 392.09 209.1 394.12 210.7 396.43 210 M 406.16 206.9 C 407.63 209.1 405.88 210.5 403.78 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 395.18 209.58 C 395.88 208.96 397.26 208.96 397.96 209.63 C 397.46 209.86 395.68 209.89 395.18 209.58 Z M 402.25 209.53 C 402.93 208.91 404.28 208.91 404.96 209.58 C 404.47 209.81 402.74 209.84 402.25 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 393.56 207 C 392.09 209.1 394.12 210.7 396.43 210 M 406.16 206.9 C 407.63 209.1 405.88 210.5 403.78 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 395.18 209.58 C 395.88 208.96 397.26 208.96 397.96 209.63 C 397.46 209.86 395.68 209.89 395.18 209.58 Z M 402.25 209.53 C 402.93 208.91 404.28 208.91 404.96 209.58 C 404.47 209.81 402.74 209.84 402.25 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.97 204.8 C 399.16 203.9 401.05 204.2 401.96 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.97 204.8 C 399.16 203.9 401.05 204.2 401.96 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="soft-rounded-bridge" display="none">
         <path d="M 397.2 185 C 396.2 193 396.2 198.7 393.52 203.7 C 390.04 205.8 390.85 209.7 394.74 210.2 C 397 211.7 404 211.9 406.16 209.8 C 409.88 208.2 408.5 205 405.43 202.7 C 402.8 197.7 404.8 191 402.8 186 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.68 190 C 403.8 198 403.8 201.7 405.83 204.7 C 407.94 206.7 407.37 209.2 404.86 209.7 C 405.35 207.3 403 205.7 402.59 203.4 C 401 198.7 402 194 401.68 190 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="4.7" ry="4.0" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 392.55 207 C 390.85 209.1 393.2 210.7 395.87 210 M 407.13 206.9 C 408.83 209.1 406.8 210.5 404.37 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 394.40 209.58 C 395.21 208.96 396.85 208.96 397.66 209.63 C 397.07 209.86 394.99 209.89 394.40 209.58 Z M 402.58 209.53 C 403.38 208.91 404.97 208.91 405.76 209.58 C 405.19 209.81 403.15 209.84 402.58 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 392.55 207 C 390.85 209.1 393.2 210.7 395.87 210 M 407.13 206.9 C 408.83 209.1 406.8 210.5 404.37 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 394.40 209.58 C 395.21 208.96 396.85 208.96 397.66 209.63 C 397.07 209.86 394.99 209.89 394.40 209.58 Z M 402.58 209.53 C 403.38 208.91 404.97 208.91 405.76 209.58 C 405.19 209.81 403.15 209.84 402.58 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.65 204.8 C 399.03 203.9 401.21 204.2 402.27 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.65 204.8 C 399.03 203.9 401.21 204.2 402.27 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="rounded-tip" display="none">
         <path d="M 397.5 189 C 396.5 197 396.5 198.7 393.76 203.7 C 390.41 205.8 391.19 209.7 394.93 210.2 C 397 211.7 404 211.9 405.93 209.8 C 409.52 208.2 408.19 205 405.23 202.7 C 402.5 197.7 404.5 195 402.5 190 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.5 194 C 403.5 202 403.5 201.7 405.62 204.7 C 407.64 206.7 407.1 209.2 404.68 209.7 C 405.15 207.3 402.89 205.7 402.5 203.4 C 401 198.7 402 198 401.5 194 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="4.52" ry="4.5" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 392.82 207 C 391.19 209.1 393.45 210.7 396.02 210 M 406.86 206.9 C 408.5 209.1 406.55 210.5 404.21 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 394.61 209.58 C 395.39 208.96 396.96 208.96 397.74 209.63 C 397.18 209.86 395.17 209.89 394.61 209.58 Z M 402.49 209.53 C 403.25 208.91 404.78 208.91 405.54 209.58 C 404.99 209.81 403.04 209.84 402.49 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 392.82 207 C 391.19 209.1 393.45 210.7 396.02 210 M 406.86 206.9 C 408.5 209.1 406.55 210.5 404.21 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 394.61 209.58 C 395.39 208.96 396.96 208.96 397.74 209.63 C 397.18 209.86 395.17 209.89 394.61 209.58 Z M 402.49 209.53 C 403.25 208.91 404.78 208.91 405.54 209.58 C 404.99 209.81 403.04 209.84 402.49 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.74 204.8 C 399.06 203.9 401.17 204.2 402.18 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.74 204.8 C 399.06 203.9 401.17 204.2 402.18 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="short-soft-tip" display="none">
         <path d="M 397.5 194 C 396.5 202 396.5 198.7 394.08 203.7 C 390.9 205.8 391.64 209.7 395.19 210.2 C 397 211.7 404 211.9 405.62 209.8 C 409.03 208.2 407.77 205 404.96 202.7 C 402.5 197.7 404.5 200 402.5 195 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.5 199 C 403.5 207 403.5 201.7 405.33 204.7 C 407.25 206.7 406.73 209.2 404.44 209.7 C 404.88 207.3 402.74 205.7 402.37 203.4 C 401 198.7 402 203 401.5 199 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="4.29" ry="3.4" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 393.19 207 C 391.64 209.1 393.78 210.7 396.23 210 M 406.51 206.9 C 408.07 209.1 406.22 210.5 404 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 394.90 209.58 C 395.64 208.96 397.11 208.96 397.85 209.63 C 397.32 209.86 395.43 209.89 394.90 209.58 Z M 402.37 209.53 C 403.09 208.91 404.53 208.91 405.25 209.58 C 404.73 209.81 402.89 209.84 402.37 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 393.19 207 C 391.64 209.1 393.78 210.7 396.23 210 M 406.51 206.9 C 408.07 209.1 406.22 210.5 404 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 394.90 209.58 C 395.64 208.96 397.11 208.96 397.85 209.63 C 397.32 209.86 395.43 209.89 394.90 209.58 Z M 402.37 209.53 C 403.09 208.91 404.53 208.91 405.25 209.58 C 404.73 209.81 402.89 209.84 402.37 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.85 204.8 C 399.11 203.9 401.11 204.2 402.07 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.85 204.8 C 399.11 203.9 401.11 204.2 402.07 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="slim-rounded-tip" display="none">
         <path d="M 398.2 188 C 397.2 196 397.2 198.7 395.12 203.7 C 392.5 205.8 393.11 209.7 396.04 210.2 C 397 211.7 404 211.9 404.64 209.8 C 407.44 208.2 406.4 205 404.09 202.7 C 401.8 197.7 403.8 194 401.8 189 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.08 193 C 402.8 201 402.8 201.7 404.39 204.7 C 405.98 206.7 405.55 209.2 403.66 209.7 C 404.03 207.3 402.26 205.7 401.95 203.4 C 401 198.7 402 197 401.08 193 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="3.54" ry="3.8" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 394.39 207 C 393.11 209.1 394.88 210.7 396.89 210 M 405.37 206.9 C 406.65 209.1 405.12 210.5 403.29 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 395.82 209.58 C 396.42 208.96 397.61 208.96 398.20 209.63 C 397.77 209.86 396.25 209.89 395.82 209.58 Z M 401.98 209.53 C 402.56 208.91 403.72 208.91 404.30 209.58 C 403.88 209.81 402.40 209.84 401.98 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 394.39 207 C 393.11 209.1 394.88 210.7 396.89 210 M 405.37 206.9 C 406.65 209.1 405.12 210.5 403.29 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 395.82 209.58 C 396.42 208.96 397.61 208.96 398.20 209.63 C 397.77 209.86 396.25 209.89 395.82 209.58 Z M 401.98 209.53 C 402.56 208.91 403.72 208.91 404.30 209.58 C 403.88 209.81 402.40 209.84 401.98 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 398.23 204.8 C 399.27 203.9 400.92 204.2 401.71 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 398.23 204.8 C 399.27 203.9 400.92 204.2 401.71 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="wide-rounded-tip" display="none">
         <path d="M 396.5 190 C 395.5 198 395.5 198.7 391.28 203.7 C 386.59 205.8 387.68 209.7 392.92 210.2 C 397 211.7 404 211.9 408.28 209.8 C 413.3 208.2 411.44 205 407.3 202.7 C 403.5 197.7 405.5 196 403.5 191 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 402.1 195 C 404.5 203 404.5 201.7 407.85 204.7 C 410.68 206.7 409.92 209.2 406.54 209.7 C 407.19 207.3 404.03 205.7 403.49 203.4 C 401 198.7 402 199 402.1 195 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="6.32" ry="4.6" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 389.97 207 C 387.68 209.1 390.84 210.7 394.44 210 M 409.59 206.9 C 411.88 209.1 409.16 210.5 405.89 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 392.41 209.58 C 393.53 208.96 395.79 208.96 396.91 209.63 C 396.10 209.86 393.22 209.89 392.41 209.58 Z M 403.42 209.53 C 404.52 208.91 406.71 208.91 407.81 209.58 C 407.02 209.81 404.21 209.84 403.42 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 389.97 207 C 387.68 209.1 390.84 210.7 394.44 210 M 409.59 206.9 C 411.88 209.1 409.16 210.5 405.89 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 392.41 209.58 C 393.53 208.96 395.79 208.96 396.91 209.63 C 396.10 209.86 393.22 209.89 392.41 209.58 Z M 403.42 209.53 C 404.52 208.91 406.71 208.91 407.81 209.58 C 407.02 209.81 404.21 209.84 403.42 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 396.84 204.8 C 398.69 203.9 401.63 204.2 403.05 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 396.84 204.8 C 398.69 203.9 401.63 204.2 403.05 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="balanced-bridge" display="none">
         <path d="M 397.4 185 C 396.4 193 396.4 198.7 393.6 203.7 C 390.16 205.8 390.96 209.7 394.8 210.2 C 397 211.7 404 211.9 406.08 209.8 C 409.76 208.2 408.4 205 405.36 202.7 C 402.6 197.7 404.6 191 402.6 186 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.56 190 C 403.6 198 403.6 201.7 405.76 204.7 C 407.84 206.7 407.28 209.2 404.8 209.7 C 405.28 207.3 402.96 205.7 402.56 203.4 C 401 198.7 402 194 401.56 190 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="4.64" ry="3.6" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 392.64 207 C 390.96 209.1 393.28 210.7 395.92 210 M 407.04 206.9 C 408.72 209.1 406.72 210.5 404.32 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 394.47 209.58 C 395.27 208.96 396.88 208.96 397.69 209.63 C 397.11 209.86 395.05 209.89 394.47 209.58 Z M 402.55 209.53 C 403.33 208.91 404.90 208.91 405.69 209.58 C 405.12 209.81 403.12 209.84 402.55 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 392.64 207 C 390.96 209.1 393.28 210.7 395.92 210 M 407.04 206.9 C 408.72 209.1 406.72 210.5 404.32 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 394.47 209.58 C 395.27 208.96 396.88 208.96 397.69 209.63 C 397.11 209.86 395.05 209.89 394.47 209.58 Z M 402.55 209.53 C 403.33 208.91 404.90 208.91 405.69 209.58 C 405.12 209.81 403.12 209.84 402.55 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.68 204.8 C 399.04 203.9 401.2 204.2 402.24 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.68 204.8 C 399.04 203.9 401.2 204.2 402.24 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="soft-wide-tip" display="none">
         <path d="M 396.8 191 C 395.8 199 395.8 198.7 391.6 203.7 C 387.08 205.8 388.13 209.7 393.18 210.2 C 397 211.7 404 211.9 407.98 209.8 C 412.81 208.2 411.02 205 407.04 202.7 C 403.2 197.7 405.2 197 403.2 192 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.92 196 C 404.2 204 404.2 201.7 407.56 204.7 C 410.29 206.7 409.56 209.2 406.3 209.7 C 406.93 207.3 403.88 205.7 403.36 203.4 C 401 198.7 402 200 401.92 196 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="6.09" ry="3.7" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 390.34 207 C 388.13 209.1 391.18 210.7 394.64 210 M 409.24 206.9 C 411.44 209.1 408.82 210.5 405.67 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 392.70 209.58 C 393.78 208.96 395.94 208.96 397.02 209.63 C 396.24 209.86 393.48 209.89 392.70 209.58 Z M 403.30 209.53 C 404.35 208.91 406.47 208.91 407.52 209.58 C 406.76 209.81 404.06 209.84 403.30 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 390.34 207 C 388.13 209.1 391.18 210.7 394.64 210 M 409.24 206.9 C 411.44 209.1 408.82 210.5 405.67 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 392.70 209.58 C 393.78 208.96 395.94 208.96 397.02 209.63 C 396.24 209.86 393.48 209.89 392.70 209.58 Z M 403.30 209.53 C 404.35 208.91 406.47 208.91 407.52 209.58 C 406.76 209.81 404.06 209.84 403.30 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 396.95 204.8 C 398.74 203.9 401.57 204.2 402.94 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 396.95 204.8 C 398.74 203.9 401.57 204.2 402.94 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="soft-upturned" display="none">
         <path d="M 397.5 191 C 396.5 199 396.5 197.8 393.84 202.8 C 390.53 204.9 391.3 208.8 395 209.3 C 397 210.8 404 211 405.85 208.9 C 409.39 207.3 408.08 204.1 405.16 201.8 C 402.5 196.8 404.5 197 402.5 192 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.5 196 C 403.5 204 403.5 200.8 405.54 203.8 C 407.55 205.8 407.01 208.3 404.62 208.8 C 405.08 206.4 402.85 204.8 402.46 202.5 C 401 197.8 402 200 401.5 196 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="205.4" rx="4.47" ry="3.5" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 392.92 206.1 C 391.3 208.2 393.53 209.8 396.07 209.1 M 406.78 206 C 408.39 208.2 406.47 209.6 404.16 208.9" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 394.68 208.68 C 395.45 208.06 397.00 208.06 397.77 208.73 C 397.21 208.96 395.24 208.99 394.68 208.68 Z M 402.46 208.63 C 403.21 208.01 404.72 208.01 405.47 208.68 C 404.93 208.91 403.00 208.94 402.46 208.63 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 392.92 206.1 C 391.3 208.2 393.53 209.8 396.07 209.1 M 406.78 206 C 408.39 208.2 406.47 209.6 404.16 208.9" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 394.68 208.68 C 395.45 208.06 397.00 208.06 397.77 208.73 C 397.21 208.96 395.24 208.99 394.68 208.68 Z M 402.46 208.63 C 403.21 208.01 404.72 208.01 405.47 208.68 C 404.93 208.91 403.00 208.94 402.46 208.63 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209" rx="1.4" ry=".65" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.77 203.9 C 399.08 203 401.15 203.3 402.16 204.3" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.77 203.9 C 399.08 203 401.15 203.3 402.16 204.3" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="gentle-bridge" display="none">
         <path d="M 397.6 187 C 396.6 195 396.6 198.7 394.08 203.7 C 390.9 205.8 391.64 209.7 395.19 210.2 C 397 211.7 404 211.9 405.62 209.8 C 409.03 208.2 407.77 205 404.96 202.7 C 402.4 197.7 404.4 193 402.4 188 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.44 192 C 403.4 200 403.4 201.7 405.33 204.7 C 407.25 206.7 406.73 209.2 404.44 209.7 C 404.88 207.3 402.74 205.7 402.37 203.4 C 401 198.7 402 196 401.44 192 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="4.29" ry="3.6" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 393.19 207 C 391.64 209.1 393.78 210.7 396.23 210 M 406.51 206.9 C 408.07 209.1 406.22 210.5 404 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 394.90 209.58 C 395.64 208.96 397.11 208.96 397.85 209.63 C 397.32 209.86 395.43 209.89 394.90 209.58 Z M 402.37 209.53 C 403.09 208.91 404.53 208.91 405.25 209.58 C 404.73 209.81 402.89 209.84 402.37 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 393.19 207 C 391.64 209.1 393.78 210.7 396.23 210 M 406.51 206.9 C 408.07 209.1 406.22 210.5 404 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 394.90 209.58 C 395.64 208.96 397.11 208.96 397.85 209.63 C 397.32 209.86 395.43 209.89 394.90 209.58 Z M 402.37 209.53 C 403.09 208.91 404.53 208.91 405.25 209.58 C 404.73 209.81 402.89 209.84 402.37 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.85 204.8 C 399.11 203.9 401.11 204.2 402.07 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.85 204.8 C 399.11 203.9 401.11 204.2 402.07 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="soft-low-bridge" display="none">
         <path d="M 396.8 193 C 395.8 201 395.8 198.7 393.12 203.7 C 389.42 205.8 390.28 209.7 394.41 210.2 C 397 211.7 404 211.9 406.54 209.8 C 410.49 208.2 409.03 205 405.76 202.7 C 403.2 197.7 405.2 199 403.2 194 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.92 198 C 404.2 206 404.2 201.7 406.19 204.7 C 408.43 206.7 407.83 209.2 405.16 209.7 C 405.68 207.3 403.18 205.7 402.75 203.4 C 401 198.7 402 202 401.92 198 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="4.99" ry="3.6" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 392.09 207 C 390.28 209.1 392.78 210.7 395.61 210 M 407.57 206.9 C 409.37 209.1 407.22 210.5 404.64 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 394.04 209.58 C 394.91 208.96 396.66 208.96 397.53 209.63 C 396.90 209.86 394.67 209.89 394.04 209.58 Z M 402.73 209.53 C 403.58 208.91 405.28 208.91 406.13 209.58 C 405.52 209.81 403.34 209.84 402.73 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 392.09 207 C 390.28 209.1 392.78 210.7 395.61 210 M 407.57 206.9 C 409.37 209.1 407.22 210.5 404.64 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 394.04 209.58 C 394.91 208.96 396.66 208.96 397.53 209.63 C 396.90 209.86 394.67 209.89 394.04 209.58 Z M 402.73 209.53 C 403.58 208.91 405.28 208.91 406.13 209.58 C 405.52 209.81 403.34 209.84 402.73 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.51 204.8 C 398.97 203.9 401.29 204.2 402.41 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.51 204.8 C 398.97 203.9 401.29 204.2 402.41 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="low-wide-bridge" display="none">
         <path d="M 396.3 194 C 395.3 202 395.3 198.7 391.44 203.7 C 386.84 205.8 387.91 209.7 393.05 210.2 C 397 211.7 404 211.9 408.13 209.8 C 413.05 208.2 411.24 205 407.17 202.7 C 403.7 197.7 405.7 200 403.7 195 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 402.22 199 C 404.7 207 404.7 201.7 407.7 204.7 C 410.49 206.7 409.74 209.2 406.42 209.7 C 407.06 207.3 403.96 205.7 403.42 203.4 C 401 198.7 402 203 402.22 199 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="6.21" ry="3.9" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 390.16 207 C 387.91 209.1 391.01 210.7 394.54 210 M 409.42 206.9 C 411.66 209.1 408.99 210.5 405.78 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 392.55 209.58 C 393.65 208.96 395.86 208.96 396.96 209.63 C 396.17 209.86 393.34 209.89 392.55 209.58 Z M 403.36 209.53 C 404.43 208.91 406.59 208.91 407.66 209.58 C 406.89 209.81 404.13 209.84 403.36 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 390.16 207 C 387.91 209.1 391.01 210.7 394.54 210 M 409.42 206.9 C 411.66 209.1 408.99 210.5 405.78 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 392.55 209.58 C 393.65 208.96 395.86 208.96 396.96 209.63 C 396.17 209.86 393.34 209.89 392.55 209.58 Z M 403.36 209.53 C 404.43 208.91 406.59 208.91 407.66 209.58 C 406.89 209.81 404.13 209.84 403.36 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 396.9 204.8 C 398.72 203.9 401.61 204.2 403 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 396.9 204.8 C 398.72 203.9 401.61 204.2 403 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="soft-flat-bridge" display="none">
         <path d="M 396.2 195 C 395.2 203 395.2 198.7 392.16 203.7 C 387.95 205.8 388.93 209.7 393.63 210.2 C 397 211.7 404 211.9 407.45 209.8 C 411.96 208.2 410.29 205 406.57 202.7 C 403.8 197.7 405.8 201 403.8 196 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 402.28 200 C 404.8 208 404.8 201.7 407.06 204.7 C 409.6 206.7 408.92 209.2 405.88 209.7 C 406.47 207.3 403.63 205.7 403.14 203.4 C 401 198.7 402 204 402.28 200 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="5.68" ry="3.3" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 390.98 207 C 388.93 209.1 391.77 210.7 395 210 M 408.62 206.9 C 410.68 209.1 408.23 210.5 405.29 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 393.19 209.58 C 394.19 208.96 396.20 208.96 397.20 209.63 C 396.48 209.86 393.91 209.89 393.19 209.58 Z M 403.09 209.53 C 404.07 208.91 406.02 208.91 407.00 209.58 C 406.30 209.81 403.79 209.84 403.09 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 390.98 207 C 388.93 209.1 391.77 210.7 395 210 M 408.62 206.9 C 410.68 209.1 408.23 210.5 405.29 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 393.19 209.58 C 394.19 208.96 396.20 208.96 397.20 209.63 C 396.48 209.86 393.91 209.89 393.19 209.58 Z M 403.09 209.53 C 404.07 208.91 406.02 208.91 407.00 209.58 C 406.30 209.81 403.79 209.84 403.09 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.16 204.8 C 398.82 203.9 401.47 204.2 402.74 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.16 204.8 C 398.82 203.9 401.47 204.2 402.74 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="aquiline-bridge" display="none">
         <path d="M 397.9 181 C 396.9 189 396.9 198.7 394.32 203.7 C 391.27 205.8 391.98 209.7 395.38 210.2 C 397 211.7 404 211.9 405.4 209.8 C 408.66 208.2 407.45 205 404.76 202.7 C 402.1 197.7 404.1 187 402.1 182 Z" fill="url(#human-nose-volume-{{ hero_variant }})" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <path d="M 401.26 186 C 403.1 194 403.1 201.7 405.11 204.7 C 406.96 206.7 406.46 209.2 404.26 209.7 C 404.69 207.3 402.63 205.7 402.27 203.4 C 401 198.7 402 190 401.26 186 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".24" mask="url(#human-nose-root-mask-{{ hero_variant }})"/>
         <ellipse cx="399.6" cy="206.3" rx="4.12" ry="3.7" fill="url(#human-nose-tip-{{ hero_variant }})"/>
-        <path d="M 393.47 207 C 391.98 209.1 394.04 210.7 396.38 210 M 406.25 206.9 C 407.74 209.1 405.96 210.5 403.83 209.8" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".52" stroke-linecap="round" opacity=".28"/>
-        <path d="M 395.11 209.58 C 395.81 208.96 397.23 208.96 397.93 209.63 C 397.42 209.86 395.62 209.89 395.11 209.58 Z M 402.28 209.53 C 402.97 208.91 404.34 208.91 405.03 209.58 C 404.54 209.81 402.77 209.84 402.28 209.53 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".84"/>
+        <path d="M 393.47 207 C 391.98 209.1 394.04 210.7 396.38 210 M 406.25 206.9 C 407.74 209.1 405.96 210.5 403.83 209.8" fill="none" stroke="var(--hero-face-edge-ink, #5a382c)" stroke-width=".85" stroke-linecap="round" opacity=".55"/>
+        <path d="M 395.11 209.58 C 395.81 208.96 397.23 208.96 397.93 209.63 C 397.42 209.86 395.62 209.89 395.11 209.58 Z M 402.28 209.53 C 402.97 208.91 404.34 208.91 405.03 209.58 C 404.54 209.81 402.77 209.84 402.28 209.53 Z" fill="var(--hero-face-edge-ink, #5a382c)" opacity=".9"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="209.35" rx=".8" ry=".35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .46)"/>
-        <path d="M 397.94 204.8 C 399.15 203.9 401.06 204.2 401.99 205.2" fill="none" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".55" stroke-linecap="round" opacity=".32"/>
+        <path d="M 397.94 204.8 C 399.15 203.9 401.06 204.2 401.99 205.2" fill="none" stroke="var(--hero-face-form-light, #f4c8a5)" stroke-width=".7" stroke-linecap="round" opacity=".62"/>
       </g>
       </g>
           </g>
@@ -8973,7 +8973,8 @@
         <ellipse cx="416.7" cy="224.2" rx="2.8" ry="2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <path d="M 382 223 C 388 222.2 392.8 216.7 397.5 218.7 C 398.7 219.2 399 220 400 220 C 401 220 401.3 219.2 402.5 218.7 C 407.2 216.7 412 222.2 418 223 C 409 226.1 391 226.1 382 223 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".87"/>
         <path d="M 382 223 C 391 226.1 409 226.1 418 223 C 412 231.6 405 233.2 400 233.2 C 395 233.2 388 231.6 382 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".87"/>
-        <path d="M 382 223 C 391 226.1 409 226.1 418 223 C 409 227.5 391 227.5 382 223 Z" fill="var(--hero-mouth-fill, #5a2418)" opacity=".92"/>
+        <path data-hero-lip-edge d="M 408.251 231.497 C 405.261 232.831 402.4 233.2 400 233.2 C 397.6 233.2 394.739 232.831 391.749 231.497" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
+        <path data-hero-mouth-seam d="M 382 223 C 391 226.1 409 226.1 418 223 C 409 227.5 391 227.5 382 223 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="full-lower-lip" display="none">
         <ellipse cx="400" cy="232.45" rx="10.5" ry="1.4" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".55"/>
@@ -8981,7 +8982,8 @@
         <ellipse cx="416.2" cy="224.2" rx="2.8" ry="2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <path d="M 382.5 223 C 389 222.8 395 221.5 398.4 222.4 C 399.5 223 400.5 223 401.6 222.4 C 405 221.5 411 222.8 417.5 223 C 408.4 225.8 391.6 225.8 382.5 223 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".86"/>
         <path d="M 382.5 223 C 391.6 225.8 408.4 225.8 417.5 223 C 411 230.9 405.5 232.6 400 232.6 C 394.5 232.6 389 230.9 382.5 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".86"/>
-        <path d="M 382.5 223 C 391.6 225.8 408.4 225.8 417.5 223 C 408.4 227.2 391.6 227.2 382.5 223 Z" fill="var(--hero-mouth-fill, #5a2418)" opacity=".92"/>
+        <path data-hero-lip-edge d="M 408.031 230.927 C 405.28 232.208 402.64 232.6 400 232.6 C 397.36 232.6 394.72 232.208 391.969 230.927" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
+        <path data-hero-mouth-seam d="M 382.5 223 C 391.6 225.8 408.4 225.8 417.5 223 C 408.4 227.2 391.6 227.2 382.5 223 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="wide-soft-lips" display="none">
         <ellipse cx="400" cy="231.5" rx="13.5" ry="1.4" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".55"/>
@@ -8989,7 +8991,8 @@
         <ellipse cx="421.2" cy="224.2" rx="2.8" ry="2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <path d="M 377.5 223 C 385 222.7 393 220.2 398 221.55 C 399.2 222.3 400.8 222.3 402 221.55 C 407 220.2 415 222.7 422.5 223 C 411 226.7 389 226.7 377.5 223 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".67"/>
         <path d="M 377.5 223 C 389 226.7 411 226.7 422.5 223 C 414 230.6 406.5 231.65 400 231.65 C 393.5 231.65 386 230.6 377.5 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".67"/>
-        <path d="M 377.5 223 C 389 226.7 411 226.7 422.5 223 C 411 228.1 389 228.1 377.5 223 Z" fill="var(--hero-mouth-fill, #5a2418)" opacity=".92"/>
+        <path data-hero-lip-edge d="M 410.051 230.316 C 406.47 231.408 403.12 231.65 400 231.65 C 396.88 231.65 393.53 231.408 389.949 230.316" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
+        <path data-hero-mouth-seam d="M 377.5 223 C 389 226.7 411 226.7 422.5 223 C 411 228.1 389 228.1 377.5 223 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="asymmetric-soft-smile" display="none">
         <ellipse cx="400" cy="231.3" rx="11.7" ry="1.4" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".55"/>
@@ -8997,7 +9000,8 @@
         <ellipse cx="418.2" cy="223.6" rx="2.8" ry="2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".7"/>
         <path d="M 380.5 223.7 C 388 224.5 394.6 224.8 398.3 225.2 C 399.2 225.6 400.2 225.6 401.4 225.1 C 407 224.2 413.4 223.5 419.5 222.4 C 410.5 227.4 390 228.3 380.5 223.7 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".57"/>
         <path d="M 380.5 223.7 C 390 228.3 410.5 227.4 419.5 222.4 C 411.5 230.2 404.2 231.5 399 231.45 C 393.3 231.4 386 229.4 380.5 223.7 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".57"/>
-        <path d="M 380.5 223.7 C 390 228.3 410.5 227.4 419.5 222.4 C 410.5 228.8 390 229.7 380.5 223.7 Z" fill="var(--hero-mouth-fill, #5a2418)" opacity=".92"/>
+        <path data-hero-lip-edge d="M 407.785 230.019 C 404.476 231.187 401.496 231.474 399 231.45 C 396.264 231.426 393.159 230.953 390.062 229.837" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
+        <path data-hero-mouth-seam d="M 380.5 223.7 C 390 228.3 410.5 227.4 419.5 222.4 C 410.5 228.8 390 229.7 380.5 223.7 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="smile">
         <g data-hero-lip-form transform="translate(400 223.5) scale(0.84 .88) translate(-400 -226)">
@@ -9007,6 +9011,7 @@
         <ellipse cx="423.9" cy="221.2" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 374.8 219.5 C 383.37 220.5 393.95 222.6 400 221.9 C 406.55 222.7 417.14 219.7 425.2 219.2 C 415.12 226.3 407.06 226.7 400 226 C 392.44 226.6 384.38 225.9 374.8 219.5 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
         <path d="M 374.8 219.5 C 384.38 233.35 392.44 233.6 400 233.6 C 407.56 233.6 415.62 233.35 425.2 219.5 C 415.62 236.1 408.57 237.2 400 237.1 C 391.43 237.2 384.38 236.1 374.8 219.5 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".68"/>
+        <path data-hero-lip-edge d="M 411.738 234.833 C 407.877 236.92 404.114 237.148 400 237.1 C 395.886 237.148 392.123 236.92 388.262 234.833" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Happy lens-shaped smile with corner dimples (contained above chin). -->
         <path data-hero-mouth-opening d="M 374.8 219.5 C 385.64 226 414.36 226 425.2 219.5 C 415.62 233.35 407.81 233.6 400 233.6 C 392.19 233.6 384.38 233.35 374.8 219.5 Z" fill="url(#human-mouth-recess-{{ hero_variant }})"/>
@@ -9014,7 +9019,7 @@
         <path d="M 373.2 219.8 C 376.8 222.9, 380.3 224, 383.6 223.4 M 416.4 223.4 C 419.7 224, 423.2 222.9, 426.8 219.8" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.05" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .14)"/>
 
 
-        <path d="M 374.8 219.5 C 385.64 226 414.36 226 425.2 219.5" fill="none" stroke="var(--hero-lip-shadow, #8f3232)" stroke-width=".72" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-mouth-seam d="M 374.8 219.5 C 385.64 226 414.36 226 425.2 219.5" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".85" stroke-linecap="round" opacity=".64"/>
         <defs><clipPath id="human-teeth-clip-smile-{{ hero_variant }}"><use href="#human-teeth-smile-{{ hero_variant }}"/></clipPath></defs>
         <g clip-path="url(#human-teeth-clip-smile-{{ hero_variant }})" fill="none" stroke="#b5a08c" stroke-linecap="round" opacity=".28" stroke-width=".42">
           <path d="M 390.42 223.5 C 390.42 225.5 391.43 227.5 391.94 228.5 M 400 224.5 C 400 226.5 400 228.5 400 229.5 M 409.58 223.5 C 409.58 225.5 408.57 227.5 408.06 228.5"/>
@@ -9028,7 +9033,8 @@
         <ellipse cx="418.2" cy="224.9" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 380.5 223.2 C 389.47 224 392.98 224.6 398 225.55 C 399 226.2 401 226.2 402 225.55 C 407.02 224.6 410.53 224 419.5 223.2 C 409.36 228 390.64 228 380.5 223.2 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".54"/>
         <path d="M 380.5 223.2 C 390.64 228 409.36 228 419.5 223.2 C 412.48 228.48 405.85 229.2 400 229.2 C 394.15 229.2 387.52 228.48 380.5 223.2 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".54"/>
-        <path d="M 380.5 223.2 C 390.64 228 409.36 228 419.5 223.2 C 410.14 228.9 389.86 228.9 380.5 223.2 Z" fill="var(--hero-mouth-fill, #5a2418)" opacity=".8"/>
+        <path data-hero-lip-edge d="M 408.92 228.278 C 405.796 229.034 402.808 229.2 400 229.2 C 397.192 229.2 394.204 229.034 391.08 228.278" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
+        <path data-hero-mouth-seam d="M 380.5 223.2 C 390.64 228 409.36 228 419.5 223.2 C 410.14 228.9 389.86 228.9 380.5 223.2 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="small-smile" display="none">
         <!-- Tapered lip masses meet at a narrow seam; soft occlusion seats them in the face. -->
@@ -9037,7 +9043,8 @@
         <ellipse cx="412.2" cy="225.2" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 386.5 223.5 C 392.71 224.3 395.14 224.08 398 225.03 C 399 225.68 401 225.68 402 225.03 C 404.86 224.08 407.29 224.3 413.5 223.5 C 406.48 227.2 393.52 227.2 386.5 223.5 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".5"/>
         <path d="M 386.5 223.5 C 393.52 227.2 406.48 227.2 413.5 223.5 C 408.64 227.68 404.05 228.28 400 228.28 C 395.95 228.28 391.36 227.68 386.5 223.5 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".5"/>
-        <path d="M 386.5 223.5 C 393.52 227.2 406.48 227.2 413.5 223.5 C 407.02 228.1 392.98 228.1 386.5 223.5 Z" fill="var(--hero-mouth-fill, #5a2418)" opacity=".8"/>
+        <path data-hero-lip-edge d="M 406.175 227.536 C 404.012 228.142 401.944 228.28 400 228.28 C 398.056 228.28 395.988 228.142 393.825 227.536" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
+        <path data-hero-mouth-seam d="M 386.5 223.5 C 393.52 227.2 406.48 227.2 413.5 223.5 C 407.02 228.1 392.98 228.1 386.5 223.5 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="grin" display="none">
         <g data-hero-lip-form transform="translate(400 223.5) scale(0.84 .88) translate(-400 -226)">
@@ -9047,13 +9054,14 @@
         <ellipse cx="421.5" cy="222.3" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 377.2 220.6 C 384.95 221.6 394.53 223.7 400 223 C 405.93 223.8 415.5 220.8 422.8 220.3 C 413.68 227.4 406.38 227.8 400 227.1 C 393.16 227.7 385.86 227 377.2 220.6 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
         <path d="M 377.2 220.6 C 385.86 232.95 393.16 233.2 400 233.2 C 406.84 233.2 414.14 232.95 422.8 220.6 C 414.14 235.7 407.75 236.8 400 236.7 C 392.25 236.8 385.86 235.7 377.2 220.6 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".68"/>
+        <path data-hero-lip-edge d="M 410.621 234.599 C 407.127 236.52 403.72 236.748 400 236.7 C 396.28 236.748 392.873 236.52 389.379 234.599" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Happy grin: lens shape with teeth. -->
         <path data-hero-mouth-opening d="M 377.2 220.6 C 387 227.2 413 227.2 422.8 220.6 C 414.14 232.95 407.07 233.2 400 233.2 C 392.93 233.2 385.86 232.95 377.2 220.6 Z" fill="url(#human-mouth-recess-{{ hero_variant }})"/>
         <path id="human-teeth-grin-{{ hero_variant }}" data-hero-teeth d="M 383.1 223.8 C 391.6 227, 408.4 227, 416.9 223.8 C 412.9 228, 406.4 229.6, 400 229.6 C 393.6 229.6, 387.1 228, 383.1 223.8 Z" fill="url(#teeth-enamel-{{ hero_variant }})" opacity=".94"/>
 
 
-        <path d="M 377.2 220.6 C 387 227.2 413 227.2 422.8 220.6" fill="none" stroke="var(--hero-lip-shadow, #8f3232)" stroke-width=".72" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-mouth-seam d="M 377.2 220.6 C 387 227.2 413 227.2 422.8 220.6" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".85" stroke-linecap="round" opacity=".64"/>
         <defs><clipPath id="human-teeth-clip-grin-{{ hero_variant }}"><use href="#human-teeth-grin-{{ hero_variant }}"/></clipPath></defs>
         <g clip-path="url(#human-teeth-clip-grin-{{ hero_variant }})" fill="none" stroke="#b5a08c" stroke-linecap="round" opacity=".28" stroke-width=".42">
           <path d="M 391.34 224.6 C 391.34 226.6 392.25 228.6 392.7 229.6 M 400 225.6 C 400 227.6 400 229.6 400 230.6 M 408.66 224.6 C 408.66 226.6 407.75 228.6 407.3 229.6"/>
@@ -9067,7 +9075,8 @@
         <ellipse cx="418.1" cy="224.9" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 380.6 223.2 C 389.52 224 393.02 226.1 398 227.05 C 399 227.7 401 227.7 402 227.05 C 406.98 226.1 410.48 224 419.4 223.2 C 409.31 230 390.69 230 380.6 223.2 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".58"/>
         <path d="M 380.6 223.2 C 390.69 230 409.31 230 419.4 223.2 C 412.42 230.05 405.82 230.8 400 230.8 C 394.18 230.8 387.58 230.05 380.6 223.2 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".58"/>
-        <path d="M 380.6 223.2 C 390.69 230 409.31 230 419.4 223.2 C 410.09 230.9 389.91 230.9 380.6 223.2 Z" fill="var(--hero-mouth-fill, #5a2418)" opacity=".8"/>
+        <path data-hero-lip-edge d="M 408.876 229.69 C 405.767 230.627 402.794 230.8 400 230.8 C 397.206 230.8 394.233 230.627 391.124 229.69" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
+        <path data-hero-mouth-seam d="M 380.6 223.2 C 390.69 230 409.31 230 419.4 223.2 C 410.09 230.9 389.91 230.9 380.6 223.2 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="neutral" display="none">
         <!-- Tapered lip masses meet at a narrow seam; soft occlusion seats them in the face. -->
@@ -9076,7 +9085,8 @@
         <ellipse cx="412.9" cy="227.1" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 385.8 225.4 C 392.33 226.2 394.89 224.48 398 225.43 C 399 226.08 401 226.08 402 225.43 C 405.11 224.48 407.67 226.2 414.2 225.4 C 406.82 227.1 393.18 227.1 385.8 225.4 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".48"/>
         <path d="M 385.8 225.4 C 393.18 227.1 406.82 227.1 414.2 225.4 C 409.09 228.15 404.26 228.78 400 228.78 C 395.74 228.78 390.91 228.15 385.8 225.4 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".48"/>
-        <path d="M 385.8 225.4 C 393.18 227.1 406.82 227.1 414.2 225.4 C 407.38 228 392.62 228 385.8 225.4 Z" fill="var(--hero-mouth-fill, #5a2418)" opacity=".8"/>
+        <path data-hero-lip-edge d="M 406.496 228.18 C 404.221 228.635 402.045 228.78 400 228.78 C 397.955 228.78 395.779 228.635 393.504 228.18" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
+        <path data-hero-mouth-seam d="M 385.8 225.4 C 393.18 227.1 406.82 227.1 414.2 225.4 C 407.38 228 392.62 228 385.8 225.4 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="full-lips" display="none">
         <!-- Tapered lip masses meet at a narrow seam; soft occlusion seats them in the face. -->
@@ -9085,7 +9095,8 @@
         <ellipse cx="416.5" cy="224.2" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 382.2 222.5 C 389 222 394 218.5 398 220.3 C 399.2 221.4 400.8 221.4 402 220.3 C 406 218.5 411 222 417.8 222.5 C 408.54 225.3 391.46 225.3 382.2 222.5 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".92"/>
         <path d="M 382.2 222.5 C 391.46 225.3 408.54 225.3 417.8 222.5 C 411.39 228.45 405.34 230.1 400 230.1 C 394.66 230.1 388.61 228.45 382.2 222.5 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".92"/>
-        <path d="M 382.2 222.5 C 391.46 225.3 408.54 225.3 417.8 222.5 C 409.26 226.2 390.74 226.2 382.2 222.5 Z" fill="var(--hero-mouth-fill, #5a2418)" opacity=".8"/>
+        <path data-hero-lip-edge d="M 408.142 228.666 C 405.29 229.72 402.563 230.1 400 230.1 C 397.437 230.1 394.71 229.72 391.858 228.666" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
+        <path data-hero-mouth-seam d="M 382.2 222.5 C 391.46 225.3 408.54 225.3 417.8 222.5 C 409.26 226.2 390.74 226.2 382.2 222.5 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="soft-full-lips" display="none">
         <!-- Tapered lip masses meet at a narrow seam; soft occlusion seats them in the face. -->
@@ -9094,7 +9105,8 @@
         <ellipse cx="415.5" cy="224.2" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 383.2 222.5 C 390 222.2 394.4 220 398 221.05 C 399.2 221.9 400.8 221.9 402 221.05 C 405.6 220 410 222.2 416.8 222.5 C 408.06 225.1 391.94 225.1 383.2 222.5 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".76"/>
         <path d="M 383.2 222.5 C 391.94 225.1 408.06 225.1 416.8 222.5 C 410.75 227.6 405.04 228.95 400 228.95 C 394.96 228.95 389.25 227.6 383.2 222.5 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".76"/>
-        <path d="M 383.2 222.5 C 391.94 225.1 408.06 225.1 416.8 222.5 C 408.74 226 391.26 226 383.2 222.5 Z" fill="var(--hero-mouth-fill, #5a2418)" opacity=".8"/>
+        <path data-hero-lip-edge d="M 407.684 227.751 C 404.993 228.639 402.419 228.95 400 228.95 C 397.581 228.95 395.007 228.639 392.316 227.751" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
+        <path data-hero-mouth-seam d="M 383.2 222.5 C 391.94 225.1 408.06 225.1 416.8 222.5 C 408.74 226 391.26 226 383.2 222.5 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="bright-smile" display="none">
         <g data-hero-lip-form transform="translate(400 223.5) scale(0.84 .88) translate(-400 -226)">
@@ -9104,6 +9116,7 @@
         <ellipse cx="424.6" cy="220.6" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 374.1 218.9 C 382.91 219.9 393.78 222 400 221.3 C 406.73 222.1 417.61 219.1 425.9 218.6 C 415.54 225.7 407.25 226.1 400 225.4 C 392.23 226 383.94 225.3 374.1 218.9 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
         <path d="M 374.1 218.9 C 383.94 234.05 392.23 234.3 400 234.3 C 407.77 234.3 416.06 234.05 425.9 218.9 C 416.06 236.8 408.81 237.9 400 237.8 C 391.19 237.9 383.94 236.8 374.1 218.9 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".68"/>
+        <path data-hero-lip-edge d="M 412.067 235.389 C 408.098 237.62 404.229 237.848 400 237.8 C 395.771 237.848 391.902 237.62 387.933 235.389" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Bright happy smile: bigger lens with corner dimples. -->
         <path data-hero-mouth-opening d="M 374.1 218.9 C 385.24 227.1 414.76 227.1 425.9 218.9 C 416.06 234.05 408.03 234.3 400 234.3 C 391.97 234.3 383.94 234.05 374.1 218.9 Z" fill="url(#human-mouth-recess-{{ hero_variant }})"/>
@@ -9111,7 +9124,7 @@
         <path d="M 372.2 219.1 C 376 222.3, 380 223.8, 383.8 223.2 M 416.2 223.2 C 420 223.8, 424 222.3, 427.8 219.1" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.05" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .14)"/>
 
 
-        <path d="M 374.1 218.9 C 385.24 227.1 414.76 227.1 425.9 218.9" fill="none" stroke="var(--hero-lip-shadow, #8f3232)" stroke-width=".72" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-mouth-seam d="M 374.1 218.9 C 385.24 227.1 414.76 227.1 425.9 218.9" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".85" stroke-linecap="round" opacity=".64"/>
         <defs><clipPath id="human-teeth-clip-bright-smile-{{ hero_variant }}"><use href="#human-teeth-bright-smile-{{ hero_variant }}"/></clipPath></defs>
         <g clip-path="url(#human-teeth-clip-bright-smile-{{ hero_variant }})" fill="none" stroke="#b5a08c" stroke-linecap="round" opacity=".28" stroke-width=".42">
           <path d="M 390.16 222.9 C 390.16 224.9 391.19 226.9 391.71 227.9 M 400 223.9 C 400 225.9 400 227.9 400 228.9 M 409.84 222.9 C 409.84 224.9 408.81 226.9 408.29 227.9"/>
@@ -9126,6 +9139,7 @@
         <ellipse cx="428" cy="220.5" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 370.7 218.8 C 380.66 219.8 392.97 221.9 400 221.2 C 407.62 222 419.92 219 429.3 218.5 C 417.58 225.6 408.2 226 400 225.3 C 391.21 225.9 381.83 225.2 370.7 218.8 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
         <path d="M 370.7 218.8 C 381.83 235.15 391.21 235.4 400 235.4 C 408.79 235.4 418.17 235.15 429.3 218.8 C 418.17 237.9 409.96 239 400 238.9 C 390.04 239 381.83 237.9 370.7 218.8 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".68"/>
+        <path data-hero-lip-edge d="M 413.649 236.357 C 409.158 238.72 404.781 238.948 400 238.9 C 395.219 238.948 390.842 238.72 386.351 236.357" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Wide happy smile with prominent dimples. -->
         <path data-hero-mouth-opening d="M 370.7 218.8 C 383.3 227.5 416.7 227.5 429.3 218.8 C 418.17 235.15 409.08 235.4 400 235.4 C 390.92 235.4 381.83 235.15 370.7 218.8 Z" fill="url(#human-mouth-recess-{{ hero_variant }})"/>
@@ -9133,7 +9147,7 @@
         <path d="M 370.2 219 C 374.6 222.4, 379 224.2, 383.5 223.5 M 416.5 223.5 C 421 224.2, 425.4 222.4, 429.8 219" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.08" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .14)"/>
 
 
-        <path d="M 370.7 218.8 C 383.3 227.5 416.7 227.5 429.3 218.8" fill="none" stroke="var(--hero-lip-shadow, #8f3232)" stroke-width=".72" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-mouth-seam d="M 370.7 218.8 C 383.3 227.5 416.7 227.5 429.3 218.8" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".85" stroke-linecap="round" opacity=".64"/>
         <defs><clipPath id="human-teeth-clip-wide-smile-{{ hero_variant }}"><use href="#human-teeth-wide-smile-{{ hero_variant }}"/></clipPath></defs>
         <g clip-path="url(#human-teeth-clip-wide-smile-{{ hero_variant }})" fill="none" stroke="#b5a08c" stroke-linecap="round" opacity=".28" stroke-width=".42">
           <path d="M 388.87 222.8 C 388.87 224.8 390.04 226.8 390.62 227.8 M 400 223.8 C 400 225.8 400 227.8 400 228.8 M 411.13 222.8 C 411.13 224.8 409.96 226.8 409.38 227.8"/>
@@ -9148,6 +9162,7 @@
         <ellipse cx="422.3" cy="221.5" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 376.4 219.8 C 384.42 220.8 394.34 222.9 400 222.2 C 406.14 223 416.05 220 423.6 219.5 C 414.16 226.6 406.61 227 400 226.3 C 392.92 226.9 385.37 226.2 376.4 219.8 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
         <path d="M 376.4 219.8 C 385.37 233.05 392.92 233.3 400 233.3 C 407.08 233.3 414.63 233.05 423.6 219.8 C 414.63 235.8 408.02 236.9 400 236.8 C 391.98 236.9 385.37 235.8 376.4 219.8 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".68"/>
+        <path data-hero-lip-edge d="M 410.991 234.599 C 407.374 236.62 403.85 236.848 400 236.8 C 396.15 236.848 392.626 236.62 389.009 234.599" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Toothy smile with prominent teeth + soft gum line. -->
         <path data-hero-mouth-opening d="M 376.4 219.8 C 386.55 227.5 413.45 227.5 423.6 219.8 C 414.63 233.05 407.32 233.3 400 233.3 C 392.68 233.3 385.37 233.05 376.4 219.8 Z" fill="url(#human-mouth-recess-{{ hero_variant }})"/>
@@ -9157,7 +9172,7 @@
         <path d="M 376.4 219.8 C 386.2 229.5, 392.5 233.1, 400 233.3 C 407.5 233.1, 413.8 229.5, 423.6 219.8" stroke="var(--hero-lip-shadow, #8f3232)" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".72"/>
 
 
-        <path d="M 376.4 219.8 C 386.55 227.5 413.45 227.5 423.6 219.8" fill="none" stroke="var(--hero-lip-shadow, #8f3232)" stroke-width=".72" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-mouth-seam d="M 376.4 219.8 C 386.55 227.5 413.45 227.5 423.6 219.8" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".85" stroke-linecap="round" opacity=".64"/>
         <defs><clipPath id="human-teeth-clip-toothy-smile-{{ hero_variant }}"><use href="#human-teeth-toothy-smile-{{ hero_variant }}"/></clipPath></defs>
         <g clip-path="url(#human-teeth-clip-toothy-smile-{{ hero_variant }})" fill="none" stroke="#b5a08c" stroke-linecap="round" opacity=".28" stroke-width=".42">
           <path d="M 391.03 223.8 C 391.03 225.8 391.98 227.8 392.45 228.8 M 400 224.8 C 400 226.8 400 228.8 400 229.8 M 408.97 223.8 C 408.97 225.8 408.02 227.8 407.55 228.8"/>
@@ -9172,6 +9187,7 @@
         <ellipse cx="418.5" cy="222.6" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 380.2 220.9 C 386.93 221.9 395.25 224 400 223.3 C 405.15 224.1 413.46 221.1 419.8 220.6 C 411.88 227.7 405.54 228.1 400 227.4 C 394.06 228 387.72 227.3 380.2 220.9 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
         <path d="M 380.2 220.9 C 387.72 232.55 394.06 232.8 400 232.8 C 405.94 232.8 412.28 232.55 419.8 220.9 C 412.28 235.3 406.73 236.4 400 236.3 C 393.27 236.4 387.72 235.3 380.2 220.9 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".68"/>
+        <path data-hero-lip-edge d="M 409.224 234.276 C 406.189 236.12 403.23 236.348 400 236.3 C 396.77 236.348 393.811 236.12 390.776 234.276" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Toothy bright smile: full happy expression with cheek dimples. -->
         <path d="M 369.4 219 C 378.2 226.5, 389 230.5, 398 231.1 C 386.6 231.4, 376.4 228.5, 369.4 223.4 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity="var(--hero-smile-cheek-shadow-opacity, .16)"/>
@@ -9184,7 +9200,7 @@
         <path d="M 376.2 221.6 C 379 223.9, 381.5 224.7, 384.1 224.2 M 415.9 224.2 C 418.5 224.7, 421 223.9, 423.8 221.6" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .14)"/>
 
 
-        <path d="M 380.2 220.9 C 388.71 227.5 411.29 227.5 419.8 220.9" fill="none" stroke="var(--hero-lip-shadow, #8f3232)" stroke-width=".72" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-mouth-seam d="M 380.2 220.9 C 388.71 227.5 411.29 227.5 419.8 220.9" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".85" stroke-linecap="round" opacity=".64"/>
         <defs><clipPath id="human-teeth-clip-toothy-bright-smile-{{ hero_variant }}"><use href="#human-teeth-toothy-bright-smile-{{ hero_variant }}"/></clipPath></defs>
         <g clip-path="url(#human-teeth-clip-toothy-bright-smile-{{ hero_variant }})" fill="none" stroke="#b5a08c" stroke-linecap="round" opacity=".28" stroke-width=".42">
           <path d="M 392.48 224.9 C 392.48 226.9 393.27 228.9 393.66 229.9 M 400 225.9 C 400 227.9 400 229.9 400 230.9 M 407.52 224.9 C 407.52 226.9 406.73 228.9 406.34 229.9"/>
@@ -9199,6 +9215,7 @@
         <ellipse cx="426.2" cy="221.1" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 372.5 219.4 C 381.85 220.4 393.4 222.5 400 221.8 C 407.15 222.6 418.7 219.6 427.5 219.1 C 416.5 226.2 407.7 226.6 400 225.9 C 391.75 226.5 382.95 225.8 372.5 219.4 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
         <path d="M 372.5 219.4 C 382.95 233.55 391.75 233.8 400 233.8 C 408.25 233.8 417.05 233.55 427.5 219.4 C 417.05 236.3 409.35 237.4 400 237.3 C 390.65 237.4 382.95 236.3 372.5 219.4 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".68"/>
+        <path data-hero-lip-edge d="M 412.81 235 C 408.596 237.12 404.488 237.348 400 237.3 C 395.512 237.348 391.404 237.12 387.19 235" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Photo smile: big confident grin with full teeth + lower-lip shine. -->
         <path data-hero-mouth-opening d="M 372.5 219.4 C 384.32 227.4 415.68 227.4 427.5 219.4 C 417.05 233.55 408.52 233.8 400 233.8 C 391.48 233.8 382.95 233.55 372.5 219.4 Z" fill="url(#human-mouth-recess-{{ hero_variant }})"/>
@@ -9210,7 +9227,7 @@
         <path d="M 371.5 219 C 374.8 221.6, 377.7 222.7, 380.7 222 M 419.3 222 C 422.3 222.7, 425.2 221.6, 428.5 219" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.02" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .14)"/>
 
 
-        <path d="M 372.5 219.4 C 384.32 227.4 415.68 227.4 427.5 219.4" fill="none" stroke="var(--hero-lip-shadow, #8f3232)" stroke-width=".72" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-mouth-seam d="M 372.5 219.4 C 384.32 227.4 415.68 227.4 427.5 219.4" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".85" stroke-linecap="round" opacity=".64"/>
         <defs><clipPath id="human-teeth-clip-photo-smile-{{ hero_variant }}"><use href="#human-teeth-photo-smile-{{ hero_variant }}"/></clipPath></defs>
         <g clip-path="url(#human-teeth-clip-photo-smile-{{ hero_variant }})" fill="none" stroke="#b5a08c" stroke-linecap="round" opacity=".28" stroke-width=".42">
           <path d="M 389.55 223.4 C 389.55 225.4 390.65 227.4 391.2 228.4 M 400 224.4 C 400 226.4 400 228.4 400 229.4 M 410.45 223.4 C 410.45 225.4 409.35 227.4 408.8 228.4"/>
@@ -9224,7 +9241,8 @@
         <ellipse cx="420.5" cy="224.7" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 378.2 223 C 388.23 223.8 392.15 226.05 398 227 C 399 227.65 401 227.65 402 227 C 407.85 226.05 411.77 223.8 421.8 223 C 410.46 230 389.54 230 378.2 223 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".6"/>
         <path d="M 378.2 223 C 389.54 230 410.46 230 421.8 223 C 413.95 230.07 406.54 230.85 400 230.85 C 393.46 230.85 386.05 230.07 378.2 223 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".6"/>
-        <path d="M 378.2 223 C 389.54 230 410.46 230 421.8 223 C 411.34 230.9 388.66 230.9 378.2 223 Z" fill="var(--hero-mouth-fill, #5a2418)" opacity=".8"/>
+        <path data-hero-lip-edge d="M 409.971 229.702 C 406.479 230.67 403.139 230.85 400 230.85 C 396.861 230.85 393.521 230.67 390.029 229.702" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
+        <path data-hero-mouth-seam d="M 378.2 223 C 389.54 230 410.46 230 421.8 223 C 411.34 230.9 388.66 230.9 378.2 223 Z" fill="var(--hero-lip-seam, #492016)" opacity=".94"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="soft-open-grin" display="none">
         <g data-hero-lip-form transform="translate(400 223.5) scale(0.84 .88) translate(-400 -226)">
@@ -9234,6 +9252,7 @@
         <ellipse cx="422.1" cy="222.5" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 376.6 220.8 C 384.56 221.8 394.38 223.9 400 223.2 C 406.08 224 415.91 221 423.4 220.5 C 414.04 227.6 406.55 228 400 227.3 C 392.98 227.9 385.49 227.2 376.6 220.8 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
         <path d="M 376.6 220.8 C 385.49 232.85 392.98 233.1 400 233.1 C 407.02 233.1 414.51 232.85 423.4 220.8 C 414.51 235.6 407.96 236.7 400 236.6 C 392.04 236.7 385.49 235.6 376.6 220.8 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".68"/>
+        <path data-hero-lip-edge d="M 410.903 234.532 C 407.317 236.42 403.821 236.648 400 236.6 C 396.179 236.648 392.683 236.42 389.097 234.532" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Soft happy grin with peek of teeth. -->
         <path data-hero-mouth-opening d="M 376.6 220.8 C 386.66 227.8 413.34 227.8 423.4 220.8 C 414.51 232.85 407.25 233.1 400 233.1 C 392.75 233.1 385.49 232.85 376.6 220.8 Z" fill="url(#human-mouth-recess-{{ hero_variant }})"/>
@@ -9242,7 +9261,7 @@
         <path d="M 377 220.8 C 386.8 229.4, 393.2 232.9, 400 233.1 C 406.8 232.9, 413.2 229.4, 423 220.8" stroke="var(--hero-lip-shadow, #8f3232)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".68"/>
 
 
-        <path d="M 376.6 220.8 C 386.66 227.8 413.34 227.8 423.4 220.8" fill="none" stroke="var(--hero-lip-shadow, #8f3232)" stroke-width=".72" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-mouth-seam d="M 376.6 220.8 C 386.66 227.8 413.34 227.8 423.4 220.8" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".85" stroke-linecap="round" opacity=".64"/>
         <defs><clipPath id="human-teeth-clip-soft-open-grin-{{ hero_variant }}"><use href="#human-teeth-soft-open-grin-{{ hero_variant }}"/></clipPath></defs>
         <g clip-path="url(#human-teeth-clip-soft-open-grin-{{ hero_variant }})" fill="none" stroke="#b5a08c" stroke-linecap="round" opacity=".28" stroke-width=".42">
           <path d="M 391.11 224.8 C 391.11 226.8 392.04 228.8 392.51 229.8 M 400 225.8 C 400 227.8 400 229.8 400 230.8 M 408.89 224.8 C 408.89 226.8 407.96 228.8 407.49 229.8"/>
@@ -9257,6 +9276,7 @@
         <ellipse cx="423" cy="221.9" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 375.7 220.2 C 383.96 221.2 394.17 223.3 400 222.6 C 406.32 223.4 416.52 220.4 424.3 219.9 C 414.58 227 406.8 227.4 400 226.7 C 392.71 227.3 384.93 226.6 375.7 220.2 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
         <path d="M 375.7 220.2 C 384.93 233.85 392.71 234.1 400 234.1 C 407.29 234.1 415.07 233.85 424.3 220.2 C 415.07 236.6 408.26 237.7 400 237.6 C 391.74 237.7 384.93 236.6 375.7 220.2 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".68"/>
+        <path data-hero-lip-edge d="M 411.32 235.355 C 407.596 237.42 403.965 237.648 400 237.6 C 396.035 237.648 392.404 237.42 388.68 235.355" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Cheerful grin: bright happy expression with corner dimples. -->
         <path data-hero-mouth-opening d="M 375.7 220.2 C 386.15 227 413.85 227 424.3 220.2 C 415.07 233.85 407.53 234.1 400 234.1 C 392.47 234.1 384.93 233.85 375.7 220.2 Z" fill="url(#human-mouth-recess-{{ hero_variant }})"/>
@@ -9264,7 +9284,7 @@
         <path d="M 373.2 219.6 C 376.8 222.7, 380.2 224, 383.6 223.4 M 416.4 223.4 C 419.8 224, 423.2 222.7, 426.8 219.6" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.05" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .14)"/>
 
 
-        <path d="M 375.7 220.2 C 386.15 227 413.85 227 424.3 220.2" fill="none" stroke="var(--hero-lip-shadow, #8f3232)" stroke-width=".72" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-mouth-seam d="M 375.7 220.2 C 386.15 227 413.85 227 424.3 220.2" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".85" stroke-linecap="round" opacity=".64"/>
         <defs><clipPath id="human-teeth-clip-cheerful-grin-{{ hero_variant }}"><use href="#human-teeth-cheerful-grin-{{ hero_variant }}"/></clipPath></defs>
         <g clip-path="url(#human-teeth-clip-cheerful-grin-{{ hero_variant }})" fill="none" stroke="#b5a08c" stroke-linecap="round" opacity=".28" stroke-width=".42">
           <path d="M 390.77 224.2 C 390.77 226.2 391.74 228.2 392.22 229.2 M 400 225.2 C 400 227.2 400 229.2 400 230.2 M 409.23 224.2 C 409.23 226.2 408.26 228.2 407.78 229.2"/>
@@ -9279,6 +9299,7 @@
         <ellipse cx="417" cy="223.4" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 381.7 221.7 C 387.92 222.7 395.61 224.8 400 224.1 C 404.76 224.9 412.44 221.9 418.3 221.4 C 410.98 228.5 405.12 228.9 400 228.2 C 394.51 228.8 388.65 228.1 381.7 221.7 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
         <path d="M 381.7 221.7 C 388.65 234.55 394.51 234.8 400 234.8 C 405.49 234.8 411.35 234.55 418.3 221.7 C 411.35 237.3 406.22 238.4 400 238.3 C 393.78 238.4 388.65 237.3 381.7 221.7 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".68"/>
+        <path data-hero-lip-edge d="M 408.525 236.144 C 405.72 238.12 402.986 238.348 400 238.3 C 397.014 238.348 394.28 238.12 391.475 236.144" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Open happy smile with visible lower lip. -->
         <path data-hero-mouth-opening d="M 381.7 221.7 C 389.57 228.3 410.43 228.3 418.3 221.7 C 411.35 234.55 405.67 234.8 400 234.8 C 394.33 234.8 388.65 234.55 381.7 221.7 Z" fill="url(#human-mouth-recess-{{ hero_variant }})"/>
@@ -9286,7 +9307,7 @@
         <path d="M 392.1 232.4 C 397.1 234.4, 402.9 234.4, 407.9 232.4" fill="none" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="2.25" stroke-linecap="round" opacity=".68"/>
 
 
-        <path d="M 381.7 221.7 C 389.57 228.3 410.43 228.3 418.3 221.7" fill="none" stroke="var(--hero-lip-shadow, #8f3232)" stroke-width=".72" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-mouth-seam d="M 381.7 221.7 C 389.57 228.3 410.43 228.3 418.3 221.7" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".85" stroke-linecap="round" opacity=".64"/>
         <defs><clipPath id="human-teeth-clip-open-smile-{{ hero_variant }}"><use href="#human-teeth-open-smile-{{ hero_variant }}"/></clipPath></defs>
         <g clip-path="url(#human-teeth-clip-open-smile-{{ hero_variant }})" fill="none" stroke="#b5a08c" stroke-linecap="round" opacity=".28" stroke-width=".42">
           <path d="M 393.05 225.7 C 393.05 227.7 393.78 229.7 394.14 230.7 M 400 226.7 C 400 228.7 400 230.7 400 231.7 M 406.95 225.7 C 406.95 227.7 406.22 229.7 405.86 230.7"/>
@@ -9301,6 +9322,7 @@
         <ellipse cx="419.9" cy="222.4" rx="3" ry="2.2" fill="url(#human-mouth-soft-shadow-{{ hero_variant }})" opacity=".8"/>
         <path d="M 378.8 220.7 C 386.01 221.7 394.91 223.8 400 223.1 C 405.51 223.9 414.42 220.9 421.2 220.4 C 412.72 227.5 405.94 227.9 400 227.2 C 393.64 227.8 386.86 227.1 378.8 220.7 Z" fill="url(#human-upper-lip-{{ hero_variant }})" opacity=".66"/>
         <path d="M 378.8 220.7 C 386.86 235.95 393.64 236.2 400 236.2 C 406.36 236.2 413.14 235.95 421.2 220.7 C 413.14 238.7 407.21 239.8 400 239.7 C 392.79 239.8 386.86 238.7 378.8 220.7 Z" fill="url(#human-lip-volume-{{ hero_variant }})" opacity=".68"/>
+        <path data-hero-lip-edge d="M 409.875 237.278 C 406.627 239.52 403.461 239.748 400 239.7 C 396.539 239.748 393.373 239.52 390.125 237.278" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".65" stroke-linecap="round" opacity=".46"/>
 
         <!-- Excited happy mouth: tall open with prominent lip + dimples. -->
         <path data-hero-mouth-opening d="M 378.8 220.7 C 387.92 228.6 412.08 228.6 421.2 220.7 C 413.14 235.95 406.57 236.2 400 236.2 C 393.43 236.2 386.86 235.95 378.8 220.7 Z" fill="url(#human-mouth-recess-{{ hero_variant }})"/>
@@ -9309,7 +9331,7 @@
         <path d="M 375.2 220.3 C 378.1 222.9, 381 224.2, 384.1 223.6 M 415.9 223.6 C 419 224.2, 421.9 222.9, 424.8 220.3" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.02" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .14)"/>
 
 
-        <path d="M 378.8 220.7 C 387.92 228.6 412.08 228.6 421.2 220.7" fill="none" stroke="var(--hero-lip-shadow, #8f3232)" stroke-width=".72" stroke-linecap="round" opacity=".5"/>
+        <path data-hero-mouth-seam d="M 378.8 220.7 C 387.92 228.6 412.08 228.6 421.2 220.7" fill="none" stroke="var(--hero-lip-seam, #492016)" stroke-width=".85" stroke-linecap="round" opacity=".64"/>
         <defs><clipPath id="human-teeth-clip-excited-smile-{{ hero_variant }}"><use href="#human-teeth-excited-smile-{{ hero_variant }}"/></clipPath></defs>
         <g clip-path="url(#human-teeth-clip-excited-smile-{{ hero_variant }})" fill="none" stroke="#b5a08c" stroke-linecap="round" opacity=".28" stroke-width=".42">
           <path d="M 391.94 224.7 C 391.94 226.7 392.79 228.7 393.22 229.7 M 400 225.7 C 400 227.7 400 229.7 400 230.7 M 408.06 224.7 C 408.06 226.7 407.21 228.7 406.78 229.7"/>

@@ -2015,6 +2015,10 @@
     var mouthFill = darkSkin
       ? skinRelativeAccent(skinShadow, '#5a2418', deepSkin ? 0.24 : 0.18, 1.75)
       : '#5a2418';
+    // Anatomical edges stay warm and dark; the accessibility-oriented faceLine
+    // token may become light on deep skin and would create bright feature rings.
+    var faceEdgeInk = mix(skin, '#231411', 0.68);
+    var lipSeam = mix(mouthFill, '#170d0c', 0.4);
     var mouthLine = darkSkin
       ? firstContrastColorAgainstAll(['#f1c27d', '#e0a080', '#fff2b8', '#ffffff', '#3a1408', '#000000'], skinRamp, compactTarget)
       : firstContrastColorAgainstAll(['#3a1408', '#000000', '#ffffff'], skinRamp, compactTarget);
@@ -2064,6 +2068,8 @@
       skinHighlight: warmHighlight,
       skinHighlightSoft: skinHighlightSoft,
       faceFormLight: faceFormLight,
+      faceEdgeInk: faceEdgeInk,
+      lipSeam: lipSeam,
       faceLine: faceLine,
       faceShadow: darkSkin ? mix(skinShadow, faceLine, 0.38) : darken(skin, 0.35),
       facePlaneShadow: facePlaneShadow,
@@ -3654,6 +3660,8 @@
     svg.style.setProperty('--hero-skin-highlight', contrastTokens.skinHighlight);
     svg.style.setProperty('--hero-skin-highlight-soft', contrastTokens.skinHighlightSoft);
     svg.style.setProperty('--hero-face-form-light', contrastTokens.faceFormLight);
+    svg.style.setProperty('--hero-face-edge-ink', contrastTokens.faceEdgeInk);
+    svg.style.setProperty('--hero-lip-seam', contrastTokens.lipSeam);
     svg.style.setProperty('--hero-face-line', contrastTokens.faceLine);
     svg.style.setProperty('--hero-face-shadow', contrastTokens.faceShadow);
     svg.style.setProperty('--hero-face-plane-shadow', contrastTokens.facePlaneShadow);

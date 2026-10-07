@@ -4291,7 +4291,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const gradientStop = svg.querySelector('linearGradient[id^="hair-grad-"] stop');
       const nose = svg.querySelector('[data-hero-slot="nose-shape"][data-hero-option="soft"] [data-hero-face-detail="nose"]');
       const mouth = svg.querySelector('[data-hero-slot="mouth-style"][data-hero-option="full-lips"]');
-      const smileLine = mouth.querySelector('path[fill*="--hero-mouth-fill"]');
+      const smileLine = mouth.querySelector('[data-hero-mouth-seam]');
       const cheek = svg.querySelector('[data-hero-polish="face"] ellipse[fill*="human-cheek-warmth"]');
       const lip = mouth.querySelector('path[fill*="human-lip-volume"]');
       const skinColor = styles.getPropertyValue('--hero-skin-light').trim();

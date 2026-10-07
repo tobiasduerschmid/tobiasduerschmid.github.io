@@ -191,6 +191,9 @@ test('Selecting a beard paints the lower face with a bun, long lashes and a nond
 });
 
 test('Customizer saves, exports and imports separate hair colors and representation choices', async ({ page, context }) => {
+  // This round trip mounts the complete choice catalog across saving, reload,
+  // export and import; keep its budget separate from one-interaction tests.
+  test.setTimeout(60_000);
   // Two axe passes traverse the complete customizer as well as this save/import flow.
   if (interactiveA11yEnabled('se-gym-hero-avatar')) test.slow();
   await context.addCookies([{ name: 'se-gym-active', value: 'true', domain: '127.0.0.1', path: '/' }]);
