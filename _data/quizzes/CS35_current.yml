@@ -10,8 +10,9 @@ decks:
   - shell_parson
   - python
   - python_output
-other:
   - git_basic
+
+other:
   - nodejs
   - react
   - design_pattern_observer

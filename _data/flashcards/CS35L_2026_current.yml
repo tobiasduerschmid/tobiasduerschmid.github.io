@@ -11,8 +11,8 @@ decks:
   - regex_examples
   - python_syntax_explain
   - python_syntax_generate
-other:
   - git_basic
+other:
   - nodejs_syntax_explain
   - nodejs_syntax_generate
   - react_syntax_explain
