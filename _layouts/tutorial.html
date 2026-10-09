@@ -3,6 +3,10 @@
 
 {% assign tutorial_data = site.data.tutorials[page.tutorial] %}
 {% assign tutorial_title = tutorial_data.title | default: page.title %}
+{% assign tutorial_has_solutions = false %}
+{% for step in tutorial_data.steps %}
+  {% if step.solution %}{% assign tutorial_has_solutions = true %}{% endif %}
+{% endfor %}
 {% include head.html %}
 <meta name="pdf-url" content="{{ page.url | replace: '.html', '' }}/print">
 
@@ -37,10 +41,20 @@
            data-original-title="Reset current step to original code">
           <i class="fa fa-undo" aria-hidden="true"></i> Reset Current Step
         </a>
+        {% if tutorial_has_solutions %}
         <a id="solutionBtn" href="#" class="tutorial-nav-link tutorial-nav-hidden"
            data-original-title="Apply solution for current step">
           <i class="fa fa-key" aria-hidden="true"></i> Solution
         </a>
+        {% endif %}
+        {% if tutorial_data.download %}
+        <button id="tutorialDownloadBtn" type="button" class="tutorial-nav-button" disabled
+                aria-describedby="tutorialDownloadStatus">
+          <i class="fa fa-download" aria-hidden="true"></i> Download ZIP
+        </button>
+        <span id="tutorialDownloadStatus" class="tutorial-download-status sr-only"
+              role="status" aria-live="polite" aria-atomic="true"></span>
+        {% endif %}
         <a id="printBtn" href="{{ page.url | replace: '.html', '' }}/print" target="_blank"
            class="tutorial-nav-link" data-original-title="Print view">
           <i class="fa fa-print" aria-hidden="true"></i> Print
@@ -272,10 +286,15 @@
 
   <!-- Tutorial styles -->
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
+  {% if tutorial_data.download %}
+  <link rel="stylesheet" href="{{ '/css/tutorial-download.css' | relative_url }}">
+  {% endif %}
   {% if tutorial_backend == 'smalltalk' %}
   <link rel="stylesheet" href="{{ '/css/smalltalk-browser.css' | relative_url }}">
   {% endif %}
+  {% unless tutorial_data.show_hints == false %}
   <link rel="stylesheet" href="{{ '/css/tutor-chat.css' | relative_url }}">
+  {% endunless %}
 
   <!-- Mermaid.js — themed via SebookMermaid to match the ArchUML visual language.
        crossorigin=anonymous ensures the response is valid under COEP=credentialless
@@ -315,11 +334,17 @@
   <script src="{{ '/js/tutorial-inline-markdown.js' | relative_url }}"></script>
   <script src="{{ '/js/keyboard-shortcut-labels.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
+  {% if tutorial_data.download %}
+  <script src="{{ '/js/vendor/fflate/0.8.2/fflate.min.js' | relative_url }}"></script>
+  <script src="{{ '/js/tutorial-download.js' | relative_url }}"></script>
+  {% endif %}
   {% if tutorial_backend == 'uml-editor' %}
   <link rel="stylesheet" href="{{ '/css/tutorial-uml-editor.css' | relative_url }}">
   <script src="{{ '/js/tutorial-uml-editor.js' | relative_url }}"></script>
   {% endif %}
+  {% unless tutorial_data.show_hints == false %}
   <script src="{{ '/js/tutor-chat.js' | relative_url }}"></script>
+  {% endunless %}
 
   {% assign tutorial_backend = tutorial_data.backend | default: 'v86' %}
   {% if site.tutorial_autosave and tutorial_data.autosave_type != false %}
@@ -494,7 +519,16 @@
         playwright: config.playwright || null,
       });
       window._tutorial = tutorial;
-      tutorial.start().catch(function () {
+      tutorial.start().then(function () {
+        {% if tutorial_data.download %}
+        TutorialDownload.attach({
+          button: document.getElementById('tutorialDownloadBtn'),
+          status: document.getElementById('tutorialDownloadStatus'),
+          filename: config.download.filename,
+          readFiles: function () { return tutorial.getEditorFileContents(config.download.files); },
+        });
+        {% endif %}
+      }).catch(function () {
         // start() owns the visible error state; consume the rejected readiness
         // promise here because this layout intentionally starts it in place.
       });

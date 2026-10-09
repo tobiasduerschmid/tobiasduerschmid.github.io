@@ -30,7 +30,7 @@
     {{ step.instructions | markdownify | replace: ' id="', ' data-print-id="' }}
   </div>
 
-  {% if step.files %}
+  {% if step.files and tutorial_data.print_starter_files != false %}
   <div class="starter-files">
     <div class="starter-files-label">Starter files</div>
     {% for file in step.files %}

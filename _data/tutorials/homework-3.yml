@@ -1,0 +1,800 @@
+# Assignment workspace: intentionally not a guided tutorial. No quizzes, hints,
+# solutions, or enforced progression; the supplied handout defines the task.
+# Starter: UCLA-CS-35L/assign3 @ f7e64760134cedd246aa5a9ac01b2bcf0a692e60.
+# Public checks use independent examples of the assignment rules, not grader cases.
+title: "Homework 3"
+description: "CS 35L assignment workspace: build tic-tac-toe and Chorus Lapilli with React, keep reproducible lab notes, and write your own tests. Assumes basic JavaScript, HTML, and React knowledge."
+backend: react
+exclude_from_index: true
+show_hints: false
+print_starter_files: false
+require_tests: false
+require_quiz: false
+allow_skip_steps: true
+autosave_type: files
+progress_version: 1
+download:
+  filename: assign.zip
+  files:
+    - src/App.jsx
+    - src/main.jsx
+    - src/styles.css
+    - tic-tac-toe.txt
+    - chorus-lapilli.txt
+    - test_chorus_lapilli.py
+    - package.json
+    - vite.config.js
+    - index.html
+learning_objectives:
+  - "Build an interactive React game from components and state."
+  - "Implement the legal moves and winning conditions of Chorus Lapilli."
+  - "Write browser tests for valid, invalid, and terminal game states."
+  - "Document reproducible development and testing steps."
+
+steps:
+
+  # Pedagogy: independent assignment milestone; retain learner design decisions.
+  - title: "Tic-Tac-Toe"
+    key: tic-tac-toe
+    instructions: |
+      ### Your Assignment
+
+      Build a simple interactive React game, then document how someone else can reproduce it. This is an **assignment workspace**: you choose the implementation. There are no quizzes or supplied solutions. You should already know JavaScript functions and arrays, HTML, and basic React components and state; the [React Essentials tutorial](/SEBook/tools/react-tutorial) is available for review.
+
+      All three sections share your files. **Auto-save** keeps edits in this browser when enabled; keep your own local backup too. **Refresh** restarts the preview with your current code. **Reset Current Step restores the shared starter files**, including both notebooks, so use it only when you intend to discard that work.
+
+      **Download ZIP** in the top bar saves your current files as `assign.zip`, ready to upload to Gradescope. It includes your latest edits even when Auto-save is off. Download again after making further changes.
+
+      ### Part 1: Tic-Tac-Toe
+
+      1. **Build** the game from the [React tic-tac-toe tutorial](https://react.dev/learn/tutorial-tic-tac-toe). The environment is ready here; skip that tutorial's setup instructions. Put your game code in `src/App.jsx`. Keep the default export named `App`; `src/main.jsx` mounts it for you.
+      2. **Record** significant actions and outcomes in `tic-tac-toe.txt` as you work. Include setup/configuration, code changes, observations, and the reasons for decisions. Write a lab notebook that someone else could follow, rather than a transcript of commands.
+      3. **Review** your own source before adapting it. Identify how components, state, events, and rendering fit together. Use the [React learning reference](https://react.dev/learn) to investigate unfamiliar ideas, including lists, JSX, and state preservation.
+
+      This section has no automatic completion check. Play your game: try different winning rows, columns, and diagonals, and verify that a finished game stops accepting moves. Time travel is optional for the final assignment.
+
+      ### Working in This Browser
+
+      - Edit a file, then choose **Refresh** above the preview to run the current version. The preview starts as an assignment placeholder; constructing the board is your work.
+      - Use `React.useState(...)` or declare `const { useState } = React;` in your app. The preview supplies React and ReactDOM globally and removes single-line imports/exports; it does not resolve arbitrary npm packages or module aliases. Keep imports on single lines.
+      - The preview uses React 18, while the course starter uses React 19 with Vite. Use the shared basic APIs for this assignment. Verify the downloaded code in Vite or through Gradescope.
+      - The supplied `src/styles.css` provides board styling, including keyboard focus and both themes. Use real buttons with accessible names such as their row, column, and current value; keep empty squares visually empty. Announce turn, selection, invalid-move, and winner messages through a status region.
+
+      ### Local Starter
+
+      Use the [Assignment 3 starter repository](https://github.com/UCLA-CS-35L/assign3) for the local testing and submission tools. This workspace adapts its file structure and includes its two-example Python test file. Local commands such as `./helper dev` run in your computer's terminal, not in this preview.
+
+    files: &assignment_files
+      - path: "src/App.jsx"
+        language: javascript
+        content: |
+          import * as React from 'react';
+
+          export default function App() {
+            return (
+              <main className="assignment-app">
+                <h1>Homework 3</h1>
+                <p>Build your tic-tac-toe game here, then adapt it to Chorus Lapilli.</p>
+              </main>
+            );
+          }
+      - path: "src/main.jsx"
+        language: javascript
+        content: |
+          import * as React from 'react';
+          import * as ReactDOM from 'react-dom/client';
+          import 'bootstrap/dist/css/bootstrap.min.css';
+          import './styles.css';
+          import App from './App.jsx';
+
+          ReactDOM.createRoot(document.getElementById('root')).render(
+            <React.StrictMode><App /></React.StrictMode>
+          );
+      - path: "src/styles.css"
+        language: css
+        content: |
+          /* Presentation only: implement the game in src/App.jsx. */
+          body { font-size: 1em; line-height: 1.5; }
+          .assignment-app, .game { padding: 1em; }
+          h1 { font-size: 1.8em; }
+          h2 { font-size: 1.4em; }
+          button { font: inherit; }
+          .square {
+            background: #fff;
+            color: #202124;
+            border: 2px solid #686868;
+            float: left;
+            width: 2.5em;
+            height: 2.5em;
+            padding: 0;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+          }
+          .square:focus-visible { outline: 3px solid #005fcc; outline-offset: 2px; }
+          .board-row::after { clear: both; content: ''; display: table; }
+          .status { margin-bottom: 1em; }
+          .game { display: flex; flex-wrap: wrap; gap: 1em; }
+          html.dark-mode .square, [data-bs-theme="dark"] .square {
+            background: #202124;
+            color: #f5f5f5;
+            border-color: #b5b5b5;
+          }
+          html.dark-mode .square:focus-visible,
+          [data-bs-theme="dark"] .square:focus-visible { outline-color: #8ac7ff; }
+          @media print {
+            body { background: #fff !important; color: #202124 !important; }
+            .square, html.dark-mode .square, [data-bs-theme="dark"] .square {
+              background: #fff; color: #202124; border-color: #686868;
+            }
+          }
+      - path: "tic-tac-toe.txt"
+        language: plaintext
+        content: ""
+      - path: "chorus-lapilli.txt"
+        language: plaintext
+        content: ""
+      - path: "test_chorus_lapilli.py"
+        language: python
+        content: |
+          #!/usr/bin/env python3
+          import unittest
+          import os
+          import sys
+          import argparse
+          import subprocess
+          import unittest
+          import urllib.request
+
+
+          class TestChorusLapilli(unittest.TestCase):
+              '''Integration testing for Chorus Lapilli
+
+              This class handles the entire react start up, testing, and take down
+              process. Feel free to modify it to suit your needs.
+              '''
+
+              # ========================== [USEFUL CONSTANTS] ===========================
+
+              # Vite default startup address
+              VITE_HOST_ADDR = 'http://localhost:5173'
+
+              # XPATH query used to find Chorus Lapilli board tiles
+              BOARD_TILE_XPATH = '//button[contains(@class, \'square\')]'
+
+              # Sets of symbol classes - each string contains all valid characters
+              # for that particular symbol
+              SYMBOL_BLANK = ''
+              SYMBOL_X = 'Xx'
+              SYMBOL_O = '0Oo'
+
+              # ======================== [SETUP/TEARDOWN HOOKS] =========================
+
+              @classmethod
+              def setUpClass(cls):
+                  '''This function runs before testing occurs.
+
+                  Bring up the web app and configure Selenium
+                  '''
+
+                  env = dict(os.environ)
+                  env.update({
+                      # Prevent React from starting its own browser window
+                      'BROWSER': 'none',
+                  })
+
+                  subprocess.run(['npm', 'install'],
+                                     stdout=subprocess.DEVNULL,
+                                     stderr=subprocess.DEVNULL,
+                                     env=env,
+                                     check=True)
+
+                  # Await Webserver Start
+                  cls.vite = subprocess.Popen(
+                      ['npm', 'run', 'dev'],
+                      stdout=subprocess.PIPE,
+                      stderr=subprocess.DEVNULL,
+                      env=env)
+
+                  if cls.vite.stdout is None:
+                      raise OSError("Vite failed to start")
+                  for _ in cls.vite.stdout:
+                      try:
+                          with urllib.request.urlopen(cls.VITE_HOST_ADDR):
+                              break
+
+                      except IOError:
+                          pass
+
+                      # Ensure Vite does not terminate early
+                      if cls.vite.poll() is not None:
+                          raise OSError('Vite terminated before test')
+                  if cls.vite.poll() is not None:
+                      raise OSError('Vite terminated before test')
+
+                  cls.driver = Browser()
+                  cls.driver.get(cls.VITE_HOST_ADDR)
+                  cls.driver.implicitly_wait(0.5)
+
+              @classmethod
+              def tearDownClass(cls):
+                  '''This function runs after all testing have run.
+
+                  Terminate Vite and take down the Selenium webdriver.
+                  '''
+                  cls.vite.terminate()
+                  cls.vite.wait()
+                  cls.driver.quit()
+
+              def setUp(self):
+                  '''This function runs before every test.
+
+                  Refresh the browser so we get a new board.
+                  '''
+                  self.driver.refresh()
+
+              def tearDown(self):
+                  '''This function runs after every test.
+
+                  Not needed, but feel free to add stuff here.
+                  '''
+
+              # ========================== [HELPER FUNCTIONS] ===========================
+
+              def assertBoardEmpty(self, tiles):
+                  '''Checks if all board tiles are empty.
+
+                  Arguments:
+                    tiles: List[WebElement] - a board consisting of 9 buttons elements
+                  '''
+                  if len(tiles) != 9:
+                      raise AssertionError('tiles is not a 3x3 grid')
+                  for i, tile in enumerate(tiles):
+                      if tile.text.strip():
+                          raise AssertionError(f'tile {i} is not empty: '
+                                               f'\'{tile.text}\'')
+
+              def assertTileIs(self, tile, symbol_set):
+                  '''Checks if a certain tile has a certain symbol.
+
+                  Arguments:
+                    tile: WebElement - the button element to check
+                    symbol_set: str - a string containing all the valid symbols
+                  Raises:
+                    AssertionError - if tile is not in the symbol set
+                  '''
+                  if symbol_set is None:
+                      return
+                  if symbol_set == self.SYMBOL_BLANK:
+                      name = 'BLANK'
+                  elif symbol_set == self.SYMBOL_X:
+                      name = 'X'
+                  elif symbol_set == self.SYMBOL_O:
+                      name = 'O'
+                  else:
+                      name = 'in symbol_set'
+                  text = tile.text.strip()
+                  if ((symbol_set == self.SYMBOL_BLANK and text)
+                          or (symbol_set != self.SYMBOL_BLANK and not text)
+                          or text not in symbol_set):
+                      raise AssertionError(f'tile is not {name}: \'{tile.text}\'')
+
+
+          # =========================== [ADD YOUR TESTS HERE] ===========================
+
+              def test_new_board_empty(self):
+                  '''Check if a new game always starts with an empty board.'''
+                  tiles = self.driver.find_elements(By.XPATH, self.BOARD_TILE_XPATH)
+                  self.assertBoardEmpty(tiles)
+
+              def test_button_click(self):
+                  '''Check if clicking the top-left button adds an X.'''
+                  tiles = self.driver.find_elements(By.XPATH, self.BOARD_TILE_XPATH)
+                  self.assertTileIs(tiles[0], self.SYMBOL_BLANK)
+                  tiles[0].click()
+                  self.assertTileIs(tiles[0], self.SYMBOL_X)
+
+
+          # ================= [DO NOT MAKE ANY CHANGES BELOW THIS LINE] =================
+
+          if __name__ != '__main__':
+              from selenium.webdriver import Firefox as Browser
+              from selenium.webdriver.common.by import By
+          else:
+              parser = argparse.ArgumentParser(prog=sys.argv[0],
+                                               description='Chorus Lapilli Tester')
+              parser.add_argument('-b',
+                                  '--browser',
+                                  action='store',
+                                  metavar='name',
+                                  choices=['firefox', 'chrome', 'safari'],
+                                  default='firefox',
+                                  help='the browser to run tests with')
+              parser.add_argument('-c',
+                                  '--change-dir',
+                                  action='store',
+                                  metavar='dir',
+                                  default=None,
+                                  help=('change the working directory before running '
+                                        'tests'))
+
+              # Change the working directory
+              options = parser.parse_args(sys.argv[1:])
+              # Import different browser drivers based on user selection
+              try:
+                  if options.browser == 'firefox':
+                      from selenium.webdriver import Firefox as Browser
+                  elif options.browser == 'chrome':
+                      from selenium.webdriver import Chrome as Browser
+                  else:
+                      from selenium.webdriver import Safari as Browser
+                  from selenium.webdriver.common.by import By
+              except ImportError as err:
+                  print('[Error]',
+                        err, '\n\n'
+                        'Please refer to the Selenium documentation on installing the '
+                        'webdriver:\n'
+                        'https://www.selenium.dev/documentation/webdriver/'
+                        'getting_started/',
+                        file=sys.stderr)
+                  sys.exit(1)
+
+              if options.change_dir:
+                  try:
+                      os.chdir(options.change_dir)
+                  except OSError as err:
+                      print(err, file=sys.stderr)
+                      sys.exit(1)
+
+              if not os.path.isfile('package.json'):
+                  print('Invalid directory: cannot find \'package.json\'',
+                        file=sys.stderr)
+                  sys.exit(1)
+
+              tests = unittest.defaultTestLoader.loadTestsFromTestCase(TestChorusLapilli)
+              unittest.TextTestRunner().run(tests)
+      - path: "package.json"
+        language: json
+        content: |
+          {
+            "name": "chorus-lapilli",
+            "private": true,
+            "version": "0.0.0",
+            "type": "module",
+            "scripts": {
+              "dev": "vite",
+              "build": "vite build",
+              "preview": "vite preview",
+              "zip": "npm-pack-zip"
+            },
+            "dependencies": {
+              "bootstrap": "^5.3.8",
+              "react": "^19.0.0",
+              "react-bootstrap": "^2.10.10",
+              "react-dom": "^19.0.0"
+            },
+            "devDependencies": {
+              "@eslint/js": "^9.22.0",
+              "@types/react": "^19.0.10",
+              "@types/react-dom": "^19.0.4",
+              "@vitejs/plugin-react": "^4.3.4",
+              "globals": "^16.0.0",
+              "npm-pack-zip": "^1.3.0",
+              "vite": "^6.3.1"
+            }
+          }
+      - path: "vite.config.js"
+        language: javascript
+        content: |
+          import { defineConfig } from 'vite'
+          import react from '@vitejs/plugin-react'
+
+          // https://vite.dev/config/
+          export default defineConfig({
+            plugins: [react()],
+          })
+      - path: "index.html"
+        language: html
+        content: |
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <title>Homework 3 — Chorus Lapilli</title>
+              <meta name="robots" content="noai, noimageai" />
+              <meta name="tdm-reservation" content="1" />
+            </head>
+            <body>
+              <div id="root"></div>
+              <script type="module" src="/src/main.jsx"></script>
+            </body>
+          </html>
+    react_files: ["src/styles.css", "src/App.jsx", "src/main.jsx"]
+    open_file: "src/App.jsx"
+
+  # Pedagogy: independent assignment milestone; retain learner design decisions.
+  - title: "Chorus Lapilli"
+    key: chorus-lapilli
+    instructions: |
+      ### Part 2: Chorus Lapilli
+
+      Adapt your tic-tac-toe game into **Chorus Lapilli** ("dancing grains"), a variant of the ancient Roman game terni lapilli. Keep your implementation in `src/App.jsx` and record the work in `chorus-lapilli.txt`.
+
+      #### Game Rules
+
+      - **Board and objective:** two players, X and O, alternate turns on a 3×3 board. Three of your pieces in a row, column, or diagonal wins. X plays first.
+      - **Placement:** for each player's first three turns, place a piece on an empty square. A placement can win before both players have placed all three pieces.
+      - **Movement:** once a player has three pieces, that player must move an existing piece to an adjacent empty square instead of adding another. Adjacency includes up, down, left, right, and diagonals. Each player retains exactly three pieces in this phase.
+      - **Center constraint:** if the player whose turn it is has three pieces and occupies the center, the move must **either win or vacate the center**. This restriction applies to that player's move, not to an opponent who does not occupy the center.
+      - **Game over:** after either player wins, further clicks must leave the board unchanged.
+
+      #### Interaction Contract
+
+      From a player's fourth turn onward (normally after six placements), a move uses **two clicks**: select one of that player's pieces, then select its destination. An invalid two-click attempt must leave the board and turn unchanged and clear the attempted selection, ready for a new move. Drag-and-drop is not supported by the grader. Do not use alert dialogs or other pop-up windows.
+
+      The grader finds nine `button` elements whose class contains `square`. Keep them in row-major document order. Their visible text should be blank, X, or O; place instructions, selection messages, and coordinates in accessible labels or outside the buttons.
+
+      | Board row | Left column | Center column | Right column |
+      | --- | --- | --- | --- |
+      | Top | 0 | 1 | 2 |
+      | Middle | 3 | 4 | 5 |
+      | Bottom | 6 | 7 | 8 |
+
+      #### Notebook and Checks
+
+      1. **Implement** the variant and describe each significant change and observation in `chorus-lapilli.txt`. Include enough steps for someone else to recreate your game.
+      2. **Exercise** both legal moves and rejected attempts yourself. Check that invalid attempts do not give the other player a turn, and that a new two-click attempt works afterward.
+      3. **Run Test My Work** to exercise nine independent examples of the game rules. Each scenario starts with a fresh preview; tests do not modify your source files. Failures identify a rule to investigate. Reproduce the attempt, compare the expected and actual board, then revise and rerun your code. You can revisit any section without passing them.
+
+      **These public checks are practice feedback, not a Gradescope score.** They use different scenarios from the Gradescope tests. Use the rules to design your implementation and your own tests; do not special-case these examples. They do not run your Python tests, inspect notebook quality, validate a Vite build or submission ZIP, or apply deadline penalties. Passing a finite set of scenarios does not establish correctness for every possible game. Continue with the testing and submission requirements in the next section.
+
+    files: *assignment_files
+    react_files: ["src/styles.css", "src/App.jsx", "src/main.jsx"]
+    open_file: "src/App.jsx"
+    react_reset_between_tests: true
+    tests:
+      - description: "Placement alternates players; occupied squares preserve the turn"
+        command: |
+          const tiles = () => Array.from(frame.contentDocument.querySelectorAll('button[class*="square"]'));
+          const click = index => frame.contentWindow.ReactDOM.flushSync(() => tiles()[index].click());
+          const expectBoard = (expected, message) => {
+            const board = tiles();
+            assert(board.length === 9, 'Render nine square buttons in row-major order.');
+            const actual = board.map(tile => {
+              const text = tile.innerText.trim();
+              return text === '' ? '-' : /^[Xx]$/.test(text) ? 'X' : /^[0Oo]$/.test(text) ? 'O' : '?';
+            }).join('');
+            assert(actual === expected, message + ': expected ' + expected + ', got ' + actual);
+          };
+          expectBoard('---------', 'A fresh board must be empty');
+          [8].forEach(click);
+          expectBoard("--------X", "X opens in the bottom-right corner");
+          [8].forEach(click);
+          expectBoard("--------X", "O cannot overwrite X or lose the turn");
+          [3].forEach(click);
+          expectBoard("---O----X", "O still places after the rejected click");
+          [8].forEach(click);
+          expectBoard("---O----X", "X cannot overwrite an occupied square either");
+          [1].forEach(click);
+          expectBoard("-X-O----X", "X places on 1");
+          [6].forEach(click);
+          expectBoard("-X-O--O-X", "O places on 6");
+          [0].forEach(click);
+          expectBoard("XX-O--O-X", "X places on 0");
+          [5].forEach(click);
+          expectBoard("XX-O-OO-X", "O places on 5");
+      - description: "Movement preserves three pieces through horizontal, vertical, and diagonal moves"
+        command: |
+          const tiles = () => Array.from(frame.contentDocument.querySelectorAll('button[class*="square"]'));
+          const click = index => frame.contentWindow.ReactDOM.flushSync(() => tiles()[index].click());
+          const expectBoard = (expected, message) => {
+            const board = tiles();
+            assert(board.length === 9, 'Render nine square buttons in row-major order.');
+            const actual = board.map(tile => {
+              const text = tile.innerText.trim();
+              return text === '' ? '-' : /^[Xx]$/.test(text) ? 'X' : /^[0Oo]$/.test(text) ? 'O' : '?';
+            }).join('');
+            assert(actual === expected, message + ': expected ' + expected + ', got ' + actual);
+          };
+          expectBoard('---------', 'A fresh board must be empty');
+          [6].forEach(click);
+          expectBoard("------X--", "X places on 6");
+          [0].forEach(click);
+          expectBoard("O-----X--", "O places on 0");
+          [1].forEach(click);
+          expectBoard("OX----X--", "X places on 1");
+          [8].forEach(click);
+          expectBoard("OX----X-O", "O places on 8");
+          [5].forEach(click);
+          expectBoard("OX---XX-O", "X places on 5");
+          [3].forEach(click);
+          expectBoard("OX-O-XX-O", "O places on 3");
+          [2, 4].forEach(click);
+          expectBoard("OX-O-XX-O", "A fourth piece cannot be placed on an empty square");
+          [5, 2].forEach(click);
+          expectBoard("OXXO--X-O", "X moves vertically");
+          [8, 7].forEach(click);
+          expectBoard("OXXO--XO-", "O moves horizontally");
+          [6, 4].forEach(click);
+          expectBoard("OXXOX--O-", "X moves diagonally into the center");
+          [3, 6].forEach(click);
+          expectBoard("OXX-X-OO-", "O can move while X owns the center");
+          [4, 8].forEach(click);
+          expectBoard("OXX---OOX", "X vacates the center diagonally");
+          [7, 4].forEach(click);
+          expectBoard("OXX-O-O-X", "O can enter the center");
+      - description: "Invalid sources, occupied destinations, and distant moves leave the next attempt usable"
+        command: |
+          const tiles = () => Array.from(frame.contentDocument.querySelectorAll('button[class*="square"]'));
+          const click = index => frame.contentWindow.ReactDOM.flushSync(() => tiles()[index].click());
+          const expectBoard = (expected, message) => {
+            const board = tiles();
+            assert(board.length === 9, 'Render nine square buttons in row-major order.');
+            const actual = board.map(tile => {
+              const text = tile.innerText.trim();
+              return text === '' ? '-' : /^[Xx]$/.test(text) ? 'X' : /^[0Oo]$/.test(text) ? 'O' : '?';
+            }).join('');
+            assert(actual === expected, message + ': expected ' + expected + ', got ' + actual);
+          };
+          expectBoard('---------', 'A fresh board must be empty');
+          [0].forEach(click);
+          expectBoard("X--------", "X places on 0");
+          [1].forEach(click);
+          expectBoard("XO-------", "O places on 1");
+          [5].forEach(click);
+          expectBoard("XO---X---", "X places on 5");
+          [6].forEach(click);
+          expectBoard("XO---XO--", "O places on 6");
+          [7].forEach(click);
+          expectBoard("XO---XOX-", "X places on 7");
+          [8].forEach(click);
+          expectBoard("XO---XOXO", "O places on 8");
+          [0, 1].forEach(click);
+          expectBoard("XO---XOXO", "Cannot move onto an opponent");
+          [5, 0].forEach(click);
+          expectBoard("XO---XOXO", "Cannot move onto your own piece");
+          [0, 2].forEach(click);
+          expectBoard("XO---XOXO", "Cannot jump across an empty intermediate square");
+          [5, 6].forEach(click);
+          expectBoard("XO---XOXO", "Consecutive indices on different rows are not adjacent");
+          [1, 4].forEach(click);
+          expectBoard("XO---XOXO", "Cannot move an opponent piece");
+          [2, 4].forEach(click);
+          expectBoard("XO---XOXO", "Cannot move from an empty square");
+          [5, 4].forEach(click);
+          expectBoard("XO--X-OXO", "A fresh X move succeeds after all rejected attempts");
+          [8, 5].forEach(click);
+          expectBoard("XO--XOOX-", "The next turn belongs to O");
+      - description: "X must vacate the center when no win results"
+        command: |
+          const tiles = () => Array.from(frame.contentDocument.querySelectorAll('button[class*="square"]'));
+          const click = index => frame.contentWindow.ReactDOM.flushSync(() => tiles()[index].click());
+          const expectBoard = (expected, message) => {
+            const board = tiles();
+            assert(board.length === 9, 'Render nine square buttons in row-major order.');
+            const actual = board.map(tile => {
+              const text = tile.innerText.trim();
+              return text === '' ? '-' : /^[Xx]$/.test(text) ? 'X' : /^[0Oo]$/.test(text) ? 'O' : '?';
+            }).join('');
+            assert(actual === expected, message + ': expected ' + expected + ', got ' + actual);
+          };
+          expectBoard('---------', 'A fresh board must be empty');
+          [4].forEach(click);
+          expectBoard("----X----", "X places on 4");
+          [0].forEach(click);
+          expectBoard("O---X----", "O places on 0");
+          [2].forEach(click);
+          expectBoard("O-X-X----", "X places on 2");
+          [8].forEach(click);
+          expectBoard("O-X-X---O", "O places on 8");
+          [3].forEach(click);
+          expectBoard("O-XXX---O", "X places on 3");
+          [7].forEach(click);
+          expectBoard("O-XXX--OO", "O places on 7");
+          [3, 1].forEach(click);
+          expectBoard("O-XXX--OO", "X cannot retain the center without winning");
+          [4, 1].forEach(click);
+          expectBoard("OXXX---OO", "X can restart the attempt and vacate the center");
+          [7, 6].forEach(click);
+          expectBoard("OXXX--O-O", "O receives the turn only after the legal move");
+      - description: "The center constraint also applies to O"
+        command: |
+          const tiles = () => Array.from(frame.contentDocument.querySelectorAll('button[class*="square"]'));
+          const click = index => frame.contentWindow.ReactDOM.flushSync(() => tiles()[index].click());
+          const expectBoard = (expected, message) => {
+            const board = tiles();
+            assert(board.length === 9, 'Render nine square buttons in row-major order.');
+            const actual = board.map(tile => {
+              const text = tile.innerText.trim();
+              return text === '' ? '-' : /^[Xx]$/.test(text) ? 'X' : /^[0Oo]$/.test(text) ? 'O' : '?';
+            }).join('');
+            assert(actual === expected, message + ': expected ' + expected + ', got ' + actual);
+          };
+          expectBoard('---------', 'A fresh board must be empty');
+          [7].forEach(click);
+          expectBoard("-------X-", "X places on 7");
+          [4].forEach(click);
+          expectBoard("----O--X-", "O places on 4");
+          [0].forEach(click);
+          expectBoard("X---O--X-", "X places on 0");
+          [2].forEach(click);
+          expectBoard("X-O-O--X-", "O places on 2");
+          [5].forEach(click);
+          expectBoard("X-O-OX-X-", "X places on 5");
+          [3].forEach(click);
+          expectBoard("X-OOOX-X-", "O places on 3");
+          [7, 6].forEach(click);
+          expectBoard("X-OOOXX--", "X may move while O owns the center");
+          [2, 1].forEach(click);
+          expectBoard("X-OOOXX--", "O cannot retain the center without winning");
+          [4, 8].forEach(click);
+          expectBoard("X-OO-XX-O", "O can restart the attempt and vacate the center");
+          [0, 1].forEach(click);
+          expectBoard("-XOO-XX-O", "A legal O move returns the turn to X");
+      - description: "X may retain the center to win a row; the finished board is frozen"
+        command: |
+          const tiles = () => Array.from(frame.contentDocument.querySelectorAll('button[class*="square"]'));
+          const click = index => frame.contentWindow.ReactDOM.flushSync(() => tiles()[index].click());
+          const expectBoard = (expected, message) => {
+            const board = tiles();
+            assert(board.length === 9, 'Render nine square buttons in row-major order.');
+            const actual = board.map(tile => {
+              const text = tile.innerText.trim();
+              return text === '' ? '-' : /^[Xx]$/.test(text) ? 'X' : /^[0Oo]$/.test(text) ? 'O' : '?';
+            }).join('');
+            assert(actual === expected, message + ': expected ' + expected + ', got ' + actual);
+          };
+          expectBoard('---------', 'A fresh board must be empty');
+          [4].forEach(click);
+          expectBoard("----X----", "X places on 4");
+          [1].forEach(click);
+          expectBoard("-O--X----", "O places on 1");
+          [6].forEach(click);
+          expectBoard("-O--X-X--", "X places on 6");
+          [0].forEach(click);
+          expectBoard("OO--X-X--", "O places on 0");
+          [5].forEach(click);
+          expectBoard("OO--XXX--", "X places on 5");
+          [8].forEach(click);
+          expectBoard("OO--XXX-O", "O places on 8");
+          [6, 3].forEach(click);
+          expectBoard("OO-XXX--O", "A winning X move may retain the center");
+          [1, 2].forEach(click);
+          expectBoard("OO-XXX--O", "O cannot make an otherwise legal move after X wins");
+          [0, 1, 2, 3, 4, 5, 6, 7, 8].forEach(click);
+          expectBoard("OO-XXX--O", "Every further click must leave the completed game unchanged");
+      - description: "O may retain the center to win a column; the finished board is frozen"
+        command: |
+          const tiles = () => Array.from(frame.contentDocument.querySelectorAll('button[class*="square"]'));
+          const click = index => frame.contentWindow.ReactDOM.flushSync(() => tiles()[index].click());
+          const expectBoard = (expected, message) => {
+            const board = tiles();
+            assert(board.length === 9, 'Render nine square buttons in row-major order.');
+            const actual = board.map(tile => {
+              const text = tile.innerText.trim();
+              return text === '' ? '-' : /^[Xx]$/.test(text) ? 'X' : /^[0Oo]$/.test(text) ? 'O' : '?';
+            }).join('');
+            assert(actual === expected, message + ': expected ' + expected + ', got ' + actual);
+          };
+          expectBoard('---------', 'A fresh board must be empty');
+          [0].forEach(click);
+          expectBoard("X--------", "X places on 0");
+          [4].forEach(click);
+          expectBoard("X---O----", "O places on 4");
+          [3].forEach(click);
+          expectBoard("X--XO----", "X places on 3");
+          [8].forEach(click);
+          expectBoard("X--XO---O", "O places on 8");
+          [5].forEach(click);
+          expectBoard("X--XOX--O", "X places on 5");
+          [1].forEach(click);
+          expectBoard("XO-XOX--O", "O places on 1");
+          [3, 6].forEach(click);
+          expectBoard("XO--OXX-O", "X makes a nonwinning move");
+          [8, 7].forEach(click);
+          expectBoard("XO--OXXO-", "A winning O move may retain the center");
+          [5, 2].forEach(click);
+          expectBoard("XO--OXXO-", "X cannot make an otherwise legal move after O wins");
+          [0, 1, 2, 3, 4, 5, 6, 7, 8].forEach(click);
+          expectBoard("XO--OXXO-", "Every further click must leave the completed game unchanged");
+      - description: "A diagonal placement win ends the game before all six pieces are placed"
+        command: |
+          const tiles = () => Array.from(frame.contentDocument.querySelectorAll('button[class*="square"]'));
+          const click = index => frame.contentWindow.ReactDOM.flushSync(() => tiles()[index].click());
+          const expectBoard = (expected, message) => {
+            const board = tiles();
+            assert(board.length === 9, 'Render nine square buttons in row-major order.');
+            const actual = board.map(tile => {
+              const text = tile.innerText.trim();
+              return text === '' ? '-' : /^[Xx]$/.test(text) ? 'X' : /^[0Oo]$/.test(text) ? 'O' : '?';
+            }).join('');
+            assert(actual === expected, message + ': expected ' + expected + ', got ' + actual);
+          };
+          expectBoard('---------', 'A fresh board must be empty');
+          [2].forEach(click);
+          expectBoard("--X------", "X places on 2");
+          [1].forEach(click);
+          expectBoard("-OX------", "O places on 1");
+          [4].forEach(click);
+          expectBoard("-OX-X----", "X places on 4");
+          [7].forEach(click);
+          expectBoard("-OX-X--O-", "O places on 7");
+          [6].forEach(click);
+          expectBoard("-OX-X-XO-", "X places on 6");
+          [0, 1, 2, 3, 4, 5, 6, 7, 8].forEach(click);
+          expectBoard("-OX-X-XO-", "Every further click must leave the completed game unchanged");
+      - description: "O can win a column during placement and stop further moves"
+        command: |
+          const tiles = () => Array.from(frame.contentDocument.querySelectorAll('button[class*="square"]'));
+          const click = index => frame.contentWindow.ReactDOM.flushSync(() => tiles()[index].click());
+          const expectBoard = (expected, message) => {
+            const board = tiles();
+            assert(board.length === 9, 'Render nine square buttons in row-major order.');
+            const actual = board.map(tile => {
+              const text = tile.innerText.trim();
+              return text === '' ? '-' : /^[Xx]$/.test(text) ? 'X' : /^[0Oo]$/.test(text) ? 'O' : '?';
+            }).join('');
+            assert(actual === expected, message + ': expected ' + expected + ', got ' + actual);
+          };
+          expectBoard('---------', 'A fresh board must be empty');
+          [8].forEach(click);
+          expectBoard("--------X", "X places on 8");
+          [0].forEach(click);
+          expectBoard("O-------X", "O places on 0");
+          [7].forEach(click);
+          expectBoard("O------XX", "X places on 7");
+          [3].forEach(click);
+          expectBoard("O--O---XX", "O places on 3");
+          [1].forEach(click);
+          expectBoard("OX-O---XX", "X places on 1");
+          [6].forEach(click);
+          expectBoard("OX-O--OXX", "O places on 6");
+          [0, 1, 2, 3, 4, 5, 6, 7, 8].forEach(click);
+          expectBoard("OX-O--OXX", "Every further click must leave the completed game unchanged");
+
+  # Pedagogy: independent assignment milestone; retain learner design decisions.
+  - title: "Tests and Submission"
+    key: tests-submission
+    instructions: |
+      ### Part 3: Your Tests
+
+      Edit `test_chorus_lapilli.py`, which contains the starter's `TestChorusLapilli` class and two example tests: an empty board on refresh, and X appearing after a top-left click.
+
+      - **Add at least three new test methods** to that class. Keep the two examples.
+      - At least one new test must verify that the app prevents further moves after a win.
+      - Choose other cases that test your implementation's rules, and record the scenarios, expected results, and actual results in `chorus-lapilli.txt`.
+
+      **The supplied grader checks for three additional methods.** The original task text says these tests will not be checked, but this grader does check their number. Include this file in your submission. Counting test methods does not establish their quality or whether they pass.
+
+      #### Run Locally
+
+      This React workspace lets you edit the Python file, but **does not execute Python/Selenium**. You can download and submit directly from the browser; to also run your tests locally:
+
+      1. **Set up** the [course starter](https://github.com/UCLA-CS-35L/assign3) locally, following its README and your course setup instructions. Run `./helper init` if you have not initialized it already.
+      2. **Download ZIP**, then extract its contents into that local repository, replacing the corresponding project files. Keep the starter's `helper` and `requirements.txt` files. Browser Auto-save does not synchronize with local files.
+      3. **Preview** with `./helper dev`. Then stop that server before the test runner starts its own server.
+      4. **Test** with `./helper test` and inspect the reported results. If your course environment requires Docker, follow its setup instructions for `./helper test-docker`.
+
+      The original handout mentions `./helper test headless` for WSL; the linked starter's current Python parser does not accept that argument. Use the command supported by your installed course version. If WSL reports line-ending errors in `helper`, install `dos2unix` and run `dos2unix helper`. For dependency-related test failures, the handout suggests `./helper clean`; this removes local dependencies, so run `./helper init` again afterward.
+
+      ### Submission Checklist
+
+      Choose **Download ZIP** in the top bar to save **`assign.zip`**, then upload that file directly to Gradescope by the posted course deadline. The download includes your current versions of:
+
+      - Your source files in `src/`, plus `index.html`.
+      - `package.json` and `vite.config.js` so the app can be built.
+      - `tic-tac-toe.txt` and `chorus-lapilli.txt`, containing substantive, reproducible lab notes.
+      - `test_chorus_lapilli.py`, with the original examples and at least three additional tests.
+
+      The files are packaged at the ZIP's top level, with source files inside `src/`, as the grader expects. No local setup or ZIP command is needed to download your browser work. A download captures your files at that moment; **download again after editing** and upload the latest archive. Downloading does not run tests or submit your work. Incomplete work, including empty notebooks, can also be downloaded.
+
+      If you continue editing locally, use **`./helper zip`** in the local starter repository to package those local changes instead. Read its notebook warnings and inspect the archive before uploading.
+
+      You may submit partial work to inspect feedback and resubmit as often as the assignment allows (the supplied handout allows unlimited submissions). Select your best-scoring submission as the active one. All code remains subject to manual inspection under the course policy.
+
+      **There is no automatic completion check in this section.** Verify the actual archive, local test results, and Gradescope feedback before considering the assignment submitted. The page does not upload or submit anything for you.
+
+    files: *assignment_files
+    react_files: ["src/styles.css", "src/App.jsx", "src/main.jsx"]
+    open_file: "test_chorus_lapilli.py"

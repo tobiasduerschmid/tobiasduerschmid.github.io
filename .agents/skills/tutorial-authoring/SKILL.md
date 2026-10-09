@@ -660,6 +660,9 @@ students are confused" reports.
       unfinished criteria fail; verify a focused correction updates the UI.
       Run the model and independent correct/incorrect alternatives in the
       actual backend, and keep the total check time practical.
+- [ ] Independent React UI scenarios set step-level
+      `react_reset_between_tests: true` and verify fresh state after both passing
+      and failing checks. Omit it for deliberately cumulative assertions.
 - [ ] **In-tutorial quizzes**: recall + spaced + higher-Bloom only. Never
       introduce new content in a quiz. Re-quiz at least one earlier-step
       concept by step 5+.
@@ -788,6 +791,15 @@ exclude_from_index: boolean            # If true, /SEBook/tutorials hides
                                        # this entry. Set on demos, lectures,
                                        # playgrounds, _backup / _old files,
                                        # and any non-student-facing tutorial.
+show_hints: boolean                    # Default true. Set false for assignments
+                                       # that must not load TutorChat's authored
+                                       # or generated hints after failed checks.
+download:                              # Optional editor-file ZIP download.
+  filename: assign.zip                 # Browser download filename.
+  files: [src/App.jsx, package.json]    # Explicit paths relative to archive root.
+                                       # Every path must have a loaded editor model.
+                                       # Includes current text, even with Auto-save off.
+                                       # No wrapper directory, execution, or submission.
 
 # === Backend selection ===
 backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smalltalk | compiler | uml-editor | multiple
@@ -1302,6 +1314,11 @@ steps:
                                              # the instructions for reference.
     commands: [string]                       # Example commands shown to
                                              # student (display only).
+    react_reset_between_tests: boolean       # React assertion batches; default false.
+                                             # Rebuild the isolated preview before
+                                             # each check, including after failure.
+                                             # Source files and drafts are retained.
+                                             # Playwright has its own reset policy.
 
     tests:                                   # One reported row per criterion;
                                              # step gate when require_tests.
@@ -1891,6 +1908,17 @@ other platforms retain `Ctrl`. This changes labels only, not key bindings.
   unless `?instructor-mode=true` is in the URL). The Print button on the
   live tutorial redirects to `<live-permalink>/print?autoprint=1` (preserving
   `?instructor-mode=true` if set).
+
+**Assignment print and instructor views.**
+
+Tutorial-level `print_starter_files: false` omits starter listings from the print
+view while retaining the full instructions for every section. Default behavior
+still prints each step's starter files. Use this for assignment briefs whose
+sections share the same large project. Print views contain authored content,
+not current editor drafts; a configured Download ZIP exports those drafts.
+The interactive layout emits the instructor Solution control only if at least
+one step defines `solution`. Homework 3 intentionally has no solution payload,
+including in public checks or repository fixtures.
 
 Both layouts load pinned Mermaid 11.16.0 followed by `js/mermaid-theme.js`.
 Use `SebookMermaid.render(root)` after Markdown is in the DOM; do not initialize
@@ -2943,6 +2971,16 @@ lesson, so the fallback lesson never opens with another exercise's code. Reset s
 its setup completes, preserving other drafts. Delete clears remembered drafts too.
 Smalltalk continues using its native accepted-source/draft owner.
 
+The optional `download` object enables a **Download ZIP** navbar button after
+startup. `js/tutorial-download.js` reads `TutorialCode.getEditorFileContents(paths)`
+at activation and uses locally vendored fflate 0.8.2 to package UTF-8 text with
+the configured relative paths. Empty files are retained; a missing editor model
+fails the entire export with a visible live-region message. The operation does
+not read saved progress, execute student code, or upload anything. It is for
+editor-managed files (Homework 3 uses nine shared files), not VM-generated files
+or Smalltalk native source. The library, controller and stylesheet are loaded
+only for opted-in pages. Keep the manifest aligned with submission requirements.
+
 SE Gym's import/export preserves each progress object, including `stepFiles` and this metadata,
 without changing its export envelope. Fresh saves do not show a migration notice.
 
@@ -3058,6 +3096,15 @@ under the same prefix family as other tutorial state so the global
   refers only to the preview document. Keep commands repository-authored, do
   not add host-page capabilities to this interface, and never expose assertion
   traffic through public window messages.
+  By default checks in a batch share the initial preview. Step-level
+  `react_reset_between_tests: true` makes `_runReactAssertionTests` rebuild the
+  iframe before each subsequent check and use the new private assertion port,
+  giving independent UI scenarios the equivalent of a per-test page refresh.
+  This resets app state, not editor files. Homework 3 uses this for nine public
+  scenarios authored independently from its private grader. Public checks contain
+  interaction examples and literal expected boards, never a reference game or
+  copied private grader cases. Python tests and submission checks remain local/Gradescope-only.
+  Leaving the step stops remaining assertions before another preview rebuild.
 - **playwright** (react): `command:` is Playwright-compat JS run by
   `js/playwright-compat/runner.js` (a subset of `@playwright/test`).
   Reference selectors via `page.getByRole(...)`, `page.getByText(...)`. Its

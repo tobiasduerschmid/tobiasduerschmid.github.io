@@ -549,6 +549,11 @@
   description: A label for unfinished work, often used for temporary commits, draft branches, or pull requests that are not ready for review.
   related: [PR]
 
+- term: WSL
+  definition: Windows Subsystem for Linux
+  description: A Windows feature for running a Linux environment and its command-line tools, including local development and testing tools.
+  related: [OS]
+
 - term: XML
   definition: Extensible Markup Language
   description: A text-based markup format with explicit tags. XML is more verbose than JSON but supports schemas, namespaces, and mixed content; it is still common in configuration files and document formats.

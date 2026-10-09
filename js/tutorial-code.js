@@ -8311,6 +8311,19 @@
     });
   };
 
+  // Return a click-time snapshot for exports, independent of autosave/backend sync.
+  // Missing declared files fail the whole export instead of silently omitting work.
+  TutorialCode.prototype.getEditorFileContents = function (paths) {
+    var self = this;
+    var files = Object.create(null);
+    paths.forEach(function (path) {
+      var entry = self.editorModels[path];
+      if (!entry) throw new Error('File is not loaded: ' + path + '. Wait for the workspace to finish loading and try again.');
+      files[path] = entry.model.getValue();
+    });
+    return files;
+  };
+
   /**
    * Sync the active file to its backend and, when enabled, browser storage.
    *
@@ -13986,8 +13999,20 @@
         var results = [];
 
         function runNext(i) {
-          if (i >= tests.length) { resolve(results); return; }
+          if (i >= tests.length || self.currentStep !== stepIndex) { resolve(results); return; }
 
+          // Independent UI scenarios need the same fresh-document boundary as
+          // Selenium's setUp refresh. Keep legacy cumulative checks unchanged.
+          if (i > 0 && step.react_reset_between_tests === true) {
+            self._rebuildReactPreview(function () { evaluateTest(i); }, step);
+          } else {
+            evaluateTest(i);
+          }
+        }
+
+        function evaluateTest(i) {
+          // Navigation can happen while the replacement preview is loading.
+          if (self.currentStep !== stepIndex) { resolve(results); return; }
           var assertionPromise;
           if (tests[i].playwright || tests[i].student_playwright || tests[i].studentTest) {
             assertionPromise = self._runPlaywrightExpectationTest(tests[i], run);

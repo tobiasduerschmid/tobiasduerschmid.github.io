@@ -1,0 +1,31 @@
+/* The tutorial navbar stays dark in both themes. */
+#navnav #tutorialDownloadBtn,
+html.dark-mode #navnav #tutorialDownloadBtn {
+  color: #fff;
+  font-weight: 650;
+}
+
+#navnav #tutorialDownloadBtn:focus-visible {
+  outline: 3px solid #FFD100;
+  outline-offset: 2px;
+}
+
+#navnav #tutorialDownloadBtn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.tutorial-download-status,
+html.dark-mode .tutorial-download-status {
+  align-self: center;
+  max-width: 26em;
+  color: #fff;
+  font-size: var(--font-size-readable-min, 16px);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+@media print {
+  #tutorialDownloadBtn,
+  .tutorial-download-status { display: none; }
+}
