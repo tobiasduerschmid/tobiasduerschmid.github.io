@@ -198,7 +198,7 @@
         { input: '2026/04/01', shouldMatch: false, label: 'wrong separator — should NOT match' }
       ],
       hiddenTests: [
-        { input: '0000-00-00', shouldMatch: true, expectedMatches: ["0000-00-00"], namedGroups: { year: '0000', month: '00', day: '00' } },
+        { input: '2024-02-29', shouldMatch: true, expectedMatches: ["2024-02-29"], namedGroups: { year: '2024', month: '02', day: '29' } },
         { input: '2026-1-1', shouldMatch: false }
       ]
     },
