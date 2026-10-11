@@ -432,21 +432,61 @@
     return 'UML activity diagram with ' + pluralize(nodes.length, 'activity', 'activities') + ' (' + nodes.join(', ') + ').';
   }
 
-  function describeDeploymentDiagram(spec) {
-    var nodes = [], artifacts = [];
-    var seenN = Object.create(null), seenA = Object.create(null);
-    spec.replace(/^\s*node\s+"?([^"\n{]+?)"?\s*(?:\{|$)/gim, function (_, n) {
-      n = n.trim(); if (!seenN[n]) { seenN[n] = true; nodes.push(n); } return '';
+  // Source-only descriptions also run without the renderer (for static output).
+  // Split declarations outside quoted names so inline node contents and escaped
+  // display names have the same identities as their visible SVG counterparts.
+  function parseDeploymentDescription(spec) {
+    var source = stripDecorations(spec)
+      .replace(/^\s*@layout\b[^\n]*\n[\s\S]*?^\s*@endlayout[^\n]*$/gim, '')
+      .replace(/\s+@pos\([^)]*\)/g, '');
+    var elements = [], links = [], byId = Object.create(null);
+    var parent = null, pendingParent = null, text = '', quoted = false, escaped = false;
+    function unquote(value) { return String(value || '').replace(/^"|"$/g, '').replace(/\\(["\\])/g, '$1'); }
+    function addStatement(statement) {
+      var line = statement.trim();
+      if (!line) return;
+      var match = line.match(/^(node|component|artifact)\s+("(?:\\.|[^"\\])*"|[^\s{}]+)(?:\s+as\s+("(?:\\.|[^"\\])*"|[^\s{}]+))?(?:\s+<<([^>]+)>>)?/i);
+      if (match) {
+        var id = unquote(match[3] || match[2]);
+        var element = { id: id, label: unquote(match[2]), kind: match[1].toLowerCase(), parentId: parent, stereotype: match[4] || '' };
+        if (!byId[id]) { byId[id] = element; elements.push(element); }
+        pendingParent = element.kind === 'node' ? id : null;
+        return;
+      }
+      var relation = line.match(/^("(?:\\.|[^"\\])*"|\S+)\s+(-->|\.\.>|--)\s+("(?:\\.|[^"\\])*"|\S+?)(?:\s+(dashed))?\s*(?::\s*(.*))?$/);
+      if (relation) links.push({ from: unquote(relation[1]), to: unquote(relation[3]), arrow: relation[2], dashed: !!relation[4], label: relation[5] || '' });
+    }
+    for (var i = 0; i < source.length; i++) {
+      var ch = source[i];
+      if (escaped) { text += ch; escaped = false; continue; }
+      if (quoted && ch === '\\') { text += ch; escaped = true; continue; }
+      if (ch === '"') { quoted = !quoted; text += ch; continue; }
+      if (!quoted && /[{};\n]/.test(ch)) {
+        addStatement(text); text = '';
+        if (ch === '{') { parent = pendingParent; pendingParent = null; }
+        else if (ch === '}') { parent = null; pendingParent = null; }
+      } else text += ch;
+    }
+    addStatement(text);
+    links.forEach(function(link) {
+      [link.from, link.to].forEach(function(id) {
+        if (!byId[id]) { var element = { id: id, label: id, kind: 'node', parentId: null, stereotype: '' }; byId[id] = element; elements.push(element); }
+      });
     });
-    spec.replace(/^\s*artifact\s+"?([^"\n]+?)"?\s*$/gim, function (_, n) {
-      n = n.trim(); if (!seenA[n]) { seenA[n] = true; artifacts.push(n); } return '';
-    });
-    if (!nodes.length && !artifacts.length) return 'UML deployment diagram.';
+    return { elements: elements, links: links, byId: byId };
+  }
+
+  function deploymentSummary(parsed) {
     var items = [];
-    if (nodes.length)     items.push(pluralize(nodes.length, 'node', 'nodes') + ' (' + nodes.join(', ') + ')');
-    if (artifacts.length) items.push(pluralize(artifacts.length, 'artifact', 'artifacts') + ' (' + artifacts.join(', ') + ')');
+    ['node', 'artifact', 'component'].forEach(function(kind) {
+      var names = parsed.elements.filter(function(element) { return element.kind === kind; }).map(function(element) { return element.label; });
+      if (names.length) items.push(pluralize(names.length, kind, kind + 's') + ' (' + names.join(', ') + ')');
+    });
+    if (!items.length) return 'UML deployment diagram.';
     return 'UML deployment diagram with ' + items.join(' and ') + '.';
   }
+
+  function describeDeploymentDiagram(spec) { return deploymentSummary(parseDeploymentDescription(spec)); }
 
   // ---------- gitgraph (commit DAG) ----------
   // Spec syntax (see ArchUML REFERENCE):
@@ -931,19 +971,24 @@
   }
 
   function describeDeploymentDiagramVerbose(spec) {
-    var nodes = [], artifacts = [];
-    var seenN = Object.create(null), seenA = Object.create(null);
-    spec.replace(/^\s*node\s+"?([^"\n{]+?)"?\s*(?:\{|$)/gim, function (_, n) {
-      n = n.trim(); if (!seenN[n]) { seenN[n] = true; nodes.push(n); } return '';
-    });
-    spec.replace(/^\s*artifact\s+"?([^"\n]+?)"?\s*$/gim, function (_, n) {
-      n = n.trim(); if (!seenA[n]) { seenA[n] = true; artifacts.push(n); } return '';
-    });
-    var summary = describeDeploymentDiagram(stripDecorations(spec));
+    var parsed = parseDeploymentDescription(spec);
     var sections = [];
-    if (nodes.length)     sections.push({ heading: 'Nodes',     items: nodes });
-    if (artifacts.length) sections.push({ heading: 'Artifacts', items: artifacts });
-    return { summary: summary, sections: sections };
+    ['node', 'artifact', 'component'].forEach(function(kind) {
+      var items = parsed.elements.filter(function(element) { return element.kind === kind; }).map(function(element) {
+        var description = element.label + (element.stereotype ? ' (' + element.stereotype + ')' : '');
+        if (element.parentId && parsed.byId[element.parentId]) description += ' inside ' + parsed.byId[element.parentId].label;
+        var children = parsed.elements.filter(function(child) { return child.parentId === element.id; });
+        if (children.length) description += ' contains ' + children.map(function(child) { return child.kind + ' ' + child.label; }).join(' and ');
+        return description;
+      });
+      if (items.length) sections.push({ heading: kind.charAt(0).toUpperCase() + kind.slice(1) + 's', items: items });
+    });
+    if (parsed.links.length) sections.push({ heading: 'Relationships', items: parsed.links.map(function(link) {
+      var phrase = link.arrow === '..>' ? ' depends on ' : link.arrow === '-->' ? ' has a directed communication path to ' : ' has a communication path with ';
+      return parsed.byId[link.from].label + phrase + parsed.byId[link.to].label +
+        (link.dashed && link.arrow !== '..>' ? ' (dashed)' : '') + (link.label ? ': ' + link.label : '') + '.';
+    }) });
+    return { summary: deploymentSummary(parsed), sections: sections };
   }
 
   function describeGitgraphDiagramVerbose(spec) {

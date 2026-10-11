@@ -4197,6 +4197,7 @@ Payment ..> Invoice : references
 
       // Identify class boxes by finding the text nodes for the class names
       // and deriving each box from the outermost rect that *contains* it.
+      // The header compartment alone misses collisions involving methods.
       const names = ['Customer', 'Order', 'Item', 'Address', 'Payment', 'Invoice'];
       const texts = Array.from(svg.querySelectorAll('text'));
       const rects = Array.from(svg.querySelectorAll('rect'));
@@ -4206,7 +4207,7 @@ Payment ..> Invoice : references
         if (!txt) continue;
         const tb = txt.getBBox();
         let best = null;
-        let bestArea = Infinity;
+        let bestArea = -Infinity;
         for (const r of rects) {
           const rb = r.getBBox();
           const contains =
@@ -4214,7 +4215,7 @@ Payment ..> Invoice : references
             tb.y >= rb.y - 0.5 && tb.y + tb.height <= rb.y + rb.height + 0.5;
           if (!contains) continue;
           const area = rb.width * rb.height;
-          if (area < bestArea) { bestArea = area; best = rb; }
+          if (area > bestArea) { bestArea = area; best = rb; }
         }
         if (best) classRects.push({ name, x: best.x, y: best.y, w: best.width, h: best.height });
       }
@@ -4237,7 +4238,7 @@ Payment ..> Invoice : references
       return { classCount: classRects.length, overlaps, pairs };
     });
 
-    expect(stats.classCount).toBeGreaterThanOrEqual(5);
+    expect(stats.classCount, 'Every expected class must participate in the overlap check').toBe(6);
     expect(stats.overlaps, `Overlapping pairs: ${(stats.pairs || []).join(', ')}`).toBe(0);
   });
 

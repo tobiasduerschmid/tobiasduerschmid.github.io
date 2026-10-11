@@ -1,9 +1,7 @@
 /* ── UML Diagram Theming ── */
 
-/* Git graph defaults — light-mode colors. SEBook applies a `filter: invert(1)`
-   to the whole SVG in dark mode (rule below) so we always render light colors
-   here and let the inversion handle dark theming. The interactive tutorial
-   view overrides these inside .tvm-git-graph-container for explicit theming. */
+/* Git graphs use theme variables instead of SVG inversion. The interactive
+   tutorial overrides these inside .tvm-git-graph-container. */
 :root {
   --git-graph-text: #222;
   --git-graph-bg: #fafbfc;
@@ -54,6 +52,9 @@ pre:has(> code.language-crc),
 .uml-er-diagram-container,
 .uml-crc-diagram-container {
   display: block;
+  min-width: 0;
+  max-width: 100%;
+  font-size: max(1em, var(--font-size-readable-min, 16px));
   --uml-stroke: #4060a0;
   --uml-text: #222;
   --uml-fill: #fff;
@@ -88,6 +89,13 @@ html.dark-mode .uml-crc-diagram-container svg {
 html.dark-mode {
   --git-graph-text: #f0f0f0;
   --git-graph-bg: #121212;
+}
+
+/* Serialized graphs can be embedded without git-graph.css or a live theme
+   observer. Keep their branch text readable as the chip background changes;
+   the border and tint retain each branch's color. Print uses the light tokens. */
+html.dark-mode .uml-gitgraph-diagram-container .git-graph-branch-label {
+  fill: var(--git-graph-text);
 }
 
 /* WCAG 1.4.3: empty/error placeholder text inside diagram containers.
@@ -129,8 +137,33 @@ html.dark-mode .uml-error-msg {
   display: block;
   margin: 0 auto;
   overflow: visible;
-  max-width: 100%;
+  /* Scale the complete drawing to keep even its smallest label paragraph-
+     sized. The renderer writes an em width from its measured SVG geometry. */
+  width: var(--uml-readable-width, auto);
+  max-width: none !important;
   height: auto;
+}
+
+[data-uml-scroll-tabindex]:focus-visible {
+  outline: 3px solid #2774ae;
+  outline-offset: 2px;
+}
+
+html.dark-mode [data-uml-scroll-tabindex]:focus-visible {
+  outline-color: #8ecfff;
+}
+
+@media print {
+  .sebook-figure--archuml > [role="img"],
+  [data-uml-scroll-tabindex] {
+    overflow: visible;
+    break-inside: avoid;
+  }
+
+  .sebook-figure--archuml > [role="img"] svg,
+  [data-uml-scroll-tabindex] svg {
+    max-width: 100% !important;
+  }
 }
 
 /* Folder trees are text-heavy and read better flowing with the surrounding

@@ -388,7 +388,7 @@ module Jekyll
 
         <<~HTML
           <figure class="sebook-figure sebook-figure--archuml sebook-figure--archuml-#{safe_type}">
-            <div class="uml-#{safe_type}-diagram-container" data-uml-rendered="true" role="img" aria-label="#{CGI.escapeHTML(desc)}"#{safe_type == 'crc' ? ' tabindex="0"' : ''}>
+            <div class="uml-#{safe_type}-diagram-container" data-uml-rendered="true" role="img" aria-label="#{CGI.escapeHTML(desc)}" tabindex="0" data-uml-scroll-tabindex="true">
               #{presentational_svg}
             </div>
             #{figcaption}

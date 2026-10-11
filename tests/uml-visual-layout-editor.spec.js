@@ -131,9 +131,11 @@ async function expectTutorHint(page, text) {
   await expect(panel.locator('.tvm-tutor-hint').filter({ hasText: text })).toBeVisible();
 }
 
-async function dragLocatorCenter(page, locator, dx, dy) {
+async function dragLocatorCenter(page, locator, dx, dy, options = {}) {
   await expect(locator).toHaveCount(1, { timeout: 2_000 });
-  await locator.evaluate((el) => el.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
+  await locator.evaluate((el, svgUnits) => el.scrollIntoView({
+    block: svgUnits ? 'center' : 'nearest', inline: svgUnits ? 'center' : 'nearest',
+  }), !!options.svgUnits);
   await expect
     .poll(() => locator.boundingBox(), {
       timeout: 2_000,
@@ -144,9 +146,24 @@ async function dragLocatorCenter(page, locator, dx, dy) {
   if (!box) throw new Error('drag target should have a bounding box');
   const cx = box.x + box.width / 2;
   const cy = box.y + box.height / 2;
+  let drag = { dx, dy };
+  if (options.svgUnits) {
+    const svgDrag = await locator.evaluate((el, { cx, cy, dx, dy }) => {
+      const hit = document.elementFromPoint(cx, cy);
+      const matrix = el.getScreenCTM();
+      return {
+        hitsTarget: hit === el || el.contains(hit),
+        // Opt into diagram units when the assertion measures SVG coordinates.
+        dx: matrix.a * dx + matrix.c * dy,
+        dy: matrix.b * dx + matrix.d * dy,
+      };
+    }, { cx, cy, dx, dy });
+    expect(svgDrag.hitsTarget, 'the visible drag start must hit the intended editor handle').toBe(true);
+    drag = svgDrag;
+  }
   await page.mouse.move(cx, cy);
   await page.mouse.down();
-  await page.mouse.move(cx + dx, cy + dy, { steps: 6 });
+  await page.mouse.move(cx + drag.dx, cy + drag.dy, { steps: 6 });
   await page.mouse.up();
 }
 
@@ -735,7 +752,7 @@ async function componentLabelInfo(page, id = 'label:edge-0') {
     const svg = document.querySelector('#uml-pg-output svg');
     const label = svg.querySelector(`[data-layout-kind="edge-label"][data-layout-id="${layoutId}"]`);
     if (!label) return null;
-    const b = label.getBBox();
+    const b = window.UMLShared.renderedSvgBox(svg, label);
     return {
       id: layoutId,
       text: label.textContent.replace(/\s+/g, ' ').trim(),
@@ -3143,7 +3160,7 @@ JailState --> NormalState : free
     const before = await componentConnectionInfo(page);
     expect(before, 'component route should expose port endpoints').not.toBeNull();
 
-    await dragLocatorCenter(page, page.locator('.uml-pg-edit-hitbox[data-layout-id="Frontend"]'), 75, 35);
+    await dragLocatorCenter(page, page.locator('.uml-pg-edit-hitbox[data-layout-id="Frontend"]'), 75, 35, { svgUnits: true });
 
     const after = await componentConnectionInfo(page);
     expect(after, 'component route should survive component drag').not.toBeNull();
@@ -3153,7 +3170,7 @@ JailState --> NormalState : free
     const source = await page.locator('#uml-pg-input').inputValue();
     const moved = source.match(/component\s+Frontend\s+@pos\((\d+),\s*(\d+)\)/);
     expect(moved, source).not.toBeNull();
-    expect(Number(moved[1])).toBeGreaterThan(150);
+    expect(Number(moved[1]) - before.sourceComponent.x).toBeCloseTo(75, 0);
   });
 
   test('dragging component ports stays on the component outline and reroutes connectors', async ({ page }) => {
@@ -3167,7 +3184,7 @@ JailState --> NormalState : free
 
     const portHandle = page.locator('.uml-pg-edit-hitbox[data-layout-id="Backend.b_eventout"]');
     await expect(portHandle).toHaveCount(1);
-    await dragLocatorCenter(page, portHandle, 38, -34);
+    await dragLocatorCenter(page, portHandle, 38, -34, { svgUnits: true });
 
     const after = await componentConnectionInfo(page, 'Backend.b_eventout', 'EventBus.eb_in');
     expect(after, 'component route should survive port drag').not.toBeNull();
@@ -3208,6 +3225,31 @@ JailState --> NormalState : free
     await selectDiagram(page, 'component');
     await page.uncheck('#uml-pg-snap');
     await selectEditMode(page, 'nodes');
+    // The behavior under test needs two ports on the same side. Fix that
+    // arrangement explicitly instead of depending on automatic graph layout.
+    await setUmlSource(page, `@startuml
+component Backend {
+  portout "dbOut" as b_dbout
+  portout "eventOut" as b_eventout
+}
+component Database {
+  portin "dbIn" as db_in
+}
+component EventBus {
+  portin "eventIn" as eb_in
+}
+b_dbout --> db_in : SQL
+b_eventout --> eb_in : publish
+@layout
+node Backend x=40 y=40
+node Database x=420 y=0
+node EventBus x=420 y=190
+node Backend.b_dbout x=170 y=95
+node Backend.b_eventout x=170 y=130
+node Database.db_in x=420 y=50
+node EventBus.eb_in x=420 y=240
+@endlayout
+@enduml`);
 
     const dbBefore = await componentPortInfo(page, 'Backend.b_dbout');
     const eventBefore = await componentPortInfo(page, 'Backend.b_eventout');
@@ -3217,7 +3259,7 @@ JailState --> NormalState : free
     expect(eventBefore.side).toBe('right');
     expect(eventBefore.cy).toBeGreaterThan(dbBefore.cy);
 
-    await dragLocatorCenter(page, page.locator('.uml-pg-edit-hitbox[data-layout-id="Backend.b_eventout"]'), 38, -50);
+    await dragLocatorCenter(page, page.locator('.uml-pg-edit-hitbox[data-layout-id="Backend.b_eventout"]'), 38, -50, { svgUnits: true });
 
     const dbAfter = await componentPortInfo(page, 'Backend.b_dbout');
     const eventAfter = await componentPortInfo(page, 'Backend.b_eventout');
@@ -3237,24 +3279,27 @@ JailState --> NormalState : free
     await page.uncheck('#uml-pg-snap');
     await selectEditMode(page, 'nodes');
 
-    const labelHandle = page.locator('.uml-pg-edit-hitbox[data-layout-id="label:edge-0"]');
+    const labelId = await page.locator('#uml-pg-output [data-layout-kind="edge-label"]')
+      .filter({ hasText: 'REST / JSON' }).getAttribute('data-layout-id');
+    const labelHandle = page.locator(`.uml-pg-edit-hitbox[data-layout-id="${labelId}"]`);
     await expect(labelHandle).toHaveCount(1);
-    const before = await componentLabelInfo(page, 'label:edge-0');
+    const before = await componentLabelInfo(page, labelId);
     expect(before, 'connector label should expose a movable handle').not.toBeNull();
+    expect(before.text).toContain('REST / JSON');
 
-    await dragLocatorCenter(page, labelHandle, 46, -24);
+    await dragLocatorCenter(page, labelHandle, 46, -24, { svgUnits: true });
 
-    const after = await componentLabelInfo(page, 'label:edge-0');
+    const after = await componentLabelInfo(page, labelId);
     expect(after.text).toContain('REST / JSON');
-    expect(after.x).toBeGreaterThan(before.x + 30);
-    expect(after.y).toBeLessThan(before.y - 10);
+    expect(after.x - before.x).toBeCloseTo(46, 0);
+    expect(after.y - before.y).toBeCloseTo(-24, 0);
 
     const source = await page.locator('#uml-pg-input').inputValue();
-    expect(source).toContain('node "label:edge-0" x=');
+    expect(source).toContain(`node "${labelId}" x=`);
 
     await page.locator('#uml-pg-reset-one').click();
     const resetSource = await page.locator('#uml-pg-input').inputValue();
-    expect(resetSource).not.toContain('node "label:edge-0" x=');
+    expect(resetSource).not.toContain(`node "${labelId}" x=`);
   });
 
   test('dragging line segments emits route metadata and reset selected removes it', async ({ page }) => {
