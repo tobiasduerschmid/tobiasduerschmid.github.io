@@ -65,6 +65,15 @@ PlayerState <|.. PrisonState
 PlayerState <|.. BankruptcyMode
 @enduml`;
 
+const MONOPOLY_STATE_ROLE_VARIATION_DIAGRAM = `@startuml
+state NormalMode
+state PrisonState
+state BankruptcyMode
+NormalMode --> PrisonState : third double
+PrisonState --> NormalMode : fee paid
+NormalMode --> BankruptcyMode : cannot pay debt
+@enduml`;
+
 async function openPlayground(page) {
   await page.goto(PLAYGROUND_URL);
   await expect(page.locator('#uml-pg-output svg')).toBeVisible();
@@ -91,7 +100,7 @@ async function selectEditMode(page, mode) {
 async function openMonopolyTutorialStep(page, stepIndex, classSource = MONOPOLY_CLASS_ROLE_VARIATION_DIAGRAM) {
   await page.goto(MONOPOLY_TUTORIAL_URL);
   await expect(page.locator('#uml-pg-output')).toBeVisible();
-  await page.evaluate(({ index, source, classKey, stateKey, sequenceKey }) => {
+  await page.evaluate(({ index, source, stateSource, classKey, stateKey, sequenceKey }) => {
     localStorage.removeItem(stateKey);
     localStorage.removeItem(sequenceKey);
     localStorage.setItem(classKey, source);
@@ -100,9 +109,11 @@ async function openMonopolyTutorialStep(page, stepIndex, classSource = MONOPOLY_
     window._tutorial._stepsUnlocked.add(index);
     window._tutorial.loadStep(index);
     localStorage.setItem(classKey, source);
+    if (index === 2) localStorage.setItem(stateKey, stateSource);
   }, {
     index: stepIndex,
     source: classSource,
+    stateSource: MONOPOLY_STATE_ROLE_VARIATION_DIAGRAM,
     classKey: tutorialAutosaveKey('class'),
     stateKey: tutorialAutosaveKey('state'),
     sequenceKey: tutorialAutosaveKey('sequence'),
@@ -124,6 +135,11 @@ async function openGeneratedPythonWorkspace(page) {
   await popup.waitForFunction(() => Boolean(window.__archUmlGeneratedPythonCode), null, { timeout: 30000 });
   const pythonText = await popup.evaluate(() => window.__archUmlGeneratedPythonCode);
   return { popup, pythonText };
+}
+
+async function expectFailedUmlCriterion(page, description) {
+  const result = page.getByRole('listitem').filter({ has: page.getByText(description, { exact: true }) });
+  await expect(result).toContainText('✗');
 }
 
 async function expectTutorHint(page, text) {
@@ -4768,7 +4784,7 @@ Playerstate <|-- BankruptState
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
-  test('UML tutorial shows naming hints for vague class and operation names', async ({ page }) => {
+  test('UML tutorial explains the published state-role and operation conventions', async ({ page }) => {
     await page.goto(MONOPOLY_TUTORIAL_URL);
     await page.waitForSelector('#uml-pg-output');
 
@@ -4790,7 +4806,7 @@ BankruptcyMode --|> PlayerState
     await page.getByRole('button', { name: /Test My Work/ }).click();
     await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
     await expectTutorHint(page, 'Concrete state class names should expose their Monopoly role');
-    await expectTutorHint(page, "state abstraction's operation should name the turn behavior");
+    await expectTutorHint(page, 'state abstraction and Player should share the turn operation name');
   });
 
   test('UML tutorial does not show naming hints when matching elements are missing', async ({ page }) => {
@@ -4827,8 +4843,8 @@ PlayerState <|-- BankruptState
     });
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/4\s*\/\s*5 tests passed/);
-    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Player owns or aggregates its current state');
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
+    await expectFailedUmlCriterion(page, 'Player owns or aggregates its current state');
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
@@ -4852,9 +4868,9 @@ PlayerState <|-- BankruptState
     });
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/4\s*\/\s*5 tests passed/);
-    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Operations support the later sequence diagram');
-    await expect(page.locator('.tvm-test-item.fail')).toContainText('argument typed as');
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
+    await expectFailedUmlCriterion(page, 'Operations support the later sequence diagram');
+    await expect(page.locator('.tvm-test-item.fail').filter({ hasText: 'argument typed as' })).toBeVisible();
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
@@ -4878,20 +4894,20 @@ PlayerState <|-- BankruptState
     });
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/4\s*\/\s*5 tests passed/);
-    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Player owns or aggregates its current state');
-    await expect(page.locator('.tvm-test-item.fail')).toContainText('target multiplicity');
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
+    await expectFailedUmlCriterion(page, 'Player owns or aggregates its current state');
+    await expect(page.locator('.tvm-test-item.fail').filter({ hasText: 'target multiplicity' })).toBeVisible();
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
-  test('UML tutorial accepts PlayerState turn operation declared on an abstract class', async ({ page }) => {
+  test('UML tutorial accepts an explicitly abstract PlayerState turn operation', async ({ page }) => {
     await page.goto(MONOPOLY_TUTORIAL_URL);
     await page.waitForSelector('#uml-pg-output');
 
     await page.locator('#uml-pg-input').evaluate((el) => {
       el.value = `@startuml
 class Player { +takeTurn(); +setState(state: PlayerState); }
-abstract class PlayerState { +takeTurn(player: Player); }
+abstract class PlayerState { +{abstract} takeTurn(player: Player); }
 class NormalTurnState { +takeTurn(player: Player); }
 class InJailState { +takeTurn(player: Player); }
 class BankruptState { +takeTurn(player: Player); }
@@ -4915,7 +4931,7 @@ PlayerState <|-- BankruptState
     await page.locator('#uml-pg-input').evaluate((el) => {
       el.value = `@startuml
 class Player { +takeTurn; +setState: PlayerState; }
-abstract class PlayerState { +takeTurn(player: Player); }
+abstract class PlayerState { +{abstract} takeTurn(player: Player); }
 class NormalTurnState { +takeTurn; }
 class InJailState { +takeTurn; }
 class BankruptState { +takeTurn; }
@@ -4928,7 +4944,7 @@ PlayerState <|-- BankruptState
     });
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/3\s*\/\s*5 tests passed/);
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc').filter({ hasText: 'Operations support the later sequence diagram' })).toBeVisible();
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc').filter({ hasText: 'Concrete states implement abstract operations' })).toBeVisible();
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
@@ -4941,7 +4957,7 @@ PlayerState <|-- BankruptState
     await page.locator('#uml-pg-input').evaluate((el) => {
       el.value = `@startuml
 class Player { +takeTurn(); +setState(state: PlayerState); }
-abstract class PlayerState { +takeTurn(player: Player); }
+abstract class PlayerState { +{abstract} takeTurn(player: Player); }
 class NormalTurnState { +takeTurn(player: Player); }
 class InJailState
 class BankruptState { +takeTurn(player: Player); }
@@ -4954,9 +4970,9 @@ PlayerState <|-- BankruptState
     });
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/4\s*\/\s*5 tests passed/);
-    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Concrete states implement abstract operations');
-    await expect(page.locator('.tvm-test-item.fail')).toContainText('InJailState.takeTurn');
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
+    await expectFailedUmlCriterion(page, 'Concrete states implement abstract operations');
+    await expect(page.locator('.tvm-test-item.fail').filter({ hasText: 'InJailState.takeTurn' })).toBeVisible();
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
@@ -4980,12 +4996,12 @@ PlayerState <|-- BankruptState
     });
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/3\s*\/\s*5 tests passed/);
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc').filter({ hasText: 'State-pattern classes are present' })).toHaveCount(1);
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
-  test('UML tutorial rejects interface states connected with generalization', async ({ page }) => {
+  test('UML tutorial accepts interface realization normalized by the editor', async ({ page }) => {
     await page.goto(MONOPOLY_TUTORIAL_URL);
     await page.waitForSelector('#uml-pg-output');
 
@@ -5005,8 +5021,7 @@ PlayerState <|-- BankruptState
     });
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/4\s*\/\s*5 tests passed/);
-    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Concrete states implement the state abstraction');
+    await expect(page.getByText('All 5 tests passed!', { exact: false })).toBeVisible();
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
@@ -5040,29 +5055,26 @@ NormalTurnState --> BankruptState : cash gone
 @enduml`);
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/0\s*\/\s*2 tests passed/);
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc').filter({ hasText: 'States reuse the concrete state class names' })).toHaveCount(1);
     await expectTutorHint(page, 'State nodes should reuse the concrete state class names');
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
-  test('UML tutorial state diagram rejects transition labels shorter than four characters', async ({ page }) => {
+  test('UML tutorial state diagram accepts concise nonempty transition conditions', async ({ page }) => {
     await openMonopolyTutorialStep(page, 1);
 
     await setUmlSource(page, `@startuml
 state NormalMode
 state PrisonState
 state BankruptcyMode
-NormalMode --> PrisonState : go
-PrisonState --> NormalMode : fee paid
+NormalMode --> PrisonState : jailed
+PrisonState --> NormalMode : pay
 NormalMode --> BankruptcyMode : cash gone
 @enduml`);
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/1\s*\/\s*2 tests passed/);
-    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('State transitions are labeled and consistent');
-    await expectTutorHint(page, 'Transition labels should describe the condition or event');
-    await expect(page.locator('.tvm-btn-next')).toBeEnabled();
+    await expect(page.getByText('All 2 tests passed!', { exact: false })).toBeVisible();
   });
 
   test('UML tutorial state diagram checks optional jail bankruptcy label when present', async ({ page }) => {
@@ -5075,12 +5087,12 @@ state BankruptcyMode
 NormalMode --> PrisonState : bad roll
 PrisonState --> NormalMode : fee paid
 NormalMode --> BankruptcyMode : cash gone
-PrisonState --> BankruptcyMode : no
+PrisonState --> BankruptcyMode
 @enduml`);
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/1\s*\/\s*2 tests passed/);
-    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('State transitions are labeled and consistent');
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
+    await expectFailedUmlCriterion(page, 'Required transitions exist and every transition is labeled');
     await expect(page.locator('.tvm-btn-next')).toBeEnabled();
   });
 
@@ -5131,9 +5143,9 @@ normal_state -> player: change_state(normal_state)
 @enduml`);
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/2\s*\/\s*5 tests passed/);
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc').filter({ hasText: 'Player and concrete state objects are shown' })).toBeVisible();
-    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc').filter({ hasText: 'Player talks to each state and changes state between calls' })).toBeVisible();
+    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc').filter({ hasText: 'Player calls two state types and changes state on a coherent path' })).toBeVisible();
     await expect(page.locator('.tvm-test-summary.all-pass')).toHaveCount(0);
   });
 
@@ -5149,8 +5161,8 @@ player -> prison_state: do_turn(player)
 @enduml`);
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/3\s*\/\s*5 tests passed/);
-    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc').filter({ hasText: 'Player talks to each state and changes state between calls' })).toBeVisible();
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
+    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc').filter({ hasText: 'Player calls two state types and changes state on a coherent path' })).toBeVisible();
     await expect(page.locator('.tvm-test-summary.all-pass')).toHaveCount(0);
   });
 
@@ -5167,8 +5179,8 @@ player -> prison_state: do_turn(player)
 @enduml`);
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/4\s*\/\s*5 tests passed/);
-    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('State-change call passes the next state object');
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
+    await expectFailedUmlCriterion(page, 'State-change call passes the next state object');
     await expectTutorHint(page, 'state-changing call should pass the lifeline');
     await expect(page.locator('.tvm-test-summary.all-pass')).toHaveCount(0);
   });
@@ -5187,8 +5199,8 @@ player -> prison_state: prison_state.helper
 @enduml`);
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/4\s*\/\s*5 tests passed/);
-    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Sequence calls use method-call labels');
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
+    await expectFailedUmlCriterion(page, 'Sequence calls use method-call labels');
     await expectTutorHint(page, 'methodName(arguments)');
     await expect(page.locator('.tvm-test-summary.all-pass')).toHaveCount(0);
   });
@@ -5207,8 +5219,8 @@ player -> prison_state: teleport(player)
 @enduml`);
 
     await page.getByRole('button', { name: /Test My Work/ }).click();
-    await expect(page.locator('.tvm-test-summary.partial')).toContainText(/4\s*\/\s*5 tests passed/);
-    await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Sequence method calls exist in the class diagram');
+    await expect(page.locator('.tvm-test-summary.partial')).toBeVisible();
+    await expectFailedUmlCriterion(page, 'Sequence calls match class operations and known argument types');
     await expectTutorHint(page, 'Read each arrow as a method call on the receiving lifeline');
     await expect(page.locator('.tvm-test-summary.all-pass')).toHaveCount(0);
   });

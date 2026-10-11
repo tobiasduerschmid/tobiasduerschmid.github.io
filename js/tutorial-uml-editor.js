@@ -1,30 +1,6 @@
 (function () {
   'use strict';
 
-  var TURN_METHOD_ALIASES = [
-    'takeTurn',
-    'doTurn',
-    'playTurn',
-    'performTurn',
-    'executeTurn',
-    'processTurn',
-    'handleTurn',
-    'runTurn',
-    'makeMove',
-    'takeAction',
-    'performAction'
-  ];
-
-  var STATE_CHANGE_METHOD_ALIASES = [
-    'setState',
-    'changeState',
-    'stateChange',
-    'switchState',
-    'updateState',
-    'transitionState',
-    'transitionToState'
-  ];
-
   var UML_TYPE_LABELS = {
     class: 'Class Diagram',
     sequence: 'Sequence Diagram',
@@ -719,8 +695,8 @@
     this._silentTestRun = silent;
     var step = this.steps[this.currentStep] || {};
     var tests = step.tests || [];
-    var model = parseArchUml(this.currentSource());
     var currentType = step.uml_type || (this.typeEl && this.typeEl.value) || 'class';
+    var model = parseArchUml(this.currentSource(), currentType);
     var self = this;
     var parsedModels = {};
     var context = {
@@ -728,7 +704,7 @@
       modelForType: function (type) {
         type = type || currentType;
         if (type === currentType) return model;
-        if (!parsedModels[type]) parsedModels[type] = parseArchUml(self.sourceForDiagramType(type));
+        if (!parsedModels[type]) parsedModels[type] = parseArchUml(self.sourceForDiagramType(type), type);
         return parsedModels[type];
       }
     };
@@ -872,7 +848,46 @@
     }
   }
 
-  function parseArchUml(source) {
+  // Adapt the renderer's public model rather than interpreting source a second time.
+  function parseArchUml(source, type) {
+    var model = { elements: [], members: [], relations: [], events: [] };
+    var renderer = window[UML_RENDERER_GLOBALS[type]];
+    if (!renderer || typeof renderer.parse !== 'function') {
+      model.parseError = 'The UML parser is unavailable. Reload the page before checking your work.';
+      return model;
+    }
+    if (['class', 'state', 'sequence'].indexOf(type) === -1) return parseOtherArchUml(source);
+    try {
+      var parsed = renderer.parse(source);
+      if (type === 'class') {
+        parsed.classes.forEach(function (cls) {
+          addElement(model, cls.type === 'abstract' ? 'abstract class' : cls.type, cls.name, cls.name);
+          cls.attributes.concat(cls.methods).forEach(function (member) {
+            model.members.push({ owner: cls.name, text: member.text, declaredAbstract: member.isAbstract, isStatic: member.isStatic });
+          });
+        });
+        model.relations = parsed.relationships.map(function (rel) {
+          return { from: rel.from, to: rel.to, semanticType: rel.type, sourceMult: rel.fromMult, targetMult: rel.toMult, label: rel.label };
+        });
+      } else if (type === 'state') {
+        parsed.states.forEach(function (state) { addElement(model, 'state', state.name, state.name); });
+        model.relations = parsed.transitions.map(function (rel) { return { from: rel.from, to: rel.to, op: '-->', label: rel.label }; });
+      } else {
+        parsed.participants.forEach(function (participant) {
+          addElement(model, 'participant', participant.id, participant.label.replace(/^:\s*/, ''));
+        });
+        model.events = parsed.messages;
+        model.relations = parsed.messages.filter(function (event) { return event.type === 'message'; }).map(function (event) {
+          return Object.assign({}, event, { op: event.msgType === 'response' ? '-->' : '->' });
+        });
+      }
+    } catch (error) {
+      model.parseError = 'The diagram could not be parsed: ' + error.message;
+    }
+    return model;
+  }
+
+  function parseOtherArchUml(source) {
     var model = { elements: [], members: [], relations: [] };
     var lines = String(source || '').split(/\r?\n/);
     var current = null;
@@ -1066,6 +1081,7 @@
   }
 
   function evaluateAssertion(model, assertion, context) {
+    if (model.parseError) return { pass: false, message: model.parseError };
     var kind = assertion.kind || assertion.type || 'element';
     if (kind === 'element' || kind === 'state' || kind === 'participant' || kind === 'class') {
       return assertElement(model, assertion, kind, context);
@@ -1074,6 +1090,7 @@
     if (kind === 'relation' || kind === 'transition' || kind === 'message') return assertRelation(model, assertion, kind, context);
     if (kind === 'sequence' || kind === 'sequence_consistency') return assertSequence(model, assertion, context);
     if (kind === 'class_consistency' || kind === 'classConsistency') return assertClassConsistency(model, assertion);
+    if (kind === 'state_consistency') return assertTransitionLabels(model);
     return { pass: false, message: 'Unknown assertion kind: ' + kind };
   }
 
@@ -1111,7 +1128,7 @@
         ? true
         : memberIsAbstract(member, model) === !!(assertion.is_abstract || assertion.isAbstract || assertion.abstract);
       return valueMatches(member.owner, owner, ownerContains) &&
-        valueMatches(member.text, text, textContains, true) &&
+        valueMatches(requiresArguments && signature ? signature.name : member.text, text, textContains, true) &&
         abstractOk &&
         (!requiresArguments || !!signature) &&
         (!expectedArgumentTypes.length || methodSignatureHasArgumentType(signature, expectedArgumentTypes));
@@ -1221,84 +1238,176 @@
     return { pass: true };
   }
 
-  function assertSequenceMessagesBetweenPlayerAndStates(model, context, assertion) {
-    var player = sequencePlayerParticipants(model)[0];
-    if (!player) return { pass: false, message: 'Expected a Player object participant before checking state interactions.' };
-    var stateParticipants = sequenceStateParticipants(model, context);
-    if (!stateParticipants.length) return { pass: false, message: 'Expected at least one concrete PlayerState object participant before checking state interactions.' };
-    var missing = stateParticipants.filter(function (stateParticipant) {
-      return !model.relations.some(function (rel) {
-        return relationBetweenParticipants(rel, player, stateParticipant);
-      });
-    });
-    return missing.length
-      ? { pass: false, message: 'Expected a message between the Player object and each concrete PlayerState object. Missing: ' + missing.map(function (p) { return p.id; }).join(', ') + '.' }
-      : { pass: true };
+  function assertSequenceMessagesBetweenPlayerAndStates(model, context) {
+    var analysis = sequenceAnalysis(model, context);
+    return analysis.witness && !analysis.errors.length
+      ? { pass: true }
+      : { pass: false, message: 'Show a coherent path where Player calls two different concrete state types with a state-changing call between them.' };
   }
 
-  function assertSequenceStateChangeBetweenStateCalls(model, context, assertion) {
-    var player = sequencePlayerParticipants(model)[0];
-    if (!player) return { pass: false, message: 'Expected a Player object participant before checking state-change ordering.' };
-    var stateParticipants = sequenceStateParticipants(model, context);
-    var turnAliases = toArray(context && context.turnAliases).concat(TURN_METHOD_ALIASES);
-    var changeAliases = toArray(context && context.stateChangeAliases).concat(STATE_CHANGE_METHOD_ALIASES);
-    var stateCalls = [];
-    model.relations.forEach(function (rel, index) {
-      var stateParticipant = stateParticipants.find(function (candidate) {
-        return relationBetweenParticipants(rel, player, candidate) && methodMatchesAliases(rel.label, turnAliases);
-      });
-      if (stateParticipant) {
-        stateCalls.push({ index: index, participant: stateParticipant });
-      }
-    });
-    var potentialNamedChange = false;
-    for (var i = 0; i < stateCalls.length; i++) {
-      for (var j = i + 1; j < stateCalls.length; j++) {
-        if (normalize(stateCalls[i].participant.className) === normalize(stateCalls[j].participant.className)) continue;
-        var hasChange = model.relations.slice(stateCalls[i].index + 1, stateCalls[j].index).some(function (rel) {
-          if (participantMatchesEndpoint(rel.to, player) && methodNameFromLabel(rel.label)) potentialNamedChange = true;
-          return participantMatchesEndpoint(rel.to, player) && methodMatchesAliases(rel.label, changeAliases);
-        });
-        if (hasChange) return { pass: true };
-      }
-    }
-    return failResult('Expected a Player state-change method call between two turn calls to different state objects.', potentialNamedChange ? assertionNamingHint(assertion) : null);
+  function assertSequenceStateChangeBetweenStateCalls(model, context) {
+    return assertSequenceMessagesBetweenPlayerAndStates(model, context);
   }
 
   function assertSequenceStateChangeArgumentIsNextState(model, context, assertion) {
-    var player = sequencePlayerParticipants(model)[0];
-    if (!player) return { pass: false, message: 'Expected a Player object participant before checking state-change arguments.' };
-    var stateParticipants = sequenceStateParticipants(model, context);
-    var turnAliases = toArray(context && context.turnAliases).concat(TURN_METHOD_ALIASES);
-    var changeAliases = toArray(context && context.stateChangeAliases).concat(STATE_CHANGE_METHOD_ALIASES);
-    var stateCalls = [];
-    model.relations.forEach(function (rel, index) {
-      var stateParticipant = stateParticipants.find(function (candidate) {
-        return participantMatchesEndpoint(rel.from, player) &&
-          participantMatchesEndpoint(rel.to, candidate) &&
-          methodMatchesAliases(rel.label, turnAliases);
-      });
-      if (stateParticipant) stateCalls.push({ index: index, participant: stateParticipant });
-    });
-    var sawStateChange = false;
-    var expectedTargets = [];
-    for (var i = 0; i < stateCalls.length; i++) {
-      for (var j = i + 1; j < stateCalls.length; j++) {
-        if (normalize(stateCalls[i].participant.className) === normalize(stateCalls[j].participant.className)) continue;
-        var nextState = stateCalls[j].participant;
-        expectedTargets.push(nextState.id);
-        var hasMatchingArgument = model.relations.slice(stateCalls[i].index + 1, stateCalls[j].index).some(function (rel) {
-          if (!participantMatchesEndpoint(rel.to, player) || !methodMatchesAliases(rel.label, changeAliases)) return false;
-          sawStateChange = true;
-          var call = methodCallFromLabel(rel.label);
-          return !!call && call.args.some(function (arg) {
-            return argumentMatchesParticipant(arg, nextState);
-          });
-        });
-        if (hasMatchingArgument) return { pass: true };
+    var analysis = sequenceAnalysis(model, context);
+    return analysis.errors.length ? failResult(analysis.errors.join(' '), assertionNamingHint(assertion))
+      : analysis.witness ? { pass: true }
+      : { pass: false, message: 'Pass the next state lifeline to the state-changing operation between turn calls.' };
+  }
+
+  // A fragment is a control-flow choice, not a flat list of messages. Keep the
+  // finite state (current object, last turn and witness) rather than enumerate
+  // exponentially many complete traces. Loops are checked to a fixed point.
+  function sequenceTree(events) {
+    var root = [], stack = [{ kind: 'root', operands: [root] }], errors = [];
+    events.forEach(function (event) {
+      var top = stack[stack.length - 1];
+      if (event.type === 'fragment_start') {
+        var fragment = { kind: event.fragType, condition: event.condition || '', guards: [event.condition || ''], operands: [[]] };
+        top.operands[top.operands.length - 1].push(fragment); stack.push(fragment);
+      } else if (event.type === 'fragment_else') {
+        if (stack.length === 1 || ['alt', 'par'].indexOf(top.kind) === -1) errors.push('An else operand needs an alt or par fragment.');
+        else { top.operands.push([]); top.guards.push(event.condition || ''); }
+      } else if (event.type === 'fragment_end') {
+        if (stack.length === 1) errors.push('A fragment end has no matching start.'); else stack.pop();
+      } else if (event.type === 'message' && event.msgType !== 'response') {
+        top.operands[top.operands.length - 1].push(event);
       }
+    });
+    if (stack.length !== 1) errors.push('Close each sequence fragment before checking the interaction.');
+    return { nodes: root, errors: errors };
+  }
+
+  function uniqueTraceStates(states) {
+    var seen = new Set();
+    return states.filter(function (state) {
+      var key = JSON.stringify(state);
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    });
+  }
+
+  function resumeTraceStates(states) {
+    return states.map(function (state) {
+      if (!state.ended) return state;
+      var resumed = Object.assign({}, state); delete resumed.ended; return resumed;
+    });
+  }
+
+  function evaluateSequenceNodes(nodes, states, advance, errors) {
+    nodes.forEach(function (node) {
+      // Break skips the remainder of this operand. Its caller resumes execution
+      // outside the enclosing fragment, rather than ending the whole diagram.
+      var ended = states.filter(function (state) { return state.ended; });
+      states = states.filter(function (state) { return !state.ended; });
+      if (node.type === 'message') {
+        states = states.map(function (state) { return advance(state, node); });
+      } else if (node.kind === 'alt') {
+        var exhaustive = node.guards.some(function (guard) { return !guard || /^(else|true)$/i.test(guard.trim()); });
+        states = resumeTraceStates(node.operands.reduce(function (all, operand) {
+          return all.concat(evaluateSequenceNodes(operand, states, advance, errors));
+        }, exhaustive ? [] : states));
+      } else if (node.kind === 'opt' || node.kind === 'break') {
+        var optional = resumeTraceStates(evaluateSequenceNodes(node.operands[0], states, advance, errors));
+        if (node.kind === 'break') optional = optional.map(function (state) { return Object.assign({}, state, { ended: true }); });
+        states = states.concat(optional);
+      } else if (node.kind === 'loop') {
+        states = evaluateSequenceLoop(node, states, advance, errors);
+      } else if (node.kind === 'critical') {
+        states = resumeTraceStates(evaluateSequenceNodes(node.operands[0], states, advance, errors));
+      } else {
+        errors.push('Automatic ordering checks cannot certify ' + node.kind + ' fragments; use a supported path or request manual review.');
+      }
+      states = uniqueTraceStates(ended.concat(states));
+    });
+    return states;
+  }
+
+  function evaluateSequenceLoop(node, states, advance, errors) {
+    var bounds = node.condition.match(/^\(\s*(\d+)\s*(?:,\s*(\d+|\*)\s*)?\)/);
+    var min = bounds ? Number(bounds[1]) : 0;
+    var max = bounds ? (bounds[2] === '*' ? Infinity : Number(bounds[2] || bounds[1])) : Infinity;
+    if (!Number.isSafeInteger(min) || (max !== Infinity && !Number.isSafeInteger(max)) || max < min || (!bounds && /^\(/.test(node.condition))) {
+      errors.push('Automatic loop checks need nonnegative numeric bounds, such as (1, 3), or manual review.');
+      return states;
     }
-    return failResult('Expected the state-change call to pass the object that receives the next turn call as an argument' + (expectedTargets.length ? ' (for example, ' + expectedTargets.join(' or ') + ').' : '.'), sawStateChange ? assertionNamingHint(assertion) : null);
+    var exits = [], iteration = 0, layers = new Map();
+    while (states.length) {
+      if (iteration >= min) exits = uniqueTraceStates(exits.concat(states));
+      if (iteration === max) break;
+      var key = states.map(function (state) { return JSON.stringify(state); }).sort().join('\n');
+      var previous = layers.get(key);
+      if (previous !== undefined) {
+        if (previous >= min) break; // All exits in the repeated cycle were checked.
+        var period = iteration - previous;
+        // A large minimum need not repeat an already checked abstract cycle.
+        if (iteration < min) iteration += Math.floor((min - iteration) / period) * period;
+        if (iteration >= min) {
+          exits = uniqueTraceStates(exits.concat(states));
+          if (iteration === max) break;
+        }
+      }
+      layers.set(key, iteration);
+      var next = evaluateSequenceNodes(node.operands[0], states, advance, errors);
+      exits = uniqueTraceStates(exits.concat(resumeTraceStates(next.filter(function (state) { return state.ended; }))));
+      states = next.filter(function (state) { return !state.ended; });
+      iteration++;
+    }
+    return exits;
+  }
+
+  function sequenceAnalysis(model, context) {
+    if (context.sequenceAnalysis) return context.sequenceAnalysis;
+    var classModel = context.modelForType('class');
+    var stateModel = context.modelForType('state');
+    var states = sequenceStateParticipants(model, context);
+    var players = sequencePlayerParticipants(model);
+    var turns = turnOperations(classModel).map(function (member) { return methodNameFromMember(member.text); });
+    var changes = stateChangeOperations(classModel);
+    var tree = sequenceTree(model.events);
+    var analysis = { errors: tree.errors.slice(), witness: false };
+    var stateNames = stateNameValues(stateModel);
+    if (stateModel.parseError) analysis.errors.push(stateModel.parseError);
+    players.forEach(function (player) {
+      var result = evaluateSequenceNodes(tree.nodes, [{ last: '', current: '', changed: false, witness: false }], function (trace, message) {
+        return advancePlayerTrace(trace, message, { player: player, states: states, turns: turns, changes: changes, classModel: classModel, stateModel: stateModel, stateNames: stateNames, participants: sequenceParticipants(model) }, analysis.errors);
+      }, analysis.errors);
+      if (result.some(function (trace) { return trace.witness; })) analysis.witness = true;
+    });
+    analysis.errors = uniqueValues(analysis.errors);
+    context.sequenceAnalysis = analysis;
+    return analysis;
+  }
+
+  function advancePlayerTrace(trace, message, design, errors) {
+    var call = methodCallFromLabel(message.label);
+    if (!call) return trace;
+    var receiver = design.states.find(function (state) { return participantMatchesEndpoint(message.to, state); });
+    var isTurn = participantMatchesEndpoint(message.from, design.player) && receiver && design.turns.some(function (name) { return name === call.name; });
+    var change = design.changes.find(function (member) { return operationAcceptsCall(design.classModel, member, call, design.participants); });
+    if (!isTurn && !(change && participantMatchesEndpoint(message.to, design.player))) return trace;
+    var next = Object.assign({}, trace);
+    if (isTurn) {
+      if (!exactValueMatches(receiver.className, design.stateNames)) errors.push('State ' + receiver.className + ' is missing from the state diagram.');
+      if (trace.current && trace.current !== receiver.id) errors.push('The next turn must use the assigned state object ' + trace.current + ', not ' + receiver.id + '.');
+      var last = design.states.find(function (state) { return state.id === trace.last; });
+      next.witness = trace.witness || !!(last && last.className !== receiver.className && trace.changed);
+      next.last = next.current = receiver.id; next.changed = false;
+      return next;
+    }
+    var signature = methodSignatureFromMember(change.text);
+    var abstraction = stateAbstraction(design.classModel);
+    var parameterIndex = signature.parameters.filter(function (param) { return param.direction !== 'out'; }).findIndex(function (param) { return param.direction !== 'out' && exactValueMatches(param.type, [abstraction.id]); });
+    var target = design.states.find(function (state) { return cleanArgument(call.args[parameterIndex]) === state.id; });
+    if (!target) { errors.push('The state-changing call must pass the next state object lifeline as its state argument.'); return next; }
+    if (!exactValueMatches(target.className, design.stateNames)) errors.push('State ' + target.className + ' is missing from the state diagram.');
+    var current = design.states.find(function (state) { return state.id === trace.current; });
+    if (current && current.id !== target.id && !design.stateModel.relations.some(function (edge) {
+      return exactValueMatches(edge.from, [current.className]) && exactValueMatches(edge.to, [target.className]);
+    })) errors.push('The state diagram needs the illustrated transition from ' + current.className + ' to ' + target.className + '.');
+    next.current = target.id; next.changed = true;
+    return next;
   }
 
   function assertSequenceCallLabelsHaveArgumentLists(model, assertion) {
@@ -1326,7 +1435,7 @@
         failures.push('receiver "' + rel.to + '" is not shown as an object');
         return;
       }
-      if (!classModelHasMethod(classModel, receiver.className, methodName)) {
+      if (!classModelHasCall(classModel, receiver.className, methodCallFromLabel(rel.label), participants)) {
         failures.push(receiver.className + '.' + methodName);
       }
     });
@@ -1342,6 +1451,10 @@
 
   function assertClassConsistency(model, assertion) {
     var check = normalize(assertion.check || assertion.rule || assertion.name);
+    if (check === 'stateroles') return assertStateRoles(model);
+    if (check === 'stateoperations') return assertStateOperations(model);
+    if (check === 'stateownership') return assertStateOwnership(model);
+    if (check === 'stateinheritance') return assertStateInheritance(model);
     if (check === 'abstractmethodsimplemented') {
       return assertAbstractMethodsImplemented(model, assertion);
     }
@@ -1353,12 +1466,12 @@
     var namingCandidateExists = false;
     model.elements.forEach(function (abstraction) {
       if (!isAbstractElement(abstraction)) return;
-      var abstractMethods = abstractMethodNamesForElement(model, abstraction);
+      var abstractMethods = abstractOperationsForElement(model, abstraction);
       if (!abstractMethods.length) return;
       concreteDescendantsOf(model, abstraction).forEach(function (concrete) {
-        abstractMethods.forEach(function (methodName) {
-          if (classHasConcreteMethod(model, concrete, methodName, {})) return;
-          missing.push(concrete.id + '.' + methodName);
+        abstractMethods.forEach(function (operation) {
+          if (classHasConcreteMethod(model, concrete, operation, {})) return;
+          missing.push(concrete.id + '.' + methodNameFromMember(operation.text) + ' with signature ' + operation.text);
           if (classHasAnyDirectMethod(model, concrete)) namingCandidateExists = true;
         });
       });
@@ -1399,9 +1512,9 @@
     var actualList = Array.isArray(actualValues) ? actualValues : [actualValues];
     var expectedList = Array.isArray(expectedValues) ? expectedValues : [expectedValues];
     return actualList.some(function (actual) {
-      var normalizedActual = normalize(actual);
+      var normalizedActual = cleanId(actual);
       return normalizedActual && expectedList.some(function (expected) {
-        return normalizedActual === normalize(expected);
+        return normalizedActual === cleanId(expected);
       });
     });
   }
@@ -1441,16 +1554,112 @@
   }
 
   function classRoleElement(context, role) {
-    if (!role || !context || typeof context.modelForType !== 'function') return null;
-    var classModel = context.modelForType('class');
-    var tokens = roleTokens(role);
-    if (!tokens.length) return null;
-    return classModel.elements.find(function (el) {
-      if (normalize(el.type).indexOf('class') === -1) return false;
-      return tokens.some(function (token) {
-        return normalize(el.id).indexOf(token) !== -1 || normalize(el.label).indexOf(token) !== -1;
+    if (!role || !context) return null;
+    return stateRoles(context.modelForType('class'))[role] || null;
+  }
+
+  function stateAbstraction(model) {
+    var player = classElementForName(model, 'Player');
+    if (!player) return null;
+    var candidates = model.elements.filter(isAbstractElement).filter(function (element) {
+      return model.relations.some(function (rel) {
+        return (exactValueMatches(rel.from, [player.id]) && exactValueMatches(rel.to, [element.id])) ||
+          (exactValueMatches(rel.to, [player.id]) && exactValueMatches(rel.from, [element.id]));
       });
-    }) || null;
+    });
+    if (candidates.length > 1) {
+      candidates = candidates.filter(function (candidate) {
+        return ['normal', 'jail', 'bankrupt'].every(function (role) {
+          return model.elements.some(function (element) {
+            return roleTokens(role).some(function (token) { return normalize(element.id).indexOf(token) !== -1; }) && classInheritsFrom(model, element, candidate, {});
+          });
+        });
+      });
+    }
+    return candidates.length === 1 ? candidates[0] : null;
+  }
+
+  function stateRoles(model) {
+    var abstraction = stateAbstraction(model);
+    var roles = {};
+    if (!abstraction) return roles;
+    ['normal', 'jail', 'bankrupt'].forEach(function (role) {
+      var candidates = concreteDescendantsOf(model, abstraction).filter(function (el) {
+        return roleTokens(role).some(function (token) { return normalize(el.id).indexOf(token) !== -1; });
+      });
+      if (candidates.length === 1) roles[role] = candidates[0];
+    });
+    return roles;
+  }
+
+  function assertStateRoles(model) {
+    var roles = stateRoles(model);
+    var ids = Object.keys(roles).map(function (role) { return roles[role].id; });
+    return ids.length === 3 && new Set(ids).size === 3
+      ? { pass: true }
+      : failResult('Show three distinct concrete state classes linked to the state abstraction: include normal, jail (or prison), and bankrupt in their respective names. Keep unrelated helpers outside these roles.', model.elements.length ? 'Concrete state class names should expose their Monopoly role within the state hierarchy, using the published naming convention.' : null);
+  }
+
+  function turnOperations(model) {
+    var abstraction = stateAbstraction(model);
+    var player = classElementForName(model, 'Player');
+    if (!abstraction || !player) return [];
+    var playerNames = classMethodNamesForType(model, player.id, {});
+    return allClassOperations(model, abstraction, {}).filter(function (member) {
+      return memberIsAbstract(member, model) && !member.isStatic &&
+        playerNames.some(function (name) { return name === methodNameFromMember(member.text); });
+    });
+  }
+
+  function stateChangeOperations(model) {
+    var abstraction = stateAbstraction(model);
+    var player = classElementForName(model, 'Player');
+    if (!abstraction || !player) return [];
+    return allClassOperations(model, player, {}).filter(function (member) {
+      var signature = methodSignatureFromMember(member.text);
+      return !member.isStatic && signature && signature.parameters.some(function (param) {
+        return param.direction !== 'out' && exactValueMatches(param.type, [abstraction.id]);
+      });
+    });
+  }
+
+  function assertStateOperations(model) {
+    return turnOperations(model).length && stateChangeOperations(model).length
+      ? { pass: true }
+      : failResult('Declare an abstract turn operation on the state abstraction and expose the same operation name on Player. Give Player a state-changing operation with an argument typed as that abstraction.', model.members.length ? 'The state abstraction and Player should share the turn operation name. Mark abstract-class turn operations abstract and type the state-changing parameter as the abstraction.' : null);
+  }
+
+  function assertStateOwnership(model) {
+    var abstraction = stateAbstraction(model);
+    if (!abstraction) return { pass: false, message: 'Connect Player to one state abstraction with aggregation or composition.' };
+    return assertRelation(model, { from: 'Player', to: abstraction.id, relation_type_any: ['aggregation', 'composition'], target_multiplicity_any: ['1', '1..1'] }, 'relation');
+  }
+
+  function assertStateInheritance(model) {
+    var abstraction = stateAbstraction(model);
+    var roles = stateRoles(model);
+    return abstraction && Object.keys(roles).length === 3 && Object.keys(roles).every(function (role) {
+      return validInheritancePath(model, roles[role], abstraction, {});
+    }) ? { pass: true } : { pass: false, message: 'Concrete states must implement the state abstraction, directly or through inheritance: generalize a class and realize an interface.' };
+  }
+
+  function validInheritancePath(model, child, ancestor, visited) {
+    if (visited[child.id]) return false;
+    visited = Object.assign({}, visited); visited[child.id] = true;
+    return model.relations.some(function (rel) {
+      var type = relationSemanticType(rel);
+      var edge = semanticRelationEndpoints(rel)[0];
+      if (!edge || !exactValueMatches(edge.from, [child.id])) return false;
+      var parent = classElementForName(model, edge.to);
+      if (!parent || (normalize(parent.type) === 'interface' ? type !== 'realization' && !(normalize(child.type) === 'interface' && type === 'generalization') : type !== 'generalization')) return false;
+      return parent === ancestor || validInheritancePath(model, parent, ancestor, visited);
+    });
+  }
+
+  function assertTransitionLabels(model) {
+    return model.relations.every(function (rel) { return String(rel.label || '').trim(); })
+      ? { pass: true }
+      : { pass: false, message: 'Label every transition with its condition or event, including additional transitions.' };
   }
 
   function roleTokens(role) {
@@ -1462,11 +1671,11 @@
   }
 
   function uniqueValues(values) {
-    var seen = {};
+    var seen = Object.create(null);
     var result = [];
     values.forEach(function (value) {
       value = cleanId(value);
-      var key = normalize(value);
+      var key = value;
       if (!key || seen[key]) return;
       seen[key] = true;
       result.push(value);
@@ -1481,7 +1690,7 @@
 
   function sequenceParticipants(model) {
     var participants = [];
-    var byId = {};
+    var byId = Object.create(null);
     model.elements.forEach(function (el) {
       if (!isSequenceParticipantType(el.type)) return;
       var participant = {
@@ -1491,11 +1700,11 @@
         implicit: false
       };
       participants.push(participant);
-      byId[normalize(participant.id)] = participant;
+      byId[participant.id] = participant;
     });
     model.relations.forEach(function (rel) {
       [rel.from, rel.to].forEach(function (endpoint) {
-        var key = normalize(endpoint);
+        var key = cleanId(endpoint);
         if (!key || byId[key]) return;
         var participant = {
           id: cleanId(endpoint),
@@ -1515,29 +1724,19 @@
   }
 
   function sequencePlayerParticipants(model) {
-    return sequenceParticipants(model).filter(function (participant) {
-      return exactValueMatches([participant.className, participant.label], ['Player']) ||
-        (normalize(participant.id).indexOf('player') !== -1 && normalize(participant.className).indexOf('state') === -1);
-    });
+    return sequenceParticipants(model).filter(function (participant) { return exactValueMatches(participant.className, ['Player']); });
   }
 
   function sequenceStateParticipants(model, context) {
-    var classNames = []
-      .concat(classRoleValues(context, 'normal'))
-      .concat(classRoleValues(context, 'jail'))
-      .concat(classRoleValues(context, 'bankrupt'));
-    return sequenceParticipants(model).filter(function (participant) {
-      return exactValueMatches([participant.className, participant.label, participant.id], classNames);
-    });
-  }
-
-  function relationBetweenParticipants(rel, left, right) {
-    return (participantMatchesEndpoint(rel.from, left) && participantMatchesEndpoint(rel.to, right)) ||
-      (participantMatchesEndpoint(rel.from, right) && participantMatchesEndpoint(rel.to, left));
+    var classModel = context.modelForType('class');
+    var abstraction = stateAbstraction(classModel);
+    if (!abstraction) return [];
+    var names = concreteDescendantsOf(classModel, abstraction).map(function (element) { return element.id; });
+    return sequenceParticipants(model).filter(function (participant) { return exactValueMatches(participant.className, names); });
   }
 
   function participantMatchesEndpoint(endpoint, participant) {
-    return !!participant && exactValueMatches(endpoint, [participant.id, participant.label, participant.className]);
+    return !!participant && cleanId(endpoint) === participant.id;
   }
 
   function participantForEndpoint(participants, endpoint) {
@@ -1546,19 +1745,8 @@
     }) || null;
   }
 
-  function argumentMatchesParticipant(argument, participant) {
-    return exactValueMatches(cleanArgument(argument), [participant.id, participant.label, participant.className]);
-  }
-
   function cleanArgument(argument) {
     return String(argument || '').trim();
-  }
-
-  function methodMatchesAliases(label, aliases) {
-    var methodName = methodNameFromLabel(label);
-    return !!methodName && toArray(aliases).some(function (alias) {
-      return normalize(methodName) === normalize(alias);
-    });
   }
 
   function methodNameFromLabel(label) {
@@ -1584,18 +1772,51 @@
 
   function methodSignatureFromMember(text) {
     text = String(text || '').replace(/\{[^}]*\}/g, ' ').replace(/^[+\-#~]\s*/, '').trim();
-    var match = text.match(/^([A-Za-z_]\w*)\s*\((.*)\)/);
+    var match = text.match(/^([A-Za-z_]\w*)\s*\((.*)\)\s*(?::\s*(.*))?$/);
     if (!match) return null;
-    return {
-      name: match[1],
-      args: splitArgumentList(match[2])
-    };
+    var args = splitArgumentList(match[2]);
+    return { name: match[1], args: args, parameters: args.map(operationParameter), returns: (match[3] || '').trim() };
   }
 
   function splitArgumentList(text) {
-    text = String(text || '').trim();
-    if (!text) return [];
-    return text.split(',').map(function (arg) { return arg.trim(); }).filter(Boolean);
+    var args = [], start = 0, depth = 0, quote = '', escaped = false;
+    String(text || '').split('').forEach(function (ch, index) {
+      if (escaped) { escaped = false; return; }
+      if (quote) { if (ch === '\\') escaped = true; else if (ch === quote) quote = ''; return; }
+      if (ch === '"' || ch === "'") { quote = ch; return; }
+      if ('([<{'.indexOf(ch) !== -1) depth++;
+      if (')]>}'.indexOf(ch) !== -1) depth--;
+      if (ch === ',' && depth === 0) { args.push(text.slice(start, index).trim()); start = index + 1; }
+    });
+    var tail = String(text || '').slice(start).trim();
+    if (tail) args.push(tail);
+    return args;
+  }
+
+  function operationParameter(text) {
+    var direction = (text.match(/^(inout|out|in)\s+/) || [null, 'in'])[1];
+    var declaration = text.replace(/^(inout|out|in)\s+/, '').split('=')[0].trim();
+    var parts = declaration.split(':');
+    var words = declaration.split(/\s+/);
+    return { type: parts.length > 1 ? parts.slice(1).join(':').trim() : words.length > 1 ? words.slice(0, -1).join(' ') : '', direction: direction, optional: text.indexOf('=') !== -1 };
+  }
+
+  function compatibleOperation(model, actual, expected) {
+    var a = methodSignatureFromMember(actual.text), b = methodSignatureFromMember(expected.text);
+    return !!a && !!b && a.name === b.name && !!actual.isStatic === !!expected.isStatic &&
+      a.parameters.length === b.parameters.length && compatibleDeclaredTypes(model, a.returns, b.returns) &&
+      a.parameters.every(function (param, index) {
+        var required = b.parameters[index];
+        return param.direction === required.direction && compatibleDeclaredTypes(model, param.type, required.type);
+      });
+  }
+
+  // UML operation redefinition allows related parameter types in either
+  // direction (UML 2.5.1 section 9.9.11.6); do not impose a language's rules.
+  function compatibleDeclaredTypes(model, actual, expected) {
+    if (!actual || !expected || actual === expected) return true;
+    var a = classElementForName(model, actual), b = classElementForName(model, expected);
+    return !!a && !!b && (validInheritancePath(model, a, b, {}) || validInheritancePath(model, b, a, {}));
   }
 
   function sequenceRelationDescription(rel) {
@@ -1612,16 +1833,31 @@
       assertion.isOperation === true;
   }
 
-  function classModelHasMethod(classModel, className, methodName) {
-    return classMethodNamesForType(classModel, className, {}).some(function (candidate) {
-      return normalize(candidate) === normalize(methodName);
+  function classModelHasCall(model, className, call, participants) {
+    var receiver = classElementForName(model, className);
+    return !!receiver && allClassOperations(model, receiver, {}).some(function (member) {
+      return operationAcceptsCall(model, member, call, participants);
+    });
+  }
+
+  function operationAcceptsCall(model, member, call, participants) {
+    var signature = methodSignatureFromMember(member.text);
+    if (signature.name !== call.name) return false;
+    var params = signature.parameters.filter(function (param) { return param.direction !== 'out'; });
+    if (call.args.length > params.length || call.args.length < params.filter(function (param) { return !param.optional; }).length) return false;
+    return call.args.every(function (argument, index) {
+      var participant = participants.find(function (candidate) { return candidate.id === argument; });
+      if (!participant || !params[index].type) return true;
+      if (participant.className === params[index].type) return true;
+      var child = classElementForName(model, participant.className), parent = classElementForName(model, params[index].type);
+      return !!child && !!parent && validInheritancePath(model, child, parent, {});
     });
   }
 
   function classMethodNamesForType(classModel, className, visited) {
     var element = classElementForName(classModel, className);
     if (!element) return [];
-    var key = normalize(element.id);
+    var key = element.id;
     if (visited[key]) return [];
     visited[key] = true;
     var names = classModel.members
@@ -1671,11 +1907,11 @@
   }
 
   function memberIsAbstract(member, model) {
-    if (/\{abstract\}|\babstract\b/i.test(member.text)) return true;
+    if (member.declaredAbstract || /\{abstract\}/i.test(member.text)) return true;
     return model.elements.some(function (el) {
       var ownerMatches = exactValueMatches(member.owner, [el.id, el.label]);
       var type = normalize(el.type);
-      return ownerMatches && (type === 'interface' || type === 'abstractclass');
+      return ownerMatches && type === 'interface';
     });
   }
 
@@ -1688,13 +1924,16 @@
     return normalize(element && element.type) === 'class';
   }
 
-  function abstractMethodNamesForElement(model, element) {
-    var names = model.members.filter(function (member) {
-      return exactValueMatches(member.owner, [element.id, element.label]) && memberIsAbstract(member, model);
-    }).map(function (member) {
-      return methodNameFromMember(member.text);
-    }).filter(Boolean);
-    return uniqueValues(names);
+  function abstractOperationsForElement(model, element) {
+    return allClassOperations(model, element, {}).filter(function (member) { return memberIsAbstract(member, model); });
+  }
+
+  function allClassOperations(model, element, visited) {
+    if (visited[element.id]) return [];
+    visited = Object.assign({}, visited); visited[element.id] = true;
+    var operations = model.members.filter(function (member) { return member.owner === element.id && methodSignatureFromMember(member.text); });
+    classParentElements(model, element).forEach(function (parent) { operations = operations.concat(allClassOperations(model, parent, visited)); });
+    return operations;
   }
 
   function concreteDescendantsOf(model, abstraction) {
@@ -1704,7 +1943,7 @@
   }
 
   function classInheritsFrom(model, child, ancestor, visited) {
-    var key = normalize(child && child.id);
+    var key = child && child.id;
     if (!key || visited[key]) return false;
     visited[key] = true;
     return classParentElements(model, child).some(function (parent) {
@@ -1719,18 +1958,18 @@
     });
   }
 
-  function classHasConcreteMethod(model, element, methodName, visited) {
-    var key = normalize(element && element.id);
+  function classHasConcreteMethod(model, element, operation, visited) {
+    var key = element && element.id;
     if (!key || visited[key]) return false;
-    visited[key] = true;
-    var direct = model.members.some(function (member) {
-      return exactValueMatches(member.owner, [element.id, element.label]) &&
-        normalize(methodNameFromMember(member.text)) === normalize(methodName) &&
-        !memberIsAbstract(member, model);
+    visited = Object.assign({}, visited); visited[key] = true;
+    var direct = model.members.filter(function (member) {
+      return member.owner === element.id && compatibleOperation(model, member, operation);
     });
-    if (direct) return true;
+    // A nearer declaration replaces the inherited operation, including when it
+    // makes that operation abstract again. Search each inheritance path alone.
+    if (direct.length) return direct.some(function (member) { return !memberIsAbstract(member, model); });
     return classParentElements(model, element).some(function (parent) {
-      return !isAbstractElement(parent) && classHasConcreteMethod(model, parent, methodName, visited);
+      return classHasConcreteMethod(model, parent, operation, visited);
     });
   }
 
@@ -1861,6 +2100,7 @@
   }
 
   function semanticRelationEndpoints(rel) {
+    if (rel.semanticType) return ['generalization', 'realization', 'aggregation', 'composition'].indexOf(rel.semanticType) !== -1 ? [{ from: rel.from, to: rel.to }] : [];
     var op = rel.op || '';
     var edges = [];
     // UML generalization / realization arrows point at the abstraction. Accept
@@ -1879,6 +2119,7 @@
   }
 
   function relationSemanticType(rel) {
+    if (rel.semanticType) return rel.semanticType;
     var op = rel.op || '';
     if (/\*/.test(op)) return 'composition';
     if (/o/.test(op)) return 'aggregation';

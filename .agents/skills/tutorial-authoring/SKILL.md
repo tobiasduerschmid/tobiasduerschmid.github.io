@@ -1354,7 +1354,8 @@ steps:
                                              # on member assertions requires a
                                              # `{abstract}` operation or an
                                              # operation declared by an
-                                             # interface or abstract class.
+                                             # interface (an abstract class alone
+                                             # does not make an operation abstract).
                                              # `requires_arguments: true`
                                              # on member assertions requires
                                              # an operation signature with
@@ -2314,6 +2315,31 @@ channel.
   The step footer exposes a confirmed "Remove All Elements" action that
   replaces the current step's active diagram draft with an empty ArchUML
   document; it does not clear drafts saved for other diagram types.
+- **UML homework grading** — class/state/sequence assertions use the same
+  public ArchUML parsers as the renderer. Notes cannot supply model evidence;
+  sequence arrows retain semantic direction and response messages are excluded
+  from call checks. `class_consistency` also supports `state_roles`,
+  `state_operations`, `state_ownership`, and `state_inheritance`. These infer the
+  state abstraction from Player's relationship, require distinct concrete roles
+  within its hierarchy (normal, jail/prison, bankrupt), accept transitive
+  realization/inheritance, and infer turn operations shared by Player and the
+  abstraction plus state-changing operations typed with that abstraction.
+  `abstract_methods_implemented` checks compatible declared signatures and
+  inherited concrete implementations; only interface operations are implicitly
+  abstract. `kind: state_consistency` checks nonempty labels on every transition.
+  Sequence checks use object IDs separately from classifier types, check call
+  arity and known lifeline argument types, and consult the saved state graph.
+  An abstract trace interpreter checks coherent paths through `alt`, `opt`,
+  `loop`, `break`, and `critical`; loop analysis honors numeric iteration bounds
+  and skips repeated abstract cycles. Break termination is scoped to its enclosing
+  fragment. Guarded alternatives include a no-match path unless an unconditional
+  operand or unlabeled `else` covers it.
+  It requires a turn/change/turn witness on at least one path and consistent
+  state changes on all shown paths. Other fragments report the need for manual
+  review, rather than receive a false automatic pass. Tests remain advisory;
+  drafts, navigation, autosave, and cooldown policy are unchanged. Arbitrary
+  expression typing and the meaning of prose guards/conditions require human
+  review; do not represent structural success as full UML/domain validation.
 - **Shared UML editor behavior** — `_includes/uml-editor.html` keeps Undo/Redo
   histories per diagram type alongside each type's session draft. Switching
   types must not clear another draft's history. Keyboard activation of an

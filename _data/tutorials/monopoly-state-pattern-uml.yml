@@ -33,123 +33,36 @@ steps:
 
       - `Player`
       - a state abstraction such as `PlayerState` as either an interface or an abstract class
-      - concrete states for normal turns, jail, and bankruptcy
-      - an abstract operation for taking a turn and an operation for changing state that takes the state abstraction as its argument
-      - concrete state classes that implement the abstract turn operation
-      - an aggregation or composition relationship showing that `Player` holds exactly one current state
+      - three distinct concrete states for normal turns, jail, and bankruptcy; include `normal`, `jail` (or `prison`), and `bankrupt` in their respective class names
+      - an abstract operation for taking a turn; expose the same operation name on `Player` so the checks can identify it without requiring a particular verb
+      - a state-changing operation on `Player` that accepts the state abstraction as an argument; choose its name freely
+      - concrete state classes that implement the abstract turn operation with a compatible signature, directly or through inheritance; mark abstract-class operations `{abstract}` (interface operations are implicitly abstract)
+      - an aggregation or composition relationship showing that `Player` holds exactly one current state; the related abstraction may have any name
+
+      The checks use these role words only within the state hierarchy, so unrelated helper classes do not change the roles. They check structural consistency; you still need to review whether the operations represent the intended Monopoly behavior.
     tests:
       - description: "State-pattern classes are present"
         assertions:
           - kind: class
             id: Player
-            naming_hint: "Use role-revealing class names. The context object should read as the player role, not as a generic game object."
-          - kind: element
-            id: PlayerState
-            element_type_any:
-              - abstract class
-              - interface
-            naming_hint: "Name the state abstraction so it clearly reads as the player's state role; the concrete state classes should point back to that abstraction."
-          - kind: class
-            id_contains: normal
-            naming_hint: "Concrete state class names should expose their Monopoly role. Look back at the assignment wording and include the role words in the class names."
-          - kind: class
-            id_contains_any:
-              - jail
-              - prison
-            naming_hint: "Concrete state class names should expose their Monopoly role. Look back at the assignment wording and include the role words in the class names."
-          - kind: class
-            id_contains: bankrupt
-            naming_hint: "Concrete state class names should expose their Monopoly role. Look back at the assignment wording and include the role words in the class names."
+          - kind: class_consistency
+            check: state_roles
       - description: "Operations support the later sequence diagram"
         assertions:
-          - kind: member
-            owner: Player
-            requires_arguments: true
-            text_contains_any:
-              - takeTurn
-              - doTurn
-              - playTurn
-              - performTurn
-              - executeTurn
-              - processTurn
-              - handleTurn
-              - runTurn
-              - makeMove
-              - takeAction
-              - performAction
-            naming_hint: "This operation should read like the player starting, taking, or doing a turn. Use a verb phrase you would also be comfortable calling in the sequence diagram."
-          - kind: member
-            owner: Player
-            requires_arguments: true
-            argument_type: PlayerState
-            text_contains_any:
-              - setState
-              - changeState
-              - stateChange
-              - switchState
-              - updateState
-              - transitionState
-              - transitionToState
-            naming_hint: "This operation should read like the player changing, updating, switching, or transitioning its current state, and it should accept the state abstraction type."
-          - kind: member
-            owner: PlayerState
-            is_abstract: true
-            requires_arguments: true
-            text_contains_any:
-              - takeTurn
-              - doTurn
-              - playTurn
-              - performTurn
-              - executeTurn
-              - processTurn
-              - handleTurn
-              - runTurn
-              - makeMove
-              - takeAction
-              - performAction
-            naming_hint: "The state abstraction's operation should name the turn behavior that every concrete state implements; keep it aligned with the turn operation you plan to call later."
+          - kind: class_consistency
+            check: state_operations
       - description: "Player owns or aggregates its current state"
         assertions:
-          - kind: relation
-            from: Player
-            to: PlayerState
-            relation_type_any:
-              - aggregation
-              - composition
-            target_multiplicity_any:
-              - "1"
-              - "1..1"
-            naming_hint: "The current-state relationship should show that the player has exactly one state object on the state-abstraction end."
+          - kind: class_consistency
+            check: state_ownership
       - description: "Concrete states implement the state abstraction"
         assertions:
-          - kind: relation
-            from_contains: normal
-            to: PlayerState
-            relation_type_for_target_type:
-              abstract class: generalization
-              interface: realization
-            naming_hint: "If the inheritance or realization arrows are present, check the concrete state class names on the child side; the grader identifies their roles from those names."
-          - kind: relation
-            from_contains_any:
-              - jail
-              - prison
-            to: PlayerState
-            relation_type_for_target_type:
-              abstract class: generalization
-              interface: realization
-            naming_hint: "If the inheritance or realization arrows are present, check the concrete state class names on the child side; the grader identifies their roles from those names."
-          - kind: relation
-            from_contains: bankrupt
-            to: PlayerState
-            relation_type_for_target_type:
-              abstract class: generalization
-              interface: realization
-            naming_hint: "If the inheritance or realization arrows are present, check the concrete state class names on the child side; the grader identifies their roles from those names."
+          - kind: class_consistency
+            check: state_inheritance
       - description: "Concrete states implement abstract operations"
         assertions:
           - kind: class_consistency
             check: abstract_methods_implemented
-            naming_hint: "Each concrete state class should include operations matching the abstract state behavior it promises to implement."
 
   # Pedagogy: Make — students create a behavioral model and label transition causes.
   - title: "State Diagram"
@@ -164,7 +77,9 @@ steps:
       - Model Monopoly player-state transitions
       - Label transitions with clear state-change conditions
 
-      Draw a state diagram with the same normal-turn, in-jail, and bankrupt state names you used for the concrete state classes in your class diagram. Label each transition with a clear condition.
+      Draw a state diagram with the same normal-turn, in-jail, and bankrupt state names you used for the concrete state classes in your class diagram. Label each transition with a clear condition or event. Include normal→jail, jail→normal, and normal→bankruptcy; jail→bankruptcy is optional for this exercise. Additional labeled transitions are allowed.
+
+      Automated checks verify the required paths and that every transition has a nonempty label. They do not judge whether a condition is meaningful or an accurate Monopoly rule; review that separately.
     tests:
       - description: "States reuse the concrete state class names"
         assertions:
@@ -177,29 +92,31 @@ steps:
           - kind: state
             class_role: bankrupt
             naming_hint: "State nodes should reuse the concrete state class names from your class diagram, not a second set of shorter state-machine-only names."
-      - description: "State transitions are labeled and consistent"
+      - description: "Required transitions exist and every transition is labeled"
         assertions:
+          - kind: state_consistency
+            check: transition_labels
           - kind: transition
             from_class_role: normal
             to_class_role: jail
-            label_min_length: 4
-            naming_hint: "Transition labels should describe the condition or event that causes the state change, not just a short marker."
+            label_min_length: 1
+            naming_hint: "Transition labels should describe the condition or event that causes the state change, and be nonempty; concise meaningful labels are fine."
           - kind: transition
             from_class_role: jail
             to_class_role: normal
-            label_min_length: 4
-            naming_hint: "Transition labels should describe the condition or event that causes the state change, not just a short marker."
+            label_min_length: 1
+            naming_hint: "Transition labels should describe the condition or event that causes the state change, and be nonempty; concise meaningful labels are fine."
           - kind: transition
             from_class_role: normal
             to_class_role: bankrupt
-            label_min_length: 4
-            naming_hint: "Transition labels should describe the condition or event that causes the state change, not just a short marker."
+            label_min_length: 1
+            naming_hint: "Transition labels should describe the condition or event that causes the state change, and be nonempty; concise meaningful labels are fine."
           - kind: transition
             from_class_role: jail
             to_class_role: bankrupt
-            label_min_length: 4
+            label_min_length: 1
             optional: true
-            naming_hint: "Transition labels should describe the condition or event that causes the state change, not just a short marker."
+            naming_hint: "Transition labels should describe the condition or event that causes the state change, and be nonempty; concise meaningful labels are fine."
 
   # Pedagogy: Make — students connect the static design to one runtime interaction.
   - title: "Sequence Diagram"
@@ -214,7 +131,9 @@ steps:
       - Show one typical State-pattern turn interaction
       - Keep operation names consistent across UML diagrams
 
-      Draw one typical interaction. A good version shows a `Player` object calling at least two different concrete state objects, with a state-change call between those turn calls. Use method names that also appear in your class diagram.
+      Draw one typical interaction. Show a `Player` object calling at least two different concrete state objects, with a state-change call between those turn calls. Use the operations declared in your class diagram, with compatible argument counts and known object types. Label calls as `method(arguments)`; the arrow identifies the receiver. Pass the next state object lifeline to the state-changing call, then direct the next turn call to that object. Every illustrated state change must exist in your state diagram.
+
+      A complete turn/change/turn interaction must occur on at least one coherent path; every shown path must respect state changes. You may use `alt`, `opt`, `loop`, `break`, and `critical` fragments. For alternatives, an unlabeled `else` covers all remaining cases; labeled guards may all be false. Numeric loop bounds such as `loop (1, 3)` are checked; the meaning of prose guards still needs human review. Calls in mutually exclusive branches cannot be combined into one interaction, and responses or notes do not count as calls. Other fragments need manual review. Extra lifelines are allowed without requiring messages to them.
     tests:
       - description: "Player and concrete state objects are shown"
         assertions:
@@ -226,7 +145,7 @@ steps:
             min: 2
             different_types: true
             naming_hint: "Use typed lifelines for concrete state objects; the class side of each lifeline should reuse a concrete state class name from your class diagram."
-      - description: "Player talks to each state and changes state between calls"
+      - description: "Player calls two state types and changes state on a coherent path"
         assertions:
           - kind: sequence
             check: messages_between_player_and_states
@@ -243,7 +162,7 @@ steps:
           - kind: sequence
             check: call_labels_have_argument_lists
             naming_hint: "Write message labels as methodName(arguments), for example takeTurn(player) or setState(in_jail_state). The arrow already names the receiver, so do not prefix the label with self. or an object name."
-      - description: "Sequence method calls exist in the class diagram"
+      - description: "Sequence calls match class operations and known argument types"
         assertions:
           - kind: sequence
             check: called_methods_exist
