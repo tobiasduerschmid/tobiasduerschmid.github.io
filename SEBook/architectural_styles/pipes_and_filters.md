@@ -27,6 +27,41 @@ To guarantee the emergent qualities of the style, the architecture must adhere t
 
 These constraints separate the code inside a filter from the configuration that wires filters together. The architecture may require a noise-reduction filter to run before an edge-detection filter, but the edge-detection filter itself should not know that the upstream neighbor is noise reduction. That ignorance is what lets the same filter be reused in a different pipeline later.
 
+## CRC Cards
+
+The Class, Responsibility, Collaborator (CRC) cards below adapt the four pipeline roles from Buschmann et al. {% cite Buschmann1996 %}, p. 56. They describe component responsibilities, whether implemented as objects, functions, or processes. Responsibilities and collaborators are separate lists, not row-by-row pairs. A filter works through pipes rather than naming its neighboring filters.
+
+<pre><code class="diagram-crc">
+@startuml
+caption: Filters own transformations; pipes own transfer and coordination; sources and sinks connect the pipeline to its environment.
+layout auto
+card "Data Source" as Source {
+  responsibility: Supply the input stream to the pipeline
+  collaborator: Pipe
+}
+card Filter {
+  responsibility: Obtain input from an incoming pipe
+  responsibility: Transform the input data
+  responsibility: Send results to an outgoing pipe
+  collaborator: Pipe
+}
+card Pipe {
+  responsibility: Carry data between adjacent stages
+  responsibility: Buffer data between active stages
+  responsibility: Coordinate active readers and writers
+  collaborator: Data Source
+  collaborator: Filter
+  collaborator: Data Sink
+}
+card "Data Sink" as Sink {
+  responsibility: Consume the final output stream
+  collaborator: Pipe
+}
+@enduml
+</code></pre>
+
+Buffering and synchronization belong to the active-pipeline case. When an active component calls a passive one directly, the pipe abstraction can be implemented by that call instead of a separate buffer.
+
 ## Quality Attribute Trade-offs
 Architectural choices are fundamentally about managing quality attributes. The pipe-and-filter style offers a distinct profile of promoted benefits and severe liabilities.
 

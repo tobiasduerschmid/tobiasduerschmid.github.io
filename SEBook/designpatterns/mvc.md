@@ -31,6 +31,38 @@ The following description is **classic Smalltalk MVC**. Its change propagation a
 * Second, the relationship between the View and the Controller utilizes the [Strategy](/SEBook/designpatterns/strategy.html) pattern. The controller encapsulates the strategy for handling user input, allowing the view to delegate all input response behavior. This allows software engineers to easily swap controllers at runtime if different behavior is required (e.g., swapping a standard controller for a read-only controller).
 * Third, the view often employs the *[Composite](/SEBook/designpatterns/composite.html)* pattern to manage complex, nested user interface elements, such as windows containing panels, which in turn contain buttons.
 
+## CRC Cards
+
+These Class, Responsibility, Collaborator (CRC) cards summarize the classic MVC roles in Buschmann et al. {% cite Buschmann1996 %}, pp. 127–128. Responsibilities describe what each role does; collaborators name the roles it works with. The two lists are independent, so entries on the same row are not paired. Here the model collaborates with views and interested controllers through the notification interface, without knowing how they draw or handle input.
+
+<pre><code class="diagram-crc">
+@startuml
+caption: MVC separates domain behavior, presentation, and input handling while coordinating updates through notifications.
+layout auto
+card Model {
+  responsibility: Maintain domain state and behavior
+  responsibility: Register dependent views and controllers
+  responsibility: Notify dependents when state changes
+  collaborator: View (notification interface)
+  collaborator: Controller (when subscribed)
+}
+card View {
+  responsibility: Read model data for presentation
+  responsibility: Refresh the display on notification
+  responsibility: Create and initialize its controller
+  collaborator: Model
+  collaborator: Controller
+}
+card Controller {
+  responsibility: Interpret user input events
+  responsibility: Request model operations or view changes
+  responsibility: React to model changes when subscribed
+  collaborator: Model
+  collaborator: View
+}
+@enduml
+</code></pre>
+
 ## UML Role Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml

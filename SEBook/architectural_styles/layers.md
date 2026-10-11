@@ -56,6 +56,25 @@ note right of DataAccess
 end note
 @enduml'></div>
 
+## CRC Card for a Layer
+
+Buschmann et al. summarize an intermediate layer with one Class, Responsibility, Collaborator (CRC) card {% cite Buschmann1996 %}, p. 34. The card represents a subsystem role, not a requirement to implement an entire layer as one class. Its responsibilities and collaborators are independent lists.
+
+<pre><code class="diagram-crc">
+@startuml
+caption: In strict layering, Layer J serves the layer above while relying only on the layer immediately below.
+layout auto
+card "Layer J" as LayerJ {
+  responsibility: Offer services to Layer J+1
+  responsibility: Implement services at its abstraction level
+  responsibility: Delegate lower-level work to Layer J-1
+  collaborator: Layer J-1
+}
+@enduml
+</code></pre>
+
+Layer J+1 is a client of this role, not a service provider that Layer J calls. That is why the lower layer is the collaborator listed here. The top and bottom layers are boundary cases: the top serves the application or user, and the bottom has no lower software layer within this decomposition.
+
 #  Quality Attribute Trade-offs
 Every architectural style is a prefabricated set of constraints designed to elicit specific systemic qualities. The layered style presents a highly distinct profile of trade-offs:
 

@@ -49,6 +49,37 @@ note bottom of Topic
 end note
 @enduml'></div>
 
+### CRC Cards: Event Channel
+
+Buschmann et al.'s basic Publisher–Subscriber pattern uses direct subscriptions, as in [Observer](/SEBook/designpatterns/observer.html#crc-cards). Their **Event Channel** variant introduces the intermediary used by this chapter's bus topology {% cite Buschmann1996 %}, pp. 341–342. These Class, Responsibility, Collaborator (CRC) cards summarize that variant at component level, omitting its middleware proxy objects. Responsibilities and collaborators are independent lists, not paired rows.
+
+<pre><code class="diagram-crc">
+@startuml
+caption: An event channel owns subscription and dispatch, so publishers and subscribers need no direct references to each other.
+layout auto
+card Publisher {
+  responsibility: Detect an event worth publishing
+  responsibility: Submit the event to the channel
+  collaborator: Event Channel
+}
+card "Event Channel" as Channel {
+  responsibility: Maintain subscriber registrations
+  responsibility: Accept published events
+  responsibility: Dispatch events to matching subscribers
+  collaborator: Publisher
+  collaborator: Subscriber
+}
+card Subscriber {
+  responsibility: Register its interests with the channel
+  responsibility: Receive events matching those interests
+  responsibility: React within its own application role
+  collaborator: Event Channel
+}
+@enduml
+</code></pre>
+
+The channel can add buffering, filtering, or delivery policies; the presence of a channel alone does not guarantee reliable delivery or a particular order. The direct pull model discussed below introduces a dependency on the publisher's query interface and therefore has different coupling from this event-channel sketch.
+
 **Behavioral Variation: Push vs. Pull Models**
 When an event occurs, how does the state information propagate to the subscribers? The literature details two distinct behavioral variations:
 *   **The Push Model:** The publisher sends all relevant changed data along with the event notification. This creates a rigid dynamic behavior but is highly efficient if subscribers almost always need the detailed information.

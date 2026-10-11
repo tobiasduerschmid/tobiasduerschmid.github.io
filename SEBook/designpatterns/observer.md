@@ -41,6 +41,32 @@ When the *Subject*'s state changes, it iterates through its list of attached *Ob
 
 This creates a loosely coupled system: the *Subject* only knows that its *Observers* implement a specific interface, not their concrete implementation details.
 
+## CRC Cards
+
+Buschmann et al.'s Publisher–Subscriber pattern describes this direct notification arrangement under the names *Publisher* and *Subscriber* {% cite Buschmann1996 %}, pp. 339–341. These Class, Responsibility, Collaborator (CRC) cards use this chapter's *Subject* and *Observer* names and show the pull variant: an observer reads the state it needs after receiving a notification. Responsibilities and collaborators are independent lists, not paired rows.
+
+<pre><code class="diagram-crc">
+@startuml
+caption: The subject owns subscription and notification; each observer owns how it reacts to a change.
+layout auto
+card "Subject (Publisher)" as Subject {
+  responsibility: Maintain the state of interest
+  responsibility: Register and remove observers
+  responsibility: Notify registered observers of changes
+  responsibility: Expose state needed by observers
+  collaborator: Observer (notification interface)
+}
+card "Observer (Subscriber)" as Observer {
+  responsibility: Receive change notifications
+  responsibility: Read relevant state from the subject
+  responsibility: Update its own dependent state or display
+  collaborator: Subject
+}
+@enduml
+</code></pre>
+
+The subject knows the notification interface, not each observer's concrete class. In a push variant, the notification carries the needed data, so the observer need not query the subject. Neither arrangement alone specifies asynchronous delivery or a message broker.
+
 ## UML Role Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
