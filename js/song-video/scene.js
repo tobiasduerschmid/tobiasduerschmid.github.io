@@ -54,13 +54,18 @@
     const { Timeline, SongKit: kit } = root;
     const choreograph = root.SongChoreographies[songId];
     if (!choreograph) throw new Error(`No choreography for "${songId}".`);
+    const themeName = storyboard.theme || 'studio';
+    const theme = kit.themes[themeName];
+    if (!theme) throw new Error(`No stage theme "${themeName}".`);
     function dispose() {
       Timeline.dispose();
       stage.replaceChildren();
+      stage.classList.remove(`theme-${themeName}`);
     }
     try {
       Timeline.beats.configure(storyboard.beats);
-      kit.backdrop(stage);
+      stage.classList.add(`theme-${themeName}`);
+      theme.build(stage, { duration: storyboard.duration });
       const content = kit.el('div', 'layer camera', stage);
       Timeline.camera.attach(content);
       const hud = kit.el('div', 'layer hud', stage);

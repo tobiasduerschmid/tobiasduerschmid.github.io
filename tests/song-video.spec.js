@@ -18,6 +18,7 @@ const { test, expect } = require('@playwright/test');
 
 const SONGS = [
   { id: 'snapshots_and_pointers', page: '/SEBook/tools/git.html' },
+  { id: 'unbox_the_stack', page: '/SEBook/tools/networking.html' },
 ];
 const EXTRAS_TOGGLE = 'Full transcript';
 const NARRATOR = '(narrator) ';

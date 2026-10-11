@@ -11,6 +11,11 @@
  *   poster    JPEG of the frame at poster_time
  *   described_soundtrack / described_timeline  Narrated M4A and live-player timing
  *
+ * A storyboard without `video` plays only in the live vector player: the
+ * render then skips the frames, the encode, and the poster, and writes just
+ * the captions and the audio-described track (add --check-flashes to capture
+ * the frames anyway and screen them for flashing, WCAG 2.3.1).
+ *
  * Pipeline: serve the repo root on loopback → open stage.html in several
  * headless Chromes (960×540 CSS px at device scale 2) → capture contiguous
  * chunks of frames as JPEGs (the stage is deterministic, so chunks render
@@ -58,15 +63,16 @@ const POSTER_JPEG_QUALITY = 84;
 const CAPTURE_WORKERS = Math.max(1, Math.min(4, Math.floor(os.cpus().length / 2)));
 
 function usage() {
-  return 'Usage: node scripts/song-video/render.js <song> [--frames-dir DIR [--skip-capture]] | <song> --stills t1,t2,… --out DIR';
+  return 'Usage: node scripts/song-video/render.js <song> [--frames-dir DIR [--skip-capture]] [--check-flashes] | <song> --stills t1,t2,… --out DIR';
 }
 
 function parseArgs(argv) {
-  const args = { song: null, framesDir: null, skipCapture: false, stills: null, out: null };
+  const args = { song: null, framesDir: null, skipCapture: false, checkFlashes: false, stills: null, out: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--frames-dir' && argv[i + 1]) args.framesDir = path.resolve(argv[++i]);
     else if (arg === '--skip-capture') args.skipCapture = true;
+    else if (arg === '--check-flashes') args.checkFlashes = true;
     else if (arg === '--stills' && argv[i + 1]) args.stills = argv[++i].split(',').map(Number);
     else if (arg === '--out' && argv[i + 1]) args.out = path.resolve(argv[++i]);
     else if (!arg.startsWith('--') && !args.song) args.song = arg;
@@ -176,9 +182,11 @@ async function renderFrames(args, storyboard, workDir) {
 
     // Chrome's own capture, like the frames: page.screenshot() waits for an
     // animation frame, which never comes while the virtual clock owns them.
-    const { page } = stages[0];
-    const cdp = await page.context().newCDPSession(page);
-    fs.writeFileSync(repoFile(storyboard.poster), await capture(cdp, page, storyboard.poster_time, POSTER_FORMAT));
+    if (storyboard.poster) {
+      const { page } = stages[0];
+      const cdp = await page.context().newCDPSession(page);
+      fs.writeFileSync(repoFile(storyboard.poster), await capture(cdp, page, storyboard.poster_time, POSTER_FORMAT));
+    }
   } finally {
     await Promise.all(stages.map((stage) => stage.browser.close()));
     await server.close();
@@ -232,10 +240,13 @@ async function main() {
   const outputKeys = OUTPUTS.filter((key) => storyboard[key]);
   for (const key of outputKeys) fs.mkdirSync(path.dirname(repoFile(storyboard[key])), { recursive: true });
 
-  console.log(`Rendering ${storyboard.title}: ${storyboard.duration} s at ${storyboard.fps} fps with ${CAPTURE_WORKERS} browsers (frames in ${workDir})`);
-  await renderFrames(args, storyboard, workDir);
-  execFileSync('swift', ['-O', path.join(TOOLS, 'check-flashes.swift'), workDir, String(storyboard.fps)], { stdio: 'inherit' });
-  encode(workDir, storyboard.fps, path.join(ROOT, storyboard.soundtrack), repoFile(storyboard.video));
+  // Live-only songs (no `video`) need frames just to screen them for flashing.
+  if (storyboard.video || args.checkFlashes) {
+    console.log(`Rendering ${storyboard.title}: ${storyboard.duration} s at ${storyboard.fps} fps with ${CAPTURE_WORKERS} browsers (frames in ${workDir})`);
+    await renderFrames(args, storyboard, workDir);
+    execFileSync('swift', ['-O', path.join(TOOLS, 'check-flashes.swift'), workDir, String(storyboard.fps)], { stdio: 'inherit' });
+  }
+  if (storyboard.video) encode(workDir, storyboard.fps, path.join(ROOT, storyboard.soundtrack), repoFile(storyboard.video));
   fs.writeFileSync(repoFile(storyboard.captions), songCaptions(storyboard));
   renderDescribedCut(storyboard, workDir);
   if (!args.framesDir) fs.rmSync(workDir, { recursive: true, force: true });

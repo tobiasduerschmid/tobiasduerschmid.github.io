@@ -66,6 +66,33 @@
     search: [['circle', { cx: 10.5, cy: 10.5, r: 6 }], ['path', { d: 'M15 15l5.5 5.5' }]],
     sparkle: [['path', { d: 'M12 3l2 7 7 2-7 2-2 7-2-7-7-2 7-2z' }]],
     merge: [['circle', { cx: 6, cy: 5, r: 2 }], ['circle', { cx: 18, cy: 5, r: 2 }], ['circle', { cx: 12, cy: 19, r: 2 }], ['path', { d: 'M6 7c0 5 6 5 6 10M18 7c0 5-6 5-6 10' }]],
+    wifi: [['path', { d: 'M2.5 9a14 14 0 0 1 19 0M5.8 12.6a9 9 0 0 1 12.4 0M9.2 16.1a4.2 4.2 0 0 1 5.6 0M12 19.6v.1' }]],
+    link: [['path', { d: 'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1' }], ['path', { d: 'M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1' }]],
+    globe: [['circle', { cx: 12, cy: 12, r: 9 }], ['path', { d: 'M3 12h18M12 3c-3.2 3.2-3.2 14.8 0 18M12 3c3.2 3.2 3.2 14.8 0 18' }]],
+    transfer: [['path', { d: 'M4 8h15l-3.5-3.5M20 16H5l3.5 3.5' }]],
+    chat: [['path', { d: 'M4 5h16v11H10l-5 4v-4H4z' }]],
+    router: [['rect', { x: 3, y: 12.5, width: 18, height: 7, rx: 2 }], ['path', { d: 'M7 12.5V6M17 12.5V6M7.5 16h.1M11 16h.1' }]],
+    key: [['circle', { cx: 8, cy: 15, r: 4 }], ['path', { d: 'M10.8 12.2L20 3M16.5 6.5l3 3M14.5 8.5l2 2' }]],
+    gamepad: [['path', { d: 'M7 8h10a4 4 0 0 1 4 4l.6 3.6a2 2 0 0 1-3.5 1.6L16 15H8l-2.1 2.2a2 2 0 0 1-3.5-1.6L3 12a4 4 0 0 1 4-4z' }], ['path', { d: 'M8 10v4M6 12h4M15.5 11h.1M17.5 13h.1' }]],
+    phone: [['path', { d: 'M5 3h3.2l1.8 4.6-2.4 1.6a11.5 11.5 0 0 0 5.2 5.2l1.6-2.4L19 13.8V17a2 2 0 0 1-2 2A15 15 0 0 1 3 5a2 2 0 0 1 2-2z' }]],
+    video: [['rect', { x: 3, y: 6, width: 12.5, height: 12, rx: 2 }], ['path', { d: 'M15.5 10.5L21 7.5v9l-5.5-3z' }]],
+    house: [['path', { d: 'M3 11.5L12 4l9 7.5M5.5 9.8V20h13V9.8M10 20v-5h4v5' }]],
+    hourglass: [['path', { d: 'M6 3h12M6 21h12M7.5 3c0 5.5 9 6.5 9 9s-9 3.5-9 9M16.5 3c0 5.5-9 6.5-9 9s9 3.5 9 9' }]],
+    timer: [['circle', { cx: 12, cy: 13.5, r: 7.5 }], ['path', { d: 'M12 9.5v4.2l2.6 1.6M9.5 2.5h5' }]],
+    envelope: [['rect', { x: 3, y: 5.5, width: 18, height: 13, rx: 2 }], ['path', { d: 'M3.5 7l8.5 6 8.5-6' }]],
+    box: [['path', { d: 'M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z' }], ['path', { d: 'M3.5 7.5L12 12l8.5-4.5M12 12v9' }]],
+    eye: [['path', { d: 'M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z' }], ['circle', { cx: 12, cy: 12, r: 3 }]],
+    chip: [['rect', { x: 6, y: 6, width: 12, height: 12, rx: 1.5 }], ['path', { d: 'M9.5 3v3M14.5 3v3M9.5 18v3M14.5 18v3M3 9.5h3M3 14.5h3M18 9.5h3M18 14.5h3' }]],
+    resend: [['path', { d: 'M20 12a8 8 0 1 1-2.4-5.7' }], ['path', { d: 'M20 4v4.5h-4.5' }]],
+    trash: [['path', { d: 'M4 7h16M9.5 7V4h5v3M6.5 7l1 13h9l1-13' }]],
+    user: [['circle', { cx: 12, cy: 8, r: 4 }], ['path', { d: 'M4.5 21a7.5 7.5 0 0 1 15 0' }]],
+    castle: [['path', { d: 'M4 21V9h3V6h2.5v3h1.5V6h2v3h1.5V6H17v3h3v12z' }], ['path', { d: 'M10 21v-4a2 2 0 0 1 4 0v4' }]],
+    question: [['circle', { cx: 12, cy: 12, r: 9 }], ['path', { d: 'M9.6 9.3a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1.1.9-1.1 1.6v.5M12 16.8v.1' }]],
+    receipt: [['path', { d: 'M6 3h12v18l-3-2-3 2-3-2-3 2z' }], ['path', { d: 'M9 8h6M9 12h6' }]],
+    door: [['path', { d: 'M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M3.5 21h17M14.5 12.5h.1' }]],
+    arrowDown: [['path', { d: 'M12 4v16M5.5 13.5L12 20l6.5-6.5' }]],
+    arrowUp: [['path', { d: 'M12 20V4M5.5 10.5L12 4l6.5 6.5' }]],
+    plug: [['path', { d: 'M8 3v4.5M16 3v4.5M5.5 7.5h13V11a6.5 6.5 0 0 1-13 0zM12 17.5V21' }]],
   };
 
   function icon(name, className) {
@@ -611,9 +638,22 @@
     return layer;
   }
 
+  // ------------------------------------------------------------------
+  // Themes: the look of the stage behind every scene
+  // ------------------------------------------------------------------
+
+  /**
+   * A theme builds the backdrop under the camera layer. A storyboard picks
+   * one with `theme` (default "studio"); theme scripts such as night-sky.js
+   * register more. The type, boxes, and HUD stay the same in every theme.
+   */
+  const themes = {
+    studio: { build: backdrop },
+  };
+
   window.SongKit = {
     el, svg, place, icon, scene, sticker, stamp, kinetic, badge, terminal,
     station, chip, flyIn, flow, polaroid, typewriter, scramble, pin, graph,
-    timeStone, confetti, fall, backdrop,
+    timeStone, confetti, fall, backdrop, themes,
   };
 })();

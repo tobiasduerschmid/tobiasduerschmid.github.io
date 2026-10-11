@@ -29,6 +29,23 @@
     });
   }
 
+  function loadStyle(href) {
+    return new Promise((resolve, reject) => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      link.onload = resolve;
+      link.onerror = () => reject(new Error(`Could not load ${href}`));
+      document.head.append(link);
+    });
+  }
+
+  /** A song's own stylesheets and scripts (`extras` in its storyboard), in order. */
+  async function loadExtras({ styles = [], scripts = [] } = {}) {
+    await Promise.all(styles.map(loadStyle));
+    for (const src of scripts) await loadScript(src);
+  }
+
   async function loadStoryboard(songId) {
     const url = `/_data/songs/${songId}.yml`;
     const response = await fetch(url, { cache: 'no-store' });
@@ -61,6 +78,7 @@
     const params = new URLSearchParams(window.location.search);
     const songId = params.get('song') || 'snapshots_and_pointers';
     const storyboard = await loadStoryboard(songId);
+    await loadExtras(storyboard.extras);
     await loadScript(`/js/song-video/songs/${songId}.js`);
     await window.SongScene.loadFonts();
 

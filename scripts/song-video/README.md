@@ -95,6 +95,16 @@ WebVTT, `described-cut.js` builds the described cut from the `narration`s, and
 `_includes/song-video.html` prints every line with its `visual` as the
 on-page transcript.
 
+Two optional fields let a song bring its own look. `theme` picks the stage
+backdrop from `SongKit.themes` (default `studio`, the aurora; `night-sky` is
+the starry sky of "Unbox the Stack"). `extras` lists the song's own
+stylesheets and scripts (`styles`, `scripts`), which both the live player
+and the export stage load, in order, before the choreography; the networking
+song uses them for `night-sky.js`, its illustrations in `js/song-video/art/`,
+and `net-kit.js`. The illustrations are live vector art: shapes, gradients,
+and patterns, without filters or bitmaps. `net-kit.js` writes each drawing
+into the page once as an SVG `<symbol>` and shows every copy with `<use>`.
+
 ### The audio-described cut
 
 The song has vocals almost throughout, so there is no room to describe the
@@ -104,7 +114,8 @@ before each section the picture holds while the narrator (the storyboard's
 song resumes exactly where it paused. The held frames are symlinks to the
 song's frames, so the cut costs no extra capture time. Narration text keeps
 Git notation (`app.py`, `--amend`) for the captions; `spokenForm()` spells it
-out for the voice.
+out for the voice, along with dotted IP addresses and any terms in the
+storyboard's `narrator.pronounce` (for example `SYN-ACK: sin ack`).
 
 | File | Role |
 | --- | --- |
@@ -163,6 +174,11 @@ about 1.5 GB of temporary disk for the frames.
 - `--frames-dir DIR` keeps the frames; add `--skip-capture` to re-encode the
   frames an earlier run kept (for example after changing the bitrate).
 
+A storyboard without `video` (like `unbox_the_stack`) plays only in the live
+player. Its render skips the frames, the encode, and the poster, and writes
+the captions and the audio-described track in under a minute; add
+`--check-flashes` to capture the frames anyway and run the flash screen.
+
 ## Adding a song
 
 1. Write and record the song (the `educational-songcraft` skill covers the
@@ -179,6 +195,7 @@ about 1.5 GB of temporary disk for the frames.
    its chapter transcript link, then point the storyboard's `player` at it.
    Render, include the video in a chapter, add the song to `SONGS` in
    `tests/song-video.spec.js`, and load `css/song-video.css` on that page.
+   Leave out `video`, `described_video`, and `poster` for a live-only song.
 
 ## Accessibility contract
 

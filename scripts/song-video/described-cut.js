@@ -24,9 +24,18 @@ const PICTURE_AFTER_LINE = 0.6; // the held picture: the section, just after its
 const FADE = 0.015; // fades around every cut in the song, so the pauses don't click
 const QUIET = 0.003; // trimmed from the ends of each spoken description
 
-/** Text the narrator reads aloud: Git notation spelled out the way people say it. */
-function spokenForm(text) {
-  return text
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Text the narrator reads aloud: notation spelled out the way people say it.
+ * `pronounce` (the storyboard's narrator.pronounce) maps a song's own terms
+ * to their spoken form, e.g. SYN-ACK → "sin ack"; longer terms win.
+ */
+function spokenForm(text, pronounce = {}) {
+  const terms = Object.keys(pronounce).sort((a, b) => b.length - a.length);
+  const spoken = terms.reduce((out, term) => out.replace(new RegExp(`(^|[^\\w.])${escapeRegExp(term)}(?![\\w])`, 'g'), (_, before) => `${before}${pronounce[term]}`), text);
+  return spoken
+    .replace(/\b(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\b/g, '$1 dot $2 dot $3 dot $4')
     .replace(/(\w+)\.(py|txt|md|css)\b/g, (_, name, ext) => `${name.replace(/_/g, ' ')} dot ${ext.split('').join(' ')}`)
     .replace(/--(\w+)/g, 'dash dash $1')
     .replace(/ -(\w)\b/g, ' dash $1')
@@ -45,12 +54,12 @@ function trimQuiet(voice) {
 
 /** Speaks every section's narration with the storyboard's macOS `say` voice. */
 function speakNarrations(storyboard, workDir, sampleRate) {
-  const { voice, rate } = storyboard.narrator;
+  const { voice, rate, pronounce } = storyboard.narrator;
   return storyboard.sections.map((section, index) => {
     const file = path.join(workDir, `narration-${index}.wav`);
     execFileSync('say', [
       '-v', voice, '-r', String(rate), '--file-format=WAVE', `--data-format=LEI16@${sampleRate}`,
-      '-o', file, spokenForm(section.narration),
+      '-o', file, spokenForm(section.narration, pronounce),
     ]);
     const spoken = readWav(file);
     if (spoken.sampleRate !== sampleRate) throw new Error(`say wrote ${spoken.sampleRate} Hz; expected ${sampleRate} Hz.`);

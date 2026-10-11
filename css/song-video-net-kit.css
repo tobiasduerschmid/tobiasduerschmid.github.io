@@ -1,0 +1,2489 @@
+/*
+ * Networking illustrations for song videos (net-kit.js), drawn in the studio
+ * theme's language from stage.css so they match the Git song: Inter type,
+ * dark panels with a light hairline (the Git stations), ink-bordered chips
+ * with hard offset shadows (the Git command chips and stickers), 4 px drawn
+ * lines (the Git flow arrows), and kinetic type for titles. Layer colors
+ * come from night-sky.css (--app gold, --trn cyan, --net violet, --lnk
+ * green; --tcp cyan, --udp pink). Every text color clears 4.5:1 on its
+ * background (WCAG 1.4.3 also covers text drawn into video).
+ */
+
+.nk-art {
+  display: block;
+  overflow: visible;
+}
+
+.nk-castle {
+  position: absolute;
+}
+
+/* ------------------------------------------------------------------ */
+/* Panels and the browser window                                       */
+/* ------------------------------------------------------------------ */
+
+.nk-frame {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--panel-line);
+  border-radius: 18px;
+  background: var(--panel);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.nk-glass {
+  position: relative;
+  height: 100%;
+  color: var(--text);
+}
+
+.nk-frame-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 0;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.nk-frame-title svg {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+
+/* The browser borrows the Git song's terminal look. */
+.nk-browser {
+  border: 1px solid rgba(160, 190, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(6, 10, 22, 0.94);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.nk-browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nk-browser-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: #ff6159;
+}
+
+.nk-browser-dot:nth-child(2) { background: #ffbd2e; }
+.nk-browser-dot:nth-child(3) { background: #28c941; }
+
+.nk-browser-url {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  height: 20px;
+  margin-left: 8px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.nk-browser-url svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--muted);
+}
+
+.nk-browser-caret {
+  width: 8px;
+  height: 15px;
+  margin-left: -4px;
+  background: var(--gold);
+}
+
+.nk-browser-page {
+  position: relative;
+  height: calc(100% - 30px);
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.nk-browser-loading {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+
+.nk-page-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: #2774ae;
+  box-shadow: inset 0 -3px 0 var(--gold);
+}
+
+.nk-page-header-mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--gold);
+}
+
+.nk-page-header-text {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.nk-page-hero {
+  height: 58px;
+  margin-top: 10px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1b3f6b, #2a6aa3 55%, #18355c);
+}
+
+.nk-page-row {
+  height: 9px;
+  margin-top: 9px;
+  border-radius: 5px;
+  background: rgba(200, 215, 245, 0.42);
+}
+
+/* ------------------------------------------------------------------ */
+/* Router islands, network lines, packets in flight                    */
+/* ------------------------------------------------------------------ */
+
+.nk-beacon {
+  position: absolute;
+  width: 140px;
+}
+
+.nk-beacon-label {
+  position: absolute;
+  left: -20px;
+  right: -20px;
+  top: 124px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+}
+
+.nk-beam {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.nk-beam-core {
+  fill: none;
+  stroke: var(--trn);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.nk-beam--app .nk-beam-core { stroke: var(--app); }
+.nk-beam--net .nk-beam-core { stroke: var(--net); }
+.nk-beam--lnk .nk-beam-core { stroke: var(--lnk); }
+.nk-beam--udp .nk-beam-core { stroke: var(--udp); }
+.nk-beam--amber .nk-beam-core { stroke: var(--amber); }
+.nk-beam--dim .nk-beam-core { stroke: #6f7da0; }
+
+.nk-orb {
+  --tone: var(--trn);
+  position: absolute;
+  box-sizing: border-box;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--tone);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--tone) 70%, transparent);
+}
+
+.nk-orb--app { --tone: var(--app); }
+.nk-orb--udp { --tone: var(--udp); }
+.nk-orb--lnk { --tone: var(--lnk); }
+.nk-orb--net { --tone: var(--net); }
+
+/* ------------------------------------------------------------------ */
+/* The packet: nested boxes, each header a command-chip label          */
+/* ------------------------------------------------------------------ */
+
+.nk-parcel {
+  position: absolute;
+  transform-origin: 50% 50%;
+}
+
+.nk-box {
+  --tone: var(--trn);
+  position: absolute;
+  box-sizing: border-box;
+  border: 3px solid var(--tone);
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4);
+}
+
+.nk-box--app { --tone: var(--app); }
+.nk-box--trn { --tone: var(--trn); }
+.nk-box--net { --tone: var(--net); }
+.nk-box--lnk { --tone: var(--lnk); }
+
+.nk-box-tab {
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 20px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.nk-box-layer {
+  padding: 0 6px;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: var(--tone);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  line-height: 15px;
+  text-transform: uppercase;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.nk-box-detail {
+  color: var(--tone);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.nk-box-body {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 26px;
+  bottom: 5px;
+  border-radius: 6px;
+}
+
+.nk-box-line {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 17px;
+}
+
+/* ------------------------------------------------------------------ */
+/* The stack: one station-style slab per layer                         */
+/* ------------------------------------------------------------------ */
+
+.nk-stack {
+  position: absolute;
+}
+
+.nk-stack-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.nk-stack-title svg {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+
+.nk-slab {
+  --tone: var(--trn);
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  border: 2px solid var(--panel-line);
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.38);
+  color: var(--text);
+}
+
+.nk-slab--app { --tone: var(--app); }
+.nk-slab--trn { --tone: var(--trn); }
+.nk-slab--net { --tone: var(--net); }
+.nk-slab--lnk { --tone: var(--lnk); }
+
+.nk-slab svg {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  color: var(--tone);
+}
+
+.nk-slab-name {
+  position: relative;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Lit: the Git stations' glow, in the layer's color. */
+.nk-slab-glow {
+  position: absolute;
+  inset: -2px;
+  border: 3px solid var(--tone);
+  border-radius: 14px;
+  box-shadow: 0 0 26px color-mix(in srgb, var(--tone) 55%, transparent), inset 0 0 18px color-mix(in srgb, var(--tone) 18%, transparent);
+}
+
+/* ------------------------------------------------------------------ */
+/* Sequence-diagram lanes, messages, chat                              */
+/* ------------------------------------------------------------------ */
+
+.nk-lane {
+  position: absolute;
+  width: 0;
+  border-left: 3px dashed var(--panel-line);
+  transform: scaleY(0);
+  transform-origin: 50% 0;
+}
+
+.nk-msg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  color: var(--trn);
+}
+
+.nk-msg--app { color: var(--app); }
+.nk-msg--udp { color: var(--udp); }
+.nk-msg--lnk { color: var(--lnk); }
+.nk-msg--net { color: var(--net); }
+.nk-msg--red { color: var(--red); }
+
+.nk-msg-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.nk-msg-head {
+  fill: currentColor;
+}
+
+.nk-msg-cross {
+  fill: none;
+  stroke: var(--red);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+/* Message names (SYN, ACK, …) are command chips, like `git add` in the Git song. */
+.nk-msg-label {
+  --tone: var(--trn);
+  position: absolute;
+  padding: 3px 9px;
+  border: 2px solid var(--ink);
+  border-radius: 7px;
+  background: var(--tone);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.nk-msg-label--app { --tone: var(--app); }
+.nk-msg-label--udp { --tone: var(--udp); }
+.nk-msg-label--lnk { --tone: var(--lnk); }
+.nk-msg-label--net { --tone: var(--net); }
+.nk-msg-label--red { --tone: var(--red); }
+
+/* Chat bubbles: the Git song's chat, tail toward the speaker. */
+.nk-bubble {
+  position: absolute;
+  padding: 9px 14px;
+  border-radius: 16px 16px 16px 4px;
+  background: #f6f8ff;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+}
+
+.nk-bubble--right {
+  border-radius: 16px 16px 4px 16px;
+  transform: translateX(-100%);
+}
+
+.nk-bubble--server {
+  background: #fff3c4;
+}
+
+/* ------------------------------------------------------------------ */
+/* Segments, timers, header diagrams                                   */
+/* ------------------------------------------------------------------ */
+
+/* A packet in flight: the protocol's header row over its payload. */
+.nk-seg {
+  --tone: var(--tcp);
+  position: absolute;
+  min-width: 92px;
+  border: 2.5px solid var(--tone);
+  border-radius: 9px;
+  background: var(--panel);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45), 0 0 14px color-mix(in srgb, var(--tone) 35%, transparent);
+  transform: translate(-50%, -50%);
+}
+
+.nk-seg--udp { --tone: var(--udp); }
+.nk-seg--ack { --tone: var(--green); min-width: 0; }
+
+.nk-seg-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 6px 6px 0 0;
+  background: color-mix(in srgb, var(--tone) 20%, #0d1428);
+}
+
+.nk-seg--ack .nk-seg-head {
+  border-radius: 6px;
+}
+
+.nk-seg-head svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--tone);
+}
+
+.nk-seg-proto {
+  padding: 0 5px;
+  border: 1.5px solid var(--ink);
+  border-radius: 5px;
+  background: var(--tone);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  line-height: 15px;
+}
+
+.nk-seg-seq {
+  color: var(--tone);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.nk-seg-body {
+  padding: 3px 9px 4px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* A lost packet: a red cross over it before it fades. */
+.nk-seg-lost {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  color: var(--red);
+}
+
+.nk-seg-lost svg {
+  width: 40px;
+  height: 40px;
+  stroke-width: 3.6;
+}
+
+/* A failed checksum: a crack across the packet. */
+.nk-seg-crack {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--red);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+/* A retransmission timer: a ring that drains, red as it runs out. */
+.nk-timer {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  color: var(--text);
+}
+
+.nk-timer-ring {
+  position: absolute;
+  inset: 0;
+  width: 44px;
+  height: 44px;
+}
+
+.nk-timer-track {
+  fill: rgba(10, 16, 34, 0.85);
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 4;
+}
+
+.nk-timer-arc {
+  fill: none;
+  stroke: var(--tcp);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+.nk-timer.is-late .nk-timer-arc {
+  stroke: var(--red);
+}
+
+.nk-timer > svg:not(.nk-timer-ring) {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 20px;
+  height: 20px;
+}
+
+.nk-timer-label {
+  position: absolute;
+  left: 50%;
+  top: 50px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+  transform: translateX(-50%);
+}
+
+.nk-timer.is-late .nk-timer-label {
+  color: var(--red);
+}
+
+/* Header diagrams: one row per 32 bits, like the RFCs draw them. */
+.nk-hdr {
+  --tone: var(--tcp);
+  position: absolute;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 2px solid var(--tone);
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45);
+}
+
+.nk-hdr--udp { --tone: var(--udp); }
+
+.nk-hdr-title {
+  margin-bottom: 6px;
+  color: var(--tone);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nk-hdr-row {
+  display: flex;
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.nk-hdr-cell {
+  flex: 1;
+  padding: 3px 4px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--tone) 22%, #101830);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 15px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* The IMP and the game map are figures like the castle. */
+.nk-imp,
+.nk-map {
+  position: absolute;
+}
+
+/* ------------------------------------------------------------------ */
+/* Gates, cards, tags, titles                                          */
+/* ------------------------------------------------------------------ */
+
+.nk-gate {
+  position: absolute;
+  width: 220px;
+  height: 268px;
+}
+
+.nk-gate--tcp { --gate-tone: var(--tcp); color: var(--tcp); }
+.nk-gate--udp { --gate-tone: var(--udp); color: var(--udp); }
+
+.nk-gate-portal {
+  opacity: 0.55;
+}
+
+/* The gate's name is a sticker, like the Git song's labels. */
+.nk-gate-sign {
+  position: absolute;
+  left: 50%;
+  top: -22px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 16px 4px;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  background: var(--gate-tone);
+  color: var(--ink);
+  font-size: 28px;
+  font-style: italic;
+  font-weight: 900;
+  white-space: nowrap;
+  transform: translateX(-50%) rotate(-2deg);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.nk-gate-sign svg {
+  width: 26px;
+  height: 26px;
+}
+
+.nk-gate-rule {
+  position: absolute;
+  left: -30px;
+  right: -30px;
+  top: 278px;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+/* Use-case cards: the Git song's file chips. */
+.nk-card {
+  --tone: var(--ink);
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 8px;
+  background: #f6f8ff;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+}
+
+.nk-card svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.nk-card--tcp { border-color: var(--tcp); box-shadow: 0 0 0 2px var(--tcp), 0 6px 14px rgba(0, 0, 0, 0.35); }
+.nk-card--udp { border-color: var(--udp); box-shadow: 0 0 0 2px var(--udp), 0 6px 14px rgba(0, 0, 0, 0.35); }
+
+/* Tags: command chips in a layer's color. */
+.nk-tag {
+  --tone: var(--trn);
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 2px solid var(--ink);
+  border-radius: 7px;
+  background: var(--tone);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.nk-tag svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.nk-tag--mono {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.nk-tag--app { --tone: var(--app); }
+.nk-tag--trn { --tone: var(--trn); }
+.nk-tag--net { --tone: var(--net); }
+.nk-tag--lnk { --tone: var(--lnk); }
+.nk-tag--udp { --tone: var(--udp); }
+.nk-tag--red { --tone: var(--red); }
+.nk-tag--white { --tone: #f6f8ff; }
+.nk-tag--amber { --tone: var(--amber); }
+
+/* A tag centered on its position (the choreography's label()). */
+.nk-centered {
+  transform: translate(-50%, -50%);
+}
+
+.kinetic-word--violet { color: var(--violet); }
+
+/* Titles: the Git song's kinetic type. */
+.nk-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 6px 0 rgba(0, 0, 0, 0.45);
+}
+
+.nk-title--gold { color: var(--gold); }
+.nk-title--white { color: var(--text); }
+.nk-title--cyan { color: var(--cyan); }
+.nk-title--pink { color: var(--pink); }
+.nk-title--violet { color: var(--violet); }
+.nk-title--green { color: var(--green); }
+
+/* ------------------------------------------------------------------ */
+/* Scenes of "Unbox the Stack" (songs/unbox_the_stack.js)              */
+/* ------------------------------------------------------------------ */
+
+/* Intro: a sky full of machines, and the one we want. */
+.machine-field {
+  position: absolute;
+  inset: 0;
+}
+
+.machine-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 2px;
+  background: #9fc4ff;
+  box-shadow: 0 0 8px 2px rgba(120, 170, 255, 0.5);
+}
+
+.machine-ring {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border: 4px solid var(--gold);
+  border-radius: 50%;
+  box-shadow: 0 0 22px rgba(255, 209, 0, 0.5);
+}
+
+.title-box {
+  position: absolute;
+  left: 425px;
+  top: 112px;
+  width: 110px;
+  height: 110px;
+  color: var(--gold);
+}
+
+.title-box svg {
+  width: 110px;
+  height: 110px;
+  stroke-width: 1.6;
+}
+
+/* Verse 1: routers can't route names; DNS answers. */
+.route-nope {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  color: var(--red);
+}
+
+.route-nope svg {
+  width: 34px;
+  height: 34px;
+  stroke-width: 3.2;
+}
+
+.dns-contact {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px 0;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.dns-name { color: var(--text); }
+.dns-arrow { color: var(--muted); }
+.dns-number { color: var(--net); }
+
+.dns-fly {
+  position: absolute;
+  padding: 3px 9px;
+  border: 2px solid var(--ink);
+  border-radius: 7px;
+  background: var(--net);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.parcel-rider {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* Routers read only the two outer labels (Link and IP). */
+.router-scan {
+  position: absolute;
+  width: 364px;
+  height: 62px;
+  border: 3px dashed var(--net);
+  border-radius: 12px;
+  background: rgba(167, 139, 250, 0.12);
+}
+
+/* "Too big? Split it up." — the page, then three packets, each with its own headers. */
+.big-payload {
+  position: absolute;
+  left: 230px;
+  top: 214px;
+  width: 500px;
+  padding: 18px 0;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: #fffbea;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.split-piece {
+  position: absolute;
+  width: 124px;
+  padding: 20px 0 16px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: #fffbea;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.split-piece::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 6px;
+  height: 7px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--green) 0 33%, var(--violet) 33% 66%, var(--cyan) 66% 100%);
+}
+
+/* Chorus: the line on screen, lines between peer layers, the ride. */
+.chorus-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 48px;
+  text-align: center;
+}
+
+.chorus-caption-name {
+  color: var(--text);
+  font-size: 40px;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 0 5px 0 rgba(0, 0, 0, 0.45);
+}
+
+.chorus-caption--app .chorus-caption-name { color: var(--gold); }
+.chorus-caption--trn .chorus-caption-name { color: var(--cyan); }
+.chorus-caption--net .chorus-caption-name { color: var(--violet); }
+.chorus-caption--lnk .chorus-caption-name { color: var(--green); }
+
+.chorus-caption-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.chorus-caption-purpose {
+  color: var(--text);
+  font-size: 21px;
+  font-weight: 800;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.chorus-chip {
+  --tone: var(--trn);
+  padding: 3px 9px;
+  border: 2px solid var(--ink);
+  border-radius: 7px;
+  background: var(--tone);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.chorus-chip--app { --tone: var(--gold); }
+.chorus-chip--trn { --tone: var(--cyan); }
+.chorus-chip--net { --tone: var(--violet); }
+.chorus-chip--lnk { --tone: var(--green); }
+
+.chorus-beams {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.chorus-beam {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.chorus-beam--app { stroke: var(--gold); }
+.chorus-beam--trn { stroke: var(--cyan); }
+.chorus-beam--net { stroke: var(--violet); }
+.chorus-beam--lnk { stroke: var(--green); }
+
+.scope-tag {
+  transform: translate(-50%, -50%);
+}
+
+.uses-arrow {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  color: var(--text);
+}
+
+.uses-arrow svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 3;
+}
+
+.ride {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.ride-ring {
+  --tone: var(--gold);
+  position: absolute;
+  box-sizing: border-box;
+  border: 3px solid var(--tone);
+  border-radius: 6px;
+}
+
+.ride-ring--app { --tone: var(--gold); background: var(--gold); }
+.ride-ring--trn { --tone: var(--cyan); }
+.ride-ring--net { --tone: var(--violet); }
+.ride-ring--lnk { --tone: var(--green); }
+
+/* ------------------------------------------------------------------ */
+/* The client window (net-art.js art + live screen content)            */
+/* ------------------------------------------------------------------ */
+
+.nk-client {
+  position: absolute;
+}
+
+.nk-client .nk-art {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.nk-client-address {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  color: #0b0f1a;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.nk-client-address svg {
+  width: 1.05em;
+  height: 1.05em;
+  flex: none;
+  color: #3b4a6b;
+}
+
+.nk-client-caret {
+  width: 0.55em;
+  height: 1.1em;
+  margin-left: -4px;
+  background: #0b0f1a;
+}
+
+.nk-client-page {
+  position: absolute;
+  padding: 10px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  background: #0b1a36;
+  transform-origin: 0 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Illustrations (art/*.js) and their live light layers                */
+/* ------------------------------------------------------------------ */
+
+/* The drawing library: <symbol>s that every copy on stage <use>s. */
+.nk-library {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.nk-figure {
+  position: absolute;
+}
+
+.nk-figure-art {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  overflow: visible;
+}
+
+.nk-figure-live {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* A router's beacon flares when a packet passes through. */
+.nk-beacon-flash {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(220, 205, 255, 0.95) 0%, rgba(167, 139, 250, 0.45) 35%, rgba(167, 139, 250, 0) 70%);
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+
+.nk-beacon-flash--wifi {
+  background: radial-gradient(circle, rgba(210, 255, 225, 0.95) 0%, rgba(74, 222, 128, 0.45) 35%, rgba(74, 222, 128, 0) 70%);
+}
+
+/* ------------------------------------------------------------------ */
+/* Verse 2: TCP plays it safe                                          */
+/* ------------------------------------------------------------------ */
+
+/* A protocol's emblem: name, motto sticker, and the Node.js call. */
+.vibe {
+  --tone: var(--tcp);
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transform: translate(-50%, -50%);
+}
+
+.vibe--udp { --tone: var(--udp); }
+
+.vibe-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--tone);
+  font-size: 54px;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-shadow: 0 5px 0 rgba(0, 0, 0, 0.45);
+}
+
+.vibe-name svg {
+  width: 44px;
+  height: 44px;
+  stroke-width: 2.4;
+}
+
+.vibe-rule {
+  padding: 5px 14px 4px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--tone);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.vibe-code {
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--tone) 60%, transparent);
+  border-radius: 8px;
+  background: rgba(8, 12, 28, 0.85);
+  color: var(--tone);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+/* The packet that takes the safe road travels under escort. */
+.vibe-escort {
+  box-shadow: 0 0 0 5px rgba(56, 211, 245, 0.28), 0 0 0 10px rgba(56, 211, 245, 0.12), 0 0 14px var(--tcp);
+}
+
+/* Handshake step numbers on the sender's lane. */
+.step-number {
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  box-sizing: border-box;
+  border-radius: 50%;
+}
+
+/* The receive buffer: numbered places for arriving packets, and a bin. */
+.buffer-panel--udp {
+  border-color: color-mix(in srgb, var(--udp) 45%, transparent);
+}
+
+.buffer-panel--tcp {
+  border-color: color-mix(in srgb, var(--tcp) 45%, transparent);
+}
+
+.buffer-slot {
+  position: absolute;
+  width: 180px;
+  height: 40px;
+  box-sizing: border-box;
+  border: 2px dashed rgba(160, 190, 255, 0.35);
+  border-radius: 9px;
+}
+
+.buffer-slot-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-align: center;
+  transform: translateY(-50%);
+}
+
+.buffer-bin {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  color: var(--red);
+}
+
+.buffer-bin svg {
+  width: 30px;
+  height: 30px;
+}
+
+/* The price of safe: a receipt, and a time axis for the pictures. */
+.receipt {
+  position: absolute;
+  width: 344px;
+  padding-bottom: 14px;
+  box-sizing: border-box;
+  border-radius: 6px 6px 0 0;
+  background: #fbf7ec;
+  color: var(--ink);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.5);
+}
+
+/* A torn, scalloped bottom edge. */
+.receipt::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 8px;
+  background: radial-gradient(circle at 6px 0, #fbf7ec 6px, transparent 6.5px) repeat-x;
+  background-size: 12px 8px;
+}
+
+.receipt-title {
+  height: 40px;
+  padding-top: 11px;
+  box-sizing: border-box;
+  border-bottom: 2px dashed rgba(11, 15, 26, 0.3);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.receipt-row {
+  height: 64px;
+  padding: 10px 16px;
+  box-sizing: border-box;
+  border-bottom: 1px dashed rgba(11, 15, 26, 0.22);
+}
+
+.receipt-what {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.receipt-why {
+  margin-top: 3px;
+  color: #3f475c;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.receipt-total {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 16px 0;
+  padding: 6px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--gold);
+  font-size: 17px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.receipt-total svg {
+  width: 20px;
+  height: 20px;
+}
+
+.price-axis {
+  position: absolute;
+  width: 500px;
+  height: 0;
+  border-top: 2px solid rgba(180, 195, 224, 0.4);
+}
+
+.price-axis-label {
+  position: absolute;
+  right: 0;
+  top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.price-brace {
+  position: absolute;
+  width: 196px;
+  height: 10px;
+  border: 2px solid var(--muted);
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+}
+
+.price-brace-label {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.price-wait {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  color: var(--gold);
+}
+
+.price-wait svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* A piece that never arrived, and pieces as squares. */
+.nk-tag.is-missing {
+  border-style: dashed;
+  border-color: var(--red);
+  background: rgba(255, 107, 125, 0.12);
+  color: var(--red);
+  box-shadow: none;
+}
+
+.nk-tag.is-square {
+  justify-content: center;
+  width: 40px;
+  box-sizing: border-box;
+}
+
+/* ------------------------------------------------------------------ */
+/* Verse 3: UDP plays it fast                                          */
+/* ------------------------------------------------------------------ */
+
+/* The handshake UDP skips, crossed out. */
+.ghost-shake {
+  position: absolute;
+  display: flex;
+  gap: 8px;
+}
+
+.ghost-step {
+  padding: 3px 9px;
+  border: 2px dashed rgba(56, 211, 245, 0.6);
+  border-radius: 7px;
+  color: rgba(180, 235, 255, 0.85);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.ghost-strike {
+  position: absolute;
+  left: -8px;
+  right: -8px;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 2px;
+  background: var(--red);
+  transform-origin: 0 50%;
+}
+
+.nk-beam.is-ghost .nk-beam-core {
+  stroke-dasharray: 0.02 0.02;
+}
+
+/* The game: two maps, a player token each, a log of updates. */
+.game-title {
+  font-size: 15px;
+}
+
+.game-token {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  box-sizing: border-box;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--udp);
+  color: var(--ink);
+  box-shadow: 0 0 0 4px rgba(255, 95, 176, 0.3), 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.game-token svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.6;
+}
+
+.game-token--ghost {
+  border-style: dashed;
+  border-color: var(--green);
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--green);
+  box-shadow: none;
+}
+
+.nk-tag.is-lost {
+  text-decoration: line-through;
+}
+
+.game-lost {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--red);
+}
+
+.game-lost svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 3.4;
+}
+
+/* The live call: two people, the voice's waveform, the call clock. */
+.call-card .nk-glass {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 22px;
+}
+
+.call-person {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.call-person svg {
+  width: 46px;
+  height: 46px;
+  padding: 9px;
+  box-sizing: border-box;
+  border: 2px solid var(--udp);
+  border-radius: 50%;
+  background: rgba(255, 95, 176, 0.18);
+}
+
+.call-person--you svg {
+  border-color: var(--cyan);
+  background: rgba(56, 211, 245, 0.18);
+}
+
+.call-wave {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 70px;
+}
+
+.call-bar {
+  width: 6px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--udp);
+}
+
+.call-clock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--udp);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.call-clock svg {
+  width: 18px;
+  height: 18px;
+}
+
+.voice-rail {
+  position: absolute;
+  width: 640px;
+  height: 0;
+  border-top: 3px solid rgba(180, 195, 224, 0.35);
+}
+
+.voice-chip {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 2px solid var(--udp);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 600;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+}
+
+.voice-chip svg {
+  width: 16px;
+  height: 16px;
+}
+
+.voice-chip--gap {
+  border-style: dashed;
+  border-color: var(--red);
+  background: rgba(255, 107, 125, 0.08);
+  color: var(--red);
+}
+
+.voice-chip--resent {
+  border-color: var(--udp);
+  box-shadow: 0 0 16px rgba(255, 95, 176, 0.5);
+}
+
+.voice-head {
+  position: absolute;
+  width: 0;
+  height: 92px;
+  border-left: 3px solid var(--gold);
+}
+
+.voice-head-label {
+  position: absolute;
+  left: 0;
+  top: -24px;
+  padding: 2px 8px;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+/* DNS lookup: the contacts entry, and the cost of a handshake. */
+.dns-contact--compact {
+  gap: 8px;
+  padding: 12px 14px 0;
+  font-size: 15px;
+}
+
+.wait-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 0 14px;
+}
+
+.wait-name {
+  width: 36px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.wait-name--udp { color: var(--udp); }
+.wait-name--tcp { color: var(--tcp); }
+
+.wait-bar {
+  height: 14px;
+  border-radius: 4px;
+}
+
+.wait-bar--udp {
+  width: 44px;
+  background: var(--udp);
+}
+
+.wait-bar--tcp {
+  width: 88px;
+  background: linear-gradient(90deg, rgba(56, 211, 245, 0.4) 0 50%, var(--tcp) 50% 100%);
+}
+
+.wait-note {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* The hook: what each gate has taken in. */
+.gate-tally {
+  position: absolute;
+  display: flex;
+  gap: 6px;
+  transform: translateX(-50%);
+}
+
+.gate-tally-item {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--ink);
+  border-radius: 7px;
+  background: var(--tcp);
+  color: var(--ink);
+}
+
+.gate-tally--udp .gate-tally-item {
+  background: var(--udp);
+}
+
+.gate-tally-item svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Verse 4: addresses and ports                                        */
+/* ------------------------------------------------------------------ */
+
+.ip-big {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 122px;
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 64px;
+  font-weight: 600;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.45);
+}
+
+.ip-part {
+  position: relative;
+  padding: 0 4px;
+}
+
+.ip-part--net { --tone: var(--violet); }
+.ip-part--host { --tone: var(--gold); }
+
+.ip-dot {
+  color: var(--muted);
+}
+
+.ip-prefix {
+  margin-left: 8px;
+  color: var(--muted);
+  font-size: 28px;
+}
+
+.ip-octet {
+  position: relative;
+  display: inline-block;
+}
+
+.ip-brace {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 100%;
+  height: 12px;
+  margin-top: 2px;
+  border: 3px solid var(--tone);
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  text-shadow: none;
+}
+
+.ip-brace-name {
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  color: var(--tone);
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.ip-brace-hint {
+  position: absolute;
+  left: 50%;
+  top: 50px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--tone);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 var(--ink);
+  translate: -50% 0;
+}
+
+.ip-brace-hint svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ip-range {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  margin-top: 8px;
+  padding: 2px 8px;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: var(--violet);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  text-shadow: none;
+  white-space: nowrap;
+  translate: -50% 0;
+}
+
+.ip-counter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 278px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 32px;
+  font-weight: 600;
+  text-align: center;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* localhost: the browser's address, and the loop that never leaves. */
+.address-pill {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #dfe8f8;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  transform: translate(-50%, -50%);
+}
+
+.address-pill svg {
+  width: 18px;
+  height: 18px;
+  color: #3b4a6b;
+}
+
+.loopback {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.loopback-path {
+  fill: none;
+  stroke: var(--violet);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.loopback-head {
+  fill: var(--violet);
+}
+
+/* Ports: the apps behind the castle's windows. */
+.port-leaders {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.port-leader {
+  fill: none;
+  stroke: rgba(56, 211, 245, 0.8);
+  stroke-width: 2;
+}
+
+.port-window-ring {
+  fill: none;
+  stroke: var(--cyan);
+  stroke-width: 3;
+}
+
+.port-label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 2px solid var(--panel-line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.45);
+}
+
+.port-label--left {
+  transform: translateX(-100%);
+}
+
+.port-label svg {
+  width: 18px;
+  height: 18px;
+  color: var(--cyan);
+}
+
+.port-number {
+  padding: 1px 7px;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: var(--cyan);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.packet-chip {
+  position: absolute;
+  display: flex;
+  overflow: hidden;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--ink), 0 0 16px rgba(167, 139, 250, 0.45);
+  transform: translate(-50%, -50%);
+}
+
+.packet-chip-ip {
+  padding: 3px 8px;
+  background: var(--violet);
+  color: var(--ink);
+}
+
+.packet-chip-port {
+  padding: 3px 8px;
+  background: var(--cyan);
+  color: var(--ink);
+}
+
+.nk-beam.is-thin .nk-beam-core {
+  stroke-width: 2.5;
+}
+
+/* Best effort: numbered packets and a full router queue. */
+.orb-number {
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.router-queue {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border: 2px solid var(--amber);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.router-queue-label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  color: var(--amber);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.router-queue-slot {
+  width: 22px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--violet);
+}
+
+/* ------------------------------------------------------------------ */
+/* Bridge: HTTP has no memory; HTTPS locks it in TLS                   */
+/* ------------------------------------------------------------------ */
+
+.memory-note-title {
+  position: absolute;
+  left: 14px;
+  top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.memory-note-text {
+  position: absolute;
+  left: 14px;
+  bottom: 5px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.memory-note-text--empty {
+  color: var(--gold);
+}
+
+.nk-box--tls {
+  --tone: #f6f8ff;
+  background: rgba(18, 26, 51, 0.7);
+}
+
+.nk-box-layer svg {
+  width: 11px;
+  height: 11px;
+  margin-right: 3px;
+  vertical-align: -1px;
+}
+
+.sightline {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.sightline-path {
+  fill: none;
+  stroke: var(--red);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+/* ------------------------------------------------------------------ */
+/* Pop quiz: question, picture, think bar, answer                      */
+/* ------------------------------------------------------------------ */
+
+.quiz-card--visual .quiz-question {
+  right: 324px;
+  font-size: 34px;
+}
+
+.quiz-visual {
+  position: absolute;
+  left: 444px;
+  top: 30px;
+  width: 260px;
+  height: 178px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #0d1530;
+  box-shadow: inset 0 0 0 3px var(--ink);
+  color: var(--text);
+}
+
+.quiz-think {
+  position: absolute;
+  left: 40px;
+  right: 336px;
+  bottom: 106px;
+  height: 10px;
+  border-radius: 5px;
+  background: rgba(11, 15, 26, 0.12);
+}
+
+.quiz-think-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 5px;
+  background: var(--pink);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+}
+
+.quiz-think-label {
+  position: absolute;
+  right: 0;
+  bottom: 14px;
+  color: #4a5268;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Q1: nested boxes with unknown labels. */
+.quiz-nest {
+  position: absolute;
+  inset: 12px;
+}
+
+.quiz-nest-box {
+  --tone: var(--lnk);
+  position: relative;
+  height: 100%;
+  padding: 24px 7px 7px;
+  box-sizing: border-box;
+  border: 3px solid var(--tone);
+  border-radius: 10px;
+}
+
+.quiz-nest-box--net { --tone: var(--net); }
+.quiz-nest-box--trn { --tone: var(--trn); }
+
+.quiz-nest-tab {
+  position: absolute;
+  left: 6px;
+  top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.quiz-nest-layer {
+  padding: 0 5px;
+  border: 1.5px solid var(--ink);
+  border-radius: 5px;
+  background: var(--tone);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 15px;
+}
+
+.quiz-nest-mystery,
+.quiz-nest-known {
+  color: var(--tone);
+  font-weight: 600;
+}
+
+.quiz-nest-known {
+  position: absolute;
+  left: 46px;
+}
+
+.quiz-nest-data {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--gold);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Q2: the castle's window and its room number. */
+.quiz-port {
+  position: absolute;
+  padding: 3px 8px;
+  border: 2px solid var(--ink);
+  border-radius: 7px;
+  background: #f6f8ff;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.quiz-port.is-known {
+  background: var(--cyan);
+}
+
+/* Q3: live voice, and the two emblems. */
+.quiz-callout {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.quiz-callout svg {
+  width: 22px;
+  height: 22px;
+}
+
+.quiz-emblem {
+  position: absolute;
+  top: 82px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 96px;
+  padding: 12px 0;
+  border: 3px solid var(--tcp);
+  border-radius: 14px;
+  color: var(--tcp);
+  font-size: 22px;
+  font-style: italic;
+  font-weight: 900;
+}
+
+.quiz-emblem svg {
+  width: 30px;
+  height: 30px;
+}
+
+.quiz-emblem--tcp { left: 22px; }
+
+.quiz-emblem--udp {
+  right: 22px;
+  border-color: var(--udp);
+  color: var(--udp);
+}
+
+/* Q4 and Q5: a queue of pieces, a lost datagram, notes. */
+.quiz-queue {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 52px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.quiz-piece {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border: 3px solid var(--tcp);
+  border-radius: 10px;
+  color: var(--tcp);
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.quiz-piece.is-missing {
+  border-style: dashed;
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.quiz-note {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  color: var(--tcp);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.quiz-note svg {
+  width: 20px;
+  height: 20px;
+}
+
+.quiz-note--udp {
+  color: var(--udp);
+}
+
+.quiz-datagram {
+  position: absolute;
+  left: 50%;
+  top: 40px;
+  padding: 10px 14px;
+  border: 3px solid var(--udp);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.quiz-bin {
+  position: absolute;
+  left: 50%;
+  top: 104px;
+  width: 40px;
+  height: 40px;
+  margin-left: -20px;
+  color: var(--red);
+}
+
+.quiz-bin svg {
+  width: 40px;
+  height: 40px;
+}
+
+/* Q6: HTTP locked inside TLS. */
+.quiz-http {
+  position: absolute;
+  left: 70px;
+  right: 70px;
+  top: 74px;
+  padding: 16px 0;
+  border: 3px solid var(--gold);
+  border-radius: 10px;
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.quiz-tls {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  top: 40px;
+  bottom: 30px;
+  border: 3px solid #f6f8ff;
+  border-radius: 14px;
+}
+
+.quiz-tls-tab {
+  position: absolute;
+  left: 10px;
+  top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #f6f8ff;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.quiz-tls-tab svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Outro: 1969, the inventors, Go Bruins                               */
+/* ------------------------------------------------------------------ */
+
+/* A teletype over each node: its name and the paper it prints on. */
+.teletype {
+  position: absolute;
+  width: 200px;
+  overflow: hidden;
+  border: 2px solid var(--panel-line);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.45);
+}
+
+.teletype-name {
+  padding: 5px 10px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.teletype-paper {
+  height: 34px;
+  padding: 0 12px;
+  border-top: 2px dashed rgba(11, 15, 26, 0.25);
+  background: #f4efe0;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  line-height: 34px;
+}
+
+/* Name cards for the people (no portraits). */
+.person {
+  position: absolute;
+  width: 330px;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  border: 2px solid var(--panel-line);
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+}
+
+.person-name {
+  color: var(--text);
+  font-size: 30px;
+  font-weight: 900;
+}
+
+.person-role {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.paper-card {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: #fbf7ec;
+  color: var(--ink);
+  white-space: nowrap;
+  box-shadow: 4px 4px 0 var(--ink);
+  transform: translateX(-50%);
+}
+
+.paper-card-year {
+  padding: 1px 8px;
+  border-radius: 5px;
+  background: var(--ink);
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.paper-card-title {
+  font-size: 16px;
+  font-style: italic;
+  font-weight: 700;
+}

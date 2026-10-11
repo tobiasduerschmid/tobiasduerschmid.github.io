@@ -11,6 +11,9 @@
   <link rel="stylesheet" href="{{ '/css/git-graph.css' | relative_url }}?v={{ site.asset_version }}-song-vector-1">
   <link rel="stylesheet" href="{{ '/css/song-video-stage.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/song-student-avatar.css' | relative_url }}">
+  {%- for href in song.extras.styles %}
+  <link rel="stylesheet" href="{{ href | relative_url }}">
+  {%- endfor %}
   <link rel="stylesheet" href="{{ '/css/song-player.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
@@ -81,6 +84,9 @@
   <script src="{{ '/js/song-video/timeline.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/kit.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/student-avatar.js' | relative_url }}"></script>
+  {%- for src in song.extras.scripts %}
+  <script src="{{ src | relative_url }}"></script>
+  {%- endfor %}
   <script src="{{ '/js/song-video/songs/' | append: page.song | append: '.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/scene.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/controls.js' | relative_url }}"></script>

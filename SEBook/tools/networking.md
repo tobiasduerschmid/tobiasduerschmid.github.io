@@ -3,9 +3,15 @@ title: Networking
 layout: sebook
 ---
 
+<link rel="stylesheet" href="/css/song-video.css">
+
 This is a **reference page** for networking concepts that are essential for building web applications. It covers network architectures, the TCP/IP protocol stack, HTTP, and the key trade-offs you need to understand when designing networked systems.
 
 > **How to use this page:** Keep it open as a reference while working on your projects. The concepts here underpin everything you build with Node.js and React — every time your browser talks to a server, it relies on these protocols.
+
+**Start with the song.** *Unbox the Stack* is a five-minute music video that previews this page's core mental model: what each of the four layers is for, how a request is wrapped on the way down and unboxed on the way up, why TCP plays it safe while UDP plays it fast (and what each choice costs), how IP addresses find the machine and ports find the app, and why HTTP needs HTTPS. The video follows one running example, your laptop at `192.168.1.42` loading `ucla.edu`, and ends with a short pop quiz. Every idea gets its own section below. Captions are on by default.
+
+{% include song-video.html song=site.data.songs.unbox_the_stack id="network-song" %}
 
 # Network Architectures
 

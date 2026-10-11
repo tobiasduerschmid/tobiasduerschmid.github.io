@@ -27,6 +27,14 @@ test('Git notation is spelled out for the narrator', () => {
   assert.equal(spokenForm('homework_final_2.txt'), 'homework final 2 dot t x t');
 });
 
+test('a song’s own terms and IP addresses are spoken the way people say them', () => {
+  const pronounce = { SYN: 'sin', 'SYN-ACK': 'sin ack', 'ucla.edu': 'U C L A dot E D U' };
+  assert.equal(spokenForm('SYN, SYN-ACK, ACK', pronounce), 'sin, sin ack, ACK');
+  assert.equal(spokenForm('ucla.edu is at 3.33.167.235', pronounce), 'U C L A dot E D U is at 3 dot 33 dot 167 dot 235');
+  // Terms match whole words only: SYNC is not SYN.
+  assert.equal(spokenForm('SYNC means sync', pronounce), 'SYNC means sync');
+});
+
 test('each section gets a hold long enough for its narration, then the song resumes where it paused', () => {
   const plan = planDescribedCut(storyboard, voices, RATE);
   const [intro, verse] = plan.holds;

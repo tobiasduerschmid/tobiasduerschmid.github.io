@@ -1,0 +1,168 @@
+/*
+ * The "night-sky" stage theme (night-sky.js): a starry fantasy sky behind
+ * the scenes. Only the backdrop changes; the HUD pieces (badge, stickers,
+ * stamps, kinetic type, quiz cards) keep the studio look from stage.css so
+ * every SE Book song video shares one type and box language. Like stage.css
+ * this styles the 960×540 stage of the live song player, which keeps its
+ * dark artwork in both page themes (the player page's print styles hide it).
+ */
+
+.theme-night-sky {
+  /* The four layers of the TCP/IP stack, in the studio palette. */
+  --app: var(--gold);
+  --trn: var(--cyan);
+  --net: var(--violet);
+  --lnk: var(--green);
+  /* TCP vs. UDP when the two transport protocols are compared. */
+  --tcp: var(--cyan);
+  --udp: var(--pink);
+  --amber: #ffb547;
+
+  background: #02040f;
+}
+
+.night-sky {
+  overflow: hidden;
+}
+
+.sky-gradient {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 38% 0%, rgba(40, 86, 190, 0.38), transparent 70%),
+    linear-gradient(180deg, #02040f 0%, #060c27 38%, #0b1536 70%, #0a0f2c 100%);
+}
+
+.sky-nebula {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 680px;
+  height: 440px;
+  margin: -220px 0 0 -340px;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+}
+
+.sky-nebula--blue { background: radial-gradient(ellipse at center, rgba(52, 104, 230, 0.34) 0%, rgba(52, 104, 230, 0.12) 42%, transparent 70%); }
+.sky-nebula--cyan { background: radial-gradient(ellipse at center, rgba(24, 170, 210, 0.24) 0%, rgba(24, 170, 210, 0.08) 45%, transparent 70%); }
+.sky-nebula--violet { background: radial-gradient(ellipse at center, rgba(118, 70, 230, 0.26) 0%, rgba(118, 70, 230, 0.09) 45%, transparent 70%); }
+.sky-nebula--amber { background: radial-gradient(ellipse at center, rgba(214, 128, 48, 0.2) 0%, rgba(214, 128, 48, 0.06) 45%, transparent 70%); }
+
+.sky-stars {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 540px;
+}
+
+.sky-stars-dots {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  border-radius: 50%;
+}
+
+.sky-bright-star {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  background: radial-gradient(circle, #fff 0 1.6px, rgba(200, 225, 255, 0.6) 2.6px, rgba(150, 200, 255, 0) 11px);
+}
+
+.sky-bright-star::before,
+.sky-bright-star::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30px;
+  height: 1px;
+  margin: -0.5px 0 0 -15px;
+  background: linear-gradient(90deg, transparent, rgba(225, 238, 255, 0.75), transparent);
+}
+
+.sky-bright-star::after {
+  transform: rotate(90deg);
+}
+
+.sky-guide {
+  position: absolute;
+  left: 318px;
+  top: 40px;
+  width: 0;
+  height: 0;
+}
+
+.sky-guide-halo {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  margin: -90px 0 0 -90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 230, 255, 0.55) 0%, rgba(110, 170, 255, 0.22) 22%, rgba(80, 140, 255, 0) 62%);
+}
+
+.sky-guide-flare {
+  position: absolute;
+  width: 220px;
+  height: 2px;
+  margin: -1px 0 0 -110px;
+  background: linear-gradient(90deg, transparent, rgba(220, 238, 255, 0.85), transparent);
+}
+
+.sky-guide-flare--cross {
+  width: 130px;
+  margin-left: -65px;
+  transform: rotate(90deg);
+}
+
+.sky-guide-core {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px 4px rgba(200, 230, 255, 0.85);
+}
+
+.sky-shooting {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 130px;
+  height: 2px;
+  margin-left: -130px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(215, 236, 255, 0.95));
+  transform-origin: 100% 50%;
+  opacity: 0;
+}
+
+.sky-ember {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ffc06a;
+  box-shadow: 0 0 6px 1px rgba(255, 168, 70, 0.75);
+}
+
+.sky-ember--cool {
+  background: #9fe8ff;
+  box-shadow: 0 0 6px 1px rgba(80, 200, 255, 0.7);
+}
+
+/* Film grain: dithers the dark gradients so the encoder doesn't band them. */
+.sky-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 75% at 50% 42%, transparent 55%, rgba(0, 0, 6, 0.6) 100%);
+}
