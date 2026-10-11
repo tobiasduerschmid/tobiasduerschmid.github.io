@@ -3,11 +3,11 @@ title: Version Control with Git
 layout: sebook
 ---
 
-<script src="/js/git-graph.js"></script>
+<script src="/js/git-graph.js?v=20261011-svg-geometry"></script>
 <script src="/js/git-command-lab.js"></script>
 <script src="/js/ArchUML/uml-bundle.js"></script>
 <script src="/js/fs-command-lab.js"></script>
-<link rel="stylesheet" href="/css/git-graph.css">
+<link rel="stylesheet" href="/css/git-graph.css?v=20261011-svg-geometry">
 <link rel="stylesheet" href="/css/git-command-lab.css">
 <link rel="stylesheet" href="/css/fs-command-lab.css">
 <link rel="stylesheet" href="/css/song-video.css">

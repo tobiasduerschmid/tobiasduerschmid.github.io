@@ -94,6 +94,50 @@ test('forward poses reuse their graph through the settled boundary', async ({ pa
   expect(result).toEqual({ canvas: true, commit: true });
 });
 
+for (const zoom of [0.8, 1.25, 2]) {
+  test(`commit centers stay connected to edges at ${zoom * 100}% zoom`, async ({ page }) => {
+    const offsets = await page.evaluate((zoom) => {
+      document.body.style.zoom = zoom;
+      const first = document.getElementById('first');
+      const second = document.getElementById('second');
+      const track = new GraphTrack(first, keys);
+      const clock = VirtualClock.create();
+      const ordinary = new GitGraph(second, { scheduler: clock });
+      ordinary.render(parse(keys[0]));
+      clock.advanceTo(1600);
+      function offset(panel) {
+        const node = panel.querySelector('[data-hash="B"] .git-graph-node');
+        const shaft = panel.querySelector('[data-edge-key="B__A"] path');
+        const [x, y] = shaft.getAttribute('d').match(/-?\d+(?:\.\d+)?/g).map(Number);
+        // A temporary SVG marker measures the path's painted coordinates.
+        // WebKit's getScreenCTM omits CSS zoom, while Firefox applies zoom
+        // inside getPointAtLength. Read the SVG path's initial M coordinates.
+        const marker = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        marker.setAttribute('cx', x);
+        marker.setAttribute('cy', y);
+        marker.setAttribute('r', '1');
+        shaft.parentNode.append(marker);
+        const a = node.getBoundingClientRect();
+        const b = marker.getBoundingClientRect();
+        marker.remove();
+        return Math.hypot(a.x + a.width / 2 - b.x - b.width / 2, a.y + a.height / 2 - b.y - b.height / 2);
+      }
+      const results = [offset(second)];
+      for (const at of [1.6, 2, 2.36, 2.72, 4]) {
+        track.pose(at);
+        results.push(offset(first));
+      }
+      ordinary.render(parse(keys[1]));
+      clock.advanceTo(1960);
+      results.push(offset(second));
+      clock.advanceTo(3200);
+      results.push(offset(second));
+      return results;
+    }, zoom);
+    offsets.forEach((offset) => expect(offset, 'the edge must start at its commit center').toBeLessThan(1));
+  });
+}
+
 test('portable edge geometry interpolates at exact seek time on touch devices', async ({ page }) => {
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'maxTouchPoints', { value: 5, configurable: true });
@@ -124,7 +168,7 @@ test('explicit song motion keeps nodes synchronized when the OS prefers reduced 
     const first = document.getElementById('first');
     const second = document.getElementById('second');
     const track = new GraphTrack(first, keys);
-    const y = (panel) => new DOMMatrix(getComputedStyle(panel.querySelector('[data-hash="B"]')).transform).m42;
+    const y = (panel) => panel.querySelector('[data-hash="B"]').getCTM().f;
     track.pose(2);
     const start = y(first);
     track.pose(2.36);

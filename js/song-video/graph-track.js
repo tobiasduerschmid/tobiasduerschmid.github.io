@@ -86,7 +86,7 @@
       this.panel.replaceChildren(canvas);
       const graph = new window.GitGraph(canvas, {
         scheduler: this.clock,
-        portablePaths: true,
+        manualGeometry: true,
         motion: 'full',
         perfLite: false,
         observeTheme: false,
@@ -107,10 +107,10 @@
     advanceTo(target) {
       const { graph, canvas, stamps } = this.shown;
       this.clock.advanceTo(target, (now) => {
-        graph.posePaths(now);
+        graph.poseGeometry(now);
         stampAnimations(canvas, stamps, now);
       });
-      graph.posePaths(target);
+      graph.poseGeometry(target);
       poseAnimations(canvas, stamps, target);
     }
 
