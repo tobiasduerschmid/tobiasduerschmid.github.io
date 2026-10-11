@@ -22,17 +22,32 @@ async function run(page, expected) {
 
 test('reload restores accepted code separately from an invalid draft', async ({ page }) => {
   await ready(page);
+  const baselineResult = await page.evaluate(async () => {
+    const workspace = window._tutorial._smalltalkAdapter.getWorkspace();
+    const baseline = workspace.snapshot();
+    // Removal must replay against an actual baseline definition, independent
+    // of whichever example/helper methods the learner's lesson currently has.
+    baseline.files.find(file => file.path === 'Counter.st').content += `
+!SEBookCounter class methodsFor: 'progress fixture'!
+seBookProgressRemovalFixture
+    ^ 17
+! !
+`;
+    await workspace.replaceProgram(baseline);
+    return workspace.evaluate('SEBookCounter seBookProgressRemovalFixture');
+  });
+  expect(baselineResult).toMatchObject({ value: { text: '17' } });
   const acceptedChanges = await page.evaluate(async invalidSource => {
     const workspace = window._tutorial._smalltalkAdapter.getWorkspace();
     await workspace.commit({ baseRevision: workspace.snapshot().revision, action: 'acceptMethod', params: {
       target: { kind: 'method', className: 'SEBookCounter', side: 'instance', selector: 'increment' },
       source: 'increment count := count + 2. ^ self', protocol: 'accessing',
     } });
-    const generated = await workspace.evaluate("Object subclass: #SEBookSavedGenerated instanceVariableNames: '' classVariableNames: '' poolDictionaries: '' category: 'SEBook-Progress'. SEBookSavedGenerated compile: 'answer ^ 42' classified: 'accessing'. SEBookCounter class removeSelector: #checkIndependentCounters");
+    const generated = await workspace.evaluate("Object subclass: #SEBookSavedGenerated instanceVariableNames: '' classVariableNames: '' poolDictionaries: '' category: 'SEBook-Progress'. SEBookSavedGenerated compile: 'answer ^ 42' classified: 'accessing'. SEBookCounter class removeSelector: #seBookProgressRemovalFixture");
     if (generated.error) throw new Error(generated.error.message);
     const program = workspace.snapshot();
     if (!program.changes.entries.some(entry => entry.entity.className === 'SEBookSavedGenerated' && entry.after !== null)) throw new Error('Generated definition was not captured');
-    if (!program.changes.entries.some(entry => entry.entity.selector === 'checkIndependentCounters' && entry.after === null)) throw new Error('Native removal was not captured');
+    if (!program.changes.entries.some(entry => entry.entity.selector === 'seBookProgressRemovalFixture' && entry.after === null)) throw new Error('Native removal was not captured');
     workspace.setDraft({ target: { kind: 'method', className: 'SEBookCounter', side: 'instance', selector: 'increment' }, baseRevision: program.revision, source: invalidSource });
     await workspace.evaluate('Smalltalk at: #ProgressLiveCounter put: SEBookCounter new');
     return program.changes.source;
@@ -53,7 +68,7 @@ test('reload restores accepted code separately from an invalid draft', async ({ 
   const native = await page.evaluate(async () => {
     const workspace = window._tutorial._smalltalkAdapter.getWorkspace();
     const generated = await workspace.evaluate('SEBookSavedGenerated new answer');
-    const removed = await workspace.evaluate('SEBookCounter class includesSelector: #checkIndependentCounters');
+    const removed = await workspace.evaluate('SEBookCounter class includesSelector: #seBookProgressRemovalFixture');
     const live = await workspace.evaluate('Smalltalk includesKey: #ProgressLiveCounter');
     return { generated: generated.value.text, removed: removed.value.booleanValue, live: live.value.booleanValue };
   });

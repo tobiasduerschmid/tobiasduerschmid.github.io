@@ -4,6 +4,7 @@ learning_objectives:
   - Analyze a method that updates an object's state.
   - Apply an accepted method change to a retained object.
   - Compare retained state with new objects in the same live image.
+  - Write a repeatable Boolean check for accumulating state.
   - Check accumulating state and independent objects.
 
 # This deliberately short student-facing integration example stays discoverable
@@ -37,6 +38,7 @@ steps:
       - Analyze the state of an object across a live method edit.
       - Accept a method change and evaluate it on a retained object.
       - Compare live state with independently checked counter behavior.
+      - Write a repeatable Boolean check of changing state.
 
       **Read the methods.** `:=` assigns, `^` returns, and `self` is the receiver.
       `SEBookCounter new` initializes a counter's `count` to zero. The semicolon
@@ -47,6 +49,7 @@ steps:
          `increment`, and `value` of `SEBookCounter`. Predict the result after
          one increment, then select **Run**. Run evaluates the class-side entry
          `SEBookCounter runExample` in the current live image.
+         **Lesson code** returns here after you explore other classes.
       2. In the **Smalltalk terminal**, **Evaluate** `counter := SEBookCounter new`.
          Then evaluate `counter increment; value`. Keep this object for the
          next action; the terminal retains its bindings between evaluations.
@@ -57,19 +60,39 @@ steps:
          error preserves both the draft and the previous accepted method.
          **Accept and Run** compiles current drafts before evaluating the entry;
          a compilation error prevents that evaluation.
+         **Review drafts** lists unaccepted edits, including methods you have
+         navigated away from.
       4. After **Accept**, predict whether evaluating `counter increment; value`
          again will give **two or three**. Explain what happened to the object's
          old state when its method changed. **Inspect result** lets you inspect
-         a counter after evaluating `counter` itself.
+         a counter after evaluating `counter` itself. After another increment,
+         select **Refresh** in that inspector to reread the same object's fields.
       5. Select **Run** twice. Both runs reuse the live image, but `runExample`
          creates a **new counter** each time. Compare its results with the
          retained terminal counter. Explain why a new counter is different
          from restarting the entire image.
       6. Select **Test My Work**. Each optional Boolean check loads accepted
-         code into its own fresh image. The checks test one update, repeated
-         updates, and an untouched second object. Only Smalltalk `true` passes;
+         code into its own fresh image. The checks test one update and its
+         returned receiver, repeated updates, and an untouched second object.
+         Only Smalltalk `true` passes;
          passing these checks alone does not show that your terminal counter
          retained its identity.
+
+      ### Write your own check
+
+      A comparison with `=` answers `true` or `false`. Predict this check's
+      answer, then **Evaluate** it in the terminal:
+
+      ```smalltalk
+      SEBookCounter new value = 0
+      ```
+
+      Now write one expression that creates a fresh counter named `probe`,
+      sends `increment` twice to that same object, and compares its final value
+      with your expected value. Predict whether your check would reject a
+      method that always assigns a fixed value, then explain why. Evaluate
+      your whole expression twice. Why can this check be repeatable even though
+      repeatedly evaluating `counter increment; value` changes its answer?
 
       **Restart session** keeps accepted code and clears live objects and
       terminal bindings. **Reset Current Step** restores the increment-by-one
@@ -102,32 +125,16 @@ steps:
           !SEBookCounter class methodsFor: 'tutorial entry points'!
           runExample
               ^ self new increment; value
-          !
-          checkIncrement
-              | counter |
-              counter := self new.
-              ^ (counter increment == counter) and: [counter value = 2]
-          !
-          checkRepeatedIncrement
-              | counter |
-              counter := self new.
-              counter increment.
-              counter increment.
-              ^ counter value = 4
-          !
-          checkIndependentCounters
-              | counter other |
-              counter := self new.
-              other := self new.
-              counter increment.
-              ^ other value = 0
           ! !
     open_file: Counter.st
     run_file: Counter.st
     run_command: SEBookCounter runExample
     tests:
-      - description: One message updates the counter.
-        command: SEBookCounter checkIncrement
+      - description: One message updates the counter and returns the receiver.
+        command: |
+          | counter |
+          counter := SEBookCounter new.
+          (counter increment == counter) and: [counter value = 2]
         hints:
           - title: Accepted Behavior
             text: Check whether the increment edit is accepted or still a draft. Run and checks exclude drafts.
@@ -136,7 +143,12 @@ steps:
           - title: A State Trace
             text: Write down the starting count and the required count after one message. Use that change to derive the update expression.
       - description: Repeated messages accumulate state.
-        command: SEBookCounter checkRepeatedIncrement
+        command: |
+          | counter |
+          counter := SEBookCounter new.
+          counter increment.
+          counter increment.
+          counter value = 4
         hints:
           - title: The Same Receiver
             text: Both messages go to one counter. Check whether your method uses that counter's current count.
@@ -145,7 +157,12 @@ steps:
           - title: The Old and New Counts
             text: Make a two-row trace for the two sends, with a column for the old count and one for the new count. Identify the relationship that both rows share.
       - description: Separate counters keep separate state.
-        command: SEBookCounter checkIndependentCounters
+        command: |
+          | counter other |
+          counter := SEBookCounter new.
+          other := SEBookCounter new.
+          counter increment.
+          other value = 0
         hints:
           - title: Per-Object State
             text: Inspect two newly created counters. Their count fields should belong to the individual objects.
@@ -179,25 +196,6 @@ steps:
             !SEBookCounter class methodsFor: 'tutorial entry points'!
             runExample
                 ^ self new increment; value
-            !
-            checkIncrement
-                | counter |
-                counter := self new.
-                ^ (counter increment == counter) and: [counter value = 2]
-            !
-            checkRepeatedIncrement
-                | counter |
-                counter := self new.
-                counter increment.
-                counter increment.
-                ^ counter value = 4
-            !
-            checkIndependentCounters
-                | counter other |
-                counter := self new.
-                other := self new.
-                counter increment.
-                ^ other value = 0
             ! !
       explanation: |
         `count := count + 2` uses the receiver's current field, so a retained
@@ -212,3 +210,6 @@ steps:
 
         Each grading check runs in a separate fresh image loaded with accepted
         code. This makes its result independent of terminal objects and bindings.
+        Your terminal check can achieve a repeatable starting state by creating
+        its own counter each time. Checking two updates distinguishes accumulation
+        from assigning a fixed final value; a one-update check alone cannot.

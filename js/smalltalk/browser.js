@@ -40,7 +40,7 @@
   }
 
   /** The view owns navigation and editor presentation; Workspace owns all Smalltalk semantics. */
-  function mount({ root, workspace, createEditor, refactorings, onDetach, onDetachFile, compact = false, focusControl }) {
+  function mount({ root, workspace, createEditor, refactorings, onDetach, onDetachFile, compact = false, focusControl, lessonTarget }) {
     const id = 'smalltalk-browser-' + (++mountId);
     const view = element('section', 'smalltalk-browser'); view.setAttribute('aria-label', 'Smalltalk System Browser'); view.tabIndex = -1;
     root.append(view);
@@ -53,6 +53,9 @@
     const back = button('Back', () => travel(-1)); const forward = button('Forward', () => travel(1));
     const breadcrumb = element('p', 'smalltalk-breadcrumb', 'Choose a package to browse the image.');
     navigation.append(back, forward);
+    if (lessonTarget) navigation.append(button('Lesson code', () => run(returnToLesson())));
+    const reviewDrafts = button('Review drafts (0)', () => openSourceViews({ mode: 'drafts' }, reviewDrafts));
+    navigation.append(reviewDrafts);
     const detach = onDetach && button('Detach System Browser', () => onDetach(target && { ...target }));
     if (detach) navigation.append(detach); view.append(navigation, breadcrumb);
     const mobileNavigation = element('nav', 'smalltalk-pane-navigation'); mobileNavigation.setAttribute('aria-label', 'Browser panes');
@@ -151,7 +154,9 @@
         searchDetails.append(summary, form); paneHeader.append(searchDetails); section.append(paneHeader, list);
       } else section.append(paneHeader, form, list);
       grid.append(section);
-      mobileNavigation.append(button(paneNames[index], () => showPane(index)));
+      const paneControl = button(paneNames[index], () => showPane(index));
+      paneControl.setAttribute('aria-current', index === 0 ? 'step' : 'false');
+      mobileNavigation.append(paneControl);
       clearPane(index, index ? 'Choose ' + paneNames[index - 1].toLowerCase() + ' first.' : 'Loading packages…');
     });
     const queryToolbar = element('div', 'smalltalk-toolbar smalltalk-query-toolbar'); queryToolbar.setAttribute('aria-label', 'Native browsing queries');
@@ -164,11 +169,8 @@
     }
     const definition = button('Class definition', () => run(openClassSource('class')));
     const comment = button('Class comment', () => run(openClassSource('comment'))); definition.disabled = true; comment.disabled = true;
-    const sourceViewsButton = button('Source views', () => {
-      queryGeneration++;
-      [header, grid, mobileNavigation, queryToolbar, creationToolbar, packageForm, sourceRegion, queryRegion, navigation, sideGroup, breadcrumb].forEach(node => { node.hidden = true; });
-      sourceViews.open();
-    });
+    const sourceViewsButton = button('Source views', () => openSourceViews({}, sourceViewsButton));
+    let sourceViewsOrigin = sourceViewsButton;
     secondaryQueries.append(definition, comment, sourceViewsButton); queryToolbar.append(queryDetails); view.append(queryToolbar);
     if (compact) {
       const tools = element('details', 'smalltalk-browser-tools'); tools.append(element('summary', '', 'Browser tools'), creationToolbar, queryToolbar);
@@ -189,6 +191,7 @@
     queryRegion.append(queryTitle, queryClose, queryStatus, queryList, queryNext); view.append(queryRegion);
     const sourceRegion = element('section', 'smalltalk-source'); sourceRegion.setAttribute('aria-label', 'Method source'); sourceRegion.tabIndex = -1;
     const sourceHeading = element('h3', '', 'Method source'); const sourceState = element('p', 'smalltalk-source-state', 'Select a method, class definition, or class comment.');
+    const sourceIdentity = element('p', 'smalltalk-source-identity'); sourceIdentity.hidden = true;
     const editorHost = element('div', 'smalltalk-source-editor'); editorHost.inert = true;
     const sourcePreview = element('pre', 'smalltalk-source-preview');
     const compilation = element('p', 'smalltalk-status'); compilation.setAttribute('role', 'status'); compilation.setAttribute('aria-label', 'Compilation status');
@@ -198,15 +201,23 @@
     editingToolbar.append(accept, revert);
     if (focusControl) editingToolbar.append(focusControl);
     if (api.FEATURES.refactorings) editingToolbar.append(refactor);
-    const sourceHeader = element('div', 'smalltalk-source-header'); sourceHeader.append(sourceHeading, sourceState, editingToolbar);
+    const sourceHeader = element('div', 'smalltalk-source-header'); sourceHeader.append(sourceHeading, sourceIdentity, sourceState, editingToolbar);
     sourceRegion.append(sourceHeader, editorHost, sourcePreview, compilation); view.append(sourceRegion);
     const editor = createEditor({ element: editorHost, value: '', language: 'smalltalk', ariaLabel: 'Smalltalk method source', onChange: changedSource });
-    const sourceViews = api.SourceViews.mount({ root: view, workspace, createEditor, onDetachFile, onClose() {
-      [header, grid, mobileNavigation, queryToolbar, creationToolbar, sourceRegion, navigation, sideGroup, breadcrumb].forEach(node => { node.hidden = false; });
-      sourceViewsButton.focus();
-    } });
+    const sourceViews = api.SourceViews.mount({ root: view, workspace, createEditor, onDetachFile,
+      onClose() { restoreBrowser(); (sourceViewsOrigin.disabled ? view : sourceViewsOrigin).focus(); },
+      async onBrowseTarget(nextTarget, { signal }) {
+        // A saved draft can outlive its native definition. Check before leaving
+        // recovery so a missing target does not replace the current Browser view.
+        await workspace.browse({ kind: 'source', target: nextTarget, offset: 0, limit: 1 });
+        if (disposed || signal.aborted) return;
+        await navigate(nextTarget, { signal });
+        if (!disposed && !signal.aborted) { restoreBrowser(); sourceRegion.focus(); }
+      },
+    });
     const refactoringView = api.FEATURES.refactorings && refactorings && api.RefactoringView.mount({ root: view, workspace, refactorings, onApplied: refactoringApplied });
     const unsubscribe = workspace.subscribe(event => {
+      if (event.type === 'drafts' || event.type === 'program') updateDraftCount();
       if (event.type === 'drafts' && sourceTarget && !editingBusy) {
         const draft = workspace.getDrafts().find(entry => sameEntity(entry.target, sourceTarget));
         if (draft && editor.getValue() !== draft.source.replace(/\r\n?/g, '\n')) {
@@ -227,12 +238,46 @@
       if (event.type === 'drafts' || event.type === 'program') updateSourceState();
       if (event.type === 'program' && sourceTarget && !editingBusy) run(refreshSource());
     });
-    updateHistory();
+    updateHistory(); updateDraftCount();
     const ready = loadPane(0).catch(showError);
 
     function run(promise) { promise.catch(showError); }
     function showError(error) { if (!disposed) compilation.textContent = 'Compilation error: ' + (error.message || String(error)); }
-    function showPane(index) { panes.forEach((pane, position) => pane.section.classList.toggle('is-current-pane', position === index)); }
+    function showPane(index) {
+      const activeElement = document.activeElement;
+      const focusedPane = panes.find(pane => pane.section.contains(activeElement));
+      panes.forEach((pane, position) => pane.section.classList.toggle('is-current-pane', position === index));
+      [...mobileNavigation.children].forEach((control, position) => control.setAttribute('aria-current', position === index ? 'step' : 'false'));
+      if (focusedPane && !focusedPane.section.getClientRects().length) {
+        const pane = panes[index];
+        (pane.list.disabled ? mobileNavigation.children[index] : pane.list).focus();
+      }
+    }
+    function updateDraftCount() {
+      const count = workspace.getDrafts().length;
+      const ownedFocus = document.activeElement === reviewDrafts;
+      reviewDrafts.textContent = 'Review drafts (' + count + ')'; reviewDrafts.disabled = !count;
+      if (!count && ownedFocus) view.focus();
+    }
+    function openSourceViews(options, origin) {
+      sourceViewsOrigin = origin; queryGeneration++;
+      [header, grid, mobileNavigation, queryToolbar, creationToolbar, packageForm, sourceRegion, queryRegion, navigation, sideGroup, breadcrumb].forEach(node => { node.hidden = true; });
+      sourceViews.open(options);
+    }
+    function restoreBrowser() {
+      [header, grid, mobileNavigation, queryToolbar, creationToolbar, sourceRegion, navigation, sideGroup, breadcrumb].forEach(node => { node.hidden = false; });
+    }
+    async function returnToLesson() {
+      panes.forEach(pane => {
+        pane.search.value = ''; pane.searchRevision++;
+        const disclosure = pane.search.closest('details');
+        if (disclosure) disclosure.open = false;
+      });
+      queryRegion.hidden = true; queryGeneration++; grid.hidden = false;
+      const generation = navigationGeneration;
+      await loadPane(0);
+      if (!disposed && generation === navigationGeneration) await navigate(lessonTarget);
+    }
     function clickedSelectedOption(event, list) {
       const chosen = event.target instanceof HTMLOptionElement ? event.target : document.elementFromPoint(event.clientX, event.clientY);
       if (chosen instanceof HTMLOptionElement) return chosen.value === list.value && list.contains(chosen);
@@ -259,7 +304,7 @@
       const pane = panes[index]; const request = ++pane.request; pane.parent = parent;
       const imageWide = options.imageWide === true;
       const result = await workspace.browse(browseQuery(pane, parent, offset, imageWide));
-      if (disposed || request !== pane.request) return;
+      if (disposed || request !== pane.request || (options.generation !== undefined && options.generation !== navigationGeneration)) return;
       pane.imageWide = imageWide;
       const ownedFocus = document.activeElement === pane.next;
       const selectedId = offset ? pane.list.value : '';
@@ -279,9 +324,35 @@
       }
       if (item) pane.list.value = item.id;
     }
-    async function navigate(nextTarget, { record = true } = {}) {
+    async function navigate(nextTarget, { record = true, signal } = {}) {
+      if (disposed || signal && signal.aborted) return;
       if (record && isAllProtocols(nextTarget) && isAllProtocols(target) && sameEntity(target, nextTarget)) return;
       const generation = ++navigationGeneration;
+      const previousTarget = target, previousSide = side, previousHistory = history, previousHistoryIndex = historyIndex;
+      function cancelNavigation() {
+        // A cancelled draft jump cannot invalidate a newer Browser selection.
+        if (disposed || generation !== navigationGeneration) return;
+        navigationGeneration++;
+        history = previousHistory; historyIndex = previousHistoryIndex; updateHistory();
+        if (previousTarget) run(navigate(previousTarget, { record: false }));
+        else clearSelection(previousSide);
+      }
+      if (signal) signal.addEventListener('abort', cancelNavigation, { once: true });
+      try { await navigateSelection(nextTarget, { record, generation }); }
+      finally { if (signal) signal.removeEventListener('abort', cancelNavigation); }
+    }
+    function clearSelection(previousSide) {
+      target = null; sourceTarget = null; acceptedSource = ''; nativeSource = '';
+      side = previousSide; sideGroup.querySelectorAll('input').forEach(radio => { radio.checked = radio.value === side; });
+      panes[0].list.value = '';
+      for (let index = 1; index < panes.length; index++) {
+        panes[index].parent = null; clearPane(index, 'Choose ' + paneNames[index - 1].toLowerCase() + ' first.');
+      }
+      editorHost.inert = true; editor.setValue(''); sourcePreview.textContent = ''; sourceHeading.textContent = 'Method source';
+      sourceRegion.removeAttribute('aria-busy'); breadcrumb.textContent = 'Choose a package to browse the image.';
+      updateQueryButtons(); updateSourceState(); showPane(0);
+    }
+    async function navigateSelection(nextTarget, { record, generation }) {
       const searchRevisions = panes.map(pane => pane.searchRevision);
       editorHost.inert = true; sourceRegion.setAttribute('aria-busy', 'true'); sourceTarget = null; updateSourceState();
       const previousTarget = target;
@@ -307,10 +378,14 @@
       if (scopeTargets[0]) selectPane(0, scopeTargets[0]);
       for (let index = 1; index < 4; index++) {
         const parent = index === 3 && scopeTargets[2] ? imageTarget(scopeTargets[2], side) : scopeTargets[index - 1];
-        if (!parent && index === 1 && target.className) { await loadPane(index); selectPane(index, scopeTargets[index]); continue; }
+        if (!parent && index === 1 && target.className) {
+          await loadPane(index, undefined, 0, { generation });
+          if (disposed || generation !== navigationGeneration) return;
+          selectPane(index, scopeTargets[index]); continue;
+        }
         if (!parent) { clearPane(index, 'Choose ' + paneNames[index - 1].toLowerCase() + ' first.'); continue; }
         // A search submitted during earlier pane loads must keep its image-wide scope.
-        await loadPane(index, parent, 0, { imageWide: panes[index].searchRevision !== searchRevisions[index] && searchesWholeImage(panes[index]) });
+        await loadPane(index, parent, 0, { generation, imageWide: panes[index].searchRevision !== searchRevisions[index] && searchesWholeImage(panes[index]) });
         if (disposed || generation !== navigationGeneration) return;
         selectPane(index, index === 3 ? target : scopeTargets[index]);
       }
@@ -355,6 +430,8 @@
       const draft = sourceTarget && workspace.getDrafts().find(entry => sameEntity(entry.target, sourceTarget));
       const revision = workspace.snapshot().revision;
       sourceState.textContent = sourceRegion.getAttribute('aria-busy') === 'true' && !sourceTarget ? 'Loading selected source…' : sourceTarget ? (draft ? 'Unaccepted draft' : 'Accepted source') + ' · revision ' + revision + (draft && draft.baseRevision !== revision ? ' · Accepted code changed; this draft needs review.' : '') : 'Select a method, class definition, or class comment.';
+      sourceIdentity.hidden = !sourceTarget;
+      sourceIdentity.textContent = sourceTarget ? sourceTarget.className + (sourceTarget.selector ? ' >> ' + sourceTarget.selector : '') + ' · ' + (sourceTarget.side || side) + ' side' : '';
       accept.disabled = editingBusy || !sourceTarget || !draft; revert.disabled = editingBusy || !draft;
       refactor.disabled = !refactoringView || editingBusy || !sourceTarget || !!draft || sourceRegion.getAttribute('aria-busy') === 'true';
       updateCreationButtons(!!draft);

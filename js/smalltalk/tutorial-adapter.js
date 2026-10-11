@@ -118,7 +118,7 @@
       return accepted;
     }
     async runTests(tests, options = {}) {
-      const batch = await this.#fresh.runTests(tests, { program: options.program || this.getProgram(), signal: options.signal });
+      const batch = await this.#fresh.runTests(tests, { program: options.program || this.getProgram(), signal: options.signal, onProgress: options.onProgress });
       return { ...batch, revision: batch.program.revision };
     }
     restart() {

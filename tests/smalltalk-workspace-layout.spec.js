@@ -67,14 +67,16 @@ async function evaluate(page, text, result) {
 }
 
 // Monaco's hidden input is not its usable writing surface. Measure the rendered
-// editor, clipping by scroll ancestors and the viewport, then hit-test the text
-// area so an overlaid dock cannot masquerade as available source space.
+// editor, clipping by scroll ancestors and the viewport, then hit-test complete
+// rows aligned with the first rendered line. Editor padding and overlaid docks
+// must not masquerade as usable source space.
 async function editorGeometry(region) {
   return region.locator('.monaco-editor').evaluate(editor => {
     const line = editor.querySelector('.view-line') || editor.querySelector('.view-lines');
     const style = getComputedStyle(line);
     const lineHeight = parseFloat(style.lineHeight);
     const rect = editor.getBoundingClientRect();
+    const firstLineTop = line.getBoundingClientRect().top;
     let top = Math.max(0, rect.top), bottom = Math.min(innerHeight, rect.bottom);
     let left = Math.max(0, rect.left), right = Math.min(innerWidth, rect.right);
     for (let parent = editor.parentElement; parent; parent = parent.parentElement) {
@@ -83,12 +85,13 @@ async function editorGeometry(region) {
       if (/(auto|scroll|hidden|clip)/.test(css.overflowX)) { left = Math.max(left, bounds.left); right = Math.min(right, bounds.right); }
     }
     let visibleRows = 0;
-    for (let y = top + lineHeight / 2; y + lineHeight / 2 <= bottom; y += lineHeight) {
+    const firstCompleteLineTop = firstLineTop + Math.max(0, Math.ceil((top - firstLineTop) / lineHeight)) * lineHeight;
+    for (let y = firstCompleteLineTop + lineHeight / 2; y + lineHeight / 2 <= bottom; y += lineHeight) {
       const points = [left + Math.min(90, (right - left) / 3), left + (right - left) / 2];
       if (points.every(x => editor.contains(document.elementFromPoint(x, y)))) visibleRows++;
       else break;
     }
-    return { height: rect.height, top: rect.top, bottom: rect.bottom, clippedHeight: Math.max(0, bottom - top), lineHeight, visibleRows, fontSize: parseFloat(style.fontSize) };
+    return { height: rect.height, top: rect.top, bottom: rect.bottom, clippedHeight: Math.max(0, bottom - top), firstLineOffset: firstLineTop - rect.top, lineHeight, visibleRows, fontSize: parseFloat(style.fontSize) };
   });
 }
 

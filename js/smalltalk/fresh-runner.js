@@ -49,7 +49,8 @@
         return result.value;
       }, { signal });
     }
-    runTests(tests, { program, signal } = {}) {
+    /** Progress uses zero-based indexes. Values are display-only: their image is disposed. */
+    runTests(tests, { program, signal, onProgress = () => {} } = {}) {
       if (this.#disposed) return Promise.reject(api.runtimeError('CANCELLED', 'Smalltalk runner disposed'));
       if (this.#operation) return Promise.reject(api.runtimeError('PRECONDITION_FAILED', 'Smalltalk checks are already running'));
       api.validateOperation('loadProgram', { program });
@@ -59,10 +60,24 @@
       if (signal) { if (signal.aborted) cancel(); else signal.addEventListener('abort', cancel, { once: true }); }
       const operation = (async () => {
         const results = [];
-        for (const check of checks) {
-          try { const value = await this.#check(snapshot, check.command, controller.signal); results.push({ passed: !!value && value.booleanValue === true, error: null }); }
-          catch (error) { if (controller.signal.aborted) throw error; results.push({ passed: false, error: { code: error.code, message: error.message } }); }
+        for (const [index, check] of checks.entries()) {
+          if (controller.signal.aborted) throw api.runtimeError('CANCELLED', 'Checks stopped');
+          onProgress({ phase: 'running', index, total: checks.length });
+          let result;
+          try {
+            const value = await this.#check(snapshot, check.command, controller.signal);
+            const summary = value ? { text: value.text, className: value.className } : null;
+            if (value && typeof value.booleanValue === 'boolean') summary.booleanValue = value.booleanValue;
+            result = { passed: !!value && value.booleanValue === true, value: summary, error: null };
+          } catch (error) {
+            if (controller.signal.aborted) throw error;
+            result = { passed: false, value: null, error: { code: error.code, message: error.message } };
+          }
+          if (controller.signal.aborted) throw api.runtimeError('CANCELLED', 'Checks stopped');
+          results.push(result);
+          onProgress({ phase: 'complete', index, total: checks.length, result: copy(result) });
         }
+        if (controller.signal.aborted) throw api.runtimeError('CANCELLED', 'Checks stopped');
         return { program: snapshot, results };
       })();
       const settled = operation.finally(() => {

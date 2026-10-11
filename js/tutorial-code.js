@@ -3826,7 +3826,7 @@
         dispose: function () { changes.dispose(); var model = editor.getModel(); editor.dispose(); if (model) model.dispose(); },
       };
     }
-    self._smalltalkBrowser = window.SEBookSmalltalk.Browser.mount({ root: browserRoot, workspace: workspace, createEditor: createEditor, compact: true, focusControl: self._smalltalkLayout.focusControl, refactorings: window.SEBookSmalltalk.FEATURES.refactorings ? window.SEBookSmalltalk.Refactorings.create(workspace) : null,
+    self._smalltalkBrowser = window.SEBookSmalltalk.Browser.mount({ root: browserRoot, workspace: workspace, createEditor: createEditor, compact: true, lessonTarget: step.smalltalk_target, focusControl: self._smalltalkLayout.focusControl, refactorings: window.SEBookSmalltalk.FEATURES.refactorings ? window.SEBookSmalltalk.Refactorings.create(workspace) : null,
       onDetach: function (target) { if (self._popoutManager) self._popoutManager.detachPane('smalltalk', { target: target }); },
       onDetachFile: function (path) { if (self._popoutManager) self._popoutManager.detachFile(path, { language: 'smalltalk' }); },
     });
@@ -3879,14 +3879,51 @@
     run.smalltalkLoad = this._stepLoadSequence;
     this._setRunTransactionControls('running', 'Checking…');
     Promise.resolve(this._stepSetupPromise).then(function () {
+      if (run.smalltalkStopped) throw window.SEBookSmalltalk.runtimeError('CANCELLED', 'Checks stopped');
       if (self.currentStep !== run.stepIndex || self._stepLoadSequence !== run.smalltalkLoad) throw new Error('Step changed');
       run.smalltalkProgram = self._smalltalkAdapter.getProgram();
       run.smalltalkEpoch = self._smalltalkAdapter.programEpoch;
-      return self._smalltalkAdapter.runTests(tests, { program: run.smalltalkProgram });
+      var drafts = self._smalltalkAdapter.workspace.getDrafts().length;
+      run.smalltalkNotice = 'Accepted source (revision ' + run.smalltalkProgram.revision + '). Each check uses an independent image. ' +
+        (drafts ? drafts + (drafts === 1 ? ' draft excluded. ' : ' drafts excluded. ') + 'Use Review drafts to inspect unaccepted edits.' : 'No drafts excluded.');
+      self._showTestPanel(self._smalltalkCheckPanel(run, '<p role="status" aria-label="Smalltalk check progress">Preparing checks…</p>'));
+      return self._smalltalkAdapter.runTests(tests, { program: run.smalltalkProgram, onProgress: function (event) {
+        if (run.silent || event.phase !== 'running' || self._activeTestRun !== run || self.currentStep !== run.stepIndex || self._smalltalkChecksStale(run)) return;
+        var status = self.stepContentEl.querySelector('[aria-label="Smalltalk check progress"]');
+        if (status) status.textContent = 'Checking ' + (event.index + 1) + ' of ' + event.total + ': ' + tests[event.index].description;
+      } });
     }).then(function (result) {
+      run.smalltalkResults = result.results;
       self._renderTestResults(tests, result.results.map(function (item) { return item.passed; }), run);
-    }, function () { self._renderTestResults(tests, new Array(tests.length).fill(false), run); }).finally(function () {
+    }, function (error) {
+      run.smalltalkFailure = run.smalltalkStopped || error.code === 'CANCELLED'
+        ? 'Checks stopped. No completion credit awarded.'
+        : 'Checks could not finish: ' + error.message + '. No completion credit awarded.';
+      self._renderTestResults(tests, new Array(tests.length).fill(null), run);
+    }).finally(function () {
       if (!self._activeRunTransaction && !self._destroyed) self._setRunTransactionControls('idle');
+      if (run.smalltalkRestoreFocus && !self._destroyed && self.currentStep === run.stepIndex) {
+        var button = self.stepControlsEl.querySelector('.tvm-btn-test');
+        if (button) button.focus();
+      }
+    });
+  };
+  TutorialCode.prototype._smalltalkChecksStale = function (run) {
+    return this._destroyed || this._stepLoadSequence !== run.smalltalkLoad ||
+      (run.smalltalkProgram && (this._smalltalkAdapter.programEpoch !== run.smalltalkEpoch ||
+        this._smalltalkAdapter.getProgram().revision !== run.smalltalkProgram.revision ||
+        this._smalltalkAdapter.getProgram().stepKey !== run.smalltalkProgram.stepKey));
+  };
+  TutorialCode.prototype._smalltalkCheckPanel = function (run, content) {
+    return '<section role="region" aria-label="Smalltalk check results">' +
+      (run.smalltalkNotice ? '<p class="smalltalk-check-notice">' + this._escapeHtml(run.smalltalkNotice) + '</p>' : '') + content + '</section>';
+  };
+  TutorialCode.prototype._smalltalkCheckDetails = function (results) {
+    return results.map(function (result) {
+      if (result.error) return 'Check error (' + result.error.code + '): ' + result.error.message;
+      var value = result.value;
+      if (value && typeof value.booleanValue === 'boolean') return value.booleanValue ? 'Returned true.' : 'Returned false; the described behavior is not satisfied.';
+      return 'Returned ' + (value ? value.text + ' (' + value.className + ')' : 'no value') + '; expected Boolean true.';
     });
   };
 
@@ -7064,8 +7101,12 @@
       return;
     }
     if (this._smalltalkAdapter) {
+      if (this._activeTestRun) {
+        this._activeTestRun.smalltalkStopped = true;
+        this._activeTestRun.smalltalkRestoreFocus = document.activeElement === this.root.querySelector('.tvm-stop-btn');
+      }
       this._smalltalkAdapter.stop();
-      this._appendOutput('Execution stopped; live session resets before its next use.\n', 'info');
+      this._appendOutput(this._activeTestRun ? 'Checks stopped; live session preserved.\n' : 'Execution stopped; live session resets before its next use.\n', 'info');
       return;
     }
     if (this._prologInterpreter && this._prologInterpreter.busy) {
@@ -14191,7 +14232,7 @@
     setTimeout(function () { if (self._testAnnouncer) self._testAnnouncer.textContent = msg; }, 50);
   };
 
-  TutorialCode.prototype._buildTestResultsHTML = function (tests, results) {
+  TutorialCode.prototype._buildTestResultsHTML = function (tests, results, details) {
     var self = this;
     var passed = results.filter(function (r) { return r === true; }).length;
     var total = tests.length, allPass = passed === total;
@@ -14204,7 +14245,8 @@
       var cls = p === true ? 'pass' : (p === false ? 'fail' : 'unknown');
       var icon = p === true ? '\u2713' : (p === false ? '\u2717' : '?');
       html += '<li class="tvm-test-item ' + cls + '"><span class="tvm-test-icon">' + icon + '</span>' +
-        '<span class="tvm-test-desc">' + self._escapeHtml(t.description) + '</span></li>';
+        '<span class="tvm-test-desc">' + self._escapeHtml(t.description) +
+        (details ? '<span class="tvm-test-detail">' + self._escapeHtml(details[i]) + '</span>' : '') + '</span></li>';
     });
     html += '</ul></div>';
     return html;
@@ -14234,10 +14276,22 @@
     // stale results prevents it from painting, passing, or unlocking the step
     // the learner is viewing now. `completed` also makes timeout/worker races
     // idempotent when two completion paths arrive for one run.
-    var staleSmalltalk = run.smalltalkProgram && (this._destroyed || this._stepLoadSequence !== run.smalltalkLoad || this._smalltalkAdapter.programEpoch !== run.smalltalkEpoch ||
-      this._smalltalkAdapter.getProgram().revision !== run.smalltalkProgram.revision ||
-      this._smalltalkAdapter.getProgram().stepKey !== run.smalltalkProgram.stepKey);
-    if (!isActiveRun || this.currentStep !== run.stepIndex || staleSmalltalk) {
+    if (!isActiveRun || this.currentStep !== run.stepIndex || this._destroyed) {
+      return;
+    }
+    if (run.smalltalkLoad !== undefined && (this._smalltalkChecksStale(run) || run.smalltalkFailure)) {
+      if (this._stepLoadSequence !== run.smalltalkLoad) return;
+      var message = this._smalltalkChecksStale(run)
+        ? 'Accepted source changed during checks. Results discarded; run Test My Work again.' : run.smalltalkFailure;
+      if (!run.silent) {
+        var interruptedHTML = this._smalltalkCheckPanel(run, '<p>' + this._escapeHtml(message) + '</p>');
+        this._showTestPanel(interruptedHTML);
+        this._ensureTestAnnouncer().textContent = message;
+        if (this._popoutManager) {
+          this._popoutManager.broadcastTestResult({ resultsHTML: interruptedHTML, results: [], allPassed: false, stepIndex: run.stepIndex });
+          this._broadcastNavState();
+        }
+      }
       return;
     }
 
@@ -14247,7 +14301,8 @@
     var silent = run.silent;
     var stepIndex = run.stepIndex;
 
-    var html = this._buildTestResultsHTML(tests, results);
+    var html = this._buildTestResultsHTML(tests, results, run.smalltalkResults && this._smalltalkCheckDetails(run.smalltalkResults));
+    if (run.smalltalkProgram) html = this._smalltalkCheckPanel(run, html);
     if (!silent) {
       this._showTestPanel(html);
       this._announceTestResult(tests, results);

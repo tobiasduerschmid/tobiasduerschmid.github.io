@@ -284,6 +284,7 @@ for (const change of ['acceptance', 'step']) {
     });
     expect(saved.stepsPassed).toEqual([]);
     if (change === 'acceptance') {
+      await expect(page.getByRole('region', { name: 'Smalltalk check results', exact: true })).toContainText('Accepted source changed during checks. Results discarded; run Test My Work again.');
       const receipt = await page.evaluate(() => window.checkReceipt);
       expect(receipt.results.map(row => row.passed)).toEqual([true, true, true]);
       expect(receipt.program.files[0].content).toContain('count + 2');

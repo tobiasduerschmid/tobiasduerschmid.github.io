@@ -88,17 +88,23 @@ html.dark-mode-transition :is(.smalltalk-browser, .smalltalk-inspector) *::after
 .smalltalk-side label:has(:checked) { background: color-mix(in srgb, var(--smalltalk-selected) 18%, var(--smalltalk-surface)); box-shadow: inset 0 0 0 1px var(--smalltalk-selected); }
 .smalltalk-side input { min-height: 24px; min-width: 24px; accent-color: var(--smalltalk-selected); }
 .smalltalk-pane-navigation { display: none; }
+.smalltalk-pane-navigation button[aria-current="step"] { border-width: 2px; text-decoration: underline; text-underline-offset: .2em; }
 .smalltalk-breadcrumb, .smalltalk-source-state { overflow-wrap: anywhere; color: var(--smalltalk-muted); }
 .smalltalk-source, .smalltalk-query-results { margin-top: .3em; min-width: 0; }
 .smalltalk-source-header, .smalltalk-terminal-header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2em .7em; }
 .smalltalk-source-header .smalltalk-toolbar, .smalltalk-source-header h3, .smalltalk-source-header p,
 .smalltalk-terminal-header h2, .smalltalk-terminal-header p { margin: 0; }
 .smalltalk-source-header .smalltalk-toolbar { margin-left: auto; }
+.smalltalk-source-identity { font-weight: 600; }
+@media screen {
+  .smalltalk-tutorial:not(.smalltalk-source-focus) .smalltalk-source-identity { display: none; }
+}
+.smalltalk-tutorial .smalltalk-check-notice { font: inherit; overflow-wrap: anywhere; }
 .smalltalk-source-editor { height: 8em; min-height: 7em; width: 100%; border: 1px solid var(--smalltalk-border); border-radius: var(--radius-sm, 4px); background: var(--smalltalk-surface); }
 .smalltalk-expression-editor { height: 5em; min-height: 4em; width: 100%; border: 1px solid var(--smalltalk-border); border-radius: var(--radius-sm, 4px); background: var(--smalltalk-surface); }
 .smalltalk-source-preview { display: none; }
 .smalltalk-source-views { min-width: 0; }
-.smalltalk-source-views h4 { font-size: 1.1em; margin: .4em 0; overflow-wrap: anywhere; }
+.smalltalk-source-views h3 { font-size: 1.2em; margin: .4em 0; overflow-wrap: anywhere; }
 .smalltalk-source-view-list { padding-left: 1.5em; margin: .5em 0; }
 .smalltalk-source-view-list li { margin: .3em 0; overflow-wrap: anywhere; }
 .smalltalk-source-views button[aria-pressed="true"] { border-width: 2px; font-weight: 700; }
@@ -171,7 +177,7 @@ html.dark-mode .smalltalk-tutorial-output .tvm-output-header .smalltalk-dock-con
 .smalltalk-compact-terminal { padding: .2em .4em; line-height: 1.3; min-height: 0; }
 .smalltalk-compact-terminal .smalltalk-terminal-header { align-items: center; gap: .3em; }
 .smalltalk-compact-terminal .smalltalk-status { min-height: 0; }
-.smalltalk-compact-terminal .smalltalk-expression-editor { height: 3.25em; min-height: 3.25em; }
+.smalltalk-compact-terminal .smalltalk-expression-editor { height: 3.25em; min-height: 56px; }
 .smalltalk-compact-terminal > .smalltalk-toolbar { margin: .15em 0; }
 .smalltalk-compact-terminal .smalltalk-evaluation-result { margin: .1em 0; padding: .1em .3em; border-left-width: 3px; border-left-color: var(--smalltalk-selected); background: color-mix(in srgb, var(--smalltalk-selected) 12%, var(--smalltalk-surface)); }
 .smalltalk-evaluation-result:empty { display: none; }
@@ -180,7 +186,7 @@ html.dark-mode .smalltalk-tutorial-output .tvm-output-header .smalltalk-dock-con
 .smalltalk-compact-terminal .smalltalk-transcript { min-height: 3em; max-height: 12em; }
 @media screen and (min-width: 901px) and (min-height: 650px) {
   .smalltalk-tutorial .tvm-editor-panel { flex: 1 1 0; }
-  .smalltalk-tutorial .tvm-output-panel { flex: 0 0 204px; }
+  .smalltalk-tutorial .tvm-output-panel { flex: 0 0 196px; }
   .smalltalk-tutorial-workspace,
   .smalltalk-tutorial-workspace > section,
   .smalltalk-tutorial-workspace .smalltalk-browser,
@@ -188,7 +194,8 @@ html.dark-mode .smalltalk-tutorial-output .tvm-output-header .smalltalk-dock-con
   .smalltalk-tutorial-workspace .smalltalk-source-views,
   .smalltalk-tutorial-workspace .smalltalk-saved-source { min-height: 0; flex: 1 1 0; display: flex; flex-direction: column; }
   .smalltalk-tutorial-workspace .smalltalk-browser { overflow: auto; }
-  .smalltalk-tutorial-workspace .smalltalk-source-editor { flex: 1 0 230px; min-height: 230px; height: auto; }
+  /* Ten 23px Monaco lines, eight pixels of editor padding and two borders. */
+  .smalltalk-tutorial-workspace .smalltalk-source-editor { flex: 1 0 240px; min-height: 240px; height: auto; }
   .smalltalk-tutorial .tvm-instructions-panel { flex-basis: 30%; }
   .smalltalk-dock-collapsed .tvm-output-panel { flex: 0 0 auto !important; }
   .smalltalk-dock-collapsed .tvm-editor-panel { flex: 1 1 0 !important; }

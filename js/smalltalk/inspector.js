@@ -71,6 +71,10 @@
     }
     function setRunning(running) { evaluate.disabled = running; stop.disabled = !running; restart.disabled = running; }
     function retain(summary, sessionId) { if (summary && summary.handle) handles.set(summary.handle, sessionId); }
+    function releaseUnowned(list, sessionId) {
+      return release(list.filter(handle => handle !== (lastResult && lastResult.handle) &&
+        ![...panels].some(panel => panel.handles.has(handle))), sessionId);
+    }
     async function release(list, sessionId) {
       const generation = handleGeneration;
       const groups = new Map();
@@ -111,7 +115,7 @@
       appendHistory('> ' + source + '\n');
       evaluation = new AbortController(); setRunning(true); status.textContent = 'Evaluating in the live image…';
       const oldHandle = lastResult && lastResult.handle; lastResult = null; inspectResult.disabled = true;
-      if (oldHandle && ![...panels].some(panel => panel.handle === oldHandle)) release([oldHandle]);
+      if (oldHandle) releaseUnowned([oldHandle]);
       try {
         const response = await workspace.evaluate(source, { signal: evaluation.signal });
         if (disposed || stopping) return;
@@ -122,11 +126,17 @@
     }
     function invalidatePanels() {
       handleGeneration++; lastResult = null; inspectResult.disabled = true; handles.clear(); pendingCleanup.clear(); cleanupStatus.hidden = true; retryCleanup.hidden = true;
-      for (const panel of panels) { panel.stale = true; panel.status.textContent = 'Stale object: the live session was restored or restarted. Evaluate again to obtain a current object.'; panel.next.disabled = true; panel.list.querySelectorAll('button').forEach(control => { control.disabled = true; }); }
+      for (const panel of panels) markStale(panel, 'Stale object: the live session was restored or restarted. Evaluate again to obtain a current object.');
+    }
+    function markStale(panel, message) {
+      panel.stale = true; panel.status.textContent = message;
+      panel.refresh.disabled = true; panel.next.disabled = true;
+      panel.list.querySelectorAll('button').forEach(control => { control.disabled = true; });
     }
     async function restartSession() {
       const hadFocus = document.activeElement === restart;
       evaluate.disabled = true; restart.disabled = true;
+      status.textContent = 'Restarting the live session…';
       try { await workspace.restart(); if (!disposed) { invalidatePanels(); status.textContent = 'Session restarted. Live bindings and objects were cleared; accepted code and drafts were retained.'; } }
       catch (error) { if (!disposed) status.textContent = 'Restart error: ' + error.message; }
       finally { if (!disposed) { setRunning(false); restoreFocus(restart, hadFocus); } }
@@ -143,47 +153,71 @@
       onInspect();
       const section = element('section', 'smalltalk-object'); section.setAttribute('aria-label', label + ' object'); section.tabIndex = -1;
       const list = element('dl', 'smalltalk-slots'); const message = element('p', 'smalltalk-status'); message.setAttribute('role', 'status');
-      const panel = { handle: summary.handle, section, list, status: message, next: null, offset: 0, stale: false, handles: new Set([summary.handle]), loading: false };
+      message.setAttribute('aria-label', label + ' inspection status');
+      const panel = { handle: summary.handle, section, list, status: message, next: null, refresh: null, offset: 0, stale: false, handles: new Set([summary.handle]), loading: false };
       const close = button('Close ' + label + ' inspector', () => closeInspection(panel));
+      panel.refresh = button('Refresh', () => loadSlots(panel, { replace: true }));
+      panel.refresh.setAttribute('aria-label', 'Refresh ' + label + ' object');
       panel.next = button('Next slots for ' + label, () => loadSlots(panel)); panel.next.hidden = true;
-      section.append(element('h3', '', label + ': ' + summary.className), close, message, list, panel.next); objects.hidden = false; objects.append(section); panels.add(panel);
+      const actions = element('div', 'smalltalk-toolbar'); actions.append(panel.refresh, close);
+      section.append(element('h3', '', label + ': ' + summary.className), actions, message, list, panel.next); objects.hidden = false; objects.append(section); panels.add(panel);
       await loadSlots(panel);
     }
     function closeInspection(panel) {
       const ownedFocus = panel.section.contains(document.activeElement);
       panels.delete(panel); panel.section.remove(); objects.hidden = panels.size === 0;
-      release([...panel.handles].filter(handle => handle !== (lastResult && lastResult.handle) && ![...panels].some(other => other.handles.has(handle))));
+      releaseUnowned([...panel.handles]);
       if (ownedFocus) {
         const destination = [inspectResult, stop, evaluate, view].find(control => !control.disabled &&
           !control.closest('[inert]') && control.getClientRects().length && getComputedStyle(control).visibility === 'visible');
         if (destination) destination.focus();
       }
     }
-    async function loadSlots(panel) {
-      if (panel.stale || panel.loading || disposed) return; const generation = handleGeneration; panel.loading = true; panel.status.textContent = 'Loading slots…';
+    function appendSlots(panel, inspection) {
+      let firstAction = null;
+      inspection.slots.forEach(slot => {
+        retain(slot.value, inspection.sessionId); if (slot.value.handle) panel.handles.add(slot.value.handle);
+        const name = element('dt', '', slot.name); const value = element('dd'); value.append(element('span', '', slot.value.text));
+        if (slot.value.handle) {
+          const expand = button('Expand ' + slot.name, () => showInspection(slot.value, slot.name));
+          if (!firstAction) firstAction = expand;
+          value.append(expand);
+        }
+        panel.list.append(name, value);
+      });
+      return firstAction;
+    }
+    async function loadSlots(panel, { replace = false } = {}) {
+      if (panel.stale || panel.loading || disposed || !panels.has(panel)) return;
+      const generation = handleGeneration;
+      const refreshHadFocus = document.activeElement === panel.refresh, nextHadFocus = document.activeElement === panel.next;
+      panel.loading = true; panel.refresh.disabled = true; panel.next.disabled = true;
+      panel.status.textContent = replace ? 'Refreshing the same live object…' : 'Loading slots…';
       try {
-        const inspection = await workspace.inspect(panel.handle, panel.offset, 25);
+        const inspection = await workspace.inspect(panel.handle, replace ? 0 : panel.offset, 25);
         if (generation !== handleGeneration) return; // Reset destroyed the old session's roots.
         if (disposed || panel.stale || !panels.has(panel)) {
-          await release(inspection.slots.map(slot => slot.value.handle).filter(Boolean), inspection.sessionId); return;
+          await releaseUnowned(inspection.slots.map(slot => slot.value.handle).filter(Boolean), inspection.sessionId); return;
         }
-        let firstAction = null;
-        inspection.slots.forEach(slot => {
-          retain(slot.value, inspection.sessionId); if (slot.value.handle) panel.handles.add(slot.value.handle);
-          const name = element('dt', '', slot.name); const value = element('dd'); value.append(element('span', '', slot.value.text));
-          if (slot.value.handle) {
-            const expand = button('Expand ' + slot.name, () => showInspection(slot.value, slot.name));
-            if (!firstAction) firstAction = expand;
-            value.append(expand);
-          }
-          panel.list.append(name, value);
-        });
-        const ownedFocus = document.activeElement === panel.next;
+        const previousHandles = replace ? [...panel.handles] : [];
+        if (replace) { panel.handles = new Set([panel.handle]); panel.list.replaceChildren(); }
+        const firstAction = appendSlots(panel, inspection);
         panel.offset = inspection.nextOffset; panel.next.hidden = inspection.nextOffset === null;
-        if (ownedFocus && panel.next.hidden) (firstAction || panel.section).focus();
-        panel.status.textContent = inspection.slots.length ? 'Loaded ' + inspection.slots.length + ' slots.' : 'This object has no slots.';
-      } catch (error) { panel.status.textContent = error.code === 'STALE_HANDLE' ? 'Stale object. Evaluate again to inspect a current object.' : 'Inspection error: ' + error.message; }
-      finally { panel.loading = false; }
+        if (nextHadFocus && panel.next.hidden) restoreFocus(firstAction || panel.section, true);
+        panel.status.textContent = (replace ? 'Refreshed the same live object. ' : '') +
+          (inspection.slots.length ? 'Loaded ' + inspection.slots.length + ' slots.' : 'This object has no slots.');
+        await releaseUnowned(previousHandles);
+      } catch (error) {
+        if (disposed || !panels.has(panel) || generation !== handleGeneration) return;
+        if (error.code === 'STALE_HANDLE') markStale(panel, 'Stale object. Evaluate again to inspect a current object.');
+        else panel.status.textContent = 'Inspection error: ' + error.message + '. Refresh to try again.';
+      } finally {
+        panel.loading = false;
+        if (!disposed && panels.has(panel)) {
+          panel.refresh.disabled = panel.stale; panel.next.disabled = panel.stale;
+          if (!panel.stale) { restoreFocus(panel.refresh, refreshHadFocus); restoreFocus(panel.next, nextHadFocus && !panel.next.hidden); }
+        }
+      }
     }
     return { dispose() {
       disposed = true; if (evaluation) evaluation.abort(); unsubscribe(); release([...handles.keys()]); panels.clear(); editor.dispose(); view.remove();

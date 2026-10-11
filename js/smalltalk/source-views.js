@@ -17,20 +17,20 @@
   }
 
   /** Presents durable source through Workspace; open focuses the view, dispose releases its editor/subscription. */
-  function mount({ root, workspace, createEditor, onClose, onDetachFile }) {
+  function mount({ root, workspace, createEditor, onClose, onDetachFile, onBrowseTarget }) {
     const id = 'smalltalk-source-views-' + (++mountId);
     const view = element('section', 'smalltalk-source-views'); view.setAttribute('aria-label', 'Browser source views'); view.tabIndex = -1; view.hidden = true;
-    let disposed = false, mode = 'files', selectedTarget = null, busy = false, downloadURL = null;
+    let disposed = false, mode = 'files', selectedTarget = null, busy = false, downloadURL = null, browseRequest = null;
     const controls = element('div', 'smalltalk-toolbar');
     const tabs = [['files', 'Source files'], ['changes', 'Accepted changes'], ['drafts', 'Saved drafts']].map(([key, label]) => {
-      const control = button(label, () => { mode = key; selectedTarget = null; status.textContent = ''; refresh(); view.focus(); });
+      const control = button(label, () => { cancelBrowse(); mode = key; selectedTarget = null; status.textContent = ''; refresh(); view.focus(); });
       controls.append(control); return { key, control };
     });
-    controls.append(button('Browse image', () => { view.hidden = true; onClose(); }));
-    const heading = element('h3', '', 'Source files'); const explanation = element('p');
+    controls.append(button('Browse image', () => { cancelBrowse(); view.hidden = true; onClose(); }));
+    const heading = element('h2', '', 'Source files'); const explanation = element('p');
     const list = element('ul', 'smalltalk-source-view-list');
     const source = element('section', 'smalltalk-saved-source'); source.setAttribute('aria-label', 'Selected saved source');
-    const sourceHeading = element('h4'); const state = element('p');
+    const sourceHeading = element('h3'); const state = element('p');
     const editorHost = element('div', 'smalltalk-source-editor'); editorHost.inert = true;
     const preview = element('pre', 'smalltalk-source-preview');
     const resource = element('pre'); resource.hidden = true;
@@ -41,6 +41,8 @@
       const draft = selectedDraft(); if (draft) download(draft.source, 'recovered-draft.st', 'text/plain');
     });
     editingControls.append(accept, revert, downloadDraft);
+    const browseTarget = onBrowseTarget && button('Edit in Browser', () => openInBrowser());
+    if (browseTarget) editingControls.append(browseTarget);
     const detach = onDetachFile && button('Detach source file', () => onDetachFile(selectedTarget.path));
     if (detach) editingControls.append(detach);
     source.append(sourceHeading, state, editorHost, preview, resource, editingControls);
@@ -55,7 +57,7 @@
     });
     function selectedDraft() { return selectedTarget && workspace.getDrafts().find(draft => api.entityKey(draft.target) === api.entityKey(selectedTarget)); }
     function selectedFile() { return selectedTarget && selectedTarget.kind === 'file' && workspace.snapshot().files.find(file => file.path === selectedTarget.path); }
-    function select(target) { selectedTarget = { ...target }; status.textContent = ''; refresh(); source.focus(); }
+    function select(target) { cancelBrowse(); selectedTarget = { ...target }; status.textContent = ''; refresh(); source.focus(); }
     source.tabIndex = -1;
     function refresh() {
       if (disposed) return;
@@ -100,6 +102,7 @@
         editor.setValue(''); preview.textContent = ''; resource.textContent = ''; return;
       }
       if (detach) detach.hidden = !file;
+      if (browseTarget) { browseTarget.hidden = !!file || !['method', 'class', 'comment'].includes(selectedTarget.kind); browseTarget.disabled = busy; }
       const resourceFile = file && file.kind === 'resource';
       const value = draft ? draft.source : file.content;
       sourceHeading.textContent = entityLabel(selectedTarget);
@@ -122,6 +125,24 @@
       const draft = selectedDraft();
       if (file && value === file.content.replace(/\r\n?/g, '\n')) workspace.revertDraft(selectedTarget);
       else workspace.setDraft({ target: selectedTarget, baseRevision: draft ? draft.baseRevision : workspace.snapshot().revision, source: value });
+    }
+    async function openInBrowser() {
+      if (!selectedTarget || busy) return;
+      const request = new AbortController(); browseRequest = request;
+      const target = { ...selectedTarget };
+      busy = true; refresh(); status.textContent = 'Opening the draft in Browser…';
+      try {
+        await onBrowseTarget(target, { signal: request.signal });
+        if (!disposed && !request.signal.aborted) view.hidden = true;
+      } catch (error) {
+        if (!disposed && !request.signal.aborted) status.textContent = 'Cannot open the original definition: ' + (error.message || String(error)) + ' The draft remains available here for recovery.';
+      } finally {
+        if (browseRequest === request) { browseRequest = null; busy = false; if (!disposed) refresh(); }
+      }
+    }
+    function cancelBrowse() {
+      if (!browseRequest) return;
+      browseRequest.abort(); browseRequest = null; busy = false;
     }
     async function acceptFile() {
       const draft = selectedDraft(); const file = selectedFile();
@@ -154,8 +175,13 @@
       view.append(link); link.click(); link.remove();
     }
     refresh();
-    return { open({ path } = {}) { if (path) { mode = 'files'; selectedTarget = { kind: 'file', path }; } view.hidden = false; refresh(); view.focus(); }, dispose() {
-      disposed = true; unsubscribe(); editor.dispose(); if (downloadURL) URL.revokeObjectURL(downloadURL); view.remove();
+    return { open({ path, mode: requestedMode } = {}) {
+      cancelBrowse();
+      if (path) { mode = 'files'; selectedTarget = { kind: 'file', path }; }
+      else if (requestedMode) { mode = requestedMode; selectedTarget = null; }
+      view.hidden = false; refresh(); view.focus();
+    }, dispose() {
+      disposed = true; cancelBrowse(); unsubscribe(); editor.dispose(); if (downloadURL) URL.revokeObjectURL(downloadURL); view.remove();
     } };
   }
   api.SourceViews = { mount };

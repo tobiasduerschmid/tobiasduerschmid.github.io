@@ -1132,7 +1132,13 @@ steps:
     # and never executes the entry after a failed acceptance. Earlier successful
     # draft commits remain accepted if a later draft fails. runTests forwards
     # its signal to independently owned fresh leases and reports batch revision.
-    # Each normal check row includes error:null; failed rows include RuntimeError.
+    # onProgress({phase,index,total,result?}) reports zero-based running/complete
+    # check progress. Result rows contain passed, error and a display-only value
+    # (text/className/optional booleanValue), never a disposed image's handle.
+    # Only native Boolean true passes. Visible feedback distinguishes false,
+    # non-Boolean answers, native errors, cancellation and stale accepted code.
+    # Author checks directly in tests[].command, outside editable source helpers;
+    # describe every required behavior, including return identity when tested.
     # Stop recovery failures remain visible and block reuse until a successful
     # Workspace recovered event (including terminal Restart) repairs the gate.
     # A recovered event cannot dismiss a still-pending later recovery attempt.
@@ -1167,7 +1173,7 @@ steps:
     # acquires/owns verified assets and dispose owns host cleanup. All fresh work
     # uses exclusive host.withFreshSession, never host.stop('fresh').
     run_command: string                      # Optional Smalltalk entry expression.
-    smalltalk_target:                         # Optional initial native Browser target.
+    smalltalk_target:                         # Optional initial target and Lesson code destination.
       kind: class                            # EntityRef, passed to Browser.navigate.
       className: SEBookCounter
       side: instance                         # instance | class
@@ -3548,3 +3554,27 @@ workspace returns to document flow; print exposes output even if its dock was
 collapsed. Preserve paragraph-size controls and heading sizes when changing this
 layout, and measure actual unoccluded Monaco rows rather than editor rectangle
 height alone (`tests/smalltalk-workspace-layout.spec.js`).
+
+Browser accepts an optional `lessonTarget` from the step's `smalltalk_target`;
+Lesson code returns to that native target while preserving drafts. Review drafts
+shows the total across all targets and opens SourceViews in its Saved drafts mode.
+Edit in Browser resumes a method/class/comment draft; a removed target stays in
+the recovery view for editing or download. Cancelling a pending Browser jump
+restores the previous selection and history; late replies cannot replace a newer
+selection or steal focus. Source identity remains visible in
+source-focus mode. On narrow screens, moving to a hidden pane hands keyboard
+focus to the next visible list and marks its navigation control current.
+
+Inspectors show snapshots. Refresh rereads the same retained object, replaces
+its slots from the first page and releases obsolete child handles only when no
+other open panel or current result owns them. Expanded child panels retain their
+own snapshots. Restart makes old panels stale and disables Refresh; it cannot
+silently replace an old object with a newly evaluated expression.
+
+Smalltalk grading freezes accepted source and reports its revision and excluded
+draft count before showing per-check progress. Stop cancels the independent
+check image while preserving live terminal bindings. Changed accepted source
+invalidates completion credit and produces an explicit rerun notice; navigating
+to another step must never paint the old batch's results into that step. Stopped
+and discarded batches also broadcast their completion notice to detached
+Instructions windows, without inventing failed assertion rows.
