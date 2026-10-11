@@ -105,6 +105,7 @@ test('laptop workspace exposes ten source lines and usable terminal controls', a
   await run.click();
   await expect(page.getByRole('region', { name: 'Program output', exact: true })).toContainText(/Result: 1\s*$/, { timeout: 30000 });
   await expect(run).toBeEnabled();
+  await page.getByRole('button', { name: 'Live terminal', exact: true }).click();
   // Return to coding after Run; its contextual hover help is intentionally
   // dismissible, rather than part of the workspace's available source area.
   await page.getByRole('textbox', { name: /^Smalltalk method source/ }).focus();

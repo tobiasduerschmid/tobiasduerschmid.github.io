@@ -16,9 +16,8 @@ async function evaluate(page, source, value) {
   await replaceSource(page, expression, source);
   const evaluate = page.getByRole('button', { name: 'Evaluate', exact: true });
   await evaluate.click(); await expect(evaluate).toBeEnabled();
-  // Regex matching preserves the submitted-line boundary; string locators normalize whitespace.
-  const quotedSource = source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  await expect(page.getByRole('region', { name: 'Submitted commands and native output', exact: true })).toContainText(new RegExp('^> ' + quotedSource + '\\n', 'm'));
+  await expect(page.getByRole('region', { name: 'Submitted commands and native output', exact: true })
+    .getByRole('article').last().getByText(source, { exact: true })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Evaluation result', exact: true })).toHaveText(value);
   await expect(page.getByRole('button', { name: 'Evaluate', exact: true })).toBeFocused();
 }

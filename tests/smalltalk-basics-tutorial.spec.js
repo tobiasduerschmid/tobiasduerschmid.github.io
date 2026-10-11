@@ -21,6 +21,7 @@ async function typeCode(page, input, code) {
 }
 
 async function evaluate(page, code, answer) {
+  await page.getByRole('button', { name: 'Live terminal', exact: true }).click();
   await typeCode(page, page.getByRole('textbox', { name: /Smalltalk expression/ }), code);
   await page.getByRole('button', { name: 'Evaluate', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Evaluate', exact: true })).toBeEnabled();

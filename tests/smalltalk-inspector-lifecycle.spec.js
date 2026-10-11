@@ -3,14 +3,14 @@ const { installSmalltalk } = require('./helpers/smalltalk-runtime');
 
 // Deliberately deferred public Workspace boundary: these tests control only
 // response timing/cleanup failures, not Smalltalk evaluation or native semantics.
-async function mountDeferredInspector(page, { startInspection = true } = {}) {
+async function mountDeferredInspector(page, { startInspection = true, compact = false } = {}) {
   await page.goto('/robots.txt');
   await page.setContent('<main><div id="root"></div></main>');
   await page.addScriptTag({ content: 'window.SEBookSmalltalk = {};' });
   await page.addScriptTag({ url: '/js/smalltalk/inspector.js' });
-  await page.evaluate(() => {
+  await page.evaluate(compact => {
     const listeners = new Set(); const pending = []; const released = [];
-    let releaseFails = false, sessionId = 'original', resultSerial = 0, deferEvaluation = false, resolveEvaluation;
+    let releaseFails = false, restartFails = false, sessionId = 'original', resultSerial = 0, deferEvaluation = false, resolveEvaluation;
     const workspace = {
       subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
       async evaluate() {
@@ -22,20 +22,24 @@ async function mountDeferredInspector(page, { startInspection = true } = {}) {
         if (releaseFails) throw Object.assign(new Error('release transport failed'), { code: 'RECOVERED_FAILURE' });
         released.push({ handles, sessionId: options.sessionId }); return { released: handles.length };
       },
-      async restart() { sessionId = 'replacement'; listeners.forEach(listener => listener({ type: 'runtime', detail: { type: 'recovered', stateRewound: true } })); },
+      async restart() {
+        if (restartFails) throw new Error('Image recovery unavailable');
+        sessionId = 'replacement'; listeners.forEach(listener => listener({ type: 'runtime', detail: { type: 'recovered', stateRewound: true } }));
+      },
     };
-    const view = window.SEBookSmalltalk.Inspector.mount({ root: document.getElementById('root'), workspace,
+    const view = window.SEBookSmalltalk.Inspector.mount({ root: document.getElementById('root'), workspace, compact,
       createEditor({ element, value, ariaLabel }) {
         const input = document.createElement('textarea'); input.setAttribute('aria-label', ariaLabel); input.value = value; element.append(input);
-        return { getValue: () => input.value, setValue: value => { input.value = value; }, dispose: () => input.remove() };
+        return { focus: () => input.focus(), getValue: () => input.value, setValue: value => { input.value = value; }, dispose: () => input.remove() };
       },
     });
     window.inspectorLifecycle = { dispose: () => view.dispose(), released,
       resolve() { pending.shift()({ sessionId: 'original', className: 'Array', slots: [{ name: '1', value: { className: 'Array', text: 'an Array', handle: 'late-child' } }], nextOffset: null }); },
       output(text) { listeners.forEach(listener => listener({ type: 'runtime', detail: { type: 'output', payload: { stream: 'stdout', text } } })); },
       deferNextEvaluation() { deferEvaluation = true; }, resolveEvaluation() { deferEvaluation = false; resolveEvaluation(); },
-      pending: () => pending.length, failRelease: value => { releaseFails = value; }, currentSession: () => sessionId };
-  });
+      pending: () => pending.length, failRelease: value => { releaseFails = value; },
+      failRestart: value => { restartFails = value; }, currentSession: () => sessionId };
+  }, compact);
   await page.getByRole('textbox', { name: 'Smalltalk expression', exact: true }).fill('anArray');
   await page.getByRole('button', { name: 'Evaluate', exact: true }).click();
   if (startInspection) {
@@ -43,6 +47,45 @@ async function mountDeferredInspector(page, { startInspection = true } = {}) {
     await expect.poll(() => page.evaluate(() => window.inspectorLifecycle.pending())).toBe(1);
   }
 }
+
+test('compact terminal shows a failed restart visibly and allows recovery to be retried', async ({ page }) => {
+  await mountDeferredInspector(page, { startInspection: false, compact: true });
+  await page.evaluate(() => window.inspectorLifecycle.failRestart(true));
+  await page.getByText('Live session help', { exact: true }).click();
+  const restart = page.getByRole('button', { name: 'Restart session', exact: true });
+  await restart.click();
+  const result = page.getByRole('region', { name: 'Evaluation result', exact: true });
+  await expect(result).toBeVisible();
+  await expect(result).toContainText('Restart error: Image recovery unavailable');
+  await expect(restart).toBeEnabled();
+  await page.evaluate(() => window.inspectorLifecycle.failRestart(false));
+  await restart.click();
+  await expect(result).toContainText('Session restarted. Live bindings and objects were cleared');
+});
+
+test('terminal keeps the latest hundred submissions and recalls retained commands after eviction', async ({ page }) => {
+  await mountDeferredInspector(page, { startInspection: false });
+  const expression = page.getByRole('textbox', { name: 'Smalltalk expression', exact: true });
+  const evaluate = page.getByRole('button', { name: 'Evaluate', exact: true });
+  // The fixture's first evaluation is evicted when one hundred more are added.
+  for (let command = 2; command <= 101; command++) {
+    await expression.fill('command' + command);
+    await evaluate.click();
+    await expect(evaluate).toBeEnabled();
+  }
+  const history = page.getByRole('region', { name: 'Submitted commands and native output', exact: true });
+  await expect(history.getByRole('article')).toHaveCount(100);
+  await expect(history.getByRole('article', { name: 'Command 1', exact: true })).toHaveCount(0);
+  await expression.fill('unfinished');
+  await history.getByRole('button', { name: 'Reuse command 2', exact: true }).click();
+  await expect(expression).toHaveValue('command2');
+  await expect(page.getByRole('button', { name: 'Previous command', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Next command', exact: true }).click();
+  await expect(expression).toHaveValue('command3');
+  await history.getByRole('button', { name: 'Reuse command 101', exact: true }).click();
+  await page.getByRole('button', { name: 'Next command', exact: true }).click();
+  await expect(expression).toHaveValue('unfinished');
+});
 
 test('Closing an Inspector during evaluation returns keyboard focus to Stop', async ({ page }) => {
   await mountDeferredInspector(page);
@@ -117,7 +160,7 @@ async function mountNativeInspector(page, { deferInspection = false } = {}) {
     const view = window.SEBookSmalltalk.Inspector.mount({ root, workspace,
       createEditor({ element, ariaLabel }) {
         const input = document.createElement('textarea'); input.setAttribute('aria-label', ariaLabel); element.append(input);
-        return { getValue: () => input.value, setValue: value => { input.value = value; }, dispose: () => input.remove() };
+        return { focus: () => input.focus(), getValue: () => input.value, setValue: value => { input.value = value; }, dispose: () => input.remove() };
       },
     });
     window.nativeInspectorCleanup = { resolve, child: () => childHandle,
@@ -192,10 +235,12 @@ test('native cyclic expansions keep shared handles until the last owner closes a
 
 test('terminal output bounds preserve newest Transcript and history text', async ({ page }) => {
   await mountDeferredInspector(page, { startInspection: false });
+  await page.evaluate(() => window.inspectorLifecycle.deferNextEvaluation());
+  await page.getByRole('button', { name: 'Evaluate', exact: true }).click();
   const oldest = 'oldest-output-marker';
   await page.evaluate(text => window.inspectorLifecycle.output(text), oldest + '\n' + 'x'.repeat(32768 - oldest.length - 1));
   const transcript = page.getByRole('region', { name: 'Transcript output', exact: true });
-  const history = page.getByRole('region', { name: 'Submitted commands and native output', exact: true });
+  const history = page.getByRole('region', { name: 'Transcript for command 2', exact: true });
   for (const output of [transcript, history]) {
     await expect(output).toContainText(oldest);
     expect((await output.textContent()).length).toBe(32768);
@@ -206,6 +251,7 @@ test('terminal output bounds preserve newest Transcript and history text', async
     await expect(output).not.toContainText(oldest);
     expect((await output.textContent()).length).toBeLessThanOrEqual(32768);
   }
+  await page.evaluate(() => window.inspectorLifecycle.resolveEvaluation());
   await page.getByRole('button', { name: 'Clear Transcript', exact: true }).click();
   await expect(transcript).toBeEmpty();
   await expect(history).toContainText('newest-output-marker 😀');

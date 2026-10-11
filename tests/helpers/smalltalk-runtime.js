@@ -60,7 +60,7 @@ async function mountSmalltalkFixture(page, { program, drafts = [], views = ['bro
       const editor = window.monaco.editor.create(element, { model, ariaLabel, fontSize: 17, minimap: { enabled: false }, wordWrap: 'on', automaticLayout: true, scrollBeyondLastLine: false, accessibilitySupport: 'on', tabSize: 2 });
       const listener = model.onDidChangeContent(() => { if (!suppress) onChange(model.getValue()); });
       window.SebookMonacoFocusExit.attach(editor);
-      return { getValue: () => model.getValue(), setValue(value) { suppress = true; try { model.setValue(value); } finally { suppress = false; } }, getSelection() { const selection = editor.getSelection(); return { start: model.getOffsetAt(selection.getStartPosition()), end: model.getOffsetAt(selection.getEndPosition()) }; }, dispose() { listener.dispose(); editor.dispose(); model.dispose(); } };
+      return { focus: () => editor.focus(), getValue: () => model.getValue(), setValue(value) { suppress = true; try { model.setValue(value); } finally { suppress = false; } }, getSelection() { const selection = editor.getSelection(); return { start: model.getOffsetAt(selection.getStartPosition()), end: model.getOffsetAt(selection.getEndPosition()) }; }, dispose() { listener.dispose(); editor.dispose(); model.dispose(); } };
     }
     try {
       if (views.includes('browser')) { const browser = window.SEBookSmalltalk.Browser.mount({ root: document.getElementById('browser-root'), workspace, createEditor, ...(refactorings ? { refactorings } : {}) }); window.smalltalkFixtureBrowser = browser; mounted.push(browser); await browser.ready; }

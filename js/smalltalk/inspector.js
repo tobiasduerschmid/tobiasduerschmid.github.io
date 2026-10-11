@@ -8,6 +8,46 @@
   function button(label, action) {
     const node = element('button', '', label); node.type = 'button'; node.addEventListener('click', action); return node;
   }
+  /** Bounded, text-only command records; history never owns native object handles. */
+  function commandHistory(root, reuse) {
+    let serial = 0, active = null;
+    const empty = element('p', 'smalltalk-history-empty', 'No commands yet. Evaluate an expression to start.');
+    root.append(empty);
+    function begin(source) {
+      root.tabIndex = 0;
+      empty.hidden = true;
+      const number = ++serial;
+      const record = element('article', 'smalltalk-command'); record.setAttribute('aria-label', 'Command ' + number);
+      const header = element('div', 'smalltalk-command-header');
+      const reuseButton = button('Reuse', () => reuse(source)); reuseButton.setAttribute('aria-label', 'Reuse command ' + number);
+      header.append(element('strong', '', 'Command ' + number), reuseButton);
+      const output = element('pre', 'smalltalk-command-output'); output.hidden = true;
+      output.setAttribute('role', 'region'); output.setAttribute('aria-label', 'Transcript for command ' + number); output.tabIndex = 0;
+      const answer = element('p', 'smalltalk-command-answer', 'Evaluating…');
+      record.append(header, element('pre', 'smalltalk-command-source', source), output, answer);
+      root.append(record);
+      if (root.querySelectorAll('article').length > 100) root.querySelector('article').remove();
+      active = { record, output, answer };
+      root.scrollTop = root.scrollHeight;
+    }
+    return {
+      begin,
+      output(text) {
+        if (!active) return;
+        const following = root.scrollHeight - root.scrollTop - root.clientHeight < 32;
+        active.output.hidden = false;
+        active.output.textContent = (active.output.textContent + text).slice(-32768);
+        if (following) root.scrollTop = root.scrollHeight;
+      },
+      finish(label, text) {
+        if (!active) return;
+        active.record.classList.toggle('is-error', label === 'Error');
+        active.answer.replaceChildren(element('strong', '', label + ': '), document.createTextNode(text));
+        active = null;
+      },
+      clear() { root.replaceChildren(empty); root.removeAttribute('tabindex'); empty.hidden = false; active = null; },
+    };
+  }
   /** A terminal and bounded inspector for the Browser's persistent live Workspace. */
   function mount({ root, workspace, createEditor, compact = false, onInspect = () => {} }) {
     const view = element('section', 'smalltalk-inspector'); view.setAttribute('aria-label', 'Smalltalk live terminal'); view.tabIndex = -1; root.append(view);
@@ -20,56 +60,87 @@
     const toolbar = element('div', 'smalltalk-toolbar');
     const evaluate = button('Evaluate', () => evaluateExpression());
     evaluate.classList.add('smalltalk-action-primary');
+    evaluate.setAttribute('aria-keyshortcuts', 'Control+Enter Meta+Enter');
     const stop = button('Stop evaluation', () => stopEvaluation()); stop.disabled = true;
     const restart = button('Restart session', () => restartSession());
     const inspectResult = button('Inspect result', () => showInspection(lastResult, 'Result')); inspectResult.disabled = true;
-    toolbar.append(evaluate, stop, restart, inspectResult);
+    const newCommand = button('New command', () => { commandIndex = commands.length; pendingExpression = ''; editor.setValue(''); editor.focus(); updateHistory(); });
+    toolbar.append(evaluate, element('kbd', 'smalltalk-evaluate-shortcut', 'Ctrl/Cmd + Enter'), stop, newCommand, inspectResult);
     const historyToolbar = element('div', 'smalltalk-toolbar'); historyToolbar.setAttribute('aria-label', 'Command history');
     const previous = button('Previous command', () => recall(-1)); const next = button('Next command', () => recall(1));
-    historyToolbar.append(previous, next);
+    const clearHistory = button('Clear history', () => {
+      history.clear(); commands = []; commandIndex = 0; pendingExpression = editor.getValue(); updateHistory();
+      status.textContent = 'History cleared. Live variables and objects are unchanged.';
+    });
+    historyToolbar.append(previous, next, clearHistory);
     const cleanupStatus = element('p'); cleanupStatus.setAttribute('role', 'status'); cleanupStatus.setAttribute('aria-label', 'Inspector cleanup status'); cleanupStatus.hidden = true;
     const retryCleanup = button('Retry inspector cleanup', () => release([...pendingCleanup.keys()])); retryCleanup.hidden = true;
     const terminalRegion = element('section'); terminalRegion.setAttribute('aria-label', 'Terminal history');
-    const terminalHistory = element('pre', 'smalltalk-terminal-history'); terminalHistory.tabIndex = 0; terminalHistory.setAttribute('role', 'region'); terminalHistory.setAttribute('aria-label', 'Submitted commands and native output');
-    terminalRegion.append(element('h3', '', 'Terminal history'), terminalHistory);
+    const terminalHistory = element('div', 'smalltalk-terminal-history'); terminalHistory.setAttribute('role', 'region'); terminalHistory.setAttribute('aria-label', 'Submitted commands and native output');
+    terminalRegion.append(terminalHistory);
     const resultRegion = element('section'); resultRegion.setAttribute('aria-label', 'Evaluation result');
     const result = element('pre', 'smalltalk-evaluation-result'); resultRegion.append(result);
+    const resultLabel = element('strong', '', 'Result');
+    const resultLine = element('div', 'smalltalk-terminal-result'); resultLine.hidden = true;
+    resultLine.append(resultLabel, resultRegion);
+    const errorHelp = element('p', 'smalltalk-terminal-error-help', 'If these are separate statements, put a period (.) between them; a newline is only whitespace. The final expression supplies the result.'); errorHelp.hidden = true;
     const transcriptRegion = element('section'); transcriptRegion.setAttribute('aria-label', 'Transcript');
     const transcript = element('pre', 'smalltalk-transcript'); transcript.tabIndex = 0; transcript.setAttribute('role', 'region'); transcript.setAttribute('aria-label', 'Transcript output');
     transcriptRegion.append(element('h3', '', 'Transcript'), button('Clear Transcript', () => { transcript.textContent = ''; }), transcript);
     const objects = element('section', 'smalltalk-inspected-objects'); objects.setAttribute('aria-label', 'Object inspector');
     objects.append(element('h3', '', 'Object inspector')); objects.hidden = true;
     const header = element('div', 'smalltalk-terminal-header'); header.append(heading, status);
-    const help = element('details', 'smalltalk-terminal-help'); help.append(element('summary', '', 'Live session help'), description);
+    const help = element('details', 'smalltalk-terminal-help'); help.append(element('summary', '', 'Live session help'), description, restart);
+    const inputHelp = element('p', 'smalltalk-terminal-input-help');
+    inputHelp.append(element('kbd', '', 'Ctrl/Cmd + Enter'), document.createTextNode(' evaluates the input. Separate statements with periods (.); Enter adds a line.'));
     if (compact) {
       view.classList.add('smalltalk-compact-terminal');
+      heading.classList.add('sr-only'); status.classList.add('sr-only');
       const details = element('details', 'smalltalk-terminal-details');
-      details.append(element('summary', '', 'History and Transcript'), historyToolbar, terminalRegion, transcriptRegion, help);
-      view.append(header, expressionRegion, toolbar, resultRegion, details, cleanupStatus, retryCleanup, objects);
-    } else view.append(header, help, expressionRegion, toolbar, historyToolbar, cleanupStatus, retryCleanup, terminalRegion, resultRegion, transcriptRegion, objects);
+      details.append(element('summary', '', 'History and Transcript'), historyToolbar, terminalRegion, transcriptRegion);
+      details.addEventListener('toggle', () => { if (details.open) terminalHistory.scrollTop = terminalHistory.scrollHeight; });
+      help.append(inputHelp);
+      const utilities = element('div', 'smalltalk-terminal-utilities'); utilities.append(details, help);
+      view.append(header, expressionRegion, toolbar, resultLine, errorHelp, utilities, cleanupStatus, retryCleanup, objects);
+    } else {
+      toolbar.append(restart);
+      view.append(header, help, inputHelp, expressionRegion, toolbar, resultLine, errorHelp, historyToolbar, cleanupStatus, retryCleanup, terminalRegion, transcriptRegion, objects);
+    }
     const editor = createEditor({ element: editorHost, value: '', language: 'smalltalk', ariaLabel: 'Smalltalk expression', onChange() {} });
     const handles = new Map(); const pendingCleanup = new Map(); const panels = new Set(); let commands = [], commandIndex = 0, pendingExpression = '', handleGeneration = 0;
     let lastResult = null, evaluation = null, disposed = false, stopping = false;
+    const history = commandHistory(terminalHistory, source => {
+      if (commandIndex === commands.length) pendingExpression = editor.getValue();
+      commandIndex = commands.lastIndexOf(source);
+      editor.setValue(source); editor.focus(); updateHistory();
+    });
+    // Capture before Monaco's newline command; no page-wide keyboard interception.
+    editorHost.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' || !(event.ctrlKey || event.metaKey) || event.altKey || event.isComposing) return;
+      event.preventDefault(); event.stopPropagation();
+      if (!event.repeat && !evaluate.disabled) evaluateExpression();
+    }, true);
     const unsubscribe = workspace.subscribe(event => {
       if (event.type !== 'runtime') return;
       const detail = event.detail;
       if (detail.type === 'output') appendTranscript(detail.payload.text);
       if (detail.type === 'recovered') {
-        invalidatePanels(); status.textContent = detail.stateRewound ? 'Session restored; inspector handles are stale. Evaluate again to inspect live objects.' : 'Session ready.';
+        invalidatePanels();
+        if (detail.stateRewound) showSessionStatus('Session restored; inspector handles are stale. Evaluate again to inspect live objects.');
+        else status.textContent = 'Session ready.';
       }
     });
     updateHistory();
-    function appendHistory(text) { terminalHistory.textContent = (terminalHistory.textContent + text).slice(-32768); }
-    function appendTranscript(text) { transcript.textContent = (transcript.textContent + text).slice(-32768); appendHistory(text); }
+    function appendTranscript(text) { transcript.textContent = (transcript.textContent + text).slice(-32768); history.output(text); }
     function updateHistory() { previous.disabled = !commands.length || commandIndex <= 0; next.disabled = commandIndex >= commands.length; }
     function recall(direction) {
       if (commandIndex === commands.length) pendingExpression = editor.getValue();
-      commandIndex += direction; editor.setValue(commandIndex === commands.length ? pendingExpression : commands[commandIndex]); updateHistory();
+      commandIndex += direction; editor.setValue(commandIndex === commands.length ? pendingExpression : commands[commandIndex]); editor.focus(); updateHistory();
     }
     function restoreFocus(control, hadFocus) {
       if (hadFocus && [document.body, document.documentElement].includes(document.activeElement)) control.focus();
     }
-    function setRunning(running) { evaluate.disabled = running; stop.disabled = !running; restart.disabled = running; }
+    function setRunning(running) { evaluate.disabled = running; stop.disabled = !running; restart.disabled = running; clearHistory.disabled = running; }
     function retain(summary, sessionId) { if (summary && summary.handle) handles.set(summary.handle, sessionId); }
     function releaseUnowned(list, sessionId) {
       return release(list.filter(handle => handle !== (lastResult && lastResult.handle) &&
@@ -109,20 +180,36 @@
     async function evaluateExpression() {
       if (evaluation || disposed) return;
       const hadFocus = document.activeElement === evaluate;
-      const source = editor.getValue(); if (!source.trim()) { status.textContent = 'Enter a Smalltalk expression to evaluate.'; return; }
+      const source = editor.getValue(); if (!source.trim()) { showSessionStatus('Enter a Smalltalk expression to evaluate.'); editor.focus(); return; }
       if (commands[commands.length - 1] !== source) commands.push(source);
       if (commands.length > 100) commands.shift(); commandIndex = commands.length; pendingExpression = ''; updateHistory();
-      appendHistory('> ' + source + '\n');
+      history.begin(source); resultLabel.textContent = 'Running'; result.textContent = 'Evaluating in the live image…';
+      resultLine.hidden = false; resultRegion.classList.remove('is-error'); errorHelp.hidden = true;
       evaluation = new AbortController(); setRunning(true); status.textContent = 'Evaluating in the live image…';
       const oldHandle = lastResult && lastResult.handle; lastResult = null; inspectResult.disabled = true;
       if (oldHandle) releaseUnowned([oldHandle]);
       try {
         const response = await workspace.evaluate(source, { signal: evaluation.signal });
         if (disposed || stopping) return;
-        if (response.error) { appendHistory('Error: ' + response.error.message + '\n'); result.textContent = response.error.message; status.textContent = 'Evaluation error: ' + response.error.message; }
-        else { appendHistory('→ ' + (response.value ? response.value.text : '') + '\n'); lastResult = response.value; retain(lastResult); result.textContent = lastResult ? lastResult.text : ''; inspectResult.disabled = !lastResult || !lastResult.handle; status.textContent = compact ? 'Evaluation complete. Live state retained.' : 'Evaluation complete. Live variables and objects are retained.'; }
-      } catch (error) { if (!disposed && !stopping) { appendHistory('Error: ' + error.message + '\n'); result.textContent = error.message; status.textContent = 'Evaluation error: ' + error.message; } }
+        if (response.error) showError(response.error, source);
+        else {
+          lastResult = response.value; retain(lastResult); result.textContent = lastResult ? lastResult.text : '';
+          resultLabel.textContent = 'Result'; resultLine.hidden = false; history.finish('Result', result.textContent);
+          inspectResult.disabled = !lastResult || !lastResult.handle;
+          status.textContent = 'Result: ' + result.textContent.slice(0, 500) + '. Live variables and objects are retained.';
+        }
+      } catch (error) { if (!disposed && !stopping) showError(error, source); }
       finally { evaluation = null; if (!disposed && !stopping) { setRunning(false); restoreFocus(evaluate, hadFocus); } }
+    }
+    function showError(error, source) {
+      history.finish('Error', error.message); result.textContent = error.message; resultLabel.textContent = 'Error'; resultLine.hidden = false;
+      resultRegion.classList.add('is-error'); errorHelp.hidden = !/[\r\n]/.test(source);
+      status.textContent = 'Evaluation error: ' + error.message.slice(0, 500);
+      if (compact) onInspect();
+    }
+    function showSessionStatus(message) {
+      status.textContent = message; resultLabel.textContent = 'Session'; result.textContent = message;
+      resultLine.hidden = false; resultRegion.classList.remove('is-error'); errorHelp.hidden = true;
     }
     function invalidatePanels() {
       handleGeneration++; lastResult = null; inspectResult.disabled = true; handles.clear(); pendingCleanup.clear(); cleanupStatus.hidden = true; retryCleanup.hidden = true;
@@ -137,15 +224,15 @@
       const hadFocus = document.activeElement === restart;
       evaluate.disabled = true; restart.disabled = true;
       status.textContent = 'Restarting the live session…';
-      try { await workspace.restart(); if (!disposed) { invalidatePanels(); status.textContent = 'Session restarted. Live bindings and objects were cleared; accepted code and drafts were retained.'; } }
-      catch (error) { if (!disposed) status.textContent = 'Restart error: ' + error.message; }
+      try { await workspace.restart(); if (!disposed) { invalidatePanels(); showSessionStatus('Session restarted. Live bindings and objects were cleared; accepted code and drafts were retained.'); } }
+      catch (error) { if (!disposed) showSessionStatus('Restart error: ' + error.message); }
       finally { if (!disposed) { setRunning(false); restoreFocus(restart, hadFocus); } }
     }
     async function stopEvaluation() {
       if (!evaluation || stopping) return; const hadFocus = document.activeElement === stop; stopping = true; stop.disabled = true; status.textContent = 'Stopping evaluation and rebuilding the live session…';
-      evaluation.abort();
-      try { await workspace.restart(); if (!disposed) { invalidatePanels(); status.textContent = 'Evaluation stopped. Session reset: live bindings and objects were cleared; accepted code and drafts were retained.'; } }
-      catch (error) { if (!disposed) status.textContent = 'Session reset error: ' + error.message; }
+      evaluation.abort(); history.finish('Stopped', 'Evaluation cancelled; the live session is being reset.');
+      try { await workspace.restart(); if (!disposed) { invalidatePanels(); resultLabel.textContent = 'Stopped'; result.textContent = 'Live session reset.'; status.textContent = 'Evaluation stopped. Session reset: live bindings and objects were cleared; accepted code and drafts were retained.'; } }
+      catch (error) { if (!disposed) showSessionStatus('Session reset error: ' + error.message); }
       finally { stopping = false; if (!disposed) { setRunning(false); restoreFocus(evaluate, hadFocus); } }
     }
     async function showInspection(summary, label) {

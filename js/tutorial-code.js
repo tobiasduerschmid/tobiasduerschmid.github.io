@@ -3754,6 +3754,7 @@
       if (event.type === 'progressWarning') self._smalltalkProgressWarnings = event.detail.warnings;
       if (event.type === 'recoveryFailed') {
         var message = 'Session recovery failed: ' + event.detail.message + '. Select Restart session to retry.';
+        if (self._smalltalkLayout) self._smalltalkLayout.showOutput();
         self._appendOutput(message + '\n', 'err');
         self._smalltalkRecoveryStatus.textContent = message;
       }
@@ -3817,6 +3818,7 @@
       var settingValue = false;
       var changes = editor.onDidChangeModelContent(function () { if (!settingValue && options.onChange) options.onChange(editor.getValue()); });
       return {
+        focus: function () { editor.focus(); },
         getValue: function () { return editor.getValue(); },
         setValue: function (value) { settingValue = true; try { editor.setValue(value); } finally { settingValue = false; } },
         getSelection: function () {
@@ -3846,6 +3848,7 @@
     var self = this;
     return Promise.resolve(this._stepSetupPromise).then(function () {
       if (self.currentStep !== run.stepIndex || self._destroyed) return false;
+      self._smalltalkLayout.showOutput();
       self._clearOutput();
       var workspace = self._smalltalkAdapter.getWorkspace();
       if (!run.acceptDrafts && self._smalltalkAdapter.workspace.getDrafts().length) self._appendOutput('Draft changes excluded; Run uses accepted source.\n', 'info');

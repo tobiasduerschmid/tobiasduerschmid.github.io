@@ -514,7 +514,7 @@
     }));
     window.SebookMonacoFocusExit.attach(editor);
     var changes = model.onDidChangeContent(function () { if (!changing) options.onChange(model.getValue()); });
-    return { getValue: function () { return model.getValue(); },
+    return { focus: function () { editor.focus(); }, getValue: function () { return model.getValue(); },
       setValue: function (value) { changing = true; try { model.setValue(value); } finally { changing = false; } },
       getSelection: function () { var selection = editor.getSelection(); return { start: model.getOffsetAt(selection.getStartPosition()), end: model.getOffsetAt(selection.getEndPosition()) }; },
       dispose: function () { changes.dispose(); editor.dispose(); model.dispose(); } };

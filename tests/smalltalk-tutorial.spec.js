@@ -60,6 +60,7 @@ async function typeSource(page, label, text) {
   await page.keyboard.insertText(text);
 }
 async function evaluate(page, source, expected) {
+  await page.getByRole('button', { name: 'Live terminal', exact: true }).click();
   const evaluateButton = terminal(page).getByRole('button', { name: 'Evaluate', exact: true });
   await expect(evaluateButton).toBeEnabled({ timeout: 120000 });
   await typeSource(page, 'Smalltalk expression', source);
@@ -420,7 +421,7 @@ test('instructions start at thirty percent and explicit pane resizing survives s
   expect(resized).toBeLessThan(0.34);
   await page.evaluate(() => window._tutorial.loadStep(0));
   await expect.poll(proportion).toBeCloseTo(resized, 2);
-  await expect(page.getByRole('button', { name: 'Restart session', exact: true })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Restart session', exact: true, includeHidden: true })).toHaveCount(1);
   await a11yCheckpoint(page, 'Smalltalk resized workspace', { feature: 'smalltalk-tutorial' });
 });
 
@@ -436,6 +437,7 @@ test('a retained-state Run entry shares objects with the terminal and Restart cl
     await expect(runButton(page)).toBeEnabled();
   }
   await evaluate(page, '(Smalltalk at: #RunCounter) increment; value', '3');
+  await terminal(page).getByText('Live session help', { exact: true }).click();
   await terminal(page).getByRole('button', { name: 'Restart session', exact: true }).click();
   await evaluate(page, 'Smalltalk includesKey: #RunCounter', 'false');
 });
@@ -534,6 +536,8 @@ for (const restart of ['adapter', 'terminal']) {
     await expect(page.getByRole('alert', { name: 'Smalltalk session recovery', exact: true })).toContainText('Select Restart session to retry.');
     if (restart === 'adapter') await page.evaluate(() => window._tutorial._smalltalkAdapter.restart());
     else {
+      await page.getByRole('button', { name: 'Live terminal', exact: true }).click();
+      await terminal(page).getByText('Live session help', { exact: true }).click();
       await terminal(page).getByRole('button', { name: 'Restart session', exact: true }).click();
       await expect(terminal(page).getByRole('status', { name: 'Live session status' })).toContainText('Session restarted.', { timeout: 30000 });
     }

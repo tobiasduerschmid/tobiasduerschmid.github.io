@@ -122,7 +122,19 @@ html.dark-mode-transition :is(.smalltalk-browser, .smalltalk-inspector) *::after
 .smalltalk-query-results ul { padding-left: 1.5em; }
 .smalltalk-query-results li { margin: .5em 0; }
 .smalltalk-transcript { max-height: 16em; min-height: 3em; overflow: auto; }
-.smalltalk-terminal-history { min-height: 5em; max-height: 15em; overflow: auto; }
+.smalltalk-terminal-history { min-height: 3em; max-height: 22em; overflow: auto; padding: .25em; }
+.smalltalk-command { margin: .4em 0; padding: .5em; border: 1px solid var(--smalltalk-line); border-left: 3px solid var(--smalltalk-selected); border-radius: var(--radius-sm, 4px); }
+.smalltalk-command-header { display: flex; align-items: center; justify-content: space-between; gap: .5em; }
+.smalltalk-inspector .smalltalk-command-source { background: var(--smalltalk-surface); border: 0; padding: .25em 0; margin: .25em 0; }
+.smalltalk-command-answer { white-space: pre-wrap; font-family: var(--font-mono, monospace); }
+.smalltalk-command.is-error, .smalltalk-inspector .is-error .smalltalk-evaluation-result { border-left: 3px solid var(--color-danger, #b91c1c); }
+html.dark-mode .smalltalk-command.is-error, html.dark-mode .smalltalk-inspector .is-error .smalltalk-evaluation-result { border-left-color: var(--color-danger, #fca5a5); }
+.smalltalk-terminal-utilities { display: flex; align-items: start; flex-wrap: wrap; gap: .5em; }
+.smalltalk-terminal-utilities > details[open] { flex-basis: 100%; }
+.smalltalk-terminal-result { display: flex; align-items: baseline; gap: .5em; }
+.smalltalk-terminal-result > section { flex: 1; min-width: 0; }
+.smalltalk-inspector .smalltalk-evaluate-shortcut { align-self: center; color: var(--smalltalk-muted); background: transparent; box-shadow: none; font: inherit; padding: 0 .25em 0 0; }
+.smalltalk-inspector .smalltalk-terminal-error-help { border-left: 3px solid var(--smalltalk-border); padding-left: .5em; }
 .smalltalk-object { border: 1px solid var(--smalltalk-line); border-radius: var(--radius-sm, 4px); padding: .5em; margin-top: .5em; background: var(--smalltalk-secondary); }
 .smalltalk-slots { margin: .5em 0; }
 .smalltalk-slots dt { font-weight: 700; overflow-wrap: anywhere; }
@@ -165,23 +177,29 @@ html.dark-mode .smalltalk-terminal-details > summary { color: var(--smalltalk-te
 .smalltalk-browser-tools[open] { flex-basis: 100%; }
 .smalltalk-tutorial .smalltalk-query-results { max-height: 10em; overflow: auto; flex: 0 0 auto; }
 .smalltalk-dock-content { display: flex; min-height: 0; min-width: 0; flex: 1 1 0; overflow: auto; }
-.smalltalk-dock-content[hidden] { display: none; }
+.smalltalk-dock-content[hidden], .smalltalk-dock-content > [hidden] { display: none !important; }
 .smalltalk-dock-content > section { flex: 1 1 0; min-width: 0; min-height: 0; margin: 0; overflow: auto; }
-.smalltalk-tutorial-output .smalltalk-dock-content > .tvm-output-container { flex: 0 1 27%; max-height: none; min-height: 0; overflow: auto; }
+.smalltalk-tutorial-output .smalltalk-dock-content > .tvm-output-container { flex: 1 1 0; max-height: none; min-height: 0; overflow: auto; }
+.smalltalk-dock-views { display: flex; flex-wrap: wrap; gap: .25em; }
+.smalltalk-tutorial-output .smalltalk-dock-views button { color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm, 4px); }
+.smalltalk-dock-views button:focus-visible { outline: 3px solid var(--focus-color, #00598c); outline-offset: 2px; }
 .smalltalk-tutorial-output .tvm-output-header { flex-wrap: wrap; gap: .2em; padding: .2em .4em; font-size: 17px; letter-spacing: normal; text-transform: none; }
 .smalltalk-tutorial-output .tvm-output-actions { flex-wrap: wrap; gap: .3em; }
+.smalltalk-tutorial-output .tvm-output-actions [hidden] { display: none !important; }
 .smalltalk-tutorial-output .tvm-output-header button { font: inherit; min-height: 1.8em; padding: .1em .4em; }
 .smalltalk-tutorial-output .tvm-output-header .smalltalk-dock-control { color: var(--color-text, #17212b); background: var(--color-surface-2, #f3f5f7); border: 1px solid var(--color-border-strong, #687885); border-radius: var(--radius-sm, 4px); }
 html.dark-mode .smalltalk-tutorial-output .tvm-output-header .smalltalk-dock-control { color: var(--color-text, #edf3fa); background: var(--color-surface-2, #223041); border-color: var(--color-border-strong, #899bad); }
 .smalltalk-tutorial-output .smalltalk-dock-control:focus-visible { outline: 3px solid var(--focus-color, #00598c); outline-offset: 2px; }
 .smalltalk-compact-terminal { padding: .2em .4em; line-height: 1.3; min-height: 0; }
-.smalltalk-compact-terminal .smalltalk-terminal-header { align-items: center; gap: .3em; }
+.smalltalk-compact-terminal .smalltalk-terminal-header { margin: 0; }
 .smalltalk-compact-terminal .smalltalk-status { min-height: 0; }
 .smalltalk-compact-terminal .smalltalk-expression-editor { height: 3.25em; min-height: 56px; }
 .smalltalk-compact-terminal > .smalltalk-toolbar { margin: .15em 0; }
 .smalltalk-compact-terminal .smalltalk-evaluation-result { margin: .1em 0; padding: .1em .3em; border-left-width: 3px; border-left-color: var(--smalltalk-selected); background: color-mix(in srgb, var(--smalltalk-selected) 12%, var(--smalltalk-surface)); }
 .smalltalk-evaluation-result:empty { display: none; }
 .smalltalk-compact-terminal .smalltalk-terminal-details { margin-top: .1em; }
+.smalltalk-compact-terminal .smalltalk-terminal-help { margin: .1em 0; }
+.smalltalk-compact-terminal .smalltalk-terminal-help > summary { padding: .1em .3em; min-height: 1.8em; }
 .smalltalk-compact-terminal .smalltalk-terminal-history,
 .smalltalk-compact-terminal .smalltalk-transcript { min-height: 3em; max-height: 12em; }
 @media screen and (min-width: 901px) and (min-height: 650px) {
@@ -235,7 +253,7 @@ html.dark-mode .smalltalk-tutorial-output .tvm-output-header .smalltalk-dock-con
 @media print {
   .smalltalk-source-focus .tvm-instructions-panel { display: block !important; }
   .smalltalk-source-focus .smalltalk-browser-header { display: block !important; }
-  .smalltalk-tutorial .smalltalk-dock-content[hidden] { display: block !important; }
+  .smalltalk-tutorial .smalltalk-dock-content[hidden], .smalltalk-tutorial .smalltalk-dock-content > [hidden] { display: block !important; }
   .smalltalk-tutorial :is(.tvm-editor-panel, .tvm-output-panel, .smalltalk-dock-content, .smalltalk-dock-content > section, .smalltalk-query-results) { height: auto; max-height: none; min-height: 0; overflow: visible; flex: none; }
   .smalltalk-tutorial .tvm-output-header, .smalltalk-browser-tools, .smalltalk-pane-search-disclosure { display: none !important; }
   .smalltalk-tutorial-workspace, .smalltalk-tutorial-workspace > section,
@@ -253,6 +271,8 @@ html.dark-mode .smalltalk-tutorial-output .tvm-output-header .smalltalk-dock-con
   .smalltalk-accepted-source { max-height: none; overflow: visible; }
   .smalltalk-source-views:not(.is-accepted-change-view) .smalltalk-source-view-list { display: none; }
   .smalltalk-transcript, .smalltalk-terminal-history, .smalltalk-tutorial-workspace { max-height: none; overflow: visible; }
+  .smalltalk-command button, .smalltalk-terminal-error-help { display: none !important; }
+  .smalltalk-command.is-error, .smalltalk-inspector .is-error .smalltalk-evaluation-result { border-color: #000 !important; }
 }
 /* Native refactoring previews use the Browser's shared theme tokens. */
 .smalltalk-refactoring-dialog { color: var(--smalltalk-text); background: var(--smalltalk-surface); border: 2px solid var(--smalltalk-border); border-radius: var(--smalltalk-radius, 8px); padding: 1em; width: min(56em, calc(100% - 2em)); max-width: calc(100% - 2em); max-height: calc(100dvh - 2em); overflow: auto; font: inherit; box-shadow: var(--shadow-lg, 0 8px 25px rgb(0 0 0 / .18)); }
@@ -338,6 +358,11 @@ html.dark-mode .smalltalk-tutorial .tvm-output-header button:not(.tvm-run-btn):h
   background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
   border-color: var(--color-primary);
   color: var(--color-text);
+}
+html:not(.dark-mode) .smalltalk-tutorial .tvm-output-header .smalltalk-dock-views button[aria-pressed="true"],
+html.dark-mode .smalltalk-tutorial .tvm-output-header .smalltalk-dock-views button[aria-pressed="true"] {
+  color: var(--color-text-on-primary); background: var(--color-primary); border-color: var(--color-primary);
+  box-shadow: inset 0 -3px 0 currentColor;
 }
 .smalltalk-tutorial .tvm-output-header button:focus-visible {
   outline: 3px solid var(--focus-color);

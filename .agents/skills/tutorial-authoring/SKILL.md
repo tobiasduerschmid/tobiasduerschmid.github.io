@@ -3576,12 +3576,12 @@ selected class, or pressing Enter while its Classes list has focus, reopens the
 class definition without discarding method navigation history.
 
 `js/smalltalk/layout.js` owns only transient tutorial layout state. The right-hand
-Output / terminal dock starts at 204px on laptop screens and offers Collapse and
+Output / terminal dock starts at 196px on laptop screens and offers Collapse and
 Expand; Focus source editor temporarily hides instructions and browsing controls
 and collapses the dock. Restore layout preserves the prior dock state. These
 actions retain mounted Monaco editors, drafts, selection, terminal history and the
 same Workspace/image. Recovery announcements remain outside the collapsible body.
-There is no layout persistence or additional keyboard shortcut.
+There is no layout persistence.
 
 Tutorial Browser composition uses compact native Search and Browser tools
 disclosures; standalone and detached tools retain their existing composition.
@@ -3604,6 +3604,25 @@ restores the previous selection and history; late replies cannot replace a newer
 selection or steal focus. Source identity remains visible in
 source-focus mode. On narrow screens, moving to a hidden pane hands keyboard
 focus to the next visible list and marks its navigation control current.
+
+The dock's Live terminal and Run output buttons switch full-width views without
+remounting either view. Run and Accept and Run reveal Run output; select Live
+terminal to resume the unchanged input and live image. Failed image recovery also
+reveals Run output so its error and retry guidance stay visible. Print exposes both views.
+In the focused terminal editor, Ctrl+Enter or Cmd+Enter evaluates the entire input;
+plain Enter inserts a newline. Smalltalk statement separators are never inserted
+or guessed. Multiline evaluation errors retain the native message and offer a
+conditional reminder about periods. The editor adapter supplies `focus()` so New
+command and history recall return keyboard focus to the input.
+
+History retains up to 100 labeled command/result records (with at most 32 KiB of
+Transcript received during each evaluation), and Previous/Next recall the last
+100 consecutive-deduplicated submissions, preserving unfinished input. Reuse loads
+a command for editing and never executes it. Clear history leaves current input,
+live objects, Transcript and the last result intact. Transcript also includes
+background output outside a terminal evaluation, bounded to the latest 32 KiB.
+History holds text, not native handles. The compact terminal keeps Restart under
+Live session help.
 
 Inspectors show snapshots. Refresh rereads the same retained object, replaces
 its slots from the first page and releases obsolete child handles only when no
