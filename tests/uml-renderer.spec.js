@@ -4829,8 +4829,9 @@ end note
           .filter((text) => expectedLabels.includes(text.textContent.trim()))
           .map(box);
         const noteBoxes = Array.from(svg.querySelectorAll('polygon.uml-note-box')).map(box);
-        const routes = Array.from(svg.querySelectorAll('polyline'))
-          .filter((polyline) => !polyline.classList.contains('uml-note-fold'))
+        // Note leaders intentionally touch their note. Only transition routes
+        // participate in the transition-versus-note clearance contract.
+        const routes = Array.from(svg.querySelectorAll('polyline[data-layout-source][data-layout-target]'))
           .map((polyline) => parsePoints(/** @type {SVGPolylineElement} */ (polyline)));
 
         let labelOverlaps = 0;
@@ -4893,6 +4894,7 @@ end note
           labelOverlaps,
           labelNodeHits,
           labelOutOfBounds,
+          routeCount: routes.length,
           routeCrossings,
           noteNodeHits,
           noteRouteHits,
@@ -4944,6 +4946,7 @@ Refunded --> [*]
     });
 
     for (const [name, result] of Object.entries(stats)) {
+      expect(result.routeCount, `${name} has visible transition routes`).toBeGreaterThan(0);
       expect(result.labelOverlaps, `${name} label overlaps`).toBe(0);
       expect(result.labelNodeHits, `${name} labels on nodes`).toBe(0);
       expect(result.labelOutOfBounds, `${name} clipped labels`).toBe(0);

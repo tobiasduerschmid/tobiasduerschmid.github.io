@@ -107,3 +107,25 @@ test('ports near a component bottom retain room for their readable labels', asyn
       .toBeGreaterThanOrEqual(4);
   }
 });
+
+test('the backend event connection aligns automatic ports without a small jog', async ({ page }) => {
+  await renderComponent(page, componentExample('26. Frontend-Backend-Database (directional ports)'));
+  const { ports, routes } = await renderedGeometry(page);
+  const route = routes.find((item) => item.source === 'Backend.b_eventout' && item.target === 'EventBus.eb_in');
+  expect(route).toBeDefined();
+  const ys = route.points.map((point) => point.y);
+  expect(Math.max(...ys) - Math.min(...ys), 'publish takes a straight horizontal path').toBeLessThan(0.01);
+  expect(route.points[0].y).toBeCloseTo(ports.find((port) => port.id === route.source).y, 2);
+  expect(route.points.at(-1).y).toBeCloseTo(ports.find((port) => port.id === route.target).y, 2);
+});
+
+test('joined interfaces align automatic ends on one horizontal shaft', async ({ page }) => {
+  await renderComponent(page, componentExample('28. Joined Assembly Interfaces (Ball-and-Socket)'));
+  const routes = await page.getByRole('img').locator('polyline[data-layout-route-id]').evaluateAll((elements) => elements
+    .filter((element) => element.getAttribute('data-layout-source') === 'Order.o_cust' ||
+      element.getAttribute('data-layout-target') === 'CRM.crm_cust')
+    .map((element) => [...element.points].map(({ x, y }) => ({ x, y }))));
+  expect(routes, 'both sides of the ball and socket remain visible').toHaveLength(2);
+  const ys = routes.flat().map((point) => point.y);
+  expect(Math.max(...ys) - Math.min(...ys), 'CustomerInfo has no avoidable corner').toBeLessThan(0.01);
+});
