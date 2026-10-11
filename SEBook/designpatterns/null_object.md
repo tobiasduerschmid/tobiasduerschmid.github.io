@@ -5,18 +5,18 @@ layout: sebook
 
 # Problem
 
-Many systems have a collaborator that is *usually* present but sometimes legitimately absent. A logging service writes to an audit log — but a guest user has no audit log. A permission service grants rights based on the user's role — but anonymous visitors have no role at all. A view in a Smalltalk MVC application uses a controller to gather user input — but a read-only view never accepts input {% cite Woolf1998 %}.
+Many systems have a collaborator that is *usually* present but sometimes legitimately absent. An optional diagnostic service records messages — but a deliberately quiet configuration discards them. A permission service grants editing rights based on the user's role — but anonymous visitors have none. A view in a Smalltalk MVC application uses a controller to gather user input — but a passive display may require no input handling {% cite Woolf1998 %}.
 
 If we represent the absent collaborator with `null`, the using code drowns in defensive checks:
 
 ```java
 class AccountView {
-    private AuditLog auditLog;            // may be null for guests
+    private DiagnosticLogger logger;     // may be null when diagnostics are disabled
     private Permissions permissions;      // may be null for anonymous
 
     void onUpdate(Change change) {
-        if (auditLog != null) {
-            auditLog.record(change);
+        if (logger != null) {
+            logger.log(change.toString());
         }
         if (permissions != null && permissions.canEdit()) {
             applyChange(change);
@@ -26,7 +26,7 @@ class AccountView {
 }
 ```
 
-Every call site has to remember the check. Forgetting one yields a `NullPointerException` (or a SIGSEGV in C++, an `AttributeError` in Python). The conditional logic obscures the actual business rule, and reviewers must verify each guard wherever the field is read.
+Every call site has to remember the check. Forgetting one yields a `NullPointerException` (or undefined behavior in C++, an `AttributeError` in Python). The conditional logic obscures the actual business rule, and reviewers must verify each guard wherever the field is read.
 
 The core problem is: **how can a client treat an absent collaborator the same way it treats a real one — without scattering null checks throughout the code, and without inventing one-off "is this thing null?" methods on every consumer?**
 
@@ -40,11 +40,11 @@ The Null Object pattern {% cite Woolf1998 %} applies when:
 * **The "do nothing" behavior is reusable.** Multiple clients want the same do-nothing behavior, or you expect to add more in the future.
 * **All of the do-nothing logic fits in a single class.** If the collaborator's interface mixes operations that should *all* sometimes do nothing with operations that must *never* do nothing, splitting that out into one Null Object class is awkward {% cite Woolf1998 %}.
 
-Common applications include guest users with empty permission sets, no-op loggers in test fixtures, leaf nodes returning empty iterators, no-op formatters for raw output, no-op animations when motion is disabled, and read-only controllers in MVC.
+Common applications include guest users with empty editing permissions, no-op diagnostic loggers, leaf nodes returning empty iterators, disabled nonessential decorative effects, and controllers for passive MVC displays. Disabling an animation that also establishes the final UI state requires preserving that state change; simply doing nothing would be incorrect.
 
 # Solution
 
-The **Null Object pattern** introduces a class that implements the same interface as the real collaborator but whose methods do nothing meaningful — return defaults, ignore arguments, or skip work entirely. Clients call the Null Object exactly as they call a real one, and the do-nothing behavior is encapsulated in one named place.
+The **Null Object pattern** introduces a class that implements the same interface as the real collaborator but whose methods implement a valid no-op or neutral result — return contract-compatible defaults, ignore arguments, or skip work. Clients call the Null Object exactly as they call a real one, and the do-nothing behavior is encapsulated in one named place.
 
 Bobby Woolf, who first wrote up the pattern, frames the intent precisely: provide a surrogate for another object that shares the same interface but does nothing, encapsulating *how to do nothing* and hiding the details from collaborators {% cite Woolf1998 %}.
 
@@ -53,7 +53,7 @@ The pattern involves four roles:
 1. **Client:** the object that requires a collaborator. The Client holds a reference to an `AbstractObject` and calls operations on it without knowing or caring whether the receiver is real or null.
 2. **AbstractObject:** the interface (or abstract class) that declares the operations the Client expects. Both the real and null collaborators conform to this interface.
 3. **RealObject:** a concrete implementation of `AbstractObject` whose operations carry out useful behavior.
-4. **NullObject:** a concrete implementation of `AbstractObject` whose operations *do nothing*. Some methods may return a "null result" (an empty list, `false`, `0`, an empty string) where the interface demands a return value.
+4. **NullObject:** a concrete implementation of `AbstractObject` whose operations *do nothing*. Some methods return a neutral result (an empty list, `false`, `0`, or an empty string), but only when that result satisfies the operation’s contract. Matching method signatures alone does not establish substitutability.
 
 The key insight is that **absence of behavior is itself a kind of behavior**, and it deserves its own named, polymorphic implementation rather than a sentinel `null` reference scattered through call sites.
 
@@ -92,20 +92,20 @@ end note
 
 ## UML Example Diagram
 
-Consider an audit-logging interface. A `BankTransfer` always tries to log every transaction, but in tests we want to suppress the log output, and for internal system transfers we deliberately omit logging. Instead of guarding every call site with `if (logger != null)`, we introduce a `SilentLogger` Null Object. The `BankTransfer` calls `logger.log(...)` uniformly; the `SilentLogger` simply drops every entry on the floor.
+Consider optional diagnostic logging around a `BankTransfer`. The diagnostic interface explicitly permits discarding messages; an authoritative transaction record would need a different contract. Instead of guarding each diagnostic call with `if (logger != null)`, we can inject a `SilentLogger`. The transfer operation then calls `logger.log(...)` uniformly. The example isolates logging; it does not implement banking or transaction persistence.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 class BankTransfer {
-	- logger: AuditLogger
-	+ transfer(amount: Money, to: Account): void
+	- logger: DiagnosticLogger
+	+ transfer(amount: int, to: String): void
 }
-interface AuditLogger {
+interface DiagnosticLogger {
 	+ log(entry: String): void
 	+ entries(): List<String>
 }
-class FileAuditLogger {
-	- path: Path
+class MemoryLogger {
+	- recorded: List<String>
 	+ log(entry: String): void
 	+ entries(): List<String>
 }
@@ -113,24 +113,24 @@ class SilentLogger {
 	+ log(entry: String): void
 	+ entries(): List<String>
 }
-BankTransfer o--> AuditLogger : logger
-FileAuditLogger ..|> AuditLogger
-SilentLogger ..|> AuditLogger
+BankTransfer o--> DiagnosticLogger : logger
+MemoryLogger ..|> DiagnosticLogger
+SilentLogger ..|> DiagnosticLogger
 note bottom of SilentLogger
 	log(): do nothing
 	entries(): return empty list
 end note
 @enduml'></div>
 
-**Figure:** `BankTransfer` only ever sees the `AuditLogger` interface; whether the real `FileAuditLogger` or the `SilentLogger` is wired in is a configuration decision made elsewhere.
+**Figure:** `BankTransfer` only ever sees the `DiagnosticLogger` interface; whether the real `MemoryLogger` or the `SilentLogger` is wired in is a configuration decision made elsewhere.
 
 ## Sequence Diagram
 
-This sequence shows that the call site looks identical regardless of which logger is wired in. The Null Object accepts the message and returns immediately — no exception, no special case, no work performed.
+The two calls below compare alternative configurations; one transfer uses one configured logger, not both. The silent variant accepts the same message without recording it.
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 participant client: BankTransfer
-participant real: FileAuditLogger
+participant real: MemoryLogger
 participant nullLog: SilentLogger
 client -> real: log("transfer 100 to acct 5")
 activate real
@@ -142,11 +142,11 @@ nullLog --> client
 deactivate nullLog
 @enduml'></div>
 
-**Figure:** the client makes the same call in both cases. The Null Object responds by doing nothing — the design intent of "no audit trail here" is encoded in the type of the collaborator, not in a missing reference.
+**Figure:** the client makes the same call in both cases. The Null Object responds by doing nothing — the design intent of "diagnostic output disabled" is encoded in the type of the collaborator, not in a missing reference.
 
 # Code Example
 
-This example shows the **before** version with scattered `null` checks and the **after** version using the Null Object pattern across four languages. Notice how the call site in `BankTransfer.transfer()` gets shorter, the design intent of "no logging needed" gets a *name* (`SilentLogger`), and adding a new audit destination later does not require revisiting any guarded call site.
+This example shows the **before** version with scattered `null` checks and the **after** version using the Null Object pattern across four languages. The before snippets assume the logger interface is already defined; the after snippets are complete examples. Java uses Java 10 or later for `List.copyOf`, and the Python before snippet uses Python 3.10 or later for union annotations. Notice how the call site in `BankTransfer.transfer()` gets shorter, the design intent of "no logging needed" gets a *name* (`SilentLogger`), and adding a new diagnostic destination later does not require revisiting any guarded call site.
 
 > **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
 
@@ -163,9 +163,9 @@ This example shows the **before** version with scattered `null` checks and the *
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
 ```java
 final class BankTransfer {
-    private final AuditLogger logger;        // may be null
+    private final DiagnosticLogger logger;        // may be null
 
-    BankTransfer(AuditLogger logger) {
+    BankTransfer(DiagnosticLogger logger) {
         this.logger = logger;
     }
 
@@ -183,7 +183,7 @@ final class BankTransfer {
 ```cpp
 class BankTransfer {
 public:
-    explicit BankTransfer(AuditLogger* logger) : logger_(logger) {}
+    explicit BankTransfer(DiagnosticLogger* logger) : logger_(logger) {}
 
     void transfer(int amount, const std::string& to) {
         if (logger_) {                       // forget this and you crash
@@ -193,7 +193,7 @@ public:
     }
 
 private:
-    AuditLogger* logger_;                    // may be nullptr
+    DiagnosticLogger* logger_;                    // may be nullptr
 };
 ```
   </div>
@@ -201,7 +201,7 @@ private:
   <div class="inline-language-panel" data-language-panel="python" role="tabpanel" markdown="1">
 ```python
 class BankTransfer:
-    def __init__(self, logger: AuditLogger | None) -> None:
+    def __init__(self, logger: DiagnosticLogger | None) -> None:
         self._logger = logger                # may be None
 
     def transfer(self, amount: int, to: str) -> None:
@@ -214,7 +214,7 @@ class BankTransfer:
   <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
 ```typescript
 class BankTransfer {
-  constructor(private readonly logger: AuditLogger | null) {}
+  constructor(private readonly logger: DiagnosticLogger | null) {}
 
   transfer(amount: number, to: string): void {
     if (this.logger !== null) {              // forget this and you crash
@@ -242,17 +242,17 @@ class BankTransfer {
 import java.util.Collections;
 import java.util.List;
 
-interface AuditLogger {
+interface DiagnosticLogger {
     void log(String entry);
     List<String> entries();
 }
 
-final class FileAuditLogger implements AuditLogger {
+final class MemoryLogger implements DiagnosticLogger {
     private final java.util.List<String> recorded = new java.util.ArrayList<>();
 
     public void log(String entry) {
         recorded.add(entry);
-        // ... and persist to disk ...
+        // Retain optional diagnostic messages in memory.
     }
 
     public List<String> entries() {
@@ -260,7 +260,7 @@ final class FileAuditLogger implements AuditLogger {
     }
 }
 
-final class SilentLogger implements AuditLogger {
+final class SilentLogger implements DiagnosticLogger {
     static final SilentLogger INSTANCE = new SilentLogger();
     private SilentLogger() {}
 
@@ -274,9 +274,9 @@ final class SilentLogger implements AuditLogger {
 }
 
 final class BankTransfer {
-    private final AuditLogger logger;        // never null
+    private final DiagnosticLogger logger;        // never null
 
-    BankTransfer(AuditLogger logger) {
+    BankTransfer(DiagnosticLogger logger) {
         this.logger = logger;
     }
 
@@ -288,7 +288,7 @@ final class BankTransfer {
 
 public class Demo {
     public static void main(String[] args) {
-        new BankTransfer(new FileAuditLogger()).transfer(100, "acct 5");
+        new BankTransfer(new MemoryLogger()).transfer(100, "acct 5");
         new BankTransfer(SilentLogger.INSTANCE).transfer(200, "acct 9");
     }
 }
@@ -301,17 +301,17 @@ public class Demo {
 #include <string>
 #include <vector>
 
-struct AuditLogger {
-    virtual ~AuditLogger() = default;
+struct DiagnosticLogger {
+    virtual ~DiagnosticLogger() = default;
     virtual void log(const std::string& entry) = 0;
     virtual std::vector<std::string> entries() const = 0;
 };
 
-class FileAuditLogger : public AuditLogger {
+class MemoryLogger : public DiagnosticLogger {
 public:
     void log(const std::string& entry) override {
         recorded_.push_back(entry);
-        // ... and persist to disk ...
+        // Retain optional diagnostic messages in memory.
     }
     std::vector<std::string> entries() const override { return recorded_; }
 
@@ -319,7 +319,7 @@ private:
     std::vector<std::string> recorded_;
 };
 
-class SilentLogger : public AuditLogger {
+class SilentLogger : public DiagnosticLogger {
 public:
     static SilentLogger& instance() {
         static SilentLogger inst;
@@ -330,11 +330,13 @@ public:
 
 private:
     SilentLogger() = default;
+    SilentLogger(const SilentLogger&) = delete;
+    SilentLogger& operator=(const SilentLogger&) = delete;
 };
 
 class BankTransfer {
 public:
-    explicit BankTransfer(AuditLogger& logger) : logger_(logger) {}
+    explicit BankTransfer(DiagnosticLogger& logger) : logger_(logger) {}
 
     void transfer(int amount, const std::string& to) {
         logger_.log("transfer " + std::to_string(amount) + " to " + to);
@@ -342,12 +344,12 @@ public:
     }
 
 private:
-    AuditLogger& logger_;                    // never null
+    DiagnosticLogger& logger_;                    // never null
 };
 
 int main() {
-    FileAuditLogger file;
-    BankTransfer(file).transfer(100, "acct 5");
+    MemoryLogger logger;
+    BankTransfer(logger).transfer(100, "acct 5");
     BankTransfer(SilentLogger::instance()).transfer(200, "acct 9");
 }
 ```
@@ -358,7 +360,7 @@ int main() {
 from abc import ABC, abstractmethod
 
 
-class AuditLogger(ABC):
+class DiagnosticLogger(ABC):
     @abstractmethod
     def log(self, entry: str) -> None:
         pass
@@ -368,20 +370,20 @@ class AuditLogger(ABC):
         pass
 
 
-class FileAuditLogger(AuditLogger):
+class MemoryLogger(DiagnosticLogger):
     def __init__(self) -> None:
         self._recorded: list[str] = []
 
     def log(self, entry: str) -> None:
         self._recorded.append(entry)
-        # ... and persist to disk ...
+        # Retain optional diagnostic messages in memory.
 
     def entries(self) -> list[str]:
         return list(self._recorded)
 
 
-class SilentLogger(AuditLogger):
-    """Null Object: implements AuditLogger by doing nothing."""
+class SilentLogger(DiagnosticLogger):
+    """Null Object: implements DiagnosticLogger by doing nothing."""
 
     def log(self, entry: str) -> None:
         pass  # do nothing
@@ -395,7 +397,7 @@ SILENT_LOGGER = SilentLogger()
 
 
 class BankTransfer:
-    def __init__(self, logger: AuditLogger) -> None:
+    def __init__(self, logger: DiagnosticLogger) -> None:
         self._logger = logger                # never None
 
     def transfer(self, amount: int, to: str) -> None:
@@ -403,24 +405,24 @@ class BankTransfer:
         # ... do the actual transfer ...
 
 
-BankTransfer(FileAuditLogger()).transfer(100, "acct 5")
+BankTransfer(MemoryLogger()).transfer(100, "acct 5")
 BankTransfer(SILENT_LOGGER).transfer(200, "acct 9")
 ```
   </div>
 
   <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
 ```typescript
-interface AuditLogger {
+interface DiagnosticLogger {
   log(entry: string): void;
   entries(): readonly string[];
 }
 
-class FileAuditLogger implements AuditLogger {
+class MemoryLogger implements DiagnosticLogger {
   private readonly recorded: string[] = [];
 
   log(entry: string): void {
     this.recorded.push(entry);
-    // ... and persist to disk ...
+    // Retain optional diagnostic messages in memory.
   }
 
   entries(): readonly string[] {
@@ -428,7 +430,7 @@ class FileAuditLogger implements AuditLogger {
   }
 }
 
-class SilentLogger implements AuditLogger {
+class SilentLogger implements DiagnosticLogger {
   static readonly INSTANCE = new SilentLogger();
   private constructor() {}
 
@@ -442,7 +444,7 @@ class SilentLogger implements AuditLogger {
 }
 
 class BankTransfer {
-  constructor(private readonly logger: AuditLogger) {} // never null
+  constructor(private readonly logger: DiagnosticLogger) {} // never null
 
   transfer(amount: number, to: string): void {
     this.logger.log(`transfer ${amount} to ${to}`);
@@ -450,21 +452,21 @@ class BankTransfer {
   }
 }
 
-new BankTransfer(new FileAuditLogger()).transfer(100, "acct 5");
+new BankTransfer(new MemoryLogger()).transfer(100, "acct 5");
 new BankTransfer(SilentLogger.INSTANCE).transfer(200, "acct 9");
 ```
   </div>
 </div>
 
-The "after" version is shorter at the call site, harder to misuse (no forgotten guard can crash the program), and gives the do-nothing behavior a name (`SilentLogger`) that announces design intent.
+The "after" version removes the guard provided that construction supplies a non-null collaborator. Null Object does not itself prevent someone from passing `null` or `None`; enforce that contract at the wiring boundary. The no-op implementation has a name (`SilentLogger`) and can be inspected or tested separately.
 
 # Design Decisions
 
 ## Should the Null Object be a Singleton?
 
-A Null Object usually carries no instance data — its whole point is to *not* hold or change anything. So a single shared instance is enough; multiple instances would be indistinguishable {% cite Woolf1998 %}. Implementing it as a [Singleton](/SEBook/designpatterns/singleton.html) (or a module-level constant in Python, a `static` reference in Java/C++) avoids needless allocation and signals statelessness.
+A stateless Null Object can be shared when clients do not depend on object identity {% cite Woolf1998 %}. Sharing is optional: dependency injection or a module-level binding can reuse an instance without enforcing the [Singleton](/SEBook/designpatterns/singleton.html) pattern. Configured Null Objects may carry immutable return values, so do-nothing behavior does not imply an absence of all data.
 
-If the same `AbstractObject` interface needs many configurable Null Objects (e.g. one that always returns "0", another that always returns the empty string), use the [Flyweight](https://en.wikipedia.org/wiki/Flyweight_pattern) pattern instead — share intrinsic behavior, parameterize extrinsic state {% cite Woolf1998 %}.
+If clients need different neutral results, a configurable Null Object may suffice. [Flyweight](https://en.wikipedia.org/wiki/Flyweight_pattern) is an additional choice when many uses share an object and caller-specific context is supplied externally; a constructor parameter alone does not make an object a Flyweight.
 
 ## Should the Null Object be a separate class or a special instance of the Real Object?
 
@@ -479,15 +481,15 @@ Prefer a separate class when the do-nothing behavior is itself a reusable concep
 
 ## What if different clients disagree on what "do nothing" means?
 
-If some clients want the Null Object to return `0` and others want it to throw, you don't have one Null Object — you have several {% cite Woolf1998 %}. Either model them as separate Null Object classes (one per do-nothing semantics) or parameterize a single Null Object class with the values to return. Avoid trying to force one Null Object to satisfy contradictory expectations; the resulting class becomes a thinly disguised Real Object with a "mode" field — at which point you have rebuilt the conditional logic the pattern was meant to remove.
+First establish the interface contract. Distinct permitted neutral results can use separate implementations or a parameterized Null Object. A client that requires an error on absence instead needs that distinction preserved. Configuration alone does not invalidate Null Object; silently violating a client’s required behavior does.
 
 ## Null Object is not a Proxy, and does not transform into a Real Object
 
-It is tempting to think of a Null Object as a placeholder that "will become real later". It does not {% cite Woolf1998 %}. A Null Object always does nothing; that is its single job. If your stand-in needs to transform into a real collaborator on first use, you are reaching for the [Proxy pattern](https://en.wikipedia.org/wiki/Proxy_pattern), not Null Object — Proxy controls access to a real subject and may instantiate it lazily. Null Object replaces the real subject permanently.
+It is tempting to think of a Null Object as a placeholder that "will become real later". It does not {% cite Woolf1998 %}. A Null Object always does nothing; that is its single job. If your stand-in needs to transform into a real collaborator on first use, you are reaching for the [Proxy pattern](https://en.wikipedia.org/wiki/Proxy_pattern), not Null Object — Proxy controls access to a real subject and may instantiate it lazily. The Null Object itself continues to provide no-op behavior, but a client can later replace its reference with a real collaborator.
 
 ## Does this collaborator need a Null Object at all? (Watch for masked bugs)
 
-The Null Object pattern silently swallows every operation it receives. That is exactly what you want when "do nothing" is a valid response — and exactly what you do *not* want when "do nothing" hides a bug. If a billing system's logger were silently a `SilentLogger` in production because of a misconfigured DI binding, you might lose months of audit trail before noticing. Mitigate this risk by:
+The Null Object supplies no-op or neutral-result behavior where its contract permits it. That is exactly what you want when "do nothing" is a valid response — and exactly what you do *not* want when "do nothing" hides a bug. If a service requires recorded messages but receives a `SilentLogger` through a misconfigured dependency binding, required behavior can disappear without an immediate error. Mitigate this risk by:
 
 * Logging at startup which collaborator was wired in (`"Audit logger: SilentLogger"` is conspicuous in a production log).
 * Making the Null Object's name say what it does — `SilentLogger`, `NoopValidator`, `EmptyPermissions` — never `DefaultLogger`.
@@ -497,11 +499,11 @@ The Null Object pattern silently swallows every operation it receives. That is e
 
 ## Singleton Null Object
 
-Because Null Objects are typically stateless, the standard implementation is to expose a single shared instance — `SilentLogger.INSTANCE` in Java, a module-level constant in Python {% cite Woolf1998 %}. This is the **Singleton Null Object** compound, called out explicitly in Woolf's Implementation discussion. It saves allocations and makes it obvious that the object has no per-call identity.
+A **Singleton Null Object** enforces one instance and provides access to it. The Java and TypeScript examples illustrate this combination. The Python example merely shares a module-level instance: calling `SilentLogger()` still creates another object. Both approaches can avoid repeated allocation, but only the first enforces Singleton construction.
 
 ## Parameterized Null Object (Flyweight Null Object)
 
-When several Null Objects of the same type need slightly different "null results" (e.g., one returns `""`, another returns `"N/A"`), the Null Object can take constructor parameters. To avoid one class per parameter combination, share intrinsic behavior across instances and parameterize extrinsic state — the [Flyweight](https://en.wikipedia.org/wiki/Flyweight_pattern) pattern fits naturally here {% cite Woolf1998 %}.
+A Null Object may store a configured neutral result, such as a placeholder label, provided the interface permits it. This is parameterization. It becomes a [Flyweight](https://en.wikipedia.org/wiki/Flyweight_pattern) design only when sharing and the separation of intrinsic state from externally supplied context are also present.
 
 ## Null Iterator
 
@@ -520,11 +522,11 @@ Applying the Null Object pattern yields the following consequences {% cite Woolf
 * **Client code stays simple.** Clients call the same operation regardless of which collaborator is wired in. No `if (x != null)` guards, no `Optional.ifPresent(...)` chains, no try/catch around `NullPointerException`. The call site reads as the actual business operation.
 * **Do-nothing behavior is encapsulated and reusable.** The "do nothing" implementation lives in one named class. Multiple clients automatically share the same do-nothing behavior, and changing what "do nothing" means is a one-place edit.
 * **Design intent is named.** A class called `SilentLogger` says what it is. A `null` reference does not. New developers reading the wiring see the design choice spelled out.
-* **Defines a class hierarchy of real and null variants.** Anywhere the Client expects an `AbstractObject`, both the Real and Null variants are interchangeable — a textbook application of [Liskov substitutability](/SEBook/designprinciples/solid.html#liskov-substitution-principle-lsp).
+* **Defines a class hierarchy of real and null variants.** If the interface contract permits no-op behavior, both Real and Null variants can be substituted — an application of [Liskov substitutability](/SEBook/designprinciples/solid.html#liskov-substitution-principle-lsp).
 
 **Liabilities**
 
-* **Can mask real bugs.** Because the Null Object swallows operations silently, a misconfiguration that wires it in unexpectedly may go unnoticed. The `SilentLogger`-in-production risk above is real — and worse the more invisible the do-nothing behavior is.
+* **Can mask real bugs.** No-op or neutral-result behavior can make an unexpected binding hard to notice. The `SilentLogger`-in-production risk above is real when diagnostic recording was required in that configuration.
 * **Class proliferation.** Every `AbstractObject` family that needs a Null Object adds at least one more class (the Null Object itself, plus possibly the `AbstractObject` extracted just to host it) {% cite Woolf1998 %}.
 * **Hard to mix do-nothing into several collaborators.** The Null Object only helps when all the do-nothing behavior lives behind one collaborator interface. If "do nothing" should sometimes mean "skip step A on Collaborator-1 and step B on Collaborator-2," you cannot drop one Null Object in.
 * **Clients cannot agree on do-nothing semantics.** If different clients want the Null Object to behave differently, you end up with multiple Null Object subclasses or a parameterized one — losing some of the simplicity the pattern was meant to offer {% cite Woolf1998 %}.
@@ -544,32 +546,32 @@ Skip the Null Object when:
 
 * **You only have one client and one call site.** A single null-check is simpler than a new class hierarchy.
 * **The absence carries information that the client must act on.** If "no logger" means "skip metrics emission too", the absence is data; do not hide it.
-* **`null` and "do nothing" are different things.** A search returning "no result found" is not the same as a search returning the empty list of results that happen to match nothing. Match the type to the meaning.
+* **`null` and "do nothing" are different things.** A successful search with no matches can return an empty list. A failed search, such as an unavailable data source, must not be disguised as an empty successful result. Match the type to the meaning.
 * **The collaborator must transform into a real one later.** That's a [Proxy](https://en.wikipedia.org/wiki/Proxy_pattern), not a Null Object.
-* **Modern language facilities already cover the case.** Languages with `Optional<T>` / `Maybe T` types, exhaustive pattern matching, or non-nullable types make the conditional shorter and the type-checker enforce it. The benefit of Null Object shrinks accordingly. (See *Related Patterns* below.)
+* **Explicit absence handling already fits the client.** `Optional<T>` / `Maybe T` and pattern matching may express the decision clearly without another class. The checking guarantees depend on the language and API; they do not all force safe handling. (See *Related Patterns* below.)
 
 # Related Patterns
 
 The Null Object frequently combines with — or competes with — other patterns:
 
-* **[Singleton](/SEBook/designpatterns/singleton.html).** Because Null Objects are typically stateless, the canonical implementation is one shared instance — a Singleton Null Object {% cite Woolf1998 %}. The compound is so common that "Null Object" implicitly suggests a Singleton in most codebases.
+* **[Singleton](/SEBook/designpatterns/singleton.html).** Because Null Objects are typically stateless, the canonical implementation is one shared instance — a Singleton Null Object {% cite Woolf1998 %}. A shared instance can also be injected without global access or a construction restriction.
 * **[Strategy](/SEBook/designpatterns/strategy.html) — Null Strategy.** A ConcreteStrategy whose implementation does nothing is a Null Object playing the Strategy role. The SimUDuck example uses `FlyNullObject` (called `FlyNoWay` in *Head First Design Patterns*) so that `RubberDuck` can `setFlyBehavior(new FlyNullObject())` without overriding `fly()` to do nothing {% cite FreemanRobson2020 %}. See [Strategy → Null Strategy](/SEBook/designpatterns/strategy.html#optional-strategy-with-default-behavior).
 * **[State](/SEBook/designpatterns/state.html) — Null State.** A ConcreteState whose operations all do nothing or return null results represents a "nothing happens here" stage in the state machine — a not-yet-logged-in state, an initialized-but-not-started state, or a final terminated state {% cite Woolf1998 %}. See [State → null state](/SEBook/designpatterns/state.html#how-to-represent-a-state-in-which-the-object-is-never-doing-anything-either-at-initialization-time-or-as-a-final-state).
-* **Special Case** (Fowler's *Patterns of Enterprise Application Architecture*). Special Case is a generalization of Null Object for any "exceptional" instance that needs uniform handling — `MissingCustomer`, `UnknownPerson`, etc. Null Object is the special case where the special case literally does nothing {% cite Fowler2002PoEAA %}.
-* **Optional / Maybe / Option types.** In ML-family and modern languages (Haskell `Maybe`, Rust `Option`, Java `Optional`, Swift `Optional`), the type system encodes "may or may not be there" and forces the client to handle both arms. This addresses the same problem (avoid `null`-related crashes) at a *different* level — at the type, not at the polymorphic dispatch. The two are complementary, not competing: an `Optional<AuditLogger>` whose empty case is filled by a `SilentLogger` gives both the type-level guarantee and the do-nothing implementation.
-* **[Iterator](https://en.wikipedia.org/wiki/Iterator_pattern) — Null Iterator.** The classic worked example: `Collections.emptyIterator()`, `iter([])` in Python, `std::ranges::empty_view` in C++. A leaf node returns a Null Iterator instead of `null`, and clients iterate uniformly {% cite Gamma1995 %}.
-* **[Decorator](https://en.wikipedia.org/wiki/Decorator_pattern) — different intent.** A Decorator wraps another object to add behavior; it must always have a real wrappee. There is no "Null Decorator" — the pattern requires something to decorate. (This is the reason the [Pattern Compounds discussion](/SEBook/designpatterns.html#communicating-design-intent-and-context-tailoring) explicitly notes there is no Null Decorator.)
-* **Proxy — easily confused.** A Proxy stands in for a real subject and may forward calls to it (lazily, remotely, with access checks). A Null Object replaces the real subject permanently. If your stand-in might "wake up" and start doing real work, it is a Proxy, not a Null Object {% cite Woolf1998 %}.
+* **Special Case** (Fowler's *Patterns of Enterprise Application Architecture*). Special Case is a generalization of Null Object for any "exceptional" instance that needs uniform handling — `MissingCustomer`, `UnknownPerson`, etc. Null Object focuses on an absent collaborator with valid no-op or neutral-result behavior {% cite Fowler2002PoEAA %}.
+* **Optional / Maybe / Option types.** In ML-family and modern languages (Haskell `Maybe`, Rust `Option`, Java `Optional`, Swift `Optional`), the type represents presence or absence. Exhaustive matching can require handling both cases; APIs such as Java `Optional.get()` can still throw when used without checking. This addresses the same problem (avoid `null`-related crashes) at a *different* level — at the type, not at the polymorphic dispatch. The two are complementary, not competing: an `Optional<DiagnosticLogger>` whose empty case is filled by a `SilentLogger` gives both the type-level guarantee and the do-nothing implementation.
+* **[Iterator](https://en.wikipedia.org/wiki/Iterator_pattern) — Null Iterator.** The classic worked example: `Collections.emptyIterator()`, `iter([])` in Python, an empty C++ range such as `std::ranges::empty_view` (whose begin and end compare equal). A leaf node returns a Null Iterator instead of `null`, and clients iterate uniformly {% cite Gamma1995 %}.
+* **[Decorator](https://en.wikipedia.org/wiki/Decorator_pattern) — different intent.** A forwarding wrapper that adds no behavior still invokes its component, so it is not a Null Object for that operation. Decorators can wrap Null Objects; judge the roles by delegation and observable behavior rather than declaring every "null" wrapper impossible.
+* **Proxy — easily confused.** A Proxy stands in for a real subject and may forward calls to it (lazily, remotely, with access checks). The Null Object itself continues to provide no-op behavior, but a client can later replace its reference with a real collaborator. If your stand-in might "wake up" and start doing real work, it is a Proxy, not a Null Object {% cite Woolf1998 %}.
 
 # Common Examples
 
 | Domain | AbstractObject | Real | Null Object |
 |---|---|---|---|
-| Auditing | `AuditLogger` | `FileAuditLogger`, `KafkaAuditLogger` | `SilentLogger` |
+| Optional diagnostics | `DiagnosticLogger` | `MemoryLogger`, `ConsoleLogger` | `SilentLogger` |
 | Authorization | `Permissions` | `RoleBasedPermissions` | `EmptyPermissions` (denies everything) or `GuestPermissions` (allows nothing requiring auth) |
-| MVC controllers | `Controller` | `TextController` | `NoController` (read-only views) {% cite Woolf1998 %} |
+| MVC controllers | `Controller` | `TextController` | `NoController` (passive displays with no input handling) {% cite Woolf1998 %} |
 | Iteration | `Iterator<T>` | `ListIterator`, `TreeIterator` | `NullIterator` / `Collections.emptyIterator()` |
-| Animation | `Animator` | `EaseInOutAnimator` | `InstantAnimator` (no-op for `prefers-reduced-motion`) |
+| Animation | `DecorativeEffect` | `ConfettiEffect` | `NoEffect` (skips a nonessential effect) |
 | Locking | `Lock` | `Mutex`, `RWLock` | `NullLock` for single-threaded use {% cite Woolf1998 %} |
 | Layout | `LayoutManager` | `BoxLayout`, `GridLayout` | `NullLayout` (each child uses its preferred size) {% cite Woolf1998 %} |
 | Strategy | `FlyBehavior` | `FlyWithWings`, `FlyRocketPowered` | `FlyNullObject` for non-flying ducks {% cite FreemanRobson2020 %} |
@@ -577,9 +579,9 @@ The Null Object frequently combines with — or competes with — other patterns
 # Practical Guidance
 
 * **Name the class for what it does, not what it is.** `SilentLogger` and `EmptyPermissions` are more honest than `NullLogger` and `DefaultPermissions`. The reader needs to understand the *behavior* at a glance — "default" implies "what you usually want", which is precisely what a Null Object usually is *not*.
-* **Log which collaborator was wired in.** A one-line startup log (`"Audit logger: SilentLogger (no audit trail will be written)"`) catches misconfigurations before they cause months of silent damage.
-* **Don't reach for it when you have only one client.** A lone `if (x != null)` is not a smell worth fixing with a class hierarchy. Wait until two or three call sites repeat the same guard.
-* **Pair with `Optional`/`Maybe` rather than replacing them.** In typed languages, returning `Optional<AuditLogger>` from your factory and then resolving the empty case to a `SilentLogger` at the wiring boundary keeps the type honest *and* keeps the call site clean.
+* **Log which collaborator was wired in.** A startup log makes the binding visible, but does not ensure anyone notices. Validate required production bindings and test the recording behavior where it matters.
+* **Compare its cost with an explicit check.** A lone `if (x != null)` may be clearer than a new class hierarchy. Repeated guards and a reusable neutral behavior strengthen the case for Null Object; there is no mandatory number of clients.
+* **Pair with `Optional`/`Maybe` rather than replacing them.** In typed languages, returning `Optional<DiagnosticLogger>` from your factory and then resolving the empty case to a `SilentLogger` at the wiring boundary keeps the type honest *and* keeps the call site clean.
 * **Don't use Null Object to silence a real exception.** If a missing file *is* an error, throw. Null Object replaces "absence is the design"; it does not paper over "absence means we screwed up".
 
 ## Flashcards

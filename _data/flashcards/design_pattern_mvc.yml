@@ -6,27 +6,27 @@ cards:
     difficulty: basic
     question: "What problem does MVC solve?"
     answer: "Separating user interface from application logic so that multiple views can display the same data, and the UI can change without modifying the core domain."
-    explanation: "User interface code is the most frequently modified part of an application. MVC isolates this volatility so changes to the UI don't ripple into the stable domain logic."
+    explanation: "Presentation and domain logic often change for different reasons. Their separation lets a new UI use the same domain operations."
   - id: 2
     difficulty: intermediate
-    question: "What three patterns does MVC combine?"
+    question: "Which three patterns explain the main relationships in classic Smalltalk MVC?"
     answer: "**Observer** (model notifies views), **Strategy** (view delegates to controller), **Composite** (view is a tree of UI components)."
-    explanation: "This makes MVC a pattern compound — the combination yields properties (clean three-way separation) that none of the individual patterns provide alone."
+    explanation: "They explain different aspects of the classic design. MVC adaptations do not have to expose all three, and a simple view need not contain a Composite tree."
   - id: 3
     difficulty: basic
-    question: "Which MVC component acts as the Observer subject?"
+    question: "In classic Observer-based MVC, which component acts as the subject?"
     answer: "The **Model**. Views (and sometimes controllers) register as observers and are notified when the model's state changes."
     explanation: "The model is completely blind to how it is displayed — it only knows that some objects implement the Observer interface and want to be notified."
   - id: 4
     difficulty: intermediate
-    question: "Why is the Controller called a 'Strategy' in MVC?"
+    question: "Why is the Controller a Strategy in classic Smalltalk MVC?"
     answer: "The view delegates all input handling to the controller. Different controllers can be swapped to change how user input is processed (e.g., standard vs. read-only mode)."
     explanation: "The Strategy pattern lets the view vary its input behavior independently of how it displays data. This is what 'pluggable user interfaces' means."
   - id: 5
     difficulty: basic
     question: "What is the main liability of MVC for simple applications?"
     answer: "**Increased complexity** — maintaining three separate component types and their interactions may not be worth it for simple user interfaces."
-    explanation: "For a simple CRUD form, a Facade + layered architecture may suffice. MVC is justified when the model is complex, has multiple views, or the UI requirements change frequently."
+    explanation: "Compare the separation’s benefit with the work the framework already supplies. One view alone is not enough to declare MVC excessive."
   - id: 6
     difficulty: intermediate
     question: "What is the 'notification storm' problem in MVC?"

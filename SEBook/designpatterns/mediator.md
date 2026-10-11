@@ -10,15 +10,15 @@ The original GoF motivating example is a different domain: a font dialog box whe
 
 # Problem
 When these objects communicate directly, several architectural challenges arise:
-*   **Many-to-Many Complexity:** As the number of objects grows, the number of direct inter-communications grows quadratically (O(N²)), leading to a tangled web of dependencies.
-*   **Low Reusability:** Because the coffee pot must "know" about the alarm clock and the calendar to function within Bob's specific rules, it becomes impossible to reuse that coffee pot code in a different home that lacks a sprinkler or a specialized calendar.
+*   **Many-to-Many Complexity:** If every object communicates directly with every other object, the number of possible links grows quadratically (O(N²)). Actual systems may have fewer links; the problem is tangled coordination, not the object count alone.
+*   **Low Reusability:** If the coffee maker contains Bob's alarm and calendar rules, reusing it in another home requires carrying or changing those dependencies.
 *   **Scattered Logic:** The "rules" of the system (e.g., "no coffee on weekends") are spread across multiple classes, making it difficult to find where to make changes when those rules evolve.
 *   **Inappropriate Intimacy:** Objects spend too much time delving into each other's private data or specific method names just to coordinate a simple task.
 
 # Solution
 The **Mediator Pattern** solves this by encapsulating many-to-many communication dependencies within a single "Mediator" object. Instead of objects talking to each other directly, they only communicate with the Mediator.
 
-The objects (often called "colleagues") tell the Mediator when their state changes. The Mediator then contains all the complex control logic and coordination rules to tell the other objects how to respond. For example, the alarm clock simply tells the Mediator "I've been snoozed", and the Mediator checks the calendar and decides whether to trigger the coffee maker. This reduces the number of inter-object connections from O(N²) to O(N), since each colleague only needs to know about the Mediator.
+The objects (often called "colleagues") report relevant events to the Mediator, which owns the coordination rules. Here, the alarm reports "alarm rang"; the hub checks the calendar and, on weekdays, starts coffee and skips watering. Routing a fully connected group through one mediator can reduce communication links from O(N²) to O(N). This counts links, not execution time: the coordination work still exists {% cite Gamma1995 %}.
 
 ## UML Role Diagram
 
@@ -94,7 +94,7 @@ deactivate hub
 
 # Code Example
 
-This example keeps the smart-home devices reusable. The alarm, calendar, coffee maker, and sprinkler do not call each other directly; the hub owns the coordination rule.
+This example keeps the smart-home devices reusable. The alarm, calendar, coffee maker, and sprinkler do not call each other directly; the hub owns the coordination rule. `Calendar` deliberately returns a fixed weekday result so the sample has deterministic output. The alarm reports events; the other devices only answer queries or receive commands, so not every colleague needs a reference back to the mediator.
 
 > **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
 
@@ -330,7 +330,7 @@ alarm.ring();
 # Consequences
 The GoF lists five consequences of the Mediator pattern; the first four are benefits and the fifth is the central trade-off:
 
-*   **It limits subclassing.** A mediator localizes behavior that would otherwise be distributed among several colleague classes. Changing this behavior requires subclassing the Mediator only; Colleague classes can be reused as-is.
+*   **It limits subclassing.** A mediator localizes behavior that would otherwise be distributed among several colleague classes. Coordination can change by replacing, configuring, or subclassing the mediator without creating matching subclasses of every colleague, provided their interfaces remain sufficient.
 *   **It decouples colleagues.** Individual objects become more reusable because they make fewer assumptions about the existence of other objects or specific system requirements. You can vary and reuse Colleague and Mediator classes independently.
 *   **It simplifies object protocols.** A mediator replaces many-to-many interactions with one-to-many interactions between the mediator and its colleagues. One-to-many relationships are easier to understand, maintain, and extend.
 *   **It abstracts how objects cooperate.** Making mediation an independent concept and encapsulating it in an object lets you focus on how objects interact apart from their individual behavior. That can help clarify how objects interact in a system.
@@ -346,9 +346,9 @@ These two behavioral patterns are frequently confused because both deal with com
 
 | Aspect | **[Observer](/SEBook/designpatterns/observer.html)** | **Mediator** |
 |---|---|---|
-| **Communication** | One-to-many: subject broadcasts, observers decide how to react | Many-to-many: colleagues report events, mediator decides what to do |
+| **Communication** | A subject notifies registered observers | Many-to-many coordination is routed through colleague–mediator links |
 | **Intelligence** | *Distributed*: each observer contains its own reaction logic | *Centralized*: the mediator contains all coordination logic |
-| **Coupling** | Subject knows only the Observer interface; observers are independent of each other | Colleagues know only the Mediator interface; all rules live in one place |
+| **Coupling** | Subject depends on the notification contract; observers need not know one another | Mediated peer dependencies move into the coordinator; unrelated dependencies may remain |
 | **Best for** | **Extensibility**: adding new types of observers without changing the subject | **Changeability**: modifying coordination rules without touching the colleagues |
 | **Risk** | Notification storms; cascading updates; hard-to-predict interaction order | God class; single point of failure; complexity displacement |
 
@@ -362,17 +362,17 @@ Mediator is also frequently confused with [Façade](/SEBook/designpatterns/facad
 
 | Aspect | **Façade** | **Mediator** |
 |---|---|---|
-| **Direction** | One-way: external clients call into the façade, which forwards to the subsystem. The subsystem objects do not know the façade exists. | Multi-way: colleagues call into the mediator, and the mediator calls back into colleagues. Both sides know each other. |
+| **Direction** | External clients call into the façade, which forwards to subsystem objects that need not know it exists. | The mediator coordinates peer objects. Event-reporting colleagues notify it, and it calls the participants needed for the response. |
 | **Goal** | Hide the complexity of a subsystem behind a simpler interface for outside use. | Coordinate the interactions among a set of peer objects so they don't have to know each other. |
-| **Subsystem awareness** | Subsystem classes are unchanged and unaware of the façade. | Colleague classes are explicitly designed to talk through the mediator. |
+| **Subsystem awareness** | Subsystem classes need no dependency on the façade. | Event-reporting colleagues know the mediation contract. Passive participants can expose ordinary operations without knowing the mediator. |
 
 If clients outside a module need a simple way in, that's a Façade. If peers inside a module need a way to coordinate without referring to each other, that's a Mediator.
 
 # Design Decisions
 
 ## Event-Based vs. Direct Method Calls
-* **Event-based:** Colleagues emit named events (strings or enums), and the mediator matches events to responses. More flexible and decoupled, but harder to trace in a debugger.
-* **Direct method calls:** The mediator has typed methods for each coordination scenario (e.g., `onAlarmRang()`, `onCalendarUpdated()`). Easier to understand but tightly couples the mediator to the specific set of colleagues.
+* **Event-based:** Colleagues report named events (strings, enums, or typed event objects), and the mediator selects a response. A generic event method can ease extension, but string events may lose compiler checks. The sample still delivers these events through synchronous method calls.
+* **Scenario-specific methods:** The mediator exposes operations such as `onAlarmRang()`. These make supported interactions explicit. Both variants depend on a coordination contract; event names do not remove that dependency.
 
 ## Scope of Mediation
 * **Per-conversation mediator:** A new mediator is created for each interaction session (common in chat applications or wizard-style UIs).

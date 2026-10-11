@@ -6,41 +6,41 @@ questions:
     type: single
     difficulty: intermediate
     question: |
-      POSA5 describes the Singleton as "a well-known pattern with a weak solution." What is the core reason for this criticism?
+      A team needs one shared service, but implements it with calls to `Service.getInstance()` throughout the application. Which two design decisions has it bundled together?
     options:
-      - "The Singleton pattern is too simple to be useful in real applications"
-      - "It conflates single-instance lifetime with a global access point"
-      - "Thread-safety is impossible to achieve with Singleton"
-      - "The Singleton pattern violates the Single Responsibility Principle"
+      - "Whether the service is immutable and whether its methods are thread-safe"
+      - "Single-instance lifetime and a global access point"
+      - "Whether the service is loaded eagerly and whether clients use inheritance"
+      - "Whether the service uses a cache and whether its methods are static"
     correct_index: 1
     option_feedback:
       0: |
-        The criticism is not that the pattern is trivial. The problem is that a legitimate lifetime constraint is often bundled with a global access mechanism that hides dependencies.
+        An instance may be mutable or immutable, and its operations may or may not be thread-safe. Neither property defines Singleton.
       2: |
-        Thread-safe Singleton implementations exist, including eager initialization and carefully written double-checked locking. Thread safety is one implementation concern, not the core architectural criticism.
+        A Singleton can be initialized eagerly or lazily. Client inheritance is not required to obtain its shared instance.
       3: |
-        SRP concerns can appear, but POSA5's critique here is more specific: Singleton mixes "there should be one instance" with "any code can reach it globally."
-    explanation: "The criticism targets the *solution*, not the problem. Ensuring a single instance is legitimate, but using a `static getInstance()` as a global access point creates hidden dependencies, prevents constructor-based substitution with test doubles, and tightly couples all consumers to one context. A DI container solves the lifetime problem without introducing global access."
+        The service need not cache anything, and its useful operations can be ordinary instance methods. Static access selects the object; it does not imply that all operations are static.
+    explanation: "Sharing one object does not require global lookup. Application setup can create an ordinary service once and pass it to consumers, with or without a DI container. This makes the dependency explicit and provides a substitution point for tests."
 
   - id: 2
     type: single
     difficulty: advanced
     question: |
-      Two threads simultaneously call `getInstance()` on a classic lazy Singleton. Both find `uniqueInstance == null` and both create a new instance. Which thread-safety approach eliminates this race condition with the **simplest** implementation and **no per-call synchronization overhead** — at the cost of not being lazy?
+      Two Java threads simultaneously call `getInstance()` on an unsynchronized lazy Singleton. Both find `uniqueInstance == null` and both create a new instance. Which thread-safety approach eliminates this race condition with the **simplest** implementation and **no explicit lock in the accessor** — accepting construction whenever the enclosing class initializes?
     options:
       - "Synchronize the entire `getInstance()` method on every call"
-      - "Use eager instantiation when the class loads"
+      - "Initialize a static final instance during class initialization"
       - "Use double-checked locking with `volatile`"
       - "Use a global lock around all Singleton access"
     correct_index: 1
     option_feedback:
       0: |
-        Synchronizing `getInstance()` is simple and correct, but it pays synchronization cost on calls after the instance already exists. The question asks for the simple approach that avoids per-call synchronization by giving up laziness.
+        Synchronizing `getInstance()` is simple and correct, but it pays synchronization cost on calls after the instance already exists. The question asks for a static initialization policy without an explicit lock in the accessor.
       2: |
         Double-checked locking can preserve laziness with `volatile`, but it is easier to get wrong and more complex than eager initialization. It is not the simplest answer in this prompt.
       3: |
         A broad global lock can serialize unrelated access and still adds locking complexity. The race is solved more simply by creating the instance during class initialization.
-    explanation: "Eager instantiation creates the instance in a static field initializer when the class loads, so there is no race and subsequent calls just return the existing field — the trade-off is that the object is built even if never used. A synchronized `getInstance()` is also correct but pays a lock on every call; double-checked locking stays lazy with low overhead after init but is significantly harder to get right."
+    explanation: "A static field initializer runs during class initialization, which the JVM synchronizes. Later accessor calls return the published instance without an explicit accessor lock. The object is created if another use initializes the class, even before any `getInstance()` call; merely loading the class need not create it. A synchronized `getInstance()` is also correct but pays a lock on every call; double-checked locking stays lazy with low overhead after init but is significantly harder to get right."
 
   - id: 3
     type: single
@@ -60,17 +60,17 @@ questions:
         The prompt gives no evidence that the driver cannot pool connections. The design problem is that the class hardcoded a one-instance assumption that the new requirement contradicts.
       3: |
         Adding a tenant ID to the constructor does not help if `getInstance()` still returns one shared object. The design needs multiple managed instances, usually keyed by tenant or supplied by DI scope.
-    explanation: "Multi-tenancy reveals that the 'exactly one' assumption was a convenience, not a hard requirement — the class now needs multiple instances. Many 'singletons' later need per-tenant, per-thread, or per-test instances. DI with a per-tenant singleton scope manages one pool per tenant without hardcoding the cardinality into the class."
+    explanation: "The new requirement changes the needed scope: one pool per process is no longer sufficient. This does not prove the old requirement was never valid; the implementation must now accommodate multiple tenant-specific pools. Many 'singletons' later need per-tenant, per-thread, or per-test instances. Explicit setup, a tenant-keyed registry, or appropriately configured DI scopes can provide one pool per tenant without making the pool class globally unique."
 
   - id: 4
     type: single
     difficulty: advanced
     question: |
-      A developer argues: "Our `Logger` class uses the Singleton pattern, and it's fine — we never need to test it." What is wrong with this reasoning?
+      Consumers call `Logger.getInstance()` directly. A developer argues that this is harmless because the logger itself needs no tests. Which testing concern remains?
     options:
       - "Loggers should always use the Factory Method pattern instead"
-      - "Every caller hides a dependency that can't be swapped for a test double"
-      - "Singleton Loggers have thread-safety issues across concurrent threads"
+      - "Callers cannot receive a replacement logger through their public API"
+      - "Every logger call races because Singleton forbids synchronized methods"
       - "Loggers should use the Observer pattern instead, not Singleton"
     correct_index: 1
     option_feedback:
@@ -86,20 +86,20 @@ questions:
     type: multiple
     difficulty: advanced
     question: |
-      Which of the following are legitimate reasons to **use** the Singleton pattern? (Select all that apply)
+      An application needs one shared configuration object. Which statements correctly distinguish that requirement from the GoF Singleton pattern? Select all that apply.
     options:
-      - "Controlling access to a hardware resource (e.g., a printer spooler) where dependency injection is unavailable"
-      - "Making it convenient to access a service from anywhere in the codebase"
-      - "Ensuring exactly one instance of a configuration object in a small script with no dependency injection framework"
-      - "Avoiding the need to pass dependencies through constructors"
+      - "Application setup can create one object and pass it to all consumers"
+      - "The absence of a DI framework makes a global accessor necessary"
+      - "A global accessor adds coupling beyond the single-instance requirement"
+      - "Immutable configuration lets every test use its own settings automatically"
     correct_indices: [0, 2]
     option_feedback:
       0: |
-        A true single hardware resource can justify central access when there is no better dependency-management mechanism. The important boundary is necessity, not convenience.
+        Passing the same ordinary object to consumers implements shared lifetime without making its class globally unique. This is manual dependency injection.
       1: |
-        Global convenience is the part that creates hidden coupling. If many classes need a service, passing it explicitly or managing it with DI keeps those dependencies visible.
+        Dependency injection means supplying a dependency. Constructor or function arguments work without a container or framework.
       2: |
-        In a small script with no DI framework, the ceremony of a full dependency graph may outweigh the cost of one shared configuration object. That is a narrow pragmatic use, not a general rule.
+        Direct global lookup hardcodes where consumers get their dependency. That choice is separate from deciding to share one instance.
       3: |
-        Constructor parameters make dependencies visible to readers and tests. Avoiding them by reaching into global state usually trades short-term convenience for harder substitution and reasoning.
-    explanation: "Singleton is legitimate only for true infrastructure resources — a unique hardware resource, or a single config object in a script — where DI is genuinely unavailable. Using it for global convenience or to avoid passing dependencies through constructors is necessity confused with convenience: those create the hidden coupling and testability harm that POSA5 criticizes. Constructor injection makes dependencies explicit, which is a feature, not a burden."
+        Immutability prevents state mutation, but it does not let consumers select a different configuration for each test. An explicit substitution point may still be needed.
+    explanation: "Choose the lifetime and the access mechanism separately. One shared instance can be created in setup and passed explicitly; a framework is optional. A global accessor adds coupling, and immutability removes shared mutation rather than all substitution concerns."

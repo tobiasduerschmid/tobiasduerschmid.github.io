@@ -3,7 +3,7 @@ title: Composite Design Pattern
 layout: sebook
 ---
 
-# Problem 
+# Problem
 
 Software often needs to treat individual objects and nested groups of objects uniformly. File systems contain files and directories, drawing tools contain primitive shapes and grouped drawings, and menu systems contain both single menu items and complete submenus. If a client has to distinguish between every leaf and every container, the code quickly fills with special cases and repeated tree traversal logic.
 
@@ -23,9 +23,9 @@ The **Composite Pattern** introduces a common `Component` abstraction shared by 
 
 ## Participants
 
-* **Component** (e.g., `Graphic`, `MenuComponent`): declares the interface for objects in the composition; implements default behavior for the interface common to all classes; declares an interface for accessing and managing its child components; optionally defines an interface for accessing a component's parent.
+* **Component** (e.g., `Graphic`, `MenuComponent`): declares the interface for objects in the composition; implements default behavior for the interface common to all classes; may declare an interface for accessing and managing children in the transparent variant; optionally defines an interface for accessing a component's parent.
 * **Leaf** (e.g., `Rectangle`, `Line`, `Text`, `MenuItem`): represents leaf objects in the composition. A leaf has no children and defines behavior for primitive objects.
-* **Composite** (e.g., `Picture`, `Menu`): defines behavior for components having children; stores child components; implements child-related operations in the `Component` interface.
+* **Composite** (e.g., `Picture`, `Menu`): defines behavior for components having children; stores child components; implements child-related operations, declared either on `Component` or only on the composite type.
 * **Client**: manipulates objects in the composition through the `Component` interface.
 
 ## UML Role Diagram
@@ -51,7 +51,7 @@ class Composite {
 class Client
 Leaf --|> Component
 Composite --|> Component
-Composite "1" *--> "*" Component
+Composite "0..1" *--> "*" Component
 Client --> Component : treats uniformly >
 @enduml'></div>
 
@@ -71,23 +71,25 @@ class Menu {
 class MenuItem {
 	+ print(): void
 }
-class Waitress {
-	+ printMenu(): void
+class Demo {
+	+ main(): void
 }
 Menu --|> MenuComponent
 MenuItem --|> MenuComponent
-Menu "1" *-- "*" MenuComponent
-Waitress --> MenuComponent : traverses
+Menu "0..1" *-- "*" MenuComponent
+Demo --> MenuComponent : prints
 @enduml'></div>
 
 ## Sequence Diagram
 
+This trace isolates the nested dessert-menu branch. In the code below, the root also prints the `Pancakes` item before visiting this branch.
+
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-actor waitress: Waitress
+participant demo: Demo
 participant allMenus: Menu
 participant dessertMenu: Menu
 participant item: MenuItem
-waitress -> allMenus: print()
+demo -> allMenus: print()
 activate allMenus
 allMenus -> dessertMenu: print()
 activate dessertMenu
@@ -104,15 +106,15 @@ deactivate allMenus
 
 This is the fundamental design trade-off of the Composite pattern:
 
-* **Transparent composite:** The full child-management interface (`add()`, `remove()`, `getChild()`) is declared on `Component`, so clients can treat leaves and composites identically through a single interface. This maximizes uniformity but means leaves inherit methods that make no sense for them (e.g., `add()` on a `MenuItem`). Leaves must either throw an exception or silently ignore these calls.
+* **Transparent composite:** The full child-management interface (`add()`, `remove()`, `getChild()`) is declared on `Component`, so clients can treat leaves and composites identically through a single interface. This maximizes uniformity but means leaves inherit methods that make no sense for them (e.g., `add()` on a `MenuItem`). The contract must specify how leaves handle unsupported calls. The example throws an exception; silently ignoring an attempted insertion would conceal a likely bug. Child queries can legitimately return an empty result for leaves.
 
-* **Safe composite:** Only `Composite` exposes `add()` and `remove()`, preventing nonsensical operations on leaves at compile time. But clients must now distinguish between leaves and composites when managing children, reducing the pattern's primary benefit of uniform treatment.
+* **Safe composite:** Only `Composite` exposes `add()` and `remove()`, preventing these operations on leaves at compile time in a statically typed language. Clients that manage children need a composite reference; they can obtain one during construction rather than necessarily downcasting. Clients that only call shared operations such as `print()` still treat leaves and composites uniformly.
 
 Neither approach is universally better—the choice depends on whether **uniformity** (transparent) or **type safety** (safe) is more important in your context.
 
 ## Child Ownership
 
-If child objects cannot exist independently of their parent, use composition semantics and let the composite own the child lifetime. If children may be shared across multiple structures, model a weaker association instead. In UML, this distinction maps to filled-diamond composition vs. open-diamond aggregation.
+Choose ownership separately from the recursive interface. The filled diamonds above model exclusive ownership: a component belongs to at most one parent, and deleting an owning composite deletes its still-owned parts. A root has no parent, hence `0..1` at the parent end. If children are shared, use an ordinary association or shared aggregation instead; an open diamond alone does not specify a lifetime policy. The C++ example expresses exclusive ownership with `unique_ptr`. The other snippets assume clients build an acyclic tree without sharing children; they do not enforce that invariant.
 
 ## Parent References
 
@@ -120,29 +122,29 @@ Adding a parent reference to `Component` enables upward traversal (e.g., "which 
 
 ## Sharing Components
 
-Sharing components is useful for reducing storage requirements, but a component with a single parent reference cannot be shared across multiple composites. One option is to let children store multiple parents; another is to drop parent references altogether and externalize the relevant state, which is the approach taken by the [Flyweight](/SEBook/designpatterns/flyweight.html) pattern.
+Sharing components is useful for reducing storage requirements, but a component with a single parent reference cannot be shared across multiple composites. One option is to let children store multiple parents; another is to drop parent references altogether and externalize the relevant state, which is the approach taken by the Flyweight pattern.
 
 ## Child Storage and Ordering
 
 Several smaller decisions arise once you commit to a Composite design:
 
 * **Where to store the children:** Putting the child collection in the `Component` base class is convenient but pays a per-leaf storage cost for a list that leaves never use. It is only worthwhile when there are relatively few leaves in the structure.
-* **Child ordering:** Many domains require an ordering on children (front-to-back rendering, the order of statements in a parse tree, the order of items on a menu). Design `add()`, `remove()`, and traversal carefully when order matters; an explicit [Iterator](/SEBook/designpatterns/iterator.html) often pays for itself here.
+* **Child ordering:** Many domains require an ordering on children (front-to-back rendering, the order of statements in a parse tree, the order of items on a menu). Design `add()`, `remove()`, and traversal carefully when order matters; an explicit Iterator often pays for itself here.
 * **Caching:** A composite that is traversed or searched frequently can cache aggregated information about its children (e.g., a bounding box of all child shapes). Any change to a child must invalidate the caches of its ancestors, which is easiest to coordinate when components hold parent references.
 * **Choice of data structure:** There is no single right collection — linked lists, arrays, hash tables, even per-child fields are all reasonable depending on access patterns and child count.
 
 # Consequences
 
-* **Defines class hierarchies of primitive and composite objects.** Primitive objects can be composed into more complex objects, which in turn can be composed recursively. Wherever client code expects a primitive object, it can also accept a composite.
+* **Defines class hierarchies of primitive and composite objects.** Primitive objects can be composed into more complex objects, which in turn can be composed recursively. Wherever client code uses the common `Component` contract, it can accept either a leaf or a composite. This does not make a composite a subtype of a particular concrete leaf.
 * **Makes the client simple.** Clients can treat composite structures and individual objects uniformly and need not write tag-and-case-statement-style logic over the classes that define the composition.
 * **Makes it easier to add new kinds of components.** New `Composite` or `Leaf` subclasses work automatically with existing structures and existing client code.
-* **Can make your design overly general.** It becomes harder to restrict which components a composite may contain. The type system cannot enforce "only these kinds of children are allowed"; you must fall back on run-time checks.
+* **Can make your design overly general.** It becomes harder to restrict which components a composite may contain. The unrestricted `add(Component)` interface accepts every component subtype. Domain-specific child restrictions need additional validation or a more restrictive type design.
 
 # Composite in Pattern Compounds
 
 The Composite pattern frequently appears as a building block in larger pattern compounds, because many patterns need to operate on tree structures:
 
-* **Composite + Builder:** The [Builder](/SEBook/designpatterns/builder.html) pattern can construct complex Composite structures step by step. The Composite's `Component` acts as the Builder's product, and the Builder handles the complexity of assembling the recursive tree.
+* **Composite + Builder:** The [Builder](/SEBook/designpatterns/builder.html) pattern can construct complex Composite structures step by step. The Builder returns an assembled composite structure and handles node creation and assembly. Kerievsky's *Encapsulate Composite with Builder* uses this step when client code exposes too much construction and validation detail (Kerievsky's 2001 draft, pp. 35–38).
 * **Composite + Visitor:** When many distinct operations need to be performed on a Composite structure without modifying its classes, the [Visitor](/SEBook/designpatterns/visitor.html) pattern provides a clean separation of concerns. This is especially useful when new operations are added frequently but new leaf types are rare.
 * **Composite + Iterator:** An Iterator can traverse the Composite tree in different orders (depth-first, breadth-first) without exposing the tree's internal structure to the client.
 * **Composite + Command:** A [Composite Command](/SEBook/designpatterns/command.html) groups multiple command objects into a tree, allowing hierarchical undo/redo operations and macro commands that execute sub-commands in sequence.
@@ -151,7 +153,7 @@ These compounds are so common that recognizing the Composite pattern is often th
 
 # Code Example
 
-This example uses a transparent composite: both `Menu` and `MenuItem` share the same `print()` operation, while only composite menus do real work in `add()`.
+This example uses a transparent composite: both `Menu` and `MenuItem` share `print()` and `add()`, but a leaf rejects `add()`. It implements only the child-management operation needed by the example; `remove()` and `getChild()` in the role diagram are optional extensions, not requirements to add unused methods. Kerievsky makes this same scope decision in *Replace Implicit Tree with Composite* (Kerievsky's 2001 draft, pp. 31–34).
 
 > **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
 
@@ -373,6 +375,8 @@ allMenus.print();
 </div>
 
 ## Flashcards
+
+This shared review covers Adapter, Composite, and Facade. Use it after studying all three chapters.
 
 {% include flashcards.html id="design_pattern_structural" %}
 

@@ -13,7 +13,7 @@ When an object requires multi-step construction or has many optional parameters,
 *   **Telescoping Constructors:** You might end up with a massive constructor with dozens of parameters, most of which are null or default values for any given instance. (Note: this problem is the primary motivation for the closely related *fluent builder* variant popularized by Joshua Bloch in *Effective Java* — see the variant note below.)
 
 # Solution
-The **Builder Pattern** separates the construction of a complex object from its representation so that the same construction process can create different representations. It encapsulates the way a complex object is built and allows it to be constructed incrementally.
+The **Builder Pattern** separates the construction of a complex object from its representation so that the same construction process can create different representations. It encapsulates the way a complex object is built and allows it to be constructed incrementally {% cite Gamma1995 %}. A useful discriminator is what stays fixed: the director can issue the same construction requests while different builders produce different representations.
 
 The pattern involves four main participants:
 1.  **Builder:** Specifies an abstract interface for creating the various parts of a `Product` object.
@@ -47,11 +47,10 @@ ConcreteBuilder --> Product : creates
 ## UML Example Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-interface AbstractBuilder {
+interface VacationBuilder {
     + build_day(date: str)
     + add_hotel(date: str, hotel_name: str)
     + add_tickets(event_name: str)
-    + get_vacation_planner(): VacationPlanner
 }
 class PatternslandBuilder {
     - planner: VacationPlanner
@@ -61,7 +60,7 @@ class PatternslandBuilder {
     + get_vacation_planner(): VacationPlanner
 }
 class Director {
-    - builder: AbstractBuilder
+    - builder: VacationBuilder
     + construct_planner()
 }
 class VacationPlanner {
@@ -70,14 +69,16 @@ class VacationPlanner {
     + show_plan()
 }
 
-Director --> AbstractBuilder : builder
-PatternslandBuilder ..|> AbstractBuilder
-PatternslandBuilder --> VacationPlanner : creates
+Director --> VacationBuilder : builder
+PatternslandBuilder ..|> VacationBuilder
+PatternslandBuilder ..> VacationPlanner : creates
 @enduml'></div>
 
 ## Code Example
 
-This example builds a vacation plan through one specific construction sequence. The director controls the steps; the concrete builder controls the internal representation of the finished plan. (Different `Director` implementations could encode different sequences over the same `VacationBuilder` interface.)
+This example builds a vacation plan through one specific construction sequence. The director controls the steps; the concrete builder controls the internal representation of the finished plan. A second builder could count hotel nights and tickets instead of recording itinerary text; the director would issue exactly the same requests. Its result might be a booking summary rather than a `VacationPlanner`, so result retrieval belongs to the concrete builder, not necessarily to the shared construction interface. Different directors can also reuse these steps for different itineraries.
+
+The sample only records descriptions; it does not make bookings. Use a fresh builder for each plan: reusing this mutable builder appends to its existing result. It exposes the result without validation, so preventing premature retrieval would require an explicit completion contract. In C++, the returned reference remains valid only while its builder exists.
 
 > **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
 
@@ -110,7 +111,6 @@ interface VacationBuilder {
     void buildDay(String date);
     void addHotel(String date, String hotelName);
     void addTickets(String eventName);
-    VacationPlanner getVacationPlanner();
 }
 
 final class PatternslandBuilder implements VacationBuilder {
@@ -185,7 +185,6 @@ public:
     virtual void buildDay(const std::string& date) = 0;
     virtual void addHotel(const std::string& date, const std::string& hotelName) = 0;
     virtual void addTickets(const std::string& eventName) = 0;
-    virtual VacationPlanner& getVacationPlanner() = 0;
 };
 
 class PatternslandBuilder : public VacationBuilder {
@@ -202,7 +201,7 @@ public:
         planner_.addItem("Tickets purchased for '" + eventName + "'");
     }
 
-    VacationPlanner& getVacationPlanner() override {
+    VacationPlanner& getVacationPlanner() {
         return planner_;
     }
 
@@ -263,10 +262,6 @@ class VacationBuilder(ABC):
     def add_tickets(self, event_name: str) -> None:
         pass
 
-    @abstractmethod
-    def get_vacation_planner(self) -> VacationPlanner:
-        pass
-
 
 class PatternslandBuilder(VacationBuilder):
     def __init__(self) -> None:
@@ -319,7 +314,6 @@ interface VacationBuilder {
   buildDay(date: string): void;
   addHotel(date: string, hotelName: string): void;
   addTickets(eventName: string): void;
-  getVacationPlanner(): VacationPlanner;
 }
 
 class PatternslandBuilder implements VacationBuilder {
@@ -364,7 +358,7 @@ builder.getVacationPlanner().showPlan();
 **Benefits:** (GoF lists three.)
 *   **Lets you vary a product's internal representation.** Because the product is constructed through an abstract `Builder` interface, changing its internal representation only requires defining a new `ConcreteBuilder`. The `Director`'s construction algorithm stays the same.
 *   **Isolates code for construction and representation.** Each `ConcreteBuilder` encapsulates all the code to assemble one kind of product. Clients don't need to know about the classes that make up the product's internal structure — those classes don't appear in `Builder`'s interface. Once written, the same `ConcreteBuilder` can be reused by different `Director`s.
-*   **Gives you finer control over the construction process.** Unlike creational patterns that build products in one shot, Builder constructs the product step by step under the director's control. The director retrieves the product only when it is finished.
+*   **Gives you finer control over the construction process.** Unlike creational patterns that build products in one shot, Builder constructs the product step by step under the director's control. In this example, the client retrieves the result from the concrete builder after the director completes its work. Whether earlier retrieval is rejected is an API decision, not a guarantee of the pattern.
 
 **Liabilities:**
 *   **More Classes:** A separate `Builder` interface and one `ConcreteBuilder` per representation increase the type count.
@@ -372,9 +366,11 @@ builder.getVacationPlanner().showPlan();
 
 # Variant: Joshua Bloch's Fluent Builder
 
-The classical GoF Builder shown above uses a separate `Director` to drive a fixed construction algorithm. A widely-used variant — popularized by Joshua Bloch in *Effective Java* (Item 2) — has no Director: the client itself chains setter-style methods on the builder (`new Pizza.Builder().size(12).cheese().build()`) and finally calls `build()` to obtain the product. This *fluent builder* is the standard solution to the **telescoping constructor** anti-pattern in Java and is what most modern Java/Kotlin/C# code means by "the Builder pattern" (e.g., `StringBuilder`, Lombok's `@Builder`, AWS SDK builders, Protocol Buffers builders). It is more about taming long parameter lists for immutable value objects than about separating construction from representation.
+The classical GoF Builder shown above uses a separate `Director` to drive a fixed construction algorithm. A widely-used variant — popularized by Joshua Bloch in *Effective Java* (Item 2) — has no Director: the client itself chains setter-style methods on the builder (`new Pizza.Builder().size(12).cheese().build()`) and finally calls `build()` to obtain the product. This *fluent builder* is one solution to **telescoping constructors**, especially for objects with many optional parameters. It emphasizes readable configuration and validation before returning a product, often an immutable value object. Fluent chaining alone does not demonstrate the GoF separation of construction from representation, and a builder does not automatically make its product immutable. Named creation methods or language-supported named/default arguments may be enough for a simpler object.
 
 # Related Patterns
 
 *   **Abstract Factory** is similar to Builder in that both construct complex objects, but the emphasis differs: Abstract Factory builds *families* of related products and returns each product immediately, while Builder constructs a single complex product step-by-step and returns it only as a final step.
-*   **Composite** is what the builder often builds — the Patternsland vacation planner above is a composite tree of days, hotels, tickets, and special events.
+*   **Composite** is a common result of a builder, but the planner above contains a flat list of strings, not a Composite tree. Kerievsky's *Encapsulate Composite with Builder* refactoring (supplied 2001 draft, pp. 35–40) addresses clients that create nodes, link them, and validate a tree themselves. Move those assembly responsibilities into intention-revealing builder operations, then verify that the resulting tree and rendered output are preserved. Builder controls construction; Composite describes the resulting recursive structure.
+
+Before rereading, explain how a booking-count builder could reuse `constructPlanner()` without building itinerary strings. Which methods would it implement, and who would retrieve its differently typed result? The key is to keep the director dependent only on the construction operations.

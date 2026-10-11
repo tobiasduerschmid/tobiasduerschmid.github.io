@@ -5,7 +5,7 @@ cards:
   - id: 1
     difficulty: basic
     question: "What problem does Mediator solve?"
-    answer: "Reduces many-to-many dependencies between objects by centralizing interaction logic in a single mediator, converting N-to-N complexity into N-to-1."
+    answer: "It centralizes coordination among colleagues and can replace dense peer-to-peer dependencies with links through a mediator. It reorganizes the coordination work rather than eliminating it."
     explanation: "Instead of objects talking directly, they report events to the mediator. The mediator contains the coordination rules and tells objects how to respond."
   - id: 2
     difficulty: intermediate
@@ -24,6 +24,6 @@ cards:
     explanation: "Without careful design, the Mediator can become an unmaintainable monolith. Consider splitting into multiple mediators for different subsystem aspects."
   - id: 5
     difficulty: advanced
-    question: "What is a 'Managed Observer'?"
-    answer: "A pattern compound combining Observer (for loose notification) with Mediator (for centralized coordination), giving both decoupling and control."
+    question: "How can Observer and Mediator be combined?"
+    answer: "Colleagues publish events through Observer-style subscriptions; a mediator subscribes and applies coordination rules."
     explanation: "Colleagues use Observer-style notifications to inform the mediator; the mediator uses direct calls to coordinate responses. This is common in real systems."

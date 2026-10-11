@@ -5,8 +5,7 @@ questions:
   - id: 1
     difficulty: intermediate
     type: single
-    question: |
-      MVC is called a "compound pattern." Which three design patterns does it combine, and what role does each play?
+    question: "Which three patterns explain the main relationships in classic Smalltalk MVC as discussed by GoF?"
     options:
       - "Observer (model→view notify), Strategy (view delegates to controller), Composite (nested UI tree)"
       - "Singleton (one model), Factory Method (create views), Adapter (controller adapts input)"
@@ -20,18 +19,16 @@ questions:
         Controllers can coordinate some interaction, but MVC's controller role is not the same as a Mediator owning all colleague coordination. MVC is usually taught as Observer plus Strategy plus Composite.
       3: |
         Commands may appear in some UI architectures, but this is not the classic compound structure of MVC. MVC's central split is model state, view presentation, and controller input handling.
-    explanation: "MVC combines **Observer** (the model is the Subject; views register and are auto-synchronized), **Strategy** (the view delegates input handling to a swappable controller), and **Composite** (the view is often a tree of nested UI components — windows > panels > buttons). The emergent property is a clean three-way separation that no individual pattern achieves alone."
-
+    explanation: "Observer propagates model changes, Strategy varies input handling through controllers, and Composite supports nested views. This is a description of classic Smalltalk MVC, not a requirement for every architecture called MVC."
   - id: 2
     difficulty: intermediate
     type: single
-    question: |
-      In MVC, the Model is completely independent of the View and Controller. Why is this considered the most important architectural property of MVC?
+    question: "The domain model has no dependency on concrete widgets or input devices. What is the main benefit of that separation?"
     options:
-      - "It keeps the Model smaller and simpler than the View and Controller"
-      - "Core domain logic can be reused, tested, and ported without modification"
-      - "It prevents the Model from becoming an unmaintainable god class over time"
-      - "It makes the View easier to implement on new platforms and devices"
+      - "It guarantees a smaller model than view or controller."
+      - "Domain logic can run and be tested without the UI."
+      - "It prevents unrelated domain responsibilities accumulating."
+      - "It makes every view portable without platform changes."
     correct_index: 1
     option_feedback:
       0: |
@@ -40,13 +37,11 @@ questions:
         Separating the model from the UI helps with responsibilities, but it does not automatically prevent the model from accumulating too much domain behavior. A model can still need its own internal design.
       3: |
         A view may become easier to replace, but MVC's deeper value is that the domain model survives view changes. The architecture protects the core logic from UI churn.
-    explanation: "Because the Model knows nothing about Views or Controllers, the core domain logic can be reused across applications, tested without any UI framework, and ported to a different platform by rewriting only the View and Controller. This is why MVC says the Model is blind to how it is displayed."
-
+    explanation: "Keeping concrete UI dependencies out of domain logic allows domain tests and other presentations to use it directly. Views and controllers may still depend on the model API, and non-UI platform dependencies remain a separate concern."
   - id: 3
     difficulty: intermediate
     type: single
-    question: |
-      A team uses MVC for a simple CRUD form with one view and no plans for additional views. A colleague suggests the architecture is over-engineered. Is this criticism valid?
+    question: "A team adds custom MVC plumbing to one small stable form. The new classes only forward calls already handled by its toolkit. Is the criticism that this adds unnecessary complexity reasonable?"
     options:
       - "No — MVC should always be used for any application with a user interface"
       - "Yes — for simple UIs, MVC's three components cost more than they return"
@@ -60,38 +55,31 @@ questions:
         Handling user input alone does not require full MVC. MVC is more justified when domain logic, presentation, and interaction are likely to evolve independently.
       3: |
         State is useful when behavior changes with an object's internal state. A simple CRUD form may need neither full MVC nor State; the issue is proportional design.
-    explanation: "Separating model, view, and controller for simple UI elements increases complexity without much flexibility gain. MVC earns its keep when the model is complex, has multiple views, or the UI changes frequently; for a single-view CRUD form a simpler layered architecture or Facade may suffice."
-
+    explanation: "In this scenario the custom layer duplicates existing mechanisms without an identified benefit. One view alone is not a reason to reject MVC: a framework may already supply it, and domain separation can remain useful."
   - id: 4
     difficulty: intermediate
     type: single
-    question: |
-      The Model in MVC automatically notifies all registered Views whenever its state changes. A developer adds 50 Views to the same Model. Performance degrades. What Observer-specific problem has MVC inherited?
+    question: "The Model notifies all 50 registered Views after every small change. Even unchanged or offscreen Views redraw each time, and this unnecessary work degrades performance. What Observer-related problem has MVC inherited?"
     options:
-      - "The lapsed listener problem — observers that should have detached stay subscribed and leak memory"
-      - "Notification storm — every model change broadcasts to every view, even ones that don't need it"
-      - "The inverted dependency problem — registration points one way in code while data flows the other"
-      - "The god class problem — one class accumulates too many responsibilities"
+      - "The lapsed listener problem — obsolete observers stay subscribed and leak memory"
+      - "Notification storm — broad broadcasts cause unnecessary view updates"
+      - "The cyclic dependency problem — every view imports another view"
+      - "The god class problem — one class owns unrelated responsibilities"
     correct_index: 1
     option_feedback:
-      0: |
-        Lapsed listeners are observers that stay registered after they should be removed, often causing leaks or stale updates. This scenario is about too many active observers being notified on each change.
-      2: |
-        Inverted dependency flow is about code-level registration pointing one way while runtime data flows the other. The performance problem here comes from broad notification fan-out.
-      3: |
-        A god class centralizes too many responsibilities in one class. Here the issue is broadcast behavior inherited from Observer, not one class doing everything.
-    explanation: "**MVC inherits the notification storm from Observer — every model change broadcasts to all 50 views even if most don't need to update.** When the Model changes, it blindly broadcasts to ALL 50 views, even if most don't need to update for a given change. For example, a view with an iconized window may not need an update until the window is restored. Solutions include batched/deferred notifications, granular event types, and smart change detection."
-
+      0: "The scenario concerns active views doing unnecessary work, not subscriptions that should have been removed."
+      2: "Notification fan-out does not require dependencies between views. The stem identifies unnecessary redraws as the cost."
+      3: "A god class centralizes unrelated responsibilities. The problem here is excessive update work across many views."
+    explanation: "Broad notifications can trigger unnecessary work in many views. Measure which updates are expensive, then consider batching, deferral, or more specific events. This differs from failing to unsubscribe obsolete views."
   - id: 5
     difficulty: advanced
     type: single
-    question: |
-      Modern frameworks like React effectively replace MVC's Observer mechanism with reactive state management (hooks, signals). Which core MVC principle do these frameworks still preserve?
+    question: "A framework manages state-triggered rendering. Which architectural responsibility remains with the application developer?"
     options:
-      - "The Strategy pattern that lets controllers be swapped at runtime"
-      - "Separation of state, presentation, and event handling, even when the mechanism changes"
-      - "The Composite pattern used to assemble a nested UI tree of components"
-      - "The explicit Subject and Observer base classes from classic Smalltalk MVC"
+      - "Give every component a runtime-swappable controller."
+      - "Keep domain decisions separate from display and input code."
+      - "Replace every UI component tree with a domain-object tree."
+      - "Implement explicit Subject and Observer base classes."
     correct_index: 1
     option_feedback:
       0: |
@@ -100,26 +88,22 @@ questions:
         UI trees are common in modern frameworks, but the question asks for the core MVC principle. A component tree helps structure views; it is not the whole architectural separation.
       3: |
         Modern reactive systems often replace explicit Subject and Observer classes with hooks, signals, or data binding. The mechanism changes while the separation of state, UI, and events remains useful.
-    explanation: "React reconciles a virtual DOM on state change; Angular and SolidJS use signals; Vue 3 uses reactive proxies. The mechanism changes — framework-managed reactivity replaces explicit Observer — but the architectural principle endures: separate what the system *knows* (Model) from how it *looks* (View) from how the user *interacts* with it (Controller)."
-
+    explanation: "Framework-managed rendering does not choose the application’s domain boundaries. The developer still decides where domain rules, presentation state, and input handling belong; using reactivity alone does not enforce MVC."
   - id: 6
     difficulty: intermediate
     type: single
     question: |
       A user clicks "Add Task" in a classic MVC desktop app. In what order do the three components participate, starting with the click?
     options:
-      - "View receives the click, updates itself, then asks the Model to record the change"
-      - "Controller receives the click, updates the Model; the Model then notifies the View, which queries the Model and re-renders"
-      - "Model receives the click directly, updates its state, then pushes new data into the View"
-      - "View receives the click, asks the Controller to compute a new screen, then writes that screen into the Model"
+      - "View changes domain data, then Controller records it."
+      - "Controller changes Model; notified View reads and redraws."
+      - "Model handles the click, then Controller changes the View."
+      - "Controller builds a screen, then stores it in the Model."
     correct_index: 1
     option_feedback:
-      0: |
-        A view that updates its own state before involving the model bypasses the architecture's main rule: the model owns state. Letting the view mutate display data independently is where stale views and "two sources of truth" bugs come from.
-      2: |
-        The model in classic MVC is blind to input devices. It does not know about clicks, mouse events, or HTTP requests — it only exposes domain operations. Translating raw input into a domain call is the controller's job.
-      3: |
-        The view does delegate input to a controller, but the controller updates the *model*, not the view. The view re-renders by reading the model in response to a notification, not by being handed a pre-built screen.
+      0: "Presentation-only state can belong to a view, but task data in this example belongs to the model. The controller translates the input into a model operation."
+      2: "The model exposes domain operations rather than handling raw device events."
+      3: "For this classic notification flow, the controller requests a model change and the view refreshes from the model."
     explanation: "**The controller receives input and updates the model; the model then notifies subscribed views, which query the model and redraw.** Classic MVC has a clear input → state → presentation flow. The **controller** translates the raw user event into a domain operation on the **model**. Mutating the model fires an Observer notification, which prompts each registered **view** to query the model for the data it needs and re-render. The view or UI event system may receive the physical event and delegate input handling to the controller; the model remains independent of input devices."
 
   - id: 7
@@ -128,36 +112,28 @@ questions:
     question: |
       A team builds a server-side web app in Ruby on Rails. The Controller receives an HTTP request, updates the Model, then selects a template and renders HTML. The View never subscribes to model change events. Which statement best characterizes this architecture relative to classic Smalltalk MVC?
     options:
-      - "It is identical to classic MVC — the request-response cycle is just an implementation detail"
-      - "It is a server-side adaptation ('Model 2'); without view→model observation it is closer to Model-View-Adapter"
-      - "It is not MVC at all because it lacks a Controller — Rails uses MVT (Model-View-Template) instead"
-      - "It is the Document-View variant from POSA1, used by MFC and ET++"
+      - "It has the same persistent view subscriptions as classic MVC."
+      - "It renders a response per request without a persistent observing view."
+      - "It cannot separate domain logic because it uses HTTP."
+      - "It merges controller and view as in Document-View."
     correct_index: 1
     option_feedback:
-      0: |
-        The Observer link between Model and View is the defining mechanism of classic MVC. Removing it (because HTTP is request-response and the page is regenerated each request) is a real architectural difference, not just an implementation detail.
-      2: |
-        Rails uses MVC terminology and very much has a Controller layer. MVT is Django's renaming, where Django's "View" plays the controller role and the "Template" plays the view role.
-      3: |
-        Document-View merges *view and controller* into one component while keeping the model separate. The Rails arrangement keeps view and controller distinct but removes the Observer link between model and view.
-    explanation: "In classic Smalltalk MVC the View *observes* the Model directly. A web request-response cycle has no persistent View to subscribe — the page is regenerated each request — so the Controller fetches data from the Model and hands it to the chosen View template. This arrangement was originally called 'Model 2', and Martin Fowler has argued it is closer to Model-View-Adapter than to classic MVC."
-
+      0: "The scenario explicitly has no subscription connecting the rendered view to later model changes."
+      2: "Request-response applications can still separate domain logic from presentation."
+      3: "The controller and template remain separate; the changed mechanism is synchronization."
+    explanation: "This is a server-side MVC adaptation: request handling invokes model operations and renders a response. Live browser updates require an additional mechanism. The Java Model 2 terminology describes a related controller-servlet and view-template design; it is not the historical name of every web MVC framework."
   - id: 8
     difficulty: advanced
     type: single
-    question: |
-      An Android team rewrites a screen using MVVM. Compared to MVP's Passive View variant, what does the ViewModel add that the Presenter does not?
+    question: "An MVVM View binds to ViewModel state. How does this differ from a Passive View whose Presenter explicitly calls display setters?"
     options:
-      - "A way to make the View completely passive and forward all events to the mediator"
-      - "View-shaped state exposed through data binding, removing the manual Observer wiring"
-      - "A swappable input-handling Strategy so the controller can be replaced at runtime"
-      - "A Composite structure for nested UI components"
+      - "A View that forwards all events to a Presenter for explicit display updates"
+      - "Presentation state exposed to the View through a configured binding"
+      - "A swappable input-handling Strategy that replaces a controller at runtime"
+      - "A Composite structure that organizes nested UI components"
     correct_index: 1
     option_feedback:
-      0: |
-        A passive View that forwards every event to a mediator is the *Presenter's* job in MVP's Passive View. MVVM also keeps the View thin, but its distinguishing mechanism is data binding, not the passivity itself.
-      2: |
-        A swappable controller is the Strategy role in classic MVC. MVVM does not introduce that as its central new idea; data binding between View and ViewModel is what differentiates it from MVP.
-      3: |
-        Composite UI trees show up in both MVP and MVVM (and classic MVC). It is not the load-bearing distinction between Presenter and ViewModel.
-    explanation: "In MVP's Passive View the Presenter pushes data into View setters by hand and the View forwards events back. MVVM instead exposes view-shaped state and commands on the ViewModel through **data binding**, so the framework propagates changes for you with no Observer subscription written by the developer. It is described as a specialisation of Fowler's earlier *Presentation Model*."
+      0: "This describes the Passive View arrangement in the question. In the MVVM arrangement, the binding reads presentation state instead of a Presenter issuing display setters."
+      2: "A swappable controller is a Strategy role in classic MVC. It does not distinguish the given MVVM and Passive View arrangements."
+      3: "Both arrangements can use nested UI components; that does not identify how view updates are delivered."
+    explanation: "In the given MVVM arrangement, binding observes presentation state and updates the view. A Passive View presenter instead issues view updates explicitly. Automatic refresh still requires a correctly configured binding or subscription; merely naming a class ViewModel does not provide it."

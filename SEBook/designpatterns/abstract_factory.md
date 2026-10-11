@@ -13,12 +13,14 @@ The primary challenge arises when a system needs to be independent of how its pr
 *   **Tight Coupling:** If the `Pizza` class directly instantiates concrete ingredient classes, it becomes "intimate" with every regional variation, making it incredibly difficult to add a new region like Los Angeles without modifying existing code.
 
 # Solution
-The **Abstract Factory Pattern** provides an interface for creating families of related or dependent objects without specifying their concrete classes. *Note: Some sources call this a "factory of factories", but that shorthand is misleading: an Abstract Factory does not literally produce other factory objects—it produces product objects via factory objects.* A much better mental model is to think of it as a **"Product Family Factory"** or an **"Ingredients Factory"**. Structurally, a single Abstract Factory interface contains a collection of operations that fit the [**Factory Method**](/SEBook/designpatterns/factory_method.html) shape—one for each product in the family.
+The **Abstract Factory Pattern** provides an interface for creating families of related or dependent objects without specifying their concrete classes. *Note: Some sources call this a "factory of factories", but that shorthand is misleading: an Abstract Factory does not literally produce other factory objects—it produces product objects via factory objects.* A much better mental model is to think of it as a **"Product Family Factory"** or an **"Ingredients Factory"**. Its creation operations usually return the abstract product types in one family. Concrete factories commonly implement these operations as [**Factory Methods**](/SEBook/designpatterns/factory_method.html); prototype-based factories are another implementation. The defining intent is coordinated families, not a mandatory implementation technique {% cite Gamma1995 %}.
 
 The design pattern involves these roles:
 1.  **Abstract Factory Interface:** Defining an interface (e.g., `PizzaIngredientFactory`) with a creation method for each type of product in the family (e.g., `createDough()`, `createSauce()`).
 2.  **Concrete Factories:** Implementing regional subclasses (e.g., `NYPizzaIngredientFactory`) that produce the specific variants of those products.
-3.  **Client:** The client (e.g., the `Pizza` class) no longer knows about specific ingredients. Instead, it is passed an `IngredientFactory` and simply asks for its components, remaining completely oblivious to whether it is receiving New York or Chicago variants.
+3.  **Abstract Products:** Interfaces such as `Dough`, `Sauce`, and `Cheese` define what clients may do with each kind of product.
+4.  **Concrete Products:** Classes such as `ThinCrustDough` and `MarinaraSauce` implement those interfaces for one family.
+5.  **Client:** The client (e.g., the `Pizza` class) no longer knows about specific ingredients. Instead, it is passed a `PizzaIngredientFactory` and simply asks for its components, remaining completely oblivious to whether it is receiving New York or Chicago variants.
 
 ## UML Role Diagram
 
@@ -54,6 +56,10 @@ Client ..> AbstractProductA
 Client ..> AbstractProductB
 ConcreteFactory1 ..|> AbstractFactory
 ConcreteFactory2 ..|> AbstractFactory
+ConcreteFactory1 ..> ProductA1 : creates
+ConcreteFactory1 ..> ProductB1 : creates
+ConcreteFactory2 ..> ProductA2 : creates
+ConcreteFactory2 ..> ProductB2 : creates
 ProductA1 ..|> AbstractProductA
 ProductA2 ..|> AbstractProductA
 ProductB1 ..|> AbstractProductB
@@ -77,7 +83,7 @@ class ThinCrustDough
 class MarinaraSauce
 class ReggianoCheese
 class CheesePizza {
-	- ingredientFactory: PizzaIngredientFactory
+	- factory: PizzaIngredientFactory
 	+ prepare(): void
 }
 NYPizzaIngredientFactory ..|> PizzaIngredientFactory
@@ -85,9 +91,9 @@ ThinCrustDough ..|> Dough
 MarinaraSauce ..|> Sauce
 ReggianoCheese ..|> Cheese
 CheesePizza --> PizzaIngredientFactory : requests family
-NYPizzaIngredientFactory --> ThinCrustDough : creates
-NYPizzaIngredientFactory --> MarinaraSauce : creates
-NYPizzaIngredientFactory --> ReggianoCheese : creates
+NYPizzaIngredientFactory ..> ThinCrustDough : creates
+NYPizzaIngredientFactory ..> MarinaraSauce : creates
+NYPizzaIngredientFactory ..> ReggianoCheese : creates
 @enduml'></div>
 
 ## Sequence Diagram
@@ -103,19 +109,19 @@ activate pizza
 pizza -> factory: createDough()
 activate factory
 create dough
-factory --> dough: <<create>>
+factory -> dough: <<create>>
 factory --> pizza: Dough
 deactivate factory
 pizza -> factory: createSauce()
 activate factory
 create sauce
-factory --> sauce: <<create>>
+factory -> sauce: <<create>>
 factory --> pizza: Sauce
 deactivate factory
 pizza -> factory: createCheese()
 activate factory
 create cheese
-factory --> cheese: <<create>>
+factory -> cheese: <<create>>
 factory --> pizza: Cheese
 deactivate factory
 deactivate pizza
@@ -386,15 +392,15 @@ pizza.prepare();
 Applying the Abstract Factory pattern results in several significant architectural trade-offs. The original GoF catalog identifies four:
 
 *   **It isolates concrete classes.** The factory encapsulates the responsibility *and* the process of creating product objects, so clients manipulate instances only through their abstract interfaces. Concrete product class names are isolated inside the concrete factory and never appear in client code.
-*   **It makes exchanging product families easy.** Because the concrete factory class appears only once in an application (where it's instantiated), swapping the entire product family is a one-line change—switch the factory, and the whole family changes at once. In the GoF widget-toolkit example, you switch from Motif to Presentation Manager simply by swapping `MotifWidgetFactory` for `PMWidgetFactory`. In the pizza example, you switch a franchise's region by passing a different `PizzaIngredientFactory`.
-*   **It promotes consistency among products.** When products in a family are designed to work together, the pattern enforces that an application uses objects from only one family at a time, preventing incompatible combinations (e.g., NY thin-crust dough with Chicago plum-tomato sauce).
+*   **It makes exchanging product families easy.** When factory selection is centralized in application setup, changing that selection changes which family future creation calls produce. Already-created products do not change; switching an existing user interface also requires recreating its widgets. In the GoF widget-toolkit example, you switch from Motif to Presentation Manager simply by swapping `MotifWidgetFactory` for `PMWidgetFactory`. In the pizza example, you switch a franchise's region by passing a different `PizzaIngredientFactory`.
+*   **It promotes consistency among products.** When products in a family are designed to work together, routing those creation requests through one consistently implemented factory keeps the resulting products in one family. The interface alone does not prevent a client from mixing objects obtained from different factories or directly calling product constructors.
 *   **Supporting new kinds of products is difficult.** While adding new *families* is easy (write a new concrete factory + product implementations), adding new *types* of products is hard. Adding "Pepperoni" to the ingredient family requires changing the `PizzaIngredientFactory` interface *and* modifying every concrete factory subclass to implement the new method. This is a fundamental asymmetry: the pattern makes one axis of change easy (new families) at the cost of making the other axis hard (new product types).
 
 # Implementation Notes
 
 The original GoF catalog highlights three useful techniques for implementing Abstract Factory:
 
-*   **Factories as Singletons.** An application typically needs only one instance of a `ConcreteFactory` per product family, so the concrete factory is often implemented as a [Singleton](/SEBook/designpatterns/singleton.html). One `NYPizzaIngredientFactory` and one `ChicagoPizzaIngredientFactory` is usually all you need.
+*   **Factories as Singletons.** GoF suggests a [Singleton](/SEBook/designpatterns/singleton.html) when one concrete factory per family is sufficient. Sharing a factory does not require global access: application setup can create it once and inject it into clients. Stateless factories may also be cheap enough that multiple instances are harmless.
 *   **Creating products with Factory Methods.** `AbstractFactory` only declares an *interface* for creating products; it's up to `ConcreteFactory` subclasses to actually create them. The most common implementation is to define a [Factory Method](/SEBook/designpatterns/factory_method.html) for each product, and have each concrete factory override those methods. (This is exactly the shape of the example above: each `createX()` slot is itself a Factory Method.) An alternative—useful when many product families exist—is to use the **Prototype** pattern: the concrete factory stores a prototypical instance of each product and creates new ones by cloning.
 *   **Defining extensible factories.** Because `AbstractFactory` typically defines a separate operation per product kind, adding a new kind of product means changing the interface and every subclass. A more flexible (but less type-safe) variation collapses all the per-product operations into a single parameterized `make(kind)` operation, where the parameter identifies the kind of product to create. This trades compile-time type checking for the ability to add new product kinds without touching the interface.
 
@@ -411,7 +417,7 @@ The pattern shows up across very different domains:
 
 *   **[Factory Method](/SEBook/designpatterns/factory_method.html).** `AbstractFactory` operations are most commonly implemented *with* Factory Methods—each `createX()` slot is itself a Factory Method that a concrete factory subclass overrides.
 *   **Prototype.** An alternative implementation of Abstract Factory: instead of subclassing for each product family, the concrete factory holds a prototypical instance of each product and creates new ones by cloning.
-*   **[Singleton](/SEBook/designpatterns/singleton.html).** A concrete factory is often a Singleton, since one instance per product family typically suffices.
+*   **[Singleton](/SEBook/designpatterns/singleton.html).** A concrete factory can be shared as a Singleton, but Abstract Factory does not require single-instance enforcement or global access.
 
 # Comparing the Creational Patterns
 
@@ -419,14 +425,16 @@ Understanding when each creational pattern applies requires examining *which sub
 
 | Comparison point | **[Factory Method](/SEBook/designpatterns/factory_method.html)** | **Abstract Factory** | **[Builder](/SEBook/designpatterns/builder.html)** |
 |---|---|---|---|
-| **Focus** | One product type | Family of related product types | Complex product with many parts |
+| **Focus** | A creation hook varied by subclasses | Family of related product types | A product assembled in steps |
 | **Mechanism** | Inheritance (subclass overrides) | Composition (client receives factory object) | Step-by-step construction algorithm |
 | **Adding new variants** | Add new Creator subclass | Add new Concrete Factory + products | Add new Builder subclass |
-| **Adding new product types** | N/A (only one product) | Difficult (change interface + all factories) | Add new build step |
-| **Complexity** | Low | High (most variation points) | Medium |
-| **Key benefit** | Simplicity | Enforces family consistency | Communicates product structure |
+| **Changing the creation contract** | May require new hooks or parameters | New product kind changes the factory interface | New step may change the builder interface and directors |
+| **Main cost** | Creator subclasses | Factory and product families | Builder protocol and intermediate state |
+| **Key benefit** | Keep creator workflow independent of product classes | Centralize family selection | Vary representation without rewriting the construction algorithm |
 
 A common framing captures the relationship: Factory Method relies on **inheritance**—you extend a creator and override the factory method. Abstract Factory relies on **object composition**—you pass a factory object to the client, and the factory creates the products. (In practice, the two patterns are often layered: each `createX()` slot inside an Abstract Factory is itself a Factory Method.)
+
+Before adding this abstraction, identify the relationship that makes the products a family. If each component is chosen independently, separate factories or direct construction may be clearer than forcing every combination into a concrete family factory.
 
 ## Flashcards
 

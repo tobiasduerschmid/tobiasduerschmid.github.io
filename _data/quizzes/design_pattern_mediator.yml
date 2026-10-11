@@ -5,8 +5,7 @@ questions:
   - id: 1
     difficulty: advanced
     type: single
-    question: |
-      In a smart home, the AlarmClock, CoffeeMaker, Calendar, and Sprinkler coordinate via a SmartHomeHub (Mediator). The rule is: "When the alarm rings on a weekday, brew coffee and skip watering." If the team used Observer instead (CoffeeMaker observes AlarmClock directly), where would the "only on weekdays" rule live?
+    question: "The alarm always announces that it rang. CoffeeMaker directly observes that event and owns the decision to brew; Calendar only answers date queries. Where must the weekday check go in this proposed design?"
     options:
       - "In the AlarmClock — it would only notify on weekdays"
       - "In the CoffeeMaker — it would check the Calendar before brewing"
@@ -20,8 +19,7 @@ questions:
         The calendar can answer questions about dates, but it is not naturally in the path of an alarm notification. Making it filter notifications turns it into a coordinator without naming that responsibility.
       3: |
         Observer can implement conditional behavior; the issue is where that condition lives. Without a mediator, observers tend to pull in the extra collaborators they need to decide how to react.
-    explanation: "With Observer each observer decides independently how to react, so the CoffeeMaker would have to check the Calendar itself to know it's a weekday — making the CoffeeMaker **depend on** the Calendar, the tight coupling Mediator exists to prevent. The Mediator centralizes the rule instead: the Hub checks the calendar and commands the coffee maker, keeping each device independent."
-
+    explanation: "Under these stated responsibilities, CoffeeMaker must query Calendar before brewing. Moving that rule to SmartHomeHub changes the responsibility allocation and lets the device remain independent of household policy. Observer itself does not require the original allocation."
   - id: 2
     difficulty: intermediate
     type: single
@@ -45,13 +43,12 @@ questions:
   - id: 3
     difficulty: intermediate
     type: single
-    question: |
-      A Mediator for a complex system has grown to 2,000 lines of coordination logic. What design problem has occurred, and what is the best remedy?
+    question: "A smart-home Mediator owns unrelated billing, security, and morning-routine rules. Changes to any area repeatedly break the others. What design response best addresses this problem?"
     options:
-      - "The Mediator has become a god class — split it into focused mediators per concern"
-      - "The Mediator is working correctly — centralized logic is always large"
-      - "Replace the Mediator with a Facade"
-      - "Replace the Mediator with Observer to distribute the logic"
+      - "Separate coordination by cohesive area."
+      - "Keep adding rules because centralization requires it."
+      - "Rename the same class Facade without moving any rules."
+      - "Move each rule into whichever device reports its event."
     correct_index: 0
     option_feedback:
       1: |
@@ -60,13 +57,11 @@ questions:
         A Facade simplifies access to a subsystem; it does not coordinate peer objects reacting to each other's events. Replacing a bloated mediator with a facade usually changes the problem rather than solving the bloat.
       3: |
         Observer may spread the same coordination rules across many observers. That can make each class smaller while making the overall behavior harder to trace.
-    explanation: "Mediator displaces coordination complexity into a central location rather than removing it, so genuinely complex coordination yields a genuinely complex **god class**. The remedy is to split it into several focused mediators by concern (e.g., a `MorningRoutineMediator` and a `SecurityMediator`). Replacing it with Observer would only scatter the same logic without reducing it."
-
+    explanation: "Unrelated reasons to change and interference between areas indicate low cohesion. Separate cohesive coordination responsibilities while making their interactions explicit. Line count alone would not prove a god class."
   - id: 4
     difficulty: advanced
     type: single
-    question: |
-      A "Managed Observer" is a pattern compound that combines Observer and Mediator. What emergent property does this combination provide?
+    question: "Colleagues publish events through Observer-style subscriptions. A mediator subscribes and coordinates their response. What does combining these patterns provide?"
     options:
       - "It eliminates the need for an Observer interface"
       - "It combines Observer's loose coupling with Mediator's centralized rules"
@@ -80,8 +75,7 @@ questions:
         The mediator is the part that manages the reaction rules. Removing it would leave observers to coordinate with each other or duplicate policy locally.
       3: |
         Direct observer-to-observer communication would recreate the peer coupling the mediator is meant to avoid. The compound keeps colleagues decoupled while still letting their changes trigger coordinated responses.
-    explanation: "Colleagues use Observer-style notifications to inform the mediator ('I changed'), and the mediator uses direct method calls to coordinate the response ('you should update'). The result combines the loose coupling of Observer (colleagues don't know about each other) with the centralized intelligence of Mediator (complex rules live in one place) — neither pattern alone provides both."
-
+    explanation: "Observer handles notification subscriptions; the Mediator owns coordination policy. This division is useful when both subscription flexibility and centralized rules are needed. Either pattern can still be useful independently."
   - id: 6
     difficulty: advanced
     type: single
@@ -105,8 +99,7 @@ questions:
   - id: 5
     difficulty: advanced
     type: single
-    question: |
-      The Mediator pattern converts N-to-N dependencies into N-to-1 dependencies. Why doesn't this always reduce overall system complexity?
+    question: "A Mediator reduces direct peer dependencies. Why might the coordination still be difficult to understand?"
     options:
       - "Because N-to-1 is always more complex than N-to-N"
       - "Because the coordination logic is displaced into the Mediator, not eliminated"

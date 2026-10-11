@@ -11,33 +11,28 @@ cards:
   - id: 2
     difficulty: basic
     question: "What problem does Null Object solve?"
-    answer: "It replaces a `null` (or absent) collaborator with a real object whose methods do nothing. Clients call the same operation regardless of which collaborator is wired in — no scattered null checks, no `NullPointerException` risk."
-    explanation: "Without the pattern, every call site needs `if (collaborator != null) collaborator.do(...)`. Forget the guard once and you crash. The Null Object lifts the do-nothing concern out of the call site and into a single named class."
-
+    answer: "It represents a legitimately absent collaborator with a real no-op implementation, allowing uniform calls once construction guarantees a non-null collaborator."
+    explanation: "The pattern removes repeated guards; it does not prevent callers from passing null or None. Enforce the collaborator contract at the wiring boundary."
   - id: 3
     difficulty: basic
     question: "What are the four roles in the Null Object pattern?"
     answer: "**Client** (uses the collaborator), **AbstractObject** (the interface the client expects), **RealObject** (does useful work), **NullObject** (implements the same interface but does nothing)."
-    explanation: "The Client only ever depends on `AbstractObject`. Both `RealObject` and `NullObject` are interchangeable through that interface — a textbook application of [Liskov substitutability](/SEBook/designprinciples/solid.html#liskov-substitution-principle-lsp)."
-
+    explanation: "Real and Null implementations must satisfy the same behavioral contract. A no-op is not substitutable for a method that promises a required state change merely because the signatures match."
   - id: 4
     difficulty: advanced
     question: "When should you use Null Object? Name the Applicability criteria."
     answer: "(1) An object already requires a collaborator. (2) Some legitimate instances should do nothing. (3) Clients should not have to check for null. (4) The do-nothing behavior is reusable. (5) All do-nothing behavior fits in a single class."
-    explanation: "All five criteria should hold. If only one or two apply, a single `if (x != null)` is usually simpler. Don't introduce Null Object until you have at least one real client that needs it (Rule of Three)."
-
+    explanation: "These criteria identify a useful fit. They are not a numerical Rule of Three; compare the benefit of a named no-op with the cost of extra types in the actual design."
   - id: 5
     difficulty: advanced
     question: "When should you NOT use Null Object?"
-    answer: "When (a) you only have one client and one call site, (b) the *absence* carries information the client must act on (404, 'no record'), (c) the collaborator must transform into a real one later (use [Proxy](https://en.wikipedia.org/wiki/Proxy_pattern)), or (d) monitoring systems need to distinguish 'skipped' from 'did nothing.'"
-    explanation: "Null Object silently swallows operations — that's its job. When that's the wrong response (a missing user is a real failure; a misconfigured logger is a real bug), keep `Optional`/`Maybe`/exceptions and handle the absence explicitly."
-
+    answer: "Avoid it when absence carries information the client must act on, neutral behavior violates the contract, or a simple explicit check is clearer. A stand-in that lazily creates and forwards to a real subject is instead a Proxy."
+    explanation: "Client count is a cost-benefit clue, not a prerequisite. Null Object is useful only when its no-op or neutral results are valid for the collaboration; it must not hide required errors."
   - id: 6
     difficulty: intermediate
-    question: "Why is a Null Object usually implemented as a Singleton?"
-    answer: "A Null Object typically has no instance data — its state can never change because it never does anything. So multiple instances are indistinguishable, and one shared instance is enough."
-    explanation: "The typical idioms are `SilentLogger.INSTANCE` (Java), a module-level constant (Python), or `static SilentLogger& instance()` (C++)."
-
+    question: "When can a Null Object be shared, and does sharing require Singleton?"
+    answer: "A stateless or safely immutable Null Object can be shared when clients do not depend on its identity. Sharing by injection or a module-level binding does not require enforced Singleton construction."
+    explanation: "The Python module-level instance is shared by convention; another SilentLogger() is still allowed. A Singleton adds a construction restriction and a point of access."
   - id: 7
     difficulty: intermediate
     question: "What is a *Null Strategy*? Give an example."
@@ -48,46 +43,39 @@ cards:
     difficulty: intermediate
     question: "What is a *Null State*? Give an example."
     answer: "A ConcreteState whose operations all do nothing or return null results — the State pattern with a Null Object playing one of the state roles. Example: a `NotLoggedInState` whose `viewProfile()` does nothing because the user has no profile to show yet."
-    explanation: "Useful for initialization states ('not yet started'), terminal states ('shutdown complete'), or states where most operations are simply not applicable yet."
-
+    explanation: "All operations covered by the Null State contract must have valid no-op or neutral-result behavior. A state with an active login or start transition is not wholly null just because other operations do nothing."
   - id: 9
     difficulty: advanced
-    question: "Why is there NO 'Null Decorator'?"
-    answer: "A Decorator must wrap a real object and forward calls to it. A Decorator with no wrappee has nothing to decorate — the role itself disappears. Without something to forward to, you don't have a Decorator; you just have a Null Object impersonating the wrapped type directly."
-    explanation: "This is called out explicitly in the [Pattern Compounds](/SEBook/designpatterns.html#communicating-design-intent-and-context-tailoring) discussion. State and Strategy work as Null compounds because 'do nothing' is still a complete implementation of the state/strategy interface; Decorator's contract is fundamentally different."
-
+    question: "Why is a pass-through Decorator different from a Null Object?"
+    answer: "A pass-through Decorator adds no behavior but still invokes its component. A Null Object itself supplies the valid no-op or neutral result."
+    explanation: "A decorator can wrap a Null Object. Classify the collaboration and call behavior, not whether a class name contains Null."
   - id: 10
     difficulty: intermediate
     question: "What is the most dangerous *liability* of the Null Object pattern?"
-    answer: "It silently swallows every operation it receives. If misconfiguration wires the Null Object in by mistake (e.g., `SilentLogger` in production), you can lose months of expected behavior before noticing. The pattern hides the absence by design."
-    explanation: "Mitigations: (1) name the class for what it actually does (`SilentLogger`, not `DefaultLogger`); (2) log at startup which collaborator was wired in; (3) reserve Null Object for cases where 'do nothing' is a genuine domain decision, never a fallback for 'we couldn't construct the real one.'"
-
+    answer: "Its valid no-op or neutral-result behavior can hide an incorrect binding. If a service requires recorded diagnostics but receives a SilentLogger, missing behavior may go unnoticed."
+    explanation: "Use a descriptive name, inspect configuration, and test required behavior. Startup logs aid diagnosis but do not ensure an incorrect binding is noticed or rejected."
   - id: 11
     difficulty: advanced
     question: "How is Null Object different from a Proxy?"
-    answer: "A **Proxy** stands in for a real subject and may forward calls to it (lazy initialization, remoting, access control). A **Null Object** *replaces* the real subject permanently and never forwards anywhere. A Null Object never transforms into a Real Object."
-    explanation: "If your stand-in might 'wake up' and start doing real work, it's a Proxy, not a Null Object. The two patterns look similar at the call site but have opposite intents."
-
+    answer: "Proxy controls access to another subject. Null Object supplies no-op behavior instead of forwarding to a real subject. The client may later replace its Null Object reference without the Null Object itself transforming."
+    explanation: "Distinguish replacing a collaborator reference from a stable proxy switching its underlying subject."
   - id: 12
     difficulty: advanced
     question: "How does Null Object relate to Fowler's *Special Case* pattern?"
-    answer: "Special Case is the broader pattern: any 'exceptional' instance handled uniformly through the same interface (e.g., `MissingCustomer` returning sensible defaults). Null Object is the specific case where the special case literally *does nothing*."
-    explanation: "Fowler's `MissingCustomer` might still answer questions sensibly (`name() = 'Unknown'`, `taxId() = 'N/A'`) — that's Special Case but not Null Object. A `SilentLogger` whose `log()` is a no-op is both Special Case AND Null Object."
-
+    answer: "Special Case handles exceptional instances uniformly through a common interface. Null Object is the specialization for an absent collaborator with valid no-op or neutral-result behavior."
+    explanation: "A default such as Unknown does not by itself distinguish the patterns: neutral results can be valid Null Object behavior too. Examine the role of the absent collaborator and its contract."
   - id: 13
     difficulty: advanced
     question: "How does Null Object relate to `Optional` / `Maybe` types?"
-    answer: "They address the same problem (avoid `null`-related crashes) at *different* levels. `Optional` is type-system-level — the type forces clients to handle both arms. Null Object is runtime-polymorphism-level — clients call the same method either way. The two are complementary, not competing."
-    explanation: "An `Optional<AuditLogger>` whose empty case is filled by a `SilentLogger` at the wiring boundary gives you both the type-level guarantee *and* the call-site simplicity. In modern languages with sound nullability, prefer `Optional` for cases where absence is meaningful; reach for Null Object when call-site uniformity matters more."
-
+    answer: "Optional or Maybe represents presence or absence explicitly. Null Object supplies uniform behavior after absence has been resolved to a no-op collaborator. Use the former when callers must distinguish absence; combine them at a wiring boundary when useful."
+    explanation: "Exhaustive matching can require handling both cases. Java Optional.get() can still throw on an empty value, so Optional does not universally force safe handling."
   - id: 14
     difficulty: advanced
     question: "What's a `NullIterator`, and where does it appear in real codebases?"
     answer: "An `Iterator` whose `hasNext()` always returns `false`. A leaf node in a tree returns one when asked for an iterator over its (non-existent) children, so clients iterate uniformly over leaves and composites."
-    explanation: "Real-world examples: `Collections.emptyIterator()` (Java), `iter([])` (Python), `std::ranges::empty_view` (C++). The Gang of Four document it as a worked example inside the Iterator pattern entry."
-
+    explanation: "Java Collections.emptyIterator() and Python iter([]) are empty iterators. C++ std::ranges::empty_view is an empty range, not itself an iterator. Exhausted iterators still obey their language-specific end-of-iteration contract."
   - id: 15
     difficulty: intermediate
     question: "Why should a Null Object be *named for what it does*, not labeled as 'default'?"
-    answer: "A name like `SilentLogger` or `EmptyPermissions` announces the do-nothing intent at every wiring site. A name like `DefaultLogger` or `BasicPermissions` suggests 'what you usually want' — the opposite of what a Null Object actually does. A misleading name makes silent-bug-masking far more likely."
-    explanation: "This is the project's strongest defense against the bug-masking liability. If a code reviewer sees `injector.bind(AuditLogger.class).toInstance(new SilentLogger())` in production wiring, the name alone forces them to ask 'wait, is this on purpose?' — a question they would never ask about `new DefaultLogger()`."
+    answer: "SilentLogger or EmptyPermissions describes the behavior directly. DefaultLogger only describes its selection policy, which may conceal a surprising no-op. A Null Object can be a legitimate default, but its behavior should still be clear."
+    explanation: "A descriptive name supports review; it cannot prove configuration is correct. Validate required bindings and test their behavior."

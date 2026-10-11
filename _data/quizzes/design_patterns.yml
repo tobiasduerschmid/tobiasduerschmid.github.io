@@ -5,8 +5,7 @@ questions:
   - id: 1
     difficulty: intermediate
     type: single
-    question: |
-      A colleague proposes using the Observer pattern in a module that has exactly one dependent object which will never change. What is the best assessment of this decision?
+    question: "A module directly calls its single fixed dependent. Neither side needs independent reuse, and there is no subscription or notification policy to vary. What is the best assessment of replacing this call with an Observer registry?"
     options:
       - "Good idea — it future-proofs the design for when more observers are needed"
       - "Bad idea — the pattern adds unnecessary complexity without addressing a real problem"
@@ -14,14 +13,10 @@ questions:
       - "It depends on whether the programming language supports interfaces"
     correct_index: 1
     option_feedback:
-      0: |
-        Future-proofing only helps when the future pressure is plausible enough to justify today's complexity. With one stable dependent, a direct call is clearer.
-      2: |
-        Design patterns are not automatic quality upgrades. They solve specific forces, and applying them without those forces adds indirection.
-      3: |
-        Interfaces can make Observer easier to express, but language support is not the deciding factor. The question is whether the dependency is dynamic and one-to-many.
-    explanation: "Observer solves a **dynamic, one-to-many** dependency. With exactly one dependent that never changes, there is no one-to-many problem and no need for dynamic subscription, so the subscriber list and notification logic add indirection for no benefit — the 'Hammer and Nail' syndrome of applying a pattern without a matching problem. The **Rule of Three** suggests waiting until you've seen the need at least three times."
-
+      0: "The scenario gives no concrete variation or decoupling need to justify the extra registry."
+      2: "A pattern is useful when its benefits address actual design forces."
+      3: "Callbacks can implement Observer without explicit interfaces. The question is whether the extra notification mechanism solves a problem here."
+    explanation: "A direct call is sufficient under these assumptions. Observer can be useful with even one current observer when independent reuse or lifecycle management matters; neither multiple subscribers nor a Rule of Three is a prerequisite."
   - id: 2
     difficulty: advanced
     type: single
@@ -40,8 +35,7 @@ questions:
         Passing a test is not the same as preserving the pattern's design benefit. Observer is meant to reduce coupling, and private-field access reintroduces it.
       3: |
         Push versus pull concerns how state is supplied during notification. Either variant can still be tightly coupled if the observer bypasses the subject's public API.
-    explanation: "Reaching into the subject's private state recouples the observer to its concrete implementation, defeating the loose coupling Observer exists to provide — even though the code still produces correct output. Studies of student work find exactly this: students reproduce a pattern's gross structure but introduce dependencies that violate its intent (74% of submissions in one study). Correct behavior is not the same as correct design."
-
+    explanation: "Private-field access bypasses the public contract and couples the observer to representation details. Successful output does not establish that the intended modularity has been preserved."
   - id: 3
     difficulty: intermediate
     type: single
@@ -54,14 +48,10 @@ questions:
       - "Factory Method — creation of documents should be deferred to subclasses"
     correct_index: 2
     option_feedback:
-      0: |
-        Observer would notify other objects after a change. It does not remove the repeated `switch` logic that decides how the document itself behaves in each status.
-      1: |
-        Strategy fits when a client selects an algorithm. Here the document's own lifecycle status determines behavior and transitions internally.
-      3: |
-        Factory Method addresses object creation. The pain here is state-dependent behavior repeated across methods after the document already exists.
-    explanation: "The diagnostic is a `switch` on a status variable repeated across many methods, with transitions driven by the object's own lifecycle. State replaces each branch with a polymorphic state object — **polymorphism over conditions**. Strategy would fit if the *client* selected the behavior explicitly, but here the transitions are internal."
-
+      0: "Observer notifies other objects; it does not organize this object’s repeated state-dependent behavior."
+      1: "Strategy encapsulates alternative algorithms. The defining concern here is behavior associated with document lifecycle states, not who calls the selector."
+      3: "Factory Method varies object creation; the problem arises after the document already exists."
+    explanation: "Repeated behavior dispatch on lifecycle status makes State a candidate. It localizes state-specific behavior; transitions may be requested by clients or implemented by the context and state objects. Selection syntax alone does not distinguish it from Strategy."
   - id: 4
     difficulty: advanced
     type: single
@@ -80,8 +70,7 @@ questions:
         "A singleton for each tenant" contradicts the original process-wide one-instance premise. The design needs scoped lifetime management, not several globals with the same problem.
       3: |
         Adapter can translate an interface, but it cannot turn one shared pool into separate tenant pools. The cardinality assumption has to change.
-    explanation: "Multi-tenancy invalidates Singleton's core premise: 'exactly one instance' was a convenience assumption, not a hard requirement, and many singletons later need per-tenant, per-test, or per-thread instances. POSA5 calls Singleton a 'pattern with a weak solution' for exactly this reason. **Dependency injection with singleton scope** sidesteps it — the container manages lifetime without baking the cardinality into the code."
-
+    explanation: "The original global pool cannot serve the new per-tenant requirement unchanged. A registry or explicit per-tenant lifetime management can supply separate pools. Dependency injection makes this lifetime policy replaceable; it need not involve a framework, and a single global container scope would still be the wrong scope."
   - id: 5
     difficulty: intermediate
     type: single
@@ -100,8 +89,7 @@ questions:
         Builder assembles one complex product through steps. Here the central force is choosing compatible objects across a product family.
       3: |
         One ingredient factory instance would not by itself guarantee family consistency. The pattern needed is an interface that creates related products together.
-    explanation: "The discriminator is *consistency across a product family*: Abstract Factory hands back a whole set of related products (Dough, Sauce, Cheese) guaranteed to match, so NY dough always pairs with NY sauce and NY cheese. Factory Method varies only one product type; Builder assembles one complex product step by step."
-
+    explanation: "Abstract Factory exposes creation operations for related product types. A correctly implemented concrete factory can supply a compatible family when clients consistently use it. The pattern does not prevent clients from mixing factories or manually constructed products; Factory Method may implement the individual creation operations."
   - id: 6
     difficulty: intermediate
     type: single
@@ -187,8 +175,7 @@ questions:
   - id: 10
     difficulty: intermediate
     type: single
-    question: |
-      MVC is described as a 'compound pattern.' Which three patterns does it combine?
+    question: "The GoF discussion of classic Smalltalk MVC highlights which three collaborating patterns?"
     options:
       - "Singleton + Factory Method + Adapter"
       - "Observer + Strategy + Composite"
@@ -202,8 +189,7 @@ questions:
         MVC may include stateful models and coordinating controllers, but the standard pattern compound taught here is Observer, Strategy, and Composite.
       3: |
         Iteration, command objects, and decorators can appear in UI systems, but they are not the classic trio that explains MVC's model-view-controller separation.
-    explanation: "MVC combines **Observer** (the model notifies views of state changes), **Strategy** (the view delegates input handling to a swappable controller), and **Composite** (the view is a tree of nested UI components). Together they decouple model, view, and controller while keeping them synchronized."
-
+    explanation: "In classic Smalltalk MVC, Observer propagates model changes, Strategy varies input handling through controllers, and Composite supports nested views. This describes that design; adaptations called MVC do not have to implement all three explicitly."
   - id: 11
     difficulty: intermediate
     type: single
@@ -242,4 +228,4 @@ questions:
         Wrapping an adaptee via composition is a standard object-adapter implementation. The concern is the logic inside the wrapper, not the fact that it wraps.
       3: |
         Multiple inheritance is not required for Adapter and is unavailable or discouraged in many languages. Composition is a normal implementation route.
-    explanation: "Looping five short turkey flights to approximate one long duck flight is **behavioral adaptation**, not interface translation. As adapters accumulate this kind of logic they grow 'thicker' and drift from translators into separate service components. Renaming a call (quack→gobble) is low-risk; behavioral logic inside an adapter warrants scrutiny."
+    explanation: "An Adapter may perform substantial behavioral translation, but it must satisfy the target contract. Five short flights do not automatically meet a long-flight requirement: validate distance, continuity, and relevant side effects. The risk is an unproved contract mapping, not a rule that adapters may only rename methods."

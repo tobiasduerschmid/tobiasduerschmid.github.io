@@ -12,7 +12,7 @@ cards:
     difficulty: basic
     question: "What are the core roles in the Command pattern?"
     answer: "Command, ConcreteCommand, Invoker, Receiver, and Client."
-    explanation: "The Client builds a ConcreteCommand with a Receiver. The Invoker stores and executes the Command. The Receiver performs the actual domain work."
+    explanation: "The Client typically builds a ConcreteCommand with a Receiver. The Invoker stores and executes the Command. GoF also permits a command to perform its own work without a separate Receiver."
 
   - id: 3
     difficulty: intermediate
@@ -24,7 +24,7 @@ cards:
     difficulty: intermediate
     question: "How does Command support undo?"
     answer: "Each command stores enough information to reverse its own effect, either by calling an inverse operation or restoring previous state."
-    explanation: "Undo is not automatic. The command object must deliberately capture old state, know the inverse action, or reject undo when reversing would be unsafe."
+    explanation: "Undo is not automatic. A value-setting command saves the prior value; simply calling the opposite operation may not restore it. Multi-step history needs a separate record for each execution."
 
   - id: 5
     difficulty: basic
@@ -66,7 +66,7 @@ cards:
     difficulty: intermediate
     question: "What is the constructor-argument style of Command?"
     answer: "The command receives its receiver and request data when it is created."
-    explanation: "This makes the command self-contained, which is useful for queuing, logging, retrying, and executing later without additional context."
+    explanation: "This can make deferred execution simpler. Durable queues also need serializable data and stable receiver identifiers; retries need a policy that prevents duplicate effects."
 
   - id: 12
     difficulty: basic

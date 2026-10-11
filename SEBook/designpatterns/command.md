@@ -114,11 +114,13 @@ interface Command {
     + undo(): void
 }
 class LightOnCommand {
+    - previousOn: boolean
     - light: Light
     + execute(): void
     + undo(): void
 }
 class LightOffCommand {
+    - previousOn: boolean
     - light: Light
     + execute(): void
     + undo(): void
@@ -128,6 +130,9 @@ class NoCommand {
     + undo(): void
 }
 class Light {
+    - on: boolean
+    + isOn(): boolean
+    + setOn(value: boolean): void
     + on(): void
     + off(): void
 }
@@ -135,8 +140,8 @@ RemoteControl o--> Command : slot and history
 LightOnCommand ..|> Command
 LightOffCommand ..|> Command
 NoCommand ..|> Command
-LightOnCommand --> Light : on off
-LightOffCommand --> Light : off on
+LightOnCommand --> Light : capture and restore
+LightOffCommand --> Light : capture and restore
 note bottom of NoCommand
 Null Object: every slot has
 safe behavior before setup.
@@ -145,7 +150,7 @@ end note
 
 ## Sequence Diagram
 
-The sequence diagram captures the runtime point that class diagrams cannot: `undo` is just another message to the last command object, not special knowledge inside the remote.
+The sequence diagram shows a light that starts off. The command captures its previous value before switching it on, then restores that value on undo. The remote remembers only the last command and consumes that one-step history after undo.
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 actor user: User
@@ -156,7 +161,11 @@ user -> remote: pressOn
 activate remote
 remote -> command: execute
 activate command
-command -> light: on
+command -> light: isOn()
+activate light
+light --> command: false
+deactivate light
+command -> light: on()
 activate light
 deactivate light
 deactivate command
@@ -168,10 +177,13 @@ user -> remote: pressUndo
 activate remote
 remote -> command: undo
 activate command
-command -> light: off
+command -> light: setOn(previousOn)
 activate light
 deactivate light
 deactivate command
+remote -> remote: clear undoCommand
+activate remote
+deactivate remote
 deactivate remote
 @enduml'></div>
 
@@ -190,7 +202,7 @@ This is not just "remove a switch statement". It changes the design from "the di
 
 # Code Example
 
-The same remote-control design appears below in Java, C++, Python, and TypeScript. The class names stay intentionally parallel so you can compare the shape of the pattern rather than the syntax of each language.
+The same remote-control design appears below in Java, C++, Python, and TypeScript. Each command remembers whether the light was on immediately before its most recent execution. This matters when On is pressed twice: undoing the second press must leave the light on. The remote supports one undo, consumed after use; it assumes no other actor changes the light between execution and undo.
 
 > **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
 
@@ -210,13 +222,17 @@ interface Command {
 }
 
 final class Light {
-    void on() {
-        System.out.println("Light is on");
+    private boolean on;
+
+    boolean isOn() { return on; }
+
+    void setOn(boolean value) {
+        on = value;
+        System.out.println(on ? "Light is on" : "Light is off");
     }
 
-    void off() {
-        System.out.println("Light is off");
-    }
+    void on() { setOn(true); }
+    void off() { setOn(false); }
 }
 
 final class NoCommand implements Command {
@@ -226,33 +242,37 @@ final class NoCommand implements Command {
 
 final class LightOnCommand implements Command {
     private final Light light;
+    private boolean previousOn;
 
     LightOnCommand(Light light) {
         this.light = light;
     }
 
     public void execute() {
+        previousOn = light.isOn();
         light.on();
     }
 
     public void undo() {
-        light.off();
+        light.setOn(previousOn);
     }
 }
 
 final class LightOffCommand implements Command {
     private final Light light;
+    private boolean previousOn;
 
     LightOffCommand(Light light) {
         this.light = light;
     }
 
     public void execute() {
+        previousOn = light.isOn();
         light.off();
     }
 
     public void undo() {
-        light.on();
+        light.setOn(previousOn);
     }
 }
 
@@ -278,6 +298,7 @@ final class RemoteControl {
 
     void pressUndo() {
         undoCommand.undo();
+        undoCommand = new NoCommand();
     }
 }
 
@@ -302,6 +323,7 @@ public class Demo {
 ```cpp
 #include <iostream>
 #include <memory>
+#include <utility>
 
 class Command {
 public:
@@ -312,13 +334,18 @@ public:
 
 class Light {
 public:
-    void on() {
-        std::cout << "Light is on\n";
+    bool isOn() const { return on_; }
+
+    void setOn(bool value) {
+        on_ = value;
+        std::cout << (on_ ? "Light is on\n" : "Light is off\n");
     }
 
-    void off() {
-        std::cout << "Light is off\n";
-    }
+    void on() { setOn(true); }
+    void off() { setOn(false); }
+
+private:
+    bool on_ = false;
 };
 
 class NoCommand : public Command {
@@ -333,15 +360,17 @@ public:
         : light_(std::move(light)) { }
 
     void execute() override {
+        previousOn_ = light_->isOn();
         light_->on();
     }
 
     void undo() override {
-        light_->off();
+        light_->setOn(previousOn_);
     }
 
 private:
     std::shared_ptr<Light> light_;
+    bool previousOn_ = false;
 };
 
 class LightOffCommand : public Command {
@@ -350,15 +379,17 @@ public:
         : light_(std::move(light)) { }
 
     void execute() override {
+        previousOn_ = light_->isOn();
         light_->off();
     }
 
     void undo() override {
-        light_->on();
+        light_->setOn(previousOn_);
     }
 
 private:
     std::shared_ptr<Light> light_;
+    bool previousOn_ = false;
 };
 
 class RemoteControl {
@@ -386,6 +417,7 @@ public:
 
     void pressUndo() {
         undoCommand_->undo();
+        undoCommand_ = std::make_shared<NoCommand>();
     }
 
 private:
@@ -425,11 +457,18 @@ class Command(ABC):
 
 
 class Light:
+    def __init__(self) -> None:
+        self.is_on = False
+
+    def set_on(self, value: bool) -> None:
+        self.is_on = value
+        print("Light is on" if value else "Light is off")
+
     def on(self) -> None:
-        print("Light is on")
+        self.set_on(True)
 
     def off(self) -> None:
-        print("Light is off")
+        self.set_on(False)
 
 
 class NoCommand(Command):
@@ -443,23 +482,27 @@ class NoCommand(Command):
 class LightOnCommand(Command):
     def __init__(self, light: Light) -> None:
         self.light = light
+        self.previous_on = False
 
     def execute(self) -> None:
+        self.previous_on = self.light.is_on
         self.light.on()
 
     def undo(self) -> None:
-        self.light.off()
+        self.light.set_on(self.previous_on)
 
 
 class LightOffCommand(Command):
     def __init__(self, light: Light) -> None:
         self.light = light
+        self.previous_on = False
 
     def execute(self) -> None:
+        self.previous_on = self.light.is_on
         self.light.off()
 
     def undo(self) -> None:
-        self.light.on()
+        self.light.set_on(self.previous_on)
 
 
 class RemoteControl:
@@ -482,6 +525,7 @@ class RemoteControl:
 
     def press_undo(self) -> None:
         self.undo_command.undo()
+        self.undo_command = NoCommand()
 
 
 light = Light()
@@ -501,13 +545,17 @@ interface Command {
 }
 
 class Light {
-  on(): void {
-    console.log("Light is on");
+  private onValue = false;
+
+  isOn(): boolean { return this.onValue; }
+
+  setOn(value: boolean): void {
+    this.onValue = value;
+    console.log(value ? "Light is on" : "Light is off");
   }
 
-  off(): void {
-    console.log("Light is off");
-  }
+  on(): void { this.setOn(true); }
+  off(): void { this.setOn(false); }
 }
 
 class NoCommand implements Command {
@@ -516,26 +564,32 @@ class NoCommand implements Command {
 }
 
 class LightOnCommand implements Command {
+  private previousOn = false;
+
   constructor(private readonly light: Light) {}
 
   execute(): void {
+    this.previousOn = this.light.isOn();
     this.light.on();
   }
 
   undo(): void {
-    this.light.off();
+    this.light.setOn(this.previousOn);
   }
 }
 
 class LightOffCommand implements Command {
+  private previousOn = false;
+
   constructor(private readonly light: Light) {}
 
   execute(): void {
+    this.previousOn = this.light.isOn();
     this.light.off();
   }
 
   undo(): void {
-    this.light.on();
+    this.light.setOn(this.previousOn);
   }
 }
 
@@ -561,6 +615,7 @@ class RemoteControl {
 
   pressUndo(): void {
     this.undoCommand.undo();
+    this.undoCommand = new NoCommand();
   }
 }
 
@@ -580,7 +635,7 @@ In languages with first-class functions, a command can sometimes be just a funct
 
 ## Execute Only vs. Execute and Undo
 
-The smallest command interface has only `execute()`. Add `undo()` only when the product actually needs undo or redo. Undo is not automatic: each command must either store enough old state to restore the receiver or know the inverse operation. Commands that cannot be undone should say so explicitly rather than pretending.
+The smallest command interface has only `execute()`. Add `undo()` only when the product actually needs undo or redo. Undo is not automatic: each command must either store enough old state to restore the receiver or know the inverse operation. Commands that cannot be undone should say so explicitly rather than pretending. A multi-step history needs a separate record of each execution: pushing the same mutable command object repeatedly would overwrite earlier snapshots. Redo also needs a defined policy for reapplying the saved request.
 
 ## Constructor Arguments vs. Execute Arguments
 
@@ -600,7 +655,7 @@ Constructor arguments make commands self-contained, which helps queuing and logg
 
 ## Receiver-Centric vs. Smart Commands
 
-A simple command just forwards one call to a receiver. A smarter command may validate permissions, store previous receiver state, coordinate several receiver calls, or emit domain events. Keep that logic inside the command only when it belongs to the request itself. If commands start becoming mini services with unrelated responsibilities, the pattern is hiding a design problem.
+A simple command just forwards one call to a receiver. A smarter command may validate permissions, store previous receiver state, coordinate several receiver calls, or emit domain events. GoF also permits a command to perform the work itself when no separate receiver is needed. Keep that logic inside the command only when it belongs to the request itself. If commands start becoming mini services with unrelated responsibilities, the pattern is hiding a design problem.
 
 ## Null Command
 
@@ -612,7 +667,7 @@ A macro command stores a list of commands and implements the same interface. `ex
 
 ## Queued and Logged Commands
 
-For queues, retries, and transaction logs, the command must carry stable data rather than live object references. A command like "email user 42 with template welcome" can be serialized. A command holding a raw in-memory `User` object usually cannot. This is the point where Command overlaps with messages, jobs, and event-driven architecture.
+For durable queues or logs that survive a process restart, commands need serializable request data and stable receiver identifiers. An in-memory queue can hold live objects as long as their lifetimes remain valid. A command like "email user 42 with template welcome" can be serialized. A command holding a raw in-memory `User` object usually cannot. This is the point where Command overlaps with messages, jobs, and event-driven architecture. Retrying execution also requires an idempotency or duplicate-detection policy; merely wrapping work in a Command does not make repeating side effects safe.
 
 # Consequences
 
@@ -657,6 +712,6 @@ The pattern earns its complexity when requests need a lifecycle: configure, exec
 # Further Reading
 
 * Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides, [Design Patterns: Elements of Reusable Object-Oriented Software](https://www.pearson.com/en-us/subject-catalog/p/Gamma-Design-Patterns-Elements-of-Reusable-Object-Oriented-Software/P200000009480?view=educator).
-* Joshua Kerievsky, [Replace Conditional Dispatcher with Command](https://flylib.com/books/en/1.476.1.76/1/) in Refactoring to Patterns.
+* Joshua Kerievsky, [Replace Conditional Dispatcher with Command](https://www.industriallogic.com/refactoring-to-patterns/catalog/conditionDispatcherWithCommand) in Refactoring to Patterns.
 * Eric Freeman and Elisabeth Robson, [Head First Design Patterns, 2nd Edition](https://www.oreilly.com/library/view/head-first-design/9781492077992/preface02.html), Chapter 6.
 * Oracle Java documentation: [Swing Action usage](https://docs.oracle.com/javase/8/docs/api/javax/swing/class-use/Action.html) and [UndoableEdit](https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/swing/undo/UndoableEdit.html).

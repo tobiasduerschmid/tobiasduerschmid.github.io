@@ -25,38 +25,18 @@ questions:
   - id: 2
     difficulty: intermediate
     type: single
-    question: |
-      Consider this `BankTransfer` class:
-
-      ```java
-      class BankTransfer {
-          private final AuditLogger logger;        // may be null
-
-          void transfer(int amount, String to) {
-              if (logger != null) {
-                  logger.log("transfer " + amount + " to " + to);
-              }
-              // ... do the actual transfer ...
-          }
-      }
-      ```
-
-      Refactoring `logger` to use the Null Object pattern would replace the `null` field with a `SilentLogger` whose `log()` does nothing. **Which design problem does this primarily address?**
+    question: "Consider optional diagnostic logging (transfer logic omitted):\n\n```java\nclass BankTransfer {\n    private final DiagnosticLogger logger; // may be null\n\n    BankTransfer(DiagnosticLogger logger) {\n        this.logger = logger;\n    }\n\n    void transfer(int amount, String to) {\n        if (logger != null) {\n            logger.log(\"transfer \" + amount + \" to \" + to);\n        }\n    }\n}\n```\n\nThe refactoring supplies a real or silent logger at construction and rejects null there. What does this primarily improve?"
     options:
-      - "Performance — eliminating the null check shaves a CPU branch off every call."
-      - "Call-site clarity — the field can never be null, so the guard cannot be forgotten."
-      - "Concurrency — the Null Object eliminates a data race on the `logger` field."
-      - "Memory — sharing one `SilentLogger` instance avoids allocating a new logger per `BankTransfer`."
+      - "Branch prediction at each diagnostic call site."
+      - "Uniform collaborator calls without repeated guards."
+      - "Thread safety of every supplied logger instance."
+      - "Persistence guarantees for transaction records."
     correct_index: 1
     option_feedback:
-      0: |
-        Performance is not why the pattern exists, and the call still happens — the JIT may inline an empty method, but you would not adopt Null Object for that reason. The benefit is design-level: the call site is uniform and the guard cannot be forgotten.
-      2: |
-        The pattern doesn't add or remove any synchronization. If two threads were already racing on the `logger` field, they would still race after the refactor — the Null Object addresses *call-site clarity*, not concurrency.
-      3: |
-        Memory savings (via Singleton) are a downstream consequence, not the design driver. You would not introduce Null Object to save a few bytes; you introduce it to make the *call site* uniform.
-    explanation: "**Null Object turns 'absence of behavior' into a real, polymorphic implementation of behavior — the call site stays uniform and the guard cannot be forgotten.** Once `logger` can never be null, the conditional disappears at every call site (current and future), and the design intent of 'no audit trail here' is encoded in a real type (`SilentLogger`) instead of an absent reference. This is the same reason `Optional<T>.empty()` beats raw nulls in modern APIs."
-
+      0: "Removing a guard may change performance, but the design benefit is uniform delegation; measure runtime effects separately."
+      2: "Null Object adds no synchronization. Thread safety depends on the collaborators and their use."
+      3: "The diagnostic contract permits dropping messages. A required transaction record cannot use a no-op implementation."
+    explanation: "Once construction guarantees a valid collaborator, callers delegate uniformly. SilentLogger encodes deliberately disabled diagnostics. This does not implement a transaction record or guarantee that every Java reference is non-null."
   - id: 3
     difficulty: advanced
     type: single
@@ -69,12 +49,9 @@ questions:
       - "Replace the entire `Controller` interface with `Optional<Controller>` and remove the Null Object plan."
     correct_index: 1
     option_feedback:
-      0: |
-        Adding a 30-method do-nothing class on speculation is exactly the over-abstraction the [Rule of Three](/SEBook/designpatterns.html#design-patterns-and-refactoring) warns against. Pattern-fit is contextual; nothing in the present design needs the Null Object.
-      2: |
-        `@Deprecated` signals "don't use this anymore," not "don't use this yet." The annotation would mislead future readers about what the placeholder is for, and it still pays the maintenance cost of a 30-method class no one calls.
-      3: |
-        That's a much larger refactor than the prompt asks for and changes the type at every call site. Even worse, `Optional<Controller>` *re-introduces* the null check at every call site — exactly the burden the original team was trying to avoid by considering Null Object in the first place.
+      0: "There is no current need for the extra class. Anticipated reuse alone does not justify maintaining 30 unused methods."
+      2: "Deprecated means discouraged existing use, not reserved future use. The unused implementation still has a maintenance cost."
+      3: "No current view needs absence handling. Changing every caller to Optional introduces another speculative change; Optional is useful when callers actually need to distinguish absence."
     explanation: "The pattern's Applicability requires that *some collaborator instances should do nothing* and that the do-nothing behavior is *reusable*. With no current users, neither holds, so the cost — a 30-method class to maintain — is paid up front while the benefit is hypothetical. Wait until at least one real client needs it."
 
   - id: 4
@@ -86,17 +63,13 @@ questions:
       - "The Null Object's class hierarchy is too deep to debug."
       - "Silent do-nothing collaborators can mask real bugs when one is wired in by mistake."
       - "The Null Object cannot be implemented as a Singleton in DI containers."
-      - "The Null Object pattern is incompatible with audit logging requirements."
+      - "Every no-op collaborator is invalid, even for optional behavior."
     correct_index: 1
     option_feedback:
-      0: |
-        The Null Object hierarchy is shallow — typically `AbstractObject`, one Real, one Null. Class-depth is not what made the bug invisible; *behavioral silence* is.
-      2: |
-        Singletons in DI work fine. The bug here is one of *configuration* (wrong binding), not one of pattern compatibility. The same misconfiguration would happen with a non-singleton SilentLogger.
-      3: |
-        The pattern itself is fine for audit logging — `SilentLogger` is a perfectly valid choice for some environments (tests, internal jobs). The bug was that it was *also* used in production by mistake, not that the pattern is wrong here.
-    explanation: "**Null Object swallows operations silently — that is exactly what you want when 'do nothing' is a valid response, and exactly what you do not want when 'do nothing' hides a bug.** Mitigations: (1) name the class for what it actually does (`SilentLogger`, never `DefaultLogger`); (2) log at startup which collaborator was wired in (`'Audit logger: SilentLogger'` is conspicuous); (3) reserve Null Object for cases where do-nothing is a legitimate domain decision, not a fallback for 'we couldn't construct the real one.'"
-
+      0: "The failure comes from unnoticed no-op behavior, not inheritance depth."
+      2: "Instance lifetime does not fix an incorrect binding. A shared or separately allocated SilentLogger can be misconfigured."
+      3: "A no-op may be valid for optional diagnostics or a deliberately isolated test. It is invalid wherever the contract requires recording; classify the contract before choosing the implementation."
+    explanation: "A silent collaborator can hide a wiring error. A startup message helps diagnosis but did not prevent this failure; validate production configuration and test required recording behavior. Do not substitute a no-op for a collaborator whose contract requires an audit trail."
   - id: 5
     difficulty: intermediate
     type: single
@@ -109,34 +82,26 @@ questions:
       - "Null Object + Adapter (a Null Adapter)"
     correct_index: 0
     option_feedback:
-      1: |
-        There is no Null Decorator: a Decorator must wrap a real object, otherwise it has nothing to decorate. The compound listed in the [Pattern Compounds](/SEBook/designpatterns.html#communicating-design-intent-and-context-tailoring) discussion explicitly notes this.
-      2: |
-        A Proxy controls access to a real subject. `FlyNullObject` does not stand in front of any real `FlyBehavior` — it *replaces* one. Proxy and Null Object are easy to confuse but have opposite intents.
-      3: |
-        Adapter wraps an object to translate one interface into another. `FlyNullObject` implements `FlyBehavior` directly without translating between two interfaces — there is nothing to adapt to.
+      1: "This class does not wrap or forward to another FlyBehavior. A pass-through decorator would still call its component; FlyNullObject directly supplies no-op behavior."
+      2: "A Proxy controls access to another subject. This implementation has no subject behind it."
+      3: "Adapter makes an existing interface satisfy another contract. This implementation needs no translation."
     explanation: "`FlyNullObject` plays both the Strategy role (a `FlyBehavior` the duck composes with) and the Null Object role (its `fly()` does nothing) — a Null Strategy compound. When one ConcreteStrategy in a Strategy hierarchy consistently does nothing, that strategy *is* a Null Object. The same role-superimposition appears as **Null State** when a do-nothing State sits in a State hierarchy."
 
   - id: 6
     difficulty: advanced
     type: single
-    question: |
-      The State and Strategy patterns each have a "null variant" (Null State, Null Strategy). Why is there **no** Null Decorator?
+    question: "A wrapper implements `Component.operation()` by calling its wrapped component and doing nothing else. Why is it different from a Null Object for that operation?"
     options:
-      - "Decorators were not part of the original GoF catalog."
-      - "A Decorator's job is to forward to a wrappee; without one, the role disappears."
-      - "Null Decorators exist but are called Adapters in the GoF catalog."
-      - "Decorators are immutable, so a Null Decorator would have no observable difference from a Real Decorator."
+      - "Decorator is absent from the GoF catalog."
+      - "The wrapped component still performs its operation."
+      - "Any wrapper without added behavior is an Adapter."
+      - "Forwarding automatically makes the wrapper immutable."
     correct_index: 1
     option_feedback:
-      0: |
-        Decorator *is* in the GoF catalog (Structural patterns). Membership in the catalog isn't what makes a Null variant possible; the role's intrinsic structure is.
-      2: |
-        Decorator and Adapter are distinct GoF patterns with different intents — Decorator extends behavior preserving the interface; Adapter translates one interface into another. Neither swallows the other.
-      3: |
-        Immutability is unrelated. The reason there is no Null Decorator is structural: a Decorator's job is *to forward to a wrappee*. Without a wrappee, there is nothing to forward to and the role disappears.
-    explanation: "**A Decorator's contract is to wrap a real object and forward calls — a Decorator with no wrappee has nothing to decorate, so the role itself doesn't make sense.** This is called out explicitly in the [Pattern Compounds](/SEBook/designpatterns.html#communicating-design-intent-and-context-tailoring) discussion. State and Strategy work because a 'do nothing' implementation is still a complete implementation of the state/strategy interface. A Decorator that wraps nothing isn't an empty decorator; it's just a Null Object impersonating the wrapped type directly."
-
+      0: "Decorator is a GoF structural pattern. Catalog membership is unrelated to this behavior."
+      2: "An Adapter translates an interface. A same-interface forwarding wrapper need not translate anything."
+      3: "Delegation does not establish immutability. Trace the call to see whether useful work still occurs."
+    explanation: "Adding no behavior is different from performing no behavior: the wrapper still delegates. A decorator may wrap a Null Object, but the absence of added behavior alone does not make the wrapper a Null Object."
   - id: 7
     difficulty: advanced
     type: multiple
@@ -150,16 +115,11 @@ questions:
       - "All of the do-nothing behavior fits inside a single class."
     correct_indices: [0, 1, 2, 4]
     option_feedback:
-      0: |
-        A real, non-optional collaboration where some instances should legitimately do nothing is the canonical Null Object scenario — the reason the pattern exists at all.
-      1: |
-        Uniform call sites are the pattern's central payoff. Without this requirement the conditional logic comes back at the call site, defeating the main benefit.
-      2: |
-        Reusable do-nothing behavior is what justifies a dedicated *class* over a one-off conditional. Without it, Null Object is a single-use trick rather than a sharable abstraction.
-      3: |
-        `Optional<T>` and `Maybe T` already give a type-checked alternative; layering a Null Object on top is sometimes useful but should be a *deliberate* choice, not a blanket policy. Cases like "user not found" or "no record exists" should stay `Optional`, because there the absence is meaningful information.
-      4: |
-        A single Null Object class can only absorb do-nothing behavior that lives behind one collaborator interface. When "do nothing" must span several collaborators, the concern is cross-cutting and belongs in aspects or middleware instead.
+      0: "A real collaboration with a valid no-op case supplies the need for this pattern."
+      1: "Uniform calls are useful when clients need not distinguish real and no-op behavior."
+      2: "Reusing one named no-op implementation avoids repeating absence-handling policy."
+      3: "Optional preserves absence as information. Resolving it to a Null Object is appropriate only when the remaining clients may safely ignore that distinction."
+      4: "A Null Object replaces one collaborator. Skipping work across several collaborators may need coordination or several no-op collaborators; it does not automatically require another particular pattern."
     explanation: "Null Object's Applicability requires a real collaboration that needs a do-nothing variant, uniform call sites, reusable do-nothing behavior, and a single-class scope. Blanket replacement of `Optional` is the modern misuse: when absence carries meaning the client must handle (404, no match, opt-out), preserve that signal rather than burying it under a do-nothing surrogate."
 
   - id: 8
@@ -180,8 +140,7 @@ questions:
         There's no Visitor in this scenario — no visitor is being applied to the children. `emptyIterator` is just a no-op implementation of the Iterator interface; the Visitor pattern is unrelated here.
       3: |
         Factory Method is about *who decides which subclass to create*. `Collections.emptyIterator()` is a factory call, but the *thing it returns* is what's relevant — and that thing is a Null Iterator, not a Factory Method.
-    explanation: "`Collections.emptyIterator()` is the canonical Null Iterator: it implements `Iterator<T>` so clients can call `hasNext()` and `next()` uniformly, with `hasNext()` always returning `false`. The Gang of Four use it to introduce Null Object inside the Iterator catalog entry. Clients iterate over leaves and composites with the same code; leaves need no special case for 'no children to iterate over.'"
-
+    explanation: "An empty iterator supplies the normal iterator contract with no elements. hasNext() is always false; Java next() still throws NoSuchElementException if called after exhaustion. Uniform iteration checks for an element before retrieving it."
   - id: 9
     difficulty: advanced
     type: single
@@ -200,57 +159,37 @@ questions:
         Special Case has nothing to do with O/R mapping specifically. It's a general-purpose pattern for representing exceptional instances — useful in any domain (UI, business logic, persistence layers, etc.).
       3: |
         Both patterns dispatch through normal polymorphism (virtual methods). Reflection is not part of either pattern's mechanics.
-    explanation: "**Special Case is the broader pattern: any 'exceptional' instance handled uniformly through the same interface (e.g., `MissingCustomer` returning sensible defaults instead of throwing). Null Object is the special case where 'exceptional' means 'do nothing.'** Fowler's `MissingCustomer` might still answer questions sensibly (`name() = 'Unknown'`, `taxId() = 'N/A'`) — that's Special Case but not Null Object. A `SilentLogger` whose `log()` is a no-op is both Special Case *and* Null Object."
-
+    explanation: "Special Case is the broader idea of representing exceptional cases behind a common interface. Null Object emphasizes an absent collaborator with valid no-op or neutral-result behavior. Returning a label such as Unknown does not by itself exclude an object from Null Object; the relevant question is the role and contract."
   - id: 10
     difficulty: advanced
     type: single
-    question: |
-      A teammate proposes implementing `SilentLogger` as a parameterized class so the same Null Object can absorb log entries with configurable behavior — for example, `new SilentLogger("test")` vs `new SilentLogger("prod-fallback")`. **What design risk does this create?**
+    question: "A Null Object returns a configured placeholder label, such as \"Unknown\" or \"Not supplied\", and performs no updates. Both labels satisfy the interface contract. What follows?"
     options:
-      - "Parameterized Null Objects always violate the Singleton constraint, so they cannot be implemented at all."
-      - "If parameters drive materially different behavior, the class has become a Real Object with a 'mode' field."
-      - "Parameterized Null Objects break Liskov substitutability with the AbstractObject."
-      - "The Java compiler refuses to compile parameterized constructors on classes intended to do nothing."
+      - "It cannot be a Null Object because it stores configuration."
+      - "It can remain a Null Object with a configured neutral result."
+      - "It must be a Flyweight because its constructor has a parameter."
+      - "It breaks substitutability merely because the labels differ."
     correct_index: 1
     option_feedback:
-      0: |
-        Parameterized Null Objects are a documented variant — essentially Flyweights with extrinsic state. The Singleton constraint can be relaxed when parameters genuinely differ; that is fine.
-      2: |
-        Liskov substitutability isn't broken just by accepting parameters — the Null Object still implements the AbstractObject interface. The risk lies elsewhere: in *what the parameters drive*, not in their existence.
-      3: |
-        There's no such Java restriction; constructors can take parameters whether or not the class does nothing. The risk is design-level, not compiler-enforced.
-    explanation: "**A 'Null Object' whose behavior changes meaningfully based on parameters is no longer a Null Object — it is a Real Object with a `mode` field, which puts the conditional back inside the class.** Parameterized Null Objects are valid when the parameter only varies the trivial null-result return value (e.g., `new EmptyString()` vs `new EmptyList()`) — those are Flyweights with intrinsic do-nothing behavior. They become a problem when 'do nothing' starts to mean different things in different cases — at which point you should split into multiple Null Object classes (one per do-nothing semantic) or accept that the abstraction is wrong for your domain."
-
+      0: "No-op behavior can coexist with immutable configuration; statelessness is common but not required."
+      2: "Flyweight additionally concerns sharing and externally supplied context. Constructor parameters alone do not establish that pattern."
+      3: "Substitutability depends on the promised behavior. The stem explicitly permits either placeholder."
+    explanation: "Parameterized neutral results are compatible with Null Object when they satisfy the contract. Check behavior rather than inferring pattern identity from whether the object has fields."
   - id: 11
     difficulty: expert
     type: single
-    question: |
-      A senior developer points at this class and says *"this is technically a Null Object, but it's the wrong tool here":*
-
-      ```python
-      class SilentNotFoundResult:
-          def get_user(self, id: int) -> User:
-              return SilentNotFoundResult()  # do nothing for any access
-          def __getattr__(self, name): return self.get_user(0)
-      ```
-
-      What is the most likely problem they're flagging?
+    question: "An API must report when a requested user does not exist. A lookup instead returns a SilentUser whose methods return empty strings, and the response is reported as a successful lookup. What is the design problem?"
     options:
-      - "The class is implemented in Python instead of a statically typed language."
-      - "It hides a meaningful absence ('user not found') and turns a 404 into a silent success."
-      - "Null Objects must implement an explicit interface — `__getattr__` is too dynamic."
-      - "The class needs to be registered as a Singleton or it will leak memory."
+      - "The implementation uses a dynamically typed language."
+      - "It hides an absence that the caller is required to report."
+      - "The class lacks an explicitly declared interface."
+      - "The class allocates an instance instead of using Singleton."
     correct_index: 1
     option_feedback:
-      0: |
-        Language choice is irrelevant — Null Object exists in dynamically typed languages too. The senior's objection is design-level: the absence of a user is *information* the caller needs to handle, not something to silently swallow.
-      2: |
-        Dynamic dispatch via `__getattr__` is a Python idiom and not in itself a problem. The real issue is what the class encodes (silent success on missing data), not how it dispatches.
-      3: |
-        Memory is not the concern. The concern is *semantics*: the class disguises a domain failure as a success, which is the canonical Null Object misuse.
-    explanation: "**Null Object is for cases where 'do nothing' is a valid domain response, not for swallowing meaningful absences.** *User not found* is information the caller must act on (return 404, prompt for re-login, retry with a different id). Returning a recursive do-nothing object turns a clear failure mode into mysterious downstream bugs ('why is the user's email always blank?'). The right tool here is `Optional[User]`, an exception, or a `MissingUser` Special Case that *announces* itself rather than impersonating a real user."
-
+      0: "The same contract violation is possible in a statically typed language."
+      2: "An explicit interface does not make incorrect absence semantics valid."
+      3: "Changing instance lifetime cannot restore the missing error signal."
+    explanation: "The API contract requires distinguishing a missing user. Preserve that distinction with an explicit result or error; returning a no-op object as success hides information the caller must act on."
   - id: 12
     difficulty: advanced
     type: multiple
@@ -264,14 +203,9 @@ questions:
       - "Hard to mix do-nothing into multiple collaborators when the do-nothing concern cuts across class boundaries."
     correct_indices: [0, 1, 2, 4]
     option_feedback:
-      0: |
-        This is the most important liability — it's why naming matters (`SilentLogger`, not `DefaultLogger`) and why startup logs should announce which collaborator was wired in.
-      1: |
-        Each `AbstractObject` family that needs a Null Object adds at least one class — often two, the abstract interface plus the Null implementation. That up-front class cost is easy to understate.
-      2: |
-        Monitoring or auditing systems may *need* to know an operation was skipped, and a Null Object hides that distinction by definition. In audit-sensitive code this trade-off is easy to miss.
-      3: |
-        Performance is not a real liability of this pattern and depends entirely on the language and runtime — the empty method may be inlined to literally zero cost. The genuine costs are design-level: masking, proliferation, monitoring opacity.
-      4: |
-        Cross-cutting do-nothing concerns are the wrong fit — they're better served by aspects, decorators, or middleware. Null Object is not a general absence-handling mechanism.
-    explanation: "Null Object's real liabilities are design-level: silently masking bugs, proliferating classes, hiding distinctions monitoring systems need, and being unable to absorb cross-cutting do-nothing concerns. Performance is not one of them — the JIT often inlines empty methods to zero cost, so adopting or rejecting the pattern on performance grounds is misguided."
+      0: "An unexpected no-op can hide missing required behavior, so validate wiring and contracts."
+      1: "A dedicated no-op implementation can add a class or an interface to maintain."
+      2: "When callers must distinguish skipped from completed work, uniform silent behavior loses needed information."
+      3: "Runtime cost depends on dispatch, allocation, inlining, and workload. Always slower is false; performance can still matter when measured."
+      4: "One Null Object does not automatically absorb behavior distributed across several collaborator interfaces."
+    explanation: "Weigh bug masking, extra types, observable absence, and the scope of the no-op collaboration. Runtime costs are context-dependent; neither zero overhead nor an inevitable slowdown follows from the pattern."

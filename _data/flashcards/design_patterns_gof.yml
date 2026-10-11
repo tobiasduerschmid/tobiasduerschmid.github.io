@@ -5,13 +5,13 @@ cards:
   - id: 1
     difficulty: basic
     question: "What problem does the **Observer** pattern solve?"
-    answer: "Maintaining a one-to-many dependency between objects efficiently and without tight coupling—when one object changes state, all dependents are notified automatically."
+    answer: "A subject notifies registered dependents through a common contract when relevant state changes, without hardcoding their concrete classes."
     explanation: "The Subject maintains a dynamic list of Observers and calls their `update()` method when its state changes. This avoids polling and avoids hardcoding the subject to specific dependents."
   - id: 2
     difficulty: intermediate
     question: "Observer: which variant requires observers to know the subject's query interface?"
     answer: "The **Pull model** adds that dependency. Push instead couples observers to the event payload format; neither variant is universally less coupled."
-    explanation: "Push: subject sends all data in `update()`. Pull: subject sends minimal notification, observers query back. A hybrid approach—pushing the event type, letting observers decide whether to pull—is most common in practice."
+    explanation: "Push supplies event data; pull supplies a notification followed by queries. A hybrid is another option. Choose according to the data and coupling each participant needs."
   - id: 3
     difficulty: intermediate
     question: "What is the **lapsed listener problem** in Observer?"
@@ -19,14 +19,14 @@ cards:
     explanation: "Solutions include explicit unsubscribe, weak references, or scoped subscriptions tied to lifecycle management."
   - id: 4
     difficulty: advanced
-    question: "What does 'inverted dependency flow' mean in Observer?"
-    answer: "In the code, observers call the subject to register (dependency points observer→subject), but data conceptually flows from subject to observer—making it hard to trace by reading code."
-    explanation: "This inversion is widely cited as a program-comprehension hazard for Observer-based designs: when encountering an observer in code, there is no nearby sign of what it depends on; the reader must trace back to the registration call."
+    question: "Why can Observer make execution flow hard to trace?"
+    answer: "The registration site and callback execution are separated. A subject calls the observer contract at runtime, while the observer or setup code may perform registration elsewhere."
+    explanation: "Track the subscription lifecycle and callback targets. Observers do not have to register themselves, and static dependencies are not a complete runtime call graph."
   - id: 5
     difficulty: basic
     question: "What problem does the **State** pattern solve?"
     answer: "Eliminates complex conditional logic that checks an object's state, replacing it with polymorphic state objects that encapsulate state-specific behavior."
-    explanation: "Each state becomes its own class. Adding a new state means adding a new class rather than modifying existing if/else chains throughout the codebase."
+    explanation: "State objects localize state-specific behavior. Adding a state can still require changes to transitions, factories, and configuration; the pattern does not guarantee pure addition."
   - id: 6
     difficulty: intermediate
     question: "How does **State** differ from **Strategy**?"
@@ -41,22 +41,22 @@ cards:
     difficulty: intermediate
     question: "Why is **Singleton** often called a 'pattern with a weak solution'?"
     answer: "It conflates two concerns: ensuring a single instance (legitimate) and providing global access (introduces hidden coupling and harms testability)."
-    explanation: "A `static getInstance()` call is a hardcoded dependency with no seam for test doubles. A DI container can guarantee one instance while keeping constructors injectable, so it solves the lifetime concern without the global access point."
+    explanation: "Direct global access hides a dependency and makes replacement harder. Constructing one object at a chosen scope and injecting it separates lifetime management from global access; no DI framework is required."
   - id: 9
     difficulty: advanced
     question: "Name three thread-safety approaches for Singleton in Java."
-    answer: "(1) Synchronized `getInstance()` (simple, slow), (2) Eager instantiation in static field (fast, may waste memory), (3) Double-checked locking with `volatile` (efficient, complex)."
-    explanation: "The classic lazy singleton is not thread-safe: two threads can both find the instance null and create two objects. Each solution trades off simplicity, performance, and memory usage."
+    answer: "Synchronized access; a static field initialized safely by the JVM; or double-checked locking with volatile. An initialization-on-demand holder is another option."
+    explanation: "These protect construction and publication, not subsequent mutable operations. Synchronization cost depends on the workload; eager static initialization happens when the class is initialized, not merely loaded."
   - id: 10
     difficulty: basic
     question: "What problem does **Factory Method** solve?"
-    answer: "Decouples object creation from usage by letting subclasses decide which class to instantiate, avoiding conditional creation logic in the creator."
-    explanation: "The creator defines an abstract `createProduct()` method; concrete creator subclasses implement it. This allows the system to evolve: add a new creator subclass without touching existing code."
+    answer: "Lets subclasses vary product creation through an overridable method without changing the stable creator workflow."
+    explanation: "A Creator declares an overridable creation operation, abstract or with a default implementation. Concrete creators vary the product. The caller that selects a creator may still need configuration changes."
   - id: 11
     difficulty: intermediate
     question: "**Factory Method** vs. **Abstract Factory**: when to use which?"
-    answer: "Factory Method: one product type, subclass decides. Abstract Factory: families of related products that must be used together."
-    explanation: "Factory Method uses inheritance (subclass overrides a method). Abstract Factory uses composition (client receives a factory object). Factory methods often lurk *inside* Abstract Factories."
+    answer: "Factory Method varies creation through an overridable method. Abstract Factory presents creation operations for related products through a factory object."
+    explanation: "These are complementary mechanisms and intents, not a rigid count of product types. Abstract Factory operations are often Factory Methods; a Creator can have more than one creation operation."
   - id: 12
     difficulty: advanced
     question: "What is the 'Rigid Interface' drawback of Abstract Factory?"
@@ -71,7 +71,7 @@ cards:
     difficulty: intermediate
     question: "**Adapter** vs. **Facade** vs. **Decorator**: what's the key distinction?"
     answer: "Adapter *converts* an interface. Facade *simplifies* a set of interfaces. Decorator *adds behavior* to an object through the same interface."
-    explanation: "All three 'wrap' another object, but with different intents. The key discriminator is what changes: Adapter changes what the interface looks like; Facade reduces how much you see; Decorator enhances what the object does."
+    explanation: "These designs can all mediate access to other objects, but their intended change differs: an expected interface, convenient subsystem access, or added responsibilities. Object-wrapper shape alone is insufficient."
   - id: 15
     difficulty: basic
     question: "What problem does **Composite** solve?"
@@ -91,11 +91,11 @@ cards:
     difficulty: advanced
     question: "**Facade** vs. **Mediator**: what's the communication direction?"
     answer: "Facade: one-directional (Facade calls subsystem; subsystem is unaware). Mediator: bidirectional (colleagues communicate through mediator and mediator coordinates back)."
-    explanation: "Facade simplifies; Mediator coordinates. If the intermediary simply delegates without adding coordination logic, it's a Facade. If it manages bidirectional control flow, it's a Mediator."
+    explanation: "Facade serves outside clients; Mediator encapsulates coordination among colleagues. A facade can sequence several subsystem calls, so orchestration alone does not turn it into a Mediator."
   - id: 19
     difficulty: basic
     question: "What problem does **Mediator** solve?"
-    answer: "Reduces many-to-many dependencies between objects by centralizing interaction logic in a single mediator, converting N-to-N complexity into N-to-1."
+    answer: "Centralizes coordination among colleagues, reducing direct peer dependencies. A fully connected group can become a set of links through a mediator; the coordination work remains."
     explanation: "Instead of objects talking directly, they report events to the mediator. The mediator contains the coordination rules and tells objects how to respond."
   - id: 20
     difficulty: intermediate

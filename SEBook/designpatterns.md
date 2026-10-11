@@ -5,6 +5,8 @@ layout: sebook
 
 # Overview
 
+**Learning goal:** Given a proposed change, identify what varies, compare a pattern with a simpler design, and explain both the benefit and the new cost. The examples assume familiarity with interfaces, inheritance, and object composition; recognizing a class diagram alone is not the goal.
+
 In software engineering, a design pattern is a ==common, acceptable solution to a recurring design problem that arises within a specific context==. The concept did not originate in computer science, but rather in architecture. Christopher Alexander, an architect who pioneered the idea of *pattern languages*, defined a pattern beautifully (*A Pattern Language*, 1977): **"Each pattern describes a problem which occurs over and over again in our environment, and then describes the core of the solution to that problem, in such a way that you can use this solution a million times over, without ever doing it the same way twice"**.
 
 In software development, design patterns refer to medium-level abstractions that describe structural and behavioral aspects of software. They sit between low-level language **idioms** (like how to efficiently concatenate strings in Java) and large-scale **architectural patterns** (like Model-View-Controller or client-server patterns). Structurally, they deal with classes, objects, and the assignment of responsibilities; behaviorally, they govern method calls, message sequences, and execution semantics. 
@@ -37,7 +39,7 @@ The full GoF catalog contains 23 patterns (5 creational, 7 structural, 11 behavi
 * [**Façade**](/SEBook/designpatterns/facade.html): Provides a unified interface to a set of interfaces in a subsystem, making the subsystem easier to use.
 
 **Behavioral Patterns** address the problem of *object interaction and responsibility*—how objects communicate and distribute work:
-* [**Strategy**](/SEBook/designpatterns/strategy.html): Defines a family of algorithms, encapsulates each one, and makes them interchangeable at runtime, letting the algorithm vary independently from clients that use it.
+* [**Strategy**](/SEBook/designpatterns/strategy.html): Defines a family of algorithms, encapsulates each one, and makes them interchangeable, letting the algorithm vary independently from clients that use it. Selection may happen during construction or later at runtime.
 * [**Observer**](/SEBook/designpatterns/observer.html): Establishes a one-to-many dependency between objects, ensuring that dependent objects are automatically notified and updated whenever the subject's state changes.
 * [**Command**](/SEBook/designpatterns/command.html): Encapsulates a request as an object, allowing invokers to be configured with different actions and supporting undo, queuing, logging, and macro commands.
 * [**State**](/SEBook/designpatterns/state.html): Encapsulates state-based behavior into distinct classes, allowing a context object to dynamically alter its behavior at runtime by delegating operations to its current state object.
@@ -195,7 +197,7 @@ Here are some examples of architectural patterns that we describe in more detail
 ## The Benefits of a Shared Toolbox
 Just as a mechanic must know their toolbox, a software engineer must know design patterns intimately—understanding their advantages, disadvantages, and knowing precisely when (and when not) to use them.
 
-*   **A Common Language for Communication:** The primary challenge in multi-person software development is communication. Patterns solve this by providing a robust, shared vocabulary. If an engineer suggests using the "[Observer](/SEBook/designpatterns/observer.html)" or "[Strategy](/SEBook/designpatterns/strategy.html)" pattern, the team instantly understands the problem, the proposed architecture, and the resulting interactions without needing a lengthy explanation.
+*   **A Common Language for Communication:** Patterns provide a shared vocabulary for discussing design. Naming "[Observer](/SEBook/designpatterns/observer.html)" or "[Strategy](/SEBook/designpatterns/strategy.html)" identifies a useful starting point, but the team still needs to agree on the participants, contracts, and chosen variation.
 *   **Capturing Design Intent:** When you encounter a design pattern in existing code, it communicates not only *what* the software does, but *why* it was designed that way. 
 *   **Reusable Experience:** Patterns are abstractions of design experience gathered by seasoned practitioners. By studying them, developers can rely on tried-and-tested methods to build flexible and maintainable systems instead of reinventing the wheel.
 
@@ -204,14 +206,14 @@ Despite their power, design patterns are not silver bullets. Misusing them intro
 
 *   **The "Hammer and Nail" Syndrome:** Novice developers who just learned patterns often try to apply them to every problem they see. **Software quality is not measured by the number of patterns used.** Often, keeping the code simple and avoiding a pattern entirely is the best solution. As Kent Beck advises: *"Do the simplest thing that could possibly work."* This echoes **Gall's Law** (John Gall, *Systemantics*, 1975): *"A complex system that works is invariably found to have evolved from a simple system that worked. A complex system designed from scratch never works and cannot be patched up to make it work."*
 *   **Over-engineering vs. Under-engineering:** Under-engineering makes software too rigid for future changes. However, over-applying patterns leads to over-engineering—creating premature abstractions that make the codebase unnecessarily complex, unreadable, and a waste of development time. Developers must constantly balance **simplicity** (fewer classes and patterns) against **changeability** (greater flexibility but more abstraction).
-*   **Implicit Dependencies:** Patterns intentionally replace static, compile-time dependencies with dynamic, runtime interactions. This flexibility comes at a cost: it becomes harder to trace the execution flow and state of the system just by reading the code.
+*   **Implicit Dependencies:** Patterns that introduce callbacks or polymorphic dispatch can make runtime interactions harder to trace. Static dependencies still exist, often through interfaces; not every pattern replaces a static relationship with a dynamic one.
 *   **Misinterpretation as Recipes:** A pattern is an abstract idea, not a snippet of code from Stack Overflow. Integrating a pattern into a system is a human-intensive, manual activity that requires tailoring the solution to fit a concrete context. As Bass, Clements, and Kazman note: *"Applying a pattern is not an all-or-nothing proposition. Pattern definitions given in catalogs are strict, but in practice architects may choose to violate them in small ways when there is a good design tradeoff to be had."*
 
 ## Common Student Misconceptions
 
 Research on teaching design patterns reveals specific, recurring pitfalls that learners should be aware of:
 
-*   **Learning Structure but Not Intent:** A design-structure-matrix study by Cai and Wong (CSEE&T 2011) of 85 student submissions found that **74%** did not faithfully implement a modular design even though their software functioned correctly. Students learned the gross structure of patterns easily, yet they made lower-level mistakes that violated the pattern's underlying intent—introducing extra dependencies that defeated the very modularity the pattern was meant to achieve. The lesson: *correct behavior is not the same as correct design*. A program can produce the right output while still being poorly structured for future change.
+*   **Learning Structure but Not Intent:** A design-structure-matrix study by Cai, Iannuzzi, and Wong (CSEE&T 2011) found unexpected dependencies in **74% of 85 student submissions** that fulfilled their required functionality {% cite Cai2011DSM %}. This is evidence from one course study, not a universal rate of student errors. The lesson is that *correct behavior is not the same as preserving an intended modular design*: review dependencies as well as output.
 *   **Ignoring Evolution Scenarios:** The true value of a design pattern is only realized as software evolves, but student assignments, once completed, seldom evolve. Without experiencing the pain of modifying tightly coupled code, it is hard to appreciate why a pattern matters. To internalize the value of patterns, try to imagine concrete future changes (e.g., "What if we need a new type of observer?" or "What if we need to swap the database?") and evaluate whether the design would gracefully accommodate them.
 *   **Confusing Patterns with Antipatterns:** Just as patterns represent proven solutions, **antipatterns** represent common *poor* design choices—such as Spaghetti Code, God Class, or Lava Flow—that lead to maintainability and security issues. Recognizing antipatterns requires going beyond individual instructions into reasoning about how methods and classes are architected. Students should be exposed to both: patterns teach *what good structure looks like*, while antipatterns teach *what to avoid*.
 *   **The "Before and After" Exercise:** A powerful technique for internalizing patterns, reported by Astrachan et al. from the first UP (Using Patterns) conference, involves taking a working solution that does *not* use a pattern and then refactoring it to introduce the appropriate pattern. By comparing the "before" and "after" versions—particularly when extending both with a new requirement—the concrete advantages of the pattern become viscerally clear. As the adage goes: *"Good design comes from experience, and experience comes from bad design."*
@@ -248,7 +250,7 @@ Behavioral variations modify the interactions and communication flows between ob
 These variations involve refining the internal workings of the pattern's participants without necessarily changing their external structural interfaces. A developer might tailor a pattern internally by choosing a specific list data structure to hold observers, adding thread-safety mechanisms, or implementing a specialized sorting algorithm to maximize performance for expected data sets.
 
 ### Language-Dependent Variations
-Modern programming languages offer specific constructs that can drastically simplify pattern implementations. For instance, dynamically typed languages can often omit explicit interfaces, and aspect-oriented languages can replace standard polymorphism with aspects and point-cuts. However, there is a dangerous trap here: **using language features to make a pattern entirely reusable as code (e.g., using `include Singleton` in Ruby) eliminates the potential for context tailoring**. Design patterns are fundamentally about *design* reuse, not exact code reuse.
+Language features and libraries can implement parts of a pattern: functions can serve as strategies, and a library can manage observer subscriptions. Reusing that code does **not** eliminate context tailoring. It commits you to the library's contracts and variation points, so check whether those fit your required lifetime, notification, error-handling, and concurrency policies. Patterns describe reusable design knowledge; reusable implementations can support that knowledge.
 
 ## The Global vs. Local Optimum Trade-off
 
@@ -258,7 +260,7 @@ If developers use the textbook Observer pattern in one module, but highly custom
 
 
 # Pattern Compounds
-In software design, applying individual design patterns is akin to utilizing distinct compositional techniques in photography—such as symmetry, color contrast, leading lines, and a focal object. Simply having these patterns present does not guarantee a masterpiece; their deliberate arrangement is crucial. When leading lines intentionally point toward a focal object, a more pleasing image emerges. In software architecture, this synergistic combination is known as a pattern compound—a term coined by Dirk Riehle in *Composite Design Patterns* (OOPSLA 1997), where the recurring superimpositions of GoF roles (Composite Builder, Composite Visitor, Singleton State) were first systematically catalogued.
+Patterns can work together when one design's participants take on roles in another. A recurring combination with its own problem, solution, and consequences is called a **pattern compound** here. Riehle's *Composite Design Patterns* studies such combinations as reusable designs in their own right {% cite Riehle1997Composite %}; merely using several patterns in one program does not establish a compound.
 
 **A pattern compound is a reoccurring set of patterns with overlapping roles from which additional properties emerge**. Notably, pattern compounds are patterns in their own right, complete with an abstract problem, an abstract context, and an abstract solution. While pattern languages provide a meta-level conceptual framework or grammar for how patterns relate to one another, pattern compounds are concrete structural and behavioral unifications.
 
@@ -273,13 +275,13 @@ This compound yields the emergent properties of **looser coupling between the cl
 ## Managing Operations: The Composite Visitor and Composite Command
 Pattern compounds frequently emerge when scaling behavioral patterns to handle structural complexity:
 *   **Composite Visitor:** If a system requires many custom operations to be defined on a Composite structure without modifying the classes themselves (and no new leaves are expected), a Visitor can be superimposed. This yields the emergent property of **strict separation of concerns**, keeping core structural elements distinct from use-case-specific operations.
-*   **Composite Command:** When a system involves hierarchical actions that require a simple execution API, a [Composite Command](/SEBook/designpatterns/command.html#macro-command) groups multiple command objects into a unified tree. This allows individual command pieces to be shared and reused, though developers must manage the consequence of execution order ambiguity.
+*   **Composite Command:** A [Composite Command](/SEBook/designpatterns/command.html#macro-command) groups commands behind the same execution interface. Specify child execution order and failure behavior; undo normally reverses that order. Share command objects only when their execution and undo state make sharing safe.
 
 ## Communicating Design Intent and Context Tailoring
 Pattern compounds also naturally arise when tailoring patterns to specific contexts or when communicating highly specific design intents.
-*   **Null State / Null Strategy:** If an object enters a "do nothing" state, combining the State pattern with the [Null Object](/SEBook/designpatterns/null_object.html) pattern perfectly communicates the design intent of empty behavior. (Note that there is no Null Decorator, as a decorator must fully implement the interface of the decorated object).
-*   **Singleton Null Object:** Because Null Objects are typically stateless, the canonical implementation shares one instance — making [Null Object](/SEBook/designpatterns/null_object.html) and [Singleton](/SEBook/designpatterns/singleton.html) one of the most frequent compounds in real codebases.
-*   **Singleton State:** If State objects are entirely stateless—meaning they carry behavior but no data, and do not require a reference back to their Context—they can be implemented as Singletons. This tailoring decision saves memory and eases object creation, though it permanently couples the design by removing the ability to reference the Context in the future.
+*   **Null State / Null Strategy:** A valid do-nothing implementation can play a State or Strategy role and a [Null Object](/SEBook/designpatterns/null_object.html) role. A forwarding Decorator that adds nothing is different: the wrapped object still performs its behavior. A decorator may itself wrap a Null Object.
+*   **Singleton Null Object:** A stateless [Null Object](/SEBook/designpatterns/null_object.html) can be shared. Enforcing a single instance with global access additionally uses [Singleton](/SEBook/designpatterns/singleton.html); sharing an injected instance does not require that pattern.
+*   **Singleton State:** A State object with no context-specific data can be shared, optionally through a Singleton. It can still receive the Context as an operation argument. Retaining one Context's data or reference inside that shared object would be unsafe when several Contexts use it; such a change may require separate State instances.
 
 ## The Advantages of Compounding Patterns
 The primary advantage of pattern compounds is that they **make software design more coherent**. Instead of finding highly optimized but fragmented patchwork solutions for every individual localized problem, compounds provide overarching design ideas and unifying themes. They raise the composition of patterns to a higher semantic abstraction, enabling developers to systematically foresee how the consequences of one pattern map directly to the context of another.
@@ -295,7 +297,7 @@ Despite their power, pattern compounds introduce distinct architectural and cogn
 
 Design patterns and refactoring are deeply connected. As Tokuda and Batory demonstrated, refactorings are behavior-preserving program transformations that can automate the evolution of a design *toward* a pattern. The principle is straightforward: **designs should evolve on an if-needed basis**. Rather than speculating upfront about which patterns might be needed, start with the simplest working solution and refactor toward a pattern when code smells indicate the need.
 
-Common code smells that suggest specific patterns:
+Code smells are investigation cues, not prescriptions. For each candidate below, identify a concrete change that the pattern would make easier and compare its cost with a smaller refactoring {% cite Kerievsky2004 %}:
 
 | Code Smell | Suggested Pattern | Why |
 |------------|-------------------|-----|
@@ -309,7 +311,9 @@ Common code smells that suggest specific patterns:
 | Hardcoded notification to specific dependents | [Observer](/SEBook/designpatterns/observer.html) | Decouple subject from its dependents |
 | Repeated `if (collaborator != null) ...` guards before delegating to a collaborator | [Null Object](/SEBook/designpatterns/null_object.html) | Replace the absent collaborator with a do-nothing object so call sites stay uniform |
 
-The **Rule of Three** provides a useful heuristic: do not apply a pattern until you have seen the need at least three times. This prevents speculative abstraction—creating flexibility for variation points that may never actually vary.
+The **Rule of Three** is a heuristic for delaying speculative abstraction, not a requirement to wait for three implementations. Two known algorithms or one clear framework extension point can justify a pattern; three similar code fragments may still need only an extracted function. Use evidence about likely changes, not a numerical threshold.
+
+**Check your reasoning:** A report exporter has one fixed format and no extension requirement. Later, two clients require different formats while sharing the same report data. Explain what changed, which responsibility could become a Strategy, and which code would still select it. A useful answer identifies formatting as the varying behavior and keeps selection at a configuration boundary; introducing a hierarchy before any variation was needed would require a separate justification.
 
 # Advanced Concepts 
 ## Patterns Within Patterns: Core Principles
@@ -322,7 +326,7 @@ When analyzing various design patterns, you will begin to notice recurring micro
 
 ## Domain-Specific and Application-Specific Patterns
 The Gang of Four patterns are generic to object-oriented programming, but patterns exist at all levels. 
-*   **Domain-Specific Patterns:** Certain industries (like Game Development, Android Apps, or Security) have their own highly tailored patterns. Because these patterns make assumptions about a specific domain, they generally carry fewer negative consequences within their niche, but they require the team to actually possess domain expertise.
+*   **Domain-Specific Patterns:** Domains such as game development and security have recurring designs that rely on domain assumptions. Those assumptions can make a pattern useful, but do not guarantee fewer costs. Check the domain constraints and failure modes explicitly.
 *   **Application-Specific Patterns:** Every distinct software project will eventually develop its own localized patterns—agreed-upon conventions and structures unique to that team. Identifying and documenting these implicit patterns is one of the most critical steps when a new developer joins an existing codebase, as it massively improves program comprehension.
 
 

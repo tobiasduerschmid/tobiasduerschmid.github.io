@@ -8,9 +8,9 @@ In modern software construction, we often build systems composed of multiple com
 
 # Problem
 When a client needs to interact with a set of complex subsystems, several issues arise:
-1.  **High Complexity:** To perform a single logical action like "Watch a Movie", the client must execute a long sequence of manual steps. In the Head First example, watching a movie requires 13 separate calls across six classes: turn on the popcorn popper, start it popping, dim the lights, put the screen down, turn on the projector, set its input, put it in widescreen mode, turn on the amplifier, set it to DVD input, set surround sound, set the volume, turn on the DVD player, and finally play the movie.
-2.  **Maintenance Nightmares:** If the movie finishes, the user has to perform all those steps again in reverse order to shut everything down. If a component is upgraded (e.g., replacing the DVD player with a Blu-ray device), every client that uses the system must learn a new, slightly different procedure.
-3.  **Tight Coupling:** The client code becomes "intimate" with every single class in the subsystem. This violates the principle of [**Information Hiding**](/SEBook/designprinciples/informationhiding.html), as the client must understand the internal low-level details of how each device operates just to use the system.
+1.  **High Complexity:** To perform a single logical action like "Watch a Movie", the client must execute a long sequence of manual steps. In the Head First example, the reduced example below makes twelve calls across six subsystem classes: start the popcorn popper, dim the lights, lower the screen, configure the projector and amplifier, and start the DVD player. These steps appear in the same order in the sequence diagram and code.
+2.  **Maintenance Nightmares:** When the movie finishes, the client needs a separate shutdown procedure: stop and eject the DVD, turn off devices, raise the screen, and restore the lights. Shutdown is not simply the startup calls in reverse order. If a component is upgraded (e.g., replacing the DVD player with a Blu-ray device), every client that uses the system must learn a new, slightly different procedure.
+3.  **Tight Coupling:** The client code becomes "intimate" with every single class in the subsystem. This exposes low-level coordination decisions to clients that only need a high-level task, weakening [**Information Hiding**](/SEBook/designprinciples/informationhiding.html).
 
 # Solution
 The **Façade Pattern** provides a unified interface to a set of interfaces in a subsystem. It defines a higher-level interface that makes the subsystem easier to use by wrapping complexity behind a single, simplified object.
@@ -42,33 +42,27 @@ Façade --> SubsystemC
 
 ## UML Example Diagram
 
+This diagram shows the movie-playback slice implemented below. CD and radio support could use the same subsystem, but is omitted from this example.
+
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout landscape
 class MovieNightClient
 class HomeTheaterFaçade {
 	+ watchMovie(movie: String): void
 	+ endMovie(): void
-	+ listenToCd(cdTitle: String): void
-	+ endCd(): void
-	+ listenToRadio(frequency: double): void
-	+ endRadio(): void
 }
 class Amplifier
-class Tuner
 class DvdPlayer
-class CdPlayer
 class Projector
 class TheaterLights
-class Screen
+class TheaterScreen
 class PopcornPopper
 MovieNightClient --> HomeTheaterFaçade
 HomeTheaterFaçade --> Amplifier
-HomeTheaterFaçade --> Tuner
 HomeTheaterFaçade --> DvdPlayer
-HomeTheaterFaçade --> CdPlayer
 HomeTheaterFaçade --> Projector
 HomeTheaterFaçade --> TheaterLights
-HomeTheaterFaçade --> Screen
+HomeTheaterFaçade --> TheaterScreen
 HomeTheaterFaçade --> PopcornPopper
 @enduml'></div>
 
@@ -79,7 +73,7 @@ participant client: MovieNightClient
 participant facade: HomeTheaterFaçade
 participant popper: PopcornPopper
 participant lights: TheaterLights
-participant screen: Screen
+participant screen: TheaterScreen
 participant projector: Projector
 participant amp: Amplifier
 participant dvd: DvdPlayer
@@ -126,7 +120,7 @@ deactivate facade
 
 # Code Example
 
-This example gives clients one intention-revealing operation, `watchMovie()`, while the facade coordinates the subsystem calls in the required order.
+This example gives clients `watchMovie()` and `endMovie()` while the facade coordinates the subsystem calls in the required order. The device methods print a trace rather than control hardware; failure recovery and restoration of prior device state would need an explicit policy in a real system.
 
 > **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
 
@@ -159,7 +153,7 @@ final class TheaterLights {
     void dim(int level) { System.out.println("Lights dimmed to " + level); }
 }
 
-final class Screen {
+final class TheaterScreen {
     void up() { System.out.println("Screen going up"); }
     void down() { System.out.println("Screen going down"); }
 }
@@ -183,11 +177,11 @@ final class HomeTheaterFaçade {
     private final DvdPlayer dvd;
     private final Projector projector;
     private final TheaterLights lights;
-    private final Screen screen;
+    private final TheaterScreen screen;
     private final PopcornPopper popper;
 
     HomeTheaterFaçade(Amplifier amp, DvdPlayer dvd, Projector projector,
-                      TheaterLights lights, Screen screen, PopcornPopper popper) {
+                      TheaterLights lights, TheaterScreen screen, PopcornPopper popper) {
         this.amp = amp;
         this.dvd = dvd;
         this.projector = projector;
@@ -229,7 +223,7 @@ public class Demo {
     public static void main(String[] args) {
         HomeTheaterFaçade homeTheater = new HomeTheaterFaçade(
             new Amplifier(), new DvdPlayer(), new Projector(),
-            new TheaterLights(), new Screen(), new PopcornPopper());
+            new TheaterLights(), new TheaterScreen(), new PopcornPopper());
         homeTheater.watchMovie("Raiders of the Lost Ark");
         homeTheater.endMovie();
     }
@@ -273,7 +267,7 @@ public:
     void dim(int level) const { std::cout << "Lights dimmed to " << level << "\n"; }
 };
 
-class Screen {
+class TheaterScreen {
 public:
     void up() const { std::cout << "Screen going up\n"; }
     void down() const { std::cout << "Screen going down\n"; }
@@ -289,7 +283,7 @@ public:
 class HomeTheaterFaçade {
 public:
     HomeTheaterFaçade(Amplifier& amp, DvdPlayer& dvd, Projector& projector,
-                      TheaterLights& lights, Screen& screen, PopcornPopper& popper)
+                      TheaterLights& lights, TheaterScreen& screen, PopcornPopper& popper)
         : amp_(amp), dvd_(dvd), projector_(projector),
           lights_(lights), screen_(screen), popper_(popper) {}
 
@@ -326,7 +320,7 @@ private:
     DvdPlayer& dvd_;
     Projector& projector_;
     TheaterLights& lights_;
-    Screen& screen_;
+    TheaterScreen& screen_;
     PopcornPopper& popper_;
 };
 
@@ -335,7 +329,7 @@ int main() {
     DvdPlayer dvd;
     Projector projector;
     TheaterLights lights;
-    Screen screen;
+    TheaterScreen screen;
     PopcornPopper popper;
     HomeTheaterFaçade homeTheater(amp, dvd, projector, lights, screen, popper);
     homeTheater.watchMovie("Raiders of the Lost Ark");
@@ -382,7 +376,7 @@ class TheaterLights:
         print(f"Lights dimmed to {level}")
 
 
-class Screen:
+class TheaterScreen:
     def up(self) -> None:
         print("Screen going up")
 
@@ -425,7 +419,7 @@ class HomeTheaterFaçade:
         dvd: DvdPlayer,
         projector: Projector,
         lights: TheaterLights,
-        screen: Screen,
+        screen: TheaterScreen,
         popper: PopcornPopper,
     ) -> None:
         self.amp = amp
@@ -464,7 +458,7 @@ class HomeTheaterFaçade:
 
 home_theater = HomeTheaterFaçade(
     Amplifier(), DvdPlayer(), Projector(),
-    TheaterLights(), Screen(), PopcornPopper(),
+    TheaterLights(), TheaterScreen(), PopcornPopper(),
 )
 home_theater.watch_movie("Raiders of the Lost Ark")
 home_theater.end_movie()
@@ -492,7 +486,7 @@ class TheaterLights {
   dim(level: number): void { console.log(`Lights dimmed to ${level}`); }
 }
 
-class Screen {
+class TheaterScreen {
   up(): void { console.log("Screen going up"); }
   down(): void { console.log("Screen going down"); }
 }
@@ -517,7 +511,7 @@ class HomeTheaterFaçade {
     private readonly dvd: DvdPlayer,
     private readonly projector: Projector,
     private readonly lights: TheaterLights,
-    private readonly screen: Screen,
+    private readonly screen: TheaterScreen,
     private readonly popper: PopcornPopper,
   ) {}
 
@@ -555,7 +549,7 @@ const homeTheater = new HomeTheaterFaçade(
   new DvdPlayer(),
   new Projector(),
   new TheaterLights(),
-  new Screen(),
+  new TheaterScreen(),
   new PopcornPopper(),
 );
 homeTheater.watchMovie("Raiders of the Lost Ark");
@@ -567,8 +561,8 @@ homeTheater.endMovie();
 # Consequences
 Applying the Façade pattern leads to several architectural benefits and trade-offs:
 *   **Simplified Interface:** The primary intent of a Façade is to simplify the interface for the client.
-*   **Reduced Coupling:** It decouples the client from the subsystem. Because the client only interacts with the Façade, internal changes to the subsystem (like adding a new device) do not require changes to the client code.
-*   **Improved Information Hiding:** It promotes modularity by ensuring that the low-level details of the subsystems are "secrets" kept within the component.
+*   **Reduced Coupling:** It reduces client dependencies on subsystem details. Changes that the Façade can absorb while preserving its public behavior do not require client changes; changes to that public behavior still can.
+*   **Improved Information Hiding:** It gives common clients a boundary behind which low-level coordination can change. Clients that deliberately use lower-level interfaces retain the corresponding dependencies.
 *   **Flexibility:** Clients that still need the power of the low-level interfaces can still access them directly; the Façade does not "trap" the subsystem, it just provides a more convenient way to use it for common tasks. This is a critical point: **a Façade is a convenience, not a prison**.
 
 # Design Decisions
@@ -577,13 +571,13 @@ Applying the Façade pattern leads to several architectural benefits and trade-o
 When a subsystem is large, a single Façade can become a "god class" that handles too many concerns. In such cases, create **multiple facades**, each responsible for a different aspect of the subsystem (e.g., `HomeTheaterPlaybackFaçade` and `HomeTheaterSetupFaçade`). This keeps each Façade cohesive and manageable.
 
 ## Façade Awareness
-Subsystem classes should **not know** about the Façade. The Façade knows the subsystem internals and delegates to them, but the subsystem components remain fully independent. This one-directional knowledge ensures the subsystem can be used without the Façade and can be tested independently.
+Subsystem classes should **not know** about the Façade. The Façade knows the subsystem internals and delegates to them, while subsystem components remain independent of the Façade. They may still depend on one another. This one-directional knowledge ensures the subsystem can be used without the Façade and can be tested independently.
 
 ## Abstract Façade
-When testability matters or when the subsystem may have platform-specific implementations, define the Façade as an **interface or abstract class**. The Gang of Four call this "reducing client-subsystem coupling further": clients communicate with the subsystem through the abstract Façade interface, so they don't know which concrete implementation of a subsystem is being used (GoF, p. 178). An alternative is to keep the Façade concrete but configure it with different subsystem objects.
+When testability matters or when the subsystem may have platform-specific implementations, define the Façade as an **interface or abstract class**. The Gang of Four call this "reducing client-subsystem coupling further": clients communicate with the subsystem through the abstract Façade interface, so they don't know which concrete implementation of a subsystem is being used (GoF, Facade, Implementation). An alternative is to keep the Façade concrete but configure it with different subsystem objects.
 
 ## Public vs. Private Subsystem Classes
-A subsystem is analogous to a class: both have public and private interfaces. The Façade is part of the **public interface** to the subsystem, but not the only part — other classes that clients legitimately need to access (e.g., `Scanner` and `Parser` in the GoF compiler example) are also public. Classes that only subsystem extenders need are **private**. Languages like C++ provide namespaces to expose only the public subsystem classes; in others, this distinction is enforced by convention (GoF, p. 178).
+A subsystem is analogous to a class: both have public and private interfaces. The Façade is part of the **public interface** to the subsystem, but not the only part — other classes that clients legitimately need to access (e.g., `Scanner` and `Parser` in the GoF compiler example) are also public. Classes intended only for subsystem implementation or extension form its **internal interface**. Enforce that boundary with the language and build system's visibility mechanisms. A named C++ namespace groups names; it does not by itself make classes private. The namespace discussion in GoF's Facade implementation notes reflects the historical language context.
 
 # The Law of Demeter
 
@@ -625,16 +619,18 @@ The Façade is often confused with Adapter and Mediator because all three involv
 | Pattern | Intent | Knowledge Direction | Scope |
 |---------|--------|---------------------|-------|
 | **Façade** | *Simplify* a complex subsystem into a convenient interface | One-way: Façade knows the subsystem; subsystem classes have no knowledge of the Façade. | Many existing interfaces → one new simpler interface |
-| **[Adapter](/SEBook/designpatterns/adapter.html)** | *Convert* an existing interface so it matches another expected interface | One-way: Client calls Adapter; Adapter calls Adaptee; Adaptee is unaware. | One existing interface → one expected interface (one-to-one) |
-| **[Mediator](/SEBook/designpatterns/mediator.html)** | *Coordinate* interactions between peer objects | Two-way awareness: Colleagues know the Mediator and call it; the Mediator calls Colleagues back. | Many peer Colleagues coordinated through one centralized object |
+| **[Adapter](/SEBook/designpatterns/adapter.html)** | *Convert* an existing interface so it matches another expected interface | In an object adapter, the client uses Target and the adapter delegates to its adaptee. | An expected Target contract implemented using one or more adapted objects |
+| **[Mediator](/SEBook/designpatterns/mediator.html)** | *Coordinate* interactions between peer objects | Colleagues notify a mediator, directly or through an event mechanism; it coordinates their responses. | Interaction policy for collaborating colleagues |
 
-A Façade simplifies access to a subsystem; an Adapter changes the *shape* of one interface to fit another; a Mediator coordinates among peers. If the intermediary hides a subsystem from outside clients (and the subsystem doesn't know about it), it is a Façade. If it converts one interface into another, it is an Adapter. If it manages communication among peers that all know about it, it is a Mediator.
+A Façade simplifies access to a subsystem; an Adapter changes the *shape* of one interface to fit another; a Mediator coordinates among peers. If the intermediary hides a subsystem from outside clients (and the subsystem doesn't know about it), it is a Façade. If it converts one interface into another, it is an Adapter. If it owns the interaction rules among peers, it plays the Mediator role. The intent and dependencies matter more than whether a call happens to produce a callback.
 
-**Façade vs. Abstract Factory.** The Gang of Four note that [Abstract Factory](/SEBook/designpatterns/abstract_factory.html) can be used *with* Façade to provide an interface for creating subsystem objects in a subsystem-independent way. Abstract Factory can also be used as an *alternative* to Façade to hide platform-specific classes (GoF, p. 182).
+**Façade vs. Abstract Factory.** The Gang of Four note that [Abstract Factory](/SEBook/designpatterns/abstract_factory.html) can be used *with* Façade to provide an interface for creating subsystem objects in a subsystem-independent way. Abstract Factory can also be used as an *alternative* to Façade to hide platform-specific classes (GoF, Facade, Related Patterns).
 
-**Façade is often a Singleton.** Because usually only one Façade object is required for a subsystem, Façades are often implemented as [Singletons](/SEBook/designpatterns/singleton.html) (GoF, p. 183).
+**Façade and instance lifetime.** GoF notes that Façades are often implemented as [Singletons](/SEBook/designpatterns/singleton.html) (Facade, Related Patterns). That is an implementation option, not a requirement: one facade per application, subsystem instance, session, or test can be supplied explicitly. Needing one instance in a particular context does not by itself justify global access or a globally enforced instance limit.
 
 ## Flashcards
+
+This shared review covers Adapter, Composite, and Facade. Use it after studying all three chapters.
 
 {% include flashcards.html id="design_pattern_structural" %}
 

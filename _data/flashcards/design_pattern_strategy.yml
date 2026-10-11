@@ -5,7 +5,7 @@ cards:
   - id: 1
     difficulty: basic
     question: "What is the *intent* of the Strategy pattern?"
-    answer: "Define a family of algorithms, encapsulate each one as an object, and make them interchangeable at runtime. Strategy lets the algorithm vary independently from the clients that use it."
+    answer: "Define a family of algorithms, encapsulate each one as an object, and make them interchangeable. Strategy lets the algorithm vary independently from the clients that use it."
     explanation: "The load-bearing word is *interchangeable*: the Context can swap one algorithm for another without changing its own code or its clients' code."
   - id: 2
     difficulty: basic
@@ -21,12 +21,12 @@ cards:
     difficulty: basic
     question: "What are the three roles in the Strategy pattern?"
     answer: "**Strategy** (the interface declaring the algorithm), **ConcreteStrategy** (each implementation of the algorithm), and **Context** (the class that holds a Strategy and delegates work to it)."
-    explanation: "The Context only depends on the Strategy *interface*, never on a ConcreteStrategy. This is what makes the algorithm swappable."
+    explanation: "The Context's delegating operation depends on the Strategy interface; construction or configuration code selects a ConcreteStrategy. This is what makes the algorithm swappable."
   - id: 5
     difficulty: intermediate
     question: "How does Strategy differ from State? They have identical UML structures."
-    answer: "**Strategy**: the *client* explicitly picks the implementation; strategies do not transition between each other. **State**: behavior changes *implicitly* via internal transitions; state objects switch the Context to a new state."
-    explanation: "Heuristic: ask whose logic chooses the next implementation. If it's the client, Strategy. If it's the Context's own internal state machine, State."
+    answer: "**Strategy** supplies an interchangeable algorithm. **State** organizes behavior around the Context's lifecycle state and transitions. Who selects the implementation is a clue, not an absolute rule."
+    explanation: "An internal transition is a useful State clue, but clients can also select a mode in State. Decide from lifecycle versus algorithm intent, not from the location of a setter call."
   - id: 6
     difficulty: intermediate
     question: "How does Strategy differ from Template Method?"
@@ -41,32 +41,33 @@ cards:
     difficulty: intermediate
     question: "Why are conditional `if`/`switch` statements selecting between algorithms a code smell that suggests Strategy?"
     answer: "Each branch represents a different algorithm hard-coded into the Context. Replacing the conditional with polymorphic Strategy objects makes adding new algorithms an *addition* rather than a *modification* of existing code (Open/Closed Principle)."
-    explanation: "This is *polymorphism over conditions*, the same principle the State pattern embodies. The compiler enforces that every Strategy implements the required method — there's no risk of forgetting a case."
+    explanation: "This is *polymorphism over conditions*, the same principle the State pattern embodies. A typed interface checks that required methods are supplied. It cannot prove algorithm correctness or that configuration selects the right implementation."
   - id: 9
     difficulty: intermediate
-    question: "What is the main drawback of Strategy that makes it unsuitable when the choice should be hidden from clients?"
-    answer: "**Clients must be aware of the different Strategies.** Because the client typically picks the ConcreteStrategy, it must understand how the strategies differ — which means strategy-specific details leak into client code."
-    explanation: "If clients don't need to make this choice, a different pattern (Template Method, Factory Method, or even a single class) is usually a better fit."
+    question: "Who needs to understand the differences between concrete strategies?"
+    answer: "The code selecting a strategy needs to understand the relevant differences. Other clients can use a Context configured by a factory without naming any concrete strategy."
+    explanation: "A factory can hide strategy construction while preserving the independent algorithm implementations. Selection and use are different responsibilities."
   - id: 10
     difficulty: intermediate
-    question: "When should a Strategy be implemented as a Singleton or Flyweight?"
-    answer: "When the Strategy is **stateless** — it carries behavior but no instance data. A single shared instance can serve all Contexts, saving memory."
-    explanation: "Stateful strategies (e.g., a `RangeValidator(min=0, max=100)`) need one instance per configuration. Stateless ones (e.g., `Quack`, `MuteQuack`) can be Flyweights since they're indistinguishable at runtime."
+    question: "When can Contexts share a Strategy instance?"
+    answer: "When sharing does not mix per-context mutable data. Stateless strategies are easy to share; immutable configured strategies can also be shared by Contexts using that configuration."
+    explanation: "For example, the same immutable range validator can serve several Contexts. A strategy that stores one Context's running total or reference needs separate ownership. Sharing does not require global Singleton access."
   - id: 11
     difficulty: advanced
     question: "Two ways the Context can give the Strategy access to its data — what are they, and what's the trade-off?"
     answer: "**(1) Pass data as parameters** — Context passes everything the Strategy might need through the algorithm interface. Keeps them decoupled but may pass unused data. **(2) Pass the Context itself** — Strategy queries Context for what it needs. More flexible but couples Strategy to Context's interface."
-    explanation: "GoF terminology: option (2) is 'taking the data to the Strategy.' Option (1) is sometimes called 'taking the Strategy to the data.'"
+    explanation: "GoF calls passing data as parameters 'taking the data to the strategy'. Passing the Context instead lets the Strategy query what it needs through the Context's interface."
   - id: 12
     difficulty: intermediate
     question: "Give three real-world examples of the Strategy pattern in everyday programming."
     answer: "Java's `Comparator<T>` for sorting; payment-method handlers (credit card, PayPal, bank transfer) sharing a `PaymentMethod` interface; pluggable validation rules (`RangeValidator`, `RegexValidator`) sharing a `Validator` interface."
     explanation: "Strategy is everywhere in standard libraries. Whenever you pass a function or callback to control how an operation behaves (sort comparator, hash function, retry policy), you're using Strategy."
   - id: 13
-    difficulty: advanced
-    question: "Why does the SimUDuck example put `fly()` and `quack()` into Strategy interfaces instead of using `Flyable` and `Quackable` interfaces directly on each duck?"
-    answer: "Plain interfaces force *every duck class* to re-implement `fly()` and `quack()`, destroying code reuse. With Strategy, duck behavior is composed — `MallardDuck` and `RedHeadDuck` can share `FlyWithWings` instead of duplicating the implementation."
-    explanation: "Interfaces alone solve the inheritance problem but lose code reuse, since each class must still write its own implementation. Strategy solves both — different ducks can share the same FlyBehavior instance."
+    difficulty: intermediate
+    question: "What does a separate FlyBehavior strategy add beyond declaring Flyable on every duck class?"
+    answer: "A duck delegates flying to a replaceable collaborator, so multiple duck classes reuse one flight implementation and individual ducks can change behavior."
+    explanation: "An interface alone specifies an operation. It does not force duplication, but it also does not supply per-object behavior selection. Strategy makes that selection explicit through composition."
+
   - id: 14
     difficulty: advanced
     question: "Strategy is also known by what alternate name in the GoF catalog?"
@@ -75,5 +76,5 @@ cards:
   - id: 15
     difficulty: advanced
     question: "When should you NOT use Strategy?"
-    answer: "When (a) there's only one algorithm, (b) variants will never change at runtime *and* clients don't care, (c) the algorithms are trivial one-liners that could just be lambdas, or (d) the choice is genuinely an internal state machine — that's State, not Strategy."
-    explanation: "The Rule of Three applies: don't introduce Strategy until you have at least three concrete variants or a clear plan for runtime swapping. Speculative abstraction is over-engineering."
+    answer: "When the existing algorithm-selection code is small and stable, or variation is only speculative. For a simple interchangeable algorithm, a function can express Strategy without a class hierarchy. For lifecycle-dependent behavior, consider State."
+    explanation: "There is no mandatory three-variant threshold and no requirement to swap at runtime. The question is whether independent algorithm variation pays for the added indirection."

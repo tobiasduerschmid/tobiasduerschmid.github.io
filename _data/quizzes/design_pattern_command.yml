@@ -46,7 +46,7 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      A `LightOnCommand` supports undo by calling `light.off()`. What must a `SetThermostatCommand` usually store to undo safely?
+      A thermostat command sets a target temperature. What must it usually store to restore the prior setting on undo?
     options:
       - "Only the new target temperature"
       - "The previous temperature before executing"
@@ -60,7 +60,7 @@ questions:
         The remote control is the invoker, not the source of the thermostat's old value. Undo should depend on receiver state, not on the UI object that triggered the command.
       3: |
         A command history can store commands for undo/redo, but each command still needs enough local information to reverse its own effect. The whole application's command list does not tell this thermostat what its previous setting was.
-    explanation: "**It needs the previous temperature.** Some undo operations are simple inverse calls, but value-changing commands usually must capture old receiver state before they execute."
+    explanation: "**It needs the previous temperature.** Value-setting commands must capture the old setting before execution. Calling the opposite operation is insufficient: turning an already-on light off would not restore its previous state."
 
   - id: 4
     difficulty: basic
@@ -189,7 +189,7 @@ questions:
         Command does not require an inheritance relationship between receiver and invoker. Their separation is the point: the invoker triggers a request without depending on the receiver API.
       3: |
         A lambda can be a lightweight command when the work is immediate and context is simple. Durable queues often need serializable request data, versioning, and enough information to replay after restart.
-    explanation: "**Queued commands need self-contained request data or a durable reference to it.** Otherwise the queue can store the command object but not safely replay the work."
+    explanation: "**Durably queued commands need self-contained request data or a durable reference to it.** Otherwise the queue can store the command object but not safely replay the work."
 
   - id: 10
     difficulty: basic

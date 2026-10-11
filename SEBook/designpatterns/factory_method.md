@@ -16,7 +16,7 @@ public Pizza orderPizza(String type) {
     Pizza pizza;
     if (type.equals("cheese")) { pizza = new CheesePizza(); }
     else if (type.equals("greek")) { pizza = new GreekPizza(); }
-    // ... more if-else blocks ...
+    else { throw new IllegalArgumentException("Unknown pizza: " + type); }
     pizza.prepare();
     pizza.bake();
     pizza.cut();
@@ -31,7 +31,7 @@ This approach presents several critical challenges:
 3.  **Tight Coupling:** The store is "intimately" aware of every concrete pizza class, making it impossible to add new regional styles without rewriting the store's core logic.
 
 # Solution
-The **Factory Method Pattern** solves this by defining an interface for creating an object but letting subclasses decide which class to instantiate. It effectively "defers" the responsibility of creation to subclasses.
+The **Factory Method Pattern** solves this by defining an interface for creating an object but letting subclasses decide which class to instantiate {% cite Gamma1995 %}. It effectively "defers" the responsibility of creation to subclasses.
 
 In our `PizzaStore` example, we typically make the `createPizza()` method **abstract** within the base `PizzaStore` class. This abstract method is the "Factory Method". We then create concrete subclasses like `NYPizzaStore` and `ChicagoPizzaStore`, each implementing `createPizza()` to return their specific regional variants. (GoF also allows the Creator to provide a *default implementation* that subclasses may optionally override — see *Abstract vs. Concrete Creator* below.)
 
@@ -41,7 +41,7 @@ The structure involves four key roles (using GoF's names; the parenthesized name
 *   **Creator** (`Application`): declares the factory method, which returns an object of type `Product`. May also define a default implementation that returns a default `ConcreteProduct`. May also call the factory method to create a `Product` (often inside a *Template Method*, in GoF terminology — in our example, `orderPizza()` is the template method that calls `createPizza()`).
 *   **ConcreteCreator** (`MyApplication`): overrides the factory method to return an instance of a `ConcreteProduct` (e.g., `NYPizzaStore` returns `NYStyleCheesePizza`).
 
-> **Factory Method vs. "Simple Factory":** A common point of confusion is the **Simple Factory** (sometimes called *Static Factory Method*) — a single non-abstract class with a parameterized method (typically a chain of `if/else` or a `switch`) that returns one of several product types. *Head First Design Patterns* gives Simple Factory only an "honorable mention", noting it is a programming idiom rather than a true design pattern. The GoF Factory Method differs in that it *defers instantiation to subclasses via inheritance* — each `ConcreteCreator` overrides the factory method, rather than one factory class switching on a type parameter.
+> **Factory Method vs. "Simple Factory":** A **Simple Factory** centralizes product selection in one operation, often using a parameter and a conditional. That operation may be static or an instance method. A **static factory method** is the broader idiom of a named static creation method; it need not switch between product types. Neither name implies the GoF pattern. The GoF Factory Method differs in that it *defers instantiation to subclasses via inheritance* — each `ConcreteCreator` overrides the factory method, rather than one factory class switching on a type parameter.
 
 ## UML Role Diagram
 
@@ -71,7 +71,7 @@ end note
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 abstract class PizzaStore {
-    + {abstract} createPizza(type: String): Pizza
+    # {abstract} createPizza(type: String): Pizza
     + orderPizza(type: String): Pizza
 }
 interface Pizza {
@@ -81,7 +81,7 @@ interface Pizza {
     + box(): void
 }
 class NYPizzaStore {
-    + createPizza(type: String): Pizza
+    # createPizza(type: String): Pizza
 }
 class NYStyleCheesePizza {
 }
@@ -101,6 +101,8 @@ customer -> store: orderPizza("cheese")
 activate store
 store -> store: createPizza("cheese")
 activate store
+create pizza
+store -> pizza: <<create>>
 deactivate store
 store -> pizza: prepare()
 activate pizza
@@ -372,7 +374,7 @@ GoF also calls out two further consequences worth highlighting:
 However, there are trade-offs:
 *   **Forced subclassing.** Clients may have to subclass `Creator` *just* to instantiate a particular `ConcreteProduct`. Subclassing is fine when the client was going to subclass anyway — otherwise it adds another point of evolution. (This is the motivating reason GoF discusses the *Using templates to avoid subclassing* and *Parameterized factory methods* variants in Implementation.)
 *   **Boilerplate Code:** It requires creating many new classes (one for each product type and one for each creator type), which can increase the "static" complexity of the code.
-*   **Program Comprehension:** While it reduces long-term maintenance costs, it can make the initial learning curve steeper for new developers who aren't familiar with the pattern.
+*   **Program Comprehension:** The extra indirection can make the workflow harder to trace. It earns its cost when creation really needs a subclass extension point; a stable, small product set may be clearer with a simple factory or direct construction.
 
 # Design Decisions
 
@@ -381,13 +383,13 @@ However, there are trade-offs:
 * **Concrete Creator with default:** The base creator provides a default product. Subclasses only override when they need a different product. Simpler, but may lead to confusion about when overriding is expected.
 
 ## Parameterized Factory Method
-A single factory method can take a parameter (like a `String` or `enum`) that identifies the kind of object to create — all variants share the same `Product` interface. Our example uses this form (`createPizza("cheese")`). GoF presents this as a *variation* of Factory Method, not a replacement: subclasses can still **override** the parameterized method to add new identifiers (e.g., a `MyCreator::Create` that handles new IDs and falls through to `Creator::Create` for the rest). It does shift conditional logic into a switch on the type parameter, so naive non-overriding implementations — adding cases by editing the existing method — violate the [Open/Closed Principle](/SEBook/designprinciples/solid.html#openclosed-principle-ocp). The polymorphic-override usage does not.
+A single factory method can take a parameter (like a `String` or `enum`) that identifies the kind of object to create — all variants share the same `Product` interface. Our example uses this form (`createPizza("cheese")`). GoF presents this as a *variation* of Factory Method, not a replacement: subclasses can still **override** the parameterized method to add new identifiers (e.g., a `MyCreator::Create` that handles new IDs and falls through to `Creator::Create` for the rest). A conditional can remain inside each override. The relevant [Open/Closed Principle](/SEBook/designprinciples/solid.html#openclosed-principle-ocp) question is whether the intended extension requires modifying the stable creator. An override can extend creation without editing that creator; registration or application setup may still need to select the new subclass. A small conditional for a stable product set is not, by itself, a reason to add a hierarchy.
 
 ## Using Templates to Avoid Subclassing (C++)
-GoF also notes that in C++ you can use templates to avoid the subclass-just-to-pick-a-Product problem: a `template <class TheProduct> class StandardCreator : public Creator { Product* CreateProduct() { return new TheProduct; } };` lets the client supply the product class with no `Creator` subclass at all. Modern Java/C# generics support a similar pattern.
+GoF also notes that in C++ you can use templates to avoid the subclass-just-to-pick-a-Product problem: a `template <class TheProduct> class StandardCreator : public Creator { Product* CreateProduct() { return new TheProduct; } };` lets the client supply the product class without hand-writing a new `Creator` subclass for every product. `StandardCreator<TheProduct>` is still a subclass. Java cannot directly instantiate a type parameter with `new T()`; pass a supplier such as `Supplier<Product>` instead. C# permits `new T()` with an appropriate `new()` constraint.
 
 ## Static Factory Method (Not GoF)
-A common idiom—`Loan.newTermLoan()`—uses static methods on the product class itself to control creation. This is not the GoF Factory Method (which relies on subclass override), but is widely used in practice. It provides named constructors and can return cached instances or subtype variants.
+A common idiom—`Loan.newTermLoan()`—uses static methods on the product class itself to control creation. This is not the GoF Factory Method (which relies on subclass override), but is widely used in practice. It provides named constructors and can return cached instances or subtype variants. Kerievsky calls the broader concept a **Creation Method**: every GoF Factory Method is a creation method, but many creation methods have no subclass hook. His *Replace Multiple Constructors with Creation Methods* refactoring uses meaningful names to distinguish construction choices without introducing a creator hierarchy. Preserve the constructor behavior, migrate callers to the named methods, and check that each method produces the intended product before removing unused constructor entry points.
 
 ## Language-specific Variants
 GoF discusses language-specific implementation details:
@@ -401,11 +403,11 @@ A common source of confusion is when to use Factory Method vs. the other creatio
 
 | Pattern | Use When... | Key Characteristic |
 |---------|-------------|-------------------|
-| **Factory Method** | Only one type of product; subclasses decide which concrete type | Simplest; uses inheritance (subclass overrides a method) |
-| **[Abstract Factory](/SEBook/designpatterns/abstract_factory.html)** | A *family* of multiple related product types that must work together | Uses composition (client receives a factory object); highest extensibility for new families |
-| **[Builder](/SEBook/designpatterns/builder.html)** | Product has many parts with sequential construction; construction process itself varies | Separates the construction algorithm from the object representation |
+| **Factory Method** | A creator needs subclasses to choose the products used by its workflow | Uses inheritance; a creator may expose several factory methods |
+| **[Abstract Factory](/SEBook/designpatterns/abstract_factory.html)** | Clients need a coordinated *family* of products | Client receives a factory object; new product kinds remain costly |
+| **[Builder](/SEBook/designpatterns/builder.html)** | The same construction process should support different product representations | Director drives steps through a builder interface |
 
-An important insight: **factory methods often lurk inside Abstract Factories**. Each creation method in an Abstract Factory (e.g., `createDough()`, `createSauce()`) is itself a factory method. The Abstract Factory defines the interface; the concrete factory subclasses implement each method—which is exactly the Factory Method pattern applied to multiple products.
+An important insight: **factory methods often lurk inside Abstract Factories**. When concrete factories override creation operations such as `createDough()` and `createSauce()`, those operations play the Factory Method role. The Abstract Factory defines the family interface; its concrete subclasses choose products through those overrides. Prototype-based Abstract Factories can instead configure creation by cloning, so the layering is common rather than mandatory.
 
 # Related Patterns
 

@@ -16,12 +16,12 @@ cards:
     difficulty: basic
     question: "What is context tailoring?"
     answer: "The process of taking an abstract pattern and adapting it to fit the concrete problem, context, and constraints of a specific application."
-    explanation: "A pattern is never copied verbatim. The developer must observe the project's needs, desired system properties, and the surrounding code, then cut the pattern to fit—documenting the rationale for each adjustment."
+    explanation: "Use the pattern as a design model, then check its participants and contracts against the concrete context. A library implementation can still be reused where its supported variations fit."
   - id: 4
     difficulty: intermediate
     question: "What is a pattern compound?"
     answer: "A reoccurring set of patterns with overlapping roles from which additional emergent properties arise."
-    explanation: "Example: MVC is a compound of Observer (model notifies views), Strategy (view delegates to controller), and Composite (view is a tree of UI components). The combination yields properties none of the individual patterns provide alone."
+    explanation: "Classic Smalltalk MVC illustrates Observer for notifications, Strategy for input handling, and Composite for nested views. Merely using several patterns in one program does not make their combination a recurring compound."
   - id: 5
     difficulty: basic
     question: "What is the 'Hammer and Nail' syndrome?"
@@ -30,7 +30,7 @@ cards:
   - id: 6
     difficulty: intermediate
     question: "A team wants to introduce Observer because one object needs to update one other object after a change. What should they evaluate before applying the pattern?"
-    answer: "Whether the dependency is truly dynamic and one-to-many, whether subscribers need to vary independently, and whether Observer's subscription machinery is cheaper than a direct method call."
+    answer: "Whether subscribers should vary independently or need managed lifetimes, and whether those benefits justify a registry compared with a direct call. One current observer does not rule out Observer."
     explanation: "The useful version of the Rule of Three is design judgment, not memorizing the number three. Patterns earn their keep when they make concrete evolution cheaper; without that pressure, they are speculative abstraction."
   - id: 7
     difficulty: intermediate
@@ -41,24 +41,24 @@ cards:
     difficulty: advanced
     question: "What does the 'Before and After' teaching technique involve?"
     answer: "Comparing a working solution *without* a pattern to a refactored version *with* the pattern, especially when extending both with a new requirement."
-    explanation: "This technique makes the pattern's value viscerally clear: extending the pattern-based version is dramatically easier than extending the version without the pattern."
+    explanation: "Compare the changes needed in both versions. A pattern helps only for the variation it accommodates; the exercise can also reveal when its extra abstraction is not worthwhile."
   - id: 9
     difficulty: advanced
-    question: "What does the '74% of student submissions' finding refer to?"
-    answer: "A design-structure-matrix study by Cai and Wong (CSEE&T 2011) of 85 student submissions found that 74% introduced modularity-violating dependencies even though their software functioned correctly."
-    explanation: "This shows that correct behavior does not mean correct design. Students learned the gross structure of patterns but made lower-level mistakes that defeated the modularity the patterns were meant to achieve."
+    question: "Why does correct program output not establish that a pattern preserves its intended modularity?"
+    answer: "A program can produce the expected result while depending on private representation details or concrete collaborators that the design intended to hide."
+    explanation: "Cai, Iannuzzi, and Wong’s 2011 study found unexpected dependencies in 74% of 85 functioning student submissions. The transferable lesson is to inspect dependencies and change scenarios, not memorize the percentage as a universal rate."
   - id: 10
     difficulty: advanced
     question: "Why do experienced engineers prefer 'do the simplest thing that could possibly work'?"
-    answer: "Per **Gall's Law** (John Gall, *Systemantics*, 1975): a complex system that works is invariably found to have evolved from a simple system that worked. Start simple, then refactor toward patterns as concrete needs emerge."
-    explanation: "Rather than speculating upfront about which patterns might be needed, start with the simplest working solution and refactor when code smells indicate the need — which prevents over-engineering. The phrase \"do the simplest thing that could possibly work\" comes from Kent Beck and the XP / TDD tradition."
+    answer: "A small working design gives feedback before speculative abstractions accumulate. Refactor toward a pattern when actual variation or a clear extension requirement justifies its cost."
+    explanation: "Simplicity is a design heuristic, not a theorem that every complex design must evolve in one prescribed sequence. Evaluate known requirements as well as today’s implementation."
   - id: 11
     difficulty: intermediate
     question: "What is the relationship between code smells and design patterns?"
-    answer: "Code smells indicate *when* a pattern might be needed; patterns provide *how* to fix the smell."
-    explanation: "For example: large if/else chains on state → State pattern. Duplicated algorithm selection → Strategy pattern. Complex object creation → Factory Method. Code smells are the diagnostic; patterns are the treatment."
+    answer: "Code smells identify design questions; patterns are possible responses, not automatic prescriptions."
+    explanation: "Repeated state checks may justify State; a small stable switch may be clearer. Compare a candidate pattern with smaller refactorings against concrete future changes."
   - id: 12
     difficulty: basic
     question: "What does 'polymorphism over conditions' mean?"
     answer: "Replace complex if/else or switch statements with polymorphic objects that each handle one case."
-    explanation: "This is a core principle embodied by State, Strategy, and Command patterns. Adding a new case requires adding a new class rather than modifying existing conditional logic (Open/Closed Principle)."
+    explanation: "This can localize a changing behavior behind a stable interface. Wiring or transition rules may still need updates, and a short stable conditional may remain simpler."

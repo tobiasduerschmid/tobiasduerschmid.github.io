@@ -6,18 +6,18 @@ layout: sebook
 # Context
 In software construction, we frequently encounter situations where an existing system needs to collaborate with a third-party library, a vendor class, or legacy code. However, these external components often have interfaces that do not match the specific "Target" interface our system was designed to use.
 
-A classic real-world analogy is the power outlet adapter. If you take a US laptop to London, the laptop’s plug (the client) expects a US power interface, but the wall outlet (the adaptee) provides a European interface. To make them work together, you need an adapter that translates the interface of the wall outlet into one the laptop can plug into. In software, the Adapter pattern acts as this "middleman", allowing classes to work together that otherwise couldn't due to incompatible interfaces.
+A classic real-world analogy is the power outlet adapter. If you take a US laptop to London, the laptop’s plug (the client) expects a US power interface, but the wall outlet (the adaptee) provides a UK plug interface. To make them work together, you need an adapter that translates the interface of the wall outlet into one the laptop can plug into. In software, the Adapter pattern acts as this "middleman", allowing classes to work together that otherwise could not because of incompatible interfaces. The analogy has a limit: a plug adapter does not by itself convert voltage. Likewise, matching software method signatures is not enough; the adapted behavior must satisfy the target contract.
 
 # Problem
 The primary challenge occurs when we want to use an existing class, but its interface does not match the one we need. This typically happens for several reasons:
 *   **Legacy Code:** We have code written a long time ago that we don’t want to (or can’t) change, but it must fit into a new, more modern architecture.
-*   **Vendor Lock-in:** We are using a vendor class that we cannot modify, yet its method names or parameters don't align with our system's requirements.
-*   **Syntactic and Semantic Mismatches:** Two interfaces might differ in syntax (e.g., `getDistance()` in inches vs. `getLength()` in meters) or semantics (e.g., a method that performs a similar action but with different side effects).
+*   **Vendor Interfaces:** We are using a vendor class that we cannot modify, yet its method names or parameters don't align with our system's requirements.
+*   **Syntactic and Semantic Mismatches:** Interfaces may use different method names or parameter shapes. They may also promise different behavior, such as distances in inches rather than meters, different error reporting, or different side effects.
 
-Without an adapter, we would be forced to rewrite our existing system code to accommodate every new vendor or legacy class, which violates the [**Open/Closed Principle**](/SEBook/designprinciples/solid.html#openclosed-principle-ocp) and creates tight coupling.
+An adapter localizes the translation so client code can continue to depend on its existing contract, supporting the [**Open/Closed Principle**](/SEBook/designprinciples/solid.html#openclosed-principle-ocp) for this kind of change. If the interfaces can safely be aligned directly, a refactoring may be simpler. Owning both classes does not settle the choice: existing clients, version compatibility, or different domain responsibilities may justify keeping their interfaces distinct.
 
 # Solution
-The **Adapter Pattern** solves this by creating a class that converts the interface of an "Adaptee" class into the "Target" interface that the "Client" expects. 
+The **Adapter Pattern** solves this by creating a class that converts the interface of an "Adaptee" class into the "Target" interface that the "Client" expects.
 
 According to the GoF catalog, there are four key roles in this structure:
 1.  **Target:** The domain-specific interface the Client wants to use (e.g., a `Duck` interface with `quack()` and `fly()`). In GoF's motivating example, this is `Shape`.
@@ -25,7 +25,7 @@ According to the GoF catalog, there are four key roles in this structure:
 3.  **Adapter:** The class that adapts the interface of Adaptee to the Target interface (e.g., `TurkeyAdapter`). In GoF, this is `TextShape`.
 4.  **Client:** The class that collaborates with objects conforming to the Target interface, remaining oblivious to the fact that it is communicating with an Adaptee through the Adapter.
 
-In the "Turkey that wants to be a Duck" example, we create a `TurkeyAdapter` that implements the `Duck` interface. When the client calls `quack()` on the adapter, the adapter internally calls `gobble()` on the wrapped turkey object. Because turkeys can only fly short distances, the adapter calls the turkey's `fly()` method five times to compensate when a duck-style `fly()` is requested. This syntactic translation effectively hides the underlying implementation from the client.
+In the "Turkey that wants to be a Duck" example, we create a `TurkeyAdapter` that implements the `Duck` interface. When the client calls `quack()` on the adapter, the adapter internally calls `gobble()` on the wrapped turkey object. For the teaching example, a duck-style `fly()` request is mapped to five calls to the turkey's short-distance `fly()`. This is a behavioral mapping chosen for the example, not proof that five short flights satisfy every possible duck-flight contract. If a client required one continuous flight, this adapter would be unsuitable even though its methods have the right names.
 
 ## UML Role Diagram
 
@@ -324,49 +324,53 @@ testDuck(new TurkeyAdapter(new WildTurkey()));
 
 # Consequences
 Applying the Adapter pattern results in several significant architectural trade-offs:
-*   **Loose Coupling:** It decouples the client from the legacy or vendor code. The client only knows the Target interface, allowing the Adaptee to evolve independently without breaking the client code.
+*   **Loose Coupling:** It decouples the client from the legacy or vendor code. The client only knows the Target interface, allowing many Adaptee changes to be absorbed inside the adapter while the Target contract remains stable. An incompatible behavioral change may still require changing the adapter or reconsidering the contract.
 *   **Information Hiding:** It follows the [Information Hiding](/SEBook/designprinciples/informationhiding.html) principle by concealing the "secret" that the system is using a legacy component.
 *   **Flexibility vs. Complexity:** While adapters make a system more flexible, they add a layer of indirection that can make it harder to trace the execution flow of the program since the client doesn't know which object is actually receiving the call.
 
 # Design Decisions
 
 ## Object Adapter vs. Class Adapter
-* **Object Adapter** (via composition): The adapter wraps an instance of the Adaptee. This is the standard approach in Java and most modern languages. It can adapt an entire class hierarchy (any subclass of the Adaptee works), and the adaptation can be configured at runtime.
-* **Class Adapter** (via inheritance): The adapter inherits from *both* the Target and the Adaptee simultaneously. This requires either multiple class inheritance (e.g., C++) or — in single-inheritance languages — the Target to be an interface, so the adapter can `extend Adaptee` and `implements Target`. It avoids the indirection overhead of delegation but ties the adapter to a single concrete Adaptee class.
+* **Object Adapter** (via composition): The adapter wraps an instance of the Adaptee. This is the standard approach in Java and most modern languages. It can wrap Adaptee subclasses that preserve the expected contract, and the wrapped object can be selected at runtime. Replacing it later requires an API that permits replacement; the example intentionally keeps its reference fixed.
+* **Class Adapter** (via inheritance): The adapter inherits from *both* the Target and the Adaptee simultaneously. This requires either multiple class inheritance (e.g., C++) or — in single-inheritance languages — the Target to be an interface, so the adapter can `extend Adaptee` and `implements Target`. It avoids a separate wrapped object and permits overriding inherited Adaptee behavior, but ties the adapter to that inherited implementation. It cannot wrap arbitrary existing instances of the Adaptee or its subclasses.
 
-Modern practice favors **Object Adapters** because they compose with any subclass of the Adaptee, can be reconfigured at runtime, and don't require either party to be open for inheritance (see also Effective Java Item 18: *Favor composition over inheritance*).
+**Object Adapters** are often a useful default because they separate the adapter from the adapted instance and do not require inheriting the Adaptee implementation. A class adapter may still be appropriate when overriding that implementation is essential and inheritance is available.
 
 ## Adaptation Scope
 Not all adapters are created equal. The complexity of adaptation ranges widely:
-* **Simple rename:** `quack()` maps directly to `gobble()`. Trivial and low-risk.
+* **Simple rename:** A target operation forwards to an equivalent adaptee operation with a different name. This is simple only when their behavior already agrees; `quack()` and `gobble()` are interchangeable here because of the deliberately loose teaching contract.
 * **Data transformation:** Converting units, reformatting data structures, or translating between protocols. Moderate complexity.
-* **Behavioral adaptation:** The adaptee's behavior is fundamentally different and the adapter must add logic to bridge the semantic gap. High complexity—and a warning sign that the adapter may be growing into a service.
+* **Behavioral adaptation:** The adapter adds behavior needed to implement the Target contract. GoF explicitly includes a spectrum from renaming operations to supporting a different set of operations; additional logic is not by itself a violation of Adapter.
 
-If an adapter becomes "too thick" (containing significant business logic), it is no longer just translating an interface—it has become a separate component that happens to look like an adapter.
+Judge the adapter by its responsibility and contract, not its line count. Unit conversion, error translation, or combining several adaptee calls may belong in adaptation. Unrelated business policy should have a separate owner. Test that the adapter preserves the behavior clients rely on, including failure cases.
+
+Kerievsky's *Separate Versions with Adapters* refactoring starts with a class full of version-specific fields and conditionals. Extract one adapter per supported version behind a common interface, checking behavior after each step. The benefit is localized version differences, not a requirement to rename methods or to wait until vendor code becomes unmodifiable (Kerievsky's 2001 *Refactoring to Patterns* draft, pp. 75–82).
 
 # Adapter Is a Family
 
-Buschmann, Henney, and Schmidt observe in *Pattern-Oriented Software Architecture, Volume 5: On Patterns and Pattern Languages* (2007, p. 234) that "the notion that there is a single pattern called Adapter is in practice present nowhere except in the table of contents of the Gang-of-Four book." A deconstruction of GoF's pattern description reveals at least four quite distinct patterns:
+GoF describes several adaptation choices under its Adapter entry. These are not four mutually exclusive categories: object vs. class adaptation concerns implementation, two-way adaptation concerns which interfaces an object supports, and pluggable adaptation concerns how the mapping is supplied.
 1. **Object Adapter:** Wraps an adaptee via composition; adaptation is encapsulated through forwarding via an additional level of indirection (the standard form, favored from a layered/encapsulated perspective).
 2. **Class Adapter:** Realized by subclassing both the adapter interface (Target) and the adaptee implementation to yield a single object — avoiding an additional level of indirection. Requires multiple inheritance, or — in single-inheritance languages — the Target being an interface.
 3. **Two-Way Adapter:** Conforms to both the target and adaptee interfaces (typically via multiple inheritance), so the adapter is usable wherever either interface is expected. GoF's example is `ConstraintStateVariable`, a subclass of both Unidraw's `StateVariable` and QOCA's `ConstraintVariable`, that adapts each interface to the other so the same object works in either system.
 4. **Pluggable Adapter:** A class with built-in interface adaptation. GoF describes three implementations: using abstract operations, using delegate objects, or using parameterized adapters (e.g., Smalltalk's `PluggableAdaptor`, which is parameterized with blocks).
 
-The first two forms (Object Adapter, Class Adapter) are described together inside GoF's Adapter entry, while Two-Way and Pluggable Adapter are surfaced in GoF's Implementation discussion. This insight is educationally important: when a reference says "use the Adapter pattern", you must clarify *which* form of adaptation is needed.
+The first two forms (Object Adapter, Class Adapter) are described together inside GoF's Adapter entry, while Two-Way and Pluggable Adapter are discussed among its consequences and implementation choices. When selecting an adapter, decide which of these properties the client needs rather than choosing a variant by name alone.
 
 # Adapter vs. Facade vs. Decorator
 
-These three patterns all "wrap" another object, but with different intents:
+These patterns can have similar wrapper structures, but their intents differ. Object count is not a reliable discriminator:
 
-| Pattern | Intent | Scope |
-|---------|--------|-------|
-| **Adapter** | *Convert* one interface to match another | One-to-one: translates a single incompatible interface |
-| **[Façade](/SEBook/designpatterns/facade.html)** | *Simplify* a complex set of interfaces | Many-to-one: wraps an entire subsystem behind one interface |
-| **Decorator** | *Add behavior* to an object without changing its interface | One-to-one: wraps a single object, preserving its interface |
+| Pattern | Intent | What the client expects |
+|---------|--------|-------------------------|
+| **Adapter** | *Convert* an interface to match an expected contract | The existing Target interface; adaptation may use one or several objects |
+| **[Façade](/SEBook/designpatterns/facade.html)** | *Simplify* use of a subsystem | A convenient higher-level interface for common tasks |
+| **Decorator** | *Add responsibilities* while retaining the component interface | The same component abstraction, with additional behavior |
 
 The key discriminator: Adapter changes *what* the interface looks like. Facade changes *how much* of the interface you see. Decorator changes *what the object does* through the same interface.
 
 ## Flashcards
+
+This shared review covers Adapter, Composite, and Facade. Use it after studying all three chapters.
 
 {% include flashcards.html id="design_pattern_structural" %}
 

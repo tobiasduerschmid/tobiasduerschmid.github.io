@@ -5,7 +5,7 @@ layout: sebook
 
 # Problem
 
-Many classes differ only in *how* they perform a particular task. A duck simulator needs many duck types that all swim and display, but each one *flies* and *quacks* differently. A text composer needs to break paragraphs into lines, but the linebreaking algorithm should be selectable: a fast greedy pass for an interactive editor, the TeX algorithm for high-quality typesetting, or a fixed-width strategy for icon grids. A payment system needs credit card, PayPal, and bank-transfer flows that all share the same checkout pipeline.
+Many classes differ only in *how* they perform a particular task. A duck simulator needs many duck types that all swim and display, but each one *flies* and *quacks* differently. A text composer needs to break paragraphs into lines, but the linebreaking algorithm should be selectable: a fast greedy pass for an interactive editor, the TeX algorithm for high-quality typesetting, or a fixed number of items per row for icon grids. A payment system needs credit card, PayPal, and bank-transfer flows that all share the same checkout pipeline.
 
 If you push every variant into a single class with conditional logic, the class quickly becomes unmaintainable:
 
@@ -43,15 +43,15 @@ Common applications include sorting and searching algorithms, validation rules, 
 
 # Solution
 
-The **Strategy pattern** defines a family of algorithms, encapsulates each one as an object, and makes them interchangeable at runtime. The client (the *Context*) holds a reference to a *Strategy* interface and delegates the variable behavior to it.
+The **Strategy pattern** defines a family of algorithms, encapsulates each one, and makes them interchangeable. The *Context* holds a reference to a *Strategy* interface and delegates the variable behavior to it; a client typically configures the Context with a concrete strategy. Selection can happen at construction time or later. Runtime swapping is useful, but it is not required by the pattern {% cite Gamma1995 %}.
 
 The pattern involves three roles:
 
 1. **Strategy:** An interface (or abstract class) declaring the operation common to all supported algorithms. The Context uses this interface to invoke the algorithm.
 2. **ConcreteStrategy:** A class that implements the Strategy interface with one specific algorithm.
-3. **Context:** The class that uses the algorithm. It holds a reference to a Strategy object and forwards work to it. The Context typically exposes a setter so the strategy can be swapped at runtime.
+3. **Context:** The class that uses the algorithm. It holds a reference to a Strategy object and forwards work to it. A constructor can establish the choice; a setter is needed only if the application permits changing it later.
 
-The key insight is **composition over inheritance**: instead of locking each variant into a subclass, the Context *has-a* Strategy and can be re-configured at any time. This is the same insight that makes the [Observer](/SEBook/designpatterns/observer.html) and [State](/SEBook/designpatterns/state.html) patterns work — replace static class hierarchies with dynamic object delegation.
+The key insight is **composition over inheritance**: the Context delegates through a Strategy contract instead of encoding each algorithm variant in a Context subclass. Its API may optionally permit reconfiguration. [Observer](/SEBook/designpatterns/observer.html) and [State](/SEBook/designpatterns/state.html) also use object collaboration to separate responsibilities; the appropriate lifecycle depends on the application.
 
 ## UML Role Diagram
 
@@ -85,7 +85,7 @@ note right of Context.contextInterface
 end note
 @enduml'></div>
 
-**Figure:** the Context aggregates a Strategy and forwards work to it; ConcreteStrategies realize the interface independently. The Context never knows which concrete strategy it holds.
+**Figure:** the Context aggregates a Strategy and forwards work through its interface; ConcreteStrategies implement the algorithms independently. The delegation code does not need to identify the concrete strategy.
 
 ## UML Example Diagram
 
@@ -157,7 +157,7 @@ deactivate rocket
 deactivate duck
 @enduml'></div>
 
-**Figure:** the same Duck object exhibits two different fly behaviors across two `performFly()` calls — runtime swapping is the central capability Strategy enables.
+**Figure:** the same Duck object exhibits two different fly behaviors across two `performFly()` calls. This example uses runtime swapping to show that the algorithm can change independently of its Context.
 
 # Code Example
 
@@ -252,6 +252,7 @@ public class Demo {
 ```cpp
 #include <iostream>
 #include <memory>
+#include <utility>
 
 struct FlyBehavior {
     virtual ~FlyBehavior() = default;
@@ -473,8 +474,8 @@ The right choice depends on the algorithm's data needs and how stable the Contex
 
 ## Compile-time vs. runtime strategy selection
 
-* **Runtime selection** (the standard form): the Strategy is held as a field and can be swapped via a setter. This enables dynamic reconfiguration — exactly what `setFlyBehavior()` enables in the duck example.
-* **Compile-time selection** (C++ template parameter, generics): the Strategy is bound when the type is instantiated — known as *policy-based design* in C++. This is more efficient (no virtual dispatch, possibly inlinable) but cannot change at runtime. Useful when the choice is fixed at configuration time and performance matters {% cite Gamma1995 %}.
+* **Runtime selection:** the Strategy object is supplied at construction time or through a setter. A setter enables dynamic reconfiguration — exactly what `setFlyBehavior()` enables in the duck example.
+* **Compile-time selection** (C++ template parameter): the Strategy type is bound when the template is instantiated — an example of *policy-based design*. This can avoid virtual dispatch and enable inlining, but the selected strategy type cannot be changed on that Context object at runtime. Generic types in other languages do not automatically provide this dispatch behavior {% cite Gamma1995 %}.
 
 ## Optional Strategy with default behavior
 
@@ -482,7 +483,7 @@ The Context can be simplified if it's meaningful for the Strategy reference to b
 
 ## Stateless vs. stateful strategies
 
-If a Strategy carries no instance data, it can be shared across many Contexts as a Flyweight or Singleton, saving memory and avoiding repeated allocation. If it carries per-Context configuration (e.g., a `RangeValidator(min=0, max=100)`), each Context needs its own Strategy instance.
+If a Strategy carries no instance data, it can be shared across many Contexts, saving memory and avoiding repeated allocation. Immutable configuration can also be shared: several Contexts can use the same `RangeValidator(min=0, max=100)`. Mutable data belonging to one Context, such as its running total or a stored reference back to it, must not accidentally be shared with other Contexts. Sharing does not require making the class a globally accessible Singleton.
 
 # Consequences
 
@@ -490,9 +491,9 @@ Applying the Strategy pattern yields several important consequences {% cite Gamm
 
 * **Families of related algorithms.** Strategy hierarchies define a family of interchangeable algorithms. Common functionality can be factored out via inheritance among ConcreteStrategies.
 * **An alternative to subclassing.** Rather than baking each algorithm variant into a Context subclass — which couples algorithm and Context tightly — Strategy encapsulates each algorithm separately. The Context becomes simpler, and algorithms can vary independently.
-* **Eliminates conditional statements.** Code with many `if`/`switch` branches selecting between algorithms is a strong code smell pointing to Strategy. Each branch becomes a polymorphic ConcreteStrategy. This is the **polymorphism over conditions** principle that also underlies the [State](/SEBook/designpatterns/state.html) pattern.
-* **A choice of implementations.** Strategies can provide different implementations of the *same* behavior with different time/space trade-offs (e.g., a fast approximate sort vs. a careful stable sort), letting the client choose.
-* **Clients must know about the strategies.** Because the client typically picks the ConcreteStrategy, it must understand how the strategies differ. If the choice should be hidden from clients, Strategy is the wrong tool.
+* **Removes repeated algorithm-selection conditionals.** Related branches move into ConcreteStrategies, so the Context delegates through one interface. Some selection logic may remain in a factory or configuration layer; small, stable conditionals do not automatically justify the pattern.
+* **A choice of implementations.** Strategies can provide different implementations of the *same* contract with different time/space trade-offs (e.g., alternative lossless compressors), letting the client choose.
+* **Someone must select a strategy.** A selecting client must understand the relevant differences. A factory or configuration layer can make that choice for other clients, so callers do not all need to know concrete strategy classes.
 * **Communication overhead.** The Strategy interface is shared by all ConcreteStrategies. Some may not need all the data the interface passes, leading to wasted preparation in the Context.
 * **Increased number of objects.** Strategy adds one class per algorithm variant. Stateless strategies can be shared as flyweights to mitigate this.
 
@@ -500,13 +501,13 @@ Applying the Strategy pattern yields several important consequences {% cite Gamm
 
 | Pattern | Similarity | Difference |
 |---|---|---|
-| [**State**](/SEBook/designpatterns/state.html) | Identical UML structure: a Context delegates to an interface with multiple implementations. | **State**: behavior changes *implicitly* via internal transitions (the Context — or the State objects themselves — switch states in response to operations). **Strategy**: behavior is *explicitly* selected by the client; strategies don't know about each other {% cite FreemanRobson2020 %}. |
+| [**State**](/SEBook/designpatterns/state.html) | Similar UML structure: a Context delegates to an interface with multiple implementations. | **State** organizes behavior around the Context's lifecycle state and transitions. **Strategy** supplies an interchangeable algorithm for a task. Who selects the implementation is a useful clue, not the definition {% cite Gamma1995 %}. |
 | **Template Method** | Both let you vary parts of an algorithm. | **Template Method** uses inheritance — the base class fixes the skeleton and subclasses override individual steps. **Strategy** uses composition — the entire algorithm is swapped via an external object {% cite Gamma1995 %}. |
-| [**Command**](/SEBook/designpatterns/command.html) | Both wrap behavior in an object behind a common interface. | **Command** represents a *request* with a lifecycle (queue, log, undo). **Strategy** represents an *algorithm choice* — there is no request identity, no undo, no queuing. |
+| [**Command**](/SEBook/designpatterns/command.html) | Both wrap behavior in an object behind a common interface. | **Command** represents a *request* that can be executed or managed uniformly (for example, queued or undone). **Strategy** represents an *algorithm choice*. Queuing and undo are possible Command capabilities, not mandatory operations or prohibitions on combining patterns. |
 | [**Observer**](/SEBook/designpatterns/observer.html) | Both replace static coupling with dynamic delegation. | **Observer** broadcasts state changes to many listeners. **Strategy** routes one operation to one chosen algorithm. |
-| **Decorator** | Both can add or change behavior via composition. | **Decorator** wraps an object to add behavior while preserving its interface. **Strategy** replaces an algorithm entirely — there is no chain of wrappers. |
+| **Decorator** | Both can add or change behavior via composition. | **Decorator** wraps an object to add responsibilities while preserving its interface. **Strategy** selects an algorithm. A strategy can itself be decorated; the intents remain distinct. |
 
-A useful heuristic distinguishing Strategy from State: ask whether *the client* picks the implementation (Strategy) or whether *the object's own internal logic* picks it (State). If a `GumballMachine` switches from `NoQuarterState` to `HasQuarterState` because the user inserted a coin, that's State. If a sort routine accepts a `Comparator` parameter, that's Strategy.
+A useful heuristic distinguishing Strategy from State is whether the variation represents an algorithm choice or a lifecycle state. Client selection often indicates Strategy and internal transitions often indicate State, but neither selection mechanism alone defines the pattern. If a `GumballMachine` switches from `NoQuarterState` to `HasQuarterState` because the user inserted a coin, that's State. If a sort routine accepts a `Comparator` parameter, that's Strategy.
 
 # Pattern Compounds and Idioms
 
@@ -527,7 +528,7 @@ Strategy combines naturally with other patterns:
 | Payment | `PaymentMethod` | credit card, PayPal, bank transfer, gift card |
 | Authentication | `AuthStrategy` | password, OAuth, SSO, API key |
 | Game AI | `BehaviorStrategy` | aggressive, defensive, patrol, idle |
-| Text layout | `Compositor` | simple greedy, TeX optimal, fixed-width array |
+| Text layout | `Compositor` | simple greedy, TeX paragraph layout, fixed-count array |
 | Pricing | `DiscountStrategy` | seasonal, member, bulk, no discount |
 
 # Practical Guidance: When NOT to Use Strategy
@@ -535,11 +536,11 @@ Strategy combines naturally with other patterns:
 Strategy is not free. Skip it when:
 
 * **There is only one algorithm.** A single concrete class with a single method is simpler. Don't create an interface and subclass for a variant that doesn't exist yet — that's speculative abstraction.
-* **The variants will never change at runtime *and* clients don't care.** A simple inheritance hierarchy or even a parameter switch may be clearer.
-* **The strategies are trivial one-liners.** A function or lambda is often enough; the boilerplate of a class hierarchy is unjustified.
+* **The existing selection logic is small, stable, and clear.** A direct implementation or parameter switch may cost less to maintain. Construction-time selection can still justify Strategy when algorithms vary independently.
+* **The strategies are trivial one-liners.** A function or lambda is often enough; it can implement the Strategy idea without a class hierarchy.
 * **The choice is genuinely a state machine.** If "which algorithm" depends on what the object is currently doing, [State](/SEBook/designpatterns/state.html) is the right tool — the structure looks identical but the intent differs.
 
-As with all design patterns, keep [the Rule of Three](/SEBook/designpatterns.html#design-patterns-and-refactoring) in mind: don't introduce Strategy until you have at least three concrete variants or a clear plan for runtime swapping. The simplest code is usually the smartest design.
+Use [the Rule of Three](/SEBook/designpatterns.html#design-patterns-and-refactoring) as a caution against speculative abstraction, not a requirement to count three variants. Two established algorithms can justify Strategy when separating them simplifies the Context. Refactor in response to actual variation and maintenance costs, not a prescribed number of classes.
 
 ## Flashcards
 

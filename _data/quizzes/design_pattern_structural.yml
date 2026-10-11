@@ -6,47 +6,47 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      A `TurkeyAdapter` implements the `Duck` interface. The `fly()` method calls `turkey.fly()` five times in a loop because a duck's flight is much longer than a turkey's short hop. What design concern does this raise?
+      A `TurkeyAdapter` implements `Duck`. Its `fly()` method calls `turkey.fly()` five times. What must be established before using it wherever a `Duck` is expected?
     options:
-      - "The adapter should use multiple inheritance instead of composition"
-      - "The adapter contains behavioral adaptation beyond simple interface translation"
-      - "The loop makes the adapter too slow for production use"
-      - "The adapter violates the Liskov Substitution Principle"
+      - "The adapter inherits the concrete turkey implementation"
+      - "The five calls satisfy the behavior promised by Duck"
+      - "The adapter delegates every target call exactly once"
+      - "The adapter and turkey expose identical method names"
     correct_index: 1
     option_feedback:
       0: |
-        Composition is a normal and often preferred way to implement an adapter. The concern is not inheritance; it is that the adapter is starting to contain nontrivial behavior.
+        Composition and inheritance are both implementation options. Neither establishes that the adapted behavior satisfies the target contract.
       2: |
-        A five-iteration loop may or may not be a performance issue. The more general design signal is that the adapter is simulating behavior rather than just translating an interface.
+        An adapter may combine several adaptee calls to implement one target operation. There is no required one-call-to-one-call mapping.
       3: |
-        LSP would be a concern if clients relying on the `Duck` contract were broken. The prompt points instead to adapter thickness: logic accumulating inside the wrapper.
-    explanation: "Renaming `quack()` to `gobble()` is low-risk interface translation. The `fly()` mapping adds *behavioral adaptation* — logic (a loop) beyond translating signatures. As adapters grow 'thicker' with logic, they drift from interface translators into separate service components, a sign the adapter may be taking on too much responsibility."
+        Different method names are one reason to use Adapter. The required agreement is on the behavior clients are promised, not on the adaptee's method names.
+    explanation: "Adapter can perform behavioral translation. The important question is whether five short flights meet the Duck contract. If that contract requires one continuous flight, the adapter is not substitutable even though it implements the right methods. The loop alone proves neither correctness nor a design defect."
 
   - id: 2
     difficulty: intermediate
     type: single
     question: |
-      A colleague says: "We should use an Adapter between our service and the database layer." Your team wrote both the service and the database layer. What is the best response?
+      Your team owns a service and a database library. The service expects a different interface, but existing applications must keep using the library's current contract. Why might an Adapter be appropriate?
     options:
-      - "Good idea — Adapters always improve decoupling"
-      - "Unnecessary — you own both sides, so refactor one to match the other"
-      - "Use a Facade instead — it simplifies complex subsystems"
-      - "Use a Mediator instead — it coordinates between components"
+      - "Owning both sides makes behavioral checks unnecessary"
+      - "It localizes translation while preserving existing contracts"
+      - "It makes the database library depend on the service interface"
+      - "It removes the need to maintain the library's existing API"
     correct_index: 1
     option_feedback:
       0: |
-        An adapter can improve decoupling when an interface mismatch cannot be changed directly, especially with legacy or third-party code. When the team owns both sides, an extra wrapper may just preserve a mismatch.
+        Source ownership does not prove substitutability. Translation must still preserve the service's required behavior, including error handling.
       2: |
-        A facade simplifies a complicated subsystem for clients. It is not the direct answer to two team-owned interfaces that can simply be aligned.
+        The adapter depends on both interfaces so the database library can remain unaware of this particular service contract.
       3: |
-        A mediator coordinates peer objects with interaction rules. A service and database layer with mismatched interfaces is not automatically a many-to-many coordination problem.
-    explanation: "Adapter is for *after-the-fact* mismatches, typically with third-party or legacy code you cannot modify. When you own both interfaces there is no fixed mismatch to adapt around — refactor one to match the other and skip the indirection. If you anticipate the interfaces diverging later (e.g., the database layer will be swapped), Bridge is the upfront solution."
+        Existing applications still depend on the library API. The adapter lets the service coexist with them; it does not remove their compatibility requirement.
+    explanation: "The constraint is preserving useful existing contracts, not who owns the source. An adapter can serve the new client without forcing unrelated clients to change. If both interfaces can safely be aligned and there is no reason to retain the mismatch, direct refactoring may be simpler. Bridge is justified by independently varying abstraction and implementation, not merely by the possibility of a future replacement."
 
   - id: 3
     difficulty: intermediate
     type: single
     question: |
-      In a Composite pattern for a restaurant menu system, a developer declares `add(MenuComponent)` on the abstract `MenuComponent` class (inherited by both `Menu` and `MenuItem`). A tester calls `menuItem.add(anotherItem)`. What happens, and what design trade-off does this illustrate?
+      In a Composite pattern for a restaurant menu system, a developer declares `add(MenuComponent)` on the abstract `MenuComponent` class (inherited by both `Menu` and `MenuItem`). The base implementation throws `UnsupportedOperationException`, and only `Menu` overrides it. A tester calls `menuItem.add(anotherItem)`. What happens?
     options:
       - "The call succeeds — items can contain other items in Composite"
       - "A runtime exception — the Transparent Composite trade-off"
@@ -59,8 +59,8 @@ questions:
       2: |
         Because `add()` is declared on the abstract component, the call type-checks. The failure is deferred to runtime in the transparent version.
       3: |
-        Some implementations could choose to ignore unsupported operations, but that hides an invalid call. The quiz's transparent composite design expects the leaf to reject it explicitly.
-    explanation: "Putting `add()`/`remove()` on the abstract `Component` gives clients a uniform interface, but leaves inherit methods that are semantically meaningless and must handle them — typically by throwing `UnsupportedOperationException` at runtime. The *Safe Composite* alternative declares those methods only on `Composite`, catching the misuse at compile time but forcing clients to downcast."
+        Some implementations could choose to ignore unsupported operations, but that hides an invalid call. The stated base implementation rejects the call explicitly.
+    explanation: "Putting `add()`/`remove()` on the abstract `Component` gives clients a uniform interface, but leaves inherit methods that are semantically meaningless and must handle them — typically by throwing `UnsupportedOperationException` at runtime. The *Safe Composite* alternative declares those methods only on `Composite`, catching the misuse at compile time in statically typed code. Construction code can retain a Composite reference; downcasting is not always necessary."
 
   - id: 4
     difficulty: intermediate
@@ -86,7 +86,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      A `HomeTheaterFacade` exposes `watchMovie()`, `endMovie()`, `listenToMusic()`, `stopMusic()`, `playGame()`, `setupKaraoke()`, and `calibrateSystem()`. The class is growing difficult to maintain. What is the best architectural response?
+      A `HomeTheaterFacade` exposes `watchMovie()`, `endMovie()`, `listenToMusic()`, `stopMusic()`, `playGame()`, `setupKaraoke()`, and `calibrateSystem()`. Different clients use playback, setup, and calibration, and these responsibilities change independently. What change best addresses that maintenance problem?
     options:
       - "Replace the Facade with a Mediator pattern"
       - "Split it into multiple narrower Facades organized by responsibility"
@@ -106,18 +106,18 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      The Facade's communication is **one-directional**: the Facade calls subsystem classes, but the subsystem does not know about the Facade. The Mediator's communication is **bidirectional**. Why does this distinction matter architecturally?
+      A facade delegates to subsystem objects that do not refer to it. A mediator owns interaction rules that its colleagues invoke through a mediator interface. Which dependency consequence follows?
     options:
-      - "One-directional communication is always faster than bidirectional"
-      - "The subsystem stays usable without the Facade; Mediator colleagues need their mediator"
-      - "Facades only work with structural patterns; Mediators only with behavioral patterns"
-      - "There is no practical difference — both achieve decoupling"
+      - "The facade must own the lifetime of every subsystem object"
+      - "The subsystem can work without the facade; colleague interactions use the mediator"
+      - "The mediator makes its colleagues independent of every coordination interface"
+      - "Both designs require the underlying objects to refer back to the intermediary"
     correct_index: 1
     option_feedback:
       0: |
-        Direction of dependency is an architectural property, not a reliable speed rule. The important effect is whether subsystem objects know about the coordination layer.
+        Dependency direction does not determine ownership. The facade may receive subsystem objects that are created and owned elsewhere.
       2: |
-        Facade and Mediator come from different pattern categories, but category labels do not explain the dependency consequence. The key is optional simplification layer versus required coordination channel.
+        The colleagues avoid encoding each other's interaction rules, but in this design they still depend on the mediator interface for those interactions.
       3: |
-        Both can reduce direct client coupling, but they do so differently. A subsystem that does not know its facade can be used without it; mediator colleagues are designed to communicate through the mediator.
-    explanation: "Because the subsystem does not know about the Facade, it stays usable and testable without the Facade present. Mediator colleagues, by contrast, depend on the Mediator interface to communicate and cannot function independently. That is why Facade is a *convenience layer* (optional) while Mediator is a *coordination layer* (required for the objects to interact)."
+        The facade's subsystem has no reference back to the facade. The mediator example has a different collaboration: colleagues invoke its coordination interface.
+    explanation: "Facade supplies a convenient entry point without making subsystem behavior depend on that entry point. Mediator owns the rules for selected interactions among colleagues, so those interactions rely on it. This does not mean colleagues have no useful standalone behavior, nor that callback direction alone identifies a pattern."

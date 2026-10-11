@@ -4,14 +4,14 @@ active: true
 cards:
   - id: 1
     difficulty: basic
-    question: "What are the three implementation aspects of Singleton?"
+    question: "What are three elements of the common Java-style Singleton implementation?"
     answer: "(1) Private constructor, (2) private static field holding the instance, (3) public static `getInstance()` method as sole access point."
-    explanation: "The private constructor prevents external instantiation. The static field stores the single instance. The static method provides controlled access."
+    explanation: "A private constructor blocks ordinary external constructor calls; the field and accessor share the instance. These are implementation choices, not language-independent requirements: GoF also describes controlled subclassing, and Python can intercept construction."
   - id: 2
     difficulty: intermediate
     question: "Why is Singleton controversial in modern practice?"
-    answer: "It conflates two concerns: ensuring a single instance (legitimate) and providing global access (harmful coupling). DI containers solve the first without introducing the second."
-    explanation: "The global access point is the real cost: any code can reach the instance, so dependencies become invisible and the retained state breaks test isolation."
+    answer: "It bundles a lifetime policy with global access. Creating one ordinary object and injecting it can separate those decisions; no DI framework is required."
+    explanation: "The global access point is the real cost: any code can reach the instance, so dependencies become invisible and shared mutable state can break test isolation. Immutable instances can still be difficult to substitute."
   - id: 3
     difficulty: basic
     question: "What is 'Singleitis'?"
@@ -20,5 +20,5 @@ cards:
   - id: 4
     difficulty: advanced
     question: "When is Singleton acceptable in modern code?"
-    answer: "When controlling a true infrastructure resource where DI is unavailable and testability of consuming code is not a concern. In all other cases, prefer DI with singleton scope."
-    explanation: "A DI container can manage singleton *lifetime* (ensuring one instance) while keeping constructors injectable and dependencies explicit, avoiding the testability problem."
+    answer: "When both a well-defined single-instance constraint and a global access point are justified, and their coupling and lifecycle costs are acceptable."
+    explanation: "A unique resource alone does not require global lookup. Manual injection or a container can share an ordinary object. Still define the scope, concurrent-use policy, and how consuming code will be tested."

@@ -6,7 +6,7 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      A `GumballMachine` has states: NoQuarter, HasQuarter, Sold, and SoldOut. Each state's `insertQuarter()` method calls `context.setState(new HasQuarterState())` to trigger transitions. What design decision is this an example of?
+      A `GumballMachine` has states: NoQuarter, HasQuarter, Sold, and SoldOut. `NoQuarterState.insertQuarter()` calls `context.setState(new HasQuarterState())` to trigger transitions. What design decision is this an example of?
     options:
       - "Context-driven transitions — the Context centralizes all transition logic"
       - "State-driven transitions — each State object knows its successor and triggers transitions"
@@ -26,21 +26,18 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      The Game of Life represents cells as `boolean[][] cells` where `true` means alive and `false` means dead. Methods contain code like `if (cells[i][j] == true) { ... }`. Which principle does this violate, and which pattern addresses it?
+      A Game of Life implementation stores cells in a boolean matrix and uses a small, stable conditional to apply the two cell rules. A reviewer says every boolean state must be replaced with State objects. How should the team evaluate that claim?
     options:
-      - "Single Responsibility Principle — use Factory Method to create cells"
-      - "Polymorphism over conditions — use the State pattern with AliveState and DeadState"
-      - "Information Hiding — use the Facade pattern to wrap the boolean matrix"
-      - "Don't Repeat Yourself — use the Template Method pattern"
+      - "Introduce State because boolean values always violate information hiding."
+      - "Keep the conditional unless state-specific complexity justifies the extra structure."
+      - "Introduce State because it guarantees faster updates for large grids."
+      - "Replace the matrix with inheritance because runtime transitions are unnecessary."
     correct_index: 1
     option_feedback:
-      0: |
-        Object creation is not the main pain in the snippet. The repeated `if` checks show behavior branching on cell state, which is what polymorphic state objects address.
-      2: |
-        Hiding the matrix behind a facade may protect representation details, but the behavioral branching would still exist somewhere. State is about moving state-specific behavior into separate implementations.
-      3: |
-        Template Method factors a fixed algorithm skeleton into a base class. The problem here is behavior changing according to a cell's current state.
-    explanation: "The boolean representation forces conditional logic everywhere a cell's behavior depends on its state, violating **polymorphism over conditions**. State replaces it with `AliveState` and `DeadState` objects that each implement their own behavior, so adding a `DyingState` means adding a class rather than editing every conditional in the codebase."
+      0: "A boolean can be an appropriate representation. Information hiding concerns what clients depend on, not whether internal state is a boolean."
+      2: "State adds indirection and objects; it does not guarantee faster execution. Representation and workload determine performance."
+      3: "Cells change state while the simulation runs. An inheritance hierarchy alone does not supply that transition behavior."
+    explanation: "State is an option for organizing substantial state-dependent behavior. A small stable conditional is not automatically a design violation. Consider State when repeated branches or evolving state-specific behavior create a concrete maintenance problem."
 
   - id: 3
     difficulty: intermediate
@@ -66,7 +63,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      A `Document` class has states: Draft, Review, Published, Archived. A new requirement adds a "Rejected" state that can transition back to Draft. Which transition approach handles this addition more gracefully?
+      A `Document` class has states: Draft, Review, Published, Archived. Only Review may enter a new Rejected state, which can return to Draft. The team wants to keep each state's outgoing transitions in that state's class. Which approach matches this goal?
     options:
       - "Context-driven — because the new transition logic can be added in one centralized place"
       - "State-driven — because only the Review state needs to know about the new Rejected state"
@@ -80,7 +77,7 @@ questions:
         State is specifically meant to make state-dependent behavior extensible. A new state still requires design work, but it does not imply a major rewrite.
       3: |
         The approaches trade off visibility against locality. When only `Review` can transition to `Rejected`, state-driven transitions can keep the change close to the affected state.
-    explanation: "With **state-driven** transitions the change is local: create the `RejectedState` class and add one transition to it inside `ReviewState`; `RejectedState` then transitions back to `DraftState`. No other state changes. Context-driven transitions would instead require editing the Context's centralized logic, potentially touching code for every state."
+    explanation: "With **state-driven** transitions the change is local: create the `RejectedState` class and add one transition to it inside `ReviewState`; `RejectedState` then transitions back to `DraftState`. No other state changes. A centralized transition table could also localize the edit, but would not meet the stated goal of keeping outgoing transition rules in state classes."
 
   - id: 5
     difficulty: advanced

@@ -8,7 +8,7 @@ layout: sebook
 
 The State pattern allows an object to change its behavior when its internal state changes — making the object appear, from the outside, to have changed its class. (See p. 283 of the GoF book {% cite Gamma1995 %} for the original formulation.)
 
-The pattern is also known as **Objects for States**. The original motivating example in GoF is a `TCPConnection` that switches behavior between `TCPEstablished`, `TCPListen`, and `TCPClosed` states — the same `Open()` request behaves entirely differently depending on which state the connection is currently in.
+The pattern is also known as **Objects for States**. The original motivating example in GoF is a `TCPConnection` that switches behavior between `TCPEstablished`, `TCPListen`, and `TCPClosed` states — the same request can behave differently depending on the connection's current state.
 
 > **Want modeling practice?** Try the [Monopoly State Pattern UML Homework](/SEBook/designpatterns/monopoly-state-pattern-uml-homework.html) — design the class, state machine, and sequence diagrams for Monopoly player turns using the State pattern.
 
@@ -16,7 +16,7 @@ The pattern is also known as **Objects for States**. The original motivating exa
 
 The core problem the State pattern addresses is when an object's behavior **needs to change dramatically based on its internal state**, and this leads to code that is complex, difficult to maintain, and hard to extend.
 
-If you try to manage state changes using traditional methods, the class containing the state often becomes polluted with large, complex if/else or switch statements that check the current state and execute the appropriate behavior. This results in cluttered code and a violation of the [Separation of Concerns](/SEBook/designprinciples/soc.html) design principle, since the code for different states is mixed together and it is hard to see what the behavior of the class is in different states. This also violates the [Open/Closed principle](/SEBook/designprinciples/solid.html#openclosed-principle-ocp), since adding additional states is very hard and requires changes in many different places in the code. 
+Repeated, large conditionals in several operations can scatter each state's behavior across a class. A new state then requires coordinated edits in many places. State can improve [Separation of Concerns](/SEBook/designprinciples/soc.html) by gathering that behavior into one class per state and support the [Open/Closed principle](/SEBook/designprinciples/solid.html#openclosed-principle-ocp) by keeping the Context's delegation stable. A small conditional or boolean state is not itself a design violation; the pattern must earn its extra classes.
 
 # Context
 
@@ -391,7 +391,7 @@ This is a critical design decision with significant consequences:
 In practice, **state-driven transitions** are preferred when states are well-defined and transitions are local. **Context-driven transitions** work better when transitions depend on complex external conditions.
 
 ## State object creation: on demand vs. shared
-If state objects are **stateless** (they carry behavior but no instance data), they can be shared as flyweights or even [Singletons](/SEBook/designpatterns/singleton.html), saving memory. GoF (p. 285) lists this as one of the State pattern's three core consequences: when the state is encoded entirely in the object's type, contexts can share a single instance per state. If state objects carry **per-context data**, they must be created on demand instead.
+If state objects are **stateless** (they carry behavior but no instance data), they can be shared as flyweights or even [Singletons](/SEBook/designpatterns/singleton.html), saving memory. GoF (p. 285) lists this as one of the State pattern's three core consequences: when the state is encoded entirely in the object's type, contexts can share a single instance per state. If state objects carry **per-context data**, each Context needs its own instances; those instances may be created eagerly or on demand.
 
 A related trade-off — also from GoF — is **when** to create state objects: create them only on demand (and destroy them when no longer current) versus create them all up front and keep references forever. On-demand creation is preferable when not all states will be entered and contexts change state infrequently. Up-front creation is better when state changes occur rapidly, so that instantiation costs are paid once and there are no destruction costs.
 
@@ -400,7 +400,7 @@ The State pattern is not the only way to structure a state machine in OO code. A
 
 The trade-off:
 * **State pattern** models *state-specific behavior*. Each state is a class; transitions are easy to augment with arbitrary code (logging, side effects, validation).
-* **Table-driven** models *transitions* uniformly. The state machine is data, so changing the topology means editing a table, not code — but attaching custom behavior to each transition is awkward, and table look-ups are typically slower than virtual calls.
+* **Table-driven** models *transitions* uniformly. Changing the topology can mean editing a table. Custom actions require an additional mechanism, such as action callbacks. GoF notes possible lookup overhead, but relative speed depends on the representation and workload; measure rather than assuming tables are slower than virtual calls.
 
 Use the table-driven approach when the state graph is large, regular, and behavior-poor (e.g., a parser's lexer states). Use the State pattern when each state needs distinct, non-trivial behavior.
 
@@ -412,24 +412,24 @@ Use the [Null Object pattern](/SEBook/designpatterns/null_object.html) to create
 
 The State pattern embodies the fundamental principle of **polymorphism over conditions**. Instead of writing:
 ```java
-if (state == "noQuarter") { /* behavior A */ }
-else if (state == "hasQuarter") { /* behavior B */ }
+if ("noQuarter".equals(state)) { /* behavior A */ }
+else if ("hasQuarter".equals(state)) { /* behavior B */ }
 // ...one branch per state, repeated in every state-dependent method
 ```
 ...the pattern replaces each branch with a polymorphic object. This is powerful because:
-* Adding a new state requires adding a new class, not modifying existing conditional logic (Open/Closed Principle).
+* Adding a new state localizes its behavior in a new class. Incoming transitions and construction code may still need edits; the Context's delegating operations can remain unchanged.
 * The behavior of each state is cohesive and self-contained, rather than scattered across one giant method.
-* The compiler can enforce that every state implements every required method, catching missing cases that a conditional chain silently ignores.
+* A typed interface can require every state to supply the required operations. This checks method coverage, not whether the transition rules are correct; those still need tests.
 
 A pedagogically effective way to internalize this insight is the "Before and After" technique: start with the conditional version of a problem, refactor it to use the State pattern, and then try to add a new state to both versions. The difference in effort makes the pattern's value clear.
 
 # State vs. Strategy
 
 The State and [Strategy](/SEBook/designpatterns/strategy.html) patterns have nearly identical UML class diagrams—a context delegating to an abstract interface with multiple concrete implementations. The difference is entirely in **intent**:
-* **State:** The context object's behavior changes *implicitly* as its internal state transitions. The client typically does not choose which state object is active. Concrete States often need to know about one another so they can install the next state on the Context.
-* **Strategy:** The client *explicitly* selects which algorithm to use. There are no automatic transitions between strategies, and Concrete Strategies are independent of one another.
+* **State:** Behavior follows the Context's current lifecycle state. The Context or Concrete States define the transitions; clients may also configure an initial state or select a mode.
+* **Strategy:** An interchangeable algorithm supplies one part of the Context's behavior. Selection often belongs to a client or factory, and peer strategies need not know about one another.
 
-A useful heuristic: if the concrete implementations *transition between each other* based on internal logic, it is State. If the client *selects* the concrete implementation at configuration time, it is Strategy.
+A useful heuristic is to ask whether the implementations represent lifecycle states or alternative algorithms. Internal transitions often indicate State, but the location of a setter call is not decisive: GoF's drawing-editor State example lets a user choose the active tool.
 
 ## Practice
 

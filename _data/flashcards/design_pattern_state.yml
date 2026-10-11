@@ -6,17 +6,17 @@ cards:
     difficulty: basic
     question: "What problem does the State pattern solve?"
     answer: "Eliminates complex conditional logic that checks an object's state, replacing it with polymorphic state objects that encapsulate state-specific behavior."
-    explanation: "Each state becomes its own class. Adding a new state means adding a new class rather than modifying existing if/else chains throughout the codebase."
+    explanation: "Each state becomes its own class. A new state gets its own behavior class; incoming transitions and construction code may still change. The Context's delegating operations can stay stable."
   - id: 2
     difficulty: basic
     question: "What principle does the State pattern embody?"
     answer: "**Polymorphism over conditions** — replacing `if/else` chains with polymorphic objects that each implement the behavior for one state."
-    explanation: "Adding a new state adds a class and may require edits to incoming transitions or wiring; it avoids scattering state-specific behavior through the context. The compiler enforces that every state implements every required method."
+    explanation: "Adding a new state adds a class and may require edits to incoming transitions or wiring; it avoids scattering state-specific behavior through the context. A typed interface checks required methods, but correct transition rules still need tests."
   - id: 3
     difficulty: intermediate
     question: "How does State differ from Strategy?"
     answer: "State varies behavior with lifecycle state; Strategy supplies an interchangeable algorithm. Who selects an implementation is a useful clue, not an absolute rule."
-    explanation: "Heuristic: if implementations transition between each other based on internal logic, it's State. If the client selects at configuration time, it's Strategy."
+    explanation: "Internal transitions often indicate State. However, a client can also select a State mode, so the deciding distinction is lifecycle state versus algorithm variation."
   - id: 4
     difficulty: intermediate
     question: "What is a 'Null State'?"

@@ -4,19 +4,19 @@ layout: sebook
 ---
 
 # Context
-In software engineering, certain classes represent concepts that should only exist once during the entire execution of a program. The original GoF motivating examples capture this well: a system may have many printers but only one *printer spooler*, only one *file system*, and only one *window manager*. Modern variations include thread pools, caches, dialog boxes, logging objects, and device drivers. In these scenarios, having more than one instance is not just unnecessary but often harmful to the system's integrity. In a UML class diagram, this requirement is explicitly modeled by specifying a multiplicity of "1" in the upper right corner of the class box, indicating the class is intended to be a singleton.
+Some applications need one coordinating object within a defined scope. GoF motivates Singleton with resources such as a printer spooler or a window manager {% cite Gamma1995 %}. These examples illustrate a design constraint, not a universal rule: applications may legitimately need several pools, caches, loggers, or device drivers. First identify the scope and the failure that a second instance would cause. One object per process, tenant, or test are different requirements.
 
 # Problem
-The primary problem arises when instantiating more than one of these unique objects leads to incorrect program behavior, resource overuse, or inconsistent results. For instance, accidentally creating two distinct "Earth" objects in a planetary simulation would break the logic of the system. 
+The primary problem arises when instantiating more than one of these unique objects leads to incorrect program behavior, resource overuse, or inconsistent results. For instance, two controllers for the same exclusive device could issue conflicting commands. Two independent simulations, however, may each need their own Earth object; a class-wide restriction would prevent that legitimate use.
 
 While developers might be tempted to use global variables to manage these unique objects, this approach introduces several critical flaws:
 *   **High Coupling:** Global variables allow any part of the system to access and potentially mess around with the object, creating a web of dependencies that makes the code hard to maintain.
 *   **Lack of Control:** Global variables do not prevent a developer from accidentally calling the constructor multiple times to create a second, distinct instance.
-*   **Instantiation Issues:** You may want the flexibility to choose between "eager instantiation" (creating the object at program start) or "lazy instantiation" (creating it only when first requested), which simple global variables do not inherently support.
+*   **Lifecycle Decisions:** The program must still decide when to create the shared object and who owns its lifetime. A global variable alone does not specify either policy.
 
 # Solution
-The **Singleton Pattern** solves these issues by ensuring a class has only one instance while providing a controlled, global point of access to it. The solution consists of three main implementation aspects:
-1.  **A Private Constructor:** By declaring the constructor `private`, the pattern prevents external classes from ever using the `new` keyword to create an instance.
+The **Singleton Pattern** combines single-instance control with a global access point. It can control construction, but it retains the coupling associated with global access. A common Java-style implementation uses three elements:
+1.  **A Private Constructor:** By declaring the constructor `private`, the pattern prevents ordinary external constructor calls. Other languages enforce or express this restriction differently.
 2.  **A Static Field:** The class maintains a private static variable (often named `uniqueInstance`) to hold its own single instance.
 3.  **A Static Access Method:** A public static method, typically named `getInstance()`, serves as the sole gateway to the object.
 
@@ -39,50 +39,41 @@ ClientB --> Singleton : getInstance()
 
 ## UML Example Diagram
 
+Both callers obtain the same `AppConfig` used in the code below. The class controls access; the returned object provides the logging operation.
+
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 layout landscape
-class ChocolateBoiler {
-	- empty: bool
-	- boiled: bool
-	- uniqueInstance: ChocolateBoiler {static}
-	- ChocolateBoiler()
-	+ getInstance(): ChocolateBoiler {static}
-	+ fill(): void
-	+ boil(): void
-	+ drain(): void
+class AppConfig {
+	- INSTANCE: AppConfig {static}
+	- AppConfig()
+	+ getInstance(): AppConfig {static}
+	+ log(message: String): void
 }
-class CandyMaker
-class CleaningCycle
-CandyMaker --> ChocolateBoiler : uses
-CleaningCycle --> ChocolateBoiler : uses
+class ClientA
+class ClientB
+ClientA ..> AppConfig : obtains instance
+ClientB ..> AppConfig : obtains instance
 @enduml'></div>
 
 ## Sequence Diagram
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-participant maker: CandyMaker
-participant cleaner: CleaningCycle
-participant boiler: ChocolateBoiler
-maker -> boiler: getInstance()
-activate boiler
-boiler --> maker: instance
-deactivate boiler
-cleaner -> boiler: getInstance()
-activate boiler
-boiler --> cleaner: same instance
-deactivate boiler
-maker -> boiler: fill()
-activate boiler
-deactivate boiler
-cleaner -> boiler: drain()
-activate boiler
-deactivate boiler
+participant firstClient: ClientA
+participant secondClient: ClientB
+participant AppConfig
+participant config: AppConfig
+firstClient -> AppConfig: getInstance()
+AppConfig --> firstClient: config
+secondClient -> AppConfig: getInstance()
+AppConfig --> secondClient: same config
+firstClient -> config: log("first message")
+secondClient -> config: log("second message")
 @enduml'></div>
 
 ## Code Example
 
-This example models a process-wide configuration/logger object. Each language has a different idiom for enforcing one instance; the intent is the same: clients do not call the constructor directly.
+This small `AppConfig` example uses logging to make shared identity visible. Java, C++, and TypeScript callers request the instance through an accessor. Python intercepts ordinary construction in `__new__`, so its callers still write `AppConfig()`. These examples demonstrate identity sharing; they do not establish a need for a global logger. Save the Java example below as `Demo.java`.
 
 > **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
 
@@ -96,7 +87,7 @@ This example models a process-wide configuration/logger object. Each language ha
 
   <div class="inline-language-panel is-active" data-language-panel="java" role="tabpanel" markdown="1">
 ```java
-public final class AppConfig {
+final class AppConfig {
     private static final AppConfig INSTANCE = new AppConfig();
 
     private AppConfig() {}
@@ -173,7 +164,7 @@ second = AppConfig()
 first.log(f"same instance: {first is second}")
 ```
 
-> **Pythonic alternative.** The `__new__` form has a well-known pitfall: Python still calls `__init__` on every `AppConfig()` call, so if the class ever grows an `__init__`, it will silently re-initialize state. The standard Pythonic singleton is just a **module-level instance** — modules are loaded once and cached, so a top-level `config = AppConfig()` in `config.py` is already a singleton, with no metaclass or `__new__` trickery.
+> **Pythonic alternative.** The `__new__` form has a well-known pitfall: Python still calls `__init__` on every `AppConfig()` call, so if the class ever grows an `__init__`, it will silently re-initialize state. A **module-level instance** is often a simpler way to share an ordinary object. Normal imports reuse the module cached in `sys.modules`; they do not prevent calling the object's class again, reloading the module, or running another interpreter. The unsynchronized `__new__` example also does not provide a concurrent-construction guarantee. It illustrates the identity idea for sequential calls.
   </div>
 
   <div class="inline-language-panel" data-language-panel="ts" role="tabpanel" markdown="1">
@@ -201,12 +192,14 @@ first.log(`same instance: ${first === second}`);
 </div>
 
 ## Refining the Solution: Thread Safety and Performance
-The Java example above uses **eager instantiation**: the instance is created when the class is first loaded. The JVM guarantees class initialization runs exactly once, so this is automatically thread-safe. The trade-off is that the object is built even if no client ever calls `getInstance()`.
+The Java example initializes its instance in a static field initializer, during **class initialization**, not merely class loading or necessarily program startup. Successful class initialization safely publishes the instance to other threads. It is eager relative to other uses that initialize `AppConfig`; if the class is never initialized, the object is never created. See the [Java Language Specification on initialization](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.4.1).
 
 A common alternative is **lazy instantiation**, which only creates the instance on the first call:
 
 ```java
-// NOT thread-safe — for illustration only
+// Alternative field and accessor inside AppConfig; NOT thread-safe
+private static AppConfig instance;
+
 public static AppConfig getInstance() {
     if (instance == null) {            // (1) check
         instance = new AppConfig();    // (2) create
@@ -218,9 +211,9 @@ public static AppConfig getInstance() {
 This naive form is **not thread-safe**: if two threads run `(1)` simultaneously and both see `null`, they will both run `(2)` and create two separate objects. Java offers several ways to fix this:
 
 *   **Synchronized Method:** Adding the `synchronized` keyword to `getInstance()` makes the check-and-create atomic, but introduces lock-acquisition overhead on *every* call, even after the object has been created.
-*   **Eager Instantiation:** As shown above. Simple, thread-safe, no synchronization — at the cost of building the object up front.
-*   **Double-Checked Locking (DCL):** Check for `null` *before* entering a synchronized block and again *inside* it, so the lock is taken only on the first call. This idiom was [famously broken](https://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html) before Java 5: without `volatile`, the JIT can reorder the constructor's writes with the publish of the reference, so another thread can observe the field as non-null while the object is still partially constructed. From Java 5 onward, declaring the instance field `volatile` adds the memory barriers needed to make DCL correct. The pattern is fiddly enough that the next two idioms are usually preferred.
-*   **Initialization-on-Demand Holder Idiom (Bill Pugh):** Put the instance in a private static nested class. The JVM only loads the holder class when it is first referenced (lazy), and class initialization is guaranteed thread-safe (no `volatile`, no `synchronized` needed). This is the recommended lazy pattern in Java.
+*   **Eager Instantiation:** As shown above. Uses the JVM's class-initialization synchronization, with no explicit lock in the accessor. The object is created whenever the enclosing class is initialized.
+*   **Double-Checked Locking (DCL):** Check for `null` *before* entering a synchronized block and again *inside* it, so calls after initialization avoid the explicit lock. Concurrent calls during initialization may still enter the synchronized block. This idiom was [famously broken](https://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html) before Java 5: without `volatile`, the JIT can reorder the constructor's writes with the publish of the reference, so another thread can observe the field as non-null while the object is still partially constructed. From Java 5 onward, declaring the instance field `volatile` adds the memory barriers needed to make DCL correct. The pattern is fiddly enough that the next two idioms are usually preferred.
+*   **Initialization-on-Demand Holder Idiom (Bill Pugh):** Put the instance in a private static nested class. Reading `Holder.INSTANCE` triggers initialization of the holder class (lazy), and the JVM synchronizes that initialization. The accessor needs no explicit `volatile` or `synchronized`.
 
 ```java
 public final class AppConfig {
@@ -234,7 +227,7 @@ public final class AppConfig {
 }
 ```
 
-*   **Enum Singleton:** Joshua Bloch (*Effective Java*, Item 3) recommends a single-element enum as the most robust singleton in Java: it is concise, thread-safe by construction, and — uniquely — defends against both serialization (deserialization will not produce a second instance) and reflection attacks (the JVM forbids reflective creation of enum values).
+*   **Enum Singleton:** Joshua Bloch (*Effective Java*, Item 3) recommends a single-element enum as the most robust singleton in Java: it is concise, thread-safe by construction, and defends against both serialization (deserialization will not produce a second instance) and reflection attacks (the JVM forbids reflective creation of enum values).
 
 ```java
 public enum AppConfig {
@@ -245,44 +238,43 @@ public enum AppConfig {
 }
 ```
 
-> **Other languages.** The table is largely a Java-specific concern. In **C++**, the function-local static "Meyers' Singleton" shown above is thread-safe by the language standard since C++11. In **Python**, the most idiomatic singleton is a **module-level instance** — modules are themselves loaded once and cached, so a top-level `config = AppConfig()` in `config.py` is already a singleton, with none of the `__new__` / `__init__` pitfalls of the class-based form.
+> **Other languages.** The preceding idioms are Java-specific. In **C++**, the function-local static "Meyers' Singleton" shown above is thread-safe by the language standard since C++11. In **Python**, normal imports share a cached module, so a module-level object is often sufficient for shared access; it does not enforce one instance of its class. In **TypeScript**, `private` restricts typed callers at compile time, and separate workers or module copies can still have separate instances.
+
+Safe creation does **not** make later operations on mutable state thread-safe. Singleton scope also stops at the relevant runtime boundary: Java class loaders, separate processes, and separate interpreters can have their own instances. Enforcing one controller across processes requires a separate coordination mechanism.
 
 # Consequences
 Applying the Singleton Pattern results in several important architectural outcomes:
 *   **Controlled Access:** The pattern provides a single point of access that can be easily managed and updated.
-*   **Resource Efficiency:** It prevents the system from being cluttered with redundant, resource-intensive objects.
+*   **Resource Sharing:** A single managed object can avoid duplicate expensive setup. This benefit depends on a real sharing requirement; a long-lived singleton can also retain resources longer than needed.
 *   **The Risk of "Singleitis":** A major drawback is the tendency for developers to overuse the pattern. Using a Singleton just for easy global access can lead to a hard-to-maintain design with high coupling, where it becomes unclear which classes depend on the Singleton and why.
-*   **Complexity in Testing:** Singletons are hard to mock during unit testing because they maintain state throughout the lifespan of the application. A `static getInstance()` call is a *hardcoded dependency* — there is no seam where a [test double](/SEBook/testing/testdoubles.html) can be injected, and tests that share the singleton interfere with each other through its retained state. This is one of the main reasons many practitioners — particularly those who practise [test-driven development](/SEBook/testing/tdd.html) — treat the pattern as an anti-pattern.
-*   **Single Responsibility Principle Violation:** A Singleton class takes on two responsibilities: doing its real work *and* managing its own lifecycle (enforcing single-instance, controlling creation). These are independent concerns and ideally belong in different places.
+*   **Complexity in Testing:** Singletons are hard to mock during unit testing because they maintain state throughout the lifespan of the application. A `static getInstance()` call is a *hardcoded dependency* — there is no seam where a [test double](/SEBook/testing/testdoubles.html) can be injected, and tests that mutate the same singleton can interfere through retained state. This is one of the main reasons many practitioners — particularly those who practise [test-driven development](/SEBook/testing/tdd.html) — treat the pattern as an anti-pattern.
+*   **Lifecycle Coupling:** A class that implements its service and manages its own instance policy ties those concerns together. If they change independently, separating setup from the service reduces reasons to modify the same class.
 
 # A Pattern with a "Weak Solution"
 
-The Singleton is perhaps the most controversial of all GoF patterns. Buschmann et al. (POSA5) describe it as **"a well-known pattern with a weak solution"**, noting that "the literature that discusses [Singleton's] issues dwarfs the page count of the original pattern description in the Gang-of-Four book." The core problem is that the pattern conflates two separate concerns:
+A central architectural criticism is that Singleton bundles two separate decisions:
 1. **Ensuring a single instance**—a legitimate design constraint.
 2. **Providing global access**—a convenience that introduces hidden coupling.
 
-Modern practice separates these concerns. A **dependency injection (DI) container** can manage the *singleton lifetime* (ensuring only one instance exists) while keeping constructors injectable and dependencies explicit. This gives you the same lifecycle guarantee without the testability and coupling problems.
+These decisions can be separated with **dependency injection (DI)**: application setup creates one ordinary object and passes that same object to its consumers. A DI container can automate a lifetime policy, but no framework is required. A container-managed singleton normally means one instance per configured container or scope; it does not forbid constructing another instance elsewhere. Explicit injection improves substitution and makes dependencies visible, while shared mutable state still requires an appropriate isolation policy.
 
 ## When Singleton is Acceptable
-The Singleton pattern remains acceptable when:
-* It controls a true infrastructure resource that *must* be unique (e.g., a hardware driver in an embedded system, the JVM's `Runtime`).
-* DI is genuinely unavailable (small scripts, legacy code, plug-ins loaded into a host that doesn't expose a container).
-* The instance is **immutable** or otherwise stateless — a read-only configuration loaded at startup, for example, raises none of the test-isolation concerns.
+Consider Singleton when a well-defined single-instance constraint and a well-known access point are both needed, and the cost of global coupling is acceptable. A fixed host API or a small closed application may make that trade-off reasonable. Check how consumers will be tested and how the lifetime ends.
 
-In all other cases, prefer DI with singleton scope. As the maxim goes — *"if your code isn't testable, it isn't a good design"* — and a hardcoded global access point is a direct obstacle to testability.
+Immutable or stateless instances avoid shared-state mutation, but callers can still need different configuration values or substitutes in tests. Prefer creating and passing one ordinary instance when that meets the requirement; the absence of a DI framework is not a reason to use Singleton.
 
 ## When Singleton is an Anti-Pattern
 * When the "only one" assumption is actually a *convenience* assumption, not a hard requirement. Many "singletons" later need multiple instances (per-tenant, per-thread, per-test).
-* When it is used to create global state—making it impossible to reason about what depends on what.
-* When it blocks unit testing by making dependencies invisible and unmockable.
+* When it is used to create global state—making dependencies harder to discover from interfaces.
+* When it blocks unit testing by hardcoding access and obstructing ordinary substitution.
 
 # Related Patterns
 
 The original GoF chapter notes that "many patterns can be implemented using the Singleton pattern" — typically because the pattern needs a single, well-known coordinating object:
 
-*   **Abstract Factory**, **Builder**, and **Prototype** are explicitly cited by GoF as patterns that are often realised as singletons, since an application usually only needs one factory / builder / prototype registry.
-*   **Facade** objects, by extension, are frequently singletons — there is usually one front door per subsystem.
-*   **Dependency Injection containers** are the modern alternative discussed above: they manage *singleton lifetime* (one instance per scope) without the global access point, so DI subsumes most legitimate uses of the Singleton pattern.
+*   **Abstract Factory**, **Builder**, and **Prototype** are cited by GoF as patterns that can use Singleton. This is a possible combination, not a lifecycle rule. In particular, a mutable builder like the vacation planner needs a separate construction session per product or an explicit reset and concurrency policy.
+*   **Facade** objects can provide a well-known subsystem entry point, but that interface role does not require a unique instance.
+*   **Dependency injection** separates object provisioning from use. Manual setup or a container can share one object among consumers without requiring those consumers to call a global accessor.
 
 ## Flashcards
 

@@ -10,8 +10,8 @@ cards:
   - id: 2
     difficulty: intermediate
     question: "Object Adapter vs. Class Adapter?"
-    answer: "Object Adapter uses **composition** (wraps the adaptee), works in any language. Class Adapter uses **inheritance** — multiple class inheritance in C++, or (in Java/C#) extending the Adaptee class while implementing the Target interface."
-    explanation: "Modern practice favors Object Adapters because they compose with any subclass of the Adaptee, can be reconfigured at runtime, and don't require either party to be open for inheritance — an application of favoring composition over inheritance."
+    answer: "Object Adapter uses **composition** to wrap an adaptee instance. Class Adapter uses **inheritance** — multiple class inheritance in C++, or (in Java/C#) extending the Adaptee class while implementing the Target interface."
+    explanation: "Object adapters can wrap compatible subclasses and select an adaptee at runtime without inheriting its implementation. Replacing that instance later requires an API that permits it. Class adapters can override inherited behavior but are tied to that inherited implementation."
   - id: 3
     difficulty: intermediate
     question: "Adapter vs. Facade vs. Decorator?"
@@ -19,19 +19,19 @@ cards:
     explanation: "Key: Adapter changes what the interface looks like; Facade reduces how much you see; Decorator enhances what the object does."
   - id: 4
     difficulty: advanced
-    question: "Why is it misleading to talk about a single 'Adapter pattern'?"
-    answer: "It is actually a family of at least four patterns: Object Adapter, Class Adapter, Two-Way Adapter, and Pluggable Adapter."
-    explanation: "Each form adapts differently, so 'use the Adapter pattern' is ambiguous until the needed kind of adaptation is named."
+    question: "Which design choices distinguish common Adapter variants?"
+    answer: "Object vs. class adaptation chooses composition vs. inheritance. Two-way adaptation supports both interfaces; pluggable adaptation makes the interface mapping configurable."
+    explanation: "These choices can overlap: a two-way adapter can also be a class adapter. Naming the required behavior is more useful than treating the variants as mutually exclusive categories."
   - id: 5
     difficulty: basic
     question: "What problem does Composite solve?"
-    answer: "Treats individual objects and nested groups uniformly through a shared abstraction, eliminating special-case code for leaves vs. containers."
-    explanation: "Clients program against the Component interface. The recursive structure lets operations work identically on single items and nested trees."
+    answer: "Treats individual objects and nested groups uniformly through a shared abstraction for common operations."
+    explanation: "Clients program against the Component interface. A leaf performs its operation directly; a composite can delegate recursively. Child-management clients may still need to distinguish the two."
   - id: 6
     difficulty: intermediate
     question: "Composite: Transparent vs. Safe design?"
-    answer: "Transparent: child-management on Component (uniform, leaves get meaningless methods). Safe: child-management only on Composite (type-safe, clients must distinguish)."
-    explanation: "Fundamental trade-off. Transparent maximizes uniformity; Safe maximizes type safety. Choice depends on context."
+    answer: "Transparent: child-management on Component (uniform, leaves get meaningless methods). Safe: child-management only on Composite (statically rejects leaf insertion calls; construction clients need a composite reference)."
+    explanation: "Fundamental trade-off. Both variants preserve uniform common operations such as print(). The trade-off concerns child management, and static guarantees depend on the language or type checker."
   - id: 7
     difficulty: advanced
     question: "Name three pattern compounds involving Composite."
@@ -44,11 +44,11 @@ cards:
     explanation: "The Facade handles coordination between subsystem components. Importantly, it does not 'trap' the subsystem — direct access remains available."
   - id: 9
     difficulty: advanced
-    question: "Facade vs. Mediator: what's the communication direction?"
-    answer: "Facade: **one-directional** (subsystem unaware of Facade). Mediator: **bidirectional** (colleagues communicate through mediator and back)."
-    explanation: "Facade simplifies. Mediator coordinates. If the intermediary just delegates, it's a Facade. If it manages bidirectional control flow, it's a Mediator."
+    question: "How do Facade and Mediator differ in responsibility and dependencies?"
+    answer: "Facade simplifies subsystem use; subsystem objects do not depend on it. Mediator encapsulates interaction rules among colleagues, which notify it directly or through events."
+    explanation: "Intent is the discriminator. A facade can perform several calls and translate data; a callback alone does not make it a mediator. Colleagues may retain useful standalone behavior even when their collaboration needs a mediator."
   - id: 10
     difficulty: intermediate
     question: "Should the subsystem know about its Facade?"
     answer: "No. The Facade knows the subsystem, but the subsystem remains independent — it can function without the Facade."
-    explanation: "This one-directional knowledge is a key design property. The subsystem can be used and tested independently of the Facade."
+    explanation: "This one-directional knowledge is a key design property. The subsystem can be used and tested independently of the Facade, although its classes may still depend on one another."

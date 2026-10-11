@@ -4,17 +4,19 @@ layout: sebook
 ---
 
 # Context
-Consider a compiler that represents programs as Abstract Syntax Trees (ASTs). The compiler needs to perform many distinct and unrelated operations across this tree, such as type-checking, code generation, and pretty-printing. 
+Visitor is a behavioral pattern. Consider a compiler that represents programs as Abstract Syntax Trees (ASTs). The compiler needs to perform many distinct and unrelated operations across this tree, such as type-checking, code generation, and pretty-printing.
 
 # Problem
-Distributing all these diverse operations directly across the node classes of the AST would heavily clutter the structure. 
-*   **Pollution of Elements:** The core purpose of an AST node is to represent syntax, not to perform type-checking or code generation. Adding these behaviors pollutes the elements.
-*   **Violation of [Open/Closed Principle](/SEBook/designprinciples/solid.html#openclosed-principle-ocp):** Every time a new operation is required (e.g., a new code optimization pass), you have to modify every single node class in the hierarchy.
+Distributing all these diverse operations directly across the node classes of the AST would heavily clutter the structure.
+*   **Unrelated Responsibilities:** Type-checking, code generation, and pretty-printing change for different reasons. Mixing all their implementations into each node can obscure both the syntax model and each complete algorithm. Keeping an operation on the nodes can still be reasonable when that behavior is central to them and the set of operations is small.
+*   **Extension Cost:** A new operation may require edits across many node classes. Visitor supports the [Open/Closed Principle](/SEBook/designprinciples/solid.html#openclosed-principle-ocp) for adding operations, while accepting a different cost when new node types are introduced.
 
 # Solution
 The **Visitor Pattern** represents an operation to be performed on the elements of an object structure. It lets you define a new operation without changing the classes of the elements on which it operates.
 
-It achieves this through a technique called **double-dispatch**. The operation that gets executed depends on *two* types: the type of the Visitor and the type of the Element it visits.
+It achieves this through a technique called **double-dispatch**. The operation that gets executed depends on *two* types: the type of the Visitor and the type of the Element it visits. First, `node.accept(visitor)` dispatches to the concrete node's implementation. That implementation calls the visitor method for its node type; dispatch on the visitor then selects the concrete algorithm.
+
+In the C++ example, overload resolution selects `visit(AssignmentNode&)` inside `AssignmentNode::accept`, where the node type is known statically; virtual dispatch then selects the visitor implementation. Overloading alone would not select an overload from the runtime type of a `Node&`. The Java, Python, and TypeScript examples use distinct method names to make the same two-step selection explicit.
 
 The key participants are:
 1.  **Visitor:** Declares a `visit` operation for each class of `ConcreteElement` in the object structure.
@@ -24,7 +26,7 @@ The key participants are:
 5.  **ObjectStructure:** Can enumerate its elements; it may be a [composite](/SEBook/designpatterns/composite.html) or a collection such as a list or a set.
 
 > [!WARNING]
-> If the element classes (the object structure) change frequently, this pattern is a poor choice. Adding a new `ConcreteElement` requires adding a corresponding operation to the `Visitor` interface and updating every single `ConcreteVisitor`.
+> If new concrete element types are added frequently, this pattern is often a poor choice. Rearranging existing nodes in a tree does not by itself require a new visitor method. Adding a new `ConcreteElement` requires adding a corresponding operation to the `Visitor` interface and updating every single `ConcreteVisitor`.
 
 ## UML Role Diagram
 
@@ -64,6 +66,8 @@ Client --> ObjectStructure
 
 ## UML Example Diagram
 
+The two visitors represent separate compiler operations over the same node types. The code below implements only the type-checking visitor to keep the dispatch mechanism visible.
+
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface NodeVisitor {
     + visitAssignment(AssignmentNode)
@@ -96,7 +100,7 @@ VariableRefNode ..|> Node
 
 ## Code Example
 
-This example adds type-checking behavior to a stable AST node hierarchy. Each node accepts a visitor and calls the overload or method that matches its concrete type.
+This example demonstrates dispatch over two node types using a flat collection. Its visitor prints which type-checking action would run; it does not implement a type system or a complete AST traversal. Each node accepts a visitor and calls the overload or method that matches its concrete type. The Java snippet uses `List.of`, available in Java 9 and later.
 
 > **Teaching example:** These snippets are intentionally small. They show one reasonable mapping of the pattern roles, not a drop-in architecture. In production, always tailor the pattern to the concrete context: lifecycle, ownership, error handling, concurrency, dependency injection, language idioms, and team conventions.
 
@@ -299,17 +303,19 @@ ast.forEach((node) => node.accept(typeChecker));
   </div>
 </div>
 
+The collection loop owns traversal in these snippets. For a tree, choose whether the nodes, a separate iterator, or the visitor controls traversal; `accept()` does not automatically visit children. For example, a node-owned traversal might visit each child before dispatching on the parent. A visitor-controlled traversal can choose different branches or orders, at the cost of potentially repeating traversal logic across visitors.
+
 # Consequences
 *   **Adding Operations is Easy:** You can add a new operation over an object structure simply by adding a new visitor class.
 *   **Gathers Related Operations:** Related behavior is localized in a single visitor class rather than spread across multiple node classes; behavior unrelated to a given operation is not entangled with it.
-*   **Adding New Elements is Hard:** The element class hierarchy must be stable. Adding a new element type requires modifying the visitor interface and all concrete visitors. This trade-off — easy to add operations, hard to add types — is the dual of the trade-off in plain object-oriented inheritance, and is known as the **Expression Problem** (Wadler, 1998).
+*   **Adding New Elements is Hard:** A relatively stable set of concrete element types makes the trade-off attractive. Adding a new element type requires modifying the visitor interface and all concrete visitors. This illustrates one side of the **[Expression Problem](https://homepages.inf.ed.ac.uk/wadler/papers/expression/expression.txt)**: supporting extensions with both new operations and new data variants while retaining static type safety and avoiding edits or recompilation of existing code. Classic Visitor makes the operation dimension easier; it does not solve both dimensions.
 *   **Visiting Across Class Hierarchies:** Unlike a virtual method on `Element`, a visitor can be applied to objects whose classes do not share a common base, as long as they all implement `accept`.
 *   **Accumulating State:** Visitors can accumulate state as they traverse the structure (e.g., a symbol table during type checking), avoiding both global variables and extra parameters threaded through every operation.
-*   **Breaks Encapsulation:** To do their work, visitors typically need access to the internal state of the elements they visit. This often forces `ConcreteElement` classes to expose state through public accessors that would otherwise be private.
-*   **Cyclic Dependency:** The `Visitor` interface depends on every `ConcreteElement` (via the `visit*` overloads), and every `Element` depends on `Visitor` (via `accept`). The **Acyclic Visitor** variant (Martin, 1998) breaks this cycle by giving each element its own narrow visitor interface and using a runtime cast inside `accept`.
-*   **Modern Alternatives:** In languages with sealed types and exhaustive pattern matching — such as Scala (`sealed trait` + `match`), Rust (`enum` + `match`), or Java 21+ (sealed interfaces + `switch` pattern matching) — much of the Visitor pattern's machinery is unnecessary. A `switch` over a sealed type achieves the same separation of operations from data and is checked for exhaustiveness by the compiler. (GoF themselves note that languages supporting double or multiple dispatch, such as CLOS, lessen the need for the Visitor pattern.)
+*   **Can Weaken Encapsulation:** To do their work, visitors typically need access to the internal state of the elements they visit. This often forces `ConcreteElement` classes to expose state through public accessors that would otherwise be private.
+*   **Cyclic Dependency:** The `Visitor` interface depends on every `ConcreteElement` (via the `visit*` overloads), and every `Element` depends on `Visitor` (via `accept`). Martin's **[Acyclic Visitor](https://objectmentor.com/publications/acv.pdf)** variant breaks this cycle by giving each element type its own narrow visitor interface and checking for that interface inside `accept`. This permits partial visitors, but unsupported element/visitor combinations must be handled at runtime.
+*   **Modern Alternatives:** In languages with sealed types and exhaustive pattern matching — such as Scala (`sealed trait` + `match`), Rust (`enum` + `match`), or Java 21+ (sealed interfaces + `switch` pattern matching) — much of the Visitor pattern's machinery is unnecessary. A `switch` over a sealed type achieves the same separation of operations from data and is checked for exhaustiveness by the compiler. Adding a new variant still requires revisiting exhaustive matches; the operation-versus-variant trade-off remains. (GoF themselves note that languages supporting double or multiple dispatch, such as CLOS, lessen the need for the Visitor pattern.)
 
 # Related Patterns
 *   **[Composite](/SEBook/designpatterns/composite.html):** Visitors can be used to apply an operation over an object structure defined by the Composite pattern.
 *   **Interpreter:** Visitor may be applied to do the interpretation. Each grammar rule is a `ConcreteElement`, and an interpretation pass is a `ConcreteVisitor`.
-*   **Iterator:** Iterators can also walk an object structure and call operations on each element, but they require all elements to share a common parent class. Visitor lifts this restriction and lets the operation differ by element type. The two patterns are often combined: an iterator drives the traversal and calls `accept` on each element.
+*   **Iterator:** Separates traversal from the representation of a collection; Visitor separates type-specific operations from the element classes. GoF contrasts Visitor with its homogeneous `Iterator<Item>` interface, but a shared inheritance base is not a requirement of all modern iterators. The two patterns combine naturally: an iterator supplies each element, and `accept` selects the appropriate visitor operation.

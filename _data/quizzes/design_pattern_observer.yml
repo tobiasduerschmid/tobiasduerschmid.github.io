@@ -20,13 +20,13 @@ questions:
         The SEBook describes Push as coupling observers to the subject's **data format** rather than its API, but the problem at 1,000 updates/second is the volume of unused data flowing through every notification, not type coupling.
       3: |
         Observer still supports adding observers at runtime in both push and pull variants. The issue is what each observer receives once it is registered.
-    explanation: "Push sends the full data set to every observer on every update, so at 1,000 updates/second with 50 widgets that each need only a subset, most of that transfer is wasted work. The SEBook recommends the **Hybrid model** (push the event type, let observers pull only what they need) combined with **batched/deferred notifications** for exactly this scenario."
+    explanation: "In this implementation, Push sends the full data set to every observer on every update, so at 1,000 updates/second with 50 widgets that each need only a subset, most of that transfer is wasted work. A smaller event payload, selective subscriptions, or a hybrid notification can reduce wasted work. Batching is another option if the display may skip intermediate updates; measure whether pulling data actually reduces cost."
 
   - id: 2
     difficulty: intermediate
     type: single
     question: |
-      A developer registers observers with a subject but never calls `detach()` when the observers are no longer needed. The application gradually slows down over time. What is this problem called?
+      In a garbage-collected application, a long-lived subject holds strong references to observers that are never detached when no longer needed. The application gradually slows down over time. What is this problem called?
     options:
       - "The notification storm problem"
       - "The inverted dependency problem"
@@ -43,24 +43,21 @@ questions:
     explanation: "Observers that never detach stay alive in memory because the subject's reference list keeps them from being garbage-collected — the lapsed listener problem. The SEBook lists three remedies: **explicit unsubscribe** (disciplined but error-prone), **weak references** (language-dependent), and **scoped subscriptions** tied to a lifecycle scope (common in modern UI frameworks)."
 
   - id: 3
-    difficulty: advanced
+    difficulty: intermediate
     type: single
     question: |
-      The Observer pattern is widely cited as creating an "inverted dependency flow" that hurts program comprehension. What does this mean in practice?
+      Client setup code registers `ChartView` with `PriceModel`. Later, updating the model unexpectedly redraws the chart. Which code path should a developer inspect to explain this behavior?
     options:
-      - "Observers depend on the subject, but the subject also depends on observers — creating a circular dependency"
-      - "Observers call the subject to register (observer→subject), but data later flows the opposite way (subject→observer)"
-      - "The subject must be created before any observers, inverting the normal object creation order"
-      - "The Pull model inverts the Push model's data flow direction"
+      - "Only the chart constructor, because construction determines every callback."
+      - "The subscription site, the model's notification, and the chart's update method."
+      - "Only inheritance relationships, because observers must subclass the subject."
+      - "The polling timer, because Observer requires views to poll the model."
     correct_index: 1
     option_feedback:
-      0: |
-        A subject normally depends only on an observer interface, not on concrete observers — that is the whole point of loose coupling. The hard-to-trace part is that registration appears in one place while later data updates arrive from the opposite direction.
-      2: |
-        Creation order is not the main issue; many systems can create subjects and observers in different orders. The term points to how dependency evidence in code differs from the runtime flow of updates.
-      3: |
-        Pull changes how much data is sent with a notification, but the subject still triggers observers. The "inverted" part is about code navigation and registration, not push versus pull payload style.
-    explanation: "Data flows subject→observer, but in the code the observer calls the subject to register, so the dependency is invisible at the observer itself. When a reader meets an observer for the first time there is no sign nearby of what it depends on — the wiring lives elsewhere, in the `attach()` call. Modern reactive frameworks try to make the dependency graph explicit at the call site for this reason."
+      0: "Client code can register or detach the chart after construction. The runtime subscription determines whether notifications reach it."
+      2: "Observer and Subject are collaborators. The observer implements a notification interface rather than inheriting from the subject."
+      3: "The model triggers the update through a callback. Pulling data during that callback is not periodic polling."
+    explanation: "Registration and notification can occur in different places. Trace both to understand which callback runs. An observer need not register itself; client setup code can wire the relationship, as in the chapter's NewsChannel example."
 
   - id: 4
     difficulty: intermediate
@@ -69,7 +66,7 @@ questions:
       A colleague says: "We only have one observer right now, so we don't need the Observer pattern — just call the method directly." When is this argument **most valid**?
     options:
       - "Never — the Observer pattern should always be used when notifications are needed"
-      - "When the single observer will never change and no additional observers are foreseeable"
+      - "When the relationship is stable and direct coupling is acceptable"
       - "When the observer uses the Pull model instead of the Push model"
       - "When the subject and observer are in the same package"
     correct_index: 1
@@ -80,7 +77,7 @@ questions:
         Push versus pull decides how notification data is delivered. It does not determine whether a subscription mechanism is justified in the first place.
       3: |
         Package placement does not decide the design force. A direct call can still be better when the relationship is stable, and Observer can still be useful across classes in the same package if the dependency is dynamic.
-    explanation: "Observer solves a **dynamic, one-to-many** dependency. With exactly one dependent that will never change, the subscriber list, notification mechanism, and interface abstractions add complexity without addressing a real problem, so a direct call is simpler. The tutorial's design-judgment step makes the same call: a simple calculator with one fixed display does not need Observer."
+    explanation: "One dependent does not by itself rule out Observer: decoupling layers or making a dependency replaceable can still justify it. A direct call is simpler when the relationship is stable and the resulting coupling is acceptable."
 
   - id: 5
     difficulty: intermediate
@@ -162,10 +159,10 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      A subject is destroyed while several observers still hold references to it (e.g., to query its state in `update()`). What is this problem called, and what is the standard remedy?
+      In C++, a subject is destroyed while observers retain raw pointers to it. Which diagnosis and remedy could prevent later invalid access?
     options:
       - "Lapsed listener — observers should call detach() before holding the reference"
-      - "Dangling references to deleted subjects — the dying subject must notify observers to clear them"
+      - "Dangling pointers — notify observers before destruction so they clear references"
       - "Inverted dependency flow — observers should not hold references to subjects in the Pull model"
       - "Notification storm — the observers should be batched to avoid the dangling refs"
     correct_index: 1
@@ -176,7 +173,7 @@ questions:
         Inverted dependency flow is about code-reading comprehension, not lifetime management. The Pull model's reference-back is exactly what creates the dangling pointer here, but the term names a different concept.
       3: |
         Notification storms describe excessive runtime traffic, not lifetime hazards. The problem here is what happens when the source of notifications is freed while listeners still point to it.
-    explanation: "This is the dangling-reference problem — the dual of the lapsed-listener problem — and it matters most in languages without garbage collection (e.g., C++). The SEBook's remedy is for the subject to notify its observers as it is destroyed so they can null out their references, preventing later access through a stale pointer."
+    explanation: "This is the dangling-reference problem — the dual of the lapsed-listener problem — and it matters most in languages without garbage collection (e.g., C++). One remedy is an explicit lifecycle notification before destruction so observers clear their references. Scoped lifetimes or weak ownership can also prevent invalid access; destruction callbacks are not mandatory."
 
   - id: 10
     difficulty: expert
@@ -196,4 +193,4 @@ questions:
         Push versus pull is about the payload, not the dispatch graph. Switching to Push does not solve duplicate updates when one observer subscribes to several subjects.
       3: |
         Counters in every observer push coordination back into the observers — the whole point of the recommendation is to centralize update-graph logic in one place. Per-observer dedup is fragile and easy to get wrong.
-    explanation: "Following GoF Implementation issue #9, when dependencies form a graph (especially a DAG) a `ChangeManager` maps subjects to observers, defines an update strategy, and dispatches so each observer is notified exactly once per logical change. GoF cite a `SimpleChangeManager` (notifies every observer) and a `DAGChangeManager` (handles directed acyclic dependency graphs). The ChangeManager is itself a Mediator and is typically a Singleton."
+    explanation: "Following GoF Implementation issue #9, when dependencies form a graph (especially a DAG) a `ChangeManager` maps subjects to observers, defines an update strategy, and can coordinate a batch so each affected observer is notified once per logical change. GoF cite a `SimpleChangeManager` (notifies every observer) and a `DAGChangeManager` (handles directed acyclic dependency graphs). The ChangeManager is itself a Mediator and is typically a Singleton."
