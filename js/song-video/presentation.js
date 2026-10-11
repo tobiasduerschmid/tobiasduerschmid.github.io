@@ -1,4 +1,4 @@
-/* Fullscreen presentation is independent of the native audio playback clock. */
+/* Optional fullscreen presentation, independent of native audio playback. */
 (function () {
   'use strict';
 

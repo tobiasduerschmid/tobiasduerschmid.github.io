@@ -8,7 +8,7 @@
   {% include ai-training-opt-out-meta.html %}
   <meta name="robots" content="noindex">
   <link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}">
-  <link rel="stylesheet" href="{{ '/css/git-graph.css' | relative_url }}?v={{ site.asset_version }}-song-vector-1">
+  <link rel="stylesheet" href="{{ '/css/git-graph.css' | relative_url }}?v={{ site.asset_version }}-song-vector-2">
   <link rel="stylesheet" href="{{ '/css/song-video-stage.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/song-student-avatar.css' | relative_url }}">
   {%- for href in song.extras.styles %}
@@ -79,8 +79,8 @@
   </main>
   <script type="application/json" id="song-data">{{ song | jsonify | replace: '<', '\u003c' }}</script>
   <script src="{{ '/js/song-video/virtual-clock.js' | relative_url }}"></script>
-  <script src="{{ '/js/git-graph.js' | relative_url }}?v={{ site.asset_version }}-song-vector-1"></script>
-  <script src="{{ '/js/song-video/graph-track.js' | relative_url }}"></script>
+  <script src="{{ '/js/git-graph.js' | relative_url }}?v={{ site.asset_version }}-song-vector-2"></script>
+  <script src="{{ '/js/song-video/graph-track.js' | relative_url }}?v={{ site.asset_version }}-song-vector-2"></script>
   <script src="{{ '/js/song-video/timeline.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/kit.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/student-avatar.js' | relative_url }}"></script>
@@ -91,7 +91,7 @@
   <script src="{{ '/js/song-video/scene.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/controls.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/tracks.js' | relative_url }}"></script>
-  <script src="{{ '/js/song-video/fullscreen.js' | relative_url }}"></script>
-  <script src="{{ '/js/song-video/player.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/presentation.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/player.js' | relative_url }}?v={{ site.asset_version }}-song-vector-2"></script>
 </body>
 </html>

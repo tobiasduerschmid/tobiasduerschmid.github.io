@@ -156,6 +156,20 @@ test('the vector song player waits for an explicit playback action', async ({ pa
   await a11yCheckpoint(page, 'song-player ready', { feature: 'song-vector-player' });
 });
 
+test('an unavailable fullscreen enhancement leaves the player usable', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  // Reproduce a browser extension or network failure at this optional resource.
+  await page.route(/\/song-video\/(?:fullscreen|presentation)\.js(?:\?|$)/, (route) => route.abort('blockedbyclient'));
+  await loadPlayer(page);
+  await expect(page.getByRole('button', { name: 'Enter full screen', exact: true })).toBeHidden();
+  await page.getByRole('button', { name: 'Closed captions (CC)', exact: true }).click();
+  await expect(lyrics(page)).toBeHidden();
+  await expect(audioPlayer(page)).toHaveJSProperty('playbackRate', 1);
+  expect(errors).toEqual([]);
+  await a11yCheckpoint(page, 'fullscreen enhancement unavailable', { feature: 'song-vector-player' });
+});
+
 test('closed captions overlay the picture and can be switched off and back on', async ({ page }) => {
   const audio = await loadAudioThenPause(page);
   await seek(audio, 91.5);

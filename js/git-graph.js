@@ -12,8 +12,9 @@
  *
  * Externally timed scenes may supply a scheduler with now(), setTimeout(),
  * clearTimeout(), requestAnimationFrame(), and cancelAnimationFrame(). Set
- * portablePaths:true and call posePaths(schedulerTime) for SVG attribute
- * interpolation instead of CSS d transitions. motion:'full', perfLite:false,
+ * manualGeometry:true and call poseGeometry(schedulerTime) to pose SVG
+ * coordinates at an exact time. Geometry uses SVG attributes at every zoom.
+ * motion:'full', perfLite:false,
  * observeTheme:false, and colorMode:'dark' keep an authored scene independent
  * of device heuristics and page theme. Ordinary graphs keep their defaults.
  * dispose() releases pending work and the theme subscription.
@@ -617,23 +618,6 @@
     });
   }
 
-  // Promote an element to its own compositor layer just before we mutate its
-  // `transform` (which kicks in the CSS transition), then drop the hint once
-  // the transition completes. Without this transient scoping, setting
-  // `will-change: transform` statically in CSS creates a compositor layer for
-  // every node/label on the page at rest — pages with many cards can easily
-  // accumulate hundreds of idle layers, at which point Chrome starts evicting
-  // them and each animation pays a re-promote cost on its first frame.
-  function _setTransformAnimated(el, transform, scheduler) {
-    el.style.willChange = 'transform';
-    el.style.transform = transform;
-    if (el._wcTimer) scheduler.clearTimeout(el._wcTimer);
-    el._wcTimer = scheduler.setTimeout(function () {
-      el.style.willChange = '';
-      el._wcTimer = null;
-    }, 900);
-  }
-
   // Own callbacks even when using the native scheduler, so releasing a graph
   // also releases closures holding its detached SVG and workbench elements.
   function _graphScheduler(source) {
@@ -675,7 +659,9 @@
     this._scheduler = _graphScheduler(options.scheduler || window);
     this._motion = options.motion;
     if (container && this._motion === 'full') container.setAttribute('data-git-graph-motion', 'full');
-    this._portablePaths = !!options.portablePaths;
+    this._manualGeometry = !!options.manualGeometry;
+    this._geometryFrame = null;
+    this._positionMotions = new Map();
     this._colorMode = options.colorMode;
     if (container && this._colorMode) container.setAttribute('data-git-graph-color-mode', this._colorMode);
     this._pathMotions = new Map();
@@ -716,6 +702,8 @@
   GitGraph.prototype.dispose = function () {
     this._scheduler.dispose();
     this._pathMotions.clear();
+    this._positionMotions.clear();
+    this._geometryFrame = null;
     const index = _liveInstances.indexOf(this);
     if (index !== -1) _liveInstances.splice(index, 1);
     if (this.container && this.container.getAnimations) {
@@ -788,7 +776,7 @@
   // HEAD re-attaches (git rebase -i), or introduces workbench rows in a
   // previously-empty zone (git add -A from a clean start) would:
   //   - recompute a larger `_paddingLeft` and shift every node `cx` right,
-  //     which glides smoothly via the CSS transform transition but still
+  //     which glides smoothly via SVG coordinate interpolation but still
   //     reads as "the whole graph is moving when only the labels should"; or
   //   - grow the workbench's min-height pin, pushing the SVG and
   //     everything below it down in a one-time jolt that doesn't recur
@@ -1389,7 +1377,7 @@
     // attached to — or which col-0 branch labels exist — would recompute a
     // different `_paddingLeft`, and every node's `cx` would shift
     // horizontally even though the commits haven't moved. The shift would
-    // glide smoothly via the CSS transform transition but was still
+    // glide smoothly via SVG coordinate interpolation but was still
     // visible as "the main graph moves while only the labels should".
     this._paddingLeft = Math.max(minPaddingLeft, this._reservedPaddingLeft || 0);
 
@@ -1635,19 +1623,9 @@
     this._lockWorkbenchHeight();
   };
 
-  // Canvas-size updates are intentionally NOT animated.
-  //
-  // Why: nodes/labels move via CSS `transform` transitions and edges morph
-  // via CSS `d` transitions. Those are compositor/paint-driven animations,
-  // while canvas width/height/viewBox tweening is JS+rAF-driven geometry
-  // mutation. Running both at once makes some browsers visibly desync edges
-  // from nodes (the exact "line lags behind node" jitter users reported).
-  //
-  // Snapping the canvas to its new dimensions before diff-updating elements
-  // keeps every moving part in ONE animation pipeline (the CSS transitions
-  // on nodes/labels/edges), which is materially more stable and accurate.
-  // Width remains effectively steady across state changes anyway because
-  // `_computeDimensions` pins it to `_reservedMaxW`.
+  // Snap the canvas before moving its contents. Changing the viewBox during
+  // a glide would add another scale to otherwise shared SVG coordinates.
+  // `_computeDimensions` reserves the width across states to avoid reflow.
   GitGraph.prototype._setSvgSize = function (w, h) {
     var svg = this._svgRoot;
     if (!svg) return;
@@ -2093,7 +2071,7 @@
   GitGraph.prototype._createEdge = function (key, x1, y1, x2, y2, color) {
     // Always use <path> (even for same-column straight lines). That way an
     // edge that switches between straight and curved during a layout shift
-    // can smoothly morph via CSS `d` transition instead of being destroyed
+    // can smoothly morph in SVG coordinates instead of being destroyed
     // and recreated (which caused the visible flash the user reported).
     var g = this._svgEl('g', {
       'class': 'git-graph-edge',
@@ -2114,11 +2092,6 @@
       'fill-opacity': 0.9,
       'class': 'git-graph-edge-head',
     });
-    if (this._portablePaths) {
-      // Geometry is posed explicitly; leave colour/draw-in CSS untouched.
-      shaft.style.transitionProperty = 'stroke-dashoffset, stroke';
-      head.style.transitionProperty = 'fill, opacity';
-    }
     g.appendChild(shaft);
     g.appendChild(head);
     return {
@@ -2189,9 +2162,7 @@
   // Every edge uses a cubic Bezier (C command). For same-column "straight"
   // segments the two control points collapse onto the straight line so the
   // rendered path is visually straight — but the command structure stays
-  // identical to curved edges. This lets CSS interpolate the `d` attribute
-  // smoothly when a rebase morphs an edge between straight↔curved
-  // (otherwise L↔C is a command-structure mismatch and the browser snaps).
+  // identical to curved edges as their endpoints interpolate during a rebase.
   // Compute the edge's actual path endpoint — already adjusted so the
   // arrow tip lands ON the parent node's border (not short of it) and, when
   // multiple children share a parent, each edge lands at a distinct point
@@ -2254,13 +2225,16 @@
 
   GitGraph.prototype._updateEdge = function (entry, x1, y1, x2, y2, color) {
     if (entry.x1 === x1 && entry.y1 === y1 && entry.x2 === x2 && entry.y2 === y2 && entry.color === color) return;
-    if (this._portablePaths && !this._prefersReducedMotion()) {
+    if (!this._prefersReducedMotion()) {
       this._pathMotions.set(entry, {
         at: this._scheduler.now(),
         from: entry.posedCoordinates || [entry.x1, entry.y1, entry.x2, entry.y2],
         to: [x1, y1, x2, y2],
       });
+      this._queueGeometryFrame();
     } else {
+      this._pathMotions.delete(entry);
+      entry.posedCoordinates = [x1, y1, x2, y2];
       entry.shaft.setAttribute('d', this._edgePathD(x1, y1, x2, y2));
       entry.head.setAttribute('transform', this._edgeHeadTransform(x1, y1, x2, y2));
     }
@@ -2275,7 +2249,7 @@
     entry.x1 = x1; entry.y1 = y1; entry.x2 = x2; entry.y2 = y2; entry.color = color;
   };
 
-  // The CSS geometry curve is cubic-bezier(.7, 0, .3, 1). Invert its X
+  // Match the colour transitions: cubic-bezier(.7, 0, .3, 1). Invert its X
   // coordinate before evaluating Y; using elapsed time as the Bezier's
   // parameter would make paths drift away from nodes during the glide.
   function _geometryProgress(progress) {
@@ -2292,10 +2266,44 @@
     return 3 * (1 - t) * t * t + t * t * t;
   }
 
-  /** Pose opt-in portable path geometry at scheduler time (milliseconds). */
-  GitGraph.prototype.posePaths = function (now) {
+  // SVG attributes keep nodes, labels and edges in one coordinate system.
+  // CSS pixel translations inside SVG are scaled twice by WebKit under zoom.
+  GitGraph.prototype._moveGroup = function (entry, cx, cy) {
+    if (this._prefersReducedMotion()) {
+      this._positionMotions.delete(entry);
+      entry.posedPosition = [cx, cy];
+      entry.g.setAttribute('transform', 'translate(' + cx + ' ' + cy + ')');
+      return;
+    }
+    this._positionMotions.set(entry, {
+      at: this._scheduler.now(),
+      from: entry.posedPosition || [entry.cx, entry.cy],
+      to: [cx, cy],
+    });
+    this._queueGeometryFrame();
+  };
+
+  GitGraph.prototype._queueGeometryFrame = function () {
+    if (this._manualGeometry || this._geometryFrame !== null) return;
+    this._geometryFrame = this._scheduler.requestAnimationFrame((now) => {
+      this._geometryFrame = null;
+      this.poseGeometry(now);
+      if (this._positionMotions.size || this._pathMotions.size) this._queueGeometryFrame();
+    });
+  };
+
+  /** Pose all geometry at scheduler time (milliseconds), including skipped frames. */
+  GitGraph.prototype.poseGeometry = function (now) {
+    const duration = this._perfLite ? 220 : GRAPH_TRANSITION_MS;
+    for (const [entry, motion] of this._positionMotions) {
+      const progress = _geometryProgress((now - motion.at) / duration);
+      const position = motion.to.map((value, i) => motion.from[i] + (value - motion.from[i]) * progress);
+      entry.g.setAttribute('transform', 'translate(' + position.join(' ') + ')');
+      entry.posedPosition = position;
+      if (progress === 1) this._positionMotions.delete(entry);
+    }
     for (const [entry, motion] of this._pathMotions) {
-      const progress = _geometryProgress((now - motion.at) / GRAPH_TRANSITION_MS);
+      const progress = _geometryProgress((now - motion.at) / duration);
       const coordinates = motion.to.map((value, i) => motion.from[i] + (value - motion.from[i]) * progress);
       entry.shaft.setAttribute('d', this._edgePathD(...coordinates));
       entry.head.setAttribute('transform', this._edgeHeadTransform(...coordinates));
@@ -2396,7 +2404,7 @@
       'data-hash': cm.hash,
       'data-layout-id': cm.hash,
     });
-    g.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
+    g.setAttribute('transform', 'translate(' + cx + ' ' + cy + ')');
 
     var glow = null;
     if (isHead) {
@@ -2457,12 +2465,7 @@
   GitGraph.prototype._updateNode = function (entry, cm, cx, cy, isHead) {
     const scheduler = this._scheduler;
     if (entry.cx !== cx || entry.cy !== cy) {
-      if (this._perfLite) {
-        entry.g.style.willChange = '';
-        entry.g.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
-      } else {
-        _setTransformAnimated(entry.g, 'translate(' + cx + 'px,' + cy + 'px)', this._scheduler);
-      }
+      this._moveGroup(entry, cx, cy);
       entry.cx = cx;
       entry.cy = cy;
     }
@@ -2657,7 +2660,7 @@
       if (layoutId) attrs['data-layout-id'] = layoutId;
       if (anchorId) attrs['data-layout-anchor'] = anchorId;
       var g = this._svgEl('g', attrs);
-      g.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
+      g.setAttribute('transform', 'translate(' + cx + ' ' + cy + ')');
       this._labelsLayer.appendChild(g);
       entry = { g: g, cx: cx, cy: cy, targetHash: targetHash };
       this._labelEls[key] = entry;
@@ -2673,12 +2676,7 @@
         entry.g.classList.remove('exiting');
       }
       if (entry.cx !== cx || entry.cy !== cy) {
-        if (this._perfLite) {
-          entry.g.style.willChange = '';
-          entry.g.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
-        } else {
-          _setTransformAnimated(entry.g, 'translate(' + cx + 'px,' + cy + 'px)', this._scheduler);
-        }
+        this._moveGroup(entry, cx, cy);
         entry.cx = cx;
         entry.cy = cy;
       }
