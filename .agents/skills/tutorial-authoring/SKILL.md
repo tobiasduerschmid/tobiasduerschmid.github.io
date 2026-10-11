@@ -2314,6 +2314,20 @@ channel.
   The step footer exposes a confirmed "Remove All Elements" action that
   replaces the current step's active diagram draft with an empty ArchUML
   document; it does not clear drafts saved for other diagram types.
+- **Shared UML editor behavior** — `_includes/uml-editor.html` keeps Undo/Redo
+  histories per diagram type alongside each type's session draft. Switching
+  types must not clear another draft's history. Keyboard activation of an
+  element palette button creates the element directly on either an empty or
+  populated canvas; pointer activation can retain placement mode. Use-case
+  system Properties expose membership checkboxes while preserving the member
+  elements and their relationships when membership is removed. Composite-state
+  edits preserve nested declarations, pseudostate kinds, and state actions.
+  Draft diagnostics are nonblocking and never discard or rewrite invalid or
+  incomplete work. Current checks cover unclosed sequence fragments, excess
+  operands for `opt`, `loop`, `break`, and `neg`, and direct self-generalization.
+  They ignore note content and do not claim complete UML validation. Keep the
+  same behavior in tutorials and standalone editor pages; no tutorial YAML
+  option, progress credit, or new persistence key is added by these controls.
 - **`_includes/uml-editor.html`** also owns UML editor export actions. The
   "Generate Python" toolbar action reads the saved class-diagram and
   sequence-diagram ArchUML drafts for the editor instance, generates a

@@ -76,6 +76,11 @@ async function selectDiagram(page, type) {
   await expect(page.locator('#uml-pg-output svg')).toBeVisible();
 }
 
+async function showCanvasForPointerWork(page) {
+  await page.getByRole('button', { name: /Full screen/ }).click();
+  await page.getByRole('button', { name: 'Got it — dismiss tips', exact: true }).click();
+}
+
 async function selectEditMode(page, mode) {
   const modeSelect = page.locator('#uml-pg-edit-mode');
   if (await modeSelect.count()) {
@@ -167,7 +172,7 @@ async function dragLocatorCenter(page, locator, dx, dy, options = {}) {
   await page.mouse.up();
 }
 
-async function dragLocatorToPoint(page, locator, x, y) {
+async function dragLocatorToPoint(page, locator, getDropPoint) {
   await expect(locator).toHaveCount(1, { timeout: 2_000 });
   await locator.evaluate((el) => el.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
   await expect
@@ -183,7 +188,10 @@ async function dragLocatorToPoint(page, locator, x, y) {
   await page.mouse.move(cx, cy);
   await page.mouse.down();
   await page.mouse.move(cx + 8, cy + 8, { steps: 2 });
-  await page.mouse.move(x, y, { steps: 8 });
+  // Arming the tool can reveal status text and move the canvas. Resolve its
+  // visible drop point after that layout change and any source scrolling.
+  const target = await getDropPoint();
+  await page.mouse.move(target.x, target.y, { steps: 8 });
   await page.mouse.up();
 }
 
@@ -239,8 +247,9 @@ async function previewPointOutsideSvg(page) {
 
 async function previewBlankPoint(page) {
   await page.locator('#uml-pg-preview-pane').evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'nearest' }));
-  return page.evaluate(() => {
-    const preview = document.querySelector('#uml-pg-preview-pane').getBoundingClientRect();
+  const point = await page.evaluate(() => {
+    const pane = document.querySelector('#uml-pg-preview-pane');
+    const preview = pane.getBoundingClientRect();
     const pad = 36;
     const candidates = [
       { x: preview.right - pad, y: preview.top + pad },
@@ -248,14 +257,17 @@ async function previewBlankPoint(page) {
       { x: preview.right - pad, y: preview.bottom - pad },
       { x: preview.left + pad, y: preview.bottom - pad },
       { x: preview.left + preview.width / 2, y: preview.top + preview.height / 2 },
-    ].filter((pt) => pt.x >= 0 && pt.x <= window.innerWidth && pt.y >= 0 && pt.y <= window.innerHeight);
+    ].filter((pt) => pt.x >= 0 && pt.x <= window.innerWidth && pt.y >= 0 && pt.y <= window.innerHeight &&
+      pane.contains(document.elementFromPoint(pt.x, pt.y)));
     const blocked = Array.from(document.querySelectorAll('.uml-pg-edit-hitbox, .uml-pg-edit-a11y-target'))
       .map((el) => el.getBoundingClientRect())
       .filter((rect) => rect.width > 0 && rect.height > 0);
     return candidates.find((pt) => !blocked.some((rect) =>
       pt.x >= rect.left && pt.x <= rect.right && pt.y >= rect.top && pt.y <= rect.bottom
-    )) || { x: preview.left + pad, y: preview.top + pad };
+    )) || null;
   });
+  expect(point, 'a blank preview point must be visible and unobscured').not.toBeNull();
+  return point;
 }
 
 function parseSvgViewBox(svgText) {
@@ -1633,29 +1645,43 @@ test.describe('UML playground visual editor', () => {
     await page.goto(UML_EDITOR_URL);
     await page.waitForSelector('#uml-pg-edit');
     await page.selectOption('#uml-pg-type', 'class');
+    await showCanvasForPointerWork(page);
     await setUmlSource(page, `@startuml
 class Animal @pos(80, 110)
 class Dog @pos(330, 110)
 @enduml`);
 
-    const paneBox = await page.locator('#uml-pg-preview-pane').boundingBox();
-    if (!paneBox) throw new Error('class preview pane should have a bounding box');
     await dragLocatorToPoint(
       page,
       page.getByRole('button', { name: 'Add element: Interface', exact: true }),
-      paneBox.x + paneBox.width - 120,
-      paneBox.y + 110,
+      async () => {
+        const target = await page.locator('#uml-pg-preview-pane').evaluate((pane) => {
+          const box = pane.getBoundingClientRect();
+          const x = box.right - 120;
+          const y = Math.min(box.top + 110, window.innerHeight - 24);
+          return { x, y, hitsCanvas: pane.contains(document.elementFromPoint(x, y)) };
+        });
+        expect(target.hitsCanvas, 'the interface drop must be on the visible canvas').toBe(true);
+        return target;
+      },
     );
     await expect(page.getByRole('button', { name: /Element IFace/ })).toHaveCount(1);
     await expect(page.locator('#uml-pg-input')).toHaveValue(/interface IFace @pos/);
 
-    const animalBox = await page.getByRole('button', { name: /Element Animal/ }).boundingBox();
-    if (!animalBox) throw new Error('Animal keyboard target should have a bounding box');
     await dragLocatorToPoint(
       page,
       page.getByRole('button', { name: 'Add relation: Dependency', exact: true }),
-      animalBox.x + animalBox.width / 2,
-      animalBox.y + animalBox.height / 2,
+      async () => {
+        const target = await page.getByRole('button', { name: /Element Animal/ }).evaluate((el) => {
+          const box = el.getBoundingClientRect();
+          const x = box.x + box.width / 2;
+          const y = box.y + box.height / 2;
+          const hit = document.elementFromPoint(x, y)?.closest('[data-layout-id]');
+          return { x, y, hitId: hit?.getAttribute('data-layout-id') };
+        });
+        expect(target.hitId, 'the dependency drop must visibly hit Animal').toBe('Animal');
+        return target;
+      },
     );
     await expect(page.locator('#uml-pg-tool-status')).toContainText('Source = "Animal"');
     await page.locator('.uml-pg-edit-hitbox[data-layout-id="Dog"]').click();
@@ -2054,6 +2080,7 @@ user -> app: run()
   test('sequence plus handle creates editable participants with valid default labels', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'sequence');
+    await showCanvasForPointerWork(page);
     await setUmlSource(page, `@startuml
 actor user: User @pos(260, 0)
 participant app: Application @pos(460, 0)
@@ -2095,11 +2122,18 @@ user -> app: login()
       return candidates.find((pt) =>
         pt.x >= visible.left && pt.x <= visible.right &&
         pt.y >= visible.top && pt.y <= visible.bottom &&
-        !blocked.some((rect) =>
+        svg.contains(document.elementFromPoint(pt.x, pt.y)) && !blocked.some((rect) =>
           pt.x >= rect.left && pt.x <= rect.right && pt.y >= rect.top && pt.y <= rect.bottom
         )) || { x: visible.right, y: visible.top };
     });
     if (!start) throw new Error('extend handle should have a box');
+    expect(await handle.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      return el.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2));
+    }), 'the visible drag start must hit the extension handle').toBe(true);
+    expect(await page.locator('#uml-pg-output svg').evaluate((svg, point) =>
+      svg.contains(document.elementFromPoint(point.x, point.y)), target),
+    'the new participant drop must be on the visible diagram').toBe(true);
     await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
     await page.mouse.down();
     await expect(page.locator('.uml-pg-extend-line')).toHaveCount(1);
@@ -2143,6 +2177,7 @@ user -> app: login()
   test('clicking lifeline body with lost tool inserts message at that Y', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'sequence');
+    await showCanvasForPointerWork(page);
     await setUmlSource(page, `@startuml
 actor user: User
 participant app: Application
@@ -2171,6 +2206,10 @@ user -> app: third()
     const userHeadAfter = await page.locator('.uml-pg-edit-hitbox[data-layout-id="user"]').boundingBox();
     expect(userHeadAfter).not.toBeNull();
     // Click the lifeline at a Y slightly above the second message arrow.
+    expect(await page.locator('#uml-pg-output svg').evaluate((svg, point) =>
+      svg.contains(document.elementFromPoint(point.x, point.y)),
+    { x: userHeadAfter.x + userHeadAfter.width / 2, y: secondMsgYAfter - 18 }),
+    'the lost-message click must hit the visible diagram').toBe(true);
     await page.mouse.move(userHeadAfter.x + userHeadAfter.width / 2, secondMsgYAfter - 18);
     await page.mouse.down();
     await page.mouse.up();
@@ -2186,6 +2225,7 @@ user -> app: third()
   test('dragging from lifeline with found tool inserts message at drag-start Y', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'sequence');
+    await showCanvasForPointerWork(page);
     await setUmlSource(page, `@startuml
 actor user: User
 participant app: Application
@@ -2208,6 +2248,9 @@ user -> app: third()
     // Drag from the app lifeline at a Y just above msg3 outward to empty space.
     const startX = appHead.x + appHead.width / 2;
     const startY = thirdMsgY - 18;
+    expect(await page.locator('#uml-pg-output svg').evaluate((svg, point) =>
+      svg.contains(document.elementFromPoint(point.x, point.y)), { x: startX, y: startY }),
+    'the found-message drag must start on the visible diagram').toBe(true);
     await page.mouse.move(startX, startY);
     await page.mouse.down();
     await page.mouse.move(startX + 80, startY, { steps: 6 });
@@ -2601,6 +2644,7 @@ app -> db: second()
   test('element tools can place on the whole preview surface, not only inside the SVG box', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'class');
+    await showCanvasForPointerWork(page);
 
     await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="class"]').click();
     const point = await previewBlankPoint(page);
@@ -2613,6 +2657,7 @@ app -> db: second()
   test('element tools can place across the preview after zooming out', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'class');
+    await showCanvasForPointerWork(page);
 
     await page.locator('#uml-pg-zoom-out').click();
     await page.locator('#uml-pg-zoom-out').click();
@@ -2626,6 +2671,7 @@ app -> db: second()
   test('class labels and notes edit with valid class-diagram source', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'class');
+    await showCanvasForPointerWork(page);
 
     await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="note"]').click();
     await page.locator('.uml-pg-edit-a11y-target[data-layout-id="Animal"]').press('Enter');
@@ -2633,9 +2679,13 @@ app -> db: second()
     const noteHandle = page.locator('.uml-pg-edit-hitbox[data-layout-id^="note:"]');
     await expect(noteHandle).toHaveCount(1);
 
-    const noteBefore = await noteHandle.boundingBox();
-    await dragLocatorCenter(page, noteHandle, 60, 35);
-    const noteAfter = await noteHandle.boundingBox();
+    await noteHandle.evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }));
+    const noteId = await noteHandle.getAttribute('data-layout-id');
+    // The editor may pan to keep the moved note visible after rendering.
+    // Measure movement in diagram coordinates so that scrolling is not counted.
+    const noteBefore = await nodeHitboxBox(page, noteId);
+    await dragLocatorCenter(page, noteHandle, 60, 35, { svgUnits: true });
+    const noteAfter = await nodeHitboxBox(page, noteId);
     if (!noteBefore || !noteAfter) throw new Error('note handle should have a box before and after dragging');
     expect(noteAfter.x).toBeGreaterThan(noteBefore.x + 25);
     await expect(page.locator('#uml-pg-input')).toHaveValue(/node "note:\d+" x=\d+ y=\d+/);
@@ -2733,16 +2783,19 @@ app -> db: second()
     await page.selectOption('#uml-pg-type', 'deployment');
     await expect(page.locator('.uml-pg-model-empty')).toBeVisible();
 
-    await page.locator('.uml-pg-model-empty').getByRole('button', { name: '+ Component' }).click();
+    await page.locator('.uml-pg-model-empty').getByRole('button', { name: '+ Node', exact: true }).click();
     await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Node"]')).toHaveCount(1);
-    await expect(page.locator('#uml-pg-output svg')).toContainText('Component');
-    await expect(page.locator('#uml-pg-input')).toHaveValue(/node Node(?: @pos\(\d+,\s*\d+\))? \{ component Component \}/);
 
     await page.locator('.uml-pg-edit-hitbox[data-layout-id="Node"]').click();
     await expect(page.locator('#uml-pg-props-content')).toContainText('Node contents');
+    await page.locator('#uml-pg-props-content').getByRole('button', { name: '+ Component', exact: true }).click();
+    await expect(page.locator('#uml-pg-output svg')).toContainText('Component');
     await page.locator('#uml-pg-props-content').getByRole('button', { name: '+ Artifact' }).click();
-    await expect(page.locator('#uml-pg-input')).toHaveValue(/node Node(?: @pos\(\d+,\s*\d+\))? \{ component Component; artifact Artifact \}/);
     await expect(page.locator('#uml-pg-output svg')).toContainText('Artifact');
+    expect(await page.evaluate(() => {
+      const model = window.UMLDeploymentDiagram.parse(document.getElementById('uml-pg-input').value);
+      return model.elements.filter(item => item.parentId === 'Node').map(item => [item.name, item.kind]);
+    })).toEqual([['Component', 'component'], ['Artifact', 'artifact']]);
   });
 
   test('activity action text can be changed from the visual properties pane', async ({ page }) => {
@@ -3276,6 +3329,8 @@ node EventBus.eb_in x=420 y=240
   test('dragging component connector labels emits label positions and replays them', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'component');
+    // Keep document reflow outside this coordinate/replay test's workspace.
+    await showCanvasForPointerWork(page);
     await page.uncheck('#uml-pg-snap');
     await selectEditMode(page, 'nodes');
 
@@ -3283,19 +3338,53 @@ node EventBus.eb_in x=420 y=240
       .filter({ hasText: 'REST / JSON' }).getAttribute('data-layout-id');
     const labelHandle = page.locator(`.uml-pg-edit-hitbox[data-layout-id="${labelId}"]`);
     await expect(labelHandle).toHaveCount(1);
+    // Select the label and expose its handle before starting the gesture.
+    const labelTarget = page.locator(`.uml-pg-edit-a11y-target[data-layout-id="${labelId}"]`);
+    await labelTarget.focus();
+    await labelTarget.press('Enter');
+    await page.evaluate(() => document.fonts.ready);
+    await labelHandle.evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }));
+    await labelHandle.scrollIntoViewIfNeeded();
     const before = await componentLabelInfo(page, labelId);
     expect(before, 'connector label should expose a movable handle').not.toBeNull();
     expect(before.text).toContain('REST / JSON');
 
-    await dragLocatorCenter(page, labelHandle, 46, -24, { svgUnits: true });
+    const renderedLabel = page.locator(`#uml-pg-output [data-layout-kind="edge-label"][data-layout-id="${labelId}"]`);
+    const start = await labelHandle.boundingBox();
+    const beforeScreen = await renderedLabel.boundingBox();
+    expect(start).not.toBeNull();
+    expect(beforeScreen).not.toBeNull();
+    const cx = start.x + start.width / 2;
+    const cy = start.y + start.height / 2;
+    expect(await labelHandle.evaluate((el, point) => {
+      const hit = document.elementFromPoint(point.x, point.y);
+      return hit === el || el.contains(hit);
+    }, { x: cx, y: cy }), 'the pointer must hit the label handle').toBe(true);
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx + 46, cy - 24, { steps: 6 });
+
+    // Page reflow may move the canvas during a drag. The label must still
+    // follow the pointer on screen; its diagram coordinates compensate.
+    const liveScreen = await renderedLabel.boundingBox();
+    expect(liveScreen).not.toBeNull();
+    expect(liveScreen.x - beforeScreen.x).toBeCloseTo(46, 0);
+    expect(liveScreen.y - beforeScreen.y).toBeCloseTo(-24, 0);
+    const dropped = await componentLabelInfo(page, labelId);
+    await page.mouse.up();
 
     const after = await componentLabelInfo(page, labelId);
     expect(after.text).toContain('REST / JSON');
-    expect(after.x - before.x).toBeCloseTo(46, 0);
-    expect(after.y - before.y).toBeCloseTo(-24, 0);
+    expect(after.x).toBeCloseTo(dropped.x, 0);
+    expect(after.y).toBeCloseTo(dropped.y, 0);
 
     const source = await page.locator('#uml-pg-input').inputValue();
-    expect(source).toContain(`node "${labelId}" x=`);
+    const savedPosition = source.split('\n').find((line) => line.startsWith(`node "${labelId}" `));
+    expect(savedPosition).toBeTruthy();
+    const coordinates = savedPosition.match(/x=(-?[\d.]+) y=(-?[\d.]+)/);
+    expect(coordinates).not.toBeNull();
+    expect(Number(coordinates[1])).toBeCloseTo(dropped.x, 0);
+    expect(Number(coordinates[2])).toBeCloseTo(dropped.y, 0);
 
     await page.locator('#uml-pg-reset-one').click();
     const resetSource = await page.locator('#uml-pg-input').inputValue();
@@ -3305,11 +3394,12 @@ node EventBus.eb_in x=420 y=240
   test('dragging line segments emits route metadata and reset selected removes it', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'class');
+    await showCanvasForPointerWork(page);
     await selectEditMode(page, 'lines');
 
     const handleCount = await page.locator('.uml-pg-edge-hitbox').count();
     expect(handleCount).toBeGreaterThan(0);
-    await dragLocatorCenter(page, page.locator('.uml-pg-edge-hitbox').first(), 0, 35);
+    await dragLocatorCenter(page, page.locator('.uml-pg-edge-hitbox').first(), 0, 35, { svgUnits: true });
     let source = await page.locator('#uml-pg-input').inputValue();
     expect(source).toMatch(/@layout schema=1 renderer="archuml-visual-editor"/);
     expect(source).toMatch(/edge "edge-\d+" points="/);
@@ -3499,14 +3589,16 @@ Customer -- Order : places
     await page.locator('#uml-pg-props-content').getByLabel('Target multiplicity / cardinality').press('Enter');
     await expect(page.locator('#uml-pg-input')).toHaveValue(/Customer "1" -- "0\.\.\*" Order : places/);
 
-    await page.locator('#uml-pg-props-content').getByLabel('Navigability').selectOption('bidirectional');
+    await page.locator('#uml-pg-props-content').getByLabel('Source navigability', { exact: true }).selectOption('navigable');
+    await page.locator('#uml-pg-props-content').getByLabel('Target navigability', { exact: true }).selectOption('navigable');
     await expect(page.locator('#uml-pg-input')).toHaveValue(/Customer "1" <--> "0\.\.\*" Order : places/);
-    await expect(page.locator('#uml-pg-props-content').getByLabel('Navigability')).toHaveValue('bidirectional');
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Source navigability', { exact: true })).toHaveValue('navigable');
 
-    await page.locator('#uml-pg-props-content').getByLabel('Navigability').selectOption('nonnav');
+    await page.locator('#uml-pg-props-content').getByLabel('Source navigability', { exact: true }).selectOption('');
+    await page.locator('#uml-pg-props-content').getByLabel('Target navigability', { exact: true }).selectOption('nonnav');
     await expect(page.locator('#uml-pg-input')).toHaveValue(/Customer "1" --x "0\.\.\*" Order : places/);
     await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue('assoc');
-    await expect(page.locator('#uml-pg-props-content').getByLabel('Navigability')).toHaveValue('nonnav');
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Target navigability', { exact: true })).toHaveValue('nonnav');
   });
 
   test('class relation properties resolve the selected relation after hierarchy routes', async ({ page }) => {
@@ -3532,9 +3624,9 @@ Player -- PlayerState : current
     await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue('plain');
     await expect(page.locator('#uml-pg-props-content').getByLabel('Source multiplicity / cardinality')).toBeVisible();
     await expect(page.locator('#uml-pg-props-content').getByLabel('Target multiplicity / cardinality')).toBeVisible();
-    await expect(page.locator('#uml-pg-props-content').getByLabel('Navigability')).toBeVisible();
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Target navigability', { exact: true })).toBeVisible();
 
-    await page.locator('#uml-pg-props-content').getByLabel('Navigability').selectOption('navigable');
+    await page.locator('#uml-pg-props-content').getByLabel('Target navigability', { exact: true }).selectOption('navigable');
     await expect(page.locator('#uml-pg-input')).toHaveValue(/Player --> PlayerState : current/);
     await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue('assoc');
   });
@@ -3561,15 +3653,16 @@ Team o-- Player : roster
     });
     await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue('aggregate');
 
-    await page.locator('#uml-pg-props-content').getByLabel('Navigability').selectOption('navigable');
+    await page.locator('#uml-pg-props-content').getByLabel('Target navigability', { exact: true }).selectOption('navigable');
     await expect(page.locator('#uml-pg-input')).toHaveValue(/Team o--> Player : roster/);
     await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue('aggregate');
-    await expect(page.locator('#uml-pg-props-content').getByLabel('Navigability')).toHaveValue('navigable');
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Target navigability', { exact: true })).toHaveValue('navigable');
 
-    await page.locator('#uml-pg-props-content').getByLabel('Navigability').selectOption('bidirectional');
+    await page.locator('#uml-pg-props-content').getByLabel('Source navigability', { exact: true }).selectOption('navigable');
+    await page.locator('#uml-pg-props-content').getByLabel('Target navigability', { exact: true }).selectOption('navigable');
     await expect(page.locator('#uml-pg-input')).toHaveValue(/Team o<--> Player : roster/);
     await expect(page.locator('#uml-pg-props-content').getByLabel('Type')).toHaveValue('aggregate');
-    await expect(page.locator('#uml-pg-props-content').getByLabel('Navigability')).toHaveValue('bidirectional');
+    await expect(page.locator('#uml-pg-props-content').getByLabel('Source navigability', { exact: true })).toHaveValue('navigable');
   });
 
   test('selected relations can be rewired from the properties pane', async ({ page }) => {
@@ -4068,6 +4161,7 @@ Alice -> Bob : hello
   test('dragging GitGraph commits moves connected lines live and after rerender', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'gitgraph');
+    await showCanvasForPointerWork(page);
     await page.uncheck('#uml-pg-snap');
     await selectEditMode(page, 'nodes');
 
@@ -4076,15 +4170,24 @@ Alice -> Bob : hello
 
     const handle = page.locator('.uml-pg-edit-hitbox[data-layout-id="F"]');
     await expect(handle).toHaveCount(1);
-    await handle.scrollIntoViewIfNeeded();
+    await handle.evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }));
     const box = await handle.boundingBox();
     expect(box, 'GitGraph commit F should have a drag handle').not.toBeNull();
     const cx = box.x + box.width / 2;
     const cy = box.y + box.height / 2;
+    const drag = await handle.evaluate((el, point) => {
+      const matrix = el.getScreenCTM();
+      return {
+        hitsTarget: el.contains(document.elementFromPoint(point.x, point.y)),
+        dx: matrix.a * 70 + matrix.c * 30,
+        dy: matrix.b * 70 + matrix.d * 30,
+      };
+    }, { x: cx, y: cy });
+    expect(drag.hitsTarget, 'the GitGraph drag must start on the visible commit').toBe(true);
 
     await page.mouse.move(cx, cy);
     await page.mouse.down();
-    await page.mouse.move(cx + 70, cy + 30, { steps: 6 });
+    await page.mouse.move(cx + drag.dx, cy + drag.dy, { steps: 6 });
 
     const during = await gitRouteEndpointFor(page, 'F');
     expect(Math.abs(during.endpoint.x - before.endpoint.x)).toBeGreaterThan(20);
@@ -4104,6 +4207,7 @@ Alice -> Bob : hello
   test('dragging GitGraph branch tips moves their branch labels as anchored elements', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'gitgraph');
+    await showCanvasForPointerWork(page);
     await page.uncheck('#uml-pg-snap');
     await selectEditMode(page, 'nodes');
 
@@ -4112,7 +4216,7 @@ Alice -> Bob : hello
     expect(beforeCommit).not.toBeNull();
     expect(beforeLabel).not.toBeNull();
 
-    await dragLocatorCenter(page, page.locator('.uml-pg-edit-hitbox[data-layout-id="H"]'), 55, 28);
+    await dragLocatorCenter(page, page.locator('.uml-pg-edit-hitbox[data-layout-id="H"]'), 55, 28, { svgUnits: true });
 
     const afterCommit = await nodeHitboxBox(page, 'H');
     const afterLabel = await nodeHitboxBox(page, 'branch:feature/parser');
@@ -5308,12 +5412,8 @@ player -> prison_state: teleport(player)
   test('multi-selection followed by Delete removes every selected element', async ({ page }) => {
     // Verifies the multi-delete contract: Delete fires once on a multi-
     // selection and removes every selected node. Uses an explicit
-    // relation-free source so the test exercises the element-only deletion
-    // path without entangling route handling — the combination of marquee
-    // + delete on the default (relation-heavy) starter exposes a real bug
-    // in deleteSelected when both an element and its incident edges are
-    // selected (tracked as a follow-up). The contract this test guards is
-    // the simpler, common case: select N elements, Delete, all gone.
+    // relation-free source to isolate element-only deletion. Mixed node and
+    // incident-edge deletion is covered by uml-editor-integrity-regressions.
     await openPlayground(page);
     await selectDiagram(page, 'class');
     await setUmlSource(page, '@startuml\nclass A\nclass B\nclass C\n@enduml');
@@ -5523,14 +5623,26 @@ test.describe('"+" extend handle creation parity', () => {
   test('state: "+" self-drop offers a self-transition (self-transition creatable via "+")', async ({ page }) => {
     await page.goto(PLAYGROUND_URL);
     await selectDiagram(page, 'state');
+    await showCanvasForPointerWork(page);
     await setUmlSource(page, '@startuml\nstate Idle\n@enduml');
     const idle = page.locator('.uml-pg-edit-hitbox[data-layout-id="Idle"]');
     await expect(idle).toBeVisible();
-    await idle.scrollIntoViewIfNeeded();
-
     // Releasing "+" back on the source state must offer a self-transition
     // (relation chooser with Transition), not the "create new element" chooser.
-    await extendDragFirstHandleTo(page, await hitboxCenter(idle));
+    const handle = page.getByRole('button', { name: /Extend a relation from Idle/ });
+    await handle.evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }));
+    const start = await hitboxCenter(handle);
+    expect(await handle.evaluate((el, point) => el.contains(document.elementFromPoint(point.x, point.y)), start),
+      'the self-transition drag must start on the visible extension handle').toBe(true);
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await expect(page.locator('.uml-pg-extend-line')).toHaveCount(1);
+    const target = await hitboxCenter(idle);
+    expect(await page.evaluate((point) => document.elementFromPoint(point.x, point.y)
+      ?.closest('[data-layout-id]')?.getAttribute('data-layout-id'), target),
+    'the self-transition drop must visibly hit Idle').toBe('Idle');
+    await page.mouse.move(target.x, target.y, { steps: 6 });
+    await page.mouse.up();
     const chooser = page.locator('.uml-pg-relation-chooser');
     await expect(chooser).toBeVisible();
     await chooser.getByRole('menuitem', { name: /transition/i }).first().click();
@@ -5657,6 +5769,7 @@ deactivate app
   test('Activate tool inserts a bar at the clicked message, not at the end', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'sequence');
+    await showCanvasForPointerWork(page);
     await setUmlSource(page, `@startuml
 actor user: User
 participant app: Application
@@ -5671,6 +5784,10 @@ user -> app: second()
     const firstY = await page.locator('[data-layout-route-id="seqmsg:3"]').first().evaluate((el) => el.getBoundingClientRect().top);
     const appHead = await page.locator('.uml-pg-edit-hitbox[data-layout-id="app"]').boundingBox();
     expect(appHead).not.toBeNull();
+    expect(await page.locator('#uml-pg-output svg').evaluate((svg, point) =>
+      svg.contains(document.elementFromPoint(point.x, point.y)),
+    { x: appHead.x + appHead.width / 2, y: firstY + 4 }),
+    'the activation click must hit the visible diagram').toBe(true);
     await page.mouse.move(appHead.x + appHead.width / 2, firstY + 4);
     await page.mouse.down();
     await page.mouse.up();

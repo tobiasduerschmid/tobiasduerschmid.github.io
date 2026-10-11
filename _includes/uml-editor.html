@@ -164,6 +164,7 @@ Supported options:
     <div id="uml-pg-preview-pane" role="region" aria-labelledby="uml-pg-preview-heading" aria-describedby="uml-pg-preview-help" tabindex="-1">
       <h2 id="uml-pg-preview-heading" class="uml-pg-sr-only">Diagram preview</h2>
       <p id="uml-pg-preview-help" class="uml-pg-sr-only">Preview updates as you edit ArchUML. In visual edit mode, Tab reaches diagram items; Enter selects an item; arrow keys nudge selected elements; Delete removes selected items.</p>
+      <section id="uml-pg-diagnostics" class="uml-pg-diagnostics" aria-label="Draft diagnostics" aria-live="polite" hidden></section>
       <div id="uml-pg-output" class="uml-class-diagram-container"></div>
       <div id="uml-pg-error" class="is-hidden" role="alert" aria-live="assertive"></div>
     </div>
@@ -890,6 +891,12 @@ Supported options:
           return { id: card.id, label: card.name, axis: 'xy' };
         });
       }
+      if (type === 'deployment' && window.UMLDeploymentDiagram) {
+        var deployment = window.UMLDeploymentDiagram.parse(text);
+        (deployment.elements || []).forEach(function (item) {
+          addElement(elements, seen, item.name, item.label || item.name);
+        });
+      }
 
       if (type === 'activity' && typeof window !== 'undefined' &&
           window.UMLActivityDiagram && typeof window.UMLActivityDiagram.parse === 'function') {
@@ -1021,11 +1028,11 @@ Supported options:
           m = line.match(/^artifact\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
           if (m) addElement(elements, seen, m[2] || m[1], m[1]);
         } else if (type === 'usecase') {
-          m = line.match(/^actor\s+("[^"]+"|\S+)/i);
-          if (m) addElement(elements, seen, unquoteId(m[1]), unquoteId(m[1]));
+          m = line.match(/^actor\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+          if (m) addElement(elements, seen, m[2] || unquoteId(m[1]), unquoteId(m[1]));
           m = line.match(/^usecase\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
           if (m) addElement(elements, seen, m[2] || unquoteId(m[1]), unquoteId(m[1]));
-          m = line.match(/^rectangle\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+          m = line.match(/^rectangle\s+("[^"]+"|\S+)(?:\s+as\s+("[^"]+"|\S+))?/i);
           if (m) addElement(elements, seen, m[2] || unquoteId(m[1]), unquoteId(m[1]));
         } else if (type === 'activity') {
           // A line like `"Receive Order" --> "Validate Payment"` declares two
@@ -1126,7 +1133,7 @@ Supported options:
         return window.UMLShared.layoutRoutePointsToString(points);
       }
       return (points || []).map(function (p) {
-        return Math.round(p.x) + ',' + Math.round(p.y);
+        return Number(p.x) + ',' + Number(p.y);
       }).join(' ');
     }
 
@@ -1167,7 +1174,7 @@ Supported options:
         return unquoteId(asIdx !== -1 ? decl.substring(0, asIdx) : (colonIdx !== -1 ? decl.substring(0, colonIdx) : decl));
       }
       if (type === 'state') {
-        m = clean.match(/^state\s+("[^"]+"|\S+)/i);
+        m = clean.match(/^(?:state|choice)\s+("[^"]+"|\S+)/i);
         return m ? unquoteId(m[1]) : null;
       }
       if (type === 'component') {
@@ -1185,11 +1192,11 @@ Supported options:
         return m ? unquoteId(m[2] || m[1]) : null;
       }
       if (type === 'usecase') {
-        m = clean.match(/^actor\s+("[^"]+"|\S+)/i);
-        if (m) return unquoteId(m[1]);
+        m = clean.match(/^actor\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+        if (m) return unquoteId(m[2] || m[1]);
         m = clean.match(/^usecase\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
         if (m) return unquoteId(m[2] || m[1]);
-        m = clean.match(/^rectangle\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
+        m = clean.match(/^rectangle\s+("[^"]+"|\S+)(?:\s+as\s+("[^"]+"|\S+))?/i);
         return m ? unquoteId(m[2] || m[1]) : null;
       }
       if (type === 'freeform') {
@@ -1419,6 +1426,11 @@ Supported options:
       svg.setAttribute('width', String(Math.ceil(canvas.width)));
       svg.setAttribute('height', String(Math.ceil(canvas.height)));
       svg.setAttribute('data-uml-pg-editor-canvas', '1');
+      // The shared renderer sized the original viewBox. Recalculate its
+      // paragraph-relative width after adding the editor's blank canvas.
+      if (window.UMLShared && window.UMLShared.autoFitSVG) {
+        window.UMLShared.autoFitSVG(output);
+      }
     }
 
     function restoreExportCanvasBounds(svg) {
@@ -2207,6 +2219,7 @@ Supported options:
     // ─── Undo / redo: snapshot the textarea before each visual mutation. ───
     var undoStack = [];
     var redoStack = [];
+    const historyByType = Object.create(null);
     var UNDO_LIMIT = 100;
     var COALESCE_MS = 600;
     // Hard cap on a coalesced burst. Without this, refreshing `top.t` on every
@@ -2269,6 +2282,38 @@ Supported options:
       var target = newSvg.querySelector('.uml-pg-edit-a11y-target[data-layout-id="' + cssAttrEscape(id) + '"]');
       if (target && target.focus) target.focus();
     }
+
+    function revealEditorTarget(target) {
+      if (!target || !output.contains(target) || dragState) return;
+      // SVG focus does not consistently scroll overflow containers in browsers.
+      // Keep the readable scale, moving only the editor's scrollable viewports.
+      [output, previewPane].forEach(function (container) {
+        if (!container || !container.contains(target)) return;
+        var bounds = container.getBoundingClientRect();
+        var rect = target.getBoundingClientRect();
+        var left = bounds.left + container.clientLeft;
+        var top = bounds.top + container.clientTop;
+        var width = container.clientWidth;
+        var height = container.clientHeight;
+        function scrollDelta(start, end, viewportStart, viewportSize) {
+          if (end - start > viewportSize) return (start + end - viewportSize) / 2 - viewportStart;
+          var margin = Math.min(12, Math.max(0, (viewportSize - (end - start)) / 2));
+          if (start < viewportStart + margin) return start - viewportStart - margin;
+          if (end > viewportStart + viewportSize - margin) return end - viewportStart - viewportSize + margin;
+          return 0;
+        }
+        container.scrollLeft += scrollDelta(rect.left, rect.right, left, width);
+        container.scrollTop += scrollDelta(rect.top, rect.bottom, top, height);
+      });
+    }
+
+    function revealSelectedLayoutTarget() {
+      if (!selectedLayoutId) return;
+      var selector = '[data-layout-id="' + cssAttrEscape(selectedLayoutId) + '"]';
+      var target = output.querySelector('[role="button"]' + selector);
+      if (target) revealEditorTarget(target);
+    }
+
     function applySnapshot(value, selection) {
       // Stage the selection so installVisualEditor restores `is-selected`
       // styling and the props pane after the re-render. Without this, undo
@@ -2333,7 +2378,32 @@ Supported options:
         var m = line.match(/\bas\s+([A-Za-z_][\w-]*)/);
         if (m) seen[m[1]] = true;
       });
+      const parser = type === 'state' ? window.UMLStateDiagram : type === 'deployment' ? window.UMLDeploymentDiagram : null;
+      if (parser && parser.parse) {
+        const model = parser.parse(stripLayoutMetadata(text));
+        (model.states || model.elements || []).forEach(function (element) { if (element.name) seen[element.name] = true; });
+      }
       return seen;
+    }
+
+    function ownedElementIds(text, type, parentId) {
+      const parser = type === 'state' ? window.UMLStateDiagram : type === 'deployment' ? window.UMLDeploymentDiagram : null;
+      if (!parser || !parser.parse) return [];
+      const model = parser.parse(stripLayoutMetadata(text));
+      const elements = model.states || model.elements || [];
+      const owned = new Set([parentId]);
+      let changed = true;
+      while (changed) {
+        changed = false;
+        elements.forEach(function (element) {
+          const parent = type === 'state' ? element.parent : element.parentId;
+          if (parent && owned.has(parent) && !owned.has(element.name)) {
+            owned.add(element.name);
+            changed = true;
+          }
+        });
+      }
+      return Array.from(owned).filter(function (id) { return id !== parentId; });
     }
 
     function generateUniqueId(text, type, base) {
@@ -2385,7 +2455,7 @@ Supported options:
       } else if (spec.keyword === 'usecase') {
         line = 'usecase "' + escapeQuoted(label) + '" as ' + id;
       } else if (spec.keyword === 'rectangle') {
-        line = 'rectangle "' + escapeQuoted(label) + '" { }';
+        line = 'rectangle "' + escapeQuoted(label) + '"' + (label !== id ? ' as ' + formatRelationEndpointId(id) : '') + ' { }';
       } else if (spec.keyword === 'artifact') {
         line = 'artifact "' + escapeQuoted(label) + '" as ' + id;
       } else if (spec.keyword === 'set') {
@@ -2485,6 +2555,14 @@ Supported options:
         if (opts.navigability === 'navigable') op = '-->';
         if (opts.navigability === 'bidirectional') op = '<-->';
         if (opts.navigability === 'nonnav') op = '--x';
+      }
+      if (typeSelect.value === 'class' && /^(plain|assoc|biassoc|compose|aggregate)$/.test(spec.id || '')) {
+        if (opts.sourceNavigability != null && opts.targetNavigability != null) {
+          var diamond = spec.id === 'compose' ? '*' : (spec.id === 'aggregate' ? 'o' : '');
+          var sourceMark = opts.sourceNavigability === 'navigable' ? '<' : (opts.sourceNavigability === 'nonnav' ? 'x' : '');
+          var targetMark = opts.targetNavigability === 'navigable' ? '>' : (opts.targetNavigability === 'nonnav' ? 'x' : '');
+          op = diamond + sourceMark + '--' + targetMark;
+        }
       }
 
       if (typeSelect.value === 'activity') {
@@ -2734,8 +2812,19 @@ Supported options:
       neg: 'neg — forbidden trace'
     };
 
-    function sequenceFragmentRanges(text) {
+    function sourceLinesWithoutNotes(text) {
       var lines = stripLayoutMetadata(text).split('\n');
+      for (var i = 0; i < lines.length; i++) {
+        var noteEnd = window.UMLShared.parseNoteLine(lines[i].trim(), lines, i, []);
+        if (noteEnd < i) continue;
+        for (var j = i; j <= noteEnd && j < lines.length; j++) lines[j] = '';
+        i = noteEnd;
+      }
+      return lines;
+    }
+
+    function sequenceFragmentRanges(text, includeIncomplete) {
+      var lines = sourceLinesWithoutNotes(text);
       var stack = [];
       var ranges = [];
       var openRe = /^\s*(alt|opt|loop|par|break|critical|ref|neg)\b\s*(?:\[(.*?)\])?\s*$/i;
@@ -2769,7 +2858,9 @@ Supported options:
           ranges.push(done);
         }
       }
-      return ranges;
+      // Editing operations require a complete source range. Diagnostics alone
+      // inspect open drafts, without exposing negative end indexes to editing.
+      return includeIncomplete ? ranges.concat(stack) : ranges;
     }
 
     function fragmentInfoForId(fragId, text) {
@@ -2790,9 +2881,8 @@ Supported options:
       var routes = readLayoutRoutes(textarea.value);
       var lines = stripLayoutMetadata(textarea.value).split('\n');
       var indent = (lines[info.startIdx].match(/^\s*/) || [''])[0];
-      // par doesn't take a guard at the opener line; everything else may.
       var keepCond = info.condition;
-      lines[info.startIdx] = indent + newKind + (keepCond && newKind !== 'par' ? ' [' + keepCond + ']' : '');
+      lines[info.startIdx] = indent + newKind + (keepCond ? ' [' + keepCond + ']' : '');
       textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
       selectAfterRender(fragId, 'fragment');
       renderDiagram();
@@ -3377,18 +3467,201 @@ Supported options:
       return -1;
     }
 
+    // Keep source-indexed layout identities attached to the same surviving line.
+    // Each edit replaces an inclusive range; insertions use end = start - 1.
+    function rewriteSourceLines(text, type, edits, positions, routes) {
+      const lines = stripLayoutMetadata(text).split('\n');
+      const result = [];
+      const lineMap = {};
+      let cursor = 0;
+      edits.sort(function (a, b) { return a.start - b.start; }).forEach(function (edit) {
+        while (cursor < edit.start) { lineMap[cursor] = result.length; result.push(lines[cursor++]); }
+        if (edit.replacement != null) {
+          if (edit.end >= edit.start) lineMap[edit.start] = result.length;
+          const replacement = String(edit.replacement).split('\n');
+          let nextMatch = 1;
+          for (let oldLine = edit.start + 1; oldLine <= edit.end; oldLine++) {
+            const matching = replacement.findIndex(function (line, index) { return index >= nextMatch && line.trim() === lines[oldLine].trim(); });
+            if (matching >= 0) {
+              lineMap[oldLine] = result.length + matching;
+              nextMatch = matching + 1;
+            }
+          }
+          result.push.apply(result, replacement);
+        }
+        cursor = Math.max(cursor, edit.end + 1);
+      });
+      while (cursor < lines.length) { lineMap[cursor] = result.length; result.push(lines[cursor++]); }
+      const oldRelations = relationLineIndices(text, type);
+      const newRelations = relationLineIndices(result.join('\n'), type);
+      function mappedKey(key, isRoute) {
+        let match = key.match(/^(rel:|seqmsg:|note:|actbar:)(\d+)$/);
+        if (match) return lineMap[Number(match[2])] == null ? null : match[1] + lineMap[Number(match[2])];
+        if (!isRoute) return key;
+        match = key.match(/^(edge[-:_])?(\d+)$/);
+        if (!match) return key;
+        const nextLine = lineMap[oldRelations[Number(match[2])]];
+        const nextOrdinal = newRelations.indexOf(nextLine);
+        return nextOrdinal < 0 ? null : (match[1] || '') + nextOrdinal;
+      }
+      const nextRoutes = {};
+      routes = routes || readLayoutRoutes(text);
+      Object.keys(routes).forEach(function (key) {
+        const next = mappedKey(key, true);
+        if (next != null) nextRoutes[next] = routes[key];
+      });
+      const nextPositions = {};
+      positions = positions || readLayoutPositions(text);
+      Object.keys(positions).forEach(function (key) {
+        const label = key.indexOf('label:') === 0;
+        const next = mappedKey(label ? key.slice(6) : key, label);
+        if (next != null) nextPositions[(label ? 'label:' : '') + next] = positions[key];
+      });
+      return writePositionsIntoSource(result.join('\n'), type, nextPositions, nextRoutes);
+    }
+
+    function maskDeclarationNotes(lines) {
+      const masked = lines.slice();
+      for (let index = 0; index < lines.length; index++) {
+        const noteEnd = window.UMLShared.parseNoteLine(lines[index].trim(), lines, index, []);
+        if (noteEnd < index) continue;
+        for (let noteLine = index; noteLine <= noteEnd && noteLine < lines.length; noteLine++) {
+          // Keep offsets stable: callers splice the original source by the
+          // boundaries found here, while note prose is never brace syntax.
+          masked[noteLine] = ' '.repeat(lines[noteLine].length);
+        }
+        index = noteEnd;
+      }
+      return masked;
+    }
+
+    function declarationBraceRange(text) {
+      text = maskDeclarationNotes(text.split('\n')).join('\n');
+      let start = -1;
+      let depth = 0;
+      let quote = '';
+      for (let index = 0; index < text.length; index++) {
+        const char = text[index];
+        if (quote) {
+          if (char === '\\') { index++; continue; }
+          if (char === quote) quote = '';
+          continue;
+        }
+        if (char === '"' || char === "'") { quote = char; continue; }
+        if (char === '{') { if (start < 0) start = index; depth++; }
+        if (char === '}' && start >= 0 && --depth === 0) return { start: start, end: index };
+      }
+      return start < 0 ? null : { start: start, end: text.length };
+    }
+
+    function declarationEndIndex(lines, start) {
+      const searchable = maskDeclarationNotes(lines);
+      let depth = 0;
+      let opened = false;
+      let quoted = false;
+      for (let i = start; i < lines.length; i++) {
+        if (/^\s*'/.test(lines[i])) continue;
+        for (let j = 0; j < searchable[i].length; j++) {
+          const char = searchable[i][j];
+          if (char === '\\' && quoted) { j++; continue; }
+          if (char === '"') quoted = !quoted;
+          if (!quoted && char === '{') { depth++; opened = true; }
+          if (!quoted && char === '}') depth--;
+        }
+        if (!opened || depth <= 0) return i;
+        if (/^\s*@enduml\b/.test(lines[i + 1] || '')) return i;
+      }
+      return lines.length - 1;
+    }
+
+    function idIsReferenceTo(candidate, id) {
+      return candidate === id || candidate.indexOf(id + '.') === 0;
+    }
+
+    // Return only identifier spans: relation endpoints and directive targets.
+    // Labels, comments, member names, and note prose are deliberately excluded.
+    function referenceSpans(line, type) {
+      if (/^\s*(?:@|'|\/\/)/.test(line) || declarationIdForLine(line, type)) return [];
+      const tokens = [];
+      const re = /"(?:[^"\\]|\\.)*"|[^\s:]+/g;
+      let match;
+      while ((match = re.exec(line))) {
+        if (line.slice(tokens.length ? tokens[tokens.length - 1].end : 0, match.index).indexOf(':') !== -1) break;
+        tokens.push({ value: unquoteId(match[0]), quoted: match[0][0] === '"', start: match.index, end: re.lastIndex });
+      }
+      const operator = tokens.findIndex(isRelationOperatorToken);
+      if (operator >= 0) {
+        const spans = [];
+        const source = parseRelationEndpointTokens(tokens.slice(0, operator), 'source').id;
+        const target = parseRelationEndpointTokens(tokens.slice(operator + 1), 'target').id;
+        const sourceToken = tokens.slice(0, operator).find(function (token) { return token.value === source; });
+        const targetToken = tokens.slice(operator + 1).find(function (token) { return token.value === target; });
+        if (sourceToken) spans.push(sourceToken);
+        if (targetToken) spans.push(targetToken);
+        return spans;
+      }
+      if (/^\s*(?:activate|deactivate|destroy|create)\b/i.test(line)) return tokens.slice(-1);
+      if (type === 'state' && /^\s*(?:"(?:[^"\\]|\\.)*"|\S+)\s*:\s*(?:entry|exit|do)\s*\//i.test(line)) return tokens.slice(0, 1);
+      if (/^\s*note\s+(?:left|right|top|bottom|over)\b/i.test(line)) {
+        return tokens.slice(tokens.findIndex(function (token) { return /^(?:of|over)$/.test(token.value); }) + 1)
+          .filter(function (token) { return !/^(?:note|left|right|top|bottom)$/.test(token.value); });
+      }
+      return [];
+    }
+
+    function componentPortForId(text, type, id) {
+      if (type !== 'component' || id.lastIndexOf('.') < 0) return null;
+      const owner = id.slice(0, id.lastIndexOf('.'));
+      const declaration = getDeclarationLine(text, type, owner);
+      if (!declaration) return null;
+      const body = parseComponentBody(parseBraceBody(declaration));
+      const index = body.ports.findIndex(function (port) { return owner + '.' + port.alias === id; });
+      return index < 0 ? null : { owner: owner, declaration: declaration, body: body, index: index };
+    }
+
+    function rewriteUsecaseMembershipReferences(text, oldId, newId) {
+      const lines = stripLayoutMetadata(text).split('\n');
+      const edits = [];
+      for (let index = 0; index < lines.length; index++) {
+        if (!/^\s*rectangle\b/i.test(lines[index])) continue;
+        const end = declarationEndIndex(lines, index);
+        const declaration = lines.slice(index, end + 1).join('\n');
+        const body = parseBraceBody(declaration);
+        const changed = body.replace(/(^|[;\n])(\s*)("(?:[^"\\]|\\.)*"|[^\s;{}]+)(\s*)(?=[;\n]|$)/g, function (match, delimiter, before, token, after) {
+          if (unquoteId(token) !== oldId) return match;
+          return delimiter + before + (newId == null ? '' : formatRelationEndpointId(newId)) + after;
+        });
+        if (changed !== body) {
+          const range = declarationBraceRange(declaration);
+          edits.push({ start: index, end: end, replacement: declaration.slice(0, range.start + 1) + changed + declaration.slice(range.end) });
+        }
+        index = end;
+      }
+      return edits.length ? rewriteSourceLines(text, 'usecase', edits) : text;
+    }
+
     function removeElementFromSource(text, type, id) {
+      // Supported container children have global identities. Remove their
+      // external references too, so parsing cannot recreate orphaned children.
+      return ownedElementIds(text, type, id).concat([id]).reduce(function (source, ownedId) {
+        return removeSingleElementFromSource(source, type, ownedId);
+      }, text);
+    }
+
+    function removeSingleElementFromSource(text, type, id) {
       if (type === 'crc') return replaceCrcCardInSource(text, id, null);
+      if (type === 'usecase') text = rewriteUsecaseMembershipReferences(text, id, null);
+      text = rewriteOwnedElementStatements(text, type, id, null);
       var positions = readLayoutPositions(text);
       var routes = readLayoutRoutes(text);
       var noteRange = virtualNoteLineRange(id, text);
       if (noteRange) {
-        noteRange.lines.splice(noteRange.start, noteRange.end - noteRange.start + 1);
-        return writePositionsIntoSource(noteRange.lines.join('\n'), type, positions, routes);
+        return rewriteSourceLines(text, type, [{ start: noteRange.start, end: noteRange.end }], positions, routes);
       }
-      delete positions[id];
+      Object.keys(positions).forEach(function (key) { if (idIsReferenceTo(key, id)) delete positions[key]; });
       Object.keys(routes).forEach(function (rid) {
-        if (rid.indexOf(id) !== -1) delete routes[rid];
+        const endpoints = rid.match(/^edge:([^|]+)\|([^|]+)$/);
+        if (endpoints && (idIsReferenceTo(endpoints[1], id) || idIsReferenceTo(endpoints[2], id))) delete routes[rid];
       });
       var clean = stripLayoutMetadata(text);
       var lines = clean.split('\n');
@@ -3398,26 +3671,42 @@ Supported options:
           var relIdxs = relationLineIndices(text, type);
           var routeOrdinal = relIdxs.indexOf(pseudoLineIdx);
           if (routeOrdinal !== -1) delete routes['edge-' + routeOrdinal];
-          lines.splice(pseudoLineIdx, 1);
-          return writePositionsIntoSource(lines.join('\n'), type, positions, routes);
+          return rewriteSourceLines(text, type, [{ start: pseudoLineIdx, end: pseudoLineIdx }], positions, routes);
         }
       }
-      var keep = [];
+      const port = componentPortForId(text, type, id);
+      if (port) {
+        port.body.ports.splice(port.index, 1);
+        text = replaceBlockByMatch(text, type, function (line) { return declarationIdForLine(line, type) === port.owner; }, setBraceBody(port.declaration, buildComponentBody(port.body)));
+        lines = stripLayoutMetadata(text).split('\n');
+        routes = readLayoutRoutes(text);
+      }
+      const edits = [];
+      let inNote = false;
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         var t = line.trim();
         if (t === '@startuml' || t === '@enduml' || /^layout\s+/i.test(t)) {
-          keep.push(line);
           continue;
         }
+        if (inNote) { if (/^end\s*note$/i.test(t)) inNote = false; continue; }
         // Strip declarations whose id matches.
         var declId = declarationIdForLine(line, type);
-        if (declId === id) continue;
-        // Strip any line that mentions id (relations, activations, etc.).
-        if (lineMentionsId(line, id)) continue;
-        keep.push(line);
+        if (declId === id) {
+          const end = declarationEndIndex(lines, i);
+          edits.push({ start: i, end: end });
+          i = end;
+          continue;
+        }
+        const noteBlock = /^note\b/i.test(t) && t.indexOf(':') < 0;
+        if (referenceSpans(line, type).some(function (span) { return idIsReferenceTo(span.value, id); })) {
+          let end = i;
+          if (noteBlock) while (end + 1 < lines.length && !/^\s*end\s*note\s*$/i.test(lines[end])) end++;
+          edits.push({ start: i, end: end });
+          i = end;
+        } else if (noteBlock) inNote = true;
       }
-      return writePositionsIntoSource(keep.join('\n'), type, positions, routes);
+      return rewriteSourceLines(text, type, edits, positions, routes);
     }
 
     function removeRelationLine(text, type, lineIndex) {
@@ -3426,28 +3715,22 @@ Supported options:
       var clean = stripLayoutMetadata(text);
       var lines = clean.split('\n');
       if (lineIndex < 0 || lineIndex >= lines.length) return text;
-      lines.splice(lineIndex, 1);
-      return writePositionsIntoSource(lines.join('\n'), type, positions, routes);
+      return rewriteSourceLines(text, type, [{ start: lineIndex, end: lineIndex }], positions, routes);
     }
 
     function replaceLineByMatch(text, type, predicate, newLine) {
-      var positions = readLayoutPositions(text);
-      var routes = readLayoutRoutes(text);
-      var clean = stripLayoutMetadata(text);
-      var lines = clean.split('\n');
+      var lines = stripLayoutMetadata(text).split('\n');
+      var searchable = sourceLinesWithoutNotes(text);
       for (var i = 0; i < lines.length; i++) {
-        if (predicate(lines[i], i)) {
-          if (newLine == null) lines.splice(i, 1);
-          else lines[i] = newLine;
-          break;
+        if (predicate(searchable[i], i)) {
+          return rewriteSourceLines(text, type, [{ start: i, end: i, replacement: newLine }]);
         }
       }
-      return writePositionsIntoSource(lines.join('\n'), type, positions, routes);
+      return text;
     }
 
     function findDeclarationLineIndex(text, type, id) {
-      var clean = stripLayoutMetadata(text);
-      var lines = clean.split('\n');
+      var lines = sourceLinesWithoutNotes(text);
       for (var i = 0; i < lines.length; i++) {
         if (declarationIdForLine(lines[i], type) === id) return i;
       }
@@ -3458,59 +3741,20 @@ Supported options:
       var idx = findDeclarationLineIndex(text, type, id);
       if (idx === -1) return null;
       var lines = stripLayoutMetadata(text).split('\n');
-      var line = lines[idx];
-      // Collapse multi-line `{ ... }` blocks into a single semicolon-separated form
-      // so the props panel can parse them uniformly.
-      if (line.indexOf('{') !== -1 && line.indexOf('}') === -1) {
-        var body = [];
-        var j = idx + 1;
-        var depth = (line.match(/\{/g) || []).length - (line.match(/\}/g) || []).length;
-        while (j < lines.length && depth > 0) {
-          var l = lines[j];
-          depth += (l.match(/\{/g) || []).length;
-          depth -= (l.match(/\}/g) || []).length;
-          if (depth === 0) {
-            // l is the closing }; everything before } belongs to body.
-            var beforeBrace = l.substring(0, l.lastIndexOf('}'));
-            if (beforeBrace.trim()) body.push(beforeBrace.trim());
-          } else {
-            body.push(l.trim());
-          }
-          j++;
-        }
-        return line.replace(/\{$/, '').trim() + ' { ' + body.filter(Boolean).join('; ') + ' }';
-      }
-      return line;
+      return lines.slice(idx, declarationEndIndex(lines, idx) + 1).join('\n');
     }
 
     // For multi-line declarations, replace the entire block (decl line + body) with a
     // single-line form (or new multi-line form). predicate(lines[i]) identifies the
     // decl line.
     function replaceBlockByMatch(text, type, predicate, newLine) {
-      var positions = readLayoutPositions(text);
-      var routes = readLayoutRoutes(text);
-      var clean = stripLayoutMetadata(text);
-      var lines = clean.split('\n');
+      var lines = stripLayoutMetadata(text).split('\n');
+      var searchable = sourceLinesWithoutNotes(text);
       for (var i = 0; i < lines.length; i++) {
-        if (!predicate(lines[i], i)) continue;
-        var line = lines[i];
-        if (line.indexOf('{') !== -1 && line.indexOf('}') === -1) {
-          // Collapse multi-line block into the single line
-          var depth = (line.match(/\{/g) || []).length - (line.match(/\}/g) || []).length;
-          var j = i + 1;
-          while (j < lines.length && depth > 0) {
-            depth += (lines[j].match(/\{/g) || []).length;
-            depth -= (lines[j].match(/\}/g) || []).length;
-            j++;
-          }
-          // Replace lines[i..j-1] with newLine (single line).
-          lines.splice(i, j - i, newLine);
-        } else {
-          lines[i] = newLine;
-        }
-        break;
+        if (!predicate(searchable[i], i)) continue;
+        return rewriteSourceLines(text, type, [{ start: i, end: declarationEndIndex(lines, i), replacement: newLine }]);
       }
-      return writePositionsIntoSource(lines.join('\n'), type, positions, routes);
+      return text;
     }
 
     function svgPointFromEvent(svg, ev) { return svgPoint(svg, ev.clientX, ev.clientY); }
@@ -3748,16 +3992,16 @@ Supported options:
       btn.appendChild(document.createTextNode(spec.label));
       var aria = (kind === 'element' ? 'Add element: ' : 'Add relation: ') + spec.label;
       btn.setAttribute('aria-label', aria);
-      btn.setAttribute('data-original-title', aria + ' — click to arm, then click on the diagram. Or drag onto the diagram.');
+      btn.setAttribute('data-original-title', aria + ' — click to arm, then click on the diagram. Or drag onto the diagram. Enter or Space adds an element directly.');
       btn.removeAttribute('title');
       // Click-to-arm interaction
-      btn.addEventListener('click', function () {
+      btn.addEventListener('click', function (event) {
         if (suppressPaletteClick) {
           suppressPaletteClick = false;
           return;
         }
         if (paletteDragState) return; // ignore the click that follows a drag
-        if (kind === 'element' && !output.querySelector('svg') && addElementWithoutCanvas(spec)) {
+        if (kind === 'element' && (event.detail === 0 || !output.querySelector('svg')) && addElementWithoutCanvas(spec)) {
           return;
         }
         if (activeTool && activeTool.spec === spec && activeTool.kind === kind) {
@@ -3970,7 +4214,13 @@ Supported options:
         return true;
       }
       textarea.value = sourceWithScaffold(textarea.value);
-      placeElementAt(spec, { x: 120, y: 80 });
+      var svg = output.querySelector('svg');
+      var items = svg ? findEditableElements(svg) : [];
+      var right = items.reduce(function (edge, item) {
+        return Math.max(edge, item.box.x + item.box.width);
+      }, 60);
+      placeElementAt(spec, { x: right + 60, y: 80 });
+      focusLayoutTarget(selectedLayoutId);
       return true;
     }
 
@@ -4878,7 +5128,7 @@ Supported options:
       if (type === 'state' && spec.isComposite) {
         var subId = generateUniqueId(textarea.value, type, 'Sub');
         textarea.value = appendRawLine(textarea.value, 'state ' + id + ' { state ' + subId + ' }');
-        renderDiagram(); selectAfterRender(id, 'node'); return;
+        selectAfterRender(id, 'node'); renderDiagram(); return;
       }
       // Activity decisions: insert if/else block stub.
       if (type === 'activity' && spec.activityDecision) {
@@ -4915,7 +5165,7 @@ Supported options:
         var actId = generateUniqueId(textarea.value, type, 'Step');
         textarea.value = appendRawLine(textarea.value, '(*) --> "' + actId + '"');
         textarea.value = appendRawLine(textarea.value, '"' + actId + '" --> (*)');
-        renderDiagram(); selectAfterRender(actId, 'node'); return;
+        selectAfterRender(actId, 'node'); renderDiagram(); return;
       }
       if (type === 'activity' && spec.activityAction) {
         var existing = collectModelElements(textarea.value, type).length;
@@ -4927,7 +5177,7 @@ Supported options:
           stub2 = '"' + escapeQuoted(prevId) + '" --> "' + escapeQuoted(opts.label) + '"';
         }
         textarea.value = appendRawLine(textarea.value, stub2);
-        renderDiagram(); selectAfterRender(opts.label, 'node'); return;
+        selectAfterRender(opts.label, 'node'); renderDiagram(); return;
       }
       // Notes / ports get sensible defaults.
       if (spec.isNote) opts.label = 'New note text';
@@ -4942,8 +5192,8 @@ Supported options:
         var hostId = findComponentAtSvgPoint(pt);
         if (hostId) {
           addPortIntoComponent(hostId, spec, id, opts.label);
-          renderDiagram();
           selectAfterRender(hostId, 'node');
+          renderDiagram();
           return;
         }
       }
@@ -4951,16 +5201,14 @@ Supported options:
         var depHostId = findDeploymentNodeAtSvgPoint(pt);
         if (depHostId) {
           addDeploymentChildIntoNode(depHostId, spec, id);
-          renderDiagram();
           selectAfterRender(depHostId, 'node');
+          renderDiagram();
           return;
         }
-        addDeploymentNodeWithChild(spec, id, pt);
-        return;
       }
       textarea.value = addElementToSource(textarea.value, type, spec, opts);
-      renderDiagram();
       selectAfterRender(id, 'node');
+      renderDiagram();
       if (clearToolAfterPlacement) setActiveTool(null);
     }
 
@@ -5019,29 +5267,12 @@ Supported options:
       var line = getDeclarationLine(textarea.value, 'deployment', nodeId);
       if (!line) return;
       var body = parseBraceBody(line);
-      var pieces = body ? body.split(/[;\n]/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
-      pieces.push((spec.id === 'artifact' ? 'artifact ' : 'component ') + childId);
-      var newLine = setBraceBody(line, pieces.join('; '));
+      var childLine = (spec.id === 'artifact' ? 'artifact ' : 'component ') + childId;
+      var newLine = setBraceBody(line, (body.trim() ? body.trim() + '\n' : '') + childLine, true);
       var sourceText = replaceBlockByMatch(textarea.value, 'deployment', function (candidate) {
         return declarationIdForLine(candidate, 'deployment') === nodeId;
       }, newLine);
       textarea.value = sourceText;
-    }
-
-    function addDeploymentNodeWithChild(spec, childId, pt) {
-      snapshotForUndo('deployment-node-child');
-      var source = sourceWithScaffold(textarea.value);
-      var positions = readLayoutPositions(source);
-      var routes = readLayoutRoutes(source);
-      var nodeId = generateUniqueId(source, 'deployment', 'Node');
-      var childLine = (spec.id === 'artifact' ? 'artifact ' : 'component ') + childId;
-      var lines = stripLayoutMetadata(source).split('\n');
-      lines.splice(findInsertPointForDeclaration(lines), 0, 'node ' + nodeId + ' { ' + childLine + ' }');
-      if (pt) positions[nodeId] = { x: Math.round(pt.x), y: Math.round(pt.y) };
-      textarea.value = writePositionsIntoSource(lines.join('\n'), 'deployment', positions, routes);
-      selectAfterRender(nodeId, 'node');
-      renderDiagram();
-      announce('Added ' + spec.label + ' inside new node "' + nodeId + '".', false);
     }
 
     function appendRawLine(text, line) {
@@ -5212,24 +5443,22 @@ Supported options:
     }
 
     function duplicateElement(id) {
-      snapshotForUndo();
       var type = typeSelect.value;
       var line = getDeclarationLine(textarea.value, type, id);
       if (!line) return;
+      snapshotForUndo();
       var newId = generateUniqueId(textarea.value, type, id + '_copy');
-      // Rewrite the id token in the line.
-      var idRe = new RegExp('\\b' + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
-      var newLine = line.replace(idRe, newId);
+      var newLine = cloneDeclarationForDuplicate(textarea.value, type, line, id, newId);
       // Offset position +30,+30 if the original had one.
       var positions = readLayoutPositions(textarea.value);
       if (positions[id]) positions[newId] = { x: positions[id].x + 30, y: positions[id].y + 30 };
       var routes = readLayoutRoutes(textarea.value);
       var clean = stripLayoutMetadata(textarea.value);
       var lines = clean.split('\n');
-      lines.splice(findInsertPointForDeclaration(lines), 0, newLine);
-      textarea.value = writePositionsIntoSource(lines.join('\n'), type, positions, routes);
-      renderDiagram();
+      var insertAt = findInsertPointForDeclaration(lines);
+      textarea.value = rewriteSourceLines(textarea.value, type, [{ start: insertAt, end: insertAt - 1, replacement: newLine }], positions, routes);
       selectAfterRender(newId, 'node');
+      renderDiagram();
     }
 
     /**
@@ -5349,7 +5578,7 @@ Supported options:
       var spec = selectedRelationToolSpec();
       if (!spec) return false;
       opts = opts || {};
-      if (sourceId === targetId && typeSelect.value !== 'sequence' && typeSelect.value !== 'state') {
+      if (sourceId === targetId && ['class', 'sequence', 'state'].indexOf(typeSelect.value) === -1) {
         announce('Self-relations not supported here.', false);
         return true;
       }
@@ -6111,7 +6340,7 @@ Supported options:
           return;
         }
         var targetId = hit.id;
-        if (targetId === sourceId && typeSelect.value !== 'sequence' && typeSelect.value !== 'state') {
+        if (targetId === sourceId && ['class', 'sequence', 'state'].indexOf(typeSelect.value) === -1) {
           announce('Self-relations not supported here.', false);
           return;
         }
@@ -6207,7 +6436,7 @@ Supported options:
       }
       var sourceId = pendingRelation.sourceId;
       var targetId = item.id;
-      if (sourceId === targetId && typeSelect.value !== 'sequence' && typeSelect.value !== 'state') {
+      if (sourceId === targetId && ['class', 'sequence', 'state'].indexOf(typeSelect.value) === -1) {
         announce('Pick a different target — self-loops are not supported here. Press Esc to cancel.', true);
         return true;
       }
@@ -6236,10 +6465,10 @@ Supported options:
     function parseClassDeclaration(line) {
       var t = line.trim();
       var info = { kind: 'class', isAbstract: false, name: '', stereotype: '', highlight: '', texture: '', members: [], rawAfter: '', body: '' };
-      var bodyMatch = t.match(/\{([\s\S]*)\}\s*$/);
-      if (bodyMatch) {
-        info.body = bodyMatch[1];
-        t = t.replace(/\s*\{[\s\S]*\}\s*$/, '');
+      const bodyRange = declarationBraceRange(t);
+      if (bodyRange) {
+        info.body = t.slice(bodyRange.start + 1, bodyRange.end);
+        t = t.slice(0, bodyRange.start).trim();
       }
       var m = t.match(/^(abstract\s+class|class|interface|enum)\s+("[^"]+"|\S+)(.*)$/i);
       if (!m) return info;
@@ -6247,6 +6476,12 @@ Supported options:
       info.isAbstract = /abstract/i.test(m[1]);
       info.name = unquoteId(m[2]);
       var rest = m[3] || '';
+      const alias = rest.match(/^\s+as\s+("(?:[^"\\]|\\.)*"|\S+)/i);
+      if (alias) {
+        info.declarationLabel = info.name;
+        info.name = unquoteId(alias[1]);
+        rest = rest.slice(alias[0].length);
+      }
       var stereo = rest.match(/<<\s*([^>]+?)\s*>>/);
       if (stereo) {
         info.stereotype = '<<' + stereo[1] + '>>';
@@ -6271,7 +6506,7 @@ Supported options:
 
     function parseMemberLine(line) {
       var t = line.trim();
-      var member = { visibility: '+', isAbstract: false, isStatic: false, text: t };
+      var member = { visibility: '', isAbstract: false, isStatic: false, text: t };
       var m = t.match(/^([+\-#~])\s*(.*)$/);
       if (m) { member.visibility = m[1]; t = m[2]; }
       while (true) {
@@ -6291,14 +6526,16 @@ Supported options:
       else if (info.kind === 'interface') keyword = 'interface';
       else if (info.kind === 'enum') keyword = 'enum';
       else keyword = 'class';
-      var line = keyword + ' ' + (/[\s"<>]/.test(info.name) ? '"' + escapeQuoted(info.name) + '"' : info.name);
+      const declarationName = info.declarationLabel == null ? info.name : info.declarationLabel;
+      var line = keyword + ' ' + (/[\s"<>]/.test(declarationName) ? '"' + escapeQuoted(declarationName) + '"' : declarationName);
+      if (info.declarationLabel != null) line += ' as ' + formatRelationEndpointId(info.name);
       if (info.stereotype) line += ' ' + info.stereotype;
       if (info.highlight) line += ' #' + String(info.highlight).replace(/^#/, '');
       if (info.texture) line += ' ' + info.texture;
       if (info.rawAfter) line += ' ' + info.rawAfter;
       if (info.members && info.members.length) {
         var body = info.members.map(function (m) {
-          var s = m.visibility || '+';
+          var s = m.visibility || '';
           if (m.isAbstract) s += ' {abstract}';
           if (m.isStatic) s += ' {static}';
           s += ' ' + (m.text || '').trim();
@@ -6421,17 +6658,9 @@ Supported options:
         function (v) { changeFragmentKind(id, v); }
       )));
 
-      // par doesn't take a guard at the opener line per UML 2.5.
-      if (info.kind !== 'par') {
-        propsContent.appendChild(field('Condition', textInput(info.condition, function (v) {
-          changeFragmentCondition(id, v);
-        })));
-      } else {
-        var hint = document.createElement('p');
-        hint.className = 'uml-pg-prop-hint';
-        hint.textContent = 'par fragments don\'t take a top-level guard. Each branch can carry its own condition below.';
-        propsContent.appendChild(hint);
-      }
+      propsContent.appendChild(field('Condition', textInput(info.condition, function (v) {
+        changeFragmentCondition(id, v);
+      })));
 
       // Branch (else) editor — alt and par benefit; show for any kind that has
       // existing branches so you can edit them.
@@ -6497,7 +6726,7 @@ Supported options:
      * routes in a single fragment block.
      */
     function startSequenceWrap(kind, fieldset, buttonRow) {
-      // par takes no condition — wrap immediately.
+      // A guard is optional. The first operand's guard remains editable in Properties.
       if (kind === 'par') {
         commitWrap(kind, '');
         return;
@@ -6685,7 +6914,13 @@ Supported options:
       var inp = document.createElement('input');
       inp.type = 'text';
       inp.value = value || '';
-      var commit = function () { onChange(inp.value); };
+      const diagramType = typeSelect.value;
+      let committedValue = inp.value;
+      var commit = function () {
+        if (typeSelect.value !== diagramType || inp.value === committedValue) return;
+        committedValue = inp.value;
+        onChange(inp.value);
+      };
       inp.addEventListener('change', commit);
       inp.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') { e.preventDefault(); commit(); }
@@ -6788,6 +7023,66 @@ Supported options:
       hint.className = 'uml-pg-prop-hint';
       hint.textContent = 'Each collaborator names an object this class needs help from. The two lists are independent; their rows do not imply pairs.';
       propsContent.appendChild(hint);
+    }
+
+    function buildSystemMembershipProps(id) {
+      var model = window.UMLUseCaseDiagram.parse(stripLayoutMetadata(textarea.value));
+      var system = model.systems.find(function (item) { return (item.id || item.name) === id; });
+      var members = system ? system.members : [];
+      var group = document.createElement('fieldset');
+      group.className = 'uml-pg-prop-fieldset';
+      var legend = document.createElement('legend');
+      legend.textContent = 'Use cases in this system';
+      group.appendChild(legend);
+      model.usecases.forEach(function (usecase) {
+        var duplicateName = model.usecases.some(function (other) { return other.id !== usecase.id && other.name === usecase.name; });
+        var label = usecase.name + (duplicateName ? ' (' + usecase.id + ')' : '');
+        group.appendChild(checkbox('Include ' + label, members.indexOf(usecase.id) !== -1, function (included) {
+          changeSystemMembership(id, usecase.id, included);
+        }));
+      });
+      if (!model.usecases.length) {
+        var hint = document.createElement('p');
+        hint.textContent = 'Add a use case, then include it here.';
+        group.appendChild(hint);
+      }
+      propsContent.appendChild(group);
+    }
+
+    function changeSystemMembership(systemId, usecaseId, included) {
+      var declaration = getDeclarationLine(textarea.value, 'usecase', systemId);
+      if (!declaration) return;
+      var hoisted = [];
+      var entries = [], entry = '', quoted = false, escaped = false;
+      var rawBody = parseBraceBody(declaration);
+      for (var i = 0; i < rawBody.length; i++) {
+        var ch = rawBody[i];
+        if (ch === '"' && !escaped) quoted = !quoted;
+        if (!quoted && (ch === ';' || ch === '\n')) { entries.push(entry); entry = ''; }
+        else entry += ch;
+        escaped = ch === '\\' && !escaped;
+      }
+      entries.push(entry);
+      var body = entries.filter(function (line) {
+        var nestedId = declarationIdForLine(line, 'usecase');
+        if (nestedId === usecaseId) {
+          if (!included) hoisted.push(line.trim());
+          return included;
+        }
+        return unquoteId(line.trim()) !== usecaseId;
+      }).filter(function (line) { return line.trim(); });
+      var declaredInside = body.some(function (line) { return declarationIdForLine(line, 'usecase') === usecaseId; });
+      if (included && !declaredInside) body.push(formatRelationEndpointId(usecaseId));
+      var braces = declarationBraceRange(declaration);
+      var header = (braces ? declaration.slice(0, braces.start) : declaration).trim();
+      var replacement = header + ' {\n' + body.map(function (line) { return '  ' + line.trim(); }).join('\n') + '\n}';
+      if (hoisted.length) replacement += '\n' + hoisted.join('\n');
+      snapshotForUndo('system-membership:' + systemId);
+      textarea.value = replaceBlockByMatch(textarea.value, 'usecase', function (line) {
+        return declarationIdForLine(line, 'usecase') === systemId;
+      }, replacement);
+      selectAfterRender(systemId, 'node');
+      renderDiagram();
     }
 
     function buildElementProps() {
@@ -6936,10 +7231,10 @@ Supported options:
             var vis = document.createElement('select');
             vis.className = 'uml-pg-member-vis';
             vis.setAttribute('aria-label', 'Visibility');
-            ['+ public', '- private', '# protected', '~ package'].forEach(function (lab) {
+            [' Unspecified', '+ public', '- private', '# protected', '~ package'].forEach(function (lab) {
               var o = document.createElement('option');
-              o.value = lab.charAt(0);
-              o.textContent = lab;
+              o.value = lab.charAt(0).trim();
+              o.textContent = lab.trim();
               if (o.value === m.visibility) o.selected = true;
               vis.appendChild(o);
             });
@@ -7004,6 +7299,9 @@ Supported options:
           replaceGenericElement(id, schema, current);
         })));
       }
+      if (type === 'usecase' && schema && schema.supports.system) {
+        buildSystemMembershipProps(id);
+      }
       if (schema && schema.supports && schema.supports.stereotype) {
         propsContent.appendChild(field('Stereotype (e.g. <<choice>>)', textInput(current.stereotype || '', function (v) {
           current.stereotype = v.trim() ? (/^<</.test(v.trim()) ? v.trim() : '<<' + v.trim().replace(/<<|>>/g, '') + '>>') : '';
@@ -7055,7 +7353,7 @@ Supported options:
 
           function commitState() {
             var newBody = buildStateBody(parsed);
-            var newLine = setBraceBody(line, newBody);
+            var newLine = setBraceBody(line, newBody, true);
             replaceLineForElementId(id, newLine);
           }
           function renderChildren() {
@@ -7068,13 +7366,21 @@ Supported options:
               name.value = c.name;
               name.placeholder = 'Sub-state name';
               name.setAttribute('aria-label', 'Sub-state ' + (idx + 1) + ' name');
-              name.addEventListener('change', function () { c.name = name.value.trim() || c.name; commitState(); });
+              name.addEventListener('change', function () {
+                renameElement(c.name, name.value.trim() || c.name);
+                selectAfterRender(id, 'node');
+              });
               var rm = document.createElement('button');
               rm.type = 'button';
               rm.className = 'uml-pg-member-remove';
               rm.textContent = '✕';
               rm.setAttribute('aria-label', 'Remove sub-state ' + (idx + 1));
-              rm.addEventListener('click', function () { parsed.children.splice(idx, 1); commitState(); });
+              rm.addEventListener('click', function () {
+                snapshotForUndo();
+                textarea.value = removeElementFromSource(textarea.value, type, c.name);
+                renderDiagram();
+                selectAfterRender(id, 'node');
+              });
               // Two-cell row: span the name across the visibility column for layout consistency
               var spacer = document.createElement('span');
               spacer.style.gridColumn = '1';
@@ -7091,6 +7397,9 @@ Supported options:
           add.textContent = '+ Add sub-state';
           add.addEventListener('click', function () {
             var newName = generateUniqueId(textarea.value, type, 'Sub');
+            var stateIds = window.UMLStateDiagram.parse(textarea.value).states.map(function (state) { return state.name; });
+            var suffix = 1;
+            while (stateIds.indexOf(newName) !== -1) newName = 'Sub' + suffix++;
             parsed.children.push({ kind: 'state', name: newName, stereotype: '' });
             commitState();
           });
@@ -7152,7 +7461,12 @@ Supported options:
             rmBtn.className = 'uml-pg-member-remove';
             rmBtn.setAttribute('aria-label', 'Remove port ' + (idx + 1));
             rmBtn.textContent = '✕';
-            rmBtn.addEventListener('click', function () { parsedComp.ports.splice(idx, 1); commitComp(); });
+            rmBtn.addEventListener('click', function () {
+              snapshotForUndo('remove-port:' + id + '.' + p.alias);
+              textarea.value = removeElementFromSource(textarea.value, typeSelect.value, id + '.' + p.alias);
+              selectAfterRender(id, 'node');
+              renderDiagram();
+            });
             row.appendChild(kindSel);
             row.appendChild(nameInput);
             row.appendChild(rmBtn);
@@ -7251,16 +7565,20 @@ Supported options:
             nameInput.value = child.name || '';
             nameInput.placeholder = 'Child name';
             nameInput.setAttribute('aria-label', 'Deployment child ' + (idx + 1) + ' name');
-            nameInput.addEventListener('change', function () { child.name = nameInput.value.trim() || child.name; commitDeploymentNode(); });
+            nameInput.addEventListener('change', function () {
+              renameElement(child.name, nameInput.value.trim() || child.name);
+              setSelectedLayoutId(id, 'node');
+            });
             var rmBtn = document.createElement('button');
             rmBtn.type = 'button';
             rmBtn.className = 'uml-pg-member-remove';
             rmBtn.setAttribute('aria-label', 'Remove deployment child ' + (idx + 1));
             rmBtn.textContent = '✕';
             rmBtn.addEventListener('click', function () {
-              parsedDep.children.splice(idx, 1);
-              commitDeploymentNode();
-              renderDeploymentChildren();
+              snapshotForUndo('remove-child:' + child.name);
+              textarea.value = removeElementFromSource(textarea.value, typeSelect.value, child.name);
+              selectAfterRender(id, 'node');
+              renderDiagram();
             });
             row.appendChild(kindSel);
             row.appendChild(nameInput);
@@ -7307,7 +7625,7 @@ Supported options:
 
         function commitEr() {
           var newBody = buildEntityBody(parsedEr);
-          var newLine = setBraceBody(line, newBody);
+          var newLine = setBraceBody(line, newBody, true);
           replaceLineForElementId(id, newLine);
         }
         function renderAttrs() {
@@ -7394,24 +7712,58 @@ Supported options:
     // ─── Container child helpers (composite state, component ports, ER attrs) ───
 
     function parseBraceBody(line) {
-      var m = String(line || '').match(/\{([\s\S]*)\}\s*$/);
-      return m ? m[1] : '';
+      const text = String(line || '');
+      const range = declarationBraceRange(text);
+      return range ? text.slice(range.start + 1, range.end) : '';
     }
 
-    function setBraceBody(line, body) {
+    function setBraceBody(line, body, multiline) {
       // Drop existing { ... } and append new body. If new body empty, drop entirely.
-      var stripped = String(line || '').replace(/\s*\{[\s\S]*\}\s*$/, '');
+      const text = String(line || '');
+      const range = declarationBraceRange(text);
+      var stripped = range ? text.slice(0, range.start).trimEnd() : text;
       if (!body || !body.trim()) return stripped;
+      if (multiline || /\n/.test(line)) return stripped + ' {\n' + body.trim() + '\n}';
       return stripped + ' { ' + body.trim() + ' }';
     }
 
     function parseStateBody(body) {
-      // Body is a list of `state X` substates (separated by ; or \n).
-      // Other forms (transitions inside composite) are preserved as-is.
-      var pieces = (body || '').split(/[;\n]/).map(function (s) { return s.trim(); }).filter(Boolean);
+      // Only direct declarations are editable in this list. Preserve nested
+      // blocks and action expressions as complete source statements.
+      var pieces = [];
+      var statement = '';
+      var depth = 0;
+      var quoted = false;
+      var escaped = false;
+      function flush() {
+        if (statement.trim()) pieces.push(statement.trim());
+        statement = '';
+      }
+      String(body || '').split('').forEach(function (ch) {
+        if (escaped) { statement += ch; escaped = false; return; }
+        if (quoted && ch === '\\') { statement += ch; escaped = true; return; }
+        if (ch === '"') quoted = !quoted;
+        if (!quoted) {
+          if (ch === '{') depth++;
+          if (ch === '}') depth = Math.max(0, depth - 1);
+          if (depth === 0 && (ch === '\n' || (ch === ';' && /^\s*state\b/i.test(statement)))) {
+            flush();
+            return;
+          }
+        }
+        statement += ch;
+      });
+      flush();
       var children = [];
       var raw = [];
+      var inNote = false;
       pieces.forEach(function (p) {
+        if (inNote) {
+          raw.push(p);
+          if (/^end\s*note$/i.test(p)) inNote = false;
+          return;
+        }
+        if (/^note\s+(?:left|right|top|bottom|over)\s+(?:of\s+)?\S+\s*$/i.test(p)) inNote = true;
         var m = p.match(/^state\s+("[^"]+"|\S+)(?:\s+(<<[^>]+>>))?\s*$/i);
         if (m) {
           children.push({ kind: 'state', name: unquoteId(m[1]), stereotype: m[2] || '' });
@@ -7429,13 +7781,94 @@ Supported options:
         return s;
       });
       pieces = pieces.concat(parsed.raw);
-      return pieces.join('; ');
+      return '\n' + pieces.join('\n') + '\n';
+    }
+
+    function bodyStatementRanges(body, groupNotes) {
+      const statements = [];
+      let start = 0;
+      let depth = 0;
+      let quoted = false;
+      for (let index = 0; index <= body.length; index++) {
+        if (groupNotes && index === start && !depth && !quoted && /^\s*note\b/.test(body.slice(start))) {
+          const noteLines = body.slice(start).split('\n');
+          const noteEnd = window.UMLShared.parseNoteLine(noteLines[0].trim(), noteLines, 0, []);
+          if (noteEnd > 0) {
+            const noteText = noteLines.slice(0, noteEnd + 1).join('\n');
+            statements.push({ start: start, end: start + noteText.length, text: noteText });
+            index = start + noteText.length;
+            start = index + 1;
+            continue;
+          }
+        }
+        const char = body[index];
+        if (quoted && char === '\\') { index++; continue; }
+        if (char === '"') quoted = !quoted;
+        if (!quoted && char === '{') depth++;
+        if (!quoted && char === '}') depth--;
+        if (index === body.length || (!quoted && depth === 0 && (char === ';' || char === '\n'))) {
+          const statement = body.slice(start, index);
+          if (statement.trim()) statements.push({ start: start, end: index, text: statement });
+          start = index + 1;
+        }
+      }
+      return statements;
+    }
+
+    function splitBodyStatements(body) {
+      return bodyStatementRanges(body).map(function (statement) { return statement.text.trim(); });
+    }
+
+    function rewriteOwnedElementStatements(text, type, oldId, newId) {
+      if (type !== 'state' && type !== 'deployment') return text;
+      function rewriteBody(declaration) {
+        const range = declarationBraceRange(declaration);
+        if (!range) return declaration;
+        let body = declaration.slice(range.start + 1, range.end);
+        bodyStatementRanges(body, true).reverse().forEach(function (statement) {
+          const id = declarationIdForLine(statement.text, type);
+          let changed = statement.text;
+          if (id === oldId) {
+            changed = newId == null ? '' : renameDeclarationIdentifier(changed, type, oldId, newId);
+          } else if (id) {
+            changed = rewriteBody(changed);
+          } else {
+            const referenceLine = /^\s*note\b/.test(changed) ? changed.split('\n')[0] : changed;
+            const spans = referenceSpans(referenceLine, type).filter(function (span) { return idIsReferenceTo(span.value, oldId); });
+            if (newId == null && spans.length) changed = '';
+            else spans.reverse().forEach(function (span) {
+              changed = changed.slice(0, span.start) + formatRelationEndpointId(newId + span.value.slice(oldId.length)) + changed.slice(span.end);
+            });
+          }
+          body = body.slice(0, statement.start) + changed + body.slice(statement.end);
+        });
+        return declaration.slice(0, range.start + 1) + body + declaration.slice(range.end);
+      }
+      const lines = stripLayoutMetadata(text).split('\n');
+      const searchable = sourceLinesWithoutNotes(text);
+      const edits = [];
+      for (let index = 0; index < lines.length; index++) {
+        if (!declarationIdForLine(searchable[index], type)) continue;
+        const end = declarationEndIndex(lines, index);
+        const declaration = lines.slice(index, end + 1).join('\n');
+        const changed = rewriteBody(declaration);
+        if (changed !== declaration) edits.push({ start: index, end: end, replacement: changed });
+        index = end;
+      }
+      if (!edits.length) return text;
+      if (newId == null) return rewriteSourceLines(text, type, edits);
+      // Identifier changes retain source line numbers, including inline and
+      // nested transitions whose saved route keys depend on their line/order.
+      edits.reverse().forEach(function (edit) {
+        lines.splice.apply(lines, [edit.start, edit.end - edit.start + 1].concat(edit.replacement.split('\n')));
+      });
+      return writePositionsIntoSource(lines.join('\n'), type, readLayoutPositions(text), readLayoutRoutes(text));
     }
 
     function parseComponentBody(body) {
       // Body holds portin/portout/port and provide/require lines plus arbitrary
       // raw lines. Split by ; or \n.
-      var pieces = (body || '').split(/[;\n]/).map(function (s) { return s.trim(); }).filter(Boolean);
+      var pieces = splitBodyStatements(body || '');
       var ports = [];
       var raw = [];
       pieces.forEach(function (p) {
@@ -7466,13 +7899,13 @@ Supported options:
     }
 
     function parseDeploymentNodeBody(body) {
-      var pieces = (body || '').split(/[;\n]/).map(function (s) { return s.trim(); }).filter(Boolean);
+      var pieces = splitBodyStatements(body || '');
       var children = [];
       var raw = [];
       pieces.forEach(function (p) {
-        var m = p.match(/^(component|artifact)\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?$/i);
+        var m = p.match(/^(component|artifact)\s+("(?:[^"\\]|\\.)*"|\S+)(?:\s+as\s+(\S+))?$/i);
         if (m) {
-          children.push({ kind: m[1].toLowerCase(), name: unquoteId(m[3] || m[2]) });
+          children.push({ kind: m[1].toLowerCase(), name: unquoteId(m[3] || m[2]), declaration: p });
         } else {
           raw.push(p);
         }
@@ -7482,11 +7915,12 @@ Supported options:
 
     function buildDeploymentNodeBody(parsed) {
       var pieces = parsed.children.map(function (child) {
+        if (child.declaration) return child.declaration.replace(/^(?:component|artifact)\b/i, child.kind);
         var name = String(child.name || '').trim() || (child.kind === 'artifact' ? 'Artifact' : 'Component');
         return (child.kind === 'artifact' ? 'artifact ' : 'component ') + formatRelationEndpointId(name);
       });
       pieces = pieces.concat(parsed.raw);
-      return pieces.join('; ');
+      return pieces.join('\n');
     }
 
     function parseEntityBody(body) {
@@ -7506,7 +7940,7 @@ Supported options:
     function buildEntityBody(parsed) {
       return parsed.attrs.map(function (a) {
         return (a.marker ? a.marker + ' ' : '') + (a.name || '');
-      }).join('; ');
+      }).join('\n');
     }
 
     // Generic helper: replace the source line for an element id with a new line.
@@ -7521,14 +7955,15 @@ Supported options:
         return declarationIdForLine(line, type) === elementId;
       }, newLine);
       textarea.value = sourceText;
-      renderDiagram();
       selectAfterRender(elementId, 'node');
+      renderDiagram();
     }
 
     function parseGenericElement(line, type) {
       var info = { name: '', label: '', stereotype: '', dashed: false, highlight: '', texture: '' };
       if (!line) return info;
-      var t = line.trim();
+      const bodyRange = declarationBraceRange(line);
+      var t = (bodyRange ? line.slice(0, bodyRange.start) + line.slice(bodyRange.end + 1) : line).trim();
       if (window.UMLShared && window.UMLShared.parseHighlightColor) {
         var highlightInfo = window.UMLShared.parseHighlightColor(t);
         if (highlightInfo && (highlightInfo.highlight || highlightInfo.texture)) {
@@ -7560,8 +7995,8 @@ Supported options:
         rest = rest.replace(/\s*<<\s*[^>]+?\s*>>/, '');
         rest = rest.replace(/\s+dashed\b/i, function () { info.dashed = true; return ''; });
         // Patterns: "Label" as id   |   id: Label   |   "Label"   |   id
-        var qm = rest.match(/^"((?:[^"\\]|\\.)*)"\s+as\s+(\S+)$/);
-        if (qm) { info.label = qm[1]; info.name = qm[2]; return info; }
+        var qm = rest.match(/^"((?:[^"\\]|\\.)*)"\s+as\s+("(?:[^"\\]|\\.)*"|\S+)$/);
+        if (qm) { info.label = qm[1]; info.name = unquoteId(qm[2]); return info; }
         var asm = rest.match(/^(\S+)\s+as\s+(\S+)$/);
         if (asm) { info.label = unquoteId(asm[1]); info.name = asm[2]; return info; }
         var col = rest.match(/^(\S+)\s*:\s*(.+)$/);
@@ -7575,19 +8010,23 @@ Supported options:
     }
 
     function replaceClassDeclaration(oldId, info) {
+      if (info.name !== oldId && existingIds(textarea.value, typeSelect.value)[info.name]) {
+        announce('"' + info.name + '" is already used. Pick a different identifier.', true);
+        return;
+      }
       snapshotForUndo('edit:' + oldId);
       var type = typeSelect.value;
       var newLine = buildClassLine(info);
       var newId = info.name;
       var sourceText = textarea.value;
-      sourceText = replaceLineByMatch(sourceText, type, function (line) {
+      sourceText = replaceBlockByMatch(sourceText, type, function (line) {
         return declarationIdForLine(line, type) === oldId;
       }, newLine);
       if (newId !== oldId && newId) sourceText = renameReferencesInRelations(sourceText, oldId, newId);
       textarea.value = sourceText;
       var preserveId = (newId !== oldId && newId) ? newId : oldId;
-      renderDiagram();
       selectAfterRender(preserveId, 'node');
+      renderDiagram();
     }
 
     function replaceGenericElement(oldId, schema, info) {
@@ -7605,40 +8044,168 @@ Supported options:
         texture: info.texture
       });
       var oldLine = getDeclarationLine(textarea.value, type, oldId);
-      if (oldLine && /\{/.test(oldLine) && declLine && /\{\s*\}/.test(declLine)) {
-        declLine = setBraceBody(declLine, parseBraceBody(oldLine));
-      }
       if (info.dashed && /\bcomponent\b/.test(declLine)) declLine = declLine.replace(/\s+dashed\b/i, '') + ' dashed';
+      if (oldLine && /\{/.test(oldLine) && declLine) {
+        declLine = setBraceBody(declLine, parseBraceBody(oldLine), oldLine.indexOf('\n') !== -1);
+      }
       var sourceText = textarea.value;
       sourceText = replaceBlockByMatch(sourceText, type, function (line) {
         return declarationIdForLine(line, type) === oldId;
       }, declLine);
       if (newId !== oldId && newId) sourceText = renameReferencesInRelations(sourceText, oldId, newId);
       textarea.value = sourceText;
-      renderDiagram();
       selectAfterRender(newId, 'node');
+      renderDiagram();
+    }
+
+    function renameClassMemberTypes(declaration, oldId, newId) {
+      const range = declarationBraceRange(declaration);
+      if (!range) return declaration;
+      let result = declaration.slice(0, range.start + 1);
+      let genericDepth = 0;
+      let inType = false;
+      for (let index = range.start + 1; index < range.end;) {
+        const char = declaration[index];
+        if (char === '"' || char === "'") {
+          let end = index + 1;
+          while (end < range.end) {
+            if (declaration[end] === '\\') { end += 2; continue; }
+            if (declaration[end++] === char) break;
+          }
+          const token = declaration.slice(index, end);
+          result += inType && unquoteId(token) === oldId ? formatRelationEndpointId(newId) : token;
+          index = end;
+          continue;
+        }
+        if (char === ':') { inType = true; genericDepth = 0; }
+        if (inType && char === '<') genericDepth++;
+        if (inType && char === '>') genericDepth = Math.max(0, genericDepth - 1);
+        if (/[;\n=)}]/.test(char) || (char === ',' && genericDepth === 0)) inType = false;
+        if (inType && /[A-Za-z_$]/.test(char)) {
+          const token = declaration.slice(index).match(/^[\w.$]+/)[0];
+          result += token === oldId ? formatRelationEndpointId(newId) : token;
+          index += token.length;
+          continue;
+        }
+        result += char;
+        index++;
+      }
+      return result + declaration.slice(range.end);
     }
 
     function renameReferencesInRelations(text, oldId, newId) {
+      if (typeSelect.value === 'usecase') text = rewriteUsecaseMembershipReferences(text, oldId, newId);
+      text = rewriteOwnedElementStatements(text, typeSelect.value, oldId, newId);
       var positions = readLayoutPositions(text);
       var routes = readLayoutRoutes(text);
       // Migrate positions/routes keyed by oldId → newId.
-      if (positions[oldId]) { positions[newId] = positions[oldId]; delete positions[oldId]; }
+      Object.keys(positions).forEach(function (key) {
+        if (!idIsReferenceTo(key, oldId)) return;
+        positions[newId + key.slice(oldId.length)] = positions[key];
+        delete positions[key];
+      });
       Object.keys(routes).forEach(function (rid) {
-        if (rid === oldId) { routes[newId] = routes[rid]; delete routes[rid]; }
+        const endpoints = rid.match(/^edge:([^|]+)\|([^|]+)$/);
+        if (!endpoints) return;
+        const next = 'edge:' + endpoints.slice(1).map(function (endpoint) {
+          return idIsReferenceTo(endpoint, oldId) ? newId + endpoint.slice(oldId.length) : endpoint;
+        }).join('|');
+        if (next !== rid) { routes[next] = routes[rid]; delete routes[rid]; }
       });
       var clean = stripLayoutMetadata(text);
       var lines = clean.split('\n');
-      var re = new RegExp('(^|[^\\w.])' + oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?=$|[^\\w])', 'g');
-      var quotedRe = new RegExp('"' + oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '"', 'g');
+      let inNote = false;
       for (var i = 0; i < lines.length; i++) {
-        // Only rewrite relation/usage lines (don't double-rewrite the rename target,
-        // which has already been replaced by replaceLineByMatch).
-        if (declarationIdForLine(lines[i], typeSelect.value) === newId) continue;
-        lines[i] = lines[i].replace(re, function (m, pre) { return pre + newId; });
-        lines[i] = lines[i].replace(quotedRe, '"' + newId + '"');
+        if (inNote) { if (/^\s*end\s*note\s*$/i.test(lines[i])) inNote = false; continue; }
+        if (typeSelect.value === 'class' && /^\s*(?:abstract\s+class|class|interface|enum)\b/i.test(lines[i])) {
+          const end = declarationEndIndex(lines, i);
+          const declaration = lines.slice(i, end + 1).join('\n');
+          lines.splice.apply(lines, [i, end - i + 1].concat(renameClassMemberTypes(declaration, oldId, newId).split('\n')));
+          i = end;
+          continue;
+        }
+        const spans = referenceSpans(lines[i], typeSelect.value);
+        spans.reverse().forEach(function (span) {
+          if (!idIsReferenceTo(span.value, oldId)) return;
+          const renamed = newId + span.value.slice(oldId.length);
+          const token = span.quoted ? '"' + escapeQuoted(renamed) + '"' : formatRelationEndpointId(renamed);
+          lines[i] = lines[i].slice(0, span.start) + token + lines[i].slice(span.end);
+        });
+        if (/^\s*note\b/i.test(lines[i]) && lines[i].indexOf(':') < 0) inNote = true;
       }
       return writePositionsIntoSource(lines.join('\n'), typeSelect.value, positions, routes);
+    }
+
+    function renameDeclarationIdentifier(declaration, type, oldId, newId) {
+      const range = declarationBraceRange(declaration);
+      const headerEnd = range ? range.start : declaration.indexOf('\n');
+      const header = headerEnd < 0 ? declaration : declaration.slice(0, headerEnd);
+      const tokens = [];
+      const re = /"(?:[^"\\]|\\.)*"|\S+/g;
+      let match;
+      while ((match = re.exec(header))) tokens.push({ text: match[0], start: match.index, end: re.lastIndex });
+      const aliasIndex = tokens.findIndex(function (token) { return token.text === 'as'; });
+      const token = aliasIndex >= 0 ? tokens[aliasIndex + 1] : tokens.find(function (candidate, index) { return index > 0 && unquoteId(candidate.text) === oldId; });
+      if (!token) return declaration;
+      return declaration.slice(0, token.start) + formatRelationEndpointId(newId) + declaration.slice(token.end);
+    }
+
+    function declarationStatementRanges(declaration, type) {
+      const statements = [];
+      function collect(text, offset) {
+        const range = declarationBraceRange(text);
+        if (!range) { statements.push({ start: offset, end: offset + text.length, text: text }); return; }
+        statements.push({ start: offset, end: offset + range.start, text: text.slice(0, range.start) });
+        bodyStatementRanges(text.slice(range.start + 1, range.end), true).forEach(function (statement) {
+          const start = offset + range.start + 1 + statement.start;
+          if (declarationIdForLine(statement.text, type)) collect(statement.text, start);
+          else statements.push({ start: start, end: offset + range.start + 1 + statement.end, text: statement.text });
+        });
+      }
+      collect(declaration, 0);
+      return statements;
+    }
+
+    function cloneDeclarationForDuplicate(source, type, declaration, oldId, newId) {
+      const statements = declarationStatementRanges(declaration, type);
+      const mapping = new Map([[oldId, newId]]);
+      const taken = existingIds(source, type);
+      taken[newId] = true;
+      if (/^(state|deployment|usecase)$/.test(type)) {
+        const owned = type === 'usecase' ? statements.map(function (statement) { return declarationIdForLine(statement.text, type); }) : ownedElementIds(source, type, oldId);
+        owned.forEach(function (id) {
+          if (!id || mapping.has(id)) return;
+          let suffix = 2;
+          let candidate = id;
+          while (taken[candidate]) candidate = id + suffix++;
+          taken[candidate] = true;
+          mapping.set(id, candidate);
+        });
+      }
+      function clonedReference(id) {
+        if (mapping.has(id)) return mapping.get(id);
+        if (id.indexOf(oldId + '.') === 0) return newId + id.slice(oldId.length);
+        return id;
+      }
+      let cloned = declaration;
+      statements.reverse().forEach(function (statement) {
+        const id = declarationIdForLine(statement.text, type);
+        let changed = statement.text;
+        if (id && mapping.has(id)) {
+          changed = renameDeclarationIdentifier(changed, type, id, mapping.get(id));
+        } else {
+          const referenceLine = /^\s*note\b/.test(changed) ? changed.split('\n')[0] : changed;
+          referenceSpans(referenceLine, type).reverse().forEach(function (span) {
+            const next = clonedReference(span.value);
+            if (next !== span.value) changed = changed.slice(0, span.start) + formatRelationEndpointId(next) + changed.slice(span.end);
+          });
+          if (type === 'usecase' && mapping.has(unquoteId(changed.trim()))) {
+            changed = changed.replace(/\S[\s\S]*\S|\S/, formatRelationEndpointId(mapping.get(unquoteId(changed.trim()))));
+          }
+        }
+        cloned = cloned.slice(0, statement.start) + changed + cloned.slice(statement.end);
+      });
+      return cloned;
     }
 
     function renameActivityElement(oldId, newLabel) {
@@ -7699,8 +8266,24 @@ Supported options:
         announce('"' + newId + '" is already used. Pick a different identifier.', true);
         return;
       }
-      snapshotForUndo();
       var sourceText = textarea.value;
+      const port = componentPortForId(sourceText, type, oldId);
+      if (port) {
+        const alias = newId.indexOf(port.owner + '.') === 0 ? newId.slice(port.owner.length + 1) : newId;
+        if (!alias || /[\s.]/.test(alias)) {
+          announce('Keep the port in "' + port.owner + '" and use a unique port identifier.', true);
+          return;
+        }
+        newId = port.owner + '.' + alias;
+        if (taken[newId]) { announce('"' + newId + '" is already used. Pick a different identifier.', true); return; }
+        snapshotForUndo();
+        port.body.ports[port.index].alias = alias;
+        sourceText = replaceBlockByMatch(sourceText, type, function (line) { return declarationIdForLine(line, type) === port.owner; }, setBraceBody(port.declaration, buildComponentBody(port.body)));
+        textarea.value = renameReferencesInRelations(sourceText, oldId, newId);
+        selectAfterRender(newId, 'node');
+        renderDiagram();
+        return;
+      }
       // Re-emit declaration with the new id, then rewrite references.
       var line = getDeclarationLine(sourceText, type, oldId);
       if (line == null) {
@@ -7708,23 +8291,21 @@ Supported options:
           renameActivityElement(oldId, newId);
           return;
         }
-        if (type !== 'state' || oldId === '[*]') return;
+        if ((type !== 'state' && type !== 'deployment') || oldId === '[*]') return;
+        snapshotForUndo();
         textarea.value = renameReferencesInRelations(sourceText, oldId, newId);
-        renderDiagram();
         selectAfterRender(newId, 'node');
+        renderDiagram();
         return;
       }
-      var declId = declarationIdForLine(line, type);
-      var renamed = line;
-      // Substitute the declared identifier token. Be conservative — just swap the
-      // first whole-word occurrence of oldId in the declaration line.
-      var re = new RegExp('\\b' + oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
-      renamed = renamed.replace(re, newId);
-      sourceText = replaceLineByMatch(sourceText, type, function (l) { return declarationIdForLine(l, type) === oldId; }, renamed);
+      var renamed = renameDeclarationIdentifier(line, type, oldId, newId);
+      if (renamed === line) return;
+      snapshotForUndo();
+      sourceText = replaceBlockByMatch(sourceText, type, function (l) { return declarationIdForLine(l, type) === oldId; }, renamed);
       sourceText = renameReferencesInRelations(sourceText, oldId, newId);
       textarea.value = sourceText;
-      renderDiagram();
       selectAfterRender(newId, 'node');
+      renderDiagram();
     }
 
     function relationLineMatchForRouteId(routeId, type, lines, relationIndices) {
@@ -7840,6 +8421,15 @@ Supported options:
         rels.map(function (r) { return { value: r.id, label: r.label }; }),
         info.kind, function (v) {
           info.kind = v;
+          // These choices explicitly choose association direction. Whole-part
+          // choices change the diamond while retaining the user's end marks.
+          if (type === 'class' && /^(plain|assoc|biassoc)$/.test(v)) {
+            var requested = rels.find(function (relation) { return relation.id === v; });
+            var defaults = parseRelationLine('A ' + requested.op + ' B');
+            info.navigability = defaults.navigability;
+            info.sourceNavigability = defaults.sourceNavigability;
+            info.targetNavigability = defaults.targetNavigability;
+          }
           replaceRelationLine(lineIdx, info);
         }
       )));
@@ -7879,7 +8469,17 @@ Supported options:
           replaceRelationLine(lineIdx, info);
         })));
       }
-      if (multSpec.navigability || /^(compose|aggregate|plain|assoc)$/.test(info.kind)) {
+      if (type === 'class' && /^(compose|aggregate|plain|assoc|biassoc)$/.test(info.kind)) {
+        ['source', 'target'].forEach(function (end) {
+          propsContent.appendChild(field((end === 'source' ? 'Source' : 'Target') + ' navigability', selectInput(
+            [{ value: '', label: 'Unspecified' }, { value: 'navigable', label: 'Navigable' }, { value: 'nonnav', label: 'Non-navigable' }],
+            info[end + 'Navigability'], function (v) {
+              info[end + 'Navigability'] = v;
+              replaceRelationLine(lineIdx, info);
+            }
+          )));
+        });
+      } else if (multSpec.navigability || /^(compose|aggregate|plain|assoc)$/.test(info.kind)) {
         propsContent.appendChild(field('Navigability', selectInput(
           [{ value: '', label: 'Default' }, { value: 'navigable', label: 'Navigable →' },
            { value: 'bidirectional', label: 'Bidirectional ↔' }, { value: 'nonnav', label: 'Non-navigable ✕' }],
@@ -8161,9 +8761,7 @@ Supported options:
       var reverseOps = {
         '<|--': { op: '--|>', kind: 'gen' },
         '<|..': { op: '..|>', kind: 'real' },
-        '<--': { op: '-->', kind: 'assoc' },
         '<..': { op: '..>', kind: 'depend' },
-        'x--': { op: '--x', kind: 'assoc', navigability: 'nonnav' },
         '--*': { op: '*--', kind: 'compose' },
         '<--*': { op: '*-->', kind: 'compose', navigability: 'navigable' },
         '<-->*': { op: '*<-->', kind: 'compose', navigability: 'bidirectional' },
@@ -8188,6 +8786,11 @@ Supported options:
         info.kind = guessRelationKind(info.op);
       }
       if (!info.navigability) info.navigability = relationNavigabilityFromOp(info.op);
+      var associationEnds = String(info.op || '').match(/^[*o]?([<x]?)--([>x]?)$/);
+      if (associationEnds) {
+        info.sourceNavigability = associationEnds[1] === '<' ? 'navigable' : (associationEnds[1] === 'x' ? 'nonnav' : '');
+        info.targetNavigability = associationEnds[2] === '>' ? 'navigable' : (associationEnds[2] === 'x' ? 'nonnav' : '');
+      }
       return info;
     }
 
@@ -8226,7 +8829,7 @@ Supported options:
       if (t.charAt(0) === 'o') return 'aggregate';
       if (t === '<-->') return 'biassoc';
       if (t === '-->') return 'assoc';
-      if (t === '--x' || t === 'x--' || t === 'x--x') return 'assoc';
+      if (/^[<x]?--[>x]?$/.test(t) && t !== '--') return 'assoc';
       if (t === '..>') return 'depend';
       if (t === '--') return 'plain';
       if (t === '==') return 'total';
@@ -8246,7 +8849,8 @@ Supported options:
       snapshotForUndo('rel:' + lineIdx);
       var newLine = buildRelationLine(spec, info.source, info.target, {
         label: info.label, sourceMult: info.sourceMult, targetMult: info.targetMult,
-        navigability: info.navigability, stereotype: info.stereotype, dashed: info.dashed
+        navigability: info.navigability, sourceNavigability: info.sourceNavigability,
+        targetNavigability: info.targetNavigability, op: info.op, stereotype: info.stereotype, dashed: info.dashed
       });
       var positions = readLayoutPositions(textarea.value);
       var routes = readLayoutRoutes(textarea.value);
@@ -8307,6 +8911,8 @@ Supported options:
         sourceMult: info.sourceMult,
         targetMult: info.targetMult,
         navigability: info.navigability,
+        sourceNavigability: info.sourceNavigability,
+        targetNavigability: info.targetNavigability,
         stereotype: info.stereotype,
         dashed: info.dashed,
         source: info.source,
@@ -8345,6 +8951,8 @@ Supported options:
         sourceMult: nextInfo.sourceMult,
         targetMult: nextInfo.targetMult,
         navigability: nextInfo.navigability,
+        sourceNavigability: nextInfo.sourceNavigability,
+        targetNavigability: nextInfo.targetNavigability,
         stereotype: nextInfo.stereotype,
         dashed: nextInfo.dashed
       });
@@ -8391,6 +8999,8 @@ Supported options:
         sourceMult: meta.info.sourceMult,
         targetMult: meta.info.targetMult,
         navigability: meta.info.navigability,
+        sourceNavigability: meta.info.sourceNavigability,
+        targetNavigability: meta.info.targetNavigability,
         stereotype: meta.info.stereotype,
         dashed: meta.info.dashed,
         source: meta.info.source,
@@ -8429,6 +9039,8 @@ Supported options:
         sourceMult: info.sourceMult,
         targetMult: info.targetMult,
         navigability: info.navigability,
+        sourceNavigability: info.sourceNavigability,
+        targetNavigability: info.targetNavigability,
         stereotype: info.stereotype,
         dashed: info.dashed
       });
@@ -8609,7 +9221,6 @@ Supported options:
               setSelectedLayoutId(route.id, 'route', { extend: true });
               return;
             }
-            snapshotForUndo('drag:route:' + route.id);
             var start = editorCanvasPoint(svg, event.clientX, event.clientY);
             var segmentIndex = Number(event.currentTarget.getAttribute('data-segment-index'));
             var locked = event.currentTarget.getAttribute('data-locked-endpoints') === 'true';
@@ -8622,6 +9233,7 @@ Supported options:
               segmentIndex: segmentIndex,
               lockedEndpoints: locked,
               start: start,
+              startClient: { x: event.clientX, y: event.clientY },
               points: clonePoints(route.points)
             };
             try { event.currentTarget.setPointerCapture(event.pointerId); } catch (e) {}
@@ -9001,7 +9613,6 @@ Supported options:
           if (!alreadySelected) {
             setSelectedLayoutId(item.id, 'node');
           }
-          snapshotForUndo('drag:elt:' + item.id);
           var start = editorCanvasPoint(svg, event.clientX, event.clientY);
           // Build group drag state if multiple selected.
           var allPositions = collectPositions(editables);
@@ -9023,6 +9634,7 @@ Supported options:
             rect: rect,
             item: item,
             start: start,
+            startClient: { x: event.clientX, y: event.clientY },
             box: item.box,
             positions: allPositions,
             parts: collectMoveParts(svg, item.box, item.id),
@@ -9177,6 +9789,14 @@ Supported options:
       if (pendingSelect) {
         var ps2 = pendingSelect; pendingSelect = null;
         setSelectedLayoutId(ps2.id, ps2.kind);
+      }
+      revealSelectedLayoutTarget();
+      if (initialCanvasRevealPending) {
+        var firstTarget = output.querySelector('.uml-pg-edit-a11y-target');
+        if (firstTarget) {
+          if (!selectedLayoutId) revealEditorTarget(firstTarget);
+          initialCanvasRevealPending = false;
+        }
       }
       refreshActiveButtonStates();
     }
@@ -9784,7 +10404,7 @@ Supported options:
           // or `+ name: type`. Strip leading visibility/modifier tokens to compare.
           for (var j = 0; j < info.members.length; j++) {
             var m = info.members[j];
-            var rendered = (m.visibility || '+') + ' ';
+            var rendered = (m.visibility || '') + ' ';
             if (m.isAbstract) rendered += '{abstract} ';
             if (m.isStatic) rendered += '{static} ';
             rendered += (m.text || '').trim();
@@ -9810,7 +10430,7 @@ Supported options:
       var input = document.createElement('input');
       input.type = 'text';
       input.className = 'uml-pg-inline-input';
-      input.value = (member.visibility || '+') +
+      input.value = (member.visibility || '') +
                     (member.isAbstract ? ' {abstract}' : '') +
                     (member.isStatic ? ' {static}' : '') +
                     ' ' + (member.text || '');
@@ -9833,7 +10453,7 @@ Supported options:
         cleanup();
         if (!raw) return;
         var parsed = parseMemberLine(raw);
-        // If the user wrote no visibility, parseMemberLine defaults to '+'. Keep that.
+        // An omitted visibility stays omitted when editing inline as well.
         info.members[memberIdx] = parsed;
         snapshotForUndo();
         var newLine = buildClassLine(info);
@@ -9864,6 +10484,7 @@ Supported options:
     // but do not survive page reloads.
     var panOffset = { x: 0, y: 0 };
     var zoom = 1;
+    var initialCanvasRevealPending = true;
     var ZOOM_MIN = 0.2;
     var ZOOM_MAX = 5;
     function applyViewTransform(svg) {
@@ -9880,6 +10501,7 @@ Supported options:
     var applyPanTransform = applyViewTransform;
     function resetView() {
       panOffset.x = 0; panOffset.y = 0; zoom = 1;
+      initialCanvasRevealPending = true;
       var svg = output.querySelector('svg');
       if (svg) applyViewTransform(svg);
     }
@@ -9993,20 +10615,16 @@ Supported options:
         }
         if (declIdx === -1) return; // declaration not found (pseudostate, etc.)
         var newId = generateUniqueId(textarea.value, type, origId);
-        var escaped = origId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // Replace the FIRST occurrence of the original id as a word boundary
-        // so the renamed declaration doesn't accidentally rewrite a body
-        // mention (e.g. an attribute named the same as the class).
-        var renamed = lines[declIdx].replace(new RegExp('\\b' + escaped + '\\b'), newId);
+        var declaration = getDeclarationLine(textarea.value, type, origId);
+        var renamed = cloneDeclarationForDuplicate(textarea.value, type, declaration, origId, newId);
         if (type === 'crc') {
           var duplicateCard = crcCardForId(textarea.value, origId);
           if (!duplicateCard) return;
           duplicateCard.id = newId;
           renamed = buildCrcCardSource(duplicateCard);
         }
-        if (renamed === lines[declIdx]) return;
+        if (renamed === declaration) return;
         var insertAt = findInsertPointForDeclaration(lines);
-        lines.splice(insertAt, 0, renamed);
         // Position: prefer explicit @pos from source; fall back to the
         // rendered hitbox bbox for auto-laid-out elements.
         var basePos = positions[origId];
@@ -10021,7 +10639,7 @@ Supported options:
         if (basePos) {
           positions[newId] = { x: basePos.x + 20, y: basePos.y + 20 };
         }
-        textarea.value = writePositionsIntoSource(lines.join('\n'), type, positions, routes);
+        textarea.value = rewriteSourceLines(textarea.value, type, [{ start: insertAt, end: insertAt - 1, replacement: renamed }], positions, routes);
         newIds.push(newId);
       });
       if (!newIds.length) {
@@ -10155,6 +10773,14 @@ Supported options:
 
     function updateDrag(event, finish) {
       if (!dragState) return;
+      if (!dragState.hasMoved && dragState.startClient) {
+        const distance = Math.hypot(event.clientX - dragState.startClient.x, event.clientY - dragState.startClient.y);
+        if (distance < 3) {
+          if (finish) dragState = null;
+          return;
+        }
+        dragState.hasMoved = true;
+      }
       var now = editorCanvasPoint(dragState.svg, event.clientX, event.clientY);
       if (dragState.kind === 'route') {
         var routeDx = now.x - dragState.start.x;
@@ -10209,6 +10835,7 @@ Supported options:
         syncRouteOverlays(dragState.layer, dragState.route.id, nextPoints);
 
         if (finish) {
+          snapshotForUndo('drag:route:' + dragState.route.id);
           var routes = readLayoutRoutes(textarea.value);
           var routeKey = layoutRouteStorageKey(routes, dragState.route) || dragState.route.id;
           routes[routeKey] = { points: nextPoints };
@@ -10293,6 +10920,7 @@ Supported options:
       applyConnectedRouteDeltas(allConnectedRoutes, movedDeltas, dragState.layer);
 
       if (finish) {
+        snapshotForUndo('drag:elt:' + dragState.item.id);
         dragState.positions[dragState.item.id] = { x: nextX, y: nextY };
         // For group: shift every other selected element's stored position by the
         // same visualDx/Dy.
@@ -10354,6 +10982,48 @@ Supported options:
     rememberCurrentSource(currentType);
     updateLayoutVisibility();
 
+    // These checks flag confirmed notation problems while retaining every draft
+    // edit. They deliberately do not claim complete UML model validation.
+    function updateDraftDiagnostics(text, type) {
+      var messages = [];
+      if (type === 'sequence') {
+        sequenceFragmentRanges(text, true).forEach(function (fragment) {
+          if (fragment.endIdx < 0) messages.push('Line ' + (fragment.startIdx + 1) + ': ' + fragment.kind + ' is missing its closing end.');
+          if (/^(opt|loop|break|neg)$/.test(fragment.kind) && fragment.branches.length) {
+            messages.push('Line ' + (fragment.startIdx + 1) + ': ' + fragment.kind + ' requires one operand. Keep this draft, or use alt/par for multiple operands.');
+          }
+        });
+      }
+      if (type === 'class' || type === 'usecase') {
+        sourceLinesWithoutNotes(text).forEach(function (line, index) {
+          var relation = parseRelationLine(line);
+          if (relation && relation.kind === 'gen' && relation.source && relation.source === relation.target) {
+            messages.push('Line ' + (index + 1) + ': an element cannot generalize itself.');
+          }
+        });
+      }
+      var region = document.getElementById('uml-pg-diagnostics');
+      var signature = messages.join('\n');
+      if (region.getAttribute('data-diagnostics') === signature) return;
+      region.setAttribute('data-diagnostics', signature);
+      region.replaceChildren();
+      region.hidden = messages.length === 0;
+      if (!messages.length) return;
+      var title = document.createElement('h3');
+      title.textContent = 'Draft diagnostics';
+      region.appendChild(title);
+      var hint = document.createElement('p');
+      hint.textContent = 'Your draft is retained. These checks cover common notation problems, not every UML constraint.';
+      region.appendChild(hint);
+      var list = document.createElement('ul');
+      messages.forEach(function (message) {
+        var item = document.createElement('li');
+        item.textContent = message;
+        list.appendChild(item);
+      });
+      region.appendChild(list);
+    }
+
     function renderDiagram(options) {
       options = options || {};
       rememberCurrentSource(currentType);
@@ -10361,6 +11031,7 @@ Supported options:
       cancelVisualEditorInstall();
       var text = textarea.value.trim();
       var type = typeSelect.value;
+      updateDraftDiagnostics(text, type);
       // is-hidden has display:none !important — toggling the class is the
       // only reliable way to actually hide/show the error box. Setting
       // style.display alone is ignored.
@@ -10495,6 +11166,11 @@ Supported options:
     typeSelect.addEventListener('change', function () {
       var prev = currentType;
       var nextType = typeSelect.value;
+      clearTimeout(debounceTimer);
+      historyByType[prev] = { undo: undoStack, redo: redoStack };
+      const nextHistory = historyByType[nextType] || { undo: [], redo: [] };
+      undoStack = nextHistory.undo;
+      redoStack = nextHistory.redo;
       rememberCurrentSource(prev);
       // Persist whatever's in the editor under the *previous* type before loading
       // the new type's content, so each type keeps its own draft.
@@ -10508,10 +11184,14 @@ Supported options:
       } else {
         textarea.value = starterText(currentType, layoutSelect.value);
       }
+      lastSnapshotValue = textarea.value;
+      refreshUndoButtons();
       rememberCurrentSource(currentType);
       updateLayoutVisibility();
       setActiveTool(null);
+      pendingSelect = null;
       setSelectedLayoutId(null);
+      initialCanvasRevealPending = true;
       rebuildPalette();
       renderDiagram();
     });
@@ -10639,6 +11319,17 @@ Supported options:
         document.addEventListener('pointerup', onUp);
       });
     }
+    output.addEventListener('focusin', function (event) {
+      var target = event.target;
+      if (target && target.closest && target.closest('svg')) {
+        revealEditorTarget(target);
+      }
+    });
+    output.addEventListener('keydown', function (event) {
+      // Selection can open the properties pane and narrow the canvas after the
+      // focus event. Run after the target's keyboard handler has updated it.
+      if (event.target && event.target.hasAttribute('data-layout-id')) revealSelectedLayoutTarget();
+    });
 
     document.addEventListener('pointermove', function (event) {
       if (dragState) updateDrag(event, false);
