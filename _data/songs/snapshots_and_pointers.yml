@@ -1,0 +1,622 @@
+# Storyboard for "Snapshots and Pointers", the Git song on the SE Book page
+# SEBook/tools/git.md (embedded with _includes/song-video.html).
+#
+# This file is the single source of truth for the song's words and timing:
+#   - scripts/song-video/songs/snapshots_and_pointers.js choreographs the
+#     music video against each line's `start` and its `marks` (the times of
+#     the words the visuals hit), and render.js renders the MP4 and writes the
+#     captions file from `text` (re-render everything with
+#     `node scripts/song-video/render.js snapshots_and_pointers`);
+#   - _includes/song-video.html prints every line with its `visual`
+#     description as the on-page transcript (WCAG 1.2.1 / 1.2.3);
+#   - each section's `narration` is spoken in the audio-described cut, where
+#     the video pauses at the start of the section while the narrator
+#     describes what it shows (extended audio description, WCAG 1.2.5).
+# Editing text or descriptions here updates the transcript on the next Jekyll
+# build, but the video and captions only after a re-render.
+#
+# Times are seconds into the recording. Line `start`/`end` and `marks` come
+# from Whisper word timestamps aligned to the lyrics; `text` is what is
+# actually sung, written in Git notation (e.g. "reset --hard" for the sung
+# "reset dash-dash hard"). Two spots in this take differ from the lyric
+# sheet: chorus 2 ends on "moves" (the verse cuts in over "with it"), and the
+# last quiz answer skips "Never!".
+
+title: "Snapshots and Pointers: a song about Git"   # the video's accessible name
+credit: Lyrics written for this chapter; music and vocals generated with Suno.
+video: /assets/video/snapshots-and-pointers.mp4
+captions: /assets/video/snapshots-and-pointers.vtt
+described_video: /assets/video/snapshots-and-pointers-described.mp4
+described_captions: /assets/video/snapshots-and-pointers-described.vtt
+poster: /assets/video/snapshots-and-pointers-poster.jpg
+soundtrack: scripts/song-video/songs/snapshots_and_pointers.m4a   # repo path; render input only
+narrator:
+  voice: Samantha   # macOS `say` voice for the audio-described cut
+  rate: 205         # words per minute
+width: 1920
+height: 1080
+fps: 30
+duration: 247.97
+poster_time: 18.6
+beats:
+  bpm: 95.11   # tracked with librosa; the grid drifts by under 50 ms
+  first: 0.815
+
+sections:
+  - id: intro
+    title: "Intro"
+    delivery: spoken
+    narration: "Audio-described version: before each section, the video pauses while I describe what it shows. The intro: cards for files named homework_final.txt, homework_final_2.txt, and more pile up, then spiral into the Time Stone, a green gem in a golden ring, under the title Snapshots and pointers."
+    lines:
+      - id: intro-1
+        start: 0.86
+        end: 4.32
+        text: "Homework final. Homework final two. Homework really done."
+        marks: {homework: 0.86, homework_2: 2.24, homework_3: 3.46}
+        visual: "File cards pop up one by one: homework_final.txt, homework_final_2.txt, homework_really_done.txt."
+      - id: intro-2
+        start: 5.14
+        end: 8.36
+        text: "A folder full of copies, and you can't trust a single one."
+        marks: {folder: 5.52, copies: 6.16, trust: 7.40}
+        visual: "More copies pile up (homework_v3_FINAL.txt, homework (1).txt, homework_FINAL_use_this.txt) and the pile shakes under a “Which one?!” sticker."
+      - id: intro-3
+        start: 9.02
+        end: 12.76
+        text: "There's a better way: the software engineer's Time Stone."
+        marks: {better: 9.54, time: 12.22}
+        visual: "The pile spirals into a glowing green gem in a golden ring, the Time Stone, and “The software engineer’s Time Stone” appears under it."
+      - id: intro-4
+        start: 13.80
+        end: 17.94
+        text: "And here's how the magic works: snapshots… and pointers."
+        marks: {magic: 14.78, snapshots: 16.88, pointers: 17.62}
+        visual: "The Time Stone spins while “Snapshots” (with a camera icon) and “& pointers” (with a pointer icon) slam in."
+  - id: verse-1
+    title: "Verse 1: Where your work lives"
+    delivery: sung
+    narration: "Verse 1 shows three panels: working tree, staging area, and repository, with a terminal in the corner. The terminal runs git add app.py, and a copy of the file flies into the staging area. Then git commit with the message Add login page, and a snapshot flies into the repository. Two more commits follow: Fix login bug, and Clean up styles. Last, git status shows a commit graph under three columns: untracked, not staged, and staged."
+    lines:
+      - id: verse-1-1
+        start: 19.52
+        end: 22.04
+        text: "So let Git track your versions. First, the working tree:"
+        marks: {git: 20.12, working: 21.54}
+        visual: "Three panels line up: Working tree, Staging area, and Repository. The Working tree lights up."
+      - id: verse-1-2
+        start: 22.24
+        end: 24.54
+        text: "the files in your editor — what you type is what you see."
+        marks: {files: 22.46, type: 23.72}
+        visual: "File cards app.py v1 and README.md v1 appear in the Working tree; app.py’s badge flips to v2 under an “Edited” sticker."
+      - id: verse-1-3
+        start: 24.66
+        end: 27.22
+        text: "Next, the staging area: your next commit, lined up for the shot."
+        marks: {staging: 25.02, next_2: 25.92, shot: 27.00}
+        visual: "The Staging area lights up with camera-viewfinder corners and a “Next commit” sticker."
+      - id: verse-1-4
+        start: 27.38
+        end: 29.60
+        text: "It starts out as a copy of the last commit you've got;"
+        marks: {copy: 28.16, last: 28.76}
+        visual: "Snapshot C1, “Initial commit”, sits in the Repository; copies of app.py v1 and README.md v1 fly from it into the Staging area."
+      - id: verse-1-5
+        start: 29.70
+        end: 32.26
+        text: "git add copies in the new version of each file you choose —"
+        marks: {add: 29.90, new: 30.74}
+        visual: "Terminal: git add app.py. A copy of app.py v2 flies from the Working tree into the Staging area and replaces v1 there (“Copy”); the Working tree keeps its app.py v2."
+      - id: verse-1-6
+        start: 32.26
+        end: 34.76
+        text: "the rest stay as they were. That's what the next commit will use."
+        marks: {rest: 32.56, next: 33.82}
+        visual: "README.md v1 stays in the Staging area with an “Unchanged” sticker."
+      - id: verse-1-7
+        start: 34.71
+        end: 37.36
+        text: "git commit takes the picture of the staging area, just so,"
+        marks: {commit: 34.96, picture: 35.44}
+        visual: "Terminal: git commit -m \"Add login page\". A shutter blinks over the Staging area and snapshot C2 flies into the Repository."
+      - id: verse-1-8
+        start: 37.36
+        end: 39.72
+        text: "and stamps it with a message, so that future you will know."
+        marks: {stamps: 37.58, future: 38.86}
+        visual: "The message “Add login page” types onto snapshot C2."
+      - id: verse-1-9
+        start: 39.72
+        end: 42.58
+        text: "Fixed a bug and cleaned up, too? Stage the fix, commit, then the rest:"
+        marks: {fixed: 39.72, cleaned: 40.46, stage: 41.32, commit: 41.90, rest: 42.40}
+        visual: "auth.py (fix) and style.css (tidy) appear in the Working tree. Terminal: git add auth.py, then git commit -m \"Fix login bug\" (snapshot C3), then git add style.css."
+      - id: verse-1-10
+        start: 42.58
+        end: 45.12
+        text: "two small commits, one job each — that's the history that reads best."
+        marks: {two: 42.58, one: 43.54, history: 44.24}
+        visual: "Terminal: git commit -m \"Clean up styles\" (snapshot C4). Stickers under the Repository: “1 job each” and “Reads best”."
+      - id: verse-1-11
+        start: 45.12
+        end: 47.56
+        text: "Not sure what's where? Run git status — it lays it out for you:"
+        marks: {run: 46.04, status: 46.28}
+        visual: "Terminal: git status. The SE Book Git graph appears (C2, C3, C4, with HEAD and main on C4) under a status strip with Untracked, Not staged, and Staged columns."
+      - id: verse-1-12
+        start: 47.56
+        end: 50.32
+        text: "what's staged, what's changed but isn't staged, and which files are new."
+        marks: {staged: 47.92, changed: 48.36, new: 50.12}
+        visual: "Rows drop into the strip as they are sung: modified app.py under Staged, modified README.md under Not staged, then notes.txt under Untracked."
+  - id: chorus-1
+    title: "Chorus"
+    delivery: sung
+    narration: "The chorus shows four panels: working tree, staging area, local repo, and remote. Arrows labeled git add, git commit, git push, and git pull carry the file and its snapshot along. Then the words: Commits never change, only pointers move. Finally, a commit graph shows the main label and HEAD; after git commit, both slide up to the new commit."
+    lines:
+      - id: chorus-1-1
+        start: 50.32
+        end: 52.10
+        text: "Edit in the working tree,"
+        marks: {edit: 50.32, working: 51.20}
+        visual: "Four panels: Working tree, Staging area, Local repo, and Remote. app.py v2 pops into the Working tree with an “Edit” sticker."
+      - id: chorus-1-2
+        start: 52.42
+        end: 55.02
+        text: "add it to the staging area — your next commit to be;"
+        marks: {add: 52.42, staging: 53.06, next: 54.04}
+        visual: "An arrow labeled git add carries a copy of app.py into the Staging area, tagged “Next commit”."
+      - id: chorus-1-3
+        start: 55.02
+        end: 57.72
+        text: "commit snapshots the staging area on your machine;"
+        marks: {commit: 55.02, snapshots: 55.50, machine: 57.34}
+        visual: "An arrow labeled git commit: a shutter blinks and snapshot C lands in the Local repo. A bracket under the first three panels reads “On your machine”."
+      - id: chorus-1-4
+        start: 57.72
+        end: 60.38
+        text: "push shares your commits, pull brings in your team's."
+        marks: {push: 57.72, pull: 59.14}
+        visual: "An arrow labeled git push copies the snapshot to the Remote; an arrow labeled git pull brings a teammate’s snapshot T back."
+      - id: chorus-1-5
+        start: 60.38
+        end: 62.74
+        text: "Commits never change — only pointers move:"
+        marks: {commits: 60.38, never: 60.72, only: 61.70, pointers: 61.88, move: 62.42}
+        visual: "Big kinetic type: a padlock and “Commits never change”, then “only pointers move” with a pointer icon."
+      - id: chorus-1-6
+        start: 62.74
+        end: 65.26
+        text: "a branch is just a label on a commit,"
+        marks: {branch: 63.08, label: 63.82}
+        visual: "A Git graph with commits A and B, and HEAD and main on B. A “Label” sticker points at main."
+      - id: chorus-1-7
+        start: 65.26
+        end: 67.28
+        text: "and HEAD is where you are —"
+        marks: {head: 65.78, are: 66.80}
+        visual: "A “You are here” map-pin sticker points at the HEAD label."
+      - id: chorus-1-8
+        start: 67.28
+        end: 70.50
+        text: "commit, and your branch moves with it."
+        marks: {commit: 67.28, moves: 69.38}
+        visual: "Terminal: git commit -m \"Add login\". Commit C pops onto the graph and the main and HEAD labels glide up to it (“Moves with it”)."
+  - id: verse-2
+    title: "Verse 2: Snapshots"
+    delivery: sung
+    narration: "Verse 2 shows a snapshot card listing every file, with who, when, and why, and a frozen look. Its ID is a long hexadecimal hash, and changing one byte gives a different hash. In a commit graph, git commit --amend adds a new commit beside the old one and moves main to it; the old commit turns grey but stays. Then git log lists the commits newest first, and git show marks one line dropped and one line added. Last, two chat messages share the hash a3f2."
+    lines:
+      - id: verse-2-1
+        start: 70.50
+        end: 72.82
+        text: "A commit stores the whole project, every tracked file, frozen tight,"
+        marks: {whole: 71.24, every: 71.76, frozen: 72.30}
+        visual: "A snapshot card lists every file (app.py, README.md, auth.py, style.css); frost spreads over it under a “Frozen” sticker."
+      - id: verse-2-2
+        start: 72.82
+        end: 75.24
+        text: "with who and when and why, and a link to its parent right behind."
+        marks: {who: 72.98, when: 73.28, why: 73.50, link: 73.92}
+        visual: "The card fills in who: you, when: Fri 10:42, why: Fix login bug; a parent card slides in behind it (“Parent”)."
+      - id: verse-2-3
+        start: 75.24
+        end: 77.76
+        text: "Its ID's a hash of all of that, the long hex string you've seen:"
+        marks: {hash: 75.98, long: 76.76}
+        visual: "A long hexadecimal commit ID scrambles into place beside the card: a3f2d9c 1e84b07 5c2a."
+      - id: verse-2-4
+        start: 77.76
+        end: 80.30
+        text: "change a single byte inside, you'd get a different ID."
+        marks: {byte: 78.58, different: 79.62}
+        visual: "README.md turns pink (“1 byte changed”) and a second ID scrambles in: 7c19b0e 52da9f1 0e3b (“Different ID!”)."
+      - id: verse-2-5
+        start: 80.30
+        end: 82.50
+        text: "So commits can't be edited. Amend just makes a new one"
+        marks: {edited: 81.29, amend: 81.44, new: 82.12}
+        visual: "A Git graph: A, B, and C (“Add logn”) with HEAD and main on C, which gets a “Can’t edit” padlock sticker. Terminal: git commit --amend -m \"Add login\". A new commit C′ (“Add login”) appears beside C."
+      - id: verse-2-6
+        start: 82.50
+        end: 84.90
+        text: "and moves your branch to point there; the old one's left alone."
+        marks: {moves: 82.76, old: 84.02}
+        visual: "The main and HEAD labels glide over to C′; the old commit C turns grey but stays in the graph (“Old one: still there”)."
+      - id: verse-2-7
+        start: 84.71
+        end: 87.08
+        text: "git log walks back through the parents, newest one on top;"
+        marks: {log: 84.90, walks: 85.28, back: 85.48, parents: 85.88, newest: 86.40}
+        visual: "Terminal: git log --oneline lists C′ Add login, then B Initial commit. A gold ring walks from C′ back through its parents B and A (“Newest on top”)."
+      - id: verse-2-8
+        start: 87.08
+        end: 90.28
+        text: "git show compares a commit with its parent: what was added, what was dropped."
+        marks: {show: 87.38, parent: 88.76, added: 89.42, dropped: 90.00}
+        visual: "Terminal: git show C′. A diff of app.py: print(\"Hello \" + name) marked − (dropped) and print(f\"Hello, {name}!\") marked + (added)."
+      - id: verse-2-9
+        start: 90.56
+        end: 93.06
+        text: "And since a hash can't drift, it's a name your team can share:"
+        marks: {hash: 90.98, drift: 91.66, share: 92.84}
+        visual: "The ID a3f2d9c, under a padlock (“Can’t drift”), between two chat avatars, You and Sam."
+      - id: verse-2-10
+        start: 93.06
+        end: 95.84
+        text: "\"It broke at a3f2\" — they'll find the same snapshot there."
+        marks: {broke: 93.18, find: 94.46}
+        visual: "You: “it broke at a3f2”. Sam: “same snapshot, found it” (“Same snapshot”)."
+  - id: chorus-2
+    title: "Chorus"
+    delivery: sung
+    narration: "The chorus again: the four panels, the words Commits never change, only pointers move, and main sliding up to a new commit."
+    lines:
+      - id: chorus-2-1
+        start: 95.84
+        end: 97.54
+        text: "Edit in the working tree,"
+        marks: {edit: 95.84, working: 96.66}
+        visual: "Four panels: Working tree, Staging area, Local repo, and Remote. app.py v2 pops into the Working tree with an “Edit” sticker."
+      - id: chorus-2-2
+        start: 97.54
+        end: 100.26
+        text: "add it to the staging area — your next commit to be;"
+        marks: {add: 97.54, staging: 98.50, next: 99.48}
+        visual: "An arrow labeled git add carries a copy of app.py into the Staging area, tagged “Next commit”."
+      - id: chorus-2-3
+        start: 100.46
+        end: 103.16
+        text: "commit snapshots the staging area on your machine;"
+        marks: {commit: 100.46, snapshots: 100.94, machine: 102.78}
+        visual: "An arrow labeled git commit: a shutter blinks and snapshot C lands in the Local repo. A bracket under the first three panels reads “On your machine”."
+      - id: chorus-2-4
+        start: 103.16
+        end: 105.70
+        text: "push shares your commits, pull brings in your team's."
+        marks: {push: 103.16, pull: 104.42}
+        visual: "An arrow labeled git push copies the snapshot to the Remote; an arrow labeled git pull brings a teammate’s snapshot T back."
+      - id: chorus-2-5
+        start: 105.70
+        end: 108.16
+        text: "Commits never change — only pointers move:"
+        marks: {commits: 105.70, never: 106.28, only: 107.02, pointers: 107.32, move: 107.76}
+        visual: "Big kinetic type: a padlock and “Commits never change”, then “only pointers move” with a pointer icon."
+      - id: chorus-2-6
+        start: 108.16
+        end: 110.68
+        text: "a branch is just a label on a commit,"
+        marks: {branch: 108.48, label: 109.28}
+        visual: "A Git graph with commits A and B, and HEAD and main on B. A “Label” sticker points at main."
+      - id: chorus-2-7
+        start: 110.68
+        end: 112.66
+        text: "and HEAD is where you are —"
+        marks: {head: 111.08, are: 112.26}
+        visual: "A “You are here” map-pin sticker points at the HEAD label."
+      - id: chorus-2-8
+        start: 112.66
+        end: 115.42
+        text: "commit, and your branch moves…"
+        marks: {commit: 112.66, moves: 114.82}
+        visual: "Terminal: git commit -m \"Fix typo\". Commit C pops onto the graph and the main and HEAD labels glide up to it (“Moves with it”)."
+  - id: verse-3
+    title: "Verse 3: Pointers"
+    delivery: sung
+    narration: "Verse 3 shows a commit graph with branch labels. git branch feature adds a label instantly, and git commit moves main up. git switch feature moves HEAD, and git switch -c ui creates a new branch and switches to it. git merge ui makes a commit with two parents. A second graph shows a fast-forward: main slides up to feature. Then two versions of the same line collide, the file shows conflict markers, and it is fixed, added, and committed."
+    lines:
+      - id: verse-3-1
+        start: 115.42
+        end: 118.08
+        text: "A branch is just a label, a sticky note stuck on a commit;"
+        marks: {label: 116.20, sticky: 116.80}
+        visual: "A Git graph with A, B, and C, and HEAD and main on C. A “Sticky note” sticker points at the main label."
+      - id: verse-3-2
+        start: 118.40
+        end: 120.54
+        text: "creating one is instant, 'cause there's nothing copied in it."
+        marks: {creating: 118.40, instant: 119.10, nothing: 119.70}
+        visual: "Terminal: git branch feature. A feature label appears on C at once (“Instant”, “0 files copied”)."
+      - id: verse-3-3
+        start: 120.64
+        end: 123.30
+        text: "HEAD's your \"you are here\": it points to the branch you're on;"
+        marks: {here: 121.26, points: 121.86}
+        visual: "A “You are here” map pin points at HEAD, which sits on main."
+      - id: verse-3-4
+        start: 123.42
+        end: 125.76
+        text: "commit, and that branch label slides up to the new one."
+        marks: {commit: 123.42, slides: 124.68}
+        visual: "Terminal: git commit -m \"Add search\". Commit D pops up and main slides up to it (“Slides up”); feature stays on C."
+      - id: verse-3-5
+        start: 125.86
+        end: 128.46
+        text: "git switch moves HEAD to a branch and swaps your files to match;"
+        marks: {switch: 125.94, swaps: 127.24}
+        visual: "Terminal: git switch feature. HEAD moves to feature; in a Working tree panel, search.py flips away (“Files swap”) and login.py stays."
+      - id: verse-3-6
+        start: 128.54
+        end: 130.96
+        text: "add -c to make the branch and switch to it in one batch."
+        marks: {dash: 128.68, batch: 130.64}
+        visual: "Terminal: git switch -c ui. A new ui label appears on C with HEAD on it (“New branch + switch”)."
+      - id: verse-3-7
+        start: 130.98
+        end: 135.64
+        text: "Both sides moved on? Run git merge: two parents, one commit — the lines converge;"
+        marks: {both: 130.98, merge: 132.82, parents: 133.54, converge: 135.20}
+        visual: "A new graph: main has commit D, ui has commit E. Terminal: git merge ui. Merge commit M pops up with arrows to both parents (“2 parents”, “Lines converge”)."
+      - id: verse-3-8
+        start: 135.64
+        end: 139.26
+        text: "if yours stood still, your label just slides ahead: a fast-forward merge."
+        marks: {yours: 136.08, slides: 137.46, fast: 138.34}
+        visual: "Another graph: main on B, feature two commits ahead on D (“Stood still”). Terminal: git merge feature. The main label slides up to D (“Fast-forward”)."
+      - id: verse-3-9
+        start: 139.26
+        end: 142.72
+        text: "Same lines changed on both sides? That's a conflict — Git stops and asks:"
+        marks: {same: 139.26, conflict: 141.12, stops: 141.80}
+        visual: "Two code cards: main’s greet.py returns f\"{last}, {first}\", feature’s returns f\"{first} {last}\". The merged file shows both versions between conflict markers (a <<<<<<< HEAD line, a line of equals signs, and a >>>>>>> feature line) under a “Conflict!” stamp. Terminal: git merge feature, then CONFLICT in greet.py."
+      - id: verse-3-10
+        start: 142.72
+        end: 146.22
+        text: "fix the file, git add it, git commit, and the merge is done at last."
+        marks: {fix: 142.72, add: 143.82, commit: 144.30, done: 145.58}
+        visual: "The markers and the losing line disappear. Terminal: git add greet.py, then git commit. A green “Merged” stamp and confetti."
+  - id: chorus-3
+    title: "Chorus"
+    delivery: sung
+    narration: "The chorus again, as before."
+    lines:
+      - id: chorus-3-1
+        start: 146.38
+        end: 148.00
+        text: "Edit in the working tree,"
+        marks: {edit: 146.38, working: 147.12}
+        visual: "Four panels: Working tree, Staging area, Local repo, and Remote. app.py v2 pops into the Working tree with an “Edit” sticker."
+      - id: chorus-3-2
+        start: 148.10
+        end: 150.98
+        text: "add it to the staging area — your next commit to be;"
+        marks: {add: 148.10, staging: 149.00, next: 149.94}
+        visual: "An arrow labeled git add carries a copy of app.py into the Staging area, tagged “Next commit”."
+      - id: chorus-3-3
+        start: 151.20
+        end: 153.64
+        text: "commit snapshots the staging area on your machine;"
+        marks: {commit: 151.20, snapshots: 151.34, machine: 153.24}
+        visual: "An arrow labeled git commit: a shutter blinks and snapshot C lands in the Local repo. A bracket under the first three panels reads “On your machine”."
+      - id: chorus-3-4
+        start: 153.82
+        end: 156.26
+        text: "push shares your commits, pull brings in your team's."
+        marks: {push: 153.82, pull: 154.88}
+        visual: "An arrow labeled git push copies the snapshot to the Remote; an arrow labeled git pull brings a teammate’s snapshot T back."
+      - id: chorus-3-5
+        start: 156.26
+        end: 158.68
+        text: "Commits never change — only pointers move:"
+        marks: {commits: 156.26, never: 156.56, only: 157.62, pointers: 157.80, move: 158.34}
+        visual: "Big kinetic type: a padlock and “Commits never change”, then “only pointers move” with a pointer icon."
+      - id: chorus-3-6
+        start: 158.68
+        end: 161.14
+        text: "a branch is just a label on a commit,"
+        marks: {branch: 158.96, label: 159.74}
+        visual: "A Git graph with commits A and B, and HEAD and main on B. A “Label” sticker points at main."
+      - id: chorus-3-7
+        start: 161.14
+        end: 163.08
+        text: "and HEAD is where you are —"
+        marks: {head: 161.54, are: 162.72}
+        visual: "A “You are here” map-pin sticker points at the HEAD label."
+      - id: chorus-3-8
+        start: 163.22
+        end: 166.34
+        text: "commit, and your branch moves with it."
+        marks: {commit: 163.22, moves: 165.32}
+        visual: "Terminal: git commit -m \"Add search\". Commit C pops onto the graph and the main and HEAD labels glide up to it (“Moves with it”)."
+  - id: bridge
+    title: "Bridge: Remotes and safety"
+    delivery: sung
+    narration: "The bridge shows two graphs: your laptop and the remote. git push copies your commit up. After a teammate pushes, git fetch moves only the origin/main label, and git pull moves main too. A later push is rejected with the message: fetch first. After git pull, git push works. git push --force appears crossed out. In a what-if, force-pushing slams the remote’s main label onto your commit, and your teammates’ commits fall away. Last, unsaved edits to app.py are wiped by git restore and git reset --hard, while the history graph stays the same."
+    lines:
+      - id: bridge-1
+        start: 166.34
+        end: 168.44
+        text: "Your commits stay on your laptop till you push them up."
+        marks: {laptop: 167.28, push: 167.90}
+        visual: "Two graphs side by side: Your laptop (B and C, HEAD and main on C, origin/main on B) and Remote (B). Terminal: git push. C appears on the Remote and origin/main moves to C."
+      - id: bridge-2
+        start: 168.44
+        end: 170.90
+        text: "git fetch downloads your team's commits but doesn't touch your stuff:"
+        marks: {fetch: 168.84, teams: 169.48, touch: 170.44}
+        visual: "A teammate’s commit T lands on the Remote (“Teammate pushed”). Terminal: git fetch. T appears on your laptop under origin/main (“Files untouched”)."
+      - id: bridge-3
+        start: 171.00
+        end: 173.82
+        text: "your files and your branch stay put; it just moves origin/main."
+        marks: {stay: 171.75, origin: 172.90}
+        visual: "Your main label stays on C (“Stays put”) while origin/main sits on T (“Moved”)."
+      - id: bridge-4
+        start: 173.82
+        end: 176.36
+        text: "Pull is fetch, then merge — and that's when your files change."
+        marks: {pull: 173.82, merge: 174.76, change: 176.06}
+        visual: "Terminal: git pull (“pull = fetch + merge”). main and HEAD move up to T (“Files change”)."
+      - id: bridge-5
+        start: 176.36
+        end: 178.80
+        text: "Push rejected, \"fetch first\"? The remote has commits you haven't got:"
+        marks: {push: 176.36, rejected: 176.60, remote: 177.62, havent: 178.32}
+        visual: "New state: your commit L on your laptop, a teammate’s commit U on the Remote. Terminal: git push, answered by “! [rejected] (fetch first)”, and a “Rejected” stamp (“You don’t have U”)."
+      - id: bridge-6
+        start: 178.80
+        end: 181.34
+        text: "pull them in, then push again. Force-push a shared branch? Better not!"
+        marks: {pull: 178.80, push: 179.58, force: 179.88, better: 180.82}
+        visual: "Terminal: git pull, and your laptop gets U and a merge commit M; git push, and the Remote gets L and M. Then git push --force appears struck through, with a “Better not” stamp."
+      - id: bridge-7
+        start: 181.34
+        end: 183.82
+        text: "It slams the remote's pointer onto your commit,"
+        marks: {slams: 181.76, commit: 183.54}
+        visual: "A what-if graph of the Remote after git push --force: its main label slams onto your commit X and the screen shakes."
+      - id: bridge-8
+        start: 183.82
+        end: 186.24
+        text: "and your teammates' work falls off the branch. Don't do it."
+        marks: {falls: 184.80, dont: 185.52}
+        visual: "The teammates’ commits U and V fall off the graph and out of the frame (“Teammates’ work”), and a “Don’t do it” stamp lands."
+      - id: bridge-9
+        start: 186.24
+        end: 188.40
+        text: "And if it isn't committed, it isn't safe:"
+        marks: {committed: 187.18, safe: 188.10}
+        visual: "A Working tree panel holds app.py with “unsaved edits” in a dashed red border, shaking under a “Not safe” sticker; beside it, a History graph (A, B, C)."
+      - id: bridge-10
+        start: 188.40
+        end: 192.82
+        text: "restore and reset --hard can wipe it, and your history holds no trace."
+        marks: {restore: 188.40, reset: 189.02, wipe: 190.48, history: 191.26, trace: 192.40}
+        visual: "Terminal: git restore app.py, then git reset --hard. The app.py card blurs away (“Wiped”) while the History graph stays the same (“No trace”)."
+  - id: quiz
+    title: "Call and response"
+    delivery: call
+    narration: "Pop quiz: each question appears on a card, and its answer appears when the crowd sings it."
+    lines:
+      - id: quiz-1
+        start: 192.82
+        end: 195.74
+        text: "Where do you type?"
+        answer: "The working tree!"
+        answer_at: 194.14
+        visual: "Quiz card 1 of 6 shows the question; the answer slams in on a green bar when the crowd sings it."
+      - id: quiz-2
+        start: 195.74
+        end: 198.20
+        text: "What's in the staging area?"
+        answer: "My next commit!"
+        answer_at: 196.98
+        visual: "Quiz card 2 of 6 shows the question; the answer slams in on a green bar when the crowd sings it."
+      - id: quiz-3
+        start: 198.20
+        end: 203.10
+        text: "What does commit save?"
+        answer: "The staging area, on my machine!"
+        answer_at: 199.34
+        visual: "Quiz card 3 of 6 shows the question; the answer slams in on a green bar when the crowd sings it."
+      - id: quiz-4
+        start: 203.10
+        end: 206.64
+        text: "You commit. What moves?"
+        answer: "My branch, and HEAD rides along!"
+        answer_at: 204.54
+        visual: "Quiz card 4 of 6 shows the question; the answer slams in on a green bar when the crowd sings it."
+      - id: quiz-5
+        start: 206.64
+        end: 210.82
+        text: "Does fetch change your files?"
+        answer: "No! Pull does: fetch, then merge!"
+        answer_at: 208.44
+        visual: "Quiz card 5 of 6 shows the question; the answer slams in on a green bar when the crowd sings it."
+      - id: quiz-6
+        start: 210.82
+        end: 214.32
+        text: "Can a commit change?"
+        answer: "Make a new one, move a pointer!"
+        answer_at: 212.28
+        visual: "Quiz card 6 of 6 shows the question; the answer slams in on a green bar when the crowd sings it."
+  - id: chorus-4
+    title: "Final chorus"
+    delivery: sung
+    narration: "The final chorus, as before, ending in confetti."
+    lines:
+      - id: chorus-4-1
+        start: 214.32
+        end: 216.08
+        text: "Edit in the working tree,"
+        marks: {edit: 214.32, working: 215.18}
+        visual: "Four panels: Working tree, Staging area, Local repo, and Remote. app.py v2 pops into the Working tree with an “Edit” sticker."
+      - id: chorus-4-2
+        start: 216.08
+        end: 219.00
+        text: "add it to the staging area — your next commit to be;"
+        marks: {add: 216.08, staging: 217.04, next: 218.04}
+        visual: "An arrow labeled git add carries a copy of app.py into the Staging area, tagged “Next commit”."
+      - id: chorus-4-3
+        start: 219.00
+        end: 221.74
+        text: "commit snapshots the staging area on your machine;"
+        marks: {commit: 219.00, snapshots: 219.48, machine: 221.32}
+        visual: "An arrow labeled git commit: a shutter blinks and snapshot C lands in the Local repo. A bracket under the first three panels reads “On your machine”."
+      - id: chorus-4-4
+        start: 221.74
+        end: 224.24
+        text: "push shares your commits, pull brings in your team's."
+        marks: {push: 221.74, pull: 223.06}
+        visual: "An arrow labeled git push copies the snapshot to the Remote; an arrow labeled git pull brings a teammate’s snapshot T back."
+      - id: chorus-4-5
+        start: 224.24
+        end: 226.72
+        text: "Commits never change — only pointers move:"
+        marks: {commits: 224.24, never: 224.80, only: 225.68, pointers: 225.88, move: 226.32}
+        visual: "Big kinetic type: a padlock and “Commits never change”, then “only pointers move” with a pointer icon."
+      - id: chorus-4-6
+        start: 226.72
+        end: 229.22
+        text: "a branch is just a label on a commit,"
+        marks: {branch: 227.02, label: 227.82}
+        visual: "A Git graph with commits A and B, and HEAD and main on B. A “Label” sticker points at main."
+      - id: chorus-4-7
+        start: 229.22
+        end: 231.24
+        text: "and HEAD is where you are —"
+        marks: {head: 229.60, are: 230.78}
+        visual: "A “You are here” map-pin sticker points at the HEAD label."
+      - id: chorus-4-8
+        start: 231.24
+        end: 234.74
+        text: "commit, and your branch moves with it."
+        marks: {commit: 231.24, moves: 233.14}
+        visual: "Terminal: git commit -m \"Ship it\". Commit C pops onto the graph and the main and HEAD labels glide up to it (“Moves with it”); confetti bursts."
+  - id: outro
+    title: "Outro"
+    delivery: spoken
+    narration: "The outro: the Time Stone returns, a HEAD tag slides back along a row of commits, and the end card reads Snapshots and pointers, SE Book, Version Control with Git."
+    lines:
+      - id: outro-1
+        start: 235.68
+        end: 239.22
+        text: "Travel back to any commit. That's your Time Stone:"
+        marks: {travel: 235.68, back: 236.28, time: 238.72}
+        visual: "The Time Stone returns over rewind lines; a HEAD tag slides back along commits D, C, B, A (“Rewind”), then “That’s your Time Stone” appears."
+      - id: outro-2
+        start: 239.42
+        end: 242.48
+        text: "snapshots… and pointers."
+        marks: {snapshots: 239.42, pointers: 242.06}
+        visual: "End card: “Snapshots & pointers” under the Time Stone, with “SE Book · Version Control with Git”."

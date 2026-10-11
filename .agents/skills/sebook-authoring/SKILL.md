@@ -160,6 +160,8 @@ Page-furniture includes, used in this order at the end of most chapters:
 
 **Bibliography** — write `{% cite Gamma1995 %}` citations inline anywhere; the layout auto-appends the References section. See the dedicated section below for entry conventions and the gating rule.
 
+**Song videos** — `{% include song-video.html song=site.data.songs.<song> id="<anchor>" %}` embeds a rendered music video with its captions, an audio-described cut, and a lyrics transcript that describes what the video shows for every line; load `/css/song-video.css` on the page (see `SEBook/tools/git.md`). The storyboard `_data/songs/<song>.yml` drives the videos, captions, and transcript; `scripts/song-video/README.md` covers rendering and adding a song, and `tests/song-video.spec.js` lists the songs it checks.
+
 **UML diagrams** — embed via the shared container; the bundled renderer ([`_layouts/sebook.html` lines 739–773](../../../_layouts/sebook.html)) picks them up and re-renders on dark-mode toggle:
 
 ```html

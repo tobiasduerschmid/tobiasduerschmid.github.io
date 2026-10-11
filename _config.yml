@@ -125,9 +125,11 @@ exclude:
   - notes
   - pdfs
   - latex
-  # Render source for the SE Book teaser video; only the rendered files in
-  # assets/video/ ship with the site.
+  # Render sources for the site's videos (the SE Book teaser and the song
+  # videos); only the rendered files in assets/video/ ship with the site.
   - scripts/sebook-teaser
+  - scripts/song-video
+  - scripts/video-tools
   - chrome-extension
 
 # Build settings

@@ -1,0 +1,110 @@
+/*
+ * Song videos in SE Book chapters (_includes/song-video.html): the player,
+ * its credit line, and the collapsible lyrics transcript.
+ *
+ * Colors come from the site's design tokens (css/design-tokens.css,
+ * css/sebook-theme.css), which carry their own html.dark-mode values; the
+ * few literal colors below have explicit dark-mode pairs. Text inherits the
+ * chapter's paragraph size; secondary text stays at 0.9em or larger.
+ */
+
+.song-video {
+  margin: 1.2em 0 1.6em;
+}
+
+.song-video-player {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  /* The video is always dark; match its backdrop so the frame reads as one piece. */
+  background: #070b1a;
+  box-shadow: 0 0 0 1px var(--sebook-border, #c8d6e2), 0 18px 40px rgba(0, 59, 92, 0.18);
+}
+
+html.dark-mode .song-video-player {
+  box-shadow: 0 0 0 1px var(--sebook-border, #31455d), 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+.song-video-player:focus-visible {
+  outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+  outline-offset: var(--focus-offset, 2px);
+}
+
+.song-video-credit {
+  margin-top: 0.5em;
+  color: var(--color-text-muted, #595959);
+  font-size: 0.9em;
+}
+
+.song-video-transcript {
+  margin-top: 0.6em;
+}
+
+.song-video-transcript > summary {
+  /* list-item restores the disclosure triangle that Bootstrap's
+     `summary { display: block }` removes. */
+  display: list-item;
+  padding: 0.3em 0;
+  cursor: pointer;
+}
+
+.song-video-transcript > summary:focus-visible {
+  outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+  outline-offset: var(--focus-offset, 2px);
+  border-radius: 4px;
+}
+
+.song-video-label {
+  margin: 1em 0 0.5em;
+  font-weight: 700;
+}
+
+.song-video-section {
+  margin: 1.2em 0 0.4em;
+  font-weight: 700;
+}
+
+.song-video-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.song-video-lines > li {
+  padding: 0.45em 0 0.45em 0.8em;
+  border-left: 3px solid var(--sebook-border, #c8d6e2);
+}
+
+.song-video-lines > li + li {
+  margin-top: 0.3em;
+}
+
+.song-video-time {
+  margin-right: 0.4em;
+  color: var(--color-text-muted, #595959);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
+}
+
+.song-video-lyric {
+  font-weight: 600;
+}
+
+.song-video-visual {
+  display: block;
+  color: var(--color-text-muted, #595959);
+  font-size: 0.9em;
+}
+
+/* Paper can't play video: print only the credit line and the transcript. */
+@media print {
+  .song-video-player {
+    display: none;
+  }
+
+  .song-video-lines > li {
+    break-inside: avoid;
+  }
+}

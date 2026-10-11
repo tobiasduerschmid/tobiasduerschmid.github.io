@@ -24,6 +24,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "4590", "--bind", "127.0.0.1"],
       "port": 4590
+    },
+    {
+      "name": "song-video-stage",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4591", "--bind", "127.0.0.1"],
+      "port": 4591
     }
   ]
 }

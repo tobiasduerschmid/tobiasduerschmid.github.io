@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-mode">
+<head>
+  <meta charset="utf-8">
+  <title>SE Book song video — render stage</title>
+  <!-- Render stage for SE Book song videos; not part of the site build
+       (excluded in _config.yml). Serve the repo root and open
+       /scripts/song-video/stage.html?song=snapshots_and_pointers&play&fit
+       to preview with sound, or run render.js. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600&family=Inter:ital,opsz,wght@0,14..32,500..900;1,14..32,800..900&display=block">
+  <link rel="stylesheet" href="/css/git-graph.css">
+  <link rel="stylesheet" href="stage.css">
+</head>
+<body>
+  <div class="stage" id="stage" aria-hidden="true"></div>
+  <script src="/node_modules/js-yaml/dist/js-yaml.min.js"></script>
+  <!-- The virtual clock must replace the timer functions before GitGraph loads. -->
+  <script src="virtual-clock.js"></script>
+  <script src="/js/git-graph.js"></script>
+  <script src="graph-track.js"></script>
+  <script src="timeline.js"></script>
+  <script src="kit.js"></script>
+  <script src="stage.js"></script>
+</body>
+</html>

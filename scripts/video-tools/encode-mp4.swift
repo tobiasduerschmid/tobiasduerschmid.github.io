@@ -1,8 +1,9 @@
-// Encodes numbered PNG frames (plus an optional WAV soundtrack) into an MP4
-// with macOS AVFoundation — H.264 video, AAC audio — so rendering the SE Book
-// teaser needs no ffmpeg install.
+// Encodes numbered PNG or JPEG frames (plus an optional soundtrack: WAV, M4A,
+// or anything else AVFoundation reads) into an MP4 with macOS AVFoundation —
+// H.264 video, AAC audio — so rendering the site's videos (scripts/sebook-teaser,
+// scripts/song-video) needs no ffmpeg install.
 //
-//   swift encode-mp4.swift <frames-dir> <fps> <video-bits-per-second> <output.mp4> [<soundtrack.wav>]
+//   swift encode-mp4.swift <frames-dir> <fps> <video-bits-per-second> <output.mp4> [<soundtrack>]
 //
 // Frames are read in file-name order (frame-00000.png, …) and must all share
 // the first frame's size. The MP4 is tagged BT.709, lasts exactly
@@ -68,16 +69,17 @@ let arguments = CommandLine.arguments
 guard arguments.count == 5 || arguments.count == 6,
       let fps = Int32(arguments[2]), fps > 0,
       let bitsPerSecond = Int(arguments[3]) else {
-    fail("usage: swift encode-mp4.swift <frames-dir> <fps> <video-bits-per-second> <output.mp4> [<soundtrack.wav>]")
+    fail("usage: swift encode-mp4.swift <frames-dir> <fps> <video-bits-per-second> <output.mp4> [<soundtrack>]")
 }
 let framesDirectory = URL(fileURLWithPath: arguments[1], isDirectory: true)
 let outputURL = URL(fileURLWithPath: arguments[4])
 let soundtrackURL = arguments.count == 6 ? URL(fileURLWithPath: arguments[5]) : nil
 
+let frameExtensions: Set<String> = ["png", "jpg", "jpeg"]
 let frameURLs = ((try? FileManager.default.contentsOfDirectory(at: framesDirectory, includingPropertiesForKeys: nil)) ?? [])
-    .filter { $0.pathExtension.lowercased() == "png" }
+    .filter { frameExtensions.contains($0.pathExtension.lowercased()) }
     .sorted { $0.lastPathComponent < $1.lastPathComponent }
-guard !frameURLs.isEmpty else { fail("no PNG frames in \(framesDirectory.path)") }
+guard !frameURLs.isEmpty else { fail("no PNG or JPEG frames in \(framesDirectory.path)") }
 
 let firstFrame = loadImage(frameURLs[0])
 let width = firstFrame.width

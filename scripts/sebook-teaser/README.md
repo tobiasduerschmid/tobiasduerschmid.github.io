@@ -20,8 +20,8 @@ audio-described cut, and the page prints `on_screen`, `description`, and
 | `audio/narration.js` | Narration for the audio-described cut (macOS `say`) |
 | `captions.js` | WebVTT captions for both cuts |
 | `blend-frames.swift` | Motion blur and film grain: averages each frame's sub-frames (`motion_blur` in the storyboard; 6 sub-frames across a 180° shutter) and lays a fixed, seeded grain over the result |
-| `check-flashes.swift` | WCAG 2.3.1 flash screen; a failure stops the render |
-| `encode-mp4.swift` | H.264 + AAC encoding with AVFoundation (no ffmpeg needed) |
+| `../video-tools/check-flashes.swift` | WCAG 2.3.1 flash screen; a failure stops the render (shared with `scripts/song-video/`) |
+| `../video-tools/encode-mp4.swift` | H.264 + AAC encoding with AVFoundation, no ffmpeg needed (shared with `scripts/song-video/`) |
 | `render.js` | Runs the whole pipeline |
 
 ## Preview

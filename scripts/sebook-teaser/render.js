@@ -45,8 +45,8 @@ const { instrumentalCaptions, describedCaptions } = require('./captions');
 const ROOT = path.resolve(__dirname, '..', '..');
 const STORYBOARD_FILE = path.join(ROOT, '_data', 'sebook_teaser.yml');
 const STAGE_URL_PATH = '/scripts/sebook-teaser/stage.html';
-const ENCODER = path.join(__dirname, 'encode-mp4.swift');
-const FLASH_CHECK = path.join(__dirname, 'check-flashes.swift');
+const ENCODER = path.join(__dirname, '..', 'video-tools', 'encode-mp4.swift');
+const FLASH_CHECK = path.join(__dirname, '..', 'video-tools', 'check-flashes.swift');
 const BLENDER = path.join(__dirname, 'blend-frames.swift');
 // At 2 Mbit/s VideoToolbox's H.264 is visually lossless even at 1:1, film
 // grain included; 20 s ≈ 5.3 MB.

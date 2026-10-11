@@ -1,5 +1,5 @@
-// Screens rendered teaser frames against WCAG 2.3.1 (Three Flashes or Below
-// Threshold) before render.js encodes them.
+// Screens rendered video frames (PNG or JPEG, 1920×1080) against WCAG 2.3.1
+// (Three Flashes or Below Threshold) before a render.js encodes them.
 //
 //   swift -O check-flashes.swift <frames-dir> <fps>
 //
@@ -30,10 +30,11 @@ guard arguments.count == 3, let fps = Int(arguments[2]), fps > 0 else {
     fail("usage: swift -O check-flashes.swift <frames-dir> <fps>")
 }
 let framesDirectory = URL(fileURLWithPath: arguments[1], isDirectory: true)
+let frameExtensions: Set<String> = ["png", "jpg", "jpeg"]
 let frameURLs = ((try? FileManager.default.contentsOfDirectory(at: framesDirectory, includingPropertiesForKeys: nil)) ?? [])
-    .filter { $0.pathExtension.lowercased() == "png" }
+    .filter { frameExtensions.contains($0.pathExtension.lowercased()) }
     .sorted { $0.lastPathComponent < $1.lastPathComponent }
-guard frameURLs.count > fps else { fail("need more than \(fps) PNG frames in \(framesDirectory.path)") }
+guard frameURLs.count > fps else { fail("need more than \(fps) PNG or JPEG frames in \(framesDirectory.path)") }
 
 let width = 480, height = 270, cells = width * height
 let fieldWidth = 160, fieldHeight = 120 // 640×480 frame pixels

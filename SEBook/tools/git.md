@@ -10,6 +10,7 @@ layout: sebook
 <link rel="stylesheet" href="/css/git-graph.css">
 <link rel="stylesheet" href="/css/git-command-lab.css">
 <link rel="stylesheet" href="/css/fs-command-lab.css">
+<link rel="stylesheet" href="/css/song-video.css">
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -34,6 +35,10 @@ document.addEventListener('DOMContentLoaded', function () {
 > **Want to practice?** Try the [Interactive Git Tutorial](/SEBook/tools/git-tutorial.html) and the [Advanced Git Tutorial](/SEBook/tools/git-advanced-tutorial.html) — hands-on exercises in a real Linux system right in the browser!
 
 In modern software construction, version control is not just a convenience — it is a foundational practice that solves several major challenges of managing code: collaboration, change tracking, traceability, safe rollback, and parallel development. Git is by far the most common tool for version control.
+
+**Start with the song.** *Snapshots and Pointers* is a four-minute music video that previews this chapter's core mental model: where your work lives (working tree, staging area, local repository, remote), why commits never change, and why branches and `HEAD` are just pointers that move. The video shows each command as it is sung, mostly on the same animated commit graphs as the demos below, and every idea gets its own section afterwards. Captions are on by default. **Before you press play,** predict: you edited `app.py` and `README.md`, ran `git add app.py`, and committed. Which version of `README.md` is in the new commit? Listen for the verse that settles it; the answer is in [Sing It Back](#sing-it-back).
+
+{% include song-video.html song=site.data.songs.snapshots_and_pointers id="git-song" %}
 
 > **By the end of this chapter, you'll be able to:**
 >
@@ -2361,6 +2366,25 @@ A condensed checklist. Each item links back to its full section.
 * **Let `git reflog` be your safety net.** Destructive operations are almost always recoverable within Git's retention window (configured via `gc.reflogExpire` / `gc.reflogExpireUnreachable`). Don't panic, reflog first.
 
 ## Practice
+
+### Sing It Back
+
+Answer these from memory, without replaying [the song at the top of the chapter](#git-song):
+
+1. You edited `app.py` and `README.md`, ran `git add app.py`, and committed. Which version of `README.md` is in the new commit?
+2. Your teammate pushed while you were coding, and you run `git fetch`. What changes on your machine, and what stays the same?
+3. You ran `git commit --amend`. What happened to the commit you amended?
+4. `main` is two commits behind `feature` and has no commits of its own. What does `git merge feature` do to `main`?
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. The `README.md` from the previous commit. The staging area is a full snapshot of the next commit: it started as a copy of the last commit, and `git add app.py` replaced only `app.py`.
+2. `git fetch` downloads the new commits and moves `origin/main`. Your files and your `main` branch stay put until you merge; `git pull` is `git fetch` followed by `git merge`.
+3. Nothing: commits never change. `--amend` made a new commit and moved your branch to it. The old commit still exists; it's just no longer on the branch.
+4. A fast-forward: Git slides the `main` label up to `feature`'s commit. No merge commit is needed, because `main` hadn't moved.
+
+</details>
 
 ### Basic Git
 

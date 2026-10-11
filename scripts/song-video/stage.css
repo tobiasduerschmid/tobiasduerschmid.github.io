@@ -1,0 +1,1020 @@
+/*
+ * Render stage for SE Book song videos (see README.md).
+ *
+ * Every rule here describes one video frame: a 960×540 CSS-pixel stage that
+ * render.js captures at device scale 2, giving 1920×1080 frames. Fixed pixel
+ * geometry is intentional — this is not a responsive page and it never ships
+ * with the site. The video is always dark; every text color below clears
+ * 4.5:1 against its own background (WCAG 1.4.3 also covers text drawn into
+ * video frames). The bottom 80 px stay free of essential content because
+ * the player draws its captions there.
+ *
+ * Elements that animate in start hidden via .is-staged; timeline.js owns all
+ * motion (paused Web Animations posed by seek(t), plus per-frame updaters).
+ */
+
+html,
+body {
+  margin: 0;
+  background: #000;
+}
+
+body.is-fit {
+  overflow: hidden;
+}
+
+.stage {
+  --bg: #070b1a;
+  --panel: rgba(18, 26, 51, 0.92);
+  --panel-line: rgba(160, 190, 255, 0.24);
+  --text: #f6f8ff;
+  --muted: #b4c3e0;
+  --gold: #ffd100;
+  --gold-deep: #ffb81c;
+  --green: #4ade80;
+  --red: #ff6b7d;
+  --pink: #ff5fb0;
+  --cyan: #38d3f5;
+  --violet: #a78bfa;
+  --blue: #60a5fa;
+  --ink: #0b0f1a;
+  --font-display: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Fira Code', Menlo, Consolas, monospace;
+
+  position: relative;
+  width: 960px;
+  height: 540px;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
+  transform-origin: 0 0;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+}
+
+.is-staged {
+  opacity: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Backdrop: drifting aurora blobs over a dot grid                     */
+/* ------------------------------------------------------------------ */
+
+.backdrop {
+  overflow: hidden;
+}
+
+.backdrop-grid {
+  position: absolute;
+  inset: -40px;
+  background-image: radial-gradient(rgba(180, 200, 255, 0.16) 1px, transparent 1.4px);
+  background-size: 24px 24px;
+}
+
+.blob {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  margin: -260px 0 0 -260px;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.42;
+}
+
+.blob--violet { background: #6d28d9; }
+.blob--cyan { background: #0891b2; }
+.blob--pink { background: #be185d; }
+.blob--gold { background: #b45309; }
+.blob--green { background: #047857; }
+
+.vignette {
+  background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+/* Equalizer strip along the bottom edge (decorative, beat-driven). */
+.eq {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 30px;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 0 6px;
+  opacity: 0.38;
+}
+
+.eq-bar {
+  flex: 1;
+  height: 30px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(to top, var(--violet), var(--cyan));
+  transform-origin: 50% 100%;
+}
+
+/* ------------------------------------------------------------------ */
+/* Camera: content layer that punches in on hits and shakes on impacts */
+/* ------------------------------------------------------------------ */
+
+.camera {
+  transform-origin: 50% 50%;
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* HUD: section badge and terminal                                     */
+/* ------------------------------------------------------------------ */
+
+.badge {
+  position: absolute;
+  left: 20px;
+  top: 18px;
+  padding: 6px 12px 5px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 3px 3px 0 var(--ink);
+  rotate: -2deg;
+  white-space: nowrap;
+}
+
+.terminal {
+  position: absolute;
+  right: 20px;
+  top: 16px;
+  width: 340px;
+  border: 1px solid rgba(160, 190, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(6, 10, 22, 0.94);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.terminal-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff6159;
+}
+
+.terminal-dot:nth-child(2) { background: #ffbd2e; }
+.terminal-dot:nth-child(3) { background: #28c941; }
+
+.terminal-title {
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.terminal-body {
+  position: relative;
+  height: 78px;
+  padding: 0 12px;
+  overflow: hidden;
+}
+
+.terminal-line {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 8px;
+  height: 22px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 22px;
+  white-space: pre;
+}
+
+.terminal-line--command::before {
+  content: '$ ';
+  color: var(--green);
+  font-weight: 600;
+}
+
+.terminal-line--output {
+  color: var(--muted);
+}
+
+.terminal-line--error {
+  color: #ff9aa6;
+}
+
+.terminal-line--struck {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--red);
+  text-decoration-thickness: 2px;
+}
+
+.terminal-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 16px;
+  margin-left: 2px;
+  vertical-align: -3px;
+  background: var(--gold);
+}
+
+/* ------------------------------------------------------------------ */
+/* Stickers, stamps, kinetic type                                      */
+/* ------------------------------------------------------------------ */
+
+.sticker {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px 4px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  box-shadow: 3px 3px 0 var(--ink);
+  white-space: nowrap;
+}
+
+.sticker svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sticker--gold { background: var(--gold); }
+.sticker--pink { background: var(--pink); }
+.sticker--green { background: var(--green); }
+.sticker--red { background: var(--red); }
+.sticker--cyan { background: var(--cyan); }
+.sticker--violet { background: var(--violet); }
+
+.stamp {
+  position: absolute;
+  padding: 6px 16px 4px;
+  border: 5px solid currentColor;
+  border-radius: 10px;
+  color: var(--red);
+  background: rgba(7, 11, 26, 0.82);
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.stamp--gold { color: var(--gold); }
+.stamp--green { color: var(--green); }
+
+.kinetic {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.28em;
+  font-size: 64px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 0 6px 0 rgba(0, 0, 0, 0.45);
+}
+
+.kinetic-word {
+  display: inline-block;
+}
+
+.kinetic-word--gold { color: var(--gold); }
+.kinetic-word--cyan { color: var(--cyan); }
+.kinetic-word--pink { color: var(--pink); }
+.kinetic-word--green { color: var(--green); }
+
+.kinetic-word svg {
+  width: 0.8em;
+  height: 0.8em;
+  margin-right: 0.12em;
+  vertical-align: -0.05em;
+}
+
+.subtitle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------ */
+/* Stations (working tree, staging area, repository, remote)           */
+/* ------------------------------------------------------------------ */
+
+.station {
+  position: absolute;
+  border: 2px solid var(--panel-line);
+  border-radius: 18px;
+  background: var(--panel);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+}
+
+.station-glow {
+  position: absolute;
+  inset: -2px;
+  border: 3px solid var(--gold);
+  border-radius: 18px;
+  box-shadow: 0 0 26px rgba(255, 209, 0, 0.55), inset 0 0 18px rgba(255, 209, 0, 0.18);
+}
+
+.station-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 0;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.station-head svg {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+
+.station--remote {
+  border-radius: 60px 60px 18px 18px;
+}
+
+/* Four stations in a row (the chorus pipeline): one-line heads. */
+.station--compact .station-head {
+  gap: 6px;
+  padding: 10px 12px 0;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+}
+
+.station--compact .station-head svg {
+  width: 22px;
+  height: 22px;
+}
+
+.viewfinder {
+  position: absolute;
+  inset: 40px 14px 14px;
+}
+
+.viewfinder-corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--gold);
+}
+
+.viewfinder-corner--tl { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+.viewfinder-corner--tr { right: 0; top: 0; border-left: 0; border-bottom: 0; }
+.viewfinder-corner--bl { left: 0; bottom: 0; border-right: 0; border-top: 0; }
+.viewfinder-corner--br { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+
+.shutter {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background: radial-gradient(circle, transparent 0, transparent 30%, rgba(5, 8, 18, 0.96) 31%);
+  background-size: 100% 100%;
+}
+
+.machine-bracket {
+  position: absolute;
+  height: 26px;
+  border: 3px solid var(--cyan);
+  border-top: 0;
+  border-radius: 0 0 14px 14px;
+}
+
+.machine-bracket-label {
+  position: absolute;
+  left: 50%;
+  bottom: -30px;
+  translate: -50% 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--cyan);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.machine-bracket-label svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* File chips: one file at one version. */
+.chip {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 8px;
+  background: #f6f8ff;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+}
+
+.chip svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.chip-version {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--ink);
+  color: var(--gold);
+  font-size: 12px;
+}
+
+.chip--dashed {
+  border-style: dashed;
+  border-color: var(--red);
+  background: #ffe4e8;
+}
+
+/* Arrows between stations, drawn on with stroke-dashoffset. */
+.flow {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.flow-path {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.flow-path--cyan { stroke: var(--cyan); }
+.flow-path--pink { stroke: var(--pink); }
+
+.flow-head {
+  fill: var(--gold);
+}
+
+.flow-head--cyan { fill: var(--cyan); }
+.flow-head--pink { fill: var(--pink); }
+
+.cmd-chip {
+  position: absolute;
+  padding: 3px 9px;
+  border: 2px solid var(--ink);
+  border-radius: 7px;
+  background: var(--gold);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.cmd-chip--cyan { background: var(--cyan); }
+.cmd-chip--pink { background: var(--pink); }
+
+/* ------------------------------------------------------------------ */
+/* Snapshot cards (polaroids) and the big commit card                  */
+/* ------------------------------------------------------------------ */
+
+.polaroid {
+  position: absolute;
+  width: 92px;
+  padding: 6px 6px 0;
+  border-radius: 6px;
+  background: #fbfbf6;
+  color: var(--ink);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+}
+
+.polaroid-photo {
+  display: grid;
+  place-items: center;
+  height: 52px;
+  border-radius: 3px;
+  background: linear-gradient(135deg, #1e3a8a, #6d28d9);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.polaroid-caption {
+  height: 26px;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 26px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.commit-card {
+  position: absolute;
+  width: 330px;
+  padding: 14px 16px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  background: #f8fafc;
+  color: var(--ink);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.5);
+}
+
+.commit-card--ghost {
+  background: #cbd5e1;
+  border-color: #94a3b8;
+}
+
+.commit-card-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.commit-card-title svg {
+  width: 22px;
+  height: 22px;
+}
+
+.commit-card-files {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.commit-card-file {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: #e2e8f0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.commit-card-file svg {
+  width: 14px;
+  height: 14px;
+}
+
+.commit-card-field {
+  display: flex;
+  gap: 10px;
+  padding: 3px 0;
+  border-top: 1px solid #cbd5e1;
+  font-size: 14px;
+}
+
+.commit-card-key {
+  width: 54px;
+  color: #475569;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.commit-card-value {
+  font-weight: 700;
+}
+
+.frost {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(186, 230, 253, 0.55), rgba(255, 255, 255, 0.15) 45%, rgba(186, 230, 253, 0.5));
+  box-shadow: inset 0 0 22px rgba(125, 211, 252, 0.9);
+}
+
+.hash-bar {
+  position: absolute;
+  padding: 8px 14px;
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  background: rgba(6, 10, 22, 0.94);
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: pre;
+}
+
+.hash-bar--changed {
+  border-color: var(--pink);
+  color: var(--pink);
+}
+
+/* ------------------------------------------------------------------ */
+/* Code panels: diff, conflict, chat                                   */
+/* ------------------------------------------------------------------ */
+
+.code-card {
+  position: absolute;
+  border: 1px solid rgba(160, 190, 255, 0.3);
+  border-radius: 14px;
+  background: rgba(6, 10, 22, 0.95);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.code-card-title {
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.code-line {
+  padding: 3px 14px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  white-space: pre;
+}
+
+.code-line--removed {
+  background: rgba(255, 107, 125, 0.16);
+  color: #ffb3bd;
+}
+
+.code-line--added {
+  background: rgba(74, 222, 128, 0.14);
+  color: #a7f3c0;
+}
+
+.code-line--marker {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.chat {
+  position: absolute;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.chat-avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.chat-avatar--you { background: var(--cyan); }
+.chat-avatar--sam { background: var(--pink); }
+
+.chat-bubble {
+  padding: 9px 14px;
+  border-radius: 16px 16px 16px 4px;
+  background: #f6f8ff;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.chat-bubble code {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ */
+/* Graph panels (GraphTrack hosts)                                     */
+/* ------------------------------------------------------------------ */
+
+.graph-card {
+  position: absolute;
+  /* Natural width: an absolutely positioned card near the right edge must
+     not shrink-wrap, or GitGraph's SVG scales down inside it. */
+  width: max-content;
+  padding: 10px 12px;
+  border: 2px solid var(--panel-line);
+  border-radius: 18px;
+  background: #121a33;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+  transform-origin: 0 0;
+}
+
+.graph-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px 4px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.graph-card-title svg {
+  width: 22px;
+  height: 22px;
+}
+
+html.dark-mode .song-graph-canvas {
+  --git-graph-bg: #121a33;
+  background: transparent;
+}
+
+.song-graph-canvas .git-graph-svg text {
+  font-family: var(--font-mono);
+}
+
+/* ------------------------------------------------------------------ */
+/* Time Stone, quiz cards, confetti                                    */
+/* ------------------------------------------------------------------ */
+
+.time-stone {
+  position: absolute;
+  overflow: visible;
+}
+
+.time-stone-ring {
+  fill: none;
+  stroke: var(--gold);
+}
+
+.time-stone-runes {
+  fill: none;
+  stroke: var(--gold-deep);
+  stroke-dasharray: 3 9;
+}
+
+.time-stone-gem {
+  stroke: #d1fae5;
+  stroke-width: 2;
+}
+
+.time-stone-glow {
+  fill: #34d399;
+  filter: blur(18px);
+}
+
+.quiz-card {
+  position: absolute;
+  left: 110px;
+  top: 92px;
+  width: 740px;
+  height: 330px;
+  border: 3px solid var(--ink);
+  border-radius: 26px;
+  background: #f6f8ff;
+  color: var(--ink);
+  box-shadow: 8px 8px 0 var(--ink), 0 30px 60px rgba(0, 0, 0, 0.5);
+}
+
+.quiz-count {
+  position: absolute;
+  left: 28px;
+  top: -18px;
+  padding: 6px 14px 5px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: var(--pink);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.quiz-question {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  top: 52px;
+  font-size: 44px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.quiz-answer {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  bottom: 36px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  background: var(--green);
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.quiz-answer svg {
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 9px;
+  height: 14px;
+  border-radius: 2px;
+}
+
+.end-credit {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.homework-card {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: #fffbea;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.homework-card svg {
+  width: 22px;
+  height: 22px;
+}
+
+.rewind-lines {
+  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.07) 0 2px, transparent 2px 9px);
+}
+
+.hash-bar svg {
+  width: 22px;
+  height: 22px;
+  margin-right: 10px;
+  vertical-align: -3px;
+}
+
+/* The `git log` walk: a ring that hops from commit to commit. */
+.walker-ring {
+  position: absolute;
+  width: 62px;
+  height: 62px;
+  margin: -31px 0 0 -31px;
+  border: 4px solid var(--gold);
+  border-radius: 50%;
+  box-shadow: 0 0 18px rgba(255, 209, 0, 0.7);
+}
+
+/* A teammate's commit falling off the branch after a force-push. */
+.falling-commit {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--pink);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Outro: HEAD rewinding along a row of commits. */
+.timeline-row {
+  position: absolute;
+  left: 278px;
+  top: 344px;
+  width: 404px;
+  height: 44px;
+}
+
+.timeline-row::before {
+  content: '';
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: 20px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--panel-line);
+}
+
+.timeline-dot {
+  position: absolute;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #2774ae;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.timeline-head {
+  position: absolute;
+  top: -36px;
+  width: 60px;
+  margin-left: -8px;
+  padding: 3px 0;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-align: center;
+}

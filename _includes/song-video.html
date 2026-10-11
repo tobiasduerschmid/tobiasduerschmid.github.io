@@ -1,0 +1,74 @@
+{%- comment -%}
+  A music video with its audio-described cut and lyrics transcript, for SE
+  Book chapters:
+
+    {% include song-video.html song=site.data.songs.snapshots_and_pointers id="git-song" %}
+
+  `id` (optional) is the figure's anchor, for links like [the song](#git-song).
+  Everything here comes from the song's storyboard (_data/songs/<song>.yml),
+  which also drives both rendered cuts and their captions
+  (scripts/song-video/render.js). Styles: css/song-video.css.
+
+  Accessibility contract (WCAG 2.2 AA), kept visually quiet under one toggle:
+    - 1.2.2: both cuts carry a captions track (the lyrics; plus the
+      narration in the described cut), on by default because the lyrics are
+      the lesson;
+    - 1.2.3 / 1.2.5: in the audio-described cut the picture pauses at the
+      start of each section while a narrator describes what it shows, and
+      the transcript gives every lyric line with what the video shows for it;
+    - 1.4.2 / 2.2.2: nothing autoplays (the a11y audit fails any autoplaying
+      media); preload="none" keeps the page light until someone presses play.
+{%- endcomment -%}
+{%- assign song = include.song -%}
+{%- assign song_video = song.video | relative_url -%}
+{%- assign described_video = song.described_video | relative_url -%}
+<figure class="song-video"{% if include.id %} id="{{ include.id }}"{% endif %}>
+  <video
+    class="song-video-player"
+    controls
+    playsinline
+    preload="none"
+    width="{{ song.width }}"
+    height="{{ song.height }}"
+    poster="{{ song.poster | relative_url }}"
+    aria-label="{{ song.title }}">
+    <source src="{{ song_video }}" type="video/mp4">
+    <track kind="captions" src="{{ song.captions | relative_url }}" srclang="en" label="English" default>
+    <p>Your browser can't play this video. <a href="{{ song_video }}">Download the video</a> or read the lyrics below.</p>
+  </video>
+  <figcaption class="song-video-credit">{{ song.credit }}</figcaption>
+
+  <details class="song-video-transcript">
+    <summary>Audio description and lyrics</summary>
+    <p class="song-video-label">Audio-described version: the video pauses at the start of each section while a narrator describes what it shows.</p>
+    <video
+      class="song-video-player"
+      controls
+      playsinline
+      preload="none"
+      width="{{ song.width }}"
+      height="{{ song.height }}"
+      poster="{{ song.poster | relative_url }}"
+      aria-label="{{ song.title }}, with audio description">
+      <source src="{{ described_video }}" type="video/mp4">
+      <track kind="captions" src="{{ song.described_captions | relative_url }}" srclang="en" label="English" default>
+      <p>Your browser can't play this video. <a href="{{ described_video }}">Download the audio-described video</a>.</p>
+    </video>
+
+    <p class="song-video-label">Lyrics and what the video shows</p>
+    {%- for section in song.sections %}
+    <p class="song-video-section">{{ section.title }}</p>
+    <ol class="song-video-lines">
+      {%- for line in section.lines %}
+      {%- assign minutes = line.start | divided_by: 60 | floor -%}
+      {%- assign seconds = line.start | modulo: 60 | floor -%}
+      <li>
+        <span class="song-video-time">{{ minutes }}:{% if seconds < 10 %}0{% endif %}{{ seconds }}</span>
+        <span class="song-video-lyric">{{ line.text }}{% if line.answer %} — {{ line.answer }}{% endif %}</span>
+        <span class="song-video-visual">On screen: {{ line.visual }}</span>
+      </li>
+      {%- endfor %}
+    </ol>
+    {%- endfor %}
+  </details>
+</figure>
