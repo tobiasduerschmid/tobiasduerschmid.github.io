@@ -1,0 +1,396 @@
+title: Smalltalk in 30 Minutes
+description: "Four tiny arcade missions: send messages, change a live scorekeeper, peek inside ifTrue:, and customize a subclass. For programmers who know variables and functions; no Smalltalk experience needed. Budget about 30 minutes, including first image load."
+learning_objectives:
+  - Predict the receiver and result of a Smalltalk message expression.
+  - Modify a method and observe its effect on an existing object's state.
+  - Explain conditional block evaluation using True and False method source.
+  - Identify a subclass's superclass and distinguish inherited from overridden behavior.
+  - Write a repeatable Boolean check for a scoring rule.
+backend: smalltalk
+require_tests: false
+require_quiz: false
+allow_skip_steps: true
+autosave_type: files
+reset_type: files
+progress_version: 1
+
+steps:
+  # Pedagogy: PRIMM Predict–Run; a worked message example followed by a small contrast.
+  - title: Messages and Results
+    key: messages-and-results-v1
+    smalltalk_target:
+      kind: method
+      className: SEBookArcade
+      side: class
+      selector: runExample
+    instructions: |
+      ### Why this matters
+
+      **Mission 1 · about 5 minutes.** In Smalltalk, objects receive messages
+      and answer objects. Numbers and strings join in too.
+
+      ### 🎯 You will learn to
+
+      - Identify a receiver, message, and answer.
+      - Predict how parentheses change a message expression.
+
+      **Exploratory step — no graded edit.** In the **Smalltalk terminal**,
+      enter one expression and select **Evaluate**. Strings use single quotes;
+      positions start at 1. Try these in order, predicting the last answer before
+      evaluating it:
+
+      ```smalltalk
+      'arcade' asUppercase
+      3 + 4
+      'arcade' copyFrom: 2 to: 4
+      ```
+
+      The receivers are `'arcade'`, `3`, and `'arcade'`. The message names are
+      `asUppercase` (no arguments), `+` (one), and `copyFrom:to:` (two).
+      Now change only the last expression's final position and predict again.
+
+      **Tiny trap:** predict `2 + 3 * 4` and `2 + (3 * 4)`, then evaluate both.
+      Binary messages such as `+` and `*` have equal precedence and run left to
+      right. In general: no-argument messages first, binary messages next,
+      keyword messages last; parentheses group first.
+
+      **Explain before moving on:** in `7 + 2`, which object receives which
+      message, and what does it answer?
+
+      **Controls:** **Run** evaluates the prepared example; **Evaluate** runs
+      your terminal expression. **Lesson code** returns Browser to this step's
+      starting source. Each step loads its own prepared scene; terminal objects
+      do not carry between steps. Use the numbered steps to move on.
+    files: &playground
+      - path: Arcade.st
+        language: smalltalk
+        content: |
+          Object subclass: #SEBookArcade
+              instanceVariableNames: ''
+              classVariableNames: ''
+              poolDictionaries: ''
+              category: 'SEBook-Arcade'!
+          !SEBookArcade class methodsFor: 'examples'!
+          runExample
+              ^ 'arcade' asUppercase
+          ! !
+    open_file: Arcade.st
+    run_file: Arcade.st
+    run_command: SEBookArcade runExample
+
+  # Pedagogy: PRIMM Investigate–Modify; predict retained state before accepting a live edit.
+  - title: Live Objects
+    key: live-scorekeeper-v1
+    smalltalk_target:
+      kind: method
+      className: SEBookArcadeScore
+      side: instance
+      selector: win
+    instructions: |
+      ### Why this matters
+
+      **Mission 2 · about 7 minutes.** Change the arcade's scoring rule while
+      a player is still playing. Accepting a method does not recreate its objects.
+
+      ### 🎯 You will learn to
+
+      - Change an instance method and inspect an existing object's state.
+      - Distinguish a draft from accepted behavior.
+
+      Browser shows `win`. `:=` assigns, `^` returns, and `self` is the receiver.
+      `new` creates a scorekeeper; `value` answers its points. Each scorekeeper
+      has its own `points` field, initialized to zero.
+
+      1. **Evaluate** `player := SEBookArcadeScore new`. Then evaluate
+         `player win`, followed by `player value`. Predict each answer first.
+         Evaluate `player` and select **Inspect result** to see its `points`.
+      2. In Browser, change **only** `win` so each win adds **10 points** to the
+         current total. Keep `^ self`. Select **Accept** to compile your edit;
+         typing alone leaves a draft. **Lesson code** brings you back if needed.
+      3. Before evaluating `player win` and then `player value` again, predict:
+         **10 or 11?** Select **Refresh** in the inspector. Explain why the old
+         point did or did not survive. A method's returned object and its effect
+         on state are different things.
+      4. Select **Test My Work** for optional feedback on one win and repeated
+         wins. Checks use accepted code and their own fresh objects/images;
+         they do not change your live player.
+
+      **Quick recovery:** **Restart session** keeps accepted code but clears
+      terminal objects. **Reset Current Step** restores the starter. Auto-save
+      preserves code and drafts across reloads, not live objects.
+    files:
+      - path: Score.st
+        language: smalltalk
+        content: |
+          Object subclass: #SEBookArcadeScore
+              instanceVariableNames: 'points'
+              classVariableNames: ''
+              poolDictionaries: ''
+              category: 'SEBook-Arcade'!
+          !SEBookArcadeScore methodsFor: 'initialization'!
+          initialize
+              super initialize.
+              points := 0
+          ! !
+          !SEBookArcadeScore methodsFor: 'scoring'!
+          win
+              points := points + 1.
+              ^ self
+          !
+          value
+              ^ points
+          ! !
+    open_file: Score.st
+    run_file: Score.st
+    run_command: SEBookArcadeScore new win; value
+    tests:
+      - description: One win adds 10 points and returns the same scorekeeper.
+        command: |
+          | score |
+          score := SEBookArcadeScore new.
+          (score win == score) and: [score value = 10]
+        hints:
+          - title: Accepted Code
+            text: Select Accept after editing win. Checks do not run an unaccepted draft.
+          - title: Two Responsibilities
+            text: Read the assignment and return separately. Which changes the score, and which answers the receiver?
+          - title: Trace One Win
+            text: Start with zero points. Write the required change in words, then use the old points in the update. Keep the receiver as the answer.
+      - description: Two wins accumulate to 20 points.
+        command: |
+          | score |
+          score := SEBookArcadeScore new.
+          score win.
+          score win.
+          score value = 20
+        hints:
+          - title: One Object, Two Messages
+            text: Both wins go to the same scorekeeper. Follow its points through both sends.
+          - title: Update or Replace?
+            text: Does your method add to the current total, or assign the same fixed total every time?
+          - title: Trace Two Wins
+            text: Write the old and new points for each win. Find an update that works for both rows without resetting the field.
+    solution:
+      files:
+        - path: Score.st
+          language: smalltalk
+          content: |
+            Object subclass: #SEBookArcadeScore
+                instanceVariableNames: 'points'
+                classVariableNames: ''
+                poolDictionaries: ''
+                category: 'SEBook-Arcade'!
+            !SEBookArcadeScore methodsFor: 'initialization'!
+            initialize
+                super initialize.
+                points := 0
+            ! !
+            !SEBookArcadeScore methodsFor: 'scoring'!
+            win
+                points := points + 10.
+                ^ self
+            !
+            value
+                ^ points
+            ! !
+
+  # Pedagogy: Predict–Investigate; contrasting Boolean receivers expose delayed evaluation.
+  - title: Boolean Objects
+    key: boolean-objects-v1
+    smalltalk_target:
+      kind: method
+      className: 'True'
+      side: instance
+      selector: 'ifTrue:'
+    instructions: |
+      ### Why this matters
+
+      **Mission 3 · about 7 minutes.** Even a conditional has method source
+      you can explore. `true` and `false` are objects of classes `True` and `False`.
+
+      ### 🎯 You will learn to
+
+      - Explain when a block runs by inspecting two system methods.
+
+      **Exploratory step — inspect, don't edit these system methods.** Square
+      brackets make a **block**: delayed computation. Predict both results:
+
+      ```smalltalk
+      false ifTrue: [1 / 0]
+      true ifTrue: [6 * 7]
+      ```
+
+      Evaluate each. Why does the first avoid division by zero?
+
+      1. Browser starts at **True → instance → ifTrue:**. Find the returned
+         expression (`^`). Which message tells the block to run?
+      2. In **Classes**, open **Search**, enter `False`, select **Search**, and
+         choose exactly `False`. Wait for its class definition. Stay on **Instance**,
+         select protocol `*` (all methods), wait for loading to finish, then select
+         method `ifTrue:`. What does it return instead?
+      3. Explain the different results using **the receiver and its method**.
+         `nil` is the object representing no result here. The source comments mention an optimization:
+         the compiler inlines ordinary conditional expressions. These methods
+         still expose the conditional behavior; not every execution calls them.
+
+      **Your turn:** evaluate `(3 > 2) ifTrue: ['Bonus unlocked!']`.
+      Change only the comparison to make the block stay asleep. Predict the
+      new answer, then check it. What changed: the block, or its Boolean receiver?
+    files: *playground
+    open_file: Arcade.st
+    run_file: Arcade.st
+    run_command: "(3 > 2) ifTrue: ['Bonus unlocked!']"
+
+  # Pedagogy: faded Modify–Make; contrast inherited code with receiver-specific dispatch.
+  - title: Subclasses and Specialization
+    key: bonus-subclass-v1
+    smalltalk_target:
+      kind: class
+      className: SEBookBonusScore
+      side: instance
+    instructions: |
+      ### Why this matters
+
+      **Mission 4 · about 9 minutes.** Give bonus players double points without
+      copying the scoring machinery. This scene already includes the previous fix.
+
+      ### 🎯 You will learn to
+
+      - Read a subclass definition and override one method.
+      - Explain which receiver supplies behavior inside an inherited method.
+
+      Browser shows the prepared subclass definition. The definition begins with:
+
+      ```smalltalk
+      SEBookArcadeScore subclass: #SEBookBonusScore
+      ```
+
+      The rest supplies field names and a category. Together this is a keyword
+      message **to the superclass** that creates a subclass; `#SEBookBonusScore`
+      is its name as a symbol. It already exists here. Its empty field list adds
+      no fields; it still inherits `points`.
+
+      1. Select **SEBookArcadeScore**, then instance method `win`. It now uses
+         `self pointsPerWin`. Read `pointsPerWin`, too. Predict the parent's
+         value after one win.
+      2. Return with **Lesson code**. Select the subclass's `pointsPerWin`.
+         Change **only this method** so bonus players earn **20 points per win**;
+         ordinary players must still earn 10. **Accept**, then **Run**.
+         Run creates a bonus player and reports one win.
+      3. **Test My Work** checks both rules and accumulation. Explain why the
+         inherited `win` asks the bonus object for `pointsPerWin` even though
+         `win` is defined in its parent. `self` remains the receiving object.
+
+      **Final mini-challenge:** `=` compares values. Write one terminal expression
+      that creates `probe := SEBookBonusScore new`, sends it `win` twice, and
+      checks its `value` against your predicted total. Separate statements with
+      periods; put the comparison last. Evaluate the whole expression twice.
+      It should answer `true` both times. Would your check catch a method that
+      always sets the score to 20? Explain.
+
+      **Exit ticket:** name one inherited method, one overridden method, and
+      the object that receives `pointsPerWin`. You have changed a running object,
+      read a conditional's source, and specialized a class. Arcade complete!
+    files:
+      - path: Bonus.st
+        language: smalltalk
+        content: |
+          Object subclass: #SEBookArcadeScore
+              instanceVariableNames: 'points'
+              classVariableNames: ''
+              poolDictionaries: ''
+              category: 'SEBook-Arcade'!
+          !SEBookArcadeScore methodsFor: 'initialization'!
+          initialize
+              super initialize.
+              points := 0
+          ! !
+          !SEBookArcadeScore methodsFor: 'scoring'!
+          win
+              points := points + self pointsPerWin.
+              ^ self
+          !
+          pointsPerWin
+              ^ 10
+          !
+          value
+              ^ points
+          ! !
+          SEBookArcadeScore subclass: #SEBookBonusScore
+              instanceVariableNames: ''
+              classVariableNames: ''
+              poolDictionaries: ''
+              category: 'SEBook-Arcade'!
+          !SEBookBonusScore methodsFor: 'scoring'!
+          pointsPerWin
+              ^ 10
+          ! !
+    open_file: Bonus.st
+    run_file: Bonus.st
+    run_command: SEBookBonusScore new win; value
+    tests:
+      - description: A bonus player's first win earns 20 points; two wins earn 40.
+        command: |
+          | bonus first |
+          bonus := SEBookBonusScore new.
+          bonus win.
+          first := bonus value.
+          bonus win.
+          (first = 20) and: [bonus value = 40]
+        hints:
+          - title: Which Class?
+            text: Check that you accepted pointsPerWin on SEBookBonusScore, on the instance side.
+          - title: Inherited Behavior
+            text: Read the parent's win method. It asks self for the amount, then adds that amount to the current points.
+          - title: Return the Rule
+            text: The override supplies the number of points for one win. It should answer that number, not change points itself.
+      - description: An ordinary player's wins still earn 10 points each.
+        command: |
+          | ordinary first |
+          ordinary := SEBookArcadeScore new.
+          ordinary win.
+          first := ordinary value.
+          ordinary win.
+          (first = 10) and: [ordinary value = 20]
+        hints:
+          - title: Compare the Classes
+            text: Which class did you edit? The parent's original rule must remain available to ordinary players.
+          - title: One Shared Method
+            text: The shared win method adds what self pointsPerWin answers. Compare that answer for each kind of player.
+          - title: Keep the Change Local
+            text: Restore the parent's rule if you changed it. Put the bonus-specific answer in the subclass's override.
+    solution:
+      files:
+        - path: Bonus.st
+          language: smalltalk
+          content: |
+            Object subclass: #SEBookArcadeScore
+                instanceVariableNames: 'points'
+                classVariableNames: ''
+                poolDictionaries: ''
+                category: 'SEBook-Arcade'!
+            !SEBookArcadeScore methodsFor: 'initialization'!
+            initialize
+                super initialize.
+                points := 0
+            ! !
+            !SEBookArcadeScore methodsFor: 'scoring'!
+            win
+                points := points + self pointsPerWin.
+                ^ self
+            !
+            pointsPerWin
+                ^ 10
+            !
+            value
+                ^ points
+            ! !
+            SEBookArcadeScore subclass: #SEBookBonusScore
+                instanceVariableNames: ''
+                classVariableNames: ''
+                poolDictionaries: ''
+                category: 'SEBook-Arcade'!
+            !SEBookBonusScore methodsFor: 'scoring'!
+            pointsPerWin
+                ^ 20
+            ! !
