@@ -4182,10 +4182,6 @@
   var heroTemplatePromise = null;
   var heroTemplateMountCount = 0;
 
-  function escapedRegExp(value) {
-    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
-
   function avatarTemplateUrl() {
     return window.SEGymHeroTemplateUrl || HERO_TEMPLATE_URL;
   }
@@ -4210,29 +4206,25 @@
       .replace(/^-+|-+$/g, '') || 'avatar';
   }
 
-  function rewriteSvgReferences(value, idMap, oldIds) {
+  function rewriteSvgReferences(value, idMap) {
     var next = String(value);
-    for (var i = 0; i < oldIds.length; i++) {
-      var oldId = oldIds[i];
-      var newId = idMap[oldId];
-      var escaped = escapedRegExp(oldId);
-      next = next.replace(new RegExp('url\\((["\\\']?)#' + escaped + '\\1\\)', 'g'), 'url(#' + newId + ')');
-      if (next === '#' + oldId) next = '#' + newId;
-    }
-    return next;
+    var fragment = next.charAt(0) === '#' ? idMap[next.slice(1)] : null;
+    if (fragment) return '#' + fragment;
+    // Read each local reference once. Scanning every template ID for every
+    // attribute made mounting the full hero stall the page's main thread.
+    return next.replace(/url\((["']?)#([^"'()\s]+)\1\)/g, function (reference, quote, id) {
+      return idMap[id] ? 'url(#' + idMap[id] + ')' : reference;
+    });
   }
 
   function uniquifySvgIds(svg, seed) {
     var token = safeIdToken(seed) + '-' + (++heroTemplateMountCount);
-    var idMap = {};
-    var oldIds = [];
+    var idMap = Object.create(null);
     svg.querySelectorAll('[id]').forEach(function (el) {
       var oldId = el.getAttribute('id');
       if (!oldId || idMap[oldId]) return;
       idMap[oldId] = oldId + '-' + token;
-      oldIds.push(oldId);
     });
-    oldIds.sort(function (a, b) { return b.length - a.length; });
     svg.querySelectorAll('[id]').forEach(function (el) {
       var oldId = el.getAttribute('id');
       if (idMap[oldId]) el.setAttribute('id', idMap[oldId]);
@@ -4241,12 +4233,12 @@
       for (var i = 0; i < el.attributes.length; i++) {
         var attr = el.attributes[i];
         if (attr.value.indexOf('#') === -1 && attr.value.indexOf('url(') === -1) continue;
-        var rewritten = rewriteSvgReferences(attr.value, idMap, oldIds);
+        var rewritten = rewriteSvgReferences(attr.value, idMap);
         if (rewritten !== attr.value) el.setAttribute(attr.name, rewritten);
       }
     });
     svg.querySelectorAll('style').forEach(function (styleEl) {
-      styleEl.textContent = rewriteSvgReferences(styleEl.textContent, idMap, oldIds);
+      styleEl.textContent = rewriteSvgReferences(styleEl.textContent, idMap);
     });
   }
 

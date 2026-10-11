@@ -268,6 +268,47 @@ test('Separately mounted heroes resolve their own gradients, masks, and clips', 
   expect(result.unresolved, 'each local paint or geometry reference must resolve inside its own hero').toEqual([]);
 });
 
+test('Mounting an SVG template preserves colors and nonlocal references while isolating local references', async ({ page }) => {
+  // A small template input covers reference syntax independently of the
+  // current hero artwork. Exercise the public loader with its configured URL.
+  await page.goto('/se-gym/');
+  await page.setContent('<main aria-label="Avatar reference fixture"></main>');
+  await page.evaluate(() => {
+    const template = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+      <defs><linearGradient id="paint" data-fixture="gradient"><stop stop-color="#abcdef"/></linearGradient><path id="shape" data-fixture="shape" d="M0 0H10V10Z"/></defs>
+      <style>.fixture-paint { fill: url('#paint'); }</style>
+      <rect data-fixture="local" width="10" height="10" fill="url(#paint)" stroke="url('#paint')"/>
+      <use data-fixture="reuse" href="#shape"/>
+      <rect data-fixture="color" fill="#abc" stroke="#abcdef"/>
+      <rect data-fixture="unknown" fill="url(#unknown-paint)"/>
+      <rect data-fixture="nonlocal" fill="url(/assets/elsewhere.svg#paint)"/>
+    </svg>`;
+    window.SEGymHeroTemplateUrl = `data:image/svg+xml,${encodeURIComponent(template)}`;
+  });
+  await page.addScriptTag({ url: '/js/se-gym-hero-avatar.js' });
+  const result = await page.evaluate(async () => {
+    window.HeroAvatar.saveAvatar(structuredClone(window.HeroAvatar.DEFAULTS));
+    const host = document.querySelector('main');
+    const mounted = await window.HeroAvatar.mountSavedAvatar(host, { variant: 'reference-fixture' });
+    const svg = host.querySelector('svg');
+    const node = (name) => svg.querySelector(`[data-fixture="${name}"]`);
+    return {
+      mounted,
+      localReferencesResolve: [node('local').getAttribute('fill'), node('local').getAttribute('stroke'), svg.querySelector('style').textContent]
+        .every((value) => value.includes(`#${node('gradient').id}`)),
+      reuseResolves: node('reuse').getAttribute('href') === `#${node('shape').id}`,
+      color: node('color').getAttribute('fill'),
+      stroke: node('color').getAttribute('stroke'),
+      unknown: node('unknown').getAttribute('fill'),
+      nonlocal: node('nonlocal').getAttribute('fill'),
+    };
+  });
+  expect(result).toEqual({
+    mounted: true, localReferencesResolve: true, reuseResolves: true,
+    color: '#abc', stroke: '#abcdef', unknown: 'url(#unknown-paint)', nonlocal: 'url(/assets/elsewhere.svg#paint)',
+  });
+});
+
 test('Bruin choice paints the mascot when the static thumbnail manifest is unavailable', async ({ page, context }) => {
   await context.addCookies([{ name: 'se-gym-active', value: 'true', domain: '127.0.0.1', path: '/' }]);
   // The optional external manifest is absent in this scenario; exercise the

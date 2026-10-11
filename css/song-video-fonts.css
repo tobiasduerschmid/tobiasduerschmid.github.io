@@ -1,0 +1,64 @@
+/* Locally hosted Google Fonts; licenses and source URLs in fonts/song-video/. */
+@font-face {
+  font-family: 'Fira Code';
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url(../fonts/song-video/fira-code-normal-500.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Fira Code';
+  font-style: normal;
+  font-weight: 600;
+  font-display: block;
+  src: url(../fonts/song-video/fira-code-normal-600.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 800;
+  font-display: block;
+  src: url(../fonts/song-video/inter-italic-800.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 900;
+  font-display: block;
+  src: url(../fonts/song-video/inter-italic-900.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url(../fonts/song-video/inter-normal-500.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: block;
+  src: url(../fonts/song-video/inter-normal-600.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url(../fonts/song-video/inter-normal-700.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 800;
+  font-display: block;
+  src: url(../fonts/song-video/inter-normal-800.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 900;
+  font-display: block;
+  src: url(../fonts/song-video/inter-normal-900.ttf) format('truetype');
+}

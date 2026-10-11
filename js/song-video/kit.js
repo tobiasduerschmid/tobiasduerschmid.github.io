@@ -12,6 +12,7 @@
 
   const { tween, fx, onFrame, EASE, clamp, progress, hash01, beats, camera } = window.Timeline;
   const SVG_NS = 'http://www.w3.org/2000/svg';
+  const graphTracks = new WeakMap();
 
   // ------------------------------------------------------------------
   // DOM helpers
@@ -332,20 +333,39 @@
    * Keeps `node` next to the element `selector` finds inside `within` (for
    * example a branch label in a GitGraph panel), so a sticker follows the
    * label as it glides. Offsets are in the node's own coordinate space;
-   * `anchor` picks the target's left or right edge.
+   * `anchor` picks the target's left or right edge. For a graph target,
+   * `anchorAt` freezes that position at an authored song time before the
+   * target disappears, independent of frame rate or seek history.
    */
-  function pin(node, within, selector, { dx = 0, dy = 0, anchor = 'left' } = {}) {
-    onFrame(() => {
+  function pin(node, within, selector, { dx = 0, dy = 0, anchor = 'left', anchorAt } = {}) {
+    let frozenPosition = null;
+    function position() {
       const target = within.querySelector(selector);
       const frame = node.offsetParent;
-      if (!target || !frame) return;
+      if (!target || !frame) return null;
       const box = target.getBoundingClientRect();
       const ref = frame.getBoundingClientRect();
       const scale = ref.width / frame.offsetWidth || 1;
       const x = ((anchor === 'right' ? box.right : box.left) - ref.left) / scale + dx;
       const y = (box.top + box.height / 2 - ref.top) / scale + dy;
-      node.style.left = `${x.toFixed(1)}px`;
-      node.style.top = `${y.toFixed(1)}px`;
+      return { x, y };
+    }
+    onFrame((t) => {
+      let currentPosition;
+      if (anchorAt !== undefined && t >= anchorAt) {
+        if (!frozenPosition) {
+          const track = graphTracks.get(within);
+          track.pose(anchorAt);
+          frozenPosition = position();
+          track.pose(t);
+        }
+        currentPosition = frozenPosition;
+      } else {
+        currentPosition = position();
+      }
+      if (!currentPosition) return;
+      node.style.left = `${currentPosition.x.toFixed(1)}px`;
+      node.style.top = `${currentPosition.y.toFixed(1)}px`;
     });
     return node;
   }
@@ -376,6 +396,8 @@
     }
     const host = el('div', 'graph-card-host', card);
     const track = new window.GraphTrack(host, keyframes, { speed });
+    graphTracks.set(card, track);
+    window.Timeline.onDispose(() => track.dispose());
     fx.rise(card, from, { distance: 30, duration: 0.4 });
     if (to !== undefined) fx.exit(card, to - 0.3, { dx: -60, duration: 0.3 });
     const settled = to === undefined ? Infinity : to + 0.1;
@@ -391,38 +413,88 @@
 
   let stoneCount = 0;
 
+  /** Layered metal and cut emerald; only the two engraved rings rotate. */
+  function timeStoneArtwork(art, id) {
+    const defs = svg('defs', {}, art);
+    const gold = svg('linearGradient', { id: `${id}-gold`, x1: '0', y1: '0', x2: '0.8', y2: '1' }, defs);
+    for (const [offset, tone] of [['0', 'glint'], ['0.28', 'light'], ['0.5', 'mid'], ['0.72', 'light'], ['1', 'shadow']]) {
+      svg('stop', { offset, class: `time-stone-gold-${tone}` }, gold);
+    }
+    const bronze = svg('linearGradient', { id: `${id}-bronze`, x1: '0', y1: '0', x2: '1', y2: '1' }, defs);
+    for (const [offset, tone] of [['0', 'light'], ['0.48', 'shadow'], ['1', 'mid']]) {
+      svg('stop', { offset, class: `time-stone-gold-${tone}` }, bronze);
+    }
+    const gem = svg('linearGradient', { id: `${id}-gem`, x1: '0', y1: '0', x2: '0.8', y2: '1' }, defs);
+    for (const [offset, tone] of [['0', 'light'], ['0.45', 'mid'], ['1', 'deep']]) {
+      svg('stop', { offset, class: `time-stone-emerald-${tone}` }, gem);
+    }
+    const aura = svg('radialGradient', { id: `${id}-aura` }, defs);
+    for (const [offset, tone] of [['0', 'core'], ['0.5', 'halo'], ['1', 'edge']]) {
+      svg('stop', { offset, class: `time-stone-aura-${tone}` }, aura);
+    }
+    const glow = svg('circle', { class: 'time-stone-glow', r: 98, fill: `url(#${id}-aura)` }, art);
+    const outer = svg('g', { class: 'time-stone-outer' }, art);
+    svg('circle', { class: 'time-stone-orbit', r: 91 }, outer);
+    svg('circle', { class: 'time-stone-runes', r: 85 }, outer);
+    for (let i = 0; i < 8; i++) {
+      svg('path', { class: 'time-stone-orbit-mark', d: 'M-3-92 0-97 3-92 0-87Z', transform: `rotate(${i * 45})` }, outer);
+    }
+
+    svg('circle', { class: 'time-stone-metal', r: 76, fill: `url(#${id}-bronze)` }, art);
+    svg('circle', { class: 'time-stone-recess', r: 69 }, art);
+    const inner = svg('g', { class: 'time-stone-inner' }, art);
+    svg('circle', { class: 'time-stone-engraving', r: 65 }, inner);
+    svg('path', {
+      class: 'time-stone-engraving',
+      d: 'M0-69 9-57 0-45-9-57ZM69 0 57 9 45 0 57-9ZM0 69-9 57 0 45 9 57ZM-69 0-57-9-45 0-57 9Z',
+    }, inner);
+
+    // The fixed almond silhouette keeps the amulet readable during a rewind.
+    const setting = svg('g', { class: 'time-stone-setting' }, art);
+    svg('path', {
+      class: 'time-stone-metal', fill: `url(#${id}-gold)`,
+      d: 'M-94 0C-69-17-48-58 0-58S69-17 94 0C69 17 48 58 0 58S-69 17-94 0Z',
+    }, setting);
+    svg('path', {
+      class: 'time-stone-recess',
+      d: 'M-78 0C-52-25-33-42 0-42S52-25 78 0C52 25 33 42 0 42S-52 25-78 0Z',
+    }, setting);
+    for (const flip of [1, -1]) {
+      const band = svg('g', { transform: `scale(1 ${flip})` }, setting);
+      svg('path', {
+        class: 'time-stone-metal', fill: `url(#${id}-gold)`,
+        d: 'M-87-2C-58-10-47-42-8-48 28-53 61-24 86-2 63-12 34-34 4-34-32-34-57-6-87-2Z',
+      }, band);
+      svg('path', { class: 'time-stone-highlight', d: 'M-76-9C-52-22-34-44-7-46 22-49 48-30 68-16' }, band);
+      svg('path', { class: 'time-stone-filigree', d: 'M-71-4C-64-17-47-25-40-20-32-14-42-3-48-8-53-12-45-18-42-12M71-4C64-17 47-25 40-20 32-14 42-3 48-8 53-12 45-18 42-12' }, band);
+    }
+    svg('circle', { class: 'time-stone-metal', r: 38, fill: `url(#${id}-gold)` }, setting);
+    svg('circle', { class: 'time-stone-bezel', r: 33 }, setting);
+    svg('path', { class: 'time-stone-gem', fill: `url(#${id}-gem)`, d: 'M-13-30 13-30 27-16 27 15 12 31-12 31-27 15-27-16Z' }, setting);
+    const facets = [
+      ['light', 'M-13-30 13-30 9-17-9-17Z'],
+      ['shine', 'M-13-30-9-17-16-8-27-16Z'],
+      ['mid', 'M13-30 27-16 16-8 9-17Z'],
+      ['deep', 'M27-16 27 15 16 8 16-8Z'],
+      ['mid', 'M27 15 12 31 9 17 16 8Z'],
+      ['deep', 'M12 31-12 31-9 17 9 17Z'],
+      ['light', 'M-12 31-27 15-16 8-9 17Z'],
+      ['mid', 'M-27 15-27-16-16-8-16 8Z'],
+    ];
+    for (const [tone, d] of facets) svg('path', { class: `time-stone-facet time-stone-facet--${tone}`, d }, setting);
+    svg('path', { class: 'time-stone-table', d: 'M-9-17 9-17 16-8 16 8 9 17-9 17-16 8-16-8Z' }, setting);
+    svg('path', { class: 'time-stone-gem-reflection', d: 'M-8-14 6-14-13 6-13-6ZM3 15 13 5 13 9 8 15Z' }, setting);
+    svg('path', { class: 'time-stone-highlight', d: 'M-12-30 12-30M-27-14V5M-33-10A35 35 0 0 1-7-34' }, setting);
+    svg('path', { class: 'time-stone-claws', d: 'M-15-33-11-27M15-33 11-27M-15 33-11 27M15 33 11 27' }, setting);
+    return { glow, outer, inner };
+  }
+
   function timeStone(parent, { x, y, size, from, to, spin = 1 }) {
     const id = `stone-${++stoneCount}`;
-    const art = svg('svg', { class: 'time-stone is-staged', viewBox: '-100 -100 200 200', width: size, height: size }, parent);
+    const art = svg('svg', { class: 'time-stone is-staged', viewBox: '-105 -105 210 210', width: size, height: size, 'aria-hidden': 'true' }, parent);
     art.style.left = `${x - size / 2}px`;
     art.style.top = `${y - size / 2}px`;
-    const defs = svg('defs', {}, art);
-    const gem = svg('linearGradient', { id: `${id}-gem`, x1: '0', y1: '0', x2: '1', y2: '1' }, defs);
-    svg('stop', { offset: '0', 'stop-color': '#a7f3d0' }, gem);
-    svg('stop', { offset: '0.45', 'stop-color': '#10b981' }, gem);
-    svg('stop', { offset: '1', 'stop-color': '#065f46' }, gem);
-    const glow = svg('circle', { class: 'time-stone-glow', r: 46 }, art);
-    const outer = svg('g', {}, art);
-    svg('circle', { class: 'time-stone-ring', r: 88, 'stroke-width': 6 }, outer);
-    svg('circle', { class: 'time-stone-runes', r: 79, 'stroke-width': 6 }, outer);
-    for (let i = 0; i < 12; i++) {
-      const a = (i / 12) * Math.PI * 2;
-      svg('line', {
-        class: 'time-stone-ring', 'stroke-width': 4, 'stroke-linecap': 'round',
-        x1: (92 * Math.sin(a)).toFixed(2), y1: (-92 * Math.cos(a)).toFixed(2),
-        x2: (99 * Math.sin(a)).toFixed(2), y2: (-99 * Math.cos(a)).toFixed(2),
-      }, outer);
-    }
-    const inner = svg('g', {}, art);
-    svg('circle', { class: 'time-stone-ring', r: 62, 'stroke-width': 3 }, inner);
-    for (let i = 0; i < 4; i++) {
-      svg('path', { d: 'M -7 -62 L 0 -44 L 7 -62 Z', fill: '#ffd100', transform: `rotate(${i * 90 + 45})` }, inner);
-    }
-    svg('path', {
-      class: 'time-stone-gem', fill: `url(#${id}-gem)`,
-      d: 'M 0 -40 L 34 -14 L 21 30 L -21 30 L -34 -14 Z',
-    }, art);
-    svg('path', { d: 'M 0 -40 L 0 30 M -34 -14 L 34 -14', stroke: 'rgba(255,255,255,0.45)', 'stroke-width': 2, fill: 'none' }, art);
+    const { glow, outer, inner } = timeStoneArtwork(art, id);
 
     fx.pop(art, from, { from: 0.2, duration: 0.6 });
     if (to !== undefined) fx.fadeOut(art, to - 0.3, 0.3);
@@ -431,37 +503,76 @@
       outer.setAttribute('transform', `rotate(${(age * 24 * spin).toFixed(2)})`);
       inner.setAttribute('transform', `rotate(${(-age * 40 * spin).toFixed(2)})`);
       const pulse = beats.pulse(t, 0.18);
-      glow.setAttribute('opacity', (0.55 + 0.3 * pulse).toFixed(3));
-      glow.setAttribute('r', (46 + 8 * pulse).toFixed(2));
+      glow.setAttribute('opacity', (0.6 + 0.15 * pulse).toFixed(3));
+      glow.setAttribute('r', (98 + 3 * pulse).toFixed(2));
     });
     return art;
   }
 
-  const CONFETTI_COLORS = ['#ffd100', '#ff5fb0', '#38d3f5', '#4ade80', '#a78bfa', '#ff6b7d'];
+  const CONFETTI_COLORS = ['gold', 'ivory', 'teal', 'coral', 'blue'];
+  const CONFETTI_SHAPES = ['ribbon', 'ticket', 'ribbon', 'ticket', 'ribbon', 'ticket', 'ribbon'];
 
-  /** A deterministic confetti burst from (x, y) at `at` that lasts about two seconds. */
-  function confetti(parent, { x, y, at, count = 46, seed = 3 }) {
-    const pieces = [];
-    for (let i = 0; i < count; i++) {
-      const node = el('div', 'confetti-piece', parent);
-      node.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
-      node.style.opacity = '0';
-      const angle = -Math.PI / 2 + (hash01(seed * 101 + i) - 0.5) * 2.4;
-      const speed = 260 + hash01(seed * 37 + i) * 240;
-      pieces.push({ node, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, spin: (hash01(seed * 13 + i) - 0.5) * 1440 });
+  function confettiPiece(layer, seed, index) {
+    const random = (channel, low, high) => low + (high - low) * hash01(seed * 4099 + index * 131 + channel * 17);
+    const shape = CONFETTI_SHAPES[index % CONFETTI_SHAPES.length];
+    const color = CONFETTI_COLORS[index % CONFETTI_COLORS.length];
+    const node = el('div', `confetti-piece confetti-piece--${shape} confetti-piece--${color}`, layer);
+    const depth = random(1, 0.72, 1.22);
+    const width = random(2, shape === 'ribbon' ? 7 : 13, shape === 'ribbon' ? 11 : 20) * depth;
+    const height = random(3, shape === 'ribbon' ? 23 : 10, shape === 'ribbon' ? 35 : 16) * depth;
+    node.style.setProperty('--piece-width', `${width.toFixed(2)}px`);
+    node.style.setProperty('--piece-height', `${height.toFixed(2)}px`);
+    return {
+      node, depth, delay: random(4, 0, 0.24), duration: random(5, 2.2, 2.7),
+      vx: random(6, -220, 220), vy: random(7, -470, -260),
+      gravity: random(8, 380, 490), wind: random(9, -16, 16),
+      phase: random(10, 0, Math.PI * 2), rotation: random(11, -90, 90),
+      spin: random(12, -250, 250), tumble: random(13, 2.4, 4.2),
+      flutter: random(14, 8, 19), frequency: random(15, 3, 5),
+      offsetX: random(16, -140, 140), offsetY: random(17, -70, 20),
+    };
+  }
+
+  function poseConfettiPiece(piece, age, x, y) {
+    const elapsed = age - piece.delay;
+    if (elapsed <= 0 || elapsed >= piece.duration) {
+      piece.node.style.opacity = '0';
+      return;
     }
+    const fraction = elapsed / piece.duration;
+    const flutter = (Math.sin(piece.phase + elapsed * piece.frequency) - Math.sin(piece.phase)) * piece.flutter * fraction;
+    const drift = piece.vx * (1 - Math.exp(-0.6 * elapsed)) / 0.6;
+    const px = x + piece.offsetX + drift + piece.wind * elapsed * elapsed + flutter;
+    const py = y + piece.offsetY + piece.vy * elapsed + 0.5 * piece.gravity * elapsed * elapsed;
+    const turn = piece.rotation + piece.spin * elapsed + flutter * 0.6;
+    const face = 0.18 + 0.82 * Math.abs(Math.cos(piece.phase + elapsed * piece.tumble));
+    const opacity = Math.min(clamp(elapsed / 0.12, 0, 1), clamp((1 - fraction) / 0.35, 0, 1)) * (0.68 + piece.depth * 0.25);
+    piece.node.style.opacity = opacity.toFixed(3);
+    piece.node.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) rotate(${turn.toFixed(1)}deg) scaleX(${face.toFixed(3)})`;
+  }
+
+  /** Seeded paper pieces pose directly from song time, including backward seeks. */
+  function confetti(parent, { x, y, at, count = 46, seed = 3 }) {
+    const layer = el('div', 'confetti-layer');
+    layer.setAttribute('aria-hidden', 'true');
+    parent.prepend(layer);
+    const pieces = Array.from({ length: Math.min(count, 46) }, (_, index) => confettiPiece(layer, seed, index));
+    // Spread side celebrations around the card, rather than exposing only the
+    // fastest particles from a compact burst hidden behind its opaque center.
+    const originX = x + Math.sign(x - 480) * 90;
+    pieces.sort((a, b) => a.depth - b.depth);
+    layer.append(...pieces.map((piece) => piece.node));
+    const end = Math.max(0, ...pieces.map((piece) => piece.delay + piece.duration));
+    let visible = false;
     onFrame((t) => {
       const age = t - at;
-      for (const piece of pieces) {
-        if (age < 0 || age > 2.2) {
-          piece.node.style.opacity = '0';
-          continue;
-        }
-        const px = x + piece.vx * age;
-        const py = y + piece.vy * age + 0.5 * 620 * age * age;
-        piece.node.style.opacity = String(clamp(1.6 - age * 0.8, 0, 1));
-        piece.node.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) rotate(${(piece.spin * age).toFixed(1)}deg)`;
+      const active = age >= 0 && age < end;
+      if (active !== visible) {
+        layer.classList.toggle('is-active', active);
+        visible = active;
       }
+      if (!active) return;
+      for (const piece of pieces) poseConfettiPiece(piece, age, originX, y);
     });
   }
 
@@ -475,7 +586,7 @@
   }
 
   // ------------------------------------------------------------------
-  // Backdrop, equalizer, camera
+  // Backdrop, camera
   // ------------------------------------------------------------------
 
   function backdrop(stage) {
@@ -500,24 +611,9 @@
     return layer;
   }
 
-  function equalizer(stage, bars = 48) {
-    const strip = el('div', 'eq', stage);
-    const nodes = Array.from({ length: bars }, () => el('div', 'eq-bar', strip));
-    onFrame((t) => {
-      const beat = beats.index(t);
-      const pulse = beats.pulse(t, 0.22);
-      nodes.forEach((node, i) => {
-        const base = 0.18 + 0.25 * hash01(beat * 97 + i);
-        const hit = pulse * (0.35 + 0.65 * hash01(beat * 31 + i * 7));
-        node.style.transform = `scaleY(${clamp(base + hit, 0.08, 1).toFixed(3)})`;
-      });
-    });
-    return strip;
-  }
-
   window.SongKit = {
     el, svg, place, icon, scene, sticker, stamp, kinetic, badge, terminal,
     station, chip, flyIn, flow, polaroid, typewriter, scramble, pin, graph,
-    timeStone, confetti, fall, backdrop, equalizer,
+    timeStone, confetti, fall, backdrop,
   };
 })();

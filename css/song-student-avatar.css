@@ -1,0 +1,46 @@
+/* The music-video art keeps its authored dark palette in both page themes.
+   Character colors are inherited from the saved SE Gym appearance. */
+.song-student-avatar {
+  position: absolute;
+  width: 260px;
+  height: 300px;
+  transform-origin: 0 0;
+  pointer-events: none;
+  z-index: 12;
+}
+.song-student-avatar[hidden] { display: none; }
+.song-student-portrait { position: absolute; inset: 0 0 auto; height: 250px; overflow: hidden; }
+.song-student-portrait > svg { display: block; width: 260px; height: 250px; overflow: hidden; filter: none; }
+.song-student-props { position: absolute; inset: 0; width: 260px; height: 300px; overflow: visible; }
+.song-student-source,
+.hero-avatar-measure-host { position: absolute; left: -10000px; top: -10000px; width: 640px; height: 665px; opacity: 0; pointer-events: none; }
+.song-student-portrait [data-hero-slot] { filter: none; }
+.song-student-portrait [data-hero-slot="head-shape"] path[fill*="--hero-face-line"],
+.song-student-portrait [data-hero-slot="head-features"] path[stroke*="--hero-face-line"] { opacity: var(--hero-contour-opacity, .18); }
+.song-student-portrait [data-hero-slot="hair"] path[stroke*="--hero-hair-rim"],
+.song-student-portrait [data-hero-slot="hairline"] path[stroke*="--hero-hair-rim"],
+.song-student-portrait [data-hero-slot="hair-root"] path[stroke*="--hero-hair-rim"] { opacity: var(--hero-hair-detail-opacity, .5); }
+.song-student-portrait [data-hero-slot="face-feature"] path[stroke*="--hero-face-line"],
+.song-student-portrait [data-hero-slot="face-feature"] circle[fill*="--hero-face-line"] { opacity: var(--hero-subtle-line-opacity, .34); }
+.student-ground { fill: #030913; opacity: .42; }
+.student-arms { transform-box: view-box; transform-origin: 130px 160px; transform: scaleX(var(--hero-body-fit-x, 1)); }
+.student-sleeve { fill: var(--hero-arm, var(--hero-suit, #218bb3)); stroke: var(--hero-arm-dark, var(--hero-suit-dark, #0e4d69)); stroke-width: 2; stroke-linejoin: round; }
+.student-sleeve-light { fill: var(--hero-arm-light, var(--hero-suit-light, #57bddd)); opacity: .65; }
+.student-sleeve-fold { fill: none; stroke: var(--hero-arm-dark, var(--hero-suit-dark, #0e4d69)); stroke-width: 1.5; stroke-linecap: round; opacity: .4; }
+.song-student-avatar[data-hero-kind="bruin"] .student-sleeve { fill: var(--hero-bruin-fur, #996432); stroke: var(--hero-bruin-line, #3d2515); }
+.song-student-avatar[data-hero-kind="bruin"] .student-sleeve-light { fill: var(--hero-bruin-fur-light, #c08a56); }
+.song-student-avatar[data-hero-kind="bruin"] .student-sleeve-fold { stroke: var(--hero-bruin-line, #3d2515); }
+.student-desk { fill: #67859d; stroke: #b2cedc; stroke-width: 1; }
+.student-desk-edge { fill: #22384f; }
+.student-laptop-rear { fill: #7494a9; stroke: #c0d3df; stroke-width: 1.2; }
+.student-laptop-sheen { fill: #d9e5ea; opacity: .08; }
+.student-laptop-top-edge { fill: none; stroke: #e1edf2; stroke-width: .7; opacity: .65; }
+.student-laptop-hinge { fill: none; stroke: #364d62; stroke-width: 2; stroke-linecap: round; }
+.student-laptop-mark { fill: #7494a9; stroke: #415f75; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: .8; }
+.student-contact-shadow { fill: #17263a; opacity: .6; }
+.student-laptop-base { fill: #607a92; stroke: #a5bfd0; stroke-width: .8; stroke-linejoin: round; }
+.song-student-avatar.is-laptop-only .student-arms { display: none; }
+@media print {
+  .song-student-avatar,
+  .song-student-source { display: none; }
+}

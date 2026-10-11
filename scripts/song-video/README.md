@@ -1,10 +1,88 @@
 # SE Book song videos
 
-Render source for the music videos in SE Book chapters. The first one is
+Live vector playback and video export for the music videos in SE Book chapters. The first one is
 "Snapshots and Pointers", the Git song on `SEBook/tools/git.md`, embedded with
 `{% include song-video.html song=site.data.songs.snapshots_and_pointers %}`.
-The published files live in `assets/video/`; this folder is excluded from the
-Jekyll build.
+Published videos live in `assets/video/`. Shared artwork and choreography live
+in `js/song-video/`, stage styles in `css/song-video-stage.css`, fonts in
+`fonts/song-video/`, and the soundtrack in `assets/audio/`. This scripts folder
+contains only the offline export tools and is excluded from the Jekyll build.
+
+## Live playback
+
+The chapter embeds `/assets/song-player/snapshots-and-pointers.html`, a
+same-origin frame that isolates the artwork from chapter CSS. `_layouts/song-player.html`
+serializes the storyboard at build time, so playback needs neither a YAML
+parser nor access to `_data/` or `node_modules/`. Both renderers call
+`SongScene.build(stage, storyboard, songId)` and use the same choreography.
+
+`player.js` uses native audio `currentTime` for every rendered picture. It
+measures drawing cost and reduces the visual frame rate on slower hardware;
+missed frames are skipped, never queued or used to slow down the soundtrack.
+The audio always supplies the clock. Rendering stops during pause, buffering,
+and hidden tabs; on return it jumps to the current audio time. Captions use
+the selected track's WebVTT cues and overlay the picture at readable, unscaled
+text size. The integrated controls provide play/pause, seeking, 10-second skips,
+mute, a captions toggle, and fullscreen. On touch devices, fullscreen requests
+a landscape orientation lock when available; otherwise, a portrait viewport
+rotates the player surface. Browsers without native fullscreen expand the
+existing same-origin frame to the visible viewport without reloading audio.
+Escape or the fullscreen button restores the page, scroll position, and focus.
+Reduced-motion users start in lyrics-only mode with visual descriptions.
+
+The Audio track selector switches between the song and the audio-described
+recording without losing the current song position. `tracks.js` maps the
+described audio's clock through `assets/audio/*-described.json`: during each
+narration interval it holds the authored picture; afterward it resumes the
+original choreography. Both recordings play at normal speed. The same control
+bar and captions work with either track; there are no raster video players on
+the Git chapter or its live player page.
+
+Audio downloads and the full transcript remain available if media fails.
+The chapter owns the embedded player's single transcript disclosure; the
+standalone player keeps a transcript link. Live visual descriptions appear
+in lyrics-only mode or when animation fails, without repeating them below
+the normal picture.
+Without JavaScript, a native audio control is provided. The player reads the
+existing SE Gym hero appearance for optional student-at-laptop cameos; it never
+saves or changes that appearance. Missing or unavailable saved data leaves a
+laptop illustration. Nothing autoplays, and media is not fetched
+until the reader presses play or chooses another audio track.
+
+The student is an optional, asynchronous enhancement. One copy of the shared
+hero artwork is adapted to a seated pose, stripped of workout layers and
+independent animation, and reused across the intro, remotes bridge, final
+chorus, and outro.
+Its head, blink, gaze, and typing-arm motion follows the same absolute song
+clock as the diagrams, with a still working pose under reduced motion. Fitting,
+hair, and accessories remain inside the shared head assembly; pupils move
+inside their original eye clips. The saved character never gates playback or
+adds another animation loop.
+
+Celebration confetti uses seeded paper ribbons and tickets with varied sizes,
+scattered launch positions, subdued shading, and tumbling. Every pose is
+calculated from the current song time, so repeated
+seeks reproduce the same frame. Particle counts stay bounded, and inactive
+bursts stop updating. Decorative particles stay behind the teaching artwork
+and above the caption reserve. The aurora backdrop uses radial gradients
+instead of moving blur filters.
+
+The exporter writes the described audio and timing manifest from the same
+frame-accurate edit plan. `scripts/video-tools/extract-audio.swift` can extract the AAC stream from
+an existing described MP4 without re-encoding. Published MP4s remain export
+artifacts, independent of the live player.
+
+Run the focused browser matrix against a built site served with HTTP byte-range
+support (for example, `bundle exec jekyll serve --port 4189`). Python's basic
+HTTP server does not provide the seekable media responses this matrix needs:
+
+```bash
+SONG_PLAYER_BASE_URL=http://127.0.0.1:4189 \
+  npx playwright test --config tests/song-vector.config.js
+```
+
+The matrix exercises Chromium, Firefox, and WebKit. Physical phone and
+screen-reader checks complement these automated tests.
 
 ## One storyboard, many outputs
 
@@ -30,13 +108,14 @@ out for the voice.
 
 | File | Role |
 | --- | --- |
-| `stage.html`, `stage.css`, `stage.js` | 960×540 CSS-pixel stage (captured at 2× = 1920×1080) with a deterministic `seek(t)` |
-| `timeline.js` | Paused Web Animations posed by `seek(t)`, per-frame updaters, the beat grid, camera punches and shakes |
-| `kit.js` | Builders for stickers, stamps, kinetic type, the terminal, Git stations, file chips, flow arrows, snapshot cards, GitGraph panels, the Time Stone, confetti |
-| `virtual-clock.js` | Replaces the page's timers so GitGraph's own animations run on song time |
-| `graph-track.js` | A GitGraph panel that steps through Git states and poses GitGraph's real transition animations at any `t` |
-| `songs/<song>.js` | The choreography: what appears on which sung word |
-| `songs/<song>.m4a` | The soundtrack (the recording, normalized to about −16 LUFS with −1 dBFS peaks) |
+| `stage.html`, `stage.js` | Offline harness for the shared 960×540 CSS-pixel stage (captured at 2× = 1920×1080), with deterministic `seek(t)` |
+| `../../js/song-video/scene.js` | Shared scene assembly, authored timing lookup, typography loading and disposal |
+| `../../js/song-video/timeline.js` | Paused Web Animations posed by `seek(t)`, per-frame updaters, the beat grid, camera punches and shakes |
+| `../../js/song-video/kit.js` | Builders for stickers, kinetic type, terminals, stations, paths and graphs |
+| `../../js/song-video/virtual-clock.js` | Independent graph clocks; never replaces browser timers |
+| `../../js/song-video/graph-track.js` | Retained graph transitions with deterministic seeking and disposal |
+| `../../js/song-video/songs/<song>.js` | The choreography: what appears on which sung word |
+| `../../assets/audio/<song>.m4a` | Shared soundtrack (normalized to about −16 LUFS with −1 dBFS peaks) |
 | `captions.js` | WebVTT captions for both cuts, from the storyboard |
 | `described-cut.js`, `wav.js` | The audio-described cut: narration, holds, frame order, soundtrack |
 | `render.js` | Runs the whole pipeline |
@@ -48,11 +127,12 @@ out for the voice.
 The graph panels use the SE Book's own `js/git-graph.js`, so the video shows
 the same commit pops, label glides, and merge bursts as the chapter's
 command labs. GitGraph animates with real timers and CSS transitions, which a
-frame-by-frame render can't wait for. For each frame, `graph-track.js`
-rebuilds the panel from the previous state, settles it, renders the target
-state, runs GitGraph's timers on the virtual clock up to the frame's moment,
-and seeks every CSS animation to its exact age. Each frame is a pure function
-of `t`, so four headless browsers can capture separate chunks of the song, and
+frame-by-frame render can't wait for. Each graph owns an independent virtual
+clock. `graph-track.js` retains the current transition during forward playback,
+advances its timers to the requested moment, and seeks animations to their
+exact age. A backward or discontinuous seek reconstructs the needed transition
+once and releases the replaced graph. Four headless browsers can still capture
+separate chunks of the song, and
 transitions can play faster than on the page (`speed`, default 1.6×) to fit
 the tempo.
 
@@ -75,7 +155,7 @@ The full render captures about 7,400 frames with four headless browsers (a few
 minutes), screens them for flashing, and encodes both cuts. It needs macOS with
 Xcode Command Line Tools (`swift`), the storyboard's `say` voice, a Chromium for Playwright (set
 `PLAYWRIGHT_CHROME_EXECUTABLE` to an installed Chrome if Playwright's own
-browsers aren't installed), network access for the stage's Google Fonts, and
+browsers aren't installed), and
 about 1.5 GB of temporary disk for the frames.
 
 - `--stills 18.6,61.5 --out DIR` renders just those moments as PNGs, for
@@ -91,11 +171,13 @@ about 1.5 GB of temporary disk for the frames.
    sheet; check them by ear, and caption what is actually sung.
 2. Add `_data/songs/<song>.yml` with the same fields as
    `snapshots_and_pointers.yml` (including a `narration` per section and a
-   `visual` per line), and `songs/<song>.m4a`.
-3. Write `songs/<song>.js`, registering
+   `visual` per line), and a soundtrack under `assets/audio/`.
+3. Write `js/song-video/songs/<song>.js`, registering
    `window.SongChoreographies['<song>']`. Keep the teaching rule: every visual
    shows what the line sings, so the audio and transcript carry everything.
-4. Render, include the video in a chapter, add the song to `SONGS` in
+4. For live playback add a page with `layout: song-player`, `song: <song>` and
+   its chapter transcript link, then point the storyboard's `player` at it.
+   Render, include the video in a chapter, add the song to `SONGS` in
    `tests/song-video.spec.js`, and load `css/song-video.css` on that page.
 
 ## Accessibility contract

@@ -713,12 +713,13 @@ html.dark-mode .git-workbench-shelf {
    remain fully interactive; nothing functional depends on animation
    completion. Uses attribute-prefix selectors so it matches the actual
    flat class names (`.git-graph-svg`, `.git-workbench-row`, …) rather
-   than expecting a nested `.git-graph > *` structure. */
+   than expecting a nested `.git-graph > *` structure. Externally timed song
+   scenes explicitly opt into full motion after their player has offered
+   lyrics-only mode; their nodes and portable paths must share one clock. */
 @media (prefers-reduced-motion: reduce) {
-  [class^="git-graph-"],
-  [class*=" git-graph-"],
-  [class^="git-workbench-"],
-  [class*=" git-workbench-"] {
+  :is([class^="git-graph-"], [class*=" git-graph-"],
+      [class^="git-workbench-"], [class*=" git-workbench-"]):not(
+        [data-git-graph-motion="full"], [data-git-graph-motion="full"] *) {
     animation: none !important;
     transition: none !important;
   }

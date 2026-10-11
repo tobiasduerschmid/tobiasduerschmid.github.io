@@ -7,9 +7,9 @@
  * _data/songs/ is the spec that the page, the captions, and the rendered
  * videos are all generated from.
  *
- * Playwright's bundled Chromium can't decode H.264, so these tests check what
- * the browser can: the captions track (parsed by the browser's TextTrack
- * API), the rendered page, and the served media files.
+ * These tests check the captions track through the browser's TextTrack API,
+ * the rendered transcript, and the served media files. Native playback is
+ * exercised separately in song-vector-player.spec.js.
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -19,7 +19,7 @@ const { test, expect } = require('@playwright/test');
 const SONGS = [
   { id: 'snapshots_and_pointers', page: '/SEBook/tools/git.html' },
 ];
-const EXTRAS_TOGGLE = 'Audio description and lyrics';
+const EXTRAS_TOGGLE = 'Full transcript';
 const NARRATOR = '(narrator) ';
 
 const withoutNotes = (text) => text.replace(/♪/g, '').trim();
@@ -43,7 +43,18 @@ for (const { id, page: pagePath } of SONGS) {
   const storyboard = yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data', 'songs', `${id}.yml`), 'utf8'));
   const lines = storyboard.sections.flatMap((section) => section.lines);
   const sung = lines.flatMap((line) => (line.answer ? [line.text, `(crowd) ${line.answer}`] : [line.text]));
-  const describedLabel = `${storyboard.title}, with audio description`;
+  async function playerAudio(page, described = false) {
+    const frameElement = page.getByTitle(`${storyboard.title}: interactive music player`);
+    await frameElement.scrollIntoViewIfNeeded();
+    const frame = frameElement.contentFrame();
+    await expect(frame.getByRole('button', { name: 'Play song', exact: true })).toBeVisible();
+    if (described) {
+      await frame.getByRole('combobox', { name: 'Audio track', exact: true }).selectOption('described');
+      await expect(frame.locator('audio source')).toHaveAttribute('src', new RegExp(storyboard.described_soundtrack));
+      await expect(frame.locator('audio track')).toHaveAttribute('src', storyboard.described_captions);
+    }
+    return frame.getByLabel(`${storyboard.title} audio`, { exact: true });
+  }
 
   test.describe(`Song video: ${storyboard.title}`, () => {
     test.beforeEach(async ({ page }) => {
@@ -51,8 +62,7 @@ for (const { id, page: pagePath } of SONGS) {
     });
 
     test('captions carry every sung line, in order, without overlapping', async ({ page }) => {
-      const video = page.getByLabel(storyboard.title, { exact: true });
-      await expect(video).toBeVisible();
+      const video = await playerAudio(page);
 
       const cues = await captionCues(video);
 
@@ -65,9 +75,7 @@ for (const { id, page: pagePath } of SONGS) {
     });
 
     test('audio-described cut captions the whole narration and every sung line, in order', async ({ page }) => {
-      await page.getByText(EXTRAS_TOGGLE).click();
-      const described = page.getByLabel(describedLabel);
-      await expect(described).toBeVisible();
+      const described = await playerAudio(page, true);
 
       const texts = (await captionCues(described)).map((cue) => withoutNotes(cue.text)).filter((text) => text !== '[music]');
 
@@ -87,21 +95,20 @@ for (const { id, page: pagePath } of SONGS) {
       }
     });
 
-    test('the videos wait for the reader: no autoplay, nothing preloaded', async ({ page }) => {
-      await page.getByText(EXTRAS_TOGGLE).click();
-      for (const video of [page.getByLabel(storyboard.title, { exact: true }), page.getByLabel(describedLabel)]) {
-        await expect(video).not.toHaveAttribute('autoplay');
-        await expect(video).toHaveAttribute('preload', 'none');
-      }
+    test('the player waits for the reader and has no raster video element', async ({ page }) => {
+      const audio = await playerAudio(page);
+      await expect(audio).not.toHaveAttribute('autoplay');
+      await expect(audio).toHaveAttribute('preload', 'none');
+      await expect(page.locator('video')).toHaveCount(0);
     });
 
-    test('both cuts, their captions, and the poster are served', async ({ request }) => {
+    test('both audio tracks, captions, and described timing are served', async ({ request }) => {
       const media = [
-        [storyboard.video, 'video/mp4'],
+        [`/${storyboard.soundtrack}`, 'audio/mp4'],
         [storyboard.captions, 'text/vtt'],
-        [storyboard.described_video, 'video/mp4'],
+        [`/${storyboard.described_soundtrack}`, 'audio/mp4'],
         [storyboard.described_captions, 'text/vtt'],
-        [storyboard.poster, 'image/jpeg'],
+        [storyboard.described_timeline, 'application/json'],
       ];
       for (const [url, type] of media) {
         const response = await request.head(url);

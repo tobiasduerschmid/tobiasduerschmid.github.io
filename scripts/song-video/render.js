@@ -9,6 +9,7 @@
  *   video     H.264 1920×1080 + the AAC soundtrack
  *   captions  WebVTT of the lyrics (captions.js)
  *   poster    JPEG of the frame at poster_time
+ *   described_soundtrack / described_timeline  Narrated M4A and live-player timing
  *
  * Pipeline: serve the repo root on loopback → open stage.html in several
  * headless Chromes (960×540 CSS px at device scale 2) → capture contiguous
@@ -39,7 +40,7 @@ const { chromium } = require('playwright');
 const { startLocalSiteServer } = require('../local-site-server');
 const { chromiumLaunchOptions } = require('../chromium-launch-options');
 const { songCaptions, describedCaptions } = require('./captions');
-const { speakNarrations, planDescribedCut, linkDescribedFrames, mixDescribedAudio } = require('./described-cut');
+const { speakNarrations, planDescribedCut, describedTimeline, linkDescribedFrames, mixDescribedAudio } = require('./described-cut');
 const { readWav, writeWav } = require('./wav');
 
 const ROOT = path.resolve(__dirname, '..', '..');
@@ -49,7 +50,7 @@ const STAGE = { width: 960, height: 540, scale: 2 };
 // text as crisp as at 1 Mbit/s in 1:1 crops (about 21 MB for four minutes).
 const VIDEO_BITS_PER_SECOND = 550_000;
 const AUDIO_SAMPLE_RATE = 48_000;
-const OUTPUTS = ['video', 'captions', 'described_video', 'described_captions', 'poster'];
+const OUTPUTS = ['video', 'captions', 'described_video', 'described_captions', 'described_soundtrack', 'described_timeline', 'poster'];
 
 const frameFileName = (index) => `frame-${String(index).padStart(5, '0')}.jpg`;
 const FRAME_JPEG_QUALITY = 92;
@@ -200,11 +201,15 @@ function renderDescribedCut(storyboard, workDir) {
   execFileSync('afconvert', ['-f', 'WAVE', '-d', `LEI16@${AUDIO_SAMPLE_RATE}`, path.join(ROOT, storyboard.soundtrack), songWav]);
   const voices = speakNarrations(storyboard, workDir, AUDIO_SAMPLE_RATE);
   const plan = planDescribedCut(storyboard, voices, AUDIO_SAMPLE_RATE);
-  const describedFrames = path.join(workDir, 'described');
-  linkDescribedFrames(plan, workDir, describedFrames, frameFileName);
   const describedWav = path.join(workDir, 'described.wav');
   writeWav(describedWav, mixDescribedAudio(plan, readWav(songWav), voices));
-  encode(describedFrames, storyboard.fps, describedWav, repoFile(storyboard.described_video));
+  execFileSync('afconvert', ['-f', 'm4af', '-d', 'aac ', '-b', '160000', describedWav, repoFile(storyboard.described_soundtrack)]);
+  fs.writeFileSync(repoFile(storyboard.described_timeline), `${JSON.stringify(describedTimeline(plan), null, 2)}\n`);
+  if (storyboard.described_video) {
+    const describedFrames = path.join(workDir, 'described');
+    linkDescribedFrames(plan, workDir, describedFrames, frameFileName);
+    encode(describedFrames, storyboard.fps, describedWav, repoFile(storyboard.described_video));
+  }
   fs.writeFileSync(repoFile(storyboard.described_captions), describedCaptions(storyboard, plan));
   console.log(`  described cut: ${plan.duration.toFixed(1)} s with ${plan.holds.length} described pauses`);
 }
@@ -224,7 +229,8 @@ async function main() {
       if (/^frame-\d+\.(jpg|png)$/.test(name)) fs.rmSync(path.join(workDir, name));
     }
   }
-  for (const key of OUTPUTS) fs.mkdirSync(path.dirname(repoFile(storyboard[key])), { recursive: true });
+  const outputKeys = OUTPUTS.filter((key) => storyboard[key]);
+  for (const key of outputKeys) fs.mkdirSync(path.dirname(repoFile(storyboard[key])), { recursive: true });
 
   console.log(`Rendering ${storyboard.title}: ${storyboard.duration} s at ${storyboard.fps} fps with ${CAPTURE_WORKERS} browsers (frames in ${workDir})`);
   await renderFrames(args, storyboard, workDir);
@@ -234,7 +240,7 @@ async function main() {
   renderDescribedCut(storyboard, workDir);
   if (!args.framesDir) fs.rmSync(workDir, { recursive: true, force: true });
 
-  for (const key of OUTPUTS) {
+  for (const key of outputKeys) {
     const { size } = fs.statSync(repoFile(storyboard[key]));
     console.log(`  ${storyboard[key]}  ${(size / 1024 / 1024).toFixed(2)} MB`);
   }

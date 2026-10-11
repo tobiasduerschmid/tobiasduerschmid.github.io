@@ -1,0 +1,91 @@
+{%- assign song = site.data.songs[page.song] -%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{{ song.title | escape }} — interactive music player</title>
+  {% include ai-training-opt-out-meta.html %}
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/git-graph.css' | relative_url }}?v={{ site.asset_version }}-song-vector-1">
+  <link rel="stylesheet" href="{{ '/css/song-video-stage.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/song-student-avatar.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/song-player.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
+</head>
+<body>
+  <a class="song-player-skip" href="#song-player">Skip to music player</a>
+  <main class="song-player" id="song-player" tabindex="-1" aria-label="{{ song.title | escape }} music player" data-song="{{ page.song | escape }}">
+    <h1>{{ song.title }}</h1>
+    <div class="song-player-screen" hidden>
+      <div class="song-player-surface">
+      <div class="song-player-viewport" data-testid="song-picture" hidden>
+        <div class="stage" id="stage" aria-hidden="true" data-avatar-script="{{ '/js/se-gym-hero-avatar.js' | relative_url }}" data-avatar-template="{{ '/assets/se-gym-hero-template.svg' | relative_url }}"></div>
+      </div>
+      <audio preload="none" aria-label="{{ song.title | escape }} audio" hidden>
+        <source src="{{ song.soundtrack | prepend: '/' | relative_url }}" type="audio/mp4">
+        <track kind="captions" src="{{ song.captions | relative_url }}" srclang="en" label="English" default>
+        <p>Your browser cannot play this audio. Use the audio downloads or full transcript below.</p>
+      </audio>
+      <div class="song-player-captions" id="song-captions" role="region" aria-label="Current lyrics">
+        <p id="song-lyrics">Press play to follow the lyrics.</p>
+      </div>
+      <section class="song-player-controls" id="song-controls" aria-label="Song controls">
+        <input class="song-player-seek" type="range" aria-label="Song position" min="0" max="{{ song.duration }}" value="0" step="0.1" disabled>
+        <div class="song-player-toolbar">
+          <button type="button" class="song-player-play" aria-label="Play song">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path class="song-player-play-icon" d="M7 4 20 12 7 20Z"/><path class="song-player-pause-icon" d="M6 4H10V20H6ZM14 4H18V20H14Z"/></svg>
+          </button>
+          <span class="song-player-time" aria-hidden="true">0:00 / {{ song.duration | divided_by: 60 | floor }}:{{ song.duration | modulo: 60 | floor }}</span>
+          <button type="button" class="song-player-back" aria-label="Back 10 seconds" disabled><span><span aria-hidden="true">−</span>10</span></button>
+          <button type="button" class="song-player-forward" aria-label="Forward 10 seconds" disabled><span><span aria-hidden="true">+</span>10</span></button>
+          <button type="button" class="song-player-mute" aria-label="Mute song">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9H7L12 5V19L7 15H3Z"/><path class="song-player-sound-icon" d="M16 8Q20 12 16 16M19 5Q25 12 19 19"/><path class="song-player-muted-icon" d="M16 9 22 15M22 9 16 15"/></svg>
+          </button>
+          <button type="button" class="song-player-cc" aria-label="Closed captions (CC)" aria-pressed="true" aria-controls="song-captions">CC</button>
+          <button type="button" class="song-player-fullscreen" aria-label="Enter full screen" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3H3V9M15 3H21V9M3 15V21H9M15 21H21V15"/></svg>
+          </button>
+        </div>
+        <label class="song-player-track-label">Audio track
+          <select class="song-player-track" data-described-src="{{ song.described_soundtrack | prepend: '/' | relative_url }}" data-described-captions="{{ song.described_captions | relative_url }}" data-described-timeline="{{ song.described_timeline | relative_url }}">
+            <option value="original">Song</option>
+            <option value="described">Song with audio description</option>
+          </select>
+        </label>
+      </section>
+      <p class="song-player-status" role="status"></p>
+      </div>
+    </div>
+    <div class="song-player-options" hidden>
+      <label class="song-player-motion"><input type="checkbox" id="lyrics-only"> Use lyrics-only mode</label>
+    </div>
+    <div class="song-player-description" role="region" aria-label="Current visual description" hidden>
+      <p id="song-description">Visual descriptions appear here during the song.</p>
+    </div>
+    <p class="song-player-transcript-link"><a href="{{ page.transcript | relative_url }}" target="_parent">Full transcript</a></p>
+    <details class="song-player-fallback">
+      <summary>Audio downloads</summary>
+      <p><a href="{{ song.soundtrack | prepend: '/' | relative_url }}">Download song audio</a></p>
+      <p><a href="{{ song.described_soundtrack | prepend: '/' | relative_url }}">Download audio-described song</a></p>
+    </details>
+    <noscript><p>The animated player needs JavaScript. Listen to the song below, or use the audio downloads and full transcript.</p>
+      <audio controls preload="none" aria-label="{{ song.title | escape }} without JavaScript" src="{{ song.soundtrack | prepend: '/' | relative_url }}"></audio>
+    </noscript>
+  </main>
+  <script type="application/json" id="song-data">{{ song | jsonify | replace: '<', '\u003c' }}</script>
+  <script src="{{ '/js/song-video/virtual-clock.js' | relative_url }}"></script>
+  <script src="{{ '/js/git-graph.js' | relative_url }}?v={{ site.asset_version }}-song-vector-1"></script>
+  <script src="{{ '/js/song-video/graph-track.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/timeline.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/kit.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/student-avatar.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/songs/' | append: page.song | append: '.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/scene.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/controls.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/tracks.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/fullscreen.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/player.js' | relative_url }}"></script>
+</body>
+</html>

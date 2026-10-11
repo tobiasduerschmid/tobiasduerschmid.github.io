@@ -26,6 +26,7 @@
 
   const animations = [];
   const updaters = [];
+  const disposers = [];
 
   function tween(node, keyframes, at, duration, easing = EASE.out) {
     const animation = node.animate(keyframes, {
@@ -46,6 +47,19 @@
   function seek(t) {
     for (const animation of animations) animation.currentTime = t * 1000;
     for (const update of updaters) update(t);
+  }
+
+  function onDispose(disposeResource) {
+    disposers.push(disposeResource);
+  }
+
+  function dispose() {
+    for (const animation of animations) animation.cancel();
+    for (const release of disposers) release();
+    animations.length = 0;
+    updaters.length = 0;
+    disposers.length = 0;
+    cameraHits.length = 0;
   }
 
   const clamp = (value, lo, hi) => Math.min(hi, Math.max(lo, value));
@@ -165,7 +179,7 @@
   };
 
   window.Timeline = {
-    EASE, tween, onFrame, seek, fx, beats, camera,
+    EASE, tween, onFrame, onDispose, dispose, seek, fx, beats, camera,
     clamp, progress, easeOutCubic, easeInOutCubic, hash01,
   };
 })();

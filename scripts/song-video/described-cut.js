@@ -93,6 +93,22 @@ function planDescribedCut(storyboard, voices, sampleRate) {
   return { fps, holds, frameCount: cursor, duration: cursor / fps };
 }
 
+/** Audio-clock manifest for the live vector player, from the exact mixing plan. */
+function describedTimeline(plan) {
+  return {
+    fps: plan.fps,
+    frameCount: plan.frameCount,
+    duration: plan.duration,
+    holds: plan.holds.map((hold) => ({
+      section: hold.section,
+      outputStart: hold.outputStart,
+      outputEnd: hold.outputEnd,
+      songTime: hold.songTime,
+      pictureTime: hold.pictureFrame / plan.fps,
+    })),
+  };
+}
+
 /** Symlinks the song's frames into the described cut's order (holds repeat one frame). */
 function linkDescribedFrames(plan, sourceDir, outDir, frameFileName) {
   fs.rmSync(outDir, { recursive: true, force: true });
@@ -131,4 +147,4 @@ function mixDescribedAudio(plan, song, voices) {
   return { sampleRate, channels: out };
 }
 
-module.exports = { spokenForm, speakNarrations, planDescribedCut, linkDescribedFrames, mixDescribedAudio };
+module.exports = { spokenForm, speakNarrations, planDescribedCut, describedTimeline, linkDescribedFrames, mixDescribedAudio };

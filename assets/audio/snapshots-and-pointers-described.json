@@ -1,0 +1,84 @@
+{
+  "fps": 30,
+  "frameCount": 12613,
+  "duration": 420.43333333333334,
+  "holds": [
+    {
+      "section": "intro",
+      "outputStart": 0,
+      "outputEnd": 18.066666666666666,
+      "songTime": 0,
+      "pictureTime": 1.4666666666666666
+    },
+    {
+      "section": "verse-1",
+      "outputStart": 37.5,
+      "outputEnd": 63.4,
+      "songTime": 19.433333333333334,
+      "pictureTime": 20.133333333333333
+    },
+    {
+      "section": "chorus-1",
+      "outputStart": 94.2,
+      "outputEnd": 114.23333333333333,
+      "songTime": 50.233333333333334,
+      "pictureTime": 50.93333333333333
+    },
+    {
+      "section": "verse-2",
+      "outputStart": 134.43333333333334,
+      "outputEnd": 160.33333333333334,
+      "songTime": 70.43333333333334,
+      "pictureTime": 71.1
+    },
+    {
+      "section": "chorus-2",
+      "outputStart": 185.66666666666666,
+      "outputEnd": 192.93333333333334,
+      "songTime": 95.76666666666667,
+      "pictureTime": 96.43333333333334
+    },
+    {
+      "section": "verse-3",
+      "outputStart": 212.5,
+      "outputEnd": 235.73333333333332,
+      "songTime": 115.33333333333333,
+      "pictureTime": 116.03333333333333
+    },
+    {
+      "section": "chorus-3",
+      "outputStart": 266.7,
+      "outputEnd": 269.1333333333333,
+      "songTime": 146.3,
+      "pictureTime": 146.96666666666667
+    },
+    {
+      "section": "bridge",
+      "outputStart": 289.1,
+      "outputEnd": 319.8333333333333,
+      "songTime": 166.26666666666668,
+      "pictureTime": 166.93333333333334
+    },
+    {
+      "section": "quiz",
+      "outputStart": 346.3,
+      "outputEnd": 351.73333333333335,
+      "songTime": 192.73333333333332,
+      "pictureTime": 193.43333333333334
+    },
+    {
+      "section": "chorus-4",
+      "outputStart": 373.23333333333335,
+      "outputEnd": 376.8666666666667,
+      "songTime": 214.23333333333332,
+      "pictureTime": 214.93333333333334
+    },
+    {
+      "section": "outro",
+      "outputStart": 398.23333333333335,
+      "outputEnd": 408.06666666666666,
+      "songTime": 235.6,
+      "pictureTime": 236.26666666666668
+    }
+  ]
+}

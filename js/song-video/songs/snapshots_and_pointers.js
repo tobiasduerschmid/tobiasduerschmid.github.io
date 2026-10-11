@@ -16,7 +16,8 @@
 (function () {
   'use strict';
 
-  window.SongChoreographies.snapshots_and_pointers = function choreograph({ song, kit, layers, terminal }) {
+  window.SongChoreographies = window.SongChoreographies || {};
+  window.SongChoreographies.snapshots_and_pointers = function choreograph({ song, kit, layers, terminal, student }) {
     const { fx, tween, EASE, camera, onFrame } = window.Timeline;
     const { content, hud } = layers;
     const line = (id) => song.line(id);
@@ -88,6 +89,7 @@
       camera.shake(trust + 0.05, 6);
 
       const title = kit.scene(content, better + 0.2, end, { enter: 'fade' });
+      if (student) student.appear({ from: better + 0.55, to: end - 0.2, x: 42, y: 135, scale: 0.78 });
       kit.timeStone(title, { x: 480, y: 200, size: 230, from: better + 0.35, to: end });
       const time = mark('intro-3', 'time');
       const subtitle = kit.el('div', 'subtitle is-staged', title, 'The software engineer’s');
@@ -295,6 +297,7 @@
       terminal.run(commitAt - 0.05, `git commit -m "${message}"`);
       kit.pin(kit.sticker(g, 'Moves with it', { at: mark(ln(8), 'moves'), variant: 'green', iconName: 'check', rotate: -4 }), card, label('main'), { dx: -150, dy: -44 });
       if (final) {
+        if (student) student.appear({ from: branchLine + 0.3, to: to - 0.2, x: 24, y: 140, scale: 0.68 });
         confettiAt(g, mark(ln(8), 'moves') + 0.2);
       }
     }
@@ -598,6 +601,9 @@
       const end = song.sectionEnd('bridge');
       terminal.window(start + 0.1, end);
       const rejectLine = line('bridge-5').start;
+      // Keep the student between the two repositories while their laptop
+      // pushes, fetches, and pulls. Leave before the wider rejected-push graphs.
+      if (student) student.appear({ from: start + 0.35, to: rejectLine - 0.2, x: 400, y: 165, scale: 0.6 });
 
       // Push, fetch, pull: your laptop and the remote side by side.
       const s = kit.scene(content, start, rejectLine);
@@ -683,7 +689,7 @@
       camera.shake(slams + 0.15, 10);
       for (const [hash, delay] of [['V', 0], ['U', 0.12]]) {
         const token = kit.el('div', 'falling-commit is-staged', w, hash);
-        kit.pin(token, whatIf, `${node(hash)} .git-graph-node`, { dx: -22, dy: -22 });
+        kit.pin(token, whatIf, `${node(hash)} .git-graph-node`, { dx: -22, dy: -22, anchorAt: falls + delay });
         tween(token, [{ opacity: 1 }, { opacity: 1 }], falls + delay, 0.01);
         kit.fall(token, falls + delay, { spin: delay ? -260 : 240, drift: delay ? -40 : 50 });
       }
@@ -744,6 +750,7 @@
       const start = song.sectionStart('outro');
       const end = song.duration;
       const s = kit.scene(content, start, end - 0.4, { exit: 'fade' });
+      if (student) student.appear({ from: start + 0.35, to: end - 0.6, x: 36, y: 90, scale: 0.8 });
       kit.timeStone(s, { x: 480, y: 190, size: 220, from: start + 0.05, to: end - 0.4, spin: -1.6 });
       const travel = mark('outro-1', 'travel');
       const rewind = kit.el('div', 'layer rewind-lines is-staged', s);

@@ -510,12 +510,190 @@ function buildCriteriaMatrix(findings, evidence) {
   });
 }
 
+// These fixtures exercise the keyboard audit itself, with real browser focus.
+async function focusAuditFrame(page, content, parentStyle = '') {
+  await page.setContent(`<style>button:focus { outline: 3px solid blue; } ${parentStyle}</style>
+    <main><button>Before frame</button><div id="frame-host"><iframe title="Focus fixture"></iframe></div><button>After frame</button></main>`);
+  await page.getByTitle('Focus fixture').evaluate((frame, markup) => { frame.srcdoc = markup; }, content);
+  await expect(page.getByTitle('Focus fixture').contentFrame().getByRole('button').first()).toBeAttached();
+}
+
+test('keyboard audit follows all outlined controls inside a same-origin frame', async ({ page }) => {
+  await focusAuditFrame(page, '<style>button:focus { outline: 3px solid blue; }</style><button>First child</button><button>Second child</button>');
+  const audit = await runFocusAudit(page);
+  expect(audit.findings).toEqual([]);
+  expect(audit.evidence.tabStopsChecked).toBe(4);
+});
+
+test('keyboard audit reports an unmarked second control inside a frame', async ({ page }) => {
+  await focusAuditFrame(page, '<style>button:focus { outline: 3px solid blue; } #unmarked:focus { outline: none; box-shadow: none; }</style><button>First child</button><button id="unmarked">Unmarked child</button>');
+  const audit = await runFocusAudit(page);
+  expect(audit.findings).toEqual(expect.arrayContaining([
+    expect.objectContaining({ criterion: '2.4.7', message: expect.stringContaining('#unmarked') }),
+  ]));
+});
+
+test('keyboard audit reports an invisible focused child inside a frame', async ({ page }) => {
+  await focusAuditFrame(page, '<style>button:focus { outline: 3px solid blue; } #invisible { opacity: 0; }</style><button id="invisible">Invisible child</button>');
+  const audit = await runFocusAudit(page);
+  expect(audit.findings).toEqual(expect.arrayContaining([
+    expect.objectContaining({ criterion: '2.4.11', message: expect.stringContaining('#invisible') }),
+  ]));
+});
+
+test('keyboard audit detects a child clipped by its frame host', async ({ page }) => {
+  await focusAuditFrame(page, '<style>body { margin: 0; } button { position: fixed; left: 100px; top: 60px; } button:focus { outline: 3px solid blue; }</style><button id="clipped">Clipped child</button>',
+    '#frame-host { overflow: hidden; width: 30px; height: 30px; } iframe { width: 300px; height: 150px; border: 0; }');
+  const audit = await runFocusAudit(page);
+  expect(audit.findings).toEqual(expect.arrayContaining([
+    expect.objectContaining({ criterion: '2.4.11', message: expect.stringContaining('#clipped') }),
+  ]));
+});
+
+test('keyboard audit continues beyond native audio controls inside a frame', async ({ page }) => {
+  await focusAuditFrame(page, '<style>audio:focus { outline: 3px solid blue; } button:focus { outline: none; box-shadow: none; }</style><audio controls tabindex="0"></audio><button id="after-audio">Unmarked control after audio</button>');
+  const audit = await runFocusAudit(page);
+  expect(audit.findings).toEqual(expect.arrayContaining([
+    expect.objectContaining({ criterion: '2.4.7', message: expect.stringContaining('#after-audio') }),
+  ]));
+});
+
+test('keyboard audit detects reverse-tab traps within a frame using page-wide boundaries', async ({ page }) => {
+  const buttons = (prefix) => Array.from({ length: 7 }, (_, i) => `<button>${prefix} ${i}</button>`).join('');
+  await focusAuditFrame(page, `<style>button:focus { outline: 3px solid blue; }</style>${buttons('Before')}<button id="trapped">Trapped child</button>${buttons('After')}`);
+  await page.getByTitle('Focus fixture').contentFrame().getByRole('button', { name: 'Trapped child', exact: true })
+    .evaluate((button) => button.addEventListener('keydown', (event) => {
+      if (event.key === 'Tab' && event.shiftKey) event.preventDefault();
+    }));
+  const audit = await runFocusAudit(page);
+  expect(audit.findings).toEqual(expect.arrayContaining([
+    expect.objectContaining({ criterion: '2.1.2', message: expect.stringContaining('#trapped') }),
+  ]));
+});
+
+// Runs in the browser: a parent document exposes the iframe as activeElement,
+// while the actual keyboard stop (and its focus ring) belongs to its document.
+function focusedControlSnapshot({ restoreIndex } = {}) {
+  const selector = 'a[href], button, input:not([type="hidden"]), select, textarea, summary, audio[controls], video[controls], iframe, [tabindex]:not([tabindex="-1"])';
+  const focusables = [];
+  function collectFocusables(root) {
+    for (const element of root.querySelectorAll(selector)) {
+      focusables.push(element);
+      if (element.localName === 'iframe' && element.contentDocument) collectFocusables(element.contentDocument);
+    }
+  }
+  collectFocusables(document);
+  // Reverse traversal begins at the last real stop from the forward walk;
+  // replaying N Tabs can instead wrap through browser chrome to the start.
+  if (restoreIndex !== undefined) focusables[restoreIndex]?.focus();
+  const frames = [];
+  let owner = document;
+  let active = owner.activeElement;
+  while (active?.localName === 'iframe') {
+    const child = active.contentDocument;
+    if (!child || !child.activeElement || child.activeElement === child.body
+      || child.activeElement === child.documentElement) break;
+    frames.push(active);
+    owner = child;
+    active = child.activeElement;
+  }
+  if (!(active instanceof owner.defaultView.HTMLElement)
+    || active === owner.body || active === owner.documentElement) return null;
+
+  const cssPath = (element) => {
+    if (element.id) return `#${CSS.escape(element.id)}`;
+    const parts = [];
+    for (let node = element; node && node.nodeType === 1 && parts.length < 4; node = node.parentElement) {
+      let part = node.localName;
+      if (node.classList.length) part += `.${[...node.classList].slice(0, 2).map((c) => CSS.escape(c)).join('.')}`;
+      parts.unshift(part);
+    }
+    return parts.join(' > ');
+  };
+  const focusIndex = focusables.indexOf(active);
+  const rect = active.getBoundingClientRect();
+  const view = owner.defaultView;
+  const parents = [...frames].reverse();
+  const pointInParent = (frame, x, y) => {
+    const bounds = frame.getBoundingClientRect();
+    const scaleX = bounds.width / frame.offsetWidth;
+    const scaleY = bounds.height / frame.offsetHeight;
+    return { x: bounds.left + (frame.clientLeft + x) * scaleX,
+      y: bounds.top + (frame.clientTop + y) * scaleY };
+  };
+  const hasPaint = (element) => {
+    for (let node = element; node; node = node.parentElement) {
+      const style = node.ownerDocument.defaultView.getComputedStyle(node);
+      if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
+    }
+    return true;
+  };
+
+  // Clip to every document viewport, then map through each frame's content
+  // box (including borders and scale) into its parent viewport.
+  let clip = { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom };
+  let clipView = view;
+  let intersectsViewport = true;
+  for (const frame of [...parents, null]) {
+    clip.left = Math.max(0, clip.left);
+    clip.top = Math.max(0, clip.top);
+    clip.right = Math.min(clipView.innerWidth, clip.right);
+    clip.bottom = Math.min(clipView.innerHeight, clip.bottom);
+    if (clip.right <= clip.left || clip.bottom <= clip.top) { intersectsViewport = false; break; }
+    if (!frame) break;
+    const start = pointInParent(frame, clip.left, clip.top);
+    const end = pointInParent(frame, clip.right, clip.bottom);
+    clip = { left: start.x, top: start.y, right: end.x, bottom: end.y };
+    clipView = frame.ownerDocument.defaultView;
+  }
+
+  // A clear point in the child is insufficient: the containing frame can be
+  // clipped by overflow or covered by parent-page sticky/fixed content.
+  function pointVisible(x, y) {
+    let target = active;
+    let targetView = view;
+    for (const frame of [...parents, null]) {
+      if (x < 0 || y < 0 || x >= targetView.innerWidth || y >= targetView.innerHeight) return false;
+      const top = targetView.document.elementFromPoint(x, y);
+      if (!top || (top !== target && !target.contains(top))) return false;
+      if (!frame) return true;
+      ({ x, y } = pointInParent(frame, x, y));
+      target = frame;
+      targetView = frame.ownerDocument.defaultView;
+    }
+    return false;
+  }
+  const xs = [rect.left + rect.width / 2, rect.left + 2, rect.right - 2];
+  const ys = [rect.top + rect.height / 2, rect.top + 2, rect.bottom - 2];
+  const visible = hasPaint(active) && frames.every(hasPaint)
+    && xs.some((x) => ys.some((y) => pointVisible(x, y)));
+  const computed = view.getComputedStyle(active);
+  return {
+    cssPath: [...frames, active].map(cssPath).join(' >> '),
+    focusIndex,
+    atDocumentStart: focusIndex >= 0 && focusIndex < 5,
+    atDocumentEnd: focusIndex >= 0 && focusIndex > focusables.length - 6,
+    rectWidth: rect.width,
+    rectHeight: rect.height,
+    intersectsViewport,
+    visible,
+    outlineStyle: computed.outlineStyle,
+    boxShadow: computed.boxShadow,
+    isNativeMedia: active.matches('audio[controls], video[controls]'),
+    // Monaco/xterm own their cursor and focus visualization; keep recording
+    // their stops without claiming their hidden textarea needs an outline.
+    isApplicationWidget: !!active.closest('.monaco-editor, .terminal.xterm, .xterm-screen'),
+  };
+}
+
 async function runFocusAudit(page) {
   // Drive Tab from Playwright's keyboard API. Synthetic KeyboardEvents
   // dispatched from inside `page.evaluate` do NOT advance focus in real
   // browsers, so the previous implementation was effectively a no-op.
   const findings = [];
   const seen = new Set();
+  let lastFocusIndex = null;
+  let forwardSteps = 0;
   const limit = 220;
 
   const firstFocusableInfo = await page.evaluate(() => {
@@ -547,75 +725,20 @@ async function runFocusAudit(page) {
   });
 
   for (let i = 0; i < limit; i += 1) {
+    forwardSteps += 1;
     await page.keyboard.press('Tab');
-    const stop = await page.evaluate(() => {
-      const active = document.activeElement;
-      if (!(active instanceof HTMLElement)) return null;
-      if (active === document.body || active === document.documentElement) return null;
-
-      const cssPath = (el) => {
-        if (el.id) return `#${CSS.escape(el.id)}`;
-        const parts = [];
-        let node = el;
-        while (node && node.nodeType === 1 && parts.length < 4) {
-          let part = node.localName;
-          if (node.classList && node.classList.length) {
-            part += `.${[...node.classList].slice(0, 2).map((c) => CSS.escape(c)).join('.')}`;
-          }
-          parts.unshift(part);
-          node = node.parentElement;
-        }
-        return parts.join(' > ');
-      };
-
-      const rect = active.getBoundingClientRect();
-      const intersectsViewport = rect.bottom > 0 && rect.right > 0
-        && rect.top < innerHeight && rect.left < innerWidth;
-
-      // Hit-test a few candidate points to see whether the focused element is
-      // visible at all under fixed/sticky chrome (covers WCAG 2.4.11).
-      const xs = [rect.left + rect.width / 2, rect.left + 2, rect.right - 2]
-        .filter((x) => x >= 0 && x < innerWidth);
-      const ys = [rect.top + rect.height / 2, rect.top + 2, rect.bottom - 2]
-        .filter((y) => y >= 0 && y < innerHeight);
-      let visible = false;
-      for (const x of xs) {
-        for (const y of ys) {
-          const top = document.elementFromPoint(x, y);
-          if (top && (top === active || active.contains(top))) { visible = true; break; }
-        }
-        if (visible) break;
-      }
-
-      const computed = getComputedStyle(active);
-      const focusables = document.querySelectorAll(
-        'a[href], button, input:not([type="hidden"]), select, textarea, summary, [tabindex]:not([tabindex="-1"])',
-      );
-      // Monaco editor and xterm terminal are "application" widgets that
-      // render their own focus visualization (blinking cursor, selection
-      // highlight) on a canvas the audit can't introspect. Their hidden
-      // <textarea> input intentionally has no outline / box-shadow and is
-      // intentionally covered by the editor surface — that's how Monaco /
-      // xterm work. Skip the visibility / outline checks for those, but
-      // still record that we tab-stopped through them.
-      const isApplicationWidget = !!active.closest('.monaco-editor, .terminal.xterm, .xterm-screen');
-      return {
-        cssPath: cssPath(active),
-        focusIndex: Array.prototype.indexOf.call(focusables, active),
-        rectWidth: rect.width,
-        rectHeight: rect.height,
-        intersectsViewport,
-        visible,
-        outlineStyle: computed.outlineStyle,
-        boxShadow: computed.boxShadow,
-        isApplicationWidget,
-      };
-    });
+    const stop = await page.evaluate(focusedControlSnapshot);
 
     if (!stop) break;
     const stopKey = `${stop.focusIndex}:${stop.cssPath}`;
-    if (seen.has(stopKey)) break;
+    if (seen.has(stopKey)) {
+      // Native media controls have multiple keyboard stops inside a closed
+      // shadow tree; activeElement remains the audio/video host for each.
+      if (stop.isNativeMedia) continue;
+      break;
+    }
     seen.add(stopKey);
+    lastFocusIndex = stop.focusIndex;
 
     if (stop.isApplicationWidget) continue;
 
@@ -665,57 +788,23 @@ async function runFocusAudit(page) {
   // focus between hidden helper inputs and the canvas; we exempt them too
   // because the apparent "stuck" state is just the widget cycling focus
   // internally.
-  await page.evaluate(() => {
-    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-  });
-  const reverseLimit = Math.min(seen.size + 2, limit);
-  for (let i = 0; i < reverseLimit; i += 1) {
-    await page.keyboard.press('Tab');
+  if (lastFocusIndex !== null) {
+    await page.evaluate(focusedControlSnapshot, { restoreIndex: lastFocusIndex });
   }
+  const reverseLimit = Math.min(forwardSteps + 2, limit);
   const reverseSeen = [];
   let consecutiveSame = 0;
   let lastKey = null;
   let trapReported = false;
   for (let i = 0; i < reverseLimit + 2; i += 1) {
     await page.keyboard.press('Shift+Tab');
-    const stop = await page.evaluate(() => {
-      const active = document.activeElement;
-      if (!(active instanceof HTMLElement) || active === document.body || active === document.documentElement) return null;
-      // Recognise the document-boundary case: Shift+Tab from the very first
-      // focusable in the document is supposed to move focus out of the page
-      // to browser chrome (URL bar). Headless browsers don't simulate the
-      // browser chrome, so they pin focus to that first focusable instead.
-      // That isn't a keyboard trap — it's a harness limitation. Treat it as
-      // such by reporting which element is currently focused AND whether it
-      // happens to be the first focusable on the page.
-      // "Near the document boundary" — i.e. within the first or last few
-      // focusables. Headless browsers pin focus to whichever-end-is-nearest
-      // when Shift+Tab tries to leave the document, so the activeElement
-      // can be any of the first/last few elements depending on visibility,
-      // skip-link state, or scroll position.
-      const focusables = document.querySelectorAll(
-        'a[href], button, input:not([type="hidden"]), select, textarea, summary, [tabindex]:not([tabindex="-1"])',
-      );
-      const idx = Array.prototype.indexOf.call(focusables, active);
-      const atDocumentStart = idx >= 0 && idx < 5;
-      const atDocumentEnd = idx >= 0 && idx > focusables.length - 6;
-      const isApplicationWidget = !!active.closest('.monaco-editor, .terminal.xterm, .xterm-screen');
-      return {
-        idx,
-        tag: active.localName,
-        id: active.id,
-        klass: active.className && typeof active.className === 'string'
-          ? active.className.split(/\s+/).slice(0, 2).join('.') : '',
-        atDocumentStart,
-        atDocumentEnd,
-        isApplicationWidget,
-      };
-    });
+    const stop = await page.evaluate(focusedControlSnapshot);
     if (!stop) break;
-    const key = `${stop.idx}:${stop.tag}#${stop.id}.${stop.klass}`;
+    const key = `${stop.focusIndex}:${stop.cssPath}`;
     consecutiveSame = (key === lastKey) ? consecutiveSame + 1 : 0;
     lastKey = key;
     reverseSeen.push(key);
+    if (stop.isNativeMedia) { consecutiveSame = 0; continue; }
     if (consecutiveSame >= 4 && !trapReported) {
       // Real keyboard traps loop indefinitely. Bumping the threshold to 5
       // consecutive same-element Shift+Tabs filters out headless quirks

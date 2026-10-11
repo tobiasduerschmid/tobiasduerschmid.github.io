@@ -13,13 +13,11 @@
  * state, played `speed` times faster than on the page so a 720 ms glide fits
  * the song's tempo.
  *
- * How a frame is posed: a fresh GitGraph renders the previous state and is
- * fast-forwarded until every transition and cleanup timer has settled; then
- * it renders the target state and the virtual clock (virtual-clock.js) runs
- * GitGraph's timers up to the frame's moment. CSS animations and transitions
- * are paused the moment they appear, stamped with the virtual time they
- * started, and seeked to that age. Each frame is therefore a pure function
- * of t.
+ * Each track owns a clock and retains its graph while time moves forward
+ * within a keyframe. On a backward seek or keyframe change it reconstructs
+ * the previous state, settles it, then starts the target transition. This
+ * makes every pose independent of seek history without rebuilding every
+ * frame. Call dispose() when the scene is released.
  */
 (function () {
   'use strict';
@@ -58,18 +56,19 @@
       this.panel = panel;
       this.keyframes = keyframes.map((key) => ({ at: key.at, state: parseState(key.state) }));
       this.speed = speed;
-      this.shown = null; // { index, canvas, stamps } while a settled state is on screen
+      this.clock = window.VirtualClock.create();
+      this.shown = null;
     }
 
     pose(t) {
       const index = this.keyframeIndexAt(t);
       const key = this.keyframes[index];
       const elapsedMs = Math.max(0, (t - key.at) * 1000 * this.speed);
-      if (index === 0 || elapsedMs >= SETTLE_MS) {
-        this.showSettled(index, elapsedMs);
-      } else {
-        this.showTransition(index, elapsedMs);
+      const target = SETTLE_MS + elapsedMs;
+      if (!this.shown || this.shown.index !== index || target < this.clock.now()) {
+        this.buildTransition(index);
       }
+      this.advanceTo(target);
     }
 
     keyframeIndexAt(t) {
@@ -80,39 +79,45 @@
       return index;
     }
 
-    /** A fresh graph showing keyframe `index` with every animation finished. */
-    buildSettled(index) {
+    buildTransition(index) {
+      this.dispose();
       const canvas = document.createElement('div');
       canvas.className = 'git-graph-canvas song-graph-canvas';
       this.panel.replaceChildren(canvas);
-      window.VirtualClock.reset();
-      const graph = new window.GitGraph(canvas);
+      const graph = new window.GitGraph(canvas, {
+        scheduler: this.clock,
+        portablePaths: true,
+        motion: 'full',
+        perfLite: false,
+        observeTheme: false,
+        colorMode: 'dark',
+      });
       graph.reserveForStates(this.keyframes.map((key) => key.state));
       const stamps = new WeakMap();
-      graph.render(this.keyframes[index].state);
+      this.shown = { index, graph, canvas, stamps };
+      graph.render(this.keyframes[Math.max(0, index - 1)].state);
       stampAnimations(canvas, stamps, 0);
-      window.VirtualClock.advanceTo(SETTLE_MS, (now) => stampAnimations(canvas, stamps, now));
-      poseAnimations(canvas, stamps, SETTLE_MS);
-      return { graph, canvas, stamps };
-    }
-
-    showSettled(index, elapsedMs) {
-      if (!this.shown || this.shown.index !== index) {
-        const { canvas, stamps } = this.buildSettled(index);
-        this.shown = { index, canvas, stamps };
+      this.advanceTo(SETTLE_MS);
+      if (index > 0) {
+        graph.render(this.keyframes[index].state);
+        stampAnimations(canvas, stamps, SETTLE_MS);
       }
-      // Only looping animations (the HEAD glow's pulse) are still running.
-      poseAnimations(this.shown.canvas, this.shown.stamps, SETTLE_MS + elapsedMs);
     }
 
-    showTransition(index, elapsedMs) {
-      const { graph, canvas, stamps } = this.buildSettled(index - 1);
+    advanceTo(target) {
+      const { graph, canvas, stamps } = this.shown;
+      this.clock.advanceTo(target, (now) => {
+        graph.posePaths(now);
+        stampAnimations(canvas, stamps, now);
+      });
+      graph.posePaths(target);
+      poseAnimations(canvas, stamps, target);
+    }
+
+    dispose() {
+      if (this.shown) this.shown.graph.dispose();
       this.shown = null;
-      const start = window.VirtualClock.now();
-      graph.render(this.keyframes[index].state);
-      stampAnimations(canvas, stamps, start);
-      window.VirtualClock.advanceTo(start + elapsedMs, (now) => stampAnimations(canvas, stamps, now));
-      poseAnimations(canvas, stamps, start + elapsedMs);
+      this.clock.reset();
     }
   }
 

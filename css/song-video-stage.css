@@ -3,8 +3,9 @@
  *
  * Every rule here describes one video frame: a 960×540 CSS-pixel stage that
  * render.js captures at device scale 2, giving 1920×1080 frames. Fixed pixel
- * geometry is intentional — this is not a responsive page and it never ships
- * with the site. The video is always dark; every text color below clears
+ * geometry is intentional — the live player scales this artwork inside its
+ * responsive viewport, with captions and controls outside its scaling.
+ * The artwork is always dark in both site themes; every text color below clears
  * 4.5:1 against its own background (WCAG 1.4.3 also covers text drawn into
  * video frames). The bottom 80 px stay free of essential content because
  * the player draws its captions there.
@@ -63,7 +64,7 @@ body.is-fit {
 }
 
 /* ------------------------------------------------------------------ */
-/* Backdrop: drifting aurora blobs over a dot grid                     */
+/* Backdrop: soft painted auroras; gradients avoid per-frame blur     */
 /* ------------------------------------------------------------------ */
 
 .backdrop {
@@ -73,50 +74,28 @@ body.is-fit {
 .backdrop-grid {
   position: absolute;
   inset: -40px;
-  background-image: radial-gradient(rgba(180, 200, 255, 0.16) 1px, transparent 1.4px);
+  background-image: radial-gradient(rgba(180, 200, 255, 0.11) 1px, transparent 1.4px);
   background-size: 24px 24px;
 }
 
 .blob {
   position: absolute;
-  width: 520px;
-  height: 520px;
-  margin: -260px 0 0 -260px;
+  width: 720px;
+  height: 720px;
+  margin: -360px 0 0 -360px;
   border-radius: 50%;
-  filter: blur(70px);
-  opacity: 0.42;
+  background: radial-gradient(ellipse, var(--aurora-color) 0%, transparent 70%);
+  opacity: 0.62;
 }
 
-.blob--violet { background: #6d28d9; }
-.blob--cyan { background: #0891b2; }
-.blob--pink { background: #be185d; }
-.blob--gold { background: #b45309; }
-.blob--green { background: #047857; }
+.blob--violet { --aurora-color: #6d28d9; }
+.blob--cyan { --aurora-color: #0891b2; }
+.blob--pink { --aurora-color: #be185d; }
+.blob--gold { --aurora-color: #b45309; }
+.blob--green { --aurora-color: #047857; }
 
 .vignette {
   background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
-}
-
-/* Equalizer strip along the bottom edge (decorative, beat-driven). */
-.eq {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 30px;
-  display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  padding: 0 6px;
-  opacity: 0.38;
-}
-
-.eq-bar {
-  flex: 1;
-  height: 30px;
-  border-radius: 3px 3px 0 0;
-  background: linear-gradient(to top, var(--violet), var(--cyan));
-  transform-origin: 50% 100%;
 }
 
 /* ------------------------------------------------------------------ */
@@ -161,8 +140,8 @@ body.is-fit {
   width: 340px;
   border: 1px solid rgba(160, 190, 255, 0.3);
   border-radius: 12px;
-  background: rgba(6, 10, 22, 0.94);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(155deg, #172039, #080d1e 72%);
+  box-shadow: inset 0 1px 0 rgba(220, 232, 255, 0.13), 0 16px 40px rgba(0, 0, 0, 0.5);
   overflow: hidden;
 }
 
@@ -348,8 +327,8 @@ body.is-fit {
   position: absolute;
   border: 2px solid var(--panel-line);
   border-radius: 18px;
-  background: var(--panel);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(155deg, rgba(39, 51, 81, 0.96), var(--panel) 65%);
+  box-shadow: inset 0 1px 0 rgba(220, 232, 255, 0.12), 0 18px 40px rgba(0, 0, 0, 0.4);
 }
 
 .station-glow {
@@ -540,9 +519,9 @@ body.is-fit {
   width: 92px;
   padding: 6px 6px 0;
   border-radius: 6px;
-  background: #fbfbf6;
+  background: linear-gradient(155deg, #fff, #f2f3ed);
   color: var(--ink);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 2px 0 #c5cbd1, 0 4px 5px rgba(0, 0, 0, 0.28), 0 10px 20px rgba(0, 0, 0, 0.4);
 }
 
 .polaroid-photo {
@@ -550,7 +529,8 @@ body.is-fit {
   place-items: center;
   height: 52px;
   border-radius: 3px;
-  background: linear-gradient(135deg, #1e3a8a, #6d28d9);
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.1), transparent 45%), linear-gradient(135deg, #1e3a8a, #6d28d9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), inset 0 -1px 0 rgba(0, 0, 0, 0.15);
   color: #fff;
   font-family: var(--font-mono);
   font-size: 20px;
@@ -654,9 +634,12 @@ body.is-fit {
 
 .hash-bar {
   position: absolute;
-  padding: 8px 14px;
-  border: 2px solid var(--gold);
+  /* A single inset ring avoids separate border-corner painting. Include its
+     width in the padding to preserve the artwork's existing box geometry. */
+  padding: 10px 16px;
+  border: 0;
   border-radius: 10px;
+  box-shadow: inset 0 0 0 2px currentColor;
   background: rgba(6, 10, 22, 0.94);
   color: var(--gold);
   font-family: var(--font-mono);
@@ -667,7 +650,6 @@ body.is-fit {
 }
 
 .hash-bar--changed {
-  border-color: var(--pink);
   color: var(--pink);
 }
 
@@ -679,8 +661,8 @@ body.is-fit {
   position: absolute;
   border: 1px solid rgba(160, 190, 255, 0.3);
   border-radius: 14px;
-  background: rgba(6, 10, 22, 0.95);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(155deg, #172039, #080d1e 72%);
+  box-shadow: inset 0 1px 0 rgba(220, 232, 255, 0.13), 0 18px 40px rgba(0, 0, 0, 0.5);
   overflow: hidden;
 }
 
@@ -790,10 +772,34 @@ body.is-fit {
   height: 22px;
 }
 
+.song-graph-canvas,
 html.dark-mode .song-graph-canvas {
+  --git-graph-text: #ffffff;
   --git-graph-bg: #121a33;
   background: transparent;
 }
+
+/* Song artwork has its own dark palette, independent of player chrome. */
+.song-graph-canvas .git-graph-head-glow {
+  stroke: #ffd100 !important;
+  stroke-opacity: 0.85 !important;
+}
+
+.song-graph-canvas .git-graph-label-g:not(.git-graph-label-g--head) .git-graph-branch-label {
+  fill: #eef7ff !important;
+}
+
+.song-graph-canvas .git-workbench { color: #e6edf3; }
+.song-graph-canvas .git-workbench-strip { background: #141a24; border-color: #52647c; }
+.song-graph-canvas .git-workbench-zone { border-color: #52647c; }
+.song-graph-canvas .git-workbench-zone-header,
+.song-graph-canvas .git-workbench-shelf-header { color: #b4c3e0; }
+.song-graph-canvas .git-workbench-row--untracked,
+.song-graph-canvas .git-workbench-row--unstaged,
+.song-graph-canvas .git-workbench-row--untracked .git-workbench-path::before { color: #f1948a; }
+.song-graph-canvas .git-workbench-row--staged { color: #4ade80; }
+.song-graph-canvas .git-workbench-stash-entry { color: #c29bf0; }
+.song-graph-canvas .git-workbench-shelf { background: #252338; border-color: #9474bf; }
 
 .song-graph-canvas .git-graph-svg text {
   font-family: var(--font-mono);
@@ -808,26 +814,70 @@ html.dark-mode .song-graph-canvas {
   overflow: visible;
 }
 
-.time-stone-ring {
+.time-stone-orbit {
   fill: none;
-  stroke: var(--gold);
+  stroke: #e9c977;
+  stroke-width: 1.4;
 }
 
 .time-stone-runes {
   fill: none;
-  stroke: var(--gold-deep);
-  stroke-dasharray: 3 9;
+  stroke: #b99655;
+  stroke-width: 3;
+  stroke-dasharray: 1 7 3 7;
 }
 
-.time-stone-gem {
-  stroke: #d1fae5;
-  stroke-width: 2;
+.time-stone-orbit-mark { fill: #efda9c; }
+
+/* The film artwork keeps this metallic palette in both site themes. */
+.time-stone-gold-glint { stop-color: #fff2c2; }
+.time-stone-gold-light { stop-color: #e8c779; }
+.time-stone-gold-mid { stop-color: #ad7431; }
+.time-stone-gold-shadow { stop-color: #543318; }
+.time-stone-emerald-light { stop-color: #baffc8; }
+.time-stone-emerald-mid { stop-color: #23d986; }
+.time-stone-emerald-deep { stop-color: #005838; }
+.time-stone-aura-core { stop-color: #55ffb2; stop-opacity: 0.7; }
+.time-stone-aura-halo { stop-color: #16bd79; stop-opacity: 0.24; }
+.time-stone-aura-edge { stop-color: #16bd79; stop-opacity: 0; }
+
+.time-stone-metal {
+  stroke: #382615;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
 }
 
-.time-stone-glow {
-  fill: #34d399;
-  filter: blur(18px);
+.time-stone-recess {
+  fill: #182b24;
+  stroke: #68481f;
+  stroke-width: 1.5;
 }
+
+.time-stone-engraving,
+.time-stone-filigree {
+  fill: none;
+  stroke: #c5a35d;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.time-stone-highlight {
+  fill: none;
+  stroke: #fff1bd;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
+
+.time-stone-bezel { fill: #0b4430; stroke: #ffe9a6; stroke-width: 1; }
+.time-stone-gem { stroke: #98efaf; stroke-width: 1; }
+.time-stone-facet--light { fill: #8bf6ac; }
+.time-stone-facet--shine { fill: #c8ffd8; }
+.time-stone-facet--mid { fill: #0da66a; }
+.time-stone-facet--deep { fill: #006144; }
+.time-stone-table { fill: none; stroke: #b4ffc9; stroke-width: 0.7; }
+.time-stone-gem-reflection { fill: #e0ffe8; fill-opacity: 0.64; }
+.time-stone-claws { fill: none; stroke: #ffe6a4; stroke-width: 3; stroke-linecap: round; }
 
 .quiz-card {
   position: absolute;
@@ -889,12 +939,51 @@ html.dark-mode .song-graph-canvas {
   flex: none;
 }
 
+.confetti-layer {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 450px;
+  overflow: hidden;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.confetti-layer.is-active { visibility: visible; }
+
+/* Warm paper colors remain stable in both site themes. The prepended layer
+   stays behind the teaching content and above the backdrop. */
 .confetti-piece {
   position: absolute;
-  width: 9px;
-  height: 14px;
-  border-radius: 2px;
+  left: 0;
+  top: 0;
+  width: var(--piece-width);
+  height: var(--piece-height);
+  margin: calc(var(--piece-height) / -2) 0 0 calc(var(--piece-width) / -2);
+  border: 0;
+  border-radius: 1px;
+  background: var(--piece-color);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform-origin: center;
 }
+
+.confetti-piece::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.34), transparent 38%, rgba(0, 0, 0, 0.13) 76%, rgba(255, 255, 255, 0.16));
+}
+
+.confetti-piece--ticket {
+  border-radius: 1.5px;
+}
+
+.confetti-piece--gold { --piece-color: #e6bd55; }
+.confetti-piece--ivory { --piece-color: #f1e5c3; }
+.confetti-piece--teal { --piece-color: #5fc6c3; }
+.confetti-piece--coral { --piece-color: #db817d; }
+.confetti-piece--blue { --piece-color: #79a9d4; }
 
 .end-credit {
   position: absolute;

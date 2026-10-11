@@ -54,6 +54,10 @@
   description: A theorem about distributed systems that says when a network partition occurs, a system must choose between returning only consistent, up-to-date data and remaining available for every request.
   related: [ACID]
 
+- term: CC
+  definition: Closed captions
+  description: Synchronized text for speech, lyrics, and meaningful sounds in a media player. Viewers can turn closed captions on or off.
+
 - term: CD
   definition: Continuous Delivery (or Continuous Deployment)
   description: The practice of keeping software in a state where it can be released at any time. Continuous Deployment goes one step further and actually releases every change automatically once it passes the pipeline.

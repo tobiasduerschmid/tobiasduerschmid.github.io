@@ -12,6 +12,50 @@
   margin: 1.2em 0 1.6em;
 }
 
+.song-video-frame {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-height: 180px;
+  border: 1px solid var(--sebook-border, #c8d6e2);
+  border-radius: 14px;
+  background: #fff;
+}
+
+html.dark-mode .song-video-frame {
+  border-color: var(--sebook-border, #31455d);
+  background: #141d2a;
+}
+
+/* An existing embedded player can fill the visual viewport without reloading. */
+.has-song-frame-fullscreen,
+.has-song-frame-fullscreen body {
+  overflow: hidden;
+}
+
+.has-song-frame-fullscreen body {
+  position: fixed;
+  top: var(--song-page-scroll-top, 0px);
+  width: 100%;
+}
+
+.song-video-frame.is-song-fullscreen,
+html.dark-mode .song-video-frame.is-song-fullscreen {
+  position: fixed;
+  inset: var(--song-fullscreen-top, 0px) auto auto var(--song-fullscreen-left, 0px);
+  width: var(--song-fullscreen-width, 100vw);
+  height: var(--song-fullscreen-height, 100dvh) !important;
+  max-width: none;
+  max-height: none;
+  min-height: 0;
+  margin: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  border: 0;
+  border-radius: 0;
+  background: #070b1a;
+  z-index: 2147483000;
+}
+
 .song-video-player {
   display: block;
   width: 100%;
@@ -38,11 +82,13 @@ html.dark-mode .song-video-player {
   font-size: 0.9em;
 }
 
-.song-video-transcript {
+.song-video-transcript,
+.song-video-fallback {
   margin-top: 0.6em;
 }
 
-.song-video-transcript > summary {
+.song-video-transcript > summary,
+.song-video-fallback > summary {
   /* list-item restores the disclosure triangle that Bootstrap's
      `summary { display: block }` removes. */
   display: list-item;
@@ -50,7 +96,8 @@ html.dark-mode .song-video-player {
   cursor: pointer;
 }
 
-.song-video-transcript > summary:focus-visible {
+.song-video-transcript > summary:focus-visible,
+.song-video-fallback > summary:focus-visible {
   outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
   outline-offset: var(--focus-offset, 2px);
   border-radius: 4px;
@@ -100,8 +147,28 @@ html.dark-mode .song-video-player {
 
 /* Paper can't play video: print only the credit line and the transcript. */
 @media print {
-  .song-video-player {
+  .has-song-frame-fullscreen {
+    overflow: visible;
+  }
+
+  .has-song-frame-fullscreen body {
+    position: static;
+    overflow: visible;
+  }
+
+  .song-video-player,
+  .song-video-frame,
+  .song-video-frame.is-song-fullscreen,
+  .song-video-fallback {
     display: none;
+  }
+
+  .song-video-transcript:not([open]) > :not(summary) {
+    display: block !important;
+  }
+
+  .song-video-transcript::details-content {
+    content-visibility: visible;
   }
 
   .song-video-lines > li {

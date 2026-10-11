@@ -1,19 +1,15 @@
-// The song-video stage's virtual clock (scripts/song-video/virtual-clock.js)
-// replaces the page's timers so GitGraph's animations can be posed at an
-// exact moment. These tests pin that contract: callbacks run only when the
-// stage advances time, in due-time order, with animation frames on a 60 Hz
-// grid.
+// Each graph owns a deterministic scheduler. Loading the shared module must
+// leave browser timers alone; advancing one clock must not run another's work.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const SOURCE = fs.readFileSync(path.join(__dirname, '..', 'song-video', 'virtual-clock.js'), 'utf8');
+const SOURCE = fs.readFileSync(path.join(__dirname, '..', '..', 'js', 'song-video', 'virtual-clock.js'), 'utf8');
 const FRAME_MS = 1000 / 60;
 
-/** Installs the clock into a fresh fake window and returns that window. */
-function installClock() {
+function installClockModule() {
   const noop = () => 0;
   const window = {
     setTimeout: noop, clearTimeout: noop, setInterval: noop, clearInterval: noop,
@@ -22,6 +18,29 @@ function installClock() {
   vm.runInNewContext(SOURCE, { window });
   return window;
 }
+
+function installClock() { return installClockModule().VirtualClock.create(); }
+
+test('loading the module preserves native timers and creates independent clocks', () => {
+  const nativeTimer = () => 42;
+  const window = { setTimeout: nativeTimer, clearTimeout: nativeTimer,
+    setInterval: nativeTimer, clearInterval: nativeTimer,
+    requestAnimationFrame: nativeTimer, cancelAnimationFrame: nativeTimer };
+  vm.runInNewContext(SOURCE, { window });
+  assert.equal(window.setTimeout, nativeTimer);
+  assert.equal(window.requestAnimationFrame, nativeTimer);
+  const first = window.VirtualClock.create();
+  const second = window.VirtualClock.create();
+  const ran = [];
+  first.setTimeout(() => ran.push('first'), 10);
+  second.setTimeout(() => ran.push('second'), 10);
+  first.advanceTo(20);
+  assert.deepEqual(ran, ['first']);
+  assert.equal(second.now(), 0);
+  first.reset();
+  second.advanceTo(20);
+  assert.deepEqual(ran, ['first', 'second']);
+});
 
 test('timers run only when time advances, in due-time order, ties in scheduling order', () => {
   const window = installClock();
@@ -32,10 +51,10 @@ test('timers run only when time advances, in due-time order, ties in scheduling 
   window.setTimeout(() => ran.push('d@30'), 30);
 
   assert.deepEqual(ran, []);
-  window.VirtualClock.advanceTo(25);
+  window.advanceTo(25);
 
   assert.deepEqual(ran, ['a@10', 'b@20', 'c@20']);
-  assert.equal(window.VirtualClock.now(), 25);
+  assert.equal(window.now(), 25);
 });
 
 test('animation frames fire on the 60 Hz virtual grid', () => {
@@ -46,7 +65,7 @@ test('animation frames fire on the 60 Hz virtual grid', () => {
     window.requestAnimationFrame((t2) => frames.push(t2));
   });
 
-  window.VirtualClock.advanceTo(40);
+  window.advanceTo(40);
 
   assert.equal(frames.length, 2);
   assert.ok(Math.abs(frames[0] - FRAME_MS) < 1e-9);
@@ -61,7 +80,7 @@ test('a callback that schedules another timer due within the same advance runs i
     window.setTimeout(() => ran.push('chained'), 5);
   }, 10);
 
-  window.VirtualClock.advanceTo(20);
+  window.advanceTo(20);
 
   assert.deepEqual(ran, ['first', 'chained']);
 });
@@ -72,7 +91,7 @@ test('cleared timers and frames never run', () => {
   window.clearTimeout(window.setTimeout(() => ran.push('timer'), 5));
   window.cancelAnimationFrame(window.requestAnimationFrame(() => ran.push('frame')));
 
-  window.VirtualClock.advanceTo(100);
+  window.advanceTo(100);
 
   assert.deepEqual(ran, []);
 });
@@ -80,12 +99,21 @@ test('cleared timers and frames never run', () => {
 test('reset drops pending callbacks and rewinds to 0', () => {
   const window = installClock();
   const ran = [];
-  window.VirtualClock.advanceTo(50);
+  window.advanceTo(50);
   window.setTimeout(() => ran.push('stale'), 10);
 
-  window.VirtualClock.reset();
-  window.VirtualClock.advanceTo(1000);
+  window.reset();
+  window.advanceTo(1000);
 
   assert.deepEqual(ran, []);
-  assert.equal(window.VirtualClock.now(), 1000);
+  assert.equal(window.now(), 1000);
+});
+
+test('a frame callback can cancel a later callback in the same frame', () => {
+  const clock = installClock();
+  const ran = [];
+  clock.requestAnimationFrame(() => clock.cancelAnimationFrame(cancelled));
+  const cancelled = clock.requestAnimationFrame(() => ran.push('cancelled'));
+  clock.advanceTo(100);
+  assert.deepEqual(ran, []);
 });

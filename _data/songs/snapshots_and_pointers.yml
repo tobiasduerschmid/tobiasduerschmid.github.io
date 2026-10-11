@@ -2,7 +2,7 @@
 # SEBook/tools/git.md (embedded with _includes/song-video.html).
 #
 # This file is the single source of truth for the song's words and timing:
-#   - scripts/song-video/songs/snapshots_and_pointers.js choreographs the
+#   - js/song-video/songs/snapshots_and_pointers.js choreographs the
 #     music video against each line's `start` and its `marks` (the times of
 #     the words the visuals hit), and render.js renders the MP4 and writes the
 #     captions file from `text` (re-render everything with
@@ -29,7 +29,10 @@ captions: /assets/video/snapshots-and-pointers.vtt
 described_video: /assets/video/snapshots-and-pointers-described.mp4
 described_captions: /assets/video/snapshots-and-pointers-described.vtt
 poster: /assets/video/snapshots-and-pointers-poster.jpg
-soundtrack: scripts/song-video/songs/snapshots_and_pointers.m4a   # repo path; render input only
+player: /assets/song-player/snapshots-and-pointers.html
+soundtrack: assets/audio/snapshots-and-pointers.m4a   # shared by the live player and exporter
+described_soundtrack: assets/audio/snapshots-and-pointers-described.m4a
+described_timeline: /assets/audio/snapshots-and-pointers-described.json
 narrator:
   voice: Samantha   # macOS `say` voice for the audio-described cut
   rate: 205         # words per minute

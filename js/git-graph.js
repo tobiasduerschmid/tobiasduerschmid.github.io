@@ -10,6 +10,14 @@
  *   var liveGraph = new GitGraph(containerElement, { live: true });
  *   graph.render(parsedData);
  *
+ * Externally timed scenes may supply a scheduler with now(), setTimeout(),
+ * clearTimeout(), requestAnimationFrame(), and cancelAnimationFrame(). Set
+ * portablePaths:true and call posePaths(schedulerTime) for SVG attribute
+ * interpolation instead of CSS d transitions. motion:'full', perfLite:false,
+ * observeTheme:false, and colorMode:'dark' keep an authored scene independent
+ * of device heuristics and page theme. Ordinary graphs keep their defaults.
+ * dispose() releases pending work and the theme subscription.
+ *
  * parsedData format (from GitGraph.parseGitState):
  *   { commits: [...], branches: [...], head: { ref, hash, detached } }
  */
@@ -132,10 +140,12 @@
   var _themeObserver = null;
   function _syncStaticBranchLabelFills() {
     if (typeof document === 'undefined' || !document.querySelectorAll || !document.documentElement) return;
-    var dark = document.documentElement.classList.contains('dark-mode');
+    var pageDark = document.documentElement.classList.contains('dark-mode');
     var labels = document.querySelectorAll('svg.git-graph-svg .git-graph-label-g:not(.git-graph-label-g--head) .git-graph-branch-label');
     for (var i = 0; i < labels.length; i++) {
       var label = labels[i];
+      const fixedCanvas = label.closest('[data-git-graph-color-mode]');
+      const dark = fixedCanvas ? fixedCanvas.getAttribute('data-git-graph-color-mode') === 'dark' : pageDark;
       if (!label.hasAttribute('data-git-graph-light-fill')) {
         label.setAttribute('data-git-graph-light-fill', label.getAttribute('fill') || '');
       }
@@ -580,8 +590,9 @@
       document.documentElement &&
       document.documentElement.classList.contains('dark-mode');
   }
-  function _branchLabelTextFill(color, chipBg) {
-    return _documentIsDarkMode() ? '#eef7ff' : _adjustForContrast(color, chipBg, 4.5);
+  function _branchLabelTextFill(color, chipBg, colorMode) {
+    const dark = colorMode ? colorMode === 'dark' : _documentIsDarkMode();
+    return dark ? '#eef7ff' : _adjustForContrast(color, chipBg, 4.5);
   }
   // Read the current label background from the CSS custom property. Falls
   // back to the light-mode default if the variable isn't set yet (e.g. when
@@ -613,14 +624,42 @@
   // every node/label on the page at rest — pages with many cards can easily
   // accumulate hundreds of idle layers, at which point Chrome starts evicting
   // them and each animation pays a re-promote cost on its first frame.
-  function _setTransformAnimated(el, transform) {
+  function _setTransformAnimated(el, transform, scheduler) {
     el.style.willChange = 'transform';
     el.style.transform = transform;
-    if (el._wcTimer) clearTimeout(el._wcTimer);
-    el._wcTimer = setTimeout(function () {
+    if (el._wcTimer) scheduler.clearTimeout(el._wcTimer);
+    el._wcTimer = scheduler.setTimeout(function () {
       el.style.willChange = '';
       el._wcTimer = null;
     }, 900);
+  }
+
+  // Own callbacks even when using the native scheduler, so releasing a graph
+  // also releases closures holding its detached SVG and workbench elements.
+  function _graphScheduler(source) {
+    const timers = new Set();
+    const frames = new Set();
+    return {
+      now: () => source.now ? source.now() : performance.now(),
+      setTimeout: (callback, delay) => {
+        const id = source.setTimeout(() => { timers.delete(id); callback(); }, delay);
+        timers.add(id);
+        return id;
+      },
+      clearTimeout: (id) => { timers.delete(id); source.clearTimeout(id); },
+      requestAnimationFrame: (callback) => {
+        const id = source.requestAnimationFrame((at) => { frames.delete(id); callback(at); });
+        frames.add(id);
+        return id;
+      },
+      cancelAnimationFrame: (id) => { frames.delete(id); source.cancelAnimationFrame(id); },
+      dispose: () => {
+        timers.forEach((id) => source.clearTimeout(id));
+        frames.forEach((id) => source.cancelAnimationFrame(id));
+        timers.clear();
+        frames.clear();
+      },
+    };
   }
 
   // ---------------------------------------------------------------------------
@@ -633,10 +672,17 @@
     this._data = null;
     this._animating = false;
     this._arrowId = _allocateGraphIdNamespace();
+    this._scheduler = _graphScheduler(options.scheduler || window);
+    this._motion = options.motion;
+    if (container && this._motion === 'full') container.setAttribute('data-git-graph-motion', 'full');
+    this._portablePaths = !!options.portablePaths;
+    this._colorMode = options.colorMode;
+    if (container && this._colorMode) container.setAttribute('data-git-graph-color-mode', this._colorMode);
+    this._pathMotions = new Map();
     // Register the live instance so the dark-mode observer can ask each one to
     // redraw when the user toggles the theme — we bake colours into SVG attrs
     // at render time, so nothing else picks up the new `--git-graph-bg` value.
-    if (container) {
+    if (container && options.observeTheme !== false) {
       _liveInstances.push(this);
       _ensureThemeObserver();
     }
@@ -648,7 +694,7 @@
     this._reservedPaddingLeft = 0;
     this._reservedMaxW        = 0;
     this._reservedWorkbenchH  = 0;
-    this._perfLite = shouldUsePerfLite();
+    this._perfLite = options.perfLite === undefined ? shouldUsePerfLite() : options.perfLite;
     this._liveA11y = !!(options.live ||
       (container && container.getAttribute && container.getAttribute('data-git-graph-live') === 'true') ||
       (container && container.classList && container.classList.contains('tvm-git-graph-container')));
@@ -661,6 +707,21 @@
     this._lastLiveStatus = '';
     this._lastA11ySnapshot = null;
   }
+
+  GitGraph.prototype._prefersReducedMotion = function () {
+    return this._motion === 'full' ? false : prefersReducedMotion();
+  };
+
+  /** Stop callbacks and theme subscriptions. Existing markup stays in place. */
+  GitGraph.prototype.dispose = function () {
+    this._scheduler.dispose();
+    this._pathMotions.clear();
+    const index = _liveInstances.indexOf(this);
+    if (index !== -1) _liveInstances.splice(index, 1);
+    if (this.container && this.container.getAnimations) {
+      this.container.getAnimations({ subtree: true }).forEach((animation) => animation.cancel());
+    }
+  };
 
   GitGraph.describeData = function (data) {
     data = data || {};
@@ -805,7 +866,9 @@
         probe.innerHTML = GitGraph.renderWorkbench(sj);
         var wbProbe = probe.querySelector('.git-workbench');
         if (!wbProbe) continue;
-        var h = wbProbe.getBoundingClientRect().height;
+        // Reservations are CSS layout sizes, not transformed screen pixels.
+        // A scaled music-player stage must not multiply its own height pin.
+        var h = wbProbe.offsetHeight;
         if (h > maxWbH) maxWbH = h;
       }
     } finally {
@@ -1594,24 +1657,26 @@
   };
 
   GitGraph.prototype._cancelDimAnim = function () {
-    if (this._dimFrame) { cancelAnimationFrame(this._dimFrame); this._dimFrame = null; }
-    if (this._dimFallback) { clearTimeout(this._dimFallback); this._dimFallback = null; }
+    const scheduler = this._scheduler;
+    if (this._dimFrame) { scheduler.cancelAnimationFrame(this._dimFrame); this._dimFrame = null; }
+    if (this._dimFallback) { scheduler.clearTimeout(this._dimFallback); this._dimFallback = null; }
   };
 
   GitGraph.prototype._animateDimensions = function (newDims) {
+    const scheduler = this._scheduler;
     var svg = this._svgRoot;
     if (!svg) return;
     this._cancelDimAnim();
     var currentHeight = parseFloat(svg.getAttribute('height')) || newDims.height;
     var shrinkDelay = (this._perfLite ? PERF_LITE_TRANSITION_MS : GRAPH_TRANSITION_MS) + DIMENSION_SHRINK_PAD_MS;
 
-    if (!prefersReducedMotion() && newDims.height < currentHeight) {
+    if (!this._prefersReducedMotion() && newDims.height < currentHeight) {
       // Nodes, labels, and edges still animate inside the old canvas for
       // the duration of the transition. If the SVG height snaps smaller
       // immediately, the graph host's overflow clips those in-flight parts.
       this._setSvgSize(newDims.width, currentHeight);
       var self = this;
-      this._dimFallback = setTimeout(function () {
+      this._dimFallback = scheduler.setTimeout(function () {
         self._dimFallback = null;
         if (self._svgRoot === svg) self._setSvgSize(newDims.width, newDims.height);
       }, shrinkDelay);
@@ -1649,7 +1714,7 @@
       if (wb.style.minHeight) wb.style.minHeight = '';
       return;
     }
-    var natural = wb.getBoundingClientRect().height;
+    var natural = wb.offsetHeight;
     if (natural <= 0) return;
     var target = Math.max(natural, this._reservedWorkbenchH);
     var curPin = parseFloat(wb.style.minHeight) || 0;
@@ -2049,6 +2114,11 @@
       'fill-opacity': 0.9,
       'class': 'git-graph-edge-head',
     });
+    if (this._portablePaths) {
+      // Geometry is posed explicitly; leave colour/draw-in CSS untouched.
+      shaft.style.transitionProperty = 'stroke-dashoffset, stroke';
+      head.style.transitionProperty = 'fill, opacity';
+    }
     g.appendChild(shaft);
     g.appendChild(head);
     return {
@@ -2070,6 +2140,7 @@
   // otherwise pop. Setting dasharray=length and animating dashoffset to 0
   // makes the line appear to grow from its starting point.
   GitGraph.prototype._animateEdgeIn = function (entry) {
+    const scheduler = this._scheduler;
     var el = entry.shaft;
     var head = entry.head;
     var len;
@@ -2087,16 +2158,16 @@
     // the SVG itself; we just skip the dashoffset tween that would have
     // made it "draw in". No inline style gets set, so there's nothing to
     // clear up later either.
-    if (prefersReducedMotion()) return;
+    if (this._prefersReducedMotion()) return;
     if (this._perfLite) {
       // Mobile fast path: avoid getTotalLength + dashoffset bookkeeping.
       el.style.opacity = '0';
       if (head) head.style.opacity = '0';
-      requestAnimationFrame(function () {
+      scheduler.requestAnimationFrame(function () {
         el.style.opacity = '1';
         if (head) head.style.opacity = '1';
       });
-      setTimeout(function () {
+      scheduler.setTimeout(function () {
         el.style.opacity = '';
         if (head) head.style.opacity = '';
       }, 260);
@@ -2104,12 +2175,12 @@
     }
     el.style.strokeDasharray = len + 'px';
     el.style.strokeDashoffset = len + 'px';
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
+    scheduler.requestAnimationFrame(function () {
+      scheduler.requestAnimationFrame(function () {
         el.style.strokeDashoffset = '0px';
       });
     });
-    setTimeout(function () {
+    scheduler.setTimeout(function () {
       el.style.strokeDasharray = '';
       el.style.strokeDashoffset = '';
     }, 900);
@@ -2183,8 +2254,16 @@
 
   GitGraph.prototype._updateEdge = function (entry, x1, y1, x2, y2, color) {
     if (entry.x1 === x1 && entry.y1 === y1 && entry.x2 === x2 && entry.y2 === y2 && entry.color === color) return;
-    entry.shaft.setAttribute('d', this._edgePathD(x1, y1, x2, y2));
-    entry.head.setAttribute('transform', this._edgeHeadTransform(x1, y1, x2, y2));
+    if (this._portablePaths && !this._prefersReducedMotion()) {
+      this._pathMotions.set(entry, {
+        at: this._scheduler.now(),
+        from: entry.posedCoordinates || [entry.x1, entry.y1, entry.x2, entry.y2],
+        to: [x1, y1, x2, y2],
+      });
+    } else {
+      entry.shaft.setAttribute('d', this._edgePathD(x1, y1, x2, y2));
+      entry.head.setAttribute('transform', this._edgeHeadTransform(x1, y1, x2, y2));
+    }
     if (entry.shaft.style.strokeDasharray) {
       entry.shaft.style.strokeDasharray = '';
       entry.shaft.style.strokeDashoffset = '';
@@ -2196,11 +2275,41 @@
     entry.x1 = x1; entry.y1 = y1; entry.x2 = x2; entry.y2 = y2; entry.color = color;
   };
 
+  // The CSS geometry curve is cubic-bezier(.7, 0, .3, 1). Invert its X
+  // coordinate before evaluating Y; using elapsed time as the Bezier's
+  // parameter would make paths drift away from nodes during the glide.
+  function _geometryProgress(progress) {
+    if (progress <= 0 || progress >= 1) return Math.max(0, Math.min(1, progress));
+    let low = 0;
+    let high = 1;
+    for (let step = 0; step < 24; step++) {
+      const t = (low + high) / 2;
+      const x = 3 * (1 - t) * (1 - t) * t * 0.7 + 3 * (1 - t) * t * t * 0.3 + t * t * t;
+      if (x < progress) low = t;
+      else high = t;
+    }
+    const t = (low + high) / 2;
+    return 3 * (1 - t) * t * t + t * t * t;
+  }
+
+  /** Pose opt-in portable path geometry at scheduler time (milliseconds). */
+  GitGraph.prototype.posePaths = function (now) {
+    for (const [entry, motion] of this._pathMotions) {
+      const progress = _geometryProgress((now - motion.at) / GRAPH_TRANSITION_MS);
+      const coordinates = motion.to.map((value, i) => motion.from[i] + (value - motion.from[i]) * progress);
+      entry.shaft.setAttribute('d', this._edgePathD(...coordinates));
+      entry.head.setAttribute('transform', this._edgeHeadTransform(...coordinates));
+      entry.posedCoordinates = coordinates;
+      if (progress === 1) this._pathMotions.delete(entry);
+    }
+  };
+
   // Retract-then-remove: mirror of _animateEdgeIn so merge-undo / reset /
   // rebase feels natural. We set strokeDasharray to the path length and
   // tween strokeDashoffset back to the length — the line gracefully un-draws
   // from parent toward child over the same 720ms used for position slides.
   GitGraph.prototype._removeEdge = function (entry, key) {
+    const scheduler = this._scheduler;
     if (entry._removalTimer) return;
     var self = this;
     var el = entry.shaft;
@@ -2209,14 +2318,14 @@
     // immediately. No dashoffset games, no 720ms wait — the element leaves
     // the DOM on the next microtask. Dependent layout snaps to the new
     // shape in the same paint.
-    if (prefersReducedMotion()) {
+    if (this._prefersReducedMotion()) {
       if (g.parentNode) g.parentNode.removeChild(g);
       delete self._edgeEls[key];
       return;
     }
     if (this._perfLite) {
       g.classList.add('exiting');
-      entry._removalTimer = setTimeout(function () {
+      entry._removalTimer = scheduler.setTimeout(function () {
         if (g.parentNode) g.parentNode.removeChild(g);
         delete self._edgeEls[key];
       }, 220);
@@ -2231,14 +2340,14 @@
     if (len && isFinite(len)) {
       el.style.strokeDasharray = len + 'px';
       el.style.strokeDashoffset = '0px';
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
+      scheduler.requestAnimationFrame(function () {
+        scheduler.requestAnimationFrame(function () {
           el.style.strokeDashoffset = len + 'px';
         });
       });
     }
     g.classList.add('exiting');
-    entry._removalTimer = setTimeout(function () {
+    entry._removalTimer = scheduler.setTimeout(function () {
       if (g.parentNode) g.parentNode.removeChild(g);
       delete self._edgeEls[key];
     }, 720);
@@ -2247,6 +2356,7 @@
   // ---- Nodes ----------------------------------------------------------------
 
   GitGraph.prototype._diffNodes = function (commits, head) {
+    const scheduler = this._scheduler;
     var newHashes = {};
     for (var i = 0; i < commits.length; i++) {
       var cm = commits[i];
@@ -2262,7 +2372,7 @@
         this._nodeEls[cm.hash] = entry;
       } else {
         if (entry._removalTimer) {
-          clearTimeout(entry._removalTimer);
+          scheduler.clearTimeout(entry._removalTimer);
           entry._removalTimer = null;
           entry.g.classList.remove('exiting');
         }
@@ -2277,6 +2387,7 @@
   };
 
   GitGraph.prototype._createNode = function (cm, cx, cy, isHead) {
+    const scheduler = this._scheduler;
     var classes = 'git-graph-node-g entering git-graph-merge-burst';
     if (isHead) classes += ' git-graph-node-head head-pulse';
 
@@ -2329,7 +2440,7 @@
     msgText.textContent = this._truncate(cm.message, 50);
     g.appendChild(msgText);
 
-    setTimeout(function () {
+    scheduler.setTimeout(function () {
       g.classList.remove('entering');
       g.classList.remove('head-pulse');
       g.classList.remove('git-graph-merge-burst');
@@ -2344,12 +2455,13 @@
   };
 
   GitGraph.prototype._updateNode = function (entry, cm, cx, cy, isHead) {
+    const scheduler = this._scheduler;
     if (entry.cx !== cx || entry.cy !== cy) {
       if (this._perfLite) {
         entry.g.style.willChange = '';
         entry.g.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
       } else {
-        _setTransformAnimated(entry.g, 'translate(' + cx + 'px,' + cy + 'px)');
+        _setTransformAnimated(entry.g, 'translate(' + cx + 'px,' + cy + 'px)', this._scheduler);
       }
       entry.cx = cx;
       entry.cy = cy;
@@ -2392,16 +2504,16 @@
           });
           entry.g.insertBefore(entry.glow, entry.circle);
           var newGlow = entry.glow;
-          setTimeout(function () { newGlow.classList.remove('glow-entering'); }, 900);
+          scheduler.setTimeout(function () { newGlow.classList.remove('glow-entering'); }, 900);
         }
         entry.g.classList.add('git-graph-node-head', 'head-pulse');
         var gRef = entry.g;
-        setTimeout(function () { gRef.classList.remove('head-pulse'); }, 900);
+        scheduler.setTimeout(function () { gRef.classList.remove('head-pulse'); }, 900);
       } else {
         if (entry.glow && entry.glow.parentNode) {
           var oldGlow = entry.glow;
           oldGlow.classList.add('glow-exiting');
-          setTimeout(function () {
+          scheduler.setTimeout(function () {
             if (oldGlow.parentNode) oldGlow.parentNode.removeChild(oldGlow);
           }, 720);
           entry.glow = null;
@@ -2413,10 +2525,11 @@
   };
 
   GitGraph.prototype._removeNode = function (entry, hash) {
+    const scheduler = this._scheduler;
     if (entry._removalTimer) return;
     var self = this;
     entry.g.classList.add('exiting');
-    entry._removalTimer = setTimeout(function () {
+    entry._removalTimer = scheduler.setTimeout(function () {
       if (entry.g.parentNode) entry.g.parentNode.removeChild(entry.g);
       delete self._nodeEls[hash];
     }, 450);
@@ -2532,6 +2645,7 @@
   };
 
   GitGraph.prototype._renderLabelGroup = function (key, cx, cy, targetHash, fillFn, extraClass, layoutId, anchorId) {
+    const scheduler = this._scheduler;
     var entry = this._labelEls[key];
     var self = this;
     if (!entry) {
@@ -2547,14 +2661,14 @@
       this._labelsLayer.appendChild(g);
       entry = { g: g, cx: cx, cy: cy, targetHash: targetHash };
       this._labelEls[key] = entry;
-      setTimeout(function () { g.classList.remove('entering'); }, 400);
+      scheduler.setTimeout(function () { g.classList.remove('entering'); }, 400);
     } else {
       if (layoutId) entry.g.setAttribute('data-layout-id', layoutId);
       else entry.g.removeAttribute('data-layout-id');
       if (anchorId) entry.g.setAttribute('data-layout-anchor', anchorId);
       else entry.g.removeAttribute('data-layout-anchor');
       if (entry._removalTimer) {
-        clearTimeout(entry._removalTimer);
+        scheduler.clearTimeout(entry._removalTimer);
         entry._removalTimer = null;
         entry.g.classList.remove('exiting');
       }
@@ -2563,7 +2677,7 @@
           entry.g.style.willChange = '';
           entry.g.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
         } else {
-          _setTransformAnimated(entry.g, 'translate(' + cx + 'px,' + cy + 'px)');
+          _setTransformAnimated(entry.g, 'translate(' + cx + 'px,' + cy + 'px)', this._scheduler);
         }
         entry.cx = cx;
         entry.cy = cy;
@@ -2576,7 +2690,7 @@
         entry.targetHash = targetHash;
         entry.g.classList.add('git-graph-label-burst');
         var gRef = entry.g;
-        setTimeout(function () { gRef.classList.remove('git-graph-label-burst'); }, 800);
+        scheduler.setTimeout(function () { gRef.classList.remove('git-graph-label-burst'); }, 800);
       }
     }
     while (entry.g.firstChild) entry.g.removeChild(entry.g.firstChild);
@@ -2617,7 +2731,7 @@
     var tL = this._svgEl('text', {
       x: brXL + textW / 2, y: labelMidY,
       'text-anchor': 'middle', 'dominant-baseline': 'central',
-      fill: _branchLabelTextFill(color, brChipBg), 'font-size': 13,
+      fill: _branchLabelTextFill(color, brChipBg, this._colorMode), 'font-size': 13,
       'font-weight': isRemote ? 400 : 700, 'font-style': isRemote ? 'italic' : 'normal',
       'class': 'git-graph-branch-label',
     });
@@ -2693,10 +2807,11 @@
   };
 
   GitGraph.prototype._removeLabel = function (entry, key) {
+    const scheduler = this._scheduler;
     if (entry._removalTimer) return;
     var self = this;
     entry.g.classList.add('exiting');
-    entry._removalTimer = setTimeout(function () {
+    entry._removalTimer = scheduler.setTimeout(function () {
       if (entry.g.parentNode) entry.g.parentNode.removeChild(entry.g);
       delete self._labelEls[key];
     }, 350);
@@ -2864,7 +2979,7 @@
           'fill="' + color + '" fill-opacity="0.22" stroke="' + color + '" stroke-width="1.5"/>';
         var brChipBgStr = _compositeOver(color, _currentLabelBg(this.container), 0.22);
         svg += '<text x="' + (brX + textW / 2) + '" y="' + labelMidY + '" ' +
-          'text-anchor="middle" dominant-baseline="central" fill="' + _branchLabelTextFill(color, brChipBgStr) + '" font-size="13" font-weight="700" ' +
+          'text-anchor="middle" dominant-baseline="central" fill="' + _branchLabelTextFill(color, brChipBgStr, this._colorMode) + '" font-size="13" font-weight="700" ' +
           'class="git-graph-branch-label">' + this._escapeXml(br.name) + '</text>';
         svg += '</g>';
         svg += lConnector(tipX, labelMidY, cx - NODE_RADIUS - 2, cy, color, true);
@@ -3065,6 +3180,7 @@
   };
 
   GitGraph.prototype._diffWorkbench = function (data) {
+    const scheduler = this._scheduler;
     var wb = this._ensureWorkbench(data);
     if (!wb) {
       if (data && data.commits) {
@@ -3303,7 +3419,7 @@
           // Status changed but position didn't (rare) — fire a burst without
           // the slide so the change is still perceptible.
           entry.el.classList.add('git-workbench-row-burst');
-          setTimeout(function () { entry.el.classList.remove('git-workbench-row-burst'); }, 800);
+          scheduler.setTimeout(function () { entry.el.classList.remove('git-workbench-row-burst'); }, 800);
           return;
         }
         var el = entry.el;
@@ -3313,10 +3429,10 @@
         // scheduled removal doesn't yank --fx/--fy out mid-animation of this
         // new transition — that would collapse the keyframe's `from` to the
         // fallback 0 and make the animation start at the new position.
-        if (el._flipBurstTimer) clearTimeout(el._flipBurstTimer);
-        if (el._flipCleanupTimer) clearTimeout(el._flipCleanupTimer);
+        if (el._flipBurstTimer) scheduler.clearTimeout(el._flipBurstTimer);
+        if (el._flipCleanupTimer) scheduler.clearTimeout(el._flipCleanupTimer);
         el.classList.add('git-workbench-row-burst');
-        el._flipBurstTimer = setTimeout(function () {
+        el._flipBurstTimer = scheduler.setTimeout(function () {
           el.classList.remove('git-workbench-row-burst');
           el._flipBurstTimer = null;
         }, 800);
@@ -3332,7 +3448,7 @@
         el.offsetWidth;
         /* eslint-enable no-unused-expressions */
         el.classList.add('git-workbench-row-flip');
-        el._flipCleanupTimer = setTimeout(function () {
+        el._flipCleanupTimer = scheduler.setTimeout(function () {
           el.classList.remove('git-workbench-row-flip');
           el.style.removeProperty('--fx');
           el.style.removeProperty('--fy');
@@ -3356,6 +3472,7 @@
   };
 
   GitGraph.prototype._createWorkbenchRow = function (d) {
+    const scheduler = this._scheduler;
     var li = document.createElement('li');
     li.className = 'git-workbench-row git-workbench-row--' + d.zone + ' entering';
     var path, label;
@@ -3374,7 +3491,7 @@
       }
       li.innerHTML = statusHtml + '<span class="git-workbench-path">' + this._escapeHtml(path) + '</span>';
     }
-    setTimeout(function () { li.classList.remove('entering'); }, 480);
+    scheduler.setTimeout(function () { li.classList.remove('entering'); }, 480);
     return {
       el: li, zone: d.zone, path: path,
       status: d.data.status, message: d.data.message,
@@ -3415,14 +3532,15 @@
   };
 
   GitGraph.prototype._removeWorkbenchRow = function (entry) {
+    const scheduler = this._scheduler;
     var el = entry.el;
-    if (prefersReducedMotion()) {
+    if (this._prefersReducedMotion()) {
       // Skip the 400ms exit animation — remove the row immediately.
       if (el.parentNode) el.parentNode.removeChild(el);
       return;
     }
     el.classList.add('exiting');
-    setTimeout(function () {
+    scheduler.setTimeout(function () {
       if (el.parentNode) el.parentNode.removeChild(el);
     }, 400);
   };
@@ -3433,6 +3551,7 @@
   // `git-workbench-row-fly` keyframe so the yellow-gold burst fires in sync
   // with the translate+shrink — same vocabulary as the FLIP zone-change.
   GitGraph.prototype._flyRowIntoCommit = function (entry, commit) {
+    const scheduler = this._scheduler;
     var rowEl = entry.el;
     var nodeEntry = this._nodeEls && this._nodeEls[commit.hash];
     if (!nodeEntry || !nodeEntry.g || !rowEl.parentNode) {
@@ -3442,7 +3561,7 @@
     // Reduced motion: drop the fly-to-commit animation; just remove the
     // row so state ends up correct. The commit itself still appears in
     // its target position via the usual node-create path.
-    if (prefersReducedMotion()) {
+    if (this._prefersReducedMotion()) {
       this._removeWorkbenchRow(entry);
       return;
     }
@@ -3464,7 +3583,7 @@
     rowEl.offsetWidth;
     /* eslint-enable no-unused-expressions */
     rowEl.classList.add('git-workbench-row-fly');
-    setTimeout(function () {
+    scheduler.setTimeout(function () {
       if (rowEl.parentNode) rowEl.parentNode.removeChild(rowEl);
     }, 500);
   };

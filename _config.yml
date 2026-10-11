@@ -125,8 +125,8 @@ exclude:
   - notes
   - pdfs
   - latex
-  # Render sources for the site's videos (the SE Book teaser and the song
-  # videos); only the rendered files in assets/video/ ship with the site.
+  # Offline video-rendering tools stay private. Shared live-player assets
+  # under js/song-video/, css/, fonts/, and assets/ ship with the site.
   - scripts/sebook-teaser
   - scripts/song-video
   - scripts/video-tools

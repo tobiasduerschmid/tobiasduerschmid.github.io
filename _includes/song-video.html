@@ -23,6 +23,16 @@
 {%- assign song_video = song.video | relative_url -%}
 {%- assign described_video = song.described_video | relative_url -%}
 <figure class="song-video"{% if include.id %} id="{{ include.id }}"{% endif %}>
+  {% if song.player %}
+  <iframe
+    class="song-video-frame"
+    src="{{ song.player | relative_url }}"
+    title="{{ song.title | escape }}: interactive music player"
+    loading="lazy"
+    allowfullscreen
+    width="960"
+    height="900"></iframe>
+  {% else %}
   <video
     class="song-video-player"
     controls
@@ -36,10 +46,12 @@
     <track kind="captions" src="{{ song.captions | relative_url }}" srclang="en" label="English" default>
     <p>Your browser can't play this video. <a href="{{ song_video }}">Download the video</a> or read the lyrics below.</p>
   </video>
+  {% endif %}
   <figcaption class="song-video-credit">{{ song.credit }}</figcaption>
 
-  <details class="song-video-transcript">
-    <summary>Audio description and lyrics</summary>
+  <details class="song-video-transcript"{% if include.id %} id="{{ include.id }}-description"{% endif %}>
+    <summary>{% if song.player %}Full transcript{% else %}Audio description and lyrics{% endif %}</summary>
+    {% unless song.player %}
     <p class="song-video-label">Audio-described version: the video pauses at the start of each section while a narrator describes what it shows.</p>
     <video
       class="song-video-player"
@@ -54,8 +66,8 @@
       <track kind="captions" src="{{ song.described_captions | relative_url }}" srclang="en" label="English" default>
       <p>Your browser can't play this video. <a href="{{ described_video }}">Download the audio-described video</a>.</p>
     </video>
+    {% endunless %}
 
-    <p class="song-video-label">Lyrics and what the video shows</p>
     {%- for section in song.sections %}
     <p class="song-video-section">{{ section.title }}</p>
     <ol class="song-video-lines">
@@ -72,3 +84,4 @@
     {%- endfor %}
   </details>
 </figure>
+{% if song.player %}<script src="{{ '/js/song-video/embed.js' | relative_url }}" defer></script>{% endif %}
