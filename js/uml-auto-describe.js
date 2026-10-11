@@ -66,7 +66,8 @@
       'gitgraph': 'Git graph diagram',
       'folder-tree': 'Folder tree diagram',
       'venn': 'Venn diagram',
-      'er': 'Entity-relationship diagram'
+      'er': 'Entity-relationship diagram',
+      'crc': 'Class-responsibility-collaborator cards'
     };
     return map[String(type || '').toLowerCase()] || 'ArchUML diagram';
   }
@@ -1029,6 +1030,47 @@
     return { summary: summary, sections: sections };
   }
 
+  // ---------- CRC cards ----------
+
+  // Keep the standalone Node describer independent of the browser renderer.
+  // CRC members are entire lines: braces and colons inside prose are literal.
+  function describeCRCCardsVerbose(spec) {
+    var sections = [];
+    var current = null;
+    var inLayout = false;
+    String(spec || '').split(/\r?\n/).forEach(function (raw) {
+      var line = raw.trim();
+      if (!line || /^(?:\/\/|#|')/.test(line)) return;
+      if (/^@layout\b/i.test(line)) { inLayout = true; return; }
+      if (/^@endlayout\b/i.test(line)) { inLayout = false; return; }
+      if (inLayout) return;
+      if (!current) {
+        var declaration = line.match(/^card\s+("(?:[^"\\]|\\.)*"|[^\s{}]+)(?:\s+as\s+(?:"(?:[^"\\]|\\.)*"|[^\s{}]+))?(?:\s+@pos\([^)]*\))?\s*\{\s*$/i);
+        if (!declaration) return;
+        var name = declaration[1];
+        if (name.charAt(0) === '"') name = name.slice(1, -1).replace(/\\(["\\])/g, '$1');
+        current = { name: name, responsibilities: [], collaborators: [] };
+        return;
+      }
+      var member = line.match(/^(responsibility|collaborator)\s*:\s*(.+)$/i);
+      if (member) {
+        current[member[1].toLowerCase() === 'responsibility' ? 'responsibilities' : 'collaborators'].push(member[2]);
+      } else if (line === '}') {
+        sections.push({
+          heading: current.name,
+          items: [
+            'Responsibilities: ' + (current.responsibilities.join('; ') || 'none declared'),
+            'Collaborators: ' + (current.collaborators.join('; ') || 'none declared')
+          ]
+        });
+        current = null;
+      }
+    });
+    var summary = pluralize(sections.length, 'CRC card', 'CRC cards');
+    if (sections.length) summary += ': ' + sections.map(function (section) { return section.heading; }).join(', ');
+    return { summary: summary + '.', sections: sections };
+  }
+
   // ---------- dispatch ----------
 
   function describe(type, spec) {
@@ -1045,6 +1087,7 @@
         case 'deployment':  return describeDeploymentDiagram(s);
         case 'gitgraph':    return describeGitgraphDiagram(s);
         case 'folder-tree': return describeFolderTreeDiagram(s);
+        case 'crc':         return describeCRCCardsVerbose(spec).summary;
         default:            return fallbackCaption(type) + '.';
       }
     } catch (e) {
@@ -1070,6 +1113,7 @@
         case 'deployment':  return describeDeploymentDiagramVerbose(s);
         case 'gitgraph':    return describeGitgraphDiagramVerbose(s);
         case 'folder-tree': return describeFolderTreeDiagramVerbose(s);
+        case 'crc':         return describeCRCCardsVerbose(s);
         default:            return { summary: fallbackCaption(type) + '.', sections: [] };
       }
     } catch (e) {
@@ -1211,7 +1255,8 @@
     'gitgraph':    'pre > code.diagram-gitgraph, pre > code.language-gitgraph',
     'folder-tree': 'pre > code.diagram-folder-tree, pre > code.language-folder-tree',
     'venn':        'pre > code.diagram-venn, pre > code.language-venn',
-    'er':          'pre > code.diagram-er, pre > code.language-er'
+    'er':          'pre > code.diagram-er, pre > code.language-er',
+    'crc':         'pre > code.diagram-crc, pre > code.language-crc'
   };
 
   // Snapshot every diagram about to be rendered. Tracks parent + child index

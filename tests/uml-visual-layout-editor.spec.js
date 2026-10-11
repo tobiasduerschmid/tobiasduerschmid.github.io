@@ -1108,6 +1108,7 @@ test.describe('UML playground visual editor', () => {
       'folder-tree',
       'venn',
       'er',
+      'crc',
     ]);
     await expect(page.locator('#uml-pg-input')).toHaveValue('@startuml\n@enduml');
     await expect(page.locator('.uml-pg-model-empty')).toBeVisible();

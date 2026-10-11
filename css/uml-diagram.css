@@ -28,11 +28,13 @@ pre:has(> code.diagram-gitgraph),
 pre:has(> code.diagram-folder-tree),
 pre:has(> code.diagram-venn),
 pre:has(> code.diagram-er),
+pre:has(> code.diagram-crc),
 pre:has(> code.language-freeform),
 pre:has(> code.language-gitgraph),
 pre:has(> code.language-folder-tree),
 pre:has(> code.language-venn),
 pre:has(> code.language-er),
+pre:has(> code.language-crc),
 [data-uml-type]:not([data-uml-rendered="true"]) {
   display: none !important;
 }
@@ -49,7 +51,8 @@ pre:has(> code.language-er),
 .uml-gitgraph-diagram-container,
 .uml-folder-tree-diagram-container,
 .uml-venn-diagram-container,
-.uml-er-diagram-container {
+.uml-er-diagram-container,
+.uml-crc-diagram-container {
   display: block;
   --uml-stroke: #4060a0;
   --uml-text: #222;
@@ -77,7 +80,8 @@ html.dark-mode .uml-deployment-diagram-container svg,
 html.dark-mode .uml-freeform-diagram-container svg,
 html.dark-mode .uml-folder-tree-diagram-container svg,
 html.dark-mode .uml-venn-diagram-container svg,
-html.dark-mode .uml-er-diagram-container svg {
+html.dark-mode .uml-er-diagram-container svg,
+html.dark-mode .uml-crc-diagram-container svg {
   filter: invert(1) hue-rotate(180deg);
 }
 
@@ -120,7 +124,8 @@ html.dark-mode .uml-error-msg {
 .uml-gitgraph-diagram-container svg,
 .uml-folder-tree-diagram-container svg,
 .uml-venn-diagram-container svg,
-.uml-er-diagram-container svg {
+.uml-er-diagram-container svg,
+.uml-crc-diagram-container svg {
   display: block;
   margin: 0 auto;
   overflow: visible;
@@ -132,6 +137,32 @@ html.dark-mode .uml-error-msg {
    prose than floating in the center of the column. */
 .uml-folder-tree-diagram-container svg {
   margin: 0;
+}
+
+/* CRC cards contain prose. Keep the measured text size in narrow columns;
+   the keyboard-focusable container scrolls instead of shrinking the text. */
+.uml-crc-diagram-container svg {
+  max-width: none !important;
+}
+
+.uml-crc-diagram-container:focus-visible {
+  outline: 3px solid #2774ae;
+  outline-offset: 2px;
+}
+
+html.dark-mode .uml-crc-diagram-container:focus-visible {
+  outline-color: #8ecfff;
+}
+
+@media print {
+  .uml-crc-diagram-container {
+    overflow: visible;
+    break-inside: avoid;
+  }
+
+  .uml-crc-diagram-container svg {
+    max-width: 100% !important;
+  }
 }
 
 /* ── Inline notation symbols ── */

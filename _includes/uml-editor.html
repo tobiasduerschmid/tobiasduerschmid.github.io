@@ -21,7 +21,7 @@ Supported options:
 - hide_archuml: "true" or "false" to hide the source pane and Copy ArchUML
 - hide_syntax_help: "true" or "false" to hide the link to the ArchUML syntax reference
 {% endcomment %}
-{% assign uml_editor_types_param = include.types | default: "class,sequence,state,component,deployment,usecase,activity,freeform,gitgraph,folder-tree,venn,er" %}
+{% assign uml_editor_types_param = include.types | default: "class,sequence,state,component,deployment,usecase,activity,freeform,gitgraph,folder-tree,venn,er,crc" %}
 {% assign uml_editor_types = uml_editor_types_param | split: "," %}
 {% assign uml_editor_default_type = include.default_type | default: "class" %}
 {% assign uml_editor_default_layout = include.default_layout | default: include.layout | default: "square" %}
@@ -67,7 +67,7 @@ Supported options:
         {% for uml_editor_type_raw in uml_editor_types %}
           {% assign uml_editor_type = uml_editor_type_raw | strip %}
           {% if uml_editor_type != "" %}
-            {% capture uml_editor_type_label %}{% case uml_editor_type %}{% when "class" %}Class{% when "sequence" %}Sequence{% when "state" %}State{% when "component" %}Component{% when "deployment" %}Deployment{% when "usecase" %}Use Case{% when "activity" %}Activity{% when "freeform" %}Freeform{% when "gitgraph" %}Git Graph{% when "folder-tree" %}Folder Tree{% when "venn" %}Venn{% when "er" %}ER (Chen){% else %}{{ uml_editor_type }}{% endcase %}{% endcapture %}
+            {% capture uml_editor_type_label %}{% case uml_editor_type %}{% when "class" %}Class{% when "sequence" %}Sequence{% when "state" %}State{% when "component" %}Component{% when "deployment" %}Deployment{% when "usecase" %}Use Case{% when "activity" %}Activity{% when "freeform" %}Freeform{% when "gitgraph" %}Git Graph{% when "folder-tree" %}Folder Tree{% when "venn" %}Venn{% when "er" %}ER (Chen){% when "crc" %}CRC Cards{% else %}{{ uml_editor_type }}{% endcase %}{% endcapture %}
             <option value="{{ uml_editor_type | escape }}"{% if uml_editor_type == uml_editor_default_type %} selected{% endif %}>{{ uml_editor_type_label | strip }}</option>
           {% endif %}
         {% endfor %}
@@ -380,6 +380,19 @@ Supported options:
       '@enduml'
     ].join('\n'),
 
+    crc: [
+      '@startuml',
+      'card Cart {',
+      '  responsibility: Know selected products and quantities',
+      '  responsibility: Calculate the total',
+      '  collaborator: Catalog',
+      '}',
+      'card Catalog {',
+      '  responsibility: Provide current product prices',
+      '}',
+      '@enduml'
+    ].join('\n'),
+
     er: [
       '@startuml',
       'title Library System',
@@ -436,6 +449,7 @@ Supported options:
     'folder-tree': function (container, text) { window.UMLFolderTreeDiagram.render(container, text); },
     venn: function (container, text) { window.UMLVennDiagram.render(container, text); },
     er: function (container, text) { window.UMLERDiagram.render(container, text); },
+    crc: function (container, text) { window.UMLCRCDiagram.render(container, text); },
   };
 
   function readEditorConfig() {
@@ -475,7 +489,8 @@ Supported options:
     gitgraph: 'UMLGitGraphDiagram',
     'folder-tree': 'UMLFolderTreeDiagram',
     venn: 'UMLVennDiagram',
-    er: 'UMLERDiagram'
+    er: 'UMLERDiagram',
+    crc: 'UMLCRCDiagram'
   };
 
   function configuredTypes() {
@@ -594,6 +609,9 @@ Supported options:
     'folder-tree': [
       { id: 'folder', label: 'Folder', glyph: '▸', base: 'folder', keyword: 'folder', supports: { displayLabel: true }, folderTreeKind: 'folder' },
       { id: 'file', label: 'File', glyph: '□', base: 'file', keyword: 'file', supports: { displayLabel: true }, folderTreeKind: 'file' }
+    ],
+    crc: [
+      { id: 'card', label: 'CRC Card', glyph: '▤', base: 'Card', keyword: 'card', supports: {} }
     ],
     er: [
       { id: 'entity',       label: 'Entity',       glyph: '□', base: 'Entity',     keyword: 'entity',                   supports: { erAttributes: true, highlight: true, texture: true } },
@@ -803,6 +821,10 @@ Supported options:
         if (/^@layout\b/i.test(trimmed)) { inLayout = true; continue; }
         if (/^@endlayout\b/i.test(trimmed)) { inLayout = false; continue; }
         if (inLayout) continue;
+        if (typeSelect.value === 'crc' && /^(?:responsibility|collaborator)\s*:/i.test(trimmed)) {
+          out.push(raw);
+          continue;
+        }
         // Permissive @pos strip: tolerate any content inside the parens
         // (decimals, scientific notation, extra whitespace) so a hand-edited
         // source can't carry stale metadata through to the renderer. The
@@ -862,6 +884,12 @@ Supported options:
       var componentContext = null;
       var stateInitialCount = 0;
       var stateFinalCount = 0;
+
+      if (type === 'crc') {
+        return window.UMLCRCDiagram.parse(text).cards.map(function (card) {
+          return { id: card.id, label: card.name, axis: 'xy' };
+        });
+      }
 
       if (type === 'activity' && typeof window !== 'undefined' &&
           window.UMLActivityDiagram && typeof window.UMLActivityDiagram.parse === 'function') {
@@ -1070,7 +1098,8 @@ Supported options:
 
     function readLayoutPositions(text) {
       if (!window.UMLShared || !window.UMLShared.extractLayoutMetadata) return {};
-      return clonePositions(window.UMLShared.extractLayoutMetadata(text).layout.positions);
+      var layout = typeSelect.value === 'crc' ? window.UMLCRCDiagram.parse(text).layout : window.UMLShared.extractLayoutMetadata(text).layout;
+      return clonePositions(layout.positions);
     }
 
     function readLayoutRoutes(text) {
@@ -1166,6 +1195,10 @@ Supported options:
       if (type === 'freeform') {
         m = clean.match(/^box(?:\s+[a-z]+)?\s+"(?:[^"\\]|\\.)*"\s+as\s+(\S+)/i);
         return m ? unquoteId(m[1]) : null;
+      }
+      if (type === 'crc') {
+        m = clean.match(/^card\s+("(?:[^"\\]|\\.)*"|[^\s{]+)(?:\s+as\s+("(?:[^"\\]|\\.)*"|[^\s{]+))?/i);
+        return m ? unquoteId(m[2] || m[1]) : null;
       }
       if (type === 'er') {
         m = clean.match(/^(entity|weak\s+entity|relationship|identifying\s+relationship)\s+("[^"]+"|\S+)/i);
@@ -1909,6 +1942,7 @@ Supported options:
     }
 
     function findEditableRoutes(svg) {
+      if (typeSelect.value === 'crc') return [];
       if (!window.UMLShared || !window.UMLShared.collectEditableRoutes) return [];
       var routes = window.UMLShared.collectEditableRoutes(svg);
       if ((typeSelect.value || '') === 'sequence') {
@@ -2331,6 +2365,10 @@ Supported options:
       var label = opts.label || id;
       var stereotype = opts.stereotype || spec.fixedStereotype || '';
       var line;
+
+      if (spec.keyword === 'card') {
+        return buildCrcCardSource({ id: id, name: label, responsibilities: [], collaborators: [] });
+      }
 
       if (spec.isNote) {
         // note as id "text"
@@ -3340,6 +3378,7 @@ Supported options:
     }
 
     function removeElementFromSource(text, type, id) {
+      if (type === 'crc') return replaceCrcCardInSource(text, id, null);
       var positions = readLayoutPositions(text);
       var routes = readLayoutRoutes(text);
       var noteRange = virtualNoteLineRange(id, text);
@@ -6667,9 +6706,97 @@ Supported options:
       return sel;
     }
 
+    function crcCardForId(text, id) {
+      return window.UMLCRCDiagram.parse(text).cards.find(function (card) {
+        return card.id === id;
+      });
+    }
+
+    function buildCrcCardSource(card) {
+      var name = String(card.name || card.id).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      var quotedId = '"' + String(card.id).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+      var sourceId = /^[A-Za-z_][\w.:-]*$/.test(card.id) ? card.id : quotedId;
+      var header = card.name === card.id ? sourceId : '"' + name + '" as ' + sourceId;
+      var lines = ['card ' + header + ' {'];
+      card.responsibilities.forEach(function (text) { lines.push('  responsibility: ' + text); });
+      card.collaborators.forEach(function (text) { lines.push('  collaborator: ' + text); });
+      lines.push('}');
+      return lines.join('\n');
+    }
+
+    function replaceCrcCardInSource(text, id, replacement) {
+      var positions = readLayoutPositions(text);
+      var routes = readLayoutRoutes(text);
+      var clean = stripLayoutMetadata(text);
+      var card = crcCardForId(clean, id);
+      if (!card) return text;
+      var lines = clean.split('\n');
+      var replacementLines = replacement ? buildCrcCardSource(replacement).split('\n') : [];
+      lines.splice.apply(lines, [card.startLine, card.endLine - card.startLine + 1].concat(replacementLines));
+      if (!replacement || replacement.id !== id) {
+        if (replacement && positions[id]) positions[replacement.id] = positions[id];
+        delete positions[id];
+      }
+      return writePositionsIntoSource(lines.join('\n'), 'crc', positions, routes);
+    }
+
+    function replaceCrcCard(id, card) {
+      snapshotForUndo('edit:' + id);
+      textarea.value = replaceCrcCardInSource(textarea.value, id, card);
+      // The selected card keeps its id. Retain its property controls while the
+      // preview renders so blur commits preserve native Tab/Shift+Tab focus.
+      // A pending selection from card creation would otherwise rebuild them.
+      pendingSelect = null;
+      renderDiagram();
+      propsTitle.textContent = 'CRC Card — ' + card.name;
+      var nameInput = propsContent.querySelector('input[type="text"]');
+      if (nameInput && nameInput.value !== card.name) nameInput.value = card.name;
+    }
+
+    function changeCrcCardProperty(id, property, value) {
+      var card = crcCardForId(textarea.value, id);
+      if (!card) return;
+      card[property] = value;
+      replaceCrcCard(id, card);
+    }
+
+    function crcListInput(items, onChange) {
+      var input = document.createElement('textarea');
+      input.rows = Math.max(3, Math.min(8, items.length + 1));
+      input.value = items.join('\n');
+      input.addEventListener('change', function () {
+        onChange(input.value.split('\n').map(function (line) { return line.trim(); }).filter(Boolean));
+      });
+      return input;
+    }
+
+    function buildCrcCardProps(id) {
+      var card = crcCardForId(textarea.value, id);
+      if (!card) return;
+      propsTitle.textContent = 'CRC Card — ' + card.name;
+      propsContent.appendChild(field('Class name', textInput(card.name, function (value) {
+        if (!value.trim()) return;
+        changeCrcCardProperty(id, 'name', value.trim());
+      })));
+      propsContent.appendChild(field('Responsibilities (one per line)', crcListInput(card.responsibilities, function (items) {
+        changeCrcCardProperty(id, 'responsibilities', items);
+      })));
+      propsContent.appendChild(field('Collaborators (one per line)', crcListInput(card.collaborators, function (items) {
+        changeCrcCardProperty(id, 'collaborators', items);
+      })));
+      var hint = document.createElement('p');
+      hint.className = 'uml-pg-prop-hint';
+      hint.textContent = 'Each collaborator names an object this class needs help from. The two lists are independent; their rows do not imply pairs.';
+      propsContent.appendChild(hint);
+    }
+
     function buildElementProps() {
       var type = typeSelect.value;
       var id = selectedLayoutId;
+      if (type === 'crc') {
+        buildCrcCardProps(id);
+        return;
+      }
       var line = getDeclarationLine(textarea.value, type, id);
       var schema = null;
       // Detect schema from line
@@ -7668,6 +7795,7 @@ Supported options:
     }
 
     function relationLineIndices(text, type) {
+      if (type === 'crc') return [];
       // Return indices of source lines that look like a relation (have a connector
       // operator) and aren't declarations themselves.
       var lines = stripLayoutMetadata(text).split('\n');
@@ -8955,7 +9083,7 @@ Supported options:
         elementVisualLayer.appendChild(rect);
         // Add hover-to-extend "+" handle for elements (skip ports/labels — they
         // have no clear connect semantics).
-        if (item.axis !== 'port' && item.axis !== 'label' && item.axis !== 'branch-label' && item.axis !== 'note') {
+        if (typeSelect.value !== 'crc' && item.axis !== 'port' && item.axis !== 'label' && item.axis !== 'branch-label' && item.axis !== 'note') {
           installExtendHandle(svg, layer, item, rect);
         }
       });
@@ -9147,6 +9275,14 @@ Supported options:
       var type = typeSelect.value;
       if (/^note:\d+$/.test(String(id))) {
         replaceVirtualNoteText(id, newLabel);
+        return;
+      }
+      if (type === 'crc') {
+        var card = crcCardForId(textarea.value, id);
+        if (card && newLabel.trim()) {
+          card.name = newLabel.trim();
+          replaceCrcCard(id, card);
+        }
         return;
       }
       if (type === 'sequence') {
@@ -9862,6 +9998,12 @@ Supported options:
         // so the renamed declaration doesn't accidentally rewrite a body
         // mention (e.g. an attribute named the same as the class).
         var renamed = lines[declIdx].replace(new RegExp('\\b' + escaped + '\\b'), newId);
+        if (type === 'crc') {
+          var duplicateCard = crcCardForId(textarea.value, origId);
+          if (!duplicateCard) return;
+          duplicateCard.id = newId;
+          renamed = buildCrcCardSource(duplicateCard);
+        }
         if (renamed === lines[declIdx]) return;
         var insertAt = findInsertPointForDeclaration(lines);
         lines.splice(insertAt, 0, renamed);

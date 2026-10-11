@@ -20,6 +20,7 @@ All ArchUML types are invoked with `<pre><code class="<class-name>">…@startuml
 | You want to draw… | Class name | Syntax reference |
 |---|---|---|
 | Classes, interfaces, inheritance, associations | `language-uml-class` | [REFERENCE.md §Class Diagrams (L266)](../../../js/ArchUML/REFERENCE.md) |
+| Class names, responsibilities, and collaborators during design exploration | `diagram-crc` (Markdown fence: `crc`) | [REFERENCE.md §CRC Cards](../../../js/ArchUML/REFERENCE.md#crc-cards) |
 | Interactions / messages between participants over time | `language-uml-sequence` | [REFERENCE.md §Sequence Diagrams (L646)](../../../js/ArchUML/REFERENCE.md) |
 | Named states and transitions (behavioral modeling) | `language-uml-state` | [REFERENCE.md §State Machine Diagrams (L974)](../../../js/ArchUML/REFERENCE.md) |
 | Components, ports, ball-and-socket interfaces | `language-uml-component` | [REFERENCE.md §Component Diagrams (L1167)](../../../js/ArchUML/REFERENCE.md) |
@@ -33,10 +34,26 @@ All ArchUML types are invoked with `<pre><code class="<class-name>">…@startuml
 | **Directory / folder tree** (filesystem layouts) | `diagram-folder-tree` | See below — not in REFERENCE.md |
 
 ### Notes and annotations on any diagram
-Almost every type supports `note left/right/top/bottom of <id> : …` and multi-line notes. See [REFERENCE.md §Notes & Annotations (L2324)](../../../js/ArchUML/REFERENCE.md). Venn supports notes targeting set intersections (e.g. `note right of SetA & SetB : …`); ER supports notes on entities and relationships.
+Almost every type supports `note left/right/top/bottom of <id> : …` and multi-line notes. See [REFERENCE.md §Notes & Annotations (L2324)](../../../js/ArchUML/REFERENCE.md). Venn supports notes targeting set intersections (e.g. `note right of SetA & SetB : …`); ER supports notes on entities and relationships. CRC cards do not support notes, arrows, or highlighting.
 
 ### Quick reference card
 For a one-page cheat sheet of arrows and operators, see [REFERENCE.md §Quick Reference Card (L2670)](../../../js/ArchUML/REFERENCE.md).
+
+## CRC cards
+
+Use `crc` when the point is to assign responsibilities and identify collaborators before specifying fields, methods, or UML relationships. Each card has a name and two independent lists; row alignment does not pair a responsibility with a collaborator. Collaborator names are text and do not imply a declared card or a connection arrow.
+
+```crc
+@startuml
+card "Shopping cart" as Cart {
+  responsibility: Know selected products
+  responsibility: Add a product to the selection
+  collaborator: Catalog
+}
+@enduml
+```
+
+The type key is `crc`, the raw code class is `diagram-crc`, and the renderer API is `UMLCRCDiagram`. SEBook's shared diagram editor supports CRC source editing, card positioning, and SVG export. Use a unique identifier per card, one entry per line, and omit entries for empty compartments. See the reference for layout directives and the full worked example.
 
 ## Folder-tree (not in REFERENCE.md)
 
@@ -135,7 +152,7 @@ When you're drawing a **UML** diagram (class, sequence, state machine, component
 
 **Availability is not guaranteed.** The `uml-diagramming` skill is installed via a plugin and may or may not be present. If it's listed in your available skills, invoke it. If it isn't, just proceed with this skill alone — don't block on it and don't mention its absence to the user.
 
-**Do not** invoke `uml-diagramming` for the non-UML types: `diagram-freeform`, `diagram-gitgraph`, `diagram-folder-tree`, or the interactive command-lab widgets. Those aren't UML and the advisor's guidance doesn't apply.
+**Do not** invoke `uml-diagramming` for the non-UML types: `diagram-freeform`, `diagram-gitgraph`, `diagram-folder-tree`, `diagram-crc`, or the interactive command-lab widgets. Those aren't UML and the advisor's guidance doesn't apply.
 
 ## Mermaid — REQUIRED: load `SebookMermaid`, never call `mermaid.initialize` directly
 
@@ -145,7 +162,7 @@ ArchUML is the default for everything in the table above. **Mermaid is the only 
 - You're embedding a diagram authored in another mermaid-using context (lecture slides, an external doc) and want it to render in-place without re-typing.
 - The diagram is simple enough that mermaid's text syntax is genuinely faster than ArchUML's, *and* the visual result will sit alongside ArchUML diagrams without a style mismatch.
 
-Anything that *is* in the ArchUML catalog (class, sequence, state, component, deployment, use case, activity, freeform, gitgraph, folder-tree, venn, ER) — use ArchUML. Don't introduce a parallel mermaid version of an ArchUML-supported type; readers experience the page as one figure set and the inconsistency is jarring.
+Anything that *is* in the ArchUML catalog (class, CRC cards, sequence, state, component, deployment, use case, activity, freeform, gitgraph, folder-tree, venn, ER) — use ArchUML. Don't introduce a parallel mermaid version of an ArchUML-supported type; readers experience the page as one figure set and the inconsistency is jarring.
 
 ### Required: load and use SebookMermaid
 

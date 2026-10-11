@@ -18,11 +18,12 @@ module Jekyll
       'gitgraph' => 'Git graph diagram',
       'folder-tree' => 'Folder tree diagram',
       'venn' => 'Venn diagram',
-      'er' => 'Entity-relationship diagram'
+      'er' => 'Entity-relationship diagram',
+      'crc' => 'Class-responsibility-collaborator cards'
     }.freeze
 
     UML_TYPES = %w[class sequence state component deployment usecase activity].freeze
-    DIAGRAM_TYPES = %w[freeform gitgraph folder-tree venn er].freeze
+    DIAGRAM_TYPES = %w[freeform gitgraph folder-tree venn er crc].freeze
     RENDERER_INPUT_PATHS = %w[
       js/ArchUML/uml-bundle.js
       js/ArchUML/uml_to_svg.js
@@ -387,7 +388,7 @@ module Jekyll
 
         <<~HTML
           <figure class="sebook-figure sebook-figure--archuml sebook-figure--archuml-#{safe_type}">
-            <div class="uml-#{safe_type}-diagram-container" data-uml-rendered="true" role="img" aria-label="#{CGI.escapeHTML(desc)}">
+            <div class="uml-#{safe_type}-diagram-container" data-uml-rendered="true" role="img" aria-label="#{CGI.escapeHTML(desc)}"#{safe_type == 'crc' ? ' tabindex="0"' : ''}>
               #{presentational_svg}
             </div>
             #{figcaption}

@@ -199,6 +199,17 @@ end note
   }]);
 });
 
+test('CRC fenced and raw blocks are recognized by the production diagram build', () => {
+  const source = '@startuml\ncard Cart {\n responsibility: Know products\n}\n@enduml';
+  const content = ['language-crc', 'diagram-crc'].map((className) =>
+    `<pre><code class="${className}">${source}</code></pre>`
+  ).join('\n');
+  const { blocks } = runPlugin('collect_code_blocks', { content });
+  assert.deepEqual(blocks.map(({ type, text }) => ({ type, text })), [
+    { type: 'crc', text: source }, { type: 'crc', text: source }
+  ]);
+});
+
 test('raw UML reference examples do not expose nested Markdown fences to Kramdown', () => {
   const reference = fs.readFileSync(REFERENCE_PATH, 'utf8');
   for (const language of ['Python', 'Java']) {

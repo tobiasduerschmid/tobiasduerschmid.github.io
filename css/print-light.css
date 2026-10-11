@@ -28,6 +28,7 @@ html.print-light-mode.dark-mode .uml-freeform-diagram-container svg,
 html.print-light-mode.dark-mode .uml-folder-tree-diagram-container svg,
 html.print-light-mode.dark-mode .uml-venn-diagram-container svg,
 html.print-light-mode.dark-mode .uml-er-diagram-container svg,
+html.print-light-mode.dark-mode .uml-crc-diagram-container svg,
 html.print-light-mode.dark-mode .uml-sym svg {
   filter: none !important;
 }
@@ -371,6 +372,7 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
   html.dark-mode .uml-folder-tree-diagram-container svg,
   html.dark-mode .uml-venn-diagram-container svg,
   html.dark-mode .uml-er-diagram-container svg,
+  html.dark-mode .uml-crc-diagram-container svg,
   html.dark-mode .uml-sym svg {
     filter: none !important;
   }
