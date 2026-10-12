@@ -359,7 +359,7 @@ test('touch dragging reorders without scrolling the grip @chromium', async ({ br
   await context.close();
 });
 
-for (const song of [git, network]) {
+for (const song of [git, network, shell]) {
   test(`${song.title}: navigation controls are absent outside playlists`, async ({ page }) => {
     await page.goto(song.path);
     await expect(page.getByRole('button', { name: 'Play song', exact: true })).toBeVisible();
@@ -375,19 +375,30 @@ for (const song of [git, network]) {
     await checkbox.check();
     await page.reload();
     await expect(checkbox).toBeChecked();
+    if (song === shell) await page.getByRole('button', { name: /^Add to playlist\s*: Small Tools/ }).click();
     await page.getByRole('button', { name: `Play: ${song.title}`, exact: true }).click();
     const frame = page.locator('#playlist-frame').contentFrame();
     const audio = audioFor(frame, song);
     await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeGreaterThan(0);
     await frame.getByRole('button', { name: 'Pause song', exact: true }).click();
+    // Observe the real transport before the checkpoint's position correction.
+    // Checking only currentTime afterwards can hide a late pause that leaked audio.
+    await audio.evaluate((media) => {
+      media.pause = function () {
+        this.dataset.stoppedAt = String(this.currentTime);
+        HTMLMediaElement.prototype.pause.call(this);
+      };
+    });
     const questions = await frame.locator('#song-data').evaluate((element) => JSON.parse(element.textContent).sections.flatMap((section) => section.lines).filter((line) => line.answer_at));
     await frame.getByRole('combobox', { name: 'Playback speed' }).selectOption('2');
     for (const question of questions) {
-      await seek(audio, question.answer_at - 0.5);
+      await seek(audio, (question.pause_at ?? question.answer_at - 0.12) - 0.4);
+      await expect(frame.locator('#song-description')).toHaveText(`Question: ${question.text}`);
       await frame.getByRole('button', { name: 'Play song', exact: true }).click();
       await expect(frame.getByRole('status')).toContainText('Paused before the answer');
       await expect(audio).toHaveJSProperty('paused', true);
       expect(await audio.evaluate((media) => media.currentTime)).toBeLessThan(question.answer_at);
+      expect(Number(await audio.getAttribute('data-stopped-at'))).toBeLessThan(question.answer_at);
       await expect(frame.locator('#song-lyrics')).toHaveText(question.text);
       await frame.getByRole('button', { name: 'Play song', exact: true }).click();
       await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeGreaterThan(question.answer_at + 0.1);
@@ -415,6 +426,25 @@ for (const song of [git, network]) {
     await expect(audio).toHaveJSProperty('paused', false);
   });
 }
+
+test('shell quiz displays complete command examples that fit their answer cards', async ({ page }) => {
+  const audio = await openPaused(page, shell);
+  const questions = await page.locator('#song-data').evaluate((element) => JSON.parse(element.textContent).sections
+    .flatMap((section) => section.lines).filter((line) => line.answer_code));
+  expect(questions).toHaveLength(9);
+  for (const question of questions) {
+    await seek(audio, question.answer_at + 0.3);
+    const code = page.locator('.quiz-answer code').filter({ hasText: question.answer_code });
+    await expect(code).toBeVisible();
+    await expect.poll(() => code.evaluate((element) => {
+      const text = element.getBoundingClientRect();
+      const card = element.closest('.quiz-answer').getBoundingClientRect();
+      return text.left >= card.left && text.right <= card.right && text.top >= card.top && text.bottom <= card.bottom;
+    }), { message: `${question.answer_code} fits without clipping` }).toBe(true);
+  }
+  await seek(audio, questions.find((question) => question.id === 'quiz-4').answer_at + 0.3);
+  await page.getByTestId('song-picture').screenshot({ path: test.info().outputPath('shell-quiz-command.png') });
+});
 
 test('reorder component supports long lists, middle destinations, and edge scrolling', async ({ page }) => {
   await page.goto(playlistPath);

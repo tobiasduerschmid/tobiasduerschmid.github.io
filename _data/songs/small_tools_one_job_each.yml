@@ -550,89 +550,109 @@ sections:
         end: 214.68
         text: "Exit code zero means…?"
         answer: "It worked!"
-        answer_at: 213.84
-        marks: {"exit": 211.26, "code": 211.82, "zero": 212.02, "means": 212.34, "it": 213.84, "worked": 214.4}
-        visual: "Quiz card 1 of 11 shows the question; the answer, It worked!, slams in on a green bar when the crowd sings it."
+        answer_at: 213.82
+        pause_at: 213.3
+        marks: {"exit": 211.26, "code": 211.82, "zero": 212.02, "means": 212.34, "it": 213.82, "worked": 214.4}
+        visual: "Quiz card 1 of 11 shows the question. At the answer, it reveals It worked!. The command reported success with exit status 0."
       - id: quiz-2
         start: 214.94
         end: 217.66
         text: "Where am I?"
         answer: "pwd!"
-        answer_at: 217.1
-        marks: {"where": 214.94, "am": 215.1, "i": 215.3, "p": 217.1, "w": 217.1, "d": 217.1}
-        visual: "Quiz card 2 of 11 shows the question; the answer, pwd!, slams in on a green bar when the crowd sings it."
+        answer_code: "pwd"
+        answer_at: 216.56
+        pause_at: 216.1
+        marks: {"where": 214.94, "am": 215.1, "i": 215.3, "p": 216.56, "w": 217.06, "d": 217.24}
+        visual: "Quiz card 2 of 11 shows the question. At the answer, it reveals pwd. Print the current working directory."
       - id: quiz-3
         start: 217.86
         end: 219.84
         text: "Rename a file?"
         answer: "mv!"
-        answer_at: 219.28
-        marks: {"rename": 217.86, "a": 218.24, "file": 218.36, "m": 219.28, "v": 219.28}
-        visual: "Quiz card 3 of 11 shows the question; the answer, mv!, slams in on a green bar when the crowd sings it."
+        answer_code: "mv old.txt new.txt"
+        answer_at: 219.04
+        pause_at: 218.7
+        marks: {"rename": 217.86, "a": 218.24, "file": 218.36, "m": 219.04, "v": 219.62}
+        visual: "Quiz card 3 of 11 shows the question. At the answer, it reveals mv old.txt new.txt. Rename old.txt to new.txt."
       - id: quiz-4
         start: 220.24
         end: 222.24
         text: "Swap “old” for “new”?"
         answer: "sed!"
+        answer_code: "sed 's/old/new/g' notes.txt"
         answer_at: 222.02
+        pause_at: 221.65
         marks: {"swap": 220.24, "old": 220.5, "for": 220.78, "new": 221.0, "sed": 222.02}
-        visual: "Quiz card 4 of 11 shows the question; the answer, sed!, slams in on a green bar when the crowd sings it."
+        visual: "Quiz card 4 of 11 shows the question. At the answer, it reveals sed 's/old/new/g' notes.txt. Print notes.txt with each old replaced by new; the input file stays unchanged."
       - id: quiz-5
         start: 222.66
         end: 225.62
         text: "Copy a whole directory?"
         answer: "cp -r!"
-        answer_at: 224.34
-        marks: {"copy": 222.66, "a": 222.94, "whole": 223.06, "directory": 223.18, "c": 224.34, "p": 224.34, "dash": 224.9, "r": 225.24}
-        visual: "Quiz card 5 of 11 shows the question; the answer, cp -r!, slams in on a green bar when the crowd sings it."
+        answer_code: "cp -r photos backup"
+        answer_at: 224.3
+        pause_at: 223.92
+        marks: {"copy": 222.66, "a": 222.94, "whole": 223.06, "directory": 223.18, "c": 224.3, "p": 224.68, "dash": 225.02, "r": 225.24}
+        visual: "Quiz card 5 of 11 shows the question. At the answer, it reveals cp -r photos backup. Recursively copy the photos directory to a new backup directory."
       - id: quiz-6
         start: 225.66
         end: 227.72
         text: "Find the lines that say ERROR?"
         answer: "grep!"
-        answer_at: 227.32
-        marks: {"find": 225.66, "the": 225.86, "lines": 225.96, "that": 226.18, "say": 226.32, "error": 226.52, "grep": 227.32}
-        visual: "Quiz card 6 of 11 shows the question; the answer, grep!, slams in on a green bar when the crowd sings it."
+        answer_code: "grep ERROR app.log"
+        answer_at: 227.0
+        pause_at: 226.8
+        marks: {"find": 225.66, "the": 225.86, "lines": 225.96, "that": 226.18, "say": 226.32, "error": 226.52, "grep": 227.0}
+        visual: "Quiz card 6 of 11 shows the question. At the answer, it reveals grep ERROR app.log. Print lines containing ERROR from app.log."
       - id: quiz-7
         start: 227.94
         end: 230.44
         text: "Drop repeated lines?"
         answer: "sort, then uniq!"
+        answer_code: "sort names.txt | uniq"
         answer_at: 229.48
+        pause_at: 229.24
         marks: {"drop": 227.94, "repeated": 228.42, "lines": 228.86, "sort": 229.48, "then": 229.88, "unique": 229.96}
-        visual: "Quiz card 7 of 11 shows the question; the answer, sort, then uniq!, slams in on a green bar when the crowd sings it."
+        visual: "Quiz card 7 of 11 shows the question. At the answer, it reveals sort names.txt | uniq. Sort names.txt, then remove adjacent duplicate lines."
       - id: quiz-8
         start: 230.76
         end: 233.5
         text: "How many lines in a file?"
         answer: "wc!"
-        answer_at: 232.94
-        marks: {"how": 230.76, "many": 230.88, "lines": 231.12, "in": 231.54, "a": 231.76, "file": 231.9, "w": 232.94, "c": 232.94}
-        visual: "Quiz card 8 of 11 shows the question; the answer, wc!, slams in on a green bar when the crowd sings it."
+        answer_code: "wc -l file.txt"
+        answer_at: 232.58
+        pause_at: 232.28
+        marks: {"how": 230.76, "many": 230.88, "lines": 231.12, "in": 231.54, "a": 231.76, "file": 231.9, "w": 232.58, "c": 233.08}
+        visual: "Quiz card 8 of 11 shows the question. At the answer, it reveals wc -l file.txt. Count newline characters in file.txt with the line-count option."
       - id: quiz-9
         start: 233.72
         end: 236.38
         text: "“Permission denied”?"
         answer: "chmod +x!"
-        answer_at: 235.16
-        marks: {"permission": 233.72, "denied": 234.16, "chmod": 235.16, "plus": 235.72, "x": 236.12}
-        visual: "Quiz card 9 of 11 shows the question; the answer, chmod +x!, slams in on a green bar when the crowd sings it."
+        answer_code: "chmod +x hello.sh"
+        answer_at: 235.14
+        pause_at: 234.8
+        marks: {"permission": 233.72, "denied": 234.16, "chmod": 235.14, "plus": 235.72, "x": 236.12}
+        visual: "Quiz card 9 of 11 shows the question. At the answer, it reveals chmod +x hello.sh. For your own readable script that lacks execute permission, add execute permission to hello.sh."
       - id: quiz-10
         start: 236.56
         end: 239.16
         text: "Your script: “command not found”?"
         answer: "./"
-        answer_at: 237.92
-        marks: {"your": 236.56, "script": 236.56, "command": 236.94, "not": 237.38, "found": 237.7, "dot": 237.92, "slash": 238.14}
-        visual: "Quiz card 10 of 11 shows the question; the answer, ./, slams in on a green bar when the crowd sings it."
+        answer_code: "./hello.sh"
+        answer_at: 238.44
+        pause_at: 238.18
+        marks: {"your": 236.56, "script": 236.56, "command": 236.94, "not": 237.38, "found": 237.7, "dot": 238.44, "slash": 238.68}
+        visual: "Quiz card 10 of 11 shows the question. At the answer, it reveals ./hello.sh. Run the executable hello.sh script in the current directory when that directory is not on PATH."
       - id: quiz-11
         start: 239.16
         end: 243.32
         text: "rm -r — can you undo it?"
         answer: "No!"
         answer_at: 242.62
+        pause_at: 242.1
         marks: {"r": 239.16, "m": 239.42, "dash": 239.76, "r_2": 240.08, "can": 240.44, "you": 240.8, "undo": 240.98, "it": 241.26, "no": 242.62}
-        visual: "Quiz card 11 of 11 shows the question; the answer, No!, slams in on a green bar when the crowd sings it."
+        visual: "Quiz card 11 of 11 shows the question. At the answer, it reveals No!. rm has no built-in undo; recovery needs a separate backup or snapshot."
   - id: chorus-3
     title: "Final chorus"
     delivery: sung

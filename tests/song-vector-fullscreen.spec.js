@@ -187,20 +187,51 @@ for (const native of [false, true]) {
 }
 
 for (const native of [false, true]) {
-  test(`playlist navigation leaves ${native ? 'native full screen @chromium' : 'fallback full screen'} and restores usable focus`, async ({ page }) => {
+  test(`playlist keeps ${native ? 'native full screen @chromium' : 'fallback full screen'} across navigation and automatic advance`, async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto('/SEBook/playlist.html');
     const player = page.locator('#playlist-frame').contentFrame();
     await expect(enter(player)).toBeVisible();
-    if (!native) await noNativeFullscreen(player);
+    if (!native) await noNativeFullscreen(page); // The persistent host owns this API.
     await enter(player).click();
     await expect(exit(player)).toBeVisible();
-    await expectFramed(player, true);
+    const expectFullscreen = async () => {
+      await expect(exit(player)).toBeVisible();
+      await expectFramed(player, true);
+      if (native) await expect.poll(() => page.evaluate(() => document.fullscreenElement?.id)).toBe('playlist-video');
+      else await expect(page.locator('#playlist-frame')).toHaveClass(/is-song-fullscreen/);
+    };
+    // Record every native exit, including a brief exit followed by re-entry.
+    await page.evaluate(() => {
+      window.playlistFullscreenExits = 0;
+      document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) window.playlistFullscreenExits++;
+      });
+    });
+    await expectFullscreen();
     await player.getByRole('button', { name: 'Next song', exact: true }).click();
-    await expect(player.getByRole('heading', { name: 'Unbox the Stack: a song about networking', exact: true })).toBeVisible();
-    await expect(player.getByRole('button', { name: 'Previous song', exact: true })).toBeFocused();
-    await expect(enter(player)).toBeVisible();
+    await expect(page.locator('#playlist-frame')).toHaveAttribute('title', frameTitle);
+    await expectFullscreen();
+    await player.getByRole('button', { name: 'Previous song', exact: true }).click();
+    await expect(page.locator('#playlist-frame')).toHaveAttribute('title', /Small Tools/);
+    await expectFullscreen();
+    // Use the real media end, so the ended event, queue, and new player all participate.
+    const audio = player.getByLabel('Small Tools, One Job Each: a song about the Unix shell audio', { exact: true });
+    await expect.poll(() => audio.evaluate((media) => media.readyState)).toBeGreaterThan(0);
+    await audio.evaluate((media) => { media.muted = true; media.pause(); media.currentTime = media.duration - 0.4; });
+    await expect(audio).toHaveJSProperty('seeking', false);
+    await player.getByRole('button', { name: 'Play song', exact: true }).click();
+    await expect(page.locator('#playlist-frame')).toHaveAttribute('title', frameTitle);
+    await expectFullscreen();
+    expect(await page.evaluate(() => window.playlistFullscreenExits)).toBe(0);
+    await page.keyboard.press('Escape');
+    await expect(enter(player)).toBeFocused();
+    await expect(page.locator('#playlist-frame')).not.toHaveClass(/is-song-fullscreen/);
+    await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(false);
     const checkbox = page.getByRole('checkbox', { name: 'Pause before quiz answers' });
     await checkbox.focus();
     await expect(checkbox).toBeFocused();
+    await page.getByRole('button', { name: 'Clear playlist', exact: true }).click();
+    await expect(page.locator('#playlist-frame')).toBeHidden();
   });
 }

@@ -131,7 +131,12 @@ builds the scene before it shows the picture.
 
 A section's `delivery` sets its captions: `sung` and `spoken` lines are one
 cue each, while `call` lines are quiz questions with an `answer` and
-`answer_at`, captioned as two cues and used as quiz-pause stops. A sung
+`answer_at`, captioned as two cues. `answer` transcribes the recording;
+`answer_code` optionally supplies an executable command for the shell quiz's
+visual answer. An optional `pause_at` marks a safe stop between the question
+and the first answer sound. Check it against the recording, including answers
+sung as separate letters, and leave enough margin for playback at 2× speed.
+Without it, the shared player stops 0.12 seconds before `answer_at`. A sung
 call-and-response chant without separate answers, like the shell song's
 command chant, is `sung`.
 

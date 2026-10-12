@@ -101,7 +101,10 @@
 
   frames.forEach((frame) => {
     frame.addEventListener('load', () => {
-      if (fullscreenFrame === frame) leaveFullscreenFrame();
+      const host = frame.closest('[data-song-fullscreen-host]');
+      const continuing = host && frame.hasAttribute('src');
+      if (fullscreenFrame === frame && !continuing) leaveFullscreenFrame();
+      if (host && !continuing && document.fullscreenElement === host) void document.exitFullscreen();
       sendTheme(frame);
     });
   });

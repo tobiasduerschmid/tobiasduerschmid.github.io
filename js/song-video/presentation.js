@@ -5,6 +5,12 @@
   function bind({ player, listen, onResize, onError }) {
     const screen = player.querySelector('.song-player-screen');
     const button = player.querySelector('.song-player-fullscreen');
+    // A playlist replaces the iframe document between songs. Its persistent
+    // host owns fullscreen so that navigation cannot tear down the presentation.
+    const frame = window.frameElement;
+    const host = frame?.closest('[data-song-fullscreen-host]');
+    const fullscreenTarget = host || screen;
+    const fullscreenDocument = fullscreenTarget.ownerDocument;
     const orientation = window.screen.orientation;
     const touchScreen = window.matchMedia('(any-pointer: coarse)');
     let active = false;
@@ -92,7 +98,7 @@
       if (!fallback) void lockLandscape();
     }
 
-    function leavePresentation(restoreFocus = true) {
+    function leavePresentation(restoreFocus = true, notify = true) {
       if (!active) return;
       const wasFallback = fallback;
       active = false;
@@ -106,7 +112,7 @@
       restoreBackground();
       restoreBackground = () => {};
       button.setAttribute('aria-label', 'Enter full screen');
-      if (wasFallback) notifyParent(false);
+      if (wasFallback && notify) notifyParent(false);
       onResize();
       if (restoreFocus) {
         window.scrollTo(scrollPosition.x, scrollPosition.y);
@@ -118,7 +124,7 @@
       if (!active) return true;
       if (fallback) leavePresentation();
       else {
-        try { await document.exitFullscreen(); }
+        try { await fullscreenDocument.exitFullscreen(); }
         catch (error) { return false; }
       }
       return true;
@@ -132,9 +138,9 @@
       }
       entering = true;
       try {
-        if (document.fullscreenEnabled && screen.requestFullscreen) {
+        if (fullscreenDocument.fullscreenEnabled && fullscreenTarget.requestFullscreen) {
           try {
-            await screen.requestFullscreen({ navigationUI: 'hide' });
+            await fullscreenTarget.requestFullscreen({ navigationUI: 'hide' });
             enterPresentation(false);
           } catch (error) { enterPresentation(true); }
         } else enterPresentation(true);
@@ -160,8 +166,12 @@
 
     button.hidden = false;
     listen(button, 'click', toggle);
-    listen(document, 'fullscreenchange', () => {
-      if (document.fullscreenElement === screen) enterPresentation(false);
+    function adoptPresentation() {
+      if (fullscreenDocument.fullscreenElement === fullscreenTarget) enterPresentation(false);
+      else if (host && frame.classList.contains('is-song-fullscreen')) enterPresentation(true);
+    }
+    listen(fullscreenDocument, 'fullscreenchange', () => {
+      if (fullscreenDocument.fullscreenElement === fullscreenTarget) enterPresentation(false);
       else if (active && !fallback) leavePresentation();
     });
     listen(document, 'keydown', keyboard);
@@ -174,8 +184,9 @@
     listen(window, 'message', (event) => {
       if (event.origin === window.location.origin && event.source === window.parent && event.data?.type === 'song-player:exit-fullscreen') void exit();
     });
-    listen(window, 'pagehide', () => { pageActive = false; leavePresentation(false); });
-    listen(window, 'pageshow', () => { pageActive = true; });
+    listen(window, 'pagehide', () => { pageActive = false; leavePresentation(false, !host); });
+    listen(window, 'pageshow', () => { pageActive = true; adoptPresentation(); });
+    adoptPresentation();
     return { isActive: () => active, exit, toggle };
   }
 

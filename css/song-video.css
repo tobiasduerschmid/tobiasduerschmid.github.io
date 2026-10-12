@@ -27,6 +27,27 @@ html.dark-mode .song-video-frame {
   background: #141d2a;
 }
 
+/* Keep the host in the top layer while its playlist iframe changes songs. */
+@media screen {
+  [data-song-fullscreen-host]:fullscreen {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background: #070b1a;
+  }
+
+  [data-song-fullscreen-host]:fullscreen > .song-video-frame {
+    height: 100% !important;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  [data-song-fullscreen-host]:fullscreen > figcaption {
+    display: none;
+  }
+}
+
 /* An existing embedded player can fill the visual viewport without reloading. */
 .has-song-frame-fullscreen,
 .has-song-frame-fullscreen body {

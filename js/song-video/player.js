@@ -98,8 +98,10 @@
       lyricText.textContent = audio.currentTime === 0 && audio.paused
         ? 'Press play to follow the lyrics.' : '[music]';
     }
-    const line = lines.findLast((item) => item.start <= tracks.position().sceneTime);
-    visualText.textContent = line ? `On screen: ${line.visual}`
+    const sceneTime = tracks.position().sceneTime;
+    const line = lines.findLast((item) => item.start <= sceneTime);
+    visualText.textContent = line?.answer_at > sceneTime ? `Question: ${line.text}`
+      : line ? `On screen: ${line.visual}`
       : 'Visual descriptions appear here during the song.';
   }
 
@@ -232,9 +234,8 @@
       onResume: () => { status.textContent = ''; updateText(); reportHeight(); },
     });
     playlistControls = window.SongPlaylistControls.bind({
-      player, listen, onNavigate: async (direction) => {
+      player, listen, onNavigate: (direction) => {
         tracks.pause();
-        if (fullscreen?.isActive()) await fullscreen.exit();
         notifyParent(`song-player:${direction}`);
       },
     });

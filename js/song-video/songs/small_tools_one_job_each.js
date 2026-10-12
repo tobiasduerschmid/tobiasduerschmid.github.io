@@ -677,7 +677,7 @@
         kit.el('div', 'quiz-question', cardNode, entry.text);
         const answer = kit.el('div', 'quiz-answer is-staged', cardNode);
         answer.append(kit.icon(QUIZ_ICONS[i]));
-        kit.el('code', 'quiz-answer-code', answer, entry.answer);
+        kit.el(entry.answer_code ? 'code' : 'span', 'quiz-answer-code', answer, entry.answer_code || entry.answer);
         fx.slam(answer, entry.answer_at, { from: 1.6 });
         camera.punch(entry.answer_at + 0.05, 0.03);
       });
