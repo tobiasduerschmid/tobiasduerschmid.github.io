@@ -295,6 +295,10 @@
   {% if page.program_output_labs or content contains 'data-write-in-question=' or page.url == '/se-gym/' %}
   {% include quiz-write-in-assets.html %}
   {% endif %}
+  {% if page.song_playlist %}
+  <link rel="stylesheet" href="{{ '/css/song-video.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/song-playlist.css' | relative_url }}">
+  {% endif %}
   <link rel="stylesheet" href="{{ "/css/print-light.css" | prepend: site.baseurl }}?v={{ asset_version }}">
 
   <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">

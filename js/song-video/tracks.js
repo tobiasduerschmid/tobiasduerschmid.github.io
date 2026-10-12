@@ -100,6 +100,7 @@
     listen(source, 'error', loadFailed);
     return {
       position,
+      mediaTime: (songTime) => active === 'described' ? describedPosition(plan, songTime) : songTime,
       pause() {
         if (pending) pending.resume = false;
         audio.pause();

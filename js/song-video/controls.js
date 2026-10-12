@@ -7,7 +7,7 @@
     return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`;
   }
 
-  function bind({ player, audio, listen, onError, onResize }) {
+  function bind({ player, audio, listen, onError, onResize, onFullscreen, onPlayBlocked }) {
     const play = player.querySelector('.song-player-play');
     const mute = player.querySelector('.song-player-mute');
     const seek = player.querySelector('.song-player-seek');
@@ -16,7 +16,11 @@
     const captions = player.querySelector('.song-player-captions');
     const back = player.querySelector('.song-player-back');
     const forward = player.querySelector('.song-player-forward');
+    const picture = player.querySelector('.song-player-picture-control');
+    const speed = player.querySelector('.song-player-speed');
+    const feedback = player.querySelector('.song-player-gesture-feedback');
     let loading = false;
+    let feedbackTimer = null;
 
     function label(button, text) {
       button.setAttribute('aria-label', text);
@@ -26,6 +30,7 @@
       const playing = !audio.paused && !audio.ended;
       play.classList.toggle('is-playing', playing);
       label(play, playing ? 'Pause song' : 'Play song');
+      label(picture, playing ? 'Pause video' : 'Play video');
     }
 
     function syncPosition() {
@@ -45,25 +50,65 @@
       label(mute, silent ? 'Unmute song' : 'Mute song');
     }
 
-    listen(play, 'click', async () => {
-      if (!audio.paused && !audio.ended) { audio.pause(); return; }
+    async function startPlayback() {
+      if (loading) return;
       try {
         if (audio.ended) audio.currentTime = 0;
         await audio.play();
       } catch (error) {
-        if (error.name !== 'AbortError') onError('The audio could not start. Use the audio downloads or full transcript below.');
+        if (error.name === 'NotAllowedError') {
+          onPlayBlocked();
+        }
+        else if (error.name !== 'AbortError') onError('The audio could not start. Use the audio downloads or full transcript below.');
       }
-    });
+    }
+    function togglePlayback() {
+      if (loading) return;
+      if (!audio.paused && !audio.ended) audio.pause();
+      else void startPlayback();
+    }
+    listen(play, 'click', togglePlayback);
     listen(seek, 'input', () => {
       if (Number.isFinite(audio.duration)) audio.currentTime = Math.min(audio.duration, Number(seek.value));
       syncPosition();
     });
-    function skip(seconds) {
-      if (!seek.disabled) audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + seconds));
+    function skip(direction) {
+      const seconds = direction * 5;
+      if (seek.disabled) return;
+      audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + seconds));
       syncPosition();
+      clearTimeout(feedbackTimer);
+      feedback.textContent = `${seconds < 0 ? '−' : '+'}${Math.abs(seconds)} seconds`;
+      feedback.classList.toggle('is-back', seconds < 0);
+      feedback.hidden = false;
+      feedbackTimer = setTimeout(() => { feedback.hidden = true; }, 700);
     }
-    listen(back, 'click', () => skip(-10));
-    listen(forward, 'click', () => skip(10));
+    const gestures = window.SongGestures.bind({
+      button: picture, screen: player.querySelector('.song-player-screen'),
+      listen, toggle: togglePlayback, skip,
+    });
+    window.SongKeyboard.bind({
+      player, listen, toggle: togglePlayback, skip, fullscreen: onFullscreen,
+    });
+    function applySpeed(value) {
+      audio.defaultPlaybackRate = value;
+      audio.playbackRate = value;
+      speed.value = String(value);
+    }
+    applySpeed(window.SongPreferences.speed());
+    listen(speed, 'change', () => {
+      applySpeed(Number(speed.value));
+      if (!window.SongPreferences.saveSpeed(audio.playbackRate)) {
+        onError('Playback speed changed for this visit. Your browser could not save it.');
+      }
+    });
+    listen(window, 'storage', (event) => {
+      if (event.key === window.SongPreferences.SPEED_KEY || event.key === null) applySpeed(window.SongPreferences.speed());
+    });
+    listen(audio, 'ratechange', () => { speed.value = String(audio.playbackRate); });
+    listen(window, 'pagehide', () => clearTimeout(feedbackTimer));
+    listen(back, 'click', () => skip(-1));
+    listen(forward, 'click', () => skip(1));
     listen(mute, 'click', () => {
       if (audio.muted || audio.volume === 0) {
         audio.muted = false;
@@ -83,9 +128,12 @@
     syncPosition();
     syncVolume();
     return {
+      play: startPlayback,
       setLoading(value) {
         loading = value;
         play.disabled = loading;
+        picture.disabled = loading;
+        gestures.cancel();
         syncPosition();
       },
     };

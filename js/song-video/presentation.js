@@ -176,7 +176,7 @@
     });
     listen(window, 'pagehide', () => { pageActive = false; leavePresentation(false); });
     listen(window, 'pageshow', () => { pageActive = true; });
-    return { isActive: () => active, exit };
+    return { isActive: () => active, exit, toggle };
   }
 
   window.SongFullscreen = { bind };

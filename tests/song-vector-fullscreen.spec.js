@@ -9,6 +9,11 @@ const exit = (scope) => scope.getByRole('button', { name: 'Exit full screen', ex
 
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
+test.beforeEach(async ({ context }) => {
+  // Keep real media responses; bypass WEBrick's incorrect cached If-Range/304 handling.
+  await context.route('**/*', (route) => route.continue());
+});
+
 async function noNativeFullscreen(scope) {
   // Browser capability is the external boundary. Exercise the real player and
   // parent integration with the platform path unavailable (as on iPhone).
@@ -55,7 +60,7 @@ test('portrait full screen remains usable without a native API and adapts when t
   // The fallback is modal even though browser chrome remains present.
   await page.getByRole('combobox', { name: 'Audio track', exact: true }).focus();
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'Play song', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeFocused();
 
   await page.setViewportSize({ width: 844, height: 390 });
   await expectFramed(page, false);
@@ -123,7 +128,7 @@ for (const lockResult of ['resolve', 'reject']) {
     await expectFramed(page, true);
     await page.getByRole('combobox', { name: 'Audio track', exact: true }).focus();
     await page.keyboard.press('Tab');
-    await expect(page.getByRole('button', { name: 'Play song', exact: true })).toBeFocused();
+    await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeFocused();
     await page.setViewportSize({ width: 844, height: 390 });
     await expectFramed(page, false);
     await exit(page).click();
@@ -178,5 +183,24 @@ for (const native of [false, true]) {
     await expect(page.getByRole('status').filter({ hasText: /could not load|failed/i })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Download song audio', exact: true })).toBeVisible();
     await expect(track).toBeEnabled();
+  });
+}
+
+for (const native of [false, true]) {
+  test(`playlist navigation leaves ${native ? 'native full screen @chromium' : 'fallback full screen'} and restores usable focus`, async ({ page }) => {
+    await page.goto('/SEBook/playlist.html');
+    const player = page.locator('#playlist-frame').contentFrame();
+    await expect(enter(player)).toBeVisible();
+    if (!native) await noNativeFullscreen(player);
+    await enter(player).click();
+    await expect(exit(player)).toBeVisible();
+    await expectFramed(player, true);
+    await player.getByRole('button', { name: 'Next song', exact: true }).click();
+    await expect(player.getByRole('heading', { name: 'Unbox the Stack: a song about networking', exact: true })).toBeVisible();
+    await expect(player.getByRole('button', { name: 'Previous song', exact: true })).toBeFocused();
+    await expect(enter(player)).toBeVisible();
+    const checkbox = page.getByRole('checkbox', { name: 'Pause before quiz answers' });
+    await checkbox.focus();
+    await expect(checkbox).toBeFocused();
   });
 }

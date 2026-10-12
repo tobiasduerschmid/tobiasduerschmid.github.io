@@ -13,6 +13,11 @@ const describedPlan = JSON.parse(fs.readFileSync(path.join(__dirname, '..', stor
 const audioPlayer = (page) => page.getByLabel(`${SONG_TITLE} audio`, { exact: true });
 const lyrics = (page) => page.getByLabel('Current lyrics', { exact: true });
 
+test.beforeEach(async ({ context }) => {
+  // Keep real media responses; bypass WEBrick's incorrect cached If-Range/304 handling.
+  await context.route('**/*', (route) => route.continue());
+});
+
 async function loadPlayer(page) {
   await page.goto(PLAYER_PATH);
   await expect(page.getByRole('button', { name: 'Play song', exact: true })).toBeEnabled();
@@ -204,20 +209,20 @@ test('integrated seek and mute controls operate the audio without changing its s
   await expect(audio).toHaveJSProperty('playbackRate', 1);
 });
 
-test('ten-second buttons seek both tracks and stop at the beginning and end', async ({ page }) => {
+test('five-second buttons seek both tracks and stop at the beginning and end', async ({ page }) => {
   const audio = await loadAudioThenPause(page);
-  const forward = page.getByRole('button', { name: 'Forward 10 seconds', exact: true });
-  const back = page.getByRole('button', { name: 'Back 10 seconds', exact: true });
+  const forward = page.getByRole('button', { name: 'Forward 5 seconds', exact: true });
+  const back = page.getByRole('button', { name: 'Back 5 seconds', exact: true });
   await seek(audio, 5);
   await back.click();
   await expect(audio).toHaveJSProperty('currentTime', 0);
   await forward.click();
-  await expect(audio).toHaveJSProperty('currentTime', 10);
+  await expect(audio).toHaveJSProperty('currentTime', 5);
   await page.getByRole('combobox', { name: 'Audio track', exact: true }).selectOption('described');
   await expect.poll(() => audio.evaluate((element) => element.duration)).toBeCloseTo(describedPlan.duration, 1);
   await seek(audio, 5);
   await forward.click();
-  await expect(audio).toHaveJSProperty('currentTime', 15);
+  await expect(audio).toHaveJSProperty('currentTime', 10);
   const duration = await audio.evaluate((element) => element.duration);
   await seek(audio, duration - 3);
   await forward.click();

@@ -104,6 +104,9 @@ Please consider only the pages linked in your specific course page and already c
 ## Practice
 To reinforce the concepts from this book, practice regularly in the [SE Gym](/se-gym).
 
+## Video playlists
+Review with [video playlists](/SEBook/playlist.html): start with the CS 35L playlist or choose and reorder videos from the library.
+
 <script>
 (function () {
   'use strict';

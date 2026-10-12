@@ -214,7 +214,8 @@ body {
   color: #fff;
 }
 
-.song-player-controls button:hover {
+.song-player-controls button:disabled { opacity: 0.5; cursor: default; }
+.song-player-controls button:hover:not(:disabled) {
   background: #2b3b52;
 }
 
@@ -259,7 +260,8 @@ body {
   stroke-linejoin: round;
 }
 
-.song-player-play svg {
+.song-player-play svg,
+.song-player-track-navigation svg {
   fill: currentColor;
   stroke: none;
 }
@@ -367,6 +369,64 @@ body {
   outline-offset: -3px;
 }
 
+/* The picture and its controls are deliberately dark in both page themes. */
+.song-player .song-player-picture-control {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  touch-action: manipulation;
+}
+
+.song-player .song-player-picture-control:focus-visible {
+  outline: 4px solid #ffd100;
+  outline-offset: -4px;
+}
+
+.song-player-gesture-feedback {
+  position: absolute;
+  z-index: 2;
+  top: 40%;
+  right: 5%;
+  padding: 0.6em;
+  border-radius: 0.5em;
+  background: #101827;
+  color: #fff;
+  pointer-events: none;
+}
+
+.song-player-gesture-feedback.is-back {
+  left: 5%;
+  right: auto;
+}
+
+.song-player-speed-label {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3em;
+}
+
+.song-player-speed {
+  min-height: 2.5em;
+  max-width: 100%;
+  padding: 0.25em;
+  border: 1px solid #8294ab;
+  border-radius: 0.3em;
+  background: #18273b;
+  color: #fff;
+}
+
+.song-player-help {
+  color: var(--player-muted);
+  font-size: 0.9em;
+}
+
 .song-player-skip {
   position: absolute;
   top: -12em;
@@ -403,6 +463,7 @@ body {
 
   .song-player-screen,
   .song-player-controls,
+  .song-player-help,
   .song-player-fallback,
   .song-player-skip {
     display: none !important;

@@ -23,7 +23,11 @@ The audio always supplies the clock. Rendering stops during pause, buffering,
 and hidden tabs; on return it jumps to the current audio time. Captions use
 the selected track's WebVTT cues and overlay the picture at readable, unscaled
 text size. The integrated controls provide play/pause, seeking, 10-second skips,
-mute, a captions toggle, and fullscreen. On touch devices, fullscreen requests
+mute, a captions toggle, and fullscreen. Picture clicks/taps toggle playback;
+double clicks/taps seek five seconds on either side. Focus-scoped F, K, Space,
+and arrow shortcuts use those same controls. Shared speed settings range from
+0.5× to 2× and apply to the native audio clock, so the animation stays in sync.
+On touch devices, fullscreen requests
 a landscape orientation lock when available; otherwise, a portrait viewport
 rotates the player surface. Browsers without native fullscreen expand the
 existing same-origin frame to the visible viewport without reloading audio.
@@ -34,7 +38,7 @@ The Audio track selector switches between the song and the audio-described
 recording without losing the current song position. `tracks.js` maps the
 described audio's clock through `assets/audio/*-described.json`: during each
 narration interval it holds the authored picture; afterward it resumes the
-original choreography. Both recordings play at normal speed. The same control
+original choreography. Both recordings use the selected playback speed. The same control
 bar and captions work with either track; there are no raster video players on
 the Git chapter or its live player page.
 
@@ -45,9 +49,14 @@ in lyrics-only mode or when animation fails, without repeating them below
 the normal picture.
 Without JavaScript, a native audio control is provided. The player reads the
 existing SE Gym hero appearance for optional student-at-laptop cameos; it never
-saves or changes that appearance. Missing or unavailable saved data leaves a
-laptop illustration. Nothing autoplays, and media is not fetched
+saves or changes that appearance. Missing or unavailable saved data uses the
+default Bruin; an unavailable avatar asset leaves a laptop illustration. Nothing autoplays, and media is not fetched
 until the reader presses play or chooses another audio track.
+
+`/SEBook/playlist.html` discovers live players from the storyboard catalog and
+offers course defaults from `_data/song_playlists.yml`. Students can reorder,
+add, and remove videos in their saved list. See `docs/song-playlists.md` for
+module boundaries, storage contracts, and authoring another playlist.
 
 The student is an optional, asynchronous enhancement. One copy of the shared
 hero artwork is adapted to a seated pose, stripped of workout layers and

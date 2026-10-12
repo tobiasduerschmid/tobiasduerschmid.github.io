@@ -27,6 +27,7 @@
   const audio = player.querySelector('audio');
   const fallback = player.querySelector('.song-player-fallback');
   const status = player.querySelector('.song-player-status');
+  const playbackPrompt = 'Press the Play song button to start playback.';
   const lyricsOnly = player.querySelector('#lyrics-only');
   const viewport = player.querySelector('.song-player-viewport');
   const stage = player.querySelector('#stage');
@@ -46,6 +47,9 @@
   let tracks = null;
   let trackLoading = false;
   let fullscreen = null;
+  let controls = null;
+  let playlistControls = null;
+  let quizPause = null;
 
   function listen(target, type, handler) {
     target.addEventListener(type, handler, { signal: events.signal });
@@ -77,6 +81,12 @@
   function updateText() {
     if (trackLoading) {
       lyricText.textContent = 'Loading the selected audio track…';
+      return;
+    }
+    const question = quizPause?.question();
+    if (question) {
+      lyricText.textContent = question;
+      visualText.textContent = `Question: ${question} Press Play when ready for the answer.`;
       return;
     }
     const activeCues = captions.track.activeCues;
@@ -146,8 +156,18 @@
 
   function receiveParentMessage(event) {
     if (event.origin !== window.location.origin || event.source !== window.parent) return;
+    if (event.data?.type === 'song-player:playlist' && event.data.song === player.dataset.song) {
+      playlistControls.update(event.data);
+      quizPause.setEnabled(event.data.quizPause);
+      fitScene();
+      return;
+    }
     if (event.data?.type === 'song-player:pause') {
       tracks.pause();
+      return;
+    }
+    if (event.data?.type === 'song-player:play') {
+      if (event.data.song === player.dataset.song) void controls.play();
       return;
     }
     if (event.data?.type !== 'song-player:theme') return;
@@ -159,9 +179,9 @@
     fitScene();
   }
 
-  function notifyPlayback() {
+  function notifyParent(type) {
     if (window.parent !== window) {
-      window.parent.postMessage({ type: 'song-player:playing' }, window.location.origin);
+      window.parent.postMessage({ type, song: player.dataset.song }, window.location.origin);
     }
   }
 
@@ -180,7 +200,15 @@
   }
 
   function bindMedia() {
-    const controls = window.SongControls.bind({ player, audio, listen, onError: showFallback, onResize: fitScene });
+    controls = window.SongControls.bind({
+      player, audio, listen, onError: showFallback, onResize: fitScene,
+      onFullscreen: () => { if (fullscreen) void fullscreen.toggle(); },
+      onPlayBlocked: () => {
+        status.textContent = playbackPrompt;
+        notifyParent('song-player:play-blocked');
+        reportHeight();
+      },
+    });
     tracks = window.SongTracks.bind({
       player, audio, listen, signal: events.signal, onError: showFallback,
       onChange: () => { updateText(); resumeDrawing(); },
@@ -192,12 +220,33 @@
         if (loading) stopDrawing();
       },
     });
-    listen(audio, 'play', notifyPlayback);
-    listen(audio, 'playing', resumeDrawing);
+    const storyboard = JSON.parse(document.getElementById('song-data').textContent);
+    quizPause = window.SongQuizPause.bind({
+      audio, tracks, lines: storyboard.sections.flatMap((section) => section.lines), listen,
+      onPause: () => {
+        status.textContent = 'Paused before the answer. Think it through, then press Play to continue.';
+        updateText();
+        poseScene();
+        reportHeight();
+      },
+      onResume: () => { status.textContent = ''; updateText(); reportHeight(); },
+    });
+    playlistControls = window.SongPlaylistControls.bind({
+      player, listen, onNavigate: async (direction) => {
+        tracks.pause();
+        if (fullscreen?.isActive()) await fullscreen.exit();
+        notifyParent(`song-player:${direction}`);
+      },
+    });
+    listen(audio, 'play', () => notifyParent('song-player:playing'));
+    listen(audio, 'playing', () => {
+      if (status.textContent === playbackPrompt) status.textContent = '';
+      resumeDrawing();
+    });
     listen(audio, 'canplay', resumeDrawing);
     listen(audio, 'waiting', stopDrawing);
     listen(audio, 'pause', stopDrawing);
-    listen(audio, 'ended', () => { stopDrawing(); updateText(); });
+    listen(audio, 'ended', () => { stopDrawing(); updateText(); notifyParent('song-player:ended'); });
     listen(audio, 'seeking', () => { stopDrawing(); updateText(); poseScene(); });
     listen(audio, 'seeked', () => { updateText(); resumeDrawing(); });
     listen(audio, 'timeupdate', updateText);
@@ -232,7 +281,7 @@
     listen(window, 'resize', fitScene);
     listen(fallback, 'toggle', reportHeight);
     if (window.parent !== window) {
-      window.parent.postMessage({ type: 'song-player:ready' }, window.location.origin);
+      notifyParent('song-player:ready');
     }
   }
 

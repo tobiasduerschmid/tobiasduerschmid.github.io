@@ -1,0 +1,129 @@
+/* Playlist presentation follows the book; player artwork retains its own theme. */
+.song-playlist {
+  --playlist-surface: #f2f6fa;
+  --playlist-text: #202b3b;
+  --playlist-border: #66778a;
+  --playlist-focus: #155a8a;
+  color: var(--playlist-text);
+  margin-block: 1em 2em;
+  overflow-wrap: anywhere;
+}
+
+html.dark-mode .song-playlist {
+  --playlist-surface: #253348;
+  --playlist-text: #f2f6fc;
+  --playlist-border: #8294ab;
+  --playlist-focus: #ffd100;
+}
+
+.song-playlist section { margin-block: 1em; }
+.song-playlist h2 { font-size: 1.4em; }
+.song-playlist h3 { font-size: 1.2em; margin-top: 0; }
+.song-playlist [hidden] { display: none !important; }
+.song-playlist figure { margin: 0; }
+.song-playlist .song-video-frame { width: 100%; }
+
+.song-playlist-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1em;
+}
+
+.song-playlist-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5em;
+}
+
+.song-playlist button,
+.song-playlist select {
+  font: inherit;
+  color: var(--playlist-text);
+  background: var(--playlist-surface);
+  border: 1px solid var(--playlist-border);
+  border-radius: 0.35em;
+  padding: 0.45em 0.7em;
+  min-height: 2.5em;
+  max-width: 100%;
+}
+
+.song-playlist button { cursor: pointer; }
+.song-playlist button:hover:not(:disabled) { border-color: var(--playlist-text); text-decoration: underline; }
+.song-playlist button:disabled { cursor: default; opacity: 0.65; }
+.song-playlist :focus-visible { outline: 3px solid var(--playlist-focus); outline-offset: 3px; }
+.song-playlist a, .song-playlist a:visited { text-decoration: underline; }
+.song-playlist-hint { font-size: 0.9em; }
+
+.song-playlist-catalog {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20em), 1fr));
+  gap: 1em;
+}
+
+.song-playlist-catalog > li,
+.song-playlist-item {
+  padding: 0.8em;
+  border: 1px solid var(--playlist-border);
+  border-radius: 0.5em;
+  background: var(--playlist-surface);
+  margin-bottom: 0.6em;
+}
+
+#playlist-queue { padding-left: 1.5em; }
+.song-playlist-item-title { font-weight: 700; }
+.song-playlist-item .song-playlist-actions { margin-top: 0.6em; }
+.song-playlist-current { display: block; font-weight: 700; }
+.song-playlist-item[aria-current] { border-inline-start: 0.3em solid var(--playlist-focus); }
+#playlist-status { min-height: 1.5em; }
+
+@media (min-width: 1400px) {
+  .song-playlist-workspace { grid-template-columns: minmax(0, 3fr) minmax(18em, 2fr); }
+}
+
+@media print {
+  .song-playlist, html.dark-mode .song-playlist {
+    --playlist-surface: #fff;
+    --playlist-text: #000;
+    --playlist-border: #555;
+    --playlist-focus: #000;
+  }
+  .song-playlist-workspace, .song-playlist-catalog { display: block; }
+  .song-playlist-actions, .song-playlist button, .song-playlist iframe,
+  .song-playlist-presets, .song-playlist-hint, #playlist-status { display: none !important; }
+  .song-playlist-item, .song-playlist-catalog > li { break-inside: avoid; }
+}
+
+.song-playlist-drag-handle {
+  display: inline-grid;
+  vertical-align: middle;
+  place-items: center;
+  width: 2.5em;
+  height: 2.5em;
+  min-width: 44px;
+  min-height: 44px;
+  margin-inline-end: 0.4em;
+  border: 1px solid var(--playlist-border);
+  border-radius: 0.35em;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.song-playlist-drag-handle svg { width: 1.2em; height: 1.2em; stroke: currentColor; stroke-width: 3; stroke-linecap: round; fill: none; }
+.song-playlist-item:only-child .song-playlist-drag-handle { visibility: hidden; }
+.song-playlist-item.is-dragging { outline: 2px dashed var(--playlist-focus); outline-offset: -5px; }
+.is-dragging .song-playlist-drag-handle { cursor: grabbing; }
+.song-playlist-item.is-drop-before { box-shadow: 0 -5px 0 var(--playlist-focus); }
+.song-playlist-item.is-drop-after { box-shadow: 0 5px 0 var(--playlist-focus); }
+.song-playlist-quiz-option { display: flex; align-items: center; gap: 0.5em; min-height: 44px; cursor: pointer; }
+.song-playlist-quiz-option input { flex: 0 0 auto; width: 1em; height: 1em; }
+@media print {
+  .song-playlist-drag-handle, .song-playlist-quiz-option, #playlist-quiz-help { display: none !important; }
+  .song-playlist-item.is-dragging { outline: none; }
+  .song-playlist-item.is-drop-before, .song-playlist-item.is-drop-after { box-shadow: none; }
+}
+/* These icons already use theme tokens; the book's image-inversion rule would
+   turn their light strokes dark a second time. */
+html.dark-mode .song-playlist-drag-handle svg { filter: none; }

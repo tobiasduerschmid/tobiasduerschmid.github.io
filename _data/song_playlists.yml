@@ -1,0 +1,9 @@
+# Song IDs are the filenames in _data/songs, without .yml.
+# The catalog on /SEBook/playlist.html discovers every song with a `player` URL.
+# These are starting points; browser edits never modify the course playlists.
+- id: cs35l
+  title: CS 35L
+  description: Git history, followed by the networking stack.
+  songs:
+    - snapshots_and_pointers
+    - unbox_the_stack

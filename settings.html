@@ -245,6 +245,29 @@ info_nav_title: "My Settings"
     </fieldset>
 
     <fieldset class="settings-section">
+      <legend class="sr-only">Video playlists</legend>
+      <h2 class="settings-section-title">Video playlists</h2>
+      <div class="settings-list">
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Music video playback speed</p>
+            <p class="setting-description">Controls audio and animation together in every music video. Change it here or in any player. Stored as <code>song-player-speed</code>.</p>
+          </div>
+          <div class="setting-control">
+            <label for="setting-song-speed">Music video playback speed</label>
+            <select id="setting-song-speed" data-setting="songSpeed">{% include song-playback-speeds.html %}</select>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Your video playlist</p>
+            <p class="setting-description">Choose and reorder videos on the <a href="{{ '/SEBook/playlist.html' | relative_url }}">Video playlists page</a>. Your ordered list is stored as <code>song-player-playlist</code>. The “Pause before quiz answers” checkbox on that page is stored as <code>song-player-quiz-pause</code> (off by default). Course playlists remain unchanged. Delete this entry in <a href="{{ '/cookies/' | relative_url }}">Browser storage</a> to return to the default list.</p>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="settings-section">
       <legend class="sr-only">Tutorials and diagrams</legend>
       <h2 class="settings-section-title">Tutorials and diagrams</h2>
       <div class="settings-list">
@@ -650,6 +673,7 @@ info_nav_title: "My Settings"
   <p class="settings-status" id="settings-status" role="status" aria-live="polite"></p>
 </article>
 
+<script src="{{ '/js/song-video/preferences.js' | relative_url }}"></script>
 <script>
 (function () {
   'use strict';
@@ -891,6 +915,7 @@ info_nav_title: "My Settings"
 
     var speed = document.getElementById('setting-audio-speed');
     if (speed) speed.value = readLS('cap_speed') || '1';
+    document.getElementById('setting-song-speed').value = String(window.SongPreferences.speed());
 
     setCheckbox('setting-tutorial-autosave', readLS('tutorial-autosave') !== 'false');
 
@@ -995,6 +1020,9 @@ info_nav_title: "My Settings"
     } else if (setting === 'audioSpeed') {
       writeLS('cap_speed', target.value);
       announce('Audio speed setting saved.');
+    } else if (setting === 'songSpeed') {
+      var saved = window.SongPreferences.saveSpeed(Number(target.value));
+      announce(saved ? 'Music video playback speed saved.' : 'Your browser could not save the music video playback speed.');
     } else if (setting === 'tutorialAutosave') {
       writeLS('tutorial-autosave', target.checked ? 'true' : 'false');
       announce('Tutorial autosave setting saved.');

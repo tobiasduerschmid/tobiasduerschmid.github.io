@@ -25,6 +25,8 @@
       <div class="song-player-surface">
       <div class="song-player-viewport" data-testid="song-picture" hidden>
         <div class="stage" id="stage" aria-hidden="true" data-avatar-script="{{ '/js/se-gym-hero-avatar.js' | relative_url }}" data-avatar-template="{{ '/assets/se-gym-hero-template.svg' | relative_url }}"></div>
+        <button type="button" class="song-player-picture-control" aria-label="Play video" aria-describedby="song-gesture-help"></button>
+        <span class="song-player-gesture-feedback" aria-hidden="true" hidden></span>
       </div>
       <audio preload="none" aria-label="{{ song.title | escape }} audio" hidden>
         <source src="{{ song.soundtrack | prepend: '/' | relative_url }}" type="audio/mp4">
@@ -37,17 +39,26 @@
       <section class="song-player-controls" id="song-controls" aria-label="Song controls">
         <input class="song-player-seek" type="range" aria-label="Song position" min="0" max="{{ song.duration }}" value="0" step="0.1" disabled>
         <div class="song-player-toolbar">
-          <button type="button" class="song-player-play" aria-label="Play song">
+          <button type="button" class="song-player-play" aria-label="Play song" aria-keyshortcuts="k">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path class="song-player-play-icon" d="M7 4 20 12 7 20Z"/><path class="song-player-pause-icon" d="M6 4H10V20H6ZM14 4H18V20H14Z"/></svg>
           </button>
+          <button type="button" class="song-player-track-navigation" data-track-navigation="previous" aria-label="Previous song" title="Previous song" hidden disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4H8V20H5ZM19 4V20L8 12Z"/></svg>
+          </button>
+          <button type="button" class="song-player-track-navigation" data-track-navigation="next" aria-label="Next song" title="Next song" hidden disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M16 4H19V20H16ZM5 4L16 12 5 20Z"/></svg>
+          </button>
           <span class="song-player-time" aria-hidden="true">0:00 / {{ song.duration | divided_by: 60 | floor }}:{{ song.duration | modulo: 60 | floor }}</span>
-          <button type="button" class="song-player-back" aria-label="Back 10 seconds" disabled><span><span aria-hidden="true">−</span>10</span></button>
-          <button type="button" class="song-player-forward" aria-label="Forward 10 seconds" disabled><span><span aria-hidden="true">+</span>10</span></button>
+          <button type="button" class="song-player-back" aria-label="Back 5 seconds" aria-keyshortcuts="ArrowLeft" disabled><span><span aria-hidden="true">−</span>5</span></button>
+          <button type="button" class="song-player-forward" aria-label="Forward 5 seconds" aria-keyshortcuts="ArrowRight" disabled><span><span aria-hidden="true">+</span>5</span></button>
           <button type="button" class="song-player-mute" aria-label="Mute song">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9H7L12 5V19L7 15H3Z"/><path class="song-player-sound-icon" d="M16 8Q20 12 16 16M19 5Q25 12 19 19"/><path class="song-player-muted-icon" d="M16 9 22 15M22 9 16 15"/></svg>
           </button>
           <button type="button" class="song-player-cc" aria-label="Closed captions (CC)" aria-pressed="true" aria-controls="song-captions">CC</button>
-          <button type="button" class="song-player-fullscreen" aria-label="Enter full screen" hidden>
+          <label class="song-player-speed-label" for="song-playback-speed">Playback speed
+            <select class="song-player-speed" id="song-playback-speed">{% include song-playback-speeds.html %}</select>
+          </label>
+          <button type="button" class="song-player-fullscreen" aria-label="Enter full screen" aria-keyshortcuts="f" hidden>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3H3V9M15 3H21V9M3 15V21H9M15 21H21V15"/></svg>
           </button>
         </div>
@@ -64,10 +75,13 @@
     <div class="song-player-options" hidden>
       <label class="song-player-motion"><input type="checkbox" id="lyrics-only"> Use lyrics-only mode</label>
     </div>
+    <p class="song-player-help" id="song-gesture-help">Click or tap the picture to play or pause. Double-click or double-tap its left half to go back 5 seconds, or its right half to go forward 5 seconds. The buttons below the picture do the same.</p>
+    <p class="song-player-help">With focus in the player: <kbd>F</kbd> toggles full screen, <kbd>←</kbd>/<kbd>→</kbd> seek 5 seconds, and <kbd>K</kbd> or <kbd>Space</kbd> plays or pauses. Use <kbd>Enter</kbd> to activate a focused button. Sliders and dropdowns keep their usual keys.</p>
     <div class="song-player-description" role="region" aria-label="Current visual description" hidden>
       <p id="song-description">Visual descriptions appear here during the song.</p>
     </div>
     <p class="song-player-transcript-link"><a href="{{ page.transcript | relative_url }}" target="_parent">Full transcript</a></p>
+    <p class="song-player-playlist-link"><a href="{{ '/SEBook/playlist.html' | relative_url }}" target="_parent">Video playlists</a></p>
     <details class="song-player-fallback">
       <summary>Audio downloads</summary>
       <p><a href="{{ song.soundtrack | prepend: '/' | relative_url }}">Download song audio</a></p>
@@ -89,9 +103,14 @@
   {%- endfor %}
   <script src="{{ '/js/song-video/songs/' | append: page.song | append: '.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/scene.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/preferences.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/gestures.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/keyboard.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/controls.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/tracks.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/presentation.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/playlist-controls.js' | relative_url }}"></script>
+  <script src="{{ '/js/song-video/quiz-pause.js' | relative_url }}"></script>
   <script src="{{ '/js/song-video/player.js' | relative_url }}?v={{ site.asset_version }}-song-vector-2"></script>
 </body>
 </html>

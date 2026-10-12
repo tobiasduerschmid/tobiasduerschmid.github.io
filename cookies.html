@@ -258,6 +258,24 @@ info_nav_title: "Browser storage"
         <td class="status-cell"></td>
         <td class="action-cell"></td>
       </tr>
+      <tr data-storage="localStorage" data-key="song-player-speed">
+        <td class="storage-key">song-player-speed</td>
+        <td>Playback speed for music videos (audio and animation together), saved only when changed in a player or My Settings. Unset uses normal speed.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="localStorage" data-key="song-player-quiz-pause">
+        <td class="storage-key">song-player-quiz-pause</td>
+        <td>Whether playlist videos pause before quiz answers until you press Play. Off by default; saved only when you change the checkbox on the playlist page.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="localStorage" data-key="song-player-playlist">
+        <td class="storage-key">song-player-playlist</td>
+        <td>Your ordered video IDs on <a href="{{ '/SEBook/playlist.html' | relative_url }}">Video playlists</a>, saved when you load a course playlist or edit your list. No playback history is stored. Deleting it restores the default course list on your next visit.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
     </tbody>
   </table>
   <button class="cookies-btn danger" data-clear-category="ui-localstorage" type="button">
