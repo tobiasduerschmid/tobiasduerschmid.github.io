@@ -2,9 +2,10 @@
 (function () {
   'use strict';
 
-  function bind({ button, screen, listen, toggle, skip }) {
+  function bind({ button, screen, listen, toggle, skip, revealControls }) {
     const doubleClickDelay = 300;
     let pending = null;
+    let revealedByTouch = false;
 
     function cancel() {
       if (pending) clearTimeout(pending.timer);
@@ -20,16 +21,23 @@
       return position < 0.5 ? -1 : 1;
     }
 
+    listen(button, 'pointerdown', (event) => {
+      // Capture this before the event bubbles to the screen's activity handler.
+      revealedByTouch = event.pointerType === 'touch' && revealControls();
+    });
     listen(button, 'click', (event) => {
       if (event.detail === 0) { cancel(); toggle(); return; } // Native keyboard/assistive activation.
+      const revealOnly = revealedByTouch;
+      revealedByTouch = false;
       const side = sideOf(event);
       if (pending && pending.side === side) {
         cancel();
         skip(side);
         return;
       }
-      if (pending) { cancel(); toggle(); }
-      pending = { side, timer: setTimeout(() => { pending = null; toggle(); }, doubleClickDelay) };
+      if (pending) { const finish = pending.finish; cancel(); finish(); }
+      const finish = () => { if (!revealOnly) toggle(); };
+      pending = { side, finish, timer: setTimeout(() => { pending = null; finish(); }, doubleClickDelay) };
     });
     listen(window, 'pagehide', cancel);
     return { cancel };

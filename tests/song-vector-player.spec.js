@@ -185,11 +185,11 @@ test('closed captions overlay the picture and can be switched off and back on', 
   const captionBox = await lyrics(page).boundingBox();
   expect(captionBox.y).toBeGreaterThanOrEqual(picture.y);
   expect(captionBox.y + captionBox.height).toBeLessThanOrEqual(picture.y + picture.height);
-  await captions.press('Space');
+  await captions.press('Enter');
   await expect(lyrics(page)).toBeHidden();
   await expect(captions).toHaveAttribute('aria-pressed', 'false');
   await seek(audio, 119.8);
-  await captions.press('Space');
+  await captions.press('Enter');
   await expect(lyrics(page)).toContainText('creating one is instant');
   await expect(audio).toHaveJSProperty('playbackRate', 1);
 });

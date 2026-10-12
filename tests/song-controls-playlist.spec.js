@@ -37,6 +37,34 @@ async function seek(audio, time) {
 }
 
 for (const song of [git, network]) {
+  test(`${song.title}: C toggles captions only in the focused player`, async ({ page }) => {
+    await page.goto(song.path);
+    const captions = page.getByRole('region', { name: 'Current lyrics', exact: true });
+    const cc = page.getByRole('button', { name: 'Closed captions (CC)', exact: true });
+    await page.getByRole('button', { name: 'Play video', exact: true }).focus();
+    await page.keyboard.press('c');
+    await expect(captions).toBeHidden();
+    await expect(cc).toHaveAttribute('aria-pressed', 'false');
+    await page.keyboard.press('Shift+C');
+    await expect(captions).toBeVisible();
+    await expect(cc).toHaveAttribute('aria-pressed', 'true');
+    await page.keyboard.down('c');
+    await page.keyboard.down('c'); // Holding C must not flicker subtitles on and off.
+    await page.keyboard.up('c');
+    await expect(captions).toBeHidden();
+    await cc.click();
+    await expect(captions).toBeVisible();
+    await expect(cc).toHaveAttribute('aria-keyshortcuts', 'c');
+    await page.keyboard.press('Control+c');
+    await expect(captions).toBeVisible();
+    await page.getByRole('combobox', { name: 'Audio track', exact: true }).focus();
+    await page.keyboard.press('c');
+    await expect(captions).toBeVisible();
+    await page.getByRole('link', { name: 'Skip to music player', exact: true }).focus();
+    await page.keyboard.press('c');
+    await expect(captions).toBeVisible();
+  });
+
   test(`${song.title}: Space plays and pauses when the fullscreen button has focus`, async ({ page }) => {
     const audio = await openPaused(page, song);
     const enter = page.getByRole('button', { name: 'Enter full screen', exact: true });

@@ -2,7 +2,7 @@
 (function () {
   'use strict';
 
-  function bind({ player, listen, toggle, skip, fullscreen }) {
+  function bind({ player, listen, toggle, skip, fullscreen, captions }) {
     listen(player, 'keydown', (event) => {
       if (event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
       const target = event.target;
@@ -11,7 +11,7 @@
       // Space always controls playback on player buttons, even after fullscreen
       // returns focus to its button. Enter retains native button activation.
       if (key === ' ' && target.closest('a, summary')) return;
-      const actions = { arrowleft: () => skip(-1), arrowright: () => skip(1), f: fullscreen, k: toggle, ' ': toggle };
+      const actions = { arrowleft: () => skip(-1), arrowright: () => skip(1), f: fullscreen, c: captions, k: toggle, ' ': toggle };
       const action = actions[key];
       if (!action) return;
       event.preventDefault();

@@ -19,6 +19,7 @@
     const picture = player.querySelector('.song-player-picture-control');
     const speed = player.querySelector('.song-player-speed');
     const feedback = player.querySelector('.song-player-gesture-feedback');
+    const visibility = window.SongControlsVisibility.bind({ player, audio, listen });
     let loading = false;
     let feedbackTimer = null;
 
@@ -67,6 +68,11 @@
       if (!audio.paused && !audio.ended) audio.pause();
       else void startPlayback();
     }
+    function toggleCaptions() {
+      captions.hidden = !captions.hidden;
+      cc.setAttribute('aria-pressed', String(!captions.hidden));
+      onResize();
+    }
     listen(play, 'click', togglePlayback);
     listen(seek, 'input', () => {
       if (Number.isFinite(audio.duration)) audio.currentTime = Math.min(audio.duration, Number(seek.value));
@@ -85,10 +91,10 @@
     }
     const gestures = window.SongGestures.bind({
       button: picture, screen: player.querySelector('.song-player-screen'),
-      listen, toggle: togglePlayback, skip,
+      listen, toggle: togglePlayback, skip, revealControls: visibility.reveal,
     });
     window.SongKeyboard.bind({
-      player, listen, toggle: togglePlayback, skip, fullscreen: onFullscreen,
+      player, listen, toggle: togglePlayback, skip, fullscreen: onFullscreen, captions: toggleCaptions,
     });
     function applySpeed(value) {
       audio.defaultPlaybackRate = value;
@@ -115,11 +121,7 @@
         if (audio.volume === 0) audio.volume = 1;
       } else audio.muted = true;
     });
-    listen(cc, 'click', () => {
-      captions.hidden = !captions.hidden;
-      cc.setAttribute('aria-pressed', String(!captions.hidden));
-      onResize();
-    });
+    listen(cc, 'click', toggleCaptions);
 
     for (const event of ['play', 'pause', 'ended']) listen(audio, event, syncPlayback);
     for (const event of ['loadedmetadata', 'durationchange', 'timeupdate', 'seeked', 'ended', 'emptied']) listen(audio, event, syncPosition);
@@ -129,8 +131,10 @@
     syncVolume();
     return {
       play: startPlayback,
+      setFullscreen: visibility.setFullscreen,
       setLoading(value) {
         loading = value;
+        visibility.setLoading(value);
         play.disabled = loading;
         picture.disabled = loading;
         gestures.cancel();

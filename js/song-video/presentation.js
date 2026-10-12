@@ -2,7 +2,7 @@
 (function () {
   'use strict';
 
-  function bind({ player, listen, onResize, onError }) {
+  function bind({ player, listen, onResize, onError, onChange }) {
     const screen = player.querySelector('.song-player-screen');
     const button = player.querySelector('.song-player-fullscreen');
     // A playlist replaces the iframe document between songs. Its persistent
@@ -95,6 +95,7 @@
       }
       resize();
       button.focus({ preventScroll: true });
+      onChange(true);
       if (!fallback) void lockLandscape();
     }
 
@@ -112,6 +113,7 @@
       restoreBackground();
       restoreBackground = () => {};
       button.setAttribute('aria-label', 'Enter full screen');
+      onChange(false);
       if (wasFallback && notify) notifyParent(false);
       onResize();
       if (restoreFocus) {
@@ -157,7 +159,10 @@
           .filter((element) => !element.disabled && element.getClientRects().length);
         const first = controls[0];
         const last = controls[controls.length - 1];
-        if (!screen.contains(document.activeElement) || (event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last)) {
+        const focused = document.activeElement;
+        const wrapBackward = event.shiftKey && (focused === first || focused === screen);
+        const wrapForward = !event.shiftKey && focused === last;
+        if (!screen.contains(focused) || wrapBackward || wrapForward) {
           event.preventDefault();
           (event.shiftKey ? last : first).focus();
         }

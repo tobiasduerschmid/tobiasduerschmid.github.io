@@ -1,5 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { a11yCheckpoint } = require('./a11y-helpers');
 
 const PLAYER_PATH = '/assets/song-player/snapshots-and-pointers.html';
 const SONG_TITLE = 'Snapshots and Pointers: a song about Git';
@@ -48,6 +49,155 @@ async function expectFramed(scope, rotated) {
     pictureInside: true, captionsInside: true, clippedControls: [], rotated,
   });
 }
+
+async function startFullscreen(page, native = false, touch = false) {
+  await page.clock.install();
+  await page.goto(PLAYER_PATH);
+  if (!native) await noNativeFullscreen(page);
+  const audio = page.getByLabel(`${SONG_TITLE} audio`, { exact: true });
+  const activate = (button) => touch ? button.tap() : button.click();
+  await activate(page.getByRole('button', { name: 'Mute song', exact: true }));
+  await activate(page.getByRole('button', { name: 'Play song', exact: true }));
+  await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeGreaterThan(0);
+  await activate(enter(page));
+  await expect(exit(page)).toBeVisible();
+  if (native) await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
+  return audio;
+}
+
+test.describe('desktop fullscreen idle controls', () => {
+  test.use({ viewport: { width: 1280, height: 900 }, hasTouch: false });
+
+  for (const native of [false, true]) {
+    test(`controls hide after inactivity and wake on mouse or keyboard in ${native ? 'native fullscreen @chromium' : 'fallback fullscreen'}`, async ({ page }) => {
+      const audio = await startFullscreen(page, native);
+      const controls = page.getByRole('region', { name: 'Song controls', exact: true });
+      const picture = page.getByTestId('song-picture');
+      await page.mouse.move(100, 100);
+      const before = await picture.boundingBox();
+      await page.clock.fastForward(4000);
+      await expect(controls).toBeHidden();
+      await expect(page.getByRole('region', { name: 'Current lyrics' })).toBeVisible();
+      expect(await picture.boundingBox(), 'hiding controls must not resize the artwork').toEqual(before);
+      await expect(page.getByRole('button', { name: 'Pause video', exact: true })).toHaveCSS('cursor', 'none');
+      await a11yCheckpoint(page, 'fullscreen controls hidden', { feature: 'song-player' });
+      await page.mouse.move(110, 100);
+      await expect(controls).toBeVisible();
+      await page.clock.fastForward(2000);
+      await page.mouse.move(120, 100);
+      await page.clock.fastForward(2000);
+      await expect(controls).toBeVisible();
+      await page.clock.fastForward(2000);
+      await expect(controls).toBeHidden();
+      await page.keyboard.press('c');
+      await expect(controls).toBeVisible();
+      await expect(page.getByRole('region', { name: 'Current lyrics' })).toBeHidden();
+      await page.clock.fastForward(4000);
+      await expect(controls).toBeHidden();
+      await page.keyboard.press('k');
+      await expect(audio).toHaveJSProperty('paused', true);
+      await page.clock.fastForward(4000);
+      await expect(controls).toBeVisible();
+      await page.keyboard.press('k');
+      await expect(audio).toHaveJSProperty('paused', false);
+      await page.clock.fastForward(4000);
+      await expect(controls).toBeHidden();
+      await page.keyboard.press('Shift+Tab');
+      await expect(page.getByRole('combobox', { name: 'Audio track', exact: true })).toBeFocused();
+      await page.keyboard.press('Tab');
+      await expect(controls).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Pause video', exact: true })).toBeFocused();
+      await page.getByRole('button', { name: 'Pause song', exact: true }).focus();
+      await page.clock.fastForward(4000);
+      await expect(controls).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Pause song', exact: true })).toBeFocused();
+      await a11yCheckpoint(page, 'fullscreen keyboard controls', { feature: 'song-player' });
+      await page.keyboard.press('Space');
+      await expect(audio).toHaveJSProperty('paused', true);
+      await page.mouse.move(140, 100);
+      await page.clock.fastForward(4000);
+      await expect(controls).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(enter(page)).toBeFocused();
+      await page.keyboard.press('Space');
+      await expect(audio).toHaveJSProperty('paused', false);
+      await page.clock.fastForward(4000);
+      await expect(controls).toBeVisible();
+    });
+  }
+
+  test('fullscreen controls stay available during hover, scrubbing, and buffering', async ({ page }) => {
+    const audio = await startFullscreen(page);
+    const controls = page.getByRole('region', { name: 'Song controls', exact: true });
+    await page.getByRole('button', { name: 'Closed captions (CC)', exact: true }).hover();
+    await page.clock.fastForward(4000);
+    await expect(controls).toBeVisible();
+    const seek = page.getByRole('slider', { name: 'Song position' });
+    const box = await seek.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(100, 100);
+    await page.clock.fastForward(4000);
+    await expect(controls).toBeVisible();
+    await page.mouse.up();
+    await expect(audio).toHaveJSProperty('seeking', false);
+    // Move focus off the slider, whose keyboard focus also keeps it visible.
+    await page.getByRole('button', { name: 'Pause video', exact: true }).focus();
+    await page.clock.fastForward(4000);
+    await expect(controls).toBeHidden();
+    // Media readiness is a browser boundary; exercise its real event handlers.
+    await audio.dispatchEvent('waiting');
+    await page.clock.fastForward(4000);
+    await expect(controls).toBeVisible();
+    await audio.dispatchEvent('playing');
+    await page.clock.fastForward(4000);
+    await expect(controls).toBeHidden();
+  });
+});
+
+for (const viewport of [{ width: 390, height: 844 }, { width: 844, height: 390 }]) {
+  test(`touch reveals idle fullscreen controls without pausing at ${viewport.width}×${viewport.height}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    const audio = await startFullscreen(page, false, true);
+    const controls = page.getByRole('region', { name: 'Song controls', exact: true });
+    const picture = page.getByRole('button', { name: 'Pause video', exact: true });
+    await page.clock.fastForward(4000);
+    await expect(controls).toBeHidden();
+    await picture.tap();
+    await page.clock.fastForward(500); // Resolve the single/double-tap gesture window.
+    await expect(controls).toBeVisible();
+    await expect(audio).toHaveJSProperty('paused', false);
+    await expectFramed(page, viewport.height > viewport.width);
+    await page.clock.fastForward(4000);
+    await expect(controls).toBeHidden();
+    const position = await audio.evaluate((media) => media.currentTime);
+    const bounds = await picture.boundingBox();
+    const point = { x: bounds.x + bounds.width * 0.75, y: bounds.y + bounds.height * 0.75 };
+    await page.touchscreen.tap(point.x, point.y);
+    await page.touchscreen.tap(point.x, point.y);
+    await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeGreaterThan(position + 4);
+    await expect(audio).toHaveJSProperty('paused', false);
+    await page.getByRole('combobox', { name: 'Playback speed' }).focus();
+    await page.clock.fastForward(4000);
+    await expect(controls).toBeVisible();
+    await exit(page).tap();
+    await expect(enter(page)).toBeVisible();
+  });
+}
+
+test('lyrics-only fullscreen controls can be revealed by touch without pausing', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const audio = await startFullscreen(page, false, true);
+  const controls = page.getByRole('region', { name: 'Song controls', exact: true });
+  await page.clock.fastForward(4000);
+  await expect(controls).toBeHidden();
+  await expect(page.getByRole('region', { name: 'Current lyrics', exact: true })).toBeVisible();
+  await page.getByRole('dialog', { name: 'Full screen music player', exact: true }).tap({ position: { x: 195, y: 422 } });
+  await page.clock.fastForward(500);
+  await expect(controls).toBeVisible();
+  await expect(audio).toHaveJSProperty('paused', false);
+  await exit(page).tap();
+});
 
 test('portrait full screen remains usable without a native API and adapts when the phone rotates', async ({ page }, testInfo) => {
   await page.goto(PLAYER_PATH);
@@ -129,7 +279,13 @@ for (const lockResult of ['resolve', 'reject']) {
     await page.getByRole('combobox', { name: 'Audio track', exact: true }).focus();
     await page.keyboard.press('Tab');
     await expect(page.getByRole('button', { name: 'Play video', exact: true })).toBeFocused();
-    await page.setViewportSize({ width: 844, height: 390 });
+    // Rotate the emulated display without resizing Chromium's native fullscreen
+    // window, which the browser protocol disallows on some platforms.
+    const session = await page.context().newCDPSession(page);
+    await session.send('Emulation.setDeviceMetricsOverride', {
+      width: 844, height: 390, deviceScaleFactor: 1, mobile: false,
+      screenOrientation: { type: 'landscapePrimary', angle: 90 },
+    });
     await expectFramed(page, false);
     await exit(page).click();
     await expect(enter(page)).toBeFocused();

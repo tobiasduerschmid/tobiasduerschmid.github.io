@@ -266,7 +266,9 @@
 
   function bindPresentation() {
     // An unavailable optional enhancement must not hide the entire player.
-    fullscreen = window.SongFullscreen?.bind({ player, listen, onResize: fitScene, onError: showFallback }) ?? null;
+    fullscreen = window.SongFullscreen?.bind({
+      player, listen, onResize: fitScene, onError: showFallback, onChange: controls.setFullscreen,
+    }) ?? null;
     lyricsOnly.checked = reducedMotion.matches;
     player.querySelector('.song-player-screen').hidden = false;
     player.querySelector('.song-player-options').hidden = false;
