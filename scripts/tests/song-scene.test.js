@@ -47,10 +47,10 @@ test('disposing a timeline cancels its animations and releases resource owners',
 test('a failed choreography releases partially built resources before fallback', () => {
   let disposed = false;
   let cleared = false;
-  const stage = { replaceChildren() { cleared = true; } };
+  const stage = { classList: { add() {}, remove() {} }, replaceChildren() { cleared = true; } };
   const context = { window: {
     Timeline: { beats: { configure() {} }, camera: { attach() {} }, dispose() { disposed = true; } },
-    SongKit: { backdrop() {}, el() { return {}; }, equalizer() {}, terminal() {} },
+    SongKit: { themes: { studio: { build() {} } }, el() { return {}; }, terminal() {} },
     SongChoreographies: { broken() { throw new Error('broken artwork'); } },
   } };
   vm.runInNewContext(fs.readFileSync(sceneFile, 'utf8'), context);

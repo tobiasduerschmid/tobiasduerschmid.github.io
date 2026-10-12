@@ -18,12 +18,12 @@
 # the next Jekyll build, but the captions and described audio only after
 # re-running render.js.
 #
-# Times are seconds into the recording. Line `start`/`end` and `marks` come
-# from Whisper word timestamps aligned to the lyrics; `text` is what is
-# actually sung, written in proper notation (e.g. "TCP" for the sung
-# "T-C-P", "SYN" for the sung "sin"). Spots where this take differs from the
-# lyric sheet: the quiz numbers after "One" are not sung, the last quiz
-# question is "What's HTTPS?", and the bridge sings "Every request is fresh".
+# Times refer to the replacement "The TCP_IP Stack" recording, with the
+# repeated chorus at the end removed and a short fade on the music tail.
+# Audio edit: keep 0-312 s, fade 310.5-312 s, normalize to -16 LUFS.
+# Line boundaries and word marks were aligned to the performed lyrics with
+# local Whisper word alignment; the embedded lyric track is inaccurate in
+# the quiz. Captions retain proper notation (TCP, SYN, IP addresses).
 
 title: "Unbox the Stack: a song about networking"   # the player's accessible name
 credit: Lyrics written for this chapter; music and vocals generated with Suno.
@@ -62,10 +62,10 @@ narrator:
 width: 1920
 height: 1080
 fps: 30
-duration: 304.8
+duration: 312.0
 beats:
-  bpm: 86.0   # constant-tempo grid fitted to librosa's beats (median error 5 ms)
-  first: 0.470
+  bpm: 86.0   # fitted to the replacement recording's beat grid
+  first: 0.24
 
 sections:
   - id: intro
@@ -74,28 +74,28 @@ sections:
     narration: "Audio-described version: before each section, the picture pauses while I describe it. The intro: a student types ucla.edu into a browser window floating in a starry sky, and a beam reaches a castle on a floating rock, the server. The sky fills with machines, and a gold ring picks out the castle. Then four colored layers, Application, Transport, Internet, and Link, each with its job, and the title: Unbox the stack."
     lines:
       - id: intro-1
-        start: 1.30
-        end: 5.70
+        start: 1.3
+        end: 4.68
         text: "You type ucla.edu and hit enter."
-        marks: {type: 1.84, ucla: 2.14, edu: 3.70, enter: 5.38}
+        marks: {type: 1.42, ucla: 1.68, edu: 3.22, enter: 4.38}
         visual: "An ornate browser window floats in a starry sky with the student at a laptop in front of it (sticker: You). The address bar types ucla.edu; on “enter” a gold light beam shoots to a castle on a floating rock, the server, and a packet of light rides there and back."
       - id: intro-2
-        start: 5.70
-        end: 9.36
+        start: 5.56
+        end: 9.26
         text: "Half a second later: the page. How'd it find the right machine?"
-        marks: {half: 5.70, page: 7.74, find: 8.46, right: 8.80, machine: 8.96}
+        marks: {half: 5.56, page: 7.34, find: 8.38, right: 8.7, machine: 8.86}
         visual: "A “½ second” tag pops up and the page loads in the browser. Then dozens of tiny machines appear across the sky, a gold ring circles the castle, and a sticker asks “Which one?”."
       - id: intro-3
-        start: 10.06
-        end: 14.84
+        start: 10.78
+        end: 15.64
         text: "Four layers. Each solves one problem, so the others don't have to."
-        marks: {four: 10.06, layers: 10.60, each: 11.26, one: 12.34, problem: 12.62, others: 14.08}
+        marks: {four: 10.78, layers: 11.3, each: 12.02, one: 13.3, problem: 13.56, others: 14.84}
         visual: "A stack of four slabs: Application (gold), Transport (cyan), Internet (violet), Link (green). Each gets its job: what the apps say, which app gets it, which machine, the next hop. Sticker: One job each."
       - id: intro-4
-        start: 15.42
-        end: 16.44
+        start: 16.18
+        end: 17.28
         text: "Let's unbox it."
-        marks: {unbox: 15.84}
+        marks: {unbox: 16.7}
         visual: "A box icon pops up and the title slams in: Unbox the stack. Subtitle: How a request finds its server."
   - id: verse-1
     title: "Verse 1: Wrap it on the way down"
@@ -103,76 +103,76 @@ sections:
     narration: "Verse 1: an HTTP GET request flies out of the browser. A DNS panel turns the name ucla.edu into the number 3.33.167.235. Then the request is wrapped in one box per layer: a TCP box with ports, an IP box from the laptop’s address to the server’s, and a Wi-Fi frame. The boxed packet travels across router islands, getting a new frame at every hop, and finally the headers and payload are pointed out, and a big page splits into three packets."
     lines:
       - id: verse-1-1
-        start: 17.64
-        end: 20.18
+        start: 18.12
+        end: 20.64
         text: "You hit enter. Your browser writes a GET:"
-        marks: {enter: 18.44, browser: 19.22, get: 19.96}
+        marks: {enter: 18.9, browser: 19.68, get: 20.46}
         visual: "The four-layer stack stands on the left and the browser on the right. On “enter”, a gold HTTP box flies out of the browser into the middle of the screen: GET / HTTP/1.1, Host: ucla.edu. The Application slab lights up."
       - id: verse-1-2
-        start: 20.18
-        end: 22.98
+        start: 21.16
+        end: 23.46
         text: "HTTP, “Send me the page.” That’s the request."
-        marks: {http: 20.18, send: 20.90, page: 21.82, request: 22.54}
+        marks: {http: 21.16, send: 22.06, page: 22.48, request: 23.04}
         visual: "Sticker: HTTP request. A chat bubble says “Send me the page.”"
       - id: verse-1-3
-        start: 22.98
-        end: 25.70
+        start: 23.6
+        end: 26.24
         text: "Routers can’t use names, so DNS gets the call:"
-        marks: {routers: 22.98, names: 23.90, dns: 24.50, call: 25.34}
+        marks: {routers: 23.6, names: 24.36, dns: 24.94, call: 25.96}
         visual: "A router icon asks “ucla.edu ?” and gets a red cross; sticker: Routers need numbers. A panel opens: DNS, the contacts app."
       - id: verse-1-4
-        start: 25.70
-        end: 28.50
+        start: 26.36
+        end: 29.02
         text: "name in, IP out, the contacts app for all."
-        marks: {name: 25.70, ip: 26.28, out: 26.66, contacts: 27.26}
+        marks: {name: 26.36, ip: 26.72, out: 27.14, contacts: 27.74}
         visual: "In the DNS panel, ucla.edu → 3.33.167.235 fills in left to right. Sticker: name in, IP out."
       - id: verse-1-5
-        start: 28.50
-        end: 31.28
+        start: 29.02
+        end: 31.9
         text: "Down to Transport: TCP adds a header,"
-        marks: {down: 28.50, transport: 29.00, tcp: 29.76, header: 30.92}
+        marks: {down: 29.02, transport: 29.46, tcp: 30.16, header: 31.58}
         visual: "The Transport slab lights up and a cyan TCP box closes around the HTTP box, its header tab reading port 52814 → port 80. Sticker: header."
       - id: verse-1-6
-        start: 31.28
-        end: 34.14
+        start: 32.3
+        end: 34.7
         text: "port to port, so the right app’s gonna get it."
-        marks: {port: 31.28, port_2: 31.80, right: 32.50, app: 32.76}
+        marks: {port: 32.3, port_2: 32.62, right: 33.32, app: 33.58}
         visual: "The TCP header tab bumps on each “port”. Sticker: Ports pick the app."
       - id: verse-1-7
-        start: 34.14
-        end: 36.78
+        start: 34.7
+        end: 37.24
         text: "Down to Internet: IP wraps it one more time,"
-        marks: {down: 34.14, internet: 34.62, ip: 35.38, wraps: 35.58}
+        marks: {down: 34.7, internet: 35.06, ip: 35.76, wraps: 36.06}
         visual: "The Internet slab lights up; the IP address flies down from the DNS panel and a violet IP box closes around the TCP box: 192.168.1.42 → 3.33.167.235."
       - id: verse-1-8
-        start: 36.78
-        end: 39.76
+        start: 37.24
+        end: 39.98
         text: "“from my IP to yours,” machine to machine, worldwide."
-        marks: {from: 36.78, yours: 37.72, machine: 38.06, machine_2: 38.58, worldwide: 39.02}
+        marks: {from: 37.24, yours: 38.18, machine: 38.6, machine_2: 39.12, worldwide: 39.64}
         visual: "Stickers: machine → machine, and worldwide."
       - id: verse-1-9
-        start: 39.90
-        end: 42.56
+        start: 39.98
+        end: 43.06
         text: "Down to Link: a Wi-Fi frame, one hop to your router."
-        marks: {down: 39.90, link: 40.20, wi: 40.56, frame: 40.84, hop: 41.38, router: 42.14}
+        marks: {down: 39.98, link: 40.64, wi: 41.0, frame: 41.32, hop: 41.92, router: 42.74}
         visual: "The Link slab lights up and a green Wi-Fi frame closes around everything: Wi-Fi → home router. Sticker: one hop. The scene switches to the journey: the browser on the left, the home router and another router on floating islands, the castle on the right, joined by green beams; the boxed packet rides to the home router."
       - id: verse-1-10
-        start: 42.58
-        end: 45.26
+        start: 43.06
+        end: 45.8
         text: "Each router swaps the frame and sends it further."
-        marks: {each: 42.58, swaps: 43.20, frame: 43.66, sends: 44.24, further: 44.90}
+        marks: {each: 43.06, swaps: 43.68, frame: 44.22, sends: 44.78, further: 45.4}
         visual: "At each router the green frame comes off and a new one goes on (“new frame: → router”, then “→ server”) before the packet rides on to the castle. Sticker: Frame swapped every hop."
       - id: verse-1-11
-        start: 45.26
-        end: 48.08
+        start: 45.8
+        end: 48.58
         text: "Each header’s a label for its layer. The payload’s the stuff."
-        marks: {header: 45.62, label: 46.14, layer: 46.82, payload: 47.30, stuff: 47.82}
+        marks: {header: 46.08, label: 46.6, layer: 47.26, payload: 47.78, stuff: 48.32}
         visual: "The nested packet fills the screen. Its header tabs light up (sticker: Headers: labels), then the HTTP request inside (sticker: Payload: the stuff)."
       - id: verse-1-12
-        start: 48.28
-        end: 51.26
+        start: 48.58
+        end: 52.04
         text: "Routers only need the outer labels. Too big? Split it up."
-        marks: {routers: 48.28, outer: 49.26, labels: 49.50, big: 50.26, split: 50.62}
+        marks: {routers: 48.58, outer: 49.7, labels: 49.98, big: 50.6, split: 51.28}
         visual: "A dashed violet frame covers only the outer two labels: Router reads Link + IP; the inner boxes dim. Then a page too big for one packet splits into three pieces, 1/3, 2/3, and 3/3."
   - id: chorus-1
     title: "Chorus"
@@ -180,40 +180,40 @@ sections:
     narration: "The chorus shows three stacks: your laptop, a router with only the Internet and Link layers, and the server. Each layer lights up as it is sung, with arcs showing who it talks to: one hop, machine to machine, app to app, and the language the apps speak. Then a packet rides down one stack gaining a box per layer, and up the other losing them."
     lines:
       - id: chorus-1-1
-        start: 51.26
-        end: 55.52
+        start: 52.04
+        end: 56.64
         text: "Link Layer: one hop on the local network. Ethernet, Wi-Fi."
-        marks: {link: 51.26, hop: 52.60, local: 53.42, ethernet: 54.08, wi: 54.72}
+        marks: {link: 52.04, hop: 53.08, local: 53.88, ethernet: 54.58, wi: 55.2}
         visual: "Three stacks of layer slabs: your laptop (four layers), a router (Internet and Link only), and the server (four layers). The Link slabs light up green, and one-hop arcs join laptop to router and router to server. Title: Link Layer, one hop on the local network; chips Ethernet and Wi-Fi."
       - id: chorus-1-2
-        start: 56.10
-        end: 60.98
+        start: 56.64
+        end: 60.58
         text: "Internet Layer: machine to machine, across networks. IP."
-        marks: {internet: 56.10, machine: 57.48, machine_2: 57.94, across: 58.34, ip: 59.68}
+        marks: {internet: 56.64, machine: 57.8, machine_2: 58.56, across: 58.98, ip: 60.04}
         visual: "The Internet slabs light up violet and a long arc joins laptop to server, labeled “machine → machine”. Title: Internet Layer, machine to machine, across networks; chip IP."
       - id: chorus-1-3
-        start: 60.98
-        end: 66.40
+        start: 60.58
+        end: 65.68
         text: "Transport Layer: app to app, reliable or fast. TCP or UDP."
-        marks: {transport: 60.98, app: 62.50, app_2: 63.00, reliable: 63.28, fast: 64.24, tcp: 64.64, udp: 65.34}
+        marks: {transport: 60.58, app: 61.98, app_2: 62.28, reliable: 62.88, fast: 63.66, tcp: 63.96, udp: 64.98}
         visual: "The Transport slabs on laptop and server light up cyan, joined by an arc labeled “app ↔ app”. Title: Transport Layer, app to app, reliable or fast; chips TCP and UDP."
       - id: chorus-1-4
-        start: 66.40
-        end: 69.88
+        start: 65.82
+        end: 68.32
         text: "Application Layer: the language the apps speak. HTTP."
-        marks: {application: 66.40, language: 67.92, speak: 68.96, http: 69.36}
+        marks: {application: 65.82, language: 66.8, speak: 67.4, http: 67.86}
         visual: "The Application slabs light up gold, joined by an arc labeled GET / HTTP/1.1. Title: Application Layer, the language the apps speak; chip HTTP."
       - id: chorus-1-5
-        start: 70.24
-        end: 73.26
+        start: 68.32
+        end: 71.16
         text: "Wrap it on the way down, unbox it on the way up."
-        marks: {wrap: 70.24, down: 71.42, unbox: 71.76, up: 72.88}
+        marks: {wrap: 68.32, down: 69.44, unbox: 69.84, up: 70.84}
         visual: "Title: Wrap ↓ · Unbox ↑. A packet rides down the laptop’s stack gaining one colored box per layer, crosses through the router, and rides up the server’s stack losing a box per layer."
       - id: chorus-1-6
-        start: 73.26
-        end: 76.50
+        start: 71.16
+        end: 74.38
         text: "Each layer only uses the one below. That’s the stack!"
-        marks: {each: 73.26, uses: 74.32, below: 75.16, stack: 76.22}
+        marks: {each: 71.16, uses: 71.96, below: 72.82, stack: 74.06}
         visual: "Small arrows point from each layer to the one below, under the caption “Each layer uses only the one below”. Then “That’s the stack!” slams in and every slab lights up."
   - id: verse-2
     title: "Verse 2: TCP plays it safe"
@@ -221,88 +221,88 @@ sections:
     narration: "Verse 2: TCP, with a shield, and UDP, with a lightning bolt, split at a fork. A sequence diagram shows the handshake: SYN, SYN-ACK, ACK, with starting sequence numbers. Numbered packets reach a receive buffer out of order and are sorted by number; ACKs travel back, and lost or broken packets are sent again when a timer runs out. FIN, FIN-ACK, ACK close the connection, and a receipt lists the price of safe: a round trip of hellos, extra ACKs, and a lost piece blocking the rest."
     lines:
       - id: verse-2-1
-        start: 76.50
-        end: 79.18
+        start: 74.48
+        end: 77.22
         text: "Transport’s got two vibes. Your app picks the path:"
-        marks: {transport: 76.50, two: 77.50, app: 78.22, picks: 78.50, path: 78.90}
+        marks: {transport: 74.48, two: 75.34, app: 76.08, picks: 76.32, path: 76.92}
         visual: "Title: Transport has two vibes. A “Your app” tag sits at a fork; a cyan road leads down-left and a pink road down-right."
       - id: verse-2-2
-        start: 79.18
-        end: 81.94
+        start: 77.34
+        end: 80.0
         text: "TCP plays it safe. UDP plays it fast."
-        marks: {tcp: 79.18, safe: 80.28, udp: 80.74, fast: 81.72}
+        marks: {tcp: 77.34, safe: 78.32, udp: 78.74, fast: 79.74}
         visual: "TCP slams in on the left with a shield (sticker: plays it safe; code: net.connect()), one packet riding the cyan road inside an escort ring. UDP slams in on the right with a lightning bolt (sticker: plays it fast; code: dgram.createSocket('udp4')), three packets darting down the pink road."
       - id: verse-2-3
-        start: 81.94
-        end: 84.56
+        start: 80.0
+        end: 82.6
         text: "TCP shakes hands first, three steps in a row:"
-        marks: {tcp: 81.94, shakes: 82.30, first: 83.18, three: 83.66, row: 84.30}
+        marks: {tcp: 80.0, shakes: 80.48, first: 81.08, three: 81.52, row: 82.36}
         visual: "A sequence diagram: the student at a laptop on the left with the “Your laptop” lane, the castle on the right with the “Server” lane. Sticker: Handshake first; step numbers 1, 2, 3 appear on the lanes."
       - id: verse-2-4
-        start: 84.56
-        end: 87.12
+        start: 82.6
+        end: 85.4
         text: "SYN: “you up?” SYN-ACK: “yeah, you?” ACK: “bet.” Let’s go."
-        marks: {syn: 84.56, up: 85.18, syn_2: 85.53, yeah: 85.96, ack_2: 86.40, bet: 86.52, go: 86.92}
+        marks: {syn: 82.6, up: 83.18, syn_2: 83.62, yeah: 83.96, ack_2: 84.48, bet: 84.7, go: 85.16}
         visual: "Three arrows cross between the lanes: SYN (bubble: “you up?”), SYN-ACK back (bubble: “yeah, you?”), ACK (bubble: “bet.”). Sticker: Connected!"
       - id: verse-2-5
-        start: 87.12
-        end: 89.78
+        start: 85.4
+        end: 88.12
         text: "SYN means “sync”: both sides share where their count begins,"
-        marks: {syn: 87.12, sync: 87.79, both: 87.98, share: 88.38, count: 89.00, begins: 89.26}
+        marks: {syn: 85.4, sync: 85.88, both: 86.36, share: 86.78, count: 87.38, begins: 87.62}
         visual: "Sticker: SYN = synchronize. Under the arrows the numbers appear: seq 100 on SYN, seq 300 · ack 101 on SYN-ACK, ack 301 on ACK."
       - id: verse-2-6
-        start: 89.78
-        end: 92.46
+        start: 88.12
+        end: 91.0
         text: "so every byte is numbered and sorted at the end."
-        marks: {every: 90.06, byte: 90.41, numbered: 90.76, sorted: 91.30, end: 92.16}
+        marks: {every: 88.44, byte: 88.72, numbered: 89.14, sorted: 89.68, end: 90.68}
         visual: "A receive buffer panel stands in front of the castle with places for seq 101, 201, and 301. Three TCP packets (bytes 101–200, 201–300, 301–400) leave the laptop at different speeds, 301 arriving first, and each lands in the place for its number. Sticker: Sorted by number. Then all three go to the app in order."
       - id: verse-2-7
-        start: 92.46
-        end: 95.32
+        start: 91.0
+        end: 93.68
         text: "What lands gets ACKed: “got it,” like a read receipt."
-        marks: {lands: 92.84, acked: 93.69, got: 93.94, read: 94.64, receipt: 94.86}
+        marks: {lands: 91.22, acked: 91.78, got: 92.26, read: 93.02, receipt: 93.22}
         visual: "A green “ACK 401” packet travels back along the lower track to the laptop: got it all up to 400. A tag at the laptop reads Read ✓✓."
       - id: verse-2-8
-        start: 95.32
-        end: 98.12
+        start: 93.68
+        end: 96.6
         text: "No ACK in time? Left on read. Resend that piece."
-        marks: {"no": 95.32, ack: 95.64, time: 96.02, left: 96.42, read: 96.70, resend: 97.28, piece: 97.82}
+        marks: {"no": 93.68, ack: 94.02, time: 94.38, left: 94.78, read: 95.08, resend: 95.58, piece: 96.2}
         visual: "Packet seq 401 leaves and is crossed out halfway: lost. A timer ring at the laptop drains to red (waiting for ACK); sticker: Left on read. A copy with a resend arrow leaves and lands in the buffer, and ACK 501 comes back."
       - id: verse-2-9
-        start: 98.12
-        end: 101.14
+        start: 96.6
+        end: 99.44
         text: "Broken checksum? Tossed, no ACK, so it’s sent once more."
-        marks: {broken: 98.12, checksum: 98.70, tossed: 99.14, ack: 99.82, sent: 100.60, more: 100.86}
+        marks: {broken: 96.6, checksum: 97.12, tossed: 97.6, ack: 98.02, sent: 98.62, more: 99.0}
         visual: "Packet seq 501 lands with a red crack (checksum ✗) and drops into the bin. The laptop’s timer runs out: no ACK. A resent copy lands safely."
       - id: verse-2-10
-        start: 101.30
-        end: 103.88
+        start: 99.44
+        end: 102.32
         text: "Done? FIN, FIN-ACK, ACK: free the memory, close the door."
-        marks: {done: 101.30, fin: 101.42, fin_2: 101.90, ack_2: 102.30, free: 102.64, memory: 102.92, close: 103.32, door: 103.64}
+        marks: {done: 99.44, fin: 99.98, fin_2: 100.32, ack_2: 100.72, free: 100.9, memory: 101.1, close: 101.54, door: 102.02}
         visual: "Back to the lanes: FIN, FIN-ACK, ACK. The “connection memory” tags on both sides turn into “freed”, and the castle’s doors swing shut (door closed). Sticker: Done? Say bye."
       - id: verse-2-11
-        start: 103.88
-        end: 106.54
+        start: 102.32
+        end: 104.9
         text: "But safe has a price. Here’s what you pay:"
-        marks: {safe: 104.14, price: 104.90, pay: 106.12}
+        marks: {safe: 102.68, price: 103.44, pay: 104.5}
         visual: "Title: Safe has a price. A paper receipt titled Receipt · TCP slides up on the left, with a time axis on the right."
       - id: verse-2-12
-        start: 106.54
-        end: 109.48
+        start: 104.9
+        end: 107.84
         text: "a round trip of hellos before your data’s on its way,"
-        marks: {round: 106.88, trip: 107.06, hellos: 107.54, data: 108.63, way: 109.24}
+        marks: {round: 105.24, trip: 105.44, hellos: 105.92, data: 106.9, way: 107.62}
         visual: "Receipt line: 1 round trip of hellos, before any data moves. On the time axis: SYN →, ← SYN-ACK under a bracket “1 round trip, no data yet”, then ACK + data →."
       - id: verse-2-13
-        start: 109.48
-        end: 111.48
+        start: 107.84
+        end: 109.84
         text: "extra ACKs along the way,"
-        marks: {extra: 109.48, acks: 109.90, way: 111.18}
+        marks: {extra: 107.84, acks: 108.28, way: 109.56}
         visual: "Receipt line: Extra ACKs, more packets on the wire. Below, data → and ← ACK alternate along the axis."
       - id: verse-2-14
-        start: 111.48
-        end: 115.02
+        start: 109.84
+        end: 113.42
         text: "and one lost piece holds up the line. The rest has to wait."
-        marks: {lost: 111.94, piece: 112.28, holds: 112.60, line: 113.40, rest: 114.10, wait: 114.78}
+        marks: {lost: 110.3, piece: 110.66, holds: 110.98, line: 111.78, rest: 112.46, wait: 113.18}
         visual: "Receipt line: One lost piece blocks the pieces behind it. Piece 1 is missing (dashed red), pieces 2, 3, 4 wait under hourglasses, and the app shows “App: waiting…”: head-of-line blocking. The receipt’s total: Time."
   - id: verse-3
     title: "Verse 3: UDP plays it fast"
@@ -310,64 +310,64 @@ sections:
     narration: "Verse 3, in pink: UDP skips the handshake, and its header has two rows to TCP’s five. Unnumbered packets arrive out of order, with no ACKs and no resend; broken or lost ones are gone. Two game maps compare sending your position with sending your moves when an update is lost. A live call shows a resent word arriving too late, and a DNS lookup gets one answer, with the app retrying on its own."
     lines:
       - id: verse-3-1
-        start: 115.02
-        end: 117.78
+        start: 113.42
+        end: 116.24
         text: "UDP skips the hello. The first packet’s data."
-        marks: {udp: 115.02, skips: 115.64, hello: 116.22, first: 116.94, data: 117.78}
+        marks: {udp: 113.42, skips: 114.0, hello: 114.6, first: 115.28, data: 116.0}
         visual: "The same delivery scene in pink, with a Server inbox. The handshake (SYN, SYN-ACK, ACK) appears dashed and is struck through; sticker: No hello. The very first packet, “data!”, flies straight into the inbox; sticker: 1st packet = data."
       - id: verse-3-2
-        start: 117.94
-        end: 120.66
+        start: 116.24
+        end: 119.04
         text: "Tiny header, no connection, nothing to remember later."
-        marks: {tiny: 117.94, header: 118.24, connection: 118.84, nothing: 119.44, remember: 119.86}
+        marks: {tiny: 116.24, header: 116.62, connection: 117.18, nothing: 117.8, remember: 118.22}
         visual: "Two header diagrams: TCP’s five rows (ports, sequence number, acknowledgment number, flags and window, checksum and urgent pointer) above UDP’s two rows (ports, length and checksum); sticker: tiny! Tags: no connection, and the server “remembers nothing”."
       - id: verse-3-3
-        start: 120.66
-        end: 123.48
+        start: 119.04
+        end: 121.74
         text: "No numbers, so no order. No ACKs, so no resend."
-        marks: {numbers: 120.90, order: 121.78, acks: 122.34, resend: 123.04}
+        marks: {numbers: 119.28, order: 120.02, acks: 120.52, resend: 121.18}
         visual: "Three UDP packets without numbers carry “see”, “you”, “soon”; they arrive as “soon”, “you”, “see”, and the server asks “soon you see?”. Stickers: no numbers, no order. A grey return track gets the tags no ACKs and no resend."
       - id: verse-3-4
-        start: 123.48
-        end: 126.28
+        start: 121.74
+        end: 124.46
         text: "Broken checksum? Tossed. Lost? Gone. That’s the end."
-        marks: {broken: 123.48, tossed: 124.24, lost: 124.64, gone: 124.98, end: 125.98}
+        marks: {broken: 121.74, tossed: 122.68, lost: 123.2, gone: 123.28, end: 124.16}
         visual: "A packet “brb” arrives cracked (checksum ✗) and drops into the bin; a packet “gg” vanishes halfway. Stamp: Gone. Sticker: No retry. The end."
       - id: verse-3-5
-        start: 126.28
-        end: 128.86
+        start: 124.46
+        end: 127.24
         text: "So if losing one would hurt, your app needs a plan:"
-        marks: {losing: 126.70, hurt: 127.38, app: 127.92, plan: 128.64}
+        marks: {losing: 124.92, hurt: 125.76, app: 126.3, plan: 127.0}
         visual: "Two game maps side by side, a pink player token on each. Stickers: Lose one?, then Plan for it: send where you are."
       - id: verse-3-6
-        start: 128.86
-        end: 131.64
+        start: 127.24
+        end: 130.06
         text: "send “I’m at x, y,” not “I moved.” The next one shows where you stand."
-        marks: {send: 128.86, x: 129.54, moved: 130.16, next: 130.54, shows: 130.84, stand: 131.32}
+        marks: {send: 127.24, x: 127.9, moved: 128.64, next: 128.92, shows: 129.24, stand: 129.76}
         visual: "Left map, titled send “I’m at (x, y)”: updates at (2, 2), at (3, 2) lost, at (4, 2), and the token jumps to (4, 2): back in sync. Right map, titled send “I moved →”: moved →, moved → lost, moved →, and the token stops one square short of a dashed green ghost: off by one, forever."
       - id: verse-3-7
-        start: 131.64
-        end: 134.50
+        start: 130.06
+        end: 132.94
         text: "Why use it? On a live call, late is as bad as lost:"
-        marks: {why: 131.64, live: 132.62, call: 132.88, late: 133.38, lost: 134.22}
+        marks: {why: 130.06, live: 131.38, call: 131.58, late: 131.98, lost: 132.74}
         visual: "A live call card (You, a pink waveform, Friend, LIVE 0:42) above a voice track: can, you, …, me, now? A “now playing” marker sweeps along; the word “hear” is missing and the waveform goes silent (lost). Title: Late = lost."
       - id: verse-3-8
-        start: 134.50
-        end: 137.46
+        start: 132.94
+        end: 135.8
         text: "resend a voice packet, and it lands after the word is gone."
-        marks: {resend: 134.50, voice: 135.06, lands: 136.12, after: 136.34, word: 136.80, gone: 137.16}
+        marks: {resend: 132.94, voice: 133.44, lands: 134.48, after: 134.7, word: 135.14, gone: 135.52}
         visual: "A resent “hear” arrives at its spot after the marker has passed. It greys out; stamp: Too late; tag: that word already played."
       - id: verse-3-9
-        start: 137.46
-        end: 139.96
+        start: 135.8
+        end: 138.38
         text: "DNS? One tiny question, one tiny reply."
-        marks: {dns: 137.46, question: 138.48, reply: 139.52}
+        marks: {dns: 135.8, question: 136.88, reply: 137.88}
         visual: "Lanes again, laptop to DNS server, with the contacts entry ucla.edu → 3.33.167.235. Sticker: DNS rides UDP. One arrow asks “ucla.edu ?”, one arrow answers 3.33.167.235."
       - id: verse-3-10
-        start: 139.96
-        end: 143.38
+        start: 138.38
+        end: 141.8
         text: "A handshake would double the wait. Lost? The app tries one more time."
-        marks: {handshake: 140.32, double: 141.00, wait: 141.32, lost: 141.50, tries: 142.30, time: 143.06}
+        marks: {handshake: 138.68, double: 139.2, wait: 139.68, lost: 140.02, tries: 140.7, time: 141.48}
         visual: "A panel compares time to an answer: UDP is one bar (ask → answer), TCP two (hello, then ask); sticker: 2× the wait. A second question is crossed out, the laptop’s timer runs out (no reply), the app asks again and gets the answer. Sticker: The app tries again."
   - id: hook
     title: "Hook: Which one?"
@@ -375,40 +375,40 @@ sections:
     narration: "The hook: two glowing gates, TCP and UDP, each with its rule. Needs and use cases fly into the gate they belong to: every byte in order, DMs, logins, files, and web pages into TCP; old news, calls, game moves, and quick lookups into UDP; a buffered video into TCP and a live call into UDP."
     lines:
       - id: hook-1
-        start: 143.38
-        end: 146.22
+        start: 141.8
+        end: 144.3
         text: "Need every byte, in order, even if you wait? TCP!"
-        marks: {every: 143.82, order: 144.56, wait: 145.52, tcp: 145.84}
+        marks: {every: 142.02, order: 142.6, wait: 143.54, tcp: 143.8}
         visual: "Two glowing gates: TCP (shield) on the left, UDP (bolt) on the right. Tags every byte, in order, even if you wait fly into the TCP gate, which shows its rule: Every byte, in order."
       - id: hook-2
-        start: 146.22
-        end: 148.46
+        start: 144.3
+        end: 147.34
         text: "Old news is useless? Keep it live: UDP!"
-        marks: {old: 146.22, useless: 146.94, live: 147.64, udp: 147.98}
+        marks: {old: 144.3, useless: 145.32, live: 145.98, udp: 146.4}
         visual: "Tags old news = useless and keep it live fly into the UDP gate, which shows its rule: Fresh beats complete."
       - id: hook-3
-        start: 148.46
-        end: 151.18
+        start: 147.34
+        end: 149.94
         text: "DMs, logins, files, web pages: TCP!"
-        marks: {dms: 148.46, logins: 149.30, files: 149.74, web: 150.07, tcp: 150.76}
+        marks: {dms: 147.34, logins: 148.14, files: 148.52, web: 148.88, tcp: 149.44}
         visual: "Cards DMs, Logins, Files, Web pages pop up and fly into the TCP gate; their icons line up under it."
       - id: hook-4
-        start: 151.18
-        end: 153.96
+        start: 149.94
+        end: 152.9
         text: "Calls, game moves, quick lookups: UDP!"
-        marks: {calls: 151.18, game: 151.88, quick: 152.54, udp: 153.26}
+        marks: {calls: 149.94, game: 150.8, quick: 151.44, udp: 152.1}
         visual: "Cards Calls, Game moves, Quick lookups fly into the UDP gate; their icons line up under it."
       - id: hook-5
-        start: 153.96
-        end: 157.14
+        start: 152.9
+        end: 156.52
         text: "A video that buffers can wait for a resend: TCP."
-        marks: {video: 154.34, buffers: 154.94, wait: 155.44, resend: 156.08, tcp: 156.70}
+        marks: {video: 153.34, buffers: 154.0, wait: 154.5, resend: 155.08, tcp: 155.6}
         visual: "Sticker: Can it wait? A Buffered video card, tagged “can wait for a resend”, flies into TCP."
       - id: hook-6
-        start: 157.14
-        end: 159.64
+        start: 156.52
+        end: 159.9
         text: "A live call can’t wait: UDP."
-        marks: {live: 157.74, call: 158.02, wait: 158.80, udp: 159.18}
+        marks: {live: 157.52, call: 157.76, wait: 158.52, udp: 158.8}
         visual: "A Live call card, tagged “can’t wait”, flies into UDP."
   - id: chorus-2
     title: "Chorus"
@@ -416,40 +416,40 @@ sections:
     narration: "The chorus again: the three stacks light up layer by layer, and a packet is wrapped on the way down and unboxed on the way up."
     lines:
       - id: chorus-2-1
-        start: 159.64
-        end: 164.38
+        start: 159.9
+        end: 164.02
         text: "Link Layer: one hop on the local network. Ethernet, Wi-Fi."
-        marks: {link: 159.64, hop: 161.44, local: 162.26, ethernet: 163.06, wi: 163.56}
+        marks: {link: 159.9, hop: 161.22, local: 162.02, ethernet: 162.74, wi: 163.48}
         visual: "Three stacks of layer slabs: your laptop (four layers), a router (Internet and Link only), and the server (four layers). The Link slabs light up green, and one-hop arcs join laptop to router and router to server. Title: Link Layer, one hop on the local network; chips Ethernet and Wi-Fi."
       - id: chorus-2-2
-        start: 164.38
-        end: 169.86
+        start: 164.02
+        end: 168.12
         text: "Internet Layer: machine to machine, across networks. IP."
-        marks: {internet: 164.38, machine: 166.26, machine_2: 166.80, across: 167.20, ip: 168.58}
+        marks: {internet: 164.02, machine: 165.26, machine_2: 166.0, across: 166.4, ip: 167.72}
         visual: "The Internet slabs light up violet and a long arc joins laptop to server, labeled “machine → machine”. Title: Internet Layer, machine to machine, across networks; chip IP."
       - id: chorus-2-3
-        start: 169.86
-        end: 175.06
+        start: 168.12
+        end: 173.14
         text: "Transport Layer: app to app, reliable or fast. TCP or UDP."
-        marks: {transport: 169.86, app: 171.40, app_2: 171.84, reliable: 172.12, fast: 173.10, tcp: 173.46, udp: 174.16}
+        marks: {transport: 168.12, app: 169.3, app_2: 169.72, reliable: 170.34, fast: 171.1, tcp: 171.36, udp: 172.42}
         visual: "The Transport slabs on laptop and server light up cyan, joined by an arc labeled “app ↔ app”. Title: Transport Layer, app to app, reliable or fast; chips TCP and UDP."
       - id: chorus-2-4
-        start: 175.06
-        end: 178.74
+        start: 173.46
+        end: 175.7
         text: "Application Layer: the language the apps speak. HTTP."
-        marks: {application: 175.06, language: 176.76, speak: 177.80, http: 178.18}
+        marks: {application: 173.46, language: 174.24, speak: 174.84, http: 175.3}
         visual: "The Application slabs light up gold, joined by an arc labeled GET / HTTP/1.1. Title: Application Layer, the language the apps speak; chip HTTP."
       - id: chorus-2-5
-        start: 179.10
-        end: 182.06
+        start: 176.04
+        end: 178.58
         text: "Wrap it on the way down, unbox it on the way up."
-        marks: {wrap: 179.10, down: 180.28, unbox: 180.66, up: 181.72}
+        marks: {wrap: 176.04, down: 176.9, unbox: 177.3, up: 178.3}
         visual: "Title: Wrap ↓ · Unbox ↑. A packet rides down the laptop’s stack gaining one colored box per layer, crosses through the router, and rides up the server’s stack losing a box per layer."
       - id: chorus-2-6
-        start: 182.06
-        end: 185.36
+        start: 178.68
+        end: 181.84
         text: "Each layer only uses the one below. That’s the stack!"
-        marks: {each: 182.06, uses: 183.14, below: 184.00, stack: 185.06}
+        marks: {each: 178.68, uses: 179.42, below: 180.26, stack: 181.5}
         visual: "Small arrows point from each layer to the one below, under the caption “Each layer uses only the one below”. Then “That’s the stack!” slams in and every slab lights up."
   - id: verse-4
     title: "Verse 4: Addresses and ports"
@@ -457,64 +457,64 @@ sections:
     narration: "Verse 4: the laptop’s address, 192.168.1.42, splits into a network part, the city, and a host part, the street; each of its four numbers runs from 0 to 255. A counter passes four billion, stamped not enough, and an IPv6 address appears. A loop leaves the student’s laptop and comes straight back: localhost. The castle’s windows are apps with port numbers, and packets climb to the window their port names. Last, a full router drops a packet, and TCP sends it again."
     lines:
       - id: verse-4-1
-        start: 185.36
-        end: 187.94
+        start: 181.96
+        end: 184.4
         text: "Internet Layer: every machine gets an IP address,"
-        marks: {internet: 185.36, every: 186.40, machine: 186.54, ip: 187.28, address: 187.54}
+        marks: {internet: 181.96, every: 182.7, machine: 182.8, ip: 183.72, address: 183.98}
         visual: "Tag: Your laptop’s IP address. The address slams in: 192.168.1.42/24."
       - id: verse-4-2
-        start: 187.94
-        end: 190.46
+        start: 184.6
+        end: 187.44
         text: "network part, then host part: city, then street. No guessing."
-        marks: {network: 187.94, host: 188.80, city: 189.48, street: 189.80, guessing: 190.18}
+        marks: {network: 184.6, host: 185.4, city: 186.06, street: 186.4, guessing: 187.04}
         visual: "192.168.1 turns violet under a bracket “network part” (city: your home network); 42 turns gold under “host part” (street: this laptop). Sticker: No guessing."
       - id: verse-4-3
-        start: 190.46
-        end: 193.06
+        start: 187.84
+        end: 190.08
         text: "IPv4: four numbers, zero to 255."
-        marks: {ipv4: 190.46, four: 191.28, numbers: 191.46, zero: 191.88, "255": 192.26}
+        marks: {ipv4: 187.84, four: 188.44, numbers: 188.54, zero: 189.0, 255: 189.24}
         visual: "Tag: IPv4: four numbers, 0 to 255 each. Each number bumps and gets a “0–255” label."
       - id: verse-4-4
-        start: 193.06
-        end: 196.00
+        start: 190.32
+        end: 193.28
         text: "Four billion addresses? Not enough. So IPv6 arrived."
-        marks: {four: 193.06, billion: 193.30, enough: 194.34, ipv6: 194.72, arrived: 195.50}
+        marks: {four: 190.32, billion: 190.46, enough: 191.54, ipv6: 192.04, arrived: 192.86}
         visual: "A counter runs up to 4,294,967,296 addresses; stamp: Not enough! Tag: 8 billion people, many devices each. Then IPv6 · 2001:db8::42 and the sticker way more room."
       - id: verse-4-5
-        start: 196.00
-        end: 198.78
+        start: 193.48
+        end: 195.76
         text: "127.0.0.1?"
-        marks: {"127": 196.00, "1": 198.08}
+        marks: {127: 193.48, 1: 195.1}
         visual: "Title: 127.0.0.1? The student sits at a laptop under an address bar reading localhost:3000."
       - id: verse-4-6
-        start: 198.78
-        end: 201.36
+        start: 195.9
+        end: 198.36
         text: "There’s no place like home: localhost, your own machine."
-        marks: {place: 199.24, home: 199.60, localhost: 200.26, own: 200.68, machine: 200.96}
+        marks: {place: 196.22, home: 196.6, localhost: 196.98, own: 197.66, machine: 197.9}
         visual: "A violet loop leaves the laptop and comes straight back into it, a packet circling it. Stickers and tags: No place like home, localhost = 127.0.0.1, your own machine, never leaves it."
       - id: verse-4-7
-        start: 201.36
-        end: 204.42
+        start: 198.36
+        end: 201.38
         text: "IP finds the machine, but one machine runs lots of apps,"
-        marks: {ip: 201.36, finds: 201.80, machine: 202.38, machine_2: 203.26, lots: 203.80, apps: 204.14}
+        marks: {ip: 198.36, finds: 198.8, machine: 199.36, machine_2: 200.24, lots: 200.78, apps: 201.12}
         visual: "The castle again: a violet packet labeled IP 3.33.167.235 rides to its gate (IP: right machine ✓). Then four windows light up with apps: :443 HTTPS website, :3000 your Node.js app, :22 SSH, :5432 database. Sticker: one machine, lots of apps."
       - id: verse-4-8
-        start: 204.42
-        end: 207.16
+        start: 201.38
+        end: 204.14
         text: "so the port picks the app: 3000, 443, like that."
-        marks: {port: 204.82, picks: 205.02, app: 205.50, "3000": 205.84, "443": 206.30}
+        marks: {port: 201.8, picks: 202.04, app: 202.5, 3000: 202.8, 443: 203.28}
         visual: "The packet’s port 3000 tag flashes and it climbs to the :3000 window, which turns green; a second packet with port 443 climbs to the :443 window. Sticker: IP → machine · port → app."
       - id: verse-4-9
-        start: 207.16
-        end: 209.84
+        start: 204.14
+        end: 206.78
         text: "IP does its best, but packets still get dropped,"
-        marks: {ip: 207.16, best: 208.16, packets: 208.68, dropped: 209.42}
+        marks: {ip: 204.14, best: 205.12, packets: 205.62, dropped: 206.44}
         visual: "The student’s laptop sends numbered packets 1, 2, 3 through the home router and a router to the castle. Sticker: IP: best effort. The router shows “queue full”, and packet 2 tumbles off the island: dropped."
       - id: verse-4-10
-        start: 209.84
-        end: 213.10
+        start: 206.78
+        end: 209.76
         text: "and IP won’t resend. That’s TCP’s job. Full stop."
-        marks: {ip: 210.08, resend: 210.78, tcp: 211.82, job: 212.12, full: 212.58, stop: 212.70}
+        marks: {ip: 207.06, resend: 207.6, tcp: 208.1, job: 208.78, full: 209.2, stop: 209.34}
         visual: "Tag: IP won’t resend. A timer at the laptop runs out (no ACK for 2); tag TCP resends 2, and a cyan packet 2 rides all the way to the castle. Sticker: That’s TCP’s job. Stamp: Full stop."
   - id: bridge
     title: "Bridge: HTTP and HTTPS"
@@ -522,34 +522,34 @@ sections:
     narration: "The bridge: requests fly to the server, and a note shows it remembers nothing between them. A request without a token gets: who are you. One that brings everything is answered by any of three server copies. Then HTTPS: a login request is locked in a TLS box and scrambles, so someone on café Wi-Fi sees only noise."
     lines:
       - id: bridge-1
-        start: 213.10
-        end: 215.72
+        start: 209.76
+        end: 214.32
         text: "Up top, HTTP has no chat history."
-        marks: {top: 213.44, http: 214.00, chat: 214.94, history: 215.20}
+        marks: {top: 210.08, http: 210.62, chat: 213.16, history: 213.56}
         visual: "Tag: Application layer · HTTP. The student sends an HTTP box (GET /profile with an Authorization token) to the castle, which answers 200 OK · Hi, Joe! A note under the castle, “server remembers:”, goes from Joe’s request to nothing. Sticker: No chat history."
       - id: bridge-2
-        start: 215.72
-        end: 218.24
-        text: "Every request is fresh. The server won’t remember me,"
-        marks: {every: 215.72, request: 216.08, fresh: 216.68, server: 217.04, remember: 217.62}
+        start: 214.32
+        end: 219.96
+        text: "Every request starts fresh. The server won’t remember me,"
+        marks: {every: 214.32, request: 215.54, fresh: 216.76, server: 217.82, remember: 218.78}
         visual: "A second request, GET /cart without the token, flies to the castle. Sticker: Every request starts fresh. The server replies “Who are you?” · 401."
       - id: bridge-3
-        start: 218.24
-        end: 221.42
+        start: 219.96
+        end: 225.56
         text: "so each request brings all it needs, and any server copy can reply."
-        marks: {each: 218.44, brings: 218.96, needs: 219.50, any: 219.88, copy: 220.58, reply: 221.02}
+        marks: {each: 220.28, brings: 220.86, needs: 222.3, any: 223.12, copy: 223.68, reply: 224.62}
         visual: "A third request brings everything: GET /cart, Authorization: Bearer token, Accept: text/html (sticker: Brings all it needs). The castle becomes three copies; the request goes to copy 2, which answers 200 OK. Sticker: Any copy can reply."
       - id: bridge-4
-        start: 222.02
-        end: 224.62
+        start: 226.22
+        end: 229.18
         text: "HTTPS: HTTP locked inside TLS."
-        marks: {https: 222.02, http: 222.66, locked: 223.04, inside: 223.52, tls: 224.08}
+        marks: {https: 226.22, http: 226.92, locked: 227.34, inside: 227.98, tls: 228.4}
         visual: "Title: HTTPS with a padlock. A login request (POST /login, user, password) is wrapped in a white TLS box marked encrypted, and its lines scramble into hexadecimal. On the right, a stack of HTTP, TCP, IP makes room for TLS between HTTP and TCP."
       - id: bridge-5
-        start: 224.62
-        end: 226.74
+        start: 229.18
+        end: 231.72
         text: "Nobody on the Wi-Fi reads your passwords."
-        marks: {nobody: 224.62, wi: 225.40, reads: 225.74, passwords: 226.12}
+        marks: {nobody: 229.18, wi: 230.04, reads: 230.44, passwords: 231.1}
         visual: "A café Wi-Fi island with “someone listening” looks at the box and sees only 9f3a 1e0c 77d2…; sticker: Password: safe."
   - id: quiz
     title: "Pop quiz"
@@ -557,52 +557,52 @@ sections:
     narration: "The pop quiz: six cards, each with a picture from the song, a bar that fills while you think, and then the answer."
     lines:
       - id: quiz-1
-        start: 226.74
-        end: 230.62
+        start: 231.72
+        end: 235.98
         text: "Pop quiz! One: going down the stack, each layer adds a what?"
         answer: "A header!"
-        answer_at: 230.20
-        marks: {pop: 226.74, one: 227.58, down: 228.12, adds: 229.40, what: 229.78}
+        answer_at: 235.48
+        marks: {pop: 231.72, one: 232.86, down: 233.06, adds: 234.5, what: 235.04}
         visual: "Quiz card 1 of 6 with nested Link, IP, and TCP boxes whose labels read ???; a think bar fills, then the labels read header and the answer appears: A header!"
       - id: quiz-2
-        start: 230.62
-        end: 234.16
+        start: 236.36
+        end: 239.68
         text: "IP finds the machine. What finds the app?"
         answer: "The port!"
-        answer_at: 233.66
-        marks: {ip: 230.62, machine: 231.84, app: 233.02}
+        answer_at: 239.1
+        marks: {ip: 236.36, machine: 237.18, app: 238.58}
         visual: "Quiz card 2: the castle with a window marked :????; the answer: The port! and the window reads :3000."
       - id: quiz-3
-        start: 234.56
-        end: 239.50
-        text: "Live voice call: TCP or UDP?"
+        start: 239.92
+        end: 245.26
+        text: "Three: live voice call. TCP or UDP?"
         answer: "UDP! Old news is useless!"
-        answer_at: 237.62
-        marks: {live: 234.56, tcp: 235.44, udp: 236.90}
+        answer_at: 243.22
+        marks: {live: 240.22, tcp: 241.16, udp: 242.28}
         visual: "Quiz card 3: live voice, with a TCP emblem and a UDP emblem; the answer lights UDP: UDP! Old news is useless!"
       - id: quiz-4
-        start: 239.50
-        end: 242.68
+        start: 245.26
+        end: 248.72
         text: "A packet’s lost. TCP?"
         answer: "Resend it! The rest wait!"
-        answer_at: 240.90
-        marks: {lost: 240.02, tcp: 240.42}
+        answer_at: 246.8
+        marks: {lost: 245.92, tcp: 246.28}
         visual: "Quiz card 4: piece 1 missing, pieces 2 and 3 waiting; the answer: Resend it! The rest wait! and 1 comes back."
       - id: quiz-5
-        start: 242.80
-        end: 245.14
+        start: 248.88
+        end: 251.3
         text: "And UDP?"
         answer: "Gone! No resend!"
-        answer_at: 243.82
-        marks: {udp: 242.92}
+        answer_at: 249.66
+        marks: {udp: 248.92}
         visual: "Quiz card 5: a UDP packet drops into a bin, no resend; the answer: Gone! No resend!"
       - id: quiz-6
-        start: 245.14
-        end: 249.56
+        start: 251.48
+        end: 256.92
         text: "What’s HTTPS?"
-        answer: "HTTP inside TLS!"
-        answer_at: 247.10
-        marks: {https: 245.90}
+        answer: "Secure HTTP inside TLS!"
+        answer_at: 253.9
+        marks: {https: 253.0}
         visual: "Quiz card 6: an HTTP box gets locked inside a TLS box; the answer: HTTP inside TLS!"
   - id: chorus-3
     title: "Final chorus"
@@ -610,40 +610,40 @@ sections:
     narration: "The final chorus: the three stacks light up layer by layer once more, and a packet is wrapped on the way down and unboxed on the way up."
     lines:
       - id: chorus-3-1
-        start: 249.56
-        end: 253.60
+        start: 256.92
+        end: 261.02
         text: "Link Layer: one hop on the local network. Ethernet, Wi-Fi."
-        marks: {link: 249.56, hop: 250.74, local: 251.56, ethernet: 252.24, wi: 252.86}
+        marks: {link: 256.92, hop: 258.2, local: 259.0, ethernet: 259.72, wi: 260.46}
         visual: "Three stacks of layer slabs: your laptop (four layers), a router (Internet and Link only), and the server (four layers). The Link slabs light up green, and one-hop arcs join laptop to router and router to server. Title: Link Layer, one hop on the local network; chips Ethernet and Wi-Fi."
       - id: chorus-3-2
-        start: 253.60
-        end: 259.16
+        start: 261.06
+        end: 265.1
         text: "Internet Layer: machine to machine, across networks. IP."
-        marks: {internet: 253.60, machine: 255.30, machine_2: 256.10, across: 256.52, ip: 257.78}
+        marks: {internet: 261.06, machine: 262.28, machine_2: 262.98, across: 263.38, ip: 264.56}
         visual: "The Internet slabs light up violet and a long arc joins laptop to server, labeled “machine → machine”. Title: Internet Layer, machine to machine, across networks; chip IP."
       - id: chorus-3-3
-        start: 259.16
-        end: 264.20
+        start: 265.24
+        end: 270.1
         text: "Transport Layer: app to app, reliable or fast. TCP or UDP."
-        marks: {transport: 259.16, app: 260.56, app_2: 261.14, reliable: 261.68, fast: 262.40, tcp: 262.76, udp: 263.48}
+        marks: {transport: 265.24, app: 266.28, app_2: 266.66, reliable: 267.36, fast: 268.12, tcp: 268.4, udp: 269.4}
         visual: "The Transport slabs on laptop and server light up cyan, joined by an arc labeled “app ↔ app”. Title: Transport Layer, app to app, reliable or fast; chips TCP and UDP."
       - id: chorus-3-4
-        start: 264.20
-        end: 268.04
+        start: 270.28
+        end: 272.74
         text: "Application Layer: the language the apps speak. HTTP."
-        marks: {application: 264.20, language: 266.06, speak: 267.24, http: 267.50}
+        marks: {application: 270.28, language: 271.22, speak: 271.8, http: 272.28}
         visual: "The Application slabs light up gold, joined by an arc labeled GET / HTTP/1.1. Title: Application Layer, the language the apps speak; chip HTTP."
       - id: chorus-3-5
-        start: 268.56
-        end: 271.36
+        start: 272.74
+        end: 275.58
         text: "Wrap it on the way down, unbox it on the way up."
-        marks: {wrap: 268.56, down: 269.56, unbox: 269.94, up: 270.98}
+        marks: {wrap: 272.74, down: 273.88, unbox: 274.28, up: 275.28}
         visual: "Title: Wrap ↓ · Unbox ↑. A packet rides down the laptop’s stack gaining one colored box per layer, crosses through the router, and rides up the server’s stack losing a box per layer."
       - id: chorus-3-6
-        start: 271.36
-        end: 274.68
+        start: 275.58
+        end: 278.9
         text: "Each layer only uses the one below. That’s the stack!"
-        marks: {each: 271.36, uses: 272.44, below: 273.30, stack: 274.36}
+        marks: {each: 275.58, uses: 276.4, below: 277.24, stack: 278.46}
         visual: "Small arrows point from each layer to the one below, under the caption “Each layer uses only the one below”. Then “That’s the stack!” slams in and every slab lights up."
   - id: outro
     title: "Outro"
@@ -651,26 +651,36 @@ sections:
     narration: "The outro: 1969, Boelter Hall at UCLA. Two steel cabinets called IMPs, the first two nodes of the net, are joined by a leased line. The letters L and O travel from UCLA to SRI, then SRI crashes. Name cards for Vint Cerf and Bob Kahn frame the words TCP slash IP and their 1974 paper. Last: Go Bruins, the full stack lit up, and confetti."
     lines:
       - id: outro-1
-        start: 274.68
-        end: 279.38
+        start: 279.57
+        end: 285.08
         text: "1969, Boelter Hall: Kleinrock’s lab, the first node on the net."
-        marks: {"1969": 274.68, boelter: 276.28, kleinrock: 277.24, first: 278.38, node: 278.64, net: 279.18}
+        marks: {1969: 279.64, boelter: 281.34, kleinrock: 283.16, first: 284.12, node: 284.36, net: 284.84}
         visual: "Title: 1969, Boelter Hall 3420 · UCLA, Leonard Kleinrock’s lab. A steel cabinet with blinking panel lamps rises: the IMP, Node 1 · UCLA. A second one appears, Node 2 · SRI, joined by a leased line at 50 kbit/s."
       - id: outro-2
-        start: 279.38
-        end: 282.76
+        start: 285.88
+        end: 289.54
         text: "The first message said “LO,” then it crashed. Don’t forget."
-        marks: {first: 279.80, message: 280.02, lo: 280.88, crashed: 281.92, forget: 282.46}
+        marks: {first: 286.02, message: 286.24, lo: 286.98, crashed: 288.6, forget: 289.22}
         visual: "UCLA’s teletype types L, O, G; the letters L and O travel down the line and print at SRI. G never arrives: SRI’s lamps go dark and a stamp reads Crash! Sticker: Oct 29, 1969 · 10:30 pm."
       - id: outro-3
-        start: 282.78
-        end: 288.30
+        start: 290.1
+        end: 296.1
         text: "Vint Cerf, a grad student there, later co-designed TCP/IP with Bob Kahn."
-        marks: {vint: 282.78, grad: 283.94, later: 285.36, designed: 285.86, tcp: 286.38, bob: 287.54, kahn: 287.82}
+        marks: {vint: 290.1, grad: 291.52, later: 292.44, designed: 293.44, tcp: 294.28, bob: 295.44, kahn: 295.7}
         visual: "Name cards: Vint Cerf, grad student in Kleinrock’s lab; Bob Kahn, co-designer of TCP/IP. Between them TCP / IP slams in, tagged Transport and Internet, above the paper “A Protocol for Packet Network Intercommunication” (1974)."
       - id: outro-4
-        start: 288.50
-        end: 291.08
+        start: 296.96
+        end: 298.94
         text: "Go Bruins! Now you know the stack."
-        marks: {go: 288.50, bruins: 289.10, know: 290.56, stack: 290.80}
+        marks: {go: 296.96, bruins: 297.2, know: 298.28, stack: 298.56}
         visual: "Go Bruins! The student sits beside the full stack, all four layers lit, as confetti flies; then a packet keeps wrapping down and unboxing up the stack to the end. Credit: SE Book · Networking."
+      - id: outro-5
+        start: 300.00
+        end: 301.24
+        text: "That’s HTTP!"
+        visual: "The four-layer stack continues wrapping and unboxing the packet beside the student at a laptop."
+      - id: outro-6
+        start: 304.04
+        end: 304.76
+        text: "Secure!"
+        visual: "The four-layer stack continues wrapping and unboxing the packet, then the music fades out."
