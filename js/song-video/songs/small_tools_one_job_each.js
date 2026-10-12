@@ -73,18 +73,22 @@
 
       // By hand: one rename at a time, and the weekend is gone.
       fx.bump(photos[0], mark('intro-2', 'rename'), 0.2);
-      kit.sticker(s, '1 of 300…', { x: 66, y: 56, at: mark('intro-2', 'hand'), until: mark('intro-3', 'type'), variant: 'white', iconName: 'pencil', rotate: -5 });
-      kit.sticker(s, 'Weekend: gone', { x: 250, y: 54, at: mark('intro-2', 'weekend'), until: mark('intro-3', 'type'), variant: 'pink', iconName: 'hourglass', rotate: 4 });
+      kit.sticker(s, '1 of 300…', { x: 66, y: 56, at: mark('intro-2', 'hand'), until: mark('intro-3', 'or'), variant: 'white', iconName: 'pencil', rotate: -5 });
+      kit.sticker(s, 'Weekend: gone', { x: 250, y: 54, at: mark('intro-2', 'weekend'), until: mark('intro-3', 'or'), variant: 'pink', iconName: 'hourglass', rotate: 4 });
       for (const card of photos) tween(card, { opacity: 0.55 }, mark('intro-2', 'weekend') + 0.2, 0.4, EASE.inOut);
       for (const card of photos) tween(card, { opacity: 1 }, renamed - 0.2, 0.3, EASE.inOut);
 
       // One line in the shell renames all of them.
       const typeAt = mark('intro-3', 'type');
-      const win = sh.session(s, { x: 600, y: 168, w: 340, rows: 3, title: '~/trip', at: typeAt - 0.2 });
-      win.run(mark('intro-3', 'one'), loop.slice(0, 26));
-      win.run(mark('intro-3', 'one') + 0.65, `  ${loop.slice(26)}`, 'cont');
-      kit.sticker(s, '1 line', { x: 760, y: 130, at: mark('intro-3', 'line'), until: lineAt + 0.4, variant: 'gold', iconName: 'terminal', rotate: 5 });
-      counter(s, { x: 650, y: 300, at: renamed + 0.4, until: lineAt + 0.4, value: '300/300', text: 'renamed' });
+      // Reflow the gallery into two rows to make room for the full command
+      // without shrinking either the command or the photo filenames.
+      photos.forEach((card, i) => fx.moveTo(card, typeAt - 0.25,
+        (i % 6) * 150 - (i % 4) * 142,
+        72 + Math.floor(i / 6) * 126 - (92 + Math.floor(i / 4) * 118), 0.4));
+      const win = sh.session(s, { x: 286, y: 344, w: 646, rows: 1, title: '~/trip', at: typeAt });
+      win.run(mark('intro-3', 'one'), loop);
+      kit.sticker(s, '1 line', { x: 52, y: 340, at: mark('intro-3', 'line'), until: lineAt + 0.4, variant: 'gold', iconName: 'terminal', rotate: 5 });
+      counter(s, { x: 36, y: 408, at: renamed + 0.4, until: lineAt + 0.4, value: '300/300', text: 'renamed' });
       camera.punch(mark('intro-3', 'blink'), 0.03);
 
       // Exactly what you type, not what you think.
