@@ -12,6 +12,10 @@ const songPlayers = [
     name: 'Networking', path: '/assets/song-player/unbox-the-stack.html', cameoTime: 3,
     storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/unbox_the_stack.yml'), 'utf8')),
   },
+  {
+    name: 'Shell', path: '/assets/song-player/small-tools-one-job-each.html', cameoTime: 267,
+    storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/small_tools_one_job_each.yml'), 'utf8')),
+  },
 ];
 const lines = new Map(storyboard.sections.flatMap((section) => section.lines).map((line) => [line.id, line]));
 const finalCelebration = lines.get('chorus-4-8').marks.moves + 0.2;

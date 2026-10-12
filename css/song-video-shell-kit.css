@@ -1,0 +1,1979 @@
+/*
+ * Shell kit artwork for "Small Tools, One Job Each" (js/song-video/shell-kit.js).
+ *
+ * Like the rest of the stage (css/song-video-stage.css), this is one video
+ * frame on a 960×540 CSS-pixel stage that the player scales as a whole, so
+ * sizes are fixed pixels. The stage is always dark in both site themes and
+ * every text color clears 4.5:1 against its own background; nothing depends
+ * on color alone (beacons and lamps carry a check or cross and a written exit
+ * code, toolbox rows and cards carry written category names). Gradients
+ * replace filters, so frames stay cheap to draw. Print never shows the stage.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Terminal session window                                             */
+/* ------------------------------------------------------------------ */
+
+.sh-window {
+  position: absolute;
+  border: 1px solid rgba(160, 190, 255, 0.3);
+  border-radius: 14px;
+  background: linear-gradient(155deg, #172039, #080d1e 72%);
+  box-shadow: inset 0 1px 0 rgba(220, 232, 255, 0.13), 0 18px 44px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.sh-window-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sh-window-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff6159;
+}
+
+.sh-window-dot:nth-child(2) { background: #ffbd2e; }
+.sh-window-dot:nth-child(3) { background: #28c941; }
+
+.sh-window-title {
+  margin-left: 8px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sh-window-body {
+  padding: 6px 16px;
+}
+
+.sh-line {
+  height: 28px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 28px;
+  white-space: pre;
+}
+
+.sh-line--command::before {
+  content: '$ ';
+  color: var(--green);
+  font-weight: 600;
+}
+
+.sh-line--output { color: var(--muted); }
+.sh-line--cont { color: var(--text); }
+.sh-line--good { color: #a7f3c0; font-weight: 700; }
+.sh-line--error { color: #ff9aa6; }
+
+.sh-cursor {
+  display: inline-block;
+  width: 9px;
+  height: 18px;
+  margin-left: 2px;
+  vertical-align: -3px;
+  background: var(--gold);
+}
+
+/* ------------------------------------------------------------------ */
+/* Word splitting: a command line, scissors, tape                      */
+/* ------------------------------------------------------------------ */
+
+.sh-tokens {
+  position: absolute;
+  display: flex;
+  align-items: flex-start;
+  column-gap: 0.6em;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sh-tokens--center {
+  left: 0;
+  right: 0;
+  justify-content: center;
+}
+
+/* Labels hang below their word without widening it, so the unsplit line
+   keeps ordinary spacing. */
+.sh-token {
+  position: relative;
+}
+
+.sh-token-text {
+  position: relative;
+  display: inline-block;
+  padding: 2px 4px;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.sh-token-box {
+  position: absolute;
+  inset: -6px -8px;
+  border: 3px solid currentColor;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sh-token-tapes {
+  position: absolute;
+  inset: -14px -18px;
+  pointer-events: none;
+}
+
+.sh-token-tape {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  border-top: 2px dotted rgba(11, 15, 26, 0.4);
+  border-bottom: 2px dotted rgba(11, 15, 26, 0.4);
+  background: linear-gradient(180deg, rgba(255, 236, 160, 0.92), rgba(240, 200, 100, 0.88));
+  box-shadow: inset 0 0 0 1px rgba(11, 15, 26, 0.2);
+  box-sizing: border-box;
+}
+
+.sh-token-tape--left {
+  left: 6px;
+  rotate: 9deg;
+}
+
+.sh-token-tape--right {
+  right: 6px;
+  rotate: -9deg;
+}
+
+.sh-token-tape--seam {
+  left: var(--seam);
+  margin-left: -9px;
+  rotate: 5deg;
+}
+
+.sh-token--command .sh-token-text { color: var(--gold); }
+.sh-token--arg .sh-token-text { color: var(--cyan); }
+.sh-token--good .sh-token-text { color: var(--green); }
+.sh-token--bad .sh-token-text { color: #ff9aa6; }
+
+.sh-token-label {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 14px);
+  translate: -50% 0;
+  padding: 3px 9px 2px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #f6f8ff;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.sh-token--command .sh-token-label { background: var(--gold); }
+.sh-token--arg .sh-token-label { background: var(--cyan); }
+.sh-token--good .sh-token-label { background: var(--green); }
+.sh-token--bad .sh-token-label { background: var(--red); }
+
+.sh-cut-layer,
+.sh-cut-marks {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.sh-cut-mark {
+  fill: none;
+  stroke: #f6f8ff;
+  stroke-width: 2.5;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.sh-scissors {
+  position: absolute;
+  width: 82px;
+  height: 116px;
+}
+
+.sh-scissors svg {
+  overflow: visible;
+}
+
+.sh-blade {
+  fill: #dfe7f5;
+  stroke: #0b0f1a;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.sh-handle {
+  fill: #ff5fb0;
+  stroke: #0b0f1a;
+  stroke-width: 2;
+}
+
+.sh-handle-hole { fill: #070b1a; }
+
+.sh-pivot {
+  fill: #f6f8ff;
+  stroke: #0b0f1a;
+  stroke-width: 1.5;
+}
+
+/* ------------------------------------------------------------------ */
+/* PATH: a filing cabinet and the desk beside it                       */
+/* ------------------------------------------------------------------ */
+
+.sh-cabinet {
+  position: absolute;
+  padding: 10px 10px 4px;
+  border: 2px solid #0b0f1a;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #5e6d90, #39466a);
+  box-shadow: inset 0 2px 0 rgba(220, 232, 255, 0.2), 0 18px 36px rgba(0, 0, 0, 0.45);
+}
+
+.sh-cabinet-head {
+  padding: 0 2px 2px;
+  color: #e3e9f6;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sh-cabinet-head b {
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+.sh-cabinet-base {
+  height: 8px;
+  margin: 6px 6px 0;
+  border-radius: 0 0 6px 6px;
+  background: #222b44;
+}
+
+.sh-drawer {
+  position: relative;
+  height: 56px;
+  margin-top: 8px;
+}
+
+.sh-drawer-tray {
+  position: absolute;
+  top: 6px;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 214px;
+  height: 44px;
+  padding: 0 10px 0 38px;
+  border: 2px solid #0b0f1a;
+  border-radius: 0 9px 9px 0;
+  background: linear-gradient(180deg, #e9eef8, #c3cde2);
+  box-sizing: border-box;
+  translate: -206px 0;
+}
+
+.sh-drawer-file {
+  padding: 3px 8px;
+  border: 1px solid #8896b3;
+  border-radius: 5px;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sh-drawer-file--hit {
+  border: 2px solid var(--ink);
+  background: var(--green);
+}
+
+.sh-drawer-front {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 56px;
+  padding: 0 12px;
+  border: 2px solid #0b0f1a;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #93a2c2, #5d6b8c);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), inset 0 -3px 0 rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+}
+
+.sh-drawer-number {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.sh-drawer-label {
+  padding: 3px 8px;
+  border: 1px solid #0b0f1a;
+  border-radius: 4px;
+  background: #fffbea;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sh-drawer-handle {
+  width: 30px;
+  height: 9px;
+  margin-left: auto;
+  flex: none;
+  border-radius: 5px;
+  background: #222b44;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25);
+}
+
+.sh-verdict {
+  position: absolute;
+  right: -12px;
+  top: -12px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  color: var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.sh-verdict svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 3;
+}
+
+.sh-verdict--ok { background: var(--green); }
+.sh-verdict--no { background: var(--red); }
+
+.sh-desk {
+  position: absolute;
+}
+
+.sh-desk-folder {
+  position: relative;
+  margin: 0 26px;
+  padding-bottom: 8px;
+  border: 2px dashed var(--red);
+  border-radius: 12px 12px 4px 4px;
+  background: rgba(40, 18, 30, 0.94);
+}
+
+.sh-desk-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px 6px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sh-desk-title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--gold);
+}
+
+.sh-desk-file {
+  margin: 3px 10px 0;
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.sh-desk-file--hit {
+  background: rgba(74, 222, 128, 0.32);
+}
+
+.sh-desk-art {
+  display: block;
+}
+
+/* ------------------------------------------------------------------ */
+/* Directory tree, map pin, full address and directions                */
+/* ------------------------------------------------------------------ */
+
+.sh-tree {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.sh-tree-line {
+  fill: none;
+  stroke: rgba(180, 195, 224, 0.55);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.sh-tree-route {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.sh-tree-route--gold { stroke: var(--gold); }
+.sh-tree-route--cyan { stroke: var(--cyan); }
+.sh-tree-route--pink { stroke: var(--pink); }
+
+.sh-folder {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 11px 0 8px;
+  border: 2px solid rgba(160, 190, 255, 0.4);
+  border-radius: 9px;
+  background: linear-gradient(155deg, #26355a, #141d36);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+.sh-folder svg {
+  width: 18px;
+  height: 18px;
+  color: var(--gold);
+  flex: none;
+}
+
+.sh-folder--root {
+  border-color: var(--gold);
+}
+
+.sh-tag {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 10px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  color: var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  white-space: nowrap;
+}
+
+.sh-tag--beside {
+  left: calc(100% + 12px);
+  top: -2px;
+}
+
+.sh-tag--gold { background: var(--gold); }
+.sh-tag--cyan { background: var(--cyan); }
+.sh-tag--pink { background: var(--pink); }
+.sh-tag--green { background: var(--green); }
+.sh-tag--white { background: #f6f8ff; }
+
+.sh-tag-icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.4;
+}
+
+.sh-tag-code {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.sh-tag-note {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sh-path {
+  position: absolute;
+  padding: 8px 14px 9px;
+  border: 2px solid currentColor;
+  border-radius: 12px;
+  background: rgba(7, 11, 26, 0.9);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+.sh-path--gold { color: var(--gold); }
+.sh-path--cyan { color: var(--cyan); }
+
+.sh-path-kind {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sh-path-kind svg {
+  width: 17px;
+  height: 17px;
+}
+
+.sh-path-text {
+  display: block;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.sh-path-note {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------------ */
+/* Pipelines: machines on a conveyor belt                              */
+/* ------------------------------------------------------------------ */
+
+.sh-machine {
+  position: absolute;
+  height: 132px;
+}
+
+.sh-machine-sign {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 10px;
+  border: 2px solid var(--gold);
+  border-radius: 9px;
+  background: linear-gradient(180deg, #1f2b4b, #0c1328);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  box-sizing: border-box;
+}
+
+.sh-machine-sign::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 8px;
+  height: 7px;
+  translate: -50% 0;
+  background: #3a4768;
+}
+
+.sh-machine-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 40px;
+  height: 92px;
+  border: 2px solid #0b0f1a;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #40548a 0%, #2a3a63 55%, #1b2645 100%);
+  box-shadow: inset 0 2px 0 rgba(220, 232, 255, 0.2), inset 0 -10px 0 rgba(0, 0, 0, 0.2), 0 16px 30px rgba(0, 0, 0, 0.45);
+  box-sizing: border-box;
+  perspective: 300px;
+}
+
+.sh-machine-art {
+  position: absolute;
+  left: -2px;
+  top: -2px;
+  overflow: visible;
+}
+
+.sh-gear {
+  stroke: #0b0f1a;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.sh-gear-hub { fill: #0b0f1a; }
+.sh-rivet { fill: rgba(220, 232, 255, 0.4); }
+
+.sh-machine-intake,
+.sh-machine-outlet {
+  position: absolute;
+  bottom: 6px;
+  width: 24px;
+  height: 26px;
+  border: 2px solid #0b0f1a;
+  background: #060a14;
+  box-shadow: inset 0 5px 7px rgba(0, 0, 0, 0.9);
+}
+
+.sh-machine-intake {
+  left: -2px;
+  border-radius: 4px 10px 10px 4px;
+}
+
+.sh-machine-outlet {
+  right: -2px;
+  border-radius: 10px 4px 4px 10px;
+}
+
+.sh-machine-hatch {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  width: 42px;
+  height: 26px;
+  margin-left: -21px;
+  border: 2px solid var(--red);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #55283a, #2a1420);
+  transform-origin: 50% 100%;
+  box-sizing: border-box;
+}
+
+.sh-machine-hatch::after {
+  content: '2';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #ffb3bd;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.sh-machine-job {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  padding: 3px 9px 2px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 2px 2px 0 var(--ink);
+  rotate: -3deg;
+}
+
+.sh-lamp {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 5px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #f6f8ff;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.sh-machine .sh-lamp {
+  right: -10px;
+  top: 46px;
+}
+
+.sh-lamp-icon {
+  display: grid;
+  place-items: center;
+}
+
+.sh-lamp-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 3;
+}
+
+.sh-lamp--ok {
+  background: var(--green);
+  box-shadow: 2px 2px 0 var(--ink), 0 0 18px rgba(74, 222, 128, 0.65);
+}
+
+.sh-lamp--bad {
+  background: var(--red);
+  box-shadow: 2px 2px 0 var(--ink), 0 0 18px rgba(255, 107, 125, 0.65);
+}
+
+.sh-belt {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.sh-belt-leg {
+  fill: none;
+  stroke: #33415f;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.sh-belt-band {
+  fill: #18203a;
+  stroke: #0b0f1a;
+  stroke-width: 2;
+}
+
+.sh-belt-tread {
+  fill: none;
+  stroke: #45547b;
+  stroke-width: 3;
+  stroke-dasharray: 8 10;
+}
+
+.sh-belt-roller {
+  fill: #5f6f96;
+  stroke: #0b0f1a;
+  stroke-width: 1.5;
+}
+
+.sh-belt-spoke {
+  fill: none;
+  stroke: #0b0f1a;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.sh-slip-paper {
+  fill: #f6f8ff;
+  stroke: #0b0f1a;
+  stroke-width: 1.2;
+}
+
+.sh-slip-lines {
+  fill: none;
+  stroke: #7e8bab;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.sh-slip--cyan .sh-slip-paper { fill: #a5ecfb; }
+.sh-slip--gold .sh-slip-paper { fill: #ffe58a; }
+.sh-slip--green .sh-slip-paper { fill: #a7f3c0; }
+
+.sh-pipe-label {
+  position: absolute;
+  padding: 3px 9px 2px;
+  border: 2px solid var(--ink);
+  border-radius: 7px;
+  background: var(--cyan);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.sh-pipe-label--error { background: var(--red); }
+
+.sh-pipe-sign {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 54px;
+  padding: 2px 0 4px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--cyan);
+  color: var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.sh-pipe-sign code {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.sh-pipe-sign-word {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sh-data {
+  position: absolute;
+  padding: 0 0 6px;
+  border: 1px solid rgba(160, 190, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(7, 11, 26, 0.92);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+/* Titles name commands (out of sort, ls output), so they keep their case. */
+.sh-data-title {
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.sh-data-line {
+  padding: 1px 10px 0;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+  white-space: pre;
+}
+
+.sh-data--gold .sh-data-line { color: #ffe58a; }
+.sh-data--green .sh-data-line { color: #a7f3c0; }
+.sh-data--cyan .sh-data-line { color: #a5ecfb; }
+
+.sh-error {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--red);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.sh-error svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sh-screen {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sh-screen svg {
+  width: 34px;
+  height: 34px;
+  color: var(--text);
+}
+
+/* ------------------------------------------------------------------ */
+/* Scripts                                                             */
+/* ------------------------------------------------------------------ */
+
+/* Overflow stays visible so a value dropped onto a blank (the word a run
+   puts in $1) can hang below its line; the corners are rounded per part. */
+.sh-script {
+  overflow: visible;
+}
+
+.sh-script-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 13px 13px 0 0;
+}
+
+.sh-script .code-line:last-child,
+.sh-script .code-line:last-child .sh-line-glow {
+  border-radius: 0 0 13px 13px;
+}
+
+.sh-script-title svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sh-script .code-line {
+  isolation: isolate;
+}
+
+.sh-script-line {
+  position: relative;
+  font-size: 18px;
+  line-height: 30px;
+}
+
+.sh-gutter {
+  display: inline-block;
+  width: 22px;
+  margin-right: 14px;
+  color: #8a99bd;
+  text-align: right;
+}
+
+.sh-line-glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.sh-line-glow--gold { background: rgba(255, 209, 0, 0.18); box-shadow: inset 4px 0 0 var(--gold); }
+.sh-line-glow--green { background: rgba(74, 222, 128, 0.18); box-shadow: inset 4px 0 0 var(--green); }
+.sh-line-glow--cyan { background: rgba(56, 211, 245, 0.16); box-shadow: inset 4px 0 0 var(--cyan); }
+.sh-line-glow--red { background: rgba(255, 107, 125, 0.18); box-shadow: inset 4px 0 0 var(--red); }
+
+.sh-seg {
+  position: relative;
+}
+
+.sh-seg--key { color: #c4b5fd; }
+.sh-seg--str { color: #a7f3c0; }
+.sh-seg--var { color: #ffe58a; }
+
+.sh-seg--space {
+  display: inline-block;
+  min-width: 0.6em;
+}
+
+.sh-seg-ring {
+  position: absolute;
+  inset: -3px -2px;
+  border: 3px solid currentColor;
+  border-radius: 7px;
+  pointer-events: none;
+}
+
+.sh-seg-ring--space {
+  inset: auto 1px -4px;
+  height: 0;
+  border-width: 0 0 4px;
+  border-radius: 2px;
+}
+
+.sh-seg-ring--gold { color: var(--gold); }
+.sh-seg-ring--pink { color: var(--pink); }
+.sh-seg-ring--cyan { color: var(--cyan); }
+.sh-seg-ring--green { color: var(--green); }
+
+.sh-seg-fill {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  z-index: 2;
+  padding: 2px 9px;
+  border: 2px solid var(--ink);
+  border-radius: 7px;
+  background: var(--cyan);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 22px;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--ink);
+  translate: -50% 8px;
+}
+
+.sh-seg-fill::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  margin-left: -6px;
+  border: 6px solid transparent;
+  border-bottom-color: var(--ink);
+  border-top: 0;
+}
+
+.sh-badge {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border: 2px solid var(--panel-line);
+  border-radius: 16px;
+  background: linear-gradient(155deg, rgba(43, 57, 92, 0.98), var(--panel) 70%);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+
+.sh-badge svg {
+  width: 30px;
+  height: 30px;
+  color: var(--gold);
+}
+
+.sh-badge code {
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 17px;
+}
+
+/* The shebang as an address label. */
+.sh-label-string {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.sh-label-cord {
+  fill: none;
+  stroke: #fdf3d6;
+  stroke-width: 2.5;
+  stroke-dasharray: 5 4;
+}
+
+.sh-luggage {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 42px;
+  padding: 0 16px 0 32px;
+  background: linear-gradient(180deg, #fff6dc, #f1dfae);
+  color: var(--ink);
+  clip-path: polygon(18px 0, 100% 0, 100% 100%, 18px 100%, 0 50%);
+  white-space: nowrap;
+}
+
+.sh-luggage-hole {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin-top: -4.5px;
+  border-radius: 50%;
+  background: #070b1a;
+}
+
+.sh-luggage-to {
+  color: #6b4423;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.sh-luggage-text {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.sh-luggage-note {
+  color: #4a3a1e;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Execute permission as a padlock. */
+.sh-padlock {
+  position: absolute;
+}
+
+.sh-padlock svg {
+  display: block;
+  overflow: visible;
+}
+
+.sh-padlock-shackle {
+  fill: none;
+  stroke: #c8d3ea;
+  stroke-width: 5;
+  stroke-linecap: round;
+  transform-box: fill-box;
+  transform-origin: 100% 100%;
+}
+
+.sh-padlock-body {
+  fill: var(--red);
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+
+.sh-padlock-body.is-open { fill: var(--green); }
+
+.sh-padlock-key {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.sh-perms {
+  position: absolute;
+  font-family: var(--font-mono);
+}
+
+.sh-perm-row {
+  display: flex;
+  gap: 3px;
+}
+
+.sh-perm-cell {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 40px;
+  flex: none;
+  border: 2px solid var(--panel-line);
+  border-radius: 7px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 700;
+  box-sizing: border-box;
+}
+
+.sh-perm-cell--type {
+  margin-right: 7px;
+  color: var(--muted);
+}
+
+.sh-perm-cell.is-new {
+  border-color: var(--ink);
+  background: var(--green);
+  color: var(--ink);
+}
+
+.sh-perms--ghost .sh-perm-cell {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.sh-perm-legend {
+  display: flex;
+  gap: 3px;
+  margin: 6px 0 0 40px;
+}
+
+.sh-perm-group {
+  width: 96px;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* A variable as a labeled box. */
+.sh-varbox {
+  position: absolute;
+  width: 150px;
+  height: 124px;
+}
+
+.sh-varbox-art {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+
+.sh-varbox-flap {
+  fill: #b07a45;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.sh-varbox-body {
+  fill: #d29a5c;
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.sh-varbox-tape { fill: rgba(255, 240, 200, 0.5); }
+
+.sh-varbox-name {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  translate: -50% 0;
+  padding: 2px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: #fffbea;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.sh-varbox-value {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 4px;
+  z-index: 1;
+  padding: 4px 6px;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: #f6f8ff;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.sh-exit {
+  position: absolute;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  column-gap: 14px;
+  padding: 12px 18px;
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  background: #f6f8ff;
+  color: var(--ink);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+.sh-exit-label {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.sh-exit-digit {
+  min-width: 48px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: #0b0f1a;
+  color: #a7f3c0;
+  font-family: var(--font-mono);
+  font-size: 50px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+}
+
+.sh-exit-note {
+  grid-column: 1 / -1;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sh-exit--ok { background: var(--green); }
+.sh-exit--bad { background: var(--red); }
+.sh-exit--bad .sh-exit-digit { color: #ffb3bd; }
+
+/* `if` as a decision diamond. */
+.sh-flow {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.sh-flow-arrow {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.sh-flow-arrow--yes {
+  stroke: var(--green);
+  stroke-width: 4;
+}
+
+.sh-flow-arrow--no {
+  stroke-dasharray: 1;
+}
+
+.sh-flow-diamond {
+  fill: #1c2744;
+  stroke: var(--gold);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.sh-flow-box {
+  position: absolute;
+  padding: 6px 12px;
+  border: 2px solid var(--panel-line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sh-flow-box--yes {
+  border-color: var(--green);
+  color: #a7f3c0;
+}
+
+.sh-flow-box--muted {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.sh-flow-ask {
+  position: absolute;
+  width: 80px;
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 24px;
+  text-align: center;
+}
+
+/* Flow tags name shell keywords, so they keep their case. */
+.sh-flow-tag {
+  position: absolute;
+  padding: 2px 9px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #f6f8ff;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sh-flow-tag--yes { background: var(--green); }
+
+/* `&&` as a boom gate. */
+.sh-gate {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sh-gate-cmd {
+  position: relative;
+  padding: 10px 16px;
+  border: 2px solid var(--panel-line);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sh-gate-barrier {
+  position: relative;
+  width: 128px;
+  height: 68px;
+}
+
+.sh-gate-post {
+  position: absolute;
+  left: 4px;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  width: 34px;
+  height: 68px;
+  padding: 5px 0;
+  border: 2px solid var(--ink);
+  border-radius: 7px 7px 3px 3px;
+  background: linear-gradient(180deg, #eef2fa, #9aa8c4);
+  box-sizing: border-box;
+}
+
+.sh-gate-sign {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.sh-gate-light {
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: #5b6680;
+}
+
+.sh-gate-light.is-go {
+  background: var(--green);
+  box-shadow: 0 0 12px rgba(74, 222, 128, 0.9);
+}
+
+.sh-gate-light.is-stop {
+  background: var(--red);
+  box-shadow: 0 0 12px rgba(255, 107, 125, 0.9);
+}
+
+.sh-gate-arm {
+  position: absolute;
+  left: 26px;
+  top: 16px;
+  width: 102px;
+  height: 13px;
+  border: 2px solid var(--ink);
+  border-radius: 7px;
+  background: repeating-linear-gradient(90deg, #ff6b7d 0 14px, #f6f8ff 14px 28px);
+  transform-origin: 4px 50%;
+  box-sizing: border-box;
+}
+
+.sh-gate-lamp {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  translate: -50% 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 5px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.sh-gate-lamp svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 3;
+}
+
+.sh-gate-lamp--ok { background: var(--green); }
+.sh-gate-lamp--bad { background: var(--red); }
+
+.sh-gate-skip {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  translate: -50% 0;
+  padding: 3px 9px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #f6f8ff;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------ */
+/* Trip photos, the rubber stamp, the thought cloud                    */
+/* ------------------------------------------------------------------ */
+
+.sh-photo {
+  position: absolute;
+  width: 136px;
+  padding: 6px 6px 0;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: #fffbea;
+  box-shadow: 4px 4px 0 var(--ink), 0 12px 24px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+}
+
+.sh-photo-art {
+  display: block;
+  width: 120px;
+  height: 72px;
+  border-radius: 5px;
+}
+
+.sh-photo-name {
+  padding: 4px 0 5px;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.sh-photo-name.is-renamed { color: #0b5d3b; }
+
+.sh-stamp-tool {
+  position: absolute;
+  width: 96px;
+  height: 104px;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+
+.sh-stamp-tool svg {
+  display: block;
+}
+
+.sh-stamp-text {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 75px;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.sh-thought {
+  position: absolute;
+}
+
+.sh-thought-art {
+  display: block;
+  overflow: visible;
+}
+
+.sh-thought-cloud {
+  fill: #f6f8ff;
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+
+.sh-thought-text {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: 28%;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ */
+/* The chant: collectible cards and the toolbox                        */
+/* ------------------------------------------------------------------ */
+
+.sh-card {
+  position: absolute;
+  padding: 5px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #ffd100, #ff5fb0 30%, #38d3f5 60%, #a78bfa 85%, #ffd100);
+  box-shadow: 7px 7px 0 var(--ink), 0 26px 50px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.sh-card-face {
+  position: relative;
+  padding: 14px 20px 18px;
+  border: 3px solid var(--ink);
+  border-radius: 21px;
+  background: #f6f8ff;
+  color: var(--ink);
+}
+
+.sh-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sh-card-cat {
+  padding: 4px 11px 3px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--card-tone);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sh-card-number {
+  color: #3d4766;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.sh-card-art {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  margin: 10px auto 0;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #ffffff 0, var(--card-tone) 62%);
+  box-shadow: 0 4px 0 var(--ink);
+}
+
+.sh-card-icon {
+  width: 46px;
+  height: 46px;
+  color: var(--ink);
+}
+
+.sh-card-cmd {
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 50px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.sh-card-cmd--long { font-size: 40px; }
+.sh-card-cmd--longer { font-size: 32px; }
+
+.sh-card-flag {
+  display: table;
+  margin: 10px auto 0;
+  padding: 3px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: #0b0f1a;
+  color: #f6f8ff;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sh-card-gist {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: var(--card-tone);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.sh-card-sheen {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 0;
+  width: 42%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  translate: -120% 0;
+  rotate: 8deg;
+  pointer-events: none;
+}
+
+.sh-card--blue,
+.sh-tile--blue,
+.sh-box-label--blue { --card-tone: #93c5fd; }
+.sh-card--gold,
+.sh-tile--gold,
+.sh-box-label--gold { --card-tone: #ffd100; }
+.sh-card--green,
+.sh-tile--green,
+.sh-box-label--green { --card-tone: #4ade80; }
+.sh-card--cyan,
+.sh-tile--cyan,
+.sh-box-label--cyan { --card-tone: #38d3f5; }
+.sh-card--violet,
+.sh-tile--violet,
+.sh-box-label--violet { --card-tone: #c4b5fd; }
+
+.sh-box {
+  position: absolute;
+}
+
+.sh-box-art {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+}
+
+.sh-box-handle {
+  fill: none;
+  stroke: #2a3350;
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+
+.sh-box-inner {
+  fill: #23101a;
+  stroke: rgba(0, 0, 0, 0.45);
+  stroke-width: 2;
+}
+
+.sh-box-latch {
+  fill: #c8d3ea;
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.sh-box-title {
+  position: absolute;
+  padding: 2px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: #f6f8ff;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sh-box-grid {
+  position: absolute;
+}
+
+.sh-box-label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  height: 38px;
+  color: var(--card-tone);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sh-slot {
+  position: absolute;
+  border: 2px dashed rgba(255, 255, 255, 0.24);
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.sh-tile {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: var(--card-tone);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--ink);
+  box-sizing: border-box;
+}
+
+.sh-tile--long {
+  font-size: 14px;
+  letter-spacing: -0.02em;
+}
+
+.sh-tile svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Small labels shared by several scenes                               */
+/* ------------------------------------------------------------------ */
+
+.sh-count {
+  position: absolute;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 14px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 3px 3px 0 var(--ink);
+  white-space: nowrap;
+}
+
+.sh-count b {
+  font-family: var(--font-mono);
+  font-size: 22px;
+}
+
+.sh-note {
+  position: absolute;
+  padding: 4px 11px 3px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.sh-note--pink { background: var(--pink); }
+.sh-note--gold { background: var(--gold); }
+.sh-note--white { background: #f6f8ff; }
+
+/* Notation keeps its case: -rw-r--r-- is not -RW-R--R--, and chmod +x is
+   not +X. Stickers that quote commands opt out of the uppercase style. */
+.sh-note--code {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sticker.sticker--keepcase {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sh-scanner {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px 5px 8px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 3px 3px 0 var(--ink);
+  white-space: nowrap;
+}
+
+.sh-scanner svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.6;
+}
+
+.sh-env {
+  position: absolute;
+  padding: 8px 14px;
+  border: 1px solid rgba(160, 190, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(7, 11, 26, 0.9);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sh-env b {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.quiz-answer-code {
+  font-family: var(--font-mono);
+  font-weight: 800;
+}

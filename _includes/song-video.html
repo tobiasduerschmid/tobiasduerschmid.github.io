@@ -18,11 +18,16 @@
       the transcript gives every lyric line with what the video shows for it;
     - 1.4.2 / 2.2.2: nothing autoplays (the a11y audit fails any autoplaying
       media); preload="none" keeps the page light until someone presses play.
+
+  `mathjax_ignore` (the class MathJax 3.1+ skips) keeps MathJax
+  (_includes/head.html, `$` delimiters) out of the transcript: shell lyrics
+  such as `"$f" "trip_$f"`, `$1`, and `$?` are notation to read as written,
+  never TeX.
 {%- endcomment -%}
 {%- assign song = include.song -%}
 {%- assign song_video = song.video | relative_url -%}
 {%- assign described_video = song.described_video | relative_url -%}
-<figure class="song-video"{% if include.id %} id="{{ include.id }}"{% endif %}>
+<figure class="song-video mathjax_ignore"{% if include.id %} id="{{ include.id }}"{% endif %}>
   {% if song.player %}
   <iframe
     class="song-video-frame"

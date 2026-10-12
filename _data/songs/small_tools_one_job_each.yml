@@ -1,0 +1,715 @@
+# Storyboard for "Small Tools, One Job Each", the shell scripting song on the
+# SE Book page SEBook/tools/shell.md (embedded with _includes/song-video.html).
+#
+# This file is the single source of truth for the song's words and timing:
+#   - js/song-video/songs/small_tools_one_job_each.js choreographs the live
+#     vector player (/assets/song-player/small-tools-one-job-each.html)
+#     against each line's `start` and its `marks` (the times of the words the
+#     visuals hit), with the artwork in js/song-video/shell-kit.js;
+#   - render.js writes the captions and the audio-described soundtrack from
+#     `text` and `narration` (`node scripts/song-video/render.js
+#     small_tools_one_job_each`). This song has no MP4: it plays only in the
+#     live player, so render.js skips the frame capture;
+#   - _includes/song-video.html prints every line with its `visual`
+#     description as the on-page transcript (WCAG 1.2.1 / 1.2.3);
+#   - each section's `narration` is spoken in the audio-described track,
+#     where the picture holds at the start of the section while the narrator
+#     describes what it shows (extended audio description, WCAG 1.2.5).
+# Editing text or descriptions here updates the transcript and the player on
+# the next Jekyll build, but the captions and described audio only after
+# re-running render.js.
+#
+# Times are seconds into the Suno take, normalized to -16 LUFS. Line
+# boundaries and word marks come from local Whisper word timestamps aligned to
+# the lyric sheet (a prompted second pass covers the quiz, where the blind
+# pass misheard the shouted answers). `text` keeps shell notation (chmod +x, ./hello.sh, $1)
+# for what is sung in words ("C-H-mod plus X", "dot-slash", "dollar one").
+
+title: "Small Tools, One Job Each: a song about the Unix shell"   # the player's accessible name
+credit: Lyrics written for this chapter; music and vocals generated with Suno.
+extras:   # the song's own art and styles, loaded before its choreography
+  styles:
+    - /css/song-video-shell-kit.css
+  scripts:
+    - /js/song-video/shell-kit.js
+player: /assets/song-player/small-tools-one-job-each.html
+captions: /assets/audio/small-tools-one-job-each.vtt
+described_captions: /assets/audio/small-tools-one-job-each-described.vtt
+soundtrack: assets/audio/small-tools-one-job-each.m4a   # repo path, played by the live player
+described_soundtrack: assets/audio/small-tools-one-job-each-described.m4a
+described_timeline: /assets/audio/small-tools-one-job-each-described.json
+narrator:
+  voice: Samantha   # macOS `say` voice for the audio-described track
+  rate: 205         # words per minute
+  pronounce:        # how the narrator says notation the captions keep as written
+    names.txt: names dot text
+    notes.txt: notes dot text
+    app.log: app dot log
+    hello.sh: hello dot S H
+    /bin/bash: slash bin slash bash
+    /bin: slash bin
+    chmod: C H mod
+    uniq: unique
+    wc -l: W C dash L
+    cp: C P
+    ls: L S
+    htop: H top
+    pwd: P W D
+width: 1920
+height: 1080
+fps: 30
+duration: 281.2
+beats:
+  bpm: 91.0   # fitted to the take's onset envelope
+  first: 0.087
+
+sections:
+  - id: intro
+    title: "Intro"
+    delivery: spoken
+    narration: "Audio-described version: before each section, the picture pauses while I describe it. The intro: twelve vector trip photos named IMG with a number, out of three hundred. Renaming one by hand takes forever, so a terminal types a one-line for loop that moves each file to a name starting with trip underscore, and every photo is renamed at once. Then: exactly what you type, not what you think."
+    lines:
+      - id: intro-1
+        start: 3.16
+        end: 7.48
+        text: "Three hundred trip pics, every name IMG-something."
+        marks: {"three": 3.16, "hundred": 3.16, "trip": 3.78, "pics": 4.22, "every": 5.58, "name": 6.2, "img": 6.63, "something": 7.06}
+        visual: "Twelve trip photos, vector landscapes named IMG_412.jpg through IMG_423.jpg, pop in one by one under a “×300 trip pics” tag."
+      - id: intro-2
+        start: 8.3
+        end: 11.42
+        text: "Rename them all by hand? There goes your weekend."
+        marks: {"rename": 8.3, "them": 8.92, "all": 9.04, "by": 9.22, "hand": 9.42, "there": 9.84, "goes": 10.66, "your": 10.86, "weekend": 11.02}
+        visual: "The first photo bumps, a “1 of 300…” sticker and a “Weekend: gone” sticker with an hourglass appear, and the photos dim."
+      - id: intro-3
+        start: 11.42
+        end: 14.56
+        text: "Or type one line in the shell — done in a blink."
+        marks: {"or": 11.42, "type": 11.96, "one": 12.2, "line": 12.46, "in": 12.68, "the": 12.86, "shell": 12.96, "done": 13.32, "in_2": 13.98, "a": 14.12, "blink": 14.24}
+        visual: "A terminal window titled ~/trip slides in and types for f in *.jpg; do mv \"$f\" \"trip_$f\"; done under a “1 line” sticker. Every photo’s name changes to trip_IMG_….jpg in a wave, and a “300/300 renamed” tag appears."
+      - id: intro-4
+        start: 15.26
+        end: 20.34
+        text: "The shell does exactly what you type… not what you think."
+        marks: {"the": 15.26, "shell": 15.88, "does": 16.16, "exactly": 16.36, "what": 16.86, "you": 17.08, "type": 17.24, "not": 18.82, "what_2": 19.44, "you_2": 19.86, "think": 20.04}
+        visual: "Kinetic type: “Exactly what you type”, then, in pink, “not what you think”."
+  - id: verse-1
+    title: "Verse 1"
+    delivery: sung
+    narration: "Verse 1, how the shell reads a line. A pair of scissors cuts the typed line cp notes.txt backup.txt at its spaces, into a command and two arguments. Tape over the quoted name my notes keeps it one argument; without quotes, it is cut in two. Then the PATH variable becomes a filing cabinet: a magnifier opens its drawers in order and finds ls in /bin, but hello.sh lies on the desk in the current directory, which is not on the PATH, until dot slash points straight at it. Finally a directory tree drawn like a map, with a pin where you are in hw1, tags for dot dot and tilde, an absolute path drawn from the root like a full address, and a relative path drawn from here like directions."
+    lines:
+      - id: verse-1-1
+        start: 32.24
+        end: 35.08
+        text: "The shell reads your line and splits it at the spaces:"
+        marks: {"the": 32.24, "shell": 32.72, "reads": 33.02, "your": 33.32, "line": 33.5, "and": 33.76, "splits": 34.04, "it": 34.28, "at": 34.46, "the_2": 34.6, "spaces": 34.7}
+        visual: "A badge, “the shell: a command-line interpreter”, with a gear. Below it, a typed line: cp notes.txt backup.txt. A pair of scissors snips the line at each space, leaving dashed cut marks, and the words separate."
+      - id: verse-1-2
+        start: 35.08
+        end: 37.26
+        text: "first word’s the command, the rest are arguments."
+        marks: {"first": 35.08, "word": 35.46, "s": 35.62, "the": 35.78, "command": 35.94, "the_2": 36.22, "rest": 36.38, "are": 36.6, "arguments": 36.72}
+        visual: "cp is outlined gold and labeled “command”; notes.txt and backup.txt are outlined cyan and labeled “argument 1” and “argument 2”."
+      - id: verse-1-3
+        start: 37.82
+        end: 40.64
+        text: "Got a file called “my notes”? Wrap the name in quotes,"
+        marks: {"got": 37.82, "a": 38.3, "file": 38.38, "called": 38.68, "my": 38.86, "notes": 39.04, "wrap": 39.46, "the": 39.78, "name": 40.0, "in": 40.22, "quotes": 40.32}
+        visual: "A file chip named “my notes” appears. In ls \"my notes\", a strip of tape covers the quoted name (“quotes tape it together”), and the scissors cut only after ls: “command” and, in green, “1 argument ✓”."
+      - id: verse-1-4
+        start: 40.64
+        end: 43.26
+        text: "or the shell sees two words: “my” and “notes”."
+        marks: {"or": 40.64, "the": 40.84, "shell": 41.0, "sees": 41.26, "two": 41.56, "words": 41.86, "my": 42.4, "and": 42.76, "notes": 43.0}
+        visual: "Under a red “No quotes” sticker, the scissors cut ls my notes twice, into three words: “command”, then my and notes in red, labeled “argument 1” and “argument 2”."
+      - id: verse-1-5
+        start: 43.26
+        end: 45.62
+        text: "Not a built-in? The shell checks your PATH —"
+        marks: {"not": 43.26, "a": 43.8, "built": 43.98, "in": 44.22, "the": 44.52, "shell": 44.62, "checks": 44.86, "your": 45.14, "path": 45.3}
+        visual: "A sticker, “built-ins: cd, echo…”. The terminal types ls. A line reads PATH=/usr/local/bin:/usr/bin:/bin, and a filing cabinet labeled “PATH searched in order” appears with three numbered drawers: 1 /usr/local/bin, 2 /usr/bin, 3 /bin."
+      - id: verse-1-6
+        start: 45.62
+        end: 48.52
+        text: "an environment variable: directories, searched in order."
+        marks: {"an": 45.62, "environment": 46.0, "variable": 46.48, "directories": 47.04, "searched": 47.58, "in": 48.08, "order": 48.32}
+        visual: "The PATH line is tagged “environment variable”. A magnifier labeled ls opens the drawers in order: drawer 1 holds node and python3 (a cross), drawer 2 git and grep (a cross), and drawer 3 cat and ls, where ls lights up (a check)."
+      - id: verse-1-7
+        start: 48.52
+        end: 50.86
+        text: "Your current directory isn’t on that list,"
+        marks: {"your": 48.52, "current": 48.78, "directory": 49.08, "isn": 49.64, "t": 49.64, "on": 50.28, "that": 50.4, "list": 50.58}
+        visual: "Beside the cabinet, a dashed red folder, ~/cs35l with hello.sh, lies on a desk, labeled “current directory”, under a “Not on PATH” stamp. The terminal shows hello.sh, then “zsh: command not found: hello.sh”."
+      - id: verse-1-8
+        start: 50.86
+        end: 53.5
+        text: "so run your script with ./"
+        marks: {"so": 50.86, "run": 51.2, "your": 51.4, "script": 51.56, "with": 51.98, "dot": 52.09, "slash": 52.2}
+        visual: "The terminal types ./hello.sh. A gold arrow labeled “./ = the one right here” runs straight to hello.sh on the desk, which gets a check."
+      - id: verse-1-9
+        start: 53.5
+        end: 56.0
+        text: "pwd prints your working directory."
+        marks: {"p": 53.5, "w": 53.68, "d": 54.04, "prints": 54.54, "your": 55.12, "working": 55.16, "directory": 55.52}
+        visual: "A directory tree drawn like a map: / at the top, then bin and home, me inside home, cs35l inside me, hw1 inside cs35l, and tests inside hw1. A map pin “. you are here” lands on hw1, and the terminal runs pwd and prints /home/me/cs35l/hw1."
+      - id: verse-1-10
+        start: 56.0
+        end: 58.24
+        text: ".. is the parent, ~ is home."
+        marks: {"dot": 56.0, "dot_2": 56.56, "is": 56.66, "the": 56.84, "parent": 57.02, "tilde": 57.46, "is_2": 57.66, "home": 57.86}
+        visual: "Tags appear: “.. parent” on cs35l, with a cyan line from hw1 up to it, and a house, “~ home”, on me."
+      - id: verse-1-11
+        start: 58.24
+        end: 61.34
+        text: "Start with a slash: absolute, from the root."
+        marks: {"start": 58.24, "with": 59.0, "a": 59.28, "slash": 59.42, "absolute": 60.08, "from": 60.54, "the": 60.94, "root": 61.1}
+        visual: "A gold card with an envelope reads “absolute = full address: /home/me/cs35l/hw1/tests, starts at the root, works from anywhere”, and a gold line runs from / down through every folder to tests."
+      - id: verse-1-12
+        start: 61.38
+        end: 64.0
+        text: "No slash: relative — it starts right here."
+        marks: {"no": 61.38, "slash": 61.62, "relative": 62.02, "it": 62.9, "starts": 63.04, "right": 63.38, "here": 63.68}
+        visual: "A cyan card reads “relative = directions: tests, starts from right here (.)”, and a short cyan line runs from hw1 to tests."
+  - id: chorus-1
+    title: "Chorus"
+    delivery: sung
+    narration: "The chorus: three small machines on a conveyor belt, sort names.txt, uniq, and wc -l, each with one job, with pipe signs between them. Paper slips ride the belt through the machines, and cards above show the text after each step, ending in 3. Labels mark standard out feeding standard in; an error message drops out of a side hatch marked 2 to your screen, as standard error, stream 2; and each machine’s beacon shows its exit code: exit 0, it worked; anything else, it didn’t."
+    lines:
+      - id: chorus-1-1
+        start: 66.9
+        end: 71.46
+        text: "Small tools, one job each — the Unix philosophy!"
+        marks: {"small": 66.9, "tools": 67.5, "one": 68.12, "job": 68.34, "each": 68.66, "the": 69.0, "unix": 70.06, "philosophy": 70.78}
+        visual: "Under “The Unix philosophy”, kinetic type: “Small tools”, “one job each”. Three small machines rise onto a conveyor belt, each with its command on a sign, sort names.txt, uniq, and wc -l, and a job plate: “order”, “dedupe”, and “count”."
+      - id: chorus-1-2
+        start: 71.46
+        end: 75.14
+        text: "Chain them in a pipeline, let the text flow through:"
+        marks: {"chain": 71.46, "them": 72.38, "in": 72.7, "a": 72.9, "pipeline": 72.98, "let": 73.6, "the": 74.08, "text": 74.28, "flow": 74.56, "through": 74.82}
+        visual: "The belt starts, the machines’ gears turn, and paper slips ride through them, with “| pipe” signs between the machines. Cards above show the text on each stretch of belt: ana, lee, sam, sam out of sort; ana, lee, sam out of uniq; and the result, 3."
+      - id: chorus-1-3
+        start: 75.14
+        end: 76.86
+        text: "standard out feeds standard in,"
+        marks: {"standard": 75.14, "out": 75.35, "feeds": 75.56, "standard_2": 76.3, "in": 76.58}
+        visual: "Labels “stdout →” under the first machine’s outlet and “→ stdin” under the second machine’s intake."
+      - id: chorus-1-4
+        start: 76.86
+        end: 80.1
+        text: "errors take the side door — standard error, stream two."
+        marks: {"errors": 76.86, "take": 77.9, "the": 78.1, "side": 78.24, "door": 78.52, "standard": 78.62, "error": 78.72, "stream": 78.82, "two": 79.78}
+        visual: "A side hatch marked 2 opens on the middle machine, and a red “error message” slip drops out of it, off the belt, toward an icon labeled “your screen”, tagged “stderr = stream 2”."
+      - id: chorus-1-5
+        start: 80.34
+        end: 82.5
+        text: "Every command ends with an exit code:"
+        marks: {"every": 80.34, "command": 80.52, "ends": 80.96, "with": 81.5, "an": 81.72, "exit": 81.92, "code": 82.16}
+        visual: "Each machine’s beacon lights green with a check mark and “exit 0”."
+      - id: chorus-1-6
+        start: 82.5
+        end: 84.1
+        text: "zero means it worked! (Zero!)"
+        marks: {"zero": 82.5, "means": 82.8, "it": 83.2, "worked": 83.4, "zero_2": 83.62}
+        visual: "Big type: a check mark, “exit 0 = it worked”."
+      - id: chorus-1-7
+        start: 84.32
+        end: 85.78
+        text: "Anything else? It didn’t!"
+        marks: {"anything": 84.32, "else": 84.56, "it": 85.1, "didn": 85.18, "t": 85.18}
+        visual: "The last beacon turns red with a cross and “exit 1”; below the first rule, big type adds a cross and “anything else = it didn’t”."
+      - id: chorus-1-8
+        start: 85.78
+        end: 87.62
+        text: "Zero means it worked!"
+        marks: {"zero": 85.78, "means": 86.56, "it": 87.12, "worked": 87.32}
+        visual: "The last beacon is green again (“exit 0”), and all three machines bump; both rules stay on screen."
+  - id: verse-2
+    title: "Verse 2"
+    delivery: sung
+    narration: "Verse 2, your first shell script. A script card, hello.sh, whose first line, the shebang, carries an address label naming /bin/bash, the interpreter that runs it. chmod +x opens a padlock and turns on the three execute bits; without it, Permission denied. Running ./hello.sh students drops students into the dollar one blank. Then a variable: a box labeled NAME catching its value, with no spaces around the equals sign, or the shell runs NAME as a command. Quoted, the variable stays one argument; unquoted, scissors split it in two. A scoreboard shows dollar question mark, the last exit code, and an if statement becomes a flowchart that checks a test’s exit code and takes the then branch on zero, ending with fi. A for loop expands star dot jpg, and a rubber stamp renames each photo in turn, three hundred in all. Last, cd homework and-and ls: a boom gate lifts for ls only when cd exits 0."
+    lines:
+      - id: verse-2-1
+        start: 87.62
+        end: 90.68
+        text: "Save your commands in a file: a shell script."
+        marks: {"save": 87.62, "your": 88.48, "commands": 88.64, "in": 89.1, "a": 89.34, "file": 89.5, "a_2": 90.0, "shell": 90.12, "script": 90.36}
+        visual: "A script card, hello.sh, with numbered lines, rises with its line 2, echo \"Hello, $1!\", under a “Shell script” sticker."
+      - id: verse-2-2
+        start: 90.68
+        end: 93.64
+        text: "Line one’s the shebang — #!/bin/bash."
+        marks: {"line": 90.68, "one": 90.85, "s": 91.02, "the": 91.44, "shebang": 91.6, "hash": 92.14, "bang": 92.32, "slash": 92.8, "bin": 92.94, "slash_2": 93.46, "bash": 93.68}
+        visual: "Its line 1, #!/bin/bash, slides in and lights up; #! is ringed gold, then /bin/bash cyan, and an address label tied to the line reads “TO /bin/bash, shebang”."
+      - id: verse-2-3
+        start: 93.9
+        end: 97.14
+        text: "chmod +x, and now it can run. (Execute!)"
+        marks: {"c": 93.9, "h": 93.9, "mod": 94.44, "plus": 94.98, "x": 95.26, "and": 95.58, "now": 95.74, "it": 95.89, "can": 96.04, "run": 96.22, "execute": 96.58}
+        visual: "The terminal types chmod +x hello.sh. A red padlock opens and turns green as the permission cells -rw-r--r-- (owner, group, others) change to -rwxr-xr-x, the three x’s turning green, beside an “x = execute” sticker."
+      - id: verse-2-4
+        start: 97.14
+        end: 99.14
+        text: "Skip that step? “Permission denied.”"
+        marks: {"skip": 97.14, "that": 97.5, "step": 97.74, "permission": 98.28, "denied": 98.58}
+        visual: "Beside them, a closed red padlock and “-rw-r--r-- (no x)”, under a “Skip chmod?” sticker, get a red “Permission denied” stamp."
+      - id: verse-2-5
+        start: 99.14
+        end: 101.5
+        text: "./hello.sh students:"
+        marks: {"dot": 99.14, "slash": 99.5, "hello": 99.88, "dot_2": 100.3, "s": 100.56, "h": 100.56, "students": 100.98}
+        visual: "The terminal types ./hello.sh students and prints Hello, students!. The words split: ./hello.sh labeled “script”, students labeled “$1”."
+      - id: verse-2-6
+        start: 101.5
+        end: 104.38
+        text: "inside, $1 is “students”. (First argument!)"
+        marks: {"inside": 101.5, "dollar": 101.82, "one": 102.14, "is": 102.84, "students": 103.2, "first": 103.58, "argument": 103.84}
+        visual: "In the script, the line with $1 lights up, $1 is ringed gold, and a “students” chip drops onto the blank under it, with an arrow from the typed word and a “first argument” sticker."
+      - id: verse-2-7
+        start: 104.38
+        end: 106.88
+        text: "Name equals value — no spaces round the equals!"
+        marks: {"name": 104.38, "equals": 104.86, "value": 105.26, "no": 105.7, "spaces": 105.82, "round": 106.2, "the": 106.48, "equals_2": 106.62}
+        visual: "A card titled “variables”: NAME=\"my notes\" lights green with its = ringed, and a cardboard box labeled NAME catches a “my notes” slip; below, NAME = \"my notes\" lights red with both spaces ringed pink. The terminal shows NAME = \"my notes\", then “zsh: command not found: NAME”, and a “No spaces!” sticker appears."
+      - id: verse-2-8
+        start: 106.88
+        end: 109.48
+        text: "Use it in double quotes, every time,"
+        marks: {"use": 106.88, "it": 107.24, "in": 108.14, "double": 108.26, "quotes": 108.48, "every": 108.88, "time": 109.18}
+        visual: "ls \"$NAME\", its quoted variable taped together, is cut only once: “command” and, in green, “1 argument ✓”."
+      - id: verse-2-9
+        start: 109.47
+        end: 111.76
+        text: "or word splitting cuts “my notes” in two."
+        marks: {"or": 109.47, "word": 109.76, "splitting": 109.96, "cuts": 110.34, "my": 110.62, "notes": 110.94, "in": 111.38, "two": 111.56}
+        visual: "Then ls my notes, tagged “$NAME, unquoted” and “word splitting”, is cut twice by the scissors into three words, with my and notes labeled “argument 1” and “argument 2” in red."
+      - id: verse-2-10
+        start: 111.76
+        end: 115.28
+        text: "$? holds the last exit code. (Return code!)"
+        marks: {"dollar": 111.76, "question": 112.4, "mark": 112.82, "holds": 113.14, "the": 113.4, "last": 113.52, "exit": 113.82, "code": 114.16, "return": 114.44, "code_2": 114.8}
+        visual: "A scoreboard reads “$? 0, last exit code”, with a sticker “a.k.a. return code”."
+      - id: verse-2-11
+        start: 115.14
+        end: 118.08
+        text: "if runs a test and checks its code: zero runs the then."
+        marks: {"if": 115.14, "runs": 115.48, "a": 115.7, "test": 115.88, "and": 116.16, "checks": 116.32, "its": 116.62, "code": 116.82, "zero": 117.06, "runs_2": 117.42, "the": 117.7, "then": 117.82}
+        visual: "A script card, check.sh: if [ -f notes.txt ]; then / echo \"found it\" / fi. The condition is ringed cyan, and a flowchart beside it runs [ -f notes.txt ] into a diamond asking “exit 0?”. The scoreboard notes “set by the [ ] test”, and the green branch, “exit 0 → then”, leads to echo \"found it\", which lights green; the other branch reads “else → fi”."
+      - id: verse-2-12
+        start: 118.2
+        end: 120.72
+        text: "The bracket’s the test command — keep the spaces inside,"
+        marks: {"the": 118.2, "bracket": 118.3, "s": 118.46, "the_2": 118.62, "test": 118.82, "command": 119.0, "keep": 119.36, "the_3": 119.76, "spaces": 119.92, "inside": 120.22}
+        visual: "The two brackets are ringed pink (“[ = test command”), and the spaces inside them are ringed gold (“Spaces inside”)."
+      - id: verse-2-13
+        start: 120.86
+        end: 124.22
+        text: "and fi ends it: that’s if backwards. (fi!)"
+        marks: {"and": 120.86, "f": 120.96, "i": 121.22, "ends": 121.56, "it": 121.92, "that": 122.1, "s": 122.1, "i_2": 122.44, "f_2": 122.66, "backwards": 122.98, "f_3": 123.6, "i_3": 123.96}
+        visual: "fi is ringed gold, and a tag shows the letters i and f swapping places: “if backwards ends it”."
+      - id: verse-2-14
+        start: 124.28
+        end: 126.56
+        text: "for f in *.jpg — (Wildcard!)"
+        marks: {"for": 124.28, "f": 124.42, "in": 124.58, "star": 124.74, "dot": 124.98, "jpeg": 125.26, "wildcard": 126.04}
+        visual: "A script card, rename.sh: for f in *.jpg; do / mv \"$f\" \"trip_$f\" / done. *.jpg is ringed gold under a “wildcard” sticker, and three photos fly out of it: IMG_412.jpg, IMG_413.jpg, IMG_414.jpg, plus “…297 more”."
+      - id: verse-2-15
+        start: 126.78
+        end: 128.58
+        text: "the for loop runs once per file:"
+        marks: {"the": 126.78, "for": 126.78, "loop": 126.96, "runs": 127.26, "once": 127.66, "per": 127.94, "file": 128.28}
+        visual: "A “once per file” sticker with a loop arrow, and a rubber stamp reading trip_ moves over the first photo."
+      - id: verse-2-16
+        start: 128.58
+        end: 131.24
+        text: "do mv \"$f\" \"trip_$f\"; done."
+        marks: {"do": 128.58, "move": 128.96, "f": 129.34, "to": 129.64, "trip": 129.86, "underscore": 130.1, "f_2": 130.52, "done": 130.94}
+        visual: "The mv line lights up as the stamp presses each photo in turn and its name changes to trip_IMG_….jpg; then the done line lights up."
+      - id: verse-2-17
+        start: 131.6
+        end: 133.5
+        text: "Three hundred renamed. (Weekend won!)"
+        marks: {"three": 131.6, "hundred": 131.6, "renamed": 131.88, "weekend": 132.7, "won": 133.26}
+        visual: "A “300/300 renamed” tag and a gold “Weekend won” stamp."
+      - id: verse-2-18
+        start: 133.64
+        end: 135.94
+        text: "cd homework && ls:"
+        marks: {"c": 133.64, "d": 133.64, "homework": 133.9, "and": 134.44, "and_2": 134.88, "l": 135.32, "s": 135.62}
+        visual: "The terminal types cd homework && ls. Three pieces appear in turn: a chip cd homework, a boom gate with && on its post, and a chip ls."
+      - id: verse-2-19
+        start: 136.58
+        end: 138.46
+        text: "ls only runs if cd worked."
+        marks: {"l": 136.58, "s": 136.82, "only": 136.98, "runs": 137.22, "if": 137.56, "c": 137.76, "d": 137.76, "worked": 138.08}
+        visual: "cd homework gets a green “exit 0” lamp, the gate’s light turns green and its striped arm lifts, ls lights green, and a card shows its output: hw1.sh, notes.txt. Below, under a “typo” sticker, cd homwork && ls: cd gets a red “exit 1” lamp, the gate stays down with a red light, and ls greys out, marked “skipped”."
+  - id: chorus-2
+    title: "Chorus"
+    delivery: sung
+    narration: "The chorus again, with a different pipeline on the belt: grep ERROR app.log, sort, and uniq, showing the error lines, the same lines sorted, and each distinct line once. Again, standard out feeds standard in, errors leave by the side hatch, and exit 0 means it worked."
+    lines:
+      - id: chorus-2-1
+        start: 138.46
+        end: 143.06
+        text: "Small tools, one job each — the Unix philosophy! (Hey!)"
+        marks: {"small": 138.46, "tools": 138.78, "one": 139.26, "job": 139.52, "each": 139.84, "the": 140.22, "unix": 141.26, "philosophy": 142.0, "hey": 142.68}
+        visual: "Under “The Unix philosophy”, kinetic type: “Small tools”, “one job each”. Three small machines rise onto a conveyor belt, each with its command on a sign, grep ERROR app.log, sort, and uniq, and a job plate: “filter”, “order”, and “dedupe”."
+      - id: chorus-2-2
+        start: 143.38
+        end: 146.34
+        text: "Chain them in a pipeline, let the text flow through:"
+        marks: {"chain": 143.38, "them": 143.66, "in": 143.88, "a": 144.08, "pipeline": 144.2, "let": 144.7, "the": 145.24, "text": 145.48, "flow": 145.76, "through": 146.02}
+        visual: "The belt starts, the machines’ gears turn, and paper slips ride through them, with “| pipe” signs between the machines. Cards above show the text on each stretch of belt: the ERROR lines out of grep, the same lines sorted out of sort, and each distinct ERROR line once as the result."
+      - id: chorus-2-3
+        start: 146.34
+        end: 148.08
+        text: "standard out feeds standard in,"
+        marks: {"standard": 146.34, "out": 146.78, "feeds": 147.13, "standard_2": 147.48, "in": 147.78}
+        visual: "Labels “stdout →” under the first machine’s outlet and “→ stdin” under the second machine’s intake."
+      - id: chorus-2-4
+        start: 148.08
+        end: 150.72
+        text: "errors take the side door — standard error, stream two."
+        marks: {"errors": 148.08, "take": 149.12, "the": 149.3, "side": 149.48, "door": 149.74, "standard": 150.0, "error": 150.4, "stream": 150.71, "two": 151.01}
+        visual: "A side hatch marked 2 opens on the middle machine, and a red “error message” slip drops out of it, off the belt, toward an icon labeled “your screen”, tagged “stderr = stream 2”."
+      - id: chorus-2-5
+        start: 151.32
+        end: 153.68
+        text: "Every command ends with an exit code:"
+        marks: {"every": 151.32, "command": 151.72, "ends": 152.18, "with": 152.72, "an": 152.94, "exit": 153.16, "code": 153.36}
+        visual: "Each machine’s beacon lights green with a check mark and “exit 0”."
+      - id: chorus-2-6
+        start: 153.68
+        end: 155.32
+        text: "zero means it worked! (Zero!)"
+        marks: {"zero": 153.68, "means": 154.0, "it": 154.4, "worked": 154.58, "zero_2": 154.82}
+        visual: "Big type: a check mark, “exit 0 = it worked”."
+      - id: chorus-2-7
+        start: 155.32
+        end: 157.02
+        text: "Anything else? It didn’t!"
+        marks: {"anything": 155.32, "else": 155.74, "it": 156.32, "didn": 156.4, "t": 156.4}
+        visual: "The last beacon turns red with a cross and “exit 1”; below the first rule, big type adds a cross and “anything else = it didn’t”."
+      - id: chorus-2-8
+        start: 157.02
+        end: 158.88
+        text: "Zero means it worked!"
+        marks: {"zero": 157.02, "means": 157.76, "it": 158.3, "worked": 158.56}
+        visual: "The last beacon is green again (“exit 0”), and all three machines bump; both rules stay on screen."
+  - id: bridge
+    title: "One job each"
+    delivery: sung
+    narration: "The bridge, one job each: for every command the crowd calls out, a numbered collectible card shows its name, its category, its job, and sometimes its key flag, then flies into an open toolbox with rows for navigating, files, reading, text, and the system. Twenty-two commands in all, from ls to htop."
+    lines:
+      - id: bridge-1
+        start: 158.88
+        end: 162.36
+        text: "One job each — I call it, you shout what it does!"
+        marks: {"one": 158.88, "job": 159.76, "each": 160.02, "i": 160.54, "call": 160.98, "it": 161.22, "you": 161.34, "shout": 161.46, "what": 161.7, "it_2": 161.88, "does": 162.0}
+        visual: "Kinetic type: “One job each”, with “I call the command, you say what it does” underneath. An open red toolbox labeled “The Unix toolbox” appears on the left, with empty trays in labeled rows: Navigate, Files, Read, Text, System."
+      - id: bridge-2
+        start: 162.36
+        end: 164.5
+        text: "ls? — Lists a directory!"
+        marks: {"l": 162.36, "s": 162.36, "lists": 163.42, "a": 163.7, "directory": 163.88}
+        visual: "A collectible card on the right, numbered 1/22: ls in large type, the category “Navigate”, an icon, and its job, “lists a directory”. Then it flies into its slot in the toolbox’s Navigate row."
+      - id: bridge-3
+        start: 164.5
+        end: 166.48
+        text: "cd? — Changes directory!"
+        marks: {"c": 164.5, "d": 164.5, "changes": 165.32, "directory": 165.66}
+        visual: "A collectible card on the right, numbered 2/22: cd in large type, the category “Navigate”, an icon, and its job, “changes directory”. Then it flies into its slot in the toolbox’s Navigate row."
+      - id: bridge-4
+        start: 166.48
+        end: 168.86
+        text: "pwd? — Prints where you are!"
+        marks: {"p": 166.48, "w": 166.48, "d": 166.48, "prints": 168.0, "where": 168.22, "you": 168.42, "are": 168.58}
+        visual: "A collectible card on the right, numbered 3/22: pwd in large type, the category “Navigate”, an icon, and its job, “prints where you are”. Then it flies into its slot in the toolbox’s Navigate row."
+      - id: bridge-5
+        start: 168.86
+        end: 171.52
+        text: "mkdir? — Makes a directory! -p: parents too!"
+        marks: {"make": 168.86, "dir": 169.14, "makes": 169.5, "a": 169.64, "directory": 169.82, "dash": 170.42, "p": 170.85, "parents": 171.28, "too": 171.53}
+        visual: "A collectible card on the right, numbered 4/22: mkdir in large type, the category “Navigate”, an icon, and its job, “makes a directory”, with the chip “-p: parents too”. Then it flies into its slot in the toolbox’s Navigate row."
+      - id: bridge-6
+        start: 171.78
+        end: 174.76
+        text: "touch? — A new, empty file! Touch a file, not grass!"
+        marks: {"touch": 171.78, "a": 172.1, "new": 172.36, "empty": 172.56, "file": 172.98, "touch_2": 173.42, "a_2": 173.68, "file_2": 173.88, "not": 174.24, "grass": 174.4}
+        visual: "A collectible card on the right, numbered 5/22: touch in large type, the category “Navigate”, an icon, and its job, “a new, empty file”. Then it flies into its slot in the toolbox’s Navigate row."
+      - id: bridge-7
+        start: 174.76
+        end: 177.58
+        text: "cp? — Copies it! -r for directories!"
+        marks: {"c": 174.76, "p": 174.76, "copies": 175.58, "it": 175.86, "dash": 176.08, "r": 176.42, "for": 176.74, "directories": 177.02}
+        visual: "A collectible card on the right, numbered 6/22: cp in large type, the category “Files”, an icon, and its job, “copies it”, with the chip “-r: directories”. Then it flies into its slot in the toolbox’s Files row."
+      - id: bridge-8
+        start: 177.58
+        end: 179.36
+        text: "mv? — Moves or renames!"
+        marks: {"m": 177.58, "v": 177.58, "moves": 178.2, "or": 178.8, "renames": 179.0}
+        visual: "A collectible card on the right, numbered 7/22: mv in large type, the category “Files”, an icon, and its job, “moves or renames”. Then it flies into its slot in the toolbox’s Files row."
+      - id: bridge-9
+        start: 179.36
+        end: 182.34
+        text: "rm? — Gone for good! No undo, no cap!"
+        marks: {"r": 179.36, "m": 179.36, "gone": 179.88, "for": 180.34, "good": 180.6, "no": 180.92, "undo": 181.26, "no_2": 181.8, "cap": 181.98}
+        visual: "A collectible card on the right, numbered 8/22: rm in large type, the category “Files”, an icon, and its job, “gone for good — no undo”. Then it flies into its slot in the toolbox’s Files row."
+      - id: bridge-10
+        start: 182.34
+        end: 183.98
+        text: "cat? — Prints files back to back!"
+        marks: {"cat": 182.34, "prints": 182.64, "files": 183.0, "back": 183.34, "to": 183.6, "back_2": 183.72}
+        visual: "A collectible card on the right, numbered 9/22: cat in large type, the category “Read”, an icon, and its job, “prints files back to back”. Then it flies into its slot in the toolbox’s Read row."
+      - id: bridge-11
+        start: 183.98
+        end: 186.28
+        text: "less? — One page at a time! q to quit!"
+        marks: {"less": 183.98, "one": 184.26, "page": 184.6, "at": 185.08, "a": 185.3, "time": 185.4, "q": 185.68, "to": 185.88, "quit": 186.04}
+        visual: "A collectible card on the right, numbered 10/22: less in large type, the category “Read”, an icon, and its job, “one page at a time”, with the chip “q: quit”. Then it flies into its slot in the toolbox’s Read row."
+      - id: bridge-12
+        start: 186.28
+        end: 188.68
+        text: "head and tail? — First or last ten lines!"
+        marks: {"head": 186.28, "and": 186.58, "tail": 186.76, "first": 187.02, "or": 187.28, "last": 187.38, "ten": 187.66, "lines": 187.92}
+        visual: "A collectible card on the right, numbered 11/22: head·tail in large type, the category “Read”, an icon, and its job, “first or last ten lines”. Then it flies into its slot in the toolbox’s Read row."
+      - id: bridge-13
+        start: 188.76
+        end: 190.82
+        text: "grep? — Finds matching lines!"
+        marks: {"grep": 188.76, "finds": 189.6, "matching": 189.9, "lines": 190.24}
+        visual: "A collectible card on the right, numbered 12/22: grep in large type, the category “Text”, an icon, and its job, “finds matching lines”. Then it flies into its slot in the toolbox’s Text row."
+      - id: bridge-14
+        start: 190.88
+        end: 192.86
+        text: "sed? — Swaps text as it streams!"
+        marks: {"sed": 190.88, "swaps": 191.52, "text": 191.8, "as": 192.22, "it": 192.41, "streams": 192.6}
+        visual: "A collectible card on the right, numbered 13/22: sed in large type, the category “Text”, an icon, and its job, “swaps text as it streams”. Then it flies into its slot in the toolbox’s Text row."
+      - id: bridge-15
+        start: 192.86
+        end: 194.42
+        text: "sort? — Puts lines in order!"
+        marks: {"sort": 192.86, "puts": 193.38, "lines": 193.54, "in": 193.92, "order": 194.16}
+        visual: "A collectible card on the right, numbered 14/22: sort in large type, the category “Text”, an icon, and its job, “puts lines in order”. Then it flies into its slot in the toolbox’s Text row."
+      - id: bridge-16
+        start: 194.42
+        end: 197.22
+        text: "uniq? — Drops repeats next door — so sort first!"
+        marks: {"unique": 194.42, "drops": 194.92, "repeats": 195.28, "next": 195.7, "door": 196.02, "so": 196.34, "sort": 196.58, "first": 196.84}
+        visual: "A collectible card on the right, numbered 15/22: uniq in large type, the category “Text”, an icon, and its job, “drops repeats next door”, with the chip “sort first”. Then it flies into its slot in the toolbox’s Text row."
+      - id: bridge-17
+        start: 197.22
+        end: 199.14
+        text: "wc? — Counts lines and words!"
+        marks: {"w": 197.22, "c": 197.22, "counts": 197.84, "lines": 198.16, "and": 198.56, "words": 198.74}
+        visual: "A collectible card on the right, numbered 16/22: wc in large type, the category “Text”, an icon, and its job, “counts lines and words”. Then it flies into its slot in the toolbox’s Text row."
+      - id: bridge-18
+        start: 199.14
+        end: 200.46
+        text: "cut? — Cuts out columns!"
+        marks: {"cut": 199.14, "cuts": 199.62, "out": 199.86, "columns": 200.04}
+        visual: "A collectible card on the right, numbered 17/22: cut in large type, the category “Text”, an icon, and its job, “cuts out columns”. Then it flies into its slot in the toolbox’s Text row."
+      - id: bridge-19
+        start: 200.46
+        end: 201.78
+        text: "find? — Searches for files!"
+        marks: {"find": 200.46, "searches": 200.96, "for": 201.16, "files": 201.4}
+        visual: "A collectible card on the right, numbered 18/22: find in large type, the category “Files”, an icon, and its job, “searches for files”. Then it flies into its slot in the toolbox’s Files row."
+      - id: bridge-20
+        start: 201.78
+        end: 202.7
+        text: "man? — The manual!"
+        marks: {"man": 201.78, "the": 202.16, "manual": 202.24}
+        visual: "A collectible card on the right, numbered 19/22: man in large type, the category “System”, an icon, and its job, “the manual”. Then it flies into its slot in the toolbox’s System row."
+      - id: bridge-21
+        start: 203.14
+        end: 205.0
+        text: "chmod? — Read, write, execute!"
+        marks: {"chmod": 203.14, "read": 203.92, "write": 204.24, "execute": 204.58}
+        visual: "A collectible card on the right, numbered 20/22: chmod in large type, the category “System”, an icon, and its job, “read, write, execute”. Then it flies into its slot in the toolbox’s System row."
+      - id: bridge-22
+        start: 205.0
+        end: 207.4
+        text: "ssh? — Secure shell, far away!"
+        marks: {"s": 205.0, "s_2": 205.0, "h": 205.0, "secure": 205.78, "shell": 206.16, "far": 206.7, "away": 207.04}
+        visual: "A collectible card on the right, numbered 21/22: ssh in large type, the category “System”, an icon, and its job, “secure shell, far away”. Then it flies into its slot in the toolbox’s System row."
+      - id: bridge-23
+        start: 207.5
+        end: 208.72
+        text: "htop? — What’s running!"
+        marks: {"h": 207.5, "top": 207.79, "what": 208.08, "s": 208.08, "running": 208.44}
+        visual: "A collectible card on the right, numbered 22/22: htop in large type, the category “System”, an icon, and its job, “what’s running”. Then it flies into its slot in the toolbox’s System row. The toolbox is full, under a “Toolbox: complete” sticker."
+  - id: quiz
+    title: "Pop quiz"
+    delivery: call
+    narration: "Pop quiz: each question appears on a card, and its answer appears when the crowd sings it."
+    lines:
+      - id: quiz-1
+        start: 211.26
+        end: 214.68
+        text: "Exit code zero means…?"
+        answer: "It worked!"
+        answer_at: 213.84
+        marks: {"exit": 211.26, "code": 211.82, "zero": 212.02, "means": 212.34, "it": 213.84, "worked": 214.4}
+        visual: "Quiz card 1 of 11 shows the question; the answer, It worked!, slams in on a green bar when the crowd sings it."
+      - id: quiz-2
+        start: 214.94
+        end: 217.66
+        text: "Where am I?"
+        answer: "pwd!"
+        answer_at: 217.1
+        marks: {"where": 214.94, "am": 215.1, "i": 215.3, "p": 217.1, "w": 217.1, "d": 217.1}
+        visual: "Quiz card 2 of 11 shows the question; the answer, pwd!, slams in on a green bar when the crowd sings it."
+      - id: quiz-3
+        start: 217.86
+        end: 219.84
+        text: "Rename a file?"
+        answer: "mv!"
+        answer_at: 219.28
+        marks: {"rename": 217.86, "a": 218.24, "file": 218.36, "m": 219.28, "v": 219.28}
+        visual: "Quiz card 3 of 11 shows the question; the answer, mv!, slams in on a green bar when the crowd sings it."
+      - id: quiz-4
+        start: 220.24
+        end: 222.24
+        text: "Swap “old” for “new”?"
+        answer: "sed!"
+        answer_at: 222.02
+        marks: {"swap": 220.24, "old": 220.5, "for": 220.78, "new": 221.0, "sed": 222.02}
+        visual: "Quiz card 4 of 11 shows the question; the answer, sed!, slams in on a green bar when the crowd sings it."
+      - id: quiz-5
+        start: 222.66
+        end: 225.62
+        text: "Copy a whole directory?"
+        answer: "cp -r!"
+        answer_at: 224.34
+        marks: {"copy": 222.66, "a": 222.94, "whole": 223.06, "directory": 223.18, "c": 224.34, "p": 224.34, "dash": 224.9, "r": 225.24}
+        visual: "Quiz card 5 of 11 shows the question; the answer, cp -r!, slams in on a green bar when the crowd sings it."
+      - id: quiz-6
+        start: 225.66
+        end: 227.72
+        text: "Find the lines that say ERROR?"
+        answer: "grep!"
+        answer_at: 227.32
+        marks: {"find": 225.66, "the": 225.86, "lines": 225.96, "that": 226.18, "say": 226.32, "error": 226.52, "grep": 227.32}
+        visual: "Quiz card 6 of 11 shows the question; the answer, grep!, slams in on a green bar when the crowd sings it."
+      - id: quiz-7
+        start: 227.94
+        end: 230.44
+        text: "Drop repeated lines?"
+        answer: "sort, then uniq!"
+        answer_at: 229.48
+        marks: {"drop": 227.94, "repeated": 228.42, "lines": 228.86, "sort": 229.48, "then": 229.88, "unique": 229.96}
+        visual: "Quiz card 7 of 11 shows the question; the answer, sort, then uniq!, slams in on a green bar when the crowd sings it."
+      - id: quiz-8
+        start: 230.76
+        end: 233.5
+        text: "How many lines in a file?"
+        answer: "wc!"
+        answer_at: 232.94
+        marks: {"how": 230.76, "many": 230.88, "lines": 231.12, "in": 231.54, "a": 231.76, "file": 231.9, "w": 232.94, "c": 232.94}
+        visual: "Quiz card 8 of 11 shows the question; the answer, wc!, slams in on a green bar when the crowd sings it."
+      - id: quiz-9
+        start: 233.72
+        end: 236.38
+        text: "“Permission denied”?"
+        answer: "chmod +x!"
+        answer_at: 235.16
+        marks: {"permission": 233.72, "denied": 234.16, "chmod": 235.16, "plus": 235.72, "x": 236.12}
+        visual: "Quiz card 9 of 11 shows the question; the answer, chmod +x!, slams in on a green bar when the crowd sings it."
+      - id: quiz-10
+        start: 236.56
+        end: 239.16
+        text: "Your script: “command not found”?"
+        answer: "./"
+        answer_at: 237.92
+        marks: {"your": 236.56, "script": 236.56, "command": 236.94, "not": 237.38, "found": 237.7, "dot": 237.92, "slash": 238.14}
+        visual: "Quiz card 10 of 11 shows the question; the answer, ./, slams in on a green bar when the crowd sings it."
+      - id: quiz-11
+        start: 239.16
+        end: 243.32
+        text: "rm -r — can you undo it?"
+        answer: "No!"
+        answer_at: 242.62
+        marks: {"r": 239.16, "m": 239.42, "dash": 239.76, "r_2": 240.08, "can": 240.44, "you": 240.8, "undo": 240.98, "it": 241.26, "no": 242.62}
+        visual: "Quiz card 11 of 11 shows the question; the answer, No!, slams in on a green bar when the crowd sings it."
+  - id: chorus-3
+    title: "Final chorus"
+    delivery: sung
+    narration: "The final chorus: the first pipeline again, sort names.txt, uniq, and wc -l, ending in 3 and exit 0, with confetti."
+    lines:
+      - id: chorus-3-1
+        start: 243.96
+        end: 248.6
+        text: "Small tools, one job each — the Unix philosophy! (Hey!)"
+        marks: {"small": 243.96, "tools": 244.34, "one": 244.9, "job": 245.02, "each": 245.36, "the": 245.72, "unix": 246.74, "philosophy": 247.48, "hey": 248.26}
+        visual: "Under “The Unix philosophy”, kinetic type: “Small tools”, “one job each”. Three small machines rise onto a conveyor belt, each with its command on a sign, sort names.txt, uniq, and wc -l, and a job plate: “order”, “dedupe”, and “count”."
+      - id: chorus-3-2
+        start: 248.88
+        end: 251.84
+        text: "Chain them in a pipeline, let the text flow through:"
+        marks: {"chain": 248.88, "them": 249.14, "in": 249.4, "a": 249.6, "pipeline": 249.7, "let": 250.24, "the": 250.76, "text": 250.98, "flow": 251.26, "through": 251.54}
+        visual: "The belt starts, the machines’ gears turn, and paper slips ride through them, with “| pipe” signs between the machines. Cards above show the text on each stretch of belt: ana, lee, sam, sam out of sort; ana, lee, sam out of uniq; and the result, 3."
+      - id: chorus-3-3
+        start: 251.84
+        end: 253.58
+        text: "standard out feeds standard in,"
+        marks: {"standard": 251.84, "out": 252.26, "feeds": 252.66, "standard_2": 252.84, "in": 253.28}
+        visual: "Labels “stdout →” under the first machine’s outlet and “→ stdin” under the second machine’s intake."
+      - id: chorus-3-4
+        start: 253.58
+        end: 256.24
+        text: "errors take the side door — standard error, stream two."
+        marks: {"errors": 253.58, "take": 254.18, "the": 254.78, "side": 254.94, "door": 255.26, "standard": 255.54, "error": 255.9, "stream": 256.25, "two": 256.61}
+        visual: "A side hatch marked 2 opens on the middle machine, and a red “error message” slip drops out of it, off the belt, toward an icon labeled “your screen”, tagged “stderr = stream 2”."
+      - id: chorus-3-5
+        start: 256.96
+        end: 259.2
+        text: "Every command ends with an exit code:"
+        marks: {"every": 256.96, "command": 257.22, "ends": 257.66, "with": 258.22, "an": 258.42, "exit": 258.64, "code": 258.88}
+        visual: "Each machine’s beacon lights green with a check mark and “exit 0”."
+      - id: chorus-3-6
+        start: 259.2
+        end: 260.86
+        text: "zero means it worked! (Zero!)"
+        marks: {"zero": 259.2, "means": 259.5, "it": 259.92, "worked": 260.08, "zero_2": 260.32}
+        visual: "Big type: a check mark, “exit 0 = it worked”."
+      - id: chorus-3-7
+        start: 261.02
+        end: 262.08
+        text: "Anything else? It didn’t!"
+        marks: {"anything": 261.02, "else": 261.26, "it": 261.66, "didn": 261.92, "t": 262.31}
+        visual: "The last beacon turns red with a cross and “exit 1”; below the first rule, big type adds a cross and “anything else = it didn’t”."
+      - id: chorus-3-8
+        start: 262.7
+        end: 264.3
+        text: "Zero means it worked!"
+        marks: {"zero": 262.7, "means": 263.28, "it": 263.86, "worked": 264.04}
+        visual: "The last beacon is green again (“exit 0”), and all three machines bump; both rules stay on screen. Confetti falls."
+  - id: outro
+    title: "Outro"
+    delivery: spoken
+    narration: "The outro: small tools, one job each. A terminal types echo dollar question mark and prints 0, and an exit 0 stamp lands, with the credit SE Book, Shell Scripting."
+    lines:
+      - id: outro-1
+        start: 264.3
+        end: 266.8
+        text: "Small tools, one job each…"
+        marks: {"small": 264.3, "tools": 265.34, "one": 265.98, "job": 266.1, "each": 266.44}
+        visual: "Kinetic type: “Small tools”, “one job each”."
+      - id: outro-2
+        start: 266.8
+        end: 269.58
+        text: "and zero means it worked."
+        marks: {"and": 266.8, "zero": 268.04, "means": 268.56, "it": 269.12, "worked": 269.3}
+        visual: "A terminal window types echo $? and prints 0 in green."
+      - id: outro-3
+        start: 269.58
+        end: 270.6
+        text: "Exit zero!"
+        marks: {"exit": 269.58, "zero": 270.14}
+        visual: "A green “exit 0” stamp, and the credit “SE Book · Shell Scripting”."
+      - id: outro-4
+        start: 278.44
+        end: 280.0
+        text: "Exit zero."
+        marks: {"exit": 278.44, "zero": 279.36}
+        visual: "The stamp and the credit stay on screen as the music ends."

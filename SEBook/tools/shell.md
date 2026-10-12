@@ -8,6 +8,7 @@ program_output_labs: true
 <script src="/js/fs-command-lab.js"></script>
 
 <link rel="stylesheet" href="/css/fs-command-lab.css">
+<link rel="stylesheet" href="/css/song-video.css">
 <link rel="stylesheet" href="/css/print-light.css">
 
 > **Start here:** If you are new to shell scripting, begin with the [Interactive Shell Scripting Tutorial](/SEBook/tools/shell-tutorial.html) — hands-on exercises in a real Linux system. This article is a **reference** to deepen your understanding afterward.
@@ -15,6 +16,12 @@ program_output_labs: true
 If you have ever found yourself performing the same repetitive tasks on your computer—renaming batches of files, searching through massive text logs, or configuring system environments—then shell scripting is the magic wand you need. Shell scripting is the bedrock of system administration, software development workflows, and server management.
 
 In this detailed educational article, we will explore the concepts, syntax, and power of shell scripting, specifically focusing on the most ubiquitous UNIX shell: Bash.
+
+**Start with the song.** *Small Tools, One Job Each* is a four-minute music video that previews this page's core mental model: how the shell splits a line into a command and its arguments and finds that command on your `PATH`, how small tools chain into a pipeline, why an exit code of `0` means success, and how a few lines in a file become a script. It ends with a quick tour of the most common commands and a short pop quiz. Every idea gets its own section below. Captions are on by default.
+
+Before you press play, predict: you are in the folder that holds your new `hello.sh`. Why does typing `hello.sh` answer `command not found`, while `./hello.sh` runs it?
+
+{% include song-video.html song=site.data.songs.small_tools_one_job_each id="shell-song" %}
  
 # Basics 
 ## What is the Shell?

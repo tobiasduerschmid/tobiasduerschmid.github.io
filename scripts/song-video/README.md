@@ -114,6 +114,24 @@ and `net-kit.js`. The illustrations are live vector art: shapes, gradients,
 and patterns, without filters or bitmaps. `net-kit.js` writes each drawing
 into the page once as an SVG `<symbol>` and shows every copy with `<use>`.
 
+"Small Tools, One Job Each", the shell song on `SEBook/tools/shell.md`, keeps
+the studio backdrop and brings `js/song-video/shell-kit.js` with
+`css/song-video-shell-kit.css`. Each of its pieces draws one visual metaphor
+beside the real notation: scissors that cut a command line at its spaces
+(with tape for quoted words), a filing cabinet for `PATH`, a map for the
+directory tree, a conveyor belt of machines for a pipeline, an address label
+for the shebang, a padlock for execute permission, a decision diamond for
+`if`, a rubber stamp for a `for` loop, a boom gate for `&&`, and collectible
+cards that fill a toolbox in the command chant. Pieces that need a word's
+position measure it on the first visible frame, because the live player
+builds the scene before it shows the picture.
+
+A section's `delivery` sets its captions: `sung` and `spoken` lines are one
+cue each, while `call` lines are quiz questions with an `answer` and
+`answer_at`, captioned as two cues and used as quiz-pause stops. A sung
+call-and-response chant without separate answers, like the shell song's
+command chant, is `sung`.
+
 ### The audio-described cut
 
 The song has vocals almost throughout, so there is no room to describe the
@@ -196,14 +214,23 @@ the captions and the audio-described track in under a minute; add
    sheet; check them by ear, and caption what is actually sung.
 2. Add `_data/songs/<song>.yml` with the same fields as
    `snapshots_and_pointers.yml` (including a `narration` per section and a
-   `visual` per line), and a soundtrack under `assets/audio/`.
+   `visual` per line), and a soundtrack under `assets/audio/`. Write the
+   soundtrack with its index first (`moov` before `mdat`, "faststart"):
+   Chrome failed to load a take whose index came last from Jekyll's server,
+   with "FFmpegDemuxer: data source error". Quote `marks` keys in the
+   YAML, since Jekyll's parser reads bare `on`, `no`, and `yes` as booleans.
+   The chapter transcript is excluded from MathJax (`mathjax_ignore` in
+   `_includes/song-video.html`), so lyrics may quote `$1` or `$?` as written.
 3. Write `js/song-video/songs/<song>.js`, registering
    `window.SongChoreographies['<song>']`. Keep the teaching rule: every visual
    shows what the line sings, so the audio and transcript carry everything.
 4. For live playback add a page with `layout: song-player`, `song: <song>` and
    its chapter transcript link, then point the storyboard's `player` at it.
    Render, include the video in a chapter, add the song to `SONGS` in
-   `tests/song-video.spec.js`, and load `css/song-video.css` on that page.
+   `tests/song-video.spec.js` (and to `songPlayers` in
+   `tests/song-vector-art.spec.js`, and its question count to
+   `scripts/tests/song-quiz-pause.test.js`), and load `css/song-video.css` on
+   that page.
    Leave out `video`, `described_video`, and `poster` for a live-only song.
 
 ## Accessibility contract

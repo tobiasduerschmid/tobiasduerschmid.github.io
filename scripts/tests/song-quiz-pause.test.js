@@ -6,11 +6,13 @@ const yaml = require('js-yaml');
 const { checkpoints } = require('../../js/song-video/quiz-pause');
 
 test('quiz stops are after the question starts and before every authored answer', () => {
-  for (const id of ['snapshots_and_pointers', 'unbox_the_stack']) {
+  // Each song's pop quiz: how many questions the crowd answers.
+  const QUESTIONS = { snapshots_and_pointers: 6, unbox_the_stack: 6, small_tools_one_job_each: 11 };
+  for (const [id, questions] of Object.entries(QUESTIONS)) {
     const song = yaml.load(fs.readFileSync(path.resolve(__dirname, '../../_data/songs', `${id}.yml`), 'utf8'));
     const lines = song.sections.flatMap((section) => section.lines);
     const stops = checkpoints(lines);
-    assert.equal(stops.length, 6);
+    assert.equal(stops.length, questions, id);
     for (const stop of stops) {
       const line = lines.find((item) => item.id === stop.id);
       assert.ok(stop.time > line.start && stop.time < line.answer_at);
