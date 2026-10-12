@@ -70,7 +70,9 @@
       Timeline.camera.attach(content);
       const hud = kit.el('div', 'layer hud', stage);
       const terminal = kit.terminal(hud);
-      const student = root.SongStudentAvatar ? root.SongStudentAvatar.create(content, stage) : null;
+      const student = root.SongStudentAvatar ? root.SongStudentAvatar.create(content, stage, {
+        laptopLogo: storyboard.student?.laptop_logo,
+      }) : null;
       choreograph({ song: songData(storyboard), kit, layers: { stage, content, hud }, terminal, student });
       Timeline.seek(0);
     } catch (error) {

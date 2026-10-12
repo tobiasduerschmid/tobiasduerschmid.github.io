@@ -27,6 +27,8 @@
 
 title: "Small Tools, One Job Each: a song about the Unix shell"   # the player's accessible name
 credit: Lyrics written for this chapter; music and vocals generated with Suno.
+student:
+  laptop_logo: /assets/icons/bash/bash.svg
 extras:   # the song's own art and styles, loaded before its choreography
   styles:
     - /css/song-video-shell-kit.css
@@ -67,14 +69,14 @@ sections:
   - id: intro
     title: "Intro"
     delivery: spoken
-    narration: "Audio-described version: before each section, the picture pauses while I describe it. The intro: twelve vector trip photos named IMG with a number, out of three hundred. Renaming one by hand takes forever, so a terminal types a one-line for loop that moves each file to a name starting with trip underscore, and every photo is renamed at once. Then: exactly what you type, not what you think."
+    narration: "Audio-described version: before each section, the picture pauses while I describe it. The intro: twelve vector trip photos named IMG with a number, out of three hundred. Renaming one by hand takes forever, so a terminal types a one-line for loop that moves each file to a name starting with trip underscore, and every photo is renamed at once. Then: exactly what you type, not what you think. A hero wants one folder called trip photos. How many folders does mkdir trip photos create? Two: trip and photos. The unquoted space separates two arguments. With quotes around trip photos, mkdir gets one argument and creates one folder with that full name. The two examples stay visible for comparison."
     lines:
       - id: intro-1
         start: 3.16
         end: 7.48
         text: "Three hundred trip pics, every name IMG-something."
         marks: {"three": 3.16, "hundred": 3.16, "trip": 3.78, "pics": 4.22, "every": 5.58, "name": 6.2, "img": 6.63, "something": 7.06}
-        visual: "Twelve trip photos, vector landscapes named IMG_412.jpg through IMG_423.jpg, pop in one by one under a “×300 trip pics” tag."
+        visual: "Twelve trip photos, vector landscapes named IMG_412.jpg through IMG_423.jpg, pop in one by one under a “×300 trip pics” tag. Your saved hero, or the default Bruin, works at a laptop bearing the Bash logo beside the photos."
       - id: intro-2
         start: 8.3
         end: 11.42
@@ -92,7 +94,7 @@ sections:
         end: 20.34
         text: "The shell does exactly what you type… not what you think."
         marks: {"the": 15.26, "shell": 15.88, "does": 16.16, "exactly": 16.36, "what": 16.86, "you": 17.08, "type": 17.24, "not": 18.82, "what_2": 19.44, "you_2": 19.86, "think": 20.04}
-        visual: "Kinetic type: “Exactly what you type”, then, in pink, “not what you think”."
+        visual: "Your hero wants one folder called trip photos. After a “How many folders?” prediction prompt, mkdir trip photos reveals two separate folders, trip and photos. Below it, mkdir \"trip photos\" reveals one folder named trip photos. Outlines group the two unquoted arguments versus the single quoted argument. Both cases remain visible through the instrumental lead-in: quoting preserves the space inside one name."
   - id: verse-1
     title: "Verse 1"
     delivery: sung

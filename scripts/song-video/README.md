@@ -22,7 +22,7 @@ missed frames are skipped, never queued or used to slow down the soundtrack.
 The audio always supplies the clock. Rendering stops during pause, buffering,
 and hidden tabs; on return it jumps to the current audio time. Captions use
 the selected track's WebVTT cues and overlay the picture at readable, unscaled
-text size. The integrated controls provide play/pause, seeking, 10-second skips,
+text size. The integrated controls provide play/pause, seeking, five-second skips,
 mute, a captions toggle, and fullscreen. Picture clicks/taps toggle playback;
 double clicks/taps seek five seconds on either side. Focus-scoped F, K, Space,
 and arrow shortcuts use those same controls. Shared speed settings range from
@@ -66,7 +66,10 @@ Its head, blink, gaze, and typing-arm motion follows the same absolute song
 clock as the diagrams, with a still working pose under reduced motion. Fitting,
 hair, and accessories remain inside the shared head assembly; pupils move
 inside their original eye clips. The saved character never gates playback or
-adds another animation loop.
+adds another animation loop. A storyboard can set `student.laptop_logo` to a local SVG URL
+to use a song-specific laptop emblem in both the live player and exports;
+without it, the shared Git mark is retained. The shell song uses the official
+Bash logo, with attribution and license in `assets/icons/bash/`.
 
 Celebration confetti uses seeded paper ribbons and tickets with varied sizes,
 scattered launch positions, subdued shading, and tumbling. Every pose is

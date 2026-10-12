@@ -57,6 +57,7 @@
       const s = kit.scene(content, 0, lineAt + 0.6, { exit: 'fade' });
       const loop = 'for f in *.jpg; do mv "$f" "trip_$f"; done';
       const renamed = mark('intro-3', 'done');
+      student?.appear({ from: 0.5, to: mark('intro-3', 'type') - 0.3, x: 665, y: 132, scale: 0.96 });
       const photos = [];
       for (let i = 0; i < 12; i++) {
         const col = i % 4;
@@ -87,15 +88,32 @@
       camera.punch(mark('intro-3', 'blink'), 0.03);
 
       // Exactly what you type, not what you think.
-      const t = kit.scene(content, lineAt + 0.3, end);
-      kit.kinetic(t, [
+      commandExample(lineAt + 0.3, end);
+    }
+
+    // Contrast only the quotes: the same intended name is either two
+    // arguments or one. Leave time to predict before revealing the folders.
+    function commandExample(from, to) {
+      const s = kit.scene(content, from, to);
+      const typed = mark('intro-4', 'type');
+      const reveal = line('intro-4').end + 1;
+      student?.appear({ from, to, x: 42, y: 196, scale: 0.78 });
+      sh.thought(s, { x: 34, y: 80, w: 238, text: 'One folder called trip photos', at: mark('intro-4', 'shell') });
+      kit.kinetic(s, [
         { text: 'Exactly', at: mark('intro-4', 'exactly'), color: 'gold' },
-        { text: 'what you type', at: mark('intro-4', 'type') },
-      ], { y: 200, size: 52, until: mark('intro-4', 'think') + 0.5 });
-      kit.kinetic(t, [
-        { text: 'not', at: mark('intro-4', 'not'), color: 'pink' },
-        { text: 'what you think', at: mark('intro-4', 'think'), color: 'pink' },
-      ], { y: 280, size: 44, until: end });
+        { text: 'what you type', at: typed },
+      ], { y: 32, size: 40 });
+      label(s, 'sh-note sh-note--white', 'How many folders?', 477, 92, typed, reveal - 0.3);
+      sh.commandResult(s, {
+        x: 296, y: 143, title: 'Without quotes', words: ['mkdir', 'trip', 'photos'],
+        folders: ['trip', 'photos'], conclusion: '2 arguments · 2 folders',
+        at: typed, resultAt: reveal,
+      });
+      sh.commandResult(s, {
+        x: 296, y: 303, title: 'With quotes', words: ['mkdir', '"trip photos"'],
+        folders: ['trip photos'], conclusion: '1 argument · 1 folder',
+        at: reveal + 3.2, resultAt: reveal + 4.2,
+      });
     }
 
     // ----------------------------------------------------------------
@@ -236,7 +254,7 @@
       });
       tree.route(['root', 'home', 'me', 'cs35l', 'hw1', 'tests'], mark('verse-1-11', 'root') - 0.35, { tone: 'gold', perHop: 0.16 });
       sh.pathCard(d, {
-        x: 626, y: 270, kind: 'relative = directions', path: 'tests',
+        x: 702, y: 270, kind: 'relative = directions', path: 'tests',
         note: 'starts from right here (.)', tone: 'cyan', iconName: 'forward', at: mark('verse-1-12', 'relative'),
       });
       tree.route(['hw1', 'tests'], mark('verse-1-12', 'starts'), { tone: 'cyan', perHop: 0.4 });
@@ -399,6 +417,7 @@
       terminal.window(line('verse-2-3').start - 0.3, varLine - 0.1);
       terminal.run(chmod - 0.15, 'chmod +x hello.sh');
       const runLine = line('verse-2-5').start;
+      student?.appear({ from: runLine, to: varLine - 0.4, x: 170, y: 233, scale: 0.67 });
       sh.padlock(a, { x: 48, y: 238, at: chmod, openAt: mark('verse-2-3', 'x'), until: runLine });
       sh.perms(a, { x: 110, y: 242, before: '-rw-r--r--', after: '-rwxr-xr-x', at: chmod, changeAt: mark('verse-2-3', 'x'), until: runLine });
       kit.sticker(a, 'x = execute', { x: 462, y: 248, at: mark('verse-2-3', 'execute'), until: runLine, variant: 'green sticker--keepcase', iconName: 'check', rotate: 4 });
@@ -542,7 +561,7 @@
       kit.sticker(d, 'once per file', { x: 260, y: 272, at: mark('verse-2-15', 'loop'), until: chainLine - 0.3, variant: 'cyan', iconName: 'loop', rotate: -3 });
       sh.rubberStamp(d, {
         text: 'trip_', from: mark('verse-2-15', 'once') - 0.1, until: mark('verse-2-17', 'three'),
-        stops: PHOTOS.map(([px, py], i) => ({ at: stampAt(i), x: px + 20, y: py + 20 })),
+        stops: PHOTOS.map(([px, py], i) => ({ at: stampAt(i), x: px + 20, y: py })),
       });
       loop.glow(1, moveAt, mark('verse-2-16', 'done'), 'gold');
       loop.glow(2, mark('verse-2-16', 'done'), mark('verse-2-17', 'three') + 0.6, 'cyan');
@@ -668,11 +687,11 @@
       const start = song.sectionStart('outro');
       const end = song.duration;
       const s = kit.scene(content, start, end - 0.3, { exit: 'fade' });
-      if (student) student.appear({ from: start + 0.3, to: end - 0.5, x: 36, y: 110, scale: 0.76 });
+      if (student) student.appear({ from: start + 0.3, to: end - 0.5, x: 64, y: 178, scale: 0.82 });
       kit.kinetic(s, [
         { text: 'Small tools', at: mark('outro-1', 'small'), color: 'gold' },
         { text: 'one job each', at: mark('outro-1', 'one') },
-      ], { y: 120, size: 48 });
+      ], { y: 74, size: 48 });
       const win = sh.session(s, { x: 370, y: 206, w: 380, rows: 2, title: '~', at: mark('outro-2', 'and') - 0.2 });
       win.run(mark('outro-2', 'and'), 'echo $?');
       win.run(mark('outro-2', 'zero'), '0', 'good');

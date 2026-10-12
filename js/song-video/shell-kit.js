@@ -130,6 +130,30 @@
   // Word splitting: a command line, scissors, and tape for quotes
   // ------------------------------------------------------------------
 
+  /** Reveal the folders created by a command after a prediction interval. */
+  function commandResult(parent, { x, y, title, words, folders, conclusion, at, resultAt }) {
+    const node = place(el('div', 'sh-command-example is-staged', parent), x, y);
+    el('div', 'sh-command-example-title', node, title);
+    const body = el('div', 'sh-example-body', node);
+    const command = el('code', 'sh-example-command', body);
+    words.forEach((word) => el('span', 'sh-example-word', command, word));
+    const arrow = icon('arrowDown', 'sh-example-arrow is-staged');
+    body.append(arrow);
+    const result = el('div', 'sh-example-result is-staged', body);
+    const folderRow = el('div', 'sh-example-folders', result);
+    folders.forEach((name) => {
+      const folder = el('div', 'sh-example-folder', folderRow);
+      folder.append(icon('folder'));
+      el('span', null, folder, name);
+    });
+    el('div', 'sh-example-conclusion', result, conclusion);
+    fx.rise(node, at, { distance: 12 });
+    fx.fadeIn(arrow, resultAt, 0.25);
+    fx.rise(result, resultAt, { distance: 10 });
+    onFrame((time) => command.classList.toggle('is-parsed', time >= resultAt));
+    return node;
+  }
+
   /**
    * words = [{ text, label, labelAt, tone, tape, tapeAt }]; tone is command |
    * arg | good | bad | plain. The row reads as one typed line until
@@ -853,9 +877,8 @@
     svg('ellipse', { cx: 48, cy: 16, rx: 18, ry: 14, fill: `url(#${id})` }, art);
     svg('rect', { x: 40, y: 26, width: 16, height: 30, rx: 4, fill: `url(#${id})` }, art);
     svg('rect', { x: 12, y: 54, width: 72, height: 22, rx: 4, fill: '#30405f' }, art);
-    svg('rect', { x: 14, y: 74, width: 68, height: 14, rx: 3, fill: '#ff5fb0' }, art);
-    const label = el('code', 'sh-stamp-text', node, text);
-    void label;
+    svg('rect', { x: 14, y: 74, width: 68, height: 20, rx: 3, fill: '#ff5fb0' }, art);
+    el('code', 'sh-stamp-text', node, text);
     mover(node, [{ x: stops[0].x, y: stops[0].y - 40 }, ...stops.map((stop) => ({ at: stop.at - 0.35, x: stop.x, y: stop.y - 40, duration: 0.3 }))]);
     fx.fadeIn(node, from ?? stops[0].at - 0.5, 0.2);
     if (until !== undefined) fx.fadeOut(node, until, 0.25);
@@ -964,7 +987,7 @@
   }
 
   window.ShellKit = {
-    session, tokens, scissors, cabinet, desk, tree, pathCard, machine, belt, dataCard,
+    session, commandResult, tokens, scissors, cabinet, desk, tree, pathCard, machine, belt, dataCard,
     script, addressLabel, padlock, perms, variableBox, exitBoard, decision, gate,
     photo, rubberStamp, thought, toolCard, toolbox, mover,
   };

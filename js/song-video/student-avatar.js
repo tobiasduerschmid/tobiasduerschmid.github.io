@@ -23,7 +23,7 @@
     return rendererPromise;
   }
 
-  function props() {
+  function props(laptopLogo) {
     const svg = document.createElementNS(SVG_NS, 'svg');
     svg.setAttribute('viewBox', '0 0 260 300');
     svg.setAttribute('class', 'song-student-props');
@@ -55,6 +55,16 @@
         <path d="M124 220 V239 M124 226 C124 230 138 228 138 234"/>
         <circle cx="124" cy="218" r="3"/><circle cx="124" cy="242" r="3"/><circle cx="138" cy="237" r="3"/>
       </g>`;
+    if (laptopLogo) {
+      const emblem = document.createElementNS(SVG_NS, 'image');
+      emblem.setAttribute('class', 'student-laptop-logo');
+      emblem.setAttribute('href', laptopLogo);
+      emblem.setAttribute('x', '111');
+      emblem.setAttribute('y', '211');
+      emblem.setAttribute('width', '38');
+      emblem.setAttribute('height', '38');
+      svg.querySelector('.student-laptop-mark').replaceWith(emblem);
+    }
     return svg;
   }
 
@@ -148,7 +158,7 @@
   }
 
   /** One portrait is reused for every scheduled cameo. Never saves. */
-  function create(parent, stage) {
+  function create(parent, stage, { laptopLogo } = {}) {
     const node = document.createElement('div');
     node.className = 'song-student-avatar is-laptop-only';
     node.dataset.testid = 'song-student-avatar';
@@ -157,7 +167,7 @@
     node.hidden = true;
     const portrait = document.createElement('div');
     portrait.className = 'song-student-portrait';
-    node.append(portrait, props());
+    node.append(portrait, props(laptopLogo));
     parent.appendChild(node);
     const cameos = [];
     let disposed = false;

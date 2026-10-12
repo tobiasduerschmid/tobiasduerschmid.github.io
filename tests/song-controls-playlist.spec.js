@@ -3,9 +3,17 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 
 const git = { title: 'Snapshots and Pointers: a song about Git', path: '/assets/song-player/snapshots-and-pointers.html' };
 const network = { title: 'Unbox the Stack: a song about networking', path: '/assets/song-player/unbox-the-stack.html' };
+const shell = { title: 'Small Tools, One Job Each: a song about the Unix shell', path: '/assets/song-player/small-tools-one-job-each.html' };
 const playlistPath = '/SEBook/playlist.html';
 const queue = (page) => page.getByRole('list', { name: 'Your playlist', exact: true });
 const audioFor = (page, song) => page.getByLabel(`${song.title} audio`, { exact: true });
+
+// Editing/playback cases use an existing student's two-song list. Adding a
+// catalog entry must not silently change that student's saved queue.
+test.use({ storageState: { cookies: [], origins: [{
+  origin: new URL(process.env.SONG_PLAYER_BASE_URL || 'http://127.0.0.1:4189').origin,
+  localStorage: [{ name: 'song-player-playlist', value: JSON.stringify({ version: 1, songs: ['snapshots_and_pointers', 'unbox_the_stack'] }) }],
+}] } });
 
 test.beforeEach(async ({ context }) => {
   // Keep real media responses; bypass WEBrick's incorrect cached If-Range/304 handling.
@@ -189,19 +197,24 @@ test('playlist defaults, editing, Undo, and reload preserve student order', asyn
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(playlistPath);
+  await page.evaluate(() => localStorage.removeItem('song-player-playlist'));
+  await page.reload();
   await expect(page.getByRole('combobox', { name: 'Start from a playlist' })).toHaveValue('cs35l');
-  await expect(queue(page).getByRole('listitem')).toHaveCount(2);
-  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(git.title);
+  await expect(queue(page).getByRole('listitem')).toHaveCount(3);
+  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(shell.title);
+  await expect(queue(page).getByRole('listitem').nth(1)).toContainText(git.title);
+  await expect(queue(page).getByRole('listitem').nth(2)).toContainText(network.title);
+  await page.getByRole('button', { name: `Move up: ${network.title}`, exact: true }).click();
   await page.getByRole('button', { name: `Move up: ${network.title}`, exact: true }).click();
   await expect(queue(page).getByRole('listitem').nth(0)).toContainText(network.title);
   await page.reload();
   await expect(queue(page).getByRole('listitem').nth(0)).toContainText(network.title);
   await page.getByRole('button', { name: `Remove: ${git.title}`, exact: true }).click();
-  await expect(queue(page).getByRole('listitem')).toHaveCount(1);
+  await expect(queue(page).getByRole('listitem')).toHaveCount(2);
   await page.getByRole('button', { name: /^Add to playlist\s*: Snapshots and Pointers: a song about Git$/ }).click();
-  await expect(queue(page).getByRole('listitem').nth(1)).toContainText(git.title);
+  await expect(queue(page).getByRole('listitem').nth(2)).toContainText(git.title);
   await page.getByRole('button', { name: 'Load playlist', exact: true }).click();
-  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(git.title);
+  await expect(queue(page).getByRole('listitem').nth(0)).toContainText(shell.title);
   await page.getByRole('button', { name: 'Undo change', exact: true }).click();
   await expect(queue(page).getByRole('listitem').nth(0)).toContainText(network.title);
   await a11yCheckpoint(page, 'edited video playlist', { feature: 'song-playlist', include: '#song-playlist' });
@@ -218,9 +231,9 @@ test('an empty list survives reload and remains editable without browser storage
     Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Blocked', 'SecurityError'); } });
   });
   await page.reload();
-  await expect(queue(page).getByRole('listitem')).toHaveCount(2);
+  await expect(queue(page).getByRole('listitem')).toHaveCount(3);
   await page.getByRole('button', { name: `Remove: ${git.title}`, exact: true }).click();
-  await expect(queue(page).getByRole('listitem')).toHaveCount(1);
+  await expect(queue(page).getByRole('listitem')).toHaveCount(2);
   await expect(page.getByRole('status')).toContainText('this visit only');
 });
 

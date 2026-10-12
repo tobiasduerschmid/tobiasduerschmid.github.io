@@ -170,8 +170,8 @@
   left: 50%;
   top: calc(100% + 14px);
   translate: -50% 0;
-  padding: 3px 9px 2px;
-  border: 2px solid var(--ink);
+  padding: 5px 11px 4px;
+  border: 0;
   border-radius: 999px;
   background: #f6f8ff;
   color: var(--ink);
@@ -181,7 +181,97 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
-  box-shadow: 2px 2px 0 var(--ink);
+  box-shadow: inset 0 0 0 2px var(--ink), 2px 2px 0 var(--ink);
+  line-height: 1.4;
+}
+
+/* A single painted ring avoids seams between separately composited border
+   corners at the scaled stage sizes used by fullscreen players. */
+.sh-command-example {
+  position: absolute;
+  width: 628px;
+  height: 142px;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  border-radius: 16px;
+  background: #101a30;
+  box-shadow: inset 0 0 0 2px #7188aa, 0 12px 26px #0006;
+}
+
+.sh-command-example-title {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.sh-example-body {
+  display: grid;
+  grid-template-columns: 300px 32px 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.sh-example-command {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+  white-space: pre;
+}
+
+.sh-example-word {
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.sh-example-word:first-child { color: var(--gold); }
+.sh-example-command.is-parsed .sh-example-word:not(:first-child) {
+  box-shadow: inset 0 0 0 2px var(--cyan);
+}
+
+.sh-example-arrow {
+  width: 32px;
+  height: 32px;
+  color: var(--cyan);
+  rotate: -90deg;
+}
+
+.sh-example-folders {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.sh-example-folder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.2;
+  white-space: pre;
+}
+
+.sh-example-folder svg {
+  width: 36px;
+  height: 36px;
+  color: var(--gold);
+}
+
+.sh-example-conclusion {
+  margin-top: 7px;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .sh-token--command .sh-token-label { background: var(--gold); }
@@ -707,8 +797,8 @@
   position: absolute;
   left: 14px;
   top: 14px;
-  padding: 3px 9px 2px;
-  border: 2px solid var(--ink);
+  padding: 5px 11px 4px;
+  border: 0;
   border-radius: 999px;
   background: var(--gold);
   color: var(--ink);
@@ -716,7 +806,7 @@
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  box-shadow: 2px 2px 0 var(--ink);
+  box-shadow: inset 0 0 0 2px var(--ink), 2px 2px 0 var(--ink);
   rotate: -3deg;
 }
 
@@ -725,8 +815,8 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 9px 3px 5px;
-  border: 2px solid var(--ink);
+  padding: 5px 11px 5px 7px;
+  border: 0;
   border-radius: 999px;
   background: #f6f8ff;
   color: var(--ink);
@@ -734,7 +824,7 @@
   font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
-  box-shadow: 2px 2px 0 var(--ink);
+  box-shadow: inset 0 0 0 2px var(--ink), 2px 2px 0 var(--ink);
 }
 
 .sh-machine .sh-lamp {
@@ -755,12 +845,12 @@
 
 .sh-lamp--ok {
   background: var(--green);
-  box-shadow: 2px 2px 0 var(--ink), 0 0 18px rgba(74, 222, 128, 0.65);
+  box-shadow: inset 0 0 0 2px var(--ink), 2px 2px 0 var(--ink), 0 0 18px rgba(74, 222, 128, 0.65);
 }
 
 .sh-lamp--bad {
   background: var(--red);
-  box-shadow: 2px 2px 0 var(--ink), 0 0 18px rgba(255, 107, 125, 0.65);
+  box-shadow: inset 0 0 0 2px var(--ink), 2px 2px 0 var(--ink), 0 0 18px rgba(255, 107, 125, 0.65);
 }
 
 .sh-belt {
@@ -1418,8 +1508,8 @@
 /* Flow tags name shell keywords, so they keep their case. */
 .sh-flow-tag {
   position: absolute;
-  padding: 2px 9px;
-  border: 2px solid var(--ink);
+  padding: 4px 11px;
+  border: 0;
   border-radius: 999px;
   background: #f6f8ff;
   color: var(--ink);
@@ -1427,6 +1517,7 @@
   font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
+  box-shadow: inset 0 0 0 2px var(--ink);
 }
 
 .sh-flow-tag--yes { background: var(--green); }
@@ -1522,14 +1613,14 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 9px 3px 5px;
-  border: 2px solid var(--ink);
+  padding: 5px 11px 5px 7px;
+  border: 0;
   border-radius: 999px;
   color: var(--ink);
   font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
-  box-shadow: 2px 2px 0 var(--ink);
+  box-shadow: inset 0 0 0 2px var(--ink), 2px 2px 0 var(--ink);
 }
 
 .sh-gate-lamp svg {
@@ -1546,8 +1637,8 @@
   left: 50%;
   top: calc(100% + 10px);
   translate: -50% 0;
-  padding: 3px 9px;
-  border: 2px solid var(--ink);
+  padding: 5px 11px;
+  border: 0;
   border-radius: 999px;
   background: #f6f8ff;
   color: var(--ink);
@@ -1556,6 +1647,7 @@
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  box-shadow: inset 0 0 0 2px var(--ink);
 }
 
 /* ------------------------------------------------------------------ */
@@ -1606,12 +1698,16 @@
 
 .sh-stamp-text {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 75px;
+  left: 14px;
+  top: 74px;
+  width: 68px;
+  height: 20px;
+  display: grid;
+  place-items: center;
   color: var(--ink);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1;
   font-weight: 800;
   text-align: center;
 }
@@ -1673,14 +1769,15 @@
 }
 
 .sh-card-cat {
-  padding: 4px 11px 3px;
-  border: 2px solid var(--ink);
+  padding: 6px 13px 5px;
+  border: 0;
   border-radius: 999px;
   background: var(--card-tone);
   font-size: 14px;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  box-shadow: inset 0 0 0 2px var(--ink);
 }
 
 .sh-card-number {
@@ -1881,8 +1978,8 @@
   display: inline-flex;
   align-items: baseline;
   gap: 8px;
-  padding: 6px 14px;
-  border: 2px solid var(--ink);
+  padding: 8px 16px;
+  border: 0;
   border-radius: 999px;
   background: var(--gold);
   color: var(--ink);
@@ -1890,7 +1987,7 @@
   font-weight: 900;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  box-shadow: 3px 3px 0 var(--ink);
+  box-shadow: inset 0 0 0 2px var(--ink), 3px 3px 0 var(--ink);
   white-space: nowrap;
 }
 
@@ -1901,8 +1998,8 @@
 
 .sh-note {
   position: absolute;
-  padding: 4px 11px 3px;
-  border: 2px solid var(--ink);
+  padding: 6px 13px 5px;
+  border: 0;
   border-radius: 999px;
   color: var(--ink);
   font-size: 13px;
@@ -1910,7 +2007,7 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   white-space: nowrap;
-  box-shadow: 2px 2px 0 var(--ink);
+  box-shadow: inset 0 0 0 2px var(--ink), 2px 2px 0 var(--ink);
 }
 
 .sh-note--pink { background: var(--pink); }
@@ -1937,15 +2034,15 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 11px 5px 8px;
-  border: 2px solid var(--ink);
+  padding: 7px 13px 7px 10px;
+  border: 0;
   border-radius: 999px;
   background: var(--gold);
   color: var(--ink);
   font-family: var(--font-mono);
   font-size: 16px;
   font-weight: 700;
-  box-shadow: 3px 3px 0 var(--ink);
+  box-shadow: inset 0 0 0 2px var(--ink), 3px 3px 0 var(--ink);
   white-space: nowrap;
 }
 

@@ -53,7 +53,7 @@ test('authored course playlists reference playable catalog songs with unique pla
       assert.ok(fs.existsSync(path.join(root, song.player)));
     }
   }
-  assert.deepEqual(playlists.find((item) => item.id === 'cs35l').songs, ['snapshots_and_pointers', 'unbox_the_stack']);
+  assert.deepEqual(playlists.find((item) => item.id === 'cs35l').songs, ['small_tools_one_job_each', 'snapshots_and_pointers', 'unbox_the_stack']);
 });
 
 test('reordering larger playlists supports first, last, middle, and unchanged destinations', () => {
