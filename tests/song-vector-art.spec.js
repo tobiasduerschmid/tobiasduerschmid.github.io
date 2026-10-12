@@ -6,6 +6,13 @@ const yaml = require('js-yaml');
 
 const PLAYER_PATH = '/assets/song-player/snapshots-and-pointers.html';
 const storyboard = yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/snapshots_and_pointers.yml'), 'utf8'));
+const songPlayers = [
+  { name: 'Git', path: PLAYER_PATH, storyboard, cameoTime: 12 },
+  {
+    name: 'Networking', path: '/assets/song-player/unbox-the-stack.html', cameoTime: 3,
+    storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/unbox_the_stack.yml'), 'utf8')),
+  },
+];
 const lines = new Map(storyboard.sections.flatMap((section) => section.lines).map((line) => [line.id, line]));
 const finalCelebration = lines.get('chorus-4-8').marks.moves + 0.2;
 const STORAGE_KEY = 'se-gym-hero-avatar';
@@ -39,6 +46,12 @@ const heroSamples = [
   // must not silently turn this choice back into the generic human character.
   { name: 'Prof', hero: profHero, skin: '#edbea5', hair: '#897257', suit: '#009bb7' },
 ];
+
+test.beforeEach(async ({ context }) => {
+  // WEBrick incorrectly returns 304 for cached If-Range requests. Routing
+  // disables that cache path while still loading the real media and artwork.
+  await context.route('**/*', (route) => route.continue());
+});
 
 async function openPausedPlayer(page) {
   await page.goto(PLAYER_PATH);
@@ -317,45 +330,60 @@ test('renderer-only: confetti reproduces an absolute pose across backward seeks'
   await expect.poll(() => paintedConfetti(page)).toEqual(firstPicture);
 });
 
-for (const { name, hero, skin, hair, suit } of heroSamples) {
-  test(`renderer-only: the ${name} remains a saved character without workout animation`, async ({ page }, testInfo) => {
-    await page.addInitScript(({ key, hero }) => localStorage.setItem(key, JSON.stringify(hero)), { key: STORAGE_KEY, hero });
-    await page.goto(PLAYER_PATH);
-    const student = page.getByTestId('song-student-avatar');
-    await expect(student).toHaveAttribute('data-avatar-state', 'saved');
-    await page.evaluate(() => window.Timeline.seek(12));
-    const portrait = student.locator('[data-gym-hero-svg]');
-    await expect(portrait).toBeVisible();
-    await expect(portrait).toHaveAttribute('data-hero-kind', hero.kind);
-    await expect(portrait).toHaveCSS('--hero-skin-light', skin);
-    await expect(portrait).toHaveCSS('--hero-hair', hair);
-    await expect(portrait).toHaveCSS('--hero-suit', suit);
-    await expect(portrait.locator('[data-hero-barbell], animate, animateTransform, animateMotion, set')).toHaveCount(0);
-    await page.getByTestId('song-picture').screenshot({ path: `/tmp/git-mv-${hero.kind}-${testInfo.project.name}-renderer.png` });
-    await student.screenshot({ path: `/tmp/git-mv-${hero.kind}-${testInfo.project.name}-renderer-closeup.png` });
-  });
-}
+for (const song of songPlayers) {
+  for (const { name, hero, skin, hair, suit } of heroSamples) {
+    test(`${song.name} renderer-only: the ${name} remains a saved character without workout animation`, async ({ page }, testInfo) => {
+      await page.addInitScript(({ key, hero }) => localStorage.setItem(key, JSON.stringify(hero)), { key: STORAGE_KEY, hero });
+      await page.goto(song.path);
+      const student = page.getByTestId('song-student-avatar');
+      await expect(student).toHaveAttribute('data-avatar-state', 'saved');
+      await page.evaluate((time) => window.Timeline.seek(time), song.cameoTime);
+      const portrait = student.locator('[data-gym-hero-svg]');
+      await expect(portrait).toBeVisible();
+      await expect(portrait).toHaveAttribute('data-hero-kind', hero.kind);
+      await expect(portrait).toHaveCSS('--hero-skin-light', skin);
+      await expect(portrait).toHaveCSS('--hero-hair', hair);
+      await expect(portrait).toHaveCSS('--hero-suit', suit);
+      await expect(portrait.locator('[data-hero-barbell], animate, animateTransform, animateMotion, set')).toHaveCount(0);
+      expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe(JSON.stringify(hero));
+      await page.getByTestId('song-picture').screenshot({ path: `/tmp/${song.name}-mv-${hero.kind}-${testInfo.project.name}-renderer.png` });
+      await student.screenshot({ path: `/tmp/${song.name}-mv-${hero.kind}-${testInfo.project.name}-renderer-closeup.png` });
+    });
+  }
 
-for (const storage of ['missing', 'malformed', 'blocked']) {
-  test(`a ${storage} saved avatar keeps the laptop and normal-speed playback available`, async ({ page }) => {
-    const errors = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    await page.addInitScript(({ mode, key }) => {
-      if (mode === 'malformed') localStorage.setItem(key, '{invalid JSON');
-      if (mode === 'blocked') Object.defineProperty(window, 'localStorage', {
-        get() { throw new DOMException('Storage disabled by browser policy', 'SecurityError'); },
-      });
-    }, { mode: storage, key: STORAGE_KEY });
-    const audio = await openPausedPlayer(page);
-    await seek(page, 12);
-    const student = page.getByTestId('song-student-avatar');
-    await expect(student).toBeVisible();
-    await expect(student).toHaveAttribute('data-avatar-state', 'fallback');
-    await page.getByRole('button', { name: 'Mute song', exact: true }).click();
-    await page.getByRole('button', { name: 'Play song', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Pause song', exact: true })).toBeEnabled();
-    await expect.poll(() => audio.evaluate((element) => element.currentTime)).toBeGreaterThan(12.1);
-    await expect(audio).toHaveJSProperty('playbackRate', 1);
-    expect(errors, 'optional saved data must not break the player').toEqual([]);
-  });
+  for (const storage of ['missing', 'malformed', 'blocked']) {
+    test(`${song.name}: a ${storage} saved avatar uses the default Bruin without saving it`, async ({ page }, testInfo) => {
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      await page.addInitScript(({ mode, key }) => {
+        if (mode === 'malformed') localStorage.setItem(key, '{invalid JSON');
+        if (mode === 'blocked') Object.defineProperty(window, 'localStorage', {
+          get() { throw new DOMException('Storage disabled by browser policy', 'SecurityError'); },
+        });
+      }, { mode: storage, key: STORAGE_KEY });
+      await page.goto(song.path);
+      await expect(page.getByRole('button', { name: 'Play song', exact: true })).toBeEnabled();
+      await page.evaluate((time) => window.Timeline.seek(time), song.cameoTime);
+      const audio = page.getByLabel(`${song.storyboard.title} audio`, { exact: true });
+      const student = page.getByTestId('song-student-avatar');
+      await expect(student).toBeVisible();
+      const portrait = student.locator('[data-gym-hero-svg]');
+      await expect(portrait).toBeVisible();
+      await expect(portrait).toHaveAttribute('data-hero-kind', 'bruin');
+      await expect(portrait).toHaveCSS('--hero-skin-light', '#8b5a35');
+      await expect(portrait).toHaveCSS('--hero-hair', '#3d2818');
+      await expect(portrait).toHaveCSS('--hero-suit', '#1F6EBD');
+      await expect(portrait.locator('[data-hero-bruin-anatomy="head"]')).toBeVisible();
+      if (storage !== 'blocked') {
+        expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe(storage === 'missing' ? null : '{invalid JSON');
+      }
+      await student.screenshot({ path: `/tmp/${song.name}-mv-default-bruin-${storage}-${testInfo.project.name}.png` });
+      await page.getByRole('button', { name: 'Mute song', exact: true }).click();
+      await page.getByRole('button', { name: 'Play song', exact: true }).click();
+      await expect(page.getByRole('button', { name: 'Pause song', exact: true })).toBeEnabled();
+      await expect.poll(() => audio.evaluate((element) => element.currentTime)).toBeGreaterThan(0.1);
+      await expect(audio).toHaveJSProperty('playbackRate', 1);
+      expect(errors, 'optional saved data must not break the player').toEqual([]);
+    });
+  }
 }

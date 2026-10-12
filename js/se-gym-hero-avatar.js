@@ -4258,6 +4258,17 @@
   function mountSavedAvatar(host, options) {
     if (!host) return Promise.resolve(false);
     var state = loadAvatar();
+    // Optional display-only fallback. Other mounts keep their saved-only
+    // behavior, and viewing a song never creates a customization in storage.
+    if (!state && options && options.fallbackKind === 'bruin') {
+      state = JSON.parse(JSON.stringify(DEFAULTS));
+      state.kind = 'bruin';
+      state.appearance.skin = BRUIN_DEFAULTS.skin;
+      state.appearance.hairColor = BRUIN_DEFAULTS.hairColor;
+      state.appearance.eyeColor = BRUIN_DEFAULTS.eyeColor;
+      state.body.type = BRUIN_DEFAULTS.bodyType;
+      state.outfit.style = BRUIN_DEFAULTS.outfitStyle;
+    }
     if (!state) return Promise.resolve(false);
     var variant = options && options.variant ? options.variant : host.getAttribute('data-hero-avatar-variant');
     return buildAvatarSvg(variant).then(function (svg) {

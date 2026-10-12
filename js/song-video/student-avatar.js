@@ -1,4 +1,4 @@
-/* Optional saved SE Gym character, posed at a laptop on the song's clock.
+/* Saved SE Gym character or default Bruin, posed at a laptop on the song's clock.
  * The saved descriptor and shared renderer remain owned by HeroAvatar.
  */
 (function (root) {
@@ -147,7 +147,7 @@
     return portraitMotion(svg);
   }
 
-  /** One optional portrait is reused for every scheduled cameo. Never saves. */
+  /** One portrait is reused for every scheduled cameo. Never saves. */
   function create(parent, stage) {
     const node = document.createElement('div');
     node.className = 'song-student-avatar is-laptop-only';
@@ -193,19 +193,20 @@
       if (!avatarScript || !avatarTemplate) return;
       try {
         const avatar = await loadRenderer(avatarScript, avatarTemplate);
-        if (disposed || !avatar || !avatar.loadAvatar()) return;
+        if (disposed || !avatar) return;
+        const saved = avatar.loadAvatar();
         sourceHost = document.createElement('div');
         sourceHost.className = 'song-student-source';
         sourceHost.setAttribute('aria-hidden', 'true');
         document.body.appendChild(sourceHost);
-        const mounted = await avatar.mountSavedAvatar(sourceHost, { variant: 'song-student' });
+        const mounted = await avatar.mountSavedAvatar(sourceHost, { variant: 'song-student', fallbackKind: 'bruin' });
         const svg = sourceHost.querySelector('svg');
         if (!mounted || !svg) return;
         posePortrait = preparePortrait(svg, node);
         if (disposed) return;
         portrait.appendChild(svg);
         node.classList.remove('is-laptop-only');
-        node.dataset.avatarState = 'saved';
+        node.dataset.avatarState = saved ? 'saved' : 'default';
         draw(lastTime);
       } catch (_) {
         // Personalization is optional; the laptop and the song remain usable.
