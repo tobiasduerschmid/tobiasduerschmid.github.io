@@ -209,12 +209,14 @@
       ih.stringWeb(c, { x: 24, y: 76, w: 350, h: 340, names: ['Cart', 'Order', 'Pay', 'Ship'], title: 'Case: 4 modules', at: mark('verse-1-6', 'four'), drawFor: 0.9, until: mark('verse-1-8', 'let') });
       const board = ih.stringWeb(c, { x: 392, y: 64, w: 548, h: 384, names: ['Cart', 'Order', 'Pay', 'Ship', 'Auth', 'Mail', 'Tax', 'Stock'], title: 'Case: 8 modules', at: mark('verse-1-7', 'eight'), drawFor: 1.8 });
       fx.moveTo(board.node, mark('verse-1-8', 'let'), -200, 0, 0.6);
-      board.mud(mark('verse-1-9', 'built') - 0.3);
+      board.mud(mark('verse-1-9', 'youve') - 0.2);
       ih.note(c, 'everything depends on everything', { x: 230, y: 30, at: mark('verse-1-8', 'depend'), until: mark('verse-1-9', 'big'), tone: 'red', rotate: -2 });
       kit.stamp(c, 'Big Ball of Mud', { x: 250, y: 396, at: mark('verse-1-9', 'big'), color: 'gold', rotate: -4, shake: false });
 
       // One change touches dozens of files; squash one bug, two crawl in.
       const d = kit.scene(content, line('verse-1-10').start - 0.1, song.sectionEnd('verse-1'));
+      ih.mud(d, { x: 332, y: 304, size: 170, at: line('verse-1-10').start - 0.1 });
+      ih.note(d, 'Big Ball of Mud', { x: 352, y: 470, at: line('verse-1-10').start - 0.1, tone: 'gold', rotate: -2 });
       const files = ['cart.js', 'order.js', 'refund.js', 'wallet.js', 'auth.js', 'mail.js', 'tax.js', 'report.js', 'admin.js', 'search.js', 'ship.js', 'stock.js'];
       const grid = ih.grid(d, { x: 40, y: 92, cols: 3, cellW: 176, cellH: 40, gap: 12, names: files, at: line('verse-1-10').start - 0.05, step: 0.03 });
       grid.light(mark('verse-1-10', 'change'), [4], { tone: 'change', stamp: 'Changed' });
@@ -244,7 +246,6 @@
         title: 'On the Criteria To Be Used in Decomposing Systems into Modules',
         meta: 'David L. Parnas · Carnegie-Mellon University', cite: 'Vol. 15, No. 12 · pp. 1053–1058', clip: true, at: paperAt,
       });
-      kit.sticker(s, 'Split by decisions', { x: 560, y: 330, at: mark('pre-chorus-1-3', 'wrote'), variant: 'gold', iconName: 'sparkle', rotate: 4 });
     }
 
     // ----------------------------------------------------------------
@@ -304,7 +305,6 @@
         hows: [{ at: 0, text: ex.hows[0] }, { at: mark(ln(8), 'how'), text: ex.hows[1] }],
         at: mark(ln(6), 'module'), whatAt: mark(ln(7), 'what'), howAt: mark(ln(7), 'how'),
       });
-      box.keep(mark(ln(8), 'what'), 'kept');
       // The callers send their requests to the nameplate only: they don't change.
       const youChange = mark(ln(9), 'change');
       ex.callers.forEach((name, i) => {
@@ -449,7 +449,6 @@
       ih.bergLabel(a, { x: 268, y: 384, title: 'Implementation', sub: 'how it keeps its promise', tone: 'deep', at: mark('verse-3-3', 'implementation') });
       berg.swap(mark('verse-3-5', 'freely'));
       kit.sticker(a, 'Change it freely', { x: 150, y: 430, at: mark('verse-3-5', 'freely'), until: mark('verse-3-6', 'what'), variant: 'cyan', iconName: 'gear', rotate: -3 });
-      kit.sticker(a, 'Tip: unchanged', { x: 70, y: 96, at: mark('verse-3-5', 'same'), variant: 'green', iconName: 'check', rotate: -4 });
       ih.heading(a, ['What goes ', 'below', '?'], { x: 520, y: 126, at: mark('verse-3-6', 'below'), size: 28 });
       ih.note(a, 'classified: choices that could change', { x: 520, y: 172, at: mark('verse-3-6', 'choices'), tone: 'cyan', rotate: -2 });
       const toggles = [
@@ -459,7 +458,6 @@
       ];
       const sink = mark('verse-3-8', 'hide');
       toggles.forEach((node, i) => fx.moveTo(node, sink + i * 0.08, 0, 14, 0.4));
-      kit.sticker(a, 'Hidden below the waterline', { x: 520, y: 416, at: sink + 0.2, variant: 'cyan', iconName: 'lock', rotate: 3 });
       kit.sticker(a, 'Changed later', { x: 784, y: 368, at: mark('verse-3-9', 'mind'), variant: 'gold', iconName: 'loop', rotate: 5 });
 
       // The outlet is the interface; the power plant is the secret.
@@ -468,9 +466,6 @@
         x: 168, y: 88, scale: 1.25, at: outletAt + 0.1,
         plants: [{ at: 0, kind: 'solar' }, { at: mark('verse-3-11', 'wind') - 0.1, kind: 'wind' }],
       });
-      ih.note(b, 'Your charger can’t tell', { x: 588, y: 470, at: mark('verse-3-10', 'tell'), tone: 'white', rotate: 2 });
-      ih.note(b, 'noon', { x: 72, y: 124, at: mark('verse-3-11', 'noon'), until: mark('verse-3-11', 'wind'), tone: 'gold', rotate: -3 });
-      ih.note(b, 'midnight', { x: 46, y: 124, at: mark('verse-3-11', 'midnight'), tone: 'cyan', rotate: -3 });
       ih.bergLabel(b, { x: 560, y: 52, title: 'Interface', sub: 'the outlet', tone: 'tip', at: mark('verse-3-12', 'interface') });
       ih.show(ih.envelope(b, { text: 'the power plant', x: 262, y: 52 }), mark('verse-3-12', 'plants'), undefined, { rotate: -3, from: 1.6 });
     }

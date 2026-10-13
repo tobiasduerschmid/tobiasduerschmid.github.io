@@ -1094,6 +1094,30 @@
     return ball;
   }
 
+  /** The same partly buried threads remain visible when the mud is reused. */
+  function mudThreads(parent, cx, cy) {
+    return [
+      'M-105 -20 C-92 -40 -60 -46 -38 -38 M9 -32 C38 -31 61 -25 80 -18',
+      'M-78 -78 C-90 -48 -75 -18 -56 -5 M12 26 C43 39 88 47 106 23',
+      'M-23 -100 C-33 -76 -19 -53 -5 -39 M32 19 Q44 56 33 85',
+      'M76 -71 C58 -67 42 -54 32 -43 M-30 16 Q-58 40 -80 53',
+      'M-105 20 Q-71 5 -48 4 M39 20 Q69 35 95 53',
+      'M-65 83 Q-43 72 -30 57 M5 33 Q26 23 51 18',
+    ].map((d) => svg('path', { class: 'ih-mud-thread', d, transform: `translate(${cx} ${cy})` }, parent));
+  }
+
+  /** A compact, labeled-scene companion using the original mud illustration. */
+  function mud(parent, { x, y, size = 160, at }) {
+    const node = art(parent, { x, y, w: size, h: size, viewBox: '-140 -130 280 280' });
+    mudBall(node, 0, 0).setAttribute('opacity', '1');
+    mudThreads(node, 0, 0).forEach((path) => {
+      path.setAttribute('pathLength', '1');
+      path.style.strokeDashoffset = '0';
+    });
+    fx.fadeIn(node, at, 0.2);
+    return node;
+  }
+
   /**
    * A framed corkboard (w×h) with `names` pinned around an ellipse, every
    * pair joined by red string (n(n−1)/2 strings) drawn one after another,
@@ -1119,7 +1143,8 @@
     const mud = svg('svg', { class: 'ih-cork-mud', viewBox: `0 0 ${w} ${h}`, width: w, height: h, 'aria-hidden': 'true' }, node);
     const ball = mudBall(mud, cx, cy + 6);
     const cards = names.map((name, i) => {
-      const card = place(el('div', 'ih-pincard', node), spots[i].x - cardW / 2, spots[i].y - 26);
+      const carrier = el('div', 'ih-pincard-carrier', node);
+      const card = place(el('div', 'ih-pincard', carrier), spots[i].x - cardW / 2, spots[i].y - 26);
       card.style.width = `${cardW}px`;
       const tilt = (hash01(i * 13 + n) - 0.5) * 10;
       card.style.rotate = `${tilt.toFixed(1)}deg`;
@@ -1127,7 +1152,7 @@
       photo.append(icon(['box', 'gear', 'receipt', 'envelope', 'lock', 'user', 'chart', 'pin'][i % 8]));
       el('span', 'ih-pincard-name', card, name);
       fx.pop(card, at + 0.05 + i * 0.06, { from: 0.6, rotate: tilt });
-      return card;
+      return carrier;
     });
     const strings = svg('svg', { class: 'ih-cork-strings', viewBox: `0 0 ${w} ${h}`, width: w, height: h, 'aria-hidden': 'true' }, node);
     const pairs = [];
@@ -1144,24 +1169,18 @@
       const starts = at + 0.35 + k * step;
       fx.draw(shadow, starts, Math.max(0.12, step * 1.6));
       fx.draw(path, starts, Math.max(0.12, step * 1.6));
-      return { path, shadow, starts };
+      return { path, shadow, starts, i, j, sag };
     });
     const pins = spots.map((s, i) => {
       const pin = svg('g', { transform: `translate(${s.x.toFixed(1)} ${(s.y - 22).toFixed(1)})` }, strings);
-      svg('circle', { class: 'ih-pin', r: 6.5 }, pin);
-      svg('circle', { class: 'ih-pin-shine', cx: -2, cy: -2, r: 2 }, pin);
-      fx.pop(pin, at + 0.1 + i * 0.06, { from: 0.4 });
+      const head = svg('g', {}, pin);
+      svg('circle', { class: 'ih-pin', r: 6.5 }, head);
+      svg('circle', { class: 'ih-pin-shine', cx: -2, cy: -2, r: 2 }, head);
+      fx.pop(head, at + 0.1 + i * 0.06, { from: 0.4 });
       return pin;
     });
     const knot = svg('g', { class: 'ih-knot', opacity: 0 }, strings);
-    const loops = [
-      'M-105 -20 C-92 -40 -60 -46 -38 -38 M9 -32 C38 -31 61 -25 80 -18',
-      'M-78 -78 C-90 -48 -75 -18 -56 -5 M12 26 C43 39 88 47 106 23',
-      'M-23 -100 C-33 -76 -19 -53 -5 -39 M32 19 Q44 56 33 85',
-      'M76 -71 C58 -67 42 -54 32 -43 M-30 16 Q-58 40 -80 53',
-      'M-105 20 Q-71 5 -48 4 M39 20 Q69 35 95 53',
-      'M-65 83 Q-43 72 -30 57 M5 33 Q26 23 51 18',
-    ].map((d) => svg('path', { class: 'ih-mud-thread', d, transform: `translate(${cx} ${cy + 6})` }, knot));
+    const loops = mudThreads(knot, cx, cy + 6);
     const note = place(el('div', 'ih-sticky is-staged', node), w - 140, n > 4 ? 0 : h - 88);
     const count = el('b', null, note, '0');
     el('span', null, note, countLabel);
@@ -1177,20 +1196,63 @@
       node,
       /** Heap the cards in the middle and knot every string into one ball of mud. */
       mud(when) {
-        cards.forEach((card, i) => {
-          const hx = cx + Math.cos(i * Math.PI / 4) * 63 - spots[i].x;
-          const hy = cy - 17 + Math.sin(i * Math.PI / 4) * 43 - spots[i].y;
-          tween(card, { translate: `${hx.toFixed(1)}px ${hy.toFixed(1)}px`, rotate: `${((hash01(i * 47) - 0.5) * 70).toFixed(1)}deg`, scale: 0.3, opacity: 0 }, when + i * 0.04, 0.6, EASE.inOut);
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        // One pose drives the cards, their pins, and both ends of every string.
+        // Keeping those attachments intact makes the net itself become the knot.
+        const duration = 1.5;
+        tween(note, { opacity: 0 }, when, 0.25, EASE.in);
+        loops.forEach((path) => path.setAttribute('pathLength', '1'));
+        let previousElapsed;
+        onFrame((t) => {
+          const elapsed = reducedMotion.matches ? (t >= when ? duration : 0) : Math.max(0, Math.min(duration, t - when));
+          if (elapsed === previousElapsed) return;
+          previousElapsed = elapsed;
+          const gather = easeInOutCubic(progress(elapsed, 0.12, 1.05));
+          const bury = easeInOutCubic(progress(elapsed, 0.85, 0.45));
+          const tension = Math.sin(Math.PI * progress(elapsed, 0, 0.45));
+          const poses = spots.map((spot, i) => {
+            const angle = -Math.PI / 2 + i * 2 * Math.PI / n + gather * 0.45;
+            const radiusX = rx * (1 - gather) + 25 * gather;
+            const radiusY = ry * (1 - gather) + 17 * gather;
+            return {
+              x: cx + Math.cos(angle) * radiusX,
+              y: cy - 22 + 28 * gather + Math.sin(angle) * radiusY,
+            };
+          });
+          cards.forEach((carrier, i) => {
+            const pinX = spots[i].x;
+            const pinY = spots[i].y - 22;
+            const dx = poses[i].x - pinX;
+            const dy = poses[i].y - pinY;
+            const scale = 1 - 0.78 * gather;
+            const rotation = gather * (18 + (hash01(i * 47) - 0.5) * 35);
+            carrier.style.transform = `translate(${dx}px, ${dy}px) translate(${pinX}px, ${pinY}px) rotate(${rotation}deg) scale(${scale}) translate(${-pinX}px, ${-pinY}px)`;
+            carrier.style.opacity = String(1 - bury);
+            pins[i].setAttribute('transform', `translate(${poses[i].x} ${poses[i].y}) scale(${1 - 0.65 * gather})`);
+            pins[i].setAttribute('opacity', String(1 - bury));
+          });
+          yarn.forEach(({ path, shadow, i, j, sag }, k) => {
+            const a = poses[i];
+            const b = poses[j];
+            // Taut at first, then bow into alternating loops as the net compacts.
+            const curl = Math.sin(Math.PI * gather) * (k % 2 ? 42 : -42);
+            const bend = sag * (1 - gather) * (1 - 0.8 * tension);
+            const d = `M${a.x} ${a.y} Q${(a.x + b.x) / 2 + curl} ${(a.y + b.y) / 2 + bend + curl} ${b.x} ${b.y}`;
+            for (const strand of [path, shadow]) {
+              strand.setAttribute('d', d);
+              strand.style.opacity = String(1 - bury);
+            }
+          });
+          const form = easeInOutCubic(progress(elapsed, 0.38, 0.9));
+          const settle = Math.sin(Math.PI * progress(elapsed, 1.1, 0.4)) * 0.055;
+          const size = 0.16 + 0.84 * form;
+          ball.setAttribute('opacity', String(progress(elapsed, 0.38, 0.25)));
+          ball.setAttribute('transform', `translate(${cx} ${cy + 6}) scale(${size * (1 + settle)} ${size * (1 - settle)})`);
+          knot.setAttribute('opacity', String(progress(elapsed, 0.8, 0.4)));
+          loops.forEach((path, k) => {
+            path.style.strokeDashoffset = String(1 - easeInOutCubic(progress(elapsed, 0.85 + k * 0.025, 0.4)));
+          });
         });
-        pins.forEach((pin) => tween(pin, { opacity: 0 }, when, 0.3, EASE.in));
-        yarn.forEach(({ path, shadow }) => {
-          tween(path, { opacity: 0 }, when, 0.4, EASE.in);
-          tween(shadow, { opacity: 0 }, when, 0.4, EASE.in);
-        });
-        tween(note, { opacity: 0 }, when, 0.3, EASE.in);
-        knot.setAttribute('opacity', '1');
-        loops.forEach((path, k) => fx.draw(path, when + 0.3 + k * 0.02, 0.5));
-        tween(ball, [{ opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1 }], when + 0.15, 0.7, EASE.out);
         return this;
       },
     };
@@ -1438,6 +1500,6 @@
     latest, show, during, note, heading, paper, list, bubble, digits, clock, counter,
     apolloPortrait, car, overflowingHead, steps, calendar, iceberg, bergLabel, toggle, waterline, outlet, dossier,
     decrypt, module, envelope, courier, laser, spotlight, lamp, agent, transmission, code, search,
-    mainframe, stringWeb, bug, stampTool, grid, vault, submarine, slip,
+    mainframe, stringWeb, mud, bug, stampTool, grid, vault, submarine, slip,
   };
 })();
