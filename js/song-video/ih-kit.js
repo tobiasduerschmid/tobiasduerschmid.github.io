@@ -380,16 +380,20 @@
     const sea = svg('linearGradient', { id: `${id}-sea`, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
     svg('stop', { offset: 0, 'stop-color': '#0e4d7a', 'stop-opacity': 0.75 }, sea);
     svg('stop', { offset: 1, 'stop-color': '#04162b', 'stop-opacity': 0.95 }, sea);
-    svg('rect', { x: 0, y: 120, width: 420, height: 240, rx: 18, fill: `url(#${id}-sea)` }, node);
+    const aboveClip = svg('path', {}, svg('clipPath', { id: `${id}-above` }, defs));
+    const belowClip = svg('path', {}, svg('clipPath', { id: `${id}-below` }, defs));
+    const seaSurface = svg('path', { fill: `url(#${id}-sea)` }, node);
+    const submerged = svg('g', { 'clip-path': `url(#${id}-below)` }, node);
+    const exposed = svg('g', { 'clip-path': `url(#${id}-above)` }, node);
     // Below the waterline: the bulk (the implementation).
-    svg('path', { class: 'ih-ice-deep', d: 'M 120 120 L 80 190 L 104 262 L 160 330 L 236 344 L 300 300 L 334 226 L 318 162 L 296 120 Z' }, node);
-    svg('path', { class: 'ih-ice-deep-shade', d: 'M 236 344 L 300 300 L 334 226 L 318 162 L 296 120 L 268 120 L 290 190 L 270 280 Z' }, node);
+    svg('path', { class: 'ih-ice-deep', d: 'M 124 110 L 80 190 L 104 262 L 160 330 L 236 344 L 300 300 L 334 226 L 318 162 L 292 110 Z' }, submerged);
+    svg('path', { class: 'ih-ice-deep-shade', d: 'M 236 344 L 300 300 L 334 226 L 318 162 L 292 110 L 265 110 L 290 190 L 270 280 Z' }, submerged);
     // Above the waterline: the tip (the interface).
-    svg('path', { class: 'ih-ice-tip', d: 'M 132 120 L 176 58 L 204 28 L 230 52 L 262 76 L 290 120 Z' }, node);
-    svg('path', { class: 'ih-ice-tip-shade', d: 'M 204 28 L 230 52 L 262 76 L 290 120 L 244 120 L 226 70 Z' }, node);
-    svg('path', { class: 'ih-ice-facet', d: 'M120 124 L164 183 L104 262 L148 204 Z M164 183 L160 330 L204 288 Z M268 124 L270 280 L300 300 L290 190 Z' }, node);
-    svg('path', { class: 'ih-ice-tip-facet', d: 'M204 28 L190 83 L166 119 H213 L226 70 Z' }, node);
-    svg('path', { class: 'ih-ice-crack', d: 'M185 126 L178 156 L189 176 M300 165 L282 184 L288 204 M130 271 L147 288' }, node);
+    svg('path', { class: 'ih-ice-tip', d: 'M 126 130 L 176 58 L 204 28 L 230 52 L 262 76 L 296 130 Z' }, exposed);
+    svg('path', { class: 'ih-ice-tip-shade', d: 'M 204 28 L 230 52 L 262 76 L 296 130 L 248 130 L 226 70 Z' }, exposed);
+    svg('path', { class: 'ih-ice-facet', d: 'M120 124 L164 183 L104 262 L148 204 Z M164 183 L160 330 L204 288 Z M268 124 L270 280 L300 300 L290 190 Z' }, submerged);
+    svg('path', { class: 'ih-ice-tip-facet', d: 'M204 28 L190 83 L159 130 H217 L226 70 Z' }, exposed);
+    svg('path', { class: 'ih-ice-crack', d: 'M185 126 L178 156 L189 176 M300 165 L282 184 L288 204 M130 271 L147 288' }, submerged);
     const wave = svg('path', { class: 'ih-sea-top' }, node);
     for (const [fx0, fy] of [[60, 300], [350, 250], [370, 320]]) {
       svg('path', { class: 'ih-fish', d: `M ${fx0} ${fy} q 10 -8 20 0 q -10 8 -20 0 Z M ${fx0 + 20} ${fy} l 7 -5 l 0 10 Z` }, node);
@@ -410,9 +414,12 @@
     let swapAt = Infinity;
     const spinFrom = gearsFrom ?? at;
     onFrame((t) => {
-      let d = 'M 0 120';
-      for (let px = 0; px <= 420; px += 20) d += ` L ${px} ${(120 + 3 * Math.sin(px / 30 + t * 2)).toFixed(1)}`;
+      let d = '';
+      for (let px = 0; px <= 420; px += 10) d += `${px ? ' L' : 'M'} ${px} ${(120 + 3 * Math.sin(px / 30 + t * 2)).toFixed(1)}`;
       wave.setAttribute('d', d);
+      aboveClip.setAttribute('d', `${d} L420 0 H0 Z`);
+      belowClip.setAttribute('d', `${d} L420 360 H0 Z`);
+      seaSurface.setAttribute('d', `${d} V342 Q420 360 402 360 H18 Q0 360 0 342 Z`);
       const swapped = progress(t, swapAt, 0.5);
       gearSets.forEach((set, s) => set.forEach(({ g, spec }, i) => {
         const spin = Math.max(0, t - spinFrom) * (i % 2 ? -50 : 60) * (s ? 1.3 : 1);
@@ -477,8 +484,8 @@
    * charging phone; on the left, behind the wall, the plant that is running.
    * plants = [{ at, kind: 'solar' | 'wind' }].
    */
-  function outlet(parent, { x, y, at, until, plants }) {
-    const node = art(parent, { x, y, w: 480, h: 300, viewBox: '0 0 480 300' });
+  function outlet(parent, { x, y, scale = 1, at, until, plants }) {
+    const node = art(parent, { x, y, w: 480 * scale, h: 300 * scale, viewBox: '0 0 480 300' });
     const sorted = [...plants].sort((a, b) => a.at - b.at);
     // Behind the wall: two scenes that cross-fade.
     const day = svg('g', {}, node);
@@ -522,10 +529,8 @@
       svg('rect', { class: 'ih-socket', x: 323, y: sy, width: 7, height: 16, rx: 2 }, node);
       svg('rect', { class: 'ih-socket', x: 340, y: sy, width: 7, height: 16, rx: 2 }, node);
     }
-    svg('path', { class: 'ih-cable', d: 'M 120 150 C 170 150 200 140 240 140' }, day);
-    svg('path', { class: 'ih-cable', d: 'M 120 150 C 170 150 200 140 240 140' }, night);
-    const flowing = svg('path', { class: 'ih-cable-glow', d: 'M 345 176 C 360 230 400 240 412 200' }, node);
-    svg('path', { class: 'ih-cable', d: 'M 345 176 C 360 230 400 240 412 200', opacity: 0.5 }, node);
+    const flowing = svg('path', { class: 'ih-cable-glow', d: 'M 345 176 C 360 230 414 240 420 188' }, node);
+    svg('path', { class: 'ih-cable', d: 'M 345 176 C 360 230 414 240 420 188', opacity: 0.5 }, node);
     svg('rect', { class: 'ih-plug', x: 316, y: 150, width: 40, height: 30, rx: 6 }, node);
     svg('rect', { class: 'ih-phone', x: 398, y: 96, width: 44, height: 92, rx: 9 }, node);
     svg('rect', { class: 'ih-phone-screen', x: 404, y: 106, width: 32, height: 70, rx: 4 }, node);
@@ -888,12 +893,12 @@
    * highlighted with a marker (and underlined) from their own time.
    * Earlier lines dim (still readable) once the next one is sung.
    */
-  function transmission(parent, { x, y, w, lines, header = 'Incoming transmission', origin, source, sourceAt, stampAt, at, until }) {
+  function transmission(parent, { x, y, w, lines, header, origin, source, sourceAt, stampAt, at, until }) {
     const node = place(el('div', 'ih-trans is-staged', parent), x, y);
     node.style.width = `${w}px`;
     const head = el('div', 'ih-trans-head', node);
     const live = el('span', 'ih-trans-live', head);
-    live.append(icon('wifi'));
+    live.append(icon('file'));
     live.append(document.createTextNode(header));
     if (origin) el('span', 'ih-trans-origin', head, origin);
     lines.forEach((line, i) => {

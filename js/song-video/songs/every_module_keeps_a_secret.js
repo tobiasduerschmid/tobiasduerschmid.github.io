@@ -64,7 +64,6 @@
       });
       kit.sticker(b, '2 digits saved', { x: 640, y: 272, at: mark('intro-4', 'digits'), variant: 'green', iconName: 'check', rotate: 4 });
       fx.bump(full, mark('intro-5', '1985'), 0.12);
-      ih.note(b, '1985 → “85”', { x: 390, y: 320, at: mark('intro-5', 'just'), tone: 'white', rotate: -2 });
 
       // 99 rolls over to 00, which the computer reads as 1900.
       const c = kit.scene(content, line('intro-6').start - 0.1, line('intro-8').start - 0.1);
@@ -124,7 +123,6 @@
       ih.search(e, {
         x: 110, y: 90, w: 740, query: 'YY', at: line('intro-14').start, typedAt: mark('intro-14', 'hunting'),
         hitsAt: mark('intro-15', 'every'), step: 0.18,
-        count: '…and thousands more', countAt: mark('intro-15', 'year'),
         hits: [
           { file: 'payroll.cbl', before: 'MOVE ', match: 'YY', after: ' TO PAY-YEAR' },
           { file: 'interest.cbl', before: 'COMPUTE AGE = NOW-', match: 'YY', after: ' - BORN-YY' },
@@ -276,6 +274,7 @@
       const q = kit.scene(content, start, mark(ln(6), 'every') + 0.25, { exit: 'fade' });
       ih.transmission(q, {
         x: 64, y: 52, w: 832, at: line(ln(1)).start - 0.3, origin: 'CACM · 1972',
+        header: 'On the Criteria To Be Used in Decomposing Systems into Modules',
         source: '— David L. Parnas, 1972', sourceAt: line(ln(5)).start, stampAt: mark(ln(5), 'from'),
         lines: [
           { at: line(ln(1)).start, parts: ['We propose that one begins'] },
@@ -340,7 +339,7 @@
         { name: 'WalletService', sub: 'wallet', at: mark('verse-2-1', 'wallet') },
       ].map((spec, i) => ({ ...spec, box: ih.module(s, { x: 40, y: 96 + i * 116, w: 256, h: 80, name: spec.name, sub: spec.sub, iconName: 'gear', at: spec.at }) }));
       const tangle = kit.scene(s, mark('verse-2-2', 'all') - 0.1, hideAt + 0.3, { exit: 'fade' });
-      ih.module(tangle, { x: 424, y: 206, w: 210, h: 84, name: 'PayPal', sub: 'payment SDK', kind: 'external', iconName: 'globe', at: mark('verse-2-2', 'paypal') });
+      ih.module(tangle, { x: 424, y: 196, w: 210, h: 104, name: 'PayPal', sub: 'payment SDK', kind: 'external', iconName: 'globe', at: mark('verse-2-2', 'paypal') });
       services.forEach((service, i) => {
         ih.courier(tangle, { from: [300, 136 + i * 116], to: [420, 248], tone: 'pink', at: mark('verse-2-2', 'call') + i * 0.12, period: 1.3 });
         service.box.secret('PayPal decision', { at: mark('verse-2-3', 'know') + i * 0.15, until: hideAt, dx: 22, dy: 62 });
@@ -429,7 +428,6 @@
         }
         if (i === 2) cells.light(panel.at + 0.4, [0, 3], { tone: 'good', step: 0.2 });
       });
-      kit.sticker(s, 'Little need to talk', { x: 640, y: 414, at: mark('pre-chorus-2-5', 'talk'), variant: 'pink', iconName: 'chat', rotate: -4 });
     }
 
     // ----------------------------------------------------------------
@@ -467,12 +465,12 @@
       // The outlet is the interface; the power plant is the secret.
       const b = kit.scene(content, outletAt, end);
       ih.outlet(b, {
-        x: 240, y: 92, at: outletAt + 0.1,
+        x: 168, y: 88, scale: 1.25, at: outletAt + 0.1,
         plants: [{ at: 0, kind: 'solar' }, { at: mark('verse-3-11', 'wind') - 0.1, kind: 'wind' }],
       });
-      ih.note(b, 'Your charger can’t tell', { x: 600, y: 404, at: mark('verse-3-10', 'tell'), tone: 'white', rotate: 2 });
-      ih.note(b, 'noon', { x: 120, y: 124, at: mark('verse-3-11', 'noon'), until: mark('verse-3-11', 'wind'), tone: 'gold', rotate: -3 });
-      ih.note(b, 'midnight', { x: 100, y: 124, at: mark('verse-3-11', 'midnight'), tone: 'cyan', rotate: -3 });
+      ih.note(b, 'Your charger can’t tell', { x: 588, y: 470, at: mark('verse-3-10', 'tell'), tone: 'white', rotate: 2 });
+      ih.note(b, 'noon', { x: 72, y: 124, at: mark('verse-3-11', 'noon'), until: mark('verse-3-11', 'wind'), tone: 'gold', rotate: -3 });
+      ih.note(b, 'midnight', { x: 46, y: 124, at: mark('verse-3-11', 'midnight'), tone: 'cyan', rotate: -3 });
       ih.bergLabel(b, { x: 560, y: 52, title: 'Interface', sub: 'the outlet', tone: 'tip', at: mark('verse-3-12', 'interface') });
       ih.show(ih.envelope(b, { text: 'the power plant', x: 262, y: 52 }), mark('verse-3-12', 'plants'), undefined, { rotate: -3, from: 1.6 });
     }
