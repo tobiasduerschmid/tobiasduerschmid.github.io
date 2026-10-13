@@ -1,0 +1,109 @@
+WEBVTT
+
+runtime-1
+00:00:00.000 --> 00:00:18.297
+How can JavaScript read a file or answer a web request without a browser? It needs a runtime: an environment that executes the language and supplies useful tools. Node.js is that environment for a computer or server. It is not a different programming language.
+
+runtime-2
+00:00:18.297 --> 00:00:40.157
+Inside Node.js, V8 executes your JavaScript. Node adds capabilities such as reading files and accepting network connections. A browser instead provides tools for interacting with a web page. Keep these two ideas separate: JavaScript is the language; the runtime determines which tools your program can use.
+
+syntax-1
+00:00:40.157 --> 00:00:58.948
+Our first program greets Sam and counts the greeting. Read it from top to bottom. Const gives the text Hello the name greeting; the quotation marks make it a string. Let gives the number zero the name count. We use let because count will change. A const binding cannot be reassigned.
+
+syntax-2
+00:00:58.948 --> 00:01:16.623
+Next, the arrow creates a function and stores it under the name greet. Name, in parentheses, is a parameter: a name for the input the function will receive. The curly braces enclose its body. We have described the work, but have not run it. Count is still zero.
+
+syntax-3
+00:01:16.623 --> 00:01:31.343
+The last line calls greet. Parentheses after a function name mean run it, and Sam is the argument we pass in. Inside this call, the parameter name now refers to Sam. Execution moves into the function body.
+
+syntax-4
+00:01:31.343 --> 00:01:52.183
+Count plus equals one adds one to count, so it becomes one. The console.log call prints the values of greeting and name: Hello Sam. The dot selects log from console; the parentheses supply its inputs. The function then finishes. These ordinary JavaScript steps run in order, one at a time.
+
+blocking-1
+00:01:52.183 --> 00:02:11.930
+Now we want to read a file, print its contents, and print Next. Our file, note.txt, contains Hello from disk. Assume it exists and the read succeeds. Require loads Node's built-in file-system module; we name that collection of tools fs. The dot lets us select readFileSync from it.
+
+blocking-2
+00:02:11.930 --> 00:02:31.603
+Here, readFileSync receives the file name and utf8, which asks Node to decode the bytes as text. This call does not return until the read finishes. During that wait, this JavaScript thread cannot run the next line or another request's handler. That is what blocking means here.
+
+blocking-3
+00:02:31.603 --> 00:02:49.515
+When the call returns, text receives Hello from disk. Only now do the two console.log calls run. First the file contents, then Next. The important cost is not just a slow file: other work needing this thread has been unable to make progress during the wait.
+
+nonblocking-1
+00:02:49.515 --> 00:03:09.151
+What if Next could print while the file is being read? This version uses readFile without Sync. The file and encoding stay the same. The new third argument, onFile, is a function to handle the result later. We will define it next. This call starts the operation and returns without the file text.
+
+nonblocking-2
+00:03:09.151 --> 00:03:28.421
+JavaScript moves on and prints Next. Node coordinates the file operation using the operating system and a libuv worker pool. Once our current code finishes, the JavaScript thread can run other ready work. The file operation and JavaScript can make progress during the same period.
+
+nonblocking-3
+00:03:28.421 --> 00:03:47.103
+When the read completes, onFile becomes ready to run with the result. The event loop coordinates when ready callbacks execute. A ready callback does not interrupt JavaScript already running; it must wait for that code to finish. The ready area here is a simplified view of Node's queues.
+
+nonblocking-4
+00:03:47.103 --> 00:04:09.114
+Now the callback runs and prints Hello from disk, after Next. This is concurrency: operations overlap in time. It is not two callbacks running simultaneously on this JavaScript thread. A long calculation still occupies the thread and delays other callbacks, even in a program that uses asynchronous file reads.
+
+callbacks-1
+00:04:09.114 --> 00:04:32.553
+A callback is a function you pass to other code. This snippet defines onFile to handle either success or failure. Function, followed by a name, parameters, and a body, is another way to define a function. The last line passes onFile to readFile. There are no call parentheses after onFile: we hand over the function, not the result of calling it now.
+
+callbacks-2
+00:04:32.553 --> 00:04:50.564
+On success, Node calls our function with two arguments: null first, meaning no error, and the file text second. They become the values of error and text. The if statement tests error. Null makes that condition false, so we skip the error block and print Hello from disk.
+
+callbacks-3
+00:04:50.564 --> 00:05:11.066
+Suppose the file is missing instead. Error now holds an error object, so the condition is true. The console.error call reports the problem. Return exits this callback immediately, before console.log can try to print missing data. Handling failure is part of using an asynchronous result.
+
+callbacks-4
+00:05:11.066 --> 00:05:32.948
+We can put the same function directly in the call. The arrow connects the error and text parameters to the body in braces. This changes the notation, not the behavior. Here, readFile calls it later because readFile is asynchronous. A callback is not automatically asynchronous; other functions may call their callbacks immediately.
+
+await-1
+00:05:32.948 --> 00:05:55.482
+Here is another way to express the same task. We load the promises version of the file-system module. Its readFile returns a promise: an object representing an eventual result or failure. Calling showFile starts our async function. At await, this function suspends until the promise settles; the JavaScript thread can do other work.
+
+await-2
+00:05:55.482 --> 00:06:13.359
+On success, the promise fulfills with Hello from disk. The function can resume: await produces that value, text receives it, and console.log prints it. The later step is written below the read, but it still runs only after the asynchronous result is ready.
+
+await-3
+00:06:13.359 --> 00:06:35.048
+On failure, await throws the rejection, and catch receives the error. We report it instead of printing file text. Try and catch keep those two outcomes separate. Notice what async does not do: a long calculation inside showFile still occupies the JavaScript thread. Await is not a command to create another thread.
+
+server-1
+00:06:35.048 --> 00:06:54.284
+Let's use a callback to answer a browser. This program loads Node's built-in HTTP module, then creates a server. The createServer call receives an arrow function as its request handler. We are registering what to do later. We have not sent Hello yet, because no request has arrived.
+
+server-2
+00:06:54.284 --> 00:07:13.330
+Listen makes the server accept connections on port three thousand. Visiting localhost, port three thousand, in a browser sends a request to this server on our computer. Node calls the handler with req, the incoming request, and res, the response object we can use to reply.
+
+server-3
+00:07:13.330 --> 00:07:30.529
+Inside the handler, res dot end sends Hello and finishes the response. The browser receives that text. The server remains listening for another request. This is the same pattern again: register a function now, then run it when the relevant event occurs.
+
+npm-1
+00:07:30.529 --> 00:07:55.333
+A module is reusable code. Node already includes the file-system and HTTP modules; they need no extra installation. Express is an external package. In a project's terminal, npm install express downloads its code into node_modules and records the dependency in package.json. Installing makes the package available to the project.
+
+npm-2
+00:07:55.333 --> 00:08:18.045
+Now, inside a JavaScript file, require loads Express and const stores its exported value under the name express. That line alone does not start a server. These examples use the CommonJS module style. Remember the different jobs: npm installs packages; require loads modules; Node runs your JavaScript program.
+
+predict-1
+00:08:18.045 --> 00:08:44.876
+Can you predict this program's output? The first line prints A. The setTimeout call schedules a callback that prints B. Empty parentheses mean the arrow function has no parameters; its short body is the console.log call. Zero requests a zero-delay timer, not an interruption. The last line prints C. What order do you expect, and why?
+
+predict-2
+00:08:44.876 --> 00:09:05.056
+The answer is A, C, B. The main code prints A, registers the timer, then prints C. Only after that code finishes can the timer callback print B. Explain the reason, not just the letters: asynchronous work lets us handle a result later while ordinary JavaScript continues running in order.

@@ -1,0 +1,75 @@
+{% assign scene = include.scene %}
+<div class="nja-model">
+{% case scene.id %}
+{% when 'runtime' %}
+  <div class="nja-runtime-source"><i class="fa fa-file-code"></i><div><strong>JavaScript program</strong><span>One language. Two environments.</span></div></div>
+  <div class="nja-runtime-branches"><span><i class="fa fa-arrow-down"></i> in a browser</span><span><i class="fa fa-arrow-down"></i> in Node.js</span></div>
+  <div class="nja-worlds">
+    <div class="nja-world"><div class="nja-window-bar"><i class="fa fa-globe"></i> Browser</div><div class="nja-webpage"><div class="nja-page-title"></div><div class="nja-page-lines"></div><i class="fa fa-hand-pointer"></i></div><strong>Web page tools</strong><p>Elements, buttons, clicks</p></div>
+    <div class="nja-world nja-node"><div class="nja-window-bar"><i class="fa fa-server"></i> Node.js</div><div class="nja-engine"><i class="fa fa-microchip"></i><strong>V8</strong><span>Executes JavaScript</span></div><div class="nja-resources"><span><i class="fa fa-file-alt"></i> Files</span><span><i class="fa fa-network-wired"></i> Network</span></div></div>
+  </div>
+{% when 'syntax' %}
+  <div class="nja-model-heading"><i class="fa fa-list"></i> Values in this program</div>
+  <div class="nja-binding"><code>greeting</code><i class="fa fa-arrow-right"></i><code class="nja-string">"Hello"</code></div>
+  <div class="nja-binding"><code>count</code><i class="fa fa-arrow-right"></i><strong class="nja-count-value">0</strong></div>
+  <div class="nja-function nja-greet-function">
+    <div class="nja-function-heading"><i class="fa fa-code"></i><strong>greet</strong></div>
+    <div class="nja-binding"><span>input</span><i class="fa fa-arrow-right"></i><code class="nja-name-value">name</code></div>
+    <div class="nja-function-body"><span>1. Increase count</span><span>2. Print greeting and name</span></div>
+    <strong class="nja-function-state">Not defined yet</strong>
+  </div>
+  <div class="nja-terminal"><span><i class="fa fa-terminal"></i> Output</span><code class="nja-syntax-output">(nothing yet)</code></div>
+{% when 'blocking' or 'nonblocking' %}
+  <div class="nja-file-object"><i class="fa fa-file-alt"></i><div><strong>note.txt</strong><code>"Hello from disk."</code></div></div>
+  <div class="nja-machine">
+    <div class="nja-track nja-thread-track" data-testid="nodejs-js-thread"><div class="nja-track-heading"><i class="fa fa-code"></i><strong>JavaScript thread</strong><i class="fa fa-lock nja-lock" hidden></i></div><div class="nja-thread-slot"><span class="nja-thread-state">Load file tools</span></div></div>
+    <div class="nja-track nja-file-track"><div class="nja-track-heading"><i class="fa fa-hard-drive"></i><strong>File operation</strong></div><span class="nja-file-state">Not started</span><div class="nja-progress-track"><div class="nja-read-progress"></div><span class="nja-read-head"></span></div></div>
+    {% if scene.id == 'nonblocking' %}
+    <div class="nja-track nja-ready-track"><div class="nja-track-heading"><i class="fa fa-clock"></i><strong>Ready callback</strong></div><div class="nja-ready-slot"><span class="nja-ready-state">Waiting for the file</span><div class="nja-callback-token" data-testid="nodejs-callback-token" hidden><i class="fa fa-code"></i> onFile</div></div></div>
+    {% endif %}
+  </div>
+  <div class="nja-terminal"><span><i class="fa fa-terminal"></i> Output</span><code class="nja-io-output">(nothing yet)</code></div>
+  {% if scene.id == 'nonblocking' %}<p class="nja-model-note">Simplified ready area; Node has several queues and phases.</p>{% endif %}
+{% when 'callbacks' %}
+  <div class="nja-model-heading"><i class="fa fa-code"></i> A function receives values</div>
+  <div class="nja-argument-ports">
+    <div><span>first argument</span><code class="nja-error-value">error</code><i class="fa fa-arrow-down"></i></div>
+    <div><span>second argument</span><code class="nja-text-value">text</code><i class="fa fa-arrow-down"></i></div>
+  </div>
+  <div class="nja-callback-body">
+    <div class="nja-function-heading"><i class="fa fa-code"></i><strong class="nja-callback-name">onFile(error, text)</strong></div>
+    <div class="nja-decision"><code>if (error)</code><span class="nja-condition-value">Which path?</span></div>
+    <div class="nja-outcome-paths">
+      <div class="nja-error-path"><span><i class="fa fa-arrow-down"></i> yes</span><strong>Report error</strong><code>return;</code><span class="nja-stop"><i class="fa fa-stop-circle"></i> exit</span></div>
+      <div class="nja-success-path"><span><i class="fa fa-arrow-down"></i> no</span><strong>Print text</strong><code>console.log(text)</code><i class="fa fa-check-circle"></i></div>
+    </div>
+  </div>
+  <div class="nja-notation-pair" data-pose="pass inline"><span><code>onFile</code>pass a function</span><span><code>onFile()</code>call it now</span></div>
+  <div class="nja-terminal" data-pose="success error" hidden><span><i class="fa fa-terminal"></i> Output</span><code class="nja-callback-output">Hello from disk.</code></div>
+{% when 'await' %}
+  <div class="nja-model-heading"><i class="fa fa-hourglass-half"></i> One operation, two outcomes</div>
+  <div class="nja-promise"><div><i class="fa fa-ticket"></i><strong>Promise</strong></div><strong class="nja-promise-state">pending</strong><code class="nja-promise-value">Result not ready</code></div>
+  <div class="nja-vertical-connector"><i class="fa fa-arrow-down"></i><span class="nja-await-transition">wait for the outcome</span></div>
+  <div class="nja-function"><div class="nja-function-heading"><i class="fa fa-code"></i><strong>showFile()</strong></div><strong class="nja-await-state">Paused at await</strong><code class="nja-await-value">text not assigned yet</code></div>
+  <div class="nja-thread-available"><i class="fa fa-unlock"></i><span>Other JavaScript work can run while the file is pending.</span></div>
+  <div class="nja-terminal"><span><i class="fa fa-terminal"></i> Output</span><code class="nja-await-output">(nothing yet)</code></div>
+{% when 'server' %}
+  <div class="nja-network">
+    <div class="nja-browser-endpoint"><div class="nja-window-bar"><i class="fa fa-globe"></i> localhost:3000</div><div class="nja-browser-page"><i class="fa fa-window-maximize"></i><strong class="nja-browser-response">No request yet</strong></div></div>
+    <div class="nja-network-wire"><span class="nja-request-label">request</span><div class="nja-wire-line"><div class="nja-message"><i class="fa fa-envelope"></i></div></div><span class="nja-response-label">response</span></div>
+    <div class="nja-server-endpoint"><div class="nja-server-rack"><i class="fa fa-server"></i><strong>Node.js server</strong></div><div class="nja-handler"><code>(req, res) =&gt; { ... }</code><span class="nja-server-state">Handler registered</span></div></div>
+  </div>
+{% when 'npm' %}
+  <div class="nja-model-heading"><i class="fa fa-cubes"></i> From package to program</div>
+  <div class="nja-registry"><i class="fa fa-cube"></i><strong>Express</strong><span>External package</span></div>
+  <div class="nja-vertical-connector"><i class="fa fa-arrow-down"></i><span class="nja-package-action">npm installs</span></div>
+  <div class="nja-project-tree"><strong><i class="fa fa-folder-open"></i> Your project</strong><div><i class="fa fa-folder"></i><code>node_modules/</code><span>installed code</span></div><div><i class="fa fa-file-code"></i><code>package.json</code><span>dependency record</span></div></div>
+  <div class="nja-module-binding" data-pose="import" hidden><i class="fa fa-arrow-down"></i><div class="nja-binding"><code>express</code><i class="fa fa-arrow-right"></i><span>exported value</span></div><p>Server: not started</p></div>
+  <p class="nja-model-note" data-pose="install">Built-in modules such as node:fs need no installation.</p>
+{% when 'predict' %}
+  <div class="nja-model-heading"><i class="fa fa-clock"></i> Current code, then callback</div>
+  <div class="nja-timer-flow"><div><strong>Main code</strong><span>print A</span><span>register timer</span><span>print C</span></div><i class="fa fa-arrow-right"></i><div><strong>Timer callback</strong><span>print B</span><span class="nja-timer-state">Runs later</span></div></div>
+  <div class="nja-output-slots"><div><span>first</span><strong>?</strong></div><div><span>second</span><strong>?</strong></div><div><span>third</span><strong>?</strong></div></div>
+  <p class="nja-prediction-state">What will appear in the output?</p>
+{% endcase %}
+</div>

@@ -145,6 +145,11 @@
   definition: European Union
   description: A political and economic union of European member states. EU directives set shared rules, such as the copyright rules for text and data mining, that each member state implements in national law.
 
+- term: ES
+  definition: ECMAScript
+  description: The standardized language underlying JavaScript. ES modules use import and export to share code between files.
+  related: [JS]
+
 - term: FTP
   definition: File Transfer Protocol
   description: An application-layer protocol for transferring files between hosts. Modern systems often prefer SSH-based or HTTPS-based transfer mechanisms for encrypted workflows.
@@ -512,6 +517,10 @@
   definition: Time To Live
   description: A limit on how long data should be considered valid or how far a network packet may travel. In DNS, TTL controls how long resolvers can cache an answer.
   related: [DNS]
+
+- term: TTS
+  definition: Text-to-Speech
+  description: Software that synthesizes spoken audio from written text. The Node.js introduction uses Kokoro to generate its narration offline.
 
 - term: UDP
   definition: User Datagram Protocol

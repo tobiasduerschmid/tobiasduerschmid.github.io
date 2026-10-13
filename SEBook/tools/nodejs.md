@@ -3,9 +3,15 @@ title: Node.js
 layout: sebook
 ---
 
+<link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/css/nodejs-animation.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
+
 This is a **reference page** for JavaScript and Node.js, designed to be kept open alongside the [Node.js Essentials Tutorial](/SEBook/tools/nodejs-tutorial). Use it to look up syntax, concepts, and comparisons while you work through the hands-on exercises.
 
-> **New to Node.js?** Start with the [interactive tutorial](/SEBook/tools/nodejs-tutorial) first — it teaches these concepts through practice with immediate feedback. This page is a reference, not a teaching resource.
+> **New to Node.js?** Watch the introduction below, then try the [interactive tutorial](/SEBook/tools/nodejs-tutorial) for practice with immediate feedback.
+
+{% include nodejs-animation.html %}
 
 ## The Syntax and Semantics: A Familiar Hybrid
 If Python and C++ had a child that was raised on the internet, it would be JavaScript. It powers most of the interactive web you use daily, runs on servers via Node.js (used at companies such as LinkedIn, PayPal, Uber, and NASA), and ships in cross-platform desktop apps like VS Code and Discord (via the Electron framework, which embeds Node.js).
@@ -34,7 +40,7 @@ Here is how JavaScript (via Node.js) fits into your mental model from C++ and Py
 | Typing | Static | Dynamic | Dynamic |
 | Memory | Manual (`new`/`delete`) | GC (reference counting + cycle collector) | GC (V8: generational, tracing) |
 | Run with | Compile → `./app` | `python script.py` | `node script.js` |
-| I/O model | Synchronous (blocks) | Synchronous (blocks) | **Asynchronous** (non-blocking) |
+| I/O options | Synchronous and asynchronous APIs | Synchronous APIs and `asyncio` | Synchronous and **asynchronous** APIs |
 
 **Running a script:** Like Python, there is no compilation step. You run a JavaScript file directly:
 ```bash
@@ -52,12 +58,11 @@ console.log("Hello from Node.js!");
 
 
 ## The Paradigm Shift: Asynchronous Programming
-Here is the largest "threshold concept" you must cross: **JavaScript is fundamentally asynchronous and single-threaded.**
+Here is the central distinction: **ordinary JavaScript runs synchronously, while Node.js provides APIs for asynchronous I/O.** Within a Node.js event loop, one JavaScript callback runs at a time.
 
-In C++ or Python, if you make a network request or read a file, your code typically stops and waits (blocks) until that task finishes. 
-In Node.js, blocking the main thread is a cardinal sin. Instead, Node.js uses an **Event Loop**. When you ask Node.js to read a file, it delegates that task to the operating system and immediately moves on to execute the next line of code. When the file is ready, a "callback" function is placed in a queue to be executed.
+Synchronous APIs such as `readFileSync` block the calling thread until the operation finishes. With asynchronous `readFile`, Node.js delegates the file operation through libuv's worker pool and returns so your next statement can run. The **event loop** arranges for the completion callback to execute later, without interrupting JavaScript already running. C++ and Python also offer asynchronous APIs; the choice of API determines the waiting behavior.
 
-*Mental Model Adjustment:* You must stop thinking of your code as executing strictly top-to-bottom. You are now setting up "listeners" and "callbacks" that react to events as they finish.
+*Mental Model Adjustment:* Trace synchronous statements top-to-bottom, then trace the completion callbacks that become ready later. Starting an asynchronous operation does not mean its result is already available.
 
 ## NPM: The Node Package Manager
 If you remember using `#include <vector>` in C++ or `import requests` (via `pip`) in Python, Node.js has **NPM**.
@@ -198,7 +203,7 @@ const alice = students.find(s => s.id === 1);   // { id: 1, name: "Alice" }
 const missing = students.find(s => s.id === 99); // undefined
 ```
 
-Understanding callbacks is essential — all of Node.js's async operations notify you they are finished by calling a function you provided.
+Understanding callbacks is essential: callback-based APIs notify you by calling a function you supplied. Other Node.js APIs return promises, which you can consume with `await` or `.then()`.
 
 ## Destructuring: Unpacking Values
 
@@ -250,7 +255,7 @@ The Event Loop is best understood with the **Restaurant Metaphor**:
 | **The Waiter** | Task Queue | When an appliance finishes, the callback is queued. |
 | **The Kitchen Manager** | Event Loop | Only when the Chef's hands are **completely empty** does the Manager hand over the next callback. |
 
-The critical insight: `setTimeout(fn, 0)` does NOT mean "run immediately". It means "run when the call stack is empty". Synchronous code always runs to completion before any callback fires:
+The critical insight: `setTimeout(fn, 0)` does NOT mean "run immediately". It schedules a timer callback for a later event-loop turn, after the timer threshold has elapsed. The current synchronous code finishes before this timer callback runs:
 
 ```javascript
 setTimeout(() => console.log("B"), 0);   // queued in Task Queue
