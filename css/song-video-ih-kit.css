@@ -1578,11 +1578,24 @@
 .ih-gear-hub { fill: #1e6fa8; }
 
 .ih-sonar { fill: none; stroke: #5ef08f; stroke-width: 2; }
-.ih-sub-hull { fill: #f2c94c; stroke: var(--ink); stroke-width: 2.5; }
-.ih-sub-tower { fill: #e0b23a; stroke: var(--ink); stroke-width: 2.5; }
+/* The underwater artwork keeps its palette in both page themes. */
+.ih-sub-gold-stop-0 { stop-color: #e9b93d; }
+.ih-sub-gold-stop-1 { stop-color: #fff0a1; }
+.ih-sub-gold-stop-2 { stop-color: #edc24b; }
+.ih-sub-gold-stop-3 { stop-color: #987020; }
+.ih-sub-metal-stop-0 { stop-color: #62798c; }
+.ih-sub-metal-stop-1 { stop-color: #edf5fa; }
+.ih-sub-metal-stop-2 { stop-color: #b1c3d0; }
+.ih-sub-metal-stop-3 { stop-color: #526a7c; }
+.ih-sub-glass-stop-0 { stop-color: #e0faff; }
+.ih-sub-glass-stop-1 { stop-color: #8adcf4; }
+.ih-sub-glass-stop-2 { stop-color: #339bc2; }
+.ih-sub-glass-stop-3 { stop-color: #165273; }
+.ih-sub-hull { fill: var(--ih-sub-gold); stroke: var(--ink); stroke-width: 2.5; }
+.ih-sub-tower { fill: var(--ih-sub-gold); stroke: var(--ink); stroke-width: 2.5; }
 .ih-sub-scope { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
-.ih-sub-port { fill: #7dd3fc; stroke: var(--ink); stroke-width: 2; }
-.ih-sub-prop { fill: #94a3b8; stroke: var(--ink); stroke-width: 1.5; }
+.ih-sub-port { fill: var(--ih-sub-glass); stroke: var(--ink); stroke-width: 2; }
+.ih-sub-prop { fill: var(--ih-sub-metal); stroke: var(--ink); stroke-width: 1.5; }
 
 .ih-berg-label {
   position: absolute;
@@ -2066,10 +2079,8 @@
 .ih-mf-reel-ring { fill: none; stroke: #91a1b1; stroke-width: 1.2; }
 .ih-mf-vent { fill: none; stroke: #566679; stroke-width: 2; stroke-linecap: round; }
 .ih-mf-screw { fill: #596a7d; }
-.ih-sub-fin { fill: #be8d2b; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
-.ih-sub-shade { fill: #c89a31; }
-.ih-sub-highlight { fill: none; stroke: #ffe79c; stroke-width: 2; stroke-linecap: round; }
-.ih-sub-port-rim { fill: #997332; stroke: #ffe099; stroke-width: 1; }
+.ih-sub-fin { fill: var(--ih-sub-gold); stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
+.ih-sub-port-rim { fill: var(--ih-sub-metal); stroke: #ffe099; stroke-width: 1; }
 .ih-sub-glass { fill: none; stroke: #dcf8ff; stroke-width: 1.4; stroke-linecap: round; }
 .ih-plate-bevel { fill: none; stroke: #d2d9df; stroke-width: 2; }
 .ih-plate-screw { fill: #a4afba; }

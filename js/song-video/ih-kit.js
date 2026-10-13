@@ -1644,14 +1644,24 @@
 
   function submarine(parent, { x, y, at, until, pingFrom }) {
     const node = art(parent, { x, y, w: 150, h: 80, viewBox: '0 0 150 80' });
+    const id = `ih-sub-${++uid}`;
+    const defs = svg('defs', {}, node);
+    // Keep the cylindrical lighting attached to each surface as the boat moves.
+    for (const [material, x2, y2, stops] of [
+      ['gold', '0%', '100%', ['0%', '22%', '55%', '100%']],
+      ['metal', '100%', '0%', ['0%', '28%', '62%', '100%']],
+      ['glass', '100%', '100%', ['0%', '35%', '70%', '100%']],
+    ]) {
+      const gradient = svg('linearGradient', { id: `${id}-${material}`, x1: '0%', y1: '0%', x2, y2 }, defs);
+      stops.forEach((offset, i) => svg('stop', { offset, class: `ih-sub-${material}-stop-${i}` }, gradient));
+      node.style.setProperty(`--ih-sub-${material}`, `url(#${id}-${material})`);
+    }
     const rings = svg('g', {}, node);
     const ringNodes = [0, 1, 2].map(() => svg('circle', { class: 'ih-sonar', cx: 10, cy: 48, r: 4 }, rings));
     svg('rect', { class: 'ih-sub-tower', x: 64, y: 18, width: 26, height: 20, rx: 6 }, node);
     svg('path', { class: 'ih-sub-scope', d: 'M80 18 V4 H92' }, node);
     svg('path', { class: 'ih-sub-fin', d: 'M114 36 L131 25 L127 45 L132 70 L113 60 Z' }, node);
     svg('rect', { class: 'ih-sub-hull', x: 14, y: 34, width: 120, height: 30, rx: 15 }, node);
-    svg('path', { class: 'ih-sub-shade', d: 'M16 53 Q73 64 132 52 Q130 64 119 64 H29 Q19 64 16 53 Z' }, node);
-    svg('path', { class: 'ih-sub-highlight', d: 'M30 39 H109 M70 23 H82' }, node);
     for (const px of [44, 70, 96]) {
       svg('circle', { class: 'ih-sub-port-rim', cx: px, cy: 49, r: 6.5 }, node);
       svg('circle', { class: 'ih-sub-port', cx: px, cy: 49, r: 4.5 }, node);
