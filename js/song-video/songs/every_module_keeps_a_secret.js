@@ -133,7 +133,7 @@
       ih.clock(f, { x: 290, y: 96, w: 380, at: line('intro-16').start, turnAt: mark('intro-16', 'came') });
       kit.sticker(f, 'Almost nothing broke', { x: 150, y: 290, at: mark('intro-16', 'nothing'), variant: 'green', iconName: 'check', rotate: -4 });
       kit.sticker(f, 'Fixed in time', { x: 580, y: 300, at: mark('intro-17', 'fixed'), variant: 'gold', iconName: 'timer', rotate: 4 });
-      kit.confetti(f, { x: 480, y: 160, at: mark('intro-16', 'came') + 0.05, count: 30, seed: 7 });
+      window.SongFireworks.celebrate(f, { at: mark('intro-16', 'came') + 0.05, seed: 7 });
       const g = kit.scene(content, line('intro-18').start - 0.1, line('intro-19').start - 0.1);
       ih.paper(g, {
         x: 290, y: 78, w: 380, kicker: 'Classified expenses', title: 'Operation Y2K', at: mark('intro-18', 'bill'),
@@ -170,14 +170,28 @@
       badge('Verse 1 · Why it matters', 'verse-1');
       const start = song.sectionStart('verse-1');
 
-      // Apollo's printout beside a person; a modern car's line count.
+      // Dated examples; source-count scope is documented in docs/song-apollo-sources.md.
       const a = kit.scene(content, start, line('verse-1-4').start - 0.1);
-      ih.spotlight(a, { x: 190, y: 260, w: 360, h: 420, at: start });
-      ih.paperStack(a, { x: 60, y: 104, at: mark('verse-1-1', 'printed'), growFor: 1.8 });
-      ih.note(a, 'Apollo’s code, printed', { x: 82, y: 76, at: mark('verse-1-1', 'code'), tone: 'white', rotate: -3 });
-      ih.note(a, 'as tall as Margaret Hamilton', { x: 64, y: 412, at: mark('verse-1-2', 'margaret'), tone: 'gold', rotate: 2 });
-      ih.car(a, { x: 480, y: 120, at: mark('verse-1-3', 'car'), w: 270 });
-      ih.counter(a, { x: 496, y: 290, label: 'lines of code in a modern car', from: 0, to: 100000000, at: mark('verse-1-3', 'a_2') - 0.1, duration: 0.8 });
+      ih.spotlight(a, { x: 170, y: 265, w: 340, h: 400, at: start });
+      ih.apolloPortrait(a, { x: 24, y: 94, at: mark('verse-1-1', 'printed') });
+      const apollo = kit.el('div', 'ih-code-record ih-code-record--apollo is-staged', a);
+      kit.el('div', 'ih-code-record-year', apollo, 'Apollo 11 · 1969');
+      kit.el('div', 'ih-code-record-count', apollo, '≈80,000');
+      kit.el('div', 'ih-code-record-unit', apollo, 'lines of code');
+      kit.el('div', 'ih-code-record-scope', apollo, 'Command + lunar modules; comments excluded');
+      const credit = kit.el('div', 'ih-hamilton-credit is-staged', apollo);
+      kit.el('strong', '', credit, 'Margaret Hamilton');
+      kit.el('span', '', credit, 'Lead software engineer');
+      kit.el('span', '', credit, 'Apollo onboard flight software · MIT');
+      fx.fadeIn(apollo, mark('verse-1-1', 'code'), 0.3);
+      fx.fadeIn(credit, mark('verse-1-2', 'margaret'), 0.3);
+      ih.car(a, { x: 570, y: 132, at: mark('verse-1-3', 'car'), w: 290 });
+      const car = kit.el('div', 'ih-code-record ih-code-record--car is-staged', a);
+      kit.el('div', 'ih-code-record-year', car, 'Modern car · 2021');
+      const carCount = ih.counter(car, { x: 0, y: 0, label: 'lines of code', from: 0, to: 100000000, at: mark('verse-1-3', 'a_2') - 0.1, duration: 0.65, format: (n) => `≈${n.toLocaleString('en-US')}` });
+      carCount.classList.add('ih-code-record-counter');
+      kit.el('div', 'ih-code-record-scope', car, 'Bosch estimate · vehicle-wide software');
+      fx.fadeIn(car, mark('verse-1-3', 'car'), 0.3);
 
       // Not a thousand times smarter: no one holds it all in their head.
       const b = kit.scene(content, line('verse-1-4').start - 0.1, line('verse-1-6').start - 0.1);
@@ -297,7 +311,7 @@
       const only = mark(ln(9), 'only');
       kit.stamp(t, 'Only one!', { x: 300, y: 386, at: only, color: 'green', rotate: -6, shake: false });
       camera.punch(only + 0.05, 0.035);
-      if (final) kit.confetti(t, { x: 480, y: 260, at: only + 0.1, seed: 33 });
+      if (final) window.SongFireworks.celebrate(t, { at: only + 0.1, seed: 33 });
     }
 
     // ----------------------------------------------------------------

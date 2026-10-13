@@ -73,11 +73,14 @@ Bash logo, with attribution and license in `assets/icons/bash/`.
 
 Celebration confetti uses seeded paper ribbons and tickets with varied sizes,
 scattered launch positions, subdued shading, and tumbling. Every pose is
-calculated from the current song time, so repeated
-seeks reproduce the same frame. Particle counts stay bounded, and inactive
-bursts stop updating. Decorative particles stay behind the teaching artwork
-and above the caption reserve. The aurora backdrop uses radial gradients
-instead of moving blur filters.
+calculated from the current song time, so repeated seeks reproduce the same
+frame. Particle counts stay bounded, and inactive bursts stop updating.
+The information-hiding song instead uses `fireworks.js`: five staggered comet
+launches and chrysanthemum bursts, with drag, gravity, tapered trails, and
+fading embers. The effect stays behind teaching artwork, is clipped above the
+caption reserve, and is hidden for reduced motion. It has no independent clock,
+randomness during playback, strobing, or full-screen flash.
+The aurora backdrop uses radial gradients instead of moving blur filters.
 
 The exporter writes the described audio and timing manifest from the same
 frame-accurate edit plan. `scripts/video-tools/extract-audio.swift` can extract the AAC stream from

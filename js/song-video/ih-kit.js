@@ -212,30 +212,13 @@
     return node;
   }
 
-  /** A paper stack that grows beside a person; the stack reaches their height. */
-  function paperStack(parent, { x, y, at, growFor = 1.6, until, sheets = 34 }) {
-    const node = art(parent, { x, y, w: 250, h: 300 });
-    const ground = 290;
-    svg('line', { class: 'ih-ruler', x1: 112, y1: 58, x2: 236, y2: 58 }, node);
-    // A simple person (no likeness): head, hair, body, arms.
-    const person = svg('g', {}, node);
-    svg('path', { class: 'ih-figure', d: 'M 40 290 L 46 160 Q 50 120 80 118 Q 110 120 114 160 L 120 290 Z' }, person);
-    svg('circle', { class: 'ih-figure', cx: 80, cy: 92, r: 26 }, person);
-    svg('path', { class: 'ih-figure-hair', d: 'M 54 92 Q 52 60 80 62 Q 108 60 106 92 Q 100 76 80 76 Q 60 76 54 92 Z' }, person);
-    const pile = svg('g', {}, node);
-    const sheetsList = Array.from({ length: sheets }, (_, i) => {
-      const top = ground - (i + 1) * 6.8;
-      const lean = (hash01(i * 13 + 7) - 0.5) * 6;
-      const g = svg('g', { transform: `translate(${lean.toFixed(1)} 0)` }, pile);
-      svg('rect', { class: 'ih-sheet', x: 140, y: top, width: 80, height: 6.8 }, g);
-      svg('rect', { class: 'ih-sheet-edge', x: 140, y: top + 5, width: 80, height: 1.8 }, g);
-      return g;
-    });
-    onFrame((t) => {
-      const shown = Math.round(sheets * easeInOutCubic(progress(t, at + 0.2, growFor)));
-      sheetsList.forEach((g, i) => g.setAttribute('opacity', i < shown ? '1' : '0'));
-    });
-    fx.fadeIn(node, at, 0.3);
+  /** Photo-referenced vector portrait; the adjacent record supplies its text alternative. */
+  function apolloPortrait(parent, { x, y, at, until }) {
+    const node = place(el('img', 'ih-apollo-portrait is-staged', parent), x, y);
+    node.src = '/assets/song-art/margaret-hamilton-apollo.svg';
+    node.alt = '';
+    node.setAttribute('aria-hidden', 'true');
+    fx.fadeIn(node, at, 0.5);
     if (until !== undefined) fx.fadeOut(node, until, 0.3);
     return node;
   }
@@ -243,13 +226,21 @@
   /** A car (for "a modern car? A hundred million lines"). */
   function car(parent, { x, y, at, until, w = 220 }) {
     const node = art(parent, { x, y, w, h: w * 0.5, viewBox: '0 0 220 110' });
-    svg('path', { class: 'ih-car-body', d: 'M 14 78 L 18 58 Q 22 50 34 48 L 62 46 L 86 22 Q 92 18 104 18 L 150 18 Q 162 18 170 26 L 190 46 Q 206 48 208 60 L 208 78 Z' }, node);
-    svg('path', { class: 'ih-car-window', d: 'M 92 28 L 124 28 L 124 46 L 74 46 Z' }, node);
-    svg('path', { class: 'ih-car-window', d: 'M 132 28 L 158 28 Q 164 28 168 34 L 178 46 L 132 46 Z' }, node);
-    svg('rect', { class: 'ih-car-light', x: 196, y: 56, width: 10, height: 8, rx: 2 }, node);
+    svg('ellipse', { class: 'ih-prop-shadow', cx: 111, cy: 96, rx: 99, ry: 6 }, node);
+    svg('path', { class: 'ih-car-body', d: 'M12 78 L15 60 Q17 51 32 49 L60 45 L82 25 Q89 18 103 18 H146 Q159 18 171 29 L189 46 Q205 48 209 59 L211 77 Q210 84 203 84 H20 Q12 84 12 78 Z' }, node);
+    svg('path', { class: 'ih-car-sill', d: 'M13 72 Q82 78 210 70 L210 79 Q209 84 201 84 H21 Q13 84 13 78 Z' }, node);
+    svg('path', { class: 'ih-car-window', d: 'M88 29 Q92 26 101 26 H122 V46 H72 Z M130 26 H147 Q155 26 162 32 L176 46 H130 Z' }, node);
+    svg('path', { class: 'ih-car-glass-shine', d: 'M90 29 H101 L85 43 H75 Z M135 29 H142 L157 43 H150 Z' }, node);
+    svg('path', { class: 'ih-car-seam', d: 'M125 50 V71 M72 50 L66 69 M181 50 L185 67' }, node);
+    svg('path', { class: 'ih-car-trim', d: 'M76 54 H85 M140 54 H149 M19 68 H30 M193 70 H206' }, node);
+    svg('path', { class: 'ih-car-highlight', d: 'M34 52 Q91 48 180 51' }, node);
+    svg('path', { class: 'ih-car-light', d: 'M195 55 L204 57 Q207 59 207 64 H195 Z' }, node);
+    svg('rect', { class: 'ih-car-tail-light', x: 16, y: 57, width: 6, height: 8, rx: 2 }, node);
     for (const cx of [56, 168]) {
-      svg('circle', { class: 'ih-car-wheel', cx, cy: 80, r: 18 }, node);
-      svg('circle', { class: 'ih-car-hub', cx, cy: 80, r: 7 }, node);
+      svg('circle', { class: 'ih-car-wheel', cx, cy: 80, r: 17 }, node);
+      svg('circle', { class: 'ih-car-rim', cx, cy: 80, r: 10 }, node);
+      for (let i = 0; i < 5; i++) svg('path', { class: 'ih-car-spoke', d: `M${cx} 80 l0 -7`, transform: `rotate(${i * 72} ${cx} 80)` }, node);
+      svg('circle', { class: 'ih-car-hub', cx, cy: 80, r: 3 }, node);
     }
     show(node, at, until, { from: 0.7 });
     return node;
@@ -259,6 +250,11 @@
   function overflowingHead(parent, { x, y, at, until, overflowAt }) {
     const node = art(parent, { x, y, w: 200, h: 200, viewBox: '-40 -60 260 260' });
     svg('path', { class: 'ih-head', d: 'M 60 190 L 64 150 Q 30 140 32 96 Q 34 40 92 34 Q 150 32 160 88 Q 164 112 176 124 L 160 128 Q 162 150 140 152 L 122 154 L 120 190 Z' }, node);
+    svg('path', { class: 'ih-head-shade', d: 'M64 148 Q94 159 122 145 L120 190 H60 Z' }, node);
+    svg('path', { class: 'ih-head-hair', d: 'M33 110 C19 72 44 34 87 30 C121 24 151 44 158 76 C132 81 109 64 95 58 C79 83 59 86 54 108 L52 131 Q35 126 33 110 Z' }, node);
+    svg('path', { class: 'ih-head-hair-shine', d: 'M43 69 C55 38 107 30 134 53 C106 42 72 44 43 69 Z' }, node);
+    svg('path', { class: 'ih-head-ear', d: 'M70 109 C66 94 49 98 53 115 C55 126 69 129 72 118 M61 108 Q66 104 66 116' }, node);
+    svg('path', { class: 'ih-head-feature', d: 'M134 93 Q143 88 150 93 M141 102 H145 M150 138 Q156 140 161 137' }, node);
     // Pages of code flying out of the top of the head, each with lines.
     const pages = svg('g', { class: 'is-staged' }, node);
     for (let i = 0; i < 6; i++) {
@@ -325,6 +321,9 @@
     // Above the waterline: the tip (the interface).
     svg('path', { class: 'ih-ice-tip', d: 'M 132 120 L 176 58 L 204 28 L 230 52 L 262 76 L 290 120 Z' }, node);
     svg('path', { class: 'ih-ice-tip-shade', d: 'M 204 28 L 230 52 L 262 76 L 290 120 L 244 120 L 226 70 Z' }, node);
+    svg('path', { class: 'ih-ice-facet', d: 'M120 124 L164 183 L104 262 L148 204 Z M164 183 L160 330 L204 288 Z M268 124 L270 280 L300 300 L290 190 Z' }, node);
+    svg('path', { class: 'ih-ice-tip-facet', d: 'M204 28 L190 83 L166 119 H213 L226 70 Z' }, node);
+    svg('path', { class: 'ih-ice-crack', d: 'M185 126 L178 156 L189 176 M300 165 L282 184 L288 204 M130 271 L147 288' }, node);
     const wave = svg('path', { class: 'ih-sea-top' }, node);
     for (const [fx0, fy] of [[60, 300], [350, 250], [370, 320]]) {
       svg('path', { class: 'ih-fish', d: `M ${fx0} ${fy} q 10 -8 20 0 q -10 8 -20 0 Z M ${fx0 + 20} ${fy} l 7 -5 l 0 10 Z` }, node);
@@ -448,6 +447,11 @@
     svg('path', { class: 'ih-wall', d: 'M 250 4 L 476 4 L 476 296 L 250 296 Z' }, node);
     svg('path', { class: 'ih-wall-cut', d: 'M 240 4 L 262 4 L 252 60 L 266 120 L 250 190 L 264 250 L 252 296 L 240 296 Z' }, node);
     svg('rect', { class: 'ih-plate', x: 300, y: 100, width: 70, height: 100, rx: 10 }, node);
+    svg('path', { class: 'ih-plate-bevel', d: 'M307 105 H363 V192' }, node);
+    for (const sy of [110, 190]) {
+      svg('circle', { class: 'ih-plate-screw', cx: 335, cy: sy, r: 2.5 }, node);
+      svg('path', { class: 'ih-plate-slot', d: `M333.5 ${sy} h3` }, node);
+    }
     for (const sy of [122, 160]) {
       svg('rect', { class: 'ih-socket', x: 323, y: sy, width: 7, height: 16, rx: 2 }, node);
       svg('rect', { class: 'ih-socket', x: 340, y: sy, width: 7, height: 16, rx: 2 }, node);
@@ -459,6 +463,8 @@
     svg('rect', { class: 'ih-plug', x: 316, y: 150, width: 40, height: 30, rx: 6 }, node);
     svg('rect', { class: 'ih-phone', x: 398, y: 96, width: 44, height: 92, rx: 9 }, node);
     svg('rect', { class: 'ih-phone-screen', x: 404, y: 106, width: 32, height: 70, rx: 4 }, node);
+    svg('rect', { class: 'ih-battery-frame', x: 409, y: 136, width: 22, height: 33, rx: 3 }, node);
+    svg('path', { class: 'ih-phone-detail', d: 'M417 101 H423 M417 181 H423 M417 133 H423' }, node);
     const battery = svg('rect', { class: 'ih-battery', x: 412, y: 140, width: 16, height: 26, rx: 2 }, node);
     onFrame((t) => {
       const current = latest(sorted, t) || sorted[0];
@@ -950,17 +956,22 @@
     const node = art(parent, { x, y, w: 230, h: 200, viewBox: '0 0 230 200' });
     svg('rect', { class: 'ih-mf-cabinet', x: 6, y: 8, width: 218, height: 184, rx: 8 }, node);
     svg('rect', { class: 'ih-mf-panel', x: 18, y: 20, width: 194, height: 34, rx: 4 }, node);
+    svg('path', { class: 'ih-mf-edge', d: 'M217 12 V185 H12 M11 14 H216' }, node);
+    svg('path', { class: 'ih-mf-tape-route', d: 'M62 131 V150 Q63 160 78 160 H152 Q167 160 168 148 V132' }, node);
     const lights = Array.from({ length: 12 }, (_, i) => svg('circle', { class: 'ih-mf-light', cx: 30 + i * 15, cy: 37, r: 4.2 }, node));
     const reels = [62, 168].map((cx) => {
       svg('rect', { class: 'ih-mf-window', x: cx - 44, y: 66, width: 88, height: 88, rx: 6 }, node);
       const reel = svg('g', { transform: `translate(${cx} 110)` }, node);
       svg('circle', { class: 'ih-mf-reel', r: 34 }, reel);
+      svg('circle', { class: 'ih-mf-reel-ring', r: 29 }, reel);
       svg('circle', { class: 'ih-mf-tape', r: 22 }, reel);
       for (let k = 0; k < 3; k++) svg('path', { class: 'ih-mf-spoke', d: 'M0 -8 L0 -30', transform: `rotate(${k * 120})` }, reel);
       svg('circle', { class: 'ih-mf-hub', r: 7 }, reel);
       return reel;
     });
-    svg('rect', { class: 'ih-mf-slot', x: 30, y: 166, width: 170, height: 8, rx: 3 }, node);
+    for (let vx = 32; vx < 152; vx += 10) svg('path', { class: 'ih-mf-vent', d: `M${vx} 174 v8` }, node);
+    svg('rect', { class: 'ih-mf-slot', x: 170, y: 173, width: 30, height: 10, rx: 2 }, node);
+    for (const [sx, sy] of [[13, 15], [217, 15], [13, 184], [217, 184]]) svg('circle', { class: 'ih-mf-screw', cx: sx, cy: sy, r: 2 }, node);
     onFrame((t) => {
       reels.forEach((reel, i) => reel.setAttribute('transform', `translate(${i ? 168 : 62} 110) rotate(${((t * (i ? -70 : 90)) % 360).toFixed(1)})`));
       // Small panel lights change state about twice a second (no flashing area).
@@ -1101,29 +1112,37 @@
   function bug(parent, { x, y, at, squashAt, until, size = 64, rotate = 0, from }) {
     const node = art(parent, { x, y, w: size, h: size, viewBox: '0 0 64 64' });
     node.style.rotate = `${rotate}deg`;
-    const splat = svg('path', { class: 'ih-bug-splat', d: 'M32 10 L38 24 L54 20 L44 32 L56 44 L40 42 L34 56 L28 42 L10 46 L20 32 L8 20 L26 24 Z', opacity: 0 }, node);
     const body = svg('g', {}, node);
     const legs = [];
     for (const side of [-1, 1]) {
-      for (const [k, dy] of [[0, -6], [1, 4], [2, 14]].map(([k, d]) => [k, d])) {
-        legs.push({ g: svg('path', { class: 'ih-bug-leg', d: `M ${32 + side * 9} ${34 + dy} l ${side * 13} ${dy / 2 - 3} l ${side * 3} 5` }, body), side, k });
+      const limb = svg('g', { transform: `translate(32 0) scale(${side} 1)` }, body);
+      for (const [k, d] of [
+        'M10 28 Q18 25 20 18 Q21 15 24 15',
+        'M13 37 Q22 35 25 39 L27 44',
+        'M11 46 Q19 48 19 54 L23 58',
+      ].entries()) {
+        legs.push({ g: svg('path', { class: 'ih-bug-leg', d }, limb), side, k });
       }
     }
-    svg('path', { class: 'ih-bug-antenna', d: 'M29 13 Q24 4 18 5 M35 13 Q40 4 46 5' }, body);
-    svg('ellipse', { class: 'ih-bug-body', cx: 32, cy: 38, rx: 14, ry: 17 }, body);
-    svg('path', { class: 'ih-bug-shell-line', d: 'M32 22 L32 55' }, body);
-    svg('ellipse', { class: 'ih-bug-shine', cx: 26, cy: 31, rx: 4, ry: 7 }, body);
-    svg('circle', { class: 'ih-bug-head', cx: 32, cy: 18, r: 8 }, body);
-    svg('circle', { class: 'ih-bug-eye', cx: 28.5, cy: 16, r: 2 }, body);
-    svg('circle', { class: 'ih-bug-eye', cx: 35.5, cy: 16, r: 2 }, body);
-    for (const [sx, sy] of [[26, 40], [38, 44], [27, 50], [37, 33]]) svg('circle', { class: 'ih-bug-spot', cx: sx, cy: sy, r: 2.6 }, body);
+    svg('path', { class: 'ih-bug-antenna', d: 'M28 15 C27 9 24 5 20 5 M36 15 C37 9 40 5 44 5' }, body);
+    svg('path', { class: 'ih-bug-head', d: 'M24 20 C22 9 42 9 40 20 L38 27 H26 Z' }, body);
+    svg('path', { class: 'ih-bug-body', d: 'M32 23 C20 20 16 31 17 40 C18 51 24 57 32 58 C40 57 46 51 47 40 C48 31 44 20 32 23 Z' }, body);
+    svg('path', { class: 'ih-bug-shadow', d: 'M39 25 C48 35 44 50 32 56 L32 58 C42 56 47 49 47 39 C47 32 44 27 39 25 Z' }, body);
+    svg('path', { class: 'ih-bug-shell-line', d: 'M32 25 C31 37 31 49 32 56' }, body);
+    svg('path', { class: 'ih-bug-shine', d: 'M21 34 C21 28 25 25 28 27 C29 29 25 30 24 35 C23 38 20 38 21 34 Z' }, body);
+    for (const side of [-1, 1]) {
+      svg('ellipse', { class: 'ih-bug-eye', cx: 32 + side * 5, cy: 17, rx: 1.5, ry: 2 }, body);
+      for (const [dx, cy, r] of [[7, 39, 2.8], [5, 49, 2.1]]) {
+        svg('circle', { class: 'ih-bug-spot', cx: 32 + side * dx, cy, r }, body);
+      }
+    }
     show(node, at, until, { from: 0.3 });
     const squashed = squashAt ?? Infinity;
     onFrame((t) => {
       const crawling = t >= at && t < squashed;
       legs.forEach(({ g, side, k }) => {
         const wiggle = crawling ? 14 * Math.sin(t * 16 + k * 2.1 + (side > 0 ? Math.PI : 0)) : 0;
-        g.setAttribute('transform', `rotate(${wiggle.toFixed(1)} ${32 + side * 9} 36)`);
+        g.setAttribute('transform', `rotate(${wiggle.toFixed(1)} 10 36)`);
       });
       if (from) {
         const p = easeInOutCubic(progress(t, at, 0.9));
@@ -1133,7 +1152,6 @@
     if (squashAt !== undefined) {
       body.style.transformOrigin = '32px 54px';
       tween(body, [{ scale: '1 1' }, { scale: '1.3 0.12' }], squashAt, 0.15, EASE.in);
-      tween(splat, [{ opacity: 0 }, { opacity: 1 }], squashAt + 0.1, 0.15, EASE.out);
     }
     return node;
   }
@@ -1287,8 +1305,15 @@
     const ringNodes = [0, 1, 2].map(() => svg('circle', { class: 'ih-sonar', cx: 10, cy: 48, r: 4 }, rings));
     svg('rect', { class: 'ih-sub-tower', x: 64, y: 18, width: 26, height: 20, rx: 6 }, node);
     svg('path', { class: 'ih-sub-scope', d: 'M80 18 V4 H92' }, node);
+    svg('path', { class: 'ih-sub-fin', d: 'M114 36 L131 25 L127 45 L132 70 L113 60 Z' }, node);
     svg('rect', { class: 'ih-sub-hull', x: 14, y: 34, width: 120, height: 30, rx: 15 }, node);
-    for (const px of [44, 70, 96]) svg('circle', { class: 'ih-sub-port', cx: px, cy: 49, r: 4.5 }, node);
+    svg('path', { class: 'ih-sub-shade', d: 'M16 53 Q73 64 132 52 Q130 64 119 64 H29 Q19 64 16 53 Z' }, node);
+    svg('path', { class: 'ih-sub-highlight', d: 'M30 39 H109 M70 23 H82' }, node);
+    for (const px of [44, 70, 96]) {
+      svg('circle', { class: 'ih-sub-port-rim', cx: px, cy: 49, r: 6.5 }, node);
+      svg('circle', { class: 'ih-sub-port', cx: px, cy: 49, r: 4.5 }, node);
+      svg('path', { class: 'ih-sub-glass', d: `M${px - 2} 50 l3 -3` }, node);
+    }
     const prop = svg('g', { transform: 'translate(138 49)' }, node);
     svg('path', { class: 'ih-sub-prop', d: 'M0 -11 L4 0 L0 11 L-4 0 Z' }, prop);
     onFrame((t) => {
@@ -1320,7 +1345,7 @@
 
   window.InfoHidingKit = {
     latest, show, during, note, heading, paper, list, bubble, digits, clock, counter,
-    paperStack, car, overflowingHead, steps, iceberg, bergLabel, toggle, waterline, outlet, dossier,
+    apolloPortrait, car, overflowingHead, steps, iceberg, bergLabel, toggle, waterline, outlet, dossier,
     decrypt, module, envelope, courier, laser, spotlight, lamp, agent, transmission, code, search,
     mainframe, stringWeb, bug, stampTool, grid, vault, submarine, slip,
   };

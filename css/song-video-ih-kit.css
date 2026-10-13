@@ -1212,10 +1212,10 @@
 .ih-figure { fill: #c4b5fd; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
 .ih-figure-hair { fill: #6d4c41; stroke: var(--ink); stroke-width: 2.5; }
 .ih-ruler { stroke: var(--gold); stroke-width: 3; stroke-dasharray: 6 6; }
-.ih-car-body { fill: #38bdf8; stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
+.ih-car-body { fill: #39afc5; stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
 .ih-car-window { fill: #0b2a44; stroke: var(--ink); stroke-width: 2.5; }
 .ih-car-wheel { fill: #1f2937; stroke: var(--ink); stroke-width: 3; }
-.ih-car-hub { fill: #cbd5e1; }
+.ih-car-hub { fill: #e9eff2; }
 .ih-car-light { fill: #fde68a; }
 
 /* Head with too much in it */
@@ -1224,14 +1224,15 @@
 .ih-head-code { stroke: #64748b; stroke-width: 2; stroke-linecap: round; }
 
 /* Bugs and the stamp that squashes them */
-.ih-bug-body { fill: #2fae5a; stroke: var(--ink); stroke-width: 2.5; }
-.ih-bug-shell-line { stroke: var(--ink); stroke-width: 2; }
-.ih-bug-shine { fill: rgba(255, 255, 255, 0.35); }
-.ih-bug-head { fill: #166534; stroke: var(--ink); stroke-width: 2.5; }
-.ih-bug-eye { fill: #f8fafc; }
-.ih-bug-leg, .ih-bug-antenna { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-.ih-bug-spot { fill: var(--ink); }
-.ih-bug-splat { fill: #a3e635; opacity: 0.85; }
+/* The film stage stays dark in both site themes; red shells read on paper too. */
+.ih-bug-body { fill: #ed454b; stroke: #591e2c; stroke-width: 1.6; }
+.ih-bug-shadow { fill: #b62338; }
+.ih-bug-shell-line { fill: none; stroke: #691d30; stroke-width: 1.4; stroke-linecap: round; }
+.ih-bug-shine { fill: #ffb5a5; }
+.ih-bug-head { fill: #702333; stroke: #b9505b; stroke-width: 1.2; }
+.ih-bug-eye { fill: #fff1dc; }
+.ih-bug-leg, .ih-bug-antenna { fill: none; stroke: #e8787e; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ih-bug-spot { fill: #641e2c; }
 .ih-stamp-knob { fill: #7a5432; stroke: var(--ink); stroke-width: 2.5; }
 .ih-stamp-neck { fill: #a87a4c; stroke: var(--ink); stroke-width: 2; }
 .ih-stamp-block { fill: #5b3a1e; stroke: var(--ink); stroke-width: 2.5; }
@@ -1857,3 +1858,66 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+
+/* The grayscale SVG remains faithful to the photo in both site themes.
+   The print stylesheet presents the song transcript instead of the stage. */
+.ih-apollo-portrait {
+  position: absolute;
+  width: 230px;
+  height: 350px;
+  object-fit: contain;
+}
+
+.ih-code-record {
+  position: absolute;
+  color: var(--text);
+  font-size: 19px;
+  line-height: 1.3;
+}
+.ih-code-record--apollo { left: 270px; top: 105px; width: 225px; }
+.ih-code-record--car { left: 550px; top: 285px; width: 370px; }
+.ih-code-record-year { color: var(--gold); font-size: 23px; font-weight: 800; }
+.ih-code-record-count { margin-top: 12px; font: 700 38px/1.15 var(--font-mono); }
+.ih-code-record-unit { font-size: 21px; font-weight: 700; }
+.ih-code-record-scope { margin-top: 10px; font-size: 18px; color: #e0d8c4; }
+.ih-hamilton-credit { margin-top: 20px; padding-top: 14px; border-top: 2px solid var(--gold); }
+.ih-hamilton-credit strong { display: block; color: var(--gold); font-size: 22px; }
+.ih-hamilton-credit span { display: block; margin-top: 5px; }
+.ih-code-record-counter { position: relative; margin-top: 12px; }
+.ih-code-record-counter .ih-counter-value { font-size: 40px; }
+.ih-code-record-counter .ih-counter-label { font-size: 21px; letter-spacing: normal; text-transform: none; }
+
+/* Illustration finish: solid shade planes and fine hardware details stay crisp
+   on the fixed dark film stage in both site themes. Print hides the player. */
+.ih-prop-shadow { fill: #020611; opacity: 0.4; }
+.ih-car-sill { fill: #20768f; }
+.ih-car-glass-shine { fill: #42718a; }
+.ih-car-seam { fill: none; stroke: #23768b; stroke-width: 1.2; }
+.ih-car-trim { fill: none; stroke: #c1e2e5; stroke-width: 1.8; stroke-linecap: round; }
+.ih-car-highlight { fill: none; stroke: #8ddce2; stroke-width: 1.6; stroke-linecap: round; }
+.ih-car-tail-light { fill: #f66a6d; }
+.ih-car-rim { fill: #627586; stroke: #b9cbd2; stroke-width: 1.4; }
+.ih-car-spoke { fill: none; stroke: #cbd9dd; stroke-width: 2; }
+.ih-head-shade { fill: #d7ac87; }
+.ih-head-hair { fill: #34333c; }
+.ih-head-hair-shine { fill: #56515a; }
+.ih-head-ear { fill: #edbf98; stroke: #b98264; stroke-width: 2; stroke-linecap: round; }
+.ih-head-feature { fill: none; stroke: #5d3d35; stroke-width: 2.5; stroke-linecap: round; }
+.ih-ice-facet { fill: #4a9bc0; opacity: 0.45; }
+.ih-ice-tip-facet { fill: #d4f0fa; }
+.ih-ice-crack { fill: none; stroke: #88cce0; stroke-width: 1.5; opacity: 0.5; stroke-linecap: round; }
+.ih-mf-edge { fill: none; stroke: #eef2ef; stroke-width: 2; }
+.ih-mf-tape-route { fill: none; stroke: #695344; stroke-width: 3; }
+.ih-mf-reel-ring { fill: none; stroke: #91a1b1; stroke-width: 1.2; }
+.ih-mf-vent { fill: none; stroke: #566679; stroke-width: 2; stroke-linecap: round; }
+.ih-mf-screw { fill: #596a7d; }
+.ih-sub-fin { fill: #be8d2b; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
+.ih-sub-shade { fill: #c89a31; }
+.ih-sub-highlight { fill: none; stroke: #ffe79c; stroke-width: 2; stroke-linecap: round; }
+.ih-sub-port-rim { fill: #997332; stroke: #ffe099; stroke-width: 1; }
+.ih-sub-glass { fill: none; stroke: #dcf8ff; stroke-width: 1.4; stroke-linecap: round; }
+.ih-plate-bevel { fill: none; stroke: #d2d9df; stroke-width: 2; }
+.ih-plate-screw { fill: #a4afba; }
+.ih-plate-slot { fill: none; stroke: #4d5c6b; stroke-width: 1; }
+.ih-battery-frame { fill: none; stroke: #d3f5ed; stroke-width: 1.5; }
+.ih-phone-detail { fill: none; stroke: #bac9d5; stroke-width: 2; stroke-linecap: round; }

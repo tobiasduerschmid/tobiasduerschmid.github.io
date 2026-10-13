@@ -1,0 +1,27 @@
+/* Fixed dark song artwork in both site themes; the player hides it in print.
+   Small glowing trails provide the celebration, with no flashing backdrop. */
+.song-fireworks {
+  position: absolute;
+  inset: 0 0 auto;
+  width: 960px;
+  height: 450px;
+  overflow: hidden;
+  pointer-events: none;
+  display: none;
+}
+.song-fireworks.is-active { display: block; }
+.song-firework--gold { --firework-color: #ffcf66; --firework-core: #fff4d2; }
+.song-firework--rose { --firework-color: #f695c9; --firework-core: #ffe7f4; }
+.song-firework--teal { --firework-color: #6ddde1; --firework-core: #e5ffff; }
+.song-firework-trails, .song-firework-embers { fill: var(--firework-color); }
+.song-firework-tips { fill: var(--firework-core); }
+.song-firework-glow {
+  fill: var(--firework-color);
+  stroke: var(--firework-color);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+.song-firework-comet { fill: #ffedbc; }
+@media (prefers-reduced-motion: reduce), print {
+  .song-fireworks.song-fireworks { display: none; }
+}
