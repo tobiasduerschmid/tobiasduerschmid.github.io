@@ -74,12 +74,17 @@
   // Paper: cards, briefing lists, speech bubbles
   // ------------------------------------------------------------------
 
-  function paper(parent, { x, y, w, kicker, title, meta, lines = [], at, until, rotate = -1.5 }) {
+  function paper(parent, { x, y, w, kicker, title, meta, cite, clip = false, lines = [], at, until, rotate = -1.5 }) {
     const node = place(el('div', 'ih-paper is-staged', parent), x, y);
     node.style.width = `${w}px`;
+    if (clip) {
+      const art = svg('svg', { class: 'ih-clip ih-clip--paper', viewBox: '0 0 16 40', 'aria-hidden': 'true' }, node);
+      svg('path', { d: 'M5 38V8a3 3 0 0 1 6 0v26a5 5 0 0 1-10 0V6a7 7 0 0 1 14 0v22' }, art);
+    }
     if (kicker) el('div', 'ih-paper-kicker', node, kicker);
     if (title) el('div', 'ih-paper-title', node, title);
     if (meta) el('div', 'ih-paper-meta', node, meta);
+    if (cite) el('div', 'ih-paper-cite', node, cite);
     const rows = lines.map((line) => {
       const row = el('div', `ih-paper-line${line.total ? ' ih-paper-line--total' : ''}${line.at !== undefined ? ' is-staged' : ''}`, node, line.text);
       if (line.at !== undefined) fx.rise(row, line.at, { distance: 8, duration: 0.3 });
@@ -249,12 +254,23 @@
   /** A head overflowing with lines of code. */
   function overflowingHead(parent, { x, y, at, until, overflowAt }) {
     const node = art(parent, { x, y, w: 200, h: 200, viewBox: '-40 -60 260 260' });
-    svg('path', { class: 'ih-head', d: 'M 60 190 L 64 150 Q 30 140 32 96 Q 34 40 92 34 Q 150 32 160 88 Q 164 112 176 124 L 160 128 Q 162 150 140 152 L 122 154 L 120 190 Z' }, node);
-    svg('path', { class: 'ih-head-shade', d: 'M64 148 Q94 159 122 145 L120 190 H60 Z' }, node);
-    svg('path', { class: 'ih-head-hair', d: 'M33 110 C19 72 44 34 87 30 C121 24 151 44 158 76 C132 81 109 64 95 58 C79 83 59 86 54 108 L52 131 Q35 126 33 110 Z' }, node);
-    svg('path', { class: 'ih-head-hair-shine', d: 'M43 69 C55 38 107 30 134 53 C106 42 72 44 43 69 Z' }, node);
-    svg('path', { class: 'ih-head-ear', d: 'M70 109 C66 94 49 98 53 115 C55 126 69 129 72 118 M61 108 Q66 104 66 116' }, node);
-    svg('path', { class: 'ih-head-feature', d: 'M134 93 Q143 88 150 93 M141 102 H145 M150 138 Q156 140 161 137' }, node);
+    // Draw the neck behind the jaw, so neither becomes a cut-out rectangle.
+    svg('path', { class: 'ih-head-neck', d: 'M76 124 L112 138 C106 151 106 159 113 166 L126 176 Q102 188 70 177 L76 158 Z' }, node);
+    svg('path', { class: 'ih-head-neck-shade', d: 'M76 128 L109 143 L107 157 Q88 150 76 139 Z' }, node);
+    svg('path', { class: 'ih-head', d: 'M54 94 C51 64 69 42 99 42 C122 42 139 54 143 75 L144 89 C143 96 145 102 149 108 L157 116 Q160 120 154 121 L146 122 L147 127 Q150 130 146 133 Q149 137 146 141 C143 150 133 155 122 152 L102 147 C90 143 82 137 76 128 C63 125 56 112 54 94 Z' }, node);
+    svg('path', { class: 'ih-head-jaw-shade', d: 'M64 107 C71 122 79 132 94 138 L122 148 Q134 152 144 143 C139 153 131 155 122 152 L102 147 C89 143 80 136 76 128 Q65 124 64 107 Z' }, node);
+    svg('path', { class: 'ih-head-hair', d: 'M55 115 C43 103 39 86 43 68 C47 47 62 32 81 28 C102 20 125 26 138 41 C145 49 149 61 148 72 C134 73 119 65 109 54 C100 70 87 82 72 89 L69 110 L63 116 L61 105 Z' }, node);
+    svg('path', { class: 'ih-head-hair-shine', d: 'M51 67 C61 41 96 27 118 38 C90 34 65 50 51 67 Z M114 43 Q133 48 140 63 Q123 58 114 43 Z' }, node);
+    svg('path', { class: 'ih-head-ear', d: 'M72 101 C69 91 57 94 57 104 C56 114 63 123 69 120 Q75 117 72 111 Z' }, node);
+    svg('path', { class: 'ih-head-ear-detail', d: 'M62 104 Q68 99 69 108 Q63 109 66 114' }, node);
+    svg('path', { class: 'ih-head-brow', d: 'M124 90 Q133 86 140 91' }, node);
+    svg('path', { class: 'ih-head-eye', d: 'M126 100 Q133 94 140 100 Q133 103 126 100 Z' }, node);
+    svg('ellipse', { class: 'ih-head-iris', cx: 136, cy: 99.5, rx: 2.3, ry: 2.8 }, node);
+    svg('circle', { class: 'ih-head-catchlight', cx: 136.7, cy: 98.6, r: 0.65 }, node);
+    svg('path', { class: 'ih-head-feature', d: 'M126 100 Q133 95 140 100 M145 117 Q148 116 150 118 M136 132 Q142 134 146 133' }, node);
+    // A short shirt collar anchors the portrait without competing with its face.
+    svg('path', { class: 'ih-head-shirt', d: 'M73 163 Q88 179 111 164 L134 174 Q142 178 146 190 H49 Q51 178 60 173 Z' }, node);
+    svg('path', { class: 'ih-head-collar', d: 'M73 163 Q89 177 111 164 L116 169 Q89 187 67 169 Z' }, node);
     // Pages of code flying out of the top of the head, each with lines.
     const pages = svg('g', { class: 'is-staged' }, node);
     for (let i = 0; i < 6; i++) {
@@ -271,17 +287,67 @@
   }
 
   /** A flowchart of processing steps; cross(at) strikes the whole idea. */
+  /**
+   * The processing steps of a flowchart as cards riding a conveyor belt
+   * (one module per step: the decomposition Parnas argued against).
+   * labels = [{ text, iconName }] or plain strings.
+   */
   function steps(parent, { x, y, labels, at, step = 0.3, until }) {
     const node = place(el('div', 'ih-steps', parent), x, y);
-    labels.forEach((text, i) => {
+    const belt = el('div', 'ih-belt is-staged', node);
+    const tread = el('div', 'ih-belt-tread', belt);
+    fx.fadeIn(belt, at - 0.1, 0.25);
+    onFrame((t) => { tread.style.backgroundPosition = `${((t * 40) % 28).toFixed(1)}px 0`; });
+    labels.forEach((label, i) => {
+      const spec = typeof label === 'string' ? { text: label } : label;
       if (i) {
         const arrow = icon('pointer', 'ih-step-arrow is-staged');
         node.append(arrow);
         fx.fadeIn(arrow, at + i * step - 0.1, 0.2);
       }
-      const box = el('div', 'ih-step is-staged', node, text);
+      const box = el('div', 'ih-step is-staged', node);
+      if (spec.iconName) box.append(icon(spec.iconName));
+      box.append(document.createTextNode(spec.text));
       fx.pop(box, at + i * step, { from: 0.7 });
     });
+    if (until !== undefined) fx.fadeOut(node, until, 0.25);
+    return node;
+  }
+
+  /**
+   * A tear-off desk calendar. pages = [{ at, month, day, year, tone }]; on
+   * each change the old page tears off and falls away.
+   */
+  function calendar(parent, { x, y, pages, at, until }) {
+    const node = place(el('div', 'ih-calendar is-staged', parent), x, y);
+    const rings = el('div', 'ih-calendar-rings', node);
+    for (let i = 0; i < 4; i++) el('span', null, rings);
+    const sheet = el('div', 'ih-calendar-page', node);
+    const month = el('div', 'ih-calendar-month', sheet);
+    const day = el('div', 'ih-calendar-day', sheet);
+    const year = el('div', 'ih-calendar-year', sheet);
+    const sorted = [...pages].sort((a, b) => a.at - b.at);
+    onFrame((t) => {
+      const page = latest(sorted, t) || sorted[0];
+      if (month.textContent !== page.month) month.textContent = page.month;
+      if (day.textContent !== String(page.day)) day.textContent = String(page.day);
+      if (year.textContent !== String(page.year)) year.textContent = String(page.year);
+      sheet.classList.toggle('is-bad', page.tone === 'bad');
+    });
+    sorted.slice(1).forEach((page, i) => {
+      const old = sorted[i];
+      const torn = el('div', 'ih-calendar-page ih-calendar-torn is-staged', node);
+      el('div', 'ih-calendar-month', torn, old.month);
+      el('div', 'ih-calendar-day', torn, String(old.day));
+      el('div', 'ih-calendar-year', torn, String(old.year));
+      tween(torn, [
+        { opacity: 1, translate: '0 0', rotate: '0deg' },
+        { opacity: 1, translate: '10px 30px', rotate: '8deg', offset: 0.3 },
+        { opacity: 0, translate: '60px 180px', rotate: '38deg' },
+      ], page.at, 0.8, EASE.in);
+      fx.bump(sheet, page.at + 0.05, 0.06);
+    });
+    fx.rise(node, at, { distance: 16, duration: 0.35 });
     if (until !== undefined) fx.fadeOut(node, until, 0.25);
     return node;
   }
@@ -987,6 +1053,42 @@
   // red string; with every pair connected, it knots into a ball of mud
   // ------------------------------------------------------------------
 
+  /** A rounded mass of wet earth, lit from the same upper left as the props. */
+  function mudBall(parent, cx, cy) {
+    const ball = svg('g', { class: 'ih-mud-ball', transform: `translate(${cx} ${cy})`, opacity: 0 }, parent);
+    const gradientId = `ih-mud-light-${++uid}`;
+    const gradient = svg('radialGradient', { id: gradientId, gradientUnits: 'userSpaceOnUse', cx: -43, cy: -52, r: 188 }, svg('defs', {}, ball));
+    for (const [offset, tone] of [['0%', 'light'], ['48%', 'middle'], ['82%', 'shade'], ['100%', 'edge']]) {
+      svg('stop', { offset, class: `ih-mud-tone--${tone}` }, gradient);
+    }
+    svg('ellipse', { class: 'ih-mud-ground', cx: 8, cy: 111, rx: 123, ry: 16 }, ball);
+    for (const [x, y, rx, ry] of [[-121, 93, 7, 4], [128, 97, 6, 4], [-104, 116, 9, 5], [104, 119, 12, 5]]) {
+      svg('ellipse', { class: 'ih-mud-clod', cx: x, cy: y, rx, ry }, ball);
+    }
+    // Small asymmetries break the edge without turning the silhouette into a splat.
+    const silhouette = 'M-118 5 C-120 -14 -114 -39 -103 -53 C-102 -67 -89 -83 -75 -86 C-61 -104 -37 -112 -20 -107 C-1 -117 25 -110 39 -104 C59 -105 79 -91 87 -77 C105 -68 114 -49 111 -34 C124 -16 123 7 119 23 C124 44 113 65 99 74 C91 94 72 107 50 106 C31 117 10 117 -7 113 C-28 119 -49 110 -60 103 C-83 102 -99 85 -102 68 C-118 52 -124 28 -118 5 Z';
+    const surface = svg('path', { class: 'ih-mud-blob', d: silhouette }, ball);
+    surface.style.fill = `url(#${gradientId})`;
+    const seams = [
+      'M-99 -28 C-91 -51 -70 -54 -57 -49 C-46 -45 -48 -33 -36 -31',
+      'M-42 -88 C-26 -97 -8 -88 -2 -78 C6 -64 20 -68 27 -59',
+      'M49 -77 C68 -70 77 -56 75 -40 C73 -30 81 -21 92 -17',
+      'M-104 28 C-88 35 -75 22 -59 27 C-49 30 -51 46 -35 48',
+      'M-15 -24 C-4 -37 20 -32 27 -16 C31 -2 43 -2 50 6',
+      'M52 42 C66 28 87 34 91 49 C91 65 80 73 68 75',
+      'M-69 70 C-54 60 -39 69 -32 81 C-20 96 1 88 13 95',
+    ];
+    seams.forEach((d) => svg('path', { class: 'ih-mud-ridge', d }, ball));
+    // Earth grains stay on the surface and remain deterministic when seeking.
+    for (let i = 0; i < 42; i++) {
+      const angle = hash01(i * 17 + 9) * Math.PI * 2;
+      const radius = 23 + Math.sqrt(hash01(i * 23 + 5)) * 79;
+      svg('ellipse', { class: i % 3 ? 'ih-mud-grain' : 'ih-mud-grain-light', cx: Math.cos(angle) * radius, cy: Math.sin(angle) * radius, rx: 0.8 + hash01(i + 1) * 1.7, ry: 0.7 + hash01(i + 3) }, ball);
+    }
+    svg('path', { class: 'ih-mud-wet', d: 'M-93 -55 Q-83 -72 -68 -72 M-46 -94 Q-30 -100 -17 -95 M11 -83 Q23 -80 28 -73 M-82 -11 Q-71 -17 -62 -11 M-15 8 Q-5 2 3 7' }, ball);
+    return ball;
+  }
+
   /**
    * A framed corkboard (w×h) with `names` pinned around an ellipse, every
    * pair joined by red string (n(n−1)/2 strings) drawn one after another,
@@ -1010,7 +1112,7 @@
     });
     // The string lies over the cards, pin to pin.
     const mud = svg('svg', { class: 'ih-cork-mud', viewBox: `0 0 ${w} ${h}`, width: w, height: h, 'aria-hidden': 'true' }, node);
-    const blob = svg('path', { class: 'ih-mud-blob', opacity: 0 }, mud);
+    const ball = mudBall(mud, cx, cy + 6);
     const cards = names.map((name, i) => {
       const card = place(el('div', 'ih-pincard', node), spots[i].x - cardW / 2, spots[i].y - 26);
       card.style.width = `${cardW}px`;
@@ -1037,7 +1139,7 @@
       const starts = at + 0.35 + k * step;
       fx.draw(shadow, starts, Math.max(0.12, step * 1.6));
       fx.draw(path, starts, Math.max(0.12, step * 1.6));
-      return { path, starts };
+      return { path, shadow, starts };
     });
     const pins = spots.map((s, i) => {
       const pin = svg('g', { transform: `translate(${s.x.toFixed(1)} ${(s.y - 22).toFixed(1)})` }, strings);
@@ -1047,22 +1149,18 @@
       return pin;
     });
     const knot = svg('g', { class: 'ih-knot', opacity: 0 }, strings);
-    const loops = Array.from({ length: 30 }, (_, k) => {
-      const r1 = 22 + hash01(k * 11 + 1) * 58;
-      const a1 = hash01(k * 17 + 2) * Math.PI * 2;
-      const a2 = a1 + 1.4 + hash01(k * 23 + 3) * 2.6;
-      const r2 = 20 + hash01(k * 29 + 4) * 60;
-      const p1 = [cx + r1 * Math.cos(a1), cy + 6 + r1 * 0.8 * Math.sin(a1)];
-      const p2 = [cx + r2 * Math.cos(a2), cy + 6 + r2 * 0.8 * Math.sin(a2)];
-      const c1 = [cx + (hash01(k * 31) - 0.5) * 160, cy + (hash01(k * 37) - 0.5) * 130];
-      const path = svg('path', { class: `ih-yarn${k % 3 ? '' : ' ih-yarn--dark'}`, d: `M ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} Q ${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}` }, knot);
-      return path;
-    });
+    const loops = [
+      'M-105 -20 C-92 -40 -60 -46 -38 -38 M9 -32 C38 -31 61 -25 80 -18',
+      'M-78 -78 C-90 -48 -75 -18 -56 -5 M12 26 C43 39 88 47 106 23',
+      'M-23 -100 C-33 -76 -19 -53 -5 -39 M32 19 Q44 56 33 85',
+      'M76 -71 C58 -67 42 -54 32 -43 M-30 16 Q-58 40 -80 53',
+      'M-105 20 Q-71 5 -48 4 M39 20 Q69 35 95 53',
+      'M-65 83 Q-43 72 -30 57 M5 33 Q26 23 51 18',
+    ].map((d) => svg('path', { class: 'ih-mud-thread', d, transform: `translate(${cx} ${cy + 6})` }, knot));
     const note = place(el('div', 'ih-sticky is-staged', node), w - 140, n > 4 ? 0 : h - 88);
     const count = el('b', null, note, '0');
     el('span', null, note, countLabel);
     fx.pop(note, at + 0.3, { from: 0.5, rotate: 4 });
-    let mudAt = Infinity;
     onFrame((t) => {
       const shown = yarn.filter((s) => t >= s.starts).length;
       const text = String(shown);
@@ -1074,32 +1172,20 @@
       node,
       /** Heap the cards in the middle and knot every string into one ball of mud. */
       mud(when) {
-        mudAt = when;
         cards.forEach((card, i) => {
-          const hx = cx + (hash01(i * 41 + 5) - 0.5) * 110 - (spots[i].x);
-          const hy = cy + (hash01(i * 43 + 6) - 0.5) * 80 - (spots[i].y);
-          tween(card, { translate: `${hx.toFixed(1)}px ${hy.toFixed(1)}px`, rotate: `${((hash01(i * 47) - 0.5) * 70).toFixed(1)}deg` }, when + i * 0.04, 0.6, EASE.inOut);
+          const hx = cx + Math.cos(i * Math.PI / 4) * 63 - spots[i].x;
+          const hy = cy - 17 + Math.sin(i * Math.PI / 4) * 43 - spots[i].y;
+          tween(card, { translate: `${hx.toFixed(1)}px ${hy.toFixed(1)}px`, rotate: `${((hash01(i * 47) - 0.5) * 70).toFixed(1)}deg`, scale: 0.3, opacity: 0 }, when + i * 0.04, 0.6, EASE.inOut);
         });
         pins.forEach((pin) => tween(pin, { opacity: 0 }, when, 0.3, EASE.in));
-        yarn.forEach(({ path }) => tween(path, { opacity: 0.15 }, when, 0.4, EASE.in));
+        yarn.forEach(({ path, shadow }) => {
+          tween(path, { opacity: 0 }, when, 0.4, EASE.in);
+          tween(shadow, { opacity: 0 }, when, 0.4, EASE.in);
+        });
         tween(note, { opacity: 0 }, when, 0.3, EASE.in);
         knot.setAttribute('opacity', '1');
         loops.forEach((path, k) => fx.draw(path, when + 0.3 + k * 0.02, 0.5));
-        const pts = Array.from({ length: 16 }, (_, k) => {
-          const a = (k / 16) * Math.PI * 2;
-          const rr = 100 + 18 * Math.sin(k * 2.3 + 1) + 10 * Math.cos(k * 3.7);
-          return [cx + rr * Math.cos(a), cy + 6 + rr * 0.78 * Math.sin(a)];
-        });
-        const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
-        const s = mid(pts[15], pts[0]);
-        let d = `M ${s[0].toFixed(1)} ${s[1].toFixed(1)}`;
-        pts.forEach((p, k) => {
-          const m = mid(p, pts[(k + 1) % 16]);
-          d += ` Q ${p[0].toFixed(1)} ${p[1].toFixed(1)} ${m[0].toFixed(1)} ${m[1].toFixed(1)}`;
-        });
-        blob.setAttribute('d', `${d} Z`);
-        tween(blob, [{ opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1 }], when + 0.2, 0.6, EASE.out);
-        blob.style.transformOrigin = `${cx}px ${cy}px`;
+        tween(ball, [{ opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1 }], when + 0.15, 0.7, EASE.out);
         return this;
       },
     };
@@ -1156,8 +1242,8 @@
     return node;
   }
 
-  /** A rubber stamp tool that comes down on (x, y) at `at` and lifts away. */
-  function stampTool(parent, { x, y, at, label = 'FIXED' }) {
+  /** The rubber meets the target at `at`, presses to baseline (x, y) in 0.15 s, then lifts. */
+  function stampTool(parent, { x, y, at, label = 'FIXED', pressDepth = 0 }) {
     const node = art(parent, { x: x - 45, y: y - 120, w: 90, h: 120, viewBox: '0 0 90 120' });
     svg('ellipse', { class: 'ih-stamp-knob', cx: 45, cy: 16, rx: 16, ry: 12 }, node);
     svg('rect', { class: 'ih-stamp-neck', x: 39, y: 24, width: 12, height: 40 }, node);
@@ -1167,9 +1253,9 @@
     text.textContent = label;
     tween(node, [
       { opacity: 0, translate: '0 -90px' },
-      { opacity: 1, translate: '0 -60px', offset: 0.35 },
-      { opacity: 1, translate: '0 18px', offset: 0.6 },
-      { opacity: 1, translate: '0 18px', offset: 0.75 },
+      { opacity: 1, translate: `0 ${18 - pressDepth}px`, offset: 0.35 / 1.1 },
+      { opacity: 1, translate: '0 18px', offset: 0.5 / 1.1 },
+      { opacity: 1, translate: '0 18px', offset: 0.7 / 1.1 },
       { opacity: 0, translate: '0 -80px' },
     ], at - 0.35, 1.1, EASE.linear);
     return node;
@@ -1345,7 +1431,7 @@
 
   window.InfoHidingKit = {
     latest, show, during, note, heading, paper, list, bubble, digits, clock, counter,
-    apolloPortrait, car, overflowingHead, steps, iceberg, bergLabel, toggle, waterline, outlet, dossier,
+    apolloPortrait, car, overflowingHead, steps, calendar, iceberg, bergLabel, toggle, waterline, outlet, dossier,
     decrypt, module, envelope, courier, laser, spotlight, lamp, agent, transmission, code, search,
     mainframe, stringWeb, bug, stampTool, grid, vault, submarine, slip,
   };

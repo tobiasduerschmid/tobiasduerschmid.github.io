@@ -634,7 +634,7 @@
 .ih-trans-stamp {
   position: absolute;
   right: 30px;
-  top: 104px;
+  top: 140px;
   padding: 4px 12px 2px;
   border: 4px solid var(--ink-red);
   border-radius: 8px;
@@ -683,6 +683,21 @@
   color: #3b3f4a;
   font-size: 16px;
   font-weight: 700;
+}
+
+.ih-paper-cite {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(11, 15, 26, 0.3);
+  color: #3b3f4a;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ih-clip--paper {
+  right: 26px;
+  top: -18px;
 }
 
 .ih-paper-line {
@@ -1219,7 +1234,21 @@
 .ih-car-light { fill: #fde68a; }
 
 /* Head with too much in it */
-.ih-head { fill: #fcd9b6; stroke: var(--ink); stroke-width: 3; }
+.ih-head { fill: #f3c9a2; }
+.ih-head-neck { fill: #dfa980; }
+.ih-head-neck-shade { fill: #b8805f; }
+.ih-head-jaw-shade { fill: #dca67c; }
+.ih-head-hair { fill: #34333c; }
+.ih-head-hair-shine { fill: #56515a; }
+.ih-head-ear { fill: #edb98f; stroke: #ba805e; stroke-width: 1.6; }
+.ih-head-ear-detail { fill: none; stroke: #ba805e; stroke-width: 1.6; stroke-linecap: round; }
+.ih-head-brow { fill: none; stroke: #4d3b37; stroke-width: 2.8; stroke-linecap: round; }
+.ih-head-eye { fill: #fff5e4; }
+.ih-head-iris { fill: #463b3a; }
+.ih-head-catchlight { fill: #fff9f1; }
+.ih-head-feature { fill: none; stroke: #78513e; stroke-width: 1.4; stroke-linecap: round; }
+.ih-head-shirt { fill: #3e5467; }
+.ih-head-collar { fill: #8fa4b1; }
 .ih-head-overflow { fill: #f6f8ff; stroke: var(--ink); stroke-width: 2; }
 .ih-head-code { stroke: #64748b; stroke-width: 2; stroke-linecap: round; }
 
@@ -1239,30 +1268,129 @@
 .ih-stamp-rubber { fill: var(--wax); }
 .ih-stamp-label { fill: #f6e7c8; font-family: var(--font-display); font-size: 15px; font-weight: 900; letter-spacing: 0.08em; }
 
-/* Flowchart steps */
+/* Flowchart steps riding a conveyor belt */
 .ih-steps {
   position: absolute;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  padding: 0 18px 26px;
+}
+
+.ih-belt {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 22px;
+  border: 2px solid var(--ink);
+  border-radius: 11px;
+  background: #2a3142;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.ih-belt-tread {
+  position: absolute;
+  inset: 4px 10px;
+  border-radius: 6px;
+  background: repeating-linear-gradient(90deg, #4b5568 0 14px, #1b2130 14px 28px);
 }
 
 .ih-step {
-  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
   border: 2px solid var(--ink);
   border-radius: 8px;
   background: var(--cream);
   color: var(--ink);
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
   white-space: nowrap;
   box-shadow: 3px 3px 0 var(--ink);
 }
 
+.ih-step svg {
+  width: 22px;
+  height: 22px;
+  color: var(--ink-red);
+}
+
 .ih-step-arrow {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   color: var(--muted);
+}
+
+/* A tear-off desk calendar */
+.ih-calendar {
+  position: absolute;
+  width: 150px;
+}
+
+.ih-calendar-rings {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-around;
+  height: 16px;
+  margin: 0 14px -8px;
+}
+
+.ih-calendar-rings span {
+  width: 8px;
+  height: 18px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: linear-gradient(90deg, #94a3b8, #e2e8f0, #94a3b8);
+}
+
+.ih-calendar-page {
+  overflow: hidden;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--cream);
+  color: var(--ink);
+  text-align: center;
+  box-shadow: 4px 4px 0 var(--ink), 0 16px 30px rgba(0, 0, 0, 0.5);
+}
+
+.ih-calendar-torn {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 8px;
+  z-index: 1;
+}
+
+.ih-calendar-month {
+  padding: 8px 0 5px;
+  background: var(--wax);
+  color: #fff1f2;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+
+.ih-calendar-day {
+  font-size: 58px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.ih-calendar-year {
+  padding-bottom: 8px;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.ih-calendar-page.is-bad .ih-calendar-year {
+  color: var(--ink-red);
+  text-decoration: underline 3px;
+  text-underline-offset: 4px;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1330,11 +1458,20 @@
 .ih-pin { fill: #e11d2e; stroke: #5c0a10; stroke-width: 1.5; }
 .ih-pin-shine { fill: rgba(255, 255, 255, 0.75); }
 
-.ih-mud-blob {
-  fill: #5c3b1e;
-  stroke: #2e1c0c;
-  stroke-width: 3;
-}
+/* Like the other illustrated props, the soil keeps its palette in both site themes. */
+.ih-mud-ball { transform-box: fill-box; transform-origin: center; }
+.ih-mud-blob { stroke: #38281d; stroke-width: 2.5; stroke-linejoin: round; }
+.ih-mud-tone--light { stop-color: #b28a60; }
+.ih-mud-tone--middle { stop-color: #82603e; }
+.ih-mud-tone--shade { stop-color: #543a26; }
+.ih-mud-tone--edge { stop-color: #35271e; }
+.ih-mud-ground { fill: #342418; opacity: 0.4; }
+.ih-mud-clod { fill: #67492f; stroke: #39291c; stroke-width: 1.5; }
+.ih-mud-ridge { fill: none; stroke: #3e2c20; stroke-width: 2.5; stroke-linecap: round; opacity: 0.45; }
+.ih-mud-grain { fill: #34281f; opacity: 0.45; }
+.ih-mud-grain-light { fill: #c5a073; opacity: 0.45; }
+.ih-mud-wet { fill: none; stroke: #dcc39a; stroke-width: 2.5; stroke-linecap: round; opacity: 0.65; }
+.ih-mud-thread { fill: none; stroke: #9c3b2b; stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
 
 .ih-pincard {
   position: absolute;
@@ -1681,7 +1818,7 @@
 
 .ih-vault-plate {
   position: relative;
-  padding: 26px 14px 10px;
+  padding: 26px 14px 20px;
   border: 2px solid var(--ink);
   border-radius: 8px;
   background: linear-gradient(170deg, #f6dc8f, var(--brass) 55%, #c79a3d);
@@ -1898,11 +2035,6 @@
 .ih-car-tail-light { fill: #f66a6d; }
 .ih-car-rim { fill: #627586; stroke: #b9cbd2; stroke-width: 1.4; }
 .ih-car-spoke { fill: none; stroke: #cbd9dd; stroke-width: 2; }
-.ih-head-shade { fill: #d7ac87; }
-.ih-head-hair { fill: #34333c; }
-.ih-head-hair-shine { fill: #56515a; }
-.ih-head-ear { fill: #edbf98; stroke: #b98264; stroke-width: 2; stroke-linecap: round; }
-.ih-head-feature { fill: none; stroke: #5d3d35; stroke-width: 2.5; stroke-linecap: round; }
 .ih-ice-facet { fill: #4a9bc0; opacity: 0.45; }
 .ih-ice-tip-facet { fill: #d4f0fa; }
 .ih-ice-crack { fill: none; stroke: #88cce0; stroke-width: 1.5; opacity: 0.5; stroke-linecap: round; }
@@ -1921,3 +2053,5 @@
 .ih-plate-slot { fill: none; stroke: #4d5c6b; stroke-width: 1; }
 .ih-battery-frame { fill: none; stroke: #d3f5ed; stroke-width: 1.5; }
 .ih-phone-detail { fill: none; stroke: #bac9d5; stroke-width: 2; stroke-linecap: round; }
+
+/* Mud is a solid volume, with damp clods and a few half-buried yarn traces. */

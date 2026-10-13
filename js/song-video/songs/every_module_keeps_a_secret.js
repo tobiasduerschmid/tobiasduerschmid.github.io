@@ -50,7 +50,7 @@
       // Memory was expensive, so the year lost its first two digits.
       const b = kit.scene(content, line('intro-2').start - 0.1, line('intro-6').start - 0.1);
       ih.note(b, '1960s', { x: 96, y: 70, at: mark('intro-2', 'sixties'), tone: 'gold', rotate: -4 });
-      ih.mainframe(b, { x: 40, y: 100, at: mark('intro-2', 'memory') - 0.2 });
+      ih.mainframe(b, { x: 40, y: 100, at: line('intro-2').start });
       kit.sticker(b, 'Memory: $$$', { x: 76, y: 312, at: mark('intro-2', 'expensive'), variant: 'red', iconName: 'receipt', rotate: -4 });
       const full = ih.digits(b, {
         x: 310, y: 118, label: 'The year', cells: 4, size: 64, at: mark('intro-3', 'programmers'),
@@ -83,7 +83,14 @@
           { at: mark('intro-7', 'as'), parts: ['     = ', { text: '1900', mark: 'red', at: mark('intro-7', '1900') }] },
         ],
       });
-      kit.stamp(c, '1900?!', { x: 560, y: 290, at: mark('intro-7', '1900'), rotate: -7, shake: false });
+      kit.stamp(c, '1900?!', { x: 470, y: 290, at: mark('intro-7', '1900'), rotate: -7, shake: false });
+      ih.calendar(c, {
+        x: 720, y: 252, at: mark('intro-6', 'year'),
+        pages: [
+          { at: 0, month: 'DEC', day: 31, year: 1999 },
+          { at: mark('intro-7', '1900'), month: 'JAN', day: 1, year: 1900, tone: 'bad' },
+        ],
+      });
       fx.bump(year, mark('intro-7', '1900'), 0.08);
 
       // Age = 00 − 85 = −85; nobody expected the code to live that long.
@@ -108,7 +115,7 @@
       const e = kit.scene(content, line('intro-12').start - 0.1, line('intro-16').start - 0.1);
       const names = ['Payroll', 'Billing', 'Interest', 'Bookings', 'Reports', 'Pensions', 'Insurance', 'Loans', 'Taxes', 'Shipping', 'Inventory', 'Grades'];
       const grid = ih.grid(e, {
-        x: 56, y: 96, cols: 4, cellW: 200, cellH: 46, gap: 14, names, at: mark('intro-12', 'two') - 0.3, step: 0.04,
+        x: 56, y: 96, cols: 4, cellW: 200, cellH: 46, gap: 14, names, at: line('intro-12').start, step: 0.04,
         until: line('intro-14').start, tag: 'YY', tagAt: mark('intro-12', 'year'), tagStep: 0.05,
       });
       ih.note(e, 'Not hidden in one module', { x: 330, y: 290, at: mark('intro-12', 'hidden'), until: mark('intro-13', 'copied'), tone: 'red', rotate: -3 });
@@ -136,7 +143,7 @@
       window.SongFireworks.celebrate(f, { at: mark('intro-16', 'came') + 0.05, seed: 7 });
       const g = kit.scene(content, line('intro-18').start - 0.1, line('intro-19').start - 0.1);
       ih.paper(g, {
-        x: 290, y: 78, w: 380, kicker: 'Classified expenses', title: 'Operation Y2K', at: mark('intro-18', 'bill'),
+        x: 290, y: 78, w: 380, kicker: 'Classified expenses', title: 'Operation Y2K', at: line('intro-18').start,
         lines: [
           { text: '1. Find every two-digit year', at: mark('intro-18', 'bill') + 0.25 },
           { text: '2. Fix it, test it, ship it', at: mark('intro-18', 'bill') + 0.6 },
@@ -171,7 +178,7 @@
       const start = song.sectionStart('verse-1');
 
       // Dated examples; source-count scope is documented in docs/song-apollo-sources.md.
-      const a = kit.scene(content, start, line('verse-1-4').start - 0.1);
+      const a = kit.scene(content, start, line('verse-1-6').start - 0.1);
       ih.spotlight(a, { x: 170, y: 265, w: 340, h: 400, at: start });
       ih.apolloPortrait(a, { x: 24, y: 94, at: mark('verse-1-1', 'printed') });
       const apollo = kit.el('div', 'ih-code-record ih-code-record--apollo is-staged', a);
@@ -185,7 +192,7 @@
       kit.el('span', '', credit, 'Apollo onboard flight software · MIT');
       fx.fadeIn(apollo, mark('verse-1-1', 'code'), 0.3);
       fx.fadeIn(credit, mark('verse-1-2', 'margaret'), 0.3);
-      ih.car(a, { x: 570, y: 132, at: mark('verse-1-3', 'car'), w: 290 });
+      ih.car(a, { x: 570, y: 132, at: mark('verse-1-3', 'car'), until: line('verse-1-4').start - 0.25, w: 290 });
       const car = kit.el('div', 'ih-code-record ih-code-record--car is-staged', a);
       kit.el('div', 'ih-code-record-year', car, 'Modern car · 2021');
       const carCount = ih.counter(car, { x: 0, y: 0, label: 'lines of code', from: 0, to: 100000000, at: mark('verse-1-3', 'a_2') - 0.1, duration: 0.65, format: (n) => `≈${n.toLocaleString('en-US')}` });
@@ -193,11 +200,11 @@
       kit.el('div', 'ih-code-record-scope', car, 'Bosch estimate · vehicle-wide software');
       fx.fadeIn(car, mark('verse-1-3', 'car'), 0.3);
 
-      // Not a thousand times smarter: no one holds it all in their head.
-      const b = kit.scene(content, line('verse-1-4').start - 0.1, line('verse-1-6').start - 0.1);
-      ih.overflowingHead(b, { x: 360, y: 140, at: line('verse-1-4').start, overflowAt: mark('verse-1-5', 'holds') });
-      kit.sticker(b, '×1000 smarter? No.', { x: 120, y: 120, at: mark('verse-1-4', 'thousand'), variant: 'white', iconName: 'cross', rotate: -5 });
-      kit.sticker(b, 'Too much for one head', { x: 580, y: 160, at: mark('verse-1-5', 'whole'), variant: 'pink', iconName: 'warning', rotate: 4 });
+      // Keep both code records visible while the car gives way to one person's
+      // limited working memory; this is still the same comparison scene.
+      ih.overflowingHead(a, { x: 645, y: 43, at: line('verse-1-4').start, overflowAt: mark('verse-1-5', 'holds') });
+      kit.sticker(a, '×1000 smarter? No.', { x: 600, y: 72, at: mark('verse-1-4', 'thousand'), until: line('verse-1-5').start, variant: 'white', iconName: 'cross', rotate: -3 });
+      kit.sticker(a, 'Too much for one head', { x: 590, y: 245, at: mark('verse-1-5', 'whole'), variant: 'pink', iconName: 'warning', rotate: 0 });
 
       // The corkboard: 4 modules → 6 strings, 8 modules → 28; then mud.
       const c = kit.scene(content, line('verse-1-6').start - 0.1, line('verse-1-10').start - 0.1);
@@ -205,7 +212,7 @@
       const board = ih.stringWeb(c, { x: 392, y: 64, w: 548, h: 384, names: ['Cart', 'Order', 'Pay', 'Ship', 'Auth', 'Mail', 'Tax', 'Stock'], title: 'Case: 8 modules', at: mark('verse-1-7', 'eight'), drawFor: 1.8 });
       fx.moveTo(board.node, mark('verse-1-8', 'let'), -200, 0, 0.6);
       board.mud(mark('verse-1-9', 'built') - 0.3);
-      ih.note(c, 'everything depends on everything', { x: 560, y: 30, at: mark('verse-1-8', 'depend'), until: mark('verse-1-9', 'big'), tone: 'red', rotate: -2 });
+      ih.note(c, 'everything depends on everything', { x: 230, y: 30, at: mark('verse-1-8', 'depend'), until: mark('verse-1-9', 'big'), tone: 'red', rotate: -2 });
       kit.stamp(c, 'Big Ball of Mud', { x: 250, y: 396, at: mark('verse-1-9', 'big'), color: 'gold', rotate: -4, shake: false });
 
       // One change touches dozens of files; squash one bug, two crawl in.
@@ -216,7 +223,7 @@
       grid.light(mark('verse-1-10', 'touch'), [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11], { step: 0.07, stamp: 'Hit' });
       ih.counter(d, { x: 50, y: 316, label: 'files touched', from: 1, to: 12, at: mark('verse-1-10', 'touch'), duration: 0.9 });
       ih.bug(d, { x: 700, y: 170, at: mark('verse-1-11', 'fix') - 0.5, squashAt: mark('verse-1-11', 'bug') + 0.1, size: 96, rotate: 200, from: [720, 30] });
-      ih.stampTool(d, { x: 748, y: 214, at: mark('verse-1-11', 'bug') + 0.1, label: 'FIXED' });
+      ih.stampTool(d, { x: 748, y: 251, pressDepth: 63, at: mark('verse-1-11', 'bug') + 0.1, label: 'FIXED' });
       ih.bug(d, { x: 610, y: 300, at: mark('verse-1-11', 'two'), size: 80, rotate: 60, from: [480, 340] });
       ih.bug(d, { x: 790, y: 290, at: mark('verse-1-11', 'more'), size: 80, rotate: -60, from: [960, 340] });
       kit.sticker(d, '+2 bugs', { x: 790, y: 150, at: mark('verse-1-11', 'appear'), variant: 'red', iconName: 'warning', rotate: 5 });
@@ -230,14 +237,14 @@
       badge('Pre-chorus · How to split a system', 'pre-chorus-1');
       const s = kit.scene(content, song.sectionStart('pre-chorus-1'), song.sectionEnd('pre-chorus-1'));
       const paperAt = mark('pre-chorus-1-3', '1972');
-      ih.heading(s, ['How do you split a system into ', 'modules', '?'], { x: 120, y: 76, at: mark('pre-chorus-1-1', 'split'), until: paperAt - 0.1 });
-      ih.steps(s, { x: 150, y: 180, labels: ['1 · Read input', '2 · Process', '3 · Print'], at: mark('pre-chorus-1-2', 'steps'), step: 0.35, until: paperAt - 0.1 });
-      kit.stamp(s, 'Not by steps', { x: 300, y: 252, at: mark('pre-chorus-1-2', 'then'), rotate: -5, shake: false, until: paperAt - 0.1 });
+      ih.heading(s, ['How do you split a system into ', 'modules', '?'], { x: 120, y: 76, at: line('pre-chorus-1-1').start, until: paperAt - 0.1 });
+      ih.steps(s, { x: 110, y: 168, labels: [{ text: '1 · Read input', iconName: 'file' }, { text: '2 · Process', iconName: 'gear' }, { text: '3 · Print', iconName: 'receipt' }], at: mark('pre-chorus-1-2', 'steps'), step: 0.35, until: paperAt - 0.1 });
+      kit.stamp(s, 'Not by steps', { x: 300, y: 262, at: mark('pre-chorus-1-2', 'then'), rotate: -5, shake: false, until: paperAt - 0.1 });
       ih.spotlight(s, { x: 480, y: 220, w: 760, h: 400, at: paperAt - 0.2 });
       ih.paper(s, {
         x: 180, y: 116, w: 600, kicker: 'Communications of the ACM · December 1972',
         title: 'On the Criteria To Be Used in Decomposing Systems into Modules',
-        meta: 'David L. Parnas', at: paperAt,
+        meta: 'David L. Parnas · Carnegie-Mellon University', cite: 'Vol. 15, No. 12 · pp. 1053–1058', clip: true, at: paperAt,
       });
       kit.sticker(s, 'Split by decisions', { x: 560, y: 330, at: mark('pre-chorus-1-3', 'wrote'), variant: 'gold', iconName: 'sparkle', rotate: 4 });
     }
@@ -336,7 +343,7 @@
       ih.module(tangle, { x: 424, y: 206, w: 210, h: 84, name: 'PayPal', sub: 'payment SDK', kind: 'external', iconName: 'globe', at: mark('verse-2-2', 'paypal') });
       services.forEach((service, i) => {
         ih.courier(tangle, { from: [300, 136 + i * 116], to: [420, 248], tone: 'pink', at: mark('verse-2-2', 'call') + i * 0.12, period: 1.3 });
-        service.box.secret('PayPal decision', { at: mark('verse-2-3', 'know') + i * 0.15, until: hideAt, dx: 92, dy: 62 });
+        service.box.secret('PayPal decision', { at: mark('verse-2-3', 'know') + i * 0.15, until: hideAt, dx: 22, dy: 62 });
       });
       ih.bubble(tangle, { x: 430, y: 72, w: 270, who: 'The chief', whoIcon: 'chat', text: '“We’re switching to Stripe!”', at: mark('verse-2-4', 'boss') + 0.3, until: line('verse-2-5').start - 0.1 });
 
@@ -402,7 +409,7 @@
     function preChorus2() {
       badge('Pre-chorus · The payoff', 'pre-chorus-2');
       const s = kit.scene(content, song.sectionStart('pre-chorus-2'), song.sectionEnd('pre-chorus-2'));
-      ih.heading(s, ['The payoff Parnas ', 'promised', ' (1972)'], { x: 70, y: 66, at: mark('pre-chorus-2-1', 'payoff') });
+      ih.heading(s, ['The payoff Parnas ', 'promised', ' (1972)'], { x: 70, y: 66, at: line('pre-chorus-2-1').start });
       const panels = [
         { title: 'Flexibility', items: ['Change one module', 'Leave the rest alone'], icons: ['gear', 'check'], at: mark('pre-chorus-2-2', 'change'), at2: mark('pre-chorus-2-2', 'leave') },
         { title: 'Comprehensibility', items: ['Study one module', 'at a time'], icons: ['search', 'book'], at: mark('pre-chorus-2-3', 'study'), at2: mark('pre-chorus-2-3', 'time') },
@@ -436,7 +443,7 @@
       const outletAt = line('verse-3-10').start - 0.1;
 
       const a = kit.scene(content, start, outletAt);
-      const berg = ih.iceberg(a, { x: 30, y: 84, at: mark('verse-3-1', 'iceberg') - 0.2, gearsFrom: mark('verse-3-3', 'under') });
+      const berg = ih.iceberg(a, { x: 30, y: 84, at: line('verse-3-1').start, gearsFrom: mark('verse-3-3', 'under') });
       ih.submarine(a, { x: 34, y: 352, at: mark('verse-3-3', 'under') - 0.3, pingFrom: mark('verse-3-3', 'water') });
       ih.waterline(a, { y: 204, x1: 440, x2: 940, at: mark('verse-3-6', 'below') });
       const tip = ih.bergLabel(a, { x: 290, y: 82, title: 'Interface', sub: 'what it does: a stable contract', tone: 'tip', at: mark('verse-3-1', 'interface') });
@@ -455,7 +462,7 @@
       const sink = mark('verse-3-8', 'hide');
       toggles.forEach((node, i) => fx.moveTo(node, sink + i * 0.08, 0, 14, 0.4));
       kit.sticker(a, 'Hidden below the waterline', { x: 520, y: 416, at: sink + 0.2, variant: 'cyan', iconName: 'lock', rotate: 3 });
-      kit.sticker(a, 'Changed later', { x: 730, y: 300, at: mark('verse-3-9', 'mind'), variant: 'gold', iconName: 'loop', rotate: 5 });
+      kit.sticker(a, 'Changed later', { x: 784, y: 368, at: mark('verse-3-9', 'mind'), variant: 'gold', iconName: 'loop', rotate: 5 });
 
       // The outlet is the interface; the power plant is the secret.
       const b = kit.scene(content, outletAt, end);
@@ -512,7 +519,7 @@
 
       // Don't hide what callers need: statelessness is a contract clause.
       const c = kit.scene(content, line('bridge-6').start - 0.1, end);
-      ih.heading(c, ['Don’t hide what callers ', 'need to know'], { x: 150, y: 52, at: mark('bridge-6', 'hide') });
+      ih.heading(c, ['Don’t hide what callers ', 'need to know'], { x: 150, y: 52, at: line('bridge-6').start });
       ih.agent(c, { x: 60, y: 110, scale: 0.7, name: 'Client', role: 'Caller', tie: 'cyan', at: mark('bridge-6', 'callers') });
       ih.agent(c, { x: 790, y: 110, scale: 0.7, name: 'Server', role: 'Module', tie: 'red', at: mark('bridge-6', 'callers') + 0.15, flip: true });
       ih.show(ih.envelope(c, { text: 'SQL or NoSQL', x: 660, y: 372 }), mark('bridge-6', 'know') + 0.2, undefined, { rotate: 3, from: 1.6 });
@@ -534,7 +541,7 @@
       badge('Debrief · The change test', 'change-test');
       const s = kit.scene(content, song.sectionStart('change-test'), song.sectionEnd('change-test'));
       ih.list(s, {
-        x: 50, y: 96, w: 380, title: 'Debrief: change test', at: mark('change-test-1', 'run'),
+        x: 50, y: 96, w: 380, title: 'Debrief: change test', at: line('change-test-1').start,
         items: [
           { text: 'List the likely changes', iconName: 'list', at: mark('change-test-2', 'list') },
           { text: 'Pick one', iconName: 'pin', at: mark('change-test-3', 'pick') },
