@@ -74,6 +74,7 @@
         laptopLogo: storyboard.student?.laptop_logo,
       }) : null;
       choreograph({ song: songData(storyboard), kit, layers: { stage, content, hud }, terminal, student });
+      root.SongRoundedSurfaces.prepare(stage);
       Timeline.seek(0);
     } catch (error) {
       dispose();

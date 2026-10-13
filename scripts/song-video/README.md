@@ -99,6 +99,23 @@ SONG_PLAYER_BASE_URL=http://127.0.0.1:4189 \
 The matrix exercises Chromium, Firefox, and WebKit. Physical phone and
 screen-reader checks complement these automated tests.
 
+Firefox rounded-border rendering also needs a **compositor readback** check:
+ordinary automated screenshots use a software snapshot and can miss WebRender
+seams. With Node 22+ and a desktop Firefox installed, run:
+
+```sh
+node scripts/song-video/check-firefox-paint.js /Applications/Firefox.app/Contents/MacOS/firefox /tmp/song-firefox-paint
+```
+
+This opens a disposable Firefox profile (never the user's profile), enables
+`remote.screenshot.use_readback`, and checks 50 transformed rounded shapes at
+fractional pixel density. It saves before/after frames, rejects stray interior
+border pixels, verifies unchanged layout, and closes the test browser. This
+reproduces [Firefox bug 2076078](https://bugzilla.mozilla.org/show_bug.cgi?id=2076078).
+The shared scene preparation detects rounded CSS borders, including pseudo
+elements, and paints each as a single surface in Firefox. No scans run during
+playback; SVG paths and other browsers retain their existing rendering.
+
 ## One storyboard, many outputs
 
 `_data/songs/<song>.yml` is the single source of truth. Each lyric line has
@@ -159,6 +176,7 @@ storyboard's `narrator.pronounce` (for example `SYN-ACK: sin ack`).
 | --- | --- |
 | `stage.html`, `stage.js` | Offline harness for the shared 960×540 CSS-pixel stage (captured at 2× = 1920×1080), with deterministic `seek(t)` |
 | `../../js/song-video/scene.js` | Shared scene assembly, authored timing lookup, typography loading and disposal |
+| `../../js/song-video/rounded-surfaces.js` | One-time Firefox rounded-border paint preparation for every song |
 | `../../js/song-video/timeline.js` | Paused Web Animations posed by `seek(t)`, per-frame updaters, the beat grid, camera punches and shakes |
 | `../../js/song-video/kit.js` | Builders for stickers, kinetic type, terminals, stations, paths and graphs |
 | `../../js/song-video/virtual-clock.js` | Independent graph clocks; never replaces browser timers |

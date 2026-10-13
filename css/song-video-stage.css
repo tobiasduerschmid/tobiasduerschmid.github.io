@@ -59,11 +59,29 @@ body.is-fit {
   inset: 0;
 }
 
-/* Keep translucent fills inside their borders when the artwork is scaled.
-   Explicit clipping avoids overlapping background/border corner paints in
-   Firefox. Apply this to every song's artwork, including its extra styles. */
+/* Keep translucent fills inside their borders when the artwork is scaled. */
 .stage .layer * {
   background-clip: padding-box;
+}
+
+/* Firefox 157 can draw the joins between rounded-border tiles inside a shape
+   when it is transformed (https://bugzilla.mozilla.org/show_bug.cgi?id=2076078).
+   Background clipping and outlines do not fix that compositor defect. A
+   non-identity filter paints the complete border into one surface before the
+   transform. The 0.01% color difference is below an 8-bit color step. Apply it
+   only to rounded bordered boxes, detected once by rounded-surfaces.js, not
+   to every SVG path or full scene. Geometry, shadows, and animation stay intact.
+   The artwork uses the same palette in both themes and is hidden in print. */
+.stage .song-rounded-surface {
+  filter: var(--song-surface-filter) brightness(0.9999);
+}
+
+.stage .song-rounded-surface-before::before {
+  filter: var(--song-surface-filter-before) brightness(0.9999);
+}
+
+.stage .song-rounded-surface-after::after {
+  filter: var(--song-surface-filter-after) brightness(0.9999);
 }
 
 .is-staged {
