@@ -260,9 +260,9 @@
    * head can't hold a whole modern system. Every pose is a pure function of
    * song time.
    */
-  function overflowingHead(parent, { x, y, at, until, overflowAt }) {
+  function overflowingHead(parent, { x, y, size = 210, at, until, overflowAt }) {
     const id = `ih-head-${++uid}`;
-    const node = art(parent, { x, y, w: 210, h: 210, viewBox: '-30 -50 260 260' });
+    const node = art(parent, { x, y, w: size, h: size, viewBox: '-30 -50 260 260' });
     const over = overflowAt ?? at + 1.5;
     const CUT = 66;       // the skull's cut plane
     const HINGE = [46, CUT];
@@ -729,6 +729,21 @@
   // Case files: every module is a manila folder; secrets are sealed
   // ------------------------------------------------------------------
 
+  /**
+   * Each named service keeps one logo wherever it appears in the song, and
+   * no two services share one, so a viewer can follow a module from scene
+   * to scene by its badge as well as its name.
+   */
+  const SERVICE_ICONS = {
+    OrderService: 'cart', RefundService: 'resend', WalletService: 'wallet',
+    PaymentGateway: 'card', PayPalGateway: 'plug', StripeGateway: 'bolt', PayPal: 'globe',
+    Dates: 'calendar', UserRepository: 'database',
+    Payroll: 'cash', Billing: 'receipt', Interest: 'percent', Reports: 'chart',
+    Login: 'key', Profile: 'user', Admin: 'gear',
+    // The corkboard's pinned modules.
+    Cart: 'cart', Order: 'box', Pay: 'card', Ship: 'truck', Auth: 'key', Mail: 'envelope', Tax: 'percent', Stock: 'stack',
+  };
+
   let fileNumber = 0;
 
   /**
@@ -737,7 +752,7 @@
    * credential badge instead (what callers may see); 'external' draws a
    * foreign-contact card. lines = [{ text, at }] lists operations.
    */
-  function module(parent, { x, y, w = 200, h = 74, name, sub, iconName = 'box', kind, lines = [], at, until, rise = true }) {
+  function module(parent, { x, y, w = 200, h = 74, name, sub, iconName = SERVICE_ICONS[name] || 'box', kind, lines = [], at, until, rise = true }) {
     const variant = kind || 'file';
     const node = place(el('div', `ih-module ih-module--${variant} is-staged`, parent), x, y);
     node.style.width = `${w}px`;
@@ -1280,7 +1295,7 @@
       const tilt = (hash01(i * 13 + n) - 0.5) * 10;
       card.style.rotate = `${tilt.toFixed(1)}deg`;
       const photo = el('span', 'ih-pincard-photo', card);
-      photo.append(icon(['box', 'gear', 'receipt', 'envelope', 'lock', 'user', 'chart', 'pin'][i % 8]));
+      photo.append(icon(SERVICE_ICONS[name] || 'box'));
       el('span', 'ih-pincard-name', card, name);
       fx.pop(card, at + 0.05 + i * 0.06, { from: 0.6, rotate: tilt });
       return carrier;
@@ -1563,7 +1578,7 @@
     node.style.width = `${w}px`;
     for (const corner of ['tl', 'tr', 'bl', 'br']) el('span', `ih-vault-rivet ih-vault-rivet--${corner}`, node);
     const head = el('div', 'ih-vault-head', node);
-    head.append(icon('box'));
+    head.append(icon(SERVICE_ICONS[name] || 'box'));
     el('span', 'ih-module-name', head, name);
     el('span', 'ih-vault-class', head, 'Module');
     const dial = svg('svg', { class: 'ih-vault-dial', viewBox: '-50 -50 100 100', width: 96, height: 96, 'aria-hidden': 'true' }, node);
@@ -1671,10 +1686,37 @@
     return node;
   }
 
+  // ------------------------------------------------------------------
+  // The spy-film ending: an iris that closes on the hero
+  // ------------------------------------------------------------------
+
+  /**
+   * A black stage-sized mask with a circular opening centred on (cx, cy)
+   * that shrinks from `startR` to 0 over [from, to]. One smooth darkening,
+   * never a flash (WCAG 2.3.1). A thin gold ring traces the opening.
+   */
+  function iris(parent, { cx, cy, from, to, startR = 640 }) {
+    const node = svg('svg', { class: 'ih-iris', viewBox: '0 0 960 540', 'aria-hidden': 'true' }, parent);
+    const mask = svg('path', { class: 'ih-iris-mask', 'fill-rule': 'evenodd' }, node);
+    const ring = svg('circle', { class: 'ih-iris-ring', cx, cy }, node);
+    onFrame((t) => {
+      if (t < from) {
+        node.style.display = 'none';
+        return;
+      }
+      node.style.display = '';
+      const r = startR * (1 - easeInOutCubic(progress(t, from, to - from)));
+      mask.setAttribute('d', `M-10 -10H970V550H-10Z M${cx - r} ${cy} a${r} ${r} 0 1 0 ${2 * r} 0 a${r} ${r} 0 1 0 ${-2 * r} 0Z`);
+      ring.setAttribute('r', Math.max(0, r).toFixed(1));
+      ring.setAttribute('opacity', r > 2 ? '1' : '0');
+    });
+    return node;
+  }
+
   window.InfoHidingKit = {
     latest, show, during, note, heading, paper, list, bubble, digits, clock, counter,
     apolloPortrait, car, overflowingHead, steps, calendar, iceberg, bergLabel, toggle, waterline, outlet, dossier,
     decrypt, module, envelope, courier, laser, spotlight, lamp, agent, transmission, code, search,
-    mainframe, stringWeb, mud, bug, stampTool, grid, vault, submarine, slip,
+    mainframe, stringWeb, mud, bug, stampTool, grid, vault, submarine, slip, iris,
   };
 })();

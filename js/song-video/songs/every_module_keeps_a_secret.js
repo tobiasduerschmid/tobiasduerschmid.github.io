@@ -87,7 +87,7 @@
         x: 720, y: 252, at: mark('intro-6', 'year'),
         pages: [
           { at: 0, month: 'DEC', day: 31, year: 1999 },
-          { at: mark('intro-7', '1900'), month: 'JAN', day: 1, year: 1900, tone: 'bad' },
+          { at: mark('intro-7', 'reads'), month: 'JAN', day: 1, year: 1900, tone: 'bad' },
         ],
       });
       fx.bump(year, mark('intro-7', '1900'), 0.08);
@@ -195,14 +195,13 @@
       kit.el('div', 'ih-code-record-year', car, 'Modern car · 2021');
       const carCount = ih.counter(car, { x: 0, y: 0, label: 'lines of code', from: 0, to: 100000000, at: mark('verse-1-3', 'a_2') - 0.1, duration: 0.65, format: (n) => `≈${n.toLocaleString('en-US')}` });
       carCount.classList.add('ih-code-record-counter');
-      kit.el('div', 'ih-code-record-scope', car, 'Bosch estimate · vehicle-wide software');
       fx.fadeIn(car, mark('verse-1-3', 'car'), 0.3);
 
       // Keep both code records visible while the car gives way to one person's
       // limited working memory; this is still the same comparison scene.
-      ih.overflowingHead(a, { x: 645, y: 43, at: line('verse-1-4').start, overflowAt: mark('verse-1-5', 'no') });
+      ih.overflowingHead(a, { x: 612, y: 26, size: 272, at: line('verse-1-4').start, overflowAt: mark('verse-1-5', 'no') });
       kit.sticker(a, '×1000 smarter? No.', { x: 452, y: 150, at: mark('verse-1-4', 'thousand'), until: line('verse-1-5').start, variant: 'white', iconName: 'cross', rotate: -3 });
-      kit.sticker(a, 'Too much for one head', { x: 590, y: 245, at: mark('verse-1-5', 'no'), variant: 'pink', iconName: 'warning', rotate: 0 });
+      kit.sticker(a, 'Too much for one head', { x: 440, y: 150, at: mark('verse-1-5', 'no'), variant: 'pink', iconName: 'warning', rotate: -3 });
 
       // The corkboard: 4 modules → 6 strings, 8 modules → 28; then mud.
       const handoff = line('verse-1-10').start - 0.35;
@@ -261,9 +260,9 @@
     // ----------------------------------------------------------------
 
     const SECRETS = [
-      { name: 'Dates', secret: 'year format', iconName: 'timer' },
-      { name: 'PaymentGateway', secret: 'provider', iconName: 'receipt' },
-      { name: 'UserRepository', secret: 'database', iconName: 'stack' },
+      { name: 'Dates', secret: 'year format' },
+      { name: 'PaymentGateway', secret: 'provider' },
+      { name: 'UserRepository', secret: 'database' },
     ];
 
     const EXAMPLES = {
@@ -296,7 +295,7 @@
       // Each module hides one decision; laser walls keep it from the others.
       const each = line(ln(4)).start;
       SECRETS.forEach((item, i) => {
-        const box = ih.module(q, { x: 64 + i * 284, y: 352, w: 258, h: 64, name: item.name, iconName: item.iconName, at: each + i * 0.18 });
+        const box = ih.module(q, { x: 64 + i * 284, y: 352, w: 258, h: 64, name: item.name, at: each + i * 0.18 });
         box.secret(item.secret, { at: mark(ln(5), 'hide') + i * 0.12, dy: 46 });
       });
       for (const wallX of [334, 618]) ih.laser(q, { x: wallX, y1: 340, y2: 430, at: mark(ln(5), 'from') + 0.05 });
@@ -316,7 +315,7 @@
       // The callers send their requests to the nameplate only: they don't change.
       const youChange = mark(ln(9), 'change');
       ex.callers.forEach((name, i) => {
-        const caller = ih.module(t, { x: 668, y: 118 + i * 98, w: 252, h: 60, name, iconName: 'user', at: mark(ln(6), 'secret') + i * 0.12 });
+        const caller = ih.module(t, { x: 668, y: 118 + i * 98, w: 252, h: 60, name, at: mark(ln(6), 'secret') + i * 0.12 });
         ih.courier(t, { from: [664, 150 + i * 98], to: [516, 196], tone: 'gold', at: mark(ln(6), 'secret') + 0.3 + i * 0.12, period: 1.6 });
         caller.verdict('unchanged', { at: youChange + 0.3 + i * 0.15, dx: 134, dy: -12 });
       });
@@ -346,9 +345,9 @@
         { name: 'OrderService', sub: 'checkout', at: mark('verse-2-1', 'checkout') },
         { name: 'RefundService', sub: 'refunds', at: mark('verse-2-1', 'refunds') },
         { name: 'WalletService', sub: 'wallet', at: mark('verse-2-1', 'wallet') },
-      ].map((spec, i) => ({ ...spec, box: ih.module(s, { x: 40, y: 96 + i * 116, w: 256, h: 80, name: spec.name, sub: spec.sub, iconName: 'gear', at: spec.at }) }));
+      ].map((spec, i) => ({ ...spec, box: ih.module(s, { x: 40, y: 96 + i * 116, w: 256, h: 80, name: spec.name, sub: spec.sub, at: spec.at }) }));
       const tangle = kit.scene(s, mark('verse-2-2', 'all') - 0.1, hideAt + 0.3, { exit: 'fade' });
-      ih.module(tangle, { x: 424, y: 196, w: 210, h: 104, name: 'PayPal', sub: 'payment SDK', kind: 'external', iconName: 'globe', at: mark('verse-2-2', 'paypal') });
+      ih.module(tangle, { x: 424, y: 196, w: 210, h: 104, name: 'PayPal', sub: 'payment SDK', kind: 'external', at: mark('verse-2-2', 'paypal') });
       services.forEach((service, i) => {
         ih.courier(tangle, { from: [300, 136 + i * 116], to: [420, 248], tone: 'pink', at: mark('verse-2-2', 'call') + i * 0.12, period: 1.3 });
         service.box.secret('PayPal decision', { at: mark('verse-2-3', 'know') + i * 0.15, until: hideAt, dx: 22, dy: 62 });
@@ -372,7 +371,7 @@
 
       // Hide it behind one interface: a public badge with two operations.
       ih.module(s, {
-        x: 396, y: 108, w: 280, h: 132, name: 'PaymentGateway', kind: 'interface', iconName: 'shield',
+        x: 396, y: 108, w: 280, h: 132, name: 'PaymentGateway', kind: 'interface',
         at: mark('verse-2-6', 'interface'),
         lines: [
           { text: 'charge(order, payment)', at: mark('verse-2-7', 'charge') },
@@ -392,14 +391,14 @@
       kit.sticker(s, 'Secret: which provider', { x: 690, y: 340, at: mark('verse-2-8', 'gateway_2'), until: agentTo, variant: 'red', iconName: 'lock', rotate: -3 });
 
       // Only PayPalGateway knows PayPal exists; Stripe plugs in beside it.
-      const paypal = ih.module(s, { x: 396, y: 318, w: 260, h: 74, name: 'PayPalGateway', iconName: 'box', at: mark('verse-2-9', 'paypal') });
+      const paypal = ih.module(s, { x: 396, y: 318, w: 260, h: 74, name: 'PayPalGateway', at: mark('verse-2-9', 'paypal') });
       ih.courier(s, { from: [526, 312], to: [526, 246], tone: 'gold', at: mark('verse-2-9', 'gateway'), period: 1.4 });
       ih.note(s, 'implements', { x: 538, y: 262, at: mark('verse-2-9', 'gateway') + 0.1, tone: 'gold', rotate: 0 });
       paypal.secret('PayPal decision', { at: mark('verse-2-9', 'knows'), dy: 56 });
       paypal.light(mark('verse-2-9', 'knows'), mark('verse-2-10', 'plug'));
-      ih.module(s, { x: 724, y: 228, w: 200, h: 80, name: 'PayPal', kind: 'external', iconName: 'globe', at: mark('verse-2-9', 'exists') - 0.2, until: mark('verse-2-10', 'stripe') });
+      ih.module(s, { x: 724, y: 228, w: 200, h: 80, name: 'PayPal', kind: 'external', at: mark('verse-2-9', 'exists') - 0.2, until: mark('verse-2-10', 'stripe') });
       ih.courier(s, { from: [660, 346], to: [722, 288], tone: 'cyan', at: mark('verse-2-9', 'exists'), until: mark('verse-2-10', 'stripe'), period: 1.2 });
-      const stripe = ih.module(s, { x: 688, y: 318, w: 250, h: 74, name: 'StripeGateway', iconName: 'box', at: mark('verse-2-10', 'write') });
+      const stripe = ih.module(s, { x: 688, y: 318, w: 250, h: 74, name: 'StripeGateway', at: mark('verse-2-10', 'write') });
       ih.courier(s, { from: [700, 314], to: [646, 242], tone: 'gold', at: mark('verse-2-10', 'plug'), period: 1.4 });
       stripe.light(mark('verse-2-10', 'plug'), end - 0.4, 'green');
       paypal.dim(mark('verse-2-10', 'plug'));
@@ -526,10 +525,10 @@
       ih.agent(c, { x: 790, y: 110, scale: 0.7, name: 'Server', role: 'Module', tie: 'red', at: mark('bridge-6', 'callers') + 0.15, flip: true });
       ih.show(ih.envelope(c, { text: 'SQL or NoSQL', x: 660, y: 372 }), mark('bridge-6', 'know') + 0.2, undefined, { rotate: 3, from: 1.6 });
       ih.paper(c, {
-        x: 300, y: 130, w: 360, kicker: 'Visible contract', title: 'Client ⇄ Server', at: mark('bridge-6', 'know'), rotate: 1,
+        x: 280, y: 130, w: 400, kicker: 'Visible contract', title: 'Client ⇄ Server', at: mark('bridge-6', 'know'), rotate: 1,
         lines: [
           { text: 'request → response', at: mark('bridge-6', 'know') + 0.3 },
-          { text: 'Clause: stateless or stateful?', at: mark('bridge-7', 'stateless') },
+          { text: 'Protocol: stateless or stateful?', at: mark('bridge-7', 'stateless') },
         ],
       });
       kit.stamp(c, 'In the contract', { x: 330, y: 282, at: mark('bridge-7', 'contract'), color: 'green', rotate: -5, shake: false });
@@ -540,10 +539,10 @@
     // ----------------------------------------------------------------
 
     function changeTest() {
-      badge('Debrief · The change test', 'change-test');
+      badge('Change Impact Analysis', 'change-test');
       const s = kit.scene(content, song.sectionStart('change-test'), song.sectionEnd('change-test'));
       ih.list(s, {
-        x: 50, y: 96, w: 380, title: 'Debrief: change test', at: line('change-test-1').start,
+        x: 50, y: 96, w: 380, title: 'Change Impact Analysis', at: line('change-test-1').start,
         items: [
           { text: 'List the likely changes', iconName: 'list', at: mark('change-test-2', 'list') },
           { text: 'Pick one', iconName: 'pin', at: mark('change-test-3', 'pick') },
@@ -612,9 +611,9 @@
 
       // The same programs, now asking one Dates module that hides the format.
       const b = kit.scene(content, line('outro-2').start - 0.1, line('outro-3').start - 0.1);
-      const one = ih.module(b, { x: 570, y: 186, w: 300, h: 86, name: 'Dates', iconName: 'timer', at: mark('outro-2', 'decision') });
+      const one = ih.module(b, { x: 570, y: 186, w: 300, h: 86, name: 'Dates', at: mark('outro-2', 'decision') });
       ['Payroll', 'Billing', 'Interest', 'Reports'].forEach((name, i) => {
-        const caller = ih.module(b, { x: 80, y: 100 + i * 80, w: 230, h: 58, name, iconName: 'user', at: mark('outro-2', 'one') + i * 0.1 });
+        const caller = ih.module(b, { x: 80, y: 100 + i * 80, w: 230, h: 58, name, at: mark('outro-2', 'one') + i * 0.1 });
         ih.courier(b, { from: [314, 130 + i * 80], to: [566, 228], tone: 'gold', at: mark('outro-2', 'decision') + 0.2 + i * 0.1, period: 1.5 });
         caller.verdict('unchanged', { at: mark('outro-2', 'module_2') + i * 0.12, dx: 124, dy: -12 });
       });
@@ -622,19 +621,34 @@
       one.light(mark('outro-2', 'change'));
       ih.counter(b, { x: 590, y: 316, label: 'module changed', from: 1, to: 1, at: mark('outro-2', 'module_2'), duration: 0.3 });
 
-      const c = kit.scene(content, line('outro-3').start - 0.1, end - 0.3, { exit: 'fade' });
+      // The finale: the case summary is stamped closed, Agent Payment
+      // Gateway whispers "Shh…", and an iris closes on the hero.
+      const c = kit.scene(content, line('outro-3').start - 0.1, end);
       kit.kinetic(c, [
         { text: 'Designing', at: mark('outro-3', 'designing') },
         { text: 'for change', at: mark('outro-3', 'change'), color: 'gold' },
-      ], { y: 64, size: 48 });
-      ih.spotlight(c, { x: 480, y: 280, w: 520, h: 380, at: line('outro-3').start });
-      student?.appear({ from: line('outro-3').start + 0.4, to: end - 0.5, x: 350, y: 140, scale: 0.86 });
-      kit.sticker(c, 'Shh…', { x: 236, y: 200, at: mark('outro-4', 'shh'), variant: 'pink', iconName: 'lock', rotate: -6 });
-      kit.sticker(c, 'Every module keeps a secret', { x: 590, y: 214, at: mark('outro-4', 'every'), variant: 'gold', iconName: 'box', rotate: 4 });
-      kit.stamp(c, 'Case closed', { x: 620, y: 300, at: mark('outro-4', 'secret') + 0.3, color: 'green', rotate: -8, shake: false });
+      ], { y: 56, size: 48 });
+      ih.spotlight(c, { x: 484, y: 280, w: 520, h: 380, at: line('outro-3').start });
+      student?.appear({ from: line('outro-3').start + 0.4, to: end, x: 372, y: 140, scale: 0.86 });
+      const summaryAt = mark('outro-3', 'designing');
+      ih.paper(c, {
+        x: 30, y: 136, w: 320, kicker: 'Case summary', title: 'Information hiding', clip: true, rotate: -2,
+        at: summaryAt,
+        lines: [
+          { text: '1. Hide what may change', at: summaryAt + 0.35 },
+          { text: '2. Show what, not how', at: mark('outro-3', 'change') + 0.2 },
+          { text: '3. 1 change → 1 module', at: mark('outro-3', 'change') + 0.9 },
+        ],
+      });
+      kit.stamp(c, 'Case closed', { x: 92, y: 312, at: mark('outro-4', 'secret') + 0.3, color: 'green', rotate: -8, shake: false });
+      ih.spotlight(c, { x: 800, y: 250, w: 300, h: 400, at: mark('outro-4', 'shh') - 0.5 });
+      ih.agent(c, { x: 720, y: 116, scale: 0.72, name: 'Payment Gateway', role: 'Agent', tie: 'gold', flip: true, at: mark('outro-4', 'shh') - 0.4 });
+      kit.sticker(c, 'Shh…', { x: 628, y: 136, at: mark('outro-4', 'shh'), variant: 'pink', iconName: 'lock', rotate: -6 });
+      ih.show(ih.envelope(c, { text: 'every module keeps a secret', x: 548, y: 378 }), mark('outro-4', 'every'), undefined, { rotate: -3, from: 1.6 });
       const credit = kit.el('div', 'end-credit is-staged', c, 'SE Book · Information Hiding');
-      credit.style.top = '420px';
+      credit.style.top = '428px';
       fx.fadeIn(credit, mark('outro-4', 'secret') + 0.6, 0.4);
+      ih.iris(c, { cx: 484, cy: 250, from: end - 1.9, to: end - 0.1 });
     }
 
     // ----------------------------------------------------------------

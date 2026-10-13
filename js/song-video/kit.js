@@ -112,6 +112,14 @@
     gear: [['circle', { cx: 12, cy: 12, r: 3.5 }], ['path', { d: 'M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1' }]],
     image: [['rect', { x: 3, y: 5, width: 18, height: 14, rx: 2 }], ['path', { d: 'M3.5 16.5l5-5 4 4 3-3 5 5' }], ['circle', { cx: 16, cy: 9.5, r: 1.6 }]],
     loop: [['path', { d: 'M17 2.5l3 3-3 3M20 5.5H8a4 4 0 0 0-4 4v1M7 21.5l-3-3 3-3M4 18.5h12a4 4 0 0 0 4-4v-1' }]],
+    cart: [['path', { d: 'M3 4h2.5l2.2 10.3a1.5 1.5 0 0 0 1.5 1.2h7.7a1.5 1.5 0 0 0 1.4-1.1L20.5 8H6.4' }], ['circle', { cx: 10, cy: 19.5, r: 1.4 }], ['circle', { cx: 17, cy: 19.5, r: 1.4 }]],
+    wallet: [['path', { d: 'M5 6.5l9.5-3 1.2 3' }], ['rect', { x: 3.5, y: 6.5, width: 17, height: 13, rx: 2 }], ['path', { d: 'M20.5 11H15a2 2 0 0 0 0 4h5.5' }], ['path', { d: 'M15.5 13h.1' }]],
+    card: [['rect', { x: 3, y: 5.5, width: 18, height: 13, rx: 2 }], ['path', { d: 'M3 10h18M6.5 14.5h4' }]],
+    calendar: [['rect', { x: 4, y: 5.5, width: 16, height: 14.5, rx: 1.5 }], ['path', { d: 'M4 10h16M8.5 3.5v4M15.5 3.5v4M8 14h2M12 14h2M8 17h2' }]],
+    database: [['ellipse', { cx: 12, cy: 6, rx: 7, ry: 2.5 }], ['path', { d: 'M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5' }]],
+    cash: [['rect', { x: 2.5, y: 6.5, width: 19, height: 11, rx: 1.5 }], ['circle', { cx: 12, cy: 12, r: 2.6 }], ['path', { d: 'M6 9.5v5M18 9.5v5' }]],
+    percent: [['path', { d: 'M18.5 5.5l-13 13' }], ['circle', { cx: 7.5, cy: 7.5, r: 2.2 }], ['circle', { cx: 16.5, cy: 16.5, r: 2.2 }]],
+    truck: [['path', { d: 'M2.5 6h11.5v10H2.5zM14 9.5h3.6l3.4 3.6V16H14' }], ['circle', { cx: 6.5, cy: 17.5, r: 1.9 }], ['circle', { cx: 17, cy: 17.5, r: 1.9 }]],
   };
 
   function icon(name, className) {

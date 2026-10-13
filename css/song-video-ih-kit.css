@@ -104,8 +104,8 @@
 }
 
 .ih-module-seal svg {
-  width: 15px;
-  height: 15px;
+  width: 17px;
+  height: 17px;
 }
 
 .ih-module-name {
@@ -2035,7 +2035,7 @@
   line-height: 1.3;
 }
 .ih-code-record--apollo { left: 270px; top: 105px; width: 225px; }
-.ih-code-record--car { left: 550px; top: 285px; width: 370px; }
+.ih-code-record--car { left: 550px; top: 316px; width: 370px; }
 .ih-code-record-year { color: var(--gold); font-size: 23px; font-weight: 800; }
 .ih-code-record-count { margin-top: 12px; font: 700 38px/1.15 var(--font-mono); }
 .ih-code-record-unit { font-size: 21px; font-weight: 700; }
@@ -2078,3 +2078,15 @@
 .ih-phone-detail { fill: none; stroke: #bac9d5; stroke-width: 2; stroke-linecap: round; }
 
 /* Mud is a solid volume, with damp clods and a few half-buried yarn traces. */
+
+/* The spy-film iris that closes the song */
+.ih-iris {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  width: 960px;
+  height: 540px;
+  pointer-events: none;
+}
+.ih-iris-mask { fill: #000; }
+.ih-iris-ring { fill: none; stroke: var(--gold); stroke-width: 4; }
