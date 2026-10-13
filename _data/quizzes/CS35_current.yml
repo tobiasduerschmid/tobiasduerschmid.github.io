@@ -11,13 +11,13 @@ decks:
   - python
   - python_output
   - git_basic
-
-other:
   - nodejs
-  - react
-  - design_pattern_observer
   - networking
   - networking_decisions
+
+other:
+  - react
+  - design_pattern_observer
   - c
   - design_principle_information_hiding
   - design_principle_solid
