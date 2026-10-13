@@ -59,6 +59,13 @@ body.is-fit {
   inset: 0;
 }
 
+/* Keep translucent fills inside their borders when the artwork is scaled.
+   Explicit clipping avoids overlapping background/border corner paints in
+   Firefox. Apply this to every song's artwork, including its extra styles. */
+.stage .layer * {
+  background-clip: padding-box;
+}
+
 .is-staged {
   opacity: 0;
 }
