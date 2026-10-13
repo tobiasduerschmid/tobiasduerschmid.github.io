@@ -1,0 +1,101 @@
+/*
+ * The "spy" stage theme (js/song-video/spy-noir.js): a noir operations room
+ * behind the scenes of "Every Module Keeps a Secret". Only the backdrop
+ * changes. Lights stay faint (alpha ≤ 0.16) so every text color in the
+ * scenes keeps its contrast, and nothing large changes brightness quickly.
+ * Like stage.css this styles the 960×540 stage, which keeps its dark artwork
+ * in both page themes; the player's print styles hide it.
+ */
+
+.theme-spy {
+  background: #03050c;
+}
+
+.spy-noir {
+  overflow: hidden;
+}
+
+.spy-base {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 46% 52% at 14% 6%, rgba(196, 136, 52, 0.22), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 88% 100%, rgba(20, 83, 45, 0.18), transparent 70%),
+    linear-gradient(170deg, #0b1122 0%, #070b18 45%, #04060e 100%);
+}
+
+/* Light through venetian blinds, falling across the room from the top right. */
+.spy-blinds {
+  position: absolute;
+  left: 380px;
+  top: -40px;
+  width: 640px;
+  height: 420px;
+  background: repeating-linear-gradient(180deg, rgba(255, 226, 170, 0.07) 0 16px, transparent 16px 34px);
+  mask-image: radial-gradient(ellipse 60% 60% at 60% 40%, #000 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 60% at 60% 40%, #000 30%, transparent 80%);
+}
+
+.spy-beam {
+  position: absolute;
+  bottom: -20px;
+  width: 300px;
+  height: 820px;
+  margin-left: -150px;
+  transform-origin: 50% 100%;
+  background: linear-gradient(0deg, rgba(255, 244, 214, 0.13), rgba(255, 244, 214, 0.03) 70%, transparent);
+  clip-path: polygon(47% 100%, 53% 100%, 100% 0, 0 0);
+}
+
+.spy-beam--left { left: 120px; }
+.spy-beam--right { left: 840px; }
+
+.spy-radar {
+  position: absolute;
+  right: -150px;
+  bottom: -150px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(74, 222, 128, 0.16), rgba(74, 222, 128, 0) 70deg, transparent 360deg);
+}
+
+.spy-radar-rings {
+  position: absolute;
+  right: -150px;
+  bottom: -150px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, transparent 0 34px, rgba(74, 222, 128, 0.12) 34px 35.5px);
+}
+
+.spy-dust {
+  position: absolute;
+  inset: 0;
+}
+
+.spy-mote {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 232, 190, 0.8);
+}
+
+.spy-grain {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(rgba(200, 210, 255, 0.07) 1px, transparent 1.4px),
+    radial-gradient(rgba(255, 220, 170, 0.05) 1px, transparent 1.4px);
+  background-size: 22px 22px, 31px 31px;
+  background-position: 0 0, 11px 7px;
+}
+
+/* The section badge reads as a red "classified" file label in this theme. */
+.theme-spy .badge {
+  background: #f3e2b8;
+  box-shadow: 3px 3px 0 var(--ink), inset 0 0 0 2px #b91c1c;
+  color: #7f1010;
+}

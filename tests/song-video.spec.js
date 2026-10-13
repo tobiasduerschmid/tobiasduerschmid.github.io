@@ -20,6 +20,7 @@ const SONGS = [
   { id: 'snapshots_and_pointers', page: '/SEBook/tools/git.html' },
   { id: 'unbox_the_stack', page: '/SEBook/tools/networking.html' },
   { id: 'small_tools_one_job_each', page: '/SEBook/tools/shell.html' },
+  { id: 'every_module_keeps_a_secret', page: '/SEBook/designprinciples/informationhiding.html' },
 ];
 const EXTRAS_TOGGLE = 'Full transcript';
 const NARRATOR = '(narrator) ';

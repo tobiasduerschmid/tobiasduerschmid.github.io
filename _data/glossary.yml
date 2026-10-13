@@ -592,3 +592,18 @@
   definition: Glasgow Haskell Compiler
   description: A compiler for Haskell that also supplies the GHCi interactive environment.
   related: [GHCi]
+
+- term: Y2K
+  definition: Year 2000
+  description: The Year 2000 problem. Programs that stored years as two digits read the year 2000 ("00") as 1900, so date calculations, comparisons, and sorting broke. Engineers worldwide repaired the affected code before January 1, 2000, at a cost of billions of dollars.
+  related: [COBOL]
+
+- term: COBOL
+  definition: Common Business-Oriented Language
+  description: A programming language designed in 1959 for business data processing. Much of the banking, payroll, and government software affected by the Y2K problem was written in COBOL.
+  related: [Y2K]
+
+- term: ACM
+  definition: Association for Computing Machinery
+  description: A professional society for computing. Its journal Communications of the ACM published David Parnas's 1972 paper that introduced information hiding.
+  related: []

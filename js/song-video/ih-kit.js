@@ -1,0 +1,1327 @@
+/*
+ * Information-hiding kit for "Every Module Keeps a Secret": a spy-thriller
+ * visual language whose metaphors carry the concept, drawn over the "spy"
+ * stage theme (spy-noir.js). Each piece keeps the real notation beside its
+ * picture:
+ *
+ *   a module is a manila case file with a typed name label; the design
+ *     decision it hides is a sealed TOP SECRET envelope, so a decision
+ *     copied into many modules is the same envelope in every file;
+ *   an interface is a public credential badge (what callers may see), and
+ *     a module split into what and how is a vault: brass nameplate outside,
+ *     the secret visible only through an X-ray window;
+ *   dependencies are red string on a detective's corkboard, which knots into
+ *     a Big Ball of Mud when every module depends on every other;
+ *   calls are courier routes with sealed envelopes travelling along them;
+ *   "from the others" is a laser wall between modules;
+ *   Parnas's sentence arrives as a decrypted transmission;
+ *   searching code is a green-phosphor intercept console;
+ *   the iceberg's hidden bulk is found by a sonar submarine, and a wall
+ *     outlet hides which power plant runs behind the wall.
+ *
+ * Builds on SongKit (kit.js) and Timeline (timeline.js); every builder
+ * schedules its own motion, and every pose is a pure function of song time.
+ * Coordinates are CSS pixels on the 960×540 stage. Styles:
+ * css/song-video-ih-kit.css.
+ */
+(function () {
+  'use strict';
+
+  const { tween, fx, onFrame, EASE, progress, easeInOutCubic, hash01 } = window.Timeline;
+  const kit = window.SongKit;
+  const { el, svg, place, icon } = kit;
+  let uid = 0;
+
+  /** The newest entry of a time-sorted list at or before t (or undefined). */
+  function latest(entries, t) {
+    let found;
+    for (const entry of entries) if (entry.at <= t) found = entry;
+    return found;
+  }
+
+  /** Shows a node from `at` (popping in) until `until` (popping out). */
+  function show(node, at, until, { rotate = 0, from = 0.6 } = {}) {
+    fx.pop(node, at, { from, rotate });
+    if (until !== undefined) fx.popOut(node, until);
+    return node;
+  }
+
+  /** Toggles a class on a node during [from, to). */
+  function during(node, className, from, to = Infinity) {
+    onFrame((t) => node.classList.toggle(className, t >= from && t < to));
+  }
+
+  /** A short ink note: { tone: white | gold | pink | cyan | green | red }. */
+  function note(parent, text, { x, y, at, until, tone = 'white', rotate = -2 }) {
+    const node = place(el('div', `ih-note${tone === 'white' ? '' : ` ih-note--${tone}`} is-staged`, parent, text), x, y);
+    return show(node, at, until, { rotate });
+  }
+
+  /** A heading with an optional <b> highlight: parts = [text, bold, text…]. */
+  function heading(parent, parts, { x, y, at, until, size }) {
+    const node = place(el('div', 'ih-heading is-staged', parent), x, y);
+    if (size) node.style.fontSize = `${size}px`;
+    parts.forEach((part, i) => {
+      if (i % 2) el('b', null, node, part);
+      else node.append(document.createTextNode(part));
+    });
+    fx.rise(node, at, { distance: 14, duration: 0.35 });
+    if (until !== undefined) fx.fadeOut(node, until, 0.25);
+    return node;
+  }
+
+  // ------------------------------------------------------------------
+  // Paper: cards, briefing lists, speech bubbles
+  // ------------------------------------------------------------------
+
+  function paper(parent, { x, y, w, kicker, title, meta, lines = [], at, until, rotate = -1.5 }) {
+    const node = place(el('div', 'ih-paper is-staged', parent), x, y);
+    node.style.width = `${w}px`;
+    if (kicker) el('div', 'ih-paper-kicker', node, kicker);
+    if (title) el('div', 'ih-paper-title', node, title);
+    if (meta) el('div', 'ih-paper-meta', node, meta);
+    const rows = lines.map((line) => {
+      const row = el('div', `ih-paper-line${line.total ? ' ih-paper-line--total' : ''}${line.at !== undefined ? ' is-staged' : ''}`, node, line.text);
+      if (line.at !== undefined) fx.rise(row, line.at, { distance: 8, duration: 0.3 });
+      return row;
+    });
+    fx.pop(node, at, { from: 0.85, rotate });
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return { node, rows };
+  }
+
+  function list(parent, { x, y, w, title, items, at, until }) {
+    const node = place(el('div', 'ih-list is-staged', parent), x, y);
+    node.style.width = `${w}px`;
+    if (title) el('div', 'ih-list-title', node, title);
+    const rows = items.map((item) => {
+      const row = el('div', 'ih-list-item is-staged', node);
+      row.append(icon(item.iconName || 'check'));
+      el('span', null, row, item.text);
+      fx.rise(row, item.at, { distance: 8, duration: 0.3 });
+      return row;
+    });
+    fx.rise(node, at, { distance: 16, duration: 0.35 });
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return { node, rows };
+  }
+
+  /** A speech (or thought) bubble with an optional speaker line. */
+  function bubble(parent, { x, y, w, text, who, whoIcon = 'user', at, until, side = 'left', thought = false }) {
+    const node = place(el('div', `ih-bubble${side === 'right' ? ' ih-bubble--right' : ''}${thought ? ' ih-bubble--thought' : ''} is-staged`, parent), x, y);
+    if (w) node.style.width = `${w}px`;
+    if (who) {
+      const head = el('div', 'ih-bubble-who', node);
+      head.append(icon(whoIcon));
+      head.append(document.createTextNode(who));
+    }
+    el('div', null, node, text);
+    return show(node, at, until, { rotate: side === 'right' ? 2 : -2, from: 0.5 });
+  }
+
+  // ------------------------------------------------------------------
+  // Digits: split-flap fields, the mission clock, counters
+  // ------------------------------------------------------------------
+
+  /**
+   * A row of flip digits. values = [{ at, text, tone }] (text is one char per
+   * cell, ' ' leaves a cell blank); changed cells roll up into place.
+   * strikes = [{ at, cells: [indices] }] draws a red slash through cells.
+   */
+  function digits(parent, { x, y, label, cells, values, size = 54, strikes = [], at, until }) {
+    const node = place(el('div', 'ih-digits is-staged', parent), x, y);
+    if (label) el('div', 'ih-digits-label', node, label);
+    const row = el('div', 'ih-digits-row', node);
+    row.style.fontSize = `${size}px`;
+    const steps = [...values].sort((a, b) => a.at - b.at);
+    const slots = Array.from({ length: cells }, (_, i) => {
+      const cell = el('div', 'ih-digit', row);
+      const now = el('div', 'ih-digit-face', cell);
+      const before = el('div', 'ih-digit-face', cell);
+      const strike = strikes.find((s) => s.cells.includes(i));
+      if (strike) {
+        const bar = el('div', 'ih-digit-strike is-staged', cell);
+        tween(bar, [{ opacity: 0, scale: '0 1' }, { opacity: 1, scale: '1 1' }], strike.at, 0.25, EASE.out);
+      }
+      return { cell, now, before };
+    });
+    onFrame((t) => {
+      const index = steps.findLastIndex((s) => s.at <= t);
+      const current = steps[Math.max(0, index)];
+      const previous = index > 0 ? steps[index - 1] : null;
+      const roll = previous ? easeInOutCubic(progress(t, current.at, 0.32)) : 1;
+      slots.forEach((slot, i) => {
+        const a = current.text[i] ?? ' ';
+        const b = previous ? previous.text[i] ?? ' ' : a;
+        if (slot.now.textContent !== a) slot.now.textContent = a;
+        if (slot.before.textContent !== b) slot.before.textContent = b;
+        const rolling = a !== b && roll < 1;
+        slot.now.style.transform = `translateY(${rolling ? (1 - roll) * 100 : 0}%)`;
+        slot.before.style.transform = `translateY(${rolling ? -roll * 100 : -100}%)`;
+        slot.cell.className = `ih-digit${current.tone ? ` ih-digit--${current.tone}` : ''}`;
+      });
+    });
+    fx.rise(node, at, { distance: 16, duration: 0.35 });
+    if (until !== undefined) fx.fadeOut(node, until, 0.25);
+    return node;
+  }
+
+  /** A digital clock that counts down to midnight and turns over on `turnAt`. */
+  function clock(parent, { x, y, w = 330, at, turnAt, until }) {
+    const node = place(el('div', 'ih-clock is-staged', parent), x, y);
+    node.style.width = `${w}px`;
+    const date = el('div', 'ih-clock-date', node);
+    const time = el('div', 'ih-clock-time', node);
+    onFrame((t) => {
+      const after = t >= turnAt;
+      const left = Math.max(0, Math.ceil(turnAt - t));
+      const seconds = after ? 0 : 60 - Math.min(59, left);
+      date.textContent = after ? 'JAN 1, 2000' : 'DEC 31, 1999';
+      time.textContent = after ? '00:00:00' : `23:59:${String(Math.min(59, seconds)).padStart(2, '0')}`;
+      node.classList.toggle('is-new', after);
+    });
+    fx.rise(node, at, { distance: 16, duration: 0.35 });
+    fx.bump(node, turnAt, 0.12);
+    if (until !== undefined) fx.fadeOut(node, until, 0.25);
+    return node;
+  }
+
+  /** A number that counts from `from` to `to` over [at, at + duration]. */
+  function counter(parent, { x, y, label, from = 0, to, at, duration = 1.2, until, format = (n) => n.toLocaleString('en-US') }) {
+    const node = place(el('div', 'ih-counter is-staged', parent), x, y);
+    const value = el('div', 'ih-counter-value', node);
+    if (label) el('div', 'ih-counter-label', node, label);
+    onFrame((t) => {
+      const p = easeInOutCubic(progress(t, at, duration));
+      const text = format(Math.round(from + (to - from) * p));
+      if (value.textContent !== text) value.textContent = text;
+    });
+    fx.rise(node, at, { distance: 12, duration: 0.3 });
+    if (until !== undefined) fx.fadeOut(node, until, 0.25);
+    return node;
+  }
+
+  // ------------------------------------------------------------------
+  // Illustrations
+  // ------------------------------------------------------------------
+
+  function art(parent, { x, y, w, h, viewBox, className = '' }) {
+    const node = svg('svg', { class: `ih-art ${className} is-staged`, viewBox: viewBox || `0 0 ${w} ${h}`, width: w, height: h, 'aria-hidden': 'true' }, parent);
+    node.style.left = `${x}px`;
+    node.style.top = `${y}px`;
+    return node;
+  }
+
+  /** A paper stack that grows beside a person; the stack reaches their height. */
+  function paperStack(parent, { x, y, at, growFor = 1.6, until, sheets = 34 }) {
+    const node = art(parent, { x, y, w: 250, h: 300 });
+    const ground = 290;
+    svg('line', { class: 'ih-ruler', x1: 112, y1: 58, x2: 236, y2: 58 }, node);
+    // A simple person (no likeness): head, hair, body, arms.
+    const person = svg('g', {}, node);
+    svg('path', { class: 'ih-figure', d: 'M 40 290 L 46 160 Q 50 120 80 118 Q 110 120 114 160 L 120 290 Z' }, person);
+    svg('circle', { class: 'ih-figure', cx: 80, cy: 92, r: 26 }, person);
+    svg('path', { class: 'ih-figure-hair', d: 'M 54 92 Q 52 60 80 62 Q 108 60 106 92 Q 100 76 80 76 Q 60 76 54 92 Z' }, person);
+    const pile = svg('g', {}, node);
+    const sheetsList = Array.from({ length: sheets }, (_, i) => {
+      const top = ground - (i + 1) * 6.8;
+      const lean = (hash01(i * 13 + 7) - 0.5) * 6;
+      const g = svg('g', { transform: `translate(${lean.toFixed(1)} 0)` }, pile);
+      svg('rect', { class: 'ih-sheet', x: 140, y: top, width: 80, height: 6.8 }, g);
+      svg('rect', { class: 'ih-sheet-edge', x: 140, y: top + 5, width: 80, height: 1.8 }, g);
+      return g;
+    });
+    onFrame((t) => {
+      const shown = Math.round(sheets * easeInOutCubic(progress(t, at + 0.2, growFor)));
+      sheetsList.forEach((g, i) => g.setAttribute('opacity', i < shown ? '1' : '0'));
+    });
+    fx.fadeIn(node, at, 0.3);
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return node;
+  }
+
+  /** A car (for "a modern car? A hundred million lines"). */
+  function car(parent, { x, y, at, until, w = 220 }) {
+    const node = art(parent, { x, y, w, h: w * 0.5, viewBox: '0 0 220 110' });
+    svg('path', { class: 'ih-car-body', d: 'M 14 78 L 18 58 Q 22 50 34 48 L 62 46 L 86 22 Q 92 18 104 18 L 150 18 Q 162 18 170 26 L 190 46 Q 206 48 208 60 L 208 78 Z' }, node);
+    svg('path', { class: 'ih-car-window', d: 'M 92 28 L 124 28 L 124 46 L 74 46 Z' }, node);
+    svg('path', { class: 'ih-car-window', d: 'M 132 28 L 158 28 Q 164 28 168 34 L 178 46 L 132 46 Z' }, node);
+    svg('rect', { class: 'ih-car-light', x: 196, y: 56, width: 10, height: 8, rx: 2 }, node);
+    for (const cx of [56, 168]) {
+      svg('circle', { class: 'ih-car-wheel', cx, cy: 80, r: 18 }, node);
+      svg('circle', { class: 'ih-car-hub', cx, cy: 80, r: 7 }, node);
+    }
+    show(node, at, until, { from: 0.7 });
+    return node;
+  }
+
+  /** A head overflowing with lines of code. */
+  function overflowingHead(parent, { x, y, at, until, overflowAt }) {
+    const node = art(parent, { x, y, w: 200, h: 200, viewBox: '-40 -60 260 260' });
+    svg('path', { class: 'ih-head', d: 'M 60 190 L 64 150 Q 30 140 32 96 Q 34 40 92 34 Q 150 32 160 88 Q 164 112 176 124 L 160 128 Q 162 150 140 152 L 122 154 L 120 190 Z' }, node);
+    // Pages of code flying out of the top of the head, each with lines.
+    const pages = svg('g', { class: 'is-staged' }, node);
+    for (let i = 0; i < 6; i++) {
+      const a = (-160 + i * 28) * Math.PI / 180;
+      const px = 96 + Math.cos(a) * 112;
+      const py = 64 + Math.sin(a) * 92;
+      const page = svg('g', { transform: `rotate(${(i - 2.5) * 18} ${px} ${py})` }, pages);
+      svg('rect', { class: 'ih-head-overflow', x: px - 16, y: py - 20, width: 32, height: 40, rx: 3 }, page);
+      for (let k = 0; k < 4; k++) svg('line', { class: 'ih-head-code', x1: px - 10, y1: py - 12 + k * 8, x2: px + (k % 2 ? 4 : 10), y2: py - 12 + k * 8 }, page);
+    }
+    fx.pop(pages, overflowAt ?? at + 0.6, { from: 0.4 });
+    show(node, at, until, { from: 0.7 });
+    return node;
+  }
+
+  /** A flowchart of processing steps; cross(at) strikes the whole idea. */
+  function steps(parent, { x, y, labels, at, step = 0.3, until }) {
+    const node = place(el('div', 'ih-steps', parent), x, y);
+    labels.forEach((text, i) => {
+      if (i) {
+        const arrow = icon('pointer', 'ih-step-arrow is-staged');
+        node.append(arrow);
+        fx.fadeIn(arrow, at + i * step - 0.1, 0.2);
+      }
+      const box = el('div', 'ih-step is-staged', node, text);
+      fx.pop(box, at + i * step, { from: 0.7 });
+    });
+    if (until !== undefined) fx.fadeOut(node, until, 0.25);
+    return node;
+  }
+
+  // ------------------------------------------------------------------
+  // The iceberg: interface above the water, implementation below
+  // ------------------------------------------------------------------
+
+  function gearPath(teeth, outer, inner) {
+    let d = '';
+    for (let i = 0; i < teeth * 2; i++) {
+      const a = (i / (teeth * 2)) * Math.PI * 2;
+      const r = i % 2 ? inner : outer;
+      const a1 = a - Math.PI / (teeth * 4);
+      const a2 = a + Math.PI / (teeth * 4);
+      d += `${i ? 'L' : 'M'} ${(r * Math.cos(a1)).toFixed(1)} ${(r * Math.sin(a1)).toFixed(1)} L ${(r * Math.cos(a2)).toFixed(1)} ${(r * Math.sin(a2)).toFixed(1)} `;
+    }
+    return `${d}Z`;
+  }
+
+  /**
+   * An iceberg in a 420×360 box with its waterline at y = 120. The tip is the
+   * interface (what), the bulk below the implementation (how). Gears below
+   * the water turn; swap(at) replaces them (the how changes, the tip doesn't).
+   */
+  function iceberg(parent, { x, y, scale = 1, at, until, gearsFrom }) {
+    const id = `ih-berg-${++uid}`;
+    const node = art(parent, { x, y, w: 420 * scale, h: 360 * scale, viewBox: '0 0 420 360' });
+    const defs = svg('defs', {}, node);
+    const sea = svg('linearGradient', { id: `${id}-sea`, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    svg('stop', { offset: 0, 'stop-color': '#0e4d7a', 'stop-opacity': 0.75 }, sea);
+    svg('stop', { offset: 1, 'stop-color': '#04162b', 'stop-opacity': 0.95 }, sea);
+    svg('rect', { x: 0, y: 120, width: 420, height: 240, rx: 18, fill: `url(#${id}-sea)` }, node);
+    // Below the waterline: the bulk (the implementation).
+    svg('path', { class: 'ih-ice-deep', d: 'M 120 120 L 80 190 L 104 262 L 160 330 L 236 344 L 300 300 L 334 226 L 318 162 L 296 120 Z' }, node);
+    svg('path', { class: 'ih-ice-deep-shade', d: 'M 236 344 L 300 300 L 334 226 L 318 162 L 296 120 L 268 120 L 290 190 L 270 280 Z' }, node);
+    // Above the waterline: the tip (the interface).
+    svg('path', { class: 'ih-ice-tip', d: 'M 132 120 L 176 58 L 204 28 L 230 52 L 262 76 L 290 120 Z' }, node);
+    svg('path', { class: 'ih-ice-tip-shade', d: 'M 204 28 L 230 52 L 262 76 L 290 120 L 244 120 L 226 70 Z' }, node);
+    const wave = svg('path', { class: 'ih-sea-top' }, node);
+    for (const [fx0, fy] of [[60, 300], [350, 250], [370, 320]]) {
+      svg('path', { class: 'ih-fish', d: `M ${fx0} ${fy} q 10 -8 20 0 q -10 8 -20 0 Z M ${fx0 + 20} ${fy} l 7 -5 l 0 10 Z` }, node);
+    }
+    const gearSets = [[], []];
+    const gearSpecs = [
+      [{ cx: 170, cy: 210, teeth: 10, r: 30 }, { cx: 226, cy: 250, teeth: 8, r: 24 }, { cx: 262, cy: 196, teeth: 7, r: 20 }],
+      [{ cx: 160, cy: 240, teeth: 12, r: 36 }, { cx: 236, cy: 206, teeth: 9, r: 28 }, { cx: 228, cy: 286, teeth: 6, r: 18 }],
+    ];
+    gearSpecs.forEach((set, s) => {
+      for (const spec of set) {
+        const g = svg('g', { opacity: s ? 0 : 1 }, node);
+        svg('path', { class: 'ih-gear', d: gearPath(spec.teeth, spec.r, spec.r * 0.78) }, g);
+        svg('circle', { class: 'ih-gear-hub', r: spec.r * 0.32 }, g);
+        gearSets[s].push({ g, spec });
+      }
+    });
+    let swapAt = Infinity;
+    const spinFrom = gearsFrom ?? at;
+    onFrame((t) => {
+      let d = 'M 0 120';
+      for (let px = 0; px <= 420; px += 20) d += ` L ${px} ${(120 + 3 * Math.sin(px / 30 + t * 2)).toFixed(1)}`;
+      wave.setAttribute('d', d);
+      const swapped = progress(t, swapAt, 0.5);
+      gearSets.forEach((set, s) => set.forEach(({ g, spec }, i) => {
+        const spin = Math.max(0, t - spinFrom) * (i % 2 ? -50 : 60) * (s ? 1.3 : 1);
+        const vis = s ? swapped : 1 - swapped;
+        const lift = (s ? 1 - swapped : swapped) * 26;
+        g.setAttribute('transform', `translate(${spec.cx} ${(spec.cy + lift).toFixed(1)}) rotate(${spin.toFixed(1)})`);
+        g.setAttribute('opacity', vis.toFixed(2));
+      }));
+    });
+    fx.fadeIn(node, at, 0.35);
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return {
+      node,
+      swap(when) { swapAt = when; return this; },
+      /** Stage point for a position in the iceberg's own 420×360 frame. */
+      point(px, py) { return [x + px * scale, y + py * scale]; },
+    };
+  }
+
+  /** A label on the iceberg: tone = tip (gold) | deep (cyan). */
+  function bergLabel(parent, { x, y, title, sub, tone = 'tip', at, until }) {
+    const node = place(el('div', `ih-berg-label ih-berg-label--${tone} is-staged`, parent), x, y);
+    node.append(document.createTextNode(title));
+    if (sub) el('small', null, node, sub);
+    return show(node, at, until, { rotate: tone === 'tip' ? -3 : 3 });
+  }
+
+  /**
+   * A two-way design choice: a pill with both options, the chosen one lit.
+   * flips = [{ at }] switch sides.
+   */
+  function toggle(parent, { x, y, a, b, at, flips = [], until, start = 0 }) {
+    const node = place(el('div', 'ih-toggle is-staged', parent), x, y);
+    const left = el('span', 'ih-toggle-side', node, a);
+    el('span', 'ih-toggle-or', node, 'or');
+    const right = el('span', 'ih-toggle-side', node, b);
+    const times = [...flips].sort((p, q) => p - q);
+    onFrame((t) => {
+      const side = (start + times.filter((f) => f <= t).length) % 2;
+      left.classList.toggle('is-on', side === 0);
+      right.classList.toggle('is-on', side === 1);
+    });
+    for (const f of times) fx.bump(node, f, 0.12);
+    return show(node, at, until, { rotate: 0, from: 0.7 });
+  }
+
+  /** A dashed waterline across the stage at y (the iceberg's sea level). */
+  function waterline(parent, { y, x1 = 0, x2 = 960, at, until }) {
+    const line = svg('svg', { class: 'ih-waterline is-staged', viewBox: '0 0 960 540', 'aria-hidden': 'true' }, parent);
+    svg('line', { x1, y1: y, x2, y2: y }, line);
+    fx.fadeIn(line, at, 0.4);
+    if (until !== undefined) fx.fadeOut(line, until, 0.3);
+    return line;
+  }
+
+  // ------------------------------------------------------------------
+  // The wall outlet and the plant behind the wall
+  // ------------------------------------------------------------------
+
+  /**
+   * A cutaway wall in a 480×300 box: on the right, an outlet, a plug, and a
+   * charging phone; on the left, behind the wall, the plant that is running.
+   * plants = [{ at, kind: 'solar' | 'wind' }].
+   */
+  function outlet(parent, { x, y, at, until, plants }) {
+    const node = art(parent, { x, y, w: 480, h: 300, viewBox: '0 0 480 300' });
+    const sorted = [...plants].sort((a, b) => a.at - b.at);
+    // Behind the wall: two scenes that cross-fade.
+    const day = svg('g', {}, node);
+    svg('rect', { class: 'ih-sky-day', x: 10, y: 10, width: 230, height: 280, rx: 14 }, day);
+    svg('rect', { class: 'ih-ground', x: 10, y: 230, width: 230, height: 60, rx: 4 }, day);
+    const sun = svg('g', { transform: 'translate(70 70)' }, day);
+    for (let i = 0; i < 8; i++) {
+      const a = (i * Math.PI) / 4;
+      svg('line', { class: 'ih-sun-ray', x1: (30 * Math.cos(a)).toFixed(1), y1: (30 * Math.sin(a)).toFixed(1), x2: (40 * Math.cos(a)).toFixed(1), y2: (40 * Math.sin(a)).toFixed(1) }, sun);
+    }
+    svg('circle', { class: 'ih-sun', r: 22 }, sun);
+    for (const px of [60, 150]) {
+      const panel = svg('g', { transform: `translate(${px} 200)` }, day);
+      svg('line', { class: 'ih-panel-leg', x1: 30, y1: 18, x2: 30, y2: 34 }, panel);
+      svg('path', { class: 'ih-panel', d: 'M 0 18 L 12 -14 L 72 -14 L 60 18 Z' }, panel);
+      svg('path', { class: 'ih-panel-grid', d: 'M 4 8 L 64 8 M 8 -3 L 68 -3 M 24 18 L 32 -14 M 44 18 L 52 -14' }, panel);
+    }
+    const night = svg('g', { opacity: 0 }, node);
+    svg('rect', { class: 'ih-sky-night', x: 10, y: 10, width: 230, height: 280, rx: 14 }, night);
+    svg('rect', { class: 'ih-ground ih-ground--night', x: 10, y: 230, width: 230, height: 60, rx: 4 }, night);
+    svg('path', { class: 'ih-moon', d: 'M 66 40 a 22 22 0 1 0 22 30 a 17 17 0 1 1 -22 -30 Z' }, night);
+    for (const [sx, sy] of [[150, 40], [190, 70], [120, 90], [210, 30], [40, 120]]) svg('circle', { class: 'ih-star', cx: sx, cy: sy, r: 2 }, night);
+    const turbines = [[90, 236, 1], [180, 236, 0.75]].map(([tx, ty, s]) => {
+      const g = svg('g', { transform: `translate(${tx} ${ty}) scale(${s})` }, night);
+      svg('path', { class: 'ih-tower', d: 'M -4 0 L -2 -120 L 2 -120 L 4 0 Z' }, g);
+      const rotor = svg('g', { transform: 'translate(0 -120)' }, g);
+      for (let i = 0; i < 3; i++) svg('path', { class: 'ih-blade', d: 'M 0 0 C 6 -16 4 -44 0 -58 C -4 -44 -6 -16 0 0 Z', transform: `rotate(${i * 120})` }, rotor);
+      svg('circle', { class: 'ih-tower', r: 5 }, rotor);
+      return rotor;
+    });
+    // The wall and the outlet.
+    svg('path', { class: 'ih-wall', d: 'M 250 4 L 476 4 L 476 296 L 250 296 Z' }, node);
+    svg('path', { class: 'ih-wall-cut', d: 'M 240 4 L 262 4 L 252 60 L 266 120 L 250 190 L 264 250 L 252 296 L 240 296 Z' }, node);
+    svg('rect', { class: 'ih-plate', x: 300, y: 100, width: 70, height: 100, rx: 10 }, node);
+    for (const sy of [122, 160]) {
+      svg('rect', { class: 'ih-socket', x: 323, y: sy, width: 7, height: 16, rx: 2 }, node);
+      svg('rect', { class: 'ih-socket', x: 340, y: sy, width: 7, height: 16, rx: 2 }, node);
+    }
+    svg('path', { class: 'ih-cable', d: 'M 120 150 C 170 150 200 140 240 140' }, day);
+    svg('path', { class: 'ih-cable', d: 'M 120 150 C 170 150 200 140 240 140' }, night);
+    const flowing = svg('path', { class: 'ih-cable-glow', d: 'M 345 176 C 360 230 400 240 412 200' }, node);
+    svg('path', { class: 'ih-cable', d: 'M 345 176 C 360 230 400 240 412 200', opacity: 0.5 }, node);
+    svg('rect', { class: 'ih-plug', x: 316, y: 150, width: 40, height: 30, rx: 6 }, node);
+    svg('rect', { class: 'ih-phone', x: 398, y: 96, width: 44, height: 92, rx: 9 }, node);
+    svg('rect', { class: 'ih-phone-screen', x: 404, y: 106, width: 32, height: 70, rx: 4 }, node);
+    const battery = svg('rect', { class: 'ih-battery', x: 412, y: 140, width: 16, height: 26, rx: 2 }, node);
+    onFrame((t) => {
+      const current = latest(sorted, t) || sorted[0];
+      const index = sorted.indexOf(current);
+      const prev = index > 0 ? sorted[index - 1] : null;
+      const fade = prev ? progress(t, current.at, 0.6) : 1;
+      const nightOpacity = current.kind === 'wind' ? fade : 1 - fade;
+      night.setAttribute('opacity', (prev || current.kind === 'wind' ? nightOpacity : 0).toFixed(2));
+      turbines.forEach((rotor, i) => rotor.setAttribute('transform', `translate(0 -120) rotate(${((t * (90 + i * 30)) % 360).toFixed(1)})`));
+      flowing.setAttribute('stroke-dashoffset', (-t * 40).toFixed(1));
+      const level = 0.3 + 0.7 * ((t * 0.08) % 1);
+      battery.setAttribute('height', (26 * level).toFixed(1));
+      battery.setAttribute('y', (166 - 26 * level).toFixed(1));
+    });
+    fx.fadeIn(node, at, 0.35);
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return node;
+  }
+
+  // ------------------------------------------------------------------
+  // Title card: a manila dossier
+  // ------------------------------------------------------------------
+
+  function dossier(parent, { x, y, w, tab, title, sub, at, until, rotate = -2 }) {
+    const node = place(el('div', 'ih-dossier is-staged', parent), x, y);
+    node.style.width = `${w}px`;
+    el('div', 'ih-dossier-tab', node, tab);
+    el('div', 'ih-dossier-title', node, title);
+    if (sub) el('div', 'ih-dossier-sub', node, sub);
+    fx.pop(node, at, { from: 0.8, rotate });
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return node;
+  }
+
+  // ------------------------------------------------------------------
+  // Decryption: text that resolves from cipher noise, left to right
+  // ------------------------------------------------------------------
+
+  const UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const LOWER = 'abcdefghijklmnopqrstuvwxyz';
+  const DIGIT = '0123456789';
+
+  /** A cipher character that keeps the case (and so the width) of `ch`. */
+  function cipher(ch, seed) {
+    const pool = /[A-Z]/.test(ch) ? UPPER : /[a-z]/.test(ch) ? LOWER : /[0-9]/.test(ch) ? DIGIT : null;
+    return pool ? pool[Math.floor(hash01(seed) * pool.length)] : ch;
+  }
+
+  /**
+   * Shows `text` in `node` from `at`: characters before the lock point are
+   * the real text, the rest churn as cipher. `offset` delays this span's
+   * lock point (to decrypt several spans as one line). Before `at` the
+   * node shows `before`.
+   */
+  function decrypt(node, text, at, { cps = 75, offset = 0, seed = 1, before = '' } = {}) {
+    onFrame((t) => {
+      if (t < at) {
+        if (node.textContent !== before) node.textContent = before;
+        return;
+      }
+      const locked = Math.floor((t - at) * cps) - offset;
+      if (locked >= text.length) {
+        if (node.textContent !== text) node.textContent = text;
+        return;
+      }
+      const frame = Math.floor(t * 20);
+      let out = '';
+      for (let i = 0; i < text.length; i++) out += i < locked ? text[i] : cipher(text[i], seed * 7919 + frame * 131 + i * 17);
+      node.textContent = out;
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // Case files: every module is a manila folder; secrets are sealed
+  // ------------------------------------------------------------------
+
+  let fileNumber = 0;
+
+  /**
+   * A module drawn as a case file: a manila folder with a typed name label,
+   * a paper clip, and a file number. kind = 'interface' draws a public
+   * credential badge instead (what callers may see); 'external' draws a
+   * foreign-contact card. lines = [{ text, at }] lists operations.
+   */
+  function module(parent, { x, y, w = 200, h = 74, name, sub, iconName = 'box', kind, lines = [], at, until, rise = true }) {
+    const variant = kind || 'file';
+    const node = place(el('div', `ih-module ih-module--${variant} is-staged`, parent), x, y);
+    node.style.width = `${w}px`;
+    node.style.height = `${h}px`;
+    const glows = {};
+    if (variant === 'file') {
+      el('div', 'ih-file-tab', node);
+      const clip = svg('svg', { class: 'ih-clip', viewBox: '0 0 16 40', 'aria-hidden': 'true' }, node);
+      svg('path', { d: 'M5 38V8a3 3 0 0 1 6 0v26a5 5 0 0 1-10 0V6a7 7 0 0 1 14 0v22' }, clip);
+      el('span', 'ih-file-no', node, `№ ${String(++fileNumber % 100).padStart(2, '0')}`);
+    }
+    if (variant === 'interface') {
+      el('div', 'ih-badge-strip', node, '«interface» · public');
+      el('span', 'ih-badge-hole', node);
+    }
+    if (variant === 'external') el('div', 'ih-contact-strip', node, 'external contact');
+    const head = el('div', 'ih-module-head', node);
+    const seal = el('span', 'ih-module-seal', head);
+    seal.append(icon(iconName));
+    el('span', 'ih-module-name', head, name);
+    if (sub) el('div', 'ih-module-sub', node, sub);
+    for (const line of lines) {
+      const row = el('div', `ih-module-line${line.at !== undefined ? ' is-staged' : ''}`, node, line.text);
+      if (line.at !== undefined) fx.rise(row, line.at, { distance: 6, duration: 0.25 });
+    }
+    if (at !== undefined) {
+      if (rise) fx.rise(node, at, { distance: 18, duration: 0.4 });
+      else fx.pop(node, at, { from: 0.7 });
+    }
+    if (until !== undefined) fx.fadeOut(node, until, 0.25);
+
+    function glow(tone) {
+      if (!glows[tone]) glows[tone] = el('div', `ih-module-glow${tone === 'gold' ? '' : ` ih-module-glow--${tone}`} is-staged`, node);
+      return glows[tone];
+    }
+
+    return {
+      node, x, y, w, h,
+      /** A sealed red "top secret" envelope pinned to the file: the decision it hides. */
+      secret(text, { at: when, until: gone, dx, dy } = {}) {
+        const env = envelope(node, { text, x: dx ?? 14, y: dy ?? h - 18 });
+        show(env, when, gone, { rotate: -3, from: 1.6 });
+        return env;
+      },
+      verdict(text, { at: when, until: gone, ok = true, dx, dy } = {}) {
+        const tag = el('div', `ih-verdict ih-verdict--${ok ? 'ok' : 'no'} is-staged`, node);
+        tag.append(icon(ok ? 'check' : 'cross'));
+        tag.append(document.createTextNode(text));
+        tag.style.left = `${dx ?? w - 40}px`;
+        tag.style.top = `${dy ?? -14}px`;
+        show(tag, when, gone, { rotate: 4, from: 1.5 });
+        return tag;
+      },
+      /** A rubber stamp across the folder (AFFECTED, CHANGED, ...). */
+      stamp(text, { at: when, color = 'red', rotate = -9, dx, dy } = {}) {
+        const mark = el('div', `ih-file-stamp ih-file-stamp--${color} is-staged`, node, text);
+        mark.style.left = `${dx ?? w / 2 - 40}px`;
+        mark.style.top = `${dy ?? h / 2 - 14}px`;
+        fx.slam(mark, when, { from: 2.2, rotate });
+        return mark;
+      },
+      light(when, gone, tone = 'gold') {
+        const g = glow(tone);
+        tween(g, [{ opacity: 0 }, { opacity: 1 }], when, 0.18, EASE.out);
+        fx.bump(node, when, 0.05);
+        if (gone !== undefined) tween(g, { opacity: 0 }, gone, 0.3, EASE.in);
+        return this;
+      },
+      dim(when, gone) {
+        tween(node, { opacity: 0.32 }, when, 0.3, EASE.inOut);
+        if (gone !== undefined) tween(node, { opacity: 1 }, gone, 0.3, EASE.inOut);
+        return this;
+      },
+    };
+  }
+
+  /** A sealed envelope with a wax seal and a "TOP SECRET" band: a module's secret. */
+  function envelope(parent, { text, x, y }) {
+    const node = place(el('div', 'ih-envelope is-staged', parent), x, y);
+    const flap = svg('svg', { class: 'ih-envelope-flap', viewBox: '0 0 100 20', preserveAspectRatio: 'none', 'aria-hidden': 'true' }, node);
+    svg('path', { d: 'M1 1 L50 18 L99 1' }, flap);
+    const seal = el('span', 'ih-envelope-seal', node);
+    seal.append(icon('lock'));
+    el('span', 'ih-envelope-band', node, 'Top secret');
+    el('span', 'ih-envelope-text', node, text);
+    return node;
+  }
+
+  // ------------------------------------------------------------------
+  // Couriers: a dashed route with sealed envelopes travelling along it
+  // ------------------------------------------------------------------
+
+  /**
+   * A route from `from` to `to` (bowed by `bend`), drawn on at `at`, along
+   * which envelopes travel every `period` seconds until `until`. tone =
+   * gold | cyan | pink | red. arrow adds a head at `to`.
+   */
+  function courier(parent, { from, to, bend = 0, at, until, tone = 'gold', period = 1.8, carriers = 1, arrow = true }) {
+    const art = svg('svg', { class: 'ih-route-art is-staged', viewBox: '0 0 960 540', 'aria-hidden': 'true' }, parent);
+    const [x1, y1] = from;
+    const [x2, y2] = to;
+    const cx = (x1 + x2) / 2;
+    const cy = (y1 + y2) / 2 + bend;
+    svg('path', { class: 'ih-route-shadow', d: `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}` }, art);
+    const path = svg('path', { class: `ih-route ih-route--${tone}`, d: `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}` }, art);
+    const ink = svg('path', { class: `ih-route-draw ih-route--${tone}`, d: `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}` }, art);
+    fx.draw(ink, at, 0.35);
+    tween(path, [{ opacity: 0 }, { opacity: 1 }], at + 0.3, 0.1, EASE.out);
+    if (arrow) {
+      const angle = Math.atan2(y2 - cy, x2 - cx) * 180 / Math.PI;
+      const head = svg('path', { class: `ih-route-head ih-route-head--${tone} is-staged`, d: 'M 0 0 L -13 -7 L -13 7 Z', transform: `translate(${x2} ${y2}) rotate(${angle.toFixed(1)})` }, art);
+      fx.fadeIn(head, at + 0.3, 0.1);
+    }
+    const letters = Array.from({ length: carriers }, () => {
+      const g = svg('g', { class: 'ih-route-letter', opacity: 0 }, art);
+      svg('rect', { x: -9, y: -6.5, width: 18, height: 13, rx: 1.5 }, g);
+      svg('path', { d: 'M -8 -5.5 L 0 1 L 8 -5.5' }, g);
+      svg('circle', { class: 'ih-route-wax', cx: 0, cy: 1.5, r: 2.4 }, g);
+      return g;
+    });
+    const end = until ?? Infinity;
+    onFrame((t) => {
+      letters.forEach((g, k) => {
+        const age = t - (at + 0.4) - (k * period) / carriers;
+        if (age < 0 || t > end - 0.3) {
+          g.setAttribute('opacity', '0');
+          return;
+        }
+        const p = (age % period) / period;
+        const q = 1 - p;
+        const px = q * q * x1 + 2 * q * p * cx + p * p * x2;
+        const py = q * q * y1 + 2 * q * p * cy + p * p * y2;
+        g.setAttribute('transform', `translate(${px.toFixed(1)} ${py.toFixed(1)})`);
+        g.setAttribute('opacity', Math.min(1, p * 6, (1 - p) * 6).toFixed(2));
+      });
+    });
+    fx.fadeIn(art, at, 0.05);
+    if (until !== undefined) fx.fadeOut(art, until - 0.25, 0.25);
+    return art;
+  }
+
+  // ------------------------------------------------------------------
+  // Security hardware: laser walls, spotlights, the interrogation lamp
+  // ------------------------------------------------------------------
+
+  /** A vertical laser wall between two emitters; it hums (slowly) once on. */
+  function laser(parent, { x, y1, y2, at, until }) {
+    const node = svg('svg', { class: 'ih-laser is-staged', viewBox: `0 0 30 ${y2 - y1 + 24}`, width: 30, height: y2 - y1 + 24, 'aria-hidden': 'true' }, parent);
+    node.style.left = `${x - 15}px`;
+    node.style.top = `${y1 - 12}px`;
+    const len = y2 - y1;
+    const glowLine = svg('line', { class: 'ih-laser-glow', x1: 15, y1: 12, x2: 15, y2: 12 + len }, node);
+    const beam = svg('line', { class: 'ih-laser-beam', x1: 15, y1: 12, x2: 15, y2: 12 + len }, node);
+    svg('rect', { class: 'ih-laser-emitter', x: 5, y: 0, width: 20, height: 12, rx: 3 }, node);
+    svg('rect', { class: 'ih-laser-emitter', x: 5, y: 12 + len, width: 20, height: 12, rx: 3 }, node);
+    svg('circle', { class: 'ih-laser-eye', cx: 15, cy: 9, r: 2.5 }, node);
+    svg('circle', { class: 'ih-laser-eye', cx: 15, cy: 15 + len, r: 2.5 }, node);
+    fx.fadeIn(node, at, 0.2);
+    fx.draw(beam, at + 0.1, 0.3);
+    fx.draw(glowLine, at + 0.1, 0.3);
+    onFrame((t) => glowLine.setAttribute('opacity', (0.45 + 0.15 * Math.sin((t - at) * 3.6)).toFixed(3)));
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return node;
+  }
+
+  /** A soft pool of light from above (a searchlight picking something out). */
+  function spotlight(parent, { x, y, w = 300, h = 300, at, until }) {
+    const node = place(el('div', 'ih-spot is-staged', parent), x - w / 2, y - h / 2);
+    node.style.width = `${w}px`;
+    node.style.height = `${h}px`;
+    fx.fadeIn(node, at, 0.4);
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return node;
+  }
+
+  /** A hanging interrogation lamp whose light falls on what is below it. */
+  function lamp(parent, { x, y = 0, w = 520, h = 360, at, until }) {
+    const node = svg('svg', { class: 'ih-lamp is-staged', viewBox: `0 0 ${w} ${h}`, width: w, height: h, 'aria-hidden': 'true' }, parent);
+    node.style.left = `${x - w / 2}px`;
+    node.style.top = `${y}px`;
+    const c = w / 2;
+    svg('path', { class: 'ih-lamp-light', d: `M ${c - 30} 46 L ${c + 30} 46 L ${w} ${h} L 0 ${h} Z` }, node);
+    svg('line', { class: 'ih-lamp-cord', x1: c, y1: 0, x2: c, y2: 22 }, node);
+    svg('path', { class: 'ih-lamp-shade', d: `M ${c - 12} 22 L ${c + 12} 22 L ${c + 36} 48 L ${c - 36} 48 Z` }, node);
+    svg('ellipse', { class: 'ih-lamp-bulb', cx: c, cy: 49, rx: 14, ry: 5 }, node);
+    fx.fadeIn(node, at, 0.4);
+    onFrame((t) => node.style.transform = `rotate(${(1.2 * Math.sin(t * 1.3)).toFixed(2)}deg)`);
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return node;
+  }
+
+  // ------------------------------------------------------------------
+  // Agents: a trench-coat silhouette with a name tag
+  // ------------------------------------------------------------------
+
+  /**
+   * A secret agent in a fedora, trench coat, and sunglasses, holding a
+   * briefcase; sways a little and the lenses glint now and then. tie =
+   * hat-band colour (red | gold | cyan). The figure is 160×300 at scale 1.
+   */
+  function agent(parent, { x, y, scale = 1, name, role, at, until, tie = 'red', briefcase = true, flip = false }) {
+    const wrap = place(el('div', 'ih-agent is-staged', parent), x, y);
+    wrap.style.width = `${160 * scale}px`;
+    const fig = svg('svg', { class: `ih-agent-art ih-agent-art--${tie}`, viewBox: '0 0 160 300', width: 160 * scale, height: 300 * scale, 'aria-hidden': 'true' }, wrap);
+    const body = svg('g', { transform: flip ? 'translate(160 0) scale(-1 1)' : '' }, fig);
+    const sway = svg('g', {}, body);
+    svg('ellipse', { class: 'ih-agent-shadow', cx: 80, cy: 292, rx: 60, ry: 7 }, sway);
+    svg('path', { class: 'ih-agent-leg', d: 'M58 262 L60 288 L74 288 L76 262 Z M86 262 L88 288 L102 288 L102 262 Z' }, sway);
+    svg('path', { class: 'ih-agent-shoe', d: 'M54 286 H76 Q78 292 72 293 H52 Q50 289 54 286 Z M86 286 H108 Q112 289 110 293 H90 Q84 292 86 286 Z' }, sway);
+    svg('path', { class: 'ih-agent-coat', d: 'M44 110 Q52 92 80 90 Q108 92 116 110 L134 266 Q80 278 26 266 Z' }, sway);
+    svg('path', { class: 'ih-agent-coat-light', d: 'M80 90 Q108 92 116 110 L134 266 Q110 271 92 272 L88 128 Z' }, sway);
+    svg('path', { class: 'ih-agent-lapel', d: 'M64 94 L80 140 L56 112 Z M96 94 L80 140 L104 112 Z' }, sway);
+    svg('path', { class: 'ih-agent-shirt', d: 'M70 92 L80 122 L90 92 Z' }, sway);
+    svg('path', { class: `ih-agent-tie ih-agent-tie--${tie}`, d: 'M78 98 L82 98 L84 120 L80 128 L76 120 Z' }, sway);
+    svg('rect', { class: 'ih-agent-belt', x: 32, y: 182, width: 96, height: 12, rx: 3 }, sway);
+    svg('rect', { class: 'ih-agent-buckle', x: 72, y: 180, width: 16, height: 16, rx: 2 }, sway);
+    for (const by of [150, 170, 210, 230]) {
+      svg('circle', { class: 'ih-agent-button', cx: 68, cy: by, r: 2.6 }, sway);
+      svg('circle', { class: 'ih-agent-button', cx: 92, cy: by, r: 2.6 }, sway);
+    }
+    svg('path', { class: 'ih-agent-coat', d: 'M44 112 Q30 150 30 214 L44 216 Q46 160 56 128 Z' }, sway);
+    svg('path', { class: 'ih-agent-coat-light', d: 'M116 112 Q130 150 132 210 L118 214 Q114 160 104 128 Z' }, sway);
+    svg('circle', { class: 'ih-agent-hand', cx: 37, cy: 220, r: 7 }, sway);
+    svg('circle', { class: 'ih-agent-hand', cx: 125, cy: 216, r: 7 }, sway);
+    if (briefcase) {
+      svg('path', { class: 'ih-agent-case-handle', d: 'M116 222 Q125 210 134 222' }, sway);
+      svg('rect', { class: 'ih-agent-case', x: 104, y: 222, width: 48, height: 34, rx: 4 }, sway);
+      svg('rect', { class: 'ih-agent-case-lock', x: 124, y: 228, width: 8, height: 6, rx: 1 }, sway);
+    }
+    svg('rect', { class: 'ih-agent-neck', x: 72, y: 80, width: 16, height: 14 }, sway);
+    svg('path', { class: 'ih-agent-collar', d: 'M56 96 L70 84 L76 104 Z M104 96 L90 84 L84 104 Z' }, sway);
+    svg('ellipse', { class: 'ih-agent-face', cx: 80, cy: 64, rx: 19, ry: 22 }, sway);
+    svg('path', { class: 'ih-agent-face-shade', d: 'M61 58 Q80 64 99 58 L99 52 L61 52 Z' }, sway);
+    svg('path', { class: 'ih-agent-mouth', d: 'M73 78 Q80 81 87 77' }, sway);
+    const glasses = svg('g', {}, sway);
+    svg('rect', { class: 'ih-agent-lens', x: 63, y: 58, width: 15, height: 9, rx: 3 }, glasses);
+    svg('rect', { class: 'ih-agent-lens', x: 82, y: 58, width: 15, height: 9, rx: 3 }, glasses);
+    svg('line', { class: 'ih-agent-bridge', x1: 78, y1: 61, x2: 82, y2: 61 }, glasses);
+    const glint = svg('line', { class: 'ih-agent-glint', x1: 0, y1: 0, x2: 4, y2: -7, opacity: 0 }, glasses);
+    svg('ellipse', { class: 'ih-agent-brim', cx: 80, cy: 50, rx: 40, ry: 8 }, sway);
+    svg('path', { class: 'ih-agent-hat', d: 'M56 49 Q56 22 80 20 Q104 22 104 49 Q92 44 80 44 Q68 44 56 49 Z' }, sway);
+    svg('path', { class: 'ih-agent-dent', d: 'M70 24 Q80 32 90 24' }, sway);
+    svg('path', { class: `ih-agent-band ih-agent-band--${tie}`, d: 'M56 42 Q80 37 104 42 L104 48 Q80 43 56 48 Z' }, sway);
+    if (name) {
+      const tag = el('div', 'ih-agent-tag', wrap);
+      if (role) el('span', 'ih-agent-role', tag, role);
+      el('span', 'ih-agent-name', tag, name);
+    }
+    onFrame((t) => {
+      const local = t - at;
+      sway.setAttribute('transform', `rotate(${(1.1 * Math.sin(local * 1.7)).toFixed(2)} 80 290)`);
+      const cycle = (local % 3.4) / 3.4;
+      const on = cycle < 0.18 && local > 0.4;
+      glint.setAttribute('opacity', on ? (Math.sin((cycle / 0.18) * Math.PI) * 0.9).toFixed(2) : '0');
+      const gx = 64 + 32 * (cycle / 0.18);
+      glint.setAttribute('transform', `translate(${gx.toFixed(1)} 66)`);
+    });
+    fx.rise(wrap, at, { distance: 24, duration: 0.45 });
+    if (until !== undefined) fx.fadeOut(wrap, until, 0.3);
+    return wrap;
+  }
+
+  // ------------------------------------------------------------------
+  // The decrypted transmission: Parnas's sentence, line by line
+  // ------------------------------------------------------------------
+
+  /**
+   * A teleprinter sheet that decrypts each line as it is sung. lines =
+   * [{ at, parts: [text | { text, tone, at }] }]: object parts are
+   * highlighted with a marker (and underlined) from their own time.
+   * Earlier lines dim (still readable) once the next one is sung.
+   */
+  function transmission(parent, { x, y, w, lines, header = 'Incoming transmission', origin, source, sourceAt, stampAt, at, until }) {
+    const node = place(el('div', 'ih-trans is-staged', parent), x, y);
+    node.style.width = `${w}px`;
+    const head = el('div', 'ih-trans-head', node);
+    const live = el('span', 'ih-trans-live', head);
+    live.append(icon('wifi'));
+    live.append(document.createTextNode(header));
+    if (origin) el('span', 'ih-trans-origin', head, origin);
+    lines.forEach((line, i) => {
+      const row = el('div', 'ih-trans-line is-staged', node);
+      let offset = 0;
+      for (const part of line.parts) {
+        const text = typeof part === 'string' ? part : part.text;
+        const span = el('span', typeof part === 'string' ? null : `ih-mark ih-mark--${part.tone || 'gold'}`, row);
+        decrypt(span, text, line.at, { offset, seed: i * 31 + offset });
+        if (typeof part !== 'string') during(span, 'is-on', part.at ?? line.at);
+        offset += text.length;
+      }
+      fx.fadeIn(row, line.at - 0.05, 0.15);
+      const next = lines[i + 1];
+      if (next) during(row, 'is-dim', next.at + 0.2, until ?? Infinity);
+    });
+    if (source) {
+      const src = el('div', 'ih-trans-source is-staged', node, source);
+      fx.fadeIn(src, sourceAt ?? at, 0.3);
+    }
+    if (stampAt !== undefined) {
+      const stamp = el('div', 'ih-trans-stamp is-staged', node, 'Decrypted');
+      fx.slam(stamp, stampAt, { from: 2.4, rotate: -10 });
+    }
+    fx.rise(node, at, { distance: 20, duration: 0.4 });
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return node;
+  }
+
+  // ------------------------------------------------------------------
+  // Code: a code card (dark), a CRT terminal (green), or a classified file
+  // ------------------------------------------------------------------
+
+  /**
+   * lines = [{ at, parts: [text | { text, mark: 'red'|'gold'|'green', at, until, cls }] }].
+   * variant = 'crt' draws a 1970s green-phosphor terminal; 'classified'
+   * adds a red CLASSIFIED header.
+   */
+  function code(parent, { x, y, w, title, lines, at, until, variant }) {
+    const node = place(el('div', `code-card ih-code${variant ? ` ih-code--${variant}` : ''} is-staged`, parent), x, y);
+    node.style.width = `${w}px`;
+    if (title) {
+      const bar = el('div', 'code-card-title', node);
+      if (variant === 'classified') el('span', 'ih-code-classified', bar, 'Classified');
+      bar.append(document.createTextNode(title));
+    }
+    const rows = lines.map((line) => {
+      const row = el('div', `code-line${line.at !== undefined ? ' is-staged' : ''}`, node);
+      for (const part of line.parts) {
+        if (typeof part === 'string') {
+          row.append(document.createTextNode(part));
+          continue;
+        }
+        const classes = [];
+        if (part.cls) classes.push(`ih-${part.cls}`);
+        if (part.mark) classes.push('ih-code-mark', part.mark === 'red' ? '' : `ih-code-mark--${part.mark}`);
+        const span = el('span', classes.filter(Boolean).join(' '), row, part.text);
+        if (part.mark && part.at !== undefined) during(span, 'is-on', part.at, part.until);
+        if (part.ref) part.ref(span);
+      }
+      if (line.at !== undefined) fx.rise(row, line.at, { distance: 6, duration: 0.25 });
+      return row;
+    });
+    if (variant === 'crt') el('div', 'ih-scanlines', node);
+    fx.rise(node, at, { distance: 18, duration: 0.4 });
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return { node, rows };
+  }
+
+  // ------------------------------------------------------------------
+  // Intercept: a surveillance terminal searching for a word
+  // ------------------------------------------------------------------
+
+  /**
+   * A green CRT "intercept" console: `query` types into its field, then
+   * hits = [{ file, before, match, after }] print one by one while a
+   * magnifier sweeps down them; count stamps a total on `countAt`.
+   */
+  function search(parent, { x, y, w, query, at, typedAt, hits, hitsAt, step = 0.12, count, countAt, until }) {
+    const node = place(el('div', 'ih-intercept is-staged', parent), x, y);
+    node.style.width = `${w}px`;
+    const head = el('div', 'ih-intercept-head', node);
+    const rec = el('span', 'ih-intercept-rec', head);
+    rec.append(icon('search'));
+    rec.append(document.createTextNode('Intercept'));
+    const field = el('span', 'ih-intercept-query', head);
+    kit.typewriter(field, `"${query}"`, typedAt ?? at, 14);
+    let countNode = null;
+    if (count) {
+      countNode = el('span', 'ih-intercept-count is-staged', head, count);
+      fx.slam(countNode, countAt, { from: 2, rotate: -4 });
+    }
+    const box = el('div', 'ih-intercept-body', node);
+    const rows = hits.map((hit, i) => {
+      const row = el('div', 'ih-hit is-staged', box);
+      el('span', 'ih-hit-file', row, hit.file);
+      const codeNode = el('span', 'ih-hit-code', row);
+      codeNode.append(document.createTextNode(hit.before));
+      el('mark', null, codeNode, hit.match);
+      codeNode.append(document.createTextNode(hit.after));
+      fx.fadeIn(row, hitsAt + i * step, 0.08);
+      return row;
+    });
+    el('div', 'ih-scanlines', node);
+    // A magnifier sweeps down the hits as they print.
+    const lens = svg('svg', { class: 'ih-lens is-staged', viewBox: '0 0 80 80', width: 80, height: 80, 'aria-hidden': 'true' }, node);
+    svg('circle', { class: 'ih-lens-glass', cx: 32, cy: 32, r: 22 }, lens);
+    svg('path', { class: 'ih-lens-shine', d: 'M18 26 A16 16 0 0 1 30 14' }, lens);
+    svg('line', { class: 'ih-lens-handle', x1: 49, y1: 49, x2: 72, y2: 72 }, lens);
+    fx.fadeIn(lens, hitsAt, 0.2);
+    const sweep = Math.max(0.6, hits.length * step + 0.3);
+    onFrame((t) => {
+      const p = easeInOutCubic(progress(t, hitsAt, sweep));
+      lens.style.transform = `translate(${(w * 0.42 + 120 * Math.sin(p * Math.PI * 2)).toFixed(1)}px, ${(40 + p * (rows.length * 26 - 10)).toFixed(1)}px)`;
+    });
+    fx.rise(node, at, { distance: 16, duration: 0.35 });
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return { node, countNode };
+  }
+
+  // ------------------------------------------------------------------
+  // The 1960s mainframe whose memory was expensive
+  // ------------------------------------------------------------------
+
+  function mainframe(parent, { x, y, at, until }) {
+    const node = art(parent, { x, y, w: 230, h: 200, viewBox: '0 0 230 200' });
+    svg('rect', { class: 'ih-mf-cabinet', x: 6, y: 8, width: 218, height: 184, rx: 8 }, node);
+    svg('rect', { class: 'ih-mf-panel', x: 18, y: 20, width: 194, height: 34, rx: 4 }, node);
+    const lights = Array.from({ length: 12 }, (_, i) => svg('circle', { class: 'ih-mf-light', cx: 30 + i * 15, cy: 37, r: 4.2 }, node));
+    const reels = [62, 168].map((cx) => {
+      svg('rect', { class: 'ih-mf-window', x: cx - 44, y: 66, width: 88, height: 88, rx: 6 }, node);
+      const reel = svg('g', { transform: `translate(${cx} 110)` }, node);
+      svg('circle', { class: 'ih-mf-reel', r: 34 }, reel);
+      svg('circle', { class: 'ih-mf-tape', r: 22 }, reel);
+      for (let k = 0; k < 3; k++) svg('path', { class: 'ih-mf-spoke', d: 'M0 -8 L0 -30', transform: `rotate(${k * 120})` }, reel);
+      svg('circle', { class: 'ih-mf-hub', r: 7 }, reel);
+      return reel;
+    });
+    svg('rect', { class: 'ih-mf-slot', x: 30, y: 166, width: 170, height: 8, rx: 3 }, node);
+    onFrame((t) => {
+      reels.forEach((reel, i) => reel.setAttribute('transform', `translate(${i ? 168 : 62} 110) rotate(${((t * (i ? -70 : 90)) % 360).toFixed(1)})`));
+      // Small panel lights change state about twice a second (no flashing area).
+      const tick = Math.floor(t * 2);
+      lights.forEach((light, i) => light.classList.toggle('is-on', hash01(tick * 31 + i * 7) > 0.45));
+    });
+    show(node, at, until, { from: 0.7 });
+    return node;
+  }
+
+  // ------------------------------------------------------------------
+  // The detective's corkboard: modules as pinned cards, dependencies as
+  // red string; with every pair connected, it knots into a ball of mud
+  // ------------------------------------------------------------------
+
+  /**
+   * A framed corkboard (w×h) with `names` pinned around an ellipse, every
+   * pair joined by red string (n(n−1)/2 strings) drawn one after another,
+   * and a sticky note counting them. mud(at) heaps the cards in the middle
+   * and knots the string into a ball of mud.
+   */
+  function stringWeb(parent, { x, y, w, h, names, at, drawFor = 1.2, until, countLabel = 'connections', title }) {
+    const node = place(el('div', 'ih-cork is-staged', parent), x, y);
+    node.style.width = `${w}px`;
+    node.style.height = `${h}px`;
+    if (title) el('div', 'ih-cork-title', node, title);
+    const n = names.length;
+    const cx = w / 2;
+    const cy = h / 2 - 8;
+    const rx = w / 2 - (n > 4 ? 76 : 86);
+    const ry = h / 2 - (n > 4 ? 62 : 70);
+    const cardW = n > 4 ? 100 : 118;
+    const spots = names.map((_, i) => {
+      const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+      return { x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a) };
+    });
+    // The string lies over the cards, pin to pin.
+    const mud = svg('svg', { class: 'ih-cork-mud', viewBox: `0 0 ${w} ${h}`, width: w, height: h, 'aria-hidden': 'true' }, node);
+    const blob = svg('path', { class: 'ih-mud-blob', opacity: 0 }, mud);
+    const cards = names.map((name, i) => {
+      const card = place(el('div', 'ih-pincard', node), spots[i].x - cardW / 2, spots[i].y - 26);
+      card.style.width = `${cardW}px`;
+      const tilt = (hash01(i * 13 + n) - 0.5) * 10;
+      card.style.rotate = `${tilt.toFixed(1)}deg`;
+      const photo = el('span', 'ih-pincard-photo', card);
+      photo.append(icon(['box', 'gear', 'receipt', 'envelope', 'lock', 'user', 'chart', 'pin'][i % 8]));
+      el('span', 'ih-pincard-name', card, name);
+      fx.pop(card, at + 0.05 + i * 0.06, { from: 0.6, rotate: tilt });
+      return card;
+    });
+    const strings = svg('svg', { class: 'ih-cork-strings', viewBox: `0 0 ${w} ${h}`, width: w, height: h, 'aria-hidden': 'true' }, node);
+    const pairs = [];
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) pairs.push([i, j]);
+    const order = pairs.map((pair, k) => ({ pair, key: hash01(k * 7 + n * 3) })).sort((a, b) => a.key - b.key).map((o) => o.pair);
+    const step = drawFor / order.length;
+    const yarn = order.map(([i, j], k) => {
+      const a = { x: spots[i].x, y: spots[i].y - 22 };
+      const b = { x: spots[j].x, y: spots[j].y - 22 };
+      const sag = 12 + Math.hypot(b.x - a.x, b.y - a.y) * 0.08;
+      const d = `M ${a.x.toFixed(1)} ${a.y.toFixed(1)} Q ${((a.x + b.x) / 2).toFixed(1)} ${((a.y + b.y) / 2 + sag).toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
+      const shadow = svg('path', { class: 'ih-yarn-shadow', d, transform: 'translate(2 3)' }, strings);
+      const path = svg('path', { class: 'ih-yarn', d }, strings);
+      const starts = at + 0.35 + k * step;
+      fx.draw(shadow, starts, Math.max(0.12, step * 1.6));
+      fx.draw(path, starts, Math.max(0.12, step * 1.6));
+      return { path, starts };
+    });
+    const pins = spots.map((s, i) => {
+      const pin = svg('g', { transform: `translate(${s.x.toFixed(1)} ${(s.y - 22).toFixed(1)})` }, strings);
+      svg('circle', { class: 'ih-pin', r: 6.5 }, pin);
+      svg('circle', { class: 'ih-pin-shine', cx: -2, cy: -2, r: 2 }, pin);
+      fx.pop(pin, at + 0.1 + i * 0.06, { from: 0.4 });
+      return pin;
+    });
+    const knot = svg('g', { class: 'ih-knot', opacity: 0 }, strings);
+    const loops = Array.from({ length: 30 }, (_, k) => {
+      const r1 = 22 + hash01(k * 11 + 1) * 58;
+      const a1 = hash01(k * 17 + 2) * Math.PI * 2;
+      const a2 = a1 + 1.4 + hash01(k * 23 + 3) * 2.6;
+      const r2 = 20 + hash01(k * 29 + 4) * 60;
+      const p1 = [cx + r1 * Math.cos(a1), cy + 6 + r1 * 0.8 * Math.sin(a1)];
+      const p2 = [cx + r2 * Math.cos(a2), cy + 6 + r2 * 0.8 * Math.sin(a2)];
+      const c1 = [cx + (hash01(k * 31) - 0.5) * 160, cy + (hash01(k * 37) - 0.5) * 130];
+      const path = svg('path', { class: `ih-yarn${k % 3 ? '' : ' ih-yarn--dark'}`, d: `M ${p1[0].toFixed(1)} ${p1[1].toFixed(1)} Q ${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}` }, knot);
+      return path;
+    });
+    const note = place(el('div', 'ih-sticky is-staged', node), w - 140, n > 4 ? 0 : h - 88);
+    const count = el('b', null, note, '0');
+    el('span', null, note, countLabel);
+    fx.pop(note, at + 0.3, { from: 0.5, rotate: 4 });
+    let mudAt = Infinity;
+    onFrame((t) => {
+      const shown = yarn.filter((s) => t >= s.starts).length;
+      const text = String(shown);
+      if (count.textContent !== text) count.textContent = text;
+    });
+    fx.fadeIn(node, at, 0.3);
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return {
+      node,
+      /** Heap the cards in the middle and knot every string into one ball of mud. */
+      mud(when) {
+        mudAt = when;
+        cards.forEach((card, i) => {
+          const hx = cx + (hash01(i * 41 + 5) - 0.5) * 110 - (spots[i].x);
+          const hy = cy + (hash01(i * 43 + 6) - 0.5) * 80 - (spots[i].y);
+          tween(card, { translate: `${hx.toFixed(1)}px ${hy.toFixed(1)}px`, rotate: `${((hash01(i * 47) - 0.5) * 70).toFixed(1)}deg` }, when + i * 0.04, 0.6, EASE.inOut);
+        });
+        pins.forEach((pin) => tween(pin, { opacity: 0 }, when, 0.3, EASE.in));
+        yarn.forEach(({ path }) => tween(path, { opacity: 0.15 }, when, 0.4, EASE.in));
+        tween(note, { opacity: 0 }, when, 0.3, EASE.in);
+        knot.setAttribute('opacity', '1');
+        loops.forEach((path, k) => fx.draw(path, when + 0.3 + k * 0.02, 0.5));
+        const pts = Array.from({ length: 16 }, (_, k) => {
+          const a = (k / 16) * Math.PI * 2;
+          const rr = 100 + 18 * Math.sin(k * 2.3 + 1) + 10 * Math.cos(k * 3.7);
+          return [cx + rr * Math.cos(a), cy + 6 + rr * 0.78 * Math.sin(a)];
+        });
+        const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+        const s = mid(pts[15], pts[0]);
+        let d = `M ${s[0].toFixed(1)} ${s[1].toFixed(1)}`;
+        pts.forEach((p, k) => {
+          const m = mid(p, pts[(k + 1) % 16]);
+          d += ` Q ${p[0].toFixed(1)} ${p[1].toFixed(1)} ${m[0].toFixed(1)} ${m[1].toFixed(1)}`;
+        });
+        blob.setAttribute('d', `${d} Z`);
+        tween(blob, [{ opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1 }], when + 0.2, 0.6, EASE.out);
+        blob.style.transformOrigin = `${cx}px ${cy}px`;
+        return this;
+      },
+    };
+  }
+
+  // ------------------------------------------------------------------
+  // Bugs: a beetle that crawls in; squash(at) flattens it
+  // ------------------------------------------------------------------
+
+  function bug(parent, { x, y, at, squashAt, until, size = 64, rotate = 0, from }) {
+    const node = art(parent, { x, y, w: size, h: size, viewBox: '0 0 64 64' });
+    node.style.rotate = `${rotate}deg`;
+    const splat = svg('path', { class: 'ih-bug-splat', d: 'M32 10 L38 24 L54 20 L44 32 L56 44 L40 42 L34 56 L28 42 L10 46 L20 32 L8 20 L26 24 Z', opacity: 0 }, node);
+    const body = svg('g', {}, node);
+    const legs = [];
+    for (const side of [-1, 1]) {
+      for (const [k, dy] of [[0, -6], [1, 4], [2, 14]].map(([k, d]) => [k, d])) {
+        legs.push({ g: svg('path', { class: 'ih-bug-leg', d: `M ${32 + side * 9} ${34 + dy} l ${side * 13} ${dy / 2 - 3} l ${side * 3} 5` }, body), side, k });
+      }
+    }
+    svg('path', { class: 'ih-bug-antenna', d: 'M29 13 Q24 4 18 5 M35 13 Q40 4 46 5' }, body);
+    svg('ellipse', { class: 'ih-bug-body', cx: 32, cy: 38, rx: 14, ry: 17 }, body);
+    svg('path', { class: 'ih-bug-shell-line', d: 'M32 22 L32 55' }, body);
+    svg('ellipse', { class: 'ih-bug-shine', cx: 26, cy: 31, rx: 4, ry: 7 }, body);
+    svg('circle', { class: 'ih-bug-head', cx: 32, cy: 18, r: 8 }, body);
+    svg('circle', { class: 'ih-bug-eye', cx: 28.5, cy: 16, r: 2 }, body);
+    svg('circle', { class: 'ih-bug-eye', cx: 35.5, cy: 16, r: 2 }, body);
+    for (const [sx, sy] of [[26, 40], [38, 44], [27, 50], [37, 33]]) svg('circle', { class: 'ih-bug-spot', cx: sx, cy: sy, r: 2.6 }, body);
+    show(node, at, until, { from: 0.3 });
+    const squashed = squashAt ?? Infinity;
+    onFrame((t) => {
+      const crawling = t >= at && t < squashed;
+      legs.forEach(({ g, side, k }) => {
+        const wiggle = crawling ? 14 * Math.sin(t * 16 + k * 2.1 + (side > 0 ? Math.PI : 0)) : 0;
+        g.setAttribute('transform', `rotate(${wiggle.toFixed(1)} ${32 + side * 9} 36)`);
+      });
+      if (from) {
+        const p = easeInOutCubic(progress(t, at, 0.9));
+        node.style.translate = `${((from[0] - x) * (1 - p)).toFixed(1)}px ${((from[1] - y) * (1 - p)).toFixed(1)}px`;
+      }
+    });
+    if (squashAt !== undefined) {
+      body.style.transformOrigin = '32px 54px';
+      tween(body, [{ scale: '1 1' }, { scale: '1.3 0.12' }], squashAt, 0.15, EASE.in);
+      tween(splat, [{ opacity: 0 }, { opacity: 1 }], squashAt + 0.1, 0.15, EASE.out);
+    }
+    return node;
+  }
+
+  /** A rubber stamp tool that comes down on (x, y) at `at` and lifts away. */
+  function stampTool(parent, { x, y, at, label = 'FIXED' }) {
+    const node = art(parent, { x: x - 45, y: y - 120, w: 90, h: 120, viewBox: '0 0 90 120' });
+    svg('ellipse', { class: 'ih-stamp-knob', cx: 45, cy: 16, rx: 16, ry: 12 }, node);
+    svg('rect', { class: 'ih-stamp-neck', x: 39, y: 24, width: 12, height: 40 }, node);
+    svg('rect', { class: 'ih-stamp-block', x: 14, y: 62, width: 62, height: 30, rx: 4 }, node);
+    svg('rect', { class: 'ih-stamp-rubber', x: 16, y: 92, width: 58, height: 10, rx: 2 }, node);
+    const text = svg('text', { class: 'ih-stamp-label', x: 45, y: 82, 'text-anchor': 'middle' }, node);
+    text.textContent = label;
+    tween(node, [
+      { opacity: 0, translate: '0 -90px' },
+      { opacity: 1, translate: '0 -60px', offset: 0.35 },
+      { opacity: 1, translate: '0 18px', offset: 0.6 },
+      { opacity: 1, translate: '0 18px', offset: 0.75 },
+      { opacity: 0, translate: '0 -80px' },
+    ], at - 0.35, 1.1, EASE.linear);
+    return node;
+  }
+
+  // ------------------------------------------------------------------
+  // A grid of small case files (the programs or files a change touches)
+  // ------------------------------------------------------------------
+
+  /**
+   * names in a grid of small manila files. tag = text of a red tab every
+   * file carries from tagAt (a copied secret). light(at, indices, { tone,
+   * stamp }) marks the files a change touches: tone = hit (red) | change
+   * (gold) | good (green), with an optional rubber-stamp word.
+   */
+  function grid(parent, { x, y, cols, cellW = 150, cellH = 40, gap = 10, names, at, step = 0.04, until, tag, tagAt, tagStep = 0.06 }) {
+    const cells = names.map((name, i) => {
+      const cell = place(el('div', 'ih-cell is-staged', parent), x + (i % cols) * (cellW + gap), y + Math.floor(i / cols) * (cellH + gap));
+      cell.style.width = `${cellW}px`;
+      cell.style.height = `${cellH}px`;
+      el('span', 'ih-cell-tab', cell);
+      el('span', 'ih-cell-name', cell, name);
+      if (tag) {
+        const chip = el('span', 'ih-cell-secret is-staged', cell);
+        chip.append(icon('lock'));
+        chip.append(document.createTextNode(tag));
+        fx.pop(chip, tagAt + i * tagStep, { from: 1.8, rotate: -6 });
+      }
+      fx.pop(cell, at + i * step, { from: 0.7 });
+      if (until !== undefined) fx.fadeOut(cell, until, 0.25);
+      return cell;
+    });
+    return {
+      cells,
+      light(when, indices, { tone = 'hit', until: gone, step: s = 0.05, stamp } = {}) {
+        indices.forEach((index, k) => {
+          const t0 = when + k * s;
+          during(cells[index], `is-${tone}`, t0, gone);
+          if (stamp) {
+            const mark = el('span', `ih-cell-stamp ih-cell-stamp--${tone} is-staged`, cells[index], stamp);
+            fx.slam(mark, t0, { from: 2, rotate: -8 });
+            if (gone !== undefined) fx.fadeOut(mark, gone, 0.2);
+          }
+        });
+        return this;
+      },
+    };
+  }
+
+  // ------------------------------------------------------------------
+  // The vault: a module whose nameplate (what) hides its contents (how)
+  // ------------------------------------------------------------------
+
+  /**
+   * One module drawn as a steel vault. Its brass nameplate is the interface
+   * (what callers may read, gold); an X-ray window shows the secret inside
+   * (how it keeps that promise, blue). hows = [{ at, text }] changes the
+   * secret: the dial spins and the new secret decrypts in place; the
+   * nameplate never changes.
+   */
+  function vault(parent, { x, y, w = 440, name, what, hows, at, whatAt, howAt, until }) {
+    const node = place(el('div', 'ih-vault is-staged', parent), x, y);
+    node.style.width = `${w}px`;
+    for (const corner of ['tl', 'tr', 'bl', 'br']) el('span', `ih-vault-rivet ih-vault-rivet--${corner}`, node);
+    const head = el('div', 'ih-vault-head', node);
+    head.append(icon('box'));
+    el('span', 'ih-module-name', head, name);
+    el('span', 'ih-vault-class', head, 'Module');
+    const dial = svg('svg', { class: 'ih-vault-dial', viewBox: '-50 -50 100 100', width: 96, height: 96, 'aria-hidden': 'true' }, node);
+    svg('circle', { class: 'ih-dial-ring', r: 46 }, dial);
+    const face = svg('g', {}, dial);
+    svg('circle', { class: 'ih-dial-face', r: 36 }, face);
+    for (let i = 0; i < 24; i++) svg('line', { class: 'ih-dial-tick', x1: 0, y1: -36, x2: 0, y2: i % 6 ? -31 : -27, transform: `rotate(${i * 15})` }, face);
+    svg('circle', { class: 'ih-dial-knob', r: 14 }, face);
+    svg('line', { class: 'ih-dial-pointer', x1: 0, y1: -12, x2: 0, y2: -22 }, face);
+    svg('path', { class: 'ih-dial-mark', d: 'M-4 -48 L4 -48 L0 -41 Z' }, dial);
+    const handle = svg('svg', { class: 'ih-vault-handle', viewBox: '0 0 20 90', width: 20, height: 90, 'aria-hidden': 'true' }, node);
+    svg('rect', { x: 6, y: 0, width: 8, height: 90, rx: 4 }, handle);
+    const plate = el('div', 'ih-vault-plate', node);
+    const whatTag = el('div', 'ih-vault-tag ih-vault-tag--what is-staged', plate);
+    whatTag.append(icon('eye'));
+    whatTag.append(document.createTextNode('What · the interface'));
+    el('div', 'ih-vault-what', plate, what);
+    const windowNode = el('div', 'ih-vault-window', node);
+    const howTag = el('div', 'ih-vault-tag ih-vault-tag--how is-staged', windowNode);
+    howTag.append(icon('lock'));
+    howTag.append(document.createTextNode('How · the secret'));
+    const howRow = el('div', 'ih-vault-how', windowNode);
+    howRow.append(icon('envelope'));
+    const steps = [...hows].sort((a, b) => a.at - b.at);
+    steps.forEach((step, i) => {
+      const span = el('span', 'ih-vault-secret', howRow);
+      decrypt(span, step.text, i ? step.at : -1, { cps: 40, seed: 77 + i });
+      const next = steps[i + 1];
+      onFrame((t) => { span.hidden = t < (i ? step.at : -Infinity) || (next && t >= next.at); });
+    });
+    onFrame((t) => {
+      let angle = 12 * Math.sin(t * 0.8);
+      for (const step of steps.slice(1)) angle += 540 * easeInOutCubic(progress(t, step.at - 0.45, 0.8));
+      face.setAttribute('transform', `rotate(${angle.toFixed(1)})`);
+    });
+    for (const step of steps.slice(1)) fx.bump(windowNode, step.at, 0.05);
+    fx.pop(whatTag, whatAt ?? at, { from: 0.6, rotate: -2 });
+    fx.pop(howTag, howAt ?? at, { from: 0.6, rotate: 2 });
+    fx.rise(node, at, { distance: 18, duration: 0.4 });
+    if (until !== undefined) fx.fadeOut(node, until, 0.3);
+    return {
+      node,
+      /** A check on the nameplate: the interface stayed the same. */
+      keep(when, text = 'kept') {
+        const tag = el('div', 'ih-verdict ih-verdict--ok ih-vault-keep is-staged', plate);
+        tag.append(icon('check'));
+        tag.append(document.createTextNode(text));
+        show(tag, when, undefined, { rotate: 4, from: 1.5 });
+        return tag;
+      },
+      light(when, gone) {
+        const glow = el('div', 'ih-module-glow is-staged', node);
+        tween(glow, [{ opacity: 0 }, { opacity: 1 }], when, 0.18, EASE.out);
+        fx.bump(node, when, 0.04);
+        if (gone !== undefined) tween(glow, { opacity: 0 }, gone, 0.3, EASE.in);
+      },
+    };
+  }
+
+  // ------------------------------------------------------------------
+  // A sonar submarine that reveals what is below the waterline
+  // ------------------------------------------------------------------
+
+  function submarine(parent, { x, y, at, until, pingFrom }) {
+    const node = art(parent, { x, y, w: 150, h: 80, viewBox: '0 0 150 80' });
+    const rings = svg('g', {}, node);
+    const ringNodes = [0, 1, 2].map(() => svg('circle', { class: 'ih-sonar', cx: 10, cy: 48, r: 4 }, rings));
+    svg('rect', { class: 'ih-sub-tower', x: 64, y: 18, width: 26, height: 20, rx: 6 }, node);
+    svg('path', { class: 'ih-sub-scope', d: 'M80 18 V4 H92' }, node);
+    svg('rect', { class: 'ih-sub-hull', x: 14, y: 34, width: 120, height: 30, rx: 15 }, node);
+    for (const px of [44, 70, 96]) svg('circle', { class: 'ih-sub-port', cx: px, cy: 49, r: 4.5 }, node);
+    const prop = svg('g', { transform: 'translate(138 49)' }, node);
+    svg('path', { class: 'ih-sub-prop', d: 'M0 -11 L4 0 L0 11 L-4 0 Z' }, prop);
+    onFrame((t) => {
+      prop.setAttribute('transform', `translate(138 49) scale(1 ${Math.cos(t * 9).toFixed(2)})`);
+      ringNodes.forEach((ring, i) => {
+        const age = t - (pingFrom ?? at) - i * 0.9;
+        const p = age < 0 ? -1 : (age % 2.7) / 2.7;
+        ring.setAttribute('r', p < 0 ? '0' : (6 + p * 120).toFixed(1));
+        ring.setAttribute('opacity', p < 0 ? '0' : (0.55 * (1 - p)).toFixed(2));
+      });
+      node.style.translate = `0 ${(3 * Math.sin(t * 1.1)).toFixed(1)}px`;
+    });
+    show(node, at, until, { from: 0.6 });
+    return node;
+  }
+
+  /** A paper slip sliding out of `parent` along (dx, dy): something that leaks. */
+  function slip(parent, { x, y, text, at, dx, dy, rotate = 12 }) {
+    const node = place(el('div', 'ih-slip is-staged', parent), x, y);
+    node.append(icon('file'));
+    node.append(document.createTextNode(text));
+    tween(node, [
+      { opacity: 0, translate: '0 0', rotate: '0deg' },
+      { opacity: 1, translate: `${dx * 0.2}px ${dy * 0.2}px`, rotate: `${rotate / 3}deg`, offset: 0.25 },
+      { opacity: 1, translate: `${dx}px ${dy}px`, rotate: `${rotate}deg` },
+    ], at, 0.9, EASE.out);
+    return node;
+  }
+
+  window.InfoHidingKit = {
+    latest, show, during, note, heading, paper, list, bubble, digits, clock, counter,
+    paperStack, car, overflowingHead, steps, iceberg, bergLabel, toggle, waterline, outlet, dossier,
+    decrypt, module, envelope, courier, laser, spotlight, lamp, agent, transmission, code, search,
+    mainframe, stringWeb, bug, stampTool, grid, vault, submarine, slip,
+  };
+})();

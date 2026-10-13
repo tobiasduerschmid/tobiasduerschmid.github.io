@@ -3,6 +3,15 @@ title: Information Hiding
 layout: sebook
 ---
 
+<link rel="stylesheet" href="/css/song-video.css">
+<link rel="stylesheet" href="/css/print-light.css">
+
+**Start with the song.** *Every Module Keeps a Secret* is a six-minute music video that previews this chapter's core idea: why one copied design decision (the two-digit year behind the Y2K bug) cost billions, how unmanaged dependencies turn into a Big Ball of Mud, Parnas's own sentence that defines information hiding, the PayPal refactoring, the iceberg of interface and implementation, why `private` alone is not enough, and the change test. It ends with a short pop quiz. Every idea gets its own section below. Captions are on by default.
+
+Before you press play, predict: three services each call PayPal directly, and your team switches to Stripe. How many of the three have to change, and what would have to be true for the answer to be zero?
+
+{% include song-video.html song=site.data.songs.every_module_keeps_a_secret id="information-hiding-song" %}
+
 # Background and Motivation
 
 ## What You Should Be Able to Do

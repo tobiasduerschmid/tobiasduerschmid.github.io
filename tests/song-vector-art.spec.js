@@ -16,6 +16,10 @@ const songPlayers = [
     name: 'Shell', path: '/assets/song-player/small-tools-one-job-each.html', cameoTime: 6,
     storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/small_tools_one_job_each.yml'), 'utf8')),
   },
+  {
+    name: 'Information hiding', path: '/assets/song-player/every-module-keeps-a-secret.html', cameoTime: 70,
+    storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/every_module_keeps_a_secret.yml'), 'utf8')),
+  },
 ];
 const lines = new Map(storyboard.sections.flatMap((section) => section.lines).map((line) => [line.id, line]));
 const finalCelebration = lines.get('chorus-4-8').marks.moves + 0.2;
@@ -349,17 +353,17 @@ for (const song of songPlayers) {
       await expect(portrait).toHaveCSS('--hero-hair', hair);
       await expect(portrait).toHaveCSS('--hero-suit', suit);
       await expect(portrait.locator('[data-hero-barbell], animate, animateTransform, animateMotion, set')).toHaveCount(0);
+      // The laptop prop shows the storyboard's emblem, or the shared mark without one.
+      const laptopLogo = song.storyboard.student?.laptop_logo;
+      if (laptopLogo) await expect(student.locator('.student-laptop-logo')).toHaveAttribute('href', laptopLogo);
+      else await expect(student.locator('.student-laptop-mark')).toBeVisible();
       if (song.name === 'Shell') {
-        // The laptop prop exposes the song's configured emblem; the saved
-        // avatar remains the same person in every scene.
-        await expect(student.locator('.student-laptop-logo')).toHaveAttribute('href', '/assets/icons/bash/bash.svg');
+        // The saved avatar remains the same person in every scene.
         for (const time of [28, 101.7, 267, 6]) {
           await page.evaluate((time) => window.Timeline.seek(time), time);
           await expect(portrait).toBeVisible();
           await expect(portrait).toHaveAttribute('data-hero-kind', hero.kind);
         }
-      } else {
-        await expect(student.locator('.student-laptop-mark')).toBeVisible();
       }
       expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe(JSON.stringify(hero));
       await page.getByTestId('song-picture').screenshot({ path: `/tmp/${song.name}-mv-${hero.kind}-${testInfo.project.name}-renderer.png` });
