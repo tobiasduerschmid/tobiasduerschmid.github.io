@@ -121,8 +121,8 @@
       grid.light(mark('intro-13', 'copied'), names.map((_, i) => i), { step: 0.08, until: line('intro-14').start });
       kit.sticker(e, 'Copied into every calculation', { x: 250, y: 296, at: mark('intro-13', 'every'), until: line('intro-14').start, variant: 'red', iconName: 'copy', rotate: 3 });
       ih.search(e, {
-        x: 110, y: 90, w: 740, query: 'YY', at: line('intro-14').start, typedAt: mark('intro-14', 'hunting'),
-        hitsAt: mark('intro-15', 'every'), step: 0.18,
+        x: 110, y: 90, w: 740, query: 'YY', at: line('intro-14').start, typedAt: line('intro-14').start + 0.1,
+        hitsAt: mark('intro-14', 'hunting'), step: 0.3,
         hits: [
           { file: 'payroll.cbl', before: 'MOVE ', match: 'YY', after: ' TO PAY-YEAR' },
           { file: 'interest.cbl', before: 'COMPUTE AGE = NOW-', match: 'YY', after: ' - BORN-YY' },
@@ -178,7 +178,7 @@
       // Dated examples; source-count scope is documented in docs/song-apollo-sources.md.
       const a = kit.scene(content, start, line('verse-1-6').start - 0.1);
       ih.spotlight(a, { x: 170, y: 265, w: 340, h: 400, at: start });
-      ih.apolloPortrait(a, { x: 24, y: 94, at: mark('verse-1-1', 'printed') });
+      ih.apolloPortrait(a, { x: 24, y: 94, at: line('verse-1-1').start });
       const apollo = kit.el('div', 'ih-code-record ih-code-record--apollo is-staged', a);
       kit.el('div', 'ih-code-record-year', apollo, 'Apollo 11 · 1969');
       kit.el('div', 'ih-code-record-count', apollo, '≈80,000');
@@ -200,31 +200,39 @@
 
       // Keep both code records visible while the car gives way to one person's
       // limited working memory; this is still the same comparison scene.
-      ih.overflowingHead(a, { x: 645, y: 43, at: line('verse-1-4').start, overflowAt: mark('verse-1-5', 'holds') });
-      kit.sticker(a, '×1000 smarter? No.', { x: 600, y: 72, at: mark('verse-1-4', 'thousand'), until: line('verse-1-5').start, variant: 'white', iconName: 'cross', rotate: -3 });
-      kit.sticker(a, 'Too much for one head', { x: 590, y: 245, at: mark('verse-1-5', 'whole'), variant: 'pink', iconName: 'warning', rotate: 0 });
+      ih.overflowingHead(a, { x: 645, y: 43, at: line('verse-1-4').start, overflowAt: mark('verse-1-5', 'no') });
+      kit.sticker(a, '×1000 smarter? No.', { x: 452, y: 150, at: mark('verse-1-4', 'thousand'), until: line('verse-1-5').start, variant: 'white', iconName: 'cross', rotate: -3 });
+      kit.sticker(a, 'Too much for one head', { x: 590, y: 245, at: mark('verse-1-5', 'no'), variant: 'pink', iconName: 'warning', rotate: 0 });
 
       // The corkboard: 4 modules → 6 strings, 8 modules → 28; then mud.
-      const c = kit.scene(content, line('verse-1-6').start - 0.1, line('verse-1-10').start - 0.1);
+      const handoff = line('verse-1-10').start - 0.35;
+      const c = kit.scene(content, line('verse-1-6').start - 0.1, handoff + 0.3, { exit: 'fade' });
       ih.stringWeb(c, { x: 24, y: 76, w: 350, h: 340, names: ['Cart', 'Order', 'Pay', 'Ship'], title: 'Case: 4 modules', at: mark('verse-1-6', 'four'), drawFor: 0.9, until: mark('verse-1-8', 'let') });
       const board = ih.stringWeb(c, { x: 392, y: 64, w: 548, h: 384, names: ['Cart', 'Order', 'Pay', 'Ship', 'Auth', 'Mail', 'Tax', 'Stock'], title: 'Case: 8 modules', at: mark('verse-1-7', 'eight'), drawFor: 1.8 });
       fx.moveTo(board.node, mark('verse-1-8', 'let'), -200, 0, 0.6);
-      board.mud(mark('verse-1-9', 'youve') - 0.2);
+      board.mud(mark('verse-1-9', 'youve') - 0.2, { strainFrom: mark('verse-1-8', 'depend') });
+      camera.shake(board.impact, 4);
       ih.note(c, 'everything depends on everything', { x: 230, y: 30, at: mark('verse-1-8', 'depend'), until: mark('verse-1-9', 'big'), tone: 'red', rotate: -2 });
       kit.stamp(c, 'Big Ball of Mud', { x: 250, y: 396, at: mark('verse-1-9', 'big'), color: 'gold', rotate: -4, shake: false });
 
       // One change touches dozens of files; squash one bug, two crawl in.
+      // The same ball carries over: it takes the board's place exactly as the
+      // board fades, then shrinks to the corner while the files appear.
+      const m = kit.scene(content, handoff - 0.3, song.sectionEnd('verse-1'));
+      const [bx, by] = board.ballCenter;
+      board.handOff(handoff + 0.01);
+      ih.mud(m, { x: 300, y: 290, size: 150, at: handoff, from: [192 + 10 + bx, 64 + 10 + by], delay: 0.05, move: 0.55 });
+      ih.note(m, 'Big Ball of Mud', { x: 312, y: 428, at: handoff + 0.55, tone: 'gold', rotate: -2 });
       const d = kit.scene(content, line('verse-1-10').start - 0.1, song.sectionEnd('verse-1'));
-      ih.mud(d, { x: 332, y: 304, size: 170, at: line('verse-1-10').start - 0.1 });
-      ih.note(d, 'Big Ball of Mud', { x: 352, y: 470, at: line('verse-1-10').start - 0.1, tone: 'gold', rotate: -2 });
       const files = ['cart.js', 'order.js', 'refund.js', 'wallet.js', 'auth.js', 'mail.js', 'tax.js', 'report.js', 'admin.js', 'search.js', 'ship.js', 'stock.js'];
-      const grid = ih.grid(d, { x: 40, y: 92, cols: 3, cellW: 176, cellH: 40, gap: 12, names: files, at: line('verse-1-10').start - 0.05, step: 0.03 });
-      grid.light(mark('verse-1-10', 'change'), [4], { tone: 'change', stamp: 'Changed' });
+      // The files arrive once the carried ball has cleared their rows.
+      const grid = ih.grid(d, { x: 40, y: 92, cols: 3, cellW: 176, cellH: 40, gap: 12, names: files, at: handoff + 0.5, step: 0.03 });
+      grid.light(mark('verse-1-10', 'one'), [4], { tone: 'change', stamp: 'Changed' });
       grid.light(mark('verse-1-10', 'touch'), [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11], { step: 0.07, stamp: 'Hit' });
       ih.counter(d, { x: 50, y: 316, label: 'files touched', from: 1, to: 12, at: mark('verse-1-10', 'touch'), duration: 0.9 });
       ih.bug(d, { x: 700, y: 170, at: mark('verse-1-11', 'fix') - 0.5, squashAt: mark('verse-1-11', 'bug') + 0.1, size: 96, rotate: 200, from: [720, 30] });
       ih.stampTool(d, { x: 748, y: 251, pressDepth: 63, at: mark('verse-1-11', 'bug') + 0.1, label: 'FIXED' });
-      ih.bug(d, { x: 610, y: 300, at: mark('verse-1-11', 'two'), size: 80, rotate: 60, from: [480, 340] });
+      ih.bug(d, { x: 640, y: 290, at: mark('verse-1-11', 'two'), size: 80, rotate: 10, from: [660, 470] });
       ih.bug(d, { x: 790, y: 290, at: mark('verse-1-11', 'more'), size: 80, rotate: -60, from: [960, 340] });
       kit.sticker(d, '+2 bugs', { x: 790, y: 150, at: mark('verse-1-11', 'appear'), variant: 'red', iconName: 'warning', rotate: 5 });
     }
@@ -238,7 +246,7 @@
       const s = kit.scene(content, song.sectionStart('pre-chorus-1'), song.sectionEnd('pre-chorus-1'));
       const paperAt = mark('pre-chorus-1-3', '1972');
       ih.heading(s, ['How do you split a system into ', 'modules', '?'], { x: 120, y: 76, at: line('pre-chorus-1-1').start, until: paperAt - 0.1 });
-      ih.steps(s, { x: 110, y: 168, labels: [{ text: '1 · Read input', iconName: 'file' }, { text: '2 · Process', iconName: 'gear' }, { text: '3 · Print', iconName: 'receipt' }], at: mark('pre-chorus-1-2', 'steps'), step: 0.35, until: paperAt - 0.1 });
+      ih.steps(s, { x: 110, y: 168, labels: [{ text: '1 · Read input', iconName: 'file' }, { text: '2 · Process', iconName: 'gear' }, { text: '3 · Print', iconName: 'receipt' }], at: line('pre-chorus-1-1').start + 1.2, step: 0.35, until: paperAt - 0.1 });
       kit.stamp(s, 'Not by steps', { x: 300, y: 262, at: mark('pre-chorus-1-2', 'then'), rotate: -5, shake: false, until: paperAt - 0.1 });
       ih.spotlight(s, { x: 480, y: 220, w: 760, h: 400, at: paperAt - 0.2 });
       ih.paper(s, {
@@ -313,7 +321,7 @@
         caller.verdict('unchanged', { at: youChange + 0.3 + i * 0.15, dx: 134, dy: -12 });
       });
       box.light(mark(ln(9), 'module'));
-      ih.counter(t, { x: 60, y: 384, label: 'module changed', from: 0, to: 1, at: mark(ln(9), 'module'), duration: 0.3 });
+      ih.counter(t, { x: 60, y: 384, label: 'module changed', from: 1, to: 1, at: mark(ln(9), 'module'), duration: 0.3 });
       const only = mark(ln(9), 'only');
       kit.stamp(t, 'Only one!', { x: 300, y: 386, at: only, color: 'green', rotate: -6, shake: false });
       camera.punch(only + 0.05, 0.035);
@@ -333,6 +341,7 @@
 
       // The store's three services, all calling PayPal, all knowing it.
       student?.appear({ from: start + 0.2, to: line('verse-2-5').start - 0.2, x: 700, y: 176, scale: 0.74 });
+      ih.heading(s, ['Your team’s ', 'store'], { x: 330, y: 40, at: line('verse-2-1').start, until: mark('verse-2-2', 'all') });
       const services = [
         { name: 'OrderService', sub: 'checkout', at: mark('verse-2-1', 'checkout') },
         { name: 'RefundService', sub: 'refunds', at: mark('verse-2-1', 'refunds') },
@@ -611,7 +620,7 @@
       });
       one.secret('year format', { at: mark('outro-2', 'hidden'), dy: 64 });
       one.light(mark('outro-2', 'change'));
-      ih.counter(b, { x: 590, y: 316, label: 'module changed', from: 0, to: 1, at: mark('outro-2', 'module_2'), duration: 0.3 });
+      ih.counter(b, { x: 590, y: 316, label: 'module changed', from: 1, to: 1, at: mark('outro-2', 'module_2'), duration: 0.3 });
 
       const c = kit.scene(content, line('outro-3').start - 0.1, end - 0.3, { exit: 'fade' });
       kit.kinetic(c, [

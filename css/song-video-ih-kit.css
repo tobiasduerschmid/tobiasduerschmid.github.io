@@ -1241,7 +1241,19 @@
 .ih-car-light { fill: #fde68a; }
 
 /* Head with too much in it */
-.ih-head { fill: #f3c9a2; }
+.ih-head { fill: #f3c9a2; stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
+.ih-head-glow { fill: rgba(255, 238, 196, 0.07); }
+.ih-head--cap { stroke-width: 3; }
+.ih-head-hole { fill: #0d1424; stroke: var(--ink); stroke-width: 2.5; }
+.ih-head-rim { fill: none; stroke: #c98d66; stroke-width: 3; }
+.ih-head-lip { fill: none; stroke: var(--ink); stroke-width: 2.5; }
+.ih-head-underside { fill: #c98d66; stroke: var(--ink); stroke-width: 2.5; }
+.ih-head-file { fill: var(--manila); stroke: var(--ink); stroke-width: 1.8; }
+.ih-head-file--extra { fill: #f4dfae; }
+.ih-head-file-tab { fill: var(--manila-deep); stroke: var(--ink); stroke-width: 1.5; }
+.ih-head-file-line { fill: none; stroke: #6b4b00; stroke-width: 1.8; stroke-linecap: round; }
+.ih-head-steam { fill: #e2e8f0; stroke: #94a3b8; stroke-width: 1; }
+.ih-head-sweat { fill: #7dd3fc; stroke: var(--ink); stroke-width: 1.5; }
 .ih-head-neck { fill: #dfa980; }
 .ih-head-neck-shade { fill: #b8805f; }
 .ih-head-jaw-shade { fill: #dca67c; }
@@ -1467,6 +1479,8 @@
 
 /* Like the other illustrated props, the soil keeps its palette in both site themes. */
 .ih-mud-ball { transform-box: fill-box; transform-origin: center; }
+.ih-mud-splat { fill: #5b3e27; stroke: #38281d; stroke-width: 1.2; }
+.ih-mud-shock { fill: none; stroke: #3a2a1d; stroke-width: 3; }
 .ih-mud-blob { stroke: #38281d; stroke-width: 2.5; stroke-linejoin: round; }
 .ih-mud-tone--light { stop-color: #b28a60; }
 .ih-mud-tone--middle { stop-color: #82603e; }

@@ -252,39 +252,156 @@
   }
 
   /** A head overflowing with lines of code. */
+  /**
+   * A head in profile whose skull opens like a hinged lid: three case files
+   * drop into the open head (what one person can hold), then at
+   * `overflowAt` more files cram in, the lid rattles, papers keep bursting
+   * out of the top, steam puffs from the ear, and the brow worries. One
+   * head can't hold a whole modern system. Every pose is a pure function of
+   * song time.
+   */
   function overflowingHead(parent, { x, y, at, until, overflowAt }) {
-    const node = art(parent, { x, y, w: 200, h: 200, viewBox: '-40 -60 260 260' });
-    // Draw the neck behind the jaw, so neither becomes a cut-out rectangle.
-    svg('path', { class: 'ih-head-neck', d: 'M76 124 L112 138 C106 151 106 159 113 166 L126 176 Q102 188 70 177 L76 158 Z' }, node);
-    svg('path', { class: 'ih-head-neck-shade', d: 'M76 128 L109 143 L107 157 Q88 150 76 139 Z' }, node);
-    svg('path', { class: 'ih-head', d: 'M54 94 C51 64 69 42 99 42 C122 42 139 54 143 75 L144 89 C143 96 145 102 149 108 L157 116 Q160 120 154 121 L146 122 L147 127 Q150 130 146 133 Q149 137 146 141 C143 150 133 155 122 152 L102 147 C90 143 82 137 76 128 C63 125 56 112 54 94 Z' }, node);
-    svg('path', { class: 'ih-head-jaw-shade', d: 'M64 107 C71 122 79 132 94 138 L122 148 Q134 152 144 143 C139 153 131 155 122 152 L102 147 C89 143 80 136 76 128 Q65 124 64 107 Z' }, node);
-    svg('path', { class: 'ih-head-hair', d: 'M55 115 C43 103 39 86 43 68 C47 47 62 32 81 28 C102 20 125 26 138 41 C145 49 149 61 148 72 C134 73 119 65 109 54 C100 70 87 82 72 89 L69 110 L63 116 L61 105 Z' }, node);
-    svg('path', { class: 'ih-head-hair-shine', d: 'M51 67 C61 41 96 27 118 38 C90 34 65 50 51 67 Z M114 43 Q133 48 140 63 Q123 58 114 43 Z' }, node);
-    svg('path', { class: 'ih-head-ear', d: 'M72 101 C69 91 57 94 57 104 C56 114 63 123 69 120 Q75 117 72 111 Z' }, node);
-    svg('path', { class: 'ih-head-ear-detail', d: 'M62 104 Q68 99 69 108 Q63 109 66 114' }, node);
-    svg('path', { class: 'ih-head-brow', d: 'M124 90 Q133 86 140 91' }, node);
-    svg('path', { class: 'ih-head-eye', d: 'M126 100 Q133 94 140 100 Q133 103 126 100 Z' }, node);
-    svg('ellipse', { class: 'ih-head-iris', cx: 136, cy: 99.5, rx: 2.3, ry: 2.8 }, node);
-    svg('circle', { class: 'ih-head-catchlight', cx: 136.7, cy: 98.6, r: 0.65 }, node);
-    svg('path', { class: 'ih-head-feature', d: 'M126 100 Q133 95 140 100 M145 117 Q148 116 150 118 M136 132 Q142 134 146 133' }, node);
-    // A short shirt collar anchors the portrait without competing with its face.
-    svg('path', { class: 'ih-head-shirt', d: 'M73 163 Q88 179 111 164 L134 174 Q142 178 146 190 H49 Q51 178 60 173 Z' }, node);
-    svg('path', { class: 'ih-head-collar', d: 'M73 163 Q89 177 111 164 L116 169 Q89 187 67 169 Z' }, node);
-    // Pages of code flying out of the top of the head, each with lines.
-    const pages = svg('g', { class: 'is-staged' }, node);
-    for (let i = 0; i < 6; i++) {
-      const a = (-160 + i * 28) * Math.PI / 180;
-      const px = 96 + Math.cos(a) * 112;
-      const py = 64 + Math.sin(a) * 92;
-      const page = svg('g', { transform: `rotate(${(i - 2.5) * 18} ${px} ${py})` }, pages);
-      svg('rect', { class: 'ih-head-overflow', x: px - 16, y: py - 20, width: 32, height: 40, rx: 3 }, page);
-      for (let k = 0; k < 4; k++) svg('line', { class: 'ih-head-code', x1: px - 10, y1: py - 12 + k * 8, x2: px + (k % 2 ? 4 : 10), y2: py - 12 + k * 8 }, page);
-    }
-    fx.pop(pages, overflowAt ?? at + 0.6, { from: 0.4 });
+    const id = `ih-head-${++uid}`;
+    const node = art(parent, { x, y, w: 210, h: 210, viewBox: '-30 -50 260 260' });
+    const over = overflowAt ?? at + 1.5;
+    const CUT = 66;       // the skull's cut plane
+    const HINGE = [46, CUT];
+    const skull = 'M46 96 C40 46 78 14 118 18 C156 22 176 52 172 86 L171 98 L182 118 Q186 124 178 126 L172 127 L174 134 Q177 138 172 141 Q176 146 171 150 C166 160 152 163 138 158 L110 152 C88 150 70 140 62 126 C52 120 47 110 46 96 Z';
+    const defs = svg('defs', {}, node);
+    const below = svg('clipPath', { id: `${id}-below` }, defs);
+    svg('rect', { x: -50, y: CUT, width: 400, height: 300 }, below);
+    const above = svg('clipPath', { id: `${id}-above` }, defs);
+    svg('rect', { x: -50, y: -200, width: 400, height: 200 + CUT }, above);
+    // Files stand in the hole: hide whatever lies below its front rim.
+    const inHole = svg('clipPath', { id: `${id}-hole` }, defs);
+    svg('path', { d: `M-50 -200 H350 V${CUT} H174 A64 10 0 0 1 44 ${CUT} H-50 Z` }, inHole);
+
+    svg('ellipse', { class: 'ih-head-glow', cx: 100, cy: 100, rx: 118, ry: 112 }, node);
+    svg('path', { class: 'ih-head-neck', d: 'M78 150 L118 160 L122 190 Q96 200 70 190 Z' }, node);
+    svg('path', { class: 'ih-head-shirt', d: 'M44 205 Q52 184 74 182 Q97 196 124 184 Q148 188 156 205 Z' }, node);
+    svg('path', { class: 'ih-head-collar', d: 'M74 182 Q97 196 124 184 L128 191 Q97 207 68 190 Z' }, node);
+
+    // The lower head: skin below the cut, hair at the back, ear and face.
+    const lower = svg('g', { 'clip-path': `url(#${id}-below)` }, node);
+    svg('path', { class: 'ih-head', d: skull }, lower);
+    svg('path', { class: 'ih-head-jaw-shade', d: 'M62 126 C72 142 92 150 112 152 L138 158 C150 162 162 158 170 150 C160 156 146 155 134 150 L110 145 C90 142 74 134 62 118 Z' }, lower);
+    svg('path', { class: 'ih-head-hair', d: 'M40 60 C40 84 44 102 54 114 C58 104 66 97 76 94 C80 84 86 74 94 60 Z' }, lower);
+    svg('path', { class: 'ih-head-ear', d: 'M70 112 C66 100 52 104 52 116 C52 128 60 136 68 132 Q74 128 72 120 Z' }, node);
+    const brow = svg('path', { class: 'ih-head-brow' }, node);
+    svg('path', { class: 'ih-head-eye', d: 'M150 102 Q158 96 166 102 Q158 106 150 102 Z' }, node);
+    svg('circle', { class: 'ih-head-iris', cx: 161, cy: 101.5, r: 2.6 }, node);
+    const mouth = svg('path', { class: 'ih-head-feature' }, node);
+
+    // The open skull: a dark hole with a lit rim.
+    const hole = svg('g', { opacity: 0 }, node);
+    svg('ellipse', { class: 'ih-head-hole', cx: 109, cy: CUT, rx: 64, ry: 10 }, hole);
+    // Case files standing in the head; the first three are what fits.
+    const files = svg('g', { 'clip-path': `url(#${id}-hole)` }, node);
+    const FILES = [
+      { x: 84, rot: -7, at: at + 0.55 }, { x: 109, rot: 2, at: at + 0.85 }, { x: 134, rot: 8, at: at + 1.15 },
+      { x: 96, rot: -18, at: over, extra: true }, { x: 122, rot: 15, at: over + 0.08, extra: true },
+      { x: 72, rot: -26, at: over + 0.16, extra: true }, { x: 147, rot: 24, at: over + 0.24, extra: true },
+      { x: 109, rot: -4, at: over + 0.32, extra: true },
+    ];
+    const fileNodes = FILES.map((f, i) => {
+      const g = svg('g', { opacity: 0 }, files);
+      const lift = f.extra ? 14 : 0;
+      const top = CUT - 38 - lift;
+      svg('path', { class: 'ih-head-file-tab', d: `M${f.x - 12} ${top + 2} v-6 q0 -2 2 -2 h9 l3 4 Z` }, g);
+      svg('rect', { class: `ih-head-file${f.extra ? ' ih-head-file--extra' : ''}`, x: f.x - 13, y: top, width: 26, height: 48, rx: 2 }, g);
+      svg('path', { class: 'ih-head-file-line', d: `M${f.x - 8} ${top + 9} h16 M${f.x - 8} ${top + 16} h11 M${f.x - 8} ${top + 23} h14` }, g);
+      return { g, f, top };
+    });
+    svg('path', { class: 'ih-head-rim', d: `M45 ${CUT} A64 10 0 0 0 173 ${CUT}` }, hole);
+    const lipFront = svg('path', { class: 'ih-head-lip', d: `M45 ${CUT} A64 10 0 0 0 173 ${CUT}`, opacity: 0 }, node);
+
+    // The lid: the hair-covered top of the skull, hinged at the back.
+    const lid = svg('g', {}, node);
+    const underside = svg('ellipse', { class: 'ih-head-underside', cx: 109, cy: CUT, rx: 64, ry: 10, opacity: 0 }, lid);
+    const cap = svg('g', { 'clip-path': `url(#${id}-above)` }, lid);
+    svg('path', { class: 'ih-head ih-head--cap', d: skull }, cap);
+    svg('path', { class: 'ih-head-hair', d: 'M38 70 C34 36 70 10 112 12 C152 14 178 40 176 72 Z' }, cap);
+    svg('path', { class: 'ih-head-hair-shine', d: 'M62 34 C78 20 104 16 124 20 C100 22 80 30 62 34 Z' }, cap);
+    // Hinged at the back, the open lid stands behind the files.
+    node.insertBefore(lid, files);
+
+    // Papers burst out of the open head, a steady stream once it overflows.
+    const stream = svg('g', {}, node);
+    const papers = Array.from({ length: 9 }, (_, i) => {
+      const g = svg('g', { opacity: 0 }, stream);
+      svg('rect', { class: 'ih-head-overflow', x: -11, y: -14, width: 22, height: 28, rx: 2 }, g);
+      svg('path', { class: 'ih-head-code', d: 'M-6 -7 h12 M-6 0 h8 M-6 7 h11' }, g);
+      return {
+        g,
+        delay: i * 0.17,
+        x0: 92 + hash01(i * 13 + 1) * 34,
+        vx: ((i % 2 ? 1 : -1) * (0.25 + 0.75 * hash01(i * 7 + 3))) * 150,
+        vy: 175 + hash01(i * 11 + 5) * 55,
+        spin: (hash01(i * 17 + 2) - 0.5) * 520,
+      };
+    });
+    // Steam from the ear and a bead of sweat when it overflows.
+    // Steam clouds: three overlapping circles each, so they read as vapour.
+    const puffs = [0, 1, 2].map(() => {
+      const g = svg('g', { opacity: 0 }, node);
+      for (const [cx, cy, r] of [[-5, 1, 5], [3, -3, 6], [8, 2, 4.5]]) svg('circle', { class: 'ih-head-steam', cx, cy, r }, g);
+      return g;
+    });
+    const sweat = svg('path', { class: 'ih-head-sweat', d: 'M0 -9 Q-6 1 0 5 Q6 1 0 -9 Z', opacity: 0 }, node);
+
+    const CALM_BROW = 'M148 92 Q158 87 166 92';
+    const WORRIED_BROW = 'M148 94 Q157 89 166 85';
+    const CALM_MOUTH = 'M160 140 Q166 143 171 141';
+    const WORRIED_MOUTH = 'M158 142 Q161 139 164 142 Q167 145 171 141';
+    const PERIOD = 1.3;
+    onFrame((t) => {
+      const open = easeInOutCubic(progress(t, at + 0.15, 0.4));
+      const jam = progress(t, over, 0.35);
+      const rattle = t >= over ? 4 * Math.sin((t - over) * 26) * (0.5 + 0.5 * Math.sin((t - over) * 3.1)) : 0;
+      const angle = -34 * open - 12 * jam + rattle;
+      lid.setAttribute('transform', `translate(0 ${(-6 * jam).toFixed(1)}) rotate(${angle.toFixed(1)} ${HINGE[0]} ${HINGE[1]})`);
+      hole.setAttribute('opacity', open > 0.05 ? '1' : '0');
+      lipFront.setAttribute('opacity', open > 0.05 ? '1' : '0');
+      underside.setAttribute('opacity', open > 0.05 ? '1' : '0');
+      fileNodes.forEach(({ g, f }) => {
+        const p = progress(t, f.at, 0.3);
+        if (p <= 0) { g.setAttribute('opacity', '0'); return; }
+        const drop = (1 - easeInOutCubic(p)) * -46;
+        const wobble = t >= over ? 1.6 * Math.sin(t * 19 + f.x) : 0;
+        g.setAttribute('opacity', '1');
+        g.setAttribute('transform', `translate(0 ${drop.toFixed(1)}) rotate(${(f.rot + wobble).toFixed(1)} ${f.x} ${CUT})`);
+      });
+      papers.forEach((pp) => {
+        const since = t - over - pp.delay;
+        if (since < 0) { pp.g.setAttribute('opacity', '0'); return; }
+        const age = since % PERIOD;
+        const px = pp.x0 + pp.vx * age;
+        const py = CUT - 30 - pp.vy * age + 220 * age * age;
+        // Gone before falling back past the opening, so no ghost crosses the face.
+        const fade = Math.max(0, Math.min(1, age / 0.1, (PERIOD - age) / 0.35, (CUT - 8 - py) / 22));
+        pp.g.setAttribute('opacity', fade.toFixed(2));
+        pp.g.setAttribute('transform', `translate(${px.toFixed(1)} ${py.toFixed(1)}) rotate(${(pp.spin * age).toFixed(1)})`);
+      });
+      puffs.forEach((puff, i) => {
+        const since = t - over - 0.3 - i * 0.45;
+        if (since < 0) { puff.setAttribute('opacity', '0'); return; }
+        const age = (since % 1.35) / 1.35;
+        const grow = 0.7 + 1.1 * age;
+        puff.setAttribute('transform', `translate(${(50 - 18 * age).toFixed(1)} ${(108 - 40 * age).toFixed(1)}) scale(${grow.toFixed(2)})`);
+        puff.setAttribute('opacity', (0.8 * Math.min(1, age * 5) * (1 - age)).toFixed(2));
+      });
+      const drip = t - over - 0.5;
+      sweat.setAttribute('opacity', drip < 0 ? '0' : '1');
+      sweat.setAttribute('transform', `translate(140 ${(84 + Math.min(12, Math.max(0, drip) * 8)).toFixed(1)})`);
+      const worried = t >= over;
+      brow.setAttribute('d', worried ? WORRIED_BROW : CALM_BROW);
+      mouth.setAttribute('d', worried ? WORRIED_MOUTH : CALM_MOUTH);
+    });
     show(node, at, until, { from: 0.7 });
     return node;
   }
+
+
 
   /** A flowchart of processing steps; cross(at) strikes the whole idea. */
   /**
@@ -1107,14 +1224,28 @@
   }
 
   /** A compact, labeled-scene companion using the original mud illustration. */
-  function mud(parent, { x, y, size = 160, at }) {
+  /**
+   * A finished ball of mud. With `from` = [x, y] (stage point of a full-size
+   * ball, 1 px per unit), it starts there at full size and moves to its own
+   * place over `move` seconds: one ball carried from scene to scene.
+   */
+  function mud(parent, { x, y, size = 160, at, from, delay = 0.32, move = 0.6 }) {
     const node = art(parent, { x, y, w: size, h: size, viewBox: '-140 -130 280 280' });
     mudBall(node, 0, 0).setAttribute('opacity', '1');
     mudThreads(node, 0, 0).forEach((path) => {
       path.setAttribute('pathLength', '1');
       path.style.strokeDashoffset = '0';
     });
-    fx.fadeIn(node, at, 0.2);
+    if (!from) {
+      fx.fadeIn(node, at, 0.2);
+      return node;
+    }
+    const ox = size * 0.5;
+    const oy = size * (130 / 280);
+    node.style.transformOrigin = `${ox}px ${oy}px`;
+    const start = { translate: `${(from[0] - x - ox).toFixed(1)}px ${(from[1] - y - oy).toFixed(1)}px`, scale: (280 / size).toFixed(3) };
+    tween(node, [{ opacity: 0, ...start }, { opacity: 1, ...start }], at, 0.02, EASE.linear);
+    tween(node, [{ opacity: 1, ...start }, { opacity: 1, translate: '0px 0px', scale: '1' }], at + delay, move, EASE.inOut);
     return node;
   }
 
@@ -1194,65 +1325,109 @@
     if (until !== undefined) fx.fadeOut(node, until, 0.3);
     return {
       node,
-      /** Heap the cards in the middle and knot every string into one ball of mud. */
-      mud(when) {
+      /** Hides the finished ball at `at` (a carried copy takes its place). */
+      handOff(at) {
+        for (const part of [ball, knot]) tween(part, { opacity: 0 }, at, 0.03, EASE.linear);
+        return this;
+      },
+      /**
+       * Everything depends on everything, then it all collapses into one
+       * ball of mud. From `strainFrom` the strings pull taut and the cards
+       * tremble harder; at `when` the cards are yanked onto a growing ball,
+       * which lands with a squash and splatter on `impact`; then the cards
+       * sink in and the strings knot across its surface. Every pose is a
+       * pure function of song time (reduced motion skips the trembling and
+       * jumps from net to ball).
+       */
+      mud(when, { strainFrom = when } = {}) {
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-        // One pose drives the cards, their pins, and both ends of every string.
-        // Keeping those attachments intact makes the net itself become the knot.
-        const duration = 1.5;
+        const IMPACT = 1.0;   // seconds after `when` that the ball lands
+        const DURATION = 1.7;
+        const ringX = 92;     // cards land on the ball's surface, not a dot
+        const ringY = 70;
+        const bx = cx;
+        const by = cy + 6;
         tween(note, { opacity: 0 }, when, 0.25, EASE.in);
         loops.forEach((path) => path.setAttribute('pathLength', '1'));
-        let previousElapsed;
+        // Mud splatter: drops fly out on impact and stay on the cork as stains.
+        const splats = Array.from({ length: 11 }, (_, i) => {
+          const angle = -Math.PI + (i / 10) * Math.PI * 1.0 + (hash01(i * 19 + 4) - 0.5) * 0.5;
+          const reach = 150 + hash01(i * 7 + 2) * 70;
+          const drop = svg('ellipse', { class: 'ih-mud-splat', rx: 5 + hash01(i * 3) * 6, ry: 3.5 + hash01(i * 5) * 3, opacity: 0 }, mud);
+          return { drop, angle, reach };
+        });
+        const ring = svg('ellipse', { class: 'ih-mud-shock', cx: bx, cy: by + 112, rx: 10, ry: 3, opacity: 0 }, mud);
+        mud.insertBefore(ring, mud.firstChild);
+        const easeIn = (p) => p * p * p;
+        let previous;
         onFrame((t) => {
-          const elapsed = reducedMotion.matches ? (t >= when ? duration : 0) : Math.max(0, Math.min(duration, t - when));
-          if (elapsed === previousElapsed) return;
-          previousElapsed = elapsed;
-          const gather = easeInOutCubic(progress(elapsed, 0.12, 1.05));
-          const bury = easeInOutCubic(progress(elapsed, 0.85, 0.45));
-          const tension = Math.sin(Math.PI * progress(elapsed, 0, 0.45));
+          const reduce = reducedMotion.matches;
+          const elapsed = reduce ? (t >= when ? DURATION : 0) : Math.max(0, Math.min(DURATION, t - when));
+          const strain = reduce || t < strainFrom ? 0 : Math.min(1, (t - strainFrom) / Math.max(0.01, when - strainFrom));
+          const key = `${elapsed.toFixed(3)}|${elapsed > 0 || strain === 0 ? 0 : t.toFixed(3)}`;
+          if (key === previous) return;
+          previous = key;
+          const gather = easeIn(progress(elapsed, 0.05, IMPACT - 0.05));
+          const sink = easeInOutCubic(progress(elapsed, IMPACT + 0.1, 0.45));
+          const shake = strain * strain * (1 - gather) * 3.2;
           const poses = spots.map((spot, i) => {
-            const angle = -Math.PI / 2 + i * 2 * Math.PI / n + gather * 0.45;
-            const radiusX = rx * (1 - gather) + 25 * gather;
-            const radiusY = ry * (1 - gather) + 17 * gather;
+            const angle = -Math.PI / 2 + i * 2 * Math.PI / n + gather * 0.6;
+            const pull = 1 - 0.05 * strain;
+            const rX = (rx * pull) * (1 - gather) + ringX * (1 - 0.45 * sink) * gather;
+            const rY = (ry * pull) * (1 - gather) + ringY * (1 - 0.45 * sink) * gather;
             return {
-              x: cx + Math.cos(angle) * radiusX,
-              y: cy - 22 + 28 * gather + Math.sin(angle) * radiusY,
+              x: bx + Math.cos(angle) * rX + shake * Math.sin(t * 37 + i * 1.7),
+              y: (cy - 22) * (1 - gather) + by * gather + Math.sin(angle) * rY + shake * Math.cos(t * 31 + i * 2.3),
             };
           });
           cards.forEach((carrier, i) => {
             const pinX = spots[i].x;
             const pinY = spots[i].y - 22;
-            const dx = poses[i].x - pinX;
-            const dy = poses[i].y - pinY;
-            const scale = 1 - 0.78 * gather;
-            const rotation = gather * (18 + (hash01(i * 47) - 0.5) * 35);
-            carrier.style.transform = `translate(${dx}px, ${dy}px) translate(${pinX}px, ${pinY}px) rotate(${rotation}deg) scale(${scale}) translate(${-pinX}px, ${-pinY}px)`;
-            carrier.style.opacity = String(1 - bury);
-            pins[i].setAttribute('transform', `translate(${poses[i].x} ${poses[i].y}) scale(${1 - 0.65 * gather})`);
-            pins[i].setAttribute('opacity', String(1 - bury));
+            const scale = (1 - 0.5 * gather) * (1 - 0.45 * sink);
+            const rotation = gather * (24 + (hash01(i * 47) - 0.5) * 50) + shake * 1.4 * Math.sin(t * 23 + i);
+            carrier.style.transform = `translate(${poses[i].x - pinX}px, ${poses[i].y - pinY}px) translate(${pinX}px, ${pinY}px) rotate(${rotation}deg) scale(${scale}) translate(${-pinX}px, ${-pinY}px)`;
+            carrier.style.opacity = String(1 - sink);
+            pins[i].setAttribute('transform', `translate(${poses[i].x} ${poses[i].y}) scale(${1 - 0.5 * gather})`);
+            pins[i].setAttribute('opacity', String(1 - sink));
           });
           yarn.forEach(({ path, shadow, i, j, sag }, k) => {
             const a = poses[i];
             const b = poses[j];
-            // Taut at first, then bow into alternating loops as the net compacts.
-            const curl = Math.sin(Math.PI * gather) * (k % 2 ? 42 : -42);
-            const bend = sag * (1 - gather) * (1 - 0.8 * tension);
-            const d = `M${a.x} ${a.y} Q${(a.x + b.x) / 2 + curl} ${(a.y + b.y) / 2 + bend + curl} ${b.x} ${b.y}`;
+            // Taut under strain, then wrapped around the ball as it forms.
+            const curl = Math.sin(Math.PI * Math.min(1, gather * 1.2)) * (k % 2 ? 38 : -38);
+            const bend = sag * (1 - 0.75 * strain) * (1 - gather);
+            const d = `M${a.x.toFixed(1)} ${a.y.toFixed(1)} Q${((a.x + b.x) / 2 + curl).toFixed(1)} ${((a.y + b.y) / 2 + bend + curl * 0.6).toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
             for (const strand of [path, shadow]) {
               strand.setAttribute('d', d);
-              strand.style.opacity = String(1 - bury);
+              strand.style.opacity = String(1 - sink);
             }
           });
-          const form = easeInOutCubic(progress(elapsed, 0.38, 0.9));
-          const settle = Math.sin(Math.PI * progress(elapsed, 1.1, 0.4)) * 0.055;
-          const size = 0.16 + 0.84 * form;
-          ball.setAttribute('opacity', String(progress(elapsed, 0.38, 0.25)));
-          ball.setAttribute('transform', `translate(${cx} ${cy + 6}) scale(${size * (1 + settle)} ${size * (1 - settle)})`);
-          knot.setAttribute('opacity', String(progress(elapsed, 0.8, 0.4)));
+          // The ball grows under the incoming cards and lands with a squash.
+          const size = 0.25 + 0.75 * easeInOutCubic(progress(elapsed, 0.15, IMPACT - 0.15));
+          const after = progress(elapsed, IMPACT, 0.6);
+          const wobble = elapsed < IMPACT ? 0 : Math.sin(after * Math.PI * 3) * Math.exp(-4 * after) * 0.12;
+          ball.setAttribute('opacity', String(progress(elapsed, 0.15, 0.2)));
+          ball.setAttribute('transform', `translate(${bx} ${by + 110 * (1 - size)}) scale(${(size * (1 + wobble)).toFixed(4)} ${(size * (1 - wobble)).toFixed(4)})`);
+          knot.setAttribute('opacity', String(progress(elapsed, IMPACT, 0.3)));
           loops.forEach((path, k) => {
-            path.style.strokeDashoffset = String(1 - easeInOutCubic(progress(elapsed, 0.85 + k * 0.025, 0.4)));
+            path.style.strokeDashoffset = String(1 - easeInOutCubic(progress(elapsed, IMPACT + 0.05 + k * 0.03, 0.45)));
           });
+          const fly = progress(elapsed, IMPACT, 0.45);
+          splats.forEach(({ drop, angle, reach }) => {
+            const r = 60 + (reach - 60) * easeInOutCubic(fly);
+            const lift = Math.sin(fly * Math.PI) * 26;
+            drop.setAttribute('cx', (bx + Math.cos(angle) * r).toFixed(1));
+            drop.setAttribute('cy', (by + 40 + Math.sin(angle) * r * 0.55 - lift + 70 * fly).toFixed(1));
+            drop.setAttribute('opacity', elapsed < IMPACT ? '0' : '0.85');
+          });
+          const wave = progress(elapsed, IMPACT, 0.5);
+          ring.setAttribute('rx', (40 + 150 * wave).toFixed(1));
+          ring.setAttribute('ry', (6 + 18 * wave).toFixed(1));
+          ring.setAttribute('opacity', elapsed < IMPACT ? '0' : (0.5 * (1 - wave)).toFixed(2));
         });
+        /** Song time the ball lands, and its centre in the board's own frame. */
+        this.impact = when + IMPACT;
+        this.ballCenter = [bx, by];
         return this;
       },
     };
