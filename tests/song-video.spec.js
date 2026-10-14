@@ -21,6 +21,7 @@ const SONGS = [
   { id: 'unbox_the_stack', page: '/SEBook/tools/networking.html' },
   { id: 'small_tools_one_job_each', page: '/SEBook/tools/shell.html' },
   { id: 'every_module_keeps_a_secret', page: '/SEBook/designprinciples/informationhiding.html' },
+  { id: 'invest_in_your_stories', page: '/SEBook/userstories.html' },
 ];
 const EXTRAS_TOGGLE = 'Full transcript';
 const NARRATOR = '(narrator) ';

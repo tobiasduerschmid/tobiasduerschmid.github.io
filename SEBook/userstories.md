@@ -3,6 +3,15 @@ title: User Stories
 layout: sebook
 ---
 
+<link rel="stylesheet" href="/css/song-video.css">
+<link rel="stylesheet" href="/css/print-light.css">
+
+**Start with the song.** *Invest in Your Stories* is a four-and-a-half-minute music video that previews this chapter: why a perfectly working app can still be the wrong thing, the "As a / I want / so that" format with its acceptance criteria, each INVEST criterion with a broken story and its fix, and Given / When / Then. It ends with a seven-question pop quiz. Every idea gets its own section below. Captions are on by default.
+
+Before you press play, predict: *"As a student, I want the website to support HTTPS so that my data is safe."* Which INVEST criterion does this story break, and how would you rewrite it?
+
+{% include song-video.html song=site.data.songs.invest_in_your_stories id="user-stories-song" %}
+
 User stories are the ==most commonly used format to specify requirements in a light-weight, informal way== (particularly in projects following [Agile processes](/SEBook/process.html)).
 Each user story is a high-level description of a software feature written from the perspective of the end-user.
 

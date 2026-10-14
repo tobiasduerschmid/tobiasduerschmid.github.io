@@ -3,9 +3,10 @@
 # These are starting points; browser edits never modify the course playlists.
 - id: cs35l
   title: CS 35L
-  description: The Unix shell, Git history, the networking stack, and information hiding.
+  description: The Unix shell, Git history, the networking stack, information hiding, and user stories.
   songs:
     - small_tools_one_job_each
     - snapshots_and_pointers
     - unbox_the_stack
     - every_module_keeps_a_secret
+    - invest_in_your_stories
