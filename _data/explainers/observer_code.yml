@@ -1,0 +1,694 @@
+python:
+  label: Python
+  filename: observer_demo.py
+  note: Abstract base classes make the Observer contract explicit. Widget fields represent UI state; a
+    GUI toolkit would display them.
+  imports: |
+    from abc import ABC, abstractmethod
+  blocks:
+    problem:
+      source: |
+        class DocumentBefore:
+            def __init__(self, preview, count, save):
+                self.text = ""
+                self.preview, self.count, self.save = preview, count, save
+
+            def set_text(self, text):
+                self.text = text
+                if self.preview is not None:
+                    self.preview.text = text
+                if self.count is not None:
+                    self.count.text = str(len(text))
+                if self.save is not None:
+                    if text == "":
+                        self.save.enabled = False
+                    else:
+                        self.save.enabled = True
+      focus:
+        state:
+        - 7
+        preview:
+        - 8
+        - 9
+        count:
+        - 10
+        - 11
+        save:
+        - 12
+        - 13
+        - 14
+        - 15
+        - 16
+    observer:
+      source: |
+        class Observer(ABC):
+            @abstractmethod
+            def update(self, text: str) -> None:
+                pass
+      focus:
+        contract:
+        - 1
+        - 2
+        - 3
+    subject:
+      source: |
+        class Subject:
+            def __init__(self):
+                self._observers: list[Observer] = []
+
+            def attach(self, observer: Observer):
+                self._observers.append(observer)
+
+            def detach(self, observer: Observer):
+                self._observers.remove(observer)
+
+            def notify_observers(self, text: str):
+                for observer in self._observers:
+                    observer.update(text)
+      focus:
+        registry:
+        - 3
+        - 12
+        attach:
+        - 5
+        - 6
+        detach:
+        - 8
+        - 9
+        notify:
+        - 11
+        - 12
+        - 13
+    document:
+      source: |
+        class Document(Subject):
+            def __init__(self):
+                super().__init__()
+                self.text = ""
+
+            def set_text(self, text: str):
+                self.text = text
+                self.notify_observers(text)
+      focus:
+        state:
+        - 6
+        - 7
+        notify:
+        - 8
+        role:
+        - 1
+    views:
+      source: |
+        class Preview(Observer):
+            def __init__(self):
+                self.text = ""
+
+            def update(self, text: str):
+                self.text = text
+
+
+        class CharacterCount(Observer):
+            def __init__(self):
+                self.text = "0"
+
+            def update(self, text: str):
+                self.text = str(len(text))
+
+
+        class SaveButton(Observer):
+            def __init__(self):
+                self.enabled = False
+
+            def update(self, text: str):
+                if text == "":
+                    self.enabled = False
+                else:
+                    self.enabled = True
+      focus:
+        preview:
+        - 1
+        - 6
+        count:
+        - 9
+        - 14
+        save:
+        - 17
+        - 19
+        - 22
+        - 23
+        - 24
+        - 25
+    wire:
+      source: |
+        document = Document()
+        preview = Preview()
+        count = CharacterCount()
+        save = SaveButton()
+        document.attach(preview)
+        document.attach(count)
+        document.attach(save)
+        document.set_text("Hi")
+        document.detach(preview)  # Close the preview pane.
+        document.set_text("Hello")
+      focus:
+        attach:
+        - 5
+        - 6
+        - 7
+        first:
+        - 8
+        detach:
+        - 9
+        second:
+        - 10
+java:
+  label: Java
+  filename: ObserverDemo.java
+  note: Observer is our own interface. Widget fields represent UI state; a GUI toolkit would display them.
+  imports: |
+    import java.util.ArrayList;
+    import java.util.List;
+  blocks:
+    problem:
+      source: |
+        final class DocumentBefore {
+            String text = "";
+            Preview preview;
+            CharacterCount count;
+            SaveButton save;
+
+            void setText(String text) {
+                this.text = text;
+                if (preview != null) {
+                    preview.text = text;
+                }
+                if (count != null) {
+                    count.text = Integer.toString(text.length());
+                }
+                if (save != null) {
+                    if (text.isEmpty()) {
+                        save.enabled = false;
+                    } else {
+                        save.enabled = true;
+                    }
+                }
+            }
+        }
+      focus:
+        state:
+        - 8
+        preview:
+        - 9
+        - 10
+        count:
+        - 12
+        - 13
+        save:
+        - 15
+        - 16
+        - 17
+        - 18
+        - 19
+    observer:
+      source: |
+        interface Observer {
+            void update(String text);
+        }
+      focus:
+        contract:
+        - 1
+        - 2
+    subject:
+      source: |
+        class Subject {
+            private final List<Observer> observers = new ArrayList<>();
+
+            void attach(Observer observer) {
+                observers.add(observer);
+            }
+
+            void detach(Observer observer) {
+                observers.remove(observer);
+            }
+
+            protected void notifyObservers(String text) {
+                for (Observer observer : observers) {
+                    observer.update(text);
+                }
+            }
+        }
+      focus:
+        registry:
+        - 2
+        attach:
+        - 4
+        - 5
+        detach:
+        - 8
+        - 9
+        notify:
+        - 12
+        - 13
+        - 14
+    document:
+      source: |
+        final class Document extends Subject {
+            String text = "";
+
+            void setText(String text) {
+                this.text = text;
+                notifyObservers(text);
+            }
+        }
+      focus:
+        state:
+        - 4
+        - 5
+        notify:
+        - 6
+        role:
+        - 1
+    views:
+      source: |
+        final class Preview implements Observer {
+            String text = "";
+            public void update(String text) {
+                this.text = text;
+            }
+        }
+
+        final class CharacterCount implements Observer {
+            String text = "0";
+            public void update(String text) {
+                this.text = Integer.toString(text.length());
+            }
+        }
+
+        final class SaveButton implements Observer {
+            boolean enabled = false;
+            public void update(String text) {
+                if (text.isEmpty()) {
+                    enabled = false;
+                } else {
+                    enabled = true;
+                }
+            }
+        }
+      focus:
+        preview:
+        - 1
+        - 4
+        count:
+        - 8
+        - 11
+        save:
+        - 15
+        - 16
+        - 18
+        - 19
+        - 20
+        - 21
+    wire:
+      source: |
+        public class ObserverDemo {
+            public static void main(String[] args) {
+                Document document = new Document();
+                Preview preview = new Preview();
+                CharacterCount count = new CharacterCount();
+                SaveButton save = new SaveButton();
+                document.attach(preview);
+                document.attach(count);
+                document.attach(save);
+                document.setText("Hi");
+                document.detach(preview); // Close the preview pane.
+                document.setText("Hello");
+            }
+        }
+      focus:
+        attach:
+        - 7
+        - 8
+        - 9
+        first:
+        - 10
+        detach:
+        - 11
+        second:
+        - 12
+cpp:
+  label: C++
+  filename: observer_demo.cpp
+  note: 'Observer uses virtual dispatch. Subject stores non-owning pointers: detach an Observer before
+    destroying it. Widget fields represent UI state.'
+  imports: |
+    #include <algorithm>
+    #include <string>
+    #include <vector>
+  blocks:
+    problem:
+      source: |
+        class DocumentBefore {
+        public:
+            std::string text;
+            Preview* preview = nullptr;
+            CharacterCount* count = nullptr;
+            SaveButton* save = nullptr;
+
+            void setText(const std::string& value) {
+                text = value;
+                if (preview != nullptr) {
+                    preview->text = text;
+                }
+                if (count != nullptr) {
+                    count->text = std::to_string(text.size());
+                }
+                if (save != nullptr) {
+                    if (text.empty()) {
+                        save->enabled = false;
+                    } else {
+                        save->enabled = true;
+                    }
+                }
+            }
+        };
+      focus:
+        state:
+        - 9
+        preview:
+        - 10
+        - 11
+        count:
+        - 13
+        - 14
+        save:
+        - 16
+        - 17
+        - 18
+        - 19
+        - 20
+    observer:
+      source: |
+        struct Observer {
+            virtual ~Observer() = default;
+            virtual void update(const std::string& text) = 0;
+        };
+      focus:
+        contract:
+        - 1
+        - 2
+        - 3
+    subject:
+      source: |
+        class Subject {
+            std::vector<Observer*> observers;
+        public:
+            void attach(Observer& observer) {
+                observers.push_back(&observer);
+            }
+
+            void detach(Observer& observer) {
+                observers.erase(
+                    std::remove(observers.begin(), observers.end(), &observer),
+                    observers.end());
+            }
+        protected:
+            void notifyObservers(const std::string& text) {
+                for (Observer* observer : observers) {
+                    observer->update(text);
+                }
+            }
+        };
+      focus:
+        registry:
+        - 2
+        attach:
+        - 4
+        - 5
+        detach:
+        - 8
+        - 9
+        - 10
+        - 11
+        notify:
+        - 14
+        - 15
+        - 16
+    document:
+      source: |
+        class Document : public Subject {
+        public:
+            std::string text;
+
+            void setText(const std::string& value) {
+                text = value;
+                notifyObservers(text);
+            }
+        };
+      focus:
+        state:
+        - 5
+        - 6
+        notify:
+        - 7
+        role:
+        - 1
+    views:
+      source: |
+        struct Preview : Observer {
+            std::string text;
+            void update(const std::string& value) override {
+                text = value;
+            }
+        };
+
+        struct CharacterCount : Observer {
+            std::string text = "0";
+            void update(const std::string& value) override {
+                text = std::to_string(value.size());
+            }
+        };
+
+        struct SaveButton : Observer {
+            bool enabled = false;
+            void update(const std::string& value) override {
+                if (value.empty()) {
+                    enabled = false;
+                } else {
+                    enabled = true;
+                }
+            }
+        };
+      focus:
+        preview:
+        - 1
+        - 4
+        count:
+        - 8
+        - 11
+        save:
+        - 15
+        - 16
+        - 18
+        - 19
+        - 20
+        - 21
+    wire:
+      source: |
+        int main() {
+            Document document;
+            Preview preview;
+            CharacterCount count;
+            SaveButton save;
+            document.attach(preview);
+            document.attach(count);
+            document.attach(save);
+            document.setText("Hi");
+            document.detach(preview); // Close the preview pane.
+            document.setText("Hello");
+            document.detach(count);
+            document.detach(save); // Detach before local widgets are destroyed.
+        }
+      focus:
+        attach:
+        - 6
+        - 7
+        - 8
+        first:
+        - 9
+        detach:
+        - 10
+        second:
+        - 11
+        cleanup:
+        - 12
+        - 13
+typescript:
+  label: TypeScript
+  filename: observer-demo.ts
+  note: The Observer interface describes a structural contract. Widget fields represent UI state; a UI
+    framework would display them.
+  imports: |
+    export {};
+  blocks:
+    problem:
+      source: |
+        class DocumentBefore {
+          text = "";
+          preview?: Preview;
+          count?: CharacterCount;
+          save?: SaveButton;
+
+          setText(text: string): void {
+            this.text = text;
+            if (this.preview !== undefined) {
+              this.preview.text = text;
+            }
+            if (this.count !== undefined) {
+              this.count.text = String(text.length);
+            }
+            if (this.save !== undefined) {
+              if (text === "") {
+                this.save.enabled = false;
+              } else {
+                this.save.enabled = true;
+              }
+            }
+          }
+        }
+      focus:
+        state:
+        - 8
+        preview:
+        - 9
+        - 10
+        count:
+        - 12
+        - 13
+        save:
+        - 15
+        - 16
+        - 17
+        - 18
+        - 19
+    observer:
+      source: |
+        interface Observer {
+          update(text: string): void;
+        }
+      focus:
+        contract:
+        - 1
+        - 2
+    subject:
+      source: |
+        class Subject {
+          private observers: Observer[] = [];
+
+          attach(observer: Observer): void {
+            this.observers.push(observer);
+          }
+
+          detach(observer: Observer): void {
+            this.observers = this.observers.filter(item => item !== observer);
+          }
+
+          protected notifyObservers(text: string): void {
+            for (const observer of this.observers) {
+              observer.update(text);
+            }
+          }
+        }
+      focus:
+        registry:
+        - 2
+        attach:
+        - 4
+        - 5
+        detach:
+        - 8
+        - 9
+        notify:
+        - 12
+        - 13
+        - 14
+    document:
+      source: |
+        class Document extends Subject {
+          text = "";
+
+          setText(text: string): void {
+            this.text = text;
+            this.notifyObservers(text);
+          }
+        }
+      focus:
+        state:
+        - 4
+        - 5
+        notify:
+        - 6
+        role:
+        - 1
+    views:
+      source: |
+        class Preview implements Observer {
+          text = "";
+          update(text: string): void {
+            this.text = text;
+          }
+        }
+
+        class CharacterCount implements Observer {
+          text = "0";
+          update(text: string): void {
+            this.text = String(text.length);
+          }
+        }
+
+        class SaveButton implements Observer {
+          enabled = false;
+          update(text: string): void {
+            if (text === "") {
+              this.enabled = false;
+            } else {
+              this.enabled = true;
+            }
+          }
+        }
+      focus:
+        preview:
+        - 1
+        - 4
+        count:
+        - 8
+        - 11
+        save:
+        - 15
+        - 16
+        - 18
+        - 19
+        - 20
+        - 21
+    wire:
+      source: |
+        const document = new Document();
+        const preview = new Preview();
+        const count = new CharacterCount();
+        const save = new SaveButton();
+        document.attach(preview);
+        document.attach(count);
+        document.attach(save);
+        document.setText("Hi");
+        document.detach(preview); // Close the preview pane.
+        document.setText("Hello");
+      focus:
+        attach:
+        - 5
+        - 6
+        - 7
+        first:
+        - 8
+        detach:
+        - 9
+        second:
+        - 10

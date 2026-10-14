@@ -2,7 +2,8 @@
 
 The Node.js reference page embeds a roughly nine-minute introduction with
 locally generated Kokoro speech and no music. Its typography, gold stickers,
-outlined objects, dark stage, and terminal colors follow the song videos. Artwork
+outlined objects, and terminal graphics follow the song videos. The player now
+uses distinct light and dark palettes that follow the site's theme. Artwork
 uses responsive HTML and CSS so code remains readable at narrow widths.
 
 ## Teaching sequence
@@ -31,8 +32,11 @@ multimedia, cognitive-load, and retrieval guidance.
   48 kbps MP3. Only the compressed file is published, not the working WAVs.
 - `assets/narration/nodejs-basics.txt`: plain, pronunciation-adjusted TTS input.
 - `assets/narration/nodejs-basics.vtt`: captions with code names preserved.
-- `_includes/nodejs-animation*.html`, `css/nodejs-animation.css`, and
-  `js/nodejs-animation*.js`: page structure, presentation, poses, and player.
+- `_includes/nodejs-animation.html`, `css/nodejs-animation.css`, and
+  `js/nodejs-animation*.js`: Node.js structure, graphics, and poses.
+- `_includes/narrated-code.html`, `css/narrated-explainer.css`, and
+  `js/narrated-explainer.js`: code highlighting, theme, and native-audio transport,
+  shared with the Observer narration.
 
 Native audio is the sole playback clock. Seeking derives the complete visual state
 from that clock; it does not replay accumulated timers. Nothing autoplays. Native
@@ -49,7 +53,7 @@ supports the inline callback and the terminal-to-JavaScript package example.
 Rouge highlights complete snippets at build time, preserving multiline syntax
 before splitting into numbered lines. The transcript uses the same highlighter
 without line numbers. Syntax colors stay separate from the gold execution marker,
-use the stage palette in either theme, and become monochrome in print.
+follow the selected theme, and become monochrome in print.
 Graphics distinguish file work, the JavaScript thread, and ready callbacks, and
 use labels and shapes in addition to color. Motion represents progress or transfer,
 not decoration. Reduced motion jumps directly to the complete teaching state.
@@ -74,6 +78,10 @@ The renderer caches individual cues under `/tmp/nodejs-kokoro-render`. Editing o
 cue only synthesizes that cue again. It regenerates audio, captions, the plain
 script, and the timing manifest together. Review changed speech before publishing.
 The narration is synthetic, not a recording of a human speaker.
+
+The optional `--storyboard` argument selects another narration; outputs follow
+that storyboard's declared audio, caption, and script paths, with a sibling
+`<storyboard-name>_timing.json` file. Omitting it preserves the Node.js defaults.
 
 Pronunciation substitutions affect only speech and the downloadable TTS script.
 Captions, visual labels, and code retain the proper technical spellings.

@@ -1,0 +1,4 @@
+empty: {text: '', preview: '', count: '0', enabled: false, detached: false}
+hi: {text: Hi, preview: Hi, count: '2', enabled: true, detached: false}
+detached: {text: Hi, preview: Hi, count: '2', enabled: true, detached: true}
+hello: {text: Hello, preview: Hi, count: '5', enabled: true, detached: true}

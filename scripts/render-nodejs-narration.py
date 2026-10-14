@@ -33,7 +33,7 @@ def timestamp(seconds):
 
 
 def render(args):
-    source = ROOT / "_data/explainers/nodejs.yml"
+    source = ROOT / args.storyboard
     storyboard = yaml.safe_load(source.read_text())
     kokoro = Kokoro(args.model, args.voices)
     work = Path(args.work_dir)
@@ -74,23 +74,24 @@ def render(args):
     peak = float(np.max(np.abs(audio)))
     if peak > 0.95:
         audio *= 0.95 / peak
-    wav_path = work / "nodejs-basics.wav"
+    wav_path = work / (Path(storyboard["audio"]).stem + ".wav")
     sf.write(wav_path, audio, sample_rate, subtype="PCM_16")
     # At 24 kHz, libsndfile maps compression from 160 down to 8 kbps.
     mp3_compression = (160 - 48) / (160 - 8)
-    sf.write(audio_dir / "nodejs-basics.mp3", audio, sample_rate,
+    sf.write(ROOT / storyboard["audio"].lstrip("/"), audio, sample_rate,
              format="MP3", subtype="MPEG_LAYER_III", bitrate_mode="CONSTANT",
              compression_level=mp3_compression)
     manifest = {"duration": samples_so_far / sample_rate, "voice": voice, "speed": speed,
                 "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "scenes": scenes}
-    (ROOT / "_data/explainers/nodejs_timing.json").write_text(json.dumps(manifest, indent=2) + "\n")
-    (text_dir / "nodejs-basics.txt").write_text("\n\n".join(script) + "\n")
-    (text_dir / "nodejs-basics.vtt").write_text("\n".join(captions))
+    source.with_name(source.stem + "_timing.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    (ROOT / storyboard["script"].lstrip("/")).write_text("\n\n".join(script) + "\n")
+    (ROOT / storyboard["captions"].lstrip("/")).write_text("\n".join(captions))
     print(f"Rendered {manifest['duration']:.1f}s with Kokoro {voice} at {speed}x", flush=True)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--storyboard", default="_data/explainers/nodejs.yml")
     parser.add_argument("--model", required=True)
     parser.add_argument("--voices", required=True)
     parser.add_argument("--work-dir", default="/tmp/nodejs-kokoro-render")

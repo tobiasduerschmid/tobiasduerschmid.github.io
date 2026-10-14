@@ -62,5 +62,11 @@ module.exports = defineConfig({
       // in Firefox without duplicating the entire site's Chromium suite.
       use: { ...devices['Desktop Firefox'], launchOptions: {} },
     },
+    {
+      name: 'observer-firefox',
+      testMatch: /(observer-animation|uml-readable-sizing)\.spec\.js/,
+      grep: /changing UML emphasis|diagram text stays paragraph-sized|diagram text follows a doubled/,
+      use: { ...devices['Desktop Firefox'], launchOptions: {} },
+    },
   ],
 });

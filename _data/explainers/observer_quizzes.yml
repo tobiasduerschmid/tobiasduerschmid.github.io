@@ -1,0 +1,121 @@
+ui:
+  question: Which information belongs to the document rather than to an individual view?
+  options:
+    - The current text being edited
+    - The counter's number formatting
+    - The preview pane's layout rules
+  correct_index: 0
+  explanation: The document owns the text. Each view owns how it presents or reacts to that text.
+  option_feedback:
+    1: Formatting a count is a view responsibility; the underlying text is the document's state.
+    2: Layout can change without changing what the document contains.
+conditions:
+  question: Why does adding a word-count panel force changes in the original design?
+  options:
+    - Each condition must run on a separate thread
+    - The document contains each widget's update rule
+    - The widgets all store the same kind of value
+  correct_index: 1
+  explanation: The document names concrete widgets and contains their presentation rules. Another widget means another special case in the document. UI tends to change more often than the domain model; avoiding concrete UI dependencies protects domain classes from those changes.
+  option_feedback:
+    0: These conditions run synchronously. The problem is responsibility and coupling, not a need for threads.
+    2: Views can store different state. The difficulty comes from putting those different update rules in the document.
+roles:
+  question: Which role owns the collection of registered Observers?
+  options:
+    - The Subject
+    - Each concrete Observer
+    - The Observer interface
+  correct_index: 0
+  explanation: The Subject manages registrations and notifies them. The Observer contract specifies the operation each recipient supports.
+  option_feedback:
+    1: A concrete Observer owns its reaction; it does not need to track the other Observers.
+    2: The Observer interface defines update; it does not hold the Subject's registration collection.
+contract:
+  question: What makes this example a push variant of Observer?
+  options:
+    - Each Observer queries the document for its text
+    - The Subject passes the new text into update
+    - The Subject creates a thread for each update
+  correct_index: 1
+  explanation: The notification carries the text as an argument. In a pull variant, the Observer queries the Subject for the state it needs.
+  option_feedback:
+    0: Querying the Subject after notification is the pull arrangement.
+    2: Push describes how data is provided, not how calls are scheduled.
+subject:
+  question: A new view already implements Observer. How should the Subject's notification loop change?
+  options:
+    - Add a condition recognizing the new view
+    - Add a new update operation for that view
+    - Keep the loop and attach the new Observer
+  correct_index: 2
+  explanation: Registration makes the new Observer part of the existing loop. Dispatch selects that object's update behavior.
+  option_feedback:
+    0: A concrete-view condition would reintroduce the dependency the pattern removes.
+    1: The shared update contract is what lets one loop notify different concrete Observers.
+document:
+  question: Suppose an Observer reads Document.text inside update. What could happen if notification came before the state assignment?
+  options:
+    - The notification would update Document.text automatically
+    - It could read old text while receiving the new text
+    - Every Observer would receive the old text as its argument
+  correct_index: 1
+  explanation: Passing the new text as an argument does not update the stored field. Assigning Document.text before notifying keeps the callback's argument and the Subject's state consistent.
+  option_feedback:
+    0: Notification calls the Observer's update operation; it does not assign the Document's text field.
+    2: The argument can already contain the new text while Document.text still holds the old value. That mismatch is the risk.
+views:
+  question: Where should the rule that disables Save for empty text belong?
+  options:
+    - In the Subject's notification loop
+    - In every Observer's update operation
+    - In the SaveButton Observer's update
+  correct_index: 2
+  explanation: The Save button owns this UI-specific rule. Observer moves responsibility; it does not forbid useful conditions.
+  option_feedback:
+    0: Putting the rule in the shared loop makes the Subject know a particular widget again.
+    1: Preview and CharacterCount do not need to own or duplicate the Save button's behavior.
+trace:
+  question: After Preview is detached, the document changes from Hello to Hi. Which values result?
+  options:
+    - Count becomes 2; Preview receives no update
+    - Count stays 5; Preview receives no update
+    - Count becomes 2; Preview also receives Hi
+  correct_index: 0
+  explanation: CharacterCount is still registered and reacts to Hi. The detached Preview receives no notification.
+  option_feedback:
+    1: Detaching Preview does not detach the other Observers.
+    2: Implementing Observer is not enough to receive a notification; the object must still be registered.
+consequences:
+  question: An Observer is slow in this implementation. What happens to the edit that triggered it?
+  options:
+    - The edit continues while a new thread runs it
+    - The edit waits for that Observer's call to return
+    - The Subject skips it after a built-in timeout
+  correct_index: 1
+  explanation: The loop calls Observers synchronously. Their work contributes to the caller's latency.
+  option_feedback:
+    0: The pattern supplies no automatic thread creation or scheduling.
+    2: There is no timeout policy in this loop; one would have to be designed explicitly.
+context:
+  question: Which situation most strongly favors Observer over a direct call?
+  options:
+    - A calculation always uses one fixed helper
+    - A sender needs durable delivery over a network
+    - Optional views independently react to a model
+  correct_index: 2
+  explanation: Independently evolving views and changing registrations are the variation Observer handles directly.
+  option_feedback:
+    0: A direct call may be clearer when the collaborator is fixed and flexible registration has no value.
+    1: Observer alone does not provide persistence, network transport, or delivery guarantees.
+transfer:
+  question: A word-count pane opens after the document already contains text. What must client code do here?
+  options:
+    - Attach its Observer and initialize its current view
+    - Attach its Observer and rely on an immediate update
+    - Add its formatting rule to the Subject's update loop
+  correct_index: 0
+  explanation: Attach only registers an Observer in this example. Client code must initialize the newly opened view from the current document state, then detach it when it closes.
+  option_feedback:
+    1: This attach implementation does not invoke update; waiting for the next edit would leave the new view uninitialized.
+    2: The new Observer should own its formatting rule, leaving the Subject's loop unchanged.

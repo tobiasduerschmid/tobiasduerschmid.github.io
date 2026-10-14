@@ -1,0 +1,184 @@
+/* Shared narration theme. Semantic colors have light and dark variants;
+   gold-filled controls keep dark text in both modes. Print is always light. */
+.narrated-explainer {
+  --nja-bg: #fff;
+  --nja-panel: #eef4fa;
+  --nja-line: #687d92;
+  --nja-text: #192d43;
+  --nja-muted: #465b70;
+  --nja-accent: var(--color-primary-strong, #005587);
+  --nja-cyan: #005b75;
+  --nja-green: #176138;
+  --nja-coral: #a51b36;
+  --nja-ink: #0b0f1a;
+  --nja-accent-fill: #ffd100;
+  --nja-code-bg: #f7f9fc;
+  --nja-chrome: #e8f0f8;
+  --nja-hover: #d8e5f2;
+  --nja-input: #fff;
+  --nja-highlight: #fff1ad;
+  --nja-note-bg: #eaf1f8;
+  --nja-success-bg: #e7f5ea;
+  --nja-error-bg: #fce8ed;
+  --nja-warning-bg: #fff3d8;
+  margin: 2em 0;
+  min-width: 0;
+  font-family: Inter, 'Helvetica Neue', Arial, sans-serif;
+  font-size: inherit;
+  letter-spacing: 0;
+}
+@media screen {
+html.dark-mode:not(.print-light-mode) .narrated-explainer {
+  --nja-bg: #0c1118;
+  --nja-panel: #19212b;
+  --nja-line: #8798a9;
+  --nja-text: #f6f8ff;
+  --nja-muted: #c5cfda;
+  --nja-accent: var(--color-primary-strong, #8bb8e8);
+  --nja-cyan: #38d3f5;
+  --nja-green: #6ee79a;
+  --nja-coral: #ff8995;
+  --nja-code-bg: #111820;
+  --nja-chrome: #20262d;
+  --nja-hover: #414c58;
+  --nja-input: #151a20;
+  --nja-highlight: #36331c;
+  --nja-note-bg: #19232d;
+  --nja-success-bg: #153725;
+  --nja-error-bg: #45232b;
+  --nja-warning-bg: #33291a;
+}
+}
+
+.narrated-explainer *, .narrated-explainer *::before, .narrated-explainer *::after { box-sizing: border-box; }
+.narrated-explainer [hidden] { display: none !important; }
+.narrated-explainer .nja-player { background: var(--nja-bg); color: var(--nja-text); border: 2px solid var(--nja-line); border-radius: 8px; overflow: hidden; }
+.narrated-explainer .nja-stage { padding: 1.4em; }
+.narrated-explainer .nja-scene { min-height: 30em; }
+.narrated-explainer .nja-scene-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 1em; color: var(--nja-muted); font-size: 0.9em; }
+.narrated-explainer .nja-sticker { background: var(--nja-accent-fill); color: var(--nja-ink); border: 2px solid var(--nja-ink); box-shadow: 3px 3px 0 var(--nja-line); padding: 0.35em 0.7em; font-weight: 900; border-radius: 4px; transform: rotate(-2deg); }
+.narrated-explainer .nja-scene h3 { margin: 0.8em 0 0.65em; color: var(--nja-text); font-size: 1.7em; font-weight: 900; line-height: 1.25; letter-spacing: 0; text-transform: none; overflow-wrap: anywhere; }
+.narrated-explainer .nja-art { min-width: 0; line-height: 1.5; }
+.narrated-explainer .nja-art p { color: var(--nja-muted); font-size: 1em; line-height: 1.5; margin: 0.65em 0; }
+.narrated-explainer .nja-art code { background: transparent; color: var(--nja-text); padding: 0; border: 0; font-family: 'Fira Code', Menlo, Consolas, monospace; font-size: 1em; white-space: normal; overflow-wrap: anywhere; }
+.narrated-explainer .nja-art .nja-purpose { margin-bottom: 1.2em; }
+.narrated-explainer .nja-purpose strong { display: inline-block; color: var(--nja-accent); margin-right: 0.45em; }
+.narrated-explainer .nja-lesson-layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 1.4em; align-items: start; }
+.narrated-explainer .nja-visual-only { display: block; }
+.narrated-explainer .nja-code-column, .narrated-explainer .nja-model { min-width: 0; }
+.narrated-explainer .nja-window-bar { display: flex; gap: 0.55em; align-items: center; padding: 0.6em 0.8em; background: var(--nja-chrome); border-bottom: 1px solid var(--nja-line); font-weight: 700; overflow-wrap: anywhere; }
+.narrated-explainer .nja-editor { border: 1px solid var(--nja-line); border-radius: 5px; background: var(--nja-code-bg); overflow: hidden; }
+.narrated-explainer .nja-art pre { margin: 0; padding: 0.65em 0; background: transparent; border: 0; border-radius: 0; color: var(--nja-text); font: inherit; text-align: left; white-space: normal; overflow: visible; }
+.narrated-explainer .nja-art pre code { font-size: 1em; white-space: normal; }
+.narrated-explainer .nja-code-line { display: grid; grid-template-columns: 1.8em minmax(0, 1fr); gap: 0.45em; padding: 0.25em 0.6em 0.25em 0.3em; border-left: 3px solid transparent; line-height: 1.65; }
+.narrated-explainer .nja-line-number { text-align: right; color: var(--nja-muted); font-size: 0.9em; user-select: none; }
+.narrated-explainer .nja-line-source { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
+.narrated-explainer .nja-syntax {
+  --nja-code-keyword: #912448;
+  --nja-code-string: #196637;
+  --nja-code-number: #6543a3;
+  --nja-code-name: #075b73;
+  --nja-code-function: var(--color-primary-strong, #005587);
+  --nja-code-comment: #4b5b69;
+}
+/* Code uses the page theme in both stage and transcript. */
+@media screen {
+html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-syntax {
+  --nja-code-keyword: #ff8995;
+  --nja-code-string: #6ee79a;
+  --nja-code-number: #c5b2ff;
+  --nja-code-name: #38d3f5;
+  --nja-code-function: #ffd100;
+  --nja-code-comment: #c5cfda;
+}
+}
+.narrated-explainer .nja-syntax :is(.k, .kd, .kr, .kc, .kt, .kp, .ow) { color: var(--nja-code-keyword); }
+.narrated-explainer .nja-syntax :is(.s, .s1, .s2, .sb, .sc, .sd, .se, .sh, .sx, .sr, .ss, .dl) { color: var(--nja-code-string); }
+.narrated-explainer .nja-syntax :is(.m, .mi, .mf, .mh, .mo, .il) { color: var(--nja-code-number); }
+.narrated-explainer .nja-syntax :is(.nb, .bp, .nc, .nn, .na, .nv, .vc, .vg, .vi) { color: var(--nja-code-name); }
+.narrated-explainer .nja-syntax .nf { color: var(--nja-code-function); }
+.narrated-explainer .nja-syntax :is(.c, .c1, .cm, .cs, .cp) { color: var(--nja-code-comment); font-style: italic; }
+.narrated-explainer .nja-code-line.is-highlighted { border-left-color: var(--nja-accent); background: var(--nja-highlight); }
+.narrated-explainer .is-highlighted .nja-line-number { color: var(--nja-accent); font-weight: 900; }
+.narrated-explainer .nja-code-context { padding-left: 0.7em; border-left: 2px solid var(--nja-line); }
+.narrated-explainer .nja-explanation { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 0.7em 1.2em; align-items: baseline; margin-top: 1.3em; padding: 0.85em 0 0.85em 1em; border-left: 4px solid var(--nja-accent); background: var(--nja-note-bg); }
+.narrated-explainer .nja-step { color: var(--nja-accent); }
+.narrated-explainer .nja-explanation .nja-note { color: var(--nja-text); margin: 0; padding-right: 0.7em; }
+.narrated-explainer .nja-takeaway { border-top: 1px solid var(--nja-line); padding-top: 0.9em; margin: 1.1em 0 0; color: var(--nja-text); font-size: 1em; line-height: 1.5; }
+.narrated-explainer .nja-takeaway > i { color: var(--nja-accent); margin-right: 0.4em; }
+/* Player controls and nonvisual alternatives. */
+.narrated-explainer .nja-narration { background: var(--nja-note-bg); border-top: 1px solid var(--nja-line); padding: 1em 1.4em; min-height: 8em; }
+.narrated-explainer .nja-narration p { color: var(--nja-text); font: inherit; line-height: 1.65; margin: 0; }
+.narrated-explainer .nja-audio { display: block; width: calc(100% - 2em); margin: 1em; }
+.narrated-explainer.is-enhanced .nja-audio { display: none; }
+.narrated-explainer .nja-controls { padding: 1em 1.4em; background: var(--nja-chrome); border-top: 1px solid var(--nja-line); }
+.narrated-explainer .nja-playback-controls { border-top: 0; border-bottom: 1px solid var(--nja-line); }
+.narrated-explainer .nja-playback-controls .nja-seek-label { margin-bottom: 0; }
+.narrated-explainer .nja-transport { display: flex; flex-wrap: wrap; gap: 0.45em; align-items: center; }
+.narrated-explainer .nja-controls button { display: grid; place-items: center; font: inherit; width: 2.4em; height: 2.4em; min-width: 40px; min-height: 40px; padding: 0.3em; background: var(--nja-chrome); border: 2px solid var(--nja-line); border-radius: 4px; color: var(--nja-text); cursor: pointer; }
+.narrated-explainer .nja-controls button[data-action="play"] { background: var(--nja-accent-fill); border-color: var(--nja-accent); color: var(--nja-ink); }
+.narrated-explainer .nja-controls button:hover:not(:disabled) { background: var(--nja-hover); }
+.narrated-explainer .nja-controls button[data-action="play"]:hover:not(:disabled) { background: #ffdf55; }
+.narrated-explainer .nja-controls button:disabled,
+.narrated-explainer .nja-controls button[data-action="play"]:disabled {
+  color: var(--nja-muted); background: var(--nja-panel); border-color: var(--nja-line);
+  border-style: dashed; opacity: 1; cursor: default;
+}
+.narrated-explainer .nja-controls button:focus-visible, .narrated-explainer .nja-controls input:focus-visible, .narrated-explainer .nja-controls select:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
+.narrated-explainer .nja-time { color: var(--nja-text); font: inherit; font-variant-numeric: tabular-nums; margin-left: auto; padding: 0; }
+.narrated-explainer .nja-seek-label { display: block; margin: 0.9em 0; color: var(--nja-text); font: inherit; }
+.narrated-explainer .nja-seek { display: block; width: 100%; height: 1.8em; margin-top: 0.2em; accent-color: var(--nja-accent); cursor: pointer; }
+.narrated-explainer .nja-settings { display: flex; flex-wrap: wrap; gap: 0.7em 1em; align-items: end; }
+.narrated-explainer .nja-settings label { display: flex; flex-direction: column; gap: 0.3em; margin: 0; color: var(--nja-text); font: inherit; min-width: 0; }
+.narrated-explainer .nja-settings select { font: inherit; color: var(--nja-text); background: var(--nja-input); border: 2px solid var(--nja-line); border-radius: 4px; max-width: 100%; min-height: 2.4em; padding: 0.3em; }
+.narrated-explainer .nja-settings .nja-scene-select { flex: 1 1 12em; }
+.narrated-explainer .nja-settings .nja-motion { flex-direction: row; align-items: center; min-height: 2.4em; }
+.narrated-explainer .nja-motion input { width: 1.2em; height: 1.2em; margin: 0 0.2em 0 0; accent-color: var(--nja-accent); }
+.narrated-explainer .nja-status { padding: 0 1.4em; color: var(--nja-text); font-size: 1em; line-height: 1.5; }
+.narrated-explainer .nja-status:empty { display: none; }
+.narrated-explainer .nja-credit { font: inherit; font-size: 0.9em; line-height: 1.6; margin-top: 0.7em; }
+.narrated-explainer a, .narrated-explainer a:visited { color: #125b8f; text-decoration: underline; text-underline-offset: 0.15em; }
+.narrated-explainer .nja-transcript { margin-top: 1em; }
+.narrated-explainer summary { cursor: pointer; padding: 0.5em 0; font-size: 1em; }
+.narrated-explainer .nja-transcript h3 { font-size: 1.2em; line-height: 1.3; }
+.narrated-explainer .nja-transcript pre, .narrated-explainer .nja-transcript pre code { font-size: 1em; white-space: pre-wrap; overflow-wrap: anywhere; }
+.narrated-explainer .nja-transcript .nja-syntax { color: #17232d; background: #f5f7fa; }
+.narrated-explainer .nja-transcript .nja-syntax code { color: inherit; background: transparent; }
+.narrated-explainer .nja-description { border-left: 3px solid #697b89; padding-left: 0.8em; color: #394957; font-size: 0.9em; }
+html.dark-mode:not(.print-light-mode) .narrated-explainer a, html.dark-mode:not(.print-light-mode) .narrated-explainer a:visited { color: #83d4ff; }
+html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-description { color: #d1dce7; border-color: #9bafc1; }
+html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-transcript .nja-syntax { color: var(--nja-text); background: var(--nja-code-bg); }
+
+@media (max-width: 1050px) {
+  .narrated-explainer .nja-lesson-layout { grid-template-columns: 1fr; }
+  .narrated-explainer .nja-explanation { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .narrated-explainer .nja-stage, .narrated-explainer .nja-controls, .narrated-explainer .nja-narration { padding: 0.85em; }
+  .narrated-explainer .nja-scene h3 { font-size: 1.4em; }
+  .narrated-explainer .nja-worlds { grid-template-columns: 1fr; gap: 1.3em; }
+  .narrated-explainer .nja-runtime-branches { display: none; }
+  .narrated-explainer .nja-runtime-source { padding: 0 0 1em; gap: 0.65em; }
+  .narrated-explainer .nja-runtime-source > i { font-size: 2.8em; }
+  .narrated-explainer .nja-code-line { grid-template-columns: 1.3em minmax(0, 1fr); gap: 0.35em; padding-right: 0.4em; }
+  .narrated-explainer .nja-notation-pair { grid-template-columns: 1fr; }
+  .narrated-explainer .nja-time { margin-left: 0; flex-basis: 100%; }
+  .narrated-explainer .nja-narration { min-height: 0; }
+  .narrated-explainer .nja-network-wire { grid-template-columns: 1fr 2em 1fr; gap: 0.3em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .narrated-explainer .nja-sticker { transform: none; }
+}
+@media print {
+  .narrated-explainer, html.dark-mode:not(.print-light-mode) .narrated-explainer { --nja-accent: #005587; color: #000; background: #fff; }
+  .narrated-explainer .nja-player, .narrated-explainer .nja-credit, .narrated-explainer .nja-transcript summary { display: none !important; }
+  .narrated-explainer .nja-transcript::details-content { display: block; content-visibility: visible; }
+  .narrated-explainer .nja-transcript > * { display: block !important; }
+  .narrated-explainer .nja-transcript-scene { break-inside: avoid; }
+  .narrated-explainer .nja-transcript .nja-syntax,
+  html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-transcript .nja-syntax { background: #fff; color: #000; }
+  .narrated-explainer .nja-transcript .nja-syntax span,
+  html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-transcript .nja-syntax span { color: #000; }
+  .narrated-explainer .nja-description, html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-description { color: #222; border-color: #666; }
+  .narrated-explainer a, .narrated-explainer a:visited, html.dark-mode:not(.print-light-mode) .narrated-explainer a, html.dark-mode:not(.print-light-mode) .narrated-explainer a:visited { color: #000; }
+}

@@ -423,7 +423,9 @@ end
 
 Jekyll::Hooks.register [:posts, :pages, :documents], :post_render do |post|
   is_production = Jekyll.env == 'production' || ENV['JEKYLL_ENV'] == 'production' || ENV['CI']
-  next unless is_production
+  # Documents that must work without JavaScript also need their diagrams in
+  # development builds (for example, printable narration steps).
+  next unless is_production || post.data['static_uml']
 
   if post.output && (post.output.include?('<html') || post.url.end_with?('/', '.html'))
     post.output = Jekyll::UMLStatic.process(post.output, page_identifier: post.url)

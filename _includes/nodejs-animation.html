@@ -1,6 +1,6 @@
 {% assign explainer = site.data.explainers.nodejs %}
 {% assign timing = site.data.explainers.nodejs_timing %}
-<section class="nodejs-animation mathjax_ignore" id="nodejs-animation" aria-labelledby="nodejs-animation-title">
+<section class="nodejs-animation narrated-explainer mathjax_ignore" id="nodejs-animation" aria-labelledby="nodejs-animation-title">
   <h2 id="nodejs-animation-title">{{ explainer.title }}</h2>
   <div class="nja-player">
     <div class="nja-controls nja-playback-controls" hidden>
@@ -25,8 +25,8 @@
             <div class="nja-lesson-layout{% unless scene.code %} nja-visual-only{% endunless %}">
               {% if scene.code %}
               <div class="nja-code-column">
-                <div data-code-variant="main">{% include nodejs-animation-code.html code=scene.code filename=scene.filename %}</div>
-                {% if scene.alternate_code %}<div data-code-variant="alternate" hidden>{% assign alternate_filename = scene.alternate_filename | default: scene.filename %}{% include nodejs-animation-code.html code=scene.alternate_code filename=alternate_filename %}</div>{% endif %}
+                <div data-code-variant="main">{% include narrated-code.html code=scene.code filename=scene.filename %}</div>
+                {% if scene.alternate_code %}<div data-code-variant="alternate" hidden>{% assign alternate_filename = scene.alternate_filename | default: scene.filename %}{% include narrated-code.html code=scene.alternate_code filename=alternate_filename %}</div>{% endif %}
                 {% if scene.context %}<p class="nja-code-context">{{ scene.context | escape }}</p>{% endif %}
               </div>
               {% endif %}
@@ -61,9 +61,9 @@
       <h3>{{ forloop.index }}. {{ scene.label }}</h3>
       {% if scene.purpose %}<p><strong>Our task:</strong> {{ scene.purpose | escape }}</p>{% endif %}
       {% if scene.context %}<p>{{ scene.context | escape }}</p>{% endif %}
-      {% if scene.code %}{% include nodejs-animation-code.html code=scene.code filename=scene.filename transcript=true %}{% endif %}
+      {% if scene.code %}{% include narrated-code.html code=scene.code filename=scene.filename transcript=true %}{% endif %}
       {% for cue in scene.cues %}
-      {% if scene.alternate_code and forloop.last %}{% assign alternate_filename = scene.alternate_filename | default: scene.filename %}{% include nodejs-animation-code.html code=scene.alternate_code filename=alternate_filename transcript=true %}{% endif %}
+      {% if scene.alternate_code and forloop.last %}{% assign alternate_filename = scene.alternate_filename | default: scene.filename %}{% include narrated-code.html code=scene.alternate_code filename=alternate_filename transcript=true %}{% endif %}
       <p>{{ cue.text }}</p>
       <p class="nja-description"><strong>Visual:</strong> {{ cue.visual | escape }}</p>
       {% endfor %}
@@ -75,4 +75,5 @@
   <script type="application/json" data-nodejs-timing>{{ timing | jsonify }}</script>
 </section>
 <script src="{{ '/js/nodejs-animation-art.js' | relative_url }}" defer></script>
+<script src="{{ '/js/narrated-explainer.js' | relative_url }}" defer></script>
 <script src="{{ '/js/nodejs-animation.js' | relative_url }}" defer></script>

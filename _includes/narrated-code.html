@@ -1,0 +1,13 @@
+{%- capture newline %}
+{% endcapture -%}
+{%- assign language = include.language | default: 'javascript' -%}
+{%- if include.filename == 'terminal' -%}{%- assign language = 'shell' -%}{%- endif -%}
+{%- assign lines = include.code | highlight_code_lines: language -%}
+{%- if include.transcript -%}
+<pre class="nja-syntax"><code>{{ lines | join: newline }}</code></pre>
+{%- else -%}
+<div class="nja-editor">
+  <div class="nja-window-bar"><i class="fa fa-{% if include.filename == 'terminal' %}terminal{% else %}file-code{% endif %}"></i><span>{{ include.filename | default: 'JavaScript' | escape }}</span></div>
+  <pre class="nja-syntax"{% if include.scrollable %} tabindex="0" aria-label="{{ include.filename | default: language | escape }} code"{% endif %}><code>{% for line in lines %}<span class="nja-code-line{% if include.focus_lines contains forloop.index %} is-highlighted{% endif %}" data-line="{{ forloop.index }}"{% if include.focus_lines contains forloop.index %} aria-current="true"{% endif %}><span class="nja-line-number" aria-hidden="true">{{ forloop.index }}</span><span class="nja-line-source">{{ line }}</span></span>{% endfor %}</code></pre>
+</div>
+{%- endif -%}

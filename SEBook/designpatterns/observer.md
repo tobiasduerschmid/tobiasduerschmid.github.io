@@ -1,7 +1,16 @@
 ---
 title: Observer Design Pattern
 layout: sebook
+static_uml: true
 ---
+
+<link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/css/narrated-explainer.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/css/observer-animation.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/css/observer-document.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
+
+{% include observer-animation.html %}
 
 > **Want hands-on practice?** Try the [Interactive Observer Pattern Tutorial](/SEBook/designpatterns/observer-tutorial.html) — experience the pain of tight coupling first, then refactor into Observer step by step with live UML diagrams, debugging challenges, and quizzes.
 
