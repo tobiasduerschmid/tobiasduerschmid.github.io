@@ -1,78 +1,4 @@
-/* Song-video palette and typography; semantic objects show the program's state.
-   The stage stays dark in either theme. Transcript and print follow the page. */
-.nodejs-animation {
-  --nja-bg: #0c1118;
-  --nja-panel: #19212b;
-  --nja-line: #8798a9;
-  --nja-text: #f6f8ff;
-  --nja-muted: #c5cfda;
-  --nja-gold: #ffd100;
-  --nja-cyan: #38d3f5;
-  --nja-green: #6ee79a;
-  --nja-coral: #ff8995;
-  --nja-ink: #0b0f1a;
-  margin: 2em 0;
-  min-width: 0;
-  font-family: Inter, 'Helvetica Neue', Arial, sans-serif;
-  font-size: inherit;
-  letter-spacing: 0;
-}
-.nodejs-animation *, .nodejs-animation *::before, .nodejs-animation *::after { box-sizing: border-box; }
-.nodejs-animation [hidden] { display: none !important; }
-.nodejs-animation .nja-player { background: var(--nja-bg); color: var(--nja-text); border: 2px solid #677888; border-radius: 8px; overflow: hidden; }
-.nodejs-animation .nja-stage { padding: 1.4em; }
-.nodejs-animation .nja-scene { min-height: 30em; }
-.nodejs-animation .nja-scene-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 1em; color: var(--nja-muted); font-size: 0.9em; }
-.nodejs-animation .nja-sticker { background: var(--nja-gold); color: var(--nja-ink); border: 2px solid var(--nja-ink); box-shadow: 3px 3px 0 #596570; padding: 0.35em 0.7em; font-weight: 900; border-radius: 4px; transform: rotate(-2deg); }
-.nodejs-animation .nja-scene h3 { margin: 0.8em 0 0.65em; color: var(--nja-text); font-size: 1.7em; font-weight: 900; line-height: 1.25; letter-spacing: 0; text-transform: none; overflow-wrap: anywhere; }
-.nodejs-animation .nja-art { min-width: 0; line-height: 1.5; }
-.nodejs-animation .nja-art p { color: var(--nja-muted); font-size: 1em; line-height: 1.5; margin: 0.65em 0; }
-.nodejs-animation .nja-art code { background: transparent; color: var(--nja-text); padding: 0; border: 0; font-family: 'Fira Code', Menlo, Consolas, monospace; font-size: 1em; white-space: normal; overflow-wrap: anywhere; }
-.nodejs-animation .nja-art .nja-purpose { margin-bottom: 1.2em; }
-.nodejs-animation .nja-purpose strong { display: inline-block; color: var(--nja-gold); margin-right: 0.45em; }
-.nodejs-animation .nja-lesson-layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 1.4em; align-items: start; }
-.nodejs-animation .nja-visual-only { display: block; }
-.nodejs-animation .nja-code-column, .nodejs-animation .nja-model { min-width: 0; }
-.nodejs-animation .nja-window-bar { display: flex; gap: 0.55em; align-items: center; padding: 0.6em 0.8em; background: #2b333d; border-bottom: 1px solid var(--nja-line); font-weight: 700; overflow-wrap: anywhere; }
-.nodejs-animation .nja-editor { border: 1px solid var(--nja-line); border-radius: 5px; background: #111820; overflow: hidden; }
-.nodejs-animation .nja-art pre { margin: 0; padding: 0.65em 0; background: transparent; border: 0; border-radius: 0; color: var(--nja-text); font: inherit; text-align: left; white-space: normal; overflow: visible; }
-.nodejs-animation .nja-art pre code { font-size: 1em; white-space: normal; }
-.nodejs-animation .nja-code-line { display: grid; grid-template-columns: 1.8em minmax(0, 1fr); gap: 0.45em; padding: 0.25em 0.6em 0.25em 0.3em; border-left: 3px solid transparent; line-height: 1.65; }
-.nodejs-animation .nja-line-number { text-align: right; color: #afbac7; font-size: 0.9em; user-select: none; }
-.nodejs-animation .nja-line-source { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
-.nodejs-animation .nja-syntax {
-  --nja-code-keyword: #912448;
-  --nja-code-string: #196637;
-  --nja-code-number: #6543a3;
-  --nja-code-name: #075b73;
-  --nja-code-function: #755800;
-  --nja-code-comment: #4b5b69;
-}
-/* The stage is always dark; transcript colors follow the page theme. */
-.nodejs-animation .nja-player .nja-syntax,
-html.dark-mode .nodejs-animation .nja-syntax {
-  --nja-code-keyword: #ff8995;
-  --nja-code-string: #6ee79a;
-  --nja-code-number: #c5b2ff;
-  --nja-code-name: #38d3f5;
-  --nja-code-function: #ffd100;
-  --nja-code-comment: #c5cfda;
-}
-.nodejs-animation .nja-syntax :is(.k, .kd, .kr, .kc, .kt, .kp, .ow) { color: var(--nja-code-keyword); }
-.nodejs-animation .nja-syntax :is(.s, .s1, .s2, .sb, .sc, .sd, .se, .sh, .sx, .sr, .ss, .dl) { color: var(--nja-code-string); }
-.nodejs-animation .nja-syntax :is(.m, .mi, .mf, .mh, .mo, .il) { color: var(--nja-code-number); }
-.nodejs-animation .nja-syntax :is(.nb, .bp, .nc, .nn, .na, .nv, .vc, .vg, .vi) { color: var(--nja-code-name); }
-.nodejs-animation .nja-syntax .nf { color: var(--nja-code-function); }
-.nodejs-animation .nja-syntax :is(.c, .c1, .cm, .cs, .cp) { color: var(--nja-code-comment); font-style: italic; }
-.nodejs-animation .nja-code-line.is-highlighted { border-left-color: var(--nja-gold); background: #36331c; }
-.nodejs-animation .is-highlighted .nja-line-number { color: var(--nja-gold); font-weight: 900; }
-.nodejs-animation .nja-code-context { padding-left: 0.7em; border-left: 2px solid var(--nja-line); }
-.nodejs-animation .nja-explanation { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 0.7em 1.2em; align-items: baseline; margin-top: 1.3em; padding: 0.85em 0 0.85em 1em; border-left: 4px solid var(--nja-gold); background: #1c2023; }
-.nodejs-animation .nja-step { color: var(--nja-gold); }
-.nodejs-animation .nja-explanation .nja-note { color: var(--nja-text); margin: 0; padding-right: 0.7em; }
-.nodejs-animation .nja-takeaway { border-top: 1px solid #657482; padding-top: 0.9em; margin: 1.1em 0 0; color: var(--nja-text); font-size: 1em; line-height: 1.5; }
-.nodejs-animation .nja-takeaway > i { color: var(--nja-gold); margin-right: 0.4em; }
-.nodejs-animation .nja-model-heading { display: flex; align-items: center; gap: 0.55em; color: var(--nja-cyan); font-weight: 700; margin-bottom: 0.8em; }
+/* Node.js-specific artwork. Shared stage and controls live in narrated-explainer.css. */
 .nodejs-animation .nja-binding { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.25fr); align-items: center; gap: 0.5em; padding: 0.6em 0; border-bottom: 1px solid #657482; }
 .nodejs-animation .nja-binding > i { color: var(--nja-cyan); }
 .nodejs-animation .nja-string, .nodejs-animation .nja-count-value { color: var(--nja-green); }
@@ -193,45 +119,6 @@ html.dark-mode .nodejs-animation .nja-syntax {
 .nodejs-animation .nja-output-slots span { display: block; color: var(--nja-muted); font-size: 0.9em; }
 .nodejs-animation .nja-output-slots strong { display: block; color: var(--nja-green); font-size: 2.6em; font-family: 'Fira Code', monospace; }
 
-/* Player controls and nonvisual alternatives. */
-.nodejs-animation .nja-narration { background: #19232d; border-top: 1px solid #7d8a99; padding: 1em 1.4em; min-height: 8em; }
-.nodejs-animation .nja-narration p { color: var(--nja-text); font: inherit; line-height: 1.65; margin: 0; }
-.nodejs-animation .nja-audio { display: block; width: calc(100% - 2em); margin: 1em; }
-.nodejs-animation.is-enhanced .nja-audio { display: none; }
-.nodejs-animation .nja-controls { padding: 1em 1.4em; background: #20262d; border-top: 1px solid #7d8a99; }
-.nodejs-animation .nja-playback-controls { border-top: 0; border-bottom: 1px solid #7d8a99; }
-.nodejs-animation .nja-playback-controls .nja-seek-label { margin-bottom: 0; }
-.nodejs-animation .nja-transport { display: flex; flex-wrap: wrap; gap: 0.45em; align-items: center; }
-.nodejs-animation .nja-controls button { display: grid; place-items: center; font: inherit; width: 2.4em; height: 2.4em; min-width: 40px; min-height: 40px; padding: 0.3em; background: #20262d; border: 2px solid #9dabba; border-radius: 4px; color: #f6f8ff; cursor: pointer; }
-.nodejs-animation .nja-controls button[data-action="play"] { background: var(--nja-gold); border-color: var(--nja-gold); color: var(--nja-ink); }
-.nodejs-animation .nja-controls button:hover { background: #414c58; }
-.nodejs-animation .nja-controls button[data-action="play"]:hover { background: #ffdf55; }
-.nodejs-animation .nja-controls button:disabled { color: #b6bec8; border-color: #758391; cursor: default; }
-.nodejs-animation .nja-controls button:focus-visible, .nodejs-animation .nja-controls input:focus-visible, .nodejs-animation .nja-controls select:focus-visible { outline: 3px solid var(--nja-cyan); outline-offset: 3px; }
-.nodejs-animation .nja-time { color: var(--nja-text); font: inherit; font-variant-numeric: tabular-nums; margin-left: auto; padding: 0; }
-.nodejs-animation .nja-seek-label { display: block; margin: 0.9em 0; color: var(--nja-text); font: inherit; }
-.nodejs-animation .nja-seek { display: block; width: 100%; height: 1.8em; margin-top: 0.2em; accent-color: var(--nja-gold); cursor: pointer; }
-.nodejs-animation .nja-settings { display: flex; flex-wrap: wrap; gap: 0.7em 1em; align-items: end; }
-.nodejs-animation .nja-settings label { display: flex; flex-direction: column; gap: 0.3em; margin: 0; color: var(--nja-text); font: inherit; min-width: 0; }
-.nodejs-animation .nja-settings select { font: inherit; color: var(--nja-text); background: #151a20; border: 2px solid #9dabba; border-radius: 4px; max-width: 100%; min-height: 2.4em; padding: 0.3em; }
-.nodejs-animation .nja-settings .nja-scene-select { flex: 1 1 12em; }
-.nodejs-animation .nja-settings .nja-motion { flex-direction: row; align-items: center; min-height: 2.4em; }
-.nodejs-animation .nja-motion input { width: 1.2em; height: 1.2em; margin: 0 0.2em 0 0; accent-color: var(--nja-gold); }
-.nodejs-animation .nja-status { padding: 0 1.4em; color: var(--nja-text); font-size: 1em; line-height: 1.5; }
-.nodejs-animation .nja-status:empty { display: none; }
-.nodejs-animation .nja-credit { font: inherit; font-size: 0.9em; line-height: 1.6; margin-top: 0.7em; }
-.nodejs-animation a, .nodejs-animation a:visited { color: #125b8f; text-decoration: underline; text-underline-offset: 0.15em; }
-.nodejs-animation .nja-transcript { margin-top: 1em; }
-.nodejs-animation summary { cursor: pointer; padding: 0.5em 0; font-size: 1em; }
-.nodejs-animation .nja-transcript h3 { font-size: 1.2em; line-height: 1.3; }
-.nodejs-animation .nja-transcript pre, .nodejs-animation .nja-transcript pre code { font-size: 1em; white-space: pre-wrap; overflow-wrap: anywhere; }
-.nodejs-animation .nja-transcript .nja-syntax { color: #17232d; background: #f5f7fa; }
-.nodejs-animation .nja-transcript .nja-syntax code { color: inherit; background: transparent; }
-.nodejs-animation .nja-description { border-left: 3px solid #697b89; padding-left: 0.8em; color: #394957; font-size: 0.9em; }
-html.dark-mode .nodejs-animation a, html.dark-mode .nodejs-animation a:visited { color: #83d4ff; }
-html.dark-mode .nodejs-animation .nja-description { color: #d1dce7; border-color: #9bafc1; }
-html.dark-mode .nodejs-animation .nja-transcript .nja-syntax { color: var(--nja-text); background: #111820; }
-
 @media (min-width: 1051px) {
   .nodejs-animation :is([data-scene="blocking"], [data-scene="nonblocking"]) .nja-model { display: contents; }
   .nodejs-animation :is([data-scene="blocking"], [data-scene="nonblocking"]) .nja-code-column { grid-column: 1; grid-row: 1 / span 2; }
@@ -242,36 +129,11 @@ html.dark-mode .nodejs-animation .nja-transcript .nja-syntax { color: var(--nja-
   .nodejs-animation :is([data-scene="blocking"], [data-scene="nonblocking"]) .nja-model-note { grid-column: 1 / -1; margin: 0; }
 }
 
-@media (max-width: 1050px) {
-  .nodejs-animation .nja-lesson-layout { grid-template-columns: 1fr; }
-  .nodejs-animation .nja-explanation { grid-template-columns: 1fr; }
-}
 @media (max-width: 520px) {
-  .nodejs-animation .nja-stage, .nodejs-animation .nja-controls, .nodejs-animation .nja-narration { padding: 0.85em; }
-  .nodejs-animation .nja-scene h3 { font-size: 1.4em; }
   .nodejs-animation .nja-worlds { grid-template-columns: 1fr; gap: 1.3em; }
   .nodejs-animation .nja-runtime-branches { display: none; }
   .nodejs-animation .nja-runtime-source { padding: 0 0 1em; gap: 0.65em; }
   .nodejs-animation .nja-runtime-source > i { font-size: 2.8em; }
-  .nodejs-animation .nja-code-line { grid-template-columns: 1.3em minmax(0, 1fr); gap: 0.35em; padding-right: 0.4em; }
   .nodejs-animation .nja-notation-pair { grid-template-columns: 1fr; }
-  .nodejs-animation .nja-time { margin-left: 0; flex-basis: 100%; }
-  .nodejs-animation .nja-narration { min-height: 0; }
   .nodejs-animation .nja-network-wire { grid-template-columns: 1fr 2em 1fr; gap: 0.3em; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .nodejs-animation .nja-sticker { transform: none; }
-}
-@media print {
-  .nodejs-animation, html.dark-mode .nodejs-animation { color: #000; background: #fff; }
-  .nodejs-animation .nja-player, .nodejs-animation .nja-credit, .nodejs-animation .nja-transcript summary { display: none !important; }
-  .nodejs-animation .nja-transcript::details-content { display: block; content-visibility: visible; }
-  .nodejs-animation .nja-transcript > * { display: block !important; }
-  .nodejs-animation .nja-transcript-scene { break-inside: avoid; }
-  .nodejs-animation .nja-transcript .nja-syntax,
-  html.dark-mode .nodejs-animation .nja-transcript .nja-syntax { background: #fff; color: #000; }
-  .nodejs-animation .nja-transcript .nja-syntax span,
-  html.dark-mode .nodejs-animation .nja-transcript .nja-syntax span { color: #000; }
-  .nodejs-animation .nja-description, html.dark-mode .nodejs-animation .nja-description { color: #222; border-color: #666; }
-  .nodejs-animation a, .nodejs-animation a:visited, html.dark-mode .nodejs-animation a, html.dark-mode .nodejs-animation a:visited { color: #000; }
 }

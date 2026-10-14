@@ -1,6 +1,6 @@
 {%- capture newline %}
 {% endcapture -%}
-{%- assign language = 'javascript' -%}
+{%- assign language = include.language | default: 'javascript' -%}
 {%- if include.filename == 'terminal' -%}{%- assign language = 'shell' -%}{%- endif -%}
 {%- assign lines = include.code | highlight_code_lines: language -%}
 {%- if include.transcript -%}

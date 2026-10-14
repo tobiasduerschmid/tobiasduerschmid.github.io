@@ -32,7 +32,9 @@ multimedia, cognitive-load, and retrieval guidance.
 - `assets/narration/nodejs-basics.txt`: plain, pronunciation-adjusted TTS input.
 - `assets/narration/nodejs-basics.vtt`: captions with code names preserved.
 - `_includes/nodejs-animation*.html`, `css/nodejs-animation.css`, and
-  `js/nodejs-animation*.js`: page structure, presentation, poses, and player.
+  `js/nodejs-animation-art.js`: Node.js-specific structure and poses.
+- `_includes/narrated-explainer*.html`, `css/narrated-explainer.css`, and
+  `js/narrated-explainer.js`: shared player, code presentation, and transcript.
 
 Native audio is the sole playback clock. Seeking derives the complete visual state
 from that clock; it does not replay accumulated timers. Nothing autoplays. Native
@@ -64,7 +66,7 @@ environment. SoundFile's bundled libsndfile encodes the compressed MP3, so no
 separate system encoder is needed. Run:
 
 ```sh
-python scripts/render-nodejs-narration.py \
+python scripts/render-explainer-narration.py --topic nodejs \
   --model /path/to/kokoro-v1.0.onnx \
   --voices /path/to/voices-v1.0.bin
 bundle exec jekyll build --incremental
@@ -87,6 +89,7 @@ these entries: many phonetic-looking respellings produce identical phonemes.
 
 ```sh
 node --test scripts/tests/nodejs-narration.test.js
+node --test scripts/tests/explainer-narration.test.js
 node --test scripts/tests/code-highlight.test.js
 A11Y_INTERACTIVE_CHECKS=1 npx playwright test tests/nodejs-animation.spec.js
 WCAG_AUDIT_URL_FILTER='^/SEBook/tools/nodejs.html$' \

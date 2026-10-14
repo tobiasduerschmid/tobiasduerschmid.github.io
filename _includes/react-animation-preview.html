@@ -1,0 +1,9 @@
+<div class="ra-browser">
+  <div class="ra-browser-chrome"><i class="fa fa-globe"></i><span class="ra-tab-title">{{ include.tab | default: 'Courses' }}</span><i class="fa fa-lock"></i></div>
+  <div class="ra-page">
+    <div class="ra-course-banner"><i class="fa fa-code"></i><span>COURSE</span></div>
+    <strong class="ra-course-title">{{ include.title | default: 'React' }}</strong>
+    <div class="ra-button"><i class="fa fa-heart"></i><span>Like: <b data-value="likes">{{ include.count | default: '0' }}</b></span><i class="fa fa-mouse-pointer ra-pointer" hidden></i></div>
+    {% if include.total %}<div class="ra-total">Total: <b data-value="likes">{{ include.count | default: '0' }}</b></div>{% endif %}
+  </div>
+</div>

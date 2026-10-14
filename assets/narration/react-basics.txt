@@ -1,0 +1,51 @@
+Imagine a course page with a Like button. The number on the button should agree with the number the app remembers. React is a Javascript library for building user interfaces. It is not a new programming language or a replacement for Node JS. In this lesson, we will follow one like count from the app's memory to the screen.
+
+With an imperative approach, you might find a button and replace its text yourself. With React, you describe what the button should show for a particular state. When you request a state update, React can calculate the interface again and update the page to match. This is declarative programming: specify the result, instead of maintaining every screen change by hand.
+
+Our first component has one job: display the course title React. The function keyword defines Course title. Its parentheses contain no parameters yet, and its outer braces enclose the function body. The const declaration gives the string React the local name title. A capital first letter distinguishes our component from built-in tags.
+
+Return gives React the element description. The parentheses group it across several lines. The tag-shaped syntax is JSX, a Javascript syntax extension that a build tool transforms into Javascript. The lowercase h two names a browser heading. Its closing tag marks the end of the heading. class name supplies a CSS class for styling; it does not name the component.
+
+Inside JSX, curly braces switch from markup to a Javascript expression. Here, title evaluates to the string React, so that is the text in the heading. These braces insert a value; the outer function braces group statements. Same punctuation, different jobs. The screen contains neither the braces nor the quotation marks.
+
+Now we want two headings without writing two component definitions. App is the parent component. It returns a main element containing two Course title elements. Uppercase names refer to our component; lowercase main refers to a built-in HTML element. The slash before each closing angle bracket makes these component tags self-closing.
+
+The title attributes pass props, short for properties. React supplies each component with a props object. The braces around title in the parameter are Javascript object destructuring: extract the property named title into a local variable. The first instance receives React; the second receives Node JS. Each evaluates the same return statement with its own input.
+
+Treat props as read-only inputs. A child should not change the object it receives. If a value needs to change over time, some component must own that changing value as state. Props answer, what was I given? State answers, what does this component need to remember?
+
+Our button needs to remember a count, even when React calls its function again. Import brings use state from the React package into this file. use state is a Hook: a function for using a React capability from a component. We call it at the top level of the component. The zero is the initial state, used when this instance first gets its memory.
+
+use state returns an array with two items. Square brackets on the left use array destructuring to name them: likes is the current value, and set likes is the update function. Const prevents reassigning these local names. It does not prevent React from supplying a new value on a later render. A plain local count would be recreated each time the function ran.
+
+Rendering means React calls the component to calculate its UI. In this render, likes is zero, so the button description says Like, zero. The value is a snapshot for this particular call. It will not change halfway through the function. We have added memory, but this button does not yet handle a click. That is our next step.
+
+This version adds click behavior to the same button. handle like is a function inside the component. The on click prop receives that function as a value, so React can call it in response to a click. This is a callback. Notice that there are no parentheses after handle like in JSX. Adding parentheses would call it while rendering, instead of passing it to run later.
+
+Now the user clicks. React calls the registered handler. The handler reads zero from its render's snapshot, adds one, and passes one to set likes. That requests a state update; it does not rewrite the local likes variable. The current handler still sees zero. React processes these queued updates after the event handler finishes.
+
+On the next render, React calls Like button with the updated state, one. The returned JSX now describes Like, one. During commit, React applies the needed changes to the dom, the browser's document object model. Here the button's text changes; the course heading does not need to be replaced. Rendering calculates a description. Committing changes the browser document.
+
+Here is a prediction. We replaced the handler's body with two identical calls. Each asks for likes plus one, and likes is zero in this render. After one click, will the next button show one or two? Think about whether the first call changes the local value used by the second.
+
+The answer is one. Both expressions read the same snapshot, zero, so both requests say replace the state with one. React groups the updates from this event. It is not losing a click, and the second line is not skipped. We simply requested the same replacement twice. Separate intentional clicks are handled separately.
+
+To add twice, each call can instead pass an updater function. The arrow syntax means, take n and return n plus one. React passes each updater the preceding queued result: zero becomes one, then one becomes two. Unlike the click callback, an updater calculates state and must be pure: no requests or mutations. Use this form when the next state depends on the previous state.
+
+Suppose a separate total must agree with the button. Two independent counts could drift apart. We move the state into Course, their nearest common parent. This is lifting state up. Course passes likes down to the button and uses the same value in the total paragraph. Neither display needs its own copy of the state.
+
+The child still needs a way to ask for another like. Course passes its handle like function as a prop named on like. That name is our choice, not a built-in browser event. The braces supply a Javascript function value. The function updates Course's state, which is where the count is owned.
+
+Here is the adapted child. Its parameter extracts likes and on like from props. It displays likes and gives on like to the button's built-in on click prop. Clicking therefore calls the parent's handler. The parent updates its count and renders both displays with one. Data flows down; the callback lets a child request a change without editing its props.
+
+Our app now lists courses from an array of objects. This component receives that array as a prop. Map calls the arrow function once per course and collects the returned list items. The dot in course.title reads a property from the current object. Curly braces let JSX include the resulting array of elements inside an unordered list.
+
+Key tells React which sibling item is which across renders. We use the stable course identifier, not its current array position. When the courses swap places, React can still associate each element with the same item. This matters especially when list items contain local state. Keys must be unique among siblings; random keys or changing positions do not provide stable identity.
+
+Here is the parent's reorder handler, assuming it stores the courses with use state. set courses receives an updater, just like set likes did. The three dots spread the current items into a new array. Reverse then reverses that copy. We do not reverse the existing state array directly. This is a shallow copy: it creates a new array but keeps the same course objects, which this operation does not modify.
+
+One last boundary: the browser tab title is outside our returned JSX. We want it to reflect the committed count. This snippet goes inside Course, with use effect imported from React. use effect receives a function. The empty parentheses and arrow define a function with no parameters; its braces enclose statements. document dot title assigns the browser title the string Likes, a colon, and the current count.
+
+React runs this effect after commit. The dependency array, likes in square brackets, declares the reactive value the effect reads. The effect runs initially and again when that value changes, synchronizing the tab with the count. Effects can run an extra setup and cleanup cycle in development. Effects that subscribe or start timers also need cleanup to undo that work.
+
+Do not add an effect just to calculate text from props or state. That calculation belongs in rendering; a user's action belongs in an event handler. Before moving on, explain our like button in your own words: who owns the count, what does the callback request, and when does the displayed number change? Trace the state update, the next render, and the commit. Then try building and changing it in the React tutorial.

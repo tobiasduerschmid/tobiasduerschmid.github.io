@@ -3,9 +3,16 @@ title: React
 layout: sebook
 ---
 
+<link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/css/narrated-explainer.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/css/react-animation.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
+
 This is a **reference page** for React, designed to be kept open alongside the [React Tutorial](/SEBook/tools/react-tutorial). Use it to look up syntax, concepts, and comparisons while you work through the hands-on exercises.
 
-> **New to React?** Start with the [interactive tutorial](/SEBook/tools/react-tutorial) first — it teaches these concepts through practice with immediate feedback. This page is a reference, not a teaching resource.
+> **New to React?** Watch the introduction below, then try the [interactive tutorial](/SEBook/tools/react-tutorial) for practice with immediate feedback.
+
+{% include narrated-explainer.html topic="react" subject="React" renderer="ReactAnimationArt" %}
 
 Welcome to the world of Frontend Development! Since you already have experience with Node.js, you actually have a massive head start.
 

@@ -1,4 +1,4 @@
-/* Node.js explainer: native audio supplies time; the storyboard supplies content. */
+/* Native audio supplies time; each explainer supplies content and a visual renderer. */
 (function () {
   'use strict';
   // Media clocks quantize timestamps; a sub-millisecond roundoff is not a previous cue.
@@ -11,8 +11,12 @@
 
   function enhance(root) {
     if (root.classList.contains('is-enhanced')) return;
-    const storyboard = JSON.parse(root.querySelector('[data-nodejs-storyboard]').textContent);
-    const timing = JSON.parse(root.querySelector('[data-nodejs-timing]').textContent);
+    const storyboard = JSON.parse(root.querySelector('[data-explainer-storyboard]').textContent);
+    const timing = JSON.parse(root.querySelector('[data-explainer-timing]').textContent);
+    const artwork = window[root.dataset.artRenderer];
+    // Combined chapters load one renderer/player pair per lesson. A later pair
+    // will enhance its own roots; until then keep the native audio fallback.
+    if (!artwork) return;
     const scenes = Array.from(root.querySelectorAll('[data-scene]'));
     const audio = root.querySelector('audio');
     const seek = root.querySelector('.nja-seek');
@@ -51,7 +55,7 @@
       currentScene = index;
       currentCue = cueIndex;
       const progress = Math.max(0, Math.min(1, (position - cueTiming.start) / (cueTiming.end - cueTiming.start)));
-      window.NodejsAnimationArt.render(scenes[index], storyboard.scenes[index].id,
+      artwork.render(scenes[index], storyboard.scenes[index].id,
         storyboard.scenes[index].cues[cueIndex], progress, motion.checked);
       seek.value = String(position);
       seek.setAttribute('aria-valuetext', `${clockLabel(position)} of ${clockLabel(timing.duration)}`);
@@ -188,5 +192,5 @@
     render(0);
   }
 
-  document.querySelectorAll('.nodejs-animation').forEach(enhance);
+  document.querySelectorAll('.narrated-explainer').forEach(enhance);
 })();
