@@ -48,3 +48,13 @@ test('terminal snippets use shell syntax and preserve their commands', () => {
   assert.equal(lines.map((line) => line.text).join('\n'), source);
   assert.ok(lines[1].tokens.some(([kind, text]) => kind === 'nv' && text === '$HOME'));
 });
+
+test('JSX distinguishes tags, attributes, strings and JavaScript without rendering the tags', () => {
+  const source = 'const label = "Like";\nreturn <button className="like">{label}: {0}</button>;';
+  const lines = highlight(source, 'jsx');
+  assert.equal(lines.map((line) => line.text).join('\n'), source);
+  assert.ok(lines.flatMap((line) => line.tags).every((tag) => ['code', 'span'].includes(tag)));
+  for (const token of ['nt', 'na', 's', 'mi']) {
+    assert.ok(lines[1].tokens.some(([kind]) => kind.startsWith(token)), `Missing JSX ${token} token`);
+  }
+});

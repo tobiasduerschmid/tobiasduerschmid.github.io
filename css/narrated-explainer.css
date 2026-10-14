@@ -96,7 +96,7 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-syntax {
 .narrated-explainer .nja-syntax :is(.s, .s1, .s2, .sb, .sc, .sd, .se, .sh, .sx, .sr, .ss, .dl) { color: var(--nja-code-string); }
 .narrated-explainer .nja-syntax :is(.m, .mi, .mf, .mh, .mo, .il) { color: var(--nja-code-number); }
 .narrated-explainer .nja-syntax :is(.nb, .bp, .nc, .nn, .na, .nv, .vc, .vg, .vi) { color: var(--nja-code-name); }
-.narrated-explainer .nja-syntax .nf { color: var(--nja-code-function); }
+.narrated-explainer .nja-syntax :is(.nf, .nt) { color: var(--nja-code-function); }
 .narrated-explainer .nja-syntax :is(.c, .c1, .cm, .cs, .cp) { color: var(--nja-code-comment); font-style: italic; }
 .narrated-explainer .nja-code-line.is-highlighted { border-left-color: var(--nja-accent); background: var(--nja-highlight); }
 .narrated-explainer .is-highlighted .nja-line-number { color: var(--nja-accent); font-weight: 900; }
@@ -106,6 +106,7 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-syntax {
 .narrated-explainer .nja-explanation .nja-note { color: var(--nja-text); margin: 0; padding-right: 0.7em; }
 .narrated-explainer .nja-takeaway { border-top: 1px solid var(--nja-line); padding-top: 0.9em; margin: 1.1em 0 0; color: var(--nja-text); font-size: 1em; line-height: 1.5; }
 .narrated-explainer .nja-takeaway > i { color: var(--nja-accent); margin-right: 0.4em; }
+.narrated-explainer .nja-model-heading { display: flex; align-items: center; gap: 0.55em; color: var(--nja-cyan); font-weight: 700; margin-bottom: 0.8em; }
 /* Player controls and nonvisual alternatives. */
 .narrated-explainer .nja-narration { background: var(--nja-note-bg); border-top: 1px solid var(--nja-line); padding: 1em 1.4em; min-height: 8em; }
 .narrated-explainer .nja-narration p { color: var(--nja-text); font: inherit; line-height: 1.65; margin: 0; }
@@ -156,15 +157,9 @@ html.dark-mode:not(.print-light-mode) .narrated-explainer .nja-transcript .nja-s
 @media (max-width: 520px) {
   .narrated-explainer .nja-stage, .narrated-explainer .nja-controls, .narrated-explainer .nja-narration { padding: 0.85em; }
   .narrated-explainer .nja-scene h3 { font-size: 1.4em; }
-  .narrated-explainer .nja-worlds { grid-template-columns: 1fr; gap: 1.3em; }
-  .narrated-explainer .nja-runtime-branches { display: none; }
-  .narrated-explainer .nja-runtime-source { padding: 0 0 1em; gap: 0.65em; }
-  .narrated-explainer .nja-runtime-source > i { font-size: 2.8em; }
   .narrated-explainer .nja-code-line { grid-template-columns: 1.3em minmax(0, 1fr); gap: 0.35em; padding-right: 0.4em; }
-  .narrated-explainer .nja-notation-pair { grid-template-columns: 1fr; }
   .narrated-explainer .nja-time { margin-left: 0; flex-basis: 100%; }
   .narrated-explainer .nja-narration { min-height: 0; }
-  .narrated-explainer .nja-network-wire { grid-template-columns: 1fr 2em 1fr; gap: 0.3em; }
 }
 @media (prefers-reduced-motion: reduce) {
   .narrated-explainer .nja-sticker { transform: none; }

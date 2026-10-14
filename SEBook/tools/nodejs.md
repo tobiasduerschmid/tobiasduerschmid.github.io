@@ -4,6 +4,7 @@ layout: sebook
 ---
 
 <link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/css/narrated-explainer.css' | relative_url }}">
 <link rel="stylesheet" href="{{ '/css/nodejs-animation.css' | relative_url }}">
 <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 

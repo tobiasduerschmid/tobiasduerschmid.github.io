@@ -1,0 +1,510 @@
+title: React in motion
+language: jsx
+audio: /assets/audio/react-basics.mp3
+script: /assets/narration/react-basics.txt
+captions: /assets/narration/react-basics.vtt
+voice: af_heart
+speed: 0.95
+pronunciations:
+  JavaScript: Javascript
+  Node.js: Node JS
+  DOM: dom
+  useState: use state
+  useEffect: use effect
+  setLikes: set likes
+  setCourses: set courses
+  handleLike: handle like
+  LikeButton: Like button
+  CourseTitle: Course title
+  CourseList: Course list
+  onLike: on like
+  onClick: on click
+  className: class name
+  document.title: document dot title
+references:
+  - title: Components and JSX
+    url: https://react.dev/learn/your-first-component
+  - title: Passing props
+    url: https://react.dev/learn/passing-props-to-a-component
+  - title: Render and commit
+    url: https://react.dev/learn/render-and-commit
+  - title: State as a snapshot
+    url: https://react.dev/learn/state-as-a-snapshot
+  - title: Queued updates
+    url: https://react.dev/learn/queueing-a-series-of-state-updates
+  - title: Sharing state
+    url: https://react.dev/learn/sharing-state-between-components
+  - title: Lists and keys
+    url: https://react.dev/learn/rendering-lists
+  - title: Updating arrays
+    url: https://react.dev/learn/updating-arrays-in-state
+  - title: Synchronizing effects
+    url: https://react.dev/learn/synchronizing-with-effects
+scenes:
+  - id: declarative
+    label: The mental model
+    title: Describe the screen from data
+    purpose: Keep a course's like count and its displayed button in agreement.
+    takeaway: React is a UI library. Describe the result for the current data.
+    cues:
+      - pose: describe
+        step: One source of truth
+        note: "Saved likes: 0. The screen says Like: 0."
+        text: >-
+          Imagine a course page with a Like button. The number on the button should
+          agree with the number the app remembers. React is a JavaScript library
+          for building user interfaces. It is not a new programming language or a
+          replacement for Node.js. In this lesson, we will follow one like count
+          from the app's memory to the screen.
+        visual: "A saved-state slot contains likes = 0. An arrow labeled Describe connects it to a browser showing a React course and a Like: 0 button."
+      - pose: change
+        step: Change state, then describe again
+        note: React calculates the next UI; the browser displays the committed result.
+        text: >-
+          With an imperative approach, you might find a button and replace its text
+          yourself. With React, you describe what the button should show for a
+          particular state. When you request a state update, React can calculate
+          the interface again and update the page to match. This is declarative
+          programming: specify the result, instead of maintaining every screen
+          change by hand.
+        visual: "The saved count becomes 1. A value travels along the connection. The browser's button becomes Like: 1, while the course title remains unchanged."
+
+  - id: jsx
+    label: Components and JSX
+    title: A function that describes UI
+    filename: CourseTitle.jsx
+    purpose: Display the course title React as a heading.
+    code: |-
+      function CourseTitle() {
+        const title = "React";
+        return (
+          <h2 className="course-title">
+            {title}
+          </h2>
+        );
+      }
+    takeaway: A component returns a description of UI, not a command to change the page.
+    cues:
+      - pose: function
+        step: Start with ordinary JavaScript
+        note: "CourseTitle is a function; title is a local constant containing text."
+        focus: [1, 2, 8]
+        text: >-
+          Our first component has one job: display the course title React.
+          The function keyword defines CourseTitle. Its parentheses contain no
+          parameters yet, and its outer braces enclose the function body.
+          The const declaration gives the string React the local name title.
+          A capital first letter distinguishes our component from built-in tags.
+        visual: "The function definition is highlighted. A component-shaped outline labeled CourseTitle contains a title binding whose value is the string React. Its output area is still empty."
+      - pose: markup
+        step: Return an element description
+        note: "h2 is a heading; className supplies a CSS class. Matching tags enclose content."
+        focus: [3, 4, 6, 7]
+        text: >-
+          Return gives React the element description. The parentheses group it
+          across several lines. The tag-shaped syntax is JSX, a JavaScript syntax
+          extension that a build tool transforms into JavaScript. The lowercase
+          h two names a browser heading. Its closing tag marks the end of the
+          heading. className supplies a CSS class for styling; it does not name
+          the component.
+        visual: "The return statement and heading tags are highlighted. A heading outline appears as the component's output, labeled h2 with the CSS class course-title."
+      - pose: expression
+        step: Put a value inside JSX
+        note: "{title} evaluates title. The browser displays React, without braces or quotes."
+        focus: [2, 5]
+        text: >-
+          Inside JSX, curly braces switch from markup to a JavaScript expression.
+          Here, title evaluates to the string React, so that is the text in the
+          heading. These braces insert a value; the outer function braces group
+          statements. Same punctuation, different jobs. The screen contains
+          neither the braces nor the quotation marks.
+        visual: "The value React moves from the local title binding into the h2 outline. The resulting browser heading reads React, with no braces or quotation marks."
+
+  - id: props
+    label: Props and composition
+    title: Same component, different inputs
+    filename: courses.jsx
+    purpose: Reuse one heading component for two different courses.
+    code: |-
+      function CourseTitle({ title }) {
+        return <h2>{title}</h2>;
+      }
+      function App() {
+        return (
+          <main>
+            <CourseTitle title="React" />
+            <CourseTitle title="Node.js" />
+          </main>
+        );
+      }
+    takeaway: Props are inputs from a parent. Each rendered instance receives its own values.
+    cues:
+      - pose: parent
+        step: Compose the interface
+        note: "App contains two CourseTitle instances. main is a built-in HTML element."
+        focus: [4, 6, 7, 8, 9]
+        text: >-
+          Now we want two headings without writing two component definitions.
+          App is the parent component. It returns a main element containing two
+          CourseTitle elements. Uppercase names refer to our component; lowercase
+          main refers to a built-in HTML element. The slash before each closing
+          angle bracket makes these component tags self-closing.
+        visual: "An App outline branches to two separate CourseTitle instances. Both heading outputs are waiting for their input."
+      - pose: inputs
+        step: Pass and receive props
+        note: "title= passes an input; { title } in the parameter extracts it from the props object."
+        focus: [1, 2, 7, 8]
+        text: >-
+          The title attributes pass props, short for properties. React supplies
+          each component with a props object. The braces around title in the
+          parameter are JavaScript object destructuring: extract the property
+          named title into a local variable. The first instance receives React;
+          the second receives Node.js. Each evaluates the same return statement
+          with its own input.
+        visual: "A cyan input ribbon carries title: React into the first instance; a green ribbon carries title: Node.js into the second. Their headings display React and Node.js respectively."
+      - pose: readonly
+        step: Inputs belong to the parent
+        note: A child reads props; it does not edit the parent's data.
+        focus: [1, 2]
+        text: >-
+          Treat props as read-only inputs. A child should not change the object
+          it receives. If a value needs to change over time, some component must
+          own that changing value as state. Props answer, what was I given?
+          State answers, what does this component need to remember?
+        visual: "Both input ribbons point from App down to the headings. Lock symbols mark the props as read-only; neither child sends a changed title back."
+
+  - id: state
+    label: State and memory
+    title: Memory that survives a render
+    filename: LikeButton.jsx
+    purpose: Remember the number of likes between calls to the component.
+    code: |-
+      import { useState } from "react";
+      function LikeButton() {
+        const [likes, setLikes] = useState(0);
+        return <button>Like: {likes}</button>;
+      }
+    takeaway: React retains state for a component instance. A setter requests its next value.
+    cues:
+      - pose: memory
+        step: Ask React for component memory
+        note: "useState(0) uses 0 as the initial state. A normal local variable is not persistent memory."
+        focus: [1, 3]
+        text: >-
+          Our button needs to remember a count, even when React calls its function
+          again. Import brings useState from the React package into this file.
+          useState is a Hook: a function for using a React capability from a
+          component. We call it at the top level of the component. The zero is
+          the initial state, used when this instance first gets its memory.
+        visual: "A persistent memory slot owned by React holds 0. The LikeButton function is drawn separately, emphasizing that its local variables are not the storage location."
+      - pose: pair
+        step: Unpack a pair with square brackets
+        note: "likes reads this render's value. setLikes is the function that requests an update."
+        focus: [3]
+        text: >-
+          useState returns an array with two items. Square brackets on the left
+          use array destructuring to name them: likes is the current value, and
+          setLikes is the update function. Const prevents reassigning these local
+          names. It does not prevent React from supplying a new value on a later
+          render. A plain local count would be recreated each time the function ran.
+        visual: "The returned pair splits into likes = 0 and the function setLikes. Separate labeled connections distinguish reading a snapshot from requesting an update."
+      - pose: snapshot
+        step: Describe this render's button
+        note: "This render sees likes = 0, so its JSX says Like: 0. No event handler is attached yet."
+        focus: [4]
+        text: >-
+          Rendering means React calls the component to calculate its UI.
+          In this render, likes is zero, so the button description says Like,
+          zero. The value is a snapshot for this particular call. It will not
+          change halfway through the function. We have added memory, but this
+          button does not yet handle a click. That is our next step.
+        visual: "A render snapshot labeled likes = 0 feeds a browser button reading Like: 0. The persistent memory remains outside the function, and the event connection is not yet attached."
+
+  - id: events
+    label: Events and rendering
+    title: Follow one click to the screen
+    filename: LikeButton.jsx
+    context: useState is imported from React, as in the previous example.
+    purpose: Add one like when the user clicks the button.
+    code: |-
+      function LikeButton() {
+        const [likes, setLikes] = useState(0);
+        function handleLike() {
+          setLikes(likes + 1);
+        }
+        return (
+          <button onClick={handleLike}>
+            Like: {likes}
+          </button>
+        );
+      }
+    takeaway: Pass a handler. The event requests state; rendering calculates UI; commit updates the DOM.
+    cues:
+      - pose: handler
+        step: Pass the function, do not call it
+        note: "onClick={handleLike} registers a callback. handleLike() would call it during rendering."
+        focus: [3, 4, 5, 7]
+        text: >-
+          This version adds click behavior to the same button. handleLike is a
+          function inside the component. The onClick prop receives that function
+          as a value, so React can call it in response to a click. This is a
+          callback. Notice that there are no parentheses after handleLike in JSX.
+          Adding parentheses would call it while rendering, instead of passing it
+          to run later.
+        visual: "The handleLike function is attached to the browser button through a callback connection. The button still reads Like: 0; the function has not executed."
+      - pose: click
+        step: Request the next state
+        note: "The handler sees 0, calculates 0 + 1, and queues the value 1."
+        focus: [4]
+        text: >-
+          Now the user clicks. React calls the registered handler. The handler
+          reads zero from its render's snapshot, adds one, and passes one to
+          setLikes. That requests a state update; it does not rewrite the local
+          likes variable. The current handler still sees zero. React processes
+          these queued updates after the event handler finishes.
+        visual: "A pointer presses Like: 0. The callback produces a queued request, next likes = 1, while the current render snapshot explicitly remains likes = 0."
+      - pose: commit
+        step: Render, then commit
+        note: "Next render: likes = 1. Commit: update the button text. The heading stays in place."
+        focus: [2, 7, 8, 9]
+        text: >-
+          On the next render, React calls LikeButton with the updated state, one.
+          The returned JSX now describes Like, one. During commit, React applies
+          the needed changes to the DOM, the browser's document object model.
+          Here the button's text changes; the course heading does not need to be
+          replaced. Rendering calculates a description. Committing changes the
+          browser document.
+        visual: "A new render snapshot holds likes = 1 and describes Like: 1. The commit connection carries that text to the existing button; the React heading is marked unchanged."
+
+  - id: updates
+    label: Predict the update
+    title: A value versus an updater function
+    filename: handleLike.jsx
+    context: Both versions run inside one click handler. This render's likes value is 0.
+    purpose: Predict what two queued updates will do before seeing the answer.
+    code: |-
+      function handleLike() {
+        setLikes(likes + 1);
+        setLikes(likes + 1);
+      }
+    alternate_code: |-
+      function handleLike() {
+        setLikes(n => n + 1);
+        setLikes(n => n + 1);
+      }
+    takeaway: A value replaces the queued state. An updater calculates from the preceding queued result.
+    cues:
+      - pose: question
+        step: Predict before tracing
+        note: "Starting at 0, does one click produce 1 or 2? Explain your reason."
+        focus: [2, 3]
+        pause_after: 6
+        text: >-
+          Here is a prediction. We replaced the handler's body with two identical
+          calls. Each asks for likes plus one, and likes is zero in this render.
+          After one click, will the next button show one or two? Think about
+          whether the first call changes the local value used by the second.
+        visual: "The snapshot says likes = 0. Two queue slots and the next button value are question marks. The answer is not displayed yet."
+      - pose: replace
+        step: Two requests for the same value
+        note: "0 + 1 is 1 both times. Replace with 1, then replace with 1: the result is 1."
+        focus: [2, 3]
+        text: >-
+          The answer is one. Both expressions read the same snapshot, zero, so
+          both requests say replace the state with one. React groups the updates
+          from this event. It is not losing a click, and the second line is not
+          skipped. We simply requested the same replacement twice. Separate
+          intentional clicks are handled separately.
+        visual: "Both queue slots reveal replace with 1. The trace reads 0 to 1 to 1, and the next browser button shows Like: 1."
+      - pose: updater
+        variant: alternate
+        step: Describe a transformation instead
+        note: "n => n + 1 takes a value and returns its successor. The queue computes 0 to 1 to 2."
+        focus: [2, 3]
+        text: >-
+          To add twice, each call can instead pass an updater function. The arrow
+          syntax means, take n and return n plus one. React passes each updater
+          the preceding queued result: zero becomes one, then one becomes two.
+          Unlike the click callback, an updater calculates state and must be
+          pure: no requests or mutations. Use this form when the next state
+          depends on the previous state.
+        visual: "The code switches to two arrow functions. The first queue slot transforms 0 into 1; the second transforms 1 into 2. The next button reads Like: 2."
+
+  - id: shared
+    label: Sharing state
+    title: One owner, two views
+    filename: Course.jsx
+    context: useState is imported from React. The child component is shown next.
+    purpose: Keep the Like button and a separate total in agreement.
+    code: |-
+      function Course() {
+        const [likes, setLikes] = useState(0);
+        function handleLike() {
+          setLikes(n => n + 1);
+        }
+        return (
+          <section>
+            <LikeButton likes={likes}
+              onLike={handleLike} />
+            <p>Total: {likes}</p>
+          </section>
+        );
+      }
+    alternate_filename: LikeButton.jsx
+    alternate_context: The child receives both its displayed value and its callback from Course. It has no local state.
+    alternate_code: |-
+      function LikeButton({ likes, onLike }) {
+        return (
+          <button onClick={onLike}>
+            Like: {likes}
+          </button>
+        );
+      }
+    takeaway: Lift shared state to a common parent. Pass values down and callbacks for requesting changes.
+    cues:
+      - pose: owner
+        step: Move the state to the common parent
+        note: Course owns one count; the button and the total receive that same value.
+        focus: [2, 8, 10]
+        text: >-
+          Suppose a separate total must agree with the button. Two independent
+          counts could drift apart. We move the state into Course, their nearest
+          common parent. This is lifting state up. Course passes likes down to
+          the button and uses the same value in the total paragraph. Neither
+          display needs its own copy of the state.
+        visual: "A single state slot, likes = 0, sits in Course above two branches. One branch feeds Like: 0; the other feeds Total: 0. There are no child state slots."
+      - pose: callback
+        step: Pass a way to request a change
+        note: "onLike is our prop name. handleLike belongs to Course, where the state is owned."
+        focus: [3, 4, 8, 9]
+        text: >-
+          The child still needs a way to ask for another like. Course passes its
+          handleLike function as a prop named onLike. That name is our choice,
+          not a built-in browser event. The braces supply a JavaScript function
+          value. The function updates Course's state, which is where the count
+          is owned.
+        visual: "Alongside the downward likes value, Course passes a callback labeled onLike. A return path from the button leads to Course's handleLike function, not to another state copy."
+      - pose: together
+        variant: alternate
+        step: The child forwards the event
+        note: "The child has no useState. One parent update gives both displays the next count."
+        focus: [1, 3, 4]
+        text: >-
+          Here is the adapted child. Its parameter extracts likes and onLike
+          from props. It displays likes and gives onLike to the button's built-in
+          onClick prop. Clicking therefore calls the parent's handler. The parent
+          updates its count and renders both displays with one. Data flows down;
+          the callback lets a child request a change without editing its props.
+        visual: "The child code replaces the parent snippet. A click follows onLike back to Course; its count becomes 1. Both downward branches update, producing Like: 1 and Total: 1 together."
+
+  - id: lists
+    label: Lists and identity
+    title: Keep each item attached to its identity
+    filename: CourseList.jsx
+    context: "The parent passes courses: an array of objects with stable id and title properties."
+    purpose: Display a course list that can change order without confusing item identities.
+    code: |-
+      function CourseList({ courses }) {
+        return (
+          <ul>
+            {courses.map(course => (
+              <li key={course.id}>
+                {course.title}
+              </li>
+            ))}
+          </ul>
+        );
+      }
+    alternate_filename: reorder.jsx
+    alternate_context: "Inside the parent: courses and setCourses come from useState. This is the parent's event handler."
+    alternate_code: |-
+      function reverseOrder() {
+        setCourses(items => [...items].reverse());
+      }
+    takeaway: Stable keys identify siblings across renders. Update arrays with a new array, not mutation of existing state.
+    cues:
+      - pose: map
+        step: Transform data into elements
+        note: "map calls the arrow function for each course and collects its returned li element."
+        focus: [3, 4, 5, 6, 7, 8, 9]
+        text: >-
+          Our app now lists courses from an array of objects. This component
+          receives that array as a prop. Map calls the arrow function once per
+          course and collects the returned list items. The dot in course.title
+          reads a property from the current object. Curly braces let JSX include
+          the resulting array of elements inside an unordered list.
+        visual: "Two course objects, id r with title React and id n with title Node.js, each map to one browser list item. The item labels and data values match."
+      - pose: keys
+        step: Identify an item, not its position
+        note: "key r still identifies React after reordering. Keys must be stable and unique among siblings."
+        focus: [5]
+        text: >-
+          Key tells React which sibling item is which across renders. We use the
+          stable course identifier, not its current array position. When the
+          courses swap places, React can still associate each element with the
+          same item. This matters especially when list items contain local state.
+          Keys must be unique among siblings; random keys or changing positions
+          do not provide stable identity.
+        visual: "The browser list reverses order. The identity tag n stays attached to Node.js, and r stays attached to React. The items move; their identity tags do not change."
+      - pose: copy
+        variant: alternate
+        step: Make a new array for the next state
+        note: "[...items] copies the array. reverse changes the copy, leaving existing state untouched."
+        focus: [2]
+        text: >-
+          Here is the parent's reorder handler, assuming it stores the courses
+          with useState. setCourses receives an updater, just like setLikes did.
+          The three dots spread the current items into a new array. Reverse
+          then reverses that copy. We do not reverse the existing state array
+          directly. This is a shallow copy: it creates a new array but keeps the
+          same course objects, which this operation does not modify.
+        visual: "The old array keeps the order r, n. A distinct copied array has order n, r and becomes the next state. The original is labeled unchanged; both retain the same stable item IDs."
+
+  - id: effects
+    label: Effects and the big picture
+    title: Synchronize beyond React's UI
+    filename: Course.jsx (inside the component)
+    context: useEffect is imported from React. likes is the state owned by Course.
+    purpose: Keep the browser tab title synchronized with the committed like count.
+    code: |-
+      useEffect(() => {
+        document.title = "Likes: " + likes;
+      }, [likes]);
+    takeaway: Render pure UI descriptions; handle user actions in events; synchronize external systems with effects.
+    cues:
+      - pose: outside
+        step: Identify the external system
+        note: The browser tab title is outside the component's returned JSX.
+        focus: [1, 2]
+        text: >-
+          One last boundary: the browser tab title is outside our returned JSX.
+          We want it to reflect the committed count. This snippet goes inside
+          Course, with useEffect imported from React. useEffect receives a
+          function. The empty parentheses and arrow define a function with no
+          parameters; its braces enclose statements. document.title assigns the
+          browser title the string Likes, a colon, and the current count.
+        visual: "The course page shows Like: 1 and Total: 1. Above it, a separate browser tab still says Courses. A boundary separates the committed page content from the external tab-title property."
+      - pose: synchronize
+        step: Run after commit when needed
+        note: "[likes] declares the reactive value read by the effect. The tab becomes Likes: 1."
+        focus: [1, 2, 3]
+        text: >-
+          React runs this effect after commit. The dependency array, likes in
+          square brackets, declares the reactive value the effect reads. The
+          effect runs initially and again when that value changes, synchronizing
+          the tab with the count. Effects can run an extra setup and cleanup
+          cycle in development. Effects that subscribe or start timers also need
+          cleanup to undo that work.
+        visual: "After the page commit, a labeled effect connection carries the count to the tab. The tab title becomes Likes: 1. The dependency label shows likes changed from 0 to 1."
+      - pose: recap
+        step: Choose the right place for the work
+        note: Props supply inputs. State remembers. Events request changes. Effects synchronize external systems.
+        focus: []
+        text: >-
+          Do not add an effect just to calculate text from props or state. That
+          calculation belongs in rendering; a user's action belongs in an event
+          handler. Before moving on, explain our like button in your own words:
+          who owns the count, what does the callback request, and when does the
+          displayed number change? Trace the state update, the next render, and
+          the commit. Then try building and changing it in the React tutorial.
+        visual: "The committed count is 1, the page displays Like: 1 and Total: 1, and the browser tab says Likes: 1. A summary distinguishes four jobs: events request state, rendering describes UI, commit updates the DOM, and the effect synchronizes the tab."

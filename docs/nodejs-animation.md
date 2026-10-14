@@ -32,11 +32,10 @@ multimedia, cognitive-load, and retrieval guidance.
   48 kbps MP3. Only the compressed file is published, not the working WAVs.
 - `assets/narration/nodejs-basics.txt`: plain, pronunciation-adjusted TTS input.
 - `assets/narration/nodejs-basics.vtt`: captions with code names preserved.
-- `_includes/nodejs-animation.html`, `css/nodejs-animation.css`, and
-  `js/nodejs-animation*.js`: Node.js structure, graphics, and poses.
-- `_includes/narrated-code.html`, `css/narrated-explainer.css`, and
-  `js/narrated-explainer.js`: code highlighting, theme, and native-audio transport,
-  shared with the Observer narration.
+- `_includes/nodejs-animation*.html`, `css/nodejs-animation.css`, and
+  `js/nodejs-animation-art.js`: Node.js-specific structure and poses.
+- `_includes/narrated-explainer*.html`, `css/narrated-explainer.css`, and
+  `js/narrated-explainer.js`: shared player, code presentation, and transcript.
 
 Native audio is the sole playback clock. Seeking derives the complete visual state
 from that clock; it does not replay accumulated timers. Nothing autoplays. Native
@@ -68,7 +67,7 @@ environment. SoundFile's bundled libsndfile encodes the compressed MP3, so no
 separate system encoder is needed. Run:
 
 ```sh
-python scripts/render-nodejs-narration.py \
+python scripts/render-explainer-narration.py --topic nodejs \
   --model /path/to/kokoro-v1.0.onnx \
   --voices /path/to/voices-v1.0.bin
 bundle exec jekyll build --incremental
@@ -79,9 +78,9 @@ cue only synthesizes that cue again. It regenerates audio, captions, the plain
 script, and the timing manifest together. Review changed speech before publishing.
 The narration is synthetic, not a recording of a human speaker.
 
-The optional `--storyboard` argument selects another narration; outputs follow
-that storyboard's declared audio, caption, and script paths, with a sibling
-`<storyboard-name>_timing.json` file. Omitting it preserves the Node.js defaults.
+The required `--topic` argument selects `nodejs`, `react`, or `observer`; outputs
+follow that storyboard's declared audio, caption, and script paths, with a sibling
+`<topic>_timing.json` file.
 
 Pronunciation substitutions affect only speech and the downloadable TTS script.
 Captions, visual labels, and code retain the proper technical spellings.
@@ -95,6 +94,7 @@ these entries: many phonetic-looking respellings produce identical phonemes.
 
 ```sh
 node --test scripts/tests/nodejs-narration.test.js
+node --test scripts/tests/explainer-narration.test.js
 node --test scripts/tests/code-highlight.test.js
 A11Y_INTERACTIVE_CHECKS=1 npx playwright test tests/nodejs-animation.spec.js
 WCAG_AUDIT_URL_FILTER='^/SEBook/tools/nodejs.html$' \

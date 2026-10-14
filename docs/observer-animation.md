@@ -54,9 +54,9 @@ stay in memory for the current page only; the player adds no persistence.
 - `_includes/observer-animation.html`, `_includes/observer-editor-illustration.html`,
   `js/observer-animation.js`, and `css/observer-animation.css`: lesson-specific UI.
 
-`js/narrated-explainer.js` shares the native-audio transport with Node.js. The
+`js/narrated-explainer.js` shares the native-audio transport with Node.js and React. The
 Observer adapter adds section checkpoints and derives visual state from the
-current cue. `narrated-code.html` and `css/narrated-explainer.css` share Rouge
+current cue. `narrated-explainer-code.html` and `css/narrated-explainer.css` share Rouge
 highlighting and the theme. Light and dark palettes follow `html.dark-mode`,
 including diagram, controls, code, focus markers, and quiz feedback.
 Text accents use the site's UCLA navy in light mode and its light-blue companion
@@ -116,8 +116,7 @@ and retrieval; their effect on learning has not been measured with students.
 Use the same isolated Kokoro environment described in `docs/nodejs-animation.md`:
 
 ```sh
-python scripts/render-nodejs-narration.py \
-  --storyboard _data/explainers/observer.yml \
+python scripts/render-explainer-narration.py --topic observer \
   --model /path/to/kokoro-v1.0.onnx \
   --voices /path/to/voices-v1.0.bin \
   --work-dir /tmp/observer-kokoro-render

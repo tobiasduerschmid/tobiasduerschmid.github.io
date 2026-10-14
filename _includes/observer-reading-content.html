@@ -19,7 +19,7 @@
             {% assign example = examples[language] %}{% assign block = example.blocks[scene.code] %}{% assign focus_lines = block.focus[cue.focus] %}
             <div data-transcript-language="{{ language }}">
               <p><strong>{{ example.label }}</strong> · {% if focus_lines %}Marked lines: {{ focus_lines | join: ', ' }}{% else %}Whole example{% endif %}</p>
-              {% include narrated-code.html code=block.source filename=example.filename language=language focus_lines=focus_lines %}
+              {% include narrated-explainer-code.html code=block.source filename=example.filename language=language focus_lines=focus_lines %}
             </div>
             {% endfor %}
           </div>
@@ -65,7 +65,7 @@
     <div data-transcript-language="{{ language }}">
       <p><strong>{{ example.label }} — {{ example.filename }}</strong></p>
       <p>{{ example.note | escape }}</p>
-      {% include narrated-code.html code=full_source language=language transcript=true %}
+      {% include narrated-explainer-code.html code=full_source language=language transcript=true %}
     </div>
     {% endfor %}
   </section>

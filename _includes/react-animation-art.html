@@ -1,0 +1,62 @@
+{% assign scene = include.scene %}
+<div class="nja-model ra-model">
+{% case scene.id %}
+{% when 'declarative' %}
+  <div class="ra-overview">
+    <div class="ra-memory"><div class="ra-object-label"><i class="fa fa-database"></i> Saved state</div><code>likes = <b data-value="likes">0</b></code><span>owned by the component</span></div>
+    <div class="ra-transfer"><span>Describe</span><div class="ra-wire"><i class="fa fa-arrow-right"></i><b class="ra-travel-value" data-value="likes">0</b></div></div>
+    {% include react-animation-preview.html %}
+  </div>
+{% when 'jsx' %}
+  <div class="ra-function-outline">
+    <div class="ra-object-label"><i class="fa fa-code"></i> CourseTitle()</div>
+    <div class="ra-binding"><code>title</code><i class="fa fa-arrow-right"></i><strong>"React"</strong></div>
+    <div class="ra-return-path"><i class="fa fa-arrow-down"></i><span>return</span></div>
+    <div class="ra-heading-output"><span class="ra-object-label">h2 .course-title</span><strong class="ra-heading-text" data-pose="expression">React</strong><span class="ra-heading-placeholder" data-pose="function markup">{title}</span></div>
+  </div>
+  <p class="ra-annotation" data-pose="function">Define the function before using its result.</p>
+  <p class="ra-annotation" data-pose="markup expression" hidden>JSX describes an element. The browser displays its content.</p>
+{% when 'props' %}
+  <div class="ra-parent-label"><i class="fa fa-code"></i> App</div>
+  <div class="ra-prop-instances">
+    <div class="ra-instance"><div class="ra-prop-ribbon"><code>title: "React"</code><i class="fa fa-lock" data-pose="readonly" hidden></i></div><i class="fa fa-arrow-down"></i><span>CourseTitle</span><strong class="ra-prop-output">?</strong></div>
+    <div class="ra-instance"><div class="ra-prop-ribbon ra-second"><code>title: "Node.js"</code><i class="fa fa-lock" data-pose="readonly" hidden></i></div><i class="fa fa-arrow-down"></i><span>CourseTitle</span><strong class="ra-prop-output">?</strong></div>
+  </div>
+  <p class="ra-annotation">One definition. Two instances. Separate inputs.</p>
+{% when 'state' %}
+  <div class="ra-memory"><div class="ra-object-label"><i class="fa fa-database"></i> React retains the state</div><code>0</code></div>
+  <div class="ra-state-pair"><div><span>read this render</span><i class="fa fa-arrow-down"></i><code>likes = 0</code></div><div><span>request an update</span><i class="fa fa-arrow-up"></i><code>setLikes</code></div></div>
+  <div class="ra-snapshot"><span class="ra-object-label"><i class="fa fa-camera"></i> Render snapshot</span><code>likes = 0</code></div>
+  <div class="ra-mini-preview"><span>Returned button</span><strong>Like: 0</strong></div>
+{% when 'events' %}
+  <div class="ra-render-cycle">
+    <div class="ra-snapshot"><span class="ra-object-label"><i class="fa fa-camera"></i> <span class="ra-snapshot-label">Current render</span></span><code>likes = <b class="ra-snapshot-count">0</b></code></div>
+    <div class="ra-request"><i class="fa fa-inbox"></i><span class="ra-request-label">Handler ready</span><code class="ra-request-value">handleLike</code></div>
+    <div class="ra-phase-track"><span data-phase="event">1. Event</span><span data-phase="render">2. Render</span><span data-phase="commit">3. Commit</span></div>
+    <div class="ra-commit-connector"><i class="fa fa-arrow-down"></i><span class="ra-commit-label">onClick receives handleLike</span></div>
+    {% include react-animation-preview.html %}
+    <p class="ra-annotation ra-preserved">Course heading: unchanged</p>
+  </div>
+{% when 'updates' %}
+  <div class="ra-snapshot"><span class="ra-object-label"><i class="fa fa-camera"></i> This handler's snapshot</span><code>likes = 0</code></div>
+  <div class="ra-queue"><div class="ra-object-label"><i class="fa fa-list-ol"></i> Update queue</div><div class="ra-queue-item"><span>1</span><code class="ra-operation">?</code><b class="ra-queue-result">?</b></div><div class="ra-queue-item"><span>2</span><code class="ra-operation">?</code><b class="ra-queue-result">?</b></div></div>
+  <div class="ra-number-trace"><b>0</b><i class="fa fa-arrow-right"></i><b class="ra-trace-first">?</b><i class="fa fa-arrow-right"></i><b class="ra-trace-last">?</b></div>
+  <div class="ra-mini-preview"><span>Next button</span><strong>Like: <b class="ra-next-count">?</b></strong></div>
+{% when 'shared' %}
+  <div class="ra-owner"><div class="ra-object-label"><i class="fa fa-code"></i> Course</div><div class="ra-memory"><span>Single state owner</span><code>likes = <b data-value="likes">0</b></code></div><div class="ra-parent-handler"><i class="fa fa-reply"></i> handleLike</div></div>
+  <div class="ra-shared-connections"><span><i class="fa fa-arrow-down"></i> likes</span><span class="ra-callback-connection"><i class="fa fa-arrow-up"></i> onLike()</span><span><i class="fa fa-arrow-down"></i> likes</span></div>
+  <div class="ra-shared-views"><div><span>LikeButton</span><div class="ra-button"><i class="fa fa-heart"></i> Like: <b data-value="likes">0</b></div></div><div><span>Paragraph</span><strong class="ra-shared-total">Total: <b data-value="likes">0</b></strong></div></div>
+  <p class="ra-annotation">Both displays read the same parent state.</p>
+{% when 'lists' %}
+  <div class="ra-list-data"><span class="ra-object-label"><i class="fa fa-database"></i> Course data</span><code>{ id: "r", title: "React" }</code><code>{ id: "n", title: "Node.js" }</code></div>
+  <div class="ra-return-path"><span class="ra-list-action">map: one element per course</span><i class="fa fa-arrow-down"></i></div>
+  <div class="ra-browser"><div class="ra-browser-chrome"><i class="fa fa-list"></i> Courses</div><div class="ra-keyed-list"><div class="ra-keyed-item ra-item-react"><span class="ra-key"><i class="fa fa-key"></i> r</span><strong>React</strong><i class="fa fa-code"></i></div><div class="ra-keyed-item ra-item-node"><span class="ra-key"><i class="fa fa-key"></i> n</span><strong>Node.js</strong><i class="fa fa-server"></i></div></div></div>
+  <div class="ra-array-copy" data-pose="copy" hidden><div><span>Old array: unchanged</span><code>[r, n]</code></div><i class="fa fa-arrow-right"></i><div><span>New array</span><code>[n, r]</code></div></div>
+  <p class="ra-annotation" data-pose="keys" hidden>Same identities. Different positions.</p>
+{% when 'effects' %}
+  <div class="ra-effect-source"><span class="ra-object-label"><i class="fa fa-check-circle"></i> Committed state</span><code>likes = 1</code></div>
+  <div class="ra-effect-connection"><span>useEffect</span><i class="fa fa-arrow-down"></i><span class="ra-dependency">[likes]: 0 to 1</span></div>
+  {% include react-animation-preview.html count="1" total=true %}
+  <div class="ra-recap" data-pose="recap" hidden><span><i class="fa fa-mouse-pointer"></i> Event requests state</span><span><i class="fa fa-code"></i> Render describes UI</span><span><i class="fa fa-check"></i> Commit updates DOM</span><span><i class="fa fa-exchange-alt"></i> Effect synchronizes tab</span></div>
+{% endcase %}
+</div>

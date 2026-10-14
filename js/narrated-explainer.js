@@ -213,4 +213,19 @@
   }
 
   window.NarratedExplainer = { enhance };
+
+  // Generic lessons supply a renderer by name. Observer supplies its own
+  // adapter so section checkpoints stay outside the shared transport.
+  document.querySelectorAll('.narrated-explainer[data-art-renderer]').forEach((root) => {
+    const artwork = window[root.dataset.artRenderer];
+    // Combined chapters load renderer/player pairs in document order.
+    if (!artwork) return;
+    enhance(root, {
+      storyboard: JSON.parse(root.querySelector('[data-explainer-storyboard]').textContent),
+      timing: JSON.parse(root.querySelector('[data-explainer-timing]').textContent),
+      render(scene, storyScene, cue, progress, motion) {
+        artwork.render(scene, storyScene.id, cue, progress, motion);
+      },
+    });
+  });
 })();

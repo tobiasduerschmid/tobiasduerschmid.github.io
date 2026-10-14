@@ -1,5 +1,8 @@
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { chromiumLaunchOptions } = require('../scripts/chromium-launch-options');
+// Decode real audio on a virtual output; CI must not depend on a sound device.
+test.use({ launchOptions: { ...chromiumLaunchOptions(), args: ['--disable-audio-output'] } });
 const timing = require('../_data/explainers/nodejs_timing.json');
 const { readFileSync } = require('node:fs');
 const yaml = require('js-yaml');
@@ -62,10 +65,12 @@ test('Kokoro narration plays and pauses with synchronized animation progress', a
   expect(await audio.evaluate((element) => element.duration)).toBeCloseTo(timing.duration, 0);
   await animation.getByRole('button', { name: 'Pause narration' }).click();
   await expect(animation.getByRole('button', { name: 'Play narration' })).toBeVisible();
-  const pausedAt = await position.inputValue();
+  const pausedAt = await audio.evaluate((element) => element.currentTime);
   await page.clock.install();
   await page.clock.fastForward(2000);
-  await expect(position).toHaveValue(pausedAt);
+  expect(await audio.evaluate((element) => element.currentTime)).toBe(pausedAt);
+  // A final media timeupdate may settle the range to the nearest hundredth.
+  await expect.poll(async () => Number(await position.inputValue())).toBeCloseTo(pausedAt, 2);
 });
 
 test('narration downloads as a compressed MP3 and the credit omits the music note', async ({ page, request }) => {

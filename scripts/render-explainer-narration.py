@@ -33,10 +33,10 @@ def timestamp(seconds):
 
 
 def render(args):
-    source = ROOT / args.storyboard
+    source = ROOT / f"_data/explainers/{args.topic}.yml"
     storyboard = yaml.safe_load(source.read_text())
     kokoro = Kokoro(args.model, args.voices)
-    work = Path(args.work_dir)
+    work = Path(args.work_dir or f"/tmp/{args.topic}-kokoro-render")
     work.mkdir(parents=True, exist_ok=True)
     audio_dir = ROOT / "assets/audio"
     text_dir = ROOT / "assets/narration"
@@ -83,7 +83,7 @@ def render(args):
              compression_level=mp3_compression)
     manifest = {"duration": samples_so_far / sample_rate, "voice": voice, "speed": speed,
                 "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "scenes": scenes}
-    source.with_name(source.stem + "_timing.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    (ROOT / f"_data/explainers/{args.topic}_timing.json").write_text(json.dumps(manifest, indent=2) + "\n")
     (ROOT / storyboard["script"].lstrip("/")).write_text("\n\n".join(script) + "\n")
     (ROOT / storyboard["captions"].lstrip("/")).write_text("\n".join(captions))
     print(f"Rendered {manifest['duration']:.1f}s with Kokoro {voice} at {speed}x", flush=True)
@@ -91,8 +91,8 @@ def render(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--storyboard", default="_data/explainers/nodejs.yml")
+    parser.add_argument("--topic", choices=["nodejs", "react", "observer"], required=True)
     parser.add_argument("--model", required=True)
     parser.add_argument("--voices", required=True)
-    parser.add_argument("--work-dir", default="/tmp/nodejs-kokoro-render")
+    parser.add_argument("--work-dir")
     render(parser.parse_args())

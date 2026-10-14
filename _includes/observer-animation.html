@@ -34,7 +34,7 @@
               {% for language in explainer.languages %}
               {% assign example = examples[language] %}{% assign block = example.blocks[scene.code] %}
               <div data-code-language="{{ language }}"{% unless language == explainer.default_language %} hidden{% endunless %}>
-                {% include narrated-code.html code=block.source filename=example.filename language=language scrollable=true %}
+                {% include narrated-explainer-code.html code=block.source filename=example.filename language=language scrollable=true %}
                 <p class="nja-code-context">{{ example.note | escape }}</p>
               </div>
               {% endfor %}
