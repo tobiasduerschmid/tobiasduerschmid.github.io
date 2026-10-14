@@ -1,4 +1,4 @@
-title: "The Observer Pattern: Stop Hard-Coding Your Dependencies"
+title: "The Observer Pattern"
 description: "Learn the most widely used behavioral design pattern by experiencing the pain of tightly coupled code first, then discovering how the Observer pattern makes your systems flexible and extensible. You will refactor a broken weather station into clean, decoupled architecture — guided by UML diagrams that update live as you code."
 
 # Authoring-time Bloom-verb objectives. Not yet rendered to students.
