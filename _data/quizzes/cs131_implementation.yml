@@ -2,10 +2,10 @@ title: 'CS 131: Language Implementation'
 description: Classify lexer and parser outcomes, repair small grammars, and trace compiler and interpreter
   steps.
 active: true
-# Entire replacement bank. Times are author estimates, not enforced limits.
+# Source-aligned review against lecture notes and homework. Times are author estimates.
 questions:
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 15–18
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 1 (lexer/parser classification)
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Tokenizing (aka Lexing).
+  # Practice: Fall 2025 Quiz 1 v2, Problem 1 (Parser Panic); trace longest matches and rule-order ties.
   - id: cs131-v2-implementation-longest-token
     type: single
     difficulty: intermediate
@@ -24,15 +24,16 @@ questions:
     explanation: The identifier rule matches all four letters. The keyword rule matches only two, so its
       earlier position does not win.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 15–19
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 1 (lexer/parser classification)
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Tokenizing (aka Lexing).
+  # Practice: Fall 2025 Quiz 1 v2, Problem 1 (Parser Panic); trace longest matches and rule-order ties.
   - id: cs131-v2-implementation-keyword-tie
     type: single
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: A lexer lists `[a-z]+ → ID` before `"send" → SEND`. It uses longest match, then earliest rule
-      for ties and ignores spaces. The parser requires `SEND ID`. What happens to the input `send parcel`?
+    question: A lexer lists `[a-z]+ → ID` before `"send" → SEND`. It uses longest match, then earliest
+      rule for ties and ignores spaces. The parser requires `SEND ID`. What happens to the input `send
+      parcel`?
     options:
     - It is accepted as SEND ID.
     - It becomes ID ID and the parser rejects it.
@@ -44,28 +45,28 @@ questions:
     explanation: Both rules match all of send, so the earlier ID rule wins. Lexing succeeds, but the resulting
       token sequence does not match SEND ID.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 15–16, 40–41
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 1 (lexer/parser classification)
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Tokenizing (aka Lexing); Parsing.
+  # Practice: Homework TOOLS1; Fall 2025 Quiz 1 v2, Problem 1 (Parser Panic); identify the first failing stage.
   - id: cs131-v2-implementation-unmatched-character
     type: single
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 35
-    question: A toy lexer accepts lowercase letters as ID, digits as NUM, and the symbols `=` and `;`. It
-      ignores spaces. Which stage first rejects `cost = 7 @;`?
+    question: A toy lexer accepts lowercase letters as ID, digits as NUM, and the symbols `=` and `;`.
+      It ignores spaces. Which stage first rejects `cost = 7 @;`?
     options:
     - 'Lexer: no rule accepts @.'
-    - 'Parser: @ has the wrong type.'
+    - 'Parser: @ is misplaced in the statement.'
     - 'Semantic analyzer: cost is undeclared.'
     correct_index: 0
     option_feedback:
-      1: A character must first become a token; the parser does not assign it a type.
+      1: Parsing checks token arrangement, but @ cannot become a token under these rules.
       2: Even if declaration checks are required, lexing already fails at @.
     explanation: The lexer cannot turn @ into any token, so this input fails before parsing or semantic
       checks.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 15–16, 19–28
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 1 (lexer/parser classification)
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Tokenizing (aka Lexing); Parsing.
+  # Practice: Homework TOOLS1; Fall 2025 Quiz 1 v2, Problem 1 (Parser Panic); identify the first failing stage.
   - id: cs131-v2-implementation-adjacent-tokens
     type: single
     difficulty: intermediate
@@ -84,35 +85,36 @@ questions:
     explanation: The lexer consumes 8 as NUM and z as ID. The parser must consume the entire statement,
       so the extra ID cannot be ignored.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 19–28
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 1 (lexer/parser classification)
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Tokenizing (aka Lexing); Parsing.
+  # Practice: Homework TOOLS1; Fall 2025 Quiz 1 v2, Problem 1 (Parser Panic); identify the first failing stage.
   - id: cs131-v2-implementation-required-operand
     type: single
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 35
-    question: Tokens `ID`, `PLUS`, and `NUM` are all valid. The only expression rule is `expr = ID PLUS
-      NUM ;`. Classify the token sequence `ID PLUS`.
+    question: The grammar has `expr = ID PLUS NUM | ID ;`. Each named token is valid; the final semicolon
+      ends the grammar rule. How is the complete token sequence `ID PLUS` classified?
     options:
-    - 'Lexical error: PLUS is invalid.'
-    - 'Parse error: the required NUM is missing.'
-    - 'Valid expression: NUM is optional.'
+    - Accepted using the ID alternative.
+    - 'Parser error: PLUS has no following NUM.'
+    - 'Lexer error: the token stream is incomplete.'
     correct_index: 1
     option_feedback:
-      0: The question states that PLUS is a valid token.
-      2: Only bracketed grammar elements are optional; NUM is unbracketed.
-    explanation: A token can be valid on its own while the sequence violates the grammar. NUM is required
-      because it is not in optional brackets.
+      0: The ID alternative leaves PLUS unconsumed. Accepting the entire expression requires consuming
+        every token.
+      2: Both tokens are valid; the missing operand violates a production, not a token rule.
+    explanation: 'Neither production consumes the entire sequence: the longer alternative lacks NUM, while
+      the shorter one leaves PLUS. Therefore parsing fails.'
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 24–28
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 1 (lexer/parser classification)
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Parsing.
+  # Practice: Homework TOOLS2; Fall 2025 Quiz 1 v2, Problem 1 (Parser Panic); determine membership and justify missing/repeated symbols.
   - id: cs131-v2-implementation-optional-arguments
     type: multiple
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 60
-    question: Use `call = ID LP [ ID { COMMA ID } ] RP ;`. Square brackets mean optional, braces mean zero
-      or more repetitions, and the final semicolon ends the grammar rule. Which complete token sequences
+    question: Use `call = ID LP [ ID { COMMA ID } ] RP ;`. Square brackets mean optional, braces mean
+      zero or more repetitions, and the final semicolon ends the grammar rule. Which complete token sequences
       are calls? Select all that apply.
     options:
     - ID LP RP
@@ -131,16 +133,16 @@ questions:
     explanation: The argument list may be absent. If present, it starts with an ID and may continue with
       comma–ID pairs.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 24–28
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 1 (lexer/parser classification)
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Parsing.
+  # Practice: Homework TOOLS2; Fall 2025 Quiz 1 v2, Problem 1 (Parser Panic); determine membership and justify missing/repeated symbols.
   - id: cs131-v2-implementation-separator-versus-terminator
     type: single
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 60
-    question: Use `program = stmt { SEMI stmt } [ SEMI ] ;` and `stmt = ID ASSIGN NUM ;`. Here SEMI is a
-      source semicolon; the semicolons ending the rules are grammar notation. What is wrong with `ID ASSIGN
-      NUM SEMI SEMI`?
+    question: Use `program = stmt { SEMI stmt } [ SEMI ] ;` and `stmt = ID ASSIGN NUM ;`. Here SEMI is
+      a source semicolon; the semicolons ending the rules are grammar notation. What is wrong with `ID
+      ASSIGN NUM SEMI SEMI`?
     options:
     - The lexer cannot emit two SEMI tokens.
     - The grammar requires a statement between these semicolons.
@@ -152,8 +154,8 @@ questions:
     explanation: After the first statement, a semicolon can either introduce another statement or serve
       as the single optional trailing semicolon. Neither choice consumes two consecutive semicolons.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 24–28
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 1 (lexer/parser classification)
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Parsing.
+  # Practice: Homework TOOLS2; Fall 2025 Quiz 1 v2, Problem 1 (Parser Panic); determine membership and justify missing/repeated symbols.
   - id: cs131-v2-implementation-grammar-repair
     type: single
     difficulty: intermediate
@@ -169,11 +171,11 @@ questions:
     option_feedback:
       0: With the initial ID omitted, this rule can still generate COMMA ID.
       2: This rule omits the required first unprefixed ID and permits a leading comma.
-    explanation: Make the entire nonempty list optional. Making only its first ID optional would let a comma–ID
-      pair appear without that first ID.
+    explanation: Make the entire nonempty list optional. Making only its first ID optional would let a
+      comma–ID pair appear without that first ID.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 32–35
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 1 (lexer/parser classification)
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Parsing is tricky.
+  # Practice: Lecture expression-grouping exercise; supports grammar reasoning in Homework TOOLS2. No exact past-exam counterpart claimed.
   - id: cs131-v2-implementation-two-parses
     type: multiple
     difficulty: intermediate
@@ -192,30 +194,36 @@ questions:
       0: Choosing PLUS at the root leaves 5 * 3 in the right subtree.
       1: Choosing TIMES at the root leaves 2 + 5 in the left subtree.
       2: This changes which operators appear between the numbers; parsing preserves the token sequence.
-    explanation: Both original operators can be at the root of a parse tree, so the grammar admits two groupings.
-      A grouping does not change the operator sequence.
+    explanation: Both original operators can be at the root of a parse tree, so the grammar admits two
+      groupings. A grouping does not change the operator sequence.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 32–35
-  # Assessment: Supporting expression-grouping skill; lecture parsing exercise (no direct past-question match claimed)
-  - id: cs131-v2-implementation-precedence-value
-    type: single
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Parsing is tricky.
+  # Practice: Lecture expression-grouping exercise; supports grammar reasoning in Homework TOOLS2. No exact past-exam counterpart claimed.
+  - id: cs131-v3-implementation-precedence-tree
+    type: multiple
     difficulty: intermediate
-    bloom: apply
+    bloom: analyze
     estimated_seconds: 45
-    question: A language gives multiplication higher precedence than addition. What is the value of `6 +
-      2 * 5`?
+    question: A parser gives multiplication higher precedence than addition. In the syntax tree for `6
+      + 2 * 5`, which statements hold? Select all that apply.
     options:
-    - '16'
-    - '40'
-    - '60'
-    correct_index: 0
+    - The root operator is +.
+    - The root operator is *.
+    - The right child of + is the * subtree.
+    - The left child of * is the + subtree.
     option_feedback:
-      1: 40 comes from grouping the addition first, which violates the stated precedence.
-      2: The addition operator remains addition; grouping does not replace it with multiplication.
-    explanation: 'Multiplication groups first: 6 + (2 * 5) is 16.'
+      0: The root combines 6 with the complete product, so it is addition.
+      1: Making multiplication the root would group the expression as (6 + 2) * 5.
+      2: The product 2 * 5 is grouped as a unit before it is added to 6.
+      3: That tree would group 6 + 2 before multiplying, reversing the stated precedence.
+    explanation: The parser groups the expression as 6 + (2 * 5). Addition is the root, with 6 on the
+      left and the multiplication subtree on the right.
+    correct_indices:
+    - 0
+    - 2
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 32–35
-  # Assessment: Prerequisite for expression traces; lecture ambiguity exercise
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Parsing is tricky.
+  # Practice: Lecture expression-grouping exercise; supports grammar reasoning in Homework TOOLS2. No exact past-exam counterpart claimed.
   - id: cs131-v2-implementation-associativity-rule
     type: single
     difficulty: intermediate
@@ -233,15 +241,15 @@ questions:
     explanation: Left associativity gives (18 - 7) - 2, which is 9. Precedence alone cannot choose between
       repeated uses of the same operator.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 36–41
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 1 (lexer/parser classification); extends stage classification to a taught semantic check
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Semantic analysis.
+  # Practice: Homework TOOLS1: distinguish semantic checks from token and grammar checks.
   - id: cs131-v2-implementation-semantic-stage
     type: single
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 40
-    question: A toy language permits `ID LP NUM COMMA NUM RP` as call syntax. The function `twice` is declared
-      to take one argument. Which stage rejects `twice(2, 3)` for the stated reason?
+    question: A toy language permits `ID LP NUM COMMA NUM RP` as call syntax. The function `twice` is
+      declared to take one argument. Which stage rejects `twice(2, 3)` for the stated reason?
     options:
     - The lexer, because commas cannot be tokens.
     - The parser, because the call shape is forbidden.
@@ -253,15 +261,15 @@ questions:
     explanation: The tokens and call shape are permitted. Checking the argument count against a function
       declaration requires semantic information.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 36–41
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 1 (lexer/parser classification); extends stage classification to declaration checking
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Semantic analysis.
+  # Practice: Homework TOOLS1: distinguish semantic checks from token and grammar checks.
   - id: cs131-v2-implementation-undeclared-name
     type: single
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 40
-    question: A toy language requires declarations before use. `total = missing + 1` has valid tokens and
-      an allowed expression shape, but `missing` was never declared. What should the frontend report?
+    question: A toy language requires declarations before use. `total = missing + 1` has valid tokens
+      and an allowed expression shape, but `missing` was never declared. What should the frontend report?
     options:
     - An unrecognized-character error
     - An undeclared-name semantic error
@@ -270,39 +278,41 @@ questions:
     option_feedback:
       0: An undeclared name can still match the identifier token rule.
       2: missing is syntactically an operand; the issue is what that name denotes.
-    explanation: Name resolution compares identifier uses with declarations during semantic analysis; the
-      tokenization and expression shape can still be valid.
+    explanation: Name resolution compares identifier uses with declarations during semantic analysis;
+      the tokenization and expression shape can still be valid.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 11–13, 19, 36–43
-  # Assessment: Supporting knowledge for Fall 2025 Quiz 1, Problem 1
+  # Taught: [02] Programming Implementation Palooza (Public).docx, How a compiler works.
+  # Practice: Homework TOOLS3: reason about the six compiler stages.
   - id: cs131-v2-implementation-compile-pipeline
     type: parsons
     difficulty: basic
     bloom: understand
     estimated_seconds: 50
-    question: Arrange the stages of the lecture's compiler pipeline. Each stage consumes the result of the
-      preceding stage. Use only the valid stages.
+    question: Arrange the six stages of the lecture's compiler pipeline for a machine-code target. Each
+      stage consumes the preceding stage's result. Use only the valid stages.
     lines:
     - Convert source characters into tokens.
     - Build a syntax tree from the tokens.
     - Check names and types and annotate the tree.
     - Generate intermediate code from the annotated tree.
-    - Generate target code from the intermediate code.
+    - Generate target assembly from the intermediate code.
+    - Assemble the target instructions into machine code.
     distractors:
-    - Execute the source to discover every possible output.
-    explanation: The representation changes from text to tokens to a tree, then to an annotated tree and
-      intermediate code before target code generation.
+    - Run the source program to produce its machine code.
+    explanation: The compiler forms tokens, a syntax tree, an annotated tree, and intermediate code. The
+      target code generator produces assembly; the assembler turns that assembly into machine code. Translation
+      does not require running the source program.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 42–48
-  # Assessment: Supporting implementation skill; no matching standalone past-exam task claimed
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Code generation.
+  # Practice: Homework TOOLS3: identify changed stages when source or target changes.
   - id: cs131-v2-implementation-target-port
     type: single
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: A compiler already translates a source language into shared intermediate code and then Intel
-      machine code. The source language stays the same, but the target becomes ARM. Which component needs
-      a target-specific replacement?
+    question: A compiler already turns a source language into shared intermediate code and then Intel
+      assembly. The source language stays the same, but the target becomes ARM. Which component must translate
+      the intermediate code into the new assembly?
     options:
     - The source tokenizer
     - The source grammar parser
@@ -311,11 +321,11 @@ questions:
     option_feedback:
       0: The source characters and token rules have not changed.
       1: The source grammar has not changed with the target processor.
-    explanation: The frontend can keep producing the same intermediate representation. The backend must
-      translate that representation to ARM instructions.
+    explanation: The frontend can keep producing the same intermediate representation. The target code
+      generator must produce ARM assembly; an ARM assembler can then turn it into machine code.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 53–55
-  # Assessment: Supporting implementation skill; no matching standalone past-exam task claimed
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Linking.
+  # Practice: Homework TOOLS1: diagnose a declared but undefined function and duplicate definitions.
   - id: cs131-v2-implementation-symbol-resolution
     type: single
     difficulty: intermediate
@@ -334,16 +344,16 @@ questions:
     explanation: The linker combines compiled units and resolves references between them. Tokenizing and
       parsing occur earlier on source text.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 60–62
-  # Assessment: Fall 2024 Midterm V1, Problem 5, PDF pp. 9–12 (interpreter state); supporting subskill
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Interpreters.
+  # Practice: Homework TOOLS5: implement commands using variable state; Fall 2024 Midterm V1 Problem 5 (PDF pp. 9–12) extends this to scoped interpreter state.
   - id: cs131-v2-implementation-interpreter-program
     type: parsons
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
     question: Construct a complete program in the lecture's toy language that initializes `count` to 12,
-      decreases it by 5, prints the updated value once, and stops. `set` replaces a value; `add` adds its
-      number.
+      decreases it by 5, prints the updated value once, and stops. `set` replaces a value; `add` adds
+      its number.
     lines:
     - set count 12
     - add count -5
@@ -351,70 +361,65 @@ questions:
     - end
     distractors:
     - set count -5
-    explanation: The order initializes the variable before updating it, prints 7 after the update, and then
-      terminates.
+    explanation: The order initializes the variable before updating it, prints 7 after the update, and
+      then terminates.
 
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 60–62
-  # Assessment: Fall 2024 Midterm V1, Problem 5, PDF pp. 9–12 (interpreter state); supporting subskill
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Interpreters.
+  # Practice: Homework TOOLS5: implement commands using variable state; Fall 2024 Midterm V1 Problem 5 (PDF pp. 9–12) extends this to scoped interpreter state.
   - id: cs131-v2-implementation-interpreter-replacement
-    type: single
+    type: write-in
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: |-
-      In the lecture's toy interpreter, `set` replaces and `add` increments a stored integer. What is printed?
+    question: This interpreter fragment prints the stored value after each command. Type the three values
+      in order.
+    explanation: The set command stores 6, add reads that value and increases it to 10, and the final
+      set replaces it with 3. Each print reads the current dictionary entry.
+    program:
+      language: python
+      file: interpreter.py
+      code: |
+        values = {}
+        program = [("set", 6), ("add", 4), ("set", 3)]
+        for command, operand in program:
+            if command == "set":
+                values["score"] = operand
+            elif command == "add":
+                values["score"] += operand
+            print(values["score"])
+    answer: 6 10 3
 
-      ```text
-      set score 6
-      add score 4
-      set score 3
-      print score
-      end
-      ```
-    options:
-    - '3'
-    - '10'
-    - '13'
-    correct_index: 0
-    option_feedback:
-      1: The later set statement overwrites the value obtained by adding.
-      2: set replaces the value; it does not add 3 to the previous value.
-    explanation: score changes from 6 to 10 and then is replaced by 3. The print operation reads the current
-      map entry.
-
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 60–62
-  # Assessment: Fall 2024 Midterm V1, Problem 5, PDF pp. 9–12 (interpreter state); supporting subskill
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Interpreters.
+  # Practice: Homework TOOLS5: implement commands using variable state; Fall 2024 Midterm V1 Problem 5 (PDF pp. 9–12) extends this to scoped interpreter state.
   - id: cs131-v2-implementation-termination-state
-    type: single
+    type: write-in
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 50
-    question: |-
-      The toy interpreter executes lines in order and stops on `end`. What does this program print?
+    question: This interpreter stops when it reads end. What does it print?
+    explanation: The first command prints 4. The end command breaks out of the execution loop before the
+      add and second print commands can run.
+    program:
+      language: python
+      file: interpreter.py
+      code: |
+        values = {"points": 4}
+        program = ["print", "end", "add", "print"]
+        for command in program:
+            if command == "end":
+                break
+            if command == "add":
+                values["points"] += 9
+            if command == "print":
+                print(values["points"])
+    answer: '4'
 
-      ```text
-      set points 4
-      end
-      add points 9
-      print points
-      ```
-    options:
-    - '4'
-    - '13'
-    - Nothing
-    correct_index: 2
-    option_feedback:
-      0: The program stops before reaching a print instruction.
-      1: Neither the addition nor the print executes after end.
-    explanation: Execution stops before the add and print lines are reached. Having a print instruction
-      in the source does not mean it executes.
-
-  # Lecture: pl_implementation_palooza_handouts_td.pdf pp. 15–18
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 1 (lexer/parser classification)
+  # Taught: [02] Programming Implementation Palooza (Public).docx, Tokenizing (aka Lexing).
+  # Practice: Fall 2025 Quiz 1 v2, Problem 1 (Parser Panic); trace longest matches and rule-order ties.
   - id: cs131-v2-implementation-lexer-repair-proof
     type: multiple
-    difficulty: advanced
-    bloom: evaluate
+    difficulty: intermediate
+    bloom: analyze
     estimated_seconds: 75
     question: A lexer uses longest match, then rule order for ties. It lists `[a-z]+ → ID` before `"run"
       → RUN`. A proposed repair moves the keyword rule first. Which checks should succeed after the repair?

@@ -1,0 +1,200 @@
+title: 'CS 131: Intermediate Haskell'
+description: Trace and build list recursion, comprehensions, polymorphic types, and map/filter/fold pipelines.
+active: true
+# Reviewed against the supplied CS131 lectures, homework, and past assessments (2026-10-14).
+# The deck level follows prerequisites; each item's difficulty describes its own reasoning demand.
+# Source and assessment comments travel with the stable item IDs. Replacement objectives use new IDs.
+# Estimated times are planning estimates, not measured learner completion times.
+cards:
+  # Previous source (superseded item): intro_to_functional_programming_and_haskell_td.pptx, slide 7 (imperative versus functional programming)
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 27–34, 91–95 (recursive accumulator).
+  # Homework: Homework Problems (Public).docx, HASKELL5 B; HASKELL6 E (accumulator helper).
+  # Assessment alignment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b–c; [Midterm] F24 V1 (Public).pdf, Problem 1, p. 2.
+  - id: cs131-v3-haskell-card-accumulator-update
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      Complete the recursive call so `total xs` sums a list of integers. Pass the updated running total in the accumulator argument.
+
+      ```haskell
+      total xs = go xs 0
+        where
+          go [] acc = acc
+          go (x:rest) acc = ___
+      ```
+    answer: '`go rest (acc + x)`'
+    explanation: The recursive call consumes the head and passes the updated total. `go rest acc + x` would perform
+      the addition after recursion rather than carry it in the accumulator.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 8, 41 (infinite lists and demand)
+  # Homework: Homework Problems (Public).docx, HASKELL8 A (finite demand).
+  - id: cs131-functional-card-finite-demand
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: Why can `take 3 (filter even [1 ..])` produce a complete finite result, while `length (filter even [1
+      ..])` cannot?
+    answer: '`take 3` needs only the first three matching elements: `[2,4,6]`. `length` must reach the end of the
+      filtered list, which contains infinitely many even numbers.'
+    explanation: A finite demand can finish when enough qualifying elements occur after a finite search. Laziness
+      alone does not make an unbounded search terminate.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 66–71 (list patterns)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (recursive base cases).
+  # Homework: Homework Problems (Public).docx, HASKELL9–10 (base cases).
+  - id: cs131-v2-functional-card-empty-and-singleton-cases
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 30
+    question: A function sums consecutive pairs and retains a final unpaired item. Write its two base cases for `[]` and `[x]`, using the name `pairSums`.
+    answer: '`pairSums [] = []` and `pairSums [x] = [x]`.'
+    explanation: The recursive two-element pattern cannot handle lists shorter than two. The two base cases preserve the stated behavior on both lengths.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 66–71 (list patterns)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (bounded recursive production).
+  # Homework: Homework Problems (Public).docx, HASKELL9 A (bounded list patterns).
+  - id: cs131-v2-functional-card-write-alternating-selection
+    difficulty: intermediate
+    bloom: create
+    estimated_seconds: 60
+    question: Write `keepFirstOfPairs`, which keeps the first item of each consecutive pair and retains an unpaired last item. For example, `[1,2,3,4,5]` becomes `[1,3,5]`. Use pattern matching.
+    answer: |-
+      ```haskell
+      keepFirstOfPairs [] = []
+      keepFirstOfPairs [x] = [x]
+      keepFirstOfPairs (x:_:xs) = x : keepFirstOfPairs xs
+      ```
+    explanation: The recursive pattern consumes two inputs while producing one. Either zero or one input remains at the base case.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 51–56 (comprehensions)
+  # Homework: Homework Problems (Public).docx, HASKELL8 A–B (write comprehensions).
+  - id: cs131-functional-card-write-comprehension
+    difficulty: intermediate
+    bloom: create
+    estimated_seconds: 45
+    question: Write a list comprehension for the squares of the even numbers from 1 to 10.
+    answer: '`[x * x | x <- [1 .. 10], even x]`, which is `[4,16,36,64,100]`.'
+    explanation: '`x <- [1 .. 10]` is the generator, `even x` is the guard, and `x * x` builds each output element. `map (\x -> x * x) (filter even [1 .. 10])` expresses the same idea.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 57–59 (multiple generators)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  # Homework: Homework Problems (Public).docx, HASKELL8 (comprehensions); lecture slides 53–59 (generator order).
+  - id: cs131-v2-functional-card-puzzle-generator-order
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |-
+      Predict the result.
+
+      ```haskell
+      [(c, n) | n <- [1, 2], c <- "xy"]
+      ```
+    answer: "`[('x',1),('y',1),('x',2),('y',2)]`"
+    explanation: Generators run like nested loops in the order they are written. `n` is the outer loop and `c` the inner one, so `c` varies fastest. The order of the components inside each tuple does not change the loop order.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 66–70 (list pattern cheat sheet)
+  # Homework: Homework Problems (Public).docx, HASKELL9 A (list patterns).
+  - id: cs131-functional-card-list-pattern-shapes
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 45
+    question: Which lists does each pattern match? `[]`, `[x]`, `(x:xs)`, and `(x:y:rest)`.
+    answer: '`[]` matches only the empty list, `[x]` exactly one element, `(x:xs)` one or more elements, and `(x:y:rest)` two or more.'
+    explanation: Against a two-element list, `(x:y:rest)` binds `rest` to `[]`. The colon in a pattern takes a list apart the way `:` builds one.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 73–75, 87–88 (type variables, map)
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 3B, p. 5 (polymorphic map type inference).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL7 (map type inference).
+  - id: cs131-v2-functional-card-infer-duplicate-map-type
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |-
+      Infer the most general type of `twins` and explain why its output is a list of tuples.
+
+      ```haskell
+      twins xs = map (\x -> (x,x)) xs
+      ```
+    answer: '`twins :: [a] -> [(a,a)]`. Each input element produces one tuple containing that element twice.'
+    explanation: The two tuple components have the same type because both are the same bound variable. `map` collects those tuples into a list.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 76 (type classes)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL7; lecture slide 76 (Ord).
+  - id: cs131-functional-card-ord-constraint
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 30
+    question: |-
+      Infer the most general type and name the operation that causes its constraint.
+
+      ```haskell
+      smaller x y = if x < y then x else y
+      ```
+    answer: '`smaller :: Ord a => a -> a -> a`; comparing with `<` requires `Ord a`.'
+    explanation: The comparison requires compatible operand types, and both branches return one of those operands.
+      `Ord` permits orderable types such as numbers, characters, and strings.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 83–86 (mappers, filters, and reducers)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL1 (map/filter/fold construction).
+  - id: cs131-functional-card-mapper-filter-reducer
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: To sum the lengths of strings longer than 3 characters in `xs`, which stage uses `filter`, which uses
+      `map`, and which uses `foldl`? Give one complete expression.
+    answer: '`foldl (+) 0 (map length (filter (\s -> length s > 3) xs))`'
+    explanation: Filtering keeps the qualifying strings; mapping converts them to lengths; folding combines the lengths
+      into one number. Mapping the predicate itself would produce Booleans.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 83–90 (map and filter)
+  # Assessment: [Midterm] F23 (Public).pdf, Problem 3a–b, p. 6 (map and filter construction).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL1 A (select rather than transform).
+  - id: cs131-v2-functional-card-pipeline-debugging
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: A student wants only the strings whose length exceeds 2 but writes `map (\s -> length s > 2) words`. Replace one function name and explain the result-type change.
+    answer: Use `filter (\s -> length s > 2) words`. The result changes from `[Bool]` to `[String]`.
+    explanation: '`map` collects predicate results. `filter` uses the predicate to select original strings.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 91–95 (foldl trace-through)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3c (accumulator recursion).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL1 A.3; ADVHASKELL2 B.7 (fold accumulator).
+  - id: cs131-v2-functional-card-fold-working-steps
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 30
+    question: List the accumulator after each input element in `foldl (\acc x -> 2*acc + x) 1 [3,4]`, then give the result.
+    answer: 'After 3: `2*1+3 = 5`. After 4: `2*5+4 = 14`. The result is 14.'
+    explanation: Each update receives the previous accumulator, not the original seed.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 91–96 (foldl and foldr)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  # Homework: Homework Problems (Public).docx, ADVHASKELL1 A.3 (foldl/r; grouping supplied).
+  - id: cs131-v2-functional-card-puzzle-folds-build-lists
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      Use `foldr f z [a,b,c] = f a (f b (f c z))` and left-to-right accumulator updates for `foldl`. Predict these values:
+
+      ```haskell
+      foldr (:) [] [1,2,3]
+      foldl (\acc x -> x : acc) [] [1,2,3]
+      ```
+    answer: '`[1,2,3]`, then `[3,2,1]`.'
+    explanation: '`foldr (:) []` rebuilds the list from the right, preserving its order. `foldl` processes 1 first
+      and puts each later element in front of the accumulator, so the last element ends up first.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 97–99 (map-reduce at industrial scale)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL1 B; HASKELL7 (pure map).
+  - id: cs131-functional-card-mapreduce-parallelism
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: If `square x = x*x`, what is `map square [2,3] ++ map square [5,7]`? Why can the two map computations
+      run independently?
+    answer: '`[4,9,25,49]`. Each squared value depends only on its own input, and the calls do not modify shared state.'
+    explanation: Concatenating the two results in input order gives the same list as mapping over `[2,3,5,7]`. Parallel
+      completion order must not change that output order.

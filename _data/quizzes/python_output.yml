@@ -1,11 +1,12 @@
-title: "Python Output Puzzles"
-description: "Trace a short program, then type its output. Every answer needs only numbers and spaces."
+title: Python Output Puzzles
+description: Trace a short program, then type its output. Every answer needs only numbers and spaces.
 active: true
 questions:
+  # Taught / practice evidence: Essential Python pp. 9, 20–24; Quiz 1 Problem 2B–D.
   - id: python-output-alias
     type: write-in
     difficulty: intermediate
-    question: "A second name remembers the original task list. What lengths are printed?"
+    question: A second name remembers the original task list. What lengths are printed?
     program:
       language: python
       file: tasks.py
@@ -16,13 +17,15 @@ questions:
         tasks = [9]
         print(len(saved),
               len(tasks))
-    answer: "2 1"
-    explanation: "`append` changes the list shared by both names. Assigning `[9]` moves only `tasks` to a new list; `saved` still reaches the two-item list."
+    answer: 2 1
+    explanation: '`append` changes the list shared by both names. Assigning `[9]` moves only `tasks` to a new list; `saved`
+      still reaches the two-item list.'
 
+  # Taught / practice evidence: Essential Python p. 10; Homework PYTHON4; F24 Midterm Problem 4.
   - id: python-output-copy-depth
     type: write-in
-    difficulty: advanced
-    question: "Which score does each copy keep after the original row changes?"
+    difficulty: intermediate
+    question: Which score does each copy keep after the original row changes?
     program:
       language: python
       file: scores.py
@@ -35,13 +38,15 @@ questions:
         rows[0][0] = 7
         print(draft[0][0],
               archive[0][0])
-    answer: "7 3"
-    explanation: "The shallow copy creates a new outer list but shares the inner row, so `draft` sees `7`. The deep copy also copies that row, so `archive` keeps `3`."
+    answer: 7 3
+    explanation: The shallow copy creates a new outer list but shares the inner row, so `draft` sees `7`. The deep copy
+      also copies that row, so `archive` keeps `3`.
 
+  # Taught / practice evidence: Essential Python pp. 22–24; Homework PYTHON2–3; Quiz 1 Problem 2B.
   - id: python-output-argument
     type: write-in
     difficulty: intermediate
-    question: "The function changes a slot, then replaces its local list. What reaches the caller?"
+    question: The function changes a slot, then replaces its local list. What reaches the caller?
     program:
       language: python
       file: resize.py
@@ -54,13 +59,15 @@ questions:
         result = resize(batch)
         print(batch[0],
               len(result))
-    answer: "6 1"
-    explanation: "`values` initially refers to `batch`, so the slot assignment changes the caller's list. Rebinding `values` affects only that local name; the returned list has one item."
+    answer: 6 1
+    explanation: '`values` initially refers to `batch`, so the slot assignment changes the caller''s list. Rebinding `values`
+      affects only that local name; the returned list has one item.'
 
+  # Taught / practice evidence: Essential Python pp. 25–27; Function Palooza, Default Parameters.
   - id: python-output-default
     type: write-in
-    difficulty: advanced
-    question: "How many events does the first returned list contain after all three calls?"
+    difficulty: intermediate
+    question: How many events does the first returned list contain after all three calls?
     program:
       language: python
       file: events.py
@@ -72,36 +79,44 @@ questions:
         record(5, [])
         record(6)
         print(len(first))
-    answer: "2"
-    explanation: "The first and third calls share the list created when `record` was defined. The middle call receives its own explicit list. `first` therefore contains `4` and `6`."
+    answer: '2'
+    explanation: The first and third calls share the list created when `record` was defined. The middle call receives its
+      own explicit list. `first` therefore contains `4` and `6`.
 
+  # Taught / practice evidence: Essential Python pp. 20–21 (shared rows); Quiz 1 Problem 2C–D.
   - id: python-output-repeated-row
     type: write-in
-    difficulty: expert
-    question: "A small board starts with two rows. What is the sum of the second row after this update?"
+    difficulty: intermediate
+    question: A small board starts with two rows. What is the sum of the second row after this update?
     program:
       language: python
       file: board.py
       code: |
-        board = [[0, 0]] * 2
+        row = [0, 0]
+        board = [row, row]
         board[0][1] = 4
         print(sum(board[1]))
-    answer: "4"
-    explanation: "Repetition copies the reference to one row. Both outer slots reach the same list, so the second row also contains `0` and `4`. A comprehension would create separate rows."
+    answer: '4'
+    explanation: Both outer slots refer to row, so the update changes the list reached through either slot. The second
+      row contains 0 and 4.
 
+  # Taught / practice evidence: Control Palooza, Generators (pause/resume and one shared iterator); Homework CTRL3; F24 Final Problem 6.
   - id: python-output-generator
     type: write-in
     difficulty: intermediate
-    question: "Two names refer to the stream of odd numbers. Which number prints?"
+    question: Two names refer to the stream of odd numbers. Which number prints?
     program:
       language: python
       file: stream.py
       code: |
-        numbers = [1, 3, 5]
-        odds = (n for n in numbers)
+        def odd_numbers():
+            for n in [1, 3, 5]:
+                yield n
+        odds = odd_numbers()
         shared = odds
         next(odds)
         next(shared)
         print(next(odds))
-    answer: "5"
-    explanation: "Both names refer to one generator with one current position. The first two calls consume `1` and `3`; the final call consumes and prints `5`."
+    answer: '5'
+    explanation: Both names refer to one generator with one current position. The first two calls consume `1` and `3`;
+      the final call consumes and prints `5`.

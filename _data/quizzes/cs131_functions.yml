@@ -1,11 +1,11 @@
 title: 'CS 131: Functions'
 description: Practice argument passing, delayed evaluation, closures, and exception flow from the lectures.
 active: true
-# Original replacement practice. Page references are physical PDF pages.
+# Reviewed against the supplied lecture notes, homework, and past assessments.
 # Time estimates are planning estimates, not time limits.
 questions:
-  # Lecture: data_palooza_v12_handouts.pdf pp.167–172; function_palooza_v8_handouts.pdf p.9
-  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1; [Final] F24 Solutions (Public).pdf P3 pp.8–9 (parameter-passing trace)
+  # Lecture: [05] Function Palooza (Public).docx — Pass by Value; Pass by Reference
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1
   - id: cs131-v2-functions-value-reference
     type: single
     difficulty: intermediate
@@ -34,38 +34,32 @@ questions:
       2: q aliases b, so updating q persists in the caller.
     explanation: Assigning p changes only the local copy. Assigning q changes b through the alias.
 
-  # Lecture: data_palooza_v12_handouts.pdf pp.174–177; function_palooza_v8_handouts.pdf p.9
-  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1 (mutation versus parameter rebinding)
+  # Lecture: [05] Function Palooza (Public).docx — Pass by Object Reference
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1
   - id: cs131-v2-functions-object-reference
-    type: single
+    type: write-in
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 60
-    question: |-
-      What does this Python code print?
+    question: What value remains in the caller’s list? Type the output.
+    explanation: The first mutation changes the shared list. Rebinding the parameter makes later changes affect only
+      the new list.
+    program:
+      language: python
+      file: functions.py
+      code: |
+        def change(items):
+            items[0] = 6
+            items = [9]
+            items[0] = 10
 
-      ```python
-      def change(items):
-          items[0] = 6
-          items = [9]
-          items[0] = 10
+        a = [2]
+        change(a)
+        print(a[0])
+    answer: '6'
 
-      a = [2]
-      change(a)
-      print(a)
-      ```
-    options:
-    - '[2]'
-    - '[6]'
-    - '[10]'
-    correct_index: 1
-    option_feedback:
-      0: Passing an object reference does not copy the list itself.
-      2: The last mutation targets the replacement list, which a never refers to.
-    explanation: The first mutation changes the shared list. Rebinding the parameter makes later changes affect only the new list.
-
-  # Lecture: data_palooza_v12_handouts.pdf pp.167–177,189; function_palooza_v8_handouts.pdf p.9
-  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1(a) (infer all compatible bindings)
+  # Lecture: [05] Function Palooza (Public).docx — Parameter Passing Semantics
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1(a)
   - id: cs131-v2-functions-infer-passing
     type: multiple
     difficulty: intermediate
@@ -85,8 +79,8 @@ questions:
       2: A separate object reference can still point to the same mutable Box.
     explanation: Both reference passing and object-reference passing let this mutation reach the original Box. The observation does not distinguish them.
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.10–11
-  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1 (compare argument-passing traces; value-result extension from lecture)
+  # Lecture: [05] Function Palooza (Public).docx — Pass by Value-Result
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1 (parameter trace; value-result taught in notes)
   - id: cs131-v2-functions-copy-in-out
     type: single
     difficulty: intermediate
@@ -114,8 +108,8 @@ questions:
       1: Pure value passing would leave x unchanged after the call; value-result copies the final value back.
     explanation: Inside change, only p’s private copy has changed, so x is still 3. Returning copies 8 back to x.
 
-  # Lecture: data_palooza_v12_handouts.pdf pp.187–193; function_palooza_v8_handouts.pdf p.9
-  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P2(a–b); [Final] F23 Solutions (Public).pdf Binding and Parameter Passing pp.7–8 (name/need trace)
+  # Lecture: [05] Function Palooza (Public).docx — Pass by Name/Need
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P2
   - id: cs131-v2-functions-name-need-count
     type: single
     difficulty: intermediate
@@ -139,8 +133,8 @@ questions:
       2: Need semantics caches the first result rather than calling probe again.
     explanation: Name reevaluates the argument expression for each use of x. Need evaluates it once and caches its value for the second use.
 
-  # Lecture: data_palooza_v12_handouts.pdf pp.187–193; function_palooza_v8_handouts.pdf p.9
-  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P2(a–b) (identify demanded arguments)
+  # Lecture: [05] Function Palooza (Public).docx — Pass by Name/Need
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P2
   - id: cs131-v2-functions-unused-lazy-argument
     type: single
     difficulty: intermediate
@@ -164,8 +158,8 @@ questions:
       2: Returning from a function does not force its unused lazy arguments.
     explanation: first demands x but never y. The deferred division is never evaluated.
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.70–71
-  # Assessment: [Final] F24 Solutions (Public).pdf P1(B.3) p.3 (closure/free-variable reasoning)
+  # Lecture: [05] Function Palooza (Public).docx — Capture by Value
+  # Assessment: Homework Problems (Public).docx FUNC4(A.3)
   - id: cs131-v2-functions-capture-copy
     type: single
     difficulty: intermediate
@@ -190,35 +184,33 @@ questions:
       2: The lambda stores its own captured value, not a reference to destroyed storage.
     explanation: 'The closure stores a copy of offset’s value at creation: 3. Changing the original variable does not change that copy.'
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.71,74–75; data_palooza_v12_handouts.pdf pp.174–177
-  # Assessment: [Midterm] F24 Solutions (Public).pdf P4 pp.7–8 (shared-reference mutation); closure extension from lecture
-  - id: cs131-v2-functions-capture-shared-object
-    type: single
+  # Lecture: [05] Function Palooza (Public).docx — Capture by Environment
+  # Assessment: Homework Problems (Public).docx FUNC4(A.1,A.3)
+  - id: cs131-v3-functions-capture-environment
+    type: write-in
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 40
-    question: |-
-      A closure captures an object reference to the existing Box, without copying the Box itself. What is printed?
+    question: What does the returned Python function print when called from this different scope?
+    explanation: The closure looks up offset in the lexical environment of make, where it was changed to 8. It does
+      not freeze the initial value 3 or use the global value 100. Adding 2 therefore yields 10.
+    program:
+      language: python
+      file: functions.py
+      code: |
+        def make():
+            offset = 3
+            add = lambda x: x + offset
+            offset = 8
+            return add
 
-      ```text
-      box = new Box(value=3)
-      change = lambda(): box.value = 8
-      box.value = 5
-      change()
-      print(box.value)
-      ```
-    options:
-    - '3'
-    - '5'
-    - '8'
-    correct_index: 2
-    option_feedback:
-      0: Creating the closure does not preserve or later restore the Box’s initial field value.
-      1: The closure runs after the field is set to 5, and its mutation changes that same Box to 8.
-    explanation: The captured object reference reaches the original Box. Mutating its field changes the object later read through box.
+        offset = 100
+        f = make()
+        print(f(2))
+    answer: '10'
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.64,67,70–73
-  # Assessment: [Final] F23 Solutions (Public).pdf Before-The-Midterm Concepts pp.2–3 (construct returned closures)
+  # Lecture: [05] Function Palooza (Public).docx — First Class Functions; Capture by Environment
+  # Assessment: [Final] F23 Solutions (Public).pdf pp.2-3 (returned functions)
   - id: cs131-v2-functions-return-function
     type: parsons
     difficulty: intermediate
@@ -236,8 +228,8 @@ questions:
     - '    return add(0)'
     explanation: Returning add preserves a callable closure that uses n. Returning add(0) would return a number instead, so f(2) would fail.
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.70–71
-  # Assessment: [Final] F24 Solutions (Public).pdf P1(B.3) p.3 (identify free variables)
+  # Lecture: [05] Function Palooza (Public).docx — Anonymous (Lambda) Functions
+  # Assessment: [Final] F24 Solutions (Public).pdf P1(B), PDF p.3
   - id: cs131-v2-functions-free-variables
     type: multiple
     difficulty: intermediate
@@ -262,8 +254,8 @@ questions:
       2: A lambda parameter is supplied when the lambda is called, rather than captured from its enclosing scope.
     explanation: m and b are defined outside the lambda but used in its body. x is the lambda’s own parameter.
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.40–44
-  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P4; [Final] F23 Solutions (Public).pdf Error Handling pp.16–18 (unwinding trace)
+  # Lecture: [05] Function Palooza (Public).docx — Exception Handling: Execution Flow
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P4
   - id: cs131-v2-functions-exception-unwind
     type: single
     difficulty: intermediate
@@ -296,8 +288,8 @@ questions:
       1: A catch does not resume the abandoned try block at K.
     explanation: The exception exits inner and skips the rest of the try block. After the handler, execution continues with D.
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.44–46
-  # Assessment: [Final] F23 Solutions (Public).pdf Error Handling pp.16–18 (match exception handlers)
+  # Lecture: [05] Function Palooza (Public).docx — The Exception Hierarchy
+  # Assessment: Homework Problems (Public).docx FUNC3(A)
   - id: cs131-v2-functions-handler-supertype
     type: single
     difficulty: intermediate
@@ -314,8 +306,8 @@ questions:
       2: The earlier IOError handler already matches, so control does not continue to the broader handler.
     explanation: The inner handler is incompatible. The first compatible outer handler accepts IOError and its ReadError subtype.
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.49–51
-  # Assessment: [Final] F23 Solutions (Public).pdf Error Handling pp.16–19 (finally and return trace)
+  # Lecture: [05] Function Palooza (Public).docx — Finally
+  # Assessment: [Final] F23 Solutions (Public).pdf Error Handling pp.16-18
   - id: cs131-v2-functions-finally-before-return
     type: single
     difficulty: intermediate
@@ -346,8 +338,8 @@ questions:
       1: Running finally does not cancel the return; A is not reached.
     explanation: The pending return runs finally before leaving f. The statement after the try/finally is skipped.
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.47–50,52–54
-  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P4; [Final] F23 Solutions (Public).pdf Error Handling pp.18–19 (resource leaks and repair)
+  # Lecture: [05] Function Palooza (Public).docx — Finally; Exceptions and memory safety
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P4
   - id: cs131-v2-functions-cleanup-finally
     type: parsons
     difficulty: intermediate
@@ -365,8 +357,8 @@ questions:
     - 'except Error:'
     explanation: The finally block closes the acquired connection on both normal and exceptional paths. If send raises, the exception propagates after cleanup and the final print is skipped. An except block alone would run cleanup only on failure.
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.25–29,61
-  # Assessment: [Final] F23 Solutions (Public).pdf Error Handling pp.16–19; Before-The-Midterm Concepts pp.4–6 (error-result representation)
+  # Lecture: [05] Function Palooza (Public).docx — Optionals; Result Object
+  # Assessment: Homework Problems (Public).docx FUNC3(B)
   - id: cs131-v2-functions-result-choice
     type: single
     difficulty: advanced
@@ -383,8 +375,8 @@ questions:
       2: These are expected outcomes that the caller can handle, not a broken program invariant.
     explanation: A Result distinguishes a successful value from failure details, so the caller can handle missing records and denied access differently.
 
-  # Lecture: function_palooza_v8_handouts.pdf p.58
-  # Assessment: [Final] F23 Solutions (Public).pdf Error Handling pp.18–19 (classify exception guarantees)
+  # Lecture: [05] Function Palooza (Public).docx — Exception handling guarantees
+  # Assessment: [Final] F23 Solutions (Public).pdf Error Handling p.19
   - id: cs131-v2-functions-exception-guarantees
     type: multiple
     difficulty: intermediate

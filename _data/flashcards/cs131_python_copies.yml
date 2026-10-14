@@ -1,0 +1,82 @@
+title: 'CS 131: Python Copies and Nested Objects'
+description: Distinguish aliases, shallow copies, deep copies, and mutable children.
+active: true
+# Reviewed against the supplied CS131 lectures, homework, and past assessments (2026-10-14).
+cards:
+  # Taught / practice evidence: Essential Python handout p. 10 (copy depth); Homework PYTHON4 A.1–A.5; F24 Midterm V1 Problem 4, pp. 7–8.
+  - id: cs131-v2-python-card-compare-shallow-children
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 30
+    question: |-
+      Without running it, predict both booleans and explain the difference.
+
+      ```python
+      from copy import copy
+      a = [[2]]
+      b = copy(a)
+      print(a is b, a[0] is b[0])
+      ```
+    answer: '`False True`: the outer list is new, but its child is shared.'
+    explanation: A shallow copy copies the outer list's references rather than recursively cloning their targets.
+
+  # Taught / practice evidence: Essential Python handout p. 10 (copy depth); Homework PYTHON4 A.1–A.5; F24 Midterm V1 Problem 4, pp. 7–8.
+  - id: cs131-v2-python-card-evaluate-double-shallow-copy
+    difficulty: intermediate
+    bloom: evaluate
+    estimated_seconds: 45
+    question: For `source = [[1]]`, a teammate proposes `copy(copy(source))` to isolate all later nested edits. Does two-stage
+      shallow copying meet that requirement? Give one operation that settles the question.
+    answer: No. With `trial = copy(copy(source))`, executing `trial[0].append(2)` also changes `source` to `[[1, 2]]`.
+    explanation: Each shallow copy makes only another outer list. All three still refer to the same inner list.
+
+  # Taught / practice evidence: Essential Python handout p. 10 (copy depth); Homework PYTHON4 A.1–A.5; F24 Midterm V1 Problem 4, pp. 7–8.
+  - id: cs131-python-card-tuple-replace
+    difficulty: basic
+    question: For pair = ([2], "west"), explain why pair[0].append(6) succeeds but pair[0] = [2, 6] fails.
+    answer: The append changes the list already stored in the tuple. The assignment tries to replace a tuple slot and raises
+      TypeError.
+    explanation: Tuple immutability fixes its member references, not the state of objects reached through those references.
+
+  # Taught / practice evidence: Essential Python handout p. 10 (copy depth); Homework PYTHON4 A.1–A.5; F24 Midterm V1 Problem 4, pp. 7–8.
+  - id: cs131-python-card-copy-dictionary-boundary
+    difficulty: intermediate
+    question: |-
+      Predict the output and identify the shared object.
+
+      ```python
+      from copy import copy
+      source = {"samples": [5]}
+      snapshot = copy(source)
+      source["samples"].append(7)
+      source["samples"] = [9]
+      print(snapshot["samples"], source["samples"])
+      ```
+    answer: '`[5, 7] [9]`'
+    explanation: The new dictionary initially shares its list value with source. The append reaches that list before source
+      replaces its own field.
+
+  # Taught / practice evidence: Essential Python handout p. 10 (copy depth); Homework PYTHON4 A.1–A.5; F24 Midterm V1 Problem 4, pp. 7–8.
+  - id: cs131-v2-python-card-write-independent-nested-edit
+    difficulty: intermediate
+    bloom: create
+    estimated_seconds: 60
+    question: Write a function `with_zero(rows)` that returns a deep copy of a nonempty list of integer lists with its
+      first element changed to 0. Each row is nonempty. The input must remain unchanged; assume `deepcopy` is imported.
+    answer: |-
+      ```python
+      def with_zero(rows):
+          result = deepcopy(rows)
+          result[0][0] = 0
+          return result
+      ```
+    explanation: Deep copying must happen before the nested assignment so no mutable row remains shared with the input.
+
+  # Taught / practice evidence: Essential Python handout p. 10 (copy depth); Homework PYTHON4 A.1–A.5; F24 Midterm V1 Problem 4, pp. 7–8.
+  - id: cs131-python-card-returned-alias-repair
+    difficulty: intermediate
+    question: A getter returns a list of mutable lists directly. Callers must be able to edit both the result’s outer list
+      and its rows without affecting the object. Write the getter body, assuming deepcopy is imported.
+    answer: '`return deepcopy(self.rows)`'
+    explanation: return self.rows[:] isolates outer-list edits but still shares rows. This contract specifically requires
+      nested isolation.

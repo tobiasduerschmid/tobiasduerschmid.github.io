@@ -1,0 +1,241 @@
+title: 'CS 131: Advanced Haskell'
+description: Reason about closures, partial application, currying, higher-order types, recursive data, and immutable updates.
+active: true
+# Reviewed against the supplied CS131 lectures, homework, and past assessments (2026-10-14).
+# The deck level follows prerequisites; each item's difficulty describes its own reasoning demand.
+# Source and assessment comments travel with the stable item IDs. Replacement objectives use new IDs.
+# Estimated times are planning estimates, not measured learner completion times.
+cards:
+  # Previous source (superseded item): intro_to_functional_programming_and_haskell_td.pptx, slides 4, 130 (history)
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 73–80, 125 (higher-order types).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL7 (higher-order type inference).
+  # Assessment alignment: [Midterm] F23 (Public).pdf, Problem 4a, p. 8; [Midterm] F24 V1 (Public).pdf, Problem 3C, p. 5.
+  - id: cs131-v3-haskell-card-infer-composed-result
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 90
+    question: |-
+      Infer the most general type of `judge`. Use `length :: [a] -> Int`.
+
+      ```haskell
+      judge transform measure xs = measure (transform (head xs)) > length xs
+      ```
+    answer: '`judge :: (a -> b) -> (b -> Int) -> [a] -> Bool`'
+    explanation: '`head xs` has the element type `a`; `transform` turns it into `b`. Comparing `measure`''s result
+      with `length xs` forces that result to `Int`, and `>` produces `Bool`. The two function arguments require parentheses.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 8 (evaluation follows need)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  # Revised source: intro_to_functional_programming_and_haskell_td.pptx, slides 8, 39, 47 (lazy demand; error expression).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL3 C; lecture slide 47 (error and demand).
+  - id: cs131-v2-functional-card-puzzle-demand-undefined
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 60
+    question: Which of `snd (error "unused", 7)`, `length [error "unused"]`, and `sum [error "needed", 1]` can produce
+      a result, and why?
+    answer: '`snd (error "unused", 7)` is `7`, and `length [error "unused"]` is `1`. Evaluating the sum raises the
+      error.'
+    explanation: '`snd` ignores the first pair component. `length` follows the list structure without demanding its
+      element. `sum` needs the elements'' numeric values, so it demands the failing expression.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 78–82 (first-class and higher-order functions)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL2 A (higher-order functions).
+  - id: cs131-functional-card-first-class-functions
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 30
+    question: 'Which definitions are higher-order, and why: `apply f x = f x`, `double x = 2*x`, and `makeAdder n
+      = \x -> n+x`?'
+    answer: '`apply` accepts a function, and `makeAdder` returns one. `double` does neither.'
+    explanation: First-class functions can be passed, returned, and stored like other values. A higher-order function
+      specifically accepts or returns a function.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 102–107 (closures)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL3 A.1–3 (closure capture).
+  - id: cs131-functional-card-closure-definition
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 45
+    question: What is a closure? Considering only `x` and `k` in `\x -> x * k`, which variable is bound and which
+      is free?
+    answer: A closure is a function together with the values of the free variables it uses, captured when the function
+      is created. `x` is bound, because it is the lambda's parameter; `k` is free.
+    explanation: '`scaleBy k = \x -> x * k` returns a separate closure for each `k`, so `scaleBy 2 5` is `10` and
+      `scaleBy 3 5` is `15`.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 102–107 (closures capture bindings)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  # Homework: Homework Problems (Public).docx, ADVHASKELL3 A (lexical capture).
+  - id: cs131-v2-functional-card-puzzle-closure-keeps-binding
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: |-
+      Predict the output.
+
+      ```haskell
+      main = do
+        let k = 2
+            times = (* k)
+        let k = 50
+        print (times 4)
+      ```
+    answer: Prints `8`.
+    explanation: '`times` refers to the binding `k = 2`. The second `let` introduces a new `k` without changing the first, so the section still multiplies by 2.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 113–117 (partial function application)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3c; [Midterm] F24 V1 (Public).pdf, Problem 3B, p. 5 (infer a partially applied function).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL4 A.2; ADVHASKELL7 (partial application types).
+  - id: cs131-v2-functional-card-partial-application-higher-order
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: 'Given `map :: (a -> b) -> [a] -> [b]` and `length :: [a] -> Int`, infer the most general type of `map length`.'
+    answer: '`map length :: [[a]] -> [Int]`.'
+    explanation: The mapping function accepts a list and returns its length. Therefore each element of the outer input list is itself a list.
+
+  # Previous source (superseded item): intro_to_functional_programming_and_haskell_td.pptx, slides 22, 116–117 (operators as partially applied functions)
+  # Previous assessment context: none; prediction card paired with the chapter's Puzzles section.
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 22, 113–117 (prefix partial application).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL4 (partial application); lecture slide 22 (prefix operators).
+  - id: cs131-v3-haskell-card-partial-subtraction
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: Predict `map ((-) 10) [2,4]`, then write a lambda that instead subtracts 10 from every list element.
+    answer: The result is `[8,6]`. To subtract 10 from each element, use `map (\x -> x - 10) [2,4]`, giving `[-8,-6]`.
+    explanation: 'Partial application of `(-)` fixes its first operand: `(-) 10` means `\x -> 10 - x`. Argument order
+      matters for subtraction.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 80, 125 (function-valued parameters in curried types)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 5 (currying and function-valued arguments).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL4 A.1 (arrow parentheses).
+  - id: cs131-v2-functional-card-preserve-function-argument
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: Add parentheses to expose right-associative arrows in `(Int -> Bool) -> Int -> Bool`. Which parentheses cannot be removed without changing the type?
+    answer: '`(Int -> Bool) -> (Int -> Bool)`. The parentheses around the first `Int -> Bool` must remain.'
+    explanation: The first argument is itself a function. The parentheses on the result side merely make the default arrow grouping explicit.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 122–124 (currying by hand)
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 3D, p. 6 (explicitly curry a function).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL4 C.4 (explicit currying).
+  - id: cs131-v2-functional-card-curried-function-production
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: Rewrite `applyThen f g x = g (f x)` using three nested single-argument lambdas, preserving argument order.
+    answer: '`applyThen = \f -> \g -> \x -> g (f x)`'
+    explanation: Each lambda receives one argument. The body passes `f x` to `g`; whether that expression is evaluated depends on how `g` uses its argument.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 123–129 (currying challenge)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL4 C.3–4 (nested lambdas).
+  - id: cs131-functional-card-uncurry-lambdas
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: Rewrite `f = \a -> (\b -> a - b * 2)` as an ordinary definition with two parameters, and give the type of `f` if `a` and `b` are `Int` values.
+    answer: '`f a b = a - b * 2`, with `f :: Int -> Int -> Int`, which means `Int -> (Int -> Int)`.'
+    explanation: Each nested lambda contributes one parameter in order, so the outer lambda's parameter becomes the first argument.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 131–135 (defining algebraic data types)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL5 A.1 (define constructors).
+  - id: cs131-functional-card-define-variants
+    difficulty: intermediate
+    bloom: create
+    estimated_seconds: 45
+    question: 'Define a type `Payment` that `print` can display, with three variants: `Cash` with no fields, `Card` with a `String`, and `Transfer` with a `String` and an `Int`.'
+    answer: '`data Payment = Cash | Card String | Transfer String Int deriving Show`'
+    explanation: 'Each variant is a constructor. `Cash` has no fields, while the others are functions such as `Transfer :: String -> Int -> Payment`. `deriving Show` generates the code that displays a value.'
+
+  # Previous source (superseded item): intro_to_functional_programming_and_haskell_td.pptx, slide 130 (sum and product types)
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 131–142 (constructor pattern matching).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL5 A.2; ADVHASKELL6 (constructor branches).
+  # Assessment alignment: [Midterm] F23 (Public).pdf, Problem 2b, pp. 4–5 (process constructor fields).
+  - id: cs131-v3-haskell-card-process-variants
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: 'For `data Charge = Free | Single Int | Combined Int Int`, write `amount :: Charge -> Int` using one
+      equation per constructor. A `Free` charge is zero; a `Single` charge returns its stored integer; a `Combined` charge is the sum of its fields.'
+    answer: |-
+      ```haskell
+      amount :: Charge -> Int
+      amount Free = 0
+      amount (Single n) = n
+      amount (Combined a b) = a + b
+      ```
+    explanation: A value uses one constructor, whose pattern exposes its fields. `Combined` supplies both amounts
+      to the same branch.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 143–145 (recursive algebraic types)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 4a (define a recursive algebraic type).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL5 C.1 (recursive child list).
+  - id: cs131-v2-functional-card-constructor-recursive-field
+    difficulty: intermediate
+    bloom: create
+    estimated_seconds: 30
+    question: Define a Haskell type `Folder` with one constructor `FolderNode` that stores a string name and a list of child folders.
+    answer: '`data Folder = FolderNode String [Folder]`'
+    explanation: The child field is a list of the type being defined, allowing zero, one, or many nested folders.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 143–145 (processing a list built from an algebraic type)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 4b (recursive aggregation).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL5 A.2–3 (recursive ADT processing).
+  - id: cs131-v2-functional-card-recursive-total-completion
+    difficulty: intermediate
+    bloom: create
+    estimated_seconds: 45
+    question: 'For `data Chain = End | Link Int Chain`, write `total :: Chain -> Int` using one equation for each constructor.'
+    answer: |-
+      ```haskell
+      total :: Chain -> Int
+      total End = 0
+      total (Link value next) = value + total next
+      ```
+    explanation: The empty structure contributes zero; each link contributes its own integer plus the result for its tail.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 143–145 (adding to an immutable list)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL8 (append cost).
+  - id: cs131-functional-card-append-cost
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: 'Why is `x : xs` cheap for an immutable list, while `xs ++ [x]` takes time proportional to the length of `xs`?'
+    answer: '`x : xs` creates one new node that points to the existing `xs`, which is shared unchanged. Appending must change the last node''s link, and because no node can change, every node of `xs` is rebuilt.'
+    explanation: Only the list cells that lead to the end are rebuilt; the elements themselves are not copied.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 146–147 (immutable trees, garbage collection)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL5 B; lecture slides 146–147 (sharing and reachability).
+  - id: cs131-functional-card-tree-path-copying
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: When you insert a value into an immutable, balanced binary search tree with n nodes, which nodes are
+      new, which are shared, and what happens to the old version's unused nodes?
+    answer: The insertion constructs a new leaf and rebuilds its ancestors, a number proportional to the tree height,
+      which is logarithmic when balanced. Off-path subtrees are shared. Old nodes become eligible for garbage collection
+      only when no live reference needs them.
+    explanation: Keeping the old root preserves the old version. Sharing avoids copying the entire tree; the cost
+      described here is the insertion's path rebuilding, not a bound on an individual garbage-collection pause.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 87–90, 113–117, 136–145 (map, partial application, recursive ADTs)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL5 C (n-ary trees).
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 2, pp. 3–4 (search all descendants).
+  - id: cs131-v3-haskell-card-tree-recursive-search
+    difficulty: advanced
+    bloom: apply
+    estimated_seconds: 90
+    question: 'For a finite tree `data Folder = Folder String [Folder]`, write `contains :: String -> Folder -> Bool`
+      that checks the current folder and all descendants for a matching name. You may use `map` and `or`; `or []`
+      is `False`.'
+    answer: |-
+      ```haskell
+      contains :: String -> Folder -> Bool
+      contains target (Folder name children) =
+        name == target || or (map (contains target) children)
+      ```
+    explanation: The current name supplies one Boolean. Partially applying `contains` to the target creates a function
+      for each child, and `or` combines their results. An unmatched leaf returns `False`.

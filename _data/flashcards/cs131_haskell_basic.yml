@@ -1,0 +1,207 @@
+title: 'CS 131: Basic Haskell'
+description: Practice pure functions, application, guards, local bindings, tuples, strings, and list construction.
+active: true
+# Reviewed against the supplied CS131 lectures, homework, and past assessments (2026-10-14).
+# The deck level follows prerequisites; each item's difficulty describes its own reasoning demand.
+# Source and assessment comments travel with the stable item IDs. Replacement objectives use new IDs.
+# Estimated times are planning estimates, not measured learner completion times.
+cards:
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 5–6 (pure functions)
+  # Homework: Homework Problems (Public).docx, HASKELL7 A (purity).
+  - id: cs131-functional-card-pure-function-properties
+    difficulty: basic
+    bloom: remember
+    estimated_seconds: 30
+    question: What two properties make a function pure?
+    answer: For the same arguments it gives the same result, and it has no observable side effects. It may use its
+      arguments and immutable constants, but not changing external state.
+    explanation: Updating a caller-owned object, incrementing a global counter, or printing is a side effect. Reading
+      a mutable global can also change the result between calls.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 8 (order of evaluation)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL3 C (lazy demand).
+  - id: cs131-functional-card-evaluation-order
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |-
+      What does `choose True` return, and is `failure` evaluated?
+
+      ```haskell
+      choose flag = if flag then 7 else failure
+        where failure = error "unused branch"
+      ```
+    answer: It returns `7`; the unchosen `failure` expression is not evaluated.
+    explanation: Lazy evaluation demands the condition and the selected result. Purity makes ignoring unused expressions
+      safe from side effects; it does not mean that forcing a failing expression would succeed.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 5, 7 (immutable bindings)
+  # Homework: Homework Problems (Public).docx, HASKELL7 (immutable bindings).
+  - id: cs131-functional-card-definition-not-assignment
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: What does `=` mean in a Haskell definition such as `rate = 5`, and how does that differ from C++?
+    answer: It binds the name `rate` to a value once. It is a definition, not an assignment, so `rate` can never change, and defining `rate` again in the same scope is an error.
+    explanation: '`let rate = 6 in …` creates a new local name that hides the outer one; it does not modify the original binding.'
+
+  # Previous source (superseded item): intro_to_functional_programming_and_haskell_td.pptx, slides 10–13 (the Haskell compiler and interpreter)
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 19–20, 27–28 (recursive application).
+  # Homework: Homework Problems (Public).docx, HASKELL3 B (non-progressing recursive call).
+  # Assessment alignment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (recursive progress and application).
+  - id: cs131-v3-haskell-card-recursion-parentheses
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: |-
+      For `n >= 0`, this function should return `n`, but it does not finish for positive inputs. Repair its recursive call and explain the cause.
+
+      ```haskell
+      countDown 0 = 0
+      countDown n = 1 + countDown n - 1
+      ```
+    answer: Write `countDown n = 1 + countDown (n - 1)`. Without parentheses, the recursive call receives `n` again.
+    explanation: Function application binds more tightly than subtraction. The original body groups as `(1 + countDown
+      n) - 1`, so it never reaches the base case for positive `n`.
+
+  # Previous source (superseded item): intro_to_functional_programming_and_haskell_td.pptx, slides 11, 13 (REPL and Prelude)
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 39, 43 (strings as lists).
+  # Homework: Homework Problems (Public).docx, HASKELL1 A.3; HASKELL6 (strings and list operations).
+  - id: cs131-v3-haskell-card-string-tail
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 30
+    question: For `word = "plane"`, give the values and types of `head word` and `tail word`.
+    answer: '`head word` is `''p'' :: Char`; `tail word` is `"lane" :: String` (equivalently `[Char]`).'
+    explanation: A string is a list of characters. `head` returns one element, while `tail` returns a list, even when
+      only one element remains.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 15–17 (function definitions and signatures)
+  # Homework: Homework Problems (Public).docx, HASKELL3 A.1 (type signatures).
+  - id: cs131-functional-card-read-signature
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: 'For `plan :: Int -> Bool -> String`, name the parameter types, the result type, and the type of `plan 3 True`.'
+    answer: The parameters are an `Int` and then a `Bool`, and the result is a `String`, so `plan 3 True` is a `String`.
+    explanation: The last type in a signature is the result. Arguments follow the function name, separated by spaces.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 18 (type inference)
+  # Homework: Homework Problems (Public).docx, HASKELL6; ADVHASKELL7 (type constraints).
+  - id: cs131-functional-card-inference-is-static
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: Does omitting a type signature allow `both xs = [length xs, True]` to load? Explain.
+    answer: No. The list would mix an `Int` from `length xs` with a `Bool`, so type inference rejects the definition
+      before it runs.
+    explanation: Inference determines types; it does not relax type rules. All elements of a Haskell list must have
+      one compatible type.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 19–21 (calling functions)
+  # Homework: Homework Problems (Public).docx, HASKELL3 B (application grouping).
+  - id: cs131-functional-card-translate-call
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 30
+    question: Write `f(x, g(y, z))` in Haskell with as few parentheses as possible.
+    answer: '`f x (g y z)`'
+    explanation: Arguments are separated by spaces. Parentheses are needed only to make the inner call a single argument; `f x g y z` would pass four separate arguments to `f`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 19–20 (calling functions)
+  # Assessment: none; prediction card paired with the chapter's Puzzles section.
+  # Homework: Homework Problems (Public).docx, HASKELL3 B (negative input and parentheses).
+  - id: cs131-v2-functional-card-puzzle-negative-argument
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 30
+    question: Why does `abs -3` fail to type-check, and how do you fix it?
+    answer: It parses as `abs - 3`, which subtracts 3 from the function `abs`. Write `abs (-3)`, which is `3`.
+    explanation: A minus sign between two expressions is subtraction, and function application binds more tightly than any operator. Parenthesize a negative argument.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 22, 40 (prefix and infix notation)
+  # Homework: Homework Problems (Public).docx, HASKELL5 A (infix mod).
+  - id: cs131-functional-card-prefix-and-infix
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 30
+    question: Rewrite `7 - 2` as a prefix call and `mod 17 5` as an infix expression. What are their values?
+    answer: '`(-) 7 2` is `5`, and ``17 `mod` 5`` is `2`.'
+    explanation: Parentheses turn an operator into an ordinary function; backticks turn a two-argument function into an operator.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 25–26 (guards)
+  # Homework: Homework Problems (Public).docx, HASKELL3 C.2 (write guards).
+  - id: cs131-functional-card-guard-syntax
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: 'Write `signLabel :: Int -> String` using guards: negative inputs return `"negative"`, zero returns
+      `"zero"`, and positive inputs return `"positive"`.'
+    answer: |-
+      ```haskell
+      signLabel :: Int -> String
+      signLabel n
+        | n < 0 = "negative"
+        | n == 0 = "zero"
+        | otherwise = "positive"
+      ```
+    explanation: Guards are tested from top to bottom. The final `otherwise` handles the remaining positive values;
+      each branch returns a `String`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 30–32 (let versus where)
+  # Homework: Homework Problems (Public).docx, HASKELL4 A.2–3 (where/let distinction).
+  - id: cs131-functional-card-let-or-where
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 30
+    question: Why is `where` convenient when several guards share a computed value? How can `let … in` express the
+      same calculation?
+    answer: A `where` binding is visible throughout its guarded equation, including the conditions. A `let … in` can
+      instead enclose one nested `if` expression that uses the binding.
+    explanation: This is a difference in scope and syntax, not in what can be computed. Neither form requires evaluating
+      an unused binding.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 36–38 (tuples and lists)
+  # Homework: Homework Problems (Public).docx, HASKELL4 A; HASKELL6 (tuples and lists).
+  - id: cs131-functional-card-tuple-or-list
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: Contrast a Haskell tuple with a Haskell list.
+    answer: A tuple has a fixed number of components, which may have different types, such as `("Lima", 19.5)`. A list may have any length, but all of its elements share one type.
+    explanation: '`fst` and `snd` work only on pairs; list functions such as `head` and `length` work only on lists.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 42 (: and ++)
+  # Homework: Homework Problems (Public).docx, HASKELL6 C–D (building lists).
+  - id: cs131-functional-card-cons-and-append
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 30
+    question: Write expressions that add `0` to the front and `9` to the end of the list `xs`.
+    answer: '`0 : xs` and `xs ++ [9]`.'
+    explanation: '`:` puts one element in front of a list. `++` joins two lists, so the single element must be wrapped as `[9]`.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 41 (ranges)
+  # Homework: Homework Problems (Public).docx, HASKELL8 A (ranges).
+  - id: cs131-functional-card-ranges
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 45
+    question: Write a range for the multiples of 5 from 5 to 50, and an expression for the first four multiples of 5 that uses an infinite range.
+    answer: '`[5, 10 .. 50]` and `take 4 [5, 10 ..]`, which is `[5,10,15,20]`.'
+    explanation: The first two values set the step. An infinite range is safe as long as only a finite part of it is demanded.
+
+  # Previous source (superseded item): intro_to_functional_programming_and_haskell_td.pptx, slides 16, 43 (main, strings as lists)
+  # Previous assessment context: none; prediction card paired with the chapter's Puzzles section.
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 36–38, 73–75 (nested types).
+  # Homework: Homework Problems (Public).docx, HASKELL4 A; HASKELL10 B (nested list/tuple shapes).
+  # Assessment alignment: [Midterm] F24 V1 (Public).pdf, Problem 3B, p. 5 (nested result shape).
+  - id: cs131-v3-haskell-card-nested-list-type
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: 'Given `pair :: (String, Int)` and `pair = ("oak", 3)`, give the types of `[pair]`, `fst pair`, and
+      `[fst pair]`.'
+    answer: '`[pair] :: [(String, Int)]`, `fst pair :: String`, and `[fst pair] :: [String]`.'
+    explanation: Square brackets add a list layer. Selecting a component removes the tuple layer; surrounding that
+      string with brackets then creates a list of strings.

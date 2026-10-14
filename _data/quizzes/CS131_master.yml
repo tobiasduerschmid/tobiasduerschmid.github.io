@@ -1,13 +1,18 @@
 title: "CS 131 Master Quiz"
-description: "Concept practice across programming languages, grouped by topic."
+description: "Full-course practice in programming languages: choose answers, order code, and predict output."
 active: true
+# List leaf decks directly: the shared renderer flattens one level of decks.
+# Full-course review; select an individual deck when studying a current unit.
 decks:
-  - cs131_python
-  - python_output
   - cs131_foundations
   - cs131_implementation
-other:
-  - cs131_functional
+  - cs131_python_references
+  - cs131_python_copies
+  - cs131_python_classes_defaults
+  - python_output
+  - cs131_haskell_basic
+  - cs131_haskell_intermediate
+  - cs131_haskell_advanced
   - cs131_types_scope_memory
   - cs131_functions
   - cs131_control

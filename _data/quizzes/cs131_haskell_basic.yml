@@ -1,0 +1,413 @@
+title: 'CS 131: Basic Haskell'
+description: Practice pure functions, application, guards, local bindings, tuples, strings, and list construction.
+active: true
+# Reviewed against the supplied CS131 lectures, homework, and past assessments (2026-10-14).
+# The deck level follows prerequisites; each item's difficulty describes its own reasoning demand.
+# Source and assessment comments travel with the stable item IDs. Replacement objectives use new IDs.
+# Estimated times are planning estimates, not measured learner completion times.
+questions:
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 5–6 (pure functions, side effects)
+  # Homework: Homework Problems (Public).docx, HASKELL7 A (classify purity).
+  - id: cs131-functional-identify-pure-function
+    type: single
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 45
+    question: |-
+      Which of these C++ functions is pure? Assume that other code may change the globals.
+
+      ```cpp
+      int calls = 0;
+      double rate = 1.1;
+      ```
+    options:
+      - '`int area(int w, int h) { return w * h; }`'
+      - '`int next(int x) { return x + calls++; }`'
+      - '`double scaled(double x) { return x * rate; }`'
+      - '`int echo(int x) { std::cout << x; return x; }`'
+    correct_index: 0
+    option_feedback:
+      1: '`calls++` changes a variable outside the function, so a second call with the same argument returns a different
+        result.'
+      2: '`scaled` changes nothing, but it reads `rate`, which other code may change, so the same argument can give
+        different results.'
+      3: Printing to the console is a side effect, even though the returned value depends only on `x`.
+    explanation: '`area` depends on its arguments and has no observable side effects. Reading a changing global, changing
+      a global, or printing prevents the other functions from being pure. Reading an immutable constant would be allowed.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 6 (why purity matters)
+  # Homework: Homework Problems (Public).docx, HASKELL7 A; ADVHASKELL3 C (purity and repeated calls).
+  - id: cs131-functional-purity-benefits
+    type: multiple
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 45
+    question: Which benefits follow from a function being pure? Select all that apply.
+    options:
+      - A test can call it without first setting up global state.
+      - A compiler may reuse an earlier result for the same arguments.
+      - Independent calls can run in parallel without changing results.
+      - The function is guaranteed to be free of type errors.
+    correct_indices:
+      - 0
+      - 1
+      - 2
+    option_feedback:
+      0: The result depends only on the arguments, so supplying them is the whole setup.
+      1: The same arguments always produce the same result, so a cached result stays correct.
+      2: Calls that share no mutable state cannot interfere with one another.
+      3: Purity concerns dependencies and effects. A pure function can still be ill-typed; Haskell checks types separately.
+    explanation: Purity makes a call's result depend only on its arguments, which supports testing, caching, parallel evaluation, and reasoning about programs. It says nothing about whether the types are correct.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 5, 7 (immutable bindings)
+  # Homework: Homework Problems (Public).docx, HASKELL7 (immutable bindings).
+  - id: cs131-functional-binding-twice
+    type: single
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 30
+    question: |-
+      A Haskell module contains these two lines. What happens when it is loaded?
+
+      ```haskell
+      limit = 10
+      limit = 20
+      ```
+    options:
+      - The module is rejected because `limit` is defined twice.
+      - '`limit` becomes 20 because the later line overwrites it.'
+      - '`limit` stays 10 because the first definition wins.'
+    correct_index: 0
+    option_feedback:
+      1: In Haskell, `=` defines a name rather than assigning to a variable, so there is nothing to overwrite.
+      2: Haskell does not choose between conflicting definitions; it reports the conflict.
+    explanation: A name is bound once and its value never changes, so two top-level definitions of `limit` are a duplicate-definition error.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 8 (evaluation follows need)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL3 C (unused failing argument).
+  - id: cs131-functional-unused-binding
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      What does `classify 5` evaluate to?
+
+      ```haskell
+      classify n = if n > 0 then label else failure
+        where
+          label = "positive " ++ show doubled
+          doubled = 2 * n
+          failure = error "not positive"
+      ```
+    options:
+      - '`"positive 10"`'
+      - An error, because `failure` is defined in the `where` block
+      - An error, because `doubled` is used before it is defined
+    correct_index: 0
+    option_feedback:
+      1: A binding is evaluated only when a result needs its value; for a positive `n`, nothing demands `failure`.
+      2: The bindings after `where` are equations, not statements, so their order does not matter.
+    explanation: The condition selects `label`, which needs `doubled`, so the result is `"positive 10"`. `failure` is never demanded, so its error is never raised.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 19–20 (application groups to the left)
+  # Homework: Homework Problems (Public).docx, HASKELL3 B (application precedence).
+  - id: cs131-functional-nested-call-syntax
+    type: single
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 45
+    question: |-
+      With these definitions, which expression computes `triple(add1(4))`, that is, 15?
+
+      ```haskell
+      triple n = 3 * n
+      add1 n = n + 1
+      ```
+    options:
+      - '`triple (add1 4)`'
+      - '`triple add1 4`'
+      - '`triple add1(4)`'
+    correct_index: 0
+    option_feedback:
+      1: Application groups to the left, so this means `(triple add1) 4`, which passes the function `add1` to `triple`.
+      2: Parentheses around a lone argument change nothing, so this still means `(triple add1) 4`.
+    explanation: A function is applied to the argument immediately after it. To pass the result of `add1 4` as a single argument, parenthesize that call.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 19–20 (calling functions)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  # Homework: Homework Problems (Public).docx, HASKELL3 B (application precedence).
+  # Format: write-in output; same reasoning objective and stable ID as the former choice item.
+  - id: cs131-v2-functional-puzzle-application-binds-first
+    type: write-in
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: What does this program print?
+    explanation: Function application has higher precedence than every infix operator. `half 10 + 4` computes `half
+      10`, which is 5, and then adds 4.
+    program:
+      language: haskell
+      file: Main.hs
+      code: |-
+        half :: Int -> Int
+        half n = n `div` 2
+        main :: IO ()
+        main = putStrLn (show (half 10 + 4))
+    answer: "9"
+    answer_prompt: Enter one integer.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 19–21 (nested calls with few parentheses)
+  # Homework: Homework Problems (Public).docx, HASKELL3 B; HASKELL4 A (calls and tuples).
+  - id: cs131-functional-equivalent-groupings
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: '`scale :: Int -> Int -> Int` takes two arguments. Which expressions compute `scale(x, abs(y) + 1)`? Select all that apply.'
+    options:
+      - '`scale x (abs y + 1)`'
+      - '`scale x ((abs y) + 1)`'
+      - '`scale x abs y + 1`'
+      - '`scale (x, abs y + 1)`'
+    correct_indices:
+      - 0
+      - 1
+    option_feedback:
+      0: '`abs y` binds before `+`, so the parentheses only need to enclose the second argument.'
+      1: The extra parentheses around `abs y` are redundant but harmless; the grouping is unchanged.
+      2: Application groups to the left, so this tries to pass the function `abs` as `scale`'s second `Int` argument.
+      3: Parentheses with a comma build one tuple argument, but `scale` takes its two arguments separately.
+    explanation: Application binds more tightly than `+`, so `abs y + 1` means `(abs y) + 1`. Wrapping it in parentheses makes it the second argument of `scale`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 24 (if is an expression)
+  # Homework: Homework Problems (Public).docx, HASKELL3 C (conditional recursion).
+  - id: cs131-functional-if-needs-else
+    type: single
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: Why does Haskell reject `bonus n = if n > 100 then 5` unless an `else` branch is added?
+    options:
+      - The `if` is an expression, so it needs a value when the test fails.
+      - An `if` statement must always end with a `return` statement.
+      - '`else` is required only when the two branches have different types.'
+    correct_index: 0
+    option_feedback:
+      1: Haskell's `if` is not a statement, and there is no `return` here; the whole `if` is the function's result.
+      2: The two branches must have the same type, and the `else` branch is required in every case.
+    explanation: Haskell uses `if` as an expression with two alternatives. The `else` expression supplies the result
+      when the condition is false, for example `bonus n = if n > 100 then 5 else 0`. Both alternatives must have the
+      same type.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 25–26 (guards)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  # Homework: Homework Problems (Public).docx, HASKELL3 C (guards).
+  - id: cs131-v2-functional-puzzle-guard-order
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      What does `[grade 95, grade 70, grade 40]` evaluate to?
+
+      ```haskell
+      grade :: Int -> Char
+      grade score
+        | score >= 60 = 'D'
+        | score >= 90 = 'A'
+        | otherwise   = 'F'
+      ```
+    options:
+      - '`"DDF"`'
+      - '`"ADF"`'
+      - 'A compile error: the `''A''` guard is unreachable'
+    correct_index: 0
+    option_feedback:
+      1: Guards are tried from top to bottom, and 95 already satisfies `score >= 60`, so the `'A'` guard is never
+        consulted.
+      2: The definition is valid Haskell. An unreachable later guard does not change the rule that the first true
+        guard supplies the result.
+    explanation: The first guard that holds selects the result. Because `score >= 60` comes before `score >= 90`,
+      every passing score becomes `'D'`. The result is displayed as a string because a list of `Char` is a `String`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 27–28 (recursion with guards, trace-through)
+  # Homework: Homework Problems (Public).docx, HASKELL3 C; HASKELL5 B (recursive progress).
+  # Format: write-in output; same reasoning objective and stable ID as the former choice item.
+  - id: cs131-functional-recursion-digit-count
+    type: write-in
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: What does this program print?
+    explanation: The calls handle 4096, 409, 40, and 4. The base case gives 1 for 4, and each of the three recursive
+      steps adds 1, for a total of 4.
+    program:
+      language: haskell
+      file: Main.hs
+      code: |-
+        digits :: Int -> Int
+        digits n
+          | n < 10 = 1
+          | otherwise = 1 + digits (n `div` 10)
+        main :: IO ()
+        main = putStrLn (show (digits 4096))
+    answer: "4"
+    answer_prompt: Enter one integer.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 30–32 (let versus where)
+  # Homework: Homework Problems (Public).docx, HASKELL4 A (where and let scope).
+  - id: cs131-functional-where-across-guards
+    type: single
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 45
+    question: |-
+      Why is the `where` clause useful for sharing `ratio` in this guarded definition?
+
+      ```haskell
+      grade score total
+        | ratio >= 0.9 = "A"
+        | ratio >= 0.8 = "B"
+        | otherwise    = "C"
+        where
+          ratio = score / total
+      ```
+    options:
+      - All guards can see a `where` binding; `let … in` covers one expression.
+      - '`where` bindings are computed before the guards, and `let` ones after.'
+      - '`where` makes `ratio` available to other top-level functions.'
+    correct_index: 0
+    option_feedback:
+      1: Neither form fixes an evaluation order; a binding is computed when a result needs it.
+      2: A `where` binding is local to the equation it belongs to.
+    explanation: The `where` binding is in scope throughout this guarded equation, including its conditions. A `let
+      … in` binding is local to the expression after `in`; an equivalent implementation could wrap a single nested
+      `if` expression in that `let`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 33–34 (nested functions in where)
+  # Homework: Homework Problems (Public).docx, HASKELL5 A (nested helper scope).
+  - id: cs131-functional-helper-sees-parameter
+    type: single
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 45
+    question: |-
+      Which statement about the helper `describe` is true?
+
+      ```haskell
+      label item price = describe price
+        where
+          describe p = item ++ ": " ++ show p
+      ```
+    options:
+      - It can use `item` because it is defined inside `label`.
+      - It must receive `item` as a parameter before it can use it.
+      - Any other top-level function can call it.
+    correct_index: 0
+    option_feedback:
+      1: A function defined in `where` can already see the parameters of the equation it belongs to.
+      2: A `where` helper is local; it exists only inside the definition of `label`.
+    explanation: 'Nested functions see the enclosing function''s parameters, so `label "pen" 3` is `"pen: 3"` without passing `item` to `describe`.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 36–37 (tuples, fst and snd)
+  # Homework: Homework Problems (Public).docx, HASKELL4 A (tuples).
+  - id: cs131-functional-tuple-selection
+    type: multiple
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: Which expressions evaluate to `"Oslo"`? Select all that apply.
+    options:
+      - '`fst ("Oslo", 4)`'
+      - '`fst (fst (("Oslo", 4), True))`'
+      - '`fst ("Oslo", 4, True)`'
+      - '`head ("Oslo", 4)`'
+    correct_indices:
+      - 0
+      - 1
+    option_feedback:
+      0: '`fst` takes the first component of a pair, so this is `"Oslo"`.'
+      1: The inner `fst` extracts the pair `("Oslo", 4)`, and the outer `fst` takes its first component.
+      2: '`fst` works only on pairs; a three-component tuple has a different type, so this is a type error.'
+      3: A tuple is not a list, so list functions such as `head` do not apply to it.
+    explanation: '`fst` and `snd` select the components of a pair. Tuples of other sizes are taken apart with patterns instead.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 38 (lists hold one element type)
+  # Homework: Homework Problems (Public).docx, HASKELL6; HASKELL10 B (list/tuple shapes).
+  - id: cs131-functional-valid-lists
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: Which of these are valid Haskell lists? Select all that apply.
+    options:
+      - '`[[1, 2], []]`'
+      - '`[("a", 1), ("b", 2)]`'
+      - '`[1, "two"]`'
+      - '`[(1, ''a''), (2, "b")]`'
+    correct_indices:
+      - 0
+      - 1
+    option_feedback:
+      0: Both elements are lists of numbers; the empty list fits any element type.
+      1: Both elements are pairs of a string and a number, so they share one type.
+      2: A number and a string have different types, and every element of a list must have the same type.
+      3: The first pair holds a character and the second a string, so the two pairs have different types.
+    explanation: A list may have any length but only one element type. Tuples inside a list must agree component by component.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 39–40 (list operations)
+  # Homework: Homework Problems (Public).docx, HASKELL6 (list operations).
+  - id: cs131-functional-zip-after-drop
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: What does `zip "abc" (drop 1 [10, 20, 30])` evaluate to?
+    options:
+      - "`[('a',20),('b',30)]`"
+      - "`[('a',10),('b',20),('c',30)]`"
+      - "`[('b',20),('c',30)]`"
+    correct_index: 0
+    option_feedback:
+      1: '`drop 1` removes the first number before `zip` ever sees the list.'
+      2: '`drop 1` applies only to the number list; `zip` still starts with `''a''`.'
+    explanation: '`drop 1 [10, 20, 30]` is `[20,30]`. `zip` pairs elements in order and stops at the end of the shorter list, so `''c''` has no partner.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 41 (ranges)
+  # Homework: Homework Problems (Public).docx, HASKELL5 A; HASKELL8 A (ranges).
+  - id: cs131-functional-range-step
+    type: single
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 30
+    question: What does `[3, 7 .. 20]` evaluate to?
+    options:
+      - '`[3,7,11,15,19]`'
+      - '`[3,7,11,15,19,23]`'
+      - '`[3,7,11,15,19,20]`'
+    correct_index: 0
+    option_feedback:
+      1: A range stops before passing its bound, and 23 would exceed 20.
+      2: The bound is a limit, not an element that is always included; 20 is not 3 plus a multiple of the step 4.
+    explanation: The first two values set the step, 7 − 3 = 4. The range continues with 11, 15, and 19, and stops because 23 would pass 20.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 42 (: and ++)
+  # Homework: Homework Problems (Public).docx, HASKELL6 C–D (cons versus append).
+  - id: cs131-functional-append-one-element
+    type: single
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 45
+    question: 'Given `drinks = ["milk", "juice"]`, which expression produces `["milk","juice","tea"]`?'
+    options:
+      - '`drinks ++ ["tea"]`'
+      - '`drinks ++ "tea"`'
+      - '`drinks : "tea"`'
+      - '`"tea" : drinks`'
+    correct_index: 0
+    option_feedback:
+      1: '`"tea"` is a list of characters, but `drinks` is a list of strings, so `++` cannot join them.'
+      2: '`:` puts one element in front of a list; it cannot attach anything at the end.'
+      3: This puts `"tea"` at the front, giving `["tea","milk","juice"]`.
+    explanation: '`++` joins two lists of the same type, so a single element must first be wrapped in its own list: `drinks ++ ["tea"]`.'

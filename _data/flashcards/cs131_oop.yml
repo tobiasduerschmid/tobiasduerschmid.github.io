@@ -1,11 +1,11 @@
 title: "CS 131: Object-Oriented Programming"
 description: "Practice short traces, diagnoses, and bounded code construction for objects and polymorphism."
 active: true
-# Complete replacement. Page references below are physical PDF pages.
+# Reviewed against the supplied lecture notes, homework, and past assessments.
 # Time estimates are planning estimates, not measured student completion times.
 cards:
-  # Lecture: oop_palooza_v7_handouts.pdf pp.41–42.
-  # Assessment: Fall 2025 Quiz 3, Problem 1; identify the receiver whose state a call changes.
+  # Lecture: [06] OOP Palooza (Public).docx — This and Self
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1 (receiver state); Homework Problems (Public).docx OOP1
   - id: cs131-v2-oop-card-receiver-call
     difficulty: intermediate
     bloom: apply
@@ -20,8 +20,8 @@ cards:
     answer: '`Bag.put(bag, "pen")`; bag becomes self.'
     explanation: "The receiver before the dot is supplied as the instance method's first argument. The item argument remains pen."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.33–34.
-  # Assessment: [Final] S23 V1 (Public).pdf, Problem 11 pp.21–22; reason about which operations remain accessible.
+  # Lecture: [06] OOP Palooza (Public).docx — Access Modifiers
+  # Assessment: [Final] S23 V1 (Public).pdf P11 pp.21-22
   - id: cs131-v2-oop-card-access-reason
     difficulty: basic
     bloom: understand
@@ -30,8 +30,8 @@ cards:
     answer: "get() is inherited as a public operation. Its Base-defined body is allowed to access Base's private n."
     explanation: "Access control is checked where a member is accessed. Using a public method does not give the caller direct access to its private implementation."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.96–100.
-  # Assessment: [Final] F22 (Public).pdf, Problem 15 p.8; trace lifecycle effects in execution order.
+  # Lecture: [06] OOP Palooza (Public).docx — Shallow Dive into Inheritance: Construction and Destruction
+  # Assessment: [Final] F22 (Public).pdf P15 p.8 (constructor/destructor effects; inheritance order from lecture)
   - id: cs131-v2-oop-card-lifetime-trace
     difficulty: intermediate
     bloom: apply
@@ -40,8 +40,8 @@ cards:
     answer: "`RMLlmr`"
     explanation: "Construction executes base bodies before derived bodies: Root, Middle, Leaf. Destruction reverses that order: Leaf, Middle, Root."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.54,66,69,85–86.
-  # Assessment: Fall 2025 Quiz 4, Problem 1(c–e); infer transitive subtype guarantees.
+  # Lecture: [06] OOP Palooza (Public).docx — Inheritance and Typing
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P1(c-e)
   - id: cs131-v2-oop-card-subtype-chain
     difficulty: intermediate
     bloom: analyze
@@ -50,8 +50,8 @@ cards:
     answer: "Yes to both. The subtype chain preserves A's public operations and permits C wherever A is expected."
     explanation: "Subtype relationships are transitive. This conclusion uses subtype inheritance; implementation reuse by itself would not establish it."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.135,140.
-  # Assessment: Fall 2025 Quiz 4, Problem 1(f); identify dispatch even when the dynamic type equals the base type.
+  # Lecture: [06] OOP Palooza (Public).docx — Dynamic Dispatch in Statically-typed Languages
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P1(f)
   - id: cs131-v2-oop-card-base-virtual
     difficulty: basic
     bloom: understand
@@ -60,8 +60,8 @@ cards:
     answer: "Dynamic dispatch; Base::ping() runs."
     explanation: "The method's virtual status determines the dispatch semantics. Finding that the actual receiver is a Base still selects the Base implementation through those semantics."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.109,135.
-  # Assessment: [Final] S23 V1 (Public).pdf, Problem 8 p.17; trace an inherited wrapper and an explicit base-method call.
+  # Lecture: [06] OOP Palooza (Public).docx — Subclassing Inheritance; Classify That Language: Dynamic Dispatch
+  # Assessment: [Final] S23 V1 (Public).pdf P8 p.17
   - id: cs131-v2-oop-card-explicit-base
     difficulty: advanced
     bloom: analyze
@@ -81,8 +81,8 @@ cards:
     answer: "`DB`. The ordinary virtual call uses D::f(); the qualified B::f() call explicitly selects the base implementation."
     explanation: "Both calls use the same receiver. Explicitly qualifying the base method chooses that implementation rather than the override."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.98–99.
-  # Assessment: [Final] F22 (Public).pdf, Problem 15 p.8; complete initialization before observing an object's fields.
+  # Lecture: [06] OOP Palooza (Public).docx — Shallow Dive into Inheritance: Construction
+  # Assessment: Homework Problems (Public).docx OOP3
   - id: cs131-v2-oop-card-init-completion
     difficulty: intermediate
     bloom: apply
@@ -101,8 +101,8 @@ cards:
     answer: "`super().__init__(name)`"
     explanation: "`Named.__init__(self, name)` is also valid here. Constructing a separate Named(name) object would not initialize this receiver."
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.85–86,90–94.
-  # Assessment: Fall 2025 Quiz 3, Problem 5(a,b); explain a compile-time difference between templates and unbounded generics.
+  # Lecture: [05] Function Palooza (Public).docx — Templates; Generics
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P5(a,b)
   - id: cs131-v2-oop-card-generic-diagnosis
     difficulty: intermediate
     bloom: analyze
@@ -111,8 +111,8 @@ cards:
     answer: "The unbounded generic body must work for every permitted T, and its declaration does not guarantee play(), while the template can check that operation for the chosen Player instantiation."
     explanation: "A generic bound declaring play() would supply the missing guarantee. The current call sites alone do not add a bound to the generic declaration."
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.92–94,101; oop_palooza_v7_handouts.pdf p.56.
-  # Assessment: Fall 2025 Quiz 3, Problem 5(b,c); supply a sufficient generic interface bound.
+  # Lecture: [05] Function Palooza (Public).docx — Generics
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P5(b,c)
   - id: cs131-v2-oop-card-design-bound
     difficulty: intermediate
     bloom: create
@@ -128,8 +128,8 @@ cards:
       ```
     explanation: "Self-check: both required operations are declared, no method body is required, and the generic restricts T to implementations of that interface. A different interface name is equally valid."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.78–80,82–84.
-  # Assessment: [Final] F23 (Public).pdf, Problem 6(c) p.17; distinguish implementation reuse from a public subtype interface.
+  # Lecture: [06] OOP Palooza (Public).docx — Subtype Inheritance Best Practices
+  # Assessment: Homework Problems (Public).docx OOP3; [Final] F23 (Public).pdf P6(c) p.17
   - id: cs131-v2-oop-card-delegation-method
     difficulty: intermediate
     bloom: create

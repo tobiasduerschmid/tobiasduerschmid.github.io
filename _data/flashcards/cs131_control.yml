@@ -1,11 +1,11 @@
 title: 'CS 131: Control and Concurrency'
 description: Retrieve and apply short-circuit, iterator, generator, and scheduling rules from the lectures.
 active: true
-# Original replacement practice. Page references are physical PDF pages.
+# Reviewed against the supplied lecture notes, homework, and past assessments.
 # Time estimates are planning estimates, not time limits.
 cards:
-  # Lecture: control_palooza_v7_handouts.pdf pp.9–15
-  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P2 (demanded evaluation; supporting prerequisite)
+  # Lecture: [07] Control Palooza (Public).docx — Short Circuiting
+  # Assessment: Homework Problems (Public).docx CTRL1(C)
   - id: cs131-v2-control-card-short-circuit
     difficulty: intermediate
     bloom: apply
@@ -14,8 +14,8 @@ cards:
     answer: Only A is printed; the result is true. B is skipped because the left operand already determines the OR result.
     explanation: 'Self-check: OR can skip its right operand when the left one is true.'
 
-  # Lecture: control_palooza_v7_handouts.pdf pp.12–15
-  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P2 (demanded evaluation; supporting prerequisite)
+  # Lecture: [07] Control Palooza (Public).docx — Short Circuiting
+  # Assessment: Homework Problems (Public).docx CTRL1(B)
   - id: cs131-v2-control-card-safe-guard
     difficulty: intermediate
     bloom: create
@@ -24,8 +24,8 @@ cards:
     answer: '`n != 0 && 10 / n > 2`'
     explanation: 'Self-check: When n is zero, the left operand must be false so the right operand is skipped.'
 
-  # Lecture: control_palooza_v7_handouts.pdf pp.4–8
-  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P2 (evaluation-rule reasoning; supporting prerequisite)
+  # Lecture: [07] Control Palooza (Public).docx — Associativity; Expression Evaluation Order
+  # Assessment: Homework Problems (Public).docx HASKELL3 (grouping); CS131 Fall 25 Quiz 3 Solutions (Public).docx P2 (evaluation)
   - id: cs131-v2-control-card-grouping
     difficulty: basic
     bloom: understand
@@ -34,17 +34,21 @@ cards:
     answer: Grouping determines which values are subtracted together. The language’s operand-evaluation rules separately determine when the calls run.
     explanation: 'Self-check: Do not infer temporal execution order just from an expression’s grouping.'
 
-  # Lecture: control_palooza_v7_handouts.pdf pp.21–22
-  # Assessment: [Final] F24 Solutions (Public).pdf P6(A,B) pp.19–20 (iteration control prerequisite)
-  - id: cs131-v2-control-card-loop-transfer
+  # Lecture: [07] Control Palooza (Public).docx — Asyncronous Programming
+  # Assessment: Homework Problems (Public).docx CTRL6(b.ii)
+  - id: cs131-v3-control-card-blocking-operation
     difficulty: intermediate
-    bloom: apply
-    estimated_seconds: 25
-    question: In a loop over `[1, 2, 3]`, the body skips to the next iteration when the item is 2 and otherwise prints it. Give the output and name the required control statement.
-    answer: 'Output: 1, 3. Use continue; break would terminate the loop at 2.'
-    explanation: 'Self-check: Continue leaves the current iteration; break leaves the loop.'
+    bloom: analyze
+    estimated_seconds: 40
+    question: A single-threaded async runtime is running an operation that computes for five seconds without awaiting
+      or yielding. Another operation is ready in the queue. Can the queued operation run during those five seconds?
+      Explain why.
+    answer: No. The current operation keeps the runtime’s only execution thread until it yields or finishes, so ready
+      queued operations must wait.
+    explanation: 'Self-check: Being declared async does not make computation run in parallel or automatically insert
+      suspension points.'
 
-  # Lecture: control_palooza_v7_handouts.pdf pp.48–53
+  # Lecture: [07] Control Palooza (Public).docx — The Separation of Responsibilities
   # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P2(b,d)
   - id: cs131-v2-control-card-iterator-state
     difficulty: intermediate
@@ -54,8 +58,8 @@ cards:
     answer: No. Each iterator stores its own traversal position, so advancing one does not advance the other.
     explanation: 'Self-check: The shared collection and each iterator’s independent position play different roles.'
 
-  # Lecture: control_palooza_v7_handouts.pdf pp.63–65
-  # Assessment: [Final] F24 Solutions (Public).pdf P6(B) p.20
+  # Lecture: [07] Control Palooza (Public).docx — How Generators Work
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P2(c)
   - id: cs131-v2-control-card-generator-pause
     difficulty: intermediate
     bloom: apply
@@ -64,8 +68,8 @@ cards:
     answer: 'First call: yields 4 without printing. Second call: prints next, then yields 6.'
     explanation: 'Self-check: Execution resumes after the previous yield; it does not restart.'
 
-  # Lecture: control_palooza_v7_handouts.pdf pp.63–67
-  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P2; [Final] F24 Solutions (Public).pdf P6(A) p.19
+  # Lecture: [07] Control Palooza (Public).docx — How Generators Work
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P2(a,c)
   - id: cs131-v2-control-card-range-generator
     difficulty: intermediate
     bloom: create
@@ -80,7 +84,7 @@ cards:
       ```
     explanation: 'Self-check: Each next should produce only one value; using return for the first value would stop the generator.'
 
-  # Lecture: control_palooza_v7_handouts.pdf pp.56,59–60
+  # Lecture: [07] Control Palooza (Public).docx — Class-Based Approach
   # Assessment: [Final] F24 Solutions (Public).pdf P6(C.1) p.21
   - id: cs131-v2-control-card-iterator-boundary
     difficulty: intermediate
@@ -90,7 +94,7 @@ cards:
     answer: Raise StopIteration. Index 3 is past the last element, so indexing first would produce an indexing error rather than the iteration-completion signal.
     explanation: 'Self-check: Completion should use the iterator protocol’s expected signal rather than an unrelated error.'
 
-  # Lecture: control_palooza_v7_handouts.pdf pp.104–107
+  # Lecture: [07] Control Palooza (Public).docx — Asyncronous Programming: spawn_inline and spawn_scheduled
   # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P3(a,b)
   - id: cs131-v2-control-card-inline-scheduled
     difficulty: intermediate
@@ -100,8 +104,8 @@ cards:
     answer: 'Inline: C, M. Scheduled: M, C, provided the caller then yields or finishes so the queued child can run.'
     explanation: 'Self-check: Inline runs the child immediately; scheduled spawn queues it until control returns to the runtime.'
 
-  # Lecture: control_palooza_v7_handouts.pdf pp.108–110
-  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P3(a,b)
+  # Lecture: [07] Control Palooza (Public).docx — Asyncronous Programming: await
+  # Assessment: Homework Problems (Public).docx CTRL6(b.i); CS131 Fall 25 Quiz 4 (with solutions).docx P3(b)
   - id: cs131-v2-control-card-await-purpose
     difficulty: advanced
     bloom: evaluate

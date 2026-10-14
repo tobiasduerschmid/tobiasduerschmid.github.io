@@ -1,0 +1,243 @@
+title: 'CS 131: Python References and Parameters'
+description: Predict mutation, rebinding, returned aliases, and immutable arguments.
+active: true
+# Reviewed against the supplied CS131 lectures, homework, and past assessments (2026-10-14).
+questions:
+  # Taught / practice evidence: Essential Python handout pp. 9, 20–24; Homework PYTHON2–3; Quiz 1 Problem 2A–D; F23 Midterm Problem 1, pp. 2–3.
+  - id: cs131-v2-python-two-parameters-one-list
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      What does this code print?
+
+      ```python
+      def edit(left, right):
+          left.append(3)
+          right = [9]
+          return right
+      items = [1]
+      result = edit(items, items)
+      print(items, result)
+      ```
+    options:
+    - '`[1, 3] [9]`'
+    - '`[9] [9]`'
+    - '`[1] [9]`'
+    correct_index: 0
+    option_feedback:
+      1: The parameters are separate local names. Rebinding `right` does not replace the object named by `items` or `left`.
+      2: Both parameters initially refer to the caller's list, so the append is visible through `items`.
+    explanation: Both arguments share one list initially. The append changes that list; the assignment gives only `right`
+      a new list, which is returned.
+
+  # Taught / practice evidence: Essential Python handout pp. 9, 20–24; Homework PYTHON2–3; Quiz 1 Problem 2A–D; F23 Midterm Problem 1, pp. 2–3.
+  - id: cs131-v2-python-old-row-still-reachable
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      What does this code print?
+
+      ```python
+      row = [2]
+      grid = [row]
+      grid[0] = [6]
+      row.append(4)
+      print(row, grid)
+      ```
+    options:
+    - '`[2, 4] [[6, 4]]`'
+    - '`[2, 4] [[6]]`'
+    - '`[2] [[6, 4]]`'
+    correct_index: 1
+    option_feedback:
+      0: Replacing `grid[0]` disconnects that slot from the old row before the append.
+      2: '`row` still names the original list; replacing the grid slot does not rebind `row`.'
+    explanation: The assignment replaces one reference inside `grid`. The old list is still reachable through `row` and
+      receives the append.
+
+  # Taught / practice evidence: Essential Python handout pp. 9, 20–24; Homework PYTHON2–3; Quiz 1 Problem 2A–D; F23 Midterm Problem 1, pp. 2–3.
+  - id: cs131-v2-python-returned-alias-after-field-change
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 90
+    question: |-
+      What does this code print?
+
+      ```python
+      class Notes:
+          def __init__(self):
+              self.lines = [1]
+          def replace(self):
+              previous = self.lines
+              self.lines = [2]
+              return previous
+      book = Notes()
+      saved = book.replace()
+      saved.append(3)
+      print(book.lines, saved)
+      ```
+    options:
+    - '`[2, 3] [1, 3]`'
+    - '`[1, 3] [1, 3]`'
+    - '`[2] [1, 3]`'
+    correct_index: 2
+    option_feedback:
+      0: The returned reference points to the old list, not to the member variable itself.
+      1: The method replaces `book.lines` even though another reference keeps the old list alive.
+    explanation: '`previous` captures the old list reference before the member is rebound. Appending through the returned
+      reference changes only that old list.'
+
+  # Taught / practice evidence: Essential Python handout pp. 9, 20–24; Homework PYTHON2–3; Quiz 1 Problem 2A–D; F23 Midterm Problem 1, pp. 2–3.
+  - id: cs131-v2-python-edits-through-two-paths
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 75
+    question: |-
+      After this setup, consider each option independently. Which statements make `other[0]` equal to `[5, 7]`? Select all that apply.
+
+      ```python
+      child = [5]
+      outer = [child]
+      other = [child]
+      ```
+    options:
+    - '`outer[0].append(7)`'
+    - '`outer[0] = outer[0] + [7]`'
+    - '`child.append(7)`'
+    - '`child = [5, 7]`'
+    correct_indices:
+    - 0
+    - 2
+    option_feedback:
+      0: '`outer[0]` and `other[0]` reach the same child, so mutation through either path is visible.'
+      1: This replaces a slot in `outer`; it does not replace the slot in `other`.
+      2: The original child is still referenced by `other[0]`.
+      3: Rebinding the name `child` leaves existing container references pointing to the old list.
+    explanation: Only the append operations mutate the shared child. The two assignments replace one binding or slot without
+      changing the child.
+
+  # Taught / practice evidence: Essential Python handout pp. 9, 20–24; Homework PYTHON2–3; Quiz 1 Problem 2A–D; F23 Midterm Problem 1, pp. 2–3.
+  - id: cs131-v2-python-build-mutate-then-detach
+    type: parsons
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 75
+    question: Arrange a function that appends 4 to the caller's list, then returns a separate list with an additional 8.
+      For input `[1]`, the caller must hold `[1, 4]` and the result must be `[1, 4, 8]`.
+    display: block
+    lines:
+    - 'def extend(items):'
+    - '    items.append(4)'
+    - '    items = items + [8]'
+    - '    return items'
+    distractors:
+    - '    items.append(8)'
+    - '    items = items + [4]'
+    explanation: 'Append before concatenating: the first step must mutate the shared input, and the second must create
+      a distinct result. Reversing them would append 4 only to the detached list.'
+
+  # Taught / practice evidence: Essential Python handout pp. 9, 20–24; Homework PYTHON2–3; Quiz 1 Problem 2A–D; F23 Midterm Problem 1, pp. 2–3.
+  - id: cs131-v2-python-return-reference-before-rebind
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      What does this code print?
+
+      ```python
+      def keep_first(values):
+          saved = values
+          values = [0]
+          return saved
+      original = [6]
+      returned = keep_first(original)
+      returned.append(8)
+      print(original is returned, original)
+      ```
+    options:
+    - '`False [6]`'
+    - '`True [0, 8]`'
+    - '`True [6, 8]`'
+    correct_index: 2
+    option_feedback:
+      0: Returning `saved` passes back the original reference, not a copy.
+      1: Only the local name `values` is rebound to `[0]`; `saved` keeps the original reference.
+    explanation: The local assignment does not affect `saved` or `original`. The returned list is the original object,
+      so the later append changes it.
+
+  # Taught / practice evidence: Essential Python handout pp. 9, 20–24; Homework PYTHON2–3; Quiz 1 Problem 2A–D; F23 Midterm Problem 1, pp. 2–3.
+  - id: cs131-python-holder-rebinding
+    type: write-in
+    difficulty: intermediate
+    question: What does this program print? Separate the values with spaces.
+    explanation: The integer parameter is rebound to 8, the shared Meter receives an attribute update to 8, and the return
+      supplies 8 separately.
+    program:
+      language: python
+      file: holder-rebinding.py
+      code: |
+        class Meter:
+            def __init__(self, value):
+                self.value = value
+        def lower(value, meter):
+            value -= 3
+            meter.value -= 3
+            meter = Meter(0)
+            return value
+        number = 11
+        meter = Meter(number)
+        result = lower(number, meter)
+        print(number, meter.value, result)
+    answer: 11 8 8
+
+  # Taught / practice evidence: Essential Python handout pp. 17–18, 28 (immutable strings); Homework PYTHON2 (immutable argument rebinding).
+  - id: cs131-python-string-rebinding
+    type: write-in
+    difficulty: intermediate
+    question: What two lengths are printed after the string is extended?
+    program:
+      language: python
+      file: labels.py
+      code: |
+        label = "ready"
+        saved = label
+        label += "!"
+        print(len(saved), len(label))
+    answer: 5 6
+    explanation: Strings are immutable. Concatenation creates a new string and rebinds label; saved still refers to the
+      original five-character string.
+
+  # Taught / practice evidence: Essential Python handout pp. 22–24; Function Palooza, Exception Handling; Homework PYTHON5 B.1 (exception recovery).
+  - id: cs131-python-error-keeps-mutation
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this program print?
+
+      ```python
+      def replace(values):
+          values.append(8)
+          raise ValueError("stop")
+      saved = [2]
+      try:
+          replace(saved)
+      except ValueError:
+          pass
+      print(saved)
+      ```
+    options:
+    - '`[2, 8]`'
+    - '`[2]`'
+    - '`[]`'
+    correct_index: 0
+    option_feedback:
+      1: Exception propagation does not roll back mutations already completed.
+      2: Catching an exception does not clear objects passed to the failing function.
+    explanation: The append completes before the raise. The caller still reaches that same list after recovery.

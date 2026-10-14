@@ -1,10 +1,10 @@
 title: 'CS 131: Functions'
 description: Compact predictions, explanations, and small function repairs grounded in the lectures.
 active: true
-# Original replacement practice. Page references are physical PDF pages.
+# Reviewed against the supplied lecture notes, homework, and past assessments.
 # Time estimates are planning estimates, not time limits.
 cards:
-  # Lecture: data_palooza_v12_handouts.pdf pp.167–172; function_palooza_v8_handouts.pdf p.9
+  # Lecture: [05] Function Palooza (Public).docx — Pass by Value; Pass by Reference
   # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1
   - id: cs131-v2-functions-card-reference
     difficulty: intermediate
@@ -14,7 +14,7 @@ cards:
     answer: 'Value: 5, because p is a separate copy. Reference: 9, because p aliases x.'
     explanation: 'Self-check: Trace which storage the assignment changes: the copy or the caller’s variable.'
 
-  # Lecture: data_palooza_v12_handouts.pdf pp.174–177
+  # Lecture: [05] Function Palooza (Public).docx — Pass by Object Reference
   # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1
   - id: cs131-v2-functions-card-rebind
     difficulty: intermediate
@@ -24,7 +24,7 @@ cards:
     answer: The caller observes the first element become 4. The later assignment only rebinds the local parameter to another list.
     explanation: 'Self-check: Distinguish changing the shared object from changing which object the parameter refers to.'
 
-  # Lecture: data_palooza_v12_handouts.pdf pp.187–193
+  # Lecture: [05] Function Palooza (Public).docx — Pass by Name/Need
   # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P2
   - id: cs131-v2-functions-card-name-need
     difficulty: intermediate
@@ -34,7 +34,7 @@ cards:
     answer: 'Name: three times. Need: once, with the result cached for the remaining two uses.'
     explanation: 'Self-check: Caching is per bound computation here; the prompt uses one parameter binding, not three separate calls.'
 
-  # Lecture: data_palooza_v12_handouts.pdf pp.170–177,189
+  # Lecture: [05] Function Palooza (Public).docx — Pass by Reference; Pass by Object Reference
   # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1(a)
   - id: cs131-v2-functions-card-distinguish-passing
     difficulty: intermediate
@@ -44,8 +44,8 @@ cards:
     answer: 'Example: `p = new Box(value=9)`. With reference semantics, assignment changes the caller’s Box value; with object-reference semantics, it rebinds only the local pointer.'
     explanation: 'Self-check: Use assignment of a new object. A field mutation alone changes the original Box under both strategies.'
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.70–71
-  # Assessment: [Final] F24 Solutions (Public).pdf P1(B.3) p.3 (closure reasoning)
+  # Lecture: [05] Function Palooza (Public).docx — Capture by Value
+  # Assessment: Homework Problems (Public).docx FUNC4(A.3)
   - id: cs131-v2-functions-card-value-capture
     difficulty: intermediate
     bloom: apply
@@ -54,8 +54,8 @@ cards:
     answer: It returns 7. Its closure retains a copy of k’s value 2, alongside the lambda’s code.
     explanation: 'Self-check: The captured copy is taken when the closure is created, not when it is later called.'
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.67,70–73
-  # Assessment: [Final] F23 Solutions (Public).pdf Before-The-Midterm Concepts pp.2–3
+  # Lecture: [05] Function Palooza (Public).docx — First Class Functions; Capture by Environment
+  # Assessment: [Final] F23 Solutions (Public).pdf pp.2-3
   - id: cs131-v2-functions-card-closure-make
     difficulty: intermediate
     bloom: create
@@ -69,7 +69,7 @@ cards:
     answer: '`return lambda x: factor * x`'
     explanation: 'Self-check: Return a function, not a numeric result; x is its parameter, and factor comes from the enclosing call.'
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.41–44
+  # Lecture: [05] Function Palooza (Public).docx — The Exception Hierarchy
   # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P4
   - id: cs131-v2-functions-card-unwind
     difficulty: intermediate
@@ -79,7 +79,7 @@ cards:
     answer: B’s print is skipped. The exception unwinds C and B and transfers control to A’s matching handler.
     explanation: 'Self-check: A handler does not resume the abandoned function at its next statement.'
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.47–50
+  # Lecture: [05] Function Palooza (Public).docx — Finally
   # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P4
   - id: cs131-v2-functions-card-cleanup
     difficulty: intermediate
@@ -96,8 +96,8 @@ cards:
       ```
     explanation: 'Self-check: The cleanup must run on both success and failure, including an exception that this function does not catch.'
 
-  # Lecture: function_palooza_v8_handouts.pdf p.58
-  # Assessment: [Final] F23 Solutions (Public).pdf Error Handling pp.18–19
+  # Lecture: [05] Function Palooza (Public).docx — Exception handling guarantees
+  # Assessment: [Final] F23 Solutions (Public).pdf Error Handling p.19
   - id: cs131-v2-functions-card-basic-strong
     difficulty: advanced
     bloom: evaluate
@@ -106,8 +106,8 @@ cards:
     answer: It meets the basic guarantee because state remains valid and resources do not leak. It fails the strong guarantee because the extra item changes the pre-call state.
     explanation: 'Self-check: Valid state and unchanged state are different promises.'
 
-  # Lecture: function_palooza_v8_handouts.pdf p.29
-  # Assessment: [Final] F23 Solutions (Public).pdf Before-The-Midterm Concepts pp.4–6 (represent result and failure)
+  # Lecture: [05] Function Palooza (Public).docx — Optionals; Result Object
+  # Assessment: Homework Problems (Public).docx FUNC3(B)
   - id: cs131-v2-functions-card-result-optional
     difficulty: basic
     bloom: understand

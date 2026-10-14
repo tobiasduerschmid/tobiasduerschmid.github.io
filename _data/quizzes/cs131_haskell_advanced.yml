@@ -1,0 +1,474 @@
+title: 'CS 131: Advanced Haskell'
+description: Reason about closures, partial application, currying, higher-order types, recursive data, and immutable updates.
+active: true
+# Reviewed against the supplied CS131 lectures, homework, and past assessments (2026-10-14).
+# The deck level follows prerequisites; each item's difficulty describes its own reasoning demand.
+# Source and assessment comments travel with the stable item IDs. Replacement objectives use new IDs.
+# Estimated times are planning estimates, not measured learner completion times.
+questions:
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 29–30, 102–107 (let, closures)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  # Homework: Homework Problems (Public).docx, ADVHASKELL3 A (lexical closure capture).
+  - id: cs131-v2-functional-puzzle-let-shadowing
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      What is the value of `result`?
+
+      ```haskell
+      result :: Int
+      result =
+        let rate = 3
+            scale x = x * rate
+        in let rate = 10 in scale 2
+      ```
+    options:
+      - '`6`'
+      - '`20`'
+      - 'A compile error: `rate` is defined twice'
+    correct_index: 0
+    option_feedback:
+      1: '`scale` uses the `rate` that was in scope where `scale` was defined. The inner `let` creates a different `rate` that only later expressions can see.'
+      2: Nested `let` expressions may reuse a name. The inner binding hides the outer one instead of conflicting with it.
+    explanation: Haskell scope is lexical, and bindings never change. The inner `rate = 10` is a new binding, so `scale 2` still computes `2 * 3`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 106–107 (free and bound variables)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL3 A.1–3 (captured variables).
+  - id: cs131-functional-free-and-bound
+    type: single
+    difficulty: intermediate
+    bloom: understand
+    estimated_seconds: 45
+    question: |-
+      Considering only `price` and `pct`, which is free and which is bound in the returned lambda?
+
+      ```haskell
+      markup pct = \price -> price + price * pct / 100
+      ```
+    options:
+      - '`price` is bound, and `pct` is free.'
+      - '`pct` is bound, and `price` is free.'
+      - Both are bound, because both are parameters.
+    correct_index: 0
+    option_feedback:
+      1: A lambda's own parameter, here `price`, is bound; `pct` comes from the enclosing `markup`, so it is free
+        in the lambda.
+      2: '`pct` is a parameter of `markup`, not of the lambda, so inside the lambda it is free and must be captured
+        by the closure.'
+    explanation: A bound variable is a parameter or local of the function itself; a free variable comes from outside
+      it. The closure created by `markup 20` captures the free variable `pct` with the value 20.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 110 (lambdas and closures challenge)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL3 A.4–5 (shadowing and lambda application).
+  # Format: write-in output; same reasoning objective and stable ID as the former choice item.
+  - id: cs131-functional-lambda-shadows-parameter
+    type: write-in
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 60
+    question: What does this program print?
+    explanation: '`boost 2 10` returns `\x -> x * 10`, a closure that captures only `y`. Applying it to 3 gives 30.'
+    program:
+      language: haskell
+      file: Main.hs
+      code: |-
+        boost :: Int -> Int -> Int -> Int
+        boost x y = \x -> x * y
+        main :: IO ()
+        main = putStrLn (show (boost 2 10 3))
+    answer: "30"
+    answer_prompt: Enter one integer.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 113–117 (partial function application)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL4 A.2 (partial application types).
+  - id: cs131-functional-partial-application-type
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |-
+      Which expression has type `Double -> Double`?
+
+      ```haskell
+      tax :: Double -> Double -> Double
+      tax rate price = price * (1 + rate)
+      ```
+    options:
+      - '`tax 0.5`'
+      - '`tax 0.5 20`'
+      - '`tax (0.5, 20)`'
+    correct_index: 0
+    option_feedback:
+      1: Supplying both arguments completes the call, so the result is a `Double`, `30.0`.
+      2: A tuple is a single argument, so this passes one pair where `tax` expects a `Double`; it is a type error.
+    explanation: Supplying only the rate partially applies `tax`. The result is a new function that still waits for a price.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 91–95, 113–117 (partially applied fold)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3c (type after partial application of accumulator recursion).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL4 A.2; ADVHASKELL7 (higher-order partial types).
+  - id: cs131-v2-functional-partially-applied-fold-type
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      Given these signatures, what is the type of `build`?
+
+      ```haskell
+      combine :: [Int] -> Int -> [Int]
+      foldl :: (b -> a -> b) -> b -> [a] -> b
+      build = foldl combine []
+      ```
+    options:
+      - '`Int -> [Int]`'
+      - '`[Int] -> [Int]`'
+      - '`[[Int]] -> [Int]`'
+    correct_index: 1
+    option_feedback:
+      0: The combining function handles one integer at a time, but the partially applied fold still expects a whole input list.
+      2: The accumulator is a list, but each input element is the second argument of `combine`, an `Int`.
+    explanation: The accumulator type `b` is `[Int]`, and the element type `a` is `Int`. Supplying the function and seed leaves `[Int] -> [Int]`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 22, 116–117 (operators as partially applied functions)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  # Homework: Homework Problems (Public).docx, ADVHASKELL4; lecture slide 22 (prefix operators).
+  - id: cs131-v2-functional-puzzle-left-section
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: What does `map ((^) 2) [1, 2, 3]` evaluate to?
+    options:
+      - '`[2,4,8]`'
+      - '`[1,4,9]`'
+      - '`[2,4,6]`'
+    correct_index: 0
+    option_feedback:
+      1: '`(^) 2` fixes the base at 2, so each list element supplies the exponent. Squaring each element would use
+        `\x -> x ^ 2`.'
+      2: '`^` is exponentiation, not multiplication; `(*) 2` would double each element.'
+    explanation: The prefix operator `(^)` takes the base first and exponent second. Partially applying it to 2 gives
+      `\x -> 2 ^ x`, producing 2, 4, and 8.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 118–128 (currying)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  # Homework: Homework Problems (Public).docx, ADVHASKELL4 B; ADVHASKELL7 (higher-order partial application).
+  - id: cs131-v2-functional-puzzle-curried-map
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 60
+    question: What does `map (\f -> f 3) (map (*) [1, 2, 3])` evaluate to?
+    options:
+      - '`[3,6,9]`'
+      - '`[1,2,3]`'
+      - 'A type error: `(*)` needs two arguments'
+    correct_index: 0
+    option_feedback:
+      1: '`map (*) [1, 2, 3]` produces the functions `(1 *)`, `(2 *)`, and `(3 *)`. Applying each one to 3 multiplies rather than returning the stored number.'
+      2: Every Haskell function takes one argument at a time. Applying `(*)` to one number is valid and returns a function waiting for the second.
+    explanation: Because `(*)` is curried, mapping it over numbers yields a list of partially applied functions. The lambda then supplies 3 to each one, producing 3, 6, and 9.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 80, 125 (function-valued parameters in curried types)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 5 (remove only redundant curry parentheses).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL4 A.1 (arrow grouping).
+  - id: cs131-v2-functional-function-argument-parentheses
+    type: single
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: Which type is equivalent to `(String -> Int) -> ([String] -> Int)` with only redundant parentheses removed?
+    options:
+      - '`String -> Int -> [String] -> Int`'
+      - '`(String -> Int) -> [String] -> Int`'
+      - '`String -> (Int -> [String]) -> Int`'
+    correct_index: 1
+    option_feedback:
+      0: Removing the first pair changes one function-valued argument into separate `String` and `Int` arguments.
+      2: This groups a different function type as an argument and changes the contract.
+    explanation: Arrows associate to the right. Parentheses around the result function are redundant, while those around the function-valued first argument are necessary.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 122–124 (currying by hand)
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 3D, p. 6 (write an explicitly curried body).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL4 C.4 (nested lambdas).
+  - id: cs131-v2-functional-assemble-explicit-currying
+    type: parsons
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 75
+    question: Arrange the fragments after `decorate =` to rewrite `decorate f x suffix = f x ++ suffix` as nested single-argument lambdas. Preserve the argument order `f`, `x`, then `suffix`. You may assume `f x` and `suffix` are strings.
+    display: inline
+    lines:
+      - '\f -> '
+      - '\x -> '
+      - '\suffix -> '
+      - 'f x '
+      - ++ suffix
+    distractors:
+      - 'suffix ++ '
+      - f suffix
+    explanation: Each arrow introduces exactly the next argument. The body must apply `f` to `x` before appending `suffix`; swapping those roles changes the function.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 131–135 (algebraic data types and constructors)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL5 A.1 (constructor fields).
+  - id: cs131-functional-adt-values
+    type: multiple
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      Which expressions are complete values of type `Drink`? Select all that apply.
+
+      ```haskell
+      data Drink = Water | Coffee Int | Juice String Int
+      ```
+    options:
+      - '`Water`'
+      - '`Coffee 2`'
+      - '`Juice "apple"`'
+      - '`Juice 300 "lime"`'
+    correct_indices:
+      - 0
+      - 1
+    option_feedback:
+      0: A constructor without fields, such as `Water`, is already a complete value.
+      1: '`Coffee` needs one `Int`, and `2` supplies it.'
+      2: '`Juice` takes two fields, so with only the string it is still a function, of type `Int -> Drink`.'
+      3: The fields must come in their declared order, a `String` and then an `Int`.
+    explanation: Each constructor is a function from its fields to a `Drink`, and a value is complete only when every field has been supplied in order.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 136–142 (pattern matching on variants; first match wins)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL5 A.2 (constructor patterns).
+  - id: cs131-functional-constructor-pattern-order
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      What is `describe (Dog "Rex" 0)`?
+
+      ```haskell
+      data Pet = Cat String | Dog String Int
+
+      describe :: Pet -> String
+      describe (Dog name _) = name ++ " is a dog"
+      describe (Dog name 0) = name ++ " is a puppy"
+      describe (Cat name)   = name ++ " is a cat"
+      ```
+    options:
+      - '`"Rex is a dog"`'
+      - '`"Rex is a puppy"`'
+      - An error, because two equations match the value
+    correct_index: 0
+    option_feedback:
+      1: Haskell does not prefer the more specific pattern; it uses the first equation that matches, and `(Dog name _)` matches every dog.
+      2: Overlapping equations are allowed. Haskell uses the first match, so the puppy equation can never be reached.
+    explanation: Equations are tried from top to bottom. To reach the puppy case, put `describe (Dog name 0)` before the general `Dog` equation.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 143–145 (a list built from an algebraic type)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 4a; [Midterm] F23 (Public).pdf, Problem 2a, p. 4 (construct a recursive algebraic value).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL5 A.1 (recursive constructors).
+  - id: cs131-v2-functional-recursive-constructor-values
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      For this definition, which expressions are complete values of type `Chain`? Select all that apply.
+
+      ```haskell
+      data Chain = End | Link String Chain
+      ```
+    options:
+      - '`Link "a" End`'
+      - '`Link "a" (Link "b" End)`'
+      - '`Link End "a"`'
+      - '`Link "a"`'
+    correct_indices:
+      - 0
+      - 1
+    option_feedback:
+      0: '`Link` receives a string followed by a complete tail value.'
+      1: A nested `Link` is a valid value for the recursive tail field.
+      2: 'The constructor fields have a fixed order: the string precedes the `Chain`.'
+      3: Supplying only the string leaves a function expecting its `Chain` argument.
+    explanation: The constructor has type `String -> Chain -> Chain`. A complete node supplies both fields, ending eventually in `End` for these finite examples.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 136–145 (recursion over an algebraic type)
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 2, pp. 3–4 (skip a node's own contribution but still visit descendants).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL5 C.2 (traverse child trees).
+  - id: cs131-v2-functional-tree-pruning-counterexample
+    type: single
+    difficulty: advanced
+    bloom: evaluate
+    estimated_seconds: 60
+    question: |-
+      The function is intended to sum all weights in a finite tree. Which input exposes its faulty zero-weight case?
+
+      ```haskell
+      data Tree = Branch Int [Tree]
+      total (Branch 0 _) = 0
+      total (Branch w cs) = foldl (\a c -> a + total c) w cs
+      ```
+    options:
+      - '`Branch 0 []`'
+      - '`Branch 5 []`'
+      - '`Branch 0 [Branch 5 []]`'
+    correct_index: 2
+    option_feedback:
+      0: A zero-weight node with no children really does have total 0, so it hides the defect.
+      1: A nonzero leaf uses the general case and returns its own weight correctly.
+    explanation: A zero-weight parent can still have nonzero descendants. The first pattern discards the children
+      instead of recursively summing them.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 131–135, 143–145 (records; updates build new values)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL5 B (immutable updates).
+  - id: cs131-functional-immutable-point-update
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |-
+      What is `(px p, px q)`?
+
+      ```haskell
+      data Point = Point { px :: Int, py :: Int }
+
+      moveRight :: Point -> Point
+      moveRight (Point x y) = Point (x + 1) y
+
+      p = Point 1 2
+      q = moveRight p
+      ```
+    options:
+      - '`(1,2)`'
+      - '`(2,2)`'
+      - '`(1,1)`'
+    correct_index: 0
+    option_feedback:
+      1: '`moveRight` builds a new `Point`; it cannot modify `p`, so `px p` is still 1.'
+      2: Immutability means `p` is unchanged, not that `moveRight` does nothing. It returns a new point whose `px` is 2.
+    explanation: '`px` reads the first field. `p` keeps its original value, and `q` is a separate point built from it, so the pair is `(1,2)`.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 144–145 (adding to the end of an immutable list)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL8 (list copying cost).
+  - id: cs131-functional-append-cost
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: For an immutable linked list with n nodes, which operation must build about n new nodes?
+    options:
+      - Adding an element at the end
+      - Adding an element at the front
+      - Removing the first element
+    correct_index: 0
+    option_feedback:
+      1: The new front node can point to the existing list, which is shared unchanged, so only one node is created.
+      2: The rest of the list already exists as the tail, so it can be returned without building anything.
+    explanation: 'The last node''s link must change to reach the new element, and no node can be modified, so every node on the way is rebuilt. That is why `xs ++ [x]` takes time proportional to the length of `xs`, while `x : xs` takes constant time.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 146 (inserting into an immutable binary search tree)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL5 B (path copying); lecture slide 146 (tree insertion).
+  - id: cs131-functional-bst-path-copy
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: A persistent binary search tree insertion rebuilds only the search path and performs no rotations. Inserting
+      7 visits existing nodes 8, 4, and 6 before reaching an empty child. How many new nodes does it construct, including
+      the new leaf?
+    options:
+      - '4'
+      - '3'
+      - '1'
+      - '7'
+    correct_index: 0
+    option_feedback:
+      1: The three existing path nodes are rebuilt, and the inserted value needs one additional leaf.
+      2: 'The new leaf alone is insufficient: each ancestor needs a new version pointing toward its updated child.'
+      3: Only the search path is rebuilt. Off-path subtrees remain shared.
+    explanation: The insertion constructs the leaf containing 7, then new versions of nodes 6, 4, and 8. All subtrees
+      outside that path are reused unchanged.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 147–150 (garbage collection; pros and cons of immutability)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL5 B; ADVHASKELL8 (versions and sharing).
+  - id: cs131-functional-immutability-tradeoffs
+    type: multiple
+    difficulty: intermediate
+    bloom: evaluate
+    estimated_seconds: 60
+    question: A Haskell program keeps both `old` and `new`, where `new` is an updated immutable data structure built
+      from `old`. Which statements follow? Select all that apply.
+    options:
+      - Reading `new` cannot change the contents of `old`.
+      - Unchanged parts can be shared between the versions.
+      - Keeping `old` allows the program to recover that version.
+      - Constructing `new` takes constant time for every update.
+      - Garbage collection may reclaim `old` while it is still needed.
+    correct_indices:
+      - 0
+      - 1
+      - 2
+    option_feedback:
+      0: Each version is immutable, so accessing the new version does not modify the old one.
+      1: Because shared parts cannot be modified, both versions can safely refer to them.
+      2: An earlier version remains available while the program retains it.
+      3: Appending to a linked list rebuilds a path whose length grows with the input.
+      4: Garbage collection reclaims unreachable data, not values that the program still needs.
+    explanation: Persistent immutable structures preserve earlier versions and may share unchanged parts. Update cost
+      depends on the path that must be rebuilt; reachable old versions remain available.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 91–95, 143–145 (folds and recursive constructors)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL5 C.2 (n-ary tree traversal).
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 4b (recursive tree aggregation).
+  - id: cs131-v3-haskell-nary-total-step
+    type: single
+    difficulty: advanced
+    bloom: apply
+    estimated_seconds: 90
+    question: |-
+      Complete `total` to sum every node weight in a finite tree, including descendants of a zero-weight node.
+
+      ```haskell
+      data Tree = Branch Int [Tree]
+      total :: Tree -> Int
+      total (Branch weight children) = ___
+      ```
+    options:
+      - foldl (\acc child -> acc + total child) weight children
+      - foldl (\acc child -> acc + total child) 0 children
+      - if weight == 0 then 0 else sum (map total children)
+    correct_index: 0
+    option_feedback:
+      1: A zero seed sums descendants but omits the current node's own weight.
+      2: A zero-weight node may have nonzero descendants, and the nonzero case still omits the current weight.
+    explanation: The seed contributes the current weight once. Each fold step adds the recursive total of one child;
+      a leaf returns its own weight because folding an empty child list returns the seed.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 73–80, 125 (type variables and function arguments)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL7 A.2–6 (higher-order type inference).
+  # Assessment: [Midterm] F23 (Public).pdf, Problem 4a, p. 8; [Midterm] F24 V1 (Public).pdf, Problem 3C, p. 5.
+  - id: cs131-v3-haskell-function-composition-type
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 90
+    question: |-
+      Infer the most general type of `combine`.
+
+      ```haskell
+      combine f g x = (f x, g (f x))
+      ```
+    options:
+      - (a -> b) -> (b -> c) -> a -> (b,c)
+      - (a -> b) -> (a -> c) -> a -> (b,c)
+      - (a -> b) -> (b -> c) -> a -> (a,c)
+    correct_index: 0
+    option_feedback:
+      1: '`g` receives `f x`, whose type is `b`, rather than the original `x` of type `a`.'
+      2: The first tuple component is `f x`, of type `b`, not `x` itself.
+    explanation: 'Assign `x :: a`. Then `f :: a -> b`; passing `f x` to `g` requires `g :: b -> c`. The result pairs
+      the intermediate value of type `b` with the final value of type `c`.'

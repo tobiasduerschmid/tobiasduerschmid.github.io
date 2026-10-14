@@ -2,10 +2,10 @@ title: 'CS 131: Language Paradigms and Design'
 description: Explain a model, predict a small effect, or construct a distinguishing experiment before
   revealing the answer.
 active: true
-# Entire replacement bank. Times are author estimates, not enforced limits.
+# Source-aligned review against lecture notes and homework. Times are author estimates.
 cards:
-  # Lecture: intro_lecture_td_handouts.pdf pp. 25–27
-  # Assessment: Foundation for Fall 2025 Quiz 4, Problem 1 (OOP)
+  # Taught: [01] Intro (Public).docx, Paradigms.
+  # Practice: Concept prerequisite; the paradigm examples are taught here. Later code traces supply application practice.
   - id: cs131-v2-foundations-card-object-model
     difficulty: basic
     bloom: understand
@@ -15,45 +15,45 @@ cards:
     answer: 'Object-oriented programming: the program organizes work around objects receiving method calls.'
     explanation: 'Self-check: name the organizing mechanism, not just the presence of a noun such as shape.'
 
-  # Lecture: intro_lecture_td_handouts.pdf pp. 25–27
-  # Assessment: Foundation for Fall 2025 Quiz 4, Problems 4–5 (Prolog)
+  # Taught: [01] Intro (Public).docx, Paradigms.
+  # Practice: Concept prerequisite; the paradigm examples are taught here. Later code traces supply application practice.
   - id: cs131-v2-foundations-card-relational-model
     difficulty: basic
     bloom: understand
     estimated_seconds: 25
-    question: A program records who teaches each course and defines a rule for who teaches a student. It
-      asks a query to find matching teachers. Which paradigm is this, and what supplies the answer?
-    answer: Logic programming. The runtime uses the recorded facts and the rule to find bindings that satisfy
-      the query.
+    question: A program records who teaches each course and defines a rule for who teaches a student.
+      It asks a query to find matching teachers. Which paradigm is this, and what supplies the answer?
+    answer: Logic programming. The runtime uses the recorded facts and the rule to find bindings that
+      satisfy the query.
     explanation: 'Self-check: mention facts/rules and a query rather than a programmer-written sequence
       of updates.'
 
-  # Lecture: intro_lecture_td_handouts.pdf pp. 28, 32–34
-  # Assessment: Fall 2023 Midterm, Problem 5, PDF p. 10 (reasoning under chosen language rules)
+  # Taught: [01] Intro (Public).docx, Building Blocks and Dimensions; Specifying a Language?.
+  # Practice: Fall 2023 Midterm Problem 5, Eggert's Scoping and Typing (PDF pp. 10–11): reason under independently chosen language rules.
   - id: cs131-v2-foundations-card-independent-dimensions
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 30
     question: A language has classes. Does that observation tell you whether it passes arguments by value
       or by reference? Give the missing information.
-    answer: No. Class support and parameter passing are separate choices. We need its passing rule or an
-      experiment that distinguishes copies from aliases.
+    answer: No. Class support and parameter passing are separate choices. We need its passing rule or
+      an experiment that distinguishes copies from aliases.
     explanation: 'Self-check: distinguish an observed language feature from an unsupported inference about
       another feature.'
 
-  # Lecture: intro_lecture_td_handouts.pdf pp. 33
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 2 (mutation versus rebinding); prerequisite for passing traces
+  # Taught: [01] Intro (Public).docx, Exercise: Classify that Language.
+  # Practice: Homework PYTHON2; Fall 2025 Quiz 1 v2, Problem 2 (Widget Woes): predict copy, mutation, and rebinding effects.
   - id: cs131-v2-foundations-card-value-update
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
-    question: An integer variable `n` holds 4. A function receives it by value and sets its parameter to
-      10. Predict `n` after the call and explain why.
+    question: An integer variable `n` holds 4. A function receives it by value and sets its parameter
+      to 10. Predict `n` after the call and explain why.
     answer: '`n` remains 4. The function changes its copied parameter, not the caller''s variable.'
     explanation: 'Self-check: trace which variable receives the assignment.'
 
-  # Lecture: intro_lecture_td_handouts.pdf pp. 33
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 2 (mutation versus rebinding); prerequisite for passing traces
+  # Taught: [01] Intro (Public).docx, Exercise: Classify that Language.
+  # Practice: Homework PYTHON2; Fall 2025 Quiz 1 v2, Problem 2 (Widget Woes): predict copy, mutation, and rebinding effects.
   - id: cs131-v2-foundations-card-reference-update
     difficulty: intermediate
     bloom: apply
@@ -63,8 +63,8 @@ cards:
     answer: '`n` becomes 10 because the parameter aliases the caller''s variable.'
     explanation: 'Self-check: assignment through an alias reaches the original variable.'
 
-  # Lecture: intro_lecture_td_handouts.pdf pp. 32–34
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 2 (mutation versus rebinding)
+  # Taught: [01] Intro (Public).docx, Exercise: Classify that Language.
+  # Practice: Homework PYTHON2; Fall 2025 Quiz 1 v2, Problem 2 (Widget Woes): predict copy, mutation, and rebinding effects.
   - id: cs131-v2-foundations-card-separate-tests
     difficulty: intermediate
     bloom: create
@@ -74,31 +74,31 @@ cards:
       assignment is allowed. State what the caller should inspect.
     answer: 'For example, `p.value = 5`. After the call, inspect the original record''s field: 1 suggests
       an independent copy; 5 shows a shared object.'
-    explanation: 'Self-check: change the existing record, then observe the caller. Merely rebinding p does
-      not distinguish an independent copy from a local object reference.'
+    explanation: 'Self-check: change the existing record, then observe the caller. Merely rebinding p
+      does not distinguish an independent copy from a local object reference.'
 
-  # Lecture: intro_lecture_td_handouts.pdf pp. 28, 33–36
-  # Assessment: Fall 2023 Midterm, Problem 5, PDF p. 10 (reasoning under chosen language rules)
+  # Taught: [01] Intro (Public).docx, Building Blocks and Dimensions; Specifying a Language?.
+  # Practice: Fall 2023 Midterm Problem 5, Eggert's Scoping and Typing (PDF pp. 10–11): reason under independently chosen language rules.
   - id: cs131-v2-foundations-card-evaluate-claim
     difficulty: intermediate
     bloom: evaluate
     estimated_seconds: 40
     question: A program is rewritten with different keywords and punctuation. A student predicts identical
-      output without checking the language rules. Give one concrete rule they must check for a program that
-      modifies an argument.
+      output without checking the language rules. Give one concrete rule they must check for a program
+      that modifies an argument.
     answer: 'They must check parameter passing: changing a copied record may be invisible to the caller,
       while changing a shared record may be visible.'
-    explanation: 'Self-check: connect the rule to a possible difference in output; keyword resemblance is
-      insufficient.'
+    explanation: 'Self-check: connect the rule to a possible difference in output; keyword resemblance
+      is insufficient.'
 
-  # Lecture: intro_lecture_td_handouts.pdf pp. 25–27
-  # Assessment: Foundation for Fall 2025 Quiz 1, Problem 3
+  # Taught: [01] Intro (Public).docx, Paradigms.
+  # Practice: Concept prerequisite; the paradigm examples are taught here. Later code traces supply application practice.
   - id: cs131-v2-foundations-card-functional-construction
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 40
-    question: A recursive total function returns 0 for an empty list. On `[3,5]`, it returns the head plus
-      the total of the tail. Give the two additions needed to obtain its result.
+    question: A recursive total function returns 0 for an empty list. On `[3,5]`, it returns the head
+      plus the total of the tail. Give the two additions needed to obtain its result.
     answer: '`5 + 0 = 5`, then `3 + 5 = 8`.'
     explanation: 'Self-check: use the empty-list result as the base and build each result while returning
       from recursion.'

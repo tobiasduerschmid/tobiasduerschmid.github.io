@@ -1,11 +1,11 @@
 title: "CS 131: Logic Programming"
 description: "Short Prolog unification, search-order, and recursive-list problems modeled on course assessments."
 active: true
-# Complete replacement. Page references below are physical PDF pages.
+# Reviewed against the supplied lecture notes, homework, and past assessments.
 # Time estimates are planning estimates, not measured student completion times.
 questions:
-  # Lecture: logic_palooza_v6_handouts.pdf pp.6,12,16–20.
-  # Assessment: Fall 2025 Quiz 4, Problem 4(a); distinguish an atom query from a variable query.
+  # Lecture: [08] Logic Palooza (Public).docx — Prolog Facts; Prolog Queries
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P4(a)
   - id: cs131-v2-logic-atom-query
     type: single
     difficulty: basic
@@ -28,8 +28,8 @@ questions:
       2: "Neither fact establishes color(x); Prolog cannot prove this particular atom query."
     explanation: "The query asks whether the atom x has color. There is no matching fact, so it fails."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.25–27,36,47–48.
-  # Assessment: [Final] F23 (Public).pdf, Problem 8(a)(ii) p.22; use a repeated variable to constrain a query.
+  # Lecture: [08] Logic Palooza (Public).docx — Matching a Goal and a Fact/Rule
+  # Assessment: Homework Problems (Public).docx LOGIC4(A.10)
   - id: cs131-v2-logic-repeated-variable
     type: single
     difficulty: intermediate
@@ -46,8 +46,8 @@ questions:
       1: "Repeated occurrences of the same variable share one consistent binding during a proof."
     explanation: "The first argument would bind X to red, but the second would require that same X to be blue. Unification fails."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.6,25–27,36.
-  # Assessment: [Final] F24 V1 (Public).pdf, Problem 7(A.2) p.23; extract bindings from a structured rule head.
+  # Lecture: [08] Logic Palooza (Public).docx — Matching a Goal and a Fact/Rule
+  # Assessment: Homework Problems (Public).docx LOGIC4(A.6,A.7)
   - id: cs131-v2-logic-nested-bindings
     type: single
     difficulty: intermediate
@@ -64,8 +64,8 @@ questions:
       2: "owns is the outer functor. P aligns with the first argument lee."
     explanation: "Matching functors expose corresponding arguments: P matches lee, and the Color inside bike matches green."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.25–27,36.
-  # Assessment: [Final] F24 V1 (Public).pdf, Problem 7(A.2) p.23; carry existing mappings into the next goal.
+  # Lecture: [08] Logic Palooza (Public).docx — Matching a Goal and a Fact/Rule
+  # Assessment: Homework Problems (Public).docx LOGIC4(A.2,A.8)
   - id: cs131-v2-logic-existing-binding
     type: multiple
     difficulty: intermediate
@@ -85,8 +85,8 @@ questions:
       3: "The functor's arity must match: edge/1 and edge/2 are different predicates."
     explanation: "Applying X = oak gives edge(oak, Y). Matching requires the same functor, two arguments, and oak in the first position."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.20–22,42.
-  # Assessment: Fall 2025 Quiz 4, Problem 4(d); list the first bindings in database order.
+  # Lecture: [08] Logic Palooza (Public).docx — Resolution: How Prolog Answers Queries
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P4(d)
   - id: cs131-v2-logic-fact-order
     type: single
     difficulty: intermediate
@@ -110,8 +110,8 @@ questions:
       2: "edge(b, z) does not match the query's first argument a."
     explanation: "The first matching fact binds Y to c. On requesting another solution, the later matching fact binds Y to b."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.9–10,22–23.
-  # Assessment: [Final] S23 V1 (Public).pdf, Problem 5 p.11; construct a relation from connected facts.
+  # Lecture: [08] Logic Palooza (Public).docx — Prolog Rules
+  # Assessment: Homework Problems (Public).docx LOGIC3; CS131 Fall 25 Quiz 4 (with solutions).docx P4
   - id: cs131-v2-logic-shared-middle
     type: single
     difficulty: intermediate
@@ -133,8 +133,8 @@ questions:
       1: "Z and W are unrelated variables, so the two edges need not connect."
     explanation: "Using Z in both subgoals forces the endpoint of the first edge to equal the start of the second."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.21–23,42.
-  # Assessment: [Final] F23 (Public).pdf, Problem 8(b) p.23; trace ordered resolution with backtracking.
+  # Lecture: [08] Logic Palooza (Public).docx — Resolution: How Prolog Answers Queries
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P4(b,c)
   - id: cs131-v2-logic-proof-order
     type: parsons
     difficulty: intermediate
@@ -159,8 +159,8 @@ questions:
       - "Report Out = b after proving only the first subgoal."
     explanation: "A rule succeeds only after every subgoal succeeds. The b branch has no continuation, so its binding is undone and the c branch is tried."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.13–14,20–23,42.
-  # Assessment: Fall 2025 Quiz 4, Problem 4(c); retain duplicate answers in source-order search.
+  # Lecture: [08] Logic Palooza (Public).docx — Resolution Continued
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P4(c)
   - id: cs131-v2-logic-duplicate-proofs
     type: single
     difficulty: advanced
@@ -186,8 +186,8 @@ questions:
       2: "The two-step rule reaches c through b; it does not produce a second proof for b."
     explanation: "The direct rule gives b and c. The two-step rule then follows a to b to c, giving c again."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.22,42.
-  # Assessment: Fall 2025 Quiz 4, Problem 4(b,c); find a later solution after an earlier branch fails.
+  # Lecture: [08] Logic Palooza (Public).docx — Resolution: How Prolog Answers Queries
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P4(b)
   - id: cs131-v2-logic-backtrack-binding
     type: single
     difficulty: intermediate
@@ -212,8 +212,8 @@ questions:
       2: "A failed amber branch does not end the search. Backtracking allows the alternative item(teal)."
     explanation: "The amber branch fails at approved(amber). Prolog backtracks, replaces that branch's binding with X = teal, and proves both subgoals."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.46,48–49.
-  # Assessment: Fall 2025 Quiz 4, Problem 5; decompose a list into initial items and the remaining tail.
+  # Lecture: [08] Logic Palooza (Public).docx — Prolog Lists: Example 2
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P5
   - id: cs131-v2-logic-list-tail
     type: single
     difficulty: intermediate
@@ -230,8 +230,8 @@ questions:
       1: "Next matches one element. Here that element is the atom blue, not a singleton list."
     explanation: "H and Next consume the first two elements. Tail is the list of all remaining elements, [green]."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.46,48.
-  # Assessment: [Final] F23 (Public).pdf, Problem 8(a) pp.22–23; use list structure to determine which queries match.
+  # Lecture: [08] Logic Palooza (Public).docx — Prolog Lists
+  # Assessment: Homework Problems (Public).docx LOGIC4(A.8,A.9)
   - id: cs131-v2-logic-nested-list
     type: multiple
     difficulty: intermediate
@@ -251,8 +251,8 @@ questions:
       3: "After consuming the first element, the remaining list contains only c."
     explanation: "The outer list has two elements: [a,b] and c. Its head is [a,b], and its tail is [c]."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.22,42,50.
-  # Assessment: Fall 2025 Quiz 4, Problem 4(c), and [Final] F23 (Public).pdf Problem 8(a); retain duplicate list-query answers.
+  # Lecture: [08] Logic Palooza (Public).docx — Example 3: Checking if a list contains a value
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P4(c); Homework Problems (Public).docx LOGIC5
   - id: cs131-v2-logic-membership-trace
     type: single
     difficulty: intermediate
@@ -275,8 +275,8 @@ questions:
       2: "Search walks the list from its head toward its tail; it does not group equal values."
     explanation: "The first clause returns the head. The second recurses on the tail, producing the values in positional order: a, b, a."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.48–49,52–54; inequality meaning supplied in the prompt.
-  # Assessment: Fall 2025 Quiz 4, Problem 5; complete the unequal-head case for removing consecutive duplicates.
+  # Lecture: [08] Logic Palooza (Public).docx — Example 4: Deleting an atom from a list
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P5
   - id: cs131-v2-logic-squeeze-tail
     type: single
     difficulty: intermediate
@@ -298,8 +298,8 @@ questions:
       2: "X is already preserved in the output head. The remaining input starts with Y."
     explanation: "Keep X because it differs from Y, then process the remaining input [Y|T]. The result of that recursive call becomes the output tail R."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.51–54.
-  # Assessment: [Final] F23 (Public).pdf, Problem 8(a) pp.22–23; trace a recursive predicate that transforms a list.
+  # Lecture: [08] Logic Palooza (Public).docx — Example 4: Deleting an atom from a list
+  # Assessment: Homework Problems (Public).docx LOGIC5
   - id: cs131-v2-logic-remove-first-proof
     type: single
     difficulty: intermediate
@@ -322,8 +322,8 @@ questions:
       1: "When the head b matches X, the first clause returns its tail [c], omitting b."
     explanation: "The recursive clause preserves a. The first clause then removes b from [b,c], giving [c]; combining the preserved head yields [a,c]."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.13–14,42–44.
-  # Assessment: [Final] F24 V1 (Public).pdf, Problem 7(A.1) p.23; inspect pending goals and recursive progress.
+  # Lecture: [08] Logic Palooza (Public).docx — Recursive Rules; Resolution Continued
+  # Assessment: Homework Problems (Public).docx LOGIC6 (resolution algorithm)
   - id: cs131-v2-logic-recursive-order
     type: single
     difficulty: advanced
@@ -347,8 +347,8 @@ questions:
       2: "When more solutions are requested, Prolog tries later rules after exhausting the direct rule."
     explanation: "The recursive rule's first subgoal asks for path(X,M) again without first moving along an edge. Repeated attempts can keep expanding the same search before the edge subgoal is checked."
 
-  # Lecture: logic_palooza_v6_handouts.pdf pp.42,48,54–55.
-  # Assessment: [Final] F24 V1 (Public).pdf, Problem 7(A.1) p.23; order recursive-list subgoals.
+  # Lecture: [08] Logic Palooza (Public).docx — Prolog List Processing: Built-in Facts and Rules
+  # Assessment: Homework Problems (Public).docx LOGIC8(A)
   - id: cs131-v2-logic-reverse-goals
     type: parsons
     difficulty: advanced

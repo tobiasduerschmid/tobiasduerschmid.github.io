@@ -1,0 +1,427 @@
+title: 'CS 131: Intermediate Haskell'
+description: Trace and build list recursion, comprehensions, polymorphic types, and map/filter/fold pipelines.
+active: true
+# Reviewed against the supplied CS131 lectures, homework, and past assessments (2026-10-14).
+# The deck level follows prerequisites; each item's difficulty describes its own reasoning demand.
+# Source and assessment comments travel with the stable item IDs. Replacement objectives use new IDs.
+# Estimated times are planning estimates, not measured learner completion times.
+questions:
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 8, 41 (infinite lists)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  # Homework: Homework Problems (Public).docx, HASKELL8 A (finite demand from infinite candidates).
+  - id: cs131-v2-functional-puzzle-lazy-search
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: What does `head (filter (\x -> x > 10) [1 ..])` evaluate to?
+    options:
+      - '`11`'
+      - 'Nothing: `filter` never finishes the infinite list'
+      - '`[11]`'
+    correct_index: 0
+    option_feedback:
+      1: '`head` needs only the first element that `filter` produces, so evaluation stops once 11 is found. The rest
+        of the infinite list is never examined.'
+      2: '`head` returns the first element itself, not a one-element list.'
+    explanation: Lazy evaluation computes only what the consumer demands. `head` demands one element, so `filter`
+      tests 1 through 11 and stops.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 44–48, 66–71 (list recursion)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (complete recursion on a count and list).
+  # Homework: Homework Problems (Public).docx, HASKELL9 A (dropping elements).
+  - id: cs131-v2-functional-skip-recursive-step
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      Complete `skip`, which discards the first `n` items, or all items if the list is shorter. Assume `n >= 0`.
+
+      ```haskell
+      skip _ [] = []
+      skip 0 xs = xs
+      skip n (x:xs) = ___
+      ```
+    options:
+      - '`x : skip (n-1) xs`'
+      - '`skip (n-1) xs`'
+      - '`skip (n-1) (x:xs)`'
+    correct_index: 1
+    option_feedback:
+      0: Consing the removed head back onto the result preserves an item that the function must discard.
+      2: Decreasing the count without removing the head eventually returns the original list.
+    explanation: Each recursive step removes one input item and consumes one unit of the count. When the count reaches zero, the unprocessed suffix is returned.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 66–71 (list patterns in recursion)
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 1, p. 2 (trace list recursion and base cases).
+  # Homework: Homework Problems (Public).docx, HASKELL9–10 (recursive list patterns).
+  - id: cs131-v2-functional-pairwise-recursion-trace
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      What is `groupSums [2,5,4,1,8]`?
+
+      ```haskell
+      groupSums [] = []
+      groupSums [x] = [x]
+      groupSums (x:y:rest) = (x+y) : groupSums rest
+      ```
+    options:
+      - '`[7, 5, 8]`'
+      - '`[7, 9, 5, 9]`'
+      - '`[7, 5]`'
+    correct_index: 0
+    option_feedback:
+      1: The pattern removes two items per call; the pairs do not overlap.
+      2: The singleton case retains an unpaired final element instead of discarding it.
+    explanation: The calls process `[2,5]`, then `[4,1]`, then the singleton `[8]`. Their contributions are 7, 5, and 8.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 44–48, 66–69 (list recursion)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (recursive completion).
+  # Homework: Homework Problems (Public).docx, HASKELL6 C (recursive selection).
+  - id: cs131-v2-functional-recursive-selection-repair
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      `positives` should retain positive integers in order. Which expression fills the blank?
+
+      ```haskell
+      positives [] = []
+      positives (x:xs)
+        | x > 0 = x : positives xs
+        | otherwise = ___
+      ```
+    options:
+      - '`xs`'
+      - '`positives (x:xs)`'
+      - '`positives xs`'
+    correct_index: 2
+    option_feedback:
+      0: Returning the tail unchanged can leave later nonpositive elements in the result.
+      1: This repeats the same input and cannot progress past a nonpositive head.
+    explanation: Dropping the current head is only one step. The remaining tail still needs the same selection rule.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 51–56 (comprehensions with a guard)
+  # Homework: Homework Problems (Public).docx, HASKELL8 A–B (comprehension guards).
+  - id: cs131-functional-comprehension-guard
+    type: single
+    difficulty: basic
+    bloom: apply
+    estimated_seconds: 45
+    question: What does `[x * 10 | x <- [1 .. 6], even x]` evaluate to?
+    options:
+      - '`[20,40,60]`'
+      - '`[10,30,50]`'
+      - '`[10,20,30,40,50,60]`'
+    correct_index: 0
+    option_feedback:
+      1: The guard keeps the values for which `even x` is `True`, not those for which it is `False`.
+      2: The guard tests the drawn value `x`, not the output `x * 10`. Testing the output would keep everything, because every multiple of 10 is even.
+    explanation: The generator supplies 1 to 6, the guard keeps 2, 4, and 6, and the expression before `|` multiplies each kept value by 10.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 57–59 (multiple and dependent generators)
+  # Homework: Homework Problems (Public).docx, HASKELL8 A (comprehensions); lecture slide 59 (dependent generators).
+  # Format: write-in output; same reasoning objective and stable ID as the former choice item.
+  - id: cs131-functional-dependent-generator-count
+    type: write-in
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: What does this program print?
+    explanation: 'The second generator depends on the first: `a = 1` gives four pairs, `a = 2` three, `a = 3` two,
+      and `a = 4` one, for 10 in total.'
+    program:
+      language: haskell
+      file: Main.hs
+      code: |-
+        main :: IO ()
+        main = putStrLn (show (length [(a,b) | a <- [1..4], b <- [a..4]]))
+    answer: "10"
+    answer_prompt: Enter one integer.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 60 (quicksort with comprehensions)
+  # Homework: Homework Problems (Public).docx, HASKELL6 C; lecture slide 60 (partitioning).
+  - id: cs131-functional-quicksort-duplicates
+    type: single
+    difficulty: intermediate
+    bloom: evaluate
+    estimated_seconds: 90
+    question: |-
+      What does `qsort [3, 1, 3, 2]` return with this definition?
+
+      ```haskell
+      qsort [] = []
+      qsort (p:rest) =
+        qsort [x | x <- rest, x < p] ++ [p] ++ qsort [x | x <- rest, x > p]
+      ```
+    options:
+      - '`[1,2,3]`'
+      - '`[1,2,3,3]`'
+      - It never finishes, because the partitions do not get smaller
+    correct_index: 0
+    option_feedback:
+      1: The second 3 is neither less than nor greater than the pivot 3, so neither comprehension keeps it.
+      2: Both comprehensions draw only from `rest`, which excludes the pivot, so each recursive call receives a shorter
+        list.
+    explanation: Elements equal to the pivot satisfy neither guard and are dropped, so this version silently removes
+      duplicates. A correct quicksort sends them to one side, for example with `x >= p` in the second comprehension.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 63–65 (patterns with constants; first match wins)
+  # Homework: Homework Problems (Public).docx, HASKELL9 A.2 (equation order).
+  - id: cs131-functional-literal-pattern-order
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: |-
+      What is `fare 0 "senior"`?
+
+      ```haskell
+      fare :: Int -> String -> Int
+      fare 0 _        = 0
+      fare _ "senior" = 2
+      fare age _      = if age < 12 then 1 else 3
+      ```
+    options:
+      - '`0`'
+      - '`2`'
+      - '`1`'
+    correct_index: 0
+    option_feedback:
+      1: Equations are tried from top to bottom, and the first one already matches, so the `"senior"` equation is never consulted.
+      2: The catch-all equation is reached only when neither earlier equation matches.
+    explanation: The first equation requires an age of `0` and accepts any second argument with `_`, so it matches and the result is `0`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 66–70 (list pattern cheat sheet)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (list patterns in recursive code).
+  # Homework: Homework Problems (Public).docx, HASKELL9 A (list patterns).
+  - id: cs131-v2-functional-nested-pattern-bindings
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: The Haskell pattern `(first:second:rest)` is matched against `[[1,2], [], [3]]`. Which bindings result? Select all that apply.
+    options:
+      - '`first = [1,2]`'
+      - '`second = []`'
+      - '`rest = [[3]]`'
+      - '`rest = [3]`'
+    correct_indices:
+      - 0
+      - 1
+      - 2
+    option_feedback:
+      0: The first element of the outer list is itself the list `[1,2]`.
+      1: An empty inner list is still a complete element of the outer list.
+      2: The remaining outer list contains one inner list, `[3]`.
+      3: The tail keeps the outer list level; pattern matching does not flatten it.
+    explanation: Each colon removes one element from the outer list. `rest` contains whatever outer elements remain, retaining their nested structure.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 73–75 (type variables)
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 3B–C, p. 5 (infer polymorphic higher-order types).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL7 (type constraints from uses).
+  - id: cs131-v2-functional-same-element-type-constraint
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      What is the most general type of this function?
+
+      ```haskell
+      collect f x = [x, f x]
+      ```
+    options:
+      - '`(a -> b) -> a -> [b]`'
+      - '`(a -> a) -> a -> [a]`'
+      - '`a -> (a -> a) -> [a]`'
+    correct_index: 1
+    option_feedback:
+      0: Both `x` and `f x` occupy one homogeneous list, so they must have the same type.
+      2: The first parameter is applied as a function; the second is its argument.
+    explanation: 'If `x :: a`, the list forces `f x :: a` too. Thus `f :: a -> a`, and the result is `[a]`.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 76 (type classes inferred from operations)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL7 (type inference); lecture slide 76 (Fractional).
+  - id: cs131-functional-infer-fractional
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: What is the most general type of `half x = x / 2`?
+    options:
+      - '`Fractional a => a -> a`'
+      - '`Num a => a -> a`'
+      - '`Int -> Int`'
+      - '`a -> a`'
+    correct_index: 0
+    option_feedback:
+      1: '`Num` provides `+`, `-`, and `*`, but not `/`; division requires `Fractional`.'
+      2: '`Int` does not support `/`, which is not integer division; `div` divides integers.'
+      3: An unconstrained `a` would allow any type, including `Bool`, which cannot be divided.
+    explanation: The `/` operator belongs to the `Fractional` type class, so the inferred type works for every fractional type, such as `Double`. Some tools also list `Num a`, which every `Fractional` type already satisfies.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 78–81 (returning functions)
+  # Homework: Homework Problems (Public).docx, ADVHASKELL2 A; ADVHASKELL3 (returned functions).
+  - id: cs131-functional-return-function-type
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      Which type completes the signature?
+
+      ```haskell
+      pick :: Bool -> ___
+      pick loud = if loud then shout else whisper
+        where
+          shout s = s ++ "!"
+          whisper s = "(" ++ s ++ ")"
+      ```
+    options:
+      - '`(String -> String)`'
+      - '`String`'
+      - '`(Bool -> String)`'
+    correct_index: 0
+    option_feedback:
+      1: '`pick` returns one of the helper functions itself, not the result of calling it.'
+      2: "The `Bool` is `pick`'s own parameter; each returned helper takes a `String`."
+    explanation: Both branches of the `if` are functions from `String` to `String`, so `pick` is a higher-order function that returns one. For example, `pick True "hi"` is `"hi!"`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 83–90 (mappers and filters)
+  # Assessment: [Midterm] F23 (Public).pdf, Problem 3a–b, p. 6 (choose map versus filter).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL1 A–B (map/filter distinction).
+  - id: cs131-v2-functional-map-boolean-results
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      What is the pair of results?
+
+      ```haskell
+      map (\x -> x > 3) [2,5,4]
+      filter (\x -> x > 3) [2,5,4]
+      ```
+    options:
+      - '`[5,4]` and `[True,True]`'
+      - '`[False,True,True]` and `[5,4]`'
+      - '`[False,True,True]` and `[True,True]`'
+    correct_index: 1
+    option_feedback:
+      0: '`map` keeps one result per input element and uses the predicate''s Boolean return values.'
+      2: '`filter` returns the original elements for which the predicate succeeds, not the returned Booleans.'
+    explanation: Mapping transforms all three elements into Booleans. Filtering retains two original integers.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 83–90, 97 (map-filter-reduce pipelines)
+  # Assessment: [Midterm] F23 (Public).pdf, Problem 3, pp. 6–7 (compose selection and transformation).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL1 B (pipeline tracing).
+  - id: cs131-v2-functional-pipeline-order-counterexample
+    type: single
+    difficulty: intermediate
+    bloom: evaluate
+    estimated_seconds: 60
+    question: Here `abs` returns the absolute value of its argument. For `xs = [-2,3]`, compare `map abs (filter (\x -> x > 0) xs)` with `filter (\x -> x > 0) (map abs xs)`. Which conclusion is justified?
+    options:
+      - Both produce `[3]`; these operations commute.
+      - Both produce `[2,3]`; absolute value runs first.
+      - They produce `[3]` and `[2,3]`; order matters.
+    correct_index: 2
+    option_feedback:
+      0: The second expression transforms -2 to 2 before testing positivity, so it retains that element.
+      1: The first expression removes -2 before `abs` ever receives it.
+    explanation: Selection tests different values in the two pipelines. A negative input supplies a counterexample to freely swapping these stages.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 91–95 (foldl and its accumulator)
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3c and Problem 4b (accumulator recursion and folding).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL1 A.3; ADVHASKELL2 B.7 (fold accumulator).
+  # Format: write-in output; same reasoning objective and stable ID as the former choice item.
+  - id: cs131-v2-functional-fold-positional-accumulator
+    type: write-in
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: What does this program print?
+    explanation: The accumulator takes the values 0, 2, 24, and 241. Its update rule determines the result, not merely
+      the presence of a fold.
+    program:
+      language: haskell
+      file: Main.hs
+      code: |-
+        main :: IO ()
+        main = putStrLn (show (foldl (\acc digit -> 10*acc + digit) 0 [2,4,1]))
+    answer: "241"
+    answer_prompt: Enter one integer.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 42, 91–96 (foldl that builds a list)
+  # Assessment: [Midterm] F23 (Public).pdf, Problem 3d, p. 7 (build a list with a fold).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL1 A.3 (fold order).
+  - id: cs131-v2-functional-fold-string-order
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      What does this expression evaluate to?
+
+      ```haskell
+      foldl (\acc word -> word ++ acc) "" ["go", "up", "now"]
+      ```
+    options:
+      - '`"goupnow"`'
+      - '`"nowupgo"`'
+      - '`"now"`'
+    correct_index: 1
+    option_feedback:
+      0: Each incoming word is placed before the accumulated string, not after it.
+      2: The new word is concatenated with the existing accumulator; it does not replace it.
+    explanation: The successive accumulators are `"go"`, `"upgo"`, and `"nowupgo"`. Left-to-right folding can still build output in reverse order.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 91–96 (foldl and foldr)
+  # Assessment: none; prediction item paired with the chapter's Puzzles section.
+  # Homework: Homework Problems (Public).docx, ADVHASKELL1 A.3 (foldl/r; grouping supplied).
+  # Format: write-in output; same reasoning objective and stable ID as the former choice item.
+  - id: cs131-v2-functional-puzzle-fold-direction
+    type: write-in
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 75
+    question: For three elements, `foldr f z [a,b,c]` groups as `f a (f b (f c z))`, while `foldl f z [a,b,c]` groups
+      as `f (f (f z a) b) c`. What does this program print?
+    explanation: '`foldr f z [a, b, c]` is `f a (f b (f c z))`, and `foldl f z [a, b, c]` is `f (f (f z a) b) c`.
+      With subtraction, these groupings give 3 and -9.'
+    program:
+      language: haskell
+      file: Main.hs
+      code: |-
+        main :: IO ()
+        main = do
+          putStrLn (show (foldr (-) 0 [5,3,1]))
+          putStrLn (show (foldl (-) 0 [5,3,1]))
+    answer: 3 -9
+    answer_prompt: Enter the two integers in order, separated by a space.
+
+  # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 83–96 (filter, map, then reduce)
+  # Assessment: [Midterm] F23 (Public).pdf, Problem 3, pp. 6–7 (compose map, filter and fold).
+  # Homework: Homework Problems (Public).docx, ADVHASKELL1 A–B (compose filter/map/fold).
+  - id: cs131-v2-functional-assemble-select-square-sum
+    type: parsons
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 75
+    question: Arrange one expression that sums the squares of only the positive integers in `values`. Negative integers must be discarded before squaring. Use all four required fragments.
+    display: inline
+    lines:
+      - 'foldl (+) 0 '
+      - '(map (\x -> x*x) '
+      - '(filter (\x -> x > 0) '
+      - values))
+    distractors:
+      - '(map (\x -> x+x) '
+      - '(filter (\x -> x*x > 0) '
+    explanation: The innermost filter removes nonpositive inputs, map squares what remains, and fold adds the squares. Squaring before checking positivity would incorrectly admit negative inputs.

@@ -1,11 +1,11 @@
 title: "CS 131: Object-Oriented Programming"
 description: "Short inheritance, access, construction, and dispatch problems modeled on course assessments."
 active: true
-# Complete replacement. Page references below are physical PDF pages.
+# Reviewed against the supplied lecture notes, homework, and past assessments.
 # Time estimates are planning estimates, not measured student completion times.
 questions:
-  # Lecture: oop_palooza_v7_handouts.pdf pp.33–34.
-  # Assessment: [Final] S23 V1 (Public).pdf, Problem 11 pp.21–22; reason about access and supported operations.
+  # Lecture: [06] OOP Palooza (Public).docx — Access Modifiers
+  # Assessment: [Final] S23 V1 (Public).pdf P11 pp.21-22
   - id: cs131-v2-oop-access-check
     type: multiple
     difficulty: intermediate
@@ -26,8 +26,8 @@ questions:
       3: "Protected access does not extend to ordinary client code."
     explanation: "Sensor's methods may use inherited public and protected members. Clients may use its public interface, including start()."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.82,85–86.
-  # Assessment: [Final] F22 (Public).pdf, Problem 16 p.9; infer implementation inheritance from a rejected substitution.
+  # Lecture: [06] OOP Palooza (Public).docx — Implementation Inheritance
+  # Assessment: [Final] F22 (Public).pdf P16 p.9
   - id: cs131-v2-oop-private-base
     type: single
     difficulty: intermediate
@@ -54,8 +54,8 @@ questions:
       1: "Client code cannot implicitly use a privately derived Pump as an Engine reference."
     explanation: "Pump exposes its own public start() operation. Reusing Engine's implementation does not expose Engine's public type or methods to clients."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.54,66,69,85–86.
-  # Assessment: Fall 2025 Quiz 4, Problem 1(a,c,d); infer an inheritance link from substitutability evidence.
+  # Lecture: [06] OOP Palooza (Public).docx — Interface Inheritance; Subclassing Inheritance; Implementation Inheritance
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P1(a,c,d)
   - id: cs131-v2-oop-infer-link
     type: single
     difficulty: advanced
@@ -73,8 +73,8 @@ questions:
       2: "Subclassing preserves the inherited public interface and subtype relationship."
     explanation: "B already supports substitution for A. The remaining link must break that relationship; among the listed forms, implementation-only inheritance does so."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.70–72,107–108.
-  # Assessment: [Final] F22 (Public).pdf, Problem 14 p.7; identify an unimplemented abstract operation after a signature mismatch.
+  # Lecture: [06] OOP Palooza (Public).docx — Abstract Methods and Classes
+  # Assessment: [Final] F22 (Public).pdf P14 p.7
   - id: cs131-v2-oop-abstract-signature
     type: single
     difficulty: intermediate
@@ -99,8 +99,8 @@ questions:
       2: "A derived class can be concrete once it implements all inherited pure virtual operations."
     explanation: "The no-argument pure virtual write() remains unimplemented. A method with an int parameter has a different signature, so Printer remains abstract."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.105,107–108.
-  # Assessment: [Final] F22 (Public).pdf, Problem 14 p.7; repair a non-overriding signature.
+  # Lecture: [06] OOP Palooza (Public).docx — Abstract Methods and Classes; Subclassing Inheritance
+  # Assessment: [Final] F22 (Public).pdf P14 p.7
   - id: cs131-v2-oop-override-repair
     type: single
     difficulty: intermediate
@@ -118,8 +118,8 @@ questions:
       1: "Changing the parameter type from int to string creates a different signature."
     explanation: "The parameter list matches the inherited operation. The override keyword then asks the compiler to verify that an override exists."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.121–124,135.
-  # Assessment: [Final] S23 V1 (Public).pdf, Problem 8 p.17; trace a virtual call through a base pointer.
+  # Lecture: [06] OOP Palooza (Public).docx — Dynamic Dispatch in Statically-typed Languages
+  # Assessment: [Final] S23 V1 (Public).pdf P8 p.17
   - id: cs131-v2-oop-virtual-output
     type: single
     difficulty: intermediate
@@ -145,8 +145,8 @@ questions:
       2: "Overriding selects a method; it does not automatically run both bodies."
     explanation: "b refers to a Child object, and value() is virtual, so the call runs Child::value() and prints 7."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.135,140.
-  # Assessment: [Final] F23 (Public).pdf, Problem 6(b) pp.16–17; classify dispatch at individual call sites.
+  # Lecture: [06] OOP Palooza (Public).docx — Dynamic Dispatch in Statically-typed Languages
+  # Assessment: [Final] F23 (Public).pdf P6(b) pp.16-17
   - id: cs131-v2-oop-dispatch-sites
     type: multiple
     difficulty: intermediate
@@ -177,8 +177,8 @@ questions:
       3: "An ordinary call to a virtual method uses the virtual dispatch semantics even when the receiver is declared Child."
     explanation: "The virtual show() calls use dynamic dispatch. The non-virtual save() calls use static dispatch."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.78–79,135.
-  # Assessment: [Final] S23 V1 (Public).pdf, Problem 8 p.17; trace a virtual call inside an inherited non-virtual method.
+  # Lecture: [06] OOP Palooza (Public).docx — Classify That Language: Dynamic Dispatch
+  # Assessment: [Final] S23 V1 (Public).pdf P8 p.17
   - id: cs131-v2-oop-inherited-wrapper
     type: single
     difficulty: advanced
@@ -198,17 +198,19 @@ questions:
       b.wrap();
       ```
     options:
-      - "<B>"
-      - "<BC>"
-      - "<C>"
+    - '`<B>`'
+    - '`<BC>`'
+    - '`<C>`'
     correct_index: 2
     option_feedback:
-      0: "Running Base::wrap() does not change the receiver into a Base object. Its virtual mark() call still reaches Child."
-      1: "The override replaces the selected implementation; the base mark() body is not automatically called."
-    explanation: "Base::wrap() runs, prints <, dynamically calls Child::mark() on the same receiver, and then prints >."
+      0: Running Base::wrap() does not change the receiver into a Base object. Its virtual mark() call still reaches
+        Child.
+      1: The override replaces the selected implementation; the base mark() body is not automatically called.
+    explanation: Base::wrap() runs, prints `<`, dynamically calls Child::mark() on the same receiver, and then prints
+      `>`.
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.85–86,90–94.
-  # Assessment: Fall 2025 Quiz 3, Problem 5(a,b); distinguish template instantiation from generic-body checking.
+  # Lecture: [05] Function Palooza (Public).docx — Templates; Generics
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P5(a,b)
   - id: cs131-v2-oop-template-or-generic
     type: single
     difficulty: intermediate
@@ -226,8 +228,8 @@ questions:
       2: "The int use fails at compile time, so runtime-only checking does not explain the observations."
     explanation: "The template model permits operations required by its body and checks whether a chosen concrete type supports them when the template is instantiated."
 
-  # Lecture: function_palooza_v8_handouts.pdf pp.91–94,101.
-  # Assessment: Fall 2025 Quiz 3, Problem 5(b,c); supply the interface bound needed by a generic body.
+  # Lecture: [05] Function Palooza (Public).docx — Generics
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P5(b,c)
   - id: cs131-v2-oop-generic-bound
     type: single
     difficulty: intermediate
@@ -251,15 +253,15 @@ questions:
       1: "The bound must justify encode() as well as transmit()."
     explanation: "A bounded generic may use the operations guaranteed by its bound. Both called methods must be part of that guarantee."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.96–100.
-  # Assessment: [Final] F22 (Public).pdf, Problem 15 p.8; trace construction and destruction effects.
+  # Lecture: [06] OOP Palooza (Public).docx — Shallow Dive into Inheritance: Construction and Destruction
+  # Assessment: [Final] F22 (Public).pdf P15 p.8 (constructor/destructor effects; inheritance order from lecture)
   - id: cs131-v2-oop-lifetime-order
     type: parsons
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 60
-    question: |
-      Arrange the four printed lines for this C++ scope, from first to last. Leave out the line that is never printed.
+    question: |-
+      Arrange the four printed lines for this C++ scope, from first to last.
 
       ```cpp
       struct Base {
@@ -273,16 +275,15 @@ questions:
       { Child c; }
       ```
     lines:
-      - "base starts"
-      - "child starts"
-      - "child ends"
-      - "base ends"
-    distractors:
-      - "child starts again"
-    explanation: "The base constructor runs before the derived constructor body. At scope exit, destruction proceeds in reverse: Child's destructor body, then Base's. The inherited base part is not a second Child object."
+    - base starts
+    - child starts
+    - child ends
+    - base ends
+    explanation: 'The base constructor runs before the derived constructor body. At scope exit, destruction proceeds
+      in reverse: Child''s destructor body, then Base''s. The inherited base part is not a second Child object.'
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.98–99.
-  # Assessment: [Final] F22 (Public).pdf, Problem 15 p.8; diagnose initialization from an observed object's state.
+  # Lecture: [06] OOP Palooza (Public).docx — Shallow Dive into Inheritance: Construction
+  # Assessment: [Final] F24 Solutions (Public).pdf p.16 (explicit base-initializer example); repair grounded in lecture construction example
   - id: cs131-v2-oop-python-base-init
     type: single
     difficulty: intermediate
@@ -308,8 +309,8 @@ questions:
       1: "This calls the same Child initializer again and recurses instead of initializing the base part."
     explanation: "Child defines its own __init__, so it must explicitly call the base initializer to set name on this object. super().__init__() does that."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.138–139.
-  # Assessment: [Final] F23 (Public).pdf, Problem 6(b) pp.16–17; locate implementations selected by virtual calls.
+  # Lecture: [06] OOP Palooza (Public).docx — Dynamic Dispatch in Statically-typed Languages
+  # Assessment: [Final] F23 (Public).pdf P6(b) pp.16-17
   - id: cs131-v2-oop-vtable-entries
     type: single
     difficulty: intermediate
@@ -326,8 +327,8 @@ questions:
       2: "An inherited implementation remains callable even when Child supplies no new body."
     explanation: "Child's table selects its override for draw and retains the inherited Base implementation for erase."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.129–130 (interface and semantic consistency only).
-  # Assessment: [Final] S23 V1 (Public).pdf, Problem 11 pp.21–22; evaluate whether inherited operations support substitution.
+  # Lecture: [06] OOP Palooza (Public).docx — Subtype Polymorphism
+  # Assessment: [Final] S23 V1 (Public).pdf P11 pp.21-22
   - id: cs131-v2-oop-contract-check
     type: multiple
     difficulty: advanced
@@ -347,8 +348,8 @@ questions:
       3: "Internal storage units may differ if the public result still meets the contract."
     explanation: "Substitution requires both the promised public operation and its meaning. Storing milliseconds is compatible with the contract if elapsed() converts them to seconds."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.78–80.
-  # Assessment: [Final] S23 V1 (Public).pdf, Problem 8 p.17; reason about an inherited wrapper's virtual call.
+  # Lecture: [06] OOP Palooza (Public).docx — Subclassing Inheritance: Pros and Cons; Classify That Language: Dynamic Dispatch
+  # Assessment: [Final] S23 V1 (Public).pdf P8 p.17
   - id: cs131-v2-oop-fragile-wrapper
     type: single
     difficulty: advanced
@@ -365,35 +366,36 @@ questions:
       2: "Changing visibility does not repair the path that bypasses the override."
     explanation: "The derived behavior depends on addAll routing each insertion through the virtual add operation. Restoring that call path restores the checks; direct storage writes bypass them."
 
-  # Lecture: oop_palooza_v7_handouts.pdf pp.109,135.
-  # Assessment: [Final] S23 V1 (Public).pdf, Problem 8 p.17; order outputs across inherited and overridden calls.
+  # Lecture: [06] OOP Palooza (Public).docx — Subclassing Inheritance; Dynamic Dispatch
+  # Assessment: [Final] S23 V1 (Public).pdf P8 p.17
   - id: cs131-v2-oop-super-trace
-    type: parsons
+    type: write-in
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 60
-    question: |
-      Arrange the four printed lines in execution order. Leave out the unused base-class output.
+    question: What does this program print? Trace the inherited and overridden calls.
+    explanation: super().run() executes Base’s run body with the same Child receiver. self.step() therefore calls
+      Child.step(), printing 2. The inherited body finishes with 3, then Child.run() prints 4.
+    program:
+      language: python
+      file: oop.py
+      code: |
+        class Base:
+            def run(self):
+                print(1)
+                self.step()
+                print(3)
 
-      ```python
-      class Base:
-          def run(self):
-              print("start")
-              self.step()
-              print("finish")
-          def step(self): print("base step")
-      class Child(Base):
-          def run(self):
-              super().run()
-              print("child done")
-          def step(self): print("child step")
-      Child().run()
-      ```
-    lines:
-      - "start"
-      - "child step"
-      - "finish"
-      - "child done"
-    distractors:
-      - "base step"
-    explanation: "super().run() executes Base's run body with the same Child receiver. self.step() therefore calls Child.step(). After the base body finishes, Child.run() prints child done."
+            def step(self):
+                print(0)
+
+        class Child(Base):
+            def run(self):
+                super().run()
+                print(4)
+
+            def step(self):
+                print(2)
+
+        Child().run()
+    answer: 1 2 3 4

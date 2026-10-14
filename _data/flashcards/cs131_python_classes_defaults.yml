@@ -1,0 +1,110 @@
+title: 'CS 131: Python Classes and Defaults'
+description: Trace class and instance state, inheritance, equality, and definition-time defaults.
+active: true
+# Reviewed against the supplied CS131 lectures, homework, and past assessments (2026-10-14).
+cards:
+  # Taught / practice evidence: Essential Python handout pp. 6–7 (class fields versus instance fields); Quiz 1 Problem 2A (object-state tracing).
+  - id: cs131-v2-python-card-class-stamps-not-live-links
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: A constructor increments `Counter.total`, then assigns `self.number = Counter.total`. After three objects
+      are constructed, why does the first object's `number` still equal 1?
+    answer: The constructor stored the then-current integer in the first instance. Later assignments to `Counter.total`
+      update the class field, not that instance field.
+    explanation: The class counter is shared; the separately assigned instance numbers are snapshots of its value.
+
+  # Taught / practice evidence: Essential Python handout pp. 11–13 (equality versus identity); Homework PYTHON5 (object reasoning).
+  - id: cs131-v2-python-card-custom-equality-change
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 30
+    question: A class defines `__eq__` to compare only `self.code == other.code`. Distinct objects `a` and `b` initially
+      both have code 3. After `b.code = 4`, give the results of `a == b` and `a is b`.
+    answer: 'Both are `False`: their compared fields now differ, and their identities were always distinct.'
+    explanation: Changing an equality-relevant field can change `==`. It does not merge or split object identities.
+
+  # Taught / practice evidence: Essential Python handout pp. 14–16 (inheritance); Homework PYTHON5 A–B.
+  - id: cs131-v2-python-card-explain-overridden-hook
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: '`Base.run` calls `self.step()`. `Child` inherits `run` and overrides `step`. In `Child().run()`, which `step`
+      executes, and why?'
+    answer: '`Child.step` executes because `self` is a `Child` instance, even inside the inherited `Base.run` method.'
+    explanation: The location of the inherited method's source does not change the runtime class of its receiver.
+
+  # Taught / practice evidence: Essential Python handout pp. 25–27 (definition-time defaults and None repair); Function Palooza, Default Parameters.
+  - id: cs131-python-card-default-snapshot
+    difficulty: intermediate
+    question: |-
+      Predict the output. When was the omitted argument chosen?
+
+      ```python
+      limit = 6
+      def after_one(limit=limit):
+          return limit - 1
+      limit = 13
+      print(after_one(), after_one(limit))
+      ```
+    answer: '`5 12`'
+    explanation: The default stores 6 when the function is defined. The explicit argument supplies the later value 13.
+
+  # Taught / practice evidence: Essential Python handout pp. 25–27 (definition-time defaults and None repair); Function Palooza, Default Parameters.
+  - id: cs131-python-card-default-list-rebind
+    difficulty: intermediate
+    question: |-
+      Predict the output. Does assigning a new local list reset the default?
+
+      ```python
+      def remember(label, seen=[]):
+          seen.append(label)
+          result = seen
+          seen = []
+          return result
+      first = remember("oak")
+      last = remember("elm")
+      print(len(first), len(last), first is last)
+      ```
+    answer: '`2 2 True`'
+    explanation: Both calls mutate the same retained list. Rebinding seen afterward changes only that invocation’s local
+      parameter.
+
+  # Taught / practice evidence: Essential Python handout pp. 25–27 (definition-time defaults and None repair); Function Palooza, Default Parameters.
+  - id: cs131-python-card-supplied-empty
+    difficulty: intermediate
+    question: |-
+      Repair this initializer so omitted input creates a fresh list while a supplied list keeps its identity.
+
+      ```python
+      def __init__(self, entries=[]):
+          self.entries = entries
+      ```
+    answer: |-
+      ```python
+      def __init__(self, entries=None):
+          if entries is None:
+              entries = []
+          self.entries = entries
+      ```
+    explanation: The sentinel selects a new list only for absence. Copying every supplied list would implement a different
+      ownership contract.
+
+  # Taught / practice evidence: Homework PYTHON5 B.1–B.3; Essential Python, Inheritance (not the excluded appendix).
+  - id: cs131-python-card-duck-typed-call
+    difficulty: intermediate
+    question: Bird and Plane are unrelated classes, and both provide fly(self). Can a Python function run obj.fly() for
+      either object? Explain what happens if a third object lacks fly.
+    answer: Yes. Python looks up fly on the actual object at runtime; a common base class is unnecessary. An object without
+      that attribute raises AttributeError.
+    explanation: The required operation determines whether this call works. Homework PYTHON5 applies this rule while handling
+      objects with different available methods.
+
+  # Taught / practice evidence: Essential Python handout pp. 14–16; Homework PYTHON5 A.1–A.2.
+  - id: cs131-python-card-base-initializer
+    difficulty: intermediate
+    question: Base.__init__(self, value) stores self.value. Child inherits Base but defines its own __init__ containing
+      only pass. Why does Child().value fail, and what line inside Child.__init__ sets it to 4?
+    answer: The child initializer did not run the base initializer. Replace pass with super().__init__(4).
+    explanation: Inheritance makes base methods available, but an overriding initializer must explicitly initialize the
+      base part of the same object.

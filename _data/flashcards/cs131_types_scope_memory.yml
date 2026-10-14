@@ -1,11 +1,11 @@
 title: 'CS 131: Types, Scope, and Memory'
 description: Predict, explain, and construct small examples of lecture type and memory rules.
 active: true
-# Original replacement practice. Page references are physical PDF pages.
+# Reviewed against the supplied lecture notes, homework, and past assessments.
 # Time estimates are planning estimates, not time limits.
 cards:
-  # Lecture: data_palooza_v12_handouts.pdf pp.29–32
-  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P1(d); [Midterm] F24 Solutions (Public).pdf P6 pp.13–14
+  # Lecture: [04] Data Palooza (Public).docx — Type Inference
+  # Assessment: Homework Problems (Public).docx TYPING7(A)
   - id: cs131-v2-types-card-infer
     difficulty: intermediate
     bloom: apply
@@ -14,8 +14,8 @@ cards:
     answer: 'Rejected: n has inferred integer type, so a string assignment violates its fixed type.'
     explanation: 'Self-check: Omitting an annotation does not make the variable dynamically typed.'
 
-  # Lecture: data_palooza_v12_handouts.pdf pp.29–31
-  # Assessment: [Midterm] F24 Solutions (Public).pdf P6 pp.13–14 (typing constraints; supporting prerequisite)
+  # Lecture: [04] Data Palooza (Public).docx — Static typing; Type Inference
+  # Assessment: Homework Problems (Public).docx TYPING7(A) (infer constraints)
   - id: cs131-v2-types-card-constraints
     difficulty: intermediate
     bloom: create
@@ -24,8 +24,8 @@ cards:
     answer: 'Example: `if flag then 1 else "one"`. One branch returns an integer and the other a string.'
     explanation: 'Self-check: Both branches must be possible, their result types must differ, and the problem permits neither conversion nor a common union result type.'
 
-  # Lecture: data_palooza_v12_handouts.pdf p.79
-  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P2(e–f)
+  # Lecture: [04] Data Palooza (Public).docx — Switching between types
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P2(e,f)
   - id: cs131-v2-types-card-narrowing-witness
     difficulty: intermediate
     bloom: apply
@@ -34,8 +34,8 @@ cards:
     answer: 'A → B: −1 (or 3) is not representable in B. B → A: 0.5 (or another noninteger B value) is not representable in A.'
     explanation: 'Self-check: Each witness must belong to the source type and be absent from the destination type.'
 
-  # Lecture: data_palooza_v12_handouts.pdf pp.96–103
-  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P3(a–b)
+  # Lecture: [04] Data Palooza (Public).docx — Lexical Scoping; Dynamic Scoping
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P3(a,b)
   - id: cs131-v2-types-card-lexical-dynamic
     difficulty: intermediate
     bloom: analyze
@@ -44,7 +44,7 @@ cards:
     answer: 'Lexical: 4, from the defining environment. Dynamic: 10, from the active caller.'
     explanation: 'Self-check: Explain which environment supplies the binding, rather than only naming the two values.'
 
-  # Lecture: data_palooza_v12_handouts.pdf p.104
+  # Lecture: [04] Data Palooza (Public).docx — Variable lifetime and scope; Lifetime
   # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P2(b)
   - id: cs131-v2-types-card-hidden-live
     difficulty: basic
@@ -54,8 +54,8 @@ cards:
     answer: The caller’s frame remains active during the call, but the callee cannot name the variable unless its scoping rules make that binding visible.
     explanation: 'Self-check: Being unable to name a variable is not evidence that its storage was destroyed.'
 
-  # Lecture: data_palooza_v12_handouts.pdf pp.118–123
-  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P4(a–c)
+  # Lecture: [04] Data Palooza (Public).docx — Mark and Sweep: Mark
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P4(a-c)
   - id: cs131-v2-types-card-marking
     difficulty: intermediate
     bloom: apply
@@ -64,8 +64,8 @@ cards:
     answer: 'Roots: A. Marked: A and B. Reclaimed: C.'
     explanation: 'Self-check: A self-reference cannot make C reachable from a root.'
 
-  # Lecture: data_palooza_v12_handouts.pdf pp.130–136
-  # Assessment: [Final] F24 Solutions (Public).pdf P2 pp.5–7
+  # Lecture: [04] Data Palooza (Public).docx — Reference Counting
+  # Assessment: Homework Problems (Public).docx DATA3(A,B)
   - id: cs131-v2-types-card-cycle
     difficulty: intermediate
     bloom: analyze
@@ -74,7 +74,7 @@ cards:
     answer: Each incoming reference from the other object keeps its count above zero. A tracing collector starts at roots, reaches neither object, and reclaims both.
     explanation: 'Self-check: Separate the count of incoming references from reachability from roots.'
 
-  # Lecture: data_palooza_v12_handouts.pdf pp.139–141
+  # Lecture: [04] Data Palooza (Public).docx — Rust’s Ownership Model: Move Semantics
   # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P5
   - id: cs131-v2-types-card-owner
     difficulty: intermediate
@@ -84,8 +84,8 @@ cards:
     answer: b can be borrowed; a is invalid after moving. The earlier read-only borrow did not transfer ownership.
     explanation: 'Self-check: Borrowing preserves ownership; moving transfers it and invalidates the old owner.'
 
-  # Lecture: data_palooza_v12_handouts.pdf pp.174–177
-  # Assessment: [Midterm] F24 Solutions (Public).pdf P4 pp.7–8
+  # Lecture: [04] Data Palooza (Public).docx — Object Reference Semantics
+  # Assessment: Homework Problems (Public).docx DATA4; CS131 Fall 25 Quiz 3 Solutions (Public).docx P1
   - id: cs131-v2-types-card-alias-example
     difficulty: intermediate
     bloom: create
@@ -100,8 +100,8 @@ cards:
       ```
     explanation: 'Self-check: Both names must refer to one list; assigning `b = [8]` would rebind b instead of changing a.'
 
-  # Lecture: data_palooza_v12_handouts.pdf pp.125–128
-  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P2(g)
+  # Lecture: [04] Data Palooza (Public).docx — Mark and copy; Mark and compact
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P2(g); Homework Problems (Public).docx DATA3(A.3)
   - id: cs131-v2-types-card-collector-choice
     difficulty: advanced
     bloom: evaluate

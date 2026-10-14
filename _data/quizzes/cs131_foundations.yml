@@ -2,10 +2,10 @@ title: 'CS 131: Language Paradigms and Design'
 description: Short language-model predictions and evidence checks. Practice the building blocks used in
   later exam traces.
 active: true
-# Entire replacement bank. Times are author estimates, not enforced limits.
+# Source-aligned review against lecture notes and homework. Times are author estimates.
 questions:
-  # Lecture: intro_lecture_td_handouts.pdf pp. 25–27
-  # Assessment: Foundation for Fall 2025 Quiz 4, Problem 2 (iteration and generators)
+  # Taught: [01] Intro (Public).docx, Paradigms.
+  # Practice: Concept prerequisite; the paradigm examples are taught here. Later code traces supply application practice.
   - id: cs131-v2-foundations-accumulator-model
     type: single
     difficulty: basic
@@ -24,8 +24,8 @@ questions:
     explanation: The solution specifies a sequence of changes to a mutable accumulator. That is the imperative
       model.
 
-  # Lecture: intro_lecture_td_handouts.pdf pp. 25–27
-  # Assessment: Foundation for Fall 2025 Quiz 1, Problem 3 (recursive list processing)
+  # Taught: [01] Intro (Public).docx, Paradigms.
+  # Practice: Concept prerequisite; the paradigm examples are taught here. Later code traces supply application practice.
   - id: cs131-v2-foundations-recursive-model
     type: single
     difficulty: basic
@@ -42,77 +42,80 @@ questions:
       0: The description does not organize the computation around interacting objects.
       2: A recursive function computes a returned value here; it is not a relation queried through facts
         and rules.
-    explanation: The result is built from an expression and a recursive function call without mutable accumulation.
+    explanation: The result is built from an expression and a recursive function call without mutable
+      accumulation.
 
-  # Lecture: intro_lecture_td_handouts.pdf pp. 28, 36
-  # Assessment: Fall 2023 Midterm, Problem 5, PDF p. 10 (reasoning under chosen language rules)
-  - id: cs131-v2-foundations-independent-rules
+  # Taught: [01] Intro (Public).docx, Specifying a Language?; [02] Programming Implementation Palooza (Public).docx, Syntax vs. Semantics.
+  # Practice: Homework TOOLS1 (distinguish syntax checks from semantic checks).
+  - id: cs131-v3-foundations-syntax-semantics
     type: multiple
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 45
-    question: A language designer changes block delimiters from braces to indentation. The specification
-      says no other rules change. Which properties remain unchanged? Select all that apply.
+    question: Which language-design changes alter semantics, rather than only the written form of a construct?
+      Select all that apply.
     options:
-    - Which variable a name refers to
-    - How arguments are passed to functions
-    - How block boundaries are written
-    - When unused objects are reclaimed
+    - Require parentheses around an if condition.
+    - Require an if condition to have Boolean type.
+    - Let parameter assignment replace the caller's variable.
+    - Replace block braces with begin and end keywords.
     correct_indices:
-    - 0
     - 1
-    - 3
+    - 2
     option_feedback:
-      0: Name lookup is a separate semantic rule and was not changed.
-      1: Parameter passing was explicitly left unchanged.
-      2: The block delimiters are exactly what the designer changed.
-      3: The rules for reclaiming objects were left unchanged.
-    explanation: The change concerns written block boundaries. Scope, parameter passing, and memory management
-      retain their specified behavior.
+      0: Parentheses specify the allowed arrangement of source symbols.
+      1: The type required of a condition is a meaning and validity rule beyond its grammatical shape.
+      2: This changes the effect of an assignment on the caller, even if the call looks the same.
+      3: Changing delimiters changes how a block is written, without specifying a different effect.
+    explanation: Syntax specifies the form of constructs. Semantics includes their type requirements and
+      behavior, such as the effect of assigning to a parameter.
 
-  # Lecture: intro_lecture_td_handouts.pdf pp. 33
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 2 (mutation versus rebinding)
+  # Taught: [01] Intro (Public).docx, Exercise: Classify that Language.
+  # Practice: Homework PYTHON2; Fall 2025 Quiz 1 v2, Problem 2 (Widget Woes): predict copy, mutation, and rebinding effects.
   - id: cs131-v2-foundations-copy-observation
     type: single
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
     question: A toy language passes an independent copy of a record containing only numbers. The caller
-      has `box.value = 6`. A function sets its parameter's `value` to 9. What does the caller read afterward?
+      has `box.value = 6`. A function sets its parameter's `value` to 9. After the call, the caller adds
+      1 to `box.value`. What does the caller read?
     options:
+    - '7'
+    - '10'
     - '6'
-    - '9'
-    - The record no longer exists
     correct_index: 0
     option_feedback:
-      1: Updating an independent copy does not update the original record.
-      2: Passing a copy does not destroy the original record.
-    explanation: The parameter contains an independent record copy, so its field update does not affect
-      the caller's record.
+      1: 10 would require the function's update to reach the original record. Its parameter is an independent
+        copy.
+      2: The call leaves the original at 6, but the caller then increments it.
+    explanation: The function changes its copy to 9. The original remains 6 until the caller increments
+      it to 7.
 
-  # Lecture: intro_lecture_td_handouts.pdf pp. 33
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 2 (mutation versus rebinding)
+  # Taught: [01] Intro (Public).docx, Exercise: Classify that Language.
+  # Practice: Homework PYTHON2; Fall 2025 Quiz 1 v2, Problem 2 (Widget Woes): predict copy, mutation, and rebinding effects.
   - id: cs131-v2-foundations-alias-parameter
     type: single
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: 'A toy language passes a record variable by reference: its parameter is an alias for the caller''s
-      variable. The function assigns a new record with `value = 8` to that parameter. The caller''s original
-      record had `value = 3`. What value does the caller now read?'
+    question: 'A toy language passes a record variable by reference: its parameter aliases the caller''s
+      variable. The original record has `value = 3`. The function changes that field to 5, then assigns
+      a new record with `value = 8` to its parameter. What value does the caller now read?'
     options:
     - '3'
     - '8'
-    - '11'
+    - '5'
     correct_index: 1
     option_feedback:
-      0: A local copy would leave the caller's variable unchanged; the parameter here aliases that variable.
-      2: The function replaces a record; it does not add its numeric fields.
-    explanation: Assignment through an alias replaces the record held by the caller's variable. It does
-      not add the old and new field values.
+      0: An independent copy would leave the original unchanged; this parameter aliases the caller's variable.
+      2: 5 would remain under object-reference passing, where rebinding changes only the local parameter.
+        Here the variable itself is aliased.
+    explanation: Both operations act through the caller's variable. The field first becomes 5, then assigning
+      the new record makes the caller's variable refer to the record containing 8.
 
-  # Lecture: intro_lecture_td_handouts.pdf pp. 32–34
-  # Assessment: Fall 2023 Midterm, Problem 5, PDF p. 10 (reasoning under chosen language rules); inference from behavior
+  # Taught: [01] Intro (Public).docx, Exercise: Classify that Language.
+  # Practice: Homework PYTHON2; Fall 2025 Quiz 1 v2, Problem 2 (Widget Woes): predict copy, mutation, and rebinding effects.
   - id: cs131-v2-foundations-evidence-limit
     type: single
     difficulty: intermediate
@@ -121,18 +124,19 @@ questions:
     question: A parameter experiment only reads a record's field. It prints the same value as the caller.
       A student concludes that the language passes records by reference. Is this evidence sufficient?
     options:
-    - Yes; reading the same field proves aliasing.
-    - No; an independent copy can give the same reading.
-    - Yes; copies must change the field value.
+    - Yes; equal field values prove a shared record.
+    - No; a copy and an alias can read the same value.
+    - No; read-only access proves a copied record.
     correct_index: 1
     option_feedback:
-      0: Both a copy and an alias can contain the same field value.
-      2: Copying preserves the initial value; it need not change it.
+      0: Equal values do not reveal whether two names reach one record or equal copies.
+      2: A reference can be used only for reading. The operations performed do not establish the passing
+        mechanism.
     explanation: A useful experiment must produce different observable outcomes under competing models.
       Reading unchanged data does not distinguish an alias from a copy.
 
-  # Lecture: intro_lecture_td_handouts.pdf pp. 34
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 2 (mutation versus rebinding)
+  # Taught: [01] Intro (Public).docx, Exercise: Classify that Language.
+  # Practice: Homework PYTHON2; Fall 2025 Quiz 1 v2, Problem 2 (Widget Woes): predict copy, mutation, and rebinding effects.
   - id: cs131-v2-foundations-object-sharing-trace
     type: parsons
     difficulty: intermediate
@@ -159,8 +163,8 @@ questions:
     explanation: The parameter first shares the caller's object. Field mutation affects that shared object,
       while rebinding the parameter affects only the local name.
 
-  # Lecture: intro_lecture_td_handouts.pdf pp. 32–34
-  # Assessment: Fall 2025 Quiz 1 v1, Problem 2 (mutation versus rebinding)
+  # Taught: [01] Intro (Public).docx, Exercise: Classify that Language.
+  # Practice: Homework PYTHON2; Fall 2025 Quiz 1 v2, Problem 2 (Widget Woes): predict copy, mutation, and rebinding effects.
   - id: cs131-v2-foundations-probe-rebinding
     type: single
     difficulty: intermediate
@@ -178,5 +182,5 @@ questions:
       1: Both models can read the same shared object.
       2: Both proposed models already allow a visible field mutation; repeating it does not distinguish
         them.
-    explanation: Rebinding changes the caller's variable under variable aliasing, but changes only the local
-      parameter under object-reference passing.
+    explanation: Rebinding changes the caller's variable under variable aliasing, but changes only the
+      local parameter under object-reference passing.

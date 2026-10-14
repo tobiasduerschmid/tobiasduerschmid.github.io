@@ -1,0 +1,177 @@
+title: 'CS 131: Python Classes and Defaults'
+description: Trace class and instance state, inheritance, equality, and definition-time defaults.
+active: true
+# Reviewed against the supplied CS131 lectures, homework, and past assessments (2026-10-14).
+questions:
+  # Taught / practice evidence: Essential Python handout pp. 6–7 (class fields versus instance fields); Quiz 1 Problem 2A (object-state tracing).
+  - id: cs131-v2-python-class-counter-instance-stamp
+    type: write-in
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: What does this program print? Separate the values with spaces.
+    explanation: 'The shared counter ends at 2. The instance fields retain the values they received: 1 for `first`, 2 for
+      `second`.'
+    program:
+      language: python
+      file: class-counter-instance-stamp.py
+      code: |
+        class Ticket:
+            issued = 0
+            def __init__(self):
+                Ticket.issued += 1
+                self.number = Ticket.issued
+        first = Ticket()
+        second = Ticket()
+        print(first.number, second.number, Ticket.issued)
+    answer: 1 2 2
+
+  # Taught / practice evidence: Essential Python handout pp. 11–13 (equality versus identity); Homework PYTHON5 (object reasoning).
+  - id: cs131-v2-python-custom-equality-projection
+    type: write-in
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: What does this program print? Separate the values with spaces.
+    explanation: The equality method makes the two labels equal by value. Identity remains different because `a` and `b`
+      refer to distinct objects.
+    program:
+      language: python
+      file: custom-equality-projection.py
+      code: |
+        class Label:
+            def __init__(self, text):
+                self.text = text
+            def __eq__(self, other):
+                return self.text == other.text
+        a = Label("ready")
+        b = Label("ready")
+        print(a == b, a is b)
+    answer: True False
+
+  # Taught / practice evidence: Essential Python handout pp. 14–16 (inheritance); Homework PYTHON5 A–B.
+  - id: cs131-v2-python-inherited-method-calls-hook
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      What does this code print?
+
+      ```python
+      class Writer:
+          def publish(self):
+              print(self.word())
+          def word(self):
+              return "draft"
+      class Editor(Writer):
+          def word(self):
+              return "final"
+      Editor().publish()
+      ```
+    options:
+    - '`draft`'
+    - '`final`'
+    - An attribute error
+    correct_index: 1
+    option_feedback:
+      0: The inherited method calls `self.word()` on an `Editor` instance, so it uses the override.
+      2: '`publish` is inherited from `Writer`; it can be called on an `Editor` instance.'
+    explanation: Inheritance supplies `publish`, and the runtime object determines the implementation used for `self.word()`.
+
+  # Taught / practice evidence: Essential Python handout pp. 25–27 (definition-time defaults and None repair); Function Palooza, Default Parameters.
+  - id: cs131-python-default-dictionary-rebind
+    type: write-in
+    difficulty: advanced
+    question: What does this program print? Separate the values with spaces.
+    explanation: Calls omitting totals share its definition-time dictionary. The first result remains an alias and observes
+      the later increment.
+    program:
+      language: python
+      file: default-dictionary-rebind.py
+      code: |
+        def count(totals={"x": 0}):
+            totals["x"] += 1
+            result = totals
+            totals = {}
+            return result
+        first = count()
+        separate = count({"x": 0})
+        last = count()
+        print(first["x"], separate["x"], last["x"], first is last)
+    answer: 2 1 2 True
+
+  # Taught / practice evidence: Essential Python handout pp. 25–27 (definition-time defaults and None repair); Function Palooza, Default Parameters.
+  - id: cs131-python-immutable-default-time
+    type: write-in
+    difficulty: intermediate
+    question: What does this program print? Separate the values with spaces.
+    explanation: Definition-time evaluation applies to immutable defaults too. Mutability determines whether later operations
+      can change that saved object.
+    program:
+      language: python
+      file: immutable-default-time.py
+      code: |
+        rate = 3
+        def cost(units, rate=rate):
+            return units * rate
+        rate = 8
+        print(cost(2), cost(2, rate))
+    answer: 6 16
+
+  # Taught / practice evidence: Essential Python handout pp. 25–27 (definition-time defaults and None repair); Function Palooza, Default Parameters.
+  - id: cs131-python-constructor-default-sharing
+    type: write-in
+    difficulty: intermediate
+    question: What does this program print? Separate the values with spaces.
+    explanation: The two omitted arguments share the initializer’s default. Separate outer instances do not guarantee separate
+      member objects.
+    program:
+      language: python
+      file: constructor-default-sharing.py
+      code: |
+        class Folder:
+            def __init__(self, labels=[]):
+                self.labels = labels
+        first = Folder()
+        second = Folder()
+        third = Folder([])
+        first.labels.append("draft")
+        print(len(second.labels), len(third.labels))
+    answer: 1 0
+
+  # Taught / practice evidence: Essential Python handout pp. 25–27 (definition-time defaults and None repair); Function Palooza, Default Parameters.
+  - id: cs131-python-none-default-contract
+    type: single
+    difficulty: intermediate
+    question: A function uses `def add(value, counts=None)`. It must create a fresh list for omitted input and append to
+      any supplied list. Which initialization before `counts.append(value)` meets this contract?
+    options:
+    - counts = []
+    - 'if counts is None: counts = []'
+    - 'if counts is not None: counts = []'
+    correct_index: 1
+    option_feedback:
+      0: Unconditional replacement discards any list supplied by the caller.
+      2: This replaces supplied lists and leaves an omitted argument as None, reversing the required cases.
+    explanation: The None check creates a new list only when no list is supplied. A supplied empty list remains the caller’s
+      object.
+
+  # Taught / practice evidence: Essential Python handout pp. 14–16; Homework PYTHON5 A.1–A.2 (missing base constructor and repair).
+  - id: cs131-python-initialize-inherited-state
+    type: parsons
+    difficulty: intermediate
+    question: Arrange the Child definition so Child().value is 7. Base.__init__(self, value) stores self.value. Initialize
+      the base state before doubling it, then add 1. Use only the needed lines.
+    display: block
+    lines:
+    - 'class Child(Base):'
+    - '    def __init__(self):'
+    - '        super().__init__(3)'
+    - '        self.value *= 2'
+    - '        self.value += 1'
+    distractors:
+    - '        Base(3)'
+    - '        self.value = 3'
+    explanation: super().__init__(3) initializes this Child instance. Doubling 3 and then adding 1 gives 7. Base(3) would
+      create a separate object, and direct field assignment bypasses the requested base initialization.
