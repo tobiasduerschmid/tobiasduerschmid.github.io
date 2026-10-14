@@ -4,7 +4,7 @@ Reviewed all **52 original quiz questions and 46 original flashcards**. Final de
 
 ## Evidence and teaching boundary
 
-Sources supplied by the user, extracted under `Extracted attachment: `:
+Sources supplied by the user:
 
 - `Lectures (Public)/intro_to_functional_programming_and_haskell_td.pptx`: read slides 1–151 (including core definitions, application, guards, local bindings, lists, comprehensions, patterns, types, map/filter/fold, closures, currying, constructors, and immutable structures). Appendix material was not needed to add new objectives.
 - `Homeworks (Public)/Homework Problems (Public).docx`: read HASKELL1–10 and ADVHASKELL1–8. These permit pure-function classification, recursive production/repair, list comprehension, helper accumulators, higher-order functions, closure capture, partial types, constructor processing, and allocation reasoning.
