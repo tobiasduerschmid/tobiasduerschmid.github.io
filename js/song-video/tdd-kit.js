@@ -273,8 +273,11 @@
     const node = place(el('div', `tdd-cycle${compact ? ' tdd-cycle--compact' : ''} is-staged`, parent), x, y);
     node.style.setProperty('--tdd-cycle-scale', scale);
     const art = svg('svg', { class: 'tdd-cycle-arrows', viewBox: '0 0 420 250', 'aria-hidden': 'true' }, node);
-    for (const d of ['M172 46 H242', 'M336 88 Q336 196 302 202', 'M122 202 Q84 196 84 92']) svg('path', { class: 'tdd-cycle-arrow', d }, art);
-    for (const [px, py, rot] of [[248, 46, 90], [300, 202, 262], [84, 88, 0]]) {
+    const top = compact ? 40 : 62;
+    const lower = compact ? 196 : 218;
+    const edge = compact ? 74 : 118;
+    for (const d of [`M234 ${top} H242`, `M367 ${edge} Q367 ${lower} 360 ${lower}`, `M122 ${lower} Q115 ${lower} 115 ${edge}`]) svg('path', { class: 'tdd-cycle-arrow', d }, art);
+    for (const [px, py, rot] of [[248, top, 90], [356, lower, 262], [115, edge - 4, 0]]) {
       svg('path', { class: 'tdd-cycle-head', d: 'M-7 6 L0 -6 L7 6 Z', transform: `translate(${px} ${py}) rotate(${rot})` }, art);
     }
     const tiles = {};

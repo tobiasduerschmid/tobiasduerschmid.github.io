@@ -2,9 +2,9 @@
  * Choreography for "Red, Green, Refactor", the test-driven development song
  * (storyboard: _data/songs/red_green_refactor.yml).
  *
- * Every visual hits a sung word: `mark(lineId, word)` is that word's time in
- * the recording. The teaching rule for the visuals: show exactly what the
- * line says, one idea per scene, in a ballroom where Test leads and Code
+ * Gestures and highlights follow sung words: `mark(lineId, word)` is that
+ * word's time in the recording. Supporting text arrives early enough to
+ * read. Each scene develops one idea in a ballroom where Test leads and Code
  * follows (js/song-video/tdd-dancers.js). Test's lamp head is the test
  * result: red with a ✗ while a test fails, green with a ✓ once it passes.
  * Code's gown is its code: jagged while messy, neatly indented once it is
@@ -61,23 +61,23 @@
       credit.style.top = '196px';
       fx.fadeIn(credit, 5.4, 0.5);
 
-      const duo = dancers.troupe(content, { x: 480, y: 448, scale: 1, at: 0.6, until: end('intro') });
+      const duo = dancers.troupe(content, { x: 480, y: 448, scale: 1.06, at: 0.6, until: end('intro') });
       duo.step('test', 0, -150, 0.01).step('code', 0, 150, 0.01);
       duo.pose('test', 5.6, 'wave', { dur: 0.5 }).pose('test', 7.0, 'stand');
       duo.pose('code', 6.2, 'wave', { dur: 0.5 }).pose('code', 7.6, 'stand');
 
       // "Shall we take a chance?" — "Let me lead this dance."
       const s = kit.scene(content, line('intro-1').start - 0.3, end('intro'), { exit: 'fade' });
-      tdd.bubble(s, { x: 616, y: 104, w: 300, who: 'Code', text: '“Shall we take a chance?”', at: mark('intro-1', 'shall'), until: line('intro-2').start - 0.2, side: 'left', tone: 'code' });
+      tdd.bubble(s, { x: 616, y: 104, w: 300, who: 'Code', text: '“Shall we take a chance?”', at: line('intro-1').start, until: line('intro-2').start - 0.2, side: 'left', tone: 'code' });
       duo.pose('code', mark('intro-1', 'take'), 'offerL');
-      tdd.bubble(s, { x: 50, y: 104, w: 300, who: 'Test', text: '“Let me lead this dance.”', at: mark('intro-2', 'let'), until: line('intro-3').start + 0.2, side: 'right', tone: 'test' });
+      tdd.bubble(s, { x: 50, y: 104, w: 300, who: 'Test', text: '“Let me lead this dance.”', at: line('intro-2').start, until: line('intro-3').start + 0.2, side: 'right', tone: 'test' });
       duo.pose('test', mark('intro-2', 'lead'), 'bow', { lean: 16, dur: 0.5 });
       duo.pose('test', mark('intro-2', 'dance') + 0.2, 'offerR', { lean: 0, dur: 0.5 });
       duo.pose('code', mark('intro-2', 'dance'), 'stand');
 
       // "First say what the code should do": a test, before any code.
       const spec = tdd.code(s, {
-        x: 250, y: 64, w: 460, title: 'tests/test_stack.py', at: mark('intro-3', 'first'), until: mark('intro-4', 'guide'),
+        x: 250, y: 64, w: 460, title: 'tests/test_stack.py', at: mark('intro-3', 'first'), until: end('intro'),
         lines: [
           { text: 'def test_new_stack_is_empty():', at: mark('intro-3', 'first') + 0.1 },
           { text: '    stack = MyStack()', at: mark('intro-3', 'what') },
@@ -100,7 +100,7 @@
 
     function verse1() {
       badge('Verse 1 · The rules of the dance', 'verse-1');
-      const duo = dancers.troupe(content, { x: 830, y: 452, scale: 0.82, at: start('verse-1'), until: end('verse-1') });
+      const duo = dancers.troupe(content, { x: 814, y: 452, scale: 0.92, at: start('verse-1'), until: end('verse-1') });
       duo.hold(start('verse-1') + 0.1, { pose: 'open', dur: 0.01 });
 
       // Rule 1: no production code before a failing test.
@@ -124,7 +124,7 @@
         x: 540, y: 108, w: 330, title: 'my_stack.py', tone: 'dim', at: mark('verse-1-2', 'till'),
         lines: ['class MyStack:', '    pass'],
       });
-      tdd.note(a, 'production code waits', { x: 540, y: 222, at: mark('verse-1-2', 'production'), tone: 'gold', iconName: 'hourglass' });
+      tdd.note(a, 'production code waits', { x: 540, y: 222, at: line('verse-1-2').start, tone: 'gold', iconName: 'hourglass' });
       duo.hold(mark('verse-1-2', 'production'), { release: true, pose: 'stand' });
       duo.pose('code', mark('verse-1-2', 'must'), 'hips', { face: 'smile' });
 
@@ -136,8 +136,8 @@
       });
       ask.mark(2, mark('verse-1-3', 'what'), line('verse-1-5').start);
       ask.mark(3, mark('verse-1-3', 'need'), line('verse-1-5').start);
-      const face = tdd.panel(b, { x: 500, y: 108, w: 280, title: 'MyStack · seen from outside', iconName: 'eye', at: mark('verse-1-4', 'from') });
-      for (const [text, at] of [['push(item)', mark('verse-1-4', 'callers')], ['is_empty() → bool', mark('verse-1-4', 'point')]]) {
+      const face = tdd.panel(b, { x: 500, y: 108, w: 280, title: 'MyStack · seen from outside', iconName: 'eye', at: line('verse-1-3').start + 0.5 });
+      for (const [text, at] of [['push(item)', line('verse-1-3').start + 0.7], ['is_empty() → bool', line('verse-1-3').start + 0.9]]) {
         const chip = kit.el('div', 'tdd-method is-staged', face.body, text);
         fx.pop(chip, at, { from: 0.6 });
       }
@@ -167,10 +167,10 @@
       kit.place(batch, 530, 110);
       for (const name of ['test_peek', 'test_size', 'test_sort']) kit.el('div', 'tdd-batch-card', batch, name);
       fx.pop(batch, mark('verse-1-6', 'no') - 0.1, { from: 0.7 });
-      kit.stamp(c, 'No batch', { x: 540, y: 196, at: mark('verse-1-6', 'batch'), until: mark('verse-1-6', 'giant') + 0.05, rotate: -8, shake: false });
-      fx.fadeOut(batch, mark('verse-1-6', 'giant') + 0.05, 0.2);
+      kit.stamp(c, 'No batch', { x: 540, y: 196, at: mark('verse-1-6', 'batch'), until: line('verse-1-7').start - 0.1, rotate: -8, shake: false });
+      // Keep the crossed-out batch visible beside the giant-hop comparison.
       tdd.hop(c, { x: 520, y: 300, w: 240, h: 90, at: mark('verse-1-6', 'no_2') });
-      kit.stamp(c, 'No giant hop', { x: 500, y: 186, at: mark('verse-1-6', 'giant') + 0.15, rotate: -6, shake: false });
+      kit.stamp(c, 'No giant hop', { x: 500, y: 330, at: line('verse-1-6').start + 0.4, rotate: -6, shake: false });
       duo.pose('test', mark('verse-1-6', 'no'), 'stand');
 
       // Small steps: each one gets feedback; when red comes back, only the
@@ -180,8 +180,8 @@
       tdd.steps(d, { x: 200, y: 170, w: 460, count: 7, at: mark('verse-1-7', 'steps'), step: 0.3, failAt: mark('verse-1-8', 'red') });
       tdd.note(d, 'one giant hop', { x: 40, y: 330, at: mark('verse-1-8', 'with'), tone: 'white' });
       tdd.hop(d, { x: 200, y: 300, w: 460, h: 100, at: mark('verse-1-8', 'with') + 0.1 });
-      tdd.note(d, 'trace 1 small step', { x: 690, y: 170, at: mark('verse-1-8', 'trace'), tone: 'green', iconName: 'search' });
-      tdd.note(d, 'which change broke it?', { x: 330, y: 262, at: mark('verse-1-8', 'red'), tone: 'red', iconName: 'question' });
+      tdd.note(d, 'trace 1 small step', { x: 690, y: 170, at: line('verse-1-8').start, tone: 'green', iconName: 'search' });
+      tdd.note(d, 'Which change broke it?', { x: 330, y: 262, at: line('verse-1-8').start, tone: 'red', iconName: 'question' });
       duo.lamp(line('verse-1-7').start, 'green').hold(line('verse-1-7').start, { pose: 'flourish' });
       duo.waltz(mark('verse-1-7', 'small'), mark('verse-1-8', 'red'), { travel: 10 });
       duo.lamp(mark('verse-1-8', 'red'), 'red');
@@ -194,7 +194,7 @@
     function verse2() {
       badge('Verse 2 · Testing the test', 'verse-2');
       const partB = line('verse-2-5').start - 0.2;
-      const duo = dancers.troupe(content, { x: 812, y: 452, scale: 0.86, at: partB, until: end('verse-2') });
+      const duo = dancers.troupe(content, { x: 800, y: 452, scale: 0.94, at: partB, until: end('verse-2') });
       duo.hold(partB + 0.05, { pose: 'open', dur: 0.01 });
 
       // Two red runs; the same colour can mean different things.
@@ -205,8 +205,8 @@
         lines: [{ text: 'from my_stack import MyStack', at: mark('verse-2-3', 'missing') }],
       }).mark(0, mark('verse-2-3', 'class'), line('verse-2-5').start, 'good');
       tdd.code(a, {
-        x: 500, y: 104, w: 420, title: 'test B', at: mark('verse-2-4', 'typo') - 0.1,
-        lines: [{ text: 'stack = MyStak()', at: mark('verse-2-4', 'typo') }],
+        x: 500, y: 104, w: 420, title: 'test B', at: line('verse-2-3').start,
+        lines: [{ text: 'stack = MyStak()', at: line('verse-2-3').start + 0.1 }],
       }).mark(0, mark('verse-2-4', 'typo'), line('verse-2-5').start, 'bad');
       tdd.pytest(a, {
         x: 40, y: 184, w: 420, at: mark('verse-2-1', 'run'),
@@ -214,11 +214,11 @@
       });
       tdd.pytest(a, {
         x: 500, y: 184, w: 420, at: mark('verse-2-1', 'first'),
-        runs: [{ at: mark('verse-2-1', 'first') + 0.2, dots: 'E', errorsAt: mark('verse-2-4', 'typo') + 0.2, summaryAt: mark('verse-2-1', 'first') + 0.6, errors: ["E  NameError: 'MyStak' not defined"], summary: '1 error' }],
+        runs: [{ at: mark('verse-2-1', 'first') + 0.2, dots: 'E', errorsAt: line('verse-2-3').start + 0.5, summaryAt: mark('verse-2-1', 'first') + 0.6, errors: ["E  NameError: 'MyStak' not defined"], summary: '1 error' }],
       });
       tdd.note(a, 'same red, different reasons', { x: 352, y: 372, at: mark('verse-2-2', 'same'), until: mark('verse-2-3', 'red'), tone: 'red', iconName: 'warning' });
       tdd.note(a, 'expected: MyStack doesn’t exist yet', { x: 40, y: 372, at: mark('verse-2-3', 'red'), tone: 'green', iconName: 'check' });
-      tdd.note(a, 'a typo: red for the wrong reason', { x: 548, y: 372, at: mark('verse-2-4', 'typo') + 0.4, tone: 'red', iconName: 'cross' });
+      tdd.note(a, 'typo: wrong reason', { x: 548, y: 372, at: line('verse-2-3').start + 0.6, tone: 'red', iconName: 'cross' });
 
       // See red before trusting green: the red run proves the test can see
       // the missing step. A test that was never red may check nothing.
@@ -289,20 +289,20 @@
       // The dance floor: three tiles, and the couple stepping between them.
       // Each tile is wide enough for the whole couple, and every step lands
       // the couple's footprint on the tile's centre.
-      const xs = { red: 600, green: 740, refactor: 880 };
+      const xs = { red: 630, green: 740, refactor: 850 };
       const tiles = props.floorTiles(content, { y: 446, xs, rx: 70, at: s0, until: sEnd });
-      const duo = dancers.troupe(content, { x: xs.red, y: 446, scale: 0.84, at: s0, until: sEnd, gap: 44 });
+      const duo = dancers.troupe(content, { x: xs.red, y: 446, scale: 1, at: s0, until: sEnd, gap: 44 });
       duo.move(s0, -duo.footprintCenter, 0, 0.01);
       duo.hold(s0 + 0.05, { pose: 'flourish', dur: 0.01 }).tidy(s0, 0, 0.01);
       const go = (phase, at) => duo.move(at - 0.35, xs[phase] - xs.red - duo.footprintCenter, 0, 0.6);
 
       // Line 1: the cycle lights word by word. Line 2: Test takes the lead.
-      const cycle = tdd.cycle(content, { x: 70, y: 128, at: s0, until: sEnd });
+      const cycle = tdd.cycle(content, { x: 40, y: 128, at: s0, until: sEnd });
       // On "let the tests lead" the cycle shrinks to the top-right corner as a
       // phase map, making room for the test that leads: it arrives a line
       // before it fails, so it can be read before the run.
       const testAt = mark(ln(2), 'let') + 0.25;
-      tween(cycle.node, { scale: '0.5', translate: '640px -92px' }, mark(ln(2), 'let') - 0.15, 0.5, EASE.inOut);
+      tween(cycle.node, { scale: '0.65', translate: '570px -100px' }, mark(ln(2), 'let') - 0.15, 0.5, EASE.inOut);
       cycle.light('red', mark(ln(1), 'red'), mark(ln(1), 'green'));
       cycle.light('green', mark(ln(1), 'green'), mark(ln(1), 'refactor'));
       cycle.light('refactor', mark(ln(1), 'refactor'), line(ln(2)).start + 0.2);
@@ -316,16 +316,17 @@
       duo.waltz(mark(ln(2), 'tests'), sEnd - 0.3, { travel: 6 });
       cycle.light('red', mark(ln(2), 'lead'), line(ln(3)).start);
 
-      // Red: the test arrives first, line by line, then fails for the change
+      // Red: the complete test arrives first, then fails for the change
       // we need, and stays up until the code lands on "Write" (or "code").
       // The code card that replaces it stays up through green and refactor,
       // and one terminal runs the tests after every step, so each box stays
       // long enough to read.
       const codeAt = ex.codeOn === 'code' ? mark(ln(5), 'code') - 0.3 : line(ln(5)).start - 0.15;
       const refactorAt = line(ln(7)).start - 0.15;
-      const changeAt = mark(ln(8), 'a');
+      // Reveal the changed line during the refactoring phrase, then hold it.
+      const changeAt = line(ln(7)).start + 0.6;
       const red = kit.scene(content, testAt - 0.2, codeAt - 0.1);
-      tdd.code(red, { x: 40, y: 92, w: 470, title: 'tests/test_stack.py', tone: 'red', at: testAt, lines: ex.test.map((text, i) => ({ text, at: testAt + 0.1 + i * 0.3 })) });
+      tdd.code(red, { x: 40, y: 92, w: 470, title: 'tests/test_stack.py', tone: 'red', at: testAt, lines: ex.test });
       const fails = mark(ln(3), 'fails');
       tdd.pytest(content, {
         x: 40, y: 92 + cardHeight(Math.max(ex.test.length, ex.code.length)) + 10, w: 470, at: fails - 0.2, until: sEnd,
@@ -335,7 +336,7 @@
           { at: changeAt + 0.1, summaryAt: changeAt + 0.5, dots: ex.pass.dots, summary: ex.pass.summary },
         ],
       });
-      tdd.note(content, ex.need, { x: 530, y: 196, at: mark(ln(4), 'for'), until: refactorAt, tone: 'gold', iconName: 'pin' });
+      tdd.note(content, ex.need, { x: 40, y: 56, at: mark(ln(4), 'for'), until: refactorAt, tone: 'gold', iconName: 'pin' });
       duo.lamp(mark(ln(3), 'fails'), 'red');
       cycle.light('red', mark(ln(3), 'first'), line(ln(5)).start);
       tiles.light('red', mark(ln(3), 'first'), line(ln(5)).start);
@@ -356,7 +357,7 @@
       // Refactor: the same code card changes its structure; the tests still pass.
       tdd.during(card.node, 'tdd-code--violet', refactorAt);
       const ref = kit.scene(content, refactorAt, sEnd);
-      if (ex.note) tdd.note(ref, ex.note, { x: 530, y: 196, at: changeAt, tone: 'violet', iconName: 'sparkle' });
+      if (ex.note) tdd.note(ref, ex.note, { x: 40, y: 56, at: changeAt, tone: 'violet', iconName: 'sparkle' });
       go('refactor', mark(ln(7), 'same'));
       duo.tidy(mark(ln(8), 'cleaner'), 1, 1.1);
       cycle.light('refactor', mark(ln(7), 'same'), sEnd);
@@ -376,7 +377,7 @@
 
     function verse3() {
       badge('Verse 3 · Green: just enough', 'verse-3');
-      const duo = dancers.troupe(content, { x: 806, y: 452, scale: 0.86, at: start('verse-3'), until: end('verse-3') });
+      const duo = dancers.troupe(content, { x: 794, y: 452, scale: 0.94, at: start('verse-3'), until: end('verse-3') });
       duo.hold(start('verse-3') + 0.05, { pose: 'open', dur: 0.01 }).lamp(start('verse-3'), 'green');
       duo.waltz(start('verse-3') + 0.3, end('verse-3') - 0.2, { travel: 10 });
 
@@ -415,9 +416,9 @@
       tdd.todo(b, {
         x: 580, y: 100, w: 320, at: mark('verse-3-7', 'write') - 0.1,
         items: [
-          { text: 'pop() on an empty stack?', at: mark('verse-3-7', 'new') },
-          { text: 'push many, pop in order', at: mark('verse-3-7', 'ideas') + 0.3 },
-          { text: 'peek()', at: mark('verse-3-7', 'list') },
+          { text: 'pop() on an empty stack?', at: line('verse-3-7').start - 0.9 },
+          { text: 'push many, pop in order', at: line('verse-3-7').start - 0.9 },
+          { text: 'peek()', at: line('verse-3-7').start - 0.9 },
         ],
       });
     }
@@ -431,7 +432,7 @@
       const s0 = start('verse-4');
       const duo = dancers.troupe(content, { x: 620, y: 448, scale: 1, at: s0, until: end('verse-4') });
       duo.hold(s0 + 0.05, { pose: 'flourish', dur: 0.01 }).lamp(s0, 'green').tidy(s0, 0, 0.01);
-      const cycle = tdd.cycle(content, { x: 726, y: 56, scale: 0.5, compact: true, at: s0, until: line('verse-4-3').start - 0.1 });
+      const cycle = tdd.cycle(content, { x: 610, y: 40, scale: 0.65, compact: true, at: s0, until: line('verse-4-3').start - 0.1 });
       cycle.light('green', s0, mark('verse-4-2', 'refactor'));
       cycle.light('refactor', mark('verse-4-2', 'refactor'), line('verse-4-3').start);
 
@@ -445,18 +446,16 @@
       duo.pose('code', mark('verse-4-2', 'clean'), 'flourish', { face: 'joy' });
       shrink(duo, line('verse-4-3').start - 0.4, 0.8, 210, 4);
 
-      // The lecture's definition of the Refactor step stays up for the whole
-      // refactoring verse (slide 15 of CS 35L Lecture 9, word for word).
-      const definition = tdd.panel(content, { x: 40, y: 318, w: 470, title: 'Refactor', iconName: 'sparkle', tone: 'violet', at: mark('verse-4-2', 'refactor'), until: end('verse-4') });
+      // Keep the definition beside the original worked refactoring examples.
+      const definition = tdd.panel(content, { x: 40, y: 318, w: 470, title: 'Refactoring', iconName: 'sparkle', tone: 'violet', at: mark('verse-4-2', 'refactor'), until: end('verse-4') });
       kit.el('p', 'tdd-definition', definition.body, 'Make the design more elegant, cleaner, and potentially faster while not changing the functionality of the program.');
-      kit.el('p', 'tdd-definition-source', definition.body, 'CS 35L, Lecture 9');
       duo.pose('code', line('verse-4-3').start, 'stand').hold(line('verse-4-3').start, { pose: 'open' });
 
       // Change how it's written, not its aim: the old pop stays readable
       // (struck through) beside the one-line version that replaces it.
-      const written = mark('verse-4-3', 'written');
+      const written = mark('verse-4-4', 'stays');
       tdd.code(content, {
-        x: 40, y: 92, w: 470, title: 'my_stack.py', tone: 'violet', at: mark('verse-4-2', 'clean'), until: line('verse-4-5').start - 0.2,
+        x: 40, y: 92, w: 470, title: 'my_stack.py', tone: 'violet', at: line('verse-4-2').start, until: line('verse-4-5').start - 0.2,
         lines: [
           'def pop(self):',
           { text: '    element = self.elements[-1]', strikeAt: written },
@@ -481,10 +480,10 @@
       });
       for (const row of [1, 3]) dup.mark(row, mark('verse-4-5', 'duplication'), line('verse-4-7').start, 'bad');
       tdd.code(c, {
-        x: 400, y: 104, w: 360, title: 'tests · after', tone: 'green', at: mark('verse-4-5', 'too'),
+        x: 400, y: 104, w: 360, title: 'tests · after', tone: 'green', at: line('verse-4-5').start + 0.4,
         lines: ['@pytest.fixture', 'def stack():', '    return MyStack()'],
       }).mark(1, mark('verse-4-6', 'code'), line('verse-4-7').start, 'good');
-      tdd.note(c, 'a fresh stack per test', { x: 400, y: 240, at: mark('verse-4-6', 'clear'), tone: 'green', iconName: 'sparkle' });
+      tdd.note(c, 'Fresh stack per test', { x: 400, y: 240, at: line('verse-4-5').start + 0.6, tone: 'green', iconName: 'sparkle' });
 
       // Each little change is followed by a run of all the tests.
       const d = kit.scene(content, line('verse-4-7').start - 0.15, end('verse-4'), { exit: 'fade' });
@@ -509,7 +508,8 @@
       badge('Verse 5 · Arrange, act, assert', 'verse-5');
       const s0 = start('verse-5');
 
-      const a = kit.scene(content, s0, line('verse-5-5').start - 0.2);
+      const weakAt = line('verse-5-4').end + 0.5;
+      const a = kit.scene(content, s0, weakAt - 0.2);
       const aaa = tdd.code(a, {
         x: 40, y: 72, w: 450, title: 'tests/test_stack.py', at: mark('verse-5-1', 'arrange'),
         lines: [
@@ -530,12 +530,12 @@
       column.push(mark('verse-5-1', 'three'), 3);
       column.pop(mark('verse-5-2', 'pop'), { to: [130, 20] });
       tdd.note(a, 'element == 3', { x: 760, y: 336, at: mark('verse-5-3', 'back'), tone: 'green', iconName: 'check' });
-      tdd.note(a, 'is_empty() → True', { x: 640, y: 380, at: mark('verse-5-4', 'empty'), tone: 'green', iconName: 'check' });
+      tdd.note(a, 'is_empty() → True', { x: 640, y: 380, at: line('verse-5-4').start, tone: 'green', iconName: 'check' });
 
       // The bug: pop returns 3 but never removes it. A weak test passes.
-      const b = kit.scene(content, line('verse-5-5').start - 0.2, line('verse-5-7').start - 0.1);
+      const b = kit.scene(content, weakAt - 0.2, line('verse-5-7').start - 0.1);
       tdd.code(b, {
-        x: 40, y: 72, w: 450, title: 'my_stack.py', tone: 'red', at: mark('verse-5-5', 'if'),
+        x: 40, y: 72, w: 450, title: 'my_stack.py', tone: 'red', at: weakAt,
         lines: ['def pop(self):', '    return self.elements[-1]'],
       }).mark(1, mark('verse-5-5', 'inside'), line('verse-5-7').start, 'bad');
       const buggy = tdd.stack(b, { x: 680, y: 130, slots: 3, at: mark('verse-5-5', 'if') });
@@ -543,29 +543,28 @@
       buggy.pop(mark('verse-5-5', 'comes'), { to: [130, 20], ghost: true });
       tdd.note(b, 'still inside!', { x: 640, y: 400, at: mark('verse-5-5', 'inside'), tone: 'red', iconName: 'warning' });
       tdd.code(b, {
-        x: 40, y: 194, w: 450, title: 'tests/test_stack.py', at: mark('verse-5-5', 'but'),
+        x: 40, y: 194, w: 450, title: 'tests/test_stack.py', at: weakAt + 0.2,
         lines: ['assert stack.pop() == 3'],
       });
-      tdd.suite(b, { x: 40, y: 280, w: 300, at: mark('verse-5-6', 'test'), tests: [{ name: 'test_pop', states: [{ at: mark('verse-5-6', 'test'), status: 'pass', word: 'PASSED?' }] }] });
-      kit.stamp(b, 'Weak test', { x: 500, y: 318, at: mark('verse-5-6', 'lets'), rotate: -7, shake: false });
+      tdd.suite(b, { x: 40, y: 280, w: 300, at: weakAt + 0.4, tests: [{ name: 'test_pop', states: [{ at: weakAt + 0.4, status: 'pass', word: 'PASSED?' }] }] });
+      kit.stamp(b, 'Weak test', { x: 500, y: 318, at: line('verse-5-5').start, rotate: -7, shake: false });
       const slider = tdd.bug(b, { x: 360, y: 384, size: 46, at: mark('verse-5-6', 'error') - 0.1, rotate: 100, until: mark('verse-5-6', 'slide') + 0.7 });
       tween(slider, { translate: '260px 30px' }, mark('verse-5-6', 'slide'), 0.7, EASE.in);
 
       // Test behavior, not private moves: then the code is free to change.
       const c = kit.scene(content, line('verse-5-7').start - 0.1, end('verse-5'));
       tdd.code(c, {
-        x: 40, y: 108, w: 470, title: 'my_stack.py', at: mark('verse-5-7', 'test'),
+        x: 40, y: 108, w: 470, title: 'Private field rename', at: mark('verse-5-7', 'test'),
         lines: [
-          'def __init__(self):',
-          { text: '    self.elements = []', strikeAt: mark('verse-5-8', 'give') },
-          { text: '    self._items = []', at: mark('verse-5-8', 'give'), tone: 'add' },
+          { text: 'self.elements = []', strikeAt: mark('verse-5-7', 'private') },
+          { text: 'self._items = []', at: mark('verse-5-7', 'private'), tone: 'add' },
         ],
       });
       tdd.suite(c, {
         x: 40, y: 230, w: 620, at: mark('verse-5-7', 'test'),
         tests: [
-          { name: 'assert stack.is_empty()', at: mark('verse-5-7', 'test'), states: [{ at: mark('verse-5-7', 'behavior'), status: 'pass' }] },
-          { name: 'assert stack.elements == []', note: 'private detail', at: mark('verse-5-7', 'behavior') + 0.3, states: [{ at: mark('verse-5-7', 'private'), status: 'pass' }, { at: mark('verse-5-8', 'give') + 0.3, status: 'fail', word: 'BROKE' }] },
+          { name: 'assert stack.is_empty()', at: line('verse-5-7').start, states: [{ at: line('verse-5-7').start, status: 'pass' }] },
+          { name: 'assert stack.elements == []', note: 'private detail', at: line('verse-5-7').start, states: [{ at: line('verse-5-7').start, status: 'pass' }, { at: mark('verse-5-7', 'private') + 0.1, status: 'fail', word: 'BROKE' }] },
         ],
       });
       const free = dancers.troupe(content, { x: 830, y: 452, scale: 0.86, at: mark('verse-5-8', 'give'), until: end('verse-5'), members: ['code'] });
@@ -613,22 +612,22 @@
       tdd.bug(b, { x: 120 + lineArt.xOf(10) - 22, y: 352, size: 44, at: mark('verse-6-4', 'bugs'), rotate: -10 });
 
       // Bad inputs as well as good, and the response each one should get.
-      const c = kit.scene(content, line('verse-6-5').start - 0.1, line('verse-6-7').start - 0.3);
+      const c = kit.scene(content, line('verse-6-5').start - 0.1, end('verse-6'));
       const orders = [
-        { text: '“−1 cups of tea”', reply: 'Invalid input', tone: 'red', at: mark('verse-6-5', 'bad') },
-        { text: '“qwertyuiop cups”', reply: 'Invalid input', tone: 'red', at: mark('verse-6-5', 'inputs') },
-        { text: '“2 cups of tea”', reply: '☕ ☕ served', tone: 'green', at: mark('verse-6-5', 'good') },
+        { text: '“−1 cups of tea”', reply: 'Invalid input', tone: 'red', at: line('verse-6-5').start },
+        { text: '“qwertyuiop cups”', reply: 'Invalid input', tone: 'red', at: line('verse-6-5').start + 0.15 },
+        { text: '“2 cups of tea”', reply: '☕ ☕ served', tone: 'green', at: line('verse-6-5').start + 0.3 },
       ];
       orders.forEach((order, i) => {
         tdd.bubble(c, { x: 220, y: 104 + i * 92, w: 250, text: order.text, at: order.at, tone: 'code', size: 17 });
-        tdd.note(c, order.reply, { x: 500, y: 116 + i * 92, at: mark('verse-6-6', 'code') + i * 0.15, tone: order.tone === 'red' ? 'gold' : 'green', iconName: 'check' });
+        tdd.note(c, order.reply, { x: 500, y: 116 + i * 92, at: order.at + 0.3, tone: order.tone === 'red' ? 'gold' : 'green', iconName: 'check' });
       });
 
       // "It didn't crash" is not a check: assert the whole promise.
       const d = kit.scene(content, line('verse-6-7').start - 0.3, end('verse-6'), { exit: 'fade' });
-      tdd.code(d, { x: 40, y: 92, w: 400, title: 'checks nothing', tone: 'red', at: line('verse-6-7').start - 0.3, lines: ['order_tea(2)'] });
+      tdd.code(d, { x: 40, y: 364, w: 400, title: 'checks nothing', tone: 'red', at: line('verse-6-7').start - 0.3, lines: ['order_tea(2)'] });
       tdd.code(d, {
-        x: 480, y: 92, w: 440, title: 'checks the result', tone: 'green', at: line('verse-6-7').start - 0.3,
+        x: 480, y: 364, w: 440, title: 'checks the result', tone: 'green', at: line('verse-6-7').start - 0.3,
         lines: ['assert order_tea(2).total == 8.00'],
       }).mark(0, mark('verse-6-8', 'whole'), end('verse-6'), 'good');
     }
@@ -644,20 +643,20 @@
       tdd.ciBadge(a, { x: 120, y: 120, at: mark('verse-7-1', 'automate'), states: [{ at: 0, status: 'pass' }] });
       tdd.stopwatch(a, { x: 380, y: 100, at: mark('verse-7-1', 'quick'), seconds: '0.03 s', spinFrom: mark('verse-7-1', 'quick') });
       tdd.runs(a, {
-        x: 90, y: 230, w: 620, label: 'Run them often', at: mark('verse-7-2', 'run'),
-        ticks: [0.08, 0.22, 0.36, 0.5, 0.64, 0.78, 0.92].map((x, i) => ({ x, at: mark('verse-7-2', 'run') + i * 0.12, status: 'pass' })),
+        x: 90, y: 230, w: 620, label: 'Run them often', at: start('verse-7') + 0.2,
+        ticks: [0.08, 0.22, 0.36, 0.5, 0.64, 0.78, 0.92].map((x, i) => ({ x, at: start('verse-7') + 0.3 + i * 0.12, status: 'pass' })),
       });
       tdd.runs(a, {
-        x: 90, y: 330, w: 620, label: 'Only when done', at: mark('verse-7-2', 'run') + 0.4,
-        ticks: [{ x: 0.92, at: mark('verse-7-2', 'done'), status: 'fail', label: 'too late to find why' }],
+        x: 90, y: 330, w: 620, label: 'Only when done', at: start('verse-7') + 0.3,
+        ticks: [{ x: 0.92, at: mark('verse-7-1', 'quick'), status: 'fail', label: 'Late feedback' }],
       });
 
       // A fresh, clean start for every test, in any order.
       const b = kit.scene(content, line('verse-7-3').start - 0.1, line('verse-7-5').start - 0.1);
-      tdd.note(b, 'fixture: a new MyStack() for each test', { x: 60, y: 120, at: mark('verse-7-3', 'fresh'), tone: 'green', iconName: 'sparkle' });
+      tdd.note(b, 'Fresh stack for each test', { x: 60, y: 120, at: line('verse-7-3').start, tone: 'green', iconName: 'sparkle' });
       const order = [['test_push', 'test_pop'], ['test_pop', 'test_push']];
       order.forEach((names, k) => {
-        const shown = mark('verse-7-3', 'gets') + k * 0.3;
+        const shown = line('verse-7-3').start + k * 0.15;
         tdd.suite(b, {
           x: 90 + k * 440, y: 190, w: 340, title: k ? 'shuffled order' : 'in order', at: shown,
           tests: names.map((name) => ({ name, states: [{ at: shown + 0.3, status: 'pass' }] })),
@@ -668,16 +667,16 @@
       const c = kit.scene(content, line('verse-7-5').start - 0.1, line('verse-7-7').start - 0.1);
       tdd.note(c, 'same code · same inputs · same setup', { x: 250, y: 130, at: mark('verse-7-5', 'same'), tone: 'cyan', size: 20 });
       ['Run 1', 'Run 2', 'Run 3'].forEach((text, i) => {
-        const shown = mark('verse-7-5', 'inputs') + i * 0.35;
+        const shown = line('verse-7-5').start + i * 0.15;
         tdd.suite(c, { x: 110 + i * 260, y: 230, w: 220, title: text, at: shown, tests: [{ name: 'test_pop', states: [{ at: shown + 0.2, status: 'pass' }] }] });
       });
 
       // Flaky tests flip without a change, and real warnings drown.
       const d = kit.scene(content, line('verse-7-7').start - 0.1, end('verse-7'), { exit: 'fade' });
       const flipStates = [];
-      for (let t = mark('verse-7-7', 'flaky'); t < end('verse-7'); t += 0.55) flipStates.push({ at: t, status: flipStates.length % 2 ? 'pass' : 'fail' });
+      for (let t = mark('verse-7-7', 'flaky'); t < end('verse-7'); t += 1) flipStates.push({ at: t, status: flipStates.length % 2 ? 'pass' : 'fail' });
       tdd.suite(d, { x: 60, y: 76, w: 380, title: 'no code changed', at: mark('verse-7-7', 'when'), tests: [{ name: 'test_checkout', note: 'flaky', states: flipStates }] });
-      props.noise(d, { x: 480, y: 70, w: 440, h: 330, at: mark('verse-7-7', 'clear'), riseAt: mark('verse-7-8', 'drown'), sinkAt: mark('verse-7-8', 'warnings') });
+      props.noise(d, { x: 480, y: 70, w: 440, h: 330, at: line('verse-7-7').start + 0.3, riseAt: mark('verse-7-8', 'drown'), sinkAt: mark('verse-7-8', 'warnings') });
     }
 
     // ----------------------------------------------------------------
@@ -689,7 +688,7 @@
 
       // Reproduce, fix, rerun: the failing test, the fix, and one terminal
       // with both runs stay up together, so each can be read in turn.
-      const rerunEnd = mark('verse-8-5', 'tests') + 0.2;
+      const rerunEnd = line('verse-8-5').end;
       const a = kit.scene(content, start('verse-8'), rerunEnd);
       // One fence of tests for the whole story: the gap closes when the new test is kept.
       props.fence(content, { x: 60, y: 96, names: ['test_push', 'test_pop', '', 'test_peek', 'test_empty'], gap: 2, closeAt: mark('verse-8-3', 'keep'), closeName: 'test_pop_empty_raises', at: start('verse-8'), until: rerunEnd });
@@ -784,24 +783,24 @@
         x: 214, y: 262, w: 506, h: 190, at: mark('bridge-7', 'tests'), darkAt: mark('bridge-8', 'cannot'),
         bugsIn: [[430, 344, mark('bridge-7', 'bugs')], [560, 394, mark('bridge-7', 'bugs') + 0.3], [640, 318, mark('bridge-7', 'see')]],
       });
-      const dijkstra = tdd.panel(d, { x: 560, y: 108, w: 360, title: 'Edsger W. Dijkstra', iconName: 'chat', at: mark('bridge-8', 'prove') });
+      const dijkstra = tdd.panel(d, { x: 560, y: 108, w: 360, title: 'Edsger W. Dijkstra', iconName: 'chat', at: line('bridge-7').start + 0.3 });
       const quote = kit.el('div', 'tdd-quote is-staged', dijkstra.body, 'Program testing can be used to show the presence of bugs, but never to show their absence!');
-      fx.fadeIn(quote, mark('bridge-8', 'prove') + 0.1, 0.4);
+      fx.fadeIn(quote, line('bridge-7').start + 0.5, 0.4);
 
       // Learn the rules, then judge: not every task is Test's to lead.
       const e = kit.scene(content, line('bridge-9').start - 0.2, end('bridge'), { exit: 'fade' });
-      const rules = tdd.panel(e, { x: 50, y: 108, w: 420, title: 'The three rules', iconName: 'list', at: mark('bridge-9', 'steps') - 0.2 });
+      const rules = tdd.panel(e, { x: 50, y: 108, w: 420, title: 'The three rules', iconName: 'list', at: line('bridge-9').start });
       ['1 · a failing test first', '2 · only enough test to fail', '3 · only enough code to pass'].forEach((text, i) => {
         const row = kit.el('div', 'tdd-rule is-staged', rules.body, text);
-        fx.fadeIn(row, mark('bridge-9', 'steps') + i * 0.25, 0.2);
+        fx.fadeIn(row, line('bridge-9').start + i * 0.15, 0.2);
       });
       tdd.note(e, 'not a dogma', { x: 260, y: 262, at: mark('bridge-9', 'judge'), tone: 'gold', iconName: 'warning' });
       props.moonshot(e, { x: 640, y: 92, at: mark('bridge-10', 'not'), towerAt: mark('bridge-10', 'not'), rocketAt: mark('bridge-10', 'theirs') });
       const tasks = [
-        { text: 'stack logic', who: 'Test leads', tone: 'green', at: mark('bridge-10', 'every') },
-        { text: 'image recognition', who: 'measure accuracy instead', tone: 'cyan', at: mark('bridge-10', 'task') },
+        { text: 'stack logic', who: 'Test leads', tone: 'green', at: line('bridge-9').start + 0.5 },
+        { text: 'image recognition', who: 'measure accuracy', tone: 'cyan', at: line('bridge-9').start + 0.7 },
       ];
-      tdd.note(e, 'taller towers never reach the moon', { x: 560, y: 404, at: mark('bridge-10', 'task'), tone: 'white', iconName: 'warning', size: 15 });
+      tdd.note(e, 'Taller towers cannot reach the moon', { x: 560, y: 404, at: line('bridge-10').start, tone: 'white', iconName: 'warning', size: 15 });
       tasks.forEach((task, i) => tdd.note(e, `${task.text}: ${task.who}`, { x: 60, y: 312 + i * 34, at: task.at, tone: task.tone, iconName: i ? 'pin' : 'check', size: 15 }));
     }
 
@@ -831,7 +830,7 @@
       ], { y: 60, size: 46, until: line('outro-6').start - 0.2 });
       const xs = { red: 290, green: 480, refactor: 670 };
       const tiles = props.floorTiles(b, { y: 446, xs, rx: 90, at: mark('outro-3', 'test') });
-      const duo = dancers.troupe(content, { x: 480, y: 446, scale: 0.96, at: mark('outro-3', 'test') - 0.1, until: song.duration });
+      const duo = dancers.troupe(content, { x: 480, y: 446, scale: 1.08, at: mark('outro-3', 'test') - 0.1, until: song.duration });
       duo.step('test', 0, -60, 0.01).step('code', 0, 60, 0.01);
       duo.step('test', mark('outro-4', 'takes'), 0, 0.6).step('code', mark('outro-4', 'takes'), 0, 0.6);
       duo.hold(mark('outro-4', 'hand'), { pose: 'flourish' });
@@ -851,9 +850,9 @@
       tdd.todo(b, {
         x: 40, y: 92, w: 360, title: 'Test list', at: mark('outro-6', 'the'), until: line('outro-7').start - 0.2,
         items: [
-          { text: 'pop() on an empty stack', at: mark('outro-6', 'the'), doneAt: mark('outro-6', 'the') },
-          { text: 'push many, pop in order', at: mark('outro-6', 'next'), focusAt: mark('outro-6', 'next'), focusUntil: line('outro-7').start },
-          { text: 'peek()', at: mark('outro-6', 'small'), doneAt: mark('outro-6', 'small') },
+          { text: 'pop() on an empty stack', at: line('outro-6').start - 1, doneAt: mark('outro-6', 'the') },
+          { text: 'push many, pop in order', at: line('outro-6').start - 1, focusAt: mark('outro-6', 'next'), focusUntil: line('outro-7').start },
+          { text: 'peek()', at: line('outro-6').start - 1, doneAt: mark('outro-6', 'small') },
         ],
       });
       duo.waltz(mark('outro-6', 'next'), mark('outro-7', 'let') - 0.2, { travel: 10 });
