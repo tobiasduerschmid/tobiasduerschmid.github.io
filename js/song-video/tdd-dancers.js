@@ -134,39 +134,51 @@
   const f = (n) => n.toFixed(2);
 
   /**
-   * A keyed track: add(at, partial, dur, curve) blends from whatever the
-   * track showed at `at` toward that state merged with `partial`. The start
-   * states are compiled once, so value(t) is a pure function of t.
+   * A keyed track: add(at, partial, dur, curve) blends each property in
+   * `partial` from whatever the track showed at `at` toward its new value.
+   * Each property keeps its own keys, so a later key interrupts only the
+   * properties it sets: a pose change never freezes a step or a hold that
+   * is still under way. The start states are compiled once, so value(t) is
+   * a pure function of t.
    */
   function track(initial) {
-    const keys = [];
+    const channels = new Map();
     let compiled = null;
     function compile() {
-      keys.sort((a, b) => a.at - b.at);
-      let state = initial;
-      compiled = keys.map((key, i) => {
-        const start = state;
-        const target = merge(start, key.partial);
-        const next = keys[i + 1];
-        const p = next ? clamp((next.at - key.at) / key.dur, 0, 1) : 1;
-        state = mix(start, target, key.curve(p));
-        return { ...key, start, target };
-      });
+      compiled = new Map();
+      for (const [name, keys] of channels) {
+        keys.sort((a, b) => a.at - b.at);
+        let state = initial[name];
+        compiled.set(name, keys.map((key, i) => {
+          const start = state;
+          const target = isObject(key.value) && isObject(start) ? merge(start, key.value) : key.value;
+          const next = keys[i + 1];
+          const p = next ? clamp((next.at - key.at) / key.dur, 0, 1) : 1;
+          state = mix(start, target, key.curve(p));
+          return { ...key, start, target };
+        }));
+      }
     }
     return {
       add(at, partial, dur = 0.6, curve = ease.inOut) {
-        keys.push({ at, partial, dur: Math.max(0.01, dur), curve });
+        for (const [name, value] of Object.entries(partial)) {
+          if (!channels.has(name)) channels.set(name, []);
+          channels.get(name).push({ at, value, dur: Math.max(0.01, dur), curve });
+        }
         compiled = null;
       },
       value(t) {
         if (!compiled) compile();
-        let current = null;
-        for (const key of compiled) {
-          if (key.at > t) break;
-          current = key;
+        const out = { ...initial };
+        for (const [name, keys] of compiled) {
+          let current = null;
+          for (const key of keys) {
+            if (key.at > t) break;
+            current = key;
+          }
+          if (current) out[name] = mix(current.start, current.target, current.curve(clamp((t - current.at) / current.dur, 0, 1)));
         }
-        if (!current) return initial;
-        return mix(current.start, current.target, current.curve(clamp((t - current.at) / current.dur, 0, 1)));
+        return out;
       },
     };
   }
