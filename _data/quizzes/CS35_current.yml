@@ -14,9 +14,9 @@ decks:
   - nodejs
   - networking
   - networking_decisions
+  - react
 
 other:
-  - react
   - design_pattern_observer
   - c
   - design_principle_information_hiding

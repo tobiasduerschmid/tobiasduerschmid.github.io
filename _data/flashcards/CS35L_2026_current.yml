@@ -15,10 +15,10 @@ decks:
   - nodejs_syntax_explain
   - nodejs_syntax_generate
   - networking_concepts
-
-other:
   - react_syntax_explain
   - react_syntax_generate
+
+other:
   - design_pattern_observer
   - c
   - design_principle_information_hiding
