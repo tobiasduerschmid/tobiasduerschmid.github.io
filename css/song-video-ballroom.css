@@ -1,0 +1,179 @@
+/*
+ * The "ballroom" stage theme (js/song-video/ballroom.js): an evening
+ * ballroom behind the scenes of "Red, Green, Refactor". Only the backdrop
+ * changes. Lights stay faint (alpha ≤ 0.2 over the scene area) so every text
+ * color in the scenes keeps its contrast, and nothing large changes
+ * brightness quickly. Like stage.css this styles the 960×540 stage, which
+ * keeps its dark artwork in both page themes; the player's print styles
+ * hide it.
+ */
+
+.theme-ballroom {
+  background: #07061a;
+}
+
+.br-room {
+  overflow: hidden;
+}
+
+.br-base {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 52% 46% at 50% 4%, rgba(255, 196, 120, 0.16), transparent 72%),
+    radial-gradient(ellipse 40% 40% at 8% 70%, rgba(140, 70, 190, 0.14), transparent 70%),
+    radial-gradient(ellipse 40% 40% at 94% 66%, rgba(40, 110, 170, 0.14), transparent 70%),
+    linear-gradient(180deg, #120c2c 0%, #0c0a24 52%, #0a0818 100%);
+}
+
+.br-wall,
+.br-floor {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.br-wall-panel {
+  fill: rgba(255, 214, 140, 0.025);
+  stroke: rgba(255, 214, 140, 0.11);
+  stroke-width: 1.4;
+}
+
+.br-wall-fan {
+  stroke: rgba(255, 214, 140, 0.1);
+  stroke-width: 1.2;
+}
+
+.br-wall-boss {
+  fill: rgba(255, 214, 140, 0.16);
+}
+
+.br-wall-rail {
+  stroke: rgba(255, 214, 140, 0.08);
+  stroke-width: 2;
+}
+
+.br-floor-seam {
+  stroke: rgba(255, 226, 180, 0.07);
+  stroke-width: 1;
+}
+
+.br-floor-row {
+  stroke: rgba(255, 226, 180, 0.05);
+  stroke-width: 1;
+}
+
+.br-floor-edge {
+  stroke: rgba(255, 214, 140, 0.22);
+  stroke-width: 1.5;
+}
+
+/* Two warm follow-spots that sweep slowly from the ceiling. */
+.br-spot {
+  position: absolute;
+  top: -60px;
+  width: 360px;
+  height: 640px;
+  margin-left: -180px;
+  transform-origin: 50% 0;
+  background: linear-gradient(180deg, rgba(255, 236, 200, 0.1), rgba(255, 236, 200, 0.03) 70%, transparent);
+  clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%);
+}
+
+.br-spot--left { left: 230px; }
+.br-spot--right { left: 730px; }
+
+.br-flecks {
+  position: absolute;
+  inset: 0;
+}
+
+.br-fleck {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 246, 220, 0.95), rgba(255, 246, 220, 0) 70%);
+}
+
+.br-chandelier {
+  position: absolute;
+  left: 370px;
+  top: -6px;
+  transform-origin: 110px 0;
+  opacity: 0.78;
+}
+
+.br-ch-chain {
+  stroke: #8a6d33;
+  stroke-width: 2;
+}
+
+.br-ch-arm {
+  fill: none;
+  stroke: #c9a24a;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.br-ch-body {
+  fill: #b48a35;
+}
+
+.br-ch-candle {
+  fill: #f3e7cf;
+}
+
+.br-ch-flame {
+  fill: #ffd27a;
+}
+
+.br-ch-drop {
+  fill: rgba(220, 236, 255, 0.55);
+}
+
+.br-drape {
+  position: absolute;
+  top: 0;
+}
+
+.br-drape--left { left: -8px; }
+
+.br-drape--right {
+  right: -8px;
+  transform: scaleX(-1);
+}
+
+.br-drape-hem {
+  fill: none;
+  stroke: rgba(255, 210, 120, 0.45);
+  stroke-width: 2.5;
+}
+
+.br-drape-tie {
+  fill: none;
+  stroke: #c9a24a;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.br-drape-tassel {
+  fill: #c9a24a;
+}
+
+/* A warm pool of light where the dancers stand. */
+.br-glow {
+  position: absolute;
+  left: 180px;
+  top: 360px;
+  width: 600px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 214, 150, 0.12), transparent 70%);
+}
+
+.br-vignette {
+  background: radial-gradient(ellipse at 50% 42%, transparent 52%, rgba(0, 0, 0, 0.6) 100%);
+}

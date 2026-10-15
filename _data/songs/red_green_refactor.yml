@@ -1,0 +1,811 @@
+# Storyboard for "Red, Green, Refactor", the test-driven development song on
+# the SE Book page SEBook/testing/tdd.md (embedded with
+# _includes/song-video.html).
+#
+# This file is the single source of truth for the song's words and timing:
+#   - js/song-video/songs/red_green_refactor.js choreographs the live vector
+#     player (/assets/song-player/red-green-refactor.html) against each
+#     line's `start` and its `marks` (the times of the words the visuals
+#     hit), with the dancers in js/song-video/tdd-dancers.js and the teaching
+#     artwork in js/song-video/tdd-kit.js and js/song-video/tdd-props.js;
+#   - render.js writes the captions and the audio-described soundtrack from
+#     `text` and `narration` (`node scripts/song-video/render.js
+#     red_green_refactor`). This song has no MP4: it plays only in the live
+#     player, so render.js skips the frame capture;
+#   - _includes/song-video.html prints every line with its `visual`
+#     description as the on-page transcript (WCAG 1.2.1 / 1.2.3);
+#   - each section's `narration` is spoken in the audio-described track,
+#     where the picture holds at the start of the section while the narrator
+#     describes what it shows (extended audio description, WCAG 1.2.5).
+# Editing text or descriptions here updates the transcript and the player on
+# the next Jekyll build, but the captions and described audio only after
+# re-running render.js.
+#
+# Times are seconds into the Suno take, normalized to -16 LUFS. Line
+# boundaries and word marks come from local Whisper word timestamps (mlx
+# whisper-large-v3-turbo) aligned to the lyric sheet, with prompted section
+# passes and short unprompted clips for the onsets Whisper stretched over
+# rests. Captions follow the recording, which differs from the lyric sheet
+# once: verse 5 sings "Three comes back to you" without the word "Assert"
+# (the code on screen still shows `assert element == 3`).
+
+title: "Red, Green, Refactor: a song about test-driven development"   # the player's accessible name
+credit: Lyrics written for this chapter; music and vocals generated with Suno.
+student:
+  laptop_logo: /assets/icons/tdd-cycle/tdd-cycle.svg
+theme: ballroom   # stage look: the evening ballroom of js/song-video/ballroom.js
+extras:   # the song's own art and styles, loaded before its choreography
+  styles:
+    - /css/song-video-ballroom.css
+    - /css/song-video-tdd-dancers.css
+    - /css/song-video-tdd-kit.css
+    - /css/song-video-tdd-props.css
+    - /css/song-fireworks.css
+  scripts:
+    - /js/song-video/ballroom.js
+    - /js/song-video/tdd-dancers.js
+    - /js/song-video/tdd-kit.js
+    - /js/song-video/tdd-props.js
+    - /js/song-video/fireworks.js
+player: /assets/song-player/red-green-refactor.html
+captions: /assets/audio/red-green-refactor.vtt
+described_captions: /assets/audio/red-green-refactor-described.vtt
+soundtrack: assets/audio/red-green-refactor.m4a   # repo path, played by the live player
+described_soundtrack: assets/audio/red-green-refactor-described.m4a
+described_timeline: /assets/audio/red-green-refactor-described.json
+narrator:
+  voice: Samantha   # macOS `say` voice for the audio-described track
+  rate: 205         # words per minute
+  pronounce:        # how the narrator says notation the captions keep as written
+    MyStack: my stack
+    is_empty: is empty
+    test_pop: test pop
+    test_push: test push
+    test_create_stack: test create stack
+    pytest: pie test
+    ImportError: import error
+    NameError: name error
+    CI: C I
+width: 1920
+height: 1080
+fps: 30
+duration: 346.41
+beats:
+  bpm: 58.66   # dotted-quarter pulse of the 12/8 ballad, fitted to the take's onsets
+  first: 0.28
+  # Every dotted-quarter beat, in seconds: tracked on the percussion (librosa,
+  # harmonic/percussive split) and smoothed by a local linear fit over ±5
+  # beats, so the dancers' waltz follows the take's tempo drift. Overrides
+  # bpm/first for Timeline.beats.
+  times: [
+    0.12, 1.11, 2.1, 3.09, 4.09, 5.08, 6.07, 7.06, 8.05, 9.04, 10.02, 11.0,
+    12.0, 13.01, 14.03, 15.04, 16.06, 17.08, 18.08, 19.09, 20.1, 21.11, 22.11, 23.11,
+    24.09, 25.07, 26.05, 27.02, 27.99, 28.97, 29.96, 30.96, 31.98, 33.0, 34.03, 35.06,
+    36.09, 37.1, 38.13, 39.16, 40.18, 41.2, 42.22, 43.23, 44.23, 45.22, 46.23, 47.24,
+    48.27, 49.32, 50.37, 51.42, 52.47, 53.51, 54.55, 55.6, 56.64, 57.67, 58.71, 59.73,
+    60.75, 61.76, 62.77, 63.79, 64.8, 65.82, 66.83, 67.84, 68.86, 69.87, 70.88, 71.89,
+    72.88, 73.88, 74.88, 75.88, 76.87, 77.86, 78.85, 79.82, 80.8, 81.77, 82.76, 83.75,
+    84.74, 85.73, 86.72, 87.71, 88.7, 89.69, 90.68, 91.66, 92.64, 93.63, 94.62, 95.61,
+    96.6, 97.58, 98.55, 99.55, 100.56, 101.57, 102.59, 103.61, 104.63, 105.64, 106.66, 107.68,
+    108.7, 109.73, 110.75, 111.77, 112.78, 113.8, 114.83, 115.84, 116.86, 117.88, 118.9, 119.9,
+    120.91, 121.92, 122.94, 123.96, 124.98, 126.01, 127.03, 128.05, 129.08, 130.11, 131.15, 132.19,
+    133.22, 134.24, 135.27, 136.3, 137.33, 138.36, 139.38, 140.38, 141.39, 142.4, 143.4, 144.42,
+    145.45, 146.49, 147.54, 148.58, 149.63, 150.69, 151.74, 152.8, 153.87, 154.93, 155.99, 157.02,
+    158.04, 159.06, 160.08, 161.1, 162.11, 163.13, 164.14, 165.14, 166.15, 167.15, 168.15, 169.15,
+    170.15, 171.14, 172.14, 173.13, 174.13, 175.13, 176.14, 177.14, 178.15, 179.15, 180.13, 181.12,
+    182.12, 183.1, 184.1, 185.07, 186.04, 186.99, 187.96, 188.94, 189.93, 190.92, 191.91, 192.9,
+    193.89, 194.89, 195.92, 196.95, 197.98, 199.0, 200.01, 201.04, 202.07, 203.11, 204.14, 205.17,
+    206.19, 207.22, 208.25, 209.28, 210.31, 211.35, 212.38, 213.41, 214.44, 215.48, 216.51, 217.54,
+    218.56, 219.59, 220.62, 221.65, 222.69, 223.72, 224.75, 225.77, 226.8, 227.83, 228.87, 229.92,
+    230.96, 232.0, 233.04, 234.07, 235.09, 236.12, 237.14, 238.16, 239.17, 240.17, 241.17, 242.18,
+    243.17, 244.18, 245.19, 246.2, 247.2, 248.21, 249.22, 250.24, 251.24, 252.24, 253.24, 254.24,
+    255.23, 256.21, 257.19, 258.18, 259.16, 260.13, 261.09, 262.05, 263.02, 263.98, 264.96, 265.95,
+    266.93, 267.92, 268.91, 269.92, 270.94, 271.97, 273.01, 274.04, 275.08, 276.09, 277.11, 278.13,
+    279.15, 280.18, 281.21, 282.23, 283.27, 284.3, 285.34, 286.39, 287.45, 288.51, 289.57, 290.63,
+    291.68, 292.72, 293.76, 294.81, 295.84, 296.88, 297.9, 298.92, 299.94, 300.96, 301.98, 303.01,
+    304.04, 305.06, 306.07, 307.08, 308.08, 309.08, 310.1, 311.11, 312.12, 313.13, 314.15, 315.18,
+    316.21, 317.23, 318.28, 319.36, 320.43, 321.52, 322.61, 323.7, 324.79, 325.87, 326.94, 328.02,
+    329.1, 330.18, 331.23, 332.28, 333.32, 334.35, 335.39, 336.43, 337.47, 338.52, 339.56, 340.6,
+    341.64, 342.68, 343.72, 344.75, 345.79, 346.83]
+
+sections:
+  - id: intro
+    title: "Intro"
+    delivery: sung
+    narration: "Audio-described version: before each section, the picture pauses while I describe it. The setting is an evening ballroom with velvet drapes, a chandelier, and a polished floor. Two dancers: Test, in a tailcoat, whose head is a glass lamp that glows red with an X on its badge when a test fails and green with a check mark when tests pass; and Code, a page with curly-brace hair clips, whose gown is made of colored code lines. The title reads Red, Green, Refactor, a song about test-driven development. Code asks, Shall we take a chance; Test answers, Let me lead this dance. A test file appears: test new stack is empty creates MyStack and asserts the stack is empty. Then the dancers join hands and begin to waltz."
+    lines:
+      - id: intro-1
+        start: 8.48
+        end: 12.02
+        text: "Code said, “Shall we take a chance?”"
+        marks: {"code": 8.48, "said": 9.32, "shall": 10.3, "we": 10.7, "take": 10.9, "a": 11.14, "chance": 11.34}
+        visual: "In a ballroom, Code (a page with curly-brace clips and a gown of code lines) asks in a bubble: “Shall we take a chance?” and offers a hand."
+      - id: intro-2
+        start: 12.98
+        end: 16.32
+        text: "Test said, “Let me lead this dance."
+        marks: {"test": 12.98, "said": 13.8, "let": 14.8, "me": 14.96, "lead": 15.12, "this": 15.44, "dance": 15.76}
+        visual: "Test (a tailcoat and a glass-lamp head) answers: “Let me lead this dance,” bows, and offers a hand."
+      - id: intro-3
+        start: 17.18
+        end: 20.56
+        text: "First say what the code should do."
+        marks: {"first": 17.18, "say": 18.02, "what": 18.6, "the": 19.14, "code": 19.3, "should": 19.68, "do": 20.04}
+        visual: "A test file appears before any code: test_new_stack_is_empty creates MyStack() and asserts stack.is_empty()."
+      - id: intro-4
+        start: 21.1
+        end: 25.1
+        text: "One small step; I’ll guide you through.”"
+        marks: {"one": 21.1, "small": 22.08, "step": 22.48, "ill": 23.32, "guide": 23.96, "you": 24.34, "through": 24.68}
+        visual: "The dancers step together, join hands, and begin to waltz."
+  - id: verse-1
+    title: "Verse 1"
+    delivery: sung
+    narration: "Verse 1, the rules of the dance. Rule 1: a test file with test push appears line by line and turns red, and a pytest terminal prints AttributeError, MyStack has no attribute push, 1 failed, while an empty my stack file is labeled production code waits. Next, the same test seen as the caller, with an arrow to MyStack seen from outside: push and is empty, how it works not written yet. Rule 2: test pop is written line by line only until it fails; a stop sign appears as Test raises a hand. A stack of five test cards is stamped No batch, and a giant leap is stamped No giant hop. Finally, a track of small footsteps, each with a green check, versus one giant hop; when the last small step turns red, only that step needs tracing, while the hop asks which change broke it."
+    lines:
+      - id: verse-1-1
+        start: 28.5
+        end: 31.54
+        text: "First, a failing unit test;"
+        marks: {"first": 28.5, "a": 29.38, "failing": 29.72, "unit": 30.14, "test": 30.78}
+        visual: "“Rule 1”: test_push appears line by line; pytest prints AttributeError: 'MyStack' object has no attribute 'push', 1 failed; Test’s lamp turns red with a ✗."
+      - id: verse-1-2
+        start: 32.14
+        end: 35.64
+        text: "till then, production code must rest."
+        marks: {"till": 32.14, "then": 32.96, "production": 33.7, "code": 34.12, "must": 34.7, "rest": 35.1}
+        visual: "An empty my_stack.py (class MyStack: pass) is labeled “production code waits”; Code puts hands on hips."
+      - id: verse-1-3
+        start: 36.48
+        end: 39.76
+        text: "The test says what we need to do,"
+        marks: {"the": 36.48, "test": 37.2, "says": 37.5, "what": 37.88, "we": 38.14, "need": 38.36, "to": 38.86, "do": 39.28}
+        visual: "In the test, the lines stack.push(3) and assert not stack.is_empty() are highlighted."
+      - id: verse-1-4
+        start: 40.0
+        end: 43.76
+        text: "from a caller’s point of view."
+        marks: {"from": 40.0, "a": 40.86, "callers": 41.26, "point": 42.24, "of": 42.7, "view": 43.3}
+        visual: "An arrow from the test (“the caller”) to “MyStack · seen from outside”: push(item), is_empty() → bool, and “how it works: not written yet”."
+      - id: verse-1-5
+        start: 44.3
+        end: 47.68
+        text: "Write test code till it fails, then stop."
+        marks: {"write": 44.3, "test": 44.96, "code": 45.34, "till": 45.7, "it": 45.92, "fails": 46.08, "then": 46.76, "stop": 47.08}
+        visual: "“Rule 2”: test_pop is typed line by line; at element = stack.pop() pytest fails, and a STOP sign appears as Test raises a hand."
+      - id: verse-1-6
+        start: 48.2
+        end: 51.74
+        text: "No batch of tests; no giant hop."
+        marks: {"no": 48.2, "batch": 48.8, "of": 49.16, "tests": 49.36, "no_2": 50.22, "giant": 50.48, "hop": 51.24}
+        visual: "A fan of five test cards is stamped “No batch”; a giant leap arc is stamped “No giant hop”."
+      - id: verse-1-7
+        start: 52.18
+        end: 55.8
+        text: "Small steps bring feedback; stay on track,"
+        marks: {"small": 52.18, "steps": 52.68, "bring": 53.06, "feedback": 53.38, "stay": 54.64, "on": 55.08, "track": 55.34}
+        visual: "Footprints labeled “small steps” land one by one along a track, each with a green ✓ flag."
+      - id: verse-1-8
+        start: 56.5
+        end: 60.32
+        text: "with less to trace when red comes back."
+        marks: {"with": 56.5, "less": 56.88, "to": 57.16, "trace": 57.4, "when": 57.92, "red": 58.48, "comes": 58.84, "back": 59.48}
+        visual: "The last small step turns red (“trace 1 small step”), while a giant hop below asks “which change broke it?”"
+  - id: verse-2
+    title: "Verse 2"
+    delivery: sung
+    narration: "Verse 2, testing the test. Two pytest terminals both show 1 error. Test A imports MyStack before it exists and fails with ImportError: expected, MyStack does not exist yet. Test B misspells MyStak and fails with NameError: a typo, red for the wrong reason. Then two timelines: red first, then green, stamped Trusted, because the test saw the missing step; and a test that was green from the start, asking can it fail at all. The dancers' lamp turns red, then green, and Code twirls."
+    lines:
+      - id: verse-2-1
+        start: 60.57
+        end: 64.1
+        text: "Run it first; find what’s to blame."
+        marks: {"run": 60.57, "it": 61.14, "first": 61.36, "find": 62.3, "whats": 62.62, "to": 63.22, "blame": 63.48}
+        visual: "“Why is it red?” Two pytest terminals each show 1 error."
+      - id: verse-2-2
+        start: 64.7
+        end: 68.18
+        text: "Not every failure means the same."
+        marks: {"not": 64.7, "every": 65.08, "failure": 65.5, "means": 66.36, "the": 67.26, "same": 67.56}
+        visual: "A note: “same red, different reasons”."
+      - id: verse-2-3
+        start: 68.78
+        end: 71.8
+        text: "A missing class can make it red;"
+        marks: {"a": 68.78, "missing": 69.08, "class": 69.42, "can": 70.16, "make": 70.58, "it": 71.08, "red": 71.3}
+        visual: "Test A, from my_stack import MyStack, fails with ImportError: cannot import name 'MyStack' — “expected: MyStack doesn’t exist yet”."
+      - id: verse-2-4
+        start: 72.62
+        end: 76.0
+        text: "a typo leads astray instead."
+        marks: {"a": 72.62, "typo": 73.18, "leads": 73.88, "astray": 74.46, "instead": 75.28}
+        visual: "Test B, stack = MyStak(), fails with NameError: name 'MyStak' is not defined — “a typo: red for the wrong reason”."
+      - id: verse-2-5
+        start: 76.62
+        end: 80.18
+        text: "See red before we trust the green:"
+        marks: {"see": 76.62, "red": 76.78, "before": 77.26, "we": 78.14, "trust": 78.72, "the": 79.3, "green": 79.8}
+        visual: "A timeline goes ✗ (no code yet) then ✓ (code written); another is ✓ from the start (“never red”)."
+      - id: verse-2-6
+        start: 80.78
+        end: 84.54
+        text: "we know the missing step was seen."
+        marks: {"we": 80.78, "know": 81.68, "the": 81.98, "missing": 82.78, "step": 83.1, "was": 83.64, "seen": 84.0}
+        visual: "The first timeline is stamped “Trusted”; the other asks “can it fail at all?”"
+  - id: chorus-1
+    title: "Chorus"
+    delivery: sung
+    narration: "The chorus, the same in all three choruses. A cycle of three tiles, Red: write a failing test, Green: make it pass, and Refactor: clean the structure, lights word by word while the dancers step onto red, green, and violet floor tiles. On let the tests lead, the cycle shrinks to the top corner as a map and the test arrives first. Red: the test fails, and a note names the change needed. Green: just enough code, and every test passes. Refactor: a black box shows the same inputs giving the same outputs while the code beside it is rewritten more cleanly, and Code's gown lines tidy up. This chorus: test new stack is empty, then is empty returns True, then a docstring documents the contract."
+    lines:
+      - id: chorus-1-1
+        start: 87.7
+        end: 89.8
+        text: "Red, green, refactor—"
+        marks: {"red": 87.7, "green": 88.68, "refactor": 89.12}
+        visual: "The Red ✗, Green ✓, and Refactor ↻ tiles of the cycle light word by word as the dancers step onto red, green, and violet floor tiles."
+      - id: chorus-1-2
+        start: 90.22
+        end: 91.64
+        text: "let the tests lead."
+        marks: {"let": 90.22, "the": 90.48, "tests": 90.76, "lead": 91.16}
+        visual: "Test takes Code’s hand and leads; the cycle shrinks to the corner and the test arrives first: test_new_stack_is_empty, line by line."
+      - id: chorus-1-3
+        start: 92.08
+        end: 93.6
+        text: "First a test fails"
+        marks: {"first": 92.08, "a": 92.6, "test": 92.86, "fails": 93.14}
+        visual: "Red: pytest runs it — ✗ 1 failed; Test’s lamp turns red."
+      - id: chorus-1-4
+        start: 93.62
+        end: 95.76
+        text: "for the change that we need."
+        marks: {"for": 93.62, "the": 93.94, "change": 94.14, "that": 94.66, "we": 94.94, "need": 95.28}
+        visual: "A note names the change: “needed: is_empty()”."
+      - id: chorus-1-5
+        start: 95.78
+        end: 97.84
+        text: "Write just enough code;"
+        marks: {"write": 95.78, "just": 96.28, "enough": 96.7, "code": 97.18}
+        visual: "Green: class MyStack with is_empty returning True; the dancers step to the green tile."
+      - id: chorus-1-6
+        start: 98.18
+        end: 99.74
+        text: "get all the tests green."
+        marks: {"get": 98.18, "all": 98.34, "the": 98.68, "tests": 98.92, "green": 99.34}
+        visual: "pytest · 1 passed: test_new_stack_is_empty ✓; Test’s lamp turns green."
+      - id: chorus-1-7
+        start: 99.98
+        end: 101.9
+        text: "Same outward behavior,"
+        marks: {"same": 99.98, "outward": 100.44, "behavior": 100.98}
+        visual: "Refactor: a black box, MyStack, maps MyStack().is_empty() to True ✓."
+      - id: chorus-1-8
+        start: 102.42
+        end: 103.72
+        text: "a cleaner routine."
+        marks: {"a": 102.42, "cleaner": 102.48, "routine": 102.86}
+        visual: "A docstring, \"A last-in, first-out stack.\", is added (“documented the contract”); Code’s gown lines tidy up and Code twirls."
+  - id: verse-3
+    title: "Verse 3"
+    delivery: sung
+    narration: "Verse 3, rule 3: just enough code. The code is_empty returns True, the simplest code that passes. Extra features, peek, size, sort, and undo, park in a lot labeled later: needs its own test. An untested extra peek method with a bug, a ladybug, and 0 tests is struck out. Then a pytest list runs all three tests, old and new, all passed, and a notepad test list collects new ideas: pop on an empty stack, push many and pop in order, and peek."
+    lines:
+      - id: verse-3-1
+        start: 107.0
+        end: 109.42
+        text: "Write just enough to pass the test;"
+        marks: {"write": 107.0, "just": 107.46, "enough": 107.9, "to": 108.34, "pass": 108.58, "the": 108.92, "test": 109.12}
+        visual: "“Rule 3”: def is_empty(self): return True, with the return line highlighted green."
+      - id: verse-3-2
+        start: 109.44
+        end: 111.44
+        text: "no extra features—park the rest."
+        marks: {"no": 109.44, "extra": 109.66, "features": 110.06, "park": 110.72, "the": 110.92, "rest": 111.14}
+        visual: "Extra features peek(), size(), sort(), and undo() park in a lot marked “P · later: needs its own test”."
+      - id: verse-3-3
+        start: 111.66
+        end: 113.44
+        text: "Untested extras hide mistakes;"
+        marks: {"untested": 111.66, "extras": 112.16, "hide": 112.66, "mistakes": 112.94}
+        visual: "An untested extra, peek returning self.elements[0], hides a ladybug; a note reads “0 tests”."
+      - id: verse-3-4
+        start: 113.46
+        end: 115.5
+        text: "don’t add more than this step takes."
+        marks: {"dont": 113.46, "add": 113.98, "more": 114.16, "than": 114.46, "this": 114.64, "step": 114.9, "takes": 115.18}
+        visual: "The extra method is struck out."
+      - id: verse-3-5
+        start: 115.52
+        end: 117.42
+        text: "Run all the tests, not just the new;"
+        marks: {"run": 115.52, "all": 115.76, "the": 116.0, "tests": 116.18, "not": 116.62, "just": 116.74, "the_2": 117.02, "new": 117.22}
+        visual: "pytest · 3 passed — test_new_stack_is_empty and test_push (old) and test_pop (new)."
+      - id: verse-3-6
+        start: 117.44
+        end: 119.5
+        text: "old promises must still hold true."
+        marks: {"old": 117.44, "promises": 117.7, "must": 118.3, "still": 118.66, "hold": 118.98, "true": 119.22}
+        visual: "The old tests, marked “old”, still pass."
+      - id: verse-3-7
+        start: 119.52
+        end: 121.36
+        text: "Write new ideas on the list;"
+        marks: {"write": 119.52, "new": 119.82, "ideas": 120.02, "on": 120.68, "the": 121.0, "list": 121.16}
+        visual: "A notepad test list fills: “pop() on an empty stack?”, “push many, pop in order”, “peek()”."
+      - id: verse-3-8
+        start: 121.38
+        end: 123.72
+        text: "stay with this step; they won’t be missed."
+        marks: {"stay": 121.38, "with": 121.74, "this": 121.98, "step": 122.26, "they": 122.64, "wont": 122.82, "be": 123.08, "missed": 123.28}
+        visual: "The dancers waltz on beside the list."
+  - id: verse-4
+    title: "Verse 4"
+    delivery: sung
+    narration: "Verse 4, refactor. The dancers begin to bow but a stamp says Not done yet; the cycle moves to Refactor and Code's gown lines line up neatly. A three-line pop method becomes one line, return self dot elements dot pop, while a black box shows push 1, push 2, pop gives 2, pop gives 1, outputs unchanged. Code twirls. Next, three tests that each repeat stack equals MyStack are refactored into one pytest fixture. Finally, a timeline of small refactoring steps, rename, fixture, shorter pop, docstring, each followed by a green test run, and a badge reads tests passing."
+    lines:
+      - id: verse-4-1
+        start: 123.74
+        end: 125.7
+        text: "Green is not the final bow;"
+        marks: {"green": 123.74, "is": 124.16, "not": 124.58, "the": 124.74, "final": 124.9, "bow": 125.36}
+        visual: "With Test’s lamp green, the dancers start to bow; a stamp says “Not done yet”."
+      - id: verse-4-2
+        start: 125.82
+        end: 127.64
+        text: "refactor: clean the structure now."
+        marks: {"refactor": 125.82, "clean": 126.36, "the": 126.7, "structure": 126.9, "now": 127.32}
+        visual: "The cycle moves to Refactor and Code’s jagged gown lines line up neatly (“same dancer, tidier code”)."
+      - id: verse-4-3
+        start: 127.66
+        end: 129.91
+        text: "Change how it’s written, not its aim;"
+        marks: {"change": 127.66, "how": 128.14, "its": 128.5, "written": 128.7, "not": 129.04, "its_2": 129.28, "aim": 129.66}
+        visual: "pop shrinks from three lines (element = self.elements[-1]; self.elements = self.elements[0:-1]; return element) to return self.elements.pop()."
+      - id: verse-4-4
+        start: 129.96
+        end: 132.66
+        text: "outward behavior stays the same."
+        marks: {"outward": 129.96, "behavior": 130.46, "stays": 131.02, "the": 131.72, "same": 132.1}
+        visual: "A black box: push(1), push(2) → ok, pop() → 2, pop() → 1, all ✓ — “same outputs”; Code twirls."
+      - id: verse-4-5
+        start: 136.74
+        end: 138.43
+        text: "Remove duplication, too;"
+        marks: {"remove": 136.74, "duplication": 137.34, "too": 138.18}
+        visual: "Three tests each start with stack = MyStack(), highlighted in red."
+      - id: verse-4-6
+        start: 139.18
+        end: 142.6
+        text: "make tests and code clear to review."
+        marks: {"make": 139.18, "tests": 139.8, "and": 140.32, "code": 140.62, "clear": 141.04, "to": 141.62, "review": 142.02}
+        visual: "After: one @pytest.fixture returns MyStack(), and test_push(stack) uses it — “a fresh stack per test”."
+      - id: verse-4-7
+        start: 143.46
+        end: 146.6
+        text: "Run all the tests through each routine;"
+        marks: {"run": 143.46, "all": 143.96, "the": 144.12, "tests": 144.26, "through": 144.74, "each": 145.28, "routine": 145.64}
+        visual: "A timeline of refactoring steps — rename, fixture, shorter pop — each gets a green ✓."
+      - id: verse-4-8
+        start: 147.34
+        end: 151.12
+        text: "each little change must leave them green."
+        marks: {"each": 147.34, "little": 147.86, "change": 148.24, "must": 148.88, "leave": 149.48, "them": 149.94, "green": 150.46}
+        visual: "A fourth step, docstring, gets its ✓, and a badge reads “tests passing” as the dancers waltz."
+  - id: chorus-2
+    title: "Chorus"
+    delivery: sung
+    narration: "The chorus again, on the same floor and cycle. This time: a failing test push, then push and is empty, with two tests passing, then is empty refactored to return not self dot elements with the same results."
+    lines:
+      - id: chorus-2-1
+        start: 152.3
+        end: 154.32
+        text: "Red, green, refactor—"
+        marks: {"red": 152.3, "green": 153.26, "refactor": 153.84}
+        visual: "The cycle’s tiles and the floor tiles light Red, Green, Refactor as the dancers step across them."
+      - id: chorus-2-2
+        start: 154.86
+        end: 156.24
+        text: "let the tests lead."
+        marks: {"let": 154.86, "the": 155.1, "tests": 155.36, "lead": 155.74}
+        visual: "Test leads Code back to the red tile as test_push arrives line by line."
+      - id: chorus-2-3
+        start: 156.62
+        end: 158.2
+        text: "First a test fails"
+        marks: {"first": 156.62, "a": 157.2, "test": 157.44, "fails": 157.74}
+        visual: "Red: ✗ 1 failed, 1 passed."
+      - id: chorus-2-4
+        start: 158.22
+        end: 160.36
+        text: "for the change that we need."
+        marks: {"for": 158.22, "the": 158.54, "change": 158.76, "that": 159.24, "we": 159.54, "need": 159.88}
+        visual: "A note: “needed: push()”."
+      - id: chorus-2-5
+        start: 160.38
+        end: 162.42
+        text: "Write just enough code;"
+        marks: {"write": 160.38, "just": 160.88, "enough": 161.3, "code": 161.78}
+        visual: "Green: push appends to self.elements, and is_empty returns len(self.elements) == 0."
+      - id: chorus-2-6
+        start: 162.5
+        end: 164.36
+        text: "get all the tests green."
+        marks: {"get": 162.5, "all": 162.94, "the": 163.28, "tests": 163.52, "green": 163.92}
+        visual: "pytest · 2 passed: test_new_stack_is_empty ✓, test_push ✓."
+      - id: chorus-2-7
+        start: 164.6
+        end: 166.48
+        text: "Same outward behavior,"
+        marks: {"same": 164.6, "outward": 165.04, "behavior": 165.58}
+        visual: "Refactor: a black box maps MyStack().is_empty() → True and push(3); is_empty() → False."
+      - id: chorus-2-8
+        start: 166.8
+        end: 168.34
+        text: "a cleaner routine."
+        marks: {"a": 166.8, "cleaner": 167.1, "routine": 167.46}
+        visual: "is_empty becomes return not self.elements (“simpler, same result”); Code twirls."
+  - id: verse-5
+    title: "Verse 5"
+    delivery: sung
+    narration: "Verse 5, arrange, act, assert. A test pop function builds up with Arrange, Act, and Assert comments while a glass column, MyStack, receives the block 3 and then pops it out: element equals 3, and is empty is True. Then a buggy pop returns the top element but never removes it, leaving a red ghost 3 inside, still inside. A weak test that only checks the returned 3 passes anyway, stamped Weak test, while a ladybug slides away. Finally, a test of behavior, is empty, keeps passing when a private field is renamed, while a test of the private elements list breaks; Code twirls."
+    lines:
+      - id: verse-5-1
+        start: 169.0
+        end: 171.46
+        text: "Arrange: a fresh stack; push in three."
+        marks: {"arrange": 169.0, "a": 169.6, "fresh": 169.82, "stack": 170.06, "push": 170.62, "in": 170.8, "three": 171.04}
+        visual: "A test_pop with “# Arrange”: stack = MyStack(), stack.push(3); a fresh glass column labeled MyStack receives the block 3."
+      - id: verse-5-2
+        start: 172.64
+        end: 175.62
+        text: "Act: pop once. What should we see?"
+        marks: {"act": 172.64, "pop": 173.66, "once": 173.88, "what": 174.28, "should": 174.52, "we": 174.78, "see": 175.02}
+        visual: "“# Act”: element = stack.pop(); the block 3 lifts out."
+      - id: verse-5-3
+        start: 176.84
+        end: 179.96
+        text: "Three comes back to you;"
+        marks: {"three": 176.84, "comes": 177.72, "back": 178.44, "to": 178.98, "you": 179.7}
+        visual: "“# Assert”: assert element == 3 lights green (“element == 3 ✓”)."
+      - id: verse-5-4
+        start: 180.52
+        end: 183.74
+        text: "assert the stack is empty, too."
+        marks: {"assert": 180.52, "the": 181.12, "stack": 181.32, "is": 181.88, "empty": 182.54, "too": 183.24}
+        visual: "assert stack.is_empty() lights green; the column is empty (“is_empty() → True ✓”)."
+      - id: verse-5-5
+        start: 187.02
+        end: 189.44
+        text: "If three comes back but stays inside,"
+        marks: {"if": 187.02, "three": 187.62, "comes": 187.86, "back": 188.18, "but": 188.44, "stays": 188.62, "inside": 188.98}
+        visual: "A buggy pop returns self.elements[-1] without removing it: the 3 comes back but a red dashed 3 stays inside (“still inside!”)."
+      - id: verse-5-6
+        start: 189.46
+        end: 191.46
+        text: "a weak test lets that error slide."
+        marks: {"a": 189.46, "weak": 189.68, "test": 189.9, "lets": 190.24, "that": 190.48, "error": 190.76, "slide": 191.02}
+        visual: "A weak test, assert stack.pop() == 3, shows “PASSED?” and is stamped “Weak test” while a ladybug slides away."
+      - id: verse-5-7
+        start: 191.48
+        end: 193.5
+        text: "Test behavior, not private moves;"
+        marks: {"test": 191.48, "behavior": 191.96, "not": 192.52, "private": 192.76, "moves": 193.14}
+        visual: "Two checks both pass: assert stack.is_empty() (behavior) and assert stack.elements == [] (private detail)."
+      - id: verse-5-8
+        start: 193.52
+        end: 195.58
+        text: "give code the freedom to improve."
+        marks: {"give": 193.52, "code": 193.78, "the": 194.14, "freedom": 194.38, "to": 194.76, "improve": 195.04}
+        visual: "self.elements is renamed self._items: the behavior test still passes, the private-detail test “BROKE”; Code twirls."
+  - id: verse-6
+    title: "Verse 6"
+    delivery: sung
+    narration: "Verse 6, choosing test cases. Three stacks, empty, one, and several, each with its own test. A number line of cups of tea from 0 to 11 with valid orders 1 to 10 gets test pins at the bounds and either side; buggy code, if 1 is at most cups less than 10, rejects 10, where a ladybug hides. Orders of minus 1 cups and qwertyuiop cups get Invalid input, and 2 cups are served. A test that only calls order tea checks nothing; a strong test asserts the cups and the total."
+    lines:
+      - id: verse-6-1
+        start: 195.84
+        end: 197.66
+        text: "Empty, one, then several more;"
+        marks: {"empty": 195.84, "one": 196.28, "then": 196.6, "several": 196.78, "more": 197.22}
+        visual: "Three MyStack columns — empty, one block (7), and three blocks (1, 2, 3)."
+      - id: verse-6-2
+        start: 197.68
+        end: 199.62
+        text: "different cases take the floor."
+        marks: {"different": 197.68, "cases": 198.16, "take": 198.7, "the": 199.08, "floor": 199.32}
+        visual: "Each case gets its test: test_pop_empty, test_pop_one, test_pop_many."
+      - id: verse-6-3
+        start: 199.64
+        end: 201.58
+        text: "Test at the bounds, and either side;"
+        marks: {"test": 199.64, "at": 199.98, "the": 200.2, "bounds": 200.36, "and": 200.86, "either": 200.96, "side": 201.16}
+        visual: "A number line from 0 to 11 shades “valid: 1–10 cups of tea”; pins test the bounds 1 and 10 (✓) and either side: 0 ✗, 2 ✓, 9 ✓, 11 ✗."
+      - id: verse-6-4
+        start: 201.6
+        end: 203.9
+        text: "that’s where off-by-one bugs may hide."
+        marks: {"thats": 201.6, "where": 201.9, "off": 202.04, "by": 202.3, "one": 202.54, "bugs": 202.84, "may": 203.28, "hide": 203.5}
+        visual: "Buggy code, if 1 <= cups < 10, “rejects 10”; a ladybug sits at 10 (“10 should pass”)."
+      - id: verse-6-5
+        start: 203.92
+        end: 205.78
+        text: "Test bad inputs, not just good;"
+        marks: {"test": 203.92, "bad": 204.32, "inputs": 204.58, "not": 205.14, "just": 205.32, "good": 205.58}
+        visual: "Orders: “−1 cups of tea” and “qwertyuiop cups” (bad), “2 cups of tea” (good)."
+      - id: verse-6-6
+        start: 205.8
+        end: 207.82
+        text: "check code responds the way it should."
+        marks: {"check": 205.8, "code": 206.08, "responds": 206.4, "the": 206.94, "way": 207.18, "it": 207.34, "should": 207.52}
+        visual: "Responses: “Invalid input”, “Invalid input”, “☕ ☕ served”."
+      - id: verse-6-7
+        start: 207.84
+        end: 210.04
+        text: "Just “it didn’t crash” won’t do;"
+        marks: {"just": 207.84, "it": 208.38, "didnt": 208.68, "crash": 209.06, "wont": 209.46, "do": 209.84}
+        visual: "A test titled “checks nothing” only calls order_tea(2)."
+      - id: verse-6-8
+        start: 210.06
+        end: 211.9
+        text: "check the whole promise, through and through."
+        marks: {"check": 210.06, "the": 210.38, "whole": 210.54, "promise": 210.76, "through": 211.24, "and": 211.48, "through_2": 211.64}
+        visual: "A test titled “checks the whole promise” asserts receipt.cups == 2 and receipt.total == 8.00."
+  - id: verse-7
+    title: "Verse 7"
+    delivery: sung
+    narration: "Verse 7, fast, isolated, repeatable. A badge reads tests passing beside a stopwatch at 0.03 seconds; one timeline runs tests often, another only when done, too late. A fixture gives each test a new MyStack, and the same tests in a shuffled order all pass. Same code, same inputs, same setup: run 1, run 2, and run 3 all pass. Then a flaky test checkout flips between failed and passed with no code changed, and a sea of red and green noise rises until a real failure sinks out of sight."
+    lines:
+      - id: verse-7-1
+        start: 212.14
+        end: 214.18
+        text: "Automate; keep tests quick to run."
+        marks: {"automate": 212.14, "keep": 212.66, "tests": 213.14, "quick": 213.42, "to": 213.68, "run": 213.9}
+        visual: "A “tests passing” badge and a stopwatch at 0.03 s."
+      - id: verse-7-2
+        start: 214.2
+        end: 216.08
+        text: "Run them often, not just when done."
+        marks: {"run": 214.2, "them": 214.52, "often": 214.72, "not": 215.2, "just": 215.36, "when": 215.62, "done": 215.86}
+        visual: "A timeline “Run them often” fills with ✓ ticks; “Only when done” has one ✗ at the end: “too late to find why”."
+      - id: verse-7-3
+        start: 216.1
+        end: 218.38
+        text: "Each test gets a fresh, clean start;"
+        marks: {"each": 216.1, "test": 216.34, "gets": 216.84, "a": 217.22, "fresh": 217.42, "clean": 217.66, "start": 217.94}
+        visual: "A note: “fixture: a new MyStack() for each test”."
+      - id: verse-7-4
+        start: 218.4
+        end: 220.2
+        text: "run order must not play a part."
+        marks: {"run": 218.4, "order": 218.66, "must": 218.96, "not": 219.22, "play": 219.44, "a": 219.74, "part": 219.94}
+        visual: "The tests run in order A and in a shuffled order, all ✓."
+      - id: verse-7-5
+        start: 220.22
+        end: 222.32
+        text: "Same code and inputs, setup too:"
+        marks: {"same": 220.22, "code": 220.58, "and": 221.0, "inputs": 221.16, "setup": 221.83, "too": 222.12}
+        visual: "A note: “same code · same inputs · same setup”."
+      - id: verse-7-6
+        start: 222.34
+        end: 224.26
+        text: "the same result should follow through."
+        marks: {"the": 222.34, "same": 222.6, "result": 222.9, "should": 223.34, "follow": 223.56, "through": 223.96}
+        visual: "Run 1, Run 2, and Run 3 of test_pop all pass."
+      - id: verse-7-7
+        start: 224.28
+        end: 226.44
+        text: "When flaky tests turn red, then clear,"
+        marks: {"when": 224.28, "flaky": 224.58, "tests": 225.02, "turn": 225.4, "red": 225.68, "then": 225.92, "clear": 226.1}
+        visual: "With “no code changed”, test_checkout (flaky) flips between FAILED and PASSED."
+      - id: verse-7-8
+        start: 226.46
+        end: 228.44
+        text: "they drown the warnings we should hear."
+        marks: {"they": 226.46, "drown": 226.72, "the": 227.04, "warnings": 227.24, "we": 227.66, "should": 227.92, "hear": 228.14}
+        visual: "Waves of ✗ and ✓ noise rise and a “Real failure” sign sinks out of sight."
+  - id: verse-8
+    title: "Verse 8"
+    delivery: sung
+    narration: "Verse 8, regression tests. A ladybug slips through a gap in a fence of tests. A new test, pop empty raises, reproduces what was seen and fails with IndexError. The fix raises EmptyStackError when the stack is empty, the new test drops into the gap in the fence, and all five tests pass. A music staff with repeat signs, whose bars are tests, loops, and Test stands guard while a bug bounces away."
+    lines:
+      - id: verse-8-1
+        start: 228.46
+        end: 230.54
+        text: "A bug slips through? Test what you saw;"
+        marks: {"a": 228.46, "bug": 228.8, "slips": 229.04, "through": 229.36, "test": 229.74, "what": 229.9, "you": 230.08, "saw": 230.24}
+        visual: "A ladybug slips through a gap in a fence of tests; a new test, test_pop_empty_raises, expects EmptyStackError from MyStack().pop()."
+      - id: verse-8-2
+        start: 230.56
+        end: 232.62
+        text: "watch that test fail and show the flaw."
+        marks: {"watch": 230.56, "that": 230.84, "test": 231.1, "fail": 231.4, "and": 231.72, "show": 231.86, "the": 232.12, "flaw": 232.28}
+        visual: "pytest fails with IndexError: pop from empty list (1 failed, 4 passed)."
+      - id: verse-8-3
+        start: 232.64
+        end: 234.88
+        text: "Then fix the code, but keep that test;"
+        marks: {"then": 232.64, "fix": 232.88, "the": 233.22, "code": 233.38, "but": 233.76, "keep": 233.96, "that": 234.22, "test": 234.5}
+        visual: "The fix adds if self.is_empty(): raise EmptyStackError(); the new test drops into the fence’s gap."
+      - id: verse-8-4
+        start: 234.9
+        end: 236.82
+        text: "run it again with all the rest."
+        marks: {"run": 234.9, "it": 235.22, "again": 235.42, "with": 235.76, "all": 236.08, "the": 236.3, "rest": 236.46}
+        visual: "pytest: 5 passed."
+      - id: verse-8-5
+        start: 237.04
+        end: 239.28
+        text: "Regression tests repeat the score;"
+        marks: {"regression": 237.04, "tests": 237.56, "repeat": 238.02, "the": 238.46, "score": 238.8}
+        visual: "A music staff with repeat signs whose bars are test_push, test_pop, test_peek, and test_pop_empty_raises; a playhead loops."
+      - id: verse-8-6
+        start: 240.72
+        end: 243.4
+        text: "they guard what used to work before."
+        marks: {"they": 240.72, "guard": 241.24, "what": 241.66, "used": 241.86, "to": 242.2, "work": 242.46, "before": 242.82}
+        visual: "Test stands guard with a raised hand, and a ladybug bounces away."
+  - id: bridge
+    title: "Bridge"
+    delivery: sung
+    narration: "The bridge, the test pyramid. A pyramid is laid from test bricks, from the bottom up, beside an arrow that runs from faster and more at the base to slower and fewer at the top: Unit, one small part, many small bricks marked with check marks, beside a unit test and the MyStack column; Integration, parts together, fewer larger bricks, as two gears named Editor and UndoHistory each turn fine alone, slide together, and jam when the integration test turns them, because square teeth meet spiked teeth; and End-to-end, the whole user flow, a single capstone, as a browser flow: type hi, click Undo, text is gone. A gold arrow joins each tier to its example. The dancers each do a solo, then join for the whole show. Test's lamp shines a beam that reveals three bugs while glowing eyes wait in the dark, beside Dijkstra's words: testing can show the presence of bugs, but never their absence. Finally the three rules, not a dogma, and a tower that never reaches the moon while a rocket does, with stack logic, where Test leads, and image recognition, where you measure accuracy instead."
+    lines:
+      - id: bridge-1
+        start: 245.4
+        end: 248.12
+        text: "Unit tests check one small part;"
+        marks: {"unit": 245.4, "tests": 246.02, "check": 246.54, "one": 246.82, "small": 247.12, "part": 247.54}
+        visual: "The test pyramid’s base is laid from many small bricks, each marked ✓ — “Unit: one small part” — beside a unit test for push; an arrow at the left runs from “faster · more” at the base upward."
+      - id: bridge-2
+        start: 248.97
+        end: 252.6
+        text: "the stack’s a useful place to start."
+        marks: {"the": 248.97, "stacks": 249.94, "a": 250.5, "useful": 250.6, "place": 251.06, "to": 251.64, "start": 251.92}
+        visual: "The MyStack column receives a 3."
+      - id: bridge-3
+        start: 253.72
+        end: 256.7
+        text: "Integration: parts connect;"
+        marks: {"integration": 253.72, "parts": 255.38, "connect": 256.22}
+        visual: "The middle tier, “Integration: parts together”, is laid from fewer, larger link bricks. Two gears appear, Editor and UndoHistory, each turning freely with a chip “✓ alone”; on “connect” they slide together, square teeth against spiked teeth."
+      - id: bridge-4
+        start: 257.74
+        end: 260.9
+        text: "check they work as we expect."
+        marks: {"check": 257.74, "they": 258.36, "work": 258.66, "as": 259.08, "we": 259.88, "expect": 260.14}
+        visual: "A gold arrow turns the Editor gear: both gears judder and stop, and a red chip reads “✗ together”."
+      - id: bridge-5
+        start: 264.4
+        end: 268.48
+        text: "End-to-end: the whole user flow;"
+        marks: {"end": 264.4, "to": 265.44, "end_2": 265.96, "the": 266.58, "whole": 266.78, "user": 267.18, "flow": 267.88}
+        visual: "The capstone, “End-to-end: whole user flow”, completes the pyramid, and the arrow’s top reads “slower · fewer”; a browser flow shows: type “hi”, click Undo, text is gone."
+      - id: bridge-6
+        start: 268.84
+        end: 272.52
+        text: "fine solo steps aren’t the whole show."
+        marks: {"fine": 268.84, "solo": 269.22, "steps": 269.8, "arent": 270.42, "the": 271.36, "whole": 271.52, "show": 271.92}
+        visual: "Test and Code each dance a solo (“solo ✓”), then join hands and twirl."
+      - id: bridge-7
+        start: 272.88
+        end: 276.56
+        text: "Tests reveal bugs we can see;"
+        marks: {"tests": 272.88, "reveal": 273.7, "bugs": 274.16, "we": 275.26, "can": 275.76, "see": 276.04}
+        visual: "Test’s lamp casts a beam that reveals three ladybugs."
+      - id: bridge-8
+        start: 276.58
+        end: 281.6
+        text: "they cannot prove we’re all bug-free."
+        marks: {"they": 276.58, "cannot": 277.36, "prove": 277.96, "were": 278.68, "all": 279.36, "bug": 280.24, "free": 281.08}
+        visual: "Glowing eyes wait in the dark beyond the beam, beside Dijkstra: “Program testing can be used to show the presence of bugs, but never to show their absence!”"
+      - id: bridge-9
+        start: 284.84
+        end: 287.88
+        text: "Learn the steps, then judge the need;"
+        marks: {"learn": 284.84, "the": 285.72, "steps": 285.94, "then": 286.48, "judge": 286.78, "the_2": 287.2, "need": 287.42}
+        visual: "The three rules — a failing test first, only enough test to fail, only enough code to pass — “not a dogma”."
+      - id: bridge-10
+        start: 287.9
+        end: 292.0
+        text: "not every task is theirs to lead."
+        marks: {"not": 287.9, "every": 289.16, "task": 289.44, "is": 290.08, "theirs": 290.62, "to": 291.06, "lead": 291.48}
+        visual: "A tower grows floor by floor but a rocket reaches the moon (“taller towers never reach the moon”); notes: stack logic: Test leads; image recognition: measure accuracy instead."
+  - id: chorus-3
+    title: "Final chorus"
+    delivery: sung
+    narration: "The final chorus on the same floor and cycle: a failing test for peek, the idea parked earlier, then a two-line peek method with all five tests passing, then a private field renamed with the same outputs. Fireworks bloom as Test dips Code."
+    lines:
+      - id: chorus-3-1
+        start: 293.3
+        end: 295.22
+        text: "Red, green, refactor—"
+        marks: {"red": 293.3, "green": 294.12, "refactor": 294.58}
+        visual: "The cycle’s tiles and the floor tiles light Red, Green, Refactor as the dancers step across them."
+      - id: chorus-3-2
+        start: 295.62
+        end: 297.14
+        text: "let the tests lead."
+        marks: {"let": 295.62, "the": 295.96, "tests": 296.22, "lead": 296.62}
+        visual: "Test leads Code back to the red tile as test_peek_shows_the_top (using the stack fixture) arrives line by line."
+      - id: chorus-3-3
+        start: 297.5
+        end: 299.08
+        text: "First a test fails"
+        marks: {"first": 297.5, "a": 298.08, "test": 298.32, "fails": 298.64}
+        visual: "Red: ✗ 1 failed, 4 passed."
+      - id: chorus-3-4
+        start: 299.1
+        end: 301.26
+        text: "for the change that we need."
+        marks: {"for": 299.1, "the": 299.44, "change": 299.62, "that": 300.14, "we": 300.42, "need": 300.76}
+        visual: "A note: “needed: peek() — the parked idea”."
+      - id: chorus-3-5
+        start: 301.28
+        end: 303.34
+        text: "Write just enough code;"
+        marks: {"write": 301.28, "just": 301.76, "enough": 302.18, "code": 302.66}
+        visual: "Green: def peek(self): return self.elements[-1]."
+      - id: chorus-3-6
+        start: 303.36
+        end: 305.26
+        text: "get all the tests green."
+        marks: {"get": 303.36, "all": 303.82, "the": 304.16, "tests": 304.4, "green": 304.84}
+        visual: "pytest · 5 passed, all five tests ✓."
+      - id: chorus-3-7
+        start: 305.48
+        end: 307.42
+        text: "Same outward behavior,"
+        marks: {"same": 305.48, "outward": 305.92, "behavior": 306.46}
+        visual: "Refactor: a black box maps push(1); push(2); peek() → 2 and pop() → 2."
+      - id: chorus-3-8
+        start: 310.7
+        end: 312.36
+        text: "a cleaner routine."
+        marks: {"a": 310.7, "cleaner": 310.98, "routine": 311.42}
+        visual: "In peek, self.elements becomes self._items (“a private rename: tests still pass”); fireworks bloom as Test dips Code."
+  - id: outro
+    title: "Outro"
+    delivery: sung
+    narration: "The outro: a test file whose function names read like sentences, labeled living documentation, while your hero reads it at a laptop. Big type reads Test-driven development; Test takes Code's hand, and the numbers 1, 2, 3 light the red, green, and violet tiles as they waltz. The test list highlights the next step, and the title reads Let the tests lead as Test dips Code and both bow."
+    lines:
+      - id: outro-1
+        start: 314.08
+        end: 316.64
+        text: "Tests show tomorrow what we meant:"
+        marks: {"tests": 314.08, "show": 314.62, "tomorrow": 315.0, "what": 315.64, "we": 316.0, "meant": 316.2}
+        visual: "A test file titled “read me tomorrow” lists test names that read like sentences, as your hero reads it at a laptop."
+      - id: outro-2
+        start: 318.06
+        end: 320.72
+        text: "living examples of intent."
+        marks: {"living": 318.06, "examples": 319.1, "of": 319.76, "intent": 320.2}
+        visual: "A note: “living documentation”."
+      - id: outro-3
+        start: 322.1
+        end: 324.2
+        text: "Test-driven development—"
+        marks: {"test": 322.1, "driven": 322.64, "development": 323.1}
+        visual: "Big type: “Test-driven development”."
+      - id: outro-4
+        start: 324.56
+        end: 326.48
+        text: "Test takes Code’s hand."
+        marks: {"test": 324.56, "takes": 325.08, "codes": 325.44, "hand": 325.98}
+        visual: "Test takes Code’s hand on the dance floor."
+      - id: outro-5
+        start: 327.32
+        end: 328.99
+        text: "One, two, three…"
+        marks: {"one": 327.32, "two": 328.24, "three": 328.74}
+        visual: "Big numbers 1, 2, 3 light the red, green, and violet floor tiles as the dancers step across them."
+      - id: outro-6
+        start: 329.4
+        end: 332.26
+        text: "the next small step we’ve planned."
+        marks: {"the": 329.4, "next": 329.88, "small": 330.14, "step": 330.6, "weve": 331.16, "planned": 331.72}
+        visual: "A test list: two items done, and “push many, pop in order” highlighted as the next step."
+      - id: outro-7
+        start: 334.13
+        end: 336.6
+        text: "Let the tests lead."
+        marks: {"let": 334.13, "the": 334.8, "tests": 335.34, "lead": 335.58}
+        visual: "The title “Let the tests lead”; Test dips Code, they bow, and the credit reads “SE Book · Test-Driven Development”."

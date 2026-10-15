@@ -3,6 +3,15 @@ title: Test-Driven Development (TDD)
 layout: sebook
 ---
 
+<link rel="stylesheet" href="/css/song-video.css">
+<link rel="stylesheet" href="/css/print-light.css">
+
+**Start with the song.** *Red, Green, Refactor* is a six-minute music video in which Test leads and Code follows through the TDD cycle. It previews the three rules of TDD, why you watch a new test fail first, the red–green–refactor steps on a growing `MyStack`, arrange–act–assert, choosing test cases at boundaries and bad inputs, fast and repeatable tests, regression tests, and the test pyramid. Captions are on by default.
+
+Before you press play, predict: you write `def pop(self): return self.elements[-1]` and a test that only checks `assert stack.pop() == 3`. Does the test pass, and what bug can it miss?
+
+{% include song-video.html song=site.data.songs.red_green_refactor id="tdd-song" %}
+
 # Introduction
 
 The trajectory of software engineering history is marked by a tectonic shift from the rigid, sequential "Waterfall" models of the 1960s–1990s to the fluid, responsive Agile paradigm. In the traditional sequential era, projects moved through immutable stages: requirements were finalized, design was set in stone, and testing occurred only at the end of the lifecycle. This "Big Upfront" approach was not merely a choice but a defensive posture against the perceived high cost of change. However, as the 21st century dawned, a group of software "gurus" met at a ski resort in the Utah mountains to codify a new path forward. United by their frustration with delayed deliveries and late-stage failures, they produced the Agile Manifesto, transitioning the industry from a focus on follow-the-plan documentation to the emergence of software through iterative growth.

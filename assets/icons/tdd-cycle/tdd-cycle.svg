@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Red, green, refactor cycle">
+  <!-- Song emblem for "Red, Green, Refactor": the TDD cycle as three tiles
+       (red ✗, green ✓, violet ↻) joined by arrows. Original artwork for the SE Book. -->
+  <path d="M24 14 H38 M50 26 Q54 44 40 50 M24 50 Q10 44 14 26" fill="none" stroke="#e7e0ff" stroke-width="3" stroke-linecap="round"/>
+  <rect x="2" y="4" width="22" height="20" rx="5" fill="#e23a52"/>
+  <path d="M8 9 L18 19 M18 9 L8 19" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <rect x="40" y="4" width="22" height="20" rx="5" fill="#22b866"/>
+  <path d="M45 14 L49 18 L57 9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="21" y="40" width="22" height="20" rx="5" fill="#7c5ce6"/>
+  <path d="M37 47 A6 6 0 1 0 38 52 M37 43 V47 H33" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

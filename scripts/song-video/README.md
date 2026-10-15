@@ -127,6 +127,12 @@ WebVTT, `described-cut.js` builds the described cut from the `narration`s, and
 `_includes/song-video.html` prints every line with its `visual` as the
 on-page transcript.
 
+`beats` gives the beat grid (`bpm`, `first`) that pulses and dance steps
+follow. A take whose tempo drifts can also list `times`, every beat in
+seconds; `Timeline.beats` then follows that tempo map instead of the fixed
+grid. The TDD song's map comes from beats tracked on the percussion and
+smoothed over ±5 beats.
+
 Two optional fields let a song bring its own look. `theme` picks the stage
 backdrop from `SongKit.themes` (default `studio`, the aurora; `night-sky` is
 the starry sky of "Unbox the Stack"). `extras` lists the song's own
@@ -148,6 +154,16 @@ for the shebang, a padlock for execute permission, a decision diamond for
 cards that fill a toolbox in the command chant. Pieces that need a word's
 position measure it on the first visible frame, because the live player
 builds the scene before it shows the picture.
+
+"Red, Green, Refactor", the TDD song on `SEBook/testing/tdd.md`, uses the
+`ballroom` theme (`js/song-video/ballroom.js`) and three modules of its own:
+`tdd-dancers.js` draws Test and Code as one SVG rig whose keyed poses,
+waltz rise-and-fall on the beat grid, and two-bone IK for joined hands are
+all pure functions of song time; `tdd-kit.js` draws the notation (Python code
+cards with syntax colours, a pytest terminal, suites, the Red/Green/Refactor
+cycle, MyStack, the test pyramid); and `tdd-props.js` draws the pictures
+(floor tiles, mismatched gears that jam in an integration failure, a staff with
+repeat signs for regression tests, flaky-noise waves, a fence of tests).
 
 A section's `delivery` sets its captions: `sung` and `spoken` lines are one
 cue each, while `call` lines are quiz questions with an `answer` and

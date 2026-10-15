@@ -1,0 +1,1416 @@
+/*
+ * Teaching artwork for "Red, Green, Refactor" (js/song-video/tdd-kit.js).
+ * Like stage.css this styles the dark 960×540 stage, which keeps its artwork
+ * in both page themes; the player's print styles hide it. Every text colour
+ * clears 4.5:1 against its own panel, and every test state pairs colour
+ * with a glyph (✗ fail, ✓ pass, ~ flaky, ↻ refactor), so no state depends
+ * on colour alone (WCAG 1.4.1, 1.4.3).
+ */
+
+.stage {
+  --tdd-red: #ff6b7d;
+  --tdd-red-deep: #b4122c;
+  --tdd-green: #4ade80;
+  --tdd-green-deep: #0d7a3c;
+  --tdd-violet: #b69cff;
+  --tdd-panel: rgba(16, 13, 42, 0.94);
+  --tdd-panel-line: rgba(200, 180, 255, 0.26);
+}
+
+/* ------------------------------------------------------------------ */
+/* Glyphs and status chips                                             */
+/* ------------------------------------------------------------------ */
+
+.tdd-glyph,
+.tdd-chip-glyph,
+.tdd-tile-glyph,
+.tdd-term-glyph,
+.tdd-todo-check,
+.tdd-flag-glyph,
+.tdd-box-glyph,
+.tdd-pin-glyph,
+.tdd-runs-glyph {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tdd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 92px;
+  padding: 2px 9px 2px 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #c9c3e8;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.tdd-chip-glyph {
+  width: 18px;
+  height: 18px;
+}
+
+.tdd-chip[data-status='pass'] {
+  background: rgba(74, 222, 128, 0.16);
+  color: var(--tdd-green);
+}
+
+.tdd-chip[data-status='fail'] {
+  background: rgba(255, 107, 125, 0.18);
+  color: var(--tdd-red);
+}
+
+.tdd-chip[data-status='flaky'] {
+  background: rgba(255, 209, 0, 0.16);
+  color: var(--gold);
+}
+
+/* ------------------------------------------------------------------ */
+/* Code cards                                                          */
+/* ------------------------------------------------------------------ */
+
+.tdd-code {
+  --tdd-code-size: 16px;
+}
+
+.tdd-code-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tdd-code-title svg {
+  width: 15px;
+  height: 15px;
+}
+
+.tdd-code-body {
+  padding: 6px 0 8px;
+}
+
+/* 26px rows: 24px of text plus 1px padding above and below. */
+.tdd-code .tdd-code-line {
+  position: relative;
+  padding: 1px 14px;
+  font-size: var(--tdd-code-size);
+  line-height: 24px;
+}
+
+.tdd-code {
+  --tdd-line: #2c3550;
+  --tdd-fill-layer: linear-gradient(155deg, #172039, #080d1e 72%);
+}
+
+.tdd-code--red {
+  --tdd-line: #a94a62;
+  box-shadow: 0 0 0 1px rgba(255, 107, 125, 0.3), 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+.tdd-code--green {
+  --tdd-line: #308a59;
+  box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.28), 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+.tdd-code--violet {
+  --tdd-line: #7163a5;
+}
+
+.tdd-code-line--add,
+.tdd-code-line.is-add {
+  background: rgba(74, 222, 128, 0.14);
+}
+
+.tdd-code-line--del,
+.tdd-code-line.is-del {
+  background: rgba(255, 107, 125, 0.16);
+}
+
+.tdd-code-line--dim {
+  opacity: 0.55;
+}
+
+.tdd-code-line.is-focus {
+  background: rgba(255, 209, 0, 0.16);
+  box-shadow: inset 4px 0 0 var(--gold);
+}
+
+.tdd-code-line.is-bad {
+  background: rgba(255, 107, 125, 0.2);
+  box-shadow: inset 4px 0 0 var(--tdd-red);
+}
+
+.tdd-code-line.is-good {
+  background: rgba(74, 222, 128, 0.16);
+  box-shadow: inset 4px 0 0 var(--tdd-green);
+}
+
+.tdd-code-line.is-struck .tdd-code-text {
+  text-decoration: line-through;
+  text-decoration-color: var(--tdd-red);
+  text-decoration-thickness: 3px;
+  opacity: 0.6;
+}
+
+.tdd-tok--kw { color: #d2a8ff; }
+.tdd-tok--fn { color: #ffd166; }
+.tdd-tok--cls { color: #7ee787; }
+.tdd-tok--call { color: #79c0ff; }
+.tdd-tok--str { color: #ffab70; }
+.tdd-tok--num { color: #8fd0ff; }
+.tdd-tok--self { color: #ff9ac1; }
+.tdd-tok--deco { color: #ffab70; }
+
+.tdd-tok--cm {
+  color: #9aa7bd;
+  font-style: italic;
+}
+
+/* ------------------------------------------------------------------ */
+/* pytest terminal                                                     */
+/* ------------------------------------------------------------------ */
+
+.tdd-term {
+  position: absolute;
+  overflow: hidden;
+  border: 1px solid;
+  border-radius: 12px;
+  --tdd-line: #2c3550;
+  --tdd-fill: #05070f;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.tdd-term-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.tdd-term-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #4b5470;
+}
+
+.tdd-term-title {
+  margin-left: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tdd-term-run {
+  padding: 8px 14px 10px;
+}
+
+.tdd-term-cmd {
+  color: #f6f8ff;
+}
+
+.tdd-term-progress {
+  color: #c9d4ee;
+  white-space: pre;
+}
+
+.tdd-term-pdot--pass { color: var(--tdd-green); }
+
+.tdd-term-pdot--fail,
+.tdd-term-pdot--error {
+  color: var(--tdd-red);
+  font-weight: 700;
+}
+
+.tdd-term-error {
+  color: #ff8f9c;
+  white-space: pre;
+}
+
+.tdd-term-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.tdd-term-summary--fail {
+  background: rgba(255, 107, 125, 0.18);
+  color: #ff9aa6;
+}
+
+.tdd-term-summary--pass {
+  background: rgba(74, 222, 128, 0.16);
+  color: #86efac;
+}
+
+.tdd-term-glyph {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Suites, notes, headings, panels                                     */
+/* ------------------------------------------------------------------ */
+
+.tdd-suite,
+.tdd-panel {
+  position: absolute;
+  overflow: hidden;
+  border: 1px solid;
+  border-radius: 14px;
+  --tdd-line: #403861;
+  --tdd-fill: #0f0c28;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+.tdd-suite-title,
+.tdd-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tdd-suite-title svg,
+.tdd-panel-title svg {
+  width: 16px;
+  height: 16px;
+}
+
+.tdd-suite-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  font-family: var(--font-mono);
+  font-size: 15px;
+}
+
+.tdd-suite-name {
+  color: #f6f8ff;
+}
+
+.tdd-suite-note {
+  margin-left: auto;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tdd-panel-body {
+  padding: 10px 14px 12px;
+}
+
+.tdd-note {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px 5px;
+  border: 1.5px solid;
+  border-radius: 10px;
+  --tdd-line: currentColor;
+  --tdd-fill: #0b0920;
+  color: #f6f8ff;
+  font-size: 16px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.tdd-note svg {
+  width: 18px;
+  height: 18px;
+}
+
+.tdd-note--gold { color: var(--gold); }
+.tdd-note--red { color: var(--tdd-red); }
+.tdd-note--green { color: var(--tdd-green); }
+.tdd-note--violet { color: var(--tdd-violet); }
+.tdd-note--cyan { color: var(--cyan); }
+
+.tdd-heading {
+  position: absolute;
+  color: #f6f8ff;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+
+.tdd-heading--center {
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+
+.tdd-heading-mark--gold { color: var(--gold); }
+.tdd-heading-mark--red { color: var(--tdd-red); }
+.tdd-heading-mark--green { color: var(--tdd-green); }
+.tdd-heading-mark--violet { color: var(--tdd-violet); }
+.tdd-heading-mark--cyan { color: var(--cyan); }
+
+/* ------------------------------------------------------------------ */
+/* Speech bubbles                                                      */
+/* ------------------------------------------------------------------ */
+
+.tdd-bubble {
+  position: absolute;
+  padding: 10px 16px 11px;
+  border: 2px solid;
+  border-radius: 18px;
+  --tdd-line: var(--ink);
+  --tdd-fill: #fff8ec;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+}
+
+.tdd-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -13px;
+  width: 22px;
+  height: 22px;
+  border-right: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  background: var(--tdd-fill);
+}
+
+.tdd-bubble--left::after {
+  left: 26px;
+  transform: rotate(45deg) skew(12deg, 12deg);
+}
+
+.tdd-bubble--right::after {
+  right: 26px;
+  transform: rotate(45deg) skew(12deg, 12deg);
+}
+
+.tdd-bubble--test { --tdd-fill: #fff3d6; }
+.tdd-bubble--code { --tdd-fill: #efeaff; }
+.tdd-bubble--red { --tdd-fill: #ffe1e5; }
+.tdd-bubble--green { --tdd-fill: #ddfbe8; }
+
+.tdd-bubble-who {
+  margin-bottom: 2px;
+  color: #4a3d7a;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------ */
+/* The TDD cycle: three floor tiles                                    */
+/* ------------------------------------------------------------------ */
+
+.tdd-cycle {
+  position: absolute;
+  width: 420px;
+  height: 250px;
+  transform: scale(var(--tdd-cycle-scale, 1));
+  transform-origin: 0 0;
+}
+
+.tdd-cycle-arrows {
+  position: absolute;
+  inset: 0;
+  width: 420px;
+  height: 250px;
+  overflow: visible;
+}
+
+.tdd-cycle-arrow {
+  fill: none;
+  stroke: rgba(230, 222, 255, 0.55);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.tdd-cycle-head {
+  fill: rgba(230, 222, 255, 0.75);
+}
+
+.tdd-tile {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 168px;
+  height: 72px;
+  padding: 0 12px;
+  border: 2px solid;
+  border-radius: 16px;
+  --tdd-line: currentColor;
+  --tdd-fill: #0c0a20;
+  box-sizing: border-box;
+  opacity: 0.62;
+}
+
+.tdd-tile.is-lit {
+  opacity: 1;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12), 0 0 28px currentColor;
+}
+
+.tdd-tile--red { color: var(--tdd-red); }
+.tdd-tile--green { color: var(--tdd-green); }
+.tdd-tile--refactor { color: var(--tdd-violet); }
+
+.tdd-tile.is-lit.tdd-tile--red { --tdd-fill: #4a0f1d; }
+.tdd-tile.is-lit.tdd-tile--green { --tdd-fill: #0b3a22; }
+.tdd-tile.is-lit.tdd-tile--refactor { --tdd-fill: #2a1e5e; }
+
+.tdd-tile-glyph {
+  flex: none;
+  width: 34px;
+  height: 34px;
+}
+
+.tdd-tile-words {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.tdd-tile-words b {
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.tdd-tile-words span {
+  color: #ece8ff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tdd-cycle--compact .tdd-tile {
+  height: 60px;
+}
+
+/* ------------------------------------------------------------------ */
+/* MyStack                                                             */
+/* ------------------------------------------------------------------ */
+
+.tdd-stack {
+  position: absolute;
+  width: 92px;
+}
+
+.tdd-stack-glass {
+  position: absolute;
+  inset: 0 0 18px;
+  border: 3px solid;
+  border-top: none;
+  border-radius: 0 0 16px 16px;
+  --tdd-line: #9aa8ca;
+  --tdd-fill-layer: linear-gradient(90deg, #1f2244, #16163a 40%, #22264a);
+}
+
+.tdd-stack-label {
+  position: absolute;
+  left: -20px;
+  right: -20px;
+  bottom: -10px;
+  color: #cfd8f5;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.tdd-stack-caption {
+  position: absolute;
+  left: -40px;
+  right: -40px;
+  top: -34px;
+  color: var(--gold);
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.tdd-block {
+  position: absolute;
+  left: 9px;
+  width: 68px;
+  height: 40px;
+  border: 2px solid;
+  border-radius: 9px;
+  --tdd-line: #0b0f1a;
+  --tdd-fill-layer: linear-gradient(180deg, #ffe08a, #f2b84a);
+  color: #1b1640;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 38px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.tdd-block--cyan { --tdd-fill-layer: linear-gradient(180deg, #a5f3fc, #38bdd8); }
+.tdd-block--violet { --tdd-fill-layer: linear-gradient(180deg, #ddd6fe, #a78bfa); }
+
+.tdd-block--ghost {
+  border: 2px dashed var(--tdd-red);
+  background: rgba(255, 107, 125, 0.22);
+  color: #ffd1d7;
+}
+
+/* ------------------------------------------------------------------ */
+/* Ladybug                                                             */
+/* ------------------------------------------------------------------ */
+
+.tdd-bug {
+  position: absolute;
+}
+
+.tdd-bug svg {
+  display: block;
+  overflow: visible;
+}
+
+.tdd-bug-legs path,
+.tdd-bug-antenna {
+  fill: none;
+  stroke: #12081a;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.tdd-bug-head { fill: #12081a; }
+
+.tdd-bug-shell {
+  fill: #e5263f;
+  stroke: #12081a;
+  stroke-width: 2.4;
+}
+
+.tdd-bug-seam {
+  stroke: #12081a;
+  stroke-width: 2;
+}
+
+.tdd-bug-spot { fill: #12081a; }
+
+.tdd-bug-shine {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.7);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+/* ------------------------------------------------------------------ */
+/* Test list notepad                                                   */
+/* ------------------------------------------------------------------ */
+
+.tdd-todo {
+  position: absolute;
+  padding: 10px 14px 12px;
+  border-radius: 6px;
+  background: repeating-linear-gradient(180deg, #fffaf0 0 29px, #c9d6f2 29px 30px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5);
+  color: #1b1640;
+}
+
+.tdd-todo-title {
+  margin-bottom: 4px;
+  color: #b4122c;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tdd-todo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.tdd-todo-box {
+  display: inline-flex;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid;
+  border-radius: 4px;
+  --tdd-line: #4a3d7a;
+  --tdd-fill: #fffaf0;
+}
+
+.tdd-todo-check {
+  width: 18px;
+  height: 18px;
+  color: var(--tdd-green-deep);
+  opacity: 0;
+}
+
+.tdd-todo-row.is-done .tdd-todo-check { opacity: 1; }
+
+.tdd-todo-row.is-done .tdd-todo-text {
+  color: #5d5a78;
+  text-decoration: line-through;
+}
+
+.tdd-todo-row.is-focus {
+  background: rgba(255, 209, 0, 0.45);
+}
+
+/* ------------------------------------------------------------------ */
+/* Footsteps, hop, stop sign                                           */
+/* ------------------------------------------------------------------ */
+
+.tdd-steps,
+.tdd-hop {
+  position: absolute;
+  height: 70px;
+}
+
+.tdd-steps-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 33px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 214, 140, 0.25);
+}
+
+.tdd-print {
+  position: absolute;
+  color: #e9e4ff;
+}
+
+.tdd-print svg {
+  display: block;
+  fill: currentColor;
+}
+
+.tdd-print--alt svg { transform: scaleX(-1); }
+.tdd-print.is-failed { color: var(--tdd-red); }
+
+.tdd-print--big svg {
+  width: 40px;
+  height: 56px;
+}
+
+.tdd-print-flag {
+  position: absolute;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(74, 222, 128, 0.2);
+  color: var(--tdd-green);
+}
+
+.tdd-flag-glyph {
+  grid-area: 1 / 1;
+  width: 18px;
+  height: 18px;
+}
+
+.tdd-flag-glyph--fail { display: none; }
+.tdd-print-flag.is-failed { background: rgba(255, 107, 125, 0.25); color: var(--tdd-red); }
+.tdd-print-flag.is-failed .tdd-flag-glyph { display: none; }
+.tdd-print-flag.is-failed .tdd-flag-glyph--fail { display: block; }
+
+.tdd-hop svg {
+  display: block;
+  overflow: visible;
+}
+
+.tdd-hop-arc {
+  fill: none;
+  stroke: rgba(255, 209, 0, 0.75);
+  stroke-width: 4;
+  stroke-dasharray: 1;
+  stroke-linecap: round;
+}
+
+.tdd-stop {
+  position: absolute;
+}
+
+.tdd-stop svg { display: block; }
+
+.tdd-stop-post { fill: #8b93ad; }
+
+.tdd-stop-face {
+  fill: #d81f3a;
+  stroke: #ffffff;
+  stroke-width: 5;
+  stroke-linejoin: round;
+}
+
+.tdd-stop-text {
+  fill: #ffffff;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+/* ------------------------------------------------------------------ */
+/* Black box: same outward behavior                                    */
+/* ------------------------------------------------------------------ */
+
+.tdd-box {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tdd-box-io {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tdd-box-call {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1.5px solid;
+  border-radius: 8px;
+  --tdd-line: #60697f;
+  --tdd-fill: #0a0c1e;
+  color: #e8eeff;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.tdd-box-call--out {
+  --tdd-line: #308a59;
+}
+
+.tdd-box-glyph {
+  width: 16px;
+  height: 16px;
+  color: var(--tdd-green);
+}
+
+.tdd-box-core {
+  position: relative;
+  flex: none;
+  width: 150px;
+  height: 120px;
+  border: 3px solid;
+  border-radius: 14px;
+  --tdd-line: #e8eeff;
+  --tdd-fill-layer: linear-gradient(160deg, #1d1a40, #0a0920);
+}
+
+.tdd-box-label {
+  position: absolute;
+  top: -26px;
+  left: 0;
+  right: 0;
+  color: #f6f8ff;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.tdd-box-inside {
+  position: absolute;
+  inset: 14px 12px;
+  width: calc(100% - 24px);
+  height: calc(100% - 28px);
+}
+
+.tdd-box-messy path {
+  fill: none;
+  stroke: #ff9ac1;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.tdd-box-neat rect {
+  fill: #b69cff;
+  opacity: 0;
+}
+
+.tdd-box.is-tidy .tdd-box-messy { opacity: 0; }
+.tdd-box.is-tidy .tdd-box-neat rect { opacity: 0.9; }
+
+/* ------------------------------------------------------------------ */
+/* Test pyramid: test bricks on a mortar face, a cost axis, focus      */
+/* ------------------------------------------------------------------ */
+
+.tdd-pyr {
+  position: absolute;
+}
+
+.tdd-pyr-art {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.tdd-pyr-shadow {
+  fill: rgba(0, 0, 0, 0.45);
+}
+
+.tdd-pyr-ghost {
+  fill: rgba(200, 210, 255, 0.04);
+  stroke: rgba(220, 228, 255, 0.4);
+  stroke-width: 1.6;
+  stroke-dasharray: 6 6;
+  stroke-linejoin: round;
+}
+
+.tdd-pyr-ghost--side {
+  fill: rgba(200, 210, 255, 0.02);
+}
+
+/* Bricks: light faces; the mortar between them is the tier's dark colour. */
+.tdd-pyr-grad--brick-0 .tdd-stop--top { stop-color: #c4ecff; }
+.tdd-pyr-grad--brick-0 .tdd-stop--bottom { stop-color: #79c4ee; }
+.tdd-pyr-grad--side-0 .tdd-stop--top { stop-color: #2f86c0; }
+.tdd-pyr-grad--side-0 .tdd-stop--bottom { stop-color: #1d5f8f; }
+.tdd-pyr-grad--brick-1 .tdd-stop--top { stop-color: #b7c9ff; }
+.tdd-pyr-grad--brick-1 .tdd-stop--bottom { stop-color: #7493ee; }
+.tdd-pyr-grad--side-1 .tdd-stop--top { stop-color: #2b49b0; }
+.tdd-pyr-grad--side-1 .tdd-stop--bottom { stop-color: #1f3487; }
+.tdd-pyr-grad--brick-2 .tdd-stop--top { stop-color: #dacdff; }
+.tdd-pyr-grad--brick-2 .tdd-stop--bottom { stop-color: #9a7ef0; }
+.tdd-pyr-grad--side-2 .tdd-stop--top { stop-color: #4c30ad; }
+.tdd-pyr-grad--side-2 .tdd-stop--bottom { stop-color: #36218a; }
+
+.tdd-tier--0 .tdd-tier-mortar { fill: #17507a; }
+.tdd-tier--1 .tdd-tier-mortar { fill: #1b2d78; }
+.tdd-tier--2 .tdd-tier-mortar { fill: #2e1c78; }
+
+.tdd-tier-mortar,
+.tdd-tier-side {
+  stroke: #0b0f1a;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.tdd-brick-face {
+  stroke: rgba(11, 15, 26, 0.35);
+  stroke-width: 0.8;
+  stroke-linejoin: round;
+}
+
+.tdd-brick-shine {
+  stroke: rgba(255, 255, 255, 0.7);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+
+.tdd-brick-glyph path {
+  fill: none;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tdd-brick-glyph--unit path { stroke: #0b4f74; }
+.tdd-brick-glyph--link path { stroke: #1b2d78; }
+.tdd-brick-glyph--window path { stroke: #2e1c78; stroke-width: 1.8; }
+
+.tdd-tier-outline {
+  fill: none;
+  stroke: none;
+  stroke-linejoin: round;
+}
+
+.tdd-tier.is-lit .tdd-tier-outline {
+  stroke: var(--gold);
+  stroke-width: 3.5;
+}
+
+.tdd-tier-shine {
+  fill: rgba(255, 255, 255, 0.4);
+}
+
+/* While one tier is sung, the others step back under an opaque shade. */
+.tdd-tier-dim {
+  fill: #0a0820;
+  opacity: 0;
+}
+
+.tdd-pyr[data-focus] .tdd-tier:not(.is-lit) .tdd-tier-dim {
+  opacity: 0.55;
+}
+
+.tdd-pyr[data-focus] .tdd-tier-name:not(.is-lit) {
+  opacity: 0.62;
+}
+
+.tdd-tier-leader {
+  stroke-width: 1.6;
+  stroke-dasharray: 3 4;
+  stroke-linecap: round;
+}
+
+.tdd-tier-leader-dot {
+  stroke: none;
+}
+
+.tdd-tier-leader--0 { stroke: #a5e4ff; fill: #a5e4ff; }
+.tdd-tier-leader--1 { stroke: #9db8ff; fill: #9db8ff; }
+.tdd-tier-leader--2 { stroke: #c9b8ff; fill: #c9b8ff; }
+
+.tdd-tier.is-lit .tdd-tier-leader {
+  stroke: var(--gold);
+  stroke-dasharray: none;
+}
+
+.tdd-tier.is-lit .tdd-tier-leader-dot {
+  fill: var(--gold);
+}
+
+.tdd-tier-tag {
+  position: absolute;
+  display: flex;
+  height: 68px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.tdd-tier-name {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  text-align: right;
+  line-height: 1.15;
+}
+
+.tdd-tier-name b {
+  font-size: 19px;
+  font-weight: 900;
+}
+
+.tdd-tier-name--0 b { color: #a5e4ff; }
+.tdd-tier-name--1 b { color: #a9c1ff; }
+.tdd-tier-name--2 b { color: #cdbdff; }
+
+.tdd-tier-name span {
+  color: #e6ebff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.tdd-tier-name.is-lit b {
+  color: var(--gold);
+}
+
+/* The cost axis: one arrow from "faster · more" (base) to "slower · fewer" (top). */
+.tdd-pyr-axis-grad .tdd-stop--top { stop-color: #b69cff; }
+.tdd-pyr-axis-grad .tdd-stop--bottom { stop-color: #7fd3ff; }
+
+.tdd-pyr-axis-head--top { fill: #b69cff; }
+.tdd-pyr-axis-head--bottom { fill: #7fd3ff; }
+
+.tdd-pyr-axis-label {
+  position: absolute;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e6ebff;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Number line: boundaries                                             */
+/* ------------------------------------------------------------------ */
+
+.tdd-line {
+  position: absolute;
+  height: 90px;
+}
+
+.tdd-line-axis {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 60px;
+  height: 4px;
+  border-radius: 2px;
+  background: #cfd8f5;
+}
+
+.tdd-line-valid {
+  position: absolute;
+  height: 20px;
+  border-radius: 6px;
+  background: rgba(74, 222, 128, 0.22);
+  box-shadow: inset 0 0 0 2px rgba(74, 222, 128, 0.7);
+}
+
+.tdd-line-label {
+  position: absolute;
+  top: -26px;
+  left: 0;
+  right: 0;
+  color: var(--tdd-green);
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tdd-line-tick {
+  position: absolute;
+  top: -6px;
+  width: 2px;
+  height: 16px;
+  margin-left: -1px;
+  background: #cfd8f5;
+}
+
+.tdd-line-tick span {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #cfd8f5;
+  font-family: var(--font-mono);
+  font-size: 15px;
+}
+
+.tdd-line-tick--bound {
+  width: 4px;
+  height: 22px;
+  margin-left: -2px;
+  background: var(--gold);
+}
+
+.tdd-line-tick--bound span {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.tdd-pin {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: -15px;
+  width: 30px;
+}
+
+.tdd-pin-glyph {
+  width: 30px;
+  height: 30px;
+  padding: 3px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.tdd-pin--accept { color: var(--tdd-green); }
+.tdd-pin--reject { color: var(--tdd-red); }
+.tdd-pin--accept .tdd-pin-glyph { background: rgba(74, 222, 128, 0.2); }
+.tdd-pin--reject .tdd-pin-glyph { background: rgba(255, 107, 125, 0.22); }
+
+.tdd-pin-stem {
+  width: 2px;
+  height: 26px;
+  background: currentColor;
+}
+
+/* ------------------------------------------------------------------ */
+/* CI badge, stopwatch, run timeline                                   */
+/* ------------------------------------------------------------------ */
+
+.tdd-ci {
+  position: absolute;
+  display: inline-flex;
+  overflow: hidden;
+  border-radius: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+
+.tdd-ci-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #3b4252;
+  color: #ffffff;
+}
+
+.tdd-ci-left svg {
+  width: 18px;
+  height: 18px;
+}
+
+.tdd-ci-right {
+  padding: 6px 12px;
+  background: #1f8a4c;
+  color: #ffffff;
+}
+
+.tdd-ci[data-status='fail'] .tdd-ci-right {
+  background: #b4122c;
+}
+
+.tdd-watch {
+  position: absolute;
+  width: 80px;
+}
+
+.tdd-watch svg { display: block; }
+
+.tdd-watch-crown { fill: #c9a24a; }
+
+.tdd-watch-face {
+  fill: #f6f8ff;
+  stroke: #c9a24a;
+  stroke-width: 5;
+}
+
+.tdd-watch-tick {
+  stroke: #1b1640;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.tdd-watch-hand {
+  stroke: #b4122c;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.tdd-watch-label {
+  margin-top: 4px;
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.tdd-runs {
+  position: absolute;
+  height: 64px;
+}
+
+.tdd-runs-label {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tdd-runs-lane {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(207, 216, 245, 0.45);
+}
+
+.tdd-runs-tick {
+  position: absolute;
+  top: -13px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  margin-left: -15px;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.tdd-runs-tick--pass { background: #0b3a22; color: var(--tdd-green); }
+.tdd-runs-tick--fail { background: #4a0f1d; color: var(--tdd-red); }
+.tdd-runs-tick--flaky { background: #3d3200; color: var(--gold); }
+
+.tdd-runs-glyph {
+  width: 20px;
+  height: 20px;
+}
+
+.tdd-runs-end {
+  position: absolute;
+  top: -30px;
+  color: var(--gold);
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.tdd-runs-tick-label {
+  position: absolute;
+  top: 34px;
+  left: 50%;
+  color: #dfe6ff;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+/* Kinetic words in the TDD phase colours (the base kit has gold, cyan, pink, green). */
+.kinetic-word--red { color: var(--tdd-red); }
+.kinetic-word--violet { color: var(--tdd-violet); }
+
+/* ------------------------------------------------------------------ */
+/* Scene pieces: interface chips, batches, rules, quotes, counts       */
+/* ------------------------------------------------------------------ */
+
+.tdd-code--dim {
+  border-style: dashed;
+}
+
+.tdd-code--dim .tdd-code-body {
+  opacity: 0.6;
+}
+
+.tdd-method {
+  margin: 6px 0;
+  padding: 6px 10px;
+  border: 1.5px solid;
+  border-radius: 8px;
+  --tdd-line: #4490a6;
+  --tdd-fill: #0a2131;
+  color: #cffafe;
+  font-family: var(--font-mono);
+  font-size: 15px;
+}
+
+.tdd-method--hidden {
+  border-style: dashed;
+  border-color: rgba(200, 200, 230, 0.45);
+  background: transparent;
+  color: #c9c3e8;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.tdd-batch {
+  position: absolute;
+  width: 260px;
+  height: 240px;
+}
+
+.tdd-batch-card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 8px 14px;
+  border: 2px solid;
+  border-radius: 10px;
+  --tdd-line: #3b2f73;
+  --tdd-fill: #efeaff;
+  color: #1b1640;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+}
+
+.tdd-batch-card:nth-child(2) { translate: 14px 30px; rotate: -3deg; }
+.tdd-batch-card:nth-child(3) { translate: 28px 60px; rotate: 0deg; }
+.tdd-batch-card:nth-child(4) { translate: 42px 90px; rotate: 3deg; }
+.tdd-batch-card:nth-child(5) { translate: 56px 120px; rotate: 6deg; }
+.tdd-batch-card:nth-child(1) { rotate: -6deg; }
+
+.tdd-rule {
+  padding: 6px 2px;
+  color: #f6f8ff;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.tdd-quote {
+  color: #f6f8ff;
+  font-size: 17px;
+  font-style: italic;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.tdd-count {
+  position: absolute;
+  width: 44px;
+  color: currentColor;
+  font-size: 72px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+}
+
+.tdd-count--red { color: var(--tdd-red); }
+.tdd-count--green { color: var(--tdd-green); }
+.tdd-count--refactor { color: var(--tdd-violet); }
+
+/* ------------------------------------------------------------------ */
+/* Seam-free frames                                                    */
+/* ------------------------------------------------------------------ */
+
+/* Firefox's WebRender paints a rounded CSS border as separate corner and
+   edge tiles, and a scaled stage can show the joins as thin L-shaped lines
+   inside each corner (Mozilla bug 2076078). These frames keep their border
+   width for layout but make it transparent, and paint the visible edge as a
+   border-box background layer under the padding-box fill: one rounded
+   shape, with no tiles to seam, in every engine. Components set --tdd-line
+   (the edge) and --tdd-fill or --tdd-fill-layer (an opaque fill; a
+   translucent fill would let the edge layer show through). */
+
+.stage :is(.tdd-code, .tdd-term, .tdd-suite, .tdd-panel, .tdd-note, .tdd-bubble, .tdd-tile,
+  .tdd-stack-glass, .tdd-todo-box, .tdd-box-call, .tdd-box-core, .tdd-method, .tdd-batch-card, .tdd-block) {
+  border-color: transparent;
+  background:
+    var(--tdd-fill-layer, linear-gradient(var(--tdd-fill), var(--tdd-fill))) padding-box,
+    linear-gradient(var(--tdd-line), var(--tdd-line)) border-box;
+}
+
+/* Dashed edges keep a real border: their gaps already hide the joins. */
+.stage .tdd-method--hidden {
+  border-color: rgba(200, 200, 230, 0.45);
+  background: transparent;
+}
+
+.stage .tdd-block--ghost {
+  border-color: var(--tdd-red);
+  background: rgba(255, 107, 125, 0.22);
+}

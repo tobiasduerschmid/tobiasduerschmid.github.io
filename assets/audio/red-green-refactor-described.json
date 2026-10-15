@@ -1,0 +1,105 @@
+{
+  "fps": 30,
+  "frameCount": 23461,
+  "duration": 782.0333333333333,
+  "holds": [
+    {
+      "section": "intro",
+      "outputStart": 0,
+      "outputEnd": 40.03333333333333,
+      "songTime": 0,
+      "pictureTime": 9.066666666666666
+    },
+    {
+      "section": "verse-1",
+      "outputStart": 68.46666666666667,
+      "outputEnd": 112.6,
+      "songTime": 28.433333333333334,
+      "pictureTime": 29.1
+    },
+    {
+      "section": "verse-2",
+      "outputStart": 144.66666666666666,
+      "outputEnd": 173.03333333333333,
+      "songTime": 60.5,
+      "pictureTime": 61.166666666666664
+    },
+    {
+      "section": "chorus-1",
+      "outputStart": 200.16666666666666,
+      "outputEnd": 239.56666666666666,
+      "songTime": 87.63333333333334,
+      "pictureTime": 88.3
+    },
+    {
+      "section": "verse-3",
+      "outputStart": 258.8666666666667,
+      "outputEnd": 286.6333333333333,
+      "songTime": 106.93333333333334,
+      "pictureTime": 107.6
+    },
+    {
+      "section": "verse-4",
+      "outputStart": 303.3666666666667,
+      "outputEnd": 338.26666666666665,
+      "songTime": 123.66666666666667,
+      "pictureTime": 124.33333333333333
+    },
+    {
+      "section": "chorus-2",
+      "outputStart": 366.8333333333333,
+      "outputEnd": 378.8333333333333,
+      "songTime": 152.23333333333332,
+      "pictureTime": 152.9
+    },
+    {
+      "section": "verse-5",
+      "outputStart": 395.53333333333336,
+      "outputEnd": 429.3666666666667,
+      "songTime": 168.93333333333334,
+      "pictureTime": 169.6
+    },
+    {
+      "section": "verse-6",
+      "outputStart": 456.2,
+      "outputEnd": 483.7,
+      "songTime": 195.76666666666668,
+      "pictureTime": 196.43333333333334
+    },
+    {
+      "section": "verse-7",
+      "outputStart": 500,
+      "outputEnd": 529.9333333333333,
+      "songTime": 212.06666666666666,
+      "pictureTime": 212.73333333333332
+    },
+    {
+      "section": "verse-8",
+      "outputStart": 546.2333333333333,
+      "outputEnd": 569.4333333333333,
+      "songTime": 228.36666666666667,
+      "pictureTime": 229.06666666666666
+    },
+    {
+      "section": "bridge",
+      "outputStart": 586.4,
+      "outputEnd": 645.8,
+      "songTime": 245.33333333333334,
+      "pictureTime": 246
+    },
+    {
+      "section": "chorus-3",
+      "outputStart": 693.7,
+      "outputEnd": 706.9666666666667,
+      "songTime": 293.23333333333335,
+      "pictureTime": 293.9
+    },
+    {
+      "section": "outro",
+      "outputStart": 727.7333333333333,
+      "outputEnd": 749.6333333333333,
+      "songTime": 314,
+      "pictureTime": 314.6666666666667
+    }
+  ]
+}

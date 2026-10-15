@@ -1,0 +1,581 @@
+/*
+ * Illustrated props for "Red, Green, Refactor" (js/song-video/tdd-props.js).
+ * Like stage.css this styles the dark 960×540 stage, which keeps its artwork
+ * in both page themes; the player's print styles hide it. States pair colour
+ * with a glyph (✗ / ✓ / ↻), and the flaky noise changes slowly in small
+ * chips, well under three flashes per second (WCAG 1.4.1, 2.3.1).
+ */
+
+/* ------------------------------------------------------------------ */
+/* Floor tiles                                                         */
+/* ------------------------------------------------------------------ */
+
+.tdd-floor {
+  position: absolute;
+  inset: 0;
+}
+
+.tdd-floor-tile {
+  position: absolute;
+  height: 32px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.2));
+  opacity: 0.55;
+}
+
+.tdd-floor-tile.is-lit {
+  opacity: 1;
+  background: radial-gradient(ellipse at 50% 50%, currentColor, transparent 75%);
+  box-shadow: 0 0 26px currentColor;
+}
+
+.tdd-floor-tile--red { color: #ff6b7d; }
+.tdd-floor-tile--green { color: #4ade80; }
+.tdd-floor-tile--refactor { color: #b69cff; }
+
+.tdd-floor-glyph {
+  position: absolute;
+  left: 10px;
+  top: 7px;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ------------------------------------------------------------------ */
+/* Gears: two parts that each turn alone but jam together              */
+/* ------------------------------------------------------------------ */
+
+.tdd-gears {
+  position: absolute;
+}
+
+.tdd-gears svg {
+  display: block;
+  overflow: visible;
+}
+
+.tdd-gear-grad--brass .tdd-stop--top { stop-color: #ffe39a; }
+.tdd-gear-grad--brass .tdd-stop--bottom { stop-color: #c08a2a; }
+.tdd-gear-grad--steel .tdd-stop--top { stop-color: #d6e6ff; }
+.tdd-gear-grad--steel .tdd-stop--bottom { stop-color: #6e8cc0; }
+
+.tdd-gear-teeth {
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+}
+
+.tdd-gear--brass .tdd-gear-teeth { stroke: #6b4e14; }
+.tdd-gear--steel .tdd-gear-teeth { stroke: #233a63; }
+
+.tdd-gear-rim {
+  fill: none;
+  stroke-width: 3;
+  opacity: 0.55;
+}
+
+.tdd-gear--brass .tdd-gear-rim { stroke: #8a6416; }
+.tdd-gear--steel .tdd-gear-rim { stroke: #33507f; }
+
+.tdd-gear-hole {
+  fill: #120e2a;
+  stroke-width: 1.6;
+}
+
+.tdd-gear--brass .tdd-gear-hole { stroke: #8a6416; }
+.tdd-gear--steel .tdd-gear-hole { stroke: #33507f; }
+
+.tdd-gear-hub {
+  stroke-width: 2;
+}
+
+.tdd-gear--brass .tdd-gear-hub { fill: #f2c14e; stroke: #6b4e14; }
+.tdd-gear--steel .tdd-gear-hub { fill: #a9c1ff; stroke: #233a63; }
+
+.tdd-gear-axle {
+  fill: #120e2a;
+}
+
+.tdd-gear-label {
+  position: absolute;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #f6f8ff;
+  text-align: center;
+}
+
+.tdd-gear-label b {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.tdd-gear-chip,
+.tdd-gear-verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px 3px 6px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.tdd-gear-chip {
+  background: rgba(74, 222, 128, 0.16);
+  color: #4ade80;
+}
+
+.tdd-gear-verdict {
+  position: absolute;
+  --tdd-line: #ff6b7d;
+  --tdd-fill: #4a0f1d;
+  color: #ff8f9c;
+  border: 2px solid;
+  font-size: 17px;
+}
+
+.tdd-gear-glyph {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tdd-gear-spark line {
+  stroke: #ffd166;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.tdd-gear-turn-arc {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.tdd-gear-turn-head {
+  fill: var(--gold);
+}
+
+/* ------------------------------------------------------------------ */
+/* Staff with repeat signs                                             */
+/* ------------------------------------------------------------------ */
+
+.tdd-staff {
+  position: absolute;
+  height: 104px;
+  padding: 10px 0;
+  border-radius: 12px;
+  background: #fbf6e9;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5);
+}
+
+.tdd-staff svg {
+  display: block;
+}
+
+.tdd-staff-line {
+  stroke: #3f3a5a;
+  stroke-width: 1.4;
+}
+
+.tdd-staff-line--bar {
+  stroke-width: 2;
+}
+
+.tdd-staff-bar { fill: #1b1640; }
+.tdd-staff-dot { fill: #1b1640; }
+.tdd-staff-note { fill: #1b1640; }
+
+.tdd-staff-stem {
+  stroke: #1b1640;
+  stroke-width: 1.6;
+}
+
+.tdd-staff-head {
+  fill: rgba(180, 18, 44, 0.75);
+}
+
+.tdd-staff-label {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #0d5c2e;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tdd-staff-glyph {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ------------------------------------------------------------------ */
+/* Flaky noise and waves                                               */
+/* ------------------------------------------------------------------ */
+
+.tdd-noise {
+  position: absolute;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+.tdd-noise-waves {
+  position: absolute;
+  inset: 0;
+}
+
+.tdd-wave--0 { fill: rgba(56, 120, 200, 0.55); }
+.tdd-wave--1 { fill: rgba(30, 70, 150, 0.75); }
+
+.tdd-noise-warning {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 180px;
+  padding: 8px 12px;
+  border: 3px solid;
+  border-radius: 12px;
+  --tdd-line: #ff6b7d;
+  --tdd-fill: #2a0a14;
+  color: #ffb3bd;
+  font-size: 18px;
+  font-weight: 900;
+  box-sizing: border-box;
+}
+
+.tdd-noise-glyph {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.tdd-noise-chip {
+  position: absolute;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 50%;
+  background: #0b3a22;
+  color: #4ade80;
+}
+
+.tdd-noise-chip[data-status='fail'] {
+  background: #4a0f1d;
+  color: #ff6b7d;
+}
+
+.tdd-noise-chip-glyph {
+  grid-area: 1 / 1;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tdd-noise-chip[data-status='fail'] .tdd-noise-chip-glyph--pass,
+.tdd-noise-chip[data-status='pass'] .tdd-noise-chip-glyph--fail {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Fence of tests                                                      */
+/* ------------------------------------------------------------------ */
+
+.tdd-fence {
+  position: absolute;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 150px;
+}
+
+.tdd-fence-rail {
+  position: absolute;
+  left: -10px;
+  right: -10px;
+  top: 64px;
+  height: 10px;
+  border-radius: 4px;
+  background: #8b6a3e;
+}
+
+.tdd-picket {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 46px;
+  height: 140px;
+  padding-bottom: 8px;
+  border: 2px solid;
+  border-radius: 23px 23px 4px 4px;
+  --tdd-line: #3b2a16;
+  --tdd-fill-layer: linear-gradient(180deg, #f5e3c4, #d9b98a);
+  color: #3b2a16;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  box-sizing: border-box;
+}
+
+.tdd-picket--new {
+  --tdd-line: #0d7a3c;
+  --tdd-fill-layer: linear-gradient(180deg, #d6ffe5, #86efac);
+  color: #0b3a22;
+}
+
+/* ------------------------------------------------------------------ */
+/* Parking lot                                                         */
+/* ------------------------------------------------------------------ */
+
+.tdd-parking {
+  position: absolute;
+  padding: 10px 12px 12px;
+  border: 2px dashed rgba(200, 220, 255, 0.5);
+  border-radius: 14px;
+  background: rgba(14, 20, 44, 0.9);
+}
+
+.tdd-parking-sign {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: #dbe6ff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.tdd-parking-sign b {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.tdd-parking-lot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tdd-parking-car {
+  padding: 5px 10px;
+  border: 2px solid;
+  border-radius: 8px;
+  --tdd-line: #94a3b8;
+  --tdd-fill: #1e293b;
+  color: #e2e8f0;
+  font-family: var(--font-mono);
+  font-size: 15px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Browser                                                             */
+/* ------------------------------------------------------------------ */
+
+.tdd-browser {
+  position: absolute;
+  overflow: hidden;
+  border: 1px solid;
+  border-radius: 12px;
+  --tdd-line: #3a4566;
+  --tdd-fill: #f8fafc;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+.tdd-browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  background: #1e293b;
+}
+
+.tdd-browser-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #64748b;
+}
+
+.tdd-browser-url {
+  margin-left: 8px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #cbd5e1;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.tdd-browser-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+}
+
+.tdd-browser-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 92px;
+  padding: 8px 4px;
+  border: 2px solid;
+  border-radius: 10px;
+  --tdd-line: #334155;
+  --tdd-fill: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.tdd-browser-step svg {
+  width: 26px;
+  height: 26px;
+  color: #2563eb;
+}
+
+.tdd-browser-arrow svg {
+  width: 20px;
+  height: 20px;
+  color: #334155;
+}
+
+/* ------------------------------------------------------------------ */
+/* Moon, rocket, tower                                                 */
+/* ------------------------------------------------------------------ */
+
+.tdd-moon {
+  position: absolute;
+  width: 300px;
+}
+
+.tdd-moon svg {
+  display: block;
+  overflow: visible;
+}
+
+.tdd-moon-disc { fill: #e5e7eb; stroke: #9ca3af; stroke-width: 3; }
+.tdd-moon-crater { fill: #c4c8d0; }
+
+.tdd-tower-floor rect {
+  fill: #475569;
+  stroke: #1e293b;
+  stroke-width: 2;
+}
+
+.tdd-tower-floor .tdd-tower-window {
+  fill: #fde68a;
+  stroke: none;
+}
+
+.tdd-rocket-body { fill: #f8fafc; stroke: #1e293b; stroke-width: 2.5; }
+.tdd-rocket-window { fill: #38bdf8; stroke: #1e293b; stroke-width: 2.5; }
+.tdd-rocket-fin { fill: #ef4444; stroke: #1e293b; stroke-width: 2; }
+.tdd-rocket-flame { fill: #fbbf24; }
+
+/* ------------------------------------------------------------------ */
+/* Lamp beam                                                           */
+/* ------------------------------------------------------------------ */
+
+.tdd-beam-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.tdd-beam {
+  position: absolute;
+  background: linear-gradient(110deg, rgba(255, 238, 190, 0.34), rgba(255, 238, 190, 0.08) 80%, transparent);
+  clip-path: polygon(0 0, 100% 30%, 100% 100%, 10% 100%, 0 6%);
+}
+
+.tdd-beam-eyes {
+  position: absolute;
+  display: flex;
+  gap: 8px;
+}
+
+.tdd-beam-eyes span {
+  width: 9px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fde047;
+  box-shadow: 0 0 8px rgba(253, 224, 71, 0.6);
+}
+
+/* ------------------------------------------------------------------ */
+/* Seam-free frames                                                    */
+/* ------------------------------------------------------------------ */
+
+/* Firefox's WebRender paints a rounded CSS border as separate corner and
+   edge tiles, and a scaled stage can show the joins as thin L-shaped lines
+   inside each corner (Mozilla bug 2076078). These frames keep their border
+   width for layout but make it transparent, and paint the visible edge as a
+   border-box background layer under the padding-box fill: one rounded
+   shape, with no tiles to seam, in every engine. Components set --tdd-line
+   (the edge) and --tdd-fill or --tdd-fill-layer (an opaque fill; a
+   translucent fill would let the edge layer show through). */
+
+.stage :is(.tdd-browser, .tdd-browser-step, .tdd-picket, .tdd-parking-car, .tdd-noise-warning, .tdd-gear-verdict) {
+  border-color: transparent;
+  background:
+    var(--tdd-fill-layer, linear-gradient(var(--tdd-fill), var(--tdd-fill))) padding-box,
+    linear-gradient(var(--tdd-line), var(--tdd-line)) border-box;
+}
+
+/* The floor tiles' fill is translucent, so their ring is a masked layer:
+   the pseudo-element's background minus its content box. */
+.tdd-floor-tile::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  padding: 2px;
+  border-radius: inherit;
+  background: currentColor;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}

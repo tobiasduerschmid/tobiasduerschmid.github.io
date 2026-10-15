@@ -125,22 +125,57 @@
   // Beat grid
   // ------------------------------------------------------------------
 
+  /**
+   * A fixed grid (bpm, first) or, when the storyboard lists `times` (every
+   * beat of a take whose tempo drifts), a tempo map; outside the map it
+   * continues at its edge tempo.
+   */
   const beats = {
     period: 60 / 95,
     first: 0,
-    configure({ bpm, first }) {
+    times: null,
+    configure({ bpm, first, times }) {
       this.period = 60 / bpm;
       this.first = first;
+      this.times = Array.isArray(times) && times.length > 1 ? times : null;
+    },
+    /** Time of beat i. */
+    time(i) {
+      const map = this.times;
+      if (!map) return this.first + i * this.period;
+      if (i < 0) return map[0] + i * (map[1] - map[0]);
+      const last = map.length - 1;
+      if (i > last) return map[last] + (i - last) * (map[last] - map[last - 1]);
+      return map[i];
     },
     /** Index of the last beat at or before t (−1 before the first beat). */
     index(t) {
-      return Math.floor((t - this.first) / this.period + 1e-9);
+      const map = this.times;
+      if (!map) return Math.floor((t - this.first) / this.period + 1e-9);
+      if (t < map[0]) return -1;
+      const last = map.length - 1;
+      if (t >= map[last]) return last + Math.floor((t - map[last]) / (map[last] - map[last - 1]) + 1e-9);
+      let lo = 0;
+      let hi = last;
+      while (hi - lo > 1) {
+        const mid = (lo + hi) >> 1;
+        if (map[mid] <= t + 1e-9) lo = mid;
+        else hi = mid;
+      }
+      return lo;
+    },
+    /** Where t falls in its beat: { index, phase in [0, 1), period }. */
+    at(t) {
+      const index = this.index(t);
+      const begin = this.time(index);
+      const period = this.time(index + 1) - begin;
+      return { index, phase: Math.min(0.999999, Math.max(0, (t - begin) / period)), period };
     },
     /** 1 on a beat, decaying exponentially until the next one. */
     pulse(t, decay = 0.11) {
       const i = this.index(t);
       if (i < 0) return 0;
-      return Math.exp(-(t - (this.first + i * this.period)) / decay);
+      return Math.exp(-(t - this.time(i)) / decay);
     },
   };
 
