@@ -64,7 +64,7 @@
 
 .tdd-arm--code .tdd-arm-sleeve,
 .tdd-arm--code .tdd-arm-fore {
-  fill: #e7e0ff;
+  fill: var(--tdd-code-skin, #e7e0ff);
   stroke: #8e82c4;
   stroke-width: 1;
 }
@@ -292,8 +292,8 @@
 
 .tdd-gown-grad .tdd-stop--top { stop-color: #1d6f86; }
 .tdd-gown-grad .tdd-stop--bottom { stop-color: #3a2b8e; }
-.tdd-page-grad .tdd-stop--top { stop-color: #fbf9ff; }
-.tdd-page-grad .tdd-stop--bottom { stop-color: #ddd5fb; }
+.tdd-page-grad .tdd-stop--top { stop-color: var(--tdd-code-skin, #fbf9ff); }
+.tdd-page-grad .tdd-stop--bottom { stop-color: var(--tdd-code-skin, #ddd5fb); }
 
 /* The refactoring spotlight on Code's gown: a cone of light from above, a
    violet glow behind the gown, a bright band sweeping down the code lines
@@ -351,20 +351,20 @@
 }
 
 .tdd-paper {
-  fill: #e7e0ff;
+  fill: var(--tdd-code-skin, #e7e0ff);
   stroke: #8e82c4;
   stroke-width: 0.8;
 }
 
 .tdd-page {
-  stroke: #3b2f73;
+  stroke: var(--tdd-code-ink, #3b2f73);
   stroke-width: 1.6;
   stroke-linejoin: round;
 }
 
 .tdd-page-fold {
-  fill: #c9bff0;
-  stroke: #3b2f73;
+  fill: var(--tdd-code-skin, #c9bff0);
+  stroke: var(--tdd-code-ink, #3b2f73);
   stroke-width: 1.4;
   stroke-linejoin: round;
 }
@@ -399,3 +399,11 @@
 .tdd-code-bar--op { fill: #f9a8d4; }
 .tdd-code-bar--lit { fill: #fcd34d; }
 .tdd-code-bar--cm { fill: #86efac; opacity: 0.8; }
+
+/* Only Code inherits the optional human palette. Costume gloves stay white;
+   light facial ink keeps deep complexions readable without recoloring Test. */
+.tdd-dancer--code .tdd-eye { fill: var(--tdd-code-ink, #1b1640); }
+.tdd-dancer--code .tdd-eye-glint { fill: var(--tdd-code-glint, #ffffff); }
+.tdd-dancer--code .tdd-lash,
+.tdd-dancer--code .tdd-brow,
+.tdd-dancer--code .tdd-mouth { stroke: var(--tdd-code-ink, #1b1640); }

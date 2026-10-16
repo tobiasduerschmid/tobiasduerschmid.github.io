@@ -197,14 +197,29 @@
       rightArm.setAttribute('transform', `rotate(${-typing * 0.8} 180 160)`);
     }
 
+    // Share one validated, read-only snapshot with other characters in this scene.
+    // Export stages omit these URLs and never read personal browser data.
+    const { avatarScript, avatarTemplate } = stage.dataset;
+    const savedAvatar = avatarScript && avatarTemplate
+      ? loadRenderer(avatarScript, avatarTemplate)
+        .then((avatar) => avatar ? { avatar, saved: avatar.loadAvatar() } : null)
+        .catch(() => null)
+      : Promise.resolve(null);
+    const savedAppearance = savedAvatar.then((result) => {
+      if (!result || !result.saved) return null;
+      const { avatar, saved } = result;
+      const skin = saved.appearance.skin;
+      const darkInk = '#1b1640';
+      const lightInk = '#ffffff';
+      const ink = avatar.contrastRatio(skin, darkInk) >= avatar.contrastRatio(skin, lightInk) ? darkInk : lightInk;
+      return { kind: saved.kind, skin, ink, glint: ink === darkInk ? lightInk : darkInk };
+    });
+
     async function hydrate() {
-      // Export stages omit these URLs: they render without personal browser data.
-      const { avatarScript, avatarTemplate } = stage.dataset;
-      if (!avatarScript || !avatarTemplate) return;
       try {
-        const avatar = await loadRenderer(avatarScript, avatarTemplate);
-        if (disposed || !avatar) return;
-        const saved = avatar.loadAvatar();
+        const result = await savedAvatar;
+        if (disposed || !result) return;
+        const { avatar, saved } = result;
         sourceHost = document.createElement('div');
         sourceHost.className = 'song-student-source';
         sourceHost.setAttribute('aria-hidden', 'true');
@@ -233,7 +248,7 @@
     });
     // Promise work is deliberately detached from SongScene.build/playback.
     void hydrate();
-    return { appear: (cue) => cameos.push(cue) };
+    return { appear: (cue) => cameos.push(cue), savedAppearance };
   }
 
   root.SongStudentAvatar = { create };
