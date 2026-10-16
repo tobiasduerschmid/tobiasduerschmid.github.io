@@ -240,25 +240,12 @@
       + ` A${f(a)} ${f(a)} 0 0 0 ${f(-a)} 0 Z`;
   }
 
-  /** A cartoon glove pointing along +y from the wrist, thumb toward the body. */
-  function glove(parent, side, size) {
-    const mirror = side === 'R' ? -1 : 1;
-    const g = svg('g', { class: 'tdd-glove-hand', transform: `scale(${mirror * size} ${size})` }, parent);
-    // One continuous silhouette keeps the thumb attached to the palm.
-    // Mirroring the entire hand preserves handedness through every arm pose.
-    svg('path', { class: 'tdd-glove', d: 'M-4.8 0.4 C-6.8 4 -6.9 10.8 -2.5 13 C0.6 14.4 4.8 12.8 6 8.8 L7.2 6.6 C8.1 5.5 7.8 3.8 6.7 4.4 L5.5 5.4 Q5.4 1.8 4.6 0.4 Z' }, g);
+  /** A simple rounded glove without a projecting thumb. */
+  function glove(parent, size) {
+    const g = svg('g', { class: 'tdd-glove-hand', transform: `scale(${size})` }, parent);
+    svg('path', { class: 'tdd-glove', d: 'M-4.8 0.4 C-6.8 4 -6.9 10.8 -2.5 13 C0.6 14.4 4.8 12.8 6 8.8 C6.8 5.8 5.8 2.4 4.6 0.4 Z' }, g);
     svg('path', { class: 'tdd-glove-line', d: 'M-1.8 8.4 L-1.4 11.8 M1.4 8.6 L1.8 12' }, g);
     svg('rect', { class: 'tdd-glove-cuff', x: -5.6, y: -2.4, width: 11.2, height: 3.8, rx: 1.9 }, g);
-    return {
-      turn(angle) {
-        // A relaxed hanging palm faces inward. As the hand rises, the
-        // forearm rolls so the thumb leads upward, not down at the floor.
-        // Passing through an edge-on palm makes this a turn, not a flip.
-        const elevation = Math.abs(((angle + 180) % 360 + 360) % 360 - 180);
-        const roll = clamp((elevation - 45) / 45, 0, 1);
-        g.setAttribute('transform', `scale(${f(mirror * size * Math.cos(Math.PI * roll))} ${size})`);
-      },
-    };
   }
 
   /** Limb widths: [shoulder, elbow] for the upper arm, [elbow, wrist] below. */
@@ -276,19 +263,18 @@
     svg('path', { class: 'tdd-arm-fore', d: segmentPath(body.fore, ...foreW) }, foreArm);
     if (kind === 'test') svg('rect', { class: 'tdd-cuff', x: -5.6, y: body.fore - 6, width: 11.2, height: 5, rx: 2 }, foreArm);
     const hand = svg('g', { transform: `translate(0 ${body.fore + 1})` }, foreArm);
-    const palm = glove(hand, side, kind === 'test' ? 0.92 : 0.8);
+    glove(hand, kind === 'test' ? 0.92 : 0.8);
     // Code's puffed cap sleeve sits on top of the shoulder and turns with it.
     const cap = kind === 'code' ? svg('g', {}, front) : null;
     if (cap) svg('path', { class: 'tdd-sleeve-puff', fill: `url(#${id}-gown)`, d: 'M-7.5 3 C-8.5 -5.5 8.5 -5.5 7.5 3 C6.4 9.5 -6.4 9.5 -7.5 3 Z' }, cap);
     return {
-      apply(angles, lean = 0) {
+      apply(angles) {
         const x = side === 'L' ? -sx : sx;
         const shoulder = `translate(${x} ${sy}) rotate(${f(angles.sh)})`;
         upperArm.setAttribute('transform', shoulder);
         if (cap) cap.setAttribute('transform', shoulder);
         foreArm.setAttribute('transform', `${shoulder} translate(0 ${body.upper}) rotate(${f(angles.el)})`);
         hand.setAttribute('transform', `translate(0 ${body.fore + 1}) rotate(${f(angles.wr || 0)})`);
-        palm.turn(lean + angles.sh + angles.el + (angles.wr || 0));
       },
     };
   }
@@ -441,8 +427,8 @@
           leg.shoe.setAttribute('transform', `translate(${f(sign * body.foot + foot.dx)} ${f(-foot.lift)}) rotate(${f(-sign * foot.lift * 1.6)})`);
         }
         head.setAttribute('transform', `rotate(${f(s.head)} 0 -188)`);
-        arms.L.apply(s.armL, s.lean);
-        arms.R.apply(s.armR, s.lean);
+        arms.L.apply(s.armL);
+        arms.R.apply(s.armR);
         faceRig.apply(t, s.face, s.look);
         root.dataset.lamp = s.lamp;
         badgeGlyph.setAttribute('d', s.lamp === 'red' ? 'M-3.4 -3.4 L3.4 3.4 M3.4 -3.4 L-3.4 3.4' : s.lamp === 'green' ? 'M-3.8 0.2 L-1.1 3 L4 -3.2' : '');
@@ -638,8 +624,8 @@
           spark.node.setAttribute('transform', `translate(${f(spark.x * s.spin)} ${f(spark.y + s.bob)}) rotate(${f(life * 90)}) scale(${f(Math.max(0.01, size))})`);
         });
         head.setAttribute('transform', `rotate(${f(s.head)} 0 -176)`);
-        arms.L.apply(s.armL, s.lean);
-        arms.R.apply(s.armR, s.lean);
+        arms.L.apply(s.armL);
+        arms.R.apply(s.armR);
         faceRig.apply(t, s.face, s.look);
       },
     };
