@@ -6,7 +6,7 @@ const { chromiumLaunchOptions } = require('../scripts/chromium-launch-options');
 
 module.exports = defineConfig({
   testDir: __dirname,
-  testMatch: /song-(?:controls-playlist|vector-player|vector-art|vector-fullscreen|video|video-graph-track)\.spec\.js$/,
+  testMatch: /song-(?:controls-playlist|vector-player|vector-resources|vector-art|vector-fullscreen|video|video-graph-track)\.spec\.js$/,
   outputDir: process.env.SONG_PLAYER_TEST_OUTPUT || '../test-results/song-player',
   workers: 1,
   retries: 0,

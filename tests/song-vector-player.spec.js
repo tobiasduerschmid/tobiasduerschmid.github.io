@@ -21,7 +21,9 @@ test.beforeEach(async ({ context }) => {
 async function loadPlayer(page) {
   await page.goto(PLAYER_PATH);
   await expect(page.getByRole('button', { name: 'Play song', exact: true })).toBeEnabled();
-  await expect(page.getByText('homework_final.txt', { exact: true })).toBeAttached();
+  await expect(page.getByTestId('song-picture')
+    .or(page.getByRole('region', { name: 'Current visual description' }))
+    .filter({ visible: true })).toBeVisible();
   return audioPlayer(page);
 }
 

@@ -136,6 +136,13 @@ body.is-fit {
   inset: 0;
 }
 
+/* Transparent pictures need no backing surfaces. Shared scene timing restores
+   them before an entrance or backward seek. The rule is theme-independent;
+   print layouts hide the complete stage and expose the transcript instead. */
+.stage .song-picture-inactive {
+  display: none !important;
+}
+
 /* ------------------------------------------------------------------ */
 /* HUD: section badge and terminal                                     */
 /* ------------------------------------------------------------------ */

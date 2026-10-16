@@ -31,9 +31,11 @@ test('disposing a timeline cancels its animations and releases resource owners',
   let canceled = false;
   let released = false;
   let frames = 0;
+  let preparedFrames = 0;
   const animation = { pause() {}, cancel() { canceled = true; }, currentTime: 0 };
   timeline.tween({ animate: () => animation }, [], 0, 1);
   timeline.onFrame(() => { frames += 1; });
+  timeline.onBeforeFrame(() => { preparedFrames += 1; });
   timeline.onDispose(() => { released = true; });
   timeline.seek(0.5);
   assert.equal(animation.currentTime, 500);
@@ -42,6 +44,28 @@ test('disposing a timeline cancels its animations and releases resource owners',
   assert.equal(canceled, true);
   assert.equal(released, true);
   assert.equal(frames, 1);
+  assert.equal(preparedFrames, 1);
+});
+
+test('frame preparation uses the requested pose before layout-dependent drawing, including backward seeks', () => {
+  const context = { window: {} };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../../js/song-video/timeline.js'), 'utf8'), context);
+  const timeline = context.window.Timeline;
+  const animation = { pause() {}, currentTime: 0 };
+  let visible = false;
+  const drawn = [];
+  timeline.tween({ animate: () => animation }, [], 0, 1);
+  // Drawing may be registered first by choreography; preparation still runs first.
+  timeline.onFrame(time => { drawn.push({ time, visible }); });
+  timeline.onBeforeFrame(() => { visible = animation.currentTime >= 500; });
+  timeline.seek(0.75);
+  timeline.seek(0.25);
+  timeline.seek(0.75);
+  assert.deepEqual(drawn, [
+    { time: 0.75, visible: true },
+    { time: 0.25, visible: false },
+    { time: 0.75, visible: true },
+  ]);
 });
 
 test('a failed choreography releases partially built resources before fallback', () => {
