@@ -416,7 +416,11 @@
 .tdd-bubble::after {
   content: '';
   position: absolute;
-  bottom: -13px;
+  bottom: -11px;
+  /* Only the lower half of the rotated square is a tail. Its upper half
+     must not paint over the last line of speech at larger text sizes. */
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  pointer-events: none;
   width: 22px;
   height: 22px;
   border-right: 2px solid var(--ink);
