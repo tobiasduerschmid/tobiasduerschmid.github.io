@@ -208,11 +208,17 @@
     const savedAppearance = savedAvatar.then((result) => {
       if (!result || !result.saved) return null;
       const { avatar, saved } = result;
-      const skin = saved.appearance.skin;
+      const { skin, hairColor: hair } = saved.appearance;
+      const tones = avatar.avatarContrastTokens(skin, hair);
       const darkInk = '#1b1640';
       const lightInk = '#ffffff';
       const ink = avatar.contrastRatio(skin, darkInk) >= avatar.contrastRatio(skin, lightInk) ? darkInk : lightInk;
-      return { kind: saved.kind, skin, ink, glint: ink === darkInk ? lightInk : darkInk };
+      return {
+        kind: saved.kind, skin, ink, glint: ink === darkInk ? lightInk : darkInk,
+        skinShadow: tones.skinShadow, skinHighlight: tones.skinHighlightSoft,
+        skinIsDark: avatar.contrastRatio(skin, lightInk) >= 4.5,
+        hair, hairIsDark: avatar.contrastRatio(hair, lightInk) >= 3,
+      };
     });
 
     async function hydrate() {

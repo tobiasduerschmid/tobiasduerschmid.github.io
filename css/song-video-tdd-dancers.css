@@ -65,14 +65,27 @@
 .tdd-arm--code .tdd-arm-sleeve,
 .tdd-arm--code .tdd-arm-fore {
   fill: var(--tdd-code-skin, #e7e0ff);
-  stroke: #8e82c4;
+  stroke: var(--tdd-code-skin-shadow, #8e82c4);
   stroke-width: 1;
 }
 
 .tdd-arm--code .tdd-arm-shine {
-  stroke: #ffffff;
+  stroke: var(--tdd-code-skin-highlight, #ffffff);
   stroke-width: 1.6;
   opacity: 0.8;
+}
+
+/* A thin outer rim separates dark arms and neck from the ballroom while
+   the original shapes retain their skin-relative shadow and highlight. */
+.tdd-skin-rim {
+  fill: none;
+  stroke: none;
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+}
+
+.has-dark-code-skin .tdd-skin-rim {
+  stroke: #fff1d9;
 }
 
 .tdd-sleeve-puff {
@@ -352,7 +365,7 @@
 
 .tdd-paper {
   fill: var(--tdd-code-skin, #e7e0ff);
-  stroke: #8e82c4;
+  stroke: var(--tdd-code-skin-shadow, #8e82c4);
   stroke-width: 0.8;
 }
 
@@ -379,12 +392,25 @@
   fill: rgba(255, 120, 170, 0.35);
 }
 
-.tdd-brace {
+.tdd-brace,
+.tdd-brace-rim {
   fill: none;
-  stroke: #f2c14e;
-  stroke-width: 3.4;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.tdd-brace {
+  stroke: var(--tdd-code-hair, #f2c14e);
+  stroke-width: 3.4;
+}
+
+.tdd-brace-rim {
+  stroke: none;
+  stroke-width: 4.8;
+}
+
+.has-dark-code-hair .tdd-brace-rim {
+  stroke: #fff1d9;
 }
 
 .tdd-slipper {

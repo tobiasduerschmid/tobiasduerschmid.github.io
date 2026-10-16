@@ -575,9 +575,13 @@ test('TDD renderer-only: regression score names fit their measures', async ({ pa
   }
 });
 
-for (const skin of ['#f8dfcf', '#291713']) {
+for (const [skin, hair, darkHair, darkSkin] of [
+  ['#f8dfcf', '#ead08a', false, false],
+  ['#291713', '#140b08', true, true],
+  ['#bb8175', '#66418c', true, false],
+]) {
   test(`TDD Code inherits the saved human skin ${skin} across scenes and themes`, async ({ page }) => {
-    const saved = JSON.stringify({ ...humanHero, appearance: { ...humanHero.appearance, skin } });
+    const saved = JSON.stringify({ ...humanHero, appearance: { ...humanHero.appearance, skin, hairColor: hair } });
     await page.addInitScript(({ key, saved }) => localStorage.setItem(key, saved), { key: STORAGE_KEY, saved });
     await page.goto('/assets/song-player/red-green-refactor.html');
     await expect(page.getByTestId('song-picture')).toBeVisible();
@@ -590,6 +594,30 @@ for (const skin of ['#f8dfcf', '#291713']) {
         for (const part of ['.tdd-paper', '.tdd-arm--code .tdd-arm-fore']) {
           for (const node of await page.locator(part).all()) await expect(node).toHaveCSS('fill', rgb);
         }
+        const hairRgb = `rgb(${hair.slice(1).match(/../g).map((part) => parseInt(part, 16)).join(', ')})`;
+        for (const brace of await page.locator('.tdd-brace').all()) await expect(brace).toHaveCSS('stroke', hairRgb);
+        for (const rim of await page.locator('.tdd-brace-rim').all()) {
+          await expect(rim).toHaveCSS('stroke', darkHair ? 'rgb(255, 241, 217)' : 'none');
+        }
+        // Four arm segments plus the neck use an independent outer rim.
+        await expect(page.locator('.tdd-skin-rim')).toHaveCount(5);
+        for (const rim of await page.locator('.tdd-skin-rim').all()) {
+          await expect(rim).toHaveCSS('stroke', darkSkin ? 'rgb(255, 241, 217)' : 'none');
+        }
+        const shading = await page.locator('.tdd-dancer--code').evaluate((arm) => {
+          const rgb = (color) => color.match(/\d+/g).map(Number);
+          const brightness = (color) => rgb(color).reduce((sum, channel) => sum + channel, 0);
+          const base = getComputedStyle(arm.querySelector('.tdd-arm-fore')).fill;
+          const shadow = getComputedStyle(arm.querySelector('.tdd-arm-fore')).stroke;
+          const highlight = getComputedStyle(arm.querySelector('.tdd-arm-shine')).stroke;
+          return { base: brightness(base), shadow: brightness(shadow), highlight: brightness(highlight), shadowRgb: rgb(shadow) };
+        });
+        expect(shading.shadow).toBeLessThan(shading.base);
+        expect(shading.highlight).toBeGreaterThan(shading.base);
+        // The shadow stays proportional to each chosen skin channel instead of purple.
+        const baseChannels = skin.slice(1).match(/../g).map((part) => parseInt(part, 16));
+        const ratios = shading.shadowRgb.map((channel, i) => channel / baseChannels[i]);
+        expect(Math.max(...ratios) - Math.min(...ratios)).toBeLessThan(0.06);
         await expect(page.locator('.tdd-code-bar--id').first()).toHaveCSS('fill', 'rgb(231, 224, 255)');
         const contrast = await page.locator('.tdd-dancer--code .tdd-eye').first().evaluate((eye, skin) => {
           const ink = getComputedStyle(eye).fill.match(/\d+/g).map(Number);
@@ -615,6 +643,9 @@ for (const [name, saved] of [['unsaved', null], ['Bruin', JSON.stringify(bruinHe
     await tddBodyGeometry(page, 2);
     await expect(page.locator('.tdd-page-grad .tdd-stop--bottom')).toHaveCSS('stop-color', 'rgb(221, 213, 251)');
     await expect(page.locator('.tdd-paper')).toHaveCSS('fill', 'rgb(231, 224, 255)');
+    await expect(page.locator('.tdd-brace').first()).toHaveCSS('stroke', 'rgb(242, 193, 78)');
+    await expect(page.locator('.tdd-brace-rim').first()).toHaveCSS('stroke', 'none');
+    await expect(page.locator('.tdd-skin-rim').first()).toHaveCSS('stroke', 'none');
     expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe(saved);
   });
 }
