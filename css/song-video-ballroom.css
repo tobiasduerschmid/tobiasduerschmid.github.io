@@ -16,6 +16,15 @@
   overflow: hidden;
 }
 
+/* Dim only the scenery, leaving the scene's labels, icons, and dancers bright. */
+.br-room::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
 .br-base {
   position: absolute;
   inset: 0;

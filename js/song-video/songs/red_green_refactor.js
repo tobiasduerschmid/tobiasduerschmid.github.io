@@ -592,8 +592,8 @@
       });
       tdd.suite(b, { x: 40, y: 280, w: 300, at: weakAt + 0.4, tests: [{ name: 'test_pop', states: [{ at: weakAt + 0.4, status: 'pass', word: 'PASSED?' }] }] });
       kit.stamp(b, 'Weak test', { x: 330, y: 352, at: line('verse-5-5').start, rotate: -7, shake: false });
-      const slider = tdd.bug(b, { x: 360, y: 384, size: 46, at: mark('verse-5-6', 'error') - 0.1, rotate: 100, until: mark('verse-5-6', 'slide') + 0.7 });
-      tween(slider, { translate: '260px 30px' }, mark('verse-5-6', 'slide'), 0.7, EASE.in);
+      const slider = tdd.bug(b, { x: 60, y: 360, size: 46, at: mark('verse-5-6', 'error') - 0.1, rotate: 100, until: mark('verse-5-6', 'slide') + 0.7 });
+      tween(slider, { translate: '180px 30px' }, mark('verse-5-6', 'slide'), 0.7, EASE.in);
 
       // Test behavior, not private moves: then the code is free to change.
       const c = kit.scene(content, line('verse-5-7').start - 0.1, end('verse-5'));

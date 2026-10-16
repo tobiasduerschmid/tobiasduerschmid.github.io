@@ -1305,20 +1305,15 @@
   height: 64px;
 }
 
-/* Opaque label plates keep the text independent of moving stage lights.
-   These shared rules cover every test-run timeline in the music video. */
+/* Bright, unboxed text across every test-run timeline. The ballroom itself
+   stays subdued so moving stage lights do not compete with the labels. */
 .tdd-runs-label,
 .tdd-runs-tick-label,
 .tdd-runs-end {
-  background: #100d2a;
-  border-radius: 5px;
-  padding: 3px 8px;
   color: #f6f8ff;
 }
 
 .tdd-runs-label {
-  display: table;
-  transform: translate(-8px, -3px);
   font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.06em;

@@ -308,7 +308,7 @@
         // another stage coordinate for the bug. The rail leaves this gap open.
         const passage = el('div', 'tdd-fence-passage', node);
         const size = 50;
-        const bug = tdd.bug(passage, { x: -size / 2, y: 204, size, at, rotate: 180, from: [-size / 2, -60] });
+        const bug = tdd.bug(passage, { x: -size / 2, y: 204, size, at, rotate: 0, from: [-size / 2, -60] });
         // Finish the entrance fade before crossing the fence, so its full
         // silhouette stays visible while it passes through the opening.
         fx.fadeIn(bug, at, 0.15);
