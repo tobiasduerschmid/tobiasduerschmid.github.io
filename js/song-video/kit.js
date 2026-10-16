@@ -317,7 +317,10 @@
 
   /** An arrow from `from` to `to` bowing by `bend` (negative = up), drawn on at `at`. */
   function flow(parent, { from, to, bend = -40, color = 'gold', at, until, label, labelAt }) {
-    const art = svg('svg', { class: 'flow', viewBox: '0 0 960 540' }, parent);
+    const art = svg('svg', { class: 'flow is-staged', viewBox: '0 0 960 540' }, parent);
+    // A fully offset dashed path still paints its round end caps. Hide the
+    // whole arrow until its cue rather than leaking dots into earlier scenes.
+    fx.fadeIn(art, at, 0.08);
     const [x1, y1] = from;
     const [x2, y2] = to;
     const cx = (x1 + x2) / 2;
