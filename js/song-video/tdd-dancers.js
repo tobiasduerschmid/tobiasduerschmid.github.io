@@ -257,10 +257,14 @@
     const upperArm = svg('g', { class: `tdd-arm tdd-arm--${kind}` }, parent);
     upperArm.dataset.side = side;
     const outer = side === 'L' ? -1 : 1;
-    svg('path', { class: 'tdd-arm-sleeve', d: segmentPath(body.upper, ...upperW) }, upperArm);
+    const upperPath = segmentPath(body.upper, ...upperW);
+    if (kind === 'code') svg('path', { class: 'tdd-skin-rim', d: upperPath }, upperArm);
+    svg('path', { class: 'tdd-arm-sleeve', d: upperPath }, upperArm);
     svg('path', { class: 'tdd-arm-shine', d: `M${f(outer * (upperW[0] / 2 - 2))} 4 Q${f(outer * (upperW[1] / 2 - 1))} ${f(body.upper * 0.55)} ${f(outer * (upperW[1] / 2 - 2))} ${f(body.upper - 4)}` }, upperArm);
     const foreArm = svg('g', { class: `tdd-forearm tdd-arm--${kind}` }, front);
-    svg('path', { class: 'tdd-arm-fore', d: segmentPath(body.fore, ...foreW) }, foreArm);
+    const forePath = segmentPath(body.fore, ...foreW);
+    if (kind === 'code') svg('path', { class: 'tdd-skin-rim', d: forePath }, foreArm);
+    svg('path', { class: 'tdd-arm-fore', d: forePath }, foreArm);
     if (kind === 'test') svg('rect', { class: 'tdd-cuff', x: -5.6, y: body.fore - 6, width: 11.2, height: 5, rx: 2 }, foreArm);
     const hand = svg('g', { transform: `translate(0 ${body.fore + 1})` }, foreArm);
     glove(hand, kind === 'test' ? 0.92 : 0.8);
@@ -527,7 +531,9 @@
     svg('path', { class: 'tdd-neckline', d: 'M-13 -169 Q-6 -158 0 -165 Q6 -158 13 -169' }, lean);
     svg('rect', { class: 'tdd-sash', x: -14, y: -123, width: 28, height: 8, rx: 3 }, lean);
     svg('path', { class: 'tdd-sash-bow', d: 'M9 -119 L19 -126 L18 -112 Z' }, lean);
-    svg('path', { class: 'tdd-paper', d: 'M-3 -181 L3 -181 L4.2 -168.5 Q0 -166.5 -4.2 -168.5 Z' }, lean);
+    const neckPath = 'M-3 -181 L3 -181 L4.2 -168.5 Q0 -166.5 -4.2 -168.5 Z';
+    svg('path', { class: 'tdd-skin-rim', d: neckPath }, lean);
+    svg('path', { class: 'tdd-paper', d: neckPath }, lean);
     // The head: a page with a folded corner, a face, and brace clips.
     const head = svg('g', {}, lean);
     svg('path', { class: 'tdd-page', fill: `url(#${id}-page)`, d: 'M-21 -231 H10 L22 -219 V-184 Q22 -178 16 -178 H-15 Q-21 -178 -21 -184 Z' }, head);
@@ -535,12 +541,12 @@
     svg('line', { class: 'tdd-page-rule', x1: -15, y1: -224, x2: 2, y2: -224 }, head);
     for (const side of [-1, 1]) {
       svg('circle', { class: 'tdd-blush', cx: side * 12, cy: -195, r: 3.4 }, head);
-      svg('path', {
-        class: 'tdd-brace',
-        d: side < 0
-          ? 'M-26 -222 Q-31 -222 -31 -216 V-210 Q-31 -205 -35 -205 Q-31 -205 -31 -200 V-194 Q-31 -188 -26 -188'
-          : 'M26 -222 Q31 -222 31 -216 V-210 Q31 -205 35 -205 Q31 -205 31 -200 V-194 Q31 -188 26 -188',
-      }, head);
+      const d = side < 0
+        ? 'M-26 -222 Q-31 -222 -31 -216 V-210 Q-31 -205 -35 -205 Q-31 -205 -31 -200 V-194 Q-31 -188 -26 -188'
+        : 'M26 -222 Q31 -222 31 -216 V-210 Q31 -205 35 -205 Q31 -205 31 -200 V-194 Q31 -188 26 -188';
+      // A wider under-stroke gives dark hair a thin rim without changing its color.
+      svg('path', { class: 'tdd-brace-rim', d }, head);
+      svg('path', { class: 'tdd-brace', d }, head);
     }
     const faceGroup = svg('g', { transform: 'translate(0 -202)' }, head);
     const faceRig = face(faceGroup, { eyeX: 8, eyeY: -2, mouthY: 9, browY: -9, lashes: true, seed: uid * 7 + 23 });
@@ -976,10 +982,15 @@
     const api = {
       node: wrap,
       /** Runtime palette from the saved human hero; defaults remain in CSS. */
-      codeSkin({ skin, ink, glint }) {
+      codeAppearance({ skin, ink, glint, skinShadow, skinHighlight, skinIsDark, hair, hairIsDark }) {
         wrap.style.setProperty('--tdd-code-skin', skin);
         wrap.style.setProperty('--tdd-code-ink', ink);
         wrap.style.setProperty('--tdd-code-glint', glint);
+        wrap.style.setProperty('--tdd-code-skin-shadow', skinShadow);
+        wrap.style.setProperty('--tdd-code-skin-highlight', skinHighlight);
+        wrap.style.setProperty('--tdd-code-hair', hair);
+        wrap.classList.toggle('has-dark-code-hair', hairIsDark);
+        wrap.classList.toggle('has-dark-code-skin', skinIsDark);
         return api;
       },
       /**

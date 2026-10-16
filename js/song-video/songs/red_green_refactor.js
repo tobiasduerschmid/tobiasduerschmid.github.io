@@ -52,7 +52,7 @@
       let disposed = false;
       window.Timeline.onDispose(() => { disposed = true; });
       student.savedAppearance.then((appearance) => {
-        if (!disposed && appearance && appearance.kind === 'human') couple.codeSkin(appearance);
+        if (!disposed && appearance && appearance.kind === 'human') couple.codeAppearance(appearance);
       });
     }
     /** Where the couple dances beside the teaching boxes (footprint centre, feet, scale). */
