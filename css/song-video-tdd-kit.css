@@ -1256,7 +1256,7 @@
 
 .tdd-ci-right {
   padding: 6px 12px;
-  background: #1f8a4c;
+  background: #126b39;
   color: #ffffff;
 }
 
@@ -1305,9 +1305,21 @@
   height: 64px;
 }
 
+/* Opaque label plates keep the text independent of moving stage lights.
+   These shared rules cover every test-run timeline in the music video. */
+.tdd-runs-label,
+.tdd-runs-tick-label,
+.tdd-runs-end {
+  background: #100d2a;
+  border-radius: 5px;
+  padding: 3px 8px;
+  color: #f6f8ff;
+}
+
 .tdd-runs-label {
-  color: var(--muted);
-  font-size: 14px;
+  display: table;
+  transform: translate(-8px, -3px);
+  font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1320,7 +1332,7 @@
   top: 36px;
   height: 4px;
   border-radius: 2px;
-  background: rgba(207, 216, 245, 0.45);
+  background: #aebbdc;
 }
 
 .tdd-runs-tick {
@@ -1334,9 +1346,11 @@
   border-radius: 50%;
 }
 
-.tdd-runs-tick--pass { background: #0b3a22; color: var(--tdd-green); }
-.tdd-runs-tick--fail { background: #4a0f1d; color: var(--tdd-red); }
-.tdd-runs-tick--flaky { background: #3d3200; color: var(--gold); }
+/* The pale discs separate from the ballroom; the dark symbols separate
+   from their discs. Shape still distinguishes pass, fail, and flaky. */
+.tdd-runs-tick--pass { background: #c7f9d8; color: #07532c; }
+.tdd-runs-tick--fail { background: #ffd3db; color: #831329; }
+.tdd-runs-tick--flaky { background: #ffec9e; color: #503b00; }
 
 .tdd-runs-glyph {
   width: 20px;
@@ -1346,8 +1360,7 @@
 .tdd-runs-end {
   position: absolute;
   top: -30px;
-  color: var(--gold);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -1356,8 +1369,7 @@
   position: absolute;
   top: 34px;
   left: 50%;
-  color: #dfe6ff;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   white-space: nowrap;
   transform: translateX(-50%);

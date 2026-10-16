@@ -667,3 +667,39 @@ test('TDD Code remains usable when avatar storage is denied', async ({ page }) =
   await expect(page.getByRole('button', { name: 'Play song', exact: true })).toBeEnabled();
   expect(errors).toEqual([]);
 });
+
+test('TDD renderer-only: the bug travels wholly through the open test-fence gap', async ({ page }) => {
+  await page.goto('/assets/song-player/red-green-refactor.html');
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+  const pose = (time) => page.evaluate((time) => {
+    window.Timeline.seek(time);
+    const fence = document.querySelector('.tdd-fence');
+    const pickets = [...fence.querySelectorAll('.tdd-picket')];
+    const rect = (node) => {
+      const { x, y, width, height } = node.getBoundingClientRect();
+      return { x, y, right: x + width, bottom: y + height, width, height };
+    };
+    const gap = pickets.findIndex((node) => node.classList.contains('tdd-picket--new'));
+    return {
+      bug: rect(fence.querySelector('.tdd-bug svg')),
+      opacity: Number(getComputedStyle(fence.querySelector('.tdd-bug')).opacity),
+      left: rect(pickets[gap - 1]), right: rect(pickets[gap + 1]),
+      rails: [...fence.querySelectorAll('.tdd-fence-rail')].map(rect),
+    };
+  }, time);
+  const entry = await pose(228.81);
+  expect(entry.bug.bottom).toBeLessThan(entry.left.y);
+  for (const time of [228.9, 229, 229.1, 229.2, 229.3, 229.4, 229.5, 229.6, 229.7]) {
+    const { bug, left, right, rails, opacity } = await pose(time);
+    if (time >= 229) expect(opacity).toBe(1);
+    expect(bug.x).toBeGreaterThan(left.right);
+    expect(bug.right).toBeLessThan(right.x);
+    expect(Math.abs((bug.x + bug.right) / 2 - (left.right + right.x) / 2)).toBeLessThan(1);
+    for (const rail of rails) {
+      expect(rail.right <= bug.x || rail.x >= bug.right, 'the rail must leave the passage open').toBe(true);
+    }
+  }
+  const exit = await pose(229.7);
+  expect(exit.bug.y).toBeGreaterThan(exit.left.bottom);
+  expect(await pose(228.81)).toEqual(entry);
+});

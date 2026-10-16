@@ -314,10 +314,12 @@
 /* ------------------------------------------------------------------ */
 
 .tdd-fence {
+  --tdd-picket-width: 46px;
+  --tdd-picket-gap: 8px;
   position: absolute;
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: var(--tdd-picket-gap);
   height: 150px;
 }
 
@@ -331,12 +333,27 @@
   background: #8b6a3e;
 }
 
+.tdd-fence-rail--before {
+  right: auto;
+  width: calc(var(--tdd-fence-gap-index) * (var(--tdd-picket-width) + var(--tdd-picket-gap)) - var(--tdd-picket-gap) + 10px);
+}
+
+.tdd-fence-rail--after {
+  left: calc((var(--tdd-fence-gap-index) + 1) * (var(--tdd-picket-width) + var(--tdd-picket-gap)));
+}
+
+.tdd-fence-passage {
+  position: absolute;
+  top: 0;
+  left: calc(var(--tdd-fence-gap-index) * (var(--tdd-picket-width) + var(--tdd-picket-gap)) + var(--tdd-picket-width) / 2);
+}
+
 .tdd-picket {
   position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  width: 46px;
+  width: var(--tdd-picket-width);
   height: 140px;
   padding-bottom: 8px;
   border: 2px solid;
