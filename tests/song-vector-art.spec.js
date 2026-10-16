@@ -703,3 +703,27 @@ test('TDD renderer-only: the bug travels wholly through the open test-fence gap'
   expect(exit.bug.y).toBeGreaterThan(exit.left.bottom);
   expect(await pose(228.81)).toEqual(entry);
 });
+
+test('TDD renderer-only: flow arrows do not leak tips before their cues or after rewind', async ({ page }) => {
+  await page.goto('/assets/song-player/red-green-refactor.html');
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+  const song = songPlayers.find(song => song.name === 'Test-driven development').storyboard;
+  const cues = new Map(song.sections.flatMap(section => section.lines).map(line => [line.id, line]));
+  const entrances = [
+    cues.get('verse-1-4').marks.callers,
+    cues.get('bridge-1').marks.check,
+    cues.get('bridge-3').marks.parts,
+    cues.get('bridge-5').marks.whole,
+  ];
+  const arrows = page.locator('.flow');
+  await expect(arrows).toHaveCount(entrances.length);
+  for (const [index, at] of entrances.entries()) {
+    const arrow = arrows.nth(index);
+    for (const [time, opacity] of [[at - 0.1, '0'], [at + 0.4, '1'], [346, '0'], [at + 0.4, '1'], [0, '0']]) {
+      await page.evaluate(time => window.Timeline.seek(time), time);
+      // The first arrow belongs to a scene that handles its exit as a whole.
+      if (index === 0 && time === 346) continue;
+      await expect(arrow).toHaveCSS('opacity', opacity);
+    }
+  }
+});
