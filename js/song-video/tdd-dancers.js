@@ -244,17 +244,27 @@
   function glove(parent, side, size) {
     const mirror = side === 'R' ? -1 : 1;
     const g = svg('g', { class: 'tdd-glove-hand', transform: `scale(${mirror * size} ${size})` }, parent);
-    svg('path', { class: 'tdd-glove', d: 'M4.2 2.4 C7.9 1.4 10 4 9 6.5 C8.2 8.3 6.2 8 5.2 6.8 Z' }, g);
-    svg('path', { class: 'tdd-glove', d: 'M-4.8 0.4 C-7.2 4.6 -6.9 10.8 -2.5 13 C0.6 14.4 4.8 12.8 6 8.8 C6.8 5.8 5.8 2.4 4.6 0.4 Z' }, g);
+    // One continuous silhouette keeps the thumb attached to the palm.
+    // Mirroring the entire hand preserves handedness through every arm pose.
+    svg('path', { class: 'tdd-glove', d: 'M-4.8 0.4 C-6.8 4 -6.9 10.8 -2.5 13 C0.6 14.4 4.8 12.8 6 8.8 L7.2 6.6 C8.1 5.5 7.8 3.8 6.7 4.4 L5.5 5.4 Q5.4 1.8 4.6 0.4 Z' }, g);
     svg('path', { class: 'tdd-glove-line', d: 'M-1.8 8.4 L-1.4 11.8 M1.4 8.6 L1.8 12' }, g);
     svg('rect', { class: 'tdd-glove-cuff', x: -5.6, y: -2.4, width: 11.2, height: 3.8, rx: 1.9 }, g);
-    return g;
+    return {
+      turn(angle) {
+        // A relaxed hanging palm faces inward. As the hand rises, the
+        // forearm rolls so the thumb leads upward, not down at the floor.
+        // Passing through an edge-on palm makes this a turn, not a flip.
+        const elevation = Math.abs(((angle + 180) % 360 + 360) % 360 - 180);
+        const roll = clamp((elevation - 45) / 45, 0, 1);
+        g.setAttribute('transform', `scale(${f(mirror * size * Math.cos(Math.PI * roll))} ${size})`);
+      },
+    };
   }
 
   /** Limb widths: [shoulder, elbow] for the upper arm, [elbow, wrist] below. */
   const ARM_WIDTHS = { test: [[13.5, 10.5], [10.5, 8.5]], code: [[9, 7.2], [7.2, 5.6]] };
 
-  function arm(parent, kind, side, body, id) {
+  function arm(parent, front, kind, side, body, id) {
     const [sx, sy] = body.shoulder;
     const [upperW, foreW] = ARM_WIDTHS[kind];
     const upperArm = svg('g', { class: `tdd-arm tdd-arm--${kind}` }, parent);
@@ -262,19 +272,23 @@
     const outer = side === 'L' ? -1 : 1;
     svg('path', { class: 'tdd-arm-sleeve', d: segmentPath(body.upper, ...upperW) }, upperArm);
     svg('path', { class: 'tdd-arm-shine', d: `M${f(outer * (upperW[0] / 2 - 2))} 4 Q${f(outer * (upperW[1] / 2 - 1))} ${f(body.upper * 0.55)} ${f(outer * (upperW[1] / 2 - 2))} ${f(body.upper - 4)}` }, upperArm);
-    const foreArm = svg('g', {}, upperArm);
+    const foreArm = svg('g', { class: `tdd-forearm tdd-arm--${kind}` }, front);
     svg('path', { class: 'tdd-arm-fore', d: segmentPath(body.fore, ...foreW) }, foreArm);
     if (kind === 'test') svg('rect', { class: 'tdd-cuff', x: -5.6, y: body.fore - 6, width: 11.2, height: 5, rx: 2 }, foreArm);
     const hand = svg('g', { transform: `translate(0 ${body.fore + 1})` }, foreArm);
-    glove(hand, side, kind === 'test' ? 0.92 : 0.8);
+    const palm = glove(hand, side, kind === 'test' ? 0.92 : 0.8);
     // Code's puffed cap sleeve sits on top of the shoulder and turns with it.
-    if (kind === 'code') svg('path', { class: 'tdd-sleeve-puff', fill: `url(#${id}-gown)`, d: 'M-7.5 3 C-8.5 -5.5 8.5 -5.5 7.5 3 C6.4 9.5 -6.4 9.5 -7.5 3 Z' }, upperArm);
+    const cap = kind === 'code' ? svg('g', {}, front) : null;
+    if (cap) svg('path', { class: 'tdd-sleeve-puff', fill: `url(#${id}-gown)`, d: 'M-7.5 3 C-8.5 -5.5 8.5 -5.5 7.5 3 C6.4 9.5 -6.4 9.5 -7.5 3 Z' }, cap);
     return {
-      apply(angles) {
+      apply(angles, lean = 0) {
         const x = side === 'L' ? -sx : sx;
-        upperArm.setAttribute('transform', `translate(${x} ${sy}) rotate(${f(angles.sh)})`);
-        foreArm.setAttribute('transform', `translate(0 ${body.upper}) rotate(${f(angles.el)})`);
+        const shoulder = `translate(${x} ${sy}) rotate(${f(angles.sh)})`;
+        upperArm.setAttribute('transform', shoulder);
+        if (cap) cap.setAttribute('transform', shoulder);
+        foreArm.setAttribute('transform', `${shoulder} translate(0 ${body.upper}) rotate(${f(angles.el)})`);
         hand.setAttribute('transform', `translate(0 ${body.fore + 1}) rotate(${f(angles.wr || 0)})`);
+        palm.turn(lean + angles.sh + angles.el + (angles.wr || 0));
       },
     };
   }
@@ -361,7 +375,12 @@
     svg('path', { class: 'tdd-lamp-shine', d: 'M-15 -229 Q-9 -236 0 -237' }, dome);
     const faceGroup = svg('g', { transform: 'translate(0 -210)' }, dome);
     const faceRig = face(faceGroup, { eyeX: 8, eyeY: -5, mouthY: 7, browY: -12, seed: uid * 7 + 11 });
-    const arms = { L: arm(lean, 'test', 'L', body, id), R: arm(lean, 'test', 'R', body, id) };
+    // Upper arms emerge from behind the torso; bent forearms, cuffs, and
+    // palms sit in front. Keep these layers in the same body coordinate frame.
+    const rearArms = svg('g', { class: 'tdd-arms-rear' }, lean);
+    lean.insertBefore(rearArms, lean.firstChild);
+    const frontArms = svg('g', { class: 'tdd-arms-front' }, lean);
+    const arms = { L: arm(rearArms, frontArms, 'test', 'L', body, id), R: arm(rearArms, frontArms, 'test', 'R', body, id) };
 
     /**
      * A tapered trouser leg from hip to ankle, and its side stripe. Seen from
@@ -422,8 +441,8 @@
           leg.shoe.setAttribute('transform', `translate(${f(sign * body.foot + foot.dx)} ${f(-foot.lift)}) rotate(${f(-sign * foot.lift * 1.6)})`);
         }
         head.setAttribute('transform', `rotate(${f(s.head)} 0 -188)`);
-        arms.L.apply(s.armL);
-        arms.R.apply(s.armR);
+        arms.L.apply(s.armL, s.lean);
+        arms.R.apply(s.armR, s.lean);
         faceRig.apply(t, s.face, s.look);
         root.dataset.lamp = s.lamp;
         badgeGlyph.setAttribute('d', s.lamp === 'red' ? 'M-3.4 -3.4 L3.4 3.4 M3.4 -3.4 L-3.4 3.4' : s.lamp === 'green' ? 'M-3.8 0.2 L-1.1 3 L4 -3.2' : '');
@@ -467,8 +486,9 @@
     const shadow = svg('ellipse', { class: 'tdd-shadow', cx: 0, cy: 0, rx: 46, ry: 6.5 }, root);
     const spin = svg('g', {}, root);
     const shoes = svg('g', {}, spin);
-    svg('ellipse', { class: 'tdd-slipper', cx: -11, cy: -3, rx: 8, ry: 4 }, shoes);
-    svg('ellipse', { class: 'tdd-slipper', cx: 11, cy: -3, rx: 8, ry: 4 }, shoes);
+    const slippers = ['L', 'R'].map((side, i) => ({
+      side, node: svg('ellipse', { class: 'tdd-slipper', cx: i ? 11 : -11, cy: -3, rx: 8, ry: 4 }, shoes),
+    }));
     const skirtClip = svg('clipPath', { id: `${id}-skirt` }, svg('defs', {}, spin));
     const clipShape = svg('path', {}, skirtClip);
     const skirt = svg('path', { class: 'tdd-gown', fill: `url(#${id}-gown)` }, spin);
@@ -508,6 +528,8 @@
     // A bright band sweeps down the gown with the rows as they snap clean.
     const sweep = svg('rect', { class: 'tdd-tidy-sweep', x: -80, y: -9, width: 160, height: 18, fill: `url(#${id}-sweep)`, opacity: 0 }, page);
     const hem = svg('path', { class: 'tdd-gown-hem' }, spin);
+    // The toes peek in front of the hem, so a lifted step stays visible.
+    spin.appendChild(shoes);
     const sparkles = SPARKLES.map(([x, y, r]) => ({ x, y, r, node: svg('path', { class: 'tdd-sparkle', d: SPARKLE, opacity: 0 }, root) }));
     // The hem stays on the floor; the waist and everything above it ride on
     // `upper`, so the gown stretches and gathers with the rise and fall.
@@ -536,7 +558,12 @@
     }
     const faceGroup = svg('g', { transform: 'translate(0 -202)' }, head);
     const faceRig = face(faceGroup, { eyeX: 8, eyeY: -2, mouthY: 9, browY: -9, lashes: true, seed: uid * 7 + 23 });
-    const arms = { L: arm(lean, 'code', 'L', body, id), R: arm(lean, 'code', 'R', body, id) };
+    // Upper arms emerge from behind the torso; bent forearms, cuffs, and
+    // palms sit in front. Keep these layers in the same body coordinate frame.
+    const rearArms = svg('g', { class: 'tdd-arms-rear' }, lean);
+    lean.insertBefore(rearArms, lean.firstChild);
+    const frontArms = svg('g', { class: 'tdd-arms-front' }, lean);
+    const arms = { L: arm(rearArms, frontArms, 'code', 'L', body, id), R: arm(rearArms, frontArms, 'code', 'R', body, id) };
 
     /** The gown from the waist (which rises and falls at waistY) to a scalloped hem on the floor. */
     function skirtPath(sway, flare, waistY) {
@@ -562,6 +589,10 @@
         spin.setAttribute('transform', `scale(${f(s.spin)} 1)`);
         upper.setAttribute('transform', `translate(0 ${f(s.bob)})`);
         lean.setAttribute('transform', `rotate(${f(s.lean)} 0 ${body.hipY})`);
+        for (const slipper of slippers) {
+          const foot = s[`foot${slipper.side}`];
+          slipper.node.setAttribute('transform', `translate(${f(foot.dx)} ${f(-foot.lift)})`);
+        }
         const waistY = body.hipY + 2 + s.bob;
         const d = skirtPath(s.sway, s.flare, waistY);
         skirt.setAttribute('d', d);
@@ -607,8 +638,8 @@
           spark.node.setAttribute('transform', `translate(${f(spark.x * s.spin)} ${f(spark.y + s.bob)}) rotate(${f(life * 90)}) scale(${f(Math.max(0.01, size))})`);
         });
         head.setAttribute('transform', `rotate(${f(s.head)} 0 -176)`);
-        arms.L.apply(s.armL);
-        arms.R.apply(s.armR);
+        arms.L.apply(s.armL, s.lean);
+        arms.R.apply(s.armR, s.lean);
         faceRig.apply(t, s.face, s.look);
       },
     };
@@ -642,7 +673,7 @@
     x: 0, y: 0, bob: 0, lean: 0, head: 0, spin: 1, look: 0, face: 'happy', lamp: 'idle',
     armL: { ...POSES.stand.armL }, armR: { ...POSES.stand.armR },
     footL: { dx: 0, lift: 0 }, footR: { dx: 0, lift: 0 },
-    sway: 0, flare: 0, clean: 1, hold: 0, embrace: 0, low: 0,
+    sway: 0, flare: 0, clean: 1, hold: 0, embrace: 0, low: 0, idleMotion: 1,
   };
 
   /**
@@ -798,8 +829,8 @@
       // Alive at rest, in time: a soft settle on every beat and a weight
       // shift that sways the couple together over two beats.
       const pulse = beats.at(t);
-      s.bob += 0.9 * Math.cos(2 * Math.PI * pulse.phase);
-      s.lean += 0.8 * Math.sin(Math.PI * (pulse.index + pulse.phase));
+      s.bob += s.idleMotion * 0.9 * Math.cos(2 * Math.PI * pulse.phase);
+      s.lean += s.idleMotion * 0.8 * Math.sin(Math.PI * (pulse.index + pulse.phase));
       const outer = isTest ? 'armL' : 'armR';
       const outerSign = isTest ? 1 : -1;
       if (w) {
@@ -817,19 +848,20 @@
           el: s[outer].el + outerSign * 9 * w.lag(1.1) * e,
           wr: (s[outer].wr || 0) + outerSign * 8 * w.lag(1.6) * e,
         };
-        if (isTest) {
-          // Planted feet: the leading foot glides to the new spot on "1–2";
+        {
+          // Both partners step: the leading foot glides on "1–2";
           // the other closes on "3". Feet stay put while the body travels.
           const leadSide = w.dir > 0 ? 'R' : 'L';
           const trailSide = w.dir > 0 ? 'L' : 'R';
           const leadX = w.lead.from + (w.lead.to - w.lead.from) * w.lead.at;
           const trailX = w.trail.from + (w.trail.to - w.trail.from) * w.trail.at;
-          const heel = 2.5 * w.rise;
+          const heel = isTest ? 2.5 * w.rise : 0;
           const lead = s[`foot${leadSide}`];
           const trail = s[`foot${trailSide}`];
           s[`foot${leadSide}`] = { dx: lead.dx + (leadX - w.x) * e, lift: lead.lift + (5 * w.lead.lift + heel) * e };
           s[`foot${trailSide}`] = { dx: trail.dx + (trailX - w.x) * e, lift: trail.lift + (3 * w.trail.lift + heel) * e };
-        } else {
+        }
+        if (!isTest) {
           // The gown trails the travel and sways with the frame.
           s.sway += (0.55 * w.lag(0.9) - 0.04 * w.travel * w.dir * Math.sin(Math.PI * w.phase)) * e;
           s.flare += 3 * w.rise * e;
@@ -838,10 +870,9 @@
         const walk = walkOf(dancer, t);
         if (walk) {
           s.bob += walk.dip;
-          if (isTest) {
-            s.footL = { ...s.footL, lift: s.footL.lift + walk.liftL };
-            s.footR = { ...s.footR, lift: s.footR.lift + walk.liftR };
-          } else {
+          s.footL = { ...s.footL, lift: s.footL.lift + walk.liftL };
+          s.footR = { ...s.footR, lift: s.footR.lift + walk.liftR };
+          if (!isTest) {
             s.sway += clamp(-walk.velocity / 140, -0.9, 0.9) * walk.amount;
           }
         }
@@ -885,8 +916,16 @@
           while (solved.sh < -240) solved.sh += 360;
           while (solved.sh >= 120) solved.sh -= 360;
         }
-        // Code's hand on Test's shoulder drapes over it at the wrist.
-        solved.wr = !isTest ? -38 * s.embrace + (s[key].wr || 0) * (1 - s.embrace) : (s[key].wr || 0);
+        solved.wr = s[key].wr || 0;
+        if (!isTest && couple.drape > 0) {
+          // Aim the palm down over his shoulder, independent of the elbow
+          // angle. During a turn the hands join overhead instead.
+          const direction = rotateAbout([couple.palm[0] / (s.spin || 1), couple.palm[1]], [0, 0], -s.lean);
+          let wrist = Math.atan2(-direction[0], direction[1]) * 180 / Math.PI - solved.sh - solved.el;
+          while (wrist - solved.wr > 180) wrist -= 360;
+          while (wrist - solved.wr < -180) wrist += 360;
+          solved.wr += (wrist - solved.wr) * couple.drape;
+        }
         s[key] = mix(s[key], solved, s.hold);
       }
       return s;
@@ -920,11 +959,15 @@
         // Promenade hold: Test's hand on Code's back, behind her; Code's hand
         // resting on top of Test's near shoulder, her arm in a long line.
         const back = on('code', [-2, -150]);
-        const shoulder = on('test', [16, -177]);
+        const contact = on('test', [25, -168]);
+        const palm = rotateAbout([0, 7.2], [0, 0], raw.test.lean);
+        // IK targets the wrist; the palm, not the cuff, rests on the shoulder.
+        const shoulder = [contact[0] - palm[0], contact[1] - palm[1]];
         // Underarm turn: the joined hands rise above Code's head.
         const arch = [raw.code.x - 20, raw.code.y + raw.code.bob - 222];
         const k = archAt(t);
         couple = {
+          palm, drape: raw.code.embrace * (1 - k),
           test: lerp(lerp(hands, back, raw.test.embrace), arch, k),
           code: lerp(lerp(hands, shoulder, raw.code.embrace), arch, k),
         };
@@ -1052,6 +1095,20 @@
         keyAll(start - 0.35, () => ({ hold: 1, embrace: 1 }), 0.35);
         if (dancers.code) dancers.code.state.add(start, { lean: 26 * depth, head: 12 * depth, bob: 5 * depth, armR: { sh: -150, el: 26 }, face: 'joy' }, dur);
         if (dancers.test) dancers.test.state.add(start, { lean: 11 * depth, head: 8 * depth, bob: 8 * depth, armL: { sh: 118, el: -28 } }, dur);
+        return api;
+      },
+      /** A grounded, supported final dip with long opposing arm lines, held still. */
+      finale(atTime, { dur = 1.3 } = {}) {
+        api.dip(atTime, { dur, depth: 1.55 });
+        const start = arrivingOnBeat(atTime, dur);
+        keyAll(start, () => ({ idleMotion: 0, low: 0, look: 0 }), dur);
+        if (dancers.test) dancers.test.state.add(start, {
+          footL: { dx: -22, lift: 0 }, footR: { dx: 12, lift: 0 },
+          armL: { sh: 132, el: -12, wr: 18 }, face: 'joy',
+        }, dur);
+        if (dancers.code) dancers.code.state.add(start, {
+          armR: { sh: -154, el: 12, wr: -20 }, flare: 14, sway: 0.55,
+        }, dur);
         return api;
       },
       /** Both stand tall again after a dip or bow, from a beat. */
