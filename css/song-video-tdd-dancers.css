@@ -6,13 +6,14 @@
  * (✗ / ✓), so state never depends on colour alone (WCAG 1.4.1).
  */
 
-/* Scaling a troupe keeps its feet on the floor. The couple always dances
-   in front of the teaching boxes: every troupe sits directly on the camera
-   layer, above the scenes' stacking contexts. */
+/* A troupe's SVG spans the whole stage, so one couple can travel through
+   every scene. The couple always dances in front of the teaching boxes:
+   every troupe sits directly on the camera layer, above the scenes'
+   stacking contexts. */
 .tdd-troupe {
   position: absolute;
   z-index: 8;
-  transform-origin: 50% 93%;
+  pointer-events: none;
 }
 
 .tdd-troupe-art {
@@ -282,6 +283,20 @@
 .tdd-gown-grad .tdd-stop--bottom { stop-color: #3a2b8e; }
 .tdd-page-grad .tdd-stop--top { stop-color: #fbf9ff; }
 .tdd-page-grad .tdd-stop--bottom { stop-color: #ddd5fb; }
+
+/* The refactoring spotlight on Code's gown: a cone of light from above, a
+   violet glow behind the gown, a bright band sweeping down the code lines
+   as they snap into place, and twinkling sparkles. All fade with the tidy. */
+.tdd-spot-grad .tdd-stop--top { stop-color: rgba(233, 225, 255, 0); }
+.tdd-spot-grad .tdd-stop--bottom { stop-color: rgba(233, 225, 255, 0.42); }
+.tdd-tidy-grad .tdd-stop--core { stop-color: rgba(167, 139, 250, 0.78); }
+.tdd-tidy-grad .tdd-stop--edge { stop-color: rgba(167, 139, 250, 0); }
+.tdd-sweep-grad .tdd-stop--edge { stop-color: rgba(255, 255, 255, 0); }
+.tdd-sweep-grad .tdd-stop--core { stop-color: rgba(255, 255, 255, 0.85); }
+
+.tdd-sparkle {
+  fill: #fff7d6;
+}
 
 .tdd-gown-hem {
   fill: none;

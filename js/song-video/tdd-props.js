@@ -381,18 +381,24 @@
   // ------------------------------------------------------------------
 
   /**
-   * beam(parent, { x, y, at, until, bugsIn, bugsDark }) — a cone of light
-   * from (x, y) spreading down-right; ladybugs inside it are revealed
-   * (bugsIn: [[x, y, at]]); others wait in the dark as faint eyes.
+   * beam(parent, { x, y, w, h, at, until, bugsIn, darkAt, mirror }) — a
+   * cone of light from (x, y) spreading down-right over w × h (with
+   * `mirror`, from (x + w, y) spreading down-left, for a lamp on the right
+   * of the stage); ladybugs inside it are revealed (bugsIn: [[x, y, at]]);
+   * from darkAt, others wait in the dark as faint eyes.
    */
-  function beam(parent, { x, y, w = 420, h = 260, at, until, bugsIn = [], darkAt }) {
+  function beam(parent, { x, y, w = 420, h = 260, at, until, bugsIn = [], darkAt, mirror = false }) {
     const node = el('div', 'tdd-beam-layer is-staged', parent);
-    const cone = place(el('div', 'tdd-beam', node), x, y);
+    const cone = place(el('div', `tdd-beam${mirror ? ' tdd-beam--mirror' : ''}`, node), x, y);
     cone.style.width = `${w}px`;
     cone.style.height = `${h}px`;
     for (const [bx, by, bAt] of bugsIn) tdd.bug(node, { x: bx, y: by, at: bAt, size: 46, rotate: hash01(bx) * 80 - 40 });
     if (darkAt !== undefined) {
-      const eyes = [[x + w + 60, y + 40], [x + 90, y + h + 30], [x + w + 20, y + h - 10], [x - 140, y + 120]].map(([ex, ey], i) => {
+      // Eyes wait in the dark beyond the beam, never behind the lamp.
+      const around = mirror
+        ? [[x - 70, y + 40], [x + 40, y + h + 26], [x - 30, y + h - 10], [x + w * 0.42, y - 44]]
+        : [[x + w + 60, y + 40], [x + 90, y + h + 30], [x + w + 20, y + h - 10], [x - 140, y + 120]];
+      const eyes = around.map(([ex, ey], i) => {
         const pair = place(el('div', 'tdd-beam-eyes is-staged', node), ex, ey);
         el('span', null, pair);
         el('span', null, pair);

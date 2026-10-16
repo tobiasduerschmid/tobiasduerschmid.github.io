@@ -298,6 +298,8 @@ body.is-fit {
 
 .stamp--gold { color: var(--gold); }
 .stamp--green { color: var(--green); }
+/* A second stamp beside a first one: still large, display-size text. */
+.stamp--small { padding: 4px 12px 3px; border-width: 4px; font-size: 26px; }
 
 .kinetic {
   position: absolute;

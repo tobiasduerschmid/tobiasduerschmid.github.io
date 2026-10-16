@@ -157,9 +157,14 @@ builds the scene before it shows the picture.
 
 "Red, Green, Refactor", the TDD song on `SEBook/testing/tdd.md`, uses the
 `ballroom` theme (`js/song-video/ballroom.js`) and three modules of its own:
-`tdd-dancers.js` draws Test and Code as one SVG rig whose keyed poses,
-waltz rise-and-fall on the beat grid, and two-bone IK for joined hands are
-all pure functions of song time; `tdd-kit.js` draws the notation (Python code
+`tdd-dancers.js` draws Test and Code as one stage-wide SVG rig whose keyed
+poses, travelling waltz on the beat grid, and two-bone IK for the hold (a
+promenade hold, joined hands, or the arch of an underarm turn) are all pure
+functions of song time. One couple dances the whole song: scenes move it with
+`place()`, and it walks or waltzes there on the beat instead of cutting
+between copies. `showcase()` is the refactoring moment: Test presents Code
+while the code lines on her gown snap into clean indentation under a
+spotlight. `tdd-kit.js` draws the notation (Python code
 cards with syntax colours, a pytest terminal, suites, the Red/Green/Refactor
 cycle, MyStack, the test pyramid); and `tdd-props.js` draws the pictures
 (floor tiles, mismatched gears that jam in an integration failure, a staff with

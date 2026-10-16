@@ -12,7 +12,9 @@
  *     alignment while the code is messy and line up in clean indentation
  *     when it is refactored: the structure changes, the dancer does not.
  *
- * A troupe (one or both dancers) is one SVG rig. Every pose is a pure
+ * A troupe (one or both dancers) is one stage-sized SVG rig that travels:
+ * place() glides it to a new spot and size on the beat (walking in time),
+ * so one couple can dance through every scene of a song. Every pose is a pure
  * function of song time: keyed joint angles blend with an ease, the waltz
  * rise-and-fall follows the storyboard's beat grid, and joined hands are
  * solved with two-bone inverse kinematics each frame, so seeking to any
@@ -46,9 +48,22 @@
 
   /** Arm poses by name; L and R are screen sides. */
   const POSES = {
-    stand: { armL: { sh: 12, el: -8 }, armR: { sh: -12, el: 8 } },
+    /** Poised: arms relaxed a little away from the body, elbows soft. */
+    stand: { armL: { sh: 14, el: -20 }, armR: { sh: -14, el: 20 } },
     open: { armL: { sh: 62, el: -14 }, armR: { sh: -62, el: 14 } },
-    flourish: { armL: { sh: 128, el: -24 }, armR: { sh: -128, el: 24 } },
+    /**
+     * The promenade line for the free (outer) arms: Test's at shoulder
+     * height, Code's a little higher, both extended with a soft elbow.
+     * The inner arms belong to the hold (see hold()).
+     */
+    frame: { armL: { sh: 108, el: -10 }, armR: { sh: -122, el: 14 } },
+    /** Presenting a partner: the free arm opens low and out to the side. */
+    present: { armL: { sh: 58, el: -14 } },
+    /** Code takes the spotlight: her free arm rises in a long line. */
+    spotlight: { armR: { sh: -142, el: 12 } },
+    /** A solo flourish: one arm high, the other opening out at the side. */
+    solo: { armL: { sh: 140, el: -18 }, armR: { sh: -66, el: 10 } },
+    flourish: { armL: { sh: 126, el: -16 }, armR: { sh: -136, el: 16 } },
     cheer: { armL: { sh: 160, el: -12 }, armR: { sh: -160, el: 12 }, face: 'joy' },
     hips: { armL: { sh: 42, el: 118 }, armR: { sh: -42, el: -118 } },
     offerR: { armL: { sh: 12, el: -8 }, armR: { sh: -76, el: -16 } },
@@ -429,9 +444,18 @@
     { indent: 1, bars: [[22, 'cm']] },
   ];
 
+  /** A four-point sparkle of radius 1, scaled per use. */
+  const SPARKLE = 'M0 -1 L0.22 -0.22 L1 0 L0.22 0.22 L0 1 L-0.22 0.22 L-1 0 L-0.22 -0.22 Z';
+  /** Where the refactoring sparkles twinkle around the gown (rig-local). */
+  const SPARKLES = [[-62, -44, 9], [64, -76, 8], [-48, -104, 7], [58, -18, 9], [-24, -138, 6], [36, -126, 7], [-70, -12, 7], [8, -150, 6]];
+
   function buildCode(parent, id) {
     const body = BODY.code;
     const root = svg('g', { class: 'tdd-dancer tdd-dancer--code' }, parent);
+    // Refactoring gets the spotlight: a cone of light from above and a glow
+    // behind the gown while its code lines snap into clean indentation.
+    const spot = svg('path', { class: 'tdd-tidy-spot', fill: `url(#${id}-spot)`, d: 'M-24 -440 L24 -440 L92 4 L-92 4 Z', opacity: 0 }, root);
+    const glow = svg('ellipse', { class: 'tdd-tidy-glow', fill: `url(#${id}-tidy)`, cx: 0, cy: -72, rx: 86, ry: 100, opacity: 0 }, root);
     const shadow = svg('ellipse', { class: 'tdd-shadow', cx: 0, cy: 0, rx: 46, ry: 6.5 }, root);
     const spin = svg('g', {}, root);
     const shoes = svg('g', {}, spin);
@@ -447,16 +471,20 @@
       const group = svg('g', {}, page);
       let x = 0;
       const bars = row.bars.map(([w, tone]) => {
-        const bar = svg('rect', { class: `tdd-code-bar tdd-code-bar--${tone}`, x, y: -2.6, width: w, height: 5.2, rx: 2.6 }, group);
-        x += w + 4;
+        const bar = svg('rect', { class: `tdd-code-bar tdd-code-bar--${tone}`, x, y: -3.2, width: w * 1.12, height: 6.4, rx: 3.2 }, group);
+        x += w * 1.12 + 4;
         return bar;
       });
-      // Messy: each row drifts by its own seeded offset and tilt.
-      const jitter = (hash01(i * 17 + 3) - 0.5) * 22;
-      const tilt = (hash01(i * 29 + 5) - 0.5) * 10;
+      // Messy: each row drifts by its own seeded offset and tilt, far enough
+      // that the snap into clean indentation reads at a glance.
+      const jitter = (hash01(i * 17 + 3) - 0.5) * 34;
+      const tilt = (hash01(i * 29 + 5) - 0.5) * 20;
       return { group, y, indent: row.indent, bars, jitter, tilt };
     });
+    // A bright band sweeps down the gown with the rows as they snap clean.
+    const sweep = svg('rect', { class: 'tdd-tidy-sweep', x: -80, y: -9, width: 160, height: 18, fill: `url(#${id}-sweep)`, opacity: 0 }, page);
     const hem = svg('path', { class: 'tdd-gown-hem' }, spin);
+    const sparkles = SPARKLES.map(([x, y, r]) => ({ x, y, r, node: svg('path', { class: 'tdd-sparkle', d: SPARKLE, opacity: 0 }, root) }));
     // The hem stays on the floor; the waist and everything above it ride on
     // `upper`, so the gown stretches and gathers with the rise and fall.
     const upper = svg('g', {}, spin);
@@ -517,15 +545,33 @@
         hem.setAttribute('d', d);
         skirtShade.setAttribute('d', `M2 ${f(waistY)} C10 -80 ${f(30 + s.sway * 6)} -40 ${f(44 + s.sway * 9 + s.flare)} -10 L${f(20 + s.sway * 6)} -8 C16 -40 8 -80 2 ${f(waistY)} Z`);
         const clean = clamp(s.clean, 0, 1);
-        for (const row of rows) {
+        // Rows snap clean one after another, top to bottom, each with a
+        // small overshoot, so a refactoring reads as code clicking into place.
+        const STAGGER = 0.6;
+        rows.forEach((row, i) => {
+          const local = clamp(clean * (1 + STAGGER) - (i / (rows.length - 1)) * STAGGER, 0, 1);
+          const c = local <= 0 ? 0 : local >= 1 ? 1 : ease.back(local);
           const halfWidth = 12 + ((row.y - body.hipY) / (-8 - body.hipY)) * (40 + s.flare * 0.8);
           const tidyX = -halfWidth + 7 + row.indent * 8 + s.sway * 9 * ((row.y - body.hipY) / 110);
-          const x = tidyX + (1 - clean) * row.jitter;
-          const tilt = (1 - clean) * row.tilt;
+          const x = tidyX + (1 - c) * row.jitter;
+          const tilt = (1 - c) * row.tilt;
           const down = (row.y - body.hipY) / (-8 - body.hipY);
           row.group.setAttribute('transform', `translate(${f(x)} ${f(row.y + s.bob * (1 - down))}) rotate(${f(tilt)})`);
-        }
+        });
         page.classList.toggle('is-messy', clean < 0.5);
+        // The spotlight while the code is being cleaned up.
+        const shine = clamp(s.tidyGlow || 0, 0, 1);
+        spot.setAttribute('opacity', f(0.75 * shine));
+        glow.setAttribute('opacity', f(0.9 * shine));
+        glow.setAttribute('ry', f(100 + s.flare * 0.6));
+        sweep.setAttribute('opacity', f(shine));
+        sweep.setAttribute('y', f(-115 + clean * 96));
+        sparkles.forEach((spark, i) => {
+          const life = (t * 1.35 + i * 0.37) % 1;
+          const size = spark.r * shine * Math.sin(Math.PI * life);
+          spark.node.setAttribute('opacity', f(shine > 0.02 ? Math.min(1, 1.6 * Math.sin(Math.PI * life)) * shine : 0));
+          spark.node.setAttribute('transform', `translate(${f(spark.x * s.spin)} ${f(spark.y + s.bob)}) rotate(${f(life * 90)}) scale(${f(Math.max(0.01, size))})`);
+        });
         head.setAttribute('transform', `rotate(${f(s.head)} 0 -176)`);
         arms.L.apply(s.armL);
         arms.R.apply(s.armR);
@@ -547,6 +593,9 @@
     }
     stops(svg('linearGradient', { id: `${id}-gown`, class: 'tdd-gown-grad', x1: 0, y1: 0, x2: 0.35, y2: 1 }, node), ['top', 'bottom']);
     stops(svg('linearGradient', { id: `${id}-page`, class: 'tdd-page-grad', x1: 0, y1: 0, x2: 0.4, y2: 1 }, node), ['top', 'bottom']);
+    stops(svg('linearGradient', { id: `${id}-spot`, class: 'tdd-spot-grad', x1: 0, y1: 0, x2: 0, y2: 1 }, node), ['top', 'bottom']);
+    stops(svg('radialGradient', { id: `${id}-tidy`, class: 'tdd-tidy-grad' }, node), ['core', 'edge']);
+    stops(svg('linearGradient', { id: `${id}-sweep`, class: 'tdd-sweep-grad', x1: 0, y1: 0, x2: 0, y2: 1 }, node), ['edge', 'core', 'edge']);
   }
 
   // ------------------------------------------------------------------
@@ -557,7 +606,7 @@
     x: 0, y: 0, bob: 0, lean: 0, head: 0, spin: 1, look: 0, face: 'happy', lamp: 'idle',
     armL: { ...POSES.stand.armL }, armR: { ...POSES.stand.armR },
     footL: { dx: 0, lift: 0 }, footR: { dx: 0, lift: 0 },
-    sway: 0, flare: 0, clean: 1, hold: 0,
+    sway: 0, flare: 0, clean: 1, hold: 0, embrace: 0, low: 0,
   };
 
   /**
@@ -566,19 +615,19 @@
    * { node, test, code, move, waltz, hold, twirl, … }: every method keys
    * motion at song times; none of them starts a clock.
    */
+  const STAGE = { w: 960, h: 540 };
+
   function troupe(parent, { x, y, scale = 1, at, until, members = ['test', 'code'], gap = 56 }) {
     const id = `tdd-troupe-${++uid}`;
-    const W = 420;
-    const H = 300;
-    const wrap = place(el('div', 'tdd-troupe is-staged', parent), x - (W / 2) * scale, y - (H - 20) * scale);
-    wrap.style.width = `${W * scale}px`;
-    wrap.style.height = `${H * scale}px`;
-    const art = svg('svg', { class: 'tdd-troupe-art', viewBox: `${-W / 2} ${-(H - 20)} ${W} ${H}`, width: W * scale, height: H * scale, 'aria-hidden': 'true' }, wrap);
+    const wrap = place(el('div', 'tdd-troupe is-staged', parent), 0, 0);
+    const art = svg('svg', { class: 'tdd-troupe-art', viewBox: `0 0 ${STAGE.w} ${STAGE.h}`, width: STAGE.w, height: STAGE.h, 'aria-hidden': 'true' }, wrap);
     defs(art, id);
-    // The floor group moves and scales the troupe (scaling about the feet
-    // reads as a step toward or away from the viewer).
+    // The floor group carries the troupe across the stage: x, y are the
+    // stage point between the dancers' feet, and scaling about the feet
+    // reads as a step toward or away from the viewer.
     const floor = svg('g', {}, art);
-    const stagePos = track({ x: 0, y: 0 });
+    const origin = { x, y, scale };
+    const stagePos = track({ ...origin });
     const dancers = {};
     members.forEach((kind) => {
       const offset = members.length === 2 ? (kind === 'test' ? -gap : gap) : 0;
@@ -588,6 +637,8 @@
     });
     const waltzes = [];
     const twirls = [];
+    /** Rig units from the troupe's x to the middle of the couple's footprint. */
+    const footprint = dancers.test && dancers.code ? (54 - 14) / 2 : 0;
 
     function poseOf(name) {
       const pose = POSES[name];
@@ -620,8 +671,17 @@
       const travel = active.travel;
       const glide = smooth(phase / 0.7);
       const swing = Math.PI * (index + phase);
+      // Progressive travel: over eight measures the couple circles the
+      // floor, out toward stage centre's far side and back, and toward and
+      // away from the viewer, so the waltz moves through space instead of
+      // rocking in place. The loop starts and ends where the couple was
+      // placed and only ever drifts away from the teaching boxes (to +x).
+      // Each measure advances on its "1" and settles by "3", like the box step.
+      const measure = index - beats.index(active.from) + smooth(phase / 0.8);
+      const around = (2 * Math.PI * measure) / 8;
       return {
         fade, index, phase, dir, travel,
+        roam: { x: active.roam * 0.5 * (1 - Math.cos(around)), y: 6 * Math.sin(around), scale: 1 + 0.03 * Math.sin(around) },
         rise: riseOf(phase),
         x: travel * dir * (2 * glide - 1),
         lead: { from: -travel * dir, to: travel * dir, at: smooth(phase / 0.42), lift: Math.sin(Math.PI * clamp(phase / 0.42, 0, 1)) },
@@ -632,22 +692,38 @@
       };
     }
 
-    /** Footwork while a dancer travels outside a waltz: one step per stride. */
-    const STRIDE = 26;
+    /**
+     * Footwork while a dancer travels outside a waltz: one step per beat, so
+     * a walk between scenes is in time with the music. Speed is measured in
+     * stage pixels and counts sideways travel, travel up or down the floor,
+     * and moving toward or away from the viewer (a change of scale).
+     */
     function walkOf(dancer, t) {
-      const xAt = (time) => dancer.state.value(time).x + stagePos.value(time).x;
-      const x = xAt(t);
-      const speed = Math.abs(x - xAt(t - 0.1)) / 0.1;
-      const amount = smooth((speed - 6) / 50);
+      const where = (time) => {
+        const pos = stagePos.value(time);
+        return [pos.x + dancer.state.value(time).x * pos.scale, pos.y, pos.scale];
+      };
+      const [x, y, sc] = where(t);
+      const [x0, y0, sc0] = where(t - 0.1);
+      const speed = Math.hypot(x - x0, (y - y0) * 1.5, (sc - sc0) * 260) / 0.1;
+      const amount = smooth((speed - 8) / 60);
       if (amount <= 0) return null;
-      const cycle = Math.sin((Math.PI * x) / STRIDE);
+      const { index, phase } = beats.at(t);
+      const cycle = Math.sin(Math.PI * (index + phase));
       return {
         amount,
-        liftL: Math.max(0, cycle) * 7 * amount,
-        liftR: Math.max(0, -cycle) * 7 * amount,
+        liftL: Math.max(0, cycle) * 8 * amount,
+        liftR: Math.max(0, -cycle) * 8 * amount,
         dip: Math.abs(cycle) * 2.5 * amount,
-        velocity: (x - xAt(t - 0.2)) / 0.2,
+        velocity: (x - where(t - 0.2)[0]) / 0.2 / sc,
       };
+    }
+
+    /** How far an underarm turn is under way at t (0 outside one, 1 in it). */
+    function archAt(t) {
+      const turn = twirls.find((tw) => tw.who === 'code' && t >= tw.at - 0.35 && t <= tw.at + tw.dur + 0.35);
+      if (!turn || !dancers.test || !dancers.code) return 0;
+      return smooth((t - turn.at + 0.35) / 0.35) * smooth((turn.at + turn.dur + 0.35 - t) / 0.35);
     }
 
     function stateOf(dancer, t, couple, w) {
@@ -661,6 +737,22 @@
         armR: { ...s.armR, el: lagged.armR.el },
         head: dancer.state.value(t - 0.05).head,
       };
+      // In the promenade hold (and under an arch) the partners stand close
+      // enough to touch: Test's arm behind Code's back, her hand on his shoulder.
+      const arch = archAt(t);
+      const closer = Math.max(s.embrace * Math.max(0, Math.abs(dancer.home) - 40), arch * Math.max(0, Math.abs(dancer.home) - 34));
+      if (closer > 0) s.x -= Math.sign(dancer.home) * closer;
+      if (arch > 0) s.hold = Math.max(s.hold, arch);
+      if (!isTest) {
+        // Cleaning up: the spotlight follows the rate of the tidy, with a
+        // short afterglow, and the gown lifts and flares as the code snaps.
+        const rate = (s.clean - lagged.clean) / 0.08;
+        const earlier = dancer.state.value(t - 0.35);
+        const rateEarlier = (earlier.clean - dancer.state.value(t - 0.43).clean) / 0.08;
+        s.tidyGlow = clamp(Math.max(rate, 0.8 * rateEarlier) / 0.8, 0, 1);
+        s.flare += 7 * s.tidyGlow;
+        s.bob -= 2 * s.tidyGlow;
+      }
       // Alive at rest, in time: a soft settle on every beat and a weight
       // shift that sways the couple together over two beats.
       const pulse = beats.at(t);
@@ -670,8 +762,10 @@
       const outerSign = isTest ? 1 : -1;
       if (w) {
         const e = w.fade;
+        const inward = isTest ? 1 : -1;
         s.bob += (4 - 7 * w.rise) * e;
-        s.lean += 3.2 * w.sway * e;
+        s.lean += (3.2 * w.sway + 2.2 * inward) * e;
+        s.head += 3 * inward * e;
         s.x += w.x * e;
         s.head += (isTest ? 2.5 * w.lag(0.3) : -2 + 3 * w.lag(0.45)) * e;
         // The free arms float on the beat, the forearm a little behind.
@@ -710,22 +804,23 @@
         const p = (t - twirl.at) / twirl.dur;
         const lift = Math.sin(Math.PI * p);
         // Turning: the figure narrows to a profile (never a paper-thin line)
-        // and widens again, while the gown flares and the body rises.
+        // and widens again, while the gown flares and the body rises. The
+        // inner hands stay joined above her head (archAt), so she turns
+        // under Test's raised arm; her free arm stays rounded and low.
         const c = Math.cos(2 * Math.PI * twirl.turns * ease.inOut(p));
         s.spin = Math.sign(c || 1) * Math.max(0.24, Math.abs(c));
         s.flare += 20 * lift;
         s.bob -= 4 * lift;
         s.head -= 6 * lift;
-        s.hold = 0;
-        if (twirl.who === 'code') s.armL = mix(s.armL, { sh: 162, el: -12 }, smooth(p / 0.2) * smooth((1 - p) / 0.2));
+        if (twirl.who === 'code') s.armR = mix(s.armR, { sh: -52, el: 46 }, smooth(p / 0.2) * smooth((1 - p) / 0.2));
       }
       if (couple && s.hold > 0) {
-        const target = couple.handAt;
+        const target = isTest ? couple.test : couple.code;
         const body = dancer.rig.body;
         const side = isTest ? 'R' : 'L';
         const sign = side === 'L' ? -1 : 1;
-        // Target in this dancer's un-leaned body coordinates.
-        const local = rotateAbout([target[0] - s.x, target[1] - s.y - s.bob], [0, body.hipY], -s.lean);
+        // Target in this dancer's un-leaned, un-turned body coordinates.
+        const local = rotateAbout([(target[0] - s.x) / (s.spin || 1), target[1] - s.y - s.bob], [0, body.hipY], -s.lean);
         const shoulder = [sign * body.shoulder[0], body.shoulder[1]];
         const solved = reach(shoulder, local, body.upper, body.fore, side === 'R' ? 1 : -1);
         const key = `arm${side}`;
@@ -738,22 +833,38 @@
       if (t < at - 0.5 || (until !== undefined && t > until + 0.5)) return;
       const pos = stagePos.value(t);
       const w = waltzAt(t);
-      const depth = w ? 1 + (w.depth - 1) * w.fade : 1;
-      floor.setAttribute('transform', `translate(${f(pos.x)} ${f(pos.y)}) scale(${depth.toFixed(4)})`);
+      const roam = w ? { x: w.roam.x * w.fade, y: w.roam.y * w.fade, scale: 1 + (w.roam.scale * w.depth - 1) * w.fade } : { x: 0, y: 0, scale: 1 };
+      const scaleNow = pos.scale * roam.scale;
+      floor.setAttribute('transform', `translate(${f(pos.x + roam.x)} ${f(pos.y + roam.y)}) scale(${scaleNow.toFixed(4)})`);
       const raw = {};
       for (const dancer of Object.values(dancers)) raw[dancer.kind] = stateOf(dancer, t, null, w);
       let couple = null;
       if (dancers.test && dancers.code) {
-        // Inner hands meet a little below and between the inner shoulders.
-        const shoulderOf = (kind, s) => {
-          const body = dancers[kind].rig.body;
-          const sign = kind === 'test' ? 1 : -1;
-          const p = rotateAbout([sign * body.shoulder[0], body.shoulder[1]], [0, body.hipY], s.lean);
+        // A point on a dancer's body (body-local, before lean and turn).
+        const on = (kind, [px, py]) => {
+          const s = raw[kind];
+          const p = rotateAbout([px, py], [0, dancers[kind].rig.body.hipY], s.lean);
           return [s.x + p[0] * s.spin, s.y + s.bob + p[1]];
         };
-        const a = shoulderOf('test', raw.test);
-        const b = shoulderOf('code', raw.code);
-        couple = { handAt: [(a[0] + b[0]) / 2, Math.max(a[1], b[1]) + 30] };
+        const lerp = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+        // Hand in hand: the inner hands meet between the inner shoulders,
+        // a little higher while waltzing.
+        const a = on('test', [BODY.test.shoulder[0], BODY.test.shoulder[1]]);
+        const b = on('code', [-BODY.code.shoulder[0], BODY.code.shoulder[1]]);
+        // Presenting (low): the joined hands drop to waist height between them.
+        const drop = 30 + 26 * Math.max(raw.test.low, raw.code.low) - (w ? 16 * w.fade : 0);
+        const hands = [(a[0] + b[0]) / 2, Math.max(a[1], b[1]) + drop];
+        // Promenade hold: Test's hand on Code's back, behind her; Code's hand
+        // resting on top of Test's near shoulder, her arm in a long line.
+        const back = on('code', [-2, -150]);
+        const shoulder = on('test', [16, -177]);
+        // Underarm turn: the joined hands rise above Code's head.
+        const arch = [raw.code.x - 20, raw.code.y + raw.code.bob - 222];
+        const k = archAt(t);
+        couple = {
+          test: lerp(lerp(hands, back, raw.test.embrace), arch, k),
+          code: lerp(lerp(hands, shoulder, raw.code.embrace), arch, k),
+        };
       }
       for (const dancer of Object.values(dancers)) dancer.rig.apply(t, stateOf(dancer, t, couple, w));
     });
@@ -777,7 +888,7 @@
        * footprint (Test's shoes on the left, Code's hem on the right), so a
        * caller can centre the couple on a floor mark.
        */
-      footprintCenter: dancers.test && dancers.code ? ((gap + 54 - (gap + 14)) / 2) * scale : 0,
+      footprintCenter: footprint * scale,
       /**
        * Keys one dancer: a pose name and/or a partial state. A gesture starts
        * on the triplet nearest its sung word (at most a sixth of a beat away).
@@ -795,7 +906,20 @@
        * short of its target by the scale factor.
        */
       move(atTime, dx, dy, dur = 0.8) {
-        stagePos.add(arrivingOnBeat(atTime, dur), { x: dx / scale, y: dy / scale }, dur);
+        stagePos.add(arrivingOnBeat(atTime, dur), { x: origin.x + dx, y: origin.y + dy }, dur);
+        return api;
+      },
+      /**
+       * Glides the troupe so the middle of its footprint stands at stage
+       * (x, y) at `scale`, arriving on a beat. Partial targets keep the rest.
+       * Outside a waltz the dancers walk there, one step per beat.
+       */
+      place(atTime, { x: px, y: py, scale: ps } = {}, dur = 1.2) {
+        const target = {};
+        if (ps !== undefined) target.scale = ps;
+        if (py !== undefined) target.y = py;
+        if (px !== undefined) target.x = px - footprint * (ps ?? stagePos.value(atTime).scale);
+        stagePos.add(arrivingOnBeat(atTime, dur), target, dur);
         return api;
       },
       /** Moves one dancer to x (rig-local), keeping the other in place; arrives on a beat. */
@@ -803,29 +927,55 @@
         dancers[kind].state.add(arrivingOnBeat(atTime, dur), { x: dancers[kind].home + dx }, dur);
         return api;
       },
-      /** Joins (or releases) the inner hands on a beat; the other arms take `pose`. */
-      hold(atTime, { pose = 'open', dur = 0.5, release = false } = {}) {
+      /**
+       * Takes (or releases) the hold on a beat; the free arms take `pose`.
+       * style 'promenade' (the default): Test's inner arm around Code's
+       * back and her hand on his shoulder, standing close; 'hands': the
+       * inner hands joined between them.
+       */
+      hold(atTime, { pose = 'frame', dur = 0.5, release = false, style = 'promenade' } = {}) {
         keyAll(dur < 0.1 ? atTime : nearestBeat(atTime), (dancer) => ({
           hold: release ? 0 : 1,
+          embrace: !release && style === 'promenade' ? 1 : 0,
           [dancer.kind === 'test' ? 'armL' : 'armR']: poseOf(pose)[dancer.kind === 'test' ? 'armL' : 'armR'],
         }), dur);
         return api;
       },
+      /**
+       * The refactoring showcase, a ballroom presentation: the couple opens
+       * out to arm's length, hand in hand; Test presents Code with his free
+       * arm opening low to the side, and she takes the spotlight with her
+       * free arm raised while the code lines on her gown snap into clean
+       * indentation, row by row. They close into the hold again on the beat
+       * at `until`.
+       */
+      showcase(atTime, { until, clean = 1 } = {}) {
+        const begin = nearestBeat(atTime);
+        const back = nearestBeat(until ?? begin + 2.4);
+        const tidyDur = clamp(back - begin - 0.4, 1.1, 2.2);
+        keyAll(begin, () => ({ hold: 1, embrace: 0, low: 1 }), 0.5);
+        if (dancers.test) dancers.test.state.add(begin, { ...POSES.present, look: 1, face: 'joy', lean: -4 }, 0.5);
+        if (dancers.code) {
+          dancers.code.state.add(begin, { ...POSES.spotlight, look: 0, face: 'joy', head: -4, lean: 2 }, 0.5);
+          dancers.code.state.add(begin + 0.2, { clean }, tidyDur);
+        }
+        keyAll(back, (dancer) => ({
+          hold: 1, embrace: 1, low: 0, lean: 0, head: 0, look: dancer.kind === 'test' ? 1 : -1,
+          [dancer.kind === 'test' ? 'armL' : 'armR']: POSES.frame[dancer.kind === 'test' ? 'armL' : 'armR'],
+        }), 0.5);
+        return api;
+      },
       /** The waltz box step (rise, fall, alternating feet) during [from, to). */
-      waltz(from, to, { travel = 10 } = {}) {
-        waltzes.push({ from, to, travel });
+      waltz(from, to, { travel = 10, roam = 26 } = {}) {
+        waltzes.push({ from, to, travel, roam });
         return api;
       },
       /** Code spins under Test's raised arm: from a beat, for whole beats. */
       twirl(atTime, { dur = 1, turns = 1, who = 'code' } = {}) {
         const start = nearestBeat(atTime);
         const length = wholeBeats(start, dur);
+        // The joined hands rise into an arch over her head (see archAt).
         twirls.push({ at: start, dur: length, turns, who });
-        if (dancers.test && who === 'code') {
-          // Test lifts the joined hands into an arch, then lowers them again.
-          dancers.test.state.add(start - 0.3, { armR: { sh: -158, el: 14 }, hold: 0 }, 0.35);
-          dancers.test.state.add(start + length - 0.1, { hold: 1 }, 0.45);
-        }
         return api;
       },
       /**
@@ -835,6 +985,8 @@
       dip(atTime, { dur = 0.9, depth = 1 } = {}) {
         const start = arrivingOnBeat(atTime, dur);
         keyAll(start - 0.35, (dancer) => ({ bob: -3, lean: dancer.kind === 'code' ? -3 : 0 }), 0.35);
+        // Test's arm supports her back (the promenade hold) through the dip.
+        keyAll(start - 0.35, () => ({ hold: 1, embrace: 1 }), 0.35);
         if (dancers.code) dancers.code.state.add(start, { lean: 26 * depth, head: 12 * depth, bob: 5 * depth, armR: { sh: -150, el: 26 }, face: 'joy' }, dur);
         if (dancers.test) dancers.test.state.add(start, { lean: 11 * depth, head: 8 * depth, bob: 8 * depth, armL: { sh: 118, el: -28 } }, dur);
         return api;
@@ -844,9 +996,15 @@
         keyAll(nearestBeat(atTime), () => ({ lean: 0, head: 0, bob: 0 }), dur);
         return api;
       },
-      /** Both bow toward each other, from a beat. */
+      /**
+       * Test bows (right hand to his chest, left arm opening to the side)
+       * and Code curtsies (sinking, both hands lifting her skirt), from a beat.
+       */
       bow(atTime, { dur = 0.6 } = {}) {
-        keyAll(nearestBeat(atTime), (dancer) => ({ lean: dancer.kind === 'test' ? 16 : -14, head: dancer.kind === 'test' ? 6 : -6, face: 'smile' }), dur);
+        const at0 = nearestBeat(atTime);
+        keyAll(at0, (dancer) => ({ hold: 0, embrace: 0, lean: dancer.kind === 'test' ? 16 : -12, head: dancer.kind === 'test' ? 6 : -8, face: 'smile' }), dur);
+        if (dancers.test) dancers.test.state.add(at0, { armR: POSES.bow.armR, armL: { sh: 52, el: -14 } }, dur);
+        if (dancers.code) dancers.code.state.add(at0, { armL: { sh: 40, el: 30 }, armR: { sh: -40, el: -30 }, bob: 8 }, dur);
         return api;
       },
       /** Test's lamp: 'idle' | 'red' | 'green' (with ✗ or ✓ on the badge). */

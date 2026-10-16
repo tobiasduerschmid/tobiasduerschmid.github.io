@@ -532,6 +532,11 @@
   clip-path: polygon(0 0, 100% 30%, 100% 100%, 10% 100%, 0 6%);
 }
 
+/* A beam from a lamp on the right, spreading left across the stage. */
+.tdd-beam--mirror {
+  transform: scaleX(-1);
+}
+
 .tdd-beam-eyes {
   position: absolute;
   display: flex;

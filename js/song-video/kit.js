@@ -162,8 +162,8 @@
     return node;
   }
 
-  function stamp(parent, text, { x, y, at, until, color = 'red', rotate = -8, shake = true }) {
-    const node = place(el('div', `stamp stamp--${color} is-staged`, parent, text), x, y);
+  function stamp(parent, text, { x, y, at, until, color = 'red', rotate = -8, shake = true, small = false }) {
+    const node = place(el('div', `stamp stamp--${color}${small ? ' stamp--small' : ''} is-staged`, parent, text), x, y);
     fx.slam(node, at, { from: 2.6, rotate });
     if (shake) camera.shake(at + 0.12, 6);
     if (until !== undefined) fx.fadeOut(node, until, 0.25);
