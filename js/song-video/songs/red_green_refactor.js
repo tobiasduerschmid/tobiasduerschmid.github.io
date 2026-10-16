@@ -48,6 +48,13 @@
 
     // The couple: one troupe from the title to the last bow.
     const couple = dancers.troupe(content, { x: 480, y: 452, scale: 1.0, at: 0.6, until: song.duration });
+    if (student && student.savedAppearance) {
+      let disposed = false;
+      window.Timeline.onDispose(() => { disposed = true; });
+      student.savedAppearance.then((appearance) => {
+        if (!disposed && appearance && appearance.kind === 'human') couple.codeSkin(appearance);
+      });
+    }
     /** Where the couple dances beside the teaching boxes (footprint centre, feet, scale). */
     const SPOT = {
       side: { x: 818, y: 456, scale: 1.12 },

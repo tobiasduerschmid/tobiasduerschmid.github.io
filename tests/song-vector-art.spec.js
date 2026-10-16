@@ -574,3 +574,65 @@ test('TDD renderer-only: regression score names fit their measures', async ({ pa
     expect(overflow, await label.innerText()).toBeLessThanOrEqual(1);
   }
 });
+
+for (const skin of ['#f8dfcf', '#291713']) {
+  test(`TDD Code inherits the saved human skin ${skin} across scenes and themes`, async ({ page }) => {
+    const saved = JSON.stringify({ ...humanHero, appearance: { ...humanHero.appearance, skin } });
+    await page.addInitScript(({ key, saved }) => localStorage.setItem(key, saved), { key: STORAGE_KEY, saved });
+    await page.goto('/assets/song-player/red-green-refactor.html');
+    await expect(page.getByTestId('song-picture')).toBeVisible();
+    const rgb = `rgb(${skin.slice(1).match(/../g).map((part) => parseInt(part, 16)).join(', ')})`;
+    for (const dark of [false, true]) {
+      await page.evaluate((dark) => document.documentElement.classList.toggle('dark-mode', dark), dark);
+      for (const time of [2, 120, 343]) {
+        await tddBodyGeometry(page, time);
+        await expect(page.locator('.tdd-page-grad .tdd-stop--bottom')).toHaveCSS('stop-color', rgb);
+        for (const part of ['.tdd-paper', '.tdd-arm--code .tdd-arm-fore']) {
+          for (const node of await page.locator(part).all()) await expect(node).toHaveCSS('fill', rgb);
+        }
+        await expect(page.locator('.tdd-code-bar--id').first()).toHaveCSS('fill', 'rgb(231, 224, 255)');
+        const contrast = await page.locator('.tdd-dancer--code .tdd-eye').first().evaluate((eye, skin) => {
+          const ink = getComputedStyle(eye).fill.match(/\d+/g).map(Number);
+          const hex = '#' + ink.map((n) => n.toString(16).padStart(2, '0')).join('');
+          return window.HeroAvatar.contrastRatio(skin, hex);
+        }, skin);
+        expect(contrast).toBeGreaterThanOrEqual(3);
+      }
+    }
+    expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe(saved);
+    await page.getByTestId('song-picture').screenshot({ path: `/tmp/tdd-code-skin-${skin.slice(1)}.png` });
+  });
+}
+
+for (const [name, saved] of [['unsaved', null], ['Bruin', JSON.stringify(bruinHero)], ['Prof', JSON.stringify({ ...humanHero, kind: 'tobias' })], ['invalid', '{broken']]) {
+  test(`TDD Code keeps her original palette with ${name} avatar data`, async ({ page }) => {
+    await page.addInitScript(({ key, saved }) => {
+      if (saved === null) localStorage.removeItem(key);
+      else localStorage.setItem(key, saved);
+    }, { key: STORAGE_KEY, saved });
+    await page.goto('/assets/song-player/red-green-refactor.html');
+    await expect(page.getByTestId('song-student-avatar')).toHaveAttribute('data-avatar-state', /saved|default/);
+    await tddBodyGeometry(page, 2);
+    await expect(page.locator('.tdd-page-grad .tdd-stop--bottom')).toHaveCSS('stop-color', 'rgb(221, 213, 251)');
+    await expect(page.locator('.tdd-paper')).toHaveCSS('fill', 'rgb(231, 224, 255)');
+    expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe(saved);
+  });
+}
+
+test('TDD Code remains usable when avatar storage is denied', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.addInitScript(() => {
+    const getItem = Storage.prototype.getItem;
+    Storage.prototype.getItem = function (key) {
+      if (key === 'se-gym-hero-avatar') throw new DOMException('Storage denied', 'SecurityError');
+      return getItem.call(this, key);
+    };
+  });
+  await page.goto('/assets/song-player/red-green-refactor.html');
+  await expect(page.getByTestId('song-student-avatar')).toHaveAttribute('data-avatar-state', 'default');
+  await tddBodyGeometry(page, 120);
+  await expect(page.locator('.tdd-page-grad .tdd-stop--bottom')).toHaveCSS('stop-color', 'rgb(221, 213, 251)');
+  await expect(page.getByRole('button', { name: 'Play song', exact: true })).toBeEnabled();
+  expect(errors).toEqual([]);
+});

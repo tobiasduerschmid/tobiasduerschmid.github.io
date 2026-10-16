@@ -975,6 +975,13 @@
 
     const api = {
       node: wrap,
+      /** Runtime palette from the saved human hero; defaults remain in CSS. */
+      codeSkin({ skin, ink, glint }) {
+        wrap.style.setProperty('--tdd-code-skin', skin);
+        wrap.style.setProperty('--tdd-code-ink', ink);
+        wrap.style.setProperty('--tdd-code-glint', glint);
+        return api;
+      },
       /**
        * Stage-pixel offset from the troupe's x to the middle of the couple's
        * footprint (Test's shoes on the left, Code's hem on the right), so a
