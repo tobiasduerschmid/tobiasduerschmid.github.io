@@ -618,7 +618,17 @@
   overflow: visible;
 }
 
-.tdd-bug-legs path,
+/* The light outline under the bug's dark parts; it must come before the
+   leg rule below, which styles the dark strokes drawn on top of it. */
+.tdd-bug .tdd-bug-halo {
+  fill: none;
+  stroke: #fde8ee;
+  stroke-width: 5.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tdd-bug-legs path:not(.tdd-bug-halo),
 .tdd-bug-antenna {
   fill: none;
   stroke: #12081a;

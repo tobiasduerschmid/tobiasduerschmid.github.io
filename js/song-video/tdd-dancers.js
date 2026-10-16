@@ -47,35 +47,42 @@
   };
 
   /** Arm poses by name; L and R are screen sides. */
+  /**
+   * Arm poses by name; L and R are screen sides. `wr` bends the wrist: for
+   * a left arm, + lifts the hand toward up; for a right arm, − does.
+   */
   const POSES = {
     /** Poised: arms relaxed a little away from the body, elbows soft. */
-    stand: { armL: { sh: 14, el: -20 }, armR: { sh: -14, el: 20 } },
-    open: { armL: { sh: 62, el: -14 }, armR: { sh: -62, el: 14 } },
+    stand: { armL: { sh: 14, el: -20, wr: 6 }, armR: { sh: -14, el: 20, wr: -6 } },
+    open: { armL: { sh: 62, el: -14, wr: 10 }, armR: { sh: -62, el: 14, wr: -10 } },
     /**
-     * The promenade line for the free (outer) arms: Test's at shoulder
-     * height, Code's a little higher, both extended with a soft elbow.
-     * The inner arms belong to the hold (see hold()).
+     * The promenade line for the free (outer) arms: each extends from the
+     * shoulder in a soft curve, elbow slightly lower than the hand, and the
+     * hand lifts at the wrist. Test's line stays near shoulder height;
+     * Code's rides higher. The inner arms belong to the hold (see hold()).
      */
-    frame: { armL: { sh: 108, el: -10 }, armR: { sh: -122, el: 14 } },
-    /** Presenting a partner: the free arm opens low and out to the side. */
-    present: { armL: { sh: 58, el: -14 } },
+    frame: { armL: { sh: 96, el: 12, wr: 16 }, armR: { sh: -112, el: -8, wr: -14 } },
+    /** Presenting a partner: the free arm opens low to the side, palm up. */
+    present: { armL: { sh: 58, el: -14, wr: 26 } },
     /** Code takes the spotlight: her free arm rises in a long line. */
-    spotlight: { armR: { sh: -142, el: 12 } },
+    spotlight: { armR: { sh: -142, el: 12, wr: -16 } },
     /** A solo flourish: one arm high, the other opening out at the side. */
-    solo: { armL: { sh: 140, el: -18 }, armR: { sh: -66, el: 10 } },
-    flourish: { armL: { sh: 126, el: -16 }, armR: { sh: -136, el: 16 } },
-    cheer: { armL: { sh: 160, el: -12 }, armR: { sh: -160, el: 12 }, face: 'joy' },
-    hips: { armL: { sh: 42, el: 118 }, armR: { sh: -42, el: -118 } },
-    offerR: { armL: { sh: 12, el: -8 }, armR: { sh: -76, el: -16 } },
-    offerL: { armL: { sh: 76, el: 16 }, armR: { sh: -12, el: 8 } },
-    pointR: { armL: { sh: 14, el: -6 }, armR: { sh: -104, el: -4 } },
-    pointL: { armL: { sh: 104, el: 4 }, armR: { sh: -14, el: 6 } },
-    stopR: { armL: { sh: 14, el: -6 }, armR: { sh: -118, el: -48 }, face: 'focus' },
-    stopL: { armL: { sh: 118, el: 48 }, armR: { sh: -14, el: 6 }, face: 'focus' },
-    thinkR: { armL: { sh: 30, el: 112 }, armR: { sh: -24, el: -150 }, face: 'focus' },
-    shrug: { armL: { sh: 48, el: -96 }, armR: { sh: -48, el: 96 }, face: 'o' },
-    bow: { lean: 0, armL: { sh: 8, el: -4 }, armR: { sh: -52, el: -92 } },
-    wave: { armL: { sh: 12, el: -8 }, armR: { sh: -140, el: -26 }, face: 'joy' },
+    solo: { armL: { sh: 140, el: -18, wr: 16 }, armR: { sh: -66, el: 10, wr: -22 } },
+    flourish: { armL: { sh: 126, el: -16, wr: 14 }, armR: { sh: -136, el: 16, wr: -14 } },
+    cheer: { armL: { sh: 160, el: -12, wr: 0 }, armR: { sh: -160, el: 12, wr: 0 }, face: 'joy' },
+    /** Hands on hips: elbows out, forearms angled back in to the waist. */
+    hips: { armL: { sh: 40, el: -92, wr: -20 }, armR: { sh: -40, el: 92, wr: 20 } },
+    offerR: { armL: { sh: 14, el: -20, wr: 6 }, armR: { sh: -70, el: -14, wr: -18 } },
+    offerL: { armL: { sh: 70, el: 14, wr: 18 }, armR: { sh: -14, el: 20, wr: -6 } },
+    pointR: { armL: { sh: 14, el: -6, wr: 0 }, armR: { sh: -104, el: -4, wr: 0 } },
+    pointL: { armL: { sh: 104, el: 4, wr: 0 }, armR: { sh: -14, el: 6, wr: 0 } },
+    /** Stop: the arm straight out at shoulder height, the palm turned up and out. */
+    stopR: { armL: { sh: 14, el: -20, wr: 6 }, armR: { sh: -98, el: -6, wr: -80 }, face: 'focus' },
+    stopL: { armL: { sh: 98, el: 6, wr: 80 }, armR: { sh: -14, el: 20, wr: -6 }, face: 'focus' },
+    thinkR: { armL: { sh: 30, el: 112, wr: 0 }, armR: { sh: -24, el: -150, wr: 0 }, face: 'focus' },
+    shrug: { armL: { sh: 48, el: -96, wr: 0 }, armR: { sh: -48, el: 96, wr: 0 }, face: 'o' },
+    bow: { lean: 0, armL: { sh: 8, el: -4, wr: 0 }, armR: { sh: -52, el: -92, wr: 0 } },
+    wave: { armL: { sh: 14, el: -20, wr: 6 }, armR: { sh: -140, el: -26, wr: -10 }, face: 'joy' },
   };
 
   const MOUTHS = {
@@ -267,6 +274,7 @@
         const x = side === 'L' ? -sx : sx;
         upperArm.setAttribute('transform', `translate(${x} ${sy}) rotate(${f(angles.sh)})`);
         foreArm.setAttribute('transform', `translate(0 ${body.upper}) rotate(${f(angles.el)})`);
+        hand.setAttribute('transform', `translate(0 ${body.fore + 1}) rotate(${f(angles.wr || 0)})`);
       },
     };
   }
@@ -466,20 +474,36 @@
     const skirt = svg('path', { class: 'tdd-gown', fill: `url(#${id}-gown)` }, spin);
     const skirtShade = svg('path', { class: 'tdd-gown-fold' }, spin);
     const page = svg('g', { 'clip-path': `url(#${id}-skirt)` }, spin);
+    // Messy code is spaghetti: rows out of order, at the wrong indentation
+    // and tilted; inside each row, tokens scattered, turned, and of uneven
+    // length. Clean code is one neat row per line. Every offset is seeded,
+    // so the mess is the same on every seek, and all of it collapses to zero
+    // as the code is cleaned.
+    const ORDER = [2, 0, 5, 1, 7, 3, 6, 4];
     const rows = CODE_ROWS.map((row, i) => {
       const y = -106 + i * 11.5;
       const group = svg('g', {}, page);
       let x = 0;
-      const bars = row.bars.map(([w, tone]) => {
-        const bar = svg('rect', { class: `tdd-code-bar tdd-code-bar--${tone}`, x, y: -3.2, width: w * 1.12, height: 6.4, rx: 3.2 }, group);
-        x += w * 1.12 + 4;
-        return bar;
+      const bars = row.bars.map(([w, tone], k) => {
+        const width = w * 1.12;
+        const bar = svg('rect', { class: `tdd-code-bar tdd-code-bar--${tone}`, x, y: -3.2, width, height: 6.4, rx: 3.2 }, group);
+        const seed = i * 31 + k * 7;
+        const messy = {
+          dx: (hash01(seed + 1) - 0.5) * 18,
+          dy: (hash01(seed + 2) - 0.5) * 8,
+          turn: (hash01(seed + 3) - 0.5) * 44,
+          stretch: 0.55 + hash01(seed + 4) * 1.0,
+        };
+        x += width + 4;
+        return { node: bar, x: x - width - 4, width, messy };
       });
-      // Messy: each row drifts by its own seeded offset and tilt, far enough
-      // that the snap into clean indentation reads at a glance.
-      const jitter = (hash01(i * 17 + 3) - 0.5) * 34;
-      const tilt = (hash01(i * 29 + 5) - 0.5) * 20;
-      return { group, y, indent: row.indent, bars, jitter, tilt };
+      return {
+        group, y, indent: row.indent, bars,
+        jitter: (hash01(i * 17 + 3) - 0.5) * 40,
+        tilt: (hash01(i * 29 + 5) - 0.5) * 30,
+        // Out of order: a messy row sits on another row's line, nudged off it.
+        drop: (ORDER[i] - i) * 11.5 + (hash01(i * 13 + 7) - 0.5) * 6,
+      };
     });
     // A bright band sweeps down the gown with the rows as they snap clean.
     const sweep = svg('rect', { class: 'tdd-tidy-sweep', x: -80, y: -9, width: 160, height: 18, fill: `url(#${id}-sweep)`, opacity: 0 }, page);
@@ -551,12 +575,22 @@
         rows.forEach((row, i) => {
           const local = clamp(clean * (1 + STAGGER) - (i / (rows.length - 1)) * STAGGER, 0, 1);
           const c = local <= 0 ? 0 : local >= 1 ? 1 : ease.back(local);
+          const mess = 1 - c;
+          // While messy, the code never quite settles: a slow, restless wobble.
+          const restless = Math.max(0, mess) * Math.sin(t * 2.6 + i * 1.7);
           const halfWidth = 12 + ((row.y - body.hipY) / (-8 - body.hipY)) * (40 + s.flare * 0.8);
           const tidyX = -halfWidth + 7 + row.indent * 8 + s.sway * 9 * ((row.y - body.hipY) / 110);
-          const x = tidyX + (1 - c) * row.jitter;
-          const tilt = (1 - c) * row.tilt;
+          const x = tidyX + mess * row.jitter + restless * 1.5;
+          const y = row.y + mess * row.drop;
+          const tilt = mess * row.tilt + restless * 2.5;
           const down = (row.y - body.hipY) / (-8 - body.hipY);
-          row.group.setAttribute('transform', `translate(${f(x)} ${f(row.y + s.bob * (1 - down))}) rotate(${f(tilt)})`);
+          row.group.setAttribute('transform', `translate(${f(x)} ${f(y + s.bob * (1 - down))}) rotate(${f(tilt)})`);
+          for (const bar of row.bars) {
+            const m = bar.messy;
+            const width = bar.width * (1 + (m.stretch - 1) * mess);
+            bar.node.setAttribute('width', f(Math.max(4, width)));
+            bar.node.setAttribute('transform', mess === 0 ? '' : `translate(${f(m.dx * mess)} ${f(m.dy * mess)}) rotate(${f(m.turn * mess)} ${f(bar.x + width / 2)} 0)`);
+          }
         });
         page.classList.toggle('is-messy', clean < 0.5);
         // The spotlight while the code is being cleaned up.
@@ -596,6 +630,8 @@
     stops(svg('linearGradient', { id: `${id}-spot`, class: 'tdd-spot-grad', x1: 0, y1: 0, x2: 0, y2: 1 }, node), ['top', 'bottom']);
     stops(svg('radialGradient', { id: `${id}-tidy`, class: 'tdd-tidy-grad' }, node), ['core', 'edge']);
     stops(svg('linearGradient', { id: `${id}-sweep`, class: 'tdd-sweep-grad', x1: 0, y1: 0, x2: 0, y2: 1 }, node), ['edge', 'core', 'edge']);
+    stops(svg('radialGradient', { id: `${id}-follow`, class: 'tdd-follow-grad' }, node), ['core', 'mid', 'edge']);
+    stops(svg('radialGradient', { id: `${id}-pool`, class: 'tdd-pool-grad' }, node), ['core', 'edge']);
   }
 
   // ------------------------------------------------------------------
@@ -626,6 +662,12 @@
     // stage point between the dancers' feet, and scaling about the feet
     // reads as a step toward or away from the viewer.
     const floor = svg('g', {}, art);
+    // A follow spot keeps the couple lifted off the dark ballroom: a soft
+    // glow behind them and a pool of light on the floor under their feet.
+    if (members.length === 2) {
+      svg('ellipse', { class: 'tdd-follow-glow', cx: 20, cy: -122, rx: 176, ry: 168, fill: `url(#${id}-follow)` }, floor);
+      svg('ellipse', { class: 'tdd-follow-pool', cx: 20, cy: 2, rx: 150, ry: 20, fill: `url(#${id}-pool)` }, floor);
+    }
     const origin = { x, y, scale };
     const stagePos = track({ ...origin });
     const dancers = {};
@@ -769,7 +811,12 @@
         s.x += w.x * e;
         s.head += (isTest ? 2.5 * w.lag(0.3) : -2 + 3 * w.lag(0.45)) * e;
         // The free arms float on the beat, the forearm a little behind.
-        s[outer] = { sh: s[outer].sh + outerSign * 7 * w.lag(0.5) * e, el: s[outer].el + outerSign * 9 * w.lag(1.1) * e };
+        // The wrist follows a beat later still, so the hand finishes the line.
+        s[outer] = {
+          sh: s[outer].sh + outerSign * 7 * w.lag(0.5) * e,
+          el: s[outer].el + outerSign * 9 * w.lag(1.1) * e,
+          wr: (s[outer].wr || 0) + outerSign * 8 * w.lag(1.6) * e,
+        };
         if (isTest) {
           // Planted feet: the leading foot glides to the new spot on "1–2";
           // the other closes on "3". Feet stay put while the body travels.
@@ -812,7 +859,9 @@
         s.flare += 20 * lift;
         s.bob -= 4 * lift;
         s.head -= 6 * lift;
-        if (twirl.who === 'code') s.armR = mix(s.armR, { sh: -52, el: 46 }, smooth(p / 0.2) * smooth((1 - p) / 0.2));
+        // Her free arm wraps in close to the waist while she turns, so the
+        // hand stays near the body's centre line as the figure narrows.
+        if (twirl.who === 'code') s.armR = mix(s.armR, { sh: -22, el: 74, wr: -10 }, smooth(p / 0.35) * smooth((1 - p) / 0.35));
       }
       if (couple && s.hold > 0) {
         const target = isTest ? couple.test : couple.code;
@@ -824,6 +873,20 @@
         const shoulder = [sign * body.shoulder[0], body.shoulder[1]];
         const solved = reach(shoulder, local, body.upper, body.fore, side === 'R' ? 1 : -1);
         const key = `arm${side}`;
+        // atan2 wraps at ±180°, so the solver's shoulder angle can come back a
+        // whole turn from the poses it blends with. Keep it in the arm's own
+        // range (the one every pose is written in: a left arm from across the
+        // chest, through hanging and out, up to just past overhead; a right
+        // arm mirrored), so the blend into and out of the hold never snaps.
+        if (side === 'L') {
+          while (solved.sh > 240) solved.sh -= 360;
+          while (solved.sh <= -120) solved.sh += 360;
+        } else {
+          while (solved.sh < -240) solved.sh += 360;
+          while (solved.sh >= 120) solved.sh -= 360;
+        }
+        // Code's hand on Test's shoulder drapes over it at the wrist.
+        solved.wr = !isTest ? -38 * s.embrace + (s[key].wr || 0) * (1 - s.embrace) : (s[key].wr || 0);
         s[key] = mix(s[key], solved, s.hold);
       }
       return s;
@@ -1003,8 +1066,8 @@
       bow(atTime, { dur = 0.6 } = {}) {
         const at0 = nearestBeat(atTime);
         keyAll(at0, (dancer) => ({ hold: 0, embrace: 0, lean: dancer.kind === 'test' ? 16 : -12, head: dancer.kind === 'test' ? 6 : -8, face: 'smile' }), dur);
-        if (dancers.test) dancers.test.state.add(at0, { armR: POSES.bow.armR, armL: { sh: 52, el: -14 } }, dur);
-        if (dancers.code) dancers.code.state.add(at0, { armL: { sh: 40, el: 30 }, armR: { sh: -40, el: -30 }, bob: 8 }, dur);
+        if (dancers.test) dancers.test.state.add(at0, { armR: POSES.bow.armR, armL: { sh: 52, el: -14, wr: 28 } }, dur);
+        if (dancers.code) dancers.code.state.add(at0, { armL: { sh: 40, el: 30, wr: 14 }, armR: { sh: -40, el: -30, wr: -14 }, bob: 8 }, dur);
         return api;
       },
       /** Test's lamp: 'idle' | 'red' | 'green' (with ✗ or ✓ on the badge). */

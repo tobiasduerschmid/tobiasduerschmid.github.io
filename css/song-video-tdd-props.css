@@ -249,7 +249,7 @@
 }
 
 .tdd-wave--0 { fill: rgba(56, 120, 200, 0.55); }
-.tdd-wave--1 { fill: rgba(30, 70, 150, 0.75); }
+.tdd-wave--1 { fill: rgba(72, 122, 222, 0.82); }
 
 .tdd-noise-warning {
   position: absolute;
@@ -502,8 +502,8 @@
 .tdd-moon-crater { fill: #c4c8d0; }
 
 .tdd-tower-floor rect {
-  fill: #475569;
-  stroke: #1e293b;
+  fill: #7b89a3;
+  stroke: #2b3550;
   stroke-width: 2;
 }
 
