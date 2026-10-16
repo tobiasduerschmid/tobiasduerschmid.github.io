@@ -575,7 +575,8 @@
   position: absolute;
   left: -40px;
   right: -40px;
-  top: -34px;
+  /* Reserve the space above the glass for incoming and returned values. */
+  bottom: -36px;
   color: var(--gold);
   font-size: 15px;
   font-weight: 800;

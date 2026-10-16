@@ -185,20 +185,14 @@
       for (const name of ['test_peek', 'test_size', 'test_sort']) kit.el('div', 'tdd-batch-card', batch, name);
       fx.pop(batch, mark('verse-1-6', 'no') - 0.1, { from: 0.7 });
       kit.stamp(c, 'No batch', { x: 510, y: 96, at: mark('verse-1-6', 'batch'), until: line('verse-1-7').start - 0.1, rotate: -8, shake: false });
-      // Keep the crossed-out batch visible beside the giant-hop comparison.
-      tdd.hop(c, { x: 476, y: 236, w: 150, h: 70, at: mark('verse-1-6', 'no_2') });
-      kit.stamp(c, 'No giant hop', { x: 452, y: 312, at: line('verse-1-6').start + 0.4, rotate: -6, shake: false, small: true });
       duo.pose('test', mark('verse-1-6', 'no'), 'frame');
 
       // Small steps: each one gets feedback; when red comes back, only the
-      // last small step needs checking — after a giant hop, everything does.
+      // last small step needs checking.
       const d = kit.scene(content, line('verse-1-7').start - 0.1, end('verse-1'));
       tdd.note(d, 'small steps', { x: 40, y: 186, at: mark('verse-1-7', 'small'), tone: 'green' });
       tdd.steps(d, { x: 200, y: 170, w: 400, count: 7, at: mark('verse-1-7', 'steps'), step: 0.3, failAt: mark('verse-1-8', 'red') });
-      tdd.note(d, 'one giant hop', { x: 40, y: 330, at: mark('verse-1-8', 'with'), tone: 'white' });
-      tdd.hop(d, { x: 200, y: 300, w: 400, h: 100, at: mark('verse-1-8', 'with') + 0.1 });
       tdd.note(d, 'trace 1 small step', { x: 400, y: 88, at: line('verse-1-8').start, tone: 'green', iconName: 'search' });
-      tdd.note(d, 'Which change broke it?', { x: 300, y: 262, at: line('verse-1-8').start, tone: 'red', iconName: 'question' });
       duo.lamp(line('verse-1-7').start, 'green').hold(line('verse-1-7').start, { pose: 'flourish' });
       duo.hold(mark('verse-1-7', 'small'), { pose: 'frame', dur: 0.6 });
       duo.waltz(mark('verse-1-7', 'small'), mark('verse-1-8', 'red'), { travel: 10, roam: 14 });
@@ -758,7 +752,7 @@
       const rerunEnd = line('verse-8-5').end;
       const a = kit.scene(content, start('verse-8'), rerunEnd);
       // One fence of tests for the whole story: the gap closes when the new test is kept.
-      props.fence(content, { x: 24, y: 96, names: ['test_push', 'test_pop', '', 'test_peek'], gap: 2, closeAt: mark('verse-8-3', 'keep'), closeName: 'test_pop_empty_raises', at: start('verse-8'), until: rerunEnd });
+      props.fence(content, { x: 24, y: 96, names: ['test_push', 'test_pop', '', 'test_peek'], gap: 2, closeAt: mark('verse-8-3', 'keep'), closeName: 'test_empty_pop', at: start('verse-8'), until: rerunEnd });
       tdd.bug(a, { x: 110, y: 300, size: 50, at: mark('verse-8-1', 'bug'), rotate: 0, from: [110, 60] });
       tdd.code(a, {
         x: 248, y: 92, w: 392, title: 'the test: what you saw', tone: 'red', at: mark('verse-8-1', 'test'),
@@ -778,7 +772,7 @@
 
       // Regression tests repeat the score and guard what worked before.
       const c = kit.scene(content, rerunEnd - 0.2, end('verse-8'), { exit: 'fade' });
-      props.staff(c, { x: 30, y: 104, w: 600, at: rerunEnd, loopFrom: mark('verse-8-5', 'repeat'), bars: ['test_push', 'test_pop', 'test_peek', 'test_pop_empty_raises'] });
+      props.staff(c, { x: 30, y: 104, w: 600, at: rerunEnd, loopFrom: mark('verse-8-5', 'repeat'), bars: ['test_push', 'test_pop', 'test_peek', 'test_empty_pop'] });
       // "They guard what worked before": Test stands guard in front of Code
       // and stops a bug that creeps in from the left.
       duo.hold(mark('verse-8-6', 'they'), { pose: 'frame' }).lamp(mark('verse-8-6', 'they'), 'green');

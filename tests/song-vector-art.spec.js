@@ -544,3 +544,33 @@ test('TDD renderer-only: Code starts each cycle happy after the preceding scene'
     await expect(mouth).toHaveAttribute('d', happy);
   }
 });
+
+test('TDD renderer-only: the fresh-stack caption stays clear of pushed and popped values', async ({ page }) => {
+  await page.goto('/assets/song-player/red-green-refactor.html');
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+  const caption = page.getByText('a fresh stack', { exact: true });
+  const value = page.locator('.tdd-stack').filter({ has: caption }).locator('.tdd-block');
+  for (const time of [171.08, 171.2, 171.46, 173.7, 173.9, 174.1, 174.3, 178.5]) {
+    await page.evaluate(t => window.Timeline.seek(t), time);
+    const a = await caption.boundingBox();
+    const b = await value.boundingBox();
+    expect(a).not.toBeNull();
+    expect(b).not.toBeNull();
+    const overlapX = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+    const overlapY = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+    expect(overlapX <= 0 || overlapY <= 0, `caption must clear the value at ${time}s`).toBe(true);
+  }
+});
+
+test('TDD renderer-only: regression score names fit their measures', async ({ page }) => {
+  await page.goto('/assets/song-player/red-green-refactor.html');
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+  await page.evaluate(() => window.Timeline.seek(240));
+  const labels = page.locator('.tdd-staff-label');
+  await expect(labels).toHaveCount(4);
+  await expect(labels.first()).toBeVisible();
+  for (const label of await labels.all()) {
+    const overflow = await label.evaluate(node => node.scrollWidth - node.clientWidth);
+    expect(overflow, await label.innerText()).toBeLessThanOrEqual(1);
+  }
+});
