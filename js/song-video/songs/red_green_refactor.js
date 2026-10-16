@@ -256,7 +256,7 @@
         x: 54, y: 276, w: 500, label: 'Green from the start', at: mark('verse-2-5', 'trust'),
         ticks: [{ x: 0.62, at: mark('verse-2-5', 'green'), status: 'pass', label: 'never red' }],
       });
-      kit.stamp(b, 'Trusted', { x: 350, y: 202, at: mark('verse-2-6', 'know'), color: 'green', rotate: -3, shake: false, small: true });
+      kit.stamp(b, 'Trusted', { x: 430, y: 202, at: mark('verse-2-6', 'know'), color: 'green', rotate: -3, shake: false, small: true });
       tdd.note(b, 'can it fail at all?', { x: 288, y: 386, at: mark('verse-2-6', 'seen'), tone: 'gold', iconName: 'question' });
       duo.lamp(mark('verse-2-5', 'red'), 'red').lamp(mark('verse-2-5', 'green'), 'green');
       duo.waltz(mark('verse-2-5', 'green'), end('verse-2') - 0.2, { travel: 10, roam: 14 });
@@ -592,8 +592,8 @@
       });
       tdd.suite(b, { x: 40, y: 280, w: 300, at: weakAt + 0.4, tests: [{ name: 'test_pop', states: [{ at: weakAt + 0.4, status: 'pass', word: 'PASSED?' }] }] });
       kit.stamp(b, 'Weak test', { x: 330, y: 352, at: line('verse-5-5').start, rotate: -7, shake: false });
-      const slider = tdd.bug(b, { x: 360, y: 384, size: 46, at: mark('verse-5-6', 'error') - 0.1, rotate: 100, until: mark('verse-5-6', 'slide') + 0.7 });
-      tween(slider, { translate: '260px 30px' }, mark('verse-5-6', 'slide'), 0.7, EASE.in);
+      const slider = tdd.bug(b, { x: 60, y: 360, size: 46, at: mark('verse-5-6', 'error') - 0.1, rotate: 100, until: mark('verse-5-6', 'slide') + 0.7 });
+      tween(slider, { translate: '180px 30px' }, mark('verse-5-6', 'slide'), 0.7, EASE.in);
 
       // Test behavior, not private moves: then the code is free to change.
       const c = kit.scene(content, line('verse-5-7').start - 0.1, end('verse-5'));
@@ -758,8 +758,8 @@
       const rerunEnd = line('verse-8-5').end;
       const a = kit.scene(content, start('verse-8'), rerunEnd);
       // One fence of tests for the whole story: the gap closes when the new test is kept.
-      props.fence(content, { x: 24, y: 96, names: ['test_push', 'test_pop', '', 'test_peek'], gap: 2, closeAt: mark('verse-8-3', 'keep'), closeName: 'test_empty_pop', at: start('verse-8'), until: rerunEnd });
-      tdd.bug(a, { x: 110, y: 300, size: 50, at: mark('verse-8-1', 'bug'), rotate: 0, from: [110, 60] });
+      const fence = props.fence(content, { x: 24, y: 96, names: ['test_push', 'test_pop', '', 'test_peek'], gap: 2, closeAt: mark('verse-8-3', 'keep'), closeName: 'test_empty_pop', at: start('verse-8'), until: rerunEnd });
+      fence.slipThrough(mark('verse-8-1', 'bug'));
       tdd.code(a, {
         x: 248, y: 92, w: 392, title: 'the test: what you saw', tone: 'red', at: mark('verse-8-1', 'test'),
         lines: ['with pytest.raises(EmptyStackError):', '    MyStack().pop()'],

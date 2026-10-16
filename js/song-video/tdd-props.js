@@ -283,7 +283,14 @@
    */
   function fence(parent, { x, y, names, gap, closeAt, closeName, at, until }) {
     const node = place(el('div', 'tdd-fence is-staged', parent), x, y);
-    el('div', 'tdd-fence-rail', node);
+    const hasGap = Number.isInteger(gap) && gap >= 0 && gap < names.length;
+    if (hasGap) {
+      node.style.setProperty('--tdd-fence-gap-index', gap);
+      el('div', 'tdd-fence-rail tdd-fence-rail--before', node);
+      el('div', 'tdd-fence-rail tdd-fence-rail--after', node);
+    } else {
+      el('div', 'tdd-fence-rail', node);
+    }
     names.forEach((name, i) => {
       if (i !== gap) {
         el('div', 'tdd-picket', node, name);
@@ -293,7 +300,21 @@
       if (closeAt !== undefined) tween(slot, [{ opacity: 0, translate: '0 -60px' }, { opacity: 1, translate: '0 0' }], closeAt, 0.5, EASE.back);
     });
     tdd.enter(node, at, until);
-    return { node };
+    return {
+      node,
+      slipThrough(at) {
+        if (!hasGap) return null;
+        // The fence owns the passage's center; choreography must not guess
+        // another stage coordinate for the bug. The rail leaves this gap open.
+        const passage = el('div', 'tdd-fence-passage', node);
+        const size = 50;
+        const bug = tdd.bug(passage, { x: -size / 2, y: 204, size, at, rotate: 0, from: [-size / 2, -60] });
+        // Finish the entrance fade before crossing the fence, so its full
+        // silhouette stays visible while it passes through the opening.
+        fx.fadeIn(bug, at, 0.15);
+        return bug;
+      },
+    };
   }
 
   // ------------------------------------------------------------------
