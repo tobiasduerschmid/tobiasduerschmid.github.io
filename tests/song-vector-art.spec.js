@@ -259,8 +259,9 @@ for (const { name, hero } of heroSamples) {
 
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.reload();
-    await expect(student).toHaveAttribute('data-avatar-state', 'saved');
     await page.getByRole('checkbox', { name: 'Use lyrics-only mode', exact: true }).uncheck();
+    await expect(page.getByTestId('song-picture')).toBeVisible();
+    await expect(student).toHaveAttribute('data-avatar-state', 'saved');
     await page.evaluate(() => window.Timeline.seek(12));
     await expect(student).toBeVisible();
     const reducedPose = await studentGeometry(student);
@@ -465,5 +466,5 @@ test('information hiding renderer-only: decorative fireworks respect reduced mot
   const celebration = page.getByTestId('song-fireworks').first();
   await expect(celebration).toBeVisible();
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(celebration).toHaveCSS('display', 'none');
+  await expect(celebration).toBeHidden();
 });

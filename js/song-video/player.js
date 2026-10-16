@@ -37,13 +37,15 @@
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const events = new AbortController();
   const budget = new FrameBudget();
+  const storyboard = JSON.parse(document.getElementById('song-data').textContent);
   let scene = null;
   let frameId = null;
   let lastFrameAt = -Infinity;
   let motionWasChosen = false;
-  let lines = [];
+  const lines = storyboard.sections.flatMap((section) => section.lines);
   let lastHeight = 0;
   let sceneFailed = false;
+  let sceneInitializing = false;
   let tracks = null;
   let trackLoading = false;
   let fullscreen = null;
@@ -188,6 +190,13 @@
   }
 
   function updateMotion() {
+    if (lyricsOnly.checked) {
+      stopDrawing();
+      if (scene) scene.dispose();
+      scene = null;
+    } else if (!scene && !sceneFailed) {
+      void initializeScene();
+    }
     viewport.hidden = lyricsOnly.checked || !scene;
     player.querySelector('.song-player-description').hidden = !viewport.hidden;
     player.querySelector('.song-player-screen').classList.toggle('is-lyrics-only', viewport.hidden);
@@ -222,7 +231,6 @@
         if (loading) stopDrawing();
       },
     });
-    const storyboard = JSON.parse(document.getElementById('song-data').textContent);
     quizPause = window.SongQuizPause.bind({
       audio, tracks, lines: storyboard.sections.flatMap((section) => section.lines), listen,
       onPause: () => {
@@ -289,17 +297,20 @@
   }
 
   async function initializeScene() {
+    if (sceneInitializing || lyricsOnly.checked || sceneFailed || events.signal.aborted) return;
+    sceneInitializing = true;
     try {
-      const storyboard = JSON.parse(document.getElementById('song-data').textContent);
-      lines = storyboard.sections.flatMap((section) => section.lines);
       if (!window.SongScene || !Element.prototype.animate) throw new Error('Animation is unavailable.');
       await window.SongScene.loadFonts();
-      if (events.signal.aborted) return;
+      // The user may choose lyrics-only while fonts are still loading.
+      if (events.signal.aborted || lyricsOnly.checked) return;
       scene = window.SongScene.build(stage, storyboard, player.dataset.song);
       updateMotion();
       updateText();
     } catch (error) {
       failScene();
+    } finally {
+      sceneInitializing = false;
     }
   }
 
@@ -315,5 +326,6 @@
     if (scene && !sceneFailed) scene.dispose();
   });
   listen(window, 'pageshow', resumeDrawing);
-  initializeScene();
+  updateMotion();
+  updateText();
 })();

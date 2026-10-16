@@ -34,6 +34,17 @@ existing same-origin frame to the visible viewport without reloading audio.
 Escape or the fullscreen button restores the page, scroll position, and focus.
 Reduced-motion users start in lyrics-only mode with visual descriptions.
 
+Scene visibility is managed centrally in `scene.js` for every song and the
+exporter. Fully transparent top-level pictures leave layout so invisible
+animations do not retain compositor surfaces throughout the song. Native
+animation timing restores pictures before frame callbacks measure them,
+including backward seeks; nested words and cards retain their layout space.
+Lyrics-only mode avoids building the scene and disposes existing artwork.
+Turning animation back on rebuilds the scene at the current audio position.
+The catalog-wide resource tests cover startup, repeated seeks, and mode changes
+in all three browser engines. They guard against excessive rendering work;
+physical iPhone memory and crash testing is still required for device validation.
+
 The Audio track selector switches between the song and the audio-described
 recording without losing the current song position. `tracks.js` maps the
 described audio's clock through `assets/audio/*-described.json`: during each

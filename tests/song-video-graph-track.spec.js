@@ -258,7 +258,7 @@ test('file-status panels keep their natural height through scaled playback and b
 test('falling commits keep the same anchor during playback and direct or backward seeks', async ({ page }) => {
   await page.addStyleTag({ path: path.join(root, 'css/song-video-stage.css') });
   await page.evaluate(() => { window.SongChoreographies = {}; });
-  for (const script of ['timeline.js', 'kit.js', 'scene.js', 'songs/snapshots_and_pointers.js']) {
+  for (const script of ['timeline.js', 'kit.js', 'rounded-surfaces.js', 'scene.js', 'songs/snapshots_and_pointers.js']) {
     await page.addScriptTag({ path: path.join(root, 'js/song-video', script) });
   }
   const storyboard = yaml.load(fs.readFileSync(path.join(root, '_data/songs/snapshots_and_pointers.yml'), 'utf8'));

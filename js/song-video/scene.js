@@ -49,6 +49,39 @@
     await root.document.fonts.ready;
   }
 
+  /**
+   * Transparent, absolutely positioned artwork must not retain compositor
+   * surfaces for the entire song. Keep its DOM/timeline for arbitrary seeks,
+   * but remove invisible top-level pictures from layout before the first paint.
+   * Nested words/cards are not culled: they can reserve space in flex layouts.
+   */
+  function manageVisibility(layers) {
+    const pictures = layers.flatMap(layer => Array.from(layer.children)).map(node => ({
+      node,
+      opacity: Number(root.getComputedStyle(node).opacity),
+      effects: node.getAnimations().flatMap(animation => {
+        const frames = animation.effect.getKeyframes().filter(frame => frame.opacity !== undefined);
+        return frames.length ? [{ effect: animation.effect, first: frames[0], last: frames[frames.length - 1] }] : [];
+      }),
+    })).filter(picture => picture.effects.length);
+    root.Timeline.onBeforeFrame(() => {
+      for (const picture of pictures) {
+        let opacity = picture.node.style.opacity === '' ? picture.opacity : Number(picture.node.style.opacity);
+        for (const { effect, first, last } of picture.effects) {
+          const { progress } = effect.getComputedTiming();
+          if (progress === null) continue;
+          // WebKit does not resolve animated computed styles under display:none.
+          // Native effect timing still works. Only cull known zero endpoints;
+          // retain every in-between pose, including overshooting easing curves.
+          if (progress === 0 && first.computedOffset === 0) opacity = Number(first.opacity);
+          else if (progress === 1 && last.computedOffset === 1) opacity = Number(last.opacity);
+          else opacity = 1;
+        }
+        picture.node.classList.toggle('song-picture-inactive', opacity === 0);
+      }
+    });
+  }
+
   /** Build a song once; seek accepts absolute audio seconds, never frame deltas. */
   function build(stage, storyboard, songId) {
     const { Timeline, SongKit: kit } = root;
@@ -75,6 +108,7 @@
       }) : null;
       choreograph({ song: songData(storyboard), kit, layers: { stage, content, hud }, terminal, student });
       root.SongRoundedSurfaces.prepare(stage);
+      manageVisibility([content, hud]);
       Timeline.seek(0);
     } catch (error) {
       dispose();

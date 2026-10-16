@@ -25,6 +25,7 @@
   };
 
   const animations = [];
+  const beforeFrame = [];
   const updaters = [];
   const disposers = [];
 
@@ -44,8 +45,15 @@
     updaters.push(update);
   }
 
+  // Visibility must be resolved after posing Web Animations, before graph
+  // renderers and other frame callbacks measure their newly visible artwork.
+  function onBeforeFrame(update) {
+    beforeFrame.push(update);
+  }
+
   function seek(t) {
     for (const animation of animations) animation.currentTime = t * 1000;
+    for (const update of beforeFrame) update(t);
     for (const update of updaters) update(t);
   }
 
@@ -57,6 +65,7 @@
     for (const animation of animations) animation.cancel();
     for (const release of disposers) release();
     animations.length = 0;
+    beforeFrame.length = 0;
     updaters.length = 0;
     disposers.length = 0;
     cameraHits.length = 0;
@@ -214,7 +223,7 @@
   };
 
   window.Timeline = {
-    EASE, tween, onFrame, onDispose, dispose, seek, fx, beats, camera,
+    EASE, tween, onBeforeFrame, onFrame, onDispose, dispose, seek, fx, beats, camera,
     clamp, progress, easeOutCubic, easeInOutCubic, hash01,
   };
 })();

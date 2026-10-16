@@ -1,5 +1,10 @@
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const fs = require('node:fs');
+const path = require('node:path');
+const yaml = require('js-yaml');
+const coursePlaylists = yaml.load(fs.readFileSync(path.join(__dirname, '../_data/song_playlists.yml'), 'utf8'));
+const defaultSongCount = coursePlaylists.find(playlist => playlist.id === 'cs35l').songs.length;
 
 const git = { title: 'Snapshots and Pointers: a song about Git', path: '/assets/song-player/snapshots-and-pointers.html' };
 const network = { title: 'Unbox the Stack: a song about networking', path: '/assets/song-player/unbox-the-stack.html' };
@@ -228,7 +233,7 @@ test('playlist defaults, editing, Undo, and reload preserve student order', asyn
   await page.evaluate(() => localStorage.removeItem('song-player-playlist'));
   await page.reload();
   await expect(page.getByRole('combobox', { name: 'Start from a playlist' })).toHaveValue('cs35l');
-  await expect(queue(page).getByRole('listitem')).toHaveCount(3);
+  await expect(queue(page).getByRole('listitem')).toHaveCount(defaultSongCount);
   await expect(queue(page).getByRole('listitem').nth(0)).toContainText(shell.title);
   await expect(queue(page).getByRole('listitem').nth(1)).toContainText(git.title);
   await expect(queue(page).getByRole('listitem').nth(2)).toContainText(network.title);
@@ -238,9 +243,9 @@ test('playlist defaults, editing, Undo, and reload preserve student order', asyn
   await page.reload();
   await expect(queue(page).getByRole('listitem').nth(0)).toContainText(network.title);
   await page.getByRole('button', { name: `Remove: ${git.title}`, exact: true }).click();
-  await expect(queue(page).getByRole('listitem')).toHaveCount(2);
+  await expect(queue(page).getByRole('listitem')).toHaveCount(defaultSongCount - 1);
   await page.getByRole('button', { name: /^Add to playlist\s*: Snapshots and Pointers: a song about Git$/ }).click();
-  await expect(queue(page).getByRole('listitem').nth(2)).toContainText(git.title);
+  await expect(queue(page).getByRole('listitem').last()).toContainText(git.title);
   await page.getByRole('button', { name: 'Load playlist', exact: true }).click();
   await expect(queue(page).getByRole('listitem').nth(0)).toContainText(shell.title);
   await page.getByRole('button', { name: 'Undo change', exact: true }).click();
@@ -259,9 +264,9 @@ test('an empty list survives reload and remains editable without browser storage
     Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Blocked', 'SecurityError'); } });
   });
   await page.reload();
-  await expect(queue(page).getByRole('listitem')).toHaveCount(3);
+  await expect(queue(page).getByRole('listitem')).toHaveCount(defaultSongCount);
   await page.getByRole('button', { name: `Remove: ${git.title}`, exact: true }).click();
-  await expect(queue(page).getByRole('listitem')).toHaveCount(2);
+  await expect(queue(page).getByRole('listitem')).toHaveCount(defaultSongCount - 1);
   await expect(page.getByRole('status')).toContainText('this visit only');
 });
 
