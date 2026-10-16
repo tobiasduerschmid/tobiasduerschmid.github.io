@@ -141,7 +141,7 @@ sections:
   - id: verse-1
     title: "Verse 1"
     delivery: sung
-    narration: "Verse 1, the rules of the dance. Rule 1: a test file with test push appears line by line and turns red, and a pytest terminal prints AttributeError, no attribute push, 1 failed, while an empty my stack file is labeled production code waits. Next, the same test seen as the caller, with an arrow to MyStack seen from outside: push, and is empty. Rule 2: test pop is written line by line only until it fails; a stop sign appears as Test raises a hand. A fan of three test cards is stamped No batch, and a giant leap is stamped No giant hop. Finally, a track of small footsteps, each with a green check, versus one giant hop; when the last small step turns red, only that step needs tracing, while the hop asks which change broke it."
+    narration: "Verse 1, the rules of the dance. Rule 1: a test file with test push appears line by line and turns red, and a pytest terminal prints AttributeError, no attribute push, 1 failed, while an empty my stack file is labeled production code waits. Next, the same test seen as the caller, with an arrow to MyStack seen from outside: push, and is empty. Rule 2: test pop is written line by line only until it fails; a stop sign appears as Test raises a hand. A fan of three test cards is stamped No batch. Finally, a track of small footsteps appears, each with a green check; when the last small step turns red, only that step needs tracing."
     lines:
       - id: verse-1-1
         start: 28.5
@@ -178,7 +178,7 @@ sections:
         end: 51.74
         text: "No batch of tests; no giant hop."
         marks: {"no": 48.2, "batch": 48.8, "of": 49.16, "tests": 49.36, "no_2": 50.22, "giant": 50.48, "hop": 51.24}
-        visual: "A fan of three test cards (test_peek, test_size, test_sort) is stamped “No batch”; a giant leap arc is stamped “No giant hop”."
+        visual: "A fan of three test cards (test_peek, test_size, test_sort) is stamped “No batch”."
       - id: verse-1-7
         start: 52.18
         end: 55.8
@@ -190,7 +190,7 @@ sections:
         end: 60.32
         text: "with less to trace when red comes back."
         marks: {"with": 56.5, "less": 56.88, "to": 57.16, "trace": 57.4, "when": 57.92, "red": 58.48, "comes": 58.84, "back": 59.48}
-        visual: "The last small step turns red (“trace 1 small step”), while a giant hop below asks “which change broke it?”"
+        visual: "The last small step turns red (“trace 1 small step”)."
   - id: verse-2
     title: "Verse 2"
     delivery: sung
@@ -625,7 +625,7 @@ sections:
         end: 234.88
         text: "Then fix the code, but keep that test;"
         marks: {"then": 232.64, "fix": 232.88, "the": 233.22, "code": 233.38, "but": 233.76, "keep": 233.96, "that": 234.22, "test": 234.5}
-        visual: "Below the test, the fix: def pop gains if self.is_empty(): raise EmptyStackError(); the new test, test_pop_empty_raises, drops into the fence’s gap."
+        visual: "Below the test, the fix: def pop gains if self.is_empty(): raise EmptyStackError(); the new test, test_empty_pop, drops into the fence’s gap."
       - id: verse-8-4
         start: 234.9
         end: 236.82
@@ -637,7 +637,7 @@ sections:
         end: 239.28
         text: "Regression tests repeat the score;"
         marks: {"regression": 237.04, "tests": 237.56, "repeat": 238.02, "the": 238.46, "score": 238.8}
-        visual: "A music staff with repeat signs whose bars are test_push, test_pop, test_peek, and test_pop_empty_raises; a playhead loops."
+        visual: "A music staff with repeat signs whose bars are test_push, test_pop, test_peek, and test_empty_pop; a playhead loops."
       - id: verse-8-6
         start: 240.72
         end: 243.4
