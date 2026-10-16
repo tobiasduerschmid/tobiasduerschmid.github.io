@@ -29,7 +29,7 @@
 
   window.SongChoreographies = window.SongChoreographies || {};
   window.SongChoreographies.red_green_refactor = function choreograph({ song, kit, layers, student }) {
-    const { fx, tween, EASE, camera } = window.Timeline;
+    const { fx, tween, EASE } = window.Timeline;
     const tdd = window.TddKit;
     const props = window.TddProps;
     const dancers = window.TddDancers;
@@ -402,7 +402,6 @@
         // Behind everything on the content layer: the bursts bloom in the
         // open stage and never cover the code, the cycle, or the dancers.
         window.SongFireworks.celebrate(content, { at: mark(ln(8), 'routine') + 0.1, seed: 41 });
-        camera.punch(mark(ln(8), 'routine') + 0.05, 0.035);
       } else {
         duo.twirl(mark(ln(8), 'routine') - 0.2, { dur: 1.1 });
       }
@@ -913,6 +912,9 @@
       couple.place(s0 - 0.4, { x: 524, y: 456, scale: 0.86 }, 1.4);
       couple.hold(s0, { pose: 'frame' }).waltz(s0 + 0.3, line('outro-3').start - 0.6, { travel: 8, roam: 0 });
       tdd.note(a, 'living documentation', { x: 60, y: 250, at: mark('outro-2', 'living'), tone: 'green', iconName: 'check' });
+      const thought = kit.el('div', 'tdd-bubble tdd-bubble--green tdd-bubble--thought is-staged', a, 'Ah, that makes sense!');
+      fx.fadeIn(thought, mark('outro-2', 'living'), 0.35);
+      fx.fadeOut(thought, line('outro-3').start - 0.6, 0.3);
 
       const b = kit.scene(content, line('outro-3').start - 0.15, song.duration, { exit: 'fade' });
       kit.kinetic(b, [

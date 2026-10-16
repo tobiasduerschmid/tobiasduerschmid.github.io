@@ -1,7 +1,7 @@
 {
   "fps": 30,
-  "frameCount": 25474,
-  "duration": 849.1333333333333,
+  "frameCount": 25533,
+  "duration": 851.1,
   "holds": [
     {
       "section": "intro",
@@ -97,7 +97,7 @@
     {
       "section": "outro",
       "outputStart": 794.8333333333334,
-      "outputEnd": 816.7333333333333,
+      "outputEnd": 818.7,
       "songTime": 314,
       "pictureTime": 314.6666666666667
     }

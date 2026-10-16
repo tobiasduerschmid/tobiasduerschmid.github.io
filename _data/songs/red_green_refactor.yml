@@ -765,7 +765,7 @@ sections:
   - id: outro
     title: "Outro"
     delivery: sung
-    narration: "The outro: a test file whose function names read like sentences, labeled living documentation, while your hero reads it at a laptop. Big type reads Test-driven development; Test takes Code's hand, and the numbers 1, 2, 3 light the red, green, and violet tiles as they waltz. The test list highlights the next step, and the title reads Let the tests lead as Test dips Code and both bow."
+    narration: "The outro: a test file whose function names read like sentences, labeled living documentation, while your hero reads it at a laptop and thinks, Ah, that makes sense! Big type reads Test-driven development; Test takes Code's hand, and the numbers 1, 2, 3 light the red, green, and violet tiles as they waltz. The test list highlights the next step, and the title reads Let the tests lead as Test dips Code and both bow."
     lines:
       - id: outro-1
         start: 314.08
@@ -778,7 +778,7 @@ sections:
         end: 320.72
         text: "living examples of intent."
         marks: {"living": 318.06, "examples": 319.1, "of": 319.76, "intent": 320.2}
-        visual: "A note: “living documentation”."
+        visual: "A note: “living documentation”. A thought bubble above the reader says “Ah, that makes sense!” with a trail of small circles pointing toward the head."
       - id: outro-3
         start: 322.1
         end: 324.2

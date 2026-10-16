@@ -443,6 +443,42 @@
 .tdd-bubble--red { --tdd-fill: #ffe1e5; }
 .tdd-bubble--green { --tdd-fill: #ddfbe8; }
 
+/* The outro reader's thought sits above the head, with a trail of circles. */
+.tdd-bubble--thought {
+  left: 590px;
+  top: 28px;
+  width: 260px;
+  border-radius: 28px;
+  font-size: 20px;
+  text-align: center;
+}
+
+.tdd-bubble--thought::before,
+.tdd-bubble--thought::after {
+  content: '';
+  position: absolute;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--tdd-fill);
+  clip-path: none;
+  transform: none;
+  pointer-events: none;
+}
+
+.tdd-bubble--thought::after {
+  left: 128px;
+  bottom: -18px;
+  width: 12px;
+  height: 12px;
+}
+
+.tdd-bubble--thought::before {
+  left: 138px;
+  bottom: -31px;
+  width: 8px;
+  height: 8px;
+}
+
 .tdd-bubble-who {
   margin-bottom: 2px;
   color: #4a3d7a;
