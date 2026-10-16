@@ -63,13 +63,18 @@
         { text: 'Red,', at: 1.0, color: 'red' },
         { text: 'Green,', at: 2.1, color: 'green' },
         { text: 'Refactor', at: 3.2, color: 'violet' },
-      ], { y: 70, size: 64 });
+      ], { y: 70, size: 64, punch: false });
       tdd.heading(title, ['a song about ', { text: 'test-driven development', tone: 'gold' }], { y: 150, at: 4.4, size: 26 });
       const credit = kit.el('div', 'end-credit is-staged', title, 'SE Book · Test-Driven Development');
       credit.style.top = '196px';
       fx.fadeIn(credit, 5.4, 0.5);
 
       const duo = couple;
+      // A poised opening: no idle bob/sway while the title and greetings land.
+      for (const kind of ['test', 'code']) {
+        duo.pose(kind, 0, { idleMotion: 0 }, { dur: 0.01 });
+        duo.pose(kind, mark('intro-4', 'guide'), { idleMotion: 1 });
+      }
       duo.step('test', 0, -150, 0.01).step('code', 0, 150, 0.01);
       // After the title they come forward to meet the song.
       duo.place(line('intro-1').start - 0.4, { x: 480 + 20 * 1.12, y: 456, scale: 1.12 }, 1.6);
@@ -238,19 +243,20 @@
       // See red before trusting green: the red run proves the test can see
       // the missing step. A test that was never red may check nothing.
       const b = kit.scene(content, line('verse-2-5').start - 0.2, end('verse-2'), { exit: 'fade' });
+      duo.place(line('verse-2-5').start - 0.5, { x: 786, y: 444, scale: 0.92 }, 0.8);
       tdd.runs(b, {
-        x: 40, y: 112, w: 560, label: 'Red first, then green', at: mark('verse-2-5', 'see'),
+        x: 54, y: 108, w: 500, label: 'Red first, then green', at: mark('verse-2-5', 'see'),
         ticks: [
           { x: 0.12, at: mark('verse-2-5', 'red'), status: 'fail', label: 'no code yet' },
           { x: 0.62, at: mark('verse-2-5', 'green'), status: 'pass', label: 'code written' },
         ],
       });
       tdd.runs(b, {
-        x: 40, y: 230, w: 560, label: 'Green from the start', at: mark('verse-2-5', 'trust'),
+        x: 54, y: 276, w: 500, label: 'Green from the start', at: mark('verse-2-5', 'trust'),
         ticks: [{ x: 0.62, at: mark('verse-2-5', 'green'), status: 'pass', label: 'never red' }],
       });
-      kit.stamp(b, 'Trusted', { x: 640, y: 70, at: mark('verse-2-6', 'know'), color: 'green', rotate: -6, shake: false });
-      tdd.note(b, 'can it fail at all?', { x: 380, y: 344, at: mark('verse-2-6', 'seen'), tone: 'gold', iconName: 'question' });
+      kit.stamp(b, 'Trusted', { x: 350, y: 202, at: mark('verse-2-6', 'know'), color: 'green', rotate: -3, shake: false, small: true });
+      tdd.note(b, 'can it fail at all?', { x: 288, y: 386, at: mark('verse-2-6', 'seen'), tone: 'gold', iconName: 'question' });
       duo.lamp(mark('verse-2-5', 'red'), 'red').lamp(mark('verse-2-5', 'green'), 'green');
       duo.waltz(mark('verse-2-5', 'green'), end('verse-2') - 0.2, { travel: 10, roam: 14 });
       duo.twirl(line('verse-2-6').end + 0.4, { dur: 1.4 });
@@ -300,6 +306,8 @@
       badge(final ? 'Final chorus · The cycle' : 'Chorus · The cycle', id);
       const s0 = start(id);
       const sEnd = end(id);
+      // A new cycle starts confidently, without carrying a prior worried face.
+      couple.face('code', s0, 'happy');
 
       // The dance floor: three tiles, and the couple stepping between them.
       // Each tile is wide enough for the whole couple, and every step lands
@@ -952,6 +960,8 @@
       duo.place(line('outro-7').start - 0.4, { scale: 1.04 }, 0.8);
       duo.lamp(mark('outro-7', 'lead'), 'green').dip(mark('outro-7', 'lead'), { dur: 0.7 });
       duo.rise(mark('outro-7', 'lead') + 2.2, 0.6).hold(mark('outro-7', 'lead') + 2.9, { release: true, pose: 'stand' }).bow(mark('outro-7', 'lead') + 3.2);
+      // After the narrated bow, a final supported dip holds through the credit.
+      duo.finale(mark('outro-7', 'lead') + 5.1);
       const credit = kit.el('div', 'end-credit is-staged', b, 'SE Book · Test-Driven Development');
       credit.style.top = '138px';
       fx.fadeIn(credit, mark('outro-7', 'lead') + 1.4, 0.6);

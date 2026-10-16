@@ -468,3 +468,79 @@ test('information hiding renderer-only: decorative fireworks respect reduced mot
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(celebration).toBeHidden();
 });
+
+async function tddBodyGeometry(page, time) {
+  return page.evaluate(time => {
+    window.Timeline.seek(time);
+    return Array.from(document.querySelectorAll('.tdd-lamp-glass, .tdd-page, .tdd-glove, .tdd-shoe, .tdd-slipper'), node => {
+      const box = node.getBoundingClientRect();
+      return { x: box.x, y: box.y, width: box.width, height: box.height };
+    });
+  }, time);
+}
+
+test('TDD renderer-only: the opening couple stands still without a rhythmic pulse', async ({ page }) => {
+  await page.goto('/assets/song-player/red-green-refactor.html');
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+  const still = await tddBodyGeometry(page, 1.2);
+  expect(still.length).toBeGreaterThan(2);
+  for (const time of [1.5, 2.1, 3.4, 5.0]) expect(await tddBodyGeometry(page, time)).toEqual(still);
+});
+
+test('TDD renderer-only: the final ballroom pose holds steady and survives rewinding', async ({ page }) => {
+  await page.goto('/assets/song-player/red-green-refactor.html');
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+  const finish = await tddBodyGeometry(page, 343);
+  expect(finish.length).toBeGreaterThan(2);
+  for (const time of [344, 345.5]) expect(await tddBodyGeometry(page, time)).toEqual(finish);
+  await tddBodyGeometry(page, 5);
+  expect(await tddBodyGeometry(page, 343)).toEqual(finish);
+});
+
+test('TDD renderer-only: Code alternates grounded steps instead of floating', async ({ page }) => {
+  await page.goto('/assets/song-player/red-green-refactor.html');
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+  const samples = await page.evaluate(() => {
+    const dancer = document.querySelector('.tdd-dancer--code');
+    return Array.from({ length: 40 }, (_, i) => {
+      window.Timeline.seek(26 + i * 0.05);
+      return Array.from(dancer.querySelectorAll('.tdd-slipper'), shoe => {
+        const point = new DOMPoint(shoe.cx.baseVal.value, shoe.cy.baseVal.value);
+        return point.matrixTransform(dancer.getScreenCTM().inverse().multiply(shoe.getScreenCTM())).y;
+      });
+    });
+  });
+  for (const sample of samples) {
+    expect(sample).toHaveLength(2);
+    // At least one supporting foot remains at its resting height.
+    expect(Math.max(...sample)).toBeCloseTo(-3, 1);
+  }
+  for (const side of [0, 1]) expect(Math.min(...samples.map(sample => sample[side]))).toBeLessThan(-5);
+});
+
+test('TDD renderer-only: comparison verdicts leave the run labels clear', async ({ page }) => {
+  await page.goto('/assets/song-player/red-green-refactor.html');
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+  await page.evaluate(() => window.Timeline.seek(84.5));
+  const verdict = await page.getByText('Trusted', { exact: true }).boundingBox();
+  expect(verdict).not.toBeNull();
+  for (const text of ['code written', 'never red', 'Green from the start']) {
+    const label = await page.getByText(text, { exact: true }).boundingBox();
+    expect(label).not.toBeNull();
+    const overlapWidth = Math.min(verdict.x + verdict.width, label.x + label.width) - Math.max(verdict.x, label.x);
+    const overlapHeight = Math.min(verdict.y + verdict.height, label.y + label.height) - Math.max(verdict.y, label.y);
+    expect(overlapWidth <= 0 || overlapHeight <= 0, `Trusted must not cover ${text}`).toBe(true);
+  }
+});
+
+test('TDD renderer-only: Code starts each cycle happy after the preceding scene', async ({ page }) => {
+  await page.goto('/assets/song-player/red-green-refactor.html');
+  await expect(page.getByTestId('song-picture')).toBeVisible();
+  const mouth = page.locator('.tdd-dancer--code .tdd-mouth');
+  await page.evaluate(() => window.Timeline.seek(1.2));
+  const happy = await mouth.getAttribute('d');
+  for (const time of [88.8, 153.4, 294.2]) {
+    await page.evaluate(t => window.Timeline.seek(t), time);
+    await expect(mouth).toHaveAttribute('d', happy);
+  }
+});
