@@ -50,7 +50,7 @@
     const couple = dancers.troupe(content, { x: 480, y: 452, scale: 1.0, at: 0.6, until: song.duration });
     /** Where the couple dances beside the teaching boxes (footprint centre, feet, scale). */
     const SPOT = {
-      side: { x: 826, y: 456, scale: 1.12 },
+      side: { x: 818, y: 456, scale: 1.12 },
     };
 
     // ----------------------------------------------------------------
@@ -99,10 +99,10 @@
 
       // "One small step; I'll guide you through": they meet, take the
       // promenade hold, and waltz across to their place beside the lesson.
-      duo.pose('test', line('intro-4').start, 'stand', { dur: 0.3 });
+      duo.pose('test', line('intro-4').start, 'stand', { dur: 0.6 });
       duo.step('test', mark('intro-4', 'one'), 0, 1.2).step('code', mark('intro-4', 'one'), 0, 1.2);
       duo.hold(mark('intro-4', 'step'), { pose: 'frame' });
-      duo.waltz(mark('intro-4', 'guide'), line('verse-1-1').start + 0.6, { travel: 10, roam: 30 });
+      duo.waltz(mark('intro-4', 'guide'), line('verse-1-1').start + 0.6, { travel: 10, roam: 14 });
       duo.place(line('intro-4').end + 0.3, SPOT.side, 2.4);
     }
 
@@ -196,7 +196,7 @@
       tdd.note(d, 'Which change broke it?', { x: 300, y: 262, at: line('verse-1-8').start, tone: 'red', iconName: 'question' });
       duo.lamp(line('verse-1-7').start, 'green').hold(line('verse-1-7').start, { pose: 'flourish' });
       duo.hold(mark('verse-1-7', 'small'), { pose: 'frame', dur: 0.6 });
-      duo.waltz(mark('verse-1-7', 'small'), mark('verse-1-8', 'red'), { travel: 10, roam: 22 });
+      duo.waltz(mark('verse-1-7', 'small'), mark('verse-1-8', 'red'), { travel: 10, roam: 14 });
       duo.lamp(mark('verse-1-8', 'red'), 'red');
     }
 
@@ -252,7 +252,7 @@
       kit.stamp(b, 'Trusted', { x: 640, y: 70, at: mark('verse-2-6', 'know'), color: 'green', rotate: -6, shake: false });
       tdd.note(b, 'can it fail at all?', { x: 380, y: 344, at: mark('verse-2-6', 'seen'), tone: 'gold', iconName: 'question' });
       duo.lamp(mark('verse-2-5', 'red'), 'red').lamp(mark('verse-2-5', 'green'), 'green');
-      duo.waltz(mark('verse-2-5', 'green'), end('verse-2') - 0.2, { travel: 10, roam: 22 });
+      duo.waltz(mark('verse-2-5', 'green'), end('verse-2') - 0.2, { travel: 10, roam: 14 });
       duo.twirl(line('verse-2-6').end + 0.4, { dur: 1.4 });
     }
 
@@ -304,12 +304,14 @@
       // The dance floor: three tiles, and the couple stepping between them.
       // Each tile is wide enough for the whole couple, and every step lands
       // the couple's footprint on the tile's centre.
-      const xs = { red: 650, green: 752, refactor: 854 };
+      const xs = { red: 650, green: 745, refactor: 840 };
       const tiles = props.floorTiles(content, { y: 446, xs, rx: 70, at: s0, until: sEnd });
       const duo = couple;
       duo.place(s0 - 0.7, { x: xs.red, y: 446, scale: 1.06 }, 0.9);
       duo.hold(s0, { pose: 'frame' });
-      const go = (phase, at) => duo.place(at - 0.35, { x: xs[phase] }, 0.6);
+      // Each move between tiles is a glide of about a beat; the long way
+      // back (refactor → red) takes longer, so it never reads as a slide.
+      const go = (phase, at, dur = 0.7) => duo.place(at - 0.35, { x: xs[phase] }, dur);
 
       // Line 1: the cycle lights word by word. Line 2: Test takes the lead.
       const cycle = tdd.cycle(content, { x: 24, y: 128, at: s0, until: sEnd });
@@ -324,10 +326,11 @@
       tiles.light('red', mark(ln(1), 'red'), mark(ln(1), 'green'));
       tiles.light('green', mark(ln(1), 'green'), mark(ln(1), 'refactor'));
       tiles.light('refactor', mark(ln(1), 'refactor'), line(ln(2)).start + 0.2);
-      go('green', mark(ln(1), 'green'));
-      go('refactor', mark(ln(1), 'refactor'));
+      // "Red, green, refactor": one continuous glide across the three tiles,
+      // passing the green tile as "green" is sung.
+      duo.place(mark(ln(1), 'green') - 0.45, { x: xs.refactor }, mark(ln(1), 'refactor') - mark(ln(1), 'green') + 0.75);
       duo.lamp(mark(ln(1), 'red'), 'red').lamp(mark(ln(1), 'green'), 'green');
-      go('red', mark(ln(2), 'let'));
+      go('red', mark(ln(2), 'let'), 1.0);
       duo.hold(mark(ln(2), 'tests'), { pose: 'frame', dur: 0.6 });
       duo.waltz(mark(ln(2), 'tests'), sEnd - 0.3, { travel: 6, roam: 0 });
       cycle.light('red', mark(ln(2), 'lead'), line(ln(3)).start);
@@ -384,8 +387,12 @@
       cycle.light('refactor', mark(ln(7), 'same'), sEnd);
       tiles.light('refactor', mark(ln(7), 'same'), sEnd);
       if (final) {
+        // The finale: they step toward centre stage and Test dips Code.
+        duo.place(mark(ln(8), 'cleaner') - 0.2, { x: xs.green }, 0.8);
         duo.dip(mark(ln(8), 'routine'), { dur: 0.6 }).rise(sEnd - 0.6);
-        window.SongFireworks.celebrate(ref, { at: mark(ln(8), 'routine') + 0.1, seed: 41 });
+        // Behind everything on the content layer: the bursts bloom in the
+        // open stage and never cover the code, the cycle, or the dancers.
+        window.SongFireworks.celebrate(content, { at: mark(ln(8), 'routine') + 0.1, seed: 41 });
         camera.punch(mark(ln(8), 'routine') + 0.05, 0.035);
       } else {
         duo.twirl(mark(ln(8), 'routine') - 0.2, { dur: 1.1 });
@@ -401,7 +408,7 @@
       const duo = couple;
       duo.place(start('verse-3') - 0.3, SPOT.side, 1.4);
       duo.hold(start('verse-3'), { pose: 'frame' }).lamp(start('verse-3'), 'green');
-      duo.waltz(start('verse-3') + 0.3, end('verse-3') - 0.2, { travel: 10, roam: 18 });
+      duo.waltz(start('verse-3') + 0.3, end('verse-3') - 0.2, { travel: 10, roam: 14 });
 
       // Just enough code; extras get parked; untested extras hide bugs.
       const a = kit.scene(content, start('verse-3'), line('verse-3-5').start - 0.1);
@@ -519,7 +526,7 @@
         ],
       });
       tdd.ciBadge(d, { x: 160, y: 250, at: mark('verse-4-8', 'leave'), states: [{ at: 0, status: 'pass' }] });
-      duo.waltz(mark('verse-4-7', 'run'), end('verse-4') - 0.2, { travel: 10, roam: 20 });
+      duo.waltz(mark('verse-4-7', 'run'), end('verse-4') - 0.2, { travel: 10, roam: 14 });
     }
 
     // ----------------------------------------------------------------
@@ -534,7 +541,7 @@
       const duo = couple;
       duo.place(s0 - 0.3, SPOT.side, 1.4);
       duo.hold(s0, { pose: 'frame' }).lamp(s0, 'idle');
-      duo.waltz(s0 + 0.3, weakAt - 0.5, { travel: 8, roam: 16 });
+      duo.waltz(s0 + 0.3, weakAt - 0.5, { travel: 8, roam: 14 });
       duo.lamp(mark('verse-5-3', 'three'), 'green');
       const a = kit.scene(content, s0, weakAt - 0.2);
       const aaa = tdd.code(a, {
@@ -614,7 +621,7 @@
       const duo = couple;
       duo.place(start('verse-6') - 0.3, SPOT.side, 1.4);
       duo.hold(start('verse-6'), { pose: 'frame' });
-      duo.waltz(start('verse-6') + 0.3, end('verse-6') - 0.3, { travel: 8, roam: 16 });
+      duo.waltz(start('verse-6') + 0.3, end('verse-6') - 0.3, { travel: 8, roam: 14 });
       duo.lamp(mark('verse-6-4', 'bugs'), 'red').lamp(line('verse-6-5').start, 'idle').lamp(mark('verse-6-8', 'whole'), 'green');
 
       // Empty, one, several: different cases take the floor.
@@ -680,7 +687,7 @@
       const duo = couple;
       duo.place(start('verse-7') - 0.3, SPOT.side, 1.4);
       duo.hold(start('verse-7'), { pose: 'frame' }).lamp(start('verse-7'), 'green');
-      duo.waltz(start('verse-7') + 0.3, line('verse-7-7').start - 0.2, { travel: 10, roam: 22 });
+      duo.waltz(start('verse-7') + 0.3, line('verse-7-7').start - 0.2, { travel: 10, roam: 14 });
 
       const a = kit.scene(content, start('verse-7'), line('verse-7-3').start - 0.1);
       tdd.ciBadge(a, { x: 120, y: 120, at: mark('verse-7-1', 'automate'), states: [{ at: 0, status: 'pass' }] });
@@ -736,7 +743,7 @@
       duo.place(start('verse-8') - 0.3, SPOT.side, 1.4);
       duo.hold(start('verse-8'), { pose: 'frame' }).face('code', mark('verse-8-1', 'bug'), 'worried');
       duo.lamp(mark('verse-8-2', 'fail'), 'red').lamp(mark('verse-8-4', 'rest'), 'green').face('code', mark('verse-8-4', 'rest'), 'joy');
-      duo.waltz(mark('verse-8-4', 'run'), line('verse-8-6').start - 0.3, { travel: 8, roam: 16 });
+      duo.waltz(mark('verse-8-4', 'run'), line('verse-8-6').start - 0.3, { travel: 8, roam: 14 });
 
       // Reproduce, fix, rerun: the failing test, the fix, and one terminal
       // with both runs stay up together, so each can be read in turn.
@@ -782,7 +789,7 @@
       // While the pyramid is laid, the couple waltzes small in the far
       // corner; it comes forward for the solos, then lights the bugs.
       const duo = couple;
-      duo.place(s0 - 0.3, { x: 884, y: 456, scale: 0.72 }, 1.8);
+      duo.place(s0 - 0.3, { x: 866, y: 456, scale: 0.72 }, 1.8);
       duo.hold(s0, { pose: 'frame' }).lamp(s0, 'idle');
       duo.waltz(s0 + 0.4, mark('bridge-6', 'fine') - 0.9, { travel: 8, roam: 10 });
       const pyramidUntil = line('bridge-7').start - 0.1;
@@ -903,28 +910,31 @@
         { text: 'Test-driven', at: mark('outro-3', 'test'), color: 'gold' },
         { text: 'development', at: mark('outro-3', 'development') },
       ], { y: 60, size: 46, until: line('outro-6').start - 0.2 });
-      const xs = { red: 290, green: 480, refactor: 670 };
-      const tiles = props.floorTiles(b, { y: 446, xs, rx: 90, at: mark('outro-3', 'test') });
+      const xs = { red: 320, green: 480, refactor: 640 };
+      const tiles = props.floorTiles(b, { y: 446, xs, rx: 78, at: mark('outro-3', 'test') });
       // Centre stage: they part, then Test takes Code's hand again.
       const duo = couple;
       duo.place(line('outro-3').start - 0.5, { x: 480 + 20 * 1.12, y: 446, scale: 1.12 }, 1.2);
       duo.hold(mark('outro-3', 'test') - 0.2, { release: true, pose: 'stand', dur: 0.5 });
       duo.step('test', mark('outro-3', 'test'), -60, 0.8).step('code', mark('outro-3', 'test'), 60, 0.8);
       duo.step('test', mark('outro-4', 'takes'), 0, 0.6).step('code', mark('outro-4', 'takes'), 0, 0.6);
-      duo.hold(mark('outro-4', 'hand'), { pose: 'flourish' });
+      duo.hold(mark('outro-4', 'hand'), { pose: 'frame' });
+      // "One, two, three": they move to the red tile, then glide across all
+      // three tiles in one continuous move, passing each as it is counted.
+      duo.place(mark('outro-4', 'hand') + 0.2, { x: xs.red }, 1.0);
+      duo.place(mark('outro-5', 'one') + 0.1, { x: xs.refactor }, mark('outro-5', 'three') - mark('outro-5', 'one') + 0.1);
       const counts = [['one', 'red', '1'], ['two', 'green', '2'], ['three', 'refactor', '3']];
       counts.forEach(([word, phase, digit], i) => {
         const at = mark('outro-5', word);
         tiles.light(phase, at, line('outro-6').start + 0.4);
-        const num = kit.place(kit.el('div', `tdd-count tdd-count--${phase} is-staged`, b, digit), xs[phase] - 22, 132);
+        const num = kit.place(kit.el('div', `tdd-count tdd-count--${phase} is-staged`, b, digit), xs[phase] - 22, 112);
         fx.slam(num, at, { from: 2 });
         fx.fadeOut(num, line('outro-6').start + 0.2, 0.3);
-        duo.place(at - 0.3, { x: xs[phase] }, 0.5);
         if (i === 0) duo.lamp(at, 'red');
         if (i === 1) duo.lamp(at, 'green');
       });
       duo.tidy(mark('outro-5', 'two'), 0, 0.5).showcase(mark('outro-5', 'three'), { until: line('outro-6').start - 0.1 });
-      duo.place(line('outro-6').start, { x: 480 }, 0.6);
+      duo.place(line('outro-6').start, { x: 480 }, 1.0);
       tdd.todo(b, {
         x: 40, y: 64, w: 300, title: 'Test list', at: mark('outro-6', 'the'), until: line('outro-7').start - 0.2,
         items: [
@@ -934,7 +944,7 @@
         ],
       });
       duo.hold(line('outro-6').start, { pose: 'frame', dur: 0.6 });
-      duo.waltz(mark('outro-6', 'next'), mark('outro-7', 'let') - 0.2, { travel: 10, roam: 18 });
+      duo.waltz(mark('outro-6', 'next'), mark('outro-7', 'let') - 0.2, { travel: 10, roam: 14 });
       kit.kinetic(b, [
         { text: 'Let the tests', at: mark('outro-7', 'let') },
         { text: 'lead', at: mark('outro-7', 'lead'), color: 'gold' },

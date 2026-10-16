@@ -357,11 +357,20 @@
   function bug(parent, { x, y, size = 44, at, until, rotate = 0, from, squashAt }) {
     const node = place(el('div', 'tdd-bug is-staged', parent), x, y);
     const art = svg('svg', { viewBox: '-32 -32 64 64', width: size, height: size, 'aria-hidden': 'true' }, node);
+    // Dark legs, antennae, and head ride on a light outline, so the bug
+    // reads on the dark stage and on light cards alike (WCAG 1.4.11).
     const legs = svg('g', { class: 'tdd-bug-legs' }, art);
+    const LEGS = [];
     for (const side of [-1, 1]) {
-      for (const k of [-1, 0, 1]) svg('path', { d: `M${side * 10} ${k * 9} Q${side * 20} ${k * 9 - 4} ${side * 24} ${k * 12}` }, legs);
+      for (const k of [-1, 0, 1]) LEGS.push(`M${side * 10} ${k * 9} Q${side * 20} ${k * 9 - 4} ${side * 24} ${k * 12}`);
     }
-    svg('path', { class: 'tdd-bug-antenna', d: 'M-5 -20 Q-10 -28 -14 -27 M5 -20 Q10 -28 14 -27' }, art);
+    for (const d of LEGS) svg('path', { class: 'tdd-bug-halo', d }, legs);
+    for (const d of LEGS) svg('path', { d }, legs);
+    const ANTENNAE = 'M-5 -20 Q-10 -28 -14 -27 M5 -20 Q10 -28 14 -27';
+    svg('path', { class: 'tdd-bug-halo', d: ANTENNAE }, art);
+    svg('circle', { class: 'tdd-bug-halo', cx: 0, cy: -16, r: 8 }, art);
+    svg('ellipse', { class: 'tdd-bug-halo', cx: 0, cy: 4, rx: 17, ry: 19 }, art);
+    svg('path', { class: 'tdd-bug-antenna', d: ANTENNAE }, art);
     svg('circle', { class: 'tdd-bug-head', cx: 0, cy: -16, r: 8 }, art);
     svg('ellipse', { class: 'tdd-bug-shell', cx: 0, cy: 4, rx: 17, ry: 19 }, art);
     svg('line', { class: 'tdd-bug-seam', x1: 0, y1: -14, x2: 0, y2: 23 }, art);

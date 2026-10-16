@@ -235,7 +235,7 @@ sections:
   - id: chorus-1
     title: "Chorus"
     delivery: sung
-    narration: "The chorus, the same in all three choruses. A cycle of three tiles, Red: write a failing test, Green: make it pass, and Refactor: clean the structure, lights word by word while the dancers step onto red, green, and violet floor tiles. On let the tests lead, the cycle shrinks to the top corner as a map and the test arrives first. Red: the test fails in a terminal below, and a note names the change needed. Green: just enough code replaces the test, the terminal shows every test passing, and the code lines on Code's gown go jagged. Refactor: the same code is rewritten more cleanly, the old line struck through above the new one, and the terminal runs the tests again: they still pass. Meanwhile Test presents Code, hand in hand, under a spotlight, and the code lines on her gown snap back into neat indentation, row by row, with sparkles. This chorus: test new stack is empty, then is empty returns True, then a docstring documents the contract."
+    narration: "The chorus, the same in all three choruses. A cycle of three tiles, Red: write a failing test, Green: make it pass, and Refactor: clean the structure, lights word by word while the dancers step onto red, green, and violet floor tiles. On let the tests lead, the cycle shrinks to the top corner as a map and the test arrives first. Red: the test fails in a terminal below, and a note names the change needed. Green: just enough code replaces the test, the terminal shows every test passing, and the code lines on Code's gown scatter into a jumble, out of order and askew. Refactor: the same code is rewritten more cleanly, the old line struck through above the new one, and the terminal runs the tests again: they still pass. Meanwhile Test presents Code, hand in hand, under a spotlight, and the code lines on her gown snap back into neat indentation, row by row, with sparkles. This chorus: test new stack is empty, then is empty returns True, then a docstring documents the contract."
     lines:
       - id: chorus-1-1
         start: 87.7
@@ -266,7 +266,7 @@ sections:
         end: 97.84
         text: "Write just enough code;"
         marks: {"write": 95.78, "just": 96.28, "enough": 96.7, "code": 97.18}
-        visual: "Green: the code replaces the test — class MyStack with is_empty returning True; the dancers step to the green tile, and Code’s gown lines go jagged as the code is written."
+        visual: "Green: the code replaces the test — class MyStack with is_empty returning True; the dancers step to the green tile, and the code lines on Code’s gown scatter into a jumble as the code is written."
       - id: chorus-1-6
         start: 98.18
         end: 99.74
@@ -354,7 +354,7 @@ sections:
         end: 127.64
         text: "refactor: clean the structure now."
         marks: {"refactor": 125.82, "clean": 126.36, "the": 126.7, "structure": 126.9, "now": 127.32}
-        visual: "The cycle moves to Refactor. Test presents Code, hand in hand, under a spotlight, and her jagged gown lines snap into neat indentation row by row, with sparkles. A violet panel titled Refactoring stays up for the whole verse: “Refactoring: Make the design more elegant, cleaner, and potentially faster while not changing the functionality of the program.”"
+        visual: "The cycle moves to Refactor. Test presents Code, hand in hand, under a spotlight, and her jumbled gown lines snap into neat indentation row by row, with sparkles. A violet panel titled Refactoring stays up for the whole verse: “Refactoring: Make the design more elegant, cleaner, and potentially faster while not changing the functionality of the program.”"
       - id: verse-4-3
         start: 127.66
         end: 129.91
@@ -425,7 +425,7 @@ sections:
         end: 162.42
         text: "Write just enough code;"
         marks: {"write": 160.38, "just": 160.88, "enough": 161.3, "code": 161.78}
-        visual: "Green: the code replaces the test — push appends to self.elements, and is_empty returns self.elements == []; the dancers step to the green tile, and Code’s gown lines go jagged."
+        visual: "Green: the code replaces the test — push appends to self.elements, and is_empty returns self.elements == []; the dancers step to the green tile, and the code lines on Code’s gown scatter into a jumble."
       - id: chorus-2-6
         start: 162.5
         end: 164.36
@@ -743,7 +743,7 @@ sections:
         end: 303.34
         text: "Write just enough code;"
         marks: {"write": 301.28, "just": 301.76, "enough": 302.18, "code": 302.66}
-        visual: "Green: the code replaces the test — def peek(self): return self.elements[-1]; the dancers step to the green tile, and Code’s gown lines go jagged."
+        visual: "Green: the code replaces the test — def peek(self): return self.elements[-1]; the dancers step to the green tile, and the code lines on Code’s gown scatter into a jumble."
       - id: chorus-3-6
         start: 303.36
         end: 305.26
