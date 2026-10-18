@@ -44,19 +44,19 @@ UML diagrams fall into two broad categories:
 
 Static diagrams capture the fixed, code-level relationships in the system:
 
-- **[Class Diagrams](/SEBook/uml_class_diagram.html)** (widely used) --- Show classes, their attributes, operations, and relationships.
+- **[Class Diagrams](/SEBook/uml_class_diagram.html)** --- Show classes, their attributes, operations, and relationships.
 - Package Diagrams --- Group related classes into packages.
-- **[Component Diagrams](/SEBook/uml_component_diagram.html)** (widely used) --- Show high-level components and their interfaces.
+- **[Component Diagrams](/SEBook/uml_component_diagram.html)** --- Show high-level components and their interfaces.
 - Deployment Diagrams --- Show the physical deployment of software onto hardware.
 
 ### Behavioral Modeling (Dynamic)
 
 Behavioral diagrams capture the dynamic execution of a system:
 
-- **[Use Case Diagrams](/SEBook/uml_use_case_diagram.html)** (widely used) --- Capture requirements from the user's perspective.
-- **[Sequence Diagrams](/SEBook/uml_sequence_diagram.html)** (widely used) --- Show time-based message exchange between objects.
-- **[State Machine Diagrams](/SEBook/uml_state_diagram.html)** (widely used) --- Model an object's lifecycle through state transitions.
-- Activity Diagrams (widely used) --- Model workflows and concurrent processes.
+- **[Use Case Diagrams](/SEBook/uml_use_case_diagram.html)** --- Capture requirements from the user's perspective.
+- **[Sequence Diagrams](/SEBook/uml_sequence_diagram.html)** --- Show time-based message exchange between objects.
+- **[State Machine Diagrams](/SEBook/uml_state_diagram.html)** --- Model an object's lifecycle through state transitions.
+- Activity Diagrams --- Model workflows and concurrent processes.
 - Communication Diagrams --- Show the same information as sequence diagrams, organized by object links rather than time.
 
 In this textbook, we focus in depth on the five most widely used diagram types: **Use Case Diagrams**, **Class Diagrams**, **Sequence Diagrams**, **State Machine Diagrams**, and **Component Diagrams**.
