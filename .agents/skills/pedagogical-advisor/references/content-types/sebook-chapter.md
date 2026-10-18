@@ -1,11 +1,8 @@
-# SEBook Chapters (project-specific supplement)
+# SEBook chapters: project overlay
 
-This file supplements the generic `textbook-chapters.md` with patterns
-specific to the `tobiasduerschmid.github.io` SEBook. **Read
-`textbook-chapters.md` first** — what's here is the project-specific
-overlay, not a replacement. The generic file owns "what makes any textbook
-chapter work"; this file owns "what's unique about *these* chapters and
-the affordances they have already."
+Use `procedures/16_material-review-and-repair.md` for review and repair,
+with `knowledge/08_cognitive-load-and-multimedia.md` for explanation design.
+Apply the main skill's evidence calibration and task-appropriate output guidance.
 
 ## What an SEBook chapter actually is
 
@@ -39,7 +36,7 @@ implications you should reason about explicitly:
    highest-utility study technique, already built into the chapter format.
 
 3. **Outbound links to hands-on tutorials** — Markdown links like
-   `[Testing Foundations](/SEBook/testing/testing-foundations-tutorial)`
+   `/SEBook/testing/testing-foundations-tutorial`
    that send readers into a sandboxed code editor at
    `_data/tutorials/<slug>.yml`. Chapter ↔ tutorial pairs implement the
    read-then-do rhythm.
@@ -60,7 +57,7 @@ shapes how chapters should be *structured* (see below).
 
 ### ArchUML diagrams in prose
 
-The generic file warns about split-attention and the redundancy principle.
+Consider split-attention and redundancy when reviewing explanations.
 ArchUML embeds in this project have specific failure modes:
 
 - **Self-contained labels.** A diagram with abstract labels (S1 / S2 / S3,
@@ -107,10 +104,9 @@ recommendations should leverage it, not reinvent it:
   definition gets six.
 
 - **Audit Bloom-level mix.** The quiz format supports MCQ with a sparse
-  `option_feedback` hash per distractor — which is powerful for
-  *clarifying wrong reasoning*, an analysis/evaluation move (Bloom 4–5),
-  not just recall (Bloom 1). If every item is recall, that is a
-  pedagogical gap even when the individual items are well-written.
+  `option_feedback` hash per distractor — which can clarify wrong reasoning. Classify cognitive demand by what
+  students must do, not by the feedback supplied. Recall-only items leave
+  a gap when higher-level objectives require evidence.
 
 - **Audit shuffle-safety of explanations.** Quiz options are shuffled at
   render time, so any phrasing like "Option B is wrong because…" or "the
@@ -187,25 +183,24 @@ readable form or are omitted in print.
 
 ## Which theory files to read (in addition to the generic file's list)
 
-The generic file's loadout still applies. *In addition*, consider:
+Load only the relevant supporting resources:
 
 - **For chapters with a flashcard + quiz tail**: load
-  `practices/effective-techniques.md` (retrieval-practice section). The
+  `knowledge/07_practice-memory-and-mastery.md` (retrieval-practice section). The
   audit recommendations above hinge on it.
 - **For chapters paired with a tutorial**: also read
-  `tutorials.md` (the content-type file in this same directory) so your
+  `knowledge/24_computing-education-and-ai.md` so your
   chapter-side recommendations don't conflict with what the tutorial
   side is doing.
 - **For chapters heavy on ArchUML / state / sequence diagrams**: keep
-  `cognition/multimedia-learning.md` open and apply *signaling*,
+  `knowledge/08_cognitive-load-and-multimedia.md` open and apply *signaling*,
   *spatial-contiguity*, and *coherence* principles to the actual
   rendered diagrams (zoom around them, view light *and* dark).
 
 ## Output format
 
-Same as the generic file (Strengths → Critical → Important → Refinements
-→ Tradeoffs → Next Steps), but cite locations using the project's path
-conventions so recommendations are actionable:
+Follow the requested deliverable and the main skill's review guidance.
+Cite locations using project paths so recommendations are actionable:
 
 - `[SEBook/testing.md, "Testing Pyramid" section, paragraph 2]`
 - `[SEBook/process.md, ArchUML state diagram after "feedback loop closes" sentence]`

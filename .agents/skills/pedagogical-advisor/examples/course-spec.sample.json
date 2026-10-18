@@ -1,0 +1,153 @@
+{
+  "course": {
+    "title": "Evidence and Decision Making",
+    "level": "undergraduate",
+    "weeks": 12,
+    "enrolment": 80,
+    "modality": "hybrid"
+  },
+  "outcomes": [
+    {
+      "id": "C1",
+      "statement": "Evaluate the quality of evidence supporting a causal claim.",
+      "independent": true
+    },
+    {
+      "id": "C2",
+      "statement": "Design a feasible investigation and justify its limitations.",
+      "independent": true
+    },
+    {
+      "id": "C3",
+      "statement": "Use generative AI to generate alternatives, verify claims, and document decisions responsibly.",
+      "independent": false
+    }
+  ],
+  "modules": [
+    {
+      "id": "M1",
+      "title": "Claims and constructs",
+      "outcomes": [
+        "C1"
+      ],
+      "practice": [
+        "retrieval",
+        "contrasting cases"
+      ],
+      "formative_evidence": "claim classification exit ticket"
+    },
+    {
+      "id": "M2",
+      "title": "Causal designs",
+      "outcomes": [
+        "C1",
+        "C2"
+      ],
+      "practice": [
+        "worked example",
+        "completion problem",
+        "case comparison"
+      ],
+      "formative_evidence": "design choice rationale"
+    },
+    {
+      "id": "M3",
+      "title": "AI-assisted evidence review",
+      "outcomes": [
+        "C1",
+        "C3"
+      ],
+      "practice": [
+        "initial unaided review",
+        "AI critique",
+        "verification log"
+      ],
+      "formative_evidence": "verified claim table"
+    },
+    {
+      "id": "M4",
+      "title": "Transfer, synthesis, and decision defense",
+      "outcomes": [
+        "C2",
+        "C3"
+      ],
+      "practice": [
+        "cumulative retrieval",
+        "transfer to a changed case",
+        "AI-assisted alternative generation",
+        "independent defense"
+      ],
+      "formative_evidence": "changed-case design memo and verification audit",
+      "feedback": "peer comparison and instructor synthesis before final defense"
+    }
+  ],
+  "assessments": [
+    {
+      "id": "A1",
+      "title": "Evidence critique",
+      "outcomes": [
+        "C1"
+      ],
+      "weight": 20,
+      "feedback": "required correction",
+      "ai_status": "prohibited for first attempt; permitted for correction with disclosure"
+    },
+    {
+      "id": "A2",
+      "title": "Investigation proposal",
+      "outcomes": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "weight": 45,
+      "feedback": "staged milestones and revision",
+      "ai_status": "permitted for alternatives and critique; verification required"
+    },
+    {
+      "id": "A3",
+      "title": "Individual changed-case defense",
+      "outcomes": [
+        "C1",
+        "C2"
+      ],
+      "weight": 25,
+      "feedback": "post-defense summary",
+      "ai_status": "prohibited",
+      "independent_evidence": {
+        "outcomes": [
+          "C1",
+          "C2"
+        ],
+        "observation": "An instructor presents each student with a previously unseen changed case and asks individual follow-up questions about causal evidence and the proposed investigation.",
+        "evidence": "The instructor records rubric ratings and short response notes for evidence evaluation, investigation design, and justified limitations.",
+        "conditions": "During the defense students respond without AI or peer assistance. Approved assistive technology and an equivalent individual written defense preserve the same reasoning criteria."
+      }
+    },
+    {
+      "id": "A4",
+      "title": "Cumulative retrieval",
+      "outcomes": [
+        "C1",
+        "C2"
+      ],
+      "weight": 10,
+      "feedback": "immediate corrective feedback",
+      "ai_status": "prohibited"
+    }
+  ],
+  "access": {
+    "materials": "accessible HTML and downloadable PDF; captions/transcripts",
+    "participation": "individual preparation before group reporting",
+    "technology_fallback": "institutional tool or equivalent non-AI workflow"
+  },
+  "workload": {
+    "student_hours_per_week": 7,
+    "estimated_marker_hours_per_week": 8
+  },
+  "evaluation": {
+    "learning": "anchored common items and novel transfer task",
+    "implementation": "milestone completion and feedback use",
+    "equity": "disaggregated outcome and access survey"
+  }
+}

@@ -1,0 +1,214 @@
+version: 2
+default:
+  read:
+  - SKILL.md
+  - procedures/00_operating-model.md
+routes:
+- id: course_design
+  signals:
+  - course
+  - curriculum
+  - semester
+  - syllabus
+  - module map
+  - program
+  read:
+  - procedures/07_course-design-workflow.md
+  - knowledge/03_course-design.md
+  - knowledge/04_learning-objectives-and-alignment.md
+  - templates/course-blueprint.md
+  - rubrics/course-design-rubric.md
+- id: lecture_design
+  signals:
+  - lecture
+  - lesson
+  - class session
+  - workshop
+  - seminar
+  - slide plan
+  read:
+  - procedures/08_lecture-design-workflow.md
+  - knowledge/05_lecture-and-session-design.md
+  - knowledge/06_active-learning.md
+  - knowledge/08_cognitive-load-and-multimedia.md
+  - rubrics/lecture-design-rubric.md
+- id: assessment_design
+  signals:
+  - assessment
+  - assignment
+  - project
+  - performance task
+  - portfolio
+  read:
+  - procedures/09_assessment-design-workflow.md
+  - knowledge/10_assessment-foundations.md
+  - knowledge/11_formative-assessment-and-feedback.md
+  - templates/assessment-blueprint.md
+  - rubrics/assessment-design-rubric.md
+- id: exam_design
+  signals:
+  - exam
+  - test
+  - quiz
+  - question bank
+  - multiple choice
+  - essay question
+  read:
+  - procedures/10_exam-design-workflow.md
+  - knowledge/12_exam-design-and-psychometrics.md
+  - templates/exam-blueprint.md
+  - rubrics/exam-design-rubric.md
+- id: homework_design
+  signals:
+  - homework
+  - problem set
+  - practice set
+  - reading assignment
+  - preparation
+  read:
+  - procedures/11_homework-design-workflow.md
+  - knowledge/13_homework-and-assignment-design.md
+  - knowledge/07_practice-memory-and-mastery.md
+  - rubrics/homework-design-rubric.md
+- id: rubric_grading
+  signals:
+  - rubric
+  - grading
+  - criteria
+  - marking
+  - standards
+  - feedback
+  read:
+  - procedures/12_rubric-design-workflow.md
+  - knowledge/17_grading-rubrics-and-academic-judgment.md
+  - knowledge/11_formative-assessment-and-feedback.md
+- id: critique
+  signals:
+  - critique
+  - review
+  - audit
+  - feedback on
+  - improve
+  - revise
+  read:
+  - procedures/03_analysis-and-critique.md
+  - procedures/05_improvement-and-revision.md
+  - tools/critique-lenses.md
+- id: brainstorming
+  signals:
+  - brainstorm
+  - ideas
+  - alternatives
+  - options
+  - workshop
+  read:
+  - procedures/02_brainstorming.md
+  - tools/strategy-cards.md
+  - tools/question-bank.md
+- id: genai
+  signals:
+  - AI
+  - GenAI
+  - ChatGPT
+  - LLM
+  - Copilot
+  - academic integrity
+  read:
+  - procedures/13_genai-redesign-workflow.md
+  - knowledge/19_genai-in-teaching-and-assessment.md
+  - templates/genai-use-matrix.md
+  - rubrics/genai-resilience-rubric.md
+- id: evidence
+  signals:
+  - evidence
+  - research
+  - meta-analysis
+  - empirically
+  - proven
+  - citation
+  read:
+  - knowledge/02_evidence-reasoning.md
+  - references/evidence-matrix.csv
+  - references/external-evidence-base.md
+  - references/research-coverage-2026.md
+- id: material_repair
+  signals:
+  - slides
+  - handout
+  - deck critique
+  - rewrite instructions
+  - lab sheet
+  read:
+  - procedures/16_material-review-and-repair.md
+  - templates/material-review.md
+- id: teaching_operations
+  signals:
+  - TA
+  - office hours
+  - facilitation
+  - announcement
+  - calibration
+  read:
+  - procedures/17_teaching-operations.md
+  - templates/ta-calibration-pack.md
+- id: assessment_clinic
+  signals:
+  - item analysis
+  - answer key
+  - grade moderation
+  - feedback triage
+  read:
+  - procedures/18_assessment-and-feedback-clinic.md
+- id: computing_ai
+  signals:
+  - CS1
+  - programming
+  - code comprehension
+  - debugging
+  read:
+  - knowledge/24_computing-education-and-ai.md
+  - references/cs-ai-evidence-2026.md
+- id: ai_literacy
+  signals:
+  - AI literacy
+  - AI tutoring
+  - delegation
+  - learning safeguards
+  read:
+  - knowledge/25_ai-literacy-and-learning-safeguards.md
+  - references/ai-learning-evidence-2026.md
+  - templates/ai-assistance-contract.md
+- id: curriculum_coaching
+  signals:
+  - software requirements
+  - software design
+  - software testing
+  - microteaching
+  - teaching rehearsal
+  read:
+  - procedures/19_ai-era-curriculum-and-coaching.md
+  - examples/cs-ai-requirements-design-testing.md
+- id: sigcse_2024_2025
+  signals:
+  - SIGCSE 2024
+  - SIGCSE 2025
+  - earlier SIGCSE results
+  read:
+  - references/sigcse-2024-evidence.md
+  - references/sigcse-2025-evidence.md
+  - knowledge/24_computing-education-and-ai.md
+  selection: Choose requested/relevant year and teaching outcome; existing TS records also in references/cs-ai-evidence-2026.md.
+- id: ai_learning_support_pilots
+  signals:
+  - help seeking
+  - teachable agent
+  - AI versus peer
+  - AI classroom pilot
+  - AI CS literature review
+  read:
+  - procedures/20_ai-learning-support-and-pilots.md
+  - references/literature-review-crosswalk.md
+  evidence: Use references/cs-review-evidence-2026.md and references/review-reliability-2026.md only for
+    relevant claims.
+routing_note: Signals suggest routes; infer intent and read only needed files. Do not load every matching
+  route.

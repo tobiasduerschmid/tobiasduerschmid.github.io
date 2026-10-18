@@ -1,0 +1,54 @@
+version: 2
+contracts:
+  consultation:
+    sections:
+    - framing
+    - diagnostic_questions_or_assumptions
+    - options
+    - tradeoffs
+    - recommended_next_decision
+  critique:
+    sections:
+    - overall_judgment
+    - strengths_to_preserve
+    - high_priority_issues
+    - lower_priority_issues
+    - revised_design_moves
+    - evidence_and_uncertainty
+    - quality_gate
+  generated_design:
+    sections:
+    - design_brief
+    - assumptions_and_constraints
+    - learning_targets
+    - sequence_or_blueprint
+    - teaching_and_learning_moves
+    - assessment_and_feedback
+    - inclusion_and_access
+    - genai_policy
+    - workload_and_resources
+    - rationale
+    - evaluation_plan
+  evidence_review:
+    sections:
+    - question_and_scope
+    - claim_map
+    - strongest_evidence
+    - moderators_and_boundary_conditions
+    - disagreements
+    - implications_for_design
+    - confidence
+  material_repair:
+    elements:
+    - inspection_scope_and_locator
+    - observed_issue_and_learning_consequence
+    - exact_replacement
+    - student_prompt_and_key
+    - verification_and_limits
+  teaching_operation:
+    elements:
+    - purpose
+    - ready_to_use_script_or_protocol
+    - staff_and_student_time
+    - evidence_and_next_response
+use: Menus for substantial tasks, not mandatory headings or intake for every request.

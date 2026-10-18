@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/pedagogical-advisor/lecture_plan.schema.json",
+  "title": "Lecture or Class Session Plan",
+  "type": "object",
+  "required": [
+    "session",
+    "target",
+    "sequence",
+    "evidence"
+  ],
+  "properties": {
+    "session": {
+      "type": "object",
+      "required": [
+        "topic",
+        "duration_minutes",
+        "modality"
+      ],
+      "properties": {
+        "topic": {
+          "type": "string"
+        },
+        "duration_minutes": {
+          "type": "integer",
+          "minimum": 10
+        },
+        "modality": {
+          "type": "string"
+        },
+        "class_size": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "performance"
+      ],
+      "properties": {
+        "performance": {
+          "type": "string",
+          "minLength": 10
+        },
+        "prior_knowledge": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "misconception": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "sequence": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "start_minute",
+          "end_minute",
+          "phase",
+          "student_work"
+        ],
+        "properties": {
+          "start_minute": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "end_minute": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "phase": {
+            "type": "string"
+          },
+          "instructor_action": {
+            "type": "string"
+          },
+          "student_work": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "formative_check",
+        "response_plan"
+      ],
+      "properties": {
+        "formative_check": {
+          "type": "string"
+        },
+        "response_plan": {
+          "type": "string"
+        },
+        "post_class_retrieval": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "access": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "genai": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contingencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

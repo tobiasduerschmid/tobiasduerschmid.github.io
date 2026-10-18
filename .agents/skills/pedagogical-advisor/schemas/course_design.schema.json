@@ -1,0 +1,306 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/pedagogical-advisor/course_design.schema.json",
+  "title": "Pedagogical Advisor Course Design",
+  "type": "object",
+  "required": [
+    "course",
+    "outcomes",
+    "modules",
+    "assessments"
+  ],
+  "properties": {
+    "course": {
+      "type": "object",
+      "required": [
+        "title",
+        "level",
+        "weeks",
+        "enrolment",
+        "modality"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "code": {
+          "type": "string"
+        },
+        "discipline": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string"
+        },
+        "weeks": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "enrolment": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "modality": {
+          "enum": [
+            "in-person",
+            "online synchronous",
+            "online asynchronous",
+            "hybrid",
+            "blended",
+            "other"
+          ]
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "learners": {
+      "type": "object",
+      "properties": {
+        "prior_knowledge": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "misconceptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "variation": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "access_needs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "outcomes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "statement"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+            "minLength": 1
+          },
+          "statement": {
+            "type": "string",
+            "minLength": 10
+          },
+          "conditions": {
+            "type": "string"
+          },
+          "standard": {
+            "type": "string"
+          },
+          "independent": {
+            "type": "boolean",
+            "description": "If true, specify a described individual observation and evidence of this outcome under stated assistance conditions in at least one assessment. A policy prohibition alone is insufficient."
+          },
+          "transfer_context": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "description": "IDs must be unique within this collection; the structural audit checks ID uniqueness."
+    },
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "outcomes",
+          "practice"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string"
+          },
+          "outcomes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "practice": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "formative_evidence": {
+            "type": "string"
+          },
+          "feedback": {
+            "type": "string"
+          },
+          "retrieval": {
+            "type": "string"
+          },
+          "access": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "description": "IDs must be unique within this collection; the structural audit checks ID uniqueness."
+    },
+    "assessments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "outcomes",
+          "weight"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string"
+          },
+          "outcomes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "feedback": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "ai_status": {
+            "type": "string",
+            "description": "Task-specific AI-use policy. Neither a prohibition nor any other policy wording establishes independent performance."
+          },
+          "independent_assurance": {
+            "type": "boolean",
+            "description": "Legacy intent flag; retained for compatibility. True alone does not establish independent evidence. Use independent_evidence to describe the observation and evidence.",
+            "deprecated": true
+          },
+          "independent_evidence": {
+            "type": "object",
+            "description": "A declared plan for observing individual performance. The audit checks that fields are present and outcome references agree; it cannot verify the observation, sufficiency of evidence, independence, accessibility, or validity. Outcome IDs must be a subset of this assessment's outcomes.",
+            "required": [
+              "outcomes",
+              "observation",
+              "evidence",
+              "conditions"
+            ],
+            "properties": {
+              "outcomes": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Only these outcomes receive declared independent-evidence coverage."
+              },
+              "observation": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S",
+                "description": "Describe how an instructor or other appropriate observer elicits individual performance, e.g. a novel-case explanation with follow-up questions."
+              },
+              "evidence": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S",
+                "description": "Describe the observable response or retained record and the criterion it supports, e.g. a rubric-scored explanation and trace."
+              },
+              "conditions": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S",
+                "description": "State allowed assistance, AI access, timing, and relevant accessible alternatives. Conditions must preserve the intended construct."
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "description": "IDs must be unique within this collection; the structural audit checks ID uniqueness."
+    },
+    "access": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "genai": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "workload": {
+      "type": "object",
+      "properties": {
+        "student_hours_per_week": {
+          "type": "number",
+          "minimum": 0
+        },
+        "estimated_marker_hours_per_week": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "description": "Course-design data contract for structural checks. Conformance does not establish pedagogical quality, learning, fairness, or assessment validity. IDs must be unique within outcomes, modules, and assessments; audit_alignment.py checks this cross-record constraint."
+}

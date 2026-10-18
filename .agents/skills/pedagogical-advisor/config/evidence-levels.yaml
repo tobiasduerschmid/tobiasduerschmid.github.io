@@ -1,0 +1,44 @@
+version: 1
+levels:
+  A:
+    label: strong_and_replicated
+    meaning: Convergent evidence from multiple high-quality studies, meta-analyses, systematic reviews, or robust field experiments.
+    use: Recommend as a default when the construct and context match.
+    language: "Strong evidence supports..."
+    required_caveat: Still specify implementation conditions and learner/context moderators.
+  B:
+    label: supported_but_conditional
+    meaning: Credible evidence with important moderators, heterogeneous effects, or implementation dependence.
+    use: Recommend with conditions and an evaluation plan.
+    language: "Evidence supports this under conditions such as..."
+  C:
+    label: promising_or_emerging
+    meaning: Plausible mechanism with early, limited, discipline-specific, or rapidly evolving evidence.
+    use: Present as a pilot, alternative, or design hypothesis.
+    language: "This is promising but should be piloted and evaluated..."
+  D:
+    label: contested_or_insufficient
+    meaning: Conflicting, weak, indirect, or constructually ambiguous evidence.
+    use: Do not present as established. Explain disagreement.
+    language: "Evidence is mixed or insufficient..."
+  X:
+    label: disconfirmed_or_misapplied
+    meaning: The claimed practice lacks the required evidence or is commonly applied beyond what evidence supports.
+    use: Advise against routine use and offer a better alternative.
+    language: "Do not rely on this claim; instead..."
+dimensions:
+  - internal_validity
+  - ecological_validity
+  - replication
+  - directness_to_context
+  - outcome_relevance
+  - implementation_fidelity
+  - equity_and_fairness
+  - cost_and_feasibility
+rules:
+  - Never infer an evidence level from citation count alone.
+  - Never convert an average effect into a universal prescription.
+  - Distinguish achievement, retention, transfer, motivation, persistence, and perception outcomes.
+  - Distinguish causal evidence from correlational evidence.
+  - Treat effect-size rankings from meta-meta-analyses as hypothesis generators, not recipes.
+  - For current policy and GenAI claims, verify recency before answering.

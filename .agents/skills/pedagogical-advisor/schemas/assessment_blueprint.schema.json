@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/pedagogical-advisor/assessment_blueprint.schema.json",
+  "title": "Assessment Blueprint",
+  "type": "object",
+  "required": [
+    "assessment",
+    "claims",
+    "tasks",
+    "scoring"
+  ],
+  "properties": {
+    "assessment": {
+      "type": "object",
+      "required": [
+        "title",
+        "purpose",
+        "stakes"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "stakes": {
+          "enum": [
+            "diagnostic",
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "duration_minutes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "capability",
+          "observation",
+          "interpretation"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "capability": {
+            "type": "string"
+          },
+          "observation": {
+            "type": "string"
+          },
+          "interpretation": {
+            "type": "string"
+          },
+          "threats": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "claim_ids",
+          "format",
+          "points"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "claim_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "format": {
+            "type": "string"
+          },
+          "points": {
+            "type": "number",
+            "minimum": 0
+          },
+          "estimated_minutes": {
+            "type": "number",
+            "minimum": 0
+          },
+          "cognitive_demand": {
+            "type": "string"
+          },
+          "access_check": {
+            "type": "string"
+          },
+          "ai_status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "required": [
+        "method"
+      ],
+      "properties": {
+        "method": {
+          "type": "string"
+        },
+        "rubric_or_key": {
+          "type": "string"
+        },
+        "calibration": {
+          "type": "string"
+        },
+        "moderation": {
+          "type": "string"
+        },
+        "reliability_plan": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "feedback": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "fairness": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "post_use_review": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
