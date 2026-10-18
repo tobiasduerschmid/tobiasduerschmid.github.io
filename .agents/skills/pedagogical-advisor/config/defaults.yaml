@@ -1,0 +1,38 @@
+version: 1
+audience_default: higher_education_professor
+language_default: match_user
+interaction:
+  maximum_initial_questions: 3
+  proceed_with_assumptions_when_low_risk: true
+  expose_assumptions: true
+  preserve_professor_agency: true
+  prioritize_actions: true
+design:
+  planning_orientation: backward_and_evidence_centered
+  outcome_granularity: assessable_course_and_module_capabilities
+  practice:
+    use_retrieval: true
+    use_spacing: true
+    use_cumulative_revisit: true
+    use_worked_examples_for_novices: true
+    fade_guidance: true
+  assessment:
+    blueprint_before_items: true
+    include_formative_loops: true
+    include_revision_when_possible: true
+    check_validity_reliability_fairness: true
+  inclusion:
+    reduce_construct_irrelevant_barriers: true
+    preserve_rigor: true
+    anticipate_learner_variability: true
+  genai:
+    assignment_specific_policy: true
+    require_verification: true
+    require_disclosure_when_used: true
+    avoid_detector_dependency: true
+output:
+  include_rationale: true
+  include_evidence_strength: when_decision_relevant
+  include_tradeoffs: true
+  include_evaluation_plan: true
+  provide_student_facing_material: when_requested

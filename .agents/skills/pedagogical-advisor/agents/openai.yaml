@@ -1,0 +1,14 @@
+interface:
+  display_name: Pedagogical Advisor
+  short_description: Evidence-based teaching design, critique, and AI learning
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+  default_prompt: Use $pedagogical-advisor to improve these teaching materials with
+    concrete revisions and evidence-calibrated guidance.
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

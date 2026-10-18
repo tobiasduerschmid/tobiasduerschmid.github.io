@@ -1,0 +1,77 @@
+{
+  "name": "pedagogical-advisor",
+  "version": "2.2.0",
+  "built_on": "2026-09-05",
+  "evidence_current_through": "2026-09-05",
+  "entry_point": "SKILL.md",
+  "purpose": "Evidence-calibrated teaching design, concrete material repair, assessment and feedback clinics, teaching operations, AI-era computing and curriculum, AI literacy, coaching and evaluation.",
+  "supported_modes": [
+    "consult",
+    "analyze",
+    "critique",
+    "generate",
+    "improve",
+    "complete",
+    "research",
+    "rehearse",
+    "evaluate"
+  ],
+  "directories": {
+    "agents": 1,
+    "assets": 1,
+    "config": 4,
+    "evals": 7,
+    "examples": 8,
+    "knowledge": 26,
+    "procedures": 21,
+    "references": 19,
+    "rubrics": 7,
+    "schemas": 3,
+    "scripts": 4,
+    "templates": 22,
+    "tools": 8
+  },
+  "source_corpus": {
+    "project_files": 16,
+    "project_inspection": "targeted passages, not whole-book reading",
+    "legacy_evidence_matrix_claims": 60,
+    "external_update_source_cards": 43,
+    "selected_sigcse_ts_papers_by_year": {
+      "2024": 5,
+      "2025": 7,
+      "2026": 3
+    },
+    "integrity_notices": 1,
+    "supplied_review_records_mapped": 43,
+    "review_records_disposition": {
+      "reuse_existing": 15,
+      "selected_research_additions": 9,
+      "background_design_or_hold": 18,
+      "integrity_notice": 1
+    }
+  },
+  "utilities": [
+    "scripts/validate_package.py",
+    "scripts/instantiate_workspace.py",
+    "scripts/audit_alignment.py",
+    "scripts/test_alignment_audit.py"
+  ],
+  "schemas": [
+    "schemas/course_design.schema.json",
+    "schemas/lecture_plan.schema.json",
+    "schemas/assessment_blueprint.schema.json"
+  ],
+  "evaluation_suite": "evals/test_prompts.jsonl",
+  "evidence_scope": "Targeted update; see references/research-coverage-2026.md; no exhaustive coverage implied",
+  "evaluation_suites": [
+    "evals/test_prompts.jsonl",
+    "evals/ai-and-materials-cases.jsonl"
+  ],
+  "evaluation_record": "evals/validation-2026-09-05.md",
+  "local_adaptation": {
+    "project": "tobiasduerschmid.github.io",
+    "upstream_version": "2.2.0",
+    "updated_on": "2026-10-18",
+    "overlay": "references/project-context.md"
+  }
+}
