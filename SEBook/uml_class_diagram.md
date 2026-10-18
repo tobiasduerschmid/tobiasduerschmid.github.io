@@ -77,7 +77,7 @@ class User {
 @enduml'></div>
 
 ### 2.3 Interfaces
-An **Interface** represents a contract. It tells us *what* a class must do, but not *how* it does it. It is denoted by the `<<interface>>` stereotype. Interfaces contain method signatures and usually do not declare attributes (the UML specification allows it, but I recommend not to use it)
+An **Interface** represents a contract. It tells us *what* a class must do, but not *how* it does it. It is denoted by the `<<interface>>` stereotype. Interfaces contain method signatures and usually do not declare attributes (the UML specification allows it {% cite OMG2017UML %}, but I recommend not to use it)
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
@@ -188,7 +188,7 @@ Author "1" -- "1..*" Book : writes
 
 #### Navigability
 
-When neither end of an association is annotated with an arrowhead or X mark, navigability is formally **undefined** in UML 2.5. By convention, many authors and tools render this case as **bidirectional** (both classes know about each other), but you should not rely on the default — make navigability explicit when it matters. In practice, the relationship is often one-way: only one class holds a reference to the other. UML uses arrowheads and X marks to show this **navigability**.
+When neither end of an association is annotated with an arrowhead or X mark, navigability is formally **undefined** in UML 2.5 {% cite OMG2017UML %}. By convention, many authors and tools render this case as **bidirectional** (both classes know about each other), but you should not rely on the default — make navigability explicit when it matters. In practice, the relationship is often one-way: only one class holds a reference to the other. UML uses arrowheads and X marks to show this **navigability**.
 
 * **Navigable end** <span class="uml-sym" data-diagram="class" data-sym="-->"></span> An **open arrowhead** pointing to the class that can be "reached". The left object has a reference to the right object.
 * **Non-Navigable end** <span class="uml-sym" data-diagram="class" data-sym="--x"></span> An **X** on the end that cannot be navigated. This explicitly states that the class at the X end does *not* hold a reference to the other.
@@ -217,7 +217,7 @@ class Boss
 Employee <--> Boss
 @enduml'></div>
 
-`Employee` knows about their `Boss`, and `Boss` knows about their `Employee`. Note that a plain line with no arrowheads on either end has **unspecified** navigability per UML 2.5 — not "bidirectional by default." If you mean both directions are navigable, draw arrowheads on both ends (as above) to make that explicit.
+`Employee` knows about their `Boss`, and `Boss` knows about their `Employee`. Note that a plain line with no arrowheads on either end has **unspecified** navigability per UML 2.5 {% cite OMG2017UML %} — not "bidirectional by default." If you mean both directions are navigable, draw arrowheads on both ends (as above) to make that explicit.
 
 **Non-navigable on one end (X on one side):** One class is explicitly prevented from navigating.
 
@@ -229,7 +229,7 @@ class Vote
 Voter x-- Vote
 @enduml'></div>
 
-In the full UML notation, an X on the `Voter` end means that the *opposite* lifeline cannot navigate to it — i.e., `Vote` does *not* hold a reference back to `Voter`. (`Voter`'s navigability toward `Vote` is then determined by whatever is marked on the `Vote` end.) Note: the X mark is a formal UML 2 notation that many simplified tools do not render, and per UML 2.5, when one end carries a navigability arrow but the other end is unmarked, the unmarked end's navigability is formally **undefined**, not "non-navigable" by default.
+In the full UML notation, an X on the `Voter` end means that the *opposite* lifeline cannot navigate to it — i.e., `Vote` does *not* hold a reference back to `Voter`. (`Voter`'s navigability toward `Vote` is then determined by whatever is marked on the `Vote` end.) Note: the X mark is a formal UML 2 notation that many simplified tools do not render, and per UML 2.5, when one end carries a navigability arrow but the other end is unmarked, the unmarked end's navigability is formally **undefined**, not "non-navigable" by default {% cite OMG2017UML %}.
 
 **Non-navigable on both ends (X on both sides):** Neither class holds a reference---the association is recorded only in the model, not in code.
 
@@ -262,7 +262,7 @@ University "1" o-- "*" Professor
 
 A relationship with exclusive composite ownership: deleting the whole deletes its current parts. A part may belong to **at most one** composite at a time and may be detached before deletion, if the model allows it. UML does not prescribe where or in what order these objects are created. In this House/Room model, deleting a house deletes its rooms.
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="*--"></span> A solid line with a **filled diamond** at the "whole" end.
-* Per the UML spec, the multiplicity on the composite end must be `1` or `0..1`.
+* Per the UML spec, the multiplicity on the composite end must be `1` or `0..1` {% cite OMG2017UML %}.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
@@ -274,7 +274,7 @@ House "1" *-- "1..*" Room
 
 **A helpful way to think about the difference:** In C++, aggregation is usually expressed through pointers/references (the part can exist separately), while composition is expressed by containing instances by value (the part's lifetime is tied to the whole). In Java and Python, every object reference is effectively a pointer — the distinction between aggregation and composition is communicated through *design intent* (who created the part? who destroys it?) rather than through language syntax. Inner classes in Java are *one* indicator of composition but are not required.
 
-> **⚠ Honest caveat on aggregation.** Aggregation has *intentionally informal* semantics in the UML 2 specification. Martin Fowler (*UML Distilled*) observes: *"Aggregation is strictly meaningless; as a result, I recommend that you ignore it in your own diagrams."* When you aren't sure whether something is aggregation or plain association, use **association** — it is always safe. Reserve the hollow diamond for the cases where part-whole semantics clearly add communicative value.
+> **⚠ Honest caveat on aggregation.** Aggregation has *intentionally informal* semantics in the UML 2 specification {% cite OMG2017UML %}. Martin Fowler observes: *"Aggregation is strictly meaningless; as a result, I recommend that you ignore it in your own diagrams."* {% cite Fowler2003 %} When you aren't sure whether something is aggregation or plain association, use **association** — it is always safe. Reserve the hollow diamond for the cases where part-whole semantics clearly add communicative value.
 
 > **Quick Check 2 (Self-Explanation)**
 > *In your own words, explain the difference between the empty diamond (Aggregation) and the filled diamond (Composition). Give a real-world example of each that is not mentioned in this text.*
@@ -300,15 +300,15 @@ From weakest to strongest, the class relationships are:
 
 ## ⚠ The Five Most Common UML Class Diagram Mistakes
 
-Empirical studies of student diagrams (Chren et al., "Mistakes in UML Diagrams: Analysis of Student Projects in a Software Engineering Course", ICSE SEET 2019) identify these recurring errors. Watch for them in your own work:
+Empirical studies of student diagrams {% cite Chren2019 %} identify these recurring errors. Watch for them in your own work:
 
 | # | Mistake | Fix |
 |---|---|---|
 | 1 | **Generalization arrow pointed the wrong way** — triangle at the child instead of the parent | The triangle *always* rests at the **parent**. Sanity-check with the "is-a" sentence: *"A [child] is a [parent]"*. |
 | 2 | **Multiplicity on the wrong end** — e.g., `*` placed next to the "one" side | Multiplicity answers *"for one of the opposite class, how many of **this** class?"* Place it next to the class being quantified. |
-| 3 | **Missing multiplicity on one end** | Per Ambler (G117), always show multiplicity on **both** ends of every relationship. An unlabeled end is ambiguous, not "just 1." |
+| 3 | **Missing multiplicity on one end** | Following guideline G117, always show multiplicity on **both** ends of every relationship {% cite Ambler2005 %}. An unlabeled end is ambiguous, not "just 1." |
 | 4 | **Confusing aggregation and composition** — using the filled diamond when parts are actually shared | Composition = exclusive ownership *and* lifecycle dependency. If the part can exist without the whole, use aggregation (or plain association). |
-| 5 | **Verbose `0..*` when `*` suffices** | Use the shorthand `*` for zero-or-more. The UML spec defines them as identical; `*` is more concise. Reserve `0..*` only when contrasting explicitly with `1..*` nearby. |
+| 5 | **Verbose `0..*` when `*` suffices** | Use the shorthand `*` for zero-or-more. The UML spec defines them as identical {% cite OMG2017UML %}; `*` is more concise. Reserve `0..*` only when contrasting explicitly with `1..*` nearby. |
 
 > **Pedagogy tip:** Before turning in any class diagram, run this five-item checklist over every relationship. Catching these five mistakes catches the majority of grading-level errors.
 

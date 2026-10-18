@@ -30,16 +30,16 @@ A *use case* refers to a particular piece of functionality that the system must 
 
 ### 2.1 Actors
 
-An **actor** represents a role played by a user, or any other system, that interacts with the *subject* of a use case (UML 2.5.1 §18.2.1). The most common notation is a stick figure with the role name below, but the spec defines **three** equivalent notations: a stick figure (Figure 18.6), a class rectangle with the keyword `«actor»` (Figure 18.7), or a custom icon that conveys the kind of actor — for example a screen-and-keyboard icon for a non-human external system (Figure 18.8). Any of the three may be used for any actor; the choice is stylistic, not semantic.
+An **actor** represents a role played by a user, or any other system, that interacts with the *subject* of a use case (UML 2.5.1 §18.2.1) {% cite OMG2017UML %}. The most common notation is a stick figure with the role name below, but the spec defines **three** equivalent notations: a stick figure (Figure 18.6), a class rectangle with the keyword `«actor»` (Figure 18.7), or a custom icon that conveys the kind of actor — for example a screen-and-keyboard icon for a non-human external system (Figure 18.8). Any of the three may be used for any actor; the choice is stylistic, not semantic.
 
 Key points about actors:
 - An actor is a **role**, not a specific person. One person can play multiple roles (e.g., a university professor might be both an "Instructor" and a "Student" in a course system).
 - A single user may be represented by **multiple actors** if they interact with different parts of the system in different capacities.
 - Actors are always **external** to the subject — they interact with it but are not part of it.
 
-> **⚠ Roles, not job titles (Ambler G65).** Name actors for the *role* they play in this system, not for their position in a company. *"Customer"*, *"Instructor"*, *"Support Agent"* — good. *"Senior VP of Sales"*, *"Junior CSR"* — bad. Job titles change when HR reorganises; roles describe what the system cares about. The same rule applies to our auto-memory guidance: **user-story actors must always be real users, never "As a system".**
+> **⚠ Roles, not job titles.** Name actors for the *role* they play in this system, not for their position in a company (guideline G65) {% cite Ambler2005 %}. *"Customer"*, *"Instructor"*, *"Support Agent"* — good. *"Senior VP of Sales"*, *"Junior CSR"* — bad. Job titles change when HR reorganises; roles describe what the system cares about. The same rule applies to our auto-memory guidance: **user-story actors must always be real users, never "As a system".**
 
-> **Non-human actors exist.** An actor can be an *external system* (a payment gateway, an email provider) or even *Time itself* — Ambler and Seidl et al. both recommend introducing a *Time* actor for use cases triggered on a schedule (payroll, monthly statements, nightly batch jobs). The actor convention keeps the diagram honest: *something* initiates every use case.
+> **Non-human actors exist.** An actor can be an *external system* (a payment gateway, an email provider) or even *Time itself* — modeling guidelines recommend introducing a *Time* actor for use cases triggered on a schedule (payroll, monthly statements, nightly batch jobs) {% cite Ambler2005 Seidl2015 %}. The actor convention keeps the diagram honest: *something* initiates every use case.
 
 ### 2.2 Use Cases
 
@@ -50,7 +50,7 @@ A **use case** represents a specific goal or piece of functionality the system p
 
 ### 2.3 Subject (System Boundary)
 
-The rectangle drawn around the use cases is called the **subject** in the UML 2.5.1 specification — though "system boundary" is the term most textbooks and tools use, and the spec acknowledges it (§18.1.4: "A subject (sometimes called a *system boundary*)..."). The subject represents the system (or component, or class) that *realizes* the contained use cases. The subject's name appears at the top of the rectangle. Actors are placed **outside** the subject, and use cases are placed **inside**.
+The rectangle drawn around the use cases is called the **subject** in the UML 2.5.1 specification — though "system boundary" is the term most textbooks and tools use, and the spec acknowledges it (§18.1.4: "A subject (sometimes called a *system boundary*)...") {% cite OMG2017UML %}. The subject represents the system (or component, or class) that *realizes* the contained use cases. The subject's name appears at the top of the rectangle. Actors are placed **outside** the subject, and use cases are placed **inside**.
 
 ### 2.4 Associations
 
@@ -114,7 +114,7 @@ A use case diagram shows *what* functionality exists, but not *how* it works. To
 
 Use cases rarely exist in isolation. UML defines three types of relationships between use cases: **inclusion**, **extension**, and **generalization**. Each is drawn as a dashed or solid arrow between use cases.
 
-**Notation Rule:** For include and extend arrows, the arrows are **dashed with an open arrowhead** (UML 2.5.1 §18.1.4) and point in the **reading direction** of the verb. The relationship label is written in **guillemets** — the spec uses `«include»` and `«extend»`; the ASCII shorthand `<<include>>` / `<<extend>>` used throughout this chapter is universally accepted by tools and equivalent. Use the **base form** of the verb (e.g., `«include»`, not `«includes»`).
+**Notation Rule:** For include and extend arrows, the arrows are **dashed with an open arrowhead** (UML 2.5.1 §18.1.4) {% cite OMG2017UML %} and point in the **reading direction** of the verb. The relationship label is written in **guillemets** — the spec uses `«include»` and `«extend»`; the ASCII shorthand `<<include>>` / `<<extend>>` used throughout this chapter is universally accepted by tools and equivalent. Use the **base form** of the verb (e.g., `«include»`, not `«includes»`).
 
 ### 4.1 Inclusion (`<<include>>`)
 
@@ -144,7 +144,7 @@ Reading this diagram: Whenever a customer **Purchases an Item**, they **always**
 
 A use case extension encapsulates a **distinct flow of events** that is **not** part of the normal or basic flow but **may optionally** extend an existing use case. Think of it as an optional, exceptional, or conditional behavior.
 
-**Extension points (optional).** A base use case can declare specific named *points* inside its flow where extensions may plug in — the `<<extend>>` relationship can name which point it attaches to, and an optional `{condition}` note on a dashed comment line states when the extension fires. Ambler (G83) advises skipping extension points on diagrams unless the flow is genuinely ambiguous — the detail usually fits better inside the textual use case description than on the picture.
+**Extension points (optional).** A base use case can declare specific named *points* inside its flow where extensions may plug in — the `<<extend>>` relationship can name which point it attaches to, and an optional `{condition}` note on a dashed comment line states when the extension fires. Guideline G83 advises skipping extension points on diagrams unless the flow is genuinely ambiguous {% cite Ambler2005 %} — the detail usually fits better inside the textual use case description than on the picture.
 
 <div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
 actor Customer
@@ -359,7 +359,7 @@ UC6 ..> UC4 : <<extend>>
 
 | # | Mistake | Fix |
 |---|---|---|
-| 1 | **`<<include>>` and `<<extend>>` arrows pointing the wrong way** | Remember (UML 2.5.1 §18.1.4): `<<include>>` points *from base (including) → included*; `<<extend>>` points *from extension → base (extended)*. They are opposite directions. |
+| 1 | **`<<include>>` and `<<extend>>` arrows pointing the wrong way** | Remember (UML 2.5.1 §18.1.4) {% cite OMG2017UML %}: `<<include>>` points *from base (including) → included*; `<<extend>>` points *from extension → base (extended)*. They are opposite directions. |
 | 2 | **Actors named with job titles instead of roles** (*"VP of Sales"*) | Name the *role* (*"Sales Rep"*). Roles describe what the system cares about; titles change with HR. |
 | 3 | **Missing actor on use cases** — a use case with no initiator | Every top-level use case must be triggered *by someone* (actor, external system, or `Time`). If nobody triggers it, why is it in the diagram? |
 | 4 | **Functional decomposition via `<<include>>`** — breaking every internal step into its own use case | Use cases are *user-visible goals*, not functions. If your diagram contains "validate input" or "query database" as use cases, you have slipped into design. |

@@ -31,7 +31,7 @@ A lifeline represents an individual participant in the interaction. It is drawn 
 
 ### 2\. Messages (The "What")
 
-Messages are the communications between lifelines. They are drawn as horizontal arrows. UML 2 distinguishes three main arrow styles (sources: Fowler, *UML Distilled*, ch. 4; Rumbaugh, Jacobson & Booch, *The Unified Modeling Language Reference Manual*):
+Messages are the communications between lifelines. They are drawn as horizontal arrows. UML 2 distinguishes three main arrow styles, described in chapter 4 of *UML Distilled* {% cite Fowler2003 %} and in *The Unified Modeling Language Reference Manual* {% cite Rumbaugh2004 %}:
 
   * **Synchronous Message** <span class="uml-sym" data-diagram="sequence" data-sym="->"></span> — solid line with **filled (triangular) arrowhead**. The sender blocks until the receiver responds, like calling a method and waiting for it to return.
   * **Asynchronous Message** <span class="uml-sym" data-diagram="sequence" data-sym="->>"></span> — solid line with **open (stick) arrowhead**. The sender fires the message and continues immediately, like posting an event to a queue or invoking a callback you don't wait for.

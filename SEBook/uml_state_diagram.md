@@ -95,11 +95,11 @@ Internal activities are particularly useful for modeling embedded systems, UI co
 
 ### 2.4 Composite States (Advanced)
 
-A **composite state** is a state that contains a nested state machine inside it. Hierarchical (composite) states originate in Harel's statecharts (1987) and were already present in UML 1.x; UML 2 formalized and extended their semantics to avoid the "spaghetti" of a flat state machine with dozens of transitions. When an object is in a composite state, it is simultaneously in *exactly one* of the nested substates.
+A **composite state** is a state that contains a nested state machine inside it. Hierarchical (composite) states originate in Harel's statecharts {% cite Harel1987 %} and were already present in UML 1.x; UML 2 formalized and extended their semantics to avoid the "spaghetti" of a flat state machine with dozens of transitions. When an object is in a composite state, it is simultaneously in *exactly one* of the nested substates.
 
 **Example:** A downloadable video has a high-level `Active` state that contains substates `Buffering`, `Playing`, and `Paused`. From any substate, a `stop()` event exits the entire composite state.
 
-This avoids drawing `stop` transitions from every leaf state separately — one transition at the composite level covers all of them. The UML 2 Reference Manual (Rumbaugh et al.) describes composite states as the primary tool for managing state-machine complexity.
+This avoids drawing `stop` transitions from every leaf state separately — one transition at the composite level covers all of them. *The Unified Modeling Language Reference Manual* describes composite states as the primary tool for managing state-machine complexity {% cite Rumbaugh2004 %}.
 
 ### 2.5 Choice Pseudostate (Advanced)
 
@@ -128,7 +128,7 @@ EmergencyPower --> [*] : manualOverride()
 1. **The Initial Transition:** The system begins at the solid circle and transitions to `Idle` via the `powerOn()` event.
 2. **Moving to Combat:** To move from `Idle` to `Combat Mode`, the `threatDetected` event must occur. Notice the guard `[sysCheckOK]`; the suit will only enter combat if internal systems pass their checks. As the transition happens, the effect `/ deployUI()` occurs.
 3. **Cyclic Behavior:** The system can transition back to `Idle` when the `threatNeutralized` event occurs, triggering the `/ retractWeapons()` effect.
-4. **Critical Transitions:** The transition to `Emergency Power` is a *completion* transition guarded by `[powerLevel < 5%]` — it has no explicit event trigger and fires as soon as the guard becomes true while the source state is settled. Notice the brackets: per the UML 2.5.1 transition-label syntax `Event [Guard] / Effect`, the guard must always appear in square brackets so it is not misread as an event name. Once in this state, the only way out is a `manualOverride()`, leading to the Final State (system shutdown).
+4. **Critical Transitions:** The transition to `Emergency Power` is a *completion* transition guarded by `[powerLevel < 5%]` — it has no explicit event trigger and fires as soon as the guard becomes true while the source state is settled. Notice the brackets: per the UML 2.5.1 transition-label syntax `Event [Guard] / Effect`, the guard must always appear in square brackets so it is not misread as an event name {% cite OMG2017UML %}. Once in this state, the only way out is a `manualOverride()`, leading to the Final State (system shutdown).
 
 ---
 
