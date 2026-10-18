@@ -114,6 +114,50 @@
   top: 80px;
 }
 
+/* Quiz and flashcard hosts opt into a visible control for continuous motion. */
+.sebook-hero-motion-control {
+  display: block;
+  max-width: 100%;
+  min-height: 44px;
+  margin: 0.5em auto;
+  padding: 0.5em 0.75em;
+  font: inherit;
+  white-space: normal;
+  color: #17466b;
+  background: #fff;
+  border: 2px solid #2774ae;
+  border-radius: 6px;
+  cursor: pointer;
+  scroll-margin-block: 100px;
+}
+
+.sebook-hero-motion-control:hover:not(:disabled) {
+  background: #e8f2fc;
+}
+
+.sebook-hero-motion-control:focus-visible {
+  outline: 3px solid #17466b;
+  outline-offset: 3px;
+}
+
+.sebook-hero-motion-control:disabled {
+  cursor: default;
+}
+
+html.dark-mode .sebook-hero-motion-control {
+  color: #e6f2ff;
+  background: #1f2937;
+  border-color: #8bb8e8;
+}
+
+html.dark-mode .sebook-hero-motion-control:hover:not(:disabled) {
+  background: #243f5b;
+}
+
+html.dark-mode .sebook-hero-motion-control:focus-visible {
+  outline-color: #8bb8e8;
+}
+
 html.dark-mode .tutorial-card {
   background: #1f2937;
   border-color: #9aa1a8;
@@ -151,11 +195,14 @@ html.dark-mode .uml-reference-intro {
     width: clamp(150px, 45vw, 220px);
     align-self: center;
     position: static;
-    order: -1;
   }
 }
 
 @media print {
+  .sebook-hero-motion-control {
+    display: none !important;
+  }
+
   .sebook-practice-hero-group {
     display: block !important;
   }

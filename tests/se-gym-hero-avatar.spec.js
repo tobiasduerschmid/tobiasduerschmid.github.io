@@ -631,6 +631,61 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(remainsStoppedAfterPreferenceRoundTrip).toBe(true);
   });
 
+  for (const chapter of ['/SEBook/requirements.html', '/SEBook/tools/java.html']) {
+    test(`Chapter heroes keep moving after reading and support keyboard pause/play: ${chapter}`, async ({ page }) => {
+      await useDefaultSavedHero(page);
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await page.clock.install();
+      await page.goto(chapter);
+      // The renderer's SVG hook identifies decorative art, which is deliberately
+      // absent from the accessibility tree. Controls use their accessible names.
+      const heroes = page.locator('[data-gym-hero-svg]');
+      await expect(heroes.first()).toHaveAttribute('data-hero-avatar-ready', 'true');
+      await page.clock.fastForward(6000);
+      await page.clock.resume();
+
+      for (const hero of await heroes.all()) {
+        await hero.scrollIntoViewIfNeeded();
+        const before = await hero.evaluate((svg) => svg.getCurrentTime());
+        await expect.poll(() => hero.evaluate((svg) => svg.getCurrentTime()), {
+          message: 'chapter avatar must still move when the reader reaches the quiz',
+        }).toBeGreaterThan(before + 0.05);
+      }
+
+      const pause = page.getByRole('button', { name: 'Pause Hero Motion', exact: true }).first();
+      await pause.focus();
+      await page.keyboard.press('Enter');
+      const play = page.getByRole('button', { name: 'Play Hero Motion', exact: true });
+      await expect(play).toBeFocused();
+      const pausedHero = heroes.first();
+      const frozen = await pausedHero.evaluate((svg) => svg.getCurrentTime());
+      await pausedHero.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      expect(await pausedHero.evaluate((svg) => svg.getCurrentTime())).toBeCloseTo(frozen, 4);
+      await a11yCheckpoint(page, 'chapter-hero-paused', { feature: A11Y_FEATURE });
+      await page.keyboard.press('Space');
+      await expect.poll(() => pausedHero.evaluate((svg) => svg.getCurrentTime())).toBeGreaterThan(frozen + 0.05);
+    });
+  }
+
+  test('Chapter hero controls respect reduced motion and preserve a manual pause', async ({ page }) => {
+    await useDefaultSavedHero(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/SEBook/tools/java.html');
+    const hero = page.locator('[data-gym-hero-svg]');
+    await expect(hero).toHaveAttribute('data-hero-avatar-ready', 'true');
+    const reduced = page.getByRole('button', { name: 'Hero Motion Reduced', exact: true });
+    await expect(reduced).toBeDisabled();
+    expect(await hero.evaluate((svg) => svg.animationsPaused())).toBe(true);
+
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.getByRole('button', { name: 'Pause Hero Motion', exact: true }).click();
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(reduced).toBeDisabled();
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await expect(page.getByRole('button', { name: 'Play Hero Motion', exact: true })).toBeEnabled();
+    expect(await hero.evaluate((svg) => svg.animationsPaused())).toBe(true);
+  });
+
   test('Hero motion synchronizes the causal lift rig while varying biological cadence', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);

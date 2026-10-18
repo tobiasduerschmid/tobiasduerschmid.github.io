@@ -159,7 +159,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
   </div>
 </div>
 {% assign _quiz_av_variant = include.id | slugify | append: "-qa" %}
-<aside class="quiz-avatar-side" aria-hidden="true" data-hero-avatar-variant="{{ _quiz_av_variant }}"></aside>
+<div class="quiz-avatar-side" data-hero-motion-control data-hero-avatar-variant="{{ _quiz_av_variant }}"></div>
 </div>
 <script>
   (function () {

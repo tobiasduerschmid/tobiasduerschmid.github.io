@@ -4054,6 +4054,7 @@
   function heroMotionShouldPause(svg) {
     return prefersReducedMotion()
       || !!window.SEGymHeroMotionPaused
+      || !!(svg && svg._seGymMotionPaused)
       || !!(svg && svg._seGymStandaloneMotionStopped)
       || customizerBackgroundShouldPause(svg);
   }
@@ -4068,6 +4069,12 @@
       } catch (e) {}
     } else {
       try { svg.unpauseAnimations(); } catch (e) {}
+    }
+    if (svg._seGymMotionControl) {
+      const reduced = prefersReducedMotion();
+      svg._seGymMotionControl.disabled = reduced || !!window.SEGymHeroMotionPaused;
+      svg._seGymMotionControl.textContent = reduced ? 'Hero Motion Reduced'
+        : (heroMotionShouldPause(svg) ? 'Play Hero Motion' : 'Pause Hero Motion');
     }
   }
   if (reducedMotionMql && typeof reducedMotionMql.addEventListener === 'function') {
@@ -4084,10 +4091,10 @@
   });
 
   function scheduleStandaloneMotionStop(svg) {
-    if (!svg || document.getElementById('toggle-hero-motion-btn')) return;
+    if (!svg || svg._seGymMotionControl || document.getElementById('toggle-hero-motion-btn')) return;
     if (svg._seGymStandaloneMotionStopped || svg._seGymStandaloneMotionTimer) return;
     // Pages without the SE Gym's visible motion control stop automatically
-    // before five seconds, so decorative quiz/stats motion never runs forever.
+    // before five seconds. Practice heroes instead have their own control.
     svg._seGymStandaloneMotionTimer = window.setTimeout(function () {
       svg._seGymStandaloneMotionTimer = null;
       if (!svg.isConnected || typeof svg.pauseAnimations !== 'function') return;
@@ -4275,10 +4282,23 @@
       if (!svg) return false;
       host.innerHTML = '';
       host.appendChild(svg);
+      if (host.hasAttribute('data-hero-motion-control')) mountHeroMotionControl(host, svg);
       applyToSvg(svg, state);
       host.style.display = '';
       return true;
     });
+  }
+
+  function mountHeroMotionControl(host, svg) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'sebook-hero-motion-control';
+    svg._seGymMotionControl = button;
+    button.addEventListener('click', function () {
+      svg._seGymMotionPaused = !svg._seGymMotionPaused;
+      applyReducedMotionToSvg(svg);
+    });
+    host.appendChild(button);
   }
 
   function isPracticeHeroWrap(el) {

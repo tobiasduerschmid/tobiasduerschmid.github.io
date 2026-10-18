@@ -53,7 +53,6 @@
       width: clamp(150px, 45vw, 220px);
       align-self: center;
       position: static;
-      order: -1;
     }
   }
 

@@ -94,7 +94,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
   </div>
 </div>
 {% assign _flashcards_av_variant = include.id | slugify | append: "-fa" %}
-<aside class="flashcards-avatar-side" aria-hidden="true" data-hero-avatar-variant="{{ _flashcards_av_variant }}"></aside>
+<div class="flashcards-avatar-side" data-hero-motion-control data-hero-avatar-variant="{{ _flashcards_av_variant }}"></div>
 </div>
 <script>
   (function () {
