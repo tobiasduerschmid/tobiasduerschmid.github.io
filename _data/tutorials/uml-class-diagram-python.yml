@@ -298,7 +298,7 @@ steps:
 
       ### Python Is Different — and That's Part of the Lesson
 
-      Unlike Java or C++, **Python has no `private` or `protected` keywords**. Access control in Python is entirely convention-based. This tutorial uses the following Python-to-UML mapping that the live diagram renderer recognises:
+      Unlike Java or C++, **Python has no `private` or `protected` keywords**. Naming conventions communicate which members belong to the public interface and which are internal. This tutorial uses the following Python-to-UML mapping that the live diagram renderer recognises:
 
       | UML | Python (as read by this renderer) |
       |---|---|
@@ -306,35 +306,32 @@ steps:
       | `#` Protected | `self._name` (single leading underscore) |
       | `-` Private | `self.__name` (double leading underscore) |
 
-      ### What `_` and `__` Really Mean in Python
+      ### Encapsulation: Let the Class Manage Its State
 
-      **Single underscore `_` — the "internal use" signal (PEP 8)**
-      ```python
-      self._internal_cache = []   # "Implementation detail — don't rely on this"
-      ```
-      A leading `_` is a **social contract**. Python does nothing to enforce it; tools like `from module import *` skip these names, and the broader community treats them as non-public. *Most Pythonistas use `_` to mean "non-public" whether the intent is protected or private.*
-
-      **Double underscore `__` — name mangling, NOT privacy**
-      ```python
-      self.__balance = 100
-      ```
-      Python rewrites `__balance` to `_BankAccount__balance`. Per the official Python tutorial:
-
-      > *"Name mangling is intended to give classes an easy way to define 'private' instance variables... without having to worry about instance variables defined by derived classes."*
-
-      The **primary purpose** of `__` is **avoiding name clashes in deep inheritance hierarchies** (PEP 8), not privacy. It happens to make accidental external access harder, which is why many tools (and this renderer) treat it as the closest Python analog of UML `-`. But don't reach for `__` just to "make something private" — idiomatic Python rarely uses it.
+      The core idea is **encapsulation**: callers use the public interface, and the class manages its internal state. For `BankAccount`, callers use `deposit`, `withdraw`, and `get_balance`. The account's methods check amounts and reject withdrawals that exceed the balance; directly assigning a new balance would bypass those checks.
 
       ```python
-      account = BankAccount(100)
-      account.__balance              # AttributeError (mangled)
-      account._BankAccount__balance  # Works — a determined caller can always get in
+      account = BankAccount(100.0)
+      account.deposit(50.0)
+      print(account.get_balance())  # 150.0
       ```
 
-      > **Key takeaway:** UML visibility expresses **design intent**; Python conventions express that intent through naming, not enforcement. In this tutorial we use `__` for private so the UML renderer displays `-`, but in real Python code many teams standardise on `_` for anything non-public.
+      The visibility choices tell readers how to use the class:
 
-      ### Visibility as a Design Decision
+      - **Public operations (`+`):** `deposit`, `withdraw`, and `get_balance` are available to callers.
+      - **Internal state (`-`):** `__balance` is managed inside the class, through those operations.
+      - **Internal helper (`#`):** `_validate_amount` supports the account's methods. Callers should use the public operations instead.
 
-      Python does not *enforce* visibility — but UML forces you to **decide** what *should* be accessible. When you model a class in UML, you make a deliberate architectural choice about which parts are the public interface and which are internal implementation details that could change without warning.
+      This boundary also lets the class change how it stores or checks its data without requiring callers to change.
+
+      <details markdown="1">
+      <summary>Python detail: name mangling</summary>
+
+      A single leading `_` normally signals any non-public member. This renderer uses `__` for UML private (`-`); Python calls its name-rewriting mechanism **name mangling**, and it does not enforce private access.
+
+      </details>
+
+      > **Key takeaway:** Choose visibility to make the **public contract** clear and keep implementation details internal. The naming convention communicates that design.
 
       ### Your Target Diagram
 
@@ -509,7 +506,7 @@ steps:
             - "The attribute is optional"
           correct_index: 1
           explanation: |
-            `-` means **private** — only accessible within the class itself. In Python, this maps to the double-underscore prefix (`__`), which triggers name mangling.
+            `-` means **private** in UML: the attribute belongs to the class's internal implementation. Callers should use its public operations. This tutorial's renderer maps a double-leading-underscore name (`__`) to `-`.
 
         - question: |
             In this tutorial's renderer, a Python method named `_calculate_tax` appears with which UML visibility marker?
@@ -521,7 +518,7 @@ steps:
             - "`~` (package)"
           correct_index: 2
           explanation: |
-            A single leading underscore (`_`) is the Python convention for **protected** members, which maps to `#` in UML. Double underscores (`__`) map to private (`-`).
+            This renderer maps a single leading underscore (`_`) to **protected** (`#`). In Python generally, `_` signals a non-public member; it does not enforce access limited to the class and its subclasses.
 
 
   # --------------------------------------------------------------------------
@@ -1177,6 +1174,8 @@ steps:
       2. **Refactor `Course`** to accept and store an `Instructor` object instead of a string
       3. **Update `get_instructor_name()`** to return `self.instructor.name`
 
+      > **Try the refactoring tools:** Place the cursor on `instructor_name` in `self.instructor_name`, then choose **Refactor: Rename Symbol...** from the editor's context menu or Command Palette. Rename the constructor parameter separately. Review the preview before **Apply**, then update the types and object access to match the target diagram. Check the live UML and run **Test My Work**.
+
       Watch the association arrow appear in the UML diagram!
 
     uml_files:
@@ -1730,6 +1729,8 @@ steps:
       3. Add `get_total_duration()` returning the sum of all song durations
       4. Add `get_song_count()` returning the number of songs
 
+      > **Practice with Rename Symbol:** Use **Refactor: Rename Symbol...** on `self.song` to rename the attribute before changing it to a collection. Review the preview: renaming updates references, while changing the stored value and implementing the collection operations remain your work. Check the UML multiplicity and run **Test My Work** afterward.
+
       The `*` multiplicity means the playlist can have zero or more songs.
 
     uml_files:
@@ -2276,6 +2277,8 @@ steps:
       2. **Extract `Customer`** — name, email
       3. **Extract `Order`** — stores customer and items, calculates total
       4. **Slim down `OnlineStore`** — coordinates the other classes
+
+      > **Refactor in small steps:** Select a coherent block of complete statements inside `place_order` and try **Refactor: Extract Function/Method...** from the editor's context menu or Command Palette. Review the preview and run the code to check that behavior stays the same. A helper method is an intermediate step; use the target diagram to decide which class should ultimately own that responsibility. Finish with **Test My Work**.
 
       Watch the UML diagram transform from a single blob into an interconnected network.
 
