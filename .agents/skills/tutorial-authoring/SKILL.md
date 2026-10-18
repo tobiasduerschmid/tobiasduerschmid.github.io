@@ -2083,6 +2083,24 @@ channel.
 
 ### 4.5 JavaScript runtime
 
+- **`js/monaco-loader.js`** — shared local Monaco loader for tutorial and UML
+  chapter editors. Load it before `tutorial-code.js`; the tutorial calls
+  `SEBookMonaco.load()` after its xterm prerequisites, then registers its
+  additional language grammars and themes as before. Chapter labs start in
+  Python and expose only Python/Java with the built-in language grammars.
+
+- **`js/uml-live.js`** — shared source-to-UML client for tutorials and SEBook
+  chapter labs. Load it before `tutorial-code.js`. `createClient()` owns lazy
+  analyzer loading, per-client worker queues, local fallback, SVG text
+  measurement, atomic SVG replacement and accessible descriptions; dispose it when the
+  tutorial is destroyed. The tutorial supplies source snapshots, hide flags,
+  layout preference and stale-result guards, then applies its own colors and
+  zoom. Chapter controls in `uml-code-lab.js` expose Java/Python only; tutorial
+  JavaScript/TypeScript support remains unchanged. Both hosts use the same
+  `uml-worker.js` and analyzers. See `docs/uml-code-labs.md` for the contract.
+  The shared UML editor include waits for its selected diagram renderer at
+  startup; a missing optional type must not block the available types.
+
 - **Compiler lab modules** — `compiler-lab-core.js` is the independent regex,
   EBNF, and AST engine. `compiler-lab-worker.js` and `compiler-lab-client.js`
   isolate and bound each request. `compiler-tutorial-adapter.js` snapshots the

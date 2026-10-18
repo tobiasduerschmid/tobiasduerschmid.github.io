@@ -1,5 +1,27 @@
 /* ── UML Diagram Theming ── */
 
+/* Shared live renderer: measure real SVG text without exposing a second image. */
+.uml-measure-host {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Render the next diagram without clearing or resizing the visible one. */
+.uml-render-staging {
+  position: absolute !important;
+  left: -100000px !important;
+  top: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none;
+}
+
+@media print {
+  .uml-measure-host { display: none; }
+}
+
 /* Git graphs use theme variables instead of SVG inversion. The interactive
    tutorial overrides these inside .tvm-git-graph-container. */
 :root {

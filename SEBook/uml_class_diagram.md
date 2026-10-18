@@ -1,6 +1,7 @@
 ---
 title: "UML Class Diagrams"
 layout: sebook
+uml_code_labs: true
 ---
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
@@ -76,6 +77,10 @@ class User {
 }
 @enduml'></div>
 
+Edit Java or Python below to update the diagram. The code is analyzed locally without execution; edits are not saved.
+
+{% include uml-code-lab.html example="visibility" %}
+
 ### 2.3 Interfaces
 An **Interface** represents a contract. It tells us *what* a class must do, but not *how* it does it. It is denoted by the `<<interface>>` stereotype. Interfaces contain method signatures and usually do not declare attributes (the UML specification allows it {% cite OMG2017UML %}, but I recommend not to use it)
 
@@ -99,6 +104,8 @@ Software is never just one class working in isolation. Classes interact. We repr
 
 Generalization connects a subclass to a superclass. It means the subclass inherits attributes and behaviors from the parent. 
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> A solid line with a hollow, closed arrow pointing to the parent.
+
+{% include uml-code-lab.html example="inheritance" %}
 
 ### Interface Realization
 When a class agrees to implement the methods defined in an interface, it "realizes" the interface.
@@ -166,6 +173,8 @@ class Course {
 }
 Student "*" -- "1..*" Course : enrolled in
 @enduml'></div>
+
+{% include uml-code-lab.html example="dependency" %}
 
 #### Multiplicities
 
@@ -257,6 +266,8 @@ class University
 class Professor
 University "1" o-- "*" Professor
 @enduml'></div>
+
+{% include uml-code-lab.html example="collection_multiplicity" %}
 
 #### Composition ("Is-Made-Up-Of")
 

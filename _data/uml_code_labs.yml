@@ -1,0 +1,292 @@
+# Focused variations on the notation just introduced. The learner predicts a
+# source change, inspects its diagram, then opens the explanation to compare.
+visibility:
+  title: Member visibility
+  type: class
+  explanation: "The field becomes public (+); the operation stays unchanged. In Python, the underscore marks a non-public convention rather than enforced access control."
+  java:
+    task: "Make name public. Which visibility symbol will change?"
+    code: |
+      class Student {
+          private String name;
+
+          public String displayName() {
+              return name;
+          }
+      }
+  python:
+    task: "Rename _name to name in both places. Which visibility symbol will change?"
+    code: |
+      class Student:
+          def __init__(self, name: str) -> None:
+              self._name = name
+
+          def display_name(self) -> str:
+              return self._name
+
+inheritance:
+  title: Adding a subclass
+  type: class
+  explanation: "Cat gains a solid line with a hollow triangle pointing to Animal, just like Dog. The subclasses inherit speak(); its declaration stays in Animal's compartment."
+  java:
+    task: "Which way will the new arrow point? Make Cat inherit from Animal."
+    code: |
+      class Animal {
+          void speak() { }
+      }
+
+      class Dog extends Animal { }
+
+      class Cat { }
+  python:
+    task: "Which way will the new arrow point? Make Cat inherit from Animal."
+    code: |
+      class Animal:
+          def speak(self) -> None:
+              pass
+
+      class Dog(Animal):
+          pass
+
+      class Cat:
+          pass
+
+dependency:
+  title: Keeping a reference
+  type: class
+  explanation: "The stored reference gives an association. Removing it leaves a dashed dependency through the parameter. Source alone cannot establish ownership or lifetime guarantees."
+  java:
+    task: "Remove the roster field and its assignment. What happens to the arrow?"
+    code: |
+      class Roster { }
+
+      class Student {
+          private Roster roster;
+
+          void keepRoster(Roster roster) {
+              this.roster = roster;
+          }
+      }
+  python:
+    task: "Replace self.roster = roster with pass. What happens to the arrow?"
+    code: |
+      class Roster:
+          pass
+
+      class Student:
+          def keep_roster(self, roster: Roster) -> None:
+              self.roster = roster
+
+collection_multiplicity:
+  title: One reference or a collection
+  type: class
+  explanation: "The generated Member end changes from 1 to *, meaning zero or more. A collection type alone does not guarantee at least one member."
+  java:
+    task: "Which multiplicity will change? Replace both members types with List<Member>."
+    code: |
+      import java.util.List;
+
+      class Member { }
+
+      class Team {
+          Member members;
+
+          Team(Member members) {
+              this.members = members;
+          }
+      }
+  python:
+    task: "Which multiplicity will change? Replace both members annotations with list[Member]."
+    code: |
+      class Member:
+          pass
+
+      class Team:
+          def __init__(self, members: Member) -> None:
+              self.members: Member = members
+
+message_order:
+  title: Calls determine message order
+  type: sequence
+  explanation: "The calls determine message order. Swapping them moves capture before authorize; moving the method declarations alone leaves the arrows unchanged."
+  java:
+    task: "Swap the two payment calls in main. Predict the new arrow order."
+    code: |
+      class Payment {
+          void capture() { }
+          void authorize() { }
+      }
+
+      class App {
+          public static void main(String[] args) {
+              Payment payment = new Payment();
+              payment.authorize();
+              payment.capture();
+          }
+      }
+  python:
+    task: "Swap the two payment calls at the bottom. Predict the new arrow order."
+    code: |
+      class Payment:
+          def capture(self) -> None:
+              pass
+
+          def authorize(self) -> None:
+              pass
+
+      payment = Payment()
+      payment.authorize()
+      payment.capture()
+
+self_calls:
+  title: Calling another method
+  type: sequence
+  explanation: "The new save() call loops back to the checkout lifeline, just like validate(). Calling another method on the same object does not create another participant."
+  java:
+    task: "Will another lifeline appear? Call this.save() after this.validate()."
+    code: |
+      class Checkout {
+          void validate() { }
+          void save() { }
+
+          void submit() {
+              this.validate();
+          }
+      }
+
+      class App {
+          public static void main(String[] args) {
+              Checkout checkout = new Checkout();
+              checkout.submit();
+          }
+      }
+  python:
+    task: "Will another lifeline appear? Call self.save() after self.validate()."
+    code: |
+      class Checkout:
+          def validate(self) -> None:
+              pass
+
+          def save(self) -> None:
+              pass
+
+          def submit(self) -> None:
+              self.validate()
+
+      checkout = Checkout()
+      checkout.submit()
+
+return_types:
+  title: Calls and replies
+  type: sequence
+  explanation: "The solid arrow still calls read(). The dashed reply points back to Main and now carries String (Java) or str (Python). This diagram labels replies by return type, not by the runtime value."
+  java:
+    task: "Which arrow will change? Make read() return \"warm\" with return type String."
+    code: |
+      class Sensor {
+          int read() {
+              return 25;
+          }
+      }
+
+      class App {
+          public static void main(String[] args) {
+              Sensor sensor = new Sensor();
+              sensor.read();
+          }
+      }
+  python:
+    task: "Which arrow will change? Make read() return \"warm\" with return type str."
+    code: |
+      class Sensor:
+          def read(self) -> int:
+              return 25
+
+      sensor = Sensor()
+      reading = sensor.read()
+
+alternatives:
+  title: Alternatives are possible paths
+  type: sequence
+  explanation: "The source shows both possible branches under alt, even though the call supplies true. Removing else leaves optional behavior, shown as opt."
+  java:
+    task: "Remove else and its decline call. Which fragment will replace alt?"
+    code: |
+      class Payment {
+          void approve() { }
+          void decline() { }
+      }
+
+      class Checkout {
+          void pay(Payment payment, boolean accepted) {
+              if (accepted) {
+                  payment.approve();
+              } else {
+                  payment.decline();
+              }
+          }
+      }
+
+      class App {
+          public static void main(String[] args) {
+              Payment payment = new Payment();
+              Checkout checkout = new Checkout();
+              checkout.pay(payment, true);
+          }
+      }
+  python:
+    task: "Remove else and its decline call. Which fragment will replace alt?"
+    code: |
+      class Payment:
+          def approve(self) -> None:
+              pass
+
+          def decline(self) -> None:
+              pass
+
+      class Checkout:
+          def pay(self, payment: Payment, accepted: bool) -> None:
+              if accepted:
+                  payment.approve()
+              else:
+                  payment.decline()
+
+      payment = Payment()
+      checkout = Checkout()
+      checkout.pay(payment, True)
+
+loop_boundary:
+  title: The loop boundary matters
+  type: sequence
+  explanation: "Both calls now sit inside the loop frame: finish happens after every item. The frame shows which messages repeat."
+  java:
+    task: "Move receipt.finish() inside the for loop, after receipt.addItem(item)."
+    code: |
+      class Receipt {
+          void addItem(String item) { }
+          void finish() { }
+      }
+
+      class App {
+          public static void main(String[] args) {
+              Receipt receipt = new Receipt();
+              for (String item : new String[] {"book", "pen"}) {
+                  receipt.addItem(item);
+              }
+              receipt.finish();
+          }
+      }
+  python:
+    task: "Indent receipt.finish() so it is inside the for loop, after receipt.add_item(item)."
+    code: |
+      class Receipt:
+          def add_item(self, item: str) -> None:
+              pass
+
+          def finish(self) -> None:
+              pass
+
+      receipt = Receipt()
+      for item in ["book", "pen"]:
+          receipt.add_item(item)
+      receipt.finish()

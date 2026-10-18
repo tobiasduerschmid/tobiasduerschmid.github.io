@@ -12881,7 +12881,7 @@ Supported options:
     rebuildPalette();
     rebuildPropsPane();
 
-    // Initial render — wait only for the renderers this include instance exposes.
+    // A missing optional renderer must not block the selected diagram type.
     function rendererReady(type) {
       var globalName = RENDERER_GLOBALS[type];
       return !!(globalName && window[globalName] && window.UMLShared);
@@ -12894,7 +12894,7 @@ Supported options:
     var rendererWaitAttempts = 0;
     var MAX_RENDERER_WAIT_ATTEMPTS = 100;
     function tryRender() {
-      var ready = supportedTypes.every(rendererReady);
+      var ready = rendererReady(typeSelect.value);
       if (ready) {
         renderDiagram();
       } else if (rendererWaitAttempts++ < MAX_RENDERER_WAIT_ATTEMPTS) {

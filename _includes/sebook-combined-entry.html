@@ -12,6 +12,7 @@
 
 {% if combined_page %}
   {% if combined_page.mermaid %}{% assign combined_has_mermaid = true %}{% endif %}
+  {% if combined_page.uml_code_labs %}{% assign combined_has_uml_code_labs = true %}{% endif %}
   {% if combined_page.layout == 'tutorial' and combined_page.tutorial %}
     {% include tutorial-print-content.html tutorial=combined_page.tutorial show_header=false instructor_mode=true %}
   {% elsif combined_page.path contains '.html' %}

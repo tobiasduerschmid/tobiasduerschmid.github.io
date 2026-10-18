@@ -194,6 +194,7 @@
   // `alt`/`else` pair no longer collapses into a flat list of messages.
   function parseSequenceSpec(spec) {
     var participants = [];
+    var participantIds = Object.create(null);
     var messages = [];
     var stack = [];
     String(spec || '').split('\n').forEach(function (raw) {
@@ -214,7 +215,10 @@
       }
       if (SEQ_LIFECYCLE.test(line)) return;
       if ((m = line.match(/^(participant|actor)\s+(\w+)\s*(?::\s*(.+))?$/i))) {
-        participants.push((m[3] || '').trim() || m[2]);
+        if (!participantIds[m[2]]) {
+          participantIds[m[2]] = true;
+          participants.push((m[3] || '').trim() || m[2]);
+        }
         return;
       }
       if ((m = line.match(/^(\w+|o)\s*(->>|->|-->|<<-|<-|<--)\s*(\w+)\s*(?::\s*(.+))?$/))) {
@@ -228,6 +232,16 @@
         });
       }
     });
+    // The renderer also draws undeclared message endpoints, such as Main.
+    // Resolve declarations first so aliases do not create duplicate lifelines.
+    messages.forEach(function (message) {
+      [message.from, message.to].forEach(function (id) {
+        if (id !== 'o' && !participantIds[id]) {
+          participantIds[id] = true;
+          participants.push(id);
+        }
+      });
+    });
     return { participants: participants, messages: messages };
   }
 
@@ -238,6 +252,15 @@
       case '<-':  return 'is called by';
       default:    return 'calls';
     }
+  }
+
+  function describeSequenceMessage(message) {
+    if (/^<<create>>$/i.test(message.text || '')) {
+      var reversed = message.arrow.charAt(0) === '<';
+      return (reversed ? message.to : message.from) + ' creates ' + (reversed ? message.from : message.to);
+    }
+    var payload = message.text ? ' with "' + message.text + '"' : '';
+    return message.from + ' ' + messageVerb(message.arrow) + ' ' + message.to + payload;
   }
 
   function describeSequenceDiagram(spec) {
@@ -253,13 +276,13 @@
 
     var prevSig = '';
     var msgs = messages.map(function (m) {
-      var payload = m.text ? ' with "' + m.text + '"' : '';
-      var body = m.from + ' ' + messageVerb(m.arrow) + ' ' + m.to + payload;
+      var body = describeSequenceMessage(m);
       var sig = fragmentSignature(m.fragmentPath);
       if (sig !== prevSig) {
         prevSig = sig;
         var prefix = fragmentPrefix(m.fragmentPath);
         if (prefix) return prefix + ', ' + body;
+        return 'outside combined fragments, ' + body;
       }
       return body;
     });
@@ -785,14 +808,14 @@
     if (messages.length) {
       var prevSig = '';
       var msgItems = messages.map(function (m, i) {
-        var payload = m.text ? ' with "' + m.text + '"' : '';
-        var body = m.from + ' ' + messageVerb(m.arrow) + ' ' + m.to + payload;
+        var body = describeSequenceMessage(m);
         var sig = fragmentSignature(m.fragmentPath);
         var line = body;
         if (sig !== prevSig) {
           prevSig = sig;
           var prefix = fragmentPrefix(m.fragmentPath);
           if (prefix) line = prefix + ', ' + body;
+          else line = 'outside combined fragments, ' + body;
         }
         return (i + 1) + '. ' + line;
       });

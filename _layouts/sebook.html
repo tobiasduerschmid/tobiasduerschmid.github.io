@@ -749,6 +749,7 @@
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
   <!-- Verbal aria-label generator (parses the spec for screen-reader text alternatives) -->
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
+  {% if page.uml_code_labs %}{% include uml-code-lab-scripts.html %}{% endif %}
 
   <!-- Global UML inline diagram init — renders data-uml-type/data-uml-spec containers
        and re-renders on dark mode toggle -->

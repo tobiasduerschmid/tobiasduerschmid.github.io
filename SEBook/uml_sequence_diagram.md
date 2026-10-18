@@ -1,6 +1,7 @@
 ---
 title: "UML Sequence Diagrams"
 layout: sebook
+uml_code_labs: true
 ---
 # Unlocking System Behavior with UML Sequence Diagrams
 
@@ -59,6 +60,10 @@ deactivate atm
 
 **Notice the flow of time:** Message 1 happens first, then 2, 3, and 4. The vertical dimension is strictly used to represent the passage of time.
 
+Edit Java or Python below to update the diagram. It sketches possible calls from source without running the code; edits are not saved.
+
+{% include uml-code-lab.html example="message_order" %}
+
 > **Stop and Think (Retrieval Practice):** If the ATM sent an alert to your phone about a login attempt but didn't wait for you to reply before proceeding, what type of message arrow would represent that alert? *(Think about your answer before reading on).*
 
 <details>
@@ -103,6 +108,8 @@ deactivate station
 
 The blue bars show when each object is actively processing. Notice how the `Station` is active from when it receives `requestStop()` until it sends the confirmation, and how the `Train` has separate execution bars for `addStop()`, `openDoors()`, and `closeDoors()`.
 
+{% include uml-code-lab.html example="self_calls" %}
+
 ### Object Naming Convention
 
 Lifelines in sequence diagrams represent specific **object instances**, not classes. The standard naming convention is:
@@ -120,6 +127,8 @@ This is different from class diagrams, which show classes in general. Sequence d
 When you draw both a class diagram and a sequence diagram for the same system, they must be **consistent**:
 - Every message arrow in the sequence diagram must correspond to a method defined in the receiving object's class (or a superclass).
 - The method names, parameter types, and return types must match between the two diagrams.
+
+{% include uml-code-lab.html example="return_types" %}
 
 ---
 
@@ -184,6 +193,8 @@ else [password is incorrect]
 end
 @enduml'></div>
 
+{% include uml-code-lab.html example="alternatives" %}
+
 ### 3\. The LOOP Fragment (Repetitive Behavior) <span class="uml-sym" data-diagram="sequence" data-sym="frag-loop"></span>
 
 The `loop` fragment represents a `for` or `while` loop. The messages inside the box are repeated as long as the guard condition remains true, or for a specified number of times.
@@ -202,6 +213,8 @@ end
 @enduml'></div>
 
 -----
+
+{% include uml-code-lab.html example="loop_boundary" %}
 
 ## Part 3: Putting It All Together (Interleaved Practice)
 

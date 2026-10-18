@@ -1,0 +1,37 @@
+{% assign uml_lab = site.data.uml_code_labs[include.example] %}
+<div class="uml-code-lab" data-uml-code-lab role="region" aria-label="UML code lab: {{ uml_lab.title | escape }}">
+  <script type="application/json">{{ uml_lab | jsonify | replace: '</', '<\/' }}</script>
+  <p class="uml-code-lab-title"><strong>{{ uml_lab.title | escape }}</strong></p>
+  <div class="uml-code-lab-interactive" hidden>
+    <div class="uml-code-lab-toolbar">
+      <label>Code language <select data-uml-language><option value="python">Python</option><option value="java">Java</option></select></label>
+      <button type="button" data-uml-reset>Reset code</button>
+    </div>
+    <p data-uml-task></p>
+    <div class="uml-code-lab-workspace">
+      <div class="uml-code-lab-editor">
+        <label><span data-uml-source-label>Python code</span><textarea data-uml-source spellcheck="false" autocapitalize="off" autocomplete="off" rows="14"></textarea></label>
+        <div class="uml-code-lab-monaco" data-uml-editor hidden></div>
+      </div>
+      <div class="uml-code-lab-result">
+        <p class="uml-code-lab-preview-title"><strong>Live {{ uml_lab.type | escape }} diagram</strong><span class="uml-code-lab-spinner" aria-hidden="true"></span></p>
+        <p data-uml-status role="status" aria-live="polite" aria-atomic="true"></p>
+        <div data-uml-preview class="uml-{{ uml_lab.type | escape }}-diagram-container"></div>
+      </div>
+    </div>
+    <div class="uml-code-lab-print-source"><p><strong data-uml-print-label>Python code</strong></p><pre><code data-uml-print-code></code></pre></div>
+  </div>
+  <div class="uml-code-lab-fallback">
+    <p><strong>Python</strong></p>
+    <pre><code class="language-python">{{ uml_lab.python.code | escape }}</code></pre>
+    <p>{{ uml_lab.python.task | escape }}</p>
+    <p><strong>Java</strong></p>
+    <pre><code class="language-java">{{ uml_lab.java.code | escape }}</code></pre>
+    <p>{{ uml_lab.java.task | escape }}</p>
+    <p>Enable JavaScript for the editable code and live diagram. You can still sketch the suggested change and compare your reasoning below.</p>
+  </div>
+  <details data-uml-explanation>
+    <summary>Check your prediction</summary>
+    <p>{{ uml_lab.explanation | escape }}</p>
+  </details>
+</div>
