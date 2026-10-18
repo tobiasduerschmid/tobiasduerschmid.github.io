@@ -36,8 +36,6 @@ LineItem "*" -- "1" Product
 
 # Introduction
 
-*Pedagogical Note: This chapter is designed using principles of **Active Engagement** (frequent retrieval practice). We will build concepts incrementally. Please complete the "Quick Checks" without looking back at the text—this introduces a "[desirable difficulty](/blog/evidence-based-study-tips-for-college-students/)" that strengthens long-term memory.*
-
 ## 🎯 Learning Objectives
 By the end of this chapter, you will be able to:
 1. Translate real-world object relationships into UML Class Diagrams.
