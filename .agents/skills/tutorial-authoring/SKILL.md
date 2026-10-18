@@ -2266,6 +2266,14 @@ channel.
   saved hero exists or reduced motion is active; keep new backends calling
   this shared helper after their common all-pass renderer instead of adding
   backend-specific celebration code.
+  The test panel is the named `tutorial-test-results` inline-size container;
+  `css/tutorial.css` stacks the hero and bubble according to that panel's
+  width, including after desktop splitter resizing. Scroll the panel in the
+  next animation frame so the hero's added height and result-control resizing
+  are included in the destination. Keep the avatar and readable bubble within
+  the panel width. A temporary `ResizeObserver` keeps the active celebration
+  visible when the panel or its scroll frame resizes; removing/replacing the
+  celebration disconnects it.
 - **`js/tutorial-quiz.js`** — shared quiz renderer (used by main page and
   the instructions popup). `single` / `multiple` / `parsons` types,
   `min_score` gating, `option_feedback` rendering.

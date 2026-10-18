@@ -3763,6 +3763,7 @@ html:not(.dark-mode) .tvm-btn-test-sure:disabled {
 }
 
 .tvm-test-panel {
+  container: tutorial-test-results / inline-size;
   margin-top: 20px;
   border-top: 1px solid #2a2a38;
   padding-top: 16px;
@@ -4435,6 +4436,7 @@ html:not(.dark-mode) .tvm-test-desc { color: #383848; }
 .tvm-hero-celebration-avatar {
   flex: 0 0 auto;
   width: clamp(240px, 30vw, 340px);
+  max-width: 100%;
 }
 
 .tvm-hero-celebration-avatar [data-gym-hero-svg] {
@@ -4446,7 +4448,9 @@ html:not(.dark-mode) .tvm-test-desc { color: #383848; }
 
 .tvm-hero-celebration-bubble {
   position: relative;
+  min-width: 0;
   max-width: min(30em, calc(100% - 370px));
+  overflow-wrap: anywhere;
   padding: 16px 24px;
   border: 2px solid #ffd100;
   border-radius: 8px;
@@ -4508,7 +4512,8 @@ html:not(.dark-mode) .tvm-hero-celebration-bubble::after {
   100% { opacity: 0; transform: translateY(-8px) scale(0.98); }
 }
 
-@media (max-width: 640px) {
+/* The instructions pane can be narrow even on a wide desktop viewport. */
+@container tutorial-test-results (max-width: 640px) {
   .tvm-hero-celebration {
     display: flex;
     flex-direction: column;
@@ -4517,7 +4522,7 @@ html:not(.dark-mode) .tvm-hero-celebration-bubble::after {
   }
 
   .tvm-hero-celebration-avatar {
-    width: clamp(210px, 68vw, 300px);
+    width: clamp(210px, 68cqw, 300px);
   }
 
   .tvm-hero-celebration-bubble {

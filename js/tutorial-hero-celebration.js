@@ -5,6 +5,7 @@
   var TEMPLATE_ID = 'quiz-avatar-tpl';
   var REMOVE_AFTER_MS = 4400;
   var removeTimer = null;
+  var resizeObserver = null;
 
   function prefersReducedMotion() {
     if (typeof window.__prefersReducedMotion === 'function') {
@@ -14,6 +15,10 @@
   }
 
   function removeExisting(root) {
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+      resizeObserver = null;
+    }
     var scope = root || document;
     var existing = scope.querySelectorAll('.tvm-hero-celebration');
     for (var i = 0; i < existing.length; i++) {
@@ -84,6 +89,20 @@
     panel.appendChild(celebration);
 
     window.requestAnimationFrame(function () {
+      if (!celebration.isConnected) return;
+      function keepInView() {
+        if (celebration.isConnected && !prefersReducedMotion()) {
+          panel.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+      }
+      // Result controls and splitters can resize the frame after the pass.
+      keepInView();
+      if (window.ResizeObserver) {
+        resizeObserver = new window.ResizeObserver(keepInView);
+        resizeObserver.observe(panel);
+        var frame = panel.closest('.tvm-step-content-wrap');
+        if (frame) resizeObserver.observe(frame);
+      }
       if (typeof window.spawnConfetti === 'function') {
         window.spawnConfetti(celebration);
       }
