@@ -1111,6 +1111,10 @@ steps:
                                              # the file into. default: editor.
         print_language: python               # Override syntax highlight in
                                              # the print view.
+        persistent: true                     # Keep current editor content when
+                                             # Reset Step reloads starter files.
+                                             # Useful for design notes shared
+                                             # with a later coding exercise.
         reseed: true                         # Give this step its own version of
                                              # the file. First entry uses this
                                              # starter; revisits restore the
@@ -2103,13 +2107,25 @@ channel.
   layout preference and stale-result guards, then applies its own colors and
   zoom. Chapter controls in `uml-code-lab.js` expose Python/Java/C++; tutorial
   JavaScript/TypeScript support remains unchanged. Both hosts use the same
-  `uml-worker.js` and analyzers. See `docs/uml-code-labs.md` for the contract.
+  `uml-worker.js` and analyzers. See `docs/uml-code-labs.md` for the contract
+  and inference limits.
   Sequence calls to known instances preserve the named receiver, even when
   several objects share a class; self-calls stay on the current lifeline.
   Java preserves known object identity through simple reference declarations
   and assignments; bindings are scoped to each followed method.
   Diagram text alternatives distinguish separate fragments with equal guards
   and preserve unspecified multiplicities rather than inventing a bound.
+  Python also propagates simple aliases and supplied object arguments. Its call
+  walk includes predicate/iterable calls and preserves short-circuit evaluation;
+  a guard method call appears before the corresponding `alt`/`opt` choice.
+  Constructor arguments and chained receivers are visited before their consumers.
+  Python nullable annotations (`Optional[T]`, `T | None`, supported quoted and
+  qualified forms) infer `0..1`; optional collections still describe many
+  elements. Java nested/qualified generic wrappers and C++ ownership wrappers
+  preserve the contained relationship's multiplicity. Inference remains a
+  bounded sketch: roles sharing a target, heterogeneous unions, ambiguous names,
+  ownership semantics, and complex control flow need review. See
+  `docs/uml-code-labs.md#inference-limits` before using inferred text as a grading oracle.
   `uml-analyzer-cpp.js` uses Java's lightweight parser/inference approach for
   C++ classes, access sections, ownership hints, and a bounded call walk from
   free `main()`. Supply headers and source files together via `uml_files`;

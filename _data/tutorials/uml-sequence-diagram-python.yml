@@ -1,5 +1,5 @@
 title: "UML Sequence Diagrams in Python"
-description: "Learn to read and create UML sequence diagrams by writing Python code that matches target diagrams. Starting from a few objects exchanging messages and building up to branches and loops, you will see how sequence diagrams turn invisible runtime behavior into a picture."
+description: "Learn to read and create UML sequence diagrams by writing Python code that matches target diagrams. Starting from a few objects exchanging messages and building up to branches and loops, you will propose your own interaction design, compare it with a suggested model, and implement that model."
 
 # Authoring-time Bloom-verb objectives. Not yet rendered to students.
 learning_objectives:
@@ -7,7 +7,8 @@ learning_objectives:
   - "Distinguish synchronous calls from return arrows; match each return value to its originating call."
   - "Use sequence-diagram `opt` and `alt` fragments to express conditional execution."
   - "Use `loop` fragments to express iteration."
-  - "Trace a runtime call sequence by hand and produce the corresponding sequence diagram."
+  - "Design an interaction from behavioral requirements and justify its participants, message order, and decision boundaries."
+  - "Compare an original proposal with a suggested sequence model, then implement and verify the model."
   - "Evaluate when a sequence diagram earns its place vs. when prose or a class diagram would communicate better."
 
 backend: pyodide
@@ -18,6 +19,15 @@ uml_default_view: true
 uml_default_type: sequence
 require_tests: true
 autosave_type: files
+progress_version: 1
+legacy_step_keys:
+  - first-sequence
+  - return-values
+  - self-calls
+  - conditional-fragments
+  - loops
+  - moderated-broadcast
+  - sequence-reference
 
 setup_commands:
   - "import sys; sys.path.insert(0, '/tutorial')"
@@ -34,6 +44,7 @@ steps:
   #   Bloom's — Remember (identify participants), Apply (write the calls).
   # --------------------------------------------------------------------------
   - title: "Your First Sequence Diagram"
+    key: first-sequence
     instructions: |
       ### Why this matters
 
@@ -56,7 +67,7 @@ steps:
       |---|---|---|
       | **Participant** (lifeline) | A box at the top, with a dashed line below | A specific **object instance** active during the scenario |
       | **Synchronous message** | Solid arrow with a **filled** arrowhead → | One object calls a method on another, and **waits** for it to finish |
-      | **Activation box** | A thin rectangle on the lifeline | The object is currently executing — a **call stack frame** in memory |
+      | **Activation box** | A thin rectangle on the lifeline | An execution is in progress; nested synchronous calls can be understood using the call stack |
       | **Time** | Top-to-bottom | Earlier events are higher up; later events are lower |
 
       > **Key distinction:** A lifeline is **not** a class. `bot: DiscordBot` means *"this particular bot instance"*. If your code creates two bots, you get two lifelines — even though there is only one `DiscordBot` class.
@@ -188,68 +199,66 @@ steps:
       - description: "bot is a DiscordBot instance"
         command: |
           source = open('/tutorial/step1/chatbot.py').read()
-          ns = {}
+          ns = {'__name__': 'tutorial_check'}
           exec(source, ns)
-          # The __main__ block only runs if __name__ == "__main__"; we simulate it.
-          # Instead we check the names assigned at module top level by running the main body.
-          import ast
-          tree = ast.parse(source)
-          main_body = None
-          for node in tree.body:
-              if isinstance(node, ast.If):
-                  main_body = node.body
-          assert main_body is not None, \
-              "Add an `if __name__ == \"__main__\":` block"
-          # Execute just the main body in a fresh namespace that has the classes
-          local_ns = {'DiscordBot': ns['DiscordBot'], 'Channel': ns['Channel']}
-          for stmt in main_body:
-              exec(compile(ast.Module(body=[stmt], type_ignores=[]), '<main>', 'exec'), local_ns)
-          assert 'bot' in local_ns, \
-              "Create a DiscordBot instance named `bot`"
-          assert isinstance(local_ns['bot'], ns['DiscordBot']), \
-              "`bot` must be a DiscordBot — use `bot = DiscordBot()`"
+          ns['__name__'] = '__main__'
+          exec(source, ns)
+          assert isinstance(ns.get('bot'), ns['DiscordBot']), 'The bot lifeline needs a DiscordBot instance named bot.'
         hints:
-          - text: "The target diagram shows `bot: DiscordBot` as a lifeline — a specific *instance* named `bot`. Inside the `if __name__ == \"__main__\":` block, how would you create that instance?"
-            condition: "default"
-          - text: "Inside the `if __name__ == \"__main__\":` block, write `bot = DiscordBot()`. Variable names become participant names in the diagram — so `bot` will appear as `bot: DiscordBot`."
-            condition: "default"
+          - text: "Find the participant labeled bot in the target. Its label contains an instance name and a class name; which belongs on each side of an assignment?"
+            condition: "code_not_matches: /if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*=/"
+          - text: "An assignment creates a name, but what value does that name refer to? Compare bot with the class named on its lifeline."
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*=)(?![\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*=\\s*DiscordBot\\s*\\()/"
+          - text: "Trace the construction line: does bot receive a new object, the class itself, or a string? Which expression creates an instance?"
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*=)(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*=\\s*DiscordBot\\s*\\()/"
 
       - description: "channel is a Channel instance"
         command: |
+          source = open('/tutorial/step1/chatbot.py').read()
+          ns = {'__name__': 'tutorial_check'}
+          exec(source, ns)
+          ns['__name__'] = '__main__'
+          exec(source, ns)
+          assert isinstance(ns.get('channel'), ns['Channel']), 'The channel lifeline needs a Channel instance named channel.'
+        hints:
+          - text: "The target has a second object lifeline. Read its instance and class names, then locate where Main creates it."
+            condition: "code_not_matches: /if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bchannel\\s*=/"
+          - text: "Inspect what channel refers to after its assignment. A lifeline stands for an instance of the class shown after the colon."
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bchannel\\s*=)(?![\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bchannel\\s*=\\s*Channel\\s*\\()/"
+          - text: "Compare the two creation arrows with the values held by bot and channel. Which construction line needs changing?"
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bchannel\\s*=)(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bchannel\\s*=\\s*Channel\\s*\\()/"
+
+      - description: "Main sends both messages in the target order"
+        command: |
           import ast
           source = open('/tutorial/step1/chatbot.py').read()
-          tree = ast.parse(source)
-          ns = {}
+          ns = {'__name__': 'tutorial_check'}
           exec(source, ns)
-          main_body = None
-          for node in tree.body:
-              if isinstance(node, ast.If):
-                  main_body = node.body
-          local_ns = {'DiscordBot': ns['DiscordBot'], 'Channel': ns['Channel']}
-          for stmt in main_body:
-              exec(compile(ast.Module(body=[stmt], type_ignores=[]), '<main>', 'exec'), local_ns)
-          assert 'channel' in local_ns, \
-              "Create a Channel instance named `channel`"
-          assert isinstance(local_ns['channel'], ns['Channel']), \
-              "`channel` must be a Channel — use `channel = Channel()`"
+          tree = ast.parse(source)
+          main_nodes = [node for node in tree.body if isinstance(node, ast.If)
+                        and any(isinstance(part, ast.Name) and part.id == '__name__' for part in ast.walk(node.test))]
+          assert main_nodes, 'Keep the __main__ entry point for this scenario.'
+          main_code = compile(ast.Module(body=main_nodes, type_ignores=[]), '<main>', 'exec')
+          events = []
+          class ObservedBot(ns['DiscordBot']):
+              def send(self, message):
+                  events.append(('send', message))
+                  return super().send(message)
+          class ObservedChannel(ns['Channel']):
+              def notify_members(self, message):
+                  events.append(('notify', message))
+                  return super().notify_members(message)
+          ns.update(DiscordBot=ObservedBot, Channel=ObservedChannel, __name__='__main__')
+          exec(main_code, ns)
+          assert events == [('send', 'Hello, world!'), ('notify', 'Welcome')], \
+              'Run both target calls once, with their shown messages, in top-to-bottom order.'
         hints:
-          - text: "The diagram shows two lifelines besides `Main`: `bot: DiscordBot` and `channel: Channel`. You have the bot — what is the second object, and which class is it an instance of?"
-            condition: "default"
-          - text: "Right after creating the bot, add `channel = Channel()`. Two objects, two lifelines."
-            condition: "default"
-
-      - description: "bot.send() and channel.notify_members() are called"
-        command: |
-          source = open('/tutorial/step1/chatbot.py').read()
-          assert 'bot.send(' in source, \
-              "Call bot.send(...) — this produces the `Main -> bot: send(...)` arrow"
-          assert 'channel.notify_members(' in source, \
-              "Call channel.notify_members(...) — this produces the `Main -> channel: notify_members(...)` arrow"
-        hints:
-          - text: "The target diagram has two solid arrows from `Main` — read their labels. Which two method calls do they represent, and on which objects?"
-            condition: "default"
-          - text: "After creating both objects, call `bot.send(\"Hello, world!\")` and then `channel.notify_members(\"Welcome\")`."
-            condition: "default"
+          - text: "Read the target from top to bottom after the creation arrows. Which object receives the first ordinary message?"
+            condition: "code_not_matches: /if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*\\.\\s*send\\s*\\(/"
+          - text: "One interaction has been added. Follow the remaining arrow to its receiver and compare its label with that class's methods."
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*\\.\\s*send\\s*\\()(?![\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bchannel\\s*\\.\\s*notify_members\\s*\\()/"
+          - text: "Make a two-row trace with columns receiver, argument, and order. Compare your actual calls with both arrows in the target; comments and unreachable calls do not execute."
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*\\.\\s*send\\s*\\()(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bchannel\\s*\\.\\s*notify_members\\s*\\()/"
 
     quiz:
       title: "Step 1 — Knowledge Check"
@@ -326,6 +335,7 @@ steps:
   #     arrow appear vs. not).
   # --------------------------------------------------------------------------
   - title: "Return Values: The Dashed Arrow"
+    key: return-values
     instructions: |
       ### Why this matters
 
@@ -409,9 +419,9 @@ steps:
       Open `step2/chatbot.py`. The starter code has the method defined, but the `__main__` block:
 
       1. Does **not** capture the return value of `get_member_count()` — fix that
-      2. Uses a hardcoded string — replace it with an f-string that uses the captured count
+      2. Uses a hardcoded string — replace it with an f-string that uses the captured count, keeping the message wording `<count> members online` (for example, `7 members online` when the count is 7).
 
-      > **Reminder:** For the dashed arrow to appear, two things must be true — the method must have a return type annotation (`-> int` already in the starter), and you must **assign** the return value to a variable.
+      > **Reminder:** This call crosses from Main to the bot, satisfying the different-lifelines rule. Keep the non-`None` return annotation (`-> int` already in the starter), and **assign** the returned value to a variable.
 
     uml_files:
       - step2/chatbot.py
@@ -471,10 +481,10 @@ steps:
       explanation: |
         Two small changes in the source, one big change in the diagram:
 
-        - `count = bot.get_member_count()` — the assignment makes the **return value "used"**. Combined with the existing `-> int` annotation, this triggers the dashed return arrow.
+        - `count = bot.get_member_count()` — the assignment makes the **return value "used"**. Combined with the existing `-> int` annotation and the call across different lifelines, this triggers the dashed return arrow.
         - `f"{count} members online"` — not required for the diagram, but it shows a realistic reason to capture the return.
 
-        Compare the earlier call `bot.send(...)` in Step 1: its return type is `None`, so even if you wrote `x = bot.send("hi")`, no dashed arrow would appear. UML draws a return arrow only when there is a **value** worth showing.
+        Compare the earlier call `bot.send(...)` in Step 1: its return type is `None`, so even if you wrote `x = bot.send("hi")`, no dashed arrow would appear. This analyzer omits that return; a hand-authored UML diagram may show a reply whenever it helps explain the interaction.
 
     tests:
       - description: "get_member_count() has a return type annotation"
@@ -490,10 +500,12 @@ steps:
           assert ret is not None and isinstance(ret, ast.Name) and ret.id == 'int', \
               "Keep the `-> int` return type annotation on get_member_count — without it, the diagram won't draw the return arrow"
         hints:
-          - text: "Which renderer condition for return arrows lives on the method signature itself? That's the one you need to preserve."
-            condition: "default"
-          - text: "Leave the method signature alone: `def get_member_count(self) -> int:`. The return type annotation is what makes the dashed return arrow show up."
-            condition: "default"
+          - text: "The return-arrow rule has a condition on the method declaration. Locate that declaration before changing the caller."
+            condition: "code_not_matches: /def get_member_count\\b/"
+          - text: "The body returns an integer. Which part of the signature tells the analyzer the type of that return value?"
+            condition: "code_matches: /^(?=[\\s\\S]*def get_member_count\\b)(?![\\s\\S]*def get_member_count\\b[^\\n]*->)/"
+          - text: "Compare the signature's return annotation with the value returned by the method. Parameter annotations describe inputs, not the returned value."
+            condition: "code_matches: /^(?=[\\s\\S]*def get_member_count\\b)(?=[\\s\\S]*def get_member_count\\b[^\\n]*->)/"
 
       - description: "The return value of get_member_count() is captured"
         command: |
@@ -501,7 +513,9 @@ steps:
           source = open('/tutorial/step2/chatbot.py').read()
           tree = ast.parse(source)
           captured = False
-          for node in ast.walk(tree):
+          main_nodes = [node for node in tree.body if isinstance(node, ast.If)
+                        and any(isinstance(part, ast.Name) and part.id == '__name__' for part in ast.walk(node.test))]
+          for node in ast.walk(ast.Module(body=main_nodes, type_ignores=[])):
               if isinstance(node, (ast.Assign, ast.AnnAssign)):
                   val = node.value
                   if (val is not None and isinstance(val, ast.Call)
@@ -509,67 +523,47 @@ steps:
                           and val.func.attr == 'get_member_count'):
                       captured = True
           assert captured, \
-              "Assign the result of bot.get_member_count() to a variable — e.g. `count = bot.get_member_count()`. Without an assignment, no return arrow appears."
+              "Capture the result of get_member_count in Main so the analyzer can show its return arrow."
         hints:
-          - text: "Right now the starter code *calls* get_member_count but throws the result away. Which renderer condition for return arrows is violated?"
-            condition: "default"
-          - text: "Capture the result in a variable: `count = bot.get_member_count()`. The assignment is what makes the return arrow appear."
-            condition: "default"
+          - text: "Start at the solid call arrow to get_member_count. Which statement in Main should invoke that method?"
+            condition: "code_not_matches: /if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?get_member_count\\s*\\(/"
+          - text: "Pause immediately after the call. Where could the returned value be stored so the next statement can use it?"
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?get_member_count\\s*\\()(?![\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\b\\w+(?:\\s*:\\s*\\w+)?\\s*=\\s*bot\\.get_member_count\\s*\\()/"
+          - text: "Trace the assignment actually executed in Main. A capture inside an unused helper cannot supply the return value for this scenario."
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?get_member_count\\s*\\()(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\b\\w+(?:\\s*:\\s*\\w+)?\\s*=\\s*bot\\.get_member_count\\s*\\()/"
 
-      - description: "The captured count is used in notify_members()"
+      - description: "The notification uses the current returned count"
         command: |
           import ast
           source = open('/tutorial/step2/chatbot.py').read()
+          ns = {'__name__': 'tutorial_check'}
+          exec(source, ns)
           tree = ast.parse(source)
-          main_body = None
-          for node in tree.body:
-              if isinstance(node, ast.If):
-                  main_body = node.body
-                  break
-          assert main_body is not None, "Add an `if __name__ == \"__main__\":` block"
-
-          def refs_any(node, names):
-              for n in ast.walk(node):
-                  if isinstance(n, ast.Name) and n.id in names:
-                      return True
-              return False
-
-          # Walk main in order, tracking names captured from get_member_count()
-          # and any names transitively assigned from expressions using those.
-          captured = set()
-          notify_with_captured = False
-          notify_any = False
-          for stmt in main_body:
-              targets, val = [], None
-              if isinstance(stmt, ast.Assign):
-                  targets, val = stmt.targets, stmt.value
-              elif isinstance(stmt, ast.AnnAssign) and stmt.value is not None:
-                  targets, val = [stmt.target], stmt.value
-              if val is not None:
-                  is_gmc = (isinstance(val, ast.Call)
-                      and isinstance(val.func, ast.Attribute)
-                      and val.func.attr == 'get_member_count')
-                  if is_gmc or (captured and refs_any(val, captured)):
-                      for t in targets:
-                          if isinstance(t, ast.Name):
-                              captured.add(t.id)
-              for n in ast.walk(stmt):
-                  if (isinstance(n, ast.Call)
-                          and isinstance(n.func, ast.Attribute)
-                          and n.func.attr == 'notify_members'):
-                      notify_any = True
-                      for arg in n.args:
-                          if captured and refs_any(arg, captured):
-                              notify_with_captured = True
-          assert notify_any, \
-              "notify_members must still be called"
-          assert notify_with_captured, \
-              "Pass the captured count variable into notify_members — a hardcoded string like \"5 members online\" does not show that the returned value flowed into the next call. Any expression that references your captured variable works: f-string, concatenation, `str(count)`, or extracting to an intermediate variable."
+          main_nodes = [node for node in tree.body if isinstance(node, ast.If)
+                        and any(isinstance(part, ast.Name) and part.id == '__name__' for part in ast.walk(node.test))]
+          assert main_nodes, 'Keep the __main__ entry point for this scenario.'
+          main_code = compile(ast.Module(body=main_nodes, type_ignores=[]), '<main>', 'exec')
+          for member_count in (0, 7):
+              events = []
+              class ObservedBot(ns['DiscordBot']):
+                  def get_member_count(self):
+                      events.append(('count',))
+                      return member_count
+              class ObservedChannel(ns['Channel']):
+                  def notify_members(self, message):
+                      events.append(('notify', message))
+                      return super().notify_members(message)
+              run_ns = dict(ns, DiscordBot=ObservedBot, Channel=ObservedChannel, __name__='__main__')
+              exec(main_code, run_ns)
+              assert events == [('count',), ('notify', f'{member_count} members online')], \
+                  'Fetch the count, then notify once using that returned value, even when it changes.'
         hints:
-          - text: "The diagram should show the return value *flowing* from `get_member_count` into the `notify_members` call. What Python change would make that flow visible?"
-            condition: "default"
-          - text: "Any expression referencing the captured variable will do — an f-string is cleanest: `channel.notify_members(f\"{count} members online\")`."
-            condition: "default"
+          - text: "The notification depends on a value returned by the bot. First locate where Main receives that value."
+            condition: "code_not_matches: /if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\b\\w+(?:\\s*:\\s*\\w+)?\\s*=\\s*bot\\.get_member_count\\s*\\(/"
+          - text: "The count is available. Trace which later call should communicate it to the channel."
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\b\\w+(?:\\s*:\\s*\\w+)?\\s*=\\s*bot\\.get_member_count\\s*\\()(?![\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?notify_members\\s*\\()/"
+          - text: "Imagine get_member_count returned 7 instead of 5. Trace the notification expression: which part changes with the returned value, and which words stay the same?"
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\b\\w+(?:\\s*:\\s*\\w+)?\\s*=\\s*bot\\.get_member_count\\s*\\()(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?notify_members\\s*\\()/"
 
     quiz:
       title: "Step 2 — Knowledge Check"
@@ -603,10 +597,10 @@ steps:
             - "Because return arrows are drawn in a separate diagram type"
           correct_index: 0
           explanation: |
-            The diagram draws a return arrow only when the return type is **not** `None` **and** the return value is captured. `send` returns `None` (no `-> int` or similar annotation), so there is no "value" to show on the way back — the end of the activation box is enough.
+            For this cross-lifeline call, the analyzer also requires a non-`None` return annotation and a captured value. `send` has neither here, so the analyzer omits its reply. UML itself does not require those display conventions.
 
         - question: |
-            **Predict.** Which of these Python snippets produces a dashed return arrow?
+            **Predict.** Each snippet runs in Main and calls the bot on a different lifeline. Which produces a dashed return arrow in this tutorial?
 
             ```python
             # A
@@ -626,7 +620,7 @@ steps:
             - "All three"
           correct_index: 1
           explanation: |
-            **Only B.** `A` calls the method but throws the return value away, so no arrow. `C` captures the return, but `-> None` means there is no meaningful value to show. `B` is the one that ticks both boxes — non-`None` return type **and** captured value.
+            **Only B.** `A` calls the method but throws the return value away, so no arrow. `C` captures the return, but `-> None` means there is no meaningful value to show. The calls already cross lifelines; `B` also has the required non-`None` return annotation and captured value.
 
         - question: |
             In Python, `self` is the first parameter of every instance method. How is `self` drawn in a sequence diagram?
@@ -652,23 +646,24 @@ steps:
   #   Bloom's — Apply (refactor to self-calls), Analyze (why nested activation).
   # --------------------------------------------------------------------------
   - title: "Self-Calls and Nested Activation"
+    key: self-calls
     instructions: |
       ### Why this matters
 
-      Real classes rarely expose every detail; they delegate to private helper methods on the same object. When the diagram captures that delegation, you can see at a glance which public method is the orchestrator and which are its internal pieces. Activation boxes are not decoration — they are the *literal* call stack you already debug every day, drawn vertically. Connecting that mental model to the diagram is the threshold concept of this step.
+      Methods often delegate work to helpers on the same object. Showing those calls makes the order of work and the responsibility of the outer method visible. For the synchronous Python calls in this step, the call stack helps explain why one activation can remain open while another starts inside it.
 
       ### 🎯 You will learn to
 
-      - Analyze why an activation box represents a call stack frame
+      - Explain nested synchronous activation using the Python call stack
       - Apply self-message notation to produce nested activation from Python code
 
       ### The Call Stack, Drawn
 
       You already know the call stack from debugging Python: every time a function calls another function, a new **stack frame** is pushed; when the function returns, the frame is popped.
 
-      A sequence diagram's **activation box** is the exact visual of that. When a message arrives at a lifeline, an activation box starts. When the method returns, the box ends.
+      An **activation box** marks an execution interval on a lifeline. In these synchronous examples, it begins when a method starts and ends when that method returns. A call to a helper can occur while the outer execution is still in progress.
 
-      > **Mental model:** Activation box ≈ stack frame. A method that takes longer has a taller box. A method that calls another method has a *nested* box stacked on top of its own. (The mapping is close but not perfect — generators, async, and coroutines blur the picture. For 99% of the synchronous code you will write as an undergraduate, "stack frame" is the right intuition.)
+      > **Mental model for synchronous calls:** A nested self-call corresponds to a new stack frame while the outer call is still active. Read vertical position as event order: the height of an activation box does **not** measure elapsed time unless the diagram explicitly includes a time scale or timing constraints.
 
       ### Self-Messages
 
@@ -689,7 +684,7 @@ steps:
       deactivate order
       @enduml'></div>
 
-      Notice the arrow from `order` to **itself**, and how it sits inside the outer activation box for `checkout()`. The small nested box is the stack frame for `_validate()` pushed on top of `checkout()`'s frame.
+      Notice the arrow from `order` to **itself**, and how it sits inside the outer activation box for `checkout()`. The small nested box marks `_validate()` executing while `checkout()` is still active, matching the nested stack frames in this synchronous code.
 
       ### Your Target Diagram
 
@@ -782,56 +777,62 @@ steps:
         - `self._log(message)` inside `handle_message` → `bot -> bot: _log(...)`
         - `self.send(message)` inside `handle_message` → `bot -> bot: send(...)`
 
-        The two self-arrows sit **inside** the activation box for `handle_message` because the Python interpreter has not returned from `handle_message` yet when it pushes the `_log` and `send` frames onto the stack. That is why activation boxes nest — they are literal stack frames.
+        The two self-arrows sit **inside** the activation box for `handle_message` because the Python interpreter has not returned from `handle_message` yet when it pushes the `_log` and `send` frames onto the stack. The nested activations communicate those overlapping execution intervals; the call stack is a useful explanation for this synchronous example.
 
         In the next step we will add **branches and loops** with interaction fragments.
 
     tests:
-      - description: "handle_message calls self._log and self.send"
+      - description: "handle_message logs before sending the unchanged message"
+        command: |
+          source = open('/tutorial/step3/chatbot.py').read()
+          ns = {'__name__': 'tutorial_check'}
+          exec(source, ns)
+          for message in ('hi there', 'meeting moved', ''):
+              events = []
+              class ObservedBot(ns['DiscordBot']):
+                  def _log(self, message):
+                      events.append(('log', message))
+                      return super()._log(message)
+                  def send(self, message):
+                      events.append(('send', message))
+                      return super().send(message)
+              ObservedBot().handle_message(message)
+              assert events == [('log', message), ('send', message)], \
+                  'Each message must be logged once before it is sent once, with its original text.'
+        hints:
+          - text: "Follow the first self-arrow inside handle_message. Which existing helper receives that message, and what does self identify?"
+            condition: "code_not_matches: /def handle_message\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bself\\s*\\.\\s*_log\\s*\\(/"
+          - text: "Logging is one part of the interaction. Follow the other self-arrow: what must happen before handle_message returns?"
+            condition: "code_matches: /^(?=[\\s\\S]*def handle_message\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bself\\s*\\.\\s*_log\\s*\\()(?![\\s\\S]*def handle_message\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bself\\s*\\.\\s*send\\s*\\()/"
+          - text: "Trace a new input such as \"meeting moved\". Record each helper call and its argument, then compare their order and payloads with the target."
+            condition: "code_matches: /^(?=[\\s\\S]*def handle_message\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bself\\s*\\.\\s*_log\\s*\\()(?=[\\s\\S]*def handle_message\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bself\\s*\\.\\s*send\\s*\\()/"
+
+      - description: "Main invokes handle_message once with the target message"
         command: |
           import ast
           source = open('/tutorial/step3/chatbot.py').read()
+          ns = {'__name__': 'tutorial_check'}
+          exec(source, ns)
           tree = ast.parse(source)
-          # Find handle_message on DiscordBot
-          handle_body = None
-          for cls in [n for n in tree.body if isinstance(n, ast.ClassDef)]:
-              if cls.name == 'DiscordBot':
-                  for m in cls.body:
-                      if isinstance(m, ast.FunctionDef) and m.name == 'handle_message':
-                          handle_body = m.body
-          assert handle_body is not None, \
-              "DiscordBot must have a handle_message method"
-          # Look for self._log(...) and self.send(...) calls
-          def has_self_call(body, method):
-              for stmt in body:
-                  for node in ast.walk(stmt):
-                      if (isinstance(node, ast.Call)
-                              and isinstance(node.func, ast.Attribute)
-                              and isinstance(node.func.value, ast.Name)
-                              and node.func.value.id == 'self'
-                              and node.func.attr == method):
-                          return True
-              return False
-          assert has_self_call(handle_body, '_log'), \
-              "handle_message must call self._log(message)"
-          assert has_self_call(handle_body, 'send'), \
-              "handle_message must call self.send(message)"
+          main_nodes = [node for node in tree.body if isinstance(node, ast.If)
+                        and any(isinstance(part, ast.Name) and part.id == '__name__' for part in ast.walk(node.test))]
+          assert main_nodes, 'Keep the __main__ entry point for this scenario.'
+          main_code = compile(ast.Module(body=main_nodes, type_ignores=[]), '<main>', 'exec')
+          entries = []
+          class ObservedBot(ns['DiscordBot']):
+              def handle_message(self, message):
+                  entries.append(message)
+                  return super().handle_message(message)
+          ns.update(DiscordBot=ObservedBot, __name__='__main__')
+          exec(main_code, ns)
+          assert entries == ['hi there'], 'Main must invoke handle_message once with the target message.'
         hints:
-          - text: "The target diagram shows two self-arrows nested inside `handle_message`'s activation box. What Python prefix on a method call tells the analyzer that the call stays on the *same* object?"
-            condition: "default"
-          - text: "Inside `handle_message`, write two lines: `self._log(message)` then `self.send(message)`. The `self.` prefix is what produces the self-arrows in the diagram."
-            condition: "default"
-
-      - description: "Main calls bot.handle_message(...)"
-        command: |
-          source = open('/tutorial/step3/chatbot.py').read()
-          assert 'bot.handle_message(' in source, \
-              "In __main__, call bot.handle_message(\"hi there\")"
-        hints:
-          - text: "The target diagram shows exactly one arrow from `Main` into `bot`. Reading that arrow's label — what single call should `__main__` make?"
-            condition: "default"
-          - text: "In the `if __name__ == \"__main__\":` block, call `bot.handle_message(\"hi there\")` — this is the single entry point from Main into the bot."
-            condition: "default"
+          - text: "The first creation arrow gives Main a bot object. Locate where that object should be constructed before sending it a message."
+            condition: "code_not_matches: /if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*=/"
+          - text: "The target has one entry arrow from Main. Use its label to choose the bot operation Main should invoke."
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*=)(?![\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*\\.\\s*handle_message\\s*\\()/"
+          - text: "Trace only Main, ignoring method bodies for a moment. Count the entry calls and compare the message argument with the target."
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*=)(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*\\.\\s*handle_message\\s*\\()/"
 
       - description: "Main does NOT call bot._log or bot.send directly"
         command: |
@@ -853,10 +854,12 @@ steps:
                           assert False, \
                               f"Main should not call bot.{n.func.attr}() directly — let handle_message delegate to _log and send internally."
         hints:
-          - text: "The target diagram shows only *one* arrow from Main into bot. If Main also called `bot._log` or `bot.send` directly, you would see extra arrows."
-            condition: "default"
-          - text: "Main should only call `bot.handle_message(\"hi there\")`. `_log` and `send` are *internal* — they are called by `handle_message` via `self._log(...)` and `self.send(...)`."
-            condition: "default"
+          - text: "Keep the two helper interactions inside the bot's activation. If this check still fails, inspect the __main__ guard and any aliases used for the bot."
+            condition: "code_not_matches: /if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*\\.\\s*(?:_log|send)\\s*\\(/"
+          - text: "A direct helper call in Main produces an extra Main-to-bot arrow. Which method should own the helper interaction instead?"
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*\\.\\s*(?:_log|send)\\s*\\()(?![\\s\\S]*def handle_message\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bself\\s*\\.\\s*(?:_log|send)\\s*\\()/"
+          - text: "Compare the source of each arrow: Main starts the operation, while the bot performs its internal steps. Which duplicate call in Main crosses that boundary?"
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bbot\\s*\\.\\s*(?:_log|send)\\s*\\()(?=[\\s\\S]*def handle_message\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bself\\s*\\.\\s*(?:_log|send)\\s*\\()/"
 
     quiz:
       title: "Step 3 — Knowledge Check"
@@ -865,7 +868,7 @@ steps:
       questions:
 
         - question: |
-            What does a **nested activation box** (a smaller box stacked on top of a larger one) represent?
+            In this synchronous Python example, what does a **nested activation box** (a smaller box stacked on top of a larger one) represent?
           type: single
           options:
             - "An object that contains another object (composition)"
@@ -874,7 +877,7 @@ steps:
             - "A parallel thread running alongside the outer call"
           correct_index: 1
           explanation: |
-            A nested activation is the visual of the Python **call stack**: a method calls another method before returning, so a new frame is pushed on top. When the inner method returns, the inner box ends; when the outer returns, the outer box ends.
+            Here the inner execution begins before the outer method returns. The Python **call stack** explains this nesting: the inner call pushes a new frame while the outer one is still present. When the inner method returns, the inner box ends; when the outer returns, the outer box ends.
 
         - question: |
             Which line of Python produces a **self-arrow** (an arrow from a lifeline back to itself)?
@@ -934,10 +937,11 @@ steps:
   #   Bloom's — Apply (write the two forms), Analyze (choose which fits).
   # --------------------------------------------------------------------------
   - title: "Conditional Fragments: opt and alt"
+    key: conditional-fragments
     instructions: |
       ### Why this matters
 
-      Real behavior almost always branches — spam vs. legitimate traffic, cache hit vs. miss, authorised vs. denied. A sequence diagram that only shows a single straight-line trace cannot communicate any of that. The `opt` and `alt` interaction fragments are how UML draws conditional execution, and the *only* difference between them is whether there is an `else`. Mastering this small contrast lets you turn any Python `if` statement into the right diagram on the first try.
+      Real behavior almost always branches — spam vs. legitimate traffic, cache hit vs. miss, authorised vs. denied. A sequence diagram that only shows a single straight-line trace cannot communicate any of that. The `opt` and `alt` interaction fragments communicate optional execution and alternatives. This analyzer maps a plain Python `if` to `opt` and an `if`/`else` to `alt`, giving you a concrete way to explore the difference.
 
       ### 🎯 You will learn to
 
@@ -948,12 +952,12 @@ steps:
 
       So far every diagram has been a straight top-to-bottom trace. But real systems **branch** — sometimes they do X, other times Y. UML handles this with **combined fragments**: labeled boxes drawn *around* the messages they contain.
 
-      There are two conditional fragment types, and the *only* difference between them is whether there's an `else`:
+      For this tutorial's Python examples, compare these two conditional fragments:
 
       | Fragment | Label | Python | Meaning |
       |---|---|---|---|
       | **opt** | `opt` | `if ...` (no `else`) | *Zero or one* execution — inside runs only if the guard is true |
-      | **alt** | `alt` / `else` | `if ... else ...` | *Exactly one* branch runs — the guard selects which |
+      | **alt** | `alt` / `else` | `if ... else ...` | Alternatives: in this exhaustive Python choice, exactly one branch runs |
 
       Both fragments wrap their region of the diagram in a thin rectangle with a guard condition (the Boolean test) in square brackets in the top-left corner.
 
@@ -987,6 +991,9 @@ steps:
       participant channel: Channel
       Main -> bot: handle("hi")
       activate bot
+      bot -> bot: _is_spam("hi")
+      activate bot
+      deactivate bot
       alt [bot._is_spam("hi")]
       bot -> bot: _block()
       activate bot
@@ -999,9 +1006,9 @@ steps:
       deactivate bot
       @enduml'></div>
 
-      The `alt` box says: *"exactly one of these branches runs."* The guard tells you *which*.
+      Here exactly one branch runs because the `else` covers every case not selected by the `if`. In UML generally, an `alt` selects **at most one** operand: if no guard is true and there is no `else` operand, none executes.
 
-      > **The choice rule:** `opt` for a single conditional message, `alt` for mutually-exclusive branches. If your `else` would be empty, use `opt`; if both branches do something, use `alt`. The Python code shape decides for you — which is another reason to keep code and diagram in sync.
+      > **The choice rule:** `opt` for a single conditional message, `alt` for mutually-exclusive branches. If your `else` would be empty, use `opt`; if both branches do something, use `alt`. These Python shapes control what this analyzer draws; a hand-authored UML model describes the alternatives relevant to its audience.
 
       ### Your Target Diagram
 
@@ -1029,6 +1036,9 @@ steps:
       deactivate channel
       Main -> bot: handle(channel, 'buy now cheap')
       activate bot
+      bot -> bot: _is_spam(message)
+      activate bot
+      deactivate bot
       alt [bot._is_spam(message)]
       bot -> bot: _block(message)
       activate bot
@@ -1050,7 +1060,9 @@ steps:
       2. In the `if` branch: call `self._block(message)`.
       3. In the `else` branch: call `channel.broadcast(message)`.
 
-      > **Note on `_is_spam`:** It is already defined — a trivial classifier. You just need to call it in the `if` condition. That call itself draws a tiny self-arrow (it's a real method call) — that is expected.
+      An equivalent `if not ...` with the two branch bodies exchanged is also valid: it changes the compartment order and guard label while preserving the same two outcomes.
+
+      > **Note on `_is_spam`:** It is already defined — a simple classifier. Its self-call appears **before** the `alt` fragment because Python evaluates the condition before choosing a branch. The guard label states which result selects the first compartment.
 
     uml_files:
       - step4/chatbot.py
@@ -1121,10 +1133,10 @@ steps:
 
         If you dropped the `else` and let non-spam messages pass silently, the fragment would change from `alt` to `opt` — that is the one-feature contrast between the two fragment types.
 
-        The tiny self-arrow for `_is_spam(message)` is the guard evaluation. Some published diagrams suppress guard calls to reduce clutter; the analyzer here shows them so the predicate inside the `alt`'s guard is visible in the code.
+        The `_is_spam(message)` self-call appears before the `alt` fragment. The condition is evaluated once for this choice; its appearance in the guard label does not represent a second method call.
 
     tests:
-      - description: "handle uses if/else with self._is_spam as the guard"
+      - description: "handle models a guarded choice with if/else"
         command: |
           import ast
           source = open('/tutorial/step4/chatbot.py').read()
@@ -1138,51 +1150,71 @@ steps:
               "handle must contain an `if` statement — that is what produces the alt/opt fragment."
           assert if_node.orelse, \
               "Use `if ... else ...` (a bare `if` would produce an `opt`, but the target diagram shows an `alt` with two compartments)."
-          test = if_node.test
-          is_spam_call = (isinstance(test, ast.Call)
-              and isinstance(test.func, ast.Attribute)
-              and test.func.attr == '_is_spam'
-              and isinstance(test.func.value, ast.Name)
-              and test.func.value.id == 'self')
-          assert is_spam_call, \
-              "The `if` condition should call `self._is_spam(message)` — that becomes `alt [bot._is_spam(message)]` in the diagram (the generator rewrites `self` to the caller's object name)."
+          is_spam_call = any(isinstance(node, ast.Call)
+              and isinstance(node.func, ast.Attribute)
+              and node.func.attr == '_is_spam'
+              and isinstance(node.func.value, ast.Name)
+              and node.func.value.id == 'self' for node in ast.walk(if_node.test))
+          assert is_spam_call, 'Use the supplied spam classifier in the guard.'
         hints:
-          - text: "The target diagram shows `alt [bot._is_spam(message)]`. What Python shape produces `alt` with a matching guard? (The generator rewrites `self` to the caller's object name — `bot` here — because the reader is looking at the bot lifeline.)"
-            condition: "default"
-          - text: "`if/else` with two non-empty branches produces `alt`. A bare `if` would produce `opt`."
-            condition: "code_missing: else:"
-          - text: "Use `if self._is_spam(message):` as your `if` line, and add an `else:` clause underneath."
-            condition: "default"
+          - text: "Compare the two target compartments with the starter's unconditional call. Where does the program need to choose between outcomes?"
+            condition: "code_not_matches: /def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bif\\s/"
+          - text: "A single optional branch produces opt. What additional branch is needed to communicate both outcomes in this target?"
+            condition: "code_matches: /^(?=[\\s\\S]*def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bif\\s)(?![\\s\\S]*def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\belse\\s*:)/"
+          - text: "Read the guard as a true/false question about the current message. Check that the condition evaluates the supplied classifier and that both outcomes have their own branch."
+            condition: "code_matches: /^(?=[\\s\\S]*def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bif\\s)(?=[\\s\\S]*def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\belse\\s*:)/"
 
-      - description: "Spam branch blocks, non-spam branch broadcasts"
+      - description: "Spam is blocked without being broadcast"
         command: |
-          import ast
           source = open('/tutorial/step4/chatbot.py').read()
-          tree = ast.parse(source)
-          bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
-          method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'handle'), None)
-          if_node = next((s for s in method.body if isinstance(s, ast.If)), None)
-          assert if_node is not None and if_node.orelse, \
-              "handle must have an if/else"
-          def calls(body, recv, meth):
-              for node in body:
-                  for n in ast.walk(node):
-                      if (isinstance(n, ast.Call)
-                              and isinstance(n.func, ast.Attribute)
-                              and isinstance(n.func.value, ast.Name)
-                              and n.func.value.id == recv
-                              and n.func.attr == meth):
-                          return True
-              return False
-          assert calls(if_node.body, 'self', '_block'), \
-              "In the `if` (spam) branch, call `self._block(message)`."
-          assert calls(if_node.orelse, 'channel', 'broadcast'), \
-              "In the `else` branch, call `channel.broadcast(message)`."
+          ns = {'__name__': 'tutorial_check'}
+          exec(source, ns)
+          for message in ('buy now tickets', 'BUY NOW tickets'):
+              events = []
+              class ObservedBot(ns['DiscordBot']):
+                  def _block(self, message):
+                      events.append(('block', message))
+                      return super()._block(message)
+              class ObservedChannel(ns['Channel']):
+                  def broadcast(self, message):
+                      events.append(('broadcast', message))
+                      return super().broadcast(message)
+              ObservedBot().handle(ObservedChannel(), message)
+              assert events == [('block', message)], \
+                  'Choose exactly one action for this input and preserve the message text.'
         hints:
-          - text: "Look at the two compartments of the `alt` in the target diagram. The top compartment has a self-arrow; the bottom has an arrow going to `channel`. What two method calls do those arrows correspond to?"
-            condition: "default"
-          - text: "`if` branch: `self._block(message)`. `else` branch: `channel.broadcast(message)`."
-            condition: "default"
+          - text: "Try one spam message and one ordinary message. Which action should each take, and which action should it avoid?"
+            condition: "code_not_matches: /def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bif\\s/"
+          - text: "Trace both truth values of the condition. Check where execution continues after the conditional body; a later unconditional call still runs."
+            condition: "code_matches: /^(?=[\\s\\S]*def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bif\\s)(?![\\s\\S]*def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\belse\\s*:)/"
+          - text: "Make a trace table for \"BUY NOW tickets\" and \"See you Tuesday\". Each row should contain one action and its unchanged input. Look for an extra action, wrong branch, or rewritten message."
+            condition: "code_matches: /^(?=[\\s\\S]*def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bif\\s)(?=[\\s\\S]*def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\belse\\s*:)/"
+
+      - description: "Ordinary messages are broadcast without being blocked"
+        command: |
+          source = open('/tutorial/step4/chatbot.py').read()
+          ns = {'__name__': 'tutorial_check'}
+          exec(source, ns)
+          for message in ('See you Tuesday', 'Goodbye'):
+              events = []
+              class ObservedBot(ns['DiscordBot']):
+                  def _block(self, message):
+                      events.append(('block', message))
+                      return super()._block(message)
+              class ObservedChannel(ns['Channel']):
+                  def broadcast(self, message):
+                      events.append(('broadcast', message))
+                      return super().broadcast(message)
+              ObservedBot().handle(ObservedChannel(), message)
+              assert events == [('broadcast', message)], \
+                  'Choose exactly one action for this input and preserve the message text.'
+        hints:
+          - text: "Try one spam message and one ordinary message. Which action should each take, and which action should it avoid?"
+            condition: "code_not_matches: /def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bif\\s/"
+          - text: "Trace both truth values of the condition. Check where execution continues after the conditional body; a later unconditional call still runs."
+            condition: "code_matches: /^(?=[\\s\\S]*def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bif\\s)(?![\\s\\S]*def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\belse\\s*:)/"
+          - text: "Make a trace table for \"BUY NOW tickets\" and \"See you Tuesday\". Each row should contain one action and its unchanged input. Look for an extra action, wrong branch, or rewritten message."
+            condition: "code_matches: /^(?=[\\s\\S]*def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bif\\s)(?=[\\s\\S]*def handle\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\belse\\s*:)/"
 
     quiz:
       title: "Step 4 — Knowledge Check"
@@ -1200,7 +1232,7 @@ steps:
             - "A function or method definition"
           correct_index: 1
           explanation: |
-            `alt` is the conditional fragment — one compartment per branch, separated by horizontal lines, with exactly one compartment executing based on its guard. It maps directly to Python's `if` / `elif` / `else`.
+            This analyzer maps an `if/else` choice to `alt`. An `elif` can appear as a nested choice in the `else` compartment, because Python evaluates its condition only after the preceding condition was false. An exhaustive Python choice takes exactly one branch. UML `alt` allows at most one operand; without an applicable guard or `else`, none executes.
 
         - question: |
             You wrote `if user.is_new: bot.send_welcome(user)` with **no** `else`. Which fragment appears on the diagram?
@@ -1212,19 +1244,19 @@ steps:
             - "No fragment — the renderer only draws `if/else`"
           correct_index: 1
           explanation: |
-            `opt` is the fragment for "maybe run this; maybe not." It has one compartment. `alt` is for mutually-exclusive branches (two or more compartments). The only thing that changes between them is whether you wrote `else`.
+            `opt` is the fragment for "maybe run this; maybe not." It has one compartment. `alt` is for mutually-exclusive branches (two or more compartments). For the Python constructs used here, adding `else` changes the analyzer's output from `opt` to `alt`.
 
         - question: |
-            **Review of Step 3.** The `_is_spam` call in the guard produces a tiny self-arrow before the alt box's contents. Why does a self-arrow appear there at all?
+            Why does the `_is_spam(message)` self-call appear **before** the `alt` fragment?
           type: single
           options:
-            - "Because the analyzer adds decorative arrows for any guard condition"
-            - "Because `self._is_spam(...)` is a real method call, like any other self-call"
-            - "Because spam detection is a special diagram primitive"
-            - "Because every guard inside an `alt` fragment draws a self-arrow"
-          correct_index: 1
+            - "Python evaluates the condition before selecting a branch."
+            - "Python executes both branches before checking the condition."
+            - "The call constructs another bot before choosing a branch."
+            - "The call schedules both branches to execute concurrently."
+          correct_index: 0
           explanation: |
-            The guard `self._is_spam(message)` is a real Python method call — the activation box for it is stacked on top of `handle`'s activation box, exactly like any other self-call from Step 3. Some published diagrams hide guard-evaluation calls to reduce clutter, but UML semantics say they are there.
+            Python needs the classifier's result to select a branch. The self-call shows that evaluation; the guard label describes the choice using its result. The label does not cause the classifier to run again.
 
 
   # --------------------------------------------------------------------------
@@ -1237,6 +1269,7 @@ steps:
   #   Bloom's — Apply (rewrite to iterate), Analyze (when loop vs. alt).
   # --------------------------------------------------------------------------
   - title: "Loops: Doing the Same Thing Many Times"
+    key: loops
     instructions: |
       ### Why this matters
 
@@ -1314,6 +1347,8 @@ steps:
       1. Replace the single call with `for msg in messages:` — produces the `loop` fragment.
       2. Inside the loop, call `channel.send_to_all(msg)` once per iteration.
 
+      A `while` loop that visits the same messages in order is also valid. Its guard label will differ, but it should show the same repeated interaction and send each message once.
+
     uml_files:
       - step5/chatbot.py
 
@@ -1370,7 +1405,7 @@ steps:
         > **Takeaway:** in a sequence diagram, "this runs many times" is a property of the *box*, not a property you show by drawing many arrows.
 
     tests:
-      - description: "broadcast_all iterates over messages with a for loop"
+      - description: "broadcast_all contains a loop fragment"
         command: |
           import ast
           source = open('/tutorial/step5/chatbot.py').read()
@@ -1383,10 +1418,12 @@ steps:
           assert has_loop, \
               "broadcast_all must iterate over messages using a for (or while) loop — that is what produces the `loop` fragment."
         hints:
-          - text: "The target diagram shows a `loop` fragment wrapping the one call. What Python construct corresponds to that?"
-            condition: "default"
-          - text: "Wrap the call in `for msg in messages:` so each iteration sends one message."
-            condition: "code_missing: for "
+          - text: "The loop fragment encloses an interaction that may happen repeatedly. Which part of the method currently runs only once?"
+            condition: "code_not_matches: /def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s/"
+          - text: "Follow one iteration with two different messages. Is the send inside the repeated body, and what value does it receive each time?"
+            condition: "code_matches: /^(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?![\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+channel\\s*\\.\\s*send_to_all\\s*\\()/"
+          - text: "Sketch the loop boundary around the send in your code. The loop should determine repetition; the body should perform one interaction for the current item."
+            condition: "code_matches: /^(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+channel\\s*\\.\\s*send_to_all\\s*\\()/"
 
       - description: "The loop body calls channel.send_to_all"
         command: |
@@ -1409,10 +1446,78 @@ steps:
           assert called, \
               "Inside the loop body, call `channel.send_to_all(msg)` once per iteration."
         hints:
-          - text: "Inside the `loop` box in the target diagram, there is exactly one arrow going to `channel`. Looking at the `Channel` class in the starter, which method sends a single message?"
-            condition: "default"
-          - text: "Inside the `for` body, call `channel.send_to_all(msg)`. That is the single arrow that appears inside the loop box."
-            condition: "default"
+          - text: "The loop fragment encloses an interaction that may happen repeatedly. Which part of the method currently runs only once?"
+            condition: "code_not_matches: /def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s/"
+          - text: "Follow one iteration with two different messages. Is the send inside the repeated body, and what value does it receive each time?"
+            condition: "code_matches: /^(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?![\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+channel\\s*\\.\\s*send_to_all\\s*\\()/"
+          - text: "Sketch the loop boundary around the send in your code. The loop should determine repetition; the body should perform one interaction for the current item."
+            condition: "code_matches: /^(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+channel\\s*\\.\\s*send_to_all\\s*\\()/"
+
+      - description: "An empty list sends no messages"
+        command: |
+          source = open('/tutorial/step5/chatbot.py').read()
+          ns = {'__name__': 'tutorial_check'}
+          exec(source, ns)
+          messages = []
+          sent = []
+          class ObservedChannel(ns['Channel']):
+              def send_to_all(self, message):
+                  sent.append(message)
+                  return super().send_to_all(message)
+          expected = list(messages)
+          ns['DiscordBot']().broadcast_all(ObservedChannel(), messages)
+          assert sent == expected, 'Send each supplied message exactly once, in order; an empty list sends nothing.'
+        hints:
+          - text: "Predict how many channel calls are needed for no messages, one message, and three messages. Compare that with the unconditional starter call."
+            condition: "code_not_matches: /def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s/"
+          - text: "Trace the values visited by your loop, then find the send performed during each visit. Which collection is actually being traversed?"
+            condition: "code_matches: /^(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?![\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+channel\\s*\\.\\s*send_to_all\\s*\\()/"
+          - text: "Trace [\"first\", \"second\", \"first\"] by hand. Keep a row for every occurrence, including the repeated text, and compare the sent values and order with those rows."
+            condition: "code_matches: /^(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+channel\\s*\\.\\s*send_to_all\\s*\\()/"
+
+      - description: "A single message is sent once"
+        command: |
+          source = open('/tutorial/step5/chatbot.py').read()
+          ns = {'__name__': 'tutorial_check'}
+          exec(source, ns)
+          messages = ['only this']
+          sent = []
+          class ObservedChannel(ns['Channel']):
+              def send_to_all(self, message):
+                  sent.append(message)
+                  return super().send_to_all(message)
+          expected = list(messages)
+          ns['DiscordBot']().broadcast_all(ObservedChannel(), messages)
+          assert sent == expected, 'Send each supplied message exactly once, in order; an empty list sends nothing.'
+        hints:
+          - text: "Predict how many channel calls are needed for no messages, one message, and three messages. Compare that with the unconditional starter call."
+            condition: "code_not_matches: /def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s/"
+          - text: "Trace the values visited by your loop, then find the send performed during each visit. Which collection is actually being traversed?"
+            condition: "code_matches: /^(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?![\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+channel\\s*\\.\\s*send_to_all\\s*\\()/"
+          - text: "Trace [\"first\", \"second\", \"first\"] by hand. Keep a row for every occurrence, including the repeated text, and compare the sent values and order with those rows."
+            condition: "code_matches: /^(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+channel\\s*\\.\\s*send_to_all\\s*\\()/"
+
+      - description: "Multiple messages are sent once each in order"
+        command: |
+          source = open('/tutorial/step5/chatbot.py').read()
+          ns = {'__name__': 'tutorial_check'}
+          exec(source, ns)
+          messages = ['first', 'second', 'first']
+          sent = []
+          class ObservedChannel(ns['Channel']):
+              def send_to_all(self, message):
+                  sent.append(message)
+                  return super().send_to_all(message)
+          expected = list(messages)
+          ns['DiscordBot']().broadcast_all(ObservedChannel(), messages)
+          assert sent == expected, 'Send each supplied message exactly once, in order; an empty list sends nothing.'
+        hints:
+          - text: "Predict how many channel calls are needed for no messages, one message, and three messages. Compare that with the unconditional starter call."
+            condition: "code_not_matches: /def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s/"
+          - text: "Trace the values visited by your loop, then find the send performed during each visit. Which collection is actually being traversed?"
+            condition: "code_matches: /^(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?![\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+channel\\s*\\.\\s*send_to_all\\s*\\()/"
+          - text: "Trace [\"first\", \"second\", \"first\"] by hand. Keep a row for every occurrence, including the repeated text, and compare the sent values and order with those rows."
+            condition: "code_matches: /^(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?=[\\s\\S]*def broadcast_all\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+channel\\s*\\.\\s*send_to_all\\s*\\()/"
 
     quiz:
       title: "Step 5 — Knowledge Check"
@@ -1484,34 +1589,228 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 6 — "Putting It All Together: A Moderated Broadcast"
+  # STEP 6 — "Sequence Diagram Reference"
   # Pedagogy:
-  #   Synthesis (Bloom's Create) — integrates every element from Steps 1-5
-  #     in a single scenario. No step-by-step walkthrough.
-  #   ICAP Constructive — student produces the implementation from a plain-
-  #     English scenario + target diagram.
-  #   Spaced retrieval — quiz reviews every prior step.
-  #   Growth-mindset priming — flags that this step is intentionally harder.
+  #   Retrieval practice / summary — consolidates notation learned.
+  #   Serves as a quick-reference card students can revisit.
   # --------------------------------------------------------------------------
-  - title: "Putting It All Together: A Moderated Broadcast"
+  - title: "Sequence Diagram Reference"
+    key: sequence-reference
     instructions: |
       ### Why this matters
 
-      A real sequence diagram is never one notation in isolation — it weaves lifelines, returns, self-calls, and control-flow fragments into a single scenario that tells a story. You have learned every piece already; the difficulty here is *integrating* them. If you stare at the target diagram for a minute before seeing how it maps to code, that is the point — working developers have the same experience when they first design a real diagram, and the only way to build that fluency is to do it.
+      You have practiced lifelines, synchronous calls, returns, self-calls, and conditional and loop fragments. Retrieve those ideas before combining them in a design of your own. Use this reference again when you need a notation reminder in the final two steps.
 
       ### 🎯 You will learn to
 
-      - Create a Python method whose sequence diagram combines lifelines, a captured return, self-calls, and both `alt` and `loop` fragments
-      - Analyze a target diagram and predict its code shape before writing a line
+      - Evaluate your own recall of every notation element introduced in Steps 1–5
+      - Apply this reference card as a quick lookup when designing future diagrams
 
-      ### The Scenario
+      ### Self-check (close this page first)
 
-      The bot runs a **daily digest** over a list of recent posts. Before the loop starts, it asks the channel how many subscribers it has, so it can log the size of the digest. Then, for each post:
+      Before you scroll to the tables below, try to answer these from memory. Look back only when you are stuck:
 
-      - **Announcements** (posts starting with `@all`) get broadcast to the channel.
-      - **Everything else** is silently skipped — the bot logs the skip but does not bother the channel.
+      1. What does a **lifeline** represent — a class, an instance, or a file?
+      2. What three conditions does this analyzer require to display a dashed return arrow?
+      3. Why does a self-call produce a *nested* activation box?
+      4. If your Python method is `for x in xs: if x.valid: bot.send(x)` (no `else`), what two fragments appear — and in which order?
 
-      ### Your Target Diagram
+      Retrieval before review is the learning — just reading the tables again is not.
+
+      ---
+
+      ### The Core Pieces
+
+      | Element | Looks like | Python that produces it |
+      |---|---|---|
+      | **Lifeline** | box on top, dashed line below | any object instance: `bot = DiscordBot()` |
+      | **Activation box** | thin rectangle on the lifeline | a method call — begins when the call arrives, ends when it returns |
+      | **Synchronous message** | solid line, filled arrowhead → | `x.method(...)` — caller waits |
+      | **Return message** | dashed line, open arrowhead ⇠ | `y = x.method()` **and** `method` returns a non-`None` type *and* caller ≠ callee |
+      | **Self-message** | arrow looping back to the same lifeline | `self.method(...)` inside a method |
+      | **Creation** | dashed arrow with `<<create>>` label to a new lifeline | constructor: `bot = DiscordBot()` |
+
+      ### The Three Fragments You Will Use Most
+
+      | Fragment | Meaning | Python |
+      |---|---|---|
+      | **opt** | zero or one execution | `if ...` (no `else`) |
+      | **alt** | at most one operand; exactly one for an exhaustive Python choice | `if ... elif ... else ...` |
+      | **loop** | repeat zero or more times | `for` / `while` |
+
+      ### Fragments You May Encounter Later
+
+      - **par** — parallel branches execute concurrently (e.g., `asyncio.gather`)
+      - **break** — when its guard holds, execute this operand instead of the remainder of the enclosing interaction fragment; this is different from Python's loop `break`
+      - **ref** — an "interaction use"; a named sub-scenario referenced from another diagram
+      - **critical** — an atomic region
+      - **neg** — an invalid trace (what **must not** happen)
+
+      ---
+
+      ### Arrow Cheat Sheet
+
+      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+      participant a: A
+      participant b: B
+      a -> b: sync_call()
+      activate b
+      b --> a: return
+      deactivate b
+      a ->> b: async_call()
+      activate b
+      deactivate b
+      a -> a: self_call()
+      activate a
+      deactivate a
+      @enduml'></div>
+
+      - `->` synchronous (caller blocks)
+      - `-->` return (dashed, open arrow)
+      - `->>` asynchronous (caller keeps going — you will meet this later)
+      - `-> self` self-call
+
+      ---
+
+      ### Guidelines You Should Remember
+
+      1. **Lifelines are instances, not classes.** Two `Dog()` calls → two lifelines.
+      2. **Activation boxes mark execution intervals.** Nested synchronous self-calls can be understood using stack frames. Box height does not measure elapsed time.
+      3. **Do not draw every `if` and `for`.** One or two fragment levels is usually enough — split deeply-branching logic into multiple diagrams.
+      4. **One scenario per diagram.** A sequence diagram answers a single question. Happy path, error path, and edge cases typically belong in separate diagrams.
+      5. **Only draw return arrows when the value matters.** UML is about communication — if the return is `None` or implied by the activation box ending, skip the dashed arrow.
+      6. **Choose the scenario's starting point.** Include `Main` and creation messages when startup matters to the interaction, as in this tutorial's runnable examples. For objects that are already running, you can start at the interesting method call instead. A login diagram might begin with `user -> authService: login(password)` and omit construction. Choose the boundary that answers the reader's question.
+
+      ---
+
+      ### What Sequence Diagrams Are Good For
+
+      - **Designing an interaction** before you write the code
+      - **Explaining a specific scenario** to a teammate or reviewer (much faster than prose)
+      - **Documenting a protocol** (API handshake, auth flow, publish/subscribe)
+      - **Finding a bug** — draw the diagram of what you *expect* vs. what actually happens
+
+      And what they are **not** good for: showing the complete behavior of a system. Use a *class* diagram for structure and use *multiple small* sequence diagrams for specific runtime scenarios.
+
+      Next, propose a daily-digest interaction from requirements. In the final step, compare your proposal with a suggested design and build its Python model.
+
+    files:
+      - path: step7/README.md
+        content: |
+          # Sequence Diagram Reference
+
+          Nothing to code in this step — it is a summary page.
+
+          Use it as a cheat sheet when working on future sequence diagrams.
+        language: markdown
+
+    open_file: step7/README.md
+
+
+  # --------------------------------------------------------------------------
+  # STEP 7 — "Daily-Digest Design Proposal"
+  # Pedagogy: Generation before a worked model; self-explanation and self-review.
+  #   Learners choose participants and message structure from requirements.
+  #   The next step supplies feedback through comparison, then implementation.
+  # --------------------------------------------------------------------------
+  - title: "Daily-Digest Design Proposal"
+    key: digest-design
+    instructions: |
+      ### Why this matters
+
+      Reading a finished diagram and deciding what belongs in it are different skills. Make a small design proposal now, while the behavior is specified but the interaction structure is still yours to choose. You will compare your reasoning with a suggested design in the final step.
+
+      ### 🎯 You will learn to
+
+      - Create an interaction proposal from behavioral requirements
+      - Justify message order and decision boundaries using concrete traces
+
+      ### The Daily-Digest Requirements
+
+      A chat bot processes a supplied list of posts for a channel. Design one digest invocation with these observable behaviors:
+
+      - **Opening record:** record the channel's current subscriber count once, before processing any posts. This record is required even for an empty list; zero subscribers is a valid count.
+      - **Announcements:** each post whose text starts with `@all` is broadcast to the channel. It receives no skip record.
+      - **Other posts:** each other post is recorded as skipped and is not broadcast.
+      - **Order and occurrences:** process posts in their supplied order and preserve their original text. Repeated text represents separate posts, so every occurrence must receive its own outcome.
+
+      ### Your Task
+
+      Open `digest-design.md`. Spend about 5–8 minutes making a proposal before opening the final step. Use short prose and an ordered message list; you may also sketch a diagram on paper.
+
+      1. **Choose participants.** Name the objects involved, what each is responsible for, and which participant starts this scenario. Distinguish object instances from class names.
+      2. **Propose the interaction.** List the messages and any returned information. Decide what happens once per invocation, what repeats, and where choices belong. Choose and explain any fragment boundaries yourself.
+      3. **Trace examples.** Write the ordered events for `["@all update", "hello", "@all update"]`. Then describe the empty-list case and the case where the channel has zero subscribers.
+      4. **Defend a choice.** Describe one alternative allocation of work or message structure and explain why you prefer your proposal. Point to a requirement or trace, not just a diagram's appearance.
+
+      ### Self-Review Before Continuing
+
+      Check your notes against each requirement. Can a reader identify who owns each responsibility, follow every message, and tell which events occur for each example? Does your proposal preserve repeated posts and make the two outcomes exclusive? Revise any gap you find.
+
+      **Complete your proposal and self-review before selecting Next.** This is a design exercise with no automatic grade. Different proposals may satisfy the requirements; the next step gives you a suggested model to compare and a concrete implementation to check. Keep your original reasoning in the notes so the comparison shows what changed.
+
+    files:
+      - &digest_design_notes
+        path: digest-design.md
+        persistent: true
+        content: |
+          # Daily-Digest Design Notes
+
+          ## My Proposal — Before Viewing the Suggested Design
+
+          Participants and responsibilities:
+
+          Messages and any returned information:
+
+          Repeated work, decisions, and proposed fragment boundaries:
+
+          Ordered trace for ["@all update", "hello", "@all update"]:
+
+          Expected behavior for an empty list and a channel with 0 subscribers:
+
+          A design choice, an alternative, and why I chose it:
+
+          Self-review: which requirement does each part of my proposal satisfy?
+
+          ## Comparison and Revision — In the Final Step
+
+          One choice I would keep, with a reason:
+
+          One choice I would revise (or an alternative I can defend), with a reason:
+
+          A trace or boundary case that supports my decision:
+        language: markdown
+
+    open_file: digest-design.md
+
+
+  # --------------------------------------------------------------------------
+  # STEP 8 — "A Suggested Daily-Digest Model"
+  # Pedagogy:
+  #   Worked-model comparison follows the learner's independent proposal.
+  #   Self-explanation connects responsibility and ordering to requirements.
+  #   Apply — implement the suggested model; check traces and boundary cases.
+  #   Spaced retrieval — quiz reviews the notation from Steps 1-5.
+  # --------------------------------------------------------------------------
+  - title: "A Suggested Daily-Digest Model"
+    key: moderated-broadcast
+    instructions: |
+      ### Why this matters
+
+      You have a proposal of your own. Comparing it with a worked model makes the design choices visible: who knows the subscriber count, who decides what to broadcast, and what must happen exactly once. Implement the suggested model after that comparison, then use traces and tests to check the behavior.
+
+      ### 🎯 You will learn to
+
+      - Evaluate your proposal against a suggested design and explain a revision or a defensible alternative
+      - Create Python code whose inferred sequence model matches the suggested interaction and its behavioral requirements
+
+      ### Compare Your Proposal First
+
+      Reopen `digest-design.md` and read your original proposal before studying the target. As you compare, add one choice you would keep and one you would revise, with reasons tied to a requirement or trace. If your proposal already agrees, explain one alternative you rejected. Preserve your original notes.
+
+      The requirements from Step 7 still apply: one opening record of the current subscriber count, one exclusive outcome per post, and the original order and text preserved even for repeated posts. The following is **one suggested design** for those requirements. For this implementation exercise, use its supplied interfaces so the live diagram and checks can give you specific feedback.
+
+      ### The Suggested Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec="@startuml
       layout landscape
@@ -1538,6 +1837,9 @@ steps:
       activate bot
       deactivate bot
       loop [for post in posts]
+      bot -> bot: _is_announcement(post)
+      activate bot
+      deactivate bot
       alt [bot._is_announcement(post)]
       bot -> channel: broadcast(post)
       activate channel
@@ -1555,27 +1857,30 @@ steps:
       Notice every concept from Steps 1-5 appears:
 
       - **Lifelines and creation (Step 1):** `Main`, `bot: DiscordBot`, `channel: Channel`, with two `<<create>>` arrows.
-      - **Return value (Step 2):** the dashed arrow labeled `count: int` from `channel` back to `bot` after `get_subscriber_count()` — the generator includes the bound variable name because `count` is used on the next line.
-      - **Self-call with nested activation (Step 3):** `bot -> bot: _log_start` and, inside the loop, `bot -> bot: _log_skip`.
+      - **Return value (Step 2):** the dashed arrow labeled `count: int` from `channel` back to `bot` after `get_subscriber_count()` — the generator labels the captured result with its bound variable name and annotated type.
+      - **Self-call with nested activation (Step 3):** `_log_start` before the loop, `_is_announcement` before each choice, and `_log_skip` in the `else` branch.
       - **Conditional fragment (Step 4):** one `alt` inside the loop.
       - **Loop fragment (Step 5):** one outer `loop` over `posts`.
 
-      One `loop` outside, one `alt` inside — exactly the two-level nesting limit that Step 5's quiz warned you not to exceed.
+      ### Why This Design Is Clean
+
+      - **Responsibilities stay identifiable.** `Channel` knows its subscriber count and performs broadcasts. `DiscordBot` coordinates the digest, classifies posts, and records its decisions. The bot can ask for the count without depending on how the channel stores it.
+      - **Invocation work stays outside per-post work.** The count query and opening log occur once, before the loop. An empty digest still records its start, without repeating the query and opening log for every post.
+      - **Each occurrence gets one decision.** The loop preserves input order, including repeated text. Its inner `alt` makes broadcast and skip mutually exclusive for the current post; a decision outside the loop would incorrectly classify the whole batch at once.
+      - **Small helpers give the intent a name.** `_is_announcement`, `_log_start`, and `_log_skip` separate classification and message formatting from coordination. Changing the announcement rule or log wording has a clear home without obscuring the digest's ordering.
+
+      Here, one outer loop and one inner choice make the requirements easy to follow. This is a design choice for this interaction, not a general UML nesting limit or the only acceptable architecture.
 
       ### Your Task
 
-      Open `step6/chatbot.py`. The helper methods are already defined (`Channel.get_subscriber_count`, `_is_announcement`, `_log_start`, `_log_skip`). Your job is to:
+      1. **Compare.** Finish the comparison section in `digest-design.md`. For the empty input, identify what remains outside the loop; for the repeated announcement, explain why it must appear twice in the runtime trace.
+      2. **Implement.** Open `step6/chatbot.py`. Its helper methods are supplied. Complete `DiscordBot.run_digest(channel, posts)` so its inferred diagram matches the suggested target. Capture the count returned by the channel, preserve the target's message order and nesting, and use the supplied classifier and logging helpers.
+      3. **Connect the scenario.** In `__main__`, create one bot and one channel, then invoke the digest once with `posts`.
+      4. **Check.** Run the code and the checks. Compare the generated diagram and observed events with your written traces. Try an empty list, zero subscribers, mixed posts, and repeated announcements; explain any revision in your notes.
 
-      1. **Implement `run_digest(channel, posts)`** on `DiscordBot` so it:
-         1. Captures the result of `channel.get_subscriber_count()` in a local variable.
-         2. Calls `self._log_start(<that variable>)` to announce the digest.
-         3. Iterates over `posts`. For each `post`:
-            - If `self._is_announcement(post)`: call `channel.broadcast(post)`.
-            - Otherwise: call `self._log_skip(post)`.
+      Equivalent loop forms or a negated guard with exchanged branch bodies are valid if they preserve the outer loop, inner alternatives, message order, and behavior. The structural checks target this suggested model; the design rationale in your notes needs your own review.
 
-      2. **In `__main__`**, create one bot, one channel, and call `bot.run_digest(channel, posts)` exactly once.
-
-      > **Predict first.** Before you start typing, take 30 seconds and mentally walk the diagram: how many lifelines, how many arrows, which are dashed, where does the `alt` sit relative to the `loop`? Writing the code *after* visualising it is much faster than writing code and hoping the diagram matches.
+      The diagram summarizes possible interactions: it shows a loop body and alternatives, while an execution trace records the particular messages that actually occur. Use both when checking your model.
 
     uml_files:
       - step6/chatbot.py
@@ -1602,14 +1907,8 @@ steps:
                   print(f"[DIGEST] skipped: {post}")
 
               def run_digest(self, channel: Channel, posts: list) -> None:
-                  # TODO: implement this method so it matches the target diagram.
-                  #   1. Capture channel.get_subscriber_count() in a local variable
-                  #   2. Call self._log_start(<that variable>)
-                  #   3. for post in posts:
-                  #        if self._is_announcement(post):
-                  #            channel.broadcast(post)
-                  #        else:
-                  #            self._log_skip(post)
+                  # TODO: model the suggested digest interaction.
+                  # Preserve its opening record and one outcome per post.
                   pass
 
 
@@ -1619,9 +1918,10 @@ steps:
                   "just saying hi",
                   "@all remember to stretch",
               ]
-              # TODO: create `bot` and `channel`, then call
-              # bot.run_digest(channel, posts) exactly once.
+              # TODO: create the participants and start one digest.
         language: python
+
+      - *digest_design_notes
 
     open_file: step6/chatbot.py
 
@@ -1670,14 +1970,16 @@ steps:
       explanation: |
         Every line of `run_digest` maps to one visual element:
 
-        - `count = channel.get_subscriber_count()` → sync arrow to `channel`, dashed return arrow labeled `int` back to `bot` (Step 2).
+        - `count = channel.get_subscriber_count()` → sync arrow to `channel`, dashed return arrow labeled `count: int` back to `bot` (Step 2).
         - `self._log_start(count)` → self-arrow stacked on top of the outer `run_digest` activation box (Step 3).
         - `for post in posts:` → `loop` fragment (Step 5).
-        - `if self._is_announcement(post): ... else: ...` → `alt` fragment with two compartments (Step 4).
+        - `if self._is_announcement(post): ... else: ...` → a classifier self-call followed by an `alt` fragment with two compartments (Step 4).
         - `channel.broadcast(post)` → sync message to `channel` (Step 1).
         - `self._log_skip(post)` → another self-arrow (Step 3).
 
-        **Why this step is the capstone:** a sequence diagram is not a list of disconnected pieces — it is a single *scenario* that weaves lifelines, calls, returns, and control-flow fragments together. Most real diagrams look like this: two or three participants, one captured return, a couple of self-calls, one or two fragments. Now that you can produce one, you can produce any of them.
+        With no posts, the count query and opening log still run once, while the loop contributes no per-post calls. With repeated announcements, each occurrence reaches `broadcast` in its original position. The `else` prevents an announcement from also being logged as skipped.
+
+        Compare these facts with the proposal you wrote before seeing the target. The model is clean because its responsibilities and control-flow boundaries make those requirements easy to inspect. Passing the checks supports this implementation's behavior; your trace-based comparison explains the design judgment.
 
     tests:
       - description: "run_digest captures channel.get_subscriber_count()"
@@ -1703,69 +2005,49 @@ steps:
                       if isinstance(t, ast.Name):
                           captured_names.add(t.id)
           assert captured_names, \
-              "run_digest must capture channel.get_subscriber_count() in a variable — e.g. `count = channel.get_subscriber_count()`. Without the assignment, no dashed return arrow appears."
+              "Capture the subscriber count in run_digest so the analyzer can show its return arrow."
         hints:
-          - text: "Which of Step 2's renderer conditions for return arrows is the one you have to enforce in *your* code (the caller), not in the method signature (the callee)?"
-            condition: "default"
-          - text: "The first line of `run_digest` should capture the count: `count = channel.get_subscriber_count()`."
-            condition: "default"
+          - text: "Locate the first call leaving the bot in the target. What information does the channel return before the digest begins?"
+            condition: "code_not_matches: /def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?get_subscriber_count\\s*\\(/"
+          - text: "The returned number is needed by a later self-call. Where can run_digest retain it between those two interactions?"
+            condition: "code_matches: /^(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?get_subscriber_count\\s*\\()(?![\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b\\w+(?:\\s*:\\s*\\w+)?\\s*=\\s*channel\\.get_subscriber_count\\s*\\()/"
+          - text: "Trace the assignment inside run_digest rather than a driver or unused helper. Which local variable receives the value returned on the dashed arrow?"
+            condition: "code_matches: /^(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?get_subscriber_count\\s*\\()(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b\\w+(?:\\s*:\\s*\\w+)?\\s*=\\s*channel\\.get_subscriber_count\\s*\\()/"
 
-      - description: "run_digest passes the captured count to self._log_start"
+      - description: "The digest logs the current subscriber count before processing posts"
+        command: |
+          source = open('/tutorial/step6/chatbot.py').read()
+          ns = {'__name__': 'tutorial_check'}
+          exec(source, ns)
+          for subscriber_count in (0, 7):
+              events = []
+              class ObservedChannel(ns['Channel']):
+                  def get_subscriber_count(self):
+                      events.append(('count',))
+                      return subscriber_count
+              class ObservedBot(ns['DiscordBot']):
+                  def _log_start(self, count):
+                      events.append(('start', count))
+                      return super()._log_start(count)
+              ObservedBot().run_digest(ObservedChannel(), [])
+              assert events == [('count',), ('start', subscriber_count)], \
+                  'Fetch the current count and log it once, even when there are no posts.'
+        hints:
+          - text: "The opening log depends on information from the channel. Follow the first call and its return before considering the loop."
+            condition: "code_not_matches: /def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?get_subscriber_count\\s*\\(/"
+          - text: "The returned value needs a consumer. Find the self-call immediately after the dashed return arrow and inspect which input that helper expects."
+            condition: "code_matches: /^(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?get_subscriber_count\\s*\\()(?![\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bself\\s*\\.\\s*_log_start\\s*\\()/"
+          - text: "Imagine the channel reports 7 subscribers and posts is empty. Which two opening interactions should still happen once, and what count should the log receive?"
+            condition: "code_matches: /^(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?get_subscriber_count\\s*\\()(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\bself\\s*\\.\\s*_log_start\\s*\\()/"
+
+      - description: "The digest models a guarded choice inside a loop"
         command: |
           import ast
           source = open('/tutorial/step6/chatbot.py').read()
           tree = ast.parse(source)
           bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
           method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'run_digest'), None)
-          assert method is not None
-
-          def refs_any(node, names):
-              for n in ast.walk(node):
-                  if isinstance(n, ast.Name) and n.id in names:
-                      return True
-              return False
-
-          captured = set()
-          log_start_uses_capture = False
-          for stmt in method.body:
-              targets, val = [], None
-              if isinstance(stmt, ast.Assign):
-                  targets, val = stmt.targets, stmt.value
-              elif isinstance(stmt, ast.AnnAssign) and stmt.value is not None:
-                  targets, val = [stmt.target], stmt.value
-              if val is not None:
-                  is_gsc = (isinstance(val, ast.Call)
-                      and isinstance(val.func, ast.Attribute)
-                      and val.func.attr == 'get_subscriber_count')
-                  if is_gsc or (captured and refs_any(val, captured)):
-                      for t in targets:
-                          if isinstance(t, ast.Name):
-                              captured.add(t.id)
-              for n in ast.walk(stmt):
-                  if (isinstance(n, ast.Call)
-                          and isinstance(n.func, ast.Attribute)
-                          and n.func.attr == '_log_start'
-                          and isinstance(n.func.value, ast.Name)
-                          and n.func.value.id == 'self'):
-                      for arg in n.args:
-                          if captured and refs_any(arg, captured):
-                              log_start_uses_capture = True
-          assert log_start_uses_capture, \
-              "Call self._log_start(<captured_count>) using the variable you captured from get_subscriber_count()."
-        hints:
-          - text: "The second line should feed the captured count into a log call — which self-method takes an `int`?"
-            condition: "default"
-          - text: "Write `self._log_start(count)` right after capturing the count."
-            condition: "default"
-
-      - description: "run_digest contains a for loop that encloses an if/else with correct conditions"
-        command: |
-          import ast
-          source = open('/tutorial/step6/chatbot.py').read()
-          tree = ast.parse(source)
-          bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
-          method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'run_digest'), None)
-          loop = next((s for s in method.body if isinstance(s, ast.For)), None)
+          loop = next((s for s in method.body if isinstance(s, (ast.For, ast.While))), None)
           assert loop is not None, \
               "run_digest must iterate over posts with a for loop — that is what produces the outer `loop` fragment."
           inner_if = next((s for s in loop.body if isinstance(s, ast.If)), None)
@@ -1773,85 +2055,158 @@ steps:
               "Inside the for loop, add an `if` — that produces the nested `alt` (or `opt`) fragment."
           assert inner_if.orelse, \
               "Use `if ... else ...`, not a bare `if`. The target diagram shows an `alt` with two compartments."
-          test = inner_if.test
-          ok = (isinstance(test, ast.Call)
-              and isinstance(test.func, ast.Attribute)
-              and test.func.attr == '_is_announcement'
-              and isinstance(test.func.value, ast.Name)
-              and test.func.value.id == 'self')
-          assert ok, \
-              "The if guard should call `self._is_announcement(post)` — that becomes `alt [bot._is_announcement(post)]` in the diagram (the generator rewrites `self` to the caller's object name)."
+          ok = any(isinstance(node, ast.Call)
+              and isinstance(node.func, ast.Attribute)
+              and node.func.attr == '_is_announcement'
+              and isinstance(node.func.value, ast.Name)
+              and node.func.value.id == 'self' for node in ast.walk(inner_if.test))
+          assert ok, "Use the supplied announcement classifier in the loop's guard."
         hints:
-          - text: "`bot._is_announcement(post)` references `bot`, but `bot` isn't defined inside `DiscordBot` — it's not a parameter of `run_digest`, a local, or a class attribute. `bot` is the variable name the *caller* uses to hold this instance; from inside the method, refer to the current instance as `self`. The diagram shows `bot.` only because PlantUML rewrites `self` to the caller's object name when rendering."
-            condition: "code_contains: bot._is_announcement"
-          - text: "Two fragments nest here: outer `loop` → inner `alt`. What Python indentation produces that order?"
-            condition: "code_not_matches: /for [^\\n]+:\\n[ \\t]+if /"
-          - text: "Structure: `for post in posts:` then inside `if self._is_announcement(post): ... else: ...`."
-            condition: "default"
+          - text: "Compare the outer and inner boxes in the target. Which Python construct repeats work, and which one selects an outcome for one post?"
+            condition: "code_not_matches: /def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s/"
+          - text: "The choice applies separately to each post. Trace the indentation: is the decision inside the repeated body?"
+            condition: "code_matches: /^(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?![\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+if\\s)/"
+          - text: "Choose one announcement and one ordinary post. Trace both paths through the same loop body and check that an else compartment exists for the other outcome."
+            condition: "code_matches: /^(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+if\\s)/"
 
-      - description: "Announcement branch broadcasts, else branch logs a skip"
+      - description: "Announcements are broadcast without being skipped"
+        command: |
+          source = open('/tutorial/step6/chatbot.py').read()
+          ns = {'__name__': 'tutorial_check'}
+          exec(source, ns)
+          posts = ['@all reminder']
+          events = []
+          class ObservedChannel(ns['Channel']):
+              def get_subscriber_count(self):
+                  events.append(('count',))
+                  return super().get_subscriber_count()
+              def broadcast(self, message):
+                  events.append(('broadcast', message))
+                  return super().broadcast(message)
+          class ObservedBot(ns['DiscordBot']):
+              def _log_start(self, count):
+                  events.append(('start', count))
+                  return super()._log_start(count)
+              def _log_skip(self, post):
+                  events.append(('skip', post))
+                  return super()._log_skip(post)
+          count = ns['Channel']().get_subscriber_count()
+          ObservedBot().run_digest(ObservedChannel(), posts)
+          assert events == [('count',), ('start', count)] + [('broadcast', '@all reminder')], \
+              'Log the start before visiting each post; choose one outcome per post and preserve its text and order.'
+        hints:
+          - text: "Each post has its own decision. Start with a two-post input containing one announcement and one ordinary message."
+            condition: "code_not_matches: /def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s/"
+          - text: "A loop chooses what to visit; its inner conditional chooses what to do. Check that both decisions depend on the current input."
+            condition: "code_matches: /^(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?![\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+if\\s)/"
+          - text: "Make one trace row per post, including repeated text. Each row needs exactly one outcome with the original post; compare its order with your run."
+            condition: "code_matches: /^(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+if\\s)/"
+
+      - description: "Ordinary posts are skipped without being broadcast"
+        command: |
+          source = open('/tutorial/step6/chatbot.py').read()
+          ns = {'__name__': 'tutorial_check'}
+          exec(source, ns)
+          posts = ['ordinary message']
+          events = []
+          class ObservedChannel(ns['Channel']):
+              def get_subscriber_count(self):
+                  events.append(('count',))
+                  return super().get_subscriber_count()
+              def broadcast(self, message):
+                  events.append(('broadcast', message))
+                  return super().broadcast(message)
+          class ObservedBot(ns['DiscordBot']):
+              def _log_start(self, count):
+                  events.append(('start', count))
+                  return super()._log_start(count)
+              def _log_skip(self, post):
+                  events.append(('skip', post))
+                  return super()._log_skip(post)
+          count = ns['Channel']().get_subscriber_count()
+          ObservedBot().run_digest(ObservedChannel(), posts)
+          assert events == [('count',), ('start', count)] + [('skip', 'ordinary message')], \
+              'Log the start before visiting each post; choose one outcome per post and preserve its text and order.'
+        hints:
+          - text: "Each post has its own decision. Start with a two-post input containing one announcement and one ordinary message."
+            condition: "code_not_matches: /def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s/"
+          - text: "A loop chooses what to visit; its inner conditional chooses what to do. Check that both decisions depend on the current input."
+            condition: "code_matches: /^(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?![\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+if\\s)/"
+          - text: "Make one trace row per post, including repeated text. Each row needs exactly one outcome with the original post; compare its order with your run."
+            condition: "code_matches: /^(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+if\\s)/"
+
+      - description: "Mixed posts keep their order and repeated occurrences"
+        command: |
+          source = open('/tutorial/step6/chatbot.py').read()
+          ns = {'__name__': 'tutorial_check'}
+          exec(source, ns)
+          posts = ['@all reminder', 'ordinary message', '@all reminder']
+          events = []
+          class ObservedChannel(ns['Channel']):
+              def get_subscriber_count(self):
+                  events.append(('count',))
+                  return super().get_subscriber_count()
+              def broadcast(self, message):
+                  events.append(('broadcast', message))
+                  return super().broadcast(message)
+          class ObservedBot(ns['DiscordBot']):
+              def _log_start(self, count):
+                  events.append(('start', count))
+                  return super()._log_start(count)
+              def _log_skip(self, post):
+                  events.append(('skip', post))
+                  return super()._log_skip(post)
+          count = ns['Channel']().get_subscriber_count()
+          ObservedBot().run_digest(ObservedChannel(), posts)
+          assert events == [('count',), ('start', count)] + [('broadcast', '@all reminder'), ('skip', 'ordinary message'), ('broadcast', '@all reminder')], \
+              'Log the start before visiting each post; choose one outcome per post and preserve its text and order.'
+        hints:
+          - text: "Each post has its own decision. Start with a two-post input containing one announcement and one ordinary message."
+            condition: "code_not_matches: /def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s/"
+          - text: "A loop chooses what to visit; its inner conditional chooses what to do. Check that both decisions depend on the current input."
+            condition: "code_matches: /^(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?![\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+if\\s)/"
+          - text: "Make one trace row per post, including repeated text. Each row needs exactly one outcome with the original post; compare its order with your run."
+            condition: "code_matches: /^(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s)(?=[\\s\\S]*def run_digest\\b[^\\n]*:\\n(?:(?!\\n[ \\t]{0,4}\\S)[\\s\\S])*?\\b(?:for|while)\\s[^\\n]*:\\n[ \\t]+if\\s)/"
+
+      - description: "Main creates one bot and one channel and starts one digest"
         command: |
           import ast
           source = open('/tutorial/step6/chatbot.py').read()
+          ns = {'__name__': 'tutorial_check'}
+          exec(source, ns)
           tree = ast.parse(source)
-          bot_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'DiscordBot'), None)
-          method = next((m for m in bot_cls.body if isinstance(m, ast.FunctionDef) and m.name == 'run_digest'), None)
-          def calls(body, recv, meth):
-              for node in body:
-                  for n in ast.walk(node):
-                      if (isinstance(n, ast.Call)
-                              and isinstance(n.func, ast.Attribute)
-                              and isinstance(n.func.value, ast.Name)
-                              and n.func.value.id == recv
-                              and n.func.attr == meth):
-                          return True
-              return False
-          loop = next((s for s in method.body if isinstance(s, ast.For)), None)
-          inner_if = next((s for s in loop.body if isinstance(s, ast.If)), None)
-          assert inner_if is not None and inner_if.orelse, \
-              "Put an if/else inside the for loop"
-          assert calls(inner_if.body, 'channel', 'broadcast'), \
-              "In the announcement branch (if), call `channel.broadcast(post)`."
-          assert calls(inner_if.orelse, 'self', '_log_skip'), \
-              "In the else branch, call `self._log_skip(post)`."
+          main_nodes = [node for node in tree.body if isinstance(node, ast.If)
+                        and any(isinstance(part, ast.Name) and part.id == '__name__' for part in ast.walk(node.test))]
+          assert main_nodes, 'Keep the __main__ entry point for this scenario.'
+          main_code = compile(ast.Module(body=main_nodes, type_ignores=[]), '<main>', 'exec')
+          bots, channels, entries = [], [], []
+          class ObservedBot(ns['DiscordBot']):
+              def __init__(self):
+                  super().__init__()
+                  bots.append(self)
+              def run_digest(self, channel, posts):
+                  entries.append((self, channel, list(posts)))
+                  return super().run_digest(channel, posts)
+          class ObservedChannel(ns['Channel']):
+              def __init__(self):
+                  super().__init__()
+                  channels.append(self)
+          ns.update(DiscordBot=ObservedBot, Channel=ObservedChannel, __name__='__main__')
+          exec(main_code, ns)
+          assert len(bots) == len(channels) == 1, 'Main must create one bot and one channel for this scenario.'
+          assert 'posts' in ns, 'Keep the supplied posts in Main.'
+          assert entries == [(bots[0], channels[0], ns['posts'])], \
+              'Invoke the digest once on the created bot, using the created channel and the supplied posts.'
         hints:
-          - text: "The two `alt` compartments each show one arrow. The top goes to `channel`; the bottom is a self-arrow. What method names do those labels show in the target diagram?"
-            condition: "default"
-          - text: "`if` branch: `channel.broadcast(post)`. `else` branch: `self._log_skip(post)`."
-            condition: "default"
-
-      - description: "Main creates bot + channel and calls bot.run_digest once"
-        command: |
-          import ast
-          source = open('/tutorial/step6/chatbot.py').read()
-          tree = ast.parse(source)
-          main_body = None
-          for node in tree.body:
-              if isinstance(node, ast.If):
-                  main_body = node.body
-                  break
-          assert main_body is not None, "Add an `if __name__ == \"__main__\":` block"
-          has_bot = has_channel = has_run = False
-          for stmt in main_body:
-              for n in ast.walk(stmt):
-                  if isinstance(n, ast.Call) and isinstance(n.func, ast.Name):
-                      if n.func.id == 'DiscordBot': has_bot = True
-                      if n.func.id == 'Channel': has_channel = True
-                  if (isinstance(n, ast.Call)
-                          and isinstance(n.func, ast.Attribute)
-                          and n.func.attr == 'run_digest'):
-                      has_run = True
-          assert has_bot, "Main must create a DiscordBot — `bot = DiscordBot()`"
-          assert has_channel, "Main must create a Channel — `channel = Channel()`"
-          assert has_run, "Main must call `bot.run_digest(channel, posts)`"
-        hints:
-          - text: "The target diagram shows two `<<create>>` arrows before the main call — one to `bot` and one to `channel`. What two object creations does that mean `__main__` must perform?"
-            condition: "default"
-          - text: "In `__main__`: create the bot, create the channel, then call `bot.run_digest(channel, posts)` once. That produces the `<<create>>` arrows and the entry call in the target diagram."
-            condition: "default"
+          - text: "The target starts with two creation arrows. Identify their classes and where Main should create those participants."
+            condition: "code_not_matches: /if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bDiscordBot\\s*\\(/"
+          - text: "One participant exists. Follow the remaining creation arrow, then identify which entry method starts the interaction between the two objects."
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bDiscordBot\\s*\\()(?![\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bChannel\\s*\\()/"
+          - text: "Draw a short Main-only trace: object creations, then the digest entry call. Check its receiver, channel argument, supplied posts, and number of invocations."
+            condition: "code_matches: /^(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bDiscordBot\\s*\\()(?=[\\s\\S]*if\\s+__name__\\s*==\\s*[\\\"\\x27]__main__[\\\"\\x27]\\s*:\\n(?:(?!\\n\\S)[\\s\\S])*?\\bChannel\\s*\\()/"
 
     quiz:
-      title: "Step 6 — Knowledge Check"
+      title: "Step 8 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1878,7 +2233,7 @@ steps:
             - "Return-arrow rendering is non-deterministic between runs"
           correct_index: 1
           explanation: |
-            Step 2's two rules: the return type must be non-`None` *and* the caller must capture the value. `get_subscriber_count` meets both (`-> int` + `count = ...`); `broadcast` fails the first (`-> None`).
+            Both calls cross from bot to channel. The analyzer's remaining conditions are a non-`None` return annotation and a captured result. `get_subscriber_count` meets them (`-> int` + assignment); `broadcast` does not (`-> None`).
 
         - question: |
             **Review of Step 3.** Why do `self._log_start(count)` and `self._log_skip(post)` appear **nested** inside the activation box for `run_digest`?
@@ -1890,7 +2245,7 @@ steps:
             - "Because `__main__` is the lifeline that ultimately calls them"
           correct_index: 1
           explanation: |
-            Activation boxes are stack frames. `run_digest` has not returned when it calls `_log_start` or `_log_skip`, so new frames are pushed on top of `run_digest`'s frame. This is Step 3's call-stack intuition, unchanged.
+            `run_digest` is still executing when it calls `_log_start` or `_log_skip`. The nested activations show those execution intervals on the same lifeline; the nested Python stack frames explain this synchronous case.
 
         - question: |
             **Review of Steps 4 & 5.** The target has a `loop` fragment containing an `alt` fragment. What Python control-flow structure produces this layout?
@@ -1905,131 +2260,17 @@ steps:
             The outer box is `loop` (a `for`) and the inner box is `alt` (an `if`/`else` with both branches non-empty). Python indentation = fragment nesting: *whichever block is innermost in the code is innermost in the diagram.*
 
         - question: |
-            **Design judgment.** You want to extend this scenario to also handle a "hold the post for moderator review" case. Which is the better choice?
+            **Design judgment.** A reviewer needs to compare three mutually exclusive outcomes for each post: broadcast, skip, or hold for moderator review. Each outcome is one message and all three fit legibly in the current diagram. Which extension best supports this comparison?
           type: single
           options:
-            - "Add a third branch to the `alt` — three compartments in one diagram"
-            - "Nest more fragments until every edge case is covered"
-            - "Leave this diagram alone and draw a separate one for the moderation path"
-            - "Stop using sequence diagrams — code is always easier to read"
-          correct_index: 2
+            - "Add a third guarded compartment to the existing `alt`."
+            - "Nest another `alt` inside each existing compartment."
+            - "Draw separate diagrams and omit the shared decision."
+            - "Draw all three messages in sequence outside the `alt`."
+          correct_index: 0
+          option_feedback:
+            1: "Nesting expresses a decision within another outcome. These three outcomes are alternatives at the same level."
+            2: "Separate diagrams can help explain long paths, but this reviewer needs to compare a short, shared decision."
+            3: "A flat message sequence suggests all three actions happen; the requirements make them mutually exclusive."
           explanation: |
-            Sequence diagrams are for **one scenario at a time**. If you keep adding branches, you get the unreadable nested-fragment mess Step 5's quiz warned about. Splitting into multiple small diagrams is not a failure — it is the correct application of the Single Responsibility Principle to your diagrams.
-
-
-  # --------------------------------------------------------------------------
-  # STEP 7 — "Sequence Diagram Reference"
-  # Pedagogy:
-  #   Retrieval practice / summary — consolidates notation learned.
-  #   Serves as a quick-reference card students can revisit.
-  # --------------------------------------------------------------------------
-  - title: "Sequence Diagram Reference"
-    instructions: |
-      ### Why this matters
-
-      Congratulations — you can now read and write basic UML sequence diagrams: lifelines, synchronous calls, return messages, self-calls with nested activation, and the `opt` / `alt` / `loop` fragments. Step 6 proved you can weave them together in one scenario. The notation only sticks if you can pull it back out of memory later, so this page is structured as a self-test first and a cheat sheet second — retrieval before review is what makes the learning durable.
-
-      ### 🎯 You will learn to
-
-      - Evaluate your own recall of every notation element introduced in Steps 1–6
-      - Apply this reference card as a quick lookup when designing future diagrams
-
-      ### Self-check (close this page first)
-
-      Before you scroll to the tables below, try to answer these from memory. Look back only when you are stuck:
-
-      1. What does a **lifeline** represent — a class, an instance, or a file?
-      2. What two conditions must BOTH be true for a dashed return arrow to appear?
-      3. Why does a self-call produce a *nested* activation box?
-      4. If your Python method is `for x in xs: if x.valid: bot.send(x)` (no `else`), what two fragments appear — and in which order?
-
-      Retrieval before review is the learning — just reading the tables again is not.
-
-      ---
-
-      ### The Core Pieces
-
-      | Element | Looks like | Python that produces it |
-      |---|---|---|
-      | **Lifeline** | box on top, dashed line below | any object instance: `bot = DiscordBot()` |
-      | **Activation box** | thin rectangle on the lifeline | a method call — begins when the call arrives, ends when it returns |
-      | **Synchronous message** | solid line, filled arrowhead → | `x.method(...)` — caller waits |
-      | **Return message** | dashed line, open arrowhead ⇠ | `y = x.method()` **and** `method` returns a non-`None` type *and* caller ≠ callee |
-      | **Self-message** | arrow looping back to the same lifeline | `self.method(...)` inside a method |
-      | **Creation** | dashed arrow with `<<create>>` label to a new lifeline | constructor: `bot = DiscordBot()` |
-
-      ### The Three Fragments You Will Use Most
-
-      | Fragment | Meaning | Python |
-      |---|---|---|
-      | **opt** | zero or one execution | `if ...` (no `else`) |
-      | **alt** | choose exactly one branch | `if ... elif ... else ...` |
-      | **loop** | repeat zero or more times | `for` / `while` |
-
-      ### Fragments You May Encounter Later
-
-      - **par** — parallel branches execute concurrently (e.g., `asyncio.gather`)
-      - **break** — exit the enclosing loop
-      - **ref** — an "interaction use"; a named sub-scenario referenced from another diagram
-      - **critical** — an atomic region
-      - **neg** — an invalid trace (what **must not** happen)
-
-      ---
-
-      ### Arrow Cheat Sheet
-
-      <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-      participant a: A
-      participant b: B
-      a -> b: sync_call()
-      activate b
-      b --> a: return
-      deactivate b
-      a ->> b: async_call()
-      activate b
-      deactivate b
-      a -> a: self_call()
-      activate a
-      deactivate a
-      @enduml'></div>
-
-      - `->` synchronous (caller blocks)
-      - `-->` return (dashed, open arrow)
-      - `->>` asynchronous (caller keeps going — you will meet this later)
-      - `-> self` self-call
-
-      ---
-
-      ### Guidelines You Should Remember
-
-      1. **Lifelines are instances, not classes.** Two `Dog()` calls → two lifelines.
-      2. **Activation boxes are stack frames.** They start on the way in, end on the way out. Nested activation = nested calls.
-      3. **Do not draw every `if` and `for`.** One or two fragment levels is usually enough — split deeply-branching logic into multiple diagrams.
-      4. **One scenario per diagram.** A sequence diagram answers a single question. Happy path, error path, and edge cases typically belong in separate diagrams.
-      5. **Only draw return arrows when the value matters.** UML is about communication — if the return is `None` or implied by the activation box ending, skip the dashed arrow.
-      6. **Real diagrams do not start from `Main`.** In this tutorial every scenario began from `__main__` to give you a Python anchor for every arrow. In practice, sequence diagrams focus on a specific interaction between objects that are already running — they start at an interesting method call, not at program startup. A whiteboard diagram might open with `user -> authService: login(password)` and never show how `user` or `authService` were constructed. The `Main` lifeline was a learning scaffold; leave it behind in your own diagrams.
-
-      ---
-
-      ### What Sequence Diagrams Are Good For
-
-      - **Designing an interaction** before you write the code
-      - **Explaining a specific scenario** to a teammate or reviewer (much faster than prose)
-      - **Documenting a protocol** (API handshake, auth flow, publish/subscribe)
-      - **Finding a bug** — draw the diagram of what you *expect* vs. what actually happens
-
-      And what they are **not** good for: showing the complete behavior of a system. Use a *class* diagram for structure and use *multiple small* sequence diagrams for specific runtime scenarios.
-
-      Next up: you now know both halves of UML modeling — structure (class diagrams) and behavior (sequence diagrams). In your software engineering career you will mix and match these constantly, usually on whiteboards, usually for five minutes at a time. That is the sweet spot UML was designed for.
-
-    files:
-      - path: step7/README.md
-        content: |
-          # Sequence Diagram Reference
-
-          Nothing to code in this step — it is a summary page.
-
-          Use it as a cheat sheet when working on future sequence diagrams.
-        language: markdown
-
-    open_file: step7/README.md
+            A third compartment adds an alternative without increasing the nesting depth. Here it keeps the three short outcomes together for comparison. A separate diagram can be appropriate when a path needs substantially more detail; that is a communication decision, not a UML requirement.

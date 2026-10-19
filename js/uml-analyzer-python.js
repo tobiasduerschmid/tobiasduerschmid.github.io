@@ -1149,21 +1149,34 @@
 
   /**
    * Infer multiplicity from a type annotation node.
-   * Returns '*' for collection types (List[X], Set[X], etc.), '0..1' for Optional[X], '1' otherwise.
+   * Collections describe many related elements, even when the collection itself
+   * is optional. Nullable scalar annotations describe zero or one element.
    */
-  function inferMultiplicity(annNode) {
-    if (!annNode) return '1';
-    if (annNode.type === 'Subscript' && annNode.value && annNode.value.type === 'Name') {
-      var wrapper = annNode.value.id;
-      if (CONTAINER_TYPES[wrapper]) return '*';
-      if (OPTIONAL_TYPES[wrapper]) return '0..1';
-      if (MAPPING_TYPES[wrapper]) return '*';
+  function inferMultiplicity(annNode, targetClass) {
+    const annotation = unquoteAnnotation(annNode);
+    if (!annotation) return '1';
+    if (annotation.type === 'Subscript') {
+      const wrapper = annotationWrapperName(annotation.value);
+      if (CONTAINER_TYPES.has(wrapper) || MAPPING_TYPES.has(wrapper)) return '*';
+      if (wrapper === 'Optional') {
+        return inferMultiplicity(annotation.slice, targetClass) === '*' ? '*' : '0..1';
+      }
     }
-    // Python 3.9+ built-in generics: list[X], set[X]
-    if (annNode.type === 'Subscript' && annNode.value && annNode.value.type === 'Name') {
-      var name = annNode.value.id;
-      if (name === 'list' || name === 'set' || name === 'tuple' || name === 'frozenset'
-          || name === 'dict' || name === 'deque') return '*';
+    const alternatives = annotationUnionMembers(annotation);
+    if (alternatives.length) {
+      // Other union arms may contain collections of unrelated types. Their
+      // cardinality says nothing about this relationship's target class.
+      const targets = targetClass ? new Set([targetClass]) : null;
+      const contributing = targets
+        ? alternatives.filter(member => extractClassFromAnnotation(member, targets))
+        : alternatives;
+      const multiplicities = contributing.map(member => inferMultiplicity(member, targetClass));
+      if (multiplicities.includes('*')) return '*';
+      if (contributing.length < alternatives.length || multiplicities.includes('0..1')) return '0..1';
+      if (alternatives.some(member => {
+        const normalized = unquoteAnnotation(member);
+        return normalized && normalized.type === 'Constant' && normalized.value === null;
+      })) return '0..1';
     }
     return '1';
   }
@@ -1199,33 +1212,70 @@
    * Container / annotation type utilities
    * =================================================================== */
 
-  var CONTAINER_TYPES = { List: 1, list: 1, Set: 1, set: 1, Tuple: 1, tuple: 1,
-    FrozenSet: 1, frozenset: 1, Sequence: 1, Iterable: 1, Collection: 1, Deque: 1, deque: 1 };
-  var OPTIONAL_TYPES = { Optional: 1 };
-  var MAPPING_TYPES = { Dict: 1, dict: 1, Mapping: 1, DefaultDict: 1, OrderedDict: 1 };
+  const CONTAINER_TYPES = new Set(['List', 'list', 'Set', 'set', 'Tuple', 'tuple',
+    'FrozenSet', 'frozenset', 'Sequence', 'Iterable', 'Collection', 'Deque', 'deque']);
+  const MAPPING_TYPES = new Set(['Dict', 'dict', 'Mapping', 'DefaultDict', 'OrderedDict']);
+
+  // Forward annotations contain Python type syntax, never executable code.
+  function unquoteAnnotation(node) {
+    while (node && node.type === 'Constant' && typeof node.value === 'string') {
+      const parsed = parseExpr(node.value);
+      // The lightweight parser also represents Ellipsis as the string '...'.
+      if (parsed && parsed.type === 'Constant' && parsed.value === node.value) return parsed;
+      node = parsed;
+    }
+    return node;
+  }
+
+  function annotationWrapperName(node) {
+    if (!node) return '';
+    if (node.type === 'Name') return node.id;
+    const qualified = unparse(node);
+    const match = /^(?:typing|collections\.abc)\.(\w+)$/.exec(qualified);
+    return match ? match[1] : '';
+  }
+
+  function annotationUnionMembers(node) {
+    if (!node) return [];
+    if (node.type === 'BinOp' && node.op === '|') {
+      return [node.left, node.right].flatMap(member => {
+        const nested = annotationUnionMembers(member);
+        return nested.length ? nested : [member];
+      });
+    }
+    if (node.type === 'Subscript' && annotationWrapperName(node.value) === 'Union') {
+      return node.slice && node.slice.type === 'Tuple' ? node.slice.elts : [node.slice];
+    }
+    return [];
+  }
 
   /** Extract a known class name from a type annotation node, unwrapping containers. */
   function extractClassFromAnnotation(node, allTypeNames) {
+    node = unquoteAnnotation(node);
     if (!node) return null;
     if (node.type === 'Name') return allTypeNames.has(node.id) ? node.id : null;
-    if (node.type === 'Constant' && typeof node.value === 'string') {
-      return allTypeNames.has(node.value) ? node.value : null;
+    const alternatives = annotationUnionMembers(node);
+    for (const alternative of alternatives) {
+      const name = extractClassFromAnnotation(alternative, allTypeNames);
+      if (name) return name;
     }
     if (node.type === 'Subscript') {
-      var wrapper = node.value && node.value.type === 'Name' ? node.value.id : '';
-      if (CONTAINER_TYPES[wrapper] || OPTIONAL_TYPES[wrapper]) {
+      const wrapper = annotationWrapperName(node.value);
+      if (CONTAINER_TYPES.has(wrapper) || wrapper === 'Optional') {
+        if (node.slice && node.slice.type === 'Tuple') {
+          for (const element of node.slice.elts) {
+            const name = extractClassFromAnnotation(element, allTypeNames);
+            if (name) return name;
+          }
+          return null;
+        }
         return extractClassFromAnnotation(node.slice, allTypeNames);
       }
-      if (MAPPING_TYPES[wrapper]) {
+      if (MAPPING_TYPES.has(wrapper)) {
         if (node.slice && node.slice.type === 'Tuple' && node.slice.elts && node.slice.elts.length === 2) {
           return extractClassFromAnnotation(node.slice.elts[1], allTypeNames);
         }
       }
-    }
-    // Union type: X | Y — check both sides
-    if (node.type === 'BinOp' && node.op === '|') {
-      return extractClassFromAnnotation(node.left, allTypeNames) ||
-             extractClassFromAnnotation(node.right, allTypeNames);
     }
     return null;
   }
@@ -1310,7 +1360,7 @@
         var pending = info._pendingCollections[pendingCls];
         _addUnique(info.associations, pendingCls);
         if (!info._relMult[pendingCls]) {
-          var tgtMult = inferMultiplicity(pending.annNode);
+          var tgtMult = inferMultiplicity(pending.annNode, pendingCls);
           info._relMult[pendingCls] = { tgtMult: tgtMult };
         }
       }
@@ -1410,7 +1460,7 @@
         _addUnique(classInfo.associations, annCls);
         classInfo._relAttrs[attrName] = true;
         if (!classInfo._relMult[annCls]) {
-          var tgtMult = inferMultiplicity(node.annotation);
+          var tgtMult = inferMultiplicity(node.annotation, annCls);
           classInfo._relMult[annCls] = { tgtMult: tgtMult };
         }
       }
@@ -1448,7 +1498,7 @@
       _addUnique(list, target);
       classInfo._relAttrs[attrName] = true;
       if (annNode && !classInfo._relMult[target]) {
-        var tgtMult = inferMultiplicity(annNode);
+        var tgtMult = inferMultiplicity(annNode, target);
         classInfo._relMult[target] = { tgtMult: tgtMult };
       }
     }
@@ -1885,7 +1935,8 @@
 
     // Scope tracking
     this.varTypes = {};
-    this.varParticipants = {}; // aliases to known objects
+    this.varParticipants = {}; // aliases and parameter bindings to known objects
+    this._scopeCaller = 'Main';
     this._callerClass = {};
     this._referencedVars = {};   // {name: true} for names read in current scope
 
@@ -2191,24 +2242,26 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._collectEntryStmts = function () {
-    var mainBlocks = {};
+    var fileEntries = {};
+    var mainFile = null;
     var topStmts = [];
     for (var fn in this.parsedFiles) {
       if (!this.parsedFiles.hasOwnProperty(fn)) continue;
       var tree = this.parsedFiles[fn];
+      fileEntries[fn] = [];
       for (var i = 0; i < tree.body.length; i++) {
         var node = tree.body[i];
         if (node.type === 'ClassDef' || node.type === 'FunctionDef' || node.type === 'Import') continue;
         if (node.type === 'If' && this._isMainGuard(node)) {
-          if (!mainBlocks[fn]) mainBlocks[fn] = [];
-          mainBlocks[fn] = mainBlocks[fn].concat(node.body);
+          mainFile = fn;
+          fileEntries[fn] = fileEntries[fn].concat(node.body);
         } else {
           topStmts.push(node);
+          fileEntries[fn].push(node);
         }
       }
     }
-    var keys = Object.keys(mainBlocks);
-    if (keys.length > 0) return mainBlocks[keys[keys.length - 1]];
+    if (mainFile !== null) return fileEntries[mainFile];
     return topStmts;
   };
 
@@ -2216,17 +2269,22 @@
     if (node.type !== 'If' || !node.test) return false;
     var test = node.test;
     if (test.type !== 'Compare') return false;
-    if (!test.left || test.left.type !== 'Name' || test.left.id !== '__name__') return false;
+    if (!test.ops || test.ops.length !== 1 || test.ops[0] !== '==') return false;
     if (!test.comparators || test.comparators.length !== 1) return false;
     var comp = test.comparators[0];
-    return comp.type === 'Constant' && comp.value === '__main__';
+    return (test.left && test.left.type === 'Name' && test.left.id === '__name__'
+        && comp.type === 'Constant' && comp.value === '__main__')
+      || (comp.type === 'Name' && comp.id === '__name__'
+        && test.left && test.left.type === 'Constant' && test.left.value === '__main__');
   };
 
   // ── Statement processing ──────────────────────────────────────────
 
   PythonSequenceDiagramGenerator.prototype._processStmts = function (stmts, caller, depth) {
     for (var i = 0; i < stmts.length; i++) {
-      this._processStmt(stmts[i], caller, depth);
+      var exit = this._processStmt(stmts[i], caller, depth);
+      if (['Return', 'Raise', 'Break', 'Continue'].indexOf(stmts[i].type) !== -1) return stmts[i].type;
+      if (exit) return exit;
     }
   };
 
@@ -2242,13 +2300,15 @@
       case 'Return':
         if (stmt.value) this._scanExprForCalls(stmt.value, caller, depth);
         break;
-      case 'If':
-        if (!this._isMainGuard(stmt)) this._processIf(stmt, caller, depth);
-        else this._processStmts(stmt.body, caller, depth);
+      case 'Raise':
+        if (stmt.exc) this._scanExprForCalls(stmt.exc, caller, depth);
         break;
+      case 'If':
+        if (!this._isMainGuard(stmt)) return this._processIf(stmt, caller, depth);
+        return this._processStmts(stmt.body, caller, depth);
       case 'For': this._processFor(stmt, caller, depth); break;
       case 'While': this._processWhile(stmt, caller, depth); break;
-      case 'With': this._processStmts(stmt.body, caller, depth); break;
+      case 'With': return this._processStmts(stmt.body, caller, depth);
       case 'Try': this._processTry(stmt, caller, depth); break;
     }
   };
@@ -2264,17 +2324,25 @@
         var clsName = resolved[0], method = resolved[1];
         if (method === '__init__' && targets.length === 1) {
           var tgt = targets[0];
+          if (tgt.type === 'Name' || isSelfAttr(tgt)) this._scanCallInputs(value, caller, depth);
           if (tgt.type === 'Name') {
+            var baseId = caller === 'Main' ? tgt.id : caller + '_' + tgt.id;
+            var pid = baseId;
+            for (var suffix = 2; this._participantSet[pid]; suffix++) pid = baseId + '_' + suffix;
+            this._callerClass[pid] = clsName;
+            if (this._dataClasses[clsName]) {
+              this.varTypes[tgt.id] = clsName;
+              this.varParticipants[tgt.id] = pid;
+              return;
+            }
+            this._ensureParticipant(pid, clsName);
+            this.lines.push('create ' + pid);
+            this.lines.push(caller + ' --> ' + pid + ': <<create>>');
+            this.lines.push('activate ' + pid);
+            this._maybeFollow(clsName, '__init__', pid, depth, value);
+            this.lines.push('deactivate ' + pid);
             this.varTypes[tgt.id] = clsName;
-            this.varParticipants[tgt.id] = tgt.id;
-            this._callerClass[tgt.id] = clsName;
-            if (this._dataClasses[clsName]) return;
-            this._ensureParticipant(tgt.id, clsName);
-            this.lines.push('create ' + tgt.id);
-            this.lines.push(caller + ' --> ' + tgt.id + ': <<create>>');
-            this.lines.push('activate ' + tgt.id);
-            this._maybeFollow(clsName, '__init__', tgt.id, depth);
-            this.lines.push('deactivate ' + tgt.id);
+            this.varParticipants[tgt.id] = pid;
             return;
           }
           if (isSelfAttr(tgt)) {
@@ -2285,7 +2353,7 @@
             this.lines.push('create ' + pid);
             this.lines.push(caller + ' --> ' + pid + ': <<create>>');
             this.lines.push('activate ' + pid);
-            this._maybeFollow(clsName, '__init__', pid, depth);
+            this._maybeFollow(clsName, '__init__', pid, depth, value);
             this.lines.push('deactivate ' + pid);
             return;
           }
@@ -2344,11 +2412,40 @@
 
   // ── Control flow → combined fragments ────────────────────────────
 
-  PythonSequenceDiagramGenerator.prototype._collectFragmentLines = function (stmts, caller, depth) {
+  PythonSequenceDiagramGenerator.prototype._scopeSnapshot = function () {
+    return { types: Object.assign({}, this.varTypes), participants: Object.assign({}, this.varParticipants) };
+  };
+
+  PythonSequenceDiagramGenerator.prototype._restoreScope = function (scope) {
+    this.varTypes = Object.assign({}, scope.types);
+    this.varParticipants = Object.assign({}, scope.participants);
+  };
+
+  PythonSequenceDiagramGenerator.prototype._mergeScopes = function (scopes) {
+    this.varTypes = {};
+    this.varParticipants = {};
+    var baseline = scopes[0];
+    for (var name in baseline.types) {
+      var type = baseline.types[name];
+      var participant = baseline.participants[name];
+      // Retain only facts that hold on every path; choosing one branch's
+      // receiver would fabricate an object identity after the merge.
+      if (!scopes.every(function (scope) {
+        return scope.types[name] === type && scope.participants[name] === participant;
+      })) continue;
+      this.varTypes[name] = type;
+      if (participant) this.varParticipants[name] = participant;
+    }
+  };
+
+  PythonSequenceDiagramGenerator.prototype._collectFragment = function (stmts, caller, depth) {
+    var scope = this._scopeSnapshot();
     var snapshot = this.lines.length;
-    this._processStmts(stmts, caller, depth);
+    var exit = this._processStmts(stmts, caller, depth);
     var newLines = this.lines.splice(snapshot);
-    return newLines;
+    var resultingScope = this._scopeSnapshot();
+    this._restoreScope(scope);
+    return { lines: newLines, scope: resultingScope, exit: exit };
   };
 
   PythonSequenceDiagramGenerator.prototype._hasMessages = function (fragmentLines) {
@@ -2360,10 +2457,13 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._processIf = function (stmt, caller, depth) {
+    this._scanExprForCalls(stmt.test, caller, depth);
     var cond = unparse(stmt.test, caller);
+    var originalScope = this._scopeSnapshot();
 
     if (!stmt.orelse || stmt.orelse.length === 0) {
-      var bodyLines = this._collectFragmentLines(stmt.body, caller, depth);
+      var body = this._collectFragment(stmt.body, caller, depth);
+      var bodyLines = body.lines;
       if (this._hasMessages(bodyLines)) {
         this.lines.push('opt [' + cond + ']');
         this.lines = this.lines.concat(bodyLines);
@@ -2371,26 +2471,20 @@
       } else {
         this.lines = this.lines.concat(bodyLines);
       }
+      this._mergeScopes([originalScope, body.scope]);
       return;
     }
 
     var branches = [];
-    var bodyLines = this._collectFragmentLines(stmt.body, caller, depth);
+    var body = this._collectFragment(stmt.body, caller, depth);
+    var bodyLines = body.lines;
     branches.push({ header: 'alt [' + cond + ']', lines: bodyLines });
 
-    var orelse = stmt.orelse;
-    while (orelse && orelse.length > 0) {
-      if (orelse.length === 1 && orelse[0].type === 'If') {
-        var elifNode = orelse[0];
-        var elifLines = this._collectFragmentLines(elifNode.body, caller, depth);
-        branches.push({ header: 'else [' + unparse(elifNode.test, caller) + ']', lines: elifLines });
-        orelse = elifNode.orelse;
-      } else {
-        var elseLines = this._collectFragmentLines(orelse, caller, depth);
-        branches.push({ header: 'else [else]', lines: elseLines });
-        break;
-      }
-    }
+    // An elif condition executes only after the preceding condition was false.
+    // Keep that nested evaluation inside the else operand.
+    var otherwise = this._collectFragment(stmt.orelse, caller, depth);
+    var elseLines = otherwise.lines;
+    branches.push({ header: 'else [else]', lines: elseLines });
 
     var hasAny = false;
     for (var i = 0; i < branches.length; i++) {
@@ -2407,13 +2501,19 @@
         this.lines = this.lines.concat(branches[i].lines);
       }
     }
+    this._mergeScopes([body.scope, otherwise.scope]);
+    if (body.exit && body.exit === otherwise.exit) return body.exit;
   };
 
   PythonSequenceDiagramGenerator.prototype._processFor = function (stmt, caller, depth) {
+    this._scanExprForCalls(stmt.iter, caller, depth);
     var target = unparse(stmt.target, caller);
     var iterText = unparse(stmt.iter, caller);
+    var originalScope = this._scopeSnapshot();
     this._inferLoopVarType(stmt, caller);
-    var bodyLines = this._collectFragmentLines(stmt.body, caller, depth);
+    var body = this._collectFragment(stmt.body, caller, depth);
+    var bodyLines = body.lines;
+    this._mergeScopes([originalScope, body.scope]);
     if (this._hasMessages(bodyLines)) {
       this.lines.push('loop [for ' + target + ' in ' + iterText + ']');
       this.lines = this.lines.concat(bodyLines);
@@ -2424,7 +2524,18 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._processWhile = function (stmt, caller, depth) {
-    var bodyLines = this._collectFragmentLines(stmt.body, caller, depth);
+    this._scanExprForCalls(stmt.test, caller, depth);
+    var originalScope = this._scopeSnapshot();
+    var body = this._collectFragment(stmt.body, caller, depth);
+    var bodyLines = body.lines;
+    var exitsBeforeRecheck = ['Break', 'Return', 'Raise'].indexOf(body.exit) !== -1;
+    if (!exitsBeforeRecheck) {
+      this._restoreScope(body.scope);
+      var testStart = this.lines.length;
+      this._scanExprForCalls(stmt.test, caller, depth);
+      bodyLines = bodyLines.concat(this.lines.splice(testStart));
+    }
+    this._mergeScopes([originalScope, body.scope]);
     if (this._hasMessages(bodyLines)) {
       this.lines.push('loop [while ' + unparse(stmt.test, caller) + ']');
       this.lines = this.lines.concat(bodyLines);
@@ -2435,12 +2546,17 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._processTry = function (stmt, caller, depth) {
-    var bodyLines = this._collectFragmentLines(stmt.body, caller, depth);
+    var originalScope = this._scopeSnapshot();
+    var body = this._collectFragment(stmt.body, caller, depth);
+    var bodyLines = body.lines;
+    var scopes = [originalScope, body.scope];
     var handlerBranches = [];
     for (var i = 0; i < (stmt.handlers || []).length; i++) {
       var h = stmt.handlers[i];
       var excType = h.excType ? unparse(h.excType) : 'Exception';
-      var hLines = this._collectFragmentLines(h.body, caller, depth);
+      var handler = this._collectFragment(h.body, caller, depth);
+      var hLines = handler.lines;
+      scopes.push(handler.scope);
       handlerBranches.push({ excType: excType, lines: hLines });
     }
 
@@ -2464,9 +2580,21 @@
         this.lines = this.lines.concat(handlerBranches[i].lines);
       }
     }
+    this._mergeScopes(scopes);
   };
 
   // ── Call processing ──────────────────────────────────────────────
+
+  PythonSequenceDiagramGenerator.prototype._scanCallInputs = function (call, caller, depth) {
+    // Python evaluates the receiver before arguments, then invokes the method.
+    if (call.func && call.func.type === 'Attribute') this._scanExprForCalls(call.func.value, caller, depth);
+    for (var i = 0; i < (call.args || []).length; i++) {
+      this._scanExprForCalls(call.args[i], caller, depth);
+    }
+    for (var i = 0; i < (call.keywords || []).length; i++) {
+      this._scanExprForCalls(call.keywords[i].value, caller, depth);
+    }
+  };
 
   /**
    * Process a call node: emit a message and optionally follow the body.
@@ -2483,13 +2611,7 @@
    *   subsequent messages.
    */
   PythonSequenceDiagramGenerator.prototype._processCall = function (call, caller, depth, returnCaptured, returnBinding) {
-    // Scan arguments first (they execute before the call)
-    for (var i = 0; i < (call.args || []).length; i++) {
-      this._scanExprForCalls(call.args[i], caller, depth);
-    }
-    for (var i = 0; i < (call.keywords || []).length; i++) {
-      this._scanExprForCalls(call.keywords[i].value, caller, depth);
-    }
+    this._scanCallInputs(call, caller, depth);
 
     var resolved = this._resolveCall(call, caller);
     if (!resolved) return;
@@ -2507,11 +2629,17 @@
     }
     // A known object takes precedence over the class-based fallback.
     var receiver = call.func && call.func.type === 'Attribute' ? call.func.value : null;
-    var receiverId = receiver && receiver.type === 'Name' ? receiver.id : null;
+    var receiverName = receiver && receiver.type === 'Name' ? receiver.id : null;
+    var receiverId = receiverName;
     if (receiverId === 'self') receiverId = caller;
     else if (this.varParticipants[receiverId]) receiverId = this.varParticipants[receiverId];
-    var calleeId = receiverId && this._participantSet[receiverId]
+    var calleeId = receiverId && (this._participantSet[receiverId] || this.varTypes[receiverName])
       ? receiverId : this._calleeIdFor(clsName, caller, attrHint);
+    if (receiver && receiver.type === 'Call' && !this._isSuperCall(receiver)) {
+      // A computed receiver has a known return type, not the identity of the
+      // first existing participant with that type.
+      calleeId = unparse(receiver, caller).replace(/\W+/g, '_').replace(/_$/, '') + '_result';
+    }
     var label = this._buildCallLabel(call, clsName, method, caller);
 
     // Detect super() call
@@ -2526,27 +2654,27 @@
       this.lines.push('create ' + calleeId);
       this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
       this.lines.push('activate ' + calleeId);
-      this._maybeFollow(clsName, '__init__', calleeId, depth);
+      this._maybeFollow(clsName, '__init__', calleeId, depth, call);
       this.lines.push('deactivate ' + calleeId);
     } else if (method === '__init__' && isSuper) {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
       this.lines.push('activate ' + calleeId);
-      this._maybeFollow(clsName, method, calleeId, depth);
+      this._maybeFollow(clsName, method, calleeId, depth, call);
       this.lines.push('deactivate ' + calleeId);
     } else if (calleeId === caller) {
       // Self-call — nested activation bar on same lifeline (UML spec: stacked rectangles)
       this.lines.push(caller + ' -> ' + caller + ': ' + label);
       this.lines.push('activate ' + caller);
-      this._maybeFollow(clsName, method, calleeId, depth);
+      this._maybeFollow(clsName, method, calleeId, depth, call);
       this.lines.push('deactivate ' + caller);
     } else {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
       this.lines.push('activate ' + calleeId);
-      this._maybeFollow(clsName, method, calleeId, depth);
+      this._maybeFollow(clsName, method, calleeId, depth, call);
       // Return/reply message — only when return value is captured AND method has
       // a non-void return type (Cheers & Lin 2020 + Ambler G172: "Label return
       // messages only when not obvious." Void/uncaptured returns are obvious.)
@@ -2563,9 +2691,13 @@
 
   PythonSequenceDiagramGenerator.prototype._buildCallLabel = function (call, clsName, method, caller) {
     var argParts = [];
-    var args = call.args || [];
+    var args = (call.args || []).map(function (arg) { return unparse(arg, caller); });
+    for (var i = 0; i < (call.keywords || []).length; i++) {
+      var keyword = call.keywords[i];
+      args.push((keyword.arg ? keyword.arg + '=' : '**') + unparse(keyword.value, caller));
+    }
     for (var i = 0; i < Math.min(args.length, 3); i++) {
-      var text = unparse(args[i], caller);
+      var text = args[i];
       if (text.length > 20) text = text.substring(0, 17) + '...';
       argParts.push(text);
     }
@@ -2603,7 +2735,27 @@
     return null;
   };
 
-  PythonSequenceDiagramGenerator.prototype._maybeFollow = function (clsName, methodName, calleeId, depth) {
+  PythonSequenceDiagramGenerator.prototype._argumentBindings = function (node, call) {
+    var bindings = { types: {}, participants: {} };
+    var parameters = (node.args ? node.args.args : []).filter(function (arg) {
+      return arg.arg !== 'self' && arg.arg !== 'cls';
+    });
+    for (var i = 0; call && i < parameters.length; i++) {
+      var parameter = parameters[i].arg;
+      var actual = (call.args || [])[i];
+      for (var j = 0; j < (call.keywords || []).length; j++) {
+        if (call.keywords[j].arg === parameter) actual = call.keywords[j].value;
+      }
+      if (!actual || actual.type !== 'Name') continue;
+      var actualType = actual.id === 'self' ? this._classOf(this._scopeCaller) : this.varTypes[actual.id];
+      var actualId = actual.id === 'self' ? this._scopeCaller : this.varParticipants[actual.id];
+      if (actualType) bindings.types[parameter] = actualType;
+      if (actualId) bindings.participants[parameter] = actualId;
+    }
+    return bindings;
+  };
+
+  PythonSequenceDiagramGenerator.prototype._maybeFollow = function (clsName, methodName, calleeId, depth, call) {
     if (depth >= this.MAX_DEPTH) return;
     var key = clsName + '::' + methodName;
     if (this._callStack[key]) return;
@@ -2622,15 +2774,17 @@
     }
 
     this._callStack[key] = true;
-    var saved = {};
-    for (var k in this.varTypes) saved[k] = this.varTypes[k];
+    var bindings = this._argumentBindings(node, call);
+    var savedScope = this._scopeSnapshot();
+    var savedCaller = this._scopeCaller;
     var savedRefs = this._referencedVars;
-    var savedParticipants = this.varParticipants;
     this.varTypes = {};
-    this.varParticipants = {};
+    this.varParticipants = bindings.participants;
+    this._scopeCaller = calleeId;
 
     var pt = (this.paramTypes[clsName] || {})[methodName] || {};
     for (var k in pt) this.varTypes[k] = pt[k];
+    for (var k in bindings.types) this.varTypes[k] = bindings.types[k];
 
     // Recompute the use-set for this method body so reply arrows can be
     // labeled `var: type` only when `var` is actually referenced later.
@@ -2638,8 +2792,8 @@
 
     this._processStmts(node.body, calleeId, depth + 1);
 
-    this.varTypes = saved;
-    this.varParticipants = savedParticipants;
+    this._restoreScope(savedScope);
+    this._scopeCaller = savedCaller;
     this._referencedVars = savedRefs;
     delete this._callStack[key];
   };
@@ -2706,13 +2860,49 @@
       }
     }
 
+    // factory.create().method() — resolve the receiver's declared return type.
+    if (func.type === 'Attribute' && func.value && func.value.type === 'Call') {
+      var factoryCall = this._resolveCall(func.value, caller);
+      if (factoryCall) {
+        var returnClass = factoryCall[1] === '__init__' ? factoryCall[0]
+          : this._getReturnClassType(factoryCall[0], factoryCall[1]);
+        if (returnClass) return [returnClass, func.attr];
+      }
+    }
+
     return null;
+  };
+
+  PythonSequenceDiagramGenerator.prototype._isSuperCall = function (call) {
+    return call.func && call.func.type === 'Name' && call.func.id === 'super';
   };
 
   PythonSequenceDiagramGenerator.prototype._scanExprForCalls = function (node, caller, depth) {
     if (!node) return;
     if (node.type === 'Call') {
       this._processCall(node, caller, depth);
+      return;
+    }
+    if (node.type === 'BoolOp') {
+      this._scanBooleanCalls(node.values || [], node.op, caller, depth);
+      return;
+    }
+    if (node.type === 'IfExp') {
+      this._processIf({ test: node.test,
+        body: [{ type: 'Expr', value: node.body }],
+        orelse: [{ type: 'Expr', value: node.orelse }] }, caller, depth);
+      return;
+    }
+    if (node.type === 'Compare') {
+      this._scanExprForCalls(node.left, caller, depth);
+      this._scanComparisonCalls(node, 0, caller, depth);
+      return;
+    }
+    if (node.type === 'Dict') {
+      for (var di = 0; di < (node.keys || []).length; di++) {
+        this._scanExprForCalls(node.keys[di], caller, depth);
+        this._scanExprForCalls(node.values[di], caller, depth);
+      }
       return;
     }
     if (node.type === 'Constant' && node.isFString && typeof node.value === 'string') {
@@ -2736,6 +2926,36 @@
         this._scanExprForCalls(val, caller, depth);
       }
     }
+  };
+
+  PythonSequenceDiagramGenerator.prototype._scanBooleanCalls = function (values, operator, caller, depth) {
+    if (!values.length) return;
+    this._scanExprForCalls(values[0], caller, depth);
+    if (values.length === 1) return;
+    var start = this.lines.length;
+    this._scanBooleanCalls(values.slice(1), operator, caller, depth);
+    var conditionalLines = this.lines.splice(start);
+    if (!this._hasMessages(conditionalLines)) return;
+    var condition = unparse(values[0], caller);
+    if (operator === 'or') condition = 'not (' + condition + ')';
+    this.lines.push('opt [' + condition + ']');
+    this.lines = this.lines.concat(conditionalLines);
+    this.lines.push('end');
+  };
+
+  PythonSequenceDiagramGenerator.prototype._scanComparisonCalls = function (node, index, caller, depth) {
+    if (index >= node.comparators.length) return;
+    this._scanExprForCalls(node.comparators[index], caller, depth);
+    if (index + 1 === node.comparators.length) return;
+    var start = this.lines.length;
+    this._scanComparisonCalls(node, index + 1, caller, depth);
+    var tail = this.lines.splice(start);
+    if (!this._hasMessages(tail)) return;
+    var preceding = { type: 'Compare', left: index === 0 ? node.left : node.comparators[index - 1],
+      ops: [node.ops[index]], comparators: [node.comparators[index]] };
+    this.lines.push('opt [' + unparse(preceding, caller) + ']');
+    this.lines = this.lines.concat(tail);
+    this.lines.push('end');
   };
 
   // ── Loop variable type inference ─────────────────────────────────

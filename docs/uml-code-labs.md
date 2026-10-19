@@ -119,6 +119,28 @@ old render from becoming the displayed answer to a newer edit.
 Text measurement reuses matching labels from the previous render; the cache
 retains only that render's entries, so successive edits cannot grow it indefinitely.
 
+## Inference limits
+
+Review inferred diagrams as teaching sketches. The lightweight analyzers do
+not establish a complete model of the program:
+
+- **Relationship roles:** multiple fields pointing to the same class can
+  collapse into one relationship, hiding different roles or multiplicities.
+- **Union types:** a heterogeneous union can omit alternative target classes.
+- **Symbol resolution:** same-named classes across modules or packages, import
+  aliases, dynamic dispatch, and complex receivers are not fully resolved.
+  A receiver known only by its type can be conflated with another instance.
+- **Ownership:** field construction and parameter passing suggest relationships
+  but do not prove UML composition or aggregation lifetime constraints.
+- **Control flow:** the bounded call walk approximates early exits, exception
+  paths, loop-carried state, and branch-dependent aliases. Python `finally`
+  calls and some field-held receiver identities remain unsupported.
+
+Grade the behavior contracts and structural constraints stated in an exercise.
+Do not use exact inferred diagram text as the sole correctness oracle. Check
+effects, ordering, multiplicities, and forbidden interactions while accepting
+equivalent internal designs; use a short explanation for modeling choices.
+
 ## C++ inference
 
 `js/uml-analyzer-cpp.js` uses the Java analyzer's approach: tokenize source,

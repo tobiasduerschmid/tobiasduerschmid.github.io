@@ -1,5 +1,5 @@
 title: "UML Class Diagrams in Python"
-description: "Learn to read and create UML class diagrams by writing Python code that matches target diagrams. Starting from single classes and building to full system architectures, you will discover how UML makes invisible design decisions visible."
+description: "Learn UML class diagrams through Python, then propose a store design before comparing it with and implementing a suggested solution. Explain how responsibilities, contracts, and relationships make the design easier to change."
 
 # Authoring-time Bloom-verb objectives. Not yet rendered to students.
 learning_objectives:
@@ -8,6 +8,7 @@ learning_objectives:
   - "Apply UML's visibility modifiers (`+`, `-`, `#`, `~`) and explain how they map to Python's leading-underscore conventions."
   - "Read multiplicity annotations (`1`, `*`, `0..1`, `1..*`) and translate them into the correct Python data structures."
   - "Evaluate a UML class diagram critically and identify design flaws (cyclic dependencies, missing abstractions, over-coupling)."
+  - "Propose a class design from behavior requirements, compare it with a suggested solution, and justify a revision."
 
 backend: pyodide
 linter: true  # live pyflakes diagnostics in the Monaco gutter
@@ -17,6 +18,18 @@ uml_default_view: true
 uml_class_layout: landscape
 require_tests: true
 autosave_type: files
+progress_version: 1
+legacy_step_keys:
+  - first-class
+  - visibility
+  - types
+  - inheritance
+  - association
+  - ownership
+  - multiplicity
+  - abstract-classes
+  - store-capstone
+  - class-reference
 
 setup_commands:
   - "import sys; sys.path.insert(0, '/tutorial'); import abc"
@@ -31,6 +44,7 @@ steps:
   #   Bloom's level — Remember (identify compartments), Apply (write class).
   # --------------------------------------------------------------------------
   - title: "Your First Class Diagram"
+    key: first-class
     uml_hide:
       - visibility
     instructions: |
@@ -148,8 +162,15 @@ steps:
           assert 'Student' in ns, \
               "Define a class called Student"
         hints:
-          - text: "Start with `class Student:` and add an `__init__` method."
-            condition: "default"
+          - title: Read the class box
+            text: Start with the top compartment of the target. Which declaration gives the remaining attributes and operations a shared owner?
+            condition: "code_not_matches: /^class[ \\t]+Student\\b/m"
+          - title: Keep members inside the class
+            text: A class declaration establishes the owner; indentation places its members inside it. Compare the constructor’s indentation with the class header.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Student\\b))(?![\\s\\S]*(?:^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*))[\\s\\S]*$/m"
+          - title: Check the definition loads
+            text: Run the file and inspect the first error before testing again. Verify that the class is defined at module level and that its name matches the target.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Student\\b))(?=[\\s\\S]*(?:^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*))[\\s\\S]*$/m"
 
       - description: "__init__ accepts name and student_id"
         command: |
@@ -164,10 +185,15 @@ steps:
           assert 'student_id' in params, \
               "__init__ must have a 'student_id' parameter: def __init__(self, name, student_id)"
         hints:
-          - text: "Look at the UML diagram's bottom compartment — it shows `__init__(name, student_id)`. What should your constructor's parameter list look like?"
-            condition: "default"
-          - text: "Define the constructor as `def __init__(self, name, student_id):`"
-            condition: "default"
+          - title: Read the constructor operation
+            text: Find the constructor in the target’s operation compartment. Separate the receiver used inside a method from the values a caller supplies.
+            condition: "code_not_matches: /^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*/m"
+          - title: Trace one construction
+            text: For Student("Alice", "S001"), map each supplied argument to a parameter. Which parameter represents each piece of student data?
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*))(?![\\s\\S]*(?:^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+__init__\\([^\\n]*\\bname\\b))[\\s\\S]*$/m"
+          - title: Compare the two inputs
+            text: "Write a two-row table: caller value → constructor parameter → stored attribute. Check that both rows have distinct parameters before writing the assignments."
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*))(?=[\\s\\S]*(?:^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+__init__\\([^\\n]*\\bname\\b))[\\s\\S]*$/m"
 
       - description: "Student has name and student_id attributes"
         command: |
@@ -184,10 +210,15 @@ steps:
           assert s.student_id == 'S001', \
               "self.student_id should store the student_id passed to __init__"
         hints:
-          - text: "The UML middle compartment lists `name` and `student_id`. Each one should become a `self.` attribute inside `__init__` — how do you assign a parameter to an instance attribute?"
-            condition: "default"
-          - text: "In `__init__`, assign each parameter to `self`: `self.name = name` and `self.student_id = student_id`"
-            condition: "default"
+          - title: From parameters to state
+            text: "Constructor parameters are temporary local names. Look back at the middle compartment: which values must still be available after construction finishes?"
+            condition: "code_not_matches: /^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*/m"
+          - title: Inspect a new student
+            text: Construct one Student, then try reading each required attribute. A local assignment and an instance assignment affect different namespaces.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*))(?![\\s\\S]*(?:^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:name|student_id)\\b))[\\s\\S]*$/m"
+          - title: Try two different students
+            text: Create students with different names and IDs. Fill in “first object → values” and “second object → values”; compare that table with what your attributes contain.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*))(?=[\\s\\S]*(?:^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:name|student_id)\\b))[\\s\\S]*$/m"
 
       - description: "get_info() returns the correct format"
         command: |
@@ -203,10 +234,15 @@ steps:
           assert result == 'Alice (S001)', \
               f"get_info() should return 'Alice (S001)' but got '{result}'"
         hints:
-          - text: "The spec says the output should look like `\"Alice (S001)\"` — the name, a space, then the student_id in parentheses. How would you build that string from the two instance attributes?"
-            condition: "default"
-          - text: "Use an f-string that combines `self.name` and `self.student_id` with the required spacing and parentheses."
-            condition: "default"
+          - title: Connect an operation to its result
+            text: The bottom compartment includes an information-producing operation. Add that operation to the class and identify which stored values it needs.
+            condition: "code_not_matches: /^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_info\\b[^\\n]*/m"
+          - title: Returned text versus printed text
+            text: Call get_info() and assign its result to a variable. Does the variable contain the text, or does the call only display it?
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_info\\b[^\\n]*))(?![\\s\\S]*(?:^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_info\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\breturn\\b))[\\s\\S]*$/m"
+          - title: Build a character-level example
+            text: For a new name and ID, write the expected text by hand. Mark the variable parts and the literal separators, then compare them with your result.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_info\\b[^\\n]*))(?=[\\s\\S]*(?:^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_info\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\breturn\\b))[\\s\\S]*$/m"
 
     quiz:
       title: "Step 1 — Knowledge Check"
@@ -273,6 +309,7 @@ steps:
   #   Bloom's level — Understand (explain mapping), Apply (rename attrs).
   # --------------------------------------------------------------------------
   - title: "Visibility: Who Can See What?"
+    key: visibility
     instructions: |
       ## Visibility Markers
 
@@ -453,10 +490,15 @@ steps:
           assert not hasattr(account, 'balance'), \
               "Remove the public self.balance — use self.__balance instead"
         hints:
-          - text: "The UML shows `-` next to `balance`. The visibility table in the instructions maps `-` to a specific Python naming convention — what prefix would you add to `self.balance`?"
-            condition: "default"
-          - text: "Replace every `self.balance` with `self.__balance` — the double underscore triggers Python name mangling, which maps to UML private (`-`)."
-            condition: "default"
+          - title: Match the visibility marker
+            text: Locate balance in the target and consult the visibility mapping for this renderer. Decide which spelling will represent the internal attribute.
+            condition: "code_not_matches: /^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:__balance)\\b/m"
+          - title: Follow every balance access
+            text: After changing the declaration, search the BankAccount methods for accesses to the old attribute. Constructor writes and later reads must refer to the same state.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:__balance)\\b))(?![\\s\\S]*(?:^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+get_balance\\b[\\s\\S]*?self\\.__balance\\b))[\\s\\S]*$/m"
+          - title: Trace state across operations
+            text: Make a table with rows “construct”, “deposit”, and “get balance”. Record the attribute each row accesses; compare the spellings and check for an accidental second balance.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:__balance)\\b))(?=[\\s\\S]*(?:^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+get_balance\\b[\\s\\S]*?self\\.__balance\\b))[\\s\\S]*$/m"
 
       - description: "validate_amount is protected (uses _ prefix)"
         command: |
@@ -467,10 +509,15 @@ steps:
           assert hasattr(account, '_validate_amount'), \
               "Rename validate_amount to _validate_amount (single underscore = protected)"
         hints:
-          - text: "The UML shows `#` next to `_validate_amount`. Looking at the visibility table in the instructions, what single-character prefix signals 'protected' in Python?"
-            condition: "default"
-          - text: "Rename `def validate_amount` to `def _validate_amount` and update all calls to it inside the other methods."
-            condition: "default"
+          - title: Identify the internal helper
+            text: Find the validation helper’s marker in the target. The renderer maps a naming convention to that marker; Python does not enforce protected access.
+            condition: "code_not_matches: /^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+_validate_amount\\b[^\\n]*/m"
+          - title: Update the callers too
+            text: A renamed definition does not update calls by itself. Trace a deposit from the public method to its validation call and compare the names.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+_validate_amount\\b[^\\n]*))(?![\\s\\S]*(?:^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?self\\._validate_amount\\s*\\())[\\s\\S]*$/m"
+          - title: Compare valid and invalid amounts
+            text: Try one positive amount and one negative amount. Record which helper each public operation reaches and whether the balance changes. Use any failing call to locate the remaining mismatch.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+_validate_amount\\b[^\\n]*))(?=[\\s\\S]*(?:^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?self\\._validate_amount\\s*\\())[\\s\\S]*$/m"
 
       - description: "Public methods still work correctly"
         command: |
@@ -487,8 +534,15 @@ steps:
           assert account.get_balance() == 150.0, \
               "Balance should not change after a failed withdrawal"
         hints:
-          - text: "Make sure you updated ALL references to `self.balance` and `self.validate_amount` inside the methods too — not just the definitions."
-            condition: "default"
+          - title: Preserve the public interface
+            text: The naming edit changes internal members. Identify the three public operations clients still call and run them one at a time.
+            condition: "code_not_matches: /^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:__balance)\\b/m"
+          - title: Check the whole rename
+            text: Trace both a balance access and a validation call inside deposit and withdraw. Which internal names still differ from their definitions?
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:__balance)\\b))(?![\\s\\S]*(?:^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+_validate_amount\\b[^\\n]*))[\\s\\S]*$/m"
+          - title: Use a state table
+            text: Start at 100, deposit 50, then request a withdrawal larger than the balance. Record the return value and balance after each action; find the first row that violates the contract.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:__balance)\\b))(?=[\\s\\S]*(?:^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+_validate_amount\\b[^\\n]*))[\\s\\S]*$/m"
 
     quiz:
       title: "Step 2 — Knowledge Check"
@@ -529,6 +583,7 @@ steps:
   #   Bloom's level — Understand (why types matter), Apply (add hints).
   # --------------------------------------------------------------------------
   - title: "Types Matter: Explicit Contracts"
+    key: types
     instructions: |
       ## Explicit Types in UML
 
@@ -713,12 +768,15 @@ steps:
           assert attr_annotations.get('__in_stock') == 'bool', \
               "Add a type hint: `self.__in_stock: bool = in_stock`"
         hints:
-          - text: "The middle compartment of the UML box shows types next to attributes. What Python syntax would put a type next to a `self.x = ...` assignment?"
-            condition: "default"
-          - text: "Annotated assignments use `name: Type = value`. Try it on `self.__name` first — the pattern is the same for all three attributes."
-            condition: "code_missing: __name:"
-          - text: "Change `self.__name = name` to `self.__name: str = name` — add `: Type` before the `=`."
-            condition: "default"
+          - title: Annotate stored state
+            text: Compare the attribute compartment with the assignments in Product.__init__. Which syntax adds type information while keeping the assigned value?
+            condition: "code_not_matches: /^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?self\\.__\\w+[ \\t]*:/m"
+          - title: Separate value from type
+            text: "For each attribute, write two columns: an example value and the kind of value it represents. Use that distinction to annotate the remaining assignments."
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?self\\.__\\w+[ \\t]*:))(?![\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?self\\.__price[ \\t]*:))[\\s\\S]*$/m"
+          - title: Read each annotated assignment
+            text: Inspect the name, annotation, and assigned expression independently. Check the target for the price and availability roles, and ensure the annotations describe those roles.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?self\\.__\\w+[ \\t]*:))(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?self\\.__price[ \\t]*:))[\\s\\S]*$/m"
 
       - description: "Methods have return type hints"
         command: |
@@ -740,12 +798,15 @@ steps:
           assert returns.get('apply_discount') == 'float', \
               "Add `-> float` to apply_discount(): `def apply_discount(self, percent: float) -> float:`"
         hints:
-          - text: "Where does a method's return type go in a UML signature? How would you express the same information on a Python `def` line?"
-            condition: "default"
-          - text: "Python puts the return type after `->`, between the closing paren and the colon."
-            condition: "code_missing: ->"
-          - text: "Add `-> ReturnType` before the colon: `def get_name(self) -> str:`. Then do the same for `get_price`, `is_available`, and `apply_discount`."
-            condition: "default"
+          - title: Trace what leaves each method
+            text: Read each method’s return expression before choosing an annotation. A parameter describes an input; a return annotation describes the value sent back.
+            condition: "code_not_matches: /^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+(?:get_name|get_price|is_available|apply_discount)\\([^\\n]*->/m"
+          - title: Complete a return-value table
+            text: List the four operations, one example returned value for each, and its type. Compare that table with the target’s operation compartment.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+(?:get_name|get_price|is_available|apply_discount)\\([^\\n]*->))(?![\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+apply_discount\\([^\\n]*->))[\\s\\S]*$/m"
+          - title: Check outputs rather than action names
+            text: A method that changes or calculates something may still return a value. Trace apply_discount and compare its returned expression with its annotation; repeat for any remaining failed operation.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+(?:get_name|get_price|is_available|apply_discount)\\([^\\n]*->))(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+apply_discount\\([^\\n]*->))[\\s\\S]*$/m"
 
       - description: "apply_discount parameter has type hint"
         command: |
@@ -760,10 +821,15 @@ steps:
           assert params['percent'].annotation == float, \
               "The percent parameter needs a type hint: percent: float"
         hints:
-          - text: "The UML shows `apply_discount(percent: float)`. You have already annotated attribute assignments — how do you write `percent: float` as a Python *parameter* annotation on the `def` line?"
-            condition: "default"
-          - text: "Change `def apply_discount(self, percent)` to `def apply_discount(self, percent: float) -> float:`"
-            condition: "default"
+          - title: Distinguish the input from the result
+            text: Locate percent inside the target operation’s parentheses. An annotation after the closing parenthesis describes a different part of the contract.
+            condition: "code_not_matches: /^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+apply_discount\\([^\\n]*\\bpercent[ \\t]*:/m"
+          - title: Check the parameter position
+            text: Compare your method header with the annotated-parameter example in the instructions. Keep the parameter’s name, type, and any default value in their separate positions.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+apply_discount\\([^\\n]*\\bpercent[ \\t]*:))(?![\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+apply_discount\\([^\\n]*\\bpercent[ \\t]*:[^,)]+\\)))[\\s\\S]*$/m"
+          - title: Allow a fractional percentage
+            text: Imagine passing 12.5 as the percentage. Compare that input’s role with the target’s declared parameter type, without changing the discount calculation.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+apply_discount\\([^\\n]*\\bpercent[ \\t]*:))(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+apply_discount\\([^\\n]*\\bpercent[ \\t]*:[^,)]+\\)))[\\s\\S]*$/m"
 
     quiz:
       title: "Step 3 — Knowledge Check"
@@ -804,17 +870,18 @@ steps:
   #   Bloom's level — Apply (refactor), Analyze (quiz on arrow direction).
   # --------------------------------------------------------------------------
   - title: "Inheritance: Is-A Relationships"
+    key: inheritance
     instructions: |
       ## The Generalization Arrow
 
       ### Why this matters
 
-      Whenever you find yourself copy-pasting the same attributes and methods across two classes, you are leaving an inheritance hierarchy unbuilt. UML draws this hidden parent-child relationship with a single hollow-triangle arrow — but the *direction* of that arrow is the most-reversed notation in introductory UML, and getting it right requires a mental shift from "general → specific" to "specific → general."
+      Inheritance lets several kinds of object share a contract: code written for a `Shape` should work with a `Circle` or `Rectangle` and still get the promised behavior. Shared fields and methods can then move to the parent. Duplication is a reason to investigate reuse, but it does not establish an inheritance relationship; unrelated classes may share a helper instead.
 
       ### 🎯 You will learn to
 
-      - Apply Python inheritance to eliminate duplicated attributes and methods
-      - Evaluate generalization arrows for correct direction using the "Is-a" test
+      - Justify inheritance using the behavior a parent promises its clients
+      - Apply inheritance and draw generalization arrows from child to parent
 
       > **Heads up — the arrow direction trips up almost everyone the first time.** Even developers who use inheritance every day sometimes have to pause and think. Expect to re-read the "Is-a test" below once or twice. That is the skill forming, not a sign you're confused.
 
@@ -826,7 +893,9 @@ steps:
 
       > **⚠ Common mistake:** Students often draw the triangle pointing **away** from the parent, from superclass down to subclass. The correct direction is the opposite: the **child points up** to the parent.
       >
-      > **"Is-a" test:** Before drawing, check the sentence *"A [Child] is a [Parent]"* makes sense. *"A Dog is an Animal"* → yes. *"An Animal is a Dog"* → no. The inheriting class is the subject; the triangle points at the parent.
+      > **"Is-a" test:** Start with *"A [Child] is a [Parent]"*, then check the behavior: can a client use the child wherever it expects the parent, without breaking the parent's promises? A plausible sentence or matching field names alone is insufficient. The triangle points at the parent whose contract the child supports.
+
+      For this exercise, a `Shape` has a color, an `area()` operation returning its geometric area, and a `describe()` operation reporting that color and area. `Circle` and `Rectangle` calculate area differently, but both support this contract. A client can call `shape.describe()` without choosing a different operation for each kind of shape.
 
       ### Your Target Diagram
 
@@ -857,14 +926,14 @@ steps:
 
       ### Your Task
 
-      The starter code has three **independent** classes with duplicated `color` and `describe()`. Refactor them:
+      The starter code has three **independent** classes. Use the shared `Shape` contract above to refactor them while preserving each shape's area and description:
 
       1. Make `Shape` the base class with `color`, `area()`, and `describe()`
       2. Make `Circle` and `Rectangle` **inherit** from `Shape` using `class Circle(Shape):`
       3. Remove the duplicated `color` attribute and `describe()` method from the subclasses
       4. Each subclass should call `super().__init__(color)` and override `area()`
 
-      Watch the inheritance arrows appear in the live diagram.
+      Watch the inheritance arrows appear in the live diagram. The analyzer reads the base class in `class Circle(Shape)`; it does not verify that `Circle` keeps `Shape`'s behavioral promises. Run the checks as well as inspecting the arrows.
 
     uml_files:
       - shapes.py
@@ -887,7 +956,7 @@ steps:
 
 
           class Circle:
-              """Independent class — duplicates color and describe from Shape!"""
+              """A circle supports the Shape contract with its own area formula."""
 
               def __init__(self, color: str, radius: float) -> None:
                   self.color: str = color          # Duplicated!
@@ -901,7 +970,7 @@ steps:
 
 
           class Rectangle:
-              """Independent class — duplicates color and describe from Shape!"""
+              """A rectangle supports the Shape contract with its own area formula."""
 
               def __init__(self, color: str, width: float, height: float) -> None:
                   self.color: str = color          # Duplicated!
@@ -972,6 +1041,8 @@ steps:
 
         Notice that `describe()` is NOT listed in `Circle` or `Rectangle` in the diagram — they inherit it. Only `area()` appears because they **override** it with their own implementation.
 
+        The reason for this hierarchy is the shared behavioral contract: inherited `describe()` calls each shape's own `area()`. Removing duplication is a benefit of this design, not sufficient evidence for choosing inheritance in another design.
+
     tests:
       - description: "Circle inherits from Shape"
         command: |
@@ -981,10 +1052,15 @@ steps:
           assert issubclass(ns['Circle'], ns['Shape']), \
               "Circle should inherit from Shape: class Circle(Shape):"
         hints:
-          - text: "The UML shows an arrow from `Circle` pointing up to `Shape`. In Python, how do you declare that one class inherits from another?"
-            condition: "default"
-          - text: "Change `class Circle:` to `class Circle(Shape):` and replace `self.color: str = color` with `super().__init__(color)`."
-            condition: "default"
+          - title: Read the generalization arrow
+            text: Follow the triangle from Circle to its parent in the target. Which class provides behavior this subclass should share?
+            condition: "code_not_matches: /^class[ \\t]+Circle[ \\t]*\\(/m"
+          - title: Check the parent expression
+            text: Compare the class header with Python’s inheritance syntax. The expression naming a parent belongs in the class declaration, while constructor arguments belong in __init__.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Circle[ \\t]*\\())(?![\\s\\S]*(?:^class[ \\t]+Circle\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?super\\s*\\())[\\s\\S]*$/m"
+          - title: Separate inheritance from initialization
+            text: Calling another constructor does not itself establish an is-a relationship. Inspect Circle's class declaration, then use issubclass to check the relationship independently of object construction.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Circle[ \\t]*\\())(?=[\\s\\S]*(?:^class[ \\t]+Circle\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?super\\s*\\())[\\s\\S]*$/m"
 
       - description: "Rectangle inherits from Shape"
         command: |
@@ -994,10 +1070,15 @@ steps:
           assert issubclass(ns['Rectangle'], ns['Shape']), \
               "Rectangle should inherit from Shape: class Rectangle(Shape):"
         hints:
-          - text: "The UML shows an arrow from `Rectangle` pointing up to `Shape`. How do you write that inheritance relationship in Python?"
-            condition: "default"
-          - text: "Change `class Rectangle:` to `class Rectangle(Shape):` and replace `self.color: str = color` with `super().__init__(color)`."
-            condition: "default"
+          - title: Read the generalization arrow
+            text: Follow the triangle from Rectangle to its parent in the target. Which class provides behavior this subclass should share?
+            condition: "code_not_matches: /^class[ \\t]+Rectangle[ \\t]*\\(/m"
+          - title: Check the parent expression
+            text: Compare the class header with Python’s inheritance syntax. The expression naming a parent belongs in the class declaration, while constructor arguments belong in __init__.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Rectangle[ \\t]*\\())(?![\\s\\S]*(?:^class[ \\t]+Rectangle\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?super\\s*\\())[\\s\\S]*$/m"
+          - title: Separate inheritance from initialization
+            text: Calling another constructor does not itself establish an is-a relationship. Inspect Rectangle's class declaration, then use issubclass to check the relationship independently of object construction.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Rectangle[ \\t]*\\())(?=[\\s\\S]*(?:^class[ \\t]+Rectangle\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?super\\s*\\())[\\s\\S]*$/m"
 
       - description: "Inherited describe() still works via polymorphism"
         command: |
@@ -1011,10 +1092,15 @@ steps:
           assert '78.5' in result, \
               f"Circle area should be about 78.54 but describe() returned: {result}"
         hints:
-          - text: "`Circle` currently has its own `describe()` that duplicates `Shape`'s. If `Shape` already provides `describe()`, does `Circle` need its own copy — or should it *inherit* it?"
-            condition: "default"
-          - text: "Remove the duplicated `describe()` from `Circle` — it should inherit it from `Shape`. The inherited `describe()` calls `self.area()` which uses `Circle`'s override."
-            condition: "default"
+          - title: Follow the inherited operation
+            text: Locate describe in Shape, then identify the instance on which it executes when called through a Circle. Which implementation should self.area() reach?
+            condition: "code_not_matches: /^class[ \\t]+Circle[ \\t]*\\(/m"
+          - title: Check inherited state
+            text: Trace construction before tracing describe. Does the Circle instance receive the state that Shape.describe reads?
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Circle[ \\t]*\\())(?![\\s\\S]*(?:^class[ \\t]+Circle\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?super\\s*\\())[\\s\\S]*$/m"
+          - title: Trace dynamic dispatch
+            text: "For a circle of radius 2, fill in: receiver of describe → receiver of area → area result → returned description. A remaining mismatch should point to state setup, overriding, or formatting."
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Circle[ \\t]*\\())(?=[\\s\\S]*(?:^class[ \\t]+Circle\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?super\\s*\\())[\\s\\S]*$/m"
 
       - description: "Duplicated describe() and color removed from subclasses"
         command: |
@@ -1040,12 +1126,15 @@ steps:
                                   assert False, \
                                       "Remove `self.color = color` from " + cls.name + " — it should inherit color from Shape via super().__init__()"
         hints:
-          - text: "Both subclasses still repeat Shape's work. What should `Circle` and `Rectangle` *not* need to do for themselves once they inherit from `Shape`?"
-            condition: "default"
-          - text: "Anything Shape already defines should disappear from the subclasses — they inherit it. Which members match that description?"
-            condition: "code_contains: def describe"
-          - text: "Delete the entire `describe()` method from both `Circle` and `Rectangle`. Also delete `self.color: str = color` from their `__init__` — they get `color` from `Shape` via `super().__init__(color)`."
-            condition: "default"
+          - title: Find repeated responsibilities
+            text: Compare each subclass with Shape. Mark which members describe a general shape and which represent only that particular geometry.
+            condition: "code_not_matches: /^class[ \\t]+(?:Circle|Rectangle)[ \\t]*\\(/m"
+          - title: Compare both subclasses
+            text: Refactor one subclass, then compare it with the other. Which repeated method and state initialization should have only one owner?
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+(?:Circle|Rectangle)[ \\t]*\\())(?![\\s\\S]*(?:^class[ \\t]+Circle\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?super\\s*\\())[\\s\\S]*$/m"
+          - title: Check declarations and uses separately
+            text: "Make two columns for each subclass: members declared here and members available through inheritance. Remove only the repeated declarations; inherited uses can remain."
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+(?:Circle|Rectangle)[ \\t]*\\())(?=[\\s\\S]*(?:^class[ \\t]+Circle\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?super\\s*\\())[\\s\\S]*$/m"
 
       - description: "Subclasses use super().__init__() to initialize the parent"
         command: |
@@ -1067,12 +1156,15 @@ steps:
                       break
               assert found_super, cls.name + ".__init__ should call super().__init__(color) to initialize Shape"
         hints:
-          - text: "If `Shape.__init__` already knows how to set `self.color`, how can the subclass call that instead of repeating the work?"
-            condition: "default"
-          - text: "Python exposes the parent's `__init__` through `super()`. Try calling it with the color argument."
-            condition: "code_missing: super()"
-          - text: "In Circle.__init__ and Rectangle.__init__, replace `self.color: str = color` with `super().__init__(color)`. This calls Shape.__init__ which sets self.color for you."
-            condition: "default"
+          - title: Find the owner of shared state
+            text: The parent constructor initializes color. After adding inheritance, consider what runs when a subclass supplies its own constructor.
+            condition: "code_not_matches: /^class[ \\t]+(?:Circle|Rectangle)[ \\t]*\\(/m"
+          - title: Plan constructor delegation
+            text: For each constructor parameter, mark whether the parent or subclass owns the corresponding state. Use the parent-initialization example from the lesson to delegate the shared work.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+(?:Circle|Rectangle)[ \\t]*\\())(?![\\s\\S]*(?:^class[ \\t]+Circle\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?super\\s*\\())[\\s\\S]*$/m"
+          - title: Check both constructor paths
+            text: "Trace construction of a Circle and a Rectangle. Fill in: shared input → parent constructor argument → inherited attribute, then check the geometry-specific assignments separately."
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+(?:Circle|Rectangle)[ \\t]*\\())(?=[\\s\\S]*(?:^class[ \\t]+Circle\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?super\\s*\\())[\\s\\S]*$/m"
 
     quiz:
       title: "Step 4 — Knowledge Check"
@@ -1093,7 +1185,7 @@ steps:
             The generalization arrow always points **from the child to the parent** — the hollow triangle is at the parent end. Think of it as the child "reaching up" to the thing it extends.
 
         - question: |
-            If `Circle` inherits `describe()` from `Shape`, where does `describe()` appear in the UML diagram?
+            If `Circle` inherits `describe()` from `Shape`, where does `describe()` appear in this tutorial's generated diagram?
           type: single
           options:
             - "In both the Shape and Circle boxes"
@@ -1102,19 +1194,21 @@ steps:
             - "Nowhere — inherited methods are not shown"
           correct_index: 1
           explanation: |
-            Inherited members appear only in the **parent** class box. The child class only lists members it **adds** or **overrides**. The inheritance arrow tells you that everything in the parent is available in the child.
+            This renderer lists `describe()` in the **parent** class box where it is defined. The child box lists the members defined there, including overrides. Follow the inheritance arrow to find inherited behavior.
 
         - question: |
-            **Review of Step 2.** Given the Shape class `+ color: str` and an inherited subclass `Circle` that needs to read `color` in its `area()` method, which access level is most appropriate for `color` if we want subclasses to read it but external code not to?
+            Two classes both store a `name` and repeat some formatting code. Which additional evidence would justify making them subclasses of a shared parent?
           type: single
           options:
-            - "Public (`+`)"
-            - "Protected (`#`)"
-            - "Private (`-`)"
-            - "Package (`~`)"
+            - "Their constructors accept the same parameter types."
+            - "Both can keep the parent's promises to its clients."
+            - "Moving the repeated code would shorten both classes."
           correct_index: 1
+          option_feedback:
+            0: "Matching input types do not establish matching behavior. Check what clients of the proposed parent can rely on."
+            2: "A helper can remove repetition too. Inheritance also commits each child to the parent's contract."
           explanation: |
-            `#` **protected** is the classic "I need subclasses to see this, but not arbitrary outside code" visibility. If `color` were private (`-`), `Circle` could not access it directly. This question reconnects Step 2's visibility markers with Step 4's inheritance — UML concepts are not independent; they interact.
+            A child should be usable through the parent's contract without breaking its promises. Shared spelling or repeated implementation alone cannot establish that. The diagram records the declared inheritance; checking the design requires reasoning about behavior.
 
 
   # --------------------------------------------------------------------------
@@ -1125,6 +1219,7 @@ steps:
   #   Bloom's level — Understand (when associations arise), Apply (refactor).
   # --------------------------------------------------------------------------
   - title: "Association: Classes That Know Each Other"
+    key: association
     uml_hide:
       - multiplicity
     instructions: |
@@ -1261,10 +1356,15 @@ steps:
           assert i.department == 'Computer Science', \
               "Instructor needs a 'department' attribute"
         hints:
-          - text: "The target UML shows a separate `Instructor` class box with `name: str` and `department: str`. What does the code need that it currently doesn't have?"
-            condition: "default"
-          - text: "Create a class: `class Instructor:` with `__init__(self, name: str, department: str)` storing both as typed attributes."
-            condition: "default"
+          - title: Give the instructor its own identity
+            text: The target contains a second class with its own state. Compare that state with the instructor string in the starter.
+            condition: "code_not_matches: /^class[ \\t]+Instructor\\b/m"
+          - title: Construct before connecting
+            text: Create an instructor on its own. Map the caller’s two values to the attributes shown in its class box before changing Course.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Instructor\\b))(?![\\s\\S]*(?:^class[ \\t]+Instructor\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:name|department)\\b))[\\s\\S]*$/m"
+          - title: Try two instructors
+            text: Use different names and departments in two instances. Check that each instance retains its own supplied data instead of a fixed example or a local-only variable.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Instructor\\b))(?=[\\s\\S]*(?:^class[ \\t]+Instructor\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:name|department)\\b))[\\s\\S]*$/m"
 
       - description: "Course stores an Instructor object (not a string)"
         command: |
@@ -1278,10 +1378,15 @@ steps:
           assert isinstance(c.instructor, ns['Instructor']), \
               "Course.instructor should be an Instructor object, not a string"
         hints:
-          - text: "The UML shows a `Course --> Instructor` association arrow — that arrow appears only when `Course` stores an `Instructor` *object* as an instance variable. Currently it stores a string. What needs to change?"
-            condition: "default"
-          - text: "Change `__init__(self, name: str, instructor_name: str)` to `__init__(self, name: str, instructor: Instructor)` and store it as `self.instructor: Instructor = instructor`."
-            condition: "default"
+          - title: Keep the relationship in the state
+            text: The arrow represents a link to an object with its own identity. Compare a stored instructor name with a stored instructor object.
+            condition: "code_not_matches: /^class[ \\t]+Course\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:instructor)\\b/m"
+          - title: Follow the constructor argument
+            text: "Create an Instructor first, then pass it into Course. Trace that argument through the constructor: is it still an object when stored?"
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Course\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:instructor)\\b))(?![\\s\\S]*(?:^class[ \\t]+Course\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?self\\.instructor[ \\t]*(?::[^=\\n]+)?=[^\\n]*\\binstructor\\b))[\\s\\S]*$/m"
+          - title: Test a shared instructor
+            text: Give two courses the same Instructor and change that instructor’s name. Predict what each course should observe; this distinguishes a retained reference from copied text.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Course\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:instructor)\\b))(?=[\\s\\S]*(?:^class[ \\t]+Course\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?self\\.instructor[ \\t]*(?::[^=\\n]+)?=[^\\n]*\\binstructor\\b))[\\s\\S]*$/m"
 
       - description: "get_instructor_name() returns the instructor's name"
         command: |
@@ -1294,10 +1399,15 @@ steps:
           assert result == 'Dr. Smith', \
               f"get_instructor_name() should return 'Dr. Smith' but got '{result}'"
         hints:
-          - text: "Now that `self.instructor` is an `Instructor` object, `get_instructor_name()` should read the name from that object — not from a string attribute."
-            condition: "default"
-          - text: "Update `get_instructor_name()` to return `self.instructor.name` instead of `self.instructor_name`."
-            condition: "default"
+          - title: Start from the relationship
+            text: First decide what Course retains after construction. The accessor must work with that representation rather than the old standalone string.
+            condition: "code_not_matches: /^class[ \\t]+Course\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:instructor)\\b/m"
+          - title: Trace the accessor’s receiver
+            text: Inside get_instructor_name, inspect the object reached by the stored relationship. Which piece of that object’s state answers the caller’s question?
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Course\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:instructor)\\b))(?![\\s\\S]*(?:^class[ \\t]+Course\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_instructor_name\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.instructor\\b))[\\s\\S]*$/m"
+          - title: Distinguish an object from its label
+            text: "Write two rows: value currently returned, and kind of value the accessor promises. Use a renamed Instructor to check that the result comes from its current state."
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Course\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:instructor)\\b))(?=[\\s\\S]*(?:^class[ \\t]+Course\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_instructor_name\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.instructor\\b))[\\s\\S]*$/m"
 
     quiz:
       title: "Step 5 — Knowledge Check"
@@ -1330,27 +1440,31 @@ steps:
             When you use a string, the **relationship between Course and Instructor is invisible** — both in the code and in the UML diagram. Using an `Instructor` object makes the dependency explicit, allowing UML to show the arrow and helping other developers understand the system structure at a glance.
 
         - question: |
-            **Review of Step 3.** In the solution above, `Course` stores `self.instructor: Instructor = instructor`. Why is the `: Instructor` type annotation load-bearing — what would change if you wrote `self.instructor = instructor` instead?
+            **Review of Step 3.** Keep the constructor parameter `instructor: Instructor`, but change `self.instructor: Instructor = instructor` to `self.instructor = instructor`. Which distinction matters when interpreting the live diagram?
           type: single
           options:
-            - "Nothing — Python ignores type annotations at runtime"
-            - "The code would stop working"
-            - "Python would enforce the type automatically"
-            - "The UML renderer would lose the association arrow"
-          correct_index: 3
+            - "The stored object stays the same; inferred diagram detail may change"
+            - "The stored object becomes a string; the diagram loses the class"
+            - "Python rejects the assignment; the diagram keeps the association"
+            - "Python checks the type at runtime; the diagram adds enforcement"
+          correct_index: 0
+          option_feedback:
+            1: "Removing an attribute annotation does not convert the assigned value. The constructor still receives and stores an Instructor object."
+            2: "Python permits assignment without an annotation. The relationship can still be inferred from the annotated constructor parameter."
+            3: "An annotation supplies type information to readers and tools; Python does not enforce that type during this assignment."
           explanation: |
-            Python itself ignores type annotations at runtime — but the UML renderer reads them. Without `: Instructor`, the renderer can't tell what class the attribute refers to, and the association arrow disappears. This reconnects Step 3's "types as contracts" lesson with Step 5's "relationships as visibility": both rely on the *same* annotations.
+            The stored reference and Python behavior are unchanged. The current renderer still infers the association from the annotated constructor parameter, but loses the target multiplicity label `1` when the attribute annotation is removed. A generated diagram is a tool's interpretation of the source: annotation changes can affect its detail without changing the objects at runtime.
 
 
   # --------------------------------------------------------------------------
   # STEP 6 — "Composition vs Aggregation"
   # Pedagogy:
-  #   Metaphor — rm -rf (composition) vs symlinks (aggregation).
-  #   C++ Bridge — unique_ptr vs raw pointer.
-  #   Bloom's level — Analyze (distinguish lifecycle dependency).
+  #   Contrast domain ownership with source-inference heuristics.
+  #   Bloom's level — Analyze (distinguish contracts from code patterns).
   #   Note: multiplicity hidden — introduced in the next step.
   # --------------------------------------------------------------------------
   - title: "Composition vs Aggregation"
+    key: ownership
     uml_hide:
       - multiplicity
     instructions: |
@@ -1358,39 +1472,53 @@ steps:
 
       ### Why this matters
 
-      "Has-a" is not a single relationship — it is a family. A `Car` *has* an `Engine` (built into it; scrapped with it). A `Team` *has* `Player`s (traded between teams; outlive the team). Both are has-a, but the lifecycle implications are radically different, and good designers make that distinction explicit. UML gives you two diamonds (filled vs. hollow) to encode the difference, and this tutorial's renderer uses *where the part is created* as a heuristic. Ownership is a design contract; Python construction syntax alone does not enforce it.
+      A stored reference tells us that two objects are linked. It does not tell us who owns whom or what happens when either object is removed. A plain **association** is enough to show that link. Use a diamond when the domain also calls for a **whole-part** relationship, and choose it from the ownership and lifecycle rules.
 
       ### 🎯 You will learn to
 
-      - Analyze a "has-a" relationship to decide between composition and aggregation
-      - Apply the right Python pattern (create-inside vs. pass-in) for each case
+      - Use domain requirements to distinguish association, composition, and aggregation
+      - Explain what the live diagram can infer from Python code and what requires a design decision
 
-      > **Heads up — this is the distinction working developers most often get wrong.**  If the rule feels fuzzy after this step, that is *honest* confusion, not a learning failure — the UML spec itself calls aggregation's semantics "intentionally informal."
+      > **Start with the relationship's meaning.** A filled diamond makes an ownership claim. A hollow diamond marks a shared whole-part relationship whose precise meaning depends on the domain. Use a plain association when no extra whole-part meaning is needed.
 
       ### Warm-Up (Retrieval from Step 5)
 
       > Before you read on — close your eyes for five seconds and answer: in Step 5, what exactly made the UML association arrow **appear** between `Course` and `Instructor`? Was it *importing* the class, *storing an instance* as an attribute, *calling a method*, or something else? Pick the answer you would bet on, then check the next paragraph.
 
-      An association appears when a class **stores another object as a persistent instance variable** — not when it merely imports or uses it. Keep that rule in your head: this step's composition and aggregation are *both* special cases of it.
+      In Step 5, `Course` stores an `Instructor` reference, and the type annotations let the analyzer identify the linked class. Importing a class alone would not create that association. This step adds whole-part meaning to stored links.
 
-      ### Two Kinds of "Has-A"
+      ### Two Kinds of Whole-Part Relationship
 
       Both composition and aggregation model a "whole-part" relationship. The difference is **ownership and lifecycle**:
 
       | Aspect | Composition (filled diamond) | Aggregation (hollow diamond) |
       |---|---|---|
       | **Symbol** | <span class="uml-sym" data-diagram="class" data-sym="*--"></span> filled diamond | <span class="uml-sym" data-diagram="class" data-sym="o--"></span> hollow diamond |
-      | **Ownership** | Whole **owns** the part exclusively (no sharing) | Whole **references** the part (can be shared) |
-      | **Lifecycle** | Part is destroyed with the whole | Part survives independently |
-      | **Renderer heuristic used here** | Part created **inside** the whole | Part **passed in** from outside |
+      | **Ownership** | Part has at most one composite owner at a time | Whole groups parts; precise ownership rules are domain-specific |
+      | **Lifecycle** | Deleting the whole deletes its parts, unless detached first | Hollow diamond alone supplies no deletion rule; in our example, parts survive independently |
 
-      > **Honest caveat.** Composition has sharp semantics in the UML spec: a part belongs to **at most one** composite at a time, and is deleted with it unless detached first. UML does not prescribe where or in what order the objects are created. **Aggregation, however, is deliberately fuzzy** — the UML 2 specification calls its semantics "intentionally informal". For this tutorial we'll use the common textbook interpretation (conceptual whole-part relationship).
-      > **Aggregation is a domain decision, not a code decision.** Whether a relationship is aggregation or plain association cannot be read reliably from code alone — it depends on the *meaning* of the domain. Is a professor a part of a department or does a department merely know some professors? That answer comes from domain knowledge, not from Python syntax. This tutorial's live diagram uses heuristics, which works well as a learning scaffold — but in the real world, rely on domain knowledge rather than on tools to infer it.
+      Exclusive composite ownership does not forbid other objects from referring to a part. It restricts which whole owns it. UML also does not prescribe where or in what order the objects are constructed: receiving a part as an argument can transfer ownership, and constructing an object internally does not establish ownership by itself.
 
-      ### The File System Metaphor
+      ### What the Live Diagram Infers
 
-      - **Composition** = a directory and its files. If you run `rm -rf directory/`, the files inside are destroyed. Their lifecycle is bound to the directory.
-      - **Aggregation** = a directory containing symbolic links. If you delete the directory, the symlinks vanish but the original files they pointed to survive.
+      The analyzer recognizes these source patterns when `Part` is a known class in the selected files:
+
+      | Python pattern | Generated relationship |
+      |---|---|
+      | Store a newly constructed object: `self.part = Part(...)` | Composition heuristic |
+      | Append a newly constructed object: `self.parts.append(Part(...))`, or construct a local variable and append it | Composition heuristic |
+      | Append an existing typed method parameter: `self.parts.append(part)` where `part: Part` | Aggregation heuristic |
+      | Store an existing object: `self.part: Part = part` | Plain association |
+      | Declare `self.parts: list[Part] = []` without a recognized append pattern | Plain association |
+
+      These patterns predict the live diagram, not the domain's lifecycle. For example, a constructor that stores an injected `part: Part` gets a plain association even if a separate ownership contract would justify composition. Check the generated relationship against the requirements before adopting it as your design.
+
+      ### The Domain Rules for This Exercise
+
+      - Each `Department` is a part of at most one `University`. In this model, dissolving a university also dissolves its departments unless they have been detached first. This is **composition**.
+      - A department groups `Professor` objects as its teaching staff. Professors can work across departments and continue to exist when a department dissolves. We choose **aggregation** to emphasize that grouping; a plain association would also express the stored references.
+
+      The code below builds these links. It has no operation for dissolving a university, so it does not implement or test the entire lifecycle contract. Deleting a Python variable also does not delete every object reachable through it.
 
       ### Your Target Diagram
 
@@ -1419,8 +1547,8 @@ steps:
       @enduml'></div>
 
       Notice the two different diamonds:
-      - **Filled diamond** <span class="uml-sym" data-diagram="class" data-sym="*--"></span> between University and Department → composition. The university creates its departments. If the university ceases to exist, so do its departments.
-      - **Hollow diamond** <span class="uml-sym" data-diagram="class" data-sym="o--"></span> between Department and Professor → aggregation. Professors are independent people who are assigned to departments. If a department is dissolved, the professors still exist.
+      - **Filled diamond** <span class="uml-sym" data-diagram="class" data-sym="*--"></span> at University → the exclusive ownership and lifecycle contract stated above.
+      - **Hollow diamond** <span class="uml-sym" data-diagram="class" data-sym="o--"></span> at Department → our chosen staff-grouping convention, without ownership of the professors' lifetimes.
 
       > **Note:** You may notice that the live diagram does not show *how many* departments or professors participate. Those numbers (called **multiplicity**) are covered in the next step.
 
@@ -1428,8 +1556,10 @@ steps:
 
       Complete the starter code:
 
-      1. **`University.add_department(dept_name)`** should **create** a new `Department` internally (composition — the part is born inside the whole)
-      2. **`Department.add_professor(prof)`** should **receive** an existing `Professor` from outside (aggregation — the part exists independently)
+      1. **`University.add_department(dept_name)`** should create a new `Department` and append it to `self.departments`.
+      2. **`Department.add_professor(prof)`** should append the supplied `Professor` to `self.professors`, preserving its identity.
+
+      Predict the generated diamonds from the pattern table, then check them in the live diagram. They agree with this exercise's stated domain rules; in another system you would need to review those rules again.
 
     uml_files:
       - university.py
@@ -1449,7 +1579,7 @@ steps:
                   self.professors: list[Professor] = []
 
               def add_professor(self, prof: Professor) -> None:
-                  # TODO: Store the professor (aggregation — received from outside)
+                  # TODO: Append the supplied professor to the staff collection.
                   pass
 
 
@@ -1459,7 +1589,7 @@ steps:
                   self.departments: list[Department] = []
 
               def add_department(self, dept_name: str) -> None:
-                  # TODO: Create a new Department and add it (composition — created inside)
+                  # TODO: Create a Department with dept_name and append it.
                   pass
 
               def get_department(self, name: str) -> Department:
@@ -1470,17 +1600,17 @@ steps:
 
 
           if __name__ == "__main__":
-              # Professors exist independently — they are created outside
+              # The domain treats professors as people independent of departments.
               prof_alice = Professor("Dr. Alice", "AI")
               prof_bob = Professor("Dr. Bob", "Systems")
 
-              # University creates its own departments (composition)
+              # Build the university's department collection.
               uni = University("State University")
               uni.add_department("Computer Science")
               uni.add_department("Mathematics")
               assert len(uni.departments) == 2, "add_department needs to actually store the new department"
 
-              # Professors are assigned to departments (aggregation)
+              # Add the existing professors to a department's staff.
               cs = uni.get_department("Computer Science")
               cs.add_professor(prof_alice)
               cs.add_professor(prof_bob)
@@ -1543,17 +1673,12 @@ steps:
                 print(f"CS has {len(cs.professors)} professors")
           language: python
       explanation: |
-        The lifecycle contract is the semantic difference; the renderer recognizes the following construction patterns in this example:
+        `add_department` constructs a local `Department` and appends it to `self.departments`, so the analyzer emits its **composition** heuristic. `add_professor` appends a typed method parameter, so it emits its **aggregation** heuristic. Storing that parameter in a scalar attribute instead would produce a plain association.
 
-        - **Composition:** `add_department` creates `Department(dept_name)` *inside* the method. The University controls the lifecycle — departments cannot exist without a university.
-        - **Aggregation:** `add_professor` receives a `Professor` that was created *outside*. The Department only holds a reference — the professor existed before and survives after.
-
-        **Code pattern to remember:**
-        - Composition: `self.parts.append(Part(...))` — created internally
-        - Aggregation: `self.parts.append(part)` — passed in from outside
+        The domain rules justify the target diamonds: departments have an exclusive university owner and a lifecycle tied to it, while professors form a staff grouping and have independent lifetimes. The checks confirm construction, storage, and object identity. They do not prove the deletion policy, which this example does not implement.
 
     tests:
-      - description: "University creates departments internally (composition)"
+      - description: "University creates and stores a named department"
         command: |
           source = open('/tutorial/university.py').read()
           ns = {}
@@ -1565,14 +1690,17 @@ steps:
           assert uni.departments[0].name == 'CS', \
               "The created department should have the name 'CS'"
         hints:
-          - text: "This exercise models ownership by having the whole create the part. Where should `Department(...)` appear to match the target?"
-            condition: "default"
-          - text: "The method signature is `add_department(self, dept_name: str)` — `dept_name` is a string, not a Department. So something has to turn it into one."
-            condition: "code_missing: Department("
-          - text: "In `add_department`, create a new Department: `dept = Department(dept_name)` then `self.departments.append(dept)`."
-            condition: "default"
+          - title: Locate creation responsibility
+            text: In this exercise University creates its departments. Trace the department-name input and identify where a new department should come into existence.
+            condition: "code_not_matches: /^class[ \\t]+University\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_department\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\bDepartment\\s*\\(/m"
+          - title: Keep the created object reachable
+            text: Creating a local object and retaining it are separate actions. After add_department returns, how will University find that department again?
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+University\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_department\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\bDepartment\\s*\\())(?![\\s\\S]*(?:^class[ \\t]+University\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_department\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.departments\\b))[\\s\\S]*$/m"
+          - title: Trace a second department
+            text: Call add_department twice with different names. Fill in the collection before and after each call, checking that both objects remain reachable and keep their supplied names.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+University\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_department\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\bDepartment\\s*\\())(?=[\\s\\S]*(?:^class[ \\t]+University\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_department\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.departments\\b))[\\s\\S]*$/m"
 
-      - description: "Department receives professors from outside (aggregation)"
+      - description: "Department stores the supplied professor without copying it"
         command: |
           source = open('/tutorial/university.py').read()
           ns = {}
@@ -1585,12 +1713,15 @@ steps:
           assert dept.professors[0] is prof, \
               "The professor in the department should be the SAME object that was passed in (not a copy)"
         hints:
-          - text: "Aggregation means the whole *receives* the part — it doesn't create a new one. How would that change the body of `add_professor`?"
-            condition: "default"
-          - text: "The parameter `prof` is already a Professor object. You just need to remember it."
-            condition: "default"
-          - text: "In `add_professor`, just append the received professor: `self.professors.append(prof)`."
-            condition: "default"
+          - title: Track the supplied object
+            text: The caller already has a Professor. Trace that object into add_professor and distinguish storing its reference from constructing a replacement.
+            condition: "code_not_matches: /^class[ \\t]+Department\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_professor\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.professors\\b/m"
+          - title: Compare state before and after
+            text: Inspect the department’s collection before and after the call. Decide what a later reader of the department should be able to reach.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Department\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_professor\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.professors\\b))(?![\\s\\S]*(?:^class[ \\t]+Department\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_professor\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\bprof\\b))[\\s\\S]*$/m"
+          - title: Check identity, not just equal names
+            text: Keep a variable referring to the supplied professor, then inspect the stored entry. A same-name replacement can look correct while breaking the shared-object relationship.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Department\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_professor\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.professors\\b))(?=[\\s\\S]*(?:^class[ \\t]+Department\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_professor\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\bprof\\b))[\\s\\S]*$/m"
 
       - description: "Full system works end-to-end"
         command: |
@@ -1605,8 +1736,15 @@ steps:
           assert len(cs.professors) == 1
           assert cs.professors[0].name == 'Dr. Alice'
         hints:
-          - text: "Make sure both `add_department` and `add_professor` append to their respective lists."
-            condition: "default"
+          - title: Start at the first missing link
+            text: "Trace the scenario in order: create a university, add a department, look it up, then assign a professor. Identify the first step that cannot reach the expected object."
+            condition: "code_not_matches: /^class[ \\t]+University\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_department\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\bDepartment\\s*\\(/m"
+          - title: Test the two responsibilities separately
+            text: First inspect the department created by University. Then call add_professor directly on that department and inspect its collection.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+University\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_department\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\bDepartment\\s*\\())(?![\\s\\S]*(?:^class[ \\t]+Department\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_professor\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.professors\\b))[\\s\\S]*$/m"
+          - title: Draw the object path
+            text: Fill in university → department → professor with the actual objects from a small run. Check the department’s name and the professor’s identity at the two links.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+University\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_department\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\bDepartment\\s*\\())(?=[\\s\\S]*(?:^class[ \\t]+Department\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_professor\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.professors\\b))[\\s\\S]*$/m"
 
     quiz:
       title: "Step 6 — Knowledge Check"
@@ -1615,7 +1753,7 @@ steps:
       questions:
 
         - question: |
-            A `Car` creates its own `Engine` in `__init__`. If the car is scrapped, the engine goes with it. What UML relationship is this?
+            In a vehicle model, an `Engine` has at most one `Car` owner. Scrapping the car also deletes its engine unless the engine is detached first. Which relationship expresses this contract?
           type: single
           options:
             - "Association (plain arrow)"
@@ -1624,10 +1762,10 @@ steps:
             - "Inheritance (hollow triangle)"
           correct_index: 2
           explanation: |
-            This is **composition** (filled diamond). The engine is created *inside* the car and its lifecycle is bound to the car. If the car is destroyed, the engine is too. The decisive premise is exclusive ownership and deletion with the car. Internal construction is only a clue; constructor injection can also transfer ownership.
+            This is **composition** (filled diamond): the premises specify exclusive composite ownership and deletion with the whole unless detached. The place where the engine was constructed does not decide the relationship.
 
         - question: |
-            A `Team` holds references to `Player` objects that were created outside the team. Players can be traded to other teams. What UML relationship is this?
+            A model treats a `Team` as a grouping of `Player`s whose lifetimes are independent of the team. The designers want to mark this as a shared whole-part relationship. Which notation expresses their choice?
           type: single
           options:
             - "Composition (filled diamond)"
@@ -1636,19 +1774,23 @@ steps:
             - "Inheritance (hollow triangle)"
           correct_index: 1
           explanation: |
-            This is **aggregation** (hollow diamond). Players exist independently of any team — they were created outside, passed in, and can move to another team. The team holds a reference but does not control the player's lifecycle.
+            **Aggregation** (hollow diamond) marks the chosen shared whole-part relationship. The independent lifetimes come from the stated domain rules. A plain association would also show the stored links if the designers did not need to emphasize grouping; passing objects as arguments alone would not require a hollow diamond.
 
         - question: |
-            Which Python code pattern does **this tutorial's renderer** use as a heuristic for composition?
+            A constructor receives `part: Part` and stores `self.part: Part = part`. The domain requires exclusive ownership and deletion with the whole unless detached. Which pair correctly describes the analyzer's output and the domain's intended relationship?
           type: single
           options:
-            - "`def __init__(self, part: Part)` — receiving the part as a parameter"
-            - "`def add(self, part: Part)` — receiving an existing object"
-            - "`self.part = Part(...)` — creating the part inside the class"
-            - "`import Part` — importing the part's module"
+            - "Analyzer: aggregation. Domain: aggregation."
+            - "Analyzer: composition. Domain: composition."
+            - "Analyzer: association. Domain: composition."
+            - "Analyzer: association. Domain: association."
           correct_index: 2
+          option_feedback:
+            0: "Receiving an object does not establish shared whole-part meaning. The analyzer uses a plain association for this scalar assignment, and the domain explicitly requires exclusive ownership."
+            1: "The domain justifies composition, but the analyzer cannot read that lifecycle contract from the supplied object. Its scalar-parameter assignment pattern produces an association."
+            3: "The analyzer's output is correct for this pattern, but the stated lifecycle contract adds composition semantics that the code pattern does not reveal."
           explanation: |
-            The renderer uses internal creation (`self.part = Part(...)`) as a composition heuristic, and an externally supplied part as an aggregation heuristic. UML composition itself is about exclusive ownership and deletion, not construction syntax: an injected part can become owned, and an internally created object can later be shared or detached.
+            The analyzer emits a plain **association** for an existing typed parameter stored in a scalar attribute. The domain contract calls for **composition**. An injected object can become an owned part: use requirements to choose the design relationship, and treat the generated diagram as evidence about source structure.
 
 
   # --------------------------------------------------------------------------
@@ -1659,6 +1801,7 @@ steps:
   #   Bloom's level — Understand (read notation), Apply (implement list).
   # --------------------------------------------------------------------------
   - title: "Multiplicity: How Many?"
+    key: multiplicity
     instructions: |
       ## Multiplicity Notation
 
@@ -1719,6 +1862,8 @@ steps:
       }
       Playlist  o--> "*" Song
       @enduml'></div>
+
+      The hollow diamond uses our grouping convention: a playlist groups songs that can also appear in other playlists. The `*` describes how many songs it can contain; it does not determine ownership.
 
       ### Your Task
 
@@ -1800,9 +1945,9 @@ steps:
       explanation: |
         The multiplicity `*` maps directly to Python's `list`:
         - `add_song()` allows adding any number of songs (the `*`)
-        - The `Song` objects exist independently — they are not created inside Playlist
+        - In this model, songs can be shared across playlists and have independent lifetimes
 
-        **Heuristic:** When you see a `list` attribute in Python code, that is a strong signal of a `*` multiplicity in the UML diagram. Conversely, when you see `*` in a UML diagram, implement it as a list in Python.
+        The analyzer infers `*` from the collection and a hollow diamond from appending the typed `song` parameter. These are separate decisions: a collection can hold owned parts or independent objects. A list fits this exercise; other collection types may fit other designs.
 
     tests:
       - description: "Playlist stores a list of songs (not a single song)"
@@ -1816,10 +1961,15 @@ steps:
           assert isinstance(p.songs, list), \
               "songs should be a list, not a single Song object"
         hints:
-          - text: "The `*` multiplicity on the UML arrow means 'zero or more songs'. What Python type naturally holds a variable number of items — and how would you change the constructor to start with an empty one?"
-            condition: "default"
-          - text: "Replace `self.song: Song = song` with `self.songs: list[Song] = []` and remove the `song` parameter from the constructor."
-            condition: "default"
+          - title: Represent zero as well as many
+            text: The target permits an empty playlist. Compare that case with the starter constructor, which requires one Song immediately.
+            condition: "code_not_matches: /^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:songs)\\b/m"
+          - title: Separate playlist identity from contents
+            text: Identify what is needed to create a named playlist before it contains any songs. Compare the constructor parameters with the state you want immediately afterward.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:songs)\\b))(?![\\s\\S]*(?:^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.songs[ \\t]*(?::[^=\\n]+)?=))[\\s\\S]*$/m"
+          - title: Check an empty instance
+            text: "Create a playlist using only its name. Inspect its contents and annotation separately: can the stored value grow as songs are added, and does the declaration describe the elements?"
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:songs)\\b))(?=[\\s\\S]*(?:^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.songs[ \\t]*(?::[^=\\n]+)?=))[\\s\\S]*$/m"
 
       - description: "add_song() works and get_song_count() is correct"
         command: |
@@ -1834,10 +1984,15 @@ steps:
           assert p.get_song_count() == 2, \
               f"After adding 2 songs, get_song_count() should return 2 but got {p.get_song_count()}"
         hints:
-          - text: "The UML shows two new methods: `add_song(song: Song)` and `get_song_count(): int`. Given that `self.songs` is a list, what would each method need to do?"
-            condition: "default"
-          - text: "Add `def add_song(self, song: Song) -> None:` that calls `self.songs.append(song)`, and `def get_song_count(self) -> int:` returning `len(self.songs)`."
-            condition: "default"
+          - title: Connect mutation and observation
+            text: One operation changes playlist contents; another reports their size. Identify the shared state both operations must use.
+            condition: "code_not_matches: /^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_song\\b[^\\n]*/m"
+          - title: Trace repeated additions
+            text: Add the same Song twice to a new playlist. Record the contents after each call. The count concerns stored occurrences, not distinct titles.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_song\\b[^\\n]*))(?![\\s\\S]*(?:^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_song_count\\b[^\\n]*))[\\s\\S]*$/m"
+          - title: Compare count with contents
+            text: Make rows for empty, one-song, and two-song playlists. Fill in the contents first, then derive the reported count from each row. Check both methods against the table.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_song\\b[^\\n]*))(?=[\\s\\S]*(?:^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_song_count\\b[^\\n]*))[\\s\\S]*$/m"
 
       - description: "get_total_duration() sums all song durations"
         command: |
@@ -1851,10 +2006,15 @@ steps:
           assert total == 350, \
               f"Total duration of 100 + 250 should be 350, got {total}"
         hints:
-          - text: "Each song in `self.songs` has a `duration_sec` attribute. How would you add all those numbers together in a single expression?"
-            condition: "default"
-          - text: "Use `sum(s.duration_sec for s in self.songs)` to compute the total duration."
-            condition: "default"
+          - title: From one song to a collection
+            text: The previous version could read one duration. Identify the value you need from each song now that several can contribute.
+            condition: "code_not_matches: /^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_total_duration\\b[^\\n]*/m"
+          - title: Trace an unequal pair
+            text: Use songs of 40 and 90 seconds. Track each song’s contribution rather than using the number of songs or the duration of just one item.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_total_duration\\b[^\\n]*))(?![\\s\\S]*(?:^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_total_duration\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\b(?:return|for)\\b))[\\s\\S]*$/m"
+          - title: Fill a running-result table
+            text: Make rows for no songs, after the first song, and after the second song. Fill in the contribution and combined duration on each row; use that to check your loop or expression.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_total_duration\\b[^\\n]*))(?=[\\s\\S]*(?:^class[ \\t]+Playlist\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_total_duration\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\b(?:return|for)\\b))[\\s\\S]*$/m"
 
     quiz:
       title: "Step 7 — Knowledge Check"
@@ -1906,6 +2066,7 @@ steps:
   #   Bloom's level — Understand (abstract meaning), Apply (use abc).
   # --------------------------------------------------------------------------
   - title: "Abstract Classes: Designing for Extension"
+    key: abstract-classes
     instructions: |
       ## Abstract Classes in UML
 
@@ -2101,10 +2262,15 @@ steps:
           except TypeError:
               pass  # Good — abstract class cannot be instantiated
         hints:
-          - text: "The UML shows `PaymentMethod` in italics — that signals 'abstract'. What Python module lets you prevent a class from being instantiated directly, and what decorator marks its methods as unimplemented blueprints?"
-            condition: "default"
-          - text: "Add `from abc import ABC, abstractmethod` at the top, change `class PaymentMethod:` to `class PaymentMethod(ABC):`, and add `@abstractmethod` above both `process()` and `get_name()`."
-            condition: "default"
+          - title: Use the abstract-class mechanism
+            text: The base class describes a contract for concrete payment types. Revisit the lesson’s abc example and identify the class-level and operation-level parts of that mechanism.
+            condition: "code_not_matches: /^class[ \\t]+PaymentMethod[ \\t]*\\(/m"
+          - title: Identify incomplete operations
+            text: List which PaymentMethod operations require a subclass implementation. Inheriting the abstract-class base alone does not mark those operations as unfinished.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+PaymentMethod[ \\t]*\\())(?![\\s\\S]*(?:^class[ \\t]+PaymentMethod\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?@abstractmethod\\b))[\\s\\S]*$/m"
+          - title: Compare base and concrete construction
+            text: Try constructing PaymentMethod and a subclass separately. Inspect the abstract markers on both required operations; the base should remain incomplete while concrete subclasses fulfill the contract.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+PaymentMethod[ \\t]*\\())(?=[\\s\\S]*(?:^class[ \\t]+PaymentMethod\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?@abstractmethod\\b))[\\s\\S]*$/m"
 
       - description: "CreditCard implements all abstract methods"
         command: |
@@ -2118,10 +2284,15 @@ steps:
           assert result == True, \
               "CreditCard.process() should return True"
         hints:
-          - text: "An abstract class defines *what* must exist; the subclass defines *how* it works. Which two methods does `PaymentMethod` declare that `CreditCard` must now provide an actual implementation for?"
-            condition: "default"
-          - text: "Implement `def process(self, amount: float) -> bool:` in CreditCard that prints a message and returns `True`, and `def get_name(self) -> str:` returning `'Credit Card'`."
-            condition: "default"
+          - title: Find the missing concrete behavior
+            text: Compare CreditCard's methods with the contract declared by PaymentMethod. Which operations are inherited as requirements rather than usable implementations?
+            condition: "code_not_matches: /^class[ \\t]+CreditCard\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+process\\b[^\\n]*/m"
+          - title: Check both sides of the contract
+            text: Implementing processing alone leaves the display-name operation unresolved. Trace how the driver uses both operations for CreditCard.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+CreditCard\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+process\\b[^\\n]*))(?![\\s\\S]*(?:^class[ \\t]+CreditCard\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_name\\b[^\\n]*))[\\s\\S]*$/m"
+          - title: Separate side effects from return values
+            text: Call each CreditCard operation and record displayed text separately from its returned value. Compare both with the task requirements; printing success does not automatically return success.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+CreditCard\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+process\\b[^\\n]*))(?=[\\s\\S]*(?:^class[ \\t]+CreditCard\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_name\\b[^\\n]*))[\\s\\S]*$/m"
 
       - description: "BankTransfer implements all abstract methods"
         command: |
@@ -2135,10 +2306,15 @@ steps:
           assert result == True, \
               "BankTransfer.process() should return True"
         hints:
-          - text: "`BankTransfer` must fulfill the same contract as `CreditCard`. Look at how `CreditCard` implements the two abstract methods — what would the `BankTransfer` versions return for its own name?"
-            condition: "default"
-          - text: "Implement `process()` and `get_name()` in BankTransfer, similar to CreditCard but returning `'Bank Transfer'` from `get_name()`."
-            condition: "default"
+          - title: Find the missing concrete behavior
+            text: Compare BankTransfer's methods with the contract declared by PaymentMethod. Which operations are inherited as requirements rather than usable implementations?
+            condition: "code_not_matches: /^class[ \\t]+BankTransfer\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+process\\b[^\\n]*/m"
+          - title: Check both sides of the contract
+            text: Implementing processing alone leaves the display-name operation unresolved. Trace how the driver uses both operations for BankTransfer.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+BankTransfer\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+process\\b[^\\n]*))(?![\\s\\S]*(?:^class[ \\t]+BankTransfer\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_name\\b[^\\n]*))[\\s\\S]*$/m"
+          - title: Separate side effects from return values
+            text: Call each BankTransfer operation and record displayed text separately from its returned value. Compare both with the task requirements; printing success does not automatically return success.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+BankTransfer\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+process\\b[^\\n]*))(?=[\\s\\S]*(?:^class[ \\t]+BankTransfer\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+get_name\\b[^\\n]*))[\\s\\S]*$/m"
 
     quiz:
       title: "Step 8 — Knowledge Check"
@@ -2184,38 +2360,275 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 9 — "The Fixer-Upper: Diagnose a Bad Design"
+  # STEP 9 — "UML Class Diagram Reference"
   # Pedagogy:
-  #   Fixer Upper Pattern — find and fix flaws in existing architecture.
-  #   ICAP Interactive — refactoring forces architectural analysis.
-  #   Bloom's level — Analyze (identify anti-pattern), Create (refactor).
+  #   Summary / Retrieval Practice — consolidates all notation learned.
+  #   Serves as a reference card students can revisit.
   # --------------------------------------------------------------------------
-  - title: "The Fixer-Upper: Diagnose a Bad Design"
+  - title: "UML Class Diagram Reference"
+    key: class-reference
     instructions: |
-      ## The God Class Anti-Pattern
-
       ### Why this matters
 
-      A 500-line class can hide bad architecture for years. Open it in your editor and you see methods scrolling past — but you have no easy way to *see* that one class is doing the work of four. UML changes that: a God Class shows up as an enormous box surrounded by emptiness, and the missing arrows are louder than any code review. This step is where UML earns its keep — not as documentation, but as a thinking tool that surfaces design problems before they become maintenance disasters.
+      You have practiced the main class-diagram notations. This reference collects them and introduces the dependency arrow for temporary use. Keep it available when choosing relationships for your own design in the next step.
 
       ### 🎯 You will learn to
 
-      - Analyze a UML diagram to identify the God Class anti-pattern
-      - Create a refactored class hierarchy with cohesive responsibilities
+      - Evaluate a design situation and pick the right UML relationship using the decision flowchart
+      - Apply the consolidated notation reference when reading or drawing class diagrams in the future
+
+      You have learned to read and create UML class diagrams. The page below summarizes every notation element covered in this tutorial — use it as a quick reference.
+
+      ---
+
+      ### The Class Box
+
+      Every class is drawn as a box with three compartments:
+
+      | Compartment | Contains | Python |
+      |---|---|---|
+      | **Top** | Class name | `class ClassName:` |
+      | **Middle** | Attributes | `self.x = value` |
+      | **Bottom** | Methods | `def method(self):` |
+
+      ---
+
+      ### Visibility
+
+      | UML | Meaning | Python Convention |
+      |---|---|---|
+      | `+` | **Public** | `self.name` (no prefix) |
+      | `-` | **Private** | `self.__name` (double underscore) |
+      | `#` | **Protected** | `self._name` (single underscore) |
+
+      ---
+
+      ### Types
+
+      | UML | Python |
+      |---|---|
+      | `name: str` | `self.name: str = name` |
+      | `get_price(): float` | `def get_price(self) -> float:` |
+      | `process(amount: float): bool` | `def process(self, amount: float) -> bool:` |
+
+      ---
+
+      ### Relationships
+
+      | Symbol | Name | Design Meaning | Analyzer Pattern |
+      |---|---|---|---|
+      | <span class="uml-sym" data-diagram="class" data-sym="--&#124;>"></span> | **Inheritance** | Child supports the parent's contract | `class Child(Parent):` |
+      | <span class="uml-sym" data-diagram="class" data-sym="-->"></span> | **Association** | "knows-about" — stores a reference | `self.other: OtherClass = other` |
+      | <span class="uml-sym" data-diagram="class" data-sym="*--"></span> | **Composition** | Exclusive composite owner; parts deleted with whole unless detached | `self.part = Part(...)`, or append a newly constructed part |
+      | <span class="uml-sym" data-diagram="class" data-sym="o--"></span> | **Aggregation** | Shared whole-part grouping; precise meaning is domain-specific | `self.parts.append(part)` with a typed method parameter |
+      | <span class="uml-sym" data-diagram="class" data-sym="..>"></span> | **Dependency** | "temporarily uses" — weakest link | Uses a class inside a method body only |
+
+      The analyzer column predicts generated notation for known classes. It cannot prove substitutability, exclusive ownership, or deletion behavior. Use the design meaning to decide whether an inferred relationship fits the requirements.
+
+      ---
+
+      ### Dependency
+
+      A **dependency** <span class="uml-sym" data-diagram="class" data-sym="..>"></span> is the weakest relationship between classes. It means one class *temporarily uses* another — typically as a method parameter or local variable inside a single method — without storing a persistent reference.
+
+      ```python
+      class ReportGenerator:
+          def generate(self, data: list) -> str:
+              formatter = HTMLFormatter()   # Used locally, not stored
+              return formatter.format(data)
+      ```
+
+      In UML, this is drawn as a **dashed arrow** from `ReportGenerator` to `HTMLFormatter`. The key difference from association: the `ReportGenerator` does NOT have an `HTMLFormatter` attribute — it only creates and uses one temporarily inside `generate()`.
+
+      **Patterns recognized by this analyzer:**
+      - `self.x = OtherClass(...)` → **composition heuristic** (new object retained in an attribute)
+      - `self.x: OtherClass = other` → **association** (existing object retained in an attribute)
+      - `local_var = OtherClass(...)` inside a method, never retained → **dependency** (temporary use)
+
+      ---
+
+      ### Multiplicity
+
+      | Notation | Meaning |
+      |---|---|
+      | `1` | Exactly one |
+      | `0..1` | Zero or one (optional) |
+      | `*` *(preferred shorthand for zero or more)* | Zero or more |
+      | `1..*` | One or more |
+      | `n..m` | Between n and m |
+
+      **Placement:** the number sits next to the class it *quantifies* — it answers "for *one* of the opposite class, how many of **this** class?"
+
+      **Style (Ambler G117):** Show multiplicity on **both ends** of every relationship; prefer `*` over verbose `0..*`.
+
+      ---
+
+      ### Abstract Classes
+
+      | UML | Meaning | Python |
+      |---|---|---|
+      | *Italic class name* | Abstract class — cannot be instantiated | `class Name(ABC):` |
+      | *Italic method name* / `{abstract}` | Abstract method — must be overridden | `@abstractmethod` |
+
+      ---
+
+      ### Choosing the Right Relationship — a Decision Flowchart
+
+      Start with the domain requirements, then compare them with the generated diagram:
+
+      1. **Should instances of this class be usable wherever the other class's contract is expected, keeping its promises?**
+         → **Inheritance** <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> may fit. Shared fields or repeated code alone are insufficient.
+      2. **Is this a whole-part relationship with at most one composite owner, where deleting the whole deletes its parts unless detached first?**
+         → **Composition** <span class="uml-sym" data-diagram="class" data-sym="*--"></span>. Construction location does not decide it.
+      3. **Does the domain call for a shared whole-part grouping with a meaning the team has agreed on?**
+         → **Aggregation** <span class="uml-sym" data-diagram="class" data-sym="o--"></span> can express that convention. Use a plain association if the grouping adds no useful meaning.
+      4. **Do the objects have a structural link, such as a retained reference, with no additional whole-part contract?**
+         → **Association** <span class="uml-sym" data-diagram="class" data-sym="-->"></span>.
+      5. **Does the class use the other temporarily without retaining a reference?**
+         → **Dependency** <span class="uml-sym" data-diagram="class" data-sym="..>"></span>.
+
+      If you have no evidence for a relationship, leave it out. A generated arrow records what the analyzer recognized; review it against these questions before adopting it as a design claim.
+
+      ### Your Toolkit for the Capstone
+
+      Use this reference while proposing the store design in the next step. It supports these tasks:
+
+      1. **Read** a UML class diagram and understand its structure
+      2. **Write** Python code that matches a given diagram
+      3. **Evaluate** whether a class groups related responsibilities
+      4. **Distinguish** between association, composition, and aggregation
+      5. **Communicate** software architecture without showing code
+      6. **Recognise the limits of UML** — aggregation's fuzzy semantics, the language-specific gap between Python's `_`/`__` and UML `-`/`#`, and when to leave notation off rather than force it
+
+    files:
+      - path: class-reference.md
+        content: |
+          # Class Diagram Reference
+
+          Use the instructions as a reference for your upcoming store design.
+        language: markdown
+
+    open_file: class-reference.md
+
+
+  # --------------------------------------------------------------------------
+  # STEP 10 — "A Store Design Proposal"
+  # Pedagogy: generation before comparison; independent design with a self-review rubric.
+  # No automatic grade claims to assess the quality of the student's explanation.
+  # --------------------------------------------------------------------------
+  - title: "A Store Design Proposal"
+    key: store-design
+    instructions: |
+      ### Why this matters
+
+      Choosing responsibilities is a different skill from translating an existing diagram into code. Make a small design proposal first. In the final step you will compare it with a suggested solution, explain what you would revise, and implement that solution.
+
+      ### 🎯 You will learn to
+
+      - Propose classes and relationships from behavior requirements
+      - Justify responsibility boundaries using a success case and a rejection case
+
+      ### The Store's Requirements
+
+      Design a small in-memory store. Choose your own class names and allocation of responsibilities; no target diagram is supplied yet.
+
+      - **Catalog assumptions:** supplied product names are unique and prices and starting stocks are nonnegative; input validation for these facts is outside this exercise. A customer has a name and an email address.
+      - **Successful purchase:** keep the requested products in order, including repetitions. Each occurrence contributes its price and reduces its stock by one. Record the purchase and confirm the customer email and total to two decimal places.
+      - **Rejected purchase:** an unknown product or insufficient stock raises `ValueError` before any stock, recorded purchases, or confirmation output changes. Count repeated names toward the quantity requested.
+      - **Empty request:** record an empty purchase with a zero total and confirm it.
+
+      ### Your Design Proposal
+
+      Spend about ten minutes on a first attempt. Open `store-design.md` and use its prompts, or make a sketch and record the reasons in that file. You do not need to run Python in this step.
+
+      1. **Assign responsibilities:** propose classes, each with a one-sentence purpose, the state it holds, and a small set of operations. Decide which facts belong together and which class coordinates a purchase.
+      2. **Choose relationships:** describe at least two links, their direction, and their multiplicities. State which references persist and which are temporary. Justify any inheritance or diamond from a contract; do not infer ownership from creation location alone.
+      3. **Trace two requests:** a $3 product with stock 2 is requested twice, then three times in a separate fresh store with the same starting stock. Record the expected total or error, final stock, recorded purchases, and confirmation. For each action, name the responsibility that should handle it.
+      4. **Stress the design:** explain what happens for an empty request and an unknown product. Identify one uncertainty or trade-off you would want a reviewer to discuss.
+
+      ### Self-Review Before Continuing
+
+      - Can you explain why each class's data and operations belong together?
+      - Does every required behavior have a responsible class, including rejecting a whole request before side effects?
+      - Do your relationship choices follow the requirements, with assumptions marked where the requirements are silent?
+
+      This proposal has no automatic pass/fail grade. Use the checklist to review your reasoning, then select **Next**. Keep the original proposal: the comparison in the final step is part of the task, and more than one initial design can be reasonable.
+
+    files:
+      - &store_design_notes
+        path: store-design.md
+        persistent: true
+        content: |
+          # My Store Design Proposal
+
+          ## Responsibilities
+          For each proposed class: purpose, state, operations, and why they belong together.
+
+          ## Relationships
+          Record at least two links, their direction and multiplicities, and any ownership assumptions.
+
+          ## Scenario Traces
+          Starting from price $3 and stock 2 each time:
+          - Request two occurrences: expected outcome and responsible classes.
+          - Request three occurrences: expected outcome and responsible classes.
+          - Empty request and unknown product: what changes, and what must stay unchanged?
+
+          ## Trade-off or Question
+          What would I ask a reviewer to examine?
+
+          ## Comparison (Complete in the Final Step)
+          - One agreement with the suggested design and why it helps:
+          - One meaningful difference and its consequence:
+          - One justified revision to either design:
+          - One change request and the class that should absorb it:
+        language: markdown
+
+    open_file: store-design.md
+
+
+  # --------------------------------------------------------------------------
+  # STEP 11 — "A Cohesive Store: Suggested Design"
+  # Pedagogy:
+  #   Generate-then-compare — revise an independent proposal using design reasons.
+  #   ICAP Interactive — refactoring forces architectural analysis.
+  #   Bloom's level — Analyze (identify anti-pattern), Create (refactor).
+  # --------------------------------------------------------------------------
+  - title: "A Cohesive Store: Suggested Design"
+    key: store-capstone
+    instructions: |
+      ### Why this matters
+
+      You have proposed a store design from its requirements. Now compare it with one suggested solution, explain the choices, and model it in Python so you can inspect its UML diagram. The aim is to connect a responsibility to the reason it belongs in a class, then verify that the collaboration preserves the required behavior.
+
+      ### 🎯 You will learn to
+
+      - Evaluate your proposal against a suggested design and justify one revision
+      - Model collaborating classes with cohesive responsibilities while preserving the store's behavior
+
+      ### Compare Your Proposal
+
+      Reopen `store-design.md` while comparing your code and the design below. Keep your original proposal and complete its **Comparison** section. Record one choice that agrees, one meaningful difference, and a change you would make to either design with a reason tied to a requirement. Different class names or an extra helper are not errors by themselves.
+
+      Your design reasoning is a self-review. **Test My Work** checks the named interfaces and behavior of the suggested solution you implement in this step; it does not grade the quality of your earlier proposal.
 
       ### Spotting the Problem
 
-      Look at the UML diagram for the starter code. You will see ONE massive class with dozens of attributes and methods, and no other classes at all. This is called a **God Class** (also known as "The Blot") — a single class that tries to do everything.
-
-      In a UML diagram, the God Class is easy to spot: one huge box surrounded by nothing. No relationships, no collaboration, no distribution of responsibility.
+      Look at the starter's attributes and methods. Group them by responsibility: product details and stock, customer identity, order totals, and notifications. A **God Class** concentrates too many responsibilities, making changes for different reasons converge on the same class. Here, the parallel lists also require careful coordination to keep each product's name, price, and stock together.
 
       ### Why It Matters
 
-      A God Class is invisible in 500 lines of Python — you might not realize how bloated it is until you try to modify it. But in a UML diagram, the problem **screams at you**. This is one of the most valuable uses of UML: making bad architecture visible before it becomes a maintenance nightmare.
+      Product stock rules and customer contact details change for different reasons. Giving them coherent homes makes those changes easier to reason about. Use the diagram to propose that separation, then use behavior checks to verify that the refactoring preserves the store's contract.
 
-      ### Your Target Diagram
+      ### The Suggested Design
 
-      Refactor the monolithic `OnlineStore` into this well-structured system:
+      Model this design by refactoring the supplied `OnlineStore`. Use these class names and interfaces for this implementation so the checks can call them.
+
+      | Class | Responsibility | Why it belongs together |
+      |---|---|---|
+      | `Product` | Name, price, stock, availability, and stock reduction | Stock operations stay with the product state they read and change; parallel product lists disappear. |
+      | `Customer` | Customer identity and contact details | Orders refer to one customer object instead of duplicating identity data across order lists. |
+      | `Order` | Customer reference, requested products, and total | Items and the total describe the same purchase; adding an item keeps those facts consistent. |
+      | `OnlineStore` | Catalog, recorded orders, and request coordination | The store can look up the whole request and reject it before any product's stock changes. |
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
         layout landscape
@@ -2253,9 +2666,15 @@ steps:
         @enduml
       '></div>
 
-      ### New Notation: Dependency
+      **Why this is a cleaner design for this exercise:** each class has a focused responsibility, related data stays together, and the store delegates product and order work through small operations. For example, changing a customer's contact data need not change the stock calculation. The store validates the entire request before committing purchases, so an error cannot leave half an order applied.
 
-      The diagram introduces one arrow you have not learned before: the **dashed arrow** (<span class="uml-sym" data-diagram="class" data-sym="..>"></span>).
+      **A trade-off to recognize:** `Order.add_item` also reduces product stock, so orders depend on inventory behavior. That keeps this exercise small. A system with reservations, cancellations, or historical order prices would need a richer design. More classes alone would not solve those requirements; this suggested solution is clean relative to the stated scope.
+
+      This target shows the relationships inferred from the supplied solution. Appending supplied products produces hollow diamonds; constructing and retaining orders produces a filled diamond; storing a supplied customer in a scalar attribute produces a plain association. Review these suggestions against the domain: for example, composition would require orders to have an exclusive store owner and a lifecycle tied to that store. The example does not implement store deletion, so its code cannot establish that contract.
+
+      ### Reading the Dependency
+
+      Recall the **dashed dependency arrow** from the reference step (<span class="uml-sym" data-diagram="class" data-sym="..>"></span>).
 
       | Symbol | Name | Meaning | Python Pattern |
       |---|---|---|---|
@@ -2263,8 +2682,8 @@ steps:
 
       In the target diagram, `OnlineStore ..> Customer` means `OnlineStore` *uses* `Customer` only inside `place_order()` — as a method parameter that is immediately handed off to `Order`. There is no `self.customer` attribute on `OnlineStore`; the `Customer` object passes through and leaves.
 
-      **Rule of thumb:**
-      - `self.x: Other = other` → **association / composition / aggregation** (persistent reference)
+      **Patterns recognized by this analyzer:**
+      - `self.x: Other = other` → **association** (stores an existing object)
       - `def method(self, other: Other)` or `local = Other(...)` inside a method, never stored → **dependency** (temporary use)
 
       This is the weakest possible relationship — the dashed line signals "I know this class exists, but I do not hold onto it."
@@ -2280,13 +2699,31 @@ steps:
 
       > **Refactor in small steps:** Select a coherent block of complete statements inside `place_order` and try **Refactor: Extract Function/Method...** from the editor's context menu or Command Palette. Review the preview and run the code to check that behavior stays the same. A helper method is an intermediate step; use the target diagram to decide which class should ultimately own that responsibility. Finish with **Test My Work**.
 
-      Watch the UML diagram transform from a single blob into an interconnected network.
+      ### Behavior to Preserve
+
+      The supplied starter already validates the whole request before changing stock. Keep this policy while moving responsibilities between classes; changing a policy is a separate task from refactoring.
+
+      - **Catalog assumptions:** supplied product names are unique and prices and starting stocks are nonnegative; validation of those inputs is outside this exercise.
+      - **Successful request:** keep the requested items in order, including repeated names. Each occurrence contributes its price and reduces that product's stock by one. Store the order and print a confirmation containing the customer email and total to two decimal places.
+      - **Unknown product or insufficient stock:** raise `ValueError` before changing any stock, recording an order, or printing a confirmation. Repeated names count toward the requested quantity.
+      - **Empty request:** create an empty order with a zero total and confirm it.
+      - **Extracted interfaces:** `Order(customer)` retains that customer and starts with empty items and zero total. `add_item(product)`, called for an available product, retains the same product object, updates the total, and reduces stock. `OnlineStore.place_order` now receives a `Customer` and returns the resulting `Order`, as shown in the target; update the driver for those interface changes.
+
+      Before editing, run the starter with a valid purchase and a rejected request. After each extraction, check the same outcomes through the new interfaces. The target changes how objects collaborate while preserving these stated outcomes.
+
+      ### Check and Explain
+
+      1. **Model:** implement the suggested classes and inspect their inferred relationships. Use the domain caveat above when interpreting the diamonds.
+      2. **Check:** run your successful and rejected scenarios from `store-design.md`, then run **Test My Work** for the supplied contract.
+      3. **Explain:** finish your Comparison section with one concrete change request—such as changing contact details or stock policy—and identify which class should absorb it and why. Revisit your original design rather than replacing it with the target.
 
     uml_files:
       - store.py
 
     files:
+      - *store_design_notes
       - path: store.py
+        reseed: true
         content: |
           class OnlineStore:
               """THE GOD CLASS — does everything, knows everything, fears nothing.
@@ -2303,7 +2740,7 @@ steps:
                   # Order data (should be its own class)
                   self._order_customer_names: list[str] = []
                   self._order_customer_emails: list[str] = []
-                  self._order_items: list[Product] = []
+                  self._order_items: list[list[str]] = []
                   self._order_totals: list[float] = []
 
               # ── Product management ──────────────────────────────────
@@ -2327,6 +2764,14 @@ steps:
               # ── Order management ────────────────────────────────────
               def place_order(self, customer_name: str, customer_email: str,
                               product_names: list) -> int:
+                  # Validate the complete request before committing any changes.
+                  quantities = {}
+                  for pname in product_names:
+                      idx = self._product_names.index(pname)  # ValueError for unknown names
+                      quantities[pname] = quantities.get(pname, 0) + 1
+                      if quantities[pname] > self._product_stocks[idx]:
+                          raise ValueError(f"Insufficient stock for {pname}")
+
                   total = 0.0
                   for pname in product_names:
                       total += self.get_product_price(pname)
@@ -2402,12 +2847,20 @@ steps:
                     self.products.append(product)
 
                 def place_order(self, customer: Customer, product_names: list) -> Order:
-                    order = Order(customer)
+                    selected = []
+                    quantities = {}
                     for name in product_names:
-                        for p in self.products:
-                            if p.name == name and p.is_available():
-                                order.add_item(p)
-                                break
+                        product = next((p for p in self.products if p.name == name), None)
+                        if product is None:
+                            raise ValueError(f"Unknown product: {name}")
+                        quantities[name] = quantities.get(name, 0) + 1
+                        if quantities[name] > product.stock:
+                            raise ValueError(f"Insufficient stock for {name}")
+                        selected.append(product)
+
+                    order = Order(customer)
+                    for product in selected:
+                        order.add_item(product)
                     self.orders.append(order)
                     print(f"[EMAIL] To: {customer.email} | Order confirmed: ${order.total:.2f}")
                     return order
@@ -2432,127 +2885,351 @@ steps:
         - `Order` manages a collection of products for a customer
         - `OnlineStore` coordinates the system
 
-        The UML diagram now shows a network of relationships — composition (`*--`), associations (`-->`), and clear data flow. This is the power of UML: it makes the difference between good and bad architecture **immediately visible**.
+        The UML diagram now exposes the classes and their inferred relationships, including composition, aggregation, and plain association. Use it to discuss which class should own each responsibility. More boxes and arrows alone do not establish a good design; check cohesion, behavior, and the ownership contracts as well.
+
+        The complete request is validated before Order.add_item changes stock. Unknown names or excess quantities therefore leave the catalog and recorded orders unchanged. Keeping each occurrence in the selected sequence preserves repeated purchases and request order. The original and extracted versions implement the same stated policy; a different error or stock policy would be a separate behavior change.
+
+        Compare this implementation with your original proposal. The useful evidence is that product data stays together, customer identity is shared by reference, order state changes consistently, and rejection happens before effects. Keep or revise your own choices for those reasons, rather than because the suggested diagram has four boxes.
 
     tests:
-      - description: "Product class exists with is_available() and reduce_stock()"
+      - description: Product reports availability at the stock boundary
         command: |
           source = open('/tutorial/store.py').read()
           ns = {}
           exec(source, ns)
-          assert 'Product' in ns, \
-              "Extract a Product class from the God Class"
-          p = ns['Product']('Test', 10.0, 3)
-          assert p.is_available() == True, \
-              "Product with stock > 0 should be available"
-          p.reduce_stock()
-          assert p.stock == 2, \
-              "reduce_stock() should decrease stock by 1"
+          for stock in (0, 1, 4):
+              product = ns['Product']('Widget', 3.5, stock)
+              assert product.name == 'Widget' and product.price == 3.5 and product.stock == stock, \
+                  "Product should retain the supplied catalog data"
+              assert product.is_available() is (stock > 0), \
+                  f"Check availability for starting stock {stock}"
         hints:
-          - text: "Look at the God Class: it stores product data as parallel lists (`_product_names`, `_product_prices`, `_product_stocks`). The target diagram shows a `Product` class with those as instance attributes. Which methods and data currently in `OnlineStore` naturally belong to `Product` instead?"
-            condition: "default"
-          - text: "Create `class Product:` with `__init__(self, name: str, price: float, stock: int)`, `is_available()` returning `self.stock > 0`, and `reduce_stock()` doing `self.stock -= 1`."
-            condition: "default"
-
-      - description: "Customer class exists with name and email"
+          - title: Group related product data
+            text: In the starter, three parallel lists describe one product. Identify the instance state that should travel together when Product is extracted.
+            condition: "code_not_matches: /^class[ \\t]+Product\\b/m"
+          - title: Find the availability boundary
+            text: Compare products whose stock is zero and one. Predict availability for each before choosing the condition in is_available.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Product\\b))(?![\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+is_available\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\breturn\\b))[\\s\\S]*$/m"
+          - title: Trace the stored stock
+            text: Construct two products with different stocks, then record constructor input → stored stock → reported availability. Locate the first mismatch in that chain.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Product\\b))(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+is_available\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\breturn\\b))[\\s\\S]*$/m"
+      - description: Product reduces stock by one per call
         command: |
           source = open('/tutorial/store.py').read()
           ns = {}
           exec(source, ns)
-          assert 'Customer' in ns, \
-              "Extract a Customer class"
-          c = ns['Customer']('Alice', 'alice@example.com')
-          assert c.name == 'Alice'
-          assert c.email == 'alice@example.com'
+          product = ns['Product']('Widget', 3.5, 2)
+          product.reduce_stock()
+          assert product.stock == 1, "One reduction should consume one unit"
+          product.reduce_stock()
+          assert product.stock == 0, "The last available unit should be consumed"
         hints:
-          - text: "The God Class takes `customer_name` and `customer_email` as plain strings in `place_order`. The target diagram shows a standalone `Customer` class. What two pieces of data does that class own?"
-            condition: "default"
-          - text: "Create `class Customer:` with `__init__(self, name: str, email: str)` storing both as typed attributes."
-            condition: "default"
-
-      - description: "Order class exists and uses Product and Customer"
+          - title: Locate the stock responsibility
+            text: Find the starter operation that changes a product’s stock. After extraction, which object owns the value it changes?
+            condition: "code_not_matches: /^class[ \\t]+Product\\b/m"
+          - title: Distinguish a calculation from an update
+            text: Inspect stock before and after one reduce_stock call. Does the operation change the Product instance, or only compute a temporary result?
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Product\\b))(?![\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+reduce_stock\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.stock\\b))[\\s\\S]*$/m"
+          - title: Trace successive reductions
+            text: Start with two units and record stock after each of two calls. Use the difference between successive rows to find an incorrect update or a reset to the original value.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Product\\b))(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+reduce_stock\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.stock\\b))[\\s\\S]*$/m"
+      - description: Customer retains its supplied identity data
         command: |
           source = open('/tutorial/store.py').read()
           ns = {}
           exec(source, ns)
-          assert 'Order' in ns, \
-              "Extract an Order class"
-          c = ns['Customer']('Alice', 'a@b.com')
-          o = ns['Order'](c)
-          p = ns['Product']('Widget', 25.0, 10)
-          o.add_item(p)
-          assert o.total == 25.0, \
-              f"After adding a $25 product, order total should be 25.0, got {o.total}"
-          assert o.customer is c, \
-              "Order should store the Customer object"
+          for name, email in [('Alice', 'alice@example.com'), ('Bob', 'bob@example.com')]:
+              customer = ns['Customer'](name, email)
+              assert customer.name == name and customer.email == email, \
+                  "Each Customer should retain its own supplied name and email"
         hints:
-          - text: "The target diagram shows `Order --> Customer` and `Order o--> Product`. That means `Order` holds a reference to a `Customer` and a list of `Product`s. What should `Order.__init__` accept, and what does `add_item` do?"
-            condition: "default"
-          - text: "Create `class Order:` with `__init__(self, customer: Customer)` storing `self.customer`, `self.items: list[Product] = []`, and `self.total: float = 0.0`. Then add `add_item(self, product: Product)` that appends the product and adds its price to `self.total`."
-            condition: "default"
-
-      - description: "OnlineStore uses the extracted classes"
+          - title: Find customer-owned data
+            text: Locate the values that describe a customer rather than a product or order. Compare them with the Customer box in the target.
+            condition: "code_not_matches: /^class[ \\t]+Customer\\b/m"
+          - title: Keep data after construction
+            text: Construct a Customer on its own. Which values must remain available after the constructor’s local parameters disappear?
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Customer\\b))(?![\\s\\S]*(?:^class[ \\t]+Customer\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.))[\\s\\S]*$/m"
+          - title: Compare two identities
+            text: Create customers with different names and emails. Fill in caller input → instance attribute for each; check that one construction does not overwrite the other’s data.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Customer\\b))(?=[\\s\\S]*(?:^class[ \\t]+Customer\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.))[\\s\\S]*$/m"
+      - description: A new Order retains its customer and starts empty
+        command: |
+          source = open('/tutorial/store.py').read()
+          ns = {}
+          exec(source, ns)
+          customer = ns['Customer']('Alice', 'alice@example.com')
+          order = ns['Order'](customer)
+          assert order.customer is customer, "Order should retain the supplied customer object"
+          assert list(order.items) == [], "A new Order should contain no purchased items"
+          assert order.total == 0, "A new Order should start with a zero total"
+        hints:
+          - title: Read the Order relationships
+            text: Follow the target’s links from Order. Which collaborator is supplied when an order is created, and which contents grow afterward?
+            condition: "code_not_matches: /^class[ \\t]+Order\\b/m"
+          - title: Separate identity from contents
+            text: Construct an order before adding anything. Compare its customer with the caller’s object and inspect the state that represents purchases so far.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Order\\b))(?![\\s\\S]*(?:^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.items\\b))[\\s\\S]*$/m"
+          - title: Check two fresh orders
+            text: Create orders for two customers, add an item to just one, and inspect the other. Use a before/after table to identify shared initial state or incorrect starting values.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Order\\b))(?=[\\s\\S]*(?:^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.items\\b))[\\s\\S]*$/m"
+      - description: Order retains product identity and repeated item occurrences
+        command: |
+          source = open('/tutorial/store.py').read()
+          ns = {}
+          exec(source, ns)
+          order = ns['Order'](ns['Customer']('Alice', 'alice@example.com'))
+          first = ns['Product']('Pen', 2.5, 3)
+          second = ns['Product']('Book', 7.0, 2)
+          for product in (first, second, first):
+              order.add_item(product)
+          assert len(order.items) == 3, "Every added occurrence should remain in the order"
+          assert all(actual is expected for actual, expected in zip(order.items, [first, second, first])), \
+              "Order items should retain the supplied Product objects in addition order"
+        hints:
+          - title: Track an item through add_item
+            text: The caller supplies a Product object. Decide what Order must retain so later code can reach that same catalog item.
+            condition: "code_not_matches: /^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*/m"
+          - title: Distinguish an item from its label
+            text: "After one addition, inspect the stored entry: is it the supplied product, copied product data, or just a name? Compare that with the target relationship."
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*))(?![\\s\\S]*(?:^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.items\\b))[\\s\\S]*$/m"
+          - title: Trace a repeated purchase
+            text: Add product A, then B, then A again. Sketch the references after each call; the last call represents another purchased unit even though the object is the same.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*))(?=[\\s\\S]*(?:^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.items\\b))[\\s\\S]*$/m"
+      - description: Order total includes the price of every added occurrence
+        command: |
+          source = open('/tutorial/store.py').read()
+          ns = {}
+          exec(source, ns)
+          order = ns['Order'](ns['Customer']('Alice', 'alice@example.com'))
+          first = ns['Product']('Pen', 2.5, 3)
+          second = ns['Product']('Book', 7.0, 2)
+          for product, expected_total in [(first, 2.5), (second, 9.5), (first, 12.0)]:
+              order.add_item(product)
+              assert abs(order.total - expected_total) < 1e-6, \
+                  "The total should include all purchases so far, including repeats"
+        hints:
+          - title: Connect items with the total
+            text: Find where the starter calculates the purchase total. Which extracted class now owns the purchases that contribute to it?
+            condition: "code_not_matches: /^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*/m"
+          - title: Compare one item with two
+            text: Add products with unequal prices and inspect the total after each call. Check whether the second call preserves the first item’s contribution.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*))(?![\\s\\S]*(?:^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.total\\b))[\\s\\S]*$/m"
+          - title: Fill a contribution table
+            text: For purchases A, B, A, write each occurrence’s price and the combined total after that row. Compare your implementation with the first row where it diverges.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*))(?=[\\s\\S]*(?:^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?self\\.total\\b))[\\s\\S]*$/m"
+      - description: Order consumes stock for every added occurrence
+        command: |
+          source = open('/tutorial/store.py').read()
+          ns = {}
+          exec(source, ns)
+          order = ns['Order'](ns['Customer']('Alice', 'alice@example.com'))
+          first = ns['Product']('Pen', 2.5, 3)
+          second = ns['Product']('Book', 7.0, 2)
+          for product in (first, second, first):
+              order.add_item(product)
+          assert first.stock == 1 and second.stock == 1, \
+              "Adding an item should consume one unit of that same Product per occurrence"
+        hints:
+          - title: Follow the purchase side effect
+            text: The contract gives add_item a stock effect as well as an order effect. Trace which Product instance must observe that change.
+            condition: "code_not_matches: /^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*/m"
+          - title: Inspect both objects after adding
+            text: Record the order contents and the supplied Product’s stock before and after one call. Passing the item and total checks does not establish the stock change.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*))(?![\\s\\S]*(?:^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\b(?:reduce_stock|stock)\\b))[\\s\\S]*$/m"
+          - title: Trace unequal purchase quantities
+            text: Add A twice and B once, then compare each product’s stock with its own starting value. Check for a missing change, a duplicate change, or a change to a copied object.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*))(?=[\\s\\S]*(?:^class[ \\t]+Order\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+add_item\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\b(?:reduce_stock|stock)\\b))[\\s\\S]*$/m"
+      - description: OnlineStore records a complete purchase through the extracted classes
         command: |
           source = open('/tutorial/store.py').read()
           ns = {}
           exec(source, ns)
           store = ns['OnlineStore']()
-          store.add_product(ns['Product']('Laptop', 999.99, 5))
+          first = ns['Product']('Pen', 2.5, 3)
+          second = ns['Product']('Book', 7.0, 2)
+          store.add_product(first)
+          store.add_product(second)
           customer = ns['Customer']('Alice', 'alice@example.com')
-          order = store.place_order(customer, ['Laptop'])
-          assert hasattr(order, 'total'), \
-              "place_order should return an Order object"
-          assert abs(order.total - 999.99) < 1e-6, \
-              f"Order total should be ~999.99, got {order.total}"
+          order = store.place_order(customer, ['Pen', 'Book', 'Pen'])
+          assert isinstance(order, ns['Order']), "place_order should return the resulting Order"
+          assert order.customer is customer, "The returned order should belong to the supplied customer"
+          assert len(order.items) == 3 and all(actual is expected for actual, expected in zip(order.items, [first, second, first])), \
+              "The returned order should retain every requested catalog Product in request order"
+          assert abs(order.total - 12.0) < 1e-6, "The returned order should include the complete purchase total"
+          assert first.stock == 1 and second.stock == 1, "The purchase should consume stock in the catalog objects"
+          assert len(store.orders) == 1 and store.orders[0] is order, "The store should record the returned order once"
         hints:
-          - text: "`OnlineStore` is now a *coordinator*, not a data container. What would its `add_product` and `place_order` look like if they delegated the real work to the new classes?"
-            condition: "default"
-          - text: "`add_product` should accept a `Product` object from outside (aggregation) rather than a name/price/stock triple."
-            condition: "default"
-          - text: "Refactor `OnlineStore` to accept `Product` objects via `add_product(self, product: Product)` and create `Order` objects in `place_order()`."
-            condition: "default"
+          - title: Connect the extracted responsibilities
+            text: Check each extracted class on its own before wiring the store. Then identify which objects place_order receives, looks up, creates, and returns.
+            condition: "code_not_matches: /^class[ \\t]+Order\\b/m"
+          - title: Trace a single request through the store
+            text: Use one known product. Follow the supplied Customer and catalog Product through place_order, then inspect the object the caller receives.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Order\\b))(?![\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\bOrder\\s*\\())[\\s\\S]*$/m"
+          - title: Check every requested occurrence
+            text: For requests A, B, A, draw one row per occurrence with the matched Product and resulting stock. Compare the returned Order with the one retained by the store.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Order\\b))(?=[\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\bOrder\\s*\\())[\\s\\S]*$/m"
+      - description: Unknown products reject the whole request without side effects
+        command: |
+          source = open('/tutorial/store.py').read()
+          ns = {}
+          exec(source, ns)
+          import contextlib
+          import io
+          for names in (['Missing'], ['Pen', 'Missing']):
+              store = ns['OnlineStore']()
+              product = ns['Product']('Pen', 2.5, 3)
+              store.add_product(product)
+              output = io.StringIO()
+              rejected = False
+              with contextlib.redirect_stdout(output):
+                  try:
+                      store.place_order(ns['Customer']('Alice', 'alice@example.com'), names)
+                  except ValueError:
+                      rejected = True
+              assert rejected, "An unknown name should reject the whole request with ValueError"
+              assert product.stock == 3 and list(store.orders) == [], "A rejected request should not change stock or record an order"
+              assert output.getvalue() == '', "A rejected request should not print a confirmation"
+        hints:
+          - title: Retain the supplied rejection policy
+            text: Compare the starter’s validation with the contract. A request containing an unknown name must fail as a whole, even if earlier names were valid.
+            condition: "code_not_matches: /^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\b(?:Order|ValueError)\\s*\\(/m"
+          - title: Make a failed lookup visible
+            text: Try a request containing only an unknown name. Trace what happens when no catalog product matches instead of treating the missing match as a successful empty purchase.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\b(?:Order|ValueError)\\s*\\())(?![\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\braise\\b))[\\s\\S]*$/m"
+          - title: Move the unknown name later
+            text: Compare [Missing] with [Pen, Missing]. Record stock, recorded orders, and output at the point of rejection; look for changes that happened before validation finished.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\b(?:Order|ValueError)\\s*\\())(?=[\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\braise\\b))[\\s\\S]*$/m"
+      - description: Insufficient stock rejects the whole request without side effects
+        command: |
+          source = open('/tutorial/store.py').read()
+          ns = {}
+          exec(source, ns)
+          import contextlib
+          import io
+          for requested, stock in [(['Pen'], 0), (['Book', 'Pen'], 0), (['Pen', 'Pen'], 1)]:
+              store = ns['OnlineStore']()
+              pen = ns['Product']('Pen', 2.5, stock)
+              book = ns['Product']('Book', 7.0, 2)
+              store.add_product(pen)
+              store.add_product(book)
+              output = io.StringIO()
+              rejected = False
+              with contextlib.redirect_stdout(output):
+                  try:
+                      store.place_order(ns['Customer']('Alice', 'alice@example.com'), requested)
+                  except ValueError:
+                      rejected = True
+              assert rejected, "The whole request should fail if it needs more units than are available"
+              assert pen.stock == stock and book.stock == 2 and list(store.orders) == [], \
+                  "Stock and recorded orders should be unchanged after insufficient stock"
+              assert output.getvalue() == '', "A rejected request should not print a confirmation"
+        hints:
+          - title: Count requested units
+            text: A product can appear more than once in a request. Compare the total requested quantity for one product with the catalog’s available quantity.
+            condition: "code_not_matches: /^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\b(?:Order|ValueError)\\s*\\(/m"
+          - title: Probe the last available unit
+            text: Try requesting the same product twice when just one unit remains. Both names are known, but the request as a whole cannot be fulfilled.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\b(?:Order|ValueError)\\s*\\())(?![\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\braise\\b))[\\s\\S]*$/m"
+          - title: Separate checking from committing
+            text: Make a trace table with requested quantity, available quantity, and changes already made. At the first excess quantity, which earlier changes would need undoing? Use that to review when mutations begin.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\b(?:Order|ValueError)\\s*\\())(?=[\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\braise\\b))[\\s\\S]*$/m"
+      - description: An empty request creates a recorded empty order
+        command: |
+          source = open('/tutorial/store.py').read()
+          ns = {}
+          exec(source, ns)
+          store = ns['OnlineStore']()
+          product = ns['Product']('Pen', 2.5, 3)
+          store.add_product(product)
+          customer = ns['Customer']('Alice', 'alice@example.com')
+          order = store.place_order(customer, [])
+          assert isinstance(order, ns['Order']) and order.customer is customer, "An empty request still returns an Order for the customer"
+          assert list(order.items) == [] and order.total == 0, "An empty request should have no items and zero total"
+          assert product.stock == 3, "An empty request should leave catalog stock unchanged"
+          assert len(store.orders) == 1 and store.orders[0] is order, "The empty order should be recorded"
+        hints:
+          - title: Review the zero-item policy
+            text: The contract explicitly allows an empty request. Think about which parts of placing an order still occur when no products are requested.
+            condition: "code_not_matches: /^class[ \\t]+Order\\b/m"
+          - title: Trace a loop with no iterations
+            text: Run place_order with an empty list. Identify any initialization, recording, or return statement that currently depends on the loop body executing.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Order\\b))(?![\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\bOrder\\s*\\())[\\s\\S]*$/m"
+          - title: Separate order state from item changes
+            text: List the postconditions for customer, contents, total, stock, and recorded orders. Fill in the empty-request row and compare it with the returned object.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Order\\b))(?=[\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\bOrder\\s*\\())[\\s\\S]*$/m"
+      - description: Successful purchases confirm the customer and total
+        command: |
+          source = open('/tutorial/store.py').read()
+          ns = {}
+          exec(source, ns)
+          import contextlib
+          import io
+          for names, expected_total in [(['Pen', 'Pen'], 5.0), ([], 0.0)]:
+              store = ns['OnlineStore']()
+              store.add_product(ns['Product']('Pen', 2.5, 3))
+              customer = ns['Customer']('Bob', 'bob@example.com')
+              output = io.StringIO()
+              with contextlib.redirect_stdout(output):
+                  store.place_order(customer, names)
+              confirmation = output.getvalue()
+              assert customer.email in confirmation, "A successful order confirmation should include the customer's email"
+              assert f'{expected_total:.2f}' in confirmation, "A successful order confirmation should include its total to two decimal places"
+        hints:
+          - title: Preserve the outward result
+            text: "The starter does more than update collections: its caller also sees a confirmation. Find that responsibility after extracting the classes."
+            condition: "code_not_matches: /^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*/m"
+          - title: Trace values into the confirmation
+            text: Compare the customer supplied by the caller and the completed order with the values used in the output. Avoid the driver’s fixed example values.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*))(?![\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\bprint\\s*\\())[\\s\\S]*$/m"
+          - title: Check another customer and an empty order
+            text: Run one purchase for a different customer and one empty request. Record the expected recipient and total before reading the output; this exposes fixed text or output inside the item loop.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*))(?=[\\s\\S]*(?:^class[ \\t]+OnlineStore\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+place_order\\b[^\\n]*\\n(?:(?!^\\S|^ {1,4}\\S)[\\s\\S])*?\\bprint\\s*\\())[\\s\\S]*$/m"
 
     quiz:
-      title: "Step 9 — Knowledge Check"
+      title: "Step 11 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
 
         - question: |
-            How can you spot a God Class in a UML diagram?
+            Which finding most strongly suggests that a class has become a God Class?
           type: single
           options:
-            - "It has too many arrows pointing to other classes"
-            - "It is one large box with many members and few collaborators"
-            - "It has many abstract methods waiting to be implemented"
-            - "It uses private visibility on all of its attributes"
+            - "It has several arrows pointing to collaborating classes"
+            - "It combines responsibilities that change for unrelated reasons"
+            - "It offers many operations for one cohesive responsibility"
+            - "It keeps its internal state behind private attributes"
           correct_index: 1
+          option_feedback:
+            0: "Collaboration alone is not evidence of excessive responsibility. Inspect what the class does and why that work changes."
+            2: "A substantial interface can still serve one coherent purpose. Count distinct responsibilities, not just methods."
+            3: "Encapsulating state does not tell you whether the class has too many responsibilities."
           explanation: |
-            A God Class appears as a **single massive box** with dozens of attributes and methods, with few or no collaborating classes around it. The lack of relationships in the diagram signals that one class is doing everything — the opposite of good object-oriented design.
+            A God Class concentrates responsibilities that would be easier to change separately. A large box can prompt investigation, but size or arrow count alone does not establish the problem. In the starter, product stock, customer identity, and order processing provide concrete responsibilities to examine.
 
         - question: |
             How does UML help you detect design problems that are hard to see in code?
           type: single
           options:
             - "UML runs the code and finds bugs automatically"
-            - "Visual structure makes bloated classes and missing links obvious"
+            - "It exposes responsibilities and links for design review"
             - "UML translates the code into a different programming language"
             - "UML counts the lines of code in each class"
           correct_index: 1
           explanation: |
-            UML makes architecture **visible**. A God Class is invisible in 500 lines of Python — you might not notice the bloat. But in a UML diagram, one enormous box surrounded by nothing is immediately obvious. UML is a thinking tool, not just documentation.
+            A diagram makes classes, members, and relationships easier to inspect together. That helps you ask design questions, such as whether responsibilities belong together. The answers still require domain knowledge and behavior checks; the picture alone does not prove quality.
 
         - question: |
             Match the UML notation to its meaning: a **solid line with a filled diamond** on one end.
           type: single
           options:
             - "Inheritance — one class extends another"
-            - "Aggregation — the part can exist independently"
+            - "Aggregation — a shared whole-part grouping"
             - "Composition — the part's lifecycle is bound to the whole"
             - "Dependency — one class temporarily uses another"
           correct_index: 2
           explanation: |
-            A filled diamond means **composition** — the whole exclusively owns the part, and the part is destroyed when the whole is destroyed. A hollow diamond would mean aggregation (independent lifecycle).
+            A filled diamond means **composition**: a part has at most one composite owner and is deleted with the whole unless detached first. A hollow diamond marks shared aggregation; its precise ownership and lifecycle meaning comes from the domain.
 
         - question: |
             A `Course` class stores `self.instructor: Instructor = instructor` where the instructor is passed in from outside and continues to exist independently when a course is deleted. Why is this an **association** rather than composition?
@@ -2601,152 +3278,3 @@ steps:
           correct_index: 2
           explanation: |
             The primary purpose of UML is **communication**. A class diagram lets developers understand and discuss the architecture of a system — what classes exist, how they relate, and what contracts they define — without reading every line of code. It is a thinking and communication tool, not a replacement for code.
-
-
-  # --------------------------------------------------------------------------
-  # STEP 10 — "UML Class Diagram Reference"
-  # Pedagogy:
-  #   Summary / Retrieval Practice — consolidates all notation learned.
-  #   Serves as a reference card students can revisit.
-  # --------------------------------------------------------------------------
-  - title: "UML Class Diagram Reference"
-    instructions: |
-      ## Congratulations!
-
-      ### Why this matters
-
-      You have learned every notation element this tutorial covers — but UML is a *vocabulary*, and vocabulary fades unless you can revisit it on demand. This final page is your reference card: a single place to look up any symbol, any relationship, any multiplicity rule when you encounter one in the wild. The decision flowchart at the end is the cheat sheet most working developers wish they had bookmarked.
-
-      ### 🎯 You will learn to
-
-      - Evaluate a design situation and pick the right UML relationship using the decision flowchart
-      - Apply the consolidated notation reference when reading or drawing class diagrams in the future
-
-      You have learned to read and create UML class diagrams. The page below summarizes every notation element covered in this tutorial — use it as a quick reference.
-
-      ---
-
-      ### The Class Box
-
-      Every class is drawn as a box with three compartments:
-
-      | Compartment | Contains | Python |
-      |---|---|---|
-      | **Top** | Class name | `class ClassName:` |
-      | **Middle** | Attributes | `self.x = value` |
-      | **Bottom** | Methods | `def method(self):` |
-
-      ---
-
-      ### Visibility
-
-      | UML | Meaning | Python Convention |
-      |---|---|---|
-      | `+` | **Public** | `self.name` (no prefix) |
-      | `-` | **Private** | `self.__name` (double underscore) |
-      | `#` | **Protected** | `self._name` (single underscore) |
-
-      ---
-
-      ### Types
-
-      | UML | Python |
-      |---|---|
-      | `name: str` | `self.name: str = name` |
-      | `get_price(): float` | `def get_price(self) -> float:` |
-      | `process(amount: float): bool` | `def process(self, amount: float) -> bool:` |
-
-      ---
-
-      ### Relationships
-
-      | Symbol | Name | Meaning | Python Pattern |
-      |---|---|---|---|
-      | <span class="uml-sym" data-diagram="class" data-sym="--&#124;>"></span> | **Inheritance** | "is-a" — child extends parent | `class Child(Parent):` |
-      | <span class="uml-sym" data-diagram="class" data-sym="-->"></span> | **Association** | "knows-about" — stores a reference | `self.other: OtherClass = other` |
-      | <span class="uml-sym" data-diagram="class" data-sym="*--"></span> | **Composition** | "owns" — part destroyed with whole | `self.part = Part(...)` (created inside) |
-      | <span class="uml-sym" data-diagram="class" data-sym="o--"></span> | **Aggregation** | "uses" — part survives independently | `self.parts.append(part)` (passed in) |
-      | <span class="uml-sym" data-diagram="class" data-sym="..>"></span> | **Dependency** | "temporarily uses" — weakest link | Uses a class inside a method body only |
-
-      ---
-
-      ### Dependency
-
-      A **dependency** <span class="uml-sym" data-diagram="class" data-sym="..>"></span> is the weakest relationship between classes. It means one class *temporarily uses* another — typically as a method parameter or local variable inside a single method — without storing a persistent reference.
-
-      ```python
-      class ReportGenerator:
-          def generate(self, data: list) -> str:
-              formatter = HTMLFormatter()   # Used locally, not stored
-              return formatter.format(data)
-      ```
-
-      In UML, this is drawn as a **dashed arrow** from `ReportGenerator` to `HTMLFormatter`. The key difference from association: the `ReportGenerator` does NOT have an `HTMLFormatter` attribute — it only creates and uses one temporarily inside `generate()`.
-
-      **Rule of thumb:**
-      - `self.x = OtherClass(...)` → **association** or **composition** (persistent reference)
-      - `local_var = OtherClass(...)` inside a method → **dependency** (temporary use)
-
-      ---
-
-      ### Multiplicity
-
-      | Notation | Meaning |
-      |---|---|
-      | `1` | Exactly one |
-      | `0..1` | Zero or one (optional) |
-      | `*` *(preferred shorthand for zero or more)* | Zero or more |
-      | `1..*` | One or more |
-      | `n..m` | Between n and m |
-
-      **Placement:** the number sits next to the class it *quantifies* — it answers "for *one* of the opposite class, how many of **this** class?"
-
-      **Style (Ambler G117):** Show multiplicity on **both ends** of every relationship; prefer `*` over verbose `0..*`.
-
-      ---
-
-      ### Abstract Classes
-
-      | UML | Meaning | Python |
-      |---|---|---|
-      | *Italic class name* | Abstract class — cannot be instantiated | `class Name(ABC):` |
-      | *Italic method name* / `{abstract}` | Abstract method — must be overridden | `@abstractmethod` |
-
-      ---
-
-      ### Choosing the Right Relationship — a Decision Flowchart
-
-      When you're writing a class, ask these questions in order:
-
-      1. **Does this class's `__init__` *create* the other object internally, and the other object makes no sense outside this one?**
-         → **Composition** <span class="uml-sym" data-diagram="class" data-sym="*--"></span> *(e.g., `Invoice` → `LineItem`)*
-      2. **Does a persistent `self.x: Other` store an object that was created outside, and survives this object being destroyed?**
-         → **Aggregation** <span class="uml-sym" data-diagram="class" data-sym="o--"></span> *(e.g., `Team` → `Player`)*
-         → *If aggregation feels contested, a plain **Association** <span class="uml-sym" data-diagram="class" data-sym="-->"></span> is always safer.*
-      3. **Is this class *a kind of* the other, sharing its interface and some behavior?**
-         → **Inheritance** <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> *(apply the "Is-a" test first)*
-      4. **Does the class only mention the other inside a method body, with no persistent reference?**
-         → **Dependency** <span class="uml-sym" data-diagram="class" data-sym="..>"></span>
-
-      If *none* of these apply, there is no relationship — don't draw one.
-
-      ### What You Learned
-
-      UML class diagrams are a **communication tool**. They make invisible design decisions visible — turning implicit code relationships into explicit, communicable blueprints. You can now:
-
-      1. **Read** a UML class diagram and understand its structure
-      2. **Write** Python code that matches a given diagram
-      3. **Identify** anti-patterns like the God Class
-      4. **Distinguish** between association, composition, and aggregation
-      5. **Communicate** software architecture without showing code
-      6. **Recognise the limits of UML** — aggregation's fuzzy semantics, the language-specific gap between Python's `_`/`__` and UML `-`/`#`, and when to leave notation off rather than force it
-
-    uml_files:
-      - store.py
-
-    files:
-      - path: store.py
-        content: |
-          # This is the reference page — no coding task here.
-          # Review the summary above and use it as a quick reference!
-        language: python

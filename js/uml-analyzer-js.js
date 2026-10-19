@@ -713,6 +713,7 @@
 
     // Scope
     this.varTypes     = {};           // {varName: className}
+    this.varParticipants = Object.create(null); // known object identities in this scope
     this._callerClass = {};           // {participantId: className}
     this._callStack   = new Set();    // "className::methodName"
   }
@@ -847,7 +848,12 @@
       if (ts.isNewExpression(decl.initializer)) {
         var clsName = _getNodeText(decl.initializer.expression, sf);
         if (this.allTypeNames.has(clsName)) {
+          // Arguments are evaluated before the constructed object's body runs.
+          for (const argument of decl.initializer.arguments || []) {
+            this._scanExprForCalls(argument, sf, caller, depth);
+          }
           this.varTypes[varName]    = clsName;
+          this.varParticipants[varName] = varName;
           this._callerClass[varName] = clsName;
           if (this._dataClasses.has(clsName)) continue;
           this._ensureParticipant(varName, clsName);
@@ -856,11 +862,6 @@
           this.lines.push('activate ' + varName);
           this._maybeFollow(clsName, 'constructor', varName, depth);
           this.lines.push('deactivate ' + varName);
-          // Scan constructor args
-          if (decl.initializer.arguments) {
-            for (var a = 0; a < decl.initializer.arguments.length; a++)
-              this._scanExprForCalls(decl.initializer.arguments[a], sf, caller, depth);
-          }
           continue;
         }
       }
@@ -1111,7 +1112,7 @@
     var method  = resolved.method;
     if (this._dataClasses.has(clsName)) return;
 
-    var calleeId = this._calleeIdFor(clsName, caller, resolved.attrHint);
+    var calleeId = resolved.participantId || this._calleeIdFor(clsName, caller, resolved.attrHint);
     var label    = this._buildCallLabel(call, sf, method);
 
     var isSuper = resolved.isSuper;
@@ -1209,16 +1210,26 @@
       return { className: func.text, method: 'constructor' };
     }
 
+    // The compiler represents `this` as a keyword, not an Identifier.
+    if (ts.isPropertyAccessExpression(func) &&
+        func.expression.kind === ts.SyntaxKind.ThisKeyword) {
+      const currentClass = this._classOf(caller);
+      if (currentClass) {
+        return { className: currentClass, method: func.name.text, participantId: caller };
+      }
+      return null;
+    }
+
     // var.method()
     if (ts.isPropertyAccessExpression(func) && ts.isIdentifier(func.expression)) {
       var varName = func.expression.text;
       var method  = func.name.text;
 
-      if (varName === 'this') {
-        var cc = this._classOf(caller);
-        if (cc) return { className: cc, method: method };
-      } else if (this.varTypes[varName]) {
-        return { className: this.varTypes[varName], method: method };
+      if (this.varTypes[varName]) {
+        // A known receiver identifies an object, not just its class. Keep a
+        // type-only fallback for parameters whose instance binding is unknown.
+        return { className: this.varTypes[varName], method: method,
+          participantId: this.varParticipants[varName] || null };
       } else if (this.allTypeNames.has(varName)) {
         return { className: varName, method: method };  // static call
       }
@@ -1268,6 +1279,9 @@
       return;
     }
     if (ts.isNewExpression(node)) {
+      for (const argument of node.arguments || []) {
+        this._scanExprForCalls(argument, sf, caller, depth);
+      }
       var clsName = _getNodeText(node.expression, sf);
       if (this.allTypeNames.has(clsName) && !this._dataClasses.has(clsName)) {
         // Treat as constructor call — resolve manually since _resolveCall
@@ -1280,11 +1294,6 @@
         this.lines.push('activate ' + calleeId);
         this._maybeFollow(clsName, 'constructor', calleeId, depth);
         this.lines.push('deactivate ' + calleeId);
-      }
-      // Scan constructor arguments
-      if (node.arguments) {
-        for (var i = 0; i < node.arguments.length; i++)
-          this._scanExprForCalls(node.arguments[i], sf, caller, depth);
       }
       return;
     }
@@ -1348,9 +1357,11 @@
     this._callStack.add(key);
     var savedVarTypes = {};
     for (var v in this.varTypes) savedVarTypes[v] = this.varTypes[v];
+    const savedVarParticipants = this.varParticipants;
 
     // Seed local scope with parameter type hints
     this.varTypes = {};
+    this.varParticipants = Object.create(null);
     var pt = (this.paramTypes[clsName] || {})[methodName];
     if (pt) { for (var p in pt) this.varTypes[p] = pt[p]; }
 
@@ -1361,6 +1372,7 @@
     }
 
     this.varTypes = savedVarTypes;
+    this.varParticipants = savedVarParticipants;
     this._callStack.delete(key);
   };
 

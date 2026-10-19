@@ -279,7 +279,9 @@
             depth--;
             if (depth === 0) { genStr += advance().value; break; }
           }
-          genStr += advance().value;
+          var genericToken = advance().value;
+          genStr += genericToken === 'extends' || genericToken === 'super'
+            ? ' ' + genericToken + ' ' : genericToken;
         }
         parts.push(genStr);
       }
@@ -664,8 +666,21 @@
   function _extractBaseTypeName(typeStr, allTypeNames) {
     if (!typeStr) return null;
 
-    // Strip array suffixes
-    var base = typeStr.replace(/\[\]/g, '').replace(/\.\.\./g, '').trim();
+    // Resolve one type expression at a time. Taking the last dot or deleting
+    // generic brackets from the whole expression loses qualified/nested items.
+    var base = typeStr.replace(/\[\]/g, '').replace(/\.\.\./g, '').trim()
+      .replace(/^\?\s*(?:extends|super)\s+/, '');
+    var generic = _genericTypeParts(base);
+    if (generic) {
+      if (allTypeNames.has(generic.name)) return generic.name;
+      if (CONTAINER_TYPES.has(generic.name)) {
+        return _extractBaseTypeName(generic.args[0], allTypeNames);
+      }
+      if (MAPPING_TYPES.has(generic.name)) {
+        return _extractBaseTypeName(generic.args[1], allTypeNames);
+      }
+      return null;
+    }
 
     // Direct match
     if (allTypeNames.has(base)) return base;
@@ -675,33 +690,14 @@
     if (dotIdx !== -1) {
       var simple = base.substring(dotIdx + 1);
       if (allTypeNames.has(simple)) return simple;
-      base = simple;
-    }
-
-    // Generic: Container<Element> or Container<Key, Value>
-    var genMatch = base.match(/^(\w+)<(.+)>$/);
-    if (genMatch) {
-      var outer = genMatch[1];
-      var inner = genMatch[2];
-
-      if (CONTAINER_TYPES.has(outer)) {
-        // Single type arg containers
-        var cleaned = inner.replace(/<[^>]*>/g, '').trim();
-        if (allTypeNames.has(cleaned)) return cleaned;
-      }
-      if (MAPPING_TYPES.has(outer)) {
-        // Map<K, V> → extract V (last type arg)
-        var args = _splitGenericArgs(inner);
-        if (args.length > 0) {
-          var lastArg = args[args.length - 1].trim().replace(/<[^>]*>/g, '');
-          if (allTypeNames.has(lastArg)) return lastArg;
-        }
-      }
-      // Try direct match of outer
-      if (allTypeNames.has(outer)) return outer;
     }
 
     return null;
+  }
+
+  function _genericTypeParts(typeStr) {
+    var match = typeStr.trim().match(/^([\w$.]+)\s*<([\s\S]+)>$/);
+    return match ? { name: match[1].split('.').pop(), args: _splitGenericArgs(match[2]) } : null;
   }
 
   function _splitGenericArgs(s) {
@@ -725,15 +721,18 @@
   function _isCollectionType(typeStr) {
     if (!typeStr) return false;
     if (/\[\]/.test(typeStr)) return true;
-    var match = typeStr.match(/^(\w+)</);
-    if (!match) return false;
-    return CONTAINER_TYPES.has(match[1]) || MAPPING_TYPES.has(match[1]);
+    var generic = _genericTypeParts(typeStr);
+    if (!generic) return false;
+    if (generic.name === 'Optional') return _isCollectionType(generic.args[0]);
+    return CONTAINER_TYPES.has(generic.name) || MAPPING_TYPES.has(generic.name);
   }
 
   /** Infer multiplicity from a type string: "1" for single, "*" for collection/array */
   function _inferMultiplicity(typeStr) {
     if (!typeStr) return '1';
-    return _isCollectionType(typeStr) ? '*' : '1';
+    if (_isCollectionType(typeStr)) return '*';
+    var generic = _genericTypeParts(typeStr);
+    return generic && generic.name === 'Optional' ? '0..1' : '1';
   }
 
   function _getVisibility(modifiers) {
@@ -1109,7 +1108,7 @@
       for (var fi = 0; fi < info.attributes.length; fi++) {
         var attrResolved = _extractBaseTypeName(info.attributes[fi].type, self.allTypeNames);
         if (attrResolved === target) {
-          return _isCollectionType(info.attributes[fi].type) ? '*' : '1';
+          return _inferMultiplicity(info.attributes[fi].type);
         }
       }
       return '1';
