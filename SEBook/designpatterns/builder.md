@@ -42,6 +42,10 @@ class Product
 Director --> Builder : builder
 ConcreteBuilder ..|> Builder
 ConcreteBuilder --> Product : creates
+callout top of text "Director" : Director: runs the construction steps in order
+callout top of text "Builder" : Builder: one method per construction step
+callout bottom of text "ConcreteBuilder" : Concrete builder: builds and assembles one representation
+callout right of text "GetResult(): Product" : The client collects the finished product from the builder
 @enduml'></div>
 
 ## UML Example Diagram
@@ -72,6 +76,10 @@ class VacationPlanner {
 Director --> VacationBuilder : builder
 PatternslandBuilder ..|> VacationBuilder
 PatternslandBuilder ..> VacationPlanner : creates
+callout top of text "Director" : Director: decides which steps a vacation needs
+callout bottom of text "PatternslandBuilder" : Concrete builder: assembles a Patternsland plan step by step
+callout bottom of text "VacationPlanner" : Product: the complex object being built
+callout right of text "get_vacation_planner(): VacationPlanner" : Result: fetched once all steps ran
 @enduml'></div>
 
 ## Code Example

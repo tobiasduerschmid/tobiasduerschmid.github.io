@@ -412,7 +412,10 @@ module Jekyll
 
           namespace_prefix = svg_namespace_prefix(page_identifier, idx)
           replacement = wrap_svg(block, descriptions[idx.to_s], namespace_prefix)
-          content.sub!(block[:original], replacement)
+          # The block form inserts the replacement literally. A string
+          # replacement would treat `\&` in escaped diagram text, such as a
+          # callout target's `\"`, as a backreference to the whole match.
+          content.sub!(block[:original]) { replacement }
         end
 
         content

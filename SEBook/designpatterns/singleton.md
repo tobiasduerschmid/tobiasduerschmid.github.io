@@ -35,6 +35,9 @@ class ClientA
 class ClientB
 ClientA --> Singleton : getInstance()
 ClientB --> Singleton : getInstance()
+callout right of text "uniqueInstance" : Static field: the one instance belongs to the class
+callout right of text "Singleton()" : Private constructor: no client can call new
+callout right of text "getInstance(): Singleton" : Global access point: always returns the same instance
 @enduml'></div>
 
 ## UML Example Diagram
@@ -54,6 +57,7 @@ class ClientA
 class ClientB
 ClientA ..> AppConfig : obtains instance
 ClientB ..> AppConfig : obtains instance
+callout right of text "INSTANCE" : Singleton role: AppConfig holds its own unique instance
 @enduml'></div>
 
 ## Sequence Diagram
@@ -69,6 +73,10 @@ secondClient -> AppConfig: getInstance()
 AppConfig --> secondClient: same config
 firstClient -> config: log("first message")
 secondClient -> config: log("second message")
+callout bottom of text "AppConfig" : Class as participant: getInstance() is a static call on the class
+callout right of text "config" : Returns the single instance created when the class loads
+callout right of text "same config" : A second request creates nothing new
+callout right of text "log(\"second message\")" : Both clients now share one object and its state
 @enduml'></div>
 
 ## Code Example

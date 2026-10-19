@@ -83,6 +83,10 @@ View ..|> Observer
 View --> Model : reads
 View --> Controller : delegates input
 Controller --> Model : updates
+callout top of text "Model" : Model: domain state that notifies observers when it changes
+callout bottom of text "View" : View: shows model data and refreshes on update()
+callout bottom of text "Controller" : Controller: turns user input into model changes
+callout right of text "delegates input" : Strategy: the view hands input handling to a swappable controller
 @enduml'></div>
 
 ## UML Example Diagram
@@ -107,6 +111,9 @@ TaskModel "1" -- "*" TaskObserver : notifies >
 TaskView ..|> TaskObserver
 TaskView ..> TaskModel : queries on update
 TaskController --> TaskModel : changes state
+callout top of text "TaskModel" : Model: owns the task list
+callout bottom of text "TaskView" : View: an observer that redraws the tasks
+callout bottom of text "TaskController" : Controller: handles requests to add tasks
 @enduml'></div>
 
 ## Sequence Diagram
@@ -130,6 +137,11 @@ view -> view: showTasks(tasks)
 deactivate view
 deactivate model
 deactivate controller
+callout right of text "addNewTask(\"Learn Observer\")" : Input goes to the controller
+callout right of text "addTask(\"Learn Observer\")" : The controller changes the model, not the screen
+callout bottom of text "update(model)" : Observer: the model notifies its views after a change
+callout left of text "getTasks()" : Pull: the view asks the model for the data it shows
+callout right of text "showTasks(tasks)" : The view redraws itself, the controller never touches the display
 @enduml'></div>
 
 

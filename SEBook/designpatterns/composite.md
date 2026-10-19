@@ -53,6 +53,10 @@ Leaf --|> Component
 Composite --|> Component
 Composite "0..1" *--> "*" Component
 Client --> Component : treats uniformly >
+callout top of text "Component" : Component: one interface for single objects and groups
+callout bottom of text "Leaf" : Leaf: an individual object without children
+callout bottom of text "Composite" : Composite: holds children and forwards operation() to each
+callout top of text "treats uniformly" : Client: does not care whether it holds a leaf or a tree
 @enduml'></div>
 
 ## UML Example Diagram
@@ -78,6 +82,9 @@ Menu --|> MenuComponent
 MenuItem --|> MenuComponent
 Menu "0..1" *-- "*" MenuComponent
 Demo --> MenuComponent : prints
+callout top of text "MenuComponent" : Component: menus and items share print()
+callout bottom of text "Menu" : Composite: a menu contains submenus and items
+callout bottom of text "MenuItem" : Leaf: a single dish
 @enduml'></div>
 
 ## Sequence Diagram
@@ -98,6 +105,9 @@ activate item
 deactivate item
 deactivate dessertMenu
 deactivate allMenus
+callout right of text "print()" occurrence 1 : The client makes one call on the root menu
+callout right of text "print()" occurrence 2 : Recursion: a menu forwards print() to each child
+callout right of text "print()" occurrence 3 : A leaf prints itself, so the recursion stops
 @enduml'></div>
 
 # Design Decisions

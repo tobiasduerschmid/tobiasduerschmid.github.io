@@ -62,6 +62,11 @@ ConcreteElementB ..|> Element
 ObjectStructure o--> Element
 Client --> Visitor
 Client --> ObjectStructure
+callout top of text "Visitor" : Visitor: one visit method per element class
+callout bottom of text "ConcreteVisitor1" : Concrete visitor: one operation for every element type
+callout top of text "Element" : Element: accept() lets a visitor in
+callout bottom of text "ConcreteElementA" : accept() calls visitConcreteElementA(this): the second dispatch
+callout top of text "ObjectStructure" : Object structure: holds the elements a visitor walks
 @enduml'></div>
 
 ## UML Example Diagram
@@ -96,6 +101,10 @@ TypeCheckingVisitor ..|> NodeVisitor
 CodeGeneratingVisitor ..|> NodeVisitor
 AssignmentNode ..|> Node
 VariableRefNode ..|> Node
+callout top of text "NodeVisitor" : Visitor: one visit method per node type
+callout bottom of text "TypeCheckingVisitor" : Concrete visitor: a whole compiler pass in one class
+callout top of text "Node" : Element: every node accepts visitors
+callout bottom of text "AssignmentNode" : accept() calls visitAssignment(this)
 @enduml'></div>
 
 ## Code Example

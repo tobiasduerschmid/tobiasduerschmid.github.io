@@ -65,6 +65,10 @@ note right of Creator
   product =
   factoryMethod();
 end note
+callout left of text "factoryMethod(): Product" occurrence 1 : Factory method: the hook a subclass overrides
+callout left of text "operation(): void" : Creator code: uses products without naming a concrete class
+callout bottom of text "ConcreteCreator" : Concrete creator: picks which product class to create
+callout top of text "Product" : Product: the interface creator code depends on
 @enduml'></div>
 
 ## UML Example Diagram
@@ -89,6 +93,10 @@ NYPizzaStore --|> PizzaStore
 NYStyleCheesePizza ..|> Pizza
 PizzaStore --> Pizza : product
 NYPizzaStore ..> NYStyleCheesePizza : <<create>>
+callout left of text "createPizza(type: String): Pizza" occurrence 1 : Factory method: a hook each regional store overrides
+callout left of text "orderPizza(type: String): Pizza" : Creator code: the same ordering steps for every store
+callout bottom of text "NYPizzaStore" : Concrete creator: makes New York style pizzas
+callout bottom of text "NYStyleCheesePizza" : Concrete product: the class only the subclass names
 @enduml'></div>
 
 ## Sequence Diagram
@@ -119,6 +127,10 @@ activate pizza
 deactivate pizza
 store --> customer: pizza
 deactivate store
+callout right of text "orderPizza(\"cheese\")" : The customer calls the inherited creator method
+callout right of text "createPizza(\"cheese\")" : Self-call to the factory method: the subclass chooses the class
+callout right of text "prepare()" : From here on, orderPizza only uses the Pizza interface
+callout right of text "pizza" : The customer never names the concrete pizza class
 @enduml'></div>
 
 # Code Example

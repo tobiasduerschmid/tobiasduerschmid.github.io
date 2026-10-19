@@ -84,6 +84,20 @@ test('identical cached diagrams get deterministic, occurrence-local SVG referenc
   assert.equal(first.cached_svg, CACHED_SVG, 'the shared cache must remain canonical');
 });
 
+test('backslash sequences in rendered diagram text are inserted literally', () => {
+  // Callout targets use JSON escapes, so a rendered label can contain `\&quot;`.
+  const diagramBlock = '<pre><code class="language-uml-sequence">@startuml\na -&gt; b: post(\\"x\\")\n@enduml</code></pre>';
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg"><text>post(\\&quot;x\\&quot;) \\0 \\\\</text></svg>';
+  const { html } = runPlugin('process_cached_svg', {
+    content: `<main>${diagramBlock}</main>`,
+    svg,
+    page_identifier: '/SEBook/escaped-label.html',
+  });
+
+  assert.ok(html.includes('<text>post(\\&quot;x\\&quot;) \\0 \\\\</text>'), html);
+  assert.ok(!html.includes('language-uml-sequence'), 'the source block must not be spliced back into the page');
+});
+
 test('SVG namespacing rewrites supported local references without touching colors or external URLs', () => {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-labelledby="title desc orphan" aria-describedby="desc" aria-controls="panel" aria-owns="shape">
   <title id="title">Title</title><desc id="desc">Description</desc>

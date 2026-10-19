@@ -83,6 +83,10 @@ note right of Context.contextInterface
 	strategy.algorithmInterface();
 	```
 end note
+callout top of text "Context" : Context: keeps a strategy and delegates the varying work to it
+callout bottom of text "setStrategy(" : Swap point: clients change the algorithm at runtime
+callout top of text "«interface»" : Strategy: the one interface all algorithms share
+callout right of text "ConcreteStrategyB" : Concrete strategies: interchangeable algorithms
 @enduml'></div>
 
 **Figure:** the Context aggregates a Strategy and forwards work through its interface; ConcreteStrategies implement the algorithms independently. The delegation code does not need to identify the concrete strategy.
@@ -125,6 +129,11 @@ note bottom of FlyNullObject
 	Null Object Strategy:
 	do nothing on fly().
 end note
+callout top of text "Duck" : Context: each duck delegates flying and quacking
+callout left of text "setFlyBehavior(" : Swap point: a duck can change how it flies at runtime
+callout top of text "FlyBehavior" : Strategy: one family of flying algorithms
+callout bottom of text "FlyWithWings" : Concrete strategy: one way to fly
+callout top of text "QuackBehavior" : Second strategy: each varying behavior gets its own interface
 @enduml'></div>
 
 **Figure:** Duck delegates flying and quacking to interchangeable Strategy objects; `RubberDuck` swaps in `FlyNullObject` instead of subclassing to override.
@@ -155,6 +164,10 @@ activate rocket
 rocket --> duck
 deactivate rocket
 deactivate duck
+callout right of text "performFly()" occurrence 1 : Client asks the context, never the algorithm
+callout right of text "fly()" occurrence 1 : Delegation: the duck forwards to its current strategy, here a do-nothing one
+callout right of text "setFlyBehavior(rocket)" : Swap: the client plugs in a different strategy object
+callout right of text "fly()" occurrence 2 : Same call in Duck, new behavior: no Duck code changed
 @enduml'></div>
 
 **Figure:** the same Duck object exhibits two different fly behaviors across two `performFly()` calls. This example uses runtime swapping to show that the algorithm can change independently of its Context.

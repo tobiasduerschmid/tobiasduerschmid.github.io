@@ -86,6 +86,9 @@ note right of Client.doWork
 	// no null check needed
 	```
 end note
+callout top of text "AbstractObject" : Abstract object: the interface the client depends on
+callout bottom of text "RealObject" : Real object: does the useful work
+callout bottom of text "NullObject" : Null object: stands in when there is no real collaborator
 @enduml'></div>
 
 **Figure:** Client holds an `AbstractObject` reference and calls `request()` uniformly. `RealObject` performs work; `NullObject` silently does nothing. The Client has no idea which one it holds.
@@ -120,6 +123,9 @@ note bottom of SilentLogger
 	log(): do nothing
 	entries(): return empty list
 end note
+callout top of text "DiagnosticLogger" : Abstract object: the logger interface
+callout bottom of text "MemoryLogger" : Real object: records each entry
+callout top of text "SilentLogger" : Null object: used when logging is off
 @enduml'></div>
 
 **Figure:** `BankTransfer` only ever sees the `DiagnosticLogger` interface; whether the real `MemoryLogger` or the `SilentLogger` is wired in is a configuration decision made elsewhere.
@@ -140,6 +146,9 @@ client -> nullLog: log("transfer 100 to acct 5")
 activate nullLog
 nullLog --> client
 deactivate nullLog
+callout right of text "log(\"transfer 100 to acct 5\")" occurrence 1 : The real logger records the entry
+callout right of text "log(\"transfer 100 to acct 5\")" occurrence 2 : The null object gets the same call and does nothing
+callout bottom of text "client: BankTransfer" : Identical client code in both cases: no null check
 @enduml'></div>
 
 **Figure:** the client makes the same call in both cases. The Null Object responds by doing nothing — the design intent of "diagnostic output disabled" is encoded in the type of the collaborator, not in a missing reference.

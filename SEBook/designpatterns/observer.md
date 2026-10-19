@@ -115,6 +115,10 @@ note bottom of ConcreteObserver.update
 	```
 end note
 note left of ConcreteSubject.getState: return subjectState
+callout top of text "Subject" : Subject: keeps a list of observers and notifies them
+callout top of text "Observer" : Observer: update() is all the subject knows
+callout bottom of text "ConcreteSubject" : Concrete subject: holds the state observers care about
+callout bottom of text "ConcreteObserver" : Concrete observer: pulls state from its subject on update
 @enduml'></div>
 
 ## UML Example Diagram
@@ -157,6 +161,9 @@ note bottom of MobileApp.update
 	print(f"[MobileApp] {self._channel.get_latest_post()}")
 	```
 end note
+callout top of text "NewsChannel" : Concrete subject: manages subscribers and the latest post
+callout top of text "Subscriber" : Observer: the abstract update() interface
+callout bottom of text "MobileApp" : Concrete observer: shows the post on a phone
 @enduml'></div>
 
 ## Sequence Diagram
@@ -210,6 +217,12 @@ deactivate channel
 deactivate app
 deactivate channel
 deactivate channel
+callout right of text "follow(app)" : Registration: observers subscribe before any change
+callout right of text "publish_post(\"New video uploaded!\")" : A state change starts the notification
+callout right of text "update()" occurrence 1 : Notify: the channel calls update() on each subscriber
+callout right of text "get_latest_post()" occurrence 1 : Pull: each observer queries the state it needs
+callout right of text "unfollow(email)" : After unsubscribing, email gets no further updates
+callout left of text "publish_post(\"Live stream starting!\")" : Only the remaining subscriber is notified now
 @enduml'></div>
 
 # Code Example

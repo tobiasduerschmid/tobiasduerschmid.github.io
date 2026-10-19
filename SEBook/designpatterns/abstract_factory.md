@@ -64,6 +64,10 @@ ProductA1 ..|> AbstractProductA
 ProductA2 ..|> AbstractProductA
 ProductB1 ..|> AbstractProductB
 ProductB2 ..|> AbstractProductB
+callout top of text "AbstractFactory" : Abstract factory: one create method per product type
+callout bottom of text "ConcreteFactory1" : Concrete factory: creates one family of products
+callout bottom of text "ProductA1" : Concrete products: made by the factory of their family
+callout top of text "Client" : Client: uses only abstract interfaces
 @enduml'></div>
 
 ## UML Example Diagram
@@ -94,6 +98,10 @@ CheesePizza --> PizzaIngredientFactory : requests family
 NYPizzaIngredientFactory ..> ThinCrustDough : creates
 NYPizzaIngredientFactory ..> MarinaraSauce : creates
 NYPizzaIngredientFactory ..> ReggianoCheese : creates
+callout top of text "PizzaIngredientFactory" : Abstract factory: creates a whole family of ingredients
+callout bottom of text "NYPizzaIngredientFactory" : Concrete factory: the New York ingredient family
+callout top of text "CheesePizza" : Client: asks the factory instead of naming ingredient classes
+callout top of text "Dough" : Abstract product: what the pizza depends on
 @enduml'></div>
 
 ## Sequence Diagram
@@ -125,6 +133,9 @@ factory -> cheese: <<create>>
 factory --> pizza: Cheese
 deactivate factory
 deactivate pizza
+callout right of text "createDough()" : The client asks the factory for each product it needs
+callout right of text "Dough" : Returned as the abstract type: the pizza never sees ThinCrustDough
+callout right of text "createCheese()" : One factory, so all ingredients come from one consistent family
 @enduml'></div>
 
 # Code Example

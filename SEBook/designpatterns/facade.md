@@ -38,6 +38,9 @@ Client --> Façade : uses >
 Façade --> SubsystemA
 Façade --> SubsystemB
 Façade --> SubsystemC
+callout top of text "Client" : Client: one dependency instead of many
+callout top of text "Façade" : Facade: a simple entry point for common tasks
+callout bottom of text "SubsystemA" : Subsystem: does the real work and does not know the facade
 @enduml'></div>
 
 ## UML Example Diagram
@@ -64,6 +67,9 @@ HomeTheaterFaçade --> Projector
 HomeTheaterFaçade --> TheaterLights
 HomeTheaterFaçade --> TheaterScreen
 HomeTheaterFaçade --> PopcornPopper
+callout top of text "MovieNightClient" : Client: depends on the facade only
+callout top of text "HomeTheaterFaçade" : Facade: turns many device calls into watchMovie() and endMovie()
+callout bottom of text "Amplifier" : Subsystem classes remain available for direct use
 @enduml'></div>
 
 ## Sequence Diagram
@@ -116,6 +122,9 @@ facade -> dvd: play("Raiders of the Lost Ark")
 activate dvd
 deactivate dvd
 deactivate facade
+callout right of text "watchMovie(\"Raiders of the Lost Ark\")" : One call from the client
+callout right of text "on()" occurrence 1 : The facade runs the startup steps in the right order
+callout left of text "play(\"Raiders of the Lost Ark\")" : Eleven subsystem calls stay hidden behind one client call
 @enduml'></div>
 
 # Code Example

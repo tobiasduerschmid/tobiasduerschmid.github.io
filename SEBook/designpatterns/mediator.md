@@ -39,6 +39,9 @@ ColleagueB --|> Colleague
 Colleague --> Mediator
 ConcreteMediator --> ColleagueA : coordinates
 ConcreteMediator --> ColleagueB : coordinates
+callout top of text "Mediator" : Mediator: the interface colleagues report events to
+callout bottom of text "ConcreteMediator" : Concrete mediator: holds the coordination logic
+callout top of text "Colleague" : Colleague: knows the mediator, not other colleagues
 @enduml'></div>
 
 ## UML Example Diagram
@@ -67,6 +70,9 @@ AlarmClock --> SmartHomeMediator
 SmartHomeHub --> CoffeeMaker : commands
 SmartHomeHub --> Calendar : queries
 SmartHomeHub --> Sprinkler : commands
+callout top of text "SmartHomeHub" : Concrete mediator: holds the morning routine logic
+callout bottom of text "AlarmClock" : Colleague: reports to the hub instead of calling devices
+callout bottom of text "CoffeeMaker" : Colleague: knows nothing about the alarm clock
 @enduml'></div>
 
 ## Sequence Diagram
@@ -90,6 +96,10 @@ hub -> sprinkler: skipMorningWatering()
 activate sprinkler
 deactivate sprinkler
 deactivate hub
+callout right of text "notify(this, \"alarmRang\")" : The colleague reports what happened, not what others should do
+callout right of text "isWeekday()" : The mediator gathers the facts it needs
+callout right of text "brew()" : The mediator decides which colleagues react
+callout right of text "skipMorningWatering()" : No colleague calls another directly
 @enduml'></div>
 
 # Code Example

@@ -45,6 +45,10 @@ class Adaptee {
 Client --> Target : uses >
 Adapter ..|> Target
 Adapter --> Adaptee : translates to
+callout top of text "Client" : Client: knows only the Target interface
+callout top of text "Target" : Target: the interface the client expects
+callout bottom of text "Adapter" : Adapter: implements Target by translating each call
+callout bottom of text "Adaptee" : Adaptee: existing class with an incompatible interface
 @enduml'></div>
 
 ## UML Example Diagram
@@ -73,6 +77,10 @@ DuckSimulator --> Duck : expects >
 TurkeyAdapter ..|> Duck
 WildTurkey ..|> Turkey
 TurkeyAdapter --> Turkey : wraps
+callout top of text "DuckSimulator" : Client: works only with ducks
+callout top of text "Duck" : Target: the interface the simulator expects
+callout bottom of text "TurkeyAdapter" : Adapter: makes a turkey look like a duck
+callout bottom of text "WildTurkey" : Adaptee: existing class that stays unchanged
 @enduml'></div>
 
 ## Sequence Diagram
@@ -95,6 +103,9 @@ activate turkey
 deactivate turkey
 end
 deactivate adapter
+callout right of text "quack()" : The client calls the Target method it knows
+callout right of text "gobble()" : Translation: the adapter calls the adaptee method under its own name
+callout right of text "LOOP" : Adapting behavior, not just names: one fly() becomes five short flights
 @enduml'></div>
 
 # Code Example

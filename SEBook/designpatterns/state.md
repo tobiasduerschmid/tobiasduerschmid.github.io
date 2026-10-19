@@ -53,6 +53,10 @@ ConcreteStateA ..|> State
 ConcreteStateB ..|> State
 ConcreteStateA --> Context : transition via setState
 ConcreteStateB --> Context : transition via setState
+callout top of text "Context" : Context: forwards each request to its current state object
+callout top of text "«interface»" : State: one method for each request the context handles
+callout bottom of text "ConcreteStateA" : Concrete state: the behavior of one mode
+callout bottom of text "transition via setState" occurrence 1 : Transition: a state installs the next state
 @enduml'></div>
 
 ## UML Example Diagram
@@ -77,6 +81,10 @@ NoQuarterState ..|> State
 HasQuarterState ..|> State
 NoQuarterState --> GumballMachine : setState(...)
 HasQuarterState --> GumballMachine : releaseBall(), setState(...)
+callout top of text "GumballMachine" : Context: every button press goes to the current state
+callout bottom of text "NoQuarterState" : Concrete state: no coin inserted yet
+callout bottom of text "HasQuarterState" : Concrete state: a crank turn releases a ball
+callout top of text "setState(...)" : Transition: the current state picks the next one
 @enduml'></div>
 
 ## Sequence Diagram
@@ -107,6 +115,10 @@ activate machine
 deactivate machine
 deactivate hasQuarter
 deactivate machine
+callout right of text "insertQuarter(machine)" : Delegation: the machine passes the event and itself to its state
+callout right of text "setState(hasQuarter)" : Transition: the state object switches the machine to the next state
+callout bottom of text "turnCrank(machine)" : A different state object now answers the next event
+callout right of text "setState(noQuarter)" : Back to the start, ready for the next customer
 @enduml'></div>
 
 # Code Example

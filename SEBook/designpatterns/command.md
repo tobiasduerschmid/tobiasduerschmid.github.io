@@ -90,6 +90,11 @@ note bottom of Invoker
 The invoker does not know
 which receiver method runs.
 end note
+callout top of text "Client" : Client: creates a command and binds it to a receiver
+callout top of text "Invoker" : Invoker: stores a command and later calls execute()
+callout bottom of text "ConcreteCommand" : Concrete command: one receiver action plus how to undo it
+callout bottom of text "Receiver" : Receiver: the object that does the actual work
+callout bottom of text "MacroCommand" : Macro command: runs several commands as one
 @enduml'></div>
 
 # Example: Remote Control
@@ -146,6 +151,9 @@ note bottom of NoCommand
 Null Object: every slot has
 safe behavior before setup.
 end note
+callout top of text "RemoteControl" : Invoker: each button calls execute() on its slot
+callout bottom of text "LightOnCommand" : Concrete command: saves the old light state, then turns it on
+callout bottom of text "Light" : Receiver: knows how to switch the light
 @enduml'></div>
 
 ## Sequence Diagram
@@ -185,6 +193,11 @@ remote -> remote: clear undoCommand
 activate remote
 deactivate remote
 deactivate remote
+callout right of text "pressOn" : The user triggers the invoker
+callout right of text "execute" : The remote calls execute() without knowing a light is involved
+callout right of text "isOn()" : The command records the previous state so undo can restore it
+callout right of text "remember command" : History: the invoker keeps the last command for undo
+callout bottom of text "undo" : Undo: the same command object reverses its own effect
 @enduml'></div>
 
 # Refactoring Path
