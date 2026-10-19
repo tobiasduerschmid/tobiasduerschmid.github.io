@@ -2016,7 +2016,6 @@
     this.varTypes = {};
     this.varParticipants = {}; // aliases and parameter bindings to known objects
     this.fieldBindings = {}; // owning participant -> field -> object binding (null after invalidation)
-    this._scopeCaller = 'Main';
     this._scopeIdentity = 'Main';
     this._invocationCount = 0;
     this._callerClass = {};
@@ -2464,6 +2463,11 @@
       if (!owner) return;
       if (!this.fieldBindings[owner.participant]) this.fieldBindings[owner.participant] = {};
       this.fieldBindings[owner.participant][target.attr] = binding;
+    } else if (target.type === 'Tuple' || target.type === 'List') {
+      // A collection binding does not identify any of its destructured items.
+      for (const element of target.elts || []) this._assignBinding(element, null, caller);
+    } else if (target.type === 'Starred') {
+      this._assignBinding(target.value, null, caller);
     }
   };
 
@@ -2493,7 +2497,7 @@
         const fieldOwner = target && target.type === 'Attribute'
           ? this._objectBinding(target.value, caller) : null;
         if (method === '__init__' && target && (target.type === 'Name' || fieldOwner)) {
-          this._scanCallInputs(value, caller, depth);
+          const inputs = this._scanCallInputs(value, caller, depth);
           const base = target.type === 'Name'
             ? (caller === 'Main' ? target.id : caller + '_' + target.id)
             : (this._callerClass[target.attr] ? fieldOwner.participant + '_' + target.attr : target.attr);
@@ -2502,7 +2506,7 @@
           if (!this._dataClasses[clsName]) {
             this._ensureParticipant(id, clsName);
             this.lines.push('create ' + id, caller + ' --> ' + id + ': <<create>>', 'activate ' + id);
-            this._maybeFollow(clsName, '__init__', id, depth, value);
+            this._maybeFollow(clsName, '__init__', id, depth, inputs);
             this.lines.push('deactivate ' + id);
           }
           this._assignBinding(target, { type: clsName, participant: id }, caller);
@@ -2582,9 +2586,10 @@
         const bindings = scopes.map(scope => (scope.fields[owner] || {})[name]);
         const first = bindings[0];
         if (first && bindings.every(binding => binding && binding.type === first.type)) {
+          const sameParticipant = bindings.every(binding => binding.participant === first.participant);
+          if (!sameParticipant) this.diagnostics.add('identity', owner + '.' + name);
           this.fieldBindings[owner][name] = { type: first.type,
-            participant: bindings.every(binding => binding.participant === first.participant)
-              ? first.participant : this._symbolicParticipantId('merged-field', owner, name,
+            participant: sameParticipant ? first.participant : this._symbolicParticipantId('merged-field', owner, name,
                 first.type, owner + '_' + name) };
         } else {
           this.fieldBindings[owner][name] = null;
@@ -2727,6 +2732,7 @@
   PythonSequenceDiagramGenerator.prototype._processFor = function (stmt, caller, depth) {
     this._scanExprForCalls(stmt.iter, caller, depth);
     const originalScope = this._scopeSnapshot();
+    if (stmt.target) this._assignBinding(stmt.target, null, caller);
     this._inferLoopVarType(stmt, caller);
     const body = this._collectFragment(stmt.body, caller, depth, true);
     return this._loopFlow(body, originalScope, 'loop [for ' + unparse(stmt.target, caller) + ' in ' + unparse(stmt.iter, caller) + ']');
@@ -2772,15 +2778,18 @@
 
   PythonSequenceDiagramGenerator.prototype._scanCallInputs = function (call, caller, depth) {
     // Python evaluates the receiver before arguments, then invokes the method.
-    const receiverBinding = call.func && call.func.type === 'Attribute'
-      ? this._scanExprForCalls(call.func.value, caller, depth) : null;
-    for (var i = 0; i < (call.args || []).length; i++) {
-      this._scanExprForCalls(call.args[i], caller, depth);
+    // Keep each evaluated binding: later arguments may replace the source field.
+    const evaluate = expression => this._scanExprForCalls(expression, caller, depth)
+      || this._objectBinding(expression, caller);
+    const receiverBinding = call.func && call.func.type === 'Attribute' ? evaluate(call.func.value) : null;
+    const resolved = this._resolveCall(call, caller);
+    const positional = (call.args || []).map(evaluate);
+    const keywords = new Map();
+    for (const keyword of call.keywords || []) {
+      const binding = evaluate(keyword.value);
+      if (keyword.arg) keywords.set(keyword.arg, binding);
     }
-    for (var i = 0; i < (call.keywords || []).length; i++) {
-      this._scanExprForCalls(call.keywords[i].value, caller, depth);
-    }
-    return receiverBinding;
+    return { receiverBinding, resolved, positional, keywords };
   };
 
   /**
@@ -2799,9 +2808,9 @@
    */
   PythonSequenceDiagramGenerator.prototype._processCall = function (call, caller, depth, returnCaptured, returnBinding) {
     if (call.inferenceIncomplete) this.diagnostics.add('unsupported', 'Expression is only partly parsed');
-    const computedReceiverBinding = this._scanCallInputs(call, caller, depth);
+    const inputs = this._scanCallInputs(call, caller, depth);
 
-    var resolved = this._resolveCall(call, caller);
+    var resolved = inputs.resolved;
     if (!resolved) {
       const name = callName(call);
       if (!['print', 'len', 'range', 'str', 'int', 'float', 'bool', 'list', 'dict', 'set', 'tuple', 'super', 'isinstance', 'enumerate', 'zip', 'min', 'max', 'sum'].includes(name)) {
@@ -2824,7 +2833,7 @@
     // A known object takes precedence over the class-based fallback.
     var receiver = call.func && call.func.type === 'Attribute' ? call.func.value : null;
     var isSuper = receiver && receiver.type === 'Call' && this._isSuperCall(receiver);
-    const receiverBinding = this._objectBinding(receiver, caller) || computedReceiverBinding;
+    const receiverBinding = inputs.receiverBinding;
     var calleeId = receiverBinding ? receiverBinding.participant
       : method === '__init__' && !isSuper ? null : this._calleeIdFor(clsName, caller, attrHint);
     if (!receiverBinding && receiver && receiver.type === 'Call' && !this._isSuperCall(receiver)) {
@@ -2841,7 +2850,7 @@
       this.lines.push('create ' + calleeId);
       this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
       this.lines.push('activate ' + calleeId);
-      this._maybeFollow(clsName, '__init__', calleeId, depth, call);
+      this._maybeFollow(clsName, '__init__', calleeId, depth, inputs);
       this.lines.push('deactivate ' + calleeId);
       return { type: clsName, participant: calleeId };
     } else if (method === '__init__' && isSuper) {
@@ -2849,20 +2858,20 @@
       this._callerClass[calleeId] = clsName;
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
       this.lines.push('activate ' + calleeId);
-      this._maybeFollow(clsName, method, calleeId, depth, call);
+      this._maybeFollow(clsName, method, calleeId, depth, inputs);
       this.lines.push('deactivate ' + calleeId);
     } else if (calleeId === caller) {
       // Self-call — nested activation bar on same lifeline (UML spec: stacked rectangles)
       this.lines.push(caller + ' -> ' + caller + ': ' + label);
       this.lines.push('activate ' + caller);
-      this._maybeFollow(clsName, method, calleeId, depth, call);
+      this._maybeFollow(clsName, method, calleeId, depth, inputs);
       this.lines.push('deactivate ' + caller);
     } else {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
       this.lines.push('activate ' + calleeId);
-      this._maybeFollow(clsName, method, calleeId, depth, call);
+      this._maybeFollow(clsName, method, calleeId, depth, inputs);
       // Return/reply message — only when return value is captured AND method has
       // a non-void return type (Cheers & Lin 2020 + Ambler G172: "Label return
       // messages only when not obvious." Void/uncaptured returns are obvious.)
@@ -2918,18 +2927,14 @@
     return null;
   };
 
-  PythonSequenceDiagramGenerator.prototype._argumentBindings = function (node, call) {
+  PythonSequenceDiagramGenerator.prototype._argumentBindings = function (node, inputs) {
     var bindings = { types: {}, participants: {} };
     var parameters = (node.args ? node.args.args : []).filter(function (arg) {
       return arg.arg !== 'self' && arg.arg !== 'cls';
     });
-    for (var i = 0; call && i < parameters.length; i++) {
+    for (var i = 0; inputs && i < parameters.length; i++) {
       var parameter = parameters[i].arg;
-      var actual = (call.args || [])[i];
-      for (var j = 0; j < (call.keywords || []).length; j++) {
-        if (call.keywords[j].arg === parameter) actual = call.keywords[j].value;
-      }
-      const binding = this._objectBinding(actual, this._scopeCaller);
+      const binding = inputs.keywords.has(parameter) ? inputs.keywords.get(parameter) : inputs.positional[i];
       if (!binding) continue;
       bindings.types[parameter] = binding.type;
       bindings.participants[parameter] = binding.participant;
@@ -2937,7 +2942,7 @@
     return bindings;
   };
 
-  PythonSequenceDiagramGenerator.prototype._maybeFollow = function (clsName, methodName, calleeId, depth, call) {
+  PythonSequenceDiagramGenerator.prototype._maybeFollow = function (clsName, methodName, calleeId, depth, inputs) {
     var key = clsName + '::' + methodName;
 
     var node = this._findMethodNode(clsName, methodName);
@@ -2961,14 +2966,12 @@
 
     if (!this.diagnostics.canExpand(clsName + '.' + methodName, Boolean(this._callStack[key]), depth, this.MAX_DEPTH)) return;
     this._callStack[key] = true;
-    var bindings = this._argumentBindings(node, call);
+    var bindings = this._argumentBindings(node, inputs);
     var savedScope = this._scopeSnapshot();
-    var savedCaller = this._scopeCaller;
     var savedIdentity = this._scopeIdentity;
     var savedRefs = this._referencedVars;
     this.varTypes = {};
     this.varParticipants = bindings.participants;
-    this._scopeCaller = calleeId;
     this._scopeIdentity = ++this._invocationCount;
 
     var pt = (this.paramTypes[clsName] || {})[methodName] || {};
@@ -2982,7 +2985,6 @@
     this._processStmts(node.body, calleeId, depth + 1);
 
     this._restoreScope(savedScope, true);
-    this._scopeCaller = savedCaller;
     this._scopeIdentity = savedIdentity;
     this._referencedVars = savedRefs;
     delete this._callStack[key];
@@ -3122,9 +3124,11 @@
     if (!values.length) return;
     this._scanExprForCalls(values[0], caller, depth);
     if (values.length === 1) return;
+    const skippedScope = this._scopeSnapshot();
     var start = this.lines.length;
     this._scanBooleanCalls(values.slice(1), operator, caller, depth);
     var conditionalLines = this.lines.splice(start);
+    this._mergeScopes([skippedScope, this._scopeSnapshot()]);
     if (!this._hasMessages(conditionalLines)) return;
     var condition = unparse(values[0], caller);
     if (operator === 'or') condition = 'not (' + condition + ')';
@@ -3137,9 +3141,11 @@
     if (index >= node.comparators.length) return;
     this._scanExprForCalls(node.comparators[index], caller, depth);
     if (index + 1 === node.comparators.length) return;
+    const skippedScope = this._scopeSnapshot();
     var start = this.lines.length;
     this._scanComparisonCalls(node, index + 1, caller, depth);
     var tail = this.lines.splice(start);
+    this._mergeScopes([skippedScope, this._scopeSnapshot()]);
     if (!this._hasMessages(tail)) return;
     var preceding = { type: 'Compare', left: index === 0 ? node.left : node.comparators[index - 1],
       ops: [node.ops[index]], comparators: [node.comparators[index]] };

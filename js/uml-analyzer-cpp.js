@@ -582,9 +582,9 @@
           if (type.reference || field.type.includes('*')) receiver.fields.set(field.name, values[0]);
         }
       }
-      const result = this.walk(method.body, context);
+      const completion = this.walk(method.body, context);
       this.activeCalls.delete(key);
-      return result;
+      return completion?.kind === 'return' ? completion.value : null;
     }
 
     // Parse calls as expressions so argument calls precede the enclosing call,
@@ -592,6 +592,10 @@
     expression(tokens, context) {
       if (++this.steps > 5000) throw new SequenceLimitError();
       if (tokens.some(token => ['&&', '||', '?'].includes(token))) this.diagnostics.add('conditional');
+      if (tokens.some((token, index) => token === 'new' ||
+          (['make_unique', 'make_shared'].includes(token) && tokens[index + 1] === '<'))) {
+        this.diagnostics.add('unsupported', 'Allocation expressions outside declaration construction');
+      }
       if (tokens.some((token, index) => ['co_await', 'co_yield'].includes(token) ||
           (token === '[' && ['.', '->', '(', '{'].includes(tokens[closing(tokens, index) + 1])))) this.diagnostics.add('unsupported', 'Coroutine, lambda, or indexed receiver');
       let result = null, i = 0;
@@ -638,13 +642,24 @@
     }
 
     construction(type, initializer, context) {
+      // Deduced values and pointer wrappers take their object type from the
+      // initializer; a known value class still owns its constructor arguments.
+      const wrapsValue = type.reference || !type.node || type.multiplicity === '0..1';
+      if (wrapsValue && ['(', '{'].includes(initializer[0])) {
+        const end = closing(initializer, 0);
+        if (end !== initializer.length - 1) return null;
+        const constructed = this.construction(type, ['=', ...initializer.slice(1, end)], context);
+        if (constructed || type.reference || !type.node) return constructed;
+        // A nullable value wrapper may instead forward ordinary constructor
+        // arguments, such as optional<Worker>{1} for Worker(int).
+      }
       let node = type.node, open = -1;
-      const newAt = initializer.indexOf('new');
-      const makerAt = initializer.findIndex(token => token === 'make_unique' || token === 'make_shared');
-      if (newAt >= 0) {
-        const end = typeEnd(initializer, newAt + 1);
-        node = this.model.type(initializer.slice(newAt + 1, end), context.scope).node; open = end;
-      } else if (makerAt >= 0 && initializer[makerAt + 1] === '<') {
+      const start = initializer[0] === '=' ? 1 : 0;
+      const makerAt = initializer[start] === 'std' && initializer[start + 1] === '::' ? start + 2 : start;
+      if (initializer[start] === 'new') {
+        const end = typeEnd(initializer, start + 1);
+        node = this.model.type(initializer.slice(start + 1, end), context.scope).node; open = end;
+      } else if (['make_unique', 'make_shared'].includes(initializer[makerAt]) && initializer[makerAt + 1] === '<') {
         const end = closing(initializer, makerAt + 1);
         node = this.model.type(initializer.slice(makerAt + 2, end), context.scope).node; open = end + 1;
       } else if (initializer[0] === '=') {
@@ -655,6 +670,8 @@
       } else if (initializer[0] === '(' || initializer[0] === '{') open = 0;
       else if (initializer.length || type.reference || type.multiplicity === '0..1' || type.collection) return null;
       if (!node || type.collection) return null;
+      if (open >= 0 && open < initializer.length &&
+          (!['(', '{'].includes(initializer[open]) || closing(initializer, open) !== initializer.length - 1)) return null;
       const args = open >= 0 && pairs[initializer[open]] ? initializer.slice(open + 1, closing(initializer, open)) : [];
       return { node, args };
     }
@@ -686,6 +703,10 @@
         }
       } else {
         value = this.expression(initializer[0] === '=' ? initializer.slice(1) : initializer, context);
+        if (value && (type.node || typeTokens.includes('auto')) && !type.reference && !type.collection &&
+            initializer[0] === '=' && initializer.length === 2) {
+          this.diagnostics.add('unsupported', 'C++ value-copy initialization');
+        }
         if (!value && type.node && !type.collection) value = this.entity(name, type.node);
       }
       context.vars.set(name, value);
@@ -744,8 +765,9 @@
       const branch = { ...context, vars: new Map(context.vars), fragment: true };
       try {
         for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
-          this.process(node, branch);
-          if (this.isAbrupt(node)) break;
+          const completion = this.process(node, branch);
+          // A loop capture lists the body, increment, and condition separately.
+          if (completion && completion.kind !== 'continue') break;
         }
         if (states) states.push(this.snapshot(branch));
         return this.lines;
@@ -766,7 +788,7 @@
       }
       if (this.isAbrupt(node)) {
         if (context.fragment || node.tokens[0] === 'throw') this.diagnostics.add('control');
-        return this.expression(node.tokens.slice(1), context);
+        return { kind: node.tokens[0], value: this.expression(node.tokens.slice(1), context) };
       }
       if (node.kind === 'simple') return this.simple(node.tokens, context);
       if (node.kind === 'if') {
@@ -830,8 +852,8 @@
       while (i < tokens.length) {
         if (++this.steps > 5000) throw new SequenceLimitError();
         const node = statement(tokens, i);
-        const result = this.process(node, context);
-        if (this.isAbrupt(node)) return result;
+        const completion = this.process(node, context);
+        if (completion) return completion;
         i = node.end;
       }
       return null;

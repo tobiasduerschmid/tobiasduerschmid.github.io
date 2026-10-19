@@ -99,6 +99,20 @@ identity at a join only when the considered paths agree. C++ also isolates
 per-object field writes. Otherwise an `identity` warning accompanies a symbolic
 receiver. This is a bounded abstraction, not whole-program points-to analysis.
 
+Python and TypeScript capture the receiver and each argument's object identity
+in evaluation order, before later arguments can reassign the source variable or
+field. Python short-circuit expressions merge evaluated and skipped states;
+disagreeing field identities use a symbolic receiver with an `identity` warning.
+Loop targets discard their previous bindings before element types are inferred.
+Java handles every variable in a local declaration and evaluates `else if`
+conditions within the preceding false branch, including unbraced nested bodies.
+C++ direct/list initialization preserves borrowed pointer/reference identities.
+Nested blocks propagate returns, breaks, and continues; unsupported value-copy
+initialization and allocation expressions retain explicit warnings. Early exits
+inside conditional or loop fragments still warn when continuation is approximate.
+An `auto` copy warns conservatively when pointer copying and object copying cannot
+be distinguished; explicitly borrowed `auto&`/`auto&&` bindings retain identity.
+
 Java, TypeScript, and C++ include loop initialization, condition calls, increments,
 and rechecks in evaluation order. The initial `while`/`for` check precedes the
 loop; the repeated check follows the body and increment. A `do` check follows

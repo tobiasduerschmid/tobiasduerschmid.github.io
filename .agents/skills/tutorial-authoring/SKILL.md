@@ -2165,6 +2165,13 @@ channel.
   headers preserve initialization, check, body, increment, and recheck order.
   TypeScript logical operands and ternaries use conditional fragments. Java
   finally follows try/catch; Java/TypeScript switch selectors are evaluated first.
+  Python/TypeScript capture receiver and argument identities in evaluation order.
+  Python short-circuit state joins warn when field identities disagree; loop targets
+  discard stale bindings. Java handles multiple local declarators and places else-if
+  predicate calls inside the preceding false branch, including unbraced nested bodies.
+  C++ direct/list initialization preserves borrowed references; nested blocks propagate
+  abrupt completion. Unsupported value copies, nested allocation expressions, and
+  approximate continuation after conditional/loop exits retain warnings.
   Recursion warnings do not claim that termination has been proved impossible. See `docs/uml-code-labs.md` for the contract.
   Worker operations have a ten-second deadline. A timeout terminates the
   worker and runs the newest queued edits in a replacement; timed-out work

@@ -1586,6 +1586,35 @@
   /* ── Variable declaration ──────────────────────────────────── */
 
   JavaSequenceDiagramGenerator.prototype._processVarDecl = function (tokens, i, caller, depth) {
+    let typeStart = i;
+    while (tokens[typeStart]?.type === 'annotation' || tokens[typeStart]?.value === 'final') typeStart++;
+    const declarationStart = this._readType(tokens, typeStart);
+    const end = this._findSemicolon(tokens, declarationStart);
+    const prefix = tokens.slice(i, declarationStart);
+    let start = declarationStart, nesting = 0;
+    for (let cursor = start; cursor <= end; cursor++) {
+      const value = tokens[cursor]?.value;
+      if (value === 'new') {
+        // Type arguments belong to one constructor, regardless of their commas.
+        cursor = this._readType(tokens, cursor + 1) - 1;
+        continue;
+      }
+      if (['(', '[', '{'].includes(value)) nesting++;
+      if ([')', ']', '}'].includes(value)) nesting--;
+      // A declaration comma is followed by a variable, unlike generic arguments.
+      let next = cursor + 2;
+      while (tokens[next]?.value === '[' && tokens[next + 1]?.value === ']') next += 2;
+      const nextVariable = tokens[cursor + 1]?.type === 'ident' &&
+        (next >= end || ['=', ','].includes(tokens[next]?.value));
+      if (cursor === end || (value === ',' && nesting === 0 && nextVariable)) {
+        this._processVariableDeclaration(prefix.concat(tokens.slice(start, cursor), { type: 'punct', value: ';' }), 0, caller, depth);
+        start = cursor + 1;
+      }
+    }
+    return end < tokens.length ? end + 1 : end;
+  };
+
+  JavaSequenceDiagramGenerator.prototype._processVariableDeclaration = function (tokens, i, caller, depth) {
     // Skip modifiers
     while (i < tokens.length && (tokens[i].type === 'annotation' ||
            (tokens[i].type === 'keyword' && (tokens[i].value === 'final' || tokens[i].value === 'var')))) i++;
@@ -1698,109 +1727,34 @@
   /* ── If/else → alt/opt fragment ────────────────────────────── */
 
   JavaSequenceDiagramGenerator.prototype._processIf = function (tokens, i, caller, depth) {
-    i++; // skip 'if'
-    // Extract condition
-    var condResult = this._extractParenContents(tokens, i);
-    i = condResult.endIdx;
-    this._scanTokensForCalls(condResult.tokens, caller, depth);
-    var cond = condResult.tokens.map(function (t) { return t.value; }).join(' ');
+    if (++this._statementVisits > 2000) throw new SequenceLimitError();
+    const condition = this._extractParenContents(tokens, i + 1);
+    this._scanTokensForCalls(condition.tokens, caller, depth);
+    const label = condition.tokens.map(token => token.value).join(' ');
+    const baseline = this._captureBindings(), states = [];
+    const thenBlock = this._extractBlock(tokens, condition.endIdx);
+    const thenLines = this._collectFragmentLines(thenBlock.tokens, caller, depth, states);
+    i = thenBlock.endIdx;
+    const hasElse = tokens[i]?.value === 'else';
+    let elseLines = [];
+    if (hasElse && tokens[i + 1]?.value === 'if') {
+      // An else-if predicate is evaluated only on the preceding false path.
+      const alternative = this._captureFragment(() => this._processIf(tokens, i + 1, caller, depth), states);
+      elseLines = alternative.lines;
+      i = alternative.result;
+    } else if (hasElse) {
+      const elseBlock = this._extractBlock(tokens, i + 1);
+      elseLines = this._collectFragmentLines(elseBlock.tokens, caller, depth, states);
+      i = elseBlock.endIdx;
+    } else states.push(baseline);
 
-    const baseline = this._captureBindings();
-    const states = [];
-
-    // Then block
-    var thenResult = this._extractBlock(tokens, i);
-    i = thenResult.endIdx;
-    var thenLines = this._collectFragmentLines(thenResult.tokens, caller, depth, states);
-
-    // Check for else
-    if (i < tokens.length && tokens[i].value === 'else') {
-      i++;
-      // else if
-      if (i < tokens.length && tokens[i].value === 'if') {
-        var elseIfResult = this._processIfBranches(tokens, i, caller, depth, states);
-        i = elseIfResult.endIdx;
-        if (!elseIfResult.exhaustive) states.push(baseline);
-
-        var branches = [{ header: 'alt [' + cond + ']', lines: thenLines }];
-        branches.push.apply(branches, elseIfResult.branches);
-
-        if (this._hasMessages(branches)) {
-          for (var b = 0; b < branches.length; b++) {
-            this.lines.push(branches[b].header);
-            this.lines.push.apply(this.lines, branches[b].lines);
-          }
-          this.lines.push('end');
-        } else {
-          for (var b = 0; b < branches.length; b++)
-            this.lines.push.apply(this.lines, branches[b].lines);
-        }
-      } else {
-        // else block
-        var elseResult = this._extractBlock(tokens, i);
-        i = elseResult.endIdx;
-        var elseLines = this._collectFragmentLines(elseResult.tokens, caller, depth, states);
-
-        var branches = [
-          { header: 'alt [' + cond + ']', lines: thenLines },
-          { header: 'else [else]', lines: elseLines }
-        ];
-        if (this._hasMessages(branches)) {
-          for (var b = 0; b < branches.length; b++) {
-            this.lines.push(branches[b].header);
-            this.lines.push.apply(this.lines, branches[b].lines);
-          }
-          this.lines.push('end');
-        } else {
-          for (var b = 0; b < branches.length; b++)
-            this.lines.push.apply(this.lines, branches[b].lines);
-        }
-      }
-    } else {
-      states.push(baseline);
-      // No else → opt
-      if (this._anyMessages(thenLines)) {
-        this.lines.push('opt [' + cond + ']');
-        this.lines.push.apply(this.lines, thenLines);
-        this.lines.push('end');
-      } else {
-        this.lines.push.apply(this.lines, thenLines);
-      }
-    }
+    if (this._anyMessages(thenLines) || this._anyMessages(elseLines)) {
+      this.lines.push((hasElse ? 'alt' : 'opt') + ' [' + label + ']', ...thenLines);
+      if (hasElse) this.lines.push('else [else]', ...elseLines);
+      this.lines.push('end');
+    } else this.lines.push(...thenLines, ...elseLines);
     this._mergeBindings(states, baseline);
     return i;
-  };
-
-  JavaSequenceDiagramGenerator.prototype._processIfBranches = function (tokens, i, caller, depth, states) {
-    var branches = [];
-    let exhaustive = false;
-    while (i < tokens.length && tokens[i].value === 'if') {
-      i++; // skip 'if'
-      var condResult = this._extractParenContents(tokens, i);
-      if (hasCallTokens(condResult.tokens)) this.diagnostics.add('unsupported', 'Calls in else-if conditions are omitted');
-      i = condResult.endIdx;
-      var cond = condResult.tokens.map(function (t) { return t.value; }).join(' ');
-
-      var blockResult = this._extractBlock(tokens, i);
-      i = blockResult.endIdx;
-      var branchLines = this._collectFragmentLines(blockResult.tokens, caller, depth, states);
-      branches.push({ header: 'else [' + cond + ']', lines: branchLines });
-
-      if (i < tokens.length && tokens[i].value === 'else') {
-        i++;
-        if (i < tokens.length && tokens[i].value === 'if') continue;
-        exhaustive = true;
-        // Final else
-        var elseResult = this._extractBlock(tokens, i);
-        i = elseResult.endIdx;
-        var elseLines = this._collectFragmentLines(elseResult.tokens, caller, depth, states);
-        branches.push({ header: 'else [else]', lines: elseLines });
-        break;
-      } else {
-        break;
-      }
-    }
-    return { branches: branches, endIdx: i, exhaustive };
   };
 
   /* ── Loop → loop fragment ──────────────────────────────────── */
@@ -2388,20 +2342,23 @@
     }
   };
 
-  JavaSequenceDiagramGenerator.prototype._collectFragmentLines = function (tokens, caller, depth, states) {
+  JavaSequenceDiagramGenerator.prototype._captureFragment = function (action, states) {
     const baseline = this._captureBindings();
-    var snapshot = this.lines.length;
+    const snapshot = this.lines.length;
     this._fragmentDepth = (this._fragmentDepth || 0) + 1;
     try {
-      this._processTokenBlock(tokens, caller, depth);
+      const result = action();
       if (states) states.push(this._captureBindings());
+      return { lines: this.lines.slice(snapshot), result };
     } finally {
+      this.lines.length = snapshot;
       this._fragmentDepth--;
       this._restoreBindings(baseline);
     }
-    var newLines = this.lines.slice(snapshot);
-    this.lines.length = snapshot;
-    return newLines;
+  };
+
+  JavaSequenceDiagramGenerator.prototype._collectFragmentLines = function (tokens, caller, depth, states) {
+    return this._captureFragment(() => this._processTokenBlock(tokens, caller, depth), states).lines;
   };
 
   JavaSequenceDiagramGenerator.prototype._hasMessages = function (branches) {
@@ -2437,6 +2394,21 @@
 
   JavaSequenceDiagramGenerator.prototype._extractBlock = function (tokens, i) {
     if (i >= tokens.length) return { tokens: [], endIdx: i };
+    // A compound statement without braces still owns its entire nested body.
+    if (['if', 'while', 'for'].includes(tokens[i].value)) {
+      if (++this._statementVisits > 2000) throw new SequenceLimitError();
+      const condition = this._extractParenContents(tokens, i + 1);
+      let end = this._extractBlock(tokens, condition.endIdx).endIdx;
+      if (tokens[i].value === 'if' && tokens[end]?.value === 'else') end = this._extractBlock(tokens, end + 1).endIdx;
+      return { tokens: tokens.slice(i, end), endIdx: end };
+    }
+    if (tokens[i].value === 'do') {
+      if (++this._statementVisits > 2000) throw new SequenceLimitError();
+      let end = this._extractBlock(tokens, i + 1).endIdx;
+      if (tokens[end]?.value === 'while') end = this._extractParenContents(tokens, end + 1).endIdx;
+      if (tokens[end]?.value === ';') end++;
+      return { tokens: tokens.slice(i, end), endIdx: end };
+    }
     // Single statement (no braces)
     if (tokens[i].value !== '{') {
       var end = this._findStmtEnd(tokens, i);

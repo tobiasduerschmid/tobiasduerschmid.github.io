@@ -1039,9 +1039,7 @@
         var clsName = _getNodeText(decl.initializer.expression, sf);
         if (this.allTypeNames.has(clsName)) {
           // Arguments are evaluated before the constructed object's body runs.
-          for (const argument of decl.initializer.arguments || []) {
-            this._scanExprForCalls(argument, sf, caller, depth);
-          }
+          const bindings = this._evaluateArguments(decl.initializer.arguments, sf, caller, depth);
           const instance = this._allocationId(varName);
           this.varTypes[varName]    = clsName;
           this.varParticipants[varName] = instance;
@@ -1051,7 +1049,6 @@
           this.lines.push('create ' + instance);
           this.lines.push(caller + ' --> ' + instance + ': <<create>>');
           this.lines.push('activate ' + instance);
-          const bindings = Array.from(decl.initializer.arguments || [], argument => this._expressionBinding(argument, caller));
           this._maybeFollow(clsName, 'constructor', instance, depth, bindings);
           this.lines.push('deactivate ' + instance);
           continue;
@@ -1080,6 +1077,10 @@
       expression = expression.expression;
     }
     if (!expression) return null;
+    if (ts.isBinaryExpression(expression) && expression.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+        ts.isIdentifier(expression.left)) {
+      return this._expressionBinding(expression.right, caller);
+    }
     if (ts.isNewExpression(expression)) return this._constructedObjects.get(expression) || null;
     if (ts.isIdentifier(expression) && this.varTypes[expression.text]) {
       return { className: this.varTypes[expression.text], participantId: this.varParticipants[expression.text] };
@@ -1382,6 +1383,15 @@
 
   /* ── Call processing ──────────────────────────────────────── */
 
+  // Later arguments may rebind a variable used by an earlier argument. Capture
+  // each evaluated value before continuing, as JavaScript's argument list does.
+  SequenceDiagramGenerator.prototype._evaluateArguments = function (args, sf, caller, depth) {
+    return Array.from(args || [], argument => {
+      this._scanExprForCalls(argument, sf, caller, depth);
+      return this._expressionBinding(argument, caller);
+    });
+  };
+
   SequenceDiagramGenerator.prototype._processCall = function (call, sf, caller, depth) {
     var ts = this.ts;
 
@@ -1394,13 +1404,9 @@
       if (call.expression.questionDotToken) this.diagnostics.add('conditional', 'Optional receiver');
     }
 
-    // Scan arguments first (they execute before the call)
-    if (call.arguments) {
-      for (var i = 0; i < call.arguments.length; i++)
-        this._scanExprForCalls(call.arguments[i], sf, caller, depth);
-    }
-
+    // The receiver is captured before argument evaluation can rebind it.
     var resolved = this._resolveCall(call, sf, caller);
+    const bindings = this._evaluateArguments(call.arguments, sf, caller, depth);
     if (!resolved) {
       const name = _getNodeText(call.expression, sf);
       if (!/^console\.(log|warn|error|info)$/.test(name)) this.diagnostics.add('unresolved', name);
@@ -1413,8 +1419,6 @@
 
     var calleeId = resolved.participantId || this._calleeIdFor(clsName, caller, resolved.attrHint);
     var label    = this._buildCallLabel(call, sf, method);
-    const bindings = Array.from(call.arguments || [], argument => this._expressionBinding(argument, caller));
-
     var isSuper = resolved.isSuper;
 
     if (method === 'constructor' && !isSuper) {
@@ -1607,9 +1611,7 @@
       return;
     }
     if (ts.isNewExpression(node)) {
-      for (const argument of node.arguments || []) {
-        this._scanExprForCalls(argument, sf, caller, depth);
-      }
+      const bindings = this._evaluateArguments(node.arguments, sf, caller, depth);
       var clsName = _getNodeText(node.expression, sf);
       if (this.allTypeNames.has(clsName) && !this._dataClasses.has(clsName)) {
         // Treat as constructor call — resolve manually since _resolveCall
@@ -1621,7 +1623,6 @@
         this.lines.push('create ' + calleeId);
         this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
         this.lines.push('activate ' + calleeId);
-        const bindings = Array.from(node.arguments || [], argument => this._expressionBinding(argument, caller));
         this._maybeFollow(clsName, 'constructor', calleeId, depth, bindings);
         this.lines.push('deactivate ' + calleeId);
       }
