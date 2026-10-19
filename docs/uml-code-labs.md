@@ -46,6 +46,13 @@ unrolled loop counts; those predictions require reasoning about the code.
   the preference. `ts` and `typescript` refer to the same saved language. Settings
   exposes the choice, and the storage inventory can delete it. If storage is
   blocked, selectors still synchronize for the current page.
+- `js/sebook-language-viewport.js` preserves the active selector's viewport
+  position while synchronized examples resize, including delayed Monaco and
+  diagram updates. The preference module emits `sebook:before-code-language-change`
+  before notifying views and `sebook:code-language-changed` afterward. Both chapter
+  layouts and the Observer reader load the viewport module before their views.
+  External preference changes anchor visible prose when no selector is focused.
+  The next scroll/navigation gesture releases the anchor; no position is persisted.
 - `js/sebook-language-switcher.js` owns the language tabs shared with static
   code examples: selection, arrow/Home/End keys, and tab/panel accessibility.
   Both SEBook layouts load the preference module and then this script before

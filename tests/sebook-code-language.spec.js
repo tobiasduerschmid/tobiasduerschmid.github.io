@@ -5,6 +5,83 @@ const classChapter = '/SEBook/uml_class_diagram.html';
 const observerChapter = '/SEBook/designpatterns/observer.html';
 const tab = (scope, name) => scope.getByRole('tab', { name, exact: true });
 
+async function trackVerticalPosition(locator) {
+  await locator.evaluate(element => {
+    const start = element.getBoundingClientRect().top;
+    let maximumShift = 0;
+    let frame;
+    let afterLayout;
+    function sample() {
+      // ResizeObserver runs after animation callbacks but before paint. Sample
+      // in the next task so unfinished layout is not mistaken for a visible jump.
+      afterLayout = setTimeout(() => {
+        maximumShift = Math.max(maximumShift, Math.abs(element.getBoundingClientRect().top - start));
+        frame = requestAnimationFrame(sample);
+      }, 0);
+    }
+    frame = requestAnimationFrame(sample);
+    window.stopPositionTracking = () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(afterLayout);
+      return maximumShift;
+    };
+  });
+}
+
+for (const { width, input, nativeAnchoring = true } of [
+  { width: 1280, input: 'pointer', nativeAnchoring: false },
+  { width: 1280, input: 'pointer' },
+  { width: 1280, input: 'keyboard' },
+  { width: 390, input: 'pointer' }
+]) {
+  test(`language changes keep the current example in place (${width}px, ${input}, native anchoring ${nativeAnchoring})`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(classChapter);
+    // Exercise browsers/settings where native scroll anchoring cannot help,
+    // as well as its interaction with the site's own position preservation.
+    if (!nativeAnchoring) await page.addStyleTag({ content: 'html { overflow-anchor: none; }' });
+    const lab = page.getByRole('region', { name: 'UML code lab: One reference or a collection', exact: true });
+    const tabs = lab.getByRole('tablist');
+    await expect(page.getByRole('textbox', { name: /Python code/ })).toHaveCount(4);
+    await expect(page.getByText('Diagram updated.', { exact: true })).toHaveCount(4);
+    // A learner's longer draft above the current example makes the height
+    // difference substantial even when the initial diagram sets a minimum.
+    const earlierLab = page.getByRole('region', { name: 'UML code lab: Member visibility', exact: true });
+    const earlierEditor = earlierLab.getByRole('textbox', { name: /Python code/ });
+    await earlierEditor.focus();
+    await earlierEditor.press('ControlOrMeta+Home');
+    await page.keyboard.insertText('# Notes in a longer draft\n'.repeat(40));
+    await expect.poll(async () => (await earlierLab.boundingBox()).height).toBeGreaterThan(1000);
+    await expect(page.getByText('Diagram updated.', { exact: true })).toHaveCount(4);
+    await tabs.evaluate(element => window.scrollBy({
+      top: element.getBoundingClientRect().top - 240, behavior: 'instant'
+    }));
+    if (input === 'keyboard') await tab(tabs, 'Python').focus();
+    const before = (await tabs.boundingBox()).y;
+    await trackVerticalPosition(tabs);
+    if (input === 'keyboard') await tab(tabs, 'Python').press('ArrowRight');
+    else await tab(tabs, 'Java').click();
+    await expectLanguage(page, 'Java');
+    await expect(page.getByText('Diagram updated.', { exact: true })).toHaveCount(4);
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await expect.poll(async () => Math.abs((await tabs.boundingBox()).y - before)).toBeLessThan(1);
+    expect(await page.evaluate(() => window.stopPositionTracking()), 'No intermediate vertical jump').toBeLessThan(1);
+    await expect(tab(tabs, 'Java')).toBeFocused();
+
+    // Shrinking the code above the same selector must preserve position too.
+    await tab(tabs, 'Python').click();
+    await expectLanguage(page, 'Python');
+    await expect(page.getByText('Diagram updated.', { exact: true })).toHaveCount(4);
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await expect.poll(async () => Math.abs((await tabs.boundingBox()).y - before)).toBeLessThan(1);
+
+    // Position preservation must not trap the reader when they scroll onward.
+    await page.mouse.move(width - 30, 500);
+    await page.mouse.wheel(0, 300);
+    await expect.poll(async () => (await tabs.boundingBox()).y).toBeLessThan(before - 200);
+  });
+}
+
 async function expectLanguage(page, name) {
   const selectors = page.getByRole('tablist').filter({ has: tab(page, name) });
   await expect(selectors).not.toHaveCount(0);

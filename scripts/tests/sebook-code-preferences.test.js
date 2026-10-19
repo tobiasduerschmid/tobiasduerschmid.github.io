@@ -8,14 +8,17 @@ const key = 'sebook-code-language';
 function preferencePage(value = null, blocked = false) {
   const storage = new Map(value === null ? [] : [[key, value]]);
   const events = new Map();
-  const window = {
+  const window = Object.assign(new EventTarget(), {
     localStorage: {
       getItem(name) { if (blocked) throw new Error('Storage blocked'); return storage.get(name) ?? null; },
       setItem(name, value) { if (blocked) throw new Error('Storage blocked'); storage.set(name, value); }
     },
-    addEventListener(name, listener) { events.set(name, listener); }
-  };
-  vm.runInNewContext(source, { window });
+    addEventListener(name, listener) {
+      events.set(name, listener);
+      EventTarget.prototype.addEventListener.call(this, name, listener);
+    }
+  });
+  vm.runInNewContext(source, { window, Event });
   return { preferences: window.SEBookCodePreferences, storage, events };
 }
 

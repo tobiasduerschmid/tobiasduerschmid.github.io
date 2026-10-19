@@ -57,7 +57,7 @@
         else return;
         event.preventDefault();
         preferences.set(buttons[target].dataset.languageOption);
-        buttons[target].focus();
+        buttons[target].focus({ preventScroll: true });
       }, { signal: events.signal });
     });
 

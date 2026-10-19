@@ -19,8 +19,10 @@
 
   function notify(language) {
     if (language === preferred) return;
+    global.dispatchEvent(new Event('sebook:before-code-language-change'));
     preferred = language;
     listeners.forEach(listener => listener());
+    global.dispatchEvent(new Event('sebook:code-language-changed'));
   }
 
   // Return the selector's own ID (including the older "ts" alias).
