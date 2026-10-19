@@ -5,10 +5,10 @@
   // Monaco 0.44 does not expose TypeScript's ModuleDetectionKind enum.
   const MODULE_DETECTION_FORCE = 3;
   // PascalCase names are `type.identifier`. The built-in light theme paints
-  // that token #008080, which is only 4.8:1 on the white editor. #0b5f66 is
-  // the same teal at 7.4:1. Dark mode keeps the built-in cyan, which is
-  // already about 10:1 on the black editor background.
-  const LIGHT_TYPE_NAME = '0b5f66';
+  // that token #008080, which is only 4.8:1 on the white editor. #04383c is
+  // the same teal at 12.8:1, close to the weight of the surrounding code.
+  // Dark mode keeps the built-in cyan, already about 10:1 on black.
+  const LIGHT_TYPE_NAME = '04383c';
 
   function labTheme(monaco) {
     const dark = document.documentElement.classList.contains('dark-mode');
