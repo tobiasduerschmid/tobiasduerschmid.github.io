@@ -141,6 +141,11 @@
   description: A programming style that attempts an operation and handles a specific expected exception if it fails. Keep the protected operation narrow so unrelated failures are not hidden.
   related: [LBYL]
 
+- term: ER
+  definition: Entity-Relationship
+  description: A data-modelling notation. An ER diagram shows the entities a system stores, their attributes and primary keys, and the relationships between them; Chen notation draws entities as rectangles, relationships as diamonds, and attributes as ellipses.
+  related: [UML]
+
 - term: EU
   definition: European Union
   description: A political and economic union of European member states. EU directives set shared rules, such as the copyright rules for text and data mining, that each member state implements in national law.
