@@ -329,6 +329,38 @@ next action without rereading a dense paragraph. This reduces search effort
   lines and indent continuation lines correctly. Verify lists, emphasis, and
   code blocks in both the live tutorial and print view.
 
+### Task Lists Must Preserve the Assessed Decision
+
+Write exercise checklists as **requirements, learner decisions, and checks**.
+First identify what the learner must derive: a visibility convention, type,
+relationship, expression, call sequence, or algorithm. Each task item should
+state the goal or observable contract while leaving that decision to the learner.
+A checklist of exact edits is a solution even when it contains no fenced code.
+
+For a UML-to-Python visibility exercise:
+
+- **Gives away the edit:** “Make balance private: rename it to `__balance`
+  (matches `-` in UML).”
+- **Preserves application:** “Compare the starter's visibility with the target.
+  Refactor mismatched members using the naming conventions taught above;
+  preserve the public operations and their behavior.”
+
+Keep required names, interfaces, outputs, edge cases, and renderer constraints
+explicit. If interpreting a supplied target diagram is the task, keep the target;
+do not translate every marker or arrow into its finished Python edit as well.
+If selecting a representation is the task, state the allowed cardinality and
+behavior rather than supplying the exact collection initializer. When a specific
+API or technique is part of the contract, name it and leave its application to
+the learner. For a worked example, show and explain the solution, then use a
+different case for practice or deliberately fade part of the example.
+
+Review **instructions, task lists, starter comments, visible test labels,
+failure messages, and cumulative hints together**. Remove duplicate answers from
+those surfaces, not just from the checklist. Ask: “After reading everything
+available before the solution reveal, what meaningful decision must the learner
+still make?” Replace prescribed fixes with concrete goals and useful checks,
+not vague requests to “fix the code.” Complete answers belong in `solution:`.
+
 ### Live Coding Over Static Examples
 
 When demonstrating, write code live rather than presenting finished solutions:
@@ -532,8 +564,9 @@ Answer these questions before creating tutorial content:
     framing errors as learning opportunities?
 11. **Can learners skim the instructions?** Are parallel rules/examples/tasks in lists,
     ordered actions numbered, and essential points selectively bolded without losing meaning?
-12. **Do visible test names and cumulative hints preserve the assessed reasoning?** Does
-    each hint add a distinct, actionable step without completing the answer?
+12. **Do task lists, starter comments, visible checks, and cumulative hints preserve
+    the assessed reasoning?** Do they specify the contract without supplying the
+    edits, and does each hint add support without completing the answer?
 
 ---
 

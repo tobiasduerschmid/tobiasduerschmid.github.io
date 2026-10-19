@@ -126,12 +126,11 @@ steps:
 
       ### Your Task
 
-      The file `step1/chatbot.py` already defines `DiscordBot` and `Channel`. Your job is to write the `if __name__ == "__main__":` block so it:
+      The file `step1/chatbot.py` already defines `DiscordBot` and `Channel`. Complete its `if __name__ == "__main__":` block:
 
-      1. Creates a `DiscordBot` instance called `bot`
-      2. Creates a `Channel` instance called `channel`
-      3. Calls `bot.send("Hello, world!")`
-      4. Calls `channel.notify_members("Welcome")`
+      1. **Read** the target from top to bottom. Identify the participants Main creates, then the receiver, method, and argument for each solid arrow.
+      2. **Implement** that scenario using the supplied classes. Use the target's participant names and message text, preserving event order.
+      3. **Check** the live diagram against the target, including who sends each message and which lifeline receives it.
 
       Watch the **Sequence Diagram** panel — it updates live as you type!
 
@@ -154,12 +153,8 @@ steps:
 
 
           if __name__ == "__main__":
-              # Your task: make the diagram match the target.
-              #
-              # 1. Create a DiscordBot called `bot`
-              # 2. Create a Channel called `channel`
-              # 3. Call bot.send("Hello, world!")
-              # 4. Call channel.notify_members("Welcome")
+              # TODO: Translate the target's participants and ordered messages
+              # into an executable scenario.
               pass
         language: python
 
@@ -416,12 +411,13 @@ steps:
 
       ### Your Task
 
-      Open `step2/chatbot.py`. The starter code has the method defined, but the `__main__` block:
+      Open `step2/chatbot.py`. The method is supplied, but the starter's notification is hardcoded:
 
-      1. Does **not** capture the return value of `get_member_count()` — fix that
-      2. Uses a hardcoded string — replace it with an f-string that uses the captured count, keeping the message wording `<count> members online` (for example, `7 members online` when the count is 7).
+      1. **Trace** the target's returned information from the bot to Main and then to the channel. Compare that data flow with the starter.
+      2. **Update** Main so the notification uses the bot's current returned count, with wording `<count> members online` (for example, `7 members online` when the count is 7).
+      3. **Check** the return arrow and notification. Try a different count, including zero, to verify the message depends on the returned value.
 
-      > **Reminder:** This call crosses from Main to the bot, satisfying the different-lifelines rule. Keep the non-`None` return annotation (`-> int` already in the starter), and **assign** the returned value to a variable.
+      > **Renderer constraint:** Keep the supplied `-> int` annotation. For this renderer to draw the reply, the call must cross lifelines and Main must retain its result in a variable. Choose how to use that value in the notification.
 
     uml_files:
       - step2/chatbot.py
@@ -446,10 +442,10 @@ steps:
               bot = DiscordBot()
               channel = Channel()
 
-              # TODO: capture the return value of bot.get_member_count()
+              # TODO: Connect the returned information to the later notification.
               bot.get_member_count()
 
-              # TODO: use the captured count in the notify message
+              # TODO: Keep this notification accurate when the count changes.
               channel.notify_members("5 members online")
         language: python
 
@@ -688,7 +684,7 @@ steps:
 
       ### Your Target Diagram
 
-      In `step3/chatbot.py`, `handle_message()` should be a small orchestrator: it calls `self._log()` and then `self.send()`, both methods on the same bot. Your target:
+      In `step3/chatbot.py`, `handle_message()` should coordinate the bot's existing operations. Read the target to determine their order and which object performs them:
 
       <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec="@startuml
       layout landscape
@@ -716,12 +712,13 @@ steps:
 
       ### Your Task
 
-      The starter file defines `DiscordBot` with `_log()` and `send()` methods, but `handle_message()` is empty. Your job:
+      The starter file defines `DiscordBot` with `_log()` and `send()` methods, but `handle_message()` is empty:
 
-      1. Fill in `handle_message()` so it calls `self._log(message)` and then `self.send(message)`
-      2. In `__main__`, call `bot.handle_message("hi there")` — and only that
+      1. **Trace** the target's outer call and nested activations. Identify the receiver and order of each message.
+      2. **Implement** `handle_message()` using the supplied operations, preserving the input message and the target's nesting.
+      3. **Start** the target's `"hi there"` scenario from Main. Main should initiate only the outer interaction after constructing the bot; the handler coordinates its internal work.
 
-      > **Watch for this:** `self._log(...)` — not `_log(...)` without the `self.` prefix. Without `self.`, the call goes to a *free function*, not a method, and the sequence diagram will not draw the self-arrow. The `self.` is what tells the analyzer "same object."
+      > **Check the receiver:** A self-message invokes a method on the current object. Compare each call's receiver with the target's lifeline; an unqualified function call does not express that same relationship.
 
     uml_files:
       - step3/chatbot.py
@@ -737,15 +734,14 @@ steps:
                   print(f"[BOT] {message}")
 
               def handle_message(self, message: str) -> None:
-                  # TODO: inside this method, call self._log(message)
-                  #       and then self.send(message).
-                  #       Both calls should appear as self-arrows in the diagram.
+                  # TODO: Coordinate this bot's operations to match the target
+                  # while preserving the supplied message.
                   pass
 
 
           if __name__ == "__main__":
               bot = DiscordBot()
-              # TODO: call bot.handle_message("hi there")
+              # TODO: Initiate the target's outer interaction.
         language: python
 
     open_file: step3/chatbot.py
@@ -1054,13 +1050,13 @@ steps:
 
       ### Your Task
 
-      The starter code has `handle(channel, message)` written with **no branching** — it unconditionally forwards everything. Your job:
+      The starter code has `handle(channel, message)` written with **no branching** — it unconditionally forwards everything:
 
-      1. Replace the body with `if self._is_spam(message):` / `else:` — produces the `alt` fragment with two compartments.
-      2. In the `if` branch: call `self._block(message)`.
-      3. In the `else` branch: call `channel.broadcast(message)`.
+      1. **Read** the target's guard and alternatives. Determine which outcome applies to spam and which applies to other messages.
+      2. **Implement** those mutually exclusive outcomes using the supplied classifier and operations. Block spam without broadcasting it; broadcast other messages without blocking them.
+      3. **Check** one input in each category and compare the resulting `alt` structure with the target.
 
-      An equivalent `if not ...` with the two branch bodies exchanged is also valid: it changes the compartment order and guard label while preserving the same two outcomes.
+      Either guard polarity is valid if its branch bodies preserve the two outcomes. The compartment order and guard label may differ.
 
       > **Note on `_is_spam`:** It is already defined — a simple classifier. Its self-call appears **before** the `alt` fragment because Python evaluates the condition before choosing a branch. The guard label states which result selects the first compartment.
 
@@ -1083,10 +1079,7 @@ steps:
                   print(f"[BLOCKED] {message}")
 
               def handle(self, channel: Channel, message: str) -> None:
-                  # TODO: rewrite this method so:
-                  #   - if self._is_spam(message): self._block(message)
-                  #   - else:                      channel.broadcast(message)
-                  # That produces the `alt` fragment in the target diagram.
+                  # TODO: Enforce the target's two mutually exclusive outcomes.
                   channel.broadcast(message)
 
 
@@ -1344,10 +1337,11 @@ steps:
 
       The starter code has `broadcast_all` written as a **flat sequence** — one unconditional call. That produces one bare arrow in the diagram. Your job:
 
-      1. Replace the single call with `for msg in messages:` — produces the `loop` fragment.
-      2. Inside the loop, call `channel.send_to_all(msg)` once per iteration.
+      1. **Interpret** the target's loop: identify the repeated interaction and which value changes on each repetition.
+      2. **Implement** `broadcast_all` so every supplied message reaches the channel exactly once, in input order. Empty input must send nothing.
+      3. **Check** empty input, several messages, and a repeated message. Compare both the live loop fragment and the actual sends with the contract.
 
-      A `while` loop that visits the same messages in order is also valid. Its guard label will differ, but it should show the same repeated interaction and send each message once.
+      Both `for` and `while` loops are valid. Their guard labels may differ, but they must express the same repeated interaction and preserve every occurrence.
 
     uml_files:
       - step5/chatbot.py
@@ -1362,8 +1356,7 @@ steps:
 
           class DiscordBot:
               def broadcast_all(self, channel: Channel, messages: list) -> None:
-                  # TODO: replace this unconditional call with a loop so the
-                  # diagram shows a `loop` fragment instead of a single arrow.
+                  # TODO: Match the target's repeated interaction for any input length.
                   channel.send_to_all(messages[0])
 
 

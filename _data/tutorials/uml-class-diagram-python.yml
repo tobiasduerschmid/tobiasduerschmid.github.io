@@ -106,7 +106,7 @@ steps:
       Open `student.py` and create a `Student` class that:
 
       1. Defines a constructor `__init__(self, name, student_id)`
-      2. Stores both parameters as instance attributes (`self.name = name`)
+      2. Stores both parameters as the instance attributes shown in the diagram
       3. Has a `get_info()` method returning `"name (student_id)"` — for example `"Alice (S001)"`
 
       Watch the **UML Diagram** panel — it updates live as you type!
@@ -356,8 +356,8 @@ steps:
       The visibility choices tell readers how to use the class:
 
       - **Public operations (`+`):** `deposit`, `withdraw`, and `get_balance` are available to callers.
-      - **Internal state (`-`):** `__balance` is managed inside the class, through those operations.
-      - **Internal helper (`#`):** `_validate_amount` supports the account's methods. Callers should use the public operations instead.
+      - **Internal state:** The balance is managed inside the class, through those operations.
+      - **Internal helper:** Amount validation supports the account's methods. Callers should use the public operations instead.
 
       This boundary also lets the class change how it stores or checks its data without requiring callers to change.
 
@@ -386,14 +386,13 @@ steps:
 
       ### Your Task
 
-      The starter code has a `BankAccount` where everything is public. Refactor it:
+      The starter code has a `BankAccount` where everything is public. Use the target to decide what needs to change:
 
-      1. Make `balance` **private** → rename to `__balance` (matches `-` in UML)
-      2. Make `validate_amount` **protected** → rename to `_validate_amount` (matches `#`)
-      3. Keep `deposit`, `withdraw`, and `get_balance` **public** (they stay as-is)
-      4. Update all internal references to use the new names
+      1. **Compare** each attribute and operation's current visibility with its marker in the target diagram.
+      2. **Refactor** mismatched members using the Python naming conventions taught above. Preserve the public interface.
+      3. **Check** that internal reads, writes, and helper calls still refer to the intended members and that deposits and withdrawals behave as before.
 
-      Watch the UML diagram update — the visibility markers should change from `+` to `-` and `#`.
+      Compare the resulting visibility markers with the target, then run **Test My Work** to check behavior too.
 
     uml_files:
       - bank_account.py
@@ -406,22 +405,22 @@ steps:
               Your job: apply proper visibility using Python naming conventions."""
 
               def __init__(self, initial_balance: float) -> None:
-                  self.balance: float = initial_balance  # Should be private (-)
+                  self.balance: float = initial_balance
 
               def deposit(self, amount: float) -> None:
-                  if self.validate_amount(amount):       # Update reference
-                      self.balance += amount              # Update reference
+                  if self.validate_amount(amount):
+                      self.balance += amount
 
               def withdraw(self, amount: float) -> bool:
                   if self.validate_amount(amount) and self.balance >= amount:
-                      self.balance -= amount              # Update reference
+                      self.balance -= amount
                       return True
                   return False
 
               def get_balance(self) -> float:
-                  return self.balance                     # Update reference
+                  return self.balance
 
-              def validate_amount(self, amount: float) -> bool:  # Should be protected (#)
+              def validate_amount(self, amount: float) -> bool:
                   return amount > 0
 
 
@@ -479,16 +478,16 @@ steps:
         **Key insight:** Python lets you access *anything*, but that does not mean you *should*. The UML diagram documents your **design intent** — which parts are the public interface and which are internal implementation details.
 
     tests:
-      - description: "balance is private (uses __ prefix)"
+      - description: "Balance visibility matches the target"
         command: |
           source = open('/tutorial/bank_account.py').read()
           ns = {}
           exec(source, ns)
           account = ns['BankAccount'](100.0)
           assert hasattr(account, '_BankAccount__balance'), \
-              "Rename self.balance to self.__balance to make it private"
+              "Compare the balance attribute's visibility with the target and the naming-convention table."
           assert not hasattr(account, 'balance'), \
-              "Remove the public self.balance — use self.__balance instead"
+              "The balance should no longer be exposed as a public attribute."
         hints:
           - title: Match the visibility marker
             text: Locate balance in the target and consult the visibility mapping for this renderer. Decide which spelling will represent the internal attribute.
@@ -500,14 +499,14 @@ steps:
             text: Make a table with rows “construct”, “deposit”, and “get balance”. Record the attribute each row accesses; compare the spellings and check for an accidental second balance.
             condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?\\bself\\.(?:__balance)\\b))(?=[\\s\\S]*(?:^class[ \\t]+BankAccount\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+get_balance\\b[\\s\\S]*?self\\.__balance\\b))[\\s\\S]*$/m"
 
-      - description: "validate_amount is protected (uses _ prefix)"
+      - description: "Validation helper visibility matches the target"
         command: |
           source = open('/tutorial/bank_account.py').read()
           ns = {}
           exec(source, ns)
           account = ns['BankAccount'](100.0)
           assert hasattr(account, '_validate_amount'), \
-              "Rename validate_amount to _validate_amount (single underscore = protected)"
+              "Compare the validation helper's visibility with the target and the naming-convention table."
         hints:
           - title: Identify the internal helper
             text: Find the validation helper’s marker in the target. The renderer maps a naming convention to that marker; Python does not enforce protected access.
@@ -659,11 +658,11 @@ steps:
       The starter code works perfectly — but has **zero type hints**. The UML diagram shows the class without any type information. Add type hints to:
 
       1. All `__init__` parameters
-      2. All instance attributes (e.g., `self.__name: str = name`)
-      3. All method return types (e.g., `-> float`)
-      4. All method parameters (e.g., `percent: float`)
+      2. All instance attributes
+      3. All method return types
+      4. All method parameters
 
-      Watch the UML diagram fill in with types as you add annotations.
+      Choose each type from the target contract. Watch the UML diagram fill in as you add annotations, and keep the existing behavior unchanged.
 
     uml_files:
       - product.py
@@ -928,12 +927,11 @@ steps:
 
       The starter code has three **independent** classes. Use the shared `Shape` contract above to refactor them while preserving each shape's area and description:
 
-      1. Make `Shape` the base class with `color`, `area()`, and `describe()`
-      2. Make `Circle` and `Rectangle` **inherit** from `Shape` using `class Circle(Shape):`
-      3. Remove the duplicated `color` attribute and `describe()` method from the subclasses
-      4. Each subclass should call `super().__init__(color)` and override `area()`
+      1. **Compare** the independent classes with the target's generalization relationships. Identify shared state and behavior, and what varies by shape.
+      2. **Refactor** the classes to match those relationships. Initialize shared state through the parent constructor and define shared behavior once.
+      3. **Check** that both concrete shapes still satisfy the `Shape` contract for area and description.
 
-      Watch the inheritance arrows appear in the live diagram. The analyzer reads the base class in `class Circle(Shape)`; it does not verify that `Circle` keeps `Shape`'s behavioral promises. Run the checks as well as inspecting the arrows.
+      Watch the inheritance arrows appear in the live diagram. The analyzer reads declared base classes; it does not verify that a subclass keeps its parent's behavioral promises. Run the checks as well as inspecting the arrows.
 
     uml_files:
       - shapes.py
@@ -1267,7 +1265,7 @@ steps:
 
       1. **Create an `Instructor` class** with `name: str`, `department: str`, and a `get_title()` method returning `"name (department)"`
       2. **Refactor `Course`** to accept and store an `Instructor` object instead of a string
-      3. **Update `get_instructor_name()`** to return `self.instructor.name`
+      3. **Preserve `get_instructor_name()`'s contract:** return the associated instructor's current name, including after that name changes.
 
       > **Try the refactoring tools:** Place the cursor on `instructor_name` in `self.instructor_name`, then choose **Refactor: Rename Symbol...** from the editor's context menu or Command Palette. Rename the constructor parameter separately. Review the preview before **Apply**, then update the types and object access to match the target diagram. Check the live UML and run **Test My Work**.
 
@@ -1556,8 +1554,8 @@ steps:
 
       Complete the starter code:
 
-      1. **`University.add_department(dept_name)`** should create a new `Department` and append it to `self.departments`.
-      2. **`Department.add_professor(prof)`** should append the supplied `Professor` to `self.professors`, preserving its identity.
+      1. **`University.add_department(dept_name)`** should establish a new department owned by the university, using the supplied name. It must be retained and discoverable through `get_department()`.
+      2. **`Department.add_professor(prof)`** should include the supplied professor in its staff, preserving that object's identity and allowing it to participate in another department too.
 
       Predict the generated diamonds from the pattern table, then check them in the live diagram. They agree with this exercise's stated domain rules; in another system you would need to review those rules again.
 
@@ -1579,7 +1577,7 @@ steps:
                   self.professors: list[Professor] = []
 
               def add_professor(self, prof: Professor) -> None:
-                  # TODO: Append the supplied professor to the staff collection.
+                  # TODO: Include the supplied professor under the grouping contract.
                   pass
 
 
@@ -1589,7 +1587,7 @@ steps:
                   self.departments: list[Department] = []
 
               def add_department(self, dept_name: str) -> None:
-                  # TODO: Create a Department with dept_name and append it.
+                  # TODO: Establish a department under the university's ownership contract.
                   pass
 
               def get_department(self, name: str) -> Department:
@@ -1869,10 +1867,10 @@ steps:
 
       The starter code has a `Playlist` that holds a single `Song`. Refactor it to hold **many** songs:
 
-      1. Change `self.song` to `self.songs: list[Song] = []` (a list of songs)
-      2. Add an `add_song(song: Song)` method that appends to the list
-      3. Add `get_total_duration()` returning the sum of all song durations
-      4. Add `get_song_count()` returning the number of songs
+      1. **Interpret** the target's multiplicity and update the constructor and stored state to match. A new playlist starts empty and retains its name.
+      2. **Implement** the target's `add_song` operation so each call retains the supplied song. Adding a song must preserve earlier entries.
+      3. **Report** the total duration and song count through the target's query operations. Both must include every added entry and return zero for an empty playlist.
+      4. **Check** the UML multiplicity and the behavior of empty and populated playlists. Update the example in `__main__` to use the new interface.
 
       > **Practice with Rename Symbol:** Use **Refactor: Rename Symbol...** on `self.song` to rename the attribute before changing it to a collection. Review the preview: renaming updates references, while changing the stored value and implementing the collection operations remain your work. Check the UML multiplicity and run **Test My Work** afterward.
 
@@ -1896,7 +1894,7 @@ steps:
 
               def __init__(self, name: str, song: Song) -> None:
                   self.name: str = name
-                  self.song: Song = song  # Only ONE song — change to a list!
+                  self.song: Song = song  # Currently holds only one song.
 
 
           if __name__ == "__main__":
@@ -2140,12 +2138,11 @@ steps:
 
       ### Your Task
 
-      The starter code has a concrete `PaymentMethod` base class. Make it abstract:
+      The starter code has a concrete `PaymentMethod` base class. Apply the `abc` mechanism from the worked example to match the target:
 
-      1. Import `ABC` and `abstractmethod` from the `abc` module
-      2. Make `PaymentMethod` inherit from `ABC`
-      3. Mark `process()` and `get_name()` with `@abstractmethod`
-      4. Complete the `CreditCard` and `BankTransfer` subclasses
+      1. **Identify** which class and operations the target marks as abstract, then express that contract in Python.
+      2. **Complete** both concrete subclasses. Each `process(amount)` prints a payment status message and reports success (`True`) in this simulation; `get_name()` returns `"Credit Card"` or `"Bank Transfer"` for the corresponding subclass.
+      3. **Check** that constructing the base class raises `TypeError`, an incomplete subclass cannot be instantiated, and both complete subclasses can be used through the common contract.
 
     uml_files:
       - payments.py
@@ -2153,19 +2150,19 @@ steps:
     files:
       - path: payments.py
         content: |
-          # TODO: Import ABC and abstractmethod from the abc module
+          # TODO: Express the target's abstract-class contract.
 
 
           class PaymentMethod:
               """This should be abstract — you should NOT be able to create
-              a plain PaymentMethod(). Make it inherit from ABC."""
+              a plain PaymentMethod()."""
 
               def process(self, amount: float) -> bool:
-                  # This should be abstract — mark with @abstractmethod
+                  # TODO: Match this operation's abstract status in the target.
                   return False
 
               def get_name(self) -> str:
-                  # This should be abstract — mark with @abstractmethod
+                  # TODO: Match this operation's abstract status in the target.
                   return "Unknown"
 
 
@@ -2173,16 +2170,14 @@ steps:
               def __init__(self, card_number: str) -> None:
                   self.card_number: str = card_number
 
-              # TODO: Implement process() — print and return True
-              # TODO: Implement get_name() — return "Credit Card"
+              # TODO: Fulfill the concrete payment contract in the task.
 
 
           class BankTransfer(PaymentMethod):
               def __init__(self, account_number: str) -> None:
                   self.account_number: str = account_number
 
-              # TODO: Implement process() — print and return True
-              # TODO: Implement get_name() — return "Bank Transfer"
+              # TODO: Fulfill the concrete payment contract in the task.
 
 
           if __name__ == "__main__":
