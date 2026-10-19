@@ -25,7 +25,7 @@ test('same-named cookies and localStorage values only hydrate their own exact or
 
 test('deletions, timestamps and retired-key rules cannot cross origins', async () => {
   const { prepareSiteEntries } = await model();
-  const prepared = prepareSiteEntries([{ area: 'local', key: 'theme', value: 'production' }], {
+  const prepared = await prepareSiteEntries([{ area: 'local', key: 'theme', value: 'production' }], {
     origin: origins[0],
     now: 10,
     lastSynced: { 'http://localhost:4000\u0000local\u0000draft': 'v:1', 'local\u0000legacy': 'v:1' },
@@ -33,7 +33,7 @@ test('deletions, timestamps and retired-key rules cannot cross origins', async (
     remoteRecords: { 'http://localhost:4000\u0000local\u0000draft': { value: 'dev', updatedAt: 1 } },
     retired: [{ area: 'local', key: 'draft' }],
   });
-  assert.deepEqual(prepared, [{ area: 'local', key: 'theme', value: 'production' }]);
+  assert.deepEqual(prepared, [{ area: 'local', key: 'theme', value: 'production', deleted: false }]);
 });
 
 test('record identity preserves key separators and rejects legacy or noncanonical origins', async () => {

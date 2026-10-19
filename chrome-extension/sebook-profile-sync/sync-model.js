@@ -14,10 +14,11 @@ export const LIMITS = {
   bytesPerItem: 8192,
   maxItems: 512,
   tombstoneRetentionMs: 90 * 24 * 60 * 60 * 1000,
+  maxClockSkewMs: 5 * 60 * 1000,
 };
 
-/** V1/V2 preserve expandedBytes as an unknown field without recalculating it. */
-export const FORMAT_VERSION = 3;
+/** V4 prevents page-clock writers and preserves V3 expanded-size accounting. */
+export const FORMAT_VERSION = 4;
 
 const KNOWN_RECORD_FIELDS = { value: true, updatedAt: true, deleted: true };
 const KNOWN_META_FIELDS = { version: true, revision: true, chunks: true, omittedCount: true, updatedAt: true, expandedBytes: true };
@@ -75,9 +76,24 @@ export function valueHash(text) {
   return hash >>> 0;
 }
 
-export function entryHash(entry) {
+export async function entryHash(entry) {
   if (!entry || entry.deleted) return 'deleted';
-  return `v:${valueHash(entry.value)}`;
+  // JSON preserves lone surrogates that UTF-8 alone would replace identically.
+  const bytes = new TextEncoder().encode(JSON.stringify(entry.value));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return 'sha256:' + [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function legacyHash(entry) {
+  return !entry || entry.deleted ? 'deleted' : `v:${valueHash(entry.value)}`;
+}
+
+async function matchesBaseline(entry, hash, remoteRecord) {
+  if (typeof hash !== 'string' || !hash.startsWith('v:')) return hash === await entryHash(entry);
+  // Old hashes cannot distinguish collisions. When the profile still matches
+  // that baseline, compare actual values; ambiguous collisions preserve local data.
+  if (remoteRecord && legacyHash(remoteRecord) === hash) return sameState(entry, remoteRecord);
+  return legacyHash(entry) === hash;
 }
 
 export function syncItemBytes(key, value) {
@@ -154,13 +170,19 @@ export function largestLiveId(records, skip) {
   return bestId;
 }
 
-export function stampMatchingLocalEntries(entries, stamps, origin) {
-  return entries.map((entry) => {
+export async function stampMatchingLocalEntries(entries, stamps, { now = Infinity, remoteRecords = {}, origin } = {}) {
+  return Promise.all(entries.map(async (entry) => {
     if (entry.writtenAt != null || !stamps) return entry;
-    const stamp = stamps[recordId(entry.area, entry.key, origin)];
-    if (!stamp || stamp.hash !== entryHash(entry)) return entry;
-    return { ...entry, writtenAt: stamp.updatedAt };
-  });
+    const id = recordId(entry.area, entry.key, origin);
+    const stamp = stamps[id];
+    if (!stamp || !await matchesBaseline(entry, stamp.hash)) return entry;
+    const timestamp = boundedTimestamp(stamp.updatedAt, now);
+    const legacy = typeof stamp.hash === 'string' && stamp.hash.startsWith('v:');
+    // A legacy hash or invalid clock cannot prove this is the same pending edit.
+    const writtenAt = legacy || timestamp !== stamp.updatedAt
+      ? nextWriteTime(now, remoteRecords[id]?.updatedAt, timestamp) : timestamp;
+    return { ...entry, writtenAt };
+  }));
 }
 
 export function entriesWithLocalDeletes(entries, lastSynced, origin) {
@@ -175,21 +197,35 @@ export function entriesWithLocalDeletes(entries, lastSynced, origin) {
   return result;
 }
 
-export function stampDivergedEntries(entries, lastSynced, now, origin) {
-  return entries.map((entry) => {
+export async function stampDivergedEntries(entries, { lastSynced = {}, stamps = {}, remoteRecords = {}, now, origin }) {
+  return Promise.all(entries.map(async (entry) => {
     if (entry.writtenAt != null || !lastSynced) return entry;
     const id = recordId(entry.area, entry.key, origin);
     if (!Object.prototype.hasOwnProperty.call(lastSynced, id)) return entry;
-    if (lastSynced[id] === entryHash(entry)) return entry;
-    return { ...entry, writtenAt: now };
-  });
+    if (await matchesBaseline(entry, lastSynced[id], remoteRecords[id])) return entry;
+    return { ...entry, writtenAt: nextWriteTime(now, remoteRecords[id]?.updatedAt, stamps[id]?.updatedAt) };
+  }));
 }
 
-export function prepareSiteEntries(entries, options) {
-  const matched = stampMatchingLocalEntries(entries || [], options.stamps || {}, options.origin);
+export async function prepareSiteEntries(entries, options) {
+  // The page supplies values, never conflict clocks. Only worker-owned
+  // baselines and quota stamps establish whether a value is a new edit.
+  const values = [...foldLocal(Array.isArray(entries) ? entries : [], options.origin).values()]
+    .map(({ area, key, value, deleted }) => ({ area, key, value, deleted }));
+  const matched = await stampMatchingLocalEntries(values, options.stamps || {}, options);
   const withDeletes = entriesWithLocalDeletes(matched, options.lastSynced || {}, options.origin);
-  const stamped = stampDivergedEntries(withDeletes, options.lastSynced || {}, options.now, options.origin);
+  const stamped = await stampDivergedEntries(withDeletes, options);
   return applyRetiredKeys(stamped, options.remoteRecords || {}, options.retired || [], options.now, options.origin);
+}
+
+function boundedTimestamp(timestamp, now) {
+  // Repair clocks saved by older extensions without discarding their values.
+  return Number.isSafeInteger(timestamp) && timestamp >= 0 && timestamp <= now + LIMITS.maxClockSkewMs
+    ? timestamp : 0;
+}
+
+function nextWriteTime(now, ...previousTimes) {
+  return Math.max(now, ...previousTimes.map((time) => boundedTimestamp(time, now) + 1));
 }
 
 /**
@@ -218,7 +254,7 @@ export function applyRetiredKeys(entries, remoteRecords, retired, now, origin) {
       key: parsed.key,
       value: '',
       deleted: true,
-      writtenAt: now,
+      writtenAt: nextWriteTime(now, remote?.updatedAt, local?.writtenAt),
     });
   });
   return [...byId.values()];
@@ -233,14 +269,16 @@ export function matchesRetired(area, key, retired) {
 }
 
 /** Only this origin is editable. Preserve other namespaces; discard originless data. */
-export function splitRecords(records, origin) {
+export function splitRecords(records, origin, now = Infinity) {
   const known = {};
   const opaque = {};
   Object.entries(records || {}).forEach(([id, record]) => {
     if (!record || typeof record !== 'object' || !recordOrigin(id)) return;
-    const canonical = canonicalRecord(record);
+    const canonical = canonicalRecord({ ...record, updatedAt: boundedTimestamp(record.updatedAt, now) });
     const parsed = parseRecordId(id);
-    if (parsed && parsed.origin === origin && canonical) known[id] = canonical;
+    if (parsed && parsed.origin === origin && canonical) {
+      known[id] = canonical;
+    }
     else opaque[id] = record;
   });
   return { known, opaque };
@@ -277,25 +315,25 @@ export function nextMeta(previousMeta, fields) {
   };
 }
 
-export function hashesForRecords(records) {
+export async function hashesForRecords(records) {
   const hashes = {};
-  Object.entries(records || {}).forEach(([id, record]) => {
+  for (const [id, record] of Object.entries(records || {})) {
     const canonical = canonicalRecord(record);
-    if (!canonical) return;
-    hashes[id] = entryHash(canonical);
-  });
+    if (!canonical) continue;
+    hashes[id] = await entryHash(canonical);
+  }
   return hashes;
 }
 
-export function unsyncedStampsFor(mergedRecords, savedRecords) {
+export async function unsyncedStampsFor(mergedRecords, savedRecords) {
   const stamps = {};
-  Object.entries(mergedRecords || {}).forEach(([id, record]) => {
+  for (const [id, record] of Object.entries(mergedRecords || {})) {
     const wanted = canonicalRecord(record);
-    if (!wanted || wanted.deleted) return;
+    if (!wanted || wanted.deleted) continue;
     const saved = canonicalRecord(savedRecords[id]);
-    if (saved && entryHash(saved) === entryHash(wanted)) return;
-    stamps[id] = { hash: entryHash(wanted), updatedAt: wanted.updatedAt };
-  });
+    if (saved && sameState(wanted, saved)) continue;
+    stamps[id] = { hash: await entryHash(wanted), updatedAt: wanted.updatedAt };
+  }
   return stamps;
 }
 
@@ -358,7 +396,7 @@ export async function fitToQuota(records, options) {
 }
 
 export function mergeSiteSnapshot(localEntries, remoteRecords, now, origin) {
-  const remote = normalizeRemote(remoteRecords, origin);
+  const remote = splitRecords(remoteRecords, origin, now).known;
   const local = foldLocal(localEntries, origin);
   const ids = new Set([...Object.keys(remote), ...local.keys()]);
   const records = {};
@@ -430,17 +468,6 @@ function foldLocal(entries, origin) {
     });
   });
   return local;
-}
-
-function normalizeRemote(records, origin) {
-  const remote = {};
-  Object.entries(records || {}).forEach(([id, record]) => {
-    const parsed = parseRecordId(id);
-    if (!parsed || parsed.origin !== origin) return;
-    const canonical = canonicalRecord(record);
-    if (canonical) remote[id] = canonical;
-  });
-  return remote;
 }
 
 function canonicalRecord(record) {

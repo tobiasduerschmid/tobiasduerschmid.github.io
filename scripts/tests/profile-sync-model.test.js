@@ -134,14 +134,14 @@ test('a value that changed since this device last synced wins over the profile, 
   const { prepareSiteEntries, recordId, entryHash } = await load('sync-model.js');
   const id = recordId('local', 'note', ORIGIN);
   const removed = recordId('cookie', 'se-gym', ORIGIN);
-  const prepared = prepareSiteEntries([
+  const prepared = await prepareSiteEntries([
     { area: 'local', key: 'note', value: 'edited-offline' },
   ], {
     origin: ORIGIN,
     stamps: {},
     lastSynced: {
-      [id]: entryHash({ value: 'previous' }),
-      [removed]: entryHash({ value: 'on' }),
+      [id]: await entryHash({ value: 'previous' }),
+      [removed]: await entryHash({ value: 'on' }),
     },
     now: 70,
   });
@@ -156,17 +156,17 @@ test('a value that changed since this device last synced wins over the profile, 
 test('an unsynced stamp keeps a too-large local value from being replaced, without erasing a newer explicit write', async () => {
   const { stampMatchingLocalEntries, recordId, entryHash } = await load('sync-model.js');
   const id = recordId('local', 'big', ORIGIN);
-  const stamps = { [id]: { hash: entryHash({ value: 'large' }), updatedAt: 15 } };
-  const stamped = stampMatchingLocalEntries([
+  const stamps = { [id]: { hash: await entryHash({ value: 'large' }), updatedAt: 15 } };
+  const stamped = await stampMatchingLocalEntries([
     { area: 'local', key: 'big', value: 'large' },
     { area: 'local', key: 'big', value: 'large', writtenAt: 4 },
-  ], stamps, ORIGIN);
+  ], stamps, { origin: ORIGIN });
 
   assert.equal(stamped[0].writtenAt, 15);
   assert.equal(stamped[1].writtenAt, 4);
-  const mismatch = stampMatchingLocalEntries([
+  const mismatch = await stampMatchingLocalEntries([
     { area: 'local', key: 'big', value: 'other' },
-  ], stamps, ORIGIN);
+  ], stamps, { origin: ORIGIN });
   assert.equal(mismatch[0].writtenAt, undefined);
 });
 
@@ -298,7 +298,7 @@ test('a retired key or prefix is deleted even when this browser wrote it later',
   const retiredId = recordId('local', 'old-draft', ORIGIN);
   const prefixedId = recordId('local', 'legacy-tool-1', ORIGIN);
   const currentId = recordId('local', 'tutorial-progress-python', ORIGIN);
-  const prepared = prepareSiteEntries([
+  const prepared = await prepareSiteEntries([
     { area: 'local', key: 'old-draft', value: 'still-here', writtenAt: 400 },
     { area: 'local', key: 'legacy-tool-1', value: 'draft', writtenAt: 400 },
     { area: 'local', key: 'tutorial-progress-python', value: 'print(1)' },

@@ -47,13 +47,10 @@ export function validateSiteSnapshot(entries, retired = []) {
     validKey(entry.area, entry.key);
     if (entry.deleted != null && typeof entry.deleted !== 'boolean') throw new TypeError('Invalid snapshot deletion.');
     if (!entry.deleted || entry.value != null) stringBytes(entry.value, RESOURCE_LIMITS.maxValueBytes, 'Snapshot value');
-    if (entry.writtenAt != null && (!Number.isSafeInteger(entry.writtenAt) || entry.writtenAt < 0)) {
-      throw new TypeError('Invalid snapshot timestamp.');
-    }
+    // Conflict clocks are assigned by the worker, never copied from the page.
     return account({
       area: entry.area, key: entry.key, value: entry.deleted ? '' : entry.value,
       deleted: !!entry.deleted,
-      ...(entry.writtenAt != null ? { writtenAt: entry.writtenAt } : {}),
     });
   });
   const checkedRetired = retired.map((rule) => {

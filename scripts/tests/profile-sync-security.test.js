@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { pathToFileURL } = require('node:url');
 const { gzipSync } = require('node:zlib');
+const { webcrypto } = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 
 const extensionDir = path.resolve('chrome-extension/sebook-profile-sync');
@@ -278,7 +279,7 @@ function coordinator() {
   };
   window.top = window;
   const context = {
-    window, location: { origin: 'https://tobiasduerschmid.github.io' },
+    window, location: { origin: 'https://tobiasduerschmid.github.io' }, crypto: webcrypto,
     document: { documentElement: { classList: { add() {}, remove() {} } } },
     chrome: {
       extension: { inIncognitoContext: false },

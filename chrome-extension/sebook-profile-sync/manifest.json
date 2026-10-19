@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SEBook Chrome profile sync",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Copies SEBook preferences and progress into your Chrome profile so they sync across your devices.",
   "minimum_chrome_version": "111",
   "incognito": "split",

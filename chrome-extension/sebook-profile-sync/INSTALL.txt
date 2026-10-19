@@ -13,6 +13,14 @@ Install
 3. Turn on Developer mode.
 4. Choose Load unpacked and select the sebook-chrome-profile-sync folder.
 
+Update
+Replace the extracted folder with the latest archive, click Reload for
+this extension at chrome://extensions, then reload any open site tabs.
+Update every computer: version 1.0.3 upgrades the profile format to keep
+older copies from rewriting it with page-supplied timestamps. Version
+1.0.1 and 1.0.2 can still read the upgraded profile, but cannot upload
+changes. Version 1.0.0 cannot read the origin-specific records.
+
 Install the extension on each computer. Turn on Chrome profile sync and
 sign in to the same Chrome profile. The site itself does not receive the
 saved data. Chrome may store the profile copy with your Chrome account
@@ -41,8 +49,3 @@ data and the existing profile copy remain unchanged. Receiving profiles
 accept at most 2,048 records and 2 MiB of expanded JSON, independently of
 the compressed Chrome quota. An oversized or damaged profile copy is
 reported as unreadable and is not overwritten automatically.
-
-To update an unpacked installation, replace its files with this archive
-and click Reload for the extension on chrome://extensions on each computer.
-Extension version 1.0.1 can read the guarded profile format but cannot
-update it. Update every computer to resume uploading changes from it.

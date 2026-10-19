@@ -83,10 +83,10 @@ async function syncEntries(entries, retired, origin) {
   if (await isPaused()) return { paused: true, ...(await status()) };
   const remote = await readRemote();
   if (remote.error) return { error: remote.error };
-  const parts = splitRecords(remote.records, origin);
   const now = Date.now();
+  const parts = splitRecords(remote.records, origin, now);
   const localState = await chrome.storage.local.get(['lastSynced', 'unsyncedStamps']);
-  const prepared = prepareSiteEntries(entries, {
+  const prepared = await prepareSiteEntries(entries, {
     origin,
     stamps: localState.unsyncedStamps || {},
     lastSynced: localState.lastSynced || {},
@@ -102,7 +102,7 @@ async function syncEntries(entries, retired, origin) {
   const fitted = await fitToQuota({ ...pruneRecords(merged.records, now), ...parts.opaque }, {
     protectedIds: Object.keys(parts.known),
     keepIds: Object.keys(parts.opaque),
-    previousRecords: remote.records,
+    previousRecords: { ...parts.known, ...parts.opaque },
     quota: LIMITS.quotaBytes,
     encode: (records, omittedCount) => encodeSyncPayload(records, {
       revision: remote.revision + 1,
@@ -119,7 +119,7 @@ async function syncEntries(entries, retired, origin) {
   let omittedCount = remote.omittedCount;
   const savedRecords = fitted.records;
   if (!recordsEqual(savedRecords, remote.records) || fitted.omitted.length !== remote.omittedCount
-    || (remote.meta && remote.meta.version !== FORMAT_VERSION)) {
+    || remote.meta?.version !== FORMAT_VERSION) {
     fitted.encoded.meta.omittedCount = fitted.omitted.length;
     fitted.encoded.meta.revision = remote.revision + 1;
     await writeRemote(fitted.encoded);
@@ -129,8 +129,8 @@ async function syncEntries(entries, retired, origin) {
   }
 
   await chrome.storage.local.set({
-    lastSynced: replaceOriginState(localState.lastSynced, origin, hashesForRecords(pruneRecords(merged.records, now))),
-    unsyncedStamps: replaceOriginState(localState.unsyncedStamps, origin, unsyncedStampsFor(merged.records, savedRecords)),
+    lastSynced: replaceOriginState(localState.lastSynced, origin, await hashesForRecords(pruneRecords(merged.records, now))),
+    unsyncedStamps: replaceOriginState(localState.unsyncedStamps, origin, await unsyncedStampsFor(merged.records, savedRecords)),
   });
   if (merged.replaced.length) await rememberReplaced(merged.replaced, origin);
 

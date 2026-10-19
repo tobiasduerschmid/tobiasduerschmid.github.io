@@ -23,10 +23,10 @@ function pageSender(url = SITE + '/SEBook/') {
 }
 
 // Only the Chrome I/O boundary is replaced; the worker, merge rules and codec run unchanged.
-async function startWorker(t, { records = {}, version = 2, local = {} } = {}) {
+async function startWorker(t, { records = {}, version, local = {} } = {}) {
   const { encodeSyncPayload, decodeSyncPayload } = await load('sync-codec.js');
   const encoded = await encodeSyncPayload(records, { revision: 1, omittedCount: 0, updatedAt: 1 });
-  encoded.meta.version = version;
+  if (version != null) encoded.meta.version = version;
   const sync = { m: encoded.meta };
   encoded.chunks.forEach((chunk, index) => { sync['c' + index] = chunk; });
   const localData = structuredClone(local);
@@ -126,12 +126,12 @@ test('accepted writes use the sender origin regardless of page-supplied origins'
     entries: [{ origin: 'http://localhost:4000', area: 'local', key: 'draft', value: 'saved', writtenAt: 10 }],
   }, pageSender('https://TOBIASDUERSCHMID.github.io:443/SEBook/'));
   assert.ok(!response.error);
-  assert.deepEqual(await worker.records(), {
-    [SITE + '\u0000local\u0000draft']: { value: 'saved', updatedAt: 10 },
-  });
+  const saved = (await worker.records())[SITE + '\u0000local\u0000draft'];
+  assert.equal(saved.value, 'saved');
+  assert.ok(saved.updatedAt > 10, 'The worker supplies the conflict clock.');
 });
 
-for (const version of [undefined, 1, 2, 3, 4]) {
+for (const version of [undefined, 1, 2, 3, 4, 99]) {
   test(`originless records and deletion history never reach a page (payload version ${version})`, async (t) => {
     const { FORMAT_VERSION } = await load('sync-model.js');
     const worker = await startWorker(t, {

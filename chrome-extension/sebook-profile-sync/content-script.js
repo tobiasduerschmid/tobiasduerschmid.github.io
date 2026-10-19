@@ -15,7 +15,6 @@
   var root = document.documentElement;
   if (root) root.classList.add('sebook-profile-sync-pending');
 
-  var requestSerial = 0;
   var ready = false;
   var paused = false;
   var dirty = false;
@@ -41,7 +40,7 @@
   }
 
   function requestPage(type, extra, timeoutMs) {
-    var requestId = requestSerial += 1;
+    const requestId = crypto.randomUUID();
     var limit = timeoutMs || 700;
     return new Promise(function (resolve) {
       var timer = setTimeout(function () {
