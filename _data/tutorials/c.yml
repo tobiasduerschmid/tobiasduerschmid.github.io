@@ -709,6 +709,8 @@ steps:
 
       Here's a mental model that will save you hours of debugging. Every pointer variable is in one of **four states**:
 
+      **Implementation view:** transition labels retain C operations and assignments because this example is about pointer handling in C.
+
       ```uml-state
       @startuml
       [*] --> Uninitialized

@@ -71,25 +71,25 @@ Here is a taste of each diagram type. Each is covered in detail in its own chapt
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Billable {
-  + processPayment(): bool
+  + processPayment(): Boolean
 }
 class Customer {
-  - id: int
+  - id: Integer
   - name: String
-  + placeOrder(): void
+  + placeOrder()
 }
 class VIP
 class Guest
 class Order {
   - date: Date
   - status: String
-  + calcTotal(): float
+  + calcTotal(): Real
 }
 class LineItem {
-  - quantity: int
+  - quantity: Integer
 }
 class Product {
-  - price: float
+  - price: Real
   - name: String
 }
 VIP --|> Customer

@@ -65,7 +65,8 @@ for (const [language, { analyze, filename }] of Object.entries(analyzers)) {
 
   test(`${language}: a collection type permits an empty team`, () => {
     const { before, after } = example('collection_multiplicity');
-    assert.match(before.classDiagram, /^Team .* "1" Member$/m);
+    const scalarMultiplicity = language === 'java' ? '0\\.\\.1' : '1';
+    assert.match(before.classDiagram, new RegExp(`^Team --> "${scalarMultiplicity}" Member$`, 'm'));
     assert.match(after.classDiagram, /^Team .* "\*" Member$/m);
     assert.doesNotMatch(after.classDiagram, /"1\.\.\*"/);
   });

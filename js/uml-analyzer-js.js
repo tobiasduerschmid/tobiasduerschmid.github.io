@@ -31,7 +31,7 @@
   function analyzeJSSources(sources, tsCompiler) {
     var ts = tsCompiler || (typeof window !== 'undefined' && window.ts);
     if (!ts) {
-      return { classDiagram: '', sequenceDiagram: '', sequenceWarnings: [], errors: ['TypeScript compiler not available'] };
+      return { classDiagram: '', constructionMethods: [], sequenceDiagram: '', sequenceWarnings: [], errors: ['TypeScript compiler not available'] };
     }
 
     var errors = [];
@@ -83,6 +83,7 @@
 
     return {
       classDiagram: classDiagram,
+      constructionMethods: extractor.constructionMethods,
       ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }),
       errors: errors
     };
@@ -302,9 +303,10 @@
     return targets.size === 1 ? Array.from(targets)[0] : null;
   }
 
-  function _recordRelationship(info, role, target, kind) {
-    if (!info.relationships.some(edge => edge.role === role && edge.target === target && edge.kind === kind)) {
-      info.relationships.push({ role: role, target: target, kind: kind, multiplicity: '1', alternative: false });
+  function _recordRelationship(info, role, target) {
+    // Neither construction nor injection proves UML ownership or shared aggregation.
+    if (!info.relationships.some(edge => edge.role === role && edge.target === target)) {
+      info.relationships.push({ role: role, target: target, multiplicity: null, alternative: false });
     }
     info._relAttrs.add(role);
   }
@@ -358,11 +360,8 @@
   /* ===================================================================
    * ClassExtractor — extract classes, interfaces, relationships
    *
-   * Relationship heuristics (adapted from Python analyzer):
-   *   Composition:  this.x = new ClassName()        — created internally
-   *   Aggregation:  constructor param property       — injected from outside
-   *                 this.x = param (typed ctor arg)
-   *   Association:  property typed as known class    — reference only
+   * Relationship evidence:
+   *   Association:  retained reference or typed property
    *   Dependency:   method param/return type         — transient use
    * =================================================================== */
 
@@ -476,9 +475,9 @@
       if (resolved) {
         initParamTypes[pName] = resolved;
         mParams[pName] = resolved;
-        // TS parameter property with known class type → aggregation
+        // TS parameter property with known class type → stored reference
         if (isProperty) {
-          _recordRelationship(info, pName, resolved, 'aggregation');
+          _recordRelationship(info, pName, resolved);
           aTypes[pName] = resolved;
         }
       }
@@ -486,7 +485,8 @@
     }
 
     if (Object.keys(mParams).length > 0) pTypes['constructor'] = mParams;
-    info.methods.push({ name: 'constructor', params: params, returnType: '', visibility: '+' });
+    info.methods.push({ name: 'constructor', params: params, returnType: '', visibility: '+', isConstructor: true,
+      isDefault: params.length === 0 && !!member.body && member.body.statements.length === 0 });
     methods['constructor'] = member;
 
     // Walk constructor body for this.x = ... assignments
@@ -515,21 +515,21 @@
       var attrName = _getNodeText(left.name, sourceFile);
       var right    = expr.right;
 
-      // this.x = new ClassName() → composition
+      // this.x = new ClassName() → stored reference
       if (ts.isNewExpression(right)) {
         var typeName = _getNodeText(right.expression, sourceFile);
         if (self.allTypeNames.has(typeName)) {
-          _recordRelationship(info, attrName, typeName, 'composition');
+          _recordRelationship(info, attrName, typeName);
           aTypes[attrName] = typeName;
           return;
         }
       }
 
-      // this.x = param → aggregation if param is a typed constructor arg
+      // this.x = param → stored reference from a typed constructor argument
       if (ts.isIdentifier(right)) {
         var paramCls = initParamTypes[right.text];
         if (paramCls) {
-          _recordRelationship(info, attrName, paramCls, 'aggregation');
+          _recordRelationship(info, attrName, paramCls);
           aTypes[attrName] = paramCls;
         }
       }
@@ -552,11 +552,11 @@
       name: name, type: type, visibility: vis, isStatic: isStatic, isAbstract: isAbstract, optional: !!member.questionToken
     });
 
-    // Property initializer: x = new ClassName() → composition
+    // Property initializer: x = new ClassName() → stored reference
     if (member.initializer && ts.isNewExpression(member.initializer)) {
       var initType = _getNodeText(member.initializer.expression, sourceFile);
       if (this.allTypeNames.has(initType)) {
-        _recordRelationship(info, name, initType, 'composition');
+        _recordRelationship(info, name, initType);
         aTypes[name] = initType;
         return;
       }
@@ -685,7 +685,7 @@
       const references = this._resolveTypeReferences(attr.type);
       for (const reference of references) {
         if (!info.relationships.some(edge => edge.role === attr.name && edge.target === reference.target)) {
-          _recordRelationship(info, attr.name, reference.target, 'association');
+          _recordRelationship(info, attr.name, reference.target);
         }
       }
       for (const edge of info.relationships.filter(edge => edge.role === attr.name)) {
@@ -721,6 +721,7 @@
    * =================================================================== */
 
   ClassExtractor.prototype.generatePlantUML = function () {
+    this.constructionMethods = [];
     if (this.classMap.size === 0) return '';
 
     var lines = ['@startuml', 'layout landscape', 'layout compact'];
@@ -761,6 +762,9 @@
         }).join(', ');
         var retStr = (method.returnType && method.returnType !== 'void')
           ? ': ' + method.returnType : '';
+        if (method.isConstructor) {
+          this.constructionMethods.push({ owner: info.name, name: method.name, lineIndex: lines.length, isDefault: method.isDefault });
+        }
         lines.push('  ' + mPrefix + method.name + '(' + paramStr + ')' + retStr);
       }
 
@@ -783,13 +787,10 @@
           lines.push(cls.name + ' ' + arrow + ' ' + cls.implements[ii]);
         }
       }
-      const arrows = { composition: '*--', aggregation: 'o--', association: '-->' };
       for (const edge of cls.relationships) {
         const repeated = cls.relationships.filter(other => other.target === edge.target).length > 1;
         const labeled = repeated || edge.alternative;
-        // Shared references do not constrain how many owners can use the target.
-        const ownerMultiplicity = edge.kind === 'composition' ? ' "1"' : '';
-        const arrow = ownerMultiplicity + ' ' + arrows[edge.kind] + ' "' + edge.multiplicity + '" ';
+        const arrow = edge.multiplicity ? ' --> "' + edge.multiplicity + '" ' : ' --> ';
         lines.push(cls.name + arrow + edge.target + (labeled ? ' : ' + edge.role + (edge.alternative ? ' (alternative)' : '') : ''));
       }
       // Dependency (..>)
@@ -1159,7 +1160,6 @@
     var ts = this.ts;
     this._scanExprForCalls(stmt.expression, sf, caller, depth);
     var cond = _getNodeText(stmt.expression, sf);
-    if (cond.length > 40) cond = cond.substring(0, 37) + '...';
 
     // Skip main-guard wrappers
     if (this._isMainGuard(stmt, sf)) {
@@ -1199,7 +1199,6 @@
       if (ts.isIfStatement(elseNode)) {
         if (this._containsCall(elseNode.expression)) this.diagnostics.add('conditional', 'else-if condition calls are omitted');
         var ec = _getNodeText(elseNode.expression, sf);
-        if (ec.length > 40) ec = ec.substring(0, 37) + '...';
         var es = ts.isBlock(elseNode.thenStatement)
           ? Array.from(elseNode.thenStatement.statements) : [elseNode.thenStatement];
         branches.push({
@@ -1291,7 +1290,6 @@
     const baseline = this._captureBindings();
     const states = ts.isDoStatement(stmt) ? [] : [baseline];
     var cond = _getNodeText(stmt.expression, sf);
-    if (cond.length > 40) cond = cond.substring(0, 37) + '...';
 
     var bodyStmts = ts.isBlock(stmt.statement)
       ? Array.from(stmt.statement.statements) : [stmt.statement];
@@ -1455,12 +1453,10 @@
   SequenceDiagramGenerator.prototype._buildCallLabel = function (call, sf, method) {
     var args = [];
     if (call.arguments) {
-      for (var i = 0; i < Math.min(call.arguments.length, 3); i++) {
+      for (var i = 0; i < call.arguments.length; i++) {
         var text = _getNodeText(call.arguments[i], sf);
-        if (text.length > 20) text = text.substring(0, 17) + '...';
         args.push(text);
       }
-      if (call.arguments.length > 3) args.push('...');
     }
     return method + '(' + args.join(', ') + ')';
   };

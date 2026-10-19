@@ -21,7 +21,7 @@ test('separate scalar and collection fields preserve their roles and multiplicit
   assert.deepEqual(edges(classDiagram, 'Box'), ['Box --> "*" Item : others', 'Box --> "1" Item : primary']);
 });
 
-test('field ownership hints are independent when several fields share a target', () => {
+test('retained fields preserve distinct roles without inferring ownership from allocation', () => {
   const { classDiagram } = infer(types + `class Box:
     def __init__(self, primary: Item):
         self.primary: Item = primary
@@ -32,7 +32,7 @@ test('field ownership hints are independent when several fields share a target',
         self.owned.append(Item())
 `);
   assert.deepEqual(edges(classDiagram, 'Box'), [
-    'Box *--> "*" Item : owned', 'Box --> "1" Item : primary', 'Box o--> "*" Item : shared',
+    'Box --> "*" Item : owned', 'Box --> "*" Item : shared', 'Box --> "1" Item : primary',
   ]);
 });
 
@@ -99,7 +99,7 @@ test('qualified constructor aliases and inheritance resolve to their declared cl
     'main.py': 'import parts as p\nfrom parts import Item as Base\nclass Special(Base):\n    pass\nclass Box:\n    def __init__(self):\n        self.item = p.Item()\n',
   });
   assert.match(classDiagram, /^Special --\|> Item$/m);
-  assert.deepEqual(edges(classDiagram, 'Box'), ['Box *--> Item']);
+  assert.deepEqual(edges(classDiagram, 'Box'), ['Box --> Item']);
 });
 
 test('a local shadow of an imported constructor does not fabricate ownership', () => {

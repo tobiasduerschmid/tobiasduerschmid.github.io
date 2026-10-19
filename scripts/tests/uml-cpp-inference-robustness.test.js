@@ -27,7 +27,7 @@ test('C++ resolves an alias in its declaration namespace when the use site shado
     namespace checkout { struct Item {}; struct Order { catalog::Entry item; }; }
   ` });
   assert.deepEqual(result.errors, []);
-  assert.match(result.classDiagram, /checkout__Order "1" \*-- "1" catalog__Item/);
+  assert.match(result.classDiagram, /checkout__Order \*-- "1" catalog__Item/);
   assert.doesNotMatch(result.classDiagram, /checkout__Order .* checkout__Item/);
 });
 
@@ -47,7 +47,7 @@ test('C++ optional and smart-pointer wrappers preserve their collection element 
       struct Item {}; struct Basket { std::${wrapper}<std::vector<Item>> items; };
     ` });
     assert.deepEqual(result.errors, []);
-    assert.match(result.classDiagram, /Basket(?: "1" \*--| o--| -->) "\*" Item/, wrapper);
+    assert.match(result.classDiagram, /Basket(?: \*--| -->) "\*" Item/, wrapper);
     assert.doesNotMatch(result.classDiagram, /Basket .*"0\.\.1" Item/, wrapper);
   }
 });
@@ -64,7 +64,7 @@ test('C++ owning a wrapper does not imply owning its borrowed pointees', () => {
 test('C++ an optional fixed-size collection can contain zero elements when absent', () => {
   const result = analyzeCppSources({ 'main.cpp': 'struct Item {}; struct Basket { std::optional<std::array<Item, 3>> items; };' });
   assert.deepEqual(result.errors, []);
-  assert.match(result.classDiagram, /Basket "1" \*-- "0\.\.3" Item/);
+  assert.match(result.classDiagram, /Basket \*-- "0\.\.3" Item/);
 });
 
 test('C++ borrowing a nullable owning pointer preserves the pointee cardinality', () => {

@@ -29,7 +29,7 @@ class Singleton {
 	- uniqueInstance: Singleton {static}
 	- Singleton()
 	+ getInstance(): Singleton {static}
-	+ operation(): void
+	+ operation()
 }
 class ClientA
 class ClientB
@@ -51,7 +51,7 @@ class AppConfig {
 	- INSTANCE: AppConfig {static}
 	- AppConfig()
 	+ getInstance(): AppConfig {static}
-	+ log(message: String): void
+	+ log(message: String)
 }
 class ClientA
 class ClientB

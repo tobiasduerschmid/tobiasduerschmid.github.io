@@ -114,6 +114,9 @@
     let client = null;
     let timer = null;
     let revision = 0;
+    let renderRevision = 0;
+    let lastAnalysis = null;
+    let diagramView = 'implementation';
     let composing = false;
     let paused = false;
 
@@ -122,6 +125,14 @@
     source.setAttribute('aria-describedby', task.id + ' ' + status.id);
     const codeEditor = global.UMLCodeLabEditor.create(source, root.querySelector('[data-uml-editor]'), languages);
     const problemReport = createProblemReport(root, codeEditor, events.signal);
+    const viewControls = global.UMLViewControls.mount(root.querySelector('[data-uml-view-controls]'), {
+      view: diagramView,
+      helpScope: document,
+      onChange(view) {
+        diagramView = view;
+        if (lastAnalysis && lastAnalysis.revision === revision) renderAnalysis(lastAnalysis.result, revision);
+      }
+    });
 
     function syncSource() {
       drafts[selectedLanguage] = source.value;
@@ -172,6 +183,7 @@
 
     function schedule(delay = 150) {
       const currentRevision = ++revision;
+      renderRevision++;
       clearTimeout(timer);
       problemReport.postpone();
       syncSource();
@@ -203,21 +215,34 @@
         const result = await client.analyze({ language: selectedLanguage, sources: { [filename]: code } });
         if (!isCurrent()) return;
         if (result.errors.length) throw new Error(result.errors.join(' '));
-        const warnings = example.type === 'sequence' ? result.sequenceWarnings || [] : [];
+        lastAnalysis = { result, revision: currentRevision };
+        await renderAnalysis(result, currentRevision);
+      } catch (error) {
+        if (!isCurrent() || global.UMLLive.isSuperseded(error)) return;
+        clearPreview();
+        setStatus('Could not update the diagram. ' + error.message, 'error');
+      }
+    }
+
+    /** A view change reuses the current source analysis and never changes the editor. */
+    async function renderAnalysis(result, currentRevision) {
+      const currentRender = ++renderRevision;
+      const isCurrent = () => !paused && revision === currentRevision && renderRevision === currentRender;
+      setStatus('Updating diagram…', 'pending');
+      try {
+        const projected = client.project(result, { language: selectedLanguage, view: diagramView });
+        const warnings = example.type === 'sequence' ? projected.sequenceWarnings || [] : [];
         const warningText = 'Warning: partial sequence. ' + warnings.map(item => item.message).join(' ');
-        const syntax = result[example.type + 'Diagram'];
+        const syntax = projected[example.type + 'Diagram'];
         if (!hasDiagram(syntax)) {
           clearPreview();
           setStatus(warnings.length ? warningText : example.type === 'class' ? 'No classes found.' : 'No calls found. Add an entry-point call.', warnings.length ? 'warning' : 'empty');
           return;
         }
-        const rendered = await client.render({
-          type: example.type, syntax, target: preview, isCurrent, readOnly: true
-        });
+        const rendered = await client.render({ type: example.type, syntax, target: preview, isCurrent, readOnly: true });
         if (rendered && isCurrent()) setStatus(warnings.length ? warningText : 'Diagram updated.', warnings.length ? 'warning' : 'ready');
       } catch (error) {
         if (!isCurrent() || global.UMLLive.isSuperseded(error)) return;
-        clearPreview();
         setStatus('Could not update the diagram. ' + error.message, 'error');
       }
     }
@@ -251,7 +276,7 @@
     return {
       pause,
       resume() { paused = false; schedule(0); },
-      destroy() { pause(); codeEditor.destroy(); languageSwitcher.destroy(); events.abort(); mounted.delete(root); }
+      destroy() { pause(); viewControls.destroy(); codeEditor.destroy(); languageSwitcher.destroy(); events.abort(); mounted.delete(root); }
     };
   }
 

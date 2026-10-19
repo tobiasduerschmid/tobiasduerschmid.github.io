@@ -75,6 +75,7 @@
 
     return {
       classDiagram: classDiagram,
+      constructionMethods: extractor.constructionMethods,
       ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }),
       errors: errors
     };
@@ -1538,12 +1539,9 @@
     this.filename = filename;
     this.methods = [];       // [{name, params, isPrivate, isAbstract, isStatic, isClassMethod, isProperty, returnType}]
     this.attributes = [];    // [{name, typeHint}]
-    this.compositions = [];  // [className]
-    this.aggregations = [];  // [className]
-    this.associations = [];  // [className]
     this.dependencies = [];  // [className]
     this._relAttrs = {};     // attribute names promoted to relationship arrows
-    this.relationships = []; // [{kind, target, attrName, multiplicity}]
+    this.relationships = []; // Stored references: [{target, attrName, multiplicity}]
     this.decorators = [];    // decorator names on the class
   }
 
@@ -1584,8 +1582,6 @@
       }
     }
 
-    for (const relation of info.relationships) _addUnique(info[relation.kind], relation.target);
-
     // Collect dependency relationships
     this._collectDependencies(node, info);
   };
@@ -1623,7 +1619,12 @@
       isStatic: isStatic,
       isClassMethod: isClassMethod,
       isProperty: isProperty,
-      returnType: returnType
+      returnType: returnType,
+      isConstructor: ['__init__', '__new__'].includes(node.name),
+      isDefault: params.length === 0 && node.body.every(statement =>
+        statement.type === 'Pass' ||
+        (statement.type === 'Expr' && statement.value?.type === 'Constant' && typeof statement.value.value === 'string') ||
+        (statement.type === 'Return' && (!statement.value || (statement.value.type === 'Constant' && statement.value.value === null))))
     });
 
     // Keep the complete annotation: a parameter may describe several targets.
@@ -1661,21 +1662,20 @@
     }
   }
 
-  PythonClassExtractor.prototype._recordRelationship = function (info, kind, target, attrName, multiplicity) {
-    const rank = { associations: 0, aggregations: 1, compositions: 2 };
+  PythonClassExtractor.prototype._recordRelationship = function (info, target, attrName, multiplicity) {
+    // Retaining an object proves a reference, not its ownership or lifecycle.
     const existing = info.relationships.find(relation => relation.target === target && relation.attrName === attrName);
     if (existing) {
-      if (rank[kind] > rank[existing.kind]) existing.kind = kind;
       if (multiplicity === '*' || !existing.multiplicity) existing.multiplicity = multiplicity;
     } else {
-      info.relationships.push({ kind, target, attrName, multiplicity });
+      info.relationships.push({ target, attrName, multiplicity });
     }
     info._relAttrs[attrName] = true;
   };
 
-  PythonClassExtractor.prototype._annotationRelationships = function (info, kind, annotation, attrName, multiplicity) {
+  PythonClassExtractor.prototype._annotationRelationships = function (info, annotation, attrName, multiplicity) {
     for (const target of extractClassesFromAnnotation(annotation, this.allTypeNames)) {
-      this._recordRelationship(info, kind, target, attrName, multiplicity || inferMultiplicity(annotation, target));
+      this._recordRelationship(info, target, attrName, multiplicity || inferMultiplicity(annotation, target));
     }
   };
 
@@ -1685,7 +1685,7 @@
     if (!classInfo.attributes.some(attribute => attribute.name === attrName)) {
       classInfo.attributes.push({ name: attrName, typeHint: node.annotation ? annotationStr(node.annotation) : null });
     }
-    this._annotationRelationships(classInfo, 'associations', node.annotation, attrName);
+    this._annotationRelationships(classInfo, node.annotation, attrName);
   };
 
   PythonClassExtractor.prototype._checkAttribute = function (node, classInfo) {
@@ -1718,12 +1718,12 @@
         const annotation = node.annotation;
         const value = node.value;
         const attrName = target.attr;
-        if (annotation) this._annotationRelationships(info, 'associations', annotation, attrName);
+        if (annotation) this._annotationRelationships(info, annotation, attrName);
         if (!value) continue;
         if (value.type === 'Call') {
           const created = callName(value);
           if (created && this.allTypeNames.has(created)) {
-            this._recordRelationship(info, 'compositions', created, attrName, annotation ? inferMultiplicity(annotation, created) : null);
+            this._recordRelationship(info, created, attrName, annotation ? inferMultiplicity(annotation, created) : null);
           }
         } else if (value.type === 'Name') {
           if (!annotation && parameterAnnotations[value.id]) {
@@ -1732,15 +1732,15 @@
               const multiplicity = inferMultiplicity(parameterAnnotation, related);
               // Keep the tutorial's distinction between an explicit scalar
               // field bound and a type learned only from its supplied argument.
-              this._recordRelationship(info, 'associations', related, attrName, multiplicity === '1' ? null : multiplicity);
+              this._recordRelationship(info, related, attrName, multiplicity === '1' ? null : multiplicity);
             }
           } else if (localCreations[value.id]) {
-            this._recordRelationship(info, 'compositions', localCreations[value.id], attrName, annotation ? inferMultiplicity(annotation, localCreations[value.id]) : null);
+            this._recordRelationship(info, localCreations[value.id], attrName, annotation ? inferMultiplicity(annotation, localCreations[value.id]) : null);
           }
         } else if (value.type === 'List') {
           for (const element of value.elts || []) {
             const created = element.type === 'Call' ? callName(element) : localCreations[element.id];
-            if (created && this.allTypeNames.has(created)) this._recordRelationship(info, 'compositions', created, attrName, '*');
+            if (created && this.allTypeNames.has(created)) this._recordRelationship(info, created, attrName, '*');
           }
         }
       }
@@ -1753,15 +1753,15 @@
     const value = call.args[0];
     const created = value.type === 'Call' ? callName(value) : localCreations[value.id];
     if (created && this.allTypeNames.has(created)) {
-      this._recordRelationship(info, 'compositions', created, func.value.attr, '*');
+      this._recordRelationship(info, created, func.value.attr, '*');
     } else if (value.type === 'Name' && parameterAnnotations[value.id]) {
-      this._annotationRelationships(info, 'aggregations', parameterAnnotations[value.id], func.value.attr, '*');
+      this._annotationRelationships(info, parameterAnnotations[value.id], func.value.attr, '*');
     }
   };
 
   PythonClassExtractor.prototype._collectDependencies = function (classNode, classInfo) {
     var structural = {};
-    var arr = classInfo.compositions.concat(classInfo.aggregations, classInfo.associations, classInfo.bases);
+    var arr = classInfo.relationships.map(relation => relation.target).concat(classInfo.bases);
     for (var i = 0; i < arr.length; i++) structural[arr[i]] = true;
 
     var self = this;
@@ -1777,7 +1777,6 @@
         if (a.annotation) {
           for (const paramCls of extractClassesFromAnnotation(a.annotation, self.allTypeNames)) {
             if (structural[paramCls]) continue;
-            if (item.name === '__init__' && classInfo.aggregations.indexOf(paramCls) !== -1) continue;
             _addUnique(classInfo.dependencies, paramCls);
           }
         }
@@ -1841,6 +1840,7 @@
   };
 
   PythonClassExtractor.prototype.generatePlantUML = function (options) {
+    this.constructionMethods = [];
     if (this.classes.length === 0) return '';
     var hideVis = options && options.hideVisibility;
     var hideMult = options && options.hideMultiplicity;
@@ -1910,6 +1910,9 @@
         }
         var methodLine = '  ' + prefix + m.name + '(' + m.params.join(', ') + ')';
         if (m.returnType) methodLine += ': ' + m.returnType;
+        if (m.isConstructor) {
+          this.constructionMethods.push({ owner: cls.name, name: m.name, lineIndex: lines.length, isDefault: m.isDefault });
+        }
         lines.push(methodLine);
       }
 
@@ -1942,8 +1945,7 @@
         const targetInfo = this.classMap[relation.target];
         const sameTarget = cls.relationships.filter(other => other.target === relation.target);
         const reverse = targetInfo ? targetInfo.relationships.filter(other => other.target === cls.name) : [];
-        const bidirectional = relation.kind === 'associations' && sameTarget.length === 1 &&
-          reverse.length === 1 && reverse[0].kind === 'associations';
+        const bidirectional = sameTarget.length === 1 && reverse.length === 1;
         if (bidirectional) {
           const key = [cls.name, relation.target].sort().join('::');
           if (emittedBidir.has(key)) continue;
@@ -1953,10 +1955,9 @@
           lines.push(cls.name + left + ' -- ' + right + relation.target);
           continue;
         }
-        const arrows = { compositions: '*-->', aggregations: 'o-->', associations: '-->' };
         const multiplicity = !hideMult && relation.multiplicity ? '"' + relation.multiplicity + '" ' : '';
         const role = sameTarget.length > 1 ? ' : ' + relation.attrName : '';
-        lines.push(cls.name + ' ' + arrows[relation.kind] + ' ' + multiplicity + relation.target + role);
+        lines.push(cls.name + ' --> ' + multiplicity + relation.target + role);
       }
 
       // Dependency
@@ -2883,12 +2884,7 @@
       var keyword = call.keywords[i];
       args.push((keyword.arg ? keyword.arg + '=' : '**') + unparse(keyword.value, caller));
     }
-    for (var i = 0; i < Math.min(args.length, 3); i++) {
-      var text = args[i];
-      if (text.length > 20) text = text.substring(0, 17) + '...';
-      argParts.push(text);
-    }
-    if (args.length > 3) argParts.push('...');
+    for (var i = 0; i < args.length; i++) argParts.push(args[i]);
     return method + '(' + argParts.join(', ') + ')';
   };
 

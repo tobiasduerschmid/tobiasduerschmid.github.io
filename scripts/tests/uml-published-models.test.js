@@ -10,6 +10,7 @@ require('../../js/uml-analyzer-python.js');
 require('../../js/uml-analyzer-js.js');
 const { analyzeJavaSources } = require('../../js/uml-analyzer-java.js');
 const { analyzeCppSources } = require('../../js/uml-analyzer-cpp.js');
+const { project } = require('../../js/uml-diagram-views.js');
 const read = file => fs.readFileSync(path.join(__dirname, '../..', file), 'utf8');
 const compiler = vm.createContext({ console, define(_name, _deps, factory) { factory(() => {}); } });
 vm.runInContext(read('js/vendor/monaco-editor/0.44.0/min/vs/language/typescript/tsWorker.js'), compiler);
@@ -41,14 +42,22 @@ const analyzers = {
   typescript: code => global.analyzeJSSources({ 'motherboard.ts': code }, compiler.ts),
 };
 
+const busEvidence = {
+  java: { kind: 'association', multiplicity: '0..1' },
+  cpp: { kind: 'composition', multiplicity: '1' },
+  python: { kind: 'association', multiplicity: '1' },
+  typescript: { kind: 'association', multiplicity: undefined },
+};
+
 for (const [language, analyze] of Object.entries(analyzers)) {
-  test(`${language}: the chapter's two bus roles agree with the inferred model`, () => {
+  test(`${language}: inference preserves the reference design's bus roles using only source-supported ownership`, () => {
     const code = sources.find(match => match[1] === language)[2];
     const result = analyze(code);
     assert.deepEqual(result.errors, []);
-    const expected = roles(targets[0][1], 'MotherBoard');
-    assert.equal(expected.length, 2, 'The chapter must distinguish primary and secondary buses');
-    assert.deepEqual(roles(result.classDiagram, 'MotherBoard'), expected);
+    const reference = roles(targets[0][1], 'MotherBoard');
+    assert.equal(reference.length, 2, 'The reference design must distinguish primary and secondary buses');
+    assert.ok(reference.every(role => role.kind === 'composition'), 'The stated lifecycle requirement remains composition');
+    assert.deepEqual(roles(result.classDiagram, 'MotherBoard'), reference.map(role => ({ ...role, ...busEvidence[language] })));
   });
 }
 
@@ -73,8 +82,8 @@ test('the Java enrollment target and solution permit a student to belong to seve
   assert.deepEqual(result.errors, []);
 
   for (const [name, diagram] of [['published target', target], ['inferred solution', result.classDiagram]]) {
-    const relation = diagram.match(/^\s*Course\s+(?:"([^"]+)"\s+)?o--\s+"([^"]+)"\s+Student\s*$/m);
-    assert.ok(relation, `${name} must retain the Course-to-Student aggregation`);
+    const relation = diagram.match(/^\s*Course\s+(?:"([^"]+)"\s+)?-->\s+"([^"]+)"\s+Student\s*$/m);
+    assert.ok(relation, `${name} must retain the Course-to-Student association`);
     assert.equal(relation[1], undefined, `${name} must not infer a course count per student`);
     assert.equal(relation[2], '*', `${name} must allow zero or more students per course`);
   }
@@ -84,6 +93,8 @@ const tutorial = yaml.load(read('_data/tutorials/uml-sequence-diagram-python.yml
 function interaction(diagram) {
   return diagram.split('\n').map(line => line.trim()).flatMap(line => {
     if (/^(?:alt |opt |loop |else\b|end$)/.test(line)) return [line];
+    const reply = line.match(/^(\w+) --> (\w+): (\w+): (.+)$/);
+    if (reply) return [{ from: reply[1], to: reply[2], result: reply[3], type: reply[4] }];
     const call = line.match(/^(\w+) -> (\w+): ([\w]+)\(/);
     // Arguments are checked by the executable tutorial graders; long display
     // labels may be abbreviated differently without changing the interaction.
@@ -93,12 +104,13 @@ function interaction(diagram) {
 
 for (const key of ['first-sequence', 'return-values', 'self-calls',
   'conditional-fragments', 'loops', 'moderated-broadcast']) {
-  test(`sequence tutorial ${key}: solution calls retain the target's order and nesting`, () => {
+  test(`sequence tutorial ${key}: Design view matches the target's calls and nesting`, () => {
     const step = tutorial.steps.find(step => step.key === key);
     const target = [...step.instructions.matchAll(/@startuml\b([\s\S]*?)@enduml/g)].at(-1)[1];
     const result = global.analyzePythonSources(Object.fromEntries(
       step.solution.files.filter(file => file.path.endsWith('.py')).map(file => [file.path, file.content])));
     assert.deepEqual(result.errors, []);
-    assert.deepEqual(interaction(result.sequenceDiagram), interaction(target));
+    const design = project(result, { language: 'python', view: 'design' });
+    assert.deepEqual(interaction(design.sequenceDiagram), interaction(target));
   });
 }

@@ -441,7 +441,7 @@ test.describe('Step 6: Composition vs Aggregation', () => {
     ].join('\n');
 
     const diagram = inferDiagram(code);
-    // No composition/aggregation since stubs are empty
+    // Collection annotations do not justify ownership diamonds.
     expect(diagram).not.toContain('*-->');
     expect(diagram).not.toContain('o-->');
     // Collection attributes should be visible
@@ -449,7 +449,7 @@ test.describe('Step 6: Composition vs Aggregation', () => {
     expect(diagram).toContain('+departments: list[Department]');
   });
 
-  test('solution — composition and aggregation with navigability', () => {
+  test('solution — stored references with navigability and no invented ownership', () => {
     const code = [
       'class Professor:',
       '    def __init__(self, name: str, field: str) -> None:',
@@ -478,10 +478,10 @@ test.describe('Step 6: Composition vs Aggregation', () => {
     ].join('\n');
 
     const diagram = inferDiagram(code);
-    // Aggregation: professors are passed in from outside
-    expect(diagram).toContain('Department o--> "*" Professor');
-    // Composition: departments are created inside University
-    expect(diagram).toContain('University *--> "*" Department');
+    // Receiving professors establishes stored references, not aggregation.
+    expect(diagram).toContain('Department --> "*" Professor');
+    // Constructing departments does not prove their lifecycle is bound to University.
+    expect(diagram).toContain('University --> "*" Department');
     // Collection attributes should be visible
     expect(diagram).toContain('+professors: list[Professor]');
     expect(diagram).toContain('+departments: list[Department]');
@@ -511,7 +511,7 @@ test.describe('Step 7: Multiplicity', () => {
     expect(diagram).toContain('Playlist --> "1" Song');
   });
 
-  test('solution — aggregation with * multiplicity', () => {
+  test('solution — association with zero-or-more multiplicity', () => {
     const code = [
       'class Song:',
       '    def __init__(self, title: str, artist: str, duration_sec: int) -> None:',
@@ -532,7 +532,7 @@ test.describe('Step 7: Multiplicity', () => {
     ].join('\n');
 
     const diagram = inferDiagram(code);
-    expect(diagram).toContain('Playlist o--> "*" Song');
+    expect(diagram).toContain('Playlist --> "*" Song');
     expect(diagram).toContain('+songs: list[Song]');
   });
 });
@@ -658,7 +658,7 @@ test.describe('Step 9: God Class Refactoring', () => {
     expect(diagram).not.toContain('--|>');
   });
 
-  test('solution — proper decomposition with all relationship types', () => {
+  test('solution — separate stored associations from temporary dependencies', () => {
     const code = [
       'class Product:',
       '    def __init__(self, name: str, price: float, stock: int) -> None:',
@@ -703,14 +703,14 @@ test.describe('Step 9: God Class Refactoring', () => {
     ].join('\n');
 
     const diagram = inferDiagram(code);
-    // Order aggregates Products (passed in from outside)
-    expect(diagram).toContain('Order o--> "*" Product');
+    // Order retains references to supplied products.
+    expect(diagram).toContain('Order --> "*" Product');
     // Order has a navigable association to Customer
     expect(diagram).toContain('Order --> "1" Customer');
-    // OnlineStore composes Orders (created inside via Order(customer))
-    expect(diagram).toContain('OnlineStore *--> "*" Order');
-    // OnlineStore aggregates Products (passed in via add_product)
-    expect(diagram).toContain('OnlineStore o--> "*" Product');
+    // Constructing orders establishes storage without proving composition.
+    expect(diagram).toContain('OnlineStore --> "*" Order');
+    // Supplied products are retained by the store.
+    expect(diagram).toContain('OnlineStore --> "*" Product');
     // Customer appears as dependency (parameter to place_order, not stored)
     expect(diagram).toContain('OnlineStore ..> Customer');
     // Collection attributes should be visible
@@ -816,7 +816,7 @@ test.describe('Fix 4: Class-level annotation multiplicity', () => {
 });
 
 test.describe('Fix 2: Inline constructor in append', () => {
-  test('self.items.append(Task()) produces composition', () => {
+  test('self.items.append(Task()) establishes a stored reference without proving composition', () => {
     const code = [
       'class Task:',
       '    def __init__(self, name: str) -> None:',
@@ -829,7 +829,7 @@ test.describe('Fix 2: Inline constructor in append', () => {
       '        self.tasks.append(Task(name))',
     ].join('\n');
     const diagram = inferDiagram(code);
-    expect(diagram).toContain('TaskList *--> "*" Task');
+    expect(diagram).toContain('TaskList --> "*" Task');
     expect(diagram).not.toContain('o-->');
     expect(diagram).not.toContain('..>');
   });
@@ -968,7 +968,7 @@ test.describe('Fix 1: Annotation fallback for unresolved collections', () => {
     expect(diagram).toContain('ReadOnlyQueue --> "*" Task');
   });
 
-  test('list[Task] = [] with append(param) resolves to aggregation, no fallback', () => {
+  test('list[Task] = [] with append(param) retains a single association', () => {
     const code = [
       'class Task:',
       '    pass',
@@ -980,8 +980,7 @@ test.describe('Fix 1: Annotation fallback for unresolved collections', () => {
       '        self.tasks.append(task)',
     ].join('\n');
     const diagram = inferDiagram(code);
-    expect(diagram).toContain('Queue o--> "*" Task');
-    // Should NOT also have association fallback
-    expect(diagram).not.toContain('Queue -->');
+    expect(diagram).toContain('Queue --> "*" Task');
+    expect(diagram.split('\n').filter(line => /^Queue .* Task$/.test(line))).toHaveLength(1);
   });
 });

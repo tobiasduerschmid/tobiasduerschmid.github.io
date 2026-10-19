@@ -25,7 +25,7 @@ The objects (often called "colleagues") report relevant events to the Mediator, 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout landscape
 interface Mediator {
-	+ notify(sender: Colleague, event: String): void
+	+ notify(sender: Colleague, event: String)
 }
 abstract class Colleague {
 	- mediator: Mediator
@@ -49,21 +49,21 @@ callout top of text "Colleague" : Colleague: knows the mediator, not other colle
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout landscape
 interface SmartHomeMediator {
-	+ notify(sender: Object, event: String): void
+	+ notify(sender: Object, event: String)
 }
 class SmartHomeHub
 class AlarmClock {
 	- mediator: SmartHomeMediator
-	+ ring(): void
+	+ ring()
 }
 class CoffeeMaker {
-	+ brew(): void
+	+ brew()
 }
 class Calendar {
-	+ isWeekday(): bool
+	+ isWeekday(): Boolean
 }
 class Sprinkler {
-	+ skipMorningWatering(): void
+	+ skipMorningWatering()
 }
 SmartHomeHub ..|> SmartHomeMediator
 AlarmClock --> SmartHomeMediator

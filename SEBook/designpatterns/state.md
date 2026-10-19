@@ -36,17 +36,17 @@ The primary interactions should be between the Context and its current State obj
 layout landscape
 class Context {
 	- state: State
-	+ request(): void
-	+ setState(state: State): void
+	+ request()
+	+ setState(state: State)
 }
 interface State {
-	+ handle(context: Context): void
+	+ handle(context: Context)
 }
 class ConcreteStateA {
-	+ handle(context: Context): void
+	+ handle(context: Context)
 }
 class ConcreteStateB {
-	+ handle(context: Context): void
+	+ handle(context: Context)
 }
 Context --> State : delegates to
 ConcreteStateA ..|> State
@@ -65,14 +65,14 @@ callout bottom of text "transition via setState" occurrence 1 : Transition: a st
 layout landscape
 class GumballMachine {
 	- state: State
-	+ insertQuarter(): void
-	+ turnCrank(): void
-	+ releaseBall(): void
-	+ setState(state: State): void
+	+ insertQuarter()
+	+ turnCrank()
+	+ releaseBall()
+	+ setState(state: State)
 }
 interface State {
-	+ insertQuarter(machine: GumballMachine): void
-	+ turnCrank(machine: GumballMachine): void
+	+ insertQuarter(machine: GumballMachine)
+	+ turnCrank(machine: GumballMachine)
 }
 class NoQuarterState
 class HasQuarterState

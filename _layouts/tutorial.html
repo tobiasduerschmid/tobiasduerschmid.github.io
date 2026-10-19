@@ -291,6 +291,7 @@
   <!-- Verbal aria-label generator (parses live tutorial diagrams as the user types) -->
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/uml-view-controls.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/object-reference-lab.css' | relative_url }}">
   {% if tutorial_backend == 'compiler' %}
   <link rel="stylesheet" href="{{ '/css/compiler-lab.css' | relative_url }}">
@@ -317,6 +318,7 @@
   <script src="{{ '/js/tutorial-inline-markdown.js' | relative_url }}"></script>
   <script src="{{ '/js/keyboard-shortcut-labels.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-live.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-view-controls.js' | relative_url }}"></script>
   <script src="{{ '/js/monaco-loader.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
   {% if tutorial_backend == 'uml-editor' %}

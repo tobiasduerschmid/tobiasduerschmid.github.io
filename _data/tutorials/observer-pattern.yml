@@ -59,7 +59,7 @@ steps:
 
       Look at the **UML Diagram** tab (bottom-right). Notice how `WeatherStation` has direct arrows to every single display. That means the station **hard-codes** every display it talks to:
 
-      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Reference design: selected pattern roles and contracts, not an exact rendering of the Python source." data-uml-spec='@startuml
       skinparam classAttributeIconSize 0
       class WeatherStation {
         + current: CurrentDisplay
@@ -71,11 +71,11 @@ steps:
         + show(temp, humidity, pressure)
       }
       class StatisticsDisplay {
-        - _temps: list
+        - temps: Sequence<?>
         + show(temp, humidity, pressure)
       }
       class ForecastDisplay {
-        - _last_pressure: float
+        - last_pressure: Real
         + show(temp, humidity, pressure)
       }
       WeatherStation --> CurrentDisplay : creates and calls
@@ -435,10 +435,10 @@ steps:
 
       Here is the formal structure. Compare this to the tightly coupled diagram from Step 1 — notice how `Subject` no longer points to specific concrete observers:
 
-      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Reference design: selected pattern roles and contracts, not an exact rendering of the Python source." data-uml-spec='@startuml
       skinparam classAttributeIconSize 0
       abstract class Subject {
-        - _observers: list
+        - observers: Sequence<?>
         + attach(observer: Observer)
         + detach(observer: Observer)
         + notify()
@@ -447,7 +447,7 @@ steps:
         + {abstract} update(subject: Subject)
       }
       class ConcreteSubject {
-        - _state
+        - state
         + get_state()
         + set_state(value)
       }
@@ -457,7 +457,7 @@ steps:
       class ConcreteObserverB {
         + update(subject: Subject)
       }
-      Subject o--> "*" Observer : notifies
+      Subject --> "*" Observer : notifies
       ConcreteSubject --|> Subject
       ConcreteObserverA ..|> Observer
       ConcreteObserverB ..|> Observer
@@ -474,7 +474,7 @@ steps:
       **Key UML relationships:**
       - **Generalization** <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> = inheritance ("is-a")
       - **Realization** <span class="uml-sym" data-diagram="class" data-sym="..|>"></span> = implements interface
-      - **Aggregation** <span class="uml-sym" data-diagram="class" data-sym="o--"></span> = "has-a" (loosely owned)
+      - **Association** <span class="uml-sym" data-diagram="class" data-sym="-->"></span> = stores references; ownership is unspecified
 
       ### Polling vs. Notification
 
@@ -497,11 +497,13 @@ steps:
       - **Move** `source.attach(DashboardA())` to *after* the first `set_value(10)`. Does Dashboard A see the value 10?
 
       #### 4. Modify
-      **Add a `DashboardC`** class that prints the value squared (e.g., `"Dashboard C sees: 100 (squared)"`). Attach it and verify it works. Then **undo your changes** — the tests check the original output.
+      **Add a `DashboardC`** class that prints the value squared (e.g., `"Dashboard C sees: 100 (squared)"`). Extend the preview's observer union annotation to include it, attach it, and verify it works. Then **undo your changes** — the tests check the original output.
 
     files:
       - path: "pattern_preview.py"
         content: |
+          from __future__ import annotations
+
           # A tiny preview of the Observer pattern in action.
           # PREDICT: What will this print? In what order?
 
@@ -509,10 +511,10 @@ steps:
               """A simple Subject that notifies observers."""
 
               def __init__(self) -> None:
-                  self._observers: list = []
+                  self._observers: list[DashboardA | DashboardB] = []
                   self._value: int = 0
 
-              def attach(self, observer) -> None:
+              def attach(self, observer: DashboardA | DashboardB) -> None:
                   self._observers.append(observer)
 
               def set_value(self, new_value: int) -> None:
@@ -675,10 +677,10 @@ steps:
 
       The Observer pattern has four roles. Here is the UML for what you are about to build:
 
-      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Reference design: selected pattern roles and contracts, not an exact rendering of the Python source." data-uml-spec='@startuml
       skinparam classAttributeIconSize 0
       abstract class Subject {
-        - _observers: list
+        - observers: Sequence<?>
         + attach(observer: Observer)
         + detach(observer: Observer)
         + notify()
@@ -687,18 +689,18 @@ steps:
         + {abstract} update(subject: Subject)
       }
       class TemperatureSensor {
-        - _temperature: float
-        + temperature: float
+        - temperature: Real
+        + temperature: Real
       }
       class TemperatureLogger {
-        + readings: list
+        + readings: Sequence<?>
         + update(subject: Subject)
       }
       class TemperatureAlert {
-        + threshold: float
+        + threshold: Real
         + update(subject: Subject)
       }
-      Subject o--> "*" Observer : notifies
+      Subject --> "*" Observer : notifies
       TemperatureSensor --|> Subject
       TemperatureLogger ..|> Observer
       TemperatureAlert ..|> Observer
@@ -725,7 +727,7 @@ steps:
 
       ### Watch the UML
 
-      As you add classes and methods, check the **UML Diagram** tab — the class diagram updates live to show your inheritance hierarchy and relationships. Compare it to the target diagram above.
+      As you add classes and methods, check the **UML Diagram** tab. Compare the responsibilities and collaborations with the reference design above. The live source diagram preserves Python naming conventions and ABC inheritance: a single underscore maps to `#`, and inheriting from an abstract class uses a solid generalization arrow. A reference design can express an interface role more abstractly; the live views do not silently change those source claims.
 
     uml_files:
       - observer_basics.py
@@ -1028,7 +1030,7 @@ steps:
             - "It does not — the observers poll the sensor"
           correct_index: 1
           explanation: |
-            The sensor only knows the abstract `Observer` interface. It calls `update()` on each object in `self._observers` without knowing whether it is a logger, an alert, or something entirely new. In the UML diagram, the aggregation arrow goes from Subject to Observer (abstract) — **not** to any concrete class. This is **loose coupling**.
+            The sensor only knows the abstract `Observer` interface. It calls `update()` on each object in `self._observers` without knowing whether it is a logger, an alert, or something entirely new. In the UML diagram, the association arrow goes from Subject to Observer (abstract) — **not** to any concrete class. This is **loose coupling**.
 
         - question: |
             In the code you wrote, observers get data by calling `subject.temperature` inside their `update()` method. This is called the **Pull model**. What is the alternative?
@@ -1100,10 +1102,10 @@ steps:
 
       Here is what the architecture looks like **after** the refactoring. Compare this to Step 1:
 
-      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Reference design: selected pattern roles and contracts, not an exact rendering of the Python source." data-uml-spec='@startuml
       skinparam classAttributeIconSize 0
       abstract class Subject {
-        - _observers: list
+        - observers: Sequence<?>
         + attach(observer: Observer)
         + detach(observer: Observer)
         + notify()
@@ -1112,29 +1114,29 @@ steps:
         + {abstract} update(subject: Subject)
       }
       class WeatherStation {
-        - _temperature: float
-        - _humidity: float
-        - _pressure: float
+        - temperature: Real
+        - humidity: Real
+        - pressure: Real
         + new_measurement(temp, humidity, pressure)
-        + temperature: float
-        + humidity: float
-        + pressure: float
+        + temperature: Real
+        + humidity: Real
+        + pressure: Real
       }
       class CurrentDisplay {
         + update(station)
       }
       class StatisticsDisplay {
-        - _temps: list
+        - temps: Sequence<?>
         + update(station)
       }
       class ForecastDisplay {
-        - _last_pressure: float
+        - last_pressure: Real
         + update(station)
       }
       class HeatIndexDisplay {
         + update(station)
       }
-      Subject o--> "*" Observer : notifies
+      Subject --> "*" Observer : notifies
       WeatherStation --|> Subject
       CurrentDisplay ..|> Observer
       StatisticsDisplay ..|> Observer
@@ -1728,16 +1730,16 @@ steps:
             Both approaches have their place. For a simple program with 2-3 displays that never change, direct calls *are* simpler. But Observer shines when: (1) the set of observers changes at runtime, (2) new types are added frequently, or (3) the subject and observers evolve independently. Patterns are tools for specific situations, not universal requirements.
 
         - question: |
-            In the Observer UML diagram, `Subject o--> "*" Observer` uses a **diamond arrow** with a multiplicity label. What does this mean?
+            In the live diagram, `Subject --> "*" Observer` follows from a collection of observer references. Which claim does that evidence support?
           type: single
           options:
-            - "Subject creates 0 or more Observer objects"
-            - "Subject *aggregates* 0 or more Observers (no ownership)"
-            - "Subject inherits from 0 or more Observer classes"
-            - "Subject deletes 0 or more Observer objects"
+            - "Subject must create every Observer it notifies"
+            - "Subject can refer to zero or more Observer objects"
+            - "Each Observer must belong to exactly one Subject"
+            - "Deleting Subject must delete its Observer objects"
           correct_index: 1
           explanation: |
-            The open diamond <span class="uml-sym" data-diagram="class" data-sym="o--"></span> represents **aggregation**: the Subject *has* a collection of Observers, but the Observers can exist independently of the Subject. The `"*"` multiplicity means "zero or more." A *filled* diamond <span class="uml-sym" data-diagram="class" data-sym="*--"></span> would be **composition** (stronger ownership). Observers are loosely associated — they can be attached to or detached from the Subject freely.
+            The association records stored references, and `*` permits an empty collection. It establishes neither observer creation, exclusive membership, nor deletion with the subject. Those would require additional contracts; neither live view invents them from a collection type.
 
 
   # --------------------------------------------------------------------------
@@ -1793,7 +1795,7 @@ steps:
 
       You have used the **Pull model** (observers call `subject.temperature`). Here is the alternative:
 
-      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Reference design: selected pattern roles and contracts, not an exact rendering of the Python source." data-uml-spec='@startuml
       skinparam classAttributeIconSize 0
       package "Pull Model" {
         class Subject_Pull {
@@ -1803,7 +1805,7 @@ steps:
         abstract class Observer_Pull {
           + update(subject)
         }
-        Subject_Pull o--> Observer_Pull
+        Subject_Pull --> Observer_Pull
         note bottom of Observer_Pull
           Observer calls
           subject.get_state()
@@ -1817,7 +1819,7 @@ steps:
         abstract class Observer_Push {
           + update(data)
         }
-        Subject_Push o--> Observer_Push
+        Subject_Push --> Observer_Push
         note bottom of Observer_Push
           Subject sends data
           directly as arguments.
@@ -2300,10 +2302,10 @@ steps:
 
       ### The Observer Pattern at a Glance
 
-      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-caption="Reference design: selected pattern roles and contracts, not an exact rendering of the Python source." data-uml-spec='@startuml
       skinparam classAttributeIconSize 0
       abstract class Subject {
-        - _observers: list
+        - observers: Sequence<?>
         + attach(observer: Observer)
         + detach(observer: Observer)
         + notify()
@@ -2311,7 +2313,7 @@ steps:
       abstract class Observer {
         + {abstract} update(subject: Subject)
       }
-      Subject o--> "*" Observer : notifies
+      Subject --> "*" Observer : notifies
       note bottom of Subject
         Maintains observer list.
         Calls update() on all

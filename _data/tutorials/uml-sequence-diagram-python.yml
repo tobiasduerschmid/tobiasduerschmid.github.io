@@ -61,6 +61,8 @@ steps:
 
       Think of it as the difference between a floor plan (class diagram) and a security camera recording (sequence diagram). Same building, very different question.
 
+      Both live views describe the current source. **Design focus** uses shared UML types, drops Python's leading name markers, and describes iteration as `for each … in …`; **Implementation details** shows Python spellings. The target diagrams use Design focus. Switching views preserves participants and call order. Compare one reply in both views: does changing its type label change who receives it?
+
       ### Four Pieces of Notation
 
       | Element | What it looks like | What it means |
@@ -143,12 +145,12 @@ steps:
       - path: step1/chatbot.py
         content: |
           class DiscordBot:
-              def send(self, message):
+              def send(self, message: str) -> None:
                   print(f"[BOT] {message}")
 
 
           class Channel:
-              def notify_members(self, message):
+              def notify_members(self, message: str) -> None:
                   print(f"[CHANNEL] {message}")
 
 
@@ -165,12 +167,12 @@ steps:
         - path: step1/chatbot.py
           content: |
             class DiscordBot:
-                def send(self, message):
+                def send(self, message: str) -> None:
                     print(f"[BOT] {message}")
 
 
             class Channel:
-                def notify_members(self, message):
+                def notify_members(self, message: str) -> None:
                     print(f"[CHANNEL] {message}")
 
 
@@ -236,11 +238,11 @@ steps:
           main_code = compile(ast.Module(body=main_nodes, type_ignores=[]), '<main>', 'exec')
           events = []
           class ObservedBot(ns['DiscordBot']):
-              def send(self, message):
+              def send(self, message: str) -> None:
                   events.append(('send', message))
                   return super().send(message)
           class ObservedChannel(ns['Channel']):
-              def notify_members(self, message):
+              def notify_members(self, message: str) -> None:
                   events.append(('notify', message))
                   return super().notify_members(message)
           ns.update(DiscordBot=ObservedBot, Channel=ObservedChannel, __name__='__main__')
@@ -372,7 +374,7 @@ steps:
       participant api: API
       caller -> api: get_status()
       activate api
-      api --> caller: str
+      api --> caller: String
       deactivate api
       @enduml'></div>
 
@@ -399,7 +401,7 @@ steps:
       deactivate channel
       Main -> bot: get_member_count()
       activate bot
-      bot --> Main: count: int
+      bot --> Main: count: Integer
       deactivate bot
       Main -> channel: notify_members('{count} members ...)
       activate channel
@@ -407,7 +409,7 @@ steps:
       deactivate Main
       @enduml"></div>
 
-      Notice the new dashed arrow from `bot` back to `Main` labeled `int` — that is the return arrow. The old call to `channel.notify_members(...)` has **no** dashed return arrow because its return type is `None`.
+      Notice the new dashed arrow from `bot` back to `Main` labeled `count: Integer` — that is the return arrow. Python spells its type `int`. The old call to `channel.notify_members(...)` has **no** dashed return arrow because its source return type is `None`.
 
       ### Your Task
 
@@ -546,7 +548,7 @@ steps:
                       events.append(('count',))
                       return member_count
               class ObservedChannel(ns['Channel']):
-                  def notify_members(self, message):
+                  def notify_members(self, message: str) -> None:
                       events.append(('notify', message))
                       return super().notify_members(message)
               run_ns = dict(ns, DiscordBot=ObservedBot, Channel=ObservedChannel, __name__='__main__')
@@ -674,13 +676,13 @@ steps:
       participant order: Order
       Main -> order: checkout()
       activate order
-      order -> order: _validate()
+      order -> order: validate()
       activate order
       deactivate order
       deactivate order
       @enduml'></div>
 
-      Notice the arrow from `order` to **itself**, and how it sits inside the outer activation box for `checkout()`. The small nested box marks `_validate()` executing while `checkout()` is still active, matching the nested stack frames in this synchronous code.
+      Notice the arrow from `order` to **itself**, and how it sits inside the outer activation box for `checkout()`. The small nested box marks `validate()` (Python's `_validate()`) executing while `checkout()` is still active, matching the nested stack frames in this synchronous code.
 
       ### Your Target Diagram
 
@@ -698,7 +700,7 @@ steps:
       deactivate bot
       Main -> bot: handle_message('hi there')
       activate bot
-      bot -> bot: _log(message)
+      bot -> bot: log(message)
       activate bot
       deactivate bot
       bot -> bot: send(message)
@@ -789,7 +791,7 @@ steps:
                   def _log(self, message):
                       events.append(('log', message))
                       return super()._log(message)
-                  def send(self, message):
+                  def send(self, message: str) -> None:
                       events.append(('send', message))
                       return super().send(message)
               ObservedBot().handle_message(message)
@@ -892,8 +894,8 @@ steps:
 
             ```python
             class Bot:
-                def a(self): self.b()
-                def b(self): pass
+                def a(self) -> None: self.b()
+                def b(self) -> None: pass
 
             if __name__ == "__main__":
                 bot = Bot()
@@ -967,7 +969,7 @@ steps:
       participant channel: Channel
       Main -> bot: welcome(user)
       activate bot
-      opt [not bot._is_subscribed(user)]
+      opt [not bot.is_subscribed(user)]
       bot -> channel: send_welcome(user)
       activate channel
       deactivate channel
@@ -987,11 +989,11 @@ steps:
       participant channel: Channel
       Main -> bot: handle("hi")
       activate bot
-      bot -> bot: _is_spam("hi")
+      bot -> bot: is_spam("hi")
       activate bot
       deactivate bot
-      alt [bot._is_spam("hi")]
-      bot -> bot: _block()
+      alt [bot.is_spam("hi")]
+      bot -> bot: block()
       activate bot
       deactivate bot
       else [else]
@@ -1032,11 +1034,11 @@ steps:
       deactivate channel
       Main -> bot: handle(channel, 'buy now cheap')
       activate bot
-      bot -> bot: _is_spam(message)
+      bot -> bot: is_spam(message)
       activate bot
       deactivate bot
-      alt [bot._is_spam(message)]
-      bot -> bot: _block(message)
+      alt [bot.is_spam(message)]
+      bot -> bot: block(message)
       activate bot
       deactivate bot
       else [else]
@@ -1293,7 +1295,7 @@ steps:
       participant channel: Channel
       Main -> bot: welcome_all(members)
       activate bot
-      loop [for member in members]
+      loop [for each member in members]
       bot -> channel: notify(member)
       activate channel
       deactivate channel
@@ -1324,7 +1326,7 @@ steps:
       deactivate channel
       Main -> bot: broadcast_all(channel, ['hi', 'hello', ...)
       activate bot
-      loop [for msg in messages]
+      loop [for each msg in messages]
       bot -> channel: send_to_all(msg)
       activate channel
       deactivate channel
@@ -1454,7 +1456,7 @@ steps:
           messages = []
           sent = []
           class ObservedChannel(ns['Channel']):
-              def send_to_all(self, message):
+              def send_to_all(self, message: str) -> None:
                   sent.append(message)
                   return super().send_to_all(message)
           expected = list(messages)
@@ -1476,7 +1478,7 @@ steps:
           messages = ['only this']
           sent = []
           class ObservedChannel(ns['Channel']):
-              def send_to_all(self, message):
+              def send_to_all(self, message: str) -> None:
                   sent.append(message)
                   return super().send_to_all(message)
           expected = list(messages)
@@ -1498,7 +1500,7 @@ steps:
           messages = ['first', 'second', 'first']
           sent = []
           class ObservedChannel(ns['Channel']):
-              def send_to_all(self, message):
+              def send_to_all(self, message: str) -> None:
                   sent.append(message)
                   return super().send_to_all(message)
           expected = list(messages)
@@ -1824,21 +1826,21 @@ steps:
       activate bot
       bot -> channel: get_subscriber_count()
       activate channel
-      channel --> bot: count: int
+      channel --> bot: count: Integer
       deactivate channel
-      bot -> bot: _log_start(count)
+      bot -> bot: log_start(count)
       activate bot
       deactivate bot
-      loop [for post in posts]
-      bot -> bot: _is_announcement(post)
+      loop [for each post in posts]
+      bot -> bot: is_announcement(post)
       activate bot
       deactivate bot
-      alt [bot._is_announcement(post)]
+      alt [bot.is_announcement(post)]
       bot -> channel: broadcast(post)
       activate channel
       deactivate channel
       else [else]
-      bot -> bot: _log_skip(post)
+      bot -> bot: log_skip(post)
       activate bot
       deactivate bot
       end

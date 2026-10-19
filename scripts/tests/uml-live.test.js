@@ -26,6 +26,8 @@ function loadClient() {
   });
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../../js/uml-sequence-diagnostics.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../../js/uml-analyzer-python.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../js/uml-expression-views.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../js/uml-diagram-views.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../../js/uml-live.js'), 'utf8'), context);
   return { api: context.window.UMLLive, workers };
 }
@@ -55,6 +57,20 @@ test('TypeScript uses the shared AST analyzer queue', async () => {
     assert.equal(workers[0].messages[0].lang, 'js');
     workers[0].reply(diagram('Student'));
     assert.equal((await result).classDiagram, 'class Student');
+  } finally { client.dispose(); }
+});
+
+test('switching diagram views reuses current source analysis without changing its raw result', async () => {
+  const { api, workers } = loadClient();
+  const client = api.createClient();
+  try {
+    const pending = client.analyze(request('Sample'));
+    const raw = { classDiagram: 'class Sample {\n  +name: str\n}', sequenceDiagram: '', errors: [] };
+    workers[0].reply(raw);
+    const result = await pending;
+    assert.match(client.project(result, { language: 'python', view: 'design' }).classDiagram, /name: String/);
+    assert.equal(client.project(result, { language: 'python', view: 'implementation' }).classDiagram, raw.classDiagram);
+    assert.equal(workers[0].messages.length, 0, 'view changes do not dispatch another analysis');
   } finally { client.dispose(); }
 });
 

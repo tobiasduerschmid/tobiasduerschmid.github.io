@@ -81,22 +81,22 @@ The subject knows the notification interface, not each observer's concrete class
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 interface Subject {
-	+ attach(observer: Observer): void
-	+ detach(observer: Observer): void
-	+ notifyObservers(): void
+	+ attach(observer: Observer)
+	+ detach(observer: Observer)
+	+ notifyObservers()
 }
 interface Observer {
-	+ update(): void
+	+ update()
 }
 class ConcreteSubject {
 	- subjectState: String
 	+ getState(): String
-	+ setState(value: String): void
+	+ setState(value: String)
 }
 class ConcreteObserver {
 	- subject: ConcreteSubject
 	- observerState: String
-	+ update(): void
+	+ update()
 }
 ConcreteSubject ..|> Subject
 ConcreteObserver ..|> Observer
@@ -123,34 +123,36 @@ callout bottom of text "ConcreteObserver" : Concrete observer: pulls state from 
 
 ## UML Example Diagram
 
+The diagram uses Design names; the attached Python code notes retain implementation spellings such as `_subscribers`.
+
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 class NewsChannel {
-	- _subscribers: list[Subscriber]
-	- _latest_post: str
+	- subscribers: Sequence<Subscriber>
+	- latest_post: String
 	+ follow(subscriber: Subscriber)
 	+ unfollow(subscriber: Subscriber)
-	+ publish_post(text: str)
-	+ get_latest_post(): str
-	- _notify_subscribers()
+	+ publish_post(text: String)
+	+ get_latest_post(): String
+	- notify_subscribers()
 }
 abstract class Subscriber <<ABC>> {
 	+ {abstract} update()
 }
 class MobileApp {
-	- _channel: NewsChannel
+	- channel: NewsChannel
 	+ update()
 }
 class EmailDigest {
-	- _channel: NewsChannel
+	- channel: NewsChannel
 	+ update()
 }
-NewsChannel "1" -- "*" Subscriber : _subscribers
+NewsChannel "1" -- "*" Subscriber : subscribers
 MobileApp --|> Subscriber
 EmailDigest --|> Subscriber
-MobileApp --> NewsChannel : _channel
-EmailDigest --> NewsChannel : _channel
-note right of NewsChannel._notify_subscribers
+MobileApp --> NewsChannel : channel
+EmailDigest --> NewsChannel : channel
+note right of NewsChannel.notify_subscribers
 	```python
 	for subscriber in self._subscribers:
 	    subscriber.update()
@@ -183,7 +185,7 @@ activate channel
 deactivate channel
 client -> channel: publish_post("New video uploaded!")
 activate channel
-channel -> channel: _notify_subscribers()
+channel -> channel: notify_subscribers()
 activate channel
 channel -> app: update()
 activate app
@@ -206,7 +208,7 @@ activate channel
 deactivate channel
 client -> channel: publish_post("Live stream starting!")
 activate channel
-channel -> channel: _notify_subscribers()
+channel -> channel: notify_subscribers()
 activate channel
 channel -> app: update()
 activate app

@@ -8,6 +8,7 @@
   {% include ai-training-opt-out-meta.html %}
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/uml-view-controls.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/tutorial-popouts.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
@@ -29,6 +30,7 @@
       </label>
       <button class="tvm-diagram-color-reset-btn" aria-label="Reset to default color">&#x21bb;</button>
     </div>
+    <div class="tvm-uml-view-choice" id="umlViewChoice"></div>
     <div class="popup-wrap">
       <div class="tvm-diagram-content is-hidden" id="diagramContent" tabindex="0"
         aria-label="UML diagram canvas. Use arrow keys to pan, Shift plus arrow keys to pan faster, plus or minus to zoom, and Home to reset pan."
@@ -39,6 +41,10 @@
 
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-live.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-expression-views.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-diagram-views.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-view-controls.js' | relative_url }}"></script>
   <script>
   (function () {
     var params    = new URLSearchParams(location.search);
@@ -53,6 +59,15 @@
     var panX      = 0;
     var panY      = 0;
     var customColor = null;
+    var diagramView = 'design';
+    var viewControls = UMLViewControls.mount(document.getElementById('umlViewChoice'), {
+      view: diagramView,
+      onChange: function (view) {
+        diagramView = view;
+        render();
+        channel.postMessage({ type: 'uml-view-change', view: view });
+      }
+    });
 
     // ── Transform (zoom + pan) ───────────────────────────────────────────
     function applyTransform() {
@@ -119,7 +134,11 @@
     // ── Render ───────────────────────────────────────────────────────────
     function render() {
       if (!state) return;
-      var spec = activeType === 'sequence' ? state.sequenceDiagram : state.classDiagram;
+      var diagrams = UMLDiagramViews.project(state.rawDiagrams || state, { language: state.language, view: diagramView });
+      var spec = activeType === 'sequence' ? diagrams.sequenceDiagram : diagrams.classDiagram;
+      if (activeType === 'class' && spec && state.classLayout) {
+        spec = UMLLive.withClassLayout(spec, state.classLayout);
+      }
       if (!spec) {
         contentEl.classList.add('is-hidden');
         contentEl.style.display = 'none';
@@ -138,6 +157,9 @@
         UMLSequenceDiagram.render(contentEl, spec);
       } else if (activeType === 'class' && window.UMLClassDiagram) {
         UMLClassDiagram.render(contentEl, spec);
+      }
+      if (window.UMLShared && typeof UMLShared.applySvgAccessibility === 'function') {
+        UMLShared.applySvgAccessibility(contentEl, activeType, spec);
       }
       applyTransform();
     }
@@ -199,8 +221,13 @@
     // ── BroadcastChannel ─────────────────────────────────────────────────
     channel.addEventListener('message', function(e) {
       if (e.data.type !== 'uml-update') return;
+      var previousParentType = state && state.activeType;
       state = e.data;
-      if (e.data.activeType) {
+      if (state.diagramView) {
+        diagramView = state.diagramView;
+        viewControls.setView(diagramView);
+      }
+      if (e.data.activeType && e.data.activeType !== previousParentType) {
         activeType = e.data.activeType;
         document.querySelectorAll('.tvm-diagram-type-btn').forEach(function(b) {
           b.classList.toggle('active', b.dataset.type === activeType);

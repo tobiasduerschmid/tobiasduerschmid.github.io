@@ -197,7 +197,9 @@
 
   /**
    * analyze({language, sources, options?}) resolves to classDiagram,
-   * sequenceDiagram, sequenceWarnings and errors. render({type, syntax, target, isCurrent?, readOnly?})
+   * sequenceDiagram, sequenceWarnings and errors. project(result, {language, view}) synchronously
+   * selects display detail after analysis without changing its grading result.
+   * render({type, syntax, target, isCurrent?, readOnly?})
    * commits an accessible SVG only while the caller's revision is current.
    * Errors reject; superseded/disposed work has umlSuperseded=true.
    * Tutorial-specific TypeScript loading can be supplied through settings.
@@ -219,7 +221,7 @@
       return global[analyzer.name](sources, language === 'js' ? global.ts : options || {});
     }
 
-    async function analyze(request) {
+    async function analyzeRaw(request) {
       if (request.language === 'typescript') request = { ...request, language: 'js' };
       if (!Object.hasOwn(analyzers, request.language)) throw new Error('Unsupported UML source language.');
       if (disposed) throw supersededError();
@@ -230,6 +232,19 @@
         if (error.umlSuperseded || error.umlTimeout || disposed) throw error;
         return analyzeOnMainThread(request);
       }
+    }
+
+    async function analyze(request) {
+      // Load the small projection modules alongside analysis, once per page.
+      // Worker replies and the fallback retain exactly the same raw contract.
+      const [result] = await Promise.all([analyzeRaw(request),
+        global.UMLExpressionViews ? Promise.resolve() : loadScript(assetURL('uml-expression-views.js')),
+        global.UMLDiagramViews ? Promise.resolve() : loadScript(assetURL('uml-diagram-views.js'))]);
+      return result;
+    }
+
+    function project(result, settings) {
+      return global.UMLDiagramViews.project(result, settings);
     }
 
     async function render({ type, syntax, target, isCurrent = () => true, readOnly = false }) {
@@ -266,7 +281,7 @@
     }
 
     return {
-      analyze, render,
+      analyze, project, render,
       dispose() { disposed = true; queue.dispose(); measurer.dispose(); }
     };
   }

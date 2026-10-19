@@ -59,20 +59,20 @@ The key insight is **composition over inheritance**: the Context delegates throu
 layout horizontal
 class Context {
 	- strategy: Strategy
-	+ setStrategy(strategy: Strategy): void
-	+ contextInterface(): void
+	+ setStrategy(strategy: Strategy)
+	+ contextInterface()
 }
 interface Strategy {
-	+ algorithmInterface(): void
+	+ algorithmInterface()
 }
 class ConcreteStrategyA {
-	+ algorithmInterface(): void
+	+ algorithmInterface()
 }
 class ConcreteStrategyB {
-	+ algorithmInterface(): void
+	+ algorithmInterface()
 }
 class ConcreteStrategyC {
-	+ algorithmInterface(): void
+	+ algorithmInterface()
 }
 Context o--> Strategy : strategy
 ConcreteStrategyA ..|> Strategy
@@ -100,20 +100,20 @@ layout landscape
 abstract class Duck {
 	- flyBehavior: FlyBehavior
 	- quackBehavior: QuackBehavior
-	+ performFly(): void
-	+ performQuack(): void
-	+ setFlyBehavior(fb: FlyBehavior): void
-	+ {abstract} display(): void
+	+ performFly()
+	+ performQuack()
+	+ setFlyBehavior(fb: FlyBehavior)
+	+ {abstract} display()
 }
 class MallardDuck
 class RubberDuck
 interface FlyBehavior {
-	+ fly(): void
+	+ fly()
 }
 class FlyWithWings
 class FlyNullObject
 interface QuackBehavior {
-	+ quack(): void
+	+ quack()
 }
 class Quack
 class Squeak

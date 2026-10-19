@@ -23,16 +23,16 @@ In the Home Theater example, we create a `HomeTheaterFaçade`. Instead of the cl
 layout landscape
 class Client
 class Façade {
-	+ operation(): void
+	+ operation()
 }
 class SubsystemA {
-	+ stepA(): void
+	+ stepA()
 }
 class SubsystemB {
-	+ stepB(): void
+	+ stepB()
 }
 class SubsystemC {
-	+ stepC(): void
+	+ stepC()
 }
 Client --> Façade : uses >
 Façade --> SubsystemA
@@ -51,8 +51,8 @@ This diagram shows the movie-playback slice implemented below. CD and radio supp
 layout landscape
 class MovieNightClient
 class HomeTheaterFaçade {
-	+ watchMovie(movie: String): void
-	+ endMovie(): void
+	+ watchMovie(movie: String)
+	+ endMovie()
 }
 class Amplifier
 class DvdPlayer

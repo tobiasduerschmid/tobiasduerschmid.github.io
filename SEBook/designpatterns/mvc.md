@@ -69,14 +69,14 @@ card Controller {
 layout landscape
 class Model
 interface Observer {
-    + update(model: Model): void
+    + update(model: Model)
 }
 class View {
-    + update(model: Model): void
-    + render(): void
+    + update(model: Model)
+    + render()
 }
 class Controller {
-    + handleInput(): void
+    + handleInput()
 }
 Model "1" -- "*" Observer : notifies >
 View ..|> Observer
@@ -94,18 +94,18 @@ callout right of text "delegates input" : Strategy: the view hands input handlin
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout landscape
 class TaskModel {
-    + addTask(task: String): void
-    + getTasks(): List<String>
+    + addTask(task: String)
+    + getTasks(): Sequence<String>
 }
 interface TaskObserver {
-    + update(model: TaskModel): void
+    + update(model: TaskModel)
 }
 class TaskView {
-    + update(model: TaskModel): void
-    + showTasks(tasks: List<String>): void
+    + update(model: TaskModel)
+    + showTasks(tasks: Sequence<String>)
 }
 class TaskController {
-    + addNewTask(task: String): void
+    + addNewTask(task: String)
 }
 TaskModel "1" -- "*" TaskObserver : notifies >
 TaskView ..|> TaskObserver

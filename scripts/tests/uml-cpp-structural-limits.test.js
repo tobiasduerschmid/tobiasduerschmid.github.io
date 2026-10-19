@@ -49,9 +49,9 @@ test('C++ repeated targets retain each field role and its own relationship kind 
   `);
 
   assert.deepEqual(new Set(relationships(classDiagram, 'Team')), new Set([
-    'Team "1" *-- "1" Person : leader',
+    'Team *-- "1" Person : leader',
     'Team --> "0..1" Person : deputy',
-    'Team "1" *-- "*" Person : members'
+    'Team *-- "*" Person : members'
   ]));
 });
 
@@ -105,8 +105,8 @@ test('C++ distinct qualified classes cannot collide with underscore-containing c
   const parcelClass = classDiagram.match(/class (\w+) \{\s*\+ship\(\)/)[1];
   const stockClass = classDiagram.match(/class (\w+) \{\s*\+count\(\)/)[1];
   assert.notEqual(parcelClass, stockClass, 'different C++ types need different diagram class identities');
-  assert.ok(classDiagram.includes('Store "1" *-- "1" ' + parcelClass));
-  assert.ok(classDiagram.includes('Store "1" *-- "1" ' + stockClass));
+  assert.ok(classDiagram.includes('Store *-- "1" ' + parcelClass));
+  assert.ok(classDiagram.includes('Store *-- "1" ' + stockClass));
   assert.ok(sequenceDiagram.includes('participant parcel: ' + parcelClass));
   assert.ok(sequenceDiagram.includes('participant stock: ' + stockClass));
 });

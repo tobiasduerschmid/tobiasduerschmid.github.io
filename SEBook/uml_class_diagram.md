@@ -9,25 +9,25 @@ uml_code_labs: true
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Billable {
-  + processPayment(): bool
+  + processPayment(): Boolean
 }
 class Customer {
-  - id: int
+  - id: Integer
   - name: String
-  + placeOrder(): void
+  + placeOrder()
 }
 class VIP
 class Guest
 class Order {
   - date: Date
   - status: String
-  + calcTotal(): float
+  + calcTotal(): Real
 }
 class LineItem {
-  - quantity: int
+  - quantity: Integer
 }
 class Product {
-  - price: float
+  - price: Real
   - name: String
 }
 VIP --|> Customer
@@ -38,8 +38,8 @@ Order *-- "1..*" LineItem
 LineItem "*" -- "1" Product
 callout top of text "«interface»" : Interface: a contract of public operations
 callout right of text "Customer" : Class: shared structure and behavior
-callout right of text "-price: float" : Attributes: values each object stores
-callout left of text "+calcTotal(): float" : Operations: behavior that can be invoked
+callout right of text "-price: Real" : Attributes: values each object stores
+callout left of text "+calcTotal(): Real" : Operations: behavior that can be invoked
 callout left of shape polygon occurrence 2 : Realization: fulfills the interface contract
 callout right of shape polygon occurrence 1 : Generalization: also a kind of the superclass
 callout right of edge 3 middle : Association: a type of link between objects
@@ -66,6 +66,24 @@ Among UML diagrams, **Class Diagrams** are the most common ones, because they ar
 
 ## The Core Building Blocks
 
+### Model Types and Source Types
+
+A class diagram selects claims for a purpose. The labs start with **Implementation details**, showing the current code's types and members. Switch to **Design focus** to abstract those types and hide empty no-argument constructors and known no-result suffixes. Constructors with parameters or initialization behavior stay visible. Hidden members still exist in the code; the view is not a certificate that the design meets its requirements. Visibility, relationships, and multiplicities keep their meaning in both views. Design focus removes Python's leading naming markers and displays Python initializers and TypeScript constructors under the class name; Implementation details retains names such as `_name`, `__init__`, and `constructor`. Protocol operations stay visible (for example, `__str__` becomes `str`). If removing markers would merge distinct members, the source names remain.
+
+We use UML's standard primitive vocabulary {% cite OMG2017UML %}:
+
+| UML primitive | Meaning | Common source types |
+|---|---|---|
+| `Integer` | Whole numbers | Python `int`; Java `int`, `long`; C++ `int`, `long`; TypeScript `bigint` |
+| `Boolean` | True or false | Python `bool`; Java `boolean`; C++ `bool`; TypeScript `boolean` |
+| `String` | Text | Python `str`; Java `String`; C++ `std::string`; TypeScript `string` |
+| `Real` | Real-number values | Python `float`; Java/C++ `float`, `double`; TypeScript `number` |
+| `UnlimitedNatural` | Nonnegative integers plus an unlimited value `*` | No direct built-in equivalent; use a nonnegative integer together with an explicit unlimited case |
+
+These are modeling correspondences, not identical runtime types. Machine integers have range limits; floating-point values approximate real numbers. TypeScript `number` does not establish an integer contract. An unsigned C++ integer is finite, so it is not `UnlimitedNatural`. Optional values remain optional, and unknown types remain unspecified. Collection labels use `Sequence<T>`, `Set<T>`, and `Map<K,V>`; a collection alone proves neither ownership nor a nonempty lower bound.
+
+Java boxed numbers retain their nullable distinction, for example `Integer` becomes `Optional<Integer>` in Design focus. A common text label such as `String` does not prove non-nullness. See [TypeScript's primitive type distinctions](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html) and [Python's annotation contract](https://docs.python.org/3/library/typing.html): Python does not enforce annotations at runtime.
+
 ### 2.1 Classes
 A **Class** <span class="uml-sym" data-diagram="class" data-sym="box" data-label="Customer"></span> describes a set of objects that share the same structure and behavior. In UML, a class is represented by a rectangle divided into three compartments:
 1. **Top:** The Class Name.
@@ -85,19 +103,21 @@ layout landscape
 class User {
   - username: String
   - email: String
-  # id: int
-  + login(): boolean
-  + resetPassword(): void
+  # id: Integer
+  + login(): Boolean
+  + resetPassword()
 }
 callout top of text "User" : Class: shared structure and behavior
 callout left of text "-" : Private: visible only inside this class
 callout left of text "#" : Protected: visible in this class and its subclasses
 callout left of text "+" : Public: visible wherever the class is visible
 callout right of text "username: String" : Attributes: values each object stores
-callout right of text "login(): boolean" : Operations: behavior that can be invoked
+callout right of text "login(): Boolean" : Operations: behavior that can be invoked
 @enduml'></div>
 
-Edit the code below to update the diagram. The code is analyzed locally without execution; edits are not saved.
+Edit the code below to update the diagram. Before editing, compare **Implementation details** with **Design focus**: which changes only the notation, and which information would a caller still need? Then compare a second language. Each language has its own example and edits; switching languages does not translate your code.
+
+In Python, `_name` is a non-public convention, `__name` triggers name mangling, and `__name__` names special protocols. The diagram's visibility markers describe that mapping; they do not give Python Java-style access enforcement. The code is analyzed locally without execution; edits are not saved.
 
 {% include uml-code-lab.html example="visibility" %}
 
@@ -108,10 +128,10 @@ An **Interface** represents a contract. It tells us *what* a class must do, but 
 layout horizontal
 layout landscape
 interface Payable {
-  + processPayment(): bool
+  + processPayment(): Boolean
 }
 callout top of text "«interface»" : Interface: a contract of public operations
-callout right of text "processPayment(): bool" : Operation: the contract name and return type
+callout right of text "processPayment(): Boolean" : Operation: the contract name and return type
 @enduml'></div>
 
 > **Quick Check 1 (Retrieval Practice)**
@@ -135,11 +155,11 @@ When a class realizes an interface, it fulfills that interface's contract: it pr
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Vehicle {
-  + startEngine(): void
+  + startEngine()
 }
 class Car {
   - make: String
-  + startEngine(): void
+  + startEngine()
 }
 class Sedan
 class SUV
@@ -160,8 +180,8 @@ A dependency indicates that one class *uses* another, but does not hold a perman
 layout horizontal
 layout landscape
 class Train {
-  # addStop(stop: ButtonPressedEvent): void
-  + startTrain(velocity: double): void
+  # addStop(stop: ButtonPressedEvent)
+  + startTrain(velocity: Real)
 }
 class ButtonPressedEvent
 Train ..> ButtonPressedEvent
@@ -174,8 +194,8 @@ Here is another example where a class depends on an exception it throws:
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class ChecksumValidator {
-  + execute(): bool
-  + validate(): void
+  + execute(): Boolean
+  + validate()
 }
 class InvalidChecksumException
 ChecksumValidator ..> InvalidChecksumException
@@ -321,7 +341,7 @@ House "1" *-- "1..*" Room
 callout bottom of edge 1 start : Composition: exclusive owner; parts die with it
 @enduml'></div>
 
-**A helpful way to think about the difference:** In C++, aggregation is usually expressed through pointers/references (the part can exist separately), while composition is expressed by containing instances by value (the part's lifetime is tied to the whole). In Java and Python, every object reference is effectively a pointer — the distinction between aggregation and composition is communicated through *design intent* (who created the part? who destroys it?) rather than through language syntax. Inner classes in Java are *one* indicator of composition but are not required.
+**Relating the model to code:** C++ value members provide concrete evidence of a part lifetime tied to its containing object. Pointers and references alone do not justify aggregation. Java and Python reference storage likewise does not establish whole-part ownership: creation location, injection, and nested class syntax are insufficient. Choose diamonds from explicit ownership and lifecycle contracts.
 
 > **⚠ Honest caveat on aggregation.** Aggregation has *intentionally informal* semantics in the UML 2 specification {% cite OMG2017UML %}. Martin Fowler observes: *"Aggregation is strictly meaningless; as a result, I recommend that you ignore it in your own diagrams."* {% cite Fowler2003 %} When you aren't sure whether something is aggregation or plain association, use **association** — it is always safe. Reserve the hollow diamond for the cases where part-whole semantics clearly add communicative value.
 
@@ -371,20 +391,20 @@ An **abstract operation** has no implementation in this class. A more specific c
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 abstract class Shape {
-  - color: int
-  + setColor(r: int, g: int, b: int): void
-  {abstract} + draw(): void
+  - color: Integer
+  + setColor(r: Integer, g: Integer, b: Integer)
+  {abstract} + draw()
 }
 class Rectangle {
-  - width: int
-  - length: int
-  + setWidth(width: int): void
-  + setHeight(height: int): void
-  + draw(): void
+  - width: Integer
+  - length: Integer
+  + setWidth(width: Integer)
+  + setHeight(height: Integer)
+  + draw()
 }
 Rectangle --|> Shape
 callout left of text "Shape" : Abstract class: cannot be instantiated directly
-callout right of text "draw(): void" occurrence 1 : Abstract operation: a descendant must implement it
+callout right of text "draw()" occurrence 1 : Abstract operation: a descendant must implement it
 callout left of shape polygon occurrence 1 : Generalization: also a kind of the superclass
 @enduml'></div>
 
@@ -398,12 +418,12 @@ In this example, `Shape` is abstract (it cannot be created directly) and declare
 layout horizontal
 layout landscape
 class MathUtils {
-  {static} +PI: double
-  {static} +abs(n: int): int
-  +round(n: double): int
+  {static} +PI: Real
+  {static} +abs(n: Integer): Integer
+  +round(n: Real): Integer
 }
-callout right of text "PI: double" : Static member: one value of the class, not each object
-callout left of text "+abs(n: int): int" : Operation: name(parameters): return type
+callout right of text "PI: Real" : Static member: one value of the class, not each object
+callout left of text "+abs(n: Integer): Integer" : Operation: name(parameters): return type
 @enduml'></div>
 
 
@@ -459,13 +479,12 @@ class BaseSynchronizer {
 layout horizontal
 layout landscape
 class BaseSynchronizer {
-  + synchronizationStarted(): void
+  + synchronizationStarted()
 }
-callout right of text "synchronizationStarted(): void" : Operation: name(parameters): return type
-callout bottom of text "void" : void: no returned value
+callout right of text "synchronizationStarted()" : Operation: name and parameters
 @enduml'></div>
 
-Each public method becomes a `+` operation in the bottom compartment. The return type follows a colon after the method signature.
+Each public method becomes a `+` operation in the bottom compartment. A result type follows a colon when shown. This design sketch omits the known no-result suffix; the source expresses it with `void` or Python's `-> None`.
 
 ### Example 2: Attributes and Associations
 
@@ -544,7 +563,7 @@ layout horizontal
 layout landscape
 class Student {
   ~ roster: Roster
-  + storeRoster(r: Roster): void
+  + storeRoster(r: Roster)
 }
 class Roster
 Student --> Roster
@@ -649,8 +668,8 @@ class ChecksumValidator {
 layout horizontal
 layout landscape
 class ChecksumValidator {
-  + execute(): bool
-  + validate(): void
+  + execute(): Boolean
+  + validate()
 }
 class InvalidChecksumException
 ChecksumValidator ..> InvalidChecksumException
@@ -729,7 +748,7 @@ callout bottom of text "primaryIDE" occurrence 1 : Role name: the part these obj
 callout top of shape polygon occurrence 1 : Composition: exclusive owner; parts die with it
 @enduml'></div>
 
-The two fields have distinct roles: each motherboard has one primary bus and one secondary bus. The inferred diagram keeps both relationships instead of merging them into a single link with multiplicity two. In this model the motherboard owns the buses' lifetimes, which justifies composition; a private nested class or constructor call alone does not prove that lifecycle contract.
+**Reference design:** each motherboard has one primary bus and one secondary bus, and this model assigns their lifetimes to the motherboard. The two roles stay separate in the live inference, but Java, Python, and TypeScript allocation patterns alone do not establish the diamonds or all multiplicity bounds. C++ value members provide stronger lifetime evidence. The reference design states the intended contract; it is not a language-independent prediction of analyzer output.
 
 > **Quick Check (Generation):** Before looking at the answer below, try to draw the UML class diagram for this code:
 > ```java
@@ -749,18 +768,18 @@ The two fields have distinct roles: each motherboard has one primary bus and one
 > layout horizontal
 > layout landscape
 > class Division {
->   - division: List~Employee~
+>   - division: Sequence&lt;Employee&gt;
 >   - employees: Employee[]
 > }
 > class Employee
-> Division o-- "*" Employee : division
+> Division --> "*" Employee : division
 > Division --> "*" Employee : employees
 > callout bottom of text "*" occurrence 1 : Multiplicity *: zero or more
-> callout top of shape polygon occurrence 1 : Aggregation: whole-part, not exclusive ownership
+> callout top of edge 1 middle : Association: stored references, ownership unspecified
 > callout bottom of edge 2 end : Navigability: Division can reach Employees
 > @enduml'></div>
 >
-> The two roles remain separate. This sketch uses aggregation for the staff grouping, matching the Java analyzer's collection heuristic; the list type alone does not establish a whole-part contract, so a plain association is also appropriate. The array relationship is an association: <code>new Employee[10]</code> creates ten initially null reference slots, not ten employees. The field's array type permits zero or more referenced employees (<code>*</code>); the initializer alone does not establish an invariant of exactly ten links. A domain rule and supporting code would be needed to require an exact number.
+> The two roles remain separate. Both stored collections use ordinary associations. Neither the list type nor creating its container establishes a whole-part ownership contract. The array relationship is an association: <code>new Employee[10]</code> creates ten initially null reference slots, not ten employees. The field's array type permits zero or more referenced employees (<code>*</code>); the initializer alone does not establish an invariant of exactly ten links. A domain rule and supporting code would be needed to require an exact number.
 > </details>
 
 
@@ -772,25 +791,25 @@ Let's read the architectural blueprint for a simplified E-Commerce system.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Billable {
-  + processPayment(): bool
+  + processPayment(): Boolean
 }
 class Customer {
-  - id: int
+  - id: Integer
   - name: String
-  + placeOrder(): void
+  + placeOrder()
 }
 class VIP
 class Guest
 class Order {
   - date: Date
   - status: String
-  + calcTotal(): float
+  + calcTotal(): Real
 }
 class LineItem {
-  - quantity: int
+  - quantity: Integer
 }
 class Product {
-  - price: float
+  - price: Real
   - name: String
 }
 VIP --|> Customer
@@ -801,8 +820,8 @@ Order *-- "1..*" LineItem
 LineItem "*" -- "1" Product
 callout top of text "«interface»" : Interface: a contract of public operations
 callout right of text "Customer" : Class: shared structure and behavior
-callout right of text "-price: float" : Attributes: values each object stores
-callout left of text "+calcTotal(): float" : Operations: behavior that can be invoked
+callout right of text "-price: Real" : Attributes: values each object stores
+callout left of text "+calcTotal(): Real" : Operations: behavior that can be invoked
 callout left of shape polygon occurrence 2 : Realization: fulfills the interface contract
 callout right of shape polygon occurrence 1 : Generalization: also a kind of the superclass
 callout right of edge 3 middle : Association: a type of link between objects
@@ -832,19 +851,19 @@ The following examples apply everything from this chapter to systems you interac
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout square
 class User {
-  + search(query: String): list
+  + search(query: String): Sequence<?>
   + createPlaylist(name: String): Playlist
 }
 class FreeUser
 class PremiumUser {
-  + download(track: Track): void
+  + download(track: Track)
 }
 class Playlist {
-  + addTrack(t: Track): void
+  + addTrack(t: Track)
 }
 class Track {
   + title: String
-  + duration: int
+  + duration: Integer
 }
 class Artist {
   + name: String
@@ -859,8 +878,8 @@ callout bottom of shape polygon occurrence 1 : Generalization: also a kind of th
 callout top of shape polygon occurrence 2 : Composition: exclusive owner; parts die with it
 callout left of text "1..*" : Multiplicity 1..*: at least one
 callout bottom of shape polygon occurrence 3 : Aggregation: whole-part, not exclusive ownership
-callout right of text "duration: int" : Attributes: values each object stores
-callout bottom of text "+addTrack(t: Track): void" : Operations: behavior that can be invoked
+callout right of text "duration: Integer" : Attributes: values each object stores
+callout bottom of text "+addTrack(t: Track)" : Operations: behavior that can be invoked
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -879,29 +898,29 @@ callout bottom of text "+addTrack(t: Track): void" : Operations: behavior that c
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Mergeable {
-  + canMerge(): bool
-  + merge(): void
+  + canMerge(): Boolean
+  + merge()
 }
 class Repository {
   - name: String
-  - isPrivate: bool
+  - isPrivate: Boolean
   + openPR(title: String): PullRequest
 }
 class PullRequest {
   - title: String
   - status: String
-  + addReview(r: Review): void
-  + canMerge(): bool
-  + merge(): void
+  + addReview(r: Review)
+  + canMerge(): Boolean
+  + merge()
 }
 class Review {
   - verdict: String
-  + approve(): void
-  + requestChanges(): void
+  + approve()
+  + requestChanges()
 }
 class CICheck {
-  - passed: bool
-  + getResult(): bool
+  - passed: Boolean
+  + getResult(): Boolean
 }
 PullRequest ..|> Mergeable
 Repository "1" *-- "*" PullRequest
@@ -912,7 +931,7 @@ callout left of shape polygon occurrence 1 : Realization: fulfills the interface
 callout right of shape polygon occurrence 2 : Composition: exclusive owner; parts die with it
 callout right of edge 3 end : Dependency: the client needs the supplier
 callout right of text "-verdict: String" : Attributes: values each object stores
-callout right of text "getResult(): bool" : Operations: behavior that can be invoked
+callout right of text "getResult(): Boolean" : Operations: behavior that can be invoked
 callout left of text "*" occurrence 2 : Multiplicity *: zero or more
 @enduml'></div>
 
@@ -937,19 +956,19 @@ class Customer {
 class Order {
   - placedAt: DateTime
   - status: String
-  + calcTotal(): float
+  + calcTotal(): Real
 }
 class OrderItem {
-  - quantity: int
-  - unitPrice: float
+  - quantity: Integer
+  - unitPrice: Real
 }
 class MenuItem {
   - name: String
-  - price: float
+  - price: Real
 }
 class Restaurant {
   - name: String
-  - rating: float
+  - rating: Real
 }
 class Driver {
   - name: String
@@ -960,7 +979,7 @@ Order *-- "1..*" OrderItem : contains
 OrderItem "*" -- "1" MenuItem : references
 Restaurant "1" -- "1..*" MenuItem : offers
 Driver "0..1" -- "0..1" Order : delivers
-callout bottom of text "+calcTotal(): float" : Operations: behavior that can be invoked
+callout bottom of text "+calcTotal(): Real" : Operations: behavior that can be invoked
 callout right of text "-vehicleType: String" : Attributes: values each object stores
 callout left of text "0..1" occurrence 1 : Multiplicity 0..1: zero or one
 callout bottom of text "1..*" occurrence 2 : Multiplicity 1..*: at least one
@@ -984,20 +1003,20 @@ callout top of edge 1 middle : Association: a type of link between objects
 abstract class Content {
   # title: String
   # rating: String
-  {abstract} + play(): void
+  {abstract} + play()
 }
 class Movie {
-  - duration: int
-  + play(): void
+  - duration: Integer
+  + play()
 }
 abstract class TVShow
 class Season {
-  - seasonNumber: int
+  - seasonNumber: Integer
 }
 class Episode {
-  - episodeNumber: int
-  - duration: int
-  + play(): void
+  - episodeNumber: Integer
+  - duration: Integer
+  + play()
 }
 class Genre {
   - name: String
@@ -1008,7 +1027,7 @@ TVShow "1" *-- "1..*" Season : contains
 Season "1" *-- "1..*" Episode : contains
 Content "*" -- "1..*" Genre : classifiedBy
 callout left of text "Content" : Abstract class: cannot be instantiated directly
-callout right of text "play(): void" : Abstract operation: a descendant must implement it
+callout right of text "play()" : Abstract operation: a descendant must implement it
 callout left of shape polygon occurrence 1 : Generalization: also a kind of the superclass
 callout left of shape polygon occurrence 2 : Composition: exclusive owner; parts die with it
 callout right of text "1..*" : Multiplicity 1..*: at least one
@@ -1030,30 +1049,30 @@ callout right of text "classifiedBy" : Association: a type of link between objec
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout square
 interface PaymentStrategy {
-  + pay(amount: float): bool
-  + refund(amount: float): bool
+  + pay(amount: Real): Boolean
+  + refund(amount: Real): Boolean
 }
 class CreditCardPayment {
   - cardNumber: String
   - cvv: String
-  + pay(amount: float): bool
-  + refund(amount: float): bool
+  + pay(amount: Real): Boolean
+  + refund(amount: Real): Boolean
 }
 class PayPalPayment {
   - email: String
-  + pay(amount: float): bool
-  + refund(amount: float): bool
+  + pay(amount: Real): Boolean
+  + refund(amount: Real): Boolean
 }
 class CryptoPayment {
   - walletAddress: String
-  + pay(amount: float): bool
-  + refund(amount: float): bool
+  + pay(amount: Real): Boolean
+  + refund(amount: Real): Boolean
 }
 class ShoppingCart {
-  - items: list
+  - items: Sequence<?>
   - strategy: PaymentStrategy
-  + setPayment(s: PaymentStrategy): void
-  + checkout(): bool
+  + setPayment(s: PaymentStrategy)
+  + checkout(): Boolean
 }
 CreditCardPayment ..|> PaymentStrategy
 PayPalPayment ..|> PaymentStrategy
@@ -1063,7 +1082,7 @@ callout right of text "«interface»" : Interface: a contract of public operatio
 callout left of shape polygon occurrence 1 : Realization: fulfills the interface contract
 callout right of edge 1 end : Navigability: the cart can reach the strategy
 callout left of text "-walletAddress: String" : Attributes: values each object stores
-callout right of text "refund(amount: float): bool" : Operations: behavior that can be invoked
+callout right of text "refund(amount: Real): Boolean" : Operations: behavior that can be invoked
 @enduml'></div>
 
 **What the UML notation captures:**

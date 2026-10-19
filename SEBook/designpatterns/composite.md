@@ -33,20 +33,20 @@ The **Composite Pattern** introduces a common `Component` abstraction shared by 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout landscape
 abstract class Component {
-	+ operation(): void
-	+ add(child: Component): void
-	+ remove(child: Component): void
-	+ getChild(i: int): Component
+	+ operation()
+	+ add(child: Component)
+	+ remove(child: Component)
+	+ getChild(i: Integer): Component
 }
 class Leaf {
-	+ operation(): void
+	+ operation()
 }
 class Composite {
-	- children: List<Component>
-	+ operation(): void
-	+ add(child: Component): void
-	+ remove(child: Component): void
-	+ getChild(i: int): Component
+	- children: Sequence<Component>
+	+ operation()
+	+ add(child: Component)
+	+ remove(child: Component)
+	+ getChild(i: Integer): Component
 }
 class Client
 Leaf --|> Component
@@ -64,19 +64,19 @@ callout top of text "treats uniformly" : Client: does not care whether it holds 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout landscape
 abstract class MenuComponent {
-	+ print(): void
-	+ add(component: MenuComponent): void
+	+ print()
+	+ add(component: MenuComponent)
 }
 class Menu {
-	- children: List<MenuComponent>
-	+ print(): void
-	+ add(component: MenuComponent): void
+	- children: Sequence<MenuComponent>
+	+ print()
+	+ add(component: MenuComponent)
 }
 class MenuItem {
-	+ print(): void
+	+ print()
 }
 class Demo {
-	+ main(): void
+	+ main()
 }
 Menu --|> MenuComponent
 MenuItem --|> MenuComponent

@@ -256,6 +256,7 @@
         returnType: tokens.slice(start, nameAt).filter(token => !modifiers.has(token)),
         static: tokens.slice(start, nameAt).includes('static'), abstract: false };
       node.constructor = !!ownerName && name === shortName(ownerName);
+      node.destructor = !!ownerName && name === '~' + shortName(ownerName);
       let i = close + 1;
       while (i < tokens.length && !['{', ';', ':'].includes(tokens[i])) {
         if (tokens[i] === '=' && tokens[i + 1] === '0') node.abstract = true;
@@ -355,7 +356,8 @@
       const pointer = clean.includes('*'), reference = clean.includes('&') || clean.includes('&&');
       let info = { node: this.resolve(name, scope), arrow: pointer || reference ? '-->' : '*--', multiplicity: pointer ? '0..1' : '1', collection: false, reference: pointer || reference };
       const base = shortName(name);
-      if (clean[end] === '<' && (containers.has(base) || ['unique_ptr', 'shared_ptr', 'weak_ptr', 'optional', 'reference_wrapper'].includes(base))) {
+      const standardType = !info.node && (!name.includes('::') || name.replace(/^::/, '').startsWith('std::'));
+      if (standardType && clean[end] === '<' && (containers.has(base) || ['unique_ptr', 'shared_ptr', 'weak_ptr', 'optional', 'reference_wrapper'].includes(base))) {
         const genericEnd = closing(clean, end);
         const args = split(clean.slice(end + 1, genericEnd));
         const item = this.type(args[base.includes('map') ? 1 : 0] || [], scope, seen);
@@ -365,8 +367,7 @@
           // The arrow targets the elements, not the optional container itself.
           let multiplicity = item.collection || base === 'reference_wrapper' ? item.multiplicity : '0..1';
           if (base !== 'reference_wrapper' && item.collection && /^\d+$/.test(multiplicity)) multiplicity = '0..' + multiplicity;
-          if (base === 'shared_ptr') Object.assign(info, { arrow: item.reference ? item.arrow : 'o--', multiplicity, reference: true });
-          else if (base === 'weak_ptr' || base === 'reference_wrapper') Object.assign(info, { arrow: '-->', multiplicity, reference: true });
+          if (['shared_ptr', 'weak_ptr', 'reference_wrapper'].includes(base)) Object.assign(info, { arrow: '-->', multiplicity, reference: true });
           else Object.assign(info, { arrow: item.reference ? item.arrow : '*--', multiplicity });
         }
         // Borrowing an owning wrapper does not transfer ownership of its contents.
@@ -403,8 +404,9 @@
     }
   }
 
-  function classDiagram(model, options) {
-    if (!model.classes.size) return '';
+  function classDiagramResult(model, options) {
+    const constructionMethods = [];
+    if (!model.classes.size) return { classDiagram: '', constructionMethods };
     const lines = ['@startuml', 'layout landscape', 'layout compact'], relationships = new Set();
     for (const node of model.classes.values()) {
       const kind = node.kind === 'enum' ? 'enum' : node.methods.some(method => method.abstract) ? 'abstract class' : 'class';
@@ -422,9 +424,8 @@
       }
       for (const { field, type } of fields) {
         if (type.node) {
-          // Shared references do not constrain how many owners can use the target.
-          const ownerMultiplicity = type.arrow === '*--' ? ' "1"' : '';
-          const multiplicity = options.hideMultiplicity ? ' ' + type.arrow + ' ' : ownerMultiplicity + ' ' + type.arrow + ' "' + type.multiplicity + '" ';
+          // This field constrains its target end, not all instances' inverse ownership.
+          const multiplicity = options.hideMultiplicity ? ' ' + type.arrow + ' ' : ' ' + type.arrow + ' "' + type.multiplicity + '" ';
           const role = targetRoles.get(type.node.name) > 1 ? ' : ' + field.name : '';
           relationships.add(node.id + multiplicity + type.node.id + role); structural.add(type.node.name);
         }
@@ -433,6 +434,10 @@
       for (const method of node.methods) {
         const params = method.params.map(param => param.name + ': ' + tokensToText(param.type)).join(', ');
         const returns = tokensToText(method.returnType);
+        if (method.constructor || method.destructor) {
+          constructionMethods.push({ owner: node.id, name: method.name, lineIndex: lines.length,
+            isDefault: method.params.length === 0 && Array.isArray(method.body) && method.body.length === 0 && method.initializers.length === 0 });
+        }
         lines.push('  ' + (method.static ? '{static} ' : '') + (method.abstract ? '{abstract} ' : '') + (options.hideVisibility ? '' : method.visibility) + method.name + '(' + params + ')' + (returns && returns !== 'void' ? ': ' + returns : ''));
         for (const typeTokens of [method.returnType, ...method.params.map(param => param.type)]) {
           const target = model.type(typeTokens, node.name).node;
@@ -441,7 +446,7 @@
       }
       lines.push('}');
     }
-    return lines.concat([...relationships], '@enduml').join('\n');
+    return { classDiagram: lines.concat([...relationships], '@enduml').join('\n'), constructionMethods };
   }
 
   function statement(tokens, start) {
@@ -856,7 +861,7 @@
       sequenceFailed = true;
       errors.push(error.message);
     }
-    return { classDiagram: classDiagram(model, options), ...sequence.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }), errors };
+    return { ...classDiagramResult(model, options), ...sequence.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }), errors };
   }
 
   if (typeof module !== 'undefined' && module.exports) module.exports = { analyzeCppSources };

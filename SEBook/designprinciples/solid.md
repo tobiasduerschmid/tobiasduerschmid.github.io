@@ -159,13 +159,13 @@ To guarantee behavioral substitutability, subclasses must follow strict Design-b
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Rectangle {
-  + setWidth(w: int)
-  + setHeight(h: int)
-  + getArea() : int
+  + setWidth(w: Integer)
+  + setHeight(h: Integer)
+  + getArea() : Integer
 }
 class Square {
-  + setWidth(w: int)
-  + setHeight(h: int)
+  + setWidth(w: Integer)
+  + setHeight(h: Integer)
 }
 Square --|> Rectangle
 note right of Square
@@ -180,16 +180,16 @@ end note
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Shape {
-  + getArea() : int
+  + getArea() : Integer
 }
 class Rectangle {
-  + setWidth(w: int)
-  + setHeight(h: int)
-  + getArea() : int
+  + setWidth(w: Integer)
+  + setHeight(h: Integer)
+  + getArea() : Integer
 }
 class Square {
-  + setSide(s: int)
-  + getArea() : int
+  + setSide(s: Integer)
+  + getArea() : Integer
 }
 Rectangle ..|> Shape
 Square ..|> Shape

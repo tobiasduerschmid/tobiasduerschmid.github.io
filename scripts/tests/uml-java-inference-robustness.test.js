@@ -27,10 +27,10 @@ for (const declaration of [
   });
 }
 
-test('Java retains composition for an actual element constructor', () => {
+test('Java construction establishes a reference without proving composition', () => {
   const result = analyzeJavaSources({ 'Store.java': 'class Item {} class Store { Item item = new Item(); }' });
   assert.deepEqual(result.errors, []);
-  assert.match(result.classDiagram, /Store "1" \*-- "1" Item/);
+  assert.match(result.classDiagram, /Store --> "0\.\.1" Item/);
 });
 
 for (const method of ['Store()', 'void addBatch()']) {
@@ -59,12 +59,12 @@ test('Java array dimensions are evaluated without invoking element constructors'
 });
 
 test('Java resolves a qualified generic element without treating its package as the outer type', () => {
-  assert.match(diagram('java.util.List<domain.Item>'), /Store o-- "\*" Item/);
+  assert.match(diagram('java.util.List<domain.Item>'), /Store --> "\*" Item/);
 });
 
 test('Java follows nested collection and map-value types to their element class', () => {
   for (const type of ['List<List<Item>>', 'Map<String, List<Item>>', 'List<Map<String, Item>>']) {
-    assert.match(diagram(type), /Store o-- "\*" Item/, type);
+    assert.match(diagram(type), /Store --> "\*" Item/, type);
   }
 });
 
@@ -72,12 +72,12 @@ test('Java distinguishes an optional single reference from a collection of refer
   const single = diagram('Optional<Item>');
   assert.match(single, /Store --> "0\.\.1" Item/);
   assert.doesNotMatch(single, /Store .*"\*" Item/);
-  assert.match(diagram('Optional<List<Item>>'), /Store o-- "\*" Item/);
+  assert.match(diagram('Optional<List<Item>>'), /Store --> "\*" Item/);
 });
 
 test('Java bounded generic wildcards preserve the named element relationship', () => {
   for (const type of ['List<? extends Item>', 'List<? super Item>']) {
-    assert.match(diagram(type), /Store o-- "\*" Item/, type);
+    assert.match(diagram(type), /Store --> "\*" Item/, type);
   }
 });
 
@@ -86,6 +86,6 @@ test('Java user-defined generic fields still refer to their outer class', () => 
     'Store.java': 'class Item {} class Envelope<T> {} class Store { Envelope<Item> items; }',
   });
   assert.deepEqual(result.errors, []);
-  assert.match(result.classDiagram, /Store --> "1" Envelope/);
+  assert.match(result.classDiagram, /Store --> "0\.\.1" Envelope/);
   assert.doesNotMatch(result.classDiagram, /Store .* Item\n/);
 });

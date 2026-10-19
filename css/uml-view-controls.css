@@ -1,0 +1,50 @@
+/* Shared by inferred UML diagrams in chapters, tutorials, and popouts. */
+.uml-view-controls,
+.uml-view-help {
+  --uml-view-bg: #fff;
+  --uml-view-fg: #202a35;
+  --uml-view-border: #66788b;
+  --uml-view-selected: #e5edf6;
+  --uml-view-focus: #005a9c;
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+}
+.uml-view-controls { display: flex; flex-wrap: wrap; gap: 0.4em; margin: 0.4em 0; }
+.uml-view-controls button {
+  font: inherit;
+  min-height: 2em;
+  max-width: 100%;
+  padding: 0.25em 0.5em;
+  border: 1px solid var(--uml-view-border);
+  border-radius: 0.2em;
+  background: var(--uml-view-bg);
+  color: var(--uml-view-fg);
+  cursor: pointer;
+}
+.uml-view-controls button[aria-pressed="true"] {
+  background: var(--uml-view-selected);
+  font-weight: bold;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.uml-view-controls button:hover { background: var(--uml-view-selected); }
+.uml-view-controls button:focus-visible { outline: 3px solid var(--uml-view-focus); outline-offset: 2px; }
+.uml-view-help { color: var(--uml-view-fg); line-height: 1.4; margin: 0.5em 0; }
+.tvm-uml-view-choice { flex: none; padding: 0 0.75em; }
+html.dark-mode :is(.uml-view-controls, .uml-view-help) {
+  --uml-view-bg: #101923;
+  --uml-view-fg: #edf2f7;
+  --uml-view-border: #94a9be;
+  --uml-view-selected: #30425a;
+  --uml-view-focus: #83ccff;
+}
+@media print {
+  .uml-view-controls button[aria-pressed="false"] { display: none; }
+  .uml-view-controls button[aria-pressed="true"] { border: 0; padding: 0; text-decoration: none; }
+  html :is(.uml-view-controls, .uml-view-help),
+  html.dark-mode :is(.uml-view-controls, .uml-view-help) {
+    --uml-view-bg: #fff;
+    --uml-view-fg: #000;
+    --uml-view-border: #000;
+    --uml-view-selected: #fff;
+  }
+}

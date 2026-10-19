@@ -45,12 +45,12 @@ test('C++ ownership and multiplicity distinguish values, references, pointers an
       std::vector<Item> items;
     };
   `);
-  assert.match(classDiagram, /Store "1" \*-- "1" Value/);
+  assert.match(classDiagram, /Store \*-- "1" Value/);
   assert.match(classDiagram, /Store --> "1" Ref/);
   assert.match(classDiagram, /Store --> "0\.\.1" Ptr/);
-  assert.match(classDiagram, /Store "1" \*-- "0\.\.1" Owned/);
-  assert.match(classDiagram, /Store o-- "0\.\.1" Shared/);
-  assert.match(classDiagram, /Store "1" \*-- "\*" Item/);
+  assert.match(classDiagram, /Store \*-- "0\.\.1" Owned/);
+  assert.match(classDiagram, /Store --> "0\.\.1" Shared/);
+  assert.match(classDiagram, /Store \*-- "\*" Item/);
 });
 
 test('parameter and return types remain dependencies when no field stores them', () => {
@@ -69,7 +69,7 @@ test('namespaces, aliases, templates and enums do not confuse distinct class ide
   `);
   assert.match(classDiagram, /class first__Item/);
   assert.match(classDiagram, /class second__Item/);
-  assert.match(classDiagram, /second__Box "1" \*-- "1" second__Item/);
+  assert.match(classDiagram, /second__Box \*-- "1" second__Item/);
   assert.doesNotMatch(classDiagram, /second__Box .* first__Item/);
   assert.match(classDiagram, /class Holder/);
   assert.match(classDiagram, /enum State \{\s*Idle\s*Busy\s*\}/);

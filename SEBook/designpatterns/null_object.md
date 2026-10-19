@@ -63,16 +63,16 @@ The key insight is that **absence of behavior is itself a kind of behavior**, an
 layout horizontal
 class Client {
 	- collaborator: AbstractObject
-	+ doWork(): void
+	+ doWork()
 }
 abstract class AbstractObject {
-	+ {abstract} request(): void
+	+ {abstract} request()
 }
 class RealObject {
-	+ request(): void
+	+ request()
 }
 class NullObject {
-	+ request(): void
+	+ request()
 }
 Client o--> AbstractObject : collaborator
 RealObject --|> AbstractObject
@@ -101,20 +101,20 @@ Consider optional diagnostic logging around a `BankTransfer`. The diagnostic int
 layout horizontal
 class BankTransfer {
 	- logger: DiagnosticLogger
-	+ transfer(amount: int, to: String): void
+	+ transfer(amount: Integer, to: String)
 }
 interface DiagnosticLogger {
-	+ log(entry: String): void
-	+ entries(): List<String>
+	+ log(entry: String)
+	+ entries(): Sequence<String>
 }
 class MemoryLogger {
-	- recorded: List<String>
-	+ log(entry: String): void
-	+ entries(): List<String>
+	- recorded: Sequence<String>
+	+ log(entry: String)
+	+ entries(): Sequence<String>
 }
 class SilentLogger {
-	+ log(entry: String): void
-	+ entries(): List<String>
+	+ log(entry: String)
+	+ entries(): Sequence<String>
 }
 BankTransfer o--> DiagnosticLogger : logger
 MemoryLogger ..|> DiagnosticLogger

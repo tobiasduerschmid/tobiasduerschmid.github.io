@@ -33,14 +33,14 @@ In the "Turkey that wants to be a Duck" example, we create a `TurkeyAdapter` tha
 layout landscape
 class Client
 interface Target {
-	+ request(): void
+	+ request()
 }
 class Adapter {
 	- adaptee: Adaptee
-	+ request(): void
+	+ request()
 }
 class Adaptee {
-	+ specificRequest(): void
+	+ specificRequest()
 }
 Client --> Target : uses >
 Adapter ..|> Target
@@ -57,21 +57,21 @@ callout bottom of text "Adaptee" : Adaptee: existing class with an incompatible 
 layout landscape
 class DuckSimulator
 interface Duck {
-	+ quack(): void
-	+ fly(): void
+	+ quack()
+	+ fly()
 }
 interface Turkey {
-	+ gobble(): void
-	+ fly(): void
+	+ gobble()
+	+ fly()
 }
 class TurkeyAdapter {
 	- turkey: Turkey
-	+ quack(): void
-	+ fly(): void
+	+ quack()
+	+ fly()
 }
 class WildTurkey {
-	+ gobble(): void
-	+ fly(): void
+	+ gobble()
+	+ fly()
 }
 DuckSimulator --> Duck : expects >
 TurkeyAdapter ..|> Duck

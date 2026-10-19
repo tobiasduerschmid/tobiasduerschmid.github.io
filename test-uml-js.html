@@ -9,6 +9,7 @@ layout: null
   <title>JS/TS UML Analyzer Test</title>
   {% include ai-training-opt-out-meta.html %}
   <link rel="stylesheet" href="/css/uml-diagram.css">
+  <link rel="stylesheet" href="/css/uml-view-controls.css">
   <link rel="stylesheet" href="/css/diagnostic-pages.css">
   <link rel="stylesheet" href="/css/print-light.css">
 </head>
@@ -17,6 +18,7 @@ layout: null
   <main id="main-content" tabindex="-1">
   <h1>JS/TS UML Analyzer Tests</h1>
   <p id="load-status" class="status loading">Loading TypeScript compiler...</p>
+  <div id="uml-view-choice"></div>
 
   <!-- Test 1: TypeScript Classes with Relationships -->
   <h2>1. TypeScript Classes — All Relationship Types</h2>
@@ -304,8 +306,20 @@ class Store extends EventEmitter {
   <script src="/js/uml-auto-describe.js"></script>
   <script src="/js/uml-sequence-diagnostics.js"></script>
   <script src="/js/uml-analyzer-js.js"></script>
+  <script src="/js/uml-expression-views.js"></script>
+  <script src="/js/uml-diagram-views.js"></script>
+  <script src="/js/uml-view-controls.js"></script>
   <script>
     var tsLoaded = false;
+    var diagramView = 'design';
+    var results = new Map();
+    UMLViewControls.mount(document.getElementById('uml-view-choice'), {
+      view: diagramView,
+      onChange: function (view) {
+        diagramView = view;
+        results.forEach(function (item, n) { renderTest(n, item.result, item.language); });
+      }
+    });
 
     // Load TypeScript compiler from CDN
     (function () {
@@ -330,19 +344,25 @@ class Store extends EventEmitter {
 
     function runTest(n, lang) {
       var textarea = document.getElementById('src' + n);
-      var syntaxEl = document.getElementById('syntax' + n);
-      var diagramEl = document.getElementById('diagram' + n);
-      var errorsEl = document.getElementById('errors' + n);
       var ext = (lang === 'js') ? '.js' : '.ts';
 
       var sources = {};
       sources['test' + ext] = textarea.value;
 
       var result = analyzeJSSources(sources, window.ts);
+      results.set(n, { result: result, language: lang });
+      renderTest(n, result, lang);
+    }
+
+    function renderTest(n, result, language) {
+      var syntaxEl = document.getElementById('syntax' + n);
+      var diagramEl = document.getElementById('diagram' + n);
+      var errorsEl = document.getElementById('errors' + n);
+      var projected = UMLDiagramViews.project(result, { language: language === 'ts' ? 'typescript' : language, view: diagramView });
 
       // Show class diagram by default, sequence for test 3
       var isSeq = (n === 3);
-      var syntax = isSeq ? result.sequenceDiagram : result.classDiagram;
+      var syntax = isSeq ? projected.sequenceDiagram : projected.classDiagram;
       syntaxEl.textContent = syntax || '(empty)';
 
       diagramEl.innerHTML = '';
@@ -351,6 +371,9 @@ class Store extends EventEmitter {
           UMLSequenceDiagram.render(diagramEl, syntax);
         } else if (!isSeq && window.UMLClassDiagram) {
           UMLClassDiagram.render(diagramEl, syntax);
+        }
+        if (window.UMLShared && typeof UMLShared.applySvgAccessibility === 'function') {
+          UMLShared.applySvgAccessibility(diagramEl, isSeq ? 'sequence' : 'class', syntax);
         }
       }
 

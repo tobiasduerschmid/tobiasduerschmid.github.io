@@ -56,28 +56,28 @@ class Client
 class Invoker {
     - command: Command
     - lastCommand: Command
-    + setCommand(command: Command): void
-    + invoke(): void
-    + undo(): void
+    + setCommand(command: Command)
+    + invoke()
+    + undo()
 }
 interface Command {
-    + execute(): void
-    + undo(): void
+    + execute()
+    + undo()
 }
 class ConcreteCommand {
     - receiver: Receiver
-    - previousValue: int
-    + execute(): void
-    + undo(): void
+    - previousValue: Integer
+    + execute()
+    + undo()
 }
 class MacroCommand {
     - commands: Command[]
-    + execute(): void
-    + undo(): void
+    + execute()
+    + undo()
 }
 class Receiver {
-    + action(): void
-    + restore(value: int): void
+    + action()
+    + restore(value: Integer)
 }
 Client ..> ConcreteCommand : creates
 Client ..> Receiver : configures
@@ -109,37 +109,37 @@ class RemoteControl {
     - onCommand: Command
     - offCommand: Command
     - undoCommand: Command
-    + setCommands(on: Command, off: Command): void
-    + pressOn(): void
-    + pressOff(): void
-    + pressUndo(): void
+    + setCommands(on: Command, off: Command)
+    + pressOn()
+    + pressOff()
+    + pressUndo()
 }
 interface Command {
-    + execute(): void
-    + undo(): void
+    + execute()
+    + undo()
 }
 class LightOnCommand {
-    - previousOn: boolean
+    - previousOn: Boolean
     - light: Light
-    + execute(): void
-    + undo(): void
+    + execute()
+    + undo()
 }
 class LightOffCommand {
-    - previousOn: boolean
+    - previousOn: Boolean
     - light: Light
-    + execute(): void
-    + undo(): void
+    + execute()
+    + undo()
 }
 class NoCommand {
-    + execute(): void
-    + undo(): void
+    + execute()
+    + undo()
 }
 class Light {
-    - on: boolean
-    + isOn(): boolean
-    + setOn(value: boolean): void
-    + on(): void
-    + off(): void
+    - on: Boolean
+    + isOn(): Boolean
+    + setOn(value: Boolean)
+    + on()
+    + off()
 }
 RemoteControl o--> Command : slot and history
 LightOnCommand ..|> Command

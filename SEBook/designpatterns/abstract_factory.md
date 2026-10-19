@@ -88,7 +88,7 @@ class MarinaraSauce
 class ReggianoCheese
 class CheesePizza {
 	- factory: PizzaIngredientFactory
-	+ prepare(): void
+	+ prepare()
 }
 NYPizzaIngredientFactory ..|> PizzaIngredientFactory
 ThinCrustDough ..|> Dough

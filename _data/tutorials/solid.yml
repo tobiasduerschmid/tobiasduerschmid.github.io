@@ -1014,8 +1014,8 @@ steps:
         + compute_fare()
         + notify_rider()
         + flag_if_unsafe()
-        - _distance()
-        - _platform_fee()
+        - distance()
+        - platform_fee()
       }
       @enduml
       ```
@@ -1027,11 +1027,11 @@ steps:
       class RideData
       class DriverMatcher {
         + match()
-        - _distance()
+        - distance()
       }
       class FareCalculator {
         + compute()
-        - _platform_fee()
+        - platform_fee()
       }
       class RideNotifier {
         + rider_arrival()
@@ -1039,7 +1039,7 @@ steps:
       }
       class SafetyAuditor {
         + audit()
-        - _distance()
+        - distance()
       }
       DriverMatcher ..> RideData
       FareCalculator ..> RideData
@@ -1048,7 +1048,7 @@ steps:
       @enduml
       ```
 
-      Notice what shifted: `_distance()` now appears in **two** classes (DriverMatcher *and* SafetyAuditor) — and that "duplication" is the point. Each actor owns its own copy and can change it without asking the other team.
+      Notice what shifted: `distance()` now appears in **two** classes (DriverMatcher *and* SafetyAuditor) — and that "duplication" is the point. The Design diagrams omit Python's leading `_`; the source helper remains `_distance()`. Each actor owns its own copy and can change it without asking the other team.
 
       #### Your Job
 
@@ -2184,7 +2184,7 @@ steps:
       CsvFormat --|> ExportFormat
       JsonFormat --|> ExportFormat
       TextFormat --|> ExportFormat
-      ReportExporter o-- ExportFormat
+      ReportExporter --> ExportFormat
       @enduml
       ```
 

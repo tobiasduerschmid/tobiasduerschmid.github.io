@@ -85,7 +85,11 @@ callout top of text "atm:" : Participant name: which individual this is
 
 **Notice the flow of time:** Message 1 happens first, then 2, 3, and 4. The vertical dimension is strictly used to represent the passage of time.
 
-Edit the code below to update the diagram. It sketches possible calls from source without running the code; edits are not saved.
+Edit the code below to update the diagram. The labs start with **Implementation details**. Compare **Design focus** before editing: does abstracting a reply type change who sends it or when it returns? Both views describe the current code and preserve call order and participant identity. A missing type is not evidence that a call returns nothing. The [class-diagram type mapping](/SEBook/uml_class_diagram.html#model-types-and-source-types) explains the shared vocabulary.
+
+The diagram sketches possible calls from source without running the code; edits are not saved. Each language has its own example and edits.
+
+Design labels use a shared pseudocode convention: logical `and`, `or`, and `not`, collection iteration as `for each … in …`, and recognized assignments as `:=`. Loop conditions and updates retain their order; a do-while loop explicitly runs before testing. Equality variants and bitwise operators remain when changing them would require more semantic information. UML permits different expression languages; these labels are not executable OCL {% cite OMG2017UML %}. A guard states a Boolean condition, not an action to perform: source conditions with side effects need further design work.
 
 {% include uml-code-lab.html example="message_order" %}
 

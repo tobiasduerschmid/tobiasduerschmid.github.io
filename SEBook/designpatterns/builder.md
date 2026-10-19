@@ -52,15 +52,15 @@ callout right of text "GetResult(): Product" : The client collects the finished 
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface VacationBuilder {
-    + build_day(date: str)
-    + add_hotel(date: str, hotel_name: str)
-    + add_tickets(event_name: str)
+    + build_day(date: String)
+    + add_hotel(date: String, hotel_name: String)
+    + add_tickets(event_name: String)
 }
 class PatternslandBuilder {
     - planner: VacationPlanner
-    + build_day(date: str)
-    + add_hotel(date: str, hotel_name: str)
-    + add_tickets(event_name: str)
+    + build_day(date: String)
+    + add_hotel(date: String, hotel_name: String)
+    + add_tickets(event_name: String)
     + get_vacation_planner(): VacationPlanner
 }
 class Director {
@@ -68,7 +68,7 @@ class Director {
     + construct_planner()
 }
 class VacationPlanner {
-    - itinerary: List
+    - itinerary: Sequence<?>
     + add_item(item)
     + show_plan()
 }

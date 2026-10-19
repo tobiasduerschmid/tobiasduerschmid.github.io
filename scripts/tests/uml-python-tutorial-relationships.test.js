@@ -50,7 +50,8 @@ for (const key of ['first-class', 'visibility', 'types', 'inheritance', 'associa
   test(`class tutorial ${key}: solution relationships match the visible target`, () => {
     const step = tutorial.steps.find(candidate => candidate.key === key);
     assert.ok(step, `Missing class tutorial lesson: ${key}`);
-    const target = step.instructions.match(/@startuml\b([\s\S]*?)@enduml/);
+    const inferredTarget = step.instructions.match(/data-uml-role="inferred-target"[^>]*?@startuml\b([\s\S]*?)@enduml/);
+    const target = inferredTarget || step.instructions.match(/@startuml\b([\s\S]*?)@enduml/);
     assert.ok(target, 'The exercise must publish its target diagram');
     const expected = relationships(target[1]);
     const sources = Object.fromEntries(step.solution.files.map(file => [file.path, file.content]));
@@ -64,8 +65,8 @@ for (const key of ['first-class', 'visibility', 'types', 'inheritance', 'associa
   });
 }
 
-// These are the documented extraction heuristics, not proof of UML ownership.
-// In particular, receiving a scalar object does not imply shared aggregation.
+// Storing either supplied or newly constructed objects establishes associations.
+// Ownership requires lifecycle evidence beyond these Python storage patterns.
 const cases = [
   {
     name: 'a retained typed parameter gives a scalar association',
@@ -74,33 +75,33 @@ const cases = [
     kind: 'association', multiplicity: '1',
   },
   {
-    name: 'a typed parameter appended to a collection gives aggregation',
+    name: 'a typed parameter appended to a collection gives association',
     body: `    def __init__(self):
         self.parts: list[Part] = []
     def add_part(self, part: Part):
         self.parts.append(part)`,
-    kind: 'aggregation', multiplicity: '*',
+    kind: 'association', multiplicity: '*',
   },
   {
-    name: 'a retained direct constructor gives composition',
+    name: 'a retained direct constructor gives association',
     body: `    def __init__(self):
         self.part: Part = Part()`,
-    kind: 'composition', multiplicity: '1',
+    kind: 'association', multiplicity: '1',
   },
   {
-    name: 'a direct constructor appended to a collection gives composition',
+    name: 'a direct constructor appended to a collection gives association',
     body: `    def __init__(self):
         self.parts: list[Part] = []
         self.parts.append(Part())`,
-    kind: 'composition', multiplicity: '*',
+    kind: 'association', multiplicity: '*',
   },
   {
-    name: 'a locally constructed object appended to a collection gives composition',
+    name: 'a locally constructed object appended to a collection gives association',
     body: `    def __init__(self):
         self.parts: list[Part] = []
         part = Part()
         self.parts.append(part)`,
-    kind: 'composition', multiplicity: '*',
+    kind: 'association', multiplicity: '*',
   },
   {
     name: 'a collection annotation without insertion gives association',

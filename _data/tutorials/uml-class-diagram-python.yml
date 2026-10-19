@@ -84,10 +84,10 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout landscape
       class Student {
-        name
-        student_id
-        __init__(name, student_id)
-        get_info()
+        name: String
+        student_id: String
+        Student(name: String, student_id: String)
+        get_info(): String
       }
       @enduml'></div>
 
@@ -95,19 +95,19 @@ steps:
 
       - **Top:** The class name is `Student` → `class Student:`
       - **Middle:** Two attributes `name` and `student_id` → instance variables set in `__init__`
-      - **Bottom:** One method `get_info()` → a method definition
+      - **Bottom:** The initializer accepts the two stored values; `get_info()` provides the information-producing operation
 
-      That is all there is to it — the diagram is a visual summary of the class.
+      The diagram selects the class structure needed for this question. **Design focus** uses UML types such as `String`, while **Implementation details** shows Python types such as `str`. Constructors with parameters or initialization behavior stay visible in both views; only empty no-argument constructors are suppressed in Design focus. The design operation `Student(...)` corresponds to Python's `__init__`; it does not rename the method in your code.
 
-      > **Note:** You may see symbols like `+`, `-`, and types like `: str` in other UML diagrams. We will cover those in the next steps. For now, focus on the three compartments.
+      > **Compare the views:** Which details change notation without changing what a `Student` can do? Why does this initializer need to remain visible? We will study visibility and type contracts in the next steps.
 
       ### Your Task
 
       Open `student.py` and create a `Student` class that:
 
-      1. Defines a constructor `__init__(self, name, student_id)`
-      2. Stores both parameters as the instance attributes shown in the diagram
-      3. Has a `get_info()` method returning `"name (student_id)"` — for example `"Alice (S001)"`
+      1. Defines `__init__(self, name: str, student_id: str) -> None`
+      2. Stores both parameters as explicitly annotated `str` instance attributes
+      3. Has a `get_info(self) -> str` method returning `"name (student_id)"` — for example `"Alice (S001)"`
 
       Watch the **UML Diagram** panel — it updates live as you type!
 
@@ -132,11 +132,11 @@ steps:
         - path: student.py
           content: |
             class Student:
-                def __init__(self, name, student_id):
-                    self.name = name
-                    self.student_id = student_id
+                def __init__(self, name: str, student_id: str) -> None:
+                    self.name: str = name
+                    self.student_id: str = student_id
 
-                def get_info(self):
+                def get_info(self) -> str:
                     return f"{self.name} ({self.student_id})"
 
 
@@ -149,7 +149,7 @@ steps:
 
         - **Top (class name):** `Student` → `class Student:`
         - **Middle (attributes):** `name`, `student_id` → `self.name = name`, `self.student_id = student_id`
-        - **Bottom (methods):** `get_info()` → `def get_info(self):`
+        - **Bottom (methods):** `get_info()` → `def get_info(self) -> str:`
 
         The diagram is simply a visual summary of the class structure. In the next steps we will add visibility markers (who can access what) and type annotations (what kind of data flows where).
 
@@ -186,7 +186,7 @@ steps:
               "__init__ must have a 'student_id' parameter: def __init__(self, name, student_id)"
         hints:
           - title: Read the constructor operation
-            text: Find the constructor in the target’s operation compartment. Separate the receiver used inside a method from the values a caller supplies.
+            text: Read the initializer signature in the target. Separate the receiver used inside a method from the values a caller supplies; the required construction inputs remain visible in Design focus.
             condition: "code_not_matches: /^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*/m"
           - title: Trace one construction
             text: For Student("Alice", "S001"), map each supplied argument to a parameter. Which parameter represents each piece of student data?
@@ -279,25 +279,25 @@ steps:
 
             ```python
             class Timer:
-                def __init__(self, seconds):
-                    self.seconds = seconds
-                    self.running = False
+                def __init__(self, seconds: int) -> None:
+                    self.seconds: int = seconds
+                    self.running: bool = False
 
-                def start(self):
+                def start(self) -> None:
                     self.running = True
 
-                def stop(self):
+                def stop(self) -> None:
                     self.running = False
             ```
           type: single
           options:
             - "2 — only start() and stop()"
-            - "3 — __init__(), start(), and stop()"
-            - "4 — __init__(), start(), stop(), and seconds"
+            - "3 — Timer(seconds), start(), and stop()"
+            - "4 — Timer(seconds), start(), stop(), and seconds"
             - "0 — none, because methods aren't shown yet"
           correct_index: 1
           explanation: |
-            The bottom compartment lists **methods**. `Timer` defines three: `__init__`, `start`, and `stop`. The attributes `seconds` and `running` go in the **middle** compartment, not the bottom. Predicting before you run is a powerful way to test your mental model — you either confirm it or you find the gap.
+            The bottom compartment lists **operations**. The parameterized initializer stays visible as `Timer(seconds)` in Design focus; `start` and `stop` also remain. The attributes `seconds` and `running` go in the **middle** compartment, not the bottom.
 
 
   # --------------------------------------------------------------------------
@@ -370,17 +370,19 @@ steps:
 
       > **Key takeaway:** Choose visibility to make the **public contract** clear and keep implementation details internal. The naming convention communicates that design.
 
+      Design focus removes leading Python naming markers while retaining visibility: `- balance` corresponds to `self.__balance`, and `# validate_amount` corresponds to `_validate_amount`. Check **Implementation details** to inspect those exact source names. The markers still describe conventions and name mangling, not enforced Python privacy.
+
       ### Your Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout landscape
       class BankAccount {
-        - __balance: float
-        + __init__(initial_balance: float): None
-        + deposit(amount: float): None
-        + withdraw(amount: float): bool
-        + get_balance(): float
-        # _validate_amount(amount: float): bool
+        - balance: Real
+        + BankAccount(initial_balance: Real)
+        + deposit(amount: Real)
+        + withdraw(amount: Real): Boolean
+        + get_balance(): Real
+        # validate_amount(amount: Real): Boolean
       }
       @enduml'></div>
 
@@ -618,7 +620,7 @@ steps:
 
       Type hints do **not** change how Python runs your code — Python ignores them at runtime. But they serve two critical purposes:
 
-      1. **UML diagrams** — the live diagram renderer reads type hints to show types. Without them, the diagram only shows names.
+      1. **UML diagrams** — the renderer reads type hints to show types. Missing return annotations remain unknown (`?`), rather than being treated as no result.
       2. **Communication** — type hints document the contracts of your class for other developers.
 
       *(Type hints can also be enforced at build time with tools like **mypy**. That's a topic for another tutorial — see the reference at the end of this one for a pointer.)*
@@ -633,23 +635,25 @@ steps:
 
       | UML | Python |
       |---|---|
-      | `- name: str` | `self.__name: str = name` |
-      | `+ get_price(): float` | `def get_price(self) -> float:` |
-      | `+ apply_discount(percent: float): float` | `def apply_discount(self, percent: float) -> float:` |
+      | `- name: String` | `self.__name: str = name` |
+      | `+ get_price(): Real` | `def get_price(self) -> float:` |
+      | `+ apply_discount(percent: Real): Real` | `def apply_discount(self, percent: float) -> float:` |
+
+      Design focus maps Python `str`, `bool`, `int`, and `float` to UML `String`, `Boolean`, `Integer`, and `Real`. Use **Implementation details** to check the actual annotations. A `float` approximates a real value; the shared label does not promise exact arithmetic. See the [full primitive mapping](/SEBook/uml_class_diagram.html#model-types-and-source-types), including `UnlimitedNatural`.
 
       ### Your Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout landscape
       class Product {
-        - __name: str
-        - __price: float
-        - __in_stock: bool
-        + __init__(name: str, price: float, in_stock: bool): None
-        + get_name(): str
-        + get_price(): float
-        + is_available(): bool
-        + apply_discount(percent: float): float
+        - name: String
+        - price: Real
+        - in_stock: Boolean
+        + Product(name: String, price: Real, in_stock: Boolean)
+        + get_name(): String
+        + get_price(): Real
+        + is_available(): Boolean
+        + apply_discount(percent: Real): Real
       }
       @enduml'></div>
 
@@ -901,21 +905,21 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout landscape
       class Shape {
-        + color: str
-        + __init__(color: str): None
-        + area(): float
-        + describe(): str
+        + color: String
+        + Shape(color: String)
+        + area(): Real
+        + describe(): String
       }
       class Circle {
-        + radius: float
-        + __init__(color: str, radius: float): None
-        + area(): float
+        + radius: Real
+        + Circle(color: String, radius: Real)
+        + area(): Real
       }
       class Rectangle {
-        + width: float
-        + height: float
-        + __init__(color: str, width: float, height: float): None
-        + area(): float
+        + width: Real
+        + height: Real
+        + Rectangle(color: String, width: Real, height: Real)
+        + area(): Real
       }
       Circle --|> Shape
       Rectangle --|> Shape
@@ -1243,16 +1247,16 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout landscape
       class Instructor {
-        + name: str
-        + department: str
-        + __init__(name: str, department: str): None
-        + get_title(): str
+        + name: String
+        + department: String
+        + Instructor(name: String, department: String)
+        + get_title(): String
       }
       class Course {
-        + name: str
+        + name: String
         + instructor: Instructor
-        + __init__(name: str, instructor: Instructor): None
-        + get_instructor_name(): str
+        + Course(name: String, instructor: Instructor)
+        + get_instructor_name(): String
       }
       Course --> Instructor
       @enduml'></div>
@@ -1503,13 +1507,13 @@ steps:
 
       | Python pattern | Generated relationship |
       |---|---|
-      | Store a newly constructed object: `self.part = Part(...)` | Composition heuristic |
-      | Append a newly constructed object: `self.parts.append(Part(...))`, or construct a local variable and append it | Composition heuristic |
-      | Append an existing typed method parameter: `self.parts.append(part)` where `part: Part` | Aggregation heuristic |
+      | Store a newly constructed object: `self.part: Part = Part(...)` | Plain association |
+      | Append a newly constructed object to a typed collection | Plain association |
+      | Append an existing typed method parameter: `self.parts.append(part)` where `part: Part` | Plain association |
       | Store an existing object: `self.part: Part = part` | Plain association |
       | Declare `self.parts: list[Part] = []` without a recognized append pattern | Plain association |
 
-      These patterns predict the live diagram, not the domain's lifecycle. For example, a constructor that stores an injected `part: Part` gets a plain association even if a separate ownership contract would justify composition. Check the generated relationship against the requirements before adopting it as your design.
+      Allocation, injection, and collection storage do not establish a lifecycle contract. Both live views therefore keep ordinary associations for these Python references. A domain model may add diamonds when requirements justify them; changing the view cannot supply missing evidence.
 
       ### The Domain Rules for This Exercise
 
@@ -1518,27 +1522,27 @@ steps:
 
       The code below builds these links. It has no operation for dissolving a university, so it does not implement or test the entire lifecycle contract. Deleting a Python variable also does not delete every object reachable through it.
 
-      ### Your Target Diagram
+      ### Reference Design for the Domain Rules
 
-      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="reference-design" data-uml-spec='@startuml
       layout landscape
       class Professor {
-        + name: str
-        + field: str
-        + __init__(name: str, field: str): None
+        + name: String
+        + field: String
+        + Professor(name: String, field: String)
       }
       class Department {
-        + name: str
-        + professors: list[Professor]
-        + __init__(name: str): None
-        + add_professor(prof: Professor): None
+        + name: String
+        + professors: Sequence<Professor>
+        + Department(name: String)
+        + add_professor(prof: Professor)
       }
       class University {
-        + name: str
-        + departments: list[Department] 
-        + __init__(name: str): None
-        + add_department(dept_name: str): None
-        + get_department(name: str): Department
+        + name: String
+        + departments: Sequence<Department>
+        + University(name: String)
+        + add_department(dept_name: String)
+        + get_department(name: String): Department
       }
       University *--> Department
       Department o--> Professor
@@ -1550,6 +1554,18 @@ steps:
 
       > **Note:** You may notice that the live diagram does not show *how many* departments or professors participate. Those numbers (called **multiplicity**) are covered in the next step.
 
+      ### Expected Source Structure
+
+      The live diagram shows the stored links below in either view. Compare it with the reference design above: which lifecycle claims are still unverified?
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="inferred-target" data-uml-spec='@startuml
+      class University
+      class Department
+      class Professor
+      University --> Department
+      Department --> Professor
+      @enduml'></div>
+
       ### Your Task
 
       Complete the starter code:
@@ -1557,7 +1573,7 @@ steps:
       1. **`University.add_department(dept_name)`** should establish a new department owned by the university, using the supplied name. It must be retained and discoverable through `get_department()`.
       2. **`Department.add_professor(prof)`** should include the supplied professor in its staff, preserving that object's identity and allowing it to participate in another department too.
 
-      Predict the generated diamonds from the pattern table, then check them in the live diagram. They agree with this exercise's stated domain rules; in another system you would need to review those rules again.
+      Predict which domain claims the live diagram cannot establish, then compare both views with the reference design. The generated associations establish stored links. Explain what extra lifecycle behavior would be needed to fulfill the university ownership contract.
 
     uml_files:
       - university.py
@@ -1671,7 +1687,7 @@ steps:
                 print(f"CS has {len(cs.professors)} professors")
           language: python
       explanation: |
-        `add_department` constructs a local `Department` and appends it to `self.departments`, so the analyzer emits its **composition** heuristic. `add_professor` appends a typed method parameter, so it emits its **aggregation** heuristic. Storing that parameter in a scalar attribute instead would produce a plain association.
+        `add_department` constructs and retains a department; `add_professor` retains the supplied professor. The analyzer emits **associations** for both stored-reference patterns. Neither construction nor injection proves exclusive ownership or deletion behavior.
 
         The domain rules justify the target diamonds: departments have an exclusive university owner and a lifecycle tied to it, while professors form a staff grouping and have independent lifetimes. The checks confirm construction, storage, and object identity. They do not prove the deletion policy, which this example does not implement.
 
@@ -1845,23 +1861,23 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout landscape
       class Song {
-        + title: str
-        + artist: str
-        + duration_sec: int
-        + __init__(title: str, artist: str, duration_sec: int): None
+        + title: String
+        + artist: String
+        + duration_sec: Integer
+        + Song(title: String, artist: String, duration_sec: Integer)
       }
       class Playlist {
-        + name: str
-        + songs: list[Song]
-        + __init__(name: str): None
-        + add_song(song: Song): None
-        + get_total_duration(): int
-        + get_song_count(): int
+        + name: String
+        + songs: Sequence<Song>
+        + Playlist(name: String)
+        + add_song(song: Song)
+        + get_total_duration(): Integer
+        + get_song_count(): Integer
       }
-      Playlist  o--> "*" Song
+      Playlist --> "*" Song
       @enduml'></div>
 
-      The hollow diamond uses our grouping convention: a playlist groups songs that can also appear in other playlists. The `*` describes how many songs it can contain; it does not determine ownership.
+      The association records stored references. The `*` describes how many songs a playlist can contain; it establishes neither exclusive ownership nor a limit on how many playlists share a song.
 
       ### Your Task
 
@@ -1945,7 +1961,7 @@ steps:
         - `add_song()` allows adding any number of songs (the `*`)
         - In this model, songs can be shared across playlists and have independent lifetimes
 
-        The analyzer infers `*` from the collection and a hollow diamond from appending the typed `song` parameter. These are separate decisions: a collection can hold owned parts or independent objects. A list fits this exercise; other collection types may fit other designs.
+        The analyzer infers `*` from the collection and an ordinary association from the stored references. A collection can hold owned parts or independent objects; its type does not establish that distinction. A list fits this exercise; other collection types may fit other designs.
 
     tests:
       - description: "Playlist stores a list of songs (not a single song)"
@@ -2115,20 +2131,20 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout landscape
       abstract class PaymentMethod {
-        + {abstract} process(amount: float): bool
-        + {abstract} get_name(): str
+        + {abstract} process(amount: Real): Boolean
+        + {abstract} get_name(): String
       }
       class CreditCard {
-        + card_number: str
-        + __init__(card_number: str): None
-        + process(amount: float): bool
-        + get_name(): str
+        + card_number: String
+        + CreditCard(card_number: String)
+        + process(amount: Real): Boolean
+        + get_name(): String
       }
       class BankTransfer {
-        + account_number: str
-        + __init__(account_number: str): None
-        + process(amount: float): bool
-        + get_name(): str
+        + account_number: String
+        + BankTransfer(account_number: String)
+        + process(amount: Real): Boolean
+        + get_name(): String
       }
       CreditCard --|> PaymentMethod
       BankTransfer --|> PaymentMethod
@@ -2436,7 +2452,7 @@ steps:
       In UML, this is drawn as a **dashed arrow** from `ReportGenerator` to `HTMLFormatter`. The key difference from association: the `ReportGenerator` does NOT have an `HTMLFormatter` attribute — it only creates and uses one temporarily inside `generate()`.
 
       **Patterns recognized by this analyzer:**
-      - `self.x = OtherClass(...)` → **composition heuristic** (new object retained in an attribute)
+      - `self.x: OtherClass = OtherClass(...)` → **association** (new object retained in an attribute)
       - `self.x: OtherClass = other` → **association** (existing object retained in an attribute)
       - `local_var = OtherClass(...)` inside a method, never retained → **dependency** (temporary use)
 
@@ -2628,35 +2644,35 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
         layout landscape
         class Product {
-          +name: str
-          +price: float
-          +stock: int
-          +__init__(name: str, price: float, stock: int): None
-          +is_available(): bool
-          +reduce_stock(): None
+          +name: String
+          +price: Real
+          +stock: Integer
+          +Product(name: String, price: Real, stock: Integer)
+          +is_available(): Boolean
+          +reduce_stock()
         }
         class Customer {
-          +name: str
-          +email: str
-          +__init__(name: str, email: str): None
+          +name: String
+          +email: String
+          +Customer(name: String, email: String)
         }
         class Order {
-          +items: list[Product]
-          +total: float
-          +__init__(customer: Customer): None
-          +add_item(product: Product): None
+          +items: Sequence<Product>
+          +total: Real
+          +Order(customer: Customer)
+          +add_item(product: Product)
         }
         class OnlineStore {
-          +products: list[Product]
-          +orders: list[Order]
-          +__init__(): None
-          +add_product(product: Product): None
-          +place_order(customer: Customer, product_names: list): Order
+          +products: Sequence<Product>
+          +orders: Sequence<Order>
+          +OnlineStore()
+          +add_product(product: Product)
+          +place_order(customer: Customer, product_names: Sequence<?>): Order
         }
-        Order o--> "*" Product
+        Order --> "*" Product
         Order --> "1" Customer
-        OnlineStore *--> "*" Order
-        OnlineStore o--> "*" Product
+        OnlineStore --> "*" Order
+        OnlineStore --> "*" Product
         OnlineStore ..> Customer
         @enduml
       '></div>
@@ -2665,7 +2681,7 @@ steps:
 
       **A trade-off to recognize:** `Order.add_item` also reduces product stock, so orders depend on inventory behavior. That keeps this exercise small. A system with reservations, cancellations, or historical order prices would need a richer design. More classes alone would not solve those requirements; this suggested solution is clean relative to the stated scope.
 
-      This target shows the relationships inferred from the supplied solution. Appending supplied products produces hollow diamonds; constructing and retaining orders produces a filled diamond; storing a supplied customer in a scalar attribute produces a plain association. Review these suggestions against the domain: for example, composition would require orders to have an exclusive store owner and a lifecycle tied to that store. The example does not implement store deletion, so its code cannot establish that contract.
+      This target shows the stored-reference associations inferred from the supplied solution. Creating and retaining an order does not prove exclusive ownership or a shared deletion policy. Neither live view adds those claims: the example does not implement store deletion. Use requirements to decide whether a separate domain model should include composition.
 
       ### Reading the Dependency
 
@@ -2708,7 +2724,7 @@ steps:
 
       ### Check and Explain
 
-      1. **Model:** implement the suggested classes and inspect their inferred relationships. Use the domain caveat above when interpreting the diamonds.
+      1. **Model:** implement the suggested classes and inspect their inferred relationships. Use the domain caveat above to distinguish stored links from lifecycle contracts.
       2. **Check:** run your successful and rejected scenarios from `store-design.md`, then run **Test My Work** for the supplied contract.
       3. **Explain:** finish your Comparison section with one concrete change request—such as changing contact details or stock policy—and identify which class should absorb it and why. Revisit your original design rather than replacing it with the target.
 
@@ -2880,7 +2896,7 @@ steps:
         - `Order` manages a collection of products for a customer
         - `OnlineStore` coordinates the system
 
-        The UML diagram now exposes the classes and their inferred relationships, including composition, aggregation, and plain association. Use it to discuss which class should own each responsibility. More boxes and arrows alone do not establish a good design; check cohesion, behavior, and the ownership contracts as well.
+        The UML diagram now exposes the classes and their inferred associations and dependencies. Use it to discuss which class should own each responsibility. More boxes and arrows alone do not establish a good design; check cohesion, behavior, and the ownership contracts as well.
 
         The complete request is validated before Order.add_item changes stock. Unknown names or excess quantities therefore leave the catalog and recorded orders unchanged. Keeping each occurrence in the selected sequence preserves repeated purchases and request order. The original and extracted versions implement the same stated policy; a different error or stock policy would be a separate behavior change.
 

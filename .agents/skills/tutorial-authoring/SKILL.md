@@ -2115,6 +2115,32 @@ channel.
   tutorial is destroyed. The tutorial supplies source snapshots, hide flags,
   layout preference and stale-result guards, then applies its own colors and
   zoom. Chapter controls in `uml-code-lab.js` expose Python/Java/C++/TypeScript.
+  Load `js/uml-view-controls.js` with `css/uml-view-controls.css` on every
+  inference host. Native **Design focus** / **Implementation details** buttons
+  select a projection of the current raw analysis through synchronous
+  `client.project(result, {language, view})`; view changes never edit source,
+  rerun inference, or change grading inputs. Tutorials default to Design focus;
+  chapter labs start in Implementation details to support comparison with the
+  abstraction. The controls provide visible help and a native hover explanation.
+  Design focus maps primitive types and omits empty no-argument constructors
+  and no-result suffixes in class diagrams. Constructors with parameters or
+  behavior remain visible; sequence calls and control flow remain intact.
+  Python names hide privacy/dunder markers while retaining UML visibility and
+  internal snake_case; constructors use their owning class's name.
+  Unknown types are not no-result types. Fullscreen shares the current selection.
+  The pure projection belongs to `js/uml-diagram-views.js`; recognized type and
+  member-name positions change, including sequence reply types and method labels.
+  Design focus also projects recognized conditions, loops and assignments into
+  common SEBook pseudocode through `js/uml-expression-views.js`
+  (`UMLExpressionViews.projectSequence`, `projectExpression`, `projectLoop`).
+  UML does not prescribe an expression language; these labels are a book convention.
+  Protocol behavior, relations, control flow, warnings and source maps retain their meaning.
+  Boxed Java primitives preserve nullability; C++ unsigned integers preserve the
+  nonnegative constraint. Equivalent-looking views do not prove equivalent code.
+  `uml-popup.html` receives raw results plus `language`, `diagramView`, and
+  `classLayout` on the existing `uml-sync-*` channel; `uml-view-change` synchronizes
+  selection back to the host. The generated Python workspace uses these same
+  controls. No new persistence key, completion rule, or YAML option is added.
   TypeScript uses the compiler AST and supplied-file symbols in `uml-analyzer-js.js`.
   Both worker and main-thread fallback load the pinned local compiler from
   `js/vendor/typescript/5.9.3/`; imports never fetch files and code never executes.

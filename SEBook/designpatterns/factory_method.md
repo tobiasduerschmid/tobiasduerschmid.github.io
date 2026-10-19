@@ -48,7 +48,7 @@ The structure involves four key roles (using GoF's names; the parenthesized name
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 abstract class Creator {
     + {abstract} factoryMethod(): Product
-    + operation(): void
+    + operation()
 }
 interface Product {
 }
@@ -66,7 +66,7 @@ note right of Creator
   factoryMethod();
 end note
 callout left of text "factoryMethod(): Product" occurrence 1 : Factory method: the hook a subclass overrides
-callout left of text "operation(): void" : Creator code: uses products without naming a concrete class
+callout left of text "operation()" : Creator code: uses products without naming a concrete class
 callout bottom of text "ConcreteCreator" : Concrete creator: picks which product class to create
 callout top of text "Product" : Product: the interface creator code depends on
 @enduml'></div>
@@ -79,10 +79,10 @@ abstract class PizzaStore {
     + orderPizza(type: String): Pizza
 }
 interface Pizza {
-    + prepare(): void
-    + bake(): void
-    + cut(): void
-    + box(): void
+    + prepare()
+    + bake()
+    + cut()
+    + box()
 }
 class NYPizzaStore {
     # createPizza(type: String): Pizza

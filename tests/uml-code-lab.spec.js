@@ -225,7 +225,9 @@ for (const [language, edits] of Object.entries(labEdits)) {
 
     const collection = labByTitle(page, 'One reference or a collection');
     await languageTab(collection, language).click();
-    await expect(collection.getByRole('img')).toHaveAccessibleName(/Team.*Member with multiplicity .* to one/);
+    await expect(collection.getByRole('img')).toHaveAccessibleName(language === 'java'
+      ? /Team.*Member with multiplicity .* to zero or one/
+      : /Team.*Member with multiplicity .* to one/);
     const single = await sourceText(collection);
     await replaceCode(editorFor(collection), edits.collection_multiplicity(single));
     await expect(collection.getByRole('img')).toHaveAccessibleName(/Team.*Member with multiplicity .* to zero or more/);
@@ -754,7 +756,7 @@ test('the chapter remains usable without JavaScript', async ({ browser, baseURL 
     const lab = labByTitle(page, 'Member visibility');
     await expect(lab.getByRole('textbox')).toHaveCount(0);
     await expect(lab.getByText(/private String name/)).toBeVisible();
-    await expect(lab.getByText(/self\._name = name/)).toBeVisible();
+    await expect(lab.getByText(/self\._name: str = name/)).toBeVisible();
     await expect(lab.getByText(/std::string displayName/)).toBeVisible();
     await expect(lab.getByText(/private name: string/)).toBeVisible();
     await lab.getByText('Check your prediction', { exact: true }).click();
@@ -798,6 +800,7 @@ test('the UML tutorial shares inference for Python, C++ and TypeScript source fi
   test.setTimeout(120_000);
   await page.goto('/SEBook/tools/uml-class-diagram-python.html');
   await waitForTutorialReady(page, { bootTimeout: 90_000 });
+  await page.getByRole('button', { name: 'Implementation details', exact: true }).click();
   expect(await setEditorContent(page, 'class TutorialDraft:\n    def greet(self):\n        pass\n')).toBe(true);
   const viewer = page.getByRole('region', { name: /Interactive UML diagram viewer/ });
   await expect(viewer.getByRole('img')).toHaveAccessibleName(/TutorialDraft/);

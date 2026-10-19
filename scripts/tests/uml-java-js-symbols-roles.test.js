@@ -30,8 +30,8 @@ for (const language of ['java', 'ts']) {
       ? 'class Person {} class Office { Person primary; java.util.List<Person> backups; }'
       : 'class Person {} class Office { primary: Person; backups: Person[]; }';
     const diagram = analyze(language, { [`office.${language}`]: source }).classDiagram;
-    assert.match(diagram, /Office (?:-->|o--) "1" Person : primary/);
-    assert.match(diagram, /Office (?:-->|o--) "\*" Person : backups/);
+    assert.match(diagram, new RegExp(`Office --> "${language === 'java' ? '0\\.\\.1' : '1'}" Person : primary`));
+    assert.match(diagram, /Office --> "\*" Person : backups/);
   });
 
   test(`${language}: an internally created role does not absorb an injected role`, () => {
@@ -39,8 +39,8 @@ for (const language of ['java', 'ts']) {
       ? 'class Engine {} class Pair { Engine owned = new Engine(); Engine shared; Pair(Engine supplied) { this.shared = supplied; } }'
       : 'class Engine {} class Pair { owned = new Engine(); shared: Engine; constructor(supplied: Engine) { this.shared = supplied; } }';
     const diagram = analyze(language, { [`pair.${language}`]: source }).classDiagram;
-    assert.match(diagram, /Pair "1" \*-- "1" Engine : owned/);
-    assert.match(diagram, /Pair o-- "1" Engine : shared/);
+    assert.match(diagram, new RegExp(`Pair --> ${language === 'java' ? '"0\\.\\.1" ' : ''}Engine : owned`));
+    assert.match(diagram, new RegExp(`Pair --> "${language === 'java' ? '0\\.\\.1' : '1'}" Engine : shared`));
   });
 
   test(`${language}: self-references retain distinct roles`, () => {
@@ -49,7 +49,7 @@ for (const language of ['java', 'ts']) {
       : 'class Node { parent: Node | null; children: Node[]; }';
     const diagram = analyze(language, { [`tree.${language}`]: source }).classDiagram;
     assert.match(diagram, /Node --> "(?:1|0\.\.1)" Node : parent/);
-    assert.match(diagram, /Node (?:-->|o--) "\*" Node : children/);
+    assert.match(diagram, /Node --> "\*" Node : children/);
   });
 }
 
@@ -97,9 +97,9 @@ test('Java package-qualified references, explicit imports and same-package looku
   const sales = classWithMember(diagram, 'salesCode');
   const stock = classWithMember(diagram, 'stockCode');
   assert.notEqual(sales, stock);
-  assert.match(diagram, new RegExp(`Order --> "1" ${sales}(?:\\n|$)`));
-  assert.match(diagram, new RegExp(`Order --> "1" ${stock}(?:\\n|$)`));
-  assert.match(diagram, new RegExp(`Basket --> "1" ${stock}(?:\\n|$)`));
+  assert.match(diagram, new RegExp(`Order --> "0\\.\\.1" ${sales}(?:\\n|$)`));
+  assert.match(diagram, new RegExp(`Order --> "0\\.\\.1" ${stock}(?:\\n|$)`));
+  assert.match(diagram, new RegExp(`Basket --> "0\\.\\.1" ${stock}(?:\\n|$)`));
 });
 
 test('Java ambiguous wildcard imports do not select an arbitrary class', () => {
@@ -136,12 +136,12 @@ test('Java unimported foreign types and unknown qualified names do not bind by b
   assert.doesNotMatch(diagram, /^Holder .* Item(?: :.*)?$/m);
 });
 
-test('Java qualified construction retains the resolved ownership role', () => {
+test('Java qualified construction retains the resolved stored-reference role', () => {
   const diagram = analyze('java', {
     'domain/Item.java': 'package domain; public class Item {}',
     'Holder.java': 'class Holder { domain.Item owned = new domain.Item(); }'
   }).classDiagram;
-  assert.match(diagram, /^Holder "1" \*-- "1" Item$/m);
+  assert.match(diagram, /^Holder --> "0\.\.1" Item$/m);
 });
 
 test('TypeScript repeated union alternatives do not overwrite a different target', () => {
@@ -175,14 +175,14 @@ test('Java a single-type import takes precedence over a type in the current pack
     'app/Holder.java': 'package app; import stock.Item; class Holder { Item item; }'
   }).classDiagram;
   const target = classWithMember(diagram, 'importedMarker');
-  assert.match(diagram, new RegExp(`^Holder --> "1" ${target}$`, 'm'));
+  assert.match(diagram, new RegExp(`^Holder --> "0\\.\\.1" ${target}$`, 'm'));
 });
 
 test('Java reciprocal references preserve both directed role cardinalities', () => {
   const diagram = analyze('java', { 'model.java': 'class Parent { Child preferred; Child backup; } class Child { java.util.List<Parent> guardians; }' }).classDiagram;
-  assert.match(diagram, /Parent --> "1" Child : preferred/);
-  assert.match(diagram, /Parent --> "1" Child : backup/);
-  assert.match(diagram, /Child o-- "\*" Parent/);
+  assert.match(diagram, /Parent --> "0\.\.1" Child : preferred/);
+  assert.match(diagram, /Parent --> "0\.\.1" Child : backup/);
+  assert.match(diagram, /Child --> "\*" Parent/);
 });
 
 test('Java nested declarations with the same name remain bound to the enclosing type', () => {
@@ -190,8 +190,8 @@ test('Java nested declarations with the same name remain bound to the enclosing 
   const a = classWithMember(diagram, 'aMarker');
   const b = classWithMember(diagram, 'bMarker');
   assert.notEqual(a, b);
-  assert.match(diagram, new RegExp(`^A --> "1" ${a}$`, 'm'));
-  assert.match(diagram, new RegExp(`^B --> "1" ${b}$`, 'm'));
+  assert.match(diagram, new RegExp(`^A --> "0\\.\\.1" ${a}$`, 'm'));
+  assert.match(diagram, new RegExp(`^B --> "0\\.\\.1" ${b}$`, 'm'));
 });
 
 test('TypeScript imported heritage aliases resolve to the declared base and interface', () => {
@@ -219,13 +219,13 @@ for (const language of ['java', 'ts']) {
 
 test('TypeScript a field initializer does not discard its other declared union alternative', () => {
   const diagram = analyze('ts', { 'model.ts': 'class Item {} class Other {} class Box { value: Item | Other = new Item(); }' }).classDiagram;
-  assert.match(diagram, /^Box "1" \*-- "0\.\.1" Item : value \(alternative\)$/m);
+  assert.match(diagram, /^Box --> "0\.\.1" Item : value \(alternative\)$/m);
   assert.match(diagram, /^Box --> "0\.\.1" Other : value \(alternative\)$/m);
 });
 
 test('TypeScript optional constructor parameter properties remain optional relationships', () => {
   const diagram = analyze('ts', { 'model.ts': 'class Item {} class Box { constructor(public value?: Item) {} }' }).classDiagram;
-  assert.match(diagram, /^Box o-- "0\.\.1" Item$/m);
+  assert.match(diagram, /^Box --> "0\.\.1" Item$/m);
 });
 
 test('TypeScript generic aliases apply defaults in declaration scope and support dependent defaults', () => {
@@ -244,13 +244,13 @@ test('Java an imported outer class resolves its nested field type', () => {
     'types/Outer.java': 'package types; public class Outer { public static class Item {} }',
     'client/Box.java': 'package client; import types.Outer; class Box { Outer.Item item; }'
   }).classDiagram;
-  assert.match(diagram, /^Box --> "1" Item$/m);
+  assert.match(diagram, /^Box --> "0\.\.1" Item$/m);
 });
 
 for (const name of ['Optional', 'List']) {
   test(`Java a supplied generic class named ${name} does not inherit library-wrapper multiplicity`, () => {
     const diagram = analyze('java', { 'model.java': `class Item {} class ${name}<T> {} class Box { ${name}<Item> value; }` }).classDiagram;
-    assert.match(diagram, new RegExp(`^Box --> "1" ${name}$`, 'm'));
+    assert.match(diagram, new RegExp(`^Box --> "0\\.\\.1" ${name}$`, 'm'));
     assert.doesNotMatch(diagram, /^Box .* Item$/m);
   });
 }

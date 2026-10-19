@@ -790,11 +790,11 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       class BankAccount {
         - owner: String
-        - balance: double
-        + BankAccount(owner: String, initialBalance: double)
-        + deposit(amount: double): void
-        + withdraw(amount: double): boolean
-        + getBalance(): double
+        - balance: Real
+        + BankAccount(owner: String, initialBalance: Real)
+        + deposit(amount: Real)
+        + withdraw(amount: Real): Boolean
+        + getBalance(): Real
         + getOwner(): String
         + toString(): String
       }
@@ -1358,23 +1358,23 @@ steps:
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       interface Shape {
-        + getArea(): double
-        + getPerimeter(): double
+        + getArea(): Real
+        + getPerimeter(): Real
         + describe(): String
       }
       class Circle {
-        - radius: double
-        + Circle(radius: double)
-        + getArea(): double
-        + getPerimeter(): double
+        - radius: Real
+        + Circle(radius: Real)
+        + getArea(): Real
+        + getPerimeter(): Real
         + describe(): String
       }
       class Rectangle {
-        - width: double
-        - height: double
-        + Rectangle(width: double, height: double)
-        + getArea(): double
-        + getPerimeter(): double
+        - width: Real
+        - height: Real
+        + Rectangle(width: Real, height: Real)
+        + getArea(): Real
+        + getPerimeter(): Real
         + describe(): String
       }
       Circle ..|> Shape
@@ -1677,22 +1677,22 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       abstract class Vehicle {
         - make: String
-        - year: int
-        + Vehicle(make: String, year: int)
+        - year: Integer
+        + Vehicle(make: String, year: Integer)
         + getMake(): String
-        + getYear(): int
+        + getYear(): Integer
         + {abstract} describe(): String
         + {abstract} startEngine(): String
       }
       class Car {
-        - numDoors: int
-        + Car(make: String, year: int, numDoors: int)
+        - numDoors: Integer
+        + Car(make: String, year: Integer, numDoors: Integer)
         + describe(): String
         + startEngine(): String
       }
       class Motorcycle {
-        - hasSidecar: boolean
-        + Motorcycle(make: String, year: int, hasSidecar: boolean)
+        - hasSidecar: Boolean
+        + Motorcycle(make: String, year: Integer, hasSidecar: Boolean)
         + describe(): String
         + startEngine(): String
       }
@@ -2965,31 +2965,31 @@ steps:
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       interface Enrollable {
-        + enroll(student: Student): void
-        + drop(name: String): boolean
-        + isEnrolled(name: String): boolean
-        + getRoster(): ArrayList<String>
+        + enroll(student: Student)
+        + drop(name: String): Boolean
+        + isEnrolled(name: String): Boolean
+        + getRoster(): Sequence<String>
       }
       class Course {
         - name: String
-        - capacity: int
-        - students: ArrayList
-        + Course(name: String, capacity: int)
+        - capacity: Integer
+        - students: Sequence<Student>
+        + Course(name: String, capacity: Integer)
         + getName(): String
-        + getCapacity(): int
-        + getEnrollmentCount(): int
-        + enroll(student: Student): void
-        + drop(name: String): boolean
-        + isEnrolled(name: String): boolean
-        + getRoster(): ArrayList<String>
+        + getCapacity(): Integer
+        + getEnrollmentCount(): Integer
+        + enroll(student: Student)
+        + drop(name: String): Boolean
+        + isEnrolled(name: String): Boolean
+        + getRoster(): Sequence<String>
         + toString(): String
       }
       class Student {
         - name: String
-        - id: int
-        + Student(name: String, id: int)
+        - id: Integer
+        + Student(name: String, id: Integer)
         + getName(): String
-        + getId(): int
+        + getId(): Integer
         + toString(): String
       }
       class EnrollmentException {
@@ -2997,7 +2997,7 @@ steps:
       }
       EnrollmentException --|> Exception
       Course ..|> Enrollable
-      Course o-- "*" Student
+      Course --> "*" Student
       Course ..> EnrollmentException : throws
       @enduml'></div>
 

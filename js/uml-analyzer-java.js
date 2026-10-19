@@ -69,6 +69,7 @@
 
     return {
       classDiagram: classDiagram,
+      constructionMethods: extractor.constructionMethods,
       ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }),
       errors: errors
     };
@@ -615,7 +616,7 @@
         };
       } else {
         // Field — may have initializer and multiple declarators
-        // Capture whether initializer starts with 'new' for composition inference
+        // Capture whether initializer starts with 'new' for retained-reference inference
         var initHasNew = false;
         var initNewType = '';
         if (at('punct', '=')) {
@@ -861,12 +862,10 @@
     return CONTAINER_TYPES.has(generic.name) || MAPPING_TYPES.has(generic.name);
   }
 
-  /** Infer multiplicity from a type string: "1" for single, "*" for collection/array */
+  /** Java references admit null; declarations alone do not prove a non-null invariant. */
   function _inferMultiplicity(typeStr, allTypeNames) {
-    if (!typeStr) return '1';
     if (_isCollectionType(typeStr, allTypeNames)) return '*';
-    var generic = _genericTypeParts(typeStr);
-    return generic && !allTypeNames.has(generic.fullName) && generic.name === 'Optional' ? '0..1' : '1';
+    return '0..1';
   }
 
   function _getVisibility(modifiers) {
@@ -884,9 +883,10 @@
     if (arr.indexOf(item) === -1) arr.push(item);
   }
 
-  function _recordRelationship(info, role, target, kind) {
-    if (!info.relationships.some(edge => edge.role === role && edge.target === target && edge.kind === kind)) {
-      info.relationships.push({ role: role, target: target, kind: kind, multiplicity: '1' });
+  function _recordRelationship(info, role, target) {
+    // Storage and allocation establish a reference, not UML whole-part semantics.
+    if (!info.relationships.some(edge => edge.role === role && edge.target === target)) {
+      info.relationships.push({ role: role, target: target, multiplicity: '0..1' });
     }
     info._relAttrs.add(role);
   }
@@ -992,9 +992,9 @@
       isStatic: isStatic, isFinal: isFinal, isAbstract: isAbstract
     });
 
-    // Field initializer: x = new ClassName() → composition
+    // Field initializer: x = new ClassName() → stored reference
     if (field.initHasNew && field.initNewType && this.allTypeNames.has(field.initNewType)) {
-      _recordRelationship(info, field.name, field.initNewType, 'composition');
+      _recordRelationship(info, field.name, field.initNewType);
       aTypes[field.name] = field.initNewType;
       return;
     }
@@ -1021,7 +1021,8 @@
       name: info.name, params: params.map(function (p) {
         return { name: p.name, type: _simpleTypeName(p.type) };
       }),
-      returnType: '', visibility: vis, isConstructor: true
+      returnType: '', visibility: vis, isConstructor: true,
+      isDefault: params.length === 0 && Array.isArray(member.body) && member.body.length === 0
     });
 
     methods['constructor'] = member.body;
@@ -1042,32 +1043,32 @@
         var rhsStart = i + 4;
 
         if (rhsStart < bodyTokens.length) {
-          // this.x = new ClassName(...) → composition (direct known type)
+          // this.x = new ClassName(...) → stored reference (direct known type)
           if (bodyTokens[rhsStart].value === 'new' &&
               rhsStart + 1 < bodyTokens.length &&
               bodyTokens[rhsStart + 1].type === 'ident' &&
               bodyTokens[rhsStart + 2] && bodyTokens[rhsStart + 2].value !== '[') {
             var typeName = bodyTokens[rhsStart + 1].value;
             if (this.allTypeNames.has(typeName)) {
-              _recordRelationship(info, fieldName, typeName, 'composition');
+              _recordRelationship(info, fieldName, typeName);
               aTypes[fieldName] = typeName;
             }
             // this.x = new ArrayList<>() — container created internally
             // The element type relationship is left to _classifyRelationships
             // (it will be association since elements aren't created here)
           }
-          // this.x = paramName → aggregation if param is typed as known class
+          // this.x = paramName → stored reference from a known parameter type
           else if (bodyTokens[rhsStart].type === 'ident') {
             var paramCls = paramTypeMap[bodyTokens[rhsStart].value];
             if (paramCls) {
-              _recordRelationship(info, fieldName, paramCls, 'aggregation');
+              _recordRelationship(info, fieldName, paramCls);
               aTypes[fieldName] = paramCls;
             }
           }
         }
       }
 
-      // Pattern: this . collection . add ( new ClassName ( ) ) → composition via collection
+      // Pattern: this . collection . add ( new ClassName ( ) ) → stored element reference
       if (i + 6 < bodyTokens.length &&
           bodyTokens[i].value === 'this' &&
           bodyTokens[i + 1].value === '.' &&
@@ -1081,7 +1082,7 @@
           if (bodyTokens[j].value === 'new' && j + 1 < bodyTokens.length &&
               bodyTokens[j + 1].type === 'ident' && this.allTypeNames.has(bodyTokens[j + 1].value) &&
               bodyTokens[j + 2] && bodyTokens[j + 2].value !== '[') {
-            _recordRelationship(info, bodyTokens[i + 2].value, bodyTokens[j + 1].value, 'composition');
+            _recordRelationship(info, bodyTokens[i + 2].value, bodyTokens[j + 1].value);
             break;
           }
         }
@@ -1118,12 +1119,12 @@
     methods[member.name] = member.body;
     mParamsMap[member.name] = params;
 
-    // Scan method body for this.collection.add(new X()) → composition
-    this._scanMethodBodyForCompositions(member.body, info);
+    // Scan method body for this.collection.add(new X()) → stored reference
+    this._scanMethodBodyForStoredElements(member.body, info);
   };
 
-  /** Scan a method body for this.field.add(new KnownClass()) patterns → composition */
-  JavaClassExtractor.prototype._scanMethodBodyForCompositions = function (bodyTokens, info) {
+  /** Scan a method body for this.field.add(new KnownClass()) patterns → stored reference */
+  JavaClassExtractor.prototype._scanMethodBodyForStoredElements = function (bodyTokens, info) {
     if (!bodyTokens) return;
     for (var i = 0; i + 6 < bodyTokens.length; i++) {
       if (bodyTokens[i].value === 'this' &&
@@ -1137,7 +1138,7 @@
           if (bodyTokens[j].value === 'new' && j + 1 < bodyTokens.length &&
               bodyTokens[j + 1].type === 'ident' && this.allTypeNames.has(bodyTokens[j + 1].value) &&
               bodyTokens[j + 2] && bodyTokens[j + 2].value !== '[') {
-            _recordRelationship(info, bodyTokens[i + 2].value, bodyTokens[j + 1].value, 'composition');
+            _recordRelationship(info, bodyTokens[i + 2].value, bodyTokens[j + 1].value);
             break;
           }
         }
@@ -1225,8 +1226,7 @@
       if (existing.length) {
         for (const edge of existing) edge.multiplicity = _inferMultiplicity(attr.type, this.allTypeNames);
       } else if (target) {
-        const groupedCollection = _isCollectionType(attr.type, this.allTypeNames) && !/\[\]\s*$/.test(attr.type);
-        _recordRelationship(info, attr.name, target, groupedCollection ? 'aggregation' : 'association');
+        _recordRelationship(info, attr.name, target);
         info.relationships[info.relationships.length - 1].multiplicity = _inferMultiplicity(attr.type, this.allTypeNames);
       }
     }
@@ -1264,6 +1264,7 @@
    * =================================================================== */
 
   JavaClassExtractor.prototype.generatePlantUML = function () {
+    this.constructionMethods = [];
     if (this.classMap.size === 0) return '';
 
     var lines = ['@startuml', 'layout landscape', 'layout compact'];
@@ -1304,6 +1305,9 @@
         }).join(', ');
         var retStr = (method.returnType && method.returnType !== 'void')
           ? ': ' + method.returnType : '';
+        if (method.isConstructor) {
+          this.constructionMethods.push({ owner: info.name, name: method.name, lineIndex: lines.length, isDefault: method.isDefault });
+        }
         lines.push('  ' + mPrefix + method.name + '(' + paramStr + ')' + retStr);
       }
 
@@ -1324,12 +1328,9 @@
           lines.push(cls.name + ' ' + arrow + ' ' + cls.implements[ii]);
         }
       }
-      const arrows = { composition: '*--', aggregation: 'o--', association: '-->' };
       for (const edge of cls.relationships) {
         const repeated = cls.relationships.filter(other => other.target === edge.target).length > 1;
-        // Shared references do not constrain how many owners can use the target.
-        const ownerMultiplicity = edge.kind === 'composition' ? ' "1"' : '';
-        lines.push(cls.name + ownerMultiplicity + ' ' + arrows[edge.kind] + ' "' + edge.multiplicity + '" ' +
+        lines.push(cls.name + ' --> "' + edge.multiplicity + '" ' +
           edge.target + (repeated ? ' : ' + edge.role : ''));
       }
       for (var d = 0; d < cls.dependencies.length; d++) {
@@ -1703,7 +1704,6 @@
     i = condResult.endIdx;
     this._scanTokensForCalls(condResult.tokens, caller, depth);
     var cond = condResult.tokens.map(function (t) { return t.value; }).join(' ');
-    if (cond.length > 40) cond = cond.substring(0, 37) + '...';
 
     const baseline = this._captureBindings();
     const states = [];
@@ -1780,7 +1780,6 @@
       if (hasCallTokens(condResult.tokens)) this.diagnostics.add('unsupported', 'Calls in else-if conditions are omitted');
       i = condResult.endIdx;
       var cond = condResult.tokens.map(function (t) { return t.value; }).join(' ');
-      if (cond.length > 40) cond = cond.substring(0, 37) + '...';
 
       var blockResult = this._extractBlock(tokens, i);
       i = blockResult.endIdx;
@@ -2182,11 +2181,10 @@
     // A known object takes precedence over the class-based fallback.
     var calleeId = receiver || this._calleeIdFor(clsName, caller, null);
     var label = method + '(';
-    // Extract abbreviated args
+    // Keep complete arguments so Design projection never abstracts a fragment.
     if (parenIdx < tokens.length && tokens[parenIdx].value === '(') {
       var argResult = this._extractParenContents(tokens, parenIdx);
-      var argStr = argResult.tokens.slice(0, 10).map(function (t) { return t.value; }).join(' ');
-      if (argStr.length > 30) argStr = argStr.substring(0, 27) + '...';
+      var argStr = argResult.tokens.map(function (t) { return t.value; }).join(' ');
       label += argStr;
     }
     label += ')';

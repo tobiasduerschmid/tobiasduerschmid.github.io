@@ -911,6 +911,9 @@
     this._umlClassLayoutDefault = this._umlClassLayoutPreference; // global fallback for per-step overrides
     this._umlHideFlags = [];             // Per-step hide flags: ['visibility'], ['multiplicity'], etc.
     this._umlLastDiagrams = null;       // {classDiagram, sequenceDiagram}
+    this._umlDiagramView = 'design';
+    this._umlViewControls = [];
+    this._umlViewEvents = new AbortController();
     this._umlAnalysisRequestId = 0;     // monotonic id; later analyses supersede earlier ones
     this._umlRenderRequestId = 0;       // monotonic id; later renders supersede earlier ones
     this._umlViewActive = false;        // true when UML tab is selected
@@ -1493,6 +1496,8 @@
   };
 
   TutorialCode.prototype.destroy = function () {
+    this._umlViewControls.forEach(function (controls) { controls.destroy(); });
+    this._umlViewEvents.abort();
     this._destroyed = true;
     clearTimeout(this._umlRefreshTimer);
     if (this._umlClient) this._umlClient.dispose();
@@ -2110,6 +2115,7 @@
     this._umlContentEl = this.root.querySelector('.tvm-diagram-content');
     this._umlFullscreenEl = this.root.querySelector('.tvm-diagram-fullscreen-overlay');
     this._umlFsContentEl = this.root.querySelector('.tvm-diagram-fs-content');
+    this._mountUMLViewControls();
     this._stepsViewEl = this.root.querySelector('.tvm-steps-view');
     this._leftTabBarEl = this.root.querySelector('.tvm-left-tab-bar');
     this._rightTabBarEl = this.root.querySelector('.tvm-right-tab-bar');
@@ -2273,12 +2279,28 @@
       var fsClose = this._umlFullscreenEl.querySelector('.tvm-diagram-fs-close');
       if (fsClose) fsClose.addEventListener('click', function () { self._closeUMLFullscreen(); });
 
-      // Close on Escape key
+      this._umlFullscreenEl.setAttribute('role', 'dialog');
+      this._umlFullscreenEl.setAttribute('aria-modal', 'true');
+      this._umlFullscreenEl.setAttribute('aria-label', 'Fullscreen UML diagram');
+      // Keep keyboard navigation inside the open diagram; Escape restores focus.
       document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && self._umlFullscreenEl && self._umlFullscreenEl.style.display !== 'none') {
+        var dialog = self._umlFullscreenEl;
+        if (!dialog || dialog.style.display === 'none') return;
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
           self._closeUMLFullscreen();
+        } else if (e.key === 'Tab') {
+          var controls = Array.from(dialog.querySelectorAll('button:not([disabled]), input:not([disabled]), [tabindex="0"]'))
+            .filter(function (element) { return element.getClientRects().length; });
+          var first = controls[0], last = controls[controls.length - 1];
+          var outside = !dialog.contains(document.activeElement);
+          if (outside || e.shiftKey && document.activeElement === first || !e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            (e.shiftKey ? last : first).focus();
+          }
         }
-      });
+      }, { capture: true, signal: this._umlViewEvents.signal });
     }
 
     // Wire all color pickers (inline + fullscreen share a single handler via event delegation)
@@ -8403,6 +8425,9 @@
     this._umlChannel = new BroadcastChannel('uml-sync-' + window.location.pathname);
     this._umlChannel.addEventListener('message', function (e) {
       if (e.data.type === 'uml-ready') self._broadcastUMLState();
+      if (e.data.type === 'uml-view-change' && ['design', 'implementation'].indexOf(e.data.view) !== -1) {
+        self._setUMLDiagramView(e.data.view);
+      }
     });
   };
 
@@ -8414,6 +8439,10 @@
         ? this._applyTutorialClassLayout(this._umlLastDiagrams.classDiagram)
         : null,
       sequenceDiagram: this._umlLastDiagrams.sequenceDiagram || null,
+      rawDiagrams: this._umlLastDiagrams,
+      language: this._umlAnalysisLanguage,
+      diagramView: this._umlDiagramView,
+      classLayout: this._umlClassLayoutPreference,
       activeType: this._umlActiveType,
       color: this._umlCustomColor,
       darkMode: document.documentElement.classList.contains('dark-mode')
@@ -9423,6 +9452,37 @@
   };
 
   /** The tutorial owns files and progress; UMLLive owns source inference and SVGs. */
+  TutorialCode.prototype._mountUMLViewControls = function () {
+    if (!this._umlDiagramEnabled) return;
+    var self = this;
+    [this._umlContainer, this._umlFullscreenEl].forEach(function (container) {
+      if (!container) return;
+      var host = document.createElement('div');
+      host.className = 'tvm-uml-view-choice';
+      var toolbar = container.querySelector('.tvm-diagram-toolbar, .tvm-diagram-fs-toolbar');
+      if (toolbar) toolbar.after(host);
+      else container.prepend(host);
+      self._umlViewControls.push(window.UMLViewControls.mount(host, {
+        view: self._umlDiagramView,
+        onChange: function (view) { self._setUMLDiagramView(view); }
+      }));
+    });
+  };
+
+  TutorialCode.prototype._setUMLDiagramView = function (view) {
+    this._umlDiagramView = view;
+    this._umlViewControls.forEach(function (controls) { controls.setView(view); });
+    this._renderCurrentUMLDiagram();
+    if (this._umlFullscreenEl && this._umlFullscreenEl.style.display !== 'none') this._renderUMLInFullscreen();
+  };
+
+  TutorialCode.prototype._getUMLDisplayDiagrams = function () {
+    return this._getUMLClient().project(this._umlLastDiagrams, {
+      language: this._umlAnalysisLanguage,
+      view: this._umlDiagramView
+    });
+  };
+
   TutorialCode.prototype._getUMLClient = function () {
     if (!this._umlClient) {
       this._umlClient = window.UMLLive.createClient({
@@ -9509,6 +9569,7 @@
       .then(function (result) {
         if (!isCurrent()) return;
         self._umlLastDiagrams = result;
+        self._umlAnalysisLanguage = lang;
         if (result.errors && result.errors.length) console.warn(lang + ' UML analysis warnings:', result.errors);
         requestAnimationFrame(function () {
           if (isCurrent()) self._renderCurrentUMLDiagram();
@@ -9526,8 +9587,9 @@
       return;
     }
 
+    var diagrams = this._getUMLDisplayDiagrams();
     if (this._umlActiveType === 'sequence') {
-      var seqSyntax = this._umlLastDiagrams.sequenceDiagram;
+      var seqSyntax = diagrams.sequenceDiagram;
       if (!seqSyntax) {
         this._showUMLEmpty('No method calls detected between classes.');
         return;
@@ -9538,7 +9600,7 @@
         this._renderMermaidDiagram(seqSyntax);
       }
     } else {
-      var classSyntax = this._umlLastDiagrams.classDiagram;
+      var classSyntax = diagrams.classDiagram;
       if (!classSyntax) {
         this._showUMLEmpty('No classes found in the watched files.');
         return;
@@ -9730,9 +9792,10 @@
       return;
     }
     this._applyUMLColors(this._umlFsContentEl);
+    var diagrams = this._getUMLDisplayDiagrams();
     try {
       if (this._umlActiveType === 'sequence') {
-        var seqSyntax = this._umlLastDiagrams.sequenceDiagram;
+        var seqSyntax = diagrams.sequenceDiagram;
         if (seqSyntax && window.UMLSequenceDiagram) {
           UMLSequenceDiagram.render(this._umlFsContentEl, seqSyntax);
           if (window.UMLShared && typeof UMLShared.applySvgAccessibility === 'function') {
@@ -9742,7 +9805,7 @@
           this._renderUMLMessage(this._umlFsContentEl, 'No sequence diagram available.', false);
         }
       } else {
-        var classSyntax = this._umlLastDiagrams.classDiagram;
+        var classSyntax = diagrams.classDiagram;
         if (classSyntax && window.UMLClassDiagram) {
           var laidOutClassSyntax = this._applyTutorialClassLayout(classSyntax);
           UMLClassDiagram.render(this._umlFsContentEl, laidOutClassSyntax);

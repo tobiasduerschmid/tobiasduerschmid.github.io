@@ -19,7 +19,7 @@ visibility:
     code: |
       class Student:
           def __init__(self, name: str) -> None:
-              self._name = name
+              self._name: str = name
 
           def display_name(self) -> str:
               return self._name
@@ -115,14 +115,14 @@ dependency:
           }
       }
   python:
-    task: "After replacing self.roster = roster with pass, will Student be independent of Roster? Predict, then edit. What further change removes the coupling without deleting either class?"
+    task: "After replacing self.roster: Roster = roster with pass, will Student be independent of Roster? Predict, then edit. What further change removes the coupling without deleting either class?"
     code: |
       class Roster:
           pass
 
       class Student:
           def keep_roster(self, roster: Roster) -> None:
-              self.roster = roster
+              self.roster: Roster = roster
 
   cpp:
     task: "After removing the roster field and its assignment, will Student be independent of Roster? Predict, then edit. What further change removes the coupling without deleting either class?"

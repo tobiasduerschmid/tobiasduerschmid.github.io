@@ -8,6 +8,45 @@ objects containing `code` and one brief `task`.
 `_data/uml_code_languages.yml` defines the ordered language options, labels,
 and source filenames for both the interactive controls and static fallbacks.
 
+All inferred diagrams offer **Design focus** and **Implementation details** for
+the same current code. Chapter labs open in Implementation details so learners
+can inspect source conventions before abstracting them. Tutorials, generated
+Python workspaces, and the JS/TypeScript diagnostic page start in Design focus;
+full screen and detached views inherit the tutorial's current selection.
+The shared `uml-view-controls.js` component
+exposes native pressed buttons, a hover explanation, and an on-page explanation
+(once per chapter page). It adds no saved preference or editor state.
+
+`UMLLive` retains raw analyzer results; `client.project(result, {language, view})`
+selects the display view without reanalyzing or changing source. Design focus
+uses UML primitive names and omits empty no-argument constructors and no-result suffixes
+from class diagrams. Relationships, sequence calls, order, and creation
+events remain intact. Implementation details retains source types and members.
+Constructors with parameters or behavior remain in both views.
+Design names hide Python privacy/dunder markers while preserving UML visibility;
+constructors use their class name, and internal snake_case stays intact.
+TypeScript's `constructor(...)` likewise displays as `ClassName(...)`.
+Unknown types remain unknown; abstraction is not verification of requirements.
+The pure `js/uml-diagram-views.js` module maps recognized type and member-name positions.
+`js/uml-expression-views.js` provides `UMLExpressionViews.projectSequence`,
+`projectExpression`, and `projectLoop` for recognized conditions, loops and
+assignments. UML does not prescribe an expression language; these labels use
+an SEBook pseudocode convention. The projection preserves the underlying
+control flow and call order.
+It retains protocol behavior, relationship facts,
+diagnostics, and source maps. Java boxed primitives retain nullability as
+`Optional<…>`; C++ unsigned integers retain the nonnegative constraint as
+`Integer {>=0}`. Sequence reply types and expression labels may change, while
+their participants, evaluation order, and control-flow structure do not.
+Matching projected types cannot prove that implementations
+are equivalent. Lifecycle lessons may use the projection's `retainConstruction`
+option when constructor operations are the subject of the lesson.
+Tutorial grading keeps the raw results. Fullscreen and detached views use the
+same selection; the existing `uml-sync-*` channel carries `rawDiagrams`,
+`language`, `diagramView`, and `classLayout`, with `uml-view-change` requesting a
+view change. `css/uml-view-controls.css` owns both themes and light-only print;
+printing retains the selected view label alongside the diagram.
+
 Keep each exercise about one concept. Ask for a consequence that requires
 tracing the code, distinguishing two cases, or constructing a counterexample;
 avoid prompts whose edit instruction gives away the answer. Learners predict
@@ -226,11 +265,21 @@ following distinctions while working only with supplied source files:
   injected fields by owning object, field aliases and subsequent assignments;
   a factory result does not reuse an old object's identity. An unknown receiver
   is not assigned to an unrelated existing object just because its type matches.
-- **Ownership:** field construction and parameter passing suggest relationships
-  but do not prove UML composition or aggregation lifetime constraints. Diamonds
-  remain syntax-based modeling suggestions that require domain review.
-  Java `new Part[n]` allocates reference slots without constructing parts, so
-  it does not infer composition or an exact `n`-object multiplicity.
+- **Ownership:** Java, Python, and JavaScript/TypeScript stored references use
+  ordinary associations. Allocation, injection, and collection storage do not
+  establish composition or aggregation. C++ value members and `unique_ptr`
+  provide lifetime/exclusive-ownership evidence for composition; raw pointers,
+  references, and `shared_ptr` retain ordinary associations. No analyzer invents
+  reverse multiplicity from a field declaration. Java `new Part[n]` allocates
+  reference slots without constructing parts; it establishes neither composition
+  nor an exact `n`-object multiplicity.
+- **Multiplicity evidence:** Java scalar references allow `0..1`; containers
+  allow `*`. Python and TypeScript explicit nonoptional annotations express `1`,
+  nullable alternatives express `0..1`, and collections express `*`. A reference
+  inferred from an unannotated assignment keeps an unspecified bound. Python
+  annotations describe a contract rather than runtime enforcement. C++ values
+  and references express `1`, nullable pointers express `0..1`, and collections
+  express `*`. Neither display view strengthens these source claims.
 - **Control flow:** Python preserves early transfers through conditional and
   cleanup paths, including `try`/`else`/`finally`. The call walk is still bounded:
   it does not evaluate arbitrary predicates, unroll loops, model every exception
@@ -328,3 +377,70 @@ syntax highlighting in all four languages, syntax and undefined-base-class
 problems in all four languages, refactoring, accessibility, small screens and
 print. A browser test runs every starter through `SEBookSourceCheck`, since
 unedited starters render without a check.
+
+
+## Teaching the two views
+
+Chapter labs begin in **Implementation details** and invite a comparison with
+**Design focus** before the existing prediction/edit task. Tutorials default to
+Design focus. Both views describe the current source: they are not a target
+model or evidence that requirements have been met. Language tabs retain separate
+examples and drafts rather than translating edits.
+
+Design focus uses UML `Integer`, `Boolean`, `String`, `UnlimitedNatural`, and
+`Real`. Shared collection labels are `Sequence<T>`, `Set<T>`, `Map<K,V>`, and
+`Tuple<...>`. It preserves optionality, unknown information, visibility, relationships, and
+multiplicities. Python naming markers are removed for design display, with
+initializers displayed under their class name and protocol operations retained
+without paired markers. Source names remain if normalization would collide;
+TypeScript constructors also display under their class name. Implementation
+details always exposes the original identifiers. Empty no-argument constructors and known no-result return suffixes can be
+suppressed. Constructors with parameters or initialization behavior remain,
+as do protocol operations. The
+implementation view supplies the original source spellings. Primitive mapping
+is an abstraction, not a claim of equal numeric range, precision, encoding,
+nullability, or runtime checking. `UnlimitedNatural` requires an explicit
+unlimited case; a finite unsigned integer is not that UML primitive.
+
+Expression labels use **SEBook design pseudocode**, not executable OCL or a
+universal UML expression grammar. Recognized logical operators use `and`, `or`,
+and `not`; collection loops use `for each … in …`. A C-style loop retains its
+start, condition, and update as separate parts, and a do-while loop says that
+the body runs before its test. A recognized assignment uses `:=`. Source
+short-circuit behavior, evaluation order, and truthiness still apply. Equality
+variants, bitwise operators (`&`, `|`, `^`), and unsupported constructs retain
+native notation where rewriting would require type or semantic evidence.
+Changing the display does not evaluate a guard or prove that its expression
+has no side effects.
+
+This convention follows UML's choice of expression language rather than
+pretending that one programming notation is mandated by UML. The supplied
+**OMG Unified Modeling Language 2.5.1** (December 2017,
+formal/2017-12-05), §7.6.4 (p. 36), §8.3.3.3–8.3.4.2 (pp. 71–72), and
+§17.6.4.2 (p. 585), permits language-specific or natural-language expressions
+and specifies Boolean interaction guards; §7.8.3.6 (p. 41) requires constraint
+evaluation to have no side effects. The public specification is available from
+[OMG](https://www.omg.org/spec/UML/2.5.1/PDF).
+The supplied **The Unified Modeling Language Reference Manual**, James
+Rumbaugh, Ivar Jacobson, and Grady Booch (Addison Wesley Longman, copyright
+1999; first printing December 1998; ISBN 0-201-30998-X), agrees in its
+“constraint” (pp. 235–236), “guard condition” (pp. 291–292), and “OCL”
+(pp. 367–368) entries. This supplied edition is distinct from the 2004 second
+edition cited elsewhere in the book. OCL describes constraints and queries;
+our assignment and loop labels are pseudocode, not OCL actions.
+
+The [class chapter](../SEBook/uml_class_diagram.md) contains the compact mapping
+and a compare-before-edit prompt; the sequence chapter asks whether abstracting
+a reply type changes its recipient or timing. The Python ownership tutorial
+separates its labeled domain reference (diamonds justified by requirements) from
+its expected inferred source structure (associations). This keeps the deliberate
+gap available for students to explain rather than disguising it as a parser rule.
+
+Content audit: authored class diagrams in SEBook chapters and tutorials use
+canonical primitive spellings; executable Python, Java, C++, and TypeScript
+source retains native types. Python starter/solution signatures and stored fields
+in UML labs and the two UML tutorials are annotated, except the deliberately
+untyped starter in the type-annotation exercise. Target constructors retain their required parameters and initialization
+responsibilities; only empty no-argument constructors may be omitted. Model/prose callout
+anchors were updated alongside displayed signatures. Other domain-specific
+classes (`Date`, `Money`, `Object`, and user-defined types) are retained.
