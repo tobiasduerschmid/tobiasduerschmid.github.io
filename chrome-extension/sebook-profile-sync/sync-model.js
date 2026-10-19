@@ -15,7 +15,7 @@ export const LIMITS = {
 };
 
 /** Bump only when older copies must not rewrite the profile payload. */
-export const FORMAT_VERSION = 1;
+export const FORMAT_VERSION = 2;
 
 const KNOWN_RECORD_FIELDS = { value: true, updatedAt: true, deleted: true };
 const KNOWN_META_FIELDS = { version: true, revision: true, chunks: true, omittedCount: true, updatedAt: true };
@@ -28,18 +28,39 @@ export function chunkKey(index) {
   return `c${index}`;
 }
 
-export function recordId(area, key) {
-  return `${area}${SEPARATOR}${key}`;
+export function recordId(area, key, origin) {
+  if (!isExactOrigin(origin)) throw new Error('An exact HTTP(S) origin is required.');
+  return `${origin}${SEPARATOR}${area}${SEPARATOR}${key}`;
 }
 
 export function parseRecordId(id) {
+  const origin = recordOrigin(id);
+  if (!origin) return null;
+  const start = origin.length + 1;
+  const cut = id.indexOf(SEPARATOR, start);
+  if (cut <= 0) return null;
+  const area = id.slice(start, cut);
+  const key = id.slice(cut + 1);
+  if ((area !== 'local' && area !== 'cookie') || key === '') return null;
+  return { origin, area, key };
+}
+
+function recordOrigin(id) {
   if (typeof id !== 'string') return null;
   const cut = id.indexOf(SEPARATOR);
   if (cut <= 0) return null;
-  const area = id.slice(0, cut);
-  const key = id.slice(cut + 1);
-  if ((area !== 'local' && area !== 'cookie') || key === '') return null;
-  return { area, key };
+  const origin = id.slice(0, cut);
+  return isExactOrigin(origin) ? origin : null;
+}
+
+function isExactOrigin(origin) {
+  if (typeof origin !== 'string') return false;
+  try {
+    const url = new URL(origin);
+    return (url.protocol === 'https:' || url.protocol === 'http:') && url.origin === origin;
+  } catch (error) {
+    return false;
+  }
 }
 
 export function valueHash(text) {
@@ -131,31 +152,31 @@ export function largestLiveId(records, skip) {
   return bestId;
 }
 
-export function stampMatchingLocalEntries(entries, stamps) {
+export function stampMatchingLocalEntries(entries, stamps, origin) {
   return entries.map((entry) => {
     if (entry.writtenAt != null || !stamps) return entry;
-    const stamp = stamps[recordId(entry.area, entry.key)];
+    const stamp = stamps[recordId(entry.area, entry.key, origin)];
     if (!stamp || stamp.hash !== entryHash(entry)) return entry;
     return { ...entry, writtenAt: stamp.updatedAt };
   });
 }
 
-export function entriesWithLocalDeletes(entries, lastSynced) {
+export function entriesWithLocalDeletes(entries, lastSynced, origin) {
   const result = entries.slice();
-  const present = new Set(entries.map((entry) => recordId(entry.area, entry.key)));
+  const present = new Set(entries.map((entry) => recordId(entry.area, entry.key, origin)));
   Object.keys(lastSynced || {}).forEach((id) => {
     if (present.has(id)) return;
     const parsed = parseRecordId(id);
-    if (!parsed) return;
+    if (!parsed || parsed.origin !== origin) return;
     result.push({ area: parsed.area, key: parsed.key, value: '', deleted: true });
   });
   return result;
 }
 
-export function stampDivergedEntries(entries, lastSynced, now) {
+export function stampDivergedEntries(entries, lastSynced, now, origin) {
   return entries.map((entry) => {
     if (entry.writtenAt != null || !lastSynced) return entry;
-    const id = recordId(entry.area, entry.key);
+    const id = recordId(entry.area, entry.key, origin);
     if (!Object.prototype.hasOwnProperty.call(lastSynced, id)) return entry;
     if (lastSynced[id] === entryHash(entry)) return entry;
     return { ...entry, writtenAt: now };
@@ -163,10 +184,10 @@ export function stampDivergedEntries(entries, lastSynced, now) {
 }
 
 export function prepareSiteEntries(entries, options) {
-  const matched = stampMatchingLocalEntries(entries || [], options.stamps || {});
-  const withDeletes = entriesWithLocalDeletes(matched, options.lastSynced || {});
-  const stamped = stampDivergedEntries(withDeletes, options.lastSynced || {}, options.now);
-  return applyRetiredKeys(stamped, options.remoteRecords || {}, options.retired || [], options.now);
+  const matched = stampMatchingLocalEntries(entries || [], options.stamps || {}, options.origin);
+  const withDeletes = entriesWithLocalDeletes(matched, options.lastSynced || {}, options.origin);
+  const stamped = stampDivergedEntries(withDeletes, options.lastSynced || {}, options.now, options.origin);
+  return applyRetiredKeys(stamped, options.remoteRecords || {}, options.retired || [], options.now, options.origin);
 }
 
 /**
@@ -174,19 +195,19 @@ export function prepareSiteEntries(entries, options) {
  * localStorage key and cookie is synced. A removed key is listed so an
  * older profile copy cannot write it back.
  */
-export function applyRetiredKeys(entries, remoteRecords, retired, now) {
+export function applyRetiredKeys(entries, remoteRecords, retired, now, origin) {
   const rules = Array.isArray(retired) ? retired : [];
   if (!rules.length) return entries;
   const byId = new Map();
   entries.forEach((entry) => {
     if (!entry || (entry.area !== 'local' && entry.area !== 'cookie')) return;
     if (typeof entry.key !== 'string' || entry.key === '') return;
-    byId.set(recordId(entry.area, entry.key), entry);
+    byId.set(recordId(entry.area, entry.key, origin), entry);
   });
   const ids = new Set([...byId.keys(), ...Object.keys(remoteRecords || {})]);
   ids.forEach((id) => {
     const parsed = parseRecordId(id);
-    if (!parsed || !matchesRetired(parsed.area, parsed.key, rules)) return;
+    if (!parsed || parsed.origin !== origin || !matchesRetired(parsed.area, parsed.key, rules)) return;
     const local = byId.get(id);
     const remote = remoteRecords[id];
     if ((!local || local.deleted) && (!remote || remote.deleted)) return;
@@ -209,14 +230,15 @@ export function matchesRetired(area, key, retired) {
   });
 }
 
-/** Known site records stay editable. Anything else is kept verbatim. */
-export function splitRecords(records) {
+/** Only this origin is editable. Preserve other namespaces; discard originless data. */
+export function splitRecords(records, origin) {
   const known = {};
   const opaque = {};
   Object.entries(records || {}).forEach(([id, record]) => {
-    if (!record || typeof record !== 'object') return;
+    if (!record || typeof record !== 'object' || !recordOrigin(id)) return;
     const canonical = canonicalRecord(record);
-    if (parseRecordId(id) && canonical) known[id] = canonical;
+    const parsed = parseRecordId(id);
+    if (parsed && parsed.origin === origin && canonical) known[id] = canonical;
     else opaque[id] = record;
   });
   return { known, opaque };
@@ -313,9 +335,9 @@ export async function fitToQuota(records, options) {
   return { records: working, omitted, encoded, overQuota: true };
 }
 
-export function mergeSiteSnapshot(localEntries, remoteRecords, now) {
-  const remote = normalizeRemote(remoteRecords);
-  const local = foldLocal(localEntries);
+export function mergeSiteSnapshot(localEntries, remoteRecords, now, origin) {
+  const remote = normalizeRemote(remoteRecords, origin);
+  const local = foldLocal(localEntries, origin);
   const ids = new Set([...Object.keys(remote), ...local.keys()]);
   const records = {};
   const apply = [];
@@ -371,13 +393,13 @@ function sameState(localEntry, record) {
   return !localEntry.deleted && localEntry.value === record.value;
 }
 
-function foldLocal(entries) {
+function foldLocal(entries, origin) {
   const local = new Map();
   (entries || []).forEach((entry) => {
     if (!entry || (entry.area !== 'local' && entry.area !== 'cookie')) return;
     if (typeof entry.key !== 'string' || entry.key === '') return;
     if (!entry.deleted && typeof entry.value !== 'string') return;
-    local.set(recordId(entry.area, entry.key), {
+    local.set(recordId(entry.area, entry.key, origin), {
       area: entry.area,
       key: entry.key,
       value: entry.deleted ? '' : entry.value,
@@ -388,10 +410,11 @@ function foldLocal(entries) {
   return local;
 }
 
-function normalizeRemote(records) {
+function normalizeRemote(records, origin) {
   const remote = {};
   Object.entries(records || {}).forEach(([id, record]) => {
-    if (!parseRecordId(id)) return;
+    const parsed = parseRecordId(id);
+    if (!parsed || parsed.origin !== origin) return;
     const canonical = canonicalRecord(record);
     if (canonical) remote[id] = canonical;
   });

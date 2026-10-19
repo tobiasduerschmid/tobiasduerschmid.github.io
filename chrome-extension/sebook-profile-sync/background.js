@@ -1,42 +1,48 @@
 import {
+  FORMAT_VERSION,
   LIMITS,
   META_KEY,
   chunkKey,
   fitToQuota,
   hashesForRecords,
   mergeSiteSnapshot,
+  parseRecordId,
   prepareSiteEntries,
   pruneRecords,
   recordsEqual,
+  recordId,
   splitRecords,
   unsyncedStampsFor,
 } from './sync-model.js';
 import { decodeSyncPayload, encodeSyncPayload } from './sync-codec.js';
 
-const SITE_URLS = [
-  'https://tobiasduerschmid.github.io/*',
-  'http://localhost/*',
-  'http://127.0.0.1/*',
-];
+const SITE_ORIGINS = ['https://tobiasduerschmid.github.io'];
+const SITE_URLS = SITE_ORIGINS.map((origin) => origin + '/*');
 
 let chain = Promise.resolve();
 let notifyTimer = 0;
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || typeof message.type !== 'string') return undefined;
-  if (chrome.extension.inIncognitoContext) {
+  if (chrome.extension.inIncognitoContext || sender?.tab?.incognito) {
     sendResponse({ skipped: 'incognito' });
     return undefined;
   }
-  enqueue(() => handleMessage(message)).then(sendResponse, (error) => {
+  const origin = sender?.id === chrome.runtime.id ? senderOrigin(sender) : null;
+  const syncRequest = message.type === 'hydrate' || message.type === 'push';
+  if (syncRequest ? !origin : !isPopupSender(sender)) {
+    sendResponse({ error: 'This sender is not allowed to access profile sync.' });
+    return undefined;
+  }
+  enqueue(() => handleMessage(message, origin)).then(sendResponse, (error) => {
     sendResponse({ error: error && error.message ? error.message : 'Sync failed.' });
   });
   return true;
 });
 
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
-  if (!message || message.type !== 'status' || !senderAllowed(sender)) return undefined;
-  if (chrome.extension.inIncognitoContext) {
+  if (!message || message.type !== 'status' || !senderOrigin(sender)) return undefined;
+  if (chrome.extension.inIncognitoContext || sender.tab.incognito) {
     sendResponse({ installed: true, skipped: 'incognito' });
     return undefined;
   }
@@ -50,33 +56,34 @@ function enqueue(task) {
   return run;
 }
 
-async function handleMessage(message) {
+async function handleMessage(message, origin) {
   if (message.type === 'status') return status();
   if (message.type === 'pause') return pause();
   if (message.type === 'resume') return resume();
   if (message.type === 'wipe') return wipe();
   if (message.type === 'discard-backup') return discardBackup();
   if (message.type === 'hydrate' || message.type === 'push') {
-    return syncEntries(message.entries || [], message.retired || []);
+    return syncEntries(message.entries || [], message.retired || [], origin);
   }
   return { error: 'Unknown request.' };
 }
 
-async function syncEntries(entries, retired) {
+async function syncEntries(entries, retired, origin) {
   if (await isPaused()) return { paused: true, ...(await status()) };
   const remote = await readRemote();
   if (remote.error) return { error: remote.error };
-  const parts = splitRecords(remote.records);
+  const parts = splitRecords(remote.records, origin);
   const now = Date.now();
   const localState = await chrome.storage.local.get(['lastSynced', 'unsyncedStamps']);
   const prepared = prepareSiteEntries(entries, {
+    origin,
     stamps: localState.unsyncedStamps || {},
     lastSynced: localState.lastSynced || {},
     now,
     retired,
     remoteRecords: parts.known,
   });
-  const merged = mergeSiteSnapshot(prepared, parts.known, now);
+  const merged = mergeSiteSnapshot(prepared, parts.known, now, origin);
   if (remote.newer) {
     return { apply: merged.apply, revision: remote.revision, readOnly: true };
   }
@@ -100,7 +107,8 @@ async function syncEntries(entries, retired) {
   let revision = remote.revision;
   let omittedCount = remote.omittedCount;
   const savedRecords = fitted.records;
-  if (!recordsEqual(savedRecords, remote.records) || fitted.omitted.length !== remote.omittedCount) {
+  if (!recordsEqual(savedRecords, remote.records) || fitted.omitted.length !== remote.omittedCount
+    || (remote.meta && remote.meta.version !== FORMAT_VERSION)) {
     fitted.encoded.meta.omittedCount = fitted.omitted.length;
     fitted.encoded.meta.revision = remote.revision + 1;
     await writeRemote(fitted.encoded);
@@ -110,10 +118,10 @@ async function syncEntries(entries, retired) {
   }
 
   await chrome.storage.local.set({
-    lastSynced: hashesForRecords(pruneRecords(merged.records, now)),
-    unsyncedStamps: unsyncedStampsFor(merged.records, savedRecords),
+    lastSynced: replaceOriginState(localState.lastSynced, origin, hashesForRecords(pruneRecords(merged.records, now))),
+    unsyncedStamps: replaceOriginState(localState.unsyncedStamps, origin, unsyncedStampsFor(merged.records, savedRecords)),
   });
-  if (merged.replaced.length) await rememberReplaced(merged.replaced);
+  if (merged.replaced.length) await rememberReplaced(merged.replaced, origin);
 
   return {
     apply: merged.apply,
@@ -191,13 +199,21 @@ async function isPaused() {
   return !!stored.paused;
 }
 
-async function rememberReplaced(replaced) {
+function replaceOriginState(previous, origin, next) {
+  const otherOrigins = Object.fromEntries(Object.entries(previous || {}).filter(([id]) => {
+    const parsed = parseRecordId(id);
+    return parsed && parsed.origin !== origin;
+  }));
+  return { ...otherOrigins, ...next };
+}
+
+async function rememberReplaced(replaced, origin) {
   const data = await chrome.storage.local.get('replacedBackup');
-  const backup = data.replacedBackup && typeof data.replacedBackup === 'object' ? { ...data.replacedBackup } : {};
+  const backup = Object.fromEntries(Object.entries(data.replacedBackup || {}).filter(([id]) => parseRecordId(id)));
   const now = Date.now();
   replaced.forEach((item) => {
     if (typeof item.value !== 'string' || item.value.length > 4000) return;
-    backup[`${item.area}\u0000${item.key}`] = { value: item.value, at: now };
+    backup[recordId(item.area, item.key, origin)] = { value: item.value, at: now };
   });
   const newest = Object.entries(backup).sort((left, right) => (left[1].at || 0) - (right[1].at || 0)).slice(-30);
   const next = {};
@@ -219,7 +235,7 @@ async function status() {
   } catch (error) {
     bytesUsed = 0;
   }
-  const liveCount = Object.values(remote.records || {}).filter((record) => record && !record.deleted).length;
+  const liveCount = Object.entries(remote.records || {}).filter(([id, record]) => parseRecordId(id) && record && !record.deleted).length;
   return {
     installed: true,
     paused: !!localState.paused,
@@ -255,12 +271,20 @@ async function notifyTabs(message) {
   }));
 }
 
-function senderAllowed(sender) {
-  if (!sender || !sender.url) return false;
+function senderOrigin(sender) {
+  if (!sender?.tab?.url || !sender.url || sender.frameId !== 0) return null;
   try {
-    const host = new URL(sender.url).hostname;
-    return host === 'tobiasduerschmid.github.io' || host === 'localhost' || host === '127.0.0.1';
+    const tabUrl = new URL(sender.tab.url);
+    const frameUrl = new URL(sender.url);
+    const origin = tabUrl.origin;
+    if (!['https:', 'http:'].includes(tabUrl.protocol) || frameUrl.protocol !== tabUrl.protocol) return null;
+    if (!SITE_ORIGINS.includes(origin) || frameUrl.origin !== origin || sender.origin !== origin) return null;
+    return origin;
   } catch (error) {
-    return false;
+    return null;
   }
+}
+
+function isPopupSender(sender) {
+  return sender?.id === chrome.runtime.id && sender.url === chrome.runtime.getURL('popup.html');
 }

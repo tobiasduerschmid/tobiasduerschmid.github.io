@@ -604,6 +604,9 @@ info_nav_title: "Browser storage"
       does not add a cookie or <code>localStorage</code> key on this site. A saved key added later is copied automatically. A key the site stops using is listed as retired in the profile-sync catalog so the extension deletes it instead of restoring an older copy. It does not copy
       <code>sessionStorage</code>, the tutorial VM snapshot database, or the VM asset cache.
       Private browsing does not write into the synced profile copy.
+      Only this site's production HTTPS origin participates; localhost and other origins are excluded.
+      When upgrading from extension version 1.0.0, update it on every computer: the old shared
+      profile copy is discarded, and this site's existing browser data seeds a new copy.
       <p id="profile-sync-status" role="status"></p>
       <p>
         While the extension is installed and syncing, <strong>Delete everything</strong> on this page

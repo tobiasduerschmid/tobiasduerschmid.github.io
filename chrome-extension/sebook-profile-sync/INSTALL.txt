@@ -4,6 +4,9 @@ This extension copies cookies and localStorage from
 https://tobiasduerschmid.github.io into your Chrome profile. After it is
 installed, syncing is automatic.
 
+Only the production HTTPS site is supported. Localhost, 127.0.0.1, other
+ports, and other origins do not participate in profile sync.
+
 Install
 1. Unzip this archive. The folder inside is named sebook-chrome-profile-sync.
 2. Open Chrome and go to chrome://extensions
@@ -21,3 +24,11 @@ tutorial files stay in the browser where they were saved. In-browser Linux
 machine snapshots are not copied.
 
 Private browsing does not write into the synced profile copy.
+
+Upgrading from 1.0.0
+Update the extension on every computer before using profile sync again.
+Version 1.0.1 discards the old shared profile copy because it cannot tell
+which site supplied those values. Data already saved in each site's
+browser storage stays there; the production site's data seeds the new
+origin-specific profile copy on its next visit. Older extension versions
+cannot read or rewrite the new format, so update all installed copies.

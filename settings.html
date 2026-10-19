@@ -612,6 +612,9 @@ info_nav_title: "My Settings"
               This site does not receive it. Very large tutorial files may stay
               in the browser where they were saved, because Chrome profile sync
               holds about 100 kilobytes.
+              Sync is limited to this site's production HTTPS origin and excludes localhost.
+              When upgrading from extension version 1.0.0, update every installed copy;
+              the old shared profile data is replaced using this site's existing browser data.
             </p>
             <p class="setting-description">
               <a href="{{ '/se-gym/#chrome-profile-sync' | relative_url }}">Download the extension from SE Gym</a>.
