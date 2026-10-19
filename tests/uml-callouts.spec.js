@@ -175,6 +175,33 @@ for (const file of chapterFiles) {
   });
 }
 
+test('a pointer goes around a relationship name that sits on its shortest path', async ({ page }) => {
+  await setup(page);
+  await page.evaluate(() => {
+    const source = `layout horizontal
+layout landscape
+class Student { - name: String }
+class Course { - title: String }
+Student "*" -- "1..*" Course : enrolled in`;
+    const container = document.getElementById('diagram');
+    window.UMLClassDiagram.render(container, source);
+    const svg = container.querySelector('svg');
+    const label = [...svg.querySelectorAll('text')].find(text => text.textContent.trim() === 'enrolled in');
+    const star = [...svg.querySelectorAll('text')].find(text => text.textContent.trim() === '*');
+    const box = star.getBBox();
+    // Sit the name between a top-side box and *, without covering the marker
+    // itself, so a short pointer through the word is the cheap-but-wrong path.
+    label.setAttribute('x', String(box.x - 20));
+    label.setAttribute('y', String(box.y - 18));
+    label.setAttribute('text-anchor', 'start');
+    label.getBoundingClientRect();
+    window.UMLCallouts.render(container, [
+      { side: 'top', target: { kind: 'text', value: '*', occurrence: 1 }, text: 'Multiplicity *: zero or more', line: 1 }
+    ]);
+  });
+  expect(await layoutProblems(page)).toEqual([]);
+});
+
 test('nearby callouts stay compact, with short wide pointers that miss labels', async ({ page }) => {
   await setup(page);
   await render(page, 'class', `layout horizontal
@@ -214,7 +241,9 @@ callout bottom of edge 1 middle : Association: links between objects`);
     const [a, tip, b] = [...tail.points];
     return Math.hypot((a.x + b.x) / 2 - tip.x, (a.y + b.y) / 2 - tip.y);
   }));
-  expect(Math.max(...association)).toBeLessThan(75);
+  // The name occupies the gap under the line, so Association goes above the
+  // headers rather than through the word. That path is one extra class tall.
+  expect(Math.max(...association)).toBeLessThan(100);
 
   await render(page, 'class', `class Order
 class LineItem
