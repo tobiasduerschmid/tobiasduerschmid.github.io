@@ -12,15 +12,16 @@
 
   function labTheme(monaco) {
     const dark = document.documentElement.classList.contains('dark-mode');
-    if (!dark) {
-      monaco.editor.defineTheme('sebook-uml-light', {
-        base: 'vs',
-        inherit: true,
-        rules: [{ token: 'type.identifier', foreground: LIGHT_TYPE_NAME }],
-        colors: {}
-      });
-    }
-    return dark ? 'vs-dark' : 'sebook-uml-light';
+    const id = dark ? 'sebook-uml-dark' : 'sebook-uml-light';
+    monaco.editor.defineTheme(id, {
+      base: dark ? 'vs-dark' : 'vs',
+      inherit: true,
+      rules: dark ? [] : [{ token: 'type.identifier', foreground: LIGHT_TYPE_NAME }],
+      // The built-in light theme fades unreferenced names to about 47% opacity.
+      // Example classes are often unreferenced, and that fade is the washed-out gray.
+      colors: { 'editorUnnecessaryCode.opacity': '#000000ff' }
+    });
+    return id;
   }
 
   function isolateTypeScriptLabs(monaco, languages) {
