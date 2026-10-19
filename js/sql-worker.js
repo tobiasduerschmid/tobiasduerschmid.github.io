@@ -31,6 +31,7 @@
 
 // sql.js — SQLite compiled to WebAssembly via Emscripten (v1.10.3)
 importScripts('/js/vendor/worker-script-integrity.js');
+importScripts('/js/sql-test-helpers.js');
 self.SEBookWorkerScriptIntegrity.importDependency('sqlJs');
 var sqlWasmBinary = self.SEBookWorkerScriptIntegrity.downloadDependency('sqlWasm');
 
@@ -116,21 +117,25 @@ function runSQL(id, sql, silent) {
 /** Evaluate a JS test assertion snippet in a sandboxed function.
  *
  * Available in test scope:
- *   db             — the live SQL.Database instance
+ *   db             — a disposable copy of the live SQL.Database instance
  *   __run_query(sql) — execute SQL, return rows as [{col: val}, ...]
  *   __exec(sql)    — execute SQL, ignore results (for setup within a test)
  *   assert(cond, msg) — throw if condition is falsy
  *   __read_file(path) — return the editor content of a file (from the in-memory file map)
+ *   __assert_result(results, expected) — compare columns, rows and optional order
+ * Each check starts from the live database; its changes are always discarded.
  */
-function runCode(id, code, silent) {
-  var AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+async function runCode(id, code, silent) {
+  const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+  let testDB;
   try {
+    testDB = new SQL_CLASS.Database(db.export());
     /* jshint evil:true */
-    var fn = new AsyncFunction('db', '__run_query', '__exec', 'assert', '__read_file', code);
-    fn(
-      db,
+    const fn = new AsyncFunction('db', '__run_query', '__exec', 'assert', '__read_file', '__assert_result', code);
+    await fn(
+      testDB,
       function __run_query(sql) {
-        var res = db.exec(sql);
+        var res = testDB.exec(sql);
         if (!res || res.length === 0) return [];
         var cols = res[0].columns;
         return res[0].values.map(function (row) {
@@ -139,22 +144,21 @@ function runCode(id, code, silent) {
           return obj;
         });
       },
-      function __exec(sql) { db.run(sql); },
+      function __exec(sql) { testDB.run(sql); },
       function assert(cond, msg) {
         if (!cond) throw new Error(msg || 'Assertion failed');
       },
       function __read_file(path) {
         return files[path] || files['/tutorial/' + path] || '';
-      }
-    ).then(function() {
-      self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
-    }).catch(function(err) {
-      if (!silent) self.postMessage({ type: 'stderr', text: err.message + '\n' });
-      self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
-    });
+      },
+      self.SEBookSqlTestHelpers.assertResult
+    );
+    self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
   } catch (err) {
     if (!silent) self.postMessage({ type: 'stderr', text: err.message + '\n' });
     self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
+  } finally {
+    if (testDB) testDB.close();
   }
 }
 

@@ -2270,6 +2270,25 @@ channel.
   Monaco default syntax languages and accessible language labels share the
   `BACKEND_EDITOR_LANGUAGES` mapping in `js/tutorial-code.js`; keep both values
   together when adding a backend so SQL and other editors announce the right language.
+  SQL `tests[].command` snippets execute in a disposable copy of the live
+  SQLite database. `db`, `__run_query(sql)` (first result as row objects), and
+  `__exec(sql)` all use that copy; changes are discarded on success or failure.
+  `__read_file(path)` reads the current editor file. Execute that source inside
+  the check: do not grade only an instructor query or require a prior Run.
+  `__assert_result(db.exec(__read_file('query.sql')), expected)` compares one
+  actual result set with `{columns: ['name'], values: [['Mango']]}`. It checks
+  column order and labels (case-insensitively), cell types, NULLs, row counts
+  and duplicate multiplicity. Row order is ignored unless `ordered: true`;
+  optional `tolerances: {avg_gpa: 0.005}` allows declared numeric rounding in
+  that column only (default tolerance is 1e-9). The comparator lives in
+  `js/sql-test-helpers.js`, loaded by `js/sql-worker.js`. It accepts equivalent
+  SQL syntax; it does not parse query text. For data changes, execute the
+  learner's script first, then inspect stored rows and constraints in the copy.
+  Author restartable practice scripts that reset only their own practice tables
+  so a mistaken live Run does not corrupt later examples. The SQL tutorial's
+  six-step query core is about 35 minutes; two data-change extensions remain in
+  the same tutorial after the core. Its versioned keys deliberately recheck
+  legacy completions while preserving drafts from the old, weaker graders.
   C++, Pyodide, SQL, Prolog, and Java worker messages are bounded RPCs: every
   callback is released by a response, timeout, termination, or `destroy()`.
   Global and per-step setup reject readiness when their command exits nonzero,

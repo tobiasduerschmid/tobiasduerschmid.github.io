@@ -51,35 +51,6 @@ async function clickRun(page) {
   await expect(runBtn).toHaveText(/^▶\s+/, { timeout: TEST_RUN_TIMEOUT });
 }
 
-/**
- * SQL backend: applySolution writes files to the worker's file map but does NOT
- * execute them.  Tests check the live DB state, so each solution file must be
- * run (executed as SQL) before the test assertions can pass.
- */
-async function passCurrentStepTestsSQL(page, timeout = TEST_RUN_TIMEOUT) {
-  await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
-    { timeout: 15_000 });
-  await page.evaluate(function () {
-    return new Promise(function (resolve) {
-      var tut = window._tutorial;
-      tut.applySolution();
-      var step = tut.steps[tut.currentStep];
-      var files = (step && step.solution && step.solution.files) ? step.solution.files : [];
-      var i = 0;
-      function runNext() {
-        if (i >= files.length) { resolve(); return; }
-        var path = '/tutorial/' + files[i].path;
-        i++;
-        tut._postWorker({ type: 'run', path: path }, runNext);
-      }
-      // Give the write messages from applySolution() time to be processed first
-      setTimeout(runNext, 1000);
-    });
-  });
-  await page.locator('.tvm-btn-test').click();
-  await expect(page.locator('.tvm-test-summary')).toContainText(/All \d+ tests passed!/, { timeout });
-}
-
 // =============================================================================
 // Block 1 – Structure, navigation, run/clear, editor
 // =============================================================================
@@ -130,8 +101,7 @@ test.describe.serial('SQL Tutorial', () => {
   });
 
   test('SQL editor announces its language to assistive technology', async () => {
-    await expect(page.locator('.tvm-tab').filter({ hasText: 'query.sql' })).toBeVisible();
-    const editor = page.locator('.tvm-editor-container .monaco-editor textarea.inputarea').first();
+    const editor = page.getByRole('textbox', { name: /\bSQL code editor\b/ });
     await expect(editor).toBeVisible();
     await expect(editor).toHaveAccessibleName(/\bSQL code editor\b/);
   });
@@ -181,14 +151,12 @@ test.describe.serial('SQL Tutorial', () => {
     expect(after).toContain('-- added comment');
   });
 
-  // --- Quiz flow (also unlocks step 2 for the navigation test) ---
+  // The opening lesson goes straight to the next exercise; checkpoints appear
+  // only after the missing-value lesson and after the final query report.
 
-  test('quiz flow: passing step 1 → next → quiz → continue advances to step 2', async () => {
+  test('passing the first exercise advances directly to the next lesson', async () => {
     await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
-    await page.locator('.tvm-btn-next').click();
-    await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
-    await answerQuizCorrectly(page);
-    await page.locator('.tvm-quiz-continue-btn').click();
+    await page.getByRole('button', { name: /^Next →$/ }).click();
     await expectActiveStep(page, 1);
     await expect(page.locator('.tvm-quiz-panel')).toBeHidden();
   });
@@ -237,24 +205,48 @@ test.describe.serial('SQL Tutorial — step-by-step', () => {
         if (!step.solution) {
           throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
         }
-        await passCurrentStepTestsSQL(page, TEST_RUN_TIMEOUT);
+        // Grading executes the edited files itself: no prior Run or sleep.
+        await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
         await expectRenderedStepTests(page, step);
         await a11yCheckpoint(page, `sql tutorial — step ${i + 1} all tests passing`, { feature: A11Y_FEATURE, darkMode: true });
       });
     }
 
-    if (step.quiz?.questions?.length > 0 && !isLast) {
-      test(`step ${i + 1} "${step.title}": quiz gate — advances to step ${i + 2}`, async () => {
-        await page.locator('.tvm-btn-next').click();
-        await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 5_000 });
-        await a11yCheckpoint(page, `sql tutorial — step ${i + 1} quiz gate (first question)`, { feature: A11Y_FEATURE, darkMode: true });
-        await answerQuizCorrectly(page);
-        await expect(page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)')).toBeVisible();
-        await expect(page.locator('.tvm-quiz-continue-btn')).toBeVisible();
-        await a11yCheckpoint(page, `sql tutorial — step ${i + 1} quiz results`, { feature: A11Y_FEATURE, darkMode: true });
-        await page.locator('.tvm-quiz-continue-btn').click();
-        await expect(page.locator('.tvm-quiz-panel')).toBeHidden({ timeout: 5_000 });
+    if (!isLast) {
+      test(`step ${i + 1} "${step.title}": advance to step ${i + 2}`, async () => {
+        await page.getByRole('button', { name: /^Next →$/ }).click();
+        if (step.quiz?.questions?.length) {
+          await expect(page.locator('.tvm-quiz-panel')).toBeVisible();
+          await a11yCheckpoint(page, `sql tutorial — step ${i + 1} quiz gate (first question)`, { feature: A11Y_FEATURE, darkMode: true });
+          await answerQuizCorrectly(page);
+          await expect(page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)')).toBeVisible();
+          await a11yCheckpoint(page, `sql tutorial — step ${i + 1} quiz results`, { feature: A11Y_FEATURE, darkMode: true });
+          await page.getByRole('button', { name: /Continue to Step/ }).click();
+        }
+        await expectActiveStep(page, i + 1);
       });
     }
   }
+});
+
+test('legacy SQL drafts survive while the revised exercises require fresh checks', async ({ page }) => {
+  const legacyDraft = { content: 'SELECT name FROM students; -- my saved query', language: 'sql' };
+  await page.addInitScript(({ draft }) => {
+    localStorage.setItem('tutorial-progress-sql', JSON.stringify({
+      step: 6, activeFile: 'final.sql', files: { 'final.sql': draft },
+      stepsPassed: [0, 1, 2, 3, 4, 5, 6], quizPassed: [0, 1, 2, 3, 4, 5, 6],
+      stepsVisited: [0, 1, 2, 3, 4, 5, 6], stepsUnlocked: [0, 1, 2, 3, 4, 5, 6, 7],
+    }));
+  }, { draft: legacyDraft });
+  await page.goto(TUTORIAL_URL + '?autosave=true');
+  await waitForTutorialReady(page);
+  await expectActiveStep(page, 0);
+  await expect(page.getByRole('status', { name: 'Saved progress update' })).toContainText('recheck');
+  await expect(page.getByRole('button', { name: /^Next →/ })).toBeDisabled();
+  await expect.poll(async () => page.evaluate(() =>
+    JSON.parse(localStorage.getItem('tutorial-progress-sql')).progressVersion)).toBe(config.progress_version);
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('tutorial-progress-sql')));
+  expect(saved.files['final.sql']).toEqual(legacyDraft);
+  expect(saved.stepsPassed).toEqual([]);
+  expect(saved.quizPassed).toEqual([]);
 });
