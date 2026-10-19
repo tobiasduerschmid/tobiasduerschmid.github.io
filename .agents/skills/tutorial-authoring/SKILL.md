@@ -2120,7 +2120,24 @@ channel.
   `js/vendor/typescript/5.9.3/`; imports never fetch files and code never executes.
   Syntax diagnostics include file/line/column and clear on a corrected edit.
   Both hosts use the same
-  `uml-worker.js` and analyzers. See `docs/uml-code-labs.md` for the contract.
+  `uml-worker.js` and analyzers. The worker and fallback load
+  `uml-sequence-diagnostics.js` before analyzers. Analysis returns
+  `sequenceWarnings: [{code, message}]` separately from blocking `errors`.
+  Known approximations (recursion/depth truncation, unresolved calls, deferred
+  execution, unsupported syntax, ambiguous dispatch, and control-flow gaps)
+  include a warning note in sequence syntax, so tutorials, popouts, and exports
+  retain it. Chapter labs also announce warnings in their status region.
+  Warnings also remain in the brief and verbose accessible descriptions. A work
+  limit returns a blocking sequence error with no partial sequence; expression
+  traversal and calls count toward the budget as well as statements. Distinct
+  allocations in repeated Java/TypeScript invocations get distinct lifelines.
+  Java binds actual object arguments; Java/TypeScript/C++ joins retain a definite
+  receiver only when the considered paths agree, otherwise warning with `identity`.
+  C++ branch snapshots include object-field bindings. Java/TypeScript/C++ loop
+  headers preserve initialization, check, body, increment, and recheck order.
+  TypeScript logical operands and ternaries use conditional fragments. Java
+  finally follows try/catch; Java/TypeScript switch selectors are evaluated first.
+  Recursion warnings do not claim that termination has been proved impossible. See `docs/uml-code-labs.md` for the contract.
   Worker operations have a ten-second deadline. A timeout terminates the
   worker and runs the newest queued edits in a replacement; timed-out work
   never retries on the main thread. Java parameter, enum, and statement

@@ -35,6 +35,45 @@ Keep the counterexample and expected result in the collapsed explanation.
 The source analyzer shows possible paths, not evaluated branch outcomes or
 unrolled loop counts; those predictions require reasoning about the code.
 
+Sequence results include `sequenceWarnings: [{code, message}]` for known
+approximations, separately from blocking `errors`. Recursion detection does not
+prove nontermination: recursive expansion and the depth limit both stop safely,
+with distinct warnings. Unknown calls, deferred execution, unsupported syntax,
+ambiguous dispatch, C++ argument order, and approximated control flow report why the sequence may
+be incomplete. Warnings are deduplicated by category for each analysis.
+`js/uml-sequence-diagnostics.js` owns this contract and embeds a warning note in
+the generated sequence so it remains visible in tutorials, popouts, and exports.
+Chapter labs also announce it in their existing status region. Valid class
+diagrams remain usable; a subsequent clean edit removes the warning.
+
+The brief and detailed diagram text alternatives retain inference warnings too.
+An exhausted work budget is a blocking sequence error: no partial or warning-only
+sequence is published, while the independently inferred class diagram survives.
+Budgets cover expressions and calls as well as statements; a large single
+expression must not bypass them.
+
+Java and TypeScript assign fresh lifelines to separate allocations, including
+repeated method invocations, and preserve existing aliases when a variable is
+reassigned. Java binds supplied object arguments to method parameters. Java,
+TypeScript, and C++ isolate alternative reference states and keep a definite
+identity at a join only when the considered paths agree. C++ also isolates
+per-object field writes. Otherwise an `identity` warning accompanies a symbolic
+receiver. This is a bounded abstraction, not whole-program points-to analysis.
+
+Java, TypeScript, and C++ include loop initialization, condition calls, increments,
+and rechecks in evaluation order. The initial `while`/`for` check precedes the
+loop; the repeated check follows the body and increment. A `do` check follows
+the first body. TypeScript logical operands (`&&`, `||`, `??`) use `opt` and
+ternary alternatives use `alt`; each branch starts from the same incoming state.
+Java cleanup follows the try/catch alternatives, and Java/TypeScript switch
+selector calls precede their cases. Early exits, exceptions, optional calls,
+unresolved dispatch, and deferred execution retain specific warnings wherever
+their full semantics are not modeled. The diagrams do not decide whether
+conditions are true or prove that a loop or recursive call terminates.
+
+The research rationale, screened sources, and remaining architectural choices
+are recorded in [the sequence inference evidence review](uml-sequence-research-evidence.md).
+
 ## Ownership
 
 - `js/sebook-code-preferences.js` owns the shared language preference. Every

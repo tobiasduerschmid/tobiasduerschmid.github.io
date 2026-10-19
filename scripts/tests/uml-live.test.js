@@ -24,6 +24,7 @@ function loadClient() {
     document: { currentScript: { src: 'https://example.test/js/uml-live.js' } },
     Worker: ControlledWorker, URL, setTimeout, clearTimeout, window: {}
   });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../js/uml-sequence-diagnostics.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../../js/uml-analyzer-python.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../../js/uml-live.js'), 'utf8'), context);
   return { api: context.window.UMLLive, workers };

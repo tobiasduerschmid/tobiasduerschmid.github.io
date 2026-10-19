@@ -16,6 +16,8 @@
  */
 (function (global) {
   'use strict';
+  const SequenceDiagnostics = typeof module !== 'undefined' && module.exports
+    ? require('./uml-sequence-diagnostics.js') : global.UMLSequenceDiagnostics;
 
   /* ===================================================================
    * Main entry point
@@ -55,17 +57,19 @@
     // Extract sequence diagram
     var seqGen = new JavaSequenceDiagramGenerator(parsedFiles, extractor, allTypeNames, errors);
     var sequenceDiagram = '';
+    let sequenceFailed = false;
     try {
       seqGen.generate();
       sequenceDiagram = seqGen.generatePlantUML();
     } catch (error) {
       if (!(error instanceof SequenceLimitError)) throw error;
+      sequenceFailed = true;
       errors.push(error.message);
     }
 
     return {
       classDiagram: classDiagram,
-      sequenceDiagram: sequenceDiagram,
+      ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }),
       errors: errors
     };
   }
@@ -1372,6 +1376,8 @@
   }
 
   function JavaSequenceDiagramGenerator(parsedFiles, extractor, allTypeNames, errors) {
+    this.diagnostics = new SequenceDiagnostics();
+    this._constructedObjects = new WeakMap();
     this.parsedFiles  = parsedFiles;
     this.classMethods = extractor.classMethods;
     this.attrTypes    = extractor.attrTypes;
@@ -1407,7 +1413,7 @@
 
   JavaSequenceDiagramGenerator.prototype._identifyDataClasses = function () {
     var data = new Set();
-    this.classMap.forEach(function (info, name) {
+    this.classMap.forEach((info, name) => {
       if (info.isEnum) { data.add(name); return; }
       if (info.isInterface) return;
       var hasBehavioral = info.methods.some(function (m) {
@@ -1415,7 +1421,8 @@
                m.name.indexOf('set') !== 0 && m.name !== 'toString' &&
                m.name !== 'hashCode' && m.name !== 'equals';
       });
-      if (!hasBehavioral) data.add(name);
+      const hasCalls = Object.values(this.classMethods[name] || {}).some(body => hasCallTokens(body));
+      if (!hasBehavioral && !hasCalls) data.add(name);
     });
     return data;
   };
@@ -1463,12 +1470,20 @@
     return null;
   };
 
+  function hasCallTokens(tokens) {
+    return tokens.some((token, index) => token.type === 'ident' && tokens[index + 1]?.value === '(');
+  }
+
   /* ── Token-based statement processing ──────────────────────── */
 
   JavaSequenceDiagramGenerator.prototype._processTokenBlock = function (tokens, caller, depth) {
     var i = 0;
     while (i < tokens.length) {
       var result = this._processTokenStmt(tokens, i, caller, depth);
+      if (['return', 'throw', 'break', 'continue'].includes(tokens[i].value)) {
+        if (this._fragmentDepth || tokens[i].value === 'throw') this.diagnostics.add('control');
+        break;
+      }
       // A standalone brace or partial statement can end at this very token.
       // Consume it rather than retrying the same statement indefinitely.
       i = Math.max(i + 1, result);
@@ -1602,16 +1617,6 @@
           if (isArrayAllocation) delete this.varTypes[varName];
           if (this.allTypeNames.has(clsName) && !isArrayAllocation) {
             this.varTypes[varName] = clsName;
-            this._callerClass[varName] = clsName;
-            if (!this._dataClasses.has(clsName)) {
-              this._ensureParticipant(varName, clsName);
-              this._receiverIds[varName] = varName;
-              this.lines.push('create ' + varName);
-              this.lines.push(caller + ' --> ' + varName + ': <<create>>');
-              this.lines.push('activate ' + varName);
-              this._maybeFollow(clsName, 'constructor', varName, depth);
-              this.lines.push('deactivate ' + varName);
-            }
             i++;
             // Skip generic args
             if (i < tokens.length && tokens[i].value === '<') {
@@ -1627,6 +1632,17 @@
               var argTokens = this._extractParenContents(tokens, i);
               i = argTokens.endIdx;
               this._scanTokensForCalls(argTokens.tokens, caller, depth);
+            }
+            if (!this._dataClasses.has(clsName)) {
+              const instance = this._allocationId(varName);
+              this._ensureParticipant(instance, clsName);
+              this._callerClass[instance] = clsName;
+              this._receiverIds[varName] = instance;
+              this.lines.push('create ' + instance);
+              this.lines.push(caller + ' --> ' + instance + ': <<create>>');
+              this.lines.push('activate ' + instance);
+              this._maybeFollow(clsName, 'constructor', instance, depth, this._argumentBindings(argTokens?.tokens || []));
+              this.lines.push('deactivate ' + instance);
             }
             return this._skipToSemicolon(tokens, i);
           }
@@ -1651,6 +1667,12 @@
       ? this._receiverIds[expression[0].value] : null;
     if (receiver) this._receiverIds[name] = receiver;
     else delete this._receiverIds[name];
+    if (expression.length === 1 && this.varTypes[expression[0].value]) this.varTypes[name] = this.varTypes[expression[0].value];
+    const constructed = expression[0]?.value === 'new' && this._constructedObjects.get(expression[0]);
+    if (constructed) {
+      this.varTypes[name] = constructed.type;
+      this._receiverIds[name] = constructed.id;
+    }
   };
 
   JavaSequenceDiagramGenerator.prototype._processExprStmt = function (tokens, i, caller, depth) {
@@ -1679,21 +1701,26 @@
     // Extract condition
     var condResult = this._extractParenContents(tokens, i);
     i = condResult.endIdx;
+    this._scanTokensForCalls(condResult.tokens, caller, depth);
     var cond = condResult.tokens.map(function (t) { return t.value; }).join(' ');
     if (cond.length > 40) cond = cond.substring(0, 37) + '...';
+
+    const baseline = this._captureBindings();
+    const states = [];
 
     // Then block
     var thenResult = this._extractBlock(tokens, i);
     i = thenResult.endIdx;
-    var thenLines = this._collectFragmentLines(thenResult.tokens, caller, depth);
+    var thenLines = this._collectFragmentLines(thenResult.tokens, caller, depth, states);
 
     // Check for else
     if (i < tokens.length && tokens[i].value === 'else') {
       i++;
       // else if
       if (i < tokens.length && tokens[i].value === 'if') {
-        var elseIfResult = this._processIfBranches(tokens, i, caller, depth);
+        var elseIfResult = this._processIfBranches(tokens, i, caller, depth, states);
         i = elseIfResult.endIdx;
+        if (!elseIfResult.exhaustive) states.push(baseline);
 
         var branches = [{ header: 'alt [' + cond + ']', lines: thenLines }];
         branches.push.apply(branches, elseIfResult.branches);
@@ -1712,7 +1739,7 @@
         // else block
         var elseResult = this._extractBlock(tokens, i);
         i = elseResult.endIdx;
-        var elseLines = this._collectFragmentLines(elseResult.tokens, caller, depth);
+        var elseLines = this._collectFragmentLines(elseResult.tokens, caller, depth, states);
 
         var branches = [
           { header: 'alt [' + cond + ']', lines: thenLines },
@@ -1730,6 +1757,7 @@
         }
       }
     } else {
+      states.push(baseline);
       // No else → opt
       if (this._anyMessages(thenLines)) {
         this.lines.push('opt [' + cond + ']');
@@ -1739,69 +1767,82 @@
         this.lines.push.apply(this.lines, thenLines);
       }
     }
+    this._mergeBindings(states, baseline);
     return i;
   };
 
-  JavaSequenceDiagramGenerator.prototype._processIfBranches = function (tokens, i, caller, depth) {
+  JavaSequenceDiagramGenerator.prototype._processIfBranches = function (tokens, i, caller, depth, states) {
     var branches = [];
+    let exhaustive = false;
     while (i < tokens.length && tokens[i].value === 'if') {
       i++; // skip 'if'
       var condResult = this._extractParenContents(tokens, i);
+      if (hasCallTokens(condResult.tokens)) this.diagnostics.add('unsupported', 'Calls in else-if conditions are omitted');
       i = condResult.endIdx;
       var cond = condResult.tokens.map(function (t) { return t.value; }).join(' ');
       if (cond.length > 40) cond = cond.substring(0, 37) + '...';
 
       var blockResult = this._extractBlock(tokens, i);
       i = blockResult.endIdx;
-      var branchLines = this._collectFragmentLines(blockResult.tokens, caller, depth);
+      var branchLines = this._collectFragmentLines(blockResult.tokens, caller, depth, states);
       branches.push({ header: 'else [' + cond + ']', lines: branchLines });
 
       if (i < tokens.length && tokens[i].value === 'else') {
         i++;
         if (i < tokens.length && tokens[i].value === 'if') continue;
+        exhaustive = true;
         // Final else
         var elseResult = this._extractBlock(tokens, i);
         i = elseResult.endIdx;
-        var elseLines = this._collectFragmentLines(elseResult.tokens, caller, depth);
+        var elseLines = this._collectFragmentLines(elseResult.tokens, caller, depth, states);
         branches.push({ header: 'else [else]', lines: elseLines });
         break;
       } else {
         break;
       }
     }
-    return { branches: branches, endIdx: i };
+    return { branches: branches, endIdx: i, exhaustive };
   };
 
   /* ── Loop → loop fragment ──────────────────────────────────── */
 
   JavaSequenceDiagramGenerator.prototype._processLoop = function (tokens, i, caller, depth) {
-    var keyword = tokens[i].value;
-    i++;
-
-    // Extract condition/header in parens
-    var condResult = this._extractParenContents(tokens, i);
-    i = condResult.endIdx;
-    var label = keyword + ' (' + condResult.tokens.map(function (t) { return t.value; }).join(' ') + ')';
-    if (label.length > 50) label = label.substring(0, 47) + '...)';
-
-    // Infer loop variable type for enhanced for
-    this._inferForEachType(condResult.tokens, caller);
-
-    var bodyResult = this._extractBlock(tokens, i);
-    i = bodyResult.endIdx;
-    var bodyLines = this._collectFragmentLines(bodyResult.tokens, caller, depth);
-
-    if (this._anyMessages(bodyLines)) {
-      this.lines.push('loop [' + label + ']');
-      this.lines.push.apply(this.lines, bodyLines);
-      this.lines.push('end');
-    } else {
-      this.lines.push.apply(this.lines, bodyLines);
+    const scope = this._captureBindings();
+    const keyword = tokens[i++].value;
+    const header = this._extractParenContents(tokens, i);
+    i = header.endIdx;
+    if (['true', ';;', ';true;'].includes(header.tokens.map(token => token.value).join(''))) this.diagnostics.add('loop');
+    let condition = header.tokens, increment = [];
+    if (keyword === 'for') {
+      const clauses = splitSequenceTokens(header.tokens, ';');
+      if (clauses.length === 3) {
+        this._processTokenBlock(clauses[0], caller, depth);
+        condition = clauses[1];
+        increment = clauses[2];
+      } else {
+        const range = splitSequenceTokens(header.tokens, ':');
+        if (range.length === 2) this._scanTokensForCalls(range[1], caller, depth);
+        else this.diagnostics.add('unsupported', 'Unrecognized for-loop header');
+        this._inferForEachType(header.tokens, caller);
+        condition = [];
+      }
     }
-    return i;
+    this._scanTokensForCalls(condition, caller, depth);
+    const states = [this._captureBindings()];
+    const body = this._extractBlock(tokens, i);
+    const separator = { type: 'punct', value: ';' };
+    const iteration = body.tokens.concat(separator, increment, separator, condition);
+    const bodyLines = this._collectFragmentLines(iteration, caller, depth, states);
+    const label = keyword + ' (' + header.tokens.map(token => token.value).join(' ') + ')';
+    if (this._anyMessages(bodyLines)) this.lines.push('loop [' + label + ']', ...bodyLines, 'end');
+    else this.lines.push(...bodyLines);
+    this._mergeBindings(states, scope);
+    return body.endIdx;
   };
 
   JavaSequenceDiagramGenerator.prototype._processDoWhile = function (tokens, i, caller, depth) {
+    const baseline = this._captureBindings();
+    const states = [];
     i++; // skip 'do'
     var bodyResult = this._extractBlock(tokens, i);
     i = bodyResult.endIdx;
@@ -1810,12 +1851,13 @@
     if (i < tokens.length && tokens[i].value === 'while') {
       i++;
       var condResult = this._extractParenContents(tokens, i);
+      if (['true', ';;', ';true;'].includes(condResult.tokens.map(token => token.value).join(''))) this.diagnostics.add('loop');
       i = condResult.endIdx;
       label = 'do-while (' + condResult.tokens.map(function (t) { return t.value; }).join(' ') + ')';
     }
     if (i < tokens.length && tokens[i].value === ';') i++;
 
-    var bodyLines = this._collectFragmentLines(bodyResult.tokens, caller, depth);
+    var bodyLines = this._collectFragmentLines(bodyResult.tokens.concat({ type: 'punct', value: ';' }, condResult?.tokens || []), caller, depth, states);
     if (this._anyMessages(bodyLines)) {
       this.lines.push('loop [' + label + ']');
       this.lines.push.apply(this.lines, bodyLines);
@@ -1823,12 +1865,14 @@
     } else {
       this.lines.push.apply(this.lines, bodyLines);
     }
+    this._mergeBindings(states, baseline);
     return i;
   };
 
   /* ── Try/catch → combined fragment ─────────────────────────── */
 
   JavaSequenceDiagramGenerator.prototype._processTry = function (tokens, i, caller, depth) {
+    this.diagnostics.add('control', 'Exception paths');
     i++; // skip 'try'
     // Skip try-with-resources parens
     if (i < tokens.length && tokens[i].value === '(') {
@@ -1858,11 +1902,12 @@
       catchBranches.push({ excType: excType, lines: catchLines });
     }
 
+    let finallyTokens = null;
     if (i < tokens.length && tokens[i].value === 'finally') {
       i++;
       var finallyResult = this._extractBlock(tokens, i);
       i = finallyResult.endIdx;
-      this._processTokenBlock(finallyResult.tokens, caller, depth);
+      finallyTokens = finallyResult.tokens;
     }
 
     // Emit as alt/else combined fragment (same pattern as Python try/except)
@@ -1886,15 +1931,18 @@
       }
     }
 
+    if (finallyTokens) this._processTokenBlock(finallyTokens, caller, depth);
     return i;
   };
 
   /* ── Switch → alt fragment ─────────────────────────────────── */
 
   JavaSequenceDiagramGenerator.prototype._processSwitch = function (tokens, i, caller, depth) {
+    this.diagnostics.add('control', 'Switch fall-through');
     i++; // skip 'switch'
     var condResult = this._extractParenContents(tokens, i);
     i = condResult.endIdx;
+    this._scanTokensForCalls(condResult.tokens, caller, depth);
 
     if (i >= tokens.length || tokens[i].value !== '{') return i;
     i++; // skip '{'
@@ -1954,6 +2002,9 @@
   /* ── Call scanning and resolution ──────────────────────────── */
 
   JavaSequenceDiagramGenerator.prototype._scanTokensForCalls = function (tokens, caller, depth) {
+    if (++this._statementVisits > 2000) throw new SequenceLimitError();
+    if (tokens.some(token => ['&&', '||', '?'].includes(token.value))) this.diagnostics.add('conditional');
+    if (tokens.some(token => ['->', '::'].includes(token.value))) this.diagnostics.add('deferred', 'Lambda or method reference');
     for (var i = 0; i < tokens.length; i++) {
       // Pattern: ClassName.staticMethod(
       if (i + 2 < tokens.length &&
@@ -1962,12 +2013,13 @@
           tokens[i + 1].value === '.' &&
           tokens[i + 2].type === 'ident' &&
           i + 3 < tokens.length && tokens[i + 3].value === '(') {
+        var callEnd = this._scanCallArguments(tokens, i + 3, caller, depth);
         var staticClsName = tokens[i].value;
         var staticMethod  = tokens[i + 2].value;
         if (!this._dataClasses.has(staticClsName)) {
           this._emitCall(caller, staticClsName, staticMethod, tokens, i + 3, depth);
         }
-        i += 3;
+        i = callEnd - 1;
         continue;
       }
 
@@ -1977,10 +2029,11 @@
           tokens[i + 1].value === '.' &&
           tokens[i + 2].type === 'ident' &&
           i + 3 < tokens.length && tokens[i + 3].value === '(') {
+        var callEnd = this._scanCallArguments(tokens, i + 3, caller, depth);
         var receiver = tokens[i].value;
         var method   = tokens[i + 2].value;
         this._handleCall(receiver, method, tokens, i + 3, caller, depth);
-        i += 3;
+        i = callEnd - 1;
         continue;
       }
 
@@ -1990,12 +2043,13 @@
           tokens[i + 1].value === '.' &&
           tokens[i + 2].type === 'ident' &&
           i + 3 < tokens.length && tokens[i + 3].value === '(') {
+        var callEnd = this._scanCallArguments(tokens, i + 3, caller, depth);
         var method = tokens[i + 2].value;
         var cc = this._classOf(caller);
         if (cc) {
           this._emitCall(caller, cc, method, tokens, i + 3, depth, caller);
         }
-        i += 3;
+        i = callEnd - 1;
         continue;
       }
 
@@ -2005,6 +2059,7 @@
           tokens[i + 1].value === '.' &&
           tokens[i + 2].type === 'ident' &&
           i + 3 < tokens.length && tokens[i + 3].value === '(') {
+        var callEnd = this._scanCallArguments(tokens, i + 3, caller, depth);
         var method = tokens[i + 2].value;
         var cc = this._classOf(caller);
         if (cc) {
@@ -2013,7 +2068,7 @@
             this._emitCall(caller, parent, method, tokens, i + 3, depth);
           }
         }
-        i += 3;
+        i = callEnd - 1;
         continue;
       }
 
@@ -2021,13 +2076,14 @@
       if (i + 1 < tokens.length &&
           tokens[i].type === 'ident' &&
           tokens[i + 1].value === '(') {
+        var callEnd = this._scanCallArguments(tokens, i + 1, caller, depth);
         var bareMethod = tokens[i].value;
         var callerClass = this._classOf(caller);
         var methodClass = callerClass ? this._findMethodInHierarchy(callerClass, bareMethod) : null;
         if (methodClass && !this._dataClasses.has(methodClass)) {
           this._emitCall(caller, methodClass, bareMethod, tokens, i + 1, depth, caller);
-        }
-        i += 1;
+        } else { this.diagnostics.add('unresolved', bareMethod); }
+        i = callEnd - 1;
         continue;
       }
 
@@ -2048,20 +2104,51 @@
         }
         if (this.allTypeNames.has(clsName) && !this._dataClasses.has(clsName) &&
             j < tokens.length && tokens[j].value === '(') {
-          var calleeId = this._calleeIdFor(clsName, caller, null);
+          var callEnd = this._scanCallArguments(tokens, j, caller, depth);
+          var calleeId = this._allocationId(clsName);
           this._ensureParticipant(calleeId, clsName);
           this._callerClass[calleeId] = clsName;
+          this._constructedObjects.set(tokens[i], { type: clsName, id: calleeId });
           this.lines.push('create ' + calleeId);
           this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
           this.lines.push('activate ' + calleeId);
-          this._maybeFollow(clsName, 'constructor', calleeId, depth);
+          this._maybeFollow(clsName, 'constructor', calleeId, depth,
+            this._argumentBindings(this._extractParenContents(tokens, j).tokens));
           this.lines.push('deactivate ' + calleeId);
-          i = j;
+          i = callEnd - 1;
         }
         continue;
       }
 
     }
+  };
+
+  JavaSequenceDiagramGenerator.prototype._scanCallArguments = function (tokens, open, caller, depth) {
+    const args = this._extractParenContents(tokens, open);
+    this._scanTokensForCalls(args.tokens, caller, depth);
+    return args.endIdx;
+  };
+
+  function splitSequenceTokens(tokens, delimiter) {
+    const parts = [[]];
+    let nesting = 0;
+    for (const token of tokens) {
+      if (['(', '[', '{'].includes(token.value)) nesting++;
+      if ([')', ']', '}'].includes(token.value)) nesting--;
+      if (token.value === delimiter && nesting === 0) parts.push([]);
+      else parts.at(-1).push(token);
+    }
+    return parts;
+  }
+
+  JavaSequenceDiagramGenerator.prototype._argumentBindings = function (tokens) {
+    const argumentsList = splitSequenceTokens(tokens, ',');
+    return argumentsList.map(argument => {
+      if (argument[0]?.value === 'new') return this._constructedObjects.get(argument[0]) || null;
+      if (argument.length !== 1) return null;
+      const name = argument[0].value;
+      return this.varTypes[name] ? { type: this.varTypes[name], id: this._receiverIds[name] } : null;
+    });
   };
 
   JavaSequenceDiagramGenerator.prototype._handleCall = function (receiver, method, tokens, parenIdx, caller, depth) {
@@ -2074,13 +2161,17 @@
         clsName = this.attrTypes[cc][receiver];
       }
     }
-    if (!clsName || this._dataClasses.has(clsName)) return;
+    if (!clsName) {
+      if (!['print', 'println', 'printf'].includes(method)) this.diagnostics.add('unresolved', receiver + '.' + method);
+      return;
+    }
+    if (this._dataClasses.has(clsName)) return;
 
     // Verify the method exists on the class
     if (!this.classMethods[clsName] || !this.classMethods[clsName][method]) {
       // Check parent classes
       var parentCls = this._findMethodInHierarchy(clsName, method);
-      if (!parentCls) return;
+      if (!parentCls) { this.diagnostics.add('unresolved', clsName + '.' + method); return; }
       clsName = parentCls;
     }
 
@@ -2099,12 +2190,13 @@
       label += argStr;
     }
     label += ')';
+    const bindings = this._argumentBindings(argResult?.tokens || []);
 
     if (calleeId === caller) {
       // Self-call — nested activation on same lifeline (UML spec: stacked rectangles)
       this.lines.push(caller + ' -> ' + caller + ': ' + label);
       this.lines.push('activate ' + caller);
-      this._maybeFollow(clsName, method, calleeId, depth);
+      this._maybeFollow(clsName, method, calleeId, depth, bindings);
       this.lines.push('deactivate ' + caller);
     } else {
       this._ensureParticipant(calleeId, clsName);
@@ -2112,7 +2204,7 @@
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
       // Activation bar (JIVE: Jayaraman et al. 2016, CPP2XMI: Korshunova et al. 2006)
       this.lines.push('activate ' + calleeId);
-      this._maybeFollow(clsName, method, calleeId, depth);
+      this._maybeFollow(clsName, method, calleeId, depth, bindings);
       var retType = this._getReturnType(clsName, method);
       if (retType) this.lines.push(calleeId + ' --> ' + caller + ': ' + retType);
       this.lines.push('deactivate ' + calleeId);
@@ -2121,26 +2213,29 @@
 
   /* ── Method following ──────────────────────────────────────── */
 
-  JavaSequenceDiagramGenerator.prototype._maybeFollow = function (clsName, methodName, calleeId, depth) {
-    if (depth >= SEQ_MAX_DEPTH) return;
+  JavaSequenceDiagramGenerator.prototype._maybeFollow = function (clsName, methodName, calleeId, depth, bindings = []) {
 
     var key = clsName + '::' + methodName;
-    if (this._callStack.has(key)) return;
+
+    const overloads = (this.classMap.get(clsName)?.methods || []).filter(method =>
+      methodName === 'constructor' ? method.isConstructor : method.name === methodName);
+    if (overloads.length > 1) this.diagnostics.add('dispatch', clsName + '.' + methodName);
 
     var bodyTokens = this._findMethodBody(clsName, methodName);
     if (!bodyTokens || bodyTokens.length === 0) {
       // Try concrete override
       var concrete = this._findConcreteOverride(clsName, methodName);
       if (concrete) {
+        this.diagnostics.add('dispatch', clsName + '.' + methodName);
         clsName = concrete.className;
         bodyTokens = concrete.body;
         key = clsName + '::' + methodName;
-        if (this._callStack.has(key)) return;
       } else {
         return;
       }
     }
 
+    if (!this.diagnostics.canExpand(clsName + '.' + methodName, this._callStack.has(key), depth, SEQ_MAX_DEPTH)) return;
     this._callStack.add(key);
     var savedVarTypes = {};
     for (var v in this.varTypes) savedVarTypes[v] = this.varTypes[v];
@@ -2151,12 +2246,20 @@
     this._receiverIds = {};
     var pt = (this.paramTypes[clsName] || {})[methodName];
     if (pt) { for (var p in pt) this.varTypes[p] = pt[p]; }
+    const parameters = (this.methodParams[clsName] || {})[methodName] || [];
+    for (let index = 0; index < parameters.length; index++) {
+      if (!bindings[index]) continue;
+      const name = parameters[index].name;
+      this.varTypes[name] = bindings[index].type;
+      if (bindings[index].id) this._receiverIds[name] = bindings[index].id;
+    }
 
-    this._processTokenBlock(bodyTokens, calleeId, depth + 1);
-
-    this.varTypes = savedVarTypes;
-    this._receiverIds = savedReceiverIds;
-    this._callStack.delete(key);
+    try { this._processTokenBlock(bodyTokens, calleeId, depth + 1); }
+    finally {
+      this.varTypes = savedVarTypes;
+      this._receiverIds = savedReceiverIds;
+      this._callStack.delete(key);
+    }
   };
 
   JavaSequenceDiagramGenerator.prototype._findMethodBody = function (clsName, methodName) {
@@ -2169,7 +2272,10 @@
         if (!this._isStubBody(meths[methodName])) return meths[methodName];
         // Stub body — try concrete override before falling through
         var concrete = this._findConcreteOverride(current, methodName);
-        if (concrete) return concrete.body;
+        if (concrete) {
+          this.diagnostics.add('dispatch', current + '.' + methodName);
+          return concrete.body;
+        }
         return meths[methodName]; // return stub as fallback
       }
       current = this._findParent(current);
@@ -2264,9 +2370,37 @@
 
   /* ── Fragment helpers ──────────────────────────────────────── */
 
-  JavaSequenceDiagramGenerator.prototype._collectFragmentLines = function (tokens, caller, depth) {
+  JavaSequenceDiagramGenerator.prototype._captureBindings = function () {
+    return { types: { ...this.varTypes }, ids: { ...this._receiverIds } };
+  };
+
+  JavaSequenceDiagramGenerator.prototype._restoreBindings = function (state) {
+    this.varTypes = { ...state.types };
+    this._receiverIds = { ...state.ids };
+  };
+
+  JavaSequenceDiagramGenerator.prototype._mergeBindings = function (states, baseline) {
+    this.varTypes = {};
+    this._receiverIds = {};
+    for (const name of Object.keys(baseline.types)) {
+      const type = states[0].types[name], id = states[0].ids[name];
+      if (states.every(state => state.types[name] === type)) this.varTypes[name] = type;
+      if (id && states.every(state => state.ids[name] === id)) this._receiverIds[name] = id;
+      else if (states.some(state => state.ids[name])) this.diagnostics.add('identity', name);
+    }
+  };
+
+  JavaSequenceDiagramGenerator.prototype._collectFragmentLines = function (tokens, caller, depth, states) {
+    const baseline = this._captureBindings();
     var snapshot = this.lines.length;
-    this._processTokenBlock(tokens, caller, depth);
+    this._fragmentDepth = (this._fragmentDepth || 0) + 1;
+    try {
+      this._processTokenBlock(tokens, caller, depth);
+      if (states) states.push(this._captureBindings());
+    } finally {
+      this._fragmentDepth--;
+      this._restoreBindings(baseline);
+    }
     var newLines = this.lines.slice(snapshot);
     this.lines.length = snapshot;
     return newLines;
@@ -2401,6 +2535,14 @@
       this._participantSet.add(id);
       this.participants.push({ id: id, label: label });
     }
+  };
+
+  JavaSequenceDiagramGenerator.prototype._allocationId = function (name) {
+    if (!this._participantSet.has(name)) return name;
+    let id, suffix = 2;
+    do { id = name + '_' + suffix++; } while (this._reservedParticipantIds.has(id));
+    this._reservedParticipantIds.add(id);
+    return id;
   };
 
   // A type-only reference has its own symbolic identity. Reserve source names

@@ -21,6 +21,8 @@
  */
 (function (global) {
   'use strict';
+  const SequenceDiagnostics = typeof module !== 'undefined' && module.exports
+    ? require('./uml-sequence-diagnostics.js') : global.UMLSequenceDiagnostics;
 
   /* ===================================================================
    * Main entry point
@@ -29,7 +31,7 @@
   function analyzeJSSources(sources, tsCompiler) {
     var ts = tsCompiler || (typeof window !== 'undefined' && window.ts);
     if (!ts) {
-      return { classDiagram: '', sequenceDiagram: '', errors: ['TypeScript compiler not available'] };
+      return { classDiagram: '', sequenceDiagram: '', sequenceWarnings: [], errors: ['TypeScript compiler not available'] };
     }
 
     var errors = [];
@@ -69,17 +71,19 @@
     // Extract sequence diagram
     var seqGen = new SequenceDiagramGenerator(ts, parsedFiles, extractor, allTypeNames, errors);
     var sequenceDiagram = '';
+    let sequenceFailed = false;
     try {
       seqGen.generate();
       sequenceDiagram = seqGen.generatePlantUML();
     } catch (error) {
       if (!(error instanceof SequenceLimitError)) throw error;
+      sequenceFailed = true;
       errors.push(error.message);
     }
 
     return {
       classDiagram: classDiagram,
-      sequenceDiagram: sequenceDiagram,
+      ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }),
       errors: errors
     };
   }
@@ -833,6 +837,8 @@
   }
 
   function SequenceDiagramGenerator(ts, parsedFiles, extractor, allTypeNames, errors) {
+    this.diagnostics = new SequenceDiagnostics();
+    this._constructedObjects = new WeakMap();
     this.ts           = ts;
     this.parsedFiles  = parsedFiles;
     this.classMethods = extractor.classMethods;
@@ -874,14 +880,15 @@
   /** Data/value classes: enums, or classes with no behavioral methods. */
   SequenceDiagramGenerator.prototype._identifyDataClasses = function () {
     var data = new Set();
-    this.classMap.forEach(function (info, name) {
+    this.classMap.forEach((info, name) => {
       if (info.isEnum) { data.add(name); return; }
       if (info.isInterface) return;
       var hasBehavioral = info.methods.some(function (m) {
         return m.name !== 'constructor' &&
                !m.name.startsWith('get ') && !m.name.startsWith('set ');
       });
-      if (!hasBehavioral) data.add(name);
+      const hasCalls = Object.values(this.classMethods[name] || {}).some(node => this._containsCall(node.body));
+      if (!hasBehavioral && !hasCalls) data.add(name);
     });
     return data;
   };
@@ -970,6 +977,11 @@
   SequenceDiagramGenerator.prototype._processStmt = function (stmt, sf, caller, depth) {
     if (++this._statementVisits > 2000) throw new SequenceLimitError();
     var ts = this.ts;
+    if (ts.isThrowStatement(stmt)) {
+      this.diagnostics.add('control', 'Exception propagation');
+      return this._scanExprForCalls(stmt.expression, sf, caller, depth);
+    }
+    if (this._fragmentDepth && (ts.isReturnStatement(stmt) || ts.isThrowStatement(stmt) || ts.isBreakStatement(stmt) || ts.isContinueStatement(stmt))) this.diagnostics.add('control');
     if (ts.isVariableStatement(stmt))     return this._processVarStmt(stmt, sf, caller, depth);
     if (ts.isExpressionStatement(stmt))   return this._processExprStmt(stmt, sf, caller, depth);
     if (ts.isIfStatement(stmt))           return this._processIf(stmt, sf, caller, depth);
@@ -1029,17 +1041,18 @@
           for (const argument of decl.initializer.arguments || []) {
             this._scanExprForCalls(argument, sf, caller, depth);
           }
+          const instance = this._allocationId(varName);
           this.varTypes[varName]    = clsName;
-          this.varParticipants[varName] = varName;
-          this._callerClass[varName] = clsName;
+          this.varParticipants[varName] = instance;
+          this._callerClass[instance] = clsName;
           if (this._dataClasses.has(clsName)) continue;
-          this._ensureParticipant(varName, clsName);
-          this.lines.push('create ' + varName);
-          this.lines.push(caller + ' --> ' + varName + ': <<create>>');
-          this.lines.push('activate ' + varName);
+          this._ensureParticipant(instance, clsName);
+          this.lines.push('create ' + instance);
+          this.lines.push(caller + ' --> ' + instance + ': <<create>>');
+          this.lines.push('activate ' + instance);
           const bindings = Array.from(decl.initializer.arguments || [], argument => this._expressionBinding(argument, caller));
-          this._maybeFollow(clsName, 'constructor', varName, depth, bindings);
-          this.lines.push('deactivate ' + varName);
+          this._maybeFollow(clsName, 'constructor', instance, depth, bindings);
+          this.lines.push('deactivate ' + instance);
           continue;
         }
       }
@@ -1066,6 +1079,7 @@
       expression = expression.expression;
     }
     if (!expression) return null;
+    if (ts.isNewExpression(expression)) return this._constructedObjects.get(expression) || null;
     if (ts.isIdentifier(expression) && this.varTypes[expression.text]) {
       return { className: this.varTypes[expression.text], participantId: this.varParticipants[expression.text] };
     }
@@ -1085,14 +1099,7 @@
   /* ── Expression statements ─────────────────────────────────── */
 
   SequenceDiagramGenerator.prototype._processExprStmt = function (stmt, sf, caller, depth) {
-    var ts = this.ts, expr = stmt.expression;
-    // Unwrap await
-    if (ts.isAwaitExpression(expr)) expr = expr.expression;
-    if (ts.isCallExpression(expr)) {
-      this._processCall(expr, sf, caller, depth);
-    } else {
-      this._scanExprForCalls(stmt.expression, sf, caller, depth);
-    }
+    this._scanExprForCalls(stmt.expression, sf, caller, depth);
   };
 
   /* ── Control flow → combined fragments ─────────────────────── */
@@ -1118,6 +1125,8 @@
         const identity = states[0].participants[name];
         if (identity && states.every(state => state.participants[name] === identity)) {
           this.varParticipants[name] = identity;
+        } else if (states.some(state => state.participants[name])) {
+          this.diagnostics.add('identity', name);
         }
       }
     }
@@ -1126,7 +1135,9 @@
   SequenceDiagramGenerator.prototype._collectFragmentLines = function (stmts, sf, caller, depth, states) {
     const bindings = this._captureBindings();
     var snapshot = this.lines.length;
-    this._processStatements(stmts, sf, caller, depth);
+    this._fragmentDepth = (this._fragmentDepth || 0) + 1;
+    try { this._processStatements(stmts, sf, caller, depth); }
+    finally { this._fragmentDepth--; }
     if (states) states.push(this._captureBindings());
     this._restoreBindings(bindings);
     var newLines = this.lines.slice(snapshot);
@@ -1146,6 +1157,7 @@
   /* if / else if / else → alt/else or opt */
   SequenceDiagramGenerator.prototype._processIf = function (stmt, sf, caller, depth) {
     var ts = this.ts;
+    this._scanExprForCalls(stmt.expression, sf, caller, depth);
     var cond = _getNodeText(stmt.expression, sf);
     if (cond.length > 40) cond = cond.substring(0, 37) + '...';
 
@@ -1185,6 +1197,7 @@
     var elseNode = stmt.elseStatement;
     while (elseNode) {
       if (ts.isIfStatement(elseNode)) {
+        if (this._containsCall(elseNode.expression)) this.diagnostics.add('conditional', 'else-if condition calls are omitted');
         var ec = _getNodeText(elseNode.expression, sf);
         if (ec.length > 40) ec = ec.substring(0, 37) + '...';
         var es = ts.isBlock(elseNode.thenStatement)
@@ -1220,9 +1233,22 @@
     }
   };
 
+  SequenceDiagramGenerator.prototype._containsCall = function (node) {
+    return Boolean(node && (this.ts.isCallExpression(node) || this.ts.isNewExpression(node) ||
+      this.ts.forEachChild(node, child => this._containsCall(child))));
+  };
+
   /* for / for-of / for-in → loop fragment */
   SequenceDiagramGenerator.prototype._processFor = function (stmt, sf, caller, depth) {
+    if (this.ts.isForStatement(stmt) && (!stmt.condition || stmt.condition.kind === this.ts.SyntaxKind.TrueKeyword)) this.diagnostics.add('loop');
     var ts = this.ts, label;
+    const scope = this._captureBindings();
+    if (ts.isForStatement(stmt)) {
+      if (stmt.initializer && ts.isVariableDeclarationList(stmt.initializer)) {
+        this._processVarStmt(ts.factory.createVariableStatement(undefined, stmt.initializer), sf, caller, depth);
+      } else this._scanExprForCalls(stmt.initializer, sf, caller, depth);
+      this._scanExprForCalls(stmt.condition, sf, caller, depth);
+    } else this._scanExprForCalls(stmt.expression, sf, caller, depth);
     const baseline = this._captureBindings();
     const states = [baseline];
 
@@ -1236,14 +1262,17 @@
               ' in ' + _getNodeText(stmt.expression, sf);
     } else {
       // C-style for
-      var condText = stmt.condition ? _getNodeText(stmt.condition, sf) : '';
-      label = condText ? 'for (' + condText + ')' : 'for loop';
+      const header = [stmt.initializer, stmt.condition, stmt.incrementor]
+        .map(node => node ? _getNodeText(node, sf) : '').join('; ');
+      label = 'for (' + header + ')';
     }
 
     var bodyStmts = ts.isBlock(stmt.statement)
       ? Array.from(stmt.statement.statements) : [stmt.statement];
-    var bodyLines = this._collectFragmentLines(bodyStmts, sf, caller, depth, states);
-    this._mergeBindings(states, baseline);
+    const repeated = ts.isForStatement(stmt) ? [stmt.incrementor, stmt.condition].filter(Boolean) : [];
+    const iteration = bodyStmts.concat(repeated.map(expression => ts.factory.createExpressionStatement(expression)));
+    var bodyLines = this._collectFragmentLines(iteration, sf, caller, depth, states);
+    this._mergeBindings(states, scope);
 
     if (this._hasMessages(bodyLines)) {
       this.lines.push('loop [' + label + ']');
@@ -1256,7 +1285,9 @@
 
   /* while / do-while → loop fragment */
   SequenceDiagramGenerator.prototype._processWhile = function (stmt, sf, caller, depth) {
+    if (stmt.expression.kind === this.ts.SyntaxKind.TrueKeyword) this.diagnostics.add('loop');
     var ts = this.ts;
+    if (!ts.isDoStatement(stmt)) this._scanExprForCalls(stmt.expression, sf, caller, depth);
     const baseline = this._captureBindings();
     const states = ts.isDoStatement(stmt) ? [] : [baseline];
     var cond = _getNodeText(stmt.expression, sf);
@@ -1264,11 +1295,11 @@
 
     var bodyStmts = ts.isBlock(stmt.statement)
       ? Array.from(stmt.statement.statements) : [stmt.statement];
-    var bodyLines = this._collectFragmentLines(bodyStmts, sf, caller, depth, states);
+    var bodyLines = this._collectFragmentLines(bodyStmts.concat(ts.factory.createExpressionStatement(stmt.expression)), sf, caller, depth, states);
     this._mergeBindings(states, baseline);
 
     if (this._hasMessages(bodyLines)) {
-      this.lines.push('loop [while ' + cond + ']');
+      this.lines.push('loop [' + (ts.isDoStatement(stmt) ? 'do, then while ' : 'while ') + cond + ']');
       this.lines.push.apply(this.lines, bodyLines);
       this.lines.push('end');
     } else {
@@ -1278,6 +1309,7 @@
 
   /* try/catch → alt/else fragment */
   SequenceDiagramGenerator.prototype._processTry = function (stmt, sf, caller, depth) {
+    this.diagnostics.add('control', 'Exception paths');
     const baseline = this._captureBindings();
     const states = [];
     var bodyLines = this._collectFragmentLines(
@@ -1320,6 +1352,8 @@
 
   /* switch/case → alt/else fragment */
   SequenceDiagramGenerator.prototype._processSwitch = function (stmt, sf, caller, depth) {
+    this.diagnostics.add('control', 'Switch fall-through');
+    this._scanExprForCalls(stmt.expression, sf, caller, depth);
     var ts = this.ts;
     var branches = [];
     const baseline = this._captureBindings();
@@ -1353,6 +1387,15 @@
   SequenceDiagramGenerator.prototype._processCall = function (call, sf, caller, depth) {
     var ts = this.ts;
 
+    // Evaluate a computed receiver before the arguments and enclosing call.
+    if (ts.isPropertyAccessExpression(call.expression) || ts.isElementAccessExpression(call.expression)) {
+      this._scanExprForCalls(call.expression.expression, sf, caller, depth);
+      if (ts.isElementAccessExpression(call.expression)) {
+        this._scanExprForCalls(call.expression.argumentExpression, sf, caller, depth);
+      }
+      if (call.expression.questionDotToken) this.diagnostics.add('conditional', 'Optional receiver');
+    }
+
     // Scan arguments first (they execute before the call)
     if (call.arguments) {
       for (var i = 0; i < call.arguments.length; i++)
@@ -1360,7 +1403,11 @@
     }
 
     var resolved = this._resolveCall(call, sf, caller);
-    if (!resolved) return;
+    if (!resolved) {
+      const name = _getNodeText(call.expression, sf);
+      if (!/^console\.(log|warn|error|info)$/.test(name)) this.diagnostics.add('unresolved', name);
+      return;
+    }
 
     var clsName = resolved.className;
     var method  = resolved.method;
@@ -1527,9 +1574,31 @@
 
   SequenceDiagramGenerator.prototype._scanExprForCalls = function (node, sf, caller, depth) {
     if (!node) return;
+    if (++this._statementVisits > 2000) throw new SequenceLimitError();
     var ts = this.ts;
     // A function value does not execute its body when it is declared or passed.
-    if (ts.isFunctionLike(node) || ts.isClassExpression(node)) return;
+    if (ts.isFunctionLike(node) || ts.isClassExpression(node)) {
+      this.diagnostics.add('deferred', 'Function values are not followed');
+      return;
+    }
+    if (node.questionDotToken) this.diagnostics.add('conditional', 'Optional call');
+    if (ts.isConditionalExpression(node)) {
+      this._scanExprForCalls(node.condition, sf, caller, depth);
+      this._conditionalExpressions(node.condition, node.whenTrue, node.whenFalse, sf, caller, depth);
+      return;
+    }
+    if (ts.isBinaryExpression(node)) {
+      const guard = {
+        [ts.SyntaxKind.AmpersandAmpersandToken]: 'truthy',
+        [ts.SyntaxKind.BarBarToken]: 'falsy',
+        [ts.SyntaxKind.QuestionQuestionToken]: 'nullish'
+      }[node.operatorToken.kind];
+      if (guard) {
+        this._scanExprForCalls(node.left, sf, caller, depth);
+        this._conditionalExpressions(node.left, node.right, null, sf, caller, depth, guard);
+        return;
+      }
+    }
 
     if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.EqualsToken && ts.isIdentifier(node.left)) {
       this._scanExprForCalls(node.right, sf, caller, depth);
@@ -1549,9 +1618,10 @@
       if (this.allTypeNames.has(clsName) && !this._dataClasses.has(clsName)) {
         // Treat as constructor call — resolve manually since _resolveCall
         // expects a CallExpression
-        var calleeId = this._calleeIdFor(clsName, caller, null);
+        var calleeId = this._allocationId(clsName);
         this._ensureParticipant(calleeId, clsName);
         this._callerClass[calleeId] = clsName;
+        this._constructedObjects.set(node, { className: clsName, participantId: calleeId });
         this.lines.push('create ' + calleeId);
         this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
         this.lines.push('activate ' + calleeId);
@@ -1561,7 +1631,9 @@
       }
       return;
     }
+    if (ts.isYieldExpression(node)) this.diagnostics.add('deferred', 'yield');
     if (ts.isAwaitExpression(node)) {
+      this.diagnostics.add('deferred', 'await');
       this._scanExprForCalls(node.expression, sf, caller, depth);
       return;
     }
@@ -1573,6 +1645,24 @@
   };
 
   /* ── Loop variable type inference ──────────────────────────── */
+
+  // Expressions share the same branch isolation/join as statement fragments.
+  // The condition has already run; each operand is visited exactly once.
+  SequenceDiagramGenerator.prototype._conditionalExpressions = function (condition, yes, no, sf, caller, depth, guard = 'truthy') {
+    const baseline = this._captureBindings();
+    const states = [];
+    const capture = expression => this._collectFragmentLines(
+      [this.ts.factory.createExpressionStatement(expression)], sf, caller, depth, states);
+    const yesLines = capture(yes);
+    const noLines = no ? capture(no) : [];
+    if (!no) states.push(baseline);
+    this._mergeBindings(states, baseline);
+    if (!this._hasMessages(yesLines) && !this._hasMessages(noLines)) return;
+    const label = _getNodeText(condition, sf) + ' is ' + guard;
+    this.lines.push((no ? 'alt' : 'opt') + ' [' + label + ']', ...yesLines);
+    if (no) this.lines.push('else [otherwise]', ...noLines);
+    this.lines.push('end');
+  };
 
   SequenceDiagramGenerator.prototype._inferLoopVarType = function (varName, iterExpr, sf, caller) {
     var ts = this.ts;
@@ -1597,27 +1687,33 @@
   /* ── Method following ──────────────────────────────────────── */
 
   SequenceDiagramGenerator.prototype._maybeFollow = function (clsName, methodName, calleeId, depth, bindings = []) {
-    if (depth >= SEQ_MAX_DEPTH) return;
 
     var key = clsName + '::' + methodName;
-    if (this._callStack.has(key)) return;
 
     var node = this._findMethodNode(clsName, methodName);
-    if (!node || !node.body) return;
+    if (!node || !node.body) {
+      if (methodName !== 'constructor') this.diagnostics.add('unresolved', clsName + '.' + methodName);
+      return;
+    }
+
+    if (node.asteriskToken || (node.modifiers || []).some(modifier => modifier.kind === this.ts.SyntaxKind.AsyncKeyword)) this.diagnostics.add('deferred', clsName + '.' + methodName);
+
+    if (node.body.statements.some(statement => this.ts.isThrowStatement(statement))) this.diagnostics.add('control', 'Exception propagation');
 
     // Abstract/stub method → try concrete override in subclass
     if (this._isStubMethod(node)) {
       var concrete = this._findConcreteOverride(clsName, methodName);
       if (concrete) {
+        this.diagnostics.add('dispatch', clsName + '.' + methodName);
         clsName = concrete.className;
         node    = concrete.node;
         key     = clsName + '::' + methodName;
-        if (this._callStack.has(key)) return;
       } else {
         return;
       }
     }
 
+    if (!this.diagnostics.canExpand(clsName + '.' + methodName, this._callStack.has(key), depth, SEQ_MAX_DEPTH)) return;
     this._callStack.add(key);
     var savedVarTypes = {};
     for (var v in this.varTypes) savedVarTypes[v] = this.varTypes[v];
@@ -1689,6 +1785,14 @@
       this._participantSet.add(id);
       this.participants.push({ id: id, label: label });
     }
+  };
+
+  SequenceDiagramGenerator.prototype._allocationId = function (name) {
+    if (!this._participantSet.has(name)) return name;
+    let id, suffix = 2;
+    do { id = name + '_' + suffix++; } while (this._reservedParticipantIds.has(id));
+    this._reservedParticipantIds.add(id);
+    return id;
   };
 
   // A type-only reference has its own symbolic identity. Reserve source names

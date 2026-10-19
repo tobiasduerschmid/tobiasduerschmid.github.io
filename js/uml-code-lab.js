@@ -203,16 +203,18 @@
         const result = await client.analyze({ language: selectedLanguage, sources: { [filename]: code } });
         if (!isCurrent()) return;
         if (result.errors.length) throw new Error(result.errors.join(' '));
+        const warnings = example.type === 'sequence' ? result.sequenceWarnings || [] : [];
+        const warningText = 'Warning: partial sequence. ' + warnings.map(item => item.message).join(' ');
         const syntax = result[example.type + 'Diagram'];
         if (!hasDiagram(syntax)) {
           clearPreview();
-          setStatus(example.type === 'class' ? 'No classes found.' : 'No calls found. Add an entry-point call.', 'empty');
+          setStatus(warnings.length ? warningText : example.type === 'class' ? 'No classes found.' : 'No calls found. Add an entry-point call.', warnings.length ? 'warning' : 'empty');
           return;
         }
         const rendered = await client.render({
           type: example.type, syntax, target: preview, isCurrent, readOnly: true
         });
-        if (rendered && isCurrent()) setStatus('Diagram updated.', 'ready');
+        if (rendered && isCurrent()) setStatus(warnings.length ? warningText : 'Diagram updated.', warnings.length ? 'warning' : 'ready');
       } catch (error) {
         if (!isCurrent() || global.UMLLive.isSuperseded(error)) return;
         clearPreview();

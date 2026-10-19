@@ -26,6 +26,8 @@
  */
 (function (global) {
   'use strict';
+  const SequenceDiagnostics = typeof module !== 'undefined' && module.exports
+    ? require('./uml-sequence-diagnostics.js') : global.UMLSequenceDiagnostics;
 
   /* ===================================================================
    * Main entry point
@@ -61,17 +63,19 @@
     // Extract sequence diagram
     var seqGen = new PythonSequenceDiagramGenerator(parsedFiles, extractor, allTypeNames);
     var sequenceDiagram = '';
+    let sequenceFailed = false;
     try {
       seqGen.generate();
       sequenceDiagram = seqGen.generatePlantUML();
     } catch (error) {
       if (!(error instanceof PythonSequenceLimitError)) throw error;
+      sequenceFailed = true;
       errors.push(error.message);
     }
 
     return {
       classDiagram: classDiagram,
-      sequenceDiagram: sequenceDiagram,
+      ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }),
       errors: errors
     };
   }
@@ -503,9 +507,11 @@
       var tokens = exprTokenize(text.trim());
       if (tokens.length === 0) return null;
       var parser = new ExprParser(tokens);
-      return parser.parseExpr();
+      const expression = parser.parseExpr();
+      if (!parser.atEnd()) expression.inferenceIncomplete = true;
+      return expression;
     } catch (e) {
-      return { type: 'Constant', value: text.trim() };
+      return { type: 'Constant', value: text.trim(), inferenceIncomplete: true };
     }
   }
 
@@ -650,6 +656,13 @@
     if (/^while\s/.test(text)) return parseWhile(ctx, blockIndent);
     if (text === 'try:' || /^try\s*:/.test(text)) return parseTry(ctx, blockIndent);
     if (/^with\s/.test(text)) return parseWith(ctx, blockIndent);
+
+    // Preserve unsupported syntax so inference cannot silently treat it as a name.
+    if (/^(?:yield|match|case|async\s+(?:with|for))\b/.test(text)) {
+      ctx.pos++;
+      if (text.endsWith(':')) parseBody(ctx, blockIndent);
+      return { type: 'Unsupported', text: text };
+    }
 
     // Simple statements
     ctx.pos++;
@@ -1977,6 +1990,7 @@
    * =================================================================== */
 
   function PythonSequenceDiagramGenerator(parsedFiles, extractor, allTypeNames) {
+    this.diagnostics = new SequenceDiagnostics();
     this.parsedFiles = parsedFiles;
     this.extractor = extractor;
     this.allTypeNames = allTypeNames;
@@ -2267,6 +2281,9 @@
       astWalk(this.parsedFiles[fn], function (node) {
         if (node.type !== 'ClassDef') return;
         if (!self.allTypeNames.has(node.name)) return;
+        let hasCalls = false;
+        astWalk(node, child => { if (child.type === 'Call') hasCalls = true; });
+        if (hasCalls) return;
         // @dataclass decorator
         var decs = node.decorators || [];
         for (var i = 0; i < decs.length; i++) {
@@ -2383,6 +2400,7 @@
         if (stmt.value) this._scanExprForCalls(stmt.value, caller, depth);
         return this._completion('Return');
       case 'Raise':
+        this.diagnostics.add('control', 'Exception propagation');
         if (stmt.exc) this._scanExprForCalls(stmt.exc, caller, depth);
         return this._completion('Raise');
       case 'Break': case 'Continue': return this._completion(stmt.type);
@@ -2391,8 +2409,11 @@
         return this._collectFragment(stmt.body, caller, depth, preservePaths);
       case 'For': return this._processFor(stmt, caller, depth);
       case 'While': return this._processWhile(stmt, caller, depth);
-      case 'With': return this._collectFragment(stmt.body, caller, depth, preservePaths);
+      case 'With':
+        this.diagnostics.add('unsupported', 'Context manager entry and exit are omitted');
+        return this._collectFragment(stmt.body, caller, depth, preservePaths);
       case 'Try': return this._processTry(stmt, caller, depth);
+      case 'Unsupported': this.diagnostics.add('unsupported', stmt.text); break;
     }
   };
 
@@ -2711,6 +2732,7 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._processWhile = function (stmt, caller, depth) {
+    if (stmt.test?.type === 'Constant' && stmt.test.value) this.diagnostics.add('loop');
     this._scanExprForCalls(stmt.test, caller, depth);
     const originalScope = this._scopeSnapshot();
     let body = this._collectFragment(stmt.body, caller, depth, true);
@@ -2775,10 +2797,17 @@
    *   subsequent messages.
    */
   PythonSequenceDiagramGenerator.prototype._processCall = function (call, caller, depth, returnCaptured, returnBinding) {
+    if (call.inferenceIncomplete) this.diagnostics.add('unsupported', 'Expression is only partly parsed');
     const computedReceiverBinding = this._scanCallInputs(call, caller, depth);
 
     var resolved = this._resolveCall(call, caller);
-    if (!resolved) return;
+    if (!resolved) {
+      const name = callName(call);
+      if (!['print', 'len', 'range', 'str', 'int', 'float', 'bool', 'list', 'dict', 'set', 'tuple', 'super', 'isinstance', 'enumerate', 'zip', 'min', 'max', 'sum'].includes(name)) {
+        this.diagnostics.add('unresolved', unparse(call.func, caller));
+      }
+      return;
+    }
     var clsName = resolved[0], method = resolved[1];
 
     if (this._dataClasses[clsName]) return;
@@ -2913,23 +2942,28 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._maybeFollow = function (clsName, methodName, calleeId, depth, call) {
-    if (depth >= this.MAX_DEPTH) return;
     var key = clsName + '::' + methodName;
-    if (this._callStack[key]) return;
 
     var node = this._findMethodNode(clsName, methodName);
-    if (!node) return;
+    if (!node) {
+      if (methodName !== '__init__') this.diagnostics.add('unresolved', clsName + '.' + methodName);
+      return;
+    }
+
+    if (node.isAsync) this.diagnostics.add('deferred', clsName + '.' + methodName);
+    if (node.body.some(statement => statement.type === 'Raise')) this.diagnostics.add('control', 'Exception propagation');
 
     if (this._isStubMethod(node)) {
       var concrete = this._findConcreteOverride(clsName, methodName);
       if (concrete) {
+        this.diagnostics.add('dispatch', clsName + '.' + methodName);
         clsName = concrete[0];
         node = concrete[1];
         key = clsName + '::' + methodName;
-        if (this._callStack[key]) return;
-      }
+      } else return;
     }
 
+    if (!this.diagnostics.canExpand(clsName + '.' + methodName, Boolean(this._callStack[key]), depth, this.MAX_DEPTH)) return;
     this._callStack[key] = true;
     var bindings = this._argumentBindings(node, call);
     var savedScope = this._scopeSnapshot();
@@ -3032,7 +3066,14 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._scanExprForCalls = function (node, caller, depth) {
+    if (++this._sequenceVisits > 2000) throw new PythonSequenceLimitError();
     if (!node) return;
+    if (node.inferenceIncomplete) this.diagnostics.add('unsupported', 'Expression is only partly parsed');
+    if (node.type === 'Lambda') {
+      this.diagnostics.add('deferred', 'Lambda body is omitted');
+      return;
+    }
+    if (node.type === 'Await') this.diagnostics.add('deferred', 'await');
     if (node.type === 'Call') {
       return this._processCall(node, caller, depth);
     }

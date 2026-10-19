@@ -57,3 +57,15 @@ end`;
   const fragments = verbose.sections.find(section => section.heading === 'Combined fragments').items;
   assert.equal(fragments.length, 2);
 });
+
+test('inference warnings remain in both accessible descriptions of an exported diagram', () => {
+  const Diagnostics = require('../../js/uml-sequence-diagnostics.js');
+  const diagnostics = new Diagnostics();
+  diagnostics.add('recursion', 'Payment.authorize');
+  const source = diagnostics.result('participant Main as : Main\nMain -> Main: authorize()').sequenceDiagram;
+  const summary = descriptions.describe('sequence', source);
+  const verbose = descriptions.describeVerbose('sequence', source);
+  assert.match(summary, /Recursive call detected/);
+  assert.match(verbose.summary, /Recursive call detected/);
+  assert.match(verbose.sections.find(section => section.heading === 'Inference warnings').items.join(' '), /Later calls and returns may be unreachable/);
+});

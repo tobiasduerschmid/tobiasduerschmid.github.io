@@ -197,7 +197,7 @@
 
   /**
    * analyze({language, sources, options?}) resolves to classDiagram,
-   * sequenceDiagram and errors. render({type, syntax, target, isCurrent?, readOnly?})
+   * sequenceDiagram, sequenceWarnings and errors. render({type, syntax, target, isCurrent?, readOnly?})
    * commits an accessible SVG only while the caller's revision is current.
    * Errors reject; superseded/disposed work has umlSuperseded=true.
    * Tutorial-specific TypeScript loading can be supplied through settings.
@@ -213,6 +213,7 @@
         if (settings.loadTypeScript) await settings.loadTypeScript();
         else await loadScript(assetURL('vendor/typescript/5.9.3/typescript.min.js'));
       }
+      if (!global.UMLSequenceDiagnostics) await loadScript(assetURL('uml-sequence-diagnostics.js'));
       if (!global[analyzer.name]) await loadScript(settings[language + 'AnalyzerPath'] || assetURL(analyzer.file));
       if (disposed) throw supersededError();
       return global[analyzer.name](sources, language === 'js' ? global.ts : options || {});

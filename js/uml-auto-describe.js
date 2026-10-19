@@ -1206,7 +1206,16 @@
   function describe(type, spec) {
     const annotations = extractNotationExplanations(spec);
     const summary = describeModel(type, annotations.source);
-    return summary + (annotations.explanations.length ? ' Notation callouts: ' + annotations.explanations.join(' ') : '');
+    const warnings = inferenceWarnings(type, spec);
+    return summary + (warnings.length ? ' ' + warnings.join(' ') : '') +
+      (annotations.explanations.length ? ' Notation callouts: ' + annotations.explanations.join(' ') : '');
+  }
+
+  function inferenceWarnings(type, spec) {
+    if (String(type).toLowerCase() !== 'sequence') return [];
+    const notes = String(spec || '').matchAll(/^\s*note\b[^\n]*\n([\s\S]*?)^\s*end\s*note\s*$/gim);
+    return [...notes].map(note => note[1].replace(/\s+/g, ' ').trim())
+      .filter(note => note.startsWith('Warning: partial sequence inference.'));
   }
 
   function describeModel(type, spec) {
@@ -1238,6 +1247,11 @@
   function describeVerbose(type, spec) {
     const annotations = extractNotationExplanations(spec);
     const verbose = describeModelVerbose(type, annotations.source);
+    const warnings = inferenceWarnings(type, spec);
+    if (warnings.length) {
+      verbose.summary += ' ' + warnings.join(' ');
+      verbose.sections.unshift({ heading: 'Inference warnings', items: warnings });
+    }
     if (annotations.explanations.length) verbose.sections.push({ heading: 'Notation callouts', items: annotations.explanations });
     return verbose;
   }

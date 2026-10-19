@@ -156,6 +156,7 @@ self.cancelAnimationFrame = self.cancelAnimationFrame || function (id) { clearTi
 var loaded = { python: false, java: false, cpp: false, jsts: false, bundle: false };
 
 function ensureAnalyzer(lang) {
+  if (!self.UMLSequenceDiagnostics) importScripts(resolve('uml-sequence-diagnostics.js'));
   if (lang === 'python' && !loaded.python) {
     importScripts(resolve('uml-analyzer-python.js'));
     loaded.python = true;

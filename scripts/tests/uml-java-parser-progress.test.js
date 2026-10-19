@@ -6,11 +6,12 @@ const path = require('node:path');
 const vm = require('node:vm');
 const test = require('node:test');
 
+const diagnostics = fs.readFileSync(path.join(__dirname, '../../js/uml-sequence-diagnostics.js'), 'utf8');
 const analyzer = fs.readFileSync(path.join(__dirname, '../../js/uml-analyzer-java.js'), 'utf8');
 
 function infer(source) {
   // A synchronous parser loop must fail the test rather than hang the test runner.
-  return vm.runInNewContext(analyzer + '\nanalyzeJavaSources(sources)', {
+  return vm.runInNewContext(diagnostics + '\n' + analyzer + '\nanalyzeJavaSources(sources)', {
     sources: { 'Example.java': source }
   }, { timeout: 1000 });
 }
