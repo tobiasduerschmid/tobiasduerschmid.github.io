@@ -125,7 +125,7 @@ test('negation encloses optional-call, optional-index, and constructed-object op
   assert.equal(projectExpression('!new (getType())(arg)', { language: 'js' }), 'not(new(getType())(arg))');
 });
 
-test('published loop labs have complete foreach labels, including the Java array expression', () => {
+test('published loop labs expose complete known iterable values in Design focus', () => {
   const fs = require('node:fs');
   const yaml = require('js-yaml');
   require('../../js/uml-analyzer-python.js');
@@ -133,6 +133,7 @@ test('published loop labs have complete foreach labels, including the Java array
   const ts = require('../../js/vendor/typescript/5.9.3/typescript.min.js');
   const { analyzeJavaSources } = require('../../js/uml-analyzer-java.js');
   const { analyzeCppSources } = require('../../js/uml-analyzer-cpp.js');
+  const { project } = require('../../js/uml-diagram-views.js');
   const labs = yaml.load(fs.readFileSync(require('node:path').join(__dirname, '../../_data/uml_code_labs.yml'), 'utf8'));
   const analyzers = {
     python: ['example.py', global.analyzePythonSources], java: ['Main.java', analyzeJavaSources],
@@ -141,11 +142,12 @@ test('published loop labs have complete foreach labels, including the Java array
   for (const [language, [filename, analyze]] of Object.entries(analyzers)) {
     const raw = analyze({ [filename]: labs.loop_boundary[language].code });
     assert.deepEqual(raw.errors, []);
-    const design = projectSequence(raw.sequenceDiagram, { language });
+    const design = project(raw, { language, view: 'design' }).sequenceDiagram;
     assert.match(design, /^loop \[for each item in /m);
     assert.doesNotMatch(design, /\.\.\./);
     assert.match(design, /(?:addItem|add_item)\(item\)/);
-    if (language !== 'cpp') assert.match(design, /for each item in \["book", "pen"\]/);
+    assert.match(design, language === 'cpp'
+      ? /for each item in \[1, 2\]/ : /for each item in \["book", "pen"\]/);
   }
 });
 

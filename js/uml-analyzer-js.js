@@ -23,6 +23,8 @@
   'use strict';
   const SequenceDiagnostics = typeof module !== 'undefined' && module.exports
     ? require('./uml-sequence-diagnostics.js') : global.UMLSequenceDiagnostics;
+  const ConstantValues = typeof module !== 'undefined' && module.exports
+    ? require('./uml-constant-values.js') : global.UMLConstantValues;
 
   /* ===================================================================
    * Main entry point
@@ -84,6 +86,7 @@
     return {
       classDiagram: classDiagram,
       constructionMethods: extractor.constructionMethods,
+      sequenceLoopConstants: seqGen.loopConstants.toJSON(),
       ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }),
       errors: errors
     };
@@ -855,6 +858,9 @@
     extractor.classMap.forEach(function (info, name) {
       self.classBases[name] = info.bases.filter(function (b) { return allTypeNames.has(b); });
     });
+    this._constantSubclassedTypes = new Set(Object.values(this.classBases).flat());
+    this._constantMethodNames = new Set(Object.values(this.classMethods).flatMap(methods => Object.keys(methods)));
+    this._constantMethodsMutable = false;
 
     this._dataClasses = this._identifyDataClasses();
 
@@ -876,6 +882,8 @@
     this.varParticipants = Object.create(null); // known object identities in this scope
     this._callerClass = {};           // {participantId: className}
     this._callStack   = new Set();    // "className::methodName"
+    this.constantBindings = new Map();
+    this.loopConstants = new ConstantValues.LoopFacts();
   }
 
   /** Data/value classes: enums, or classes with no behavioral methods. */
@@ -978,6 +986,8 @@
   SequenceDiagramGenerator.prototype._processStmt = function (stmt, sf, caller, depth) {
     if (++this._statementVisits > 2000) throw new SequenceLimitError();
     var ts = this.ts;
+    if (ts.isIfStatement(stmt) || ts.isWhileStatement(stmt) || ts.isDoStatement(stmt) ||
+        ts.isTryStatement(stmt) || ts.isSwitchStatement(stmt) || ts.isWithStatement(stmt)) this.constantBindings.clear();
     if (ts.isThrowStatement(stmt)) {
       this.diagnostics.add('control', 'Exception propagation');
       return this._scanExprForCalls(stmt.expression, sf, caller, depth);
@@ -1011,6 +1021,7 @@
       }
     }
     for (const name of locals) this._bindVariable(name, null);
+    for (const name of locals) this.constantBindings.delete(name);
     try {
       for (const statement of statements) {
         this._processStmt(statement, sf, caller, depth);
@@ -1020,6 +1031,9 @@
     } finally {
       for (const name of locals) this._bindVariable(name, outer.types[name]
         ? { className: outer.types[name], participantId: outer.participants[name] } : null);
+      // A block may have called code that captures its outer variables. Do not
+      // restore stale value facts merely because their names were shadowed.
+      this.constantBindings.clear();
     }
   };
 
@@ -1031,6 +1045,7 @@
 
     for (var i = 0; i < decls.length; i++) {
       var decl = decls[i];
+      this._rememberConstant(decl.name, decl.initializer, sf);
       if (!decl.initializer) continue;
       var varName = _getNodeText(decl.name, sf);
 
@@ -1066,6 +1081,71 @@
       if (binding) this._bindVariable(varName, binding);
       else delete this.varParticipants[varName];
     }
+  };
+
+  SequenceDiagramGenerator.prototype._constantValue = function (expression, sf) {
+    const ts = this.ts;
+    while (expression && (ts.isParenthesizedExpression(expression) || ts.isAsExpression(expression) ||
+      ts.isTypeAssertionExpression(expression) || ts.isNonNullExpression(expression) || ts.isSatisfiesExpression(expression))) expression = expression.expression;
+    return expression ? ConstantValues.evaluate(_getNodeText(expression, sf),
+      { language: 'typescript', bindings: this.constantBindings }) : undefined;
+  };
+
+  SequenceDiagramGenerator.prototype._rememberConstant = function (target, expression, sf) {
+    const ts = this.ts;
+    if (!ts.isIdentifier(target)) { this.constantBindings.clear(); return; }
+    const names = this._constantExpressionNames(expression);
+    if (!names) { this.constantBindings.clear(); return; }
+    const alias = [...names].some(name => Array.isArray(this.constantBindings.get(name)));
+    const value = alias ? undefined : this._constantValue(expression, sf);
+    if (alias) this.constantBindings.clear();
+    this.constantBindings.delete(target.text);
+    if (value !== undefined) this.constantBindings.set(target.text, value);
+  };
+
+  SequenceDiagramGenerator.prototype._constantExpressionNames = function (expression) {
+    const ts = this.ts, names = new Set();
+    let remaining = 128;
+    const visit = node => {
+      if (!node) return false;
+      if (--remaining < 0) return true;
+      if (ts.isIdentifier(node)) names.add(node.text);
+      return ts.forEachChild(node, visit);
+    };
+    return visit(expression) ? null : names;
+  };
+
+  SequenceDiagramGenerator.prototype._constantLoopBodySafe = function (body, iterable, sf, caller) {
+    if (this._constantMethodsMutable) return false;
+    const ts = this.ts, names = this._constantExpressionNames(iterable);
+    if (!names) return false;
+    let remaining = 128;
+    const safe = node => {
+      if (!node) return true;
+      if (--remaining < 0) return false;
+      if (ts.isIdentifier(node) && names.has(node.text)) return false;
+      if (ts.isCallExpression(node)) {
+        const resolved = this._resolveCall(node, sf, caller);
+        const method = resolved && this._findMethodNode(resolved.className, resolved.method);
+        const inert = method && method.body && method.parameters.length <= 32 && method.body.statements.length <= 32
+          && !ts.getDecorators(method)?.length && !method.parameters.some(parameter => parameter.initializer)
+          && !this._constantSubclassedTypes.has(resolved.className)
+          && method.body.statements.every(statement => ts.isEmptyStatement(statement) || ts.isReturnStatement(statement)
+            && (!statement.expression || ts.isLiteralExpression(statement.expression)));
+        return Boolean(inert && ts.isPropertyAccessExpression(node.expression)
+          && safe(node.expression.expression) && (node.arguments || []).every(safe));
+      }
+      if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node) || ts.isNewExpression(node) ||
+          ts.isFunctionLike(node) || ts.isClassDeclaration(node) || ts.isClassExpression(node) ||
+          ts.isAwaitExpression(node) || ts.isYieldExpression(node) || ts.isWithStatement(node) ||
+          ts.isVariableDeclaration(node) || ts.isForStatement(node) || ts.isForOfStatement(node) || ts.isForInStatement(node) ||
+          ts.isWhileStatement(node) || ts.isDoStatement(node) || ts.isTryStatement(node) || ts.isPostfixUnaryExpression(node) ||
+          ts.isPrefixUnaryExpression(node) && [ts.SyntaxKind.PlusPlusToken, ts.SyntaxKind.MinusMinusToken].includes(node.operator) ||
+          ts.isBinaryExpression(node) && node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+          node.operatorToken.kind <= ts.SyntaxKind.LastAssignment) return false;
+      return !ts.forEachChild(node, child => !safe(child));
+    };
+    return safe(body);
   };
 
   // Follow simple aliases through TypeScript's non-runtime expression wrappers.
@@ -1107,17 +1187,19 @@
   /* ── Control flow → combined fragments ─────────────────────── */
 
   SequenceDiagramGenerator.prototype._captureBindings = function () {
-    return { types: { ...this.varTypes }, participants: { ...this.varParticipants } };
+    return { types: { ...this.varTypes }, participants: { ...this.varParticipants }, constants: new Map(this.constantBindings) };
   };
 
   SequenceDiagramGenerator.prototype._restoreBindings = function (state) {
     this.varTypes = { ...state.types };
     this.varParticipants = { ...state.participants };
+    this.constantBindings = new Map(state.constants);
   };
 
   // An identity survives a join only when every possible path agrees. Keep a
   // shared type when possible, without attributing its calls to a known object.
   SequenceDiagramGenerator.prototype._mergeBindings = function (states, scope) {
+    this.constantBindings.clear();
     this.varTypes = {};
     this.varParticipants = Object.create(null);
     for (const name of Object.keys(scope.types)) {
@@ -1242,6 +1324,9 @@
   SequenceDiagramGenerator.prototype._processFor = function (stmt, sf, caller, depth) {
     if (this.ts.isForStatement(stmt) && (!stmt.condition || stmt.condition.kind === this.ts.SyntaxKind.TrueKeyword)) this.diagnostics.add('loop');
     var ts = this.ts, label;
+    const iterable = ts.isForOfStatement(stmt) && this._constantLoopBodySafe(stmt.statement, stmt.expression, sf, caller)
+      ? this._constantValue(stmt.expression, sf) : undefined;
+    this.constantBindings.clear();
     const scope = this._captureBindings();
     if (ts.isForStatement(stmt)) {
       if (stmt.initializer && ts.isVariableDeclarationList(stmt.initializer)) {
@@ -1273,6 +1358,7 @@
     const iteration = bodyStmts.concat(repeated.map(expression => ts.factory.createExpressionStatement(expression)));
     var bodyLines = this._collectFragmentLines(iteration, sf, caller, depth, states);
     this._mergeBindings(states, scope);
+    this.loopConstants.record('loop [' + label + ']', Array.isArray(iterable) ? iterable : undefined);
 
     if (this._hasMessages(bodyLines)) {
       this.lines.push('loop [' + label + ']');
@@ -1386,6 +1472,7 @@
   // Later arguments may rebind a variable used by an earlier argument. Capture
   // each evaluated value before continuing, as JavaScript's argument list does.
   SequenceDiagramGenerator.prototype._evaluateArguments = function (args, sf, caller, depth) {
+    this.constantBindings.clear();
     return Array.from(args || [], argument => {
       this._scanExprForCalls(argument, sf, caller, depth);
       return this._expressionBinding(argument, caller);
@@ -1576,6 +1663,19 @@
     if (!node) return;
     if (++this._statementVisits > 2000) throw new SequenceLimitError();
     var ts = this.ts;
+    if (ts.isBinaryExpression(node) && node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+        node.operatorToken.kind <= ts.SyntaxKind.LastAssignment) {
+      const member = ts.isPropertyAccessExpression(node.left) ? node.left.name.text
+        : ts.isElementAccessExpression(node.left) && ts.isStringLiteral(node.left.argumentExpression)
+          ? node.left.argumentExpression.text : null;
+      if (member === 'prototype' || this._constantMethodNames.has(member)) this._constantMethodsMutable = true;
+    }
+    if (ts.isDeleteExpression(node) || ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node) ||
+        ts.isAwaitExpression(node) || ts.isYieldExpression(node) ||
+        ts.isPrefixUnaryExpression(node) && [ts.SyntaxKind.PlusPlusToken, ts.SyntaxKind.MinusMinusToken].includes(node.operator) ||
+        ts.isPostfixUnaryExpression(node) || ts.isBinaryExpression(node) &&
+        node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment && node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
+        (node.operatorToken.kind !== ts.SyntaxKind.EqualsToken || !ts.isIdentifier(node.left))) this.constantBindings.clear();
     // A function value does not execute its body when it is declared or passed.
     if (ts.isFunctionLike(node) || ts.isClassExpression(node)) {
       this.diagnostics.add('deferred', 'Function values are not followed');
@@ -1602,6 +1702,7 @@
 
     if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.EqualsToken && ts.isIdentifier(node.left)) {
       this._scanExprForCalls(node.right, sf, caller, depth);
+      this._rememberConstant(node.left, node.right, sf);
       this._bindVariable(node.left.text, this._expressionBinding(node.right, caller));
       return;
     }
@@ -1715,10 +1816,12 @@
     var savedVarTypes = {};
     for (var v in this.varTypes) savedVarTypes[v] = this.varTypes[v];
     const savedVarParticipants = this.varParticipants;
+    const savedConstants = this.constantBindings;
 
     // Seed local scope with parameter type hints
     this.varTypes = {};
     this.varParticipants = Object.create(null);
+    this.constantBindings = new Map();
     var pt = (this.paramTypes[clsName] || {})[methodName];
     if (pt) { for (var p in pt) this.varTypes[p] = pt[p]; }
     for (let index = 0; index < bindings.length && index < node.parameters.length; index++) {
@@ -1733,6 +1836,7 @@
     } finally {
       this.varTypes = savedVarTypes;
       this.varParticipants = savedVarParticipants;
+      this.constantBindings = savedConstants;
       this._callStack.delete(key);
     }
   };

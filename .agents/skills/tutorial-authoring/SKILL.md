@@ -2136,6 +2136,12 @@ channel.
   UML does not prescribe an expression language; these labels are a book convention.
   List types use `Sequence<T>`; recognized sequence values use square brackets
   and ordinary string values use double quotes. Opaque literals retain source notation.
+  Analyzers may attach `sequenceLoopConstants` for bounded static folding of
+  supported literal values and arithmetic. Design focus uses proven iterable
+  values without executing code or unrolling loops. Mutation, uncertain bindings,
+  or conflicting/unknown occurrences of the same raw loop header retain the name.
+  Keep this evidence with raw results across workers and popouts; Implementation
+  details and grading continue to use the original source expressions.
   Protocol behavior, relations, control flow, warnings and source maps retain their meaning.
   Boxed Java primitives preserve nullability; C++ unsigned integers preserve the
   nonnegative constraint. Equivalent-looking views do not prove equivalent code.

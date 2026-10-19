@@ -9,6 +9,8 @@
   'use strict';
   const SequenceDiagnostics = typeof module !== 'undefined' && module.exports
     ? require('./uml-sequence-diagnostics.js') : global.UMLSequenceDiagnostics;
+  const ConstantValues = typeof module !== 'undefined' && module.exports
+    ? require('./uml-constant-values.js') : global.UMLConstantValues;
 
   const identifier = value => /^[A-Za-z_]\w*$/.test(value || '');
   const access = new Set(['public', 'protected', 'private']);
@@ -493,6 +495,7 @@
   class CppSequence {
     constructor(model) {
       this.diagnostics = new SequenceDiagnostics();
+      this.loopConstants = new ConstantValues.LoopFacts();
       this.model = model; this.lines = []; this.participants = new Map();
       this.identities = new Set(['Main']); this.activeCalls = new Set(); this.steps = 0;
       this.entities = new Set();
@@ -502,7 +505,7 @@
       const main = this.model.functions.find(fn => fn.name === 'main' && fn.body);
       if (!main) return '';
       const receiver = { id: 'Main', node: null, fields: new Map() };
-      this.walk(main.body, { receiver, scope: main.scope, vars: new Map(), depth: 0 });
+      this.walk(main.body, { receiver, scope: main.scope, vars: new Map(), constants: new Map(), depth: 0 });
       if (!this.lines.length) return '';
       return ['@startuml', 'layout landscape', 'layout compact', 'participant Main as : Main',
         ...[...this.participants].map(([id, node]) => 'participant ' + id + ': ' + node.id),
@@ -547,7 +550,7 @@
 
     invoke(receiver, method, args, argumentText, context) {
       if (++this.steps > 5000) throw new SequenceLimitError();
-      if (!method) { this.diagnostics.add('unresolved'); return null; }
+      if (!method) { context.constants.clear(); this.diagnostics.add('unresolved'); return null; }
       if (method.ambiguous) this.diagnostics.add('dispatch', method.name);
       else if (!method.body) this.diagnostics.add('unresolved', method.name);
       this.ensure(receiver);
@@ -567,7 +570,7 @@
       if (!method.body || (!method.body.length && !method.initializers.length)) return null;
       if (!this.diagnostics.canExpand(method.name, this.activeCalls.has(key), depth, 3)) return null;
       this.activeCalls.add(key);
-      const context = { receiver, scope: method.owner || method.scope, vars: new Map(), depth: depth + 1 };
+      const context = { receiver, scope: method.owner || method.scope, vars: new Map(), constants: new Map(), depth: depth + 1 };
       method.params.forEach((param, index) => {
         const type = this.model.type(param.type, context.scope);
         let value = args[index];
@@ -591,6 +594,9 @@
     // and a typed return value can be the receiver of the next member access.
     expression(tokens, context) {
       if (++this.steps > 5000) throw new SequenceLimitError();
+      const effectful = tokens.some((token, index) => ['=', '+=', '-=', '*=', '/=', '++', '--', '&', '->*'].includes(token) ||
+        token === '(' && (identifier(tokens[index - 1]) || [')', ']'].includes(tokens[index - 1])));
+      if (effectful) for (const token of tokens) context.constants.delete(token);
       if (tokens.some(token => ['&&', '||', '?'].includes(token))) this.diagnostics.add('conditional');
       if (tokens.some((token, index) => token === 'new' ||
           (['make_unique', 'make_shared'].includes(token) && tokens[index + 1] === '<'))) {
@@ -688,6 +694,13 @@
         return true;
       }
       const typeTokens = tokens.slice(0, end), name = tokens[end], initializer = tokens.slice(end + 1);
+      const constant = this.constantDeclaration(typeTokens, initializer, context);
+      // A retained reference may mutate the original later, even after rebinding
+      // the alias. Forget the fact at its first escape instead of guessing alias lifetimes.
+      for (const token of initializer) {
+        if (Array.isArray(context.constants.get(token)) || typeTokens.some(part => ['*', '&', '&&'].includes(part))) context.constants.delete(token);
+      }
+      context.constants.delete(name);
       const type = this.model.type(typeTokens, context.scope);
       const construct = this.construction(type, initializer, context);
       let value = null;
@@ -710,8 +723,64 @@
         if (!value && type.node && !type.collection) value = this.entity(name, type.node);
       }
       context.vars.set(name, value);
+      if (constant !== undefined) context.constants.set(name, constant);
       if (context.declared) context.declared.add(name);
       return true;
+    }
+
+    constantDeclaration(typeTokens, source, context) {
+      if (source.length > 128) return undefined;
+      if (typeTokens.some(token => ['volatile', '*', '&', '&&'].includes(token))) return undefined;
+      const type = tokensToText(typeTokens.filter(token => !['const', 'constexpr'].includes(token)));
+      const container = type.match(/^std::(?:vector|list|deque)<(int|bool|std::string)>$/);
+      const elementType = container ? container[1] : type;
+      if (!['int', 'bool', 'std::string'].includes(elementType)) return undefined;
+      let initializer = source, bound = null, rawArray = false;
+      if (initializer[0] === '[') {
+        const end = closing(initializer, 0);
+        bound = initializer.slice(1, end);
+        initializer = initializer.slice(end + 1); rawArray = true;
+        if (initializer[0] === '[') return undefined;
+      }
+      if (initializer[0] === '=') initializer = initializer.slice(1);
+      if (!initializer.length) return undefined;
+      if (initializer.some(token => Array.isArray(context.constants.get(token)))) return undefined;
+      const sequence = rawArray || !!container;
+      if (sequence && initializer[0] !== '{') return undefined;
+      const value = ConstantValues.evaluate(initializer.join(' '), {
+        language: 'cpp', bindings: context.constants, allowBraceSequence: sequence
+      });
+      const compatible = item => elementType === 'int' ? Number.isInteger(item) && item >= -2147483648 && item <= 2147483647
+        : typeof item === (elementType === 'bool' ? 'boolean' : 'string');
+      if (sequence) {
+        if (!Array.isArray(value) || !value.every(compatible)) return undefined;
+        if (rawArray && (bound.length ? ConstantValues.evaluate(bound.join(' '), { language: 'cpp', bindings: context.constants }) !== value.length : !value.length)) return undefined;
+      } else if (!compatible(value)) return undefined;
+      return value;
+    }
+
+    forgetLoopConstants(body, context) {
+      for (const [name, value] of context.constants) {
+        if (!Array.isArray(value)) context.constants.delete(name);
+      }
+      if (!context.constants.size) return;
+      // Only inspect a small body for aliases or writes; larger bodies keep
+      // symbolic iterables instead of repeatedly serializing nested statements.
+      const pending = [body];
+      let budget = 256;
+      while (pending.length && budget-- > 0) {
+        const value = pending.pop();
+        if (typeof value === 'string') context.constants.delete(value);
+        else if (Array.isArray(value)) {
+          if (value.length > budget) { context.constants.clear(); return; }
+          for (const item of value) pending.push(item);
+        } else if (value && typeof value === 'object') {
+          for (const key of ['tokens', 'condition', 'body', 'otherwise', 'catches']) {
+            if (value[key]) pending.push(value[key]);
+          }
+        }
+      }
+      if (pending.length) context.constants.clear();
     }
 
     simple(tokens, context) {
@@ -719,6 +788,7 @@
       if (this.local(tokens, context)) return;
       const assignment = split(tokens, '=', false);
       if (assignment.length === 2) {
+        for (const token of tokens) context.constants.delete(token);
         const value = this.expression(assignment[1], context), lhs = assignment[0];
         if (lhs.length === 1 && context.vars.has(lhs[0])) context.vars.set(lhs[0], value);
         else if (lhs.length === 1 && this.model.field(context.receiver.node, lhs[0])) context.receiver.fields.set(lhs[0], value);
@@ -731,7 +801,7 @@
     }
 
     snapshot(context) {
-      return { vars: new Map(context.vars), fields: new Map([...this.entities].map(entity => [entity, new Map(entity.fields)])) };
+      return { vars: new Map(context.vars), constants: new Map(context.constants), fields: new Map([...this.entities].map(entity => [entity, new Map(entity.fields)])) };
     }
 
     mergeReceiver(values, label) {
@@ -742,6 +812,7 @@
     }
 
     mergeStates(states, baseline, context) {
+      context.constants = new Map([...baseline.constants].filter(([name, value]) => states.every(state => state.constants.get(name) === value)));
       for (const name of baseline.vars.keys()) {
         context.vars.set(name, this.mergeReceiver(states.map(state => state.vars.get(name)), name));
       }
@@ -762,7 +833,7 @@
     capture(nodes, context, states) {
       const baseline = this.snapshot(context);
       const outer = this.lines; this.lines = [];
-      const branch = { ...context, vars: new Map(context.vars), fragment: true };
+      const branch = { ...context, vars: new Map(context.vars), constants: new Map(context.constants), fragment: true };
       try {
         for (const node of Array.isArray(nodes) ? nodes : [nodes]) {
           const completion = this.process(node, branch);
@@ -779,10 +850,13 @@
 
     process(node, context) {
       if (node.kind === 'block') {
-        const block = { ...context, vars: new Map(context.vars), declared: new Set() };
+        const block = { ...context, vars: new Map(context.vars), constants: new Map(context.constants), declared: new Set() };
         const result = this.walk(node.body, block);
         for (const name of context.vars.keys()) {
           if (!block.declared.has(name)) context.vars.set(name, block.vars.get(name));
+        }
+        for (const name of context.constants.keys()) {
+          if (!block.declared.has(name) && !block.constants.has(name)) context.constants.delete(name);
         }
         return result;
       }
@@ -805,7 +879,14 @@
       } else if (['for', 'while', 'do'].includes(node.kind)) {
         const baseline = this.snapshot(context);
         if (['true', '1', ';;', ';true;', ';1;'].includes(node.condition.join(''))) this.diagnostics.add('loop');
-        const loopContext = { ...context, vars: new Map(context.vars) };
+        const loopContext = { ...context, vars: new Map(context.vars), constants: new Map(context.constants) };
+        this.forgetLoopConstants(node.body, loopContext);
+        const range = node.kind === 'for' ? split(node.condition, ':', false) : [];
+        if (range.length === 2 && range[0].some(token => ['&', '&&'].includes(token))) {
+          for (const token of range[1]) loopContext.constants.delete(token);
+        }
+        const iterable = range.length === 2 && !range[0].includes('&') && !range[0].includes('&&')
+          ? ConstantValues.evaluate(range[1].join(' '), { language: 'cpp', bindings: loopContext.constants, allowBraceSequence: true }) : undefined;
         const init = split(node.condition, ';', false)[0];
         if (node.kind === 'for') this.simple(split(init, ':', false)[0], loopContext);
         const clauses = split(node.condition, ';', false);
@@ -817,8 +898,14 @@
         iteration.push({ kind: 'simple', tokens: condition });
         const body = this.capture(iteration, loopContext, states);
         this.mergeStates(states, baseline, context);
-        if (body.length) this.lines.push('loop [' + node.kind + ' (' + tokensToText(node.condition) + ')]', ...body, 'end');
+        if (body.length) {
+          const header = 'loop [' + node.kind + ' (' + tokensToText(node.condition) + ')]';
+          const retained = range[1]?.length !== 1 || states.every(state => state.constants.get(range[1][0]) === iterable);
+          this.loopConstants.record(header, retained && Array.isArray(iterable) ? iterable : undefined);
+          this.lines.push(header, ...body, 'end');
+        }
       } else if (node.kind === 'try') {
+        context.constants.clear();
         this.diagnostics.add('control', 'Exception paths');
         const body = this.capture(node.body, context);
         const handlers = node.catches.map(handler => ({ label: tokensToText(handler.condition), lines: this.capture(handler.body, context) }));
@@ -828,6 +915,7 @@
           this.lines.push('end');
         }
       } else if (node.kind === 'switch') {
+        context.constants.clear();
         this.diagnostics.add('control', 'Switch fall-through');
         this.expression(node.condition, context);
         const tokens = node.body.body || [], branches = [];
@@ -883,7 +971,8 @@
       sequenceFailed = true;
       errors.push(error.message);
     }
-    return { ...classDiagramResult(model, options), ...sequence.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }), errors };
+    return { ...classDiagramResult(model, options), ...sequence.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }),
+      sequenceLoopConstants: sequenceFailed ? [] : sequence.loopConstants.toJSON(), errors };
   }
 
   if (typeof module !== 'undefined' && module.exports) module.exports = { analyzeCppSources };

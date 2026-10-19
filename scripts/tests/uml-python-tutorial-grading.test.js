@@ -258,6 +258,7 @@ test('class capstone recognizes extracted Product progress without passing the u
 test('the association example retains its arrow but loses multiplicity when only its attribute annotation is removed', () => {
   const context = {};
   vm.runInNewContext(fs.readFileSync(path.join(root, 'js/uml-sequence-diagnostics.js'), 'utf8'), context);
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'js/uml-constant-values.js'), 'utf8'), context);
   vm.runInNewContext(fs.readFileSync(path.join(root, 'js/uml-analyzer-python.js'), 'utf8'), context);
   const source = studentSource('class', 5);
   const original = context.analyzePythonSources({ 'enrollment.py': source });

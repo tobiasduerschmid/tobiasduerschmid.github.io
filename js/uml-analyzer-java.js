@@ -18,6 +18,8 @@
   'use strict';
   const SequenceDiagnostics = typeof module !== 'undefined' && module.exports
     ? require('./uml-sequence-diagnostics.js') : global.UMLSequenceDiagnostics;
+  const ConstantValues = typeof module !== 'undefined' && module.exports
+    ? require('./uml-constant-values.js') : global.UMLConstantValues;
 
   /* ===================================================================
    * Main entry point
@@ -71,6 +73,7 @@
       classDiagram: classDiagram,
       constructionMethods: extractor.constructionMethods,
       ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }),
+      sequenceLoopConstants: sequenceFailed ? [] : seqGen.loopConstants.toJSON(),
       errors: errors
     };
   }
@@ -1378,6 +1381,8 @@
 
   function JavaSequenceDiagramGenerator(parsedFiles, extractor, allTypeNames, errors) {
     this.diagnostics = new SequenceDiagnostics();
+    this.loopConstants = new ConstantValues.LoopFacts();
+    this._constants = new Map();
     this._constructedObjects = new WeakMap();
     this.parsedFiles  = parsedFiles;
     this.classMethods = extractor.classMethods;
@@ -1629,6 +1634,7 @@
     if (i >= tokens.length || tokens[i].type !== 'ident') return this._skipToSemicolon(tokens, i);
     var varName = tokens[i].value;
     i++;
+    this._constantDeclaration(typeStr, varName, tokens.slice(i, this._findSemicolon(tokens, i)));
 
     // Track type
     var resolved = _extractBaseTypeName(typeStr, this.allTypeNames);
@@ -1689,6 +1695,35 @@
   };
 
   /* ── Expression statement ──────────────────────────────────── */
+
+  JavaSequenceDiagramGenerator.prototype._constantDeclaration = function (type, name, initializer) {
+    const array = type.endsWith('[]');
+    const elementType = array ? type.slice(0, -2) : type;
+    const expression = initializer[0]?.value === '=' ? initializer.slice(1) : [];
+    const aliased = expression.some(token => Array.isArray(this._constants.get(token.value)));
+    // Adjacent punctuation tokens could be ++/-- in the original source;
+    // joining them with spaces must not turn updates into unary arithmetic.
+    const writes = expression.some((token, index) => token.value === '=' ||
+      ['+', '-'].includes(token.value) && expression[index + 1]?.value === token.value);
+    const value = expression.length <= 128 && !aliased && !writes && ['int', 'boolean', 'String', 'java.lang.String'].includes(elementType)
+      ? ConstantValues.evaluate(expression.map(token => token.value).join(' '), {
+        language: 'java', bindings: this._constants, allowBraceSequence: array
+      }) : undefined;
+    for (const token of expression) if (Array.isArray(this._constants.get(token.value))) this._constants.delete(token.value);
+    this._constants.delete(name);
+    const compatible = item => elementType === 'int' ? Number.isInteger(item) && item >= -2147483648 && item <= 2147483647
+      : typeof item === (elementType === 'boolean' ? 'boolean' : 'string');
+    if (value !== undefined && (array ? Array.isArray(value) && value.every(compatible) : !Array.isArray(value) && compatible(value))) this._constants.set(name, value);
+  };
+
+  JavaSequenceDiagramGenerator.prototype._forgetLoopConstants = function (tokens) {
+    if (!this._constants.size) return;
+    if (tokens.length > 256) { this._constants.clear(); return; }
+    const names = new Set(tokens.map(token => token.value));
+    for (const [name, value] of this._constants) {
+      if (!Array.isArray(value) || names.has(name)) this._constants.delete(name);
+    }
+  };
 
   JavaSequenceDiagramGenerator.prototype._bindReceiver = function (name, expression) {
     // Copy object identity, not the source variable: later rebinding must not
@@ -1765,7 +1800,7 @@
     const header = this._extractParenContents(tokens, i);
     i = header.endIdx;
     if (['true', ';;', ';true;'].includes(header.tokens.map(token => token.value).join(''))) this.diagnostics.add('loop');
-    let condition = header.tokens, increment = [];
+    let condition = header.tokens, increment = [], range = [];
     if (keyword === 'for') {
       const clauses = splitSequenceTokens(header.tokens, ';');
       if (clauses.length === 3) {
@@ -1773,7 +1808,7 @@
         condition = clauses[1];
         increment = clauses[2];
       } else {
-        const range = splitSequenceTokens(header.tokens, ':');
+        range = splitSequenceTokens(header.tokens, ':');
         if (range.length === 2) this._scanTokensForCalls(range[1], caller, depth);
         else this.diagnostics.add('unsupported', 'Unrecognized for-loop header');
         this._inferForEachType(header.tokens, caller);
@@ -1781,13 +1816,24 @@
       }
     }
     this._scanTokensForCalls(condition, caller, depth);
-    const states = [this._captureBindings()];
     const body = this._extractBlock(tokens, i);
+    this._forgetLoopConstants(body.tokens);
+    this._forgetLoopConstants(increment);
+    this._forgetLoopConstants(condition);
+    const iterable = range.length === 2 ? ConstantValues.evaluate(range[1].map(token => token.value).join(' '), {
+      language: 'java', bindings: this._constants
+    }) : undefined;
+    const states = [this._captureBindings()];
     const separator = { type: 'punct', value: ';' };
     const iteration = body.tokens.concat(separator, increment, separator, condition);
     const bodyLines = this._collectFragmentLines(iteration, caller, depth, states);
     const label = keyword + ' (' + header.tokens.map(token => token.value).join(' ') + ')';
-    if (this._anyMessages(bodyLines)) this.lines.push('loop [' + label + ']', ...bodyLines, 'end');
+    if (this._anyMessages(bodyLines)) {
+      const rawHeader = 'loop [' + label + ']';
+      const retained = range[1]?.length !== 1 || states.every(state => state.constants.get(range[1][0].value) === iterable);
+      this.loopConstants.record(rawHeader, retained && Array.isArray(iterable) ? iterable : undefined);
+      this.lines.push(rawHeader, ...bodyLines, 'end');
+    }
     else this.lines.push(...bodyLines);
     this._mergeBindings(states, scope);
     return body.endIdx;
@@ -1798,6 +1844,7 @@
     const states = [];
     i++; // skip 'do'
     var bodyResult = this._extractBlock(tokens, i);
+    this._forgetLoopConstants(bodyResult.tokens);
     i = bodyResult.endIdx;
 
     var label = 'do-while';
@@ -1808,6 +1855,7 @@
       i = condResult.endIdx;
       label = 'do-while (' + condResult.tokens.map(function (t) { return t.value; }).join(' ') + ')';
     }
+    this._forgetLoopConstants(condResult?.tokens || []);
     if (i < tokens.length && tokens[i].value === ';') i++;
 
     var bodyLines = this._collectFragmentLines(bodyResult.tokens.concat({ type: 'punct', value: ';' }, condResult?.tokens || []), caller, depth, states);
@@ -1825,6 +1873,7 @@
   /* ── Try/catch → combined fragment ─────────────────────────── */
 
   JavaSequenceDiagramGenerator.prototype._processTry = function (tokens, i, caller, depth) {
+    this._constants.clear();
     this.diagnostics.add('control', 'Exception paths');
     i++; // skip 'try'
     // Skip try-with-resources parens
@@ -1885,12 +1934,14 @@
     }
 
     if (finallyTokens) this._processTokenBlock(finallyTokens, caller, depth);
+    this._constants.clear();
     return i;
   };
 
   /* ── Switch → alt fragment ─────────────────────────────────── */
 
   JavaSequenceDiagramGenerator.prototype._processSwitch = function (tokens, i, caller, depth) {
+    this._constants.clear();
     this.diagnostics.add('control', 'Switch fall-through');
     i++; // skip 'switch'
     var condResult = this._extractParenContents(tokens, i);
@@ -1956,6 +2007,13 @@
 
   JavaSequenceDiagramGenerator.prototype._scanTokensForCalls = function (tokens, caller, depth) {
     if (++this._statementVisits > 2000) throw new SequenceLimitError();
+    // This tokenizer keeps Java punctuation as individual tokens, including
+    // ++/-- and compound assignments. Calls and writes invalidate named facts.
+    if (hasCallTokens(tokens) || tokens.some((token, index) =>
+      ['=', '->', '::'].includes(token.value) ||
+      ['+', '-'].includes(token.value) && tokens[index + 1]?.value === token.value)) {
+      for (const token of tokens) this._constants.delete(token.value);
+    }
     if (tokens.some(token => ['&&', '||', '?'].includes(token.value))) this.diagnostics.add('conditional');
     if (tokens.some(token => ['->', '::'].includes(token.value))) this.diagnostics.add('deferred', 'Lambda or method reference');
     for (var i = 0; i < tokens.length; i++) {
@@ -2192,10 +2250,12 @@
     var savedVarTypes = {};
     for (var v in this.varTypes) savedVarTypes[v] = this.varTypes[v];
     var savedReceiverIds = this._receiverIds;
+    const savedConstants = this._constants;
 
     // Seed with parameter types
     this.varTypes = {};
     this._receiverIds = {};
+    this._constants = new Map();
     var pt = (this.paramTypes[clsName] || {})[methodName];
     if (pt) { for (var p in pt) this.varTypes[p] = pt[p]; }
     const parameters = (this.methodParams[clsName] || {})[methodName] || [];
@@ -2210,6 +2270,7 @@
     finally {
       this.varTypes = savedVarTypes;
       this._receiverIds = savedReceiverIds;
+      this._constants = savedConstants;
       this._callStack.delete(key);
     }
   };
@@ -2323,15 +2384,17 @@
   /* ── Fragment helpers ──────────────────────────────────────── */
 
   JavaSequenceDiagramGenerator.prototype._captureBindings = function () {
-    return { types: { ...this.varTypes }, ids: { ...this._receiverIds } };
+    return { types: { ...this.varTypes }, ids: { ...this._receiverIds }, constants: new Map(this._constants) };
   };
 
   JavaSequenceDiagramGenerator.prototype._restoreBindings = function (state) {
     this.varTypes = { ...state.types };
     this._receiverIds = { ...state.ids };
+    this._constants = new Map(state.constants);
   };
 
   JavaSequenceDiagramGenerator.prototype._mergeBindings = function (states, baseline) {
+    this._constants = new Map([...baseline.constants].filter(([name, value]) => states.every(state => state.constants.get(name) === value)));
     this.varTypes = {};
     this._receiverIds = {};
     for (const name of Object.keys(baseline.types)) {

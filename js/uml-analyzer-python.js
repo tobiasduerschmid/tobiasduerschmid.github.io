@@ -28,6 +28,8 @@
   'use strict';
   const SequenceDiagnostics = typeof module !== 'undefined' && module.exports
     ? require('./uml-sequence-diagnostics.js') : global.UMLSequenceDiagnostics;
+  const ConstantValues = typeof module !== 'undefined' && module.exports
+    ? require('./uml-constant-values.js') : global.UMLConstantValues;
 
   /* ===================================================================
    * Main entry point
@@ -76,6 +78,7 @@
     return {
       classDiagram: classDiagram,
       constructionMethods: extractor.constructionMethods,
+      sequenceLoopConstants: seqGen.loopConstants.toJSON(),
       ...seqGen.diagnostics.result(sequenceDiagram, { failed: sequenceFailed }),
       errors: errors
     };
@@ -509,6 +512,9 @@
       if (tokens.length === 0) return null;
       var parser = new ExprParser(tokens);
       const expression = parser.parseExpr();
+      // Constant evaluation needs source spelling, not the parser's approximate
+      // numeric value (hexadecimal and large integers may lose information).
+      expression.sourceExpression = text.trim();
       if (!parser.atEnd()) expression.inferenceIncomplete = true;
       return expression;
     } catch (e) {
@@ -2004,6 +2010,9 @@
     this.classBases = {};      // {className: [baseName]}
     this._dataClasses = {};    // {className: true}
     this._buildLookups();
+    this._constantSubclassedTypes = new Set(Object.values(this.classBases).flat());
+    this._constantMethodNames = new Set(Object.values(this.classMethods).flatMap(methods => Object.keys(methods)));
+    this._constantMethodsMutable = false;
 
     // Output state
     this.participants = [];
@@ -2020,6 +2029,8 @@
     this._invocationCount = 0;
     this._callerClass = {};
     this._referencedVars = {};   // {name: true} for names read in current scope
+    this.constantBindings = new Map();
+    this.loopConstants = new ConstantValues.LoopFacts();
 
     // Recursion guard
     this._callStack = {};
@@ -2389,9 +2400,11 @@
 
   PythonSequenceDiagramGenerator.prototype._processStmt = function (stmt, caller, depth, preservePaths) {
     if (!stmt) return;
+    if (['If', 'While', 'Try', 'With', 'Unsupported', 'AugAssign'].includes(stmt.type)) this.constantBindings.clear();
     switch (stmt.type) {
       case 'Assign': this._processAssign(stmt, caller, depth); break;
       case 'AnnAssign':
+        this._rememberConstants(stmt.value, [stmt.target]);
         if (stmt.value) this._processAssignValue(stmt.value, [stmt.target], caller, depth);
         break;
       case 'AugAssign': this._scanExprForCalls(stmt.value, caller, depth); break;
@@ -2418,7 +2431,62 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._processAssign = function (stmt, caller, depth) {
+    this._rememberConstants(stmt.value, stmt.targets || []);
     this._processAssignValue(stmt.value, stmt.targets || [], caller, depth);
+  };
+
+  function constantExpressionNames(expression) {
+    const names = new Set();
+    let remaining = 128;
+    const visit = node => {
+      if (!node || typeof node !== 'object') return true;
+      if (--remaining < 0) return false;
+      if (node.type === 'Name') names.add(node.id);
+      return Object.values(node).every(value => Array.isArray(value) ? value.every(visit) : visit(value));
+    };
+    return visit(expression) ? names : null;
+  }
+
+  // Only straight-line, unescaped values are evidence for Design labels. A
+  // collection alias would require heap analysis, so discard that evidence.
+  PythonSequenceDiagramGenerator.prototype._rememberConstants = function (value, targets) {
+    if (targets.some(target => target.type === 'Attribute' && this._constantMethodNames.has(target.attr))) this._constantMethodsMutable = true;
+    if (targets.some(target => target.type !== 'Name')) { this.constantBindings.clear(); return; }
+    const names = constantExpressionNames(value);
+    if (!names) { this.constantBindings.clear(); return; }
+    const aliasesCollection = [...names].some(name => Array.isArray(this.constantBindings.get(name)));
+    const result = !aliasesCollection && !value?.inferenceIncomplete
+      ? ConstantValues.evaluate(value?.sourceExpression || '', { language: 'python', bindings: this.constantBindings }) : undefined;
+    if (aliasesCollection || targets.length > 1 && Array.isArray(result)) this.constantBindings.clear();
+    for (const target of targets) {
+      this.constantBindings.delete(target.id);
+      if (result !== undefined && !aliasesCollection && !(targets.length > 1 && Array.isArray(result))) this.constantBindings.set(target.id, result);
+    }
+  };
+
+  PythonSequenceDiagramGenerator.prototype._constantLoopBodySafe = function (stmts, iterable, caller) {
+    if (this._constantMethodsMutable) return false;
+    const names = constantExpressionNames(iterable);
+    if (!names) return false;
+    let remaining = 128;
+    const safe = node => {
+      if (!node || typeof node !== 'object') return true;
+      if (--remaining < 0) return false;
+      if (Array.isArray(node)) return node.every(safe);
+      if (node.inferenceIncomplete || ['Unsupported', 'With', 'Await', 'Lambda', 'FunctionDef', 'ClassDef',
+        'Attribute', 'Subscript', 'Assign', 'AnnAssign', 'AugAssign', 'For', 'While', 'Try'].includes(node.type)) return false;
+      if (node.type === 'Name' && names.has(node.id)) return false;
+      if (node.type !== 'Call') return Object.values(node).every(safe);
+      const resolved = this._resolveCall(node, caller);
+      const method = resolved && this._findMethodNode(resolved[0], resolved[1]);
+      // Unknown calls could capture a module variable. Only demonstrably
+      // inert methods may run while a named collection is displayed as a value.
+      return Boolean(method && !method.isAsync && !method.decorators.length && !this._constantSubclassedTypes.has(resolved[0])
+        && method.body.length <= 32 && method.body.every(statement => statement.type === 'Pass' || statement.type === 'Return'
+          && (!statement.value || statement.value.type === 'Constant' && !statement.value.isFString))
+        && safe(node.func.value) && safe(node.args) && safe(node.keywords));
+    };
+    return safe(stmts);
   };
 
   // Resolve object expressions independently of call syntax. Bindings are local
@@ -2490,6 +2558,7 @@
 
   PythonSequenceDiagramGenerator.prototype._processAssignValue = function (value, targets, caller, depth) {
     if (value && value.type === 'Call') {
+      this.constantBindings.clear();
       const resolved = this._resolveCall(value, caller);
       if (resolved) {
         const [clsName, method] = resolved;
@@ -2550,12 +2619,14 @@
   PythonSequenceDiagramGenerator.prototype._scopeSnapshot = function () {
     const fields = {};
     for (const owner in this.fieldBindings) fields[owner] = Object.assign({}, this.fieldBindings[owner]);
-    return { types: Object.assign({}, this.varTypes), participants: Object.assign({}, this.varParticipants), fields: fields };
+    return { types: Object.assign({}, this.varTypes), participants: Object.assign({}, this.varParticipants), fields: fields,
+      constants: new Map(this.constantBindings) };
   };
 
   PythonSequenceDiagramGenerator.prototype._restoreScope = function (scope, preserveFields) {
     this.varTypes = Object.assign({}, scope.types);
     this.varParticipants = Object.assign({}, scope.participants);
+    this.constantBindings = new Map(scope.constants);
     if (!preserveFields) {
       this.fieldBindings = {};
       for (const owner in scope.fields) this.fieldBindings[owner] = Object.assign({}, scope.fields[owner]);
@@ -2563,6 +2634,7 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._mergeScopes = function (scopes) {
+    this.constantBindings.clear();
     this.varTypes = {};
     this.varParticipants = {};
     var baseline = scopes[0];
@@ -2731,11 +2803,18 @@
 
   PythonSequenceDiagramGenerator.prototype._processFor = function (stmt, caller, depth) {
     this._scanExprForCalls(stmt.iter, caller, depth);
+    const header = 'loop [for ' + unparse(stmt.target, caller) + ' in ' + unparse(stmt.iter, caller) + ']';
+    const iterable = !stmt.iter?.inferenceIncomplete && this._constantLoopBodySafe(stmt.body, stmt.iter, caller)
+      ? ConstantValues.evaluate(stmt.iter?.sourceExpression || '', { language: 'python', bindings: this.constantBindings }) : undefined;
+    this.loopConstants.record(header, Array.isArray(iterable) ? iterable : undefined);
+    // A later iteration may see writes from the earlier body. Do not reuse
+    // entry facts for nested loops; fresh body assignments can establish them.
+    this.constantBindings.clear();
     const originalScope = this._scopeSnapshot();
     if (stmt.target) this._assignBinding(stmt.target, null, caller);
     this._inferLoopVarType(stmt, caller);
     const body = this._collectFragment(stmt.body, caller, depth, true);
-    return this._loopFlow(body, originalScope, 'loop [for ' + unparse(stmt.target, caller) + ' in ' + unparse(stmt.iter, caller) + ']');
+    return this._loopFlow(body, originalScope, header);
   };
 
   PythonSequenceDiagramGenerator.prototype._processWhile = function (stmt, caller, depth) {
@@ -2777,6 +2856,7 @@
   // ── Call processing ──────────────────────────────────────────────
 
   PythonSequenceDiagramGenerator.prototype._scanCallInputs = function (call, caller, depth) {
+    this.constantBindings.clear();
     // Python evaluates the receiver before arguments, then invokes the method.
     // Keep each evaluated binding: later arguments may replace the source field.
     const evaluate = expression => this._scanExprForCalls(expression, caller, depth)
@@ -2972,6 +3052,7 @@
     var savedRefs = this._referencedVars;
     this.varTypes = {};
     this.varParticipants = bindings.participants;
+    this.constantBindings = new Map();
     this._scopeIdentity = ++this._invocationCount;
 
     var pt = (this.paramTypes[clsName] || {})[methodName] || {};
@@ -3066,6 +3147,9 @@
   PythonSequenceDiagramGenerator.prototype._scanExprForCalls = function (node, caller, depth) {
     if (++this._sequenceVisits > 2000) throw new PythonSequenceLimitError();
     if (!node) return;
+    // Attribute/subscript reads may invoke user code through descriptors or
+    // __getitem__; without an effect proof they end a constant region.
+    if (['Attribute', 'Subscript', 'Await'].includes(node.type) || node.inferenceIncomplete) this.constantBindings.clear();
     if (node.inferenceIncomplete) this.diagnostics.add('unsupported', 'Expression is only partly parsed');
     if (node.type === 'Lambda') {
       this.diagnostics.add('deferred', 'Lambda body is omitted');

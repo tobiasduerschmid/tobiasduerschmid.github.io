@@ -425,7 +425,9 @@
     const range = topLevelParts(body, separator);
     if (range.length === 2) {
       const binder = language === 'python' ? format(range[0]) : bindingName(range[0]);
-      if (binder) return 'for each ' + binder + ' in ' + (language === 'js' && separator === 'in' ? 'keys of ' : '') + iterableExpression(range[1], options);
+      const keys = language === 'js' && separator === 'in';
+      if (binder) return 'for each ' + binder + ' in ' + (keys ? 'keys of ' : '') +
+        (!keys && typeof options.knownIterable === 'string' ? options.knownIterable : iterableExpression(range[1], options));
     }
     // Older analyzer results may contain only the condition of a C-style loop.
     // It cannot be expanded without inventing the omitted initialization/update.

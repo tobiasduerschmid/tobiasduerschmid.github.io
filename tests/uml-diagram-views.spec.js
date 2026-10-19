@@ -8,6 +8,17 @@ const chapter = '/SEBook/uml_class_diagram.html';
 const visibilityLab = page => page.getByRole('region', { name: 'UML code lab: Member visibility', exact: true });
 const viewButton = (scope, name) => scope.getByRole('button', { name, exact: true });
 
+async function replaceChapterCode(lab, language, source) {
+  const editor = lab.locator('[data-uml-editor]').getByRole('textbox', { name: `${language} code` });
+  await editor.focus();
+  await selectAllInMonaco(editor);
+  // Monaco's public paste action preserves source spelling and indentation.
+  await editor.evaluate((element, text) => {
+    const instance = window.monaco.editor.getEditors().find(candidate => candidate.getDomNode().contains(element));
+    instance.trigger('keyboard', 'paste', { text });
+  }, source);
+}
+
 test('chapter views abstract the same code and restore its implementation details', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -86,15 +97,8 @@ test('sequence views abstract a loop without changing its source or calls', asyn
   for (const language of ['Python', 'Java', 'TypeScript']) {
     await lab.getByRole('tab', { name: language, exact: true }).click();
     if (language === 'Python') {
-      const editor = lab.locator('[data-uml-editor]').getByRole('textbox', { name: /Python code/ });
       const singleQuoted = (await source.inputValue()).replace('["book", "pen"]', "['book', 'pen']");
-      await editor.focus();
-      await selectAllInMonaco(editor);
-      // Paste keeps the learner's exact literal spelling and indentation.
-      await editor.evaluate((element, text) => {
-        const instance = window.monaco.editor.getEditors().find(candidate => candidate.getDomNode().contains(element));
-        instance.trigger('keyboard', 'paste', { text });
-      }, singleQuoted);
+      await replaceChapterCode(lab, language, singleQuoted);
       await expect(diagram).toContainText("for item in ['book', 'pen']", { timeout: 15_000 });
     } else {
       await expect(diagram).toContainText(language === 'Java' ? 'for (String item' : 'for item of');
@@ -111,6 +115,65 @@ test('sequence views abstract a loop without changing its source or calls', asyn
     await expect(diagram).toHaveText(originalDiagram);
     await expect(source).toHaveValue(originalSource);
   }
+});
+
+test('known local sequences fold in all four languages while switching views preserves code', async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.goto('/SEBook/uml_sequence_diagram.html');
+  const lab = page.getByRole('region', { name: 'UML code lab: The loop boundary matters', exact: true });
+  const diagram = lab.getByRole('img');
+  const examples = [
+    ['Python', `class Sink:
+    def consume(self, value: int) -> None:
+        pass
+sink = Sink()
+first = 3 - 2
+items = [first, first + 1]
+for item in items:
+    sink.consume(item)
+`],
+    ['Java', `class Sink { void consume(int value) {} }
+class Main { public static void main(String[] args) {
+    Sink sink = new Sink();
+    int first = 3 - 2;
+    int[] items = {first, first + 1};
+    for (int item : items) { sink.consume(item); }
+} }`],
+    ['C++', `#include <vector>
+class Sink { public: void consume(int value) {} };
+int main() {
+    Sink sink;
+    int first = 3 - 2;
+    std::vector<int> items = {first, first + 1};
+    for (int item : items) { sink.consume(item); }
+}`],
+    ['TypeScript', `class Sink { consume(value: number): void {} }
+const sink = new Sink();
+const first = 3 - 2;
+const items = [first, first + 1];
+for (const item of items) { sink.consume(item); }`]
+  ];
+  const timings = [];
+  for (const [language, template] of examples) {
+    const method = 'consume' + language.replace(/\W/g, '');
+    const code = template.replaceAll('consume', method);
+    await lab.getByRole('tab', { name: language, exact: true }).click();
+    const editStart = performance.now();
+    await replaceChapterCode(lab, language, code);
+    await expect(diagram).toHaveAccessibleName(new RegExp(method + '\\(item\\)'), { timeout: 15_000 });
+    const analyzedAfterMs = Math.round(performance.now() - editStart);
+    const implementation = await diagram.textContent();
+    const viewStart = performance.now();
+    await viewButton(lab, 'Design focus').click();
+    await expect(diagram).toContainText('for each item in [1, 2]');
+    const designAfterMs = Math.round(performance.now() - viewStart);
+    await expect(lab.locator('[data-uml-source]')).toHaveValue(code);
+    await viewButton(lab, 'Implementation details').click();
+    await expect(diagram).toHaveText(implementation);
+    timings.push({ language, analyzedAfterMs, designAfterMs });
+  }
+  // Timing evidence is recorded, not compared to a flaky machine-speed oracle.
+  await test.info().attach('uml-live-latency.json', { body: JSON.stringify(timings, null, 2), contentType: 'application/json' });
 });
 
 test('tutorial, fullscreen, and detached diagrams share the selected view', async ({ page }) => {

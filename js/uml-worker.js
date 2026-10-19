@@ -157,6 +157,7 @@ var loaded = { python: false, java: false, cpp: false, jsts: false, bundle: fals
 
 function ensureAnalyzer(lang) {
   if (!self.UMLSequenceDiagnostics) importScripts(resolve('uml-sequence-diagnostics.js'));
+  if (!self.UMLConstantValues) importScripts(resolve('uml-constant-values.js'));
   if (lang === 'python' && !loaded.python) {
     importScripts(resolve('uml-analyzer-python.js'));
     loaded.python = true;

@@ -216,6 +216,7 @@
         else await loadScript(assetURL('vendor/typescript/5.9.3/typescript.min.js'));
       }
       if (!global.UMLSequenceDiagnostics) await loadScript(assetURL('uml-sequence-diagnostics.js'));
+      if (!global.UMLConstantValues) await loadScript(assetURL('uml-constant-values.js'));
       if (!global[analyzer.name]) await loadScript(settings[language + 'AnalyzerPath'] || assetURL(analyzer.file));
       if (disposed) throw supersededError();
       return global[analyzer.name](sources, language === 'js' ? global.ts : options || {});

@@ -25,6 +25,7 @@ function loadClient() {
     Worker: ControlledWorker, URL, setTimeout, clearTimeout, window: {}
   });
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../../js/uml-sequence-diagnostics.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../js/uml-constant-values.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../../js/uml-analyzer-python.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../../js/uml-expression-views.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../../js/uml-diagram-views.js'), 'utf8'), context);

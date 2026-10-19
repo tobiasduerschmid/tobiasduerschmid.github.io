@@ -301,7 +301,9 @@
         line = reply[1] + (binding.length === 2
           ? binding[0] + ': ' + mapType(binding[1], context) : mapType(reply[2], context));
       }
-      let projected = expressions().projectSequence(line, expressionOptions(scoped));
+      let projected = expressions().projectSequence(line, {
+        ...expressionOptions(scoped), knownIterable: context.loopConstants.get(line)
+      });
       if (context.language === 'python' && call) {
         // Resolve the displayed operation in the receiver's class. Arguments
         // and guards remain in the caller's scope; unrelated classes must not
@@ -324,6 +326,7 @@
     if (view === 'implementation') return { ...result };
     if (view !== 'design') throw new Error('Unknown UML diagram view: ' + view);
     const context = { language: language === 'typescript' ? 'js' : language,
+      loopConstants: new Map((result.sequenceLoopConstants || []).map(fact => [fact.header, fact.iterable])),
       declaredTypes: classTypes(result.classDiagram || ''),
       constructionLines: result.constructionMethods && new Set(result.constructionMethods.map(method => method.lineIndex)),
       defaultConstructionLines: new Set((result.constructionMethods || []).filter(method => method.isDefault).map(method => method.lineIndex)),

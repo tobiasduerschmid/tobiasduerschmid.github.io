@@ -33,6 +33,14 @@ The pure `js/uml-diagram-views.js` module maps recognized type and member-name p
 assignments. UML does not prescribe an expression language; these labels use
 an SEBook pseudocode convention. The projection preserves the underlying
 control flow and call order.
+Analyzers attach `sequenceLoopConstants` evidence for bounded static constant
+folding and propagation. Design focus can show a known iterable value, such as
+`for each item in [1, 2]`, without executing the program or unrolling the loop.
+Only supported literal values and arithmetic are folded. Mutation, uncertain
+bindings, or conflicting/unknown occurrences of the same raw loop header keep
+the iterable symbolic. The raw diagram, Implementation details, and grading
+retain source expressions; source analysis owns the evidence, not the display
+formatter.
 It retains protocol behavior, relationship facts,
 diagnostics, and source maps. Java boxed primitives retain nullability as
 `Optional<…>`; C++ unsigned integers retain the nonnegative constraint as
