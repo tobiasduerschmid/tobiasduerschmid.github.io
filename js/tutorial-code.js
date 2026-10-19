@@ -519,6 +519,7 @@
     ts: 'typescript', tsx: 'jsx',
     yml: 'yaml', yaml: 'yaml', md: 'markdown',
     css: 'css', txt: 'plaintext', c: 'c', h: 'c', cpp: 'cpp',
+    cc: 'cpp', cxx: 'cpp', 'c++': 'cpp', hpp: 'cpp', hh: 'cpp', hxx: 'cpp',
     makefile: 'makefile', Makefile: 'makefile',
     pl: 'prolog', pro: 'prolog',
     java: 'java',
@@ -527,6 +528,7 @@
 
   function detectLanguage(filename) {
     if (/^[Mm]akefile$/.test(filename)) return 'makefile';
+    if (/\.C$/.test(filename)) return 'cpp';
     var ext = filename.split('.').pop().toLowerCase();
     return LANG_MAP[ext] || 'plaintext';
   }
@@ -907,7 +909,7 @@
     this._umlRefreshTimer = null;
     this._umlActiveType = options.uml_default_type === 'sequence' ? 'sequence' : 'class'; // 'class' or 'sequence'
     this._umlWatchedFiles = [];         // Set per-step from YAML uml_files
-    this._umlLanguage = 'python';      // 'python' or 'js' — auto-detected from file extensions
+    this._umlLanguage = 'python';      // Auto-detected from watched source-file extensions.
     this._umlClassLayoutPreference = options.uml_class_layout || 'portrait';
     this._umlClassLayoutDefault = this._umlClassLayoutPreference; // global fallback for per-step overrides
     this._umlHideFlags = [];             // Per-step hide flags: ['visibility'], ['multiplicity'], etc.
@@ -9454,13 +9456,15 @@
     return this._umlClient;
   };
 
-  /** Detect whether watched files are JS/TS, Java, or Python */
+  /** Detect whether watched files are JS/TS, Java, C++, or Python. */
   TutorialCode.prototype._detectUMLLanguage = function () {
     var jsExts = /\.(js|jsx|ts|tsx)$/;
     var javaExts = /\.java$/;
+    var cppExts = /\.(cpp|cc|cxx|c\+\+|hpp|hh|hxx|h|C)$/;
     var hasJS = this._umlWatchedFiles.some(function (f) { return jsExts.test(f); });
     var hasJava = this._umlWatchedFiles.some(function (f) { return javaExts.test(f); });
-    this._umlLanguage = hasJS ? 'js' : hasJava ? 'java' : 'python';
+    var hasCpp = this._umlWatchedFiles.some(function (f) { return cppExts.test(f); });
+    this._umlLanguage = hasJS ? 'js' : hasJava ? 'java' : hasCpp ? 'cpp' : 'python';
     return this._umlLanguage;
   };
 
@@ -9495,8 +9499,8 @@
         sources[filename] = entry.model.getValue();
         pending--;
         if (pending === 0) onSourcesReady();
-      } else if ((lang === 'python' || lang === 'java') && self._worker) {
-        // Python/Java files: fallback to worker FS
+      } else if ((lang === 'python' || lang === 'java' || lang === 'cpp') && self._worker) {
+        // Compiled/Python source files: fallback to the backend worker FS.
         self._postWorker({ type: 'read', path: '/tutorial/' + filename }, function (msg) {
           if (msg.type === 'read_ok') {
             sources[filename] = msg.content;
@@ -9505,7 +9509,7 @@
           if (pending === 0) onSourcesReady();
         });
       } else {
-        // JS/TS file not in editor — skip it
+        // No available backend file source — skip it.
         pending--;
         if (pending === 0) onSourcesReady();
       }

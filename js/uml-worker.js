@@ -2,7 +2,7 @@
  * UML analysis + rendering worker.
  *
  * Two responsibilities:
- *   (1) Run the pure-JS UML analyzers (Python / Java / JS-TS) — produces
+ *   (1) Run the pure-JS UML analyzers (Python / Java / C++ / JS-TS) — produces
  *       PlantUML-style diagram syntax strings.
  *   (2) Run the ArchUML renderer (uml-bundle.js) to turn that syntax into
  *       an SVG **string**. The main thread injects the string into the DOM
@@ -153,7 +153,7 @@ self.requestAnimationFrame = self.requestAnimationFrame || function (cb) {
 self.cancelAnimationFrame = self.cancelAnimationFrame || function (id) { clearTimeout(id); };
 
 // ─── Lazy loaders ──────────────────────────────────────────────────────
-var loaded = { python: false, java: false, jsts: false, bundle: false };
+var loaded = { python: false, java: false, cpp: false, jsts: false, bundle: false };
 
 function ensureAnalyzer(lang) {
   if (lang === 'python' && !loaded.python) {
@@ -162,6 +162,9 @@ function ensureAnalyzer(lang) {
   } else if (lang === 'java' && !loaded.java) {
     importScripts(resolve('uml-analyzer-java.js'));
     loaded.java = true;
+  } else if (lang === 'cpp' && !loaded.cpp) {
+    importScripts(resolve('uml-analyzer-cpp.js'));
+    loaded.cpp = true;
   } else if (lang === 'js' && !loaded.jsts) {
     if (!self.SEBookWorkerScriptIntegrity) {
       importScripts('/js/vendor/worker-script-integrity.js');
@@ -201,6 +204,7 @@ function handleAnalyze(msg) {
     var result;
     if (lang === 'python')      result = self.analyzePythonSources(sources, options);
     else if (lang === 'java')   result = self.analyzeJavaSources(sources);
+    else if (lang === 'cpp')    result = self.analyzeCppSources(sources, options);
     else if (lang === 'js')     result = self.analyzeJSSources(sources, self.ts);
     else throw new Error('Unknown UML language: ' + lang);
     self.postMessage({ type: 'analysis', id: id, ok: true, result: result });

@@ -37,3 +37,23 @@ test('implicit lifelines are counted once across repeated calls and later declar
   const participants = verbose.sections.find(section => section.heading === 'Participants').items;
   assert.deepEqual(Array.from(participants).sort(), ['Main', 'Service']);
 });
+
+test('separate optional frames with equal guards stay distinct in text alternatives', () => {
+  const source = `opt [accepted]
+checkout -> payment: approve()
+checkout -> payment: record()
+end
+opt [accepted]
+checkout -> payment: decline()
+end`;
+  const summary = descriptions.describe('sequence', source);
+  const verbose = descriptions.describeVerbose('sequence', source);
+  const messages = verbose.sections.find(section => section.heading === 'Messages').items.join('; ');
+  for (const text of [summary, messages]) {
+    assert.equal((text.match(/in optional fragment \[accepted\]/g) || []).length, 2);
+    assert.match(text, /optional fragment \[accepted\], checkout calls payment with "approve\(\)"/);
+    assert.match(text, /optional fragment \[accepted\], checkout calls payment with "decline\(\)"/);
+  }
+  const fragments = verbose.sections.find(section => section.heading === 'Combined fragments').items;
+  assert.equal(fragments.length, 2);
+});

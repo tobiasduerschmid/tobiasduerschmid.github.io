@@ -3,6 +3,7 @@
   'use strict';
   const vs = new URL('vendor/monaco-editor/0.44.0/min/vs', document.currentScript.src).href;
   let loading;
+  const languageLoads = new Map();
 
   function load() {
     if (global.monaco && global.monaco.editor) return Promise.resolve(global.monaco);
@@ -26,5 +27,20 @@
     return loading;
   }
 
-  global.SEBookMonaco = { load };
+  function loadLanguages(languages) {
+    return load().then(monaco => Promise.all(languages.map(language => {
+      if (!languageLoads.has(language)) {
+        // editor.main only registers lazy language factories. Colorize waits
+        // for the actual tokenizer, so an immediate edit cannot race its load.
+        const ready = monaco.editor.colorize(' ', language, {}).catch(error => {
+          languageLoads.delete(language);
+          throw error;
+        });
+        languageLoads.set(language, ready);
+      }
+      return languageLoads.get(language);
+    })).then(() => monaco));
+  }
+
+  global.SEBookMonaco = { load, loadLanguages };
 })(window);

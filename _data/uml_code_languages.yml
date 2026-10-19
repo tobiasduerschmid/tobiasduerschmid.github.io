@@ -1,0 +1,9 @@
+- id: python
+  label: Python
+  filename: example.py
+- id: java
+  label: Java
+  filename: Example.java
+- id: cpp
+  label: C++
+  filename: example.cpp

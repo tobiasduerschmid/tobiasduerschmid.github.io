@@ -2087,7 +2087,13 @@ channel.
   chapter editors. Load it before `tutorial-code.js`; the tutorial calls
   `SEBookMonaco.load()` after its xterm prerequisites, then registers its
   additional language grammars and themes as before. Chapter labs start in
-  Python and expose only Python/Java with the built-in language grammars.
+  Python and expose Python/Java/C++ with the built-in language grammars.
+  Chapter hosts use `loadLanguages(ids)` to await their lazy tokenizers before
+  creating editors. It warms each grammar once with Monaco's public colorizer;
+  tutorial `load()` keeps its existing custom-language registration sequence.
+  Chapter editors also refresh visible model tokens with `colorizeModelLine`
+  after edits, language switches, and scrolling so highlighting does not wait
+  for Monaco's idle background tokenization.
 
 - **`js/uml-live.js`** — shared source-to-UML client for tutorials and SEBook
   chapter labs. Load it before `tutorial-code.js`. `createClient()` owns lazy
@@ -2095,9 +2101,22 @@ channel.
   measurement, atomic SVG replacement and accessible descriptions; dispose it when the
   tutorial is destroyed. The tutorial supplies source snapshots, hide flags,
   layout preference and stale-result guards, then applies its own colors and
-  zoom. Chapter controls in `uml-code-lab.js` expose Java/Python only; tutorial
+  zoom. Chapter controls in `uml-code-lab.js` expose Python/Java/C++; tutorial
   JavaScript/TypeScript support remains unchanged. Both hosts use the same
   `uml-worker.js` and analyzers. See `docs/uml-code-labs.md` for the contract.
+  Sequence calls to known instances preserve the named receiver, even when
+  several objects share a class; self-calls stay on the current lifeline.
+  Java preserves known object identity through simple reference declarations
+  and assignments; bindings are scoped to each followed method.
+  Diagram text alternatives distinguish separate fragments with equal guards
+  and preserve unspecified multiplicities rather than inventing a bound.
+  `uml-analyzer-cpp.js` uses Java's lightweight parser/inference approach for
+  C++ classes, access sections, ownership hints, and a bounded call walk from
+  free `main()`. Supply headers and source files together via `uml_files`;
+  `.cpp/.cc/.cxx/.c++/.C/.hpp/.hh/.hxx/.h` select C++. Includes/macros are not
+  expanded, templates are not instantiated, and code is never executed.
+  The editor detects C++ for the C++-specific extensions as well; ambiguous
+  `.h` retains the existing C grammar unless the file specifies `language: cpp`.
   The shared UML editor include waits for its selected diagram renderer at
   startup; a missing optional type must not block the available types.
 

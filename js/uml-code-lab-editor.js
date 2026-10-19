@@ -2,12 +2,23 @@
 (function (global) {
   'use strict';
 
-  function create(source, host) {
+  function create(source, host, languages) {
     let editor;
     let language = 'python';
     let label = 'Python code';
     let destroyed = false;
     let syncing = false;
+
+    function refreshVisibleSyntax() {
+      if (!editor) return;
+      const model = editor.getModel();
+      const ranges = editor.getVisibleRanges();
+      const lastLine = Math.min(model.getLineCount(), ranges.length
+        ? ranges[ranges.length - 1].endLineNumber : source.rows);
+      // Monaco defers background tokenization until idle. Its public line
+      // colorizer updates the model's tokens synchronously for this viewport.
+      global.monaco.editor.colorizeModelLine(model, lastLine);
+    }
 
     function updateAppearance() {
       if (!editor) return;
@@ -33,9 +44,10 @@
       editor.updateOptions({ ariaLabel: label + '. Press Escape to leave the editor.' });
       syncing = false;
       updateAppearance();
+      refreshVisibleSyntax();
     }
 
-    global.SEBookMonaco.load().then(monaco => {
+    global.SEBookMonaco.loadLanguages(languages).then(monaco => {
       if (destroyed) return;
       const focused = document.activeElement === source;
       const selection = [source.selectionStart, source.selectionEnd];
@@ -62,15 +74,18 @@
       global.SebookMonacoFocusExit.attach(editor);
       editor.onDidChangeModelContent(() => {
         if (syncing) return;
+        refreshVisibleSyntax();
         source.value = editor.getValue();
         source.dispatchEvent(new Event('input', { bubbles: true }));
       });
+      editor.onDidScrollChange(refreshVisibleSyntax);
       editor.onDidCompositionStart(() => source.dispatchEvent(new Event('compositionstart')));
       editor.onDidCompositionEnd(() => source.dispatchEvent(new Event('compositionend')));
       source.hidden = true;
       themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
       sizeObserver.observe(host.parentElement);
       updateAppearance();
+      refreshVisibleSyntax();
       if (focused) {
         const model = editor.getModel();
         const start = model.getPositionAt(selection[0]);

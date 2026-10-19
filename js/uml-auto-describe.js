@@ -23,10 +23,10 @@
   }
 
   function formatMultValue(m) {
-    if (!m) return 'one';
+    if (!m) return 'unspecified';
     switch (m) {
       case '*':
-      case '0..*': return 'many';
+      case '0..*': return 'zero or more';
       case '1..*': return 'one or more';
       case '0..1': return 'zero or one';
       case '1':    return 'one';
@@ -178,7 +178,7 @@
   }
 
   function fragmentSignature(stack) {
-    return stack.map(function (f) { return f.kind + ':' + f.label; }).join('|');
+    return stack.map(function (f) { return f.id + ':' + f.kind + ':' + f.label; }).join('|');
   }
 
   function fragmentPrefix(stack) {
@@ -197,12 +197,13 @@
     var participantIds = Object.create(null);
     var messages = [];
     var stack = [];
+    var nextFragmentId = 0;
     String(spec || '').split('\n').forEach(function (raw) {
       var line = raw.trim();
       if (!line) return;
       var m;
       if ((m = line.match(SEQ_FRAGMENT_OPEN))) {
-        stack.push({ kind: m[1].toLowerCase(), label: (m[2] || '').trim() });
+        stack.push({ id: nextFragmentId++, kind: m[1].toLowerCase(), label: (m[2] || '').trim() });
         return;
       }
       if ((m = line.match(SEQ_FRAGMENT_ELSE))) {
@@ -224,7 +225,7 @@
       if ((m = line.match(/^(\w+|o)\s*(->>|->|-->|<<-|<-|<--)\s*(\w+)\s*(?::\s*(.+))?$/))) {
         // Deep-copy frames so a later `else` that mutates the live stack
         // doesn't retroactively rewrite this message's branch label.
-        var frozenPath = stack.map(function (f) { return { kind: f.kind, label: f.label }; });
+        var frozenPath = stack.map(function (f) { return { id: f.id, kind: f.kind, label: f.label }; });
         messages.push({
           from: m[1], arrow: m[2], to: m[3],
           text: m[4] && m[4].trim(),
@@ -794,10 +795,11 @@
     var seenFragments = Object.create(null);
     messages.forEach(function (m) {
       m.fragmentPath.forEach(function (f) {
-        var key = fragmentLabel(f.kind, f.label);
+        // Equal guards can belong to separate source constructs.
+        var key = fragmentSignature([f]);
         if (!seenFragments[key]) {
           seenFragments[key] = true;
-          fragmentItems.push(key);
+          fragmentItems.push(fragmentLabel(f.kind, f.label));
         }
       });
     });

@@ -1323,6 +1323,7 @@
     this._participantSet = new Set();
     this.lines           = [];
     this.varTypes        = {};
+    this._receiverIds     = {};
     this._callerClass    = {};
     this._callStack      = new Set();
   }
@@ -1506,6 +1507,7 @@
     // Track type
     var resolved = _extractBaseTypeName(typeStr, this.allTypeNames);
     if (resolved) this.varTypes[varName] = resolved;
+    delete this._receiverIds[varName];
 
     // Check for initializer
     if (i < tokens.length && tokens[i].value === '=') {
@@ -1520,6 +1522,7 @@
             this._callerClass[varName] = clsName;
             if (!this._dataClasses.has(clsName)) {
               this._ensureParticipant(varName, clsName);
+              this._receiverIds[varName] = varName;
               this.lines.push('create ' + varName);
               this.lines.push(caller + ' --> ' + varName + ': <<create>>');
               this.lines.push('activate ' + varName);
@@ -1549,6 +1552,7 @@
       // Other initializer — scan for method calls
       var exprEnd = this._findSemicolon(tokens, i);
       this._scanTokensForCalls(tokens.slice(i, exprEnd), caller, depth);
+      this._bindReceiver(varName, tokens.slice(i, exprEnd));
       return exprEnd < tokens.length ? exprEnd + 1 : tokens.length;
     }
 
@@ -1557,10 +1561,22 @@
 
   /* ── Expression statement ──────────────────────────────────── */
 
+  JavaSequenceDiagramGenerator.prototype._bindReceiver = function (name, expression) {
+    // Copy object identity, not the source variable: later rebinding must not
+    // redirect aliases that already refer to the previous object.
+    var receiver = expression.length === 1 && expression[0].type === 'ident'
+      ? this._receiverIds[expression[0].value] : null;
+    if (receiver) this._receiverIds[name] = receiver;
+    else delete this._receiverIds[name];
+  };
+
   JavaSequenceDiagramGenerator.prototype._processExprStmt = function (tokens, i, caller, depth) {
     var end = this._findStmtEnd(tokens, i);
     var stmtTokens = tokens.slice(i, end);
     this._scanTokensForCalls(stmtTokens, caller, depth);
+    if (stmtTokens.length >= 3 && stmtTokens[0].type === 'ident' && stmtTokens[1].value === '=') {
+      this._bindReceiver(stmtTokens[0].value, stmtTokens.slice(2));
+    }
     return end < tokens.length && tokens[end].value === ';' ? end + 1 : end;
   };
 
@@ -1894,7 +1910,7 @@
         var method = tokens[i + 2].value;
         var cc = this._classOf(caller);
         if (cc) {
-          this._emitCall(caller, cc, method, tokens, i + 3, depth);
+          this._emitCall(caller, cc, method, tokens, i + 3, depth, caller);
         }
         i += 3;
         continue;
@@ -1911,7 +1927,7 @@
         if (cc) {
           var parent = this._findParent(cc);
           if (parent) {
-            this._emitCall(caller, parent, method, tokens, i + 3, depth, true);
+            this._emitCall(caller, parent, method, tokens, i + 3, depth);
           }
         }
         i += 3;
@@ -1926,7 +1942,7 @@
         var callerClass = this._classOf(caller);
         var methodClass = callerClass ? this._findMethodInHierarchy(callerClass, bareMethod) : null;
         if (methodClass && !this._dataClasses.has(methodClass)) {
-          this._emitCall(caller, methodClass, bareMethod, tokens, i + 1, depth);
+          this._emitCall(caller, methodClass, bareMethod, tokens, i + 1, depth, caller);
         }
         i += 1;
         continue;
@@ -1985,11 +2001,12 @@
       clsName = parentCls;
     }
 
-    this._emitCall(caller, clsName, method, tokens, parenIdx, depth);
+    this._emitCall(caller, clsName, method, tokens, parenIdx, depth, this._receiverIds[receiver] || receiver);
   };
 
-  JavaSequenceDiagramGenerator.prototype._emitCall = function (caller, clsName, method, tokens, parenIdx, depth, isSuper) {
-    var calleeId = this._calleeIdFor(clsName, caller, null);
+  JavaSequenceDiagramGenerator.prototype._emitCall = function (caller, clsName, method, tokens, parenIdx, depth, receiver) {
+    // A known object takes precedence over the class-based fallback.
+    var calleeId = this._participantSet.has(receiver) ? receiver : this._calleeIdFor(clsName, caller, null);
     var label = method + '(';
     // Extract abbreviated args
     if (parenIdx < tokens.length && tokens[parenIdx].value === '(') {
@@ -2044,15 +2061,18 @@
     this._callStack.add(key);
     var savedVarTypes = {};
     for (var v in this.varTypes) savedVarTypes[v] = this.varTypes[v];
+    var savedReceiverIds = this._receiverIds;
 
     // Seed with parameter types
     this.varTypes = {};
+    this._receiverIds = {};
     var pt = (this.paramTypes[clsName] || {})[methodName];
     if (pt) { for (var p in pt) this.varTypes[p] = pt[p]; }
 
     this._processTokenBlock(bodyTokens, calleeId, depth + 1);
 
     this.varTypes = savedVarTypes;
+    this._receiverIds = savedReceiverIds;
     this._callStack.delete(key);
   };
 

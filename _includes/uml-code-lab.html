@@ -4,7 +4,7 @@
   <p class="uml-code-lab-title"><strong>{{ uml_lab.title | escape }}</strong></p>
   <div class="uml-code-lab-interactive" hidden>
     <div class="uml-code-lab-toolbar">
-      <label>Code language <select data-uml-language><option value="python">Python</option><option value="java">Java</option></select></label>
+      <label>Code language <select data-uml-language>{% for language in site.data.uml_code_languages %}<option value="{{ language.id }}" data-filename="{{ language.filename }}">{{ language.label | escape }}</option>{% endfor %}</select></label>
       <button type="button" data-uml-reset>Reset code</button>
     </div>
     <p data-uml-task></p>
@@ -22,12 +22,11 @@
     <div class="uml-code-lab-print-source"><p><strong data-uml-print-label>Python code</strong></p><pre><code data-uml-print-code></code></pre></div>
   </div>
   <div class="uml-code-lab-fallback">
-    <p><strong>Python</strong></p>
-    <pre><code class="language-python">{{ uml_lab.python.code | escape }}</code></pre>
-    <p>{{ uml_lab.python.task | escape }}</p>
-    <p><strong>Java</strong></p>
-    <pre><code class="language-java">{{ uml_lab.java.code | escape }}</code></pre>
-    <p>{{ uml_lab.java.task | escape }}</p>
+    {% for language in site.data.uml_code_languages %}
+    <p><strong>{{ language.label | escape }}</strong></p>
+    <pre><code class="language-{{ language.id }}">{{ uml_lab[language.id].code | escape }}</code></pre>
+    <p>{{ uml_lab[language.id].task | escape }}</p>
+    {% endfor %}
     <p>Enable JavaScript for the editable code and live diagram. You can still sketch the suggested change and compare your reasoning below.</p>
   </div>
   <details data-uml-explanation>

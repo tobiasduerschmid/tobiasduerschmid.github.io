@@ -77,7 +77,7 @@ class User {
 }
 @enduml'></div>
 
-Edit Java or Python below to update the diagram. The code is analyzed locally without execution; edits are not saved.
+Edit Python, Java, or C++ below to update the diagram. The code is analyzed locally without execution; edits are not saved.
 
 {% include uml-code-lab.html example="visibility" %}
 

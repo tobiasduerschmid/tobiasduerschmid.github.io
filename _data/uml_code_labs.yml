@@ -1,11 +1,11 @@
-# Focused variations on the notation just introduced. The learner predicts a
-# source change, inspects its diagram, then opens the explanation to compare.
+# Predict a consequence that needs reasoning about the code, then edit and
+# compare. Keep answers in the collapsed explanation, not in the prompt.
 visibility:
   title: Member visibility
   type: class
-  explanation: "The field becomes public (+); the operation stays unchanged. In Python, the underscore marks a non-public convention rather than enforced access control."
+  explanation: "Only read access is lost from the public API: the field already excluded direct writes. Making the reading method non-public does not change the field's visibility. Python's underscore expresses a convention, not enforced privacy."
   java:
-    task: "Make name public. Which visibility symbol will change?"
+    task: "For an existing Student, would making only displayName() private remove public read access, write access, both, or neither? Predict, then change that method."
     code: |
       class Student {
           private String name;
@@ -15,7 +15,7 @@ visibility:
           }
       }
   python:
-    task: "Rename _name to name in both places. Which visibility symbol will change?"
+    task: "Under Python's public-API convention, would renaming display_name() to _display_name() remove read access, write access, both, or neither for an existing Student? Predict, then rename only the method."
     code: |
       class Student:
           def __init__(self, name: str) -> None:
@@ -24,12 +24,25 @@ visibility:
           def display_name(self) -> str:
               return self._name
 
+  cpp:
+    task: "For an existing Student, would moving only displayName() into a private section remove public read access, write access, both, or neither? Predict, then move that method."
+    code: |
+      #include <string>
+
+      class Student {
+          std::string name;
+      public:
+          std::string displayName() const {
+              return name;
+          }
+      };
+
 inheritance:
-  title: Adding a subclass
+  title: Inheritance through a parent
   type: class
-  explanation: "Cat gains a solid line with a hollow triangle pointing to Animal, just like Dog. The subclasses inherit speak(); its declaration stays in Animal's compartment."
+  explanation: "Puppy can still use speak() through Dog's inheritance from Animal. Its direct parent becomes Dog; Animal remains an ancestor. The direct links are Puppy to Dog and Dog to Animal."
   java:
-    task: "Which way will the new arrow point? Make Cat inherit from Animal."
+    task: "If Puppy inherits from Dog instead of Animal directly, can a Puppy still speak()? Predict the direct inheritance links, then change its parent."
     code: |
       class Animal {
           void speak() { }
@@ -37,9 +50,9 @@ inheritance:
 
       class Dog extends Animal { }
 
-      class Cat { }
+      class Puppy extends Animal { }
   python:
-    task: "Which way will the new arrow point? Make Cat inherit from Animal."
+    task: "If Puppy inherits from Dog instead of Animal directly, can a Puppy still speak()? Predict the direct inheritance links, then change its parent."
     code: |
       class Animal:
           def speak(self) -> None:
@@ -48,15 +61,27 @@ inheritance:
       class Dog(Animal):
           pass
 
-      class Cat:
+      class Puppy(Animal):
           pass
+
+  cpp:
+    task: "If Puppy inherits publicly from Dog instead of Animal directly, can a Puppy still speak()? Predict the direct inheritance links, then change its parent."
+    code: |
+      class Animal {
+      public:
+          void speak() { }
+      };
+
+      class Dog : public Animal { };
+
+      class Puppy : public Animal { };
 
 dependency:
   title: Keeping a reference
   type: class
-  explanation: "The stored reference gives an association. Removing it leaves a dashed dependency through the parameter. Source alone cannot establish ownership or lifetime guarantees."
+  explanation: "Removing the stored reference leaves a dependency: the method signature still names Roster. Removing that now-unused parameter eliminates the dependency too. Both classes can remain."
   java:
-    task: "Remove the roster field and its assignment. What happens to the arrow?"
+    task: "After removing the roster field and its assignment, will Student be independent of Roster? Predict, then edit. What further change removes the coupling without deleting either class?"
     code: |
       class Roster { }
 
@@ -68,7 +93,7 @@ dependency:
           }
       }
   python:
-    task: "Replace self.roster = roster with pass. What happens to the arrow?"
+    task: "After replacing self.roster = roster with pass, will Student be independent of Roster? Predict, then edit. What further change removes the coupling without deleting either class?"
     code: |
       class Roster:
           pass
@@ -77,12 +102,25 @@ dependency:
           def keep_roster(self, roster: Roster) -> None:
               self.roster = roster
 
+  cpp:
+    task: "After removing the roster field and its assignment, will Student be independent of Roster? Predict, then edit. What further change removes the coupling without deleting either class?"
+    code: |
+      class Roster { };
+
+      class Student {
+          Roster* roster = nullptr;
+      public:
+          void keepRoster(Roster& roster) {
+              this->roster = &roster;
+          }
+      };
+
 collection_multiplicity:
   title: One reference or a collection
   type: class
-  explanation: "The generated Member end changes from 1 to *, meaning zero or more. A collection type alone does not guarantee at least one member."
+  explanation: "An empty collection is a counterexample: the Member end permits zero or more (*), so the type does not enforce a nonempty team. A separate invariant and validation would be needed for a lower bound of one."
   java:
-    task: "Which multiplicity will change? Replace both members types with List<Member>."
+    task: "A team must have at least one member. Would replacing both members types with List<Member> enforce that rule? Predict the lower bound and look for a counterexample, then edit."
     code: |
       import java.util.List;
 
@@ -96,7 +134,7 @@ collection_multiplicity:
           }
       }
   python:
-    task: "Which multiplicity will change? Replace both members annotations with list[Member]."
+    task: "A team must have at least one member. Would replacing both members annotations with list[Member] enforce that rule? Predict the lower bound and look for a counterexample, then edit."
     code: |
       class Member:
           pass
@@ -105,45 +143,82 @@ collection_multiplicity:
           def __init__(self, members: Member) -> None:
               self.members: Member = members
 
+  cpp:
+    task: "A team must have at least one member. Would replacing both Member& types with std::vector<Member*> enforce that rule? Predict the lower bound and look for a counterexample, then edit."
+    code: |
+      #include <vector>
+
+      class Member { };
+
+      class Team {
+          Member& members;
+      public:
+          explicit Team(Member& members) : members(members) { }
+      };
+
 message_order:
   title: Calls determine message order
   type: sequence
-  explanation: "The calls determine message order. Swapping them moves capture before authorize; moving the method declarations alone leaves the arrows unchanged."
+  explanation: "After the swap, Main calls refund(), then authorize(); payment calls its own capture() while handling authorize(). That nested call stays with authorize(), regardless of where capture() is declared."
   java:
-    task: "Swap the two payment calls in main. Predict the new arrow order."
+    task: "After swapping the two calls in main, what will the full message order be, including calls inside methods? Predict who sends capture(), then make the swap."
     code: |
       class Payment {
           void capture() { }
-          void authorize() { }
+          void authorize() {
+              this.capture();
+          }
+          void refund() { }
       }
 
       class App {
           public static void main(String[] args) {
               Payment payment = new Payment();
               payment.authorize();
-              payment.capture();
+              payment.refund();
           }
       }
   python:
-    task: "Swap the two payment calls at the bottom. Predict the new arrow order."
+    task: "After swapping the two calls at the bottom, what will the full message order be, including calls inside methods? Predict who sends capture(), then make the swap."
     code: |
       class Payment:
           def capture(self) -> None:
               pass
 
           def authorize(self) -> None:
+              self.capture()
+
+          def refund(self) -> None:
               pass
 
       payment = Payment()
       payment.authorize()
-      payment.capture()
+      payment.refund()
+
+  cpp:
+    task: "After swapping the two calls in main, what will the full message order be, including calls inside methods? Predict who sends capture(), then make the swap."
+    code: |
+      class Payment {
+      public:
+          void capture() { }
+          void authorize() {
+              this->capture();
+          }
+          void refund() { }
+      };
+
+      int main() {
+          Payment payment;
+          payment.authorize();
+          payment.refund();
+      }
 
 self_calls:
   title: Calling another method
   type: sequence
-  explanation: "The new save() call loops back to the checkout lifeline, just like validate(). Calling another method on the same object does not create another participant."
+  explanation: "validate() finishes first, then save(), then submit(). All three execute on the same checkout object, so their activations nest on one Checkout lifeline."
   java:
-    task: "Will another lifeline appear? Call this.save() after this.validate()."
+    task: "If submit() calls save(), which calls validate(), predict the completion order and the number of Checkout lifelines. Then rearrange the calls without creating an object."
     code: |
       class Checkout {
           void validate() { }
@@ -161,7 +236,7 @@ self_calls:
           }
       }
   python:
-    task: "Will another lifeline appear? Call self.save() after self.validate()."
+    task: "If submit() calls save(), which calls validate(), predict the completion order and the number of Checkout lifelines. Then rearrange the calls without creating an object."
     code: |
       class Checkout:
           def validate(self) -> None:
@@ -176,12 +251,30 @@ self_calls:
       checkout = Checkout()
       checkout.submit()
 
-return_types:
-  title: Calls and replies
+  cpp:
+    task: "If submit() calls save(), which calls validate(), predict the completion order and the number of Checkout lifelines. Then rearrange the calls without creating an object."
+    code: |
+      class Checkout {
+      public:
+          void validate() { }
+          void save() { }
+
+          void submit() {
+              this->validate();
+          }
+      };
+
+      int main() {
+          Checkout checkout;
+          checkout.submit();
+      }
+
+message_receivers:
+  title: Following a reference
   type: sequence
-  explanation: "The solid arrow still calls read(). The dashed reply points back to Main and now carries String (Java) or str (Python). This diagram labels replies by return type, not by the runtime value."
+  explanation: "selected refers to the existing outdoor object, so outdoor receives read() and sends the reply. The Sensor lifeline count stays two: assigning a reference creates no new Sensor."
   java:
-    task: "Which arrow will change? Make read() return \"warm\" with return type String."
+    task: "Change selected's initializer from indoor to outdoor, leaving selected.read() unchanged. Predict the number of Sensor lifelines and which object sends the reply before editing."
     code: |
       class Sensor {
           int read() {
@@ -191,26 +284,47 @@ return_types:
 
       class App {
           public static void main(String[] args) {
-              Sensor sensor = new Sensor();
-              sensor.read();
+              Sensor indoor = new Sensor();
+              Sensor outdoor = new Sensor();
+              Sensor selected = indoor;
+              int reading = selected.read();
           }
       }
   python:
-    task: "Which arrow will change? Make read() return \"warm\" with return type str."
+    task: "Change selected = indoor to selected = outdoor, leaving selected.read() unchanged. Predict the number of Sensor lifelines and which object sends the reply before editing."
     code: |
       class Sensor:
           def read(self) -> int:
               return 25
 
-      sensor = Sensor()
-      reading = sensor.read()
+      indoor = Sensor()
+      outdoor = Sensor()
+      selected = indoor
+      reading = selected.read()
+
+  cpp:
+    task: "Change selected's initializer from indoor to outdoor, keeping Sensor& and selected.read() unchanged. Predict the number of Sensor lifelines and which object sends the reply before editing."
+    code: |
+      class Sensor {
+      public:
+          int read() const {
+              return 25;
+          }
+      };
+
+      int main() {
+          Sensor indoor;
+          Sensor outdoor;
+          Sensor& selected = indoor;
+          int reading = selected.read();
+      }
 
 alternatives:
   title: Alternatives are possible paths
   type: sequence
-  explanation: "The source shows both possible branches under alt, even though the call supplies true. Removing else leaves optional behavior, shown as opt."
+  explanation: "The original if/else runs exactly one call. Two independent if statements with the same condition run both calls when accepted is true and neither when it is false. Their two opt frames expose the loss of mutual exclusion."
   java:
-    task: "Remove else and its decline call. Which fragment will replace alt?"
+    task: "Replace else with a separate if (accepted). Will exactly one payment call still run for every input? Predict the calls for true and false before editing."
     code: |
       class Payment {
           void approve() { }
@@ -235,7 +349,7 @@ alternatives:
           }
       }
   python:
-    task: "Remove else and its decline call. Which fragment will replace alt?"
+    task: "Replace else with a separate if accepted. Will exactly one payment call still run for every input? Predict the calls for True and False before editing."
     code: |
       class Payment:
           def approve(self) -> None:
@@ -255,12 +369,38 @@ alternatives:
       checkout = Checkout()
       checkout.pay(payment, True)
 
+  cpp:
+    task: "Replace else with a separate if (accepted). Will exactly one payment call still run for every input? Predict the calls for true and false before editing."
+    code: |
+      class Payment {
+      public:
+          void approve() { }
+          void decline() { }
+      };
+
+      class Checkout {
+      public:
+          void pay(Payment& payment, bool accepted) {
+              if (accepted) {
+                  payment.approve();
+              } else {
+                  payment.decline();
+              }
+          }
+      };
+
+      int main() {
+          Payment payment;
+          Checkout checkout;
+          checkout.pay(payment, true);
+      }
+
 loop_boundary:
   title: The loop boundary matters
   type: sequence
-  explanation: "Both calls now sit inside the loop frame: finish happens after every item. The frame shows which messages repeat."
+  explanation: "Outside the loop, finish() runs once for either input. Inside, it runs zero times for zero items and twice for two items. An empty receipt is no longer finalized."
   java:
-    task: "Move receipt.finish() inside the for loop, after receipt.addItem(item)."
+    task: "If finish() moves inside the loop after addItem(), how do its call counts change for zero items and two items? Predict both cases, then move it."
     code: |
       class Receipt {
           void addItem(String item) { }
@@ -277,7 +417,7 @@ loop_boundary:
           }
       }
   python:
-    task: "Indent receipt.finish() so it is inside the for loop, after receipt.add_item(item)."
+    task: "If finish() moves inside the loop after add_item(), how do its call counts change for zero items and two items? Predict both cases, then move it."
     code: |
       class Receipt:
           def add_item(self, item: str) -> None:
@@ -290,3 +430,21 @@ loop_boundary:
       for item in ["book", "pen"]:
           receipt.add_item(item)
       receipt.finish()
+  cpp:
+    task: "If finish() moves inside the loop after addItem(), how do its call counts change for zero items and two items? Predict both cases, then move it."
+    code: |
+      #include <initializer_list>
+
+      class Receipt {
+      public:
+          void addItem(int item) { }
+          void finish() { }
+      };
+
+      int main() {
+          Receipt receipt;
+          for (int item : {1, 2}) {
+              receipt.addItem(item);
+          }
+          receipt.finish();
+      }

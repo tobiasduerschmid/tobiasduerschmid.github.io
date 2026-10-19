@@ -60,7 +60,7 @@ deactivate atm
 
 **Notice the flow of time:** Message 1 happens first, then 2, 3, and 4. The vertical dimension is strictly used to represent the passage of time.
 
-Edit Java or Python below to update the diagram. It sketches possible calls from source without running the code; edits are not saved.
+Edit Python, Java, or C++ below to update the diagram. It sketches possible calls from source without running the code; edits are not saved.
 
 {% include uml-code-lab.html example="message_order" %}
 
@@ -122,13 +122,13 @@ Lifelines in sequence diagrams represent specific **object instances**, not clas
 
 This is different from class diagrams, which show classes in general. Sequence diagrams show **one particular scenario** of interactions between concrete instances.
 
+{% include uml-code-lab.html example="message_receivers" %}
+
 ### Consistency with Class Diagrams
 
 When you draw both a class diagram and a sequence diagram for the same system, they must be **consistent**:
 - Every message arrow in the sequence diagram must correspond to a method defined in the receiving object's class (or a superclass).
 - The method names, parameter types, and return types must match between the two diagrams.
-
-{% include uml-code-lab.html example="return_types" %}
 
 ---
 

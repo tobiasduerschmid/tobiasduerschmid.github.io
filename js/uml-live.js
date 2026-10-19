@@ -13,6 +13,7 @@
   const analyzers = {
     python: { file: 'uml-analyzer-python.js', name: 'analyzePythonSources' },
     java: { file: 'uml-analyzer-java.js', name: 'analyzeJavaSources' },
+    cpp: { file: 'uml-analyzer-cpp.js', name: 'analyzeCppSources' },
     js: { file: 'uml-analyzer-js.js', name: 'analyzeJSSources' }
   };
 

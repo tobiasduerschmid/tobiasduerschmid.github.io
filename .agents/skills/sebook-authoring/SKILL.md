@@ -108,7 +108,7 @@ If you must rename one of these, either pin the new heading with `## New Title {
 
 **Live UML code labs.** Set `uml_code_labs: true` in chapter front matter and
 embed `{% include uml-code-lab.html example="visibility" %}` after the relevant
-concept. `_data/uml_code_labs.yml` holds the Python/Java starter code, a short
+concept. `_data/uml_code_labs.yml` holds the Python/Java/C++ starter code, a short
 editing prompt, and a collapsed explanation. Python is selected by default.
 `uml-code-lab-editor.js` uses locally vendored Monaco for syntax highlighting;
 Escape leaves the editor, and a native textarea survives editor-load failure.
@@ -118,7 +118,8 @@ ready. Keep prompts minimal and focus
 each lab on one diagram change. Both the chapter and combined-course layouts
 load the shared `uml-live.js` pipeline and `uml-code-lab.js` controls. Edits
 stay in memory; code is analyzed without execution. No-JavaScript readers get
-both source examples; print gets the current draft and matching diagram.
+all three source examples; print gets the current draft and matching diagram.
+`_data/uml_code_languages.yml` defines language labels, filenames and order.
 See `docs/uml-code-labs.md` for the API, inference limits, and verification.
 
 **Compiler labs.** Use `{% include compiler-lab.html config=page.compiler_lab %}`

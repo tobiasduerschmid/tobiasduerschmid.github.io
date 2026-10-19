@@ -13,7 +13,8 @@
     const task = root.querySelector('[data-uml-task]');
     const explanation = root.querySelector('[data-uml-explanation]');
     const events = new AbortController();
-    const drafts = { java: example.java.code, python: example.python.code };
+    const languages = [...language.options].map(option => option.value);
+    const drafts = Object.fromEntries(languages.map(id => [id, example[id].code]));
     let selectedLanguage = 'python';
     let client = null;
     let timer = null;
@@ -24,7 +25,7 @@
     task.id = 'uml-lab-task-' + (++nextId);
     status.id = 'uml-lab-status-' + nextId;
     source.setAttribute('aria-describedby', task.id + ' ' + status.id);
-    const codeEditor = global.UMLCodeLabEditor.create(source, root.querySelector('[data-uml-editor]'));
+    const codeEditor = global.UMLCodeLabEditor.create(source, root.querySelector('[data-uml-editor]'), languages);
 
     function syncSource() {
       drafts[selectedLanguage] = source.value;
@@ -47,7 +48,7 @@
 
     function showLanguage() {
       selectedLanguage = language.value;
-      const label = selectedLanguage === 'java' ? 'Java code' : 'Python code';
+      const label = language.selectedOptions[0].textContent + ' code';
       root.querySelector('[data-uml-source-label]').textContent = label;
       root.querySelector('[data-uml-print-label]').textContent = label;
       source.value = drafts[selectedLanguage];
@@ -76,7 +77,7 @@
       const isCurrent = () => !paused && revision === currentRevision;
       if (!isCurrent()) return;
       if (!client) client = global.UMLLive.createClient();
-      const filename = selectedLanguage === 'java' ? 'Example.java' : 'example.py';
+      const filename = language.selectedOptions[0].dataset.filename;
       try {
         const result = await client.analyze({ language: selectedLanguage, sources: { [filename]: source.value } });
         if (!isCurrent()) return;

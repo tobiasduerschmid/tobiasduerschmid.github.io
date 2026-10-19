@@ -1885,6 +1885,7 @@
 
     // Scope tracking
     this.varTypes = {};
+    this.varParticipants = {}; // aliases to known objects
     this._callerClass = {};
     this._referencedVars = {};   // {name: true} for names read in current scope
 
@@ -2265,6 +2266,7 @@
           var tgt = targets[0];
           if (tgt.type === 'Name') {
             this.varTypes[tgt.id] = clsName;
+            this.varParticipants[tgt.id] = tgt.id;
             this._callerClass[tgt.id] = clsName;
             if (this._dataClasses[clsName]) return;
             this._ensureParticipant(tgt.id, clsName);
@@ -2294,15 +2296,20 @@
         // name as a `returnBinding` so the reply arrow can be labeled
         // `var: type` rather than a bare `type`.
         var binding = null;
+        var retCls = null;
         if (targets.length === 1 && targets[0].type === 'Name') {
           var tname = targets[0].id;
           if (this._referencedVars[tname]) binding = tname;
           // Track the variable's type from the return annotation for
           // downstream `tname.method()` resolution.
-          var retCls = this._getReturnClassType(clsName, method);
-          if (retCls) this.varTypes[tname] = retCls;
+          retCls = this._getReturnClassType(clsName, method);
         }
         this._processCall(value, caller, depth, true, binding);
+        if (targets.length === 1 && targets[0].type === 'Name') {
+          delete this.varTypes[targets[0].id];
+          delete this.varParticipants[targets[0].id];
+          if (retCls) this.varTypes[targets[0].id] = retCls;
+        }
         return;
       }
     }
@@ -2310,9 +2317,19 @@
     // variable-to-variable assignments (y = x → y gets x's type)
     if (value && value.type === 'Name' && targets.length === 1 && targets[0].type === 'Name') {
       var srcType = this.varTypes[value.id];
+      var srcParticipant = this.varParticipants[value.id];
+      delete this.varTypes[targets[0].id];
+      delete this.varParticipants[targets[0].id];
       if (srcType) this.varTypes[targets[0].id] = srcType;
+      if (srcParticipant) this.varParticipants[targets[0].id] = srcParticipant;
+      return;
     }
     this._scanExprForCalls(value, caller, depth);
+    for (var i = 0; i < targets.length; i++) {
+      if (targets[i].type !== 'Name') continue;
+      delete this.varTypes[targets[i].id];
+      delete this.varParticipants[targets[i].id];
+    }
   };
 
   PythonSequenceDiagramGenerator.prototype._processExprStmt = function (stmt, caller, depth) {
@@ -2488,7 +2505,13 @@
         && call.func.value.value.id === 'self') {
       attrHint = call.func.value.attr;
     }
-    var calleeId = this._calleeIdFor(clsName, caller, attrHint);
+    // A known object takes precedence over the class-based fallback.
+    var receiver = call.func && call.func.type === 'Attribute' ? call.func.value : null;
+    var receiverId = receiver && receiver.type === 'Name' ? receiver.id : null;
+    if (receiverId === 'self') receiverId = caller;
+    else if (this.varParticipants[receiverId]) receiverId = this.varParticipants[receiverId];
+    var calleeId = receiverId && this._participantSet[receiverId]
+      ? receiverId : this._calleeIdFor(clsName, caller, attrHint);
     var label = this._buildCallLabel(call, clsName, method, caller);
 
     // Detect super() call
@@ -2602,7 +2625,9 @@
     var saved = {};
     for (var k in this.varTypes) saved[k] = this.varTypes[k];
     var savedRefs = this._referencedVars;
+    var savedParticipants = this.varParticipants;
     this.varTypes = {};
+    this.varParticipants = {};
 
     var pt = (this.paramTypes[clsName] || {})[methodName] || {};
     for (var k in pt) this.varTypes[k] = pt[k];
@@ -2614,6 +2639,7 @@
     this._processStmts(node.body, calleeId, depth + 1);
 
     this.varTypes = saved;
+    this.varParticipants = savedParticipants;
     this._referencedVars = savedRefs;
     delete this._callStack[key];
   };
