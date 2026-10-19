@@ -103,20 +103,40 @@ retains only that render's entries, so successive edits cannot grow it indefinit
 
 ## Inference limits
 
-Review inferred diagrams as teaching sketches. The lightweight analyzers do
-not establish a complete model of the program:
+Review inferred diagrams as teaching sketches. The analyzers preserve the
+following distinctions while working only with supplied source files:
 
-- **Relationship roles:** multiple fields pointing to the same class can
-  collapse into one relationship, hiding different roles or multiplicities.
-- **Union types:** a heterogeneous union can omit alternative target classes.
-- **Symbol resolution:** same-named classes across modules or packages, import
-  aliases, dynamic dispatch, and complex receivers are not fully resolved.
-  A receiver known only by its type can be conflated with another instance.
+- **Relationship roles:** fields pointing to the same class retain separate
+  relationships and multiplicities. Role labels distinguish those fields,
+  including when multiplicities are hidden. Reciprocal fields remain separate
+  references; their declarations do not establish that they are inverse ends
+  of one association.
+- **Union types:** Python and TypeScript retain each known alternative target
+  with its own cardinality. A scalar choice between classes makes each target
+  optional; it does not mean that both objects must exist. Sequence dispatch
+  leaves an ambiguous receiver unresolved instead of choosing a union arm.
+- **Symbol resolution:** supplied-file Python imports, relative imports and
+  aliases, Java packages/imports/nested declarations, and TypeScript compiler
+  symbols distinguish same-named declarations. C++ resolves inherited fields
+  in their declaring scope. Diagram identifiers remain distinct even when
+  qualification would otherwise create the same identifier. Missing sources,
+  runtime rebinding, external package configuration and dynamic dispatch can
+  still leave targets unresolved; the analyzers do not load external packages.
+- **Object identity:** a known receiver keeps its identity. Python also tracks
+  injected fields by owning object, field aliases and subsequent assignments;
+  a factory result does not reuse an old object's identity. An unknown receiver
+  is not assigned to an unrelated existing object just because its type matches.
 - **Ownership:** field construction and parameter passing suggest relationships
-  but do not prove UML composition or aggregation lifetime constraints.
-- **Control flow:** the bounded call walk approximates early exits, exception
-  paths, loop-carried state, and branch-dependent aliases. Python `finally`
-  calls and some field-held receiver identities remain unsupported.
+  but do not prove UML composition or aggregation lifetime constraints. Diamonds
+  remain syntax-based modeling suggestions that require domain review.
+- **Control flow:** Python preserves early transfers through conditional and
+  cleanup paths, including `try`/`else`/`finally`. The call walk is still bounded:
+  it does not evaluate arbitrary predicates, unroll loops, model every exception
+  type or perform whole-program dynamic dispatch. A diagram shows possible
+  source paths, not an execution trace. Python limits sequence expansion to
+  2,000 statement visits. Exceeding that limit returns an explanatory `errors`
+  entry and an empty `sequenceDiagram`, while retaining the class diagram;
+  a truncated sequence is not presented as a complete result.
 
 Grade the behavior contracts and structural constraints stated in an exercise.
 Do not use exact inferred diagram text as the sole correctness oracle. Check

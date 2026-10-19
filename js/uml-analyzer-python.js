@@ -42,24 +42,32 @@
       try {
         var ast = parsePythonSource(sources[filename]);
         parsedFiles[filename] = ast;
-        // Collect type names (classes)
-        astWalk(ast, function (node) {
-          if (node.type === 'ClassDef') allTypeNames.add(node.name);
-        });
       } catch (e) {
         errors.push(filename + ': Parse error: ' + e.message);
       }
     }
 
+    // Resolve supplied-source names once so both diagrams use the same identities.
+    var symbols = new PythonSourceSymbols(parsedFiles);
+    symbols.normalize();
+    symbols.classes.forEach(function (entry) { allTypeNames.add(entry.id); });
+
     // Extract class diagram
     var extractor = new PythonClassExtractor(parsedFiles, allTypeNames, errors);
+    extractor.symbols = symbols;
     extractor.analyze();
     var classDiagram = extractor.generatePlantUML(options || {});
 
     // Extract sequence diagram
     var seqGen = new PythonSequenceDiagramGenerator(parsedFiles, extractor, allTypeNames);
-    seqGen.generate();
-    var sequenceDiagram = seqGen.generatePlantUML();
+    var sequenceDiagram = '';
+    try {
+      seqGen.generate();
+      sequenceDiagram = seqGen.generatePlantUML();
+    } catch (error) {
+      if (!(error instanceof PythonSequenceLimitError)) throw error;
+      errors.push(error.message);
+    }
 
     return {
       classDiagram: classDiagram,
@@ -655,7 +663,7 @@
       var rest = text.substring(5).trim();
       return { type: 'Raise', exc: rest ? parseExpr(rest) : null };
     }
-    if (/^(?:import|from)\s/.test(text)) return { type: 'Import' };
+    if (/^(?:import|from)\s/.test(text)) return { type: 'Import', text: text };
     if (text === 'break') return { type: 'Break' };
     if (text === 'continue') return { type: 'Continue' };
 
@@ -864,6 +872,7 @@
     var body = parseBody(ctx, blockIndent);
     var handlers = [];
     var finalbody = [];
+    var orelse = [];
 
     while (ctx.pos < ctx.lines.length) {
       var next = ctx.lines[ctx.pos];
@@ -884,13 +893,13 @@
         break;
       } else if (/^else\s*:/.test(next.text)) {
         ctx.pos++;
-        parseBody(ctx, blockIndent); // skip else body for now
+        orelse = parseBody(ctx, blockIndent);
       } else {
         break;
       }
     }
 
-    return { type: 'Try', body: body, handlers: handlers, finalbody: finalbody };
+    return { type: 'Try', body: body, handlers: handlers, orelse: orelse, finalbody: finalbody };
   }
 
   function parseWith(ctx, blockIndent) {
@@ -1057,6 +1066,217 @@
   }
 
   /* ===================================================================
+   * Supplied-source symbol resolution
+   * =================================================================== */
+
+  function pythonModuleName(filename) {
+    return filename.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\.pyi?$/, '')
+      .replace(/\/__init__$/, '').replace(/\//g, '.');
+  }
+
+  function bindPythonSourceName(scope, name, binding) {
+    // Source-only resolution cannot pick one binding for a name that is
+    // reassigned at runtime. Keep such references unresolved.
+    scope.bindings.set(name, scope.bindings.has(name) ? { kind: 'unknown' } : binding);
+  }
+
+  function PythonSourceSymbols(parsedFiles) {
+    this.parsedFiles = parsedFiles;
+    this.modules = new Map();
+    this.classes = [];
+    this.nodeScopes = new WeakMap();
+    this.bySimpleName = new Map();
+    for (const filename of Object.keys(parsedFiles)) {
+      const scope = { kind: 'module', filename, module: pythonModuleName(filename), path: '', parent: null, bindings: new Map() };
+      this.modules.set(scope.module, scope);
+      this.collect(parsedFiles[filename].body, scope);
+    }
+    const usedIds = new Set();
+    const ordered = this.classes.slice().sort((left, right) => {
+      const uniqueLeft = this.bySimpleName.get(left.name).length === 1;
+      const uniqueRight = this.bySimpleName.get(right.name).length === 1;
+      return Number(uniqueRight) - Number(uniqueLeft) ||
+        (left.scope.module + '.' + left.path).localeCompare(right.scope.module + '.' + right.path);
+    });
+    for (const entry of ordered) {
+      const candidates = this.bySimpleName.get(entry.name);
+      const baseId = candidates.length === 1 ? entry.name : [entry.scope.module, entry.path].filter(Boolean).join('.').replace(/[^\w]/g, '__');
+      let id = baseId, suffix = 2;
+      while (usedIds.has(id)) id = baseId + '__' + suffix++;
+      entry.id = id;
+      usedIds.add(id);
+    }
+  }
+
+  PythonSourceSymbols.prototype.collect = function (body, scope) {
+    for (const node of body) {
+      this.nodeScopes.set(node, scope);
+      if (node.type === 'ClassDef' || node.type === 'FunctionDef') {
+        const path = scope.path ? scope.path + '.' + node.name : node.name;
+        const childScope = { kind: node.type === 'ClassDef' ? 'class' : 'function', filename: scope.filename,
+          module: scope.module, path, parent: scope, bindings: new Map() };
+        if (node.type === 'ClassDef') {
+          const entry = { node, name: node.name, path, scope, childScope };
+          this.classes.push(entry);
+          if (!this.bySimpleName.has(node.name)) this.bySimpleName.set(node.name, []);
+          this.bySimpleName.get(node.name).push(entry);
+          bindPythonSourceName(scope, node.name, { kind: 'class', entry });
+        } else {
+          bindPythonSourceName(scope, node.name, { kind: 'unknown' });
+          for (const arg of node.args.args) childScope.bindings.set(arg.arg, { kind: 'unknown' });
+        }
+        this.nodeScopes.set(node.body, childScope);
+        this.collect(node.body, childScope);
+      } else if (node.type === 'Import') {
+        this.collectImport(node.text, scope);
+      } else if (node.type === 'Assign' || node.type === 'AnnAssign') {
+        for (const target of node.targets || [node.target]) {
+          if (target && target.type === 'Name') {
+            bindPythonSourceName(scope, target.id, { kind: 'alias', value: node.value, scope });
+          }
+        }
+      } else {
+        for (const key of ['body', 'orelse', 'finalbody']) {
+          if (Array.isArray(node[key])) this.collect(node[key], scope);
+        }
+        for (const handler of node.handlers || []) this.collect(handler.body || [], scope);
+      }
+    }
+  };
+
+  PythonSourceSymbols.prototype.collectImport = function (text, scope) {
+    const from = /^from\s+([.\w]+)\s+import\s+(.+)$/.exec(text || '');
+    const imported = from ? from[2].replace(/^\(|\)$/g, '') : (text || '').replace(/^import\s+/, '');
+    let module = from ? from[1] : '';
+    if (module.startsWith('.')) {
+      const dots = /^\.+/.exec(module)[0].length;
+      const packageParts = scope.module.split('.');
+      if (!/(?:^|\/)__init__\.pyi?$/.test(scope.filename)) packageParts.pop();
+      module = packageParts.slice(0, Math.max(0, packageParts.length - dots + 1))
+        .concat(module.slice(dots).split('.').filter(Boolean)).join('.');
+    }
+    for (const part of _splitCommaTopLevel(imported)) {
+      const match = /^\s*([\w.]+)(?:\s+as\s+(\w+))?\s*$/.exec(part);
+      if (!match) continue;
+      const local = match[2] || (from ? match[1] : match[1].split('.')[0]);
+      const path = from ? [module, match[1]].filter(Boolean).join('.') : (match[2] ? match[1] : local);
+      bindPythonSourceName(scope, local, { kind: 'import', path });
+    }
+  };
+
+  PythonSourceSymbols.prototype.resolvePath = function (path, visited) {
+    if (this.modules.has(path)) return { kind: 'module', scope: this.modules.get(path) };
+    const parts = path.split('.');
+    for (let split = parts.length - 1; split > 0; split--) {
+      const module = this.modules.get(parts.slice(0, split).join('.'));
+      if (module) return this.resolve(parts.slice(split).join('.'), module, visited, false);
+    }
+    return { kind: 'external', path };
+  };
+
+  PythonSourceSymbols.prototype.resolve = function (name, scope, visited, lexical) {
+    visited = visited || new Set();
+    const parts = name.split('.');
+    let binding = null;
+    for (let owner = scope; owner; owner = lexical === false ? null : owner.parent) {
+      // A class body has its own namespace, but it is not an enclosing
+      // lexical scope for methods or nested class bodies.
+      if (owner !== scope && owner.kind === 'class') continue;
+      if (owner.bindings.has(parts[0])) { binding = owner.bindings.get(parts[0]); break; }
+    }
+    if (!binding) {
+      // Merely supplying another module never imports its names. Keep dotted
+      // external syntax for supported annotations such as typing.Optional,
+      // but do not use it to discover unrelated supplied declarations.
+      return parts.length > 1 ? { kind: 'external', path: name } : null;
+    }
+    if (visited.has(binding)) return null;
+    visited = new Set(visited).add(binding);
+    if (binding.kind === 'import') {
+      return this.resolvePath([binding.path].concat(parts.slice(1)).join('.'), visited);
+    }
+    if (binding.kind === 'alias') {
+      const value = unquoteAnnotation(binding.value);
+      if (!value || !['Name', 'Attribute'].includes(value.type)) return parts.length === 1 ? binding : null;
+      const target = this.resolve(unparse(value), binding.scope, visited);
+      if (!target || parts.length === 1) return target;
+      binding = target;
+    }
+    if (parts.length === 1) return binding;
+    if (binding.kind === 'class') return this.resolve(parts.slice(1).join('.'), binding.entry.childScope, visited, false);
+    if (binding.kind === 'module') return this.resolve(parts.slice(1).join('.'), binding.scope, visited, false);
+    return null;
+  };
+
+  PythonSourceSymbols.prototype.annotation = function (node, scope, visited) {
+    node = unquoteAnnotation(node);
+    if (!node) return node;
+    visited = visited || new Set();
+    if (node.type === 'Name' || node.type === 'Attribute') {
+      const symbol = this.resolve(unparse(node), scope);
+      if (symbol && symbol.kind === 'class') return { type: 'Name', id: symbol.entry.id, _resolvedClass: true };
+      if (symbol && symbol.kind === 'alias' && !visited.has(symbol)) {
+        return this.annotation(symbol.value, symbol.scope, new Set(visited).add(symbol));
+      }
+      if (symbol && symbol.kind === 'external') return parseExpr(symbol.path);
+      if (node.type === 'Name' && (symbol || this.bySimpleName.has(node.id))) {
+        return { type: 'Name', id: node.id, _unresolvedType: true };
+      }
+      return node;
+    }
+    if (node.type === 'Subscript') return { type: 'Subscript', value: this.annotation(node.value, scope, visited), slice: this.annotation(node.slice, scope, visited) };
+    if (node.type === 'Tuple') return { type: 'Tuple', elts: node.elts.map(element => this.annotation(element, scope, visited)) };
+    if (node.type === 'BinOp' && node.op === '|') return { type: 'BinOp', op: '|', left: this.annotation(node.left, scope, visited), right: this.annotation(node.right, scope, visited) };
+    return node;
+  };
+
+  PythonSourceSymbols.prototype.normalize = function () {
+    const normalizeAnnotation = (annotation, scope) => {
+      const normalized = this.annotation(annotation, scope);
+      return normalized ? Object.assign({}, normalized, { _annotationText: unparse(annotation) }) : normalized;
+    };
+    const normalizeNode = (node, scope) => {
+      if (!node || typeof node !== 'object') return;
+      if (Array.isArray(node)) { node.forEach(item => normalizeNode(item, scope)); return; }
+      if (node.type === 'ClassDef' || node.type === 'FunctionDef') {
+        if (node.type === 'ClassDef') {
+          const entry = this.classes.find(candidate => candidate.node === node);
+          node.name = entry.id;
+          node.bases = node.bases.map(base => {
+            const symbol = this.resolve(base, scope);
+            return symbol && symbol.kind === 'class' ? symbol.entry.id : base;
+          });
+        } else {
+          for (const arg of node.args.args) {
+            if (arg.annotation) arg.annotation = normalizeAnnotation(arg.annotation, scope);
+          }
+          if (node.returns) node.returns = normalizeAnnotation(node.returns, scope);
+        }
+        normalizeNode(node.body, this.nodeScopes.get(node.body));
+        return;
+      }
+      if (node.annotation) node.annotation = normalizeAnnotation(node.annotation, scope);
+      if (node.type === 'Call') {
+        const symbol = this.resolve(unparse(node.func), scope);
+        node._classTarget = symbol && symbol.kind === 'class' ? symbol.entry.id : null;
+        if (node._classTarget) node.func = { type: 'Name', id: node._classTarget };
+        else if (node.func.type === 'Attribute') {
+          const receiver = this.resolve(unparse(node.func.value), scope);
+          if (receiver && receiver.kind === 'class') {
+            node.func.value = { type: 'Name', id: receiver.entry.id, _typeTarget: receiver.entry.id };
+          } else if (node.func.value) {
+            node.func.value._typeTarget = null;
+          }
+        }
+      }
+      for (const key of Object.keys(node)) {
+        if (key !== 'annotation' && typeof node[key] === 'object') normalizeNode(node[key], scope);
+      }
+    };
+    for (const [module, scope] of this.modules) normalizeNode(this.parsedFiles[scope.filename], scope);
+  };
+
+  /* ===================================================================
    * AST utilities
    * =================================================================== */
 
@@ -1191,7 +1411,7 @@
 
   /** Get annotation as a readable string (for type hints). */
   function annotationStr(node) {
-    return unparse(node);
+    return node && node._annotationText || unparse(node);
   }
 
   /** Check if a node is self.xxx */
@@ -1202,6 +1422,7 @@
   /** Get the callee name from a Call node's func. */
   function callName(node) {
     if (node.type !== 'Call') return null;
+    if (Object.prototype.hasOwnProperty.call(node, '_classTarget')) return node._classTarget;
     var f = node.func;
     if (f.type === 'Name') return f.id;
     if (f.type === 'Attribute') return f.attr;
@@ -1229,6 +1450,7 @@
 
   function annotationWrapperName(node) {
     if (!node) return '';
+    if (node._resolvedClass || node._unresolvedType) return '';
     if (node.type === 'Name') return node.id;
     const qualified = unparse(node);
     const match = /^(?:typing|collections\.abc)\.(\w+)$/.exec(qualified);
@@ -1249,35 +1471,35 @@
     return [];
   }
 
-  /** Extract a known class name from a type annotation node, unwrapping containers. */
-  function extractClassFromAnnotation(node, allTypeNames) {
+  /** Extract every known target from an annotation, preserving union alternatives. */
+  function extractClassesFromAnnotation(node, allTypeNames) {
     node = unquoteAnnotation(node);
-    if (!node) return null;
-    if (node.type === 'Name') return allTypeNames.has(node.id) ? node.id : null;
+    if (!node) return [];
+    if (node._unresolvedType) return [];
+    if (node.type === 'Name') return allTypeNames.has(node.id) ? [node.id] : [];
     const alternatives = annotationUnionMembers(node);
-    for (const alternative of alternatives) {
-      const name = extractClassFromAnnotation(alternative, allTypeNames);
-      if (name) return name;
-    }
+    if (alternatives.length) return [...new Set(alternatives.flatMap(alternative => extractClassesFromAnnotation(alternative, allTypeNames)))];
     if (node.type === 'Subscript') {
+      if (node.value && node.value.type === 'Name' && !node.value._unresolvedType && allTypeNames.has(node.value.id)) {
+        return [node.value.id];
+      }
       const wrapper = annotationWrapperName(node.value);
       if (CONTAINER_TYPES.has(wrapper) || wrapper === 'Optional') {
-        if (node.slice && node.slice.type === 'Tuple') {
-          for (const element of node.slice.elts) {
-            const name = extractClassFromAnnotation(element, allTypeNames);
-            if (name) return name;
-          }
-          return null;
-        }
-        return extractClassFromAnnotation(node.slice, allTypeNames);
+        const elements = node.slice && node.slice.type === 'Tuple' ? node.slice.elts : [node.slice];
+        return [...new Set(elements.flatMap(element => extractClassesFromAnnotation(element, allTypeNames)))];
       }
       if (MAPPING_TYPES.has(wrapper)) {
         if (node.slice && node.slice.type === 'Tuple' && node.slice.elts && node.slice.elts.length === 2) {
-          return extractClassFromAnnotation(node.slice.elts[1], allTypeNames);
+          return extractClassesFromAnnotation(node.slice.elts[1], allTypeNames);
         }
       }
     }
-    return null;
+    return [];
+  }
+
+  function extractClassFromAnnotation(node, allTypeNames) {
+    const classes = extractClassesFromAnnotation(node, allTypeNames);
+    return classes.length === 1 ? classes[0] : null;
   }
 
   /** Resolve an annotation to a known class, unwrapping containers. */
@@ -1308,8 +1530,7 @@
     this.associations = [];  // [className]
     this.dependencies = [];  // [className]
     this._relAttrs = {};     // attribute names promoted to relationship arrows
-    this._relMult = {};      // {targetClass: {tgtMult}} — multiplicity metadata
-    this._pendingCollections = {}; // {targetClass: {annNode, attrName}} — deferred from list[T] = []
+    this.relationships = []; // [{kind, target, attrName, multiplicity}]
     this.decorators = [];    // decorator names on the class
   }
 
@@ -1326,6 +1547,7 @@
       var node = body[i];
       if (node.type === 'ClassDef') {
         this._extractClass(node, filename);
+        this._extractFromBody(node.body, filename);
       }
     }
   };
@@ -1349,22 +1571,7 @@
       }
     }
 
-    // Reconcile pending collections: any list[T] = [] that was NOT resolved by
-    // an append/add call falls back to an association using the annotation type.
-    for (var pendingCls in info._pendingCollections) {
-      if (!info._pendingCollections.hasOwnProperty(pendingCls)) continue;
-      // Only add if not already covered by composition/aggregation/association
-      if (info.compositions.indexOf(pendingCls) === -1 &&
-          info.aggregations.indexOf(pendingCls) === -1 &&
-          info.associations.indexOf(pendingCls) === -1) {
-        var pending = info._pendingCollections[pendingCls];
-        _addUnique(info.associations, pendingCls);
-        if (!info._relMult[pendingCls]) {
-          var tgtMult = inferMultiplicity(pending.annNode, pendingCls);
-          info._relMult[pendingCls] = { tgtMult: tgtMult };
-        }
-      }
-    }
+    for (const relation of info.relationships) _addUnique(info[relation.kind], relation.target);
 
     // Collect dependency relationships
     this._collectDependencies(node, info);
@@ -1406,65 +1613,66 @@
       returnType: returnType
     });
 
-    // Build param types map for aggregation detection in this method.
-    // Works for __init__ and setter/mutator methods (Milanova 2007:
-    // an object injected from outside via any method parameter = aggregation).
+    // Keep the complete annotation: a parameter may describe several targets.
     var initParamTypes = {};
     for (var i = 0; i < args.length; i++) {
       var a = args[i];
-      if (a.arg === 'self' || a.arg === 'cls') continue;
-      if (a.annotation) {
-        var cls = extractClassFromAnnotation(a.annotation, this.allTypeNames);
-        if (cls) initParamTypes[a.arg] = cls;
-      }
+      if (a.arg !== 'self' && a.arg !== 'cls' && a.annotation) initParamTypes[a.arg] = a.annotation;
     }
 
-    // Pre-scan method body for local constructor calls: name = ClassName(...)
-    // This detects composition patterns like: dept = Department(...); self.departments.append(dept)
     var localCreations = {};
     var self = this;
-    astWalk({ type: '_wrap', body: node.body }, function (child) {
+    walkPythonMethodBody(node.body, function (child) {
       if (child.type === 'Assign' && child.targets && child.targets.length === 1) {
         var tgt = child.targets[0];
         if (tgt.type === 'Name' && child.value && child.value.type === 'Call') {
           var callee = callName(child.value);
-          if (callee && self.allTypeNames.has(callee)) {
-            localCreations[tgt.id] = callee;
-          }
+          if (callee && self.allTypeNames.has(callee)) localCreations[tgt.id] = callee;
         }
       }
-    });
-
-    // Walk method body for self.x assignments and relationships
-    astWalk({ type: '_wrap', body: node.body }, function (child) {
       self._checkAttribute(child, classInfo);
-      self._checkFieldRelationship(child, classInfo, initParamTypes, localCreations, node.name);
+      self._checkFieldRelationship(child, classInfo, initParamTypes, localCreations);
     });
+  };
+
+  // Nested functions/classes have their own receivers; their assignments are
+  // not fields of the enclosing method's class.
+  function walkPythonMethodBody(body, visit) {
+    for (const node of body) {
+      if (node.type === 'FunctionDef' || node.type === 'ClassDef') continue;
+      visit(node);
+      for (const key of ['body', 'orelse', 'finalbody']) {
+        if (Array.isArray(node[key])) walkPythonMethodBody(node[key], visit);
+      }
+      for (const handler of node.handlers || []) walkPythonMethodBody(handler.body || [], visit);
+    }
+  }
+
+  PythonClassExtractor.prototype._recordRelationship = function (info, kind, target, attrName, multiplicity) {
+    const rank = { associations: 0, aggregations: 1, compositions: 2 };
+    const existing = info.relationships.find(relation => relation.target === target && relation.attrName === attrName);
+    if (existing) {
+      if (rank[kind] > rank[existing.kind]) existing.kind = kind;
+      if (multiplicity === '*' || !existing.multiplicity) existing.multiplicity = multiplicity;
+    } else {
+      info.relationships.push({ kind, target, attrName, multiplicity });
+    }
+    info._relAttrs[attrName] = true;
+  };
+
+  PythonClassExtractor.prototype._annotationRelationships = function (info, kind, annotation, attrName, multiplicity) {
+    for (const target of extractClassesFromAnnotation(annotation, this.allTypeNames)) {
+      this._recordRelationship(info, kind, target, attrName, multiplicity || inferMultiplicity(annotation, target));
+    }
   };
 
   PythonClassExtractor.prototype._extractClassLevelAnnotation = function (node, classInfo) {
     if (!node.target || node.target.type !== 'Name') return;
     var attrName = node.target.id;
-    var typeHint = node.annotation ? annotationStr(node.annotation) : null;
-
-    // Avoid duplicates
-    for (var i = 0; i < classInfo.attributes.length; i++) {
-      if (classInfo.attributes[i].name === attrName) return;
+    if (!classInfo.attributes.some(attribute => attribute.name === attrName)) {
+      classInfo.attributes.push({ name: attrName, typeHint: node.annotation ? annotationStr(node.annotation) : null });
     }
-    classInfo.attributes.push({ name: attrName, typeHint: typeHint });
-
-    // Check for association
-    if (node.annotation) {
-      var annCls = extractClassFromAnnotation(node.annotation, this.allTypeNames);
-      if (annCls) {
-        _addUnique(classInfo.associations, annCls);
-        classInfo._relAttrs[attrName] = true;
-        if (!classInfo._relMult[annCls]) {
-          var tgtMult = inferMultiplicity(node.annotation, annCls);
-          classInfo._relMult[annCls] = { tgtMult: tgtMult };
-        }
-      }
-    }
+    this._annotationRelationships(classInfo, 'associations', node.annotation, attrName);
   };
 
   PythonClassExtractor.prototype._checkAttribute = function (node, classInfo) {
@@ -1490,157 +1698,51 @@
     classInfo.attributes.push({ name: attrName, typeHint: typeHint });
   };
 
-  PythonClassExtractor.prototype._checkFieldRelationship = function (node, classInfo, initParamTypes, localCreations, methodName) {
-    var self = this;
-
-    /** Store a relationship with multiplicity inferred from an annotation node. */
-    function addRel(list, target, annNode, attrName) {
-      _addUnique(list, target);
-      classInfo._relAttrs[attrName] = true;
-      if (annNode && !classInfo._relMult[target]) {
-        var tgtMult = inferMultiplicity(annNode, target);
-        classInfo._relMult[target] = { tgtMult: tgtMult };
+  PythonClassExtractor.prototype._checkFieldRelationship = function (node, info, parameterAnnotations, localCreations) {
+    if (node.type === 'Assign' || node.type === 'AnnAssign') {
+      for (const target of node.targets || [node.target]) {
+        if (!isSelfAttr(target)) continue;
+        const annotation = node.annotation;
+        const value = node.value;
+        const attrName = target.attr;
+        if (annotation) this._annotationRelationships(info, 'associations', annotation, attrName);
+        if (!value) continue;
+        if (value.type === 'Call') {
+          const created = callName(value);
+          if (created && this.allTypeNames.has(created)) {
+            this._recordRelationship(info, 'compositions', created, attrName, annotation ? inferMultiplicity(annotation, created) : null);
+          }
+        } else if (value.type === 'Name') {
+          if (!annotation && parameterAnnotations[value.id]) {
+            const parameterAnnotation = parameterAnnotations[value.id];
+            for (const related of extractClassesFromAnnotation(parameterAnnotation, this.allTypeNames)) {
+              const multiplicity = inferMultiplicity(parameterAnnotation, related);
+              // Keep the tutorial's distinction between an explicit scalar
+              // field bound and a type learned only from its supplied argument.
+              this._recordRelationship(info, 'associations', related, attrName, multiplicity === '1' ? null : multiplicity);
+            }
+          } else if (localCreations[value.id]) {
+            this._recordRelationship(info, 'compositions', localCreations[value.id], attrName, annotation ? inferMultiplicity(annotation, localCreations[value.id]) : null);
+          }
+        } else if (value.type === 'List') {
+          for (const element of value.elts || []) {
+            const created = element.type === 'Call' ? callName(element) : localCreations[element.id];
+            if (created && this.allTypeNames.has(created)) this._recordRelationship(info, 'compositions', created, attrName, '*');
+          }
+        }
       }
+      return;
     }
-
-    if (node.type === 'Assign') {
-      var targets = node.targets || [];
-      for (var i = 0; i < targets.length; i++) {
-        var tgt = targets[i];
-        if (!isSelfAttr(tgt)) continue;
-        var attrName = tgt.attr;
-
-        // self.x = ClassName() → composition (1 to 1)
-        if (node.value && node.value.type === 'Call') {
-          var callee = callName(node.value);
-          if (callee && this.allTypeNames.has(callee)) {
-            addRel(classInfo.compositions, callee, null, attrName);
-            continue;
-          }
-        }
-        // self.x = param → association if param is a typed method arg
-        if (node.value && node.value.type === 'Name') {
-          var paramCls = initParamTypes[node.value.id];
-          if (paramCls) {
-            addRel(classInfo.associations, paramCls, null, attrName);
-            continue;
-          }
-        }
-        // self.x = [ClassName(), ...] → composition (* multiplicity)
-        if (node.value && node.value.type === 'List' && node.value.elts) {
-          for (var j = 0; j < node.value.elts.length; j++) {
-            var elt = node.value.elts[j];
-            if (elt.type === 'Call') {
-              var c = callName(elt);
-              if (c && this.allTypeNames.has(c)) {
-                _addUnique(classInfo.compositions, c);
-                classInfo._relAttrs[attrName] = true;
-                if (!classInfo._relMult[c]) {
-                  classInfo._relMult[c] = { tgtMult: '*' };
-                }
-              }
-            }
-          }
-        }
-      }
-    } else if (node.type === 'AnnAssign' && node.target) {
-      if (!isSelfAttr(node.target)) return;
-      var attrName = node.target.attr;
-      var annCls = node.annotation ? extractClassFromAnnotation(node.annotation, this.allTypeNames) : null;
-
-      if (node.value) {
-        // self.x: T = ClassName() → composition
-        if (node.value.type === 'Call') {
-          var callee = callName(node.value);
-          if (callee && this.allTypeNames.has(callee)) {
-            addRel(classInfo.compositions, callee, node.annotation, attrName);
-            return;
-          }
-        }
-        // self.x: T = param → association
-        if (node.value.type === 'Name') {
-          var paramCls = initParamTypes[node.value.id];
-          if (paramCls) {
-            addRel(classInfo.associations, paramCls, node.annotation, attrName);
-            return;
-          }
-        }
-        // self.x: List[T] = [] → defer relationship classification.
-        // The relationship type (composition vs aggregation) is determined by
-        // how items are added: append(local_created) = composition,
-        // append(param) = aggregation.  If no append is found, the annotation
-        // type is used as a fallback association (reconciled after all methods).
-        if (annCls && _isEmptyCollection(node.value)) {
-          classInfo._pendingCollections[annCls] = { annNode: node.annotation, attrName: attrName };
-          return;
-        }
-        // self.x: T = <other expr> → association from annotation
-        if (annCls) {
-          addRel(classInfo.associations, annCls, node.annotation, attrName);
-        }
-      } else {
-        // self.x: ClassName (no value) → association
-        if (annCls) {
-          addRel(classInfo.associations, annCls, node.annotation, attrName);
-        }
-      }
-    } else if (node.type === 'Expr' && node.value && node.value.type === 'Call') {
-      // self.x.append(v) / self.x.add(v) → relationship with * multiplicity
-      var call = node.value;
-      var func = call.func;
-      if (func && func.type === 'Attribute' &&
-          (func.attr === 'append' || func.attr === 'add') &&
-          isSelfAttr(func.value) &&
-          call.args && call.args.length >= 1) {
-        var arg = call.args[0];
-        var attrName = func.value.attr;
-        var resolvedCls = null;
-
-        if (arg.type === 'Name') {
-          // Check if arg is a locally-created object: v = ClassName(...)
-          // Pattern: dept = Department(...); self.departments.append(dept) → composition
-          var createdCls = localCreations ? localCreations[arg.id] : null;
-          if (createdCls) {
-            var aggIdx = classInfo.aggregations.indexOf(createdCls);
-            if (aggIdx !== -1) classInfo.aggregations.splice(aggIdx, 1);
-            _addUnique(classInfo.compositions, createdCls);
-            if (!classInfo._relMult[createdCls]) {
-              classInfo._relMult[createdCls] = { tgtMult: '*' };
-            }
-            resolvedCls = createdCls;
-          } else {
-            // Check if arg is a method parameter → aggregation
-            var paramCls = initParamTypes[arg.id];
-            if (paramCls &&
-                classInfo.compositions.indexOf(paramCls) === -1 &&
-                classInfo.aggregations.indexOf(paramCls) === -1 &&
-                classInfo.associations.indexOf(paramCls) === -1) {
-              _addUnique(classInfo.aggregations, paramCls);
-              if (!classInfo._relMult[paramCls]) {
-                classInfo._relMult[paramCls] = { tgtMult: '*' };
-              }
-              resolvedCls = paramCls;
-            }
-          }
-        } else if (arg.type === 'Call') {
-          // self.items.append(Task()) → inline constructor → composition
-          var inlineCls = callName(arg);
-          if (inlineCls && self.allTypeNames.has(inlineCls)) {
-            var aggIdx = classInfo.aggregations.indexOf(inlineCls);
-            if (aggIdx !== -1) classInfo.aggregations.splice(aggIdx, 1);
-            _addUnique(classInfo.compositions, inlineCls);
-            if (!classInfo._relMult[inlineCls]) {
-              classInfo._relMult[inlineCls] = { tgtMult: '*' };
-            }
-            resolvedCls = inlineCls;
-          }
-        }
-
-        // Clear pending collection entry if the append resolved the type
-        if (resolvedCls && classInfo._pendingCollections[resolvedCls]) {
-          delete classInfo._pendingCollections[resolvedCls];
-        }
-      }
+    if (node.type !== 'Expr' || !node.value || node.value.type !== 'Call') return;
+    const call = node.value;
+    const func = call.func;
+    if (func.type !== 'Attribute' || !['append', 'add'].includes(func.attr) || !isSelfAttr(func.value) || !call.args.length) return;
+    const value = call.args[0];
+    const created = value.type === 'Call' ? callName(value) : localCreations[value.id];
+    if (created && this.allTypeNames.has(created)) {
+      this._recordRelationship(info, 'compositions', created, func.value.attr, '*');
+    } else if (value.type === 'Name' && parameterAnnotations[value.id]) {
+      this._annotationRelationships(info, 'aggregations', parameterAnnotations[value.id], func.value.attr, '*');
     }
   };
 
@@ -1660,8 +1762,8 @@
         var a = args[j];
         if (a.arg === 'self' || a.arg === 'cls') continue;
         if (a.annotation) {
-          var paramCls = extractClassFromAnnotation(a.annotation, self.allTypeNames);
-          if (paramCls && !structural[paramCls]) {
+          for (const paramCls of extractClassesFromAnnotation(a.annotation, self.allTypeNames)) {
+            if (structural[paramCls]) continue;
             if (item.name === '__init__' && classInfo.aggregations.indexOf(paramCls) !== -1) continue;
             _addUnique(classInfo.dependencies, paramCls);
           }
@@ -1670,15 +1772,14 @@
 
       // Return type → dependency
       if (item.returns) {
-        var retCls = extractClassFromAnnotation(item.returns, self.allTypeNames);
-        if (retCls && !structural[retCls]) {
-          _addUnique(classInfo.dependencies, retCls);
+        for (const retCls of extractClassesFromAnnotation(item.returns, self.allTypeNames)) {
+          if (!structural[retCls]) _addUnique(classInfo.dependencies, retCls);
         }
       }
 
       // Local ClassName() calls and raise statements → dependency
       if (item.name !== '__init__') {
-        astWalk({ type: '_wrap', body: item.body }, function (child) {
+        walkPythonMethodBody(item.body, function (child) {
           if (child.type === 'Assign') {
             var targets = child.targets || [];
             for (var k = 0; k < targets.length; k++) {
@@ -1708,7 +1809,7 @@
         });
       } else {
         // __init__ can also raise exceptions → "throws" dependency
-        astWalk({ type: '_wrap', body: item.body }, function (child) {
+        walkPythonMethodBody(item.body, function (child) {
           if (child.type === 'Raise' && child.exc) {
             var excNode = child.exc;
             var excClass = null;
@@ -1748,10 +1849,12 @@
       }
       lines.push(decl + ' {');
 
-      // Attributes — filter out those promoted to relationships
+      // Scalar references are represented by arrows. Collection fields stay
+      // visible as well, preserving the tutorial's container representation.
       for (var j = 0; j < cls.attributes.length; j++) {
         var attr = cls.attributes[j];
-        if (cls._relAttrs[attr.name]) continue;
+        const isCollection = cls.relationships.some(relation => relation.attrName === attr.name && relation.multiplicity === '*');
+        if (cls._relAttrs[attr.name] && !isCollection) continue;
         // Visibility: __ → private, _ → protected, else → public
         var prefix;
         if (hideVis) {
@@ -1805,20 +1908,7 @@
       lines.push('class ' + externalBases[eb]);
     }
 
-    // Build bidirectional association set (both classes reference each other)
-    var bidir = {};
-    var emittedBidir = {};
-    for (var i = 0; i < sorted.length; i++) {
-      var biCls = sorted[i];
-      for (var j = 0; j < biCls.associations.length; j++) {
-        var target = biCls.associations[j];
-        var targetInfo = this.classMap[target];
-        if (targetInfo && targetInfo.associations.indexOf(biCls.name) !== -1) {
-          var key = [biCls.name, target].sort().join('::');
-          bidir[key] = true;
-        }
-      }
-    }
+    const emittedBidir = new Set();
 
     // Relationships
     for (var i = 0; i < sorted.length; i++) {
@@ -1833,55 +1923,27 @@
         lines.push(cls.name + arrow + base);
       }
 
-      // Composition — navigable, with multiplicity (only target side is inferrable)
-      for (var j = 0; j < cls.compositions.length; j++) {
-        var compTarget = cls.compositions[j];
-        var compMult = cls._relMult[compTarget];
-        var compLabel = (compMult && !hideMult)
-          ? ' *--> "' + compMult.tgtMult + '" '
-          : ' *--> ';
-        lines.push(cls.name + compLabel + compTarget);
-      }
-
-      // Aggregation — with multiplicity (only target side is inferrable)
-      for (var j = 0; j < cls.aggregations.length; j++) {
-        var aggTarget = cls.aggregations[j];
-        var aggMult = cls._relMult[aggTarget];
-        var aggLabel = (aggMult && !hideMult)
-          ? ' o--> "' + aggMult.tgtMult + '" '
-          : ' o--> ';
-        lines.push(cls.name + aggLabel + aggTarget);
-      }
-
-      // Association — with bidirectionality detection and multiplicity
-      for (var j = 0; j < cls.associations.length; j++) {
-        var assocTarget = cls.associations[j];
-        var bdKey = [cls.name, assocTarget].sort().join('::');
-        if (bidir[bdKey]) {
-          // Bidirectional — emit once with undirected arrow
-          if (!emittedBidir[bdKey]) {
-            emittedBidir[bdKey] = true;
-            if (hideMult) {
-              lines.push(cls.name + ' -- ' + assocTarget);
-            } else {
-              var m1 = cls._relMult[assocTarget];
-              var m2 = this.classMap[assocTarget] ? this.classMap[assocTarget]._relMult[cls.name] : null;
-              var tgtM = m1 ? m1.tgtMult : '';
-              var srcM = m2 ? m2.tgtMult : '';
-              var label = srcM ? ' "' + srcM + '"' : '';
-              label += ' -- ';
-              label += tgtM ? '"' + tgtM + '" ' : '';
-              lines.push(cls.name + label + assocTarget);
-            }
-          }
-        } else {
-          // Unidirectional — directed arrow with multiplicity
-          var assocMult = cls._relMult[assocTarget];
-          var assocLabel = (assocMult && !hideMult)
-            ? ' --> "' + assocMult.tgtMult + '" '
-            : ' --> ';
-          lines.push(cls.name + assocLabel + assocTarget);
+      // Distinct fields keep their own arrows. Collapse reciprocal references
+      // only when each side has one role, so no role or cardinality is lost.
+      for (const relation of cls.relationships) {
+        const targetInfo = this.classMap[relation.target];
+        const sameTarget = cls.relationships.filter(other => other.target === relation.target);
+        const reverse = targetInfo ? targetInfo.relationships.filter(other => other.target === cls.name) : [];
+        const bidirectional = relation.kind === 'associations' && sameTarget.length === 1 &&
+          reverse.length === 1 && reverse[0].kind === 'associations';
+        if (bidirectional) {
+          const key = [cls.name, relation.target].sort().join('::');
+          if (emittedBidir.has(key)) continue;
+          emittedBidir.add(key);
+          const left = !hideMult && reverse[0].multiplicity ? ' "' + reverse[0].multiplicity + '"' : '';
+          const right = !hideMult && relation.multiplicity ? '"' + relation.multiplicity + '" ' : '';
+          lines.push(cls.name + left + ' -- ' + right + relation.target);
+          continue;
         }
+        const arrows = { compositions: '*-->', aggregations: 'o-->', associations: '-->' };
+        const multiplicity = !hideMult && relation.multiplicity ? '"' + relation.multiplicity + '" ' : '';
+        const role = sameTarget.length > 1 ? ' : ' + relation.attrName : '';
+        lines.push(cls.name + ' ' + arrows[relation.kind] + ' ' + multiplicity + relation.target + role);
       }
 
       // Dependency
@@ -1930,13 +1992,18 @@
 
     // Output state
     this.participants = [];
-    this._participantSet = {};
+    this._participantSet = new Set();
+    this._participantIds = new Set(['Main']);
+    this._symbolicParticipantIds = new Map();
     this.lines = [];
 
     // Scope tracking
     this.varTypes = {};
     this.varParticipants = {}; // aliases and parameter bindings to known objects
+    this.fieldBindings = {}; // owning participant -> field -> object binding (null after invalidation)
     this._scopeCaller = 'Main';
+    this._scopeIdentity = 'Main';
+    this._invocationCount = 0;
     this._callerClass = {};
     this._referencedVars = {};   // {name: true} for names read in current scope
 
@@ -2103,6 +2170,11 @@
 
         for (var i = 0; i < node.body.length; i++) {
           var item = node.body[i];
+          if (item.type === 'AnnAssign' && item.target && item.target.type === 'Name') {
+            fAnns[item.target.id] = item.annotation;
+            const scalarType = self._scalarAnnotationClass(item.annotation);
+            if (scalarType) aTypes[item.target.id] = scalarType;
+          }
           if (item.type !== 'FunctionDef') continue;
           methods[item.name] = item;
 
@@ -2113,7 +2185,7 @@
             var a = args[j];
             if (a.arg === 'self' || a.arg === 'cls') continue;
             if (a.annotation) {
-              var resolved = resolveAnnotationToClass(a.annotation, self.allTypeNames);
+              var resolved = self._scalarAnnotationClass(a.annotation);
               if (resolved) mParams[a.arg] = resolved;
             }
           }
@@ -2122,11 +2194,13 @@
           // __init__: extract attribute types
           if (item.name === '__init__') {
             var initParams = {};
+            var initAnnotations = {};
             for (var j = 0; j < args.length; j++) {
               var a = args[j];
               if (a.arg === 'self' || a.arg === 'cls') continue;
               if (a.annotation) {
-                var resolved = resolveAnnotationToClass(a.annotation, self.allTypeNames);
+                initAnnotations[a.arg] = a.annotation;
+                var resolved = self._scalarAnnotationClass(a.annotation);
                 if (resolved) initParams[a.arg] = resolved;
               }
             }
@@ -2137,12 +2211,13 @@
                   var tgt = targets[k];
                   if (isSelfAttr(tgt)) {
                     if (child.value && child.value.type === 'Call') {
-                      var cn = child.value.func;
-                      if (cn && cn.type === 'Name' && self.allTypeNames.has(cn.id)) {
-                        aTypes[tgt.attr] = cn.id;
+                      const cn = callName(child.value);
+                      if (cn && self.allTypeNames.has(cn)) {
+                        aTypes[tgt.attr] = cn;
                       }
                     } else if (child.value && child.value.type === 'Name') {
                       var pc = initParams[child.value.id];
+                      if (initAnnotations[child.value.id]) fAnns[tgt.attr] = initAnnotations[child.value.id];
                       if (pc) aTypes[tgt.attr] = pc;
                     }
                   }
@@ -2152,14 +2227,14 @@
                 if (child.annotation) fAnns[attrName] = child.annotation;
                 var resolved = null;
                 if (child.value && child.value.type === 'Call') {
-                  var cn = child.value.func;
-                  if (cn && cn.type === 'Name' && self.allTypeNames.has(cn.id)) resolved = cn.id;
+                  const cn = callName(child.value);
+                  if (cn && self.allTypeNames.has(cn)) resolved = cn;
                 }
                 if (!resolved && child.value && child.value.type === 'Name') {
                   resolved = initParams[child.value.id];
                 }
                 if (!resolved && child.annotation) {
-                  resolved = resolveAnnotationToClass(child.annotation, self.allTypeNames);
+                  resolved = self._scalarAnnotationClass(child.annotation);
                 }
                 if (resolved) aTypes[attrName] = resolved;
               }
@@ -2176,6 +2251,13 @@
 
     // Identify data classes
     this._identifyDataClasses();
+  };
+
+  // A collection's element type is useful for loop variables, but the
+  // collection itself is not an instance of that element's class.
+  PythonSequenceDiagramGenerator.prototype._scalarAnnotationClass = function (annotation) {
+    const type = resolveAnnotationToClass(annotation, this.allTypeNames);
+    return type && inferMultiplicity(annotation, type) !== '*' ? type : null;
   };
 
   PythonSequenceDiagramGenerator.prototype._identifyDataClasses = function () {
@@ -2281,14 +2363,14 @@
   // ── Statement processing ──────────────────────────────────────────
 
   PythonSequenceDiagramGenerator.prototype._processStmts = function (stmts, caller, depth) {
-    for (var i = 0; i < stmts.length; i++) {
-      var exit = this._processStmt(stmts[i], caller, depth);
-      if (['Return', 'Raise', 'Break', 'Continue'].indexOf(stmts[i].type) !== -1) return stmts[i].type;
-      if (exit) return exit;
-    }
+    if (depth === 0) this._sequenceVisits = 0;
+    const flow = this._buildSequenceFlow(stmts, caller, depth, false);
+    this.lines.push(...this._flowLines(flow));
+    this._mergeScopes(this._flowOutcomes(flow).map(outcome => outcome.scope));
+    return flow;
   };
 
-  PythonSequenceDiagramGenerator.prototype._processStmt = function (stmt, caller, depth) {
+  PythonSequenceDiagramGenerator.prototype._processStmt = function (stmt, caller, depth, preservePaths) {
     if (!stmt) return;
     switch (stmt.type) {
       case 'Assign': this._processAssign(stmt, caller, depth); break;
@@ -2299,17 +2381,18 @@
       case 'Expr': this._processExprStmt(stmt, caller, depth); break;
       case 'Return':
         if (stmt.value) this._scanExprForCalls(stmt.value, caller, depth);
-        break;
+        return this._completion('Return');
       case 'Raise':
         if (stmt.exc) this._scanExprForCalls(stmt.exc, caller, depth);
-        break;
+        return this._completion('Raise');
+      case 'Break': case 'Continue': return this._completion(stmt.type);
       case 'If':
-        if (!this._isMainGuard(stmt)) return this._processIf(stmt, caller, depth);
-        return this._processStmts(stmt.body, caller, depth);
-      case 'For': this._processFor(stmt, caller, depth); break;
-      case 'While': this._processWhile(stmt, caller, depth); break;
-      case 'With': return this._processStmts(stmt.body, caller, depth);
-      case 'Try': this._processTry(stmt, caller, depth); break;
+        if (!this._isMainGuard(stmt)) return this._processIf(stmt, caller, depth, { preservePaths });
+        return this._collectFragment(stmt.body, caller, depth, preservePaths);
+      case 'For': return this._processFor(stmt, caller, depth);
+      case 'While': return this._processWhile(stmt, caller, depth);
+      case 'With': return this._collectFragment(stmt.body, caller, depth, preservePaths);
+      case 'Try': return this._processTry(stmt, caller, depth);
     }
   };
 
@@ -2317,87 +2400,113 @@
     this._processAssignValue(stmt.value, stmt.targets || [], caller, depth);
   };
 
+  // Resolve object expressions independently of call syntax. Bindings are local
+  // names or fields of a particular owner; a type alone never identifies an
+  // unrelated object that happens to share that type.
+  PythonSequenceDiagramGenerator.prototype._objectBinding = function (expression, caller) {
+    if (!expression) return null;
+    if (expression.type === 'Name') {
+      if (expression.id === 'self') return { type: this._classOf(caller), participant: caller };
+      const type = this.varTypes[expression.id];
+      return type ? { type: type, participant: this.varParticipants[expression.id]
+        || this._symbolicParticipantId('local', this._scopeIdentity, expression.id, type,
+          caller === 'Main' ? expression.id : caller + '_' + expression.id) } : null;
+    }
+    if (expression.type !== 'Attribute') return null;
+    const owner = this._objectBinding(expression.value, caller);
+    if (!owner) return null;
+    const fields = this.fieldBindings[owner.participant] || {};
+    if (Object.prototype.hasOwnProperty.call(fields, expression.attr)) return fields[expression.attr];
+    let ownerType = owner.type;
+    const seen = new Set();
+    while (ownerType && !seen.has(ownerType)) {
+      seen.add(ownerType);
+      const type = (this.attrTypes[ownerType] || {})[expression.attr];
+      if (type) return { type: type, participant: this._symbolicParticipantId(
+        'field', owner.participant, expression.attr, type, owner.participant + '_' + expression.attr) };
+      ownerType = this._findParent(ownerType);
+    }
+    return null;
+  };
+
+  PythonSequenceDiagramGenerator.prototype._assignBinding = function (target, binding, caller) {
+    if (target.type === 'Name') {
+      delete this.varTypes[target.id];
+      delete this.varParticipants[target.id];
+      if (binding) {
+        this.varTypes[target.id] = binding.type;
+        this.varParticipants[target.id] = binding.participant;
+      }
+    } else if (target.type === 'Attribute') {
+      const owner = this._objectBinding(target.value, caller);
+      if (!owner) return;
+      if (!this.fieldBindings[owner.participant]) this.fieldBindings[owner.participant] = {};
+      this.fieldBindings[owner.participant][target.attr] = binding;
+    }
+  };
+
+  PythonSequenceDiagramGenerator.prototype._newParticipantId = function (base) {
+    let id = base;
+    for (let suffix = 2; this._participantIds.has(id); suffix++) id = base + '_' + suffix;
+    // Reserve immediately: aliases/fields can reference an object before any
+    // message causes it to be rendered as a participant.
+    this._participantIds.add(id);
+    return id;
+  };
+
+  PythonSequenceDiagramGenerator.prototype._symbolicParticipantId = function (kind, owner, role, type, base) {
+    const key = JSON.stringify([kind, owner, role, type]);
+    if (!this._symbolicParticipantIds.has(key)) {
+      this._symbolicParticipantIds.set(key, this._newParticipantId(base));
+    }
+    return this._symbolicParticipantIds.get(key);
+  };
+
   PythonSequenceDiagramGenerator.prototype._processAssignValue = function (value, targets, caller, depth) {
     if (value && value.type === 'Call') {
-      var resolved = this._resolveCall(value, caller);
+      const resolved = this._resolveCall(value, caller);
       if (resolved) {
-        var clsName = resolved[0], method = resolved[1];
-        if (method === '__init__' && targets.length === 1) {
-          var tgt = targets[0];
-          if (tgt.type === 'Name' || isSelfAttr(tgt)) this._scanCallInputs(value, caller, depth);
-          if (tgt.type === 'Name') {
-            var baseId = caller === 'Main' ? tgt.id : caller + '_' + tgt.id;
-            var pid = baseId;
-            for (var suffix = 2; this._participantSet[pid]; suffix++) pid = baseId + '_' + suffix;
-            this._callerClass[pid] = clsName;
-            if (this._dataClasses[clsName]) {
-              this.varTypes[tgt.id] = clsName;
-              this.varParticipants[tgt.id] = pid;
-              return;
-            }
-            this._ensureParticipant(pid, clsName);
-            this.lines.push('create ' + pid);
-            this.lines.push(caller + ' --> ' + pid + ': <<create>>');
-            this.lines.push('activate ' + pid);
-            this._maybeFollow(clsName, '__init__', pid, depth, value);
-            this.lines.push('deactivate ' + pid);
-            this.varTypes[tgt.id] = clsName;
-            this.varParticipants[tgt.id] = pid;
-            return;
+        const [clsName, method] = resolved;
+        const target = targets.length === 1 ? targets[0] : null;
+        const fieldOwner = target && target.type === 'Attribute'
+          ? this._objectBinding(target.value, caller) : null;
+        if (method === '__init__' && target && (target.type === 'Name' || fieldOwner)) {
+          this._scanCallInputs(value, caller, depth);
+          const base = target.type === 'Name'
+            ? (caller === 'Main' ? target.id : caller + '_' + target.id)
+            : (this._callerClass[target.attr] ? fieldOwner.participant + '_' + target.attr : target.attr);
+          const id = this._newParticipantId(base);
+          this._callerClass[id] = clsName;
+          if (!this._dataClasses[clsName]) {
+            this._ensureParticipant(id, clsName);
+            this.lines.push('create ' + id, caller + ' --> ' + id + ': <<create>>', 'activate ' + id);
+            this._maybeFollow(clsName, '__init__', id, depth, value);
+            this.lines.push('deactivate ' + id);
           }
-          if (isSelfAttr(tgt)) {
-            if (this._dataClasses[clsName]) return;
-            var pid = tgt.attr;
-            this._ensureParticipant(pid, clsName);
-            this._callerClass[pid] = clsName;
-            this.lines.push('create ' + pid);
-            this.lines.push(caller + ' --> ' + pid + ': <<create>>');
-            this.lines.push('activate ' + pid);
-            this._maybeFollow(clsName, '__init__', pid, depth, value);
-            this.lines.push('deactivate ' + pid);
-            return;
+          this._assignBinding(target, { type: clsName, participant: id }, caller);
+          return;
+        }
+        const returnName = target && target.type === 'Name' && this._referencedVars[target.id] ? target.id : null;
+        const returnType = this._getReturnClassType(clsName, method);
+        this._processCall(value, caller, depth, true, returnName);
+        let returnBinding = null;
+        if (returnType && targets.length) {
+          const name = targets[0].type === 'Name' ? targets[0].id : targets[0].attr;
+          if (name) {
+            const id = this._newParticipantId((caller === 'Main' ? '' : caller + '_') + name);
+            this._callerClass[id] = returnType;
+            returnBinding = { type: returnType, participant: id };
           }
         }
-        // Non-constructor call assigned to a variable — return IS captured
-        // (Cheers & Lin 2020: show return arrow when value is used)
-        // If the target variable is read later in the scope, forward its
-        // name as a `returnBinding` so the reply arrow can be labeled
-        // `var: type` rather than a bare `type`.
-        var binding = null;
-        var retCls = null;
-        if (targets.length === 1 && targets[0].type === 'Name') {
-          var tname = targets[0].id;
-          if (this._referencedVars[tname]) binding = tname;
-          // Track the variable's type from the return annotation for
-          // downstream `tname.method()` resolution.
-          retCls = this._getReturnClassType(clsName, method);
-        }
-        this._processCall(value, caller, depth, true, binding);
-        if (targets.length === 1 && targets[0].type === 'Name') {
-          delete this.varTypes[targets[0].id];
-          delete this.varParticipants[targets[0].id];
-          if (retCls) this.varTypes[targets[0].id] = retCls;
+        for (const assignment of targets) {
+          this._assignBinding(assignment, returnBinding, caller);
         }
         return;
       }
     }
-    // PyCG-inspired assignment graph (Salis et al. 2021): propagate types through
-    // variable-to-variable assignments (y = x → y gets x's type)
-    if (value && value.type === 'Name' && targets.length === 1 && targets[0].type === 'Name') {
-      var srcType = this.varTypes[value.id];
-      var srcParticipant = this.varParticipants[value.id];
-      delete this.varTypes[targets[0].id];
-      delete this.varParticipants[targets[0].id];
-      if (srcType) this.varTypes[targets[0].id] = srcType;
-      if (srcParticipant) this.varParticipants[targets[0].id] = srcParticipant;
-      return;
-    }
+    const binding = this._objectBinding(value, caller);
     this._scanExprForCalls(value, caller, depth);
-    for (var i = 0; i < targets.length; i++) {
-      if (targets[i].type !== 'Name') continue;
-      delete this.varTypes[targets[i].id];
-      delete this.varParticipants[targets[i].id];
-    }
+    for (const target of targets) this._assignBinding(target, binding, caller);
   };
 
   PythonSequenceDiagramGenerator.prototype._processExprStmt = function (stmt, caller, depth) {
@@ -2413,12 +2522,18 @@
   // ── Control flow → combined fragments ────────────────────────────
 
   PythonSequenceDiagramGenerator.prototype._scopeSnapshot = function () {
-    return { types: Object.assign({}, this.varTypes), participants: Object.assign({}, this.varParticipants) };
+    const fields = {};
+    for (const owner in this.fieldBindings) fields[owner] = Object.assign({}, this.fieldBindings[owner]);
+    return { types: Object.assign({}, this.varTypes), participants: Object.assign({}, this.varParticipants), fields: fields };
   };
 
-  PythonSequenceDiagramGenerator.prototype._restoreScope = function (scope) {
+  PythonSequenceDiagramGenerator.prototype._restoreScope = function (scope, preserveFields) {
     this.varTypes = Object.assign({}, scope.types);
     this.varParticipants = Object.assign({}, scope.participants);
+    if (!preserveFields) {
+      this.fieldBindings = {};
+      for (const owner in scope.fields) this.fieldBindings[owner] = Object.assign({}, scope.fields[owner]);
+    }
   };
 
   PythonSequenceDiagramGenerator.prototype._mergeScopes = function (scopes) {
@@ -2436,164 +2551,213 @@
       this.varTypes[name] = type;
       if (participant) this.varParticipants[name] = participant;
     }
+    this.fieldBindings = {};
+    const owners = new Set(scopes.flatMap(scope => Object.keys(scope.fields)));
+    for (const owner of owners) {
+      const names = new Set(scopes.flatMap(scope => Object.keys(scope.fields[owner] || {})));
+      this.fieldBindings[owner] = {};
+      for (const name of names) {
+        const bindings = scopes.map(scope => (scope.fields[owner] || {})[name]);
+        const first = bindings[0];
+        if (first && bindings.every(binding => binding && binding.type === first.type)) {
+          this.fieldBindings[owner][name] = { type: first.type,
+            participant: bindings.every(binding => binding.participant === first.participant)
+              ? first.participant : this._symbolicParticipantId('merged-field', owner, name,
+                first.type, owner + '_' + name) };
+        } else {
+          this.fieldBindings[owner][name] = null;
+        }
+      }
+    }
   };
 
-  PythonSequenceDiagramGenerator.prototype._collectFragment = function (stmts, caller, depth) {
-    var scope = this._scopeSnapshot();
-    var snapshot = this.lines.length;
-    var exit = this._processStmts(stmts, caller, depth);
-    var newLines = this.lines.splice(snapshot);
-    var resultingScope = this._scopeSnapshot();
+  class PythonSequenceLimitError extends Error {
+    constructor() {
+      super('Python sequence inference limit reached; simplify the example to inspect its interactions.');
+      this.name = 'PythonSequenceLimitError';
+    }
+  }
+
+  // A flow retains each completion's scope and pending transfer until its
+  // enclosing construct consumes it. In particular, finally runs before paths
+  // join, while a method return still contributes heap effects at its caller.
+  PythonSequenceDiagramGenerator.prototype._completion = function (exit, lines) {
+    return { lines: lines || [], scope: this._scopeSnapshot(), exit: exit || null };
+  };
+
+  PythonSequenceDiagramGenerator.prototype._flowOutcomes = function (flow) {
+    return flow.branches ? flow.branches.flatMap(branch => this._flowOutcomes(branch.flow)) : [flow];
+  };
+
+  PythonSequenceDiagramGenerator.prototype._flowLines = function (flow) {
+    if (!flow.branches) return flow.lines;
+    const branches = flow.branches.map(branch => ({ header: branch.header, lines: this._flowLines(branch.flow) }));
+    if (!branches.some(branch => this._hasMessages(branch.lines))) return flow.lines;
+    const optional = flow.optional && !this._hasMessages(branches[1].lines);
+    const lines = flow.lines.slice();
+    branches.forEach((branch, index) => {
+      if (optional && index === 1) return;
+      lines.push(optional ? branch.header.replace(/^alt /, 'opt ') : branch.header, ...branch.lines);
+    });
+    lines.push('end');
+    return lines;
+  };
+
+  PythonSequenceDiagramGenerator.prototype._mapCompletions = function (flow, transform) {
+    if (flow.branches) return { ...flow,
+      branches: flow.branches.map(branch => ({ ...branch, flow: this._mapCompletions(branch.flow, transform) })) };
+    const saved = this._scopeSnapshot();
+    this._restoreScope(flow.scope);
+    const next = transform(flow);
+    this._restoreScope(saved);
+    return { ...next, lines: flow.lines.concat(next.lines) };
+  };
+
+  PythonSequenceDiagramGenerator.prototype._buildSequenceFlow = function (stmts, caller, depth, preservePaths) {
+    const prefix = [];
+    for (let index = 0; index < stmts.length; index++) {
+      // Source paths can multiply inside nested cleanup. Refuse a partial
+      // diagram when the work bound is reached instead of silently dropping
+      // paths or fabricating a merged receiver for their finalizers.
+      if (++this._sequenceVisits > 2000) throw new PythonSequenceLimitError();
+      const start = this.lines.length;
+      let flow = this._processStmt(stmts[index], caller, depth, preservePaths);
+      const lines = this.lines.splice(start);
+      if (!flow) { prefix.push(...lines); continue; }
+      flow = { ...flow, lines: lines.concat(flow.lines) };
+      const outcomes = this._flowOutcomes(flow);
+      const sameScope = outcomes.every(outcome => JSON.stringify(outcome.scope) === JSON.stringify(outcomes[0].scope));
+      if ((preservePaths && !sameScope) || outcomes.some(outcome => outcome.exit)) {
+        const remaining = stmts.slice(index + 1);
+        flow = this._mapCompletions(flow, outcome => outcome.exit
+          ? { ...outcome, lines: [] }
+          : this._collectFragment(remaining, caller, depth, preservePaths));
+        return { ...flow, lines: prefix.concat(flow.lines) };
+      }
+      prefix.push(...this._flowLines(flow));
+      this._mergeScopes(outcomes.map(outcome => outcome.scope));
+    }
+    return this._completion(null, prefix);
+  };
+
+  PythonSequenceDiagramGenerator.prototype._collectFragment = function (stmts, caller, depth, preservePaths) {
+    const scope = this._scopeSnapshot();
+    const flow = this._buildSequenceFlow(stmts, caller, depth, Boolean(preservePaths));
     this._restoreScope(scope);
-    return { lines: newLines, scope: resultingScope, exit: exit };
+    return flow;
   };
 
   PythonSequenceDiagramGenerator.prototype._hasMessages = function (fragmentLines) {
-    for (var i = 0; i < fragmentLines.length; i++) {
-      var s = fragmentLines[i].trim();
-      if (s && !/^(alt |else |loop |opt |end|activate |deactivate |create )/.test(s)) return true;
-    }
-    return false;
+    return fragmentLines.some(line => line.trim()
+      && !/^(alt |else |loop |opt |end|activate |deactivate |create )/.test(line.trim()));
   };
 
-  PythonSequenceDiagramGenerator.prototype._processIf = function (stmt, caller, depth) {
+  PythonSequenceDiagramGenerator.prototype._processIf = function (stmt, caller, depth, context) {
     this._scanExprForCalls(stmt.test, caller, depth);
-    var cond = unparse(stmt.test, caller);
-    var originalScope = this._scopeSnapshot();
-
-    if (!stmt.orelse || stmt.orelse.length === 0) {
-      var body = this._collectFragment(stmt.body, caller, depth);
-      var bodyLines = body.lines;
-      if (this._hasMessages(bodyLines)) {
-        this.lines.push('opt [' + cond + ']');
-        this.lines = this.lines.concat(bodyLines);
-        this.lines.push('end');
-      } else {
-        this.lines = this.lines.concat(bodyLines);
-      }
-      this._mergeScopes([originalScope, body.scope]);
-      return;
+    const flow = { lines: [], optional: !(stmt.orelse || []).length, branches: [
+      { header: 'alt [' + unparse(stmt.test, caller) + ']',
+        flow: this._collectFragment(stmt.body, caller, depth, context && context.preservePaths) },
+      { header: 'else [else]',
+        flow: this._collectFragment(stmt.orelse || [], caller, depth, context && context.preservePaths) },
+    ] };
+    // Conditional expressions use the same branch emitter without asking the
+    // statement walker to consume their outcome tree.
+    if (!context) {
+      this.lines.push(...this._flowLines(flow));
+      this._mergeScopes(this._flowOutcomes(flow).map(outcome => outcome.scope));
     }
+    return flow;
+  };
 
-    var branches = [];
-    var body = this._collectFragment(stmt.body, caller, depth);
-    var bodyLines = body.lines;
-    branches.push({ header: 'alt [' + cond + ']', lines: bodyLines });
+  PythonSequenceDiagramGenerator.prototype._completionPaths = function (flow, conditions) {
+    if (!flow.branches) return [{ outcome: flow, conditions }];
+    const firstCondition = flow.branches[0].header.replace(/^(?:alt|else) \[|\]$/g, '');
+    return flow.branches.flatMap(branch => {
+      const condition = branch.header === 'else [else]' ? 'not (' + firstCondition + ')'
+        : branch.header.replace(/^(?:alt|else) \[|\]$/g, '');
+      return this._completionPaths(branch.flow, conditions.concat(condition));
+    });
+  };
 
-    // An elif condition executes only after the preceding condition was false.
-    // Keep that nested evaluation inside the else operand.
-    var otherwise = this._collectFragment(stmt.orelse, caller, depth);
-    var elseLines = otherwise.lines;
-    branches.push({ header: 'else [else]', lines: elseLines });
-
-    var hasAny = false;
-    for (var i = 0; i < branches.length; i++) {
-      if (this._hasMessages(branches[i].lines)) { hasAny = true; break; }
+  PythonSequenceDiagramGenerator.prototype._loopFlow = function (body, originalScope, header) {
+    const bodyLines = this._flowLines(body);
+    const lines = this._hasMessages(bodyLines) ? [header, ...bodyLines, 'end'] : bodyLines;
+    const paths = this._completionPaths(body, []);
+    const methodExits = paths.some(path => ['Return', 'Raise'].includes(path.outcome.exit));
+    if (!methodExits) {
+      // Break/continue stay within the bounded zero/one-iteration loop model.
+      this._mergeScopes([originalScope, ...paths.map(path => path.outcome.scope)]);
+      return this._completion(null, lines);
     }
-    if (hasAny) {
-      for (var i = 0; i < branches.length; i++) {
-        this.lines.push(branches[i].header);
-        this.lines = this.lines.concat(branches[i].lines);
-      }
-      this.lines.push('end');
-    } else {
-      for (var i = 0; i < branches.length; i++) {
-        this.lines = this.lines.concat(branches[i].lines);
-      }
-    }
-    this._mergeScopes([body.scope, otherwise.scope]);
-    if (body.exit && body.exit === otherwise.exit) return body.exit;
+    // A loop may run zero times, but a return/raise in an executed iteration
+    // still leaves the method. Keep those completions for enclosing cleanup
+    // instead of placing the continuation on every path after the loop.
+    const branches = paths.map((path, index) => {
+      const exit = ['Return', 'Raise'].includes(path.outcome.exit) ? path.outcome.exit : null;
+      const label = exit === 'Return' ? 'return from loop' : exit === 'Raise' ? 'exception from loop' : 'loop finished';
+      return { header: (index ? 'else' : 'alt') + ' [' + [label, ...path.conditions].join('; ') + ']',
+        flow: { lines: [], scope: path.outcome.scope, exit } };
+    });
+    branches.push({ header: 'else [zero iterations]', flow: { lines: [], scope: originalScope, exit: null } });
+    return { lines, branches };
   };
 
   PythonSequenceDiagramGenerator.prototype._processFor = function (stmt, caller, depth) {
     this._scanExprForCalls(stmt.iter, caller, depth);
-    var target = unparse(stmt.target, caller);
-    var iterText = unparse(stmt.iter, caller);
-    var originalScope = this._scopeSnapshot();
+    const originalScope = this._scopeSnapshot();
     this._inferLoopVarType(stmt, caller);
-    var body = this._collectFragment(stmt.body, caller, depth);
-    var bodyLines = body.lines;
-    this._mergeScopes([originalScope, body.scope]);
-    if (this._hasMessages(bodyLines)) {
-      this.lines.push('loop [for ' + target + ' in ' + iterText + ']');
-      this.lines = this.lines.concat(bodyLines);
-      this.lines.push('end');
-    } else {
-      this.lines = this.lines.concat(bodyLines);
-    }
+    const body = this._collectFragment(stmt.body, caller, depth, true);
+    return this._loopFlow(body, originalScope, 'loop [for ' + unparse(stmt.target, caller) + ' in ' + unparse(stmt.iter, caller) + ']');
   };
 
   PythonSequenceDiagramGenerator.prototype._processWhile = function (stmt, caller, depth) {
     this._scanExprForCalls(stmt.test, caller, depth);
-    var originalScope = this._scopeSnapshot();
-    var body = this._collectFragment(stmt.body, caller, depth);
-    var bodyLines = body.lines;
-    var exitsBeforeRecheck = ['Break', 'Return', 'Raise'].indexOf(body.exit) !== -1;
-    if (!exitsBeforeRecheck) {
-      this._restoreScope(body.scope);
-      var testStart = this.lines.length;
+    const originalScope = this._scopeSnapshot();
+    let body = this._collectFragment(stmt.body, caller, depth, true);
+    body = this._mapCompletions(body, outcome => {
+      if (outcome.exit && outcome.exit !== 'Continue') return { ...outcome, lines: [] };
+      const start = this.lines.length;
       this._scanExprForCalls(stmt.test, caller, depth);
-      bodyLines = bodyLines.concat(this.lines.splice(testStart));
-    }
-    this._mergeScopes([originalScope, body.scope]);
-    if (this._hasMessages(bodyLines)) {
-      this.lines.push('loop [while ' + unparse(stmt.test, caller) + ']');
-      this.lines = this.lines.concat(bodyLines);
-      this.lines.push('end');
-    } else {
-      this.lines = this.lines.concat(bodyLines);
-    }
+      return this._completion(outcome.exit, this.lines.splice(start));
+    });
+    return this._loopFlow(body, originalScope, 'loop [while ' + unparse(stmt.test, caller) + ']');
   };
 
   PythonSequenceDiagramGenerator.prototype._processTry = function (stmt, caller, depth) {
-    var originalScope = this._scopeSnapshot();
-    var body = this._collectFragment(stmt.body, caller, depth);
-    var bodyLines = body.lines;
-    var scopes = [originalScope, body.scope];
-    var handlerBranches = [];
-    for (var i = 0; i < (stmt.handlers || []).length; i++) {
-      var h = stmt.handlers[i];
-      var excType = h.excType ? unparse(h.excType) : 'Exception';
-      var handler = this._collectFragment(h.body, caller, depth);
-      var hLines = handler.lines;
-      scopes.push(handler.scope);
-      handlerBranches.push({ excType: excType, lines: hLines });
+    let body = this._collectFragment(stmt.body, caller, depth, true);
+    body = this._mapCompletions(body, outcome => outcome.exit
+      ? { ...outcome, lines: [] }
+      : this._collectFragment(stmt.orelse || [], caller, depth, true));
+    const branches = [{ header: 'alt [try]', flow: body }];
+    for (const handler of stmt.handlers || []) {
+      branches.push({ header: 'else [except ' + (handler.excType ? unparse(handler.excType) : 'Exception') + ']',
+        flow: this._collectFragment(handler.body, caller, depth, true) });
     }
-
-    var hasBody = this._hasMessages(bodyLines);
-    var hasHandlers = false;
-    for (var i = 0; i < handlerBranches.length; i++) {
-      if (this._hasMessages(handlerBranches[i].lines)) { hasHandlers = true; break; }
+    let flow = branches.length > 1 ? { lines: [], branches } : body;
+    // Each finalizer sees its incoming path's bindings. A transfer in cleanup
+    // replaces a pending transfer; normal completion resumes the pending one.
+    if ((stmt.finalbody || []).length) {
+      flow = this._mapCompletions(flow, outcome => {
+        const cleanup = this._collectFragment(stmt.finalbody, caller, depth, true);
+        return this._mapCompletions(cleanup, final => ({ ...final, lines: [], exit: final.exit || outcome.exit }));
+      });
     }
-
-    if (hasBody || hasHandlers) {
-      this.lines.push('alt [try]');
-      this.lines = this.lines.concat(bodyLines);
-      for (var i = 0; i < handlerBranches.length; i++) {
-        this.lines.push('else [except ' + handlerBranches[i].excType + ']');
-        this.lines = this.lines.concat(handlerBranches[i].lines);
-      }
-      this.lines.push('end');
-    } else {
-      this.lines = this.lines.concat(bodyLines);
-      for (var i = 0; i < handlerBranches.length; i++) {
-        this.lines = this.lines.concat(handlerBranches[i].lines);
-      }
-    }
-    this._mergeScopes(scopes);
+    return flow;
   };
 
   // ── Call processing ──────────────────────────────────────────────
 
   PythonSequenceDiagramGenerator.prototype._scanCallInputs = function (call, caller, depth) {
     // Python evaluates the receiver before arguments, then invokes the method.
-    if (call.func && call.func.type === 'Attribute') this._scanExprForCalls(call.func.value, caller, depth);
+    const receiverBinding = call.func && call.func.type === 'Attribute'
+      ? this._scanExprForCalls(call.func.value, caller, depth) : null;
     for (var i = 0; i < (call.args || []).length; i++) {
       this._scanExprForCalls(call.args[i], caller, depth);
     }
     for (var i = 0; i < (call.keywords || []).length; i++) {
       this._scanExprForCalls(call.keywords[i].value, caller, depth);
     }
+    return receiverBinding;
   };
 
   /**
@@ -2611,7 +2775,7 @@
    *   subsequent messages.
    */
   PythonSequenceDiagramGenerator.prototype._processCall = function (call, caller, depth, returnCaptured, returnBinding) {
-    this._scanCallInputs(call, caller, depth);
+    const computedReceiverBinding = this._scanCallInputs(call, caller, depth);
 
     var resolved = this._resolveCall(call, caller);
     if (!resolved) return;
@@ -2629,26 +2793,19 @@
     }
     // A known object takes precedence over the class-based fallback.
     var receiver = call.func && call.func.type === 'Attribute' ? call.func.value : null;
-    var receiverName = receiver && receiver.type === 'Name' ? receiver.id : null;
-    var receiverId = receiverName;
-    if (receiverId === 'self') receiverId = caller;
-    else if (this.varParticipants[receiverId]) receiverId = this.varParticipants[receiverId];
-    var calleeId = receiverId && (this._participantSet[receiverId] || this.varTypes[receiverName])
-      ? receiverId : this._calleeIdFor(clsName, caller, attrHint);
-    if (receiver && receiver.type === 'Call' && !this._isSuperCall(receiver)) {
+    var isSuper = receiver && receiver.type === 'Call' && this._isSuperCall(receiver);
+    const receiverBinding = this._objectBinding(receiver, caller) || computedReceiverBinding;
+    var calleeId = receiverBinding ? receiverBinding.participant
+      : method === '__init__' && !isSuper ? null : this._calleeIdFor(clsName, caller, attrHint);
+    if (!receiverBinding && receiver && receiver.type === 'Call' && !this._isSuperCall(receiver)) {
       // A computed receiver has a known return type, not the identity of the
       // first existing participant with that type.
-      calleeId = unparse(receiver, caller).replace(/\W+/g, '_').replace(/_$/, '') + '_result';
+      calleeId = this._newParticipantId(unparse(receiver, caller).replace(/\W+/g, '_').replace(/_$/, '') + '_result');
     }
     var label = this._buildCallLabel(call, clsName, method, caller);
 
-    // Detect super() call
-    var isSuper = call.func && call.func.type === 'Attribute'
-        && call.func.value && call.func.value.type === 'Call'
-        && call.func.value.func && call.func.value.func.type === 'Name'
-        && call.func.value.func.id === 'super';
-
     if (method === '__init__' && !isSuper) {
+      calleeId = this._newParticipantId(clsName);
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push('create ' + calleeId);
@@ -2656,6 +2813,7 @@
       this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, '__init__', calleeId, depth, call);
       this.lines.push('deactivate ' + calleeId);
+      return { type: clsName, participant: calleeId };
     } else if (method === '__init__' && isSuper) {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
@@ -2709,7 +2867,7 @@
   PythonSequenceDiagramGenerator.prototype._getReturnClassType = function (clsName, methodName) {
     var node = this._findMethodNode(clsName, methodName);
     if (node && node.returns) {
-      return resolveAnnotationToClass(node.returns, this.allTypeNames);
+      return this._scalarAnnotationClass(node.returns);
     }
     return null;
   };
@@ -2746,11 +2904,10 @@
       for (var j = 0; j < (call.keywords || []).length; j++) {
         if (call.keywords[j].arg === parameter) actual = call.keywords[j].value;
       }
-      if (!actual || actual.type !== 'Name') continue;
-      var actualType = actual.id === 'self' ? this._classOf(this._scopeCaller) : this.varTypes[actual.id];
-      var actualId = actual.id === 'self' ? this._scopeCaller : this.varParticipants[actual.id];
-      if (actualType) bindings.types[parameter] = actualType;
-      if (actualId) bindings.participants[parameter] = actualId;
+      const binding = this._objectBinding(actual, this._scopeCaller);
+      if (!binding) continue;
+      bindings.types[parameter] = binding.type;
+      bindings.participants[parameter] = binding.participant;
     }
     return bindings;
   };
@@ -2777,10 +2934,12 @@
     var bindings = this._argumentBindings(node, call);
     var savedScope = this._scopeSnapshot();
     var savedCaller = this._scopeCaller;
+    var savedIdentity = this._scopeIdentity;
     var savedRefs = this._referencedVars;
     this.varTypes = {};
     this.varParticipants = bindings.participants;
     this._scopeCaller = calleeId;
+    this._scopeIdentity = ++this._invocationCount;
 
     var pt = (this.paramTypes[clsName] || {})[methodName] || {};
     for (var k in pt) this.varTypes[k] = pt[k];
@@ -2792,8 +2951,9 @@
 
     this._processStmts(node.body, calleeId, depth + 1);
 
-    this._restoreScope(savedScope);
+    this._restoreScope(savedScope, true);
     this._scopeCaller = savedCaller;
+    this._scopeIdentity = savedIdentity;
     this._referencedVars = savedRefs;
     delete this._callStack[key];
   };
@@ -2805,8 +2965,9 @@
     if (!func) return null;
 
     // ClassName(...)
-    if (func.type === 'Name' && this.allTypeNames.has(func.id)) {
-      return [func.id, '__init__'];
+    const constructedClass = callName(call);
+    if (constructedClass && this.allTypeNames.has(constructedClass)) {
+      return [constructedClass, '__init__'];
     }
 
     // var.method() or ClassName.static_method()
@@ -2825,26 +2986,19 @@
         return [resolvedCls, method];
       }
       // ClassName.static_method() — static/class method call on a known type
-      if (this.allTypeNames.has(varName)) {
+      if (func.value._typeTarget !== null && this.allTypeNames.has(varName)) {
         var targetMeths = this.classMethods[varName] || {};
         if (targetMeths[method]) return [varName, method];
       }
       return null;
     }
 
-    // self.attr.method()
+    // Field receivers belong to the particular owning object, including aliases
+    // and expressions such as client.service.method().
     if (func.type === 'Attribute'
-        && func.value && func.value.type === 'Attribute'
-        && func.value.value && func.value.value.type === 'Name'
-        && func.value.value.id === 'self') {
-      var attr = func.value.attr;
-      var method = func.attr;
-      var cc = this._classOf(caller);
-      if (cc && this.attrTypes[cc] && this.attrTypes[cc][attr]) {
-        var targetCls = this.attrTypes[cc][attr];
-        var targetMeths = this.classMethods[targetCls] || {};
-        if (targetMeths[method]) return [targetCls, method];
-      }
+        && func.value && func.value.type === 'Attribute') {
+      const binding = this._objectBinding(func.value, caller);
+      if (binding && this._findMethodNode(binding.type, func.attr)) return [binding.type, func.attr];
     }
 
     // super().method()
@@ -2880,8 +3034,7 @@
   PythonSequenceDiagramGenerator.prototype._scanExprForCalls = function (node, caller, depth) {
     if (!node) return;
     if (node.type === 'Call') {
-      this._processCall(node, caller, depth);
-      return;
+      return this._processCall(node, caller, depth);
     }
     if (node.type === 'BoolOp') {
       this._scanBooleanCalls(node.values || [], node.op, caller, depth);
@@ -3022,22 +3175,16 @@
   // ── Helpers ──────────────────────────────────────────────────────
 
   PythonSequenceDiagramGenerator.prototype._ensureParticipant = function (pid, label) {
-    if (!this._participantSet[pid]) {
-      this._participantSet[pid] = true;
+    this._participantIds.add(pid);
+    if (!this._participantSet.has(pid)) {
+      this._participantSet.add(pid);
       this.participants.push({ id: pid, label: label });
     }
   };
 
   PythonSequenceDiagramGenerator.prototype._calleeIdFor = function (clsName, caller, attrHint) {
-    for (var i = 0; i < this.participants.length; i++) {
-      var p = this.participants[i];
-      if (this._callerClass[p.id] === clsName && p.id !== 'Main') return p.id;
-    }
-    if (attrHint) return attrHint;
-    for (var v in this.varTypes) {
-      if (this.varTypes[v] === clsName) return v;
-    }
-    return clsName;
+    return attrHint ? this._symbolicParticipantId('field', caller, attrHint, clsName, caller + '_' + attrHint)
+      : this._symbolicParticipantId('class', clsName, '', clsName, clsName);
   };
 
   PythonSequenceDiagramGenerator.prototype._classOf = function (participantId) {

@@ -74,9 +74,50 @@
 
   // ---------- class diagrams ----------
 
-  // Longest-arrow-first so e.g. '--|>' isn't matched as '--' first.
-  var CLASS_ARROWS = ['<-->', '--|>', '..|>', '<|--', '<|..', '*--', '--*', 'o--', '--o',
-                      '..>', '<..', '-->', '<--', 'x--x', 'x--', '--x', '..', '--'];
+  // Match the public class renderer's supported ownership/navigation markers.
+  // Reverse aliases swap both endpoints and their multiplicities before prose
+  // generation; the diamond continues to identify the whole.
+  var CLASS_ARROW_TYPES = {
+    '--|>': { verb: 'extends' },
+    '<|--': { verb: 'extends', reverse: true },
+    '..|>': { verb: 'implements' },
+    '<|..': { verb: 'implements', reverse: true },
+    '*--': { verb: 'composes' },
+    '*-->': { verb: 'composes', toNavigation: 'navigable' },
+    '*<-->': { verb: 'composes', fromNavigation: 'navigable', toNavigation: 'navigable' },
+    '*--x': { verb: 'composes', toNavigation: 'non-navigable' },
+    '*x-->': { verb: 'composes', fromNavigation: 'non-navigable', toNavigation: 'navigable' },
+    '*<--x': { verb: 'composes', fromNavigation: 'navigable', toNavigation: 'non-navigable' },
+    'o--': { verb: 'aggregates' },
+    'o-->': { verb: 'aggregates', toNavigation: 'navigable' },
+    'o<-->': { verb: 'aggregates', fromNavigation: 'navigable', toNavigation: 'navigable' },
+    'o--x': { verb: 'aggregates', toNavigation: 'non-navigable' },
+    'ox-->': { verb: 'aggregates', fromNavigation: 'non-navigable', toNavigation: 'navigable' },
+    'o<--x': { verb: 'aggregates', fromNavigation: 'navigable', toNavigation: 'non-navigable' },
+    '--*': { verb: 'composes', reverse: true },
+    '<--*': { verb: 'composes', reverse: true, toNavigation: 'navigable' },
+    '<-->*': { verb: 'composes', reverse: true, fromNavigation: 'navigable', toNavigation: 'navigable' },
+    'x--*': { verb: 'composes', reverse: true, toNavigation: 'non-navigable' },
+    '--o': { verb: 'aggregates', reverse: true },
+    '<--o': { verb: 'aggregates', reverse: true, toNavigation: 'navigable' },
+    '<-->o': { verb: 'aggregates', reverse: true, fromNavigation: 'navigable', toNavigation: 'navigable' },
+    'x--o': { verb: 'aggregates', reverse: true, toNavigation: 'non-navigable' },
+    '*<-->x': { verb: 'composes', toNavigation: 'non-navigable' },
+    '-->': { verb: 'references' },
+    '<--': { verb: 'references', reverse: true },
+    '<-->': { verb: 'reference each other', symmetric: true },
+    '--': { verb: 'is associated with' },
+    'x-->': { verb: 'is associated with', fromNavigation: 'non-navigable', toNavigation: 'navigable' },
+    '<--x': { verb: 'is associated with', fromNavigation: 'navigable', toNavigation: 'non-navigable' },
+    '--x': { verb: 'has a non-navigable association with', toNavigation: 'non-navigable' },
+    'x--': { verb: 'has a non-navigable association with', reverse: true, toNavigation: 'non-navigable' },
+    'x--x': { verb: 'is associated with', fromNavigation: 'non-navigable', toNavigation: 'non-navigable' },
+    '..>': { verb: 'depends on' },
+    // Retain the describer's existing compatibility with dotted associations.
+    '<..': { verb: 'depends on', reverse: true },
+    '..': { verb: 'is associated with' }
+  };
+  var CLASS_ARROWS = Object.keys(CLASS_ARROW_TYPES).sort(function (a, b) { return b.length - a.length; });
 
   function escapeRegex(s) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -125,31 +166,32 @@
     return rels.length ? head + ' ' + rels.join('. ') + '.' : head;
   }
 
-  function describeClassRel(rel) {
-    var from = rel.from, to = rel.to;
-    var mult = formatMult(rel.fromMult, rel.toMult);
-    var label = rel.label ? ' labeled "' + rel.label + '"' : '';
-    switch (rel.arrow) {
-      case '--|>':  return from + ' extends ' + to;
-      case '<|--':  return to + ' extends ' + from;
-      case '..|>':  return from + ' implements ' + to;
-      case '<|..':  return to + ' implements ' + from;
-      case '*--':   return from + ' composes ' + to + mult + label;
-      case '--*':   return to + ' composes ' + from + mult + label;
-      case 'o--':   return from + ' aggregates ' + to + mult + label;
-      case '--o':   return to + ' aggregates ' + from + mult + label;
-      case '..>':   return from + ' depends on ' + to + label;
-      case '<..':   return to + ' depends on ' + from + label;
-      case '-->':   return from + ' references ' + to + mult + label;
-      case '<--':   return to + ' references ' + from + mult + label;
-      case '<-->':  return from + ' and ' + to + ' reference each other' + mult + label;
-      case '--':
-      case '..':    return from + ' is associated with ' + to + mult + label;
-      case 'x--':
-      case '--x':   return from + ' has a non-navigable association with ' + to + label;
-      case 'x--x':  return from + ' and ' + to + ' have a non-navigable association' + label;
-      default:      return null;
+  function describeClassNavigation(from, to, arrow) {
+    if (arrow.fromNavigation === 'navigable' && arrow.toNavigation === 'navigable') {
+      return '; navigable in both directions';
     }
+    if (arrow.fromNavigation === 'non-navigable' && arrow.toNavigation === 'non-navigable') {
+      return '; not navigable in either direction';
+    }
+    const directions = [];
+    if (arrow.fromNavigation) {
+      directions.push((arrow.fromNavigation === 'non-navigable' ? 'not ' : '') + 'navigable from ' + to + ' to ' + from);
+    }
+    if (arrow.toNavigation) {
+      directions.push((arrow.toNavigation === 'non-navigable' ? 'not ' : '') + 'navigable from ' + from + ' to ' + to);
+    }
+    return directions.length ? '; ' + directions.join('; ') : '';
+  }
+
+  function describeClassRel(rel) {
+    const arrow = CLASS_ARROW_TYPES[rel.arrow];
+    if (!arrow) return null;
+    const from = arrow.reverse ? rel.to : rel.from;
+    const to = arrow.reverse ? rel.from : rel.to;
+    const mult = arrow.reverse ? formatMult(rel.toMult, rel.fromMult) : formatMult(rel.fromMult, rel.toMult);
+    const label = rel.label ? ' labeled "' + rel.label + '"' : '';
+    const relation = arrow.symmetric ? from + ' and ' + to + ' ' + arrow.verb : from + ' ' + arrow.verb + ' ' + to;
+    return relation + mult + label + describeClassNavigation(from, to, arrow);
   }
 
   // ---------- sequence diagrams ----------

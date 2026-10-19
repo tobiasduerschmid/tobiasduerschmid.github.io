@@ -48,6 +48,8 @@
       }
     }
 
+    parsedFiles = _resolveSuppliedSymbols(ts, parsedFiles);
+
     // First pass: collect all type names (classes, interfaces, enums)
     var allTypeNames = new Set();
     for (var fn in parsedFiles) {
@@ -74,6 +76,141 @@
   /* ===================================================================
    * Helpers
    * =================================================================== */
+
+  // Bind only supplied files: imports never trigger network or filesystem access.
+  // Canonical names are introduced only for collisions; ordinary examples retain
+  // their familiar labels. The existing extractors can then use one name index.
+  function _resolveSuppliedSymbols(ts, parsedFiles) {
+    const files = new Map(Object.entries(parsedFiles).map(([name, source]) => ['/' + name.replace(/^\/+/, ''), source]));
+    const normalize = name => {
+      const parts = [];
+      for (const part of name.split('/')) {
+        if (part === '..') parts.pop();
+        else if (part && part !== '.') parts.push(part);
+      }
+      return '/' + parts.join('/');
+    };
+    const host = {
+      getSourceFile: name => files.get(normalize(name)),
+      getDefaultLibFileName: () => '', writeFile: () => {},
+      getCurrentDirectory: () => '/', getDirectories: () => [],
+      fileExists: name => files.has(normalize(name)),
+      readFile: name => { const source = files.get(normalize(name)); return source && source.text; },
+      getCanonicalFileName: name => normalize(name), useCaseSensitiveFileNames: () => true,
+      getNewLine: () => '\n',
+      resolveModuleNames: (names, containingFile) => names.map(name => {
+        if (!name.startsWith('.')) return undefined;
+        const base = normalize(containingFile.slice(0, containingFile.lastIndexOf('/') + 1) + name);
+        const candidates = [base, ...['.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.js'].map(extension => base + extension)];
+        const resolvedFileName = candidates.find(candidate => files.has(candidate));
+        return resolvedFileName ? { resolvedFileName: resolvedFileName, isExternalLibraryImport: false } : undefined;
+      })
+    };
+    const program = ts.createProgram(Array.from(files.keys()), { noLib: true, allowJs: true, checkJs: true }, host);
+    const checker = program.getTypeChecker();
+    const declarations = [];
+    const counts = new Map();
+    for (const source of files.values()) {
+      const visit = node => {
+        if ((ts.isClassDeclaration(node) || ts.isInterfaceDeclaration(node) || ts.isEnumDeclaration(node)) && node.name) {
+          declarations.push(node);
+          counts.set(node.name.text, (counts.get(node.name.text) || 0) + 1);
+        }
+        ts.forEachChild(node, visit);
+      };
+      visit(source);
+    }
+    const ids = new Map();
+    const used = new Set();
+    for (const declaration of declarations) {
+      const name = declaration.name.text;
+      let id = name;
+      if (counts.get(name) > 1) {
+        const file = declaration.getSourceFile().fileName.replace(/\.[^.]+$/, '').replace(/[^\w$]/g, '_').replace(/^_+/, '');
+        id = file + '_' + name;
+      }
+      const base = id;
+      for (let suffix = 2; used.has(id); suffix++) id = base + '_' + suffix;
+      ids.set(declaration, id);
+      used.add(id);
+    }
+    const symbolAt = node => {
+      let symbol = checker.getSymbolAtLocation(node);
+      if (symbol && (symbol.flags & ts.SymbolFlags.Alias)) symbol = checker.getAliasedSymbol(symbol);
+      return symbol;
+    };
+    const declarationId = symbol => {
+      const targets = new Set((symbol && symbol.declarations || []).map(declaration => ids.get(declaration)).filter(Boolean));
+      return targets.size === 1 ? Array.from(targets)[0] : null;
+    };
+    const renderType = (node, aliases = new Set(), bindings = new Map()) => {
+      if (ts.isTypeReferenceNode(node) || ts.isExpressionWithTypeArguments(node)) {
+        const typeName = node.typeName || node.expression;
+        const symbol = symbolAt(typeName);
+        if (bindings.has(symbol)) return bindings.get(symbol);
+        const id = declarationId(symbol);
+        const args = node.typeArguments ? '<' + node.typeArguments.map(type => renderType(type, aliases, bindings)).join(', ') + '>' : '';
+        if (id) return id + args;
+        const alias = (symbol && symbol.declarations || []).find(declaration => ts.isTypeAliasDeclaration(declaration));
+        if (alias && !aliases.has(alias)) {
+          const nextAliases = new Set(aliases).add(alias);
+          const nextBindings = new Map(bindings);
+          for (let index = 0; index < (alias.typeParameters || []).length; index++) {
+            const parameter = alias.typeParameters[index];
+            const suppliedArgument = node.typeArguments && node.typeArguments[index];
+            const argument = suppliedArgument || parameter.default;
+            if (argument) nextBindings.set(symbolAt(parameter.name),
+              renderType(argument, nextAliases, suppliedArgument ? bindings : nextBindings));
+          }
+          return '(' + renderType(alias.type, nextAliases, nextBindings) + ')';
+        }
+        const name = typeName.getText();
+        return (counts.has(name) ? 'unresolved.' + name : name) + args;
+      }
+      const edits = [];
+      ts.forEachChild(node, child => {
+        if (ts.isTypeNode(child)) edits.push({ start: child.getStart(), end: child.end, text: renderType(child, aliases, bindings) });
+      });
+      let text = node.getText();
+      const start = node.getStart();
+      for (const edit of edits.sort((a, b) => b.start - a.start)) {
+        text = text.slice(0, edit.start - start) + edit.text + text.slice(edit.end - start);
+      }
+      return text;
+    };
+    const resolved = {};
+    for (const [filename, source] of Object.entries(parsedFiles)) {
+      const edits = [];
+      const visit = node => {
+        if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) return;
+        if (ts.isTypeNode(node)) {
+          edits.push({ start: node.getStart(), end: node.end, text: renderType(node) });
+          return;
+        }
+        if ((ts.isIdentifier(node) || ts.isPropertyAccessExpression(node)) && !ts.isPrivateIdentifier(node)) {
+          const parentDeclaration = ids.has(node.parent) && node.parent.name === node ? node.parent : null;
+          const symbol = symbolAt(node);
+          const id = parentDeclaration ? ids.get(parentDeclaration) : declarationId(symbol);
+          if (id) {
+            edits.push({ start: node.getStart(), end: node.end, text: id });
+            return;
+          }
+          if (ts.isIdentifier(node) && counts.has(node.text) && (!symbol || !(symbol.declarations || []).length)) {
+            edits.push({ start: node.getStart(), end: node.end, text: 'unresolved_' + node.text });
+            return;
+          }
+        }
+        ts.forEachChild(node, visit);
+      };
+      visit(source);
+      let text = source.text;
+      for (const edit of edits.sort((a, b) => b.start - a.start)) {
+        text = text.slice(0, edit.start) + edit.text + text.slice(edit.end);
+      }
+      resolved[filename] = ts.createSourceFile(filename, text, ts.ScriptTarget.Latest, true, _getScriptKind(ts, filename));
+    }
+    return resolved;
+  }
 
   function _getScriptKind(ts, filename) {
     if (filename.endsWith('.tsx')) return ts.ScriptKind.TSX;
@@ -111,36 +248,50 @@
    *  Array<Task> → Task, Task[] → Task, Map<string,Task> → Task,
    *  Promise<Task> → Task, Set<Task> → Task, etc.
    */
+  function _typeReferences(ts, node, allTypeNames) {
+    if (!node) return [];
+    if (ts.isParenthesizedTypeNode(node)) return _typeReferences(ts, node.type, allTypeNames);
+    if (ts.isUnionTypeNode(node)) {
+      const byTarget = new Map();
+      for (const reference of node.types.flatMap(type => _typeReferences(ts, type, allTypeNames))) {
+        const previous = byTarget.get(reference.target);
+        byTarget.set(reference.target, {
+          ...reference,
+          multiplicity: previous && previous.multiplicity === '*' ? '*' : reference.multiplicity,
+          alternative: reference.alternative || !!(previous && previous.alternative)
+        });
+      }
+      const references = Array.from(byTarget.values());
+      const alternatives = new Set(references.map(reference => reference.target)).size > 1;
+      return references.map(reference => ({
+        ...reference, multiplicity: reference.multiplicity === '*' ? '*' : '0..1',
+        alternative: alternatives || reference.alternative
+      }));
+    }
+    if (ts.isArrayTypeNode(node)) {
+      return _typeReferences(ts, node.elementType, allTypeNames)
+        .map(reference => ({ ...reference, multiplicity: '*' }));
+    }
+    if (!ts.isTypeReferenceNode(node)) return [];
+    const name = node.typeName.getText();
+    if (allTypeNames.has(name)) return [{ target: name, multiplicity: '1', alternative: false }];
+    if (!CONTAINER_TYPES.has(name) || !node.typeArguments || !node.typeArguments.length) return [];
+    const argument = node.typeArguments[MAPPING_TYPES.has(name) ? node.typeArguments.length - 1 : 0];
+    const many = !['Promise', 'Observable'].includes(name);
+    return _typeReferences(ts, argument, allTypeNames)
+      .map(reference => ({ ...reference, multiplicity: many ? '*' : reference.multiplicity }));
+  }
+
   function _extractBaseTypeName(ts, typeNode, allTypeNames) {
-    if (!typeNode) return null;
+    const targets = new Set(_typeReferences(ts, typeNode, allTypeNames).map(reference => reference.target));
+    return targets.size === 1 ? Array.from(targets)[0] : null;
+  }
 
-    // Direct type reference: Task
-    if (ts.isTypeReferenceNode(typeNode)) {
-      var name = typeNode.typeName.text ||
-                 (typeNode.typeName.right && typeNode.typeName.right.text) || '';
-      if (name && allTypeNames.has(name)) return name;
-      // Generic: Array<Task>, Set<Task>, Promise<Task>
-      if (CONTAINER_TYPES.has(name) && typeNode.typeArguments && typeNode.typeArguments.length > 0) {
-        var idx = MAPPING_TYPES.has(name) ? typeNode.typeArguments.length - 1 : 0;
-        return _extractBaseTypeName(ts, typeNode.typeArguments[idx], allTypeNames);
-      }
-      return null;
+  function _recordRelationship(info, role, target, kind) {
+    if (!info.relationships.some(edge => edge.role === role && edge.target === target && edge.kind === kind)) {
+      info.relationships.push({ role: role, target: target, kind: kind, multiplicity: '1', alternative: false });
     }
-
-    // Array shorthand: Task[]
-    if (ts.isArrayTypeNode(typeNode)) {
-      return _extractBaseTypeName(ts, typeNode.elementType, allTypeNames);
-    }
-
-    // Union type: Task | null → Task
-    if (ts.isUnionTypeNode(typeNode)) {
-      for (var i = 0; i < typeNode.types.length; i++) {
-        var inner = _extractBaseTypeName(ts, typeNode.types[i], allTypeNames);
-        if (inner) return inner;
-      }
-    }
-
-    return null;
+    info._relAttrs.add(role);
   }
 
   function _getNodeText(node, sourceFile) {
@@ -184,10 +335,8 @@
     this.implements  = opts.implements  || [];  // [ifaceName] — implements
     this.attributes  = [];   // [{name, type, visibility, isStatic, isAbstract}]
     this.methods     = [];   // [{name, params:[{name,type}], returnType, visibility, isStatic, isAbstract, isAsync}]
-    this.compositions = [];  // [className] — created internally  (strong ownership)
-    this.aggregations = [];  // [className] — injected from outside (weak ownership)
-    this.associations = [];  // [className] — reference without ownership semantics
     this.dependencies = [];  // [className] — transient usage (params/returns)
+    this.relationships = []; // Field-level edges; each role retains its own cardinality.
     this._relAttrs    = new Set(); // attrs promoted to relationship arrows
   }
 
@@ -305,7 +454,7 @@
       });
 
       if (isProperty) {
-        info.attributes.push({ name: pName, type: pType, visibility: _getVisibility(ts, param) });
+        info.attributes.push({ name: pName, type: pType, visibility: _getVisibility(ts, param), optional: !!param.questionToken });
       }
 
       var resolved = _extractBaseTypeName(ts, param.type, this.allTypeNames);
@@ -314,8 +463,7 @@
         mParams[pName] = resolved;
         // TS parameter property with known class type → aggregation
         if (isProperty) {
-          _addUnique(info.aggregations, resolved);
-          info._relAttrs.add(pName);
+          _recordRelationship(info, pName, resolved, 'aggregation');
           aTypes[pName] = resolved;
         }
       }
@@ -356,8 +504,7 @@
       if (ts.isNewExpression(right)) {
         var typeName = _getNodeText(right.expression, sourceFile);
         if (self.allTypeNames.has(typeName)) {
-          _addUnique(info.compositions, typeName);
-          info._relAttrs.add(attrName);
+          _recordRelationship(info, attrName, typeName, 'composition');
           aTypes[attrName] = typeName;
           return;
         }
@@ -367,8 +514,7 @@
       if (ts.isIdentifier(right)) {
         var paramCls = initParamTypes[right.text];
         if (paramCls) {
-          _addUnique(info.aggregations, paramCls);
-          info._relAttrs.add(attrName);
+          _recordRelationship(info, attrName, paramCls, 'aggregation');
           aTypes[attrName] = paramCls;
         }
       }
@@ -388,15 +534,14 @@
     var isAbstract = _hasMod(ts, member, ts.SyntaxKind.AbstractKeyword);
 
     info.attributes.push({
-      name: name, type: type, visibility: vis, isStatic: isStatic, isAbstract: isAbstract
+      name: name, type: type, visibility: vis, isStatic: isStatic, isAbstract: isAbstract, optional: !!member.questionToken
     });
 
     // Property initializer: x = new ClassName() → composition
     if (member.initializer && ts.isNewExpression(member.initializer)) {
       var initType = _getNodeText(member.initializer.expression, sourceFile);
       if (this.allTypeNames.has(initType)) {
-        _addUnique(info.compositions, initType);
-        info._relAttrs.add(name);
+        _recordRelationship(info, name, initType, 'composition');
         aTypes[name] = initType;
         return;
       }
@@ -468,7 +613,7 @@
       if (member.kind === ts.SyntaxKind.PropertySignature) {
         var propName = _getNodeText(member.name, sourceFile);
         var propType = member.type ? _getNodeText(member.type, sourceFile) : 'any';
-        info.attributes.push({ name: propName, type: propType, visibility: '+' });
+        info.attributes.push({ name: propName, type: propType, visibility: '+', optional: !!member.questionToken });
       } else if (member.kind === ts.SyntaxKind.MethodSignature) {
         var methName = _getNodeText(member.name, sourceFile);
         var params = [];
@@ -519,56 +664,41 @@
     var structural = new Set();
     info.bases.forEach(function (b) { structural.add(b); });
     info.implements.forEach(function (i) { structural.add(i); });
-    info.compositions.forEach(function (c) { structural.add(c); });
-    info.aggregations.forEach(function (a) { structural.add(a); });
 
-    // Remaining typed attributes → association
-    for (var i = 0; i < info.attributes.length; i++) {
-      var attr = info.attributes[i];
-      var resolved = this._resolveTypeStr(attr.type);
-      if (resolved && resolved !== info.name &&
-          !structural.has(resolved) && !info._relAttrs.has(attr.name)) {
-        _addUnique(info.associations, resolved);
-        info._relAttrs.add(attr.name);
-        structural.add(resolved);
+    // Each field is a separate relationship even when its target is shared.
+    for (const attr of info.attributes) {
+      const references = this._resolveTypeReferences(attr.type);
+      for (const reference of references) {
+        if (!info.relationships.some(edge => edge.role === attr.name && edge.target === reference.target)) {
+          _recordRelationship(info, attr.name, reference.target, 'association');
+        }
+      }
+      for (const edge of info.relationships.filter(edge => edge.role === attr.name)) {
+        const annotation = references.find(reference => reference.target === edge.target);
+        if (annotation) Object.assign(edge, annotation);
+        if (attr.optional && edge.multiplicity !== '*') edge.multiplicity = '0..1';
       }
     }
+    info.relationships.forEach(edge => structural.add(edge.target));
 
-    // Method param/return types → dependency
-    for (var m = 0; m < info.methods.length; m++) {
-      var method = info.methods[m];
-      var retResolved = this._resolveTypeStr(method.returnType);
-      if (retResolved && retResolved !== info.name && !structural.has(retResolved)) {
-        _addUnique(info.dependencies, retResolved);
-        structural.add(retResolved);
-      }
-      for (var p = 0; p < method.params.length; p++) {
-        var paramResolved = this._resolveTypeStr(method.params[p].type);
-        if (paramResolved && paramResolved !== info.name && !structural.has(paramResolved)) {
-          _addUnique(info.dependencies, paramResolved);
-          structural.add(paramResolved);
+    // Temporary method uses remain dependencies unless a structural edge exists.
+    for (const method of info.methods) {
+      for (const type of [method.returnType, ...method.params.map(param => param.type)]) {
+        for (const reference of this._resolveTypeReferences(type)) {
+          if (reference.target !== info.name && !structural.has(reference.target)) {
+            _addUnique(info.dependencies, reference.target);
+            structural.add(reference.target);
+          }
         }
       }
     }
   };
 
-  /** Resolve a type string to a known class name (string-level fallback). */
-  ClassExtractor.prototype._resolveTypeStr = function (typeStr) {
-    if (!typeStr) return null;
-    if (this.allTypeNames.has(typeStr)) return typeStr;
-    // Task[]
-    var arrMatch = typeStr.match(/^(\w+)\[\]$/);
-    if (arrMatch && this.allTypeNames.has(arrMatch[1])) return arrMatch[1];
-    // Array<Task>, Set<Task>, etc.
-    var genMatch = typeStr.match(/^\w+<(?:[\w,\s]+,\s*)?(\w+)>$/);
-    if (genMatch && this.allTypeNames.has(genMatch[1])) return genMatch[1];
-    // Task | null
-    var parts = typeStr.split(/\s*\|\s*/);
-    for (var i = 0; i < parts.length; i++) {
-      var p = parts[i].trim();
-      if (p !== 'null' && p !== 'undefined' && this.allTypeNames.has(p)) return p;
-    }
-    return null;
+  ClassExtractor.prototype._resolveTypeReferences = function (typeStr) {
+    if (!typeStr) return [];
+    const source = this.ts.createSourceFile('type.ts', 'type Inferred = ' + typeStr + ';',
+      this.ts.ScriptTarget.Latest, true, this.ts.ScriptKind.TS);
+    return _typeReferences(this.ts, source.statements[0].type, this.allTypeNames);
   };
 
   /* ===================================================================
@@ -638,17 +768,13 @@
           lines.push(cls.name + ' ' + arrow + ' ' + cls.implements[ii]);
         }
       }
-      // Composition (*--)
-      for (var c = 0; c < cls.compositions.length; c++) {
-        lines.push(cls.name + ' *-- ' + cls.compositions[c]);
-      }
-      // Aggregation (o--)
-      for (var ag = 0; ag < cls.aggregations.length; ag++) {
-        lines.push(cls.name + ' o-- ' + cls.aggregations[ag]);
-      }
-      // Association (-->)
-      for (var as = 0; as < cls.associations.length; as++) {
-        lines.push(cls.name + ' --> ' + cls.associations[as]);
+      const arrows = { composition: '*--', aggregation: 'o--', association: '-->' };
+      for (const edge of cls.relationships) {
+        const repeated = cls.relationships.filter(other => other.target === edge.target).length > 1;
+        const labeled = repeated || edge.alternative;
+        const multiplicities = labeled || edge.multiplicity !== '1';
+        const arrow = multiplicities ? ' "1" ' + arrows[edge.kind] + ' "' + edge.multiplicity + '" ' : ' ' + arrows[edge.kind] + ' ';
+        lines.push(cls.name + arrow + edge.target + (labeled ? ' : ' + edge.role + (edge.alternative ? ' (alternative)' : '') : ''));
       }
       // Dependency (..>)
       for (var d = 0; d < cls.dependencies.length; d++) {
@@ -709,6 +835,13 @@
     // Output
     this.participants    = [];        // [{id, label}]
     this._participantSet = new Set();
+    this._syntheticReceiverIds = new Map();
+    this._reservedParticipantIds = new Set(['Main', ...allTypeNames]);
+    const reserveName = node => {
+      if (ts.isIdentifier(node)) this._reservedParticipantIds.add(node.text);
+      ts.forEachChild(node, reserveName);
+    };
+    Object.values(parsedFiles).forEach(reserveName);
     this.lines           = [];
 
     // Scope
@@ -1229,7 +1362,7 @@
         // A known receiver identifies an object, not just its class. Keep a
         // type-only fallback for parameters whose instance binding is unknown.
         return { className: this.varTypes[varName], method: method,
-          participantId: this.varParticipants[varName] || null };
+          participantId: this.varParticipants[varName] || this._syntheticReceiverId(this.varTypes[varName], caller, varName, 'variable') };
       } else if (this.allTypeNames.has(varName)) {
         return { className: varName, method: method };  // static call
       }
@@ -1416,23 +1549,29 @@
   /* ── Participant helpers ───────────────────────────────────── */
 
   SequenceDiagramGenerator.prototype._ensureParticipant = function (id, label) {
+    this._reservedParticipantIds.add(id);
     if (!this._participantSet.has(id)) {
       this._participantSet.add(id);
       this.participants.push({ id: id, label: label });
     }
   };
 
+  // A type-only reference has its own symbolic identity. Reserve source names
+  // up front so later declarations cannot accidentally take that lifeline.
+  SequenceDiagramGenerator.prototype._syntheticReceiverId = function (type, owner, role, kind) {
+    const key = JSON.stringify([owner, kind, role, type]);
+    if (this._syntheticReceiverIds.has(key)) return this._syntheticReceiverIds.get(key);
+    const base = owner + '_' + role;
+    let id = base;
+    for (let suffix = 2; this._reservedParticipantIds.has(id); suffix++) id = base + '_' + suffix;
+    this._reservedParticipantIds.add(id);
+    this._syntheticReceiverIds.set(key, id);
+    return id;
+  };
+
   SequenceDiagramGenerator.prototype._calleeIdFor = function (clsName, caller, attrHint) {
-    // Reuse existing participant of same class
-    for (var i = 0; i < this.participants.length; i++) {
-      var p = this.participants[i];
-      if (this._callerClass[p.id] === clsName && p.id !== 'Main') return p.id;
-    }
-    if (attrHint) return attrHint;
-    for (var v in this.varTypes) {
-      if (this.varTypes[v] === clsName) return v;
-    }
-    return clsName;
+    // A matching class does not prove that two references denote the same object.
+    return attrHint ? this._syntheticReceiverId(clsName, caller, attrHint, 'field') : clsName;
   };
 
   SequenceDiagramGenerator.prototype._classOf = function (pid) {

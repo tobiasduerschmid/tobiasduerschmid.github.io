@@ -18,6 +18,14 @@
   const shortName = name => name.split('::').pop();
   const diagramId = name => name.replace(/::/g, '__').replace(/[^\w]/g, '_');
 
+  function uniqueDiagramId(name, allocated) {
+    const base = diagramId(name);
+    let id = base, suffix = 2;
+    while (allocated.has(id)) id = base + '_' + suffix++;
+    allocated.add(id);
+    return id;
+  }
+
   function tokensToText(tokens) {
     return tokens.join(' ').replace(/\s*::\s*/g, '::').replace(/\s*([<>,*&\[\]])\s*/g, '$1')
       .replace(/,/g, ', ').replace(/\s*(->|\.)\s*/g, '$1').replace(/\s+\(/g, '(')
@@ -282,7 +290,8 @@
     constructor(parser) {
       this.classes = parser.classes; this.aliases = parser.aliases;
       this.functions = []; this.freeFunctions = new Map();
-      this.classes.forEach(node => { node.id = diagramId(node.name); });
+      const classIds = new Set();
+      this.classes.forEach(node => { node.id = uniqueDiagramId(node.name, classIds); });
       for (const fn of parser.functions) {
         const owner = fn.owner && this.resolve(fn.owner, fn.scope);
         // A qualified definition can belong to a namespace as well as a class.
@@ -383,7 +392,7 @@
       if (!node || visited.has(node.name)) return null;
       visited.add(node.name);
       const field = node.fields.find(field => field.name === name);
-      if (field) return field;
+      if (field) return { ...field, scope: node.name };
       for (const base of node.bases) {
         const found = this.field(this.type(base, node.scope).node, name, visited);
         if (found) return found;
@@ -404,11 +413,16 @@
         const parent = model.type(base, node.scope).node;
         if (parent) { relationships.add(node.id + ' --|> ' + parent.id); structural.add(parent.name); }
       }
-      for (const field of node.fields) {
-        const type = model.type(field.type, node.name);
+      const fields = node.fields.map(field => ({ field, type: model.type(field.type, node.name) }));
+      const targetRoles = new Map();
+      for (const { type } of fields) {
+        if (type.node) targetRoles.set(type.node.name, (targetRoles.get(type.node.name) || 0) + 1);
+      }
+      for (const { field, type } of fields) {
         if (type.node) {
           const multiplicity = options.hideMultiplicity ? ' ' + type.arrow + ' ' : ' "1" ' + type.arrow + ' "' + type.multiplicity + '" ';
-          relationships.add(node.id + multiplicity + type.node.id); structural.add(type.node.name);
+          const role = targetRoles.get(type.node.name) > 1 ? ' : ' + field.name : '';
+          relationships.add(node.id + multiplicity + type.node.id + role); structural.add(type.node.name);
         }
         if (!type.node || type.collection) lines.push('  ' + (field.static ? '{static} ' : '') + (options.hideVisibility ? '' : field.visibility) + field.name + ': ' + tokensToText(field.type.filter(token => !modifiers.has(token))));
       }
@@ -485,11 +499,7 @@
     }
 
     entity(name, node) {
-      const base = diagramId(name);
-      let id = base, suffix = 2;
-      while (this.identities.has(id)) id = base + '_' + suffix++;
-      this.identities.add(id);
-      return { id, node, fields: new Map() };
+      return { id: uniqueDiagramId(name, this.identities), node, fields: new Map() };
     }
 
     ensure(entity) { if (entity.node) this.participants.set(entity.id, entity.node); }
@@ -498,7 +508,7 @@
       if (receiver.fields.has(name)) return receiver.fields.get(name);
       const field = this.model.field(receiver.node, name);
       if (!field) return null;
-      const type = this.model.type(field.type, receiver.node.name);
+      const type = this.model.type(field.type, field.scope);
       if (!type.node || type.collection) return null;
       const value = this.entity(receiver.id + '_' + name, type.node);
       receiver.fields.set(name, value);
@@ -548,7 +558,7 @@
         const field = this.model.field(receiver.node, initializer.name);
         const values = this.arguments(initializer.args, context);
         if (field && values[0]) {
-          const type = this.model.type(field.type, context.scope);
+          const type = this.model.type(field.type, field.scope);
           if (type.reference || field.type.includes('*')) receiver.fields.set(field.name, values[0]);
         }
       }

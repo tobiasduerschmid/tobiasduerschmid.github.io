@@ -2115,16 +2115,26 @@ channel.
   and assignments; bindings are scoped to each followed method.
   Diagram text alternatives distinguish separate fragments with equal guards
   and preserve unspecified multiplicities rather than inventing a bound.
-  Python also propagates simple aliases and supplied object arguments. Its call
-  walk includes predicate/iterable calls and preserves short-circuit evaluation;
+  Python also propagates aliases, supplied object arguments and per-owner field
+  bindings; field reassignment and factory results preserve distinct identities.
+  Its call walk includes predicate/iterable calls and preserves short-circuit evaluation;
   a guard method call appears before the corresponding `alt`/`opt` choice.
   Constructor arguments and chained receivers are visited before their consumers.
   Python nullable annotations (`Optional[T]`, `T | None`, supported quoted and
   qualified forms) infer `0..1`; optional collections still describe many
   elements. Java nested/qualified generic wrappers and C++ ownership wrappers
-  preserve the contained relationship's multiplicity. Inference remains a
-  bounded sketch: roles sharing a target, heterogeneous unions, ambiguous names,
-  ownership semantics, and complex control flow need review. See
+  preserve the contained relationship's multiplicity. Fields sharing a target
+  retain separate relationships/cardinalities with role labels when needed;
+  Python and TypeScript union annotations retain all known alternatives.
+  Supplied-source symbol resolution handles imports, aliases and scoped names,
+  with distinct diagram identifiers for colliding declarations. Unresolved or
+  ambiguous references never select an unrelated same-named type or object.
+  Python `try`/`else`/`finally` retains cleanup calls and pending transfers;
+  calls after a guard exit stay on the continuing path. Python sequence expansion
+  stops after 2,000 statement visits with a diagnostic and no partial sequence;
+  class inference remains available. Inference remains
+  bounded: unavailable sources, dynamic dispatch, exact exception paths and
+  domain ownership semantics still need review. See
   `docs/uml-code-labs.md#inference-limits` before using inferred text as a grading oracle.
   `uml-analyzer-cpp.js` uses Java's lightweight parser/inference approach for
   C++ classes, access sections, ownership hints, and a bounded call walk from

@@ -45,6 +45,8 @@
       }
     }
 
+    _resolveJavaSymbols(parsedFiles, allTypeNames);
+
     // Extract class diagram
     var extractor = new JavaClassExtractor(parsedFiles, allTypeNames, errors);
     extractor.analyze();
@@ -60,6 +62,117 @@
       sequenceDiagram: sequenceDiagram,
       errors: errors
     };
+  }
+
+  function _resolveJavaSymbols(parsedFiles, allTypeNames) {
+    const declarations = [];
+    const qualified = new Map();
+    const counts = new Map();
+    for (const file of Object.values(parsedFiles)) {
+      const tokens = tokenize(file.source);
+      const context = { packageName: '', imports: [], wildcardImports: [] };
+      for (let index = 0; index < tokens.length && ['package', 'import'].includes(tokens[index].value); index++) {
+        const kind = tokens[index].value;
+        const name = [];
+        while (++index < tokens.length && tokens[index].value !== ';') name.push(tokens[index].value);
+        const path = name.join('');
+        if (kind === 'package') context.packageName = path;
+        else if (path.endsWith('.*')) context.wildcardImports.push(path.slice(0, -2));
+        else context.imports.push(path);
+      }
+      const collect = (decl, enclosing) => {
+        const name = [...enclosing, decl.name].filter(Boolean).join('.');
+        const record = { decl: decl, name: name, context: context, enclosing: enclosing };
+        declarations.push(record);
+        const matches = qualified.get(name) || [];
+        matches.push(record);
+        qualified.set(name, matches);
+        counts.set(decl.name, (counts.get(decl.name) || 0) + 1);
+        for (const member of decl.members || []) {
+          if (['class', 'interface', 'enum'].includes(member.kind)) collect(member, [...enclosing, decl.name]);
+        }
+      };
+      for (const decl of file.ast) collect(decl, context.packageName ? [context.packageName] : []);
+    }
+    allTypeNames.clear();
+    const used = new Set();
+    for (const record of declarations) {
+      let id = counts.get(record.decl.name) === 1 ? record.decl.name : record.name.replace(/\./g, '_');
+      const base = id;
+      for (let suffix = 2; used.has(id); suffix++) id = base + '_' + suffix;
+      record.id = id;
+      used.add(id);
+      allTypeNames.add(id);
+    }
+    const exact = name => {
+      const matches = qualified.get(name) || [];
+      return matches.length === 1 ? matches[0].id : null;
+    };
+    const resolve = (name, record) => {
+      if (name.includes('.')) {
+        const absolute = exact(name);
+        if (absolute) return absolute;
+      }
+      for (let length = record.enclosing.length + 1; length > (record.context.packageName ? 1 : 0); length--) {
+        const scope = [...record.enclosing, record.decl.name].slice(0, length);
+        const candidate = [...scope, name].join('.');
+        const local = exact(candidate);
+        if (local) return local;
+      }
+      const [outerName, ...nestedNames] = name.split('.');
+      const importedPaths = record.context.imports.filter(path => path.split('.').pop() === outerName)
+        .map(path => [path, ...nestedNames].join('.'));
+      if (importedPaths.length) {
+        const explicit = new Set(importedPaths.map(exact).filter(Boolean));
+        return explicit.size === 1 ? Array.from(explicit)[0] : null;
+      }
+      const packageType = exact(record.context.packageName ? record.context.packageName + '.' + name : name);
+      if (packageType) return packageType;
+      const wildcard = record.context.wildcardImports.map(packageName => exact(packageName + '.' + name)).filter(Boolean);
+      return new Set(wildcard).size === 1 ? wildcard[0] : null;
+    };
+    const rewriteType = (type, record) => type.replace(/[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*/g,
+      name => resolve(name, record) || (counts.has(name.split('.').pop()) ? 'unresolved_' + name.replace(/\./g, '_') : name));
+    const rewriteTokens = (tokens, record) => {
+      const output = [];
+      for (let index = 0; index < tokens.length; index++) {
+        const token = tokens[index];
+        if (token.type !== 'ident') { output.push(token); continue; }
+        let end = index;
+        let name = token.value;
+        let match = resolve(name, record);
+        let matchEnd = index;
+        while (tokens[end + 1] && tokens[end + 1].value === '.' && tokens[end + 2] && tokens[end + 2].type === 'ident') {
+          end += 2;
+          name += '.' + tokens[end].value;
+          const qualifiedName = resolve(name, record);
+          if (qualifiedName) { match = qualifiedName; matchEnd = end; }
+        }
+        const replacement = match || (counts.has(token.value) ? 'unresolved_' + token.value : null);
+        output.push(replacement ? { ...token, value: replacement } : token);
+        if (match) index = matchEnd;
+      }
+      return output;
+    };
+    // Resolve every reference before changing declaration names, since lexical
+    // lookup still needs their original source names during this pass.
+    for (const record of declarations) {
+      const decl = record.decl;
+      if (decl.extends) decl.extends = Array.isArray(decl.extends)
+        ? decl.extends.map(type => rewriteType(type, record)) : rewriteType(decl.extends, record);
+      if (decl.implements) decl.implements = decl.implements.map(type => rewriteType(type, record));
+      const rewriteMember = member => {
+        if (member.kind === 'fields') return member.fields.forEach(rewriteMember);
+        if (member.type) member.type = rewriteType(member.type, record);
+        if (member.returnType) member.returnType = rewriteType(member.returnType, record);
+        if (member.initNewType) member.initNewType = rewriteType(member.initNewType, record);
+        for (const parameter of member.params || []) parameter.type = rewriteType(parameter.type, record);
+        if (member.throwsTypes) member.throwsTypes = member.throwsTypes.map(type => rewriteType(type, record));
+        if (member.body) member.body = rewriteTokens(member.body, record);
+      };
+      for (const member of decl.members || []) if (!['class', 'interface', 'enum'].includes(member.kind)) rewriteMember(member);
+    }
+    for (const record of declarations) record.decl.name = record.id;
   }
 
   /* ===================================================================
@@ -489,6 +602,11 @@
           if (at('keyword', 'new') && peek(1) && peek(1).type === 'ident') {
             initHasNew = true;
             initNewType = peek(1).value;
+            let offset = 2;
+            while (peek(offset) && peek(offset).value === '.' && peek(offset + 1) && peek(offset + 1).type === 'ident') {
+              initNewType += '.' + peek(offset + 1).value;
+              offset += 2;
+            }
           }
           skipFieldInit();
         }
@@ -672,7 +790,7 @@
       .replace(/^\?\s*(?:extends|super)\s+/, '');
     var generic = _genericTypeParts(base);
     if (generic) {
-      if (allTypeNames.has(generic.name)) return generic.name;
+      if (allTypeNames.has(generic.fullName)) return generic.fullName;
       if (CONTAINER_TYPES.has(generic.name)) {
         return _extractBaseTypeName(generic.args[0], allTypeNames);
       }
@@ -685,19 +803,12 @@
     // Direct match
     if (allTypeNames.has(base)) return base;
 
-    // Qualified name: take last segment
-    var dotIdx = base.lastIndexOf('.');
-    if (dotIdx !== -1) {
-      var simple = base.substring(dotIdx + 1);
-      if (allTypeNames.has(simple)) return simple;
-    }
-
     return null;
   }
 
   function _genericTypeParts(typeStr) {
     var match = typeStr.trim().match(/^([\w$.]+)\s*<([\s\S]+)>$/);
-    return match ? { name: match[1].split('.').pop(), args: _splitGenericArgs(match[2]) } : null;
+    return match ? { fullName: match[1], name: match[1].split('.').pop(), args: _splitGenericArgs(match[2]) } : null;
   }
 
   function _splitGenericArgs(s) {
@@ -718,21 +829,21 @@
   }
 
   /** Check if a type string is a collection (List<X>, Set<X>, Map<K,V>, etc.) or array X[] */
-  function _isCollectionType(typeStr) {
+  function _isCollectionType(typeStr, allTypeNames) {
     if (!typeStr) return false;
-    if (/\[\]/.test(typeStr)) return true;
+    if (/\[\]\s*$/.test(typeStr)) return true;
     var generic = _genericTypeParts(typeStr);
-    if (!generic) return false;
-    if (generic.name === 'Optional') return _isCollectionType(generic.args[0]);
+    if (!generic || allTypeNames.has(generic.fullName)) return false;
+    if (generic.name === 'Optional') return _isCollectionType(generic.args[0], allTypeNames);
     return CONTAINER_TYPES.has(generic.name) || MAPPING_TYPES.has(generic.name);
   }
 
   /** Infer multiplicity from a type string: "1" for single, "*" for collection/array */
-  function _inferMultiplicity(typeStr) {
+  function _inferMultiplicity(typeStr, allTypeNames) {
     if (!typeStr) return '1';
-    if (_isCollectionType(typeStr)) return '*';
+    if (_isCollectionType(typeStr, allTypeNames)) return '*';
     var generic = _genericTypeParts(typeStr);
-    return generic && generic.name === 'Optional' ? '0..1' : '1';
+    return generic && !allTypeNames.has(generic.fullName) && generic.name === 'Optional' ? '0..1' : '1';
   }
 
   function _getVisibility(modifiers) {
@@ -750,6 +861,13 @@
     if (arr.indexOf(item) === -1) arr.push(item);
   }
 
+  function _recordRelationship(info, role, target, kind) {
+    if (!info.relationships.some(edge => edge.role === role && edge.target === target && edge.kind === kind)) {
+      info.relationships.push({ role: role, target: target, kind: kind, multiplicity: '1' });
+    }
+    info._relAttrs.add(role);
+  }
+
   /* ===================================================================
    * ClassInfo — same structure as JS analyzer
    * =================================================================== */
@@ -763,12 +881,9 @@
     this.implements  = opts.implements  || [];
     this.attributes  = [];
     this.methods     = [];
-    this.compositions = [];   // [className]
-    this.aggregations = [];   // [className]
-    this.associations = [];   // [className]
     this.dependencies = [];   // [className]
+    this.relationships = []; // Distinct stored roles must not share multiplicity metadata.
     this._relAttrs    = new Set();
-    this._relMult     = {};   // {targetClass: {srcMult, tgtMult}} — multiplicity metadata
   }
 
   /* ===================================================================
@@ -856,8 +971,7 @@
 
     // Field initializer: x = new ClassName() → composition
     if (field.initHasNew && field.initNewType && this.allTypeNames.has(field.initNewType)) {
-      _addUnique(info.compositions, field.initNewType);
-      info._relAttrs.add(field.name);
+      _recordRelationship(info, field.name, field.initNewType, 'composition');
       aTypes[field.name] = field.initNewType;
       return;
     }
@@ -911,8 +1025,7 @@
               bodyTokens[rhsStart + 1].type === 'ident') {
             var typeName = bodyTokens[rhsStart + 1].value;
             if (this.allTypeNames.has(typeName)) {
-              _addUnique(info.compositions, typeName);
-              info._relAttrs.add(fieldName);
+              _recordRelationship(info, fieldName, typeName, 'composition');
               aTypes[fieldName] = typeName;
             }
             // this.x = new ArrayList<>() — container created internally
@@ -923,8 +1036,7 @@
           else if (bodyTokens[rhsStart].type === 'ident') {
             var paramCls = paramTypeMap[bodyTokens[rhsStart].value];
             if (paramCls) {
-              _addUnique(info.aggregations, paramCls);
-              info._relAttrs.add(fieldName);
+              _recordRelationship(info, fieldName, paramCls, 'aggregation');
               aTypes[fieldName] = paramCls;
             }
           }
@@ -944,7 +1056,7 @@
         for (var j = i + 6; j < bodyTokens.length && bodyTokens[j].value !== ')'; j++) {
           if (bodyTokens[j].value === 'new' && j + 1 < bodyTokens.length &&
               bodyTokens[j + 1].type === 'ident' && this.allTypeNames.has(bodyTokens[j + 1].value)) {
-            _addUnique(info.compositions, bodyTokens[j + 1].value);
+            _recordRelationship(info, bodyTokens[i + 2].value, bodyTokens[j + 1].value, 'composition');
             break;
           }
         }
@@ -999,7 +1111,7 @@
         for (var j = i + 6; j < bodyTokens.length && bodyTokens[j].value !== ')'; j++) {
           if (bodyTokens[j].value === 'new' && j + 1 < bodyTokens.length &&
               bodyTokens[j + 1].type === 'ident' && this.allTypeNames.has(bodyTokens[j + 1].value)) {
-            _addUnique(info.compositions, bodyTokens[j + 1].value);
+            _recordRelationship(info, bodyTokens[i + 2].value, bodyTokens[j + 1].value, 'composition');
             break;
           }
         }
@@ -1080,49 +1192,18 @@
     var structural = new Set();
     info.bases.forEach(function (b) { structural.add(b); });
     info.implements.forEach(function (i) { structural.add(i); });
-    info.compositions.forEach(function (c) { structural.add(c); });
-    info.aggregations.forEach(function (a) { structural.add(a); });
 
-    // Remaining typed attributes → association or aggregation
-    for (var i = 0; i < info.attributes.length; i++) {
-      var attr = info.attributes[i];
-      var resolved = _extractBaseTypeName(attr.type, this.allTypeNames);
-      if (resolved && resolved !== info.name &&
-          !structural.has(resolved) && !info._relAttrs.has(attr.name)) {
-        var tgtMult = _inferMultiplicity(attr.type);
-        // Collection-typed field (List<X>, Set<X>, etc.) → aggregation (1-to-many)
-        if (_isCollectionType(attr.type)) {
-          _addUnique(info.aggregations, resolved);
-        } else {
-          _addUnique(info.associations, resolved);
-        }
-        info._relMult[resolved] = { srcMult: '1', tgtMult: tgtMult };
-        info._relAttrs.add(attr.name);
-        structural.add(resolved);
+    for (const attr of info.attributes) {
+      const target = _extractBaseTypeName(attr.type, this.allTypeNames);
+      const existing = info.relationships.filter(edge => edge.role === attr.name);
+      if (existing.length) {
+        for (const edge of existing) edge.multiplicity = _inferMultiplicity(attr.type, this.allTypeNames);
+      } else if (target) {
+        _recordRelationship(info, attr.name, target, _isCollectionType(attr.type, this.allTypeNames) ? 'aggregation' : 'association');
+        info.relationships[info.relationships.length - 1].multiplicity = _inferMultiplicity(attr.type, this.allTypeNames);
       }
     }
-
-    // Record multiplicity for compositions/aggregations by checking field types
-    var self = this;
-    function _findFieldMult(target) {
-      for (var fi = 0; fi < info.attributes.length; fi++) {
-        var attrResolved = _extractBaseTypeName(info.attributes[fi].type, self.allTypeNames);
-        if (attrResolved === target) {
-          return _inferMultiplicity(info.attributes[fi].type);
-        }
-      }
-      return '1';
-    }
-    for (var ci = 0; ci < info.compositions.length; ci++) {
-      if (!info._relMult[info.compositions[ci]]) {
-        info._relMult[info.compositions[ci]] = { srcMult: '1', tgtMult: _findFieldMult(info.compositions[ci]) };
-      }
-    }
-    for (var ai = 0; ai < info.aggregations.length; ai++) {
-      if (!info._relMult[info.aggregations[ai]]) {
-        info._relMult[info.aggregations[ai]] = { srcMult: '1', tgtMult: _findFieldMult(info.aggregations[ai]) };
-      }
-    }
+    info.relationships.forEach(edge => structural.add(edge.target));
 
     // Method param/return types → dependency
     for (var m = 0; m < info.methods.length; m++) {
@@ -1175,7 +1256,7 @@
       // but keep collection-typed fields since their generic type is informative)
       for (var a = 0; a < info.attributes.length; a++) {
         var attr = info.attributes[a];
-        if (info._relAttrs.has(attr.name) && !_isCollectionType(attr.type)) continue;
+        if (info._relAttrs.has(attr.name) && !_isCollectionType(attr.type, this.allTypeNames)) continue;
         var aPrefix = '';
         if (attr.isStatic)   aPrefix += '{static} ';
         if (attr.isAbstract) aPrefix += '{abstract} ';
@@ -1202,22 +1283,6 @@
       lines.push('}');
     }
 
-    // Build bidirectional association set for navigability
-    var bidir = new Set();
-    for (var bi = 0; bi < sorted.length; bi++) {
-      var biCls = sorted[bi];
-      for (var bj = 0; bj < biCls.associations.length; bj++) {
-        var target = biCls.associations[bj];
-        var targetInfo = this.classMap.get(target);
-        if (targetInfo && targetInfo.associations.indexOf(biCls.name) !== -1) {
-          // Both reference each other — bidirectional
-          var key = [biCls.name, target].sort().join('::');
-          bidir.add(key);
-        }
-      }
-    }
-    var emittedBidir = new Set();
-
     // Relationships
     for (var r = 0; r < sorted.length; r++) {
       var cls = sorted[r];
@@ -1232,37 +1297,11 @@
           lines.push(cls.name + ' ' + arrow + ' ' + cls.implements[ii]);
         }
       }
-      for (var c = 0; c < cls.compositions.length; c++) {
-        var compTarget = cls.compositions[c];
-        var compMult = cls._relMult[compTarget];
-        var compLabel = compMult ? ' "' + compMult.srcMult + '" *-- "' + compMult.tgtMult + '" ' : ' *-- ';
-        lines.push(cls.name + compLabel + compTarget);
-      }
-      for (var ag = 0; ag < cls.aggregations.length; ag++) {
-        var aggTarget = cls.aggregations[ag];
-        var aggMult = cls._relMult[aggTarget];
-        var aggLabel = aggMult ? ' "' + aggMult.srcMult + '" o-- "' + aggMult.tgtMult + '" ' : ' o-- ';
-        lines.push(cls.name + aggLabel + aggTarget);
-      }
-      for (var as = 0; as < cls.associations.length; as++) {
-        var assocTarget = cls.associations[as];
-        var bdKey = [cls.name, assocTarget].sort().join('::');
-        if (bidir.has(bdKey)) {
-          // Bidirectional — emit once with undirected arrow
-          if (!emittedBidir.has(bdKey)) {
-            emittedBidir.add(bdKey);
-            var m1 = cls._relMult[assocTarget];
-            var m2 = this.classMap.get(assocTarget)._relMult[cls.name];
-            var srcM = m1 ? m1.srcMult : '1';
-            var tgtM = m1 ? m1.tgtMult : '1';
-            lines.push(cls.name + ' "' + srcM + '" -- "' + tgtM + '" ' + assocTarget);
-          }
-        } else {
-          // Unidirectional — directed arrow
-          var assocMult = cls._relMult[assocTarget];
-          var assocLabel = assocMult ? ' "' + assocMult.srcMult + '" --> "' + assocMult.tgtMult + '" ' : ' --> ';
-          lines.push(cls.name + assocLabel + assocTarget);
-        }
+      const arrows = { composition: '*--', aggregation: 'o--', association: '-->' };
+      for (const edge of cls.relationships) {
+        const repeated = cls.relationships.filter(other => other.target === edge.target).length > 1;
+        lines.push(cls.name + ' "1" ' + arrows[edge.kind] + ' "' + edge.multiplicity + '" ' +
+          edge.target + (repeated ? ' : ' + edge.role : ''));
       }
       for (var d = 0; d < cls.dependencies.length; d++) {
         lines.push(cls.name + ' ..> ' + cls.dependencies[d]);
@@ -1320,6 +1359,13 @@
 
     this.participants    = [];
     this._participantSet = new Set();
+    this._syntheticReceiverIds = new Map();
+    this._reservedParticipantIds = new Set(['Main', ...allTypeNames]);
+    for (const file of Object.values(parsedFiles)) {
+      for (const token of tokenize(file.source)) {
+        if (token.type === 'ident') this._reservedParticipantIds.add(token.value);
+      }
+    }
     this.lines           = [];
     this.varTypes        = {};
     this._receiverIds     = {};
@@ -2000,12 +2046,12 @@
       clsName = parentCls;
     }
 
-    this._emitCall(caller, clsName, method, tokens, parenIdx, depth, this._receiverIds[receiver] || receiver);
+    this._emitCall(caller, clsName, method, tokens, parenIdx, depth, this._receiverIds[receiver] || this._syntheticReceiverId(clsName, caller, receiver, this.varTypes[receiver] ? 'variable' : 'field'));
   };
 
   JavaSequenceDiagramGenerator.prototype._emitCall = function (caller, clsName, method, tokens, parenIdx, depth, receiver) {
     // A known object takes precedence over the class-based fallback.
-    var calleeId = this._participantSet.has(receiver) ? receiver : this._calleeIdFor(clsName, caller, null);
+    var calleeId = receiver || this._calleeIdFor(clsName, caller, null);
     var label = method + '(';
     // Extract abbreviated args
     if (parenIdx < tokens.length && tokens[parenIdx].value === '(') {
@@ -2312,22 +2358,29 @@
   };
 
   JavaSequenceDiagramGenerator.prototype._ensureParticipant = function (id, label) {
+    this._reservedParticipantIds.add(id);
     if (!this._participantSet.has(id)) {
       this._participantSet.add(id);
       this.participants.push({ id: id, label: label });
     }
   };
 
+  // A type-only reference has its own symbolic identity. Reserve source names
+  // up front so later declarations cannot accidentally take that lifeline.
+  JavaSequenceDiagramGenerator.prototype._syntheticReceiverId = function (type, owner, role, kind) {
+    const key = JSON.stringify([owner, kind, role, type]);
+    if (this._syntheticReceiverIds.has(key)) return this._syntheticReceiverIds.get(key);
+    const base = owner + '_' + role;
+    let id = base;
+    for (let suffix = 2; this._reservedParticipantIds.has(id); suffix++) id = base + '_' + suffix;
+    this._reservedParticipantIds.add(id);
+    this._syntheticReceiverIds.set(key, id);
+    return id;
+  };
+
   JavaSequenceDiagramGenerator.prototype._calleeIdFor = function (clsName, caller, attrHint) {
-    for (var i = 0; i < this.participants.length; i++) {
-      var p = this.participants[i];
-      if (this._callerClass[p.id] === clsName && p.id !== 'Main') return p.id;
-    }
-    if (attrHint) return attrHint;
-    for (var v in this.varTypes) {
-      if (this.varTypes[v] === clsName) return v;
-    }
-    return clsName;
+    // Type equality alone does not establish reference identity.
+    return attrHint ? this._syntheticReceiverId(clsName, caller, attrHint, 'field') : clsName;
   };
 
   JavaSequenceDiagramGenerator.prototype._classOf = function (pid) {
