@@ -53,10 +53,10 @@ client -> server: findBook()
 server --> client: book
 client ->> server: reserveBook()
 o-> server: availabilityChanged
-callout right of edge 1 end : Synchronous call: wait for completion
-callout left of edge 2 end : Reply: return of control and results
-callout right of edge 3 end : Asynchronous message: no waiting
-callout right of edge 4 start : Found message: sender outside this interaction
+callout right of edge 1 end : Synchronous call: the sender waits for completion
+callout left of edge 2 end : Reply: returns control and any results
+callout right of edge 3 end : Asynchronous message: the sender continues at once
+callout right of edge 4 start : Found message: its sender is outside this interaction
 @enduml'></div>
 
 ### Visualizing the Basics: A Simple ATM Login
@@ -75,12 +75,12 @@ bank --> atm: cardValid()
 deactivate bank
 atm -> customer: promptPIN()
 deactivate atm
-callout left of edge 3 end : Reply: return of control and results
-callout left of edge 4 end : Synchronous call: wait for completion
-callout right of element actbar:7 : Execution bar: time spent carrying out a behavior
-callout left of shape line occurrence 1 : Lifeline: one participant, with time flowing downward
-callout top of text "ATM" : Participant type: its class or role
-callout top of text "atm:" : Participant name: the individual taking part
+callout left of edge 3 end : Reply: returns control and any results
+callout left of edge 4 end : Synchronous call: the sender waits for completion
+callout right of element actbar:7 : Execution specification: while this behavior runs
+callout left of shape line occurrence 1 : Lifeline: one participant; time runs downward
+callout top of text "ATM" : Participant type: its class or other type
+callout top of text "atm:" : Participant name: which individual this is
 @enduml'></div>
 
 **Notice the flow of time:** Message 1 happens first, then 2, 3, and 4. The vertical dimension is strictly used to represent the passage of time.
@@ -129,8 +129,8 @@ train --> station: doorsClosed
 deactivate train
 station --> passenger: confirmation
 deactivate station
-callout right of element actbar:7 : Execution bar: time spent carrying out a behavior
-callout right of text "openDoors()" : Self-call: invoking behavior on the same participant
+callout right of element actbar:7 : Execution specification: while this behavior runs
+callout right of text "openDoors()" : Self-call: a message to the same participant
 @enduml'></div>
 
 The blue bars show when each object is actively processing. Notice how the `Station` is active from when it receives `requestStop()` until it sends the confirmation, and how the `Train` has separate execution bars for `addStop()`, `openDoors()`, and `closeDoors()`.
@@ -194,8 +194,8 @@ opt [hasLoyaltyAccount == true]
   pricing --> checkout: discountApplied()
   deactivate pricing
 end
-callout right of text "OPT" : Opt: optional behavior if true
-callout left of text "[hasLoyaltyAccount == true]" : Guard: condition for entering this fragment
+callout right of text "OPT" : Opt: runs only when its guard is true
+callout left of text "[hasLoyaltyAccount == true]" : Guard: must be true to run this fragment
 @enduml'></div>
 
 *Notice the `[hasLoyaltyAccount == true]` text. This is the **guard condition**. If it evaluates to false, the sequence skips the entire box.*
@@ -220,8 +220,8 @@ else [password is incorrect]
   db --> system: loginFailed()
   deactivate db
 end
-callout right of text "ALT" : Alt: multile branches with condition
-callout left of text "[password is correct]" : Guard: condition for choosing this branch
+callout right of text "ALT" : Alt: at most one guarded branch runs
+callout left of text "[password is correct]" : Guard: must be true to choose this branch
 @enduml'></div>
 
 {% include uml-code-lab.html example="alternatives" %}
@@ -241,8 +241,8 @@ loop [up to 3 times]
   server --> app: ack()
   deactivate server
 end
-callout right of text "LOOP" : Loop: repeating the enclosed messages
-callout left of text "[up to 3 times]" : Loop bound: maximum number of repetitions
+callout right of text "LOOP" : Loop: repeats while the guard allows
+callout left of text "[up to 3 times]" : Loop bound: at most this many times
 @enduml'></div>
 
 -----
@@ -287,9 +287,9 @@ opt [smsEnabled == true]
   deactivate sms
 end
 deactivate hub
-callout left of text "LOOP" : Loop: repeating the enclosed messages
-callout right of text "ALT" : Alt: multile branches with condition
-callout right of text "OPT" : Opt: optional behavior if true
+callout left of text "LOOP" : Loop: repeats while the guard allows
+callout right of text "ALT" : Alt: at most one guarded branch runs
+callout right of text "OPT" : Opt: runs only when its guard is true
 @enduml'></div>
 
 -----
@@ -435,8 +435,8 @@ sale -> payment: authorize()
 activate payment
 deactivate payment
 deactivate sale
-callout right of text "payment: Payment" : Creation: the participant starts existing here
-callout left of text "&lt;&lt;create&gt;&gt;" : Creation message: making a new object
+callout right of text "payment: Payment" : Creation: this participant begins here
+callout left of text "&lt;&lt;create&gt;&gt;" : Creation message: creates the new participant
 @enduml'></div>
 
 Notice how the `Payment` constructor call becomes a `create` message in the sequence diagram. The `Payment` object appears at the point in the timeline when it is created.
@@ -665,8 +665,8 @@ end
 a -> b: endSale()
 activate b
 deactivate b
-callout right of text "LOOP" : Loop: repeating the enclosed messages
-callout left of text "[more items]" : Loop condition: continuing while true
+callout right of text "LOOP" : Loop: repeats while the guard allows
+callout left of text "[more items]" : Loop condition: repeat while this is true
 @enduml'></div>
 
 The `for` loop in code maps directly to a `loop` fragment. The guard condition `[more items]` is a Boolean expression that describes when the loop continues.
@@ -691,9 +691,9 @@ else [else]
   deactivate c
 end
 deactivate a
-callout left of edge 1 start : Found message: sender outside this interaction
-callout right of text "ALT" : Alt: multile branches with condition
-callout right of text "[else]" : Else: fallback when no other branch condition holds
+callout left of edge 1 start : Found message: its sender is outside this interaction
+callout right of text "ALT" : Alt: at most one guarded branch runs
+callout right of text "[else]" : Else: runs when no other guard is true
 @enduml'></div>
 
 Equivalent code in four languages:
@@ -857,8 +857,8 @@ class A {
 >   activate order
 >   deactivate order
 > end
-> callout right of text "ALT" : Alt: multile branches with condition
-> callout left of text "[inStock == true]" : Guard: condition for choosing this branch
+> callout right of text "ALT" : Alt: at most one guarded branch runs
+> callout left of text "[inStock == true]" : Guard: must be true to choose this branch
 > @enduml'></div>
 > </details>
 
@@ -898,9 +898,9 @@ G --> A: accessToken
 deactivate G
 A --> B: 200 session cookie
 deactivate A
-callout top of text "A: AppBackend" : Lifeline header: participant name and type
-callout right of edge 1 end : Synchronous call: wait for completion
-callout right of text "accessToken" : Reply: return of control and results
+callout top of text "A: AppBackend" : Lifeline header: name, then type
+callout right of edge 1 end : Synchronous call: the sender waits for completion
+callout right of text "accessToken" : Reply: returns control and any results
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -937,11 +937,11 @@ else [chargeResult.declined]
   os --> app: error(chargeResult.reason)
 end
 deactivate os
-callout left of edge 6 end : Reply: return of control and results
-callout left of text "[chargeResult.approved]" : Guard: condition for choosing this branch
-callout right of text "ALT" : Alt: multile branches with condition
-callout right of edge 2 end : Synchronous call: wait for completion
-callout top of text "app: MobileApp" : Lifeline header: participant name and type
+callout left of edge 6 end : Reply: returns control and any results
+callout left of text "[chargeResult.approved]" : Guard: must be true to choose this branch
+callout right of text "ALT" : Alt: at most one guarded branch runs
+callout right of edge 2 end : Synchronous call: the sender waits for completion
+callout top of text "app: MobileApp" : Lifeline header: name, then type
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -980,9 +980,9 @@ opt [all tests passed]
 end
 gh --> dev: notify(testResults)
 deactivate gh
-callout right of text "runTests()" : Self-call: invoking behavior on the same participant
-callout left of text "OPT" : Opt: optional behavior if true
-callout left of edge 7 end : Reply: return of control and results
+callout right of text "runTests()" : Self-call: a message to the same participant
+callout left of text "OPT" : Opt: runs only when its guard is true
+callout left of edge 7 end : Reply: returns control and any results
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -1016,9 +1016,9 @@ activate notif
 notif --> rider: driverAssigned(eta)
 deactivate notif
 deactivate match
-callout left of edge 3 end : Reply: return of control and results
-callout top of text "rider: RiderApp" : Lifeline header: participant name and type
-callout left of text "LOOP" : Loop: repeated messages
+callout left of edge 3 end : Reply: returns control and any results
+callout top of text "rider: RiderApp" : Lifeline header: name, then type
+callout left of text "LOOP" : Loop: repeats while the guard allows
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -1057,9 +1057,9 @@ end
 deactivate notif
 ws --> sender: ack(messageId)
 deactivate ws
-callout right of text "messageReceived" : Asynchronous message: no waiting
-callout left of text "LOOP" : Loop: repeating the enclosed messages
-callout left of text "ack(messageId)" : Reply: return of control and results
+callout right of text "messageReceived" : Asynchronous message: the sender continues at once
+callout left of text "LOOP" : Loop: repeats while the guard allows
+callout left of text "ack(messageId)" : Reply: returns control and any results
 @enduml'></div>
 
 **What the UML notation captures:**

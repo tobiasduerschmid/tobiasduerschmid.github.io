@@ -12,9 +12,9 @@ cards:
   - id: 2
     difficulty: intermediate
     question: "What is the difference between `<<include>>` and `<<extend>>`?"
-    answer: "`<<include>>` = **always** happens (mandatory). `<<extend>>` = **sometimes** happens (optional)."
+    answer: "`<<include>>` always inserts its behavior. `<<extend>>` inserts behavior when its condition is true."
     explanation: >
-      Include factors out shared behavior that must always occur. Extend adds optional behavior that only occurs under certain conditions. Both use dashed arrows, but the arrow directions differ: include points toward the included use case; extend points toward the base use case.
+      Include factors out shared behavior that the base always inserts. Extend inserts extra behavior into the base when its condition is true; if no condition is shown, UML treats it as true. Both use dashed arrows, but the directions differ: include points toward the included use case; extend points toward the base use case.
 
   - id: 3
     difficulty: intermediate
@@ -26,9 +26,9 @@ cards:
   - id: 4
     difficulty: intermediate
     question: "Which direction does the `<<extend>>` arrow point?"
-    answer: "From the **extending** (optional) use case **to** the **base** use case."
+    answer: "From the **extending** use case **to** the **base** use case."
     explanation: >
-      For example, if "Log Debug Info" optionally extends "Purchase Item," the arrow goes from "Log Debug Info" to "Purchase Item." This is the opposite direction from include.
+      If "Log Debug Info" extends "Purchase Item," the arrow goes from "Log Debug Info" to "Purchase Item." The extension is inserted when its condition is true. This is the opposite direction from include.
 
   - id: 5
     difficulty: basic

@@ -10,7 +10,7 @@ cards:
       <div data-uml-type="class" data-uml-spec="class Department&#10;class Professor&#10;Department o-- Professor"></div>
     answer: "Aggregation"
     explanation: >
-      A hollow diamond on the whole (owner) side indicates **Aggregation**, representing a 'part-of' relationship where the parts can exist independently of the whole.
+      A hollow diamond on the whole side indicates **Aggregation**: a whole-part association that does not claim exclusive ownership. UML does not fix the part's lifecycle.
 
   - id: 2
     difficulty: advanced
@@ -36,7 +36,7 @@ cards:
     question: "What is the difference between **Generalization** and **Realization** arrows?"
     answer: "Generalization = **solid line** with hollow arrowhead. Realization = **dashed line** with hollow arrowhead."
     explanation: >
-      Both use the same hollow triangle arrowhead, so the *line style* is the only tell: solid means inheriting from a superclass, dashed means implementing an interface.
+      Both use the same hollow triangle arrowhead, so the *line style* is the only tell: a solid line means the subclass is also a kind of the superclass, and a dashed line means the class fulfills an interface.
 
       <div data-uml-type="class" data-uml-spec="interface Flyable {&#10;  +fly(): void&#10;}&#10;class Bird {&#10;  +fly(): void&#10;}&#10;class Sparrow&#10;Bird ..|> Flyable&#10;Sparrow --|> Bird"></div>
 
@@ -71,7 +71,7 @@ cards:
     question: "How do you indicate an **abstract class** in UML?"
     answer: "By *italicizing* the class name, or adding `{abstract}`."
     explanation: >
-      An abstract class cannot be instantiated directly. Abstract operations (methods with no implementation) are also shown in italics. Concrete subclasses must provide or inherit implementations of all remaining abstract operations; an abstract subclass may leave them abstract.
+      An abstract class cannot be instantiated directly. An abstract operation has no implementation in that class and is also shown in italics. A concrete descendant must supply the missing implementation; an abstract subclass may leave it abstract.
 
       <div data-uml-type="class" data-uml-spec="abstract class Shape {&#10;  {abstract} +draw(): void&#10;}&#10;class Circle {&#10;  +draw(): void&#10;}&#10;Circle --|> Shape"></div>
 
@@ -80,7 +80,7 @@ cards:
     question: "List the class relationships from **weakest to strongest**."
     answer: "Dependency < Association < Aggregation < Composition < Generalization/Realization"
     explanation: >
-      **Dependency** (dashed arrow, temporary use) is weakest. **Association** (solid line, structural link) is stronger. **Aggregation** (hollow diamond, parts can exist alone) and **Composition** (filled diamond, parts die with whole) add ownership semantics. **Generalization** (hollow triangle, inheritance) and **Realization** (dashed hollow triangle, interface implementation) represent the strongest "is-a" relationships.
+      **Dependency** (dashed arrow, the client needs the supplier) is weakest. **Association** (solid line, a type of link) is stronger. **Aggregation** (hollow diamond, whole-part without exclusive ownership) and **Composition** (filled diamond, at most one owner; parts are deleted with it) add whole-part meaning. **Generalization** (hollow triangle, the subclass is also a kind of the superclass) and **Realization** (dashed hollow triangle, the class fulfills an interface) are the "is-a" relationships.
 
   - id: 10
     difficulty: basic

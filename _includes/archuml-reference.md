@@ -1417,7 +1417,7 @@ rectangle "System Name" {
 Actor -- UseCase                          ← association (no arrow)
 Actor --> UseCase                         ← directed association
 UseCase ..> UseCase : <<include>>         ← include (mandatory sub-flow)
-UseCase ..> UseCase : <<extend>>          ← extend (optional extension)
+UseCase ..> UseCase : <<extend>>          ← extend (inserted when its condition is true)
 Actor --|> Actor                          ← actor generalization
 ```
 

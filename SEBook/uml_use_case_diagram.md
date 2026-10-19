@@ -43,7 +43,7 @@ Key points about actors:
 
 ### 2.2 Use Cases
 
-A **use case** represents a specific goal or piece of functionality the system provides. Use cases are drawn as **ovals (ellipses)** containing the use case name.
+A **use case** is behavior the system performs with its actors that yields a result those actors value. Use cases are drawn as **ovals (ellipses)** containing the use case name.
 
 - Use case names should describe a goal using a **verb phrase** (e.g., "Place Order", not "Order" or "OrderSystem").
 - There will be one or more use cases per kind of actor. It is common for any reasonable system to have many use cases.
@@ -71,10 +71,10 @@ rectangle "Train System" {
 }
 Passenger -- UC1
 Technician -- UC2
-callout left of text "Passenger" : Actor: an external user or system role
-callout right of text "Ride" : Use case: a goal achieved with the system
-callout top of text "Train System" : System boundary: what belongs to the system
-callout bottom of edge 1 middle : Association: participation in a use case
+callout left of text "Passenger" : Actor: an outside role, played by a user or system
+callout right of text "Ride" : Use case: valued behavior the system performs
+callout top of text "Train System" : System boundary: the subject of these use cases
+callout bottom of edge 1 middle : Association: this actor participates in the use case
 @enduml'></div>
 
 Reading this diagram: A **Passenger** can **Ride** the train, and a **Technician** can **Repair** the train. Both are roles (actors) external to the system.
@@ -138,7 +138,7 @@ Customer -- UC1
 Customer -- UC2
 UC1 ..> UC3 : <<include>>
 UC2 ..> UC3 : <<include>>
-callout bottom of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: required behavior reused from another use case
+callout bottom of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: the base always inserts this behavior
 @enduml'></div>
 
 Reading this diagram: Whenever a customer **Purchases an Item**, they **always** Login. Whenever they **Track Packages**, they also **always** Login. The Login behavior is shared, so it is factored out into its own use case and included by both.
@@ -147,7 +147,7 @@ Reading this diagram: Whenever a customer **Purchases an Item**, they **always**
 
 ### 4.2 Extension (`<<extend>>`)
 
-A use case extension encapsulates a **distinct flow of events** that is **not** part of the normal or basic flow but **may optionally** extend an existing use case. Think of it as an optional, exceptional, or conditional behavior.
+An `<<extend>>` relationship inserts extra behavior into a base use case at an extension point. The insertion happens when the extend condition is true. If no condition is shown, UML treats that condition as true, so the extension runs. A written condition is what makes the extra behavior optional.
 
 **Extension points (optional).** A base use case can declare specific named *points* inside its flow where extensions may plug in — the `<<extend>>` relationship can name which point it attaches to, and an optional `{condition}` note on a dashed comment line states when the extension fires. Guideline G83 advises skipping extension points on diagrams unless the flow is genuinely ambiguous {% cite Ambler2005 %} — the detail usually fits better inside the textual use case description than on the picture.
 
@@ -161,10 +161,10 @@ rectangle "E-Commerce" {
 }
 Customer -- UC1
 UC2 ..> UC1 : <<extend>>
-callout right of text "&lt;&lt;extend&gt;&gt;" : Extend: optional addition to a base use case
+callout right of text "&lt;&lt;extend&gt;&gt;" : Extend: inserted when its condition holds
 @enduml'></div>
 
-Reading this diagram: When a customer purchases an item, debug info **can** (optionally) be logged in some cases. The extension is not part of the normal flow.
+Reading this diagram: No condition is written on `<<extend>>`, so debug logging is inserted whenever a purchase reaches the extension point. To make logging optional, add a condition; the extension then runs only when that condition is true. The base use case does not mention the extension. The arrow points from the extension to the base.
 
 **Key insight:** The arrow points **from the extending use case to the base use case** (from "Log Debug Info" to "Purchase Item"). This is the opposite direction from `<<include>>`.
 
@@ -183,7 +183,7 @@ rectangle "Sync System" {
 }
 UC2 --|> UC1
 UC3 --|> UC1
-callout left of shape polygon occurrence 2 : Generalization: specializing a more general use case
+callout left of shape polygon occurrence 2 : Generalization: a more specific kind of the parent
 @enduml'></div>
 
 Reading this diagram: "Synchronize Wirelessly" and "Synchronize Serially" are both specialized versions of "Synchronize Data". Either can be used wherever the general "Synchronize Data" use case is expected.
@@ -203,9 +203,9 @@ Students often confuse `<<include>>` and `<<extend>>`. Here is a direct comparis
 
 | Feature | `<<include>>` | `<<extend>>` |
 |---------|--------------|-------------|
-| **When it happens** | **Always** --- the included behavior is mandatory | **Sometimes** --- the extending behavior is optional/conditional |
+| **When it happens** | **Always** --- the base inserts the included behavior | **When its condition is true.** No condition means the extension runs |
 | **Arrow direction** | From base (including) use case **to** included use case | From extending use case **to** base (extended) use case |
-| **Analogy** | Like a function call that always executes | Like an optional plugin or hook |
+| **Analogy** | Like a function call that always executes | Like a hook that runs when its condition is true |
 | **Example** | "Purchase Item" always includes "Login" | "Purchase Item" may be extended by "Apply Coupon" |
 
 ---
@@ -228,10 +228,10 @@ Customer -- UC1
 Customer -- UC2
 UC1 ..> UC3 : <<include>>
 UC2 ..> UC3 : <<include>>
-callout left of text "Customer" : Actor: an external user or system role
-callout top of text "My Library" : System boundary: what belongs to the system
-callout right of text "Loan Book" : Use case: a goal achieved with the system
-callout bottom of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: required behavior reused from another use case
+callout left of text "Customer" : Actor: an outside role, played by a user or system
+callout top of text "My Library" : System boundary: the subject of these use cases
+callout right of text "Loan Book" : Use case: valued behavior the system performs
+callout bottom of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: the base always inserts this behavior
 @enduml'></div>
 
 ### System Walkthrough
@@ -277,10 +277,10 @@ Maintainer -- UC3
 CI -- UC4
 UC1 ..> UC5 : <<include>>
 UC3 ..> UC4 : <<include>>
-callout left of element CI : Actor: an external system playing a role
-callout top of text "GitHub Repository" : System boundary: what belongs to the system
-callout left of text "Create Pull Request" : Use case: a goal achieved with the system
-callout right of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: required behavior reused from another use case
+callout left of element CI : Actor: an outside role, played by a user or system
+callout top of text "GitHub Repository" : System boundary: the subject of these use cases
+callout left of text "Create Pull Request" : Use case: valued behavior the system performs
+callout right of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: the base always inserts this behavior
 @enduml'></div>
 
 **Reading the diagram:**
@@ -288,14 +288,14 @@ callout right of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: required
 1. **`CI Bot` as a non-human actor:** Actors don't have to be people. Any external role that interacts with the system qualifies — automated services, payment providers, external APIs. The CI bot initiates the `Run CI Checks` use case just as a human would trigger any other.
 2. **`<<include>>` (Create PR → Authenticate):** You cannot create a PR without being logged in. This is mandatory, unconditional behavior — `<<include>>` is correct. The arrow points *from the base* toward the included behavior.
 3. **`<<include>>` (Merge PR → Run CI Checks):** A maintainer cannot merge without CI passing. The checks run automatically as part of every merge — they are not optional. This is another `<<include>>`.
-4. **What is NOT shown:** There is no `<<extend>>` here, because there is no optional behavior in this workflow. Not every use case diagram needs `<<extend>>` — use it only when behavior genuinely *sometimes* happens.
+4. **What is NOT shown:** There is no `<<extend>>` here. Use `<<extend>>` when extra behavior is inserted only under a condition. This workflow has no such conditional addition.
 5. **Modeling simplification:** In reality every GitHub action requires authentication, so `Review Code` and `Merge Pull Request` would each `<<include>>` `Authenticate` too. We show authentication only on `Create Pull Request` to keep the diagram readable — don't read this as "review and merge are unauthenticated". Real diagrams often face the same trade-off between completeness and clarity.
 
 ---
 
 ### Example 2: Airbnb — Accommodation Booking
 
-**Scenario:** Guests search and book; hosts list properties; payment is handled by an external service. Leaving a review is optional behavior that extends the booking flow — making this an `<<extend>>`.
+**Scenario:** Guests search and book; hosts list properties; payment is handled by an external service. Leaving a review extends the booking flow when the guest chooses to write one — an `<<extend>>` with that condition.
 
 <div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
 actor Guest
@@ -320,25 +320,25 @@ Host -- UC5
 PS -- UC3
 UC2 ..> UC3 : <<include>>
 UC4 ..> UC2 : <<extend>>
-callout left of text "Host" : Actor: an external user or system role
-callout top of text "Airbnb Platform" : System boundary: what belongs to the system
-callout right of text "&lt;&lt;include&gt;&gt;" : Include: required behavior reused from another use case
-callout left of text "&lt;&lt;extend&gt;&gt;" : Extend: optional addition to a base use case
-callout left of text "Search Listings" : Use case: a goal achieved with the system
+callout left of text "Host" : Actor: an outside role, played by a user or system
+callout top of text "Airbnb Platform" : System boundary: the subject of these use cases
+callout right of text "&lt;&lt;include&gt;&gt;" : Include: the base always inserts this behavior
+callout left of text "&lt;&lt;extend&gt;&gt;" : Extend: inserted when its condition holds
+callout left of text "Search Listings" : Use case: valued behavior the system performs
 @enduml'></div>
 
 **Reading the diagram:**
 
 1. **`<<include>>` (Booking → Payment):** Every booking always processes payment. There is no booking without payment — the arrow points *from* `Book Accommodation` *toward* `Process Payment`.
-2. **`<<extend>>` (Review → Booking):** A guest *may* leave a review after a booking, but they don't have to. The `<<extend>>` arrow points *from* the optional use case (`Leave Review`) *toward* the base use case (`Book Accommodation`) — the opposite direction from `<<include>>`.
+2. **`<<extend>>` (Review → Booking):** A review is inserted into booking when its condition holds — here, when the guest chooses to write one. The diagram omits that condition text. The arrow points *from* `Leave Review` *toward* `Book Accommodation`, the opposite direction from `<<include>>`.
 3. **`Payment Service` as an external actor:** The payment provider lives outside the Airbnb platform boundary. Showing it as an actor with an association to `Process Payment` makes the external dependency visible in the requirements model.
-4. **Arrow direction summary:** `<<include>>` points *toward* the behavior that is always included; `<<extend>>` points *toward* the base use case being sometimes extended. Both use dashed arrows — only the direction differs.
+4. **Arrow direction summary:** `<<include>>` points *toward* the behavior the base always inserts. `<<extend>>` points *toward* the base use case that receives the extension when the condition is true. Both use dashed arrows — only the direction differs.
 
 ---
 
 ### Example 3: University LMS — Canvas-Style Learning Platform
 
-**Scenario:** Students submit assignments and view grades; instructors grade and post announcements. Both roles require authentication for sensitive operations. Email notifications are optional — they extend the announcement flow.
+**Scenario:** Students submit assignments and view grades; instructors grade and post announcements. Both roles require authentication for sensitive operations. An email notification extends the announcement flow when the instructor chooses to send one.
 
 <div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
 actor Student
@@ -364,17 +364,17 @@ Instructor -- UC4
 UC1 ..> UC5 : <<include>>
 UC2 ..> UC5 : <<include>>
 UC6 ..> UC4 : <<extend>>
-callout left of text "Student" : Actor: an external user or system role
-callout top of text "Learning Management System" : System boundary: what belongs to the system
-callout right of text "&lt;&lt;extend&gt;&gt;" : Extend: optional addition to a base use case
-callout bottom of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: required behavior reused from another use case
-callout left of text "Submit Assignment" : Use case: a goal achieved with the system
+callout left of text "Student" : Actor: an outside role, played by a user or system
+callout top of text "Learning Management System" : System boundary: the subject of these use cases
+callout right of text "&lt;&lt;extend&gt;&gt;" : Extend: inserted when its condition holds
+callout bottom of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: the base always inserts this behavior
+callout left of text "Submit Assignment" : Use case: valued behavior the system performs
 @enduml'></div>
 
 **Reading the diagram:**
 
 1. **Multiple use cases sharing one `<<include>>` target:** Both `Submit Assignment` and `Grade Submission` include `Authenticate`. This is the real value of `<<include>>` — one shared behavior, referenced from many places, maintained in one spot. If authentication changes, you update it once.
-2. **`<<extend>>` for optional notification:** `Send Email Notification` extends `Post Announcement`. Sometimes an instructor sends an email alongside the announcement, sometimes they don't. `<<extend>>` captures this conditionality.
+2. **`<<extend>>` for a conditional notification:** `Send Email Notification` extends `Post Announcement`. The email is inserted when the instructor chooses to send one. That choice is the condition; the diagram does not spell the condition out.
 3. **Role separation:** Students and Instructors have distinct, non-overlapping primary interactions. A student cannot grade; an instructor is not shown submitting assignments. The diagram communicates the access control model at a glance.
 4. **`Authenticate` has no actor association:** `Authenticate` is never triggered directly by an actor — it is always triggered by another use case (`<<include>>`). This is correct — actors initiate top-level use cases, not shared sub-behaviors.
 
@@ -397,7 +397,7 @@ Grab a blank piece of paper. Without looking at this chapter, try to draw the us
 1. A **Student** can **Enroll in Course** and **View Grades**.
 2. A **Professor** can **Create Course** and **Submit Grades**.
 3. Both Enroll in Course and Create Course always include **Authenticate** (login).
-4. View Grades can optionally be extended by **Export Transcript**.
+4. **Export Transcript** extends **View Grades** when the student asks for a transcript.
 
 After drawing, review your diagram against the rules in sections 2-4. Check: Are your arrows pointing in the correct direction? Did you use dashed lines for include/extend?
 

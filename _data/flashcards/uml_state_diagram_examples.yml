@@ -51,4 +51,4 @@ cards:
     question: "Does a state machine always need a **final state**?"
     answer: "No. Final states mark region completion. Initial pseudostates mark default entry, with at most one per region; other explicit entry paths are possible."
     explanation: >
-      Many real-world objects run indefinitely (e.g., a server, a hardware controller). Their state machines have an initial state but no final state. An order workflow can use a final state to mark completion after delivery or cancellation without implying that the stored order object is destroyed.
+      Many real-world objects run indefinitely (e.g., a server, a hardware controller). Their state machines have an initial pseudostate but no final state. An order workflow can use a final state to mark completion of the region after delivery or cancellation without implying that the stored order object is destroyed.

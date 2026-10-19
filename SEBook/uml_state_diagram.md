@@ -13,11 +13,11 @@ Paid --> Refunded : return_initiated
 Delivered --> [*]
 Cancelled --> [*]
 Refunded --> [*]
-callout left of edge 1 start : Initial marker: where the behavior starts
-callout right of text "Created" : State: a condition during an object lifetime
-callout right of text "payment_received" : Trigger: event that can start the transition
-callout right of edge 4 end : Transition: changing from one state to another
-callout right of edge 7 end : Final state: completion of this behavior
+callout left of edge 1 start : Initial pseudostate: execution starts here and moves on
+callout right of text "Created" : State: waiting, doing work, or meeting a condition
+callout right of text "payment_received" : Trigger: an event that may fire this transition
+callout right of edge 4 end : Transition: the move to the target state
+callout right of edge 7 end : Final state: this region has completed
 @enduml'></div>
 
 # UML State Machine Diagrams
@@ -55,7 +55,7 @@ To manage cognitive load, we will break down the state machine into its smallest
 
 ### 2.1 States
 A **State** represents a condition or situation during the life of an object during which it satisfies some condition, performs some activity, or waits for some event.
-* **Initial State** <span class="uml-sym" data-diagram="state" data-sym="[*]"></span>: The starting point of the machine, represented by a solid black circle.
+* **Initial pseudostate** <span class="uml-sym" data-diagram="state" data-sym="[*]"></span>: Where execution of this region starts. The machine does not stay here. Drawn as a solid black circle.
 * **Regular State** <span class="uml-sym" data-diagram="state" data-sym="regular"></span>: Represented by a rectangle with rounded corners.
 * **Final State** <span class="uml-sym" data-diagram="state" data-sym="final"></span>: Completion of the enclosing region, represented by a solid black circle surrounded by a hollow circle (a bullseye). When all top-level regions complete, the state-machine behavior completes; this does not itself destroy the context object.
 
@@ -73,11 +73,11 @@ Transitions are labeled using the following syntax:
 [*] --> Locked
 Locked --> Unlocked : badgeRead [authorized] / releaseLock()
 Unlocked --> [*] : sessionEnded
-callout left of edge 1 start : Initial marker: where the behavior starts
-callout left of text "badgeRead" : Trigger: event that can start the transition
-callout right of text "[authorized]" : Guard: condition required when handling the event
-callout left of text "releaseLock()" : Effect: action performed during the transition
-callout right of edge 3 end : Final state: completion of this behavior
+callout left of edge 1 start : Initial pseudostate: execution starts here and moves on
+callout left of text "badgeRead" : Trigger: an event that may fire this transition
+callout right of text "[authorized]" : Guard: must be true when the event is handled
+callout left of text "releaseLock()" : Effect: behavior run when the transition fires
+callout right of edge 3 end : Final state: this region has completed
 @enduml'></div>
 
 ### 2.3 Internal Activities
@@ -103,9 +103,9 @@ state Processing {
   do / processData()
   exit / stopTimer()
 }
-callout left of text "entry / clearBuffers()" : Entry: action on entering the state
-callout right of text "do / processData()" : Do: ongoing activity, interrupted on exit
-callout right of text "exit / stopTimer()" : Exit: action on leaving the state
+callout left of text "entry / clearBuffers()" : Entry: runs whenever the state is entered
+callout right of text "do / processData()" : Do: ongoing activity; aborted if the state is exited
+callout right of text "exit / stopTimer()" : Exit: runs whenever the state is exited
 @enduml'></div>
 
 Internal activities are particularly useful for modeling embedded systems, UI components, and any object that needs to perform setup/teardown when entering or leaving a state.
@@ -140,9 +140,9 @@ Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()
 CombatMode --> Idle : threatNeutralized / retractWeapons()
 CombatMode --> EmergencyPower : when(powerLevel &lt; 5%) / rerouteToLifeSupport()
 EmergencyPower --> [*] : manualOverride()
-callout left of text "[sysCheckOK]" : Guard: condition required when handling the event
-callout right of text "when(powerLevel &lt; 5%)" : Change event: a condition becoming true
-callout left of text "deployUI()" : Effect: action performed during the transition
+callout left of text "[sysCheckOK]" : Guard: must be true when the event is handled
+callout right of text "when(powerLevel &lt; 5%)" : Change event: fires when the condition becomes true
+callout left of text "deployUI()" : Effect: behavior run when the transition fires
 @enduml'></div>
 
 ### Deconstructing the Model
@@ -174,9 +174,9 @@ Playing --> Paused : pauseButton
 Paused --> Playing : playButton
 Playing --> Buffering : skipTrack(nextId) / clearBuffer()
 Playing --> Idle : stopButton
-callout right of text "pauseButton" : Trigger: event that can start the transition
-callout left of text "Playing" : State: a condition during an object lifetime
-callout left of text "loadError / showErrorMessage()" : Effect: action performed during the transition
+callout right of text "pauseButton" : Trigger: an event that may fire this transition
+callout left of text "Playing" : State: waiting, doing work, or meeting a condition
+callout left of text "loadError / showErrorMessage()" : Transition label: event, then the effect after /
 @enduml'></div>
 
 **Reading the diagram:**
@@ -202,10 +202,10 @@ Open --> Closed : closePR()
 ChangesRequested --> Closed : closePR()
 Merged --> [*]
 Closed --> [*]
-callout right of text "[ciPassed]" : Guard: checks required to pass when mergePR occurs
-callout left of text "reviewSubmitted" : Trigger: event that can start the transition
-callout right of text "closeHeadBranch()" : Effect: action performed during the transition
-callout right of edge 8 end : Final state: completion of this behavior
+callout right of text "[ciPassed]" : Guard: must be true when mergePR is handled
+callout left of text "reviewSubmitted" : Trigger: an event that may fire this transition
+callout right of text "closeHeadBranch()" : Effect: behavior run when the transition fires
+callout right of edge 8 end : Final state: this region has completed
 @enduml'></div>
 
 **Reading the diagram:**
@@ -231,10 +231,10 @@ ReadyForPickup --> InTransit : driverPickedUp()
 InTransit --> Delivered : driverArrived() / notifyCustomer()
 Delivered --> [*]
 Cancelled --> [*]
-callout right of text "refundPayment()" : Effect: action performed during the transition
-callout left of text "restaurantAccepts()" : Trigger: event that can start the transition
-callout left of text "InTransit" : State: a condition during an object lifetime
-callout right of edge 8 end : Final state: completion of this behavior
+callout right of text "refundPayment()" : Effect: behavior run when the transition fires
+callout left of text "restaurantAccepts()" : Trigger: an event that may fire this transition
+callout left of text "InTransit" : State: waiting, doing work, or meeting a condition
+callout right of edge 8 end : Final state: this region has completed
 @enduml'></div>
 
 **Reading the diagram:**

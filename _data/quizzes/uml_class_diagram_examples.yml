@@ -261,7 +261,7 @@ questions:
       3: |
         `#` is protected visibility for members. It does not mark a class as abstract.
     explanation: >
-      **An abstract class is shown by italicizing the class name or adding `{abstract}` — not by using `<<interface>>`, which is reserved for interfaces.** Abstract operations (methods without an implementation) are italicized the same way.
+      **An abstract class is shown by italicizing the class name or adding `{abstract}` — not by using `<<interface>>`, which is reserved for interfaces.** An abstract operation has no implementation in that class and is italicized the same way. A concrete descendant supplies the implementation.
 
       <div data-uml-type="class" data-uml-spec="abstract class Vehicle {&#10;  {abstract} +move(): void&#10;}&#10;class Car {&#10;  +move(): void&#10;}&#10;Car --|> Vehicle"></div>
 

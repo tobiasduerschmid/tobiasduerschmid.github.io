@@ -26,10 +26,10 @@ wa_out --> gw_in : HTTPS
 gw_auth --> auth_in : gRPC
 gw_data --> ds_in : gRPC
 ds_out --> db_in : SQL
-callout top of text "WebApp" : Component: replaceable unit with defined services
-callout bottom of element WebApp.wa_out : Port: interaction point on a component
-callout top of text "HTTPS" : Protocol: rules for communication
-callout bottom of edge 1 middle : Connector: communication between components
+callout top of text "WebApp" : Component: replaceable part; offers and needs services
+callout bottom of element WebApp.wa_out : Port: a distinct interaction point
+callout top of text "HTTPS" : Protocol: the rules this connector uses
+callout bottom of edge 1 middle : Connector: a link these parts use to communicate
 @enduml'></div>
 
 # UML Component Diagrams
@@ -65,7 +65,7 @@ This is the role of **UML Component Diagrams**. They operate at a **higher level
 
 ### 2.1 Components
 
-A **component** is a modular, deployable, and replaceable part of a system that encapsulates its contents and exposes its functionality through well-defined interfaces. Think of it as a "black box" that does something useful.
+A **component** is a modular part of a system that encapsulates its contents. Another component can replace it when the replacement offers and needs compatible services. Think of it as a "black box" with a contract for the services it provides and the services it requires.
 
 In UML, a component is drawn as a rectangle with a small component icon (two small rectangles) in the upper-right corner. In our notation:
 
@@ -73,7 +73,7 @@ In UML, a component is drawn as a rectangle with a small component icon (two sma
 component Frontend
 component Backend
 component Database
-callout right of text "Backend" : Component: replaceable unit with defined services
+callout right of text "Backend" : Component: replaceable part; offers and needs services
 @enduml'></div>
 
 Examples of components in real systems:
@@ -98,8 +98,8 @@ component OrderService {
   require "IPayment" as r1
   require "IInventory" as r2
 }
-callout left of element OrderService.p1 : Provided interface: services offered
-callout right of element OrderService.r1 : Required interface: services needed
+callout left of element OrderService.p1 : Provided interface: services this part offers
+callout right of element OrderService.r1 : Required interface: services this part needs
 @enduml'></div>
 
 Reading this diagram: `OrderService` **provides** the `IOrderAPI` interface (other components can call it) and **requires** the `IPayment` and `IInventory` interfaces (it depends on payment and inventory services to function).
@@ -116,7 +116,7 @@ component PaymentService {
   portin "processPayment" as ps_in
   portout "bankAPI" as ps_out
 }
-callout left of element PaymentService.ps_in : Port: interaction point on a component
+callout left of element PaymentService.ps_in : Port: a distinct interaction point
 @enduml'></div>
 
 Reading this diagram: `PaymentService` has an incoming port `processPayment` (where other components send payment requests) and an outgoing port `bankAPI` (where it communicates with the external bank).
@@ -153,7 +153,7 @@ component CatalogService
 component OrderService
 component PaymentService
 component Database
-callout right of text "OrderService" : Component: replaceable unit with defined services
+callout right of text "OrderService" : Component: replaceable part; offers and needs services
 @enduml'></div>
 
 ### Step 2: Add Ports and Connect Components
@@ -186,9 +186,9 @@ wa_ord --> os_in : REST
 os_pay --> ps_in : gRPC
 cs_db --> db_in1 : SQL
 os_db --> db_in2 : SQL
-callout right of text "gRPC" : Protocol: rules for communication
-callout bottom of element OrderService.os_pay : Port: interaction point on a component
-callout top of text "WebApp" : Component: replaceable unit with defined services
+callout right of text "gRPC" : Protocol: the rules this connector uses
+callout bottom of element OrderService.os_pay : Port: a distinct interaction point
+callout top of text "WebApp" : Component: replaceable part; offers and needs services
 @enduml'></div>
 
 ### Reading the Complete Diagram
@@ -214,7 +214,7 @@ component PaymentGateway {
   provide "IPayment" as p1
 }
 r1 --> p1
-callout bottom of edge 1 middle : Assembly: connecting needed and offered services
+callout bottom of edge 1 middle : Assembly: joins a required interface to a provided one
 @enduml'></div>
 
 Reading this diagram: `ShoppingCart` requires the `IPayment` interface, and `PaymentGateway` provides it. The connector shows the dependency is satisfied---the shopping cart can use the payment gateway. If you wanted to swap in a different payment provider, you would only need to provide a component that satisfies the same `IPayment` interface.
@@ -261,7 +261,7 @@ component Logger
 component MetricsCollector
 OrderService ..> Logger : uses
 OrderService ..> MetricsCollector : reports to
-callout right of edge 1 middle : Dependency: using services of another component
+callout right of edge 1 middle : Dependency: the client relies on the supplier
 @enduml'></div>
 
 Here, `OrderService` depends on `Logger` and `MetricsCollector` for cross-cutting concerns, but these are not core architectural connections---they are auxiliary dependencies.
@@ -301,9 +301,9 @@ wc_out --> gw_in : HTTPS
 gw_auth --> auth_in : gRPC
 gw_content --> cs_in : gRPC
 gw_rec --> re_in : gRPC
-callout top of text "HTTPS" : Protocol: rules for communication
-callout bottom of element APIGateway.gw_in : Port: interaction point on a component
-callout top of text "WebClient" : Component: replaceable unit with defined services
+callout top of text "HTTPS" : Protocol: the rules this connector uses
+callout bottom of element APIGateway.gw_in : Port: a distinct interaction point
+callout top of text "WebClient" : Component: replaceable part; offers and needs services
 @enduml'></div>
 
 **Reading the diagram:**
@@ -342,10 +342,10 @@ app_out --> gw_in : HTTPS
 gw_orders --> os_in : REST
 os_db --> db_in : SQL
 os_req --> ps_prov
-callout top of text "PaymentService" : Component: replaceable unit with defined services
-callout bottom of element APIGateway.gw_in : Port: interaction point on a component
-callout top of shape circle : Assembly: connecting needed and offered services
-callout bottom of text "HTTPS" : Protocol: rules for communication
+callout top of text "PaymentService" : Component: replaceable part; offers and needs services
+callout bottom of element APIGateway.gw_in : Port: a distinct interaction point
+callout top of shape circle : Assembly: joins a required interface to a provided one
+callout bottom of text "HTTPS" : Protocol: the rules this connector uses
 @enduml'></div>
 
 **Reading the diagram:**
@@ -383,10 +383,10 @@ gh_ev --> bs_in : webhook
 bs_art --> ar_in : push image
 bs_dep --> ds_in : trigger deploy
 BuildService ..> SlackNotifier : build status
-callout top of text "BuildService" : Component: replaceable unit with defined services
-callout bottom of element BuildService.bs_in : Port: interaction point on a component
-callout right of text "build status" : Dependency: using another component for notifications
-callout top of text "push image" : Connector label: interaction carried over the connection
+callout top of text "BuildService" : Component: replaceable part; offers and needs services
+callout bottom of element BuildService.bs_in : Port: a distinct interaction point
+callout right of text "build status" : Dependency: BuildService relies on SlackNotifier
+callout top of text "push image" : Connector label: what this link carries
 @enduml'></div>
 
 **Reading the diagram:**

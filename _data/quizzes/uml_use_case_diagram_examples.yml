@@ -39,12 +39,12 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        Optional behavior is modeled with `<<extend>>`, not `<<include>>`. Include means the base use case always uses the included behavior.
+        Behavior inserted only when a condition is true is `<<extend>>`, not `<<include>>`. Include means the base use case always inserts the included behavior.
       2: |
         Specialization would use generalization notation. Include is about factoring mandatory shared behavior into a separate use case.
       3: |
-        That describes `<<extend>>`, where optional behavior supplements a base flow. Here `Purchase Item` includes `Login`.
-    explanation: "**`<<include>>` means Login always occurs as a mandatory part of Purchase Item.** The included behavior is unconditional — like a function call that always runs — not the sometimes-behavior that `<<extend>>` models."
+        That describes `<<extend>>`, which inserts behavior into a base use case when its condition is true. Here `Purchase Item` includes `Login`.
+    explanation: "**`<<include>>` means Purchase Item always inserts Login.** The included behavior is unconditional — like a function call that always runs. `<<extend>>` is the relationship that inserts behavior when its condition is true."
 
   - id: 3
     difficulty: intermediate
@@ -56,17 +56,17 @@ questions:
     options:
       - "Include uses a solid arrow; extend uses a dashed arrow."
       - "Include is for actors; extend is for use cases."
-      - "Include means the behavior always happens; extend means it sometimes happens."
+      - "Include always inserts its behavior; extend runs when its condition is true."
       - "Include arrows point to the base; extend arrows point to the extension."
     correct_index: 2
     option_feedback:
       0: |
-        Both include and extend are shown as dashed dependency arrows with stereotypes. The distinction is mandatory shared behavior versus optional extension behavior.
+        Both include and extend are shown as dashed arrows with stereotypes. Include always inserts its behavior. Extend inserts behavior when its condition is true.
       1: |
         Include and extend are relationships between use cases. Actor associations are the lines between actors and use cases.
       3: |
         The arrow directions are easy to reverse: include points from the base use case to the included use case, while extend points from the extension to the base.
-    explanation: "**`<<include>>` is mandatory shared behavior (always happens); `<<extend>>` is optional or conditional (sometimes happens).** Both use dashed arrows, but they point in opposite directions: include from base to included, extend from extension to base."
+    explanation: "**`<<include>>` always inserts the included behavior. `<<extend>>` inserts its behavior when its condition is true; a missing condition counts as true.** Both use dashed arrows, but they point in opposite directions: include from base to included, extend from extension to base."
 
   - id: 4
     difficulty: intermediate
@@ -76,19 +76,19 @@ questions:
 
       <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor User&#10;usecase &quot;Place Order&quot; as UC1&#10;usecase &quot;Apply Coupon&quot; as UC2&#10;rectangle &quot;Shop&quot; {&#10;  UC1&#10;  UC2&#10;}&#10;User -- UC1&#10;UC2 ..> UC1 : <<extend>>&#10;@enduml"></div>
     options:
-      - "Apply Coupon is optional behavior that may supplement the basic Place Order flow."
+      - "Apply Coupon extends Place Order and is inserted when its condition holds."
       - "Apply Coupon is a specialized version of Place Order."
-      - "Apply Coupon always occurs as part of Place Order."
-      - "Place Order is optional behavior that may supplement the basic Apply Coupon flow."
+      - "Place Order includes Apply Coupon as one of its own required steps."
+      - "Place Order supplements the Apply Coupon flow."
     correct_index: 0
     option_feedback:
       1: |
-        Specialization uses generalization notation with a hollow triangle. `<<extend>>` means optional or conditional additional behavior.
+        Specialization uses generalization notation with a hollow triangle. `<<extend>>` inserts the extending use case into the base when its condition is true.
       2: |
-        Mandatory shared behavior would be `<<include>>`. Applying a coupon is conditional, so it extends the base order flow only sometimes.
+        That would be `<<include>>`, with the arrow pointing from Place Order to Apply Coupon. This arrow is `<<extend>>`: Apply Coupon is inserted when its condition holds. No condition is drawn here, so UML treats the condition as true.
       3: |
         The arrow points from the extension to the base. `Apply Coupon` extends `Place Order`, not the other way around.
-    explanation: "**`<<extend>>` means Apply Coupon is optional behavior that may supplement Place Order.** The arrow points from the extension (Apply Coupon) toward the base (Place Order) — the opposite direction from `<<include>>`."
+    explanation: "**`<<extend>>` inserts Apply Coupon into Place Order when its condition is true.** No condition is drawn, so that condition counts as true and the extension runs. The arrow still points from the extension to the base, the opposite direction from `<<include>>`."
 
   - id: 5
     difficulty: basic
