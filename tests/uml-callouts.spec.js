@@ -175,6 +175,57 @@ for (const file of chapterFiles) {
   });
 }
 
+test('nearby callouts stay compact, with short wide pointers that miss labels', async ({ page }) => {
+  await setup(page);
+  await render(page, 'class', `layout horizontal
+layout landscape
+class User {
+  - username: String
+  # id: int
+  + login(): boolean
+}
+callout left of text "-" : Private: only this class can access it.
+callout left of text "#" : Protected: accessible in this class and subclasses.
+callout left of text "+" : Public: any client can access it.`);
+  expect(await layoutProblems(page)).toEqual([]);
+  const geometry = await page.locator('.uml-callout').evaluateAll(groups => groups.map(group => {
+    const box = group.querySelector('.uml-callout-box');
+    const [a, tip, b] = [...group.querySelector('.uml-callout-pointer').points];
+    return {
+      height: box.height.baseVal.value,
+      length: Math.hypot((a.x + b.x) / 2 - tip.x, (a.y + b.y) / 2 - tip.y),
+      base: Math.hypot(a.x - b.x, a.y - b.y),
+    };
+  }));
+  // Two-line explanations used to carry 12-unit padding and 60-unit needles.
+  expect(Math.max(...geometry.map(item => item.height))).toBeLessThan(60);
+  expect(Math.max(...geometry.map(item => item.length))).toBeLessThan(50);
+  expect(Math.min(...geometry.map(item => item.base))).toBeGreaterThan(13);
+
+  await render(page, 'class', `layout horizontal
+layout landscape
+class Student { - name: String }
+class Course { - title: String }
+Student "*" -- "1..*" Course : enrolled in
+callout bottom of text "1..*" : Multiplicity 1..*: at least one
+callout top of text "*" : Multiplicity *: zero or more
+callout bottom of edge 1 middle : Association: links between objects`);
+  expect(await layoutProblems(page)).toEqual([]);
+
+  await render(page, 'class', `class Order
+class LineItem
+Order *-- LineItem
+callout right of edge 1 start : The filled diamond marks Order as the composite owner of its line items.`);
+  expect(await layoutProblems(page)).toEqual([]);
+  const diamond = await page.locator('.uml-callout-pointer').evaluate(tail => {
+    const [a, tip, b] = [...tail.points];
+    return { length: Math.hypot((a.x + b.x) / 2 - tip.x, (a.y + b.y) / 2 - tip.y),
+      base: Math.hypot(a.x - b.x, a.y - b.y) };
+  });
+  expect(diamond.length).toBeLessThan(30);
+  expect(diamond.base).toBeGreaterThan(13);
+});
+
 test('inheritance explanations stay beside their triangles with short pointers', async ({ page }) => {
   await setup(page);
   await render(page, 'class', `interface Vehicle {\n+ startEngine(): void\n}\nclass Car {\n- make: String\n+ startEngine(): void\n}\nclass Sedan\nclass SUV\nCar ..|> Vehicle\nSedan --|> Car\nSUV --|> Car
