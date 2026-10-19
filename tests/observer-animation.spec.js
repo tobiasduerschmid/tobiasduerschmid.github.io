@@ -86,6 +86,17 @@ test('language changes preserve the narration and highlight the corresponding co
 
 test('each section ends in exactly one tutorial question and resumes only when requested', async ({ page }) => {
   test.setTimeout(120000);
+  // WEBrick may answer a conditional MP3 range request with 304 instead of
+  // the bytes Chromium needs after seeking. Keep the real narration while
+  // removing cache validators from these range requests.
+  await page.route('**/assets/audio/observer-pattern.mp3', route => {
+    const headers = { ...route.request().headers() };
+    if (headers.range) {
+      delete headers['if-none-match'];
+      delete headers['if-modified-since'];
+    }
+    return route.continue({ headers });
+  });
   await page.goto(url);
   const animation = player(page);
   for (const [index, scene] of story.scenes.entries()) {

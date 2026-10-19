@@ -554,6 +554,10 @@
       editor._dbgEqSearchZone = null;
       try { editor.changeViewZones(function (accessor) { accessor.removeZone(zone); }); } catch (e) {}
     }
+    if (editor._dbgEqSearchAccessibleDom) {
+      editor._dbgEqSearchAccessibleDom.remove();
+      editor._dbgEqSearchAccessibleDom = null;
+    }
     editor._dbgEqSearchHeight = 0;
   }
 
@@ -650,11 +654,25 @@
     if (!editor._dbgEqSearchDom) {
       editor._dbgEqSearchDom = document.createElement('div');
       editor._dbgEqSearchDom.className = 'tvm-eq-search';
-      editor._dbgEqSearchDom.setAttribute('role', 'status');
-      editor._dbgEqSearchDom.setAttribute('aria-live', 'polite');
-      editor._dbgEqSearchDom.setAttribute('aria-atomic', 'true');
     }
     fillEquationSearch(editor._dbgEqSearchDom, frame);
+    // Monaco marks view zones aria-hidden. Mirror the same semantic content
+    // outside that subtree so equation choices reach assistive technology.
+    if (!editor._dbgEqSearchAccessibleDom) {
+      var accessible = document.createElement('div');
+      accessible.className = 'tvm-eq-search-accessible';
+      accessible.setAttribute('role', 'status');
+      accessible.setAttribute('aria-label', 'Equation search');
+      accessible.setAttribute('aria-live', 'polite');
+      accessible.setAttribute('aria-atomic', 'true');
+      editor.getDomNode().parentElement.append(accessible);
+      editor._dbgEqSearchAccessibleDom = accessible;
+    }
+    if (editor._dbgEqSearchAccessibleDom.textContent !== editor._dbgEqSearchDom.textContent) {
+      editor._dbgEqSearchAccessibleDom.replaceChildren(
+        ...Array.from(editor._dbgEqSearchDom.childNodes, function (node) { return node.cloneNode(true); })
+      );
+    }
     placeEquationZone(editor, search.anchorLine(frame), true);
   }
 

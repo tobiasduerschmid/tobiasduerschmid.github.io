@@ -220,8 +220,7 @@ test('dragging token rows changes tie priority and retains edits, skip flags, an
 
 test('tutorial saves dragged token ordering and Reset restores the original order', async ({ page }) => {
   await openTutorial(page);
-  await page.getByTitle('Drag token rule 2 to reorder', { exact: true })
-    .dragTo(page.getByTitle('Drag token rule 1 to reorder', { exact: true }), { targetPosition: { x: 10, y: 1 } });
+  await dragTokenRule(page, page, 2, 1);
   await expect(page.getByLabel('Token name 1', { exact: true })).toHaveValue('IDENT');
   await page.reload();
   await expect(page.getByLabel('Token name 1', { exact: true })).toHaveValue('IDENT');

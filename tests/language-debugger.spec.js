@@ -295,8 +295,8 @@ main = print (countAtLeast 60 [60,59,60])
   // Rewinding to the first call shows the supplied arguments in the equation overlay.
   const firstCall = page.getByRole('button', { name: /Find countAtLeast/ }).first();
   await firstCall.press('Enter');
-  const equationSearch = page.getByRole('status', { name: /Equations/ });
-  await expect(equationSearch).toBeVisible();
+  await expect(page.locator('.tvm-eq-search')).toBeVisible({ timeout: 15_000 });
+  const equationSearch = page.getByRole('status', { name: 'Equation search' });
   await expect(equationSearch).toContainText('countAtLeast threshold []');
   await expect(equationSearch).toContainText('countAtLeast threshold (x:xs)');
   await expect(equationSearch).toContainText('Line 3 · not reached');
@@ -320,8 +320,21 @@ main = print (countAtLeast 60 [60,59,60])
   await expect(page.locator('.monaco-editor .tvm-eq-arrow-not-matched')).toHaveCount(1);
   await expect.poll(async () => (await page.locator('.monaco-editor .tvm-debug-current-expression').allTextContents()).join('').replace(/\s/g, ''))
     .toBe('contribution+countAtLeastthresholdxs');
-  const threshold = page.locator('.view-line').filter({ hasText: 'threshold (x:xs)' }).getByText('threshold', { exact: true });
-  await threshold.hover();
+  const equationLine = page.locator('.view-line').filter({ hasText: 'threshold (x:xs)' }).first();
+  await equationLine.scrollIntoViewIfNeeded();
+  const thresholdPoint = await equationLine.evaluate((line) => {
+    const words = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
+    let text = words.nextNode();
+    while (text && !text.textContent.includes('threshold')) text = words.nextNode();
+    if (!text) throw new Error('Rendered equation does not show threshold');
+    const start = text.textContent.indexOf('threshold');
+    const range = document.createRange();
+    range.setStart(text, start);
+    range.setEnd(text, start + 'threshold'.length);
+    const rect = range.getBoundingClientRect();
+    return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+  });
+  await page.mouse.move(thresholdPoint.x, thresholdPoint.y);
   await expect(page.locator('.monaco-hover')).toContainText('threshold :: Int');
   await expect(page.locator('.monaco-hover')).toContainText('60');
   await page.getByRole('button', { name: /Find local binding contribution/ }).first().click();
@@ -365,7 +378,7 @@ main = print (score 5)
     await expect(outputPanel(page)).toContainText('11');
     const demand = page.getByRole('button', { name: /Find score/ }).first();
     await demand.click();
-    const equationSearch = page.getByRole('status', { name: /Equations/ });
+    const equationSearch = page.getByRole('status', { name: 'Equation search' });
     await expect(equationSearch).toContainText('score n');
     await expect(equationSearch).toContainText('not reached');
     await expect(equationSearch).toContainText('5');

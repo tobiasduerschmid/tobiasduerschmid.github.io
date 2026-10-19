@@ -541,6 +541,24 @@ test('keyboard audit reports an invisible focused child inside a frame', async (
   ]));
 });
 
+test('keyboard audit checks the visible focus track of a transparent native switch', async ({ page }) => {
+  await page.setContent(`<style>
+    .tvm-dark-toggle-wrap { position: relative; display: inline-flex; }
+    .tvm-toggle-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; }
+    .tvm-dark-toggle-track { display: block; position: relative; width: 34px; height: 18px; background: #555; }
+    .tvm-toggle-input:focus-visible + .tvm-dark-toggle-track { outline: 3px solid blue; }
+  </style><main><label class="tvm-dark-toggle-wrap">
+    <input id="theme-switch" class="tvm-toggle-input" type="checkbox" aria-label="Dark mode">
+    <span class="tvm-dark-toggle-track"></span>
+  </label></main>`);
+  expect((await runFocusAudit(page)).findings.filter((finding) => finding.criterion === '2.4.11')).toEqual([]);
+
+  await page.addStyleTag({ content: '.tvm-toggle-input:focus-visible + .tvm-dark-toggle-track { outline: none; }' });
+  expect((await runFocusAudit(page)).findings).toEqual(expect.arrayContaining([
+    expect.objectContaining({ criterion: '2.4.11', message: expect.stringContaining('#theme-switch') }),
+  ]));
+});
+
 test('keyboard audit detects a child clipped by its frame host', async ({ page }) => {
   await focusAuditFrame(page, '<style>body { margin: 0; } button { position: fixed; left: 100px; top: 60px; } button:focus { outline: 3px solid blue; }</style><button id="clipped">Clipped child</button>',
     '#frame-host { overflow: hidden; width: 30px; height: 30px; } iframe { width: 300px; height: 150px; border: 0; }');
@@ -611,8 +629,20 @@ function focusedControlSnapshot({ restoreIndex } = {}) {
     return parts.join(' > ');
   };
   const focusIndex = focusables.indexOf(active);
-  const rect = active.getBoundingClientRect();
   const view = owner.defaultView;
+  // The tutorial switch keeps its native input transparent and draws its
+  // keyboard focus ring on the adjacent track. Treat that track as the visual
+  // focus target only while it actually has a visible focus indicator.
+  const track = active.matches('input.tvm-toggle-input:focus-visible')
+    && active.nextElementSibling?.matches('.tvm-dark-toggle-track')
+    ? active.nextElementSibling : null;
+  const trackStyle = track && view.getComputedStyle(track);
+  const trackHasFocusIndicator = trackStyle && (
+    (trackStyle.outlineStyle !== 'none' && parseFloat(trackStyle.outlineWidth) > 0)
+    || trackStyle.boxShadow !== 'none'
+  );
+  const visualTarget = trackHasFocusIndicator ? track : active;
+  const rect = visualTarget.getBoundingClientRect();
   const parents = [...frames].reverse();
   const pointInParent = (frame, x, y) => {
     const bounds = frame.getBoundingClientRect();
@@ -650,7 +680,7 @@ function focusedControlSnapshot({ restoreIndex } = {}) {
   // A clear point in the child is insufficient: the containing frame can be
   // clipped by overflow or covered by parent-page sticky/fixed content.
   function pointVisible(x, y) {
-    let target = active;
+    let target = visualTarget;
     let targetView = view;
     for (const frame of [...parents, null]) {
       if (x < 0 || y < 0 || x >= targetView.innerWidth || y >= targetView.innerHeight) return false;
@@ -665,9 +695,9 @@ function focusedControlSnapshot({ restoreIndex } = {}) {
   }
   const xs = [rect.left + rect.width / 2, rect.left + 2, rect.right - 2];
   const ys = [rect.top + rect.height / 2, rect.top + 2, rect.bottom - 2];
-  const visible = hasPaint(active) && frames.every(hasPaint)
+  const visible = hasPaint(visualTarget) && frames.every(hasPaint)
     && xs.some((x) => ys.some((y) => pointVisible(x, y)));
-  const computed = view.getComputedStyle(active);
+  const computed = view.getComputedStyle(visualTarget);
   return {
     cssPath: [...frames, active].map(cssPath).join(' >> '),
     focusIndex,

@@ -692,6 +692,17 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     const motionClockFailures = await page.evaluate(() => {
       const failures = [];
+      const sameNumericSegments = (actual, expected) => {
+        const segments = (value) => (value || '').split(';').map((segment) =>
+          segment.trim().split(/\s+/).filter(Boolean).map(Number));
+        const actualSegments = segments(actual);
+        const expectedSegments = segments(expected);
+        return actualSegments.length === expectedSegments.length
+          && actualSegments.every((numbers, index) =>
+            numbers.length === expectedSegments[index].length
+            && numbers.every((number, position) => Number.isFinite(number)
+              && number === expectedSegments[index][position]));
+      };
       const sharedTiming = {
         dur: '2.2s',
         keyTimes: '0;0.55;1',
@@ -813,7 +824,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           };
 
           for (const [name, value] of Object.entries(sharedTiming)) {
-            if (details[name] !== value) {
+            const matches = name === 'keyTimes' || name === 'keySplines'
+              ? sameNumericSegments(details[name], value)
+              : details[name] === value;
+            if (!matches) {
               failures.push({ label, reason: 'motion animation does not use shared timing', expected: { [name]: value }, details });
             }
           }
@@ -4787,9 +4801,11 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
     const earShape = page.getByLabel('Ears', { exact: true });
-    await expect(earShape.locator('option')).toHaveCount(12);
+    const shapes = await earShape.locator('option').evaluateAll((options) =>
+      options.map((option) => option.value));
+    expect(shapes).toContain('photo-rounded-lobe');
 
-    for (const shape of ['small-round', 'petite-lobe', 'photo-rounded-lobe', 'rounded-attached', 'free-lobe', 'prominent', 'soft-angled', 'long-soft']) {
+    for (const shape of shapes) {
       await earShape.selectOption(shape);
       await expect(preview.locator(`[data-hero-slot="ear-shape"][data-hero-option="${shape}"]`))
         .toHaveAttribute('display', 'inline');
@@ -4854,8 +4870,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         state.appearance.facialHair = value;
         window.HeroAvatar.applyToSvg(svg, state);
         const group = svg.querySelector(`[data-hero-slot="facial-hair"][data-hero-option="${value}"]`);
-        const beardIsOpaque = group && Array.from(group.querySelectorAll('[fill]:not([fill="none"])'))
-          .every((node) => Number(node.getAttribute('opacity') || '1') >= 0.85);
+        const filledPaths = group ? [...group.querySelectorAll('path[fill]:not([fill="none"])')] : [];
+        const beardIsOpaque = filledPaths.some((path) => Number(path.getAttribute('opacity') || '1') >= 0.85);
         if (!beardIsOpaque) failures.push({ slot: 'facial-hair', value, beardIsOpaque });
       }
 

@@ -54,7 +54,9 @@ test('mounted Smalltalk workspace retains terminal state through Run and remains
     await terminal.getByRole('button', { name: 'Evaluate', exact: true }).click();
     await expect(terminal.getByRole('button', { name: 'Evaluate', exact: true })).toBeEnabled();
     await expect(terminal.getByRole('region', { name: 'Evaluation result', exact: true })).toHaveText(expected, { timeout: 30000 });
-    await expect(terminal.getByRole('status', { name: 'Live session status', exact: true })).toContainText('Evaluation complete.');
+    const liveStatus = terminal.getByRole('status', { name: 'Live session status', exact: true });
+    await expect(liveStatus).toContainText(`Result: ${expected}.`);
+    await expect(liveStatus).toContainText('Live variables and objects are retained.');
     return Math.round(performance.now() - began);
   }
   timings.terminalEvaluationMs = await evaluate('releaseCounter := SEBookCounter new. releaseCounter increment; value', '1');
@@ -62,6 +64,7 @@ test('mounted Smalltalk workspace retains terminal state through Run and remains
   await run.click();
   await expect(page.getByRole('region', { name: 'Program output', exact: true })).toContainText(/Result: 1\s*$/, { timeout: 30000 });
   timings.warmRunMs = Math.round(performance.now() - runStarted);
+  await page.getByRole('button', { name: 'Live terminal', exact: true }).click();
   await evaluate('releaseCounter value + 1', '2');
   await a11yCheckpoint(page, 'smalltalk-mounted-light', { feature: 'smalltalk-release' });
 

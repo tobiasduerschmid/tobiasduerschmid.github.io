@@ -50,5 +50,5 @@ test('stopping checks reports cancellation without marking assertions failed or 
   // Public Workspace proves Stop cancels only the independent check image.
   const result = await page.evaluate(() => window._tutorial._smalltalkAdapter.workspace.evaluate('retained'));
   expect(result.value.text).toBe('42');
-  await expect(page.getByRole('region', { name: 'Program output', exact: true })).not.toContainText('live session resets');
+  await expect(page.getByRole('region', { name: 'Output and live terminal', exact: true })).not.toContainText('live session resets');
 });

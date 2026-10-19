@@ -3866,7 +3866,10 @@
     return Promise.resolve(self._stepSetupPromise).then(function () { return self._smalltalkAdapter.replaceFiles(files); }).then(function () {
       self._invalidateSmalltalkCredit();
       return self._mountSmalltalkViews(self._smalltalkAdapter.workspace, step);
-    }).catch(function (error) { self._appendOutput('Acceptance failed: ' + error.message + '\n', 'err'); });
+    }).catch(function (error) {
+      if (self._smalltalkLayout) self._smalltalkLayout.showOutput();
+      self._appendOutput('Acceptance failed: ' + error.message + '\n', 'err');
+    });
   };
   TutorialCode.prototype._runTestsSmalltalk = function (run) {
     var self = this;

@@ -2119,8 +2119,7 @@ channel.
   `js/vendor/typescript/5.9.3/`; imports never fetch files and code never executes.
   Syntax diagnostics include file/line/column and clear on a corrected edit.
   Both hosts use the same
-  `uml-worker.js` and analyzers. See `docs/uml-code-labs.md` for the contract
-  and inference limits.
+  `uml-worker.js` and analyzers. See `docs/uml-code-labs.md` for the contract.
   Worker operations have a ten-second deadline. A timeout terminates the
   worker and runs the newest queued edits in a replacement; timed-out work
   never retries on the main thread. Java parameter, enum, and statement
@@ -2909,7 +2908,10 @@ and on the selection step itself, the editor lists the call's arguments and
 every equation in a view zone and boxes each header. Gutter arrows use a
 distinct shape for tried, not matched, matched, and not reached; words in the
 list carry the same states. On the selection step the chosen body stays
-highlighted beside that list. The overlay leaves on the following event.
+highlighted beside that list. Monaco hides view zones from the accessibility
+tree, so `editor-attach.js` mirrors the equation list as a screen-reader status
+outside the editor; keep both copies synchronized and remove the status when
+the overlay leaves on the following event.
 Haskell does not show the equation list in Variables; that list is the editor
 overlay. Variables shows argument bindings and local bindings, including
 pattern-binding types. Hovering a pattern or local name
@@ -3725,8 +3727,10 @@ focus to the next visible list and marks its navigation control current.
 
 The dock's Live terminal and Run output buttons switch full-width views without
 remounting either view. Run and Accept and Run reveal Run output; select Live
-terminal to resume the unchanged input and live image. Failed image recovery also
-reveals Run output so its error and retry guidance stay visible. Print exposes both views.
+terminal to resume the unchanged input and live image. Failed solution replacement
+reveals Run output so its acceptance error is visible while drafts and accepted
+source remain intact. Failed image recovery also reveals Run output so its error
+and retry guidance stay visible. Print exposes both views.
 In the focused terminal editor, Ctrl+Enter or Cmd+Enter evaluates the entire input;
 plain Enter inserts a newline. Smalltalk statement separators are never inserted
 or guessed. Multiline evaluation errors retain the native message and offer a

@@ -253,20 +253,23 @@ async function unmarkedTextLinkFindings(page, { include, exclude } = {}) {
   return findings;
 }
 
-async function runAxe(page, { include, exclude, rules } = {}) {
+async function runAxe(page, { include, exclude } = {}) {
   const AxeBuilder = getAxeBuilder();
-  let builder = new AxeBuilder({ page });
-  if (rules) {
-    builder = builder.withRules(rules);
-  } else {
-    // The static audit's calibrated checks only see the initial page state.
-    // Keep these axe rules active here so dynamic controls and feedback are
-    // checked after each interaction, including target size and contrast.
-    builder = builder.withTags(AXE_TAGS);
-  }
+  // The static audit's calibrated checks only see the initial page state.
+  // Keep these axe rules active in both themes so dynamic controls and
+  // feedback are checked after each interaction.
+  let builder = new AxeBuilder({ page }).withTags(AXE_TAGS);
   if (include) builder = builder.include(include);
   if (exclude) builder = builder.exclude(exclude);
   return builder.analyze();
+}
+
+async function wcagFindings(page, opts) {
+  const result = await runAxe(page, { include: opts.include, exclude: opts.exclude });
+  return (result.violations || []).filter(
+    (violation) => (violation.tags || []).some((tag) => AXE_TAGS.includes(tag)),
+  ).concat(equalRatioContrastFindings(result))
+    .concat(await unmarkedTextLinkFindings(page, opts));
 }
 
 async function settlePaint(page) {
@@ -304,7 +307,7 @@ async function installMotionGuard(page) {
  * @param {string} [opts.feature] feature key for `A11Y_INTERACTIVE_FEATURES`
  * @param {string|string[]} [opts.include] CSS selector(s) to scope the audit
  * @param {string|string[]} [opts.exclude] CSS selector(s) to exclude
- * @param {boolean} [opts.darkMode] run a dark-mode contrast pass (default true);
+ * @param {boolean} [opts.darkMode] run a dark-mode audit (default true);
  *        set false only for views that are intentionally light-only, such as print.
  */
 async function a11yCheckpoint(page, label, opts = {}) {
@@ -315,11 +318,7 @@ async function a11yCheckpoint(page, label, opts = {}) {
 // Exported separately so the audit contract can be tested without depending
 // on the optional environment flag used by the large behavior suites.
 async function auditInteractiveState(page, label, opts = {}) {
-  const lightResult = await runAxe(page, { include: opts.include, exclude: opts.exclude });
-  const lightViolations = (lightResult.violations || []).filter(
-    (v) => (v.tags || []).some((t) => AXE_TAGS.includes(t)),
-  ).concat(equalRatioContrastFindings(lightResult))
-    .concat(await unmarkedTextLinkFindings(page, opts));
+  const lightViolations = await wcagFindings(page, opts);
   expect(lightViolations, formatViolations(label, lightViolations)).toHaveLength(0);
 
   if (opts.darkMode !== false) {
@@ -332,14 +331,7 @@ async function auditInteractiveState(page, label, opts = {}) {
         await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
       }
       await settlePaint(page);
-      const darkResult = await runAxe(page, {
-        include: opts.include,
-        exclude: opts.exclude,
-        rules: ['color-contrast'],
-      });
-      const darkViolations = (darkResult.violations || [])
-        .concat(equalRatioContrastFindings(darkResult))
-        .concat(await unmarkedTextLinkFindings(page, opts));
+      const darkViolations = await wcagFindings(page, opts);
       expect(
         darkViolations,
         formatViolations(`${label} [dark mode]`, darkViolations),

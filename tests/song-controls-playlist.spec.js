@@ -15,10 +15,13 @@ const audioFor = (page, song) => page.getByLabel(`${song.title} audio`, { exact:
 
 // Editing/playback cases use an existing student's two-song list. Adding a
 // catalog entry must not silently change that student's saved queue.
-test.use({ storageState: { cookies: [], origins: [{
-  origin: new URL(process.env.SONG_PLAYER_BASE_URL || 'http://127.0.0.1:4189').origin,
+const savedTwoSongState = (baseURL) => ({ cookies: [], origins: [{
+  origin: new URL(baseURL).origin,
   localStorage: [{ name: 'song-player-playlist', value: JSON.stringify({ version: 1, songs: ['snapshots_and_pointers', 'unbox_the_stack'] }) }],
-}] } });
+}] });
+test.use({ storageState: async ({ baseURL }, use) => {
+  await use(savedTwoSongState(baseURL));
+} });
 
 test.beforeEach(async ({ context }) => {
   // Keep real media responses; bypass WEBrick's incorrect cached If-Range/304 handling.
@@ -181,11 +184,11 @@ for (const song of [git, network]) {
   });
 }
 
-test('touch taps support playback and double-tap seeking', async ({ browser }) => {
+test('touch taps support playback and double-tap seeking', async ({ browser, baseURL }) => {
   const context = await browser.newContext({ hasTouch: true, viewport: { width: 390, height: 844 } });
   await context.route('**/*', (route) => route.continue());
   const page = await context.newPage();
-  await page.goto(`${test.info().project.use.baseURL || process.env.SONG_PLAYER_BASE_URL || 'http://127.0.0.1:4189'}${network.path}`);
+  await page.goto(`${baseURL}${network.path}`);
   const audio = audioFor(page, network);
   await audio.evaluate((media) => { media.muted = true; });
   await page.getByRole('button', { name: 'Play video', exact: true }).tap();
@@ -373,11 +376,13 @@ test('drag reordering preserves the current song, supports Undo and persistence,
   await expect(frame.getByRole('button', { name: 'Next song', exact: true })).toBeDisabled();
 });
 
-test('touch dragging reorders without scrolling the grip @chromium', async ({ browser }) => {
-  const context = await browser.newContext({ hasTouch: true, viewport: { width: 820, height: 1100 } });
+test('touch dragging reorders without scrolling the grip @chromium', async ({ browser, baseURL }) => {
+  const context = await browser.newContext({
+    hasTouch: true, viewport: { width: 820, height: 1100 }, storageState: savedTwoSongState(baseURL),
+  });
   await context.route('**/*', (route) => route.continue());
   const page = await context.newPage();
-  await page.goto(`${process.env.SONG_PLAYER_BASE_URL}${playlistPath}`);
+  await page.goto(`${baseURL}${playlistPath}`);
   await queue(page).scrollIntoViewIfNeeded();
   const first = await queue(page).getByRole('listitem').first().boundingBox();
   const handle = await queue(page).getByRole('listitem').last().locator('.song-playlist-drag-handle').boundingBox();

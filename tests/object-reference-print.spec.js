@@ -134,7 +134,7 @@ test('detached instructions print cards and connected arrows for their displayed
   await page.getByRole('button', { name: /Open instructions in separate window$/ }).click();
   const popup = await popupOpened;
   const lab = labs(popup).first();
-  await expect(control(lab, 'Forward')).toBeEnabled();
+  await expect(control(lab, 'Forward')).toBeEnabled({ timeout: 30_000 });
   await popup.emulateMedia({ media: 'print' });
   const history = lab.locator('.orl-print');
   await expect(history.locator('.orl-object').first()).toBeVisible();

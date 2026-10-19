@@ -2902,6 +2902,7 @@ app -> db: second()
   test('state pseudostates are editable and transition handles align with rendered routes', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'state');
+    await showCanvasForPointerWork(page);
     await page.locator('#uml-pg-input').fill(`@startuml
 [*] --> Idle : start
 Idle --> BankruptState : bankrupt
@@ -2972,7 +2973,8 @@ Idle --> BankruptState : bankrupt
     expect(alignment.compared).toBeGreaterThan(0);
     expect(alignment.maxDelta).toBeLessThan(1.5);
 
-    await dragLocatorCenter(page, page.locator('.uml-pg-edit-a11y-target[data-layout-id="__initial__0"]'), 40, 20);
+    await initial.hover();
+    await dragLocatorCenter(page, initial, 40, 20);
     await expect(page.locator('#uml-pg-input')).toHaveValue(/node "__initial__0" x=/);
   });
 
