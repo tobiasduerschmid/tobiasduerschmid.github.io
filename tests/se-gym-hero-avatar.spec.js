@@ -4870,8 +4870,17 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         state.appearance.facialHair = value;
         window.HeroAvatar.applyToSvg(svg, state);
         const group = svg.querySelector(`[data-hero-slot="facial-hair"][data-hero-option="${value}"]`);
-        const filledPaths = group ? [...group.querySelectorAll('path[fill]:not([fill="none"])')] : [];
-        const beardIsOpaque = filledPaths.some((path) => Number(path.getAttribute('opacity') || '1') >= 0.85);
+        // The base must be opaque; strand highlights can remain translucent.
+        const bases = group ? [...group.querySelectorAll('[data-testid="hero-beard-base"]')] : [];
+        const beardIsOpaque = bases.length > 0 && bases.every((base) => {
+          const style = getComputedStyle(base);
+          let opacity = Number(style.fillOpacity);
+          for (let layer = base; layer && layer !== svg; layer = layer.parentElement) {
+            opacity *= Number(getComputedStyle(layer).opacity);
+          }
+          const box = base.getBoundingClientRect();
+          return style.fill !== 'none' && opacity >= 0.85 && box.width > 0 && box.height > 0;
+        });
         if (!beardIsOpaque) failures.push({ slot: 'facial-hair', value, beardIsOpaque });
       }
 

@@ -8932,7 +8932,7 @@
         <path data-hero-jaw-band data-hero-jaw-start-y="208" data-hero-jaw-depth="4" d="M 361 208 C 366 224, 380 237, 400 239 C 420 237, 434 224, 439 208 C 433 221, 419 233, 400 235 C 381 233, 367 221, 361 208 Z" fill="url(#facial-hair-grad-{{ hero_variant }})" opacity=".96"/>
       </g>
       <g data-hero-slot="facial-hair" data-hero-option="short-beard" display="none">
-        <path d="M 362 210 C 368 232, 382 248, 400 252 C 418 248, 432 232, 438 210 C 426 224, 412 234, 400 236 C 388 234, 374 224, 362 210 Z" fill="url(#facial-hair-grad-{{ hero_variant }})"/>
+        <path data-testid="hero-beard-base" d="M 362 210 C 368 232, 382 248, 400 252 C 418 248, 432 232, 438 210 C 426 224, 412 234, 400 236 C 388 234, 374 224, 362 210 Z" fill="url(#facial-hair-grad-{{ hero_variant }})"/>
         <path d="M 376 220 C 386 229, 394 234, 400 235 C 406 234, 414 229, 424 220" stroke="color-mix(in srgb, var(--hero-hair-light, #4a3220) 45%, var(--hero-hair, #1f140c))" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".5"/>
 
         <path d="M 379 233 C 381 236 383 239 386 240 M 393 239 C 393 242 395 245 397 246 M 415 234 C 413 239 410 242 408 244" fill="none" stroke="var(--hero-hair-dark, #0f0905)" stroke-width=".9" stroke-linecap="round" stroke-linejoin="round" opacity=".4"/>
@@ -8945,7 +8945,7 @@
 <path d="M 418 221.4 C 417 230.52 414 237.36 409 244.2 C 421 238.88 428 227.48 428 216.08 C 425 216.84 421 219.12 418 221.4 Z" fill="url(#beard-lock-material-{{ hero_variant }})" opacity="0.74"/>
 <path d="M 435 209.24 C 434 219.12 433 229 426 236.6 C 437 229 443 213.8 441 203.92 C 439 206.2 437 207.72 435 209.24 Z" fill="url(#beard-lock-material-{{ hero_variant }})" opacity="0.74"/></g></g>
       <g data-hero-slot="facial-hair" data-hero-option="trimmed-beard" clip-path="url(#face-clear-clip-{{ hero_variant }})" display="none">
-        <path d="M 359 204 C 361 218, 365 232, 373 243 C 381 253, 391 258, 401 260 C 412 258, 422 252, 430 241 C 437 231, 440 217, 441 203 C 433 211, 425 217, 416 222 C 410 225, 405 228, 400 232 C 394 228, 389 225, 383 222 C 374 217, 366 211, 359 204 Z" fill="url(#facial-hair-grad-{{ hero_variant }})"/>
+        <path data-testid="hero-beard-base" d="M 359 204 C 361 218, 365 232, 373 243 C 381 253, 391 258, 401 260 C 412 258, 422 252, 430 241 C 437 231, 440 217, 441 203 C 433 211, 425 217, 416 222 C 410 225, 405 228, 400 232 C 394 228, 389 225, 383 222 C 374 217, 366 211, 359 204 Z" fill="url(#facial-hair-grad-{{ hero_variant }})"/>
         <path d="M 401 232 C 411 227, 421 220, 432 211 C 431 229, 424 244, 413 252 C 408 256, 404 258, 401 259 Z" fill="color-mix(in srgb, var(--hero-hair-dark, #0f0905) 24%, var(--hero-hair, #1f140c))"/>
         <path d="M 368 219 C 374 232, 382 243, 391 249 M 416 244 C 423 237, 428 228, 432 217" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.75" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .44)"/>
         <path d="M 388 251 C 396 256, 405 256, 413 250" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.45" fill="none" stroke-linecap="round" opacity=".46"/>
@@ -8960,7 +8960,7 @@
 <path d="M 418 225 C 417 237 414 246 409 255 C 421 248 428 233 428 218 C 425 219 421 222 418 225 Z" fill="url(#beard-lock-material-{{ hero_variant }})" opacity="0.74"/>
 <path d="M 435 209 C 434 222 433 235 426 245 C 437 235 443 215 441 202 C 439 205 437 207 435 209 Z" fill="url(#beard-lock-material-{{ hero_variant }})" opacity="0.74"/></g></g>
       <g data-hero-slot="facial-hair" data-hero-option="full-beard" clip-path="url(#face-clear-clip-{{ hero_variant }})" display="none">
-        <path d="M 357 198 C 359 219, 364 238, 376 252 C 383 260, 392 265, 401 266 C 411 263, 421 257, 429 247 C 438 234, 442 216, 443 198 C 434 209, 425 217, 415 222 C 409 225, 404 228, 400 232 C 395 228, 390 225, 384 222 C 374 216, 365 208, 357 198 Z" fill="url(#facial-hair-grad-{{ hero_variant }})"/>
+        <path data-testid="hero-beard-base" d="M 357 198 C 359 219, 364 238, 376 252 C 383 260, 392 265, 401 266 C 411 263, 421 257, 429 247 C 438 234, 442 216, 443 198 C 434 209, 425 217, 415 222 C 409 225, 404 228, 400 232 C 395 228, 390 225, 384 222 C 374 216, 365 208, 357 198 Z" fill="url(#facial-hair-grad-{{ hero_variant }})"/>
         <path d="M 400 232 C 410 228, 422 219, 435 205 C 434 227, 426 247, 413 257 C 408 261, 403 264, 400 265 Z" fill="color-mix(in srgb, var(--hero-hair-dark, #0f0905) 32%, var(--hero-hair, #1f140c))"/>
         <g data-hero-mustache="">
           <path d="M 374 218 C 382 212, 391 212, 400 217 C 409 212, 418 212, 426 218 C 417 218, 409 221, 400 222 C 391 221, 383 219, 374 218 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".94"/>
