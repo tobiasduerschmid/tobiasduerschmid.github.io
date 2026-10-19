@@ -27,6 +27,26 @@ var ISOLATION_QUERY = 'sebook-coi';
 // page-specific JSON) keep going through the COI rewrite path below.
 var VM_ASSET_RE = /^\/(vm\/dist\/(state\.bin\.gz|bzImage|rootfs\.cpio\.gz)|assets\/v86\/(v86\.wasm|libv86\.js|seabios\.bin|vgabios\.bin))$/;
 
+function isCanonicalVMAssetURL(url) {
+  // Compare the whole URL: URL.search is empty even for a trailing '?',
+  // which Cache Storage treats as a different key from the bare asset URL.
+  return url.origin === self.location.origin && VM_ASSET_RE.test(url.pathname)
+    && url.href === url.origin + url.pathname;
+}
+
+function pruneVMAssetCache() {
+  return caches.open(VM_CACHE).then(function (cache) {
+    return cache.keys().then(function (requests) {
+      return Promise.all(requests.filter(function (request) {
+        return !isCanonicalVMAssetURL(new URL(request.url));
+      }).map(function (request) { return cache.delete(request); }));
+    });
+  }).catch(function (error) {
+    // Storage failures must not prevent this worker from providing isolation.
+    console.warn('[coi-serviceworker] Failed to prune VM asset cache:', error);
+  });
+}
+
 self.addEventListener('install', function () {
   self.skipWaiting();
 });
@@ -37,7 +57,7 @@ self.addEventListener('activate', function (e) {
       return Promise.all(keys.filter(function (k) {
         return k !== VM_CACHE && OWNED_VM_CACHE_RE.test(k);
       }).map(function (k) { return caches.delete(k); }));
-    }).then(function () { return self.clients.claim(); })
+    }).then(pruneVMAssetCache).then(function () { return self.clients.claim(); })
   );
 });
 
@@ -169,6 +189,12 @@ self.addEventListener('fetch', function (e) {
   // deploy. HEAD avoids downloading the body when cached bytes are current;
   // conditional GET is the standards-compliant fallback if HEAD is unavailable.
   if (VM_ASSET_RE.test(url.pathname)) {
+    if (!isCanonicalVMAssetURL(url)) {
+      e.respondWith(Promise.resolve(new Response('VM asset URLs must not include a query or fragment.', {
+        status: 400,
+      })));
+      return;
+    }
     var vmAssetFetch = handleVMAssetRequest(e.request);
     e.respondWith(vmAssetFetch.then(function (result) {
       return result.response;

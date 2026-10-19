@@ -17,10 +17,15 @@ async function installAndOpenIsolatedPage(page) {
   await expect.poll(() => page.evaluate(() => window.crossOriginIsolated)).toBe(true);
 }
 
-test('tutorial isolation is opt-in and activation preserves unrelated caches', async ({ page }) => {
+test('tutorial isolation is opt-in and activation cleans only noncanonical VM cache entries', async ({ page }) => {
   await page.goto('/cookies/');
   await page.evaluate(async () => {
     await caches.open('unrelated-feature-cache');
+    await caches.open('vm-assets-v1');
+    const cache = await caches.open('vm-assets-v2');
+    await cache.put('/vm/dist/state.bin.gz', new Response('saved snapshot'));
+    await cache.put('/vm/dist/state.bin.gz?v=1', new Response('duplicate snapshot'));
+    await cache.put('/vm/dist/state.bin.gz?', new Response('empty-query duplicate'));
   });
   await installAndOpenIsolatedPage(page);
 
@@ -31,6 +36,45 @@ test('tutorial isolation is opt-in and activation preserves unrelated caches', a
   expect(ordinaryHeaders['cross-origin-embedder-policy']).toBeUndefined();
   expect(await page.evaluate(() => window.crossOriginIsolated)).toBe(false);
   expect(await page.evaluate(async () => (await caches.keys()).includes('unrelated-feature-cache'))).toBe(true);
+  expect(await page.evaluate(async () => (await caches.keys()).includes('vm-assets-v1'))).toBe(false);
+  const savedAssets = await page.evaluate(async () => {
+    const cache = await caches.open('vm-assets-v2');
+    const keys = await cache.keys();
+    return Promise.all(keys.map(async request => ({
+      url: request.url,
+      body: await (await cache.match(request)).text(),
+    })));
+  });
+  expect(savedAssets).toEqual([{
+    url: new URL('/vm/dist/state.bin.gz', page.url()).href,
+    body: 'saved snapshot',
+  }]);
+});
+
+test('VM query variants are rejected while canonical assets stay usable and cached', async ({ page }) => {
+  await page.goto('/cookies/');
+  await installAndOpenIsolatedPage(page);
+
+  const statuses = await page.evaluate(async () => Promise.all([
+    '/vm/dist/state.bin.gz?variant=1',
+    '/vm/dist/state.bin.gz?variant=2',
+    '/vm/dist/state.bin.gz?',
+    '/assets/v86/seabios.bin?variant=1',
+  ].map(async url => (await fetch(url)).status)));
+  expect(statuses).toEqual([400, 400, 400, 400]);
+  expect(await page.evaluate(async () => (await (await caches.open('vm-assets-v2')).keys()).length)).toBe(0);
+
+  const canonicalURL = new URL('/assets/v86/seabios.bin', page.url()).href;
+  const bodyLength = await page.evaluate(async url => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Canonical VM asset failed: ${response.status}`);
+    return (await response.arrayBuffer()).byteLength;
+  }, canonicalURL);
+  expect(bodyLength).toBeGreaterThan(0);
+  await expect.poll(() => page.evaluate(async () => {
+    const cache = await caches.open('vm-assets-v2');
+    return (await cache.keys()).map(request => request.url);
+  })).toEqual([canonicalURL]);
 });
 
 test('isolated pages can start same-origin workers', async ({ page }) => {
