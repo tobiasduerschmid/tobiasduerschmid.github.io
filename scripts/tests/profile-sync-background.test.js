@@ -131,8 +131,9 @@ test('accepted writes use the sender origin regardless of page-supplied origins'
   });
 });
 
-for (const version of [undefined, 1, 2, 3]) {
+for (const version of [undefined, 1, 2, 3, 4]) {
   test(`originless records and deletion history never reach a page (payload version ${version})`, async (t) => {
+    const { FORMAT_VERSION } = await load('sync-model.js');
     const worker = await startWorker(t, {
       records: {
         'local\u0000draft': { value: 'unattributed-secret', updatedAt: 999 },
@@ -144,13 +145,13 @@ for (const version of [undefined, 1, 2, 3]) {
     else worker.sync.m.version = version;
     const response = await worker.send({ type: 'hydrate', entries: [] });
     assert.deepEqual(response.apply, []);
-    if (version !== 3) {
+    if (version === undefined || version <= FORMAT_VERSION) {
       assert.deepEqual(await worker.records(), {});
       assert.deepEqual(worker.local.lastSynced, {});
-      assert.equal(worker.sync.m.version, 2);
+      assert.equal(worker.sync.m.version, FORMAT_VERSION);
     } else {
       assert.equal(response.readOnly, true);
-      assert.equal(worker.sync.m.version, 3);
+      assert.equal(worker.sync.m.version, version);
     }
   });
 }

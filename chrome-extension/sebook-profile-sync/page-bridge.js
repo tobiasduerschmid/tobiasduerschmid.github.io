@@ -110,12 +110,11 @@
     return catalog.retired.slice();
   }
 
-  function postToExtension(type, snapshot) {
+  function postToExtension(type) {
     hostWindow().postMessage({
       channel: CHANNEL,
       to: 'extension',
       type: type,
-      snapshot: snapshot || buildSnapshot(),
     }, location.origin);
   }
 

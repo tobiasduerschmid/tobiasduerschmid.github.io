@@ -32,3 +32,17 @@ which site supplied those values. Data already saved in each site's
 browser storage stays there; the production site's data seeds the new
 origin-specific profile copy on its next visit. Older extension versions
 cannot read or rewrite the new format, so update all installed copies.
+
+Resource limits
+Each sync snapshot accepts at most 1,024 entries, 1,024 UTF-8 bytes per
+key, 256 KiB per value, 1 MiB of expanded JSON, and 128 retired-key rules.
+A snapshot above these limits is rejected before merging; saved browser
+data and the existing profile copy remain unchanged. Receiving profiles
+accept at most 2,048 records and 2 MiB of expanded JSON, independently of
+the compressed Chrome quota. An oversized or damaged profile copy is
+reported as unreadable and is not overwritten automatically.
+
+To update an unpacked installation, replace its files with this archive
+and click Reload for the extension on chrome://extensions on each computer.
+Extension version 1.0.1 can read the guarded profile format but cannot
+update it. Update every computer to resume uploading changes from it.

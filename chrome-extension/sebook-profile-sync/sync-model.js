@@ -7,6 +7,8 @@
  * profile is not emptied when a later edit is too large to sync.
  */
 
+import { RESOURCE_LIMITS } from './sync-validation.js';
+
 export const LIMITS = {
   quotaBytes: 100000,
   bytesPerItem: 8192,
@@ -14,11 +16,11 @@ export const LIMITS = {
   tombstoneRetentionMs: 90 * 24 * 60 * 60 * 1000,
 };
 
-/** Bump only when older copies must not rewrite the profile payload. */
-export const FORMAT_VERSION = 2;
+/** V1/V2 preserve expandedBytes as an unknown field without recalculating it. */
+export const FORMAT_VERSION = 3;
 
 const KNOWN_RECORD_FIELDS = { value: true, updatedAt: true, deleted: true };
-const KNOWN_META_FIELDS = { version: true, revision: true, chunks: true, omittedCount: true, updatedAt: true };
+const KNOWN_META_FIELDS = { version: true, revision: true, chunks: true, omittedCount: true, updatedAt: true, expandedBytes: true };
 
 export const META_KEY = 'm';
 
@@ -79,7 +81,7 @@ export function entryHash(entry) {
 }
 
 export function syncItemBytes(key, value) {
-  return key.length + JSON.stringify(value).length;
+  return new TextEncoder().encode(key + JSON.stringify(value)).byteLength;
 }
 
 export function maxChunkChars(index) {
@@ -271,6 +273,7 @@ export function nextMeta(previousMeta, fields) {
     chunks: fields.chunks,
     omittedCount: fields.omittedCount,
     updatedAt: fields.updatedAt,
+    ...(fields.expandedBytes != null ? { expandedBytes: fields.expandedBytes } : {}),
   };
 }
 
@@ -297,7 +300,9 @@ export function unsyncedStampsFor(mergedRecords, savedRecords) {
 }
 
 /**
- * Drops the largest live values until `encode` reports that the payload fits.
+ * Searches prefixes of a stable largest-first pruning order. A known fitting
+ * candidate is retained even if compressed sizes are not strictly monotonic.
+ * At most 16 whole-payload encodes are performed, including prior-copy restores.
  * `protectedIds` are dropped only after every unprotected live value is gone,
  * so a previously synced copy is not sacrificed to make room for brand-new data.
  * When a protected value is dropped, the previous profile copy is put back if
@@ -305,34 +310,51 @@ export function unsyncedStampsFor(mergedRecords, savedRecords) {
  */
 export async function fitToQuota(records, options) {
   const source = records || {};
-  const working = { ...source };
-  const omitted = [];
+  if (Object.keys(source).length > RESOURCE_LIMITS.maxEntries + 2 * RESOURCE_LIMITS.maxRecords) {
+    throw new RangeError('Merged profile has too many records.');
+  }
   const protect = new Set(options.protectedIds || []);
   const keep = new Set(options.keepIds || []);
   const previous = options.previousRecords || {};
-  const quota = options.quota;
-  let guard = Object.keys(source).length + 2;
-
-  while (guard > 0) {
-    guard -= 1;
-    const encoded = await options.encode(working, omitted.length);
-    if (encoded.ok && encoded.totalBytes <= quota) {
-      return {
-        records: working,
-        omitted: omitted.filter((id) => !sameRecord(working[id], source[id])),
-        encoded,
-      };
-    }
-    const id = largestLiveId(working, combinedSkip(protect, keep)) || largestLiveId(working, keep);
-    if (!id) return { records: working, omitted, encoded, overQuota: true };
-    const removed = working[id];
-    delete working[id];
-    omitted.push(id);
-    await restorePreviousIfSmaller(working, previous[id], removed, id, omitted.length, options, quota);
+  const candidates = Object.keys(source).filter((id) => !keep.has(id) && source[id]
+    && !source[id].deleted && typeof source[id].value === 'string');
+  candidates.sort((left, right) => Number(protect.has(left)) - Number(protect.has(right))
+    || source[right].value.length - source[left].value.length || (left < right ? -1 : left > right ? 1 : 0));
+  const operations = [];
+  const restored = [];
+  for (const id of candidates) {
+    const prior = canonicalRecord(previous[id]);
+    const smaller = prior && JSON.stringify(prior).length < JSON.stringify(source[id]).length;
+    operations.push({ id, replacement: smaller ? prior : null });
+    if (smaller && !prior.deleted) restored.push({ id, replacement: null });
   }
-
-  const encoded = await options.encode(working, omitted.length);
-  return { records: working, omitted, encoded, overQuota: true };
+  operations.push(...restored);
+  const evaluate = async (count) => {
+    const working = { ...source };
+    const omitted = new Set();
+    for (let index = 0; index < count; index++) {
+      const { id, replacement } = operations[index];
+      if (replacement) working[id] = replacement;
+      else delete working[id];
+      omitted.add(id);
+    }
+    return { records: working, omitted: [...omitted], encoded: await options.encode(working, omitted.size) };
+  };
+  const fits = (result) => result.encoded.ok && result.encoded.totalBytes <= options.quota;
+  const initial = await evaluate(0);
+  if (fits(initial)) return initial;
+  if (!operations.length) return { ...initial, overQuota: true };
+  let low = 0;
+  let high = operations.length;
+  let best = await evaluate(high);
+  if (!fits(best)) return { ...best, overQuota: true };
+  for (let attempts = 2; high - low > 1 && attempts < RESOURCE_LIMITS.maxEncodeAttempts; attempts++) {
+    const middle = Math.floor((low + high) / 2);
+    const trial = await evaluate(middle);
+    if (fits(trial)) { high = middle; best = trial; }
+    else low = middle;
+  }
+  return best;
 }
 
 export function mergeSiteSnapshot(localEntries, remoteRecords, now, origin) {
@@ -437,20 +459,4 @@ function unknownFields(record) {
     extras[key] = record[key];
   });
   return extras;
-}
-
-function combinedSkip(protect, keep) {
-  return new Set([...protect, ...keep]);
-}
-
-function sameRecord(left, right) {
-  return JSON.stringify(canonicalRecord(left) || null) === JSON.stringify(canonicalRecord(right) || null);
-}
-
-async function restorePreviousIfSmaller(working, previous, removed, id, omittedCount, options, quota) {
-  const prior = canonicalRecord(previous);
-  if (!prior || sameRecord(prior, removed)) return;
-  const trial = { ...working, [id]: prior };
-  const encoded = await options.encode(trial, omittedCount);
-  if (encoded.ok && encoded.totalBytes <= quota) working[id] = prior;
 }

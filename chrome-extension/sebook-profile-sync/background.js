@@ -15,6 +15,7 @@ import {
   unsyncedStampsFor,
 } from './sync-model.js';
 import { decodeSyncPayload, encodeSyncPayload } from './sync-codec.js';
+import { validateSiteSnapshot } from './sync-validation.js';
 
 const SITE_ORIGINS = ['https://tobiasduerschmid.github.io'];
 const SITE_URLS = SITE_ORIGINS.map((origin) => origin + '/*');
@@ -34,7 +35,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ error: 'This sender is not allowed to access profile sync.' });
     return undefined;
   }
-  enqueue(() => handleMessage(message, origin)).then(sendResponse, (error) => {
+  // Validate synchronously so rejected page data is never retained in the queue.
+  let request = message;
+  if (message.type === 'hydrate' || message.type === 'push') {
+    try {
+      request = { type: message.type, ...validateSiteSnapshot(message.entries, message.retired) };
+    } catch (error) {
+      sendResponse({ error: error.message });
+      return undefined;
+    }
+  }
+  enqueue(() => handleMessage(request, origin)).then(sendResponse, (error) => {
     sendResponse({ error: error && error.message ? error.message : 'Sync failed.' });
   });
   return true;
@@ -63,7 +74,7 @@ async function handleMessage(message, origin) {
   if (message.type === 'wipe') return wipe();
   if (message.type === 'discard-backup') return discardBackup();
   if (message.type === 'hydrate' || message.type === 'push') {
-    return syncEntries(message.entries || [], message.retired || [], origin);
+    return syncEntries(message.entries, message.retired, origin);
   }
   return { error: 'Unknown request.' };
 }

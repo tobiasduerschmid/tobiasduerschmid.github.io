@@ -19,7 +19,7 @@
   var ready = false;
   var paused = false;
   var dirty = false;
-  var latestSnapshot = null;
+  var pushQueued = false;
   var lastRevision = 0;
   var pushTimer = 0;
   var chain = Promise.resolve();
@@ -49,7 +49,7 @@
         resolve(null);
       }, limit);
       function onMessage(event) {
-        if (event.origin !== location.origin) return;
+        if (event.origin !== location.origin || event.source !== window) return;
         var data = event.data;
         if (!data || data.channel !== CHANNEL || data.to !== 'extension') return;
         if (data.requestId !== requestId || data.type !== type) return;
@@ -138,34 +138,38 @@
     if (typeof result.revision === 'number') lastRevision = result.revision;
     await applyOnPage(result.apply, snapshot.takenAt);
     ready = true;
-    if (dirty && latestSnapshot) {
-      dirty = false;
-      schedulePush(latestSnapshot);
-    }
+    if (dirty && !pushQueued) schedulePush();
   }
 
-  function schedulePush(snapshot) {
-    latestSnapshot = snapshot;
-    if (!ready || paused) {
-      dirty = true;
-      return;
-    }
+  function schedulePush(flush) {
+    dirty = true;
+    if (!ready || paused || pushQueued) return;
     clearTimeout(pushTimer);
-    pushTimer = setTimeout(function () {
-      var snapshotToSend = latestSnapshot;
-      enqueue(function () { return syncSnapshot('push', snapshotToSend); });
-    }, 400);
+    function push() {
+      pushQueued = true;
+      enqueue(async function () {
+        dirty = false;
+        try {
+          const snapshot = await snapshotFromPage();
+          await syncSnapshot('push', snapshot);
+        } finally {
+          pushQueued = false;
+          if (dirty && !paused) schedulePush();
+        }
+      });
+    }
+    if (flush) push();
+    else pushTimer = setTimeout(push, 400);
   }
 
   window.addEventListener('message', function (event) {
     if (event.origin !== location.origin) return;
     var data = event.data;
     if (!data || data.channel !== CHANNEL || data.to !== 'extension') return;
-    if (data.type === 'local-change' && data.snapshot) schedulePush(data.snapshot);
-    if (data.type === 'flush' && data.snapshot) {
-      clearTimeout(pushTimer);
-      enqueue(function () { return syncSnapshot('push', data.snapshot); });
-    }
+    // Notifications can come from same-origin child frames. Their attached data
+    // is never trusted as a snapshot; only a requested top-window reply is used.
+    if (data.type === 'local-change') schedulePush();
+    if (data.type === 'flush') schedulePush(true);
   });
 
   chrome.runtime.onMessage.addListener(function (message) {
