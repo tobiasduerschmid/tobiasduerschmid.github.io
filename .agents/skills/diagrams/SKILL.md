@@ -175,7 +175,7 @@ Every page that contains a mermaid block **must** load both scripts in this orde
 
 The second script defines `window.SebookMermaid` and immediately calls `mermaid.initialize(...)` with theme variables, font, and colors that mirror the ArchUML palette in [css/uml-diagram.css](../../../css/uml-diagram.css) and [js/ArchUML/uml-bundle.js](../../../js/ArchUML/uml-bundle.js):
 
-- Stroke `#4060a0`, fill `#fdfcf8`, header fill `#d0ddef`, text `#222`, edge `#444`
+- Stroke `#4060a0`, fill `#fdfcf8`, header fill `#d0ddef`, text `#222`, edge `#000`
 - Font: `'Segoe UI', system-ui, -apple-system, sans-serif`; node and edge labels render at `20px` through `css/uml-diagram.css`
 - Dark mode: SVG `filter: invert(1) hue-rotate(180deg)` (matches the rule ArchUML applies)
 

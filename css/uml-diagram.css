@@ -83,7 +83,7 @@ pre:has(> code.language-crc),
   --uml-text: #222;
   --uml-fill: #fff;
   --uml-header-fill: #d0ddef;
-  --uml-line: #444;
+  --uml-line: #000;
   --uml-secondary-line: #657484;
   --uml-bg: transparent;
   overflow-x: auto;

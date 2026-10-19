@@ -1108,7 +1108,7 @@ SmartHomeHub --> Sprinkler : commands
       const bridgeCount = Array.from(svg.querySelectorAll('line')).filter((line) => {
         const strokeWidth = Number(line.getAttribute('stroke-width') || 0);
         const stroke = line.getAttribute('stroke') || '';
-        return strokeWidth > 4 && stroke !== '#444';
+        return strokeWidth > 4 && stroke !== '#000';
       }).length;
 
       document.body.removeChild(host);
@@ -1203,7 +1203,7 @@ end note
       const middleCx = middle.x + middle.width / 2;
       const centerDelta = Math.abs(parentCx - middleCx);
       const hasStraightStem = Array.from(svg.querySelectorAll('line')).some((line) => {
-        if ((line.getAttribute('stroke') || '') !== '#444') return false;
+        if ((line.getAttribute('stroke') || '') !== '#000') return false;
         if (!line.hasAttribute('stroke-dasharray')) return false;
         const x1 = Number(line.getAttribute('x1'));
         const x2 = Number(line.getAttribute('x2'));
@@ -1314,7 +1314,7 @@ SoldState --> GumballMachine : setState(...)
       const centerDelta = Math.abs((state.x + state.width / 2) - (middle.x + middle.width / 2));
       const routeRatios = [];
       for (const routeEl of Array.from(svg.querySelectorAll('polyline, line'))) {
-        if ((routeEl.getAttribute('stroke') || '') !== '#444') continue;
+        if ((routeEl.getAttribute('stroke') || '') !== '#000') continue;
         if (routeEl.hasAttribute('stroke-dasharray')) continue;
         let points = [];
         if (routeEl.tagName.toLowerCase() === 'line') {
@@ -1534,7 +1534,7 @@ Squeak ..|> QuackBehavior
         if (duckBox) {
           const routeSegments = [];
           for (const el of Array.from(strategy.svg.querySelectorAll('polyline, line'))) {
-            if ((el.getAttribute('stroke') || '') !== '#444') continue;
+            if ((el.getAttribute('stroke') || '') !== '#000') continue;
             let points;
             if (el.tagName.toLowerCase() === 'line') {
               points = [
@@ -1806,7 +1806,7 @@ end note
       const relationRoutes = [];
       for (const el of Array.from(svg.querySelectorAll('polyline, line'))) {
         if (el.classList.contains('uml-note-connector')) continue;
-        if ((el.getAttribute('stroke') || '') !== '#444') continue;
+        if ((el.getAttribute('stroke') || '') !== '#000') continue;
         let points;
         if (el.tagName.toLowerCase() === 'line') {
           points = [
@@ -2692,7 +2692,7 @@ Client --> LibraryServer : POST Book
       const getLabel = parallelTexts.find((text) => text.textContent.trim() === 'GET Book');
       const postLabel = parallelTexts.find((text) => text.textContent.trim() === 'POST Book');
       const routeYs = Array.from(parallelSvg.querySelectorAll('polyline'))
-        .filter((polyline) => polyline.getAttribute('stroke') === '#444')
+        .filter((polyline) => polyline.getAttribute('stroke') === '#000')
         .map((polyline) => (polyline.getAttribute('points') || '').trim().split(/\s+/)[0].split(',').map(Number)[1])
         .sort((a, b) => a - b);
       const getBox = getLabel ? box(getLabel) : null;
@@ -2888,7 +2888,7 @@ n_out2 --> u_p3 : POST
         }));
 
       const routes = Array.from(svg.querySelectorAll('polyline'))
-        .filter((polyline) => (polyline.getAttribute('stroke') || '') === '#444')
+        .filter((polyline) => (polyline.getAttribute('stroke') || '') === '#000')
         .map((polyline, index) => ({ index, points: parsePoints(polyline.getAttribute('points') || '') }))
         .filter((route) => {
           if (route.points.length < 2) return false;
@@ -4066,7 +4066,7 @@ Source --> Target dashed : sync
           isDashed(rect)
         ).length;
       const dashedRoutes = Array.from(svg.querySelectorAll('polyline'))
-        .filter((polyline) => polyline.getAttribute('stroke') === '#444' && isDashed(polyline))
+        .filter((polyline) => polyline.getAttribute('stroke') === '#000' && isDashed(polyline))
         .length;
       const labels = Array.from(svg.querySelectorAll('text')).map((text) => text.textContent.trim());
       const externalLabel = Array.from(svg.querySelectorAll('text'))
@@ -4389,7 +4389,7 @@ end note
         const routes = [];
         for (const line of Array.from(svg.querySelectorAll('line'))) {
           const stroke = line.getAttribute('stroke') || '';
-          if (stroke !== '#444' && !line.classList.contains('uml-note-connector')) continue;
+          if (stroke !== '#000' && !line.classList.contains('uml-note-connector')) continue;
           routes.push({
             kind: 'line',
             points: [
@@ -4401,7 +4401,7 @@ end note
         for (const polyline of Array.from(svg.querySelectorAll('polyline'))) {
           if (polyline.classList.contains('uml-note-fold')) continue;
           const stroke = polyline.getAttribute('stroke') || '';
-          if (stroke !== '#444' && !polyline.classList.contains('uml-note-connector')) continue;
+          if (stroke !== '#000' && !polyline.classList.contains('uml-note-connector')) continue;
           const points = parsePoints(polyline.getAttribute('points') || '');
           if (points.length < 2) continue;
           const xs = points.map((point) => point.x);
@@ -4442,7 +4442,7 @@ end note
       const routes = routeElements();
       result.routeCount = routes.length;
       for (const polyline of Array.from(svg.querySelectorAll('polyline'))) {
-        if ((polyline.getAttribute('stroke') || '') !== '#444') continue;
+        if ((polyline.getAttribute('stroke') || '') !== '#000') continue;
         if (polyline.getAttribute('stroke-dasharray') !== '8,4') continue;
         const points = parsePoints(polyline.getAttribute('points') || '');
         if (points.length) result.dependencyStartXs.push(Math.round(points[0].x));

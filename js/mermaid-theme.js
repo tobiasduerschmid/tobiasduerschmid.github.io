@@ -18,7 +18,7 @@
  * The theme variables here mirror the ArchUML CSS-variable palette defined in
  * `css/uml-diagram.css`:
  *   --uml-stroke #4060a0   --uml-text #222   --uml-fill #fff (here #fdfcf8)
- *   --uml-header-fill #d0ddef   --uml-line #444
+ *   --uml-header-fill #d0ddef   --uml-line #000
  * Typography is paragraph-sized in css/uml-diagram.css; the configuration
  * below reserves enough measurement space for Mermaid's HTML labels.
  *
@@ -38,7 +38,7 @@
     fill:          '#fdfcf8',
     headerFill:    '#d0ddef',
     secondaryFill: '#eef4fa',
-    line:          '#444',
+    line:          '#000',
     fontFamily:    "'Segoe UI', system-ui, -apple-system, sans-serif",
     // Mermaid bakes a `font-size: 0.75em` rule onto its inner <g class="label">
     // wrappers, which is also what it uses to MEASURE label width and pre-size

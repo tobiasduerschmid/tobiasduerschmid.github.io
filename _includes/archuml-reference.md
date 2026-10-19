@@ -1848,7 +1848,7 @@ Override any of the following CSS custom properties to theme diagrams globally:
   --uml-text:            #222;       /* primary text */
   --uml-fill:            #fdfcf8;   /* default element fill */
   --uml-header-fill:     #dbe8f8;   /* class header / title bar fill */
-  --uml-line:            #444;       /* alternate line color */
+  --uml-line:            #000;       /* relationship lines */
   --uml-secondary-line:  #657484;   /* notes / secondary strokes */
   --uml-secondary-fill:  #eef4fa;   /* note background */
   --uml-label-fill:      rgba(255,255,255,0.94);   /* relationship label bg */
