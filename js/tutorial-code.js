@@ -3413,6 +3413,8 @@
         // Makefile automatic vars ($@ $< $^) and built-in functions ($(shell), $(wildcard)).
         { token: 'variable.predefined', foreground: '0070c1', fontStyle: 'bold' },
         { token: 'support.function', foreground: '795e26' },
+        // Class and type names. Inherited vs color #008080 is only 4.8:1 on white.
+        { token: 'type.identifier', foreground: '0b5f66' },
       ],
       colors: {},
     });

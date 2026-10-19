@@ -4,6 +4,24 @@
 
   // Monaco 0.44 does not expose TypeScript's ModuleDetectionKind enum.
   const MODULE_DETECTION_FORCE = 3;
+  // PascalCase names are `type.identifier`. The built-in light theme paints
+  // that token #008080, which is only 4.8:1 on the white editor. #0b5f66 is
+  // the same teal at 7.4:1. Dark mode keeps the built-in cyan, which is
+  // already about 10:1 on the black editor background.
+  const LIGHT_TYPE_NAME = '0b5f66';
+
+  function labTheme(monaco) {
+    const dark = document.documentElement.classList.contains('dark-mode');
+    if (!dark) {
+      monaco.editor.defineTheme('sebook-uml-light', {
+        base: 'vs',
+        inherit: true,
+        rules: [{ token: 'type.identifier', foreground: LIGHT_TYPE_NAME }],
+        colors: {}
+      });
+    }
+    return dark ? 'vs-dark' : 'sebook-uml-light';
+  }
 
   function isolateTypeScriptLabs(monaco, languages) {
     if (!languages.includes('typescript')) return;
@@ -51,7 +69,7 @@
       const fontSize = parseFloat(style.fontSize);
       editor.updateOptions({
         fontSize, lineHeight: Math.ceil(fontSize * 1.5),
-        theme: document.documentElement.classList.contains('dark-mode') ? 'vs-dark' : 'vs'
+        theme: labTheme(global.monaco)
       });
       fitContent();
     }
@@ -79,7 +97,7 @@
       const selection = [source.selectionStart, source.selectionEnd];
       host.hidden = false;
       editor = monaco.editor.create(host, {
-        value: source.value, language,
+        value: source.value, language, theme: labTheme(monaco),
         ariaLabel: label + '. Press Escape to leave the editor.',
         accessibilitySupport: 'auto',
         automaticLayout: true,
