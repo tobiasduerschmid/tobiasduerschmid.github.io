@@ -2,9 +2,6 @@ topics:
   - name: Python & C++ Refresher
     icon: null
     url: /SEBook/tools/cs131-refresher-tutorial
-  - name: "Java Concepts for CS131"
-    icon: null
-    url: /SEBook/tools/java-cs131-tutorial
   - name: Haskell
     icon: null
     url: /SEBook/tools/haskell.html
@@ -15,6 +12,9 @@ topics:
         url: /SEBook/tools/haskell-functions-tutorial
       - name: "Haskell 3: Data and Persistent Programs"
         url: /SEBook/tools/haskell-data-tutorial
+  - name: "Java Concepts for CS131"
+    icon: null
+    url: /SEBook/tools/java-cs131-tutorial
   - name: "Prolog: Queries to Programs"
     icon: null
     url: /SEBook/tools/prolog-tutorial
