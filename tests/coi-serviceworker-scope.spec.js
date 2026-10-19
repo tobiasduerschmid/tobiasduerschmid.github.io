@@ -1,5 +1,12 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { createHash } = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const v86WasmDigest = createHash('sha256')
+  .update(fs.readFileSync(path.join(__dirname, '../assets/v86/v86.wasm')))
+  .digest('hex');
 
 /** @param {import('@playwright/test').Page} page */
 async function installAndOpenIsolatedPage(page) {
@@ -108,4 +115,87 @@ test('isolated pages can start same-origin workers', async ({ page }) => {
     id: 'coi-worker-probe',
     ok: true,
   });
+});
+
+/** @param {import('@playwright/test').Page} page */
+async function poisonExecutableCacheFromPython(page) {
+  await page.evaluate(() => new Promise((resolve, reject) => {
+    const worker = new Worker('/js/pyodide-worker.js');
+    worker.onerror = () => {
+      worker.terminate();
+      reject(new Error('The Python worker could not start.'));
+    };
+    worker.onmessage = ({ data }) => {
+      if (data.type === 'ready') {
+        worker.postMessage({
+          type: 'runCode', id: 'poison-cache', silent: true,
+          code: [
+            'from js import caches, fetch, Response, Object',
+            'from pyodide.ffi import to_js',
+            'cache = await caches.open("vm-assets-v2")',
+            'for asset in ["libv86.js", "v86.wasm"]:',
+            '    for query in ["", "?security-regression=1"]:',
+            '        url = "/assets/v86/" + asset + query',
+            '        head = await fetch(url, to_js({"method": "HEAD"}, dict_converter=Object.fromEntries))',
+            '        assert head.ok',
+            '        forged = Response.new("globalThis.__poisonedV86Cache = true;", to_js({"headers": head.headers}, dict_converter=Object.fromEntries))',
+            '        await cache.put(url, forged)',
+          ].join('\n'),
+        });
+      } else if (data.type === 'error' || (data.type === 'run_done' && data.exitCode !== 0)) {
+        worker.terminate();
+        reject(new Error(data.message || data.error || 'Python cache poisoning fixture failed.'));
+      } else if (data.type === 'run_done' && data.id === 'poison-cache') {
+        worker.terminate();
+        resolve(undefined);
+      }
+    };
+  }));
+  // Prove the fixture reached the shared origin cache before checking the defense.
+  expect(await page.evaluate(async () => {
+    const cache = await caches.open('vm-assets-v2');
+    const response = await cache.match('/assets/v86/libv86.js');
+    return response && response.text();
+  })).toContain('__poisonedV86Cache');
+}
+
+test('v86 executes trusted assets after learner Python poisons the executable cache', async ({ page }) => {
+  test.setTimeout(60000);
+  await page.goto('/cookies/');
+  await installAndOpenIsolatedPage(page);
+  await poisonExecutableCacheFromPython(page);
+
+  await page.addScriptTag({ url: '/assets/v86/libv86.js' });
+  expect(await page.evaluate(() => ({
+    poisoned: !!window.__poisonedV86Cache,
+    engine: typeof window.V86,
+  }))).toEqual({ poisoned: false, engine: 'function' });
+
+  const wasmDigest = await page.evaluate(async () => {
+    const response = await fetch('/assets/v86/v86.wasm?security-regression=1', { cache: 'no-store' });
+    const bytes = await response.arrayBuffer();
+    const hash = await crypto.subtle.digest('SHA-256', bytes);
+    return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, '0')).join('');
+  });
+  expect(wasmDigest).toBe(v86WasmDigest);
+});
+
+test('offline v86 requests fail instead of serving learner-poisoned executable cache entries', async ({ page, context }) => {
+  test.setTimeout(60000);
+  await page.goto('/cookies/');
+  await installAndOpenIsolatedPage(page);
+  await poisonExecutableCacheFromPython(page);
+
+  await context.setOffline(true);
+  const results = await page.evaluate(async () => {
+    return Promise.all(['libv86.js', 'v86.wasm'].map(async asset => {
+      try {
+        await fetch('/assets/v86/' + asset + '?security-regression=1', { cache: 'no-store' });
+        return 'served';
+      } catch (_) {
+        return 'unavailable';
+      }
+    }));
+  });
+  expect(results).toEqual(['unavailable', 'unavailable']);
 });

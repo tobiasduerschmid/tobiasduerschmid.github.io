@@ -10,7 +10,7 @@ const serviceWorkerSource = fs.readFileSync(
   'utf8',
 );
 
-function createFetchHarness({ openCache, cacheNames = [], deleteCache = async () => true }) {
+function createFetchHarness({ openCache, networkFetch, cacheNames = [], deleteCache = async () => true }) {
   const listeners = new Map();
   const warnings = [];
   const networkRequests = [];
@@ -45,6 +45,7 @@ function createFetchHarness({ openCache, cacheNames = [], deleteCache = async ()
     },
     fetch(request) {
       networkRequests.push(request);
+      if (networkFetch) return networkFetch(request);
       return Promise.resolve(new Response('kernel bytes', {
         status: 200,
         headers: { ETag: '"kernel-v1"' },
@@ -71,10 +72,11 @@ function createFetchHarness({ openCache, cacheNames = [], deleteCache = async ()
       return lifetimePromise;
     },
     dispatchVMAssetFetch(url = 'https://sebook.test/vm/dist/bzImage') {
+      const request = new Request(new URL(url, self.location.origin));
       let responsePromise;
       let lifetimePromise;
       listeners.get('fetch')({
-        request: new Request(url),
+        request,
         respondWith(value) {
           responsePromise = Promise.resolve(value);
         },
@@ -82,8 +84,8 @@ function createFetchHarness({ openCache, cacheNames = [], deleteCache = async ()
           lifetimePromise = Promise.resolve(value);
         },
       });
-      assert.ok(responsePromise, 'the VM asset request must be handled by the service worker');
-      return { responsePromise, lifetimePromise };
+      // An unhandled FetchEvent goes to the browser's normal HTTP fetch path.
+      return { responsePromise: responsePromise || sandbox.fetch(request), lifetimePromise };
     },
   };
 }
@@ -102,6 +104,7 @@ test('VM asset fetch stays alive until cache population completes', async () => 
 
   let lifetimeSettled = false;
   const { responsePromise, lifetimePromise } = harness.dispatchVMAssetFetch();
+  assert.ok(lifetimePromise, 'cache population must extend the VM asset fetch lifetime');
   lifetimePromise.then(() => {
     lifetimeSettled = true;
   });
@@ -119,8 +122,6 @@ const vmAssetPaths = [
   '/vm/dist/state.bin.gz',
   '/vm/dist/bzImage',
   '/vm/dist/rootfs.cpio.gz',
-  '/assets/v86/v86.wasm',
-  '/assets/v86/libv86.js',
   '/assets/v86/seabios.bin',
   '/assets/v86/vgabios.bin',
 ];
@@ -174,8 +175,8 @@ test('canonical VM assets remain cached and revalidated without another body dow
     }
   }
 
-  assert.equal(harness.networkRequests.filter(request => request.method === 'GET').length, 7);
-  assert.equal(harness.networkRequests.filter(request => request.method === 'HEAD').length, 7);
+  assert.equal(harness.networkRequests.filter(request => request.method === 'GET').length, 5);
+  assert.equal(harness.networkRequests.filter(request => request.method === 'HEAD').length, 5);
   assert.deepEqual((await cache.keys()).map(request => new URL(request.url).pathname), vmAssetPaths);
 });
 
@@ -247,4 +248,46 @@ test('VM asset fetch falls back to the network when its cache cannot open', asyn
   assert.equal(await response.text(), 'kernel bytes');
   assert.equal(harness.networkRequests.length, 1);
   assert.equal(harness.warnings.length, 1);
+});
+
+for (const assetPath of ['/assets/v86/libv86.js', '/assets/v86/v86.wasm']) {
+  for (const query of ['', '?version=reviewed']) {
+    test(`${assetPath}${query} ignores a forged cache body with matching server validators`, async () => {
+      const headers = { ETag: '"reviewed-v1"', 'Last-Modified': 'Sun, 18 Oct 2026 12:00:00 GMT' };
+      const harness = createFetchHarness({
+        openCache: async () => ({
+          match: async () => new Response('attacker bytes', { headers }),
+        }),
+        networkFetch: async () => new Response('reviewed executable bytes', { headers }),
+      });
+
+      const { responsePromise } = harness.dispatchVMAssetFetch(assetPath + query);
+      assert.equal(await (await responsePromise).text(), 'reviewed executable bytes');
+    });
+  }
+
+  test(`${assetPath} never falls back to a forged cache body when the network is offline`, async () => {
+    const harness = createFetchHarness({
+      openCache: async () => ({
+        match: async () => new Response('attacker bytes', { headers: { ETag: '"reviewed-v1"' } }),
+      }),
+      networkFetch: async () => { throw new TypeError('Network unavailable'); },
+    });
+
+    const { responsePromise } = harness.dispatchVMAssetFetch(assetPath);
+    await assert.rejects(responsePromise, /Network unavailable/);
+  });
+}
+
+test('guest VM data still reuses a cached response with matching server validators', async () => {
+  const harness = createFetchHarness({
+    openCache: async () => ({
+      match: async () => new Response('cached kernel bytes', { headers: { ETag: '"kernel-v1"' } }),
+    }),
+  });
+
+  const { responsePromise, lifetimePromise } = harness.dispatchVMAssetFetch();
+  assert.equal(await (await responsePromise).text(), 'cached kernel bytes');
+  await lifetimePromise;
+  assert.deepEqual(harness.networkRequests.map(request => request.method), ['HEAD']);
 });

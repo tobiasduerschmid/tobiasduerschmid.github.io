@@ -5,7 +5,7 @@
  *  1. Inject COOP/COEP headers on same-origin responses so SharedArrayBuffer
  *     is available on GitHub Pages (which doesn't let us set custom headers).
  *     Isolated documents and the workers they start both need COEP.
- *  2. Cache the v86 VM assets (snapshot, kernel, BIOS, wasm) so repeat visits
+ *  2. Cache guest VM data (snapshot, kernel, root filesystem, BIOS) so repeat visits
  *     skip the multi-MB downloads. GitHub Pages defaults to 10-min HTTP cache;
  *     this cache survives much longer and is more eviction-resistant on mobile.
  *
@@ -23,9 +23,12 @@ var VM_CACHE = 'vm-assets-v2';
 var OWNED_VM_CACHE_RE = /^vm-assets-v\d+$/;
 var ISOLATION_QUERY = 'sebook-coi';
 
-// Match same-origin VM asset paths exactly so unrelated requests (HTML, CSS,
-// page-specific JSON) keep going through the COI rewrite path below.
-var VM_ASSET_RE = /^\/(vm\/dist\/(state\.bin\.gz|bzImage|rootfs\.cpio\.gz)|assets\/v86\/(v86\.wasm|libv86\.js|seabios\.bin|vgabios\.bin))$/;
+// Cache only guest VM data. Same-origin learner workers can write CacheStorage,
+// including forged response validators, so it cannot be trusted for executable
+// JavaScript or WebAssembly. libv86.js and v86.wasm use normal HTTP fetching and
+// browser HTTP caching, with no fallback to old entries in this shared cache.
+// Match paths exactly so unrelated requests keep the COI rewrite path below.
+var VM_ASSET_RE = /^\/(vm\/dist\/(state\.bin\.gz|bzImage|rootfs\.cpio\.gz)|assets\/v86\/(seabios\.bin|vgabios\.bin))$/;
 
 function isCanonicalVMAssetURL(url) {
   // Compare the whole URL: URL.search is empty even for a trailing '?',

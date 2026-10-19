@@ -531,14 +531,15 @@ info_nav_title: "Browser storage"
     </li>
     <li>
       <strong>Cache API</strong> (<code>caches.open</code>) &mdash; the service worker (see below)
-      stores the in-browser Linux VM's static assets here under cache key
+      stores the in-browser Linux VM's guest data here under cache key
       <code>vm-assets-v2</code>: the post-boot snapshot
       (<code>vm/dist/state.bin.gz</code>, ~50&nbsp;MB), the kernel
       (<code>bzImage</code>), the root filesystem (<code>rootfs.cpio.gz</code>), and the
-      v86 engine + BIOS files (<code>v86.wasm</code>, <code>libv86.js</code>,
-      <code>seabios.bin</code>, <code>vgabios.bin</code>). They are byte-for-byte copies of
+      BIOS files (<code>seabios.bin</code>, <code>vgabios.bin</code>). They are byte-for-byte copies of
       what the server already ships &mdash; no per-user data. The next tutorial load
-      will refetch them after deletion.
+      will refetch them after deletion. The JavaScript and WebAssembly engine files
+      (<code>libv86.js</code>, <code>v86.wasm</code>) use the browser's normal HTTP cache
+      instead of this shared cache.
       <button id="cookies-delete-vm-cache" class="cookies-btn danger" type="button">
         <i class="fa fa-trash" aria-hidden="true"></i> Delete cached VM assets
       </button>
