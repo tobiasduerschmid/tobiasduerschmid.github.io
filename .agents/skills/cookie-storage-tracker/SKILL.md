@@ -122,13 +122,14 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - `se-bookmarks`, `se-bookmarks-active`
 - `se-gym`, `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `analyze-performance`, `se-gym-show-difficulty`, `se-gym-show-workout-hero`, `se-gym-active-difficulties`
 
-**localStorage — static (9):**
+**localStorage — static (10):**
 - `prefersReducedMotion`
 - `abbr-underlines`
 - `cap_volume`, `cap_speed`
 - `tts-voice-name`
 - `se-gym-stats`
 - `tutorial-autosave`
+- `sebook-code-language` — shared language for SEBook code tabs, UML labs, and Observer lesson views; written on explicit selection, default Python
 - `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
 
 **localStorage — dynamic prefixes (10)** (one entry per tutorial id / page path):
@@ -163,6 +164,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - Read-aloud controls and voice: `read-aloud`, `tts-voice-name`
 - Audio defaults: `cap_volume`, `cap_speed`
 - Tutorial autosave: `tutorial-autosave`
+- SE Book code language: `sebook-code-language` (Python, Java, C++, TypeScript)
 - UML accent color: `uml-accent-color`
 - SEBook bookmarks enabled: `se-bookmarks-active`
 - SE Gym enabled, timed practice, workout hero, difficulty visibility/filtering, and performance tracking: `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `se-gym-show-workout-hero`, `se-gym-show-difficulty`, `se-gym-active-difficulties`, `analyze-performance`, `se-gym-stats`

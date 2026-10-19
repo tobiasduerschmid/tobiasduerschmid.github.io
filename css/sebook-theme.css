@@ -778,6 +778,7 @@ html.dark-mode-transition #sidebar * {
 }
 
 .inline-language-tabs button {
+  font: inherit;
   border: 1px solid transparent;
   border-radius: var(--radius-sm, 4px);
   background: transparent;

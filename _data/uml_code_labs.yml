@@ -32,7 +32,7 @@ visibility:
       class Student {
           std::string name;
       public:
-          std::string displayName() const {
+          std::string displayName() {
               return name;
           }
       };
@@ -153,7 +153,7 @@ collection_multiplicity:
       class Team {
           Member& members;
       public:
-          explicit Team(Member& members) : members(members) { }
+          Team(Member& members) : members(members) { }
       };
 
 message_order:
@@ -307,7 +307,7 @@ message_receivers:
     code: |
       class Sensor {
       public:
-          int read() const {
+          int read() {
               return 25;
           }
       };
@@ -433,8 +433,6 @@ loop_boundary:
   cpp:
     task: "If finish() moves inside the loop after addItem(), how do its call counts change for zero items and two items? Predict both cases, then move it."
     code: |
-      #include <initializer_list>
-
       class Receipt {
       public:
           void addItem(int item) { }
@@ -443,7 +441,8 @@ loop_boundary:
 
       int main() {
           Receipt receipt;
-          for (int item : {1, 2}) {
+          int items[] = {1, 2};
+          for (int item : items) {
               receipt.addItem(item);
           }
           receipt.finish();

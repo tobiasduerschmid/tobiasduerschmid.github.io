@@ -7,6 +7,8 @@ const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
 const classChapter = '/SEBook/uml_class_diagram.html';
 const sequenceChapter = '/SEBook/uml_sequence_diagram.html';
 const labByTitle = (page, title) => page.getByRole('region', { name: `UML code lab: ${title}`, exact: true });
+const languageNames = { python: 'Python', java: 'Java', cpp: 'C++' };
+const languageTab = (lab, language) => lab.getByRole('tab', { name: languageNames[language], exact: true });
 
 async function replaceCode(editor, value) {
   await editor.focus();
@@ -39,13 +41,20 @@ for (const dark of [false, true]) {
     await page.goto(classChapter);
     await page.evaluate(enabled => document.documentElement.classList.toggle('dark-mode', enabled), dark);
     const lab = labByTitle(page, 'Member visibility');
-    await expect(lab.getByRole('combobox')).toHaveValue('python');
+    await expect(languageTab(lab, 'python')).toHaveAttribute('aria-selected', 'true');
     await expect(editorFor(lab)).toHaveAccessibleName(/Python code/);
+    const referenceTabs = page.getByRole('tablist', { name: 'Simple class code language' });
+    const tabColors = tab => tab.evaluate(element => {
+      const style = getComputedStyle(element);
+      return [style.color, style.backgroundColor, style.borderColor];
+    });
+    expect(await tabColors(languageTab(lab, 'python'))).toEqual(await tabColors(referenceTabs.getByRole('tab', { name: 'Python', exact: true })));
+    expect(await tabColors(languageTab(lab, 'cpp'))).toEqual(await tabColors(referenceTabs.getByRole('tab', { name: 'C++', exact: true })));
     await expect.poll(() => lab.locator('.monaco-editor-background').evaluateAll(elements =>
       [...new Set(elements.map(element => getComputedStyle(element).backgroundColor))]
     )).toEqual([dark ? 'rgb(0, 0, 0)' : 'rgb(255, 255, 255)']);
     for (const [language, source] of Object.entries(syntaxSamples)) {
-      await lab.getByRole('combobox').selectOption(language);
+      await languageTab(lab, language).click();
       await replaceCode(editorFor(lab), source);
       const lines = lab.locator('.view-lines');
       const keyword = lines.getByText('class', { exact: true });
@@ -77,7 +86,7 @@ for (const [language, edits] of Object.entries(labEdits)) {
   test(`${language}: hiding the reading method preserves the field visibility`, async ({ page }) => {
     await page.goto(classChapter);
     const lab = labByTitle(page, 'Member visibility');
-    await lab.getByRole('combobox', { name: 'Code language' }).selectOption(language);
+    await languageTab(lab, language).click();
     const editor = editorFor(lab);
     await expect(lab.getByRole('img')).toContainText(language === 'python' ? '#_name' : '-name');
     const original = await sourceText(lab);
@@ -90,7 +99,7 @@ for (const [language, edits] of Object.entries(labEdits)) {
   test(`${language}: removing storage and the parameter eliminates the dependency in two steps`, async ({ page }) => {
     await page.goto(classChapter);
     const lab = labByTitle(page, 'Keeping a reference');
-    await lab.getByRole('combobox').selectOption(language);
+    await languageTab(lab, language).click();
     await expect(lab.getByRole('img')).toHaveAccessibleName(/Student references Roster/);
     const editor = editorFor(lab);
     const original = await sourceText(lab);
@@ -105,7 +114,7 @@ for (const [language, edits] of Object.entries(labEdits)) {
   test(`${language}: inheritance and collection labs change the intended relationships`, async ({ page }) => {
     await page.goto(classChapter);
     const inheritance = labByTitle(page, 'Inheritance through a parent');
-    await inheritance.getByRole('combobox').selectOption(language);
+    await languageTab(inheritance, language).click();
     await expect(inheritance.getByRole('img')).toHaveAccessibleName(/Dog extends Animal/);
     await expect(inheritance.getByRole('img')).toHaveAccessibleName(/Puppy extends Animal/);
     const subclasses = await sourceText(inheritance);
@@ -116,7 +125,7 @@ for (const [language, edits] of Object.entries(labEdits)) {
     await expect(inheritance.getByRole('img')).not.toHaveAccessibleName(/Puppy extends Animal/);
 
     const collection = labByTitle(page, 'One reference or a collection');
-    await collection.getByRole('combobox').selectOption(language);
+    await languageTab(collection, language).click();
     await expect(collection.getByRole('img')).toHaveAccessibleName(/Team.*Member with multiplicity .* to one/);
     const single = await sourceText(collection);
     await replaceCode(editorFor(collection), edits.collection_multiplicity(single));
@@ -127,7 +136,7 @@ for (const [language, edits] of Object.entries(labEdits)) {
   test(`${language}: self-calls stay on the current object's lifeline`, async ({ page }) => {
     await page.goto(sequenceChapter);
     const selfCalls = labByTitle(page, 'Calling another method');
-    await selfCalls.getByRole('combobox').selectOption(language);
+    await languageTab(selfCalls, language).click();
     await expect(selfCalls.getByRole('img')).toHaveAccessibleName(/2 participants.*Main creates checkout/);
     await expect(selfCalls.getByRole('img')).toHaveAccessibleName(/checkout calls checkout with "validate\(\)"/);
     await expect(selfCalls.getByRole('img')).not.toHaveAccessibleName(/save\(\)/);
@@ -139,7 +148,7 @@ for (const [language, edits] of Object.entries(labEdits)) {
   test(`${language}: changing a reference moves the reply without adding a lifeline`, async ({ page }) => {
     await page.goto(sequenceChapter);
     const lab = labByTitle(page, 'Following a reference');
-    await lab.getByRole('combobox').selectOption(language);
+    await languageTab(lab, language).click();
     const diagram = lab.getByRole('img');
     await expect(diagram).toHaveAccessibleName(/3 participants.*Main creates indoor.*Main creates outdoor/);
     await expect(diagram).toHaveAccessibleName(/Main calls indoor with "read\(\)".*indoor replies to Main/);
@@ -154,7 +163,7 @@ for (const [language, edits] of Object.entries(labEdits)) {
   test(`${language}: edits change message order and branch and loop boundaries`, async ({ page }) => {
     await page.goto(sequenceChapter);
     const order = labByTitle(page, 'Calls determine message order');
-    await order.getByRole('combobox').selectOption(language);
+    await languageTab(order, language).click();
     await expect(order.getByRole('img')).toHaveAccessibleName(/Main calls payment with "authorize\(\)".*payment calls payment with "capture\(\)".*Main calls payment with "refund\(\)"/);
     const editor = editorFor(order);
     const original = await sourceText(order);
@@ -162,7 +171,7 @@ for (const [language, edits] of Object.entries(labEdits)) {
     await expect(order.getByRole('img')).toHaveAccessibleName(/Main calls payment with "refund\(\)".*Main calls payment with "authorize\(\)".*payment calls payment with "capture\(\)"/);
 
     const alternatives = labByTitle(page, 'Alternatives are possible paths');
-    await alternatives.getByRole('combobox').selectOption(language);
+    await languageTab(alternatives, language).click();
     await expect(alternatives.getByRole('img')).toHaveAccessibleName(/alt branch.*approve\(\).*decline\(\)/);
     const branchEditor = editorFor(alternatives);
     const branches = await sourceText(alternatives);
@@ -171,7 +180,7 @@ for (const [language, edits] of Object.entries(labEdits)) {
     await expect(alternatives.getByRole('img')).not.toHaveAccessibleName(/alt branch/);
 
     const loop = labByTitle(page, 'The loop boundary matters');
-    await loop.getByRole('combobox').selectOption(language);
+    await languageTab(loop, language).click();
     await expect(loop.getByRole('img')).toHaveAccessibleName(/outside combined fragments.*finish\(\)/);
     const loopEditor = editorFor(loop);
     const loopSource = await sourceText(loop);
@@ -182,33 +191,68 @@ for (const [language, edits] of Object.entries(labEdits)) {
   });
 }
 
-test('language drafts and widgets are independent; reset affects only the selected draft', async ({ page }) => {
+test('synced language changes preserve each lab draft; reset affects only the selected draft', async ({ page }) => {
   await page.goto(classChapter);
   const lab = labByTitle(page, 'Member visibility');
-  const selector = lab.getByRole('combobox');
-  await expect(selector.getByRole('option')).toHaveText(['Python', 'Java', 'C++']);
+  const selector = lab.getByRole('tablist', { name: 'Code language' });
+  await expect(selector.getByRole('tab')).toHaveText(['Python', 'Java', 'C++']);
   const editor = editorFor(lab);
-  await expect(selector).toHaveValue('python');
-  await selector.selectOption('java');
+  await expect(languageTab(lab, 'python')).toHaveAttribute('aria-selected', 'true');
+  await languageTab(lab, 'java').click();
   await replaceCode(editor, 'class JavaDraft {}');
-  await selector.selectOption('cpp');
+  const otherLab = labByTitle(page, 'Keeping a reference');
+  await languageTab(otherLab, 'cpp').click();
   await expect(editor).toHaveAccessibleName(/C\+\+ code/);
   await replaceCode(editor, 'class CppDraft {};');
-  await selector.selectOption('python');
+  await languageTab(lab, 'python').click();
   await replaceCode(editor, 'class PythonDraft:\n    pass');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/PythonDraft/);
-  await selector.selectOption('cpp');
+  await languageTab(lab, 'cpp').click();
   await expect(lab.locator('[data-uml-source]')).toHaveValue('class CppDraft {};');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/CppDraft/);
-  await selector.selectOption('java');
+  await languageTab(lab, 'java').click();
   await expect(lab.locator('[data-uml-source]')).toHaveValue('class JavaDraft {}');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/JavaDraft/);
   await expect(labByTitle(page, 'Keeping a reference').getByRole('img')).toHaveAccessibleName(/Student.*Roster|Roster.*Student/);
   await lab.getByRole('button', { name: 'Reset code' }).click();
   await expect(lab.getByRole('img')).toHaveAccessibleName(/Student/);
-  await selector.selectOption('python');
+  await languageTab(lab, 'python').click();
   await expect(lab.locator('[data-uml-source]')).toHaveValue('class PythonDraft:\n    pass');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/PythonDraft/);
+});
+
+test('code examples and labs share keyboard language tabs with labeled panels', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto(classChapter);
+  const lab = labByTitle(page, 'Member visibility');
+  const sample = page.locator('[data-language-switcher]').filter({
+    has: page.getByRole('tablist', { name: 'Simple class code language' })
+  });
+
+  for (const [widget, first, last] of [[lab, 'Python', 'C++'], [sample, 'Java', 'TypeScript']]) {
+    const firstTab = widget.getByRole('tab', { name: first, exact: true });
+    const lastTab = widget.getByRole('tab', { name: last, exact: true });
+    await firstTab.focus();
+    await firstTab.press('ArrowLeft');
+    await expect(lastTab).toBeFocused();
+    await expect(lastTab).toHaveAttribute('aria-selected', 'true');
+    await expect(widget.getByRole('tabpanel', { name: last, exact: true })).toBeVisible();
+    await lastTab.press('ArrowRight');
+    await expect(firstTab).toBeFocused();
+    await expect(firstTab).toHaveAttribute('aria-selected', 'true');
+    await firstTab.press('End');
+    await expect(lastTab).toBeFocused();
+    await lastTab.press('Home');
+    await expect(firstTab).toBeFocused();
+    await expect(widget.getByRole('tabpanel', { name: first, exact: true })).toBeVisible();
+    await expect(widget.getByRole('tab', { selected: true })).toHaveCount(1);
+  }
+  await languageTab(lab, 'cpp').click();
+  await expect(editorFor(lab)).toHaveAccessibleName(/C\+\+ code/);
+  await expect(sample.getByRole('tab', { name: 'C++', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(labByTitle(page, 'Keeping a reference').getByRole('tab', { name: 'C++' })).toHaveAttribute('aria-selected', 'true');
+  expect(errors).toEqual([]);
 });
 
 test('empty source clears the old answer and corrected code recovers, including without Workers', async ({ page }) => {
@@ -222,10 +266,10 @@ test('empty source clears the old answer and corrected code recovers, including 
   await expect(lab.getByRole('img')).toHaveCount(0);
   await replaceCode(editor, 'class Recovered:\n    pass');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/Recovered/);
-  await lab.getByRole('combobox').selectOption('java');
+  await languageTab(lab, 'java').click();
   await replaceCode(editor, 'class RecoveredJava {}');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/RecoveredJava/);
-  await lab.getByRole('combobox').selectOption('cpp');
+  await languageTab(lab, 'cpp').click();
   await replaceCode(editor, 'class RecoveredCpp {};');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/RecoveredCpp/);
   await replaceCode(editor, 'class Broken {');
@@ -297,7 +341,7 @@ test('source editing and live diagrams survive an unavailable Monaco dependency'
   const lab = labByTitle(page, 'Member visibility');
   await lab.getByRole('textbox', { name: 'Python code', exact: true }).fill('class FallbackDraft:\n    pass');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/FallbackDraft/);
-  await lab.getByRole('combobox').selectOption('cpp');
+  await languageTab(lab, 'cpp').click();
   await lab.getByRole('textbox', { name: 'C++ code', exact: true }).fill('class CppFallback {};');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/CppFallback/);
 });
@@ -308,7 +352,7 @@ for (const dark of [false, true]) {
     await page.goto(classChapter);
     await page.evaluate(enabled => document.documentElement.classList.toggle('dark-mode', enabled), dark);
     const lab = labByTitle(page, 'Member visibility');
-    await lab.getByRole('combobox').selectOption('cpp');
+    await languageTab(lab, 'cpp').click();
     const editor = editorFor(lab);
     await expect(lab.getByRole('img')).toBeVisible();
     await editor.focus();
@@ -319,7 +363,7 @@ for (const dark of [false, true]) {
     await expect(wideDiagram).toBeFocused();
     await wideDiagram.press('ArrowRight');
     await expect.poll(() => wideDiagram.evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
-    for (const control of [editor, lab.getByRole('combobox'), lab.getByRole('button', { name: 'Reset code' })]) {
+    for (const control of [editor, ...['python', 'java', 'cpp'].map(language => languageTab(lab, language)), lab.getByRole('button', { name: 'Reset code' })]) {
       await control.scrollIntoViewIfNeeded();
       await expect(control).toBeInViewport();
       expect(await control.evaluate(element => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
@@ -342,13 +386,14 @@ for (const dark of [false, true]) {
 test('print shows the current source and matching diagram in light colors', async ({ page }) => {
   await page.goto(classChapter);
   const lab = labByTitle(page, 'Member visibility');
-  await lab.getByRole('combobox').selectOption('cpp');
+  await languageTab(lab, 'cpp').click();
   await replaceCode(editorFor(lab), 'class PrintedDraft {};');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/PrintedDraft/);
   await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
   await page.emulateMedia({ media: 'print' });
   await expect(editorFor(lab)).toBeHidden();
   await expect(lab.getByRole('button', { name: 'Reset code' })).toBeHidden();
+  await expect(lab.getByRole('tablist')).toBeHidden();
   await expect(lab.getByRole('code')).toBeVisible();
   await expect(lab.getByRole('code')).toHaveText('class PrintedDraft {};');
   await expect(lab.getByRole('img')).toBeVisible();
@@ -387,7 +432,7 @@ test('the chapter remains usable without JavaScript', async ({ browser, baseURL 
 test('combined course chapters initialize their embedded code labs', async ({ page }) => {
   await page.goto('/SEBook/CS130.html');
   const lab = labByTitle(page, 'Member visibility');
-  await lab.getByRole('combobox').selectOption('cpp');
+  await languageTab(lab, 'cpp').click();
   await replaceCode(editorFor(lab), 'class CombinedChapter {};');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/CombinedChapter/);
 });

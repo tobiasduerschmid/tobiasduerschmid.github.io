@@ -217,7 +217,7 @@ info_nav_title: "Browser storage"
     All entries are pure preferences and progress data &mdash; never personal information.
   </p>
 
-  <h3>Accessibility &amp; audio</h3>
+  <h3>Accessibility, code language &amp; audio</h3>
   <table class="storage-table" data-category="ui-localstorage">
     <thead>
       <tr>
@@ -228,6 +228,12 @@ info_nav_title: "Browser storage"
       </tr>
     </thead>
     <tbody>
+      <tr data-storage="localStorage" data-key="sebook-code-language">
+        <td class="storage-key">sebook-code-language</td>
+        <td>Your shared code language across SE Book examples, UML labs, and Observer lesson views. Saved when you choose a language, follow a language-specific lesson link, or change it in <a href="{{ '/settings/' | relative_url }}">My Settings</a>. Unset defaults to Python; examples without your language use a supported fallback. Code edits are not stored in this preference.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
       <tr data-storage="localStorage" data-key="prefersReducedMotion">
         <td class="storage-key">prefersReducedMotion</td>
         <td>Persistent override of the OS &ldquo;reduce motion&rdquo; preference (set by visiting <code>?reduce-motion=1</code>).</td>

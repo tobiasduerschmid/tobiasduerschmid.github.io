@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ page.title | escape }}</title>
   {% include ai-training-opt-out-meta.html %}
+  <script src="{{ '/js/sebook-code-preferences.js' | relative_url }}"></script>
   <script src="{{ '/js/observer-document.js' | relative_url }}"></script>
   <link rel="stylesheet" href="{{ '/css/song-video-fonts.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
@@ -34,6 +35,9 @@
     <h2>Lesson steps</h2>
     {{ content }}
   </main>
-  <footer class="observer-document-footer">{% include ai-training-opt-out-notice.txt %}</footer>
+  <footer class="observer-document-footer">
+    {% include cookie-notice.html %}
+    {% include ai-training-opt-out-notice.txt %}
+  </footer>
 </body>
 </html>

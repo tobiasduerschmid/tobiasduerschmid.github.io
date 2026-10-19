@@ -6,14 +6,15 @@
 
   function mount(root) {
     const example = JSON.parse(root.querySelector('script[type="application/json"]').textContent);
-    const language = root.querySelector('[data-uml-language]');
+    const languageTabs = [...root.querySelectorAll('[data-language-option]')];
+    const languageSwitcher = global.SEBookLanguageSwitcher.initSwitcher(root);
     const source = root.querySelector('[data-uml-source]');
     const preview = root.querySelector('[data-uml-preview]');
     const status = root.querySelector('[data-uml-status]');
     const task = root.querySelector('[data-uml-task]');
     const explanation = root.querySelector('[data-uml-explanation]');
     const events = new AbortController();
-    const languages = [...language.options].map(option => option.value);
+    const languages = languageTabs.map(button => button.dataset.languageOption);
     const drafts = Object.fromEntries(languages.map(id => [id, example[id].code]));
     let selectedLanguage = 'python';
     let client = null;
@@ -47,8 +48,9 @@
     }
 
     function showLanguage() {
-      selectedLanguage = language.value;
-      const label = language.selectedOptions[0].textContent + ' code';
+      selectedLanguage = languageSwitcher.language;
+      const selectedTab = languageTabs.find(button => button.dataset.languageOption === selectedLanguage);
+      const label = selectedTab.textContent + ' code';
       root.querySelector('[data-uml-source-label]').textContent = label;
       root.querySelector('[data-uml-print-label]').textContent = label;
       source.value = drafts[selectedLanguage];
@@ -77,7 +79,7 @@
       const isCurrent = () => !paused && revision === currentRevision;
       if (!isCurrent()) return;
       if (!client) client = global.UMLLive.createClient();
-      const filename = language.selectedOptions[0].dataset.filename;
+      const filename = languageTabs.find(button => button.dataset.languageOption === selectedLanguage).dataset.filename;
       try {
         const result = await client.analyze({ language: selectedLanguage, sources: { [filename]: source.value } });
         if (!isCurrent()) return;
@@ -106,7 +108,7 @@
     listen(source, 'input', () => schedule());
     listen(source, 'compositionstart', () => { composing = true; schedule(); });
     listen(source, 'compositionend', () => { composing = false; schedule(); });
-    listen(language, 'change', showLanguage);
+    listen(root, 'sebook:languagechange', showLanguage);
     listen(root.querySelector('[data-uml-reset]'), 'click', () => {
       drafts[selectedLanguage] = example[selectedLanguage].code;
       showLanguage();
@@ -126,7 +128,7 @@
     return {
       pause,
       resume() { paused = false; schedule(0); },
-      destroy() { pause(); codeEditor.destroy(); events.abort(); mounted.delete(root); }
+      destroy() { pause(); codeEditor.destroy(); languageSwitcher.destroy(); events.abort(); mounted.delete(root); }
     };
   }
 

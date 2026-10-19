@@ -155,7 +155,7 @@
       onSeek: closeQuiz, canPlay: () => quizPanel.hidden,
     });
     root.querySelector('[data-review-check]').addEventListener('click', () => openQuiz(player.currentScene()));
-    languageSelect.addEventListener('change', () => {
+    languageSelect.addEventListener('sebook:languagechange', () => {
       player.refresh();
       root.querySelector('.nja-status').textContent = `Code language: ${examples[languageSelect.value].label}. Narration position unchanged.`;
     });

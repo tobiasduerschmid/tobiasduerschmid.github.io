@@ -95,6 +95,8 @@
   {% include footer.html %}
 
   {% if combined_has_mermaid %}{% include mermaid-content.html %}{% endif %}
+  <script src="{{ '/js/sebook-code-preferences.js' | relative_url }}" defer></script>
+  <script src="{{ '/js/sebook-language-switcher.js' | relative_url }}" defer></script>
   {% if combined_has_uml_code_labs %}
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>

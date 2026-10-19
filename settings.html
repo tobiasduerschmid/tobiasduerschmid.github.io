@@ -276,6 +276,26 @@ info_nav_title: "My Settings"
       <div class="settings-list">
         <div class="setting-row">
           <div>
+            <label class="setting-name" for="setting-code-language">SE Book code language</label>
+            <p class="setting-description" id="setting-code-language-help">
+              Shared by all language selectors in the SE Book, including code
+              examples, UML labs, and Observer lesson views. Python is the default.
+              Examples without your language use Python, or their own default if
+              Python is unavailable. Stored as <code>sebook-code-language</code>.
+            </p>
+          </div>
+          <div class="setting-control">
+            <select id="setting-code-language" data-setting="codeLanguage" aria-describedby="setting-code-language-help">
+              <option value="python">Python</option>
+              <option value="java">Java</option>
+              <option value="cpp">C++</option>
+              <option value="typescript">TypeScript</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
             <p class="setting-name">Autosave tutorial work</p>
             <p class="setting-description">
               When this is on, the code you write in any tutorial — plus the
@@ -678,6 +698,7 @@ info_nav_title: "My Settings"
 </article>
 
 <script src="{{ '/js/song-video/preferences.js' | relative_url }}"></script>
+<script src="{{ '/js/sebook-code-preferences.js' | relative_url }}"></script>
 <script>
 (function () {
   'use strict';
@@ -1027,6 +1048,9 @@ info_nav_title: "My Settings"
     } else if (setting === 'songSpeed') {
       var saved = window.SongPreferences.saveSpeed(Number(target.value));
       announce(saved ? 'Music video playback speed saved.' : 'Your browser could not save the music video playback speed.');
+    } else if (setting === 'codeLanguage') {
+      var languageSaved = window.SEBookCodePreferences.set(target.value);
+      announce(languageSaved ? 'SE Book code language saved.' : 'Language changed for this page. Your browser could not save the preference.');
     } else if (setting === 'tutorialAutosave') {
       writeLS('tutorial-autosave', target.checked ? 'true' : 'false');
       announce('Tutorial autosave setting saved.');
@@ -1037,6 +1061,9 @@ info_nav_title: "My Settings"
   }
 
   var form = document.getElementById('settings-form');
+  window.SEBookCodePreferences.subscribe(function () {
+    document.getElementById('setting-code-language').value = window.SEBookCodePreferences.choose();
+  });
   if (form) {
     form.addEventListener('change', handleChange);
     form.addEventListener('input', function (event) {

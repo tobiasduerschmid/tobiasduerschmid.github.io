@@ -1,5 +1,4 @@
-/* Reading preferences shared by the narrated, self-paced, and print surfaces.
-   Preferences travel in URLs; no browser storage is needed. */
+/* Reading views share the SEBook language preference; URLs can select a view. */
 (function () {
   'use strict';
   const params = new URLSearchParams(window.location.search);
@@ -34,18 +33,29 @@
     });
   }
 
+  function updateLanguageInURL(language) {
+    const current = new URL(window.location.href);
+    if (!current.searchParams.has('language')) return;
+    current.searchParams.set('language', language);
+    window.history.replaceState(window.history.state, '', current.href);
+  }
+
   function enhancePreferences(lesson) {
+    const preferences = window.SEBookCodePreferences;
     const language = lesson.querySelector('[data-setting="language"], [data-document-language]');
+    const available = Array.from(language.options, option => option.value);
     const requestedLanguage = params.get('language');
-    if (Array.from(language.options).some(option => option.value === requestedLanguage)) {
-      language.value = requestedLanguage;
+    if (available.includes(requestedLanguage)) {
+      preferences.set(requestedLanguage);
     }
-    function updateLanguage() {
+    preferences.subscribe(() => {
+      language.value = preferences.choose(available);
       selectCodeLanguage(lesson, language.value);
       updateViewLinks(lesson, language.value);
-    }
-    updateLanguage();
-    language.addEventListener('change', updateLanguage);
+      updateLanguageInURL(language.value);
+      language.dispatchEvent(new CustomEvent('sebook:languagechange'));
+    });
+    language.addEventListener('change', () => preferences.set(language.value));
 
     const themeButton = lesson.querySelector('[data-document-theme]');
     const siteThemeToggle = document.getElementById('darkModeToggle');

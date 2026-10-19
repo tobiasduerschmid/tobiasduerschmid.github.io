@@ -33,7 +33,8 @@ tutorial quizzes. Audio pauses at the boundary; the learner can answer or skip,
 then continue. Previous and Next move directly between scenes, skipping any open
 check; they do not open checks themselves. Seeking and scene selection also remain
 available for review. Answers
-stay in memory for the current page only; the player adds no persistence.
+stay in memory for the current page only. Language selections use the shared
+SEBook preference (`sebook-code-language`); no playback history is saved.
 
 ## Sources
 
@@ -89,7 +90,11 @@ SVG and its labels. Firefox reports their `getCTM()` transforms in inconsistent
 coordinate spaces, which otherwise makes repeated fitting alternate sizes.
 `js/observer-document.js` owns language visibility and view-link preferences on all
 three surfaces. It loads before the player adapter so the initial cue uses the
-requested language. It does not load the audio player. The player groups language
+shared `SEBookCodePreferences` language. A valid `?language=` view link selects
+and saves that language across the SEBook. Choosing a language in a
+selector updates the chapter tabs and any existing URL language
+parameter, so reloading keeps the new choice. Both `ts` in chapter tabs and
+`typescript` in this lesson map to the same preference. It does not load the audio player. The player groups language
 and transport controls in a compact wrapping toolbar without reducing type or
 control sizes. Native audio, script, and caption downloads
 remain available in the narrated version.

@@ -2091,7 +2091,10 @@ channel.
   chapter editors. Load it before `tutorial-code.js`; the tutorial calls
   `SEBookMonaco.load()` after its xterm prerequisites, then registers its
   additional language grammars and themes as before. Chapter labs start in
-  Python and expose Python/Java/C++ with the built-in language grammars.
+  Python by default and expose Python/Java/C++ with the built-in language grammars.
+  Chapter language tabs follow the shared `js/sebook-code-preferences.js`
+  preference (`sebook-code-language`); code drafts remain in memory.
+  This preference does not change a tutorial step’s authored language or backend.
   Chapter hosts use `loadLanguages(ids)` to await their lazy tokenizers before
   creating editors. It warms each grammar once with Monaco's public colorizer;
   tutorial `load()` keeps its existing custom-language registration sequence.

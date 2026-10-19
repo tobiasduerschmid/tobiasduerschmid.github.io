@@ -15,6 +15,8 @@ before editing; the explanation stays collapsed. The
 source is analyzed locally, never executed. Inference is a source sketch,
 not a complete compiler, runtime trace, or proof of ownership/lifetimes.
 Verify both starter code and the suggested edit with the real analyzers.
+Keep C++ examples focused on the UML concept: omit incidental qualifiers such
+as `explicit` and method `const` when the exercise does not depend on them.
 The `message_receivers` lab distinguishes variable names from object identity:
 changing a reference's initializer moves a call between two existing objects,
 while the call site and number of instances stay the same.
@@ -31,6 +33,21 @@ unrolled loop counts; those predictions require reasoning about the code.
 
 ## Ownership
 
+- `js/sebook-code-preferences.js` owns the shared language preference. Every
+  SEBook language selector (chapter examples, labs, and Observer lesson views)
+  follows it across the page, navigation, reloads, and other open tabs. Explicit
+  selections and language-specific view links write `sebook-code-language` to localStorage. Python
+  is the default and the first fallback when a language is unavailable; otherwise
+  the example uses its authored default or first option. Fallbacks never overwrite
+  the preference. `ts` and `typescript` refer to the same saved language. Settings
+  exposes the choice, and the storage inventory can delete it. If storage is
+  blocked, selectors still synchronize for the current page.
+- `js/sebook-language-switcher.js` owns the language tabs shared with static
+  code examples: selection, arrow/Home/End keys, and tab/panel accessibility.
+  Both SEBook layouts load the preference module and then this script before
+  the lab controls. Tabs use the shared
+  `.inline-language-tabs` styles; an empty `data-language-panel` identifies the
+  lab's single editor/diagram panel. Changes emit `sebook:languagechange`.
 - `js/uml-live.js` owns source analysis, lazy analyzer loading, worker queues,
   main-thread fallback, text measurement, SVG rendering and accessible names.
   Tutorials and chapter labs use the same pipeline and `js/uml-worker.js`.
@@ -50,7 +67,7 @@ unrolled loop counts; those predictions require reasoning about the code.
   languages, the public line colorizer refreshes visible model tokens without
   waiting for Monaco's idle background pass. Scrolling extends that refresh
   to the newly visible code. A native
-  textarea remains available if Monaco fails to load. No persistence is added.
+  textarea remains available if Monaco fails to load. Source drafts are not saved.
 - `js/tutorial-code.js` continues to own tutorial file models, progress, layout
   preferences, diagram colors and zoom. Its existing JavaScript/TypeScript UML
   support remains available; chapter controls expose Python, Java and C++.

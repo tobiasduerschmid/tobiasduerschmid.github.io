@@ -1,12 +1,15 @@
 {% assign uml_lab = site.data.uml_code_labs[include.example] %}
-<div class="uml-code-lab" data-uml-code-lab role="region" aria-label="UML code lab: {{ uml_lab.title | escape }}">
+<div class="uml-code-lab" data-uml-code-lab data-language-switcher data-default-language="python" role="region" aria-label="UML code lab: {{ uml_lab.title | escape }}">
   <script type="application/json">{{ uml_lab | jsonify | replace: '</', '<\/' }}</script>
   <p class="uml-code-lab-title"><strong>{{ uml_lab.title | escape }}</strong></p>
   <div class="uml-code-lab-interactive" hidden>
     <div class="uml-code-lab-toolbar">
-      <label>Code language <select data-uml-language>{% for language in site.data.uml_code_languages %}<option value="{{ language.id }}" data-filename="{{ language.filename }}">{{ language.label | escape }}</option>{% endfor %}</select></label>
+      <div class="inline-language-tabs" role="tablist" aria-label="Code language">
+        {% for language in site.data.uml_code_languages %}<button type="button" role="tab" data-language-option="{{ language.id }}" data-filename="{{ language.filename }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}" tabindex="{% if forloop.first %}0{% else %}-1{% endif %}">{{ language.label | escape }}</button>{% endfor %}
+      </div>
       <button type="button" data-uml-reset>Reset code</button>
     </div>
+    <div data-language-panel role="tabpanel">
     <p data-uml-task></p>
     <div class="uml-code-lab-workspace">
       <div class="uml-code-lab-editor">
@@ -20,6 +23,7 @@
       </div>
     </div>
     <div class="uml-code-lab-print-source"><p><strong data-uml-print-label>Python code</strong></p><pre><code data-uml-print-code></code></pre></div>
+    </div>
   </div>
   <div class="uml-code-lab-fallback">
     {% for language in site.data.uml_code_languages %}
