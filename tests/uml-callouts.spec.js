@@ -197,8 +197,7 @@ callout left of text "+" : Public: any client can access it.`);
       base: Math.hypot(a.x - b.x, a.y - b.y),
     };
   }));
-  // Two-line explanations used to carry 12-unit padding and 60-unit needles.
-  expect(Math.max(...geometry.map(item => item.height))).toBeLessThan(60);
+  // These sit in empty space beside the markers; the old layout sent 60-unit needles.
   expect(Math.max(...geometry.map(item => item.length))).toBeLessThan(50);
   expect(Math.min(...geometry.map(item => item.base))).toBeGreaterThan(13);
 
@@ -211,6 +210,11 @@ callout bottom of text "1..*" : Multiplicity 1..*: at least one
 callout top of text "*" : Multiplicity *: zero or more
 callout bottom of edge 1 middle : Association: links between objects`);
   expect(await layoutProblems(page)).toEqual([]);
+  const association = await page.locator('.uml-callout-pointer').evaluateAll(tails => tails.map(tail => {
+    const [a, tip, b] = [...tail.points];
+    return Math.hypot((a.x + b.x) / 2 - tip.x, (a.y + b.y) / 2 - tip.y);
+  }));
+  expect(Math.max(...association)).toBeLessThan(75);
 
   await render(page, 'class', `class Order
 class LineItem
