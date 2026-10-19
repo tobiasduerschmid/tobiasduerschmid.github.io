@@ -71,6 +71,9 @@ rectangle "Train System" {
 }
 Passenger -- UC1
 Technician -- UC2
+callout left of element Passenger : An actor is an external role that interacts with the system.
+callout right of element UC1 : An oval names behavior that delivers an observable result of value.
+callout top of text "Train System" : The boundary identifies the system whose use cases are shown.
 @enduml'></div>
 
 Reading this diagram: A **Passenger** can **Ride** the train, and a **Technician** can **Repair** the train. Both are roles (actors) external to the system.
@@ -134,6 +137,7 @@ Customer -- UC1
 Customer -- UC2
 UC1 ..> UC3 : <<include>>
 UC2 ..> UC3 : <<include>>
+callout bottom of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include inserts required behavior.
 @enduml'></div>
 
 Reading this diagram: Whenever a customer **Purchases an Item**, they **always** Login. Whenever they **Track Packages**, they also **always** Login. The Login behavior is shared, so it is factored out into its own use case and included by both.
@@ -156,6 +160,7 @@ rectangle "E-Commerce" {
 }
 Customer -- UC1
 UC2 ..> UC1 : <<extend>>
+callout right of text "&lt;&lt;extend&gt;&gt;" : Extend adds behavior at an extension point. The arrow points to the base use case.
 @enduml'></div>
 
 Reading this diagram: When a customer purchases an item, debug info **can** (optionally) be logged in some cases. The extension is not part of the normal flow.
@@ -177,6 +182,7 @@ rectangle "Sync System" {
 }
 UC2 --|> UC1
 UC3 --|> UC1
+callout left of shape polygon occurrence 2 : The hollow triangle points to the more general use case.
 @enduml'></div>
 
 Reading this diagram: "Synchronize Wirelessly" and "Synchronize Serially" are both specialized versions of "Synchronize Data". Either can be used wherever the general "Synchronize Data" use case is expected.
@@ -221,6 +227,7 @@ Customer -- UC1
 Customer -- UC2
 UC1 ..> UC3 : <<include>>
 UC2 ..> UC3 : <<include>>
+callout bottom of text "&lt;&lt;include&gt;&gt;" occurrence 2 : The included behavior runs when this step is reached.
 @enduml'></div>
 
 ### System Walkthrough
@@ -266,6 +273,7 @@ Maintainer -- UC3
 CI -- UC4
 UC1 ..> UC5 : <<include>>
 UC3 ..> UC4 : <<include>>
+callout left of element CI : An actor can be an external system, not only a person.
 @enduml'></div>
 
 **Reading the diagram:**
@@ -305,6 +313,7 @@ Host -- UC5
 PS -- UC3
 UC2 ..> UC3 : <<include>>
 UC4 ..> UC2 : <<extend>>
+callout left of element Host : An actor identifies a role; one person can play more than one role.
 @enduml'></div>
 
 **Reading the diagram:**
@@ -344,6 +353,7 @@ Instructor -- UC4
 UC1 ..> UC5 : <<include>>
 UC2 ..> UC5 : <<include>>
 UC6 ..> UC4 : <<extend>>
+callout right of text "&lt;&lt;extend&gt;&gt;" : This arrow points to the base use case whose behavior may be extended.
 @enduml'></div>
 
 **Reading the diagram:**

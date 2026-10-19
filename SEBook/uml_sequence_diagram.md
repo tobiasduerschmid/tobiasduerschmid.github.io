@@ -42,7 +42,22 @@ Messages are the communications between lifelines. They are drawn as horizontal 
   * **Asynchronous Message** <span class="uml-sym" data-diagram="sequence" data-sym="->>"></span> — solid line with **open (stick) arrowhead**. The sender fires the message and continues immediately, like posting an event to a queue or invoking a callback you don't wait for.
   * **Return Message** <span class="uml-sym" data-diagram="sequence" data-sym="-->"></span> — **dashed** line with open arrowhead. Represents control (and often a value) returning to the original caller. Return arrows are optional in UML 2: include them when the returned value is important, omit them when a synchronous call obviously returns.
 
-> **⚠ Common mistake:** Students often confuse the filled vs. open arrowhead, treating both as synchronous. The rule: **filled = blocks, open = fires-and-forgets**. Remember it as "filled is full commitment; open lets go."
+> **⚠ Common mistake:** Students often confuse the filled vs. open arrowhead, treating both as synchronous. For a **solid message line**, a filled head means a synchronous call and an open head means an asynchronous message. A dashed reply can also have an open head, so read the line style together with the arrowhead.
+
+The callouts below explain the arrow semantics. A filled circle at the sending end marks a **found message**: its sender is outside the scope of the interaction {% cite OMG2017UML %}.
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant client: Client
+participant server: LibraryServer
+client -> server: findBook()
+server --> client: book
+client ->> server: reserveBook()
+o-> server: availabilityChanged
+callout right of edge 1 end : Filled head: the caller waits for completion.
+callout left of edge 2 end : A dashed reply returns control and any result.
+callout right of edge 3 end : Open head on a solid line: the sender continues without waiting.
+callout right of edge 4 start : The filled circle means the sender is outside this interaction.
+@enduml'></div>
 
 ### Visualizing the Basics: A Simple ATM Login
 
@@ -60,6 +75,8 @@ bank --> atm: cardValid()
 deactivate bank
 atm -> customer: promptPIN()
 deactivate atm
+callout top of text "atm:" : The name before the colon identifies the participant.
+callout top of text "ATM" : The type after the colon identifies its classifier.
 @enduml'></div>
 
 **Notice the flow of time:** Message 1 happens first, then 2, 3, and 4. The vertical dimension is strictly used to represent the passage of time.
@@ -108,6 +125,7 @@ train --> station: doorsClosed
 deactivate train
 station --> passenger: confirmation
 deactivate station
+callout right of element actbar:7 : An execution bar spans the time spent performing a behavior.
 @enduml'></div>
 
 The blue bars show when each object is actively processing. Notice how the `Station` is active from when it receives `requestStop()` until it sends the confirmation, and how the `Train` has separate execution bars for `addStop()`, `openDoors()`, and `closeDoors()`.
@@ -171,6 +189,7 @@ opt [hasLoyaltyAccount == true]
   pricing --> checkout: discountApplied()
   deactivate pricing
 end
+callout right of text "OPT" : Execute this fragment only when its guard is true.
 @enduml'></div>
 
 *Notice the `[hasLoyaltyAccount == true]` text. This is the **guard condition**. If it evaluates to false, the sequence skips the entire box.*
@@ -195,6 +214,7 @@ else [password is incorrect]
   db --> system: loginFailed()
   deactivate db
 end
+callout right of text "ALT" : Choose at most one branch whose guard is true.
 @enduml'></div>
 
 {% include uml-code-lab.html example="alternatives" %}
@@ -214,6 +234,7 @@ loop [up to 3 times]
   server --> app: ack()
   deactivate server
 end
+callout right of text "LOOP" : Repeat the enclosed interaction within the stated bounds.
 @enduml'></div>
 
 -----
@@ -258,6 +279,7 @@ opt [smsEnabled == true]
   deactivate sms
 end
 deactivate hub
+callout right of text "ALT" : Choose a guarded branch within each iteration of the enclosing loop.
 @enduml'></div>
 
 -----
@@ -403,6 +425,7 @@ sale -> payment: authorize()
 activate payment
 deactivate payment
 deactivate sale
+callout right of text "payment: Payment" : A created participant starts its lifeline when the creation message arrives.
 @enduml'></div>
 
 Notice how the `Payment` constructor call becomes a `create` message in the sequence diagram. The `Payment` object appears at the point in the timeline when it is created.
@@ -631,6 +654,7 @@ end
 a -> b: endSale()
 activate b
 deactivate b
+callout right of text "LOOP" : The enclosed messages repeat while more items remain.
 @enduml'></div>
 
 The `for` loop in code maps directly to a `loop` fragment. The guard condition `[more items]` is a Boolean expression that describes when the loop continues.
@@ -655,6 +679,7 @@ else [else]
   deactivate c
 end
 deactivate a
+callout left of edge 1 start : A filled circle marks a message whose sender is outside the interaction.
 @enduml'></div>
 
 Equivalent code in four languages:
@@ -818,6 +843,7 @@ class A {
 >   activate order
 >   deactivate order
 > end
+> callout right of text "ALT" : The guards select the reserve-and-confirm branch or the rejection branch.
 > @enduml'></div>
 > </details>
 
@@ -857,6 +883,7 @@ G --> A: accessToken
 deactivate G
 A --> B: 200 session cookie
 deactivate A
+callout right of text "accessToken" : A dashed reply carries the result of the preceding synchronous call.
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -893,6 +920,7 @@ else [chargeResult.declined]
   os --> app: error(chargeResult.reason)
 end
 deactivate os
+callout right of text "ALT" : These operands show alternative outcomes of the payment call.
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -931,6 +959,7 @@ opt [all tests passed]
 end
 gh --> dev: notify(testResults)
 deactivate gh
+callout right of text "runTests()" : A message back to the same lifeline is a self-call.
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -964,6 +993,7 @@ activate notif
 notif --> rider: driverAssigned(eta)
 deactivate notif
 deactivate match
+callout right of text "[no driver has accepted]" : Repeat while true.
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -1002,6 +1032,7 @@ end
 deactivate notif
 ws --> sender: ack(messageId)
 deactivate ws
+callout right of text "messageReceived" : The solid line with an open head is asynchronous: the sender need not wait.
 @enduml'></div>
 
 **What the UML notation captures:**

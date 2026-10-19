@@ -12848,6 +12848,16 @@ Supported options:
       // the root SVG so the export reflects the diagram's intrinsic size.
       clone.style.removeProperty('transform');
 
+      // Teaching overlays get their colors from the shared CSS module.
+      // Resolve those runtime values before leaving the page's stylesheet.
+      var calloutShapes = svg.querySelectorAll('.uml-callout-box, .uml-callout-pointer, .uml-callout text');
+      var exportedCalloutShapes = clone.querySelectorAll('.uml-callout-box, .uml-callout-pointer, .uml-callout text');
+      Array.prototype.forEach.call(calloutShapes, function (shape, index) {
+        var style = getComputedStyle(shape);
+        exportedCalloutShapes[index].setAttribute('fill', style.fill);
+        exportedCalloutShapes[index].setAttribute('stroke', style.stroke);
+      });
+
       var serializer = new XMLSerializer();
       var svgStr = '<?xml version="1.0" encoding="UTF-8"?>\n' + serializer.serializeToString(clone);
       var blob = new Blob([svgStr], { type: 'image/svg+xml' });

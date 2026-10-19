@@ -1,3 +1,5 @@
+@import url("../js/ArchUML/css/callouts.css");
+
 /* ── UML Diagram Theming ── */
 
 /* Shared live renderer: measure real SVG text without exposing a second image. */
@@ -93,18 +95,18 @@ pre:has(> code.language-crc),
    Git-graph is excluded because its branch colors and HEAD chip styling are
    chosen for both modes; it themes via CSS variables (--git-graph-bg/text)
    instead of relying on a global filter. */
-html.dark-mode .uml-class-diagram-container svg,
-html.dark-mode .uml-sequence-diagram-container svg,
-html.dark-mode .uml-state-diagram-container svg,
-html.dark-mode .uml-activity-diagram-container svg,
-html.dark-mode .uml-usecase-diagram-container svg,
-html.dark-mode .uml-component-diagram-container svg,
-html.dark-mode .uml-deployment-diagram-container svg,
-html.dark-mode .uml-freeform-diagram-container svg,
-html.dark-mode .uml-folder-tree-diagram-container svg,
-html.dark-mode .uml-venn-diagram-container svg,
-html.dark-mode .uml-er-diagram-container svg,
-html.dark-mode .uml-crc-diagram-container svg {
+html.dark-mode .uml-class-diagram-container svg:not(.uml-with-callouts),
+html.dark-mode .uml-sequence-diagram-container svg:not(.uml-with-callouts),
+html.dark-mode .uml-state-diagram-container svg:not(.uml-with-callouts),
+html.dark-mode .uml-activity-diagram-container svg:not(.uml-with-callouts),
+html.dark-mode .uml-usecase-diagram-container svg:not(.uml-with-callouts),
+html.dark-mode .uml-component-diagram-container svg:not(.uml-with-callouts),
+html.dark-mode .uml-deployment-diagram-container svg:not(.uml-with-callouts),
+html.dark-mode .uml-freeform-diagram-container svg:not(.uml-with-callouts),
+html.dark-mode .uml-folder-tree-diagram-container svg:not(.uml-with-callouts),
+html.dark-mode .uml-venn-diagram-container svg:not(.uml-with-callouts),
+html.dark-mode .uml-er-diagram-container svg:not(.uml-with-callouts),
+html.dark-mode .uml-crc-diagram-container svg:not(.uml-with-callouts) {
   filter: invert(1) hue-rotate(180deg);
 }
 

@@ -13,6 +13,8 @@ Paid --> Refunded : return_initiated
 Delivered --> [*]
 Cancelled --> [*]
 Refunded --> [*]
+callout left of edge 1 start : The filled circle marks where the lifecycle begins.
+callout right of element Delivered : A state describes a condition that holds during part of the object lifetime.
 @enduml'></div>
 
 # UML State Machine Diagrams
@@ -64,6 +66,16 @@ Transitions are labeled using the following syntax:
 * **Guard:** A boolean condition that *must* be true for the transition to occur (e.g., `[powerLevel > 10]`).
 * **Effect:** An action or behavior that executes during the transition (e.g., `/ turnOnLED()`).
 
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+[*] --> Locked
+Locked --> Unlocked : badgeRead [authorized] / releaseLock()
+Unlocked --> [*] : sessionEnded
+callout left of edge 1 start : The filled circle marks the initial pseudostate: where this region starts.
+callout right of text "[authorized]" : Test the guard when badgeRead is handled. A false guard prevents this transition.
+callout left of text "releaseLock()" : The effect runs when this transition is taken.
+callout right of edge 3 end : The bullseye means this region has completed.
+@enduml'></div>
+
 ### 2.3 Internal Activities
 
 States can have **internal activities** that execute at specific points during the state's lifetime. These are written inside the state rectangle:
@@ -87,6 +99,8 @@ state Processing {
   do / processData()
   exit / stopTimer()
 }
+callout left of text "entry / clearBuffers()" : Entry behavior runs whenever this state is entered.
+callout right of text "do / processData()" : The do activity can continue while the state is active; exiting interrupts it.
 @enduml'></div>
 
 Internal activities are particularly useful for modeling embedded systems, UI components, and any object that needs to perform setup/teardown when entering or leaving a state.
@@ -119,16 +133,17 @@ When the suit is powered on, it enters an *Idle* state. If its sensors detect a 
 [*] --> Idle
 Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()
 CombatMode --> Idle : threatNeutralized / retractWeapons()
-CombatMode --> EmergencyPower : [powerLevel &lt; 5%] / rerouteToLifeSupport()
+CombatMode --> EmergencyPower : when(powerLevel &lt; 5%) / rerouteToLifeSupport()
 EmergencyPower --> [*] : manualOverride()
+callout left of text "[sysCheckOK]" : This guard must be true when threatDetected is handled.
 @enduml'></div>
 
 ### Deconstructing the Model
 
-1. **The Initial Transition:** The system begins at the solid circle and transitions to `Idle` via the `powerOn()` event.
+1. **The Initial Transition:** The initial transition starts at the solid circle and enters `Idle`; no trigger is written on this transition.
 2. **Moving to Combat:** To move from `Idle` to `Combat Mode`, the `threatDetected` event must occur. Notice the guard `[sysCheckOK]`; the suit will only enter combat if internal systems pass their checks. As the transition happens, the effect `/ deployUI()` occurs.
 3. **Cyclic Behavior:** The system can transition back to `Idle` when the `threatNeutralized` event occurs, triggering the `/ retractWeapons()` effect.
-4. **Critical Transitions:** The transition to `Emergency Power` is a *completion* transition guarded by `[powerLevel < 5%]` — it has no explicit event trigger and fires as soon as the guard becomes true while the source state is settled. Notice the brackets: per the UML 2.5.1 transition-label syntax `Event [Guard] / Effect`, the guard must always appear in square brackets so it is not misread as an event name {% cite OMG2017UML %}. Once in this state, the only way out is a `manualOverride()`, leading to the Final State (system shutdown).
+4. **Critical Transitions:** The transition to `Emergency Power` uses the change event `when(powerLevel < 5%)`, which occurs when that condition becomes true while `CombatMode` is active. A guard alone would be tested only when its transition is triggered; it would not watch for a later change in power level {% cite OMG2017UML %}. Once in this state, the only way out is a `manualOverride()`, leading to the Final State (system shutdown).
 
 ---
 
@@ -151,6 +166,7 @@ Playing --> Paused : pauseButton
 Paused --> Playing : playButton
 Playing --> Buffering : skipTrack(nextId) / clearBuffer()
 Playing --> Idle : stopButton
+callout right of text "pauseButton" : The event triggers this transition only while its source state is active.
 @enduml'></div>
 
 **Reading the diagram:**
@@ -176,13 +192,14 @@ Open --> Closed : closePR()
 ChangesRequested --> Closed : closePR()
 Merged --> [*]
 Closed --> [*]
+callout right of text "[ciPassed]" : Test this guard when mergePR occurs; passing checks alone does not trigger the transition.
 @enduml'></div>
 
 **Reading the diagram:**
 
 1. **Guards on the same event:** Both `Open → ChangesRequested` and `Open → Approved` are triggered by `reviewSubmitted`. The guards `[hasRejection]` and `[allApproved]` select which transition fires. The same event can lead to different states — the guard is the deciding factor.
 2. **Cyclic path (ChangesRequested → Open):** After a reviewer requests changes, the author pushes new commits, sending the PR back to `Open`. State machines can loop — objects do not always progress linearly.
-3. **Guard on merge (`[ciPassed]`):** The PR stays `Approved` until CI passes. This is a business rule — it cannot be merged in a broken state. The diagram makes the constraint explicit without requiring you to read the code.
+3. **Guard on merge (`[ciPassed]`):** When `mergePR` occurs, this guard must be true for the transition to `Merged`. Passing CI alone does not trigger the transition.
 4. **Two final states:** Both `Merged` and `Closed` are terminal states. Every PR ends one of these two ways. Multiple final states are valid and common in business process models.
 
 ---
@@ -201,6 +218,7 @@ ReadyForPickup --> InTransit : driverPickedUp()
 InTransit --> Delivered : driverArrived() / notifyCustomer()
 Delivered --> [*]
 Cancelled --> [*]
+callout right of text "refundPayment()" : The effect after the slash runs when this transition is taken.
 @enduml'></div>
 
 **Reading the diagram:**

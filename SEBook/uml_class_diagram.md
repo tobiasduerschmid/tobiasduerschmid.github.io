@@ -36,6 +36,8 @@ Order ..|> Billable
 Customer "1" -- "*" Order
 Order *-- "1..*" LineItem
 LineItem "*" -- "1" Product
+callout right of text "«interface»" : This keyword identifies the contract implemented by Order.
+callout left of edge 2 start : The filled diamond marks Order as the composite owner of its line items.
 @enduml'></div>
 
 # Introduction
@@ -78,6 +80,9 @@ class User {
   + login(): boolean
   + resetPassword(): void
 }
+callout left of text "-" : Private: only this class can access it.
+callout left of text "#" : Protected: accessible in this class and subclasses.
+callout left of text "+" : Public: any client can access it.
 @enduml'></div>
 
 Edit the code below to update the diagram. The code is analyzed locally without execution; edits are not saved.
@@ -93,6 +98,7 @@ layout landscape
 interface Payable {
   + processPayment(): bool
 }
+callout right of text "«interface»" : This keyword marks a contract that implementations must fulfill.
 @enduml'></div>
 
 > **Quick Check 1 (Retrieval Practice)**
@@ -127,6 +133,8 @@ class SUV
 Car ..|> Vehicle
 Sedan --|> Car
 SUV --|> Car
+callout right of shape polygon occurrence 1 : Dashed line and hollow triangle: Car realizes the Vehicle contract.
+callout left of shape polygon occurrence 2 : Solid line and hollow triangle: the triangle points to the superclass.
 @enduml'></div>
 
 ### Dependency (Weakest Relationship)
@@ -143,6 +151,7 @@ class Train {
 }
 class ButtonPressedEvent
 Train ..> ButtonPressedEvent
+callout bottom of edge 1 middle : A dependency points from the user of a type to the type it needs.
 @enduml'></div>
 
 In this example, `Train` depends on `ButtonPressedEvent` because it uses it as a parameter type in `addStop()`. However, `Train` does not store a permanent reference to `ButtonPressedEvent`---the dependency exists only for the duration of the method call.
@@ -156,6 +165,7 @@ class ChecksumValidator {
 }
 class InvalidChecksumException
 ChecksumValidator ..> InvalidChecksumException
+callout bottom of edge 1 middle : A dashed dependency records a type this class needs.
 @enduml'></div>
 
 
@@ -175,6 +185,7 @@ class Course {
   - title: String
 }
 Student "*" -- "1..*" Course : enrolled in
+callout bottom of edge 1 middle : A solid association represents links between instances.
 @enduml'></div>
 
 {% include uml-code-lab.html example="dependency" %}
@@ -196,6 +207,8 @@ layout landscape
 class Author
 class Book
 Author "1" -- "1..*" Book : writes
+callout top of text "1" : Each Book has exactly one Author in this model.
+callout bottom of text "1..*" : Each Author has one or more Books in this model.
 @enduml'></div>
 
 #### Navigability
@@ -215,6 +228,7 @@ layout landscape
 class Vote
 class Politician
 Vote --> Politician
+callout bottom of edge 1 end : The open arrow marks the end that can be reached: Vote can navigate to Politician.
 @enduml'></div>
 
 `Vote` can navigate to `Politician`. This notation alone does not say whether `Politician` can navigate back to individual `Vote` objects; an X at the reverse end would explicitly mark it non-navigable.
@@ -227,6 +241,7 @@ layout landscape
 class Employee
 class Boss
 Employee <--> Boss
+callout bottom of edge 1 middle : Arrowheads at both ends make both navigation directions explicit.
 @enduml'></div>
 
 `Employee` knows about their `Boss`, and `Boss` knows about their `Employee`. Note that a plain line with no arrowheads on either end has **unspecified** navigability per UML 2.5 {% cite OMG2017UML %} — not "bidirectional by default." If you mean both directions are navigable, draw arrowheads on both ends (as above) to make that explicit.
@@ -239,6 +254,7 @@ layout landscape
 class Voter
 class Vote
 Voter x-- Vote
+callout bottom of edge 1 start : The X makes this end non-navigable: Vote cannot navigate to Voter.
 @enduml'></div>
 
 In the full UML notation, an X on the `Voter` end means that the *opposite* lifeline cannot navigate to it — i.e., `Vote` does *not* hold a reference back to `Voter`. (`Voter`'s navigability toward `Vote` is then determined by whatever is marked on the `Vote` end.) Note: the X mark is a formal UML 2 notation that many simplified tools do not render, and per UML 2.5, when one end carries a navigability arrow but the other end is unmarked, the unmarked end's navigability is formally **undefined**, not "non-navigable" by default {% cite OMG2017UML %}.
@@ -251,6 +267,7 @@ layout landscape
 class Account
 class ClearTextPassword
 Account x--x ClearTextPassword
+callout bottom of edge 1 start : An X marks an end that cannot be navigated to.
 @enduml'></div>
 
 An X on both ends of `Account`<span class="uml-sym" data-diagram="class" data-sym="x--x"></span>`ClearTextPassword` means neither class should store a reference to the other. This is a deliberate design decision (e.g., for security: an `Account` should never hold a reference to a `ClearTextPassword`).
@@ -268,6 +285,7 @@ layout landscape
 class University
 class Professor
 University "1" o-- "*" Professor
+callout bottom of edge 1 start : The hollow diamond marks the whole. Shared aggregation adds no fixed lifetime rule.
 @enduml'></div>
 
 {% include uml-code-lab.html example="collection_multiplicity" %}
@@ -284,6 +302,7 @@ layout landscape
 class House
 class Room
 House "1" *-- "1..*" Room
+callout bottom of edge 1 start : The filled diamond marks the composite whole. Deleting it deletes its current parts.
 @enduml'></div>
 
 **A helpful way to think about the difference:** In C++, aggregation is usually expressed through pointers/references (the part can exist separately), while composition is expressed by containing instances by value (the part's lifetime is tied to the whole). In Java and Python, every object reference is effectively a pointer — the distinction between aggregation and composition is communicated through *design intent* (who created the part? who destroys it?) rather than through language syntax. Inner classes in Java are *one* indicator of composition but are not required.
@@ -348,6 +367,8 @@ class Rectangle {
   + draw(): void
 }
 Rectangle --|> Shape
+callout left of text "Shape" : An italic class name means the class cannot be instantiated directly.
+callout right of text "draw(): void" occurrence 1 : An italic operation is abstract; a concrete subclass supplies its behavior.
 @enduml'></div>
 
 In this example, `Shape` is abstract (it cannot be created directly) and declares an abstract `draw()` method. `Rectangle` inherits from `Shape` and provides a concrete implementation of `draw()`.
@@ -364,6 +385,7 @@ class MathUtils {
   {static} +abs(n: int): int
   +round(n: double): int
 }
+callout right of text "PI: double" : Underlining marks a class-level member, shared rather than owned by each instance.
 @enduml'></div>
 
 
@@ -421,6 +443,7 @@ layout landscape
 class BaseSynchronizer {
   + synchronizationStarted(): void
 }
+callout right of text "synchronizationStarted(): void" : Parentheses mark an operation; the type after the colon is its result type.
 @enduml'></div>
 
 Each public method becomes a `+` operation in the bottom compartment. The return type follows a colon after the method signature.
@@ -506,6 +529,7 @@ class Student {
 }
 class Roster
 Student --> Roster
+callout left of text "~" : The tilde means package visibility: access from the same package.
 @enduml'></div>
 
 Notice: in the Java version, the `roster` field has package visibility (`~`) because no access modifier was specified (Java default is package-private). Other languages express visibility differently, but the relationship is the same: `Student` holds a reference to a `Roster`.
@@ -610,6 +634,7 @@ class ChecksumValidator {
 }
 class InvalidChecksumException
 ChecksumValidator ..> InvalidChecksumException
+callout bottom of edge 1 middle : Using an exception type creates a dependency on that type.
 @enduml'></div>
 
 The `ChecksumValidator` *depends on* `InvalidChecksumException` (it uses it in a throws clause and catch block) but does not store a permanent reference to it. This is a dependency, not an association.
@@ -680,6 +705,7 @@ class MotherBoard {
 class IDEBus
 MotherBoard "1" *-- "1" IDEBus : primaryIDE
 MotherBoard "1" *-- "1" IDEBus : secondaryIDE
+callout bottom of text "primaryIDE" occurrence 1 : A role name identifies which connection or property an association represents.
 @enduml'></div>
 
 The two fields have distinct roles: each motherboard has one primary bus and one secondary bus. The inferred diagram keeps both relationships instead of merging them into a single link with multiplicity two. In this model the motherboard owns the buses' lifetimes, which justifies composition; a private nested class or constructor call alone does not prove that lifecycle contract.
@@ -708,6 +734,7 @@ The two fields have distinct roles: each motherboard has one primary bus and one
 > class Employee
 > Division o-- "*" Employee : division
 > Division --> "*" Employee : employees
+> callout bottom of text "*" occurrence 1 : The star permits zero or more Employees for one Division.
 > @enduml'></div>
 >
 > The two roles remain separate. This sketch uses aggregation for the staff grouping, matching the Java analyzer's collection heuristic; the list type alone does not establish a whole-part contract, so a plain association is also appropriate. The array relationship is an association: <code>new Employee[10]</code> creates ten initially null reference slots, not ten employees. The field's array type permits zero or more referenced employees (<code>*</code>); the initializer alone does not establish an invariant of exactly ten links. A domain rule and supporting code would be needed to require an exact number.
@@ -749,6 +776,7 @@ Order ..|> Billable
 Customer "1" -- "*" Order
 Order *-- "1..*" LineItem
 LineItem "*" -- "1" Product
+callout right of text "1..*" : Each Order contains at least one LineItem in this model.
 @enduml'></div>
 
 ### System Walkthrough:
@@ -792,6 +820,7 @@ PremiumUser --|> User
 User "1" *-- "*" Playlist : owns
 Playlist "*" o-- "*" Track : contains
 Track "*" -- "1..*" Artist : performedBy
+callout left of shape polygon occurrence 3 : The hollow diamond groups Tracks that can exist independently of Playlists.
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -838,6 +867,7 @@ PullRequest ..|> Mergeable
 Repository "1" *-- "*" PullRequest
 PullRequest "1" *-- "*" Review
 PullRequest ..> CICheck
+callout right of text "«interface»" : The interface specifies the merge operations promised by PullRequest.
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -883,6 +913,7 @@ Order *-- "1..*" OrderItem : contains
 OrderItem "*" -- "1" MenuItem : references
 Restaurant "1" -- "1..*" MenuItem : offers
 Driver "0..1" -- "0..1" Order : delivers
+callout bottom of text "1..*" occurrence 2 : A Restaurant offers one or more MenuItems.
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -924,6 +955,7 @@ TVShow --|> Content
 TVShow "1" *-- "1..*" Season : contains
 Season "1" *-- "1..*" Episode : contains
 Content "*" -- "1..*" Genre : classifiedBy
+callout left of text "Content" : An italic name marks an abstract class; instantiate a concrete subtype.
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -969,6 +1001,7 @@ CreditCardPayment ..|> PaymentStrategy
 PayPalPayment ..|> PaymentStrategy
 CryptoPayment ..|> PaymentStrategy
 ShoppingCart --> PaymentStrategy : uses
+callout right of text "«interface»" : Concrete payment classes realize the same interface contract.
 @enduml'></div>
 
 **What the UML notation captures:**

@@ -1185,7 +1185,31 @@
 
   // ---------- dispatch ----------
 
+  // The build-time describer also runs without a DOM or the renderer bundle.
+  // Keep explanations separate from the UML model in both text alternatives.
+  function extractNotationExplanations(spec) {
+    const explanations = [];
+    let inNote = false;
+    const source = String(spec || '').split('\n').map(line => {
+      const trimmed = line.trim();
+      if (/^end\s*note$/i.test(trimmed)) { inNote = false; return line; }
+      if (inNote) return line;
+      if (/^note\b[^:]*$/i.test(trimmed)) { inNote = true; return line; }
+      const match = trimmed.match(/^callout\s+(?:left|right|top|bottom)\s+of\s+(text\s+"(?:[^"\\]|\\.)+"(?:\s+occurrence\s+\d+)?|(?:element|edge|point|shape)\s+[^\n]+?)\s+:\s+(.+)$/);
+      if (!match) return line;
+      explanations.push(match[1] + ': ' + match[2]);
+      return '';
+    }).join('\n');
+    return { source, explanations };
+  }
+
   function describe(type, spec) {
+    const annotations = extractNotationExplanations(spec);
+    const summary = describeModel(type, annotations.source);
+    return summary + (annotations.explanations.length ? ' Notation callouts: ' + annotations.explanations.join(' ') : '');
+  }
+
+  function describeModel(type, spec) {
     var t = String(type || '').toLowerCase();
     var s = stripDecorations(spec);
     try {
@@ -1212,6 +1236,13 @@
   // Note: verbose describers do NOT pre-strip decorations because they want
   // to walk the raw spec themselves (class bodies in particular).
   function describeVerbose(type, spec) {
+    const annotations = extractNotationExplanations(spec);
+    const verbose = describeModelVerbose(type, annotations.source);
+    if (annotations.explanations.length) verbose.sections.push({ heading: 'Notation callouts', items: annotations.explanations });
+    return verbose;
+  }
+
+  function describeModelVerbose(type, spec) {
     var t = String(type || '').toLowerCase();
     var s = String(spec || '');
     try {

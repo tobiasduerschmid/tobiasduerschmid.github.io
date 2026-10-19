@@ -407,6 +407,27 @@ test('WCAG keyboard audit recognizes functional bypass links and native scroll c
   expect(focusFindings.filter((finding) => finding.criterion === '2.4.1')).toEqual([]);
 });
 
+test('SVG contrast follows preceding paint through nested groups', async ({ page }) => {
+  await page.setContent(`<!doctype html><html lang="en"><head><title>SVG layers</title></head><body>
+    <main><svg width="400" height="160" role="img" aria-label="Layered diagram">
+      <g><g><g>
+        <rect x="100" y="30" width="200" height="90" fill="#d0ddef" />
+        <text x="160" y="60" font-size="18" fill="#222">Readable label</text>
+        <text x="130" y="100" font-size="18" fill="#c0cddd">Low contrast label</text>
+      </g></g>
+      <g><polygon points="10,10 240,120 10,20" fill="#003b5c" /></g></g>
+    </svg><svg width="400" height="120" role="img" aria-label="Nested callout">
+      <g><rect width="400" height="120" fill="#d0ddef" /></g>
+      <g><g><rect x="20" y="20" width="300" height="70" fill="#003b5c" />
+        <text x="30" y="60" font-size="18" fill="white">Readable callout</text>
+      </g></g>
+    </svg></main></body></html>`);
+  const findings = (await page.evaluate(runDomAudit)).findings.filter(finding => finding.criterion === '1.4.3');
+  expect(findings.some(finding => finding.message.includes('Readable label'))).toBe(false);
+  expect(findings.some(finding => finding.message.includes('Readable callout'))).toBe(false);
+  expect(findings.some(finding => finding.message.includes('Low contrast label'))).toBe(true);
+});
+
 test('WCAG bypass audit requires a skip link only before repeated page chrome', async ({ page }) => {
   await page.setContent('<!doctype html><html lang="en"><head><title>All main</title></head><body><main><h1>All main</h1><button>Act</button></main></body></html>');
   expect((await page.evaluate(runDomAudit)).findings.filter((finding) => finding.criterion === '2.4.1')).toEqual([]);
@@ -1891,10 +1912,12 @@ function runDomAudit() {
 
     function collectOverlappingSvgFills(target, targetRect) {
       const out = [];
+      let branch = target;
       let host = target.parentElement;
       while (host && host instanceof Element && host.namespaceURI === 'http://www.w3.org/2000/svg') {
+        const level = [];
         const siblings = Array.from(host.children);
-        const idx = siblings.indexOf(target.parentElement === host ? target : target.closest('g, text') || target);
+        const idx = siblings.indexOf(branch);
         const limit = idx === -1 ? siblings.length : idx;
         for (let i = 0; i < limit; i += 1) {
           const sib = siblings[i];
@@ -1907,13 +1930,16 @@ function runDomAudit() {
             for (const inner of sib.querySelectorAll('circle, rect, path, polygon, ellipse')) {
               if (!rectOverlap(inner.getBoundingClientRect(), targetRect)) continue;
               const fill = readSvgFill(inner);
-              if (fill) out.push(fill);
+              if (fill) level.push(fill);
             }
           } else {
             const fill = readSvgFill(sib);
-            if (fill) out.push(fill);
+            if (fill) level.push(fill);
           }
         }
+        // An ancestor's earlier siblings paint before this local backdrop.
+        out.unshift(...level);
+        branch = host;
         host = host.parentElement;
       }
       // Paint order: earlier siblings render first, later overlap them. Composite from bottom up.
