@@ -25,24 +25,6 @@ bindings scoped to each followed method.
 Diagram text alternatives state zero-or-more bounds explicitly and keep
 separate conditional frames distinct even when their guards are identical.
 
-## Prediction prompt review
-
-All nine labs use equivalent reasoning tasks in Python, Java, and C++ (27
-prompts). The revisions below target common misconceptions rather than recall
-of a symbol. These are design judgments, not evidence from learner testing.
-
-| Lab | Weakness in the earlier prompt | Reasoning required now |
-| --- | --- | --- |
-| Visibility | Changing the field modifier revealed the expected symbol. | Distinguish public reading from writing when only a getter becomes non-public. Python uses the public-API convention. |
-| Inheritance | Adding a stated parent gave away the new arrow. | Separate a direct parent from an ancestor; check inherited behavior after reparenting. |
-| Dependency | Removing a field asked only for the replacement arrow. | Explain why coupling remains, then find the second change that removes it. |
-| Multiplicity | Replacing a scalar with a collection practically named the answer. | Test a nonempty-team requirement against an empty-collection counterexample. |
-| Message order | Swapping two independent calls was just a text reorder. | Trace a nested call and its sender after the outer calls change order. |
-| Self-calls | Adding one call only required counting another arrow. | Distinguish call order from completion order, and activations from objects. |
-| References | Changing an explicit receiver directly named the destination. | Follow an alias to an existing object; distinguish reference creation from object creation. |
-| Alternatives | Deleting an else branch merely removed its message. | Compare mutually exclusive branches with independent guards for both Boolean inputs. |
-| Loop boundary | Moving a call into a loop only asked about frame placement. | Compare zero and two iterations and identify the lost finalization for an empty input. |
-
 Keep the counterexample and expected result in the collapsed explanation.
 The source analyzer shows possible paths, not evaluated branch outcomes or
 unrolled loop counts; those predictions require reasoning about the code.
