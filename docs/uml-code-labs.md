@@ -129,6 +129,8 @@ following distinctions while working only with supplied source files:
 - **Ownership:** field construction and parameter passing suggest relationships
   but do not prove UML composition or aggregation lifetime constraints. Diamonds
   remain syntax-based modeling suggestions that require domain review.
+  Java `new Part[n]` allocates reference slots without constructing parts, so
+  it does not infer composition or an exact `n`-object multiplicity.
 - **Control flow:** Python preserves early transfers through conditional and
   cleanup paths, including `try`/`else`/`finally`. The call walk is still bounded:
   it does not evaluate arbitrary predicates, unroll loops, model every exception

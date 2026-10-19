@@ -607,6 +607,8 @@
               initNewType += '.' + peek(offset + 1).value;
               offset += 2;
             }
+            // Allocating reference slots does not construct any element objects.
+            if (peek(offset) && peek(offset).value === '[') initHasNew = false;
           }
           skipFieldInit();
         }
@@ -1022,7 +1024,8 @@
           // this.x = new ClassName(...) → composition (direct known type)
           if (bodyTokens[rhsStart].value === 'new' &&
               rhsStart + 1 < bodyTokens.length &&
-              bodyTokens[rhsStart + 1].type === 'ident') {
+              bodyTokens[rhsStart + 1].type === 'ident' &&
+              bodyTokens[rhsStart + 2] && bodyTokens[rhsStart + 2].value !== '[') {
             var typeName = bodyTokens[rhsStart + 1].value;
             if (this.allTypeNames.has(typeName)) {
               _recordRelationship(info, fieldName, typeName, 'composition');
@@ -1055,7 +1058,8 @@
         // Scan inside parens for 'new ClassName'
         for (var j = i + 6; j < bodyTokens.length && bodyTokens[j].value !== ')'; j++) {
           if (bodyTokens[j].value === 'new' && j + 1 < bodyTokens.length &&
-              bodyTokens[j + 1].type === 'ident' && this.allTypeNames.has(bodyTokens[j + 1].value)) {
+              bodyTokens[j + 1].type === 'ident' && this.allTypeNames.has(bodyTokens[j + 1].value) &&
+              bodyTokens[j + 2] && bodyTokens[j + 2].value !== '[') {
             _recordRelationship(info, bodyTokens[i + 2].value, bodyTokens[j + 1].value, 'composition');
             break;
           }
@@ -1110,7 +1114,8 @@
           bodyTokens[i + 5].value === '(') {
         for (var j = i + 6; j < bodyTokens.length && bodyTokens[j].value !== ')'; j++) {
           if (bodyTokens[j].value === 'new' && j + 1 < bodyTokens.length &&
-              bodyTokens[j + 1].type === 'ident' && this.allTypeNames.has(bodyTokens[j + 1].value)) {
+              bodyTokens[j + 1].type === 'ident' && this.allTypeNames.has(bodyTokens[j + 1].value) &&
+              bodyTokens[j + 2] && bodyTokens[j + 2].value !== '[') {
             _recordRelationship(info, bodyTokens[i + 2].value, bodyTokens[j + 1].value, 'composition');
             break;
           }
@@ -1199,7 +1204,8 @@
       if (existing.length) {
         for (const edge of existing) edge.multiplicity = _inferMultiplicity(attr.type, this.allTypeNames);
       } else if (target) {
-        _recordRelationship(info, attr.name, target, _isCollectionType(attr.type, this.allTypeNames) ? 'aggregation' : 'association');
+        const groupedCollection = _isCollectionType(attr.type, this.allTypeNames) && !/\[\]\s*$/.test(attr.type);
+        _recordRelationship(info, attr.name, target, groupedCollection ? 'aggregation' : 'association');
         info.relationships[info.relationships.length - 1].multiplicity = _inferMultiplicity(attr.type, this.allTypeNames);
       }
     }
@@ -1562,7 +1568,9 @@
         i++;
         if (i < tokens.length && tokens[i].type === 'ident') {
           var clsName = tokens[i].value;
-          if (this.allTypeNames.has(clsName)) {
+          const isArrayAllocation = tokens[i + 1] && tokens[i + 1].value === '[';
+          if (isArrayAllocation) delete this.varTypes[varName];
+          if (this.allTypeNames.has(clsName) && !isArrayAllocation) {
             this.varTypes[varName] = clsName;
             this._callerClass[varName] = clsName;
             if (!this._dataClasses.has(clsName)) {

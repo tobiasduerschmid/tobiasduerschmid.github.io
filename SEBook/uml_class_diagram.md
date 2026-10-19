@@ -650,8 +650,8 @@ class MotherBoard:
         pass
 
     def __init__(self) -> None:
-        self._primary_ide = MotherBoard._IDEBus()
-        self._secondary_ide = MotherBoard._IDEBus()
+        self._primary_ide: MotherBoard._IDEBus = MotherBoard._IDEBus()
+        self._secondary_ide: MotherBoard._IDEBus = MotherBoard._IDEBus()
 ```
   </div>
 
@@ -675,15 +675,17 @@ class MotherBoard {
   - secondaryIDE: IDEBus
 }
 class IDEBus
-MotherBoard *-- "2" IDEBus
+MotherBoard "1" *-- "1" IDEBus : primaryIDE
+MotherBoard "1" *-- "1" IDEBus : secondaryIDE
 @enduml'></div>
 
-The private part type plus owned fields indicate composition: the `IDEBus` instances are created and controlled by the `MotherBoard`.
+The two fields have distinct roles: each motherboard has one primary bus and one secondary bus. The inferred diagram keeps both relationships instead of merging them into a single link with multiplicity two. In this model the motherboard owns the buses' lifetimes, which justifies composition; a private nested class or constructor call alone does not prove that lifecycle contract.
 
 > **Quick Check (Generation):** Before looking at the answer below, try to draw the UML class diagram for this code:
 > ```java
 > import java.util.ArrayList;
 > import java.util.List;
+> class Employee { }
 > public class Division {
 >     private List<Employee> division = new ArrayList<>();
 >     private Employee[] employees = new Employee[10];
@@ -701,11 +703,11 @@ The private part type plus owned fields indicate composition: the `IDEBus` insta
 >   - employees: Employee[]
 > }
 > class Employee
-> Division o-- "*" Employee
-> Division -- "10" Employee
+> Division o-- "*" Employee : division
+> Division --> "*" Employee : employees
 > @enduml'></div>
 >
-> The <code>List&lt;Employee&gt;</code> field suggests aggregation (the collection can grow dynamically, employees can exist independently). The array with a fixed size of 10 is a direct association with a specific multiplicity.
+> The two roles remain separate. This sketch uses aggregation for the staff grouping, matching the Java analyzer's collection heuristic; the list type alone does not establish a whole-part contract, so a plain association is also appropriate. The array relationship is an association: <code>new Employee[10]</code> creates ten initially null reference slots, not ten employees. The field's array type permits zero or more referenced employees (<code>*</code>); the initializer alone does not establish an invariant of exactly ten links. A domain rule and supporting code would be needed to require an exact number.
 > </details>
 
 

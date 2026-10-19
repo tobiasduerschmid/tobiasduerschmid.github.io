@@ -130,6 +130,32 @@ for (const fixture of fixtures) {
   }
 }
 
+const chapter = fs.readFileSync(path.join(__dirname, '../../SEBook/uml_class_diagram.md'), 'utf8')
+  .replace(/^> ?/gm, '');
+for (const [owner, roles] of [['MotherBoard', ['primaryIDE', 'secondaryIDE']],
+  ['Division', ['division', 'employees']]]) {
+  const source = [...chapter.matchAll(/@startuml\b([\s\S]*?)@enduml/g)]
+    .find(match => match[1].includes(`class ${owner}`))[1];
+  for (const theme of ['light', 'dark']) {
+    test(`${owner} chapter relationships stay separate and accessible in ${theme} mode`, async () => {
+      await withDiagram(source, theme, async page => {
+        const labels = await renderedLabels(page, roles);
+        assert.deepEqual(labels.map(label => label.text).sort(), roles.slice().sort());
+        assertSeparateLabels(labels);
+        const description = await page.getByRole('img').getAttribute('aria-label');
+        for (const role of roles) assert.ok(description.includes(`labeled "${role}"`));
+        if (owner === 'Division') {
+          assert.ok(description.includes('Division references Employee with multiplicity unspecified to zero or more labeled "employees"'));
+          assert.doesNotMatch(description, /Division composes Employee/);
+        }
+        if (process.env.UML_CHAPTER_SCREENSHOT && owner === 'MotherBoard' && theme === 'light') {
+          await page.screenshot({ path: process.env.UML_CHAPTER_SCREENSHOT, fullPage: true });
+        }
+      });
+    });
+  }
+}
+
 for (const theme of ['light', 'dark']) {
   test(`union alternatives survive rendering and text descriptions in ${theme} mode`, async () => {
     const result = global.analyzeJSSources({

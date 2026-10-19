@@ -2126,6 +2126,8 @@ channel.
   preserve the contained relationship's multiplicity. Fields sharing a target
   retain separate relationships/cardinalities with role labels when needed;
   Python and TypeScript union annotations retain all known alternatives.
+  Java reference-array allocation creates slots, not owned elements: an
+  initialized `Part[]` stays an association with many-valued multiplicity.
   Supplied-source symbol resolution handles imports, aliases and scoped names,
   with distinct diagram identifiers for colliding declarations. Unresolved or
   ambiguous references never select an unrelated same-named type or object.

@@ -45,14 +45,14 @@ function infer(sources, options) {
   return relationships(result.classDiagram);
 }
 
-for (const key of ['inheritance', 'ownership', 'multiplicity', 'store-capstone']) {
+for (const key of ['first-class', 'visibility', 'types', 'inheritance', 'association',
+  'ownership', 'multiplicity', 'abstract-classes', 'store-capstone']) {
   test(`class tutorial ${key}: solution relationships match the visible target`, () => {
     const step = tutorial.steps.find(candidate => candidate.key === key);
     assert.ok(step, `Missing class tutorial lesson: ${key}`);
     const target = step.instructions.match(/@startuml\b([\s\S]*?)@enduml/);
     assert.ok(target, 'The exercise must publish its target diagram');
     const expected = relationships(target[1]);
-    assert.ok(expected.length > 0, 'The target must specify relationships');
     const sources = Object.fromEntries(step.solution.files.map(file => [file.path, file.content]));
 
     const actual = infer(sources, {

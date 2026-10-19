@@ -13,6 +13,51 @@ function diagram(fieldType) {
   return result.classDiagram;
 }
 
+for (const declaration of [
+  'Item[] items = new Item[10];',
+  'Item[][] items = new Item[2][10];',
+  'Item[] items; Store() { this.items = new Item[10]; }',
+]) {
+  test(`Java reference-array allocation does not construct owned elements: ${declaration}`, () => {
+    const result = analyzeJavaSources({ 'Store.java': `class Item {} class Store { ${declaration} }` });
+    assert.deepEqual(result.errors, []);
+    assert.match(result.classDiagram, /Store "1" --> "\*" Item/);
+    assert.doesNotMatch(result.classDiagram, /Store .*\*--.*Item/);
+    assert.doesNotMatch(result.classDiagram, /"10"/);
+  });
+}
+
+test('Java retains composition for an actual element constructor', () => {
+  const result = analyzeJavaSources({ 'Store.java': 'class Item {} class Store { Item item = new Item(); }' });
+  assert.deepEqual(result.errors, []);
+  assert.match(result.classDiagram, /Store "1" \*-- "1" Item/);
+});
+
+for (const method of ['Store()', 'void addBatch()']) {
+  test(`Java array insertion does not create owned elements in ${method}`, () => {
+    const result = analyzeJavaSources({ 'Store.java': `import java.util.List;
+      class Item {} class Store { List<Item[]> items;
+        ${method} { this.items.add(new Item[10]); }
+      }` });
+    assert.deepEqual(result.errors, []);
+    assert.doesNotMatch(result.classDiagram, /Store .*\*--.*Item/);
+    assert.match(result.classDiagram, /Store .*"\*" Item/);
+  });
+}
+
+test('Java array dimensions are evaluated without invoking element constructors', () => {
+  const result = analyzeJavaSources({ 'App.java': `
+    class Item { Item() { this.initialize(); } void initialize() {} }
+    class Counter { int size() { return 10; } }
+    class App { public static void main(String[] args) {
+      Counter counter = new Counter();
+      Item[] items = new Item[counter.size()];
+    } }` });
+  assert.deepEqual(result.errors, []);
+  assert.match(result.sequenceDiagram, /Main -> counter: size\(\)/);
+  assert.doesNotMatch(result.sequenceDiagram, /create items|initialize\(\)|participant items/);
+});
+
 test('Java resolves a qualified generic element without treating its package as the outer type', () => {
   assert.match(diagram('java.util.List<domain.Item>'), /Store "1" o-- "\*" Item/);
 });
