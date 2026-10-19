@@ -3802,6 +3802,7 @@ class Dog @pos(330, 110)
   test('dragging state-machine regular transitions keeps endpoints anchored', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'state');
+    await showCanvasForPointerWork(page);
     await page.uncheck('#uml-pg-snap');
     await selectEditMode(page, 'lines');
 
