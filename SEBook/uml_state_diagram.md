@@ -13,8 +13,11 @@ Paid --> Refunded : return_initiated
 Delivered --> [*]
 Cancelled --> [*]
 Refunded --> [*]
-callout left of edge 1 start : The filled circle marks where the lifecycle begins.
-callout right of element Delivered : A state describes a condition that holds during part of the object lifetime.
+callout left of edge 1 start : Initial marker: where the behavior starts
+callout right of text "Created" : State: a condition during an object lifetime
+callout right of text "payment_received" : Trigger: event that can start the transition
+callout right of edge 4 end : Transition: changing from one state to another
+callout right of edge 7 end : Final state: completion of this behavior
 @enduml'></div>
 
 # UML State Machine Diagrams
@@ -70,10 +73,11 @@ Transitions are labeled using the following syntax:
 [*] --> Locked
 Locked --> Unlocked : badgeRead [authorized] / releaseLock()
 Unlocked --> [*] : sessionEnded
-callout left of edge 1 start : The filled circle marks the initial pseudostate: where this region starts.
-callout right of text "[authorized]" : Test the guard when badgeRead is handled. A false guard prevents this transition.
-callout left of text "releaseLock()" : The effect runs when this transition is taken.
-callout right of edge 3 end : The bullseye means this region has completed.
+callout left of edge 1 start : Initial marker: where the behavior starts
+callout left of text "badgeRead" : Trigger: event that can start the transition
+callout right of text "[authorized]" : Guard: condition required when handling the event
+callout left of text "releaseLock()" : Effect: action performed during the transition
+callout right of edge 3 end : Final state: completion of this behavior
 @enduml'></div>
 
 ### 2.3 Internal Activities
@@ -99,8 +103,9 @@ state Processing {
   do / processData()
   exit / stopTimer()
 }
-callout left of text "entry / clearBuffers()" : Entry behavior runs whenever this state is entered.
-callout right of text "do / processData()" : The do activity can continue while the state is active; exiting interrupts it.
+callout left of text "entry / clearBuffers()" : Entry: action on entering the state
+callout right of text "do / processData()" : Do: ongoing activity, interrupted on exit
+callout right of text "exit / stopTimer()" : Exit: action on leaving the state
 @enduml'></div>
 
 Internal activities are particularly useful for modeling embedded systems, UI components, and any object that needs to perform setup/teardown when entering or leaving a state.
@@ -135,7 +140,9 @@ Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()
 CombatMode --> Idle : threatNeutralized / retractWeapons()
 CombatMode --> EmergencyPower : when(powerLevel &lt; 5%) / rerouteToLifeSupport()
 EmergencyPower --> [*] : manualOverride()
-callout left of text "[sysCheckOK]" : This guard must be true when threatDetected is handled.
+callout left of text "[sysCheckOK]" : Guard: condition required when handling the event
+callout right of text "when(powerLevel &lt; 5%)" : Change event: a condition becoming true
+callout left of text "deployUI()" : Effect: action performed during the transition
 @enduml'></div>
 
 ### Deconstructing the Model
@@ -158,6 +165,7 @@ The exosuit above introduces the syntax. Now let's see state machines applied to
 **Scenario:** A track player has distinct states that determine how it responds to the same button press. Pressing play does nothing when you are *already* playing — but it transitions correctly from `Paused` or `Idle`. This context-dependence is exactly what state machines model.
 
 <div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+layout square
 [*] --> Idle
 Idle --> Buffering : playTrack(trackId)
 Buffering --> Playing : bufferReady
@@ -166,7 +174,9 @@ Playing --> Paused : pauseButton
 Paused --> Playing : playButton
 Playing --> Buffering : skipTrack(nextId) / clearBuffer()
 Playing --> Idle : stopButton
-callout right of text "pauseButton" : The event triggers this transition only while its source state is active.
+callout right of text "pauseButton" : Trigger: event that can start the transition
+callout left of text "Playing" : State: a condition during an object lifetime
+callout left of text "loadError / showErrorMessage()" : Effect: action performed during the transition
 @enduml'></div>
 
 **Reading the diagram:**
@@ -192,7 +202,10 @@ Open --> Closed : closePR()
 ChangesRequested --> Closed : closePR()
 Merged --> [*]
 Closed --> [*]
-callout right of text "[ciPassed]" : Test this guard when mergePR occurs; passing checks alone does not trigger the transition.
+callout right of text "[ciPassed]" : Guard: checks required to pass when mergePR occurs
+callout left of text "reviewSubmitted" : Trigger: event that can start the transition
+callout right of text "closeHeadBranch()" : Effect: action performed during the transition
+callout right of edge 8 end : Final state: completion of this behavior
 @enduml'></div>
 
 **Reading the diagram:**
@@ -218,7 +231,10 @@ ReadyForPickup --> InTransit : driverPickedUp()
 InTransit --> Delivered : driverArrived() / notifyCustomer()
 Delivered --> [*]
 Cancelled --> [*]
-callout right of text "refundPayment()" : The effect after the slash runs when this transition is taken.
+callout right of text "refundPayment()" : Effect: action performed during the transition
+callout left of text "restaurantAccepts()" : Trigger: event that can start the transition
+callout left of text "InTransit" : State: a condition during an object lifetime
+callout right of edge 8 end : Final state: completion of this behavior
 @enduml'></div>
 
 **Reading the diagram:**

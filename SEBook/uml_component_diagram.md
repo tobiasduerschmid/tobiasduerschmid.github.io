@@ -26,8 +26,10 @@ wa_out --> gw_in : HTTPS
 gw_auth --> auth_in : gRPC
 gw_data --> ds_in : gRPC
 ds_out --> db_in : SQL
-callout top of element WebApp.wa_out : A square port identifies a specific interaction point on the component.
-callout bottom of text "HTTPS" : A connector label can name the protocol used for communication.
+callout top of text "WebApp" : Component: replaceable unit with defined services
+callout bottom of element WebApp.wa_out : Port: interaction point on a component
+callout top of text "HTTPS" : Protocol: rules for communication
+callout bottom of edge 1 middle : Connector: communication between components
 @enduml'></div>
 
 # UML Component Diagrams
@@ -71,7 +73,7 @@ In UML, a component is drawn as a rectangle with a small component icon (two sma
 component Frontend
 component Backend
 component Database
-callout right of element Backend : A component is a modular unit with specified interfaces.
+callout right of text "Backend" : Component: replaceable unit with defined services
 @enduml'></div>
 
 Examples of components in real systems:
@@ -96,8 +98,8 @@ component OrderService {
   require "IPayment" as r1
   require "IInventory" as r2
 }
-callout left of element OrderService.p1 : The ball marks a provided interface: a service this component offers.
-callout right of element OrderService.r1 : The socket marks a required interface: a service this component needs.
+callout left of element OrderService.p1 : Provided interface: services offered
+callout right of element OrderService.r1 : Required interface: services needed
 @enduml'></div>
 
 Reading this diagram: `OrderService` **provides** the `IOrderAPI` interface (other components can call it) and **requires** the `IPayment` and `IInventory` interfaces (it depends on payment and inventory services to function).
@@ -114,7 +116,7 @@ component PaymentService {
   portin "processPayment" as ps_in
   portout "bankAPI" as ps_out
 }
-callout left of element PaymentService.ps_in : A square on the boundary marks a port: a named interaction point.
+callout left of element PaymentService.ps_in : Port: interaction point on a component
 @enduml'></div>
 
 Reading this diagram: `PaymentService` has an incoming port `processPayment` (where other components send payment requests) and an outgoing port `bankAPI` (where it communicates with the external bank).
@@ -151,7 +153,7 @@ component CatalogService
 component OrderService
 component PaymentService
 component Database
-callout right of element OrderService : Each rectangle identifies a modular component; its internals are omitted.
+callout right of text "OrderService" : Component: replaceable unit with defined services
 @enduml'></div>
 
 ### Step 2: Add Ports and Connect Components
@@ -184,7 +186,9 @@ wa_ord --> os_in : REST
 os_pay --> ps_in : gRPC
 cs_db --> db_in1 : SQL
 os_db --> db_in2 : SQL
-callout bottom of element OrderService.os_pay : This port groups the interactions used to request payment.
+callout right of text "gRPC" : Protocol: rules for communication
+callout bottom of element OrderService.os_pay : Port: interaction point on a component
+callout top of text "WebApp" : Component: replaceable unit with defined services
 @enduml'></div>
 
 ### Reading the Complete Diagram
@@ -210,7 +214,7 @@ component PaymentGateway {
   provide "IPayment" as p1
 }
 r1 --> p1
-callout bottom of edge 1 middle : An assembly connector joins a required interface to a compatible provided interface.
+callout bottom of edge 1 middle : Assembly: connecting needed and offered services
 @enduml'></div>
 
 Reading this diagram: `ShoppingCart` requires the `IPayment` interface, and `PaymentGateway` provides it. The connector shows the dependency is satisfied---the shopping cart can use the payment gateway. If you wanted to swap in a different payment provider, you would only need to provide a component that satisfies the same `IPayment` interface.
@@ -257,7 +261,7 @@ component Logger
 component MetricsCollector
 OrderService ..> Logger : uses
 OrderService ..> MetricsCollector : reports to
-callout right of edge 1 middle : The dashed dependency points to a component whose services are used.
+callout right of edge 1 middle : Dependency: using services of another component
 @enduml'></div>
 
 Here, `OrderService` depends on `Logger` and `MetricsCollector` for cross-cutting concerns, but these are not core architectural connections---they are auxiliary dependencies.
@@ -297,7 +301,9 @@ wc_out --> gw_in : HTTPS
 gw_auth --> auth_in : gRPC
 gw_content --> cs_in : gRPC
 gw_rec --> re_in : gRPC
-callout top of element APIGateway.gw_in : A named port specifies where this component interacts with its environment.
+callout top of text "HTTPS" : Protocol: rules for communication
+callout bottom of element APIGateway.gw_in : Port: interaction point on a component
+callout top of text "WebClient" : Component: replaceable unit with defined services
 @enduml'></div>
 
 **Reading the diagram:**
@@ -336,7 +342,10 @@ app_out --> gw_in : HTTPS
 gw_orders --> os_in : REST
 os_db --> db_in : SQL
 os_req --> ps_prov
-callout top of element PaymentService : This replaceable component provides the IPayment contract.
+callout top of text "PaymentService" : Component: replaceable unit with defined services
+callout bottom of element APIGateway.gw_in : Port: interaction point on a component
+callout top of shape circle : Assembly: connecting needed and offered services
+callout bottom of text "HTTPS" : Protocol: rules for communication
 @enduml'></div>
 
 **Reading the diagram:**
@@ -374,7 +383,10 @@ gh_ev --> bs_in : webhook
 bs_art --> ar_in : push image
 bs_dep --> ds_in : trigger deploy
 BuildService ..> SlackNotifier : build status
-callout bottom of text "build status" : A dashed dependency records use of the notification component.
+callout top of text "BuildService" : Component: replaceable unit with defined services
+callout bottom of element BuildService.bs_in : Port: interaction point on a component
+callout right of text "build status" : Dependency: using another component for notifications
+callout top of text "push image" : Connector label: interaction carried over the connection
 @enduml'></div>
 
 **Reading the diagram:**
