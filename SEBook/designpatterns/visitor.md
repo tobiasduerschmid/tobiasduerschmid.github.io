@@ -107,6 +107,40 @@ callout top of text "Node" : Element: every node accepts visitors
 callout bottom of text "AssignmentNode" : accept() calls visitAssignment(this)
 @enduml'></div>
 
+## Sequence Diagram
+
+This sequence traces double dispatch at runtime. The client calls only `accept()`, yet the method that finally runs depends on both the node and the visitor. The last call reuses the `AssignmentNode` with a `CodeGeneratingVisitor` from the example diagram, so the same node takes part in a second operation without changing.
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant client: Demo
+participant assignment: AssignmentNode
+participant reference: VariableRefNode
+participant checker: TypeCheckingVisitor
+participant generator: CodeGeneratingVisitor
+client -> assignment: accept(checker)
+activate assignment
+assignment -> checker: visitAssignment(this)
+activate checker
+deactivate checker
+deactivate assignment
+client -> reference: accept(checker)
+activate reference
+reference -> checker: visitVariableRef(this)
+activate checker
+deactivate checker
+deactivate reference
+client -> assignment: accept(generator)
+activate assignment
+assignment -> generator: visitAssignment(this)
+activate generator
+deactivate generator
+deactivate assignment
+callout right of text "accept(checker)" occurrence 1 : First dispatch: the runtime node type selects which accept() runs
+callout right of text "visitAssignment(this)" occurrence 1 : Second dispatch: the node names its own type, and the visitor type selects the algorithm
+callout right of text "visitVariableRef(this)" : A different node calls a different visit method, with no type checks
+callout right of text "accept(generator)" : Same node, other visitor: a new operation without editing AssignmentNode
+@enduml'></div>
+
 ## Code Example
 
 This example demonstrates dispatch over two node types using a flat collection. Its visitor prints which type-checking action would run; it does not implement a type system or a complete AST traversal. Each node accepts a visitor and calls the overload or method that matches its concrete type. The Java snippet uses `List.of`, available in Java 9 and later.

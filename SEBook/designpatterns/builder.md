@@ -82,6 +82,50 @@ callout bottom of text "VacationPlanner" : Product: the complex object being bui
 callout right of text "get_vacation_planner(): VacationPlanner" : Result: fetched once all steps ran
 @enduml'></div>
 
+## Sequence Diagram
+
+This sequence shows who controls what during construction. The director fixes the order of the steps, the concrete builder decides what each step adds to the product, and the client takes the finished product from the builder.
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant client: Demo
+participant director: Director
+participant builder: PatternslandBuilder
+participant planner: VacationPlanner
+client -> director: construct_planner()
+activate director
+director -> builder: build_day("August 10")
+activate builder
+builder -> planner: add_item(...)
+activate planner
+deactivate planner
+deactivate builder
+director -> builder: add_hotel("August 10", "Grand Facadian")
+activate builder
+builder -> planner: add_item(...)
+activate planner
+deactivate planner
+deactivate builder
+director -> builder: add_tickets("Patterns on Ice")
+activate builder
+builder -> planner: add_item(...)
+activate planner
+deactivate planner
+deactivate builder
+deactivate director
+client -> builder: get_vacation_planner()
+activate builder
+builder --> client: planner
+deactivate builder
+client -> planner: show_plan()
+activate planner
+deactivate planner
+callout right of text "construct_planner()" : The client asks the director to run the construction
+callout right of text "build_day(\"August 10\")" : The director calls each step through the VacationBuilder interface, in its own order
+callout right of text "add_item(...)" occurrence 1 : The concrete builder decides how a step changes the product
+callout right of text "get_vacation_planner()" : The client collects the product from the builder, not the director
+callout right of text "show_plan()" : Only the finished product is used
+@enduml'></div>
+
 ## Code Example
 
 This example builds a vacation plan through one specific construction sequence. The director controls the steps; the concrete builder controls the internal representation of the finished plan. A second builder could count hotel nights and tickets instead of recording itinerary text; the director would issue exactly the same requests. Its result might be a booking summary rather than a `VacationPlanner`, so result retrieval belongs to the concrete builder, not necessarily to the shared construction interface. Different directors can also reuse these steps for different itineraries.
