@@ -324,7 +324,7 @@ steps:
 
       ### The Four UML Visibility Levels
 
-      UML uses symbols to show *who* can access each attribute or method (source: *UML@Classroom*, Seidl et al., Table 4.1):
+      UML uses symbols to show *who* can access each attribute or method:
 
       | UML Symbol | Meaning | Access Scope |
       |---|---|---|
