@@ -1,9 +1,9 @@
 # Live UML from source
 
-The class and sequence chapters embed small Python/Java/C++ exercises with
+The class and sequence chapters embed small Python/Java/C++/TypeScript exercises with
 `{% include uml-code-lab.html example="visibility" %}`. Set `uml_code_labs: true`
 in the chapter front matter. Examples live in `_data/uml_code_labs.yml`:
-`title`, `type` (`class` or `sequence`), `explanation`, and `python`/`java`/`cpp`
+`title`, `type` (`class` or `sequence`), `explanation`, and `python`/`java`/`cpp`/`typescript`
 objects containing `code` and one brief `task`.
 `_data/uml_code_languages.yml` defines the ordered language options, labels,
 and source filenames for both the interactive controls and static fallbacks.
@@ -21,11 +21,15 @@ The `message_receivers` lab distinguishes variable names from object identity:
 changing a reference's initializer moves a call between two existing objects,
 while the call site and number of instances stay the same.
 Named receivers take precedence over class-based inference; self-calls stay
-on the current object's lifeline in the shared analyzers. Java copies known
+on the current object's lifeline in the shared analyzers. Java and TypeScript copy known
 object identity through simple reference declarations and assignments, with
 bindings scoped to each followed method.
 Diagram text alternatives state zero-or-more bounds explicitly and keep
 separate conditional frames distinct even when their guards are identical.
+For associations and shared aggregation, a field's multiplicity describes
+targets per source object. The reverse end stays unspecified: a nullable
+`Roster*` gives each student zero or one roster, but multiple students can
+reference that same roster. No one-student constraint is inferred.
 
 Keep the counterexample and expected result in the collapsed explanation.
 The source analyzer shows possible paths, not evaluated branch outcomes or
@@ -58,11 +62,15 @@ unrolled loop counts; those predictions require reasoning about the code.
   through a visually hidden status. Python is the default; drafts exist only
   in memory and switching languages preserves each draft.
 - `js/uml-code-lab-editor.js` enhances the source field with Monaco's Python,
-  Java and C++ grammars, adapting font size and theme to the chapter, with pure white
+  Java, C++ and TypeScript grammars, adapting font size and theme to the chapter, with pure white
   and pure black editor backgrounds. The shared
   `js/monaco-loader.js` loads the locally vendored editor for both tutorials and
   chapters. Chapter editors await `loadLanguages` so lazy tokenizers are ready
-  before the first edit; each grammar is warmed once per page. Escape leaves
+  before the first edit; each grammar is warmed once per page. Its height
+  follows its content, including wrapped lines on
+  narrow screens. TypeScript models are treated as separate modules so class
+  and variable names in different labs do not collide; semantic checking stays
+  enabled. Escape leaves
   the editor using `js/monaco-focus-exit.js`. After editing or switching
   languages, the public line colorizer refreshes visible model tokens without
   waiting for Monaco's idle background pass. Scrolling extends that refresh
@@ -70,7 +78,7 @@ unrolled loop counts; those predictions require reasoning about the code.
   textarea remains available if Monaco fails to load. Source drafts are not saved.
 - `js/tutorial-code.js` continues to own tutorial file models, progress, layout
   preferences, diagram colors and zoom. Its existing JavaScript/TypeScript UML
-  support remains available; chapter controls expose Python, Java and C++.
+  support uses the same local compiler as the chapter controls.
 - `_includes/uml-code-lab.html` owns semantic markup and escaped source
   fallbacks. `css/uml-code-lab.css` owns presentation in light, dark, mobile and
   print. Print uses the current draft and only a diagram matching that draft.
@@ -97,7 +105,11 @@ client.dispose();
 
 `analyze` returns `{ classDiagram, sequenceDiagram, errors }`. Analyzer errors
 are data; loading/worker failures fall back to the local analyzer and reject
-if that also fails. Rendering returns false for stale or disposed work.
+if that also fails. Analysis and rendering have a ten-second worker deadline.
+A timeout terminates the worker, rejects the stalled operation, and starts
+the newest queued edits in a fresh worker. Timed-out work never falls back
+to the main thread, so it cannot freeze the editor. Rendering returns false
+for stale or disposed work.
 `UMLLive.isSuperseded(error)` identifies replaced queued analysis requests.
 `UMLLive.withClassLayout(syntax, preference)` replaces class layout directives.
 Tutorial hosts may supply analyzer paths and `loadTypeScript` to `createClient`.
@@ -152,8 +164,9 @@ following distinctions while working only with supplied source files:
   cleanup paths, including `try`/`else`/`finally`. The call walk is still bounded:
   it does not evaluate arbitrary predicates, unroll loops, model every exception
   type or perform whole-program dynamic dispatch. A diagram shows possible
-  source paths, not an execution trace. Python limits sequence expansion to
-  2,000 statement visits. Exceeding that limit returns an explanatory `errors`
+  source paths, not an execution trace. Python, Java and JavaScript/TypeScript
+  limit sequence expansion to 2,000 statement visits; C++ allows 5,000.
+  Exceeding the limit returns an explanatory `errors`
   entry and an empty `sequenceDiagram`, while retaining the class diagram;
   a truncated sequence is not presented as a complete result.
 
@@ -161,6 +174,34 @@ Grade the behavior contracts and structural constraints stated in an exercise.
 Do not use exact inferred diagram text as the sole correctness oracle. Check
 effects, ordering, multiplicities, and forbidden interactions while accepting
 equivalent internal designs; use a short explanation for modeling choices.
+
+## TypeScript inference
+
+`language: 'typescript'` selects the existing JavaScript/TypeScript analyzer,
+`js/uml-analyzer-js.js`, through the shared client. Both the worker and its
+local fallback load the pinned TypeScript 5.9.3 compiler from
+`js/vendor/typescript/5.9.3/`; inference does not depend on a CDN. Parsing uses
+the compiler's AST and supplied-file symbol resolution. Imports never fetch
+files, and source code never executes. Syntax diagnostics include the file,
+line and column, allowing an incomplete edit to recover on the next update.
+This is syntax analysis, not a full TypeScript type check.
+
+Class inference recognizes classes, interfaces, enums, visibility, inheritance,
+constructor parameter properties, typed fields, nullable and union types,
+collections, relative imports and type aliases. Stored scalar references retain
+their target multiplicity, while the unknown inverse end stays unspecified.
+
+Sequence inference starts at top-level statements, follows constructors and
+methods to a bounded depth, and preserves named receivers, simple aliases,
+typed arguments, self-calls, replies and control-flow fragments. Local bindings
+stay scoped. Branches start with independent bindings; a join preserves object
+identity only when every considered path agrees. Uncalled callbacks are not
+executed, and `finally` calls follow the try/catch alternatives.
+
+The sequence is a source sketch. Callback invocation, overload resolution,
+dynamic dispatch, complex expressions, exact short-circuit behavior, and
+path-sensitive exits across nested control flow are not fully modeled.
+Use small examples and review the inferred interactions before grading them.
 
 ## C++ inference
 
@@ -212,6 +253,6 @@ Suggested edits live in `tests/helpers/uml-lab-edits.js`, shared with browser
 checks so both exercise the same chapter tasks.
 The browser suite exercises edits, language and widget isolation, reset, no-worker
 fallback, empty-source recovery, C++ header/source tutorial integration,
-syntax highlighting, accessibility, small screens and print. Compile C++
+syntax highlighting in all four languages, accessibility, small screens and print. Compile C++
 starter code and suggested edits with `clang++ -std=c++17 -fsyntax-only` when
 changing the examples; the analyzer is not a syntax validator.

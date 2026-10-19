@@ -825,7 +825,8 @@ html.dark-mode a:visited {
 	color: #FFD100;
 }
 
-html.dark-mode a:hover {
+html.dark-mode a:hover,
+html.dark-mode a:focus {
 	color: #FFD100;
 	background-color: #005587;
 }

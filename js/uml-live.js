@@ -68,12 +68,29 @@
       stop(error);
     }
 
+    function timeout() {
+      const error = Object.assign(new Error('UML generation timed out. Edit the code or try again.'), { umlTimeout: true });
+      // Preserve only the newest queued edits; never repeat the stalled input
+      // on the main thread, where it would freeze the editor as well.
+      const queued = Object.values(slots).map(slot => {
+        const request = slot.queued;
+        slot.queued = null;
+        return { slot, request };
+      });
+      stop(error);
+      for (const { slot, request } of queued) {
+        if (request) dispatch(slot, request);
+      }
+    }
+
     function ensureWorker() {
       if (disposed) throw supersededError();
       if (unavailable) throw new Error('UML worker is unavailable.');
       if (worker) return worker;
-      worker = new Worker(assetURL('uml-worker.js'));
+      const activeWorker = new Worker(assetURL('uml-worker.js'));
+      worker = activeWorker;
       worker.onmessage = event => {
+        if (worker !== activeWorker) return;
         const message = event.data;
         const slot = slots[replies[message.type]];
         if (!slot || !slot.active || slot.active.id !== message.id) return;
@@ -91,8 +108,12 @@
         slot.queued = null;
         if (next) dispatch(slot, next);
       };
-      worker.onerror = event => fail(new Error(event.message || 'UML worker failed.'));
-      worker.onmessageerror = () => fail(new Error('Could not read the UML worker response.'));
+      worker.onerror = event => {
+        if (worker === activeWorker) fail(new Error(event.message || 'UML worker failed.'));
+      };
+      worker.onmessageerror = () => {
+        if (worker === activeWorker) fail(new Error('Could not read the UML worker response.'));
+      };
       return worker;
     }
 
@@ -101,7 +122,7 @@
         const activeWorker = ensureWorker();
         request.id = ++nextId;
         slot.active = request;
-        request.timer = setTimeout(() => fail(new Error('UML generation timed out.')), 60000);
+        request.timer = setTimeout(timeout, 10000);
         activeWorker.postMessage({ ...request.payload, id: request.id });
       } catch (error) {
         fail(error);
@@ -188,20 +209,24 @@
 
     async function analyzeOnMainThread({ language, sources, options }) {
       const analyzer = analyzers[language];
-      if (language === 'js' && !global.ts) await settings.loadTypeScript();
+      if (language === 'js' && !global.ts) {
+        if (settings.loadTypeScript) await settings.loadTypeScript();
+        else await loadScript(assetURL('vendor/typescript/5.9.3/typescript.min.js'));
+      }
       if (!global[analyzer.name]) await loadScript(settings[language + 'AnalyzerPath'] || assetURL(analyzer.file));
       if (disposed) throw supersededError();
       return global[analyzer.name](sources, language === 'js' ? global.ts : options || {});
     }
 
     async function analyze(request) {
+      if (request.language === 'typescript') request = { ...request, language: 'js' };
       if (!Object.hasOwn(analyzers, request.language)) throw new Error('Unsupported UML source language.');
       if (disposed) throw supersededError();
       try {
         return await queue.submit('analyze', { type: 'analyze', lang: request.language,
           sources: request.sources, options: request.options || {} });
       } catch (error) {
-        if (error.umlSuperseded || disposed) throw error;
+        if (error.umlSuperseded || error.umlTimeout || disposed) throw error;
         return analyzeOnMainThread(request);
       }
     }
@@ -221,6 +246,7 @@
             syntax, ...snapshotContainer(surface), measurements: measurer.measure(type, syntax) });
         } catch (error) {
           if (error.umlSuperseded || !current()) return false;
+          if (error.umlTimeout) throw error;
           renderer.render(surface, syntax);
           svg = surface.innerHTML;
         }

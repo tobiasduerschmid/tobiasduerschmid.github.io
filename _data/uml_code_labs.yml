@@ -37,6 +37,17 @@ visibility:
           }
       };
 
+  typescript:
+    task: "For an existing Student, would making only displayName() private remove public read access, write access, both, or neither? Predict, then change that method."
+    code: |
+      class Student {
+          private name: string = "Ada";
+
+          public displayName(): string {
+              return this.name;
+          }
+      }
+
 inheritance:
   title: Inheritance through a parent
   type: class
@@ -76,6 +87,17 @@ inheritance:
 
       class Puppy : public Animal { };
 
+  typescript:
+    task: "If Puppy inherits from Dog instead of Animal directly, can a Puppy still speak()? Predict the direct inheritance links, then change its parent."
+    code: |
+      class Animal {
+          speak(): void { }
+      }
+
+      class Dog extends Animal { }
+
+      class Puppy extends Animal { }
+
 dependency:
   title: Keeping a reference
   type: class
@@ -114,6 +136,19 @@ dependency:
               this->roster = &roster;
           }
       };
+
+  typescript:
+    task: "After removing the roster field and its assignment, will Student be independent of Roster? Predict, then edit. What further change removes the coupling without deleting either class?"
+    code: |
+      class Roster { }
+
+      class Student {
+          private roster: Roster | null = null;
+
+          keepRoster(roster: Roster): void {
+              this.roster = roster;
+          }
+      }
 
 collection_multiplicity:
   title: One reference or a collection
@@ -155,6 +190,19 @@ collection_multiplicity:
       public:
           Team(Member& members) : members(members) { }
       };
+
+  typescript:
+    task: "A team must have at least one member. Would replacing both members annotations with Member[] enforce that rule? Predict the lower bound and look for a counterexample, then edit."
+    code: |
+      class Member { }
+
+      class Team {
+          members: Member;
+
+          constructor(members: Member) {
+              this.members = members;
+          }
+      }
 
 message_order:
   title: Calls determine message order
@@ -213,6 +261,21 @@ message_order:
           payment.refund();
       }
 
+  typescript:
+    task: "After swapping the two calls at the bottom, what will the full message order be, including calls inside methods? Predict who sends capture(), then make the swap."
+    code: |
+      class Payment {
+          capture(): void { }
+          authorize(): void {
+              this.capture();
+          }
+          refund(): void { }
+      }
+
+      const payment = new Payment();
+      payment.authorize();
+      payment.refund();
+
 self_calls:
   title: Calling another method
   type: sequence
@@ -269,6 +332,21 @@ self_calls:
           checkout.submit();
       }
 
+  typescript:
+    task: "If submit() calls save(), which calls validate(), predict the completion order and the number of Checkout lifelines. Then rearrange the calls without creating an object."
+    code: |
+      class Checkout {
+          validate(): void { }
+          save(): void { }
+
+          submit(): void {
+              this.validate();
+          }
+      }
+
+      const checkout = new Checkout();
+      checkout.submit();
+
 message_receivers:
   title: Following a reference
   type: sequence
@@ -318,6 +396,20 @@ message_receivers:
           Sensor& selected = indoor;
           int reading = selected.read();
       }
+
+  typescript:
+    task: "Change selected = indoor to selected = outdoor, leaving selected.read() unchanged. Predict the number of Sensor lifelines and which object sends the reply before editing."
+    code: |
+      class Sensor {
+          read(): number {
+              return 25;
+          }
+      }
+
+      const indoor = new Sensor();
+      const outdoor = new Sensor();
+      const selected = indoor;
+      const reading = selected.read();
 
 alternatives:
   title: Alternatives are possible paths
@@ -395,6 +487,28 @@ alternatives:
           checkout.pay(payment, true);
       }
 
+  typescript:
+    task: "Replace else with a separate if (accepted). Will exactly one payment call still run for every input? Predict the calls for true and false before editing."
+    code: |
+      class Payment {
+          approve(): void { }
+          decline(): void { }
+      }
+
+      class Checkout {
+          pay(payment: Payment, accepted: boolean): void {
+              if (accepted) {
+                  payment.approve();
+              } else {
+                  payment.decline();
+              }
+          }
+      }
+
+      const payment = new Payment();
+      const checkout = new Checkout();
+      checkout.pay(payment, true);
+
 loop_boundary:
   title: The loop boundary matters
   type: sequence
@@ -447,3 +561,17 @@ loop_boundary:
           }
           receipt.finish();
       }
+
+  typescript:
+    task: "If finish() moves inside the loop after addItem(), how do its call counts change for zero items and two items? Predict both cases, then move it."
+    code: |
+      class Receipt {
+          addItem(item: string): void { }
+          finish(): void { }
+      }
+
+      const receipt = new Receipt();
+      for (const item of ["book", "pen"]) {
+          receipt.addItem(item);
+      }
+      receipt.finish();

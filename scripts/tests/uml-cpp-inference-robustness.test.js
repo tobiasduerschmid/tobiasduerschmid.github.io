@@ -4,6 +4,23 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { analyzeCppSources } = require('../../js/uml-analyzer-cpp.js');
 
+test('C++ reports its sequence limit instead of silently returning a truncated interaction', () => {
+  const repeated = method => `this->${method}();`.repeat(20);
+  const result = analyzeCppSources({ 'main.cpp': `
+    class Fanout {
+    public:
+      void run() { ${repeated('middle')} }
+      void middle() { ${repeated('leaf')} }
+      void leaf() { ${repeated('ping')} }
+      void ping() {}
+    };
+    int main() { Fanout fanout; fanout.run(); }
+  ` });
+  assert.ok(result.errors.some(error => /sequence inference limit/i.test(error)));
+  assert.equal(result.sequenceDiagram, '');
+  assert.match(result.classDiagram, /class Fanout/);
+});
+
 test('C++ resolves an alias in its declaration namespace when the use site shadows its target', () => {
   const result = analyzeCppSources({ 'main.cpp': `
     namespace catalog { struct Item {}; using Entry = Item; }
@@ -21,7 +38,7 @@ test('C++ alias chains retain declaration scopes and use-site reference qualifie
     struct Basket { const checkout::Purchase& item; };
   ` });
   assert.deepEqual(result.errors, []);
-  assert.match(result.classDiagram, /Basket "1" --> "1" catalog__Item/);
+  assert.match(result.classDiagram, /Basket --> "1" catalog__Item/);
 });
 
 test('C++ optional and smart-pointer wrappers preserve their collection element multiplicity', () => {
@@ -30,7 +47,7 @@ test('C++ optional and smart-pointer wrappers preserve their collection element 
       struct Item {}; struct Basket { std::${wrapper}<std::vector<Item>> items; };
     ` });
     assert.deepEqual(result.errors, []);
-    assert.match(result.classDiagram, /Basket "1" (?:\*--|o--|-->) "\*" Item/, wrapper);
+    assert.match(result.classDiagram, /Basket(?: "1" \*--| o--| -->) "\*" Item/, wrapper);
     assert.doesNotMatch(result.classDiagram, /Basket .*"0\.\.1" Item/, wrapper);
   }
 });
@@ -39,7 +56,7 @@ test('C++ owning a wrapper does not imply owning its borrowed pointees', () => {
   for (const type of ['std::optional<Item*>', 'std::unique_ptr<std::vector<Item*>>', 'std::shared_ptr<std::vector<Item*>>']) {
     const result = analyzeCppSources({ 'main.cpp': `struct Item {}; struct Basket { ${type} items; };` });
     assert.deepEqual(result.errors, []);
-    assert.match(result.classDiagram, /Basket "1" --> "(?:0\.\.1|\*)" Item/, type);
+    assert.match(result.classDiagram, /Basket --> "(?:0\.\.1|\*)" Item/, type);
     assert.doesNotMatch(result.classDiagram, /Basket .*\*--/, type);
   }
 });
@@ -53,5 +70,5 @@ test('C++ an optional fixed-size collection can contain zero elements when absen
 test('C++ borrowing a nullable owning pointer preserves the pointee cardinality', () => {
   const result = analyzeCppSources({ 'main.cpp': 'struct Item {}; struct Basket { std::reference_wrapper<std::unique_ptr<Item>> item; };' });
   assert.deepEqual(result.errors, []);
-  assert.match(result.classDiagram, /Basket "1" --> "0\.\.1" Item/);
+  assert.match(result.classDiagram, /Basket --> "0\.\.1" Item/);
 });

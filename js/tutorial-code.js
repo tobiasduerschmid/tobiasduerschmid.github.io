@@ -36,7 +36,6 @@
     XTERM_FIT: 'https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.min.js',
     MARKED: 'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js',
     WEBCONTAINER: '/js/vendor/webcontainer/api-1.6.4.js',
-    TYPESCRIPT: 'https://cdn.jsdelivr.net/npm/typescript@5.9.3/lib/typescript.min.js',
   };
 
   var CDN_INTEGRITY = Object.freeze({
@@ -48,8 +47,6 @@
       'sha384-6M2z0GY6uKJvy5qdiP4Rg/fF4YNh3IF7X9j/iEEiFk707OW9nVCUNdOun47YwDyp',
     'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js':
       'sha384-odPBjvtXVM/5hOYIr3A1dB+flh0c3wAT3bSesIOqEGmyUA4JoKf/YTWy0XKOYAY7',
-    'https://cdn.jsdelivr.net/npm/typescript@5.9.3/lib/typescript.min.js':
-      'sha384-LDb+pvmOeRIyOeeIuwLFSYWg1ONahfOXlQuZxYV+f7HeTMjyJN3TK7qV+WD9lZdj'
   });
 
   function crossOriginIntegrity(url) {
@@ -9449,8 +9446,7 @@
       this._umlClient = window.UMLLive.createClient({
         pythonAnalyzerPath: this.config.pythonJSAnalyzerPath,
         javaAnalyzerPath: this.config.javaAnalyzerPath,
-        jsAnalyzerPath: this.config.jsAnalyzerPath,
-        loadTypeScript: function () { return loadScript(CDN.TYPESCRIPT); }
+        jsAnalyzerPath: this.config.jsAnalyzerPath
       });
     }
     return this._umlClient;

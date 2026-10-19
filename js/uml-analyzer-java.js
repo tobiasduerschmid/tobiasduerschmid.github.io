@@ -54,8 +54,14 @@
 
     // Extract sequence diagram
     var seqGen = new JavaSequenceDiagramGenerator(parsedFiles, extractor, allTypeNames, errors);
-    seqGen.generate();
-    var sequenceDiagram = seqGen.generatePlantUML();
+    var sequenceDiagram = '';
+    try {
+      seqGen.generate();
+      sequenceDiagram = seqGen.generatePlantUML();
+    } catch (error) {
+      if (!(error instanceof SequenceLimitError)) throw error;
+      errors.push(error.message);
+    }
 
     return {
       classDiagram: classDiagram,
@@ -420,6 +426,7 @@
       var params = [];
       if (!consume('punct', '(')) return params;
       while (pos < tokens.length && !at('punct', ')')) {
+        var start = pos;
         // Skip annotations on params
         while (at('annotation')) advance();
         // Skip 'final'
@@ -429,10 +436,18 @@
         if (peek() && peek().type === 'ident') {
           pName = advance().value;
         }
+        // Java permits array dimensions on the parameter's declarator too.
+        while (at('punct', '[')) {
+          advance();
+          consume('punct', ']');
+          pType += '[]';
+        }
         if (pType) {
           params.push({ name: pName, type: pType });
         }
         consume('punct', ',');
+        // Incomplete edits must consume a token instead of retrying it forever.
+        if (pos === start) advance();
       }
       consume('punct', ')');
       return params;
@@ -483,6 +498,7 @@
       var constants = [];
       while (pos < tokens.length) {
         if (at('punct', ';') || at('punct', '}')) break;
+        var start = pos;
         if (peek() && peek().type === 'ident') {
           constants.push(advance().value);
           // Skip constructor args if present
@@ -499,6 +515,7 @@
           if (at('punct', '{')) parseBlock();
         }
         consume('punct', ',');
+        if (pos === start) advance();
       }
       consume('punct', ';');
       return constants;
@@ -1306,7 +1323,9 @@
       const arrows = { composition: '*--', aggregation: 'o--', association: '-->' };
       for (const edge of cls.relationships) {
         const repeated = cls.relationships.filter(other => other.target === edge.target).length > 1;
-        lines.push(cls.name + ' "1" ' + arrows[edge.kind] + ' "' + edge.multiplicity + '" ' +
+        // Shared references do not constrain how many owners can use the target.
+        const ownerMultiplicity = edge.kind === 'composition' ? ' "1"' : '';
+        lines.push(cls.name + ownerMultiplicity + ' ' + arrows[edge.kind] + ' "' + edge.multiplicity + '" ' +
           edge.target + (repeated ? ' : ' + edge.role : ''));
       }
       for (var d = 0; d < cls.dependencies.length; d++) {
@@ -1344,6 +1363,13 @@
    * =================================================================== */
 
   var SEQ_MAX_DEPTH = 3;
+
+  class SequenceLimitError extends Error {
+    constructor() {
+      super('Java sequence inference limit reached; simplify the example to inspect its interactions.');
+      this.name = 'SequenceLimitError';
+    }
+  }
 
   function JavaSequenceDiagramGenerator(parsedFiles, extractor, allTypeNames, errors) {
     this.parsedFiles  = parsedFiles;
@@ -1397,6 +1423,7 @@
   /* ── Public entry point ────────────────────────────────────── */
 
   JavaSequenceDiagramGenerator.prototype.generate = function () {
+    this._statementVisits = 0;
     var mainBody = this._findMain();
     if (!mainBody || mainBody.length === 0) return;
 
@@ -1442,11 +1469,14 @@
     var i = 0;
     while (i < tokens.length) {
       var result = this._processTokenStmt(tokens, i, caller, depth);
-      i = result;
+      // A standalone brace or partial statement can end at this very token.
+      // Consume it rather than retrying the same statement indefinitely.
+      i = Math.max(i + 1, result);
     }
   };
 
   JavaSequenceDiagramGenerator.prototype._processTokenStmt = function (tokens, i, caller, depth) {
+    if (++this._statementVisits > 2000) throw new SequenceLimitError();
     if (i >= tokens.length) return tokens.length;
     var tok = tokens[i];
 

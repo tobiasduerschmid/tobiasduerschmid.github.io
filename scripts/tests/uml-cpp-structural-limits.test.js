@@ -14,12 +14,31 @@ function relationships(diagram, source) {
   return diagram.split('\n').filter(line => line.startsWith(source + ' ') && /(?:-->|\*--|o--)/.test(line));
 }
 
+test('C++ students may share a roster without an inferred one-student restriction', () => {
+  const { classDiagram } = infer(`
+    class Roster {};
+    class Student {
+      Roster* roster = nullptr;
+    public:
+      void keepRoster(Roster* roster) { this->roster = roster; }
+    };
+    int main() {
+      Roster roster;
+      Student first, second;
+      first.keepRoster(&roster);
+      second.keepRoster(&roster);
+    }
+  `);
+
+  assert.deepEqual(relationships(classDiagram, 'Student'), ['Student --> "0..1" Roster']);
+});
+
 test('C++ retains distinct fields with the same relationship target and cardinality', () => {
   const { classDiagram } = infer('struct Person {}; struct Team { Person* manager; Person* deputy; };');
 
   assert.deepEqual(new Set(relationships(classDiagram, 'Team')), new Set([
-    'Team "1" --> "0..1" Person : manager',
-    'Team "1" --> "0..1" Person : deputy'
+    'Team --> "0..1" Person : manager',
+    'Team --> "0..1" Person : deputy'
   ]));
 });
 
@@ -31,7 +50,7 @@ test('C++ repeated targets retain each field role and its own relationship kind 
 
   assert.deepEqual(new Set(relationships(classDiagram, 'Team')), new Set([
     'Team "1" *-- "1" Person : leader',
-    'Team "1" --> "0..1" Person : deputy',
+    'Team --> "0..1" Person : deputy',
     'Team "1" *-- "*" Person : members'
   ]));
 });
@@ -50,7 +69,7 @@ test('C++ hiding multiplicity still distinguishes repeated field roles', () => {
 test('C++ leaves the compact unambiguous relationship notation unchanged', () => {
   const { classDiagram } = infer('struct Person {}; struct Team { Person* manager; };');
 
-  assert.deepEqual(relationships(classDiagram, 'Team'), ['Team "1" --> "0..1" Person']);
+  assert.deepEqual(relationships(classDiagram, 'Team'), ['Team --> "0..1" Person']);
 });
 
 test('C++ inherited field receivers use the field declaration namespace despite a shadowing child type', () => {

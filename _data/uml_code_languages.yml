@@ -7,3 +7,6 @@
 - id: cpp
   label: C++
   filename: example.cpp
+- id: typescript
+  label: TypeScript
+  filename: example.ts

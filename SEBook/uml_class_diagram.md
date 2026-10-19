@@ -4,6 +4,9 @@ layout: sebook
 uml_code_labs: true
 ---
 
+> **Want to practice?** Write code that matches target diagrams in our interactive tutorials: [UML Class Diagrams in Python](/SEBook/tools/uml-class-diagram-python.html) and [UML Class Diagrams in Java](/SEBook/tools/java-tutorial.html).
+{: id="7-interactive-tutorials"}
+
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Billable {
   + processPayment(): bool
@@ -77,7 +80,7 @@ class User {
 }
 @enduml'></div>
 
-Edit Python, Java, or C++ below to update the diagram. The code is analyzed locally without execution; edits are not saved.
+Edit the code below to update the diagram. The code is analyzed locally without execution; edits are not saved.
 
 {% include uml-code-lab.html example="visibility" %}
 
@@ -178,7 +181,7 @@ Student "*" -- "1..*" Course : enrolled in
 
 #### Multiplicities
 
-Along association lines, we use numbers to define *how many* objects are involved. Always show multiplicity on **both** ends of an association.
+Along association lines, we use numbers to define *how many* objects are involved. Show multiplicity on **both** ends when the design defines both constraints. If code only establishes one end, leave the other unspecified rather than assuming `1`.
 
 | Notation | Meaning |
 |----------|---------|
@@ -1001,10 +1004,3 @@ Test your knowledge with these retrieval practice exercises. These diagrams are 
 {% include quiz.html id="uml_class_diagram_examples" %}
 
 *Pedagogical Tip: If you find these challenging, it's a good sign! Effortful retrieval is exactly what builds durable mental models. Try coming back to these tomorrow to benefit from [spacing and interleaving](/blog/evidence-based-study-tips-for-college-students/).*
-
-## 7. Interactive Tutorials
-
-Master UML class diagrams by writing code that matches target diagrams in our interactive tutorials:
-
-* **[UML Class Diagrams in Python](/SEBook/tools/uml-class-diagram-python.html)**
-* **[UML Class Diagrams in Java](/SEBook/tools/java-tutorial.html)**

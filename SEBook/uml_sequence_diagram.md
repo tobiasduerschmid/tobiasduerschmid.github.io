@@ -3,6 +3,10 @@ title: "UML Sequence Diagrams"
 layout: sebook
 uml_code_labs: true
 ---
+
+> **Want to practice?** Write code that matches target diagrams in our interactive tutorial: [UML Sequence Diagrams in Python](/SEBook/tools/uml-sequence-diagram-python.html).
+{: #interactive-tutorials}
+
 # Unlocking System Behavior with UML Sequence Diagrams
 
 ## Introduction: The "Who, What, and When" of Systems
@@ -60,7 +64,7 @@ deactivate atm
 
 **Notice the flow of time:** Message 1 happens first, then 2, 3, and 4. The vertical dimension is strictly used to represent the passage of time.
 
-Edit Python, Java, or C++ below to update the diagram. It sketches possible calls from source without running the code; edits are not saved.
+Edit the code below to update the diagram. It sketches possible calls from source without running the code; edits are not saved.
 
 {% include uml-code-lab.html example="message_order" %}
 
@@ -1037,9 +1041,3 @@ Test your knowledge with these retrieval practice exercises. These diagrams are 
 {% include quiz.html id="uml_sequence_diagram_examples" %}
 
 *Pedagogical Tip: If you find these challenging, it's a good sign! Effortful retrieval is exactly what builds durable mental models. Try coming back to these tomorrow to benefit from [spacing and interleaving](/blog/evidence-based-study-tips-for-college-students/).*
-
-## Interactive Tutorials
-
-Master UML sequence diagrams by writing code that matches target diagrams in our interactive tutorials:
-
-* **[UML Sequence Diagrams in Python](/SEBook/tools/uml-sequence-diagram-python.html)**

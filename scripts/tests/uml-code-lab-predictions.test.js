@@ -9,12 +9,15 @@ const edits = require('../../tests/helpers/uml-lab-edits');
 require('../../js/uml-analyzer-python.js');
 const { analyzeJavaSources } = require('../../js/uml-analyzer-java.js');
 const { analyzeCppSources } = require('../../js/uml-analyzer-cpp.js');
+require('../../js/uml-analyzer-js.js');
+const compiler = require('../../js/vendor/typescript/5.9.3/typescript.min.js');
 
 const labs = yaml.load(fs.readFileSync(path.join(__dirname, '../../_data/uml_code_labs.yml'), 'utf8'));
 const analyzers = {
   python: { analyze: global.analyzePythonSources, filename: 'example.py' },
   java: { analyze: analyzeJavaSources, filename: 'App.java' },
-  cpp: { analyze: analyzeCppSources, filename: 'example.cpp' }
+  cpp: { analyze: analyzeCppSources, filename: 'example.cpp' },
+  typescript: { analyze: sources => global.analyzeJSSources(sources, compiler), filename: 'example.ts' }
 };
 const calls = diagram => diagram.split('\n').filter(line => line.includes(' -> '));
 

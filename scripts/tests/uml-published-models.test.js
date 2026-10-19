@@ -64,6 +64,22 @@ test('the chapter array example preserves separate roles without claiming ten ow
   });
 });
 
+test('the Java enrollment target and solution permit a student to belong to several courses', () => {
+  const tutorial = yaml.load(read('_data/tutorials/java.yml'));
+  const step = tutorial.steps.find(step => step.title === 'Design Challenge: Course Enrollment');
+  const target = step.instructions.match(/@startuml\b([\s\S]*?)@enduml/)[1];
+  const sources = Object.fromEntries([...step.files, ...step.solution.files].map(file => [file.path, file.content]));
+  const result = analyzeJavaSources(sources);
+  assert.deepEqual(result.errors, []);
+
+  for (const [name, diagram] of [['published target', target], ['inferred solution', result.classDiagram]]) {
+    const relation = diagram.match(/^\s*Course\s+(?:"([^"]+)"\s+)?o--\s+"([^"]+)"\s+Student\s*$/m);
+    assert.ok(relation, `${name} must retain the Course-to-Student aggregation`);
+    assert.equal(relation[1], undefined, `${name} must not infer a course count per student`);
+    assert.equal(relation[2], '*', `${name} must allow zero or more students per course`);
+  }
+});
+
 const tutorial = yaml.load(read('_data/tutorials/uml-sequence-diagram-python.yml'));
 function interaction(diagram) {
   return diagram.split('\n').map(line => line.trim()).flatMap(line => {

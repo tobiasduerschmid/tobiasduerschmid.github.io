@@ -2,12 +2,37 @@
 (function (global) {
   'use strict';
 
+  // Monaco 0.44 does not expose TypeScript's ModuleDetectionKind enum.
+  const MODULE_DETECTION_FORCE = 3;
+
+  function isolateTypeScriptLabs(monaco, languages) {
+    if (!languages.includes('typescript')) return;
+    const defaults = monaco.languages.typescript.typescriptDefaults;
+    const options = defaults.getCompilerOptions();
+    if (options.moduleDetection !== MODULE_DETECTION_FORCE) {
+      // Each lab is a separate program, even when its code has no imports.
+      defaults.setCompilerOptions({ ...options, moduleDetection: MODULE_DETECTION_FORCE });
+    }
+  }
+
   function create(source, host, languages) {
     let editor;
     let language = 'python';
     let label = 'Python code';
     let destroyed = false;
     let syncing = false;
+
+    function fitContent() {
+      if (!editor) return;
+      const style = getComputedStyle(host);
+      const borders = style.boxSizing === 'border-box'
+        ? parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth) : 0;
+      const height = Math.ceil(editor.getContentHeight() + borders) + 'px';
+      if (host.style.height !== height) {
+        host.style.height = height;
+        editor.layout();
+      }
+    }
 
     function refreshVisibleSyntax() {
       if (!editor) return;
@@ -24,11 +49,11 @@
       if (!editor) return;
       const style = getComputedStyle(host.parentElement);
       const fontSize = parseFloat(style.fontSize);
-      host.style.height = (source.rows * fontSize * 1.5 + 16) + 'px';
       editor.updateOptions({
         fontSize, lineHeight: Math.ceil(fontSize * 1.5),
         theme: document.documentElement.classList.contains('dark-mode') ? 'vs-dark' : 'vs'
       });
+      fitContent();
     }
 
     const themeObserver = new MutationObserver(updateAppearance);
@@ -49,6 +74,7 @@
 
     global.SEBookMonaco.loadLanguages(languages).then(monaco => {
       if (destroyed) return;
+      isolateTypeScriptLabs(monaco, languages);
       const focused = document.activeElement === source;
       const selection = [source.selectionStart, source.selectionEnd];
       host.hidden = false;
@@ -60,7 +86,7 @@
         minimap: { enabled: false },
         lineNumbers: 'off', folding: false, glyphMargin: false,
         lineDecorationsWidth: 8, lineNumbersMinChars: 0,
-        scrollBeyondLastLine: false, wordWrap: 'off',
+        scrollBeyondLastLine: false, wordWrap: 'on',
         tabSize: 4, insertSpaces: true, detectIndentation: false,
         fontFamily: getComputedStyle(source).fontFamily,
         padding: { top: 8, bottom: 8 },
@@ -72,6 +98,10 @@
         contextmenu: false
       });
       global.SebookMonacoFocusExit.attach(editor);
+      editor.onDidContentSizeChange(() => {
+        fitContent();
+        refreshVisibleSyntax();
+      });
       editor.onDidChangeModelContent(() => {
         if (syncing) return;
         refreshVisibleSyntax();

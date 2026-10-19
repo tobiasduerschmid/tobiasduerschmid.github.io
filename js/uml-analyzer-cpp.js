@@ -420,7 +420,9 @@
       }
       for (const { field, type } of fields) {
         if (type.node) {
-          const multiplicity = options.hideMultiplicity ? ' ' + type.arrow + ' ' : ' "1" ' + type.arrow + ' "' + type.multiplicity + '" ';
+          // Shared references do not constrain how many owners can use the target.
+          const ownerMultiplicity = type.arrow === '*--' ? ' "1"' : '';
+          const multiplicity = options.hideMultiplicity ? ' ' + type.arrow + ' ' : ownerMultiplicity + ' ' + type.arrow + ' "' + type.multiplicity + '" ';
           const role = targetRoles.get(type.node.name) > 1 ? ' : ' + field.name : '';
           relationships.add(node.id + multiplicity + type.node.id + role); structural.add(type.node.name);
         }
@@ -738,13 +740,21 @@
 
     walk(tokens, context) {
       let i = 0;
-      while (i < tokens.length && this.steps++ < 5000) {
+      while (i < tokens.length) {
+        if (++this.steps > 5000) throw new SequenceLimitError();
         const node = statement(tokens, i);
         if (node.kind === 'simple' && node.tokens[0] === 'return') return this.expression(node.tokens.slice(1), context);
         this.process(node, context);
         i = node.end;
       }
       return null;
+    }
+  }
+
+  class SequenceLimitError extends Error {
+    constructor() {
+      super('C++ sequence inference limit reached; simplify the example to inspect its interactions.');
+      this.name = 'SequenceLimitError';
     }
   }
 
@@ -755,7 +765,13 @@
       catch (error) { errors.push(filename + ': ' + error.message); }
     }
     const model = new CppModel(parser);
-    return { classDiagram: classDiagram(model, options), sequenceDiagram: new CppSequence(model).generate(), errors };
+    let sequenceDiagram = '';
+    try { sequenceDiagram = new CppSequence(model).generate(); }
+    catch (error) {
+      if (!(error instanceof SequenceLimitError)) throw error;
+      errors.push(error.message);
+    }
+    return { classDiagram: classDiagram(model, options), sequenceDiagram, errors };
   }
 
   if (typeof module !== 'undefined' && module.exports) module.exports = { analyzeCppSources };

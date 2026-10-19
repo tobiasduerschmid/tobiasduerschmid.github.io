@@ -46,10 +46,10 @@ test('C++ ownership and multiplicity distinguish values, references, pointers an
     };
   `);
   assert.match(classDiagram, /Store "1" \*-- "1" Value/);
-  assert.match(classDiagram, /Store "1" --> "1" Ref/);
-  assert.match(classDiagram, /Store "1" --> "0\.\.1" Ptr/);
+  assert.match(classDiagram, /Store --> "1" Ref/);
+  assert.match(classDiagram, /Store --> "0\.\.1" Ptr/);
   assert.match(classDiagram, /Store "1" \*-- "0\.\.1" Owned/);
-  assert.match(classDiagram, /Store "1" o-- "0\.\.1" Shared/);
+  assert.match(classDiagram, /Store o-- "0\.\.1" Shared/);
   assert.match(classDiagram, /Store "1" \*-- "\*" Item/);
 });
 
@@ -188,7 +188,7 @@ test('recursive calls terminate with balanced activations and deterministic resu
 
 test('borrowed containers do not imply ownership of their elements', () => {
   const { classDiagram } = infer('struct Item {}; struct View { const std::vector<Item>& items; std::span<Item> range; };');
-  assert.match(classDiagram, /View "1" --> "\*" Item/);
+  assert.match(classDiagram, /View --> "\*" Item/);
   assert.doesNotMatch(classDiagram, /View .*\*--/);
 });
 

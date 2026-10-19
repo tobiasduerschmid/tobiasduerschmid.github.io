@@ -8,6 +8,19 @@ const sharedEdits = {
 };
 
 module.exports = {
+  typescript: {
+    ...sharedEdits,
+    visibility: code => code.replace('public displayName', 'private displayName'),
+    dependency: code => code.replace('private roster: Roster | null = null;', '').replace('this.roster = roster;', ''),
+    removeParameter: code => code.replace('roster: Roster)', ')'),
+    inheritance: code => code.replace('class Puppy extends Animal', 'class Puppy extends Dog'),
+    collection_multiplicity: code => code.replaceAll('members: Member', 'members: Member[]'),
+    self_calls: code => code.replace('this.validate();', 'this.save();')
+      .replace('save(): void { }', 'save(): void { this.validate(); }'),
+    alternatives: code => code.replace('else {', 'if (accepted) {'),
+    loop_boundary: code => code.replace('    receipt.addItem(item);\n}\nreceipt.finish();',
+      '    receipt.addItem(item);\n    receipt.finish();\n}')
+  },
   python: {
     ...sharedEdits,
     visibility: code => code.replace('def display_name(', 'def _display_name('),

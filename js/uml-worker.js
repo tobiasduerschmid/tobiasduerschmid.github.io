@@ -166,10 +166,7 @@ function ensureAnalyzer(lang) {
     importScripts(resolve('uml-analyzer-cpp.js'));
     loaded.cpp = true;
   } else if (lang === 'js' && !loaded.jsts) {
-    if (!self.SEBookWorkerScriptIntegrity) {
-      importScripts('/js/vendor/worker-script-integrity.js');
-    }
-    self.SEBookWorkerScriptIntegrity.importDependency('typescript');
+    importScripts(resolve('vendor/typescript/5.9.3/typescript.min.js'));
     importScripts(resolve('uml-analyzer-js.js'));
     loaded.jsts = true;
   }

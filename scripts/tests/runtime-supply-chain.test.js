@@ -3,6 +3,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
+const vm = require('node:vm');
 const zlib = require('node:zlib');
 
 const repositoryRoot = path.resolve(__dirname, '../..');
@@ -270,7 +271,7 @@ test('Prolog loads its unchanged reviewed interpreter and lists library locally'
   assert.match(worker, /importScripts\('\/js\/vendor\/tau-prolog\/0\.3\.4\/lists\.js'\)/);
 });
 
-test('Monaco loads only from its complete reviewed local AMD runtime', () => {
+test('Monaco loads only from its complete reviewed local AMD runtime', async () => {
   const versionDirectory = 'js/vendor/monaco-editor/0.44.0';
   const checksums = verifyChecksumManifest(versionDirectory);
   assert.equal(checksums.size, 116, 'Monaco 0.44.0 snapshot must contain the complete min/vs tree');
@@ -295,10 +296,28 @@ test('Monaco loads only from its complete reviewed local AMD runtime', () => {
 
   const tutorialRuntime = read('js/tutorial-code.js');
   const sharedEditor = read('js/popout/shared-editor.js');
-  assert.match(tutorialRuntime,
-    /MONACO_LOADER: '\/js\/vendor\/monaco-editor\/0\.44\.0\/min\/vs\/loader\.js'/);
-  assert.match(tutorialRuntime,
-    /MONACO_VS: '\/js\/vendor\/monaco-editor\/0\.44\.0\/min\/vs'/);
+  const scripts = [];
+  const browser = { monaco: null };
+  const context = vm.createContext({ window: browser, URL, document: {
+    currentScript: { src: 'https://book.example/js/monaco-loader.js' },
+    createElement: () => ({}),
+    head: { appendChild: script => scripts.push(script) }
+  } });
+  vm.runInContext(read('js/monaco-loader.js'), context);
+  const loading = browser.SEBookMonaco.load();
+  assert.equal(browser.SEBookMonaco.load(), loading, 'hosts share one editor load');
+  assert.deepEqual(scripts.map(script => script.src), [
+    'https://book.example/js/vendor/monaco-editor/0.44.0/min/vs/loader.js'
+  ]);
+  browser.require = (modules, ready) => {
+    assert.equal(modules.join(','), 'vs/editor/editor.main');
+    browser.monaco = { editor: {} };
+    ready();
+  };
+  browser.require.config = config => assert.equal(config.paths.vs,
+    'https://book.example/js/vendor/monaco-editor/0.44.0/min/vs');
+  scripts[0].onload();
+  assert.equal(await loading, browser.monaco);
   assert.match(sharedEditor,
     /var MONACO_VS = '\/js\/vendor\/monaco-editor\/0\.44\.0\/min\/vs';/);
 
@@ -311,6 +330,18 @@ test('Monaco loads only from its complete reviewed local AMD runtime', () => {
   }
   assert.doesNotMatch(`${tutorialRuntime}\n${sharedEditor}`,
     /cdn\.jsdelivr\.net\/npm\/monaco-editor/);
+});
+
+test('UML inference ships the unchanged pinned TypeScript compiler and its license', () => {
+  const versionDirectory = 'js/vendor/typescript/5.9.3';
+  const checksums = verifyChecksumManifest(versionDirectory);
+  assert.equal(checksums.get('typescript.min.js'), '8197e57fa5e1d7f6521f3a2f6a32565196e4e59c092cdc2a9c3206b98ef57ddf');
+  assert.equal(checksums.get('LICENSE.txt'), 'a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47');
+  const compiler = require('../../js/vendor/typescript/5.9.3/typescript.min.js');
+  assert.equal(compiler.version, '5.9.3');
+  const parsed = compiler.createSourceFile('example.ts', 'class Example { value: string; }', compiler.ScriptTarget.Latest);
+  assert.equal(parsed.parseDiagnostics.length, 0);
+  assert.equal(compiler.isClassDeclaration(parsed.statements[0]), true);
 });
 
 test('Pyodide boot and tutorial package closures are complete and same-origin', () => {

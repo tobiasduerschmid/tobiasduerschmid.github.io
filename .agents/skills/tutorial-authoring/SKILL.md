@@ -2091,7 +2091,7 @@ channel.
   chapter editors. Load it before `tutorial-code.js`; the tutorial calls
   `SEBookMonaco.load()` after its xterm prerequisites, then registers its
   additional language grammars and themes as before. Chapter labs start in
-  Python by default and expose Python/Java/C++ with the built-in language grammars.
+  Python by default and expose Python/Java/C++/TypeScript with the built-in language grammars.
   Chapter language tabs follow the shared `js/sebook-code-preferences.js`
   preference (`sebook-code-language`); code drafts remain in memory.
   This preference does not change a tutorial step’s authored language or backend.
@@ -2100,7 +2100,12 @@ channel.
   tutorial `load()` keeps its existing custom-language registration sequence.
   Chapter editors also refresh visible model tokens with `colorizeModelLine`
   after edits, language switches, and scrolling so highlighting does not wait
-  for Monaco's idle background tokenization.
+  for Monaco's idle background tokenization. Chapter editor height follows
+  Monaco's content height (including wrapped lines and the host border), so
+  edits, language changes and narrow screens do not require internal scrolling.
+  Chapter TypeScript models use forced module detection to isolate each lab's
+  declarations; semantic checking stays enabled. This is configured by the
+  chapter editor adapter, not the shared tutorial loader.
 
 - **`js/uml-live.js`** — shared source-to-UML client for tutorials and SEBook
   chapter labs. Load it before `tutorial-code.js`. `createClient()` owns lazy
@@ -2108,14 +2113,26 @@ channel.
   measurement, atomic SVG replacement and accessible descriptions; dispose it when the
   tutorial is destroyed. The tutorial supplies source snapshots, hide flags,
   layout preference and stale-result guards, then applies its own colors and
-  zoom. Chapter controls in `uml-code-lab.js` expose Python/Java/C++; tutorial
-  JavaScript/TypeScript support remains unchanged. Both hosts use the same
+  zoom. Chapter controls in `uml-code-lab.js` expose Python/Java/C++/TypeScript.
+  TypeScript uses the compiler AST and supplied-file symbols in `uml-analyzer-js.js`.
+  Both worker and main-thread fallback load the pinned local compiler from
+  `js/vendor/typescript/5.9.3/`; imports never fetch files and code never executes.
+  Syntax diagnostics include file/line/column and clear on a corrected edit.
+  Both hosts use the same
   `uml-worker.js` and analyzers. See `docs/uml-code-labs.md` for the contract
   and inference limits.
+  Worker operations have a ten-second deadline. A timeout terminates the
+  worker and runs the newest queued edits in a replacement; timed-out work
+  never retries on the main thread. Java parameter, enum, and statement
+  parsing must advance through incomplete editor input, including array
+  dimensions written after parameter names.
   Sequence calls to known instances preserve the named receiver, even when
   several objects share a class; self-calls stay on the current lifeline.
-  Java preserves known object identity through simple reference declarations
-  and assignments; bindings are scoped to each followed method.
+  Java and TypeScript preserve known object identity through simple reference
+  declarations and assignments; bindings are scoped to each followed method.
+  TypeScript also binds supplied arguments and isolates branch scopes; receiver
+  identity survives a join only when all considered paths agree. Uncalled
+  callbacks are skipped, and finally calls follow try/catch alternatives.
   Diagram text alternatives distinguish separate fragments with equal guards
   and preserve unspecified multiplicities rather than inventing a bound.
   Python also propagates aliases, supplied object arguments and per-owner field
@@ -2126,8 +2143,11 @@ channel.
   Python nullable annotations (`Optional[T]`, `T | None`, supported quoted and
   qualified forms) infer `0..1`; optional collections still describe many
   elements. Java nested/qualified generic wrappers and C++ ownership wrappers
-  preserve the contained relationship's multiplicity. Fields sharing a target
-  retain separate relationships/cardinalities with role labels when needed;
+  preserve the contained relationship's multiplicity. For associations and
+  shared aggregation, field types constrain targets per source object only;
+  Java/C++/TypeScript leave the reverse multiplicity unspecified rather than
+  imposing one owner. Authored targets must not invent that ownership bound.
+  Fields sharing a target retain separate relationships/cardinalities with role labels when needed;
   Python and TypeScript union annotations retain all known alternatives.
   Java reference-array allocation creates slots, not owned elements: an
   initialized `Part[]` stays an association with many-valued multiplicity.
@@ -2135,8 +2155,9 @@ channel.
   with distinct diagram identifiers for colliding declarations. Unresolved or
   ambiguous references never select an unrelated same-named type or object.
   Python `try`/`else`/`finally` retains cleanup calls and pending transfers;
-  calls after a guard exit stay on the continuing path. Python sequence expansion
-  stops after 2,000 statement visits with a diagnostic and no partial sequence;
+  calls after a guard exit stay on the continuing path. Python, Java and
+  JavaScript/TypeScript sequence expansion stops after 2,000 statement visits
+  (C++ allows 5,000), with a diagnostic and no partial sequence;
   class inference remains available. Inference remains
   bounded: unavailable sources, dynamic dispatch, exact exception paths and
   domain ownership semantics still need review. See
@@ -2150,6 +2171,8 @@ channel.
   `.h` retains the existing C grammar unless the file specifies `language: cpp`.
   The shared UML editor include waits for its selected diagram renderer at
   startup; a missing optional type must not block the available types.
+  The previous-step diagram preview applies the shared accessible description
+  and read-only image role after rendering, keeping keyboard scrolling available.
 
 - **Compiler lab modules** — `compiler-lab-core.js` is the independent regex,
   EBNF, and AST engine. `compiler-lab-worker.js` and `compiler-lab-client.js`

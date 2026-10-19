@@ -481,6 +481,7 @@
       article.appendChild(title);
       var preview = document.createElement('div');
       preview.className = 'tvm-previous-diagram-render ' + (UML_CONTAINER_CLASSES[entry.type] || 'uml-class-diagram-container');
+      preview.setAttribute('role', 'group');
       preview.setAttribute('aria-label', umlTypeLabel(entry.type) + ' created in a previous tutorial step');
       article.appendChild(preview);
       list.appendChild(article);
@@ -842,6 +843,9 @@
     }
     try {
       renderer.render(container, source);
+      container.setAttribute('role', 'img');
+      window.UMLShared.autoFitSVG(container);
+      window.UMLShared.applySvgAccessibility(container, type, source);
       container.setAttribute('data-uml-rendered', 'true');
     } catch (error) {
       container.innerHTML = '<p class="tvm-previous-diagram-placeholder">This saved ' + escapeHtml(umlTypeLabel(type).toLowerCase()) + ' could not be rendered.</p>';

@@ -2997,9 +2997,11 @@ steps:
       }
       EnrollmentException --|> Exception
       Course ..|> Enrollable
-      Course "1" o-- "*" Student
+      Course o-- "*" Student
       Course ..> EnrollmentException : throws
       @enduml'></div>
+
+      The `*` counts students per course. The Course end is unspecified: storing students in one course does not prevent those same students from enrolling in other courses.
 
       ### Requirements
 

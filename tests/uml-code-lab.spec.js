@@ -7,7 +7,7 @@ const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
 const classChapter = '/SEBook/uml_class_diagram.html';
 const sequenceChapter = '/SEBook/uml_sequence_diagram.html';
 const labByTitle = (page, title) => page.getByRole('region', { name: `UML code lab: ${title}`, exact: true });
-const languageNames = { python: 'Python', java: 'Java', cpp: 'C++' };
+const languageNames = { python: 'Python', java: 'Java', cpp: 'C++', typescript: 'TypeScript' };
 const languageTab = (lab, language) => lab.getByRole('tab', { name: languageNames[language], exact: true });
 
 async function replaceCode(editor, value) {
@@ -33,8 +33,88 @@ const labEdits = require('./helpers/uml-lab-edits');
 const syntaxSamples = {
   python: 'class Marker:\n    # class in comment\n    text = "class in string"\n    doc = """first line\nclass in multiline string\n"""\n    value = 42',
   java: 'class Marker {\n    /* class in comment\nclass on second comment line */\n    String text = "class in string";\n    int value = 42;\n}',
-  cpp: 'class Marker {\n    /* class in comment\nclass on second comment line */\n    const char* text = "class in string";\n    int value = 42;\n};'
+  cpp: 'class Marker {\n    /* class in comment\nclass on second comment line */\n    const char* text = "class in string";\n    int value = 42;\n};',
+  typescript: 'class Marker {\n    /* class in comment\nclass on second comment line */\n    text: string = "class in string";\n    value: number = 42;\n}'
 };
+
+for (const chapter of [classChapter, sequenceChapter]) {
+  test(`TypeScript editors use isolated lab scopes and retain type checking: ${chapter}`, async ({ page }) => {
+    await page.goto(chapter);
+    const labs = page.getByRole('region', { name: /^UML code lab:/ });
+    await languageTab(labs.first(), 'typescript').click();
+    await expect(page.locator('[data-uml-editor] .monaco-editor')).toHaveCount(await labs.count());
+    const diagnostics = () => page.evaluate(async () => {
+      const models = window.monaco.editor.getModels().filter(model => model.getLanguageId() === 'typescript');
+      const getWorker = await window.monaco.languages.typescript.getTypeScriptWorker();
+      const worker = await getWorker(...models.map(model => model.uri));
+      const results = await Promise.all(models.map(model => worker.getSemanticDiagnostics(model.uri.toString())));
+      return results.flat().map(diagnostic => ({ code: diagnostic.code, message: diagnostic.messageText }));
+    });
+    expect(await diagnostics()).toEqual([]);
+    await replaceCode(editorFor(labs.first()), 'class Example { value: number = "wrong type"; }');
+    await expect.poll(diagnostics).toEqual(expect.arrayContaining([expect.objectContaining({ code: 2322 })]));
+    await expect(editorFor(labs.first())).toBeFocused();
+  });
+}
+
+for (const width of [1440, 390]) {
+  test(`lab editors fit all code after edits, wrapping, and reset at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(classChapter);
+    const lab = labByTitle(page, 'Member visibility');
+    await languageTab(lab, 'typescript').click();
+    const editor = editorFor(lab);
+    const host = lab.locator('[data-uml-editor]');
+    const longSource = [
+      'class FullExample {',
+      '    // ' + 'This explanation stays readable when the editor wraps onto another line. '.repeat(3),
+      ...Array.from({ length: 30 }, (_, index) => `    value${index}: number = ${index};`),
+      '    lastLine(): void {}',
+      '}'
+    ].join('\n');
+    await replaceCode(editor, longSource);
+    const overflow = () => host.evaluate(element => {
+      const instance = window.monaco.editor.getEditors().find(candidate => candidate.getDomNode().parentElement === element);
+      const layout = instance.getLayoutInfo();
+      return { vertical: instance.getScrollHeight() > layout.height + 1,
+        horizontal: instance.getScrollWidth() > layout.contentWidth + 1 };
+    });
+    await expect.poll(overflow).toEqual({ vertical: false, horizontal: false });
+    await expect(host.locator('.view-line').filter({ hasText: 'lastLine' })).toBeVisible();
+    const expanded = await host.boundingBox();
+    await expect(editor).toBeFocused();
+    await lab.getByRole('button', { name: 'Reset code' }).click();
+    await expect.poll(async () => (await host.boundingBox()).height).toBeLessThan(expanded.height - 200);
+    await expect.poll(overflow).toEqual({ vertical: false, horizontal: false });
+    await languageTab(lab, 'python').click();
+    await expect(editor).toHaveAccessibleName(/Python code/);
+    await expect.poll(overflow).toEqual({ vertical: false, horizontal: false });
+  });
+}
+
+for (const language of ['java', 'cpp']) {
+  test(`${language}: incomplete code does not block the next diagram update`, async ({ page }) => {
+    await page.goto(classChapter);
+    const lab = labByTitle(page, 'Member visibility');
+    await languageTab(lab, language).click();
+    await expect(lab.getByRole('img')).toHaveAccessibleName(/Student/);
+    const editor = editorFor(lab);
+    const unfinished = language === 'java'
+      ? 'class Example { void read(int value = ) {} }'
+      : 'class Example { public: void read(int value) {';
+    await replaceCode(editor, unfinished);
+    await expect(lab).not.toHaveAttribute('data-state', 'pending');
+
+    const repaired = language === 'java'
+      ? 'class Recovered { public void read(int values[]) {} }'
+      : 'class Recovered { public: void read(int values[]) {} };';
+    await replaceCode(editor, repaired);
+    await expect(lab.getByRole('img')).toHaveAccessibleName(/Recovered/);
+    await expect(lab.getByRole('img')).toContainText('read(values: int[])');
+    await expect(lab).toHaveAttribute('data-state', 'ready');
+    await expect(editor).toBeFocused();
+  });
+}
 
 for (const dark of [false, true]) {
   test(`Python is the default and all languages highlight edited syntax (${dark ? 'dark' : 'light'})`, async ({ page }) => {
@@ -101,6 +181,7 @@ for (const [language, edits] of Object.entries(labEdits)) {
     const lab = labByTitle(page, 'Keeping a reference');
     await languageTab(lab, language).click();
     await expect(lab.getByRole('img')).toHaveAccessibleName(/Student references Roster/);
+    await expect(lab.getByRole('img')).not.toHaveAccessibleName(/Student references Roster with multiplicity one to/);
     const editor = editorFor(lab);
     const original = await sourceText(lab);
     await replaceCode(editor, edits.dependency(original));
@@ -195,7 +276,7 @@ test('synced language changes preserve each lab draft; reset affects only the se
   await page.goto(classChapter);
   const lab = labByTitle(page, 'Member visibility');
   const selector = lab.getByRole('tablist', { name: 'Code language' });
-  await expect(selector.getByRole('tab')).toHaveText(['Python', 'Java', 'C++']);
+  await expect(selector.getByRole('tab')).toHaveText(['Python', 'Java', 'C++', 'TypeScript']);
   const editor = editorFor(lab);
   await expect(languageTab(lab, 'python')).toHaveAttribute('aria-selected', 'true');
   await languageTab(lab, 'java').click();
@@ -230,7 +311,7 @@ test('code examples and labs share keyboard language tabs with labeled panels', 
     has: page.getByRole('tablist', { name: 'Simple class code language' })
   });
 
-  for (const [widget, first, last] of [[lab, 'Python', 'C++'], [sample, 'Java', 'TypeScript']]) {
+  for (const [widget, first, last] of [[lab, 'Python', 'TypeScript'], [sample, 'Java', 'TypeScript']]) {
     const firstTab = widget.getByRole('tab', { name: first, exact: true });
     const lastTab = widget.getByRole('tab', { name: last, exact: true });
     await firstTab.focus();
@@ -277,6 +358,23 @@ test('empty source clears the old answer and corrected code recovers, including 
   await expect(lab.getByRole('img')).toHaveCount(0);
   await replaceCode(editor, 'class CorrectedCpp {};');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/CorrectedCpp/);
+  await languageTab(lab, 'typescript').click();
+  await replaceCode(editor, 'class CorrectedTypeScript { value: number = 1; }');
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/CorrectedTypeScript/);
+});
+
+test('TypeScript inference uses local dependencies and recovers after syntax errors', async ({ page }) => {
+  await page.route('https://cdn.jsdelivr.net/**', route => route.abort());
+  await page.goto(classChapter);
+  const lab = labByTitle(page, 'Keeping a reference');
+  await languageTab(lab, 'typescript').click();
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/Student references Roster with multiplicity unspecified to zero or one/);
+  await replaceCode(editorFor(lab), 'class Broken { read(value: ) {}');
+  await expect(lab.getByRole('status')).toContainText('example.ts');
+  await replaceCode(editorFor(lab), 'class Fixed { read(value: number): void {} }');
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/Fixed/);
+  await expect(lab.getByRole('img')).toContainText('read(value: number)');
+  await expect(lab).toHaveAttribute('data-state', 'ready');
 });
 
 test('rapid edits display only the latest source and reset cancels pending changes', async ({ page }) => {
@@ -293,6 +391,36 @@ test('rapid edits display only the latest source and reset cancels pending chang
   await lab.getByRole('button', { name: 'Reset code' }).click();
   await expect(lab.getByRole('img')).toHaveAccessibleName(/Student/);
   await expect(lab.locator('[data-uml-source]')).not.toHaveValue(/DiscardedDraft/);
+});
+
+test('a stalled renderer times out and the next edit recovers without freezing the editor', async ({ page }) => {
+  await page.clock.install();
+  await page.addInitScript(() => {
+    const BrowserWorker = window.Worker;
+    window.Worker = class extends BrowserWorker {
+      postMessage(message, transfer) {
+        if (message.type === 'renderDiagram' && message.syntax.includes('StalledRender')) {
+          window.umlRenderStalled = true;
+          return;
+        }
+        super.postMessage(message, transfer);
+      }
+    };
+  });
+  await page.goto(classChapter);
+  const lab = labByTitle(page, 'Member visibility');
+  const editor = editorFor(lab);
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/Student/);
+  await replaceCode(editor, 'class StalledRender:\n    pass');
+  await expect.poll(() => page.evaluate(() => window.umlRenderStalled)).toBe(true);
+  await expect(lab).toHaveAttribute('data-state', 'pending');
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/Student/);
+  await page.clock.fastForward(10_000);
+  await expect(lab.getByRole('status')).toContainText('timed out');
+  await replaceCode(editor, 'class RecoveredRender:\n    pass');
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/RecoveredRender/);
+  await expect(editor).toBeFocused();
+  await expect(lab).toHaveAttribute('data-state', 'ready');
 });
 
 test('a spinner preserves the current diagram and its position until the replacement is ready', async ({ page }) => {
@@ -344,6 +472,9 @@ test('source editing and live diagrams survive an unavailable Monaco dependency'
   await languageTab(lab, 'cpp').click();
   await lab.getByRole('textbox', { name: 'C++ code', exact: true }).fill('class CppFallback {};');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/CppFallback/);
+  await languageTab(lab, 'typescript').click();
+  await lab.getByRole('textbox', { name: 'TypeScript code', exact: true }).fill('class TypeScriptFallback { value: number = 1; }');
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/TypeScriptFallback/);
 });
 
 for (const dark of [false, true]) {
@@ -363,7 +494,7 @@ for (const dark of [false, true]) {
     await expect(wideDiagram).toBeFocused();
     await wideDiagram.press('ArrowRight');
     await expect.poll(() => wideDiagram.evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
-    for (const control of [editor, ...['python', 'java', 'cpp'].map(language => languageTab(lab, language)), lab.getByRole('button', { name: 'Reset code' })]) {
+    for (const control of [editor, ...Object.keys(languageNames).map(language => languageTab(lab, language)), lab.getByRole('button', { name: 'Reset code' })]) {
       await control.scrollIntoViewIfNeeded();
       await expect(control).toBeInViewport();
       expect(await control.evaluate(element => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
@@ -422,6 +553,7 @@ test('the chapter remains usable without JavaScript', async ({ browser, baseURL 
     await expect(lab.getByText(/private String name/)).toBeVisible();
     await expect(lab.getByText(/self\._name = name/)).toBeVisible();
     await expect(lab.getByText(/std::string displayName/)).toBeVisible();
+    await expect(lab.getByText(/private name: string/)).toBeVisible();
     await lab.getByText('Check your prediction', { exact: true }).click();
     await expect(lab.getByText(/Only read access is lost from the public API/)).toBeVisible();
   } finally {
@@ -459,7 +591,7 @@ test('the UML worker accepts C++ sources and class display options', async ({ pa
   expect(response.result.sequenceDiagram).toContain('Main -> worker: run()');
 });
 
-test('the UML tutorial shares inference for Python and C++ header/source files', async ({ page }) => {
+test('the UML tutorial shares inference for Python, C++ and TypeScript source files', async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto('/SEBook/tools/uml-class-diagram-python.html');
   await waitForTutorialReady(page, { bootTimeout: 90_000 });
@@ -485,4 +617,16 @@ test('the UML tutorial shares inference for Python and C++ header/source files',
   expect(await setEditorContent(page, 'int Sensor::read() const { return 25; }\nint main() { Sensor second; second.read(); }')).toBe(true);
   await expect(viewer.getByRole('img')).toHaveAccessibleName(/Main calls second with "read\(\)"/);
   await expect(viewer.getByRole('img')).not.toHaveAccessibleName(/Main calls sensor/);
+  const typeScriptLanguages = await page.evaluate(() => {
+    const tutorial = window._tutorial;
+    tutorial._umlWatchedFiles = ['sensor.ts', 'main.ts'];
+    tutorial.openFile('sensor.ts', 'export class Sensor { read(): number { return 25; } }');
+    tutorial.openFile('main.ts', "import { Sensor } from './sensor'; const device = new Sensor(); const selected = device; selected.read();");
+    tutorial._refreshUMLDiagram();
+    return tutorial._umlWatchedFiles.map(filename => tutorial.editorModels[filename].model.getLanguageId());
+  });
+  expect(typeScriptLanguages).toEqual(['typescript', 'typescript']);
+  await expect(viewer.getByRole('img')).toHaveAccessibleName(/Main calls device with "read\(\)".*device replies to Main with "number"/);
+  await page.getByRole('button', { name: 'Class Diagram', exact: true }).click();
+  await expect(viewer.getByRole('img')).toContainText('read(): number');
 });

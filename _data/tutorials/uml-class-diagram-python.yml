@@ -1832,9 +1832,9 @@ steps:
       Playlist <span class="uml-sym" data-diagram="class" data-sym="-->"></span> **"0..\*"** Song
 
       - Left-to-right: "One `Playlist` contains **zero or more** `Song`s."
-      - Right-to-left: "Each `Song` belongs to **some** `Playlist`" — but we can't say how many from a diagram with only *one* multiplicity shown.
+      - Right-to-left: "How many playlists can contain one `Song`?" The blank Playlist end leaves that answer **unspecified**.
 
-      > **⚠ Unidirectional diagrams only tell half the story.** When the Playlist end is blank, the Song-to-Playlist multiplicity is **unspecified**, not "1." In a real music app a song typically lives on many playlists — modeling that requires a multiplicity at the Playlist end too (e.g., `Playlist "0..*" <-- "*" Song`). This tutorial keeps one end hidden to teach one idea at a time; real designs usually show both.
+      > **⚠ An omitted multiplicity is unspecified.** The code tells us how many songs each playlist stores, but it does not limit how many playlists share a song. A model that allows a song on zero or more playlists could state `Playlist "0..*" --> "*" Song`. Add that reverse bound when the design establishes it.
 
       **Placement rule:** The number sits next to the class it **quantifies**. The `0..*` goes next to `Song` because *one playlist has many songs*, not because there are "many songs in general."
 

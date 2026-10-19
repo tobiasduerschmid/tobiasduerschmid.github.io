@@ -116,8 +116,8 @@ for (const fixture of fixtures) {
         assert.match(imageText, /0\.\.1/);
         assert.match(imageText, /\*/);
         const description = await page.getByRole('img').getAttribute('aria-label');
-        assert.match(description, /Office (?:references|aggregates|composes) Person with multiplicity (?:one|unspecified) to zero or one labeled "primary"/);
-        assert.match(description, /Office (?:references|aggregates|composes) Person with multiplicity (?:one|unspecified) to zero or more labeled "backups"/);
+        assert.match(description, /Office (?:references|aggregates|composes) Person with multiplicity unspecified to zero or one labeled "primary"/);
+        assert.match(description, /Office (?:references|aggregates|composes) Person with multiplicity unspecified to zero or more labeled "backups"/);
         const verbose = await page.evaluate(source => window.UMLAutoDescribe.describeVerbose('class', source), result.classDiagram);
         const relationships = verbose.sections.find(section => section.heading === 'Relationships').items;
         assert.equal(relationships.filter(item => /labeled "primary"/.test(item)).length, 1);
@@ -168,7 +168,7 @@ for (const theme of ['light', 'dark']) {
       assertSeparateLabels(labels);
       const description = await page.getByRole('img').getAttribute('aria-label');
       for (const target of ['Cat', 'Dog']) {
-        assert.ok(description.includes(`Household references ${target} with multiplicity one to zero or one labeled "pet (alternative)"`),
+        assert.ok(description.includes(`Household references ${target} with multiplicity unspecified to zero or one labeled "pet (alternative)"`),
           `The text alternative must describe the optional ${target} relationship`);
       }
     });

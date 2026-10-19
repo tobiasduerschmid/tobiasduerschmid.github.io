@@ -26,7 +26,7 @@ test('one choice applies to every example, survives navigation, and preserves un
 
   await page.goto(classChapter);
   const lab = page.getByRole('region', { name: 'UML code lab: Member visibility', exact: true });
-  await expect(tab(lab, 'Python')).toHaveAttribute('aria-selected', 'true');
+  await expect(tab(lab, 'TypeScript')).toHaveAttribute('aria-selected', 'true');
   await expect(tab(page.getByRole('tablist', { name: 'Simple class code language' }), 'TypeScript')).toHaveAttribute('aria-selected', 'true');
   await page.goto('/SEBook/development_practices/modern_code_review.html');
   await expectLanguage(page, 'Python');
