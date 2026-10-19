@@ -35,6 +35,31 @@
     js: { Array: 'Sequence', ReadonlyArray: 'Sequence', Set: 'Set', Map: 'Map' }
   };
 
+  function standardCollectionName(name, language) {
+    if (!/[.:]/.test(name)) return name;
+    const qualifier = {
+      python: /^(?:typing|collections\.abc)\.[^.]+$/,
+      java: /^java\.util\.[^.]+$/,
+      cpp: /^std::[^:]+$/,
+      js: /^globalThis\.[^.]+$/
+    }[language];
+    return qualifier?.test(name) ? name.split(/::|\./).pop() : null;
+  }
+
+  function closingParenthesis(text, open) {
+    let depth = 1, quote = '';
+    for (let i = open + 1; i < text.length; i++) {
+      const char = text[i];
+      if (quote) {
+        if (char === '\\') i++;
+        else if (char === quote) quote = '';
+      } else if (char === '"' || char === "'") quote = char;
+      else if (char === '(') depth++;
+      else if (char === ')' && --depth === 0) return i;
+    }
+    return -1;
+  }
+
   // Separators in nested generics, literal strings or default expressions are
   // not member/parameter separators. In particular, C++ :: is never a colon.
   function splitTopLevel(text, separator) {
@@ -83,11 +108,12 @@
       if (present.length === 1 && present.length !== mapped.length) return nullable(present[0]);
       return mapped.join(' | ');
     }
-    if (type.startsWith('(') && type.endsWith(')')) return mapType(type.slice(1, -1), context);
+    if (type.startsWith('(') && closingParenthesis(type, 0) === type.length - 1) return mapType(type.slice(1, -1), context);
     if (['None', 'null', 'undefined'].includes(type)) return 'null';
     if (lang === 'cpp') return mapCppType(type, context);
     const native = lang === 'java' ? type.replace(/^java\.lang\./, '') : type;
     if (Object.hasOwn(primitives[lang] || {}, native)) return primitives[lang][native];
+    if (lang === 'js' && /^readonly\s+.+\[\]$/.test(type)) return mapType(type.replace(/^readonly\s+/, ''), context);
     const array = type.match(/^(.+)\[\]$/);
     if (array) return 'Sequence<' + mapType(array[1], context) + '>';
     return mapGenericType(type, context);
@@ -104,27 +130,25 @@
       return /^(?:unsigned|(?:std::)?(?:uint|size_t))/.test(value) ? 'Integer {>=0}' : 'Integer';
     }
     if (/^signed(?: (?:short|long|long long|int))?(?: int)?$/.test(value)) return 'Integer';
-    const array = value.match(/^(.+)\[(\d*)\]$/);
-    if (array) return 'Sequence<' + mapType(array[1], context) + '>' + (array[2] ? ' [' + array[2] + ']' : '');
+    const array = value.match(/^(.+?)((?:\[\d*\])+)$/);
+    if (array) {
+      return Array.from(array[2].matchAll(/\[(\d*)\]/g), match => match[1]).reverse()
+        .reduce((element, length) => 'Sequence<' + element + '>' + (length ? ' [' + length + ']' : ''), mapType(array[1], context));
+    }
     return mapGenericType(value, context);
   }
 
   function mapGenericType(type, context) {
     const generic = type.match(/^([\w.:]+)\s*[<\[]([\s\S]*)[>\]]$/);
     if (!generic) {
-      const bare = collections[context.language]?.[type];
+      const bare = collections[context.language]?.[standardCollectionName(type, context.language)];
       return bare && bare !== 'Optional' && bare !== 'Union' ? bare + (bare === 'Map' ? '<?, ?>' : '<?>') : type;
     }
     const [ , name, body ] = generic;
     const shortName = name.split(/::|\./).pop();
     if (context.declaredTypes.has(name) || ['Literal', 'Annotated', 'Callable'].includes(shortName)) return type;
     const args = splitTopLevel(body, ',').map(part => mapType(part, context));
-    const standardName = !/[.:]/.test(name) || {
-      python: /^(?:typing|collections\.abc)\.[^.]+$/,
-      java: /^java\.util\.[^.]+$/,
-      cpp: /^std::[^:]+$/,
-      js: /^globalThis\.[^.]+$/
-    }[context.language]?.test(name);
+    const standardName = standardCollectionName(name, context.language);
     if (standardName && context.language === 'cpp' && ['unique_ptr', 'shared_ptr', 'weak_ptr'].includes(shortName)) return 'Optional<' + args[0] + '>';
     if (standardName && context.language === 'cpp' && shortName === 'array' && args.length === 2) return 'Sequence<' + args[0] + '> [' + args[1] + ']';
     const mappedName = standardName && collections[context.language]?.[shortName];
@@ -166,13 +190,8 @@
     const memberColon = splitTopLevel(line.slice(0, open < 0 ? undefined : open), ':').length > 1;
     if (open < 0 || memberColon) return line.match(/^\s*/)[0] + typedMember(line.trim(), context);
     // The enclosing parameter list can contain callable annotations/defaults.
-    let depth = 1, close = open + 1;
-    for (; close < line.length && depth; close++) {
-      if (line[close] === '(') depth++;
-      else if (line[close] === ')') depth--;
-    }
-    if (depth) return line;
-    close--;
+    const close = closingParenthesis(line, open);
+    if (close < 0) return line;
     const name = line.slice(0, open).replace(/\{\w+\}/g, '').trim().replace(/^[+#~\-]/, '').trim();
     const construction = isConstruction(name, owner, context);
     if (construction && !retainConstruction && context.defaultConstructionLines.has(context.lineIndex)) return null;
@@ -229,6 +248,23 @@
     return line.replace(pythonMember, (whole, prefix, name) => prefix + (names.get(name) || name));
   }
 
+  function pythonClassNames(syntax) {
+    const scopes = new Map();
+    const lines = syntax.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const declaration = lines[i].match(/^\s*(?:abstract\s+)?(?:class|interface)\s+([\w.]+)[^{]*\{/);
+      if (!declaration) continue;
+      const end = lines.findIndex((line, index) => index > i && line.trim() === '}');
+      scopes.set(declaration[1], pythonNames(lines.slice(i + 1, end < 0 ? undefined : end), declaration[1]));
+    }
+    return scopes;
+  }
+
+  function pythonScope(context, owner) {
+    const localNames = context.pythonNamesByType.get(owner);
+    return localNames ? { ...context, pythonNames: new Map([...context.pythonNames, ...localNames]) } : context;
+  }
+
   function projectClass(syntax, context, retainConstruction) {
     let owner = null;
     let names = new Map();
@@ -238,33 +274,44 @@
       if (declaration) {
         owner = declaration[1].split(/::|\./).pop();
         if (context.language === 'python') {
-          const end = lines.findIndex((candidate, index) => index > lineIndex && candidate.trim() === '}');
-          names = pythonNames(lines.slice(lineIndex + 1, end < 0 ? undefined : end), owner);
+          names = context.pythonNamesByType.get(owner) || new Map();
         }
         return line;
       }
       if (line.trim() === '}') { owner = null; return line; }
       if (!owner) return line;
-      const member = projectMember(line, owner, { ...context, lineIndex }, retainConstruction);
+      const member = projectMember(line, owner, { ...pythonScope(context, owner), lineIndex }, retainConstruction);
       return member !== null && context.language === 'python' ? renamePythonMember(member, names) : member;
     }).filter(line => line !== null).join('\n');
   }
 
   function projectSequence(syntax, context) {
-    const typed = syntax.split('\n').map(line => {
-      if (context.language === 'python') {
-        line = line.replace(/^(\S+\s+->\s+\S+\s*:\s*)(\w+)(\()/,
-          (whole, prefix, name, open) => prefix + (context.pythonNames.get(name) || pythonDisplayName(name)) + open);
-      }
+    const participants = new Map(Array.from(syntax.matchAll(/^\s*participant\s+(\w+)\s*:\s*([\w.]+)/gm), match => [match[1], match[2]]));
+    const active = [];
+    return syntax.split('\n').map(line => {
+      const activation = line.match(/^\s*(activate|deactivate)\s+(\w+)/);
+      if (activation?.[1] === 'activate') active.push(activation[2]);
+      else if (activation?.[1] === 'deactivate' && active.lastIndexOf(activation[2]) >= 0) active.splice(active.lastIndexOf(activation[2]), 1);
+      const scoped = pythonScope(context, participants.get(active.at(-1)));
+      const call = line.match(/^\S+\s+->\s+(\S+)\s*:\s*(\w+)\(/);
       const reply = line.match(/^(\S+\s+-->\s+\S+\s*:\s*)(.*)$/);
-      if (!reply || reply[2].includes('<<create>>')) return line;
-      // Analyzer reply labels are declared types, optionally prefixed with the
-      // receiving variable. Expression projection is applied separately below.
-      const binding = splitTopLevel(reply[2], ':');
-      return reply[1] + (binding.length === 2
-        ? binding[0] + ': ' + mapType(binding[1], context) : mapType(reply[2], context));
+      if (reply && !reply[2].includes('<<create>>')) {
+        // Reply type labels are distinct from source expressions.
+        const binding = splitTopLevel(reply[2], ':');
+        line = reply[1] + (binding.length === 2
+          ? binding[0] + ': ' + mapType(binding[1], context) : mapType(reply[2], context));
+      }
+      let projected = expressions().projectSequence(line, expressionOptions(scoped));
+      if (context.language === 'python' && call) {
+        // Resolve the displayed operation in the receiver's class. Arguments
+        // and guards remain in the caller's scope; unrelated classes must not
+        // create naming collisions in this receiver.
+        const receiver = pythonScope(context, participants.get(call[1]));
+        const name = receiver.pythonNames.get(call[2]) || pythonDisplayName(call[2]);
+        projected = projected.replace(/^(\S+\s+->\s+\S+\s*:\s*)\w+(?=\()/, (_, prefix) => prefix + name);
+      }
+      return projected;
     }).join('\n');
-    return expressions().projectSequence(typed, expressionOptions(context));
   }
 
   /**
@@ -280,7 +327,8 @@
       declaredTypes: classTypes(result.classDiagram || ''),
       constructionLines: result.constructionMethods && new Set(result.constructionMethods.map(method => method.lineIndex)),
       defaultConstructionLines: new Set((result.constructionMethods || []).filter(method => method.isDefault).map(method => method.lineIndex)),
-      pythonNames: pythonNames((result.classDiagram || '').split('\n')) };
+      pythonNames: pythonNames((result.classDiagram || '').split('\n')),
+      pythonNamesByType: pythonClassNames(result.classDiagram || '') };
     return { ...result,
       classDiagram: projectClass(result.classDiagram || '', context, retainConstruction),
       sequenceDiagram: projectSequence(result.sequenceDiagram || '', context) };

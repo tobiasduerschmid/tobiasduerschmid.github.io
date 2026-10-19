@@ -95,22 +95,37 @@ function interaction(diagram) {
     if (/^(?:alt |opt |loop |else\b|end$)/.test(line)) return [line];
     const reply = line.match(/^(\w+) --> (\w+): (\w+): (.+)$/);
     if (reply) return [{ from: reply[1], to: reply[2], result: reply[3], type: reply[4] }];
-    const call = line.match(/^(\w+) -> (\w+): ([\w]+)\(/);
-    // Arguments are checked by the executable tutorial graders; long display
-    // labels may be abbreviated differently without changing the interaction.
-    return call ? [{ from: call[1], to: call[2], method: call[3] }] : [];
+    const call = line.match(/^(\w+) -> (\w+): (.+)$/);
+    return call ? [{ from: call[1], to: call[2], call: call[3] }] : [];
   });
 }
 
 for (const key of ['first-sequence', 'return-values', 'self-calls',
   'conditional-fragments', 'loops', 'moderated-broadcast']) {
-  test(`sequence tutorial ${key}: Design view matches the target's calls and nesting`, () => {
+  test(`sequence tutorial ${key}: Design view matches complete target calls, reply types, and nesting`, () => {
     const step = tutorial.steps.find(step => step.key === key);
-    const target = [...step.instructions.matchAll(/@startuml\b([\s\S]*?)@enduml/g)].at(-1)[1];
+    const target = [...step.instructions.matchAll(/@startuml\b([\s\S]*?)@enduml/g)].at(-1)[1]
+      .replace(/&quot;/g, '"');
     const result = global.analyzePythonSources(Object.fromEntries(
       step.solution.files.filter(file => file.path.endsWith('.py')).map(file => [file.path, file.content])));
     assert.deepEqual(result.errors, []);
     const design = project(result, { language: 'python', view: 'design' });
     assert.deepEqual(interaction(design.sequenceDiagram), interaction(target));
+  });
+}
+
+for (const [key, signature] of [
+  ['loops', 'broadcast_all(channel: Channel, messages: Sequence<String>)'],
+  ['moderated-broadcast', 'run_digest(channel: Channel, posts: Sequence<String>)'],
+]) {
+  test(`sequence tutorial ${key}: starter and solution expose the string-sequence contract`, () => {
+    const step = tutorial.steps.find(step => step.key === key);
+    for (const [kind, files] of [['starter', step.files], ['solution', step.solution.files]]) {
+      const raw = global.analyzePythonSources(Object.fromEntries(
+        files.filter(file => file.path.endsWith('.py')).map(file => [file.path, file.content])));
+      const design = project(raw, { language: 'python', view: 'design' });
+      assert.ok(design.classDiagram.split('\n').some(line => line.trim() === '+' + signature),
+        `${kind} must display ${signature}`);
+    }
   });
 }

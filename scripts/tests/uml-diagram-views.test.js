@@ -272,3 +272,68 @@ test('C++ destruction with cleanup behavior remains visible', () => {
   const raw = analyzeCppSources({ 'sample.cpp': 'class Sample { public: ~Sample() { release(); } void release() {} };' });
   assert.match(project(raw, { language: 'cpp' }).classDiagram, /\+~Sample\(\)/);
 });
+
+test('equivalent sequence types share one Design spelling, including qualified and readonly forms', () => {
+  for (const [language, types] of [
+    ['python', ['list[str]', 'typing.List[str]', 'collections.abc.Sequence[str]']],
+    ['java', ['List<String>', 'java.util.List<String>', 'String[]']],
+    ['cpp', ['std::vector<std::string>', 'std::list<std::string>']],
+    ['typescript', ['string[]', 'readonly string[]', 'Array<string>', 'ReadonlyArray<string>']]
+  ]) {
+    for (const type of types) assert.equal(mapType(type, { language }), 'Sequence<String>', `${language}: ${type}`);
+  }
+  for (const [language, type] of [['python', 'typing.List'], ['java', 'java.util.List']]) {
+    assert.equal(mapType(type, { language }), 'Sequence<?>');
+  }
+  assert.equal(mapType('domain.List', { language: 'java' }), 'domain.List');
+  assert.equal(mapType('List', { language: 'java', declaredTypes: new Set(['List']) }), 'List');
+});
+
+test('nested fixed arrays retain their outer and inner bounds', () => {
+  assert.equal(mapType('int[3][4]', { language: 'cpp' }), 'Sequence<Sequence<Integer> [4]> [3]');
+  assert.equal(mapType('std::array<std::array<int, 4>, 3>', { language: 'cpp' }), 'Sequence<Sequence<Integer> [4]> [3]');
+});
+
+test('parentheses inside literal parameter types do not hide the operation return type', () => {
+  const python = global.analyzePythonSources({ 'sample.py': 'from typing import Literal\nclass Parser:\n    def choose(self, token: Literal["("]) -> str:\n        return token\n' });
+  const typescript = global.analyzeJSSources({ 'sample.ts': 'class Parser { choose(token: "("): string { return token; } }' }, ts);
+  assert.match(project(python, { language: 'python' }).classDiagram, /choose\(token: Literal\["\("\]\): String/);
+  assert.match(project(typescript, { language: 'typescript' }).classDiagram, /choose\(token: "\("\): String/);
+});
+
+test('Python operation names agree between class and sequence views without cross-class collisions', () => {
+  const raw = global.analyzePythonSources({ 'sample.py': `class A:
+    def _read(self) -> int:
+        return 1
+class B:
+    def read(self) -> int:
+        return 2
+a = A()
+b = B()
+first = a._read()
+second = b.read()
+` });
+  const design = project(raw, { language: 'python' });
+  assert.match(design.classDiagram, /#read\(\): Integer/);
+  assert.match(design.sequenceDiagram, /Main -> a: read\(\)/);
+  assert.match(design.sequenceDiagram, /Main -> b: read\(\)/);
+  assert.match(project(raw, { language: 'python', view: 'implementation' }).sequenceDiagram, /Main -> a: _read\(\)/);
+});
+
+test('Python literal prefixes and escaping survive inference before Design normalization', () => {
+  const raw = global.analyzePythonSources({ 'sample.py': String.raw`class Sink:
+    def emit(self, value: object) -> None:
+        pass
+sink = Sink()
+count = 2
+sink.emit(f"{count} members online")
+sink.emit(r"\n")
+sink.emit(b"book")
+sink.emit("don't change")
+` });
+  const design = project(raw, { language: 'python' });
+  for (const label of ['emit(f"{count} members online")', String.raw`emit(r"\n")`, 'emit(b"book")', 'emit("don\'t change")']) {
+    assert.ok(raw.sequenceDiagram.includes(label), `Implementation preserves ${label}`);
+    assert.ok(design.sequenceDiagram.includes(label), `Design preserves ${label}`);
+  }
+});

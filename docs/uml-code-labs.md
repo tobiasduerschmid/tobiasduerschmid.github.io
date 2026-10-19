@@ -413,6 +413,15 @@ native notation where rewriting would require type or semantic evidence.
 Changing the display does not evaluate a guard or prove that its expression
 has no side effects.
 
+Keep collection types and values distinct: `Sequence<String>` is a type;
+`["book", "pen"]` is one value. Recognized sequence literals use square brackets,
+and ordinary string values use double quotes with their values preserved.
+For example, the shared loop label is `for each item in ["book", "pen"]`.
+Sets, maps, tuples, character literals, and collection constructors whose arguments
+represent size or fill remain distinct. Raw, byte, formatted, template, and regex
+literals retain source notation, as do escapes whose equivalence is uncertain.
+Authored targets follow the same convention; executable code keeps native syntax.
+
 This convention follows UML's choice of expression language rather than
 pretending that one programming notation is mandated by UML. The supplied
 **OMG Unified Modeling Language 2.5.1** (December 2017,

@@ -166,6 +166,79 @@
     return null;
   }
 
+  /** Decode only escapes with the same meaning in all four source languages. */
+  function canonicalString(source, language) {
+    const quote = source[0];
+    if (!['"', "'"].includes(quote) || source.startsWith(quote.repeat(3)) ||
+        source[source.length - 1] !== quote || quote === "'" && !['python', 'js'].includes(language)) return source;
+    const escapes = { n: '\n', r: '\r', t: '\t', b: '\b', f: '\f', '\\': '\\', '"': '"', "'": "'" };
+    let value = '';
+    for (let i = 1; i < source.length - 1; i++) {
+      const char = source[i];
+      if (char === '\\') {
+        const escaped = source[++i];
+        if (!Object.hasOwn(escapes, escaped)) return source;
+        value += escapes[escaped];
+      } else {
+        if (/[\n\r]/.test(char)) return source;
+        value += char;
+      }
+    }
+    return JSON.stringify(value).replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
+  }
+
+  function collectionLiteral(tokens, start, language) {
+    let open = start, dimensions = 1, elementType = null;
+    if (language === 'java' && tokens[start]?.value === 'new') {
+      open++;
+      if (tokens[open]?.kind !== 'word') return null;
+      open++;
+      while (tokens[open]?.value === '.' && tokens[open + 1]?.kind === 'word') open += 2;
+      dimensions = 0;
+      while (tokens[open]?.value === '[' && tokens[open + 1]?.value === ']') { open += 2; dimensions++; }
+      if (!dimensions) return null;
+    } else if (language === 'cpp' && tokens[start]?.value === 'std' && tokens[start + 1]?.value === '::' &&
+        ['vector', 'list', 'deque'].includes(tokens[start + 2]?.value) && tokens[start + 3]?.value === '<' &&
+        !['::', '.', '->'].includes(tokens[start - 1]?.value)) {
+      let depth = 0;
+      for (open = start + 3; open < tokens.length; open++) {
+        if (tokens[open].value === '<') depth++;
+        else if (['>', '>>'].includes(tokens[open].value)) depth -= tokens[open].value.length;
+        if (!depth) {
+          elementType = format(topLevelParts(tokens.slice(start + 4, open), ',')[0]);
+          open++; break;
+        }
+      }
+    } else return null;
+    const end = tokens[open]?.value === '{' ? closingIndex(tokens, open) : -1;
+    if (end >= 0 && language === 'cpp' && !compatibleCppElements(tokens.slice(open + 1, end), elementType)) return null;
+    return end < 0 ? null : { open, end, dimensions };
+  }
+
+  function compatibleCppElements(tokens, type) {
+    if (!tokens.length) return true;
+    // Braces can select vector's size/fill/range/allocator constructors. Only
+    // compatible literal elements prove that initializer_list is applicable.
+    return topLevelParts(tokens, ',').every((part, index, parts) => {
+      if (!part.length) return index === parts.length - 1; // trailing comma
+      const value = format(part);
+      if (type === 'std::string' || /^(?:const )?char \*$/.test(type)) return part.length === 1 && /^"/.test(value);
+      if (type === 'char') return part.length === 1 && /^'/.test(value);
+      if (type === 'bool') return ['true', 'false'].includes(value);
+      if (!/^(?:(?:unsigned|signed) ?)?(?:char|short(?: int)?|int|long(?: long)?(?: int)?|float|double|long double)$/.test(type)) return false;
+      return /^[+-]? ?(?:0[xX][\da-fA-F]+|\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)[uUlLfF]*$/.test(value);
+    });
+  }
+
+  function collectionTokens(tokens, options, dimensions = 1) {
+    const values = dimensions > 1 ? topLevelParts(tokens, ',').flatMap((part, index) => {
+      const nested = part[0]?.value === '{' && closingIndex(part, 0) === part.length - 1;
+      return (index ? [{ value: ',', kind: 'symbol' }] : []).concat(nested
+        ? collectionTokens(part.slice(1, -1), options, dimensions - 1) : projectTokens(part, options));
+    }) : projectTokens(tokens, options);
+    return [{ value: '[', kind: 'symbol' }, ...values, { value: ']', kind: 'symbol' }];
+  }
+
   // Find precisely the operand of !; not(x) retains the source unary binding
   // in expressions such as !x == y and never changes it to not(x == y).
   function unaryEnd(tokens, start) {
@@ -205,7 +278,13 @@
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
       let value = token.value;
-      if (token.kind === 'literal') { output.push(token); continue; }
+      if (token.kind === 'literal') { output.push({ ...token, value: canonicalString(value, language) }); continue; }
+      const collection = collectionLiteral(tokens, i, language);
+      if (collection) {
+        output.push(...collectionTokens(tokens.slice(collection.open + 1, collection.end), options, collection.dimensions));
+        i = collection.end;
+        continue;
+      }
       const cast = language === 'cpp' && namedCast(tokens, i);
       if (cast) {
         const type = format(tokens.slice(i + 2, cast.angle)) + (tokens[cast.angle].value === '>>' ? '>' : '');
@@ -310,14 +389,10 @@
   }
 
   function iterableExpression(tokens, options) {
-    // Java's explicit array allocation is a collection literal in this label;
-    // object construction elsewhere remains a visible source operation.
-    if (languageOf(options) === 'java' && tokens[0]?.value === 'new') {
-      const array = tokens.findIndex(token => token.value === '[');
-      const open = tokens.findIndex(token => token.value === '{');
-      if (array > 1 && tokens[array + 1]?.value === ']' && open === array + 2 && closingIndex(tokens, open) === tokens.length - 1) {
-        return '[' + format(projectTokens(tokens.slice(open + 1, -1), options)) + ']';
-      }
+    // A bare braced initializer is unambiguously a sequence in a C++ range-for
+    // operand. Elsewhere braces may construct an object, set, map, or block.
+    if (languageOf(options) === 'cpp' && tokens[0]?.value === '{' && closingIndex(tokens, 0) === tokens.length - 1) {
+      return format(collectionTokens(tokens.slice(1, -1), options));
     }
     return format(projectTokens(tokens, options));
   }
@@ -359,6 +434,7 @@
 
   function projectSequence(syntax, options = {}) {
     return syntax.split('\n').map(line => {
+      if (/^\s*else\s*$/.test(line)) return line.replace('else', 'else [else]');
       const fragment = line.match(/^(\s*)(loop|alt|opt|else|break)\s+\[([\s\S]*)\](\s*)$/);
       if (fragment) {
         const label = fragment[2] === 'loop' ? projectLoop(fragment[3], options) : projectExpression(fragment[3], options);

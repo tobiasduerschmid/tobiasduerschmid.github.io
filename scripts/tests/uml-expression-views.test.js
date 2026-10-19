@@ -96,6 +96,13 @@ test('sequence projection changes labels while preserving participants, directio
   assert.equal(projectSequence(projected, { language: 'python' }), projected, 'projection is stable');
 });
 
+test('fallback branches use the same Design guard regardless of analyzer spelling', () => {
+  const source = 'alt [ready]\nA -> B: run()\nelse\nA -> B: stop()\nend';
+  const expected = 'alt [ready]\nA -> B: run()\nelse [else]\nA -> B: stop()\nend';
+  assert.equal(projectSequence(source, { language: 'cpp' }), expected);
+  assert.equal(projectSequence(expected, { language: 'python' }), expected);
+});
+
 test('opaque source constructs retain their spelling when no safe abstraction is available', () => {
   assert.equal(projectExpression('flags &= mask', { language: 'cpp', assignment: true }), 'flags &= mask');
   assert.equal(projectExpression('a ?? b', { language: 'js' }), 'a ?? b');
@@ -138,6 +145,56 @@ test('published loop labs have complete foreach labels, including the Java array
     assert.match(design, /^loop \[for each item in /m);
     assert.doesNotMatch(design, /\.\.\./);
     assert.match(design, /(?:addItem|add_item)\(item\)/);
-    if (language === 'java') assert.match(design, /for each item in \["book", "pen"\]/);
+    if (language !== 'cpp') assert.match(design, /for each item in \["book", "pen"\]/);
   }
+});
+
+test('equivalent list literals share one Design spelling across languages and expression positions', () => {
+  const cases = [
+    ['python', "['book', 'pen']"], ['typescript', "['book', 'pen']"],
+    ['java', 'new String[] {"book", "pen"}'],
+    ['cpp', 'std::vector<std::string>{"book", "pen"}'],
+    ['cpp', 'std::list<std::string>{"book", "pen"}'],
+    ['cpp', 'std::deque<std::string>{"book", "pen"}']
+  ];
+  for (const [language, source] of cases) {
+    assert.equal(projectExpression(source, { language }), '["book", "pen"]');
+    assert.equal(projectExpression('send(' + source + ')', { language }), 'send(["book", "pen"])');
+  }
+  assert.equal(projectLoop('for (const char* item : {"book", "pen"})', { language: 'cpp' }), 'for each item in ["book", "pen"]');
+  assert.equal(projectExpression("[['book'], ['pen']]", { language: 'python' }), '[["book"], ["pen"]]');
+  assert.equal(projectExpression('new String[][] {{"book"}, {"pen"}}', { language: 'java' }), '[["book"], ["pen"]]');
+});
+
+test('canonical string spelling preserves every supported escaped value', () => {
+  const source = String.raw`['don\'t', 'say "hi"', 'a\\b', '\n', '\t', '\r', '\b', '\f', 'a && b, c', 'café']`;
+  const values = ["don't", 'say "hi"', 'a\\b', '\n', '\t', '\r', '\b', '\f', 'a && b, c', 'café'];
+  const expected = '[' + values.map(value => JSON.stringify(value)).join(', ') + ']';
+  for (const language of ['python', 'typescript']) {
+    const design = projectExpression(source, { language });
+    assert.equal(design, expected);
+    assert.deepEqual(JSON.parse(design), values, 'display spelling must decode to the original values');
+    assert.equal(projectExpression(design, { language }), design);
+  }
+});
+
+test('collection abstraction retains kinds, character semantics, and opaque literal forms', () => {
+  assert.equal(projectExpression("('book', 'pen')", { language: 'python' }), '("book", "pen")');
+  assert.equal(projectExpression("{'book', 'pen'}", { language: 'python' }), '{"book", "pen"}');
+  assert.equal(projectExpression("{'book': 'pen'}", { language: 'python' }), '{"book" : "pen"}');
+  assert.equal(projectExpression("new char[] {'b', 'p'}", { language: 'java' }), "['b', 'p']");
+  assert.equal(projectExpression("std::vector<char>{'b', 'p'}", { language: 'cpp' }), "['b', 'p']");
+  for (const [language, source] of [
+    ['python', String.raw`[r'\n', b'book', f'{name}', '\x41', '\q']`],
+    ['typescript', String.raw`[/a&&b/, \`raw && text\`, '\x41']`.replaceAll('\\`', '`')],
+    ['cpp', String.raw`{R"tag(a && b)tag", L"book"}`]
+  ]) assert.equal(projectExpression(source, { language }), source);
+  assert.equal(projectExpression('std::vector<int>(3, 1)', { language: 'cpp' }), 'std::vector < int > (3, 1)');
+  assert.equal(projectExpression('std::vector<std::string>{3}', { language: 'cpp' }), 'std::vector < std::string > {3}');
+  assert.equal(projectExpression('std::vector<std::string>{3, "x"}', { language: 'cpp' }), 'std::vector < std::string > {3, "x"}');
+  assert.equal(projectExpression('std::vector<int>{first, last}', { language: 'cpp' }), 'std::vector < int > {first, last}');
+  assert.equal(projectExpression('std::vector<int>{3, std::allocator<int>{}}', { language: 'cpp' }), 'std::vector < int > {3, std::allocator < int > {}}');
+  assert.equal(projectExpression('std::vector<int>{3, 1}', { language: 'cpp' }), '[3, 1]');
+  assert.equal(projectExpression('domain::vector<int>{1, 2}', { language: 'cpp' }), 'domain::vector < int > {1, 2}');
+  assert.equal(projectExpression('new String[3]', { language: 'java' }), 'new String[3]');
 });

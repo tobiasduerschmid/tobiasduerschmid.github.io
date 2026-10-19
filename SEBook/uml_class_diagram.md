@@ -84,6 +84,8 @@ These are modeling correspondences, not identical runtime types. Machine integer
 
 Java boxed numbers retain their nullable distinction, for example `Integer` becomes `Optional<Integer>` in Design focus. A common text label such as `String` does not prove non-nullness. See [TypeScript's primitive type distinctions](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html) and [Python's annotation contract](https://docs.python.org/3/library/typing.html): Python does not enforce annotations at runtime.
 
+Distinguish a collection's **type**, such as `Sequence<String>`, from one **value**, such as `["book", "pen"]`. Design focus uses square brackets and double-quoted strings for recognized sequence values. Sets, maps, and tuples keep their distinct forms.
+
 ### 2.1 Classes
 A **Class** <span class="uml-sym" data-diagram="class" data-sym="box" data-label="Customer"></span> describes a set of objects that share the same structure and behavior. In UML, a class is represented by a rectangle divided into three compartments:
 1. **Top:** The Class Name.

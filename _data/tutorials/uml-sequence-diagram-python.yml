@@ -107,10 +107,10 @@ steps:
       Main --> channel: <<create>>
       activate channel
       deactivate channel
-      Main -> bot: send('Hello, world!')
+      Main -> bot: send(&quot;Hello, world!&quot;)
       activate bot
       deactivate bot
-      Main -> channel: notify_members('Welcome')
+      Main -> channel: notify_members(&quot;Welcome&quot;)
       activate channel
       deactivate channel
       deactivate Main
@@ -403,7 +403,7 @@ steps:
       activate bot
       bot --> Main: count: Integer
       deactivate bot
-      Main -> channel: notify_members('{count} members ...)
+      Main -> channel: notify_members(f&quot;{count} members online&quot;)
       activate channel
       deactivate channel
       deactivate Main
@@ -698,7 +698,7 @@ steps:
       Main --> bot: <<create>>
       activate bot
       deactivate bot
-      Main -> bot: handle_message('hi there')
+      Main -> bot: handle_message(&quot;hi there&quot;)
       activate bot
       bot -> bot: log(message)
       activate bot
@@ -1032,7 +1032,7 @@ steps:
       Main --> channel: <<create>>
       activate channel
       deactivate channel
-      Main -> bot: handle(channel, 'buy now cheap')
+      Main -> bot: handle(channel, &quot;buy now cheap&quot;)
       activate bot
       bot -> bot: is_spam(message)
       activate bot
@@ -1324,7 +1324,7 @@ steps:
       Main --> channel: <<create>>
       activate channel
       deactivate channel
-      Main -> bot: broadcast_all(channel, ['hi', 'hello', ...)
+      Main -> bot: broadcast_all(channel, [&quot;hi&quot;, &quot;hello&quot;, &quot;good morning&quot;])
       activate bot
       loop [for each msg in messages]
       bot -> channel: send_to_all(msg)
@@ -1357,7 +1357,7 @@ steps:
 
 
           class DiscordBot:
-              def broadcast_all(self, channel: Channel, messages: list) -> None:
+              def broadcast_all(self, channel: Channel, messages: list[str]) -> None:
                   # TODO: Match the target's repeated interaction for any input length.
                   channel.send_to_all(messages[0])
 
@@ -1380,7 +1380,7 @@ steps:
 
 
             class DiscordBot:
-                def broadcast_all(self, channel: Channel, messages: list) -> None:
+                def broadcast_all(self, channel: Channel, messages: list[str]) -> None:
                     for msg in messages:
                         channel.send_to_all(msg)
 
@@ -1852,8 +1852,8 @@ steps:
       Notice every concept from Steps 1-5 appears:
 
       - **Lifelines and creation (Step 1):** `Main`, `bot: DiscordBot`, `channel: Channel`, with two `<<create>>` arrows.
-      - **Return value (Step 2):** the dashed arrow labeled `count: int` from `channel` back to `bot` after `get_subscriber_count()` — the generator labels the captured result with its bound variable name and annotated type.
-      - **Self-call with nested activation (Step 3):** `_log_start` before the loop, `_is_announcement` before each choice, and `_log_skip` in the `else` branch.
+      - **Return value (Step 2):** the dashed arrow labeled `count: Integer` from `channel` back to `bot` after `get_subscriber_count()` — the generator labels the captured result with its bound variable name and abstracted type.
+      - **Self-call with nested activation (Step 3):** `log_start` before the loop, `is_announcement` before each choice, and `log_skip` in the `else` branch. The corresponding Python helpers retain their leading `_`.
       - **Conditional fragment (Step 4):** one `alt` inside the loop.
       - **Loop fragment (Step 5):** one outer `loop` over `posts`.
 
@@ -1901,7 +1901,7 @@ steps:
               def _log_skip(self, post: str) -> None:
                   print(f"[DIGEST] skipped: {post}")
 
-              def run_digest(self, channel: Channel, posts: list) -> None:
+              def run_digest(self, channel: Channel, posts: list[str]) -> None:
                   # TODO: model the suggested digest interaction.
                   # Preserve its opening record and one outcome per post.
                   pass
@@ -1942,7 +1942,7 @@ steps:
                 def _log_skip(self, post: str) -> None:
                     print(f"[DIGEST] skipped: {post}")
 
-                def run_digest(self, channel: Channel, posts: list) -> None:
+                def run_digest(self, channel: Channel, posts: list[str]) -> None:
                     count = channel.get_subscriber_count()
                     self._log_start(count)
                     for post in posts:
@@ -1965,7 +1965,7 @@ steps:
       explanation: |
         Every line of `run_digest` maps to one visual element:
 
-        - `count = channel.get_subscriber_count()` → sync arrow to `channel`, dashed return arrow labeled `count: int` back to `bot` (Step 2).
+        - `count = channel.get_subscriber_count()` → sync arrow to `channel`, dashed return arrow labeled `count: Integer` in Design focus back to `bot` (Step 2).
         - `self._log_start(count)` → self-arrow stacked on top of the outer `run_digest` activation box (Step 3).
         - `for post in posts:` → `loop` fragment (Step 5).
         - `if self._is_announcement(post): ... else: ...` → a classifier self-call followed by an `alt` fragment with two compartments (Step 4).

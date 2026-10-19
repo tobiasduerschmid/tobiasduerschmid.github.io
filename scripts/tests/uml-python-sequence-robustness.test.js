@@ -226,7 +226,7 @@ probe = Probe()
 if __name__ != "__main__":
     probe.work()
 `);
-  assert.match(output, /opt \[__name__ != '__main__'\]/);
+  assert.match(output, /opt \[__name__ != "__main__"\]/);
 });
 
 test('the reversed equality form of the main guard includes module initialization', () => {

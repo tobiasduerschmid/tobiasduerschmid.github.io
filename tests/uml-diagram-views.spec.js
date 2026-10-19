@@ -2,6 +2,7 @@
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const { waitForTutorialReady, setEditorContent } = require('./tutorial-helpers');
+const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
 
 const chapter = '/SEBook/uml_class_diagram.html';
 const visibilityLab = page => page.getByRole('region', { name: 'UML code lab: Member visibility', exact: true });
@@ -77,22 +78,39 @@ test('view controls remain readable in light, dark, narrow, and print layouts', 
 });
 
 test('sequence views abstract a loop without changing its source or calls', async ({ page }) => {
+  test.setTimeout(60_000);
   await page.goto('/SEBook/uml_sequence_diagram.html');
   const lab = page.getByRole('region', { name: 'UML code lab: The loop boundary matters', exact: true });
-  await lab.getByRole('tab', { name: 'Java', exact: true }).click();
   const diagram = lab.getByRole('img');
-  await expect(diagram).toContainText('for (String item');
-  const originalDiagram = await diagram.textContent();
   const source = lab.locator('[data-uml-source]');
-  const originalSource = await source.inputValue();
+  for (const language of ['Python', 'Java', 'TypeScript']) {
+    await lab.getByRole('tab', { name: language, exact: true }).click();
+    if (language === 'Python') {
+      const editor = lab.locator('[data-uml-editor]').getByRole('textbox', { name: /Python code/ });
+      const singleQuoted = (await source.inputValue()).replace('["book", "pen"]', "['book', 'pen']");
+      await editor.focus();
+      await selectAllInMonaco(editor);
+      // Paste keeps the learner's exact literal spelling and indentation.
+      await editor.evaluate((element, text) => {
+        const instance = window.monaco.editor.getEditors().find(candidate => candidate.getDomNode().contains(element));
+        instance.trigger('keyboard', 'paste', { text });
+      }, singleQuoted);
+      await expect(diagram).toContainText("for item in ['book', 'pen']", { timeout: 15_000 });
+    } else {
+      await expect(diagram).toContainText(language === 'Java' ? 'for (String item' : 'for item of');
+    }
+    const originalDiagram = await diagram.textContent();
+    const originalSource = await source.inputValue();
 
-  await viewButton(lab, 'Design focus').click();
-  await expect(diagram).toContainText('for each item in ["book", "pen"]');
-  await expect(diagram).toHaveAccessibleName(/Main calls receipt with "addItem\(item\)".*Main calls receipt with "finish\(\)"/);
-  await expect(source).toHaveValue(originalSource);
+    await viewButton(lab, 'Design focus').click();
+    await expect(diagram).toContainText('for each item in ["book", "pen"]');
+    await expect(diagram).toHaveAccessibleName(/Main calls receipt with "add_?[Ii]tem\(item\)".*Main calls receipt with "finish\(\)"/);
+    await expect(source).toHaveValue(originalSource);
 
-  await viewButton(lab, 'Implementation details').click();
-  await expect(diagram).toHaveText(originalDiagram);
+    await viewButton(lab, 'Implementation details').click();
+    await expect(diagram).toHaveText(originalDiagram);
+    await expect(source).toHaveValue(originalSource);
+  }
 });
 
 test('tutorial, fullscreen, and detached diagrams share the selected view', async ({ page }) => {

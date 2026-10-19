@@ -2134,6 +2134,8 @@ channel.
   common SEBook pseudocode through `js/uml-expression-views.js`
   (`UMLExpressionViews.projectSequence`, `projectExpression`, `projectLoop`).
   UML does not prescribe an expression language; these labels are a book convention.
+  List types use `Sequence<T>`; recognized sequence values use square brackets
+  and ordinary string values use double quotes. Opaque literals retain source notation.
   Protocol behavior, relations, control flow, warnings and source maps retain their meaning.
   Boxed Java primitives preserve nullability; C++ unsigned integers preserve the
   nonnegative constraint. Equivalent-looking views do not prove equivalent code.

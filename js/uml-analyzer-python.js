@@ -491,7 +491,7 @@
       }
       if (s.startsWith('"""') || s.startsWith("'''")) s = s.slice(3, -3);
       else s = s.slice(1, -1);
-      var node = { type: 'Constant', value: s };
+      var node = { type: 'Constant', value: s, sourceLiteral: tok.v };
       if (isF) node.isFString = true;
       return node;
     }
@@ -1342,7 +1342,7 @@
         if (node.value === true) return 'True';
         if (node.value === false) return 'False';
         if (node.value === null) return 'None';
-        if (typeof node.value === 'string') return "'" + node.value + "'";
+        if (typeof node.value === 'string') return node.sourceLiteral || "'" + node.value + "'";
         return String(node.value);
       case 'Attribute': return unparse(node.value, caller) + '.' + node.attr;
       case 'Call':
