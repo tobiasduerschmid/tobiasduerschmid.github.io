@@ -17,7 +17,13 @@
         <div class="uml-code-lab-monaco" data-uml-editor hidden></div>
       </div>
       <div class="uml-code-lab-result">
-        <p class="uml-code-lab-preview-title"><strong>Live {{ uml_lab.type | escape }} diagram</strong><span class="uml-code-lab-spinner" aria-hidden="true"></span></p>
+        <div class="uml-code-lab-preview-title">
+          <strong>Live {{ uml_lab.type | escape }} diagram</strong><span class="uml-code-lab-spinner" aria-hidden="true"></span>
+          <div class="uml-code-lab-problems" data-uml-problems-anchor>
+            <button type="button" class="uml-code-lab-problem-toggle" data-uml-problems-toggle aria-expanded="false" hidden><span aria-hidden="true">!</span></button>
+            <div class="uml-code-lab-problem-panel" data-uml-problems hidden></div>
+          </div>
+        </div>
         <p data-uml-status role="status" aria-live="polite" aria-atomic="true"></p>
         <div data-uml-preview class="uml-{{ uml_lab.type | escape }}-diagram-container"></div>
       </div>

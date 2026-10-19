@@ -3,6 +3,100 @@
   'use strict';
   const mounted = new Map();
   let nextId = 0;
+  // Problems surface only after a typing pause, so half-typed code is not flagged.
+  const PROBLEM_REVEAL_DELAY_MS = 500;
+  // Lets the pointer cross from the badge to its details without closing them.
+  const HOVER_CLOSE_DELAY_MS = 300;
+
+  function describeProblem(problem) {
+    const heading = document.createElement('strong');
+    heading.textContent = `${problem.kind === 'syntax' ? 'Syntax error' : 'Error'} on line ${problem.line}, column ${problem.column}:`;
+    const item = document.createElement('li');
+    item.append(heading, ' ' + [problem.message, problem.hint].filter(Boolean).join(' '));
+    return item;
+  }
+
+  /**
+   * The badge beside the diagram title. report(problems) shows problems after
+   * a typing pause (at once if the badge is already up); details open on hover
+   * or click and close with Escape. It owns the source's aria-invalid and the
+   * editor's markers while problems are shown.
+   */
+  function createProblemReport(root, codeEditor, signal) {
+    const anchor = root.querySelector('[data-uml-problems-anchor]');
+    const toggle = root.querySelector('[data-uml-problems-toggle]');
+    const panel = root.querySelector('[data-uml-problems]');
+    const source = root.querySelector('[data-uml-source]');
+    const status = root.querySelector('[data-uml-status]');
+    let revealTimer = null;
+    let closeTimer = null;
+    let shown = false;
+    let pinned = false;
+
+    panel.id = root.querySelector('[data-uml-task]').id.replace('task', 'problems');
+    toggle.setAttribute('aria-controls', panel.id);
+
+    function setOpen(open, pin = false) {
+      clearTimeout(closeTimer);
+      pinned = open && pin;
+      panel.hidden = !open;
+      toggle.setAttribute('aria-expanded', String(open));
+    }
+
+    function show(problems) {
+      shown = true;
+      const count = problems.length === 1 ? 'the code problem' : `the ${problems.length} code problems`;
+      const note = document.createElement('p');
+      note.textContent = 'The diagram stays as it was until the code is fixed.';
+      const list = document.createElement('ul');
+      list.append(...problems.map(describeProblem));
+      panel.replaceChildren(list, note);
+      toggle.setAttribute('aria-label', 'Show ' + count);
+      toggle.hidden = false;
+      source.setAttribute('aria-invalid', 'true');
+      status.textContent = `Diagram paused: the code has ${problems.length === 1 ? 'a problem' : problems.length + ' problems'}. Details are beside the diagram title.`;
+      codeEditor.showProblems(problems);
+    }
+
+    function clear() {
+      clearTimeout(revealTimer);
+      if (!shown) return;
+      shown = false;
+      setOpen(false);
+      toggle.hidden = true;
+      source.setAttribute('aria-invalid', 'false');
+      codeEditor.showProblems([]);
+    }
+
+    toggle.addEventListener('click', () => setOpen(panel.hidden || !pinned, true), { signal });
+    anchor.addEventListener('mouseenter', () => { if (panel.hidden) setOpen(true); else clearTimeout(closeTimer); }, { signal });
+    anchor.addEventListener('mouseleave', () => {
+      if (!pinned) closeTimer = setTimeout(() => setOpen(false), HOVER_CLOSE_DELAY_MS);
+    }, { signal });
+    document.addEventListener('pointerdown', event => {
+      if (!panel.hidden && !anchor.contains(event.target)) setOpen(false);
+    }, { signal });
+    // Capture so the first Escape closes the details before an editor reacts to it.
+    document.addEventListener('keydown', event => {
+      if (event.key !== 'Escape' || panel.hidden) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (panel.contains(document.activeElement)) toggle.focus();
+      setOpen(false);
+    }, { signal, capture: true });
+
+    return {
+      /** problems is non-empty; clear() reports code that checks cleanly. */
+      report(problems) {
+        clearTimeout(revealTimer);
+        if (shown) show(problems);
+        else revealTimer = setTimeout(() => show(problems), PROBLEM_REVEAL_DELAY_MS);
+      },
+      /** New input restarts the pause before problems appear. */
+      postpone() { clearTimeout(revealTimer); },
+      clear
+    };
+  }
 
   function mount(root) {
     const example = JSON.parse(root.querySelector('script[type="application/json"]').textContent);
@@ -27,6 +121,7 @@
     status.id = 'uml-lab-status-' + nextId;
     source.setAttribute('aria-describedby', task.id + ' ' + status.id);
     const codeEditor = global.UMLCodeLabEditor.create(source, root.querySelector('[data-uml-editor]'), languages);
+    const problemReport = createProblemReport(root, codeEditor, events.signal);
 
     function syncSource() {
       drafts[selectedLanguage] = source.value;
@@ -36,8 +131,20 @@
     function setStatus(message, state) {
       status.textContent = message;
       root.dataset.state = state;
-      source.setAttribute('aria-invalid', state === 'error' ? 'true' : 'false');
+      // While edits are pending or the code has problems, the problem report owns aria-invalid.
+      if (state !== 'pending' && state !== 'invalid') source.setAttribute('aria-invalid', state === 'error' ? 'true' : 'false');
       preview.setAttribute('aria-busy', state === 'pending' ? 'true' : 'false');
+    }
+
+    /** Authored starter code is verified by tests, so it renders without loading checkers. */
+    function sourceProblems(code) {
+      if (code === example[selectedLanguage].code) return Promise.resolve([]);
+      return global.SEBookSourceCheck.check(selectedLanguage, code).catch(error => {
+        // A newer edit replaced this check; an unavailable checker must not
+        // block the diagram, and analysis still reports what it cannot read.
+        if (!error.superseded) console.warn('Source check unavailable:', error);
+        return [];
+      });
     }
 
     function clearPreview() {
@@ -55,7 +162,8 @@
       root.querySelector('[data-uml-print-label]').textContent = label;
       source.value = drafts[selectedLanguage];
       source.rows = Math.max(8, Math.min(18, source.value.trimEnd().split('\n').length));
-      codeEditor.sync(selectedLanguage, label);
+      problemReport.clear();
+      codeEditor.sync(selectedLanguage, label, selectedTab.dataset.filename);
       task.textContent = example[selectedLanguage].task;
       explanation.open = false;
       syncSource();
@@ -65,6 +173,7 @@
     function schedule(delay = 150) {
       const currentRevision = ++revision;
       clearTimeout(timer);
+      problemReport.postpone();
       syncSource();
       setStatus('Updating diagram…', 'pending');
       if (!composing && !paused) timer = setTimeout(() => update(currentRevision), delay);
@@ -80,8 +189,18 @@
       if (!isCurrent()) return;
       if (!client) client = global.UMLLive.createClient();
       const filename = languageTabs.find(button => button.dataset.languageOption === selectedLanguage).dataset.filename;
+      const code = source.value;
       try {
-        const result = await client.analyze({ language: selectedLanguage, sources: { [filename]: source.value } });
+        const problems = await sourceProblems(code);
+        if (!isCurrent()) return;
+        if (problems.length) {
+          // The preview keeps its last diagram until the code checks cleanly.
+          setStatus('', 'invalid');
+          problemReport.report(problems);
+          return;
+        }
+        problemReport.clear();
+        const result = await client.analyze({ language: selectedLanguage, sources: { [filename]: code } });
         if (!isCurrent()) return;
         if (result.errors.length) throw new Error(result.errors.join(' '));
         const syntax = result[example.type + 'Diagram'];
@@ -105,6 +224,8 @@
       element.addEventListener(name, callback, { signal: events.signal });
     }
 
+    // Checkers load on first use; start when the learner reaches the code.
+    listen(root.querySelector('.uml-code-lab-editor'), 'focusin', () => global.SEBookSourceCheck.prepare(selectedLanguage));
     listen(source, 'input', () => schedule());
     listen(source, 'compositionstart', () => { composing = true; schedule(); });
     listen(source, 'compositionend', () => { composing = false; schedule(); });

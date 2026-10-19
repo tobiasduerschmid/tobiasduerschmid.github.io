@@ -383,6 +383,26 @@ class Analyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
 
+def describe_error(filename, exc):
+    """Locate syntax errors (1-based, end exclusive) so editors can mark them."""
+    if not isinstance(exc, SyntaxError) or not exc.lineno:
+        return {"filename": filename, "message": str(exc)}
+    line = exc.lineno
+    column = exc.offset or 1
+    end_line = exc.end_lineno or line
+    end_column = exc.end_offset or column
+    if (end_line, end_column) <= (line, column):
+        end_line, end_column = line, column + 1
+    return {
+        "filename": filename,
+        "message": exc.msg,
+        "line": line,
+        "column": column,
+        "endLine": end_line,
+        "endColumn": end_column,
+    }
+
+
 def analyze_files(files_json):
     files = json.loads(files_json)
     result = {"files": {}, "errors": []}
@@ -403,7 +423,7 @@ def analyze_files(files_json):
                 "symbols": analyzer.symbols,
             }
         except Exception as exc:
-            result["errors"].append({"filename": filename, "message": str(exc)})
+            result["errors"].append(describe_error(filename, exc))
             result["files"][filename] = {
                 "classes": [],
                 "functions": [],
@@ -414,6 +434,40 @@ def analyze_files(files_json):
                 "symbols": [],
             }
     return json.dumps(result)
+
+
+def undefined_names(filename, tree):
+    """Names pyflakes cannot resolve; imports and builtins count as defined."""
+    from pyflakes import checker, messages
+
+    undefined = (messages.UndefinedName, messages.UndefinedLocal, messages.UndefinedExport)
+    for message in checker.Checker(tree, filename=filename).messages:
+        if not isinstance(message, undefined):
+            continue
+        name = message.message_args[0]
+        yield {
+            "filename": filename,
+            "kind": "semantic",
+            "message": message.message % message.message_args,
+            "line": message.lineno,
+            "column": message.col + 1,
+            "endLine": message.lineno,
+            "endColumn": message.col + 1 + len(name),
+        }
+
+
+def check_files(files_json):
+    """Syntax errors, then undefined names: the problems that stop code from running."""
+    problems = []
+    for item in json.loads(files_json):
+        filename = item.get("filename", "")
+        try:
+            tree = ast.parse(item.get("content", ""), filename=filename)
+        except SyntaxError as exc:
+            problems.append({**describe_error(filename, exc), "kind": "syntax"})
+            continue
+        problems.extend(undefined_names(filename, tree))
+    return json.dumps({"problems": problems})
 
 
 if __name__ == "__main__" and sys.platform != "emscripten":

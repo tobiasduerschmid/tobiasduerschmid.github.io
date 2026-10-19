@@ -5,6 +5,8 @@
  * Every compilation gets a fresh filesystem and every execution a fresh WASI
  * instance. Failed compilation can never execute a previous binary. The host
  * owns Stop and the deadline, so even an infinite loop can be terminated.
+ * check type-checks one standalone source (-fsyntax-only): nothing is linked
+ * or executed, and the stored files are untouched.
  */
 import { runClang } from './vendor/yowasp-clang/22.0.0-git20542-10/gen/bundle.js';
 import { WASI, File, OpenFile, ConsoleStdout } from './vendor/browser-wasi-shim/0.4.2/dist/index.js';
@@ -111,9 +113,29 @@ async function compileAndRun(message) {
   postMessage({ type: 'run_done', id: message.id, exitCode, phase, ...output.text });
 }
 
+/** Replies with clang's diagnostics text; an empty stderr means the code compiles. */
+async function check(message) {
+  const output = outputCapture(true);
+  try {
+    // Unlike run, keep exceptions enabled: no libc++ is linked, so valid
+    // throw/catch code must not be reported as an error.
+    await runClang(['clang++', '-std=c++17', '-fsyntax-only', '-fno-color-diagnostics',
+      '/check/' + message.filename], { check: { [message.filename]: message.code } }, {
+      decodeASCII: false,
+      stdout: bytes => output.write('stdout', bytes),
+      stderr: bytes => output.write('stderr', bytes),
+    });
+  } catch (error) {
+    // A non-zero exit already wrote its diagnostics to stderr.
+    if (!output.text.stderr) output.text.stderr = `${error.message || error}\n`;
+  }
+  postMessage({ type: 'check_done', id: message.id, stderr: output.text.stderr });
+}
+
 async function handle(message) {
   await ready;
   if (message.type === 'run' || message.type === 'runTest') return compileAndRun(message);
+  if (message.type === 'check') return check(message);
   if (message.type === 'write') {
     try {
       files.set(sourcePath(message.path), String(message.content));

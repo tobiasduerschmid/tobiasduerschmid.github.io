@@ -112,6 +112,12 @@ concept. `_data/uml_code_labs.yml` holds the Python/Java/C++ starter code, a sho
 editing prompt, and a collapsed explanation. Python is selected by default.
 `uml-code-lab-editor.js` uses locally vendored Monaco for syntax highlighting;
 Escape leaves the editor, and a native textarea survives editor-load failure.
+`source-check.js` checks every edit with each language's own tools (syntax,
+then names such as an undefined base class). Until a problem is fixed, the lab
+keeps the last diagram; after a typing pause it shows a "!" badge (details with
+fix hints on hover or click) and Monaco markers.
+Starter code must pass these checks; the lab browser suite verifies it.
+Python editors offer the tutorial refactorings from the editor menu.
 A spinner beside the diagram
 title preserves the previous diagram's position until its replacement is
 ready. Keep prompts minimal and focus

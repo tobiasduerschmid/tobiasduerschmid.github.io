@@ -10,7 +10,8 @@
  *   { files: { [filename]: { classes, functions, calls, assignments, imports, statements, symbols } } }
  * Each adapter owns its parser/analyzer and returns Monaco edit plans. Python is
  * the first implementation and is backed by Python's stdlib ast module through
- * js/python-ast-worker.js; JS/TS/JSX can plug into the same contract later.
+ * the page's shared js/python-ast-service.js; JS/TS/JSX can plug into the same
+ * contract later.
  */
 (function (global) {
   'use strict';
@@ -82,8 +83,6 @@
     },
   ];
   var LanguageAdapters = {};
-  var SCRIPT_URL = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
-  var _styleInstalled = false;
 
   function attach(opts) {
     return new RefactoringController(opts || {});
@@ -102,7 +101,6 @@
     this.applyEdits = opts.applyEdits;
     this.notify = opts.notify || defaultNotify;
     this._disposables = [];
-    installStyles();
     this.attachEditors(this.editors);
   }
 
@@ -219,7 +217,9 @@
   };
 
   RefactoringController.prototype._pythonAnalysis = function (workspace) {
-    return PythonAstService.analyze(workspace);
+    return global.SEBookPythonAst.analyze((workspace.files || []).filter(function (f) {
+      return isPythonFile(f.language, f.filename);
+    }));
   };
 
   RefactoringController.prototype._applyPlan = function (plan, workspace) {
@@ -635,67 +635,6 @@
       },
     };
   }
-
-  var PythonAstService = (function () {
-    var worker = null;
-    var nextId = 1;
-    var pending = {};
-    var cacheKey = '';
-    var cacheValue = null;
-
-    function ensureWorker() {
-      if (worker) return worker;
-      worker = new Worker(pythonAstWorkerUrl());
-      worker.onmessage = function (event) {
-        var msg = event.data || {};
-        if (msg.type !== 'analysis' || !pending[msg.id]) return;
-        var entry = pending[msg.id];
-        clearTimeout(entry.timer);
-        delete pending[msg.id];
-        if (msg.ok) entry.resolve(msg.analysis);
-        else entry.reject(new Error(msg.error || 'Python AST analysis failed.'));
-      };
-      worker.onerror = function (event) {
-        Object.keys(pending).forEach(function (id) {
-          pending[id].reject(new Error(event.message || 'Python AST worker failed.'));
-        });
-        pending = {};
-      };
-      return worker;
-    }
-
-    function keyFor(workspace) {
-      return (workspace.files || []).map(function (f) {
-        return f.filename + ':' + (f.content || '').length + ':' + hashString(f.content || '');
-      }).join('|');
-    }
-
-    function analyze(workspace) {
-      var key = keyFor(workspace);
-      if (cacheValue && key === cacheKey) return Promise.resolve(cacheValue);
-      var id = nextId++;
-      var files = (workspace.files || []).filter(function (f) {
-        return isPythonFile(f.language, f.filename);
-      });
-      return new Promise(function (resolve, reject) {
-        pending[id] = {
-          resolve: function (analysis) {
-            cacheKey = key;
-            cacheValue = analysis;
-            resolve(analysis);
-          },
-          reject: reject,
-          timer: setTimeout(function () {
-            delete pending[id];
-            reject(new Error('Python AST analysis timed out.'));
-          }, 60000),
-        };
-        ensureWorker().postMessage({ type: 'analyze', id: id, files: files });
-      });
-    }
-
-    return { analyze: analyze };
-  })();
 
   /* ------------------------------------------------------------------------ */
   /* Python adapter                                                           */
@@ -1173,13 +1112,6 @@
   };
 
   registerLanguageAdapter('python', PythonAdapter);
-
-  function pythonAstWorkerUrl() {
-    if (SCRIPT_URL && global.URL) {
-      return new global.URL('python-ast-worker.js', SCRIPT_URL).href;
-    }
-    return '/js/python-ast-worker.js';
-  }
 
   /* ------------------------------------------------------------------------ */
   /* Python parsing and text utilities                                         */
@@ -4282,67 +4214,6 @@
     return 1;
   }
 
-  function installStyles() {
-    if (_styleInstalled || !document || !document.head) return;
-    _styleInstalled = true;
-    var style = document.createElement('style');
-    style.textContent = [
-      '.sbr-backdrop{--sbr-bg:#fff;--sbr-text:#111827;--sbr-muted:#4b5563;--sbr-border:#cbd5e1;--sbr-panel:#f8fafc;--sbr-panel-strong:#eef2f7;--sbr-input:#fff;--sbr-primary:#2774ae;--sbr-primary-hover:#1e5f91;--sbr-primary-text:#fff;--sbr-focus:#0ea5e9;--sbr-danger:#9f1239;--sbr-old-bg:#fff1f2;--sbr-old-text:#7f1d1d;--sbr-old-gutter:#be123c;--sbr-new-bg:#ecfdf5;--sbr-new-text:#064e3b;--sbr-new-gutter:#047857;position:fixed;inset:0;z-index:4000;background:rgba(15,23,42,.58);display:flex;align-items:center;justify-content:center;padding:18px;color:var(--sbr-text)}',
-      'html.dark-mode .sbr-backdrop{--sbr-bg:#111827;--sbr-text:#f8fafc;--sbr-muted:#cbd5e1;--sbr-border:#475569;--sbr-panel:#0f172a;--sbr-panel-strong:#1e293b;--sbr-input:#020617;--sbr-primary:#7dd3fc;--sbr-primary-hover:#bae6fd;--sbr-primary-text:#082f49;--sbr-focus:#38bdf8;--sbr-danger:#fecdd3;--sbr-old-bg:#451a1a;--sbr-old-text:#fecaca;--sbr-old-gutter:#fca5a5;--sbr-new-bg:#052e24;--sbr-new-text:#bbf7d0;--sbr-new-gutter:#86efac;background:rgba(0,0,0,.72)}',
-      '.sbr-modal{width:min(840px,calc(100vw - 32px));max-height:min(88vh,780px);background:var(--sbr-bg);color:var(--sbr-text);border:1px solid var(--sbr-border);border-radius:8px;box-shadow:0 22px 70px rgba(0,0,0,.34);display:flex;flex-direction:column;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
-      '.sbr-modal-extract-class{width:min(1280px,calc(100vw - 28px));max-height:min(92vh,940px)}',
-      '.sbr-header{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;border-bottom:1px solid var(--sbr-border);background:var(--sbr-panel)}',
-      '.sbr-title{font-weight:750;font-size:15px;line-height:1.3;color:var(--sbr-text)}',
-      '.sbr-icon-btn{width:32px;height:32px;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--sbr-muted);font-size:22px;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}',
-      '.sbr-icon-btn:hover{background:var(--sbr-panel-strong);color:var(--sbr-text);border-color:var(--sbr-border)}',
-      '.sbr-body{padding:16px;overflow:auto;min-height:80px;line-height:1.45}',
-      '.sbr-field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--sbr-text)}',
-      '.sbr-input{width:100%;box-sizing:border-box;font:13px Menlo,Consolas,monospace;padding:9px 10px;border:1px solid var(--sbr-border);border-radius:6px;background:var(--sbr-input);color:var(--sbr-text);outline:none}',
-      '.sbr-input:focus{border-color:var(--sbr-focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--sbr-focus) 26%,transparent)}',
-      '.sbr-error{min-height:18px;color:var(--sbr-danger);font-size:12px;margin-top:7px;font-weight:700}',
-      '.sbr-summary{font-size:13px;color:var(--sbr-muted);margin:0 0 10px;max-width:72ch}',
-      '.sbr-stats{display:inline-flex;align-items:center;min-height:24px;margin:0 0 12px;padding:3px 9px;border:1px solid var(--sbr-border);border-radius:999px;background:var(--sbr-panel);color:var(--sbr-muted);font-size:12px;font-weight:700}',
-      '.sbr-inline-actions{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 10px}',
-      '.sbr-checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin:12px 0 4px}',
-      '.sbr-check{display:flex;align-items:center;gap:9px;min-width:0;font:13px Menlo,Consolas,monospace;color:var(--sbr-text);padding:8px 9px;border:1px solid var(--sbr-border);border-radius:6px;background:var(--sbr-panel)}',
-      '.sbr-check input{accent-color:var(--sbr-primary);width:15px;height:15px;flex:0 0 auto}',
-      '.sbr-check span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
-      '.sbr-uml-preview{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin:14px 0 4px}',
-      '.sbr-uml-panel{min-width:0;border:1px solid var(--sbr-border);border-radius:6px;background:var(--sbr-panel);overflow:hidden}',
-      '.sbr-uml-panel-title{padding:7px 10px;border-bottom:1px solid var(--sbr-border);background:var(--sbr-panel-strong);font-size:12px;font-weight:800;color:var(--sbr-muted);text-transform:uppercase;letter-spacing:0}',
-      '.sbr-uml-diagram{min-height:360px;max-height:52vh;box-sizing:border-box;overflow:auto;padding:10px;background:var(--sbr-bg)}',
-      '.sbr-uml-diagram svg{margin:0 auto;max-width:none}',
-      '.sbr-preview{font:12px Menlo,Consolas,monospace;background:var(--sbr-panel);border:1px solid var(--sbr-border);border-radius:6px;max-height:54vh;overflow:auto;color:var(--sbr-text)}',
-      '.sbr-preview-file + .sbr-preview-file{border-top:1px solid var(--sbr-border)}',
-      '.sbr-preview-file-header{position:sticky;top:0;z-index:1;padding:8px 10px;background:var(--sbr-panel-strong);border-bottom:1px solid var(--sbr-border);font-weight:800;color:var(--sbr-text)}',
-      '.sbr-preview-hunk{padding:7px 0}',
-      '.sbr-preview-hunk + .sbr-preview-hunk{border-top:1px solid var(--sbr-border)}',
-      '.sbr-preview-hunk-meta{padding:3px 10px 6px;color:var(--sbr-muted);font-weight:700}',
-      '.sbr-preview-line{display:grid;grid-template-columns:28px 52px minmax(0,1fr);min-height:20px;white-space:pre;tab-size:4}',
-      '.sbr-preview-gutter{padding:2px 7px;text-align:center;font-weight:800;user-select:none}',
-      '.sbr-preview-line-no{padding:2px 8px;text-align:right;color:var(--sbr-muted);border-right:1px solid color-mix(in srgb,var(--sbr-border) 72%,transparent);user-select:none}',
-      '.sbr-preview-code{padding:2px 10px 2px 0;overflow:visible}',
-      '.sbr-preview-line-context{background:var(--sbr-bg);color:var(--sbr-text)}',
-      '.sbr-preview-line-old{background:var(--sbr-old-bg);color:var(--sbr-old-text)}',
-      '.sbr-preview-line-old .sbr-preview-gutter{color:var(--sbr-old-gutter)}',
-      '.sbr-preview-line-new{background:var(--sbr-new-bg);color:var(--sbr-new-text)}',
-      '.sbr-preview-line-new .sbr-preview-gutter{color:var(--sbr-new-gutter)}',
-      '.sbr-preview-empty{padding:18px;color:var(--sbr-muted)}',
-      '.sbr-actions{display:flex;justify-content:flex-end;gap:10px;padding:12px 16px;border-top:1px solid var(--sbr-border);background:var(--sbr-panel)}',
-      '.sbr-btn{min-height:34px;border:1px solid var(--sbr-border);background:var(--sbr-bg);color:var(--sbr-text);border-radius:6px;padding:7px 14px;font-size:13px;font-weight:800;cursor:pointer}',
-      '.sbr-btn:hover{background:var(--sbr-panel-strong)}',
-      '.sbr-primary{border-color:var(--sbr-primary);background:var(--sbr-primary);color:var(--sbr-primary-text)}',
-      '.sbr-primary:hover{background:var(--sbr-primary-hover);border-color:var(--sbr-primary-hover)}',
-      '.sbr-btn:disabled{opacity:.52;cursor:not-allowed}.sbr-btn:disabled:hover{background:var(--sbr-primary);border-color:var(--sbr-primary)}',
-      '.sbr-btn:focus-visible,.sbr-icon-btn:focus-visible,.sbr-check:focus-within{outline:2px solid var(--sbr-focus);outline-offset:2px}',
-      '.sbr-toast{position:fixed;right:18px;bottom:18px;z-index:4100;max-width:min(420px,calc(100vw - 36px));background:#111827;color:#fff;padding:10px 12px;border-radius:6px;font:13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.16)}',
-      '.sbr-toast.ok{background:#064e3b}.sbr-toast.warn{background:#78350f}.sbr-toast.bad{background:#7f1d1d}',
-      'html.dark-mode .sbr-toast{background:#f8fafc;color:#111827;border-color:#cbd5e1}.dark-mode .sbr-toast.ok{background:#bbf7d0;color:#052e16}.dark-mode .sbr-toast.warn{background:#fde68a;color:#451a03}.dark-mode .sbr-toast.bad{background:#fecaca;color:#450a0a}',
-      '@media (max-width:640px){.sbr-backdrop{align-items:stretch;padding:10px}.sbr-modal{width:100%;max-height:calc(100vh - 20px)}.sbr-actions{flex-wrap:wrap}.sbr-btn{flex:1 1 120px}.sbr-checks,.sbr-uml-preview{grid-template-columns:1fr}.sbr-uml-diagram{max-height:48vh}}',
-    ].join('');
-    document.head.appendChild(style);
-  }
-
   /* ------------------------------------------------------------------------ */
   /* Generic utilities                                                        */
   /* ------------------------------------------------------------------------ */
@@ -4550,13 +4421,35 @@
     return out;
   }
 
-  function hashString(str) {
-    var h = 0;
-    str = String(str || '');
-    for (var i = 0; i < str.length; i++) {
-      h = ((h << 5) - h + str.charCodeAt(i)) | 0;
-    }
-    return h;
+  /**
+   * Apply a plan's edits as one undoable step per model. modelFor(filename)
+   * returns that file's Monaco model, or null for files the host cannot edit.
+   * Returns the filenames that changed.
+   */
+  function applyEditsToModels(monaco, edits, modelFor) {
+    var byFile = {};
+    (edits || []).forEach(function (edit) {
+      if (!edit || !edit.filename || !edit.range) return;
+      if (!byFile[edit.filename]) byFile[edit.filename] = [];
+      byFile[edit.filename].push(edit);
+    });
+    return Object.keys(byFile).filter(function (filename) {
+      var model = modelFor(filename);
+      if (!model) return false;
+      model.pushEditOperations([], byFile[filename].map(function (edit) {
+        return {
+          range: new monaco.Range(
+            edit.range.startLineNumber,
+            edit.range.startColumn,
+            edit.range.endLineNumber,
+            edit.range.endColumn
+          ),
+          text: edit.text || '',
+          forceMoveMarkers: true,
+        };
+      }), function () { return null; });
+      return true;
+    });
   }
 
   function defaultNotify(message, cls) {
@@ -4573,6 +4466,7 @@
 
   global.SebookRefactorings = {
     attach: attach,
+    applyEditsToModels: applyEditsToModels,
     createPopupHost: createPopupHost,
     registerLanguageAdapter: registerLanguageAdapter,
     adapters: LanguageAdapters,

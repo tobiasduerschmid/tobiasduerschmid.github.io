@@ -1,9 +1,12 @@
-/** Enhance a chapter's native source field; UML analysis stays in its host. */
+/**
+ * Enhance a chapter's native source field with Monaco, source-problem markers,
+ * and the shared tutorial refactorings. UML analysis and source checks stay in
+ * the host.
+ */
 (function (global) {
   'use strict';
 
-  // Monaco 0.44 does not expose TypeScript's ModuleDetectionKind enum.
-  const MODULE_DETECTION_FORCE = 3;
+  const PROBLEM_MARKER_OWNER = 'sebook-source-check';
   // PascalCase names are `type.identifier`. The built-in light theme paints
   // that token #008080, which is only 4.8:1 on the white editor. #04383c is
   // the same teal at 12.8:1, close to the weight of the surrounding code.
@@ -24,20 +27,32 @@
     return id;
   }
 
-  function isolateTypeScriptLabs(monaco, languages) {
+  /** The lab's source check marks TypeScript problems with fix hints; Monaco's own copy would repeat them. */
+  function leaveTypeScriptDiagnosticsToLab(monaco, languages) {
     if (!languages.includes('typescript')) return;
     const defaults = monaco.languages.typescript.typescriptDefaults;
-    const options = defaults.getCompilerOptions();
-    if (options.moduleDetection !== MODULE_DETECTION_FORCE) {
-      // Each lab is a separate program, even when its code has no imports.
-      defaults.setCompilerOptions({ ...options, moduleDetection: MODULE_DETECTION_FORCE });
-    }
+    defaults.setDiagnosticsOptions({ ...defaults.getDiagnosticsOptions(),
+      noSyntaxValidation: true, noSemanticValidation: true });
+  }
+
+  function problemMarkers(monaco, problems) {
+    return problems.map(problem => ({
+      severity: monaco.MarkerSeverity.Error,
+      message: problem.hint ? problem.message + '\n' + problem.hint : problem.message,
+      startLineNumber: problem.line,
+      startColumn: problem.column,
+      endLineNumber: problem.endLine,
+      endColumn: problem.endColumn
+    }));
   }
 
   function create(source, host, languages) {
     let editor;
+    let refactorings = null;
     let language = 'python';
     let label = 'Python code';
+    let filename = 'example.py';
+    let problems = [];
     let destroyed = false;
     let syncing = false;
 
@@ -78,13 +93,37 @@
     const themeObserver = new MutationObserver(updateAppearance);
     const sizeObserver = new ResizeObserver(updateAppearance);
 
-    function sync(nextLanguage, nextLabel) {
+    function showProblems(nextProblems) {
+      problems = nextProblems;
+      if (!editor) return;
+      global.monaco.editor.setModelMarkers(editor.getModel(), PROBLEM_MARKER_OWNER, problemMarkers(global.monaco, problems));
+      // An open problem panel would keep describing an error that is gone.
+      // Closing it focuses the editor, so only do that while the learner is in it.
+      if (!problems.length && editor.hasWidgetFocus()) editor.trigger('sebook', 'closeMarkersNavigation', null);
+    }
+
+    function attachRefactorings(monaco) {
+      if (!global.SebookRefactorings) return null;
+      return global.SebookRefactorings.attach({
+        monaco,
+        editors: [editor],
+        getActiveFileName: () => filename,
+        getWorkspace: () => ({ activeFile: filename, files: [{ filename, content: editor.getValue(), language }] }),
+        applyEdits: edits => global.SebookRefactorings.applyEditsToModels(monaco, edits,
+          name => name === filename ? editor.getModel() : null)
+      });
+    }
+
+    function sync(nextLanguage, nextLabel, nextFilename) {
       language = nextLanguage;
       label = nextLabel;
+      filename = nextFilename;
+      problems = [];
       if (!editor) return;
       syncing = true;
       global.monaco.editor.setModelLanguage(editor.getModel(), language);
       editor.setValue(source.value);
+      showProblems([]);
       editor.updateOptions({ ariaLabel: label + '. Press Escape to leave the editor.' });
       syncing = false;
       updateAppearance();
@@ -93,7 +132,7 @@
 
     global.SEBookMonaco.loadLanguages(languages).then(monaco => {
       if (destroyed) return;
-      isolateTypeScriptLabs(monaco, languages);
+      leaveTypeScriptDiagnosticsToLab(monaco, languages);
       const focused = document.activeElement === source;
       const selection = [source.selectionStart, source.selectionEnd];
       host.hidden = false;
@@ -114,9 +153,16 @@
         parameterHints: { enabled: false },
         overviewRulerLanes: 0, hideCursorInOverviewRuler: true,
         scrollbar: { alwaysConsumeMouseWheel: false },
-        contextmenu: false
+        // Hint hovers must not be clipped by the content-sized editor box.
+        fixedOverflowWidgets: true
       });
       global.SebookMonacoFocusExit.attach(editor);
+      showProblems(problems);
+      // Refactorings analyze with Pyodide; load it only for learners who edit.
+      const firstFocus = editor.onDidFocusEditorText(() => {
+        firstFocus.dispose();
+        refactorings = attachRefactorings(monaco);
+      });
       editor.onDidContentSizeChange(() => {
         fitContent();
         refreshVisibleSyntax();
@@ -144,6 +190,7 @@
       }
     }).catch(() => {
       // The native field remains editable when the optional editor cannot load.
+      if (refactorings) { refactorings.dispose(); refactorings = null; }
       if (editor) { editor.getModel().dispose(); editor.dispose(); editor = null; }
       source.hidden = false;
       host.hidden = true;
@@ -151,10 +198,12 @@
 
     return {
       sync,
+      showProblems,
       destroy() {
         destroyed = true;
         themeObserver.disconnect();
         sizeObserver.disconnect();
+        if (refactorings) refactorings.dispose();
         if (editor) { editor.getModel().dispose(); editor.dispose(); }
       }
     };

@@ -63,11 +63,33 @@ unrolled loop counts; those predictions require reasoning about the code.
   main-thread fallback, text measurement, SVG rendering and accessible names.
   Tutorials and chapter labs use the same pipeline and `js/uml-worker.js`.
 - `js/uml-code-lab.js` owns the chapter controls, debounce, per-language drafts,
-  reset, status, and stale-result guards. Edits debounce for 150 ms. A spinner occupies reserved space
+  reset, status, and stale-result guards. Edits debounce for 150 ms. Each edit
+  is checked before analysis; code that checks cleanly updates the diagram at
+  once. While the check reports a problem, the previous diagram stays
+  unchanged. Once typing pauses for half a second, a small "!" badge appears beside
+  the diagram title and the editor marks the problems. Hovering or clicking the
+  badge shows each problem's position, message, and fix hint; Escape closes the
+  details. A visually hidden status announces the pause. Unedited starter code skips
+  the check; a browser test proves every starter passes it. A checker that
+  cannot load does not block the diagram. Focusing the editor area starts
+  loading the selected language's checker. A spinner occupies reserved space
   beside the diagram title while the previous diagram stays in place. Its
   animation stops for reduced-motion preferences; updates remain announced
   through a visually hidden status. Python is the default; drafts exist only
   in memory and switching languages preserves each draft.
+- `js/source-check.js` (`SEBookSourceCheck.check(language, source)`) reports
+  syntax problems, then semantic ones, decided by each language's own tools:
+  Python uses CPython's `ast` and pyflakes (undefined names) through
+  `js/python-ast-service.js`. TypeScript uses the compiler's parse diagnostics,
+  then Monaco's TypeScript service (with standard-library typings). C++ uses the
+  tree-sitter grammar, then `clang -fsyntax-only` in `js/cpp-worker.js` (with
+  standard headers). Java uses the tree-sitter grammar, then resolves type names
+  against the example's declarations, its imports, and `java.lang`. No Java
+  compiler runs in the browser, and a wildcard import disables that name check.
+  The module only adds positions and fix hints; it never executes code. The
+  tree-sitter files are vendored under `js/vendor/tree-sitter/`.
+- `js/python-ast-service.js` is the page's single Pyodide worker client for
+  refactoring analysis (`analyze`) and source checks (`check`).
 - `js/uml-code-lab-editor.js` enhances the source field with Monaco's Python,
   Java, C++ and TypeScript grammars, adapting font size and theme to the chapter, with pure white
   and pure black editor backgrounds. The shared
@@ -75,9 +97,12 @@ unrolled loop counts; those predictions require reasoning about the code.
   chapters. Chapter editors await `loadLanguages` so lazy tokenizers are ready
   before the first edit; each grammar is warmed once per page. Its height
   follows its content, including wrapped lines on
-  narrow screens. TypeScript models are treated as separate modules so class
-  and variable names in different labs do not collide; semantic checking stays
-  enabled. Escape leaves
+  narrow screens. It shows the source check's problems as Monaco markers (hover,
+  or F8 for the problem panel); Monaco's own TypeScript validation is off so
+  problems are not repeated. Python editors offer the tutorial refactorings
+  (`js/tutorial-refactorings.js`) from the editor menu (right-click or
+  Shift+F10); the controller attaches on first focus, so Pyodide loads only for
+  learners who edit. Escape leaves
   the editor using `js/monaco-focus-exit.js`. After editing or switching
   languages, the public line colorizer refreshes visible model tokens without
   waiting for Monaco's idle background pass. Scrolling extends that refresh
@@ -260,6 +285,7 @@ Suggested edits live in `tests/helpers/uml-lab-edits.js`, shared with browser
 checks so both exercise the same chapter tasks.
 The browser suite exercises edits, language and widget isolation, reset, no-worker
 fallback, empty-source recovery, C++ header/source tutorial integration,
-syntax highlighting in all four languages, accessibility, small screens and print. Compile C++
-starter code and suggested edits with `clang++ -std=c++17 -fsyntax-only` when
-changing the examples; the analyzer is not a syntax validator.
+syntax highlighting in all four languages, syntax and undefined-base-class
+problems in all four languages, refactoring, accessibility, small screens and
+print. A browser test runs every starter through `SEBookSourceCheck`, since
+unedited starters render without a check.

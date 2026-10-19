@@ -1,8 +1,15 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
+const { test, expect: baseExpect } = require('@playwright/test');
+const fs = require('fs');
+const path = require('path');
+const yaml = require('js-yaml');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const { waitForTutorialReady, setEditorContent } = require('./tutorial-helpers');
 const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
+
+// A learner's first edit in a language loads its checker (Pyodide, clang,
+// TypeScript), so a diagram can take longer than the default to follow.
+const expect = baseExpect.configure({ timeout: 15_000 });
 
 const classChapter = '/SEBook/uml_class_diagram.html';
 const sequenceChapter = '/SEBook/uml_sequence_diagram.html';
@@ -24,6 +31,17 @@ async function replaceCode(editor, value) {
 
 const sourceText = lab => lab.locator('[data-uml-source]').inputValue();
 
+/** The "!" badge beside the diagram title; it appears once typing pauses on code with problems. */
+const problemBadge = lab => lab.getByRole('button', { name: /^Show the (\d+ )?code problems?$/ });
+
+/** Opens the badge's details by click and returns them, located through aria-controls. */
+async function openProblemDetails(lab) {
+  const badge = problemBadge(lab);
+  await badge.click();
+  await expect(badge).toHaveAttribute('aria-expanded', 'true');
+  return lab.page().locator('#' + await badge.getAttribute('aria-controls'));
+}
+
 function editorFor(lab) {
   return lab.locator('[data-uml-editor]').getByRole('textbox', { name: /code/ });
 }
@@ -38,22 +56,22 @@ const syntaxSamples = {
 };
 
 for (const chapter of [classChapter, sequenceChapter]) {
-  test(`TypeScript editors use isolated lab scopes and retain type checking: ${chapter}`, async ({ page }) => {
+  test(`TypeScript labs are checked as separate programs and report type errors: ${chapter}`, async ({ page }) => {
     await page.goto(chapter);
     const labs = page.getByRole('region', { name: /^UML code lab:/ });
     await languageTab(labs.first(), 'typescript').click();
-    await expect(page.locator('[data-uml-editor] .monaco-editor')).toHaveCount(await labs.count());
-    const diagnostics = () => page.evaluate(async () => {
-      const models = window.monaco.editor.getModels().filter(model => model.getLanguageId() === 'typescript');
-      const getWorker = await window.monaco.languages.typescript.getTypeScriptWorker();
-      const worker = await getWorker(...models.map(model => model.uri));
-      const results = await Promise.all(models.map(model => worker.getSemanticDiagnostics(model.uri.toString())));
-      return results.flat().map(diagnostic => ({ code: diagnostic.code, message: diagnostic.messageText }));
-    });
-    expect(await diagnostics()).toEqual([]);
-    await replaceCode(editorFor(labs.first()), 'class Example { value: number = "wrong type"; }');
-    await expect.poll(diagnostics).toEqual(expect.arrayContaining([expect.objectContaining({ code: 2322 })]));
-    await expect(editorFor(labs.first())).toBeFocused();
+    const lab = labs.first();
+    const editor = editorFor(lab);
+    await expect(lab.getByRole('img')).toBeVisible();
+    // Another lab's declarations on the same page are not duplicates here.
+    await replaceCode(editor, await labs.nth(1).locator('[data-uml-source]').inputValue());
+    await expect(lab).toHaveAttribute('data-state', 'ready');
+
+    await replaceCode(editor, 'class Example { value: number = "wrong type"; }');
+    await expect(problemBadge(lab)).toBeVisible();
+    await expect(editor).toBeFocused();
+    await expect(await openProblemDetails(lab)).toContainText(
+      "Error on line 1, column 17: Type 'string' is not assignable to type 'number'.");
   });
 }
 
@@ -354,8 +372,8 @@ test('empty source clears the old answer and corrected code recovers, including 
   await replaceCode(editor, 'class RecoveredCpp {};');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/RecoveredCpp/);
   await replaceCode(editor, 'class Broken {');
-  await expect(lab.getByRole('status')).toContainText('Could not update the diagram.');
-  await expect(lab.getByRole('img')).toHaveCount(0);
+  await expect(await openProblemDetails(lab)).toContainText("Syntax error on line 1, column 14: '{' is never closed.");
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/RecoveredCpp/);
   await replaceCode(editor, 'class CorrectedCpp {};');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/CorrectedCpp/);
   await languageTab(lab, 'typescript').click();
@@ -370,10 +388,195 @@ test('TypeScript inference uses local dependencies and recovers after syntax err
   await languageTab(lab, 'typescript').click();
   await expect(lab.getByRole('img')).toHaveAccessibleName(/Student references Roster with multiplicity unspecified to zero or one/);
   await replaceCode(editorFor(lab), 'class Broken { read(value: ) {}');
-  await expect(lab.getByRole('status')).toContainText('example.ts');
+  await expect(problemBadge(lab)).toBeVisible();
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/Student references Roster/);
   await replaceCode(editorFor(lab), 'class Fixed { read(value: number): void {} }');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/Fixed/);
   await expect(lab.getByRole('img')).toContainText('read(value: number)');
+  await expect(lab).toHaveAttribute('data-state', 'ready');
+});
+
+// Each sample breaks the code in one place; `fixed` repairs that place.
+const sourceProblemCases = [
+  {
+    language: 'python', problem: 'a syntax error',
+    broken: 'class Broken:\n    def read(self)\n        pass',
+    fixed: 'class Fixed:\n    def read(self):\n        pass',
+    error: "Syntax error on line 2, column 19: expected ':'.",
+    hint: "Lines that start a block (class, def, if, for, while, …) end with ':'."
+  },
+  {
+    language: 'java', problem: 'a syntax error',
+    broken: 'class Broken { void read() { int x = 1 } }',
+    fixed: 'class Fixed { void read() { int x = 1; } }',
+    error: "Syntax error on line 1, column 39: Missing ';'.",
+    hint: "End the statement with ';'."
+  },
+  {
+    language: 'cpp', problem: 'a syntax error',
+    broken: 'class Broken {\n}',
+    fixed: 'class Fixed {\n};',
+    error: "Syntax error on line 2, column 2: Missing ';'.",
+    hint: "In C++, a class or struct definition ends with '};'."
+  },
+  {
+    language: 'typescript', problem: 'a syntax error',
+    broken: 'class Broken { read(value: ) {} }',
+    fixed: 'class Fixed { read(value: number) {} }',
+    error: 'Syntax error on line 1, column 28: Type expected.',
+    hint: 'Add a type here, for example number or string.'
+  },
+  // Inheriting from a class the example never declares is an error; a
+  // standard-library base class is not.
+  {
+    language: 'python', problem: 'an undefined base class',
+    broken: 'class Puppy(Animal):\n    pass',
+    fixed: 'class Fixed(Exception):\n    pass',
+    error: "Error on line 1, column 13: undefined name 'Animal'.",
+    hint: 'Define Animal in this example, or import it from the standard library.'
+  },
+  {
+    language: 'java', problem: 'an undefined base class',
+    broken: 'class Puppy extends Animal {}',
+    fixed: 'class Fixed extends RuntimeException {}',
+    error: 'Error on line 1, column 21: cannot find symbol: class Animal.',
+    hint: 'Declare Animal in this example, or import it from the Java standard library.'
+  },
+  {
+    language: 'cpp', problem: 'an undefined base class',
+    broken: 'class Puppy : public Animal {};',
+    fixed: '#include <stdexcept>\n\nclass Fixed : public std::runtime_error {\npublic:\n    Fixed() : std::runtime_error("failed") {}\n};',
+    error: 'Error on line 1, column 22: expected class name.',
+    hint: 'Declare the base class before this class, or use a standard-library class such as std::exception.'
+  },
+  {
+    language: 'typescript', problem: 'an undefined base class',
+    broken: 'class Puppy extends Animal {}',
+    fixed: 'class Fixed extends Error {}',
+    error: "Error on line 1, column 21: Cannot find name 'Animal'.",
+    hint: 'Declare Animal in this example; only built-in types are available.'
+  }
+];
+
+for (const sample of sourceProblemCases) {
+  test(`${sample.language}: ${sample.problem} keeps the last diagram and explains the fix until it is resolved`, async ({ page }) => {
+    await page.goto(classChapter);
+    const lab = labByTitle(page, 'Member visibility');
+    await languageTab(lab, sample.language).click();
+    await expect(lab.getByRole('img')).toHaveAccessibleName(/Student/);
+    const editor = editorFor(lab);
+    const editorHost = lab.locator('[data-uml-editor]');
+
+    await replaceCode(editor, sample.broken);
+    // The first check in a language loads its tools (Pyodide, clang, …).
+    const badge = problemBadge(lab);
+    await expect(badge).toBeVisible({ timeout: 30_000 });
+    await expect(lab.getByRole('img')).toHaveAccessibleName(/Student/);
+    await expect(lab.getByRole('status')).toHaveText(/^Diagram paused: the code has (a problem|\d+ problems)\./);
+
+    // Hovering shows the details; Escape dismisses them without moving the pointer.
+    const details = page.locator('#' + await badge.getAttribute('aria-controls'));
+    await badge.hover();
+    await expect(details).toContainText(sample.error);
+    await expect(details).toContainText(sample.hint);
+    await a11yCheckpoint(page, `UML lab reporting ${sample.problem} (${sample.language})`, { include: '.uml-code-lab' });
+    await page.keyboard.press('Escape');
+    await expect(details).toBeHidden();
+
+    // A click keeps them open after the pointer leaves; a second click closes them.
+    await badge.click();
+    await page.mouse.move(0, 0);
+    await expect(details).toBeVisible();
+    await badge.click();
+    await expect(details).toBeHidden();
+
+    await editor.press('F8');
+    await expect(editorHost.getByText(sample.hint)).toBeVisible();
+
+    await replaceCode(editor, sample.fixed);
+    await expect(lab.getByRole('img')).toHaveAccessibleName(/Fixed/);
+    await expect(lab).toHaveAttribute('data-state', 'ready');
+    await expect(badge).toBeHidden();
+    await expect(editorHost.getByText(sample.hint)).toHaveCount(0);
+  });
+}
+
+test('problems appear only once typing pauses, while valid edits update the diagram at once', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-01-01T09:00:00Z') });
+  await page.goto(classChapter);
+  const lab = labByTitle(page, 'Member visibility');
+  await languageTab(lab, 'java').click();
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/Student/);
+  const editor = editorFor(lab);
+  await replaceCode(editor, 'class Warmup {}');
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/Warmup/);
+  await page.clock.pauseAt(new Date('2026-01-01T10:00:00Z'));
+
+  await replaceCode(editor, 'class Puppy extends Animal {}');
+  await page.clock.runFor(200);
+  await expect(lab).toHaveAttribute('data-state', 'invalid');
+  await expect(problemBadge(lab)).toBeHidden();
+  await page.clock.runFor(500);
+  await expect(problemBadge(lab)).toBeVisible();
+
+  await replaceCode(editor, 'class Puppy {}');
+  await page.clock.runFor(200);
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/Puppy/);
+  await expect(problemBadge(lab)).toBeHidden();
+});
+
+test('starter code passes every language check, so it renders without one', async ({ page }) => {
+  test.setTimeout(120_000);
+  const labs = yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data', 'uml_code_labs.yml'), 'utf8'));
+  const sources = Object.entries(labs).flatMap(([id, lab]) => Object.keys(languageNames)
+    .map(language => ({ id, language, code: lab[language].code })));
+  await page.goto(classChapter);
+  const problems = await page.evaluate(async entries => {
+    const found = [];
+    for (const { id, language, code } of entries) {
+      const diagnostics = await window.SEBookSourceCheck.check(language, code);
+      if (diagnostics.length) found.push({ id, language, diagnostics });
+    }
+    return found;
+  }, sources);
+  expect(problems).toEqual([]);
+});
+
+test('Python lab editors offer the tutorial refactorings and the diagram follows the result', async ({ page }) => {
+  await page.goto(classChapter);
+  const lab = labByTitle(page, 'Member visibility');
+  await expect(lab.getByRole('img')).toContainText('display_name(): str');
+  const editor = editorFor(lab);
+  await editor.focus();
+  await editor.evaluate(element => {
+    const instance = window.monaco.editor.getEditors().find(candidate => candidate.getDomNode().contains(element));
+    const line = instance.getModel().getLinesContent().findIndex(text => text.includes('def display_name')) + 1;
+    instance.setPosition({ lineNumber: line, column: 12 });
+  });
+  const rename = page.getByRole('menuitem', { name: 'Refactor: Rename Symbol...' });
+  // Availability comes from Python's ast module, which loads on first use;
+  // until then the editor menu leaves the refactoring out.
+  await expect(async () => {
+    await page.keyboard.press('Escape');
+    await editor.focus();
+    await page.keyboard.press('Shift+F10');
+    await expect(rename).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 30_000 });
+  // Choose it the way a keyboard user does: arrow to the item, then Enter.
+  await expect(async () => {
+    await page.keyboard.press('ArrowDown');
+    await expect(rename).toBeFocused({ timeout: 200 });
+  }).toPass({ timeout: 5_000 });
+  await page.keyboard.press('Enter');
+
+  const dialog = page.getByRole('dialog', { name: 'Rename Symbol' });
+  await dialog.getByLabel('New name').fill('_display_name');
+  await dialog.getByLabel('New name').press('Enter');
+  await page.getByRole('dialog', { name: 'Rename display_name to _display_name' })
+    .getByRole('button', { name: 'Apply' }).click();
+
+  await expect(lab.locator('[data-uml-source]')).toHaveValue(/def _display_name\(self\)/);
+  await expect(lab.getByRole('img')).toContainText('_display_name(): str');
   await expect(lab).toHaveAttribute('data-state', 'ready');
 });
 

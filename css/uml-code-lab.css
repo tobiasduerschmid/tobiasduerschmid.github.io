@@ -47,7 +47,7 @@ html.dark-mode .uml-code-lab {
 }
 .uml-code-lab button { cursor: pointer; }
 .uml-code-lab [data-uml-reset]:hover { text-decoration: underline; }
-.uml-code-lab :is([data-uml-reset], [data-uml-source], summary, [data-uml-preview]):focus-visible,
+.uml-code-lab :is([data-uml-reset], [data-uml-source], summary, [data-uml-preview], .uml-code-lab-problem-toggle):focus-visible,
 .uml-code-lab-monaco:focus-within {
   outline: 3px solid var(--uml-lab-focus);
   outline-offset: 3px;
@@ -80,8 +80,43 @@ html.dark-mode .uml-code-lab {
 .uml-code-lab-monaco :is(.monaco-editor, .monaco-editor-background, .margin) {
   background-color: var(--uml-lab-editor-background) !important;
 }
-.uml-code-lab-result > p:first-child { margin-top: 0; }
-.uml-code-lab-preview-title { display: flex; align-items: center; gap: 0.6em; }
+.uml-code-lab-result { position: relative; }
+.uml-code-lab-preview-title { display: flex; align-items: center; gap: 0.6em; margin: 0 0 0.6em; }
+/* Code problems: a small badge beside the title; details overlay the diagram. */
+.uml-code-lab-problem-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.6em;
+  height: 1.6em;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--uml-lab-error);
+  color: var(--uml-lab-background);
+  font: inherit;
+  font-weight: 800;
+  line-height: 1;
+}
+.uml-code-lab-problem-panel {
+  position: absolute;
+  top: 2.4em;
+  right: 0;
+  left: 0;
+  z-index: 5;
+  padding: 0.6em 0.85em;
+  border: 1px solid var(--uml-lab-error);
+  border-left-width: 0.3em;
+  border-radius: 0.2em;
+  background: var(--uml-lab-input);
+  color: var(--uml-lab-text);
+  box-shadow: 0 0.4em 1.2em rgba(0, 0, 0, 0.18);
+}
+.uml-code-lab-problem-panel ul { margin: 0; padding-left: 1.2em; }
+.uml-code-lab-problem-panel li + li { margin-top: 0.4em; }
+.uml-code-lab-problem-panel strong { color: var(--uml-lab-error); }
+.uml-code-lab-problem-panel p { margin: 0.5em 0 0; }
 .uml-code-lab-spinner {
   display: inline-block;
   flex: none;
@@ -101,7 +136,7 @@ html.dark-mode .uml-code-lab {
   .uml-code-lab[data-state="pending"] .uml-code-lab-spinner { animation: none; }
 }
 .uml-code-lab [data-uml-status] { font-size: 0.9em; overflow-wrap: anywhere; }
-.uml-code-lab:is([data-state="ready"], [data-state="pending"]) [data-uml-status] {
+.uml-code-lab:is([data-state="ready"], [data-state="pending"], [data-state="invalid"]) [data-uml-status] {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -134,7 +169,8 @@ html.dark-mode .uml-code-lab {
   }
   .uml-code-lab-toolbar,
   .uml-code-lab-editor,
-  .uml-code-lab-spinner { display: none; }
+  .uml-code-lab-spinner,
+  .uml-code-lab-problems { display: none; }
   .uml-code-lab-print-source { display: block; }
   .uml-code-lab-print-source pre { white-space: pre-wrap; overflow-wrap: anywhere; }
   .uml-code-lab-workspace { display: block; }

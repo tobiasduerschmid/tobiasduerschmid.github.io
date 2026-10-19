@@ -8819,37 +8819,14 @@
   };
 
   TutorialCode.prototype._applyRefactoringEdits = function (edits, plan, request) {
-    edits = edits || [];
     request = request || {};
     if (request.activeFile && typeof request.activeContent === 'string' && this.editorModels[request.activeFile]) {
       this._applyFileEditFromPopup(request.activeFile, request.activeContent);
     }
     var self = this;
-    var byFile = {};
-    edits.forEach(function (edit) {
-      if (!edit || !edit.filename || !edit.range) return;
-      if (!byFile[edit.filename]) byFile[edit.filename] = [];
-      byFile[edit.filename].push(edit);
-    });
-    var changed = [];
-    Object.keys(byFile).forEach(function (filename) {
+    var changed = window.SebookRefactorings.applyEditsToModels(monaco, edits, function (filename) {
       var entry = self.editorModels[filename];
-      if (!entry || !entry.model) return;
-      var model = entry.model;
-      var ops = byFile[filename].map(function (edit) {
-        return {
-          range: new monaco.Range(
-            edit.range.startLineNumber,
-            edit.range.startColumn,
-            edit.range.endLineNumber,
-            edit.range.endColumn
-          ),
-          text: edit.text || '',
-          forceMoveMarkers: true,
-        };
-      });
-      model.pushEditOperations([], ops, function () { return null; });
-      changed.push(filename);
+      return entry ? entry.model : null;
     });
     var syncs = changed.map(function (filename) {
       return Promise.resolve(self._syncFileToBackend(filename));

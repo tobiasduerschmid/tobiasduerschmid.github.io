@@ -136,6 +136,17 @@ test.describe('tutorial refactoring engine', () => {
   const api = loadRefactoringTestApi();
   const adapter = api.PythonAdapter;
 
+  test('locates a syntax error so an editor can mark the exact source range', () => {
+    const raw = execFileSync('python3', [analyzerPath], {
+      input: JSON.stringify([{ filename: 'broken.py', content: 'class A:\n    def f(self)\n        pass\n' }]),
+      cwd: repoRoot,
+      encoding: 'utf8',
+    });
+    expect(JSON.parse(raw).errors).toEqual([
+      { filename: 'broken.py', message: "expected ':'", line: 2, column: 16, endLine: 2, endColumn: 17 },
+    ]);
+  });
+
   test('renames a local symbol without touching strings, comments, or other scopes', () => {
     const before = text`
 def build_summary(track):

@@ -2103,9 +2103,10 @@ channel.
   for Monaco's idle background tokenization. Chapter editor height follows
   Monaco's content height (including wrapped lines and the host border), so
   edits, language changes and narrow screens do not require internal scrolling.
-  Chapter TypeScript models use forced module detection to isolate each lab's
-  declarations; semantic checking stays enabled. This is configured by the
-  chapter editor adapter, not the shared tutorial loader.
+  Chapter labs turn off Monaco's own TypeScript validation; `js/source-check.js`
+  reports syntax and semantic problems as markers instead, checking each source
+  as its own module (forced module detection). This is configured by the
+  chapter adapters, not the shared tutorial loader.
 
 - **`js/uml-live.js`** — shared source-to-UML client for tutorials and SEBook
   chapter labs. Load it before `tutorial-code.js`. `createClient()` owns lazy
@@ -2405,7 +2406,13 @@ channel.
   worker separate from the tutorial backend. Worker lifetime and cancellation
   belong to the individual lab, not to the tutorial's main debugger.
 - **`js/tutorial-refactorings.js`** — Monaco refactoring helpers
-  (rename, extract, inline) used by the refactoring tutorials.
+  (rename, extract, inline) used by the refactoring tutorials and the SEBook
+  UML code labs. Hosts call `attach({ monaco, editors, getActiveFileName,
+  getWorkspace, applyEdits })`; `applyEditsToModels(monaco, edits, modelFor)`
+  applies a plan as one undoable step per model. Python analysis comes from
+  `js/python-ast-service.js` (`SEBookPythonAst`), the page's single client for
+  `js/python-ast-worker.js`. Load it before this module on every host page
+  (tutorial layout, both tutorial popups, `uml-python-workspace.html`).
 - **`js/debugger/*.js`** — time-travel debugger: `sync.js`,
   `ui-render.js`, `editor-attach.js`, `main.js`, `worker-extension.js`.
   Browser-backend Stop is a hard cancellation: `browser-channel.js`
@@ -2483,7 +2490,8 @@ channel.
   instead of being dropped.
 - **Backend runtime adapters** — `js/pyodide-worker.js` (Python),
   `js/cpp-worker.js` (C++17 module worker using pinned local YoWASP Clang
-  and the browser WASI shim), `js/sql-worker.js`, `js/java-worker.js`, `js/prolog-worker.js`,
+  and the browser WASI shim; its `check` message runs `-fsyntax-only` for
+  `js/source-check.js` without linking or running), `js/sql-worker.js`, `js/java-worker.js`, `js/prolog-worker.js`,
   `haskell-runtime-frame.html` + `js/haskell-worker.js` (a sandboxed Haskell
   frame through `js/vendor/microhs/mhs-embed.js`, the local, pinned MicroHs
   WebAssembly runtime),

@@ -1,8 +1,9 @@
 /**
- * Python AST analysis worker for tutorial refactorings.
+ * Python source worker behind js/python-ast-service.js.
  *
- * Uses Python's stdlib ast module through Pyodide and returns the shared source
- * model consumed by js/tutorial-refactorings.js.
+ * 'analyze' returns the source model consumed by js/tutorial-refactorings.js
+ * (Python's stdlib ast module). 'check' returns syntax errors and undefined
+ * names (ast plus pyflakes). Both parse source; neither executes it.
  */
 'use strict';
 
@@ -10,7 +11,9 @@ var PYODIDE_INDEX_URL = '/js/vendor/pyodide/0.27.0/';
 importScripts(PYODIDE_INDEX_URL + 'pyodide.js');
 
 var pyodideReady = Promise.all([
-  loadPyodide({ indexURL: PYODIDE_INDEX_URL }),
+  loadPyodide({ indexURL: PYODIDE_INDEX_URL }).then(function (pyodide) {
+    return pyodide.loadPackage('pyflakes').then(function () { return pyodide; });
+  }),
   fetch(new URL('python-ast-analyzer.py', self.location.href).href).then(function (response) {
     if (!response.ok) throw new Error('Unable to load Python AST analyzer.');
     return response.text();
@@ -22,18 +25,19 @@ var pyodideReady = Promise.all([
   return pyodide;
 });
 
+var ENTRY_POINTS = { analyze: 'analyze_files', check: 'check_files' };
+
 self.onmessage = function (event) {
   var msg = event.data || {};
-  if (msg.type !== 'analyze') return;
+  var entryPoint = ENTRY_POINTS[msg.type];
+  if (!entryPoint) return;
+  function reply(fields) {
+    self.postMessage(Object.assign({ type: 'result', id: msg.id }, fields));
+  }
   pyodideReady.then(function (pyodide) {
-    try {
-      pyodide.globals.set('__sebook_files_json', JSON.stringify(msg.files || []));
-      var raw = pyodide.runPython('analyze_files(__sebook_files_json)');
-      self.postMessage({ type: 'analysis', id: msg.id, ok: true, analysis: JSON.parse(raw) });
-    } catch (err) {
-      self.postMessage({ type: 'analysis', id: msg.id, ok: false, error: err.message || String(err) });
-    }
+    pyodide.globals.set('__sebook_files_json', JSON.stringify(msg.files || []));
+    reply({ ok: true, value: JSON.parse(pyodide.runPython(entryPoint + '(__sebook_files_json)')) });
   }).catch(function (err) {
-    self.postMessage({ type: 'analysis', id: msg.id, ok: false, error: err.message || String(err) });
+    reply({ ok: false, error: err.message || String(err) });
   });
 };

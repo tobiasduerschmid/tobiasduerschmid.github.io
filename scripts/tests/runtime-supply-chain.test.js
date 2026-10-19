@@ -344,6 +344,41 @@ test('UML inference ships the unchanged pinned TypeScript compiler and its licen
   assert.equal(compiler.isClassDeclaration(parsed.statements[0]), true);
 });
 
+test('source checks ship unchanged pinned tree-sitter runtime and grammars that share an ABI', async t => {
+  const versionDirectory = 'js/vendor/tree-sitter';
+  const checksums = verifyChecksumManifest(versionDirectory);
+  const pinned = {
+    'web-tree-sitter-0.25.10/tree-sitter.js': 'd4fc466df6358055253bc4cdaab23cdf84fe00741fa5a4ff56506c06c533da42',
+    'web-tree-sitter-0.25.10/tree-sitter.wasm': 'f38dcc4b43b818f9a0785bc1c6d5611a75ac4cdd428ff3f02757c34ca4e46d7f',
+    'tree-sitter-java-0.23.5/tree-sitter-java.wasm': '4fdeac4ca6ca089f06c6f7e562abcac1733cd465728cc7031ebb73c2019122c4',
+    'tree-sitter-cpp-0.23.4/tree-sitter-cpp.wasm': '174eb0deb75b2ec7881bcacda9f995648d8e683956e5c2267e69ab6dc503fcbf',
+  };
+  for (const [file, hash] of Object.entries(pinned)) assert.equal(checksums.get(file), hash, file);
+  for (const directory of ['web-tree-sitter-0.25.10', 'tree-sitter-java-0.23.5', 'tree-sitter-cpp-0.23.4']) {
+    assert.ok(checksums.has(`${directory}/LICENSE`), `${directory} keeps its license`);
+  }
+
+  // The repository is CommonJS, so Node needs an .mjs copy of the unmodified ES module.
+  const runtime = path.join(repositoryRoot, versionDirectory, 'web-tree-sitter-0.25.10');
+  const scratch = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'tree-sitter-'));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  fs.copyFileSync(path.join(runtime, 'tree-sitter.js'), path.join(scratch, 'tree-sitter.mjs'));
+  const { Parser, Language } = await import(require('node:url').pathToFileURL(path.join(scratch, 'tree-sitter.mjs')).href);
+  await Parser.init({ locateFile: name => path.join(runtime, name) });
+  const parser = new Parser();
+  for (const [grammar, source] of [['tree-sitter-java-0.23.5/tree-sitter-java.wasm', 'class A extends B {}'],
+    ['tree-sitter-cpp-0.23.4/tree-sitter-cpp.wasm', 'class A : public B {};']]) {
+    parser.setLanguage(await Language.load(path.join(repositoryRoot, versionDirectory, grammar)));
+    const tree = parser.parse(source);
+    assert.equal(tree.rootNode.hasError, false, `${grammar} parses with the pinned runtime`);
+    tree.delete();
+  }
+
+  const checker = read('js/source-check.js');
+  assert.match(checker, /'vendor\/tree-sitter\/web-tree-sitter-0\.25\.10\/tree-sitter\.js'/);
+  assert.doesNotMatch(checker, /https?:\/\//, 'source checks load only same-origin tools');
+});
+
 test('Pyodide boot and tutorial package closures are complete and same-origin', () => {
   const versionDirectory = 'js/vendor/pyodide/0.27.0';
   const checksums = verifyChecksumManifest(versionDirectory);
