@@ -83,10 +83,11 @@ Data source: _data/quizzes/{{ include.id }}.yml
       </div>
       <div class="parsons-correct-data hidden"
         data-correct="{{ q.lines | jsonify | escape }}"
+        data-interchangeable="{% if q.interchangeable %}{{ q.interchangeable | jsonify | escape }}{% else %}[]{% endif %}"
         data-distractors="{% if q.distractors %}{{ q.distractors | jsonify | escape }}{% else %}[]{% endif %}"
         data-display="{{ q.display | default: 'block' }}"></div>
       <div class="quiz-correct-answers">
-        Correct order:<br>
+        {% if q.interchangeable %}One correct order:{% else %}Correct order:{% endif %}<br>
         <span class="correct-labels">
           {% if q.display == 'inline' %}
           <code>{{ q.lines | join: '' | escape }}</code>
@@ -161,6 +162,9 @@ Data source: _data/quizzes/{{ include.id }}.yml
 {% assign _quiz_av_variant = include.id | slugify | append: "-qa" %}
 <div class="quiz-avatar-side" data-hero-motion-control data-hero-avatar-variant="{{ _quiz_av_variant }}"></div>
 </div>
+{% unless parsons_grading_loaded %}{% assign parsons_grading_loaded = true %}
+<script src="{{ '/js/parsons-grading.js' | relative_url }}"></script>
+{% endunless %}
 <script>
   (function () {
     const quizId = "{{ include.id }}";
@@ -307,13 +311,11 @@ Data source: _data/quizzes/{{ include.id }}.yml
         distractors = Array.isArray(parsed) ? parsed : [];
       } catch (e) { distractors = []; }
       const display = correctDataEl.dataset.display || 'block';
-      // Build elements with correct-position metadata to avoid string comparison issues
-      function buildParsonsLine(line, correctPos, isDistractor) {
+      function buildParsonsLine(line, isDistractor) {
         const el = document.createElement('div');
         el.className = 'parsons-line';
         el.draggable = true;
         el.dataset.line = line;
-        el.dataset.correctPos = String(correctPos);
         el.dataset.distractor = isDistractor ? 'true' : 'false';
         // role + tabindex + aria-label so keyboard + screen-reader users can
         // operate the Parsons puzzle (WCAG 2.2 SC 2.5.7 Dragging Movements).
@@ -323,8 +325,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
         el.innerHTML = '<span class="parsons-grip" aria-hidden="true">&#8942;&#8942;</span><code>' + escapeHtml(line) + '</code>';
         return el;
       }
-      const correctEls = correctLines.map((line, i) => buildParsonsLine(line, i, false));
-      const distractorEls = distractors.map(line => buildParsonsLine(line, -1, true));
+      const correctEls = correctLines.map(line => buildParsonsLine(line, false));
+      const distractorEls = distractors.map(line => buildParsonsLine(line, true));
       const allEls = correctEls.concat(distractorEls);
       if (!noShuffle) shuffleArray(allEls);
       const bank = card.querySelector('.parsons-bank');
@@ -803,26 +805,11 @@ Data source: _data/quizzes/{{ include.id }}.yml
       btn.addEventListener('click', () => {
         const card = btn.closest('.quiz-question-card');
         if (!card) return;
-        const target = card.querySelector('.parsons-target');
         const correctDataEl = card.querySelector('.parsons-correct-data');
-        if (!target || !correctDataEl) return;
-        const correct = JSON.parse(correctDataEl.dataset.correct);
-        const placedEls = Array.from(target.querySelectorAll('.parsons-line'));
-        // Use numeric correctPos to avoid string comparison issues with special chars
-        const isCorrect = placedEls.length === correct.length &&
-          placedEls.every((el, i) => el.dataset.correctPos === String(i) || el.dataset.line === correct[i]);
-
-        // Mark lines in target
-        placedEls.forEach((el, i) => {
-          el.classList.remove('parsons-correct', 'parsons-incorrect');
-          if (i < correct.length && (el.dataset.correctPos === String(i) || el.dataset.line === correct[i])) el.classList.add('parsons-correct');
-          else el.classList.add('parsons-incorrect');
-        });
-        // Mark distractors left in bank as correct (they belong there)
-        card.querySelectorAll('.parsons-bank .parsons-line').forEach(el => {
-          el.classList.remove('parsons-correct', 'parsons-incorrect');
-          if (el.dataset.distractor === 'true') el.classList.add('parsons-correct');
-          else el.classList.add('parsons-incorrect');
+        if (!correctDataEl) return;
+        const isCorrect = window.ParsonsGrading.markParsonsAnswer(card, {
+          lines: JSON.parse(correctDataEl.dataset.correct),
+          interchangeable: JSON.parse(correctDataEl.dataset.interchangeable),
         });
         // Disable interaction
         card.querySelectorAll('.parsons-line').forEach(el => { el.draggable = false; });

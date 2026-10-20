@@ -3278,6 +3278,9 @@ steps:
             - restore
             - "--staged"
             - notes.txt
+          # Git accepts the option before or after its argument.
+          interchangeable:
+            - [[2], [3]]
           distractors:
             - rm
             - "--cached"
@@ -3296,6 +3299,9 @@ steps:
             - rm
             - "--cached"
             - notes.txt
+          # Git accepts the option before or after its argument.
+          interchangeable:
+            - [[2], [3]]
           distractors:
             - restore
             - "--staged"
@@ -3314,6 +3320,9 @@ steps:
             - reset
             - "--hard"
             - HEAD
+          # Git accepts the option before or after its argument.
+          interchangeable:
+            - [[2], [3]]
           distractors:
             - restore
             - "--soft"
@@ -3331,6 +3340,9 @@ steps:
             - revert
             - HEAD
             - "--no-edit"
+          # Git accepts the option before or after its argument.
+          interchangeable:
+            - [[2], [3]]
           distractors:
             - reset
             - "--hard"
@@ -3338,7 +3350,8 @@ steps:
             - restore
           explanation: >-
             git revert HEAD --no-edit records an inverse commit and keeps the original in history. --no-edit
-            accepts the default message. Resetting to HEAD~1 instead moves the local branch tip; it does not
+            accepts the default message; git revert --no-edit HEAD is the same command. Resetting to HEAD~1
+            instead moves the local branch tip; it does not
             create an undo commit.
 
 

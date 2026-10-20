@@ -176,6 +176,33 @@ The student must arrange code lines into a correct order. Distractors are extra 
   explanation: "The direction is from concrete dispatch logic to polymorphism."
 ```
 
+#### Other valid orders: `interchangeable`
+
+`lines` gives **one** correct order. When some lines do not depend on each other, the grader must also accept the other orders, or it marks a working answer wrong. Declare those lines with `interchangeable` instead of listing whole alternative orders:
+
+```yaml
+  lines:
+    - "public class Circle implements Shape {"   # 0
+    - "    private double radius;"               # 1
+    - "    @Override"                            # 2
+    - "    public double getArea() { ... }"      # 3
+    - "}"                                        # 4
+  # Java does not care in which order class members are declared.
+  interchangeable:
+    - [[1], [2, 3]]       # one group: the field, and the annotated method as one block
+```
+
+- **Group** = a list of blocks that may appear in any order. **Block** = consecutive line indices (0-based, into `lines`) that travel together, e.g. an annotation and its method, a rule and its recipe, `| sort` in a pipeline.
+- A group's blocks must be **adjacent** in `lines`, each block must be a **consecutive run**, and a group needs **at least two blocks**.
+- Several groups may be declared. They must cover **different lines**, or one group must lie **inside a single block** of another (nesting). Example: two Java types that may swap, plus members that may swap inside each type: `[[0, 1, 2, 3], [4, …, 11]]`, `[[1], [2]]`, `[[5], [6], [7, 8], [9, 10]]`.
+- Lines outside every group keep their authored position. Blocks are never split or interleaved. If a valid answer needs an interleaving the declaration cannot express, accept that limitation rather than loosening the groups: the grader fails closed, never open.
+- Answers compare by **line text**, so identical fragments (`|`, `&&`, `}`) already work in either slot without a declaration.
+- The groups may allow at most 5040 orders in total (7!). A malformed declaration is ignored at runtime, with a console warning, so only the authored order is accepted. `node --test scripts/tests/parsons-question-data.test.js` validates every declaration in `_data/`.
+- The answer reveal reads "One correct order:" when a question declares `interchangeable`, and the tutorial print view lists the interchangeable line runs.
+- Put a one-line YAML comment above the field saying *why* the lines are independent. Indices are easy to break when lines are inserted, so re-check the groups whenever you edit `lines`. If the reason is not obvious to a learner (a pipeline stage that can move, an option after an argument), say it in `explanation` too.
+
+**Audit every Parsons question for other valid orders.** Ask, for each pair of adjacent blocks, *"would the program (or process) behave the same if these two were swapped?"* Common independent runs: class members, struct fields, independent declarations or assignments, top-level definitions, Makefile variables and non-default rules, git options before/after an argument, commutative filter stages in a pipeline. A stem that fixes the order ("first identify the commit, then revert it") makes the order part of the spec, so it needs no `interchangeable`. The grading code lives in `js/parsons-grading.js` and is shared by `_includes/quiz.html`, `js/tutorial-quiz.js`, and the SE Gym (`se-gym.html`).
+
 #### When to choose Parsons over MCQ
 
 Parsons is the right tool when the student already understands each line in isolation but you want to test the *ordering* schema — control-flow shape, sequencing of state changes, dependency between steps. It removes syntax-recall load (Sweller's germane focus) while still demanding structural reasoning. Choose Parsons over a "which version compiles?" MCQ when your goal is to teach the *shape* of a solution. Choose MCQ over Parsons when discrimination between conceptual neighbours matters more than ordering.

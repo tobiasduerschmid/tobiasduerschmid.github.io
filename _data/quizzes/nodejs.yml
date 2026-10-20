@@ -209,10 +209,13 @@ questions:
       - "    res.json({ message: `Hello, ${name}!` });"
       - "});"
       - "app.listen(3000);"
+    # Routes registered right after listen() still exist before the first request arrives.
+    interchangeable:
+      - [[2, 3, 4, 5], [6]]
     distractors:
       - "app.post('/api/greet', (req, res) => {"
       - "    res.send(name);"
-    explanation: "`require('express')` imports the framework and `express()` creates the app; `app.get()` registers a handler where `req.query.name` reads the `?name=` parameter and `res.json()` replies with correct JSON headers; `app.listen(3000)` starts the server. The `app.post` distractor uses the wrong HTTP method for a read, and `res.send(name)` would send plain text without JSON formatting."
+    explanation: "`require('express')` imports the framework and `express()` creates the app; `app.get()` registers a handler where `req.query.name` reads the `?name=` parameter and `res.json()` replies with correct JSON headers; `app.listen(3000)` starts the server (it may also come before `app.get()`, because the route is registered before the first request can arrive). The `app.post` distractor uses the wrong HTTP method for a read, and `res.send(name)` would send plain text without JSON formatting."
 
   - id: 10
     difficulty: advanced

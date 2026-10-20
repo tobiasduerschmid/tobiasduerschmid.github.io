@@ -70,10 +70,13 @@ questions:
       - "grep -v '^$'"
       - "|"
       - "sort"
+    # Removing blank lines before or after sorting prints the same lines.
+    interchangeable:
+      - [[1, 2], [3, 4]]
     distractors:
       - "grep '^#' config.txt"
       - "wc -l"
-    explanation: "`grep -v '^#'` removes lines that start with `#` (comments). `grep -v '^$'` removes blank lines (lines matching the empty-string anchor). `sort` alphabetically orders the remaining entries. The distractor `grep '^#'` would keep *only* comment lines — the opposite of the goal. `wc -l` would count rather than display the lines."
+    explanation: "`grep -v '^#'` removes lines that start with `#` (comments). `grep -v '^$'` removes blank lines (lines matching the empty-string anchor). `sort` alphabetically orders the remaining entries; sorting before removing blank lines prints the same result. The distractor `grep '^#'` would keep *only* comment lines — the opposite of the goal. `wc -l` would count rather than display the lines."
 
   - id: 5
     difficulty: intermediate

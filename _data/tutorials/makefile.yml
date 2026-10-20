@@ -1794,8 +1794,12 @@ steps:
             - "\\t./app"
             - "clean:"
             - "\\trm -f *.o app"
+          # Variables may come in any order; after the default `app` rule, so may the other rules.
+          interchangeable:
+            - [[0], [1], [2]]
+            - [[5, 6], [7], [8, 9], [10, 11]]
           distractors:
             - "$(CC) $(CFLAGS) main.o math.o io.o -o app"
             - "main.o: main.c"
             - "all: app clean"
-          explanation: "Variables at top (`CC`, `CFLAGS`, `OBJS` — Steps 3 + 4), then the link rule using `$(OBJS)` and `$^`/`$@` (Step 4), then the pattern rule (Step 4) replacing the three explicit `.o` rules, then `.PHONY: clean run` covering both phony targets (Step 6 generalization), then the `run` and `clean` rules. The distractor `$(CC) $(CFLAGS) main.o math.o io.o -o app` re-introduces the filename repetition Step 4 eliminated. `main.o: main.c` is one of the explicit rules the pattern rule replaces. `all: app clean` would make `all` depend on a phony — the bug from question 2."
+          explanation: "Variables at top (`CC`, `CFLAGS`, `OBJS` — Steps 3 + 4), then the link rule using `$(OBJS)` and `$^`/`$@` (Step 4), then the pattern rule (Step 4) replacing the three explicit `.o` rules, then `.PHONY: clean run` covering both phony targets (Step 6 generalization), then the `run` and `clean` rules. Make also accepts the variables in another order and the rules after `app` in another order; `app` must stay the first rule because the first rule is what a bare `make` builds. The distractor `$(CC) $(CFLAGS) main.o math.o io.o -o app` re-introduces the filename repetition Step 4 eliminated. `main.o: main.c` is one of the explicit rules the pattern rule replaces. `all: app clean` would make `all` depend on a phony — the bug from question 2."
