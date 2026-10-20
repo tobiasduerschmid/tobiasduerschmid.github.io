@@ -2,6 +2,10 @@
 
 This file is the canonical source of project-wide instructions for any AI coding agent. `CLAUDE.md` and `GEMINI.md` are symlinks to this file.
 
+## Git hygiene — never commit temporary files
+
+Do not commit temporary files, scratch scripts, debug logs, test reports, screenshots captured for verification, generated build output, dependency directories or symlinks, or other local working artifacts. Keep temporary work outside the repository when practical. Stage only the intended source, documentation, and permanent tests using explicit paths; inspect `git diff --cached --name-only` and `git diff --cached --check` before every commit. Do not use broad staging commands that could include unrelated or temporary files. Only include a generated artifact when it is an intentional project deliverable requested by the user.
+
 ## Accessibility — WCAG 2.2 Level AA is required
 
 Every change to this repository — new feature, bug fix, refactor, content edit, or dependency bump — must leave every reachable page **fully compliant with [WCAG 2.2 Level AA](https://www.w3.org/TR/WCAG22/)**. That means satisfying all 30 Level A *and* all 25 Level AA success criteria — 55 in total — on every page the build emits. This is a hard requirement, not a goal. If you cannot make a change AA-compliant, stop and surface the trade-off to the user before proceeding.
