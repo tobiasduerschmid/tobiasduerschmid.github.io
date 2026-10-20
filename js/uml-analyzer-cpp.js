@@ -11,6 +11,8 @@
     ? require('./uml-sequence-diagnostics.js') : global.UMLSequenceDiagnostics;
   const ConstantValues = typeof module !== 'undefined' && module.exports
     ? require('./uml-constant-values.js') : global.UMLConstantValues;
+  const ReturnSummaries = typeof module !== 'undefined' && module.exports
+    ? require('./uml-return-summaries.js') : global.UMLReturnSummaries;
 
   const identifier = value => /^[A-Za-z_]\w*$/.test(value || '');
   const access = new Set(['public', 'protected', 'private']);
@@ -499,6 +501,8 @@
       this.model = model; this.lines = []; this.participants = new Map();
       this.identities = new Set(['Main']); this.activeCalls = new Set(); this.steps = 0;
       this.entities = new Set();
+      this.returnSummaries = new WeakMap();
+      this.conditionalReturns = new WeakMap();
     }
 
     generate() {
@@ -545,7 +549,15 @@
     arguments(tokens, context) {
       const parts = tokens.length ? split(tokens) : [];
       if (parts.filter(part => part.includes('(')).length > 1) this.diagnostics.add('ordering');
-      return parts.map(part => this.expression(part, context));
+      const uncertainOrder = parts.length > 1 && parts.some(part => part.some(token =>
+        ['=', '+=', '-=', '*=', '/=', '++', '--'].includes(token)));
+      const values = parts.map(part => this.expression(part, context));
+      if (uncertainOrder) {
+        this.diagnostics.add('ordering');
+        values.fill(null);
+        values.uncertainOrder = true;
+      }
+      return values;
     }
 
     invoke(receiver, method, args, argumentText, context) {
@@ -560,9 +572,94 @@
       const returnType = tokensToText(method.returnType);
       if (returnType && returnType !== 'void') this.lines.push(receiver.id + ' --> ' + context.receiver.id + ': ' + returnType);
       this.lines.push('deactivate ' + receiver.id);
-      if (result) return result;
       const type = this.model.type(method.returnType, method.owner || method.scope);
+      const borrowed = type.reference || method.returnType.includes('*');
+      // A later return in the linear walk cannot overrule an earlier branch's
+      // return. In that case only agreement across all return paths is evidence.
+      const branchedReturns = this.hasConditionalReturn(method);
+      if (borrowed && result && !branchedReturns && !args.uncertainOrder) return result;
+      if (borrowed && !method.ambiguous && !args.uncertainOrder) {
+        const summary = this.returnSummary(method);
+        if (summary?.kind === 'receiver') return receiver;
+        if (summary?.kind === 'parameter') {
+          const parameterType = this.model.type(method.params[summary.index].type, method.owner || method.scope);
+          if ((parameterType.reference || method.params[summary.index].type.includes('*')) && args[summary.index]) return args[summary.index];
+        }
+      }
+      if (type.node && !type.collection && borrowed) this.diagnostics.add('identity', method.name + ' result');
       return type.node && !type.collection ? this.entity(receiver.id + '_' + method.name + '_result', type.node) : null;
+    }
+
+    hasConditionalReturn(method) {
+      if (this.conditionalReturns.has(method)) return this.conditionalReturns.get(method);
+      const body = method.body || [];
+      const visitTokens = (tokens, conditional) => {
+        for (let index = 0; index < tokens.length;) {
+          const node = statement(tokens, index);
+          if (visit(node, conditional)) return true;
+          index = node.end;
+        }
+        return false;
+      };
+      const visit = (node, conditional) => {
+        if (node.kind === 'simple') return conditional && node.tokens[0] === 'return';
+        if (node.kind === 'block') return visitTokens(node.body, conditional);
+        return node.body && visit(node.body, true) || node.otherwise && visit(node.otherwise, true) ||
+          node.catches?.some(handler => visit(handler.body, true));
+      };
+      const result = body.length > 256 || !!visitTokens(body, false);
+      this.conditionalReturns.set(method, result);
+      return result;
+    }
+
+    returnSummary(method) {
+      if (this.returnSummaries.has(method)) return this.returnSummaries.get(method);
+      let summary = null;
+      if (method.body && method.body.length <= 256) {
+        const statements = tokens => {
+          const nodes = [];
+          for (let index = 0; index < tokens.length;) {
+            const node = statement(tokens, index);
+            nodes.push(node); index = node.end;
+          }
+          return nodes;
+        };
+        const nameOf = tokens => tokens.length === 1 && identifier(tokens[0]) ? tokens[0]
+          : tokens.length === 2 && ['*', '&'].includes(tokens[0]) && identifier(tokens[1]) ? tokens[1] : null;
+        const scalarParameters = new Set(method.params.filter(param =>
+          param.type.every(token => ['const', 'bool', 'int', 'short', 'long', 'unsigned', 'signed', 'char'].includes(token)))
+          .map(param => param.name));
+        const pointerParameters = new Set(method.params.filter(param => param.type.includes('*') &&
+          !param.type.some(token => ['&', '&&'].includes(token))).map(param => param.name));
+        const safeCondition = tokens => tokens.every(token =>
+          scalarParameters.has(token) || ['true', 'false', '!', '&&', '||', '==', '!=', '<', '>', '<=', '>=', '(', ')'].includes(token) || /^\d+$/.test(token));
+        const readStatement = node => {
+          if (node.kind === 'block') return { kind: 'scope', body: statements(node.body) };
+          if (node.kind === 'if' && safeCondition(node.condition)) return {
+            kind: 'if', consequent: [node.body], alternate: node.otherwise ? [node.otherwise] : []
+          };
+          if (node.kind !== 'simple') return { kind: 'unknown' };
+          const tokens = node.tokens;
+          if (!tokens.length) return { kind: 'noop' };
+          if (tokens[0] === 'return') return { kind: 'return', name: nameOf(tokens.slice(1)) };
+          const declarationEnd = typeEnd(tokens, 0, true);
+          if (declarationEnd && identifier(tokens[declarationEnd])) {
+            const type = tokens.slice(0, declarationEnd), initializer = tokens.slice(declarationEnd + 1);
+            const borrowed = type.includes('*') || type.includes('&') || type.includes('&&');
+            if (initializer[0] !== '=' || initializer.some(token => ['(', '{', '[', '++', '--'].includes(token))) return { kind: 'unknown' };
+            return { kind: 'assign', declare: true, name: tokens[declarationEnd], value: borrowed ? nameOf(initializer.slice(1)) : null };
+          }
+          // Object/reference assignment copies into the existing object; only
+          // a known pointer parameter has the alias-rebinding semantics here.
+          if (tokens[1] === '=' && pointerParameters.has(tokens[0])) return { kind: 'assign', name: tokens[0], value: nameOf(tokens.slice(2)) };
+          return { kind: 'unknown' };
+        };
+        summary = ReturnSummaries.analyze(statements(method.body), {
+          parameters: method.params.map(param => param.name), receiver: 'this', readStatement
+        });
+      }
+      this.returnSummaries.set(method, summary);
+      return summary;
     }
 
     follow(receiver, method, args, depth) {

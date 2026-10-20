@@ -151,7 +151,7 @@ Lifelines in sequence diagrams represent specific **object instances**, not clas
 - If only the class matters: <span class="uml-sym" data-diagram="sequence" data-sym="head-anon" data-label=": ShoppingCart"></span> (anonymous instance)
 - Multiple instances of the same class get distinct names: <span class="uml-sym" data-diagram="sequence" data-sym="head-multi" data-label="server[i] : Server"></span>
 
-This is different from class diagrams, which show classes in general. Sequence diagrams show **one particular scenario** of interactions between concrete instances.
+This is different from class diagrams, which show classes in general. Sequence diagrams show **one particular scenario** of interactions between concrete instances. Returning an existing object by reference does not create another instance: a later call still belongs to that object's lifeline. When the analyzer cannot establish which object is returned, it keeps the receiver symbolic instead of choosing an existing instance by type alone.
 
 {% include uml-code-lab.html example="message_receivers" %}
 

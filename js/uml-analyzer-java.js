@@ -20,6 +20,8 @@
     ? require('./uml-sequence-diagnostics.js') : global.UMLSequenceDiagnostics;
   const ConstantValues = typeof module !== 'undefined' && module.exports
     ? require('./uml-constant-values.js') : global.UMLConstantValues;
+  const ReturnSummaries = typeof module !== 'undefined' && module.exports
+    ? require('./uml-return-summaries.js') : global.UMLReturnSummaries;
 
   /* ===================================================================
    * Main entry point
@@ -1024,7 +1026,7 @@
       name: info.name, params: params.map(function (p) {
         return { name: p.name, type: _simpleTypeName(p.type) };
       }),
-      returnType: '', visibility: vis, isConstructor: true,
+      returnType: '', visibility: vis, isConstructor: true, sourceBody: member.body, sourceParams: params,
       isDefault: params.length === 0 && Array.isArray(member.body) && member.body.length === 0
     });
 
@@ -1115,6 +1117,7 @@
         return { name: p.name, type: _simpleTypeName(p.type) };
       }),
       returnType: _simpleTypeName(member.returnType),
+      sourceBody: member.body, sourceParams: params,
       visibility: vis, isStatic: isStatic, isAbstract: isAbstract,
       throwsTypes: (member.throwsTypes || []).map(_simpleTypeName)
     });
@@ -1169,6 +1172,7 @@
             return { name: p.name, type: _simpleTypeName(p.type) };
           }),
           returnType: _simpleTypeName(member.returnType),
+          sourceBody: member.body, sourceParams: params,
           visibility: '+'
         });
         methods[member.name] = member.body;
@@ -1384,6 +1388,10 @@
     this.loopConstants = new ConstantValues.LoopFacts();
     this._constants = new Map();
     this._constructedObjects = new WeakMap();
+    this._callResults = new WeakMap();
+    this._callArguments = new WeakMap();
+    this._returnSummaries = new WeakMap();
+    this._methodSelections = new Map();
     this.parsedFiles  = parsedFiles;
     this.classMethods = extractor.classMethods;
     this.attrTypes    = extractor.attrTypes;
@@ -1665,9 +1673,10 @@
             }
             // Scan constructor args for nested calls
             if (i < tokens.length && tokens[i].value === '(') {
+              var argumentOpen = i;
               var argTokens = this._extractParenContents(tokens, i);
+              this._scanCallArguments(tokens, i, caller, depth);
               i = argTokens.endIdx;
-              this._scanTokensForCalls(argTokens.tokens, caller, depth);
             }
             if (!this._dataClasses.has(clsName)) {
               const instance = this._allocationId(varName);
@@ -1677,7 +1686,8 @@
               this.lines.push('create ' + instance);
               this.lines.push(caller + ' --> ' + instance + ': <<create>>');
               this.lines.push('activate ' + instance);
-              this._maybeFollow(clsName, 'constructor', instance, depth, this._argumentBindings(argTokens?.tokens || []));
+              this._maybeFollow(clsName, 'constructor', instance, depth,
+                this._callArguments.get(tokens[argumentOpen]) || this._argumentBindings(argTokens?.tokens || []));
               this.lines.push('deactivate ' + instance);
             }
             return this._skipToSemicolon(tokens, i);
@@ -1738,6 +1748,23 @@
       this.varTypes[name] = constructed.type;
       this._receiverIds[name] = constructed.id;
     }
+    const returned = this._expressionBinding(expression);
+    if (returned) {
+      this.varTypes[name] = returned.type;
+      this._receiverIds[name] = returned.id;
+      if (returned.uncertain) this.diagnostics.add('identity', name);
+    }
+  };
+
+  JavaSequenceDiagramGenerator.prototype._expressionBinding = function (tokens) {
+    if (!tokens.length) return null;
+    const call = this._callResults.get(tokens[0]);
+    if (call && call.last === tokens.at(-1)) return call.binding;
+    if (tokens[0].value === 'new') return this._constructedObjects.get(tokens[0]) || null;
+    if (tokens.length === 1 && this.varTypes[tokens[0].value]) {
+      return { type: this.varTypes[tokens[0].value], id: this._receiverIds[tokens[0].value] };
+    }
+    return null;
   };
 
   JavaSequenceDiagramGenerator.prototype._processExprStmt = function (tokens, i, caller, depth) {
@@ -2027,10 +2054,11 @@
         var callEnd = this._scanCallArguments(tokens, i + 3, caller, depth);
         var staticClsName = tokens[i].value;
         var staticMethod  = tokens[i + 2].value;
+        var returned = null;
         if (!this._dataClasses.has(staticClsName)) {
-          this._emitCall(caller, staticClsName, staticMethod, tokens, i + 3, depth);
+          returned = this._emitCall(caller, staticClsName, staticMethod, tokens, i + 3, depth);
         }
-        i = callEnd - 1;
+        i = this._scanCallChain(tokens, i, callEnd, returned, caller, depth) - 1;
         continue;
       }
 
@@ -2040,11 +2068,12 @@
           tokens[i + 1].value === '.' &&
           tokens[i + 2].type === 'ident' &&
           i + 3 < tokens.length && tokens[i + 3].value === '(') {
+        var receiverBinding = this._expressionBinding([tokens[i]]);
         var callEnd = this._scanCallArguments(tokens, i + 3, caller, depth);
         var receiver = tokens[i].value;
         var method   = tokens[i + 2].value;
-        this._handleCall(receiver, method, tokens, i + 3, caller, depth);
-        i = callEnd - 1;
+        var returned = this._handleCall(receiver, method, tokens, i + 3, caller, depth, receiverBinding);
+        i = this._scanCallChain(tokens, i, callEnd, returned, caller, depth) - 1;
         continue;
       }
 
@@ -2057,10 +2086,8 @@
         var callEnd = this._scanCallArguments(tokens, i + 3, caller, depth);
         var method = tokens[i + 2].value;
         var cc = this._classOf(caller);
-        if (cc) {
-          this._emitCall(caller, cc, method, tokens, i + 3, depth, caller);
-        }
-        i = callEnd - 1;
+        var returned = cc ? this._emitCall(caller, cc, method, tokens, i + 3, depth, caller) : null;
+        i = this._scanCallChain(tokens, i, callEnd, returned, caller, depth) - 1;
         continue;
       }
 
@@ -2073,13 +2100,14 @@
         var callEnd = this._scanCallArguments(tokens, i + 3, caller, depth);
         var method = tokens[i + 2].value;
         var cc = this._classOf(caller);
+        var returned = null;
         if (cc) {
           var parent = this._findParent(cc);
           if (parent) {
-            this._emitCall(caller, parent, method, tokens, i + 3, depth);
+            returned = this._emitCall(caller, parent, method, tokens, i + 3, depth);
           }
         }
-        i = callEnd - 1;
+        i = this._scanCallChain(tokens, i, callEnd, returned, caller, depth) - 1;
         continue;
       }
 
@@ -2091,10 +2119,11 @@
         var bareMethod = tokens[i].value;
         var callerClass = this._classOf(caller);
         var methodClass = callerClass ? this._findMethodInHierarchy(callerClass, bareMethod) : null;
+        var returned = null;
         if (methodClass && !this._dataClasses.has(methodClass)) {
-          this._emitCall(caller, methodClass, bareMethod, tokens, i + 1, depth, caller);
+          returned = this._emitCall(caller, methodClass, bareMethod, tokens, i + 1, depth, caller);
         } else { this.diagnostics.add('unresolved', bareMethod); }
-        i = callEnd - 1;
+        i = this._scanCallChain(tokens, i, callEnd, returned, caller, depth) - 1;
         continue;
       }
 
@@ -2124,7 +2153,7 @@
           this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
           this.lines.push('activate ' + calleeId);
           this._maybeFollow(clsName, 'constructor', calleeId, depth,
-            this._argumentBindings(this._extractParenContents(tokens, j).tokens));
+            this._callArguments.get(tokens[j]) || this._argumentBindings(this._extractParenContents(tokens, j).tokens));
           this.lines.push('deactivate ' + calleeId);
           i = callEnd - 1;
         }
@@ -2136,8 +2165,29 @@
 
   JavaSequenceDiagramGenerator.prototype._scanCallArguments = function (tokens, open, caller, depth) {
     const args = this._extractParenContents(tokens, open);
-    this._scanTokensForCalls(args.tokens, caller, depth);
+    const bindings = [];
+    for (const argument of args.tokens.length ? splitSequenceTokens(args.tokens, ',') : []) {
+      this._scanTokensForCalls(argument, caller, depth);
+      if (argument[0]?.type === 'ident' && argument[1]?.value === '=' && argument[2]?.value !== '=') {
+        this._bindReceiver(argument[0].value, argument.slice(2));
+        bindings.push(this._expressionBinding(argument.slice(2)));
+      } else bindings.push(this._expressionBinding(argument));
+    }
+    this._callArguments.set(tokens[open], bindings);
     return args.endIdx;
+  };
+
+  JavaSequenceDiagramGenerator.prototype._scanCallChain = function (tokens, start, end, binding, caller, depth) {
+    while (tokens[end]?.value === '.' && tokens[end + 1]?.type === 'ident' && tokens[end + 2]?.value === '(') {
+      const method = tokens[end + 1].value, open = end + 2;
+      end = this._scanCallArguments(tokens, open, caller, depth);
+      if (!binding?.type) { this.diagnostics.add('unresolved', method); binding = null; continue; }
+      if (binding.uncertain) this.diagnostics.add('identity', method + ' receiver');
+      if (!this._findMethodInHierarchy(binding.type, method)) { this.diagnostics.add('unresolved', method); binding = null; continue; }
+      binding = this._emitCall(caller, binding.type, method, tokens, open, depth, binding.id);
+    }
+    this._callResults.set(tokens[start], { last: tokens[end - 1], binding });
+    return end;
   };
 
   function splitSequenceTokens(tokens, delimiter) {
@@ -2153,18 +2203,12 @@
   }
 
   JavaSequenceDiagramGenerator.prototype._argumentBindings = function (tokens) {
-    const argumentsList = splitSequenceTokens(tokens, ',');
-    return argumentsList.map(argument => {
-      if (argument[0]?.value === 'new') return this._constructedObjects.get(argument[0]) || null;
-      if (argument.length !== 1) return null;
-      const name = argument[0].value;
-      return this.varTypes[name] ? { type: this.varTypes[name], id: this._receiverIds[name] } : null;
-    });
+    return (tokens.length ? splitSequenceTokens(tokens, ',') : []).map(argument => this._expressionBinding(argument));
   };
 
-  JavaSequenceDiagramGenerator.prototype._handleCall = function (receiver, method, tokens, parenIdx, caller, depth) {
+  JavaSequenceDiagramGenerator.prototype._handleCall = function (receiver, method, tokens, parenIdx, caller, depth, binding) {
     // Resolve receiver to a class
-    var clsName = this.varTypes[receiver];
+    var clsName = binding?.type || this.varTypes[receiver];
     if (!clsName) {
       // Check if receiver is an attribute of the caller's class
       var cc = this._classOf(caller);
@@ -2186,7 +2230,7 @@
       clsName = parentCls;
     }
 
-    this._emitCall(caller, clsName, method, tokens, parenIdx, depth, this._receiverIds[receiver] || this._syntheticReceiverId(clsName, caller, receiver, this.varTypes[receiver] ? 'variable' : 'field'));
+    return this._emitCall(caller, clsName, method, tokens, parenIdx, depth, binding?.id || this._receiverIds[receiver] || this._syntheticReceiverId(clsName, caller, receiver, this.varTypes[receiver] ? 'variable' : 'field'));
   };
 
   JavaSequenceDiagramGenerator.prototype._emitCall = function (caller, clsName, method, tokens, parenIdx, depth, receiver) {
@@ -2200,13 +2244,14 @@
       label += argStr;
     }
     label += ')';
-    const bindings = this._argumentBindings(argResult?.tokens || []);
+    const bindings = this._callArguments.get(tokens[parenIdx]) || this._argumentBindings(argResult?.tokens || []);
+    const selected = this._selectMethod(clsName, method, bindings.length);
 
     if (calleeId === caller) {
       // Self-call — nested activation on same lifeline (UML spec: stacked rectangles)
       this.lines.push(caller + ' -> ' + caller + ': ' + label);
       this.lines.push('activate ' + caller);
-      this._maybeFollow(clsName, method, calleeId, depth, bindings);
+      this._maybeFollow(clsName, method, calleeId, depth, bindings, selected);
       this.lines.push('deactivate ' + caller);
     } else {
       this._ensureParticipant(calleeId, clsName);
@@ -2214,24 +2259,113 @@
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
       // Activation bar (JIVE: Jayaraman et al. 2016, CPP2XMI: Korshunova et al. 2006)
       this.lines.push('activate ' + calleeId);
-      this._maybeFollow(clsName, method, calleeId, depth, bindings);
-      var retType = this._getReturnType(clsName, method);
+      this._maybeFollow(clsName, method, calleeId, depth, bindings, selected);
+      var retType = selected ? selected.method.returnType : this._getReturnType(clsName, method);
+      if (retType === 'void') retType = null;
       if (retType) this.lines.push(calleeId + ' --> ' + caller + ': ' + retType);
       this.lines.push('deactivate ' + calleeId);
     }
+    const returnType = selected ? selected.method.returnType : this._getReturnType(clsName, method);
+    if (!this.allTypeNames.has(returnType)) return null;
+    const summary = selected && this._returnSummary(selected.method);
+    if (summary?.kind === 'receiver') return { type: this._callerClass[calleeId] || clsName, id: calleeId };
+    if (summary?.kind === 'parameter' && bindings[summary.index]?.id) return bindings[summary.index];
+    return { type: returnType, id: this._syntheticReceiverId(returnType, calleeId, method, 'return'), uncertain: true };
   };
 
   /* ── Method following ──────────────────────────────────────── */
 
-  JavaSequenceDiagramGenerator.prototype._maybeFollow = function (clsName, methodName, calleeId, depth, bindings = []) {
+  JavaSequenceDiagramGenerator.prototype._selectMethod = function (clsName, methodName, count) {
+    const key = clsName + '::' + methodName + '/' + count;
+    if (this._methodSelections.has(key)) return this._methodSelections.get(key);
+    const seen = new Set(), signatures = new Set(), candidates = [];
+    let variableArity = false, current = clsName;
+    while (current && !seen.has(current)) {
+      seen.add(current);
+      for (const method of this.classMap.get(current)?.methods || []) {
+        if (methodName === 'constructor' ? !method.isConstructor : method.isConstructor || method.name !== methodName) continue;
+        const parameters = method.sourceParams || method.params;
+        if (parameters.some(param => param.type.includes('...'))) variableArity = true;
+        const signature = parameters.map(param => param.type).join(',');
+        if (signatures.has(signature)) continue;
+        signatures.add(signature);
+        if (parameters.length === count) candidates.push({ owner: current, method });
+      }
+      current = methodName === 'constructor' ? null : this._findParent(current);
+    }
+    const selected = !variableArity && candidates.length === 1 ? candidates[0] : null;
+    this._methodSelections.set(key, selected);
+    return selected;
+  };
 
-    var key = clsName + '::' + methodName;
+  JavaSequenceDiagramGenerator.prototype._returnSummary = function (method) {
+    if (this._returnSummaries.has(method)) return this._returnSummaries.get(method);
+    let summary = null;
+    const source = method.sourceBody;
+    if (Array.isArray(source) && source.length <= 256 && !method.isAbstract) {
+      const statements = tokens => {
+        const nodes = [];
+        for (let index = 0; index < tokens.length;) {
+          if (tokens[index].value === '{') {
+            const block = this._extractBlock(tokens, index);
+            nodes.push({ kind: 'scope', tokens: block.tokens }); index = block.endIdx;
+          } else if (tokens[index].value === 'if') {
+            const condition = this._extractParenContents(tokens, index + 1);
+            const yes = this._extractBlock(tokens, condition.endIdx);
+            const no = tokens[yes.endIdx]?.value === 'else' ? this._extractBlock(tokens, yes.endIdx + 1) : null;
+            nodes.push({ kind: 'if', condition: condition.tokens, yes: yes.tokens, no: no?.tokens || [] });
+            index = no ? no.endIdx : yes.endIdx;
+          } else {
+            const end = this._findSemicolon(tokens, index);
+            nodes.push({ kind: 'simple', tokens: tokens.slice(index, end) }); index = end + 1;
+          }
+        }
+        return nodes;
+      };
+      const nameOf = tokens => tokens.length === 1 && (tokens[0].type === 'ident' || tokens[0].value === 'this') ? tokens[0].value : null;
+      const safeCondition = tokens => tokens.every((token, index) => {
+        const value = token.value;
+        if (value === '(' && tokens[index - 1]?.type === 'ident') return false;
+        if (value === '=') return tokens[index + 1]?.value === '=' || ['=', '!', '<', '>'].includes(tokens[index - 1]?.value);
+        return token.type === 'ident' || token.type === 'number' || ['true', 'false', 'null', '(', ')', '!', '&', '|', '<', '>'].includes(value);
+      });
+      const readStatement = node => {
+        if (node.kind === 'scope') return { kind: 'scope', body: statements(node.tokens) };
+        if (node.kind === 'if') return safeCondition(node.condition) ? {
+          kind: 'if', consequent: [{ kind: 'scope', tokens: node.yes }], alternate: [{ kind: 'scope', tokens: node.no }]
+        } : { kind: 'unknown' };
+        const tokens = node.tokens;
+        if (!tokens.length) return { kind: 'noop' };
+        if (tokens[0].value === 'return') return { kind: 'return', name: nameOf(tokens.slice(1)) };
+        let typeStart = tokens[0].value === 'final' ? 1 : 0;
+        const end = this._readType(tokens, typeStart);
+        if (tokens[end]?.type === 'ident' && tokens[end + 1]?.value === '=' && nameOf(tokens.slice(end + 2))) {
+          return { kind: 'assign', declare: true, name: tokens[end].value, value: nameOf(tokens.slice(end + 2)) };
+        }
+        if (tokens[0].type === 'ident' && tokens[1]?.value === '=' && nameOf(tokens.slice(2))) {
+          return { kind: 'assign', name: tokens[0].value, value: nameOf(tokens.slice(2)) };
+        }
+        return { kind: 'unknown' };
+      };
+      summary = ReturnSummaries.analyze(statements(source), {
+        parameters: method.params.map(param => param.name), receiver: method.isStatic ? null : 'this', readStatement
+      });
+    }
+    this._returnSummaries.set(method, summary);
+    return summary;
+  };
+
+  JavaSequenceDiagramGenerator.prototype._maybeFollow = function (clsName, methodName, calleeId, depth, bindings = [], selected) {
+
+    selected = selected || this._selectMethod(clsName, methodName, bindings.length);
+    var key = clsName + '::' + methodName + (selected ? '(' + selected.method.params.map(param => param.type).join(',') + ')' : '');
 
     const overloads = (this.classMap.get(clsName)?.methods || []).filter(method =>
       methodName === 'constructor' ? method.isConstructor : method.name === methodName);
-    if (overloads.length > 1) this.diagnostics.add('dispatch', clsName + '.' + methodName);
+    if (!selected && overloads.length) this.diagnostics.add('dispatch', clsName + '.' + methodName);
 
-    var bodyTokens = this._findMethodBody(clsName, methodName);
+    var bodyTokens = selected?.method.sourceBody || this._findMethodBody(clsName, methodName);
+    if (selected && Array.isArray(selected.method.sourceBody) && !selected.method.sourceBody.length && !selected.method.isAbstract) return;
     if (!bodyTokens || bodyTokens.length === 0) {
       // Try concrete override
       var concrete = this._findConcreteOverride(clsName, methodName);
@@ -2256,9 +2390,11 @@
     this.varTypes = {};
     this._receiverIds = {};
     this._constants = new Map();
-    var pt = (this.paramTypes[clsName] || {})[methodName];
-    if (pt) { for (var p in pt) this.varTypes[p] = pt[p]; }
-    const parameters = (this.methodParams[clsName] || {})[methodName] || [];
+    const parameters = selected?.method.sourceParams || (this.methodParams[clsName] || {})[methodName] || [];
+    for (const parameter of parameters) {
+      const type = _extractBaseTypeName(parameter.type, this.allTypeNames);
+      if (type) this.varTypes[parameter.name] = type;
+    }
     for (let index = 0; index < parameters.length; index++) {
       if (!bindings[index]) continue;
       const name = parameters[index].name;

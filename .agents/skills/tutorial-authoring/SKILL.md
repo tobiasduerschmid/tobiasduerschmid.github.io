@@ -2167,6 +2167,17 @@ channel.
   allocations in repeated Java/TypeScript invocations get distinct lifelines.
   Java binds actual object arguments; Java/TypeScript/C++ joins retain a definite
   receiver only when the considered paths agree, otherwise warning with `identity`.
+  Bounded return summaries preserve receiver/parameter identity through local
+  aliases and agreeing returns guarded by supported side-effect-free conditions.
+  Fields, fallthrough, differing origins, loops, exception flow, and deferred or
+  unsupported constructs supply no summary evidence. C++ requires borrowed
+  pointer/reference returns and borrowed parameters for parameter aliases;
+  value copies are not assumed to alias their source.
+  Java may select a unique fixed-arity match; same-arity and varargs ambiguity remain.
+  Python/TypeScript class classification retains inherited behavioral methods.
+  `js/uml-return-summaries.js` owns the shared bounded origin analysis; adapters
+  own syntax/scoping and call resolution. Return identity does not prove purity.
+  Keep calls and conditional fragments visible: identity evidence is not a runtime trace.
   C++ branch snapshots include object-field bindings. Java/TypeScript/C++ loop
   headers preserve initialization, check, body, increment, and recheck order.
   TypeScript logical operands and ternaries use conditional fragments. Java
@@ -2194,7 +2205,7 @@ channel.
   Diagram text alternatives distinguish separate fragments with equal guards
   and preserve unspecified multiplicities rather than inventing a bound.
   Python also propagates aliases, supplied object arguments and per-owner field
-  bindings; field reassignment and factory results preserve distinct identities.
+  bindings; fresh allocations stay distinct and proven returned aliases retain identity.
   Its call walk includes predicate/iterable calls and preserves short-circuit evaluation;
   a guard method call appears before the corresponding `alt`/`opt` choice.
   Constructor arguments and chained receivers are visited before their consumers.

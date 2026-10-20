@@ -8,11 +8,12 @@ const test = require('node:test');
 
 const diagnostics = fs.readFileSync(path.join(__dirname, '../../js/uml-sequence-diagnostics.js'), 'utf8');
 const constants = fs.readFileSync(path.join(__dirname, '../../js/uml-constant-values.js'), 'utf8');
+const summaries = fs.readFileSync(path.join(__dirname, '../../js/uml-return-summaries.js'), 'utf8');
 const analyzer = fs.readFileSync(path.join(__dirname, '../../js/uml-analyzer-java.js'), 'utf8');
 
 function infer(source) {
   // A synchronous parser loop must fail the test rather than hang the test runner.
-  return vm.runInNewContext(diagnostics + '\n' + constants + '\n' + analyzer + '\nanalyzeJavaSources(sources)', {
+  return vm.runInNewContext(diagnostics + '\n' + constants + '\n' + summaries + '\n' + analyzer + '\nanalyzeJavaSources(sources)', {
     sources: { 'Example.java': source }
   }, { timeout: 1000 });
 }

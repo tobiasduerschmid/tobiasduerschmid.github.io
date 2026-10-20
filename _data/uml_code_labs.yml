@@ -350,7 +350,7 @@ self_calls:
 message_receivers:
   title: Following a reference
   type: sequence
-  explanation: "selected refers to the existing outdoor object, so outdoor receives read() and sends the reply. The Sensor lifeline count stays two: assigning a reference creates no new Sensor."
+  explanation: "selected refers to the existing outdoor object, so outdoor receives read() and sends the reply. The Sensor lifeline count stays two: assigning a reference creates no new Sensor. Follow-up: compare a helper returning that object by reference with one constructing a new Sensor. The first preserves its lifeline; the second creates an object. C++ value returns may copy or move and are not assumed to preserve identity."
   java:
     task: "Change selected's initializer from indoor to outdoor, leaving selected.read() unchanged. Predict the number of Sensor lifelines and which object sends the reply before editing."
     code: |

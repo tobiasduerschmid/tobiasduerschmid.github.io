@@ -353,7 +353,7 @@ steps:
       2. The caller **captures** the return value in a variable (`count = bot.get_count()`)
       3. The caller and callee are **different lifelines**; the analyzer omits separate return arrows for self-calls.
 
-      If you just write `bot.send("hi")` and ignore any return, no dashed arrow appears — because "the call finished and came back" is already implied by the activation box ending. A hand-authored UML diagram can show an uncaptured return or a self-call return when that information matters.
+      If you just write `bot.send("hi")` and ignore any return, no dashed arrow appears — because "the call finished and came back" is already implied by the activation box ending. A hand-authored UML diagram can show an uncaptured return or a self-call return when that information matters. An object-valued reply may carry an existing reference: capturing it does not itself create another lifeline. The analyzer preserves a proven returned identity and leaves an uncertain one symbolic.
 
       ### Example — With and Without Capture
 

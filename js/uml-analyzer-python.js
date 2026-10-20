@@ -30,6 +30,8 @@
     ? require('./uml-sequence-diagnostics.js') : global.UMLSequenceDiagnostics;
   const ConstantValues = typeof module !== 'undefined' && module.exports
     ? require('./uml-constant-values.js') : global.UMLConstantValues;
+  const ReturnSummaries = typeof module !== 'undefined' && module.exports
+    ? require('./uml-return-summaries.js') : global.UMLReturnSummaries;
 
   /* ===================================================================
    * Main entry point
@@ -781,6 +783,7 @@
       type: 'FunctionDef',
       name: name,
       args: { args: args },
+      simpleParameters: !_splitCommaTopLevel(paramsStr).some(part => /^[*]/.test(part.trim())),
       returns: returns,
       decorators: decorators || [],
       body: body,
@@ -2009,10 +2012,13 @@
     this.fieldAnnotations = {}; // {className: {attrName: annotationNode}}
     this.classBases = {};      // {className: [baseName]}
     this._dataClasses = {};    // {className: true}
+    this._methodOwners = new WeakMap();
     this._buildLookups();
     this._constantSubclassedTypes = new Set(Object.values(this.classBases).flat());
     this._constantMethodNames = new Set(Object.values(this.classMethods).flatMap(methods => Object.keys(methods)));
     this._constantMethodsMutable = false;
+    this._returnSummaries = new WeakMap();
+    this._returnedObjects = new WeakMap();
 
     // Output state
     this.participants = [];
@@ -2202,6 +2208,7 @@
           }
           if (item.type !== 'FunctionDef') continue;
           methods[item.name] = item;
+          self._methodOwners.set(item, cname);
 
           // Parameter types
           var mParams = {};
@@ -2286,34 +2293,28 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._identifyDataClasses = function () {
-    var self = this;
-    for (var fn in this.parsedFiles) {
-      if (!this.parsedFiles.hasOwnProperty(fn)) continue;
-      astWalk(this.parsedFiles[fn], function (node) {
-        if (node.type !== 'ClassDef') return;
-        if (!self.allTypeNames.has(node.name)) return;
+    // Cache behavioral classification across the hierarchy: an empty subclass
+    // inherits its parent's interactions rather than becoming a value object.
+    const ownBehavior = new Map(), behavior = new Map();
+    for (const tree of Object.values(this.parsedFiles)) {
+      astWalk(tree, node => {
+        if (node.type !== 'ClassDef' || !this.allTypeNames.has(node.name)) return;
         let hasCalls = false;
         astWalk(node, child => { if (child.type === 'Call') hasCalls = true; });
-        if (hasCalls) return;
-        // @dataclass decorator
-        var decs = node.decorators || [];
-        for (var i = 0; i < decs.length; i++) {
-          if (decs[i] === 'dataclass') { self._dataClasses[node.name] = true; return; }
-        }
-        // No behavioral methods → data class
-        var hasBehavioral = false;
-        for (var i = 0; i < node.body.length; i++) {
-          var item = node.body[i];
-          if (item.type === 'FunctionDef') {
-            if (!(item.name.startsWith('__') && item.name.endsWith('__'))) {
-              hasBehavioral = true;
-              break;
-            }
-          }
-        }
-        if (!hasBehavioral) self._dataClasses[node.name] = true;
+        ownBehavior.set(node.name, hasCalls || node.body.some(item => item.type === 'FunctionDef'
+          && !(item.name.startsWith('__') && item.name.endsWith('__'))));
       });
     }
+    const hasBehavior = (name, depth = 0) => {
+      if (depth > 32) return true;
+      if (behavior.has(name)) return behavior.get(name);
+      behavior.set(name, true); // Cyclic/unknown inheritance cannot prove value-only behavior.
+      const result = !ownBehavior.has(name) || ownBehavior.get(name)
+        || (this.classBases[name] || []).some(base => hasBehavior(base, depth + 1));
+      behavior.set(name, result);
+      return result;
+    };
+    for (const name of ownBehavior.keys()) if (!hasBehavior(name)) this._dataClasses[name] = true;
   };
 
   PythonSequenceDiagramGenerator.prototype.generate = function () {
@@ -2494,6 +2495,7 @@
   // unrelated object that happens to share that type.
   PythonSequenceDiagramGenerator.prototype._objectBinding = function (expression, caller) {
     if (!expression) return null;
+    if (expression.type === 'Call') return this._returnedObjects.get(expression) || null;
     if (expression.type === 'Name') {
       if (expression.id === 'self') return { type: this._classOf(caller), participant: caller };
       const type = this.varTypes[expression.id];
@@ -2583,9 +2585,8 @@
         }
         const returnName = target && target.type === 'Name' && this._referencedVars[target.id] ? target.id : null;
         const returnType = this._getReturnClassType(clsName, method);
-        this._processCall(value, caller, depth, true, returnName);
-        let returnBinding = null;
-        if (returnType && targets.length) {
+        let returnBinding = this._processCall(value, caller, depth, true, returnName);
+        if (!returnBinding && returnType && targets.length) {
           const name = targets[0].type === 'Name' ? targets[0].id : targets[0].attr;
           if (name) {
             const id = this._newParticipantId((caller === 'Main' ? '' : caller + '_') + name);
@@ -2599,8 +2600,8 @@
         return;
       }
     }
-    const binding = this._objectBinding(value, caller);
-    this._scanExprForCalls(value, caller, depth);
+    const evaluated = this._scanExprForCalls(value, caller, depth);
+    const binding = evaluated || this._objectBinding(value, caller);
     for (const target of targets) this._assignBinding(target, binding, caller);
   };
 
@@ -2887,6 +2888,7 @@
    *   subsequent messages.
    */
   PythonSequenceDiagramGenerator.prototype._processCall = function (call, caller, depth, returnCaptured, returnBinding) {
+    this._returnedObjects.delete(call);
     if (call.inferenceIncomplete) this.diagnostics.add('unsupported', 'Expression is only partly parsed');
     const inputs = this._scanCallInputs(call, caller, depth);
 
@@ -2922,6 +2924,8 @@
       calleeId = this._newParticipantId(unparse(receiver, caller).replace(/\W+/g, '_').replace(/_$/, '') + '_result');
     }
     var label = this._buildCallLabel(call, clsName, method, caller);
+    const returned = this._returnIdentity(clsName, method, inputs, call,
+      receiverBinding || (isSuper ? { type: this._classOf(caller), participant: caller } : null));
 
     if (method === '__init__' && !isSuper) {
       calleeId = this._newParticipantId(clsName);
@@ -2932,7 +2936,9 @@
       this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, '__init__', calleeId, depth, inputs);
       this.lines.push('deactivate ' + calleeId);
-      return { type: clsName, participant: calleeId };
+      const constructed = { type: clsName, participant: calleeId };
+      this._returnedObjects.set(call, constructed);
+      return constructed;
     } else if (method === '__init__' && isSuper) {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
@@ -2964,6 +2970,8 @@
       }
       this.lines.push('deactivate ' + calleeId);
     }
+    if (returned) this._returnedObjects.set(call, returned);
+    return returned;
   };
 
   PythonSequenceDiagramGenerator.prototype._buildCallLabel = function (call, clsName, method, caller) {
@@ -3005,6 +3013,68 @@
       current = this._findParent(current);
     }
     return null;
+  };
+
+  // Return summaries prove identity only. They do not replace body traversal or
+  // imply that a call has no effects. Unsupported syntax declines the proof.
+  PythonSequenceDiagramGenerator.prototype._returnSummary = function (node) {
+    if (this._returnSummaries.has(node)) return this._returnSummaries.get(node);
+    const parameters = (node.args ? node.args.args : []);
+    let summary = null;
+    const owner = this.extractor.classMap[this._methodOwners.get(node)];
+    if ((!owner || !owner.decorators.length) && !node.isAsync && !node.decorators.length && node.simpleParameters
+        && parameters.length && parameters[0].arg === 'self') {
+      let expressionBudget = 128;
+      const safeExpression = (expression, depth = 0) => {
+        if (!expression) return true;
+        if (--expressionBudget < 0 || depth > 8 || expression.inferenceIncomplete) return false;
+        if (expression.type === 'Name') return true;
+        if (expression.type === 'Constant') return !expression.isFString;
+        if (!['UnaryOp', 'BinOp', 'BoolOp', 'Compare'].includes(expression.type)) return false;
+        return Object.values(expression).every(value => !value || typeof value !== 'object'
+          || (Array.isArray(value) ? value.every(child => safeExpression(child, depth + 1))
+            : safeExpression(value, depth + 1)));
+      };
+      const nameOf = expression => expression && !expression.inferenceIncomplete && expression.type === 'Name' ? expression.id : null;
+      summary = ReturnSummaries.analyze(node.body, {
+        parameters: parameters.slice(1).map(parameter => parameter.arg), receiver: 'self',
+        readStatement: statement => {
+          if (statement.inferenceIncomplete) return { kind: 'unknown' };
+          if (statement.type === 'Return') return { kind: 'return', name: nameOf(statement.value) };
+          if (statement.type === 'Pass' || statement.type === 'Expr' && statement.value
+              && statement.value.type === 'Constant' && !statement.value.isFString) return { kind: 'noop' };
+          if (statement.type === 'Assign' || statement.type === 'AnnAssign') {
+            const targets = statement.targets || [statement.target];
+            if (targets.length === 1 && targets[0] && targets[0].type === 'Name' && safeExpression(statement.value)) {
+              return { kind: 'assign', name: targets[0].id, value: nameOf(statement.value) };
+            }
+          }
+          if (statement.type === 'If' && safeExpression(statement.test)) {
+            return { kind: 'if', consequent: statement.body, alternate: statement.orelse || [] };
+          }
+          return { kind: 'unknown' };
+        }
+      });
+    }
+    this._returnSummaries.set(node, summary);
+    return summary;
+  };
+
+  PythonSequenceDiagramGenerator.prototype._returnIdentity = function (clsName, methodName, inputs, call, receiver) {
+    if (this._constantMethodsMutable || call.inferenceIncomplete
+        || (call.args || []).some(argument => argument.type === 'Starred')
+        || (call.keywords || []).some(keyword => !keyword.arg)) return null;
+    const node = this._findMethodNode(clsName, methodName);
+    const info = this.extractor.classMap[clsName];
+    if (!node || info && info.decorators.length) return null;
+    const summary = this._returnSummary(node);
+    if (!summary) return null;
+    if (summary.kind === 'receiver') return receiver;
+    const parameter = node.args.args[summary.index + 1].arg;
+    if (inputs.keywords.has(parameter)) {
+      return inputs.positional.length > summary.index ? null : inputs.keywords.get(parameter);
+    }
+    return inputs.positional[summary.index] || null;
   };
 
   PythonSequenceDiagramGenerator.prototype._argumentBindings = function (node, inputs) {
@@ -3125,6 +3195,12 @@
         var parent = this._findParent(cc);
         if (parent) return [parent, method];
       }
+    }
+
+    // A computed receiver can be a proven alias of a supplied object.
+    if (func.type === 'Attribute' && func.value && func.value.type === 'Call') {
+      const binding = this._objectBinding(func.value, caller);
+      if (binding) return [binding.type, func.attr];
     }
 
     // factory.create().method() — resolve the receiver's declared return type.

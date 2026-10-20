@@ -107,6 +107,22 @@ identity at a join only when the considered paths agree. C++ also isolates
 per-object field writes. Otherwise an `identity` warning accompanies a symbolic
 receiver. This is a bounded abstraction, not whole-program points-to analysis.
 
+Bounded method summaries prove when a result aliases the receiver or a supplied
+parameter. Local aliases and branches with supported side-effect-free guards
+can preserve that identity when every considered return agrees. Field getters,
+fallthrough, differing return origins, loops, exception flow, and deferred or
+unsupported constructs provide no return-summary evidence.
+C++ requires borrowed pointer/reference returns and borrowed parameters for
+parameter aliases; value copies are not assumed to alias their source. These
+summaries refine the receiving lifeline without removing calls, choosing a branch,
+or executing the program.
+Java selects a known fixed-arity overload when its argument count identifies one
+candidate; same-arity or varargs ambiguity still prevents an arbitrary choice of
+body or reply type. Python and TypeScript retain inherited behavioral methods
+when classifying objects, so an empty subclass does not hide its parent's calls.
+`js/uml-return-summaries.js` owns the bounded origin analysis; language adapters
+own syntax, scopes, and call resolution. A return origin does not prove purity.
+
 Python and TypeScript capture the receiver and each argument's object identity
 in evaluation order, before later arguments can reassign the source variable or
 field. Python short-circuit expressions merge evaluated and skipped states;
@@ -285,8 +301,9 @@ following distinctions while working only with supplied source files:
   still leave targets unresolved; the analyzers do not load external packages.
 - **Object identity:** a known receiver keeps its identity. Python also tracks
   injected fields by owning object, field aliases and subsequent assignments;
-  a factory result does not reuse an old object's identity. An unknown receiver
-  is not assigned to an unrelated existing object just because its type matches.
+  a fresh allocation has fresh identity, while a proven returned alias retains
+  its existing object. An unknown receiver is not assigned to an unrelated
+  existing object just because its type matches.
 - **Ownership:** Java, Python, and JavaScript/TypeScript stored references use
   ordinary associations. Allocation, injection, and collection storage do not
   establish composition or aggregation. C++ value members and `unique_ptr`
@@ -361,8 +378,8 @@ across those files. Classes/structs, access sections, inheritance, enums,
 namespaces, type aliases, constructors, static and pure virtual methods are
 recognized. Namespace separators become `__` in diagram identifiers.
 
-Value members and `unique_ptr` suggest composition; `shared_ptr` suggests
-aggregation; references, raw pointers and `weak_ptr` suggest association.
+Value members and `unique_ptr` provide composition evidence; `shared_ptr`,
+references, raw pointers and `weak_ptr` retain ordinary associations.
 Containers/arrays contribute multiplicity; borrowing a container does not
 imply ownership. Parameter and return types contribute dependencies.
 These are syntax-based hints, not ownership proofs.

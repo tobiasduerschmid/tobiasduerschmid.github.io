@@ -25,6 +25,8 @@
     ? require('./uml-sequence-diagnostics.js') : global.UMLSequenceDiagnostics;
   const ConstantValues = typeof module !== 'undefined' && module.exports
     ? require('./uml-constant-values.js') : global.UMLConstantValues;
+  const ReturnSummaries = typeof module !== 'undefined' && module.exports
+    ? require('./uml-return-summaries.js') : global.UMLReturnSummaries;
 
   /* ===================================================================
    * Main entry point
@@ -843,6 +845,8 @@
   function SequenceDiagramGenerator(ts, parsedFiles, extractor, allTypeNames, errors) {
     this.diagnostics = new SequenceDiagnostics();
     this._constructedObjects = new WeakMap();
+    this._returnedObjects = new WeakMap();
+    this._returnSummaries = new WeakMap();
     this.ts           = ts;
     this.parsedFiles  = parsedFiles;
     this.classMethods = extractor.classMethods;
@@ -888,16 +892,21 @@
 
   /** Data/value classes: enums, or classes with no behavioral methods. */
   SequenceDiagramGenerator.prototype._identifyDataClasses = function () {
-    var data = new Set();
+    const data = new Set(), behavior = new Map();
+    const hasBehavior = (name, depth = 0) => {
+      if (depth > 32) return true;
+      if (behavior.has(name)) return behavior.get(name);
+      behavior.set(name, true); // An inheritance cycle is not evidence of a value class.
+      const info = this.classMap.get(name);
+      const result = !info || info.isInterface || info.methods.some(method => method.name !== 'constructor'
+        && !method.name.startsWith('get ') && !method.name.startsWith('set '))
+        || Object.values(this.classMethods[name] || {}).some(node => this._containsCall(node.body))
+        || (this.classBases[name] || []).some(base => hasBehavior(base, depth + 1));
+      behavior.set(name, result);
+      return result;
+    };
     this.classMap.forEach((info, name) => {
-      if (info.isEnum) { data.add(name); return; }
-      if (info.isInterface) return;
-      var hasBehavioral = info.methods.some(function (m) {
-        return m.name !== 'constructor' &&
-               !m.name.startsWith('get ') && !m.name.startsWith('set ');
-      });
-      const hasCalls = Object.values(this.classMethods[name] || {}).some(node => this._containsCall(node.body));
-      if (!hasBehavioral && !hasCalls) data.add(name);
+      if (info.isEnum || !hasBehavior(name)) data.add(name);
     });
     return data;
   };
@@ -1162,8 +1171,11 @@
       return this._expressionBinding(expression.right, caller);
     }
     if (ts.isNewExpression(expression)) return this._constructedObjects.get(expression) || null;
+    if (ts.isCallExpression(expression)) return this._returnedObjects.get(expression) || null;
     if (ts.isIdentifier(expression) && this.varTypes[expression.text]) {
-      return { className: this.varTypes[expression.text], participantId: this.varParticipants[expression.text] };
+      const type = this.varTypes[expression.text];
+      return { className: type, participantId: this.varParticipants[expression.text]
+        || this._syntheticReceiverId(type, caller, expression.text, 'variable') };
     }
     if (expression.kind === ts.SyntaxKind.ThisKeyword && this._classOf(caller)) {
       return { className: this._classOf(caller), participantId: caller };
@@ -1481,6 +1493,7 @@
 
   SequenceDiagramGenerator.prototype._processCall = function (call, sf, caller, depth) {
     var ts = this.ts;
+    this._returnedObjects.delete(call);
 
     // Evaluate a computed receiver before the arguments and enclosing call.
     if (ts.isPropertyAccessExpression(call.expression) || ts.isElementAccessExpression(call.expression)) {
@@ -1493,6 +1506,8 @@
 
     // The receiver is captured before argument evaluation can rebind it.
     var resolved = this._resolveCall(call, sf, caller);
+    const receiver = ts.isPropertyAccessExpression(call.expression)
+      ? this._expressionBinding(call.expression.expression, caller) : null;
     const bindings = this._evaluateArguments(call.arguments, sf, caller, depth);
     if (!resolved) {
       const name = _getNodeText(call.expression, sf);
@@ -1507,6 +1522,8 @@
     var calleeId = resolved.participantId || this._calleeIdFor(clsName, caller, resolved.attrHint);
     var label    = this._buildCallLabel(call, sf, method);
     var isSuper = resolved.isSuper;
+    const returned = this._returnIdentity(clsName, method, bindings, call,
+      receiver || (isSuper ? { className: this._classOf(caller), participantId: caller } : null));
 
     if (method === 'constructor' && !isSuper) {
       this._ensureParticipant(calleeId, clsName);
@@ -1539,6 +1556,7 @@
       if (retType) this.lines.push(calleeId + ' --> ' + caller + ': ' + retType);
       this.lines.push('deactivate ' + calleeId);
     }
+    if (returned) this._returnedObjects.set(call, returned);
   };
 
   SequenceDiagramGenerator.prototype._buildCallLabel = function (call, sf, method) {
@@ -1555,7 +1573,7 @@
   SequenceDiagramGenerator.prototype._getReturnType = function (clsName, methodName) {
     var node = this._findMethodNode(clsName, methodName);
     if (node && node.type) {
-      var sf  = this._sourceFileForClass(clsName);
+      var sf  = node.getSourceFile();
       var ret = sf ? _getNodeText(node.type, sf) : '';
       if (ret && ret !== 'void' && ret !== 'undefined') return ret;
     }
@@ -1571,6 +1589,92 @@
       current = this._findParent(current);
     }
     return null;
+  };
+
+  // This cached proof tracks the returned input object, not purity. The normal
+  // call traversal still emits every modeled interaction and its diagnostics.
+  SequenceDiagramGenerator.prototype._returnSummary = function (node) {
+    if (this._returnSummaries.has(node)) return this._returnSummaries.get(node);
+    const ts = this.ts;
+    let summary = null;
+    const decorated = value => ts.canHaveDecorators(value) && (ts.getDecorators(value) || []).length;
+    const asynchronous = (node.modifiers || []).some(modifier => modifier.kind === ts.SyntaxKind.AsyncKeyword);
+    if (node.body && !asynchronous && !node.asteriskToken && !decorated(node) && !decorated(node.parent)
+        && node.parameters.every(parameter => ts.isIdentifier(parameter.name)
+          && parameter.name.text !== 'this' && !parameter.dotDotDotToken)) {
+      let expressionBudget = 128;
+      const unwrap = expression => {
+        let depth = 0;
+        while (expression && (ts.isParenthesizedExpression(expression) || ts.isAsExpression(expression)
+            || ts.isTypeAssertionExpression(expression) || ts.isNonNullExpression(expression)
+            || ts.isSatisfiesExpression(expression))) {
+          if (++depth > 8) return null;
+          expression = expression.expression;
+        }
+        return expression;
+      };
+      const nameOf = expression => {
+        expression = unwrap(expression);
+        return expression && (ts.isIdentifier(expression) ? expression.text
+          : expression.kind === ts.SyntaxKind.ThisKeyword ? 'this' : null);
+      };
+      const safeExpression = (expression, depth = 0) => {
+        if (!expression) return true;
+        if (--expressionBudget < 0 || depth > 8) return false;
+        expression = unwrap(expression);
+        if (!expression) return false;
+        if (ts.isIdentifier(expression) || ts.isLiteralExpression(expression)
+            || [ts.SyntaxKind.ThisKeyword, ts.SyntaxKind.TrueKeyword, ts.SyntaxKind.FalseKeyword,
+              ts.SyntaxKind.NullKeyword].includes(expression.kind)) return true;
+        if (ts.isBinaryExpression(expression)) {
+          if (expression.operatorToken.kind >= ts.SyntaxKind.FirstAssignment
+              && expression.operatorToken.kind <= ts.SyntaxKind.LastAssignment) return false;
+          return safeExpression(expression.left, depth + 1) && safeExpression(expression.right, depth + 1);
+        }
+        return ts.isPrefixUnaryExpression(expression)
+          && ![ts.SyntaxKind.PlusPlusToken, ts.SyntaxKind.MinusMinusToken].includes(expression.operator)
+          && safeExpression(expression.operand, depth + 1);
+      };
+      const statements = statement => statement ? [statement] : [];
+      summary = ReturnSummaries.analyze(node.body.statements, {
+        parameters: node.parameters.map(parameter => parameter.name.text), receiver: 'this',
+        readStatement: statement => {
+          if (ts.isReturnStatement(statement)) return { kind: 'return', name: nameOf(statement.expression) };
+          if (ts.isEmptyStatement(statement) || ts.isExpressionStatement(statement)
+              && ts.isStringLiteral(statement.expression)) return { kind: 'noop' };
+          if (ts.isBlock(statement)) return { kind: 'scope', body: statement.statements };
+          if (ts.isVariableStatement(statement) && statement.declarationList.declarations.length === 1) {
+            const declaration = statement.declarationList.declarations[0];
+            if (ts.isIdentifier(declaration.name) && safeExpression(declaration.initializer)) {
+              return { kind: 'assign', name: declaration.name.text, value: nameOf(declaration.initializer),
+                declare: Boolean(statement.declarationList.flags & ts.NodeFlags.BlockScoped) };
+            }
+          }
+          if (ts.isExpressionStatement(statement) && ts.isBinaryExpression(statement.expression)) {
+            const assignment = statement.expression;
+            if (assignment.operatorToken.kind === ts.SyntaxKind.EqualsToken && ts.isIdentifier(assignment.left)
+                && safeExpression(assignment.right)) {
+              return { kind: 'assign', name: assignment.left.text, value: nameOf(assignment.right) };
+            }
+          }
+          if (ts.isIfStatement(statement) && safeExpression(statement.expression)) {
+            return { kind: 'if', consequent: statements(statement.thenStatement), alternate: statements(statement.elseStatement) };
+          }
+          return { kind: 'unknown' };
+        }
+      });
+    }
+    this._returnSummaries.set(node, summary);
+    return summary;
+  };
+
+  SequenceDiagramGenerator.prototype._returnIdentity = function (clsName, methodName, bindings, call, receiver) {
+    if (this._constantMethodsMutable || call.questionDotToken || call.expression.questionDotToken
+        || (call.arguments || []).some(argument => this.ts.isSpreadElement(argument))) return null;
+    const node = this._findMethodNode(clsName, methodName);
+    const summary = node && this._returnSummary(node);
+    if (!summary) return null;
+    return summary.kind === 'receiver' ? receiver : bindings[summary.index] || null;
   };
 
   SequenceDiagramGenerator.prototype._sourceFileForClass = function (clsName) {
@@ -1640,6 +1744,12 @@
         }
       }
       return null;
+    }
+
+    // Method results retain a proven input identity, including fluent chains.
+    if (ts.isPropertyAccessExpression(func)) {
+      const binding = this._expressionBinding(func.expression, caller);
+      if (binding) return { className: binding.className, method: func.name.text, participantId: binding.participantId };
     }
 
     // super.method()
@@ -1830,7 +1940,7 @@
       }
     }
 
-    var sf    = this._sourceFileForClass(clsName);
+    var sf    = node.getSourceFile();
     try {
       this._processStatements(node.body.statements || [], sf, calleeId, depth + 1);
     } finally {
