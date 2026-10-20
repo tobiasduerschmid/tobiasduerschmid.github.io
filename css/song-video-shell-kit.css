@@ -1963,6 +1963,11 @@
   letter-spacing: -0.02em;
 }
 
+.sh-tile--longest {
+  font-size: 12.5px;
+  letter-spacing: -0.03em;
+}
+
 .sh-tile svg {
   width: 15px;
   height: 15px;

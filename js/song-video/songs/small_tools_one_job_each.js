@@ -365,7 +365,8 @@
       screen.append(document.createTextNode('your screen'));
       fx.rise(screen, door - 0.2, { distance: 10 });
       fx.fadeOut(screen, exitLine, 0.25);
-      label(s, 'sh-pipe-label sh-pipe-label--error', 'stderr = stream 2', XS[1] + W / 2 + 90, MY + 150, mark(ln(4), 'two'), exitLine);
+      // Named beside the screen it reaches, clear of the stdout/stdin labels.
+      label(s, 'sh-pipe-label sh-pipe-label--error', 'stderr = stream 2', XS[1] + W / 2 + 250, MY + 188, mark(ln(4), 'two'), exitLine);
 
       // Every command returns an exit code: zero means it worked.
       const exit = mark(ln(5), 'exit');

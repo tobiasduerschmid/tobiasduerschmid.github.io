@@ -350,13 +350,14 @@
       ih.module(tangle, { x: 424, y: 196, w: 210, h: 104, name: 'PayPal', sub: 'payment SDK', kind: 'external', at: mark('verse-2-2', 'paypal') });
       services.forEach((service, i) => {
         ih.courier(tangle, { from: [300, 136 + i * 116], to: [420, 248], tone: 'pink', at: mark('verse-2-2', 'call') + i * 0.12, period: 1.3 });
-        service.box.secret('PayPal decision', { at: mark('verse-2-3', 'know') + i * 0.15, until: hideAt, dx: 22, dy: 62 });
+        service.box.secret('PayPal decision', { at: mark('verse-2-3', 'know') + i * 0.15, until: hideAt, dx: 8, dy: 62 });
       });
       ih.bubble(tangle, { x: 430, y: 72, w: 270, who: 'The chief', whoIcon: 'chat', text: '“We’re switching to Stripe!”', at: mark('verse-2-4', 'boss') + 0.3, until: line('verse-2-5').start - 0.1 });
 
-      // Intercepting every mention of PayPal: it's everywhere.
+      // Intercepting every mention of PayPal: it's everywhere. The panel
+      // starts right of the secret strips so none of them is cut off.
       ih.search(tangle, {
-        x: 326, y: 86, w: 614, query: 'PayPal', at: line('verse-2-5').start, typedAt: mark('verse-2-5', 'search'),
+        x: 340, y: 86, w: 600, query: 'PayPal', at: line('verse-2-5').start, typedAt: mark('verse-2-5', 'search'),
         hitsAt: mark('verse-2-5', 'paypal'), step: 0.1, count: 'Everywhere', countAt: mark('verse-2-5', 'everywhere'),
         until: hideAt,
         hits: [

@@ -297,10 +297,13 @@
   height: 16px;
 }
 
+/* A name too long for its card wraps under the status chip instead of being
+   cut off by the card's edge. */
 .tdd-suite-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 4px 10px;
   padding: 6px 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   font-family: var(--font-mono);
