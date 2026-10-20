@@ -475,35 +475,67 @@
   }
 
   /**
-   * Four stories stacked in a trench coat and hat, pretending to be one.
-   * At `splitAt` the coat drops and the four cards spread into a row.
+   * Stories stacked in a trench coat and hat, pretending to be one: the top
+   * story peeks out of the collar like a face, and the coat hides the rest.
+   * At `splitAt` the coat and hat drop and the cards spread into a row.
+   * `row` gives the cards' row position in stage pixels.
    */
-  function trenchCoat(parent, { x, y, at, splitAt, until, labels, icons = [] }) {
+  let coatId = 0;
+  function trenchCoat(parent, { x, y, at, splitAt, until, labels, icons = [], row = { x: 150, y: 280, gap: 20 } }) {
+    const id = `us-coat-${++coatId}`;
     const node = place(el('div', 'us-coat is-staged', parent), x, y);
-    const cards = labels.map((text, i) => {
+    const CARD_W = 150;
+    const tops = labels.map((_, i) => (i === 0 ? 38 : 96 + (i - 1) * 54));
+    const makeCard = (i) => {
       const mini = el('div', 'us-coat-card', node);
       if (icons[i]) mini.append(icon(icons[i]));
-      el('span', null, mini, text);
-      mini.style.top = `${18 + i * 52}px`;
+      el('span', null, mini, labels[i]);
+      mini.style.top = `${tops[i]}px`;
       return mini;
-    });
-    const coat = svg('svg', { viewBox: '0 0 200 280', class: 'us-coat-art' }, node);
-    svg('path', { class: 'us-coat-hat-brim', d: 'M40 30h120' }, coat);
-    svg('path', { class: 'us-coat-hat', d: 'M62 30c0-20 10-28 38-28s38 8 38 28z' }, coat);
-    svg('path', { class: 'us-coat-hatband', d: 'M62 23h76' }, coat);
-    svg('path', { class: 'us-coat-body', d: 'M42 70 L100 58 L158 70 L176 270 L24 270Z' }, coat);
-    svg('path', { class: 'us-coat-lapel', d: 'M100 58 L78 128 L100 150 L122 128Z' }, coat);
-    svg('path', { class: 'us-coat-belt', d: 'M30 178H170' }, coat);
-    svg('path', { class: 'us-coat-seam', d: 'M100 150V270' }, coat);
-    for (const cy of [168, 205, 240]) svg('circle', { class: 'us-coat-button', cx: 112, cy, r: 4 }, coat);
-    svg('rect', { class: 'us-coat-buckle', x: 92, y: 170, width: 16, height: 16, rx: 2 }, coat);
+    };
+    // Hidden stories first, then the coat, then the "face" story and the hat.
+    const hidden = labels.slice(1).map((_, i) => makeCard(i + 1));
+    const coat = svg('svg', { viewBox: '0 0 220 300', class: 'us-coat-art' }, node);
+    const defs = svg('defs', {}, coat);
+    const grad = svg('linearGradient', { id: `${id}-cloth`, x1: 0, y1: 0, x2: 1, y2: 0 }, defs);
+    svg('stop', { offset: '0', 'stop-color': '#d2a36d' }, grad);
+    svg('stop', { offset: '0.55', 'stop-color': '#bf8d57' }, grad);
+    svg('stop', { offset: '1', 'stop-color': '#a3733f' }, grad);
+    const cloth = `url(#${id}-cloth)`;
+    svg('path', { class: 'us-coat-sleeve', fill: cloth, d: 'M40 94C27 124 21 172 23 216L45 218C47 178 51 132 58 106Z' }, coat);
+    svg('path', { class: 'us-coat-sleeve', fill: cloth, d: 'M180 94C193 124 199 172 197 216L175 218C173 178 169 132 162 106Z' }, coat);
+    svg('path', { class: 'us-coat-hand', d: 'M24 216h20v8a10 10 0 0 1-20 0zM176 216h20v8a10 10 0 0 1-20 0z' }, coat);
+    svg('path', { class: 'us-coat-body', fill: cloth, d: 'M40 94C42 82 60 77 80 75L110 98L140 75C160 77 178 82 180 94L194 280Q110 292 26 280Z' }, coat);
+    svg('path', { class: 'us-coat-shade', d: 'M110 98V286M150 102L165 280' }, coat);
+    svg('path', { class: 'us-coat-lapel', d: 'M80 75L110 98L97 154L68 102Z' }, coat);
+    svg('path', { class: 'us-coat-lapel', d: 'M140 75L110 98L123 154L152 102Z' }, coat);
+    svg('path', { class: 'us-coat-collar', d: 'M68 64L82 74L68 102L54 82Z' }, coat);
+    svg('path', { class: 'us-coat-collar', d: 'M152 64L138 74L152 102L166 82Z' }, coat);
+    svg('rect', { class: 'us-coat-belt', x: 32, y: 178, width: 156, height: 13, rx: 3 }, coat);
+    svg('rect', { class: 'us-coat-buckle', x: 101, y: 175, width: 18, height: 19, rx: 3 }, coat);
+    for (const [cx, cy] of [[96, 126], [124, 126], [96, 154], [124, 154], [96, 214], [124, 214]]) svg('circle', { class: 'us-coat-button', cx, cy, r: 3.6 }, coat);
+    svg('path', { class: 'us-coat-pocket', d: 'M44 228h34M142 228h34' }, coat);
+    svg('ellipse', { class: 'us-coat-shoe', cx: 86, cy: 291, rx: 17, ry: 7 }, coat);
+    svg('ellipse', { class: 'us-coat-shoe', cx: 134, cy: 291, rx: 17, ry: 7 }, coat);
+    const face = makeCard(0);
+    face.classList.add('us-coat-card--face');
+    const hat = svg('svg', { viewBox: '0 0 220 44', class: 'us-coat-hat-art' }, node);
+    svg('path', { class: 'us-coat-hat', d: 'M74 34C73 12 86 4 110 4S147 12 146 34Z' }, hat);
+    svg('path', { class: 'us-coat-hat-dent', d: 'M96 10Q110 18 124 10' }, hat);
+    svg('rect', { class: 'us-coat-hatband', x: 75, y: 24, width: 70, height: 8 }, hat);
+    svg('ellipse', { class: 'us-coat-hat-brim', cx: 110, cy: 35, rx: 64, ry: 7 }, hat);
+    const cards = [face, ...hidden];
+    cards.forEach((mini) => { mini.style.left = `${(220 - CARD_W) / 2}px`; mini.style.width = `${CARD_W}px`; });
     fx.pop(node, at, { from: 0.7 });
     if (splitAt !== undefined) {
-      tween(coat, [{ opacity: 1, translate: '0 0', rotate: '0deg' }, { opacity: 0, translate: '0 140px', rotate: '8deg' }], splitAt, 0.55, EASE.in);
+      tween(coat, [{ opacity: 1, translate: '0 0', rotate: '0deg' }, { opacity: 0, translate: '0 160px', rotate: '6deg' }], splitAt, 0.55, EASE.in);
+      tween(hat, [{ opacity: 1, translate: '0 0', rotate: '0deg' }, { opacity: 0, translate: '40px -50px', rotate: '-25deg' }], splitAt, 0.5, EASE.out);
       cards.forEach((mini, i) => {
-        const dx = -260 + i * 175 + 60;
-        const dy = 150 - i * 52;
-        tween(mini, { translate: `${dx}px ${dy}px`, rotate: `${(i % 2 ? 3 : -3)}deg` }, splitAt + 0.2 + i * 0.08, 0.5, EASE.inOut);
+        const left = row.x + i * (CARD_W + row.gap) - x;
+        const top = row.y - y;
+        const dx = left - (220 - CARD_W) / 2;
+        const dy = top - tops[i];
+        tween(mini, { translate: `${dx}px ${dy}px`, rotate: `${i % 2 ? 2 : -2}deg` }, splitAt + 0.2 + i * 0.08, 0.5, EASE.inOut);
       });
     }
     if (until !== undefined) fx.fadeOut(node, until);

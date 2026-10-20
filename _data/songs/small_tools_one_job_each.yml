@@ -29,10 +29,13 @@ title: "Small Tools, One Job Each: a song about the Unix shell"   # the player's
 credit: Lyrics written for this chapter; music and vocals generated with Suno.
 student:
   laptop_logo: /assets/icons/bash/bash.svg
+theme: workshop   # stage look: the workshop shadow board of js/song-video/workshop.js
 extras:   # the song's own art and styles, loaded before its choreography
   styles:
+    - /css/song-video-workshop.css
     - /css/song-video-shell-kit.css
   scripts:
+    - /js/song-video/workshop.js
     - /js/song-video/shell-kit.js
 player: /assets/song-player/small-tools-one-job-each.html
 captions: /assets/audio/small-tools-one-job-each.vtt

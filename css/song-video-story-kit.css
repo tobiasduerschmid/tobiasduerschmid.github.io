@@ -958,42 +958,52 @@
 
 .us-coat {
   position: absolute;
-  width: 200px;
-  height: 280px;
+  width: 220px;
+  height: 300px;
 }
 
-.us-coat-art {
+.us-coat-art,
+.us-coat-hat-art {
   position: absolute;
-  inset: 0;
-  width: 200px;
-  height: 280px;
+  left: 0;
   overflow: visible;
 }
 
-.us-coat-body { fill: #b7895a; stroke: #6f4b28; stroke-width: 3; stroke-linejoin: round; }
-.us-coat-lapel { fill: #9c7146; stroke: #6f4b28; stroke-width: 3; stroke-linejoin: round; }
-.us-coat-belt { stroke: #6f4b28; stroke-width: 10; }
-.us-coat-seam { stroke: #6f4b28; stroke-width: 2; }
+.us-coat-art { top: 0; width: 220px; height: 300px; }
+.us-coat-hat-art { top: 0; width: 220px; height: 44px; }
+
+.us-coat-body,
+.us-coat-sleeve { stroke: #6b4523; stroke-width: 3; stroke-linejoin: round; }
+.us-coat-shade { fill: none; stroke: rgba(107, 69, 35, 0.55); stroke-width: 2; }
+.us-coat-lapel { fill: #a87745; stroke: #6b4523; stroke-width: 3; stroke-linejoin: round; }
+.us-coat-collar { fill: #c99860; stroke: #6b4523; stroke-width: 3; stroke-linejoin: round; }
+.us-coat-belt { fill: #7a4f28; stroke: #5a3618; stroke-width: 2; }
+.us-coat-buckle { fill: none; stroke: #ffd100; stroke-width: 3.5; }
 .us-coat-button { fill: #3b2614; }
-.us-coat-buckle { fill: none; stroke: #ffd100; stroke-width: 3; }
-.us-coat-hat { fill: #3a3f55; stroke: #1c2032; stroke-width: 3; }
-.us-coat-hat-brim { stroke: #1c2032; stroke-width: 9; stroke-linecap: round; }
-.us-coat-hatband { stroke: #a3123a; stroke-width: 6; }
+.us-coat-pocket { stroke: #6b4523; stroke-width: 3; stroke-linecap: round; }
+.us-coat-hand { fill: #f6ead0; stroke: #6b4523; stroke-width: 2; }
+.us-coat-shoe { fill: #1c2032; }
+.us-coat-hat { fill: #3a3f55; stroke: #1c2032; stroke-width: 3; stroke-linejoin: round; }
+.us-coat-hat-dent { fill: none; stroke: #1c2032; stroke-width: 2.5; stroke-linecap: round; }
+.us-coat-hatband { fill: #a3123a; }
+.us-coat-hat-brim { fill: #2b2f42; stroke: #1c2032; stroke-width: 3; }
 
 .us-coat-card {
   position: absolute;
-  left: 40px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  width: 120px;
-  padding: 8px 10px;
+  height: 40px;
+  padding: 0 10px;
   border-radius: 6px;
   background: linear-gradient(170deg, #fffaf0, #f6ead0);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
   color: #12172a;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .us-coat-card svg { flex: none; width: 18px; height: 18px; color: #a3123a; }

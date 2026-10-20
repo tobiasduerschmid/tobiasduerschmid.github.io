@@ -145,8 +145,17 @@ grid. The TDD song's map comes from beats tracked on the percussion and
 smoothed over ±5 beats.
 
 Two optional fields let a song bring its own look. `theme` picks the stage
-backdrop from `SongKit.themes` (default `studio`, the aurora; `night-sky` is
-the starry sky of "Unbox the Stack"). `extras` lists the song's own
+backdrop from `SongKit.themes` (default `studio`, the aurora). Every song now
+brings a room that fits its topic: `night-sky` is the starry sky of "Unbox
+the Stack", `darkroom` the photographer's darkroom of "Snapshots and
+Pointers" (prints of snapshots drying on a line, with HEAD and branch tags
+pointing at the newest one), `story-wall` the team-room wall of "Invest in
+Your Stories" (sticky notes and index cards in a story map), `workshop` the
+pegboard shadow board of "Small Tools, One Job Each", `ballroom` the TDD
+song's evening ballroom, and `spy` the information-hiding song's noir
+operations room. A theme script registers itself in `SongKit.themes`, draws
+its room once, and poses it only from song time; its stylesheet keeps the
+scenery faint enough that text over it keeps 4.5:1. `extras` lists the song's own
 stylesheets and scripts (`styles`, `scripts`), which both the live player
 and the export stage load, in order, before the choreography; the networking
 song uses them for `night-sky.js`, its illustrations in `js/song-video/art/`,
@@ -154,8 +163,8 @@ and `net-kit.js`. The illustrations are live vector art: shapes, gradients,
 and patterns, without filters or bitmaps. `net-kit.js` writes each drawing
 into the page once as an SVG `<symbol>` and shows every copy with `<use>`.
 
-"Small Tools, One Job Each", the shell song on `SEBook/tools/shell.md`, keeps
-the studio backdrop and brings `js/song-video/shell-kit.js` with
+"Small Tools, One Job Each", the shell song on `SEBook/tools/shell.md`, uses
+the `workshop` theme and brings `js/song-video/shell-kit.js` with
 `css/song-video-shell-kit.css`. Each of its pieces draws one visual metaphor
 beside the real notation: scissors that cut a command line at its spaces
 (with tape for quoted words), a filing cabinet for `PATH`, a map for the

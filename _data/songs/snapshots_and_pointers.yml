@@ -24,6 +24,12 @@
 
 title: "Snapshots and Pointers: a song about Git"   # the video's accessible name
 credit: Lyrics written for this chapter; music and vocals generated with Suno.
+theme: darkroom   # stage look: the photographer's darkroom of js/song-video/darkroom.js
+extras:   # the theme's art and styles, loaded before the choreography
+  styles:
+    - /css/song-video-darkroom.css
+  scripts:
+    - /js/song-video/darkroom.js
 video: /assets/video/snapshots-and-pointers.mp4
 captions: /assets/video/snapshots-and-pointers.vtt
 described_video: /assets/video/snapshots-and-pointers-described.mp4
