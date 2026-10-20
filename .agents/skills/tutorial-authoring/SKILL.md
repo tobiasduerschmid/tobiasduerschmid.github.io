@@ -2596,7 +2596,7 @@ channel.
   paragraph (`showHelp: false`); tutorial introductions explain that Design focus
   is a reference and Implementation details is used for target comparisons.
   Fit changes it to Restore and temporarily scales the SVG to the
-  available pane space, preserving the outer layout and
+  full pane dimensions independently of page/lesson scroll position, preserving the outer layout and
   lesson/page scroll position; Restore recovers the diagram's own scrolling. Controls and
   hover/focus/long-press help stay outside image semantics and exported SVG.
   A toolbar row keeps the button clear when the drawing reaches the top-right

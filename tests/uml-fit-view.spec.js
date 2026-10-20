@@ -31,7 +31,7 @@ async function expectFits(page, diagram) {
   const size = await diagram.locator('svg').boundingBox();
   const viewport = await diagram.boundingBox();
   expect(size.width).toBeLessThanOrEqual(viewport.width + 1);
-  expect(size.height).toBeLessThanOrEqual(page.viewportSize().height - 64);
+  expect(size.height).toBeLessThanOrEqual(page.viewportSize().height);
   expect(await diagram.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
 }
 
@@ -179,7 +179,7 @@ test('fitted diagrams use empty side gutters instead of adding vertical space fo
 
 test('fit chooses the larger collision-free layout near the side-gutter boundary', async ({ page }) => {
   const diagram = await diagramFixture(page, { width: 1800, height: 1000 });
-  await page.setViewportSize({ width: 800, height: 440 });
+  await page.setViewportSize({ width: 800, height: 400 });
   await diagram.evaluate(el => {
     el.style.width = '760px';
     el.style.height = '390px';
@@ -301,7 +301,8 @@ test('a lesson diagram control scrolls with its diagram instead of floating abov
   const svg = await diagram.locator('svg').boundingBox();
   const restore = await restoreButton(page).boundingBox();
   expect(restore.y).toBeGreaterThanOrEqual(pane.top);
-  expect(svg.y + svg.height).toBeLessThanOrEqual(pane.bottom + 1);
+  expect(restore.y).toBeCloseTo(after.y, 0);
+  expect(svg.height).toBeLessThanOrEqual(pane.bottom - pane.top + 1);
 });
 
 test('viewers that own zoom controls can opt out of the shared fit button', async ({ page }) => {
@@ -314,6 +315,39 @@ test('viewers that own zoom controls can opt out of the shared fit button', asyn
 });
 
 for (const nested of [false, true]) {
+  test(`fit scale is independent of ${nested ? 'lesson pane' : 'page'} scroll position`, async ({ page }) => {
+    const diagram = await diagramFixture(page, { width: 2000, height: 1800 });
+    await diagram.evaluate((el, nested) => {
+      const figure = el.parentElement;
+      const intro = document.createElement('p');
+      intro.textContent = 'Introduction before the diagram';
+      intro.style.height = '500px';
+      figure.prepend(intro);
+      if (nested) {
+        figure.style.height = '350px';
+        figure.style.overflow = 'auto';
+      }
+      window.UMLShared.autoFitSVG(el);
+    }, nested);
+    const scrollTo = top => diagram.evaluate((el, { nested, top }) => {
+      (nested ? el.parentElement : document.scrollingElement).scrollTop = top;
+    }, { nested, top });
+    await scrollTo(430);
+    await fitButtons(page).click();
+    const first = await diagram.locator('svg').boundingBox();
+    await restoreButton(page).click();
+    await scrollTo(510);
+    await fitButtons(page).click();
+    const second = await diagram.locator('svg').boundingBox();
+    expect(second.width).toBeCloseTo(first.width, 0);
+    expect(second.height).toBeCloseTo(first.height, 0);
+    // A refresh while scrolled must not recalculate a smaller scale either.
+    await scrollTo(430);
+    await diagram.evaluate(el => window.UMLShared.autoFitSVG(el));
+    expect((await diagram.locator('svg').boundingBox()).width).toBeCloseTo(first.width, 0);
+    expect(first.height).toBeGreaterThan(nested ? 300 : 500);
+  });
+
   test(`fit and restore keep the control anchored in a ${nested ? 'lesson pane' : 'page'} even near the end`, async ({ page }) => {
     const diagram = await diagramFixture(page, { width: 2000, height: 1800 });
     await diagram.evaluate((el, nested) => {
