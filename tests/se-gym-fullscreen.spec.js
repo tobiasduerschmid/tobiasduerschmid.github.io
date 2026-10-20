@@ -22,9 +22,11 @@ for (const start of ['Start Workout', 'Start Workout from controls', 'Start targ
     await expect.poll(() => isFullscreen(page)).toBe(true);
     const exit = page.getByRole('button', { name: 'Exit full screen', exact: true }).filter({ visible: true });
     await expect(exit).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeHidden();
     await a11yCheckpoint(page, 'workout fullscreen controls', { include: '.workout-header-row' });
     await page.getByRole('button', { name: 'Back to Gym Entrance', exact: true }).click();
     await expect.poll(() => isFullscreen(page)).toBe(false);
+    await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
     await page.getByRole('button', { name: 'Resume Saved Workout', exact: true }).click();
     await expect.poll(() => isFullscreen(page)).toBe(true);
   });

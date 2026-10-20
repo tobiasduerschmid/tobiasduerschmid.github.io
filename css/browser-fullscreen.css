@@ -14,3 +14,10 @@ body.tutorial-layout #browser-fullscreen-status {
 
 html.se-gym-plain [data-browser-fullscreen],
 html.se-gym-plain #browser-fullscreen-status { display: none; }
+
+/* Keep Gym's own exit/navigation controls; reclaim the site banner's space.
+   Applies equally in both themes without changing the print layout. */
+@media screen {
+  html:fullscreen body.se-gym-page #navnav { display: none; }
+  html:fullscreen body.se-gym-page #sebook-content-wrapper { margin-top: 0 !important; }
+}
