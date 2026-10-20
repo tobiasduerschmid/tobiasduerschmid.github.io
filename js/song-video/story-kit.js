@@ -476,7 +476,9 @@
 
   /**
    * Stories stacked in a trench coat and hat, pretending to be one: the top
-   * story peeks out of the collar like a face, and the coat hides the rest.
+   * story peeks out of the collar like a face, and the others stick out of
+   * the coat's sides, alternating left and right, so their names stay
+   * readable before the coat drops.
    * At `splitAt` the coat and hat drop and the cards spread into a row.
    * `row` gives the cards' row position in stage pixels.
    */
@@ -486,11 +488,16 @@
     const node = place(el('div', 'us-coat is-staged', parent), x, y);
     const CARD_W = 150;
     const tops = labels.map((_, i) => (i === 0 ? 38 : 96 + (i - 1) * 54));
+    // The face sits centred; hidden stories poke out past the sleeves.
+    const side = (i) => (i === 0 ? 0 : i % 2 ? -1 : 1);
+    const lefts = labels.map((_, i) => (220 - CARD_W) / 2 + side(i) * 147);
     const makeCard = (i) => {
-      const mini = el('div', 'us-coat-card', node);
+      const mini = el('div', `us-coat-card${side(i) < 0 ? ' us-coat-card--left' : side(i) > 0 ? ' us-coat-card--right' : ''}`, node);
       if (icons[i]) mini.append(icon(icons[i]));
       el('span', null, mini, labels[i]);
       mini.style.top = `${tops[i]}px`;
+      mini.style.left = `${lefts[i]}px`;
+      if (side(i)) mini.style.rotate = `${side(i) * 4}deg`;
       return mini;
     };
     // Hidden stories first, then the coat, then the "face" story and the hat.
@@ -525,7 +532,7 @@
     svg('rect', { class: 'us-coat-hatband', x: 75, y: 24, width: 70, height: 8 }, hat);
     svg('ellipse', { class: 'us-coat-hat-brim', cx: 110, cy: 35, rx: 64, ry: 7 }, hat);
     const cards = [face, ...hidden];
-    cards.forEach((mini) => { mini.style.left = `${(220 - CARD_W) / 2}px`; mini.style.width = `${CARD_W}px`; });
+    cards.forEach((mini) => { mini.style.width = `${CARD_W}px`; });
     fx.pop(node, at, { from: 0.7 });
     if (splitAt !== undefined) {
       tween(coat, [{ opacity: 1, translate: '0 0', rotate: '0deg' }, { opacity: 0, translate: '0 160px', rotate: '6deg' }], splitAt, 0.55, EASE.in);
@@ -533,7 +540,7 @@
       cards.forEach((mini, i) => {
         const left = row.x + i * (CARD_W + row.gap) - x;
         const top = row.y - y;
-        const dx = left - (220 - CARD_W) / 2;
+        const dx = left - lefts[i];
         const dy = top - tops[i];
         tween(mini, { translate: `${dx}px ${dy}px`, rotate: `${i % 2 ? 2 : -2}deg` }, splitAt + 0.2 + i * 0.08, 0.5, EASE.inOut);
       });

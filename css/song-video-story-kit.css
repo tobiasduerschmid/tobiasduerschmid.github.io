@@ -1013,6 +1013,11 @@
   box-sizing: border-box;
 }
 
+/* Stories sticking out of the coat's sides keep their names on the
+   visible end, outside the sleeve. */
+.us-coat-card--left { justify-content: flex-start; }
+.us-coat-card--right { justify-content: flex-end; }
+
 .us-coat-card svg { flex: none; width: 18px; height: 18px; color: #a3123a; }
 
 .us-crumbs {
