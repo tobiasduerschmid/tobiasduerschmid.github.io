@@ -93,7 +93,8 @@
       kit.el('span', null, how, 'build it');
       fx.pop(how, mark('verse-1-1', 'how'));
       fx.moveTo(how, mark('verse-1-1', 'who') - 0.1, 350, 0, 0.5);
-      tween(how, { opacity: 0.4, scale: 0.75 }, mark('verse-1-1', 'who'), 0.4);
+      // Parked for later: dimmed but opaque, so the wall behind never shows through it.
+      tween(how, { scale: 0.75, filter: 'saturate(0.25) brightness(0.6)' }, mark('verse-1-1', 'who'), 0.4);
       kit.sticker(a, 'later', { x: 800, y: 250, at: mark('verse-1-1', 'what'), variant: 'white', rotate: 6 });
       [['who', 'Who?', 'the user'], ['what', 'What?', 'they need'], ['why', 'Why?', 'their goal']].forEach(([word, big, small], i) => {
         const tile = kit.place(kit.el('div', 'us-question is-staged', a), 110 + i * 190, 110);
@@ -307,7 +308,7 @@
       const vStart = line('verse-2-13').start;
       const e = kit.scene(content, httpsLine - 0.1, vStart - 0.1);
       const request = us.card(e, { x: 200, y: 100, w: 470, at: httpsLine, tilt: -1, title: 'User story', quote: 'I want the site on HTTPS' });
-      const howStamp = request.stamp('HOW?', { at: mark('verse-2-10', 'how'), rotate: -12, dx: 120 });
+      const howStamp = request.stamp('HOW?', { at: mark('verse-2-10', 'how'), rotate: -12, dx: 175 });
       fx.fadeOut(howStamp, mark('verse-2-11', 'keep') - 0.2, 0.2);
       note(e, 'the team picks the how', { x: 460, y: 270, at: mark('verse-2-10', 'team'), until: mark('verse-2-11', 'keep'), variant: 'cyan' });
       request.rewrite('quote', '“Keep my data private”', mark('verse-2-11', 'keep'));
@@ -322,7 +323,8 @@
       us.miniCard(f, { x: 220, y: 210, text: 'users', at: mark('verse-2-14', 'users'), iconName: 'user', tone: 'gold' });
       us.miniCard(f, { x: 420, y: 210, text: 'customers', at: mark('verse-2-14', 'customers'), iconName: 'cart', tone: 'gold' });
       const devs = us.miniCard(f, { x: 640, y: 210, text: 'devs only', at: mark('verse-2-14', 'devs'), iconName: 'gear', tone: 'ghost' });
-      kit.stamp(f, '✗', { x: 690, y: 190, at: mark('verse-2-14', 'alone'), color: 'red', rotate: 0 });
+      // Beside the chip, not on it, so "devs only" stays readable.
+      kit.stamp(f, '✗', { x: 796, y: 196, at: mark('verse-2-14', 'alone'), color: 'red', rotate: 0 });
       tween(devs, { opacity: 0.4 }, mark('verse-2-14', 'alone') + 0.1, 0.3);
 
       // Criteria that stop at "a button shows" miss the value.
@@ -553,8 +555,12 @@
       fx.pop(folder, mark('outro-1', 'uptime'));
       [['uptime', 'uptime', 'timer'], ['scale', 'scale', 'chart'], ['safety', 'safety rules', 'shield']].forEach(([word, text, iconName], i) => {
         const chip = us.miniCard(a, { x: 470, y: 120 + i * 70, text, at: mark('outro-1', word), tone: 'ghost', iconName });
-        fx.moveTo(chip, mark('outro-1', 'specs') - 0.3 + i * 0.08, 250, 60 - i * 70, 0.5);
-        fx.fadeOut(chip, mark('outro-1', 'specs') + 0.15 + i * 0.08, 0.2);
+        // Filed away on "need": each chip shrinks into the folder in turn and is
+        // gone before the scene ends, instead of piling up over it.
+        const file = mark('outro-1', 'need') + i * 0.12;
+        fx.moveTo(chip, file, 250, 60 - i * 70, 0.45);
+        tween(chip, { scale: 0.3 }, file, 0.45, EASE.in);
+        fx.fadeOut(chip, file + 0.35, 0.15);
       });
       note(a, 'need other kinds of specs', { x: 520, y: 380, at: mark('outro-1', 'other'), variant: 'violet' });
 
