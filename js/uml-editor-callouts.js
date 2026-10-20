@@ -28,7 +28,7 @@
       const id = element.getAttribute('data-layout-bounds-id') || element.getAttribute('data-layout-id');
       if (!id || /\s/.test(id) || ids.has(id)) continue;
       ids.add(id);
-      targets.push({ value: 'element ' + id, label: 'Element: ' + id, selectionId: id });
+      targets.push({ value: 'element ' + id, label: 'Element: ' + id, selectionId: id, element });
     }
     const occurrences = new Map();
     for (const element of modelParts(svg, 'text')) {
@@ -37,7 +37,7 @@
       const occurrence = (occurrences.get(text) || 0) + 1;
       occurrences.set(text, occurrence);
       targets.push({ value: targetSource({ kind: 'text', value: text, occurrence }),
-        label: 'Text: ' + text + (occurrence > 1 ? ' (' + occurrence + ')' : ''), text });
+        label: 'Text: ' + text + (occurrence > 1 ? ' (' + occurrence + ')' : ''), text, element });
     }
     const allRoutes = window.UMLShared.collectEditableRoutes(svg);
     const routeIds = new Map(allRoutes.map(route => [route.element, route.id]));
@@ -46,14 +46,15 @@
     routes.forEach((route, index) => {
       for (const anchor of ['middle', 'start', 'end']) {
         targets.push({ value: 'edge ' + (index + 1) + ' ' + anchor,
-          label: 'Relationship ' + (index + 1) + ' — ' + anchor, routeId: route.id });
+          label: 'Relationship ' + (index + 1) + ' — ' + anchor, routeId: route.id,
+          element: anchor === 'middle' ? route.element : null, path: true });
       }
     });
     for (const shape of SHAPES) {
       modelParts(svg, shape).forEach((element, index) => {
         const owner = element.closest('[data-layout-fragment-id], [data-layout-activation-id], [data-layout-id]');
         targets.push({ value: 'shape ' + shape + ' occurrence ' + (index + 1), label: 'Shape: ' + shape + ' ' + (index + 1),
-          routeId: routeIds.get(element),
+          routeId: routeIds.get(element), element, path: ['path', 'line', 'polyline'].includes(shape),
           selectionId: owner && (owner.getAttribute('data-layout-fragment-id') || owner.getAttribute('data-layout-activation-id') || owner.getAttribute('data-layout-id')) });
       });
     }
@@ -92,13 +93,17 @@
     let sourceRevision = '';
     let loadedForm = '';
     let staleDraft = false;
+    let disposeDrag = null;
 
     function formValue() {
       return JSON.stringify([target.value, side.value, explanation.value]);
     }
 
     function sourceIsCurrent() {
-      if (staleDraft) return false;
+      return !staleDraft && renderedSourceIsCurrent();
+    }
+
+    function renderedSourceIsCurrent() {
       if (getSource() === sourceRevision) return true;
       message.textContent = 'The diagram is updating. Review the preview, then try again.';
       return false;
@@ -163,6 +168,33 @@
       message.textContent = '';
       loadCallout();
       open();
+      if (target.value) explanation.focus();
+    }
+
+    function editCallout(index) {
+      editing = index;
+      loadCallout();
+      open();
+      explanation.focus();
+    }
+
+    function moveCallout(index, nextTarget, nextSide) {
+      if (!renderedSourceIsCurrent()) return;
+      const callout = callouts[index];
+      const line = 'callout ' + nextSide + ' of ' + nextTarget + ' : ' + callout.text;
+      const source = replaceCallout(getSource(), callout, line);
+      // Keep an unfinished explanation intact when moving its saved callout.
+      if (editing === index && !staleDraft) {
+        const cleanForm = formValue() === loadedForm;
+        target.value = nextTarget;
+        side.value = nextSide;
+        callouts[index] = window.UMLCallouts.extract(source).callouts[index];
+        if (cleanForm) loadedForm = formValue();
+      }
+      commitSource(source);
+      const moved = root.querySelectorAll('.uml-callout')[index];
+      if (moved) moved.focus();
+      message.textContent = 'Callout attached to ' + nextTarget + '.';
     }
 
     function close() {
@@ -172,6 +204,8 @@
     }
 
     function refresh(svg, type) {
+      if (disposeDrag) disposeDrag();
+      disposeDrag = null;
       const supported = UML_TYPES.has(type);
       const preserveDraft = currentType === type && loadedForm && formValue() !== loadedForm;
       const draftTarget = target.value;
@@ -221,6 +255,9 @@
       } else {
         loadCallout();
       }
+      if (svg && sourceValid) disposeDrag = window.UMLCalloutDrag.install({
+        svg, targets, callouts, onEdit: editCallout, onMove: moveCallout
+      });
     }
 
     toggle.addEventListener('click', () => panel.hidden ? open() : close());
@@ -265,7 +302,7 @@
       message.textContent = 'Callout removed.';
       target.focus();
     });
-    return { refresh, openForSelection };
+    return { refresh, openForSelection, isSupported: () => UML_TYPES.has(currentType) };
   }
 
   window.UMLCalloutEditor = { create };

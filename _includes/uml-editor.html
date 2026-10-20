@@ -61,6 +61,7 @@ Supported options:
 {% include confirmation-dialog.html %}
 <link rel="stylesheet" href="{{ '/css/uml-editor-callouts.css' | relative_url }}">
 <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}" media="print">
+<script src="{{ '/js/uml-editor-callout-drag.js' | relative_url }}"></script>
 <script src="{{ '/js/uml-editor-callouts.js' | relative_url }}"></script>
 
 <div id="uml-playground-wrap"{% if uml_editor_hide_archuml == true or uml_editor_hide_archuml == "true" %} class="is-archuml-hidden"{% endif %}>
@@ -138,7 +139,7 @@ Supported options:
       <button id="uml-pg-callout-new" type="button">New callout</button>
       <button id="uml-pg-callout-close" type="button">Close callouts</button>
     </div>
-    <p>Explain an element, label, relationship, or symbol. The preferred position guides placement; callouts avoid covering the diagram.</p>
+    <p>Right-click an element or relationship to add a callout. Drag a callout to attach it to the nearest element; click it to edit. You can also choose its target and preferred position below.</p>
     <div class="uml-pg-prop-row">
       <label for="uml-pg-callout-saved">Saved callout</label>
       <select id="uml-pg-callout-saved"><option value="-1">New callout</option></select>
@@ -5472,7 +5473,7 @@ Supported options:
       var box = document.createElement('div');
       box.className = 'uml-pg-context-menu';
       box.setAttribute('role', 'menu');
-      items.forEach(function (item) {
+      items.filter(Boolean).forEach(function (item) {
         if (item.separator) {
           box.appendChild(document.createElement('hr'));
           return;
@@ -5510,10 +5511,28 @@ Supported options:
       contextMenu = box;
     }
 
+    function calloutContextAction(id, kind) {
+      if (!calloutEditor.isSupported()) return null;
+      return { label: 'Add callout', onClick: function () {
+        setSelectedLayoutId(id, kind);
+        calloutEditor.openForSelection();
+      } };
+    }
+
+    function buildSequenceDetailContextMenu(id, kind, clientX, clientY) {
+      showContextMenu(clientX, clientY, [
+        { label: 'Edit properties', onClick: function () { setSelectedLayoutId(id, kind); } },
+        calloutContextAction(id, kind),
+        { separator: true },
+        { label: 'Delete', danger: true, onClick: function () { setSelectedLayoutId(id, kind); deleteSelected(); } }
+      ]);
+    }
+
     function buildElementContextMenu(item, clientX, clientY) {
       var items = [
         { label: 'Rename label', kbd: 'F2 / dbl-click', onClick: function () { startInlineRename(item); } },
         { label: 'Edit properties', kbd: 'click', onClick: function () { setSelectedLayoutId(item.id, 'node'); /* props pane is already shown */ } },
+        calloutContextAction(item.id, 'node'),
         { label: 'Duplicate', onClick: function () { duplicateElement(item.id); } },
         { separator: true },
         { label: 'Delete', kbd: 'Del', danger: true, onClick: function () { setSelectedLayoutId(item.id, 'node'); deleteSelected(); } }
@@ -5524,6 +5543,7 @@ Supported options:
     function buildRouteContextMenu(routeId, clientX, clientY) {
       var items = [
         { label: 'Edit relation', onClick: function () { setSelectedLayoutId(routeId, 'route'); } },
+        calloutContextAction(routeId, 'route'),
         { label: 'Invert direction', onClick: function () { setSelectedLayoutId(routeId, 'route'); invertRelationDirection(routeId); } },
         { separator: true },
         { label: 'Delete', kbd: 'Del', danger: true, onClick: function () { setSelectedLayoutId(routeId, 'route'); deleteSelected(); } }
@@ -6194,7 +6214,7 @@ Supported options:
 
         function selectThis(extend) { setSelectedLayoutId(bar.id, 'activation', extend ? { extend: true } : undefined); }
         function bodyPointerDown(ev) {
-          if (activeTool) return;
+          if (activeTool || ev.button !== 0) return;
           ev.preventDefault(); ev.stopPropagation();
           if (ev.metaKey || ev.ctrlKey || ev.shiftKey) { selectThis(true); return; }
           startActivationBarDrag(svg, layer, bar, 'move', ev);
@@ -6211,7 +6231,10 @@ Supported options:
           ev.preventDefault(); ev.stopPropagation();
           startActivationBarDrag(svg, layer, bar, 'end', ev);
         });
-        function onContext(ev) { ev.preventDefault(); ev.stopPropagation(); selectThis(false); }
+        function onContext(ev) {
+          ev.preventDefault(); ev.stopPropagation(); selectThis(false);
+          buildSequenceDetailContextMenu(bar.id, 'activation', ev.clientX, ev.clientY);
+        }
         hitbox.addEventListener('contextmenu', onContext);
         a11y.addEventListener('contextmenu', onContext);
         a11y.addEventListener('keydown', function (ev) {
@@ -9821,7 +9844,7 @@ Supported options:
             setSelectedLayoutId(frag.id, 'fragment', extend ? { extend: true } : undefined);
           }
           function onPointerDown(event) {
-            if (activeTool) return;
+            if (activeTool || event.button !== 0) return;
             event.preventDefault();
             event.stopPropagation();
             var extend = event.metaKey || event.ctrlKey || event.shiftKey;
@@ -9831,6 +9854,7 @@ Supported options:
             event.preventDefault();
             event.stopPropagation();
             selectFragment(false);
+            buildSequenceDetailContextMenu(frag.id, 'fragment', event.clientX, event.clientY);
           }
           function onKey(event) {
             var k = event.key;
@@ -13028,8 +13052,13 @@ Supported options:
         clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
       }
       clone.classList.remove('uml-pg-editing');
-      Array.prototype.slice.call(clone.querySelectorAll('.uml-pg-edit-layer')).forEach(function (layer) {
+      Array.prototype.slice.call(clone.querySelectorAll('.uml-pg-edit-layer, .uml-pg-callout-snap-target, .uml-pg-callout-hint')).forEach(function (layer) {
         if (layer.parentNode) layer.parentNode.removeChild(layer);
+      });
+      clone.querySelectorAll('.uml-callout').forEach(function (callout) {
+        callout.removeAttribute('role');
+        callout.removeAttribute('tabindex');
+        callout.removeAttribute('aria-label');
       });
       restoreExportCanvasBounds(clone);
 

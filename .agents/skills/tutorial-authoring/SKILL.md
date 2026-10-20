@@ -2587,7 +2587,14 @@ channel.
   Its **Callouts** panel (`js/uml-editor-callouts.js`, with presentation in
   `css/uml-editor-callouts.css`) creates, edits, and removes ArchUML teaching
   callouts for all seven UML types. Properties offers **Add teaching callout**
-  for the current selection; the panel also lists visible labels, relationship
+  for the current selection,
+  and element/relationship context menus offer **Add callout**, selecting the
+  clicked target and focusing the explanation. `js/uml-editor-callout-drag.js`
+  lets learners drag existing callouts to the nearest element or label; the drop
+  chooses the preferred side and updates the ordinary source directive in one
+  undo step. Escape cancels a drag. Clicking a callout or pressing Enter/Space
+  opens its editor; target/position selectors provide a non-drag alternative.
+  The panel also lists visible labels, relationship
   start/middle/end targets, and SVG symbols. Targets are captured before canvas
   edit overlays are installed so shape/text occurrences match the renderer.
   Callouts remain ordinary source directives and use the existing undo, draft,

@@ -79,3 +79,25 @@ html.dark-mode .uml-pg-callout-open:focus-visible { outline-color: #ffd100; }
 @media print {
   #uml-pg-callout-panel, #uml-pg-callout-toggle, .uml-pg-callout-open { display: none !important; }
 }
+
+#uml-playground-wrap .uml-callout[role="button"] {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+#uml-playground-wrap .uml-callout.is-dragging { cursor: grabbing; opacity: 0.75; }
+#uml-playground-wrap .uml-callout:focus-visible { outline: 3px solid #2774ae; outline-offset: 4px; }
+#uml-playground-wrap .uml-pg-callout-snap-target {
+  fill: none;
+  stroke: #2774ae;
+  stroke-width: 3px;
+  stroke-dasharray: 6 3;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+html.dark-mode #uml-playground-wrap .uml-callout:focus-visible { outline-color: #ffd100; }
+html.dark-mode #uml-playground-wrap .uml-pg-callout-snap-target { stroke: #ffd100; }
+@media print {
+  #uml-playground-wrap .uml-pg-callout-snap-target { display: none; }
+  #uml-playground-wrap .uml-callout:focus-visible { outline: none; }
+}
