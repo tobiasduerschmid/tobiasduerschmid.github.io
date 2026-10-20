@@ -531,7 +531,7 @@ steps:
             1: A quoted value has type `String`, which conflicts with the declared input type.
             2: Both operators produce `Bool`. An exact-budget example is needed to distinguish their behavior.
             3: The declared result is `Bool`; the budget is a `Double`.
-          explanation: Types rule out incompatible kinds of value, but not swapped roles or the wrong comparison between compatible values. Check a budget below the price and one exactly equal to it; predict both expected answers before running.
+          explanation: Types rule out incompatible kinds of value, but not swapped roles or the wrong comparison between compatible values. Compare a budget below the price and one exactly equal to it; reason about the expected result in each case.
     solution:
       files:
         - path: Main.hs

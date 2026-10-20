@@ -102,8 +102,9 @@ retrieval easier and more durable. Testing effects have been demonstrated at ret
 intervals from days to years (Roediger & Karpicke, 2006; Dunlosky et al., 2013).
 
 **Tutorial applications:**
-- **Predict-before-running:** Before learners execute code, require them to predict the
-  output on paper/in their head. This forces retrieval of language semantics.
+- **Predict-before-running (runnable exercises only):** When the learner can execute
+  the supplied code in the lesson workspace, ask them to predict its output first.
+  In a knowledge-check quiz, ask for a prediction or trace without a Run instruction.
 - **Recall-based quizzes:** After teaching a concept, quiz immediately *and* again after
   a delay. Embed checkpoint quizzes between tutorial sections.
 - **Explain-to-a-rubber-duck:** Ask learners to explain code without looking at it.
@@ -292,7 +293,7 @@ This helps learners see the *structure* of solutions, not just the syntax.
 
 ### The PRIMM Framework
 
-For code comprehension exercises:
+For code comprehension exercises with code available in the runnable lesson workspace:
 
 1. **Predict:** "What will this code output?" (before running)
 2. **Run:** Execute and compare prediction to actual output
@@ -511,6 +512,20 @@ Design assessments using Bloom's taxonomy: ensure you test at multiple levels, n
 just Remember and Apply. Include Analyze ("compare these two approaches"), Evaluate
 ("which design is better for this use case?"), and Create ("design a solution").
 
+### Quiz Prompts Must Match Available Actions
+
+Tutorial knowledge-check code blocks are read-only snippets, not runnable editors.
+Do not tell learners to "predict before you run," "run this snippet," "click Run,"
+or "check your prediction by running it" in quiz questions, explanations, or
+option feedback. The lesson's Run button does not execute a quiz snippet.
+
+Preserve the reasoning task with wording such as "Given this code, what is the
+output?", "Trace the calls," or "Which members appear in the diagram?" Prediction
+is still appropriate; promising an unavailable execution step is not. Use the
+full Predict–Run sequence only in lesson exercises where the learner can execute
+the supplied code. Review quiz text separately from runnable lesson instructions.
+See [quiz-format](../quiz-format/SKILL.md) for the matching authoring check.
+
 ### Learner-Facing Test Names Are Part of the Scaffold
 
 A visible test name identifies **what is being checked**, such as a behavior,
@@ -567,6 +582,8 @@ Answer these questions before creating tutorial content:
 12. **Do task lists, starter comments, visible checks, and cumulative hints preserve
     the assessed reasoning?** Do they specify the contract without supplying the
     edits, and does each hint add support without completing the answer?
+13. **Can the learner perform every requested action in this surface?** Quiz snippets
+    support reading and reasoning; reserve Run instructions for runnable exercises.
 
 ---
 

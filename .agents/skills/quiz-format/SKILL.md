@@ -74,6 +74,25 @@ Difficulty labels:
 
 When in doubt, choose the lower difficulty if the item is mainly about a central concept stated directly in the page. Choose the higher difficulty only when the learner's productive mental work is genuinely harder. A bad question can feel hard because it is ambiguous, verbose, or under-scaffolded; fix that question rather than labeling it `advanced` or `expert`.
 
+## Tutorial quizzes do not run their code snippets
+
+Code fences in tutorial knowledge checks are read-only. The tutorial workspace's
+Run button executes lesson files, not the code shown in a quiz. Do not include
+"predict before you run," "run this code," "click Run," or "run it to check your
+answer" in quiz questions, explanations, or `option_feedback`.
+
+Ask for the reasoning directly: "Given this code, what is the output?", "Trace
+the calls," or "How many methods appear in the UML box?" Keep prediction and
+code-comprehension questions; remove the implied execution step. Runnable lesson
+exercises may still use Predict–Run instructions. Statements explaining runtime
+semantics (for example, "a syntax error occurs before the program runs") are
+valid; this rule concerns instructions to execute the quiz snippet.
+
+When reviewing `_data/tutorials/*.yml`, inspect the nested `quiz:` fields rather
+than globally deleting prediction wording from lesson instructions. Check the
+question, explanation, and option feedback against the actions available in the
+quiz UI. See [cs-tutorial-design](../cs-tutorial-design/SKILL.md) for PRIMM guidance.
+
 ## No inline Bloom-level markers in question text
 
 **Do not embed Bloom's taxonomy level labels in `question:` text as bold bracket tags.** This pattern has been removed from this project and must not be reintroduced.
@@ -192,6 +211,7 @@ Before merging a quiz file with new `option_feedback`:
 - [ ] No second-person blame; misconception is framed in the third person.
 - [ ] **Shuffle-safe**: no letter or ordinal references ("Option A", "the third choice", "the last one", etc.) in `explanation:`, `question:`, or anywhere outside `option_feedback`. Per-option reasoning lives in `option_feedback`; the `explanation` describes the correct answer or underlying principle. *Collective, content-anchored* references to wrong-option **categories** are fine ("approaches that mutate state", "options that use `WHERE` for aggregates"); references to specific options by letter or YAML index are not.
 - [ ] **Distractors pass the six tests** in `references/schema.md` → "Distractor design": plausible to a partial-knower, misconception-grounded, variation-clean (one critical feature), homogeneous with the key, free of cueing, *and consistent with what the stem shows*. If a distractor fails these, fix the distractor — feedback can't rescue it.
+- [ ] **Available actions match the prompt.** Tutorial quiz snippets are read-only: no "predict before you run" or other instruction to execute them in questions, explanations, or option feedback. Preserve reasoning prompts and runnable lesson exercises.
 - [ ] **Stem hygiene** (`references/schema.md` → "Stem design"): paraphrased from the lesson, no filler clauses, options of comparable shape and length to the key. If any clause in the stem could be cut without changing the question, cut it.
 - [ ] **No answer-leak tells** (rule 5 above; verified by `scripts/audit_mcq_tells.py`): the correct option's length is **≤ ~1.8x** the median wrong-option length, the correct option is **not strictly the longest by more than ~15 chars**, and no formatting (`**bold**`, `*italic*`, `` `code` ``) appears *only* in the correct option. If the correct answer naturally needs more detail, move the qualifying clauses into `option_feedback` or `explanation`; do not pad distractors to match.
 - [ ] **For Parsons: count the lines.** Sweet spot 4–8; standard algorithms 9–12 are fine; never past 14. Don't claim "kept within the cap" without counting.

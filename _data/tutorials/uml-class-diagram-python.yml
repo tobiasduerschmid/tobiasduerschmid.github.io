@@ -277,7 +277,7 @@ steps:
             The UML box has three compartments: the class name at the top, `x` in the attributes section (middle), and `calculate()` in the methods section (bottom). `self` is not shown in UML — it is implicit.
 
         - question: |
-            **Predict before you run.** Given this Python code, *how many items* will appear in the **bottom** (methods) compartment of the UML box?
+            Given this Python code, *how many items* will appear in the **bottom** (methods) compartment of the UML box?
 
             ```python
             class Timer:
