@@ -93,7 +93,8 @@
       kit.el('span', null, how, 'build it');
       fx.pop(how, mark('verse-1-1', 'how'));
       fx.moveTo(how, mark('verse-1-1', 'who') - 0.1, 350, 0, 0.5);
-      tween(how, { opacity: 0.4, scale: 0.75 }, mark('verse-1-1', 'who'), 0.4);
+      // Parked for later: dimmed but opaque, so the wall behind never shows through it.
+      tween(how, { scale: 0.75, filter: 'saturate(0.25) brightness(0.6)' }, mark('verse-1-1', 'who'), 0.4);
       kit.sticker(a, 'later', { x: 800, y: 250, at: mark('verse-1-1', 'what'), variant: 'white', rotate: 6 });
       [['who', 'Who?', 'the user'], ['what', 'What?', 'they need'], ['why', 'Why?', 'their goal']].forEach(([word, big, small], i) => {
         const tile = kit.place(kit.el('div', 'us-question is-staged', a), 110 + i * 190, 110);
@@ -138,7 +139,8 @@
         us.miniCard(d, { x: 580, y: 190, text: '#14 Dark mode', at: boardLine + 0.2, iconName: 'eye' }),
       ];
       const added = us.miniCard(d, { x: 340, y: 300, text: '#15 Deadline reminder', at: mark('verse-1-7', 'add'), iconName: 'calendar', tone: 'gold' });
-      kit.sticker(d, 'add', { x: 300, y: 290, at: mark('verse-1-7', 'add'), until: mark('verse-1-8', 'order') - 0.2, variant: 'green', iconName: 'filePlus', rotate: -6 });
+      // Rests on the new card's top edge, clear of its icon.
+      kit.sticker(d, 'add', { x: 296, y: 268, at: mark('verse-1-7', 'add'), until: mark('verse-1-8', 'order') - 0.2, variant: 'green', iconName: 'filePlus', rotate: -6 });
       fx.bump(cards[1], mark('verse-1-7', 'change'), 0.15);
       kit.sticker(d, 'changed', { x: 470, y: 160, at: mark('verse-1-7', 'change'), variant: 'cyan', iconName: 'pencil', rotate: 5 });
       kit.fall(cards[2], mark('verse-1-7', 'drop'), { spin: 90, drift: 30 });
@@ -306,7 +308,7 @@
       const vStart = line('verse-2-13').start;
       const e = kit.scene(content, httpsLine - 0.1, vStart - 0.1);
       const request = us.card(e, { x: 200, y: 100, w: 470, at: httpsLine, tilt: -1, title: 'User story', quote: 'I want the site on HTTPS' });
-      const howStamp = request.stamp('HOW?', { at: mark('verse-2-10', 'how'), rotate: -12, dx: 120 });
+      const howStamp = request.stamp('HOW?', { at: mark('verse-2-10', 'how'), rotate: -12, dx: 175 });
       fx.fadeOut(howStamp, mark('verse-2-11', 'keep') - 0.2, 0.2);
       note(e, 'the team picks the how', { x: 460, y: 270, at: mark('verse-2-10', 'team'), until: mark('verse-2-11', 'keep'), variant: 'cyan' });
       request.rewrite('quote', '“Keep my data private”', mark('verse-2-11', 'keep'));
@@ -321,7 +323,8 @@
       us.miniCard(f, { x: 220, y: 210, text: 'users', at: mark('verse-2-14', 'users'), iconName: 'user', tone: 'gold' });
       us.miniCard(f, { x: 420, y: 210, text: 'customers', at: mark('verse-2-14', 'customers'), iconName: 'cart', tone: 'gold' });
       const devs = us.miniCard(f, { x: 640, y: 210, text: 'devs only', at: mark('verse-2-14', 'devs'), iconName: 'gear', tone: 'ghost' });
-      kit.stamp(f, '✗', { x: 690, y: 190, at: mark('verse-2-14', 'alone'), color: 'red', rotate: 0 });
+      // Beside the chip, not on it, so "devs only" stays readable.
+      kit.stamp(f, '✗', { x: 796, y: 196, at: mark('verse-2-14', 'alone'), color: 'red', rotate: 0 });
       tween(devs, { opacity: 0.4 }, mark('verse-2-14', 'alone') + 0.1, 0.3);
 
       // Criteria that stop at "a button shows" miss the value.
@@ -552,8 +555,12 @@
       fx.pop(folder, mark('outro-1', 'uptime'));
       [['uptime', 'uptime', 'timer'], ['scale', 'scale', 'chart'], ['safety', 'safety rules', 'shield']].forEach(([word, text, iconName], i) => {
         const chip = us.miniCard(a, { x: 470, y: 120 + i * 70, text, at: mark('outro-1', word), tone: 'ghost', iconName });
-        fx.moveTo(chip, mark('outro-1', 'specs') - 0.3 + i * 0.08, 250, 60 - i * 70, 0.5);
-        fx.fadeOut(chip, mark('outro-1', 'specs') + 0.15 + i * 0.08, 0.2);
+        // Filed away on "need": each chip shrinks into the folder in turn and is
+        // gone before the scene ends, instead of piling up over it.
+        const file = mark('outro-1', 'need') + i * 0.12;
+        fx.moveTo(chip, file, 250, 60 - i * 70, 0.45);
+        tween(chip, { scale: 0.3 }, file, 0.45, EASE.in);
+        fx.fadeOut(chip, file + 0.35, 0.15);
       });
       note(a, 'need other kinds of specs', { x: 520, y: 380, at: mark('outro-1', 'other'), variant: 'violet' });
 
@@ -563,7 +570,9 @@
         x: 420, y: 110, w: 420, at: mark('outro-2', 'features'), size: 'small', title: 'User story',
         role: 'student', want: 'to resubmit before it’s due', why: 'I can fix a mistake or two',
       });
-      story.stamp('INVEST', { at: mark('outro-2', 'invest'), color: 'gold', rotate: -8, dy: 10 });
+      // An approval stamp on the card's lower-right corner, so the finished
+      // story stays readable to the end.
+      story.stamp('INVEST', { at: mark('outro-2', 'invest'), color: 'gold', rotate: -8, dx: 130, dy: 104 });
       kit.kinetic(b, [
         { text: 'the right', at: mark('outro-2', 'right') },
         { text: 'thing', at: mark('outro-2', 'thing'), color: 'gold' },

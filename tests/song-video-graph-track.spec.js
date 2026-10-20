@@ -256,12 +256,17 @@ test('file-status panels keep their natural height through scaled playback and b
 });
 
 test('falling commits keep the same anchor during playback and direct or backward seeks', async ({ page }) => {
+  const storyboard = yaml.load(fs.readFileSync(path.join(root, '_data/songs/snapshots_and_pointers.yml'), 'utf8'));
   await page.addStyleTag({ path: path.join(root, 'css/song-video-stage.css') });
   await page.evaluate(() => { window.SongChoreographies = {}; });
-  for (const script of ['timeline.js', 'kit.js', 'rounded-surfaces.js', 'scene.js', 'songs/snapshots_and_pointers.js']) {
+  for (const script of ['timeline.js', 'kit.js', 'rounded-surfaces.js', 'scene.js']) {
     await page.addScriptTag({ path: path.join(root, 'js/song-video', script) });
   }
-  const storyboard = yaml.load(fs.readFileSync(path.join(root, '_data/songs/snapshots_and_pointers.yml'), 'utf8'));
+  // The song's own room and artwork, loaded before its choreography as the player does.
+  const { styles = [], scripts = [] } = storyboard.extras || {};
+  for (const href of styles) await page.addStyleTag({ path: path.join(root, href) });
+  for (const src of scripts) await page.addScriptTag({ path: path.join(root, src) });
+  await page.addScriptTag({ path: path.join(root, 'js/song-video/songs/snapshots_and_pointers.js') });
   const positions = await page.evaluate((storyboard) => {
     const stage = document.getElementById('first');
     stage.className = 'stage';

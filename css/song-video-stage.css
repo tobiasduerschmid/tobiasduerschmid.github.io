@@ -64,24 +64,57 @@ body.is-fit {
   background-clip: padding-box;
 }
 
-/* Firefox 157 can draw the joins between rounded-border tiles inside a shape
-   when it is transformed (https://bugzilla.mozilla.org/show_bug.cgi?id=2076078).
-   Background clipping and outlines do not fix that compositor defect. A
-   non-identity filter paints the complete border into one surface before the
-   transform. The 0.01% color difference is below an 8-bit color step. Apply it
-   only to rounded bordered boxes, detected once by rounded-surfaces.js, not
-   to every SVG path or full scene. Geometry, shadows, and animation stay intact.
-   The artwork uses the same palette in both themes and is hidden in print. */
-.stage .song-rounded-surface {
-  filter: var(--song-surface-filter) brightness(0.9999);
+/* Firefox draws a rounded CSS border as separate corner and edge pieces, and
+   a scaled stage can show their joins as thin L-shaped lines inside each
+   corner (https://bugzilla.mozilla.org/show_bug.cgi?id=2076078). In Firefox,
+   rounded-surfaces.js repaints each rounded box with a solid border, once per
+   scene: a box with an opaque fill gets its border colour as a border-box
+   background layer (inline), and these rules carry the two cases that inline
+   styles cannot reach. A box with a translucent or empty interior draws its
+   ring with a free pseudo-element masked to the border area; a pseudo-element
+   with a border takes its layers from custom properties on its box. The
+   artwork uses the same palette in both themes and is hidden in print. */
+.stage .song-frame-ring-after::after,
+.stage .song-frame-ring-before::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * var(--song-frame-top));
+  right: calc(-1 * var(--song-frame-right));
+  bottom: calc(-1 * var(--song-frame-bottom));
+  left: calc(-1 * var(--song-frame-left));
+  box-sizing: border-box;
+  padding: var(--song-frame-top) var(--song-frame-right) var(--song-frame-bottom) var(--song-frame-left);
+  border: 0;
+  border-radius: inherit;
+  background: var(--song-frame-line);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
 }
 
-.stage .song-rounded-surface-before::before {
-  filter: var(--song-surface-filter-before) brightness(0.9999);
+.stage .song-frame-layers-before::before,
+.stage .song-frame-layers-after::after {
+  border-color: transparent !important;
+  background-color: transparent !important;
 }
 
-.stage .song-rounded-surface-after::after {
-  filter: var(--song-surface-filter-after) brightness(0.9999);
+.stage .song-frame-layers-before::before {
+  background-image: var(--song-frame-before-image) !important;
+  background-clip: var(--song-frame-before-clip) !important;
+  background-origin: var(--song-frame-before-origin) !important;
+  background-size: var(--song-frame-before-size) !important;
+  background-position: var(--song-frame-before-position) !important;
+  background-repeat: var(--song-frame-before-repeat) !important;
+}
+
+.stage .song-frame-layers-after::after {
+  background-image: var(--song-frame-after-image) !important;
+  background-clip: var(--song-frame-after-clip) !important;
+  background-origin: var(--song-frame-after-origin) !important;
+  background-size: var(--song-frame-after-size) !important;
+  background-position: var(--song-frame-after-position) !important;
+  background-repeat: var(--song-frame-after-repeat) !important;
 }
 
 .is-staged {

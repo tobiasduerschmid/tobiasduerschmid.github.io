@@ -969,8 +969,11 @@
       /** Fills a slot with the command's tile, flying in from the big card. */
       fill(cmd, time, iconName) {
         const slot = slots.get(cmd);
+        // Longer names drop the icon, and the longest (head·tail) set smaller,
+        // so every name keeps clear margins inside its tile.
         const long = cmd.length >= 5;
-        const tile = place(el('div', `sh-tile sh-tile--${slot.tone}${long ? ' sh-tile--long' : ''} is-staged`, grid), slot.left, slot.top);
+        const size = cmd.length >= 8 ? ' sh-tile--long sh-tile--longest' : long ? ' sh-tile--long' : '';
+        const tile = place(el('div', `sh-tile sh-tile--${slot.tone}${size} is-staged`, grid), slot.left, slot.top);
         tile.style.width = `${tileW}px`;
         tile.style.height = `${tileH}px`;
         if (!long) tile.append(icon(iconName));

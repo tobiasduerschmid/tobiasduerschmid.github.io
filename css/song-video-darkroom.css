@@ -1,0 +1,379 @@
+/*
+ * The "darkroom" stage theme (js/song-video/darkroom.js): a photographer's
+ * darkroom behind the scenes of "Snapshots and Pointers". Only the backdrop
+ * changes. The scenery stays faint (fills at alpha ≤ 0.3, under a dimming
+ * layer) so every text color drawn over it keeps at least 4.5:1, and
+ * nothing large changes brightness quickly. Like stage.css this styles the
+ * 960×540 stage, which keeps its dark artwork in both page themes; the
+ * player's print styles hide it.
+ */
+
+.theme-darkroom {
+  background: #090a1c;
+}
+
+.dr-room {
+  overflow: hidden;
+}
+
+/* One knob for the whole room: dims the scenery, never the scenes above it. */
+.dr-room::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.08);
+  pointer-events: none;
+}
+
+/* Safelight glow (top right), enlarger glow (left), and a tiled backsplash
+   above the counter. */
+.dr-base {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 40% 52% at 94% 0%, rgba(255, 70, 96, 0.24), transparent 70%),
+    radial-gradient(ellipse 30% 30% at 78% 92%, rgba(255, 70, 96, 0.1), transparent 70%),
+    radial-gradient(ellipse 50% 60% at 4% 18%, rgba(118, 96, 255, 0.22), transparent 72%),
+    radial-gradient(ellipse 44% 40% at 46% 54%, rgba(150, 40, 150, 0.1), transparent 72%),
+    radial-gradient(ellipse 60% 40% at 58% 100%, rgba(16, 160, 180, 0.14), transparent 70%),
+    linear-gradient(180deg, #100f2a 0%, #0c0b22 55%, #08081a 100%);
+}
+
+.dr-backsplash {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 300px;
+  height: 174px;
+  background-image:
+    linear-gradient(rgba(190, 200, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(190, 200, 255, 0.035) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: 12px 0;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 45%);
+  mask-image: linear-gradient(180deg, transparent, #000 45%);
+}
+
+.dr-line-art,
+.dr-counter {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* ---- The drying line ---------------------------------------------- */
+
+.dr-line {
+  fill: none;
+  stroke: rgba(230, 220, 200, 0.34);
+  stroke-width: 1.4;
+}
+
+.dr-print-shadow {
+  fill: rgba(0, 0, 0, 0.35);
+}
+
+.dr-print-frame {
+  fill: rgba(250, 238, 214, 0.22);
+}
+
+/* The image area's fill is the print gradient set in darkroom.js. */
+.dr-print-sheen {
+  fill: rgba(255, 255, 255, 0.05);
+}
+
+.dr-doodle-sun {
+  fill: rgba(255, 196, 120, 0.4);
+}
+
+.dr-doodle-hill {
+  fill: rgba(150, 132, 255, 0.34);
+}
+
+.dr-doodle-file {
+  fill: rgba(150, 132, 255, 0.26);
+  stroke: rgba(190, 180, 255, 0.4);
+  stroke-width: 1.2;
+}
+
+.dr-doodle-line {
+  fill: none;
+  stroke: rgba(190, 180, 255, 0.4);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.dr-doodle-node {
+  fill: rgba(56, 211, 245, 0.36);
+  stroke: rgba(150, 230, 255, 0.45);
+  stroke-width: 1.2;
+}
+
+.dr-pin {
+  fill: rgba(206, 168, 112, 0.5);
+  stroke: rgba(60, 40, 20, 0.5);
+  stroke-width: 0.8;
+}
+
+.dr-pin-slit {
+  stroke: rgba(60, 40, 20, 0.6);
+  stroke-width: 1;
+}
+
+/* HEAD (gold) points at the branch (cyan), which points at the newest print. */
+.dr-tag-string {
+  stroke: rgba(230, 220, 200, 0.34);
+  stroke-width: 1;
+}
+
+.dr-tag-card {
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.dr-tag--head .dr-tag-card {
+  fill: rgba(255, 209, 0, 0.3);
+  stroke: rgba(255, 209, 0, 0.55);
+}
+
+.dr-tag--branch .dr-tag-card {
+  fill: rgba(56, 211, 245, 0.26);
+  stroke: rgba(56, 211, 245, 0.5);
+}
+
+.dr-tag-hole {
+  fill: #0b0d1f;
+}
+
+.dr-tag-mark {
+  fill: none;
+  stroke: rgba(8, 10, 24, 0.75);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Negatives: amber film base, dark frames, pale sprocket holes. */
+.dr-neg-strip {
+  fill: rgba(110, 66, 38, 0.34);
+}
+
+.dr-neg-frame {
+  fill: rgba(22, 14, 10, 0.6);
+}
+
+.dr-neg-ghost {
+  fill: rgba(255, 200, 150, 0.12);
+}
+
+.dr-neg-hole {
+  fill: rgba(255, 236, 210, 0.18);
+}
+
+/* ---- The counter ---------------------------------------------------- */
+
+.dr-counter-edge {
+  stroke: rgba(170, 180, 230, 0.18);
+  stroke-width: 1.5;
+}
+
+.dr-tray {
+  fill: rgba(120, 130, 170, 0.1);
+  stroke: rgba(170, 180, 230, 0.2);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.dr-tray-rim {
+  fill: none;
+  stroke: rgba(200, 210, 255, 0.26);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+.dr-tray-liquid {
+  fill: rgba(40, 70, 140, 0.24);
+}
+
+.dr-tray-paper {
+  fill: rgba(240, 232, 216, 0.16);
+}
+
+.dr-tray-image {
+  fill: rgba(150, 132, 255, 0.3);
+}
+
+.dr-tray-ripple {
+  fill: none;
+  stroke: rgba(200, 220, 255, 0.12);
+  stroke-width: 1.2;
+}
+
+/* ---- The enlarger's beam and out-of-focus lights ------------------- */
+
+.dr-beam {
+  position: absolute;
+  left: -120px;
+  top: -80px;
+  width: 460px;
+  height: 680px;
+  transform-origin: 50% 0;
+  background: linear-gradient(180deg, rgba(200, 190, 255, 0.12), rgba(200, 190, 255, 0.03) 72%, transparent);
+  clip-path: polygon(45% 0, 55% 0, 100% 100%, 0 100%);
+  /* Soft sides, so the cone reads as light rather than a shape. */
+  -webkit-mask-image: linear-gradient(90deg, transparent 4%, #000 34%, #000 66%, transparent 96%);
+  mask-image: linear-gradient(90deg, transparent 4%, #000 34%, #000 66%, transparent 96%);
+}
+
+
+.dr-bokeh {
+  position: absolute;
+  inset: 0;
+}
+
+.dr-bokeh-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 84px;
+  height: 84px;
+  margin: -42px 0 0 -42px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--dr-bokeh), 0.07) 0 52%, rgba(var(--dr-bokeh), 0.14) 64%, rgba(var(--dr-bokeh), 0) 70%);
+}
+
+.dr-bokeh-dot--warm { --dr-bokeh: 255, 150, 120; }
+.dr-bokeh-dot--cool { --dr-bokeh: 150, 170, 255; }
+.dr-bokeh-dot--teal { --dr-bokeh: 80, 220, 230; }
+
+.dr-vignette {
+  background: radial-gradient(ellipse at 50% 45%, transparent 58%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+/* ------------------------------------------------------------------ */
+/* The scenes in the darkroom's language                               */
+/* ------------------------------------------------------------------ */
+
+/* The shared kit keeps its structure and choreography; this room restyles
+   it as darkroom things. Boards (stations and history cards) carry a strip
+   of film as their header, snapshots are prints on warm photo paper, file
+   chips are paper labels, stickers are punched hang tags like the HEAD and
+   branch tags on the line, and the section badge is a film-box label.
+   Corners are small: darkroom gear is boxy, not bubbly. */
+
+.theme-darkroom .station,
+.theme-darkroom .graph-card {
+  border-color: rgba(255, 226, 205, 0.18);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 92, 92, 0.06), transparent 34%),
+    linear-gradient(160deg, #1b1731, #100e21 72%);
+  box-shadow: inset 0 1px 0 rgba(255, 230, 210, 0.08), 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+.theme-darkroom .station-glow {
+  border-radius: 10px;
+}
+
+/* A strip of film behind each board's title: dark film base with a row of
+   sprocket holes above and below the words. */
+.theme-darkroom .station:not(.station--remote)::before,
+.theme-darkroom .graph-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 38px;
+  border-radius: 8px 8px 0 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 214, 170, 0.2) 0 6px, transparent 6px 13px) left 6px top 4px / calc(100% - 12px) 4px no-repeat,
+    repeating-linear-gradient(90deg, rgba(255, 214, 170, 0.2) 0 6px, transparent 6px 13px) left 6px bottom 4px / calc(100% - 12px) 4px no-repeat,
+    linear-gradient(180deg, #0c0a16, #120f1f);
+  pointer-events: none;
+}
+
+/* A history card without a title keeps only a thin sprocket edge, clear of
+   its first row of labels. */
+.theme-darkroom .graph-card:not(:has(> .graph-card-title))::before {
+  height: 10px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 214, 170, 0.2) 0 6px, transparent 6px 13px) left 6px top 3px / calc(100% - 12px) 3px no-repeat,
+    linear-gradient(180deg, #0c0a16, #120f1f);
+}
+
+.theme-darkroom .station-head,
+.theme-darkroom .graph-card-title {
+  position: relative;
+}
+
+/* Snapshots: prints on warm photo paper with a developed, vignetted image. */
+.theme-darkroom .polaroid {
+  border-radius: 2px;
+  background: linear-gradient(160deg, #fcf7ec, #efe5cf);
+  box-shadow: 0 1px 0 #cbbd9c, 0 4px 6px rgba(0, 0, 0, 0.3), 0 12px 22px rgba(0, 0, 0, 0.45);
+}
+
+.theme-darkroom .polaroid-photo {
+  border-radius: 1px;
+  background:
+    radial-gradient(ellipse at 28% 22%, rgba(255, 255, 255, 0.06), transparent 55%),
+    radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(0, 0, 0, 0.38) 100%),
+    linear-gradient(135deg, #342483, #18436b);
+}
+
+/* The big commit card and the quiz cards are photo paper too. */
+.theme-darkroom .commit-card,
+.theme-darkroom .quiz-card {
+  border-radius: 6px;
+  background: linear-gradient(170deg, #fffaf0, #f3ead7);
+}
+
+/* File chips: paper labels. */
+.theme-darkroom .chip {
+  border-color: rgba(255, 244, 226, 0.9);
+  border-radius: 3px;
+  background: #fbf5e8;
+}
+
+.theme-darkroom .chip-version {
+  border-radius: 2px;
+}
+
+.theme-darkroom .chip--dashed {
+  background: #ffe4e8;
+}
+
+/* Stickers become hang tags: a punched hole with its string, square-cut
+   ends, and the same colours, ink, and hard shadow as before. */
+.theme-darkroom .sticker {
+  padding-left: 22px;
+  border-radius: 4px;
+  background-image: radial-gradient(circle at 10px 50%, #0b0a18 0 3.2px, rgba(11, 10, 24, 0.35) 3.6px, transparent 4.4px);
+}
+
+.theme-darkroom .sticker::before {
+  content: '';
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  width: 18px;
+  height: 1.6px;
+  border-radius: 1px;
+  background: rgba(240, 228, 206, 0.75);
+  transform-origin: 100% 50%;
+  rotate: 24deg;
+}
+
+/* Arrow labels and the section badge: square-cut labels in the same ink. */
+.theme-darkroom .cmd-chip {
+  border-radius: 3px;
+}
+
+.theme-darkroom .badge {
+  padding-left: 22px;
+  border-radius: 3px;
+  background:
+    linear-gradient(90deg, var(--ink) 0 10px, transparent 10px),
+    linear-gradient(180deg, #ffbf47, #ffa62b);
+}

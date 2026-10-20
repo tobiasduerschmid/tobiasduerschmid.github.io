@@ -123,9 +123,18 @@ This opens a disposable Firefox profile (never the user's profile), enables
 fractional pixel density. It saves before/after frames, rejects stray interior
 border pixels, verifies unchanged layout, and closes the test browser. This
 reproduces [Firefox bug 2076078](https://bugzilla.mozilla.org/show_bug.cgi?id=2076078).
-The shared scene preparation detects rounded CSS borders, including pseudo
-elements, and paints each as a single surface in Firefox. No scans run during
-playback; SVG paths and other browsers retain their existing rendering.
+The same defect also shows as thin L-shaped lines inside the corners of
+rounded boxes on a scaled stage, because Firefox draws a rounded border as
+separate corner and edge pieces. In Firefox, the shared scene preparation
+(`rounded-surfaces.js`) therefore repaints every rounded box with a solid
+border, including pseudo-elements, without a border: an opaque box paints
+its border colour as a border-box background layer under its fill, and a
+translucent or empty box draws the ring with a free pseudo-element masked to
+the border area. Layout is unchanged. The repaint copies computed colours, so
+a class change that could change paint repaints just the boxes inside the
+changed element, and boxes whose border or fill is animated keep their
+border. Dashed and dotted borders, SVG paths, and other browsers keep their
+existing rendering.
 
 ## One storyboard, many outputs
 
@@ -145,8 +154,17 @@ grid. The TDD song's map comes from beats tracked on the percussion and
 smoothed over ±5 beats.
 
 Two optional fields let a song bring its own look. `theme` picks the stage
-backdrop from `SongKit.themes` (default `studio`, the aurora; `night-sky` is
-the starry sky of "Unbox the Stack"). `extras` lists the song's own
+backdrop from `SongKit.themes` (default `studio`, the aurora). Every song now
+brings a room that fits its topic: `night-sky` is the starry sky of "Unbox
+the Stack", `darkroom` the photographer's darkroom of "Snapshots and
+Pointers" (prints of snapshots drying on a line, with HEAD and branch tags
+pointing at the newest one), `story-wall` the team-room wall of "Invest in
+Your Stories" (sticky notes and index cards in a story map), `workshop` the
+pegboard shadow board of "Small Tools, One Job Each", `ballroom` the TDD
+song's evening ballroom, and `spy` the information-hiding song's noir
+operations room. A theme script registers itself in `SongKit.themes`, draws
+its room once, and poses it only from song time; its stylesheet keeps the
+scenery faint enough that text over it keeps 4.5:1. `extras` lists the song's own
 stylesheets and scripts (`styles`, `scripts`), which both the live player
 and the export stage load, in order, before the choreography; the networking
 song uses them for `night-sky.js`, its illustrations in `js/song-video/art/`,
@@ -154,8 +172,8 @@ and `net-kit.js`. The illustrations are live vector art: shapes, gradients,
 and patterns, without filters or bitmaps. `net-kit.js` writes each drawing
 into the page once as an SVG `<symbol>` and shows every copy with `<use>`.
 
-"Small Tools, One Job Each", the shell song on `SEBook/tools/shell.md`, keeps
-the studio backdrop and brings `js/song-video/shell-kit.js` with
+"Small Tools, One Job Each", the shell song on `SEBook/tools/shell.md`, uses
+the `workshop` theme and brings `js/song-video/shell-kit.js` with
 `css/song-video-shell-kit.css`. Each of its pieces draws one visual metaphor
 beside the real notation: scissors that cut a command line at its spaces
 (with tape for quoted words), a filing cabinet for `PATH`, a map for the

@@ -32,10 +32,13 @@ title: "Invest in Your Stories: a song about user stories and INVEST"   # the pl
 credit: Lyrics written for this chapter; music and vocals generated with Suno.
 student:
   laptop_logo: /assets/icons/story-card/story-card.svg
+theme: story-wall   # stage look: the team-room wall of js/song-video/story-wall.js
 extras:   # the song's own art and styles, loaded before its choreography
   styles:
+    - /css/song-video-story-wall.css
     - /css/song-video-story-kit.css
   scripts:
+    - /js/song-video/story-wall.js
     - /js/song-video/story-kit.js
 player: /assets/song-player/invest-in-your-stories.html
 captions: /assets/audio/invest-in-your-stories.vtt
