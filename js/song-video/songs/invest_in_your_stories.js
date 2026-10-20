@@ -138,7 +138,8 @@
         us.miniCard(d, { x: 580, y: 190, text: '#14 Dark mode', at: boardLine + 0.2, iconName: 'eye' }),
       ];
       const added = us.miniCard(d, { x: 340, y: 300, text: '#15 Deadline reminder', at: mark('verse-1-7', 'add'), iconName: 'calendar', tone: 'gold' });
-      kit.sticker(d, 'add', { x: 300, y: 290, at: mark('verse-1-7', 'add'), until: mark('verse-1-8', 'order') - 0.2, variant: 'green', iconName: 'filePlus', rotate: -6 });
+      // Rests on the new card's top edge, clear of its icon.
+      kit.sticker(d, 'add', { x: 296, y: 268, at: mark('verse-1-7', 'add'), until: mark('verse-1-8', 'order') - 0.2, variant: 'green', iconName: 'filePlus', rotate: -6 });
       fx.bump(cards[1], mark('verse-1-7', 'change'), 0.15);
       kit.sticker(d, 'changed', { x: 470, y: 160, at: mark('verse-1-7', 'change'), variant: 'cyan', iconName: 'pencil', rotate: 5 });
       kit.fall(cards[2], mark('verse-1-7', 'drop'), { spin: 90, drift: 30 });

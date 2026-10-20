@@ -319,7 +319,8 @@
 
       // The snapshot card: every tracked file, frozen, with who/when/why and a parent.
       const s = kit.scene(content, start, amendLine);
-      const parent = kit.place(kit.el('div', 'commit-card commit-card--ghost is-staged', s), 96, 168);
+      // Far enough left that its whole "Parent" title shows beside the commit card.
+      const parent = kit.place(kit.el('div', 'commit-card commit-card--ghost is-staged', s), 50, 168);
       const parentTitle = kit.el('div', 'commit-card-title', parent);
       parentTitle.append(document.createTextNode('Parent'));
       const card = kit.place(kit.el('div', 'commit-card is-staged', s), 150, 124);
@@ -348,7 +349,8 @@
       kit.sticker(s, 'Frozen', { x: 104, y: 104, at: frozen, until: amendLine, variant: 'cyan', iconName: 'snow', rotate: -8 });
       const link = mark('verse-2-2', 'link');
       fx.slideIn(parent, link, { dx: 50, dy: 20, duration: 0.4 });
-      kit.sticker(s, 'Parent', { x: 60, y: 300, at: link + 0.15, until: amendLine, variant: 'violet', iconName: 'pointer', rotate: -6 });
+      // Hangs on the parent card's corner, clear of the commit card's rows.
+      kit.sticker(s, 'Parent', { x: 8, y: 208, at: link + 0.15, until: amendLine, variant: 'violet', iconName: 'pointer', rotate: -6 });
 
       // Its ID is a hash of all of that — change one byte, get a different ID.
       const hashAt = mark('verse-2-3', 'hash');

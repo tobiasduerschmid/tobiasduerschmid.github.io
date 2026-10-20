@@ -22,8 +22,11 @@
   const W = 960;
   const H = 540;
   const COUNTER_TOP = 474;
-  // The drying line sags across the top of the frame (a quadratic curve).
-  const LINE = { x0: -20, y0: 28, cx: 480, cy: 74, x1: 980, y1: 24 };
+  // The drying line sags across the top of the frame (a quadratic curve),
+  // high enough that its prints stay above the boards of most scenes.
+  const LINE = { x0: -20, y0: 16, cx: 480, cy: 60, x1: 980, y1: 12 };
+  // Prints and tags are drawn at this size, small enough to read as scenery.
+  const HANGER_SIZE = 0.86;
   // Prints along the line, oldest first: curve parameter, picture, size, and
   // resting tilt, so the line looks hand-hung rather than ruled.
   const PRINTS = [
@@ -125,12 +128,12 @@
       const point = linePoint(spec.u);
       hangers.push({
         ...print(art, { ...point, doodle: spec.doodle, image: `url(#${image})` }),
-        tilt: spec.tilt, scale: spec.scale, swing: 1.3, period: 5.5 + 2.5 * hash01(i * 7 + 3), beat: 0.5,
+        tilt: spec.tilt, scale: spec.scale * HANGER_SIZE, swing: 1.3, period: 5.5 + 2.5 * hash01(i * 7 + 3), beat: 0.5,
       });
     }
     // HEAD → branch → newest print, told only with colour and arrows.
-    hangers.push({ ...tag(art, { ...linePoint(0.655), kind: 'branch', drop: 16 }), swing: 3, period: 4.6, beat: 1 });
-    hangers.push({ ...tag(art, { ...linePoint(0.72), kind: 'head', drop: 30 }), swing: 3.4, period: 5.2, beat: 1 });
+    hangers.push({ ...tag(art, { ...linePoint(0.655), kind: 'branch', drop: 16 }), scale: HANGER_SIZE, swing: 3, period: 4.6, beat: 1 });
+    hangers.push({ ...tag(art, { ...linePoint(0.72), kind: 'head', drop: 30 }), scale: HANGER_SIZE, swing: 3.4, period: 5.2, beat: 1 });
     hangers.forEach((hanger, i) => { hanger.phase = hash01(i * 31 + 17) * Math.PI * 2; });
     return hangers;
   }
