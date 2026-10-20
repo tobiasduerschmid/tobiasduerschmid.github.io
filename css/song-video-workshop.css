@@ -1,7 +1,7 @@
 /*
  * The "workshop" stage theme (js/song-video/workshop.js): the workshop wall
  * behind the scenes of "Small Tools, One Job Each". Only the backdrop
- * changes. The tools stay faint (fills at alpha ≤ 0.32, under a dimming
+ * changes. The tools stay faint (fills at alpha ≤ 0.26, under a dimming
  * layer) so every text color drawn over them keeps at least 4.5:1, and
  * nothing large changes brightness quickly. Like stage.css this styles the
  * 960×540 stage, which keeps its dark artwork in both page themes; the
@@ -97,25 +97,25 @@
 
 /* The outline painted for each tool, a little larger than the tool. */
 .ws-outline {
-  fill: rgba(255, 209, 0, 0.06);
-  stroke: rgba(255, 209, 0, 0.2);
+  fill: rgba(255, 209, 0, 0.05);
+  stroke: rgba(255, 209, 0, 0.16);
   stroke-width: 5;
   stroke-linejoin: round;
 }
 
 .ws-tool-shadow {
-  fill: rgba(0, 0, 0, 0.32);
+  fill: rgba(0, 0, 0, 0.26);
 }
 
-.ws-steel { fill: rgba(190, 205, 230, 0.28); }
-.ws-wood { fill: rgba(205, 150, 90, 0.32); }
-.ws-handle--red { fill: rgba(255, 107, 125, 0.32); }
-.ws-handle--blue { fill: rgba(96, 165, 250, 0.32); }
-.ws-handle--yellow { fill: rgba(255, 209, 0, 0.3); }
+.ws-steel { fill: rgba(190, 205, 230, 0.22); }
+.ws-wood { fill: rgba(205, 150, 90, 0.26); }
+.ws-handle--red { fill: rgba(255, 107, 125, 0.26); }
+.ws-handle--blue { fill: rgba(96, 165, 250, 0.26); }
+.ws-handle--yellow { fill: rgba(255, 209, 0, 0.24); }
 
 .ws-hook {
   fill: none;
-  stroke: rgba(200, 210, 235, 0.38);
+  stroke: rgba(200, 210, 235, 0.3);
   stroke-width: 2.4;
   stroke-linecap: round;
 }

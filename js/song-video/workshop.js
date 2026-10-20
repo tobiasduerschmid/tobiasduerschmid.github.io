@@ -59,16 +59,19 @@
       ['ws-handle ws-handle--red', 'M-9 12 A8 8 0 1 1 -9.1 12 Z M9 12 A8 8 0 1 1 8.9 12 Z'],
     ] },
   };
-  // Where each tool hangs on the board; the scissors are out, in use.
+  // Where each tool hangs on the board; the scissors are out, in use. The
+  // tools keep to the outer edges and are drawn at TOOL_SIZE, so diagrams
+  // that reach the sides of the frame pass over as little of them as possible.
+  const TOOL_SIZE = 0.84;
   const BOARD = [
-    { tool: 'hammer', x: 60, y: 132, tilt: -4 },
-    { tool: 'screwdriver', x: 112, y: 130, tilt: 3 },
-    { tool: 'wrench', x: 58, y: 262, tilt: 2 },
-    { tool: 'pliers', x: 112, y: 254, tilt: -3 },
-    { tool: 'magnifier', x: 84, y: 382, tilt: 4 },
-    { tool: 'tape', x: 892, y: 176, tilt: 0, swing: 1 },
-    { tool: 'scissors', x: 848, y: 290, tilt: -6, missing: true },
-    { tool: 'saw', x: 834, y: 384, tilt: -3 },
+    { tool: 'hammer', x: 44, y: 128, tilt: -4 },
+    { tool: 'screwdriver', x: 90, y: 126, tilt: 3 },
+    { tool: 'wrench', x: 42, y: 254, tilt: 2 },
+    { tool: 'pliers', x: 90, y: 246, tilt: -3 },
+    { tool: 'magnifier', x: 64, y: 368, tilt: 4 },
+    { tool: 'tape', x: 912, y: 170, tilt: 0, swing: 1 },
+    { tool: 'scissors', x: 872, y: 282, tilt: -6, missing: true },
+    { tool: 'saw', x: 852, y: 376, tilt: -3 },
   ];
 
   /** One tool on its hook, over the outline painted for it on the board. */
@@ -131,7 +134,7 @@
     onFrame((t) => {
       for (const tool of tools) {
         const angle = tool.tilt + (tool.swing || 0) * 2.5 * Math.sin(t * 0.9 + tool.phase);
-        tool.node.setAttribute('transform', `translate(${tool.x} ${tool.y}) rotate(${angle.toFixed(2)})`);
+        tool.node.setAttribute('transform', `translate(${tool.x} ${tool.y}) rotate(${angle.toFixed(2)}) scale(${TOOL_SIZE})`);
       }
       for (const mote of motes) {
         const a = (t / mote.period) * Math.PI * 2 + mote.phase;
