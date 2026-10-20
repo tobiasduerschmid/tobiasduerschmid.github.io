@@ -564,7 +564,9 @@
         x: 420, y: 110, w: 420, at: mark('outro-2', 'features'), size: 'small', title: 'User story',
         role: 'student', want: 'to resubmit before it’s due', why: 'I can fix a mistake or two',
       });
-      story.stamp('INVEST', { at: mark('outro-2', 'invest'), color: 'gold', rotate: -8, dy: 10 });
+      // An approval stamp on the card's lower-right corner, so the finished
+      // story stays readable to the end.
+      story.stamp('INVEST', { at: mark('outro-2', 'invest'), color: 'gold', rotate: -8, dx: 130, dy: 104 });
       kit.kinetic(b, [
         { text: 'the right', at: mark('outro-2', 'right') },
         { text: 'thing', at: mark('outro-2', 'thing'), color: 'gold' },
