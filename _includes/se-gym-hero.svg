@@ -9,7 +9,7 @@
     <radialGradient id="prof-form-shadow-{{ hero_variant }}" cx=".8" cy=".45" r=".73"><stop offset="0" stop-color="#ad7153" stop-opacity=".24"/><stop offset=".58" stop-color="#ce8d67" stop-opacity=".08"/><stop offset="1" stop-color="#ce8d67" stop-opacity="0"/></radialGradient>
     <radialGradient id="prof-skin-light-{{ hero_variant }}"><stop offset="0" stop-color="#fff4df" stop-opacity=".65"/><stop offset=".52" stop-color="#fff1dc" stop-opacity=".24"/><stop offset="1" stop-color="#fff1dc" stop-opacity="0"/></radialGradient>
     <radialGradient id="prof-cheek-{{ hero_variant }}"><stop offset="0" stop-color="#cb7e74" stop-opacity=".29"/><stop offset=".56" stop-color="#d6907d" stop-opacity=".13"/><stop offset="1" stop-color="#d6907d" stop-opacity="0"/></radialGradient>
-    <radialGradient id="prof-nose-{{ hero_variant }}" gradientUnits="userSpaceOnUse" cx="405" cy="201" r="13"><stop offset="0" stop-color="#bd8b70" stop-opacity=".28"/><stop offset=".55" stop-color="#c39176" stop-opacity=".18"/><stop offset="1" stop-color="#c39176" stop-opacity="0"/></radialGradient>
+    <radialGradient id="prof-nose-{{ hero_variant }}" gradientUnits="userSpaceOnUse" cx="402" cy="200" r="14" gradientTransform="translate(0 -50) scale(1 1.25)"><stop offset="0" stop-color="#b47f65" stop-opacity=".3"/><stop offset=".5" stop-color="#c7957a" stop-opacity=".2"/><stop offset="1" stop-color="#c7957a" stop-opacity="0"/></radialGradient>
     <radialGradient id="prof-hair-{{ hero_variant }}" gradientUnits="userSpaceOnUse" cx="380" cy="120" r="82"><stop offset="0" stop-color="#b5a184"/><stop offset=".32" stop-color="#a18a6e"/><stop offset=".68" stop-color="var(--hero-hair, #897257)"/><stop offset="1" stop-color="#5e5143"/></radialGradient>
     <linearGradient id="prof-hair-sheen-{{ hero_variant }}" x1=".1" y1="0" x2=".75" y2="1"><stop offset="0" stop-color="#e7d4b4" stop-opacity=".48"/><stop offset=".45" stop-color="#cdb594" stop-opacity=".24"/><stop offset="1" stop-color="#b09b7c" stop-opacity="0"/></linearGradient>
     <radialGradient id="prof-iris-{{ hero_variant }}"><stop offset="0" stop-color="#263b40"/><stop offset=".4" stop-color="#527379"/><stop offset=".7" stop-color="#90aba8"/><stop offset="1" stop-color="#3b5861"/></radialGradient>
@@ -9634,34 +9634,36 @@
         </g>
       </g>
       <!-- Prof: fixed portrait based on the supplied reference photograph. -->
-      <g data-hero-kind-layer="tobias" data-hero-tobias="portrait" display="none" stroke-linecap="round" stroke-linejoin="round">
+      <g data-hero-kind-layer="tobias" data-hero-tobias="portrait" display="none" transform="translate(0 -8)" stroke-linecap="round" stroke-linejoin="round">
         <defs>
-          <path id="prof-face-outline-{{ hero_variant }}" d="M 359 158 C 358 140 374 128 396 128 C 420 127 438 140 441 158 C 442 176 439 195 435 210 C 431 224 423 235 413 241 C 406 245 395 245 388 241 C 377 235 369 224 365 210 C 360 195 357 176 359 158 Z"/>
+          <path id="prof-face-outline-{{ hero_variant }}" d="M 359 158 C 358 140 374 128 396 128 C 420 127 438 140 441 158 C 443 177 443 195 440 210 C 438 223 435 232 430 239 C 424 247 416 252 408 255 C 402 257 396 257 390 255 C 380 251 371 245 365 237 C 359 229 356 219 355 208 C 354 191 356 174 359 158 Z"/>
           <clipPath id="prof-face-clip-{{ hero_variant }}"><use href="#prof-face-outline-{{ hero_variant }}"/></clipPath>
-          <path id="tobias-eye-outline-{{ hero_variant }}" d="M 369 183 C 374 176.8 382 176.5 389 182.5 C 384 188 375 188.5 369 183 Z M 411 182.5 C 418 176.5 426 176.8 431 183 C 425 188.5 416 188 411 182.5 Z"/>
+          <path id="tobias-eye-outline-{{ hero_variant }}" d="M 369 182 C 374 176.8 382 176.5 389 182.5 C 384 187.5 375 188 369 182 Z M 411 182.5 C 418 176.5 426 176.8 431 182 C 425 188 416 187.5 411 182.5 Z"/>
           <clipPath id="tobias-eye-clip-{{ hero_variant }}"><use href="#tobias-eye-outline-{{ hero_variant }}"/></clipPath>
         </defs>
         <!-- Hair behind the temples, then the neck and the softly modelled face. -->
         <path d="M 353 181 C 349 166 349 145 360 132 C 376 115 406 113 429 128 C 443 139 448 160 443 181 C 432 168 365 168 353 181 Z" fill="#665746"/>
-        <path d="M 384 229 C 385 240 384 247 381 251 C 386 259 393 264 400 267 C 408 264 414 258 419 251 C 416 247 416 238 417 228 Z" fill="url(#prof-neck-{{ hero_variant }})"/>
-        <path d="M 384 234 C 392 246 409 248 417 235 C 415 246 408 253 400 255 C 393 252 387 247 384 241 Z" fill="#805448" opacity=".13"/>
-        <path d="M 386 251 C 390 260 397 265 400 266" fill="none" stroke="#f4cbae" stroke-width="2" opacity=".36"/>
+        <path d="M 384 240 C 385 250 384 255 381 259 C 386 267 393 272 400 275 C 408 272 414 266 419 259 C 416 255 416 247 417 239 Z" fill="url(#prof-neck-{{ hero_variant }})"/>
+        <path d="M 384 247 C 392 257 408 259 417 247 C 415 257 408 265 400 267 C 393 264 387 259 384 253 Z" fill="#805448" opacity=".17"/>
+        <path d="M 386 259 C 390 268 397 273 400 274" fill="none" stroke="#f4cbae" stroke-width="2" opacity=".36"/>
         <path d="M 358 178 C 351 172 346 177 347 186 C 347 195 351 204 356 203 C 360 202 363 197 362 190 M 440 178 C 447 172 453 177 452 186 C 452 195 448 204 443 203 C 439 202 436 197 437 190" fill="url(#prof-skin-{{ hero_variant }})" stroke="#ad7d68" stroke-width="1"/>
         <path d="M 355 181 C 350 178 350 185 352 190 C 355 187 357 189 356 194 M 445 181 C 450 178 449 186 447 190 C 444 187 442 190 444 195" fill="none" stroke="#aa7565" stroke-width="1.1" opacity=".6"/>
         <path d="M 350 183 C 349 191 352 198 355 199 M 450 183 C 450 191 447 198 445 199" fill="none" stroke="#ffe0c7" stroke-width="1.1" opacity=".7"/>
         <use href="#prof-face-outline-{{ hero_variant }}" fill="url(#prof-skin-{{ hero_variant }})"/>
         <g clip-path="url(#prof-face-clip-{{ hero_variant }})">
-          <path d="M 426 150 C 438 177 433 196 429 211 C 425 226 416 238 399 245 C 419 248 436 229 442 209 C 449 189 447 165 439 149 Z" fill="url(#prof-form-shadow-{{ hero_variant }})"/>
+          <path d="M 426 150 C 438 177 436 199 433 217 C 429 236 417 249 399 257 C 419 260 438 238 443 216 C 449 191 447 165 439 149 Z" fill="url(#prof-form-shadow-{{ hero_variant }})"/>
+          <!-- Jaw angles and lower-face proportions follow the reference photograph. -->
+          <path d="M 356 210 C 359 225 363 235 371 242 C 380 250 390 254 399 255 C 411 254 422 247 429 236 C 435 227 438 216 440 207 C 440 230 431 246 418 253 C 403 262 389 259 376 250 C 363 242 356 228 356 210 Z" fill="#ac7962" opacity=".1"/>
           <ellipse cx="378" cy="168" rx="28" ry="35" fill="url(#prof-skin-light-{{ hero_variant }})" opacity=".52"/>
           <ellipse cx="374" cy="202" rx="17" ry="15" fill="url(#prof-cheek-{{ hero_variant }})"/>
           <ellipse cx="428" cy="202" rx="17" ry="15" fill="url(#prof-cheek-{{ hero_variant }})"/>
           <ellipse cx="374" cy="198" rx="14" ry="8" fill="url(#prof-skin-light-{{ hero_variant }})" opacity=".7"/>
           <ellipse cx="426" cy="198" rx="14" ry="8" fill="url(#prof-skin-light-{{ hero_variant }})" opacity=".46"/>
-          <ellipse cx="400" cy="235" rx="11" ry="5" fill="url(#prof-skin-light-{{ hero_variant }})" opacity=".2"/>
+          <ellipse cx="399" cy="245" rx="12" ry="7" fill="url(#prof-skin-light-{{ hero_variant }})" opacity=".3"/>
           <path d="M 359 164 C 365 151 374 145 386 140 C 406 136 427 146 440 163 C 438 149 422 134 397 134 C 377 134 363 145 359 164 Z" fill="#84644e" opacity=".1"/>
         </g>
         <use href="#prof-face-outline-{{ hero_variant }}" fill="none" stroke="#ad785c" stroke-width="1.1" stroke-opacity=".52"/>
-        <path d="M 361 177 C 359 195 366 215 376 228" fill="none" stroke="#ffdec5" stroke-width="1.5" opacity=".28"/>
+        <path d="M 359 182 C 356 205 359 224 369 237" fill="none" stroke="#ffdec5" stroke-width="1.5" opacity=".24"/>
         <!-- Short, tousled locks grow from an off-centre crown; the forehead stays open. -->
         <path d="M 354 176 C 350 164 349 150 353 139 C 356 130 362 123 370 119 C 373 116 377 114 382 114 C 381 112 380 110 381 109 C 385 112 390 111 394 110 C 399 108 403 110 407 113 C 407 111 408 110 409 110 C 418 113 426 117 432 122 C 439 125 443 133 445 141 C 448 153 445 167 442 176 C 439 170 438 160 437 156 C 433 152 430 147 427 143 C 428 148 428 153 427 156 C 423 152 420 146 418 142 C 418 147 420 152 419 155 C 414 152 411 146 408 142 C 409 148 408 153 406 157 C 403 153 401 147 399 143 C 398 149 395 153 392 155 C 393 150 393 145 392 142 C 389 149 385 153 381 154 C 383 150 384 145 384 141 C 379 146 375 151 373 155 C 373 151 374 147 374 145 C 369 149 366 155 364 160 C 363 157 363 154 363 152 C 359 160 358 170 358 177 Z" fill="url(#prof-hair-{{ hero_variant }})" stroke="#71604b" stroke-width=".85"/>
         <path d="M 354 143 C 361 127 375 118 387 115 C 380 122 375 129 371 139 C 373 131 376 126 378 123 C 368 128 360 136 354 143 Z M 393 115 C 402 112 418 118 426 126 C 416 121 407 120 401 121 C 405 128 410 139 410 147 C 404 134 398 123 393 115 Z" fill="url(#prof-hair-sheen-{{ hero_variant }})"/>
@@ -9675,31 +9677,32 @@
         </g>
         <path d="M 354 136 C 356 130 360 125 365 122 M 375 116 C 378 114 381 113 384 113 M 395 110 C 398 109 400 110 403 111 M 428 120 C 434 123 438 127 440 132" fill="none" stroke="#b9a184" stroke-width=".65" opacity=".72"/>
         <!-- Soft brows and lower-lid highlights keep the gaze open and encouraging. -->
-        <path d="M 368 172 C 374 167 383 166.5 390 170 C 383 168.5 375 170 369 173.5 C 368.6 173.2 368.1 172.6 368 172 Z M 432 172 C 426 167 417 166.5 410 170 C 417 168.5 425 170 431 173.5 C 431.4 173.2 431.9 172.6 432 172 Z" fill="#77614d" opacity=".86"/>
+        <path d="M 368 172 C 374 167 383 166.5 390 170 C 383 168.5 375 170 369 173.5 C 368.6 173.2 368.1 172.6 368 172 Z M 432 172 C 426 167 417 166.5 410 170 C 417 168.5 425 170 431 173.5 C 431.4 173.2 431.9 172.6 432 172 Z" fill="#77614d" opacity=".8"/>
         <path d="M 371 170.5 C 376 168 382 167.8 387 169 M 429 170.5 C 424 168 418 167.8 413 169" fill="none" stroke="#b1997e" stroke-width=".55" opacity=".55"/>
         <path d="M 368 180 C 374 175 382 175 390 180 M 410 180 C 418 175 426 175 433 180" fill="none" stroke="#b08570" stroke-width="1" opacity=".35"/>
         <g data-hero-tobias="eyes-open">
           <animate attributeName="opacity" values="1;1;0;1;1" keyTimes="0;.45;.47;.49;1" dur="4.4s" begin="0s" repeatCount="indefinite"/>
           <use href="#tobias-eye-outline-{{ hero_variant }}" fill="url(#sclera-depth-{{ hero_variant }})"/>
           <g clip-path="url(#tobias-eye-clip-{{ hero_variant }})">
-            <circle cx="379.5" cy="182.8" r="4.5" fill="url(#prof-iris-{{ hero_variant }})"/><circle cx="420.5" cy="182.8" r="4.5" fill="url(#prof-iris-{{ hero_variant }})"/>
-            <g fill="#263a40"><circle cx="379.5" cy="182.8" r="2.05"/><circle cx="420.5" cy="182.8" r="2.05"/></g>
+            <circle cx="379.5" cy="182.8" r="3.7" fill="url(#prof-iris-{{ hero_variant }})"/><circle cx="420.5" cy="182.8" r="3.7" fill="url(#prof-iris-{{ hero_variant }})"/>
+            <g fill="#263a40"><circle cx="379.5" cy="182.8" r="1.7"/><circle cx="420.5" cy="182.8" r="1.7"/></g>
             <path d="M 369 183.5 C 374 177.3 382 177 389 183 M 411 183 C 418 177 426 177.3 431 183.5" fill="none" stroke="#5c6c70" stroke-width="1.4" opacity=".18"/>
-            <g fill="#ffffff"><circle cx="378" cy="181.3" r="1.1"/><circle cx="419" cy="181.3" r="1.1"/></g>
-            <g fill="#e8f5f3" opacity=".64"><circle cx="381.2" cy="184.6" r=".58"/><circle cx="422.2" cy="184.6" r=".58"/></g>
+            <g fill="#ffffff"><circle cx="378.3" cy="181.6" r=".85"/><circle cx="419.3" cy="181.6" r=".85"/></g>
+            <g fill="#e8f5f3" opacity=".64"><circle cx="380.9" cy="184.3" r=".45"/><circle cx="421.9" cy="184.3" r=".45"/></g>
           </g>
-          <path d="M 369 183 C 374 176.8 382 176.5 389 182.5 M 411 182.5 C 418 176.5 426 176.8 431 183" fill="none" stroke="#725d51" stroke-width=".9"/>
-          <path d="M 370 185.5 C 376 189 383 188.5 388 185 M 412 185 C 417 188.5 424 189 430 185.5" fill="none" stroke="#fff0d9" stroke-width=".8" opacity=".4"/>
+          <path d="M 369 182 C 374 176.8 382 176.5 389 182.5 M 411 182.5 C 418 176.5 426 176.8 431 182" fill="none" stroke="#725d51" stroke-width=".9"/>
+          <path d="M 370 184.8 C 376 188.5 383 188 388 185 M 412 185 C 417 188 424 188.5 430 184.8" fill="none" stroke="#fff0d9" stroke-width=".8" opacity=".4"/>
         </g>
         <g opacity="0" data-hero-tobias="eyes-closed">
           <animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;.45;.47;.49;1" dur="4.4s" begin="0s" repeatCount="indefinite"/>
           <path d="M 369 184 C 375 188 383 188 389 183 M 411 183 C 417 188 425 188 431 184" fill="none" stroke="#876752" stroke-width="1.2"/>
         </g>
-        <!-- Implied bridge and a softly shaded nose tip, with no long contour line. -->
-        <path d="M 398 184 C 397 191 395 196 392 201 C 390.5 205 396 208.5 401.5 208.5 C 407.5 208.5 413 205 410 202 C 406 197 406 191 403 185 Z" fill="url(#prof-nose-{{ hero_variant }})"/>
-        <path d="M 398.5 206.7 C 400.2 207.4 402.2 207.4 403.8 206.4" fill="none" stroke="#b17b65" stroke-width=".65" opacity=".22"/>
-        <path d="M 394.4 204.6 C 395.2 203.8 396.4 203.7 397.6 204.5 M 404.4 204.5 C 405.6 203.7 406.8 203.8 407.6 204.6" fill="none" stroke="#956750" stroke-width=".75" opacity=".52"/>
-        <ellipse cx="399.5" cy="201.5" rx="4.5" ry="3.3" fill="url(#prof-skin-light-{{ hero_variant }})" opacity=".6"/>
+        <!-- A continuous bridge and broad, forward-facing tip; nostrils stay understated. -->
+        <path d="M 398 183 C 397 190 395 197 390 202 C 387 205 390 208 397 209 C 404 210 410 209 413 205 C 415 201 411 198 408 195 C 406 191 406 186 404 183 Z" fill="url(#prof-nose-{{ hero_variant }})"/>
+        <path d="M 402 207 C 406 207 410 205 411 203 C 411 207 407 209 402 208 Z" fill="#9f7059" opacity=".15"/>
+        <path d="M 404.5 187 C 405.3 191.5 406.1 195.3 408.4 198.6" fill="none" stroke="#a97a63" stroke-width=".65" opacity=".27"/>
+        <ellipse cx="399" cy="194" rx="2.8" ry="8" fill="url(#prof-skin-light-{{ hero_variant }})" opacity=".3"/>
+        <ellipse cx="397.5" cy="204" rx="6.2" ry="3.7" fill="url(#prof-skin-light-{{ hero_variant }})" opacity=".58"/>
         <!-- Small frame shadows and restrained reflections distinguish metal from glass. -->
         <path d="M 360 180 C 370 178 385 178 395 181 M 405 181 C 415 178 430 178 440 180" fill="none" stroke="#795c4f" stroke-width="3.2" opacity=".13" transform="translate(0 1.4)"/>
         <path d="M 361 178 C 369 176 386 176 393 178 C 395 179 395 182 394 185 C 393 188 393 191 390 192 C 383 194 372 194 366 192 C 363 190 362 182 361 178 Z M 407 178 C 414 176 431 176 439 178 C 438 182 437 190 434 192 C 428 194 417 194 410 192 C 407 191 407 188 406 185 C 405 182 405 179 407 178 Z" fill="url(#prof-lens-{{ hero_variant }})" stroke="url(#prof-glasses-metal-{{ hero_variant }})" stroke-width=".9"/>
@@ -9707,15 +9710,15 @@
         <path d="M 362 177.6 C 371 176.1 384 176.5 391 177.6 M 409 177.6 C 417 176.1 430 176.5 438 177.6" fill="none" stroke="#8ca1a9" stroke-width=".45" opacity=".72"/>
         <path d="M 365 180 C 369 178 373 179 375 179 M 411 180 C 415 178 419 179 421 179 M 386 191 C 389 190 391 187 392 185 M 430 191 C 433 190 435 187 436 185" fill="none" stroke="#ffffff" stroke-width=".85" opacity=".55"/>
         <!-- Lifted smile corners preserve the original enamel shape and tooth detail. -->
-        <path d="M 377 212 C 386 215 394 216 400 215 C 409 216 417 213 424 210 C 420 217 410 223 401 224 C 391 224 383 219 377 212 Z" fill="#bc8374" opacity=".46"/>
-        <path d="M 379 213 C 390 217 411 217 422 212 C 418 220 409 226 401 226 C 392 226 383 220 379 213 Z" fill="url(#prof-mouth-{{ hero_variant }})"/>
+        <path d="M 376.5 210.8 C 386 214.5 394 216 400 215 C 409 216 417 212.5 424.5 208.8 C 420 217 410 223 401 224 C 391 224 383 219 376.5 210.8 Z" fill="#bc8374" opacity=".46"/>
+        <path d="M 378 211.5 C 389 216.5 412 216.5 423 210.5 C 419 219 410 226 401 226 C 392 226 382 219 378 211.5 Z" fill="url(#prof-mouth-{{ hero_variant }})"/>
         <path d="M 383 216 C 393 219 409 219 418 215 C 415 220 408 223 401 223 C 393 223 387 220 383 216 Z" fill="url(#prof-teeth-{{ hero_variant }})"/>
         <path d="M 391 218 C 391 220 392 221 392 221 M 400 219 C 400 221 400 222 400 222 M 409 218 C 409 220 409 221 409 221" fill="none" stroke="#bda997" stroke-width=".45" opacity=".46"/>
-        <path d="M 380 213 C 391 217 411 217 421 213" fill="none" stroke="#916556" stroke-width=".8" opacity=".63"/>
+        <path d="M 379 211.8 C 390 216.5 411 216.5 422 211" fill="none" stroke="#916556" stroke-width=".8" opacity=".6"/>
         <path d="M 387 224 C 395 228 408 229 418 223 C 411 230 398 231 391 227 C 389 226 388 225 387 224 Z" fill="#c99180" opacity=".34"/>
         <path d="M 394 228 C 399 230 406 230 411 227" fill="none" stroke="#fbe0c5" stroke-width=".85" opacity=".4"/>
-        <path d="M 377 210.5 C 375.8 212 375.4 213.7 376.5 215 M 423 210.5 C 424.2 212 424.6 213.7 423.5 215" fill="none" stroke="#ae7b66" stroke-width=".75" opacity=".3"/>
-        <path d="M 369 204 C 371 207 373 209 376 210 M 424 210 C 427 209 429 207 431 204" fill="none" stroke="#b9816d" stroke-width=".8" opacity=".16"/>
+        <path d="M 376.5 209.5 C 375 210.8 375 212.8 376.2 214 M 423.5 209.5 C 425 210.8 425 212.8 423.8 214" fill="none" stroke="#ae7b66" stroke-width=".75" opacity=".3"/>
+        <path d="M 388 205 C 382 206 378 209 376 212 M 414 205 C 419 207 423 210 424 213" fill="none" stroke="#b9816d" stroke-width=".75" opacity=".22"/>
       </g>
 </g>
   </g>
