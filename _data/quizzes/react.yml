@@ -375,3 +375,37 @@ questions:
       - "  }, []);"
       - "    .then(data => setUser(fetch(data)));"
     explanation: "The effect resets `user` to null when it starts, so the loading message appears during that request. Cleanup marks the old effect obsolete, preventing an earlier response from overwriting a newer one. `[userId]` reruns the effect when the prop changes; `[]` would miss those changes. Error handling is omitted under the successful-response assumption."
+
+  - id: exam-practice-external-reassignment
+    type: single
+    difficulty: intermediate
+    question: A mounted component initializes `shown` with `useState(albums)`. Outside React, `albums` is reassigned to a new array. No setter runs and the component is not remounted. What remains displayed?
+    options:
+    - The previous array stored in shown.
+    - The newly assigned albums array.
+    - Both arrays joined into one list.
+    correct_index: 0
+    option_feedback:
+      1: The initial value does not stay linked to the variable used to initialize it. External reassignment also does not request a React render.
+      2: Reassignment does not append values to the separate array retained in component state.
+    explanation: The state still holds the original array. Keep changing data in React state and update it through its setter so React can render the new data.
+  - id: exam-practice-map-return
+    type: single
+    difficulty: intermediate
+    question: |-
+      Why does this React list have no items? The titles are unique.
+
+      ```jsx
+      <ol>{titles.map(title => {
+        <li key={title}>{title}</li>;
+      })}</ol>
+      ```
+    options:
+    - The ol element requires forEach instead of map.
+    - The callback body does not return its li element.
+    - The title must be converted to a number for its key.
+    correct_index: 1
+    option_feedback:
+      0: map is appropriate because rendering needs the resulting array of elements. forEach does not return that array.
+      2: A unique, stable string can be a key. Numeric keys are not required.
+    explanation: An arrow function with a block body needs an explicit return. Add return before the li element, or use an expression body with parentheses.

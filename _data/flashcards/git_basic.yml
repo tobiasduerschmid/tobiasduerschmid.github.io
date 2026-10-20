@@ -102,3 +102,28 @@ cards:
     question: "You merge a feature branch into main, and Git performs the merge without creating a new merge commit — it simply moves the 'main' pointer forward. What type of merge is this, and when does it occur?"
     answer: "A **fast-forward merge** — occurs when 'main' has no new commits since the feature branch was created."
     explanation: "A fast-forward merge happens when the target branch hasn't diverged. Git can simply advance its pointer in a straight line to the tip of the incoming branch, keeping the commit history perfectly linear. If both branches have diverged, Git performs a three-way merge and creates a merge commit instead."
+
+  - id: 21
+    difficulty: intermediate
+    question: Write the command that reviews the exact staged changes before an ordinary commit.
+    answer: '`git diff --cached`'
+    explanation: This compares the index with HEAD. Plain `git diff` instead shows unstaged working-tree changes.
+
+  - id: 22
+    difficulty: intermediate
+    question: Create a new `draft.txt`, stage it, then leave its deletion unstaged. Give the three commands.
+    answer: |-
+      ```sh
+      printf "draft\n" > draft.txt
+      git add draft.txt
+      rm draft.txt
+      ```
+    explanation: The index contains the added file while the working tree lacks it. An ordinary commit still includes
+      the file unless the index is changed.
+
+  - id: 23
+    difficulty: intermediate
+    question: Starting from a clean branch equal to its upstream, what local operation makes it ahead by one commit?
+    answer: Create one local commit without pushing it.
+    explanation: Editing and staging affect files, not commit ancestry. The ahead count increases only when the branch
+      contains a commit absent from its upstream tracking ref.

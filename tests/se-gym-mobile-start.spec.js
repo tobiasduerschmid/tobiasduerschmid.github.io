@@ -25,8 +25,10 @@ for (const fullscreen of [false, true]) {
     expect(new Set(gymScripts.map(script => script.href)).size).toBe(1);
     await page.getByRole('button', { name: 'Start Workout', exact: true }).tap();
     const card = page.locator('.workout-quiz-card').filter({ visible: true });
+    const answerOptions = card.getByRole('group', { name: 'Answer options', exact: true })
+      .or(card.getByRole('radiogroup', { name: 'Answer options', exact: true }));
     async function expectQuestionAtTop() {
-      await expect(page.getByRole('button', { name: 'Submit Answer', exact: true })).toBeVisible();
+      await expect(answerOptions).toBeVisible();
       await expect.poll(async () => {
         const question = await card.boundingBox();
         const nav = await page.getByRole('navigation', { name: 'Main navigation' }).boundingBox();
@@ -34,8 +36,9 @@ for (const fullscreen of [false, true]) {
       }).toBeLessThan(4);
     }
     await expectQuestionAtTop();
-    await page.getByRole('group', { name: 'Answer options' }).getByRole('checkbox').first().tap();
-    await page.getByRole('button', { name: 'Submit Answer', exact: true }).tap();
+    const needsSubmit = await answerOptions.getByRole('checkbox').count() > 0;
+    await answerOptions.getByRole('checkbox').or(answerOptions.getByRole('radio')).first().tap();
+    if (needsSubmit) await page.getByRole('button', { name: 'Submit Answer', exact: true }).tap();
     await page.getByRole('button', { name: 'Next', exact: true }).tap();
     await expectQuestionAtTop();
     expect(errors).toEqual([]);

@@ -91,3 +91,9 @@ cards:
     question: "Why is choosing the right software process a **context-dependent** decision, not a universal answer?"
     answer: "Every process is engineered around assumptions about (a) requirement stability, (b) team size and locality, (c) deployment cadence, (d) cost of failure, (e) customer accessibility. When the assumptions hold, the process produces its promised benefits; when they don't, the process produces friction without the benefits. There is no universally best process — only processes that fit some contexts better than others."
     explanation: "The honest engineering response: match process to context. Agile + XP for evolving-requirements, redeployable, small-team software. SAFe or LeSS for very large teams. V-model or formal methods for safety-critical. Waterfall for genuinely stable requirements or regulatory-mandated phases. The reflexive 'always Agile' or 'always Waterfall' positions both fail when the assumptions don't match."
+
+  - id: 16
+    difficulty: intermediate
+    question: Why is “this is a startup” insufficient by itself to justify an agile process?
+    answer: You still need to examine uncertainty, feedback access, and the cost of change or release.
+    explanation: Small companies can face stable requirements or irreversible deployments. Explain how the process fits the actual work.

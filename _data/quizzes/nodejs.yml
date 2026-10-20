@@ -424,3 +424,49 @@ questions:
       - "const city = user.profile.address.city || 'Unknown';"
       - "const city = user?.profile?.address?.city ?? city;"
     explanation: "When `address` is null, `address?.city` returns undefined and `??` supplies 'Unknown'. Directly accessing `.city` on null throws. The self-referencing default `?? city` is evaluated for this missing value and reads the new `const city` before initialization, causing a ReferenceError."
+
+  - id: exam-practice-http-method
+    type: single
+    difficulty: intermediate
+    question: |-
+      A running Express app has these handlers. What response does `GET /status` receive?
+
+      ```javascript
+      app.post("/status", (req, res) => res.send("saved"));
+      app.use((req, res) => res.status(404).send("missing"));
+      ```
+    options:
+    - 200 with saved
+    - 404 with missing
+    - 200 with missing
+    correct_index: 1
+    option_feedback:
+      0: 'Matching the path is not enough: app.post handles POST requests, not this GET request.'
+      2: The fallback explicitly sets status 404 before sending its body.
+    explanation: The POST route does not match a GET request. The fallback runs and sends missing with status 404.
+  - id: exam-practice-query-string
+    type: single
+    difficulty: intermediate
+    question: For `GET /books?available=true`, `req.query.available` is the string `"true"`. Which check selects the available-only branch?
+    options:
+    - req.query.available === true
+    - req.query.available === "true"
+    - typeof req.query.available === "boolean"
+    correct_index: 1
+    option_feedback:
+      0: Strict equality does not convert a string into the boolean true.
+      2: The given query value is a string, so its type is not boolean.
+    explanation: Compare the query string to the expected text. This keeps the distinction between textual request data and JavaScript booleans explicit.
+  - id: exam-practice-id-not-index
+    type: single
+    difficulty: intermediate
+    question: A roster has numeric IDs 4, 8, and 12. In `/people/:id`, which lookup finds the requested ID rather than treating it as an array position?
+    options:
+    - roster.find(person => person.id === Number(req.params.id))
+    - roster[Number(req.params.id)]
+    - roster.find(person => person.id - 1 === Number(req.params.id))
+    correct_index: 0
+    option_feedback:
+      1: An ID identifies a record; it need not equal its zero-based array position.
+      2: Subtracting one changes the identifier being compared. IDs do not need an index correction.
+    explanation: Convert the textual route parameter to a number, then compare it with each record’s ID. The roster’s positions do not determine its IDs.

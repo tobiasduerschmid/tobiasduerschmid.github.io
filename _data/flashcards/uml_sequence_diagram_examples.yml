@@ -63,3 +63,9 @@ cards:
     answer: "It marks a **found message**: the sender is outside the interaction being shown."
     explanation: >
       A found message reaches a lifeline in the diagram, but its sender is not shown. The line begins at a filled circle instead of another lifeline.
+
+  - id: 9
+    difficulty: intermediate
+    question: Does dispatch through an abstract `State` reference require a second, abstract State object in a sequence diagram?
+    answer: No. The reference can designate the concrete current-state object.
+    explanation: Show the actual participating object. An abstract-typed lifeline can stand for that object; it is not evidence that an abstract class was instantiated.

@@ -174,7 +174,10 @@
 
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
-        for (const node of mutation.addedNodes) {
+        // Hidden answers have no measurable overflow until their container is
+        // revealed. Recheck regions inside a changed visibility container too.
+        const changedNodes = mutation.type === 'attributes' ? [mutation.target] : mutation.addedNodes;
+        for (const node of changedNodes) {
           if (node.nodeType !== Node.ELEMENT_NODE) continue;
           if (node.matches?.(SCROLLABLE_REGION_SELECTOR) || node.querySelector?.(SCROLLABLE_REGION_SELECTOR)) {
             schedule();
@@ -183,7 +186,13 @@
         }
       }
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      // Exclude tabindex so making a region focusable cannot retrigger a pass.
+      attributeFilter: ['class', 'hidden', 'aria-hidden'],
+    });
   }
 
   if (document.readyState === 'loading') {

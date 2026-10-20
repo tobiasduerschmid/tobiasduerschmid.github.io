@@ -206,3 +206,30 @@ questions:
       3: |
         Keeping the sprint backlog stable protects the team's focus, but stability of the plan does not forbid having the conversation now. Deferring an urgent discussion to the next iteration violates 'customer collaboration over contract negotiation' and damages both the relationship and the product.
     explanation: "**'Responding to change over following a plan' means treating change as expected and negotiable — *not* automatically accepting it. The healthy response is a conversation that surfaces the cost of the change and the value of the displaced work, then a joint decision with the customer.** This is also why 'customer collaboration over contract negotiation' matters — the customer is a partner in the trade-off, not a counterparty who issues binding orders."
+
+  - id: 11
+    type: single
+    difficulty: intermediate
+    question: A five-person team can demo a course-planning prototype weekly, and students’ priorities are still uncertain. Which fact most strongly supports an iterative agile process?
+    options:
+    - The application happens to be written in JavaScript.
+    - The team can use real feedback to revise priorities.
+    - The team has already chosen a two-week meeting schedule.
+    correct_index: 1
+    option_feedback:
+      0: Programming language does not determine how stable requirements are or how useful feedback will be.
+      2: A schedule alone does not create the feedback and adaptation that justify the process.
+    explanation: Frequent usable increments let the team test assumptions about what students need while changes are still manageable.
+  - id: 12
+    type: single
+    difficulty: intermediate
+    question: A controller has stable requirements, costly failures, and a one-time deployment. Which emphasis most strongly favors a plan-driven process?
+    options:
+    - Learning requirements from frequent live releases.
+    - Changing priorities after each customer demo.
+    - Verifying the agreed requirements before deployment.
+    correct_index: 2
+    option_feedback:
+      0: Frequent live releases are unavailable in this scenario, and failures have a high cost.
+      1: Frequent reprioritization is less central when the requirements are stable; the pressing need is verification before deployment.
+    explanation: Stable requirements and an expensive, irreversible deployment favor explicit planning and verification. This choice follows the project’s constraints, not simply the company’s size.

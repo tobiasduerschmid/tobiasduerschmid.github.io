@@ -66,3 +66,10 @@ cards:
     difficulty: basic
     question: "What does **HTTPS** add on top of HTTP, and why is it important?"
     answer: "HTTPS adds **TLS encryption, integrity protection, and server authentication** to HTTP. It protects sensitive data (passwords, personal info) from being read or modified in transit. Modern web guidance is to serve public pages and subresources over HTTPS, even when the page itself is not collecting sensitive data."
+
+  - id: exam-practice-delta-vs-snapshot
+    difficulty: intermediate
+    question: Why does losing an incremental text edit matter more than losing an old complete cursor-position
+      snapshot?
+    answer: The edit changes a document that later edits build on, so losing it can leave the document wrong.
+      A later complete cursor snapshot replaces the earlier position.

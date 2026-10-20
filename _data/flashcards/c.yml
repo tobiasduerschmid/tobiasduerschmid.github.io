@@ -233,3 +233,10 @@ cards:
       | **Security update** | Every program statically linked against the buggy library must be **re-linked and re-shipped** | One library file replaced; **every** dynamically-linked program picks up the fix on next start |
 
       **The tradeoff in one sentence:** static linking maximizes portability and run-time predictability at the cost of binary size and update agility; dynamic linking does the reverse. Embedded firmware tends toward static; OS distributions tend toward dynamic.
+
+  - id: exam-practice-explicit-polymorphism
+    difficulty: intermediate
+    question: In C, how can two record types expose different implementations of one operation without built-in
+      virtual methods?
+    answer: Store a function pointer for the operation and call through it. Each record can select a different
+      implementation; the program supplies the dispatch structure explicitly.

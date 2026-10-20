@@ -102,3 +102,31 @@ cards:
     question: "You want to delete all files ending in `.tmp` in the current directory using a single shell command, without listing each filename explicitly."
     answer: "`rm *.tmp`"
     explanation: "The `*` wildcard is a **glob pattern** — it is expanded by the shell itself (filename expansion) before `rm` runs. Globbing is entirely separate from regular expressions: in RegEx, `*` means 'zero or more of the preceding character', not 'match anything'."
+
+  - id: 21
+    difficulty: intermediate
+    question: Write one command that prints `missing` if `grep -q needle data.txt` returns nonzero, without aborting
+      a Bash script using `set -e`.
+    answer: '`grep -q needle data.txt || printf "missing\n"`'
+    explanation: The command before `||` is exempt from errexit because the list handles its status. This handles
+      both no match and a grep error; distinguishing them would require checking the status separately.
+
+  - id: 22
+    difficulty: intermediate
+    question: Write a Bash loop that appends `job=lint` then `job=test` to `jobs.txt`, without printing those lines
+      to the terminal.
+    answer: |-
+      ```sh
+      for job in lint test; do
+          printf "job=%s\n" "$job" >> jobs.txt
+      done
+      ```
+    explanation: Each iteration expands the current job name and appends one line to the file. The redirection sends
+      these writes to the file rather than the terminal.
+
+  - id: 23
+    difficulty: advanced
+    question: In Bash, enable stopping on a failed pipeline even when its final command succeeds. Give the setting.
+    answer: '`set -e -o pipefail`'
+    explanation: '`pipefail` makes a pipeline report the rightmost nonzero command status. `-e` then exits for an
+      unhandled failure; failures being tested by conditionals or nonfinal `&&`/`||` positions still have exceptions.'

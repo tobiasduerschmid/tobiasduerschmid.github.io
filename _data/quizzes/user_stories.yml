@@ -206,3 +206,69 @@ questions:
         A test needs an observable expected result. "Blazing fast" and "pleasant" need measurable
         targets, such as load time and design acceptance criteria, before they can be verified.
     explanation: "**Testable** fails because 'blazing fast', 'extremely modern', and 'pleasant' have no objective metric or acceptance example. Here that drags down **Estimable** too: with no performance budget, design reference, or user-testing target, the team has nothing concrete to size against. Whether the story is 'small' is context-dependent, so selecting Small is also acceptable."
+
+  - id: 6
+    type: single
+    difficulty: intermediate
+    question: A story promises calendar, chat, payroll, and storage integrations. Which revision most directly makes it Small while preserving user value?
+    options:
+    - Deliver calendar-event import first.
+    - Build only the shared database schema.
+    - Keep all integrations but shorten the story.
+    correct_index: 0
+    option_feedback:
+      1: A database layer alone does not let a user complete the promised task. Slice by a usable outcome, not just by technical layer.
+      2: Small concerns implementation scope, not sentence length.
+    explanation: Calendar-event import is one usable integration. Its end-to-end scope is narrower than implementing four separate integrations.
+  - id: 7
+    type: single
+    difficulty: intermediate
+    question: On an agreed dataset and workload, an acceptance criterion says “search feels fast.” Which replacement provides a measurable pass/fail condition?
+    options:
+    - Search uses a modern caching library.
+    - Search is faster than users expect.
+    - 95% of searches finish within 300 ms.
+    correct_index: 2
+    option_feedback:
+      0: Choosing a library specifies a mechanism; it does not state the response-time outcome.
+      1: Users can have different expectations. A test needs an agreed threshold and conditions.
+    explanation: The revised criterion names a dataset, a percentile, and a response-time limit. The team must also agree on the measurement workload and environment.
+  - id: 8
+    type: single
+    difficulty: intermediate
+    question: A library story promises due-date reminders. Its only criterion checks a due-date badge. Which added outcome tests reminder delivery?
+    options:
+    - A reminder is sent at 9 a.m. the day before a book is due.
+    - A reminder preference is stored when the reader selects it.
+    - A reminder icon appears beside books due the next day.
+    correct_index: 0
+    option_feedback:
+      1: Saving a preference establishes configuration, not that a scheduled reminder is delivered.
+      2: A visual marker on the book page does not establish delivery of the promised reminder.
+    explanation: The new criterion connects a concrete trigger to the notification outcome. A value justification should refer to behavior actually included in the acceptance criteria.
+  - id: 9
+    type: single
+    difficulty: intermediate
+    question: No technology choice is mandated. A story requires “use Redis to remember recently viewed books.” Which rewrite best preserves Negotiable?
+    options:
+    - Store recently viewed books in a Redis sorted set.
+    - Let readers reopen their five most recently viewed books.
+    - Let developers choose the Redis configuration.
+    correct_index: 1
+    option_feedback:
+      0: The data structure still locks in an implementation before discussing alternatives.
+      2: Configuration freedom is narrower than leaving the storage mechanism open.
+    explanation: The revised story specifies a user-visible capability while leaving its implementation open. A real contractual or operational constraint may still legitimately limit alternatives.
+  - id: 10
+    type: single
+    difficulty: intermediate
+    question: A story exports one course roster as CSV. Which argument best justifies Small?
+    options:
+    - It names a familiar file format.
+    - It is useful to every instructor.
+    - One export path reuses existing roster data.
+    correct_index: 2
+    option_feedback:
+      0: A familiar format does not by itself bound the work; an export could still include many workflows.
+      1: Usefulness supports Valuable. It does not establish a small implementation scope.
+    explanation: The argument identifies a bounded workflow and existing inputs. Small is about manageable implementation effort, rather than sentence length or popularity.

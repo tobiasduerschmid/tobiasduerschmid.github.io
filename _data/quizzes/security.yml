@@ -365,3 +365,19 @@ questions:
     correct_index: 0
     option_feedback: {"1": "Restricting misuse can be a legitimate goal; the problem is the omitted attack action.", "2": "The deployed phone exposes a physical control, so physical actions belong in its threat model.", "3": "The model underestimated what the attacker could do."}
     explanation: "Threat modeling must include plausible actions against the deployed system. A removable cover does not enforce the dialing policy against someone who can remove it. Do not use 911-1119 as a normal US seven-digit-number counterexample: 911 is a reserved emergency code."
+
+  - id: exam-practice-rendering-path
+    type: single
+    difficulty: intermediate
+    question: A discussion page displays user text. Which implementation most directly permits stored cross-site
+      scripting?
+    options:
+    - Insert saved text using `textContent`.
+    - Insert saved text using `innerHTML`.
+    - Show saved text as a React text child.
+    correct_index: 1
+    option_feedback:
+      0: textContent treats the supplied value as text rather than interpreting it as markup.
+      2: Normal React text children escape text; explicitly inserting untrusted HTML is a different operation.
+    explanation: When untrusted saved content is interpreted as HTML, an attacker may inject executable browser
+      content. Identify the path from stored user input to HTML interpretation.

@@ -61,3 +61,19 @@ cards:
     question: "A C project has multiple executables: a server and a client. The Makefile starts with `all: server client`. What happens if you just type `make`?"  
     answer: "It will build both the `server` and the `client` executables."  
     explanation: "`make` defaults to the first target defined in the file (which is `all` here). By listing both programs as prerequisites for `all`, it forces `make` to evaluate and build the rules for both of them."
+
+  - id: 11
+    difficulty: intermediate
+    question: A rule prints `built` but creates no file with its target name. Why does its recipe run again on the
+      next invocation?
+    answer: The target file is still missing, so it still needs updating.
+    explanation: Make compares target existence and timestamps; it does not persist a separate record saying that
+      a recipe ran successfully.
+
+  - id: 12
+    difficulty: intermediate
+    question: In a recipe, `@bash run.sh > output.txt` executes a program that prints a result. Where is that result,
+      and how can you display it?
+    answer: It is in `output.txt`; run `cat output.txt`.
+    explanation: '`@` hides the command echo. The shell redirection separately sends the program''s stdout to the
+      file instead of the terminal.'

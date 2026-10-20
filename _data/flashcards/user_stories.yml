@@ -52,3 +52,24 @@ cards:
     question: "What is the difference between the main body of the User Story and Acceptance Criteria?"
     answer: "A User Story summarizes the **who**, **what**, and **why** of a feature; Acceptance Criteria define the observable conditions that determine whether the story is actually 'Done'."
     explanation: "Think of the User Story as the goal statement and the Acceptance Criteria as the decision driver for scope. When the two disagree, the acceptance criteria usually determine what implementation will be accepted, so they must capture the essential behavior that delivers the story's value."
+
+  - id: 11
+    difficulty: intermediate
+    question: A story says “help readers find books,” but its criteria only check that a search box exists. What is missing?
+    answer: An observable search result behavior that delivers the stated benefit.
+    explanation: A visible control alone does not show that users can find a book. Add a concrete query and expected matching results.
+  - id: 12
+    difficulty: intermediate
+    question: Repair “the report is accurate” into one testable acceptance criterion.
+    answer: Given a fixture with sales of 12 and 8, when the report is generated, then its total is 20.
+    explanation: Specify inputs, trigger, and an observable expected result. One example pins one behavior; other cases may need separate criteria.
+  - id: 13
+    difficulty: intermediate
+    question: How can you make “integrate every messaging service” Small without splitting by technical layer?
+    answer: Deliver one usable messaging integration first.
+    explanation: A vertical slice includes enough interface and backend behavior to deliver that one outcome.
+  - id: 14
+    difficulty: intermediate
+    question: What evidence should justify that a particular story is Valuable?
+    answer: Explain how the behavior in its acceptance criteria helps its named user.
+    explanation: Do not justify value using additional features that the criteria never promise.

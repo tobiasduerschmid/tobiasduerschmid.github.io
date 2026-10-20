@@ -194,3 +194,43 @@ questions:
       3: |
         Counters in every observer push coordination back into the observers — the whole point of the recommendation is to centralize update-graph logic in one place. Per-observer dedup is fragile and easy to get wrong.
     explanation: "Following GoF Implementation issue #9, when dependencies form a graph (especially a DAG) a `ChangeManager` maps subjects to observers, defines an update strategy, and can coordinate a batch so each affected observer is notified once per logical change. GoF cite a `SimpleChangeManager` (notifies every observer) and a `DAGChangeManager` (handles directed acyclic dependency graphs). The ChangeManager is itself a Mediator and is typically a Singleton."
+
+  - id: 11
+    type: single
+    difficulty: intermediate
+    question: A sensor has two registered observers. A complete notification trace calls only the chart observer, with no filtering rule. Which repair follows Observer?
+    options:
+    - Notify only the most recently registered observer.
+    - Call the update operation on both registered observers.
+    - Make each observer periodically modify the sensor.
+    correct_index: 1
+    option_feedback:
+      0: Registration adds another subscriber; it does not replace existing subscribers unless that is an explicit contract.
+      2: Polling or mutating the subject is not the missing notification in the stated design.
+    explanation: The subject notifies each registered observer through the shared observer contract. A complete trace must account for both subscriptions.
+  - id: 12
+    type: single
+    difficulty: intermediate
+    question: A sensor checks whether each subscriber is a graph or a text panel before calling a different method. What change best removes that type knowledge?
+    options:
+    - Move the type checks into a longer switch.
+    - Give the sensor a field for each panel type.
+    - Call a shared update operation on each subscriber.
+    correct_index: 2
+    option_feedback:
+      0: Centralizing the same checks does not remove the dependency on every concrete subscriber type.
+      1: Concrete fields still force the sensor to change when a new display type is added.
+    explanation: Polymorphic updates let the sensor announce a change while each observer decides how to display it. The model need not own presentation-specific behavior.
+  - id: 13
+    type: single
+    difficulty: intermediate
+    question: A pull-based Observer interface declares only `update()`. A notification calls `update(17)`. Which correction preserves the pull design?
+    options:
+    - Call update() and let the observer query the subject.
+    - Keep the argument and omit it from the class diagram.
+    - Add the value parameter only to one observer class.
+    correct_index: 0
+    option_feedback:
+      1: The interaction and operation contract would still disagree about the parameter.
+      2: Changing only one observer leaves the shared contract inconsistent and breaks uniform notification.
+    explanation: In this pull design, notification has no payload; observers retrieve needed data through the subject’s query interface. A push redesign would require consistently updating the contract and implementations.

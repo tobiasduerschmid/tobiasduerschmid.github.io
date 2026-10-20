@@ -1,5 +1,30 @@
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const fs = require('node:fs');
+const path = require('node:path');
+const yaml = require('js-yaml');
+const userStories = yaml.load(fs.readFileSync(path.join(__dirname, '../_data/quizzes/user_stories.yml'), 'utf8'));
+const normalizeQuestion = text => text.replace(/^\s*-\s+/gm, '').replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/\s+/g, ' ').trim();
+
+async function expectAnswerOptions(page) {
+  await expect(page.getByRole('group', { name: 'Answer options', exact: true })
+    .or(page.getByRole('radiogroup', { name: 'Answer options', exact: true }))).toBeVisible();
+}
+
+async function submitIncorrectAnswer(page) {
+  const visibleQuestion = normalizeQuestion(await page.locator('.workout-quiz-card .question-text').innerText());
+  const question = userStories.questions.find(item => normalizeQuestion(item.question) === visibleQuestion);
+  expect(question, 'the visible question must belong to the authored deck').toBeTruthy();
+  const correct = question.type === 'multiple' ? question.correct_indices : [question.correct_index];
+  const accepted = correct.concat(question.optional_indices || []);
+  const wrongIndex = question.options.findIndex((_, index) => !accepted.includes(index));
+  expect(wrongIndex, 'the authored question must provide a distractor for review').toBeGreaterThanOrEqual(0);
+  const optionName = new RegExp(question.options[wrongIndex].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$');
+  await page.getByRole(question.type === 'multiple' ? 'checkbox' : 'radio', { name: optionName }).click();
+  if (question.type === 'multiple') await page.getByRole('button', { name: 'Submit Answer', exact: true }).click();
+  await expect(page.getByText('Explanation', { exact: true })).toBeVisible();
+}
+
 test.use({ reducedMotion: 'reduce' });
 const isFullscreen = page => page.evaluate(() => document.fullscreenElement === document.documentElement);
 async function setup(page, context, baseURL) {
@@ -58,7 +83,7 @@ test('a blocked fullscreen request does not prevent starting the workout', async
   await page.getByRole('checkbox', { name: 'Workout in full screen', exact: true }).press('Space');
   await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'could not enter fullscreen' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Submit Answer', exact: true })).toBeVisible();
+  await expectAnswerOptions(page);
 });
 
 for (const action of ['Restart Workout', 'Review Incorrect']) {
@@ -68,16 +93,14 @@ for (const action of ['Restart Workout', 'Review Incorrect']) {
     await page.getByRole('spinbutton', { name: 'Max cards:' }).fill('1');
     await page.getByRole('button', { name: 'Start targeted practice for INVEST Criteria Violations Quiz', exact: true }).click();
     await expect.poll(() => isFullscreen(page)).toBe(true);
-    // Selecting every criterion is intentionally wrong for this single-violation deck.
-    for (const option of await page.getByRole('group', { name: 'Answer options' }).getByRole('checkbox').all()) await option.click();
-    await page.getByRole('button', { name: 'Submit Answer', exact: true }).click();
+    await submitIncorrectAnswer(page);
     await page.getByRole('button', { name: 'Next', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Workout Complete!', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Exit full screen', exact: true }).filter({ visible: true }).click();
     await expect.poll(() => isFullscreen(page)).toBe(false);
     await page.getByRole('button', { name: action, exact: true }).click();
     await expect.poll(() => isFullscreen(page)).toBe(true);
-    await expect(page.getByRole('button', { name: 'Submit Answer', exact: true })).toBeVisible();
+    await expectAnswerOptions(page);
   });
 }
 

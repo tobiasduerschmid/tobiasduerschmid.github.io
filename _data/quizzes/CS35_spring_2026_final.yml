@@ -1,0 +1,1895 @@
+# Source: CS 35L Spring 2026 Final Exam Questions Only.docx, supplied by the user.
+# Stems and options preserve source wording; inline-code delimiters protect command punctuation.
+# Source numbering/points and the shared select-all instruction are retained.
+# Code-comprehension context is repeated so each shuffled question is self-contained.
+# Keys/explanations are authored for practice, not an official Spring 2026 solution.
+# Preserve source distractors even when the answer-tell lint flags their lengths.
+title: CS 35L Final Exam Spring 2026 MCQs
+description: All 23 multiple-choice questions from the supplied Spring 2026 final, with original question and option
+  wording. Practice keys and explanations follow the introductory course concepts; no official Spring 2026 answer
+  key was supplied.
+active: true
+questions:
+  - id: 1
+    type: multiple
+    difficulty: intermediate
+    question: |-
+      1. When integrating a feature branch into ‘main’, under what condition(s) will Git perform a fast-forward merge rather than creating a three-way merge commit?  (2 pts)
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - When the feature branch has been squashed into a single commit before merging
+      - When 'main' has received no new commits since the feature branch was created
+      - When there are conflicting changes on the same lines in both branches
+      - When you explicitly pass the `--squash` flag to `git merge`
+    correct_indices:
+      - 1
+    option_feedback:
+      0: Combining feature commits does not remove new commits on `main`. The branch relationship, rather than the
+        number of feature commits, determines whether a fast-forward is possible.
+      1: With no new commits on `main`, its tip remains an ancestor of an ordinarily developed feature branch, so
+        a fast-forward can advance the pointer.
+      2: A fast-forward only advances a branch pointer; it does not combine two divergent sets of line edits.
+      3: '`--squash` prepares a combined working-tree and index result for a later commit. It does not perform a
+        fast-forward update of the branch.'
+    explanation: 'Git can fast-forward when `main` is an ancestor of the feature tip: it advances the branch pointer
+      without combining divergent histories. If `main` has received no new commits, an ordinarily developed feature
+      branch has this relationship. Squashing feature commits alone does not establish it.'
+  - id: 2
+    type: multiple
+    difficulty: basic
+    question: |-
+      2. A script is invoked with ./deploy.sh production 8080 myapp. Inside the script, which variable holds the value 8080?  (2 pts)
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - $#
+      - $0
+      - $1
+      - $2
+    correct_indices:
+      - 3
+    option_feedback:
+      0: '`$#` is the number of positional arguments, which is three here.'
+      1: '`$0` identifies the invoked script, not an argument after its name.'
+      2: The first argument is `production`; the port is the second argument.
+      3: Positional arguments start at one, so the second argument is available through `$2`.
+    explanation: '`$0` names the invoked script; positional parameters start at `$1`. Here `$1` is `production`,
+      `$2` is `8080`, and `$3` is `myapp`.'
+  - id: 3
+    type: multiple
+    difficulty: basic
+    question: |-
+      3. In a Makefile, you define a target as .PHONY: clean. What is the primary purpose of declaring clean as a .PHONY target?
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - To hide the target so it cannot be executed by standard users.
+      - To indicate that the target executes a background shell script asynchronously.
+      - To ensure the command runs regardless of whether a file named "clean" actually exists in the directory,
+        skipping the file modification check
+      - To define variables (like compiler flags) that apply globally to all subsequent build targets.
+    correct_indices:
+      - 2
+    option_feedback:
+      0: Phony declarations change Make's treatment of target names; they do not set execution permissions.
+      1: Whether a recipe runs asynchronously is unrelated to declaring its target phony.
+      2: A real file named `clean` must not suppress the cleanup recipe. The phony declaration tells Make that this
+        name represents an action.
+      3: Variables have their own assignment syntax. `.PHONY` declares target names rather than variable scope.
+    explanation: A phony target names an action rather than a file to update. Declaring `clean` phony prevents a
+      file with that name from making the cleanup action appear up to date.
+  - id: 4
+    type: multiple
+    difficulty: advanced
+    question: |-
+      4. Which of the following statements accurately characterize or distinguish coupling, cohesion, or dependencies? (2 pts)
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - High coupling and low cohesion are the primary design objectives because minimizing the total count of distinct
+        sub-modules streamlines localized testing.
+      - A semantic dependency exists when a change in Component B necessitates a corresponding modification in Component
+        A because they implement the same shared design decision or process the same underlying data, even if Component
+        A contains no syntactic references to Component B.
+      - An unmanaged software architecture often degenerates into a "Big Ball of Mud" which is characterized by
+        low modifiability, low understandability, and high brittleness.
+      - As stated by Robert C. Martin, a pristine system design minimizes individual sub-module isolation while
+        maximizing the overall absolute number of design decisions forced upfront
+    correct_indices:
+      - 1
+      - 2
+    option_feedback:
+      0: Tightly connected modules with unrelated responsibilities make changes spread. Module count alone does
+        not determine testability.
+      1: Two components can depend on the same representation or rule without directly referencing each other in
+        source code.
+      2: An unmanaged tangle of dependencies makes it hard to predict the impact of a change.
+      3: Isolating modules and postponing unnecessary decisions preserve options; forcing many decisions early does
+        not define a pristine design.
+    explanation: Semantic dependencies can arise from shared knowledge without an import or call between components.
+      Uncontrolled dependencies make changes harder to localize, understand, and test; low coupling and high cohesion
+      are the usual goals.
+  - id: 5
+    type: multiple
+    difficulty: intermediate
+    question: |-
+      5. Which of the following statements correctly align with insights shared in the code review and software quality lecture?  (2pts)
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - Refactoring is defined strictly as a semantics-preserving structural change that should only be performed
+        confidently when balanced on top of a safety net of comprehensive tests.
+      - 'Tony Hoare observed that there are two primary ways of constructing a software design: one is to make it
+        so simple that there are obviously no defects, and the other is to make it so complicated that there are
+        no obvious defects.'
+      - Code refactoring's principal function is to deliberately alter the externally visible, documented contractual
+        behavior of an API to fix edge cases.
+      - Empirical statistics demonstrate that professional software developers spend the vast majority (approximately
+        85–90%) of their working hours writing fresh production code lines, with reading existing systems counting
+        as a minor activity.
+    correct_indices:
+      - 0
+      - 1
+    option_feedback:
+      0: Changing structure while preserving behavior is the central refactoring constraint. Tests support confidence
+        in that preservation.
+      1: The contrast is between simplicity that exposes defects and complexity that can hide them, not between
+        two equally easy systems to verify.
+      2: A deliberate change to documented external behavior is a functional change, even if nearby cleanup is also
+        performed.
+      3: Understanding existing code is a substantial part of maintenance and review. The stated percentage for
+        writing new code is not a sound characterization.
+    explanation: Refactoring improves internal structure while preserving observable behavior, with tests providing
+      a safety net. Hoare's contrast distinguishes simplicity that makes defects easy to spot from complexity that
+      hides them.
+  - id: 6
+    type: multiple
+    difficulty: intermediate
+    question: |-
+      6. Which of the following statements correctly describe Git's architectural mechanics or operations? (2pts)
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - The staging area holds a designated set of modifications that are actively prepared to be recorded into
+        the project snapshot during the subsequent commit execution.
+      - HEAD is an internal reference pointer that explicitly tracks the absolute oldest historical commit (the
+        repository root node) to allow continuous backwards delta comparisons.
+      - A merge conflict occurs when Git attempts to automatically combine changes, but encounters overlapping modifications
+        on identical lines of code executed concurrently across separate versions.
+      - In Git's distributed architecture, tracking historical version records via git log or executing local branching
+        actions always requires a constant live network connection to a centralized remote server.
+    correct_indices:
+      - 0
+      - 2
+    option_feedback:
+      0: Staging chooses the content to include in the next snapshot; editing a file alone does not stage its new
+        content.
+      1: HEAD usually refers to the checked-out branch, or directly to a commit when detached. It is not fixed at
+        the root commit.
+      2: Incompatible changes to the same lines are one way automatic merging can fail. They need not have been
+        made at the same clock time.
+      3: A local repository contains its own commits and branch references. Network access is needed for remote
+        communication, not for every local operation.
+    explanation: The index records the content prepared for the next commit. Incompatible edits to the same lines
+      can prevent automatic merging. HEAD identifies the current checkout, and local history inspection and branching
+      work offline.
+  - id: 7
+    type: multiple
+    difficulty: advanced
+    question: |-
+      7. Which of the following classifications perfectly align with the design guidelines taught in this course? (2pts)
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - Deciding whether a backend server processes persistent application storage using a relational database (SQL)
+        or a non-relational database (NoSQL) should typically be structured as a hidden detail from the frontend
+        client components.
+      - Defining whether a proprietary cross-network communication protocol is stateful or stateless represents
+        a Visible Contract between client and server that they must explicitly know and agree upon.
+      - Strict Test-Driven Development (TDD) naturally guarantees optimal large-scale architectural component breakdown
+        because writing individual unit tests first inherently plans macro-level architectural boundaries.
+      - The Single Responsibility Principle often fosters low coupling and high cohesion by ensuring that a class
+        is mapped to exactly one encapsulated design concern, giving it only a single reason to change.
+    correct_indices:
+      - 0
+      - 1
+      - 3
+    option_feedback:
+      0: A database choice can remain behind a stable service interface, avoiding frontend changes when storage
+        technology changes.
+      1: Client and server must agree on which state is retained and which information each request must supply.
+      2: Local tests can guide small design choices without resolving the responsibilities and boundaries of the
+        whole system.
+      3: Grouping one coherent responsibility limits the reasons that a class needs to change.
+    explanation: The frontend should depend on the backend's interface rather than its database representation.
+      Stateful versus stateless protocol behavior affects that interface. Focused responsibilities can support cohesion
+      and reduce coupling, while unit-test-first development alone does not guarantee a good system architecture.
+  - id: 8
+    type: multiple
+    difficulty: intermediate
+    question: |-
+      8. When writing systems programs in C as opposed to object-oriented environments like C++, which technical constraints apply? (2pts)
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - C lacks built-in language support for native classes, polymorphism, or inheritance, requiring explicit manual
+        patterns (such as arrays of function pointers) if those behaviors are needed.
+      - C compiles directly to machine code close to hardware instructions, giving developers raw access to memory
+        management.
+      - Memory resource allocation requires strict manual tracking, as C lacks automated class destructors (RAII)
+        to clean up heap allocations when variables fall out of scope.
+      - Pointers in C are strictly sandboxed at the runtime level to automatically eliminate memory leaks and out-of-bounds
+        array violations.
+    correct_indices:
+      - 0
+      - 1
+      - 2
+    option_feedback:
+      0: C can implement dispatch manually through function pointers, but it has no built-in C++-style class and
+        inheritance mechanism.
+      1: C is commonly compiled to native machine code and permits explicit memory operations.
+      2: Leaving a scope does not automatically free a heap allocation in ordinary C. The program must arrange cleanup.
+      3: Raw C pointers do not automatically enforce bounds or free unreachable allocations.
+    explanation: C provides low-level memory access without built-in C++ classes, inheritance, or automatic class
+      destructors. Object-oriented behavior can be implemented explicitly, and heap allocations require deliberate
+      cleanup. Raw pointers do not automatically prevent leaks or out-of-bounds access.
+  - id: 9
+    type: multiple
+    difficulty: intermediate
+    question: |-
+      9. When leveraging Large Language Models (LLMs) for automated code generation, what structural limitations and prompt patterns apply? (2pts)
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - Generative AI models operate non-deterministically by statistically predicting the most probable next token
+        sequence based on prompt context and training datasets.
+      - The "Replace the TODO" prompt pattern works by providing a code skeleton accompanied by clear structural
+        context to guide the model's output.
+      - Providing detailed contextual criteria (such as explicitly prioritizing security and privacy over performance)
+        guides the model to shape code properties correctly.
+      - LLMs are entirely deterministic and reliable, removing the need for human code reviews or verification testing.
+    correct_indices:
+      - 0
+      - 1
+      - 2
+    option_feedback:
+      0: Generated continuations depend on learned token probabilities and the prompt context; repeated generation
+        can produce different code.
+      1: A skeleton makes the surrounding structure and the intended insertion point visible to the model.
+      2: Stating priorities supplies criteria against which generated code can be guided and checked.
+      3: Repeatability of generation would not prove correctness. Generated code still needs independent review
+        and verification.
+    explanation: LLMs generate code through probabilistic next-token prediction. A code skeleton and explicit priorities
+      give the model useful context and constraints. Generated code still needs human review and verification testing.
+  - id: 10
+    type: multiple
+    difficulty: intermediate
+    question: |-
+      10. When designing a complex web service like a video-streaming platform, which combinations of Application and Transport Layer protocols align with architectural constraints? (2pts)
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - Combining HTTP/HTTPS at the Application Layer with TCP at the Transport Layer guarantees reliable, ordered
+        data transfer for control signals, API endpoints, and web assets.
+      - UDP can be utilized at the Transport Layer for specific low-overhead or real-time streaming segments where
+        low-latency delivery takes precedence over occasional frame loss.
+      - The choice of an Application Layer protocol dictates the physical routing paths across network routers.
+      - Selecting a protocol stack requires balancing reliable state delivery against transmission overhead constraints.
+    correct_indices:
+      - 0
+      - 1
+      - 3
+    option_feedback:
+      0: TCP detects loss and provides ordered byte delivery for an established connection; this supports conventional
+        HTTP traffic over TCP.
+      1: An application can use UDP when handling occasional loss is preferable to delaying later real-time data.
+      2: Routers use network-layer forwarding information. Choosing HTTP rather than another application protocol
+        does not specify the physical route.
+      3: Reliability mechanisms and latency or transmission costs must be weighed against the application's needs.
+    explanation: TCP supplies reliable, ordered delivery, while UDP can suit real-time data where low delay matters
+      more than recovering every lost packet. Choosing a stack means balancing these needs. Application protocols
+      do not dictate the physical route across routers.
+  - id: 11
+    type: multiple
+    difficulty: intermediate
+    question: |-
+      11. You run the product catalog for a large retailer. A stale read of the catalog by a few seconds is fine; a 500 error costs you a sale. A network link between two data centers flaps for ten seconds. You would rather the system be  (2pts)
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - 'Available & partition tolerant: serve both sides of the partition, accept that some reads may be briefly
+        stale'
+      - 'Consistent & partition tolerant:  refuse requests on the minority side to guarantee every read is fresh'
+      - 'Non-distributed: run the whole catalog on a single node'
+      - Available & partition tolerant & consistent, because it is possible to achieve all three.
+    correct_indices:
+      - 0
+    option_feedback:
+      0: Serving both sides preserves the stated preference for responses even before replicas can synchronize.
+      1: Refusing requests can preserve consistency, but conflicts with the scenario's preference to keep serving
+        during the partition.
+      2: A single node changes the deployment and creates its own availability risks; it does not satisfy the stated
+        distributed-service trade-off.
+      3: During a partition, immediate consistency and a successful response to every request cannot both be guaranteed.
+    explanation: The retailer prefers continuing to answer requests during a partition even when reads can be stale.
+      This favors availability over immediate consistency between the two data centers.
+  - id: 12
+    type: multiple
+    difficulty: basic
+    question: |-
+      12.Which operating-system example best illustrates Information Hiding? (2 pts)
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - Apps call stable file and process APIs while the OS hides layout, caching, and drivers
+      - Applications directly choose the disk block layout so they can optimize every file write
+      - Every application bundles its own CPU scheduler so the OS can stay simple
+      - The OS exposes every hardware interrupt to every program because hidden details are always bad
+    correct_indices:
+      - 0
+    option_feedback:
+      0: The stable API describes what applications can request while isolating how the OS performs the work.
+      1: Making each application choose disk layout exposes the storage representation rather than hiding it.
+      2: Duplicating scheduling in every application exposes and spreads a system-level responsibility.
+      3: Exposing low-level interrupts makes applications depend directly on hardware details.
+    explanation: Stable operating-system interfaces let applications use files and processes without depending on
+      storage layout, cache algorithms, or device-driver implementations. Those internal decisions can change while
+      the interface remains stable.
+  - id: 13
+    type: multiple
+    difficulty: basic
+    question: |-
+      13. According to the principle of information hiding, which element must be kept out of a module’s public interface? (2pts)
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - The names and parameters of public methods
+      - The high-level side effects of calling a function.
+      - The specific internal data structures used for caching
+      - The error types explicitly thrown by the interface.
+    correct_indices:
+      - 2
+    option_feedback:
+      0: Callers need method names and parameters to use the interface.
+      1: Callers need to know relevant side effects to use a function correctly.
+      2: A cache's data structure can usually change without changing the service callers receive.
+      3: Promised error behavior is part of the contract callers use to handle failures.
+    explanation: The cache's internal representation is an implementation decision. Public method signatures, documented
+      side effects, and promised error behavior are parts of the contract that callers need.
+  - id: 14
+    type: multiple
+    difficulty: intermediate
+    question: |-
+      14. Which of these systems is most prone to cross-site scripting attacks? (2pts)
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - A web app that allows users to book flights
+      - A web app that allows users to upload photos (without any meta data) to a shared drive
+      - An Android app that allows users to communicate via direct messages
+      - A web app that allows users write and read reviews for movies
+    correct_indices:
+      - 3
+    option_feedback:
+      0: A booking site could have XSS, but the description does not explicitly identify the shared user-written
+        content emphasized by the review site.
+      1: Uploads can be dangerous if active content is served unsafely, but displaying user-written review text
+        is the more direct scenario described here.
+      2: A native messaging interface is not itself a browser HTML-rendering context. An embedded WebView could
+        introduce additional risks not specified here.
+      3: Reviews cross from one user's input to another user's browser. That boundary requires safe handling of
+        untrusted text.
+    explanation: A movie-review site displays user-written text in other users' browsers. If it treats that text
+      as executable markup instead of safely handling it as data, an attacker can inject a script. That makes it
+      the clearest XSS scenario among the choices.
+  - id: 15
+    type: multiple
+    difficulty: basic
+    question: |-
+      15. What is a primary benefit of employing rational decision making (as opposed to intuitive decision making) in software engineering? (2pts)
+
+      Select all that apply. Some questions may have multiple correct answers.
+    options:
+      - It enables quicker decision-making when the problem is ill-defined or highly uncertain
+      - It results in better decisions, because it uses UML diagrams to visualize the architecture
+      - It usually guides non-expert designers to better design outcomes & documents decisions
+      - It results in cleaner architectures, because it prioritizes information hiding over algorithmic optimization
+    correct_indices:
+      - 2
+    option_feedback:
+      0: Fast decisions under uncertainty can benefit from experienced intuition. Structured analysis is not inherently
+        quicker.
+      1: Diagrams can support analysis, but merely drawing UML does not establish a better decision.
+      2: Explicit criteria and recorded reasoning give non-experts a structured way to compare options.
+      3: The method compares the relevant priorities; it does not always place information hiding above performance.
+    explanation: Rational decision making makes criteria, alternatives, trade-offs, and reasoning explicit. That
+      structure helps less-experienced designers compare options and documents why a decision was made.
+  - id: 16
+    type: multiple
+    difficulty: advanced
+    question: Based on recommendations from the lecture, which of these git commands might create major challenges
+      in team projects? Check all that apply! (4 pts)
+    options:
+      - '`git pull --rebase`'
+      - '`git rebase -i HEAD~4`'
+      - '`git push -f`'
+      - '`git cherry-pick c330e27`'
+    correct_indices:
+      - 0
+      - 1
+      - 2
+    option_feedback:
+      0: Rebasing commits that teammates already use can leave their branches based on replaced history. Rebasing
+        only private, unpublished commits is a normal workflow and is not inherently a team problem.
+      1: Interactive rebase can replace, reorder, or remove commits. Rewriting commits already shared with teammates
+        requires coordination.
+      2: A force push can replace a remote branch tip and remove teammates' commits from that branch's visible history.
+      3: Cherry-pick normally adds a new commit with selected changes. The course warning here concerns rewriting
+        shared history, rather than copying a change into a new commit.
+    explanation: Both rebasing commands can rewrite commits that teammates already use, and force pushing can replace
+      shared branch history. These operations require coordination when applied to shared work. Rebasing private,
+      unpublished commits is a normal workflow.
+  - id: 17
+    type: single
+    difficulty: advanced
+    question: |-
+      Do not read every line first. Start with the incident brief, predict the relevant files/functions, then trace only the path needed.
+
+      Avengers Tower runs a small Node.js mission-dispatch service. A bug report says:
+
+      “When a hero is denied clearance after gear has already been reserved, the gear should be returned to the armory and no dispatch should be saved.”
+
+      A recent request used:
+
+      ```javascript
+      {
+       heroId: "parker",
+       missionCode: "ultron",
+       loadout: [{ gearId: "web_fluid", qty: 6 }]
+      }
+      ```
+
+      Before the request, the armory had:
+
+      ```javascript
+      { web_fluid: 12, arc_reactor: 2, shield: 1, widow_bite: 4 }
+      ```
+
+      Use your top-down code comprehension skills to answer these questions:
+
+      1. What happens in the current implementation when Parker requests six web fluid units for the Ultron mission?
+
+      TIP: You may annotate the code with your own thought as scratch paper!
+
+      data/avengersData.js
+
+      ```javascript
+      const gear = {
+        web_fluid: { stock: 12, power: 100 },
+        arc_reactor: { stock: 2, power: 900 },
+        shield: { stock: 1, power: 500 },
+        widow_bite: { stock: 4, power: 150 }
+      };
+
+      const missions = {
+        bridge: { baseRisk: 3, sector: "NYC" },
+        ultron: { baseRisk: 8, sector: "Sokovia" },
+        dark_dimension: { baseRisk: 9, scanner: "offline" }
+      };
+
+      const clearance = {
+        stark: 10,
+        rogers: 10,
+        strange: 9,
+        romanoff: 7,
+        parker: 3
+      };
+
+      const flags = {
+        commsEnabled: true,
+        releaseOnDeniedClearance: true
+      };
+      module.exports = { gear, missions, clearance, flags };
+      ```
+
+      services/armory.js
+
+      ```javascript
+      const { gear } = require("../data/avengersData");
+
+      function reserveLoadout(loadout) {
+        const reserved = [];
+
+        for (const item of loadout) {
+          const entry = gear[item.gearId];
+          if (!entry) return { ok: false, error: "unknown gear", reserved };
+          if (entry.stock < item.qty) {
+            return { ok: false, error: "not enough gear", reserved };
+          }
+
+          entry.stock -= item.qty;
+          reserved.push({ gearId: item.gearId, qty: item.qty });
+        }
+
+        return { ok: true, reserved };
+      }
+
+      function releaseLoadout(reserved) {
+        for (const item of reserved) {
+          gear[item.gearId].stock += item.qty;
+        }
+      }
+
+      function stockOf(gearId) {
+        return gear[gearId]?.stock;
+      }
+      module.exports = { reserveLoadout, releaseLoadout, stockOf };
+      ```
+
+      services/threat.js
+
+      ```javascript
+      const { gear: poweredGear, missions } = require("../data/avengersData");
+
+      function assessThreat(missionCode, loadout) {
+        const mission = missions[missionCode];
+        if (!mission) return { ok: false, error: "unknown mission" };
+        if (mission.scanner === "offline") {
+          return { ok: false, error: "threat matrix offline" };
+        }
+
+        const power = loadout.reduce((sum, item) =>
+          sum + poweredGear[item.gearId].power * item.qty, 0);
+
+        const level = Math.max(1, Math.round(mission.baseRisk - power / 1000));
+        return { ok: true, level, power };
+      }
+
+      module.exports = { assessThreat };
+      ```
+
+      services/clearance.js
+
+      ```javascript
+      const { clearance } = require("../data/avengersData");
+
+      function authorize(heroId, threatLevel) {
+        if ((clearance[heroId] ?? 0) < threatLevel) {
+          return { ok: false, reason: "clearance too low" };
+        }
+        return { ok: true, token: `auth_${heroId}_${threatLevel}` };
+      }
+
+      module.exports = { authorize };
+      ```
+
+      services/store.js
+
+      ```javascript
+      let dispatches = [];
+
+      function saveDispatch(record) {
+        const saved = { id: dispatches.length + 1, ...record };
+        dispatches.push(saved);
+        return saved;
+      }
+
+      function allDispatches() {
+        return [...dispatches];
+      }
+
+      module.exports = { saveDispatch, allDispatches };
+      ```
+
+      services/comms.js
+
+      ```javascript
+      function enqueueComms(dispatch) {
+        return { queued: true, channel: `tower.${dispatch.heroId}` };
+      }
+
+      module.exports = { enqueueComms };
+      ```
+
+      services/squadService.js
+
+      ```javascript
+      function squadForSector(sector) {
+        if (sector === "Sokovia") return ["rogers", "romanoff", "barton"];
+        if (sector === "NYC") return ["romanoff", "parker", "stark"];
+        return ["strange"];
+      }
+
+      module.exports = { squadForSector };
+      ```
+
+      routes/missionRoute.js:
+
+      ```javascript
+      const { reserveLoadout, releaseLoadout } = require("../services/armory");
+      const { assessThreat } = require("../services/threat");
+      const { authorize } = require("../services/clearance");
+      const { saveDispatch } = require("../services/store");
+      const { enqueueComms } = require("../services/comms");
+      const { flags } = require("../data/avengersData");
+
+      function dispatchMission(req, res) {
+        const { heroId, missionCode, loadout = [] } = req.body;
+
+        if (!heroId || !missionCode || loadout.length === 0) {
+          return res.status(400).json({ error: "missing mission fields" });
+        }
+
+        const hold = reserveLoadout(loadout);
+        if (!hold.ok) {
+          releaseLoadout(hold.reserved);
+          return res.status(409).json({ error: hold.error });
+        }
+
+        const threat = assessThreat(missionCode, loadout);
+        if (!threat.ok) {
+          releaseLoadout(hold.reserved);
+          return res.status(422).json({ error: threat.error });
+        }
+
+        const approved = authorize(heroId, threat.level);
+        if (!approved.ok) {
+          return res.status(403).json({ error: approved.reason });
+        }
+
+        const dispatch = saveDispatch({
+          heroId,
+          missionCode,
+          loadout,
+          threatLevel: threat.level,
+          gearPower: threat.power,
+          token: approved.token
+        });
+
+        if (flags.commsEnabled) enqueueComms(dispatch);
+
+        return res.status(202).json({
+          id: dispatch.id,
+          threatLevel: dispatch.threatLevel
+        });
+      }
+
+      module.exports = { dispatchMission };
+      ```
+    options:
+      - Status 403; web fluid returns to 12; no dispatch is saved.
+      - Status 403; web fluid remains at 6; no dispatch is saved.
+      - Status 422; web fluid returns to 12; no dispatch is saved.
+      - Status 202; web fluid remains at 6; one dispatch is saved.
+    correct_index: 1
+    option_feedback:
+      0: This describes the required behavior, but the current denied-clearance branch omits the release call.
+      2: The Ultron mission exists and its scanner is not offline, so threat assessment succeeds rather than returning
+        the 422 path.
+      3: Authorization fails before the route reaches `saveDispatch` or the 202 response.
+    explanation: Reservation subtracts six from twelve, leaving six units. The loadout has power `6 × 100 = 600`;
+      threat is `Math.round(8 - 600 / 1000) = 7`. Parker's clearance of three is too low. The route returns 403
+      without calling `releaseLoadout`, and returns before `saveDispatch`.
+  - id: 18
+    type: single
+    difficulty: intermediate
+    question: |-
+      Do not read every line first. Start with the incident brief, predict the relevant files/functions, then trace only the path needed.
+
+      Avengers Tower runs a small Node.js mission-dispatch service. A bug report says:
+
+      “When a hero is denied clearance after gear has already been reserved, the gear should be returned to the armory and no dispatch should be saved.”
+
+      A recent request used:
+
+      ```javascript
+      {
+       heroId: "parker",
+       missionCode: "ultron",
+       loadout: [{ gearId: "web_fluid", qty: 6 }]
+      }
+      ```
+
+      Before the request, the armory had:
+
+      ```javascript
+      { web_fluid: 12, arc_reactor: 2, shield: 1, widow_bite: 4 }
+      ```
+
+      Use your top-down code comprehension skills to answer these questions:
+
+      2. Where is gear stock first changed on a valid request with available gear?
+
+      TIP: You may annotate the code with your own thought as scratch paper!
+
+      data/avengersData.js
+
+      ```javascript
+      const gear = {
+        web_fluid: { stock: 12, power: 100 },
+        arc_reactor: { stock: 2, power: 900 },
+        shield: { stock: 1, power: 500 },
+        widow_bite: { stock: 4, power: 150 }
+      };
+
+      const missions = {
+        bridge: { baseRisk: 3, sector: "NYC" },
+        ultron: { baseRisk: 8, sector: "Sokovia" },
+        dark_dimension: { baseRisk: 9, scanner: "offline" }
+      };
+
+      const clearance = {
+        stark: 10,
+        rogers: 10,
+        strange: 9,
+        romanoff: 7,
+        parker: 3
+      };
+
+      const flags = {
+        commsEnabled: true,
+        releaseOnDeniedClearance: true
+      };
+      module.exports = { gear, missions, clearance, flags };
+      ```
+
+      services/armory.js
+
+      ```javascript
+      const { gear } = require("../data/avengersData");
+
+      function reserveLoadout(loadout) {
+        const reserved = [];
+
+        for (const item of loadout) {
+          const entry = gear[item.gearId];
+          if (!entry) return { ok: false, error: "unknown gear", reserved };
+          if (entry.stock < item.qty) {
+            return { ok: false, error: "not enough gear", reserved };
+          }
+
+          entry.stock -= item.qty;
+          reserved.push({ gearId: item.gearId, qty: item.qty });
+        }
+
+        return { ok: true, reserved };
+      }
+
+      function releaseLoadout(reserved) {
+        for (const item of reserved) {
+          gear[item.gearId].stock += item.qty;
+        }
+      }
+
+      function stockOf(gearId) {
+        return gear[gearId]?.stock;
+      }
+      module.exports = { reserveLoadout, releaseLoadout, stockOf };
+      ```
+
+      services/threat.js
+
+      ```javascript
+      const { gear: poweredGear, missions } = require("../data/avengersData");
+
+      function assessThreat(missionCode, loadout) {
+        const mission = missions[missionCode];
+        if (!mission) return { ok: false, error: "unknown mission" };
+        if (mission.scanner === "offline") {
+          return { ok: false, error: "threat matrix offline" };
+        }
+
+        const power = loadout.reduce((sum, item) =>
+          sum + poweredGear[item.gearId].power * item.qty, 0);
+
+        const level = Math.max(1, Math.round(mission.baseRisk - power / 1000));
+        return { ok: true, level, power };
+      }
+
+      module.exports = { assessThreat };
+      ```
+
+      services/clearance.js
+
+      ```javascript
+      const { clearance } = require("../data/avengersData");
+
+      function authorize(heroId, threatLevel) {
+        if ((clearance[heroId] ?? 0) < threatLevel) {
+          return { ok: false, reason: "clearance too low" };
+        }
+        return { ok: true, token: `auth_${heroId}_${threatLevel}` };
+      }
+
+      module.exports = { authorize };
+      ```
+
+      services/store.js
+
+      ```javascript
+      let dispatches = [];
+
+      function saveDispatch(record) {
+        const saved = { id: dispatches.length + 1, ...record };
+        dispatches.push(saved);
+        return saved;
+      }
+
+      function allDispatches() {
+        return [...dispatches];
+      }
+
+      module.exports = { saveDispatch, allDispatches };
+      ```
+
+      services/comms.js
+
+      ```javascript
+      function enqueueComms(dispatch) {
+        return { queued: true, channel: `tower.${dispatch.heroId}` };
+      }
+
+      module.exports = { enqueueComms };
+      ```
+
+      services/squadService.js
+
+      ```javascript
+      function squadForSector(sector) {
+        if (sector === "Sokovia") return ["rogers", "romanoff", "barton"];
+        if (sector === "NYC") return ["romanoff", "parker", "stark"];
+        return ["strange"];
+      }
+
+      module.exports = { squadForSector };
+      ```
+
+      routes/missionRoute.js:
+
+      ```javascript
+      const { reserveLoadout, releaseLoadout } = require("../services/armory");
+      const { assessThreat } = require("../services/threat");
+      const { authorize } = require("../services/clearance");
+      const { saveDispatch } = require("../services/store");
+      const { enqueueComms } = require("../services/comms");
+      const { flags } = require("../data/avengersData");
+
+      function dispatchMission(req, res) {
+        const { heroId, missionCode, loadout = [] } = req.body;
+
+        if (!heroId || !missionCode || loadout.length === 0) {
+          return res.status(400).json({ error: "missing mission fields" });
+        }
+
+        const hold = reserveLoadout(loadout);
+        if (!hold.ok) {
+          releaseLoadout(hold.reserved);
+          return res.status(409).json({ error: hold.error });
+        }
+
+        const threat = assessThreat(missionCode, loadout);
+        if (!threat.ok) {
+          releaseLoadout(hold.reserved);
+          return res.status(422).json({ error: threat.error });
+        }
+
+        const approved = authorize(heroId, threat.level);
+        if (!approved.ok) {
+          return res.status(403).json({ error: approved.reason });
+        }
+
+        const dispatch = saveDispatch({
+          heroId,
+          missionCode,
+          loadout,
+          threatLevel: threat.level,
+          gearPower: threat.power,
+          token: approved.token
+        });
+
+        if (flags.commsEnabled) enqueueComms(dispatch);
+
+        return res.status(202).json({
+          id: dispatch.id,
+          threatLevel: dispatch.threatLevel
+        });
+      }
+
+      module.exports = { dispatchMission };
+      ```
+    options:
+      - In the flags object.
+      - In reserveLoadout().
+      - In assessThreat().
+      - In saveDispatch().
+    correct_index: 1
+    option_feedback:
+      0: The flags store booleans. Declaring them does not change gear stock.
+      2: '`assessThreat` reads gear power and computes a threat level; reservation has already changed stock.'
+      3: '`saveDispatch` records an authorized dispatch after reservation and threat assessment.'
+    explanation: After the route validates the required fields, `reserveLoadout` performs `entry.stock -= item.qty`.
+      Threat assessment reads gear power, and storage records a dispatch only after authorization succeeds.
+  - id: 19
+    type: single
+    difficulty: advanced
+    question: |-
+      Do not read every line first. Start with the incident brief, predict the relevant files/functions, then trace only the path needed.
+
+      Avengers Tower runs a small Node.js mission-dispatch service. A bug report says:
+
+      “When a hero is denied clearance after gear has already been reserved, the gear should be returned to the armory and no dispatch should be saved.”
+
+      A recent request used:
+
+      ```javascript
+      {
+       heroId: "parker",
+       missionCode: "ultron",
+       loadout: [{ gearId: "web_fluid", qty: 6 }]
+      }
+      ```
+
+      Before the request, the armory had:
+
+      ```javascript
+      { web_fluid: 12, arc_reactor: 2, shield: 1, widow_bite: 4 }
+      ```
+
+      Use your top-down code comprehension skills to answer these questions:
+
+      3. Which change best fixes the reported bug while preserving the current workflow?
+
+      TIP: You may annotate the code with your own thought as scratch paper!
+
+      data/avengersData.js
+
+      ```javascript
+      const gear = {
+        web_fluid: { stock: 12, power: 100 },
+        arc_reactor: { stock: 2, power: 900 },
+        shield: { stock: 1, power: 500 },
+        widow_bite: { stock: 4, power: 150 }
+      };
+
+      const missions = {
+        bridge: { baseRisk: 3, sector: "NYC" },
+        ultron: { baseRisk: 8, sector: "Sokovia" },
+        dark_dimension: { baseRisk: 9, scanner: "offline" }
+      };
+
+      const clearance = {
+        stark: 10,
+        rogers: 10,
+        strange: 9,
+        romanoff: 7,
+        parker: 3
+      };
+
+      const flags = {
+        commsEnabled: true,
+        releaseOnDeniedClearance: true
+      };
+      module.exports = { gear, missions, clearance, flags };
+      ```
+
+      services/armory.js
+
+      ```javascript
+      const { gear } = require("../data/avengersData");
+
+      function reserveLoadout(loadout) {
+        const reserved = [];
+
+        for (const item of loadout) {
+          const entry = gear[item.gearId];
+          if (!entry) return { ok: false, error: "unknown gear", reserved };
+          if (entry.stock < item.qty) {
+            return { ok: false, error: "not enough gear", reserved };
+          }
+
+          entry.stock -= item.qty;
+          reserved.push({ gearId: item.gearId, qty: item.qty });
+        }
+
+        return { ok: true, reserved };
+      }
+
+      function releaseLoadout(reserved) {
+        for (const item of reserved) {
+          gear[item.gearId].stock += item.qty;
+        }
+      }
+
+      function stockOf(gearId) {
+        return gear[gearId]?.stock;
+      }
+      module.exports = { reserveLoadout, releaseLoadout, stockOf };
+      ```
+
+      services/threat.js
+
+      ```javascript
+      const { gear: poweredGear, missions } = require("../data/avengersData");
+
+      function assessThreat(missionCode, loadout) {
+        const mission = missions[missionCode];
+        if (!mission) return { ok: false, error: "unknown mission" };
+        if (mission.scanner === "offline") {
+          return { ok: false, error: "threat matrix offline" };
+        }
+
+        const power = loadout.reduce((sum, item) =>
+          sum + poweredGear[item.gearId].power * item.qty, 0);
+
+        const level = Math.max(1, Math.round(mission.baseRisk - power / 1000));
+        return { ok: true, level, power };
+      }
+
+      module.exports = { assessThreat };
+      ```
+
+      services/clearance.js
+
+      ```javascript
+      const { clearance } = require("../data/avengersData");
+
+      function authorize(heroId, threatLevel) {
+        if ((clearance[heroId] ?? 0) < threatLevel) {
+          return { ok: false, reason: "clearance too low" };
+        }
+        return { ok: true, token: `auth_${heroId}_${threatLevel}` };
+      }
+
+      module.exports = { authorize };
+      ```
+
+      services/store.js
+
+      ```javascript
+      let dispatches = [];
+
+      function saveDispatch(record) {
+        const saved = { id: dispatches.length + 1, ...record };
+        dispatches.push(saved);
+        return saved;
+      }
+
+      function allDispatches() {
+        return [...dispatches];
+      }
+
+      module.exports = { saveDispatch, allDispatches };
+      ```
+
+      services/comms.js
+
+      ```javascript
+      function enqueueComms(dispatch) {
+        return { queued: true, channel: `tower.${dispatch.heroId}` };
+      }
+
+      module.exports = { enqueueComms };
+      ```
+
+      services/squadService.js
+
+      ```javascript
+      function squadForSector(sector) {
+        if (sector === "Sokovia") return ["rogers", "romanoff", "barton"];
+        if (sector === "NYC") return ["romanoff", "parker", "stark"];
+        return ["strange"];
+      }
+
+      module.exports = { squadForSector };
+      ```
+
+      routes/missionRoute.js:
+
+      ```javascript
+      const { reserveLoadout, releaseLoadout } = require("../services/armory");
+      const { assessThreat } = require("../services/threat");
+      const { authorize } = require("../services/clearance");
+      const { saveDispatch } = require("../services/store");
+      const { enqueueComms } = require("../services/comms");
+      const { flags } = require("../data/avengersData");
+
+      function dispatchMission(req, res) {
+        const { heroId, missionCode, loadout = [] } = req.body;
+
+        if (!heroId || !missionCode || loadout.length === 0) {
+          return res.status(400).json({ error: "missing mission fields" });
+        }
+
+        const hold = reserveLoadout(loadout);
+        if (!hold.ok) {
+          releaseLoadout(hold.reserved);
+          return res.status(409).json({ error: hold.error });
+        }
+
+        const threat = assessThreat(missionCode, loadout);
+        if (!threat.ok) {
+          releaseLoadout(hold.reserved);
+          return res.status(422).json({ error: threat.error });
+        }
+
+        const approved = authorize(heroId, threat.level);
+        if (!approved.ok) {
+          return res.status(403).json({ error: approved.reason });
+        }
+
+        const dispatch = saveDispatch({
+          heroId,
+          missionCode,
+          loadout,
+          threatLevel: threat.level,
+          gearPower: threat.power,
+          token: approved.token
+        });
+
+        if (flags.commsEnabled) enqueueComms(dispatch);
+
+        return res.status(202).json({
+          id: dispatch.id,
+          threatLevel: dispatch.threatLevel
+        });
+      }
+
+      module.exports = { dispatchMission };
+      ```
+    options:
+      - Call releaseLoadout(hold.reserved) before returning the 403 response.
+      - Remove the stock decrement from reserveLoadout().
+      - Save the dispatch before calling authorize().
+      - Increase Parker’s clearance from 3 to 10.
+    correct_index: 0
+    option_feedback:
+      1: Removing the decrement prevents successful requests from actually reserving their gear.
+      2: Saving before authorization would persist a dispatch for a hero who may be denied.
+      3: Changing one hero's clearance avoids this example's denial without fixing cleanup for future denials.
+    explanation: The reservation has already changed stock when authorization fails. Releasing `hold.reserved` before
+      the 403 return compensates for that change, while keeping denial before persistence. The other failure paths
+      already use this cleanup pattern.
+  - id: 20
+    type: single
+    difficulty: intermediate
+    question: |-
+      Do not read every line first. Start with the incident brief, predict the relevant files/functions, then trace only the path needed.
+
+      Avengers Tower runs a small Node.js mission-dispatch service. A bug report says:
+
+      “When a hero is denied clearance after gear has already been reserved, the gear should be returned to the armory and no dispatch should be saved.”
+
+      A recent request used:
+
+      ```javascript
+      {
+       heroId: "parker",
+       missionCode: "ultron",
+       loadout: [{ gearId: "web_fluid", qty: 6 }]
+      }
+      ```
+
+      Before the request, the armory had:
+
+      ```javascript
+      { web_fluid: 12, arc_reactor: 2, shield: 1, widow_bite: 4 }
+      ```
+
+      Use your top-down code comprehension skills to answer these questions:
+
+      4. What is the best interpretation of releaseOnDeniedClearance: true?
+
+      TIP: You may annotate the code with your own thought as scratch paper!
+
+      data/avengersData.js
+
+      ```javascript
+      const gear = {
+        web_fluid: { stock: 12, power: 100 },
+        arc_reactor: { stock: 2, power: 900 },
+        shield: { stock: 1, power: 500 },
+        widow_bite: { stock: 4, power: 150 }
+      };
+
+      const missions = {
+        bridge: { baseRisk: 3, sector: "NYC" },
+        ultron: { baseRisk: 8, sector: "Sokovia" },
+        dark_dimension: { baseRisk: 9, scanner: "offline" }
+      };
+
+      const clearance = {
+        stark: 10,
+        rogers: 10,
+        strange: 9,
+        romanoff: 7,
+        parker: 3
+      };
+
+      const flags = {
+        commsEnabled: true,
+        releaseOnDeniedClearance: true
+      };
+      module.exports = { gear, missions, clearance, flags };
+      ```
+
+      services/armory.js
+
+      ```javascript
+      const { gear } = require("../data/avengersData");
+
+      function reserveLoadout(loadout) {
+        const reserved = [];
+
+        for (const item of loadout) {
+          const entry = gear[item.gearId];
+          if (!entry) return { ok: false, error: "unknown gear", reserved };
+          if (entry.stock < item.qty) {
+            return { ok: false, error: "not enough gear", reserved };
+          }
+
+          entry.stock -= item.qty;
+          reserved.push({ gearId: item.gearId, qty: item.qty });
+        }
+
+        return { ok: true, reserved };
+      }
+
+      function releaseLoadout(reserved) {
+        for (const item of reserved) {
+          gear[item.gearId].stock += item.qty;
+        }
+      }
+
+      function stockOf(gearId) {
+        return gear[gearId]?.stock;
+      }
+      module.exports = { reserveLoadout, releaseLoadout, stockOf };
+      ```
+
+      services/threat.js
+
+      ```javascript
+      const { gear: poweredGear, missions } = require("../data/avengersData");
+
+      function assessThreat(missionCode, loadout) {
+        const mission = missions[missionCode];
+        if (!mission) return { ok: false, error: "unknown mission" };
+        if (mission.scanner === "offline") {
+          return { ok: false, error: "threat matrix offline" };
+        }
+
+        const power = loadout.reduce((sum, item) =>
+          sum + poweredGear[item.gearId].power * item.qty, 0);
+
+        const level = Math.max(1, Math.round(mission.baseRisk - power / 1000));
+        return { ok: true, level, power };
+      }
+
+      module.exports = { assessThreat };
+      ```
+
+      services/clearance.js
+
+      ```javascript
+      const { clearance } = require("../data/avengersData");
+
+      function authorize(heroId, threatLevel) {
+        if ((clearance[heroId] ?? 0) < threatLevel) {
+          return { ok: false, reason: "clearance too low" };
+        }
+        return { ok: true, token: `auth_${heroId}_${threatLevel}` };
+      }
+
+      module.exports = { authorize };
+      ```
+
+      services/store.js
+
+      ```javascript
+      let dispatches = [];
+
+      function saveDispatch(record) {
+        const saved = { id: dispatches.length + 1, ...record };
+        dispatches.push(saved);
+        return saved;
+      }
+
+      function allDispatches() {
+        return [...dispatches];
+      }
+
+      module.exports = { saveDispatch, allDispatches };
+      ```
+
+      services/comms.js
+
+      ```javascript
+      function enqueueComms(dispatch) {
+        return { queued: true, channel: `tower.${dispatch.heroId}` };
+      }
+
+      module.exports = { enqueueComms };
+      ```
+
+      services/squadService.js
+
+      ```javascript
+      function squadForSector(sector) {
+        if (sector === "Sokovia") return ["rogers", "romanoff", "barton"];
+        if (sector === "NYC") return ["romanoff", "parker", "stark"];
+        return ["strange"];
+      }
+
+      module.exports = { squadForSector };
+      ```
+
+      routes/missionRoute.js:
+
+      ```javascript
+      const { reserveLoadout, releaseLoadout } = require("../services/armory");
+      const { assessThreat } = require("../services/threat");
+      const { authorize } = require("../services/clearance");
+      const { saveDispatch } = require("../services/store");
+      const { enqueueComms } = require("../services/comms");
+      const { flags } = require("../data/avengersData");
+
+      function dispatchMission(req, res) {
+        const { heroId, missionCode, loadout = [] } = req.body;
+
+        if (!heroId || !missionCode || loadout.length === 0) {
+          return res.status(400).json({ error: "missing mission fields" });
+        }
+
+        const hold = reserveLoadout(loadout);
+        if (!hold.ok) {
+          releaseLoadout(hold.reserved);
+          return res.status(409).json({ error: hold.error });
+        }
+
+        const threat = assessThreat(missionCode, loadout);
+        if (!threat.ok) {
+          releaseLoadout(hold.reserved);
+          return res.status(422).json({ error: threat.error });
+        }
+
+        const approved = authorize(heroId, threat.level);
+        if (!approved.ok) {
+          return res.status(403).json({ error: approved.reason });
+        }
+
+        const dispatch = saveDispatch({
+          heroId,
+          missionCode,
+          loadout,
+          threatLevel: threat.level,
+          gearPower: threat.power,
+          token: approved.token
+        });
+
+        if (flags.commsEnabled) enqueueComms(dispatch);
+
+        return res.status(202).json({
+          id: dispatch.id,
+          threatLevel: dispatch.threatLevel
+        });
+      }
+
+      module.exports = { dispatchMission };
+      ```
+    options:
+      - It proves gear is released when clearance is denied.
+      - It is a promising clue, but the denied-clearance path never reads it.
+      - It is passed into authorize() to control hero clearance.
+      - It causes enqueueComms() to release gear.
+    correct_index: 1
+    option_feedback:
+      0: Declaring a true flag does not execute cleanup. The failure branch must actually consult the flag or call
+        the release function.
+      2: '`authorize` receives the hero identifier and threat level; the flag is not an argument.'
+      3: The route reaches communications only after a successful save, and `enqueueComms` contains no gear-release
+        operation.
+    explanation: The flag is declared and exported, but the route's denied-clearance branch never reads it or releases
+      the hold. A meaningful name suggests intent; only the executed calls establish behavior.
+  - id: 21
+    type: single
+    difficulty: intermediate
+    question: |-
+      Do not read every line first. Start with the incident brief, predict the relevant files/functions, then trace only the path needed.
+
+      Avengers Tower runs a small Node.js mission-dispatch service. A bug report says:
+
+      “When a hero is denied clearance after gear has already been reserved, the gear should be returned to the armory and no dispatch should be saved.”
+
+      A recent request used:
+
+      ```javascript
+      {
+       heroId: "parker",
+       missionCode: "ultron",
+       loadout: [{ gearId: "web_fluid", qty: 6 }]
+      }
+      ```
+
+      Before the request, the armory had:
+
+      ```javascript
+      { web_fluid: 12, arc_reactor: 2, shield: 1, widow_bite: 4 }
+      ```
+
+      Use your top-down code comprehension skills to answer these questions:
+
+      5. Why is squadService.js not central to this bug?
+
+      TIP: You may annotate the code with your own thought as scratch paper!
+
+      data/avengersData.js
+
+      ```javascript
+      const gear = {
+        web_fluid: { stock: 12, power: 100 },
+        arc_reactor: { stock: 2, power: 900 },
+        shield: { stock: 1, power: 500 },
+        widow_bite: { stock: 4, power: 150 }
+      };
+
+      const missions = {
+        bridge: { baseRisk: 3, sector: "NYC" },
+        ultron: { baseRisk: 8, sector: "Sokovia" },
+        dark_dimension: { baseRisk: 9, scanner: "offline" }
+      };
+
+      const clearance = {
+        stark: 10,
+        rogers: 10,
+        strange: 9,
+        romanoff: 7,
+        parker: 3
+      };
+
+      const flags = {
+        commsEnabled: true,
+        releaseOnDeniedClearance: true
+      };
+      module.exports = { gear, missions, clearance, flags };
+      ```
+
+      services/armory.js
+
+      ```javascript
+      const { gear } = require("../data/avengersData");
+
+      function reserveLoadout(loadout) {
+        const reserved = [];
+
+        for (const item of loadout) {
+          const entry = gear[item.gearId];
+          if (!entry) return { ok: false, error: "unknown gear", reserved };
+          if (entry.stock < item.qty) {
+            return { ok: false, error: "not enough gear", reserved };
+          }
+
+          entry.stock -= item.qty;
+          reserved.push({ gearId: item.gearId, qty: item.qty });
+        }
+
+        return { ok: true, reserved };
+      }
+
+      function releaseLoadout(reserved) {
+        for (const item of reserved) {
+          gear[item.gearId].stock += item.qty;
+        }
+      }
+
+      function stockOf(gearId) {
+        return gear[gearId]?.stock;
+      }
+      module.exports = { reserveLoadout, releaseLoadout, stockOf };
+      ```
+
+      services/threat.js
+
+      ```javascript
+      const { gear: poweredGear, missions } = require("../data/avengersData");
+
+      function assessThreat(missionCode, loadout) {
+        const mission = missions[missionCode];
+        if (!mission) return { ok: false, error: "unknown mission" };
+        if (mission.scanner === "offline") {
+          return { ok: false, error: "threat matrix offline" };
+        }
+
+        const power = loadout.reduce((sum, item) =>
+          sum + poweredGear[item.gearId].power * item.qty, 0);
+
+        const level = Math.max(1, Math.round(mission.baseRisk - power / 1000));
+        return { ok: true, level, power };
+      }
+
+      module.exports = { assessThreat };
+      ```
+
+      services/clearance.js
+
+      ```javascript
+      const { clearance } = require("../data/avengersData");
+
+      function authorize(heroId, threatLevel) {
+        if ((clearance[heroId] ?? 0) < threatLevel) {
+          return { ok: false, reason: "clearance too low" };
+        }
+        return { ok: true, token: `auth_${heroId}_${threatLevel}` };
+      }
+
+      module.exports = { authorize };
+      ```
+
+      services/store.js
+
+      ```javascript
+      let dispatches = [];
+
+      function saveDispatch(record) {
+        const saved = { id: dispatches.length + 1, ...record };
+        dispatches.push(saved);
+        return saved;
+      }
+
+      function allDispatches() {
+        return [...dispatches];
+      }
+
+      module.exports = { saveDispatch, allDispatches };
+      ```
+
+      services/comms.js
+
+      ```javascript
+      function enqueueComms(dispatch) {
+        return { queued: true, channel: `tower.${dispatch.heroId}` };
+      }
+
+      module.exports = { enqueueComms };
+      ```
+
+      services/squadService.js
+
+      ```javascript
+      function squadForSector(sector) {
+        if (sector === "Sokovia") return ["rogers", "romanoff", "barton"];
+        if (sector === "NYC") return ["romanoff", "parker", "stark"];
+        return ["strange"];
+      }
+
+      module.exports = { squadForSector };
+      ```
+
+      routes/missionRoute.js:
+
+      ```javascript
+      const { reserveLoadout, releaseLoadout } = require("../services/armory");
+      const { assessThreat } = require("../services/threat");
+      const { authorize } = require("../services/clearance");
+      const { saveDispatch } = require("../services/store");
+      const { enqueueComms } = require("../services/comms");
+      const { flags } = require("../data/avengersData");
+
+      function dispatchMission(req, res) {
+        const { heroId, missionCode, loadout = [] } = req.body;
+
+        if (!heroId || !missionCode || loadout.length === 0) {
+          return res.status(400).json({ error: "missing mission fields" });
+        }
+
+        const hold = reserveLoadout(loadout);
+        if (!hold.ok) {
+          releaseLoadout(hold.reserved);
+          return res.status(409).json({ error: hold.error });
+        }
+
+        const threat = assessThreat(missionCode, loadout);
+        if (!threat.ok) {
+          releaseLoadout(hold.reserved);
+          return res.status(422).json({ error: threat.error });
+        }
+
+        const approved = authorize(heroId, threat.level);
+        if (!approved.ok) {
+          return res.status(403).json({ error: approved.reason });
+        }
+
+        const dispatch = saveDispatch({
+          heroId,
+          missionCode,
+          loadout,
+          threatLevel: threat.level,
+          gearPower: threat.power,
+          token: approved.token
+        });
+
+        if (flags.commsEnabled) enqueueComms(dispatch);
+
+        return res.status(202).json({
+          id: dispatch.id,
+          threatLevel: dispatch.threatLevel
+        });
+      }
+
+      module.exports = { dispatchMission };
+      ```
+    options:
+      - It has no conditional logic.
+      - It only handles successful missions.
+      - It is not imported or called by the mission route.
+      - It only affects missions in NYC.
+    correct_index: 2
+    option_feedback:
+      0: '`squadForSector` contains two conditional checks, so absence of conditionals cannot explain its irrelevance.'
+      1: The function chooses names by sector; the mission route does not call it on either success or failure.
+      3: The service also handles Sokovia and a default case. The important distinction is whether it is on the
+        executed path.
+    explanation: The route imports the armory, threat, clearance, store, comms, and data modules. It does not import
+      or call `squadService.js`, so that service is outside the execution path for this failure.
+  - id: 22
+    type: single
+    difficulty: advanced
+    question: |-
+      Do not read every line first. Start with the incident brief, predict the relevant files/functions, then trace only the path needed.
+
+      Avengers Tower runs a small Node.js mission-dispatch service. A bug report says:
+
+      “When a hero is denied clearance after gear has already been reserved, the gear should be returned to the armory and no dispatch should be saved.”
+
+      A recent request used:
+
+      ```javascript
+      {
+       heroId: "parker",
+       missionCode: "ultron",
+       loadout: [{ gearId: "web_fluid", qty: 6 }]
+      }
+      ```
+
+      Before the request, the armory had:
+
+      ```javascript
+      { web_fluid: 12, arc_reactor: 2, shield: 1, widow_bite: 4 }
+      ```
+
+      Use your top-down code comprehension skills to answer these questions:
+
+      6. Why is Parker denied clearance for the Ultron request?
+
+      TIP: You may annotate the code with your own thought as scratch paper!
+
+      data/avengersData.js
+
+      ```javascript
+      const gear = {
+        web_fluid: { stock: 12, power: 100 },
+        arc_reactor: { stock: 2, power: 900 },
+        shield: { stock: 1, power: 500 },
+        widow_bite: { stock: 4, power: 150 }
+      };
+
+      const missions = {
+        bridge: { baseRisk: 3, sector: "NYC" },
+        ultron: { baseRisk: 8, sector: "Sokovia" },
+        dark_dimension: { baseRisk: 9, scanner: "offline" }
+      };
+
+      const clearance = {
+        stark: 10,
+        rogers: 10,
+        strange: 9,
+        romanoff: 7,
+        parker: 3
+      };
+
+      const flags = {
+        commsEnabled: true,
+        releaseOnDeniedClearance: true
+      };
+      module.exports = { gear, missions, clearance, flags };
+      ```
+
+      services/armory.js
+
+      ```javascript
+      const { gear } = require("../data/avengersData");
+
+      function reserveLoadout(loadout) {
+        const reserved = [];
+
+        for (const item of loadout) {
+          const entry = gear[item.gearId];
+          if (!entry) return { ok: false, error: "unknown gear", reserved };
+          if (entry.stock < item.qty) {
+            return { ok: false, error: "not enough gear", reserved };
+          }
+
+          entry.stock -= item.qty;
+          reserved.push({ gearId: item.gearId, qty: item.qty });
+        }
+
+        return { ok: true, reserved };
+      }
+
+      function releaseLoadout(reserved) {
+        for (const item of reserved) {
+          gear[item.gearId].stock += item.qty;
+        }
+      }
+
+      function stockOf(gearId) {
+        return gear[gearId]?.stock;
+      }
+      module.exports = { reserveLoadout, releaseLoadout, stockOf };
+      ```
+
+      services/threat.js
+
+      ```javascript
+      const { gear: poweredGear, missions } = require("../data/avengersData");
+
+      function assessThreat(missionCode, loadout) {
+        const mission = missions[missionCode];
+        if (!mission) return { ok: false, error: "unknown mission" };
+        if (mission.scanner === "offline") {
+          return { ok: false, error: "threat matrix offline" };
+        }
+
+        const power = loadout.reduce((sum, item) =>
+          sum + poweredGear[item.gearId].power * item.qty, 0);
+
+        const level = Math.max(1, Math.round(mission.baseRisk - power / 1000));
+        return { ok: true, level, power };
+      }
+
+      module.exports = { assessThreat };
+      ```
+
+      services/clearance.js
+
+      ```javascript
+      const { clearance } = require("../data/avengersData");
+
+      function authorize(heroId, threatLevel) {
+        if ((clearance[heroId] ?? 0) < threatLevel) {
+          return { ok: false, reason: "clearance too low" };
+        }
+        return { ok: true, token: `auth_${heroId}_${threatLevel}` };
+      }
+
+      module.exports = { authorize };
+      ```
+
+      services/store.js
+
+      ```javascript
+      let dispatches = [];
+
+      function saveDispatch(record) {
+        const saved = { id: dispatches.length + 1, ...record };
+        dispatches.push(saved);
+        return saved;
+      }
+
+      function allDispatches() {
+        return [...dispatches];
+      }
+
+      module.exports = { saveDispatch, allDispatches };
+      ```
+
+      services/comms.js
+
+      ```javascript
+      function enqueueComms(dispatch) {
+        return { queued: true, channel: `tower.${dispatch.heroId}` };
+      }
+
+      module.exports = { enqueueComms };
+      ```
+
+      services/squadService.js
+
+      ```javascript
+      function squadForSector(sector) {
+        if (sector === "Sokovia") return ["rogers", "romanoff", "barton"];
+        if (sector === "NYC") return ["romanoff", "parker", "stark"];
+        return ["strange"];
+      }
+
+      module.exports = { squadForSector };
+      ```
+
+      routes/missionRoute.js:
+
+      ```javascript
+      const { reserveLoadout, releaseLoadout } = require("../services/armory");
+      const { assessThreat } = require("../services/threat");
+      const { authorize } = require("../services/clearance");
+      const { saveDispatch } = require("../services/store");
+      const { enqueueComms } = require("../services/comms");
+      const { flags } = require("../data/avengersData");
+
+      function dispatchMission(req, res) {
+        const { heroId, missionCode, loadout = [] } = req.body;
+
+        if (!heroId || !missionCode || loadout.length === 0) {
+          return res.status(400).json({ error: "missing mission fields" });
+        }
+
+        const hold = reserveLoadout(loadout);
+        if (!hold.ok) {
+          releaseLoadout(hold.reserved);
+          return res.status(409).json({ error: hold.error });
+        }
+
+        const threat = assessThreat(missionCode, loadout);
+        if (!threat.ok) {
+          releaseLoadout(hold.reserved);
+          return res.status(422).json({ error: threat.error });
+        }
+
+        const approved = authorize(heroId, threat.level);
+        if (!approved.ok) {
+          return res.status(403).json({ error: approved.reason });
+        }
+
+        const dispatch = saveDispatch({
+          heroId,
+          missionCode,
+          loadout,
+          threatLevel: threat.level,
+          gearPower: threat.power,
+          token: approved.token
+        });
+
+        if (flags.commsEnabled) enqueueComms(dispatch);
+
+        return res.status(202).json({
+          id: dispatch.id,
+          threatLevel: dispatch.threatLevel
+        });
+      }
+
+      module.exports = { dispatchMission };
+      ```
+    options:
+      - Parker has clearance 3, but the computed threat level is higher than 3.
+      - Parker has no entry in the clearance table.
+      - Ultron missions always fail before clearance is checked.
+      - Web fluid has too little power to be reserved.
+    correct_index: 0
+    option_feedback:
+      1: 'The clearance table explicitly contains `parker: 3`.'
+      2: Ultron has a valid mission entry and no offline-scanner condition, so execution reaches authorization.
+      3: Reservation checks gear identity and stock quantity. Gear power is used later by threat assessment.
+    explanation: Six web-fluid units contribute power 600. The Ultron base risk of eight gives threat level `Math.max(1,
+      Math.round(8 - 0.6)) = 7`. Authorization compares Parker's clearance of three with seven and denies the request.
+  - id: 23
+    type: multiple
+    difficulty: intermediate
+    question: 1. In which situations would an agile software process be most appropriate (as compared to a plan-driven
+      approach)? Check all that apply (3 pts)
+    options:
+      - Developing a new full-self-driving autopilot for self-driving cars
+      - Working in a small company that uses existing AI models to recommend the best movies
+      - Creating a new mobile game for iPhones
+    correct_indices:
+      - 1
+      - 2
+    option_feedback:
+      0: Autopilot software has high-consequence failures and requires rigorous assurance and traceability. Iteration
+        can still be used within that discipline, but a lightweight agile process alone is not the strongest fit
+        described.
+      1: An evolving recommendation product benefits from feedback about whether users value its results and from
+        frequent small changes.
+      2: A mobile game can be iterated using player feedback about mechanics and experience, with requirements changing
+        as the team learns.
+    explanation: A recommendation product and a mobile game benefit from frequent user feedback and adapting requirements.
+      Safety-critical autopilot work places greater emphasis on upfront assurance, traceability, and verification,
+      making a more plan-driven approach the expected comparison here.

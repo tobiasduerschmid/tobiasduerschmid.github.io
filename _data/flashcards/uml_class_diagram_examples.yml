@@ -90,3 +90,14 @@ cards:
       A plain association (<span class="uml-sym" data-diagram="class" data-sym="--"></span>) has **unspecified** navigability per UML 2.5 — not "bidirectional by default." An arrowhead establishes that direction of navigation; an X at the opposite end would explicitly rule out reverse navigation. In a typical design model, the tail class has a field of the head class's type. This is a design-level detail — omit it in early domain models.
 
       <div data-uml-type="class" data-uml-spec="class Employee&#10;class Boss&#10;Employee --> Boss"></div>
+
+  - id: 11
+    difficulty: intermediate
+    question: A concrete class inherits an abstract operation and no implementation. What must it supply?
+    answer: A compatible implementation of that operation.
+    explanation: Otherwise it must remain abstract. An operation omitted from a simplified diagram is not, by itself, proof that the implementation is missing.
+  - id: 12
+    difficulty: intermediate
+    question: A subject may have zero, one, or many observers. What multiplicity belongs at the observer end?
+    answer: '`0..*`'
+    explanation: A multiplicity of `1` would require exactly one observer for each subject, contradicting optional and multiple subscriptions.

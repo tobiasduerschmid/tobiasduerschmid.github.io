@@ -266,3 +266,30 @@ questions:
       3: |
         An attribute is one possible design if `Order` stores a reference, but the sequence message alone does not force that. The receiver still needs the operation being called.
     explanation: "**Every message arrow must correspond to a method on the receiving object's class (or a superclass), so `Inventory` needs a `checkStock(itemId)` method.** Sequence and class diagrams of the same system must stay consistent in method names, parameters, and return types."
+
+  - id: 13
+    type: single
+    difficulty: intermediate
+    question: A context holds a `ReadyState` object through an abstract `State` reference. Which trace correctly models a delegated call?
+    options:
+    - Context calls a separate abstract State instance, which forwards it.
+    - Context calls the current ReadyState instance directly.
+    - Context calls every concrete State instance in sequence.
+    correct_index: 1
+    option_feedback:
+      0: Dynamic dispatch does not create an extra object of the abstract class. A lifeline may be typed by an abstraction while representing the same concrete object.
+      2: Delegation selects the current state; it does not execute all possible states.
+    explanation: The abstract reference and concrete object are not two receivers. The call is dispatched to the current object’s implementation.
+  - id: 14
+    type: single
+    difficulty: intermediate
+    question: 'A receiver declares only `reserve(count: int)`. Which sequence message is consistent with that operation?'
+    options:
+    - reserve()
+    - reserve(3, "blue")
+    - reserve(3)
+    correct_index: 2
+    option_feedback:
+      0: The declared operation requires one argument; the message supplies none.
+      1: The message supplies two arguments while the declared operation accepts one.
+    explanation: Check both the receiver and the argument list when comparing class and sequence diagrams. Here one integer argument matches the declared operation.

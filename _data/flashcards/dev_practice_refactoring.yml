@@ -57,3 +57,15 @@ cards:
     question: "What is the human supervisor's role when AI performs refactorings?"
     answer: "The human identifies the smell, chooses the transformation, bounds the scope, runs tests after each step, and rejects changes that alter behavior or hide system-level design problems."
     explanation: "AI can execute many catalog refactorings, but it cannot be trusted to decide that the system behavior is preserved without human verification."
+
+  - id: exam-practice-guard-compression
+    difficulty: intermediate
+    question: Why must a refactor keep the length check before `row[0]` when combining nested Python conditions?
+    answer: An empty list has no element 0. A left-to-right `and` chain must establish that the list is nonempty
+      before reading its first element.
+  - id: exam-practice-name-predicate
+    difficulty: intermediate
+    question: A function returns whether any shipment has at least 4 entries and starts with a requested depot
+      code. Give a descriptive replacement for its name `mystery`.
+    answer: For example, `has_shipment_for_depot`. The name communicates a Boolean question in domain terms;
+      the minimum-length rule belongs in the documented contract.

@@ -98,3 +98,30 @@ questions:
       3: |
         A Null Object can be shared as a singleton when it is truly stateless. The compatibility of those patterns is not the issue here.
     explanation: "Because many contexts would share one instance, a Singleton state can no longer hold per-context fields or a per-context reference back to its Context. This **Singleton State** compound is memory-efficient but inflexible — only safe when the states are sure to stay purely behavioral, or when a later refactor away from shared instances is acceptable."
+
+  - id: 6
+    type: single
+    difficulty: intermediate
+    question: A `Printer` uses State objects. Where should “reject a print request while jammed” belong?
+    options:
+    - In the concrete jammed state.
+    - In every client that prints.
+    - In a client-side switch over all states.
+    correct_index: 0
+    option_feedback:
+      1: That scatters a state-dependent rule across callers, so each caller must know internal printer states.
+      2: A switch in each client recreates the coupling that delegation is intended to remove.
+    explanation: The printer delegates state-dependent behavior to its current state. The jammed state owns the response to a print request in that state.
+  - id: 7
+    type: single
+    difficulty: intermediate
+    question: A player stores its current State object. Every state uses the same account identifier. What belongs in the context rather than each state?
+    options:
+    - The rule for moving out of jail.
+    - The behavior of a bankrupt turn.
+    - The shared account identifier.
+    correct_index: 2
+    option_feedback:
+      0: A state-specific transition rule can belong with that state, depending on the chosen transition design.
+      1: Turn behavior that varies for bankrupt players is a state-dependent concern.
+    explanation: The context can retain identity and other state-independent data while delegating varying behavior. Copying shared identity into every state risks inconsistent copies.

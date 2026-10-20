@@ -1,5 +1,35 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const fs = require('node:fs');
+const path = require('node:path');
+const yaml = require('js-yaml');
+
+// Expectations come from authored decks, independently of the browser renderer.
+const loadDeck = (kind, id) => yaml.load(fs.readFileSync(path.join(__dirname, '../_data', kind, id + '.yml'), 'utf8'));
+const userStoriesQuiz = loadDeck('quizzes', 'user_stories');
+const normalizeQuestionText = text => text
+  .replace(/`([^`]+)`/g, '$1')
+  .replace(/[“”]/g, '"')
+  .replace(/[‘’]/g, "'")
+  .replace(/(?:^|\s)-(?=\s)/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+async function visibleUserStory(card) {
+  const text = normalizeQuestionText(await card.locator('.question-text').innerText());
+  const question = userStoriesQuiz.questions.find(item => normalizeQuestionText(item.question) === text);
+  expect(question, `visible question should match an authored user story: ${text}`).toBeDefined();
+  return question;
+}
+
+async function answerAuthoredUserStory(card, question, includeOptional = false) {
+  const multiple = question.type === 'multiple';
+  const indices = multiple ? question.correct_indices.concat(includeOptional ? question.optional_indices || [] : []) : [question.correct_index];
+  for (const index of indices) {
+    await card.getByRole(multiple ? 'checkbox' : 'radio').filter({ hasText: question.options[index] }).click();
+  }
+  if (multiple) await card.getByRole('button', { name: 'Submit Answer', exact: true }).click();
+}
 const { a11yCheckpoint } = require('./a11y-helpers');
 
 // Feature key used by `A11Y_INTERACTIVE_FEATURES` to scope a targeted sweep
@@ -643,7 +673,8 @@ test.describe('Personal Gym - Workout', () => {
 
     await expect(page.locator('#gym-workout')).toBeVisible();
     await expect(page.locator('#gym-entrance')).toBeHidden();
-    await expect(page.locator('#workout-total')).toHaveText('10');
+    const expectedTotal = loadDeck('quizzes', 'shell_parson').questions.length + userStoriesQuiz.questions.length;
+    await expect(page.locator('#workout-total')).toHaveText(String(expectedTotal));
 
     await page.getByRole('button', { name: /Back to Gym Entrance/i }).click();
     await expect(page).toHaveURL(/\/se-gym\/$/);
@@ -657,7 +688,8 @@ test.describe('Personal Gym - Workout', () => {
 
     await expect(page.locator('#gym-workout')).toBeVisible();
     await expect(page.locator('#gym-entrance')).toBeHidden();
-    await expect(page.locator('#workout-total')).toHaveText('14');
+    const expectedTotal = loadDeck('flashcards', 'design_pattern_singleton').cards.length + loadDeck('flashcards', 'user_stories').cards.length;
+    await expect(page.locator('#workout-total')).toHaveText(String(expectedTotal));
     await expect(page.locator('.workout-flashcard')).toBeVisible();
 
     await page.getByRole('button', { name: /Back to Gym Entrance/i }).click();
@@ -1030,17 +1062,25 @@ test.describe('Personal Gym - Workout', () => {
     await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'user_stories' }]));
     await page.goto(GYM_URL);
 
-    await page.locator('#max-cards').fill('1');
-    await page.locator('#start-workout-btn').click();
+    await page.getByRole('spinbutton', { name: 'Max cards:' }).fill(String(userStoriesQuiz.questions.length));
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
 
     const quizCard = page.locator('#workout-card-area .workout-quiz-card');
-    await expect(quizCard).toBeVisible();
+    // The real deck mixes single and multiple answers; reach a multiple item
+    // regardless of the workout's shuffled order.
+    for (let i = 0; i < userStoriesQuiz.questions.length; i++) {
+      await expect(quizCard).toBeVisible();
+      const question = await visibleUserStory(quizCard);
+      if (question.type === 'multiple') break;
+      await answerAuthoredUserStory(quizCard, question);
+      await quizCard.getByRole('button', { name: 'Next', exact: true }).click();
+    }
     await expect(quizCard).toHaveAttribute('data-type', 'multiple');
     await expect(quizCard.locator('.quiz-shortcuts-hint')).toContainText(/Enter|Return/);
-    await expect(quizCard.locator('.quiz-option').first()).toBeFocused();
+    await expect(quizCard.getByRole('checkbox').first()).toBeFocused();
 
     await page.keyboard.press('1');
-    await expect(quizCard.locator('.submit-answer-btn')).toBeEnabled();
+    await expect(quizCard.getByRole('button', { name: 'Submit Answer', exact: true })).toBeEnabled();
     await page.keyboard.press('Enter');
 
     await expect(quizCard.locator('.quiz-explanation')).toBeVisible();
@@ -1513,22 +1553,30 @@ test.describe('Personal Gym - Workout', () => {
     await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'user_stories' }]));
     await page.goto(GYM_URL);
 
-    await page.locator('#max-cards').fill('5');
-    await page.locator('#start-workout-btn').click();
+    const questions = userStoriesQuiz.questions;
+    await page.getByRole('spinbutton', { name: 'Max cards:' }).fill(String(questions.length));
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
 
-    for (let i = 0; i < 5; i++) {
+    const answeredIds = new Set();
+    let optionalQuestionsAnswered = 0;
+    for (let i = 0; i < questions.length; i++) {
       const card = page.locator('#workout-card-area .workout-quiz-card');
       await expect(card).toBeVisible();
-      const questionText = await card.locator('.question-text').innerText();
-      const includeOptional = questionText.includes('homepage to load blazing fast');
+      const question = await visibleUserStory(card);
+      const includeOptional = (question.optional_indices || []).length > 0;
 
-      await answerWorkoutMultipleChoice(card, includeOptional);
+      await answerAuthoredUserStory(card, question, includeOptional);
       await expect(card.locator('.quiz-option.selected.incorrect')).toHaveCount(0);
-      await card.locator('.next-btn').click();
+      answeredIds.add(question.id);
+      if (includeOptional) optionalQuestionsAnswered++;
+      await card.getByRole('button', { name: 'Next', exact: true }).click();
     }
 
+    expect([...answeredIds].sort()).toEqual(questions.map(question => question.id).sort());
+    expect(optionalQuestionsAnswered, 'the workout must exercise an optional accepted answer').toBeGreaterThan(0);
+    expect(optionalQuestionsAnswered).toBe(questions.filter(question => (question.optional_indices || []).length > 0).length);
     await expect(page.locator('#workout-results')).toBeVisible();
-    await expect(page.locator('#workout-score')).toHaveText('5');
+    await expect(page.locator('#workout-score')).toHaveText(String(questions.length));
     await expect(page.locator('#workout-review-btn')).toBeHidden();
   });
 });

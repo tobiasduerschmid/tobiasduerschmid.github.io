@@ -276,3 +276,113 @@ questions:
       - "\\w+://"
       - "[a-z]"
     explanation: "**`https?://` handles both protocols and `([^/]+)` captures the domain by matching everything up to the first slash.** `https?://` matches both `http://` and `https://` (the `s` is optional via `?`). The capturing group `([^/]+)` matches one or more characters that are NOT a forward slash — i.e., the domain name. `\\w+://` is a distractor that would also match things like `ftp://` which wasn't the intent, and `[a-z]` matches only a single lowercase letter."
+
+  - id: 14
+    type: single
+    difficulty: intermediate
+    question: In Python, for input without newlines, which pattern used with `re.search` accepts exactly `on` or `off`
+      as the whole input?
+    options:
+      - '`^on|off$`'
+      - '`^(?:on|off)$`'
+      - '`^(?:on|off)+$`'
+    correct_index: 1
+    option_feedback:
+      0: Alternation splits this into `^on` and `off$`, allowing extra text after `on` or before `off`.
+      2: The `+` repeats the whole choice and therefore accepts concatenations such as `onoff`.
+    explanation: Grouping makes both anchors apply to both alternatives. The repeated-group variant would also accept
+      strings such as `onoff`.
+
+  - id: 15
+    type: single
+    difficulty: intermediate
+    question: For whole-string matching, which pattern accepts only strings that alternate `x` and `y`, start with
+      `x`, and have length at least 4?
+    options:
+      - '`(?:xy){2,}`'
+      - '`[xy]{4,}`'
+      - '`(?:xy){2,}x?`'
+    correct_index: 2
+    option_feedback:
+      0: This enforces alternation but rejects valid odd lengths such as `xyxyx`.
+      1: A character class permits any order, including repeated adjacent letters such as `xxxx`.
+    explanation: Two `xy` pairs give the minimum length of four. More pairs extend an even-length string, and the
+      optional trailing `x` permits odd lengths without breaking alternation.
+
+  - id: 16
+    type: single
+    difficulty: intermediate
+    question: In Python, which pattern extracts `27` as named group `count` from `qty=27;`, excluding the label and
+      semicolon from that group?
+    options:
+      - '`(?P<count>qty=[0-9]+);`'
+      - '`qty=(?P<count>[0-9]+);`'
+      - '`qty=(?P<count>[0-9]+;)`'
+    correct_index: 1
+    option_feedback:
+      0: This puts the `qty=` label inside the named capture.
+      2: This puts the trailing semicolon inside the named capture.
+    explanation: Only the characters inside the named-group parentheses are captured as `count`. The label and delimiter
+      still participate in the full match.
+
+  - id: 17
+    type: single
+    difficulty: intermediate
+    question: Which pattern matches one or more complete repetitions of `ha`, such as `ha` and `hahaha`, but rejects
+      `haaa`? Use whole-string matching.
+    options:
+      - '`ha+`'
+      - '`(?:ha)+`'
+      - '`[ha]+`'
+    correct_index: 1
+    option_feedback:
+      0: This repeats only `a`, so it accepts `haaa`.
+      2: This permits any nonempty sequence of `h` and `a`, including `haaa` and `hhh`.
+    explanation: A quantifier repeats its preceding atom. Grouping `ha` makes that complete two-character unit repeat.
+
+  - id: 18
+    type: single
+    difficulty: intermediate
+    question: A match must end immediately before a whitespace character and `Ready`, without consuming either. Which
+      suffix expresses this?
+    options:
+      - '`\sReady`'
+      - '`(?=\sReady)`'
+      - '`(?<=\sReady)`'
+    correct_index: 1
+    option_feedback:
+      0: This consumes the separator and `Ready` as part of the match.
+      2: A lookbehind checks text before the current position, not the following marker.
+    explanation: A positive lookahead checks the following text without adding it to the match or a preceding capture.
+
+  - id: 19
+    type: single
+    difficulty: intermediate
+    question: Which pattern accepts every zero-padded hour from `00` through `23` and rejects `24`? Use whole-string
+      matching.
+    options:
+      - '`[0-2][0-9]`'
+      - '`(?:[01][0-9]|2[0-3])`'
+      - '`[0-2][0-3]`'
+    correct_index: 1
+    option_feedback:
+      0: This also accepts `24` through `29`.
+      2: This wrongly rejects hours such as `08` and `19`.
+    explanation: Hours starting with 0 or 1 allow any decimal second digit. Hours starting with 2 allow only 0 through
+      3.
+
+  - id: 20
+    type: single
+    difficulty: intermediate
+    question: Which Python pattern accepts a whole token of 5–9 characters with no whitespace, including punctuation?
+      Use `re.fullmatch`.
+    options:
+      - '`\w{5,9}`'
+      - '`\S{5,9}`'
+      - '`.{5,9}`'
+    correct_index: 1
+    option_feedback:
+      0: '`\w` excludes punctuation such as `!`, even though punctuation is allowed here.'
+      2: The dot allows spaces and tabs, so length alone does not enforce the whitespace restriction.
+    explanation: '`\S` matches a non-whitespace character, including punctuation. The bounds apply to the whole token
+      because the caller uses `fullmatch`.'

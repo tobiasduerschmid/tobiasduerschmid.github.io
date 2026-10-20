@@ -27,3 +27,14 @@ cards:
     question: "Name three contexts where the Observer pattern is highly applicable."
     answer: "Classic GUI/MVC (model notifies views), event listeners, and in-process subscriptions to a news source."
     explanation: "Swing listeners and Node.js EventEmitter illustrate related notification designs. Distributed feeds additionally require transport, delivery, and retry policies that Observer itself does not supply."
+
+  - id: 6
+    difficulty: intermediate
+    question: A model calls `drawChart()` and `drawTable()` directly. How can Observer separate the concerns?
+    answer: Have both views implement a shared notification operation; each view owns its rendering.
+    explanation: The model publishes changes without selecting concrete display behavior.
+  - id: 7
+    difficulty: intermediate
+    question: Two observers are registered, but a complete notify trace updates one. What should you check first?
+    answer: Whether notification visits all registered observers or has an explicit filtering rule.
+    explanation: With ordinary broadcast notification and no filter, the missing update is a behavioral omission.

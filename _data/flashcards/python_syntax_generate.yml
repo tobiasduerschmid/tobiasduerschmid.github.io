@@ -250,3 +250,13 @@ cards:
       return await left, await right
       ```
     explanation: Both operations are scheduled before the first await. asyncio.gather(read_left(), read_right()) is another option; creating raw coroutine objects alone does not schedule them.
+
+  - id: exam-practice-write-length-guard
+    difficulty: intermediate
+    question: Before pairing the lists `prices` and `credits`, write a guard that raises `ValueError` when their lengths differ.
+    answer: |-
+      ```python
+      if len(prices) != len(credits):
+          raise ValueError("lengths differ")
+      ```
+    explanation: The guard rejects mismatched inputs before zip can silently omit unmatched elements.

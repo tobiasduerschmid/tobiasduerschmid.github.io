@@ -139,3 +139,10 @@ cards:
     question: "Which CAP property does each requirement prioritize? (a) Reads must reflect the latest completed write, even if some requests must fail during a partition. (b) Stale reads are acceptable but requests must keep succeeding. (c) Replicas must tolerate a failed intercontinental link. (d) An ATM must keep accepting bounded withdrawals while disconnected from its bank."
     answer: "(a) Consistency: prefer CP for the specified read contract. (b) Availability: prefer AP for the specified service contract. (c) Partition tolerance: still choose how to trade consistency against availability. (d) Availability during the outage, with an explicit offline limit and reconciliation policy."
     explanation: "CAP names a consistency/availability trade-off during partitions. It does not by itself provide transaction isolation, idempotent payments, or all application invariants."
+
+  - id: exam-practice-transaction-boundary
+    difficulty: intermediate
+    question: A database commit succeeds, then sending a receipt email fails. Why does this alone not show a
+      database atomicity violation?
+    answer: The email send is outside the database transaction. Database atomicity covers the operations grouped
+      in that transaction, not every later action in the application.

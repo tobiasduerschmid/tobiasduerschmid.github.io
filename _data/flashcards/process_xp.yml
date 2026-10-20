@@ -97,3 +97,14 @@ cards:
     question: "When is XP the **wrong** process to choose?"
     answer: "When (a) the team is very large (XP doesn't scale past ~10 people in one team), (b) the domain is safety-critical and working software cannot be continuously deployed (e.g., spacecraft, certified medical devices), (c) requirements are genuinely stable and won't evolve, or (d) the team is not co-located (physical or close-virtual proximity is needed for pair programming and verbal coordination)."
     explanation: "XP's practices were engineered for a specific context — small co-located teams in evolving-requirements environments with continuous-deployment domains. In other contexts, frameworks like SAFe (large enterprise Agile), V-model (safety-critical), or even Waterfall (genuinely stable requirements) can be better fits. Picking XP for the wrong context is using the right hammer on the wrong nail."
+
+  - id: 16
+    difficulty: intermediate
+    question: A navigator cannot explain the change after ten minutes of silent typing. Name one targeted mitigation.
+    answer: Pause to explain the next small step, then rotate roles.
+    explanation: Active discussion and role changes help reveal and repair unequal understanding.
+  - id: 17
+    difficulty: intermediate
+    question: Remote pairing tools solve the location barrier. What scheduling constraint remains?
+    answer: The partners still need overlapping time for live collaboration.
+    explanation: If no overlap exists, asynchronous review can help, but it is a different collaboration format.

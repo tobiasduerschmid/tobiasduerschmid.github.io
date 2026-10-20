@@ -42,3 +42,32 @@ cards:
     question: "You want to safely inspect the codebase at a specific older commit without modifying any branch. Which Git command does this?"
     answer: "`git checkout <commit-hash>` (or `git switch --detach <commit-hash>`)"
     explanation: "Checking out a commit directly (rather than a branch) places you in 'detached HEAD' state, where HEAD points to a specific commit rather than a branch. You can look around freely, but any commits made here are not anchored to a branch and can be lost when switching away. Use `git switch -c <name>` to anchor them to a new branch if needed."
+
+  - id: 9
+    difficulty: intermediate
+    question: '`git reflog` reveals a lost fix at `abc1234`. Create a branch named `recovered-fix` at that commit
+      without changing your current checkout.'
+    answer: '`git branch recovered-fix abc1234`'
+    explanation: A branch keeps the still-existing commit reachable. Inspect it before deciding whether to merge or
+      cherry-pick its changes; reflogs and unreachable objects are not retained forever.
+
+  - id: 10
+    difficulty: advanced
+    question: A regression detector is stored outside the repository at `/tmp/check_export.sh`. Write a bisect sequence
+      using known revisions `bad_rev` and `good_rev`.
+    answer: |-
+      ```sh
+      git bisect start bad_rev good_rev
+      git bisect run /bin/sh /tmp/check_export.sh
+      git bisect reset
+      ```
+    explanation: The detector must exercise the current checkout, remain compatible across candidates, and return
+      0 for good or 1 for the targeted regression. Keeping it outside the checkout prevents historical checkouts from
+      removing it.
+
+  - id: 11
+    difficulty: advanced
+    question: What extra rule makes squash-merged TDD work useful for bisecting `main`?
+    answer: Merge only a completed, passing feature, and use a consistent detector for the particular regression.
+    explanation: Squashing combines commits but does not make broken code pass. Keeping intentional red steps off
+      main removes one confounder; the chosen good/bad property must still hold consistently across the searched history.

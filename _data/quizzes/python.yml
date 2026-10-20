@@ -1310,3 +1310,43 @@ questions:
       0: The base case returns a count of one rather than the integer’s value.
       2: An empty list contributes sum over no children, which is zero.
     explanation: The recursion counts four integer leaves. Each call reduces the problem to child trees; empty lists add nothing.
+
+  - id: exam-practice-paired-lengths
+    type: single
+    difficulty: intermediate
+    question: A function must reject unequal list lengths. It currently subtracts pairs with `zip(prices, credits)`. Which change enforces that requirement?
+    options:
+    - Check both lengths and raise ValueError before pairing.
+    - Pad the shorter list with zeros before pairing.
+    - Keep zip because it detects unequal lengths itself.
+    correct_index: 0
+    option_feedback:
+      1: Padding invents data rather than rejecting the invalid input required by the contract.
+      2: Ordinary zip stops at the shortest input; it does not reject unequal lengths.
+    explanation: Check the lengths before using zip. Otherwise unmatched values are silently skipped, so the function may return a plausible but incomplete result.
+  - id: exam-practice-numpy-loop
+    type: single
+    difficulty: intermediate
+    question: Both versions subtract one million pairs of numbers. Why can a NumPy array expression run faster than a Python loop?
+    options:
+    - Array syntax reduces the work to one numeric subtraction.
+    - Compiled loops avoid per-element Python execution.
+    - NumPy delays the subtractions until the result is printed.
+    correct_index: 1
+    option_feedback:
+      0: Each pair still needs its subtraction. The speedup comes from how the loop executes, not from removing those operations.
+      2: Ordinary NumPy array arithmetic computes the result; it is not deferred until printing.
+    explanation: NumPy performs the elementwise work in compiled code, avoiding the interpreter overhead of executing the loop body once per Python element.
+  - id: exam-practice-numpy-storage
+    type: single
+    difficulty: intermediate
+    question: A numeric NumPy array uses one fixed element type. How does that help compiled numerical loops?
+    options:
+    - Each element carries an independent Python type object.
+    - Each element freely changes to an unrelated type.
+    - Values use one predictable numeric representation.
+    correct_index: 2
+    option_feedback:
+      0: Ordinary Python lists refer to Python objects. A numeric ndarray instead stores values according to a shared dtype.
+      1: A numeric array has a fixed dtype; its elements do not independently become arbitrary Python objects.
+    explanation: A uniform numeric representation lets compiled loops process the values efficiently, rather than repeatedly handling separate Python number objects.

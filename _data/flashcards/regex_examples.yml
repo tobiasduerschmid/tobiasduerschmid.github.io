@@ -61,3 +61,41 @@ cards:
     question: "Write a regex to find all leading and trailing whitespaces in a string (commonly used for string trimming)."  
     answer: "`^\\s+|\\s+$`"
     explanation: "Matches one or more whitespace characters `\\s+` at the start `^` of the string, OR `|` one or more whitespace characters at the end `$` of the string."
+
+  - id: 11
+    difficulty: advanced
+    question: Using `re.fullmatch`, write a regex for strings alternating `p` and `q`, starting with either, with
+      length at least 4.
+    answer: '`(?:pq){2,}p?|(?:qp){2,}q?`'
+    explanation: The two alternatives allow either starting letter. Each requires two pairs, and the optional final
+      letter admits odd lengths without allowing adjacent equal letters.
+
+  - id: 12
+    difficulty: intermediate
+    question: Write a Python regex that finds `id=42;` inside text and captures only the digits in a named group `id`.
+    answer: '`id=(?P<id>[0-9]+);`'
+    explanation: The delimiters locate the field but sit outside the named capture. Do not anchor the entire document
+      when the task is to find a field within it.
+
+  - id: 13
+    difficulty: advanced
+    question: Write a Python regex that captures `go go go` as named group `words` at a line start, immediately before
+      one space and `Stop`. Require at least three `go` words; exclude the final separator from the capture.
+    answer: '`(?m)^(?P<words>go(?: go){2,})(?= Stop\b)`'
+    explanation: One initial word plus at least two space-and-word repetitions gives three or more. The final lookahead
+      verifies the marker without capturing its preceding space; multiline mode makes `^` recognize each line start.
+
+  - id: 14
+    difficulty: intermediate
+    question: Using `re.fullmatch`, write a pattern for zero-padded minutes and seconds `MM:SS`, each from `00` through
+      `59`.
+    answer: '`[0-5][0-9]:[0-5][0-9]`'
+    explanation: Each tens digit is restricted to 0–5; the units digit may be 0–9. Whole-string matching also rejects
+      missing zero padding and extra text.
+
+  - id: 15
+    difficulty: intermediate
+    question: Using `re.fullmatch`, write a regex for 6–12 characters that contain no whitespace but may contain punctuation.
+    answer: '`\S{6,12}`'
+    explanation: '`\S` excludes whitespace; the repetition bounds enforce the length. `\w` would incorrectly reject
+      allowed punctuation.'

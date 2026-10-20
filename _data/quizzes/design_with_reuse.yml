@@ -297,3 +297,30 @@ questions:
         Assumptions* principle helps you notice the streaming issue, but the decision principle for
         choosing between them is the fit-vs-popularity rule.
     explanation: "Popular packages are usually safer defaults, but only when they fit your operating conditions. The 2 GB / memory-constrained context falsifies Library X's assumption that the file fits in memory; Library Y's lower popularity is a real cost, but a popular library that crashes your service has zero value."
+
+  - id: 13
+    type: single
+    difficulty: intermediate
+    question: A reused decoder supports images up to 4096 pixels wide. A new app accepts 12000-pixel images. What must the team verify?
+    options:
+    - That matching file formats establish compatibility.
+    - That the decoder safely supports the larger inputs.
+    - That success on smaller images establishes compatibility.
+    correct_index: 1
+    option_feedback:
+      0: The same format can contain images that exceed the decoder’s supported dimensions.
+      2: Tests within the original limit do not establish correct behavior beyond that limit.
+    explanation: Reuse requires checking the old assumptions against the new context. Restrict inputs, adapt or replace the component, or verify a supported extension before relying on it.
+  - id: 14
+    type: single
+    difficulty: intermediate
+    question: A dependency is pinned, but a relevant security fix is released. Which action balances reproducibility and maintenance?
+    options:
+    - Test the fixed version, then update the pin and lockfile.
+    - Remove all version constraints from future installs.
+    - Keep the vulnerable version because pinning forbids updates.
+    correct_index: 0
+    option_feedback:
+      1: Unconstrained installs make future builds unpredictable rather than validating one deliberate upgrade.
+      2: Pinning makes versions explicit; it does not prohibit controlled updates.
+    explanation: Validate the upgrade and record the chosen version. Reproducibility and timely maintenance support each other when upgrades are deliberate.

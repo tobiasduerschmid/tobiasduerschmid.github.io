@@ -27,3 +27,14 @@ cards:
     question: "In the State design pattern, who should define state transitions?"
     answer: "**Context-driven**: all transitions visible in one place. **State-driven**: each state knows its successors, more flexible but harder to see the full machine."
     explanation: "State-driven is preferred for well-defined, local transitions. Context-driven works better when transitions depend on complex external conditions."
+
+  - id: 6
+    difficulty: intermediate
+    question: After a ticket changes from Open to Closed, what must change for State-based delegation to use closed-ticket behavior?
+    answer: The context must refer to the Closed state object.
+    explanation: Replacing the current state changes which implementation handles the next delegated operation; changing a label alone does not.
+  - id: 7
+    difficulty: intermediate
+    question: Why does making a context’s current-state field public weaken the State design?
+    answer: Callers can bypass transition rules and install an invalid state.
+    explanation: Keep the representation controlled and expose domain operations that preserve valid transitions.

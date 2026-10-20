@@ -481,3 +481,15 @@ cards:
       ```
     answer: They may use different Python environments. Compare the selected interpreters and the environment reported by `python -m pip --version`.
     explanation: A virtual environment isolates installed packages. It does not change Python name binding or copy semantics.
+
+  - id: exam-practice-filter-input-or-output
+    difficulty: intermediate
+    question: |-
+      What list does this Python expression produce?
+
+      ```python
+      values = [4, 9]
+      [v * 2 for v in values if v > 5]
+      ```
+    answer: '`[18]`'
+    explanation: The condition checks each original value. Only 9 passes; that value is then doubled.
