@@ -523,6 +523,7 @@ html.dark-mode .uml-pg-toolbar-group:not(:last-of-type) {
 #uml-pg-export-source,
 #uml-pg-generate-python,
 #uml-pg-fullscreen,
+#uml-pg-exit-fullscreen,
 #uml-pg-undo,
 #uml-pg-redo {
   font: inherit;
@@ -855,11 +856,13 @@ html.dark-mode .uml-pg-inline-input {
   box-shadow: 0 2px 8px rgba(124, 196, 255, 0.5);
 }
 
-#uml-pg-fullscreen:hover {
+#uml-pg-fullscreen:hover,
+#uml-pg-exit-fullscreen:hover {
   background: #f5f8fc;
 }
 
-#uml-pg-fullscreen:focus-visible {
+#uml-pg-fullscreen:focus-visible,
+#uml-pg-exit-fullscreen:focus-visible {
   outline: 3px solid #2774AE;
   outline-offset: 2px;
 }
@@ -870,11 +873,43 @@ html.dark-mode .uml-pg-inline-input {
   border-color: #1a5a8a;
 }
 
+/* The browser top layer keeps the editor above tutorial/site navigation.
+   Exit has its own sticky row, independent of scrolling toolbars and canvas. */
+#uml-pg-fullscreen-bar[hidden] { display: none; }
+
+#uml-pg-fullscreen-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  padding: 0.5em;
+  background: #eef2f9;
+  color: #26415f;
+  border-bottom: 1px solid #c8d4e8;
+}
+
+html.dark-mode #uml-pg-fullscreen-bar {
+  background: #1b2b40;
+  color: #e3eef9;
+  border-color: #2c3e57;
+}
+
+#uml-playground-wrap.is-fullscreen #uml-pg-fullscreen { display: none; }
+
 /* Full-screen mode: take over the viewport. */
 #uml-playground-wrap.is-fullscreen {
   position: fixed;
   inset: 0;
   z-index: 9999;
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  overflow: auto;
   margin: 0;
   border-radius: 0;
   border: none;
@@ -904,6 +939,7 @@ html.dark-mode #uml-playground-wrap.is-fullscreen {
 }
 
 #uml-playground-wrap.is-fullscreen #uml-pg-preview-pane {
+  min-height: 0;
   overflow: auto;
 }
 
@@ -925,7 +961,7 @@ html.dark-mode #uml-playground-wrap.is-fullscreen {
   max-height: none;
 }
 
-/* When fullscreen, scroll the document up so the toolbar isn't hidden by anything below. */
+/* Keep the underlying page at its existing scroll position. */
 body.uml-pg-fullscreen-lock {
   overflow: hidden;
 }
@@ -1124,8 +1160,9 @@ html.dark-mode .uml-pg-splitter:focus-visible {
   padding: 12px;
   background: #fff;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
 }
 
 /* The pane is focusable (tabindex="-1") only so a canvas click can move keyboard
@@ -1155,6 +1192,8 @@ body #main-content #uml-pg-output svg[data-uml-pg-editor-canvas="1"] {
 
 .uml-pg-diagnostics {
   flex: 0 0 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
   margin: 0.5em;
   padding: 0.75em;
   border: 2px solid currentColor;
@@ -1168,6 +1207,15 @@ body #main-content #uml-pg-output svg[data-uml-pg-editor-canvas="1"] {
 .uml-pg-diagnostics p, .uml-pg-diagnostics ul { margin: 0.5em 0; }
 
 @media print {
+  #uml-playground-wrap::backdrop { background: #fff; }
+  #uml-pg-fullscreen-bar { display: none; }
+  #uml-playground-wrap.is-fullscreen {
+    position: static;
+    height: auto;
+    overflow: visible;
+    background: #fff;
+    color: #000;
+  }
   .uml-pg-diagnostics { color: #000; background: #fff; }
 }
 
@@ -1860,7 +1908,8 @@ html.dark-mode #uml-pg-reset-example,
 html.dark-mode #uml-pg-copy-source,
 html.dark-mode #uml-pg-export-source,
 html.dark-mode #uml-pg-generate-python,
-html.dark-mode #uml-pg-fullscreen {
+html.dark-mode #uml-pg-fullscreen,
+html.dark-mode #uml-pg-exit-fullscreen {
   background: #243347;
   border-color: #3a4a60;
   color: #d0e0f0;
@@ -1872,7 +1921,8 @@ html.dark-mode #uml-pg-reset-example:hover,
 html.dark-mode #uml-pg-copy-source:hover,
 html.dark-mode #uml-pg-export-source:hover,
 html.dark-mode #uml-pg-generate-python:hover,
-html.dark-mode #uml-pg-fullscreen:hover {
+html.dark-mode #uml-pg-fullscreen:hover,
+html.dark-mode #uml-pg-exit-fullscreen:hover {
   background: #2c3f57;
 }
 

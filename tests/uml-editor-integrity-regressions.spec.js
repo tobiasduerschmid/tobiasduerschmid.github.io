@@ -450,3 +450,151 @@ test('deleting a node together with its incident edge preserves unrelated relati
   await undoButton(page).click();
   await expect(sourceInput(page)).toHaveValue(source);
 });
+
+// Keyword-shaped identifiers are valid class names; they must not make
+// relationships look like declarations during an identity change.
+for (const [name, relation] of [
+  ['Class', 'Class --|> Class2'],
+  ['Class2', 'Class --|> Class2'],
+  ['Class', 'Class2 --|> Class'],
+  ['Class2', 'Class2 --|> Class'],
+  ['Class', 'Class *-- Class2'],
+  ['Class2', 'Class --> Class2: uses'],
+  ['Interface', 'Interface ..|> Class2'],
+  ['Enum', 'Enum o-- Class2'],
+]) {
+  test(`renaming ${name} preserves ${relation}`, async ({ page }) => {
+    const keyword = /^(Interface|Enum)/.exec(relation)?.[1] || 'Class';
+    const original = `@startuml\nclass ${keyword} { + name: String }\nclass Class2\n${relation}\n@enduml`;
+    await openDiagram(page, 'class', original);
+    await selectElement(page, name);
+    await editProperty(page, 'Name (id)', 'Renamed');
+    const expectedRelation = relation.replace(new RegExp(`\\b${name}\\b`, 'g'), 'Renamed');
+    await expect(sourceInput(page)).toHaveValue(original.replace(new RegExp(`\\b${name}\\b`, 'g'), 'Renamed'));
+    // The retained source must still render the relationship, not merely look valid.
+    await expect(page.getByRole('button', { name: /^Relation segment/ }).first()).toBeAttached();
+    await expect(sourceInput(page)).toHaveValue(new RegExp(expectedRelation.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    await undoButton(page).click();
+    await expect(sourceInput(page)).toHaveValue(original);
+    await redoButton(page).click();
+    await expect(sourceInput(page)).toHaveValue(original.replace(new RegExp(`\\b${name}\\b`, 'g'), 'Renamed'));
+  });
+}
+
+for (const name of ['Class', 'Class2']) {
+  test(`inline rename of ${name} preserves the generalization`, async ({ page }) => {
+    const original = '@startuml\nclass Class\nclass Class2\nClass --|> Class2\n@enduml';
+    await openDiagram(page, 'class', original);
+    await selectElement(page, name);
+    const target = elementTarget(page, name);
+    await target.evaluate(el => el.scrollIntoView({ block: 'center', inline: 'center' }));
+    const box = await target.boundingBox();
+    await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
+    const rename = page.getByRole('textbox', { name: `Rename ${name}`, exact: true });
+    await rename.fill('Renamed');
+    await rename.press('Enter');
+    await expect(sourceInput(page)).toHaveValue(original.replace(new RegExp(`\\b${name}\\b`, 'g'), 'Renamed'));
+    await expect(page.getByRole('button', { name: /^Relation segment/ }).first()).toBeAttached();
+  });
+}
+
+for (const operation of ['rename', 'delete']) {
+  test(`${operation} of a class preserves a separately declared dotted class`, async ({ page }) => {
+    const original = '@startuml\nclass A\nclass A.Part @pos(300, 200)\nclass Target\nA.Part --> Target\nA --> Target\n@enduml';
+    await openDiagram(page, 'class', original);
+    await selectElement(page, 'A');
+    if (operation === 'rename') await editProperty(page, 'Name (id)', 'Renamed');
+    else await deleteSelected(page);
+    await expect(sourceInput(page)).toHaveValue(/class A\.Part @pos\(300, 200\)/);
+    await expect(sourceInput(page)).toHaveValue(/A\.Part --> Target/);
+    await expect(elementTarget(page, 'A.Part')).toBeVisible();
+    await undoButton(page).click();
+    await expect(sourceInput(page)).toHaveValue(original);
+  });
+}
+
+for (const [id, relation] of [
+  ['A', "A '1' --> '*' B: owns"],
+  ['B', "A '1' --> '*' B: owns"],
+  ['A::B', 'A::B --> B: uses'],
+]) {
+  test(`renaming ${id} retains endpoint syntax in ${relation}`, async ({ page }) => {
+    const source = `@startuml\nclass ${id === 'A::B' ? id : 'A'}\nclass B\n${relation}\n@enduml`;
+    await openDiagram(page, 'class', source);
+    await selectElement(page, id);
+    await editProperty(page, 'Name (id)', 'Renamed');
+    await expect(sourceInput(page)).toHaveValue(source.replace(new RegExp(`\\b${id}\\b`, 'g'), 'Renamed'));
+    await expect(page.getByRole('button', { name: /^Relation segment/ }).first()).toBeAttached();
+  });
+}
+
+test('renaming a type updates each argument of square-bracket generics', async ({ page }) => {
+  const source = '@startuml\nclass A\nclass B\nclass Holder { +pair: tuple[A, B]; +nested: list[tuple[A, B]]; +find(a: A, b: B): tuple[A, B] }\n@enduml';
+  await openDiagram(page, 'class', source);
+  await selectElement(page, 'B');
+  await editProperty(page, 'Name (id)', 'Renamed');
+  await expect(sourceInput(page)).toHaveValue(source.replace(/\bB\b/g, 'Renamed'));
+});
+
+for (const operation of ['rename', 'delete']) {
+  test(`${operation} of a component updates its actual ports but preserves dotted siblings`, async ({ page }) => {
+    const original = '@startuml\ncomponent A { portin "request" as req }\ncomponent A.Part\ncomponent Target\nA.req --> Target\nA.Part --> Target\n@enduml';
+    await openDiagram(page, 'component', original);
+    await selectElement(page, 'A');
+    if (operation === 'rename') {
+      await editProperty(page, 'Identifier', 'Renamed');
+      await expect(sourceInput(page)).toHaveValue(/Renamed\.req --> Target/);
+    } else {
+      await deleteSelected(page);
+      await expect(sourceInput(page)).not.toHaveValue(/A\.req --> Target/);
+    }
+    await expect(sourceInput(page)).toHaveValue(/component A\.Part/);
+    await expect(sourceInput(page)).toHaveValue(/A\.Part --> Target/);
+    await undoButton(page).click();
+    await expect(sourceInput(page)).toHaveValue(original);
+  });
+}
+
+test('editing a namespace relation label keeps its endpoints', async ({ page }) => {
+  const original = '@startuml\nclass A::B\nclass Target\nA::B --> Target: old label\n@enduml';
+  await openDiagram(page, 'class', original);
+  const route = page.getByRole('button', { name: /^Relation segment/ }).first();
+  await route.focus();
+  await route.press('Enter');
+  await editProperty(page, 'Label', 'new label');
+  await expect(sourceInput(page)).toHaveValue(/A::B --> Target\s*:\s*new label/);
+  await deleteSelected(page);
+  await expect(sourceInput(page)).not.toHaveValue(/-->/);
+  await expect(elementTarget(page, 'A::B')).toBeVisible();
+  await expect(elementTarget(page, 'Target')).toBeVisible();
+});
+
+test('renaming a namespace type updates member types and preserves named-note prose', async ({ page }) => {
+  const original = '@startuml\nclass A::B\nclass Holder { +value: A::B }\nnote as Explanation\nA::B --> Holder is an example\nend note\nA::B --> Holder\n@enduml';
+  await openDiagram(page, 'class', original);
+  await selectElement(page, 'A::B');
+  await editProperty(page, 'Name (id)', 'Renamed');
+  await expect(sourceInput(page)).toHaveValue('@startuml\nclass Renamed\nclass Holder { +value: Renamed }\nnote as Explanation\nA::B --> Holder is an example\nend note\nRenamed --> Holder\n@enduml');
+});
+
+test('renaming an activity action changes references without rewriting explanatory text', async ({ page }) => {
+  const original = '@startuml\n(*) --> "Work"\n"Work" --> "Done": "Work" complete\nnote right of "Done": "Work" is the old label\n"Done" --> (*)\n@enduml';
+  await openDiagram(page, 'activity', original);
+  await selectElement(page, 'Work');
+  await editProperty(page, 'Action text', 'Renamed');
+  await expect(sourceInput(page)).toHaveValue('@startuml\n(*) --> "Renamed"\n"Renamed" --> "Done": "Work" complete\nnote right of "Done": "Work" is the old label\n"Done" --> (*)\n@enduml');
+  await undoButton(page).click();
+  await expect(sourceInput(page)).toHaveValue(original);
+});
+
+test('duplicating a state retains links to independent dotted states', async ({ page }) => {
+  const original = '@startuml\nstate A {\nstate Child\nChild --> A.Part\n}\nstate A.Part\n@enduml';
+  await openDiagram(page, 'state', original);
+  await selectElement(page, 'A');
+  await page.keyboard.press(process.platform === 'darwin' ? 'Meta+d' : 'Control+d');
+  await expect(sourceInput(page)).toHaveValue(/Child2 --> A\.Part/);
+  await expect(sourceInput(page)).not.toHaveValue(/A2\.Part/);
+  await expect(elementTarget(page, 'A.Part')).toBeVisible();
+  await undoButton(page).click();
+  await expect(sourceInput(page)).toHaveValue(original);
+});

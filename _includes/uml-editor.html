@@ -60,6 +60,10 @@ Supported options:
 </script>
 
 <div id="uml-playground-wrap"{% if uml_editor_hide_archuml == true or uml_editor_hide_archuml == "true" %} class="is-archuml-hidden"{% endif %}>
+  <div id="uml-pg-fullscreen-bar" role="group" aria-label="Fullscreen controls" hidden>
+    <span>UML editor · <kbd>Esc</kbd> to exit</span>
+    <button id="uml-pg-exit-fullscreen" type="button">Exit full screen</button>
+  </div>
   <div id="uml-playground-toolbar">
     <span class="uml-pg-toolbar-group uml-pg-toolbar-group-type">
       <label for="uml-pg-type">Diagram type:</label>
@@ -117,7 +121,7 @@ Supported options:
         <button id="uml-pg-zoom-readout-btn" type="button" data-original-title="Reset zoom to 100% (Cmd/Ctrl+0)" aria-keyshortcuts="Control+0"><span id="uml-pg-zoom-readout">100%</span></button>
         <button id="uml-pg-zoom-in" type="button" data-original-title="Zoom in (Cmd/Ctrl++)" aria-keyshortcuts="Control+=" aria-label="Zoom in">+</button>
       </span>
-      <button id="uml-pg-fullscreen" type="button" data-original-title="Toggle full-screen (F)" aria-pressed="false">⛶ Full screen</button>
+      <button id="uml-pg-fullscreen" type="button" data-original-title="Toggle browser fullscreen (F)" aria-keyshortcuts="F" aria-pressed="false">⛶ Full screen</button>
     </span>
     <span id="uml-pg-autosave" role="status" aria-live="polite" aria-atomic="true"></span>
     <span id="uml-pg-status" role="status" aria-live="polite" aria-atomic="true"></span>
@@ -149,7 +153,7 @@ Supported options:
         <li><span class="uml-pg-help-key" aria-hidden="true">Edit</span> Double-click to rename. Click a relation to set its label, multiplicity, or navigability.</li>
         <li><span class="uml-pg-help-key" aria-hidden="true">Move</span> Drag to reposition. <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+click multi-selects. Drag empty canvas to pan.</li>
       </ul>
-      <p class="uml-pg-help-footer">Press <kbd>?</kbd> in the editor to show or hide these tips · <kbd>F</kbd> for fullscreen · <kbd>Del</kbd> to remove · <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>Z</kbd> to undo</p>
+      <p class="uml-pg-help-footer">Press <kbd>?</kbd> in the editor to show or hide these tips · <kbd>F</kbd> for browser fullscreen · <kbd>Esc</kbd> to exit · <kbd>Del</kbd> to remove · <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>Z</kbd> to undo</p>
     </div>
     <button id="uml-pg-help-dismiss" type="button" aria-label="Got it — dismiss tips">Got it</button>
   </div>
@@ -693,6 +697,7 @@ Supported options:
     var textarea = document.getElementById('uml-pg-input');
     var output = document.getElementById('uml-pg-output');
     var previewPane = document.getElementById('uml-pg-preview-pane');
+    var wrap = document.getElementById('uml-playground-wrap');
     var errorBox = document.getElementById('uml-pg-error');
     var downloadBtn = document.getElementById('uml-pg-download');
     var editToggle = document.getElementById('uml-pg-edit');
@@ -1162,6 +1167,11 @@ Supported options:
       m = clean.match(/^note\s+as\s+(\S+)/i);
       if (m) return unquoteId(m[1]);
       if (type === 'class') {
+        // A class may itself be named Class or Interface. Its outgoing arrow
+        // is a relation, not a declaration whose identifier is the operator.
+        var tokens = tokenizeRelationParts(clean);
+        if (isRelationOperatorToken(tokens[1]) ||
+            (relationTokenLooksLikeMultiplicity(tokens[1]) && isRelationOperatorToken(tokens[2]))) return null;
         m = clean.match(/^(?:abstract\s+class|class|interface|enum)\s+("[^"]+"|\S+)(?:\s+as\s+(\S+))?/i);
         return m ? unquoteId(m[2] || m[1]) : null;
       }
@@ -2251,6 +2261,12 @@ Supported options:
       var now = Date.now();
       var value = explicitValue !== undefined ? explicitValue : textarea.value;
       var top = undoStack[undoStack.length - 1];
+      // An edit after Undo starts a new branch, even inside a coalescing burst.
+      if (redoStack.length) {
+        redoStack.length = 0;
+        if (top) top.kind = null;
+        refreshUndoButtons();
+      }
       if (kind && top && top.kind === kind &&
           (now - top.t) < COALESCE_MS &&
           (now - top.firstT) < MAX_COALESCE_MS) {
@@ -2331,9 +2347,9 @@ Supported options:
       renderDiagram();
       refreshUndoButtons();
       if (selection && selection.id) {
-        // The hitbox DOM is rebuilt during renderDiagram; defer the focus so
-        // we hit the new node, not the stale one.
-        setTimeout(function () { focusLayoutTarget(selection.id); }, 0);
+        // renderDiagram rebuilds the hitboxes synchronously. Restore focus now
+        // so a deferred callback cannot steal the student's next focus choice.
+        focusLayoutTarget(selection.id);
       }
     }
     function undo() {
@@ -2929,8 +2945,9 @@ Supported options:
       var routes = readLayoutRoutes(textarea.value);
       var lines = stripLayoutMetadata(textarea.value).split('\n');
       var openIndent = (lines[info.startIdx].match(/^\s*/) || [''])[0];
-      lines.splice(info.endIdx, 0, openIndent + 'else' + (trimmed ? ' [' + trimmed + ']' : ''));
-      textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
+      var branch = openIndent + 'else' + (trimmed ? ' [' + trimmed + ']' : '');
+      textarea.value = rewriteSourceLines(textarea.value, 'sequence',
+        [{ start: info.endIdx, end: info.endIdx - 1, replacement: branch }], positions, routes);
       selectAfterRender(fragId, 'fragment');
       renderDiagram();
       announce('Added else branch.', false);
@@ -3121,7 +3138,7 @@ Supported options:
         return true;
       } else {
         var nextIdx = nextNonBlank(blockEnd, +1);
-        if (nextIdx >= lines.length) {
+        if (nextIdx >= lines.length || /^\s*@enduml\b/i.test(lines[nextIdx])) {
           announce('Fragment is already last.', false);
           return false;
         }
@@ -3536,7 +3553,9 @@ Supported options:
     }
 
     function declarationBraceRange(text) {
-      text = maskDeclarationNotes(text.split('\n')).join('\n');
+      text = maskDeclarationNotes(text.split('\n')).map(function (line) {
+        return /^\s*'/.test(line) ? ' '.repeat(line.length) : line;
+      }).join('\n');
       let start = -1;
       let depth = 0;
       let quote = '';
@@ -3575,30 +3594,63 @@ Supported options:
     }
 
     function idIsReferenceTo(candidate, id) {
-      return candidate === id || candidate.indexOf(id + '.') === 0;
+      if (candidate === id) return true;
+      if (typeSelect.value === 'venn') return candidate.toLowerCase() === id.toLowerCase();
+      // Dotted class names are independent identities. Only component ports
+      // belong to their dotted owner and follow an owner's rename/removal.
+      if (typeSelect.value !== 'component' || candidate.indexOf(id + '.') !== 0) return false;
+      const port = componentPortForId(textarea.value, 'component', candidate);
+      return !!port && port.owner === id;
+    }
+
+    // Venn names may contain spaces; separators only count outside quotes.
+    // Keep offsets so edits retain the learner's separators and note prose.
+    function vennReferenceSpans(text, offset) {
+      if (/^(?:outside|none|\*)$/i.test(text.trim())) return [];
+      const spans = [];
+      let start = 0;
+      let quoted = false;
+      for (let index = 0; index <= text.length; index++) {
+        if (text[index] === '"') quoted = !quoted;
+        if (index < text.length && (quoted || !/[&+,∩]/.test(text[index]))) continue;
+        const raw = text.slice(start, index);
+        const token = raw.trim();
+        if (token) {
+          const tokenStart = offset + start + raw.indexOf(token);
+          spans.push({ value: unquoteId(token), quoted: token[0] === '"', start: tokenStart, end: tokenStart + token.length });
+        }
+        start = index + 1;
+      }
+      return spans;
     }
 
     // Return only identifier spans: relation endpoints and directive targets.
     // Labels, comments, member names, and note prose are deliberately excluded.
     function referenceSpans(line, type) {
       if (/^\s*(?:@|'|\/\/)/.test(line) || declarationIdForLine(line, type)) return [];
-      const tokens = [];
-      const re = /"(?:[^"\\]|\\.)*"|[^\s:]+/g;
-      let match;
-      while ((match = re.exec(line))) {
-        if (line.slice(tokens.length ? tokens[tokens.length - 1].end : 0, match.index).indexOf(':') !== -1) break;
-        tokens.push({ value: unquoteId(match[0]), quoted: match[0][0] === '"', start: match.index, end: re.lastIndex });
+      const labelIndex = relationLabelIndex(line);
+      if (type === 'venn') {
+        const note = line.match(/^\s*note\s+(?:left|right|top|bottom|above|below)\s+of\s+/i);
+        if (note || labelIndex >= 0) {
+          const start = note ? note[0].length : 0;
+          return vennReferenceSpans(line.slice(start, labelIndex < 0 ? line.length : labelIndex), start);
+        }
       }
+      const tokens = tokenizeRelationParts(labelIndex < 0 ? line : line.slice(0, labelIndex));
       const operator = tokens.findIndex(isRelationOperatorToken);
       if (operator >= 0) {
-        const spans = [];
-        const source = parseRelationEndpointTokens(tokens.slice(0, operator), 'source').id;
-        const target = parseRelationEndpointTokens(tokens.slice(operator + 1), 'target').id;
-        const sourceToken = tokens.slice(0, operator).find(function (token) { return token.value === source; });
-        const targetToken = tokens.slice(operator + 1).find(function (token) { return token.value === target; });
-        if (sourceToken) spans.push(sourceToken);
-        if (targetToken) spans.push(targetToken);
-        return spans;
+        return [parseRelationEndpointTokens(tokens.slice(0, operator), 'source'),
+          parseRelationEndpointTokens(tokens.slice(operator + 1), 'target')]
+          .filter(function (endpoint) { return endpoint.tokens.length; })
+          .map(function (endpoint) {
+            const first = endpoint.tokens[0];
+            const last = endpoint.tokens[endpoint.tokens.length - 1];
+            return { value: endpoint.id, quoted: endpoint.tokens.length === 1 && first.quoted,
+              start: first.start, end: last.end };
+          });
+      }
+      if (type === 'activity' && /^"(?:[^"\\]|\\.)+"$/.test(window.UMLShared.parseHighlightColor(line).stripped.trim())) {
+        return tokens.slice(0, 1);
       }
       if (/^\s*(?:activate|deactivate|destroy|create)\b/i.test(line)) return tokens.slice(-1);
       if (type === 'state' && /^\s*(?:"(?:[^"\\]|\\.)*"|\S+)\s*:\s*(?:entry|exit|do)\s*\//i.test(line)) return tokens.slice(0, 1);
@@ -4707,7 +4759,8 @@ Supported options:
       if (/^rectangle\b/i.test(trimmed)) return 'Boundary';
       if (/^(?:entity|weak\s+entity)\b/i.test(trimmed)) return 'Entity';
       if (/^(?:relationship|identifying\s+relationship)\b/i.test(trimmed)) return 'Relationship';
-      if (parseTokenizedRelationLine(trimmed.replace(/\s*:\s*.*$/, ''))) return 'Relation';
+      var labelIndex = relationLabelIndex(trimmed);
+      if (parseTokenizedRelationLine(labelIndex < 0 ? trimmed : trimmed.slice(0, labelIndex))) return 'Relation';
       return 'Model row';
     }
 
@@ -5382,7 +5435,7 @@ Supported options:
         });
         box.appendChild(btn);
       });
-      document.body.appendChild(box);
+      wrap.appendChild(box);
       var W = window.innerWidth, H = window.innerHeight;
       var rect = box.getBoundingClientRect();
       var x = Math.min(Math.max(clientX, 8), W - rect.width - 8);
@@ -5501,7 +5554,7 @@ Supported options:
         });
         box.appendChild(btn);
       });
-      document.body.appendChild(box);
+      wrap.appendChild(box);
       var W = window.innerWidth, H = window.innerHeight;
       var rect = box.getBoundingClientRect();
       var x = Math.min(Math.max(clientX, 8), W - rect.width - 8);
@@ -5551,7 +5604,7 @@ Supported options:
         });
         box.appendChild(btn);
       });
-      document.body.appendChild(box);
+      wrap.appendChild(box);
       // Position near the cursor, kept inside the viewport.
       var W = window.innerWidth, H = window.innerHeight;
       var rect = box.getBoundingClientRect();
@@ -6500,7 +6553,7 @@ Supported options:
         }
       }
       info.rawAfter = rest.trim();
-      info.members = info.body.split(/[;\n]/).map(function (s) { return s.trim(); }).filter(Boolean).map(parseMemberLine);
+      info.members = splitBodyStatements(info.body).map(parseMemberLine);
       return info;
     }
 
@@ -7788,7 +7841,7 @@ Supported options:
       const statements = [];
       let start = 0;
       let depth = 0;
-      let quoted = false;
+      let quoted = '';
       for (let index = 0; index <= body.length; index++) {
         if (groupNotes && index === start && !depth && !quoted && /^\s*note\b/.test(body.slice(start))) {
           const noteLines = body.slice(start).split('\n');
@@ -7802,8 +7855,15 @@ Supported options:
           }
         }
         const char = body[index];
+        if (!quoted && char === "'" && !body.slice(body.lastIndexOf('\n', index - 1) + 1, index).trim()) {
+          // A line-leading apostrophe is a comment, not a member string.
+          const newline = body.indexOf('\n', index);
+          index = newline < 0 ? body.length - 1 : newline - 1;
+          continue;
+        }
         if (quoted && char === '\\') { index++; continue; }
-        if (char === '"') quoted = !quoted;
+        if (quoted && char === quoted) quoted = '';
+        else if (!quoted && (char === '"' || char === "'")) quoted = char;
         if (!quoted && char === '{') depth++;
         if (!quoted && char === '}') depth--;
         if (index === body.length || (!quoted && depth === 0 && (char === ';' || char === '\n'))) {
@@ -8078,11 +8138,11 @@ Supported options:
           continue;
         }
         if (char === ':') { inType = true; genericDepth = 0; }
-        if (inType && char === '<') genericDepth++;
-        if (inType && char === '>') genericDepth = Math.max(0, genericDepth - 1);
+        if (inType && (char === '<' || char === '[')) genericDepth++;
+        if (inType && (char === '>' || char === ']')) genericDepth = Math.max(0, genericDepth - 1);
         if (/[;\n=)}]/.test(char) || (char === ',' && genericDepth === 0)) inType = false;
         if (inType && /[A-Za-z_$]/.test(char)) {
-          const token = declaration.slice(index).match(/^[\w.$]+/)[0];
+          const token = declaration.slice(index).match(/^[\w.$]+(?:::[\w.$]+)*/)[0];
           result += token === oldId ? formatRelationEndpointId(newId) : token;
           index += token.length;
           continue;
@@ -8117,7 +8177,8 @@ Supported options:
       let inNote = false;
       for (var i = 0; i < lines.length; i++) {
         if (inNote) { if (/^\s*end\s*note\s*$/i.test(lines[i])) inNote = false; continue; }
-        if (typeSelect.value === 'class' && /^\s*(?:abstract\s+class|class|interface|enum)\b/i.test(lines[i])) {
+        if (typeSelect.value === 'class' && /^\s*(?:abstract\s+class|class|interface|enum)\b/i.test(lines[i]) &&
+            declarationIdForLine(lines[i], 'class')) {
           const end = declarationEndIndex(lines, i);
           const declaration = lines.slice(i, end + 1).join('\n');
           lines.splice.apply(lines, [i, end - i + 1].concat(renameClassMemberTypes(declaration, oldId, newId).split('\n')));
@@ -8184,7 +8245,7 @@ Supported options:
       }
       function clonedReference(id) {
         if (mapping.has(id)) return mapping.get(id);
-        if (id.indexOf(oldId + '.') === 0) return newId + id.slice(oldId.length);
+        if (idIsReferenceTo(id, oldId)) return newId + id.slice(oldId.length);
         return id;
       }
       let cloned = declaration;
@@ -8219,40 +8280,7 @@ Supported options:
         return;
       }
       snapshotForUndo('activity-rename:' + oldId);
-      var positions = readLayoutPositions(textarea.value);
-      var routes = readLayoutRoutes(textarea.value);
-      if (positions[oldId]) {
-        positions[next] = positions[oldId];
-        delete positions[oldId];
-      }
-      Object.keys(routes || {}).forEach(function (routeId) {
-        var route = routes[routeId];
-        if (!route || !route.points) return;
-        var nextRouteId = routeId
-          .replace(new RegExp('(^|[|:])' + oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[|:])', 'g'), function (m, pre, post) {
-            return pre + next + post;
-          });
-        if (nextRouteId !== routeId) {
-          routes[nextRouteId] = route;
-          delete routes[routeId];
-        }
-      });
-      var clean = stripLayoutMetadata(textarea.value);
-      var escapedOld = oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/"/g, '\\"');
-      var quotedOld = new RegExp('"'+ escapedOld + '"', 'g');
-      var bareOld = oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      var nextQuoted = '"' + escapeQuoted(next) + '"';
-      var lines = clean.split('\n').map(function (line) {
-        var rewritten = line.replace(quotedOld, nextQuoted);
-        rewritten = rewritten.replace(new RegExp('(^|\\s)' + bareOld + '(\\s*-->)', 'g'), function (match, pre, post) {
-          return pre + nextQuoted + post;
-        });
-        rewritten = rewritten.replace(new RegExp('(-->\\s*(?:\\[[^\\]]*\\]\\s*)?)' + bareOld + '(?=\\s*(?::|$))', 'g'), function (match, pre) {
-          return pre + nextQuoted;
-        });
-        return rewritten;
-      });
-      textarea.value = writePositionsIntoSource(lines.join('\n'), 'activity', positions, routes);
+      textarea.value = renameReferencesInRelations(textarea.value, oldId, next);
       renderDiagram();
       selectAfterRender(next, 'node');
       announce('Renamed action to "' + next + '".', false);
@@ -8393,7 +8421,8 @@ Supported options:
         // Must contain a connector + endpoints. Use the same tolerant token
         // parser as the properties pane so variants such as o<--> and *--x
         // remain selectable even when the renderer exposes an ordinal route id.
-        if (parseTokenizedRelationLine(t.replace(/\s*:\s*.*$/, ''))) out.push(i);
+        var labelIndex = relationLabelIndex(t);
+        if (parseTokenizedRelationLine(labelIndex < 0 ? t : t.slice(0, labelIndex))) out.push(i);
       }
       return out;
     }
@@ -8562,11 +8591,11 @@ Supported options:
       var m;
       while ((m = re.exec(String(text || '')))) {
         if (m[1] != null) {
-          tokens.push({ value: unquoteId('"' + m[1] + '"'), quoted: true });
+          tokens.push({ value: unquoteId('"' + m[1] + '"'), quoted: true, start: m.index, end: re.lastIndex });
         } else if (m[2] != null) {
-          tokens.push({ value: m[2].replace(/\\'/g, "'").replace(/\\\\/g, '\\'), quoted: true });
+          tokens.push({ value: m[2].replace(/\\'/g, "'").replace(/\\\\/g, '\\'), quoted: true, start: m.index, end: re.lastIndex });
         } else {
-          tokens.push({ value: m[3], quoted: false });
+          tokens.push({ value: m[3], quoted: false, start: m.index, end: re.lastIndex });
         }
       }
       return tokens;
@@ -8600,47 +8629,41 @@ Supported options:
     }
 
     function parseRelationEndpointTokens(tokens, side) {
-      var result = { id: '', mult: '' };
       var list = (tokens || []).filter(function (token) {
         return token && String(token.value || '').trim();
       });
-      if (!list.length) return result;
-
-      if (side === 'source' &&
-          list.length === 2 &&
-          list[0].quoted &&
-          relationTokenLooksLikeMultiplicity(list[0]) &&
-          !relationTokenLooksLikeMultiplicity(list[1])) {
-        // Tolerate lines written by older visual-editor builds:
-        // `"1" A -- B` instead of the renderer's `A "1" -- B`.
-        result.mult = cleanRelationMultiplicityToken(list[0]);
-        result.id = joinRelationEndpointTokens([list[1]]);
-        return result;
+      var multiplicity = null;
+      if (side === 'source' && list.length === 2 && list[0].quoted &&
+          relationTokenLooksLikeMultiplicity(list[0]) && !relationTokenLooksLikeMultiplicity(list[1])) {
+        // Tolerate the legacy `"1" A -- B` spelling.
+        multiplicity = list.shift();
+      } else if (side === 'target' && list.length >= 2 &&
+          (list[0].quoted || /^\[[^\]]+\]$/.test(list[0].value))) {
+        multiplicity = list.shift();
+      } else if (list.length >= 2 &&
+          (list[list.length - 1].quoted || /^\[[^\]]+\]$/.test(list[list.length - 1].value))) {
+        multiplicity = list.pop();
       }
+      return { id: joinRelationEndpointTokens(list),
+        mult: multiplicity ? cleanRelationMultiplicityToken(multiplicity) : '', tokens: list };
+    }
 
-      if (side === 'source' && list.length >= 2 &&
-          (list[list.length - 1].quoted || (!list[list.length - 1].quoted && /^\[[^\]]+\]$/.test(list[list.length - 1].value)))) {
-        result.mult = cleanRelationMultiplicityToken(list[list.length - 1]);
-        result.id = joinRelationEndpointTokens(list.slice(0, list.length - 1));
-        return result;
+    // A namespace separator or a colon inside a quoted identifier is not a
+    // relation label. Both property edits and reference rewrites use this split.
+    function relationLabelIndex(text) {
+      var quote = '';
+      for (var index = 0; index < text.length; index++) {
+        var char = text[index];
+        if (quote) {
+          if (char === '\\') { index++; continue; }
+          if (char === quote) quote = '';
+        } else if (char === '"' || char === "'") {
+          quote = char;
+        } else if (char === ':' && text[index - 1] !== ':' && text[index + 1] !== ':') {
+          return index;
+        }
       }
-
-      if (side === 'target' && list.length >= 2 &&
-          (list[0].quoted || (!list[0].quoted && /^\[[^\]]+\]$/.test(list[0].value)))) {
-        result.mult = cleanRelationMultiplicityToken(list[0]);
-        result.id = joinRelationEndpointTokens(list.slice(1));
-        return result;
-      }
-
-      if (side === 'target' && list.length >= 2 &&
-          (list[list.length - 1].quoted || (!list[list.length - 1].quoted && /^\[[^\]]+\]$/.test(list[list.length - 1].value)))) {
-        result.mult = cleanRelationMultiplicityToken(list[list.length - 1]);
-        result.id = joinRelationEndpointTokens(list.slice(0, list.length - 1));
-        return result;
-      }
-
-      result.id = joinRelationEndpointTokens(list);
-      return result;
+      return -1;
     }
 
     function parseTokenizedRelationLine(text) {
@@ -8671,13 +8694,13 @@ Supported options:
       if (!line) return info;
       var t = line.trim();
       // Pull off label
-      var labMatch = t.match(/\s*:\s*(.*)$/);
-      if (labMatch) {
-        var labRaw = labMatch[1];
+      var labelIndex = relationLabelIndex(t);
+      if (labelIndex >= 0) {
+        var labRaw = t.slice(labelIndex + 1).trim();
         var sm = labRaw.match(/^<<\s*([^>]+?)\s*>>\s*(.*)$/);
         if (sm) { info.stereotype = '<<' + sm[1] + '>>'; info.label = sm[2].trim(); }
         else info.label = labRaw.trim();
-        t = t.replace(/\s*:\s*.*$/, '');
+        t = t.slice(0, labelIndex).trim();
       }
       if (/\s+dashed\s*$/i.test(t)) {
         info.dashed = true;
@@ -9070,10 +9093,11 @@ Supported options:
       input.style.top = Math.max(8, Math.min(top - 18, window.innerHeight - 42)) + 'px';
       input.style.width = '180px';
       input.style.minHeight = '32px';
-      document.body.appendChild(input);
+      wrap.appendChild(input);
       input.focus();
       input.select();
       inlineRenameInput = input;
+      inlineRenameCancel = cancel;
 
       function commit() {
         var next = input.value.trim();
@@ -9090,6 +9114,7 @@ Supported options:
         input.removeEventListener('blur', commit);
         if (input.parentNode) input.parentNode.removeChild(input);
         inlineRenameInput = null;
+        inlineRenameCancel = null;
       }
       function onKey(ev) {
         if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
@@ -9199,6 +9224,7 @@ Supported options:
           seg.setAttribute('aria-label', 'Relation segment ' + (i + 1) + ' of ' + route.id + ' — Enter to select, Delete to remove');
           setRouteOverlaySegment(seg, route.points[i], route.points[i + 1]);
           seg.addEventListener('pointerdown', function (event) {
+            if (event.button !== 0) return;
             // Yield to an active tool — element hitbox underneath should handle
             // the click for relation-tool source/target picks.
             if (activeTool) return;
@@ -9555,6 +9581,7 @@ Supported options:
         // hitboxes after the first selection — a per-rect closure would be
         // discarded between the two clicks.
         addHitboxListener('pointerdown', function (event) {
+          if (event.button !== 0) return;
           // In relation-tool mode, click → record source/target instead of drag.
           if (activeTool && activeTool.kind === 'relation') {
             if (selectedSequenceMessageToolSpec()) {
@@ -9681,11 +9708,9 @@ Supported options:
           } else if (k === 'F2') {
             event.preventDefault();
             setSelectedLayoutId(item.id, 'node');
-            // Focus the Identifier field in the props panel.
-            setTimeout(function () {
-              var firstInput = propsContent && propsContent.querySelector('input[type="text"]');
-              if (firstInput) { firstInput.focus(); firstInput.select(); }
-            }, 0);
+            // Selection rebuilds properties synchronously; do not defer focus.
+            var firstInput = propsContent && propsContent.querySelector('input[type="text"]');
+            if (firstInput) { firstInput.focus(); firstInput.select(); }
           } else if (k === 'Escape') {
             event.preventDefault();
             if (activeTool) { setActiveTool(null); announce('Cancelled.', false); }
@@ -9803,6 +9828,7 @@ Supported options:
 
     // ─── In-canvas inline rename (label-only, never id) ───
     var inlineRenameInput = null;
+    var inlineRenameCancel = null;
 
     function startInlineRename(item) {
       cancelInlineRename();
@@ -9821,10 +9847,11 @@ Supported options:
       input.style.top = rect.top + 'px';
       input.style.width = Math.max(rect.width, 100) + 'px';
       input.style.minHeight = Math.max(rect.height * 0.5, 28) + 'px';
-      document.body.appendChild(input);
+      wrap.appendChild(input);
       input.focus();
       input.select();
       inlineRenameInput = input;
+      inlineRenameCancel = cancel;
 
       var labelTextNode = findElementLabelTextNode(svg, item);
       var originalText = labelTextNode ? labelTextNode.textContent : null;
@@ -9848,6 +9875,7 @@ Supported options:
         input.removeEventListener('blur', commit);
         if (input.parentNode) input.parentNode.removeChild(input);
         inlineRenameInput = null;
+        inlineRenameCancel = null;
       }
       function onKey(ev) {
         if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
@@ -9859,10 +9887,7 @@ Supported options:
     }
 
     function cancelInlineRename() {
-      if (inlineRenameInput && inlineRenameInput.parentNode) {
-        inlineRenameInput.parentNode.removeChild(inlineRenameInput);
-      }
-      inlineRenameInput = null;
+      if (inlineRenameCancel) inlineRenameCancel();
     }
 
     function findElementLabelTextNode(svg, item) {
@@ -10134,10 +10159,11 @@ Supported options:
       input.style.top = rect.top + 'px';
       input.style.width = Math.max(rect.width + 80, 160) + 'px';
       input.style.minHeight = Math.max(rect.height + 4, 24) + 'px';
-      document.body.appendChild(input);
+      wrap.appendChild(input);
       input.focus();
       input.select();
       inlineRenameInput = input;
+      inlineRenameCancel = cancel;
 
       var originalText = textEl.textContent;
       function preview() {
@@ -10186,6 +10212,7 @@ Supported options:
         input.removeEventListener('blur', commit);
         if (input.parentNode) input.parentNode.removeChild(input);
         inlineRenameInput = null;
+        inlineRenameCancel = null;
       }
       function onKey(ev) {
         if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
@@ -10225,10 +10252,11 @@ Supported options:
       input.style.top = rect.top + 'px';
       input.style.width = Math.max(rect.width + 80, 160) + 'px';
       input.style.minHeight = Math.max(rect.height + 4, 24) + 'px';
-      document.body.appendChild(input);
+      wrap.appendChild(input);
       input.focus();
       input.select();
       inlineRenameInput = input;
+      inlineRenameCancel = cancel;
 
       var originalText = textEl.textContent;
       function preview() {
@@ -10254,6 +10282,7 @@ Supported options:
         input.removeEventListener('blur', commit);
         if (input.parentNode) input.parentNode.removeChild(input);
         inlineRenameInput = null;
+        inlineRenameCancel = null;
       }
       function onKey(ev) {
         if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
@@ -10439,10 +10468,11 @@ Supported options:
       input.style.top = rect.top + 'px';
       input.style.width = Math.max(rect.width + 60, 160) + 'px';
       input.style.minHeight = Math.max(rect.height + 4, 24) + 'px';
-      document.body.appendChild(input);
+      wrap.appendChild(input);
       input.focus();
       input.select();
       inlineRenameInput = input;
+      inlineRenameCancel = cancel;
 
       var originalText = textEl.textContent;
       function preview() {
@@ -10469,6 +10499,7 @@ Supported options:
         input.removeEventListener('blur', commit);
         if (input.parentNode) input.parentNode.removeChild(input);
         inlineRenameInput = null;
+        inlineRenameCancel = null;
       }
       function onKey(ev) {
         if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
@@ -10675,16 +10706,56 @@ Supported options:
       textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, positions, routes);
       pendingSelect = { id: id, kind: 'node' };
       renderDiagram();
-      // Restore focus to the keyboard-operable target after the re-render.
-      setTimeout(function () {
-        var newSvg = output.querySelector('svg');
-        if (!newSvg) return;
-        var target = newSvg.querySelector('.uml-pg-edit-a11y-target[data-layout-id="' + cssAttrEscape(id) + '"]');
-        if (target && target.focus) target.focus();
-      }, 0);
+      // The rebuilt target is ready now; avoid stealing a later focus choice.
+      focusLayoutTarget(id);
     }
 
     function cssAttrEscape(s) { return String(s).replace(/(["\\])/g, '\\$1'); }
+
+    function alignmentBoxesForDrag(state) {
+      if (!state.alignmentBoxes) {
+        state.alignmentBoxes = findEditableElements(state.svg).filter(function (item) {
+          return item.axis === 'xy' && item.id !== state.item.id && selectedLayoutIds[item.id] !== 'node';
+        }).map(function (item) { return item.box; });
+      }
+      return state.alignmentBoxes;
+    }
+
+    function alignmentTolerance(svg) {
+      var origin = editorCanvasPoint(svg, 0, 0);
+      var offset = editorCanvasPoint(svg, 4, 4);
+      return { x: Math.abs(offset.x - origin.x), y: Math.abs(offset.y - origin.y) };
+    }
+
+    function alignedCoordinate(position, size, peers, axis, tolerance) {
+      var dimension = axis === 'x' ? 'width' : 'height';
+      // Prefer center alignment to a nearby edge, particularly when the two
+      // classes have slightly different measured widths.
+      var fractions = [0.5, 0, 1];
+      for (var i = 0; i < fractions.length; i++) {
+        var fraction = fractions[i];
+        var closest = null;
+        var distance = tolerance;
+        peers.forEach(function (box) {
+          var candidate = box[axis] + box[dimension] * fraction - size * fraction;
+          if (Math.abs(candidate - position) <= distance) {
+            closest = candidate;
+            distance = Math.abs(candidate - position);
+          }
+        });
+        if (closest !== null) return closest;
+      }
+      return Math.round(position / 10) * 10;
+    }
+
+    function snapAlignedNodePosition(state, position) {
+      var peers = alignmentBoxesForDrag(state);
+      var tolerance = alignmentTolerance(state.svg);
+      return {
+        x: alignedCoordinate(position.x, state.box.width, peers, 'x', tolerance.x),
+        y: alignedCoordinate(position.y, state.box.height, peers, 'y', tolerance.y)
+      };
+    }
 
     /**
      * Draw alignment-guide lines while dragging — show vertical/horizontal
@@ -10698,7 +10769,8 @@ Supported options:
       Array.prototype.slice.call(layer.querySelectorAll('.uml-pg-guide-line')).forEach(function (g) { g.remove(); });
       // Don't bother for ports / labels.
       if (dragState.item.axis === 'port' || dragState.item.axis === 'label' || dragState.item.axis === 'branch-label') return;
-      var TOL = 4;
+      var tolerance = alignmentTolerance(svg);
+      if (snapToggle && snapToggle.checked && dragState.item.axis === 'xy') tolerance = { x: 0.01, y: 0.01 };
       var movedBox = {
         x: dragState.box.x + visualDx,
         y: dragState.box.y + visualDy,
@@ -10740,7 +10812,7 @@ Supported options:
         var bXs = [b.x, bCx, b.x + b.width];
         for (var i = 0; i < movedXs.length; i++) {
           for (var j = 0; j < bXs.length; j++) {
-            if (Math.abs(movedXs[i] - bXs[j]) <= TOL) {
+            if (Math.abs(movedXs[i] - bXs[j]) <= tolerance.x) {
               var x = bXs[j];
               var top = Math.min(movedBox.y, b.y) - 12;
               var bot = Math.max(movedBox.y + movedBox.height, b.y + b.height) + 12;
@@ -10753,7 +10825,7 @@ Supported options:
         var bYs = [b.y, bCy, b.y + b.height];
         for (var k = 0; k < movedYs.length; k++) {
           for (var m = 0; m < bYs.length; m++) {
-            if (Math.abs(movedYs[k] - bYs[m]) <= TOL) {
+            if (Math.abs(movedYs[k] - bYs[m]) <= tolerance.y) {
               var y = bYs[m];
               var left = Math.min(movedBox.x, b.x) - 12;
               var right = Math.max(movedBox.x + movedBox.width, b.x + b.width) + 12;
@@ -10858,8 +10930,14 @@ Supported options:
         nextY = constrained.y;
       }
       if (snapToggle && snapToggle.checked) {
-        if (dragState.item.axis !== 'port') nextX = Math.round(nextX / 10) * 10;
-        nextY = Math.round(nextY / 10) * 10;
+        if (dragState.item.axis === 'xy') {
+          var aligned = snapAlignedNodePosition(dragState, { x: nextX, y: nextY });
+          nextX = aligned.x;
+          nextY = aligned.y;
+        } else {
+          if (dragState.item.axis !== 'port') nextX = Math.round(nextX / 10) * 10;
+          nextY = Math.round(nextY / 10) * 10;
+        }
         if (dragState.item.axis === 'port') {
           var resnapped = constrainedPortPosition(dragState.item, nextX, nextY);
           nextX = resnapped.x;
@@ -11198,6 +11276,7 @@ Supported options:
 
     layoutSelect.addEventListener('change', function () {
       if (!ignoresLayout()) {
+        snapshotForUndo();
         textarea.value = applyLayoutDirective(textarea.value, layoutSelect.value);
       }
       renderDiagram();
@@ -11264,7 +11343,7 @@ Supported options:
           if (box) return box;
           box = document.createElement('div');
           box.className = 'uml-pg-marquee-box';
-          document.body.appendChild(box);
+          wrap.appendChild(box);
           return box;
         }
         function update(x, y) {
@@ -11379,34 +11458,21 @@ Supported options:
     }
 
     var fullscreenBtn = document.getElementById('uml-pg-fullscreen');
-    var wrap = document.getElementById('uml-playground-wrap');
+    var fullscreenBar = document.getElementById('uml-pg-fullscreen-bar');
+    var exitFullscreenBtn = document.getElementById('uml-pg-exit-fullscreen');
     var autosaveIndicator = document.getElementById('uml-pg-autosave');
 
-    // Clicking the canvas must pull keyboard focus into the editor so the
-    // focus-scoped single-key shortcuts work — F (fullscreen), ? (tips), zoom,
-    // select-all, etc. These stay scoped to the focused widget on purpose
-    // (WCAG 2.1.4 Character Key Shortcuts), but the preview pane is otherwise
-    // unfocusable and the SVG-level pointerdown calls preventDefault() for its
-    // pan gesture, which suppresses the browser's native click-to-focus — so a
-    // canvas click would leave focus on <body> and the shortcuts dead. We set
-    // focus explicitly here, only when it is currently outside the editor (so a
-    // canvas click while a diagram item is focused leaves that item focused),
-    // and never steal focus from a control the click already targets.
+    // Capture before canvas handlers prevent native focus or stop propagation.
+    // A pointer selection must own the next key, even after editing a text field
+    // or focusing a different diagram item.
     if (previewPane) {
       previewPane.addEventListener('pointerdown', function (event) {
         if (event.button !== 0) return;
-        var t = event.target;
-        // If the click targets a more specific focusable control (a toolbar
-        // button, a diagram item's tabindex hitbox, an inline rename field…),
-        // let it take focus naturally. The pane itself is tabindex="-1", so
-        // exclude it from this check — otherwise every canvas click matches.
-        var focusable = t && t.closest &&
-          t.closest('a[href], button, input, textarea, select, [tabindex], [contenteditable]');
-        if (focusable && focusable !== previewPane) return;
-        if (wrap && !wrap.contains(document.activeElement)) {
-          try { previewPane.focus({ preventScroll: true }); } catch (e) { previewPane.focus(); }
-        }
-      });
+        var target = event.target;
+        if (target.closest('a[href], button, input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return;
+        var focusTarget = target.closest('[tabindex]') || previewPane;
+        focusTarget.focus({ preventScroll: true });
+      }, true);
     }
 
     // ─── Autosave ─────────────────────────────────────────────────────────
@@ -11627,20 +11693,73 @@ Supported options:
         if (pp && propsPane) propsPane.style.flex = '0 0 ' + Number(pp) + 'px';
       } catch (e) {}
     }
-    function setFullscreen(on) {
-      if (!wrap || !fullscreenBtn) return;
-      wrap.classList.toggle('is-fullscreen', !!on);
-      document.body.classList.toggle('uml-pg-fullscreen-lock', !!on);
-      fullscreenBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      fullscreenBtn.textContent = on ? '⤢ Exit full screen' : '⛶ Full screen';
-      // Re-render so the canvas resizes to the new pane.
-      setTimeout(renderDiagram, 30);
-    }
-    if (fullscreenBtn) {
-      fullscreenBtn.addEventListener('click', function () {
-        setFullscreen(!wrap.classList.contains('is-fullscreen'));
+    var fullscreenPending = false;
+    var fullscreenReturnFocus = null;
+
+    // Browser state is authoritative, including Escape and browser-menu exits.
+    function syncFullscreen() {
+      var on = document.fullscreenElement === wrap;
+      if (on === wrap.classList.contains('is-fullscreen')) return;
+      if (!on) cancelInlineRename();
+      wrap.classList.toggle('is-fullscreen', on);
+      document.body.classList.toggle('uml-pg-fullscreen-lock', on);
+      fullscreenBar.hidden = !on;
+      fullscreenBtn.setAttribute('aria-pressed', String(on));
+      requestAnimationFrame(function () {
+        renderDiagram();
+        var target = on ? exitFullscreenBtn : fullscreenReturnFocus;
+        if (!target || !target.isConnected) target = previewPane;
+        target.focus({ preventScroll: true });
+        // Restored focus is navigation, not a request to reopen obsolete help.
+        if (window.dismissAccessibleTooltips) window.dismissAccessibleTooltips();
       });
     }
+
+    async function setFullscreen(on) {
+      if (fullscreenPending && document.fullscreenElement !== wrap) return;
+      fullscreenPending = true;
+      try {
+        if (on) {
+          if (!wrap.requestFullscreen) {
+            announce('Browser fullscreen is unavailable on this device.', true);
+            return;
+          }
+          fullscreenReturnFocus = document.activeElement;
+          await wrap.requestFullscreen();
+        } else if (document.fullscreenElement === wrap) {
+          await document.exitFullscreen();
+        }
+      } catch (error) {
+        announce(on ? 'The browser could not enter fullscreen. Please try the Full screen button.'
+          : 'The browser could not exit fullscreen. Press Escape to exit.', true);
+      } finally {
+        fullscreenPending = false;
+      }
+    }
+
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    fullscreenBtn.addEventListener('click', function () { setFullscreen(true); });
+    exitFullscreenBtn.addEventListener('click', function () { setFullscreen(false); });
+    // Escape remains available from text fields and SVG controls that otherwise
+    // consume it. Native browser exits also reach syncFullscreen above.
+    wrap.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && (dragState || paletteDragState)) {
+        event.preventDefault();
+        event.stopPropagation();
+        suppressPaletteClick = !!paletteDragState;
+        dragState = null;
+        paletteDragState = null;
+        clearSmartGuides();
+        renderDiagram();
+        announce('Cancelled.', false);
+        return;
+      }
+      if (event.key === 'Escape' && document.fullscreenElement === wrap) {
+        event.preventDefault();
+        // Let inline editors also receive Escape and cancel their draft.
+        setFullscreen(false);
+      }
+    }, true);
 
     if (propsDelete) {
       propsDelete.addEventListener('click', function () { deleteSelected(); });
@@ -11655,12 +11774,12 @@ Supported options:
       var typingInTextarea = t === textarea;
       var typingInForm = propsContent && propsContent.contains(t);
       var tag = t.tagName ? t.tagName.toLowerCase() : '';
-      var inFormControl = tag === 'input' || tag === 'textarea' || tag === 'select';
+      var inFormControl = tag === 'input' || tag === 'textarea' || tag === 'select' || t.isContentEditable;
       var inWrap = wrap && wrap.contains(t);
       var mod = event.metaKey || event.ctrlKey;
       // Undo / redo: only when not in a native text-editing surface (otherwise the
       // browser's textarea undo wins).
-      if (mod && (key === 'z' || key === 'Z') && !inFormControl) {
+      if (mod && (key === 'z' || key === 'Z') && inWrap && !inFormControl) {
         if (event.shiftKey) {
           event.preventDefault();
           redo();
@@ -11670,7 +11789,7 @@ Supported options:
         }
         return;
       }
-      if (mod && (key === 'y' || key === 'Y') && !inFormControl) {
+      if (mod && (key === 'y' || key === 'Y') && inWrap && !inFormControl) {
         event.preventDefault();
         redo();
         return;
@@ -11705,7 +11824,7 @@ Supported options:
         zoomToFit();
         return;
       }
-      if (key === 'Escape') {
+      if (key === 'Escape' && inWrap) {
         if (sequenceMessageDragState) {
           event.preventDefault();
           cancelSequenceMessageDrag();
@@ -11729,14 +11848,15 @@ Supported options:
           event.preventDefault();
           setSelectedLayoutId(null);
         }
-      } else if ((key === 'Delete' || key === 'Backspace') && selectedLayoutId &&
+      } else if ((key === 'Delete' || key === 'Backspace') && inWrap && selectedLayoutId &&
                  !typingInTextarea && !typingInForm) {
         if (inFormControl || tag === 'button') return;
         event.preventDefault();
         deleteSelected();
-      } else if ((key === 'f' || key === 'F') && inWrap && !inFormControl) {
+      } else if ((key === 'f' || key === 'F') && inWrap && !inFormControl &&
+                 !mod && !event.altKey && !event.repeat && !event.isComposing) {
         event.preventDefault();
-        setFullscreen(!wrap.classList.contains('is-fullscreen'));
+        setFullscreen(document.fullscreenElement !== wrap);
       } else if (key === '?' && inWrap && !inFormControl) {
         // ? toggles the help banner — useful for getting tips back after
         // dismissing them. Standard convention from GitHub, Gmail, Notion.
@@ -11757,6 +11877,7 @@ Supported options:
     if (resetOneBtn) {
       resetOneBtn.addEventListener('click', function () {
         if (!selectedLayoutId) return;
+        snapshotForUndo();
         if (selectedLayoutKind === 'route') {
           var routes = readLayoutRoutes(textarea.value);
           var selectedRoute = findEditableRoutes(output.querySelector('svg')).find(function (route) {

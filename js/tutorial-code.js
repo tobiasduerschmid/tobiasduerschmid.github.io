@@ -12781,6 +12781,11 @@
       var $trigger = jQuery(trigger);
       clearTimer($trigger, 'a11yTooltipHideTimer');
       clearTimer($trigger, 'a11yTooltipShowTimer');
+      var tooltip = $trigger.data('bs.tooltip');
+      if (tooltip) {
+        var fullscreen = document.fullscreenElement;
+        tooltip.options.container = fullscreen && fullscreen.contains(trigger) ? fullscreen : document.body;
+      }
       $trigger.tooltip('show');
       window.setTimeout(function () {
         getTip($trigger)
@@ -12812,6 +12817,15 @@
       .on('mouseenter.a11yTooltip', function () {
         scheduleShow(this);
       })
+      .on('click.a11yTooltip', function () {
+        if (!this.matches('button, [role="button"]')) return;
+        var $trigger = jQuery(this);
+        clearTimer($trigger, 'a11yTooltipShowTimer');
+        clearTimer($trigger, 'a11yTooltipHideTimer');
+        // Activation dismisses help before it can cover the next control.
+        getTip($trigger).removeClass('fade');
+        $trigger.tooltip('hide');
+      })
       .on('focusin.a11yTooltip', function () {
         showTooltip(this);
       })
@@ -12835,11 +12849,24 @@
         $trigger.tooltip('hide');
       });
 
+    window.dismissAccessibleTooltips = function () {
+      jQuery('[data-original-title]').each(function () {
+        var $trigger = jQuery(this);
+        clearTimer($trigger, 'a11yTooltipShowTimer');
+        clearTimer($trigger, 'a11yTooltipHideTimer');
+        var tooltip = $trigger.data('bs.tooltip');
+        if (tooltip) {
+          if (tooltip.$tip) tooltip.$tip.removeClass('fade');
+          $trigger.tooltip('hide');
+        }
+      });
+    };
+
     jQuery(document)
       .off('keydown.tutorialDynamicTooltips')
       .on('keydown.tutorialDynamicTooltips', function (event) {
         if (event.key === 'Escape' || event.keyCode === 27) {
-          jQuery('[data-original-title]').tooltip('hide');
+          window.dismissAccessibleTooltips();
         }
       });
   };

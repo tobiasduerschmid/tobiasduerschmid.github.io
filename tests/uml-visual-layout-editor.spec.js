@@ -87,6 +87,7 @@ async function selectDiagram(page, type) {
 
 async function showCanvasForPointerWork(page) {
   await page.getByRole('button', { name: /Full screen/ }).click();
+  await expect(page.getByRole('button', { name: 'Exit full screen', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'Got it — dismiss tips', exact: true }).click();
 }
 
@@ -157,6 +158,13 @@ async function dragLocatorCenter(page, locator, dx, dy, options = {}) {
   await locator.evaluate((el, svgUnits) => el.scrollIntoView({
     block: svgUnits ? 'center' : 'nearest', inline: svgUnits ? 'center' : 'nearest',
   }), !!options.svgUnits);
+  // Hover waits for scrolling/layout to settle on boxes. SVG strokes can be
+  // clickable while their DOM bounds have zero area, so use coordinates there.
+  const hasBoxArea = await locator.evaluate(el => {
+    const rect = el.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  });
+  if (hasBoxArea) await locator.hover();
   await expect
     .poll(() => locator.boundingBox(), {
       timeout: 2_000,
@@ -1683,6 +1691,7 @@ class Dog @pos(330, 110)
     );
     await expect(page.getByRole('button', { name: /Element IFace/ })).toHaveCount(1);
     await expect(page.locator('#uml-pg-input')).toHaveValue(/interface IFace @pos/);
+    await page.getByRole('button', { name: /Element Animal/ }).scrollIntoViewIfNeeded();
 
     await dragLocatorToPoint(
       page,

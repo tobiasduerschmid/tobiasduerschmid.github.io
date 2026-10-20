@@ -2559,6 +2559,35 @@ channel.
   They ignore note content and do not claim complete UML validation. Keep the
   same behavior in tutorials and standalone editor pages; no tutorial YAML
   option, progress credit, or new persistence key is added by these controls.
+- **UML editor reference edits** — renaming either classifier preserves its
+  relationship endpoints. Reference edits share the properties panel's tokenizer,
+  including namespace separators (`::`) and both multiplicity quote styles.
+  Member types inside angle- and square-bracket generics follow type renames.
+  Dotted identifiers are independent unless they identify an actual component
+  port; deleting or renaming `A` must preserve a separately declared `A.Part`.
+- **UML editor history and safe edits** — new edits after Undo discard the redo
+  branch; resetting a selected layout and changing layout mode are undoable.
+  Activity labels and Venn set references preserve explanatory text and contents.
+  Sequence branch insertion remaps source-indexed label positions, and fragments
+  cannot move beyond `@enduml`. Member string defaults retain quoted delimiters.
+- **UML editor fullscreen and focus** — the shared editor requests browser
+  fullscreen for its wrapper. A dedicated sticky exit row remains visible above
+  the scrollable controls; Escape exits even from editor inputs. Browser
+  `fullscreenchange` events synchronize controls and restore focus. Fixed-position
+  editing menus and inline fields belong to the wrapper so they remain usable in
+  the browser top layer. Canvas pointer capture transfers focus before SVG handlers
+  suppress native focus, so F and Delete apply to the clicked editor target.
+  Undo, Redo, and Delete require editor focus. Undo/Redo, arrow nudges, and F2
+  restore focus synchronously so they cannot steal a subsequent focus choice. Escape cancels a pending palette
+  or class/route drag before exiting fullscreen; right-button gestures do not drag.
+  Tooltips render within the fullscreen element and dismiss on button activation
+  so they cannot remain over the next control. After fullscreen focus restoration,
+  the tooltip controller's `dismissAccessibleTooltips()` clears obsolete help;
+  subsequent deliberate hover or keyboard focus still opens it.
+  Draft diagnostics occupy a row above the canvas, never a column beside it.
+  With Snap enabled, dragging nodes aligns nearby centers/edges within four
+  screen pixels; grid placement remains the fallback and manual route editing
+  is unchanged.
 - **Shared UML fit/restore view** — the ArchUML bundle automatically adds one
   top-right control in a reserved toolbar row to overflowing diagram viewports,
   including authored lesson diagrams. The shared UML editor/playground, live

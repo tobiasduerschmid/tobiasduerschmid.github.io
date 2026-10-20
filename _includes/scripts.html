@@ -122,6 +122,11 @@
         var $trigger = $(trigger);
         clearHideTimer($trigger);
         clearShowTimer($trigger);
+        var tooltip = $trigger.data('bs.tooltip');
+        if (tooltip) {
+          var fullscreen = document.fullscreenElement;
+          tooltip.options.container = fullscreen && fullscreen.contains(trigger) ? fullscreen : document.body;
+        }
         $trigger.tooltip('show');
         window.setTimeout(function () {
           getTip($trigger)
@@ -167,6 +172,15 @@
           if (!deviceCanHover()) return;
           scheduleShow(this);
         })
+        .on('click.a11yTooltip', function () {
+          if (!this.matches('button, [role="button"]')) return;
+          var $trigger = $(this);
+          clearShowTimer($trigger);
+          clearHideTimer($trigger);
+          // Activation dismisses help before it can cover the next control.
+          getTip($trigger).removeClass('fade');
+          $trigger.tooltip('hide');
+        })
         .on('focusin.a11yTooltip', function () {
           if (!isKeyboardFocus(this)) return;
           showTooltip(this);
@@ -184,7 +198,9 @@
         var $trigger = $(this);
         clearHideTimer($trigger);
         clearShowTimer($trigger);
-        if ($trigger.data('bs.tooltip')) {
+        var tooltip = $trigger.data('bs.tooltip');
+        if (tooltip) {
+          if (tooltip.$tip) tooltip.$tip.removeClass('fade');
           $trigger.tooltip('hide');
         }
       });
@@ -203,6 +219,7 @@
       .off('keydown.a11yTooltip')
       .on('keydown.a11yTooltip', onAccessibleTooltipKeydown);
 
+    window.dismissAccessibleTooltips = hideLiveAccessibleTooltips;
     window.initAccessibleTooltips = initAccessibleTooltips;
     initAccessibleTooltips(tooltipSelector);
     if (window.MutationObserver) {
