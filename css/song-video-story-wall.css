@@ -167,3 +167,19 @@
 .sw-vignette {
   background: radial-gradient(ellipse at 50% 45%, transparent 56%, rgba(0, 0, 0, 0.5) 100%);
 }
+
+/* ------------------------------------------------------------------ */
+/* The scenes in the story wall's language                             */
+/* ------------------------------------------------------------------ */
+
+/* The section badge is a strip of masking tape with torn ends, written in
+   dark marker ink (about 12:1 on the tape). */
+.theme-story-wall .badge {
+  padding: 7px 18px 6px;
+  border: 0;
+  border-radius: 1px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 45%), #eadcb6;
+  box-shadow: none;
+  color: #2b2418;
+  clip-path: polygon(0 10%, 2% 0, 30% 6%, 62% 0, 98% 5%, 100% 0, 99% 48%, 100% 92%, 97% 100%, 66% 95%, 34% 100%, 3% 96%, 0 100%, 1% 52%);
+}

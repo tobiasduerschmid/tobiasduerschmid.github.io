@@ -249,3 +249,131 @@
 .dr-vignette {
   background: radial-gradient(ellipse at 50% 45%, transparent 58%, rgba(0, 0, 0, 0.5) 100%);
 }
+
+/* ------------------------------------------------------------------ */
+/* The scenes in the darkroom's language                               */
+/* ------------------------------------------------------------------ */
+
+/* The shared kit keeps its structure and choreography; this room restyles
+   it as darkroom things. Boards (stations and history cards) carry a strip
+   of film as their header, snapshots are prints on warm photo paper, file
+   chips are paper labels, stickers are punched hang tags like the HEAD and
+   branch tags on the line, and the section badge is a film-box label.
+   Corners are small: darkroom gear is boxy, not bubbly. */
+
+.theme-darkroom .station,
+.theme-darkroom .graph-card {
+  border-color: rgba(255, 226, 205, 0.18);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 92, 92, 0.06), transparent 34%),
+    linear-gradient(160deg, #1b1731, #100e21 72%);
+  box-shadow: inset 0 1px 0 rgba(255, 230, 210, 0.08), 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+.theme-darkroom .station-glow {
+  border-radius: 10px;
+}
+
+/* A strip of film behind each board's title: dark film base with a row of
+   sprocket holes above and below the words. */
+.theme-darkroom .station:not(.station--remote)::before,
+.theme-darkroom .graph-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 38px;
+  border-radius: 8px 8px 0 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 214, 170, 0.2) 0 6px, transparent 6px 13px) left 6px top 4px / calc(100% - 12px) 4px no-repeat,
+    repeating-linear-gradient(90deg, rgba(255, 214, 170, 0.2) 0 6px, transparent 6px 13px) left 6px bottom 4px / calc(100% - 12px) 4px no-repeat,
+    linear-gradient(180deg, #0c0a16, #120f1f);
+  pointer-events: none;
+}
+
+/* A history card without a title keeps only a thin sprocket edge, clear of
+   its first row of labels. */
+.theme-darkroom .graph-card:not(:has(> .graph-card-title))::before {
+  height: 10px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 214, 170, 0.2) 0 6px, transparent 6px 13px) left 6px top 3px / calc(100% - 12px) 3px no-repeat,
+    linear-gradient(180deg, #0c0a16, #120f1f);
+}
+
+.theme-darkroom .station-head,
+.theme-darkroom .graph-card-title {
+  position: relative;
+}
+
+/* Snapshots: prints on warm photo paper with a developed, vignetted image. */
+.theme-darkroom .polaroid {
+  border-radius: 2px;
+  background: linear-gradient(160deg, #fcf7ec, #efe5cf);
+  box-shadow: 0 1px 0 #cbbd9c, 0 4px 6px rgba(0, 0, 0, 0.3), 0 12px 22px rgba(0, 0, 0, 0.45);
+}
+
+.theme-darkroom .polaroid-photo {
+  border-radius: 1px;
+  background:
+    radial-gradient(ellipse at 28% 22%, rgba(255, 255, 255, 0.2), transparent 55%),
+    radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(0, 0, 0, 0.38) 100%),
+    linear-gradient(135deg, #3d2a92, #1c4f7c);
+}
+
+/* The big commit card and the quiz cards are photo paper too. */
+.theme-darkroom .commit-card,
+.theme-darkroom .quiz-card {
+  border-radius: 6px;
+  background: linear-gradient(170deg, #fffaf0, #f3ead7);
+}
+
+/* File chips: paper labels. */
+.theme-darkroom .chip {
+  border-color: rgba(255, 244, 226, 0.9);
+  border-radius: 3px;
+  background: #fbf5e8;
+}
+
+.theme-darkroom .chip-version {
+  border-radius: 2px;
+}
+
+.theme-darkroom .chip--dashed {
+  background: #ffe4e8;
+}
+
+/* Stickers become hang tags: a punched hole with its string, square-cut
+   ends, and the same colours, ink, and hard shadow as before. */
+.theme-darkroom .sticker {
+  padding-left: 22px;
+  border-radius: 4px;
+  background-image: radial-gradient(circle at 10px 50%, #0b0a18 0 3.2px, rgba(11, 10, 24, 0.35) 3.6px, transparent 4.4px);
+}
+
+.theme-darkroom .sticker::before {
+  content: '';
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  width: 18px;
+  height: 1.6px;
+  border-radius: 1px;
+  background: rgba(240, 228, 206, 0.75);
+  transform-origin: 100% 50%;
+  rotate: 24deg;
+}
+
+/* Arrow labels and the section badge: square-cut labels in the same ink. */
+.theme-darkroom .cmd-chip {
+  border-radius: 3px;
+}
+
+.theme-darkroom .badge {
+  padding-left: 22px;
+  border-radius: 3px;
+  background:
+    linear-gradient(90deg, var(--ink) 0 10px, transparent 10px),
+    linear-gradient(180deg, #ffbf47, #ffa62b);
+}
