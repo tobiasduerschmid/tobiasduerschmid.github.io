@@ -1240,7 +1240,7 @@ questions:
     option_feedback:
       0: A bare name in a pattern captures the matched value; it is not a comparison to its earlier value.
       2: A bare capture pattern matches the value and binds the name.
-    explanation: Use a literal such as case "ok" when a constant string comparison is intended.
+    explanation: '`case expected:` is a capture pattern, not a comparison: a bare name matches any value and binds it, so `expected` becomes `"wait"` and the program prints `wait`. Use a literal such as `case "ok":` when you want to compare with a constant.'
 
   # Source concepts: Control Palooza notes, Async Syntax in Python and JavaScript.
   - id: python-course-async-schedule

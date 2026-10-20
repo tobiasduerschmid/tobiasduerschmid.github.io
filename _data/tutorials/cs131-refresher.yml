@@ -1651,6 +1651,7 @@ steps:
           distractors:
             - "    return count_items(values[1:])"
             - "    for item in values:"
+          explanation: "The base case is the empty list, which has length 0. Every other list has one first item plus the items in its tail `values[1:]`, so the recursive case returns `1 + count_items(values[1:])`. Without the `1 +`, no item is ever counted and every call returns 0."
         - type: single
           difficulty: advanced
           question: |

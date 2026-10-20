@@ -47,7 +47,7 @@ questions:
         A class that does not justify its existence can be folded into a more useful owner.
       4: |
         A missing test is a safety-net gap, not a naming smell. Renaming may improve clarity, but it does not create behavioral evidence.
-    explanation: "Refactoring is strongest when the chosen transformation matches the design force behind the smell."
+    explanation: "Each reasonable pairing removes the cause of its smell: Introduce Parameter Object gives a data clump a name, Extract Class separates code that changes for different reasons, Replace Conditional with Polymorphism moves each type-specific branch into its own class, and Inline Class folds away a lazy class that does not pay for itself. A missing test is a gap in the safety net, which no rename can fill."
 
   - id: 3
     difficulty: intermediate

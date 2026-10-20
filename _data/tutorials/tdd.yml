@@ -1679,6 +1679,7 @@ steps:
             0: "*\"Refactor on first sight of duplication\"* sounds disciplined, but with one example, you're guessing the abstraction's shape. Two examples reveal the *common* parts; one is just a special case dressed as a pattern. Beck's *Rule of Three* (popularised by Fowler) is the same idea — refactor toward duplication, not before it."
             2: "Performance is not the reason. Python's interpreter compiles both forms to similar bytecode, and the difference is microseconds at most. Confusing a *design* discipline with a *performance* concern muddles two unrelated questions."
             3: "Order *is* the lesson. Refactor-before-test gives you no safety net during the structural change; refactor-after-test gives you passing test results proving behavior was preserved. The same final code is reached, but only one path *guarantees* the path was safe."
+          explanation: "With only `[1]` and `[5]`, a loop would be a guess about the design's shape. The `[1, 1]` test showed the duplication was real and what the general rule must handle, and the three passing tests made the loop refactor safe."
 
         - question: |
             You replaced the hardcoded branches with a `for` loop and ran pytest. All four tests passed. What did the test suite just do for you that you would otherwise have had to do manually?
