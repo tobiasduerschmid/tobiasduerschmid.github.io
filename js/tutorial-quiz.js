@@ -83,7 +83,13 @@
     var quiz = opts.quiz;
     var deckId = opts.deckId || '';
     var escapeHtml = opts.escapeHtml || _identityEscape;
-    var renderMarkdown = opts.renderMarkdown || _identityMarkdown;
+    var fallbackMarkdown = opts.renderMarkdown || _identityMarkdown;
+    function renderMarkdown(text) {
+      if (quiz.renderedMarkdown && Object.prototype.hasOwnProperty.call(quiz.renderedMarkdown, text)) {
+        return quiz.renderedMarkdown[text];
+      }
+      return fallbackMarkdown(text);
+    }
     var doShuffle = quiz.shuffle !== false;
     var doOptionShuffle = doShuffle && quiz.shuffle_options !== false && quiz.option_shuffle !== false;
     var doQuestionShuffle = doShuffle && quiz.shuffle_questions !== false && quiz.question_shuffle !== false;

@@ -272,6 +272,7 @@
 
   <!-- Tutorial styles -->
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/tutorial-quiz-code.css' | relative_url }}">
   {% if tutorial_backend == 'smalltalk' %}
   <link rel="stylesheet" href="{{ '/css/smalltalk-browser.css' | relative_url }}">
   {% endif %}
@@ -378,7 +379,7 @@
     window.SEBookGlossaryAbbr = {{ site.data.glossary | jsonify | replace: "</script", "<\/script" }};
 
     document.addEventListener('DOMContentLoaded', function () {
-      var config = {{ tutorial_data | jsonify | replace: "</script", "<\/script" }};
+      var config = {{ tutorial_data | with_quiz_markdown | jsonify | replace: "</script", "<\/script" }};
       // Server-side markdown rendering (Rouge syntax highlighting). The replace-filter
       // on each jsonified string converts literal closing-script-tags inside embedded
       // GitCommandLab specs to the safe <\/script form so the outer script block cannot

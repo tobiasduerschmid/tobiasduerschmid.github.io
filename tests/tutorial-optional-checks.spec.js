@@ -6,6 +6,11 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 const URL = '/SEBook/tools/cs131-refresher-tutorial';
 const config = loadTutorialConfig('cs131-refresher');
 
+// Markdown typography may curl prose quotes; answer identity does not depend on that.
+function answerText(text) {
+  return text.replace(/`/g, '').replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
+}
+
 async function readProgress(page) {
   // This is the documented tutorial export format, not private runtime state.
   return page.evaluate(() => JSON.parse(localStorage.getItem('tutorial-progress-cs131-refresher')));
@@ -42,11 +47,13 @@ test('refresher students can skip checks and continue after errors without recor
   const questions = config.steps[1].quiz.questions;
   for (let i = 0; i < questions.length; i++) {
     const visibleOptions = page.getByRole('radio');
-    const texts = await visibleOptions.allTextContents();
-    const question = questions.find((q) => texts.some((text) => text.includes(q.options[0].replace(/`/g, ''))));
+    const texts = (await visibleOptions.allTextContents()).map(answerText);
+    const question = questions.find((q) => texts.some((text) => text.includes(answerText(q.options[0]))));
     expect(question, 'the visible quiz question should come from the authored Point quiz').toBeTruthy();
-    const wrong = question.options.find((_, index) => index !== question.correct_index).replace(/`/g, '');
-    await visibleOptions.filter({ hasText: wrong }).click();
+    const wrong = answerText(question.options.find((_, index) => index !== question.correct_index));
+    const wrongIndex = texts.findIndex(text => text.includes(wrong));
+    expect(wrongIndex, 'the incorrect answer should be available').toBeGreaterThanOrEqual(0);
+    await visibleOptions.nth(wrongIndex).click();
     await page.getByRole('button', { name: i + 1 < questions.length ? 'Next Question' : 'See Results', exact: true }).click();
   }
   await expect(page.getByText(/You scored 0\/3/)).toBeVisible();

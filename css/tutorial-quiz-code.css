@@ -1,0 +1,56 @@
+/* Quiz code uses Rouge's language tokens, including in standalone popouts. */
+.tvm-quiz-panel {
+  --quiz-code-text: #333333;
+  --quiz-code-comment: #006400;
+  --quiz-code-keyword: #0000ff;
+  --quiz-code-type: #005f73;
+  --quiz-code-number: #006b35;
+  --quiz-code-string: #a31515;
+  --quiz-code-name: #5c3d00;
+  --quiz-code-variable: #001080;
+}
+@media screen {
+  html.dark-mode .tvm-quiz-panel {
+    --quiz-code-text: #d4d4d4;
+    --quiz-code-comment: #7ccf7c;
+    --quiz-code-keyword: #8fc4e3;
+    --quiz-code-type: #4ec9b0;
+    --quiz-code-number: #b5cea8;
+    --quiz-code-string: #ce9178;
+    --quiz-code-name: #dcdcaa;
+    --quiz-code-variable: #9cdcfe;
+  }
+}
+.tvm-quiz-panel .highlight {
+  background: transparent;
+  margin: 0;
+}
+.tvm-quiz-panel pre {
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 1em;
+  font-weight: 400;
+}
+/* Defeat inline-code styling without removing the surrounding pre's box. */
+.tvm-quiz-panel pre code {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  border-radius: 0;
+  color: var(--quiz-code-text) !important;
+  font: inherit !important;
+}
+.tvm-quiz-panel .highlight :is(.c, .cm, .cp, .c1, .cs) { color: var(--quiz-code-comment) !important; font-style: italic; }
+.tvm-quiz-panel .highlight :is(.k, .kc, .kd, .kp, .kr, .ow) { color: var(--quiz-code-keyword) !important; }
+.tvm-quiz-panel .highlight :is(.kt, .nc, .nn) { color: var(--quiz-code-type) !important; }
+.tvm-quiz-panel .highlight :is(.m, .mf, .mh, .mi, .mo, .il) { color: var(--quiz-code-number) !important; }
+.tvm-quiz-panel .highlight :is(.s, .s1, .s2, .sb, .sc, .sd, .se, .sh, .si, .sx, .sr, .ss, .dl, .ne, .nt) { color: var(--quiz-code-string) !important; }
+.tvm-quiz-panel .highlight :is(.nb, .bp, .nf) { color: var(--quiz-code-name) !important; }
+.tvm-quiz-panel .highlight :is(.na, .no, .nv, .vc, .vg, .vi, .ni) { color: var(--quiz-code-variable) !important; }
+.tvm-quiz-panel .highlight :is(.o, .n, .p, .w) { color: var(--quiz-code-text) !important; }
+@media print {
+  html .tvm-quiz-panel pre {
+    background: #f6f8fa !important;
+    border: 1px solid #d0d0e0 !important;
+    color: #333333 !important;
+  }
+}

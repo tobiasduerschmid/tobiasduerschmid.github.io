@@ -2440,7 +2440,14 @@ channel.
   celebration disconnects it.
 - **`js/tutorial-quiz.js`** — shared quiz renderer (used by main page and
   the instructions popup). `single` / `multiple` / `parsons` types,
-  `min_score` gating, `option_feedback` rendering.
+  `min_score` gating, `option_feedback` rendering. The tutorial layout uses
+  `_plugins/tutorial_quiz_markdown.rb` (`with_quiz_markdown`) to pre-render question,
+  option, feedback, and explanation Markdown through Jekyll/Rouge. The quiz's
+  `renderedMarkdown` lookup preserves each fenced block's declared language and
+  raw source, survives shuffling, and travels to popouts in the rendered quiz HTML.
+  Runtime-only quiz data without this lookup retains the supplied Markdown fallback.
+  `css/tutorial-quiz-code.css` owns quiz token colors for light/dark/print and keeps
+  block code transparent inside the existing bordered code box.
   Optional checks use `allowSkip` and `onSkip`; `onPass` remains reserved for
   passing results. Skip is available while answering and returns on Try Again;
   results replace it with Continue/Finish Review so a passing score cannot be
