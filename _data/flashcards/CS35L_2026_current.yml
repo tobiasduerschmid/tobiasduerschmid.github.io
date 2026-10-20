@@ -17,13 +17,13 @@ decks:
   - networking_concepts
   - react_syntax_explain
   - react_syntax_generate
-  - design_principle_information_hiding
   - design_principle_solid
   - design_principle_soc
 
 other:
   - design_pattern_observer
   - c
+  - design_principle_information_hiding
   - design_with_reuse
   - uml_class_diagram_examples
   - uml_sequence_diagram_examples
