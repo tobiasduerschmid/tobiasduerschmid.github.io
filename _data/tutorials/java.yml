@@ -34,7 +34,7 @@ steps:
 
       ### Why this matters
 
-      **Which diagram view should I use?** Use **Implementation details** when matching your code to a target diagram or checking an exercise. **Design focus** is for reference only: it simplifies types, names, and expressions to emphasize the design. Targets may use UML notation; translate those labels to the source-language names and types while matching the required structure or message order. Switching views does not change your code or verify correctness; use **Test My Work** to check the exercise.
+      **Which diagram view should I use?** Use **Implementation details** when matching your code to a target diagram or checking an exercise. **Design focus** is for reference only: it simplifies types, names, and expressions to emphasize the design. Target diagrams use the same Java names and types as **Implementation details**. Switching views does not change your code or verify correctness; use **Test My Work** to check the exercise.
 
       You already know how to program. This tutorial won't re-teach loops or variables — instead, it focuses on **what's different** about Java and **why** Java made those choices. Starting with a clear map between languages keeps your prior knowledge useful and prevents silent transfer errors later.
 
@@ -792,11 +792,11 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       class BankAccount {
         - owner: String
-        - balance: Real
-        + BankAccount(owner: String, initialBalance: Real)
-        + deposit(amount: Real)
-        + withdraw(amount: Real): Boolean
-        + getBalance(): Real
+        - balance: double
+        + BankAccount(owner: String, initialBalance: double)
+        + deposit(amount: double)
+        + withdraw(amount: double): boolean
+        + getBalance(): double
         + getOwner(): String
         + toString(): String
       }
@@ -1360,23 +1360,23 @@ steps:
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       interface Shape {
-        + getArea(): Real
-        + getPerimeter(): Real
+        + getArea(): double
+        + getPerimeter(): double
         + describe(): String
       }
       class Circle {
-        - radius: Real
-        + Circle(radius: Real)
-        + getArea(): Real
-        + getPerimeter(): Real
+        - radius: double
+        + Circle(radius: double)
+        + getArea(): double
+        + getPerimeter(): double
         + describe(): String
       }
       class Rectangle {
-        - width: Real
-        - height: Real
-        + Rectangle(width: Real, height: Real)
-        + getArea(): Real
-        + getPerimeter(): Real
+        - width: double
+        - height: double
+        + Rectangle(width: double, height: double)
+        + getArea(): double
+        + getPerimeter(): double
         + describe(): String
       }
       Circle ..|> Shape
@@ -1679,22 +1679,22 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       abstract class Vehicle {
         - make: String
-        - year: Integer
-        + Vehicle(make: String, year: Integer)
+        - year: int
+        + Vehicle(make: String, year: int)
         + getMake(): String
-        + getYear(): Integer
+        + getYear(): int
         + {abstract} describe(): String
         + {abstract} startEngine(): String
       }
       class Car {
-        - numDoors: Integer
-        + Car(make: String, year: Integer, numDoors: Integer)
+        - numDoors: int
+        + Car(make: String, year: int, numDoors: int)
         + describe(): String
         + startEngine(): String
       }
       class Motorcycle {
-        - hasSidecar: Boolean
-        + Motorcycle(make: String, year: Integer, hasSidecar: Boolean)
+        - hasSidecar: boolean
+        + Motorcycle(make: String, year: int, hasSidecar: boolean)
         + describe(): String
         + startEngine(): String
       }
@@ -2096,14 +2096,14 @@ steps:
       The `Pair.java` file has a working but **non-generic** `StringIntPair` class — it only works for `(String, int)` pairs. Your job is to **generify** it into a `Pair<A, B>` that works for any two types:
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-      class "Pair<A, B>" as Pair {
+      class Pair {
         - first: A
         - second: B
         + Pair(first: A, second: B)
         + getFirst(): A
         + getSecond(): B
         + toString(): String
-        + {static} swap(pair: Pair): Pair
+        + {static} swap(pair: Pair<X, Y>): Pair<Y, X>
       }
       @enduml'></div>
 
@@ -2968,30 +2968,30 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       interface Enrollable {
         + enroll(student: Student)
-        + drop(name: String): Boolean
-        + isEnrolled(name: String): Boolean
-        + getRoster(): Sequence<String>
+        + drop(name: String): boolean
+        + isEnrolled(name: String): boolean
+        + getRoster(): ArrayList<String>
       }
       class Course {
         - name: String
-        - capacity: Integer
-        - students: Sequence<Student>
-        + Course(name: String, capacity: Integer)
+        - capacity: int
+        - students: ArrayList<Student>
+        + Course(name: String, capacity: int)
         + getName(): String
-        + getCapacity(): Integer
-        + getEnrollmentCount(): Integer
+        + getCapacity(): int
+        + getEnrollmentCount(): int
         + enroll(student: Student)
-        + drop(name: String): Boolean
-        + isEnrolled(name: String): Boolean
-        + getRoster(): Sequence<String>
+        + drop(studentName: String): boolean
+        + isEnrolled(studentName: String): boolean
+        + getRoster(): ArrayList<String>
         + toString(): String
       }
       class Student {
         - name: String
-        - id: Integer
-        + Student(name: String, id: Integer)
+        - id: int
+        + Student(name: String, id: int)
         + getName(): String
-        + getId(): Integer
+        + getId(): int
         + toString(): String
       }
       class EnrollmentException {
