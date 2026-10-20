@@ -6,7 +6,7 @@ layout: sebook
   {% if site.personal_gym %}
 
   <!-- Confirm Modal -->
-  <div id="confirm-modal" class="is-hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-msg">
+  <dialog id="confirm-modal" class="is-hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-msg">
     <div class="confirm-modal-backdrop"></div>
     <div class="confirm-modal-box">
       <p id="confirm-modal-msg">Do you want to delete your current performance statistics?</p>
@@ -15,7 +15,7 @@ layout: sebook
         <button id="confirm-modal-no" class="gym-btn secondary">No</button>
       </div>
     </div>
-  </div>
+  </dialog>
 
   <div id="se-gym-app">
     <p id="plain-quiz-status" class="workout-quiz-card is-hidden" role="status"></p>
@@ -502,7 +502,7 @@ layout: sebook
     </div>
 
     <!-- ==================== TUTORIAL EXPORT MODAL ==================== -->
-    <div id="tutorial-export-modal" class="is-hidden" role="dialog" aria-modal="true" aria-labelledby="tutorial-export-modal-title">
+    <dialog id="tutorial-export-modal" class="is-hidden" role="dialog" aria-modal="true" aria-labelledby="tutorial-export-modal-title">
       <div class="confirm-modal-backdrop"></div>
       <div class="tutorial-io-modal-box">
         <h3 id="tutorial-export-modal-title" class="tutorial-io-modal-title">Select tutorials to export</h3>
@@ -520,11 +520,11 @@ layout: sebook
           <button id="tutorial-export-confirm" class="gym-btn primary">Download JSON</button>
         </div>
       </div>
-    </div>
+    </dialog>
 
     {% if site.gym_hero_animation %}
     <!-- ==================== HERO CUSTOMIZER MODAL ==================== -->
-    <div id="hero-customizer-modal" class="hero-cust-modal" role="dialog" aria-modal="true"
+    <dialog id="hero-customizer-modal" class="hero-cust-modal" role="dialog" aria-modal="true"
       aria-labelledby="hero-customizer-title" aria-describedby="hero-customizer-desc" hidden>
       <div class="hero-cust-backdrop"></div>
       <div class="hero-cust-box" role="document">
@@ -761,11 +761,11 @@ layout: sebook
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
     {% endif %}
 
     <!-- ==================== TUTORIAL IMPORT MODAL ==================== -->
-    <div id="tutorial-import-modal" class="is-hidden" role="dialog" aria-modal="true" aria-labelledby="tutorial-import-modal-title">
+    <dialog id="tutorial-import-modal" class="is-hidden" role="dialog" aria-modal="true" aria-labelledby="tutorial-import-modal-title">
       <div class="confirm-modal-backdrop"></div>
       <div class="tutorial-io-modal-box">
         <h3 id="tutorial-import-modal-title" class="tutorial-io-modal-title">Select tutorials to import</h3>
@@ -780,7 +780,7 @@ layout: sebook
           <button id="tutorial-import-confirm" class="gym-btn primary">Import</button>
         </div>
       </div>
-    </div>
+    </dialog>
 
     <!-- ==================== WORKOUT VIEW ==================== -->
     <div id="gym-workout" class="is-hidden">
@@ -2529,6 +2529,7 @@ layout: sebook
       }
       function closeManagedGymModal(modal) {
         if (!modal) return;
+        modal.close();
         hideElement(modal);
         if (activeGymModal === modal) {
           document.removeEventListener('keydown', handleManagedGymModalKeydown);
@@ -2539,13 +2540,17 @@ layout: sebook
         }
         activeGymModalPreviousFocus = null;
       }
+      function cancelManagedGymModal() {
+        if (!activeGymModal) return;
+        var cancel = activeGymModal.querySelector('[data-modal-cancel], button[id$="-cancel"], #confirm-modal-no');
+        if (cancel) cancel.click();
+        else closeManagedGymModal(activeGymModal);
+      }
       function handleManagedGymModalKeydown(e) {
         if (!activeGymModal) return;
         if (e.key === 'Escape') {
           e.preventDefault();
-          var cancel = activeGymModal.querySelector('[data-modal-cancel], .gym-btn.secondary, button[id$="-cancel"]');
-          if (cancel) cancel.click();
-          else closeManagedGymModal(activeGymModal);
+          cancelManagedGymModal();
           return;
         }
         if (e.key !== 'Tab') return;
@@ -2565,6 +2570,11 @@ layout: sebook
         activeGymModalPreviousFocus = document.activeElement;
         activeGymModal = modal;
         showElement(modal);
+        modal.showModal();
+        modal.oncancel = function (event) {
+          event.preventDefault();
+          cancelManagedGymModal();
+        };
         document.addEventListener('keydown', handleManagedGymModalKeydown);
         var target = defaultFocus || getModalFocusables(modal)[0];
         if (target && typeof target.focus === 'function') target.focus();

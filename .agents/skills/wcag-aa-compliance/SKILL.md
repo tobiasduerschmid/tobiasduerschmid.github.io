@@ -177,6 +177,24 @@ When surfacing, include: which criterion is violated, where (file + line), what 
 
 ## Quick decision guide
 
+### Fullscreen dialogs
+
+Use the site's custom dialogs instead of `window.alert`, `window.confirm`, or
+`window.prompt`: browsers can suppress these in fullscreen. Include
+`confirmation-dialog.html` and await `SebookConfirmation.confirm(options)` for
+confirmation, or `SebookConfirmation.alert(options)` for a notice. Shared layouts
+load this helper; standalone layouts must include it themselves.
+
+For forms, use a styled `<dialog>` opened with `showModal()` so it enters the
+modal top layer and makes the background inert. When mounting a dynamic dialog,
+append it inside `document.fullscreenElement || document.body`. A large z-index
+alone cannot place content above a native fullscreen element. Preserve a visible
+label, initial focus, Tab containment, Escape cancellation, and focus restoration.
+Fullscreen/editor Escape handlers must defer to an open dialog so cancellation
+does not also exit fullscreen or edit the underlying workspace. Test the actual
+fullscreen control, cancellation and confirmation, both themes, narrow viewports,
+and print; verify destructive work happens only after explicit confirmation.
+
 | Situation | What to do |
 |---|---|
 | Adding any new interactive element | Use a native element (`<button>`, `<a>`, `<input>`). Give it a visible label or `aria-label`. Verify keyboard, focus ring, contrast in both modes, target size ≥ 24×24. |

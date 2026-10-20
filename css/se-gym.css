@@ -6034,3 +6034,33 @@ html.dark-mode [data-hero-human-only]:disabled {
   html.dark-mode [data-hero-human-only]:disabled,
   [data-hero-human-only]:disabled { background-color: #f1f3f5; }
 }
+
+/* Fullscreen-safe top-layer hosts; the existing boxes own their presentation. */
+dialog#confirm-modal,
+dialog#tutorial-export-modal,
+dialog#tutorial-import-modal,
+dialog.hero-cust-modal {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  box-sizing: border-box;
+  font: inherit;
+}
+dialog#confirm-modal,
+dialog#tutorial-export-modal,
+dialog#tutorial-import-modal { padding: 0; }
+dialog#confirm-modal:not([open]),
+dialog#tutorial-export-modal:not([open]),
+dialog#tutorial-import-modal:not([open]),
+dialog.hero-cust-modal:not([open]) { display: none; }
+@media print {
+  dialog#confirm-modal,
+  dialog#tutorial-export-modal,
+  dialog#tutorial-import-modal,
+  dialog.hero-cust-modal { display: none !important; }
+}

@@ -6514,6 +6514,8 @@
       resetHistory(normalizedFormState());
       setStatus('');
       modal.hidden = false;
+      modal.showModal();
+      modal.oncancel = function (event) { event.preventDefault(); closeModal(); };
       loadStaticChoicePreviewImages();
       document.body.classList.add('hero-cust-modal-open');
       modal.classList.add('hero-cust-open');
@@ -6525,6 +6527,7 @@
     }
 
     function closeModal() {
+      modal.close();
       modal.hidden = true;
       document.body.classList.remove('hero-cust-modal-open');
       modal.classList.remove('hero-cust-open');
@@ -6533,7 +6536,7 @@
     }
 
     function onKeydown(e) {
-      if (modal.hidden) return;
+      if (modal.hidden || !modal.contains(e.target)) return;
       var key = String(e.key || '').toLowerCase();
       var code = String(e.code || '').toLowerCase();
       var isHistoryShortcut = (e.ctrlKey || e.metaKey) && !e.altKey;

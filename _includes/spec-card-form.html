@@ -272,19 +272,19 @@ Persistence:
               copyBtn.textContent = 'Copied!';
               setTimeout(function () { copyBtn.innerHTML = '<i class="fa fa-copy" aria-hidden="true"></i> Copy to clipboard'; }, 1200);
             }, function () {
-              window.alert('Could not copy. Use Export to download instead.');
+              SebookConfirmation.alert({ title: 'Could not copy', message: 'Could not copy. Use Export to download instead.' });
             });
           } else {
-            window.alert('Clipboard API not available. Use Export to download instead.');
+            SebookConfirmation.alert({ title: 'Could not copy', message: 'Clipboard API not available. Use Export to download instead.' });
           }
         });
       }
 
       if (resetBtn) {
-        resetBtn.addEventListener('click', function () {
+        resetBtn.addEventListener('click', async function () {
           var data = snapshot();
           var any = FIELDS.some(function (f) { return (data[f] || '').trim(); });
-          if (any && !window.confirm('Reset all fields and clear this Spec Card from your browser?')) {
+          if (any && !await SebookConfirmation.confirm({ title: 'Reset Spec Card?', message: 'Reset all fields and clear this Spec Card from your browser?', confirmLabel: 'Reset card' })) {
             return;
           }
           FIELDS.forEach(function (f) { if (inputs[f]) inputs[f].value = ''; });

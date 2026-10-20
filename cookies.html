@@ -779,8 +779,8 @@ info_nav_title: "Browser storage"
     btn.setAttribute('data-original-title', isSet ? ('Delete ' + key) : (key + ' is not set'));
     btn.removeAttribute('title');
     btn.disabled = !isSet;
-    btn.addEventListener('click', function () {
-      if (isDestructiveStorageKey(key) && !confirm('Delete ' + key + '? This may remove saved tutorial work, bookmarks, or SE Gym data and cannot be undone.')) return;
+    btn.addEventListener('click', async function () {
+      if (isDestructiveStorageKey(key) && !await confirmDeletion('Delete ' + key + '? This may remove saved tutorial work, bookmarks, or SE Gym data and cannot be undone.')) return;
       if (storage === 'cookie') deleteCookie(key);
       else deleteLS(key);
       renderRow(row);
@@ -923,7 +923,7 @@ info_nav_title: "Browser storage"
     return deleted;
   }
 
-  document.addEventListener('click', function (ev) {
+  document.addEventListener('click', async function (ev) {
     var target = ev.target.closest && ev.target.closest('[data-clear-category]');
     if (!target) return;
 
@@ -933,7 +933,7 @@ info_nav_title: "Browser storage"
     var rows = document.querySelectorAll('table[data-category="' + category + '"] tr[data-storage][data-key]');
     if (!rows.length && !prefixCsv) return;
 
-    if (!confirm('Delete all entries in this category? This cannot be undone.')) return;
+    if (!await confirmDeletion('Delete all entries in this category? This cannot be undone.')) return;
 
     var n = 0;
     for (var i = 0; i < rows.length; i++) { deleteRowEntry(rows[i]); n++; }
@@ -953,8 +953,8 @@ info_nav_title: "Browser storage"
     toast('Refreshed');
   });
 
-  document.getElementById('cookies-delete-vm-snapshots').addEventListener('click', function () {
-    if (!confirm('Delete all saved tutorial VM reset snapshots? They will be recreated when needed.')) return;
+  document.getElementById('cookies-delete-vm-snapshots').addEventListener('click', async function () {
+    if (!await confirmDeletion('Delete all saved tutorial VM reset snapshots? They will be recreated when needed.')) return;
     runStorageDeletion(this, function () {
       return deleteDatabase('sebook-tutorial-vm-snapshots');
     }, 'Saved VM snapshots deleted');
@@ -968,10 +968,14 @@ info_nav_title: "Browser storage"
     runStorageDeletion(this, unregisterTutorialServiceWorker, 'Tutorial service worker unregistered');
   });
 
+  function confirmDeletion(message) {
+    return SebookConfirmation.confirm({ title: 'Delete saved data?', message: message, confirmLabel: 'Delete data' });
+  }
+
   // -------- Delete everything --------
-  document.getElementById('cookies-delete-all').addEventListener('click', function () {
+  document.getElementById('cookies-delete-all').addEventListener('click', async function () {
     var deleteAllButton = this;
-    if (!confirm(
+    if (!await confirmDeletion(
       'Delete EVERY cookie and browser-storage entry this site has stored?\n\n' +
       'This will sign you out of any preferences, lose your tutorial progress, and clear ' +
       'bookmarks/SE Gym data. If the Chrome profile sync extension is installed and syncing, ' +

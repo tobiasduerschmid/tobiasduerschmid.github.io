@@ -119,9 +119,8 @@ test.describe('Spec Card widget — persistence', () => {
     const widget = page.getByRole('region', { name: /spec card/i }).first();
     await widget.getByLabel(/behavior/i).fill('to-be-cleared');
 
-    // Auto-confirm the "are you sure" prompt before the reset click.
-    page.on('dialog', (dialog) => dialog.accept());
     await widget.getByRole('button', { name: /reset/i }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Reset card' }).click();
 
     await expect(widget.getByLabel(/behavior/i)).toHaveValue('');
     await expect(page.locator('[data-spec-card-status]').first()).toHaveText(/empty/i);

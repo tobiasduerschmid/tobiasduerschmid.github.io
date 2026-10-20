@@ -11813,7 +11813,7 @@ Supported options:
     // Escape remains available from text fields and SVG controls that otherwise
     // consume it. Native browser exits also reach syncFullscreen above.
     wrap.addEventListener('keydown', function (event) {
-      if (event.target.closest('dialog[open]')) return;
+      if (event.defaultPrevented || event.target.closest('dialog[open]')) return;
       if (event.key === 'Escape' && (dragState || paletteDragState)) {
         event.preventDefault();
         event.stopPropagation();

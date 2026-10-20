@@ -383,8 +383,8 @@
           }
         }
         updateIcon();
-        btn.addEventListener('click', function () {
-          if (SEBookmarks.isBookmarked(url) && !window.confirm('Remove bookmark for this page?')) return;
+        btn.addEventListener('click', async function () {
+          if (SEBookmarks.isBookmarked(url) && !await SebookConfirmation.confirm({ title: 'Remove bookmark?', message: 'Remove bookmark for this page?', confirmLabel: 'Remove bookmark' })) return;
           SEBookmarks.toggleBookmark(url, title);
           updateIcon();
         });

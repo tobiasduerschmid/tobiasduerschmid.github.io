@@ -4,7 +4,7 @@
   var active = false;
 
   /** Resolve true only after explicit confirmation; dismissal preserves work. */
-  function confirm(options) {
+  function open(options) {
     if (active) return Promise.resolve(false);
     active = true;
     var dialog = document.getElementById('sebook-confirmation-template').content.firstElementChild.cloneNode(true);
@@ -14,6 +14,7 @@
     dialog.querySelector('h2').textContent = options.title;
     dialog.querySelector('p').textContent = options.message;
     cancel.textContent = options.cancelLabel || 'Cancel';
+    cancel.hidden = !!options.notice;
     accept.textContent = options.confirmLabel;
 
     return new Promise(function (resolve) {
@@ -43,7 +44,7 @@
           finish(false);
         } else if (event.key === 'Tab') {
           event.preventDefault();
-          (document.activeElement === cancel ? accept : cancel).focus();
+          (options.notice || document.activeElement === cancel ? accept : cancel).focus();
         }
       });
       dialog.addEventListener('click', function (event) {
@@ -58,9 +59,14 @@
       (document.fullscreenElement || document.body).appendChild(dialog);
       document.body.classList.add('sebook-confirmation-open');
       dialog.showModal();
-      cancel.focus();
+      (options.notice ? accept : cancel).focus();
     });
   }
 
-  window.SebookConfirmation = { confirm: confirm };
+  window.SebookConfirmation = {
+    confirm: open,
+    alert: function (options) {
+      return open(Object.assign({}, options, { notice: true, confirmLabel: 'OK' }));
+    }
+  };
 })();

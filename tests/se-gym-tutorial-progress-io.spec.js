@@ -50,7 +50,8 @@ test.describe('SE Gym tutorial progress import', () => {
     await expect(page.locator('#tutorial-import-modal')).toHaveClass(/is-hidden/);
   });
 
-  test('imports a valid versioned tutorial progress entry', async ({ page }) => {
+  test('imports a valid versioned tutorial progress entry in fullscreen', async ({ page }) => {
+    await page.locator('html').evaluate(element => element.requestFullscreen());
     const value = { step: 2, files: {}, activeFile: 'main.py', stepsUnlocked: [0, 1, 2] };
     await uploadProgress(page, {
       format: 'se-gym-tutorial-progress',

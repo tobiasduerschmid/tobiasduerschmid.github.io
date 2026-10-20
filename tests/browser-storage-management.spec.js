@@ -35,8 +35,8 @@ test('Delete everything removes synchronous and asynchronous site storage', asyn
   await page.goto('/cookies/');
   await seedBrowserStorage(page);
 
-  page.once('dialog', dialog => dialog.accept());
   await page.locator('#cookies-delete-all').click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete data' }).click();
   await expect(page.locator('#cookies-toast')).toHaveText('All site storage deleted');
 
   const remaining = await page.evaluate(async ({ databaseName, cacheName }) => ({
@@ -62,8 +62,8 @@ test('tutorial state deletion includes debugger exception breakpoints', async ({
 
   await page.getByRole('button', { name: 'Refresh' }).click();
   await expect(page.locator('#tutorial-dynamic-body')).toContainText('tutorial-debug-excbps-python');
-  page.once('dialog', dialog => dialog.accept());
   await page.getByRole('button', { name: 'Delete all tutorial state' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete data' }).click();
 
   await expect.poll(() => page.evaluate(() => localStorage.getItem('tutorial-debug-excbps-python'))).toBeNull();
 });

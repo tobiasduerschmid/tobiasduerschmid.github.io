@@ -162,3 +162,99 @@ test('confirmation fits a narrow screen in both themes and is omitted from print
   await page.emulateMedia({ media: 'print' });
   await expect(dialog).toBeHidden();
 });
+
+
+test('SE Gym confirms and cancels in fullscreen without changing saved statistics', async ({ page, context, baseURL }, testInfo) => {
+  await context.addCookies(['se-gym-active', 'analyze-performance'].map(name => ({ name, value: 'true', url: baseURL })));
+  await page.goto('/se-gym/');
+  const savedStats = await page.evaluate(() => {
+    PersonalGym.saveStats({ test: { seen: 5, correct: 1 } });
+    return PersonalGym.getStats();
+  });
+  await fullscreen(page);
+  const toggle = page.locator('#analyzePerformanceToggle');
+  await toggle.press('Space');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'No', exact: true })).toBeFocused();
+  await a11yCheckpoint(page, 'SE Gym fullscreen confirmation', { include: '#confirm-modal' });
+  await page.screenshot({ path: testInfo.outputPath('gym-fullscreen-confirmation.png') });
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(toggle).toBeChecked();
+  await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(true);
+  expect(await page.evaluate(() => PersonalGym.getStats())).toEqual(savedStats);
+  await toggle.press('Space');
+  await dialog.getByRole('button', { name: 'Yes', exact: true }).click();
+  await expect(toggle).not.toBeChecked();
+  expect(await page.evaluate(() => PersonalGym.getStats())).toEqual({});
+});
+
+test('SE Gym export Escape closes the dialog and restores focus in fullscreen', async ({ page, context, baseURL }) => {
+  await context.addCookies([{ name: 'se-gym-active', value: 'true', url: baseURL }]);
+  await page.goto('/se-gym/');
+  await fullscreen(page);
+  const trigger = page.locator('#download-tutorial-progress-btn');
+  await trigger.click();
+  const dialog = page.getByRole('dialog', { name: 'Select tutorials to export' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Cancel', exact: true })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
+  await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(true);
+});
+
+test('Spec Card reset preserves work on cancel in fullscreen', async ({ page }) => {
+  await page.goto('/SEBook/tools/spec-card');
+  const widget = page.getByRole('region', { name: /spec card/i }).first();
+  const behavior = widget.getByLabel(/behavior/i);
+  await behavior.fill('Keep this specification');
+  await fullscreen(page);
+  await widget.getByRole('button', { name: /reset/i }).click();
+  const dialog = page.getByRole('dialog', { name: 'Reset Spec Card?' });
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(behavior).toHaveValue('Keep this specification');
+  await widget.getByRole('button', { name: /reset/i }).click();
+  await dialog.getByRole('button', { name: 'Reset card' }).click();
+  await expect(behavior).toHaveValue('');
+});
+
+
+test('clipboard failure shows an accessible notice in fullscreen', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('Clipboard unavailable')) } });
+  });
+  await page.goto('/SEBook/tools/spec-card');
+  await fullscreen(page);
+  const copy = page.getByRole('button', { name: /Copy to clipboard/i }).first();
+  await copy.click();
+  const dialog = page.getByRole('dialog', { name: 'Could not copy' });
+  await expect(dialog).toContainText('Use Export to download instead.');
+  const ok = dialog.getByRole('button', { name: 'OK', exact: true });
+  await expect(ok).toBeFocused();
+  await ok.press('Tab');
+  await expect(ok).toBeFocused();
+  await ok.click();
+  await expect(dialog).toBeHidden();
+  await expect(copy).toBeFocused();
+});
+
+test('hero customizer remains readable and dismissible in fullscreen', async ({ page, context, baseURL }, testInfo) => {
+  await context.addCookies([{ name: 'se-gym-active', value: 'true', url: baseURL }]);
+  await page.goto('/se-gym/');
+  await fullscreen(page);
+  const trigger = page.getByRole('button', { name: 'Customize Hero', exact: true });
+  await trigger.click();
+  const dialog = page.getByRole('dialog', { name: 'Customize your hero' });
+  await expect(dialog).toBeVisible();
+  for (const dark of [false, true]) {
+    await page.locator('html').evaluate((html, dark) => html.classList.toggle('dark-mode', dark), dark);
+    await expect(dialog.getByRole('button', { name: 'Close hero customizer' })).toBeInViewport();
+    await page.screenshot({ path: testInfo.outputPath('hero-dialog-' + (dark ? 'dark' : 'light') + '.png') });
+  }
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
+  await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(true);
+});
