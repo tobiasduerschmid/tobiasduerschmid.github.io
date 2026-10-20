@@ -197,6 +197,8 @@ cards:
   - id: exam-practice-ordered-topic-list
     difficulty: intermediate
     question: A React component receives `topics`, an array of unique strings. Write its return statement to display them as a numbered list with stable keys.
+    hint: >-
+      Separate the list container from the expression that creates one child per topic.
     answer: |-
       ```jsx
       return (

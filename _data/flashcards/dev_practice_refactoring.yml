@@ -74,6 +74,8 @@ cards:
           if row[0] == "x":
               accept(row)
       ```
+    hint: >-
+      Try the empty list first. In Python, an `and` expression stops when an operand is false.
     answer: |-
       ```python
       if len(row) > 0 and row[0] == "x":
@@ -84,5 +86,7 @@ cards:
     difficulty: intermediate
     question: Name one refactoring, besides renaming or adding comments, for code that repeats the same five-line
       input validation in three functions.
+    hint: >-
+      Imagine changing one validation rule. How many copies currently need the same edit?
     answer: Extract a validation function and call it from each location, preserving the same checks and error
       behavior.

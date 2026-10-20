@@ -113,6 +113,8 @@ cards:
     difficulty: intermediate
     question: Write one command that prints `missing` if `grep -q needle data.txt` returns nonzero, without aborting
       a Bash script using `set -e`.
+    hint: >-
+      Consider how Bash treats a command whose failure is tested before choosing a fallback.
     answer: '`grep -q needle data.txt || printf "missing\n"`'
     explanation: The command before `||` is exempt from errexit because the list handles its status. This handles
       both no match and a grep error; distinguishing them would require checking the status separately.
@@ -121,6 +123,8 @@ cards:
     difficulty: intermediate
     question: Write a Bash loop that appends `job=lint` then `job=test` to `jobs.txt`, without printing those lines
       to the terminal.
+    hint: >-
+      Write the command for one job first, then replace the changing part with a loop variable.
     answer: |-
       ```sh
       for job in lint test; do

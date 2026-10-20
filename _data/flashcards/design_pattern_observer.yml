@@ -36,9 +36,13 @@ cards:
     difficulty: intermediate
     question: In the Observer pattern, a sensor calls `chart.draw()` and `table.draw()` directly. How would
       you let it support a new display without changing the sensor?
+    hint: >-
+      Imagine adding a third display. Which class should need a new implementation, and which code should stay the same?
     answer: Notify each subscriber through a common `update()` operation. Each display implements its own rendering.
   - id: 7
     difficulty: intermediate
     question: An Observer subject stores `[chart, table]`. Its notify method calls only `observers[0].update()`.
       What change makes both displays receive updates?
+    hint: >-
+      Trace which list elements the indexing expression visits before deciding how to repair the notification.
     answer: Loop over the registered observers and call `update()` on each.

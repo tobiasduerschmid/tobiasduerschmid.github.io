@@ -112,4 +112,6 @@ cards:
     difficulty: intermediate
     question: A team can demo a prototype weekly, and users keep revising their priorities. Give one reason
       to use an agile process.
+    hint: >-
+      Compare when the team would discover a wrong priority with weekly working increments versus one final release.
     answer: Frequent feedback lets the team adjust priorities before spending months building the wrong features.

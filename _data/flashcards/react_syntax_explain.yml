@@ -216,6 +216,8 @@ cards:
         items.filter(item => item.done)
       );
       ```
+    hint: >-
+      Trace two renders with different `items`. Which initialization happens only on the first render?
     answer: |-
       Derive it during each render:
 

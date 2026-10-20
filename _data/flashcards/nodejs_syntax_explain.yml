@@ -211,5 +211,7 @@ cards:
       ```javascript
       console.log(Boolean(req.query.archived));
       ```
+    hint: >-
+      Classify the value by its JavaScript type before applying the truthiness rules.
     answer: '`true`, because `"false"` is a nonempty string.'
     explanation: If the API expects the text true or false, compare the value with "true" rather than relying on string truthiness.

@@ -236,18 +236,17 @@ questions:
   - id: 8
     type: single
     difficulty: intermediate
-    question: A library story promises due-date reminders, but its only criterion checks a due-date badge. Which
-      critique of INVEST is best supported?
+    question: A library story promises due-date reminders. Its sole criterion shows an already stored due date
+      as a badge. Which INVEST criticism fits?
     options:
-    - 'Testable: a badge can never be checked.'
-    - 'Valuable: the criteria omit reminder delivery.'
-    - 'Small: a badge must take several months.'
+    - 'Independent: it reads existing due-date data.'
+    - 'Valuable: it does not require sending reminders.'
+    - 'Small: borrowers must wait until the due date.'
     correct_index: 1
     option_feedback:
-      0: A concrete badge display can be tested; the missing behavior is the reminder.
-      2: The described criterion does not establish excessive implementation effort.
-    explanation: Judge the promised value using the acceptance criteria. A displayed date alone does not deliver
-      a reminder.
+      0: Independent concerns dependencies between stories, not use of existing data or features.
+      2: Small concerns implementation effort, not the time a borrower waits.
+    explanation: Judge value using the acceptance criteria. Showing a stored date alone does not deliver a reminder.
   - id: 9
     type: single
     difficulty: intermediate

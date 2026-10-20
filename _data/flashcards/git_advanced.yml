@@ -66,6 +66,8 @@ cards:
     difficulty: intermediate
     question: A feature branch contains intentional failing TDD commits but ends with passing tests. How does
       squash-merging the completed feature help later bisects of `main`?
+    hint: >-
+      Sketch which commits reach `main` with a normal merge and with a squash merge.
     answer: It puts the completed change on `main` without its intermediate failing commits, so those red steps
       cannot be mistaken for regressions on `main`.
     explanation: Squashing does not fix bugs; the completed feature still needs to pass its tests.

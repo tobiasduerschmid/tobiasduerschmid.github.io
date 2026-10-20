@@ -110,5 +110,7 @@ cards:
     difficulty: intermediate
     question: A `Reader.read()` contract promises a string. A subtype returns `None` at end-of-file. Why can
       this violate the Liskov Substitution Principle?
+    hint: >-
+      Imagine a client that immediately uses the returned value as a string. Trace it with each implementation.
     answer: It weakens the promised result. A client that calls string operations on the result can fail when
       given the subtype.

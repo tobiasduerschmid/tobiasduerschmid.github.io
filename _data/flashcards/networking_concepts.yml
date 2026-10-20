@@ -77,5 +77,7 @@ cards:
     difficulty: intermediate
     question: A text editor sends incremental edits; a game sends complete cursor positions. Why is a lost update
       more serious for the editor?
+    hint: >-
+      Drop the middle of three updates. Does the last update contain enough information to recover?
     answer: Later edits depend on earlier edits, so a lost edit can corrupt the document. A later complete cursor
       position replaces a lost one.

@@ -82,6 +82,8 @@ cards:
     difficulty: intermediate
     question: "This Make rule builds `calc.o`. What command does its recipe run?\n\n```make\n%.o: %.c\n\tgcc\
       \ -c $< -o $@\n```"
+    hint: >-
+      Match the requested target to the pattern, then determine the target and prerequisite names before expanding the variables.
     answer: '`gcc -c calc.c -o calc.o`'
     explanation: '`$<` is the first prerequisite; `$@` is the target. The pattern matches the common `calc`
       stem.'

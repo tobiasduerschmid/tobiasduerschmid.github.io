@@ -118,6 +118,8 @@ cards:
     difficulty: intermediate
     question: During pair programming, the driver types silently and the navigator loses track. Suggest one
       change that helps both understand the code.
+    hint: >-
+      Consider what the navigator needs in order to predict and discuss the driver’s next edit.
     answer: Pause to discuss the next small step and then rotate driver and navigator roles.
   - id: 17
     difficulty: intermediate

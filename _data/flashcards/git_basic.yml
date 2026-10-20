@@ -115,6 +115,8 @@ cards:
     difficulty: intermediate
     question: You stage a new `notes.txt`, then delete it with `rm`. Will an ordinary Git commit include the
       file? Explain.
+    hint: >-
+      Track the working file and staged snapshot separately after each command.
     answer: Yes. The index still contains the staged file; deleting the working copy does not stage its deletion.
   - id: 23
     difficulty: intermediate

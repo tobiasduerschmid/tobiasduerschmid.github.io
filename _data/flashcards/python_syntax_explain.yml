@@ -537,5 +537,7 @@ cards:
       values = [4, 9]
       [v * 2 for v in values if v > 5]
       ```
+    hint: >-
+      Make one row per input value, recording the condition result and then the value produced.
     answer: '`[18]`'
     explanation: The condition checks each original value. Only 9 passes; that value is then doubled.

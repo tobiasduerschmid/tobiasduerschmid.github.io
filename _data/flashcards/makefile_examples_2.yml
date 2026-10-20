@@ -78,9 +78,13 @@ cards:
     difficulty: intermediate
     question: "No `report` file exists. Why does `make report` run this recipe on both invocations?\n\n```make\n\
       report:\n\t@echo built\n```"
+    hint: >-
+      List the files that exist after the recipe finishes, then apply Make’s target-existence and freshness rules.
     answer: The recipe never creates `report`, so the target is still missing on the second invocation.
   - id: 12
     difficulty: intermediate
     question: In a Make recipe, `@bash run.sh > output.txt` runs a script that prints `42` to stdout. Why is
       `42` absent from the terminal?
+    hint: >-
+      Separate Make’s handling of the recipe command from Bash’s handling of the script’s output.
     answer: '`>` sends stdout to `output.txt`. The `@` only hides the recipe command itself.'

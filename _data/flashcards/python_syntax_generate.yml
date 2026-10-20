@@ -287,6 +287,8 @@ cards:
     difficulty: intermediate
     question: Python lists `prices` and `credits` have equal lengths. Write an expression that returns their
       pairwise differences greater than 5, in order.
+    hint: >-
+      Work through one aligned pair first. Decide whether the filter uses an input or the computed difference.
     answer: |-
       ```python
       [p - c for p, c in zip(prices, credits)

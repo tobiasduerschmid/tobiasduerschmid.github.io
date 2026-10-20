@@ -227,13 +227,13 @@ questions:
     question: One developer is the sole maintainer of a critical parser. What benefit would pairing on its next
       change provide?
     options:
-    - The pair can skip testing the changed parser.
-    - The pair will necessarily finish in half the time.
+    - The pair can replace running tests with discussion.
+    - Each partner can implement a separate half alone.
     - Another developer learns how the parser works.
     correct_index: 2
     option_feedback:
-      0: Live review can catch mistakes, but it does not replace tests.
-      1: Two developers can improve understanding and review without halving elapsed time.
+      0: Discussion can catch mistakes, but it does not replace executing tests.
+      1: Working separately splits the task; pairing builds shared understanding of the same change.
     explanation: Pairing spreads knowledge, reducing dependence on a single developer.
   - id: 13
     type: single

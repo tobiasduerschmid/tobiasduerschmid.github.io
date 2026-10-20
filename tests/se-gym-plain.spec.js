@@ -1,6 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { a11yCheckpoint } = require('./a11y-helpers');
+const { a11yCheckpoint, interactiveA11yEnabled } = require('./a11y-helpers');
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
@@ -107,7 +107,8 @@ for (const query of ['', '&quiz=missing-quiz']) {
 }
 
 test('plain quiz completion and restart preserve a saved workout and ignore gym restrictions', async ({ page }) => {
-  test.setTimeout(60000);
+  // Feedback and results each run light/dark audits in accessibility mode.
+  test.setTimeout(interactiveA11yEnabled('se-gym') ? 120000 : 60000);
   await page.goto('/se-gym/');
   const gymActivation = page.getByRole('checkbox', { name: 'Toggle personal gym activation' });
   await gymActivation.focus();

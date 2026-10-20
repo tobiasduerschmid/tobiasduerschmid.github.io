@@ -65,17 +65,23 @@ cards:
     difficulty: intermediate
     question: A story promises to help readers find books, but its only acceptance criterion checks that a search
       box exists. Why is its value not demonstrated?
+    hint: >-
+      Compare the reader’s goal with what an implementation could do while passing the sole criterion.
     answer: The criterion does not require a search to return matching books, so it does not establish the promised
       reader benefit.
   - id: 12
     difficulty: intermediate
     question: A sales report totals transaction amounts. Write one testable acceptance criterion using transactions
       of 12 and 8.
+    hint: >-
+      Specify one concrete starting state, one action, and one observable outcome.
     answer: Given transactions of 12 and 8, when the report is generated, then it shows a total of 20.
   - id: 13
     difficulty: intermediate
     question: A story adds email, SMS, and chat reminders. Suggest a smaller story that still delivers a complete
       user benefit.
+    hint: >-
+      Choose one channel and check that a borrower could use it without the other channels.
     answer: 'For example: As a borrower, I want an email before my book is due so I can return it on time.'
     explanation: This keeps one complete reminder path rather than splitting the work into interface-only and
       database-only tasks.
@@ -83,4 +89,6 @@ cards:
     difficulty: intermediate
     question: A story’s criterion says an instructor can download the current roster as CSV. Give a Valuable
       justification based only on that criterion.
+    hint: >-
+      Compare the instructor’s workflow with and without the download, staying within the stated criterion.
     answer: The instructor can use the roster in a spreadsheet without retyping each student’s details.

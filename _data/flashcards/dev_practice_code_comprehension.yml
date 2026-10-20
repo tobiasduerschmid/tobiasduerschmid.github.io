@@ -68,6 +68,8 @@ cards:
     difficulty: intermediate
     question: A booking handler reserves 3 seats, then rejects an unauthorized request. What must the rejection
       branch do to leave the seat count unchanged?
+    hint: >-
+      Compare the available seats before the request with the required count after rejection.
     answer: Release those 3 seats before returning the error.
   - id: exam-practice-trace-observations
     difficulty: intermediate
@@ -83,4 +85,6 @@ cards:
       }
       book(false);
       ```
+    hint: >-
+      Track the returned status and current seat count separately. Follow only statements executed on this call.
     answer: '`[403, 6]`. Returning an error does not undo the subtraction.'
