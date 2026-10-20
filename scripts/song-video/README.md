@@ -123,9 +123,18 @@ This opens a disposable Firefox profile (never the user's profile), enables
 fractional pixel density. It saves before/after frames, rejects stray interior
 border pixels, verifies unchanged layout, and closes the test browser. This
 reproduces [Firefox bug 2076078](https://bugzilla.mozilla.org/show_bug.cgi?id=2076078).
-The shared scene preparation detects rounded CSS borders, including pseudo
-elements, and paints each as a single surface in Firefox. No scans run during
-playback; SVG paths and other browsers retain their existing rendering.
+The same defect also shows as thin L-shaped lines inside the corners of
+rounded boxes on a scaled stage, because Firefox draws a rounded border as
+separate corner and edge pieces. In Firefox, the shared scene preparation
+(`rounded-surfaces.js`) therefore repaints every rounded box with a solid
+border, including pseudo-elements, without a border: an opaque box paints
+its border colour as a border-box background layer under its fill, and a
+translucent or empty box draws the ring with a free pseudo-element masked to
+the border area. Layout is unchanged. The repaint copies computed colours, so
+a class change that could change paint repaints just the boxes inside the
+changed element, and boxes whose border or fill is animated keep their
+border. Dashed and dotted borders, SVG paths, and other browsers keep their
+existing rendering.
 
 ## One storyboard, many outputs
 
