@@ -125,8 +125,9 @@ cards:
       these writes to the file rather than the terminal.
 
   - id: 23
-    difficulty: advanced
-    question: In Bash, enable stopping on a failed pipeline even when its final command succeeds. Give the setting.
-    answer: '`set -e -o pipefail`'
-    explanation: '`pipefail` makes a pipeline report the rightmost nonzero command status. `-e` then exits for an
-      unhandled failure; failures being tested by conditionals or nonfinal `&&`/`||` positions still have exceptions.'
+    difficulty: intermediate
+    question: In Bash, `set -e` is active, but `false | tee build.log` succeeds. What additional setting makes
+      this pipeline fail?
+    answer: '`set -o pipefail`'
+    explanation: Without `pipefail`, the pipeline reports the final command’s success. With it, the unhandled
+      failure makes this script exit.

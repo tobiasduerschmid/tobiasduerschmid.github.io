@@ -142,7 +142,6 @@ cards:
 
   - id: exam-practice-transaction-boundary
     difficulty: intermediate
-    question: A database commit succeeds, then sending a receipt email fails. Why does this alone not show a
-      database atomicity violation?
-    answer: The email send is outside the database transaction. Database atomicity covers the operations grouped
-      in that transaction, not every later action in the application.
+    question: An app commits a database purchase, then calls a separate email service. The email fails. Does
+      database atomicity require undoing the purchase? Why?
+    answer: No. Atomicity applies to the database transaction; the later email call is outside it.

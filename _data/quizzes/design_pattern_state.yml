@@ -102,26 +102,28 @@ questions:
   - id: 6
     type: single
     difficulty: intermediate
-    question: A `Printer` uses State objects. Where should “reject a print request while jammed” belong?
+    question: 'A printer uses the State pattern: Ready prints; Jammed rejects printing. Where should the differing
+      `print()` implementations live?'
     options:
-    - In the concrete jammed state.
-    - In every client that prints.
-    - In a client-side switch over all states.
+    - In the Ready and Jammed state classes.
+    - In a state switch in every printer client.
+    - In one growing switch in the Printer class.
     correct_index: 0
-    option_feedback:
-      1: That scatters a state-dependent rule across callers, so each caller must know internal printer states.
-      2: A switch in each client recreates the coupling that delegation is intended to remove.
-    explanation: The printer delegates state-dependent behavior to its current state. The jammed state owns the response to a print request in that state.
+    option_feedback: {}
+    explanation: The context delegates to its current state. Each concrete state supplies its response, keeping
+      state-dependent behavior out of clients and a central switch.
   - id: 7
     type: single
     difficulty: intermediate
-    question: A player stores its current State object. Every state uses the same account identifier. What belongs in the context rather than each state?
+    question: A game uses the State pattern for Active and Bankrupt players. The player’s account ID stays the
+      same across transitions. Where should that ID be stored?
     options:
-    - The rule for moving out of jail.
-    - The behavior of a bankrupt turn.
-    - The shared account identifier.
+    - Only in the Active state.
+    - Separately in every state object.
+    - In the Player context.
     correct_index: 2
     option_feedback:
-      0: A state-specific transition rule can belong with that state, depending on the chosen transition design.
-      1: Turn behavior that varies for bankrupt players is a state-dependent concern.
-    explanation: The context can retain identity and other state-independent data while delegating varying behavior. Copying shared identity into every state risks inconsistent copies.
+      0: The account is still needed when the player is Bankrupt.
+      1: Duplicating the ID creates copies that must be kept consistent.
+    explanation: State-independent data belongs in the context. Replacing the state object should not replace
+      the player’s identity.

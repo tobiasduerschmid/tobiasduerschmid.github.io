@@ -354,7 +354,7 @@ questions:
   - id: 16
     type: single
     difficulty: intermediate
-    question: '`PausedState` extends abstract class `JobState`. A generalization arrow points toward `PausedState`. What is the smallest correction?'
+    question: 'In a UML class diagram, `PausedState` extends abstract class `JobState`. A generalization arrow points toward `PausedState`. What is the smallest correction?'
     options:
     - Replace the triangle with a filled diamond.
     - Point the hollow triangle toward JobState.
@@ -367,7 +367,7 @@ questions:
   - id: 17
     type: single
     difficulty: intermediate
-    question: A dashboard may subscribe to several feeds and survives when any feed is deleted. Which relationship best models a feed’s link to that dashboard?
+    question: A dashboard may subscribe to several feeds and survives when any feed is deleted. Which UML relationship best models a feed’s link to that dashboard?
     options:
     - 'Composition: the feed owns the dashboard’s lifetime.'
     - 'Generalization: the dashboard is a kind of feed.'

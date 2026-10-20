@@ -296,7 +296,7 @@ questions:
   - id: 15
     type: single
     difficulty: intermediate
-    question: For whole-string matching, which pattern accepts only strings that alternate `x` and `y`, start with
+    question: For Python whole-string regex matching, which pattern accepts only strings that alternate `x` and `y`, start with
       `x`, and have length at least 4?
     options:
       - '`(?:xy){2,}`'
@@ -328,7 +328,7 @@ questions:
   - id: 17
     type: single
     difficulty: intermediate
-    question: Which pattern matches one or more complete repetitions of `ha`, such as `ha` and `hahaha`, but rejects
+    question: Which Python regex matches one or more complete repetitions of `ha`, such as `ha` and `hahaha`, but rejects
       `haaa`? Use whole-string matching.
     options:
       - '`ha+`'
@@ -343,7 +343,7 @@ questions:
   - id: 18
     type: single
     difficulty: intermediate
-    question: A match must end immediately before a whitespace character and `Ready`, without consuming either. Which
+    question: A Python regex match must end immediately before a whitespace character and `Ready`, without consuming either. Which
       suffix expresses this?
     options:
       - '`\sReady`'
@@ -358,7 +358,7 @@ questions:
   - id: 19
     type: single
     difficulty: intermediate
-    question: Which pattern accepts every zero-padded hour from `00` through `23` and rejects `24`? Use whole-string
+    question: Which Python regex accepts every zero-padded hour from `00` through `23` and rejects `24`? Use whole-string
       matching.
     options:
       - '`[0-2][0-9]`'

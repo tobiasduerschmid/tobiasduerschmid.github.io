@@ -64,15 +64,15 @@ cards:
 
   - id: 11
     difficulty: intermediate
-    question: Write a `saved.txt` rule that depends on `input.txt` and copies it using `$<` and `$@`.
-    answer: "```make\nsaved.txt: input.txt\n\tcp $< $@\n```"
-    explanation: Use a tab before the recipe. `$<` expands to the first prerequisite, and `$@` expands to the target;
-      this recipe actually creates the target file.
-
+    question: "This Make rule builds `calc.o`. What command does its recipe run?\n\n```make\n%.o: %.c\n\tgcc\
+      \ -c $< -o $@\n```"
+    answer: '`gcc -c calc.c -o calc.o`'
+    explanation: '`$<` is the first prerequisite; `$@` is the target. The pattern matches the common `calc`
+      stem.'
   - id: 12
     difficulty: intermediate
-    question: A script runs `printf "cached\n" | tee preview`. A `preview:` Make action has no prerequisites and is
-      not phony. Why can its recipe be skipped, and what declaration fixes this?
-    answer: '`tee` created a file named `preview`, so Make treats the target as up to date. Add `.PHONY: preview`.'
-    explanation: An action name can collide with a file created elsewhere in the workflow. Declaring it phony makes
-      the recipe independent of that file's existence.
+    question: After `make 2>&1 | tee check`, the next `make check` skips a `check:` action with no prerequisites.
+      What Makefile declaration prevents this?
+    answer: '`.PHONY: check`'
+    explanation: '`tee` created a file named `check`. Declaring the action phony prevents that file from suppressing
+      its recipe.'

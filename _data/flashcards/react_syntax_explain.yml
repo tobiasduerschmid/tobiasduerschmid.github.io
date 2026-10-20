@@ -193,10 +193,17 @@ cards:
   - id: exam-practice-derive-filtered-list
     difficulty: intermediate
     question: |-
-      In a React render, what will `visible` contain after `items` state gains another item with `done: true`?
+      In React, `items` is state but `visible` is initialized only once. How can `visible` stay current when `items` changes?
+
+      ```javascript
+      const [visible] = useState(
+        items.filter(item => item.done)
+      );
+      ```
+    answer: |-
+      Derive it during each render:
 
       ```javascript
       const visible = items.filter(item => item.done);
       ```
-    answer: The completed items, including the newly added one.
-    explanation: Recomputing the filtered list from current state avoids keeping a separate filtered-state copy that can become stale.
+    explanation: The filtered list follows `items`; it does not need independent state.

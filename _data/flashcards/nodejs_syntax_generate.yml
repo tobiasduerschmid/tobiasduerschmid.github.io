@@ -121,9 +121,17 @@ cards:
 
   - id: exam-practice-route-interpolation
     difficulty: intermediate
-    question: Inside an Express `/rooms/:code` handler, write one statement that sends `Room C7` when `req.params.code` is `"C7"`. Use a template literal.
+    question: |-
+      Repair this Express handler so `/rooms/C7` responds with `Room C7`.
+
+      ```javascript
+      app.get("/rooms/:code", (req, res) => {
+        res.send("Room ${req.params.code}");
+      });
+      ```
     answer: |-
+      Use backticks for interpolation:
+
       ```javascript
       res.send(`Room ${req.params.code}`);
       ```
-    explanation: Read the route parameter from req.params and interpolate it with ${...} inside backticks.

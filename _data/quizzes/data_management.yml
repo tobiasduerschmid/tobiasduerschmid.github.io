@@ -292,15 +292,17 @@ questions:
   - id: exam-practice-partition-unique
     type: single
     difficulty: intermediate
-    question: Two disconnected replicas accept the same supposedly unique ticket code. After reconnection, both
-      records remain. Which ACID property does the broken uniqueness rule concern?
+    question: Two disconnected database replicas accept the same ticket code. After reconnection both records
+      remain, violating a uniqueness rule. Which ACID property is violated?
     options:
     - Atomicity
     - Consistency
     - Durability
     correct_index: 1
     option_feedback:
-      0: Atomicity asks whether the operations within a transaction happen together.
-      2: Durability asks whether committed data survives; these records were retained.
-    explanation: ACID consistency requires transactions to preserve database rules such as uniqueness. The key
-      evidence here is the invalid final database state.
+      0: Atomicity concerns whether a transaction’s operations happen together. The stated failure is a broken
+        uniqueness rule.
+      2: Durability concerns retaining committed changes. Here the problem is retaining an invalid combination
+        of records.
+    explanation: Consistency requires the database to preserve its rules, including uniqueness. This is ACID
+      consistency, not the separate CAP use of that term.

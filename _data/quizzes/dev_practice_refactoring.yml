@@ -136,7 +136,8 @@ questions:
   - id: exam-practice-safe-condition-order
     type: single
     difficulty: intermediate
-    question: For `row`, which condition safely checks for a nonempty built-in list starting with `"x"`?
+    question: In Python, which condition safely checks whether `row` is a nonempty built-in list starting with
+      `"x"`?
     options:
     - '`row[0] == "x" and type(row) == list and len(row) > 0`'
     - '`type(row) == list and len(row) > 0 and row[0] == "x"`'
@@ -150,8 +151,8 @@ questions:
   - id: exam-practice-boundary-oracle
     type: single
     difficulty: intermediate
-    question: A function returns true for a list starting with `"x"` only when its length is at least 4. Which
-      test pair best checks the length boundary?
+    question: A Python function accepts a list starting with `"x"` only if its length is at least 4. Which test
+      pair checks that length boundary?
     options:
     - '`["x",1,2] → False`; `["x",1,2,3] → True`'
     - '`["x",1,2,3] → True`; `["x",1,2,3,4] → True`'

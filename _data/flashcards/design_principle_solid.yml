@@ -94,6 +94,7 @@ cards:
 
   - id: 16
     difficulty: intermediate
-    question: A subtype accepts the same input but returns less than its superclass promises. Which Liskov contract rule fails?
-    answer: It weakens the postcondition.
-    explanation: Substitution must preserve the guarantees a client can rely on after the operation succeeds.
+    question: A `Reader.read()` contract promises a string. A subtype returns `None` at end-of-file. Why can
+      this violate the Liskov Substitution Principle?
+    answer: It weakens the promised result. A client that calls string operations on the result can fail when
+      given the subtype.

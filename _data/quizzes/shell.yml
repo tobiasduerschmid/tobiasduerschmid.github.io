@@ -484,7 +484,7 @@ questions:
   - id: 23
     type: single
     difficulty: intermediate
-    question: '`build.sh` writes `ok` to stdout and `warn` to stderr. With `./build.sh 2>&1 > build.log`, where does
+    question: 'In Bash, `build.sh` writes `ok` to stdout and `warn` to stderr. With `./build.sh 2>&1 > build.log`, where does
       `warn` go?'
     options:
       - The terminal

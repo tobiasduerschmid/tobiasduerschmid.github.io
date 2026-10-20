@@ -69,7 +69,7 @@ cards:
 
   - id: exam-practice-delta-vs-snapshot
     difficulty: intermediate
-    question: Why does losing an incremental text edit matter more than losing an old complete cursor-position
-      snapshot?
-    answer: The edit changes a document that later edits build on, so losing it can leave the document wrong.
-      A later complete cursor snapshot replaces the earlier position.
+    question: A text editor sends incremental edits; a game sends complete cursor positions. Why is a lost update
+      more serious for the editor?
+    answer: Later edits depend on earlier edits, so a lost edit can corrupt the document. A later complete cursor
+      position replaces a lost one.

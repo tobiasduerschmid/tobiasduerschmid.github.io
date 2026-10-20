@@ -263,19 +263,18 @@ questions:
   - id: 13
     type: single
     difficulty: intermediate
-    question: "What does this recipe print when `make bundle` runs? `first.o` and `second.o` exist; `bundle` does\
-      \ not.\n\n```make\nbundle: first.o second.o\n\t@echo $@ $< $^\n```"
+    question: "What command does this Make recipe run? Both `.o` files exist; `app` is missing.\n\n```make\n\
+      app: main.o math.o\n\tgcc $^ -o $@\n```"
     options:
-      - '`bundle first.o first.o second.o`'
-      - '`bundle first.o second.o`'
-      - '`first.o bundle first.o second.o`'
+    - gcc main.o math.o -o app
+    - gcc main.o -o app
+    - gcc app -o main.o math.o
     correct_index: 0
     option_feedback:
-      1: '`$^` includes the first prerequisite as well as the second, so `first.o` appears twice in this output.'
-      2: '`$@` names the target, while `$<` names the first prerequisite.'
-    explanation: '`$@` is `bundle`, `$<` is `first.o`, and `$^` is the full prerequisite list. The first prerequisite
-      appears in both `$<` and `$^`.'
-
+      1: Using only the first prerequisite would omit math.o; $^ includes both.
+      2: The target is the output after -o, not an input object file.
+    explanation: '`$^` expands to all prerequisites, and `$@` to the target. Both object files are linked into
+      `app`.'
   - id: 14
     type: single
     difficulty: intermediate

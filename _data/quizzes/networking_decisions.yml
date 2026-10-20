@@ -202,15 +202,15 @@ questions:
   - id: exam-practice-peer-redundancy
     type: single
     difficulty: intermediate
-    question: A volunteer backup network must retrieve a file when its original uploader is offline. What design
-      choice most directly supports that requirement?
+    question: A backup network uses volunteers’ storage, has no central file server, and must serve files while
+      uploaders are offline. Which design fits?
     options:
-    - Keep the only copy on the uploader.
-    - Replicate the file across several peers.
-    - Use a faster connection to the uploader.
+    - Clients keep their only copy locally.
+    - Peers store copies for other peers.
+    - Clients download only from uploaders.
     correct_index: 1
     option_feedback:
-      0: An offline uploader cannot serve its only copy.
-      2: More bandwidth does not make an offline host reachable.
-    explanation: Peer-to-peer organization permits volunteers to store and serve one another’s files. Keeping
-      copies on multiple peers supports retrieval when one leaves.
+      0: A copy only on an offline client cannot be retrieved.
+      2: Depending on the uploader conflicts with the offline-access requirement.
+    explanation: Replicating files across peers lets an available peer serve a copy when the original uploader
+      is offline.

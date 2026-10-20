@@ -210,16 +210,16 @@ questions:
   - id: 6
     type: single
     difficulty: intermediate
-    question: A story promises calendar, chat, payroll, and storage integrations. Which revision most directly makes it Small while preserving user value?
+    question: A story includes calendar, chat, payroll, and storage integrations. Which split gives users a
+      useful first increment?
     options:
-    - Deliver calendar-event import first.
-    - Build only the shared database schema.
-    - Keep all integrations but shorten the story.
+    - Import calendar events end to end.
+    - Build tables for all four integrations.
+    - Build buttons for all four integrations.
     correct_index: 0
-    option_feedback:
-      1: A database layer alone does not let a user complete the promised task. Slice by a usable outcome, not just by technical layer.
-      2: Small concerns implementation scope, not sentence length.
-    explanation: Calendar-event import is one usable integration. Its end-to-end scope is narrower than implementing four separate integrations.
+    option_feedback: {}
+    explanation: One working integration delivers a complete outcome with less scope. Isolated tables or buttons
+      do not yet provide that outcome.
   - id: 7
     type: single
     difficulty: intermediate
@@ -236,20 +236,22 @@ questions:
   - id: 8
     type: single
     difficulty: intermediate
-    question: A library story promises due-date reminders. Its only criterion checks a due-date badge. Which added outcome tests reminder delivery?
+    question: A library story promises due-date reminders, but its only criterion checks a due-date badge. Which
+      critique of INVEST is best supported?
     options:
-    - A reminder is sent at 9 a.m. the day before a book is due.
-    - A reminder preference is stored when the reader selects it.
-    - A reminder icon appears beside books due the next day.
-    correct_index: 0
+    - 'Testable: a badge can never be checked.'
+    - 'Valuable: the criteria omit reminder delivery.'
+    - 'Small: a badge must take several months.'
+    correct_index: 1
     option_feedback:
-      1: Saving a preference establishes configuration, not that a scheduled reminder is delivered.
-      2: A visual marker on the book page does not establish delivery of the promised reminder.
-    explanation: The new criterion connects a concrete trigger to the notification outcome. A value justification should refer to behavior actually included in the acceptance criteria.
+      0: A concrete badge display can be tested; the missing behavior is the reminder.
+      2: The described criterion does not establish excessive implementation effort.
+    explanation: Judge the promised value using the acceptance criteria. A displayed date alone does not deliver
+      a reminder.
   - id: 9
     type: single
     difficulty: intermediate
-    question: No technology choice is mandated. A story requires “use Redis to remember recently viewed books.” Which rewrite best preserves Negotiable?
+    question: For this user story, no technology choice is mandated. A story requires “use Redis to remember recently viewed books.” Which rewrite best preserves Negotiable?
     options:
     - Store recently viewed books in a Redis sorted set.
     - Let readers reopen their five most recently viewed books.
@@ -262,13 +264,13 @@ questions:
   - id: 10
     type: single
     difficulty: intermediate
-    question: A story exports one course roster as CSV. Which argument best justifies Small?
+    question: A roster-export story reuses existing data and adds one CSV download. Which argument supports
+      INVEST’s Small criterion?
     options:
-    - It names a familiar file format.
-    - It is useful to every instructor.
-    - One export path reuses existing roster data.
+    - The story is written in one short sentence.
+    - Downloading will take instructors little time.
+    - The work is limited to one existing-data export.
     correct_index: 2
-    option_feedback:
-      0: A familiar format does not by itself bound the work; an export could still include many workflows.
-      1: Usefulness supports Valuable. It does not establish a small implementation scope.
-    explanation: The argument identifies a bounded workflow and existing inputs. Small is about manageable implementation effort, rather than sentence length or popularity.
+    option_feedback: {}
+    explanation: Small concerns implementation effort. A bounded export using existing data supports that judgment;
+      sentence length and user time do not.

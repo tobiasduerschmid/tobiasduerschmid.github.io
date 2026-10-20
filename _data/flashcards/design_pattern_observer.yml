@@ -30,11 +30,11 @@ cards:
 
   - id: 6
     difficulty: intermediate
-    question: A model calls `drawChart()` and `drawTable()` directly. How can Observer separate the concerns?
-    answer: Have both views implement a shared notification operation; each view owns its rendering.
-    explanation: The model publishes changes without selecting concrete display behavior.
+    question: In the Observer pattern, a sensor calls `chart.draw()` and `table.draw()` directly. How would
+      you let it support a new display without changing the sensor?
+    answer: Notify each subscriber through a common `update()` operation. Each display implements its own rendering.
   - id: 7
     difficulty: intermediate
-    question: Two observers are registered, but a complete notify trace updates one. What should you check first?
-    answer: Whether notification visits all registered observers or has an explicit filtering rule.
-    explanation: With ordinary broadcast notification and no filter, the missing update is a behavioral omission.
+    question: An Observer subject stores `[chart, table]`. Its notify method calls only `observers[0].update()`.
+      What change makes both displays receive updates?
+    answer: Loop over the registered observers and call `update()` on each.

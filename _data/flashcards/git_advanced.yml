@@ -52,22 +52,20 @@ cards:
       cherry-pick its changes; reflogs and unreachable objects are not retained forever.
 
   - id: 10
-    difficulty: advanced
-    question: A regression detector is stored outside the repository at `/tmp/check_export.sh`. Write a bisect sequence
-      using known revisions `bad_rev` and `good_rev`.
+    difficulty: intermediate
+    question: A Git bisect check is saved at `/tmp/check_export.sh` and tests the current checkout. Given known
+      commits `bad_rev` and `good_rev`, start an automated bisect.
     answer: |-
       ```sh
       git bisect start bad_rev good_rev
       git bisect run /bin/sh /tmp/check_export.sh
-      git bisect reset
       ```
-    explanation: The detector must exercise the current checkout, remain compatible across candidates, and return
-      0 for good or 1 for the targeted regression. Keeping it outside the checkout prevents historical checkouts from
-      removing it.
-
+    explanation: The check must return 0 for working export and 1 for the export bug. After inspecting the result,
+      use `git bisect reset` to return to the original checkout.
   - id: 11
-    difficulty: advanced
-    question: What extra rule makes squash-merged TDD work useful for bisecting `main`?
-    answer: Merge only a completed, passing feature, and use a consistent detector for the particular regression.
-    explanation: Squashing combines commits but does not make broken code pass. Keeping intentional red steps off
-      main removes one confounder; the chosen good/bad property must still hold consistently across the searched history.
+    difficulty: intermediate
+    question: A feature branch contains intentional failing TDD commits but ends with passing tests. How does
+      squash-merging the completed feature help later bisects of `main`?
+    answer: It puts the completed change on `main` without its intermediate failing commits, so those red steps
+      cannot be mistaken for regressions on `main`.
+    explanation: Squashing does not fix bugs; the completed feature still needs to pass its tests.

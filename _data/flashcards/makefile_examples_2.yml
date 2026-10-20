@@ -64,16 +64,11 @@ cards:
 
   - id: 11
     difficulty: intermediate
-    question: A rule prints `built` but creates no file with its target name. Why does its recipe run again on the
-      next invocation?
-    answer: The target file is still missing, so it still needs updating.
-    explanation: Make compares target existence and timestamps; it does not persist a separate record saying that
-      a recipe ran successfully.
-
+    question: "No `report` file exists. Why does `make report` run this recipe on both invocations?\n\n```make\n\
+      report:\n\t@echo built\n```"
+    answer: The recipe never creates `report`, so the target is still missing on the second invocation.
   - id: 12
     difficulty: intermediate
-    question: In a recipe, `@bash run.sh > output.txt` executes a program that prints a result. Where is that result,
-      and how can you display it?
-    answer: It is in `output.txt`; run `cat output.txt`.
-    explanation: '`@` hides the command echo. The shell redirection separately sends the program''s stdout to the
-      file instead of the terminal.'
+    question: In a Make recipe, `@bash run.sh > output.txt` runs a script that prints `42` to stdout. Why is
+      `42` absent from the terminal?
+    answer: '`>` sends stdout to `output.txt`. The `@` only hides the recipe command itself.'

@@ -76,11 +76,13 @@ cards:
 
   - id: 13
     difficulty: intermediate
-    question: Why is a missing test-data file insufficient evidence for the Red step?
-    answer: The test has not reached the behavior it is meant to check.
-    explanation: Repair setup, rerun, and inspect the expected behavioral failure before implementing the feature.
+    question: In TDD, a new test fails because its input file is missing. Why is that not the failure you need
+      before implementing the feature?
+    answer: It fails in setup without checking the intended behavior. Fix setup and confirm that the assertion
+      detects the missing behavior.
   - id: 14
     difficulty: intermediate
-    question: A test unexpectedly passes before the feature exists. What should you inspect?
-    answer: Whether the test executes the intended path and asserts a distinguishing outcome.
-    explanation: The behavior may already exist, or the test may be ineffective. A green result alone does not resolve that distinction.
+    question: A new TDD test passes before you implement the feature. What should you check before writing production
+      code?
+    answer: Check whether the behavior already exists and whether the test actually exercises and asserts the
+      intended result.

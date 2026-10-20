@@ -189,16 +189,15 @@ questions:
   - id: 10
     type: single
     difficulty: intermediate
-    question: A test already exposes one missing rounding case. Why implement that case before adding ten unrelated failing tests?
+    question: A TDD test exposes one missing rounding case. Why fix it before adding unrelated failing tests?
     options:
-    - Multiple tests make assertions less accurate.
-    - One failing behavior keeps the next change focused.
-    - Only the newest test may be retained in the suite.
+    - To reduce the number of tests kept in the suite.
+    - To keep the next implementation step focused.
+    - To avoid testing the remaining rounding cases.
     correct_index: 1
-    option_feedback:
-      0: Multiple tests can be accurate. The problem is coordinating many new failures in one feedback cycle.
-      2: Earlier tests remain as regression checks; the limit concerns the size of the next increment.
-    explanation: A small Red step makes the cause of failure and the immediate implementation goal clear, allowing a short feedback cycle.
+    option_feedback: {}
+    explanation: One small failing behavior gives a clear implementation goal and a short feedback cycle. Add
+      later cases in subsequent cycles.
   - id: 11
     type: single
     difficulty: intermediate

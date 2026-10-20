@@ -211,7 +211,7 @@ questions:
   - id: 11
     type: single
     difficulty: intermediate
-    question: A fast typist silently implements changes while their partner loses track. Which adjustment most directly restores collaboration?
+    question: During pair programming, the driver types silently while the navigator loses track. Which adjustment most directly restores collaboration?
     options:
     - Explain the next step and rotate driver/navigator roles.
     - Keep the same driver until the entire feature is complete.
@@ -224,26 +224,27 @@ questions:
   - id: 12
     type: single
     difficulty: intermediate
-    question: Two developers finish a fix together. Which observation best supports knowledge transfer?
+    question: One developer is the sole maintainer of a critical parser. What benefit would pairing on its next
+      change provide?
     options:
-    - Both stayed connected to the editor throughout.
-    - Both accounts contributed lines to the patch.
-    - Both can explain the defect and its verification.
+    - The pair can skip testing the changed parser.
+    - The pair will necessarily finish in half the time.
+    - Another developer learns how the parser works.
     correct_index: 2
     option_feedback:
-      0: Being present does not establish shared understanding; a partner can remain passive.
-      1: Dividing typing work does not establish that each partner understands the cause and correction.
-    explanation: Knowledge transfer is evidenced by what both partners can explain and do afterward. Ask each to account for the cause, fix, and verification.
+      0: Live review can catch mistakes, but it does not replace tests.
+      1: Two developers can improve understanding and review without halving elapsed time.
+    explanation: Pairing spreads knowledge, reducing dependence on a single developer.
   - id: 13
     type: single
     difficulty: intermediate
-    question: Two remote developers cannot see each other’s edits during a pairing session. Which mitigation targets that obstacle?
+    question: A pair loses time because the driver changes the design without explaining it. Which change most
+      directly addresses the problem?
     options:
-    - Send a patch only after the session ends.
-    - Use a shared editing view with live conversation.
-    - Have both edit separate copies without talking.
+    - Have each partner implement a separate solution.
+    - Agree on the next small step before typing.
+    - Keep the faster typist driving every session.
     correct_index: 1
-    option_feedback:
-      0: Delayed review can be useful, but it does not provide shared visibility during the session.
-      2: Separate copies without communication prevent the ongoing coordination needed for pairing.
-    explanation: Shared code visibility and live discussion support joint reasoning. Remote tools reduce the location barrier, though the pair still needs overlapping time.
+    option_feedback: {}
+    explanation: A shared next step keeps both partners involved in the reasoning. Rotating roles can also help
+      maintain shared understanding.

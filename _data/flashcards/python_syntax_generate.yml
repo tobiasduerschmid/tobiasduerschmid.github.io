@@ -253,10 +253,11 @@ cards:
 
   - id: exam-practice-write-length-guard
     difficulty: intermediate
-    question: Before pairing the lists `prices` and `credits`, write a guard that raises `ValueError` when their lengths differ.
+    question: Python lists `prices` and `credits` have equal lengths. Write an expression that returns their
+      pairwise differences greater than 5, in order.
     answer: |-
       ```python
-      if len(prices) != len(credits):
-          raise ValueError("lengths differ")
+      [p - c for p, c in zip(prices, credits)
+       if p - c > 5]
       ```
-    explanation: The guard rejects mismatched inputs before zip can silently omit unmatched elements.
+    explanation: Pair first, subtract, then filter the difference rather than either input.

@@ -30,11 +30,13 @@ cards:
 
   - id: 6
     difficulty: intermediate
-    question: After a ticket changes from Open to Closed, what must change for State-based delegation to use closed-ticket behavior?
-    answer: The context must refer to the Closed state object.
-    explanation: Replacing the current state changes which implementation handles the next delegated operation; changing a label alone does not.
+    question: A ticket uses the State pattern. Closing it changes a string label to `"Closed"`, but `ticket.state`
+      still holds an Open object. Why can it still accept edits?
+    answer: Delegated calls still reach the Open object. The transition must replace the current state with
+      a Closed object.
   - id: 7
     difficulty: intermediate
-    question: Why does making a context’s current-state field public weaken the State design?
-    answer: Callers can bypass transition rules and install an invalid state.
-    explanation: Keep the representation controlled and expose domain operations that preserve valid transitions.
+    question: A State-pattern ticket exposes `state` publicly. Clients can assign Closed without checking for
+      unpaid charges. How can the design enforce the closing rule?
+    answer: Make the state reference private and expose a closing operation that checks the charges before changing
+      state.

@@ -13,6 +13,11 @@ For SEBook, SE Gym, tutorials, quizzes, flashcards, or UCLA course materials,
 read `references/project-context.md` alongside the relevant route below.
 For static SEBook chapters also read `references/content-types/sebook-chapter.md`.
 Project skills own authoring formats and runtime constraints.
+For exam-derived practice, inspect the exam, its available solution, and the
+corresponding teaching material. Preserve the assessed reasoning at the course's
+level, with short independent tasks. Apply the premise–answer check in
+`procedures/10_exam-design-workflow.md`; an explanation must not supply context
+that the learner needed before answering.
 
 ## Start with the task
 

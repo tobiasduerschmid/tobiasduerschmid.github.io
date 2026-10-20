@@ -460,7 +460,8 @@ questions:
   - id: exam-practice-id-not-index
     type: single
     difficulty: intermediate
-    question: A roster has numeric IDs 4, 8, and 12. In `/people/:id`, which lookup finds the requested ID rather than treating it as an array position?
+    question: An Express roster has numeric IDs 4, 8, and 12. In `/people/:id`, which lookup finds the requested
+      person by ID?
     options:
     - roster.find(person => person.id === Number(req.params.id))
     - roster[Number(req.params.id)]
@@ -469,4 +470,5 @@ questions:
     option_feedback:
       1: An ID identifies a record; it need not equal its zero-based array position.
       2: Subtracting one changes the identifier being compared. IDs do not need an index correction.
-    explanation: Convert the textual route parameter to a number, then compare it with each record’s ID. The roster’s positions do not determine its IDs.
+    explanation: Convert the textual route parameter to a number, then compare it with each record’s ID. The
+      roster’s positions do not determine its IDs.

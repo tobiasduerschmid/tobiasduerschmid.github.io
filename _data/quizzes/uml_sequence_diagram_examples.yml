@@ -270,7 +270,7 @@ questions:
   - id: 13
     type: single
     difficulty: intermediate
-    question: A context holds a `ReadyState` object through an abstract `State` reference. Which trace correctly models a delegated call?
+    question: A context holds a `ReadyState` object through an abstract `State` reference. Which UML sequence trace correctly models a delegated call?
     options:
     - Context calls a separate abstract State instance, which forwards it.
     - Context calls the current ReadyState instance directly.
@@ -283,7 +283,7 @@ questions:
   - id: 14
     type: single
     difficulty: intermediate
-    question: 'A receiver declares only `reserve(count: int)`. Which sequence message is consistent with that operation?'
+    question: 'A receiver declares only `reserve(count: int)`. Which UML sequence message is consistent with that operation?'
     options:
     - reserve()
     - reserve(3, "blue")

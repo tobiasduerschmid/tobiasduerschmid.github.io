@@ -100,11 +100,12 @@ cards:
 
   - id: 16
     difficulty: intermediate
-    question: A navigator cannot explain the change after ten minutes of silent typing. Name one targeted mitigation.
-    answer: Pause to explain the next small step, then rotate roles.
-    explanation: Active discussion and role changes help reveal and repair unequal understanding.
+    question: During pair programming, the driver types silently and the navigator loses track. Suggest one
+      change that helps both understand the code.
+    answer: Pause to discuss the next small step and then rotate driver and navigator roles.
   - id: 17
     difficulty: intermediate
-    question: Remote pairing tools solve the location barrier. What scheduling constraint remains?
-    answer: The partners still need overlapping time for live collaboration.
-    explanation: If no overlap exists, asynchronous review can help, but it is a different collaboration format.
+    question: Only one developer understands a critical module. How could pair programming reduce this project
+      risk?
+    answer: Have that developer work through changes with a teammate so both understand the module and can maintain
+      it.

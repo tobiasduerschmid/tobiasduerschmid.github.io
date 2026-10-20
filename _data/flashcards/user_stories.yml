@@ -55,21 +55,24 @@ cards:
 
   - id: 11
     difficulty: intermediate
-    question: A story says “help readers find books,” but its criteria only check that a search box exists. What is missing?
-    answer: An observable search result behavior that delivers the stated benefit.
-    explanation: A visible control alone does not show that users can find a book. Add a concrete query and expected matching results.
+    question: A story promises to help readers find books, but its only acceptance criterion checks that a search
+      box exists. Why is its value not demonstrated?
+    answer: The criterion does not require a search to return matching books, so it does not establish the promised
+      reader benefit.
   - id: 12
     difficulty: intermediate
-    question: Repair “the report is accurate” into one testable acceptance criterion.
-    answer: Given a fixture with sales of 12 and 8, when the report is generated, then its total is 20.
-    explanation: Specify inputs, trigger, and an observable expected result. One example pins one behavior; other cases may need separate criteria.
+    question: A sales report totals transaction amounts. Write one testable acceptance criterion using transactions
+      of 12 and 8.
+    answer: Given transactions of 12 and 8, when the report is generated, then it shows a total of 20.
   - id: 13
     difficulty: intermediate
-    question: How can you make “integrate every messaging service” Small without splitting by technical layer?
-    answer: Deliver one usable messaging integration first.
-    explanation: A vertical slice includes enough interface and backend behavior to deliver that one outcome.
+    question: A story adds email, SMS, and chat reminders. Suggest a smaller story that still delivers a complete
+      user benefit.
+    answer: 'For example: As a borrower, I want an email before my book is due so I can return it on time.'
+    explanation: This keeps one complete reminder path rather than splitting the work into interface-only and
+      database-only tasks.
   - id: 14
     difficulty: intermediate
-    question: What evidence should justify that a particular story is Valuable?
-    answer: Explain how the behavior in its acceptance criteria helps its named user.
-    explanation: Do not justify value using additional features that the criteria never promise.
+    question: A story’s criterion says an instructor can download the current roster as CSV. Give a Valuable
+      justification based only on that criterion.
+    answer: The instructor can use the roster in a spreadsheet without retyping each student’s details.

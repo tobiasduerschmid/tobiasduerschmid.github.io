@@ -330,16 +330,15 @@ questions:
   - id: 17
     type: single
     difficulty: intermediate
-    question: '`main` advanced after `topic` was created. You then merged `main` into `topic`, so the current `main`
-      tip is now an ancestor of `topic`. With default merge settings, what does `git merge topic` on `main` do?'
+    question: Git branch `main` is an ancestor of `topic`. With default merge settings, what does `git merge
+      topic` do when run on `main`?
     options:
-      - Fast-forward `main`
-      - Create a merge commit
-      - Reject the divergent histories
+    - Fast-forward `main`
+    - Create a merge commit
+    - Reject the divergent histories
     correct_index: 0
     option_feedback:
-      1: A merge commit is needed for divergent tips, or when requested with `--no-ff`; these current tips are not
-        divergent.
-      2: The earlier divergence was already integrated into `topic`.
-    explanation: 'The current ancestry is what matters: because `main` is an ancestor of `topic`, Git can move its
-      pointer forward. It does not matter that `main` gained commits earlier.'
+      1: A three-way merge commit is not needed when the current branch is already an ancestor of the other
+        tip.
+      2: 'These tips are not divergent: every commit on main is already in topic.'
+    explanation: Git can advance `main` to the `topic` tip without combining divergent changes, so it fast-forwards.

@@ -60,12 +60,23 @@ cards:
 
   - id: exam-practice-guard-compression
     difficulty: intermediate
-    question: Why must a refactor keep the length check before `row[0]` when combining nested Python conditions?
-    answer: An empty list has no element 0. A left-to-right `and` chain must establish that the list is nonempty
-      before reading its first element.
+    question: |-
+      For a Python list `row` that may be empty, combine these checks into one safe condition.
+
+      ```python
+      if len(row) > 0:
+          if row[0] == "x":
+              accept(row)
+      ```
+    answer: |-
+      ```python
+      if len(row) > 0 and row[0] == "x":
+          accept(row)
+      ```
+    explanation: '`and` stops if the list is empty, so indexing is safe.'
   - id: exam-practice-name-predicate
     difficulty: intermediate
-    question: A function returns whether any shipment has at least 4 entries and starts with a requested depot
-      code. Give a descriptive replacement for its name `mystery`.
-    answer: For example, `has_shipment_for_depot`. The name communicates a Boolean question in domain terms;
-      the minimum-length rule belongs in the documented contract.
+    question: Name one refactoring, besides renaming or adding comments, for code that repeats the same five-line
+      input validation in three functions.
+    answer: Extract a validation function and call it from each location, preserving the same checks and error
+      behavior.

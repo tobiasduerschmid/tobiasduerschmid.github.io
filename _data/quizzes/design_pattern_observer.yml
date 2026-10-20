@@ -198,39 +198,46 @@ questions:
   - id: 11
     type: single
     difficulty: intermediate
-    question: A sensor has two registered observers. A complete notification trace calls only the chart observer, with no filtering rule. Which repair follows Observer?
+    question: |-
+      In the Observer pattern, `observers` contains a chart and a table. What bug remains in this Python notification method?
+
+      ```python
+      def notify(self):
+          self.observers[0].update()
+      ```
     options:
-    - Notify only the most recently registered observer.
-    - Call the update operation on both registered observers.
-    - Make each observer periodically modify the sensor.
-    correct_index: 1
-    option_feedback:
-      0: Registration adds another subscriber; it does not replace existing subscribers unless that is an explicit contract.
-      2: Polling or mutating the subject is not the missing notification in the stated design.
-    explanation: The subject notifies each registered observer through the shared observer contract. A complete trace must account for both subscriptions.
+    - It updates only the chart.
+    - It updates both displays twice.
+    - It updates the table before the chart.
+    correct_index: 0
+    option_feedback: {}
+    explanation: Index 0 selects only the chart. Iterate over all registered observers so both receive the notification.
   - id: 12
     type: single
     difficulty: intermediate
-    question: A sensor checks whether each subscriber is a graph or a text panel before calling a different method. What change best removes that type knowledge?
+    question: A sensor uses a type switch to call `drawChart()` or `drawTable()` on subscribers. Which change
+      lets it support a new display without changing that switch?
     options:
-    - Move the type checks into a longer switch.
-    - Give the sensor a field for each panel type.
-    - Call a shared update operation on each subscriber.
+    - Add a switch case for each new display.
+    - Store separate lists for each display type.
+    - Call a common update() on each subscriber.
     correct_index: 2
     option_feedback:
-      0: Centralizing the same checks does not remove the dependency on every concrete subscriber type.
-      1: Concrete fields still force the sensor to change when a new display type is added.
-    explanation: Polymorphic updates let the sensor announce a change while each observer decides how to display it. The model need not own presentation-specific behavior.
+      0: Another case still makes the sensor depend on every display type.
+      1: Separate lists still require the sensor to know the concrete display types.
+    explanation: The sensor announces a change through the Observer interface. Each display owns its rendering.
   - id: 13
     type: single
     difficulty: intermediate
-    question: A pull-based Observer interface declares only `update()`. A notification calls `update(17)`. Which correction preserves the pull design?
+    question: A pull-based Observer interface declares `update()`, and observers read values through `sensor.getValue()`.
+      Which notification matches that design?
     options:
-    - Call update() and let the observer query the subject.
-    - Keep the argument and omit it from the class diagram.
-    - Add the value parameter only to one observer class.
+    - observer.update()
+    - observer.update(sensor.getValue())
+    - observer.getValue()
     correct_index: 0
     option_feedback:
-      1: The interaction and operation contract would still disagree about the parameter.
-      2: Changing only one observer leaves the shared contract inconsistent and breaks uniform notification.
-    explanation: In this pull design, notification has no payload; observers retrieve needed data through the subject’s query interface. A push redesign would require consistently updating the contract and implementations.
+      1: Passing the value would require changing the notification contract to a push design.
+      2: The query belongs to the sensor; querying an observer does not notify it.
+    explanation: The subject sends a parameterless notification. The observer then queries the subject for the
+      value.

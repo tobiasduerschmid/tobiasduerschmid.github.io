@@ -1314,7 +1314,7 @@ questions:
   - id: exam-practice-paired-lengths
     type: single
     difficulty: intermediate
-    question: A function must reject unequal list lengths. It currently subtracts pairs with `zip(prices, credits)`. Which change enforces that requirement?
+    question: A Python function must reject unequal list lengths. It currently subtracts pairs with `zip(prices, credits)`. Which change enforces that requirement?
     options:
     - Check both lengths and raise ValueError before pairing.
     - Pad the shorter list with zeros before pairing.

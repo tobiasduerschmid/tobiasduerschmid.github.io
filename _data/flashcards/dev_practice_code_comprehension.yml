@@ -60,13 +60,21 @@ cards:
 
   - id: exam-practice-repair-rejection
     difficulty: intermediate
-    question: A reservation subtracts 3 seats. A later authorization check returns an error without undoing it.
-      What operation belongs immediately before that error return?
-    answer: Release the 3 seats reserved by this request. Then return the authorization error without saving
-      a successful booking.
+    question: A booking handler reserves 3 seats, then rejects an unauthorized request. What must the rejection
+      branch do to leave the seat count unchanged?
+    answer: Release those 3 seats before returning the error.
   - id: exam-practice-trace-observations
     difficulty: intermediate
-    question: A request is rejected after reserving a resource. Name the three observable results to check when
-      tracing this bug.
-    answer: The returned status, the remaining resource quantity, and whether a successful record was saved.
-      An error response alone does not prove that earlier changes were undone.
+    question: |-
+      What pair does this JavaScript call return?
+
+      ```javascript
+      function book(allowed) {
+        let seats = 8;
+        seats -= 2;
+        if (!allowed) return [403, seats];
+        return [201, seats];
+      }
+      book(false);
+      ```
+    answer: '`[403, 6]`. Returning an error does not undo the subtraction.'

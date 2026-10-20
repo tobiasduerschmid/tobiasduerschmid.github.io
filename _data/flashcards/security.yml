@@ -172,7 +172,6 @@ cards:
 
   - id: exam-practice-sql-bind
     difficulty: intermediate
-    question: An SQL query is built by concatenating a typed name into its WHERE clause. What change separates
-      that name from SQL syntax?
-    answer: Use a parameterized query and bind the typed name as a value. The database receives the value separately
-      from the SQL command structure.
+    question: A login query concatenates the typed username into SQL. How should the query be changed to prevent
+      that text from becoming SQL syntax?
+    answer: Use a parameterized query with a placeholder, and bind the username as a value.

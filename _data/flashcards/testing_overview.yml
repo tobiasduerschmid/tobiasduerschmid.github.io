@@ -52,6 +52,6 @@ cards:
 
   - id: 9
     difficulty: intermediate
-    question: A test reveals the wrong invoice total. What does it establish, and what remains for debugging?
-    answer: It establishes an observed failure; debugging must locate and explain its cause.
-    explanation: A failing assertion is a starting observation, not yet a diagnosis of the faulty statement or assumption.
+    question: A test expects an invoice total of 20 but gets 18. What does testing establish, and what must
+      debugging find?
+    answer: Testing exposes the wrong result. Debugging locates and explains its cause.

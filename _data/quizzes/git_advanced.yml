@@ -186,19 +186,18 @@ questions:
   - id: 10
     type: single
     difficulty: intermediate
-    question: After a teammate force-pushes rewritten history, your committed fix is absent from the branch log. You
-      still have the original local clone. What is the best first recovery step?
+    question: A force-push removes your committed fix from the remote branch. Your local clone previously contained
+      it. What is the best first recovery step?
     options:
-      - Inspect `git reflog` for the old tip
-      - Repeat `git pull` until it returns
-      - Run `git gc --prune=now`
+    - Inspect git reflog for the old commit.
+    - Fetch again to restore the old history.
+    - Reset to the current remote branch tip.
     correct_index: 0
     option_feedback:
-      1: Pull follows the current remote history; repeating it does not restore a removed branch tip.
-      2: Pruning can remove unreachable objects that are needed for recovery.
-    explanation: The local reflog records recent reference movements and may identify the old commit. Inspect it,
-      create a branch at the recovered commit, and then choose how to reintegrate the fix.
-
+      1: Fetching follows the remote’s current history; it does not restore the removed branch tip.
+      2: The remote tip is precisely the history from which the fix is missing.
+    explanation: The local reflog may still identify the old commit. Once found, create a branch at it before
+      reintegrating the fix.
   - id: 11
     type: single
     difficulty: intermediate
