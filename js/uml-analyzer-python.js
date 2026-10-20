@@ -1103,6 +1103,14 @@
     scope.bindings.set(name, scope.bindings.has(name) ? { kind: 'unknown' } : binding);
   }
 
+  function bindPythonSourceTarget(scope, target, binding) {
+    if (!target) return;
+    if (target.type === 'Name') bindPythonSourceName(scope, target.id, binding);
+    else if (target.type === 'Tuple' || target.type === 'List') {
+      for (const element of target.elts || []) bindPythonSourceTarget(scope, element, { kind: 'unknown' });
+    } else if (target.type === 'Starred') bindPythonSourceTarget(scope, target.value, { kind: 'unknown' });
+  }
+
   function PythonSourceSymbols(parsedFiles) {
     this.parsedFiles = parsedFiles;
     this.modules = new Map();
@@ -1154,15 +1162,17 @@
         this.collectImport(node.text, scope);
       } else if (node.type === 'Assign' || node.type === 'AnnAssign') {
         for (const target of node.targets || [node.target]) {
-          if (target && target.type === 'Name') {
-            bindPythonSourceName(scope, target.id, { kind: 'alias', value: node.value, scope });
-          }
+          bindPythonSourceTarget(scope, target, { kind: 'alias', value: node.value, scope });
         }
       } else {
+        if (node.type === 'For' || node.type === 'AugAssign') bindPythonSourceTarget(scope, node.target, { kind: 'unknown' });
         for (const key of ['body', 'orelse', 'finalbody']) {
           if (Array.isArray(node[key])) this.collect(node[key], scope);
         }
-        for (const handler of node.handlers || []) this.collect(handler.body || [], scope);
+        for (const handler of node.handlers || []) {
+          if (handler.name) bindPythonSourceName(scope, handler.name, { kind: 'unknown' });
+          this.collect(handler.body || [], scope);
+        }
       }
     }
   };
@@ -1197,16 +1207,19 @@
     return { kind: 'external', path };
   };
 
+  PythonSourceSymbols.prototype.lookup = function (name, scope, lexical) {
+    for (let owner = scope; owner; owner = lexical === false ? null : owner.parent) {
+      // Class namespaces do not enclose methods or nested class bodies.
+      if (owner !== scope && owner.kind === 'class') continue;
+      if (owner.bindings.has(name)) return owner.bindings.get(name);
+    }
+    return null;
+  };
+
   PythonSourceSymbols.prototype.resolve = function (name, scope, visited, lexical) {
     visited = visited || new Set();
     const parts = name.split('.');
-    let binding = null;
-    for (let owner = scope; owner; owner = lexical === false ? null : owner.parent) {
-      // A class body has its own namespace, but it is not an enclosing
-      // lexical scope for methods or nested class bodies.
-      if (owner !== scope && owner.kind === 'class') continue;
-      if (owner.bindings.has(parts[0])) { binding = owner.bindings.get(parts[0]); break; }
-    }
+    let binding = this.lookup(parts[0], scope, lexical);
     if (!binding) {
       // Merely supplying another module never imports its names. Keep dotted
       // external syntax for supported annotations such as typing.Optional,
@@ -1242,7 +1255,10 @@
         return this.annotation(symbol.value, symbol.scope, new Set(visited).add(symbol));
       }
       if (symbol && symbol.kind === 'external') return parseExpr(symbol.path);
-      if (node.type === 'Name' && (symbol || this.bySimpleName.has(node.id))) {
+      if (node.type === 'Name' && !this.lookup(node.id, scope) && PYTHON_PRIMITIVE_TYPES.has(node.id)) {
+        return { type: 'Name', id: node.id, _primitiveType: pythonPrimitiveType(node.id) };
+      }
+      if (node.type === 'Name' && (symbol || this.lookup(node.id, scope) || this.bySimpleName.has(node.id))) {
         return { type: 'Name', id: node.id, _unresolvedType: true };
       }
       return node;
@@ -1282,6 +1298,7 @@
       if (node.type === 'Call') {
         const symbol = this.resolve(unparse(node.func), scope);
         node._classTarget = symbol && symbol.kind === 'class' ? symbol.entry.id : null;
+        node._primitiveTarget = node.func.type === 'Name' && !this.lookup(node.func.id, scope) ? pythonPrimitiveType(node.func.id) : null;
         if (node._classTarget) node.func = { type: 'Name', id: node._classTarget };
         else if (node.func.type === 'Attribute') {
           const receiver = this.resolve(unparse(node.func.value), scope);
@@ -1455,6 +1472,13 @@
   /* ===================================================================
    * Container / annotation type utilities
    * =================================================================== */
+
+  const PYTHON_PRIMITIVE_TYPES = new Set(['str', 'int', 'float', 'bool', 'complex', 'bytes']);
+
+  // The prefix cannot be a source class identifier, even when a class is named str.
+  function pythonPrimitiveType(name) {
+    return PYTHON_PRIMITIVE_TYPES.has(name) ? '$primitive:' + name : null;
+  }
 
   const CONTAINER_TYPES = new Set(['List', 'list', 'Set', 'set', 'Tuple', 'tuple',
     'FrozenSet', 'frozenset', 'Sequence', 'Iterable', 'Collection', 'Deque', 'deque']);
@@ -2203,7 +2227,7 @@
           var item = node.body[i];
           if (item.type === 'AnnAssign' && item.target && item.target.type === 'Name') {
             fAnns[item.target.id] = item.annotation;
-            const scalarType = self._scalarAnnotationClass(item.annotation);
+            const scalarType = self._scalarAnnotationType(item.annotation);
             if (scalarType) aTypes[item.target.id] = scalarType;
           }
           if (item.type !== 'FunctionDef') continue;
@@ -2217,7 +2241,7 @@
             var a = args[j];
             if (a.arg === 'self' || a.arg === 'cls') continue;
             if (a.annotation) {
-              var resolved = self._scalarAnnotationClass(a.annotation);
+              var resolved = self._scalarAnnotationType(a.annotation);
               if (resolved) mParams[a.arg] = resolved;
             }
           }
@@ -2232,7 +2256,7 @@
               if (a.arg === 'self' || a.arg === 'cls') continue;
               if (a.annotation) {
                 initAnnotations[a.arg] = a.annotation;
-                var resolved = self._scalarAnnotationClass(a.annotation);
+                var resolved = self._scalarAnnotationType(a.annotation);
                 if (resolved) initParams[a.arg] = resolved;
               }
             }
@@ -2266,7 +2290,7 @@
                   resolved = initParams[child.value.id];
                 }
                 if (!resolved && child.annotation) {
-                  resolved = self._scalarAnnotationClass(child.annotation);
+                  resolved = self._scalarAnnotationType(child.annotation);
                 }
                 if (resolved) aTypes[attrName] = resolved;
               }
@@ -2287,7 +2311,12 @@
 
   // A collection's element type is useful for loop variables, but the
   // collection itself is not an instance of that element's class.
-  PythonSequenceDiagramGenerator.prototype._scalarAnnotationClass = function (annotation) {
+  PythonSequenceDiagramGenerator.prototype._isPrimitiveType = function (type) {
+    return typeof type === 'string' && type.startsWith('$primitive:');
+  };
+
+  PythonSequenceDiagramGenerator.prototype._scalarAnnotationType = function (annotation) {
+    if (annotation && annotation._primitiveType) return annotation._primitiveType;
     const type = resolveAnnotationToClass(annotation, this.allTypeNames);
     return type && inferMultiplicity(annotation, type) !== '*' ? type : null;
   };
@@ -2408,7 +2437,11 @@
         this._rememberConstants(stmt.value, [stmt.target]);
         if (stmt.value) this._processAssignValue(stmt.value, [stmt.target], caller, depth);
         break;
-      case 'AugAssign': this._scanExprForCalls(stmt.value, caller, depth); break;
+      case 'AugAssign':
+        this._scanExprForCalls(stmt.target, caller, depth);
+        this._scanExprForCalls(stmt.value, caller, depth);
+        this._assignBinding(stmt.target, null, caller);
+        break;
       case 'Expr': this._processExprStmt(stmt, caller, depth); break;
       case 'Return':
         if (stmt.value) this._scanExprForCalls(stmt.value, caller, depth);
@@ -2495,10 +2528,26 @@
   // unrelated object that happens to share that type.
   PythonSequenceDiagramGenerator.prototype._objectBinding = function (expression, caller) {
     if (!expression) return null;
-    if (expression.type === 'Call') return this._returnedObjects.get(expression) || null;
+    // Primitive facts share the existing scope/branch invalidation rules but
+    // never receive lifelines. Only proven types suppress member-call warnings.
+    if (expression.type === 'Constant' && !expression.inferenceIncomplete) {
+      const type = typeof expression.value === 'string' ? 'str'
+        : typeof expression.value === 'boolean' ? 'bool'
+        : typeof expression.value === 'number' ? (Number.isInteger(expression.value) ? 'int' : 'float') : null;
+      return type ? { type: pythonPrimitiveType(type), participant: null } : null;
+    }
+    if (expression.type === 'Call') {
+      const returned = this._returnedObjects.get(expression);
+      if (returned) return returned;
+      if (expression._primitiveTarget) return { type: expression._primitiveTarget, participant: null };
+      const resolved = this._resolveCall(expression, caller);
+      const type = resolved && this._getReturnScalarType(resolved[0], resolved[1]);
+      return this._isPrimitiveType(type) ? { type, participant: null } : null;
+    }
     if (expression.type === 'Name') {
       if (expression.id === 'self') return { type: this._classOf(caller), participant: caller };
       const type = this.varTypes[expression.id];
+      if (this._isPrimitiveType(type)) return { type, participant: null };
       return type ? { type: type, participant: this.varParticipants[expression.id]
         || this._symbolicParticipantId('local', this._scopeIdentity, expression.id, type,
           caller === 'Main' ? expression.id : caller + '_' + expression.id) } : null;
@@ -2513,6 +2562,7 @@
     while (ownerType && !seen.has(ownerType)) {
       seen.add(ownerType);
       const type = (this.attrTypes[ownerType] || {})[expression.attr];
+      if (this._isPrimitiveType(type)) return { type, participant: null };
       if (type) return { type: type, participant: this._symbolicParticipantId(
         'field', owner.participant, expression.attr, type, owner.participant + '_' + expression.attr) };
       ownerType = this._findParent(ownerType);
@@ -2584,8 +2634,9 @@
           return;
         }
         const returnName = target && target.type === 'Name' && this._referencedVars[target.id] ? target.id : null;
-        const returnType = this._getReturnClassType(clsName, method);
+        const returnType = this._getReturnScalarType(clsName, method);
         let returnBinding = this._processCall(value, caller, depth, true, returnName);
+        if (!returnBinding && this._isPrimitiveType(returnType)) returnBinding = { type: returnType, participant: null };
         if (!returnBinding && returnType && targets.length) {
           const name = targets[0].type === 'Name' ? targets[0].id : targets[0].attr;
           if (name) {
@@ -2894,8 +2945,9 @@
 
     var resolved = inputs.resolved;
     if (!resolved) {
-      const name = callName(call);
-      if (!['print', 'len', 'range', 'str', 'int', 'float', 'bool', 'list', 'dict', 'set', 'tuple', 'super', 'isinstance', 'enumerate', 'zip', 'min', 'max', 'sum'].includes(name)) {
+      // Free functions and known primitive operations are outside the object
+      // interaction model. Their arguments were still scanned above.
+      if (call.func && call.func.type !== 'Name' && !this._isPrimitiveType(inputs.receiverBinding && inputs.receiverBinding.type)) {
         this.diagnostics.add('unresolved', unparse(call.func, caller));
       }
       return;
@@ -2985,11 +3037,11 @@
     return method + '(' + argParts.join(', ') + ')';
   };
 
-  /** Resolve a method's return type to a known class name (for type tracking). */
-  PythonSequenceDiagramGenerator.prototype._getReturnClassType = function (clsName, methodName) {
+  /** Resolve a scalar return type for object or primitive binding tracking. */
+  PythonSequenceDiagramGenerator.prototype._getReturnScalarType = function (clsName, methodName) {
     var node = this._findMethodNode(clsName, methodName);
     if (node && node.returns) {
-      return this._scalarAnnotationClass(node.returns);
+      return this._scalarAnnotationType(node.returns);
     }
     return null;
   };
@@ -3153,6 +3205,11 @@
       return [constructedClass, '__init__'];
     }
 
+    if (func.type === 'Attribute') {
+      const receiver = this._objectBinding(func.value, caller);
+      if (receiver && this._isPrimitiveType(receiver.type)) return null;
+    }
+
     // var.method() or ClassName.static_method()
     if (func.type === 'Attribute' && func.value && func.value.type === 'Name') {
       var varName = func.value.id;
@@ -3208,7 +3265,7 @@
       var factoryCall = this._resolveCall(func.value, caller);
       if (factoryCall) {
         var returnClass = factoryCall[1] === '__init__' ? factoryCall[0]
-          : this._getReturnClassType(factoryCall[0], factoryCall[1]);
+          : this._getReturnScalarType(factoryCall[0], factoryCall[1]);
         if (returnClass) return [returnClass, func.attr];
       }
     }

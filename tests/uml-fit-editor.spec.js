@@ -39,6 +39,7 @@ test('the tutorial target keeps its fit control attached and fits inside the les
   await expect(target.locator('svg')).toBeVisible();
   await target.scrollIntoViewIfNeeded();
   await expect(fit(page)).toHaveCount(1);
+  await fit(page).scrollIntoViewIfNeeded();
   const diagramBox = await target.boundingBox();
   const buttonBox = await fit(page).boundingBox();
   expect(Math.abs(buttonBox.y - diagramBox.y)).toBeLessThan(16);
@@ -46,8 +47,15 @@ test('the tutorial target keeps its fit control attached and fits inside the les
   const bounds = await pane.boundingBox();
   const drawing = await target.locator('svg').boundingBox();
   const restoreBox = await restore(page).boundingBox();
+  expect(restoreBox.y).toBeCloseTo(buttonBox.y, 0);
+  expect(restoreBox.x).toBeCloseTo(buttonBox.x, 0);
   expect(restoreBox.y).toBeGreaterThanOrEqual(bounds.y);
   expect(drawing.y + drawing.height).toBeLessThanOrEqual(bounds.y + bounds.height + 1);
+  const bottomPadding = await pane.evaluate(el => parseFloat(getComputedStyle(el).paddingBottom))
+    + await target.evaluate(el => parseFloat(getComputedStyle(el).paddingBottom));
+  // This tall target is height-limited: fitting should use the available space,
+  // not shrink it further by counting the lesson's top padding a second time.
+  expect(bounds.y + bounds.height - bottomPadding - drawing.y - drawing.height).toBeLessThanOrEqual(2);
   await page.screenshot({ path: test.info().outputPath('tutorial-target-fitted.png') });
   await restore(page).click();
   await expect(fit(page)).toHaveCount(1);

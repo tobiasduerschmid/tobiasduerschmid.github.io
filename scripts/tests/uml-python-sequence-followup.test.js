@@ -131,3 +131,80 @@ group.visit(first)
   assert.notEqual(receiver, 'first');
   assert.ok(result.sequenceDiagram.includes('participant ' + receiver + ': Other'));
 });
+
+for (const call of ['print("hello")', 'external_helper("hello")']) {
+  test(`free function ${call} does not produce an unresolved object-call warning`, () => {
+    const result = infer('class Bot:\n    def run(self):\n        ' + call + '\nbot = Bot()\nbot.run()');
+    assert.deepEqual(result.sequenceWarnings, []);
+    assert.doesNotMatch(result.sequenceDiagram, /Warning: partial sequence inference/);
+    assert.deepEqual(messages(result), ['Main -> bot: run()']);
+  });
+}
+
+for (const body of [
+  'message.lower()',
+  'alias = message\n        alias.lower()',
+  'local = "hello"\n        local.upper()',
+  'self.label.lower()',
+  'self.text().lower()',
+  'str(42).lower()',
+]) {
+  test(`known primitive calls stay outside object-interaction diagnostics: ${body}`, () => {
+    const result = infer(`class Bot:
+    label: str
+    def text(self) -> str:
+        return "hello"
+    def run(self, message: str):
+        ${body}
+bot = Bot()
+bot.run("hello")`);
+    assert.deepEqual(result.sequenceWarnings, []);
+    assert.doesNotMatch(result.sequenceDiagram, /participant .*: (str|int|float|bool)\b/);
+    assert.ok(messages(result).some(message => message === 'Main -> bot: run("hello")'));
+  });
+}
+
+test('free functions still inspect object-call arguments and retain unresolved member warnings', () => {
+  const result = infer('class Bot:\n    def read(self):\n        pass\nbot = Bot()\nprint(bot.read())\nexternal_helper(missing.send())\nmissing.print()');
+  assert.deepEqual(messages(result), ['Main -> bot: read()']);
+  assert.deepEqual(result.sequenceWarnings.map(warning => warning.code), ['unresolved']);
+  assert.match(result.sequenceWarnings[0].message, /missing.send/);
+});
+
+test('a primitive name reassigned to an unknown result must still warn on member calls', () => {
+  const result = infer('message = "hello"\nmessage = external_helper()\nmessage.lower()');
+  assert.ok(result.sequenceWarnings.some(warning => warning.code === 'unresolved'));
+});
+
+test('a source class named str keeps its object calls and unresolved method warnings', () => {
+  const result = infer('class str:\n    def known(self):\n        pass\nvalue = str()\nvalue.known()\nvalue.missing()');
+  assert.ok(messages(result).includes('Main -> value: known()'));
+  assert.ok(result.sequenceWarnings.some(warning => warning.code === 'unresolved'));
+});
+
+for (const source of [
+  'str = external_factory\nvalue = str()\nvalue.lower()',
+  'text = "hello"\ntext += external_helper()\ntext.send()',
+]) {
+  test(`unknown bindings retain member-call warnings: ${source}`, () => {
+    const result = infer(source);
+    assert.ok(result.sequenceWarnings.some(warning => warning.code === 'unresolved'));
+  });
+}
+
+test('string literals keep builtin identity when a source class is named str', () => {
+  const result = infer('class str:\n    def lower(self):\n        missing.send()\ntext = "hello"\ntext.lower()');
+  assert.deepEqual(result.sequenceWarnings, []);
+  assert.deepEqual(messages(result), []);
+});
+
+for (const source of [
+  'for str in factories:\n    value = str()\n    value.send()',
+  'for str, other in factories:\n    value = str()\n    value.send()',
+  'str, other = factories\nvalue = str()\nvalue.send()',
+]) {
+  test(`binding targets shadow primitive constructors: ${source}`, () => {
+    const result = infer(source);
+    assert.ok(result.sequenceWarnings.some(warning => warning.code === 'unresolved'));
+  });
+}

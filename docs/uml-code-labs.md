@@ -87,7 +87,12 @@ approximations, separately from blocking `errors`. Recursion detection does not
 prove nontermination: recursive expansion and the depth limit both stop safely,
 with distinct warnings. Unknown calls, deferred execution, unsupported syntax,
 ambiguous dispatch, C++ argument order, and approximated control flow report why the sequence may
-be incomplete. Warnings are deduplicated by category for each analysis.
+be incomplete. Python omits unresolved-call warnings for free functions and
+known primitive receivers (such as `print(...)` and `message: str` followed by
+`message.lower()`). Their argument and receiver expressions are still analyzed,
+and calls on unknown objects retain warnings. These exclusions define the
+object-interaction scope; they do not establish that a call is pure.
+Warnings are deduplicated by category for each analysis.
 `js/uml-sequence-diagnostics.js` owns this contract and embeds a warning note in
 the generated sequence so it remains visible in tutorials, popouts, and exports.
 Chapter labs also announce it in their existing status region. Valid class

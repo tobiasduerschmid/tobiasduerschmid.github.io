@@ -82,3 +82,35 @@ for (const [language, source] of Object.entries(sources)) {
     expect(errors).toEqual([]);
   });
 }
+
+test('Python tutorial omits free-function and string warnings while retaining unknown object calls', async ({ page }) => {
+  test.setTimeout(120_000);
+  const { waitForTutorialReady, setEditorContent } = require('./tutorial-helpers');
+  await page.goto('/SEBook/tools/uml-sequence-diagram-python.html#self-calls');
+  await waitForTutorialReady(page, { bootTimeout: 90_000 });
+  const source = `class DiscordBot:
+    def _log(self, message: str) -> None:
+        print(message.lower())
+    def send(self, message: str) -> None:
+        print(message)
+    def handle_message(self, message: str) -> None:
+        self._log(message)
+        self.send(message)
+bot = DiscordBot()
+bot.handle_message("hi there")`;
+  expect(await setEditorContent(page, source)).toBe(true);
+  const viewer = page.getByRole('region', { name: /Interactive UML diagram viewer/ });
+  await page.getByRole('button', { name: 'Sequence Diagram', exact: true }).click();
+  const diagram = viewer.getByRole('img');
+  await expect(diagram).toContainText('_log(message)');
+  await expect(diagram).toContainText('send(message)');
+  await expect(diagram).not.toContainText('Warning:');
+  await expect(diagram).not.toHaveAccessibleName(/partial sequence inference/);
+  expect(await setEditorContent(page, source + '\nmissing.send()')).toBe(true);
+  await page.getByRole('button', { name: /Refresh$/ }).click();
+  await expect(diagram).toContainText('missing.send');
+  await expect(diagram).toHaveAccessibleName(/could not be resolved/);
+  expect(await setEditorContent(page, source)).toBe(true);
+  await page.getByRole('button', { name: /Refresh$/ }).click();
+  await expect(diagram).not.toContainText('Warning:');
+});

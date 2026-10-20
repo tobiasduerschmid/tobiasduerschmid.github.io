@@ -276,3 +276,98 @@ test('viewers that own zoom controls can opt out of the shared fit button', asyn
   });
   await expect(fitButtons(page)).toHaveCount(0);
 });
+
+for (const nested of [false, true]) {
+  test(`fit and restore keep the control anchored in a ${nested ? 'lesson pane' : 'page'} even near the end`, async ({ page }) => {
+    const diagram = await diagramFixture(page, { width: 2000, height: 1800 });
+    await diagram.evaluate((el, nested) => {
+      const figure = el.parentElement;
+      const intro = document.createElement('p');
+      intro.textContent = 'Introduction before the diagram';
+      intro.style.height = '500px';
+      figure.prepend(intro);
+      if (nested) {
+        figure.style.height = '350px';
+        figure.style.overflow = 'auto';
+      }
+      window.UMLShared.autoFitSVG(el);
+      const scroller = nested ? figure : document.scrollingElement;
+      scroller.scrollTop = 430;
+    }, nested);
+    // Observe settled positions across animation frames, including browser
+    // scroll anchoring and ResizeObserver callbacks after each activation.
+    const sample = () => page.evaluate(async () => {
+      const button = document.querySelector('button[aria-label="Fit diagram to screen"], button[aria-label="Restore previous diagram view"]');
+      const positions = [];
+      for (let frame = 0; frame < 6; frame++) {
+        await new Promise(requestAnimationFrame);
+        const rect = button.getBoundingClientRect();
+        positions.push({ x: rect.x, y: rect.y });
+      }
+      return positions;
+    });
+    const before = (await sample())[0];
+    for (let cycle = 0; cycle < 2; cycle++) {
+      await fitButtons(page).click();
+      await expectFits(page, diagram);
+      for (const position of await sample()) {
+        expect(position.x).toBeCloseTo(before.x, 0);
+        expect(position.y).toBeCloseTo(before.y, 0);
+      }
+      await restoreButton(page).click();
+      for (const position of await sample()) {
+        expect(position.x).toBeCloseTo(before.x, 0);
+        expect(position.y).toBeCloseTo(before.y, 0);
+      }
+    }
+    await fitButtons(page).click();
+    await diagram.evaluate((el, nested) => {
+      const scroller = nested ? el.parentElement : document.scrollingElement;
+      scroller.scrollTop += 40;
+    }, nested);
+    const afterScrolling = (await sample())[0];
+    await restoreButton(page).click();
+    for (const position of await sample()) {
+      expect(position.x).toBeCloseTo(afterScrolling.x, 0);
+      expect(position.y).toBeCloseTo(afterScrolling.y, 0);
+    }
+  });
+}
+
+for (const nested of [false, true]) {
+  test(`resizing while a fitted diagram is below the ${nested ? 'lesson pane' : 'page'} preserves its usable scale`, async ({ page }) => {
+    const diagram = await diagramFixture(page, { width: 2000, height: 1800 });
+    await diagram.evaluate((el, nested) => {
+      const figure = el.parentElement;
+      const intro = document.createElement('p');
+      intro.textContent = 'Introduction before the diagram';
+      intro.style.height = '1000px';
+      figure.prepend(intro);
+      if (nested) {
+        figure.style.height = '350px';
+        figure.style.overflow = 'auto';
+      }
+      window.UMLShared.autoFitSVG(el);
+      (nested ? figure : document.scrollingElement).scrollTop = 1000;
+    }, nested);
+    await fitButtons(page).click();
+    await page.evaluate(() => document.activeElement.blur());
+    await diagram.evaluate((el, nested) => {
+      (nested ? el.parentElement : document.scrollingElement).scrollTop = 0;
+    }, nested);
+    expect((await restoreButton(page).boundingBox()).y).toBeGreaterThan(nested ? 350 : 600);
+    await page.setViewportSize({ width: 320, height: 550 });
+    // Let resize and ResizeObserver callbacks settle while the control is offscreen.
+    await page.evaluate(async () => {
+      for (let frame = 0; frame < 6; frame++) await new Promise(requestAnimationFrame);
+    });
+    expect((await diagram.locator('svg').boundingBox()).width).toBeGreaterThan(24);
+    expect(await diagram.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+    await diagram.evaluate((el, nested) => {
+      (nested ? el.parentElement : document.scrollingElement).scrollTop = 1000;
+    }, nested);
+    await expect.poll(async () => (await diagram.locator('svg').boundingBox()).width).toBeGreaterThan(24);
+    await expectFits(page, diagram);
+    await expect(restoreButton(page)).toHaveCount(1);
+  });
+}

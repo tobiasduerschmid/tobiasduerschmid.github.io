@@ -2119,9 +2119,9 @@ channel.
   inference host. Native **Design focus** / **Implementation details** buttons
   select a projection of the current raw analysis through synchronous
   `client.project(result, {language, view})`; view changes never edit source,
-  rerun inference, or change grading inputs. Tutorials default to Design focus;
-  chapter labs start in Implementation details to support comparison with the
-  abstraction. The controls provide visible help and a native hover explanation.
+  rerun inference, or change grading inputs. Tutorials and chapter labs start in
+  Implementation details. Tutorial introductions explain that students match this view and use Design focus as a reference.
+  Tutorial viewers omit the repeated help paragraph; chapter controls retain it.
   Design focus maps primitive types and omits empty no-argument constructors
   and no-result suffixes in class diagrams. Constructors with parameters or
   behavior remain visible; sequence calls and control flow remain intact.
@@ -2160,7 +2160,10 @@ channel.
   Known approximations (recursion/depth truncation, unresolved calls, deferred
   execution, unsupported syntax, ambiguous dispatch, and control-flow gaps)
   include a warning note in sequence syntax, so tutorials, popouts, and exports
-  retain it. Chapter labs also announce warnings in their status region.
+  retain it. Python excludes unresolved free functions and known primitive receivers
+  from object-call warnings, while still traversing receiver/argument expressions.
+  Shadowed builtin names and uncertain reassignment retain member-call warnings.
+  Chapter labs also announce warnings in their status region.
   Warnings also remain in the brief and verbose accessible descriptions. A work
   limit returns a blocking sequence error with no partial sequence; expression
   traversal and calls count toward the budget as well as statements. Distinct
@@ -2555,7 +2558,8 @@ channel.
   paragraph (`showHelp: false`); tutorial introductions explain that Design focus
   is a reference and Implementation details is used for target comparisons.
   Fit changes it to Restore and temporarily scales the SVG to the
-  available screen/pane; Restore recovers prior scroll positions. Controls and
+  available space below its anchored control, preserving the outer layout and
+  lesson/page scroll position; Restore recovers the diagram's own scrolling. Controls and
   hover/focus/long-press help stay outside image semantics and exported SVG.
   Ordinary renderer updates retain fit mode. Styles live
   in `js/ArchUML/css/diagram-view.css`, imported by `css/uml-diagram.css`.
