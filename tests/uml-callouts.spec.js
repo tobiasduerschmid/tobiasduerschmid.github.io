@@ -152,7 +152,7 @@ async function layoutProblems(page) {
 }
 
 const fs = require('node:fs');
-const chapterFiles = fs.readdirSync(path.join(root, 'SEBook')).filter(file => /^uml_.*_diagram\.md$/.test(file));
+const chapterFiles = fs.readdirSync(path.join(root, 'SEBook')).filter(file => file === 'uml.md' || /^uml_.*_diagram\.md$/.test(file));
 for (const file of chapterFiles) {
   test(`${file}: every authored diagram has clear teaching callouts`, async ({ page }) => {
     await setup(page);

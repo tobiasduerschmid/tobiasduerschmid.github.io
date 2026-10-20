@@ -98,6 +98,10 @@ Order ..|> Billable
 Customer "1" -- "*" Order
 Order *-- "1..*" LineItem
 LineItem "*" -- "1" Product
+callout right of text "Customer" : Class: shared structure and behavior
+callout right of text "-id: Integer" : Private attribute: a value each customer stores
+callout left of text "+placeOrder()" : Public operation: behavior a caller can request
+callout right of text "1..*" : Multiplicity: each order has at least one line item
 @enduml'></div>
 
 ### Sequence Diagram
@@ -118,6 +122,10 @@ else [not found]
   server --> client: 404 Not Found
 end
 deactivate server
+callout left of element client : Participant: an object taking part in the interaction
+callout top of text "GET /book/42" : Synchronous call: the sender waits for a reply
+callout left of edge 3 end : Dashed reply: a result returned to the caller
+callout left of text "ALT" : Alternative: at most one guarded branch runs
 @enduml'></div>
 
 ### State Machine Diagram
@@ -132,6 +140,10 @@ Paid --> Refunded : return_initiated
 Delivered --> [*]
 Cancelled --> [*]
 Refunded --> [*]
+callout left of edge 1 start : Initial pseudostate: the lifecycle starts here
+callout right of text "Paid" : State: a condition in the order lifecycle
+callout right of text "payment_received" : Trigger: an event that may fire this transition
+callout right of edge 7 end : Final state: this region has completed
 @enduml'></div>
 
 ### Use Case Diagram
@@ -153,4 +165,7 @@ Customer -- UC1
 Customer -- UC2
 Admin -- UC3
 Admin -- UC4
+callout left of text "Customer" : Actor: an external role interacting with the system
+callout right of text "Place Order" : Use case: a goal the system helps an actor achieve
+callout top of text "Online Store" : System boundary: the use cases inside belong to this system
 @enduml'></div>
