@@ -88,7 +88,7 @@ pre:has(> code.language-crc),
   --uml-secondary-line: #657484;
   --uml-bg: transparent;
   overflow-x: auto;
-  padding: 12px 0;
+  padding: 0;
 }
 
 

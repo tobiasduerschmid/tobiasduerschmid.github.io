@@ -159,6 +159,42 @@ test('vertical scroll containers fit the full diagram and restore vertical posit
   expect(await diagram.evaluate(el => el.scrollTop)).toBe(previous);
 });
 
+test('fitted diagrams use empty side gutters instead of adding vertical space for the control', async ({ page }) => {
+  const diagram = await diagramFixture(page, { width: 1200, height: 1200 });
+  await diagram.evaluate(el => {
+    el.style.width = '760px';
+    el.style.height = '360px';
+    el.style.overflow = 'auto';
+    window.UMLShared.autoFitSVG(el);
+  });
+  await fitButtons(page).click();
+  const frame = await diagram.boundingBox();
+  const drawing = await diagram.locator('svg').boundingBox();
+  const control = await restoreButton(page).boundingBox();
+  expect(drawing.width).toBeGreaterThan(340);
+  expect(drawing.y - frame.y).toBeLessThanOrEqual(2);
+  expect(frame.y + frame.height - drawing.y - drawing.height).toBeLessThanOrEqual(8);
+  expect(control.x).toBeGreaterThanOrEqual(drawing.x + drawing.width + 4);
+});
+
+test('fit chooses the larger collision-free layout near the side-gutter boundary', async ({ page }) => {
+  const diagram = await diagramFixture(page, { width: 1800, height: 1000 });
+  await page.setViewportSize({ width: 800, height: 440 });
+  await diagram.evaluate(el => {
+    el.style.width = '760px';
+    el.style.height = '390px';
+    el.style.overflow = 'auto';
+    window.UMLShared.autoFitSVG(el);
+  });
+  await fitButtons(page).click();
+  const frame = await diagram.boundingBox();
+  const drawing = await diagram.locator('svg').boundingBox();
+  const control = await restoreButton(page).boundingBox();
+  expect(drawing.width).toBeGreaterThan(600);
+  expect(drawing.y - frame.y).toBeLessThanOrEqual(2);
+  expect(control.x).toBeGreaterThanOrEqual(drawing.x + drawing.width + 4);
+});
+
 test('both icons stay centered and the control has its own space above diagram content', async ({ page }) => {
   const diagram = await diagramFixture(page);
   for (const name of ['Fit diagram to screen', 'Restore previous diagram view']) {

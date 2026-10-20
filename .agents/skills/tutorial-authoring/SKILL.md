@@ -2589,16 +2589,19 @@ channel.
   screen pixels; grid placement remains the fallback and manual route editing
   is unchanged.
 - **Shared UML fit/restore view** — the ArchUML bundle automatically adds one
-  top-right control in a reserved toolbar row to overflowing diagram viewports,
+  top-right control to overflowing diagram viewports,
   including authored lesson diagrams. The shared UML editor/playground, live
   tutorial viewers, and their fullscreen/popout counterparts opt out with `data-uml-fit="off"` because they own zoom and pan.
   Their view selector starts in Implementation details and omits the long help
   paragraph (`showHelp: false`); tutorial introductions explain that Design focus
   is a reference and Implementation details is used for target comparisons.
   Fit changes it to Restore and temporarily scales the SVG to the
-  available space below its anchored control, preserving the outer layout and
+  available pane space, preserving the outer layout and
   lesson/page scroll position; Restore recovers the diagram's own scrolling. Controls and
   hover/focus/long-press help stay outside image semantics and exported SVG.
+  A toolbar row keeps the button clear when the drawing reaches the top-right
+  corner; when the fitted drawing leaves a side gutter, the button uses that
+  gutter and the row collapses. Diagram containers add no vertical padding.
   Ordinary renderer updates retain fit mode. Styles live
   in `js/ArchUML/css/diagram-view.css`, imported by `css/uml-diagram.css`.
   No tutorial YAML, stored preference, or new keyboard shortcut is required.
