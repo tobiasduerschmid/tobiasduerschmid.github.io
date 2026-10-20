@@ -15,6 +15,25 @@ layout: sebook
   </div>
   {% endif %}
 
+  <section id="skipped-questions" class="stats-section" aria-labelledby="skipped-questions-heading">
+    <h2 id="skipped-questions-heading">Skipped questions <span id="skipped-questions-count"></span></h2>
+    <p>These questions are left out of practice for the decks shown below. Choose <strong>Show again</strong> to include a question in future practice from its deck.</p>
+    <p id="skipped-questions-empty">Loading skipped questions…</p>
+    <ul id="skipped-questions-list" class="stats-skipped-list"></ul>
+    <p id="skipped-questions-status" class="stats-action-status" role="status" aria-live="polite"></p>
+    <template id="skipped-question-template">
+      <li class="stats-skipped-card">
+        <p class="stats-skipped-source"></p>
+        <div class="stats-skipped-prompt"></div>
+        <p class="stats-skipped-state">Skipped for this deck.</p>
+        <div class="stats-skipped-actions">
+          <button type="button" class="gym-btn secondary">Show again</button>
+        </div>
+      </li>
+    </template>
+    <noscript><p>Enable JavaScript to review and restore skipped questions.</p></noscript>
+  </section>
+
   <!-- Disabled / empty states (hidden by JS when data exists) -->
   <div id="stats-tracking-off" class="stats-disabled-panel" role="status">
     <p><i class="fa-solid fa-chart-line" aria-hidden="true"></i>
@@ -147,6 +166,7 @@ layout: sebook
 </div><!-- #stats-app -->
 
 {% include se-gym-feature-flags.html %}
+<script src="{{ '/js/se-gym-skipped-review.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
 
 <!-- ==================== PAGE SCRIPT ==================== -->
 <script>

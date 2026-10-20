@@ -396,6 +396,26 @@ info_nav_title: "My Settings"
 
         <div class="setting-row">
           <div>
+            <p class="setting-name">Questions you always skip</p>
+            <p class="setting-description" id="setting-skipped-questions-description">
+              Choose <em>Always skip</em> on an SE Gym question to leave it out
+              of future practice from that deck. Choices are saved in this
+              browser under <code>se-gym-skipped-questions</code> in
+              localStorage. <a href="{{ '/se-gym-stats/#skipped-questions' | relative_url }}">Review skipped questions</a>
+              to restore individual questions, or restore all skipped questions
+              here to make them available in new workouts again.
+            </p>
+          </div>
+          <div class="setting-control">
+            <button type="button" id="setting-skipped-questions-reset" class="settings-btn" aria-describedby="setting-skipped-questions-description">
+              Restore all skipped questions
+            </button>
+            <p class="settings-note" id="setting-skipped-questions-status" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
             <p class="setting-name">Hero avatar</p>
             <p class="setting-description">
               The SE Gym page shows an animated super-hero you can identify with.
@@ -1119,6 +1139,19 @@ info_nav_title: "My Settings"
       var status = document.getElementById('setting-hero-avatar-status');
       if (status) status.textContent = 'Saved hero removed. The SE Gym page will randomize its heroes separately until you save a new customization.';
       announce('Saved hero removed.');
+    });
+  }
+
+  var resetSkippedQuestions = document.getElementById('setting-skipped-questions-reset');
+  if (resetSkippedQuestions) {
+    resetSkippedQuestions.addEventListener('click', function () {
+      var status = document.getElementById('setting-skipped-questions-status');
+      try {
+        localStorage.removeItem('se-gym-skipped-questions');
+        status.textContent = 'All skipped questions are available in new SE Gym workouts again.';
+      } catch (e) {
+        status.textContent = 'Your browser could not restore skipped questions. Allow site storage, then try again.';
+      }
     });
   }
 

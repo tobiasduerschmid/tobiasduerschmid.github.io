@@ -412,6 +412,108 @@
     });
   }
 
+  // ==================== Per-deck skipped questions ====================
+  // Scope follows the selected deck, unlike stats which follow the source deck.
+  const SKIPPED_QUESTIONS_KEY = 'se-gym-skipped-questions';
+
+  function skippedQuestionId(deckId, data) {
+    const questionId = String(cardStatsId(data));
+    // Aggregate decks may contain the same numeric ID from several source decks.
+    return data && data.sourceDeckId && data.sourceDeckId !== deckId
+      ? data.sourceDeckId + ':' + questionId
+      : questionId;
+  }
+
+  function normalizeSkippedQuestions(value) {
+    const skipped = Object.create(null);
+    Object.keys(plainObjectStore(value)).forEach(function (deckKey) {
+      if (!/^(quiz|flashcard):.+$/.test(deckKey) || !Array.isArray(value[deckKey])) return;
+      const ids = value[deckKey].filter(function (id) {
+        return typeof id === 'string' && id.length > 0;
+      });
+      if (ids.length) skipped[deckKey] = Array.from(new Set(ids));
+    });
+    return skipped;
+  }
+
+  function readSkippedQuestions() {
+    let raw;
+    try {
+      raw = localStorage.getItem(SKIPPED_QUESTIONS_KEY);
+    } catch (error) {
+      // A denied read must not turn a later write into a destructive replacement.
+      return null;
+    }
+    try {
+      return normalizeSkippedQuestions(JSON.parse(raw || '{}'));
+    } catch (error) {
+      return Object.create(null);
+    }
+  }
+
+  function saveSkippedQuestions(skipped) {
+    try {
+      if (Object.keys(skipped).length) {
+        localStorage.setItem(SKIPPED_QUESTIONS_KEY, JSON.stringify(skipped));
+      } else {
+        localStorage.removeItem(SKIPPED_QUESTIONS_KEY);
+      }
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function hasSkippedQuestion(skipped, cardType, deckId, data) {
+    const ids = skipped && skipped[cardType + ':' + deckId];
+    return !!ids && ids.indexOf(skippedQuestionId(deckId, data)) !== -1;
+  }
+
+  /** Save this question's exclusion for exactly this deck/type; false means storage failed. */
+  function skipQuestion(cardType, deckId, data) {
+    const skipped = readSkippedQuestions();
+    if (!skipped) return false;
+    if (hasSkippedQuestion(skipped, cardType, deckId, data)) return true;
+    const deckKey = cardType + ':' + deckId;
+    const ids = skipped[deckKey] || [];
+    skipped[deckKey] = ids.concat(skippedQuestionId(deckId, data));
+    return saveSkippedQuestions(skipped);
+  }
+
+  /** Restore this question only in the chosen deck; false means storage failed. */
+  function restoreQuestion(cardType, deckId, data) {
+    const skipped = readSkippedQuestions();
+    if (!skipped) return false;
+    if (!hasSkippedQuestion(skipped, cardType, deckId, data)) return true;
+    const deckKey = cardType + ':' + deckId;
+    const questionId = skippedQuestionId(deckId, data);
+    skipped[deckKey] = skipped[deckKey].filter(function (id) { return id !== questionId; });
+    if (!skipped[deckKey].length) delete skipped[deckKey];
+    return saveSkippedQuestions(skipped);
+  }
+
+  function isQuestionSkipped(cardType, deckId, data) {
+    return hasSkippedQuestion(readSkippedQuestions(), cardType, deckId, data);
+  }
+
+  /** Return eligible cards in their existing order without mutating the input. */
+  function filterSkippedQuestions(cards) {
+    const skipped = readSkippedQuestions();
+    return cards.filter(function (card) {
+      return !hasSkippedQuestion(skipped, card.cardType, card.deckId, card.data);
+    });
+  }
+
+  /** Return available skipped cards in every saved deck scope, including aggregates. */
+  function getSkippedCards(cardData) {
+    const skipped = readSkippedQuestions();
+    const cards = [];
+    visitCardData(cardData, function (card) {
+      if (hasSkippedQuestion(skipped, card.cardType, card.deckId, card.data)) cards.push(card);
+    });
+    return cards;
+  }
+
   function addCorpusVariant(index, key, meta) {
     if (!index[key]) index[key] = [];
     if (!index[key].some(function (existing) { return existing.canonicalKey === meta.canonicalKey; })) {
@@ -842,6 +944,11 @@
     cardStatsKey: cardStatsKey,
     cardStatsKeyVariants: cardStatsKeyVariants,
     forEachAvailableCard: forEachAvailableCard,
+    skipQuestion: skipQuestion,
+    restoreQuestion: restoreQuestion,
+    isQuestionSkipped: isQuestionSkipped,
+    filterSkippedQuestions: filterSkippedQuestions,
+    getSkippedCards: getSkippedCards,
     buildCardCorpus: buildCardCorpus,
     getCanonicalStatsEntries: getCanonicalStatsEntries,
     migrateStatsKeys: migrateStatsKeys,
