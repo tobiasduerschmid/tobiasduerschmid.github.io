@@ -50,6 +50,8 @@ steps:
     instructions: |
       ## Welcome to UML Class Diagrams
 
+      **Which diagram view should I use?** Use **Implementation details** when matching your code to a target diagram or checking an exercise. **Design focus** is for reference only: it simplifies types, names, and expressions to emphasize the design. Targets may use UML notation; translate those labels to the source-language names and types while matching the required structure or message order. Switching views does not change your code or verify correctness; use **Test My Work** to check the exercise.
+
       ### Why this matters
 
       Before you can read a UML class diagram, you have to know how to look at one. The class box is the atom of the entire notation — every other concept (visibility, types, inheritance, multiplicity) is just decoration on this three-compartment shape. Get this single building block solid and the rest of the tutorial clicks into place.
@@ -97,9 +99,9 @@ steps:
       - **Middle:** Two attributes `name` and `student_id` → instance variables set in `__init__`
       - **Bottom:** The initializer accepts the two stored values; `get_info()` provides the information-producing operation
 
-      The diagram selects the class structure needed for this question. **Design focus** uses UML types such as `String`, while **Implementation details** shows Python types such as `str`. Constructors with parameters or initialization behavior stay visible in both views; only empty no-argument constructors are suppressed in Design focus. The design operation `Student(...)` corresponds to Python's `__init__`; it does not rename the method in your code.
+      In **Implementation details**, the target's UML `String` corresponds to Python `str`, and `Student(...)` corresponds to `__init__(...)`. Match the required attributes and operations using those Python spellings. Constructors with parameters or initialization behavior remain visible in both views.
 
-      > **Compare the views:** Which details change notation without changing what a `Student` can do? Why does this initializer need to remain visible? We will study visibility and type contracts in the next steps.
+      > **Check the mapping:** Which Python operation initializes a `Student`, and which values must its caller supply? We will study visibility and type contracts in the next steps.
 
       ### Your Task
 

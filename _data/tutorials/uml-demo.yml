@@ -20,6 +20,8 @@ steps:
     instructions: |
       ## Live UML Diagrams
 
+      **Which diagram view should I use?** Use **Implementation details** when matching your code to a target diagram or checking an exercise. **Design focus** is for reference only: it simplifies types, names, and expressions to emphasize the design. Targets may use UML notation; translate those labels to the source-language names and types while matching the required structure or message order. Switching views does not change your code or verify correctness; check the behavior by running your code.
+
       This tutorial demonstrates the **UML Diagram** tab. Look at the tab bar above
       the editor — you should see a **UML Diagram** tab.
 

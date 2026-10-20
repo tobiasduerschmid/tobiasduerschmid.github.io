@@ -2547,6 +2547,19 @@ channel.
   They ignore note content and do not claim complete UML validation. Keep the
   same behavior in tutorials and standalone editor pages; no tutorial YAML
   option, progress credit, or new persistence key is added by these controls.
+- **Shared UML fit/restore view** — the ArchUML bundle automatically adds one
+  top-right control in a reserved toolbar row to overflowing diagram viewports,
+  including authored lesson diagrams. The shared UML editor/playground, live
+  tutorial viewers, and their fullscreen/popout counterparts opt out with `data-uml-fit="off"` because they own zoom and pan.
+  Their view selector starts in Implementation details and omits the long help
+  paragraph (`showHelp: false`); tutorial introductions explain that Design focus
+  is a reference and Implementation details is used for target comparisons.
+  Fit changes it to Restore and temporarily scales the SVG to the
+  available screen/pane; Restore recovers prior scroll positions. Controls and
+  hover/focus/long-press help stay outside image semantics and exported SVG.
+  Ordinary renderer updates retain fit mode. Styles live
+  in `js/ArchUML/css/diagram-view.css`, imported by `css/uml-diagram.css`.
+  No tutorial YAML, stored preference, or new keyboard shortcut is required.
 - **`_includes/uml-editor.html`** also owns UML editor export actions. The
   "Generate Python" toolbar action reads the saved class-diagram and
   sequence-diagram ArchUML drafts for the editor instance, generates a

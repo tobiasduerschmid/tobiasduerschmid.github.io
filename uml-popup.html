@@ -32,7 +32,7 @@
     </div>
     <div class="tvm-uml-view-choice" id="umlViewChoice"></div>
     <div class="popup-wrap">
-      <div class="tvm-diagram-content is-hidden" id="diagramContent" tabindex="0"
+      <div class="tvm-diagram-content is-hidden" id="diagramContent" data-uml-fit="off" tabindex="0"
         aria-label="UML diagram canvas. Use arrow keys to pan, Shift plus arrow keys to pan faster, plus or minus to zoom, and Home to reset pan."
         aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Shift+ArrowUp Shift+ArrowDown Shift+ArrowLeft Shift+ArrowRight + - Home"></div>
       <div class="popup-status" id="popupStatus" role="status" aria-live="polite">Waiting for diagram from tutorial&hellip;</div>
@@ -59,9 +59,10 @@
     var panX      = 0;
     var panY      = 0;
     var customColor = null;
-    var diagramView = 'design';
+    var diagramView = 'implementation';
     var viewControls = UMLViewControls.mount(document.getElementById('umlViewChoice'), {
       view: diagramView,
+      showHelp: false,
       onChange: function (view) {
         diagramView = view;
         render();

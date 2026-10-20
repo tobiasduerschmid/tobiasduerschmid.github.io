@@ -48,6 +48,8 @@ steps:
     instructions: |
       ### Why this matters
 
+      **Which diagram view should I use?** Use **Implementation details** when matching your code to a target diagram or checking an exercise. **Design focus** is for reference only: it simplifies types, names, and expressions to emphasize the design. Targets may use UML notation; translate those labels to the source-language names and types while matching the required structure or message order. Switching views does not change your code or verify correctness; use **Test My Work** to check the exercise.
+
       Class diagrams show what *exists* in a system; sequence diagrams show what *happens at runtime* — which object calls which method, in what order. As soon as you start designing or debugging real interactions (logins, API handshakes, message flows), you need a way to describe behavior over time, not just structure. This first step gives you the smallest complete sequence diagram and shows you how Python code on the page becomes a picture you can read.
 
       ### 🎯 You will learn to
@@ -60,8 +62,6 @@ steps:
       You already know class diagrams — they show what *exists*: classes, attributes, methods, relationships. A sequence diagram shows what **happens at runtime**: which object calls which method, and in what order.
 
       Think of it as the difference between a floor plan (class diagram) and a security camera recording (sequence diagram). Same building, very different question.
-
-      Both live views describe the current source. **Design focus** uses shared UML types, drops Python's leading name markers, and describes iteration as `for each … in …`; **Implementation details** shows Python spellings. The target diagrams use Design focus. Switching views preserves participants and call order. Compare one reply in both views: does changing its type label change who receives it?
 
       ### Four Pieces of Notation
 

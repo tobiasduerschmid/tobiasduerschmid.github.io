@@ -36,6 +36,8 @@ steps:
     instructions: |
       ### Why this matters
 
+      **Which diagram view should I use?** Use **Implementation details** when matching your code to a target diagram or checking an exercise. **Design focus** is for reference only: it simplifies types, names, and expressions to emphasize the design. Targets may use UML notation; translate those labels to the source-language names and types while matching the required structure or message order. Switching views does not change your code or verify correctness; use **Test My Work** to check the exercise.
+
       Hard-coded dependencies *feel* fine when there are only three of them — until your manager asks for a fourth, and you realize every new display means editing the class that's supposed to just collect sensor data. You're about to live that pain on purpose, so the fix in later steps lands as relief rather than abstract theory.
 
       ### 🎯 You will learn to

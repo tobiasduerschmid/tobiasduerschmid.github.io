@@ -34,6 +34,8 @@ steps:
 
       ### Why this matters
 
+      **Which diagram view should I use?** Use **Implementation details** when matching your code to a target diagram or checking an exercise. **Design focus** is for reference only: it simplifies types, names, and expressions to emphasize the design. Targets may use UML notation; translate those labels to the source-language names and types while matching the required structure or message order. Switching views does not change your code or verify correctness; use **Test My Work** to check the exercise.
+
       You already know how to program. This tutorial won't re-teach loops or variables — instead, it focuses on **what's different** about Java and **why** Java made those choices. Starting with a clear map between languages keeps your prior knowledge useful and prevents silent transfer errors later.
 
       ### 🎯 You will learn to

@@ -6,14 +6,14 @@
   const explanation = 'Design focus uses UML types and SEBook pseudocode for conditions, loops and assignments. It hides Python name markers, empty no-argument constructors and no-result suffixes. Implementation details keeps source notation. Relations and calls stay the same. Neither view verifies the design.';
 
   /** Mounts session-only view selection; programmatic setView does not notify. */
-  function mount(host, { view = 'design', onChange, helpScope = host }) {
+  function mount(host, { view = 'design', onChange, helpScope = host, showHelp = true }) {
     const events = new AbortController();
     const group = document.createElement('div');
     group.className = 'uml-view-controls';
     group.setAttribute('role', 'group');
     group.setAttribute('aria-label', 'UML view');
     let help = helpByScope.get(helpScope);
-    if (!help || !help.isConnected) {
+    if (showHelp && (!help || !help.isConnected)) {
       help = document.createElement('p');
       help.id = 'uml-view-help-' + (++nextId);
       help.className = 'uml-view-help';
@@ -25,9 +25,9 @@
       const button = document.createElement('button');
       button.type = 'button';
       button.textContent = value === 'design' ? 'Design focus' : 'Implementation details';
-      button.title = explanation;
+      if (showHelp) button.title = explanation;
       button.dataset.noTooltip = 'true';
-      button.setAttribute('aria-describedby', help.id);
+      if (showHelp) button.setAttribute('aria-describedby', help.id);
       button.addEventListener('click', () => {
         if (view === value) return;
         setView(value);

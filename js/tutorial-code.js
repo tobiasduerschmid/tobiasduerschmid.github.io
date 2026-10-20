@@ -911,7 +911,7 @@
     this._umlClassLayoutDefault = this._umlClassLayoutPreference; // global fallback for per-step overrides
     this._umlHideFlags = [];             // Per-step hide flags: ['visibility'], ['multiplicity'], etc.
     this._umlLastDiagrams = null;       // {classDiagram, sequenceDiagram}
-    this._umlDiagramView = 'design';
+    this._umlDiagramView = 'implementation';
     this._umlViewControls = [];
     this._umlViewEvents = new AbortController();
     this._umlAnalysisRequestId = 0;     // monotonic id; later analyses supersede earlier ones
@@ -1632,7 +1632,7 @@
     // tabindex="0" makes this container focusable so keyboard users can pan
     // and zoom the diagram; without role+aria-label the WCAG 4.1.2 audit
     // flags it as an interactive element missing an accessible name.
-    var diagramContentHtml = '<div class="tvm-diagram-content" tabindex="0" role="region" aria-label="Interactive UML diagram viewer"></div>';
+    var diagramContentHtml = '<div class="tvm-diagram-content" data-uml-fit="off" tabindex="0" role="region" aria-label="Interactive UML diagram viewer"></div>';
     var terminalHtml;
     if (this.config.useTerminal) {
       // Terminal (xterm-backed: v86 / webcontainer) is intentionally NOT
@@ -2013,7 +2013,7 @@
       '<label class="tvm-diagram-color-btn" data-original-title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input tvm-diagram-fs-color-input" aria-label="Diagram accent color"></label>' +
       '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color" aria-label="Reset to default color">\u21bb</button>' +
       '</div>' +
-      '<div class="tvm-diagram-fs-content"></div>' +
+      '<div class="tvm-diagram-fs-content" data-uml-fit="off"></div>' +
       '</div>' +
       (this.gitGraphPath
         ? '<div class="tvm-git-graph-panel" style="display:none">' +
@@ -9464,6 +9464,7 @@
       else container.prepend(host);
       self._umlViewControls.push(window.UMLViewControls.mount(host, {
         view: self._umlDiagramView,
+        showHelp: false,
         onChange: function (view) { self._setUMLDiagramView(view); }
       }));
     });

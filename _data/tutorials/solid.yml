@@ -36,6 +36,8 @@ steps:
     instructions: |
       ### Why this matters
 
+      **Which diagram view should I use?** Use **Implementation details** when matching your code to a target diagram or checking an exercise. **Design focus** is for reference only: it simplifies types, names, and expressions to emphasize the design. Targets may use UML notation; translate those labels to the source-language names and types while matching the required structure or message order. Switching views does not change your code or verify correctness; use **Test My Work** to check the exercise.
+
       Software you'll ship in your career will be edited by many teams over many years — and the moment two unrelated change requests touch the same private helper, "small fix" becomes "broken release." Feeling that friction first-hand is the only durable motivation for the five SOLID principles that follow. Everything in this tutorial flows from the pain you're about to feel in the next 20 minutes. (Assumes Python classes, dicts, f-strings, `json.dumps` — see the [Python tutorial](/SEBook/tools/python-tutorial) if shaky.)
 
       ### 🎯 You will learn to

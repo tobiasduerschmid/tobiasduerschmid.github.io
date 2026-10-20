@@ -184,10 +184,14 @@ test('tutorial, fullscreen, and detached diagrams share the selected view', asyn
   await waitForTutorialReady(page, { bootTimeout: 90_000 });
   expect(await setEditorContent(page, 'class Sensor:\n    def __init__(self, value: int) -> None:\n        self.value: int = value\n    def read(self) -> int:\n        return self.value\nsensor = Sensor(25)\nreading = sensor.read()\nprint(reading)')).toBe(true);
   const viewer = page.getByRole('region', { name: /Interactive UML diagram viewer/ });
-  await expect(viewButton(page, 'Design focus')).toHaveAttribute('aria-pressed', 'true');
+  await expect(viewButton(page, 'Implementation details')).toHaveAttribute('aria-pressed', 'true');
+  await expect(viewer.getByRole('img')).toContainText('value: int');
+  await expect(page.getByText(/Design focus uses UML types and SEBook pseudocode/)).toHaveCount(0);
+  await expect(page.getByText('Which diagram view should I use?', { exact: true })).toBeVisible();
+  await expect(viewer.getByRole('button', { name: 'Fit diagram to screen', exact: true })).toHaveCount(0);
+  await viewButton(page, 'Design focus').click();
   await expect(viewer.getByRole('img')).toContainText('value: Integer');
   await viewButton(page, 'Implementation details').click();
-  await expect(viewer.getByRole('img')).toContainText('value: int');
 
   await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
   const fullscreen = page.getByRole('dialog', { name: 'Fullscreen UML diagram' });
@@ -207,7 +211,8 @@ test('tutorial, fullscreen, and detached diagrams share the selected view', asyn
   await page.getByRole('button', { name: 'Open in separate window', exact: true }).click();
   const popup = await popupPromise;
   await expect(popup.getByRole('img')).toContainText('value: Integer');
-  await expect(viewButton(popup, 'Design focus')).toHaveAccessibleDescription(/Neither view verifies the design/);
+  await expect(popup.getByText(/Design focus uses UML types and SEBook pseudocode/)).toHaveCount(0);
+  await expect(popup.getByRole('button', { name: 'Fit diagram to screen', exact: true })).toHaveCount(0);
   await viewButton(popup, 'Implementation details').click();
   await expect(popup.getByRole('img')).toContainText('value: int');
   await expect(viewer.getByRole('img')).toContainText('value: int');
