@@ -317,9 +317,9 @@
 .theme-darkroom .polaroid-photo {
   border-radius: 1px;
   background:
-    radial-gradient(ellipse at 28% 22%, rgba(255, 255, 255, 0.2), transparent 55%),
+    radial-gradient(ellipse at 28% 22%, rgba(255, 255, 255, 0.06), transparent 55%),
     radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(0, 0, 0, 0.38) 100%),
-    linear-gradient(135deg, #3d2a92, #1c4f7c);
+    linear-gradient(135deg, #342483, #18436b);
 }
 
 /* The big commit card and the quiz cards are photo paper too. */

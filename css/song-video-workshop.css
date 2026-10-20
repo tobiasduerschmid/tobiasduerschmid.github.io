@@ -241,7 +241,7 @@
 .theme-workshop .code-card {
   background-image:
     var(--ws-screw), var(--ws-screw), var(--ws-screw), var(--ws-screw),
-    linear-gradient(155deg, #1a2238, #0a0e1f 72%);
+    linear-gradient(155deg, #172039, #080d1e 72%);
 }
 
 .theme-workshop .sh-data,
