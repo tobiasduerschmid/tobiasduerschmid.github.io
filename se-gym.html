@@ -2831,22 +2831,24 @@ layout: sebook
 
       function scrollToTop() {
         var navbar = document.getElementById('navnav');
-        var navHeight = navbar ? navbar.offsetHeight : 50;
         var app = document.getElementById('se-gym-app');
-        var writeInCard = app.querySelector('.workout-quiz-card[data-type="write-in"]');
-        if (window.matchMedia('(max-width: 760px)').matches && writeInCard && writeInCard.getClientRects().length) {
-          // Let the previous answer's removal settle before positioning the
-          // new question; otherwise browser scroll anchoring can move it again.
-          requestAnimationFrame(function () {
-            if (!writeInCard.isConnected) return;
-            var top = writeInCard.getBoundingClientRect().top + window.pageYOffset;
-            window.scrollTo({ top: top - navHeight - 10, behavior: motionSafeScrollBehavior() });
-          });
-          return;
-        }
-        var y = app.getBoundingClientRect().top + window.pageYOffset - navHeight - 10;
-        window.scrollTo({ top: y, behavior: motionSafeScrollBehavior() });
+        var questionCard = workoutCardArea.firstElementChild;
+        var target = questionCard && questionCard.getClientRects().length ? questionCard : app;
+        // Measure after replacing the previous card so scroll anchoring cannot
+        // pull the new question back toward the workout toolbar.
+        requestAnimationFrame(function () {
+          if (!target.isConnected) return;
+          var navHeight = navbar ? navbar.offsetHeight : 0;
+          var top = target.getBoundingClientRect().top + window.pageYOffset;
+          // A new question is a navigation, not an animation. A smooth scroll
+          // can be cancelled by the same touch gesture that activated Next.
+          window.scrollTo({ top: top - navHeight - 10, behavior: 'instant' });
+        });
       }
+
+      document.addEventListener('fullscreenchange', function () {
+        if (document.body.classList.contains('se-gym-workout-active')) scrollToTop();
+      });
 
       function setWorkoutMode(isWorkout) {
         document.body.classList.toggle('se-gym-workout-active', !!isWorkout);

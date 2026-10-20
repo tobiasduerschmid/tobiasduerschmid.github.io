@@ -312,7 +312,8 @@
   <script src="{{ "/js/accessibility-fixes.js" | prepend: site.baseurl }}" defer></script>
 
   {% if site.personal_gym %}
-  <script src="{{ "/js/se-gym.js" | prepend: site.baseurl }}"></script>
+  <!-- Keep the Gym API in sync with inline page code across deployments. -->
+  <script src="{{ "/js/se-gym.js" | prepend: site.baseurl }}?v={{ site.time | date: '%s' }}"></script>
   {% endif %}
 
   {% if site.bookmarks %}

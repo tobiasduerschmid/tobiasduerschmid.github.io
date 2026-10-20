@@ -55,6 +55,11 @@ module.exports = defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
+      name: 'gym-mobile-firefox',
+      testMatch: /se-gym-mobile-start\.spec\.js/,
+      use: { ...devices['Desktop Firefox'], launchOptions: {} },
+    },
+    {
       name: 'avatar-firefox',
       testMatch: /se-gym-hero-(artifacts|representation)\.spec\.js/,
       grep: /Selecting a beard paints|Beards remain attached|Full beard shapes stay below|Detached and hidden avatar templates/,
