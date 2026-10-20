@@ -15,6 +15,8 @@ cards:
     explanation: "The two are complementary, not competing. Black-box keeps tests honest to the spec and resistant to implementation drift; white-box exposes paths the spec doesn't enumerate and finds coverage gaps. A healthy suite uses both — black-box for behavior, white-box for implementation-specific risk."
 
   - id: 3
+    hint: >-
+      Consider a rarely reached error branch. What evidence would justify testing it even if common examples from the specification never reach it?
     difficulty: advanced
     question: "A teammate proposes deleting all white-box tests in favor of black-box tests, saying *'we should only test the spec'*. Critique this proposal."
     answer: "Too aggressive. Black-box alone misses real implementation risks — error paths, defensive branches, behaviors the spec is vague about. Favor black-box for behavior coverage, keep targeted white-box tests for known implementation risks."
@@ -27,12 +29,16 @@ cards:
     explanation: "The pyramid metaphor suggests that the lowest levels (unit, component) should be the most numerous because they're fast, focused, and cheap to maintain. Higher levels are slower and more brittle but exercise real assumptions the lower levels can't. A healthy strategy mixes all four — not 'unit tests only' and not 'end-to-end tests only'."
 
   - id: 5
+    hint: >-
+      Ask which assumptions are made where two passing units connect. Where are those assumptions actually checked together?
     difficulty: intermediate
     question: "A team has 500 unit tests and 0 integration or system tests. They report production bugs where 'all the units passed but they didn't work together'. Diagnose and fix."
     answer: "Missing upper layers. Add a layer of **integration tests** for module boundaries and a thin layer of **system tests** for critical end-to-end flows."
     explanation: "Unit tests verify individual pieces in isolation — they cannot catch contract mismatches, configuration errors, or wiring bugs between components. The healthy shape *is* a pyramid: many fast tests at the base, fewer slower tests above, a handful at the top. All-base, no-tip and all-tip, no-base are both unhealthy."
 
   - id: 6
+    hint: >-
+      List the real components and infrastructure that must cooperate for this test to pass. How does that affect realism and failure diagnosis?
     difficulty: intermediate
     question: "Translate into the pyramid: *'A test starts the full web server, opens a real browser, logs in, navigates to checkout, and clicks Buy.'* Which level, and what does it cost/buy you?"
     answer: "**System test** (end-to-end / E2E). *Costs*: slow, fragile, sensitive to environment, hard to debug. *Buys*: realistic verification that the deployed system works for a real user flow."

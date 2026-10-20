@@ -19,6 +19,8 @@ cards:
     answer: '`<div style={{background: "blue", color: "white"}}>Content</div>`'
     explanation: "JSX `style` takes a JS object (not a CSS string). Double braces: outer = JSX expression, inner = object literal. CSS properties use camelCase."
   - id: 3
+    hint: >-
+      Build the always-visible name and price first. Treat the sale marker as a separate conditional piece whose visibility depends on the supplied Boolean.
     difficulty: advanced
     question: "Write a React component `ProductCard` that accepts `name`, `price`, and `onSale` props. Show the name in an `<h3>`, the price formatted to 2 decimals, and a 'Sale!' span only when `onSale` is true."
     answer: |
@@ -45,6 +47,8 @@ cards:
     answer: "`<button onClick={() => setCount(count + 1)}>+1</button>`"
     explanation: "Use `onClick` (camelCase). Pass an arrow function as the handler. Never mutate state directly — always use the setter."
   - id: 6
+    hint: >-
+      Choose an identity that stays with a user even when its array position changes. Then turn each data item into one rendered list item.
     difficulty: intermediate
     question: "In React, render a list of `users` (each with `id` and `name`) as `<li>` elements with proper keys."
     answer: |
@@ -62,11 +66,15 @@ cards:
     answer: "`{isLoggedIn ? <Dashboard /> : <LoginForm />}`"
     explanation: "Ternary operator inside JSX for conditional rendering. Both branches must be valid JSX expressions."
   - id: 8
+    hint: >-
+      Test the expression with count equal to 0. Make the left operand express the intended yes/no condition instead of returning a number that React could render.
     difficulty: advanced
     question: "In React JSX, show a `<Badge />` only when `count` is greater than 0. Be careful not to render the number `0`."
     answer: "`{count > 0 && <Badge count={count} />}`"
     explanation: "Use `count > 0` (not just `count`) because the number `0` is a valid React node and would render as text. `false` renders as nothing."
   - id: 9
+    hint: >-
+      Construct the next array before handing it to the setter. Keep the old array’s contents available to any existing references.
     difficulty: advanced
     question: "In React, add an item to an array stored in state (`items`/`setItems`) without mutating the original array."
     answer: "`setItems([...items, newItem])`"
@@ -83,6 +91,8 @@ cards:
       ```
     explanation: "The `children` prop contains whatever JSX is nested inside the component tags. This is the foundation of composition in React."
   - id: 11
+    hint: >-
+      Keep ownership of the state in the parent. Give the child a way to report a new value, then trace how the next render sends the updated value back down.
     difficulty: advanced
     question: "In React, pass a callback function from a parent to a child component so the child can update the parent's state."
     answer: |
@@ -105,6 +115,8 @@ cards:
     explanation: "React uses the DOM-style prop name `className`. A string `class` attribute is valid JSX and modern React passes it through, but development mode warns to use the canonical `className` prop."
 
   - id: 13
+    hint: >-
+      Separate obtaining a Promise from receiving its resolved array. Choose where the request begins and where the state setter receives actual post data.
     difficulty: advanced
     question: "Write a React `useEffect` that calls `fetchPosts()` on mount in production, storing the result in a `posts` state variable. Assume `fetchPosts()` returns a Promise that resolves to an array."
     answer: |
@@ -118,6 +130,8 @@ cards:
     explanation: "The empty dependency array means this effect runs on mount and not on ordinary re-renders. Development Strict Mode adds a setup/cleanup cycle; a later remount also runs it again. useState([]) lets the component render an empty list before the data arrives. A production fetch also needs error handling and protection against obsolete results."
 
   - id: 14
+    hint: >-
+      The update function should describe a change to the state React supplies when processing the update. Avoid computing its input from an earlier render’s captured count.
     difficulty: advanced
     question: "Write a React counter component whose +1 button uses the functional state updater form."
     answer: |
@@ -133,12 +147,16 @@ cards:
     explanation: "An updater receives the latest pending value. This avoids stale values in delayed callbacks or multiple updates in one handler. Separate intentional clicks are handled separately; a single synchronous increment per click does not require an updater to avoid lost rapid clicks."
 
   - id: 15
+    hint: >-
+      Describe which tasks should survive the removal. Build the next array from those tasks, leaving the previous array intact.
     difficulty: advanced
     question: "In React, remove the item with `id === deletedId` from the `tasks` state array."
     answer: "`setTasks(tasks.filter(task => task.id !== deletedId));`"
     explanation: "`.filter()` returns a new array containing only items where the condition is true — the one with the matching `id` is excluded. Never use `.splice()` or index-based deletion on state arrays; they mutate in-place and React won't detect the change."
 
   - id: 16
+    hint: >-
+      Create a replacement object that starts with the existing fields. Decide where to put the new score so an old score cannot overwrite it.
     difficulty: advanced
     question: "In React, update the `score` field of the `player` state object to `newScore`, keeping all other fields unchanged."
     answer: "`setPlayer({ ...player, score: newScore });`"
@@ -159,6 +177,8 @@ cards:
     explanation: "`<>...</>` is a React Fragment — a wrapper that exists only in JSX, not in the real DOM. Use it whenever a component must return multiple elements but you don't want an extra `<div>` cluttering the HTML structure or breaking CSS layouts like flexbox and grid."
 
   - id: 18
+    hint: >-
+      Close the loop between state and the input: one direction supplies the rendered value, and the event path reports the edited text back to state.
     difficulty: advanced
     question: "Write a React controlled text input that is bound to a `username` state variable. Every keystroke should update the state."
     answer: |

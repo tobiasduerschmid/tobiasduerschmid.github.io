@@ -74,6 +74,8 @@ cards:
     explanation: "Command substitution `$(...)` executes the inner command in a subshell and replaces itself with the command's standard output. This is the standard way to capture the result of a command into a variable."
 
   - id: 16
+    hint: >-
+      Write down the argument list that reaches the command after expansion. What must change so the space stays inside one argument?
     difficulty: advanced
     question: "A shell variable `FILE` holds the value `my report.pdf`. Running `rm $FILE` fails with a 'No such file or directory' error for both 'my' and 'report.pdf'. How do you fix this?"
     answer: "`rm \"$FILE\"`"
@@ -86,12 +88,16 @@ cards:
     explanation: "`$#` expands to the total count of positional arguments passed to the script. A typical guard looks like: `if [ $# -ne 2 ]; then echo 'Usage: script.sh src dest'; exit 1; fi`. Other useful special variables: `$1`, `$2` (individual args), `$0` (script name), `$@` (all args)."
 
   - id: 18
+    hint: >-
+      For each command, consider both success and failure. Which earlier successes must be established before the final command may run?
     difficulty: advanced
     question: "You want to create a directory called 'build' and then immediately run `cmake ..` inside it, but only if the directory creation succeeded — all in a single shell command."
     answer: "`mkdir build && cd build && cmake ..`"
     explanation: "The `&&` (AND) operator runs the next command only if the previous one **succeeded** (exit code 0). If `mkdir` fails, neither `cd` nor `cmake` will execute. This is a concise alternative to a full `if/then/fi` block for simple success-guarded sequences."
 
   - id: 19
+    hint: >-
+      Trace both possible exit statuses of the directory change. In which case should the next operation terminate the script?
     difficulty: advanced
     question: "At the start of a Bash script, you need to change into `/deploy/target`. If that directory doesn't exist, the script must abort immediately — write a defensive one-liner."
     answer: "`cd /deploy/target || exit 1`"

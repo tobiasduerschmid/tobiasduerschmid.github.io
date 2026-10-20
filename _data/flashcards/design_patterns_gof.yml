@@ -13,11 +13,15 @@ cards:
     answer: "The **Pull model** adds that dependency. Push instead couples observers to the event payload format; neither variant is universally less coupled."
     explanation: "Push supplies event data; pull supplies a notification followed by queries. A hybrid is another option. Choose according to the data and coupling each participant needs."
   - id: 3
+    hint: >-
+      After a subscriber is no longer used by the application, trace whether the subject still holds a reference to it.
     difficulty: intermediate
     question: "What is the **lapsed listener problem** in Observer?"
     answer: "A memory leak that occurs when observers register with a subject but are never explicitly unsubscribed, causing the subject's reference to keep them alive in memory."
     explanation: "Solutions include explicit unsubscribe, weak references, or scoped subscriptions tied to lifecycle management."
   - id: 4
+    hint: >-
+      An update executes long after setup has finished. Reconstruct the connection between the setup code and the later callback.
     difficulty: advanced
     question: "Why can the Observer pattern make execution flow hard to trace?"
     answer: "The registration site and callback execution are separated. A subject calls the observer contract at runtime, while the observer or setup code may perform registration elsewhere."
@@ -28,16 +32,22 @@ cards:
     answer: "Eliminates complex conditional logic that checks an object's state, replacing it with polymorphic state objects that encapsulate state-specific behavior."
     explanation: "State objects localize state-specific behavior. Adding a state can still require changes to transitions, factories, and configuration; the pattern does not guarantee pure addition."
   - id: 6
+    hint: >-
+      Compare behavior changing after a lifecycle event with behavior changing because a caller selects another algorithm. Focus on purpose rather than diagram shape.
     difficulty: intermediate
     question: "How does the **State** pattern differ from the **Strategy** pattern?"
     answer: "State varies behavior with lifecycle state; Strategy supplies an interchangeable algorithm. Who selects an implementation is a useful clue, not an absolute rule."
     explanation: "Their UML structures can look alike. State transitions are usually managed by the context or its state objects; clients often configure strategies. Distinguish the patterns by the problem and intent, not selection syntax alone."
   - id: 7
+    hint: >-
+      Compare editing transitions in one central place with editing each state beside its own behavior. What becomes easier to see, and what becomes harder?
     difficulty: advanced
     question: "State pattern: who should define state transitions?"
     answer: "**Context-driven**: all transitions visible in one place, good for complex conditions. **State-driven**: each state knows its successors, more flexible but harder to see full state machine."
     explanation: "State-driven transitions are preferred when states are well-defined and transitions are local. Context-driven works better when transitions depend on complex external conditions."
   - id: 8
+    hint: >-
+      Separate the requirement to create one instance from the decision to let every caller locate it globally. How would each affect an isolated test?
     difficulty: intermediate
     question: "Why is the **Singleton** pattern often called a 'pattern with a weak solution'?"
     answer: "It conflates two concerns: ensuring a single instance (legitimate) and providing global access (introduces hidden coupling and harms testability)."
@@ -53,11 +63,15 @@ cards:
     answer: "Lets subclasses vary product creation through an overridable method without changing the stable creator workflow."
     explanation: "A Creator declares an overridable creation operation, abstract or with a default implementation. Concrete creators vary the product. The caller that selects a creator may still need configuration changes."
   - id: 11
+    hint: >-
+      Compare changing which product a stable workflow creates with changing several related products together. Identify the varying decision before naming the mechanism.
     difficulty: intermediate
     question: "**Factory Method** vs. **Abstract Factory**: when to use which?"
     answer: "Factory Method varies creation through an overridable method. Abstract Factory presents creation operations for related products through a factory object."
     explanation: "These are complementary mechanisms and intents, not a rigid count of product types. Abstract Factory operations are often Factory Methods; a Creator can have more than one creation operation."
   - id: 12
+    hint: >-
+      Add a new product category to an existing family. Trace the impact on every factory that promises to create that family’s products.
     difficulty: advanced
     question: "What is the 'Rigid Interface' drawback of Abstract Factory?"
     answer: "Adding a new product type to the family requires changing the Abstract Factory interface and modifying *every* concrete factory subclass."
@@ -68,6 +82,8 @@ cards:
     answer: "Allows classes with incompatible interfaces to work together by translating one interface into another that the client expects."
     explanation: "Like a power outlet adapter for international travel—the adapter translates between two incompatible plug standards without modifying either one."
   - id: 14
+    hint: >-
+      Inspect what the client expects to call before and after each wrapper. Does the client-facing contract change, and what work moves behind it?
     difficulty: intermediate
     question: "**Adapter** vs. **Facade** vs. **Decorator** patterns: what's the key distinction?"
     answer: "Adapter *converts* an interface. Facade *simplifies* a set of interfaces. Decorator *adds behavior* to an object through the same interface."
@@ -78,6 +94,8 @@ cards:
     answer: "Treats individual objects and nested groups uniformly through a shared abstraction, eliminating special-case code for leaves vs. containers."
     explanation: "Clients program against the Component interface, which both Leaf and Composite implement. The recursive structure allows operations like `print()` or `totalPrice()` to work identically on single items and nested trees."
   - id: 16
+    hint: >-
+      Try inserting a child into a leaf through a common Component reference. Ask where that invalid operation can be detected.
     difficulty: intermediate
     question: "Composite pattern: **Transparent** vs. **Safe** design?"
     answer: "Transparent: child-management methods on Component (uniform, but leaves get meaningless methods). Safe: child-management only on Composite (type-safe, but clients must distinguish)."
@@ -88,6 +106,8 @@ cards:
     answer: "Provides a simplified, unified interface to a complex subsystem, reducing the number of objects a client must interact with."
     explanation: "Instead of the client calling twelve methods on six objects, it calls one high-level method on the Facade. Importantly, the Facade does not 'trap' the subsystem—direct access remains available."
   - id: 18
+    hint: >-
+      Trace an operation from an external subsystem client, then trace an event among collaborating peers. Which objects need references back to the coordinating object?
     difficulty: advanced
     question: "**Facade** vs. **Mediator** patterns: what's the communication direction?"
     answer: "Facade: one-directional (Facade calls subsystem; subsystem is unaware). Mediator: bidirectional (colleagues communicate through mediator and mediator coordinates back)."
@@ -98,6 +118,8 @@ cards:
     answer: "Centralizes coordination among colleagues, reducing direct peer dependencies. A fully connected group can become a set of links through a mediator; the coordination work remains."
     explanation: "Instead of objects talking directly, they report events to the mediator. The mediator contains the coordination rules and tells objects how to respond."
   - id: 20
+    hint: >-
+      Suppose a reaction depends on the state of several peers. Find where the rule combining that information would live in each design.
     difficulty: intermediate
     question: "**Observer** vs. **Mediator** patterns: what's the core difference?"
     answer: "Observer: *distributed* intelligence (each observer reacts independently). Mediator: *centralized* intelligence (the mediator coordinates all responses)."

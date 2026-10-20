@@ -23,6 +23,8 @@ cards:
   # Lecture: [06] OOP Palooza (Public).docx — Access Modifiers
   # Assessment: [Final] S23 V1 (Public).pdf P11 pp.21-22
   - id: cs131-v2-oop-card-access-reason
+    hint: >-
+      Identify the class whose method body actually reads n. Inheriting the right to call a method and receiving permission to access its implementation data are separate checks.
     difficulty: basic
     bloom: understand
     estimated_seconds: 30
@@ -33,6 +35,8 @@ cards:
   # Lecture: [06] OOP Palooza (Public).docx — Shallow Dive into Inheritance: Construction and Destruction
   # Assessment: [Final] F22 (Public).pdf P15 p.8 (constructor/destructor effects; inheritance order from lecture)
   - id: cs131-v2-oop-card-lifetime-trace
+    hint: >-
+      Treat each object as containing its base-class parts. Determine what must already exist before a derived constructor body runs, then reverse the dependency when dismantling it.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
@@ -53,6 +57,8 @@ cards:
   # Lecture: [06] OOP Palooza (Public).docx — Dynamic Dispatch in Statically-typed Languages
   # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P1(f)
   - id: cs131-v2-oop-card-base-virtual
+    hint: >-
+      Determine the call-selection rule from the declaration, then determine the chosen implementation from the actual receiver. The number of available overrides does not define the selection rule.
     difficulty: basic
     bloom: understand
     estimated_seconds: 30
@@ -63,6 +69,8 @@ cards:
   # Lecture: [06] OOP Palooza (Public).docx — Subclassing Inheritance; Classify That Language: Dynamic Dispatch
   # Assessment: [Final] S23 V1 (Public).pdf P8 p.17
   - id: cs131-v2-oop-card-explicit-base
+    hint: >-
+      Keep track of the actual receiver while executing the inherited wrap body. Then compare the information supplied by an ordinary method name with the explicitly qualified B::f.
     difficulty: advanced
     bloom: analyze
     estimated_seconds: 60
@@ -84,6 +92,8 @@ cards:
   # Lecture: [06] OOP Palooza (Public).docx — Shallow Dive into Inheritance: Construction
   # Assessment: Homework Problems (Public).docx OOP3
   - id: cs131-v2-oop-card-init-completion
+    hint: >-
+      The new object already exists when its initializer runs. Reuse the inherited initialization behavior on that same receiver instead of constructing a second Named object.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
@@ -104,6 +114,8 @@ cards:
   # Lecture: [05] Function Palooza (Public).docx — Templates; Generics
   # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P5(a,b)
   - id: cs131-v2-oop-card-generic-diagnosis
+    hint: >-
+      List the types the declaration permits, not just the types used by today’s callers. Ask what evidence the checker has that every permitted argument supports play.
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 45
@@ -114,6 +126,8 @@ cards:
   # Lecture: [05] Function Palooza (Public).docx — Generics
   # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P5(b,c)
   - id: cs131-v2-oop-card-design-bound
+    hint: >-
+      Derive the contract from the operations the generic body actually performs. A bound should promise just those callable operations, without requiring a particular storage representation.
     difficulty: intermediate
     bloom: create
     estimated_seconds: 60
@@ -131,6 +145,8 @@ cards:
   # Lecture: [06] OOP Palooza (Public).docx — Subtype Inheritance Best Practices
   # Assessment: Homework Problems (Public).docx OOP3; [Final] F23 (Public).pdf P6(c) p.17
   - id: cs131-v2-oop-card-delegation-method
+    hint: >-
+      Treat UniqueBox as the only public entry point. Use the contained object’s query to decide whether its update operation is needed.
     difficulty: intermediate
     bloom: create
     estimated_seconds: 60

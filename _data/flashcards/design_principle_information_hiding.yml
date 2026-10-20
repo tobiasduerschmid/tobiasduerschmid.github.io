@@ -45,6 +45,8 @@ cards:
     explanation: "Heuristic: the bigger the gap between interface size and implementation size, the deeper the module."
 
   - id: 8
+    hint: >-
+      Inspect a public method’s return type and the operations a caller can perform on its result. Could either expose a decision despite inaccessible fields?
     difficulty: basic
     question: "True or false: 'If I make all my fields `private`, I have followed the Information Hiding principle.'"
     answer: "**False.** Visibility modifiers are one *language tool* for enforcing hiding. The principle is broader: even with all-`private` fields, you can leak the secret through your **interface** — for example, by returning a vendor-specific type like `PayPalCharge` from a public method."
@@ -57,24 +59,32 @@ cards:
     explanation: "Coupling and cohesion are the *metrics* by which Information Hiding is evaluated. Information Hiding is the *principle*; cohesion/coupling are the measurements that show whether you applied it well."
 
   - id: 10
+    hint: >-
+      Two modules compile after one changes how it interprets an integer field. What shared assumption could still make their combined behavior wrong?
     difficulty: intermediate
     question: "Distinguish **syntactic** and **semantic** coupling. Why is the second one more dangerous?"
     answer: "**Syntactic coupling**: module A imports/calls/names types from B (the compiler can see it). **Semantic coupling**: A and B share an unspoken assumption (e.g., 'phone numbers are 10-digit strings without formatting'); changing the assumption in one silently breaks the other. Semantic coupling is more dangerous because ordinary type checking may not reveal the shared assumption; targeted tests or analysis can still detect particular cases."
     explanation: "Information Hiding fights both kinds, but semantic coupling only goes away when the shared assumption itself lives in exactly one module."
 
   - id: 11
+    hint: >-
+      Replace the payment provider and mark every place that names its types or operations. Which decision is repeated across those places?
     difficulty: basic
     question: "An e-commerce backend's `OrderService`, `RefundService`, and `WalletService` all call the PayPal SDK directly. Under Information Hiding, what is the **secret** here, and where should it live?"
     answer: "The secret is **'we use PayPal'** (the choice of payment provider). It should live in **exactly one module** — a `PaymentGateway` interface with a `PayPalGateway` implementation. `OrderService`, `RefundService`, and `WalletService` should all depend on the abstraction, never on PayPal."
     explanation: "When the CFO swaps providers, the impact is bounded to writing a new gateway implementation. None of the services have to change."
 
   - id: 12
+    hint: >-
+      Imagine a client reconnecting after a dropped connection. Could it behave correctly without knowing whether earlier interactions established a session?
     difficulty: intermediate
     question: "Why is whether a network protocol is **stateful or stateless** part of the **interface**, not the secret?"
     answer: "Because clients **cannot ignore** it. Stateful protocols require clients to maintain a session, reconnect on disconnect, and carry session tokens. Statelessness allows simpler clients. Hiding this would produce mysterious bugs."
     explanation: "Rule of thumb: hide what only the module needs to know to do its job; expose what callers need to know to use it correctly."
 
   - id: 13
+    hint: >-
+      Choose a plausible implementation change and trace every client assumption it affects. Compare how far that change travels in two candidate decompositions.
     difficulty: intermediate
     question: "What is **change impact analysis**, and how does it test whether your design follows Information Hiding?"
     answer: "Change impact analysis is the procedure of **listing plausible future changes**, **estimating their likelihood**, and **counting the modules each one would force you to edit**. A well-hidden design responds to a single change by lighting up one module; a poorly-hidden one lights up many."
@@ -87,6 +97,8 @@ cards:
     explanation: "Other common ones: leaky abstractions, God classes, shallow modules, conditional types in clients (`if provider == 'paypal'` everywhere), and 'documentation as a substitute for hiding'."
 
   - id: 15
+    hint: >-
+      For each proposed hidden decision, ask whether clients need to rely on it and whether it is likely to vary. Compare the benefit with the extra boundary cost.
     difficulty: advanced
     question: "When is applying Information Hiding a **bad** idea?"
     answer: "For **throwaway scripts**, **single-variant systems with stable scope**, **premature abstractions** in domains you don't yet understand, and **performance-critical inner loops** where indirection has measurable cost. Also: when the property is genuinely part of the contract and hiding it would produce silent failures."
@@ -105,6 +117,8 @@ cards:
     explanation: "The Apollo software was already considered highly complex in the 1960s. Modern systems can be orders of magnitude larger, while human working memory has not grown. The design has to reduce cognitive load."
 
   - id: 18
+    hint: >-
+      Add one more module to a system where every module may depend on every other one. How many new relationships become possible?
     difficulty: basic
     question: "What does the formula `n * (n - 1) / 2` remind you about module design?"
     answer: "It is the number of possible pairwise relationships among `n` modules. As module count grows, possible relationships grow roughly **quadratically**, so uncontrolled dependencies quickly become unmanageable."
@@ -123,6 +137,8 @@ cards:
     explanation: "Repeated switches over the same alternatives leak the choice list. A common fix is polymorphism plus one factory, configuration module, or dependency-injection boundary that owns the list."
 
   - id: 21
+    hint: >-
+      Distinguish what a customer must choose at checkout from what a refund service must know to carry out that choice.
     difficulty: advanced
     question: "In a checkout system that uses PayPal, why can PayPal be both **visible** and **hidden** under Information Hiding, depending on the boundary?"
     answer: "The user-facing checkout flow may need to show PayPal as a supported option, and the server must verify it securely. But backend services should not know the PayPal SDK; they should depend on a vendor-neutral `PaymentGateway`."
@@ -165,12 +181,16 @@ cards:
     explanation: "The goal is not to predict every future requirement. It is to predict likely classes of change and confine each class to a small, documented part of the system."
 
   - id: 28
+    hint: >-
+      Read an API from the client’s side and list conclusions you could reasonably draw from its names, types, and promised behavior. Which conclusions should survive an implementation change?
     difficulty: intermediate
     question: "What does it mean to treat an **interface as permission to assume**?"
     answer: "Every public name, type, return value, exception, ordering guarantee, flag, and data shape tells clients something they are allowed to rely on. A good interface exposes only stable, intentional assumptions and keeps volatile details private."
     explanation: "This turns leak detection into a concrete review habit: ask what each public detail permits clients to know, then remove permissions that would make future changes ripple."
 
   - id: 29
+    hint: >-
+      Suppose a client needs all circular shifts but does not care about their order. What future implementation choices are lost by promising an order anyway?
     difficulty: advanced
     question: "Why was Parnas's circular-shift ordering in the improved KWIC design still a design error?"
     answer: "The interface specified an ordering that clients did not need. That extra promise restricted future implementations even though the module was otherwise closer to an information-hiding design."
@@ -183,12 +203,16 @@ cards:
     explanation: "For a payment gateway, the provider protocol may be the primary secret; retry policy, idempotency-key format, and provider response mapping may be secondary secrets."
 
   - id: 31
+    hint: >-
+      Replace the search algorithm while keeping the domain task the same. Which expectations might callers have formed from the old method name?
     difficulty: advanced
     question: "Why can an API named `search_bm25` leak information even if its fields are private?"
     answer: "The name and return shape can expose the ranking algorithm, score scale, storage row format, tie-break details, and pagination strategy. Clients should usually depend on domain-level search results, not BM25 internals."
     explanation: "Access modifiers hide fields inside a class. Information Hiding also asks whether the public contract reveals volatile algorithm and representation decisions."
 
   - id: 32
+    hint: >-
+      Compare the work of following a call for the first time with the work of changing the hidden implementation later. Are those costs paid in the same place?
     difficulty: intermediate
     question: "Why might a more modular design feel harder to understand at first?"
     answer: "It can introduce extra abstractions that readers must learn before seeing the hidden implementation. The benefit often appears during modification: the right change stays local instead of spreading through clients."

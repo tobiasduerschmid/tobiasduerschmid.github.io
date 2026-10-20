@@ -28,6 +28,8 @@ cards:
     answer: "The tendency for developers who just learned patterns to apply them to every problem, even when simple code would be a better solution."
     explanation: "Software quality is not measured by the number of patterns used. Often, keeping the code simple and avoiding a pattern entirely is the best solution."
   - id: 6
+    hint: >-
+      Identify what is expected to vary: recipients, their lifetimes, or the notification behavior. Compare the changes needed with a direct call and with a subscription mechanism.
     difficulty: intermediate
     question: "A team wants to introduce Observer because one object needs to update one other object after a change. What should they evaluate before applying the pattern?"
     answer: "Whether subscribers should vary independently or need managed lifetimes, and whether those benefits justify a registry compared with a direct call. One current observer does not rule out Observer."
@@ -43,16 +45,22 @@ cards:
     answer: "Comparing a working solution *without* a pattern to a refactored version *with* the pattern, especially when extending both with a new requirement."
     explanation: "Compare the changes needed in both versions. A pattern helps only for the variation it accommodates; the exercise can also reveal when its extra abstraction is not worthwhile."
   - id: 9
+    hint: >-
+      Keep the current output unchanged while replacing one collaborator’s private representation. Would every supposedly independent client still work?
     difficulty: advanced
     question: "Why does correct program output not establish that a pattern preserves its intended modularity?"
     answer: "A program can produce the expected result while depending on private representation details or concrete collaborators that the design intended to hide."
     explanation: "Cai, Iannuzzi, and Wong’s 2011 study found unexpected dependencies in 74% of 85 functioning student submissions. The transferable lesson is to inspect dependencies and change scenarios, not memorize the percentage as a universal rate."
   - id: 10
+    hint: >-
+      Choose a plausible extension and compare modifying a small existing design with understanding an abstraction added for a hypothetical future.
     difficulty: advanced
     question: "Why do experienced engineers prefer 'do the simplest thing that could possibly work'?"
     answer: "A small working design gives feedback before speculative abstractions accumulate. Refactor toward a pattern when actual variation or a clear extension requirement justifies its cost."
     explanation: "Simplicity is a design heuristic, not a theorem that every complex design must evolve in one prescribed sequence. Evaluate known requirements as well as today’s implementation."
   - id: 11
+    hint: >-
+      Identify the concrete change that is painful before choosing a pattern. Does the proposed structure make that particular change easier?
     difficulty: intermediate
     question: "What is the relationship between code smells and design patterns?"
     answer: "Code smells identify design questions; patterns are possible responses, not automatic prescriptions."

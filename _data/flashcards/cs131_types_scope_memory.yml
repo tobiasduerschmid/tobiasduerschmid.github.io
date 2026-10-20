@@ -7,6 +7,8 @@ cards:
   # Lecture: [04] Data Palooza (Public).docx — Type Inference
   # Assessment: Homework Problems (Public).docx TYPING7(A)
   - id: cs131-v2-types-card-infer
+    hint: >-
+      Determine the type from the initial expression first. Then check the later value against that type, rather than inferring again from each assignment.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 25
@@ -17,6 +19,8 @@ cards:
   # Lecture: [04] Data Palooza (Public).docx — Static typing; Type Inference
   # Assessment: Homework Problems (Public).docx TYPING7(A) (infer constraints)
   - id: cs131-v2-types-card-constraints
+    hint: >-
+      For each branch, write its result type rather than its value. Choose results that force incompatible requirements on the function’s one result type.
     difficulty: intermediate
     bloom: create
     estimated_seconds: 45
@@ -27,6 +31,8 @@ cards:
   # Lecture: [04] Data Palooza (Public).docx — Switching between types
   # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P2(e,f)
   - id: cs131-v2-types-card-narrowing-witness
+    hint: >-
+      Treat A and B as sets of representable values. For each arrow, look for a member of its source set that is missing from its destination set.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 40
@@ -37,6 +43,8 @@ cards:
   # Lecture: [04] Data Palooza (Public).docx — Lexical Scoping; Dynamic Scoping
   # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P3(a,b)
   - id: cs131-v2-types-card-lexical-dynamic
+    hint: >-
+      Draw two different lookup paths: one through the environments surrounding show’s definition, and one through the active calls. Locate x along each path.
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 40
@@ -47,6 +55,8 @@ cards:
   # Lecture: [04] Data Palooza (Public).docx — Variable lifetime and scope; Lifetime
   # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P2(b)
   - id: cs131-v2-types-card-hidden-live
+    hint: >-
+      Pause a call-stack trace while the callee is running. Ask separately whether the caller will resume with its stored value and whether the callee can use that variable’s name.
     difficulty: basic
     bloom: understand
     estimated_seconds: 25
@@ -57,6 +67,8 @@ cards:
   # Lecture: [04] Data Palooza (Public).docx — Mark and Sweep: Mark
   # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P4(a-c)
   - id: cs131-v2-types-card-marking
+    hint: >-
+      Start your graph walk only from the global reference, following outgoing arrows. Do not begin a second walk at an object merely because it has a self-loop.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 40
@@ -67,6 +79,8 @@ cards:
   # Lecture: [04] Data Palooza (Public).docx — Reference Counting
   # Assessment: Homework Problems (Public).docx DATA3(A,B)
   - id: cs131-v2-types-card-cycle
+    hint: >-
+      On the same two-object graph, count incoming references and then attempt a walk from the program’s roots. Compare what those two procedures can observe.
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 40
@@ -77,6 +91,8 @@ cards:
   # Lecture: [04] Data Palooza (Public).docx — Rust’s Ownership Model: Move Semantics
   # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P5
   - id: cs131-v2-types-card-owner
+    hint: >-
+      Keep an ownership ledger after each operation. Distinguish temporary permission to read an object from transferring responsibility for that object.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 25
@@ -103,6 +119,8 @@ cards:
   # Lecture: [04] Data Palooza (Public).docx — Mark and copy; Mark and compact
   # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P2(g); Homework Problems (Public).docx DATA3(A.3)
   - id: cs131-v2-types-card-collector-choice
+    hint: >-
+      Sketch the heap immediately before and after two collections. Identify which objects survive both rounds and account for the collector’s operations on them.
     difficulty: advanced
     bloom: evaluate
     estimated_seconds: 45

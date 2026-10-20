@@ -23,11 +23,15 @@ cards:
     answer: "**Strategy** (the interface declaring the algorithm), **ConcreteStrategy** (each implementation of the algorithm), and **Context** (the class that holds a Strategy and delegates work to it)."
     explanation: "The Context's delegating operation depends on the Strategy interface; construction or configuration code selects a ConcreteStrategy. This is what makes the algorithm swappable."
   - id: 5
+    hint: >-
+      Compare a player moving into a new game phase with a caller choosing a compression method. What does the changing collaborator mean in each example?
     difficulty: intermediate
     question: "How does the Strategy pattern differ from the State pattern? They have identical UML structures."
     answer: "**Strategy** supplies an interchangeable algorithm. **State** organizes behavior around the Context's lifecycle state and transitions. Who selects the implementation is a clue, not an absolute rule."
     explanation: "An internal transition is a useful State clue, but clients can also select a mode in State. Decide from lifecycle versus algorithm intent, not from the location of a setter call."
   - id: 6
+    hint: >-
+      Locate the algorithm skeleton in each design. Ask whether changing the behavior requires a new subtype of that owner or a different collaborator.
     difficulty: intermediate
     question: "How does the Strategy pattern differ from Template Method?"
     answer: "**Template Method** uses *inheritance* — the base class fixes an algorithm skeleton and subclasses override individual steps. **Strategy** uses *composition* — the entire algorithm is replaced via an external object."
@@ -38,6 +42,8 @@ cards:
     answer: "A ConcreteStrategy whose implementation does nothing (e.g., `FlyNullObject`). It lets the Context call `strategy.algorithmInterface()` uniformly without null checks."
     explanation: "Without a null strategy, the Context needs `if (strategy != null)` everywhere. With one, the call site stays clean. RubberDuck uses `FlyNullObject` instead of overriding `fly()` to do nothing."
   - id: 8
+    hint: >-
+      Add another algorithm variant and mark every existing selection branch that must change. Which part of the design should own the new behavior?
     difficulty: intermediate
     question: "Why are conditional `if`/`switch` statements selecting between algorithms a code smell that suggests the Strategy pattern?"
     answer: "Each branch represents a different algorithm hard-coded into the Context. Replacing the conditional with polymorphic Strategy objects makes adding new algorithms an *addition* rather than a *modification* of existing code (Open/Closed Principle)."
@@ -48,11 +54,15 @@ cards:
     answer: "The code selecting a strategy needs to understand the relevant differences. Other clients can use a Context configured by a factory without naming any concrete strategy."
     explanation: "A factory can hide strategy construction while preserving the independent algorithm implementations. Selection and use are different responsibilities."
   - id: 10
+    hint: >-
+      Have two contexts use one strategy in alternating calls. Check whether data from the first call can affect the second context’s result.
     difficulty: intermediate
     question: "In the Strategy pattern, when can Contexts share a Strategy instance?"
     answer: "When sharing does not mix per-context mutable data. Stateless strategies are easy to share; immutable configured strategies can also be shared by Contexts using that configuration."
     explanation: "For example, the same immutable range validator can serve several Contexts. A strategy that stores one Context's running total or reference needs separate ownership. Sharing does not require global Singleton access."
   - id: 11
+    hint: >-
+      List what one strategy needs to know and what the Context knows. How could the boundary expose enough for this algorithm without making every Context detail part of the contract?
     difficulty: advanced
     question: "In the Strategy pattern, two ways the Context can give the Strategy access to its data — what are they, and what's the trade-off?"
     answer: "**(1) Pass data as parameters** — Context passes everything the Strategy might need through the algorithm interface. Keeps them decoupled but may pass unused data. **(2) Pass the Context itself** — Strategy queries Context for what it needs. More flexible but couples Strategy to Context's interface."
@@ -63,6 +73,8 @@ cards:
     answer: "Java's `Comparator<T>` for sorting; payment-method handlers (credit card, PayPal, bank transfer) sharing a `PaymentMethod` interface; pluggable validation rules (`RangeValidator`, `RegexValidator`) sharing a `Validator` interface."
     explanation: "Strategy is everywhere in standard libraries. Whenever you pass a function or callback to control how an operation behaves (sort comparator, hash function, retry policy), you're using Strategy."
   - id: 13
+    hint: >-
+      Suppose two duck types need the same flight behavior and one duck changes it during execution. Trace where that behavior would live with only the interface.
     difficulty: intermediate
     question: "In the classic duck-simulator example of the Strategy pattern, what does a separate FlyBehavior strategy add beyond declaring a Flyable interface on every duck class?"
     answer: "A duck delegates flying to a replaceable collaborator, so multiple duck classes reuse one flight implementation and individual ducks can change behavior."
@@ -74,6 +86,8 @@ cards:
     answer: "**Policy** — emphasizing that the Strategy encapsulates a *policy decision* (e.g., 'how should we break lines?', 'how should we authenticate?')."
     explanation: "The 'Policy' name is more common in security and infrastructure contexts (auth policy, retry policy, eviction policy). Same pattern, different connotation."
   - id: 15
+    hint: >-
+      Name a real variation requirement before adding a family of classes. Compare the proposed flexibility with the extra navigation needed to read a call.
     difficulty: advanced
     question: "When should you NOT use the Strategy pattern?"
     answer: "When the existing algorithm-selection code is small and stable, or variation is only speculative. For a simple interchangeable algorithm, a function can express Strategy without a class hierarchy. For lifecycle-dependent behavior, consider State."

@@ -3,6 +3,8 @@ description: "Retrieval practice for evaluating a whole test suite — coverage 
 active: true
 cards:
   - id: 1
+    hint: >-
+      Imagine executing every line with all result-checking assertions removed. Which measurement would still look good?
     difficulty: intermediate
     question: "Why is coverage a *map* rather than a *grade* of test quality?"
     answer: "Coverage tells you which lines/branches were **executed**. It does not tell you whether the test **checked the right result** — high coverage can coexist with weak assertions and missing boundaries."
@@ -33,18 +35,24 @@ cards:
     explanation: "Test-code smells are well catalogued, and studies find they are widespread in real projects and that their presence harms comprehension and maintenance. Test code is production code for confidence — it needs the same design care."
 
   - id: 6
+    hint: >-
+      Consider two changes separately: one that preserves behavior and one that breaks it. What would you need to learn about the suite’s response to each?
     difficulty: advanced
     question: "Diagnose this: *'Coverage is 88%, suite passes consistently, but engineers report being afraid to refactor module X because they don't trust the tests.'*"
     answer: "Likely **weak oracles and over-coupling to implementation** — tests pass when code runs, but engineers know from experience that real bugs slip through and that refactors trigger false failures."
     explanation: "This is the textbook gap between coverage as a measurement and quality as an experience. Engineer fear is a real signal — it usually traces to assertions that don't catch the bugs that matter (weak oracles) or assertions that catch refactors that don't matter (over-coupling). Mutation testing diagnoses the first; reviewing what each test asserts on diagnoses the second."
 
   - id: 7
+    hint: >-
+      Start from the phrase “for any rows.” What would have to vary across inputs, and what relationship should stay true?
     difficulty: intermediate
     question: "Choose between an example-based test and a property-based test for: *'CSV parser round-trip — `parse(format(rows)) == rows` for any rows.'* Which is stronger here?"
     answer: "**Property-based**. The round-trip is naturally `∀ rows: parse(format(rows)) == rows`, and a generator produces input shapes (embedded commas, quotes, Unicode) a human author would never write."
     explanation: "Round-trip is one of the canonical patterns property-based testing exploits, alongside identity, commutativity, associativity, and idempotence. The generator finds boundary cases the author didn't think of. Pair the property with two or three hand-chosen example tests for cases you care about specifically — properties and examples complement each other."
 
   - id: 8
+    hint: >-
+      Compare the faults created by the mutation operators with the cause of the escaped bug. Are they necessarily drawn from the same kinds of mistake?
     difficulty: advanced
     question: "Mutation testing reports 95% on a service module, but a postmortem finds a real bug no test caught. What does that contradict, and what does it really tell you?"
     answer: "Not a contradiction. Mutation tests **small syntactic faults**; real bugs often live at higher-level seams — wrong spec, missed boundary, missing scenario — that no syntactic mutant exercises."
@@ -57,18 +65,24 @@ cards:
     explanation: "The rubric in the chapter is structured this way deliberately — each row has a *strong evidence* description and a *warning sign*. Use it as a checklist when reviewing PRs or auditing a suite. The point is not to score; it is to make weakness diagnosable, so concrete fixes follow."
 
   - id: 10
+    hint: >-
+      Before assigning a cause, check whether release volume, tested code, or counted defects changed. Then ask what each metric observes and what it misses.
     difficulty: expert
     question: 'Dashboard: coverage 92% (up from 88%), mutation score steady at 80%, escaped-bug count doubled in three months. Diagnose.'
     answer: The dashboard warrants investigation, but does not identify one cause. Check missing scenarios and weak oracles, changes in the mutant population, release volume, and the kinds of bugs that escaped.
     explanation: Coverage and mutation scores are normalized percentages. An unchanged 80% can represent more killed mutants if the denominator grew. A doubled raw bug count can also reflect more releases. Inspect those denominators and concrete escaped bugs before choosing a remedy.
 
   - id: 11
+    hint: >-
+      Compare what a developer needs after a small edit with what a release decision needs to establish about the deployed system.
     difficulty: expert
     question: "Why is using one test suite for both *formative* fast feedback and *summative* release sign-off risky?"
     answer: "The two goals pull opposite ways — fast suites need isolation and mocks; release gates need realism and breadth. Conflating them makes the fast suite slow *and* the release gate narrow. Separate them into layers."
     explanation: "This mirrors the formative-vs-summative distinction in assessment. A 'one suite to rule them all' design forces tradeoffs that hurt both purposes. The healthier model is to keep the fast feedback loop trustworthy and quick, and treat the larger gate as a *separate* artifact with its own runtime and scope expectations."
 
   - id: 12
+    hint: >-
+      Imagine trying to meet the coverage target without detecting any additional bugs. What would independent review need to inspect to reject that approach?
     difficulty: expert
     question: "Critique: *'We require 100% line coverage on every PR; tests are reviewed only by the author.'* Name at least three failure modes this invites."
     answer: "(1) **Coverage gaming** — execute lines without assertions. (2) **Weak oracles unreviewed** — vacuous assertions slip through. (3) **Hostile refactoring** — tests pin implementation details. (4) **Slowed feedback** — exhaustive coverage forces slow tests."

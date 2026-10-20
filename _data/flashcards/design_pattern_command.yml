@@ -15,12 +15,16 @@ cards:
     explanation: "The Client typically builds a ConcreteCommand with a Receiver. The Invoker stores and executes the Command. GoF also permits a command to perform its own work without a separate Receiver."
 
   - id: 3
+    hint: >-
+      Add two new actions to the current dispatcher, then ask for one action to be queued for later. Which existing code would need to change?
     difficulty: intermediate
     question: "When does Refactoring to Patterns recommend moving from a conditional dispatcher to Command?"
     answer: "When the dispatcher is bloated or needs runtime flexibility that hard-coded branches cannot provide."
     explanation: "A small stable conditional can stay simple. Command earns its keep when actions need to be added, removed, configured, queued, logged, or tested independently."
 
   - id: 4
+    hint: >-
+      Consider a command that overwrites a value. After execution, what would still need to be known to restore the earlier state?
     difficulty: intermediate
     question: "How does the Command design pattern support undo?"
     answer: "Each command stores enough information to reverse its own effect, either by calling an inverse operation or restoring previous state."
@@ -33,6 +37,8 @@ cards:
     explanation: "It applies the Null Object pattern so invokers do not need repeated null checks before executing a slot, hook, or optional command."
 
   - id: 6
+    hint: >-
+      Compare choosing how to compress a file with storing a user’s edit for later replay. What does each object represent to its client?
     difficulty: intermediate
     question: "How is the Command pattern different from the Strategy pattern?"
     answer: "Strategy represents an interchangeable algorithm. Command represents a request with a lifecycle, such as execute, undo, queue, log, replay, or compose."
@@ -57,6 +63,8 @@ cards:
     explanation: "Macro commands are useful when a single user action should trigger several operations while still looking like one command to the invoker."
 
   - id: 10
+    hint: >-
+      List what the caller must do with the request after receiving it. Does it need anything beyond invoking the supplied behavior?
     difficulty: intermediate
     question: "When is a closure or function enough instead of a Command-pattern object?"
     answer: "When the request only needs simple execute-only callback behavior."

@@ -18,11 +18,15 @@ cards:
     answer: "`2 ** 10`"
     explanation: "Python uses `**` for exponentiation. Do NOT use `^` — that is bitwise XOR in Python."
   - id: 4
+    hint: >-
+      Identify the loop’s input values, including range’s excluded endpoint, before choosing the expression produced for each one.
     difficulty: intermediate
     question: "Create a list of the squares of numbers 1 through 5: `[1, 4, 9, 16, 25]` using a single line of Python."
     answer: "`[x**2 for x in range(1, 6)]`"
     explanation: "A list comprehension: `[expression for variable in iterable]`. `range(1, 6)` generates 1, 2, 3, 4, 5 (stop is exclusive)."
   - id: 5
+    hint: >-
+      Keep the original value as each output element. Add a separate condition that decides whether that element belongs in the result.
     difficulty: intermediate
     question: "In Python, from a list `nums = [4, 8, 15, 16, 23, 42]`, create a new list containing only the numbers greater than 20."
     answer: "`[x for x in nums if x > 20]`"
@@ -56,11 +60,15 @@ cards:
       ```
     explanation: "`re.findall()` returns a list of all matches. `\\d+` matches one or more digits. Use raw strings `r'...'` for regex patterns."
   - id: 9
+    hint: >-
+      Build the pattern from one digit group and one literal separator, then repeat that structure to cover exactly four groups. A regex dot without escaping has a different meaning.
     difficulty: advanced
     question: "In Python, replace text shaped like four digit groups separated by dots with `\"x.x.x.x\"`. Use a simple regex; validating IPv4 numeric ranges is outside this task."
     answer: "`re.sub(r'\\d+\\.\\d+\\.\\d+\\.\\d+', 'x.x.x.x', text)`"
     explanation: "`re.sub(pattern, replacement, string)` returns a string with each match replaced. The pattern also accepts invalid address values such as 999.999.999.999; shape matching is not address validation."
   - id: 10
+    hint: >-
+      Count the script name when checking argv’s length. Separate a diagnostic meant for the user from ordinary output another program might consume.
     difficulty: expert
     question: "Write a Python script that prints an error to stderr and exits with code 1 if no command-line argument is provided."
     answer: |
@@ -87,6 +95,8 @@ cards:
     explanation: "`re.search()` returns a match object (truthy) or `None` (falsy). It is the Python equivalent of `grep -q`."
 
   - id: 13
+    hint: >-
+      Draw two station instances sharing the supplied calibration but owning different readings lists. Decide which objects must be created on each initializer call.
     difficulty: intermediate
     question: |
       In Python, define a class `WeatherStation(name, calibration)`. Each instance must keep the
@@ -106,6 +116,8 @@ cards:
     explanation: "The constructor deliberately shares the supplied collaborator and constructs independent mutable storage. Putting readings = [] in the class body would create a shared class list instead."
 
   - id: 14
+    hint: >-
+      Handle an unsupported operand before reading its fields. For supported readings, translate “both fields match” into a condition that must hold for each field.
     difficulty: intermediate
     question: |
       A Python `Reading` class already initializes `self.temperature` and `self.unit`.
@@ -122,6 +134,8 @@ cards:
     explanation: "This defines value equality without changing identity. Returning NotImplemented declines unsupported operands so Python can try comparison fallback; it is different from raising an exception."
 
   - id: 15
+    hint: >-
+      Try your default-handling condition with None and with a caller’s empty list. These inputs must take different paths even though both are falsy.
     difficulty: intermediate
     question: |
       Write a Python function `record_alert(message, alerts=None)` to append a message and return
@@ -139,6 +153,8 @@ cards:
     explanation: "None marks absence; an empty list does not. Constructing the list inside the call prevents accidental reuse of a mutable default, while supplied lists are deliberately shared with the caller."
 
   - id: 16
+    hint: >-
+      The snapshot must isolate nested mutable objects while preserving repeated references within its own graph. Compare that requirement with copying only the outer station.
     difficulty: intermediate
     question: |
       `station` is an ordinary WeatherStation whose calibration and readings
@@ -156,6 +172,8 @@ cards:
     explanation: "Assignment would alias the station. A shallow copy would retain its mutable member references. Deepcopy isolates the supported mutable graph while preserving repeated references within that graph; immutable leaves may safely be reused."
 
   - id: 17
+    hint: >-
+      Distinguish copying the outer container from copying its elements. Choose a construction that adds the sample without changing either the original slots or the existing element objects.
     difficulty: intermediate
     question: |
       Write a Python function `with_sample(readings, sample)` for a built-in list. Return a new
@@ -169,6 +187,8 @@ cards:
     explanation: "Concatenation creates a new outer list while reusing the element references. append or list += would mutate the input instead. A deep copy would unnecessarily change the requested sharing of mutable elements."
 
   - id: 18
+    hint: >-
+      Locate the reference you need to replace: the station’s member, not a field inside the formerly shared calibration. Draw the old and new paths before writing the assignment.
     difficulty: intermediate
     question: |
       In Python, a station object has a `calibration` member that other stations may share.
@@ -184,12 +204,16 @@ cards:
 
   # Source concepts: CS131 course archive: Essential Python; Homework PYTHON1–5; Week 1/4/10 worksheets; Function and Control Palooza notes.
   - id: python-course-write-independent-grid
+    hint: >-
+      Count how many row objects your expression creates. Repeating one row reference three times does not create three independently mutable rows.
     difficulty: intermediate
     question: In Python, create a list `rows` of three independently mutable rows, each containing two zeros.
     answer: '`rows = [[0, 0] for _ in range(3)]`'
     explanation: The inner list literal is evaluated once per row. Repeating one constructed row with multiplication would share it.
 
   - id: python-course-write-dictionary-default
+    hint: >-
+      Distinguish omitted input from a supplied empty dictionary, then consider the first occurrence of a label before incrementing its count.
     difficulty: intermediate
     question: Write a Python function remember(label, counts=None) that increments a per-label count and returns the dictionary. Omitted input must start fresh; supplied empty dictionaries must be mutated.
     answer: |-
@@ -203,6 +227,8 @@ cards:
     explanation: The sentinel distinguishes absent input from an empty caller-owned dictionary. The function returns the same dictionary it updated.
 
   - id: python-course-write-iterator
+    hint: >-
+      Trace both an empty input and the call immediately after the last value. Check availability before reading a slot, and advance the position only when consuming a value.
     difficulty: intermediate
     question: Complete __next__ for a Python iterator with self.items and self.position, initially zero. It must return each value once and signal exhaustion, including on empty input.
     answer: |-
@@ -217,6 +243,8 @@ cards:
     explanation: Check the boundary before indexing. None cannot serve as the exhaustion signal because it may be an ordinary element. A complete iterator also implements __iter__ returning self.
 
   - id: python-course-write-recursive-count
+    hint: >-
+      An integer leaf and a list of subtrees need different cases. Assume each recursive call counts its child correctly, then combine those counts; an empty list should also fit.
     difficulty: intermediate
     question: Write a Python function count_leaves(tree) for a finite acyclic nest of lists whose leaves are integers. Return the number of integer leaves without changing the input.
     answer: |-
@@ -229,6 +257,8 @@ cards:
     explanation: Each integer contributes one; an empty list contributes zero. Recursive calls handle smaller child trees, and the contract excludes cycles.
 
   - id: python-course-write-safe-lookup
+    hint: >-
+      Test presence and stored value as separate properties. Try an environment that explicitly contains the name with value None before choosing the condition.
     difficulty: intermediate
     question: Write a Python function lookup(environment, name) that returns the value stored under name in the dict environment, including zero or None, and raises NameError only if the key is absent.
     answer: |-
@@ -241,6 +271,8 @@ cards:
     explanation: Key membership measures whether a binding exists. A truthiness check or get(name) is None would reject some valid stored values.
 
   - id: python-course-write-concurrent-tasks
+    hint: >-
+      Draw a timeline with both start events before the first wait. Keep a handle for each scheduled operation so its eventual result can be collected.
     difficulty: intermediate
     question: Inside a Python async function, call independent async functions read_left() and read_right(), schedule both before waiting, and return their two results. Assume asyncio is imported.
     answer: |-

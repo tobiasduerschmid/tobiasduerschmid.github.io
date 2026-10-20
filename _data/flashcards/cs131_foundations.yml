@@ -44,6 +44,8 @@ cards:
   # Taught: [01] Intro (Public).docx, Exercise: Classify that Language.
   # Practice: Homework PYTHON2; Fall 2025 Quiz 1 v2, Problem 2 (Widget Woes): predict copy, mutation, and rebinding effects.
   - id: cs131-v2-foundations-card-value-update
+    hint: >-
+      Draw a storage box for the caller and one for the parameter created by the call. Mark the box named on the left side of the assignment.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
@@ -55,6 +57,8 @@ cards:
   # Taught: [01] Intro (Public).docx, Exercise: Classify that Language.
   # Practice: Homework PYTHON2; Fall 2025 Quiz 1 v2, Problem 2 (Widget Woes): predict copy, mutation, and rebinding effects.
   - id: cs131-v2-foundations-card-reference-update
+    hint: >-
+      Before tracing the assignment, decide whether n and the reference parameter name one storage location or two.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
@@ -66,6 +70,8 @@ cards:
   # Taught: [01] Intro (Public).docx, Exercise: Classify that Language.
   # Practice: Homework PYTHON2; Fall 2025 Quiz 1 v2, Problem 2 (Widget Woes): predict copy, mutation, and rebinding effects.
   - id: cs131-v2-foundations-card-separate-tests
+    hint: >-
+      Choose a change whose effect could still be inspected after the function returns. Changing only the local parameter name would not test whether its record is shared.
     difficulty: intermediate
     bloom: create
     estimated_seconds: 50
@@ -94,6 +100,8 @@ cards:
   # Taught: [01] Intro (Public).docx, Paradigms.
   # Practice: Concept prerequisite; the paradigm examples are taught here. Later code traces supply application practice.
   - id: cs131-v2-foundations-card-functional-construction
+    hint: >-
+      Write the pending addition for each nonempty suffix, then begin resolving them at the empty-list case.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 40

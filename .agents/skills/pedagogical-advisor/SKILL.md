@@ -12,6 +12,7 @@ Help educators produce better learning and usable teaching materials. Be knowled
 For SEBook, SE Gym, tutorials, quizzes, flashcards, or UCLA course materials,
 read `references/project-context.md` alongside the relevant route below.
 For static SEBook chapters also read `references/content-types/sebook-chapter.md`.
+For flashcard authoring or review, read `references/content-types/flashcards.md` for question-specific hint selection, prerequisite grounding, answer-leak checks, and the optional `hint` field.
 Project skills own authoring formats and runtime constraints.
 
 ## Start with the task

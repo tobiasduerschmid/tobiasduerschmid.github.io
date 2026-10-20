@@ -18,16 +18,22 @@ cards:
     answer: "The **Model**. Views (and sometimes controllers) register as observers and are notified when the model's state changes."
     explanation: "The model is completely blind to how it is displayed — it only knows that some objects implement the Observer interface and want to be notified."
   - id: 4
+    hint: >-
+      Keep a view’s drawing behavior fixed but change how it reacts to user input. Which collaboration would let you vary just that decision?
     difficulty: intermediate
     question: "Why is the Controller a Strategy in classic Smalltalk MVC?"
     answer: "The view delegates all input handling to the controller. Different controllers can be swapped to change how user input is processed (e.g., standard vs. read-only mode)."
     explanation: "The Strategy pattern lets the view vary its input behavior independently of how it displays data. This is what 'pluggable user interfaces' means."
   - id: 5
+    hint: >-
+      Compare the number of concepts needed for a one-screen, fixed display before and after introducing the pattern. Which expected changes repay that extra structure?
     difficulty: basic
     question: "What is the main liability of MVC for simple applications?"
     answer: "**Increased complexity** — maintaining three separate component types and their interactions may not be worth it for simple user interfaces."
     explanation: "Compare the separation’s benefit with the work the framework already supplies. One view alone is not enough to declare MVC excessive."
   - id: 6
+    hint: >-
+      Trace one small model edit through every subscribed view, including any further edits caused by their callbacks.
     difficulty: intermediate
     question: "What is the 'notification storm' problem in MVC?"
     answer: "Minor model changes trigger notifications to all subscribed views, potentially causing excessive cascading updates and performance bottlenecks."

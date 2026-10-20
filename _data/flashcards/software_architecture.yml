@@ -15,6 +15,8 @@ cards:
     explanation: "A component diagram may show that a service publishes to a broker; an architecture decision record explains why the team accepted asynchronous messaging's debugging cost to gain evolvability."
 
   - id: 3
+    hint: >-
+      Compare changing a button’s wording with requiring the service to survive an entire data-center outage. Which one could force a different system structure?
     difficulty: basic
     question: "What makes a requirement an **architectural driver**?"
     answer: "A requirement is an architectural driver when changing it would plausibly change the architecture. Drivers are usually high in importance and high in difficulty."
@@ -45,12 +47,16 @@ cards:
     explanation: "A shared library can appear once in the module view and be compiled into several runtime components. The views are related, but they are not interchangeable."
 
   - id: 8
+    hint: >-
+      For each concern, first name the things whose relationships you must inspect. Are you following code dependencies, stored facts, running units, or events over time?
     difficulty: advanced
     question: "Which architectural view would you use to reason about each concern: maintainability, database structure, deployment/message flow, and protocol timing?"
     answer: "**Maintainability:** module view. **Database structure:** data view. **Deployment and message flow:** component-and-connector view. **Protocol timing or complex interactions:** behavioral view."
     explanation: "The point of multiple views is not documentation variety. Each view exposes a different structure, so each supports different claims."
 
   - id: 9
+    hint: >-
+      Imagine deploying identical source code on one server and then on replicated servers. What evidence would distinguish their behavior when a machine fails?
     difficulty: advanced
     question: "Why can't a layered module view by itself prove availability?"
     answer: "Layers are code organization before deployment. Availability depends on runtime components, failure modes, redundancy, recovery, monitoring, and deployment topology."
@@ -63,6 +69,8 @@ cards:
     explanation: "Architecture diagrams are representations, not the architecture itself. The real architecture is embodied in the code and runtime artifacts."
 
   - id: 11
+    hint: >-
+      Compare an undocumented new service with a new import that a dependency rule explicitly forbids. Check each change against the intended rules.
     difficulty: intermediate
     question: "Distinguish architectural **drift** and **erosion**."
     answer: "**Drift** adds design decisions not captured in the intended architecture without directly violating its rules. **Erosion** directly violates the intended architecture's rules or constraints."

@@ -7,6 +7,8 @@ cards:
   # Taught: [02] Programming Implementation Palooza (Public).docx, Tokenizing (aka Lexing).
   # Practice: Fall 2025 Quiz 1 v2, Problem 1 (Parser Panic); trace longest matches and rule-order ties.
   - id: cs131-v2-implementation-card-longest-match
+    hint: >-
+      At each word, compare how many characters each rule can consume before considering its position in the rule list.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 35
@@ -18,6 +20,8 @@ cards:
   # Taught: [02] Programming Implementation Palooza (Public).docx, Tokenizing (aka Lexing).
   # Practice: Fall 2025 Quiz 1 v2, Problem 1 (Parser Panic); trace longest matches and rule-order ties.
   - id: cs131-v2-implementation-card-keyword-fix
+    hint: >-
+      Separate the equal-length match for the keyword alone from the longer match for a name beginning with that keyword. A repair must preserve both cases.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 40
@@ -31,6 +35,8 @@ cards:
   # Taught: [02] Programming Implementation Palooza (Public).docx, Tokenizing (aka Lexing); Parsing.
   # Practice: Homework TOOLS1; Fall 2025 Quiz 1 v2, Problem 1 (Parser Panic); identify the first failing stage.
   - id: cs131-v2-implementation-card-phase-reason
+    hint: >-
+      Align the three token categories with the three positions in the production. The characters have already been recognized; check what relationship between tokens remains to be established.
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 40
@@ -42,6 +48,8 @@ cards:
   # Taught: [02] Programming Implementation Palooza (Public).docx, Parsing.
   # Practice: Homework TOOLS2; Fall 2025 Quiz 1 v2, Problem 1 (Parser Panic); determine membership and justify missing/repeated symbols.
   - id: cs131-v2-implementation-card-optional-language
+    hint: >-
+      Expand the repetition zero times, leaving everything outside the braces in place. Inspect the token sequence that remains.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 35
@@ -54,6 +62,8 @@ cards:
   # Taught: [02] Programming Implementation Palooza (Public).docx, Parsing.
   # Practice: Homework TOOLS2; Fall 2025 Quiz 1 v2, Problem 1 (Parser Panic); determine membership and justify missing/repeated symbols.
   - id: cs131-v2-implementation-card-build-grammar
+    hint: >-
+      First describe a nonempty list as its first item followed by any extra comma-item pairs. Then decide how much of that structure must be optional to admit zero arguments.
     difficulty: intermediate
     bloom: create
     estimated_seconds: 50
@@ -66,6 +76,8 @@ cards:
   # Taught: [02] Programming Implementation Palooza (Public).docx, Parsing is tricky.
   # Practice: Lecture expression-grouping exercise; supports grammar reasoning in Homework TOOLS2. No exact past-exam counterpart claimed.
   - id: cs131-v2-implementation-card-parse-witness
+    hint: >-
+      Choose each minus sign in turn as the outermost operation. Keep the token order fixed while grouping its two operands.
     difficulty: intermediate
     bloom: create
     estimated_seconds: 50
@@ -78,6 +90,8 @@ cards:
   # Taught: [02] Programming Implementation Palooza (Public).docx, Parsing is tricky.
   # Practice: Lecture expression-grouping exercise; supports grammar reasoning in Homework TOOLS2. No exact past-exam counterpart claimed.
   - id: cs131-v2-implementation-card-precedence-tree
+    hint: >-
+      A tree’s root combines the results of its children. First identify the subexpression that must be grouped together, then ask which operation consumes that whole result.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 40
@@ -90,6 +104,8 @@ cards:
   # Taught: [02] Programming Implementation Palooza (Public).docx, Semantic analysis.
   # Practice: Homework TOOLS1: distinguish semantic checks from token and grammar checks.
   - id: cs131-v2-implementation-card-semantic-evidence
+    hint: >-
+      The call’s punctuation reveals its supplied arguments. What separate fact about the called function would let you compare that count with what is allowed?
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 35
@@ -101,6 +117,8 @@ cards:
   # Taught: [02] Programming Implementation Palooza (Public).docx, Code generation.
   # Practice: Homework TOOLS3: identify changed stages when source or target changes.
   - id: cs131-v2-implementation-card-target-backend
+    hint: >-
+      Draw the boundaries from source to shared intermediate representation, assembly, and machine code. Mark which boundaries depend on the destination processor.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 35
@@ -143,6 +161,8 @@ cards:
   # Taught: [02] Programming Implementation Palooza (Public).docx, Semantic analysis.
   # Practice: Homework TOOLS1: distinguish semantic checks from token and grammar checks.
   - id: cs131-v2-implementation-card-declaration-diagnostic
+    hint: >-
+      Compare recognizing a name’s spelling with checking whether the program has introduced that name. What information is available from the characters alone?
     difficulty: intermediate
     bloom: evaluate
     estimated_seconds: 45

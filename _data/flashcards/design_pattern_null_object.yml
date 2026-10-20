@@ -24,11 +24,15 @@ cards:
     answer: "(1) An object already requires a collaborator. (2) Some legitimate instances should do nothing. (3) Clients should not have to check for null. (4) The do-nothing behavior is reusable. (5) All do-nothing behavior fits in a single class."
     explanation: "These criteria identify a useful fit. They are not a numerical Rule of Three; compare the benefit of a named no-op with the cost of extra types in the actual design."
   - id: 5
+    hint: >-
+      Compare a deliberately silent diagnostic logger with a missing payment authorization service. Is doing nothing acceptable under each collaborator’s contract?
     difficulty: advanced
     question: "When should you NOT use Null Object?"
     answer: "Avoid it when absence carries information the client must act on, neutral behavior violates the contract, or a simple explicit check is clearer. A stand-in that lazily creates and forwards to a real subject is instead a Proxy."
     explanation: "Client count is a cost-benefit clue, not a prerequisite. Null Object is useful only when its no-op or neutral results are valid for the collaboration; it must not hide required errors."
   - id: 6
+    hint: >-
+      Have two clients call the same instance in turn. Could a call for one client change the behavior or data observed by the other?
     difficulty: intermediate
     question: "When can a Null Object be shared, and does sharing require Singleton?"
     answer: "A stateless or safely immutable Null Object can be shared when clients do not depend on its identity. Sharing by injection or a module-level binding does not require enforced Singleton construction."
@@ -45,11 +49,15 @@ cards:
     answer: "A ConcreteState whose operations all do nothing or return null results — the State pattern with a Null Object playing one of the state roles. Example: a `NotLoggedInState` whose `viewProfile()` does nothing because the user has no profile to show yet."
     explanation: "All operations covered by the Null State contract must have valid no-op or neutral-result behavior. A state with an active login or start transition is not wholly null just because other operations do nothing."
   - id: 9
+    hint: >-
+      Follow one operation all the way to the object that performs it. Does “adding nothing” also mean that no underlying operation runs?
     difficulty: advanced
     question: "Why is a pass-through Decorator different from a Null Object?"
     answer: "A pass-through Decorator adds no behavior but still invokes its component. A Null Object itself supplies the valid no-op or neutral result."
     explanation: "A decorator can wrap a Null Object. Classify the collaboration and call behavior, not whether a class name contains Null."
   - id: 10
+    hint: >-
+      A service is configured with a SilentLogger even though its contract requires an audit record. Would an ordinary call necessarily fail visibly?
     difficulty: intermediate
     question: "What is the most dangerous *liability* of the Null Object pattern?"
     answer: "Its valid no-op or neutral-result behavior can hide an incorrect binding. If a service requires recorded diagnostics but receives a SilentLogger, missing behavior may go unnoticed."
@@ -65,6 +73,8 @@ cards:
     answer: "Special Case handles exceptional instances uniformly through a common interface. Null Object is the specialization for an absent collaborator with valid no-op or neutral-result behavior."
     explanation: "A default such as Unknown does not by itself distinguish the patterns: neutral results can be valid Null Object behavior too. Examine the role of the absent collaborator and its contract."
   - id: 13
+    hint: >-
+      Ask whether the caller must make a decision specifically because the collaborator is absent, or whether one valid behavior covers that case.
     difficulty: advanced
     question: "How does Null Object relate to `Optional` / `Maybe` types?"
     answer: "Optional or Maybe represents presence or absence explicitly. Null Object supplies uniform behavior after absence has been resolved to a no-op collaborator. Use the former when callers must distinguish absence; combine them at a wiring boundary when useful."
@@ -75,6 +85,8 @@ cards:
     answer: "An `Iterator` whose `hasNext()` always returns `false`. A leaf node in a tree returns one when asked for an iterator over its (non-existent) children, so clients iterate uniformly over leaves and composites."
     explanation: "Java Collections.emptyIterator() and Python iter([]) are empty iterators. C++ std::ranges::empty_view is an empty range, not itself an iterator. Exhausted iterators still obey their language-specific end-of-iteration contract."
   - id: 15
+    hint: >-
+      Read the name as the person wiring the application. Could you predict the effect of calling it without inspecting its implementation?
     difficulty: intermediate
     question: "Why should a Null Object be *named for what it does*, not labeled as 'default'?"
     answer: "SilentLogger or EmptyPermissions describes the behavior directly. DefaultLogger only describes its selection policy, which may conceal a surprising no-op. A Null Object can be a legitimate default, but its behavior should still be clear."

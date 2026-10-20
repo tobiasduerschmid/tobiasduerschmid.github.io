@@ -47,6 +47,8 @@ cards:
       Internal activities execute at specific points: **entry/** runs every time the state is entered (regardless of which transition was taken), **exit/** runs every time the state is exited, and **do/** starts after entry and may finish while the state remains active; if still running when the state exits, it is aborted. These are different from transition effects, which only execute during a specific transition.
 
   - id: 7
+    hint: >-
+      Consider a controller intended to keep responding for the entire lifetime of a device. What would reaching completion mean for that model?
     difficulty: intermediate
     question: "Does a UML state machine diagram always need a **final state**?"
     answer: "No. Final states mark region completion. Initial pseudostates mark default entry, with at most one per region; other explicit entry paths are possible."

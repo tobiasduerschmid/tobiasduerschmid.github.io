@@ -13,16 +13,22 @@ cards:
     answer: "Observer: **distributed** intelligence (each observer reacts independently). Mediator: **centralized** intelligence (mediator coordinates all responses)."
     explanation: "Observer for extensibility (adding new dependents). Mediator for changeability (modifying coordination rules). They are often combined in practice."
   - id: 3
+    hint: >-
+      In the smart-home example, compare independently recording an alarm event with deciding whether to brew coffee based on the calendar. Where does each response need information from?
     difficulty: intermediate
     question: "When to use the Observer vs. the Mediator pattern?"
     answer: "Observer when objects need to react **independently** to a change. Mediator when objects need to be **coordinated** (the response depends on collective state)."
     explanation: "If each observer does its own thing, use Observer. If the response requires checking multiple objects' states, use Mediator."
   - id: 4
+    hint: >-
+      Move every interaction rule out of the devices into one coordinator. Then count how many distinct reasons that coordinator could have to change.
     difficulty: intermediate
     question: "What is the 'god class' risk of the Mediator pattern?"
     answer: "The mediator centralizes all coordination logic, so complex systems produce complex mediators. The pattern displaces complexity rather than removing it."
     explanation: "Without careful design, the Mediator can become an unmaintainable monolith. Consider splitting into multiple mediators for different subsystem aspects."
   - id: 5
+    hint: >-
+      Separate the job of announcing that an appliance changed from the job of deciding what the whole home should do next.
     difficulty: advanced
     question: "How can the Observer and Mediator patterns be combined?"
     answer: "Colleagues publish events through Observer-style subscriptions; a mediator subscribes and applies coordination rules."

@@ -15,12 +15,16 @@ cards:
     explanation: "Both are necessary. A test needs to put the system into a known state (controllability) and then see what it does (observability). Either property absent and the test cannot be written or cannot be verified."
 
   - id: 3
+    hint: >-
+      For a checkout test, distinguish the payment provider’s reply from the request sent to it. Which direction crosses the component boundary in each case?
     difficulty: intermediate
     question: "Distinguish **indirect inputs** and **indirect outputs**, and how each is tested."
     answer: "**Indirect inputs:** responses from external components your code depends on (e.g., a database query result). Controlled via **stubs** that return pre-coded responses. **Indirect outputs:** messages your code sends to external components (e.g., an email, a payment API call). Observed via **spies** (record the calls) or **mocks** (set expectations and verify)."
     explanation: "Direct inputs (function arguments) and direct outputs (return values) are easy — the test just passes and inspects. Indirect inputs and outputs are the testability hard problem; they're why test doubles exist."
 
   - id: 4
+    hint: >-
+      Try constructing one business-rule object in a test. Count the unrelated collaborators you must configure before you can exercise the rule.
     difficulty: advanced
     question: "How do the **SOLID principles** synergize with testability?"
     answer: "**Single Responsibility** → small, focused units are easy to test in isolation. **Interface Segregation** → small interfaces are easy to mock or stub. **Dependency Inversion** → depending on abstractions lets you inject test doubles. **Open/Closed** → extending behavior without modifying existing code preserves existing test coverage. **Liskov Substitution** → subtypes are interchangeable in tests."
@@ -33,6 +37,8 @@ cards:
     explanation: "Cycles are detectable with static-analysis tooling (madge, ArchUnit, depcruise). Most build systems can be configured to fail the build on cycle introduction, preventing the problem at the gate rather than chasing it after the fact."
 
   - id: 6
+    hint: >-
+      A recovery test must run today, although a production failure might not occur for months. What must the test arrange, and what must it measure afterward?
     difficulty: advanced
     question: "How is **Chaos Monkey** an instance of testability for the *reliability* quality attribute?"
     answer: "It solves the **controllability** problem of reliably triggering rare component failures by causing them deliberately (fault injection). The remaining challenge is **observability** — extensive metrics, traces, and dashboards are needed to see how the rest of the system reacts to the injected failure."
@@ -51,18 +57,24 @@ cards:
     explanation: "Classic applications: search engines, machine-learning models, compilers, simulations. You may not know the 'correct' search result for query X, but you know two identical searches must return the same list. The invariant becomes the oracle."
 
   - id: 9
+    hint: >-
+      A random click sequence finishes without crashing but displays the wrong account balance. What would the test need to recognize that failure?
     difficulty: intermediate
     question: "What is **monkey testing**, and what does it find vs miss?"
     answer: "A 'monkey' (random testing tool) triggers random system events — UI clicks, random inputs, random sequences. **Finds:** crashes, hangs, security vulnerabilities, and resource leaks. **Misses:** logic errors. The monkey doesn't know what the correct output should be, so it cannot detect wrong-but-not-crashing behavior."
     explanation: "Monkey testing (Android's Monkey, fuzzers like AFL or libFuzzer) is excellent for finding robustness defects and crashes in input handling. It is the wrong tool for verifying business-rule correctness — for that, you need an oracle (or metamorphic invariants)."
 
   - id: 10
+    hint: >-
+      A test-first implementation passes the examples the author remembered. What evidence is still missing about scenarios the author never considered?
     difficulty: advanced
     question: "What does **TDD** actually guarantee about testability, and what does it not?"
     answer: "TDD **strongly encourages** production code to be written in response to failing tests, which can push the design toward small, testable units. It **does not** guarantee 100% coverage, modularity, decoupling, or that every production line was actually test-first — incomplete test lists, skipped Refactor steps, and untested error paths can still slip through."
     explanation: "TDD is a *design technique* that happens to produce tests as a byproduct. Its biggest benefit is the design pressure (write the test → think about how the unit will be used → keep the unit small and isolated). That pressure is valuable, but it depends on disciplined practice and a strong test list; coverage gaps still need techniques like mutation testing, property-based testing, and code review."
 
   - id: 11
+    hint: >-
+      Suppose a simulation returns a plausible numerical prediction. How would a test decide whether that particular result is right?
     difficulty: advanced
     question: "Why is the *oracle problem* a fundamental testability challenge?"
     answer: "An *oracle* is a mechanism that decides whether a given output is correct. For many real systems — machine learning, search ranking, simulations, AI translation — you cannot easily specify the correct output for each input, so traditional input-output assertion testing breaks down. The oracle problem is the difficulty of writing tests when no such mechanism exists."
@@ -81,6 +93,8 @@ cards:
     explanation: "It is testability applied at the product level: the team creates a controllable + observable mock (the human) and measures user response under realistic conditions. This surfaces real usability issues and demand signals before architectural decisions are made around assumptions that may not hold."
 
   - id: 14
+    hint: >-
+      A test passes after another test but fails when run alone. Trace which part of its starting state was established outside its own setup.
     difficulty: advanced
     question: "Why is *test isolation* a controllability requirement?"
     answer: "If a test depends on state left behind by other tests (shared caches, modified global variables, database rows not rolled back), it cannot be reliably brought into its required initial state by itself. The test passes or fails based on run order, parallelism, or test selection — not on the code's correctness."

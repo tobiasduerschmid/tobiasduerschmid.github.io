@@ -7,6 +7,8 @@ cards:
   # Lecture: [07] Control Palooza (Public).docx — Short Circuiting
   # Assessment: Homework Problems (Public).docx CTRL1(C)
   - id: cs131-v2-control-card-short-circuit
+    hint: >-
+      After evaluating the left operand, ask whether either possible Boolean from the right operand could still change the OR result. Only executed calls can print.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 25
@@ -43,6 +45,8 @@ cards:
     question: A single-threaded async runtime is running an operation that computes for five seconds without awaiting
       or yielding. Another operation is ready in the queue. Can the queued operation run during those five seconds?
       Explain why.
+    hint: >-
+      Mark every point where the running operation gives control back to the scheduler. Being ready in the queue is separate from having an opportunity to run.
     answer: No. The current operation keeps the runtime’s only execution thread until it yields or finishes, so ready
       queued operations must wait.
     explanation: 'Self-check: Being declared async does not make computation run in parallel or automatically insert
@@ -51,6 +55,8 @@ cards:
   # Lecture: [07] Control Palooza (Public).docx — The Separation of Responsibilities
   # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P2(b,d)
   - id: cs131-v2-control-card-iterator-state
+    hint: >-
+      Keep two cursor positions in your trace, even though both cursors visit the same list. Which cursor receives each advance operation?
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 25
@@ -61,6 +67,8 @@ cards:
   # Lecture: [07] Control Palooza (Public).docx — How Generators Work
   # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P2(c)
   - id: cs131-v2-control-card-generator-pause
+    hint: >-
+      Mark where execution pauses at each yield. The next call resumes from that point; it does not restart the function.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 40
@@ -87,6 +95,8 @@ cards:
   # Lecture: [07] Control Palooza (Public).docx — Class-Based Approach
   # Assessment: [Final] F24 Solutions (Public).pdf P6(C.1) p.21
   - id: cs131-v2-control-card-iterator-boundary
+    hint: >-
+      List the valid indices of a three-element list, then compare pos with that set. Distinguish normal completion of a traversal from an invalid element access.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
@@ -97,6 +107,8 @@ cards:
   # Lecture: [07] Control Palooza (Public).docx — Asyncronous Programming: spawn_inline and spawn_scheduled
   # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P3(a,b)
   - id: cs131-v2-control-card-inline-scheduled
+    hint: >-
+      Trace who has control immediately after the spawn operation in each model. Put a queued child on a separate pending-work list until the caller gives up control.
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 40
@@ -107,6 +119,8 @@ cards:
   # Lecture: [07] Control Palooza (Public).docx — Asyncronous Programming: await
   # Assessment: Homework Problems (Public).docx CTRL6(b.i); CS131 Fall 25 Quiz 4 (with solutions).docx P3(b)
   - id: cs131-v2-control-card-await-purpose
+    hint: >-
+      Separate having a handle to a job from having its result. Identify the point where this caller depends on completion and whether unrelated jobs share that dependency.
     difficulty: advanced
     bloom: evaluate
     estimated_seconds: 40

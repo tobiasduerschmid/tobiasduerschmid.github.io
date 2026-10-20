@@ -24,6 +24,8 @@ cards:
     explanation: "The point of the integrated model is that real developers rarely use only one reading strategy. They switch levels as their hypotheses succeed or fail."
 
   - id: 4
+    hint: >-
+      Before inspecting the changed statements, write the question “What behavior is this change supposed to establish?” Identify the project artifacts that could answer it.
     difficulty: intermediate
     bloom: apply
     question: "What should a reviewer do during the orientation phase before reading a complex diff?"
@@ -31,6 +33,8 @@ cards:
     explanation: "Starting from the diff forces bottom-up reconstruction. Starting from intent gives the reviewer a specification layer that makes the diff easier to evaluate."
 
   - id: 5
+    hint: >-
+      Compare a flat set of checks with deeply nested checks that require remembering several earlier values. Can equal branch counts capture the difference?
     difficulty: expert
     bloom: evaluate
     question: "Why can cyclomatic complexity under-predict human difficulty?"
@@ -45,6 +49,8 @@ cards:
     explanation: "When this gap is unmanaged, maintainers make local code changes that satisfy the immediate task while eroding the system's intended architecture."
 
   - id: 7
+    hint: >-
+      Follow a simple request across ten one-line wrapper methods. What must the reader reconstruct even though each method is small?
     difficulty: expert
     bloom: evaluate
     question: "Why can excessive abstraction make code harder to understand?"

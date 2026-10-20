@@ -9,6 +9,8 @@ cards:
     explanation: "This refined framing replaces the older 'one reason to change' slogan. The word *actor* matters: it names a real person or team whose requests drive edits. Multiple actors sharing one module = conflicting edits + accidental regressions."
 
   - id: 2
+    hint: >-
+      A class has ten methods that always change for the same stakeholder. Compare it with a two-method class whose methods answer to unrelated stakeholders.
     difficulty: intermediate
     question: "Why is 'a class should only do one thing' a MISLEADING restatement of SRP?"
     answer: "It conflates the **function-level** advice ('a function should do one thing') with SRP, which operates at the **module level** and is about axes of change (actors), not about method count."
@@ -21,12 +23,16 @@ cards:
     explanation: "The three services do not know about each other. A change requested by Accounting now edits exactly one file, so HR's feature cannot silently break."
 
   - id: 4
+    hint: >-
+      Imagine Finance and HR request changes in the same week. Trace where their edits land under two different responsibility assignments.
     difficulty: intermediate
     question: "How does SRP reduce merge conflicts on a multi-team codebase?"
     answer: "If each module answers to one actor, changes requested by different stakeholders naturally land in different files. Finance's pull request and HR's pull request stop touching the same class."
     explanation: "This is one of the most underrated practical payoffs of SRP. 'Conway's Law' cuts both ways: your class structure ends up mirroring your stakeholder structure, and that's exactly what you want."
 
   - id: 5
+    hint: >-
+      Review recent changes to the two proposed pieces. Would separating them let either evolve without coordinated edits to the other?
     difficulty: advanced
     question: "When is splitting a class into two INCORRECT from an SRP perspective?"
     answer: "When both parts always change together, for the same reason, driven by the same actor. Then there is really **one** axis of change, and the split is artificial abstraction that adds coordination and maintenance overhead."
@@ -45,6 +51,8 @@ cards:
     explanation: "These three rules let a client reason about *any* subtype using only the parent's contract. Violate one and the client must special-case — that's the architectural pollution LSP is designed to prevent."
 
   - id: 8
+    hint: >-
+      Write a client that sets width, then height, and uses both values. Check the client’s expectations after substituting the subtype.
     difficulty: advanced
     question: "Why does a self-consistent `Square` still violate LSP when substituted for `Rectangle`?"
     answer: "LSP is judged against the **client's expectations of the parent**. Clients of `Rectangle` assume width and height mutate independently; a `Square` that couples them (to maintain its own invariant) breaks that expectation even though it is internally correct."
@@ -57,12 +65,16 @@ cards:
     explanation: "Classic example: `Ostrich extends Bird` overriding `fly()` to throw. Fix: split the hierarchy — e.g., extract `FlyingBird` — so only classes that can honor `fly()`'s contract are typed as flying."
 
   - id: 10
+    hint: >-
+      Judge the substitution from a Vector client’s expectations, then separately ask what a strict stack client should be allowed to do.
     difficulty: advanced
     question: "What is the design problem with Java's `Stack extends Vector`, and is it necessarily an LSP violation?"
     answer: "`Stack` inherits random-access operations from `Vector`, so its API does not enforce stack-only access. This is inappropriate inheritance for a strict stack abstraction; it does not by itself show a violation of the **Vector** contract, which is the contract relevant to LSP substitution."
     explanation: "Java recommends `Deque` for stack operations. To demonstrate an LSP violation, show a subtype breaking behavior promised to clients of its parent, such as rejecting an input the parent accepts."
 
   - id: 11
+    hint: >-
+      An existing client receives a newly added subtype through its old interface. What must remain true for the client to work without a new special case?
     difficulty: expert
     question: "How does LSP **enable** the Open/Closed Principle?"
     answer: "If every subtype honors the parent's contract, a client can iterate polymorphically and accept new subtypes without modification. Safe substitution is what makes extension safe."
@@ -87,6 +99,8 @@ cards:
     explanation: "The chapter is explicit: Spring's `@Autowired` can coexist with full DIP violation if the 'abstraction' is actually shaped by the database library. DIP is an architectural posture; DI is plumbing."
 
   - id: 15
+    hint: >-
+      Replace the low-level library. Ask whether the interface still expresses the business client’s needs or has to change to resemble the replacement library.
     difficulty: advanced
     question: "What does 'interface ownership' mean in DIP, and why does it matter?"
     answer: "The **high-level client** must declare and own the abstraction, tailored to its own needs. If the interface is shaped to mirror a specific low-level library, the dependency hasn't truly been inverted — it's been renamed."

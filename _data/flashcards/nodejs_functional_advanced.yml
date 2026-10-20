@@ -23,6 +23,8 @@ cards:
       ```javascript
       const sum = [1, 2, 3].reduce((acc, n) => acc + n, 0);
       ```
+    hint: >-
+      Write the accumulator’s initial value, then carry the callback result into the next invocation. Keep the accumulator separate from the next array element.
     answer: "Produces `6` — `.reduce()` accumulates a single value by calling the callback for each element. `acc` starts at `0` (the second argument) and each step adds `n` to it."
 
   - id: explain-12
@@ -49,6 +51,8 @@ cards:
   - id: write-5
     difficulty: intermediate
     question: "In JavaScript, given `const nums = [1, 2, 3, 4, 5]`, create a new array containing only the even numbers using a higher-order function."
+    hint: >-
+      Separate deciding whether an element qualifies from transforming its value. The new array should contain the original qualifying numbers.
     answer: "`const evens = nums.filter(n => n % 2 === 0);`"
     explanation: "`.filter()` takes a callback and returns a new array with only elements where the callback returns `true`."
 
@@ -61,6 +65,8 @@ cards:
   - id: write-7
     difficulty: intermediate
     question: "In JavaScript, compute the sum of `[1, 2, 3, 4, 5]` using a single expression."
+    hint: >-
+      Choose the result for an empty input first. Then describe how one next number updates the total accumulated so far.
     answer: "`[1, 2, 3, 4, 5].reduce((acc, n) => acc + n, 0)`"
     explanation: "`.reduce()` accumulates a value. The second argument (`0`) is the initial accumulator value."
 

@@ -17,7 +17,8 @@ skills for the **operational mechanics** (the what / where / how to write it).
 | Interactive tutorial (`_data/tutorials/<slug>.yml`)            | `knowledge/24_computing-education-and-ai.md`             | [`tutorial-authoring`](../../tutorial-authoring/SKILL.md) (YAML schema, runtime constraints) **and** the project `cs-tutorial-design` skill (PRIMM, desirable difficulties for CS) |
 | Quiz (`_data/quizzes/<slug>.yml` or in-tutorial `quiz:` block) | `procedures/10_exam-design-workflow.md`     | [`quiz-format`](../../quiz-format/SKILL.md) for the schema, `option_feedback` semantics, and shuffle-safe phrasing   |
 | Testing-focused chapter or tutorial                            | the matching content-type file                      | [`test-design`](../../test-design/SKILL.md) for what makes a test capture a *spec* rather than an *implementation*   |
-| Flashcards (`_data/flashcards/`), CS130 / CS35L course content | `procedures/17_teaching-operations.md`                 | inspect peer cards / quizzes already in the same course for tone and difficulty calibration                       |
+| Flashcards (`_data/flashcards/`) | `procedures/11_homework-design-workflow.md`; `knowledge/07_practice-memory-and-mastery.md` | [`content-types/flashcards.md`](./content-types/flashcards.md): inspect each question and its taught prerequisites; add optional non-revealing hints only when useful, omit pure recall clues. |
+| CS130 / CS35L course operations | `procedures/17_teaching-operations.md` | inspect peer course material for tone and difficulty calibration |
 | SE Gym exercise (with hero avatar customizer)                  | `knowledge/14_motivation-belonging-and-climate.md`                   | [`avatar-svg-design`](../../avatar-svg-design/SKILL.md) (artwork), [`asset-creator`](../../asset-creator/SKILL.md) (other SVGs) |
 
 A few project-specific facts that change pedagogical advice here:

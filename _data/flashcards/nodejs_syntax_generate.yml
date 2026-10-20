@@ -37,6 +37,8 @@ cards:
     answer: "`setTimeout(() => { /* code */ }, 0);`"
     explanation: "`setTimeout(fn, 0)` does NOT run immediately — it queues `fn` in the Task Queue. The Event Loop only dequeues it when the Call Stack is completely empty."
   - id: 10
+    hint: >-
+      Plan the stages from request to response to decoded data. Identify the points where awaited work could reject and where its failure should be handled.
     difficulty: advanced
     question: "Write a JavaScript async function `loadUser` that fetches user data from `/api/user`, handles errors, and logs the result."
     answer: |
@@ -53,6 +55,8 @@ cards:
       ```
     explanation: "`async`/`await` makes async code look synchronous. `await` suspends the function (non-blocking) until the Promise resolves. `try/catch` handles rejections."
   - id: 11
+    hint: >-
+      Start both operations before introducing a wait that would prevent the second from starting. Then collect their eventual results in a known order.
     difficulty: advanced
     question: "In JavaScript, fetch two independent API endpoints in parallel (not sequentially) and assign the results to `a` and `b`."
     answer: "`const [a, b] = await Promise.all([fetchA(), fetchB()]);`"
@@ -69,6 +73,8 @@ cards:
     explanation: "Object destructuring in parameters is the standard pattern for React component props: `function Card({ title, color }) { ... }`."
 
   - id: 14
+    hint: >-
+      The timer knows when the delay has elapsed; the caller needs an object representing eventual completion. Connect that timer event to the completion mechanism.
     difficulty: advanced
     question: "Write a JavaScript `delay(ms)` function that returns a Promise which resolves after `ms` milliseconds."
     answer: |
@@ -80,6 +86,8 @@ cards:
     explanation: "`new Promise(resolve => ...)` creates a Promise. Passing `resolve` as the `setTimeout` callback means: 'resolve this Promise after `ms` ms.' Usage: `await delay(1000)` pauses for 1 second without blocking the Event Loop."
 
   - id: 16
+    hint: >-
+      Protect every potentially missing link, then distinguish a missing final name from a present but empty string when choosing the fallback.
     difficulty: advanced
     question: "In JavaScript, safely read `response.data.user.name` where any part of the chain might be `null` or `undefined`. Fall back to `'Anonymous'` if missing."
     answer: |

@@ -9,6 +9,8 @@ cards:
     explanation: "This framing explains hallucinations (plausible-looking but fabricated APIs), outdated patterns (repeated from training data), and confident-but-wrong outputs. Linguistic plausibility is not factual correctness."
 
   - id: 2
+    hint: >-
+      Break delivery into understanding the request, implementation, integration, and verification. Speed up only the implementation step and inspect the remaining work.
     difficulty: intermediate
     question: Why can faster AI code generation produce a smaller improvement in end-to-end engineering productivity?
     answer: Compilers automated **accidental complexity** — repetitive mechanical translation from high-level intent to machine instructions. GenAI can assist with both mechanical work and **essential complexity**, but generating code does not eliminate the need to resolve it — understanding requirements, choosing data structures, navigating trade-offs, integrating with real systems. Most of an engineer's work still lives in essential complexity.
@@ -21,6 +23,8 @@ cards:
     explanation: "Each stage shapes the model's behavior. Pre-training determines what it 'knows.' Post-training (especially RLHF) calibrates what it produces in response to instructions. Inference parameters (temperature, top-p) control how deterministic the output is."
 
   - id: 4
+    hint: >-
+      Follow a generated feature through review, debugging, and deployment. Which costs would a typing-speed measurement omit?
     difficulty: intermediate
     question: "What is the **illusion of AI productivity**, and how do you avoid being fooled by it?"
     answer: "Generation speed *feels* like productivity, but if the output is subtly wrong, debugging can dwarf the time saved. Avoid the illusion by measuring productivity *end-to-end* (features shipped per week with acceptable defect and security rates), not by characters generated per minute."
@@ -33,6 +37,8 @@ cards:
     explanation: "The 40% figure is scoped to security-sensitive prompts, not all generated code, but plausible-looking vulnerable patterns appear well beyond that benchmark. Mitigations: explicit security review of every AI block, static-analysis in the loop, extra scrutiny on SQL, deserialization, auth, and never treating AI confidence as evidence of safety."
 
   - id: 6
+    hint: >-
+      Compare asking for feedback on your own trace with copying a finished trace. In each case, identify the mental operation the learner actually performs.
     difficulty: basic
     question: What is **cognitive offloading**, and when can it undermine programming skill formation?
     answer: Cognitive offloading uses external aids to reduce internal processing demands, such as notes, reminders, or AI assistance. It can undermine learning when it replaces the reasoning, retrieval, or practice the learner needs to develop.
@@ -57,12 +63,16 @@ cards:
     explanation: "The review step (2) is where TDG earns its quality: reviewed tests provide evidence about the cases and properties they cover; passing them does not prove correctness for untested behavior. Skipping review means satisfying broken tests. A remediation loop that feeds failing-test stack traces back to the LLM improves correctness even further."
 
   - id: 10
+    hint: >-
+      Try specifying a change to one module using only its contract. Then repeat when its behavior depends on undocumented state in several other modules.
     difficulty: advanced
     question: "Why does **loose coupling** amplify AI effectiveness, and **tight coupling** sabotage it?"
     answer: "Modular code (Information Hiding, microservices, well-bounded interfaces) limits the **context window** the AI needs to process. Smaller, well-named modules fit cleanly in context; hidden internals don't leak unexpected coupling; generated code can be locally verified. In tightly coupled spaghetti code, the AI cannot see (or fit) enough context to reason correctly, and its plausible-looking output silently breaks distant code."
     explanation: "Modern architecture has gained a new payoff: it is now a force multiplier for AI productivity, not just a maintainability concern. Teams that defer architectural cleanup pay a *compounding* AI-effectiveness tax on every future change."
 
   - id: 11
+    hint: >-
+      Suppose two generated implementations use different names and control flow but meet the same contract. What should remain invariant in the check?
     difficulty: intermediate
     question: "Why is AI inference typically **non-deterministic**, and what does that mean for testing?"
     answer: "LLMs sample from a probability distribution over next tokens; identical prompts can produce different outputs depending on the temperature parameter and random seed. Non-determinism means you cannot rely on bit-identical AI output for testing — your tests must verify properties of the result (it compiles, it passes tests, it satisfies a spec), not its exact text."
@@ -105,6 +115,8 @@ cards:
     explanation: "The added tool access is why agents feel powerful, but it also raises the supervision bar. If an agent can run useful commands, it can also propose dangerous ones."
 
   - id: 17
+    hint: >-
+      An agent reads a repository comment containing an imperative sentence. What distinguishes that text’s role from the developer’s actual task instruction?
     difficulty: advanced
     question: "What is a **prompt injection** risk for coding agents?"
     answer: "Prompt injection happens when malicious or irrelevant instructions hidden in a web page, issue, document, or code comment are read by the agent and treated as task instructions. For coding agents, this can lead to unsafe commands, data exposure, or unrelated code changes."
@@ -117,12 +129,16 @@ cards:
     explanation: "Skill files improve the agent's default behavior; they do not remove the need for review. A rule file is an instruction, not proof of compliance."
 
   - id: 19
+    hint: >-
+      List the assumptions a generated implementation would have to commit to. Which of those could be evaluated before any code is written?
     difficulty: intermediate
     question: "Why should large AI coding tasks start with a **planning step** before any code is generated?"
     answer: "A plan makes the agent's assumptions visible before code exists. The human can review architecture, state transitions, tests, security, accessibility, and scope, then approve one small step at a time."
     explanation: "Planning changes the workflow from 'generate a pile of code and hope' to 'surface design decisions, bound the task, implement, test, review, refactor.'"
 
   - id: 20
+    hint: >-
+      Start from one target behavior and trace only the interfaces and assumptions needed to explain it. Which additional files would merely compete for attention?
     difficulty: intermediate
     question: "Why is dumping the entire repository into an AI context often worse than selecting relevant files?"
     answer: "LLMs have finite context windows and uneven attention. Irrelevant files can bury the important constraints, causing lost-in-the-middle failures or hallucinations. Good context engineering provides the smallest relevant slice: target files, nearby interfaces, tests, and constraints."
@@ -141,12 +157,16 @@ cards:
     explanation: "These tasks are common, well-bounded, and reviewable. The human still checks the output and quality attributes before shipping."
 
   - id: 23
+    hint: >-
+      Imagine receiving a plausible but subtly wrong solution. For which tasks could you independently detect the error before someone relied on it?
     difficulty: intermediate
     question: "Which tasks should you be cautious about delegating to AI?"
     answer: "High-stakes security, safety, legal, medical, financial, or accessibility-sensitive work; complex stateful workflows; novel architecture decisions; and any problem you do not understand well enough to review."
     explanation: "AI is an amplifier of engineering skill. If the human lacks the schema needed to evaluate the output, the agent can create an illusion of competence rather than reliable progress."
 
   - id: 24
+    hint: >-
+      A generated function returns the expected values for three examples. Try a new valid input chosen from the specification rather than those examples.
     difficulty: advanced
     question: "What is the overfitting failure mode in **Test-Driven Generation**?"
     answer: "The AI may pass visible tests by hard-coding sample inputs and outputs instead of implementing the general rule. The code looks green but fails the real specification."
