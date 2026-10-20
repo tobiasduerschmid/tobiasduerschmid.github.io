@@ -1,7 +1,7 @@
 ---
 name: quiz-format
 description: >-
-  Authoring guide for the SEBook quiz YAML format: schema, difficulty calibration, misconception feedback, shuffle-safe authoring, and examples. Use every time Codex creates, edits, reviews, or generates content for `_data/quizzes/*.yml` or tutorial-step quiz blocks under `_data/tutorials/*.yml`. Trigger on requests to add or improve quiz questions, draft questions, set `difficulty`, write or audit `option_feedback`, fix answer-choice explanations, or edit `correct_indices`, `optional_indices`, `lines`, or `distractors`. The key traps are that `option_feedback` is a sparse hash keyed by YAML option index, and quiz options shuffle at render time, so explanations must not refer to "Option A", "the third choice", or other display positions.
+  Authoring guide for the SEBook quiz YAML format: schema, difficulty calibration, misconception feedback, shuffle-safe authoring, and examples. Use every time Codex creates, edits, reviews, or generates content for `_data/quizzes/*.yml` or tutorial-step quiz blocks under `_data/tutorials/*.yml`. Trigger on requests to add or improve quiz questions, draft questions, set `difficulty`, write or audit `option_feedback`, fix answer-choice explanations, or edit `correct_indices`, `optional_indices`, `lines`, `interchangeable`, or `distractors`. The key traps are that `option_feedback` is a sparse hash keyed by YAML option index, and quiz options shuffle at render time, so explanations must not refer to "Option A", "the third choice", or other display positions.
 ---
 
 # SEBook quiz authoring
@@ -54,7 +54,7 @@ questions:
 
 For tutorial quizzes the same block nests under each step's `quiz:` key inside `_data/tutorials/<name>.yml`, and may add `min_score: 0.8` (gating threshold), `shuffle: true` (default), `shuffle_questions: false` for deliberate difficulty ramps, and `shuffle_options: true` to keep answer choices randomized.
 
-Parsons (code-ordering) questions use `lines:` and `distractors:` instead of `options:`. They do **not** support `option_feedback`. See `references/schema.md`.
+Parsons (code-ordering) questions use `lines:` and `distractors:` instead of `options:`. They do **not** support `option_feedback`. `lines` is one correct order; when some lines are independent (class members, struct fields, swappable pipeline stages), declare them with `interchangeable:` so every valid order is accepted. See `references/schema.md` → "Other valid orders".
 
 ## Difficulty calibration
 
@@ -243,6 +243,7 @@ Before merging a quiz file with new `option_feedback`:
 - [ ] **Stem hygiene** (`references/schema.md` → "Stem design"): paraphrased from the lesson, no filler clauses, options of comparable shape and length to the key. If any clause in the stem could be cut without changing the question, cut it.
 - [ ] **No answer-leak tells** (rule 5 above; verified by `scripts/audit_mcq_tells.py`): the correct option's length is **≤ ~1.8x** the median wrong-option length, the correct option is **not strictly the longest by more than ~15 chars**, and no formatting (`**bold**`, `*italic*`, `` `code` ``) appears *only* in the correct option. If the correct answer naturally needs more detail, move the qualifying clauses into `option_feedback` or `explanation`; do not pad distractors to match.
 - [ ] **For Parsons: count the lines.** Sweet spot 4–8; standard algorithms 9–12 are fine; never past 14. Don't claim "kept within the cap" without counting.
+- [ ] **For Parsons: accept every valid order.** For each pair of adjacent blocks ask whether swapping them would still work; if so, and the stem does not fix the order, declare them in `interchangeable` and run `node --test scripts/tests/parsons-question-data.test.js`.
 - [ ] **At least one distractor encodes the canonical novice misconception** for this concept (mutable defaults, `==` vs `is`, forgotten base case, `WHERE` vs `HAVING`, off-by-one). If none do, the question tests recall, not discrimination.
 - [ ] **Difficulty calibrated.** Target ~70–80% correct on first attempt for an in-tutorial gate (`min_score: 0.8` only works when items hit this band). For SEGym workout questions, 50–70% is appropriate (deliberate practice tolerates more failure). If you'd expect <40% correct, the prerequisite isn't in place — fix the tutorial, not the quiz.
 - [ ] For tutorial quizzes: `min_score:` set deliberately (default 0.8), or omitted if you accept the default.

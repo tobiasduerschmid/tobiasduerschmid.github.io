@@ -570,6 +570,9 @@ steps:
             - "fgets(city, sizeof(city), stdin);"
             - "strip_newline(city);"
             - "printf(\"City: %s\\n\", city);"
+          # Declaring the buffer before or after the prompt makes no difference.
+          interchangeable:
+            - [[0], [1]]
           distractors:
             - "scanf(\"%s\", city);"
             - "gets(city);"
@@ -1186,6 +1189,9 @@ steps:
             - "strncpy(dest, src, sizeof(dest) - 1);"
             - "dest[sizeof(dest) - 1] = '\\0';"
             - "printf(\"%s\\n\", dest);"
+          # The two declarations are independent.
+          interchangeable:
+            - [[0], [1]]
           distractors:
             - "strcpy(dest, src);"
             - "dest = src;"
@@ -1513,6 +1519,9 @@ steps:
             - "double rect_area(const Rectangle *r) {"
             - "    return r->width * r->height;"
             - "}"
+          # Struct members may be declared in either order.
+          interchangeable:
+            - [[1], [2]]
           distractors:
             - "class Rectangle {"
             - "    return r.width * r.height;"
@@ -1791,6 +1800,9 @@ steps:
             - "} Shape;"
             - "if (s.type == CIRCLE) printf(\"%.2f\\n\", 3.14 * s.radius * s.radius);"
             - "else printf(\"%.2f\\n\", s.w * s.h);"
+          # The tag and the union are independent struct members.
+          interchangeable:
+            - [[2], [3]]
           distractors:
             - "class Shape { virtual double area(); };"
           explanation: "First define the enum for shape types, then the tagged struct with an anonymous union containing either a `radius` or a `{w, h}` sub-struct. The `if` dispatches on the tag. The distractor uses C++ classes/virtual functions, which don't exist in C."
@@ -2157,6 +2169,9 @@ steps:
             - "}"
             - "char *words[] = {\"banana\", \"apple\", \"cherry\"};"
             - "qsort(words, 3, sizeof(char *), cmp_str);"
+          # The comparison function and the array may be defined in either order.
+          interchangeable:
+            - [[0, 1, 2], [3]]
           distractors:
             - "    return *(char *)a - *(char *)b;"
             - "std::sort(words, words + 3);"
@@ -2724,6 +2739,9 @@ steps:
             - "    printf(\"%d: %s\", n++, buf);"
             - "}"
             - "fclose(fp);"
+          # Opening and checking the file stays together; the declarations may come before or after it.
+          interchangeable:
+            - [[0, 1], [2], [3]]
           distractors:
             - "while (!feof(fp)) {"
             - "fp.close();"
@@ -3104,6 +3122,9 @@ steps:
             - "new_node->next = NULL;"
             - "tail->next = new_node;"
             - "tail = new_node;"
+          # The new node's fields may be set in either order.
+          interchangeable:
+            - [[1], [2]]
           distractors:
             - "new_node->next = tail;"
             - "head = new_node;"

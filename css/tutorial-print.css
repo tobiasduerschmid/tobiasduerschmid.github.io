@@ -579,6 +579,19 @@
       background: #c62828;
     }
 
+    /* A run of lines that may be placed in any order (interchangeable). */
+    .print-parsons-alternative {
+      background: #eef2ff;
+      color: #1e2a5a;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .print-parsons-alternative::before {
+      content: '⇄';
+      content: '⇄' / '';
+      background: #3949ab;
+    }
+
     .print-parsons-label {
       font-size: 0.95em;
       font-weight: 600;

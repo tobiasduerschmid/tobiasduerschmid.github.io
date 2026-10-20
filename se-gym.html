@@ -857,6 +857,7 @@ layout: sebook
   <link rel="stylesheet" href="{{ '/css/browser-fullscreen.css' | relative_url }}">
   <script src="{{ '/js/browser-fullscreen.js' | relative_url }}" defer></script>
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
+  <script src="{{ '/js/parsons-grading.js' | relative_url }}"></script>
   <!-- Verbal aria-label generator (parses live SE Gym diagrams as the user types) -->
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
   {% if site.gym_hero_animation and jekyll.environment == 'production' %}
@@ -3149,10 +3150,10 @@ layout: sebook
         var correctOrder = q.lines || [];
         var distractors = q.distractors || [];
         var display = q.display || 'block';
-        var items = correctOrder.map(function (line, i) {
-          return { line: line, correctPos: i, isDistractor: false };
+        var items = correctOrder.map(function (line) {
+          return { line: line, isDistractor: false };
         }).concat(distractors.map(function (line) {
-          return { line: line, correctPos: -1, isDistractor: true };
+          return { line: line, isDistractor: true };
         }));
         shuffleArray(items);
 
@@ -3170,7 +3171,7 @@ layout: sebook
         items.forEach(function (item, itemIndex) {
           var shortcut = itemIndex < 9 ? String(itemIndex + 1) : '';
           bankHtml += '<div class="parsons-line" draggable="true" data-line="' + escapeHtml(item.line) +
-            '" data-distractor="' + item.isDistractor + '" data-correct-pos="' + item.correctPos + '"' +
+            '" data-distractor="' + item.isDistractor + '"' +
             (shortcut ? ' data-shortcut-index="' + shortcut + '" aria-keyshortcuts="' + shortcut + ' Space"' : ' aria-keyshortcuts="Space"') +
             ' tabindex="0" role="button" aria-label="' + escapeHtml('Line ' + (itemIndex + 1) + ': ' + item.line) + '">' +
             '<span class="parsons-shortcut-label" aria-hidden="true">' + (itemIndex + 1) + '</span>' +
@@ -3199,7 +3200,8 @@ layout: sebook
           '<button class="parsons-reset-btn"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span>Reset</span></button></div>' +
           '</div>' +
           buildParsonsShortcutHint(items.length) +
-          '<div class="quiz-correct-answers">Correct order:<br><span class="correct-labels">' +
+          '<div class="quiz-correct-answers">' + (q.interchangeable ? 'One correct order:' : 'Correct order:') +
+          '<br><span class="correct-labels">' +
           correctDisplay + '</span></div>' +
           '<div class="quiz-explanation hidden">' +
           '<div class="explanation-title">Explanation</div>' +
@@ -3257,22 +3259,8 @@ layout: sebook
 
         // Check button
         div.querySelector('.parsons-check-btn').addEventListener('click', function () {
-          var target = div.querySelector('.parsons-target');
-          var placedEls = Array.prototype.slice.call(target.querySelectorAll('.parsons-line'));
-          var isCorrect = placedEls.length === correctOrder.length &&
-            placedEls.every(function (el, i) {
-              return el.dataset.correctPos === String(i) || el.dataset.line === correctOrder[i];
-            });
-
-          placedEls.forEach(function (el, i) {
-            el.classList.remove('parsons-correct', 'parsons-incorrect');
-            if (i < correctOrder.length && (el.dataset.correctPos === String(i) || el.dataset.line === correctOrder[i])) el.classList.add('parsons-correct');
-            else el.classList.add('parsons-incorrect');
-          });
-          div.querySelectorAll('.parsons-bank .parsons-line').forEach(function (el) {
-            el.classList.remove('parsons-correct', 'parsons-incorrect');
-            if (el.dataset.distractor === 'true') el.classList.add('parsons-correct');
-            else el.classList.add('parsons-incorrect');
+          var isCorrect = window.ParsonsGrading.markParsonsAnswer(div, {
+            lines: correctOrder, interchangeable: q.interchangeable,
           });
           div.querySelectorAll('.parsons-line').forEach(function (el) { el.draggable = false; });
           div.querySelector('.parsons-check-btn').disabled = true;

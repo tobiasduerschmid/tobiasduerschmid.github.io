@@ -1454,7 +1454,11 @@ steps:
             0: "Misconception note for 0"
           explanation: "General explanation"
           # Parsons only:
-          lines: ["line1", "line2", "line3"]
+          lines: ["line1", "line2", "line3"]  # one correct order
+          interchangeable: [[[1], [2]]]      # optional: runs of line indices
+                                             # that may appear in any order
+                                             # (quiz-format schema.md →
+                                             # "Other valid orders")
           distractors: ["unused1", "unused2"]
 
     solution:                                # Instructor-mode reveal target.
@@ -2469,6 +2473,12 @@ channel.
   lines; number keys move matching lines, `Space` moves the focused line, and
   `Enter` / `Return` checks the order before focus moves to the next-question
   button.
+  Parsons answers are graded by `window.ParsonsGrading`
+  (`js/parsons-grading.js`), which accepts the authored order plus every
+  order allowed by the question's `interchangeable` groups. The same module
+  grades `_includes/quiz.html` and the SE Gym, so every host page that loads
+  `tutorial-quiz.js` must load `parsons-grading.js` before it
+  (`scripts/tests/parsons-grading-hosts.test.js` enforces this).
 - **`js/tutorial-popout-manager.js`** / **`js/tutorial-popout-client.js`** —
   popout lifecycle and IPC.
 - **`js/object-reference-lab.js`** — reusable inline Python lab controller.

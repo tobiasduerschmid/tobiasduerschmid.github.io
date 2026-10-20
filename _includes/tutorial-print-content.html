@@ -110,12 +110,20 @@
           {% if q.type == 'parsons' %}<span class="print-quiz-q-type">(arrange in order)</span>{% endif %}
         </p>
         {% if q.type == 'parsons' %}
-        <div class="print-parsons-label">Correct order:</div>
+        <div class="print-parsons-label">{% if q.interchangeable %}One correct order:{% else %}Correct order:{% endif %}</div>
         <ol class="print-parsons-lines">
           {% for line in q.lines %}
           <li class="print-parsons-line"><code>{{ line | xml_escape }}</code></li>
           {% endfor %}
         </ol>
+        {% if q.interchangeable %}
+        <div class="print-parsons-label">Also accepted, in any order:</div>
+        <ul class="print-parsons-lines">
+          {% for group in q.interchangeable %}
+          <li class="print-parsons-line print-parsons-alternative">{% for block in group %}{% if block.size > 1 %}lines {{ block.first | plus: 1 }}–{{ block.last | plus: 1 }}{% else %}line {{ block.first | plus: 1 }}{% endif %}{% unless forloop.last %}; {% endunless %}{% endfor %}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
         {% if q.distractors %}
         <div class="print-parsons-label">Distractors (not used):</div>
         <ul class="print-parsons-lines">

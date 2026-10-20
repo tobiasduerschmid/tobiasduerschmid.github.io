@@ -355,6 +355,9 @@ questions:
       - "        return new Pair<>(p.getSecond(), p.getFirst());"
       - "    }"
       - "}"
+    # Java does not care in which order class members are declared.
+    interchangeable:
+      - [[1], [2], [3], [4], [5], [6, 7, 8]]
     distractors:
       - "    public static <X, Y> Pair<X, Y> swap(Pair<X, Y> p) {"
       - "    public Pair(T first, T second) { this.first = first; this.second = second; }"
@@ -379,6 +382,11 @@ questions:
       - "    @Override"
       - "    public double getPerimeter() { return 2 * Math.PI * radius; }"
       - "}"
+    # Either type may come first; members keep their annotations but not their order.
+    interchangeable:
+      - [[0, 1, 2, 3], [4, 5, 6, 7, 8, 9, 10, 11]]
+      - [[1], [2]]
+      - [[5], [6], [7, 8], [9, 10]]
     distractors:
       - "public class Circle extends Shape {"
       - "public abstract class Shape {"
@@ -404,6 +412,9 @@ questions:
       - "} catch (InsufficientFundsException e) {"
       - "    System.out.println(\"Error: \" + e.getMessage());"
       - "}"
+    # The exception class, the method and the calling code live in separate places.
+    interchangeable:
+      - [[0, 1, 2], [3, 4, 5, 6, 7], [8, 9, 10, 11, 12]]
     distractors:
       - "class InsufficientFundsException extends RuntimeException {"
       - "public boolean withdraw(double amount) {"

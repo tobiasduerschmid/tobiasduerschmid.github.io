@@ -24,6 +24,7 @@
     answer_prompt: {{ q.answer_prompt | jsonify }},
     {% endif %}
     lines: {{ q.lines | jsonify | default: "null" }},
+    interchangeable: {{ q.interchangeable | jsonify | default: "null" }},
     distractors: {{ q.distractors | jsonify | default: "null" }},
     display: {{ q.display | default: "block" | jsonify }},
     difficulty: {{ q.difficulty | downcase | jsonify }}
@@ -53,6 +54,7 @@
     answer_prompt: {{ q.answer_prompt | jsonify }},
     {% endif %}
     lines: {{ q.lines | jsonify | default: "null" }},
+    interchangeable: {{ q.interchangeable | jsonify | default: "null" }},
     distractors: {{ q.distractors | jsonify | default: "null" }},
     display: {{ q.display | default: "block" | jsonify }},
     difficulty: {{ q.difficulty | downcase | jsonify }}

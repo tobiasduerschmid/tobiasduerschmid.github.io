@@ -16,6 +16,9 @@
  *   SebookQuiz.mount(opts)           → buildHTML + setInnerHTML + attach
  *     opts: same as buildHTML + attach combined.
  *
+ * Hosts must load js/parsons-grading.js first; Parsons answers are graded by
+ * window.ParsonsGrading so every quiz surface accepts the same orders.
+ *
  * The host (main or popup) is responsible for:
  *   - Showing/hiding the quiz panel and the step content panel
  *   - Tracking quizPassed + advancing to the next step on onPass
@@ -113,15 +116,16 @@
         var allLines = (q.lines || []).slice();
         var distractors = (q.distractors || []);
         var correctOrder = allLines.slice();
-        var items = allLines.map(function (line, i) {
-          return { line: line, correctPos: i, isDistractor: false };
+        var items = allLines.map(function (line) {
+          return { line: line, isDistractor: false };
         }).concat(distractors.map(function (line) {
-          return { line: line, correctPos: -1, isDistractor: true };
+          return { line: line, isDistractor: true };
         }));
         shuffle(items);
         return {
           question: q.question || '', type: 'parsons', explanation: q.explanation || '',
           shuffledItems: items, correctOrder: correctOrder, distractors: distractors,
+          interchangeable: q.interchangeable || [],
           options: [], correctOriginals: [], correctLabels: [],
           questionId: q.id != null ? String(q.id) : '',
         };
@@ -179,8 +183,7 @@
         q.shuffledItems.forEach(function (item, itemIndex) {
           var shortcut = itemIndex < 9 ? String(itemIndex + 1) : '';
           html += '<div class="parsons-line" draggable="true" data-line="'
-            + escapeHtml(item.line) + '" data-distractor="' + item.isDistractor
-            + '" data-correct-pos="' + item.correctPos + '"'
+            + escapeHtml(item.line) + '" data-distractor="' + item.isDistractor + '"'
             + (shortcut ? ' data-shortcut-index="' + shortcut + '" aria-keyshortcuts="' + shortcut + ' Space"' : ' aria-keyshortcuts="Space"')
             + ' tabindex="0" role="button" aria-label="' + escapeHtml('Line ' + (itemIndex + 1) + ': ' + item.line) + '">'
             + '<span class="parsons-shortcut-label" aria-hidden="true">' + (itemIndex + 1) + '</span>'
@@ -196,8 +199,11 @@
         html += '</div>';
         html += buildParsonsShortcutHint(q.shuffledItems.length);
         html += '<div class="parsons-correct-data hidden" data-correct="'
-          + escapeHtml(JSON.stringify(q.correctOrder)) + '"></div>';
-        html += '<div class="quiz-correct-answers">Correct order:<br><span class="correct-labels"><code>'
+          + escapeHtml(JSON.stringify(q.correctOrder)) + '" data-interchangeable="'
+          + escapeHtml(JSON.stringify(q.interchangeable)) + '"></div>';
+        html += '<div class="quiz-correct-answers">'
+          + (q.interchangeable.length ? 'One correct order:' : 'Correct order:')
+          + '<br><span class="correct-labels"><code>'
           + q.correctOrder.map(function (l) { return escapeHtml(l); }).join('</code><br><code>')
           + '</code></span></div>';
       } else {
@@ -691,27 +697,11 @@
       btn.addEventListener('click', function () {
         var card = btn.closest('.quiz-question-card');
         if (!card) return;
-        var target = card.querySelector('.parsons-target');
         var correctData = card.querySelector('.parsons-correct-data');
-        if (!target || !correctData) return;
-        var correct = JSON.parse(correctData.dataset.correct);
-        var placedEls = Array.prototype.slice.call(target.querySelectorAll('.parsons-line'));
-        var isCorrect = placedEls.length === correct.length
-          && placedEls.every(function (el, i) {
-            return el.dataset.correctPos === String(i) || el.dataset.line === correct[i];
-          });
-        placedEls.forEach(function (el, i) {
-          el.classList.remove('parsons-correct', 'parsons-incorrect');
-          if (i < correct.length && (el.dataset.correctPos === String(i) || el.dataset.line === correct[i])) {
-            el.classList.add('parsons-correct');
-          } else {
-            el.classList.add('parsons-incorrect');
-          }
-        });
-        card.querySelectorAll('.parsons-bank .parsons-line').forEach(function (el) {
-          el.classList.remove('parsons-correct', 'parsons-incorrect');
-          if (el.dataset.distractor === 'true') el.classList.add('parsons-correct');
-          else el.classList.add('parsons-incorrect');
+        if (!correctData) return;
+        var isCorrect = window.ParsonsGrading.markParsonsAnswer(card, {
+          lines: JSON.parse(correctData.dataset.correct),
+          interchangeable: JSON.parse(correctData.dataset.interchangeable),
         });
         card.querySelectorAll('.parsons-line').forEach(function (el) { el.setAttribute('draggable', 'false'); });
         btn.disabled = true;
