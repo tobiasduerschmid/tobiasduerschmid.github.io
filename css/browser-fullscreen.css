@@ -1,0 +1,16 @@
+#browser-fullscreen-status:empty { display: none; }
+
+/* The tutorial navigation has the same dark background in both themes. */
+body.tutorial-layout #browser-fullscreen-status {
+  flex-basis: 100%;
+  color: #fff;
+  white-space: normal;
+  font-size: var(--font-size-readable-min, 16px);
+}
+
+@media print {
+  [data-browser-fullscreen], #browser-fullscreen-status { display: none !important; }
+}
+
+html.se-gym-plain [data-browser-fullscreen],
+html.se-gym-plain #browser-fullscreen-status { display: none; }

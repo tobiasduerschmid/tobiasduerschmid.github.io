@@ -117,9 +117,10 @@ If you skipped any of these, go back and do them — the cookies page is a priva
 
 This is a snapshot to help you spot duplicates and pick the right category — **`cookies.html` is the source of truth**, not this list.
 
-**Cookies (19):**
+**Cookies (20):**
 - `dark-mode`, `show-highlights`, `highlights` (alias on blog index), `blog-show-citations`, `read-aloud`, `uml-accent-color`, `more-confetti`
 - `se-bookmarks`, `se-bookmarks-active`
+- `se-gym-workout-fullscreen` — optional fullscreen for workout launches; off by default
 - `se-gym`, `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `analyze-performance`, `se-gym-show-difficulty`, `se-gym-show-workout-hero`, `se-gym-active-difficulties`
 
 **localStorage — static (10):**

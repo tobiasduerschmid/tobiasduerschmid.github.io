@@ -3894,3 +3894,12 @@ invalidates completion credit and produces an explicit rerun notice; navigating
 to another step must never paint the old batch's results into that step. Stopped
 and discarded batches also broadcast their completion notice to detached
 Instructions windows, without inventing failed assertion rows.
+
+### Whole tutorial browser fullscreen
+
+The shared tutorial navbar includes a Full screen / Exit full screen button,
+managed by `js/browser-fullscreen.js`. It requests fullscreen on the document
+root so instructions, editors, output, diagrams, popout controls, and the navbar
+remain available. Browser exits synchronize its label and pressed state. There
+is no keyboard shortcut. The same controller supplies the SE Gym workout button;
+its optional saved preference is off by default.

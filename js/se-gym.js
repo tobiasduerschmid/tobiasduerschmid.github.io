@@ -17,6 +17,7 @@
   var TIMED_SECONDS_PER_QUESTION_COOKIE = 'se-gym-timer-seconds-per-question';
   var SHOW_DIFFICULTY_COOKIE = 'se-gym-show-difficulty';
   var SHOW_WORKOUT_HERO_COOKIE = 'se-gym-show-workout-hero';
+  var WORKOUT_FULLSCREEN_COOKIE = 'se-gym-workout-fullscreen';
   var ACTIVE_DIFFICULTIES_COOKIE = 'se-gym-active-difficulties';
   var DEFAULT_TIMED_TOTAL_MINUTES = 20;
   var DEFAULT_TIMED_SECONDS_PER_QUESTION = 60;
@@ -174,6 +175,14 @@
 
   function setShowDifficulty(value) {
     setCookie(SHOW_DIFFICULTY_COOKIE, value ? 'true' : 'false', COOKIE_DAYS);
+  }
+
+  function isWorkoutFullscreen() {
+    return getCookie(WORKOUT_FULLSCREEN_COOKIE) === 'true';
+  }
+
+  function setWorkoutFullscreen(value) {
+    setCookie(WORKOUT_FULLSCREEN_COOKIE, value ? 'true' : 'false', COOKIE_DAYS);
   }
 
   function isShowWorkoutHero() {
@@ -822,6 +831,8 @@
     setAnalyzePerformance: setAnalyzePerformance,
     isShowDifficulty: isShowDifficulty,
     setShowDifficulty: setShowDifficulty,
+    isWorkoutFullscreen: isWorkoutFullscreen,
+    setWorkoutFullscreen: setWorkoutFullscreen,
     isShowWorkoutHero: isShowWorkoutHero,
     setShowWorkoutHero: setShowWorkoutHero,
     getActiveDifficulties: getActiveDifficulties,

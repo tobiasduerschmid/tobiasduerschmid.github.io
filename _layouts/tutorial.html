@@ -48,6 +48,8 @@
         <button id="tts-read-btn" class="tutorial-nav-button" data-original-title="Read current step aloud" aria-label="Read Aloud: read current step aloud">
           <i class="fa fa-volume-up" aria-hidden="true"></i> Read Aloud
         </button>
+        <button type="button" class="tutorial-nav-button" data-browser-fullscreen aria-pressed="false" aria-describedby="browser-fullscreen-status"><i class="fa fa-expand" aria-hidden="true"></i> <span data-fullscreen-label>Full screen</span></button>
+        <span id="browser-fullscreen-status" role="status"></span>
         <label id="darkModeLabel" class="tutorial-nav-control">
           Dark mode
           <span class="tvm-dark-toggle-wrap">
@@ -322,6 +324,8 @@
   <script src="{{ '/js/uml-view-controls.js' | relative_url }}"></script>
   <script src="{{ '/js/monaco-loader.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
+  <link rel="stylesheet" href="{{ '/css/browser-fullscreen.css' | relative_url }}">
+  <script src="{{ '/js/browser-fullscreen.js' | relative_url }}" defer></script>
   {% if tutorial_backend == 'uml-editor' %}
   <link rel="stylesheet" href="{{ '/css/tutorial-uml-editor.css' | relative_url }}">
   <script src="{{ '/js/tutorial-uml-editor.js' | relative_url }}"></script>

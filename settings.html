@@ -550,6 +550,20 @@ info_nav_title: "My Settings"
 
         <div class="setting-row">
           <div>
+            <p class="setting-name">Workout in full screen</p>
+            <p class="setting-description">Start, resume, and restart SE Gym workouts in browser fullscreen. Off by default. Browsers may require clicking Full screen for workouts opened directly by URL. Stored in the <code>se-gym-workout-fullscreen</code> cookie.</p>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <span class="sr-only">Workout in full screen</span>
+              <input type="checkbox" id="setting-workout-fullscreen" data-setting="workoutFullscreen" aria-label="Workout in full screen">
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
             <p class="setting-name">Difficulty levels to include in workouts</p>
             <p class="setting-description">
               Check the difficulty levels you want to test. By default, all
@@ -912,6 +926,7 @@ info_nav_title: "My Settings"
     setCheckbox('setting-timed-practice', readCookie('se-gym-timed-practice') === 'true');
     setCheckbox('setting-performance', readCookie('analyze-performance') === 'true');
     setCheckbox('setting-show-difficulty', readCookie('se-gym-show-difficulty') === 'true');
+    setCheckbox('setting-workout-fullscreen', readCookie('se-gym-workout-fullscreen') === 'true');
     setCheckbox('setting-show-workout-hero', readCookie('se-gym-show-workout-hero') !== 'false');
 
     var activeDifficulties = readActiveDifficulties();
@@ -1016,6 +1031,9 @@ info_nav_title: "My Settings"
     } else if (setting === 'showDifficulty') {
       writeCookie('se-gym-show-difficulty', target.checked ? 'true' : 'false');
       announce('Difficulty visibility setting saved.');
+    } else if (setting === 'workoutFullscreen') {
+      writeCookie('se-gym-workout-fullscreen', target.checked ? 'true' : 'false');
+      announce('Workout fullscreen setting saved.');
     } else if (setting === 'showWorkoutHero') {
       writeCookie('se-gym-show-workout-hero', target.checked ? 'true' : 'false');
       announce('Workout hero setting saved.');

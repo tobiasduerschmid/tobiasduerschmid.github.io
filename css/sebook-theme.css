@@ -104,6 +104,7 @@ html.dark-mode body.tutorial-layout {
 #navnav .navbar-right > a:visited,
 #navnav .navbar-right > label,
 #navnav #tts-read-btn,
+#navnav .tutorial-nav-button,
 #navnav .tutorial-help-menu-toggle {
   border-radius: var(--radius-pill, 999px) !important;
   color: #eef7ff !important;

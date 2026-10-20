@@ -161,6 +161,14 @@ layout: sebook
               <span class="slider round"></span>
             </label>
           </div>
+          <div class="controls-row toggle-row toggle-row-balanced u-section-gap-top">
+            <label for="workoutFullscreenToggle" class="toggle-copy">Workout in full screen</label>
+            <label class="switch">
+              <span class="sr-only">Workout in full screen</span>
+              <input type="checkbox" id="workoutFullscreenToggle" aria-label="Workout in full screen">
+              <span class="slider round"></span>
+            </label>
+          </div>
           {% if site.gym_hero_animation %}
           <div class="controls-row toggle-row toggle-row-balanced u-section-gap-top">
             <span class="toggle-copy">
@@ -778,9 +786,11 @@ layout: sebook
           <span id="timed-practice-clock-value" class="timed-practice-clock-value">00:00</span>
           <button type="button" id="timed-practice-extend-btn" class="timed-practice-extend-btn">Add 1 minute</button>
         </div>
+        <button type="button" class="gym-btn secondary" data-browser-fullscreen aria-pressed="false" aria-describedby="browser-fullscreen-status"><i class="fa fa-expand" aria-hidden="true"></i> <span data-fullscreen-label>Full screen</span></button>
         <button id="back-to-library-btn" class="gym-btn secondary"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to
           Gym Entrance</button>
       </div>
+      <p id="browser-fullscreen-status" class="gym-summary-text" role="status"></p>
       <p id="timed-practice-status" class="gym-summary-text" role="status" aria-live="polite" aria-atomic="true"></p>
 
       <div class="workout-progress-bar">
@@ -816,6 +826,7 @@ layout: sebook
             <ul id="workout-breakdown-list" class="workout-breakdown-list"></ul>
           </section>
           <div class="workout-results-actions">
+            <button type="button" class="gym-btn secondary" data-browser-fullscreen aria-pressed="false" aria-describedby="browser-fullscreen-status"><i class="fa fa-expand" aria-hidden="true"></i> <span data-fullscreen-label>Full screen</span></button>
             <button id="workout-restart-btn" class="gym-btn primary"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Restart Workout</button>
             <button id="workout-review-btn" class="gym-btn secondary is-hidden"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Review Incorrect</button>
             <button id="workout-back-btn" class="gym-btn secondary"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to Gym Entrance</button>
@@ -840,6 +851,8 @@ layout: sebook
   <!-- ==================== PAGE SCRIPT ==================== -->
   <!-- Custom UML diagram renderers -->
   <!-- Bundled UML diagram renderer -->
+  <link rel="stylesheet" href="{{ '/css/browser-fullscreen.css' | relative_url }}">
+  <script src="{{ '/js/browser-fullscreen.js' | relative_url }}" defer></script>
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
   <!-- Verbal aria-label generator (parses live SE Gym diagrams as the user types) -->
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
@@ -1776,8 +1789,12 @@ layout: sebook
         return picked;
       }
 
-      // Shared workout-start sequence for every entry point (normal, hard,
-      // review, daily, direct links). Returns false if there are no cards.
+      function requestWorkoutFullscreen() {
+        // Plain views are embedded worksheets; they do not own the browser view.
+        if (!isPlainView && PersonalGym.isWorkoutFullscreen()) window.BrowserFullscreen.enter();
+      }
+
+      // Shared start sequence for normal, hard, daily, and linked workouts.
       function beginWorkout(cards, options) {
         options = options || {};
         workoutIsDaily = false;
@@ -1804,6 +1821,7 @@ layout: sebook
         hideElement(workoutResults);
         workoutCardArea.innerHTML = '';
         workoutTotalEl.textContent = workoutCards.length;
+        requestWorkoutFullscreen();
         startWorkoutTimer(workoutCards.length);
         saveWorkoutProgress(0);
         showWorkoutCard(0);
@@ -2141,6 +2159,7 @@ layout: sebook
           return;
         }
 
+        requestWorkoutFullscreen();
         startWorkoutTimer(workoutIsReview ? workoutReviewQueue.length : workoutCards.length);
         showWorkoutCard(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
         scrollToTop();
@@ -2240,6 +2259,12 @@ layout: sebook
           PersonalGym.setShowDifficulty(showDifficultyToggle.checked);
         });
       }
+
+      var workoutFullscreenToggle = document.getElementById('workoutFullscreenToggle');
+      workoutFullscreenToggle.checked = PersonalGym.isWorkoutFullscreen();
+      workoutFullscreenToggle.addEventListener('change', function () {
+        PersonalGym.setWorkoutFullscreen(workoutFullscreenToggle.checked);
+      });
 
       // ---- Workout hero toggle ----
       if (showWorkoutHeroToggle && typeof PersonalGym.setShowWorkoutHero === 'function') {
@@ -3597,6 +3622,7 @@ layout: sebook
         workoutEndedByTimer = false;
         workoutActivityCardCount = 0;
         hideElement(workoutResults);
+        requestWorkoutFullscreen();
         startWorkoutTimer(workoutReviewQueue.length);
         saveWorkoutProgress(0);
         showWorkoutCard(workoutReviewQueue[0]);
@@ -3617,6 +3643,7 @@ layout: sebook
         restartWorkoutHeroAnimations();
         hideElement(workoutResults);
         if (workoutResultShortcutHint) workoutResultShortcutHint.classList.add('hidden');
+        requestWorkoutFullscreen();
         startWorkoutTimer(workoutCards.length);
         saveWorkoutProgress(0);
         showWorkoutCard(0);
@@ -3624,6 +3651,7 @@ layout: sebook
       }
 
       function goBackToLibrary() {
+        window.BrowserFullscreen.exit();
         stopWorkoutTimer(true);
         clearRequestedWorkoutParamsFromUrl();
         hideElement(workoutView);

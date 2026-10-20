@@ -5,6 +5,7 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 test.use({ reducedMotion: 'reduce' });
 
 async function expectOnlyQuizChrome(page) {
+  await expect(page.getByRole('button', { name: /^(Exit full screen|Full screen)$/ })).toHaveCount(0);
   await expect(page.getByRole('heading', { level: 1 })).toBeHidden();
   await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeHidden();
   await expect(page.getByRole('contentinfo')).toBeHidden();
