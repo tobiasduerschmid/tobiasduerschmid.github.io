@@ -51,21 +51,16 @@ questions:
     type: single
     question: >
       Which combined fragment would you use to model an **if-else** decision in a sequence diagram?
-
-      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant c: Client&#10;participant a: AuthService&#10;c -> a: login(user, pass)&#10;activate a&#10;alt [credentials valid]&#10;  a --> c: token&#10;  deactivate a&#10;else [credentials invalid]&#10;  a --> c: error&#10;  deactivate a&#10;end&#10;@enduml"></div>
     options:
       - "`loop` — repeats messages while a condition is true."
       - "`opt` — executes messages only if a condition is true."
       - "`alt` — selects one of multiple branches based on guard conditions."
-      - "`par` — executes messages in parallel."
     correct_index: 2
     option_feedback:
       0: |
         `loop` models repetition. An if-else decision needs mutually exclusive alternatives, not repeated execution.
       1: |
         `opt` is for one optional block with no else branch. If there are multiple possible branches, use `alt`.
-      3: |
-        `par` models concurrent regions. It does not choose one branch based on a guard.
     explanation: "**`alt` models if-else by selecting one of several guarded branches; only one region executes.** Use `opt` for a simple if-without-else — a single guarded block with no alternative."
 
   - id: 4
@@ -101,8 +96,7 @@ questions:
       - "`if` — conditional execution"
       - "`loop` — repeated execution"
       - "`try` — exception handling"
-      - "`par` — parallel execution"
-    correct_indices: [0, 1, 3, 5]
+    correct_indices: [0, 1, 3]
     option_feedback:
       0: |
         `alt` is the UML combined fragment for alternative guarded branches. Omitting it misses the normal way to model if-else behavior.
@@ -114,9 +108,7 @@ questions:
         `loop` is valid for repeated execution, such as a for-loop or while-loop scenario.
       4: |
         UML does not use a `try` combined fragment. Exception-like or aborting behavior can be modeled with other interaction operators such as `break`, depending on the case.
-      5: |
-        `par` is valid when regions proceed in parallel or independently.
-    explanation: "**`alt`, `opt`, `loop`, and `par` are valid UML combined fragments; there is no `if` or `try` operator.** Conditional logic uses `alt`/`opt`, and exception-like aborting behavior uses the `break` fragment."
+    explanation: "**`alt`, `opt`, and `loop` are valid UML combined fragments; there is no `if` or `try` operator.** Conditional logic uses `alt`/`opt`, and exception-like aborting behavior uses the `break` fragment."
 
   - id: 6
     difficulty: intermediate
@@ -211,8 +203,6 @@ questions:
     type: single
     question: >
       What is the correct lifeline label format for an unnamed instance of class `ShoppingCart`?
-
-      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant sc: ShoppingCart&#10;participant ch: Checkout&#10;sc -> ch: submit()&#10;activate ch&#10;ch --> sc: receipt&#10;deactivate ch&#10;@enduml"></div>
     options:
       - "`ShoppingCart`"
       - "`: ShoppingCart`"
@@ -231,7 +221,7 @@ questions:
   - id: 11
     difficulty: intermediate
     type: single
-    question: >
+    question: |
       Given this Java code, which sequence diagram element represents the `new Payment(amount)` call?
 
       ```java
@@ -240,8 +230,6 @@ questions:
           p.authorize();
       }
       ```
-
-      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant ch: Checkout&#10;participant p: Payment&#10;create p&#10;ch --> p: <<create>>&#10;activate p&#10;deactivate p&#10;ch -> p: authorize()&#10;activate p&#10;p --> ch: authorized&#10;deactivate p&#10;@enduml"></div>
     options:
       - "A synchronous message labeled `new Payment(amount)` to an existing Payment lifeline."
       - "A create message to a new Payment lifeline that appears at the point of creation."
@@ -261,7 +249,9 @@ questions:
     difficulty: advanced
     type: single
     question: >
-      A sequence diagram and a class diagram are drawn for the same system. An arrow in the sequence diagram shows `order -> inventory: checkStock(itemId)`. What must be true in the class diagram?
+      A sequence diagram and a class diagram are drawn for the same system. What must be true in the class diagram for the interaction below?
+
+      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant order: Order&#10;participant inventory: Inventory&#10;order -> inventory: checkStock(itemId)&#10;@enduml"></div>
     options:
       - "`Inventory` (or a superclass) must declare `checkStock(itemId)`."
       - "There must be a dependency arrow from Order to Inventory."

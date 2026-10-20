@@ -32,7 +32,7 @@ cards:
       A filled diamond (<span class="uml-sym" data-diagram="class" data-sym="*--"></span>) is **Composition**, meaning a part belongs to at most one composite at a time and is deleted with that whole unless detached first. A hollow diamond (<span class="uml-sym" data-diagram="class" data-sym="o--"></span>) is **Aggregation**.
 
   - id: 4
-    difficulty: advanced
+    difficulty: intermediate
     question: "What is the difference between **Generalization** and **Realization** arrows?"
     answer: "Generalization = **solid line** with hollow arrowhead. Realization = **dashed line** with hollow arrowhead."
     explanation: >
@@ -67,7 +67,7 @@ cards:
       A dashed arrow with an open arrowhead (<span class='uml-sym' data-diagram='class' data-sym='..>'></span>) denotes a **Dependency**. It means a class uses another as a method parameter, local variable, return type, or thrown exception — but does not hold a permanent reference. It is the weakest of all class relationships.
 
   - id: 8
-    difficulty: basic
+    difficulty: intermediate
     question: "How do you indicate an **abstract class** in UML?"
     answer: "By *italicizing* the class name, or adding `{abstract}`."
     explanation: >
@@ -76,7 +76,7 @@ cards:
       <div data-uml-type="class" data-uml-spec="abstract class Shape {&#10;  {abstract} +draw(): void&#10;}&#10;class Circle {&#10;  +draw(): void&#10;}&#10;Circle --|> Shape"></div>
 
   - id: 9
-    difficulty: advanced
+    difficulty: expert
     question: "List the class relationships from **weakest to strongest**."
     answer: "Dependency < Association < Aggregation < Composition < Generalization/Realization"
     explanation: >

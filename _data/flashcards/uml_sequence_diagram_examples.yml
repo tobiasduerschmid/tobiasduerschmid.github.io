@@ -58,8 +58,8 @@ cards:
       Sequence diagrams show interactions between specific **object instances**, not classes in general. If the object name is irrelevant, you can omit it and write just `: ClassName`. This distinguishes sequence diagrams from class diagrams, which model classes in general.
 
   - id: 8
-    difficulty: advanced
-    question: "What is the `par` combined fragment used for?"
-    answer: "To model messages that execute **in parallel** (concurrently)."
+    difficulty: intermediate
+    question: "What does a **filled circle at the sending end** of a sequence-diagram message mean?"
+    answer: "It marks a **found message**: the sender is outside the interaction being shown."
     explanation: >
-      The `par` fragment divides the interaction into regions that execute simultaneously. This is useful for modeling multi-threaded behavior or concurrent operations. The `critical` fragment is related: it marks a region that cannot be interleaved by other event occurrences — the equivalent of a synchronized block.
+      A found message reaches a lifeline in the diagram, but its sender is not shown. The line begins at a filled circle instead of another lifeline.

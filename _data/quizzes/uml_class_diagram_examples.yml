@@ -216,31 +216,36 @@ questions:
   - id: 10
     difficulty: advanced
     type: single
-    question: >
-      Given this Java code, what is the correct UML class diagram?
+    question: |
+      Given this C++ code, what is the correct UML class diagram?
 
-      ```java
-      public class Student {
-          Roster roster;
-          public void storeRoster(Roster r) {
-              roster = r;
+      ```cpp
+      class Roster {};
+
+      class Student {
+      public:
+          void storeRoster(Roster& r) {
+              roster = &r;
           }
-      }
+
+      private:
+          Roster* roster = nullptr;
+      };
       ```
     options:
-      - "Student has an association to Roster with package visibility (~)."
+      - "Student has an association to Roster through a private (-) field."
       - "Student has a dependency on Roster, shown with a dashed arrow."
       - "Student has a composition with Roster, shown with a filled diamond."
       - "Student inherits from Roster, shown with a hollow triangle."
     correct_index: 0
     option_feedback:
       1: |
-        A dependency would fit a parameter or local variable used temporarily. Here `Roster roster;` stores a field, so the relationship is structural.
+        A dependency would fit temporary use of the parameter alone. Here `Student` retains a `Roster*` field after `storeRoster` returns, so the relationship is structural.
       2: |
-        A field alone does not prove composition. Composition would require whole-part lifecycle ownership, not just a stored reference assigned from outside.
+        A stored pointer does not establish whole-part ownership. The `Roster` is supplied by reference, and this code does not make `Student` responsible for its lifetime.
       3: |
-        There is no `extends Roster` relationship in the code. Storing a `Roster` field is not inheritance.
-    explanation: "**This is an association with `~` (package) visibility.** Storing `Roster` as a field is a permanent structural link (association, not dependency), and the missing Java access modifier defaults to package-private, which maps to `~` in UML."
+        `Student` does not derive from `Roster`. Storing a pointer to another object is not inheritance.
+    explanation: "**This is an association through a private (`-`) field.** `Student` stores a pointer to `Roster`, so it can navigate to a `Roster` object. The pointer can be null; this code does not establish composition or ownership."
 
   - id: 11
     difficulty: basic
@@ -269,12 +274,12 @@ questions:
     difficulty: advanced
     type: multiple
     question: >
-      Which of the following Java code patterns would result in a **dependency** (dashed arrow) relationship in UML, rather than an association? (Select all that apply.)
+      Which of the following Java/C++ code patterns would result in a **dependency** (dashed arrow) relationship in UML, rather than an association? (Select all that apply.)
 
-      <div data-uml-type="class" data-uml-spec="@startuml&#10;class ReportGenerator {&#10;  +generate(data: String): String&#10;}&#10;class Logger&#10;class IOException&#10;ReportGenerator ..> Logger&#10;ReportGenerator ..> IOException&#10;@enduml"></div>
+      <div data-uml-type="class" data-uml-spec="@startuml&#10;class ReportGenerator {&#10;  +generate(data: Text): Text&#10;}&#10;class Logger&#10;class FileError&#10;ReportGenerator ..> Logger&#10;ReportGenerator ..> FileError&#10;@enduml"></div>
     options:
       - "A class uses another class as a method parameter type."
-      - "A class stores another class as an instance variable (field)."
+      - "A class stores another class in a member field."
       - "A class catches an exception of another class type."
       - "A class creates a local variable of another class type inside a method."
     correct_indices: [0, 2, 3]
