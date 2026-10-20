@@ -48,7 +48,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      **Which diagram view should I use?** Use **Implementation details** when matching your code to a target diagram or checking an exercise. **Design focus** is for reference only: it simplifies types, names, and expressions to emphasize the design. Targets may use UML notation; translate those labels to the source-language names and types while matching the required structure or message order. Switching views does not change your code or verify correctness; use **Test My Work** to check the exercise.
+      **Which diagram view should I use?** Use **Implementation details** when matching your code to a target diagram or checking an exercise. **Design focus** is for reference only: it simplifies types, names, and expressions to emphasize the design. Target diagrams use the same Python names, types, and expressions as **Implementation details**. Switching views does not change your code or verify correctness; use **Test My Work** to check the exercise.
 
       Class diagrams show what *exists* in a system; sequence diagrams show what *happens at runtime* — which object calls which method, in what order. As soon as you start designing or debugging real interactions (logins, API handshakes, message flows), you need a way to describe behavior over time, not just structure. This first step gives you the smallest complete sequence diagram and shows you how Python code on the page becomes a picture you can read.
 
@@ -374,7 +374,7 @@ steps:
       participant api: API
       caller -> api: get_status()
       activate api
-      api --> caller: String
+      api --> caller: str
       deactivate api
       @enduml'></div>
 
@@ -401,7 +401,7 @@ steps:
       deactivate channel
       Main -> bot: get_member_count()
       activate bot
-      bot --> Main: count: Integer
+      bot --> Main: count: int
       deactivate bot
       Main -> channel: notify_members(f&quot;{count} members online&quot;)
       activate channel
@@ -409,7 +409,7 @@ steps:
       deactivate Main
       @enduml"></div>
 
-      Notice the new dashed arrow from `bot` back to `Main` labeled `count: Integer` — that is the return arrow. Python spells its type `int`. The old call to `channel.notify_members(...)` has **no** dashed return arrow because its source return type is `None`.
+      Notice the new dashed arrow from `bot` back to `Main` labeled `count: int` — that is the return arrow. The old call to `channel.notify_members(...)` has **no** dashed return arrow because its source return type is `None`.
 
       ### Your Task
 
@@ -676,13 +676,13 @@ steps:
       participant order: Order
       Main -> order: checkout()
       activate order
-      order -> order: validate()
+      order -> order: _validate()
       activate order
       deactivate order
       deactivate order
       @enduml'></div>
 
-      Notice the arrow from `order` to **itself**, and how it sits inside the outer activation box for `checkout()`. The small nested box marks `validate()` (Python's `_validate()`) executing while `checkout()` is still active, matching the nested stack frames in this synchronous code.
+      Notice the arrow from `order` to **itself**, and how it sits inside the outer activation box for `checkout()`. The small nested box marks `_validate()` executing while `checkout()` is still active, matching the nested stack frames in this synchronous code.
 
       ### Your Target Diagram
 
@@ -700,7 +700,7 @@ steps:
       deactivate bot
       Main -> bot: handle_message(&quot;hi there&quot;)
       activate bot
-      bot -> bot: log(message)
+      bot -> bot: _log(message)
       activate bot
       deactivate bot
       bot -> bot: send(message)
@@ -969,7 +969,7 @@ steps:
       participant channel: Channel
       Main -> bot: welcome(user)
       activate bot
-      opt [not bot.is_subscribed(user)]
+      opt [not bot._is_subscribed(user)]
       bot -> channel: send_welcome(user)
       activate channel
       deactivate channel
@@ -989,11 +989,11 @@ steps:
       participant channel: Channel
       Main -> bot: handle("hi")
       activate bot
-      bot -> bot: is_spam("hi")
+      bot -> bot: _is_spam("hi")
       activate bot
       deactivate bot
-      alt [bot.is_spam("hi")]
-      bot -> bot: block()
+      alt [bot._is_spam("hi")]
+      bot -> bot: _block()
       activate bot
       deactivate bot
       else [else]
@@ -1034,11 +1034,11 @@ steps:
       deactivate channel
       Main -> bot: handle(channel, &quot;buy now cheap&quot;)
       activate bot
-      bot -> bot: is_spam(message)
+      bot -> bot: _is_spam(message)
       activate bot
       deactivate bot
-      alt [bot.is_spam(message)]
-      bot -> bot: block(message)
+      alt [bot._is_spam(message)]
+      bot -> bot: _block(message)
       activate bot
       deactivate bot
       else [else]
@@ -1295,7 +1295,7 @@ steps:
       participant channel: Channel
       Main -> bot: welcome_all(members)
       activate bot
-      loop [for each member in members]
+      loop [for member in members]
       bot -> channel: notify(member)
       activate channel
       deactivate channel
@@ -1326,7 +1326,7 @@ steps:
       deactivate channel
       Main -> bot: broadcast_all(channel, [&quot;hi&quot;, &quot;hello&quot;, &quot;good morning&quot;])
       activate bot
-      loop [for each msg in messages]
+      loop [for msg in messages]
       bot -> channel: send_to_all(msg)
       activate channel
       deactivate channel
@@ -1530,7 +1530,7 @@ steps:
             - "Repeated object creation in a single scenario"
           correct_index: 2
           explanation: |
-            `loop` wraps messages that repeat. It maps to Python's `for` and `while`. The guard can describe the iteration (e.g., `[for each message]`).
+            `loop` wraps messages that repeat. It maps to Python's `for` and `while`. The guard can describe the iteration (e.g., `[for message in messages]`).
 
         - question: |
             **Review of Step 4.** Your method body is `for x in items: if x.valid: bot.send(x)`. Which two fragments appear, and in what order?
@@ -1826,21 +1826,21 @@ steps:
       activate bot
       bot -> channel: get_subscriber_count()
       activate channel
-      channel --> bot: count: Integer
+      channel --> bot: count: int
       deactivate channel
-      bot -> bot: log_start(count)
+      bot -> bot: _log_start(count)
       activate bot
       deactivate bot
-      loop [for each post in posts]
-      bot -> bot: is_announcement(post)
+      loop [for post in posts]
+      bot -> bot: _is_announcement(post)
       activate bot
       deactivate bot
-      alt [bot.is_announcement(post)]
+      alt [bot._is_announcement(post)]
       bot -> channel: broadcast(post)
       activate channel
       deactivate channel
       else [else]
-      bot -> bot: log_skip(post)
+      bot -> bot: _log_skip(post)
       activate bot
       deactivate bot
       end
@@ -1852,8 +1852,8 @@ steps:
       Notice every concept from Steps 1-5 appears:
 
       - **Lifelines and creation (Step 1):** `Main`, `bot: DiscordBot`, `channel: Channel`, with two `<<create>>` arrows.
-      - **Return value (Step 2):** the dashed arrow labeled `count: Integer` from `channel` back to `bot` after `get_subscriber_count()` — the generator labels the captured result with its bound variable name and abstracted type.
-      - **Self-call with nested activation (Step 3):** `log_start` before the loop, `is_announcement` before each choice, and `log_skip` in the `else` branch. The corresponding Python helpers retain their leading `_`.
+      - **Return value (Step 2):** the dashed arrow labeled `count: int` from `channel` back to `bot` after `get_subscriber_count()` — the generator labels the captured result with its bound variable name and annotated type.
+      - **Self-call with nested activation (Step 3):** `_log_start` before the loop, `_is_announcement` before each choice, and `_log_skip` in the `else` branch.
       - **Conditional fragment (Step 4):** one `alt` inside the loop.
       - **Loop fragment (Step 5):** one outer `loop` over `posts`.
 
@@ -1965,7 +1965,7 @@ steps:
       explanation: |
         Every line of `run_digest` maps to one visual element:
 
-        - `count = channel.get_subscriber_count()` → sync arrow to `channel`, dashed return arrow labeled `count: Integer` in Design focus back to `bot` (Step 2).
+        - `count = channel.get_subscriber_count()` → sync arrow to `channel`, dashed return arrow labeled `count: int` back to `bot` (Step 2).
         - `self._log_start(count)` → self-arrow stacked on top of the outer `run_digest` activation box (Step 3).
         - `for post in posts:` → `loop` fragment (Step 5).
         - `if self._is_announcement(post): ... else: ...` → a classifier self-call followed by an `alt` fragment with two compartments (Step 4).

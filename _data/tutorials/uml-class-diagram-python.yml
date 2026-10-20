@@ -50,7 +50,7 @@ steps:
     instructions: |
       ## Welcome to UML Class Diagrams
 
-      **Which diagram view should I use?** Use **Implementation details** when matching your code to a target diagram or checking an exercise. **Design focus** is for reference only: it simplifies types, names, and expressions to emphasize the design. Targets may use UML notation; translate those labels to the source-language names and types while matching the required structure or message order. Switching views does not change your code or verify correctness; use **Test My Work** to check the exercise.
+      **Which diagram view should I use?** Use **Implementation details** when matching your code to a target diagram or checking an exercise. **Design focus** is for reference only: it simplifies types, names, and expressions to emphasize the design. Target diagrams use the same Python names and types as **Implementation details**. Switching views does not change your code or verify correctness; use **Test My Work** to check the exercise.
 
       ### Why this matters
 
@@ -86,10 +86,10 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout landscape
       class Student {
-        name: String
-        student_id: String
-        Student(name: String, student_id: String)
-        get_info(): String
+        name: str
+        student_id: str
+        __init__(name: str, student_id: str): None
+        get_info(): str
       }
       @enduml'></div>
 
@@ -99,7 +99,7 @@ steps:
       - **Middle:** Two attributes `name` and `student_id` → instance variables set in `__init__`
       - **Bottom:** The initializer accepts the two stored values; `get_info()` provides the information-producing operation
 
-      In **Implementation details**, the target's UML `String` corresponds to Python `str`, and `Student(...)` corresponds to `__init__(...)`. Match the required attributes and operations using those Python spellings. Constructors with parameters or initialization behavior remain visible in both views.
+      The target shows Python annotations such as `str` and the initializer `__init__(...)`. Match the required attributes and operations using those spellings.
 
       > **Check the mapping:** Which Python operation initializes a `Student`, and which values must its caller supply? We will study visibility and type contracts in the next steps.
 
@@ -188,7 +188,7 @@ steps:
               "__init__ must have a 'student_id' parameter: def __init__(self, name, student_id)"
         hints:
           - title: Read the constructor operation
-            text: Read the initializer signature in the target. Separate the receiver used inside a method from the values a caller supplies; the required construction inputs remain visible in Design focus.
+            text: Read the initializer signature in the target. Separate the receiver used inside a method from the values a caller supplies.
             condition: "code_not_matches: /^class[ \\t]+Student\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?^ {4}def[ \\t]+__init__\\b[^\\n]*/m"
           - title: Trace one construction
             text: For Student("Alice", "S001"), map each supplied argument to a parameter. Which parameter represents each piece of student data?
@@ -294,12 +294,12 @@ steps:
           type: single
           options:
             - "2 — only start() and stop()"
-            - "3 — Timer(seconds), start(), and stop()"
-            - "4 — Timer(seconds), start(), stop(), and seconds"
+            - "3 — __init__(), start(), and stop()"
+            - "4 — __init__(), start(), stop(), and seconds"
             - "0 — none, because methods aren't shown yet"
           correct_index: 1
           explanation: |
-            The bottom compartment lists **operations**. The parameterized initializer stays visible as `Timer(seconds)` in Design focus; `start` and `stop` also remain. The attributes `seconds` and `running` go in the **middle** compartment, not the bottom.
+            The bottom compartment lists **operations**: `__init__`, `start`, and `stop`. The attributes `seconds` and `running` go in the **middle** compartment, not the bottom.
 
 
   # --------------------------------------------------------------------------
@@ -372,19 +372,19 @@ steps:
 
       > **Key takeaway:** Choose visibility to make the **public contract** clear and keep implementation details internal. The naming convention communicates that design.
 
-      Design focus removes leading Python naming markers while retaining visibility: `- balance` corresponds to `self.__balance`, and `# validate_amount` corresponds to `_validate_amount`. Check **Implementation details** to inspect those exact source names. The markers still describe conventions and name mangling, not enforced Python privacy.
+      The target retains Python naming markers: `- __balance` corresponds to `self.__balance`, and `# _validate_amount` corresponds to `_validate_amount`. The visibility markers describe conventions and name mangling, not enforced Python privacy.
 
       ### Your Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout landscape
       class BankAccount {
-        - balance: Real
-        + BankAccount(initial_balance: Real)
-        + deposit(amount: Real)
-        + withdraw(amount: Real): Boolean
-        + get_balance(): Real
-        # validate_amount(amount: Real): Boolean
+        - __balance: float
+        + __init__(initial_balance: float): None
+        + deposit(amount: float): None
+        + withdraw(amount: float): bool
+        + get_balance(): float
+        # _validate_amount(amount: float): bool
       }
       @enduml'></div>
 
@@ -637,25 +637,25 @@ steps:
 
       | UML | Python |
       |---|---|
-      | `- name: String` | `self.__name: str = name` |
-      | `+ get_price(): Real` | `def get_price(self) -> float:` |
-      | `+ apply_discount(percent: Real): Real` | `def apply_discount(self, percent: float) -> float:` |
+      | `- __name: str` | `self.__name: str = name` |
+      | `+ get_price(): float` | `def get_price(self) -> float:` |
+      | `+ apply_discount(percent: float): float` | `def apply_discount(self, percent: float) -> float:` |
 
-      Design focus maps Python `str`, `bool`, `int`, and `float` to UML `String`, `Boolean`, `Integer`, and `Real`. Use **Implementation details** to check the actual annotations. A `float` approximates a real value; the shared label does not promise exact arithmetic. See the [full primitive mapping](/SEBook/uml_class_diagram.html#model-types-and-source-types), including `UnlimitedNatural`.
+      The target uses Python annotations: `str`, `bool`, `int`, and `float`. A Python `float` approximates a real value; it does not promise exact arithmetic. See the [comparison with UML primitive types](/SEBook/uml_class_diagram.html#model-types-and-source-types).
 
       ### Your Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout landscape
       class Product {
-        - name: String
-        - price: Real
-        - in_stock: Boolean
-        + Product(name: String, price: Real, in_stock: Boolean)
-        + get_name(): String
-        + get_price(): Real
-        + is_available(): Boolean
-        + apply_discount(percent: Real): Real
+        - __name: str
+        - __price: float
+        - __in_stock: bool
+        + __init__(name: str, price: float, in_stock: bool): None
+        + get_name(): str
+        + get_price(): float
+        + is_available(): bool
+        + apply_discount(percent: float): float
       }
       @enduml'></div>
 
@@ -907,21 +907,21 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout landscape
       class Shape {
-        + color: String
-        + Shape(color: String)
-        + area(): Real
-        + describe(): String
+        + color: str
+        + __init__(color: str): None
+        + area(): float
+        + describe(): str
       }
       class Circle {
-        + radius: Real
-        + Circle(color: String, radius: Real)
-        + area(): Real
+        + radius: float
+        + __init__(color: str, radius: float): None
+        + area(): float
       }
       class Rectangle {
-        + width: Real
-        + height: Real
-        + Rectangle(color: String, width: Real, height: Real)
-        + area(): Real
+        + width: float
+        + height: float
+        + __init__(color: str, width: float, height: float): None
+        + area(): float
       }
       Circle --|> Shape
       Rectangle --|> Shape
@@ -1249,16 +1249,15 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout landscape
       class Instructor {
-        + name: String
-        + department: String
-        + Instructor(name: String, department: String)
-        + get_title(): String
+        + name: str
+        + department: str
+        + __init__(name: str, department: str): None
+        + get_title(): str
       }
       class Course {
-        + name: String
-        + instructor: Instructor
-        + Course(name: String, instructor: Instructor)
-        + get_instructor_name(): String
+        + name: str
+        + __init__(name: str, instructor: Instructor): None
+        + get_instructor_name(): str
       }
       Course --> Instructor
       @enduml'></div>
@@ -1558,12 +1557,28 @@ steps:
 
       ### Expected Source Structure
 
-      The live diagram shows the stored links below in either view. Compare it with the reference design above: which lifecycle claims are still unverified?
+      The target below uses Implementation details and shows the stored links inferred from the source. Compare it with the reference design above: which lifecycle claims are still unverified?
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-role="inferred-target" data-uml-spec='@startuml
-      class University
-      class Department
-      class Professor
+      layout landscape
+      class Professor {
+        + name: str
+        + field: str
+        + __init__(name: str, field: str): None
+      }
+      class Department {
+        + name: str
+        + professors: list[Professor]
+        + __init__(name: str): None
+        + add_professor(prof: Professor): None
+      }
+      class University {
+        + name: str
+        + departments: list[Department]
+        + __init__(name: str): None
+        + add_department(dept_name: str): None
+        + get_department(name: str): Department
+      }
       University --> Department
       Department --> Professor
       @enduml'></div>
@@ -1863,18 +1878,18 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout landscape
       class Song {
-        + title: String
-        + artist: String
-        + duration_sec: Integer
-        + Song(title: String, artist: String, duration_sec: Integer)
+        + title: str
+        + artist: str
+        + duration_sec: int
+        + __init__(title: str, artist: str, duration_sec: int): None
       }
       class Playlist {
-        + name: String
-        + songs: Sequence<Song>
-        + Playlist(name: String)
-        + add_song(song: Song)
-        + get_total_duration(): Integer
-        + get_song_count(): Integer
+        + name: str
+        + songs: list[Song]
+        + __init__(name: str): None
+        + add_song(song: Song): None
+        + get_total_duration(): int
+        + get_song_count(): int
       }
       Playlist --> "*" Song
       @enduml'></div>
@@ -2133,20 +2148,20 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       layout landscape
       abstract class PaymentMethod {
-        + {abstract} process(amount: Real): Boolean
-        + {abstract} get_name(): String
+        + {abstract} process(amount: float): bool
+        + {abstract} get_name(): str
       }
       class CreditCard {
-        + card_number: String
-        + CreditCard(card_number: String)
-        + process(amount: Real): Boolean
-        + get_name(): String
+        + card_number: str
+        + __init__(card_number: str): None
+        + process(amount: float): bool
+        + get_name(): str
       }
       class BankTransfer {
-        + account_number: String
-        + BankTransfer(account_number: String)
-        + process(amount: Real): Boolean
-        + get_name(): String
+        + account_number: str
+        + __init__(account_number: str): None
+        + process(amount: float): bool
+        + get_name(): str
       }
       CreditCard --|> PaymentMethod
       BankTransfer --|> PaymentMethod
@@ -2646,30 +2661,30 @@ steps:
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
         layout landscape
         class Product {
-          +name: String
-          +price: Real
-          +stock: Integer
-          +Product(name: String, price: Real, stock: Integer)
-          +is_available(): Boolean
-          +reduce_stock()
+          +name: str
+          +price: float
+          +stock: int
+          +__init__(name: str, price: float, stock: int): None
+          +is_available(): bool
+          +reduce_stock(): None
         }
         class Customer {
-          +name: String
-          +email: String
-          +Customer(name: String, email: String)
+          +name: str
+          +email: str
+          +__init__(name: str, email: str): None
         }
         class Order {
-          +items: Sequence<Product>
-          +total: Real
-          +Order(customer: Customer)
-          +add_item(product: Product)
+          +items: list[Product]
+          +total: float
+          +__init__(customer: Customer): None
+          +add_item(product: Product): None
         }
         class OnlineStore {
-          +products: Sequence<Product>
-          +orders: Sequence<Order>
-          +OnlineStore()
-          +add_product(product: Product)
-          +place_order(customer: Customer, product_names: Sequence<?>): Order
+          +products: list[Product]
+          +orders: list[Order]
+          +__init__(): None
+          +add_product(product: Product): None
+          +place_order(customer: Customer, product_names: list): Order
         }
         Order --> "*" Product
         Order --> "1" Customer
