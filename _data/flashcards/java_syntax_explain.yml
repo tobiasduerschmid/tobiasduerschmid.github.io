@@ -4,6 +4,8 @@ active: true
 cards:
 
   - id: 1
+    hint: >-
+      Count the objects created by the two new expressions. Compare that count with the number of distinct character sequences they represent.
     difficulty: intermediate
     question: |
       ```java
@@ -23,6 +25,8 @@ cards:
       **Key insight:** Java's `==` is *always* a reference comparison for objects. Unlike Python's `==` (value comparison) and C++'s `==` (overloadable per class), Java's `==` never examines content.
 
   - id: 2
+    hint: >-
+      Separate the numeric value from the identity of the wrapper object. Ask what changes if boxing reuses an existing object instead of creating another one.
     difficulty: advanced
     question: |
       ```java
@@ -43,6 +47,8 @@ cards:
       **Why dangerous:** Tests usually use small values (IDs, counts) that fall in the cache range. `==` appears to work. In production, large IDs or counts fall outside the cache and `==` silently returns `false`. The fix is always `.equals()` for wrapper types.
 
   - id: 3
+    hint: >-
+      The destination requires a primitive integer. Trace the implicit conversion needed to extract that value from the reference currently stored in count.
     difficulty: intermediate
     question: |
       ```java
@@ -60,6 +66,8 @@ cards:
       This is a common production bug because `Integer` fields default to `null` (not `0`), and database queries returning no row often produce `null` wrapper values.
 
   - id: 4
+    hint: >-
+      Break += into reading the old value, performing arithmetic, and storing the result. Which representations must Version A cross during that cycle?
     difficulty: advanced
     question: |
       ```java
@@ -88,6 +96,8 @@ cards:
       **Use Version B.** Use primitive types for accumulators and counters. Use wrapper types only when generics (`List<Integer>`), nullable values, or object methods (`.compareTo()`) require them.
 
   - id: 5
+    hint: >-
+      Invent a client assignment that violates the account’s rules. Check whether that assignment must pass through the validation in withdraw.
     difficulty: intermediate
     question: |
       ```java
@@ -116,6 +126,8 @@ cards:
       This is the core value of encapsulation: **validation cannot be bypassed** because callers have no path to the field directly.
 
   - id: 6
+    hint: >-
+      Write one caller that uses the declared return type and one operation specific to that representation. Would keeping the field private make that caller independent of a representation change?
     difficulty: advanced
     question: |
       ```java
@@ -145,6 +157,8 @@ cards:
       After this refactoring, switching from `ArrayList` to `int[]` changes exactly one class.
 
   - id: 7
+    hint: >-
+      Compare a misspelled method in a concrete class that must implement an abstract contract with a misspelled method that already has an inherited implementation. Which mistake could otherwise leave valid inherited behavior in place?
     difficulty: intermediate
     question: |
       ```java
@@ -170,6 +184,8 @@ cards:
       Explain what Java's `@Override` buys you here. Give an example of the specific bug it prevents.
     answer: "@Override asks the compiler to verify that a method overrides a superclass method or implements an interface method.\n\nIn this exact example, renaming getArea to getArae would fail to compile even without @Override: a concrete Circle must implement Shape.getArea. The annotation adds a direct diagnostic at the mistaken declaration.\n\nA typo can compile silently when the intended method already has an inherited implementation (for example, a concrete superclass method or an interface default method). The inherited behavior then runs instead of the intended override. @Override catches that typo too."
   - id: 8
+    hint: >-
+      Trace where the make field receives its initial value. Then ask what state getMake would inspect if the subclass tried to call it earlier.
     difficulty: advanced
     question: |
       ```java
@@ -204,6 +220,8 @@ cards:
       In C++, the equivalent constraint is enforced through initializer lists: `Car(String make) : Vehicle(make) { }`.
 
   - id: 9
+    hint: >-
+      Make two columns: operations permitted by the variable’s declared type, and behavior supplied by the current object. Apply the appropriate column at each stage.
     difficulty: advanced
     question: |
       ```java
@@ -224,6 +242,8 @@ cards:
       This is Java's default behavior for all non-static, non-final methods. Unlike C++, where virtual dispatch requires the `virtual` keyword, every Java method is effectively virtual.
 
   - id: 10
+    hint: >-
+      Imagine invoking Pair.swap without constructing any Pair instance first. Where could the method obtain an instance-specific choice for A and B?
     difficulty: advanced
     question: |
       ```java
@@ -251,6 +271,8 @@ cards:
       If `swap` used `A` and `B` directly, a static method would need to belong to a specific `Pair<A, B>`, which is impossible. The method-level parameters `<X, Y>` make `swap` work for *any* `Pair`, not just one with a specific concrete type.
 
   - id: 11
+    hint: >-
+      Evaluate the lookup before the assignment. Then check what conversion is needed to store that result in the primitive variable grade.
     difficulty: advanced
     question: |
       ```java
@@ -302,6 +324,8 @@ cards:
       The design choice says: *"Division by zero is a recoverable situation the caller should explicitly decide how to handle"* — not a programmer error. This is appropriate for library APIs where you want to force callers to think about failure modes.
 
   - id: 13
+    hint: >-
+      Try passing a different collection implementation that still supports all the operations average needs. Which declaration lets the compiler accept that substitution?
     difficulty: intermediate
     question: |
       ```java
@@ -329,6 +353,8 @@ cards:
       **Version B is correct.** The parameter should be the **narrowest interface** that expresses what the method actually needs. `average()` only needs to iterate — that's a `List` contract, not an `ArrayList` one. Using `ArrayList` couples callers to an implementation detail the method doesn't actually require.
 
   - id: 14
+    hint: >-
+      Trace the second addition against each collection’s contract. Does it record another position or try to add a value already represented?
     difficulty: intermediate
     question: |
       ```java
@@ -356,6 +382,8 @@ cards:
       **Design principle:** The collection type encodes your **invariant** — what the data is allowed to contain. Choosing `HashSet` for submitted assignments is not just a performance choice; it's a semantic declaration that *"a student can only submit once."* `ArrayList` gives you no such guarantee.
 
   - id: 15
+    hint: >-
+      Count comparisons for a missing name in the current implementation. Before choosing names as keys, also ask what the replacement would mean if two students shared a name.
     difficulty: advanced
     question: |
       ```java

@@ -13,6 +13,8 @@ cards:
     answer: "Object Adapter uses **composition** to wrap an adaptee instance. Class Adapter uses **inheritance** — multiple class inheritance in C++, or (in Java/C#) extending the Adaptee class while implementing the Target interface."
     explanation: "Object adapters can wrap compatible subclasses and select an adaptee at runtime without inheriting its implementation. Replacing that instance later requires an API that permits it. Class adapters can override inherited behavior but are tied to that inherited implementation."
   - id: 3
+    hint: >-
+      For each pattern, inspect the contract the client sees before and after the wrapper is introduced. What aspect of the client’s work changes?
     difficulty: intermediate
     question: "Adapter vs. Facade vs. Decorator design patterns?"
     answer: "Adapter *converts* an interface. Facade *simplifies* a set of interfaces. Decorator *adds behavior* through the same interface."
@@ -28,6 +30,8 @@ cards:
     answer: "Treats individual objects and nested groups uniformly through a shared abstraction for common operations."
     explanation: "Clients program against the Component interface. A leaf performs its operation directly; a composite can delegate recursively. Child-management clients may still need to distinguish the two."
   - id: 6
+    hint: >-
+      Try calling a child-insertion operation through the common type when the object is a leaf. Where could the design reject the meaningless operation?
     difficulty: intermediate
     question: "Composite pattern: Transparent vs. Safe design?"
     answer: "Transparent: child-management on Component (uniform, leaves get meaningless methods). Safe: child-management only on Composite (statically rejects leaf insertion calls; construction clients need a composite reference)."
@@ -43,6 +47,8 @@ cards:
     answer: "Provides a simplified, unified interface to a complex subsystem, reducing the number of objects a client must interact with."
     explanation: "The Facade handles coordination between subsystem components. Importantly, it does not 'trap' the subsystem — direct access remains available."
   - id: 9
+    hint: >-
+      Trace who initiates an interaction and who must know whom. Compare an outside client entering a subsystem with peer objects coordinating inside it.
     difficulty: advanced
     question: "How do the Facade and Mediator patterns differ in responsibility and dependencies?"
     answer: "Facade simplifies subsystem use; subsystem objects do not depend on it. Mediator encapsulates interaction rules among colleagues, which notify it directly or through events."

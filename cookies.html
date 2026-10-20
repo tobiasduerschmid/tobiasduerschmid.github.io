@@ -311,9 +311,15 @@ info_nav_title: "Browser storage"
         <td class="status-cell"></td>
         <td class="action-cell"></td>
       </tr>
+      <tr data-storage="localStorage" data-key="se-gym-skipped-questions">
+        <td class="storage-key">se-gym-skipped-questions</td>
+        <td>Question IDs grouped by deck that you choose to <em>Always skip</em> in SE Gym. Saved only when you use that button; those questions are excluded from future practice for their decks in this browser. <a href="{{ '/se-gym-stats/#skipped-questions' | relative_url }}">Review skipped questions</a> to restore them individually. Delete this entry or use <em>Restore all skipped questions</em> in <a href="{{ '/settings/' | relative_url }}">My Settings</a> to restore all of them.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
       <tr data-storage="localStorage" data-key="se-gym-workout-progress">
         <td class="storage-key">se-gym-workout-progress</td>
-        <td>The active SE Gym workout checkpoint: card order, next unanswered position, current score, missed-card list, and per-difficulty tally. Written while a workout is in progress so reloading or leaving halfway can resume at the next unanswered card. Replaced when you restart or start another workout, and deleted when you finish, discard, empty the gym, or disable Personal Gym. Direct quiz, flashcard, and question-selection links preserve any already saved workout, including when you finish, review, or restart the linked practice. Quiz links with plain=true always leave this checkpoint unchanged.</td>
+        <td>The active SE Gym workout checkpoint: card order, selected deck IDs, next unanswered position, current score, missed-card list, and per-difficulty tally. Deck IDs preserve which deck your Always skip choices apply to when you resume. Written while a workout is in progress so reloading or leaving halfway can resume at the next unanswered card. Replaced when you restart or start another workout, and deleted when you finish, discard, empty the gym, or disable Personal Gym. Direct quiz, flashcard, and question-selection links preserve any already saved workout, including when you finish, review, or restart the linked practice. Quiz links with plain=true always leave this checkpoint unchanged.</td>
         <td class="status-cell"></td>
         <td class="action-cell"></td>
       </tr>

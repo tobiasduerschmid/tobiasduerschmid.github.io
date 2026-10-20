@@ -123,12 +123,14 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - `se-gym-workout-fullscreen` — optional fullscreen for workout launches; off by default
 - `se-gym`, `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `analyze-performance`, `se-gym-show-difficulty`, `se-gym-show-workout-hero`, `se-gym-active-difficulties`
 
-**localStorage — static (10):**
+**localStorage — static (12):**
 - `prefersReducedMotion`
 - `abbr-underlines`
 - `cap_volume`, `cap_speed`
 - `tts-voice-name`
 - `se-gym-stats`
+- `se-gym-skipped-questions` — question IDs grouped by deck, saved by Always skip and excluded from future practice; restored individually on the statistics page or all at once in My Settings or the storage inventory
+- `se-gym-workout-progress` — active workout checkpoint including card order, optional selected deck IDs that preserve skip scope on resume, position, score, missed cards, and difficulty tally
 - `tutorial-autosave`
 - `sebook-code-language` — shared language for SEBook code tabs, UML labs, and Observer lesson views; written on explicit selection, default Python
 - `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
@@ -169,6 +171,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - UML accent color: `uml-accent-color`
 - SEBook bookmarks enabled: `se-bookmarks-active`
 - SE Gym enabled, timed practice, workout hero, difficulty visibility/filtering, and performance tracking: `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `se-gym-show-workout-hero`, `se-gym-show-difficulty`, `se-gym-active-difficulties`, `analyze-performance`, `se-gym-stats`
+- SE Gym questions marked Always skip, with a restore action: `se-gym-skipped-questions`
 - Per-tutorial state and progress: `tutorial-progress-<id>`, `tutorial-editor-split-<id>`, `tutorial-cooldown-<id>`, `tutorial-time-practice-<id>`, `tutorial-popout-state-<path>-<session>`, `tutorial-debug-bps-<id>`, `tutorial-debug-excbps-<id>`, `tutorial-debug-watchpoint-remove-choice-<id>`, `tutorial-debug-section-<id>-<name>`, `tutorial-debug-subsection-<id>-<name>`, `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
 
 If your change makes any line in this section wrong, edit `cookies.html` first, then update this snapshot.

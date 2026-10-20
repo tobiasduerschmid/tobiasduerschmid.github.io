@@ -3,6 +3,8 @@ description: "Test your knowledge on evidence-based study techniques!"
 active: true
 cards:
   - id: 1
+    hint: >-
+      Compare recognizing a sentence while it is visible with explaining the same idea after closing the book. What evidence of learning does each provide?
     difficulty: intermediate
     question: "Why is rereading a textbook often an ineffective study strategy?"
     answer: "It creates an 'illusion of knowing' or perceptual fluency."

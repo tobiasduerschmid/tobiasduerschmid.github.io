@@ -11,6 +11,8 @@ cards:
     explanation: "`.equals()` compares character content regardless of object identity. `==` would fail whenever `input` and `stored` are separate objects with identical content — for example, when `stored` came from a database query and `input` came from user input."
 
   - id: 2
+    hint: >-
+      Follow the missing-key case through the lookup and the conversion to int. Supply the fallback before an absent wrapper would have to become a primitive.
     difficulty: intermediate
     question: |
       A Java HashMap lookup is crashing in production with a `NullPointerException`. The code is:
@@ -23,6 +25,8 @@ cards:
     explanation: "`HashMap.get()` returns `null` for missing keys. Auto-unboxing `null` to `int` throws NPE. `getOrDefault(key, fallback)` returns the value if present, or the fallback for an absent key. An explicitly stored null still returns null and would fail during unboxing; assume this grades map stores only non-null Integer values. Alternatively: `grades.containsKey(studentId) ? grades.get(studentId) : 0`, but `getOrDefault` is more idiomatic."
 
   - id: 3
+    hint: >-
+      For each operation, write its allowed state change before coding. Keep all writes to balance behind the methods that check those conditions.
     difficulty: advanced
     question: |
       Design a Java `BankAccount` class that:
@@ -66,6 +70,8 @@ cards:
     explanation: "Private fields + validated methods = encapsulation. The `withdraw` boolean return avoids throwing an exception for an expected condition (insufficient funds isn't a programming error). `toString()` is annotated `@Override` — the compiler verifies we're overriding `Object.toString()`."
 
   - id: 4
+    hint: >-
+      Locate every place that knows a grade boundary. Replace that duplicated policy knowledge with a request for the classification the caller needs.
     difficulty: expert
     question: |
       This Java class has a design problem. Identify it, then rewrite `GradeReport` so that changing the grading thresholds (A ≥ 90, B ≥ 80…) requires editing **only one method**:
@@ -142,6 +148,8 @@ cards:
     explanation: "Interface methods are implicitly `public abstract`. The implementing class uses `implements` (not `extends`). Every method declared in the interface must be implemented — the compiler enforces this. `@Override` confirms the method matches the interface signature."
 
   - id: 6
+    hint: >-
+      Separate state and behavior common to all animals from the sound supplied by each subclass. Identify which constructor owns initialization of the inherited name.
     difficulty: advanced
     question: |
       Design an abstract Java class `Animal` with:
@@ -174,6 +182,8 @@ cards:
     explanation: "Under Java 17 constructor rules, `super(name)` must be the first statement — it runs the parent constructor before any Dog-specific code. Because `name` is `private` in `Animal`, `Dog` cannot access it directly — it uses `getName()`. The `abstract` keyword on `makeSound()` forces every concrete subclass to provide an implementation."
 
   - id: 7
+    hint: >-
+      Follow one stored item from the constructor through the field to the getter and setter. The same type relationship must hold at every boundary.
     difficulty: intermediate
     question: |
       Write a generic Java class `Box<T>` that holds one item of any type. Include a constructor, a `getItem()` method, and a `setItem()` method.
@@ -198,6 +208,8 @@ cards:
     explanation: "`<T>` is a type parameter — a placeholder filled in at the call site. The compiler uses it to insert correct types and casts, catching mismatches at compile time instead of runtime. `Box<int>` is illegal — use `Box<Integer>` since generics require object types (due to type erasure)."
 
   - id: 8
+    hint: >-
+      A generic body cannot assume arbitrary T values support numeric operators. Identify the comparison operation the type contract must guarantee.
     difficulty: advanced
     question: |
       Write a generic static Java method `findMax` that takes two arguments of any type and returns the larger one. The type must be **constrained** to types that can be compared.
@@ -214,6 +226,8 @@ cards:
     explanation: "`<T extends Comparable<T>>` is a **bounded type parameter** — it restricts `T` to types that implement `Comparable`. This is the Java equivalent of C++20 concepts. Without the bound, the compiler would reject `a.compareTo(b)` because it can't guarantee `T` has that method. `String`, `Integer`, `Double` all implement `Comparable`."
 
   - id: 9
+    hint: >-
+      Describe the state needed after processing one word, then after processing that same word again. Include the lookup result for a word never encountered.
     difficulty: expert
     question: |
       Write a Java `WordCounter` class that takes a `String[]` in its constructor and provides:
@@ -249,6 +263,8 @@ cards:
     explanation: "`HashMap<String, Integer>` maps each word to its frequency — O(1) insert and lookup. `HashSet<String>` tracks distinct words — O(1) add with automatic deduplication. `getOrDefault(word, 0)` avoids the NPE that `get()` followed by auto-unboxing would cause for missing keys."
 
   - id: 10
+    hint: >-
+      Draw the full-course and available-seat paths before choosing statements. Decide where the state may change and what information must cross the method boundary on failure.
     difficulty: advanced
     question: |
       In Java, define a checked exception `EnrollmentException` and a `Course.enroll(Student s)` method that throws it when the course is full (`capacity` exceeded). Write both the class definition and the calling code that handles the exception.
@@ -301,6 +317,8 @@ cards:
     explanation: "`catch (IOException e)` handles `IOException` and all its subclasses (e.g., `FileNotFoundException`). `finally` runs whether or not an exception was thrown — use it for cleanup (closing streams, releasing locks). Even if the `catch` block re-throws, `finally` still runs."
 
   - id: 12
+    hint: >-
+      Trace adding the same student twice, then imagine a second method that also inserts students. Which design makes the no-duplicates rule depend on remembering a check at every insertion site?
     difficulty: advanced
     question: "You need to store course enrollments in Java. Two options:\n- `List<Student>` with a manual duplicate check in `enroll()`\n- `LinkedHashSet<Student>` that handles duplicates automatically\n\nImplement `enroll(Student s)` using each approach, then state which is preferable and why.\n\nAssume Student.equals and hashCode consistently identify the same unique enrollment ID."
     answer: "```java\n// Option A: List — manual duplicate check\nprivate List<Student> students = new ArrayList<>();\npublic void enroll(Student s) {\n    if (!students.contains(s)) students.add(s);\n}\n\n// Option B: LinkedHashSet — automatic deduplication, insertion order preserved\nprivate LinkedHashSet<Student> students = new LinkedHashSet<>();\npublic void enroll(Student s) {\n    students.add(s);   // ignored if already present — no check needed\n}\n```\n\n**Option B is preferable.** `LinkedHashSet.add()` is expected O(1) with well-distributed hashes and the \"no duplicates\" invariant is **enforced by the type** — you cannot accidentally skip the check. `List.contains()` is O(n) and the invariant is only enforced if every path that changes the list preserves it. Choose a collection whose contract matches your invariant.\n"
@@ -328,6 +346,8 @@ cards:
     explanation: "Declaring the parameter as `List<String>` (the interface) rather than `ArrayList<String>` (the concrete class) allows any `List` implementation to be passed. This is 'program to an interface, not an implementation.' The enhanced for-loop works on any `Iterable`, which both `ArrayList` and `LinkedList` implement through `List`."
 
   - id: 14
+    hint: >-
+      For each operation, identify the caller’s input, useful result, and possible failure. Keep storage choices out of those caller-facing types.
     difficulty: expert
     question: |
       You are building a course registration system in Java. Design the method signature (interface method + throws) for an `Enrollable` interface that:
@@ -356,6 +376,8 @@ cards:
     explanation: "`enroll()` throws a checked exception because a full course is an external condition the caller should handle. `drop()` returns `boolean` because dropping a non-existent student is a non-exceptional expected case. `getRoster()` returns `List<String>` (names) rather than exposing `Student` objects or a concrete collection type — this hides the storage decision and does not expose stored Student objects through the roster. Student remains part of the public contract because enroll accepts it."
 
   - id: 15
+    hint: >-
+      Ask which capabilities this local counter needs. Trace the conversions required by its current type on each increment before choosing the replacement.
     difficulty: advanced
     question: |
       A teammate wrote this Java accumulator. Find the performance issue, explain the root cause, and write the corrected version.

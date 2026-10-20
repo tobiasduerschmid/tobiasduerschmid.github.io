@@ -13,6 +13,8 @@ cards:
     answer: "**Polymorphism over conditions** — replacing `if/else` chains with polymorphic objects that each implement the behavior for one state."
     explanation: "Adding a new state adds a class and may require edits to incoming transitions or wiring; it avoids scattering state-specific behavior through the context. A typed interface checks required methods, but correct transition rules still need tests."
   - id: 3
+    hint: >-
+      Compare a game object changing behavior after an event with a client selecting a different sorting algorithm. What causes the variation in each case?
     difficulty: intermediate
     question: "How does the State pattern differ from the Strategy pattern?"
     answer: "State varies behavior with lifecycle state; Strategy supplies an interchangeable algorithm. Who selects an implementation is a useful clue, not an absolute rule."
@@ -23,6 +25,8 @@ cards:
     answer: "A state object implementing the Null Object pattern for 'do nothing' behavior, used instead of null checks."
     explanation: "Used for initialization or final states. Communicates the design intent of empty behavior explicitly rather than scattering null checks throughout the code."
   - id: 5
+    hint: >-
+      Put all transition rules in one place, then try putting each rule beside the behavior it leaves. Compare how you would find and change the complete lifecycle.
     difficulty: advanced
     question: "In the State design pattern, who should define state transitions?"
     answer: "**Context-driven**: all transitions visible in one place. **State-driven**: each state knows its successors, more flexible but harder to see the full machine."

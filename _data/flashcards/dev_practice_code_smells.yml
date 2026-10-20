@@ -10,6 +10,8 @@ cards:
     explanation: "Smells are diagnostic cues. They tell you where to inspect, not what verdict to reach automatically."
 
   - id: 2
+    hint: >-
+      A business rule changes after being copied into three places. Trace what happens if a maintainer finds only two copies.
     difficulty: intermediate
     bloom: understand
     question: "Why is duplicated code dangerous?"
@@ -24,6 +26,8 @@ cards:
     explanation: "The goal is not tiny methods for their own sake. The goal is to make each conceptual step visible and separately reviewable."
 
   - id: 4
+    hint: >-
+      List the unrelated requests that caused the class to grow. Compare the class’s size with its history of reasons for change.
     difficulty: advanced
     bloom: apply
     question: "How do the Large Class and Divergent Change code smells relate?"
@@ -31,6 +35,8 @@ cards:
     explanation: "Both point toward separating responsibilities so each class has one primary reason to change."
 
   - id: 5
+    hint: >-
+      Inspect several call sites and circle values that recur together. Are they independent choices or parts of one domain concept?
     difficulty: advanced
     bloom: apply
     question: "How are the Long Parameter List and Data Clumps code smells related?"
@@ -52,6 +58,8 @@ cards:
     explanation: "The typical fix is Move Method or Extract Method plus Move Method, placing behavior closer to the data and invariants it uses."
 
   - id: 8
+    hint: >-
+      For a suspected smell, name an actual change it makes harder. Then consider whether removing it would introduce a larger cost in this context.
     difficulty: advanced
     bloom: evaluate
     question: "Why should code smells be handled with judgment instead of automatic rules?"

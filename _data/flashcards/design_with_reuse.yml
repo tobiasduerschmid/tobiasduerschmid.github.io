@@ -21,6 +21,8 @@ cards:
     explanation: "The distinction matters because external reuse must treat the module as a partially-known black box that can change, disappear, or even be weaponized — while internal reuse usually has access to the original author, source, and tests."
 
   - id: 4
+    hint: >-
+      Two modules accept compatible data types but each assumes it controls the main event loop. What else must agree before they can work together?
     difficulty: intermediate
     question: "What does Garlan's *Architectural Mismatch* say about reuse?"
     answer: "Real-world modules are **only partially compatible**. They make countless undocumented assumptions about threading, ownership, lifecycle, and error handling, so integrating them requires substantial **glue code**. The vision of snap-together components is closer to an aspiration than a reality."
@@ -33,6 +35,8 @@ cards:
     explanation: "Defense against silent upstream drift. The `urllib3` 2.0.0 → `requests` → `docker` incident dramatized this: a transitive major-version release broke unrelated, untouched projects overnight."
 
   - id: 6
+    hint: >-
+      Distinguish reproducing yesterday’s build from intentionally adopting a reviewed patch. Do those tasks require the dependency version to change at the same time?
     difficulty: advanced
     question: "How does the principle **Update Your Dependencies** (for security patches) interact with **Keep Versions Fixed** (pinning)? Aren't they in tension?"
     answer: "They are complementary. Pin so that updates happen **intentionally**, not by accident — but actively update on your own cadence so you receive security fixes and bug fixes. Without pinning your build breaks at random. Without updating you become Heartbleed."
@@ -45,6 +49,8 @@ cards:
     explanation: "Each new dependency is a risk: it can break, stop being maintained, be abandoned, be unpublished, or be silently weaponized (cf. the 2018 *eslint-scope* malicious-package incident). Reimplementing a few lines is often cheaper over the long run than carrying the dependency."
 
   - id: 8
+    hint: >-
+      A library works well for millions of users but rejects one input your product must support. Which evidence matters for your adoption decision?
     difficulty: basic
     question: "Modules with higher **maintenance level** and **popularity** are better reuse candidates — but what beats popularity?"
     answer: "**Fit to your context.** The most popular library is useless if it doesn't handle the inputs, scale, or constraints your domain actually requires."
@@ -99,12 +105,16 @@ cards:
     explanation: "Design Docs aim for early identification of issues (when changes are still cheap), consensus, knowledge transfer, and organizational memory. Practiced widely at Google, Amazon, Microsoft, Kubernetes, Shopify, and others."
 
   - id: 17
+    hint: >-
+      Choose a decision whose answer depends on information you will learn next month. Where would committing now make later change expensive?
     difficulty: intermediate
     question: "Why is it valuable to **delay** some design decisions, and how do you keep track of them?"
     answer: "Some decisions depend on information you don't yet have, or are likely to change. Design the system so it does **not** assume a solution for those decisions, and **keep a list** of delayed decisions and what information you need to resolve them. This keeps the design flexible at exactly the points where it most needs to be flexible."
     explanation: "Premature commitment to a solution for a high-uncertainty decision means you usually have to rework once the information arrives. A delayed-decision list is the architectural equivalent of a TODO list with reasons attached."
 
   - id: 18
+    hint: >-
+      Take a previously correct function into a new environment with larger inputs. Does control of the source code prove its old assumptions still hold?
     difficulty: intermediate
     question: "True or false: *Owning the code makes it safe to reuse without further checks.*"
     answer: "**False.** Owning the code is no defense against the assumptions baked into it. Ariane 5 destroyed itself because the team reused code they fully owned — but the new operating context violated assumptions the original code had silently relied on."
@@ -117,6 +127,8 @@ cards:
     explanation: "Divide-and-conquer applied to design. Experts routinely solve a stripped-down version of the problem to anchor their understanding, then layer in complexity."
 
   - id: 20
+    hint: >-
+      Trace the dependency’s life after the first successful integration. What work returns when its environment, interface, or known defects change?
     difficulty: advanced
     question: "Heartbleed and left-pad both illustrate that external reuse is **not a one-time investment**. Why?"
     answer: "Once you depend on a module, you also depend on its **ongoing fate**: security vulnerabilities will be discovered (you must update — Heartbleed), maintainers may abandon or weaponize the package (you must monitor — left-pad, eslint-scope), important updates may bundle API-breaking changes (you must test — urllib3 2.0.0). Adopting a dependency is signing up for ongoing maintenance work."

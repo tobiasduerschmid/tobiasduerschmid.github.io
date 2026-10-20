@@ -27,6 +27,8 @@ cards:
     explanation: "Each style is a vocabulary of element and connector types plus topological constraints. Modern derived styles — REST, Event Sourcing, Hexagonal/Clean — are typically combinations or refinements of these foundational styles."
 
   - id: 5
+    hint: >-
+      Consider an image-processing pipeline inside a service that receives interactive requests. Does the internal organization have to match the way services communicate?
     difficulty: intermediate
     question: "What is a **heterogeneous architecture**, and why is it the norm in real systems?"
     answer: "An architecture that combines multiple styles, because every style trades off some qualities for others and no single style suits every concern of a complex system. The two main combination patterns are **hierarchy** (one style governs the macro-structure, a different style governs each component's internals) and **overlay** (multiple styles applied concurrently to the same components, like REST)."
@@ -45,6 +47,8 @@ cards:
     explanation: "The bounded-context and data-ownership differences cascade into operational complexity (microservices add DevOps overhead), team structure (independent teams per service), and evolution (microservices change independently). SOA dominates large legacy enterprises; microservices dominate cloud-native and modern web companies."
 
   - id: 8
+    hint: >-
+      Choose one style rule and imagine removing it. Which change or interaction becomes possible, and which useful prediction becomes harder?
     difficulty: basic
     question: "Why does style choice strongly influence achievable **quality attributes**?"
     answer: "Each style is a *prefabricated set of constraints* designed to elicit specific qualities. Pipe-and-filter promotes modifiability and reusability while inhibiting interactivity and fault tolerance; pub-sub promotes evolvability while inhibiting predictability; layered promotes portability while inhibiting performance. **Choosing a style is implicitly choosing a quality profile.**"
@@ -57,6 +61,8 @@ cards:
     explanation: "Without constraints, you have a vocabulary of element types but no architectural discipline — just a kit of parts. The constraints are the contract: 'satisfy these and you get these quality properties.' Break the constraint, lose the guarantee."
 
   - id: 10
+    hint: >-
+      For a familiar style, identify an interaction its rules forbid. What requirement might make that forbidden interaction attractive?
     difficulty: basic
     question: "Why is *every* successful style a deliberate trade-off?"
     answer: "Because architectural styles are constrained vocabularies, they make some design choices impossible — and those impossible choices are exactly what would have delivered different quality attributes. Pipe-and-filter's filter independence buys recomposability and parallelism, and gives up shared state and interactivity. Pub-sub's bus indirection buys decoupling, and gives up synchronous determinism. There is no free lunch in style choice."
@@ -75,12 +81,16 @@ cards:
     explanation: "This is the central practical insight of style-based design. Without architecture, a desired quality (say, modifiability) is a property the team must maintain by discipline. With the right architectural style, the quality is built into the structure and resists violation by construction."
 
   - id: 13
+    hint: >-
+      Suppose a new billing rule forces edits in four separately deployed services. Revisit whether their boundaries follow business responsibilities or merely technical steps.
     difficulty: advanced
     question: "How does **Domain-Driven Design** connect to microservices?"
     answer: "Domain-Driven Design gives architects the idea of a **bounded context**: a business-domain boundary with its own model and language. Microservices use that idea to draw service boundaries around business capabilities, so each service can evolve independently instead of becoming a tiny technical layer in a distributed monolith."
     explanation: "The key page-level connection is bounded-context mapping. If service boundaries are drawn only around technical functions, the system may have many deployments but still require coordinated changes across services."
 
   - id: 14
+    hint: >-
+      Compare the boxes in a design document with actual imports, calls, and message routes. What evidence would distinguish a claimed boundary from an enforced one?
     difficulty: intermediate
     question: "When evaluating whether a system 'is' a particular architectural style, what are you really evaluating?"
     answer: "Whether the *embodied* code satisfies the style's constraints — its allowed element types, connector types, and topological rules. A team can *claim* to use any style; the question is whether the source code actually does. Architectural recovery tools and code reviews exist to detect when an embodied architecture has diverged from its stated style."
@@ -93,6 +103,8 @@ cards:
     explanation: "The architect who only knows microservices forces every problem into microservices. The architect who knows pipe-and-filter, pub-sub, layered, client-server, repository, and peer-to-peer can pick fit-for-purpose styles per subproblem — and recognize, name, and trade off the qualities each one buys and gives up."
 
   - id: 16
+    hint: >-
+      Compare predicting a component’s behavior when it may read any global state with predicting it when all inputs are explicit. What does restricting its choices let you establish?
     difficulty: basic
     question: "Why do architectural-style constraints give architects power?"
     answer: "Constraints remove some design freedom so the architect can make stronger predictions. If filters can communicate only through pipes, the team can predict recomposability. If lower layers cannot call upper layers, the team can predict dependency direction. The constraint is what makes the quality claim analyzable."

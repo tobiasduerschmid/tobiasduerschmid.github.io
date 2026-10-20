@@ -109,6 +109,7 @@ layout: sebook
             <a class="gym-btn secondary" href="{{ '/se-gym-stats/' | relative_url }}" id="stats-page-link">
               <i class="fa-solid fa-chart-column" aria-hidden="true"></i> View performance statistics
             </a>
+            <a class="gym-btn secondary" href="{{ '/se-gym-stats/#skipped-questions' | relative_url }}">Review skipped questions</a>
           </div>
           <div class="controls-row toggle-row timed-practice-toggle-row">
             <span class="toggle-copy">
@@ -795,6 +796,8 @@ layout: sebook
       </div>
       <p id="browser-fullscreen-status" class="gym-summary-text" role="status"></p>
       <p id="timed-practice-status" class="gym-summary-text" role="status" aria-live="polite" aria-atomic="true"></p>
+      <p id="workout-skip-status" class="gym-summary-text" role="status" aria-atomic="true"></p>
+      <p class="gym-summary-text"><a href="{{ '/se-gym-stats/#skipped-questions' | relative_url }}">Review skipped questions</a> to show them in practice again.</p>
 
       <div class="workout-progress-bar">
         <div class="workout-progress-fill progress-fill-zero" id="workout-progress"></div>
@@ -950,6 +953,7 @@ layout: sebook
       var gymSelectedDiv = document.getElementById('gym-selected');
       var backBtn = document.getElementById('back-to-library-btn');
       var workoutCardArea = document.getElementById('workout-card-area');
+      var workoutSkipStatus = document.getElementById('workout-skip-status');
       var workoutResults = document.getElementById('workout-results');
       var workoutProgress = document.getElementById('workout-progress');
       var workoutScoreEl = document.getElementById('workout-score');
@@ -1031,6 +1035,7 @@ layout: sebook
       var workoutIsDaily = false; // true when the current workout was started by "Workout of the Day"
       var workoutActivityCardCount = 0;
       var workoutPreservesSavedProgress = false;
+      var workoutCurrentCardAnswered = false;
       var challengeTarget = null; // { score, total, name } when the current workout is an imported challenge
       var lastTimedPracticeDrawCount = 0;
       var WORKOUT_PROGRESS_KEY = 'se-gym-workout-progress';
@@ -1618,7 +1623,7 @@ layout: sebook
           if (!entry || (entry.type !== 'quiz' && entry.type !== 'flashcard')) return;
           var data = entry.type === 'quiz' ? ALL_CARD_DATA.quizzes[entry.id] : ALL_CARD_DATA.flashcards[entry.id];
           if (!data) return;
-          var items = entry.type === 'quiz' ? data.questions : data.cards;
+          var items = availableDeckCards(entry.type, entry.id).map(function (card) { return card.data; });
           var count = items.length;
           items.forEach(function (item) {
             if (!passesDifficultyFilter(item)) return;
@@ -1744,7 +1749,22 @@ layout: sebook
       // decks are visited before masters so an aggregate card resolves to the
       // source topic's canonical key.
       function forEachAvailableCard(cb) {
-        PersonalGym.forEachAvailableCard(ALL_CARD_DATA, cb);
+        var cards = [];
+        PersonalGym.forEachAvailableCard(ALL_CARD_DATA, function (card) { cards.push(card); });
+        PersonalGym.filterSkippedQuestions(cards).forEach(cb);
+      }
+
+      function deckCards(cardType, deckId) {
+        var decks = cardType === 'quiz' ? ALL_CARD_DATA.quizzes : ALL_CARD_DATA.flashcards;
+        if (!Object.prototype.hasOwnProperty.call(decks, deckId)) return [];
+        var deck = decks[deckId];
+        return (cardType === 'quiz' ? deck.questions : deck.cards).map(function (data) {
+          return { cardType: cardType, source: deck.title, deckId: deckId, data: data };
+        });
+      }
+
+      function availableDeckCards(cardType, deckId) {
+        return PersonalGym.filterSkippedQuestions(deckCards(cardType, deckId));
       }
 
       // Cards whose spaced-repetition due time has arrived, most overdue first.
@@ -1802,7 +1822,9 @@ layout: sebook
       function beginWorkout(cards, options) {
         options = options || {};
         workoutIsDaily = false;
+        cards = PersonalGym.filterSkippedQuestions(cards || []);
         if (!cards || cards.length === 0) return false;
+        workoutSkipStatus.textContent = '';
         // Linked practice can run alongside a paused workout. Keep that
         // checkpoint protected for this run, including its reviews and restarts.
         workoutPreservesSavedProgress = !!options.preserveSaved && readWorkoutProgress() !== null;
@@ -1972,11 +1994,21 @@ layout: sebook
       }
 
       // Resolve challenge card keys back to workout cards, preserving order.
-      function buildCardsFromKeys(keys) {
+      function buildCardsFromKeys(keys, decks) {
+        // Checkpoints keep the selected deck as well as the canonical stats key:
+        // the same question may be skipped in a master deck but kept in its topic.
+        if (Array.isArray(decks)) {
+          return keys.map(function (key, index) {
+            var deck = decks[index];
+            return deckCards(deck.cardType, deck.deckId).find(function (card) {
+              return cardStatsKeyVariants(card.cardType, card.deckId, card.data).indexOf(key) !== -1;
+            });
+          }).filter(Boolean);
+        }
         var want = {};
         keys.forEach(function (k) { want[k] = true; });
         var byKey = {};
-        forEachAvailableCard(function (c) {
+        PersonalGym.forEachAvailableCard(ALL_CARD_DATA, function (c) {
           cardStatsKeyVariants(c.cardType, c.deckId, c.data).forEach(function (key) {
             if (want[key] && !byKey[key]) byKey[key] = { cardType: c.cardType, source: c.source, deckId: c.deckId, data: c.data };
           });
@@ -2025,6 +2057,10 @@ layout: sebook
           if (isReview && reviewQueue.length === 0) return null;
           return {
             keys: keys,
+            decks: Array.isArray(data.decks) && data.decks.length === keys.length &&
+              data.decks.every(function (deck) {
+                return deck && (deck.cardType === 'quiz' || deck.cardType === 'flashcard') && typeof deck.deckId === 'string';
+              }) ? data.decks : null,
             currentStep: integerInRange(data.currentStep, 0, keys.length, 0),
             score: integerInRange(data.score, 0, keys.length, 0),
             incorrectIndices: normalizeWorkoutIndices(data.incorrectIndices, keys.length),
@@ -2061,6 +2097,7 @@ layout: sebook
           type: WORKOUT_PROGRESS_KEY,
           v: WORKOUT_PROGRESS_VERSION,
           keys: keys,
+          decks: workoutCards.map(function (card) { return { cardType: card.cardType, deckId: card.deckId }; }),
           currentStep: integerInRange(step, 0, keys.length, 0),
           score: integerInRange(workoutScore, 0, keys.length, 0),
           incorrectIndices: normalizeWorkoutIndices(workoutIncorrectIndices, keys.length),
@@ -2081,6 +2118,7 @@ layout: sebook
       }
 
       function saveAnsweredWorkoutProgress() {
+        workoutCurrentCardAnswered = true;
         recordWorkoutCardAnswered();
         saveWorkoutProgress(workoutIsReview ? workoutReviewStep + 1 : workoutCurrentStep + 1);
       }
@@ -2099,7 +2137,7 @@ layout: sebook
           savedWorkoutSummary.textContent = '';
           return false;
         }
-        var cards = buildCardsFromKeys(saved.keys);
+        var cards = buildCardsFromKeys(saved.keys, saved.decks);
         if (cards.length !== saved.keys.length) {
           clearWorkoutProgress();
           return false;
@@ -2122,7 +2160,7 @@ layout: sebook
           announceGymStatus('No saved workout is available.');
           return;
         }
-        var cards = buildCardsFromKeys(saved.keys);
+        var cards = buildCardsFromKeys(saved.keys, saved.decks);
         if (cards.length !== saved.keys.length) {
           clearWorkoutProgress();
           announceGymStatus('That saved workout is no longer available. Start a new workout instead.');
@@ -2179,14 +2217,16 @@ layout: sebook
             if (challengeStatusEl) challengeStatusEl.textContent = 'That file is not a valid SE Gym challenge.';
             return;
           }
-          var cards = buildCardsFromKeys(data.keys);
+          var cards = PersonalGym.filterSkippedQuestions(buildCardsFromKeys(data.keys));
           if (!cards.length) {
-            if (challengeStatusEl) challengeStatusEl.textContent = 'None of the challenge’s questions are available on this site.';
+            challengeTarget = null;
+            if (challengeStatusEl) challengeStatusEl.textContent = 'None of the challenge’s questions are available for practice. Review skipped questions to restore any you excluded.';
             return;
           }
           challengeTarget = {
             score: Math.max(0, parseInt(data.score, 10) || 0),
             total: Math.max(cards.length, parseInt(data.total, 10) || cards.length),
+            questionsOmitted: cards.length !== data.keys.length,
             name: typeof data.name === 'string' ? data.name.slice(0, 40) : ''
           };
           if (challengeStatusEl) challengeStatusEl.textContent = '';
@@ -2603,7 +2643,7 @@ layout: sebook
             });
           } else if (entry.type === 'selection') {
             hasSelection = true;
-            buildCardsFromKeys(requestedQuestionKeys).forEach(function(found) {
+            PersonalGym.filterSkippedQuestions(buildCardsFromKeys(requestedQuestionKeys)).forEach(function(found) {
               if (found && !seenQuestions[found.data.question]) {
                 seenQuestions[found.data.question] = true;
                 found.source += ' (Selected)';
@@ -2613,7 +2653,8 @@ layout: sebook
           } else if (entry.type === 'quiz') {
             var quizData = ALL_CARD_DATA.quizzes[entry.id];
             if (!quizData) return;
-            quizData.questions.forEach(function (q) {
+            availableDeckCards('quiz', entry.id).forEach(function (card) {
+              var q = card.data;
               if (!isAllowedDifficulty(q)) return;
               if (!seenQuestions[q.question]) {
                 seenQuestions[q.question] = true;
@@ -2628,7 +2669,8 @@ layout: sebook
           } else if (entry.type === 'flashcard') {
             var fcData = ALL_CARD_DATA.flashcards[entry.id];
             if (!fcData) return;
-            fcData.cards.forEach(function (c) {
+            availableDeckCards('flashcard', entry.id).forEach(function (card) {
+              var c = card.data;
               if (!isAllowedDifficulty(c)) return;
               if (!seenQuestions[c.question]) {
                 seenQuestions[c.question] = true;
@@ -2661,8 +2703,8 @@ layout: sebook
         challengeTarget = null;
         var cards = buildWorkoutCards(sourceGym);
         if (!cards.length) {
-          if (isPlainView) showPlainQuizStatus('No questions are available for this quiz. Check the quiz name in the URL.');
-          else announceGymStatus('No cards match your current gym and difficulty filter.');
+          if (isPlainView) showPlainQuizStatus('No questions are available for this quiz. Check the quiz name or restore skipped questions from the statistics page.');
+          else announceGymStatus('No cards are available with your current decks, difficulty filter, and skipped questions. Review skipped questions on the statistics page to restore them.');
           return;
         }
         beginWorkout(cards, { preserveSaved: !!(options && options.preserveSaved) });
@@ -2674,6 +2716,11 @@ layout: sebook
         workoutCardArea.innerHTML = '';
         var card = workoutCards[index];
         if (!card) return;
+        workoutCurrentCardAnswered = false;
+        if (PersonalGym.isQuestionSkipped(card.cardType, card.deckId, card.data)) {
+          removeUnansweredWorkoutCard(index);
+          return;
+        }
 
         updateWorkoutProgress();
 
@@ -2682,7 +2729,60 @@ layout: sebook
         } else {
           renderFlashcard(card, index);
         }
+        renderSkipQuestionAction(card, index);
         if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
+      }
+
+      function renderSkipQuestionAction(card, index) {
+        var actions = document.createElement('div');
+        actions.className = 'workout-skip-actions';
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'gym-btn secondary';
+        button.textContent = 'Always skip';
+        button.setAttribute('aria-describedby', 'workout-skip-help');
+        var help = document.createElement('p');
+        help.id = 'workout-skip-help';
+        help.textContent = 'Skip this question in this deck. Restore it with “Show again” in Review skipped questions.';
+        button.addEventListener('click', function () {
+          if (!PersonalGym.skipQuestion(card.cardType, card.deckId, card.data)) {
+            workoutSkipStatus.textContent = 'Could not save this choice. Allow browser storage and try again.';
+            return;
+          }
+          workoutSkipStatus.textContent = 'Question skipped in ' + card.source + '. You can show it again from Review skipped questions.';
+          if (workoutCurrentCardAnswered) {
+            workoutIncorrectIndices = workoutIncorrectIndices.filter(function (value) { return value !== index; });
+            saveWorkoutProgress(workoutIsReview ? workoutReviewStep + 1 : workoutCurrentStep + 1);
+            nextWorkoutCard();
+          } else {
+            removeUnansweredWorkoutCard(index);
+          }
+        });
+        actions.appendChild(button);
+        actions.appendChild(help);
+        workoutCardArea.appendChild(actions);
+      }
+
+      function removeUnansweredWorkoutCard(index) {
+        if (challengeTarget) challengeTarget.questionsOmitted = true;
+        if (workoutIsReview) {
+          // Preserve the first attempt's score; skipping a review is not an answer.
+          workoutReviewQueue.splice(workoutReviewStep, 1);
+        } else {
+          workoutCards.splice(index, 1);
+          workoutIncorrectIndices = workoutIncorrectIndices.filter(function (value) {
+            return value !== index;
+          }).map(function (value) { return value > index ? value - 1 : value; });
+          workoutTotalEl.textContent = workoutCards.length;
+        }
+        var nextIndex = workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep;
+        if (typeof nextIndex === 'number' && nextIndex < workoutCards.length) {
+          saveWorkoutProgress();
+          showWorkoutCard(nextIndex);
+          scrollToTop();
+        } else {
+          finishWorkout();
+        }
       }
 
       function updateWorkoutProgress() {
@@ -3355,9 +3455,16 @@ layout: sebook
         div.className = 'workout-flashcard';
 
         var sourceHtml = '<span class="workout-source-badge flashcard-badge">' + escapeHtml(card.source) + '</span>' + difficultyBadgeHtml(c);
+        const hintId = 'workout-flashcard-hint-' + workoutIndex;
+        const hintHtml = c.hint
+          ? '<div class="flashcard-hint-area">' +
+            '<button class="flashcard-hint-toggle" type="button" aria-expanded="false" aria-controls="' + hintId + '">Hint</button>' +
+            '<div class="flashcard-hint" id="' + hintId + '" hidden>' + c.hint + '</div></div>'
+          : '';
 
         div.innerHTML = sourceHtml +
           '<div class="flashcard-question">' + c.question + '</div>' +
+          hintHtml +
           '<div class="flashcard-answer-container hidden">' +
           '<div class="flashcard-answer">' + c.answer + '</div>' +
           '<div class="flashcard-explanation">' + c.explanation + '</div>' +
@@ -3382,6 +3489,15 @@ layout: sebook
         var shortcutHint = div.querySelector('.flashcard-shortcuts-hint');
         var correctBtn = div.querySelector('.correct-btn');
         var incorrectBtn = div.querySelector('.incorrect-btn');
+        const hintButton = div.querySelector('.flashcard-hint-toggle');
+        if (hintButton) {
+          const hint = div.querySelector('.flashcard-hint');
+          hintButton.addEventListener('click', function () {
+            hint.hidden = !hint.hidden;
+            hintButton.setAttribute('aria-expanded', String(!hint.hidden));
+            hintButton.textContent = hint.hidden ? 'Hint' : 'Hide Hint';
+          });
+        }
 
         showBtn.addEventListener('click', function () {
           answerContainer.classList.remove('hidden');
@@ -3507,6 +3623,7 @@ layout: sebook
         if (!workoutPreservesSavedProgress) clearWorkoutProgress();
         workoutCardArea.innerHTML = '';
         workoutView.classList.add('workout-results-active');
+        workoutView.classList.toggle('workout-empty', workoutCards.length === 0);
         showElement(workoutResults);
         workoutProgress.style.width = '100%';
         workoutScoreEl.textContent = workoutScore;
@@ -3521,7 +3638,7 @@ layout: sebook
         }
 
         // Record a completed Workout of the Day so the entrance badge updates.
-        if (workoutIsDaily && practicedCardCount >= workoutCards.length) {
+        if (workoutIsDaily && practicedCardCount > 0 && practicedCardCount >= workoutCards.length) {
           PersonalGym.setDailyLast(PersonalGym.todayStr());
           if (wodStatusEl) {
             wodStatusEl.textContent = '✓ Completed today';
@@ -3530,7 +3647,11 @@ layout: sebook
         }
         if (workoutIsDaily) workoutIsDaily = false;
 
-        if (workoutEndedByTimer) {
+        workoutRestartBtn.disabled = PersonalGym.filterSkippedQuestions(workoutCards).length === 0;
+        if (workoutCards.length === 0) {
+          workoutSummaryEl.textContent = 'No questions remain in this workout. Restore skipped questions to practice them again.';
+          hideElement(workoutReviewBtn);
+        } else if (workoutEndedByTimer) {
           workoutSummaryEl.textContent = 'Time is up. Review your score below, then restart or return to the gym entrance.';
           if (workoutIncorrectIndices.length > 0) showElement(workoutReviewBtn);
           else hideElement(workoutReviewBtn);
@@ -3540,7 +3661,8 @@ layout: sebook
           if (typeof window.spawnConfetti === 'function') window.spawnConfetti(workoutResults);
         } else {
           workoutSummaryEl.textContent = 'Keep practicing to improve your recall!';
-          showElement(workoutReviewBtn);
+          if (workoutIncorrectIndices.length > 0) showElement(workoutReviewBtn);
+          else hideElement(workoutReviewBtn);
           if (typeof window.spawnConfetti === 'function') window.spawnConfetti(workoutResults);
         }
 
@@ -3550,23 +3672,26 @@ layout: sebook
           var them = challengeTarget.score;
           var who = challengeTarget.name || 'Your challenger';
           var verdict = you > them ? 'You win! 🏆' : (you === them ? 'It’s a tie!' : 'So close — train and rematch!');
-          workoutSummaryEl.textContent = 'Challenge complete — ' + verdict + ' You scored ' + you + ' / ' +
-            workoutCards.length + '; ' + who + ' scored ' + them + ' / ' + challengeTarget.total + '.';
+          workoutSummaryEl.textContent = challengeTarget.questionsOmitted
+            ? 'Challenge practice complete. Scores are not compared because some questions were skipped or unavailable.'
+            : 'Challenge complete — ' + verdict + ' You scored ' + you + ' / ' +
+              workoutCards.length + '; ' + who + ' scored ' + them + ' / ' + challengeTarget.total + '.';
           challengeTarget = null;
         }
 
         if (workoutResultShortcutHint) {
           workoutResultShortcutHint.innerHTML = 'Shortcut: <kbd>' + enterKeyLabel() + '</kbd> restarts the workout.';
-          workoutResultShortcutHint.classList.remove('hidden');
+          workoutResultShortcutHint.classList.toggle('hidden', workoutRestartBtn.disabled);
         }
-        focusWorkoutAction(workoutRestartBtn);
-        spawnGymEmojis(workoutResults);
+        focusWorkoutAction(workoutRestartBtn.disabled ? workoutBackBtn : workoutRestartBtn);
+        if (practicedCardCount > 0) spawnGymEmojis(workoutResults);
       }
 
       function renderWorkoutBreakdown() {
         var listEl = document.getElementById('workout-breakdown-list');
         if (!listEl) return;
         listEl.innerHTML = '';
+        if (!workoutCards.length) return;
 
         var totalSeen = workoutCards.length;
         var totalCorrect = workoutScore;
@@ -3611,11 +3736,15 @@ layout: sebook
 
       function startReview() {
         workoutIsReview = true;
-        workoutReviewQueue = workoutIncorrectIndices.filter(function (v, i, a) { return a.indexOf(v) === i; });
+        workoutReviewQueue = workoutIncorrectIndices.filter(function (v, i, a) {
+          var card = workoutCards[v];
+          return a.indexOf(v) === i && !PersonalGym.isQuestionSkipped(card.cardType, card.deckId, card.data);
+        });
         workoutIncorrectIndices = [];
         workoutReviewStep = 0;
         workoutEndedByTimer = false;
         workoutActivityCardCount = 0;
+        if (!workoutReviewQueue.length) { finishWorkout(); return; }
         hideElement(workoutResults);
         requestWorkoutFullscreen();
         startWorkoutTimer(workoutReviewQueue.length);
@@ -3625,6 +3754,7 @@ layout: sebook
       }
 
       function restartWorkout() {
+        workoutCards = PersonalGym.filterSkippedQuestions(workoutCards);
         shuffleArray(workoutCards);
         workoutCurrentStep = 0;
         workoutScore = 0;
@@ -3635,6 +3765,8 @@ layout: sebook
         workoutEndedByTimer = false;
         workoutActivityCardCount = 0;
         resetDifficultyStats();
+        workoutTotalEl.textContent = workoutCards.length;
+        if (!workoutCards.length) { finishWorkout(); return; }
         restartWorkoutHeroAnimations();
         hideElement(workoutResults);
         if (workoutResultShortcutHint) workoutResultShortcutHint.classList.add('hidden');

@@ -21,6 +21,8 @@ cards:
   # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slide 8 (order of evaluation)
   # Homework: Homework Problems (Public).docx, ADVHASKELL3 C (lazy demand).
   - id: cs131-functional-card-evaluation-order
+    hint: >-
+      Substitute True for flag, then follow the condition to determine which expression supplies the result. Identify whether computing that result requires the other branch.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
@@ -60,6 +62,8 @@ cards:
       countDown 0 = 0
       countDown n = 1 + countDown n - 1
       ```
+    hint: >-
+      Identify exactly which expression is passed to countDown before applying arithmetic outside the call. Compare that argument with the value needed to make progress toward zero.
     answer: Write `countDown n = 1 + countDown (n - 1)`. Without parentheses, the recursive call receives `n` again.
     explanation: Function application binds more tightly than subtraction. The original body groups as `(1 + countDown
       n) - 1`, so it never reaches the base case for positive `n`.
@@ -93,6 +97,8 @@ cards:
     bloom: analyze
     estimated_seconds: 45
     question: In Haskell, does omitting a type signature allow `both xs = [length xs, True]` to load? Explain.
+    hint: >-
+      Write the type produced by length xs and the type of True. Check the element-type requirement for one Haskell list, independently of whether a signature was written.
     answer: No. The list would mix an `Int` from `length xs` with a `Bool`, so type inference rejects the definition
       before it runs.
     explanation: Inference determines types; it does not relax type rules. All elements of a Haskell list must have
@@ -112,6 +118,8 @@ cards:
   # Assessment: none; prediction card paired with the chapter's Puzzles section.
   # Homework: Homework Problems (Public).docx, HASKELL3 B (negative input and parentheses).
   - id: cs131-v2-functional-card-puzzle-negative-argument
+    hint: >-
+      Consider the two roles of the minus sign: an operator between expressions and part of a negative argument. Which grouping would give abs a number?
     difficulty: intermediate
     bloom: understand
     estimated_seconds: 30
@@ -202,6 +210,8 @@ cards:
     estimated_seconds: 45
     question: 'In Haskell, given `pair :: (String, Int)` and `pair = ("oak", 3)`, give the types of `[pair]`, `fst pair`, and
       `[fst pair]`.'
+    hint: >-
+      Apply one type change at a time: selecting a tuple field versus wrapping a value in a singleton list. Keep parentheses for tuple structure distinct from list brackets.
     answer: '`[pair] :: [(String, Int)]`, `fst pair :: String`, and `[fst pair] :: [String]`.'
     explanation: Square brackets add a list layer. Selecting a component removes the tuple layer; surrounding that
       string with brackets then creates a list of strings.

@@ -9,12 +9,16 @@ cards:
     explanation: "Almost every security failure is a violation of one or more of these three. Calling everything 'a security incident' obscures what went wrong; CIA gives you the vocabulary to be specific."
 
   - id: 2
+    hint: >-
+      Assess what the attacker can do with the stolen copy separately from what legitimate users can still do with the server copy.
     difficulty: basic
     question: "A stolen laptop contains an unencrypted copy of patient records; intact records remain available on the hospital’s server. Which CIA property is directly at risk from disclosure?"
     answer: "Confidentiality: an unauthorized holder may read the laptop’s copy. The stated intact server copy means this example does not establish loss of hospital-wide availability or modification of the records."
     explanation: "Disk encryption (e.g., FileVault, BitLocker, LUKS) is the standard countermeasure: a stolen disk reveals only ciphertext that the attacker cannot decrypt without the key."
 
   - id: 3
+    hint: >-
+      Check each property against the stated facts. Separate changes to stored bytes, the ability to use them, and evidence that anyone has read them.
     difficulty: intermediate
     question: "A ransomware attack encrypts the only copy of a database. **Which CIA properties are violated?**"
     answer: "Integrity is violated by unauthorized encryption of the stored bytes. Availability is violated because legitimate users cannot read the only copy. Those facts alone do not establish whether sensitive information was disclosed; ransomware can also cause a confidentiality breach."
@@ -27,12 +31,16 @@ cards:
     explanation: "Every web vulnerability whose name contains 'injection' (SQL injection, command injection, LDAP injection, NoSQL injection) shares this same root cause."
 
   - id: 5
+    hint: >-
+      Follow the input to the database parser. At what point must the system distinguish the intended query structure from a user-supplied value?
     difficulty: advanced
     question: "What is the **standard fix** for SQL injection, and *why* does it work?"
     answer: "Use **parameterized queries / prepared statements**: write the SQL with placeholders (`?`, `@0`, `$1`, …) and pass the values as separate arguments to the database driver. This works because the database **parses the SQL once with the placeholders in place** before the values are ever attached, so the values cannot grow new SQL syntax — they are bound into an already-parsed query plan as pure data."
     explanation: "Manual escaping is a fragile, error-prone alternative — it loses to subtleties of every database's quoting rules and to Unicode normalization tricks. Don't roll your own escaping."
 
   - id: 6
+    hint: >-
+      Consider separately what an attacker-controlled query could do to stored data and to the resources needed to serve legitimate requests.
     difficulty: intermediate
     question: "**Which CIA properties** can a successful SQL injection attack violate?"
     answer: "All three: **Confidentiality** (read sensitive rows from any table the connection can see), **Integrity** (modify, insert, or delete data — `UPDATE … SET role='admin'`, `INSERT` a backdoor account, `DROP TABLE`), and **Availability** (less common, but possible — drop tables, delete rows, or run very expensive queries to exhaust the database)."
@@ -51,6 +59,8 @@ cards:
     explanation: "Escaping is the foundation; CSP and `HttpOnly` are layers on top. Most XSS bugs in the wild come from explicitly *bypassing* the templating engine's default escaping (`dangerouslySetInnerHTML`, `mark_safe`, `|safe`, `v-html`)."
 
   - id: 9
+    hint: >-
+      Place the injected script in the victim page and consider the operations normal page scripts are allowed to perform. Map possible effects to the security goals.
     difficulty: intermediate
     question: "**Which CIA properties** does a successful XSS attack typically violate?"
     answer: "**Confidentiality** (script reads cookies, tokens, DOM contents, and exfiltrates them) and **Integrity** (script modifies the page, submits forms in the victim's name, posts on their behalf, changes settings). Availability violations are possible (a runaway script can wedge a browser tab) but uncommon in practice."
@@ -69,6 +79,8 @@ cards:
     explanation: "Use an authenticated public key to avoid substituting an attacker’s key. Public-key encryption, digital signatures, and key agreement are distinct operations; protocols can combine them with fast symmetric encryption."
 
   - id: 12
+    hint: >-
+      Work backward from who must be able to recover the plaintext. Then check which corresponding key Alice can obtain without exchanging a secret first.
     difficulty: basic
     question: "Alice wants to send Bob a private message using public-key cryptography. **Which key does she use to encrypt?**"
     answer: "**Bob's public key.** Anyone may have it, so Alice can use it without prior secret sharing — but only Bob's matching *private* key (which only Bob holds) can decrypt the resulting ciphertext."
@@ -81,6 +93,8 @@ cards:
     explanation: "Signatures do not hide message contents. Use a vetted protocol when confidentiality and authenticity are both required; RSA, ECDSA, and EdDSA have different signing and verification procedures."
 
   - id: 14
+    hint: >-
+      Compare processing a short message and a very large file. What properties would a compact representation need to preserve the usefulness of the signature?
     difficulty: intermediate
     question: "Why do practical signature schemes hash message data?"
     answer: "Hashing handles arbitrary-size messages efficiently while the public-key operations work with a bounded-size representation. Collision resistance helps prevent substituting another message with the same representation. Exact hashing and encoding rules depend on the signature scheme."
@@ -105,12 +119,16 @@ cards:
     explanation: "Statelessness is the JWT win (no shared session store; easier horizontal scaling). The price is harder revocation — without a session store, a stolen JWT remains usable until its `exp` time."
 
   - id: 18
+    hint: >-
+      Trace a logout or emergency revocation in each design. Where would a verifier learn that a previously issued credential should no longer be accepted?
     difficulty: advanced
     question: "What are the **trade-offs** between session cookies and JWTs?"
     answer: "**Session cookies:** stateful (need a session store), easy to revoke (delete the row), simple. **JWTs:** stateless on the server (no session store; easier horizontal scaling), but harder to revoke (a stolen JWT stays usable until `exp`). Both are vulnerable to XSS-driven session-riding; both should be served only over TLS. JWTs in `localStorage` are *XSS-readable* (avoid). JWTs in `HttpOnly` + `SameSite` cookies match the session-cookie security profile."
     explanation: "Standard production pattern for JWTs: short access-token expiry (5–15 min) plus a longer-lived refresh token tracked server-side. The refresh token gives you back a revocation lever; the short access-token expiry bounds the damage of a leak."
 
   - id: 19
+    hint: >-
+      Distinguish inspecting a credential from asking the browser to send a request. Which of those operations does the cookie flag actually restrict?
     difficulty: advanced
     question: "Does the **`HttpOnly`** cookie flag fully protect a session against XSS? Explain."
     answer: "**No.** `HttpOnly` prevents JavaScript from *reading* the cookie, so a successful XSS attack cannot directly *exfiltrate* the session token. But the script can still *use* the session: any `fetch('/api/...', { credentials: 'include' })` call will have the cookie attached automatically by the browser, so the attacker rides the session in the victim's browser without ever touching the raw token. This is sometimes called *session-riding*."
@@ -123,12 +141,16 @@ cards:
     explanation: "Zero Trust replaced the older 'castle and moat' / perimeter model, which assumed that anything inside the corporate network was trustworthy. That assumption fails against insider threats, compromised internal hosts, and supply-chain attacks."
 
   - id: 21
+    hint: >-
+      Imagine the attacker obtains the source code but no credentials. Which part of your defense would still have to protect the system?
     difficulty: intermediate
     question: "What is **security through obscurity**, and why is it a bad foundation?"
     answer: "**Security through obscurity** is the practice of relying on *hiding the design or mechanism* of a system to keep it secure (a hidden URL, a custom-rolled hash, an unpublished port). It is a bad foundation because as soon as anyone reverses or discovers the design, the entire defense collapses — the lecture's analogy is hiding the house key in a flowerpot. Real security must rest on something that stays secret even when the design is public — typically a key — which is what the **Open Design** principle requires."
     explanation: "Obscurity is not useless; it is just not a foundation. Hiding your specific framework versions and config (*complementary obscurity*) is reasonable defense-in-depth on top of strong open mechanisms — never instead of them."
 
   - id: 22
+    hint: >-
+      Separate evaluating whether a security mechanism is sound from making a deployed system easier to fingerprint. Who benefits from disclosure in each case?
     difficulty: intermediate
     question: "When should you apply **public scrutiny** vs. **complementary obscurity**?"
     answer: "**Public scrutiny** when proposing a *new* security approach or algorithm — expose the design to the security community so weaknesses are found before attackers exploit them. **Complementary obscurity** when *deploying* an existing, well-scrutinized technology in a real product — hide implementation specifics (framework versions, configuration, internal endpoints) to slow down opportunistic attackers who look for known vulnerabilities. The two apply to different layers and are not contradictory."
@@ -159,6 +181,8 @@ cards:
     explanation: "Standard moves to shrink attack surface: turn off unused features, close unused ports, drop unused dependencies, restrict admin interfaces to a private network, expose only the smallest public API needed. The Principle of Least Privilege shrinks the *blast radius* once an attacker is in; shrinking the attack surface tries to keep them out in the first place."
 
   - id: 27
+    hint: >-
+      Trace an authenticated request from a normal page script. Which part of the browser attaches credentials, and does the script need to read their bytes first?
     difficulty: advanced
     question: "**Why are session cookies still vulnerable to XSS** even when `HttpOnly` is set?"
     answer: "Because XSS gives the attacker code execution *inside the trusted page's origin*. Even though the script cannot read the cookie (thanks to `HttpOnly`), it can still issue authenticated `fetch` requests through the browser — the browser will attach the cookie automatically. So the attacker rides the session in the victim's browser without ever touching the raw token. This is sometimes called *session-riding*."

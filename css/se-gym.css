@@ -3475,6 +3475,31 @@
       transition: width 0.4s ease;
     }
 
+    .workout-empty .workout-score-display,
+    .workout-empty .workout-breakdown {
+      display: none;
+    }
+
+    .workout-skip-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1em;
+      margin-block: 1em;
+    }
+    .workout-skip-actions p {
+      flex: 1 1 20em;
+      margin: 0;
+    }
+    .workout-skip-actions button {
+      font: inherit;
+    }
+    @media print {
+      .workout-skip-actions {
+        display: none;
+      }
+    }
+
     #workout-card-area {
       max-width: 860px;
       margin: 0 auto;

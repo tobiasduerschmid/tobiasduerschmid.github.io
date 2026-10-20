@@ -70,6 +70,8 @@ cards:
       ```
     answer: "**Conditional rendering** using a ternary — renders `Dashboard` if `isLoggedIn` is true, `LoginForm` otherwise. This is one of two standard patterns (the other is `&&`)."
   - id: 8
+    hint: >-
+      Evaluate the left side first for unreadCount equal to 0 and to a positive number. Then determine what value the whole JavaScript expression supplies to JSX.
     difficulty: advanced
     question: |
       You are shown React/JSX code. Explain what it does and what it renders.
@@ -79,6 +81,8 @@ cards:
       ```
     answer: "**Short-circuit conditional rendering** — renders `Badge` ONLY when `unreadCount > 0`. When the left side is `false`, React renders nothing. Note: use `> 0`, not just `unreadCount &&`, to avoid rendering `0` as text."
   - id: 9
+    hint: >-
+      Compare the identity and contents of the array passed to setItems with the old items array. Track what the spread contributes before the final element.
     difficulty: advanced
     question: |
       You are shown React/JSX code. Explain what it does and what it renders.
@@ -88,6 +92,8 @@ cards:
       ```
     answer: "Correctly adds `newItem` to state. Creates a **new array** with the spread operator (`...items` copies all existing items, then `newItem` is appended). You must create a new array — `items.push(newItem)` mutates in-place and React won't detect the change."
   - id: 10
+    hint: >-
+      Trace one new string from the child’s change event to the parent’s setter and then back through value on the next render.
     difficulty: advanced
     question: |
       You are shown React/JSX code. Explain what it does and what it renders.
@@ -134,6 +140,8 @@ cards:
     answer: "Runs an effect after mounting. With an empty dependency array, ordinary re-renders do not re-run it. In development Strict Mode, React performs an extra setup/cleanup cycle to check cleanup behavior; remounting also runs the effect again."
 
   - id: 14
+    hint: >-
+      Compare a render with the same userId to one with a different userId. Which value determines the requested URL and also appears in the dependency list?
     difficulty: advanced
     question: |
       You are shown React/JSX code. Explain what it does and what it renders.
@@ -148,6 +156,8 @@ cards:
     answer: "Fetches user data on mount **and re-fetches whenever `userId` changes**. `userId` in the dependency array tells React: re-run this effect when `userId` takes a new value. Without listing `userId`, the effect would keep showing the first user's data even after the prop changes — a stale closure bug."
 
   - id: 15
+    hint: >-
+      Imagine two updates queued before another render. Ask whether this argument supplies an already computed number or a rule React can apply to the pending state.
     difficulty: advanced
     question: |
       You are shown React/JSX code. Explain what it does and what it renders.
@@ -158,6 +168,8 @@ cards:
     answer: "The **functional update** form of `setState`. Instead of passing the next value directly, you pass a function. React calls that function with the *guaranteed latest* state value as `prev`. Use this whenever new state depends on old state — it prevents stale closure bugs where a batch of rapid updates could all read the same outdated value."
 
   - id: 16
+    hint: >-
+      Evaluate the predicate once for an item matching targetId and once for a different item. Remember that the new array keeps the items whose predicate succeeds.
     difficulty: advanced
     question: |
       You are shown React/JSX code. Explain what it does and what it renders.
@@ -168,6 +180,8 @@ cards:
     answer: "Removes the item with `id === targetId` from the `items` state array. `.filter()` returns a **new array** (never mutates the original), which is required — React detects changes by reference. All items where the condition is true are kept; the one matching `targetId` is excluded."
 
   - id: 17
+    hint: >-
+      Process the object fields in their written order. If a property name occurs again after the spread, decide which value the new object retains.
     difficulty: advanced
     question: |
       You are shown React/JSX code. Explain what it does and what it renders.
@@ -178,6 +192,8 @@ cards:
     answer: "Updates the `name` field of the `user` state object while preserving all other fields. The spread `...user` copies every existing key into a new object, then `name: 'Bob'` overrides just that one key. **Never mutate the object directly** (`user.name = 'Bob'`) — that changes the same reference React already has, so it won't detect the change and won't re-render."
 
   - id: 18
+    hint: >-
+      Trace a keystroke through the event, the state update, and the next render. Identify the source that supplies the input’s displayed value at each render.
     difficulty: advanced
     question: |
       You are shown React/JSX code. Explain what it does and what it renders.

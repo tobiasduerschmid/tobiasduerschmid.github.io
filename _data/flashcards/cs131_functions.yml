@@ -7,6 +7,8 @@ cards:
   # Lecture: [05] Function Palooza (Public).docx — Pass by Value; Pass by Reference
   # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1
   - id: cs131-v2-functions-card-reference
+    hint: >-
+      Draw the parameter’s storage relationship to x before performing the assignment. Use a separate copy in one model and a second name for the same location in the other.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 25
@@ -17,6 +19,8 @@ cards:
   # Lecture: [05] Function Palooza (Public).docx — Pass by Object Reference
   # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1
   - id: cs131-v2-functions-card-rebind
+    hint: >-
+      Trace the original list object and the local name p separately. For each statement, identify whether its left side selects a list slot or the parameter binding.
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 40
@@ -27,6 +31,8 @@ cards:
   # Lecture: [05] Function Palooza (Public).docx — Pass by Name/Need
   # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P2
   - id: cs131-v2-functions-card-name-need
+    hint: >-
+      Make one trace entry for each use of x. In each evaluation model, check whether that use evaluates the argument expression again or can reuse an earlier result.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 40
@@ -37,6 +43,8 @@ cards:
   # Lecture: [05] Function Palooza (Public).docx — Pass by Reference; Pass by Object Reference
   # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P1(a)
   - id: cs131-v2-functions-card-distinguish-passing
+    hint: >-
+      A field mutation can be visible under both strategies. Choose an operation that tests whether the parameter names the caller’s variable itself.
     difficulty: intermediate
     bloom: create
     estimated_seconds: 50
@@ -47,6 +55,8 @@ cards:
   # Lecture: [05] Function Palooza (Public).docx — Capture by Value
   # Assessment: Homework Problems (Public).docx FUNC4(A.3)
   - id: cs131-v2-functions-card-value-capture
+    hint: >-
+      Write down the closure’s saved state at the moment the lambda is created, before applying the later assignment to the original variable.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 25
@@ -57,6 +67,8 @@ cards:
   # Lecture: [05] Function Palooza (Public).docx — First Class Functions; Capture by Environment
   # Assessment: [Final] F23 Solutions (Public).pdf pp.2-3
   - id: cs131-v2-functions-card-closure-make
+    hint: >-
+      Distinguish the input known when make_scale runs from the input that will arrive when its returned function is called. The returned computation needs access to both.
     difficulty: intermediate
     bloom: create
     estimated_seconds: 45
@@ -72,6 +84,8 @@ cards:
   # Lecture: [05] Function Palooza (Public).docx — The Exception Hierarchy
   # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P4
   - id: cs131-v2-functions-card-unwind
+    hint: >-
+      Draw the active call stack A → B → C. Mark the matching handler and identify which activations lie between the throw and that handler.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 25
@@ -99,6 +113,8 @@ cards:
   # Lecture: [05] Function Palooza (Public).docx — Exception handling guarantees
   # Assessment: [Final] F23 Solutions (Public).pdf Error Handling p.19
   - id: cs131-v2-functions-card-basic-strong
+    hint: >-
+      Compare two separate properties: whether the queue is still usable and whether it is identical to its pre-call state. Resource cleanup answers a third, separate question.
     difficulty: advanced
     bloom: evaluate
     estimated_seconds: 40
@@ -109,6 +125,8 @@ cards:
   # Lecture: [05] Function Palooza (Public).docx — Optionals; Result Object
   # Assessment: Homework Problems (Public).docx FUNC3(B)
   - id: cs131-v2-functions-card-result-optional
+    hint: >-
+      Imagine writing the caller’s two recovery branches. What observation in the returned value would let it distinguish those branches?
     difficulty: basic
     bloom: understand
     estimated_seconds: 30

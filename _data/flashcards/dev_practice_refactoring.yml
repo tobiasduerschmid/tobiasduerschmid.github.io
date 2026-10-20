@@ -10,6 +10,8 @@ cards:
     explanation: "The behavior-preserving constraint is what separates refactoring from feature work or bug fixing."
 
   - id: 2
+    hint: >-
+      Estimate the effort for the next three changes before and after a proposed restructuring. Which costs would justify paying for the restructuring now?
     difficulty: basic
     bloom: understand
     question: "Why is refactoring an economic activity, not just code cleanup?"
@@ -45,6 +47,8 @@ cards:
     explanation: "This is strongest when the conditional represents behavior that changes by type, not when it is a simple one-off guard."
 
   - id: 7
+    hint: >-
+      An internal rewrite passes one happy-path example. What other evidence and change size would make it easier to detect and locate a behavior regression?
     difficulty: basic
     bloom: evaluate
     question: "What is the safety net for refactoring?"
@@ -52,6 +56,8 @@ cards:
     explanation: "Large refactorings fail when they mix many transformations before feedback. The small-step rhythm makes behavior preservation observable."
 
   - id: 8
+    hint: >-
+      Compare an AI edit against the original observable contract and the particular design problem being addressed. What must remain true even if the code looks cleaner?
     difficulty: expert
     bloom: evaluate
     question: "What is the human supervisor's role when AI performs refactorings?"

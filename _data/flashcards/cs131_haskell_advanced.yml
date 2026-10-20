@@ -20,6 +20,8 @@ cards:
       ```haskell
       judge transform measure xs = measure (transform (head xs)) > length xs
       ```
+    hint: >-
+      Start from head xs and give its element an arbitrary type. Propagate that type through transform and measure, then use the comparison with length xs to constrain the result.
     answer: '`judge :: (a -> b) -> (b -> Int) -> [a] -> Bool`'
     explanation: '`head xs` has the element type `a`; `transform` turns it into `b`. Comparing `measure`''s result
       with `length xs` forces that result to `Int`, and `>` produces `Bool`. The two function arguments require parentheses.'
@@ -29,6 +31,8 @@ cards:
   # Revised source: intro_to_functional_programming_and_haskell_td.pptx, slides 8, 39, 47 (lazy demand; error expression).
   # Homework: Homework Problems (Public).docx, ADVHASKELL3 C; lecture slide 47 (error and demand).
   - id: cs131-v2-functional-card-puzzle-demand-undefined
+    hint: >-
+      Separate inspecting a container’s shape from evaluating its elements. For each outer operation, mark exactly which component values it needs.
     difficulty: advanced
     bloom: analyze
     estimated_seconds: 60
@@ -47,6 +51,8 @@ cards:
     estimated_seconds: 30
     question: 'Which Haskell definitions are higher-order, and why: `apply f x = f x`, `double x = 2*x`, and `makeAdder n
       = \x -> n+x`?'
+    hint: >-
+      Inspect what each definition receives and what expression it returns. Distinguish returning a function from immediately applying a function to produce an ordinary result.
     answer: '`apply` accepts a function, and `makeAdder` returns one. `double` does neither.'
     explanation: First-class functions can be passed, returned, and stored like other values. A higher-order function
       specifically accepts or returns a function.
@@ -68,6 +74,8 @@ cards:
   # Assessment: none; prediction card paired with the chapter's Puzzles section.
   # Homework: Homework Problems (Public).docx, ADVHASKELL3 A (lexical capture).
   - id: cs131-v2-functional-card-puzzle-closure-keeps-binding
+    hint: >-
+      Locate the definition that creates times and resolve k at that location. A later binding with the same spelling may belong to a different scope.
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 45
@@ -88,6 +96,8 @@ cards:
   # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3c; [Midterm] F24 V1 (Public).pdf, Problem 3B, p. 5 (infer a partially applied function).
   # Homework: Homework Problems (Public).docx, ADVHASKELL4 A.2; ADVHASKELL7 (partial application types).
   - id: cs131-v2-functional-card-partial-application-higher-order
+    hint: >-
+      Match length’s input and output to map’s function parameter first. Then determine the type of the collection map still needs.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
@@ -104,6 +114,8 @@ cards:
     bloom: apply
     estimated_seconds: 45
     question: In Haskell, predict `map ((-) 10) [2,4]`, then write a lambda that instead subtracts 10 from every list element.
+    hint: >-
+      Rewrite the partially applied operator as a two-argument call before substituting each list element. Check which subtraction operand was fixed by supplying 10.
     answer: The result is `[8,6]`. To subtract 10 from each element, use `map (\x -> x - 10) [2,4]`, giving `[-8,-6]`.
     explanation: 'Partial application of `(-)` fixes its first operand: `(-) 10` means `\x -> 10 - x`. Argument order
       matters for subtraction.'
@@ -112,6 +124,8 @@ cards:
   # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 5 (currying and function-valued arguments).
   # Homework: Homework Problems (Public).docx, ADVHASKELL4 A.1 (arrow parentheses).
   - id: cs131-v2-functional-card-preserve-function-argument
+    hint: >-
+      Identify the first argument as a whole before regrouping the remaining arrows. Check whether removing each existing pair of parentheses would change what a caller must supply first.
     difficulty: basic
     bloom: understand
     estimated_seconds: 30
@@ -123,6 +137,8 @@ cards:
   # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 3D, p. 6 (explicitly curry a function).
   # Homework: Homework Problems (Public).docx, ADVHASKELL4 C.4 (explicit currying).
   - id: cs131-v2-functional-card-curried-function-production
+    hint: >-
+      After receiving f, the result must still accept g and then x. Preserve that sequence of inputs while keeping the original composition in the innermost body.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
@@ -185,6 +201,8 @@ cards:
   # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 4b (recursive aggregation).
   # Homework: Homework Problems (Public).docx, ADVHASKELL5 A.2–3 (recursive ADT processing).
   - id: cs131-v2-functional-card-recursive-total-completion
+    hint: >-
+      Use the constructors to divide the cases. For a Link, assume the recursive call already totals the remaining chain and decide what this node contributes.
     difficulty: intermediate
     bloom: create
     estimated_seconds: 45
@@ -200,6 +218,8 @@ cards:
   # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 143–145 (adding to an immutable list)
   # Homework: Homework Problems (Public).docx, ADVHASKELL8 (append cost).
   - id: cs131-functional-card-append-cost
+    hint: >-
+      Draw a three-node list with immutable next links. Compare adding a new head with making the final node lead to a new element while keeping the original list usable.
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 45
@@ -210,6 +230,8 @@ cards:
   # Lecture: intro_to_functional_programming_and_haskell_td.pptx, slides 146–147 (immutable trees, garbage collection)
   # Homework: Homework Problems (Public).docx, ADVHASKELL5 B; lecture slides 146–147 (sharing and reachability).
   - id: cs131-functional-card-tree-path-copying
+    hint: >-
+      Trace the search path to the insertion point. Work upward, asking which parent must now point to a changed child and which entire subtree can keep its existing root.
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 60
@@ -231,6 +253,8 @@ cards:
     question: 'For a finite Haskell tree type `data Folder = Folder String [Folder]`, write `contains :: String -> Folder -> Bool`
       that checks the current folder and all descendants for a matching name. You may use `map` and `or`; `or []`
       is `False`.'
+    hint: >-
+      Separate checking the current node from combining recursive checks of its children. Consider a folder with no children and a match appearing only in a grandchild.
     answer: |-
       ```haskell
       contains :: String -> Folder -> Bool

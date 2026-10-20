@@ -45,42 +45,56 @@ cards:
     explanation: "Mitigations when the build slows past 10 minutes: parallelize tests, split into fast smoke tests + slower extended suites, invest in test selection (only run tests affected by a change), or remove redundant/slow tests. The benchmark itself is what forces the team to have the conversation."
 
   - id: 7
+    hint: >-
+      Imagine fixing an unfamiliar teammate’s module. What shared expectations would make that safe and understandable?
     difficulty: intermediate
     question: "What is **collective code ownership**, and what does it **require** to work?"
     answer: "**Collective code ownership:** no individual owners of modules; the entire team owns all the code. Any team member can fix a bug or improve any module. **Requires:** strict **coding standards** so the code looks unified regardless of who wrote it — otherwise every file becomes alien to non-original-author readers and the practice collapses."
     explanation: "The pair-program → collective-ownership → coding-standards triangle reinforces itself. Pair programming spreads knowledge across the team; collective ownership lets any pair fix any module; coding standards make any module readable to any pair. Drop one and the others lose their force."
 
   - id: 8
+    hint: >-
+      Imagine the only developer familiar with a subsystem leaving. What experience would other team members need to keep work moving?
     difficulty: intermediate
     question: "What is the **bus factor**, and how does collective code ownership improve it?"
     answer: "The **bus factor** is the number of people who can disappear (e.g., be hit by a bus, get sick, take a new job) before the project stalls because critical knowledge is lost. **Collective code ownership** distributes knowledge across the team so the bus factor approaches the team size — no single departure cripples the project."
     explanation: "Silos and individual code ownership produce bus factors of 1: lose one person, lose a critical capability. This is a serious operational risk that pair programming + collective ownership + coding standards together address. Knowledge sharing isn't a soft benefit — it's risk mitigation."
 
   - id: 9
+    hint: >-
+      Compare choosing which user outcomes matter most with deciding how to implement one selected outcome this week. Who needs which level of detail?
     difficulty: intermediate
     question: "In XP, what are **Release Planning** and **Iteration Planning**, and why are they separate?"
     answer: "**Release planning:** customer presents user stories, developers estimate effort, customer prioritizes by balancing business value and technical cost — sets the longer-horizon road map. **Iteration planning:** chosen stories are broken down into technical tasks for a 1–4-week cycle. Separating them keeps each conversation at its right altitude — business priorities vs technical execution."
     explanation: "If combined, the customer rabbit-holes into implementation details and developers rabbit-hole into priorities. Splitting the conversation lets each level focus on its right decisions, with the customer in the lead at release planning and the team in the lead at iteration planning."
 
   - id: 10
+    hint: >-
+      Suppose two developers give very different estimates for the same story. What might they believe differently about the work?
     difficulty: intermediate
     question: "What is **Planning Poker**, and what makes it valuable beyond producing estimates?"
     answer: "Each team member secretly chooses a Fibonacci-number card representing 'story points' (imaginary effort units). When estimates diverge, the team discusses the reasoning until reaching consensus. The *discussion* is the actual value: divergent estimates reveal that members hold different mental models of the work — hidden complexity, helpful libraries, missing context — and resolving that gap is what produces realistic plans."
     explanation: "Teams that resolve divergence by averaging or majority vote throw away the most valuable information Planning Poker produces. The number you write down at the end matters less than the conversation that produced it."
 
   - id: 11
+    hint: >-
+      Imagine one mistaken assumption in a release. Compare how soon users can expose it and how much work has accumulated before correction.
     difficulty: intermediate
     question: "Why are **small releases** a core XP practice?"
     answer: "They maximize customer value by getting working software in front of users early and often, providing **rapid feedback** that validates assumptions in short cycles rather than after months or years. They reduce risk by surfacing problems while they're still cheap to fix, and they let priorities re-shape based on real-world response."
     explanation: "Small releases are XP's mechanism for honoring 'responding to change over following a plan.' A wrong assumption discovered after one iteration costs one iteration to fix; a wrong assumption discovered after a year costs a year."
 
   - id: 12
+    hint: >-
+      Ask whether making today’s test pass necessarily protects a decision that several future features will share. Where would that broader question be considered?
     difficulty: advanced
     question: "What is the **common critique of XP** regarding design, and how does XP answer it?"
     answer: "**Critique:** TDD focuses on the immediate requirements of a single feature, so developers may fail to step back and structure modules around design decisions likely to change — leading to violations of **Information Hiding** and accumulating technical debt. **XP's answer:** 'continuous attention to technical excellence' — deliberate architectural refactoring that complements feature-by-feature TDD."
     explanation: "TDD alone is a local optimizer; it doesn't see structural debt accumulating. The 12th XP principle ('continuous attention to technical excellence and good design enhances agility') is the explicit acknowledgment that REFACTOR cycles must also climb to architecture level periodically, not just stay at the function level."
 
   - id: 13
+    hint: >-
+      Pick two practices and trace how doing one well makes the other easier. Then imagine removing the supporting practice.
     difficulty: expert
     question: "Why are XP practices described as **loosely coupled but synergistic**?"
     answer: "Each practice has independent value, but they reinforce each other: pair programming spreads knowledge that collective ownership relies on; coding standards make collective ownership feasible; small releases provide feedback TDD targets; the planning game gives TDD specific stories to test. A team can drop any one practice, but doing so loses the synergies the kept practices were counting on."
@@ -93,6 +107,8 @@ cards:
     explanation: "The 'over' wording matters: it doesn't say 'instead of' — it says 'more critical than.' Documentation, processes, contracts, and plans all have value; XP just refuses to let them dominate decisions when the left-hand-side values are at stake."
 
   - id: 15
+    hint: >-
+      Check whether the team can obtain rapid feedback, coordinate closely, and recover from frequent small releases in the proposed setting.
     difficulty: advanced
     question: "When is XP the **wrong** process to choose?"
     answer: "When (a) the team is very large (XP doesn't scale past ~10 people in one team), (b) the domain is safety-critical and working software cannot be continuously deployed (e.g., spacecraft, certified medical devices), (c) requirements are genuinely stable and won't evolve, or (d) the team is not co-located (physical or close-virtual proximity is needed for pair programming and verbal coordination)."

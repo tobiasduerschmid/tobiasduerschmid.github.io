@@ -74,6 +74,8 @@ cards:
       Mismatched format specifiers (`%d` for a `float`, `%f` for an `int`) compile cleanly but produce garbage at runtime, because `printf` blindly trusts the format string. Always compile with `-Wall -Wformat` to catch this.
 
   - id: 6
+    hint: >-
+      Trace the first write to either pointed-to integer: which original value would it destroy? Keep that value available until the other integer has received it.
     difficulty: intermediate
     question: |
       Write a C function `void swap(int* a, int* b)` that swaps the values pointed to by `a` and `b`, plus the call site that swaps two local variables `x` and `y`.
@@ -99,6 +101,8 @@ cards:
       - The signature `swap(int*, int*)` advertises that the function may mutate both arguments. That advertisement is more explicit than C++'s `swap(int&, int&)`.
 
   - id: 7
+    hint: >-
+      Count how many complete rows precede row i, then how many elements precede column j within it. Separately convert the total element count into the byte count requested by the allocator.
     difficulty: advanced
     question: |
       In C, allocate a flat `rows × cols` matrix of `int` on the heap, write the index expression for element `(i, j)` in row-major order, and free the allocation.
@@ -120,6 +124,8 @@ cards:
       `sizeof(int)` is needed because `malloc` takes a byte count, not an element count. Forgetting it (`malloc(rows * cols)`) would allocate only one byte per element, and the index expression would walk into unrelated memory.
 
   - id: 8
+    hint: >-
+      Track the lifetime of the array separately from the pointer value returned to the caller. Which function activation owns the storage?
     difficulty: expert
     question: |
       What is the bug in this C code, and what is the most likely runtime symptom?
@@ -154,6 +160,8 @@ cards:
       libc papers over those differences. The result: your `fopen` call compiles into different machine code on Linux vs. macOS vs. Windows, but your *source* is identical. libc is the layer that makes C source portable across operating systems.
 
   - id: 10
+    hint: >-
+      After each statement, record both the address stored in p and whether the allocation at that address is still owned by this code. Do not assume changing allocation status also assigns to p.
     difficulty: advanced
     question: |
       Walk through what happens at runtime when this C code executes:
@@ -179,6 +187,8 @@ cards:
       **Defensive habit:** `free(p); p = NULL;` makes a subsequent `free(p)` a no-op (the standard guarantees `free(NULL)` does nothing).
 
   - id: 11
+    hint: >-
+      Start with constraints outside the algorithm: the supported build tools and the languages that must call the library. Explain how each constraint could affect the language or interface choice.
     difficulty: expert
     question: |
       Name two distinct production scenarios where you would deliberately choose C over C++, and explain *why* each scenario favors C.
@@ -190,6 +200,8 @@ cards:
       Either reason can justify the discipline cost of manual memory management.
 
   - id: 12
+    hint: >-
+      Compare what a downloaded web page is allowed to access with what a native library running in the host process could access. Which boundary must the browser preserve?
     difficulty: expert
     question: |
       Almost every major language (Python, Java, C#, Rust, Go, Ruby) supports calling into a C library. **Browser JavaScript** does not — and this is not an accident. What is the design rationale?
@@ -201,6 +213,8 @@ cards:
       **The modern workaround is WebAssembly**: you compile C source to Wasm bytecode, which the browser runs in *the same sandbox* as JavaScript. Wasm has no syscall access by default — it can only see what the page explicitly hands it. You keep the performance of C without breaking the browser's security model.
 
   - id: 13
+    hint: >-
+      Try drawing two nodes and the link between them. If a node contained another whole node rather than a reference to one, could its size ever be determined?
     difficulty: advanced
     question: |
       Design a C `struct` for a singly-linked-list node that stores an `int` value. Then write the prototype for a function `list_prepend` that takes the current head and an `int`, and returns the new head.
@@ -222,6 +236,8 @@ cards:
       - The doc comment names ownership: the caller must eventually walk the list and `free` each node.
 
   - id: 14
+    hint: >-
+      Follow one library routine from build to delivery to execution. After that routine receives a security fix, identify which delivered files still contain its old code.
     difficulty: advanced
     question: |
       Compare **static** and **dynamic** linking on three axes: when linking happens, what gets shipped, and the consequence for security updates.

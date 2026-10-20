@@ -73,6 +73,7 @@
         id: {{ card.id | jsonify }},
         sourceDeckId: {{ fcid | jsonify }},
         question: {{ card.question | markdownify | jsonify }},
+        hint: {{ card.hint | default: "" | strip | markdownify | strip | jsonify }},
         answer: {{ card.answer | markdownify | jsonify }},
         explanation: {{ card.explanation | default: "" | markdownify | jsonify }},
         difficulty: {{ card.difficulty | downcase | jsonify }}
@@ -89,6 +90,7 @@
       id: {{ card.id | jsonify }},
       sourceDeckId: {{ gym_id | jsonify }},
       question: {{ card.question | markdownify | jsonify }},
+      hint: {{ card.hint | default: "" | strip | markdownify | strip | jsonify }},
       answer: {{ card.answer | markdownify | jsonify }},
       explanation: {{ card.explanation | default: "" | markdownify | jsonify }},
       difficulty: {{ card.difficulty | downcase | jsonify }}

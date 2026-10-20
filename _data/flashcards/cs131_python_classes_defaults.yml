@@ -5,6 +5,8 @@ active: true
 cards:
   # Taught / practice evidence: Essential Python handout pp. 6–7 (class fields versus instance fields); Quiz 1 Problem 2A (object-state tracing).
   - id: cs131-v2-python-card-class-stamps-not-live-links
+    hint: >-
+      Track Counter.total and the first instance’s number as separate attributes. Which attribute is the target of each later assignment?
     difficulty: basic
     bloom: understand
     estimated_seconds: 30
@@ -16,6 +18,8 @@ cards:
 
   # Taught / practice evidence: Essential Python handout pp. 11–13 (equality versus identity); Homework PYTHON5 (object reasoning).
   - id: cs131-v2-python-card-custom-equality-change
+    hint: >-
+      Evaluate the class’s equality policy using the fields as they stand after the assignment. Separately ask whether any new object identity was created or merged.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
@@ -26,6 +30,8 @@ cards:
 
   # Taught / practice evidence: Essential Python handout pp. 14–16 (inheritance); Homework PYTHON5 A–B.
   - id: cs131-v2-python-card-explain-overridden-hook
+    hint: >-
+      Record the actual object bound to self when run starts. Inherited code still makes the step call through that receiver.
     difficulty: basic
     bloom: understand
     estimated_seconds: 30
@@ -36,6 +42,8 @@ cards:
 
   # Taught / practice evidence: Essential Python handout pp. 25–27 (definition-time defaults and None repair); Function Palooza, Default Parameters.
   - id: cs131-python-card-default-snapshot
+    hint: >-
+      Mark when def executes and when each call executes. Evaluate the default expression at its own event, separately from an explicitly supplied argument.
     difficulty: intermediate
     question: |-
       Predict the output of this Python code. When was the omitted argument chosen?
@@ -66,12 +74,16 @@ cards:
       last = remember("elm")
       print(len(first), len(last), first is last)
       ```
+    hint: >-
+      Draw the default object when def executes. Then trace result, seen, first, and last as references across both calls, distinguishing rebinding from mutation.
     answer: '`2 2 True`'
     explanation: Both calls mutate the same retained list. Rebinding seen afterward changes only that invocation’s local
       parameter.
 
   # Taught / practice evidence: Essential Python handout pp. 25–27 (definition-time defaults and None repair); Function Palooza, Default Parameters.
   - id: cs131-python-card-supplied-empty
+    hint: >-
+      Test the proposed condition with both None and an explicitly supplied empty list. They have the same truth value but different ownership requirements.
     difficulty: intermediate
     question: |-
       Repair this Python initializer so omitted input creates a fresh list while a supplied list keeps its identity.
@@ -105,6 +117,8 @@ cards:
     difficulty: intermediate
     question: In Python, Base.__init__(self, value) stores self.value. Child inherits Base but defines its own __init__ containing
       only pass. Why does Child().value fail, and what line inside Child.__init__ sets it to 4?
+    hint: >-
+      Trace initializer lookup for Child before tracing assignments to attributes. Locate the existing initializer behavior that could establish the field on the new instance.
     answer: The child initializer did not run the base initializer. Replace pass with super().__init__(4).
     explanation: Inheritance makes base methods available, but an overriding initializer must explicitly initialize the
       base part of the same object.

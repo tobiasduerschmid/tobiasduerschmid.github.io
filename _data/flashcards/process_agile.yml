@@ -21,12 +21,16 @@ cards:
     explanation: "This is the structural innovation that lets Agile honor 'responding to change' and 'customer collaboration.' Without iterations, there's no opportunity for fast feedback; with them, course-correction is cheap because only one iteration's worth of work is at risk at any time."
 
   - id: 4
+    hint: >-
+      Choose one wrong assumption about a customer’s workflow. Compare the work built on top of it after one week and after six months.
     difficulty: intermediate
     question: "Why is **late customer feedback** Waterfall's most costly failure mode?"
     answer: "Defects (a wrong requirement, a missed integration, a flawed assumption) are most expensive to fix at the end of the cycle, when most other code already depends on them. By the time the customer sees Waterfall's output, months or years of work has been built on whatever was wrong, so fixing the foundation often costs as much as the original build."
     explanation: "Classic cost-of-defects data shows defect-fix cost rising 10x–100x as defects move from requirements → design → implementation → testing → production. Agile's short iterations are designed to catch defects within hours or days, when they're still cheap."
 
   - id: 5
+    hint: >-
+      Compare improving an existing search screen with adding a previously absent checkout flow. What changes in each case?
     difficulty: advanced
     question: "Distinguish **iterative** from **incremental** delivery."
     answer: "**Iterative:** repeatedly refining the *same* deliverable based on feedback (sketch → rough → polished). **Incremental:** building the system in *additive slices* over time (login, then dashboard, then reports). Agile combines both — each iteration both refines existing increments based on feedback and adds new ones."
@@ -45,6 +49,8 @@ cards:
     explanation: "These are complementary, not alternatives. Many teams combine Scrum's workflow with XP's engineering practices, or use Lean continuous-improvement on top of Scrum. Choose by which dimension your team most needs to strengthen (process clarity → Scrum; engineering quality → XP; waste reduction → Lean)."
 
   - id: 8
+    hint: >-
+      Identify the assumptions a phased plan needs to hold. Which project constraints would make late change costly even with frequent feedback?
     difficulty: advanced
     question: "When is **Waterfall** still the right choice?"
     answer: "When (a) requirements are genuinely stable and well-understood up front (some embedded systems, regulatory-compliance work), (b) the system is safety-critical and software cannot be incrementally deployed (spacecraft, certified medical devices, aircraft control), (c) integration with hardware development timelines requires phase alignment, or (d) contractual / regulatory frameworks mandate a phased deliverable schedule."
@@ -57,18 +63,24 @@ cards:
     explanation: "Common symptoms: 150-page upfront requirements docs, refusing to change requirements mid-sprint, demos only at the end of long engagements, no actual customer in the loop, technical debt ignored. The fix is to start with the values and let ceremonies serve them — not the reverse."
 
   - id: 10
+    hint: >-
+      Suppose new evidence contradicts a planned feature’s expected value. What decision should the plan help the team make now?
     difficulty: intermediate
     question: "What does **'responding to change over following a plan'** actually mean for a working team?"
     answer: "Plans exist and are valuable, but they are treated as **hypotheses to be revised** based on what each iteration reveals — not as commitments to be followed regardless of evidence. When the customer or the iteration's results contradict the plan, the team has a conversation about the trade-off and updates the plan rather than executing the wrong work."
     explanation: "Agile teams that interpret this as 'no plan' produce chaos. Teams that interpret it as 'plan but adjust' produce direction with adaptability. The middle path is harder than either extreme but is what the Manifesto authors intended."
 
   - id: 11
+    hint: >-
+      Consider the work a feature creates after its first release. What obligations remain even when few people use it?
     difficulty: advanced
     question: "Why does **simplicity** (maximizing the work *not* done) appear as an Agile principle?"
     answer: "Because every feature has carrying cost (maintenance, complexity, security surface, test burden) and most projected features are never used. Building the simplest thing that delivers the value, and waiting to see real demand before adding more, is the most economical path to a useful product."
     explanation: "This is YAGNI ('You Aren't Gonna Need It') as a principle. Agile teams resist speculative complexity — adding features for hypothetical future users — because they know each one will need to be maintained whether used or not. Simplicity here is engineering economy, not minimalism for aesthetics."
 
   - id: 12
+    hint: >-
+      Imagine adding the next feature to two equally functional versions: one clear and well tested, one tangled and fragile. Compare the next iteration’s risks.
     difficulty: intermediate
     question: "Why must Agile teams invest in **technical excellence** even though working software is the primary measure of progress?"
     answer: "Working software measures *current* output; technical excellence determines *future* output. A team that ships fast but accumulates technical debt will eventually slow to a crawl as every change costs more than the last. Agile's iteration model only works if each iteration is approximately as fast and safe as the previous — which requires continuous design attention."
@@ -81,12 +93,16 @@ cards:
     explanation: "The boundaries of iterations create natural rhythms for planning, demo, retrospective, and re-prioritization. Without time-boxing, work tends to expand to whatever space is available; the iteration boundary forces a discipline of 'what can we deliver in N weeks?'"
 
   - id: 14
+    hint: >-
+      Separate deciding the desired outcome from deciding how to implement it. Who has the most relevant information for each?
     difficulty: basic
     question: "What is the role of **self-organizing teams** in Agile?"
     answer: "Agile empowers developers to decide *how* to best organize their own work — task allocation, technical approach, tooling — because the people doing the work have the best context about trade-offs, dependencies, and risks. Leadership sets *what* (priorities, strategy) and *why* (business value); the team decides *how*."
     explanation: "The opposite is treating developers as 'coding monkeys' executing orders from above. Self-organization isn't anarchy — it's pushing decisions to the level where information is best, raising both quality (better decisions) and morale (autonomy is a motivator)."
 
   - id: 15
+    hint: >-
+      Compare the feasibility of getting feedback and recovering from a bad release in two different domains. Which process assumptions change?
     difficulty: advanced
     question: "Why is choosing the right software process a **context-dependent** decision, not a universal answer?"
     answer: "Every process is engineered around assumptions about (a) requirement stability, (b) team size and locality, (c) deployment cadence, (d) cost of failure, (e) customer accessibility. When the assumptions hold, the process produces its promised benefits; when they don't, the process produces friction without the benefits. There is no universally best process — only processes that fit some contexts better than others."

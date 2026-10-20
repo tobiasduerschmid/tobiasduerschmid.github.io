@@ -39,6 +39,8 @@ cards:
     explanation: "This is the opposite of the DRY-everything monolith approach. Sharing rich domain models across services would re-create the coupling microservices exist to break — every model change would coordinate across all consumers, defeating the architectural style."
 
   - id: 7
+    hint: >-
+      A shared API has twenty independent clients. Change the meaning of one field and trace which organizations would have to coordinate.
     difficulty: basic
     question: "Why does **interoperability conflict with changeability**?"
     answer: "Standardized interfaces are inherently difficult to evolve — a change cannot be localized to one system; it requires every participating system to update simultaneously. The wider the adoption, the more rigid the interface becomes."
@@ -51,6 +53,8 @@ cards:
     explanation: "A 500-page spec with 200 optional fields buys maximum variability and minimum adoption. A spec too thin to support real use cases buys easy adoption and limited value. Most successful interop standards (REST, OAuth 2.0, Webhooks, JSON Schema) hit the sweet spot via tight cores + optional extensions."
 
   - id: 9
+    hint: >-
+      Give two teams the same numeric field and ask each to use it in a calculation. What assumptions would they need to agree on beyond the field’s data type?
     difficulty: intermediate
     question: "How does an interface specification achieve true **semantic interoperability**?"
     answer: "By documenting a **semantic view** that explicitly defines: the purpose of each action, its side effects, its usage restrictions (who may perform it), the errors that can occur and why, and worked examples of outputs for given inputs — plus the units, date formats, coordinate systems, and reference frames of the data. Shared dictionaries and standardized terminologies (e.g., IATA airport codes, SNOMED CT) make this practical."
@@ -69,12 +73,16 @@ cards:
     explanation: "Every payment startup that builds its own credit-card processing wastes years on a solved problem. Every product team that builds its own email-delivery infrastructure handles deliverability complaints instead of building their actual product. Interop is what lets engineering focus stay on the differentiating work."
 
   - id: 12
+    hint: >-
+      Imagine removing an obsolete field that one old client still reads. Follow the work needed to keep that client working across future releases.
     difficulty: advanced
     question: "Why does **forever-backward-compatibility** carry a real cost?"
     answer: "Maintaining a never-broken API ossifies the system — every release carries legacy code paths, edge-case behavior must be preserved verbatim, and architectural improvements that would require interface changes cannot be made. The cumulative support burden grows every release."
     explanation: "Major platforms publish explicit deprecation policies ('v1 supported 18 months past v2 launch') to balance stability for consumers against the team's ability to evolve. Forever-backward-compatibility looks customer-friendly but trades long-term product quality for short-term stability."
 
   - id: 13
+    hint: >-
+      The message {"temperature": 30} parses successfully at both ends. What can the parser establish, and what still needs agreement between the teams?
     difficulty: advanced
     question: "Why is semantic interoperability harder to achieve than syntactic?"
     answer: "Syntactic interoperability has explicit machine-checkable specifications (JSON schemas, XSD, Protobuf). Semantic interoperability depends on implicit assumptions — units, encoding, side effects, lifecycle states — that are easy to leave undocumented and hard to verify automatically. Many semantic failures only surface when production data exposes a gap nobody thought to check."
@@ -87,6 +95,8 @@ cards:
     explanation: "A monolith has one interface (its UI). A 200-service microservice platform has thousands. The number of pairwise interactions grows faster than the number of services, so interop discipline (versioning, contracts, schemas, semantic views) scales nonlinearly in importance."
 
   - id: 15
+    hint: >-
+      Suppose two systems accept the same price message, but disagree about whether tax is included. Trace what a customer would be charged.
     difficulty: advanced
     question: "What does it mean to be 'interoperable' but not actually useful for collaboration?"
     answer: "Two systems can pass each other's parse tests (syntactic interop), yet still fail to collaborate meaningfully because of semantic mismatches, missing features, asymmetric coverage, or business-rule incompatibilities. The *useful* qualifier in the definition matters: interop is measured by the value of the exchange, not just its technical success."
