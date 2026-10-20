@@ -28,7 +28,7 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      In the lecture's terminology, which scenario is **external reuse** rather than internal reuse?
+      Which scenario is **external reuse** rather than internal reuse?
     options:
       - "A team reuses a billing module written two years ago by another team in the same company"
       - "A project depends on the requests package installed via pip from PyPI"
@@ -95,7 +95,7 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      You're considering adding a 12-line npm dependency that capitalizes the first letter of each word in a string. The package has 7 GitHub stars and one maintainer with no commits in the last year. Which course of action best follows the chapter's principles?
+      You're considering adding a 12-line npm dependency that capitalizes the first letter of each word in a string. The package has 7 GitHub stars and one maintainer with no commits in the last year. Which course of action best follows sound principles for reusing external code?
     options:
       - "Add it — reuse is always better than reinventing the wheel"
       - "Add it, but pin the version exactly to today's release"
@@ -173,7 +173,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      A team is choosing whether to rewrite an old internal `BatchScheduler` for use in a new low-latency streaming service. Which course of action best embodies the design principles in this chapter?
+      A team is choosing whether to rewrite an old internal `BatchScheduler` for use in a new low-latency streaming service. Which course of action best reflects sound principles for design with reuse?
     options:
       - "Reuse it as-is — internal code is always safe to reuse because the team owns it"
       - "Reuse it after identifying its implicit assumptions and verifying they still hold; otherwise adapt or replace"

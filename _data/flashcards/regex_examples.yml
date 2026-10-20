@@ -4,7 +4,7 @@ active: true
 cards:  
   - id: 1  
     difficulty: advanced
-    question: "Write a regex to recognize the simplified email shape used in this chapter (e.g., user@domain.com), without attempting complete email-address validation."
+    question: "Write a regex to recognize a simplified email shape (e.g., user@domain.com) — a local part, `@`, a domain name, and a top-level domain of at least two letters — without attempting complete email-address validation."
     answer: "`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$`"  
     explanation: "This matches a sequence of alphanumeric characters and allowed symbols for the username, followed by an '@', a domain name, and a 2+ character top-level domain."  
   
@@ -22,7 +22,7 @@ cards:
   
   - id: 4  
     difficulty: expert
-    question: "Write a regex to validate this password-format exercise: ASCII letters and digits only, at least 8 characters, containing at least one uppercase letter, one lowercase letter, and one digit."
+    question: "Write a regex to validate a password with these rules: ASCII letters and digits only, at least 8 characters, containing at least one uppercase letter, one lowercase letter, and one digit."
     answer: "`^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$`"  
     explanation: "Uses positive lookaheads `(?=...)` to scan ahead and guarantee the presence of a lowercase, uppercase, and digit before matching a string of 8 or more valid characters."  
   

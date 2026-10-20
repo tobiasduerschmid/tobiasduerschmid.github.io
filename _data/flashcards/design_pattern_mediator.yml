@@ -4,26 +4,26 @@ active: true
 cards:
   - id: 1
     difficulty: basic
-    question: "What problem does Mediator solve?"
+    question: "What problem does the Mediator pattern solve?"
     answer: "It centralizes coordination among colleagues and can replace dense peer-to-peer dependencies with links through a mediator. It reorganizes the coordination work rather than eliminating it."
     explanation: "Instead of objects talking directly, they report events to the mediator. The mediator contains the coordination rules and tells objects how to respond."
   - id: 2
     difficulty: intermediate
-    question: "Observer vs. Mediator: key difference?"
+    question: "Observer vs. Mediator design patterns: key difference?"
     answer: "Observer: **distributed** intelligence (each observer reacts independently). Mediator: **centralized** intelligence (mediator coordinates all responses)."
     explanation: "Observer for extensibility (adding new dependents). Mediator for changeability (modifying coordination rules). They are often combined in practice."
   - id: 3
     difficulty: intermediate
-    question: "When to use Observer vs. Mediator?"
+    question: "When to use the Observer vs. the Mediator pattern?"
     answer: "Observer when objects need to react **independently** to a change. Mediator when objects need to be **coordinated** (the response depends on collective state)."
     explanation: "If each observer does its own thing, use Observer. If the response requires checking multiple objects' states, use Mediator."
   - id: 4
     difficulty: intermediate
-    question: "What is the 'god class' risk of Mediator?"
+    question: "What is the 'god class' risk of the Mediator pattern?"
     answer: "The mediator centralizes all coordination logic, so complex systems produce complex mediators. The pattern displaces complexity rather than removing it."
     explanation: "Without careful design, the Mediator can become an unmaintainable monolith. Consider splitting into multiple mediators for different subsystem aspects."
   - id: 5
     difficulty: advanced
-    question: "How can Observer and Mediator be combined?"
+    question: "How can the Observer and Mediator patterns be combined?"
     answer: "Colleagues publish events through Observer-style subscriptions; a mediator subscribes and applies coordination rules."
     explanation: "Colleagues use Observer-style notifications to inform the mediator; the mediator uses direct calls to coordinate responses. This is common in real systems."

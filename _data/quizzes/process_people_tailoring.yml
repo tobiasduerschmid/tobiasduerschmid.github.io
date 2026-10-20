@@ -96,7 +96,7 @@ questions:
     bloom: apply
     type: multiple
     question: |
-      A CS 35L project team wants a lightweight process for the next milestone. Which actions fit the chapter's guidance? Select all that apply.
+      A small course-project team (for example, in CS 35L) wants a lightweight process for the next milestone. Which actions fit a risk-driven agile process? Select all that apply.
     options:
       - "Keep a feature backlog and a technical debt backlog."
       - "Write a short design note before changing the data model."

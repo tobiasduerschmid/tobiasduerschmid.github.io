@@ -1,0 +1,185 @@
+title: "Python Functional Programming (Advanced) Quiz"
+description: "Advanced Python practice with lambdas, map, closures, currying, late binding, generators, and lazy evaluation."
+active: true
+# Split from the CS 35L Python decks (python, python_output): CS 131 masters include this deck; CS 35L masters do not.
+questions:
+  - id: 7
+    difficulty: advanced
+    question: |
+      A student writes this Python list comprehension:
+      ```python
+      result = [x**2 for x in range(1000000) if x % 2 == 0]
+      ```
+      The program only needs one pass through these values. Their teammate says: "Use a **generator expression** to avoid storing them all." What would the generator version look like, and why does it use less memory here?
+    options:
+      - "Replace `[]` with `()`: `(x**2 for x in range(1000000) if x % 2 == 0)` — values produced lazily."
+      - "Use `list()` around the comprehension to make it a generator"
+      - "Generators don't exist in Python — the student should use `itertools.imap()` instead"
+      - "There is no memory difference — Python automatically optimizes large comprehensions into generators"
+    correct_index: 0
+    option_feedback:
+      1: |
+        `list(...)` forces eager materialization; replacing brackets with parentheses is what creates a
+        lazy generator expression.
+      2: |
+        Generator expressions are built into modern Python; `itertools.imap()` is a Python 2 era false
+        trail.
+      3: |
+        Python does not silently turn list comprehensions into generators; brackets mean a list is
+        allocated.
+    explanation: "Replacing `[...]` with `(...)` creates a generator expression. It produces values one at a time using constant memory, instead of building the 500,000-element list upfront. When you only need to iterate once and don't need to store the full collection, generators are dramatically more memory-efficient."
+
+
+  - id: 33
+    type: single
+    difficulty: advanced
+    question: |
+      Each stored function compares its argument with `limit`. What does this Python program print?
+      ```python
+      checks = []
+      for limit in [10, 20, 30]:
+          def check(value, limit=limit):
+              return value < limit
+          checks.append(check)
+
+      print([check(15) for check in checks])
+      ```
+    options:
+      - "`[False, True, True]`"
+      - "`[True, True, True]`"
+      - "`[False, False, False]`"
+      - "`[True, False, False]`"
+    correct_index: 0
+    option_feedback:
+      1: "Without `limit=limit`, every function would read the loop variable after the loop ends, when it is 30. The default argument instead stores each pass's value when `def` runs."
+      2: "Each `def` statement evaluates its default separately, so the three functions keep 10, 20, and 30 rather than sharing the first value."
+      3: "`check(15)` asks whether 15 is less than the stored limit. That is false for 10 and true for 20 and 30."
+    explanation: "Default values are evaluated when `def` executes, here once per loop pass, so each function captures that pass's `limit`. Calling each function with 15 then compares it with 10, 20, and 30."
+
+
+  # Source concepts: Function Palooza notes, Closures; Midterm F22 Problem 4.
+  - id: python-course-closure-state
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this Python program print?
+
+      ```python
+      def counter(start):
+          total = start
+          def step():
+              nonlocal total
+              total += 2
+              return total
+          return step
+      a = counter(1)
+      b = a
+      c = counter(1)
+      print(a(), b(), c())
+      ```
+    options:
+    - '`3 3 3`'
+    - '`3 5 3`'
+    - '`3 5 7`'
+    correct_index: 1
+    option_feedback:
+      0: a and b name the same closure, so the second call observes its updated total.
+      2: c was created by a separate factory call and has a separate enclosing binding.
+    explanation: A function alias shares closure state; a new factory invocation creates new state.
+
+
+  # Source concepts: Function Palooza notes, First-Class Functions; Final F23 Problem 1 (currying).
+  - id: python-course-curry-call
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this Python program print?
+
+      ```python
+      def attach(prefix):
+          return lambda text: prefix + text
+      decorate = attach("#")
+      print(decorate("one"), attach("@")("two"))
+      ```
+    options:
+    - '`#one @two`'
+    - '`one two`'
+    - '`@one @two`'
+    correct_index: 0
+    option_feedback:
+      1: Each returned function retains and prepends its enclosing prefix.
+      2: The second factory call does not rebind the first closure’s prefix.
+    explanation: Each call to attach returns a one-argument function with its own captured prefix. The second expression creates and immediately calls such a function.
+
+
+  # Source concepts: Functional Programming notes, higher-order functions; Control Palooza, Iterators.
+  - id: python-course-lazy-map
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this Python program print?
+
+      ```python
+      values = map(lambda n: n * 3, [2, 4])
+      print(next(values), list(values), list(values))
+      ```
+    options:
+    - '`6 [6, 12] [6, 12]`'
+    - '`6 [12] [12]`'
+    - '`6 [12] []`'
+    correct_index: 2
+    option_feedback:
+      0: next consumes the first result; list receives only the remaining results.
+      1: The first list conversion exhausts this one iterator.
+    explanation: map returns a lazy iterator. All three expressions consume the same traversal from left to right.
+
+
+  # Source concepts: Control Palooza notes, Generators: Execution Flow.
+  - id: python-course-generator-suspension
+    type: single
+    difficulty: intermediate
+    question: |-
+      What does this Python program print?
+
+      ```python
+      def values():
+          print("start")
+          yield 4
+          print("resume")
+          yield 9
+      work = values()
+      print("ready")
+      print(next(work))
+      print(list(work))
+      ```
+    options:
+    - '`start / ready / 4 / resume / [9]`'
+    - '`ready / start / 4 / resume / [9]`'
+    - '`ready / start / resume / 4 / [4, 9]`'
+    correct_index: 1
+    option_feedback:
+      0: Calling a generator function creates its generator without executing the body.
+      2: The first yield suspends before the resume message, and its value is already consumed by next.
+    explanation: The body begins at next, pauses at yield 4, then resumes during list. Slashes in the choices separate output lines.
+
+
+  # Taught / practice evidence: Control Palooza, Generators (pause/resume and one shared iterator); Homework CTRL3; F24 Final Problem 6.
+  - id: python-output-generator
+    type: write-in
+    difficulty: intermediate
+    question: Two names refer to the stream of odd numbers. Which number prints?
+    program:
+      language: python
+      file: stream.py
+      code: |
+        def odd_numbers():
+            for n in [1, 3, 5]:
+                yield n
+        odds = odd_numbers()
+        shared = odds
+        next(odds)
+        next(shared)
+        print(next(odds))
+    answer: '5'
+    explanation: Both names refer to one generator with one current position. The first two calls consume `1` and `3`;
+      the final call consumes and prints `5`.

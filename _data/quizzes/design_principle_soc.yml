@@ -57,7 +57,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      In the Monopoly example from the lecture, the **Application Layer** (game logic) exposes three kinds of interaction to the **Presentation Layer**. Which of the following is NOT one of them?
+      A Monopoly game separates its **Application Layer** (game logic) from its **Presentation Layer** (UI). The Application Layer exposes three kinds of interaction to the Presentation Layer. Which of the following is NOT one of them?
     options:
       - "Getters, e.g., getCurrentBalance()"
       - "Commands, e.g., buyProperty(name, user)"

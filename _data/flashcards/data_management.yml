@@ -52,13 +52,13 @@ cards:
 
   - id: 9
     difficulty: basic
-    question: "What is a **transaction**?"
+    question: "What is a database **transaction**?"
     answer: "A transaction groups database operations into an atomic unit: its writes commit together or are rolled back together. What concurrent transactions can observe depends on the isolation level; serializable isolation gives an effect equivalent to a serial execution."
     explanation: "Transactions are the DBMS's primary tool for giving the application simple correctness guarantees in the face of crashes and concurrency."
 
   - id: 10
     difficulty: basic
-    question: "What do **`COMMIT`** and **`ROLLBACK`** do?"
+    question: "In SQL, what do **`COMMIT`** and **`ROLLBACK`** do?"
     answer: "COMMIT completes the transaction so its database changes persist under the durability contract. ROLLBACK discards that transaction’s uncommitted changes; it does not undo other transactions or external side effects. Recovery discards uncommitted database changes after a crash."
     explanation: "The all-or-nothing guarantee applies to the transaction’s database effects. Sequences and other DBMS-specific operations can have different rollback rules; an external email or payment is not automatically undone."
 

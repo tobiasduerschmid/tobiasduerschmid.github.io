@@ -10,7 +10,7 @@ questions:
     bloom: analyze
     estimated_seconds: 75
     question: |-
-      What does this code print?
+      What does this Python code print?
 
       ```python
       from copy import copy
@@ -38,7 +38,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |-
-      What does this code print?
+      What does this Python code print?
 
       ```python
       from copy import deepcopy
@@ -64,7 +64,7 @@ questions:
     difficulty: basic
     bloom: understand
     estimated_seconds: 30
-    question: A constructor uses `self.values = values`. A caller later appends to the supplied list. Which explanation
+    question: A Python constructor uses `self.values = values`. A caller later appends to the supplied list. Which explanation
       accounts for the object seeing that new element?
     options:
     - The field and caller share one list.
@@ -85,7 +85,7 @@ questions:
     bloom: evaluate
     estimated_seconds: 60
     question: |-
-      A reviewer claims that `b = copy(a)` makes an independent outer list but shares its inner lists. After this setup, which expressions directly confirm that claim? Select all that apply.
+      A reviewer claims that Python's `b = copy(a)` makes an independent outer list but shares its inner lists. After this setup, which expressions directly confirm that claim? Select all that apply.
 
       ```python
       from copy import copy
@@ -115,7 +115,7 @@ questions:
     bloom: analyze
     estimated_seconds: 75
     question: |-
-      What does this code print?
+      What does this Python code print?
 
       ```python
       def revise(values):
@@ -143,7 +143,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 75
-    question: Arrange a function that returns a deep-copied version of a nonempty nested list with 7 appended to its first
+    question: Arrange a Python function that returns a deep-copied version of a nonempty nested list with 7 appended to its first
       row. The input and all its rows must stay unchanged. Assume `copy` and `deepcopy` are already imported.
     display: block
     lines:
@@ -164,7 +164,7 @@ questions:
     bloom: evaluate
     estimated_seconds: 60
     question: |-
-      This function must return an edited copy of a nonempty nested list while leaving every input row unchanged. Which replacement for the marked line meets that contract? Assume ordinary lists of integers.
+      This Python function must return an edited copy of a nonempty nested list while leaving every input row unchanged. Which replacement for the marked line meets that contract? Assume ordinary lists of integers.
 
       ```python
       from copy import copy, deepcopy
@@ -189,7 +189,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |-
-      What does this program print?
+      What does this Python program print?
 
       ```python
       row = [4]
@@ -215,7 +215,7 @@ questions:
     type: single
     difficulty: advanced
     question: |-
-      What does this program print?
+      What does this Python program print?
 
       ```python
       from copy import copy, deepcopy

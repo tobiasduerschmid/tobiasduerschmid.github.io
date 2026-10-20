@@ -117,7 +117,7 @@ questions:
     bloom: apply
     type: single
     question: |
-      You are assigned a 350-line pull request in an unfamiliar area. Which review sequence best applies the chapter's comprehension advice?
+      You are assigned a 350-line pull request in an unfamiliar area. Which review sequence best applies evidence-based code-comprehension advice?
     options:
       - "Start at the first changed line and read every file in the order the review tool presents it."
       - "Read PR description, issue, and tests first; form a hypothesis, then drill into key paths."

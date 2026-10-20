@@ -34,7 +34,7 @@ cards:
 
   - id: 6
     difficulty: advanced
-    question: "What is a **Fake**? Canonical example? How is it different from a Stub?"
+    question: "What is a **Fake** test double? Canonical example? How is it different from a Stub?"
     answer: "A **Fake** is a *working* alternative implementation with shortcuts unsuitable for production (e.g. in-memory DB satisfying the real interface). A **Stub** returns canned values for specific calls; a Fake actually implements the behavior."
     explanation: "Fakes are ideal when you want realistic behavior at high speed — write a row, read it back, query by index — without standing up the real dependency. They cost more to build but pay back across many tests. Stubs are cheap and case-specific; Fakes are richer and scenario-general."
 
@@ -52,7 +52,7 @@ cards:
 
   - id: 9
     difficulty: advanced
-    question: "Pick a double for: *'My SUT's constructor requires a `loader`, but this behavior never calls `loader.load_config()`.'*"
+    question: "Pick a test double for: *'My SUT's constructor requires a `loader`, but this behavior never calls `loader.load_config()`.'*"
     answer: "A **Dummy** suffices — the loader satisfies the signature but is never used in this path. If the SUT *does* read fields from `loader.load_config()`, escalate to a **Stub** returning a specific config."
     explanation: "Reaching for a Mock or Spy here would over-specify the test. The minimum-viable-double rule says pick the simplest double that lets the test do its job — a Dummy exists only to satisfy the signature, and anything heavier is extra coupling for no benefit."
 

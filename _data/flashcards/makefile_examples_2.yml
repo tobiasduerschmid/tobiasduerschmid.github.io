@@ -4,7 +4,7 @@ active: true
 cards:  
   - id: 1  
     difficulty: intermediate
-    question: "Given the snippet `app: main.o network.o utils.o` followed by the command `$(CC) $(CFLAGS) $^ -o $@`, what exactly does the command evaluate to if `CC=gcc` and `CFLAGS=-Wall`?"  
+    question: "Given the Makefile snippet `app: main.o network.o utils.o` followed by the command `$(CC) $(CFLAGS) $^ -o $@`, what exactly does the command evaluate to if `CC=gcc` and `CFLAGS=-Wall`?"  
     answer: "`gcc -Wall main.o network.o utils.o -o app`"  
     explanation: "`$^` expands to all prerequisites (the three `.o` files), and `$@` expands to the target name (`app`). This is the standard way to link object files into a final C executable."  
 
@@ -34,7 +34,7 @@ cards:
 
   - id: 6  
     difficulty: advanced
-    question: "In the rule `main.o: main.c main.h types.h`, what happens if you edit and save `types.h`?"  
+    question: "In the Makefile rule `main.o: main.c main.h types.h`, what happens if you edit and save `types.h`?"  
     answer: "`make` will recompile `main.o` the next time it is run."  
     explanation: "Even though `types.h` is not directly passed to the compiler in the recipe, listing header files as prerequisites tells `make` to track their modification timestamps. If a header changes, the object files that depend on it must be rebuilt."  
 

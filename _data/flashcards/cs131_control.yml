@@ -100,7 +100,7 @@ cards:
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 40
-    question: A child prints C before its first suspension. The caller spawns it and immediately prints M. Give the first two prints for inline spawn and for scheduled spawn under the lecture’s single-threaded runtime.
+    question: A child prints C before its first suspension. The caller spawns it and immediately prints M. Give the first two prints for inline spawn and for scheduled spawn in a single-threaded spawn/await runtime.
     answer: 'Inline: C, M. Scheduled: M, C, provided the caller then yields or finishes so the queued child can run.'
     explanation: 'Self-check: Inline runs the child immediately; scheduled spawn queues it until control returns to the runtime.'
 

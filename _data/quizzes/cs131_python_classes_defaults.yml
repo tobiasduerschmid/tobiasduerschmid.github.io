@@ -56,7 +56,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |-
-      What does this code print?
+      What does this Python code print?
 
       ```python
       class Writer:
@@ -144,7 +144,7 @@ questions:
   - id: cs131-python-none-default-contract
     type: single
     difficulty: intermediate
-    question: A function uses `def add(value, counts=None)`. It must create a fresh list for omitted input and append to
+    question: A Python function uses `def add(value, counts=None)`. It must create a fresh list for omitted input and append to
       any supplied list. Which initialization before `counts.append(value)` meets this contract?
     options:
     - counts = []
@@ -161,7 +161,7 @@ questions:
   - id: cs131-python-initialize-inherited-state
     type: parsons
     difficulty: intermediate
-    question: Arrange the Child definition so Child().value is 7. Base.__init__(self, value) stores self.value. Initialize
+    question: Arrange the Python Child class definition so Child().value is 7. Base.__init__(self, value) stores self.value. Initialize
       the base state before doubling it, then add 1. Use only the needed lines.
     display: block
     lines:

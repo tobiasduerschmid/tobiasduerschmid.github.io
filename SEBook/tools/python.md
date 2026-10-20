@@ -2308,8 +2308,12 @@ Before opening the cards, explain three contrasts without looking back: rebindin
 
 ## CS131 Reference Practice
 
-These shorter course-focused sets revisit object references, nested arrays, parameter passing, and defaults in different contexts. Attempt the writing prompts before revealing the answers.
+These shorter course-focused sets revisit object references, nested arrays, parameter passing, and defaults in different contexts. The advanced functional-programming sets practice lambdas, closures, currying, late binding, and generators. Attempt the writing prompts before revealing the answers.
 
 {% include flashcards.html id="cs131_python" %}
 
+{% include flashcards.html id="python_functional_advanced" %}
+
 {% include quiz.html id="cs131_python" %}
+
+{% include quiz.html id="python_functional_advanced" %}

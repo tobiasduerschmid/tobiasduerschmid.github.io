@@ -26,7 +26,7 @@ questions:
   - id: 2
     difficulty: advanced
     question: |
-      A developer writes this code and is confused why the output is `A, C, B` instead of `A, B, C`:
+      A developer writes this JavaScript code and is confused why the output is `A, C, B` instead of `A, B, C`:
       ```javascript
       console.log("A");
       setTimeout(() => console.log("B"), 0);
@@ -53,7 +53,7 @@ questions:
 
   - id: 3
     difficulty: advanced
-    question: "A teammate's code uses `==` for all comparisons and it 'works fine in tests.' You suggest changing to `===` in code review. They push back: 'If it works, why change it?' What is the strongest argument for `===`?"
+    question: "A teammate's JavaScript code uses `==` for all comparisons and it 'works fine in tests.' You suggest changing to `===` in code review. They push back: 'If it works, why change it?' What is the strongest argument for `===`?"
     options:
       - "`===` is measurably faster at runtime"
       - "`==` silently coerces across types, masking bugs the moment types diverge (e.g. `'0' == 0`)"
@@ -73,7 +73,7 @@ questions:
   - id: 4
     difficulty: advanced
     question: |
-      Compare these two approaches for fetching data from two independent APIs:
+      Compare these two JavaScript approaches for fetching data from two independent APIs:
 
       **Approach A (Sequential):**
       ```javascript
@@ -148,7 +148,7 @@ questions:
   - id: 7
     difficulty: advanced
     question: |
-      A student writes:
+      A student writes this JavaScript:
       ```javascript
       async function processAll(items) {
           items.forEach(async (item) => {
@@ -179,7 +179,7 @@ questions:
   - id: 8
     difficulty: advanced
     question: |
-      **Arrange** the lines to write an async function that reads a file and returns its parsed JSON content, handling errors gracefully.
+      **Arrange** the lines to write a Node.js async function that reads a file and returns its parsed JSON content, handling errors gracefully.
     type: parsons
     lines:
       - "async function loadConfig(path) {"
@@ -217,7 +217,7 @@ questions:
   - id: 10
     difficulty: advanced
     question: |
-      **Arrange** the fragments to build a Promise chain that fetches data, parses JSON, and handles errors.
+      **Arrange** the fragments to build a JavaScript Promise chain that fetches data, parses JSON, and handles errors.
     type: parsons
     display: inline
     lines:
@@ -233,7 +233,7 @@ questions:
   - id: 11
     difficulty: advanced
     question: |
-      You are building a TikTok-style feed. Match each task to the best array method:
+      You are building a TikTok-style feed. Match each task to the best JavaScript array method:
       - Task A: Remove videos the user has already seen
       - Task B: Convert each video object into a `<VideoCard>` component
       - Task C: Calculate the total watch time across all videos
@@ -256,7 +256,7 @@ questions:
 
   - id: 12
     difficulty: advanced
-    question: "An API promises that message counts are numbers, but returns `\"42\"`. The bot uses `if (count == 42)`. Which diagnosis best explains what this check misses?"
+    question: "An API promises that message counts are numbers, but returns `\"42\"`. The JavaScript bot uses `if (count == 42)`. Which diagnosis best explains what this check misses?"
     options:
       - "The comparison rejects the string because its type differs."
       - "The comparison coerces the string, concealing a violated API contract."
@@ -269,7 +269,7 @@ questions:
   - id: 13
     difficulty: intermediate
     question: |
-      **Arrange** the lines to process an array of Spotify tracks: filter explicit songs, extract just the titles, and join them into a comma-separated string.
+      **Arrange** the lines to process a JavaScript array of Spotify tracks: filter explicit songs, extract just the titles, and join them into a comma-separated string.
     type: parsons
     display: inline
     lines:
@@ -284,7 +284,7 @@ questions:
 
   - id: 14
     difficulty: intermediate
-    question: "What does calling an `async` function **always** return, even if the function body just returns a plain number like `return 42`?"
+    question: "What does calling a JavaScript `async` function **always** return, even if the function body just returns a plain number like `return 42`?"
     options:
       - "The plain value (`42`) — `async` is only meaningful when the function contains an `await`"
       - "A Promise — every `async` function wraps its return in `Promise.resolve()`"
@@ -305,7 +305,7 @@ questions:
   - id: 15
     difficulty: advanced
     question: |
-      A developer needs a `delay(ms)` utility that returns a Promise resolving after `ms` milliseconds. Which implementation is correct?
+      A developer needs a JavaScript `delay(ms)` utility that returns a Promise resolving after `ms` milliseconds. Which implementation is correct?
     options:
       - |
         ```javascript
@@ -345,7 +345,7 @@ questions:
   - id: 16
     difficulty: intermediate
     question: |
-      **Arrange** the lines to filter passing students (grade ≥ 60) and extract just their names.
+      **Arrange** the JavaScript lines to filter passing students (grade ≥ 60) and extract just their names.
     type: parsons
     display: inline
     lines:
@@ -361,7 +361,7 @@ questions:
   - id: 17
     difficulty: advanced
     question: |
-      **Arrange** the lines of a corrected `processAll` function. The original bug: `"All done!"` printed before items finished processing because `.forEach()` ignores the `await` inside its callback.
+      **Arrange** the lines of a corrected JavaScript `processAll` function. The original bug: `"All done!"` printed before items finished processing because `.forEach()` ignores the `await` inside its callback.
     type: parsons
     lines:
       - "async function processAll(items) {"
@@ -378,7 +378,7 @@ questions:
   - id: 18
     difficulty: advanced
     question: |
-      A student writes this code for a multiplayer game server and wonders why player moves are "laggy":
+      A student writes this Node.js code for a multiplayer game server and wonders why player moves are "laggy":
       ```javascript
       app.post('/move', (req, res) => {
           // Compute best AI response (CPU-intensive, ~2 seconds)
@@ -408,7 +408,7 @@ questions:
   - id: 19
     difficulty: advanced
     question: |
-      **Arrange** the lines to look up a student by ID from a roster array, handle the case where the student isn't found, and return their data as JSON.
+      **Arrange** the lines of an Express route to look up a student by ID from a roster array, handle the case where the student isn't found, and return their data as JSON.
     type: parsons
     lines:
       - "router.get('/students/:id', async (req, res) => {"
@@ -440,7 +440,7 @@ questions:
   - id: 21
     difficulty: intermediate
     question: |
-      What is the value of `x` after this code runs?
+      What is the value of `x` after this JavaScript code runs?
       ```javascript
       let x;
       console.log(x);
@@ -466,7 +466,7 @@ questions:
   - id: 22
     difficulty: advanced
     question: |
-      **Arrange** the lines to safely access a nested property, provide a default, and log the result.
+      **Arrange** the JavaScript lines to safely access a nested property, provide a default, and log the result.
     type: parsons
     display: inline
     lines:

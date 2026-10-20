@@ -5,7 +5,7 @@ questions:
   - id: 1
     difficulty: advanced
     type: single
-    question: "The alarm always announces that it rang. CoffeeMaker directly observes that event and owns the decision to brew; Calendar only answers date queries. Where must the weekday check go in this proposed design?"
+    question: "A smart home should brew coffee after the alarm rings, but only on weekdays. In a proposed design, the alarm always announces that it rang. CoffeeMaker directly observes that event and owns the decision to brew; Calendar only answers date queries. Where must the weekday check go?"
     options:
       - "In the AlarmClock — it would only notify on weekdays"
       - "In the CoffeeMaker — it would check the Calendar before brewing"
@@ -24,7 +24,7 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      What is the **core difference** between Observer and Mediator?
+      What is the **core difference** between the Observer and Mediator patterns?
     options:
       - "Observer is one-to-many; Mediator is many-to-many"
       - "Observer distributes reaction logic; Mediator centralizes it"

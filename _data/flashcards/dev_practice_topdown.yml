@@ -19,14 +19,14 @@ cards:
   - id: 3
     difficulty: expert
     bloom: apply
-    question: "What is a dangling purpose link in a reader's mental model?"
+    question: "In program comprehension, what is a dangling purpose link in a reader's mental model?"
     answer: "It is a gap between knowing **what** a program should accomplish and not yet knowing **how** the implementation accomplishes it. The gap generates targeted 'how' questions that guide the reader into the code."
     explanation: "A good PR description intentionally creates the specification layer first, so the reader's implementation search is focused rather than random."
 
   - id: 4
     difficulty: intermediate
     bloom: apply
-    question: "What is the Stepdown Rule?"
+    question: "In source-code organization, what is the Stepdown Rule?"
     answer: "A source file should present high-level functions first, then place lower-level helper functions below the functions that call them. The reader descends one abstraction level at a time."
     explanation: "The rule supports top-down scanning: read the public story first, drill into details only when a hypothesis needs verification."
 

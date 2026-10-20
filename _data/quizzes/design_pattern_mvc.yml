@@ -23,7 +23,7 @@ questions:
   - id: 2
     difficulty: intermediate
     type: single
-    question: "The domain model has no dependency on concrete widgets or input devices. What is the main benefit of that separation?"
+    question: "In an MVC design, the domain model has no dependency on concrete widgets or input devices. What is the main benefit of that separation?"
     options:
       - "It guarantees a smaller model than view or controller."
       - "Domain logic can run and be tested without the UI."
@@ -74,7 +74,7 @@ questions:
   - id: 5
     difficulty: advanced
     type: single
-    question: "A framework manages state-triggered rendering. Which architectural responsibility remains with the application developer?"
+    question: "A UI framework manages state-triggered rendering. Which architectural responsibility remains with the application developer?"
     options:
       - "Give every component a runtime-swappable controller."
       - "Keep domain decisions separate from display and input code."

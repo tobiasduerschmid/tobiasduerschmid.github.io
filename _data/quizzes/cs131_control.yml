@@ -310,7 +310,7 @@ questions:
     bloom: apply
     estimated_seconds: 50
     question: |-
-      Use the lecture's single-threaded runtime. Scheduled spawn queues work without running it immediately; await suspends until that work completes. What is printed?
+      Assume a single-threaded runtime. Scheduled spawn queues work without running it immediately; await suspends until that work completes. What is printed?
 
       ```text
       operation job() { print("J") }
@@ -371,7 +371,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 40
-    question: Under the lecture's await rules, h refers to an operation that has already completed successfully with result 6. Select every effect of executing `x = await(h)`.
+    question: In a single-threaded spawn/await runtime, handle h refers to an operation that has already completed successfully with result 6. Select every effect of executing `x = await(h)`.
     options:
     - x receives 6.
     - The operation starts again.

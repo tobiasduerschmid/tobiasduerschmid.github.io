@@ -196,6 +196,33 @@ Watch for "Options A and B…", "option C…", "the third choice…", and ordina
 
 For the full step-by-step "audit and fix" recipe, several before/after worked examples, and the canonical stable-exception case, see **`references/shuffle-safety.md`**.
 
+## Self-contained stems: SE Gym mixes decks
+
+SE Gym shuffles cards from many decks into one workout: master decks (CS 35L, CS 130, CS 131, Tools), personal gyms, and Difficult or Selected reviews. The card badge then shows the master deck's title, not the topic, so the deck title and description are **not** available context. Every `question:` in `_data/quizzes/*.yml` and every flashcard `question:` in `_data/flashcards/*.yml` must be answerable on its own:
+
+- **Name the language, tool, or notation** whenever the answer depends on it: "Which **shell** command…", "Which **Git** command…", "What does this **Python** code print?", "Write a **JavaScript** arrow function…", "In **Haskell**, what does … evaluate to?", "In a **UML sequence diagram**, …". A bare "What does `sort` do?" or "Print the unique names" collides with Python, JavaScript, Git, and shell cards. Some answers change with the language (`"42" == 42`, calling an `async` function, `round(0.5)`), so the language is part of the question, not decoration.
+- **Name the pattern, principle, or style.** Write "the Command pattern", not "Command" (it collides with shell and Git commands). Write "the State pattern", not "State" (it collides with React state). Write "the golden rule of layered architecture", not "the golden rule".
+- **No references outside the card**: no "the lecture's model", "the chapter's advice", "covered in this chapter", "in the course model", "this deck", or "the previous question". State the scenario, schema, or convention the item relies on (the PayPal services, the Monopoly layers, the `Course`/`IsEnrolled` key) in the stem.
+- **Add context without cueing the key.** Name the domain, not the concept under test ("Which creational pattern…", not a hint toward Abstract Factory). When a convention varies by source (dispatch classification, cast versus conversion, await semantics), state that a convention applies without stating its answer.
+- Write-in programs display the run command (`python3 file.py`, `runghc file.hs`, `sh file.sh`), so their language is already visible. Parsons fragments and rendered UML diagrams help, but the stem should still say which language or diagram type it is.
+- Keep duplicated cards identical across decks (for example `git.yml` and `git_basic.yml`): a workout de-duplicates cards by question text. Rewording is safe for learner statistics because stats are keyed by the card's stable `id`, not its text.
+
+Quick audit for references outside the card (it reads only `question:` fields, including multi-line ones, and prints nothing when clean):
+
+```bash
+python3 - <<'EOF'
+import glob, re, yaml
+pat = re.compile(r"the lecture|lecture's|the chapter|this chapter|course model|previous question|this deck", re.I)
+for f in sorted(glob.glob('_data/quizzes/*.yml') + glob.glob('_data/flashcards/*.yml')):
+    d = yaml.safe_load(open(f)) or {}
+    for it in d.get('questions') or d.get('cards') or []:
+        if pat.search(str(it.get('question', ''))):
+            print(f, it.get('id'))
+EOF
+```
+
+The audit only catches explicit references. Missing language or tool names need a human read: ask whether the card could be answered correctly if it appeared between a Git card and a Python card.
+
 ## Authoring checklist
 
 Before merging a quiz file with new `option_feedback`:
@@ -210,6 +237,7 @@ Before merging a quiz file with new `option_feedback`:
 - [ ] Feedback does not duplicate the `explanation:` field.
 - [ ] No second-person blame; misconception is framed in the third person.
 - [ ] **Shuffle-safe**: no letter or ordinal references ("Option A", "the third choice", "the last one", etc.) in `explanation:`, `question:`, or anywhere outside `option_feedback`. Per-option reasoning lives in `option_feedback`; the `explanation` describes the correct answer or underlying principle. *Collective, content-anchored* references to wrong-option **categories** are fine ("approaches that mutate state", "options that use `WHERE` for aggregates"); references to specific options by letter or YAML index are not.
+- [ ] **Self-contained stem** (see "Self-contained stems" above): the question names its language, tool, notation, or pattern and never relies on the deck title, a lecture, a chapter, or another question. Flashcard prompts follow the same rule.
 - [ ] **Distractors pass the six tests** in `references/schema.md` → "Distractor design": plausible to a partial-knower, misconception-grounded, variation-clean (one critical feature), homogeneous with the key, free of cueing, *and consistent with what the stem shows*. If a distractor fails these, fix the distractor — feedback can't rescue it.
 - [ ] **Available actions match the prompt.** Tutorial quiz snippets are read-only: no "predict before you run" or other instruction to execute them in questions, explanations, or option feedback. Preserve reasoning prompts and runnable lesson exercises.
 - [ ] **Stem hygiene** (`references/schema.md` → "Stem design"): paraphrased from the lesson, no filler clauses, options of comparable shape and length to the key. If any clause in the stem could be cut without changing the question, cut it.

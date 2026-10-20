@@ -4,7 +4,7 @@ active: true
 questions:
   - id: 1
     difficulty: basic
-    question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. Which command is best suited to temporarily save your current work without making a messy commit?"
+    question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. Which Git command is best suited to temporarily save your current work without making a messy commit?"
     options:
       - "`git cherry-pick`"
       - "`git bisect`"
@@ -107,7 +107,7 @@ questions:
   - id: 6
     difficulty: intermediate
     type: multiple
-    question: "Which of the following are valid methods or strategies for integrating changes from a feature branch back into the main codebase? (Select all that apply)"
+    question: "Which of the following are valid methods or strategies for integrating changes from a feature branch back into the main codebase in Git? (Select all that apply)"
     options:
       - "`git merge`"
       - "`git rebase`"
@@ -154,7 +154,7 @@ questions:
   - id: 8
     difficulty: intermediate
     question: |
-      **Arrange** the commands to safely stash your work, pull remote changes, and restore your stashed work.
+      **Arrange** the Git commands to safely stash your work, pull remote changes, and restore your stashed work.
     type: parsons
     display: inline
     lines:
@@ -171,7 +171,7 @@ questions:
   - id: 9
     difficulty: advanced
     question: |
-      **Arrange** the commands to stage a forgotten file and fold it into the last commit without changing the commit message.
+      **Arrange** the Git commands to stage a forgotten file and fold it into the last commit without changing the commit message.
     type: parsons
     display: inline
     lines:

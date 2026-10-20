@@ -22,7 +22,7 @@ cards:
 
   - id: 4
     difficulty: intermediate
-    question: "Name and briefly describe the main *foundational* architectural styles covered in this chapter."
+    question: "Name and briefly describe five *foundational* software architectural styles."
     answer: "**Pipe-and-Filter** (data flow): independent filters transform streams; pipes connect output→input ports. **Layered** (call-return): hierarchical strata; upper layers use lower layers only. **Client-Server** (call-return): asymmetric synchronous request/response between clients and a server. **Publish-Subscribe / Event-Based** (implicit invocation): publishers emit events to a shared bus; subscribers register interest. **Service-Oriented Architecture (SOA)** and **Microservices** (modern distributed): networks of services, differing in protocol weight, data ownership, and bounded-context mapping."
     explanation: "Each style is a vocabulary of element and connector types plus topological constraints. Modern derived styles — REST, Event Sourcing, Hexagonal/Clean — are typically combinations or refinements of these foundational styles."
 
@@ -76,7 +76,7 @@ cards:
 
   - id: 13
     difficulty: advanced
-    question: "Why does the chapter connect **Domain-Driven Design** to microservices?"
+    question: "How does **Domain-Driven Design** connect to microservices?"
     answer: "Domain-Driven Design gives architects the idea of a **bounded context**: a business-domain boundary with its own model and language. Microservices use that idea to draw service boundaries around business capabilities, so each service can evolve independently instead of becoming a tiny technical layer in a distributed monolith."
     explanation: "The key page-level connection is bounded-context mapping. If service boundaries are drawn only around technical functions, the system may have many deployments but still require coordinated changes across services."
 
@@ -100,7 +100,7 @@ cards:
 
   - id: 17
     difficulty: intermediate
-    question: "Which architectural styles in this chapter are module styles, and which are component-and-connector styles?"
+    question: "Among layered, pipes-and-filters, and publish-subscribe architectures, which are module styles and which are component-and-connector styles?"
     answer: "**Layered architecture** is primarily a module style: its elements are code modules or layers, and its relation is allowed-to-use. **Pipes-and-filters** and **publish-subscribe** are component-and-connector styles: their elements are runtime components and connectors such as pipes, topics, or event buses."
     explanation: "The viewtype matters because it controls what claims are legitimate. A module style can support maintainability and dependency claims; runtime availability and message-flow claims need component-and-connector or behavioral views."
 

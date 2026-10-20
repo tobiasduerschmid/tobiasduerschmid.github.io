@@ -53,7 +53,7 @@ cards:
   - id: 5
     difficulty: advanced
     question: |
-      Predict what this program prints:
+      Predict what this C program prints:
 
       ```c
       #include <stdio.h>
@@ -101,7 +101,7 @@ cards:
   - id: 7
     difficulty: advanced
     question: |
-      Allocate a flat `rows × cols` matrix of `int` on the heap, write the index expression for element `(i, j)` in row-major order, and free the allocation.
+      In C, allocate a flat `rows × cols` matrix of `int` on the heap, write the index expression for element `(i, j)` in row-major order, and free the allocation.
     answer: |
       ```c
       int* matrix = malloc(rows * cols * sizeof(int));
@@ -122,7 +122,7 @@ cards:
   - id: 8
     difficulty: expert
     question: |
-      What is the bug in this code, and what is the most likely runtime symptom?
+      What is the bug in this C code, and what is the most likely runtime symptom?
 
       ```c
       char* greeting(void) {
@@ -156,7 +156,7 @@ cards:
   - id: 10
     difficulty: advanced
     question: |
-      Walk through what happens at runtime when this code executes:
+      Walk through what happens at runtime when this C code executes:
 
       ```c
       int* p = malloc(sizeof(int));

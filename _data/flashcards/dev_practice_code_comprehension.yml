@@ -12,7 +12,7 @@ cards:
   - id: 2
     difficulty: basic
     bloom: understand
-    question: "How do bottom-up and top-down comprehension differ?"
+    question: "How do bottom-up and top-down code comprehension differ?"
     answer: "**Bottom-up comprehension** starts with statements and builds larger chunks from control flow and data flow. **Top-down comprehension** starts with a hypothesis about the system's purpose and looks for beacons that confirm, refine, or reject it."
     explanation: "Bottom-up is useful when the reader lacks context or when the code is genuinely unfamiliar. Top-down is faster when the reader has relevant schemas and the code exposes reliable cues."
 

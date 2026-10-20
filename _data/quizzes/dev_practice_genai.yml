@@ -249,7 +249,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      You want an agent to implement a stateful feature in an unfamiliar codebase. Which workflow best applies the lecture's advice?
+      You want an agent to implement a stateful feature in an unfamiliar codebase. Which workflow is the most responsible way to work with the agent?
     options:
       - "Ask for the whole feature in one prompt and review only the running UI."
       - "Have the agent inspect files, propose a plan, then approve one small step at a time."
@@ -354,7 +354,7 @@ questions:
     difficulty: basic
     type: single
     question: |
-      Which sequence correctly names the three main stages discussed for LLM development and use?
+      Which sequence correctly names the three main stages of LLM development and use?
     options:
       - "Pre-training, post-training, inference."
       - "Compilation, linking, execution."
@@ -394,7 +394,7 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      You want an agent to add a title-only search box to the SEBook home page. Which prompt best applies the lecture's prompt-engineering advice?
+      You want an agent to add a title-only search box to the SEBook home page. Which prompt best applies good prompt-engineering practice?
     options:
       - "\"Add a search feature to the SEBook home page. Make it work well.\""
       - "\"Add a title-only search box on the home page. Propose a plan with tests before coding.\""

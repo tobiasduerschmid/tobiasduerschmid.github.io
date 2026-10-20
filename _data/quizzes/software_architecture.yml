@@ -148,7 +148,7 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      A shared C++ library appears once in the source tree. At build time, it is compiled into both the client executable and the server executable. Which view explains this cleanly?
+      A shared C++ library appears once in the source tree. At build time, it is compiled into both the client executable and the server executable. Which architectural view explains this cleanly?
     options:
       - "Module view: one code module. Component-and-connector view: two runtime components linked to that module."
       - "The component-and-connector view shows one component, because there is one source directory."
@@ -168,7 +168,7 @@ questions:
     difficulty: advanced
     type: multiple
     question: |
-      Which view is the best starting point for each analysis? Select all correct matches.
+      Which architectural view is the best starting point for each analysis? Select all correct matches.
     options:
       - "Whether a database schema represents customers, courses, and enrollments correctly → data view."
       - "Whether a service can tolerate one process crashing and being restarted → module view."

@@ -26,7 +26,7 @@ questions:
     difficulty: basic
     type: single
     question: |
-      A watchdog sends a request every 2 seconds to each worker. Each healthy worker replies immediately. If no reply arrives before timeout, the watchdog restarts the worker. Which tactic is this?
+      A watchdog sends a request every 2 seconds to each worker. Each healthy worker replies immediately. If no reply arrives before timeout, the watchdog restarts the worker. Which architectural tactic is this?
     options:
       - "Heartbeat."
       - "Ping-echo."
@@ -46,7 +46,7 @@ questions:
     difficulty: basic
     type: single
     question: |
-      Each worker sends an "alive" message to a monitor every 5 seconds. If the monitor stops receiving messages from one worker, it replaces that worker. Which tactic is this, and what is one cost?
+      Each worker sends an "alive" message to a monitor every 5 seconds. If the monitor stops receiving messages from one worker, it replaces that worker. Which architectural tactic is this, and what is one cost?
     options:
       - "Heartbeat; each worker must implement liveness logic and the messages cost resources."
       - "Ping-echo; the watchdog does all the work and workers stay passive."

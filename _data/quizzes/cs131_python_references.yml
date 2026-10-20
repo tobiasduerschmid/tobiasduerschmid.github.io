@@ -10,7 +10,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |-
-      What does this code print?
+      What does this Python code print?
 
       ```python
       def edit(left, right):
@@ -39,7 +39,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |-
-      What does this code print?
+      What does this Python code print?
 
       ```python
       row = [2]
@@ -66,7 +66,7 @@ questions:
     bloom: analyze
     estimated_seconds: 90
     question: |-
-      What does this code print?
+      What does this Python code print?
 
       ```python
       class Notes:
@@ -99,7 +99,7 @@ questions:
     bloom: analyze
     estimated_seconds: 75
     question: |-
-      After this setup, consider each option independently. Which statements make `other[0]` equal to `[5, 7]`? Select all that apply.
+      After this Python setup, consider each option independently. Which statements make `other[0]` equal to `[5, 7]`? Select all that apply.
 
       ```python
       child = [5]
@@ -128,7 +128,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 75
-    question: Arrange a function that appends 4 to the caller's list, then returns a separate list with an additional 8.
+    question: Arrange a Python function that appends 4 to the caller's list, then returns a separate list with an additional 8.
       For input `[1]`, the caller must hold `[1, 4]` and the result must be `[1, 4, 8]`.
     display: block
     lines:
@@ -149,7 +149,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |-
-      What does this code print?
+      What does this Python code print?
 
       ```python
       def keep_first(values):
@@ -219,7 +219,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |-
-      What does this program print?
+      What does this Python program print?
 
       ```python
       def replace(values):

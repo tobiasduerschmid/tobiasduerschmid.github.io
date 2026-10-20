@@ -104,7 +104,7 @@ questions:
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 60
-    question: Type `Whole` represents integers from −8 through 8. Type `Half` represents multiples of 0.5 from 0 through 7.5. Select every narrowing conversion, using the lecture's requirement that widening preserve every source value exactly.
+    question: Type `Whole` represents integers from −8 through 8. Type `Half` represents multiples of 0.5 from 0 through 7.5. Select every narrowing conversion, treating a conversion as widening only if it preserves every source value exactly.
     options:
     - Whole → Half
     - Half → Whole
@@ -125,7 +125,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 40
-    question: Use the lecture's terminology. Operation X creates a floating-point value `5.0` from integer `5`. Operation Y views an existing Student object through a Person reference without creating another object. How are X and Y classified?
+    question: Treat type conversion and type cast as distinct operations, even though some languages spell both with cast syntax. Operation X creates a floating-point value `5.0` from integer `5`. Operation Y views an existing Student object through a Person reference without creating another object. How are X and Y classified?
     options:
     - 'X: cast; Y: conversion'
     - 'X: conversion; Y: cast'
@@ -243,7 +243,7 @@ questions:
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 60
-    question: At collection time, a global points to object A, a local in an active caller points to B, and A has a field pointing to C. No other references exist. Select every root object under the lecture's definition.
+    question: At collection time, a global points to object A, a local in an active caller points to B, and A has a field pointing to C. No other references exist. Select every object that a tracing garbage collector treats as a root object.
     options:
     - A
     - B
@@ -301,7 +301,7 @@ questions:
     difficulty: advanced
     bloom: evaluate
     estimated_seconds: 60
-    question: A program keeps almost all of its heap objects alive across many collections. You want to reduce repeatedly copying those survivors. Which of the lecture's collector properties best supports choosing mark and compact over two-space mark and copy?
+    question: A program keeps almost all of its heap objects alive across many collections. You want to reduce repeatedly copying those survivors. Which collector property best supports choosing mark and compact over two-space mark and copy?
     options:
     - Compacted survivors may stay in place.
     - Compaction skips the marking phase.

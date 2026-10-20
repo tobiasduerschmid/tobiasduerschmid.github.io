@@ -33,7 +33,7 @@ cards:
   - id: 5
     difficulty: intermediate
     bloom: apply
-    question: "What practical limits should shape review size and speed?"
+    question: "What practical limits should shape code review size and speed?"
     answer: "Keep pull requests roughly between 200 and 400 lines of code, avoid review sessions longer than about an hour, and review at a measured pace rather than skimming hundreds of lines too quickly."
     explanation: "The exact numbers are heuristics, not laws. The principle is that review effectiveness drops when the reader's attention and working memory are exhausted."
 
@@ -47,7 +47,7 @@ cards:
   - id: 7
     difficulty: advanced
     bloom: analyze
-    question: "How do bikeshedding and linters relate?"
+    question: "In code review, how do bikeshedding and linters relate?"
     answer: "Bikeshedding wastes human review attention on trivial subjective details. Linters and formatters move style enforcement to automation so reviewers can spend scarce attention on design, correctness, and maintainability."
     explanation: "The highest-value human comments are the ones automation cannot make."
 
@@ -75,7 +75,7 @@ cards:
   - id: 11
     difficulty: advanced
     bloom: evaluate
-    question: "Why can adding more reviewers reduce accountability?"
+    question: "Why can adding more code reviewers reduce accountability?"
     answer: "Large reviewer groups can trigger a bystander effect: each person assumes someone else will read carefully, so focused attention diffuses instead of multiplying."
     explanation: "Review quality depends on active ownership of the review, not the raw number of people copied."
 

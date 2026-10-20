@@ -205,7 +205,7 @@ questions:
   - id: 10 
     difficulty: advanced
     type: multiple 
-    question: "Which of the following statements about Lookaheads `(?=...)` are true? (Select all that apply)" 
+    question: "Which of the following statements about regex lookaheads `(?=...)` are true? (Select all that apply)" 
     options: 
       - "They assert that a specific pattern must follow, but they do not add those characters to the final match." 
       - "They can be chained together at the same position in the string to test multiple independent conditions." 

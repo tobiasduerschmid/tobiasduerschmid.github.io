@@ -14,17 +14,17 @@ cards:
     explanation: "If the problem is about *creating* objects flexibly, look at creational patterns. If it is about *structuring* relationships, look at structural. If it is about *coordinating behavior*, look at behavioral."
   - id: 3
     difficulty: basic
-    question: "What is context tailoring?"
+    question: "When applying a design pattern, what is context tailoring?"
     answer: "The process of taking an abstract pattern and adapting it to fit the concrete problem, context, and constraints of a specific application."
     explanation: "Use the pattern as a design model, then check its participants and contracts against the concrete context. A library implementation can still be reused where its supported variations fit."
   - id: 4
     difficulty: intermediate
-    question: "What is a pattern compound?"
+    question: "In design patterns, what is a pattern compound?"
     answer: "A reoccurring set of patterns with overlapping roles from which additional emergent properties arise."
     explanation: "Classic Smalltalk MVC illustrates Observer for notifications, Strategy for input handling, and Composite for nested views. Merely using several patterns in one program does not make their combination a recurring compound."
   - id: 5
     difficulty: basic
-    question: "What is the 'Hammer and Nail' syndrome?"
+    question: "In design-pattern practice, what is the 'Hammer and Nail' syndrome?"
     answer: "The tendency for developers who just learned patterns to apply them to every problem, even when simple code would be a better solution."
     explanation: "Software quality is not measured by the number of patterns used. Often, keeping the code simple and avoiding a pattern entirely is the best solution."
   - id: 6
@@ -39,7 +39,7 @@ cards:
     explanation: "As Taylor, Medvidović, and Dashofy frame it (*Software Architecture: Foundations, Theory, and Practice*, 2009): architectural styles constrain the overall architectural decisions, while design patterns provide concrete, parameterized solution fragments."
   - id: 8
     difficulty: advanced
-    question: "What does the 'Before and After' teaching technique involve?"
+    question: "What does the 'Before and After' technique for teaching design patterns involve?"
     answer: "Comparing a working solution *without* a pattern to a refactored version *with* the pattern, especially when extending both with a new requirement."
     explanation: "Compare the changes needed in both versions. A pattern helps only for the variation it accommodates; the exercise can also reveal when its extra abstraction is not worthwhile."
   - id: 9

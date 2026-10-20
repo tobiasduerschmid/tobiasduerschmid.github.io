@@ -9,7 +9,7 @@ cards:
     explanation: "The Subject maintains a dynamic list of Observers and calls their `update()` method when its state changes. This avoids polling and avoids hardcoding the subject to specific dependents."
   - id: 2
     difficulty: intermediate
-    question: "Observer: which variant requires observers to know the subject's query interface?"
+    question: "In the Observer pattern, which variant requires observers to know the subject's query interface?"
     answer: "The **Pull model** adds that dependency. Push instead couples observers to the event payload format; neither variant is universally less coupled."
     explanation: "Push supplies event data; pull supplies a notification followed by queries. A hybrid is another option. Choose according to the data and coupling each participant needs."
   - id: 3
@@ -19,7 +19,7 @@ cards:
     explanation: "Solutions include explicit unsubscribe, weak references, or scoped subscriptions tied to lifecycle management."
   - id: 4
     difficulty: advanced
-    question: "Why can Observer make execution flow hard to trace?"
+    question: "Why can the Observer pattern make execution flow hard to trace?"
     answer: "The registration site and callback execution are separated. A subject calls the observer contract at runtime, while the observer or setup code may perform registration elsewhere."
     explanation: "Track the subscription lifecycle and callback targets. Observers do not have to register themselves, and static dependencies are not a complete runtime call graph."
   - id: 5
@@ -29,7 +29,7 @@ cards:
     explanation: "State objects localize state-specific behavior. Adding a state can still require changes to transitions, factories, and configuration; the pattern does not guarantee pure addition."
   - id: 6
     difficulty: intermediate
-    question: "How does **State** differ from **Strategy**?"
+    question: "How does the **State** pattern differ from the **Strategy** pattern?"
     answer: "State varies behavior with lifecycle state; Strategy supplies an interchangeable algorithm. Who selects an implementation is a useful clue, not an absolute rule."
     explanation: "Their UML structures can look alike. State transitions are usually managed by the context or its state objects; clients often configure strategies. Distinguish the patterns by the problem and intent, not selection syntax alone."
   - id: 7
@@ -39,7 +39,7 @@ cards:
     explanation: "State-driven transitions are preferred when states are well-defined and transitions are local. Context-driven works better when transitions depend on complex external conditions."
   - id: 8
     difficulty: intermediate
-    question: "Why is **Singleton** often called a 'pattern with a weak solution'?"
+    question: "Why is the **Singleton** pattern often called a 'pattern with a weak solution'?"
     answer: "It conflates two concerns: ensuring a single instance (legitimate) and providing global access (introduces hidden coupling and harms testability)."
     explanation: "Direct global access hides a dependency and makes replacement harder. Constructing one object at a chosen scope and injecting it separates lifetime management from global access; no DI framework is required."
   - id: 9
@@ -64,41 +64,41 @@ cards:
     explanation: "The pattern has an asymmetry: adding new *families* is easy (pure addition). Adding new *product types* is hard (changes ripple). This is a fundamental design trade-off."
   - id: 13
     difficulty: basic
-    question: "What problem does **Adapter** solve?"
+    question: "What problem does the **Adapter** pattern solve?"
     answer: "Allows classes with incompatible interfaces to work together by translating one interface into another that the client expects."
     explanation: "Like a power outlet adapter for international travel—the adapter translates between two incompatible plug standards without modifying either one."
   - id: 14
     difficulty: intermediate
-    question: "**Adapter** vs. **Facade** vs. **Decorator**: what's the key distinction?"
+    question: "**Adapter** vs. **Facade** vs. **Decorator** patterns: what's the key distinction?"
     answer: "Adapter *converts* an interface. Facade *simplifies* a set of interfaces. Decorator *adds behavior* to an object through the same interface."
     explanation: "These designs can all mediate access to other objects, but their intended change differs: an expected interface, convenient subsystem access, or added responsibilities. Object-wrapper shape alone is insufficient."
   - id: 15
     difficulty: basic
-    question: "What problem does **Composite** solve?"
+    question: "What problem does the **Composite** pattern solve?"
     answer: "Treats individual objects and nested groups uniformly through a shared abstraction, eliminating special-case code for leaves vs. containers."
     explanation: "Clients program against the Component interface, which both Leaf and Composite implement. The recursive structure allows operations like `print()` or `totalPrice()` to work identically on single items and nested trees."
   - id: 16
     difficulty: intermediate
-    question: "Composite: **Transparent** vs. **Safe** design?"
+    question: "Composite pattern: **Transparent** vs. **Safe** design?"
     answer: "Transparent: child-management methods on Component (uniform, but leaves get meaningless methods). Safe: child-management only on Composite (type-safe, but clients must distinguish)."
     explanation: "This is the fundamental trade-off of Composite. Transparent maximizes uniformity; Safe maximizes type safety. The choice depends on the specific context."
   - id: 17
     difficulty: basic
-    question: "What problem does **Façade** solve?"
+    question: "What problem does the **Façade** pattern solve?"
     answer: "Provides a simplified, unified interface to a complex subsystem, reducing the number of objects a client must interact with."
     explanation: "Instead of the client calling twelve methods on six objects, it calls one high-level method on the Facade. Importantly, the Facade does not 'trap' the subsystem—direct access remains available."
   - id: 18
     difficulty: advanced
-    question: "**Facade** vs. **Mediator**: what's the communication direction?"
+    question: "**Facade** vs. **Mediator** patterns: what's the communication direction?"
     answer: "Facade: one-directional (Facade calls subsystem; subsystem is unaware). Mediator: bidirectional (colleagues communicate through mediator and mediator coordinates back)."
     explanation: "Facade serves outside clients; Mediator encapsulates coordination among colleagues. A facade can sequence several subsystem calls, so orchestration alone does not turn it into a Mediator."
   - id: 19
     difficulty: basic
-    question: "What problem does **Mediator** solve?"
+    question: "What problem does the **Mediator** pattern solve?"
     answer: "Centralizes coordination among colleagues, reducing direct peer dependencies. A fully connected group can become a set of links through a mediator; the coordination work remains."
     explanation: "Instead of objects talking directly, they report events to the mediator. The mediator contains the coordination rules and tells objects how to respond."
   - id: 20
     difficulty: intermediate
-    question: "**Observer** vs. **Mediator**: what's the core difference?"
+    question: "**Observer** vs. **Mediator** patterns: what's the core difference?"
     answer: "Observer: *distributed* intelligence (each observer reacts independently). Mediator: *centralized* intelligence (the mediator coordinates all responses)."
     explanation: "Observer is best for extensibility (adding new observers). Mediator is best for changeability (modifying coordination rules). They are often combined in practice."

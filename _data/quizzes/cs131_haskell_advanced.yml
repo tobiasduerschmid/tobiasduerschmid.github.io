@@ -15,7 +15,7 @@ questions:
     bloom: analyze
     estimated_seconds: 60
     question: |-
-      What is the value of `result`?
+      What is the value of `result` in this Haskell code?
 
       ```haskell
       result :: Int
@@ -42,7 +42,7 @@ questions:
     bloom: understand
     estimated_seconds: 45
     question: |-
-      Considering only `price` and `pct`, which is free and which is bound in the returned lambda?
+      Considering only `price` and `pct`, which is free and which is bound in the returned Haskell lambda?
 
       ```haskell
       markup pct = \price -> price + price * pct / 100
@@ -89,7 +89,7 @@ questions:
     bloom: apply
     estimated_seconds: 45
     question: |-
-      Which expression has type `Double -> Double`?
+      Which Haskell expression has type `Double -> Double`?
 
       ```haskell
       tax :: Double -> Double -> Double
@@ -114,7 +114,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |-
-      Given these signatures, what is the type of `build`?
+      Given these Haskell signatures, what is the type of `build`?
 
       ```haskell
       combine :: [Int] -> Int -> [Int]
@@ -139,7 +139,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: What does `map ((^) 2) [1, 2, 3]` evaluate to?
+    question: In Haskell, what does `map ((^) 2) [1, 2, 3]` evaluate to?
     options:
       - '`[2,4,8]`'
       - '`[1,4,9]`'
@@ -160,7 +160,7 @@ questions:
     difficulty: advanced
     bloom: analyze
     estimated_seconds: 60
-    question: What does `map (\f -> f 3) (map (*) [1, 2, 3])` evaluate to?
+    question: In Haskell, what does `map (\f -> f 3) (map (*) [1, 2, 3])` evaluate to?
     options:
       - '`[3,6,9]`'
       - '`[1,2,3]`'
@@ -179,7 +179,7 @@ questions:
     difficulty: basic
     bloom: understand
     estimated_seconds: 30
-    question: Which type is equivalent to `(String -> Int) -> ([String] -> Int)` with only redundant parentheses removed?
+    question: Which Haskell type is equivalent to `(String -> Int) -> ([String] -> Int)` with only redundant parentheses removed?
     options:
       - '`String -> Int -> [String] -> Int`'
       - '`(String -> Int) -> [String] -> Int`'
@@ -198,7 +198,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 75
-    question: Arrange the fragments after `decorate =` to rewrite `decorate f x suffix = f x ++ suffix` as nested single-argument lambdas. Preserve the argument order `f`, `x`, then `suffix`. You may assume `f x` and `suffix` are strings.
+    question: Arrange the Haskell fragments after `decorate =` to rewrite `decorate f x suffix = f x ++ suffix` as nested single-argument lambdas. Preserve the argument order `f`, `x`, then `suffix`. You may assume `f x` and `suffix` are strings.
     display: inline
     lines:
       - '\f -> '
@@ -219,7 +219,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |-
-      Which expressions are complete values of type `Drink`? Select all that apply.
+      Which Haskell expressions are complete values of type `Drink`? Select all that apply.
 
       ```haskell
       data Drink = Water | Coffee Int | Juice String Int
@@ -247,7 +247,7 @@ questions:
     bloom: analyze
     estimated_seconds: 60
     question: |-
-      What is `describe (Dog "Rex" 0)`?
+      In Haskell, what is `describe (Dog "Rex" 0)`?
 
       ```haskell
       data Pet = Cat String | Dog String Int
@@ -276,7 +276,7 @@ questions:
     bloom: analyze
     estimated_seconds: 60
     question: |-
-      For this definition, which expressions are complete values of type `Chain`? Select all that apply.
+      For this Haskell definition, which expressions are complete values of type `Chain`? Select all that apply.
 
       ```haskell
       data Chain = End | Link String Chain
@@ -305,7 +305,7 @@ questions:
     bloom: evaluate
     estimated_seconds: 60
     question: |-
-      The function is intended to sum all weights in a finite tree. Which input exposes its faulty zero-weight case?
+      The Haskell function is intended to sum all weights in a finite tree. Which input exposes its faulty zero-weight case?
 
       ```haskell
       data Tree = Branch Int [Tree]
@@ -331,7 +331,7 @@ questions:
     bloom: apply
     estimated_seconds: 45
     question: |-
-      What is `(px p, px q)`?
+      In Haskell, what is `(px p, px q)`?
 
       ```haskell
       data Point = Point { px :: Int, py :: Int }
@@ -430,7 +430,7 @@ questions:
     bloom: apply
     estimated_seconds: 90
     question: |-
-      Complete `total` to sum every node weight in a finite tree, including descendants of a zero-weight node.
+      Complete the Haskell function `total` to sum every node weight in a finite tree, including descendants of a zero-weight node.
 
       ```haskell
       data Tree = Branch Int [Tree]
@@ -457,7 +457,7 @@ questions:
     bloom: analyze
     estimated_seconds: 90
     question: |-
-      Infer the most general type of `combine`.
+      Infer the most general Haskell type of `combine`.
 
       ```haskell
       combine f g x = (f x, g (f x))

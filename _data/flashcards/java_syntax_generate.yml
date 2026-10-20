@@ -6,14 +6,14 @@ cards:
   - id: 1
     difficulty: basic
     question: |
-      Two `String` variables `input` and `stored` may or may not point to the same object. Write a boolean expression that checks whether they contain the same characters, guaranteed to be correct regardless of how they were created.
+      Two Java `String` variables `input` and `stored` may or may not point to the same object. Write a boolean expression that checks whether they contain the same characters, guaranteed to be correct regardless of how they were created.
     answer: "`input.equals(stored)`"
     explanation: "`.equals()` compares character content regardless of object identity. `==` would fail whenever `input` and `stored` are separate objects with identical content — for example, when `stored` came from a database query and `input` came from user input."
 
   - id: 2
     difficulty: intermediate
     question: |
-      A HashMap lookup is crashing in production with a `NullPointerException`. The code is:
+      A Java HashMap lookup is crashing in production with a `NullPointerException`. The code is:
       ```java
       Map<String, Integer> grades = loadFromDB();
       int g = grades.get(studentId);
@@ -25,7 +25,7 @@ cards:
   - id: 3
     difficulty: advanced
     question: |
-      Design a `BankAccount` class that:
+      Design a Java `BankAccount` class that:
       - Stores `owner` (String) and `balance` (double) — neither directly accessible from outside
       - Provides a constructor, `getOwner()`, `getBalance()`
       - `deposit(double amount)` — only accepts positive amounts
@@ -68,7 +68,7 @@ cards:
   - id: 4
     difficulty: expert
     question: |
-      This class has a design problem. Identify it, then rewrite `GradeReport` so that changing the grading thresholds (A ≥ 90, B ≥ 80…) requires editing **only one method**:
+      This Java class has a design problem. Identify it, then rewrite `GradeReport` so that changing the grading thresholds (A ≥ 90, B ≥ 80…) requires editing **only one method**:
       ```java
       class GradeReport {
           private List<Integer> scores;
@@ -121,7 +121,7 @@ cards:
   - id: 5
     difficulty: intermediate
     question: |
-      Define a `Drawable` interface with one method: `String draw()`. Then write a `Square` class that implements it — `draw()` returns `"Square(side=5.0)"`.
+      In Java, define a `Drawable` interface with one method: `String draw()`. Then write a `Square` class that implements it — `draw()` returns `"Square(side=5.0)"`.
     answer: |
       ```java
       public interface Drawable {
@@ -144,7 +144,7 @@ cards:
   - id: 6
     difficulty: advanced
     question: |
-      Design an abstract class `Animal` with:
+      Design an abstract Java class `Animal` with:
       - A `private String name` and a constructor
       - A concrete `getName()` getter
       - An abstract method `makeSound()` that returns a `String`
@@ -176,7 +176,7 @@ cards:
   - id: 7
     difficulty: intermediate
     question: |
-      Write a generic class `Box<T>` that holds one item of any type. Include a constructor, a `getItem()` method, and a `setItem()` method.
+      Write a generic Java class `Box<T>` that holds one item of any type. Include a constructor, a `getItem()` method, and a `setItem()` method.
     answer: |
       ```java
       public class Box<T> {
@@ -200,7 +200,7 @@ cards:
   - id: 8
     difficulty: advanced
     question: |
-      Write a generic static method `findMax` that takes two arguments of any type and returns the larger one. The type must be **constrained** to types that can be compared.
+      Write a generic static Java method `findMax` that takes two arguments of any type and returns the larger one. The type must be **constrained** to types that can be compared.
     answer: |
       ```java
       public static <T extends Comparable<T>> T findMax(T a, T b) {
@@ -216,7 +216,7 @@ cards:
   - id: 9
     difficulty: expert
     question: |
-      Write a `WordCounter` class that takes a `String[]` in its constructor and provides:
+      Write a Java `WordCounter` class that takes a `String[]` in its constructor and provides:
       - `int getCount(String word)` — returns 0 for unknown words, no NPE
       - `int getUniqueCount()` — number of distinct words
 
@@ -251,7 +251,7 @@ cards:
   - id: 10
     difficulty: advanced
     question: |
-      Define a checked exception `EnrollmentException` and a `Course.enroll(Student s)` method that throws it when the course is full (`capacity` exceeded). Write both the class definition and the calling code that handles the exception.
+      In Java, define a checked exception `EnrollmentException` and a `Course.enroll(Student s)` method that throws it when the course is full (`capacity` exceeded). Write both the class definition and the calling code that handles the exception.
     answer: |
       ```java
       public class EnrollmentException extends Exception {
@@ -286,7 +286,7 @@ cards:
   - id: 11
     difficulty: intermediate
     question: |
-      Write a `try-catch-finally` block that: opens a file (throws `IOException`), reads its content, and prints an error if it fails. The `finally` block should always print `"Done."`.
+      Write a Java `try-catch-finally` block that: opens a file (throws `IOException`), reads its content, and prints an error if it fails. The `finally` block should always print `"Done."`.
     answer: |
       ```java
       try {
@@ -302,14 +302,14 @@ cards:
 
   - id: 12
     difficulty: advanced
-    question: "You need to store course enrollments. Two options:\n- `List<Student>` with a manual duplicate check in `enroll()`\n- `LinkedHashSet<Student>` that handles duplicates automatically\n\nImplement `enroll(Student s)` using each approach, then state which is preferable and why.\n\nAssume Student.equals and hashCode consistently identify the same unique enrollment ID."
+    question: "You need to store course enrollments in Java. Two options:\n- `List<Student>` with a manual duplicate check in `enroll()`\n- `LinkedHashSet<Student>` that handles duplicates automatically\n\nImplement `enroll(Student s)` using each approach, then state which is preferable and why.\n\nAssume Student.equals and hashCode consistently identify the same unique enrollment ID."
     answer: "```java\n// Option A: List — manual duplicate check\nprivate List<Student> students = new ArrayList<>();\npublic void enroll(Student s) {\n    if (!students.contains(s)) students.add(s);\n}\n\n// Option B: LinkedHashSet — automatic deduplication, insertion order preserved\nprivate LinkedHashSet<Student> students = new LinkedHashSet<>();\npublic void enroll(Student s) {\n    students.add(s);   // ignored if already present — no check needed\n}\n```\n\n**Option B is preferable.** `LinkedHashSet.add()` is expected O(1) with well-distributed hashes and the \"no duplicates\" invariant is **enforced by the type** — you cannot accidentally skip the check. `List.contains()` is O(n) and the invariant is only enforced if every path that changes the list preserves it. Choose a collection whose contract matches your invariant.\n"
     explanation: "Choosing the right collection encodes intent. `Set` means 'unique elements' — the type enforces the invariant. `List` means 'ordered sequence with possible duplicates' — you must enforce uniqueness manually, which is fragile. `LinkedHashSet` adds insertion-order iteration over plain `HashSet`."
 
   - id: 13
     difficulty: intermediate
     question: |
-      Write a method `printAll(List<String> items)` that iterates the list with an enhanced for-loop, printing each item. Then call it with an `ArrayList<String>` **and** a `LinkedList<String>`. Explain why both calls compile.
+      Write a Java method `printAll(List<String> items)` that iterates the list with an enhanced for-loop, printing each item. Then call it with an `ArrayList<String>` **and** a `LinkedList<String>`. Explain why both calls compile.
     answer: |
       ```java
       public void printAll(List<String> items) {
@@ -330,7 +330,7 @@ cards:
   - id: 14
     difficulty: expert
     question: |
-      You are building a course registration system. Design the method signature (interface method + throws) for an `Enrollable` interface that:
+      You are building a course registration system in Java. Design the method signature (interface method + throws) for an `Enrollable` interface that:
       - Adds a student (can fail if course is full or duplicate)
       - Removes a student by name (returns whether it succeeded)
       - Checks enrollment by name
@@ -358,7 +358,7 @@ cards:
   - id: 15
     difficulty: advanced
     question: |
-      A teammate wrote this accumulator. Find the performance issue, explain the root cause, and write the corrected version.
+      A teammate wrote this Java accumulator. Find the performance issue, explain the root cause, and write the corrected version.
       ```java
       Integer total = 0;
       for (String word : words) {

@@ -10,7 +10,7 @@ cards:
 
   - id: 2
     difficulty: basic
-    question: "How does a tactic differ from an architectural style?"
+    question: "How does an architectural tactic differ from an architectural style?"
     answer: "A **style** defines the gross structure: element types, connector types, and constraints. A **tactic** improves one quality scenario inside that structure."
     explanation: "Publish-subscribe is a style. Heartbeat is a tactic. A pub-sub robot can still use heartbeat to detect failed components."
 
@@ -58,6 +58,6 @@ cards:
 
   - id: 10
     difficulty: advanced
-    question: "What sequence should an architect follow when choosing a tactic?"
+    question: "What sequence should an architect follow when choosing an architectural tactic?"
     answer: "State the quality scenario and measure, identify the blocker, choose a tactic that addresses it, name inhibited qualities, and add observability to verify the tactic works."
     explanation: "Tactics should be selected because they improve a specific scenario, not because they are popular or familiar."

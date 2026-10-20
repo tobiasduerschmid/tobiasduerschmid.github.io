@@ -288,7 +288,7 @@ questions:
     difficulty: basic
     bloom: understand
     estimated_seconds: 50
-    question: Arrange the six stages of the lecture's compiler pipeline for a machine-code target. Each
+    question: Arrange the six stages of a classic compiler pipeline for a machine-code target. Each
       stage consumes the preceding stage's result. Use only the valid stages.
     lines:
     - Convert source characters into tokens.
@@ -351,7 +351,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: Construct a complete program in the lecture's toy language that initializes `count` to 12,
+    question: Construct a complete program in a toy command language that initializes `count` to 12,
       decreases it by 5, prints the updated value once, and stops. `set` replaces a value; `add` adds
       its number.
     lines:

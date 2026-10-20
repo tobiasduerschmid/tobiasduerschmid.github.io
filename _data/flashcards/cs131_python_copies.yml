@@ -9,7 +9,7 @@ cards:
     bloom: apply
     estimated_seconds: 30
     question: |-
-      Without running it, predict both booleans and explain the difference.
+      Without running this Python code, predict both booleans and explain the difference.
 
       ```python
       from copy import copy
@@ -25,7 +25,7 @@ cards:
     difficulty: intermediate
     bloom: evaluate
     estimated_seconds: 45
-    question: For `source = [[1]]`, a teammate proposes `copy(copy(source))` to isolate all later nested edits. Does two-stage
+    question: In Python, for `source = [[1]]`, a teammate proposes `copy(copy(source))` to isolate all later nested edits. Does two-stage
       shallow copying meet that requirement? Give one operation that settles the question.
     answer: No. With `trial = copy(copy(source))`, executing `trial[0].append(2)` also changes `source` to `[[1, 2]]`.
     explanation: Each shallow copy makes only another outer list. All three still refer to the same inner list.
@@ -33,7 +33,7 @@ cards:
   # Taught / practice evidence: Essential Python handout p. 10 (copy depth); Homework PYTHON4 A.1–A.5; F24 Midterm V1 Problem 4, pp. 7–8.
   - id: cs131-python-card-tuple-replace
     difficulty: basic
-    question: For pair = ([2], "west"), explain why pair[0].append(6) succeeds but pair[0] = [2, 6] fails.
+    question: In Python, for pair = ([2], "west"), explain why pair[0].append(6) succeeds but pair[0] = [2, 6] fails.
     answer: The append changes the list already stored in the tuple. The assignment tries to replace a tuple slot and raises
       TypeError.
     explanation: Tuple immutability fixes its member references, not the state of objects reached through those references.
@@ -42,7 +42,7 @@ cards:
   - id: cs131-python-card-copy-dictionary-boundary
     difficulty: intermediate
     question: |-
-      Predict the output and identify the shared object.
+      Predict the output of this Python code and identify the shared object.
 
       ```python
       from copy import copy
@@ -61,7 +61,7 @@ cards:
     difficulty: intermediate
     bloom: create
     estimated_seconds: 60
-    question: Write a function `with_zero(rows)` that returns a deep copy of a nonempty list of integer lists with its
+    question: Write a Python function `with_zero(rows)` that returns a deep copy of a nonempty list of integer lists with its
       first element changed to 0. Each row is nonempty. The input must remain unchanged; assume `deepcopy` is imported.
     answer: |-
       ```python
@@ -75,7 +75,7 @@ cards:
   # Taught / practice evidence: Essential Python handout p. 10 (copy depth); Homework PYTHON4 A.1–A.5; F24 Midterm V1 Problem 4, pp. 7–8.
   - id: cs131-python-card-returned-alias-repair
     difficulty: intermediate
-    question: A getter returns a list of mutable lists directly. Callers must be able to edit both the result’s outer list
+    question: A Python getter returns a list of mutable lists directly. Callers must be able to edit both the result’s outer list
       and its rows without affecting the object. Write the getter body, assuming deepcopy is imported.
     answer: '`return deepcopy(self.rows)`'
     explanation: return self.rows[:] isolates outer-list edits but still shares rows. This contract specifically requires

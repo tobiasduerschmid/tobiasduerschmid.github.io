@@ -4,7 +4,7 @@ active: true
 cards:
   - id: 1
     difficulty: basic
-    question: "What is the difference between a **synchronous** and an **asynchronous** message arrow?"
+    question: "In a UML sequence diagram, what is the difference between a **synchronous** and an **asynchronous** message arrow?"
     answer: "Synchronous uses a **filled arrowhead**; asynchronous uses an **open (stick) arrowhead**."
     explanation: >
       A synchronous message (filled arrowhead) means the sender **waits** for the receiver to finish. An asynchronous message (open arrowhead) means the sender **continues immediately** without waiting.
@@ -22,14 +22,14 @@ cards:
 
   - id: 3
     difficulty: intermediate
-    question: "What is the difference between an `opt` fragment and an `alt` fragment?"
+    question: "In a UML sequence diagram, what is the difference between an `opt` fragment and an `alt` fragment?"
     answer: "`opt` = if (no else). `alt` = if-else with multiple branches."
     explanation: >
       An **`opt`** fragment has a single guard condition — messages execute only if the guard is true (like an `if` without `else`). An **`alt`** fragment has two or more regions separated by dashed lines, each with its own guard — at most one region executes. If no guard is true and there is no `else` region, none executes.
 
   - id: 4
     difficulty: basic
-    question: "What does a **lifeline** represent, and how is it drawn?"
+    question: "In a UML sequence diagram, what does a **lifeline** represent, and how is it drawn?"
     answer: "A participant in the interaction — drawn as a **box** at the top with a **dashed vertical line** extending downward."
     explanation: >
       The box contains the participant's name (format: `objectName:ClassName` or `:ClassName`). The dashed vertical line represents the participant's existence over time. Time flows **top-to-bottom**.
@@ -45,7 +45,7 @@ cards:
 
   - id: 6
     difficulty: basic
-    question: "What does an **activation bar** (execution specification) represent on a lifeline?"
+    question: "In a UML sequence diagram, what does an **activation bar** (execution specification) represent on a lifeline?"
     answer: "The period during which the object is **actively performing** an action or behavior."
     explanation: >
       Thin rectangles on a lifeline showing when an object is processing a method call. They nest when A calls B which calls C — all three carry overlapping bars — so you can see which objects are busy at any point.

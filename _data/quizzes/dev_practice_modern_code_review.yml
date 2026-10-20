@@ -96,7 +96,7 @@ questions:
     bloom: apply
     type: multiple
     question: |
-      An author wants to make a complex function more reviewable before opening a PR. Which changes are aligned with the chapter? Select all that apply.
+      An author wants to make a complex function more reviewable before opening a PR. Which changes support that goal? Select all that apply.
     options:
       - "Write clear pre- and post-conditions for the most important function."
       - "Use assertions for programmer-error invariants."

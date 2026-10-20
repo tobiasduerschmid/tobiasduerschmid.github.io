@@ -12,7 +12,7 @@ cards:
       System.out.println(a == b);        // Line A
       System.out.println(a.equals(b));   // Line B
       ```
-      Predict each output. Then explain *why* Line A and Line B differ — what does each operator actually check?
+      Predict each output of this Java code. Then explain *why* Line A and Line B differ — what does each operator actually check?
     answer: |
       **Line A:** `false`. **Line B:** `true`.
 
@@ -34,7 +34,7 @@ cards:
       Integer q = 128;
       System.out.println(p == q);   // may be false or true
       ```
-      The only change is 127 → 128. Why is the second output no longer guaranteed, and why is relying on it dangerous?
+      In this Java code, the only change is 127 → 128. Why is the second output no longer guaranteed, and why is relying on it dangerous?
     answer: |
       Java guarantees cached `Integer` objects for values **−128 to 127** and permits caching a wider range. Autoboxing `Integer x = 127` hands back the *same cached object* every time, so `x == y` is `true` (same reference).
 
@@ -97,7 +97,7 @@ cards:
           ...
       }
       ```
-      The fields are `public`. Explain what specific harm this causes compared to making them `private` with a `withdraw()` method that validates before mutating.
+      In this Java class, the fields are `public`. Explain what specific harm this causes compared to making them `private` with a `withdraw()` method that validates before mutating.
     answer: |
       With public fields, **any class can set `balance` to any value** — including negative amounts or values that bypass business rules. There is no enforcement point.
 
@@ -125,7 +125,7 @@ cards:
           public ArrayList<Integer> getScores() { return scores; }
       }
       ```
-      The field is `private`. A colleague says "information hiding is achieved." Are they right? What would break if you later switch `scores` to `int[]`?
+      In this Java class, the field is `private`. A colleague says "information hiding is achieved." Are they right? What would break if you later switch `scores` to `int[]`?
     answer: |
       **Wrong.** The field is *encapsulated* (private), but information hiding is not achieved.
 
@@ -167,7 +167,7 @@ cards:
       Shape s = new Circle(5.0);
       System.out.println(s.getArea());
       ```
-      Explain what `@Override` buys you here. Give an example of the specific bug it prevents.
+      Explain what Java's `@Override` buys you here. Give an example of the specific bug it prevents.
     answer: "@Override asks the compiler to verify that a method overrides a superclass method or implements an interface method.\n\nIn this exact example, renaming getArea to getArae would fail to compile even without @Override: a concrete Circle must implement Shape.getArea. The annotation adds a direct diagnostic at the mistaken declaration.\n\nA typo can compile silently when the intended method already has an inherited implementation (for example, a concrete superclass method or an interface default method). The inherited behavior then runs instead of the intended override. @Override catches that typo too."
   - id: 8
     difficulty: advanced
@@ -215,7 +215,7 @@ cards:
           System.out.println(v.describe());
       }
       ```
-      The reference type is `Vehicle`, but `describe()` is abstract. Describe precisely what happens at **compile time** and at **runtime** when `v.describe()` is called.
+      In this Java code, the reference type is `Vehicle`, but `describe()` is abstract. Describe precisely what happens at **compile time** and at **runtime** when `v.describe()` is called.
     answer: |
       **Compile time:** The compiler checks that `describe()` is declared in the static type of `v`, which is `Vehicle`. Since `Vehicle` declares `abstract String describe()`, the call is legal. The compiler does **not** know which implementation will run.
 
@@ -236,7 +236,7 @@ cards:
           }
       }
       ```
-      Why does `swap` declare its own type parameters `<X, Y>` instead of reusing the class's `<A, B>`?
+      In this Java class, why does `swap` declare its own type parameters `<X, Y>` instead of reusing the class's `<A, B>`?
     answer: |
       `swap` is `static` — it has **no access to the instance's type parameters** `A` and `B`, because statics exist on the class, not on any particular `Pair<A, B>` instance.
 
@@ -258,7 +258,7 @@ cards:
       scores.put("Alice", 95);
       int grade = scores.get("Bob");  // Bob not in map
       ```
-      This compiles without warnings. Predict what happens at runtime and explain the chain of events.
+      This Java code compiles without warnings. Predict what happens at runtime and explain the chain of events.
     answer: |
       **Runtime:** `NullPointerException`.
 
@@ -291,7 +291,7 @@ cards:
           public CalculatorException(String msg) { super(msg); }
       }
       ```
-      `CalculatorException` extends `Exception`, not `RuntimeException`. What concrete difference does this choice produce for **callers** of `divide()`?
+      In this Java code, `CalculatorException` extends `Exception`, not `RuntimeException`. What concrete difference does this choice produce for **callers** of `divide()`?
     answer: |
       Because `CalculatorException` is **checked** (extends `Exception`), the compiler forces every caller to either:
       1. Catch it: `try { calc.divide(10, 0); } catch (CalculatorException e) { ... }`
@@ -311,7 +311,7 @@ cards:
       // Version B
       public double average(List<Integer> scores) { ... }
       ```
-      Both compile. Analyze the practical difference when other code calls `average()`.
+      Both Java versions compile. Analyze the practical difference when other code calls `average()`.
     answer: |
       **Version A** forces callers to pass an `ArrayList` specifically:
       ```java
@@ -344,7 +344,7 @@ cards:
       System.out.println(submitted.size());  // ?
       System.out.println(roster.size());     // ?
       ```
-      Predict each output and explain what design principle drives the difference between `HashSet` and `ArrayList`.
+      Predict each output of this Java code and explain what design principle drives the difference between `HashSet` and `ArrayList`.
     answer: |
       - `submitted.size()` → **1**
       - `roster.size()` → **2**
@@ -370,7 +370,7 @@ cards:
           }
       }
       ```
-      This works correctly. Evaluate it for performance and explain what would change if you swapped `ArrayList<Student>` for `HashMap<String, Student>`.
+      This Java code works correctly. Evaluate it for performance and explain what would change if you swapped `ArrayList<Student>` for `HashMap<String, Student>`.
     answer: |
       **Current:** `isEnrolled()` is **O(n)** — it scans every student linearly until a match is found. For a large course (or many `isEnrolled` calls), this is slow.
 

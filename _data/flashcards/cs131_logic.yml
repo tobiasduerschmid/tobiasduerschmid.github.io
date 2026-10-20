@@ -10,7 +10,7 @@ cards:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
-    question: "Unify `record(X, tag(X))` with `record(blue, tag(Y))`. Give bindings for X and Y."
+    question: "In Prolog, unify `record(X, tag(X))` with `record(blue, tag(Y))`. Give bindings for X and Y."
     answer: "X = blue and Y = blue."
     explanation: "The first position fixes X as blue. Its repeated occurrence inside tag(...) then forces Y to match blue too."
 
@@ -21,7 +21,7 @@ cards:
     bloom: understand
     estimated_seconds: 30
     question: |
-      Does `allowed(kai)` succeed? Explain using the database, without assuming anything about the real person.
+      Does the Prolog query `allowed(kai)` succeed? Explain using the database, without assuming anything about the real person.
 
       ```prolog
       blocked(ren).
@@ -37,7 +37,7 @@ cards:
     bloom: apply
     estimated_seconds: 60
     question: |
-      Give all Y values in order for `hop(a,Y)`.
+      Give all Y values in order for the Prolog query `hop(a,Y)`.
 
       ```prolog
       edge(a,c).
@@ -56,7 +56,7 @@ cards:
     bloom: analyze
     estimated_seconds: 45
     question: |
-      Why does `pick(X)` produce X = a twice when all answers are requested?
+      Why does the Prolog query `pick(X)` produce X = a twice when all answers are requested?
 
       ```prolog
       red(a).
@@ -73,7 +73,7 @@ cards:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
-    question: "Unify `[A,B|Rest]` with `[[red],blue,green,yellow]`. Give A, B, and Rest."
+    question: "In Prolog, unify `[A,B|Rest]` with `[[red],blue,green,yellow]`. Give A, B, and Rest."
     answer: "A = [red], B = blue, Rest = [green,yellow]."
     explanation: "A matches one whole element, even when that element is a list. Rest matches the list remaining after the first two elements."
 
@@ -84,7 +84,7 @@ cards:
     bloom: apply
     estimated_seconds: 45
     question: |
-      squeeze(Input,Output) removes consecutive duplicates. Complete its equal-head clause so one copy remains available for comparison with the rest of the list.
+      The Prolog predicate squeeze(Input,Output) removes consecutive duplicates. Complete its equal-head clause so one copy remains available for comparison with the rest of the list.
 
       ```prolog
       squeeze([X,X|T], R) :- MISSING.
@@ -98,7 +98,7 @@ cards:
     difficulty: intermediate
     bloom: create
     estimated_seconds: 60
-    question: "The fact on_team(Person,Team) records membership. Write one rule same_team(A,B) that succeeds when A and B share a team. Allow A and B to be the same person."
+    question: "The fact on_team(Person,Team) records membership. Write one Prolog rule same_team(A,B) that succeeds when A and B share a team. Allow A and B to be the same person."
     answer: "`same_team(A,B) :- on_team(A,T), on_team(B,T).`"
     explanation: "Self-check: both membership subgoals use the same team variable. Using unrelated team variables would allow people on different teams. Reversing the two subgoals preserves this relation's meaning."
 
@@ -109,7 +109,7 @@ cards:
     bloom: analyze
     estimated_seconds: 45
     question: |
-      The recursive clause loses the prefix before the removed item. Replace only `R` in its head to repair that problem.
+      The recursive Prolog clause loses the prefix before the removed item. Replace only `R` in its head to repair that problem.
 
       ```prolog
       remove_one(X,[X|T],T).
@@ -125,7 +125,7 @@ cards:
     bloom: evaluate
     estimated_seconds: 60
     question: |
-      For this finite, acyclic edge database, which recursive body avoids repeatedly asking the same path question before making progress: `path(X,M), edge(M,Y)` or `edge(X,M), path(M,Y)`? Justify the choice for path(a,Y).
+      For this finite, acyclic Prolog edge database, which recursive body avoids repeatedly asking the same path question before making progress: `path(X,M), edge(M,Y)` or `edge(X,M), path(M,Y)`? Justify the choice for path(a,Y).
 
       ```prolog
       edge(a,b).
@@ -141,7 +141,7 @@ cards:
     difficulty: advanced
     bloom: create
     estimated_seconds: 60
-    question: "Write two clauses for double_each(Input,Output) on finite lists: [] produces [], and each element appears twice in the output. For example, double_each([a,b],R) yields R = [a,a,b,b]. Use head/tail matching and recursion."
+    question: "Write two Prolog clauses for double_each(Input,Output) on finite lists: [] produces [], and each element appears twice in the output. For example, double_each([a,b],R) yields R = [a,a,b,b]. Use head/tail matching and recursion."
     answer: |
       ```prolog
       double_each([], []).

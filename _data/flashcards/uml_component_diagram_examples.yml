@@ -11,7 +11,7 @@ cards:
 
   - id: 2
     difficulty: basic
-    question: "What is the difference between a **provided interface** (lollipop) and a **required interface** (socket)?"
+    question: "In a UML component diagram, what is the difference between a **provided interface** (lollipop) and a **required interface** (socket)?"
     answer: "Provided = the component **offers** this service (ball). Required = the component **needs** this service (socket)."
     explanation: >
       A provided interface (lollipop/ball) says "I implement this and you can call me." A required interface (socket/half-circle) says "I need someone to provide this for me to work." When a required interface connects to a matching provided interface, this forms an assembly connector.
@@ -25,7 +25,7 @@ cards:
 
   - id: 4
     difficulty: intermediate
-    question: "What is an **assembly connector** (ball-and-socket)?"
+    question: "In a UML component diagram, what is an **assembly connector** (ball-and-socket)?"
     answer: "A connector that links one component's **required** interface to another component's **provided** interface."
     explanation: >
       The ball-and-socket notation shows that the dependency is satisfied: the requiring component can use the providing component. This enables **loose coupling** --- components depend on interfaces, not implementations, so you can swap providers without changing the consumer.
@@ -39,7 +39,7 @@ cards:
 
   - id: 6
     difficulty: intermediate
-    question: "How is a **dependency** shown between components?"
+    question: "In a UML component diagram, how is a **dependency** shown between components?"
     answer: "A **dashed arrow** from the dependent component to the component it depends on."
     explanation: >
       This is the same notation as class diagram dependencies (<span class="uml-sym" data-diagram="class" data-sym="..>"></span>). It expresses dependence, while an assembly connector explicitly connects required and provided interfaces. Logging can use an assembly connector, and a central service can be shown as a dependency; architectural importance does not determine the relationship kind.

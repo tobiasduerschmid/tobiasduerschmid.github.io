@@ -6,7 +6,7 @@ questions:
   - id: 1
     difficulty: intermediate
     question: |
-      Predict the output of this code:
+      Predict the output of this Java code:
       ```java
       String a = new String("hello");
       String b = new String("hello");
@@ -34,7 +34,7 @@ questions:
   - id: 2
     difficulty: advanced
     question: |
-      What does this code print?
+      What does this Java code print?
       ```java
       Integer x = 200;
       Integer y = 200;
@@ -51,7 +51,7 @@ questions:
   - id: 3
     difficulty: intermediate
     question: |
-      What happens at runtime when this code executes?
+      What happens at runtime when this Java code executes?
       ```java
       Integer count = null;
       int n = count;
@@ -77,7 +77,7 @@ questions:
   - id: 4
     difficulty: advanced
     question: |
-      A teammate writes this in a hot loop:
+      A teammate writes this Java code in a hot loop:
       ```java
       Integer sum = 0;
       for (int i = 0; i < 1_000_000; i++) {
@@ -124,7 +124,7 @@ questions:
   - id: 6
     difficulty: advanced
     question: |
-      A `GradeReport` class has `private ArrayList<Integer> scores` and exposes it like this:
+      A Java `GradeReport` class has `private ArrayList<Integer> scores` and exposes it like this:
       ```java
       public ArrayList<Integer> getScores() { return scores; }
       ```
@@ -193,7 +193,7 @@ questions:
   - id: 9
     difficulty: advanced
     question: |
-      This code does not compile. Why?
+      This Java code does not compile. Why?
       ```java
       public boolean isStringList(List<?> list) {
           return list instanceof List<String>;
@@ -220,7 +220,7 @@ questions:
   - id: 10
     difficulty: intermediate
     question: |
-      Match each task to the best collection:
+      Match each task to the best Java collection:
       - **A:** Track which students have submitted homework (no duplicates, O(1) lookup by name)
       - **B:** Map each student ID (int) to their final grade (double)
       - **C:** Maintain an ordered history of grade submissions (newest at the end, access by index)
@@ -245,7 +245,7 @@ questions:
   - id: 11
     difficulty: advanced
     question: |
-      What is the bug in this code?
+      What is the bug in this Java code?
       ```java
       Map<String, Integer> scores = new HashMap<>();
       scores.put("Alice", 95);
@@ -315,7 +315,7 @@ questions:
   - id: 14
     difficulty: intermediate
     question: |
-      Given:
+      Given this Java code:
       ```java
       Vehicle v = new Car("Toyota", 2024, 4);
       System.out.println(v.describe());
@@ -342,7 +342,7 @@ questions:
   - id: 15
     difficulty: advanced
     question: |
-      **Arrange** the lines to implement a generic `Pair<A, B>` class with a static `swap` method that returns a `Pair<B, A>`.
+      **Arrange** the lines to implement a generic Java `Pair<A, B>` class with a static `swap` method that returns a `Pair<B, A>`.
     type: parsons
     lines:
       - "public class Pair<A, B> {"
@@ -364,7 +364,7 @@ questions:
   - id: 16
     difficulty: intermediate
     question: |
-      **Arrange** the lines to define a `Shape` interface and a `Circle` class that correctly implements it.
+      **Arrange** the lines to define a Java `Shape` interface and a `Circle` class that correctly implements it.
     type: parsons
     lines:
       - "public interface Shape {"
@@ -388,7 +388,7 @@ questions:
   - id: 17
     difficulty: advanced
     question: |
-      **Arrange** the lines to define a checked exception, declare it in a method, and handle it in calling code.
+      **Arrange** the lines to define a Java checked exception, declare it in a method, and handle it in calling code.
     type: parsons
     lines:
       - "class InsufficientFundsException extends Exception {"
@@ -411,7 +411,7 @@ questions:
 
   - id: 18
     difficulty: expert
-    question: "You're designing a Course class. It needs:\n- An enroll/drop API that hides storage\n- Expected O(1) lookup for isEnrolled(String name)\n- At most one enrollment per name (names are unique keys in this exercise)\n\nWhich design achieves these goals?"
+    question: "You're designing a Java Course class. It needs:\n- An enroll/drop API that hides storage\n- Expected O(1) lookup for isEnrolled(String name)\n- At most one enrollment per name (names are unique keys in this exercise)\n\nWhich design achieves these goals?"
     options:
             ["Use a List<Student> internally; expose it via getStudents() so callers can call contains()","An Enrollable API backed by a private HashMap<String, Student> keyed by name","Use HashMap<String, Student> internally; make all fields public","Use ArrayList<Student> internally and expose the full list"]
     correct_index: 1

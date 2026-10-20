@@ -11,21 +11,21 @@ cards:
 
   - id: 2
     difficulty: intermediate
-    question: "What is the difference between `<<include>>` and `<<extend>>`?"
+    question: "In a UML use case diagram, what is the difference between `<<include>>` and `<<extend>>`?"
     answer: "`<<include>>` always inserts its behavior. `<<extend>>` inserts behavior when its condition is true."
     explanation: >
       Include factors out shared behavior that the base always inserts. Extend inserts extra behavior into the base when its condition is true; if no condition is shown, UML treats it as true. Both use dashed arrows, but the directions differ: include points toward the included use case; extend points toward the base use case.
 
   - id: 3
     difficulty: intermediate
-    question: "Which direction does the `<<include>>` arrow point?"
+    question: "In a UML use case diagram, which direction does the `<<include>>` arrow point?"
     answer: "From the **including** (base) use case **to** the **included** (shared) use case."
     explanation: >
       For example, if "Purchase Item" always includes "Login," the arrow goes from "Purchase Item" to "Login." Think of it like a function call: the caller points to the callee.
 
   - id: 4
     difficulty: intermediate
-    question: "Which direction does the `<<extend>>` arrow point?"
+    question: "In a UML use case diagram, which direction does the `<<extend>>` arrow point?"
     answer: "From the **extending** use case **to** the **base** use case."
     explanation: >
       If "Log Debug Info" extends "Purchase Item," the arrow goes from "Log Debug Info" to "Purchase Item." The extension is inserted when its condition is true. This is the opposite direction from include.
@@ -39,7 +39,7 @@ cards:
 
   - id: 6
     difficulty: intermediate
-    question: "How is **generalization** between use cases drawn?"
+    question: "In a UML use case diagram, how is **generalization** between use cases drawn?"
     answer: "A **solid line** with a **hollow triangle arrowhead** pointing to the general (parent) use case."
     explanation: >
       This is the same notation as class generalization (inheritance). A specialized use case can replace or enhance the behavior of the general use case.

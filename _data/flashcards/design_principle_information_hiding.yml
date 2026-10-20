@@ -16,7 +16,7 @@ cards:
 
   - id: 3
     difficulty: advanced
-    question: "What two example modularizations did Parnas compare in his paper, and which won?"
+    question: "In *On the Criteria To Be Used in Decomposing Systems into Modules*, which two example modularizations did Parnas compare, and which won?"
     answer: "He compared a **conventional flowchart-based decomposition** (one module per processing step) and an **information-hiding decomposition** (one module per design decision) using the **KWIC (Key Word In Context) index** program. The information-hiding decomposition was dramatically easier to change, understand, and develop in parallel."
     explanation: "Both decompositions worked, but in the conventional one almost every module had to change when the data structure changed. In the information-hiding version, exactly one module changed."
 
@@ -64,7 +64,7 @@ cards:
 
   - id: 11
     difficulty: basic
-    question: "In the lecture's **payment-system** example, what is the secret, and where should it live?"
+    question: "An e-commerce backend's `OrderService`, `RefundService`, and `WalletService` all call the PayPal SDK directly. Under Information Hiding, what is the **secret** here, and where should it live?"
     answer: "The secret is **'we use PayPal'** (the choice of payment provider). It should live in **exactly one module** — a `PaymentGateway` interface with a `PayPalGateway` implementation. `OrderService`, `RefundService`, and `WalletService` should all depend on the abstraction, never on PayPal."
     explanation: "When the CFO swaps providers, the impact is bounded to writing a new gateway implementation. None of the services have to change."
 
@@ -100,7 +100,7 @@ cards:
 
   - id: 17
     difficulty: basic
-    question: "Why did the lecture connect Information Hiding to the Software Crisis and modern software scale?"
+    question: "How does Information Hiding connect to the Software Crisis and modern software scale?"
     answer: "Because software systems grew far beyond what one person can understand at once. Faster hardware lets us run larger systems, but **architecture** makes them understandable: Information Hiding bounds what each developer has to know."
     explanation: "The Apollo software was already considered highly complex in the 1960s. Modern systems can be orders of magnitude larger, while human working memory has not grown. The design has to reduce cognitive load."
 
@@ -124,7 +124,7 @@ cards:
 
   - id: 21
     difficulty: advanced
-    question: "Why can PayPal be both **visible** and **hidden**, depending on the boundary?"
+    question: "In a checkout system that uses PayPal, why can PayPal be both **visible** and **hidden** under Information Hiding, depending on the boundary?"
     answer: "The user-facing checkout flow may need to show PayPal as a supported option, and the server must verify it securely. But backend services should not know the PayPal SDK; they should depend on a vendor-neutral `PaymentGateway`."
     explanation: "Information Hiding is boundary-relative: expose what callers need to use the system correctly; hide the implementation decisions that callers do not need."
 

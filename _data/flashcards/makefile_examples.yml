@@ -16,25 +16,25 @@ cards:
 
   - id: 3
     difficulty: intermediate
-    question: "Write a standard `clean` target that removes all `.o` files and an `app` executable, ensuring it runs even if a file literally named 'clean' is created in the directory."  
+    question: "Write a standard Makefile `clean` target that removes all `.o` files and an `app` executable, ensuring it runs even if a file literally named 'clean' is created in the directory."  
     answer: "`.PHONY: clean\nclean:\n\trm -f *.o app`"  
     explanation: "The `.PHONY` declaration tells `make` that `clean` is an action, not a file. The `-f` flag in `rm` prevents errors if the files don't exist."  
 
   - id: 4
     difficulty: intermediate
-    question: "Write a generic pattern rule to compile any `.c` file into a corresponding `.o` file, using automatic variables for the target name and the first prerequisite."  
+    question: "Write a generic Makefile pattern rule to compile any `.c` file into a corresponding `.o` file, using automatic variables for the target name and the first prerequisite."  
     answer: "`%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@`"  
     explanation: "The `%` acts as a wildcard. `$<` substitutes the name of the `.c` file, and `$@` substitutes the name of the `.o` file."  
 
   - id: 5
     difficulty: intermediate
-    question: "Given a variable `SRCS = main.c utils.c`, write a variable definition for `OBJS` that dynamically replaces the `.c` extension with `.o` for all files in `SRCS`."  
+    question: "Given a Makefile variable `SRCS = main.c utils.c`, write a variable definition for `OBJS` that dynamically replaces the `.c` extension with `.o` for all files in `SRCS`."  
     answer: "`OBJS = $(SRCS:.c=.o)`"  
     explanation: "This is a substitution reference. It takes the value of `SRCS`, looks for the `.c` suffix at the end of each word, and replaces it with `.o`."  
 
   - id: 6  
     difficulty: advanced
-    question: "Write a rule to link an executable `myprog` from a list of object files stored in the `$(OBJS)` variable, using the automatic variable that lists all prerequisites."  
+    question: "Write a Makefile rule to link an executable `myprog` from a list of object files stored in the `$(OBJS)` variable, using the automatic variable that lists all prerequisites."  
     answer: "`myprog: $(OBJS)\n\t$(CC) $^ -o $@`"  
     explanation: "`$^` expands to a space-separated list of all prerequisites (all the `.o` files), and `$@` expands to the target name (`myprog`)."  
 
@@ -58,6 +58,6 @@ cards:
 
   - id: 10
     difficulty: advanced
-    question: "Write a generic rule to create a build directory `build/` using the `mkdir` command."  
+    question: "Write a Makefile rule to create a build directory `build/` using the `mkdir` command."  
     answer: "`build/:\n\tmkdir -p $@`"  
     explanation: "Directories can be targets just like regular files. The `-p` flag ensures `mkdir` doesn't throw an error if the directory already exists."

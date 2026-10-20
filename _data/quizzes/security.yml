@@ -86,7 +86,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      A developer fixes the SQL injection bug from the previous question by switching to a **parameterized query**:
+      A login handler concatenated the typed username and password into its SQL string, which allowed SQL injection. A developer fixes it by switching to a **parameterized query**:
 
       ```sql
       SELECT * FROM Users WHERE Name = @0 AND Pass = @1

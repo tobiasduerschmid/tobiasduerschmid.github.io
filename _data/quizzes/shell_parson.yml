@@ -6,7 +6,7 @@ questions:
   - id: 1
     difficulty: advanced
     question: |
-      **Arrange** the fragments to find which lines appear most often in `access.log` — showing the top 5 repeated entries with their counts.
+      **Arrange** the shell pipeline fragments to find which lines appear most often in `access.log` — showing the top 5 repeated entries with their counts.
     type: parsons
     display: inline
     lines:
@@ -25,7 +25,7 @@ questions:
   - id: 2
     difficulty: advanced
     question: |
-      **Arrange** the fragments to count how many *unique* lines containing `"error"` (case-insensitive) exist in `app.log`.
+      **Arrange** the shell pipeline fragments to count how many *unique* lines containing `"error"` (case-insensitive) exist in `app.log`.
     type: parsons
     display: inline
     lines:
@@ -44,7 +44,7 @@ questions:
   - id: 3
     difficulty: intermediate
     question: |
-      **Arrange** the fragments to combine two log files and display every unique line in sorted order.
+      **Arrange** the shell pipeline fragments to combine two log files and display every unique line in sorted order.
     type: parsons
     display: inline
     lines:
@@ -61,7 +61,7 @@ questions:
   - id: 4
     difficulty: advanced
     question: |
-      **Arrange** the fragments to display lines from `config.txt` that are neither empty nor start with `#`, sorted alphabetically.
+      **Arrange** the shell pipeline fragments to display lines from `config.txt` that are neither empty nor start with `#`, sorted alphabetically.
     type: parsons
     display: inline
     lines:
@@ -78,7 +78,7 @@ questions:
   - id: 5
     difficulty: intermediate
     question: |
-      **Arrange** the fragments to count how many non-hidden `.txt` files are in the current directory. Assume every matching directory entry is a regular file and filenames contain no newlines.
+      **Arrange** the shell pipeline fragments to count how many non-hidden `.txt` files are in the current directory. Assume every matching directory entry is a regular file and filenames contain no newlines.
     type: parsons
     display: inline
     lines:

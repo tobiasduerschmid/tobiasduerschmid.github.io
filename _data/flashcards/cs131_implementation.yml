@@ -10,7 +10,7 @@ cards:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 35
-    question: Rules are `"in" → IN` then `[a-z]+ → ID`, with longest match before rule order. Give the
+    question: Lexer rules are `"in" → IN` then `[a-z]+ → ID`, with longest match before rule order. Give the
       tokens for `in ink`. Spaces are ignored.
     answer: '`IN`, then `ID("ink")`.'
     explanation: 'Self-check: use rule order for in, but match length for ink.'
@@ -21,7 +21,7 @@ cards:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 40
-    question: The parser needs a WHILE token, but `while` becomes ID because the ID rule is earlier. Longest-match
+    question: The parser needs a WHILE token, but `while` becomes ID because the lexer's ID rule is earlier. Longest-match
       ties use rule order. Give the smallest rule-order repair and one identifier that should still stay
       ID.
     answer: Move the exact while keyword rule before ID. For example, whileloop must remain one ID because
@@ -45,7 +45,7 @@ cards:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 35
-    question: Using `items = ID { COMMA ID } ;`, give the minimum number of IDs and explain whether an
+    question: Using the grammar rule `items = ID { COMMA ID } ;`, give the minimum number of IDs and explain whether an
       empty list of tokens is accepted.
     answer: At least one ID is required. The braces permit zero additional comma–ID pairs, but do not
       remove the leading ID.
@@ -69,7 +69,7 @@ cards:
     difficulty: intermediate
     bloom: create
     estimated_seconds: 50
-    question: For `expr = expr MINUS expr | NUM ;`, give two groupings of `9 - 4 - 1` that demonstrate
+    question: For the grammar `expr = expr MINUS expr | NUM ;`, give two groupings of `9 - 4 - 1` that demonstrate
       ambiguity, and their values.
     answer: '`(9 - 4) - 1 = 4`; `9 - (4 - 1) = 6`.'
     explanation: 'Self-check: preserve the original token order while changing only grouping. Different
@@ -117,7 +117,7 @@ cards:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 40
-    question: 'The toy interpreter stores `level: 8`. It executes `add level -3`, then `set level 2`.
+    question: 'A toy interpreter stores `level: 8`. It executes `add level -3`, then `set level 2`.
       What is stored after each instruction?'
     answer: 'After add: `level: 5`. After set: `level: 2`.'
     explanation: 'Self-check: add uses the prior value; set replaces it.'

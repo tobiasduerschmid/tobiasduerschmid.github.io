@@ -2,8 +2,9 @@ title: "CS 131 Current Quiz"
 description: "Practice the course through Advanced Haskell: language foundations, implementation, Python, and functional programming."
 active: true
 # Current teaching boundary: through Advanced Haskell. List leaf decks directly.
-# Python output practice is included in the three Python decks; python_output also
-# contains a later Control Palooza generator question, so it is not included here.
+# Python output practice is included in the three Python decks, so python_output is not
+# listed here. python_functional_advanced (closures, currying, generators) belongs to the
+# later Function and Control Palooza material and is listed only in CS131_master.
 decks:
   - cs131_foundations
   - cs131_implementation

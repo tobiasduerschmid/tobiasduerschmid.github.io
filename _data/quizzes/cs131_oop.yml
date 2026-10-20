@@ -153,7 +153,7 @@ questions:
     bloom: analyze
     estimated_seconds: 60
     question: |
-      In the course's C++ dispatch model, select every call below that uses dynamic dispatch. Ignore compiler optimizations.
+      Select every call below that uses dynamic dispatch under C++'s rules for virtual and non-virtual methods, even where a compiler could resolve the target early.
 
       ```cpp
       struct Base {
@@ -217,7 +217,7 @@ questions:
     bloom: analyze
     estimated_seconds: 60
     question: |
-      In a mystery language, `show<T>(T x)` calls `x.label()`. No bound is declared, and not every type has label(). The compiler accepts the definition and a use with Badge, but rejects a use with int. Which lecture model explains all three observations?
+      In a mystery language, `show<T>(T x)` calls `x.label()`. No bound is declared, and not every type has label(). The compiler accepts the definition and a use with Badge, but rejects a use with int. Which type-checking model explains all three observations?
     options:
       - "Unbounded generics checked before use."
       - "Templates checked for the chosen type."
@@ -290,7 +290,7 @@ questions:
     bloom: analyze
     estimated_seconds: 60
     question: |
-      `print(c.name)` raises an attribute error. Which statement should be added before `self.score = score`?
+      In this Python code, `print(c.name)` raises an attribute error. Which statement should be added before `self.score = score`?
 
       ```python
       class Base:
@@ -316,7 +316,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: "Base provides virtual draw() and erase(). Child publicly derives from Base and overrides only draw(). In the lecture's vtable model, which implementations appear in Child's draw and erase entries?"
+    question: "Base provides virtual draw() and erase(). Child publicly derives from Base and overrides only draw(). In a typical C++ vtable implementation, which implementations appear in Child's draw and erase entries?"
     options:
       - "Child::draw and Base::erase"
       - "Base::draw and Base::erase"

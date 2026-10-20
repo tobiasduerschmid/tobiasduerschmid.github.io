@@ -28,7 +28,7 @@ questions:
     bloom: apply
     type: single
     question: |
-      You are reviewing a PR with new production code and tests. Which use of tests best follows the chapter's beacon argument?
+      You are reviewing a PR with new production code and tests. Which use of tests best treats them as beacons for code comprehension?
     options:
       - "Read the tests first to infer intent, then check the production code."
       - "Skip the tests because only production code matters."
@@ -49,7 +49,7 @@ questions:
     bloom: analyze
     type: multiple
     question: |
-      Classify the beacons. Which examples are correctly identified? Select all that apply.
+      Classify these code-comprehension beacons. Which examples are correctly identified? Select all that apply.
     options:
       - "`isPrimeNumber` is a lexical beacon."
       - "A familiar accumulator loop is a structural beacon that can trigger a programming plan."

@@ -6,6 +6,7 @@ decks:
   - shell_parson
   - regex
   - python
+  - python_functional_advanced
   - nodejs
   - react
   - git_basic

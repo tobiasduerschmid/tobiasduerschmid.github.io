@@ -82,7 +82,7 @@ cards:
 
   - id: 14
     difficulty: basic
-    question: "List five common quality attributes named in the SEBook."
+    question: "List five common software quality attributes."
     answer: "**Extensibility**, **availability**, **security**, **performance**, **robustness**, **interoperability**, **testability**, **changeability**, **reusability**, **scalability**, **portability** — also called the '-ilities'. The chapter focuses in depth on interoperability and testability."
     explanation: "There is no single canonical list; ISO 25010 (the international standard for software quality) names eight characteristics with many subcharacteristics. The point is not to memorize a list but to be able to identify which qualities matter for a specific system and design for them deliberately."
 
@@ -94,7 +94,7 @@ cards:
 
   - id: 16
     difficulty: intermediate
-    question: "Give a good **extensibility** quality-attribute specification for adding depth sensors."
+    question: "A perception system processes images from depth sensors. Give a good **extensibility** quality-attribute specification for adding new depth sensors."
     answer: "\"Adding a new depth sensor requires implementing one sensor adapter and must not require changes to components that process depth images.\""
     explanation: "This improves on 'adding sensors should be easy' because it names the class of change (new depth sensor) and the success measure (no changes to depth-image processing components)."
 

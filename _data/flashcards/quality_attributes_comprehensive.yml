@@ -149,7 +149,7 @@ cards:
   - id: 17
     difficulty: expert
     bloom: create
-    question: "Use this checklist to draft a quality requirement."
+    question: "Which checklist of elements helps you draft a complete quality requirement?"
     answer: |
       Name the quality, the function or component, the scenario, the metric or structural boundary, the measurement window, and any exclusions or acceptable trade-offs.
     explanation: |

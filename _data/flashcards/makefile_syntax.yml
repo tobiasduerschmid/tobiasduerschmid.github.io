@@ -22,31 +22,31 @@ cards:
 
   - id: 4  
     difficulty: basic
-    question: "What Automatic Variable represents the file name of the target of the rule?"  
+    question: "In a Makefile, what automatic variable represents the file name of the target of the rule?"  
     answer: "`$@`"  
     explanation: "This is commonly used in the compilation command to specify the output file name dynamically."  
 
   - id: 5
     difficulty: basic
-    question: "What Automatic Variable represents the name of the first prerequisite?"
+    question: "In a Makefile, what automatic variable represents the name of the first prerequisite?"
     answer: "`$<`"  
     explanation: "This is frequently used in pattern rules to pass the specific source file (like a `.c` file) to the compiler."  
 
   - id: 6  
     difficulty: intermediate
-    question: "What Automatic Variable represents the names of all the prerequisites, with spaces between them?"  
+    question: "In a Makefile, what automatic variable represents the names of all the prerequisites, with spaces between them?"  
     answer: "`$^`"  
     explanation: "This is often used in linking commands where all object files need to be passed to the compiler at once to create an executable."  
 
   - id: 7
     difficulty: basic
-    question: "What wildcard character is used to define a Pattern Rule (a generic rule applied to multiple files)?"  
+    question: "In a Makefile, what wildcard character is used to define a pattern rule (a generic rule applied to multiple files)?"  
     answer: "`%` (Percent sign)"  
     explanation: "For example, `%.o: %.c` tells `make` how to compile any `.o` object file from a corresponding `.c` source file."  
 
   - id: 8
     difficulty: basic
-    question: "What special target is used to declare that a target name is an action (like 'clean') and not an actual file to be created?"  
+    question: "In a Makefile, what special target is used to declare that a target name is an action (like 'clean') and not an actual file to be created?"  
     answer: "`.PHONY: target_name`"  
     explanation: "This prevents conflicts if a file literally named 'clean' is ever created in the directory, ensuring the recipe will always run when invoked."  
 
@@ -58,6 +58,6 @@ cards:
 
   - id: 10
     difficulty: intermediate
-    question: "What syntax is used for string substitution on a variable, such as changing all `.c` extensions in `$(SRCS)` to `.o`?"  
+    question: "In a Makefile, what syntax is used for string substitution on a variable, such as changing all `.c` extensions in `$(SRCS)` to `.o`?"  
     answer: "`$(SRCS:.c=.o)`"  
     explanation: "This evaluates to the value of the `SRCS` variable, but replaces the suffix `.c` with `.o` for every word in the list."

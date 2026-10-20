@@ -40,7 +40,7 @@ cards:
 
   - id: 7
     difficulty: intermediate
-    question: "What are the two layers in the lecture's Monopoly example, and who knows about whom?"
+    question: "A Monopoly game separates its UI from its game rules. What are the two layers called, and which one knows about the other?"
     answer: "**Presentation Layer** (UI: terminal, web, 3D casino) and **Application Layer** (game rules, board, turns). The Application Layer has **no idea** a UI exists; it only exposes getters, commands, and change-callbacks. The Presentation Layer depends on the Application Layer, not the other way around."
     explanation: "This one-way dependency is exactly what lets three different UIs drive the same game engine. The game logic is reusable and testable in isolation."
 

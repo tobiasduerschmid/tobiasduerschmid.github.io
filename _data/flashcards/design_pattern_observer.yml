@@ -9,7 +9,7 @@ cards:
     explanation: "The Subject maintains a dynamic list of Observers and notifies them via `update()`. This avoids polling and avoids hardcoding the subject to specific dependents."
   - id: 2
     difficulty: advanced
-    question: "Observer: which variant requires observers to know the subject's query interface?"
+    question: "In the Observer pattern, which variant requires observers to know the subject's query interface?"
     answer: "The **Pull model** adds that dependency. Push instead couples observers to the event payload format; neither variant is universally less coupled."
     explanation: "Push supplies a chosen payload; it need not contain the subject's entire state. Pull sends a minimal notification and observers query. A hybrid can push the event type and let observers pull additional data."
   - id: 3
@@ -19,11 +19,11 @@ cards:
     explanation: "Solutions: explicit unsubscribe (disciplined but error-prone), weak references (language-dependent), or scoped subscriptions tied to lifecycle management."
   - id: 4
     difficulty: advanced
-    question: "Why can Observer callbacks require extra work to trace?"
+    question: "Why can Observer-pattern callbacks require extra work to trace?"
     answer: "Subscription and notification occur at different sites. To explain an update, trace the registration, the subject's notification, and the observer callback."
     explanation: "Observers or client setup code may register the subscription. Pull observers can also hold an explicit subject reference; their dependency is not inherently invisible."
   - id: 5
     difficulty: basic
-    question: "Name three contexts where Observer is highly applicable."
+    question: "Name three contexts where the Observer pattern is highly applicable."
     answer: "Classic GUI/MVC (model notifies views), event listeners, and in-process subscriptions to a news source."
     explanation: "Swing listeners and Node.js EventEmitter illustrate related notification designs. Distributed feeds additionally require transport, delivery, and retry policies that Observer itself does not supply."

@@ -88,6 +88,6 @@ cards:
 
   - id: 15
     difficulty: advanced
-    question: "Recall at least six questions from the checklist a test should pass before you commit it."
+    question: "List at least six questions a test should pass before you commit it."
     answer: "(1) Fails if the behavior were broken? (2) Name describes behavior, not implementation? (3) Setup minimal? (4) Assertion specific? (5) Boundary/invalid cases included? (6) Runs alone, in any order? (7) Survives reasonable refactoring? (8) Useful failure message in six months?"
     explanation: "Use these eight checks as a self-review at commit time. A 'yes' to all is a green light; even one 'no' is worth fixing before merging — test debt compounds, and a flaky or brittle test left in the suite teaches the team to ignore failures."

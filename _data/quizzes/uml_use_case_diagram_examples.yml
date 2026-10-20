@@ -28,7 +28,7 @@ questions:
     difficulty: basic
     type: single
     question: >
-      Look at this diagram. What does the `<<include>>` relationship mean here?
+      Look at this UML use case diagram. What does the `<<include>>` relationship mean here?
 
       <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor Customer&#10;usecase &quot;Purchase Item&quot; as UC1&#10;usecase &quot;Login&quot; as UC2&#10;rectangle &quot;Store&quot; {&#10;  UC1&#10;  UC2&#10;}&#10;Customer -- UC1&#10;UC1 ..> UC2 : <<include>>&#10;@enduml"></div>
     options:
@@ -50,7 +50,7 @@ questions:
     difficulty: intermediate
     type: single
     question: >
-      What is the key difference between `<<include>>` and `<<extend>>`?
+      In UML use case diagrams, what is the key difference between `<<include>>` and `<<extend>>`?
 
       <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor User&#10;usecase &quot;Checkout&quot; as UC1&#10;usecase &quot;Login&quot; as UC2&#10;usecase &quot;Apply Coupon&quot; as UC3&#10;rectangle &quot;Shop&quot; {&#10;  UC1&#10;  UC2&#10;  UC3&#10;}&#10;User -- UC1&#10;UC1 ..> UC2 : <<include>>&#10;UC3 ..> UC1 : <<extend>>&#10;@enduml"></div>
     options:
@@ -72,7 +72,7 @@ questions:
     difficulty: intermediate
     type: single
     question: >
-      In this diagram, what does the `<<extend>>` arrow mean?
+      In this UML use case diagram, what does the `<<extend>>` arrow mean?
 
       <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor User&#10;usecase &quot;Place Order&quot; as UC1&#10;usecase &quot;Apply Coupon&quot; as UC2&#10;rectangle &quot;Shop&quot; {&#10;  UC1&#10;  UC2&#10;}&#10;User -- UC1&#10;UC2 ..> UC1 : <<extend>>&#10;@enduml"></div>
     options:
@@ -144,7 +144,7 @@ questions:
     difficulty: intermediate
     type: single
     question: >
-      How is **generalization** between use cases shown?
+      In a UML use case diagram, how is **generalization** between use cases shown?
 
       <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor User&#10;usecase &quot;Pay Online&quot; as UC1&#10;usecase &quot;Pay by Credit Card&quot; as UC2&#10;usecase &quot;Pay by PayPal&quot; as UC3&#10;rectangle &quot;Payment System&quot; {&#10;  UC1&#10;  UC2&#10;  UC3&#10;}&#10;User -- UC1&#10;UC2 --|> UC1&#10;UC3 --|> UC1&#10;@enduml"></div>
     options:

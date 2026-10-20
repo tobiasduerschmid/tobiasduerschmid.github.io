@@ -91,7 +91,7 @@ questions:
     bloom: analyze
     estimated_seconds: 60
     question: |-
-      What does `classify 5` evaluate to?
+      In Haskell, what does `classify 5` evaluate to?
 
       ```haskell
       classify n = if n > 0 then label else failure
@@ -118,7 +118,7 @@ questions:
     bloom: apply
     estimated_seconds: 45
     question: |-
-      With these definitions, which expression computes `triple(add1(4))`, that is, 15?
+      With these Haskell definitions, which expression computes `triple(add1(4))`, that is, 15?
 
       ```haskell
       triple n = 3 * n
@@ -164,7 +164,7 @@ questions:
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 60
-    question: '`scale :: Int -> Int -> Int` takes two arguments. Which expressions compute `scale(x, abs(y) + 1)`? Select all that apply.'
+    question: 'In Haskell, `scale :: Int -> Int -> Int` takes two arguments. Which expressions compute `scale(x, abs(y) + 1)`? Select all that apply.'
     options:
       - '`scale x (abs y + 1)`'
       - '`scale x ((abs y) + 1)`'
@@ -209,7 +209,7 @@ questions:
     bloom: analyze
     estimated_seconds: 60
     question: |-
-      What does `[grade 95, grade 70, grade 40]` evaluate to?
+      In Haskell, what does `[grade 95, grade 70, grade 40]` evaluate to?
 
       ```haskell
       grade :: Int -> Char
@@ -263,7 +263,7 @@ questions:
     bloom: understand
     estimated_seconds: 45
     question: |-
-      Why is the `where` clause useful for sharing `ratio` in this guarded definition?
+      Why is the `where` clause useful for sharing `ratio` in this guarded Haskell definition?
 
       ```haskell
       grade score total
@@ -293,7 +293,7 @@ questions:
     bloom: understand
     estimated_seconds: 45
     question: |-
-      Which statement about the helper `describe` is true?
+      Which statement about the Haskell helper `describe` is true?
 
       ```haskell
       label item price = describe price
@@ -317,7 +317,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 60
-    question: Which expressions evaluate to `"Oslo"`? Select all that apply.
+    question: Which Haskell expressions evaluate to `"Oslo"`? Select all that apply.
     options:
       - '`fst ("Oslo", 4)`'
       - '`fst (fst (("Oslo", 4), True))`'
@@ -363,7 +363,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: What does `zip "abc" (drop 1 [10, 20, 30])` evaluate to?
+    question: In Haskell, what does `zip "abc" (drop 1 [10, 20, 30])` evaluate to?
     options:
       - "`[('a',20),('b',30)]`"
       - "`[('a',10),('b',20),('c',30)]`"
@@ -381,7 +381,7 @@ questions:
     difficulty: basic
     bloom: apply
     estimated_seconds: 30
-    question: What does `[3, 7 .. 20]` evaluate to?
+    question: In Haskell, what does `[3, 7 .. 20]` evaluate to?
     options:
       - '`[3,7,11,15,19]`'
       - '`[3,7,11,15,19,23]`'
@@ -399,7 +399,7 @@ questions:
     difficulty: basic
     bloom: apply
     estimated_seconds: 45
-    question: 'Given `drinks = ["milk", "juice"]`, which expression produces `["milk","juice","tea"]`?'
+    question: 'In Haskell, given `drinks = ["milk", "juice"]`, which expression produces `["milk","juice","tea"]`?'
     options:
       - '`drinks ++ ["tea"]`'
       - '`drinks ++ "tea"`'

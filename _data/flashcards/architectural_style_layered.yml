@@ -28,7 +28,7 @@ cards:
 
   - id: 5
     difficulty: intermediate
-    question: "How do you implement upward notification (e.g., a sensor driver notifying the UI) without violating the golden rule?"
+    question: "How do you implement upward notification (e.g., a sensor driver notifying the UI) without violating the golden rule of layered architecture?"
     answer: "**Callback / Observer / Publish-Subscribe.** The upper layer implements an abstract listener interface defined in or below the lower layer, and registers an instance with the lower layer at startup. The lower layer holds only an interface-typed callback reference, so control can flow upward without a compile-time dependency on the upper layer."
     explanation: "Control flows upward (the driver invokes the listener); dependency stays downward (the UI depends on the driver's listener interface, not vice versa). This pattern is everywhere in real layered systems: OS interrupts, GUI event loops, network protocol upcalls."
 

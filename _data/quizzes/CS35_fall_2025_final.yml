@@ -230,7 +230,7 @@ questions:
   - id: 16
     difficulty: intermediate
     type: multiple
-    question: Which commands can rewrite existing commits or forcibly replace remote branch history, creating coordination problems when applied to work teammates share? Select all that apply.
+    question: Which Git commands can rewrite existing commits or forcibly replace remote branch history, creating coordination problems when applied to work teammates share? Select all that apply.
     options:
     - '`git rebase -i`'
     - '`git cherry-pick`'

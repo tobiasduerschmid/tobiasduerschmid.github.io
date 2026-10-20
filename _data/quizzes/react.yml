@@ -33,7 +33,7 @@ questions:
 
   - id: 2
     difficulty: advanced
-    question: "A student stores the full filtered list in state alongside the unfiltered list: `const [allTasks, setAllTasks] = useState(tasks)` and `const [filteredTasks, setFilteredTasks] = useState(tasks)`. What design problem does this create?"
+    question: "A student stores the full filtered list in React state alongside the unfiltered list: `const [allTasks, setAllTasks] = useState(tasks)` and `const [filteredTasks, setFilteredTasks] = useState(tasks)`. What design problem does this create?"
     options:
       - "This is correct — having both lists in state makes the component faster"
       - "The filtered copy is redundant; keep changing tasks and the filter as source state."
@@ -95,7 +95,7 @@ questions:
   - id: 5
     difficulty: advanced
     question: |
-      What renders when `count` is `0`?
+      In React, what renders when `count` is `0`?
       ```jsx
       {count && <Badge count={count} />}
       ```
@@ -118,7 +118,7 @@ questions:
 
   - id: 6
     difficulty: advanced
-    question: "A `<SearchBar>` and a `<ProductTable>` are sibling components. The user types in the search bar and the table should filter. Where should the `filterText` state live, and why?"
+    question: "A `<SearchBar>` and a `<ProductTable>` are sibling React components. The user types in the search bar and the table should filter. Where should the `filterText` state live, and why?"
     options:
       - "In `SearchBar` — it owns the input, so it should own the state"
       - "In `ProductTable` — it needs the filter to display results"
@@ -181,7 +181,7 @@ questions:
 
   - id: 9
     difficulty: advanced
-    question: "**Arrange** the lines to fetch data on mount and again when the `url` prop changes, storing the result in state."
+    question: "**Arrange** the lines of a React hook to fetch data on mount and again when the `url` prop changes, storing the result in state."
     type: parsons
     lines:
       - "function useFetch(url) {"
@@ -216,7 +216,7 @@ questions:
   - id: 11
     difficulty: advanced
     question: |
-      What happens when the component first renders?
+      What happens when this React component first renders?
       ```jsx
       function App() {
         const [count, setCount] = useState(0);
@@ -242,7 +242,7 @@ questions:
   - id: 12
     difficulty: advanced
     question: |
-      A component fetches user data based on a `userId` prop:
+      A React component fetches user data based on a `userId` prop:
       ```jsx
       useEffect(() => {
         fetch(`/api/users/${userId}`)
@@ -272,7 +272,7 @@ questions:
   - id: 13
     difficulty: advanced
     question: |
-      A component tracks a user object: `const [user, setUser] = useState({ name: 'Alice', age: 25 })`. How should you update **only** the `name` to `'Bob'` while keeping `age` intact?
+      A React component tracks a user object: `const [user, setUser] = useState({ name: 'Alice', age: 25 })`. How should you update **only** the `name` to `'Bob'` while keeping `age` intact?
     options:
       - "`user.name = 'Bob'; setUser(user);`"
       - "`setUser({ name: 'Bob' });`"
@@ -334,7 +334,7 @@ questions:
   - id: 16
     difficulty: advanced
     question: |
-      **Arrange** the lines to build a counter component that safely increments using the functional update pattern.
+      **Arrange** the lines to build a React counter component that safely increments using the functional update pattern.
     type: parsons
     lines:
       - "function Counter() {"
@@ -356,7 +356,7 @@ questions:
 
   - id: 17
     difficulty: advanced
-    question: "**Arrange** the lines to fetch user data on mount and when `userId` changes. At the start of each effect, reset to a loading message; ignore results from obsolete effects. Assume successful responses."
+    question: "**Arrange** the lines of a React component to fetch user data on mount and when `userId` changes. At the start of each effect, reset to a loading message; ignore results from obsolete effects. Assume successful responses."
     type: parsons
     lines:
       - "function UserProfile({ userId }) {"

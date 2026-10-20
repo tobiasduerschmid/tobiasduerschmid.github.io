@@ -383,7 +383,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      In a client/server checkout system, which statement best handles the PayPal decision?
+      In a client/server checkout system, which statement best handles the decision to use PayPal as the payment provider?
     options:
       - "PayPal should be hidden from every boundary, including the user interface; the client can simply report that payment succeeded"
       - "Supported methods may show in the client/server contract, but backend services still hide the SDK behind a vendor-neutral `PaymentGateway`"

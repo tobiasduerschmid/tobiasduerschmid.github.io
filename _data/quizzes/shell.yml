@@ -64,7 +64,7 @@ questions:
     explanation: "**Bash lacks block-level scoping, so variables set inside loops remain accessible throughout the entire script.** Unlike C++ `{}` blocks, loops and conditionals do not create a new scope. Unless a variable is declared `local` inside a function, its value persists after the control structure ends."
   - id: 4
     difficulty: advanced
-    question: "You want to use a command that requires two file inputs (like `diff`), but your data is currently coming from the live outputs of two different commands. Instead of creating temporary files on the disk, you use the `<(command)` syntax. What is this concept called and what does it achieve?"
+    question: "You want to use a command that requires two file inputs (like `diff`), but your data is currently coming from the live outputs of two different commands. Instead of creating temporary files on the disk, you use Bash's `<(command)` syntax. What is this concept called and what does it achieve?"
     options:
       - "Piping; it concatenates the outputs of both commands into a single, unified text stream."
       - "Process substitution; each command's output is exposed as a file-like input."
@@ -244,7 +244,7 @@ questions:
     explanation: "**The shell word-splits the unquoted variable at the space, turning one filename into two separate arguments.** `wc -l $LOGFILE` expands to `wc -l access errors.log`, so `wc` looks for two files. Quoting the expansion — `wc -l \"$LOGFILE\"` — keeps the value as a single argument."
   - id: 12
     difficulty: basic
-    question: "A script is invoked with `./deploy.sh production 8080 myapp`. Inside the script, which variable holds the value `8080`?"
+    question: "A Bash script is invoked with `./deploy.sh production 8080 myapp`. Inside the script, which variable holds the value `8080`?"
     options:
       - "`$0`"
       - "`$1`"
@@ -263,7 +263,7 @@ questions:
     explanation: "**`$2` holds the value `8080` because `$0` is the script name, `$1` is the first argument, and `$2` is the second.** `$0` is the script name (`./deploy.sh`), `$1` is the first argument (`production`), `$2` is the second argument (`8080`), and `$3` would be `myapp`. `$#` holds the total argument count (3)."
   - id: 13
     difficulty: advanced
-    question: "A script contains the line: `cd /deploy/target && ./run_tests.sh && echo 'All tests passed!'`. If `./run_tests.sh` exits with a non-zero status code, what happens next?"
+    question: "A shell script contains the line: `cd /deploy/target && ./run_tests.sh && echo 'All tests passed!'`. If `./run_tests.sh` exits with a non-zero status code, what happens next?"
     options:
       - "The script immediately exits and returns a non-zero status to the caller."
       - "`echo 'All tests passed!'` runs regardless, because it is the last command in the chain."
@@ -313,7 +313,7 @@ questions:
   - id: 15
     difficulty: advanced
     question: |
-      **Arrange** the pipeline fragments to build a command that extracts all ERROR lines from a log, sorts them, removes duplicates, and counts how many unique errors remain.
+      **Arrange** the pipeline fragments to build a shell command that extracts all ERROR lines from a log, sorts them, removes duplicates, and counts how many unique errors remain.
     type: parsons
     display: inline
     lines:
@@ -349,7 +349,7 @@ questions:
   - id: 17
     difficulty: expert
     question: |
-      **Arrange** the pipeline fragments to find the 5 most frequently occurring IP addresses in an access log.
+      **Arrange** the shell pipeline fragments to find the 5 most frequently occurring IP addresses in an access log.
     type: parsons
     display: inline
     lines:
@@ -370,7 +370,7 @@ questions:
   - id: 18
     difficulty: advanced
     question: |
-      **Arrange** the fragments to redirect both stdout and stderr of a deployment script into a single log file.
+      **Arrange** the shell command fragments to redirect both stdout and stderr of a deployment script into a single log file.
     type: parsons
     display: inline
     lines:
@@ -386,7 +386,7 @@ questions:
   - id: 19
     difficulty: advanced
     question: |
-      **Arrange** the pipeline to count how many files under `src/` contain the word `TODO`.
+      **Arrange** the shell pipeline to count how many files under `src/` contain the word `TODO`.
     type: parsons
     display: inline
     lines:
@@ -401,7 +401,7 @@ questions:
   - id: 20
     difficulty: intermediate
     question: |
-      **Arrange** the fragments to grant execute permission on a script and immediately run it.
+      **Arrange** the shell command fragments to grant execute permission on a script and immediately run it.
     type: parsons
     display: inline
     lines:
@@ -426,7 +426,7 @@ questions:
           utils.js
       ```
 
-      You run `mkdir src/components/ui`. What is the result?
+      You run `mkdir src/components/ui` in a Unix shell. What is the result?
     options:
       - "Creates both `src/components/` and `src/components/ui/` successfully."
       - "Creates only `src/components/` since `mkdir` stops at the first missing parent."

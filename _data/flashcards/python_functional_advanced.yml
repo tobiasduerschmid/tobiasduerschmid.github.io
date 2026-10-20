@@ -1,0 +1,99 @@
+title: "Python Functional Programming (Advanced) Flashcards"
+description: "Explain and write Python lambdas, closures, late-binding functions, and generators."
+active: true
+# Split from the CS 35L Python decks (python_syntax_explain, python_syntax_generate): CS 131 masters include this deck; CS 35L masters do not.
+cards:
+  - id: 21
+    difficulty: advanced
+    question: |
+      Predict the output of this Python code and explain it.
+      ```python
+      squares = []
+      for n in range(3):
+          def square():
+              return n * n
+          squares.append(square)
+      print(squares[0]())
+      ```
+    answer: "Prints `4`, not `0`. The body of `square` looks up `n` when it is called. By then the loop has finished and `n` is still bound to `2`, because a `for` loop does not create a scope. Capture the current value with a default argument, `def square(n=n):`, because defaults are evaluated when `def` executes."
+
+
+  - id: python-course-card-closure-mutation
+    difficulty: intermediate
+    question: |-
+      Does this Python closure need nonlocal events? Explain the result.
+
+      ```python
+      def recorder():
+          events = []
+          def add(event):
+              events.append(event)
+              return events[:]
+          return add
+      add = recorder()
+      add("open")
+      print(add("close"))
+      ```
+    answer: It prints `['open', 'close']` and needs no nonlocal declaration.
+    explanation: The closure mutates the captured list. It never assigns a new object to the enclosing events name.
+
+
+  - id: python-course-card-generator-observes-mutation
+    difficulty: intermediate
+    question: |-
+      Predict the output of this Python code. Is creating this generator a snapshot?
+
+      ```python
+      def each(values):
+          yield from values
+      source = [3]
+      pending = each(source)
+      source.append(5)
+      print(list(pending))
+      ```
+    answer: '`[3, 5]`'
+    explanation: The generator retains the input list reference. Its body begins after the append, so it traverses the updated list.
+
+
+  - id: python-course-card-iterable-iterator
+    difficulty: basic
+    question: |-
+      In this Python code, explain why the second traversal of values differs from the second traversal of pending.
+
+      ```python
+      values = [2, 5]
+      pending = (value * 2 for value in values)
+      print(list(values), list(values))
+      print(list(pending), list(pending))
+      ```
+    answer: |-
+      ```text
+      [2, 5] [2, 5]
+      [4, 10] []
+      ```
+      A list supplies a fresh iterator for each traversal; a generator is its own iterator with one advancing execution state.
+    explanation: iter(generator) returns that same generator. Calling the generator function again creates new state.
+
+
+  - id: python-course-write-closure
+    difficulty: intermediate
+    question: Write a Python function make_offset(offset), returning a function that adds offset to its one argument.
+    answer: |-
+      ```python
+      def make_offset(offset):
+          return lambda value: value + offset
+      ```
+    explanation: Each factory call creates a closure over its own offset binding. An ordinary nested def with a return statement is equivalent.
+
+
+  - id: python-course-write-generator
+    difficulty: intermediate
+    question: Write positive(values), a Python generator that yields only values greater than zero, in input order. It must not build a result list.
+    answer: |-
+      ```python
+      def positive(values):
+          for value in values:
+              if value > 0:
+                  yield value
+      ```
+    explanation: The function pauses at each yield. Reaching its end exhausts the generator; there is no need to raise StopIteration inside it.

@@ -102,7 +102,7 @@ cards:
     difficulty: advanced
     bloom: evaluate
     estimated_seconds: 40
-    question: A failed operation leaves a valid queue with one extra item and releases all acquired resources. Explain whether it meets the basic guarantee, the strong guarantee, both, or neither.
+    question: A failed operation leaves a valid queue with one extra item and releases all acquired resources. Explain whether it meets the basic exception-safety guarantee, the strong guarantee, both, or neither.
     answer: It meets the basic guarantee because state remains valid and resources do not leak. It fails the strong guarantee because the extra item changes the pre-call state.
     explanation: 'Self-check: Valid state and unchanged state are different promises.'
 

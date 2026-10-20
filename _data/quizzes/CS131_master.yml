@@ -10,6 +10,7 @@ decks:
   - cs131_python_copies
   - cs131_python_classes_defaults
   - python_output
+  - python_functional_advanced
   - cs131_haskell_basic
   - cs131_haskell_intermediate
   - cs131_haskell_advanced

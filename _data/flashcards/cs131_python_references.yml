@@ -9,7 +9,7 @@ cards:
     bloom: apply
     estimated_seconds: 45
     question: |-
-      Predict the output, then name the assignment that disconnects one path.
+      Predict the output of this Python code, then name the assignment that disconnects one path.
 
       ```python
       entry = [4]
@@ -26,7 +26,7 @@ cards:
     difficulty: intermediate
     bloom: create
     estimated_seconds: 45
-    question: A function runs `values = []` and returns nothing. Its caller wants an empty list after the call. Give a
+    question: A Python function runs `values = []` and returns nothing. Its caller wants an empty list after the call. Give a
       two-line repair that returns the replacement and explicitly stores it at the call site.
     answer: 'Inside the function: `return []`. At the call site: `values = reset(values)`.'
     explanation: Returning a new reference and assigning it in the caller replaces the caller's binding. Merely assigning
@@ -37,7 +37,7 @@ cards:
     difficulty: basic
     bloom: understand
     estimated_seconds: 30
-    question: A method returns `self.entries` directly. The caller executes `saved = obj.get_entries()` and then `saved.append(5)`.
+    question: A Python method returns `self.entries` directly. The caller executes `saved = obj.get_entries()` and then `saved.append(5)`.
       Why does `obj.entries` change even though the caller never assigns to that field?
     answer: The returned value is a reference to the field's list. `append` mutates that same list through the caller's
       reference.
@@ -49,7 +49,7 @@ cards:
     bloom: apply
     estimated_seconds: 30
     question: |-
-      Complete the return expression so `finish(values)` appends 2 to the original list but returns a separate list with a final 9.
+      Complete the return expression in this Python function so `finish(values)` appends 2 to the original list but returns a separate list with a final 9.
 
       ```python
       def finish(values):
@@ -64,7 +64,7 @@ cards:
   - id: cs131-python-card-holder-local
     difficulty: intermediate
     question: |-
-      Explain why the number stays unchanged while the holder changes.
+      In this Python code, explain why the number stays unchanged while the holder changes.
 
       ```python
       def spend(number, holder):
@@ -82,7 +82,7 @@ cards:
   # Taught / practice evidence: Essential Python handout pp. 17–18, 22–24, 28; Homework PYTHON2.
   - id: cs131-python-card-string-argument
     difficulty: intermediate
-    question: A function runs text = text + "!" and returns nothing. After mark(label), why is the caller’s label unchanged?
+    question: A Python function runs text = text + "!" and returns nothing. After mark(label), why is the caller’s label unchanged?
       Give a repair that makes the new string available to the caller.
     answer: Return text + "!" from mark and assign label = mark(label) at the call site.
     explanation: Strings cannot be mutated. The concatenation creates a new string; local rebinding alone does not change
@@ -92,7 +92,7 @@ cards:
   - id: cs131-python-card-two-parameter-child
     difficulty: advanced
     question: |-
-      Predict the output and explain why a locally rebound parameter still changes input.
+      Predict the output of this Python code and explain why a locally rebound parameter still changes input.
 
       ```python
       def change(a, b):

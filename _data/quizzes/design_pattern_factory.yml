@@ -106,7 +106,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      In the `PizzaStore` example, `orderPizza()` runs a fixed sequence: `createPizza(type)`, then `prepare()`, `bake()`, `cut()`, `box()`. The `createPizza()` step is the one part that varies by subclass. Which design pattern describes the role of `orderPizza()` itself in this structure?
+      In a `PizzaStore` class, `orderPizza()` runs a fixed sequence: `createPizza(type)`, then `prepare()`, `bake()`, `cut()`, `box()`. The `createPizza()` step is the one part that varies by subclass. Which design pattern describes the role of `orderPizza()` itself in this structure?
     options:
       - "Strategy — `orderPizza()` is an interchangeable algorithm"
       - "Template Method — a fixed sequence with a subclass creation hook"

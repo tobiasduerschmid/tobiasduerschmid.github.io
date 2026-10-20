@@ -58,7 +58,7 @@ cards:
 
   - id: 10
     difficulty: intermediate
-    question: "Walk through the **Green** step for: *'Given failing test `assert order.cancel().status == \"cancelled\"`, write the simplest passing code.'*"
+    question: "Walk through the TDD **Green** step for: *'Given failing test `assert order.cancel().status == \"cancelled\"`, write the simplest passing code.'*"
     answer: "Add a `cancel` method to `Order` whose body is `self.status = 'cancelled'; return self`. *No validation, no state machine, no event publishing, no logging* — those earn their place in future Red cycles."
     explanation: "Beck's slogan in the Green phase is *'do the simplest thing that could possibly work'*. Shortcuts here are not sloppy; they preserve the rhythm. The Refactor step is where duplication and design clarity get addressed; trying to do everything in Green is how steps become too large and the World-of-Red trap opens up."
 

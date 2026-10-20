@@ -25,7 +25,7 @@ cards:
     bloom: apply
     estimated_seconds: 45
     question: |-
-      What does `choose True` return, and is `failure` evaluated?
+      In Haskell, what does `choose True` return, and is `failure` evaluated?
 
       ```haskell
       choose flag = if flag then 7 else failure
@@ -54,7 +54,7 @@ cards:
     bloom: analyze
     estimated_seconds: 45
     question: |-
-      For `n >= 0`, this function should return `n`, but it does not finish for positive inputs. Repair its recursive call and explain the cause.
+      For `n >= 0`, this Haskell function should return `n`, but it does not finish for positive inputs. Repair its recursive call and explain the cause.
 
       ```haskell
       countDown 0 = 0
@@ -71,7 +71,7 @@ cards:
     difficulty: basic
     bloom: apply
     estimated_seconds: 30
-    question: For `word = "plane"`, give the values and types of `head word` and `tail word`.
+    question: In Haskell, for `word = "plane"`, give the values and types of `head word` and `tail word`.
     answer: '`head word` is `''p'' :: Char`; `tail word` is `"lane" :: String` (equivalently `[Char]`).'
     explanation: A string is a list of characters. `head` returns one element, while `tail` returns a list, even when
       only one element remains.
@@ -82,7 +82,7 @@ cards:
     difficulty: basic
     bloom: understand
     estimated_seconds: 30
-    question: 'For `plan :: Int -> Bool -> String`, name the parameter types, the result type, and the type of `plan 3 True`.'
+    question: 'For the Haskell signature `plan :: Int -> Bool -> String`, name the parameter types, the result type, and the type of `plan 3 True`.'
     answer: The parameters are an `Int` and then a `Bool`, and the result is a `String`, so `plan 3 True` is a `String`.
     explanation: The last type in a signature is the result. Arguments follow the function name, separated by spaces.
 
@@ -92,7 +92,7 @@ cards:
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 45
-    question: Does omitting a type signature allow `both xs = [length xs, True]` to load? Explain.
+    question: In Haskell, does omitting a type signature allow `both xs = [length xs, True]` to load? Explain.
     answer: No. The list would mix an `Int` from `length xs` with a `Bool`, so type inference rejects the definition
       before it runs.
     explanation: Inference determines types; it does not relax type rules. All elements of a Haskell list must have
@@ -115,7 +115,7 @@ cards:
     difficulty: intermediate
     bloom: understand
     estimated_seconds: 30
-    question: Why does `abs -3` fail to type-check, and how do you fix it?
+    question: In Haskell, why does `abs -3` fail to type-check, and how do you fix it?
     answer: It parses as `abs - 3`, which subtracts 3 from the function `abs`. Write `abs (-3)`, which is `3`.
     explanation: A minus sign between two expressions is subtraction, and function application binds more tightly than any operator. Parenthesize a negative argument.
 
@@ -125,7 +125,7 @@ cards:
     difficulty: basic
     bloom: apply
     estimated_seconds: 30
-    question: Rewrite `7 - 2` as a prefix call and `mod 17 5` as an infix expression. What are their values?
+    question: In Haskell, rewrite `7 - 2` as a prefix call and `mod 17 5` as an infix expression. What are their values?
     answer: '`(-) 7 2` is `5`, and ``17 `mod` 5`` is `2`.'
     explanation: Parentheses turn an operator into an ordinary function; backticks turn a two-argument function into an operator.
 
@@ -135,7 +135,7 @@ cards:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: 'Write `signLabel :: Int -> String` using guards: negative inputs return `"negative"`, zero returns
+    question: 'Write the Haskell function `signLabel :: Int -> String` using guards: negative inputs return `"negative"`, zero returns
       `"zero"`, and positive inputs return `"positive"`.'
     answer: |-
       ```haskell
@@ -154,7 +154,7 @@ cards:
     difficulty: intermediate
     bloom: understand
     estimated_seconds: 30
-    question: Why is `where` convenient when several guards share a computed value? How can `let … in` express the
+    question: In Haskell, why is `where` convenient when several guards share a computed value? How can `let … in` express the
       same calculation?
     answer: A `where` binding is visible throughout its guarded equation, including the conditions. A `let … in` can
       instead enclose one nested `if` expression that uses the binding.
@@ -177,7 +177,7 @@ cards:
     difficulty: basic
     bloom: apply
     estimated_seconds: 30
-    question: Write expressions that add `0` to the front and `9` to the end of the list `xs`.
+    question: Write Haskell expressions that add `0` to the front and `9` to the end of the list `xs`.
     answer: '`0 : xs` and `xs ++ [9]`.'
     explanation: '`:` puts one element in front of a list. `++` joins two lists, so the single element must be wrapped as `[9]`.'
 
@@ -187,7 +187,7 @@ cards:
     difficulty: basic
     bloom: apply
     estimated_seconds: 45
-    question: Write a range for the multiples of 5 from 5 to 50, and an expression for the first four multiples of 5 that uses an infinite range.
+    question: Write a Haskell range for the multiples of 5 from 5 to 50, and an expression for the first four multiples of 5 that uses an infinite range.
     answer: '`[5, 10 .. 50]` and `take 4 [5, 10 ..]`, which is `[5,10,15,20]`.'
     explanation: The first two values set the step. An infinite range is safe as long as only a finite part of it is demanded.
 
@@ -200,7 +200,7 @@ cards:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: 'Given `pair :: (String, Int)` and `pair = ("oak", 3)`, give the types of `[pair]`, `fst pair`, and
+    question: 'In Haskell, given `pair :: (String, Int)` and `pair = ("oak", 3)`, give the types of `[pair]`, `fst pair`, and
       `[fst pair]`.'
     answer: '`[pair] :: [(String, Int)]`, `fst pair :: String`, and `[fst pair] :: [String]`.'
     explanation: Square brackets add a list layer. Selecting a component removes the tuple layer; surrounding that

@@ -28,7 +28,7 @@ questions:
     difficulty: basic
     type: single
     question: >
-      Given the transition label `buttonPressed [isEnabled] / playSound()`, which part is the **guard condition**?
+      Given the UML state-machine transition label `buttonPressed [isEnabled] / playSound()`, which part is the **guard condition**?
 
       <div data-uml-type="state" data-uml-spec="@startuml&#10;[*] --> Idle&#10;Idle --> Running : startButton [isReady] / initDisplay()&#10;Running --> Idle : stopButton / saveState()&#10;@enduml"></div>
     options:
@@ -50,7 +50,7 @@ questions:
     difficulty: intermediate
     type: single
     question: >
-      In this diagram, what happens if `threatDetected` occurs but `sysCheckOK` is **false**?
+      In this UML state machine diagram, what happens if `threatDetected` occurs but `sysCheckOK` is **false**?
 
       <div data-uml-type="state" data-uml-spec="[*] --> Idle&#10;Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()&#10;CombatMode --> Idle : threatNeutralized / retractWeapons()"></div>
     options:
@@ -99,7 +99,7 @@ questions:
     difficulty: basic
     type: single
     question: >
-      What does the symbol ◎ (a filled circle inside a hollow circle) represent?
+      In a UML state machine diagram, what does the symbol ◎ (a filled circle inside a hollow circle) represent?
 
       <div data-uml-type="state" data-uml-spec="[*] --> Active&#10;Active --> [*] : destroy()"></div>
     options:
@@ -163,7 +163,7 @@ questions:
     difficulty: basic
     type: single
     question: >
-      Look at this diagram. What is the **effect** that executes when transitioning from CombatMode to Idle?
+      Look at this UML state machine diagram. What is the **effect** that executes when transitioning from CombatMode to Idle?
 
       <div data-uml-type="state" data-uml-spec="[*] --> Idle&#10;Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()&#10;CombatMode --> Idle : threatNeutralized / retractWeapons()&#10;CombatMode --> EmergencyPower : powerCritical / rerouteToLifeSupport()&#10;EmergencyPower --> [*] : manualOverride()"></div>
     options:
@@ -185,7 +185,7 @@ questions:
     difficulty: intermediate
     type: single
     question: >
-      How many **states** (not counting the initial pseudostate or final state) are in this diagram?
+      How many **states** (not counting the initial pseudostate or final state) are in this UML state machine diagram?
 
       <div data-uml-type="state" data-uml-spec="[*] --> Created&#10;Created --> Paid : paymentReceived&#10;Paid --> Shipped : itemDispatched&#10;Shipped --> Delivered : deliveryConfirmed&#10;Created --> Cancelled : customerCancels&#10;Delivered --> [*]&#10;Cancelled --> [*]"></div>
     options:
@@ -207,7 +207,7 @@ questions:
     difficulty: intermediate
     type: single
     question: >
-      In this diagram, which transition has **both** a guard condition and an effect?
+      In this UML state machine diagram, which transition has **both** a guard condition and an effect?
 
       <div data-uml-type="state" data-uml-spec="[*] --> Idle&#10;Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()&#10;CombatMode --> Idle : threatNeutralized / retractWeapons()&#10;CombatMode --> EmergencyPower : powerCritical / rerouteToLifeSupport()"></div>
     options:
@@ -254,7 +254,7 @@ questions:
     difficulty: advanced
     type: single
     question: >
-      What is the difference between an `entry/` internal activity and an effect on a transition (`/ action`)?
+      In a UML state machine, what is the difference between an `entry/` internal activity and an effect on a transition (`/ action`)?
 
       <div data-uml-type="state" data-uml-spec="@startuml&#10;[*] --> Connecting&#10;Connecting : entry/ showSpinner()&#10;Connecting : exit/ hideSpinner()&#10;Connecting --> Connected : handshakeOK / logSuccess()&#10;Connecting --> Error : timeout / logError()&#10;@enduml"></div>
     options:

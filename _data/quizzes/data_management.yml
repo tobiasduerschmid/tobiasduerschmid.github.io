@@ -242,7 +242,7 @@ questions:
   - id: 13
     difficulty: intermediate
     type: single
-    question: "For every course offering, including offerings with zero enrollments, list its course ID, quarter, and enrolled-student count. An offering is identified by (course_id, quarter), as in the chapter. Which sequence implements this?"
+    question: "For every course offering, including offerings with zero enrollments, list its course ID, quarter, and enrolled-student count. Offerings are rows of a `Course` table keyed by (course ID, quarter), and an `IsEnrolled` table stores one row per student enrollment with that same key. Which sequence implements this?"
     options:
       - "Select enrollments, then project course_id and student_id."
       - "Left join on the offering key; group by it and count student_id."

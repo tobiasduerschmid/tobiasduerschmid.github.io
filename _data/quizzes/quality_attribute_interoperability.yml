@@ -66,7 +66,7 @@ questions:
     difficulty: advanced
     type: multiple
     question: |
-      The Global Distribution System (GDS) case illustrates trade-offs interoperability creates. Which statements correctly characterize the GDS dilemma? Select all that apply.
+      The airline Global Distribution System (GDS) — a shared booking standard connecting airlines and travel agencies worldwide — illustrates trade-offs interoperability creates. Which statements correctly characterize the GDS dilemma? Select all that apply.
     options:
       - "Highly standardized interfaces are difficult to evolve because every participating system must update simultaneously."
       - "GDS struggled to support Southwest Airlines because Southwest's business model (no traditional seat assignments) didn't fit the standardized interface."

@@ -364,7 +364,7 @@ questions:
     difficulty: advanced
     bloom: evaluate
     estimated_seconds: 60
-    question: A lookup often finds no record; occasionally it finds a record but lacks permission to read it. The caller needs to distinguish these two expected failures from a successful record. Which lecture mechanism most directly represents all three outcomes?
+    question: A lookup often finds no record; occasionally it finds a record but lacks permission to read it. The caller needs to distinguish these two expected failures from a successful record. Which mechanism most directly represents all three outcomes?
     options:
     - An Optional containing a record or no value
     - A Result containing a record or error details

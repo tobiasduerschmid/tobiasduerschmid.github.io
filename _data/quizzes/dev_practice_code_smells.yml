@@ -28,7 +28,7 @@ questions:
     bloom: analyze
     type: single
     question: |
-      A `User` class changes when database schema changes, when display-name formatting changes, and when password-reset email copy changes. Which smell is most central?
+      A `User` class changes when database schema changes, when display-name formatting changes, and when password-reset email copy changes. Which code smell is most central?
     options:
       - "Divergent Change."
       - "Shotgun Surgery."
@@ -49,7 +49,7 @@ questions:
     bloom: analyze
     type: single
     question: |
-      Adding a new tax rule requires tiny edits in `Invoice`, `ReceiptPrinter`, `TaxReport`, `OrderSummary`, and `CustomerExport`. Which smell does this suggest?
+      Adding a new tax rule requires tiny edits in `Invoice`, `ReceiptPrinter`, `TaxReport`, `OrderSummary`, and `CustomerExport`. Which code smell does this suggest?
     options:
       - "Shotgun Surgery."
       - "Large Class."

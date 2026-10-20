@@ -87,7 +87,7 @@ questions:
 
   - id: 5
     difficulty: intermediate
-    question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. Which command is best suited to temporarily save your current work without making a messy commit?"
+    question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. Which Git command is best suited to temporarily save your current work without making a messy commit?"
     options:
       - "`git cherry-pick`"
       - "`git bisect`"
@@ -269,7 +269,7 @@ questions:
   - id: 13
     difficulty: advanced
     type: multiple
-    question: "Which of the following are valid methods or strategies for integrating changes from a feature branch back into the main codebase? (Select all that apply)"
+    question: "Which of the following are valid methods or strategies for integrating changes from a feature branch back into the main codebase in Git? (Select all that apply)"
     options:
       - "`git merge`"
       - "`git rebase`"
@@ -377,7 +377,7 @@ questions:
   - id: 18
     difficulty: advanced
     question: |
-      **Arrange** the commands to safely stash your work, pull remote changes, and restore your stashed work.
+      **Arrange** the Git commands to safely stash your work, pull remote changes, and restore your stashed work.
     type: parsons
     display: inline
     lines:
@@ -394,7 +394,7 @@ questions:
   - id: 19
     difficulty: advanced
     question: |
-      **Arrange** the commands to undo a bad commit on a shared branch safely: first identify the commit, then revert it, then push the fix.
+      **Arrange** the Git commands to undo a bad commit on a shared branch safely: first identify the commit, then revert it, then push the fix.
     type: parsons
     display: inline
     lines:
@@ -411,7 +411,7 @@ questions:
   - id: 20
     difficulty: intermediate
     question: |
-      **Arrange** the commands to initialize a new repository and record an initial commit.
+      **Arrange** the Git commands to initialize a new repository and record an initial commit.
     type: parsons
     display: inline
     lines:
@@ -428,7 +428,7 @@ questions:
   - id: 21
     difficulty: intermediate
     question: |
-      **Arrange** the commands to register a remote called `origin` and push the `main` branch to it for the first time.
+      **Arrange** the Git commands to register a remote called `origin` and push the `main` branch to it for the first time.
     type: parsons
     display: inline
     lines:
@@ -443,7 +443,7 @@ questions:
   - id: 22
     difficulty: advanced
     question: |
-      **Arrange** the commands to stage a forgotten file and fold it into the last commit without changing the commit message.
+      **Arrange** the Git commands to stage a forgotten file and fold it into the last commit without changing the commit message.
     type: parsons
     display: inline
     lines:

@@ -58,7 +58,7 @@ cards:
 
   - id: 9
     difficulty: intermediate
-    question: "What are **Release Planning** and **Iteration Planning**, and why are they separate?"
+    question: "In XP, what are **Release Planning** and **Iteration Planning**, and why are they separate?"
     answer: "**Release planning:** customer presents user stories, developers estimate effort, customer prioritizes by balancing business value and technical cost — sets the longer-horizon road map. **Iteration planning:** chosen stories are broken down into technical tasks for a 1–4-week cycle. Separating them keeps each conversation at its right altitude — business priorities vs technical execution."
     explanation: "If combined, the customer rabbit-holes into implementation details and developers rabbit-hole into priorities. Splitting the conversation lets each level focus on its right decisions, with the customer in the lead at release planning and the team in the lead at iteration planning."
 

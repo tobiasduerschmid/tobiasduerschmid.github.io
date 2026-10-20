@@ -1,4 +1,4 @@
-title: Python Output Puzzles
+title: Python Output Puzzles (Basic)
 description: Trace a short program, then type its output. Every answer needs only numbers and spaces.
 active: true
 questions:
@@ -99,24 +99,3 @@ questions:
     answer: '4'
     explanation: Both outer slots refer to row, so the update changes the list reached through either slot. The second
       row contains 0 and 4.
-
-  # Taught / practice evidence: Control Palooza, Generators (pause/resume and one shared iterator); Homework CTRL3; F24 Final Problem 6.
-  - id: python-output-generator
-    type: write-in
-    difficulty: intermediate
-    question: Two names refer to the stream of odd numbers. Which number prints?
-    program:
-      language: python
-      file: stream.py
-      code: |
-        def odd_numbers():
-            for n in [1, 3, 5]:
-                yield n
-        odds = odd_numbers()
-        shared = odds
-        next(odds)
-        next(shared)
-        print(next(odds))
-    answer: '5'
-    explanation: Both names refer to one generator with one current position. The first two calls consume `1` and `3`;
-      the final call consumes and prints `5`.

@@ -68,6 +68,6 @@ cards:
   - id: 10
     difficulty: intermediate
     bloom: apply
-    question: "What is a good process rule for a CS 35L project team?"
+    question: "What is a good process rule for a small course-project team, such as a CS 35L team?"
     answer: "Use a lightweight agile process, but write short design notes for hard-to-reverse boundaries such as APIs, data models, storage formats, concurrency models, and deployment assumptions."
     explanation: "Small teams do not need heavy ceremony, but they still need shared rationale for decisions that will shape later work."

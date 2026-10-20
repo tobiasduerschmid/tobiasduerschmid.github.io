@@ -11,7 +11,7 @@ cards:
 
   - id: 2
     difficulty: basic
-    question: "What do the **initial pseudostate** and **final state** look like?"
+    question: "In a UML state machine diagram, what do the **initial pseudostate** and **final state** look like?"
     answer: "Initial = solid black circle. Final = solid circle inside a hollow circle (bullseye)."
     explanation: >
       The **initial pseudostate** (<span class="uml-sym" data-diagram="state" data-sym="[*]"></span>) is the entry point — it may have at most one outgoing transition, with no trigger or guard. The **final state** (◎) indicates that its enclosing region has completed; it does not itself destroy the context object.
@@ -20,7 +20,7 @@ cards:
 
   - id: 3
     difficulty: intermediate
-    question: "What happens when a transition's **guard condition** evaluates to false?"
+    question: "In a UML state machine, what happens when a transition's **guard condition** evaluates to false?"
     answer: "That transition does **not** fire. Another enabled transition may still be taken."
     explanation: >
       A guard acts as a gatekeeper. Even if the triggering event occurs, the transition is only taken if the guard is true. If false, this transition is disabled. The object stays put only if no other enabled transition handles the event.
@@ -41,14 +41,14 @@ cards:
 
   - id: 6
     difficulty: advanced
-    question: "What are the three types of **internal activities** a state can have?"
+    question: "In a UML state machine diagram, what are the three types of **internal activities** a state can have?"
     answer: "`entry /` (runs on entering), `exit /` (runs on leaving), `do /` (runs while in the state)."
     explanation: >
       Internal activities execute at specific points: **entry/** runs every time the state is entered (regardless of which transition was taken), **exit/** runs every time the state is exited, and **do/** starts after entry and may finish while the state remains active; if still running when the state exits, it is aborted. These are different from transition effects, which only execute during a specific transition.
 
   - id: 7
     difficulty: intermediate
-    question: "Does a state machine always need a **final state**?"
+    question: "Does a UML state machine diagram always need a **final state**?"
     answer: "No. Final states mark region completion. Initial pseudostates mark default entry, with at most one per region; other explicit entry paths are possible."
     explanation: >
       Many real-world objects run indefinitely (e.g., a server, a hardware controller). Their state machines have an initial pseudostate but no final state. An order workflow can use a final state to mark completion of the region after delivery or cancellation without implying that the stored order object is destroyed.

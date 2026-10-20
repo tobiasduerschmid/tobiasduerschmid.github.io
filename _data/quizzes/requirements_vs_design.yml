@@ -5,7 +5,7 @@ questions:
   - id: 1
     difficulty: basic
     question: |
-      A library catalog team writes: "Readers must be able to search for books by keyword, title, or author name, even when they make minor typos." How should this statement be classified?
+      A library catalog team writes: "Readers must be able to search for books by keyword, title, or author name, even when they make minor typos." Should this statement be classified as a requirement or a design decision?
     options:
       - "Requirement: it states the search behavior and tolerance the user needs."
       - "Design decision: it requires a specific search engine."
@@ -25,7 +25,7 @@ questions:
   - id: 2
     difficulty: basic
     question: |
-      A team writes: "Index the book catalog in Elasticsearch and use fuzzy matching for misspelled queries." How should this statement be classified?
+      A team writes: "Index the book catalog in Elasticsearch and use fuzzy matching for misspelled queries." Should this statement be classified as a requirement or a design decision?
     options:
       - "Requirement: it describes the reader's need in measurable terms."
       - "Design decision: it chooses a search technology and mechanism."
@@ -45,7 +45,7 @@ questions:
   - id: 3
     difficulty: basic
     question: |
-      An e-commerce team writes: "The application must restore a user's cart items after the browser is accidentally closed." How should this statement be classified?
+      An e-commerce team writes: "The application must restore a user's cart items after the browser is accidentally closed." Should this statement be classified as a requirement or a design decision?
     options:
       - "Requirement: it states the persistence outcome the shopper expects."
       - "Design decision: it requires a specific in-memory cache."
@@ -65,7 +65,7 @@ questions:
   - id: 4
     difficulty: basic
     question: |
-      A shopping application specification says: "Store active cart data in Redis with a 30-minute expiration time." How should this statement be classified?
+      A shopping application specification says: "Store active cart data in Redis with a 30-minute expiration time." Should this statement be classified as a requirement or a design decision?
     options:
       - "Requirement: it states that shoppers should not lose cart items."
       - "Design decision: it chooses a storage technology and retention policy."
@@ -85,7 +85,7 @@ questions:
   - id: 5
     difficulty: basic
     question: |
-      A financial dashboard team writes: "Only registered and verified users may view account balances." How should this statement be classified?
+      A financial dashboard team writes: "Only registered and verified users may view account balances." Should this statement be classified as a requirement or a design decision?
     options:
       - "Requirement: it states the access rule the system must enforce."
       - "Design decision: it requires OAuth 2.0."
@@ -105,7 +105,7 @@ questions:
   - id: 6
     difficulty: basic
     question: |
-      A dashboard implementation plan says: "Use OAuth 2.0 for third-party login and issue JSON Web Tokens for user sessions." How should this statement be classified?
+      A dashboard implementation plan says: "Use OAuth 2.0 for third-party login and issue JSON Web Tokens for user sessions." Should this statement be classified as a requirement or a design decision?
     options:
       - "Requirement: it states who may access the dashboard."
       - "Design decision: it chooses authentication and session mechanisms."
@@ -125,7 +125,7 @@ questions:
   - id: 7
     difficulty: basic
     question: |
-      A route-planning app team writes: "The system must display the shortest available route from the user's current location to the selected destination." How should this statement be classified?
+      A route-planning app team writes: "The system must display the shortest available route from the user's current location to the selected destination." Should this statement be classified as a requirement or a design decision?
     options:
       - "Requirement: it states the route result the user needs."
       - "Design decision: it requires Dijkstra's algorithm."
@@ -145,7 +145,7 @@ questions:
   - id: 8
     difficulty: basic
     question: |
-      A route-planning design note says: "Represent roads as a weighted graph and run A* search with distance as the heuristic." How should this statement be classified?
+      A route-planning design note says: "Represent roads as a weighted graph and run A* search with distance as the heuristic." Should this statement be classified as a requirement or a design decision?
     options:
       - "Requirement: it guarantees the route is useful to the user."
       - "Design decision: it chooses a data representation and algorithm."
@@ -165,7 +165,7 @@ questions:
   - id: 9
     difficulty: basic
     question: |
-      A collaborative editor team writes: "Multiple users must be able to edit the same file at the same time and see each other's changes within 500 ms." How should this statement be classified?
+      A collaborative editor team writes: "Multiple users must be able to edit the same file at the same time and see each other's changes within 500 ms." Should this statement be classified as a requirement or a design decision?
     options:
       - "Requirement: it states collaboration behavior and a measurable response time."
       - "Design decision: it requires Operational Transformation."
@@ -185,7 +185,7 @@ questions:
   - id: 10
     difficulty: basic
     question: |
-      A collaborative editor design says: "Use WebSockets for persistent two-way communication and Operational Transformation to resolve concurrent edits." How should this statement be classified?
+      A collaborative editor design says: "Use WebSockets for persistent two-way communication and Operational Transformation to resolve concurrent edits." Should this statement be classified as a requirement or a design decision?
     options:
       - "Requirement: it states that users can collaborate in real time."
       - "Design decision: it chooses transport and conflict-resolution mechanisms."

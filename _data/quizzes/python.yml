@@ -1,5 +1,5 @@
-title: "Python Concepts Quiz"
-description: "Practice Python's object model, calls, closures, iteration, exceptions, and concurrency with output predictions and contract checks."
+title: "Python Concepts Quiz (Basic)"
+description: "Practice Python's object model, calls, iteration, exceptions, and concurrency with output predictions and contract checks."
 active: true
 questions:
   # Source concepts: Homework OOP5; OOP lecture (multiple inheritance and mixins).
@@ -7,7 +7,7 @@ questions:
     type: single
     difficulty: advanced
     question: |-
-      What does this program print?
+      What does this Python program print?
 
       ```python
       class End:
@@ -38,7 +38,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |-
-      For an ordinary list of integers, which function body returns an extended list without an external mutation or input/output effect?
+      For an ordinary Python list of integers, which function body returns an extended list without an external mutation or input/output effect?
     options:
       - '`result = values; result.append(2); return result`'
       - '`values.append(2); return values[:]`'
@@ -106,7 +106,7 @@ questions:
 
   - id: 3
     difficulty: intermediate
-    question: "A C++ programmer writes `total = sum(scores) / len(scores)` and expects integer division (like C++'s `/`). They get `85.5` instead of `85`. What happened, and how should they get integer division?"
+    question: "A C++ programmer writes `total = sum(scores) / len(scores)` in Python and expects integer division (like C++'s `/`). They get `85.5` instead of `85`. What happened, and how should they get integer division?"
     options:
       - "Python's `sum()` always returns a float, even for integer lists"
       - "In Python 3, `/` is float division; use `//` for floor: `sum(scores) // len(scores)`."
@@ -148,7 +148,7 @@ questions:
 
   - id: 5
     difficulty: intermediate
-    question: "A student uses `re.findall(r'ERROR', text)` to count errors in a log. Their teammate suggests `text.count('ERROR')` instead. When is `re.findall()` the better choice?"
+    question: "A student uses Python's `re.findall(r'ERROR', text)` to count errors in a log. Their teammate suggests `text.count('ERROR')` instead. When is `re.findall()` the better choice?"
     options:
       - "`re.findall()` is always better because it's faster for string searching"
       - "When the target is a pattern (timestamps, IPs, variable text), not a fixed literal."
@@ -188,36 +188,10 @@ questions:
         Bash, C, or any other executable.
     explanation: "UNIX separates stdout (file descriptor 1) and stderr (fd 2) for exactly this reason. `> results.txt` redirects only stdout, so diagnostics sent to `print()` contaminate the data file. Send them to `file=sys.stderr` instead — downstream tools then receive clean machine-readable output, the same reason C++ separates `std::cout` from `std::cerr`."
 
-  - id: 7
-    difficulty: advanced
-    question: |
-      A student writes this list comprehension:
-      ```python
-      result = [x**2 for x in range(1000000) if x % 2 == 0]
-      ```
-      The program only needs one pass through these values. Their teammate says: "Use a **generator expression** to avoid storing them all." What would the generator version look like, and why does it use less memory here?
-    options:
-      - "Replace `[]` with `()`: `(x**2 for x in range(1000000) if x % 2 == 0)` — values produced lazily."
-      - "Use `list()` around the comprehension to make it a generator"
-      - "Generators don't exist in Python — the student should use `itertools.imap()` instead"
-      - "There is no memory difference — Python automatically optimizes large comprehensions into generators"
-    correct_index: 0
-    option_feedback:
-      1: |
-        `list(...)` forces eager materialization; replacing brackets with parentheses is what creates a
-        lazy generator expression.
-      2: |
-        Generator expressions are built into modern Python; `itertools.imap()` is a Python 2 era false
-        trail.
-      3: |
-        Python does not silently turn list comprehensions into generators; brackets mean a list is
-        allocated.
-    explanation: "Replacing `[...]` with `(...)` creates a generator expression. It produces values one at a time using constant memory, instead of building the 500,000-element list upfront. When you only need to iterate once and don't need to store the full collection, generators are dramatically more memory-efficient."
-
   - id: 8
     difficulty: intermediate
     question: |
-      Each call that omits `items` should start with an empty list. Why does this implementation violate that contract?
+      Each call that omits `items` should start with an empty list. Why does this Python implementation violate that contract?
       ```python
       def add_item(item, items=[]):
           items.append(item)
@@ -244,7 +218,7 @@ questions:
   - id: 9
     difficulty: advanced
     question: |
-      **Arrange** the lines to define a function that safely reads a file and returns the word count, using `with` for resource management.
+      **Arrange** the lines to define a Python function that safely reads a file and returns the word count, using `with` for resource management.
     type: parsons
     lines:
       - "def count_words(filename):"
@@ -261,7 +235,7 @@ questions:
   - id: 10
     difficulty: basic
     question: |
-      **Arrange** the lines to create a list comprehension that filters and transforms data, then prints the result.
+      **Arrange** the lines to create a Python list comprehension that filters and transforms data, then prints the result.
     type: parsons
     lines:
       - "scores = [95, 83, 71, 62, 55]"
@@ -276,7 +250,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |
-      What does this weather-station label update print?
+      What does this Python weather-station label update print?
       ```python
       label = "Coastal"
       archived = label
@@ -300,7 +274,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |
-      What does this print?
+      What does this Python code print?
       ```python
       hourly = [18, 20]
       reports = [hourly, hourly]
@@ -324,7 +298,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |
-      Two instruments share a calibration object. What does this print?
+      Two instruments share a calibration object. What does this Python code print?
       ```python
       class Calibration:
           def __init__(self, offset):
@@ -357,7 +331,7 @@ questions:
     type: single
     difficulty: advanced
     question: |
-      What does this print?
+      What does this Python code print?
       ```python
       class Gauge:
           issued = 0
@@ -387,7 +361,7 @@ questions:
     type: single
     difficulty: advanced
     question: |
-      What does this print?
+      What does this Python code print?
       ```python
       import copy
       measurements = [12]
@@ -413,7 +387,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |
-      A Reading class defines `__eq__` to compare temperature and unit, returning
+      A Python Reading class defines `__eq__` to compare temperature and unit, returning
       `NotImplemented` for other types. Two separately constructed Readings have
       matching fields. Which result must hold?
     options:
@@ -432,7 +406,7 @@ questions:
     type: single
     difficulty: advanced
     question: |
-      What does this print?
+      What does this Python code print?
       ```python
       def revise(values):
           values[0] = 30
@@ -459,7 +433,7 @@ questions:
     type: single
     difficulty: advanced
     question: |
-      This function must append to and return a supplied list, even when it is
+      This Python function must append to and return a supplied list, even when it is
       empty. Only an omitted argument or `None` should request a new list.
       Which replacement condition fixes the contract?
       ```python
@@ -485,7 +459,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |
-      What does this print?
+      What does this Python code print?
       ```python
       class Sensor:
           def __init__(self):
@@ -517,7 +491,7 @@ questions:
     type: single
     difficulty: advanced
     question: |
-      What does this print?
+      What does this Python code print?
       ```python
       class Sensor:
           def label(self):
@@ -585,7 +559,7 @@ questions:
     type: single
     difficulty: advanced
     question: |
-      An ordinary `station` object has a mutable `calibration` member and a
+      An ordinary Python `station` object has a mutable `calibration` member and a
       `readings` list of immutable numbers. Create a separate station whose
       readings list can change independently, but whose calibration stays shared.
       Assume `import copy` and standard copying behavior. Which implementation
@@ -606,7 +580,7 @@ questions:
     type: single
     difficulty: advanced
     question: |
-      What does this print after the name used in the default expression is rebound?
+      What does this Python code print after the name used in the default expression is rebound?
       ```python
       pending = []
 
@@ -635,7 +609,7 @@ questions:
     type: single
     difficulty: advanced
     question: |
-      What does this print when a class object is passed to a function?
+      What does this Python code print when a class object is passed to a function?
       ```python
       class Probe:
           limit = 30
@@ -665,7 +639,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |
-      What does this print after append and extend build different list structures?
+      What does this Python code print after append and extend build different list structures?
       ```python
       samples = [3, 5]
       grouped = []
@@ -691,7 +665,7 @@ questions:
     type: single
     difficulty: advanced
     question: |
-      What does this print? Here both arguments are built-in lists.
+      What does this Python code print? Here both arguments are built-in lists.
       ```python
       def grow_in_place(values):
           values += [9]
@@ -721,7 +695,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |
-      Reading inherits the default object equality behavior. What does this print?
+      Reading inherits the default object equality behavior. What does this Python code print?
       ```python
       import copy
 
@@ -751,7 +725,7 @@ questions:
     type: single
     difficulty: advanced
     question: |
-      What remains visible through this shallow snapshot?
+      In this Python code, what remains visible through the shallow snapshot?
       ```python
       readings = [[10], [20]]
       snapshot = readings.copy()
@@ -775,7 +749,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |
-      What does this program print?
+      What does this Python program print?
       ```python
       def add_flat(frames):
           frames += ["flat"]
@@ -801,7 +775,7 @@ questions:
     type: single
     difficulty: advanced
     question: |
-      What does this program print?
+      What does this Python program print?
       ```python
       record = ("M31", [1, 2])
       record[1].append(3)
@@ -827,7 +801,7 @@ questions:
     type: single
     difficulty: advanced
     question: |
-      The loop is meant to discard every `"bad"` code. What does this program print?
+      The loop is meant to discard every `"bad"` code. What does this Python program print?
       ```python
       codes = ["ok", "bad", "bad", "bad", "ok"]
       for code in codes:
@@ -847,37 +821,11 @@ questions:
       3: "Dictionaries and sets raise `RuntimeError` when their size changes during iteration, but a list iterator simply keeps advancing by position."
     explanation: "A list iterator tracks an index. Each `remove` shifts later elements left, so the element that moves into the just-visited index is skipped. Filtering into a new list avoids the problem: `[code for code in codes if code != \"bad\"]`."
 
-  - id: 33
-    type: single
-    difficulty: advanced
-    question: |
-      Each stored function compares its argument with `limit`. What does this program print?
-      ```python
-      checks = []
-      for limit in [10, 20, 30]:
-          def check(value, limit=limit):
-              return value < limit
-          checks.append(check)
-
-      print([check(15) for check in checks])
-      ```
-    options:
-      - "`[False, True, True]`"
-      - "`[True, True, True]`"
-      - "`[False, False, False]`"
-      - "`[True, False, False]`"
-    correct_index: 0
-    option_feedback:
-      1: "Without `limit=limit`, every function would read the loop variable after the loop ends, when it is 30. The default argument instead stores each pass's value when `def` runs."
-      2: "Each `def` statement evaluates its default separately, so the three functions keep 10, 20, and 30 rather than sharing the first value."
-      3: "`check(15)` asks whether 15 is less than the stored limit. That is false for 10 and true for 20 and 30."
-    explanation: "Default values are evaluated when `def` executes, here once per loop pass, so each function captures that pass's `limit`. Calling each function with 15 then compares it with 10, 20, and 30."
-
   - id: 34
     type: single
     difficulty: advanced
     question: |
-      What happens when this program runs?
+      What happens when this Python program runs?
       ```python
       total = 0
 
@@ -903,7 +851,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |
-      A configuration helper uses `or` to supply a default. What does this program print?
+      A configuration helper uses `or` to supply a default. What does this Python program print?
       ```python
       def effective_limit(limit):
           return limit or 100
@@ -926,7 +874,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |
-      What does this program print?
+      What does this Python program print?
       ```python
       low, value, high = 1, 5, 3
       print(low < value < high)
@@ -946,7 +894,7 @@ questions:
     type: single
     difficulty: advanced
     question: |
-      What does this program print?
+      What does this Python program print?
       ```python
       print(round(4.5), round(5.5))
       ```
@@ -964,7 +912,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |
-      What happens when this program runs?
+      What happens when this Python program runs?
       ```python
       names = ["Vega", "Altair"]
       names = names.sort()
@@ -986,7 +934,7 @@ questions:
     type: single
     difficulty: advanced
     question: |
-      `dict.fromkeys` stores one shared value object under every key. What does this program print?
+      `dict.fromkeys` stores one shared value object under every key. What does this Python program print?
       ```python
       tallies = dict.fromkeys(["north", "south"], 0)
       tallies["north"] += 1
@@ -1006,7 +954,7 @@ questions:
   - id: python-course-environment
     type: single
     difficulty: intermediate
-    question: An editor imports a package successfully, but running the file in a terminal raises ModuleNotFoundError. What should be checked first?
+    question: An editor imports a Python package successfully, but running the file in a terminal raises ModuleNotFoundError. What should be checked first?
     options:
     - Whether both tools use the same Python environment
     - Whether every function needs a global declaration
@@ -1022,7 +970,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |-
-      What does this program print?
+      What does this Python program print?
 
       ```python
       def collect(*items, flag=False, **options):
@@ -1047,7 +995,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |-
-      What does this program print?
+      What does this Python program print?
 
       ```python
       log = []
@@ -1070,65 +1018,12 @@ questions:
       2: Both argument expressions finish before combine starts executing its body.
     explanation: The argument results are 1 and 2. The body then appends its marker and subtracts those already computed values.
 
-  # Source concepts: Function Palooza notes, Closures; Midterm F22 Problem 4.
-  - id: python-course-closure-state
-    type: single
-    difficulty: intermediate
-    question: |-
-      What does this program print?
-
-      ```python
-      def counter(start):
-          total = start
-          def step():
-              nonlocal total
-              total += 2
-              return total
-          return step
-      a = counter(1)
-      b = a
-      c = counter(1)
-      print(a(), b(), c())
-      ```
-    options:
-    - '`3 3 3`'
-    - '`3 5 3`'
-    - '`3 5 7`'
-    correct_index: 1
-    option_feedback:
-      0: a and b name the same closure, so the second call observes its updated total.
-      2: c was created by a separate factory call and has a separate enclosing binding.
-    explanation: A function alias shares closure state; a new factory invocation creates new state.
-
-  # Source concepts: Function Palooza notes, First-Class Functions; Final F23 Problem 1 (currying).
-  - id: python-course-curry-call
-    type: single
-    difficulty: intermediate
-    question: |-
-      What does this program print?
-
-      ```python
-      def attach(prefix):
-          return lambda text: prefix + text
-      decorate = attach("#")
-      print(decorate("one"), attach("@")("two"))
-      ```
-    options:
-    - '`#one @two`'
-    - '`one two`'
-    - '`@one @two`'
-    correct_index: 0
-    option_feedback:
-      1: Each returned function retains and prepends its enclosing prefix.
-      2: The second factory call does not rebind the first closure’s prefix.
-    explanation: Each call to attach returns a one-argument function with its own captured prefix. The second expression creates and immediately calls such a function.
-
   # Source concepts: Week 4 Worksheet Problem 6; Final F22 Problem 1 comprehension item.
   - id: python-course-comprehension-order
     type: single
     difficulty: intermediate
     question: |-
-      What does this program print?
+      What does this Python program print?
 
       ```python
       rows = [[3, 1], [], [2]]
@@ -1146,33 +1041,12 @@ questions:
       2: The clauses traverse rows and then their values in input order.
     explanation: The outer enumeration supplies row indices 0, 1, and 2. The inner loop and filter select 3 and 2 without renumbering the rows.
 
-  # Source concepts: Functional Programming notes, higher-order functions; Control Palooza, Iterators.
-  - id: python-course-lazy-map
-    type: single
-    difficulty: intermediate
-    question: |-
-      What does this program print?
-
-      ```python
-      values = map(lambda n: n * 3, [2, 4])
-      print(next(values), list(values), list(values))
-      ```
-    options:
-    - '`6 [6, 12] [6, 12]`'
-    - '`6 [12] [12]`'
-    - '`6 [12] []`'
-    correct_index: 2
-    option_feedback:
-      0: next consumes the first result; list receives only the remaining results.
-      1: The first list conversion exhausts this one iterator.
-    explanation: map returns a lazy iterator. All three expressions consume the same traversal from left to right.
-
   # Source concepts: Control Palooza notes, Iterable vs Iterator; Final F24 Problem 6.
   - id: python-course-iterator-alias
     type: single
     difficulty: intermediate
     question: |-
-      What does this program print?
+      What does this Python program print?
 
       ```python
       words = ["red", "blue", "gold"]
@@ -1191,39 +1065,11 @@ questions:
       2: fresh is a separate iterator beginning at the first list element.
     explanation: A list can create multiple independent iterators; assignment of one iterator creates another reference to its existing position.
 
-  # Source concepts: Control Palooza notes, Generators: Execution Flow.
-  - id: python-course-generator-suspension
-    type: single
-    difficulty: intermediate
-    question: |-
-      What does this program print?
-
-      ```python
-      def values():
-          print("start")
-          yield 4
-          print("resume")
-          yield 9
-      work = values()
-      print("ready")
-      print(next(work))
-      print(list(work))
-      ```
-    options:
-    - '`start / ready / 4 / resume / [9]`'
-    - '`ready / start / 4 / resume / [9]`'
-    - '`ready / start / resume / 4 / [4, 9]`'
-    correct_index: 1
-    option_feedback:
-      0: Calling a generator function creates its generator without executing the body.
-      2: The first yield suspends before the resume message, and its value is already consumed by next.
-    explanation: The body begins at next, pauses at yield 4, then resumes during list. Slashes in the choices separate output lines.
-
   # Source concepts: Control Palooza notes, Class-Based Approach; Final F24 Problem 6C.
   - id: python-course-iterator-contract
     type: single
     difficulty: basic
-    question: A finite custom iterator has reached its end. What must its next operation do?
+    question: A finite custom Python iterator has reached its end. What must its next operation do?
     options:
     - Return None once and start over
     - Raise StopIteration and stay exhausted
@@ -1239,7 +1085,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |-
-      What does this program print?
+      What does this Python program print?
 
       ```python
       def parse(text):
@@ -1270,7 +1116,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |-
-      What does this program print?
+      What does this Python program print?
 
       ```python
       class Level:
@@ -1306,7 +1152,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |-
-      What does this program print?
+      What does this Python program print?
 
       ```python
       class Record:
@@ -1335,7 +1181,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |-
-      What does this program print?
+      What does this Python program print?
 
       ```python
       class Amount:
@@ -1362,7 +1208,7 @@ questions:
   - id: python-course-environment-zero
     type: single
     difficulty: intermediate
-    question: 'An interpreter stores {"count": 0} in its environment dictionary. Which test determines whether the name count is defined, even when its value is falsy?'
+    question: 'An interpreter written in Python stores {"count": 0} in its environment dictionary. Which test determines whether the name count is defined, even when its value is falsy?'
     options:
     - '`bool(environment.get("count"))`'
     - '`"count" in environment`'
@@ -1378,7 +1224,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |-
-      What does this program print?
+      What does this Python program print?
 
       ```python
       expected = "ok"
@@ -1400,7 +1246,7 @@ questions:
   - id: python-course-async-schedule
     type: single
     difficulty: intermediate
-    question: Two independent async requests should both be scheduled before the caller waits for their results. Which approach expresses that?
+    question: In Python asyncio, two independent async requests should both be scheduled before the caller waits for their results. Which approach expresses that?
     options:
     - Await the first request, then create the second coroutine
     - Call both async functions and ignore their return values
@@ -1430,7 +1276,7 @@ questions:
   - id: python-course-module-entry
     type: single
     difficulty: intermediate
-    question: 'A file defines main and ends with if __name__ == "__main__": main(). What happens when another module imports that file normally for the first time?'
+    question: 'A Python file defines main and ends with if __name__ == "__main__": main(). What happens when another module imports that file normally for the first time?'
     options:
     - Its definitions execute, but the guarded call is skipped
     - Every statement waits until main is explicitly called
@@ -1446,7 +1292,7 @@ questions:
     type: single
     difficulty: intermediate
     question: |-
-      What does this program print?
+      What does this Python program print?
 
       ```python
       def leaves(tree):

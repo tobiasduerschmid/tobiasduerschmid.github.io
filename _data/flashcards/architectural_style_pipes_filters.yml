@@ -70,7 +70,7 @@ cards:
 
   - id: 12
     difficulty: advanced
-    question: "What does it mean for a filter to be implemented in an *architecturally-evident coding style*?"
+    question: "What does it mean for a filter in a pipe-and-filter system to be implemented in an *architecturally-evident coding style*?"
     answer: "The code makes the architectural role explicit — e.g., in Java, an abstract `Filter` base class implementing `Runnable` (one thread per filter), and a `Pipe` class wrapping a `BlockingQueue` for thread-safe data transfer. Reading the code tells you what kind of architectural element each class is."
     explanation: "The alternative — implementing filters as ordinary classes with no explicit Filter/Pipe types — leaves the architectural role implicit and unenforceable. Architecturally-evident code prevents drift: a reviewer can immediately spot a 'filter' that secretly holds state or imports another filter."
 

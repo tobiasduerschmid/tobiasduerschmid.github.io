@@ -1,11 +1,11 @@
-title: "Python — Explain the Code"
+title: "Python — Explain the Code (Basic)"
 description: "Predict Python results and explain the bindings, shared objects, and language rules behind them."
 active: true
 cards:
   - id: python-course-card-super-order
     difficulty: intermediate
     question: |-
-      Does super() inside Fast go directly to Storage? Predict the output.
+      In this Python code, does super() inside Fast go directly to Storage? Predict the output.
 
       ```python
       class Storage:
@@ -24,7 +24,7 @@ cards:
   - id: python-course-card-purity-boundary
     difficulty: intermediate
     question: |-
-      For a list of integers, explain why this local mutation has no external effect. What changes if the slice is removed?
+      For a list of integers passed to this Python function, explain why its local mutation has no external effect. What changes if the slice is removed?
 
       ```python
       def enlarged(values):
@@ -38,7 +38,7 @@ cards:
   - id: python-course-card-abstract-versus-error
     difficulty: intermediate
     question: |-
-      Compare Plain and Contract: when does each reject its incomplete implementation?
+      In this Python code, compare Plain and Contract: when does each reject its incomplete implementation?
 
       ```python
       from abc import ABC, abstractmethod
@@ -177,7 +177,7 @@ cards:
   - id: 13
     difficulty: intermediate
     question: |
-      Predict the output. Which objects change, and which names are rebound?
+      Predict the output of this Python code. Which objects change, and which names are rebound?
       ```python
       samples = 1024
       archived = samples
@@ -190,7 +190,7 @@ cards:
   - id: 14
     difficulty: advanced
     question: |
-      Predict the output and distinguish attribute assignment from member mutation.
+      Predict the output of this Python code and distinguish attribute assignment from member mutation.
       ```python
       class WeatherLog:
           zone = "north"
@@ -208,7 +208,7 @@ cards:
   - id: 15
     difficulty: advanced
     question: |
-      Predict the output. Why do the two copied slots still refer to the same inner list?
+      Predict the output of this Python code. Why do the two copied slots still refer to the same inner list?
       ```python
       import copy
       samples = [5]
@@ -222,7 +222,7 @@ cards:
   - id: 16
     difficulty: advanced
     question: |
-      Predict the output. Does the super call operate on a second object?
+      Predict the output of this Python code. Does the super call operate on a second object?
       ```python
       class Counter:
           def __init__(self):
@@ -246,7 +246,7 @@ cards:
   - id: 17
     difficulty: advanced
     question: |
-      Predict the output. How does choosing one copy operation or two affect sharing?
+      Predict the output of this Python code. How does choosing one copy operation or two affect sharing?
       ```python
       import copy
 
@@ -260,7 +260,7 @@ cards:
   - id: 18
     difficulty: advanced
     question: |
-      Predict the output. Does using None as the default prohibit all sharing?
+      Predict the output of this Python code. Does using None as the default prohibit all sharing?
       ```python
       class SampleBatch:
           def __init__(self, readings=None):
@@ -277,7 +277,7 @@ cards:
   - id: 19
     difficulty: intermediate
     question: |
-      Predict the output and explain why the two aliases differ.
+      Predict the output of this Python code and explain why the two aliases differ.
       ```python
       label = "dark"
       saved_label = label
@@ -292,30 +292,17 @@ cards:
   - id: 20
     difficulty: intermediate
     question: |
-      Predict the output. Does the tuple prevent the change?
+      Predict the output of this Python code. Does the tuple prevent the change?
       ```python
       batch = ([], "north")
       batch[0].append("dust")
       print(batch)
       ```
     answer: "Prints `(['dust'], 'north')` without an error. A tuple fixes which objects occupy its slots, not whether those objects can change; `append` mutates the list and never assigns to the tuple. By contrast, `batch[0] += [\"dust\"]` would extend the list and then raise `TypeError` when it tried to store the result back into the tuple's slot."
-  - id: 21
-    difficulty: advanced
-    question: |
-      Predict the output and explain it.
-      ```python
-      squares = []
-      for n in range(3):
-          def square():
-              return n * n
-          squares.append(square)
-      print(squares[0]())
-      ```
-    answer: "Prints `4`, not `0`. The body of `square` looks up `n` when it is called. By then the loop has finished and `n` is still bound to `2`, because a `for` loop does not create a scope. Capture the current value with a default argument, `def square(n=n):`, because defaults are evaluated when `def` executes."
   - id: 22
     difficulty: intermediate
     question: |
-      Predict the output. Why does this loop remove every `3`?
+      Predict the output of this Python code. Why does this loop remove every `3`?
       ```python
       readings = [7, 3, 3, 9]
       for value in readings[:]:
@@ -327,7 +314,7 @@ cards:
   - id: 23
     difficulty: intermediate
     question: |
-      Predict both lines of output.
+      Predict both lines this Python code prints.
       ```python
       temps = [3, 1, 2]
       print(sorted(temps), temps)
@@ -337,7 +324,7 @@ cards:
   - id: 24
     difficulty: intermediate
     question: |
-      Predict the output. What would happen without the `global` line?
+      Predict the output of this Python code. What would happen without the `global` line?
       ```python
       count = 0
 
@@ -353,7 +340,7 @@ cards:
   - id: 25
     difficulty: intermediate
     question: |
-      Predict the output. Why is there no `ZeroDivisionError`?
+      Predict the output of this Python code. Why is there no `ZeroDivisionError`?
       ```python
       print("" or "anonymous", "Ann" or "anonymous")
       print(0 and 10 / 0)
@@ -362,7 +349,7 @@ cards:
   - id: 26
     difficulty: advanced
     question: |
-      Predict the output.
+      Predict the output of this Python code.
       ```python
       print(round(0.5), round(1.5), round(-2.5))
       ```
@@ -370,7 +357,7 @@ cards:
   - id: 27
     difficulty: intermediate
     question: |
-      Predict the output.
+      Predict the output of this Python code.
       ```python
       x = 7
       print(1 < x < 10, 10 > x > 8)
@@ -379,7 +366,7 @@ cards:
   - id: 28
     difficulty: intermediate
     question: |
-      Predict the output. How would `dict.fromkeys` change it?
+      Predict the output of this Python code. How would `dict.fromkeys` change it?
       ```python
       logs = {dome: [] for dome in ["north", "south"]}
       logs["north"].append("dust")
@@ -391,7 +378,7 @@ cards:
   - id: python-course-card-local-before-assignment
     difficulty: intermediate
     question: |-
-      Why does this raise UnboundLocalError instead of printing the global value?
+      Why does this Python code raise UnboundLocalError instead of printing the global value?
 
       ```python
       score = 5
@@ -406,7 +393,7 @@ cards:
   - id: python-course-card-variadic-child
     difficulty: intermediate
     question: |-
-      Predict the output. Does the new argument tuple copy its elements?
+      Predict the output of this Python code. Does the new argument tuple copy its elements?
 
       ```python
       def flag(*items, enabled=False):
@@ -419,64 +406,10 @@ cards:
     answer: '`[6] (1, True)`'
     explanation: The tuple is new, but its first member refers to the caller’s list. The named enabled parameter is keyword-only.
 
-  - id: python-course-card-closure-mutation
-    difficulty: intermediate
-    question: |-
-      Does this closure need nonlocal events? Explain the result.
-
-      ```python
-      def recorder():
-          events = []
-          def add(event):
-              events.append(event)
-              return events[:]
-          return add
-      add = recorder()
-      add("open")
-      print(add("close"))
-      ```
-    answer: It prints `['open', 'close']` and needs no nonlocal declaration.
-    explanation: The closure mutates the captured list. It never assigns a new object to the enclosing events name.
-
-  - id: python-course-card-generator-observes-mutation
-    difficulty: intermediate
-    question: |-
-      Predict the output. Is creating this generator a snapshot?
-
-      ```python
-      def each(values):
-          yield from values
-      source = [3]
-      pending = each(source)
-      source.append(5)
-      print(list(pending))
-      ```
-    answer: '`[3, 5]`'
-    explanation: The generator retains the input list reference. Its body begins after the append, so it traverses the updated list.
-
-  - id: python-course-card-iterable-iterator
-    difficulty: basic
-    question: |-
-      Explain why the second traversal of values differs from the second traversal of pending.
-
-      ```python
-      values = [2, 5]
-      pending = (value * 2 for value in values)
-      print(list(values), list(values))
-      print(list(pending), list(pending))
-      ```
-    answer: |-
-      ```text
-      [2, 5] [2, 5]
-      [4, 10] []
-      ```
-      A list supplies a fresh iterator for each traversal; a generator is its own iterator with one advancing execution state.
-    explanation: iter(generator) returns that same generator. Calling the generator function again creates new state.
-
   - id: python-course-card-classmethod
     difficulty: basic
     question: |-
-      Predict the output and explain what cls refers to.
+      Predict the output of this Python code and explain what cls refers to.
 
       ```python
       class Base:
@@ -493,7 +426,7 @@ cards:
   - id: python-course-card-finally-return
     difficulty: intermediate
     question: |-
-      Predict the order of the printed lines.
+      Predict the order of the lines this Python code prints.
 
       ```python
       def attempt():
@@ -511,7 +444,7 @@ cards:
   - id: python-course-card-coroutine-task
     difficulty: intermediate
     question: |-
-      In this script, which assignment schedules a task? Does creating pending alone execute fetch?
+      In this Python script, which assignment schedules a task? Does creating pending alone execute fetch?
 
       ```python
       import asyncio
@@ -529,7 +462,7 @@ cards:
   - id: python-course-card-runtime-types
     difficulty: intermediate
     question: |-
-      Predict both booleans. Which check fits an interpreter that must reject booleans as integers?
+      Predict both booleans this Python code prints. Which check fits an interpreter that must reject booleans as integers?
 
       ```python
       print(isinstance(True, int), type(True) is int)
@@ -540,7 +473,7 @@ cards:
   - id: python-course-card-import-environment
     difficulty: basic
     question: |-
-      A terminal and editor run the same file but disagree about an installed package. How can these terminal commands help diagnose the difference?
+      A terminal and editor run the same Python file but disagree about an installed package. How can these terminal commands help diagnose the difference?
 
       ```bash
       python --version

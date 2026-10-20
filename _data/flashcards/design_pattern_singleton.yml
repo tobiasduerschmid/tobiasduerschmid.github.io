@@ -9,7 +9,7 @@ cards:
     explanation: "A private constructor blocks ordinary external constructor calls; the field and accessor share the instance. These are implementation choices, not language-independent requirements: GoF also describes controlled subclassing, and Python can intercept construction."
   - id: 2
     difficulty: intermediate
-    question: "Why is Singleton controversial in modern practice?"
+    question: "Why is the Singleton pattern controversial in modern practice?"
     answer: "It bundles a lifetime policy with global access. Creating one ordinary object and injecting it can separate those decisions; no DI framework is required."
     explanation: "The global access point is the real cost: any code can reach the instance, so dependencies become invisible and shared mutable state can break test isolation. Immutable instances can still be difficult to substitute."
   - id: 3
@@ -19,6 +19,6 @@ cards:
     explanation: "Using Singleton just for convenience rather than a genuine 'exactly one instance' constraint leads to a hard-to-maintain design where dependencies are invisible."
   - id: 4
     difficulty: advanced
-    question: "When is Singleton acceptable in modern code?"
+    question: "When is the Singleton pattern acceptable in modern code?"
     answer: "When both a well-defined single-instance constraint and a global access point are justified, and their coupling and lifecycle costs are acceptable."
     explanation: "A unique resource alone does not require global lookup. Manual injection or a container can share an ordinary object. Still define the scope, concurrent-use policy, and how consuming code will be tested."

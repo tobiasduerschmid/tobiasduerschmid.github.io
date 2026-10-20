@@ -14,7 +14,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: What does `head (filter (\x -> x > 10) [1 ..])` evaluate to?
+    question: In Haskell, what does `head (filter (\x -> x > 10) [1 ..])` evaluate to?
     options:
       - '`11`'
       - 'Nothing: `filter` never finishes the infinite list'
@@ -36,7 +36,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |-
-      Complete `skip`, which discards the first `n` items, or all items if the list is shorter. Assume `n >= 0`.
+      Complete the Haskell function `skip`, which discards the first `n` items, or all items if the list is shorter. Assume `n >= 0`.
 
       ```haskell
       skip _ [] = []
@@ -62,7 +62,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |-
-      What is `groupSums [2,5,4,1,8]`?
+      In Haskell, what is `groupSums [2,5,4,1,8]`?
 
       ```haskell
       groupSums [] = []
@@ -88,7 +88,7 @@ questions:
     bloom: analyze
     estimated_seconds: 60
     question: |-
-      `positives` should retain positive integers in order. Which expression fills the blank?
+      The Haskell function `positives` should retain positive integers in order. Which expression fills the blank?
 
       ```haskell
       positives [] = []
@@ -113,7 +113,7 @@ questions:
     difficulty: basic
     bloom: apply
     estimated_seconds: 45
-    question: What does `[x * 10 | x <- [1 .. 6], even x]` evaluate to?
+    question: In Haskell, what does `[x * 10 | x <- [1 .. 6], even x]` evaluate to?
     options:
       - '`[20,40,60]`'
       - '`[10,30,50]`'
@@ -152,7 +152,7 @@ questions:
     bloom: evaluate
     estimated_seconds: 90
     question: |-
-      What does `qsort [3, 1, 3, 2]` return with this definition?
+      What does `qsort [3, 1, 3, 2]` return with this Haskell definition?
 
       ```haskell
       qsort [] = []
@@ -179,7 +179,7 @@ questions:
     bloom: analyze
     estimated_seconds: 45
     question: |-
-      What is `fare 0 "senior"`?
+      In Haskell, what is `fare 0 "senior"`?
 
       ```haskell
       fare :: Int -> String -> Int
@@ -231,7 +231,7 @@ questions:
     bloom: analyze
     estimated_seconds: 60
     question: |-
-      What is the most general type of this function?
+      What is the most general type of this Haskell function?
 
       ```haskell
       collect f x = [x, f x]
@@ -253,7 +253,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: What is the most general type of `half x = x / 2`?
+    question: In Haskell, what is the most general type of `half x = x / 2`?
     options:
       - '`Fractional a => a -> a`'
       - '`Num a => a -> a`'
@@ -274,7 +274,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |-
-      Which type completes the signature?
+      Which type completes the Haskell signature?
 
       ```haskell
       pick :: Bool -> ___
@@ -302,7 +302,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |-
-      What is the pair of results?
+      What is the pair of results of these Haskell expressions?
 
       ```haskell
       map (\x -> x > 3) [2,5,4]
@@ -326,7 +326,7 @@ questions:
     difficulty: intermediate
     bloom: evaluate
     estimated_seconds: 60
-    question: Here `abs` returns the absolute value of its argument. For `xs = [-2,3]`, compare `map abs (filter (\x -> x > 0) xs)` with `filter (\x -> x > 0) (map abs xs)`. Which conclusion is justified?
+    question: In Haskell, `abs` returns the absolute value of its argument. For `xs = [-2,3]`, compare `map abs (filter (\x -> x > 0) xs)` with `filter (\x -> x > 0) (map abs xs)`. Which conclusion is justified?
     options:
       - Both produce `[3]`; these operations commute.
       - Both produce `[2,3]`; absolute value runs first.
@@ -367,7 +367,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |-
-      What does this expression evaluate to?
+      What does this Haskell expression evaluate to?
 
       ```haskell
       foldl (\acc word -> word ++ acc) "" ["go", "up", "now"]
@@ -414,7 +414,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 75
-    question: Arrange one expression that sums the squares of only the positive integers in `values`. Negative integers must be discarded before squaring. Use all four required fragments.
+    question: Arrange one Haskell expression that sums the squares of only the positive integers in `values`. Negative integers must be discarded before squaring. Use all four required fragments.
     display: inline
     lines:
       - 'foldl (+) 0 '

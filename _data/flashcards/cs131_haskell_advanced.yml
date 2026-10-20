@@ -15,7 +15,7 @@ cards:
     bloom: analyze
     estimated_seconds: 90
     question: |-
-      Infer the most general type of `judge`. Use `length :: [a] -> Int`.
+      Infer the most general Haskell type of `judge`. Use `length :: [a] -> Int`.
 
       ```haskell
       judge transform measure xs = measure (transform (head xs)) > length xs
@@ -32,7 +32,7 @@ cards:
     difficulty: advanced
     bloom: analyze
     estimated_seconds: 60
-    question: Which of `snd (error "unused", 7)`, `length [error "unused"]`, and `sum [error "needed", 1]` can produce
+    question: In Haskell, which of `snd (error "unused", 7)`, `length [error "unused"]`, and `sum [error "needed", 1]` can produce
       a result, and why?
     answer: '`snd (error "unused", 7)` is `7`, and `length [error "unused"]` is `1`. Evaluating the sum raises the
       error.'
@@ -45,7 +45,7 @@ cards:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
-    question: 'Which definitions are higher-order, and why: `apply f x = f x`, `double x = 2*x`, and `makeAdder n
+    question: 'Which Haskell definitions are higher-order, and why: `apply f x = f x`, `double x = 2*x`, and `makeAdder n
       = \x -> n+x`?'
     answer: '`apply` accepts a function, and `makeAdder` returns one. `double` does neither.'
     explanation: First-class functions can be passed, returned, and stored like other values. A higher-order function
@@ -72,7 +72,7 @@ cards:
     bloom: analyze
     estimated_seconds: 45
     question: |-
-      Predict the output.
+      Predict the output of this Haskell code.
 
       ```haskell
       main = do
@@ -91,7 +91,7 @@ cards:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: 'Given `map :: (a -> b) -> [a] -> [b]` and `length :: [a] -> Int`, infer the most general type of `map length`.'
+    question: 'In Haskell, given `map :: (a -> b) -> [a] -> [b]` and `length :: [a] -> Int`, infer the most general type of `map length`.'
     answer: '`map length :: [[a]] -> [Int]`.'
     explanation: The mapping function accepts a list and returns its length. Therefore each element of the outer input list is itself a list.
 
@@ -103,7 +103,7 @@ cards:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: Predict `map ((-) 10) [2,4]`, then write a lambda that instead subtracts 10 from every list element.
+    question: In Haskell, predict `map ((-) 10) [2,4]`, then write a lambda that instead subtracts 10 from every list element.
     answer: The result is `[8,6]`. To subtract 10 from each element, use `map (\x -> x - 10) [2,4]`, giving `[-8,-6]`.
     explanation: 'Partial application of `(-)` fixes its first operand: `(-) 10` means `\x -> 10 - x`. Argument order
       matters for subtraction.'
@@ -115,7 +115,7 @@ cards:
     difficulty: basic
     bloom: understand
     estimated_seconds: 30
-    question: Add parentheses to expose right-associative arrows in `(Int -> Bool) -> Int -> Bool`. Which parentheses cannot be removed without changing the type?
+    question: Add parentheses to expose right-associative arrows in the Haskell type `(Int -> Bool) -> Int -> Bool`. Which parentheses cannot be removed without changing the type?
     answer: '`(Int -> Bool) -> (Int -> Bool)`. The parentheses around the first `Int -> Bool` must remain.'
     explanation: The first argument is itself a function. The parentheses on the result side merely make the default arrow grouping explicit.
 
@@ -126,7 +126,7 @@ cards:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: Rewrite `applyThen f g x = g (f x)` using three nested single-argument lambdas, preserving argument order.
+    question: Rewrite the Haskell definition `applyThen f g x = g (f x)` using three nested single-argument lambdas, preserving argument order.
     answer: '`applyThen = \f -> \g -> \x -> g (f x)`'
     explanation: Each lambda receives one argument. The body passes `f x` to `g`; whether that expression is evaluated depends on how `g` uses its argument.
 
@@ -136,7 +136,7 @@ cards:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: Rewrite `f = \a -> (\b -> a - b * 2)` as an ordinary definition with two parameters, and give the type of `f` if `a` and `b` are `Int` values.
+    question: Rewrite the Haskell definition `f = \a -> (\b -> a - b * 2)` as an ordinary definition with two parameters, and give the type of `f` if `a` and `b` are `Int` values.
     answer: '`f a b = a - b * 2`, with `f :: Int -> Int -> Int`, which means `Int -> (Int -> Int)`.'
     explanation: Each nested lambda contributes one parameter in order, so the outer lambda's parameter becomes the first argument.
 
@@ -146,7 +146,7 @@ cards:
     difficulty: intermediate
     bloom: create
     estimated_seconds: 45
-    question: 'Define a type `Payment` that `print` can display, with three variants: `Cash` with no fields, `Card` with a `String`, and `Transfer` with a `String` and an `Int`.'
+    question: 'Define a Haskell type `Payment` that `print` can display, with three variants: `Cash` with no fields, `Card` with a `String`, and `Transfer` with a `String` and an `Int`.'
     answer: '`data Payment = Cash | Card String | Transfer String Int deriving Show`'
     explanation: 'Each variant is a constructor. `Cash` has no fields, while the others are functions such as `Transfer :: String -> Int -> Payment`. `deriving Show` generates the code that displays a value.'
 
@@ -158,7 +158,7 @@ cards:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 60
-    question: 'For `data Charge = Free | Single Int | Combined Int Int`, write `amount :: Charge -> Int` using one
+    question: 'For the Haskell type `data Charge = Free | Single Int | Combined Int Int`, write `amount :: Charge -> Int` using one
       equation per constructor. A `Free` charge is zero; a `Single` charge returns its stored integer; a `Combined` charge is the sum of its fields.'
     answer: |-
       ```haskell
@@ -188,7 +188,7 @@ cards:
     difficulty: intermediate
     bloom: create
     estimated_seconds: 45
-    question: 'For `data Chain = End | Link Int Chain`, write `total :: Chain -> Int` using one equation for each constructor.'
+    question: 'For the Haskell type `data Chain = End | Link Int Chain`, write `total :: Chain -> Int` using one equation for each constructor.'
     answer: |-
       ```haskell
       total :: Chain -> Int
@@ -203,7 +203,7 @@ cards:
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 45
-    question: 'Why is `x : xs` cheap for an immutable list, while `xs ++ [x]` takes time proportional to the length of `xs`?'
+    question: 'In Haskell, why is `x : xs` cheap for an immutable list, while `xs ++ [x]` takes time proportional to the length of `xs`?'
     answer: '`x : xs` creates one new node that points to the existing `xs`, which is shared unchanged. Appending must change the last node''s link, and because no node can change, every node of `xs` is rebuilt.'
     explanation: Only the list cells that lead to the end are rebuilt; the elements themselves are not copied.
 
@@ -228,7 +228,7 @@ cards:
     difficulty: advanced
     bloom: apply
     estimated_seconds: 90
-    question: 'For a finite tree `data Folder = Folder String [Folder]`, write `contains :: String -> Folder -> Bool`
+    question: 'For a finite Haskell tree type `data Folder = Folder String [Folder]`, write `contains :: String -> Folder -> Bool`
       that checks the current folder and all descendants for a matching name. You may use `map` and `or`; `or []`
       is `False`.'
     answer: |-

@@ -48,7 +48,7 @@ questions:
     difficulty: basic
     type: single
     question: >
-      What is the purpose of **ports** (small squares on component boundaries)?
+      In a UML component diagram, what is the purpose of **ports** (small squares on component boundaries)?
 
       <div data-uml-type="component" data-uml-spec="@startuml&#10;component NotificationService {&#10;  portin &quot;requests&quot; as ns_in&#10;  portout &quot;email&quot; as ns_email&#10;  portout &quot;sms&quot; as ns_sms&#10;}&#10;@enduml"></div>
     options:
@@ -90,7 +90,7 @@ questions:
     difficulty: intermediate
     type: single
     question: >
-      What does a **dashed arrow** between two components represent?
+      In a UML component diagram, what does a **dashed arrow** between two components represent?
 
       <div data-uml-type="component" data-uml-spec="@startuml&#10;component OrderService {&#10;  portout &quot;log&quot; as os_log&#10;}&#10;component LoggingService {&#10;  portin &quot;write&quot; as ls_in&#10;}&#10;os_log ..> ls_in&#10;@enduml"></div>
     options:
@@ -140,7 +140,7 @@ questions:
     difficulty: intermediate
     type: single
     question: >
-      What does the ball-and-socket notation (assembly connector) represent?
+      In a UML component diagram, what does the ball-and-socket notation (assembly connector) represent?
 
       <div data-uml-type="component" data-uml-spec="@startuml&#10;component ShoppingCart {&#10;  require &quot;IPayment&quot; as r1&#10;}&#10;component StripeGateway {&#10;  provide &quot;IPayment&quot; as p1&#10;}&#10;r1 --> p1&#10;@enduml"></div>
     options:

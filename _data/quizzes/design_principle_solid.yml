@@ -201,7 +201,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      The chapter says a `Square` class can **perfectly** enforce its own geometric invariants and still violate LSP when used in place of a `Rectangle`. Which statement best explains *why*?
+      A `Square` class can **perfectly** enforce its own geometric invariants and still violate LSP when used in place of a `Rectangle`. Which statement best explains *why*?
     options:
       - "Mathematical squares are not rectangles; the real-world taxonomy is wrong"
       - "Clients of the parent expect width and height to vary independently"
@@ -295,7 +295,7 @@ questions:
     difficulty: expert
     type: single
     question: |
-      The chapter argues SOLID principles **reinforce** each other. Which pairing below best captures a genuine dependency between two principles?
+      The SOLID principles often **reinforce** each other. Which pairing below best captures a genuine dependency between two principles?
     options:
       - "SRP requires DIP: you cannot have one responsibility without dependency injection"
       - "LSP enables OCP: subtypes that honor parent contracts let routers add new types without modification"

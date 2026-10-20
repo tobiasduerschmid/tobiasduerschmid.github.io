@@ -12,7 +12,7 @@ questions:
     bloom: understand
     estimated_seconds: 30
     question: |
-      The entire database is shown. What is the result of `color(x)`?
+      The entire Prolog database is shown. What is the result of `color(x)`?
 
       ```prolog
       color(red).
@@ -35,7 +35,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
-    question: "Can `pair(X, X)` unify with `pair(red, blue)`?"
+    question: "In Prolog, can `pair(X, X)` unify with `pair(red, blue)`?"
     options:
       - "Yes, with X = red for both positions."
       - "Yes, with a different X in each position."
@@ -53,7 +53,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
-    question: "Unify `owns(P, bike(Color))` with `owns(lee, bike(green))`. Which bindings result?"
+    question: "In Prolog, unify `owns(P, bike(Color))` with `owns(lee, bike(green))`. Which bindings result?"
     options:
       - "P = lee; Color = green"
       - "P = lee; Color = bike(green)"
@@ -71,7 +71,7 @@ questions:
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 45
-    question: "The current proof has X = oak. Select every fact that can unify with the next goal `edge(X, Y)` under that binding. Treat each fact as a separate alternative."
+    question: "The current Prolog proof has X = oak. Select every fact that can unify with the next goal `edge(X, Y)` under that binding. Treat each fact as a separate alternative."
     options:
       - "edge(oak, pine)."
       - "edge(pine, oak)."
@@ -93,7 +93,7 @@ questions:
     bloom: apply
     estimated_seconds: 30
     question: |
-      List all bindings for `Y`, in the order produced by `edge(a, Y)`.
+      List all bindings for `Y`, in the order produced by the Prolog query `edge(a, Y)`.
 
       ```prolog
       edge(b, z).
@@ -118,7 +118,7 @@ questions:
     bloom: apply
     estimated_seconds: 45
     question: |
-      `two_step(X,Y)` should mean that an edge goes from X to some middle node and another edge goes from that same node to Y. Which body completes the rule?
+      `two_step(X,Y)` should mean that an edge goes from X to some middle node and another edge goes from that same node to Y. Which body completes the Prolog rule?
 
       ```prolog
       two_step(X, Y) :- BODY.
@@ -141,7 +141,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |
-      Arrange these resolution events for the first successful answer to `route(a, Out)`. Leave out the event that never occurs.
+      Arrange these resolution events for the first successful answer to the Prolog query `route(a, Out)`. Leave out the event that never occurs.
 
       ```prolog
       edge(a, b).
@@ -167,7 +167,7 @@ questions:
     bloom: analyze
     estimated_seconds: 75
     question: |
-      What sequence of values does `reach(a, Y)` produce when all solutions are requested? Include duplicates.
+      What sequence of values does the Prolog query `reach(a, Y)` produce when all solutions are requested? Include duplicates.
 
       ```prolog
       edge(a, b).
@@ -194,7 +194,7 @@ questions:
     bloom: analyze
     estimated_seconds: 45
     question: |
-      What is the first binding produced by `ready(X)`?
+      What is the first binding produced by the Prolog query `ready(X)`?
 
       ```prolog
       item(amber).
@@ -219,7 +219,7 @@ questions:
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
-    question: "When `[H, Next | Tail]` unifies with `[red, blue, green]`, what are H, Next, and Tail?"
+    question: "In Prolog, when `[H, Next | Tail]` unifies with `[red, blue, green]`, what are H, Next, and Tail?"
     options:
       - "H = red; Next = blue; Tail = green"
       - "H = red; Next = [blue]; Tail = [green]"
@@ -237,7 +237,7 @@ questions:
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 45
-    question: "Select every true statement after `[H | T]` unifies with `[[a,b], c]`."
+    question: "Select every true statement after the Prolog list `[H | T]` unifies with `[[a,b], c]`."
     options:
       - "H = a"
       - "H = [a,b]"
@@ -259,7 +259,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |
-      What sequence of bindings for X does `has(X, [a,b,a])` produce when all solutions are requested?
+      What sequence of bindings for X does the Prolog query `has(X, [a,b,a])` produce when all solutions are requested?
 
       ```prolog
       has(X, [X|Tail]).
@@ -283,7 +283,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |
-      squeeze(Input,Output) removes consecutive duplicates from a list of atoms. Its empty, singleton, and equal-head cases are already correct. Complete the unequal-head clause below. For ground atoms, X \= Y succeeds when they differ.
+      The Prolog predicate squeeze(Input,Output) removes consecutive duplicates from a list of atoms. Its empty, singleton, and equal-head cases are already correct. Complete the unequal-head clause below. For ground atoms, X \= Y succeeds when they differ.
 
       ```prolog
       squeeze([X,Y|T], [X|R]) :- X \= Y, MISSING.
@@ -306,7 +306,7 @@ questions:
     bloom: apply
     estimated_seconds: 60
     question: |
-      What is the first result for R from `take_out(b, [a,b,c], R)`?
+      What is the first result for R from the Prolog query `take_out(b, [a,b,c], R)`?
 
       ```prolog
       take_out(X, [X|T], T).
@@ -330,7 +330,7 @@ questions:
     bloom: analyze
     estimated_seconds: 75
     question: |
-      The query `path(a,Y)` can produce b, but requesting all answers can recurse indefinitely. Why?
+      The Prolog query `path(a,Y)` can produce b, but requesting all answers can recurse indefinitely. Why?
 
       ```prolog
       edge(a,b).
@@ -355,7 +355,7 @@ questions:
     bloom: analyze
     estimated_seconds: 75
     question: |
-      Arrange the successful goal calls for the first proof of `rev([a,b], R)`. T1 and T2 name fresh variables for the inner results. Leave out the append call with the wrong argument order.
+      Arrange the successful goal calls for the first Prolog proof of `rev([a,b], R)`. T1 and T2 name fresh variables for the inner results. Leave out the append call with the wrong argument order.
 
       ```prolog
       rev([], []).

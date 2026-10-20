@@ -6,7 +6,7 @@ questions:
     difficulty: intermediate
     type: single
     question: >
-      Look at the following diagram. What is the relationship between **Customer** and **Order**?
+      Look at the following UML class diagram. What is the relationship between **Customer** and **Order**?
 
       <div data-uml-type="class" data-uml-spec="class Customer {&#10;  -name: String&#10;  -email: String&#10;}&#10;class Order {&#10;  -id: int&#10;  -date: Date&#10;}&#10;Customer '1' --> '*' Order : places"></div>
     options:
@@ -58,7 +58,7 @@ questions:
     difficulty: basic
     type: single
     question: >
-      What type of relationship is shown here between **Graphic** and **Circle**?
+      What type of UML relationship is shown here between **Graphic** and **Circle**?
 
       <div data-uml-type="class" data-uml-spec="abstract class Graphic {&#10;  {abstract} +draw()&#10;}&#10;class Circle {&#10;  +draw()&#10;}&#10;Circle --|> Graphic"></div>
     options:
@@ -80,7 +80,7 @@ questions:
     difficulty: basic
     type: single
     question: >
-      Which of the following relationships is shown here?
+      Which of the following UML class-diagram relationships is shown here?
 
       <div data-uml-type="class" data-uml-spec="class Car&#10;class Engine&#10;Car *-- Engine"></div>
     options:
@@ -102,7 +102,7 @@ questions:
     difficulty: intermediate
     type: single
     question: >
-      What type of relationship is shown between **Payment** and **Processable**?
+      What type of UML relationship is shown between **Payment** and **Processable**?
 
       <div data-uml-type="class" data-uml-spec="interface Processable {&#10;  +process(): bool&#10;}&#10;class Payment {&#10;  -amount: float&#10;  +process(): bool&#10;}&#10;Payment ..|> Processable"></div>
     options:
@@ -124,7 +124,7 @@ questions:
     difficulty: intermediate
     type: single
     question: >
-      What does the multiplicity `0..*` on the **Order** side mean in this diagram?
+      What does the multiplicity `0..*` on the **Order** side mean in this UML class diagram?
 
       <div data-uml-type="class" data-uml-spec="class Customer {&#10;  -name: String&#10;}&#10;class Order {&#10;  -date: Date&#10;}&#10;Customer '1' --> '0..*' Order"></div>
     options:
@@ -146,7 +146,7 @@ questions:
     difficulty: advanced
     type: multiple
     question: >
-      Looking at this e-commerce diagram, which statements are correct? (Select all that apply.)
+      Looking at this e-commerce UML class diagram, which statements are correct? (Select all that apply.)
 
       <div data-uml-type="class" data-uml-spec="interface Billable {&#10;  +processPayment(): bool&#10;}&#10;class Order {&#10;  -status: String&#10;  +calcTotal(): float&#10;}&#10;class LineItem {&#10;  -quantity: int&#10;}&#10;class Product {&#10;  -price: float&#10;}&#10;Order ..|> Billable&#10;Order *-- '1..*' LineItem&#10;LineItem '0..*' -- '1' Product"></div>
     options:
@@ -195,7 +195,7 @@ questions:
     difficulty: intermediate
     type: single
     question: >
-      What type of relationship is shown here between **Formatter** and **IOException**?
+      What type of UML relationship is shown here between **Formatter** and **IOException**?
 
       <div data-uml-type="class" data-uml-spec="class Formatter {&#10;  +format(data: String): String&#10;}&#10;class IOException&#10;Formatter ..> IOException"></div>
     options:
@@ -298,7 +298,7 @@ questions:
     difficulty: basic
     type: single
     question: >
-      What does the **arrowhead** on this association mean?
+      What does the **arrowhead** on this UML association mean?
 
       <div data-uml-type="class" data-uml-spec="class Employee&#10;class Boss&#10;Employee --> Boss"></div>
     options:

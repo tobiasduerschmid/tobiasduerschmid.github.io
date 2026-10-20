@@ -46,7 +46,7 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      Client setup code registers `ChartView` with `PriceModel`. Later, updating the model unexpectedly redraws the chart. Which code path should a developer inspect to explain this behavior?
+      Client setup code registers `ChartView` as an observer of `PriceModel`. Later, updating the model unexpectedly redraws the chart. Which code path should a developer inspect to explain this behavior?
     options:
       - "Only the chart constructor, because construction determines every callback."
       - "The subscription site, the model's notification, and the chart's update method."

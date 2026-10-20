@@ -19,28 +19,28 @@ cards:
   - id: 3
     difficulty: basic
     bloom: apply
-    question: "What is a structural beacon?"
+    question: "In code comprehension, what is a structural beacon?"
     answer: "A structural beacon is a recognizable code shape, such as an accumulator loop, a sorting swap, or a standard request-validation-controller sequence that triggers a familiar programming plan."
     explanation: "The reader recognizes the plan first, then only inspects details that might differ from the expected pattern."
 
   - id: 4
     difficulty: basic
     bloom: apply
-    question: "How do tests act as beacons?"
+    question: "How do tests act as code beacons?"
     answer: "Tests document intended behavior in executable form. A reviewer can read tests first to build a top-down expectation before reading the production implementation."
     explanation: "Tests are especially valuable beacons during code review because they expose the author's specification layer."
 
   - id: 5
     difficulty: basic
     bloom: understand
-    question: "How do assertions act as beacons?"
+    question: "How do assertions act as code beacons?"
     answer: "Assertions make assumptions explicit at the exact point where they matter. They tell readers what state the author believes must hold."
     explanation: "The assertion is both a runtime check and a comprehension cue."
 
   - id: 6
     difficulty: advanced
     bloom: evaluate
-    question: "What is the Singleton naming paradox for beacons?"
+    question: "What is the Singleton naming paradox for code beacons?"
     answer: "Including `Singleton` in a class name can help readers recognize the design, but it may also leak an implementation decision clients should not depend on."
     explanation: "The trade-off is beacon visibility versus information hiding. Not every helpful cue belongs in a public name."
 
@@ -54,6 +54,6 @@ cards:
   - id: 8
     difficulty: basic
     bloom: evaluate
-    question: "Why do experts avoid exhaustive tracing when beacons are reliable?"
+    question: "Why do experts avoid exhaustive tracing when code beacons are reliable?"
     answer: "Exhaustive tracing spends scarce working memory on details that a reliable beacon already compresses. Experts trace line-by-line only when a hypothesis fails or behavior is risky."
     explanation: "Expertise includes knowing when not to trace. Strategic avoidance of unnecessary detail is a strength, not laziness."

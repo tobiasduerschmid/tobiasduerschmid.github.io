@@ -24,7 +24,7 @@ cards:
   - id: 3
     difficulty: intermediate
     question: >
-      What is the difference between these two relationships?
+      What is the difference between these two UML class-diagram relationships?
 
       <div data-uml-type="class" data-uml-spec="class Building&#10;class Room&#10;class Library&#10;class Book&#10;Building *-- Room&#10;Library o-- Book"></div>
     answer: "The first is **Composition** (strong), the second is **Aggregation** (weak)."
@@ -33,7 +33,7 @@ cards:
 
   - id: 4
     difficulty: intermediate
-    question: "What is the difference between **Generalization** and **Realization** arrows?"
+    question: "What is the difference between **Generalization** and **Realization** arrows in UML class diagrams?"
     answer: "Generalization = **solid line** with hollow arrowhead. Realization = **dashed line** with hollow arrowhead."
     explanation: >
       Both use the same hollow triangle arrowhead, so the *line style* is the only tell: a solid line means the subclass is also a kind of the superclass, and a dashed line means the class fulfills an interface.
@@ -51,7 +51,7 @@ cards:
 
   - id: 6
     difficulty: basic
-    question: "What does the multiplicity `1..*` mean on an association?"
+    question: "What does the multiplicity `1..*` mean on a UML association?"
     answer: "**One or more** — at least one instance is required."
     explanation: >
       Common multiplicities: `1` (exactly one), `0..1` (zero or one), `0..*` (zero or more), `1..*` (one or more). Always show multiplicity on **both ends** of an association.
@@ -59,7 +59,7 @@ cards:
   - id: 7
     difficulty: advanced
     question: >
-      What relationship is represented in the diagram below, and when is it used?
+      What UML class-diagram relationship is represented in the diagram below, and when is it used?
 
       <div data-uml-type="class" data-uml-spec="class Train {&#10;  # addStop(stop: Event): void&#10;}&#10;class Event&#10;Train ..> Event"></div>
     answer: "A **Dependency** — the weakest relationship. One class temporarily uses another."
@@ -77,14 +77,14 @@ cards:
 
   - id: 9
     difficulty: expert
-    question: "List the class relationships from **weakest to strongest**."
+    question: "List the UML class relationships from **weakest to strongest**."
     answer: "Dependency < Association < Aggregation < Composition < Generalization/Realization"
     explanation: >
       **Dependency** (dashed arrow, the client needs the supplier) is weakest. **Association** (solid line, a type of link) is stronger. **Aggregation** (hollow diamond, whole-part without exclusive ownership) and **Composition** (filled diamond, at most one owner; parts are deleted with it) add whole-part meaning. **Generalization** (hollow triangle, the subclass is also a kind of the superclass) and **Realization** (dashed hollow triangle, the class fulfills an interface) are the "is-a" relationships.
 
   - id: 10
     difficulty: basic
-    question: "What does a **navigable association** (<span class='uml-sym' data-diagram='class' data-sym='-->'></span>) indicate?"
+    question: "In a UML class diagram, what does a **navigable association** (<span class='uml-sym' data-diagram='class' data-sym='-->'></span>) indicate?"
     answer: "The class at the **tail** holds a reference to the class at the **arrowhead**. The arrow specifies navigation toward the arrowhead; the unmarked reverse direction remains unspecified."
     explanation: >
       A plain association (<span class="uml-sym" data-diagram="class" data-sym="--"></span>) has **unspecified** navigability per UML 2.5 — not "bidirectional by default." An arrowhead establishes that direction of navigation; an X at the opposite end would explicitly rule out reverse navigation. In a typical design model, the tail class has a field of the head class's type. This is a design-level detail — omit it in early domain models.

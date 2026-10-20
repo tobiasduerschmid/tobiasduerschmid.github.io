@@ -113,7 +113,7 @@ questions:
     difficulty: advanced
     type: multiple
     question: |
-      Two research findings shape modern thinking about TDD. Which of the following claims are well-supported by the studies cited in the chapter? (Select all that apply.)
+      Two research findings shape modern thinking about TDD. Which of the following claims are well-supported by empirical studies of TDD? (Select all that apply.)
     options:
       - "Industrial case studies report large reductions in pre-release defect density for TDD teams, with an initial development-time increase."
       - "Quality and productivity gains are primarily associated with *fine granularity and uniform rhythm*, not simply with test-first ordering."

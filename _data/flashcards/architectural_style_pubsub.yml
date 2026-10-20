@@ -22,13 +22,13 @@ cards:
 
   - id: 4
     difficulty: intermediate
-    question: "How does **topic-based** routing work, and what's its main trade-off?"
+    question: "In publish-subscribe, how does **topic-based** routing work, and what's its main trade-off?"
     answer: "Subscribers register on a named channel string (e.g., `market.quotes.NASDAQ`). Routing is simple and fast, but topic names become part of the architecture — every publisher and subscriber agrees on the strings, so the names are load-bearing connectors."
     explanation: "Topic-based is the most widespread routing model. The cost of its simplicity is that the topic strings become first-class architectural contracts — rename one inconsistently (as the Autoware.AI ROS commit did) and the runtime message flow silently breaks."
 
   - id: 4b
     difficulty: advanced
-    question: "How does **content-based** routing work, and what's its main trade-off?"
+    question: "In publish-subscribe, how does **content-based** routing work, and what's its main trade-off?"
     answer: "Subscribers express predicates over event contents (e.g., `company == 'TELCO' and price < 100`). The broker evaluates each event's attributes against subscriber-defined pattern rules and delivers only matches. Trade-off: matching is more expressive but costs more at the broker than a topic hash lookup."
     explanation: "Content-based routing gives finer-grained delivery and dynamic predicates rather than predefined channels. Use it when filtering must happen on payload attributes; expect higher broker CPU than topic-based when subscriptions are numerous or predicates are expensive."
 
@@ -88,7 +88,7 @@ cards:
 
   - id: 13
     difficulty: advanced
-    question: "What is the *illusion of obliviousness* and why does Fairbanks warn about it?"
+    question: "What is the *illusion of obliviousness* in publish-subscribe systems, and why does Fairbanks warn about it?"
     answer: "At runtime, components are oblivious to each other. But at design time, a developer chose to add the New-Employee publisher *specifically because* the Order-Computer subscriber needs it. Architectural diagrams that only show components attached to a bus hide this business intent."
     explanation: "Document the conceptual producer→consumer relationships in design artifacts even though the runtime topology hides them — otherwise maintenance engineers cannot trace business logic through the bus, and the architecture becomes unrefactorable."
 

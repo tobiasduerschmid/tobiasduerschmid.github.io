@@ -10,7 +10,7 @@ cards:
 
   - id: 2
     difficulty: basic
-    question: "Name the two big benefits of reuse."
+    question: "Name the two big benefits of software reuse."
     answer: "(1) **Higher productivity / faster time-to-market** — implementation and testing time shrink. (2) **Higher software quality / fewer defects** — a widely-used module has been tried and tested by many other users, so most of its bugs have already been found and fixed."
     explanation: "Both are empirically established in studies of industrial reuse: the deeper win is quality, since a library with tens of thousands of users has had far more chances for bugs to surface than fresh code."
 

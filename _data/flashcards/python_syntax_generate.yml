@@ -1,20 +1,20 @@
-title: "Python — Write the Code"
-description: "Write small functions, classes, closures, generators, and async tasks with deliberate ownership and copying."
+title: "Python — Write the Code (Basic)"
+description: "Write small functions, classes, iterators, and async tasks with deliberate ownership and copying."
 active: true
 cards:
   - id: 1
     difficulty: intermediate
-    question: "Print a formatted string that says `Student: Alice, GPA: 3.82` using a variable `name = \"Alice\"` and `gpa = 3.82`. Format the GPA to 2 decimal places."
+    question: "In Python, print a formatted string that says `Student: Alice, GPA: 3.82` using a variable `name = \"Alice\"` and `gpa = 3.82`. Format the GPA to 2 decimal places."
     answer: "`print(f\"Student: {name}, GPA: {gpa:.2f}\")`"
     explanation: "f-strings use the `f\"...\"` prefix. `{variable}` embeds a value. `:.2f` formats to 2 decimal places."
   - id: 2
     difficulty: intermediate
-    question: "Perform integer (floor) division of 7 by 2, getting `3` as the result (not `3.5`)."
+    question: "In Python, perform integer (floor) division of 7 by 2, getting `3` as the result (not `3.5`)."
     answer: "`7 // 2`"
     explanation: "Division of built-in integers with `/` returns a float. `//` floors the quotient; it agrees with C++ integer division for positive operands but differs when a negative quotient has a fractional part."
   - id: 3
     difficulty: intermediate
-    question: "Compute 2 to the power of 10 (should give 1024)."
+    question: "In Python, compute 2 to the power of 10 (should give 1024)."
     answer: "`2 ** 10`"
     explanation: "Python uses `**` for exponentiation. Do NOT use `^` — that is bitwise XOR in Python."
   - id: 4
@@ -24,12 +24,12 @@ cards:
     explanation: "A list comprehension: `[expression for variable in iterable]`. `range(1, 6)` generates 1, 2, 3, 4, 5 (stop is exclusive)."
   - id: 5
     difficulty: intermediate
-    question: "From a list `nums = [4, 8, 15, 16, 23, 42]`, create a new list containing only the numbers greater than 20."
+    question: "In Python, from a list `nums = [4, 8, 15, 16, 23, 42]`, create a new list containing only the numbers greater than 20."
     answer: "`[x for x in nums if x > 20]`"
     explanation: "A list comprehension with a filter: `[expression for var in iterable if condition]`."
   - id: 6
     difficulty: advanced
-    question: "Read a file called `data.txt` line by line, safely closing it even if an error occurs."
+    question: "In Python, read a file called `data.txt` line by line, safely closing it even if an error occurs."
     answer: |
       ```python
       with open("data.txt") as f:
@@ -39,7 +39,7 @@ cards:
     explanation: "The `with` statement is a context manager — it guarantees the file is closed when the block exits, like RAII in C++."
   - id: 7
     difficulty: intermediate
-    question: "Iterate over a list `fruits = [\"apple\", \"banana\"]` and print both the index and the value."
+    question: "In Python, iterate over a list `fruits = [\"apple\", \"banana\"]` and print both the index and the value."
     answer: |
       ```python
       for i, fruit in enumerate(fruits):
@@ -48,7 +48,7 @@ cards:
     explanation: "`enumerate()` yields `(index, value)` pairs. This is the Pythonic alternative to `for i in range(len(fruits))`."
   - id: 8
     difficulty: advanced
-    question: "Find all numbers (sequences of digits) in the string `\"Error 404 and 500\"` using regex."
+    question: "In Python, find all numbers (sequences of digits) in the string `\"Error 404 and 500\"` using regex."
     answer: |
       ```python
       import re
@@ -57,12 +57,12 @@ cards:
     explanation: "`re.findall()` returns a list of all matches. `\\d+` matches one or more digits. Use raw strings `r'...'` for regex patterns."
   - id: 9
     difficulty: advanced
-    question: "Replace text shaped like four digit groups separated by dots with `\"x.x.x.x\"`. Use a simple regex; validating IPv4 numeric ranges is outside this task."
+    question: "In Python, replace text shaped like four digit groups separated by dots with `\"x.x.x.x\"`. Use a simple regex; validating IPv4 numeric ranges is outside this task."
     answer: "`re.sub(r'\\d+\\.\\d+\\.\\d+\\.\\d+', 'x.x.x.x', text)`"
     explanation: "`re.sub(pattern, replacement, string)` returns a string with each match replaced. The pattern also accepts invalid address values such as 999.999.999.999; shape matching is not address validation."
   - id: 10
     difficulty: expert
-    question: "Write a script that prints an error to stderr and exits with code 1 if no command-line argument is provided."
+    question: "Write a Python script that prints an error to stderr and exits with code 1 if no command-line argument is provided."
     answer: |
       ```python
       import sys
@@ -73,12 +73,12 @@ cards:
     explanation: "`sys.argv[0]` is the script name; real args start at index 1. `file=sys.stderr` sends output to stderr. `sys.exit(1)` exits with a non-zero code."
   - id: 11
     difficulty: basic
-    question: "Check the type of a variable `x` at runtime and print it."
+    question: "In Python, check the type of a variable `x` at runtime and print it."
     answer: "`print(type(x))`"
     explanation: "`type()` returns the type of any object. Python is dynamically typed — types are checked at runtime, not compile time."
   - id: 12
     difficulty: advanced
-    question: "Check whether a regex pattern matches anywhere in a string `line`, and print `Found!` if it does."
+    question: "In Python, check whether a regex pattern matches anywhere in a string `line`, and print `Found!` if it does."
     answer: |
       ```python
       if re.search(r'pattern', line):
@@ -89,7 +89,7 @@ cards:
   - id: 13
     difficulty: intermediate
     question: |
-      Define `WeatherStation(name, calibration)`. Each instance must keep the
+      In Python, define a class `WeatherStation(name, calibration)`. Each instance must keep the
       supplied calibration object by reference and own a fresh empty `readings`
       list. Add `record(value)` to append one value to that instance's list.
     answer: |
@@ -108,7 +108,7 @@ cards:
   - id: 14
     difficulty: intermediate
     question: |
-      A `Reading` class already initializes `self.temperature` and `self.unit`.
+      A Python `Reading` class already initializes `self.temperature` and `self.unit`.
       Write its `__eq__` method so two Readings compare equal exactly when both
       fields match. Return `NotImplemented` for an operand that is not a Reading.
     answer: |
@@ -124,7 +124,7 @@ cards:
   - id: 15
     difficulty: intermediate
     question: |
-      Write `record_alert(message, alerts=None)` to append a message and return
+      Write a Python function `record_alert(message, alerts=None)` to append a message and return
       the list. An omitted argument or explicit None gets a fresh list each
       call. Any supplied list, including an empty one, must be mutated and
       returned as the same object.
@@ -142,7 +142,7 @@ cards:
     difficulty: intermediate
     question: |
       `station` is an ordinary WeatherStation whose calibration and readings
-      are mutable member objects. Write `archive_station(station)` to return
+      are mutable member objects. Write a Python function `archive_station(station)` to return
       an independent snapshot of its mutable member state. The supplied
       objects support standard copying, and repeated member references should
       stay shared within the snapshot.
@@ -158,7 +158,7 @@ cards:
   - id: 17
     difficulty: intermediate
     question: |
-      Write `with_sample(readings, sample)` for a built-in list. Return a new
+      Write a Python function `with_sample(readings, sample)` for a built-in list. Return a new
       outer list containing the existing readings followed by sample. Leave
       the input list unchanged, and keep the existing element objects shared.
     answer: |
@@ -171,7 +171,7 @@ cards:
   - id: 18
     difficulty: intermediate
     question: |
-      A station has a `calibration` member that other stations may share.
+      In Python, a station object has a `calibration` member that other stations may share.
       `Calibration(offset)` creates a fresh calibration object. Write
       `detach_calibration(station, offset)` to give this station a new
       calibration, leaving its former calibration object unchanged.
@@ -185,13 +185,13 @@ cards:
   # Source concepts: CS131 course archive: Essential Python; Homework PYTHON1–5; Week 1/4/10 worksheets; Function and Control Palooza notes.
   - id: python-course-write-independent-grid
     difficulty: intermediate
-    question: Create three independently mutable rows, each containing two zeros.
+    question: In Python, create a list `rows` of three independently mutable rows, each containing two zeros.
     answer: '`rows = [[0, 0] for _ in range(3)]`'
     explanation: The inner list literal is evaluated once per row. Repeating one constructed row with multiplication would share it.
 
   - id: python-course-write-dictionary-default
     difficulty: intermediate
-    question: Write remember(label, counts=None) that increments a per-label count and returns the dictionary. Omitted input must start fresh; supplied empty dictionaries must be mutated.
+    question: Write a Python function remember(label, counts=None) that increments a per-label count and returns the dictionary. Omitted input must start fresh; supplied empty dictionaries must be mutated.
     answer: |-
       ```python
       def remember(label, counts=None):
@@ -202,31 +202,9 @@ cards:
       ```
     explanation: The sentinel distinguishes absent input from an empty caller-owned dictionary. The function returns the same dictionary it updated.
 
-  - id: python-course-write-closure
-    difficulty: intermediate
-    question: Write make_offset(offset), returning a function that adds offset to its one argument.
-    answer: |-
-      ```python
-      def make_offset(offset):
-          return lambda value: value + offset
-      ```
-    explanation: Each factory call creates a closure over its own offset binding. An ordinary nested def with a return statement is equivalent.
-
-  - id: python-course-write-generator
-    difficulty: intermediate
-    question: Write positive(values), a generator that yields only values greater than zero, in input order. It must not build a result list.
-    answer: |-
-      ```python
-      def positive(values):
-          for value in values:
-              if value > 0:
-                  yield value
-      ```
-    explanation: The function pauses at each yield. Reaching its end exhausts the generator; there is no need to raise StopIteration inside it.
-
   - id: python-course-write-iterator
     difficulty: intermediate
-    question: Complete __next__ for an iterator with self.items and self.position, initially zero. It must return each value once and signal exhaustion, including on empty input.
+    question: Complete __next__ for a Python iterator with self.items and self.position, initially zero. It must return each value once and signal exhaustion, including on empty input.
     answer: |-
       ```python
       def __next__(self):
@@ -240,7 +218,7 @@ cards:
 
   - id: python-course-write-recursive-count
     difficulty: intermediate
-    question: Write count_leaves(tree) for a finite acyclic nest of lists whose leaves are integers. Return the number of integer leaves without changing the input.
+    question: Write a Python function count_leaves(tree) for a finite acyclic nest of lists whose leaves are integers. Return the number of integer leaves without changing the input.
     answer: |-
       ```python
       def count_leaves(tree):
@@ -252,7 +230,7 @@ cards:
 
   - id: python-course-write-safe-lookup
     difficulty: intermediate
-    question: Write lookup(environment, name) that returns the stored value, including zero or None, and raises NameError only if the key is absent.
+    question: Write a Python function lookup(environment, name) that returns the value stored under name in the dict environment, including zero or None, and raises NameError only if the key is absent.
     answer: |-
       ```python
       def lookup(environment, name):
@@ -264,7 +242,7 @@ cards:
 
   - id: python-course-write-concurrent-tasks
     difficulty: intermediate
-    question: Inside an async function, call independent async functions read_left() and read_right(), schedule both before waiting, and return their two results. Assume asyncio is imported.
+    question: Inside a Python async function, call independent async functions read_left() and read_right(), schedule both before waiting, and return their two results. Assume asyncio is imported.
     answer: |-
       ```python
       left = asyncio.create_task(read_left())

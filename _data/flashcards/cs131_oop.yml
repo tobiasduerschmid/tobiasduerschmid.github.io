@@ -56,7 +56,7 @@ cards:
     difficulty: basic
     bloom: understand
     estimated_seconds: 30
-    question: "C++ Base declares virtual ping(). A function receives Base& b and calls b.ping(); this time b refers to an actual Base object. In the course model, is this a static or dynamic call, and which implementation runs? Ignore compiler optimizations."
+    question: "C++ Base declares virtual ping(). A function receives Base& b and calls b.ping(); this time b refers to an actual Base object. Is this a static or dynamic call, and which implementation runs? Ignore compiler optimizations."
     answer: "Dynamic dispatch; Base::ping() runs."
     explanation: "The method's virtual status determines the dispatch semantics. Finding that the actual receiver is a Base still selects the Base implementation through those semantics."
 
@@ -67,7 +67,7 @@ cards:
     bloom: analyze
     estimated_seconds: 60
     question: |
-      What is printed? Explain the difference between the two calls in wrap.
+      What does this C++ code print? Explain the difference between the two calls in wrap.
 
       ```cpp
       struct B {
@@ -88,7 +88,7 @@ cards:
     bloom: apply
     estimated_seconds: 45
     question: |
-      Fill the one missing line so a new NamedScore stores both fields on the same object.
+      Fill the one missing line in this Python code so a new NamedScore stores both fields on the same object.
 
       ```python
       class Named:

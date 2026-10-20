@@ -6,7 +6,7 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      A `GumballMachine` has states: NoQuarter, HasQuarter, Sold, and SoldOut. `NoQuarterState.insertQuarter()` calls `context.setState(new HasQuarterState())` to trigger transitions. What design decision is this an example of?
+      A `GumballMachine` built with the State pattern has states: NoQuarter, HasQuarter, Sold, and SoldOut. `NoQuarterState.insertQuarter()` calls `context.setState(new HasQuarterState())` to trigger transitions. What design decision is this an example of?
     options:
       - "Context-driven transitions — the Context centralizes all transition logic"
       - "State-driven transitions — each State object knows its successor and triggers transitions"
