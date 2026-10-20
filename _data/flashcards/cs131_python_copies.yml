@@ -5,6 +5,8 @@ active: true
 cards:
   # Taught / practice evidence: Essential Python handout p. 10 (copy depth); Homework PYTHON4 A.1–A.5; F24 Midterm V1 Problem 4, pp. 7–8.
   - id: cs131-v2-python-card-compare-shallow-children
+    hint: >-
+      Compare identity at two levels: the copied container and the object reached through its first slot. A new container does not by itself imply new children.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
@@ -22,6 +24,8 @@ cards:
 
   # Taught / practice evidence: Essential Python handout p. 10 (copy depth); Homework PYTHON4 A.1–A.5; F24 Midterm V1 Problem 4, pp. 7–8.
   - id: cs131-v2-python-card-evaluate-double-shallow-copy
+    hint: >-
+      Track the destination of slot 0 through both copies. Choose a test that mutates the object reached through that slot instead of replacing the slot.
     difficulty: intermediate
     bloom: evaluate
     estimated_seconds: 45
@@ -32,6 +36,8 @@ cards:
 
   # Taught / practice evidence: Essential Python handout p. 10 (copy depth); Homework PYTHON4 A.1–A.5; F24 Midterm V1 Problem 4, pp. 7–8.
   - id: cs131-python-card-tuple-replace
+    hint: >-
+      Distinguish the tuple’s fixed slots from the mutable object reached through one slot. Identify which of those two objects each operation tries to change.
     difficulty: basic
     question: In Python, for pair = ([2], "west"), explain why pair[0].append(6) succeeds but pair[0] = [2, 6] fails.
     answer: The append changes the list already stored in the tuple. The assignment tries to replace a tuple slot and raises
@@ -40,6 +46,8 @@ cards:
 
   # Taught / practice evidence: Essential Python handout p. 10 (copy depth); Homework PYTHON4 A.1–A.5; F24 Midterm V1 Problem 4, pp. 7–8.
   - id: cs131-python-card-copy-dictionary-boundary
+    hint: >-
+      After copying, draw two dictionaries and follow each samples reference. Trace the append before the later slot replacement.
     difficulty: intermediate
     question: |-
       Predict the output of this Python code and identify the shared object.
@@ -58,6 +66,8 @@ cards:
 
   # Taught / practice evidence: Essential Python handout p. 10 (copy depth); Homework PYTHON4 A.1–A.5; F24 Midterm V1 Problem 4, pp. 7–8.
   - id: cs131-v2-python-card-write-independent-nested-edit
+    hint: >-
+      Decide which object graph must receive the indexed assignment. Establish that graph’s independence before making the edit.
     difficulty: intermediate
     bloom: create
     estimated_seconds: 60
@@ -74,6 +84,8 @@ cards:
 
   # Taught / practice evidence: Essential Python handout p. 10 (copy depth); Homework PYTHON4 A.1–A.5; F24 Midterm V1 Problem 4, pp. 7–8.
   - id: cs131-python-card-returned-alias-repair
+    hint: >-
+      Check both allowed caller edits: replacing a result slot and mutating a row reached through it. The copy boundary must protect the stored data from both.
     difficulty: intermediate
     question: A Python getter returns a list of mutable lists directly. Callers must be able to edit both the result’s outer list
       and its rows without affecting the object. Write the getter body, assuming deepcopy is imported.

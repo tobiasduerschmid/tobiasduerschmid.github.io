@@ -17,6 +17,8 @@ cards:
     explanation: "These decisions tend to affect many later choices, so the cost of changing them rises quickly."
 
   - id: 3
+    hint: >-
+      Imagine changing a storage format after several features ship. What would determine whether that change stays local or spreads through the system?
     difficulty: intermediate
     bloom: understand
     question: "How can good architecture help an agile team make decisions late?"
@@ -38,6 +40,8 @@ cards:
     explanation: "Software design is collaborative because important design decisions affect many people and rely on knowledge distributed across the team."
 
   - id: 6
+    hint: >-
+      Imagine a future maintainer challenging a decision. Which choices would most need an explicit account of alternatives and evidence?
     difficulty: intermediate
     bloom: analyze
     question: "When is rational decision-making especially useful in software design?"
@@ -45,6 +49,8 @@ cards:
     explanation: "Rational process makes trade-offs explicit and communicable."
 
   - id: 7
+    hint: >-
+      Compare an experienced engineer under time pressure with a novice facing an unfamiliar domain. What makes a quick judgment more or less trustworthy?
     difficulty: intermediate
     bloom: analyze
     question: "When can experienced intuition be appropriate in software design?"
@@ -52,6 +58,8 @@ cards:
     explanation: "Intuition is not a substitute for evidence, but expert pattern recognition can be valuable under uncertainty."
 
   - id: 8
+    hint: >-
+      Assume the team cannot inspect every alternative. How could its process expose an incorrect assumption before too much depends on it?
     difficulty: advanced
     bloom: analyze
     question: "What does **bounded rationality** imply for software process?"
@@ -59,6 +67,8 @@ cards:
     explanation: "A process that assumes perfect planning will fail when human limits and changing evidence appear."
 
   - id: 9
+    hint: >-
+      Compare how each team could observe a mistake, deliver a correction, and recover from its consequences.
     difficulty: intermediate
     bloom: evaluate
     question: "Why might a web social product need less upfront design than spacecraft software?"
@@ -66,6 +76,8 @@ cards:
     explanation: "The process changes because the economics of feedback and failure change."
 
   - id: 10
+    hint: >-
+      Compare a choice your team can reverse in an afternoon with one that would force several teammates to redo their work. What evidence would be useful before committing to each?
     difficulty: intermediate
     bloom: apply
     question: "What is a good process rule for a small course-project team, such as a CS 35L team?"

@@ -13,11 +13,15 @@ cards:
     answer: "The **Pull model** adds that dependency. Push instead couples observers to the event payload format; neither variant is universally less coupled."
     explanation: "Push supplies a chosen payload; it need not contain the subject's entire state. Pull sends a minimal notification and observers query. A hybrid can push the event type and let observers pull additional data."
   - id: 3
+    hint: >-
+      After a view closes, draw the references still held by the long-lived subject. Which objects remain reachable?
     difficulty: advanced
     question: "What is the **lapsed listener problem**?"
     answer: "A memory leak where observers register with a subject but are never unsubscribed, causing the subject's reference to keep them alive in memory."
     explanation: "Solutions: explicit unsubscribe (disciplined but error-prone), weak references (language-dependent), or scoped subscriptions tied to lifecycle management."
   - id: 4
+    hint: >-
+      Start at the unexpected screen update and work backward. Where was its callback registered, and what later invoked it?
     difficulty: advanced
     question: "Why can Observer-pattern callbacks require extra work to trace?"
     answer: "Subscription and notification occur at different sites. To explain an update, trace the registration, the subject's notification, and the observer callback."

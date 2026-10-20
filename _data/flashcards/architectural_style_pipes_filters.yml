@@ -15,6 +15,8 @@ cards:
     explanation: "Fairbanks's metaphor: a filter is 'a simple clerk in a locked room who receives message envelopes slipped under one door and slips another message envelope under another door.' These constraints are what enable filter reusability and natural concurrency."
 
   - id: 3
+    hint: >-
+      Try emitting the smallest item after reading only the first half of an unknown input stream. What could a later item force you to reconsider?
     difficulty: advanced
     question: "What is the **sorting paradox** in pipe-and-filter design?"
     answer: "True pipe-and-filter requires *incremental* processing — filters begin producing output before fully consuming their input. But `sort` is mathematically non-incremental: the first output element cannot be produced until all input has been examined. Including `sort` in a pipeline degenerates the affected segment into batch-sequential processing, losing the style's concurrency benefit."
@@ -33,6 +35,8 @@ cards:
     explanation: "These trade-offs explain why the style dominates batch analytics, compilers, signal processing, and ETL, and is rarely the right call for interactive UIs, real-time control loops, or transactional workflows."
 
   - id: 6
+    hint: >-
+      Follow one record across three filters whose internal representations differ from the wire format. Identify work that happens between the useful transformations.
     difficulty: advanced
     question: "Why does the common-data-format requirement create overhead in pipe-and-filter systems?"
     answer: "To support arbitrary filter recomposition, every filter must agree on a shared data format (often a lowest-common-denominator like ASCII or XML). Each filter parses incoming data and re-serializes outgoing data, repeated at every pipe. Profiling often shows 50–70% of CPU spent in this conversion."
@@ -45,12 +49,16 @@ cards:
     explanation: "Without this framework, every C developer would have to manually fork processes, create pipes, and manage concurrent reads and writes. `stdio` is the canonical example of an architecture framework that hoists a style directly into the platform."
 
   - id: 8
+    hint: >-
+      Run the same filter twice with identical input streams but different database contents. Can its output still be explained from the stream alone?
     difficulty: advanced
     question: "Real-world pipelines often have a filter that reaches into a shared database or cache to enrich the data stream. Which pipe-and-filter constraint does this break, and what is the consequence?"
     answer: "It breaks **strict independence** — filters are required to share no state with other filters or external resources, communicating only through pipes. The consequence is that the system loses its compositional analyzability (you can no longer reason about behavior from the filter graph alone) and its natural parallelism (filters now contend on the shared resource), even though the violation often looks like a harmless convenience."
     explanation: "This is the classic Fairbanks **platonic-vs-embodied** gap: the textbook style and the implementation diverge. Academics argue the violation is a basic-tenet failure; pragmatists argue it is a necessary adaptation. Either framing only helps if you recognize you've made the trade — accepting lost concurrency and reusability for a real engineering need — rather than discovering the loss after the architecture has decayed."
 
   - id: 9
+    hint: >-
+      Try modeling a user who changes an earlier choice after seeing a later result. Which connections or retained information would that interaction require?
     difficulty: intermediate
     question: "When is pipe-and-filter the **wrong** style to choose?"
     answer: "When the system requires (a) **rich interactivity** with cyclic user feedback, (b) **transactional consistency** across stages, (c) **fine-grained error recovery** mid-stream, or (d) **shared state** between processing stages. Interactive UIs, real-time control loops, OLTP workloads, and stateful gaming engines are all poor fits."
@@ -75,6 +83,8 @@ cards:
     explanation: "The alternative — implementing filters as ordinary classes with no explicit Filter/Pipe types — leaves the architectural role implicit and unenforceable. Architecturally-evident code prevents drift: a reviewer can immediately spot a 'filter' that secretly holds state or imports another filter."
 
   - id: 13
+    hint: >-
+      Stop a middle filter after it has consumed some records but before forwarding all their results. What information would a restart need to avoid omissions or duplicates?
     difficulty: advanced
     question: "Why is pipe-and-filter's fault tolerance called the *Achilles' heel* of the style?"
     answer: "Filters share no state, so when one crashes mid-stream, the pipeline has no way to checkpoint, resynchronize, or recover. The data already in transit through the pipes is lost, the upstream filters keep producing, and the downstream filters block waiting for data that will never arrive. Recovery typically requires restarting the entire pipeline from the source."
@@ -87,6 +97,8 @@ cards:
     explanation: "Most Unix shell pipelines are strictly linear. Spark, FFmpeg filter graphs, and modern stream processors are DAG-shaped. The DAG generalization keeps every architectural property (independence, agnosticism, recomposability) while allowing fan-out and fan-in for parallelism and data merging."
 
   - id: 15
+    hint: >-
+      Take a batch transformation that also needs progress updates and recovery after a crash. Which responsibilities fit the stream transformation, and which need additional mechanisms?
     difficulty: advanced
     question: "Why is pure pipe-and-filter usually combined with other styles in real systems?"
     answer: "Because the style's inhibited qualities (interactivity, error handling, shared state) are addressed by other styles. **Hybrids:** pipe-and-filter for transformation + publish-subscribe for error broadcasting (Lattanze's broadcasting filters); pipe-and-filter for batch stages + layered architecture inside each filter; pipe-and-filter for stream processing + event sourcing for replay and recovery."

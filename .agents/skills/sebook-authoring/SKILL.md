@@ -176,7 +176,9 @@ Page-furniture includes, used in this order at the end of most chapters:
 {% include quiz.html id="state" %}
 ```
 
-…where the data lives at `_data/flashcards/state.yml` and `_data/quizzes/state.yml`. See [`quiz-format`](../quiz-format/SKILL.md) for the YAML schema.
+…where the data lives at `_data/flashcards/state.yml` and `_data/quizzes/state.yml`. See [`quiz-format`](../quiz-format/SKILL.md) for the quiz schema.
+
+**Flashcard hints.** Before generating or revising flashcards, read the pedagogical-advisor [flashcard guide](../pedagogical-advisor/references/content-types/flashcards.md). Inspect each question and its easier SEBook/tutorial prerequisites. Add an optional per-card Markdown `hint` only when a concrete reasoning cue helps without revealing the answer; omit it for pure retrieval where a hint would give away the target. Do not attach hints automatically by difficulty. Keep IDs stable. Chapter, composite, and SE Gym views inherit the source card's hint; no page-local button or duplicate hint text is needed.
 
 **Landing banner (`hero:`)** — front matter `hero: sebook-hero.html` makes the layout render that include as a full-width banner above the sidebar and main content, and skip the standard `header_project.html` title header (so the page's first `<h1>` comes from the banner). Only the SE Book home page (`SEBook/index.md`) uses it. The banner lives outside `<main>`, so it is a labelled `<section>` region, and the page's content should still open with a `# ` heading so the top nav keeps an entry. Chapters should not set `hero:`.
 

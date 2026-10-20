@@ -21,6 +21,8 @@ cards:
     explanation: "Both matter, but they surface differently. Run-time qualities show up in monitoring dashboards and user complaints; design-time qualities show up in PR cycle time, regression rates, and how long new hires take to ship their first feature."
 
   - id: 4
+    hint: >-
+      Imagine adding independent failure recovery to a design built around one shared process. Would a single feature module contain all the required changes?
     difficulty: intermediate
     question: "Why are quality attributes called the *load-bearing walls* of a software system?"
     answer: "Three reasons: (a) **early architectural decisions strongly constrain** which qualities the system can later achieve; (b) quality concerns are **cross-cutting** — they touch many modules, not one; (c) they are **expensive to retrofit** — bolting on scalability or security after the fact often requires rebuilding rather than patching."
@@ -39,6 +41,8 @@ cards:
     explanation: "Synergies are where the architect gets compound wins — one set of design decisions improves multiple qualities at once. The Single Responsibility, Dependency Inversion, and Interface Segregation principles each buy multiple quality wins simultaneously."
 
   - id: 7
+    hint: >-
+      Trace the extra work required to check a request more thoroughly before accepting it. Which other goal might that extra work affect?
     difficulty: advanced
     question: "Why can't a system maximize all quality attributes simultaneously?"
     answer: "Because the architectural and implementation choices that improve some qualities (e.g., abstraction layers for modifiability, encryption for security, retries for reliability) actively cost others (indirection for performance, CPU time, latency). Trade-offs are intrinsic, not avoidable through cleverness."
@@ -57,6 +61,8 @@ cards:
     explanation: "Hard thresholds are testable in CI; soft goals show up as quarterly OKRs or architectural review criteria. Most real systems mix both — hard thresholds on the few load-bearing qualities, soft goals on everything else."
 
   - id: 10
+    hint: >-
+      Two candidate designs improve different qualities and each costs more on another dimension. What stakeholder decision is needed before choosing between them?
     difficulty: advanced
     question: "Why must architects prioritize 2–3 quality attributes per system instead of optimizing all of them?"
     answer: "Because trade-offs are real and pervasive — every architectural decision that improves one quality often degrades another. Without explicit priorities, the team cannot resolve those conflicts coherently and the architecture drifts toward whatever quality happens to bubble up first in each decision. Prioritization is what gives the architecture a *spine*."
@@ -69,6 +75,8 @@ cards:
     explanation: "User-facing qualities show up in monitoring dashboards, SLAs, customer complaints, and reviews. Developer-facing qualities show up in cycle time, regression rates, the cost of a refactor, and onboarding velocity. Both matter to the business, just on different time horizons."
 
   - id: 12
+    hint: >-
+      Pick one structural rule, such as forbidding direct dependencies between certain modules. Explain how following that rule changes the cost of a future modification.
     difficulty: advanced
     question: "What is the *architecture-attribute coupling*: how does the choice of architectural style influence which quality attributes are achievable?"
     answer: "Each architectural style is a *prefabricated set of constraints* that promotes specific qualities and inhibits others — pipe-and-filter promotes modifiability and reusability while inhibiting interactivity and fault tolerance; pub-sub promotes evolvability while inhibiting predictability; layered promotes portability while inhibiting performance. **Choosing a style is implicitly choosing a quality profile.**"
@@ -93,24 +101,32 @@ cards:
     explanation: "Generic 'improve quality' efforts often produce diffuse, low-impact work — code-style cleanups, more linters, more tests of already-tested code — while the load-bearing qualities the system actually needs (say, scalability and security) go unaddressed. Specific, prioritized quality work compounds; generic quality work dissipates."
 
   - id: 16
+    hint: >-
+      Start with the actual change request: a new sensor has been purchased. Identify what a developer should have to edit and what existing work you want to protect.
     difficulty: intermediate
     question: "A perception system processes images from depth sensors. Give a good **extensibility** quality-attribute specification for adding new depth sensors."
     answer: "\"Adding a new depth sensor requires implementing one sensor adapter and must not require changes to components that process depth images.\""
     explanation: "This improves on 'adding sensors should be easy' because it names the class of change (new depth sensor) and the success measure (no changes to depth-image processing components)."
 
   - id: 17
+    hint: >-
+      Choose a successful payment and a rare provider failure. How could a developer reliably set up both cases and determine whether authorization behaved correctly?
     difficulty: intermediate
     question: "Give a good **testability** quality-attribute specification for payment authorization code."
     answer: "\"A developer can run deterministic tests for payment authorization outcomes, including declined cards and network timeouts, without contacting the real payment provider.\""
     explanation: "The scenario is testing authorization outcomes, including rare or external-service cases. The measure is controllability and observability without using the real provider."
 
   - id: 18
+    hint: >-
+      Use an extension request as the experiment. What could you inspect in the resulting code diff to judge whether the extension remained local?
     difficulty: advanced
     question: "Why can a structural boundary be a valid quality-attribute measure?"
     answer: "Some design-time qualities are best measured by **what must not change** or **which dependencies must not be introduced**, not by runtime numbers. Example: adding a depth sensor must not require changing depth-image processors."
     explanation: "Runtime qualities often use latency, throughput, or uptime. Design-time qualities often use developer time, number of modules touched, dependency direction, or forbidden ripple effects."
 
   - id: 19
+    hint: >-
+      Imagine two teams both adopt the named technology but receive very different traffic volumes. What would let you decide whether either met the requirement?
     difficulty: intermediate
     question: "Why is \"Use Kafka for scalability\" a poor quality requirement?"
     answer: "It chooses an implementation before stating the quality scenario. A quality requirement should say what scale must be supported, under which load, and with which metric; Kafka may be one candidate tactic or style choice afterward."

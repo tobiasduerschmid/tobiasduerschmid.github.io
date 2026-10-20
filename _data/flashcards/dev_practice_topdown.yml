@@ -10,6 +10,8 @@ cards:
     explanation: "It differs from line-by-line tracing because the reader uses prior knowledge to decide where to look and what details matter."
 
   - id: 2
+    hint: >-
+      When you recognize a familiar request-validation flow, list what you expect to find next. Which details can now be grouped into one known operation?
     difficulty: intermediate
     bloom: understand
     question: "How does schema activation help expert programmers read code faster?"
@@ -38,6 +40,8 @@ cards:
     explanation: "This does not mean hiding details forever. It means organizing details so the reader can choose when to descend."
 
   - id: 6
+    hint: >-
+      A function name predicts one behavior, but a test exposes another. What evidence should guide the next reading step?
     difficulty: basic
     bloom: analyze
     question: "Why do experts switch between top-down and bottom-up comprehension?"
@@ -45,6 +49,8 @@ cards:
     explanation: "The strongest readers are opportunistic. They do not cling to one strategy when evidence says another will be cheaper."
 
   - id: 7
+    hint: >-
+      Imagine a class named after a familiar pattern that does not fulfill its usual role. What incorrect prediction could that name encourage?
     difficulty: advanced
     bloom: evaluate
     question: "When can a design pattern hurt top-down comprehension?"

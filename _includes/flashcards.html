@@ -2,6 +2,7 @@
 Interactive Flashcard Fragment
 Usage: {% include flashcards.html id="study_tips" %}
 Data source: _data/flashcards/{{ include.id }}.yml
+Optional card.hint is Markdown guidance shown separately from the answer.
 {% endcomment %}
 
 {% assign flashcard_data = site.data.flashcards[include.id] %}
@@ -57,6 +58,14 @@ Data source: _data/flashcards/{{ include.id }}.yml
       </span>
       {% endif %}
       <div class="flashcard-question">{{ card.question | markdownify }}</div>
+
+      {% assign card_hint = card.hint | default: "" | strip %}
+      {% if card_hint != "" %}
+      <div class="flashcard-hint-area">
+        <button type="button" class="flashcard-hint-toggle" aria-expanded="false">Hint</button>
+        <div class="flashcard-hint" hidden>{{ card_hint | markdownify }}</div>
+      </div>
+      {% endif %}
 
       <div class="flashcard-answer-container hidden">
         <div class="flashcard-answer">{{ card.answer | markdownify }}</div>
@@ -121,6 +130,21 @@ Data source: _data/flashcards/{{ include.id }}.yml
     const restartBtn = container.querySelector('.restart-btn');
     const listContainer = container.querySelector('.flashcards-list');
     const announceRegion = container.querySelector('.flashcards-announce');
+    const containerIndex = Array.from(document.querySelectorAll('.flashcards-container')).indexOf(container);
+
+    container.querySelectorAll('.flashcard-hint-area').forEach((hintArea, index) => {
+      const hint = hintArea.querySelector('.flashcard-hint');
+      hint.id = 'flashcard-hint-' + containerIndex + '-' + index;
+      hintArea.querySelector('.flashcard-hint-toggle').setAttribute('aria-controls', hint.id);
+    });
+
+    function resetHint(card) {
+      const hintButton = card.querySelector('.flashcard-hint-toggle');
+      if (!hintButton) return;
+      card.querySelector('.flashcard-hint').hidden = true;
+      hintButton.setAttribute('aria-expanded', 'false');
+      hintButton.textContent = 'Hint';
+    }
 
     function announce(msg) {
       if (!announceRegion) return;
@@ -147,6 +171,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
         listContainer.appendChild(card);
 
         // Reset card state
+        resetHint(card);
         card.querySelector('.flashcard-answer-container').classList.add('hidden');
         card.querySelector('.show-answer-btn').classList.remove('hidden');
         card.querySelector('.assessment-buttons').classList.add('hidden');
@@ -183,6 +208,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
 
     function showCard(index) {
       cards.forEach(c => c.classList.remove('active'));
+      resetHint(cards[index]);
       cards[index].classList.add('active');
       updateProgress();
       if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
@@ -207,6 +233,13 @@ Data source: _data/flashcards/{{ include.id }}.yml
       btn.setAttribute('aria-expanded', 'true');
       card.querySelector('.assessment-buttons').classList.remove('hidden');
       announce('Answer revealed. Use the "I got it right" or "I missed it" buttons to rate yourself.');
+    }
+
+    function handleHint(button) {
+      const hint = button.closest('.flashcard-hint-area').querySelector('.flashcard-hint');
+      hint.hidden = !hint.hidden;
+      button.setAttribute('aria-expanded', String(!hint.hidden));
+      button.textContent = hint.hidden ? 'Hint' : 'Hide Hint';
     }
 
     function handleAssessment(correct, card) {
@@ -248,6 +281,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
 
     function resetCard(index) {
       const card = cards[index];
+      resetHint(card);
       card.querySelector('.flashcard-answer-container').classList.add('hidden');
       const showBtn = card.querySelector('.show-answer-btn');
       showBtn.classList.remove('hidden');
@@ -282,7 +316,9 @@ Data source: _data/flashcards/{{ include.id }}.yml
     // Event Listeners
     container.addEventListener('click', e => {
       const target = e.target;
-      if (target.closest('.show-answer-btn')) {
+      if (target.closest('.flashcard-hint-toggle')) {
+        handleHint(target.closest('.flashcard-hint-toggle'));
+      } else if (target.closest('.show-answer-btn')) {
         handleShowAnswer(e);
       } else if (target.closest('.correct-btn')) {
         handleAssessment(true, target.closest('.flashcard-card'));

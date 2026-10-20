@@ -3,12 +3,16 @@ description: "Test your ability to read and understand actual Makefile snippets 
 active: true
 cards:  
   - id: 1  
+    hint: >-
+      Make a small substitution table for the named variables and the rule-derived variables, then expand the command from left to right.
     difficulty: intermediate
     question: "Given the Makefile snippet `app: main.o network.o utils.o` followed by the command `$(CC) $(CFLAGS) $^ -o $@`, what exactly does the command evaluate to if `CC=gcc` and `CFLAGS=-Wall`?"  
     answer: "`gcc -Wall main.o network.o utils.o -o app`"  
     explanation: "`$^` expands to all prerequisites (the three `.o` files), and `$@` expands to the target name (`app`). This is the standard way to link object files into a final C executable."  
 
   - id: 2  
+    hint: >-
+      Apply the suffix transformation to each word independently. Check that the directory/name portion of each word is unchanged.
     difficulty: intermediate
     question: "If a C project Makefile contains `SRCS = main.c math.c io.c` and `OBJS = $(SRCS:.c=.o)`, what does `OBJS` evaluate to?"  
     answer: "`main.o math.o io.o`"  
@@ -21,18 +25,24 @@ cards:
     explanation: "In a pattern rule, `$<` is an automatic variable that evaluates to the first prerequisite. In this case, it passes the specific C source file being compiled to the compiler."  
 
   - id: 4  
+    hint: >-
+      Distinguish a default supplied by the file from a value supplied by the caller. Check whether the conditional assignment still needs to provide a value.
     difficulty: advanced
     question: "You see the line `CC ?= gcc` at the top of a Makefile. What happens if a developer compiles the project by typing `make CC=clang` in their terminal?"  
     answer: "The compiler used will be `clang`, not `gcc`."  
     explanation: "The `?=` operator is a conditional assignment. It only sets `CC` to `gcc` if `CC` has not already been defined. The command-line argument overrides the default."  
 
   - id: 5  
+    hint: >-
+      Apply the normal rule for a target with no prerequisites when a same-named file already exists. Would Make see any reason to rebuild it?
     difficulty: intermediate
     question: "A C project has a rule `clean:\n\trm -f *.o myapp`. Why is it critical to also include `.PHONY: clean` in this Makefile?"  
     answer: "To ensure the cleanup runs even if a developer accidentally creates a file literally named `clean` in the project directory."  
     explanation: "Without `.PHONY`, if a file named `clean` exists and has no prerequisites, `make` will think the target `clean` is already \"up to date\" and will refuse to execute the `rm` command."  
 
   - id: 6  
+    hint: >-
+      Compare the saved header timestamp with the object timestamp. Which dependency edge does Make follow when deciding whether the object is current?
     difficulty: advanced
     question: "In the Makefile rule `main.o: main.c main.h types.h`, what happens if you edit and save `types.h`?"  
     answer: "`make` will recompile `main.o` the next time it is run."  
@@ -57,6 +67,8 @@ cards:
     explanation: "For example, if your C program uses the math library `<math.h>`, you would define `LDLIBS = -lm` so the linker knows to include it when combining the `.o` files."  
 
   - id: 10
+    hint: >-
+      Find the default goal, then follow its prerequisites. A goal can require several outputs even when its own recipe is empty.
     difficulty: advanced
     question: "A C project has multiple executables: a server and a client. The Makefile starts with `all: server client`. What happens if you just type `make`?"  
     answer: "It will build both the `server` and the `client` executables."  

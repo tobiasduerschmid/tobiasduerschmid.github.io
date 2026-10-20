@@ -27,18 +27,24 @@ cards:
     explanation: "This is the single most common terminology error in software architecture. Calling deployment tiers 'layers' obscures whether you control dependency direction (layers) or where things run (tiers). A single physical web server frequently runs four or more layers in one tier."
 
   - id: 5
+    hint: >-
+      Separate the direction of a runtime call from the direction of a source-code dependency. What type would the driver need to name to make the call?
     difficulty: intermediate
     question: "How do you implement upward notification (e.g., a sensor driver notifying the UI) without violating the golden rule of layered architecture?"
     answer: "**Callback / Observer / Publish-Subscribe.** The upper layer implements an abstract listener interface defined in or below the lower layer, and registers an instance with the lower layer at startup. The lower layer holds only an interface-typed callback reference, so control can flow upward without a compile-time dependency on the upper layer."
     explanation: "Control flows upward (the driver invokes the listener); dependency stays downward (the UI depends on the driver's listener interface, not vice versa). This pattern is everywhere in real layered systems: OS interrupts, GUI event loops, network protocol upcalls."
 
   - id: 6
+    hint: >-
+      Imagine replacing the bottom layer, then trace one request through the whole stack. Which costs change in each thought experiment?
     difficulty: intermediate
     question: "Which quality attributes does layered architecture **promote**, and which does it **inhibit**?"
     answer: "**Promotes:** modifiability (changes inside a layer hide behind its interface), portability (platform-specific code isolated to the bottom), and reuse (a well-defined lower layer serves multiple applications). **Inhibits:** performance and efficiency (each layer adds indirection and often data is repeatedly transformed or buffered at each boundary). It also complicates Agile development by creating an upper-layer/lower-layer bottleneck."
     explanation: "Layering is a deliberate trade. The TCP/IP stack accepts the per-packet layer-traversal overhead because the modifiability and portability wins (any link layer, any application protocol) are decisive for an interoperable internet."
 
   - id: 7
+    hint: >-
+      Suppose the database library disappears during a test of a business rule. Which dependencies would have to move for the rule to remain runnable?
     difficulty: advanced
     question: "What is the dependency inversion in **Hexagonal**, **Onion**, and **Clean Architecture**?"
     answer: "Traditional layering places **Infrastructure** at the bottom, so business logic depends on it transitively. The inversion places the **Domain Model at the center** with no dependencies on infrastructure; UI, databases, and external services become outer-ring adapters that depend inward on domain-defined ports."
@@ -57,24 +63,32 @@ cards:
     explanation: "This idea — that software can be organized as a hierarchy of abstractions, each acting as a virtual machine for the next — directly underlies TCP/IP, OSI, J2EE, MVC, and Clean Architecture. It is one of the most influential ideas in software engineering."
 
   - id: 10
+    hint: >-
+      Trace one user-visible feature through the teams that own its layers. Which team needs another team’s interface before it can finish?
     difficulty: advanced
     question: "Why does the layered style often complicate Agile vertical-slice development?"
     answer: "Upper layers depend on lower layers, so upper-layer development is blocked until lower-layer interfaces stabilize. A feature that requires changes in every layer demands coordination across every team owning each layer. Teams mitigate this with up-front interface design and contract mocks so upper layers can develop against stubs."
     explanation: "This is not a fatal incompatibility — Agile teams ship layered architectures all the time — but it is a real planning cost. The mitigation discipline (stable interface contracts, mocks, and integration tests) becomes a development-process artifact, not just an architectural one."
 
   - id: 11
+    hint: >-
+      Recall how a caller uses a function’s contract without tracing its body. Apply that same reasoning to a whole group of modules.
     difficulty: advanced
     question: "What does it mean to say each layer acts as a **virtual machine** to the layer above it?"
     answer: "Each layer exposes a well-defined set of services through an abstract interface, while completely hiding its internal implementation and the layers below it. The higher layer programs against this interface as if it were the only world it lives in — exactly as a program runs against a virtual machine without seeing the underlying hardware."
     explanation: "This is information hiding raised to the architectural level. TCP gives the application protocol the illusion of a reliable byte stream; the file system gives a process the illusion of named persistent storage. Each abstraction internalizes the effects of change in the lower layer, which is what buys modifiability and portability."
 
   - id: 12
+    hint: >-
+      Draw a new shortcut from the top layer to a low-level API, then change that API. Compare the affected callers before and after the shortcut.
     difficulty: advanced
     question: "Why does excessive **layer bridging** make a strict layered architecture decay?"
     answer: "Each bypass creates a coupling between non-adjacent layers that the strict topology was designed to prevent. The lower-layer interface now has more consumers, so any change to it ripples more widely. Over time the dependency graph approaches that of an unlayered system, and the portability and modifiability the style promised disappear."
     explanation: "One bridge is a documented exception. Ten bridges are an undocumented relaxed layering. A hundred bridges is a big ball of mud with leftover layering vocabulary. Teams that resist bridging keep their portability properties for decades; teams that bridge freely lose them in a year or two."
 
   - id: 13
+    hint: >-
+      Compare a one-day throwaway script with a product expected to support several platforms for years. Which future changes would repay the cost of the extra boundaries?
     difficulty: advanced
     question: "When is a non-layered or single-layer architecture appropriate?"
     answer: "When the system is small, single-purpose, short-lived, or unlikely to evolve — so the modifiability and portability layering buys would not be exercised. Examples: throwaway scripts, single-author CLI utilities, short-fuse prototypes, demo programs. The up-front design cost of layering is paid every day; if no benefit will ever be collected, skip it."
@@ -93,6 +107,8 @@ cards:
     explanation: "Erosion is rarely caused by malice or ignorance — it's caused by deadlines. The fix is structural and process-level: dependency-checking linters in CI (e.g., ArchUnit, depcruise), code-review checklists, and an explicit refactor budget when violations accumulate. Documentation alone never prevents erosion; tooling enforcement does."
 
   - id: 16
+    hint: >-
+      Could the same source modules run in one process or in several replicated processes? Ask whether those deployments would have the same failure behavior.
     difficulty: intermediate
     question: "Why can't a layered module view by itself support an availability claim?"
     answer: "Because layers are design-time code modules, not independently failing runtime processes. Availability depends on deployed components, communication paths, redundancy, fault detection, recovery behavior, and operational monitoring."

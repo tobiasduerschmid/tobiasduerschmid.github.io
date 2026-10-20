@@ -7,6 +7,8 @@ cards:
   # Lecture: [08] Logic Palooza (Public).docx — Matching a Goal and a Fact/Rule
   # Assessment: Homework Problems (Public).docx LOGIC4(A.6)
   - id: cs131-v2-logic-card-unify-repeated
+    hint: >-
+      Match corresponding term positions and keep one binding table. Every occurrence of the same variable must remain consistent with the binding already recorded.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
@@ -17,6 +19,8 @@ cards:
   # Lecture: [08] Logic Palooza (Public).docx — Negation in Rules
   # Assessment: Lecture Negation in Rules example; CS131 Fall 25 Quiz 4 (with solutions).docx P4(a) practices ground-query reasoning
   - id: cs131-v2-logic-card-ground-negation
+    hint: >-
+      Try proving the inner blocked goal using only the supplied facts. Decide what a completed search with no proof means for the surrounding not.
     difficulty: basic
     bloom: understand
     estimated_seconds: 30
@@ -33,6 +37,8 @@ cards:
   # Lecture: [08] Logic Palooza (Public).docx — Resolution: How Prolog Answers Queries
   # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P4(b,c)
   - id: cs131-v2-logic-card-two-step-order
+    hint: >-
+      Choose the first edge from a in database order, then finish its second-edge search before returning to the next choice for the intermediate node.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 60
@@ -52,6 +58,8 @@ cards:
   # Lecture: [08] Logic Palooza (Public).docx — Resolution Continued
   # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P4(c)
   - id: cs131-v2-logic-card-duplicate-reason
+    hint: >-
+      Trace the two clauses as separate proof attempts. Count successful paths through the rules before considering whether their final variable bindings happen to match.
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 45
@@ -70,6 +78,8 @@ cards:
   # Lecture: [08] Logic Palooza (Public).docx — Prolog Lists: Example 2
   # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P5
   - id: cs131-v2-logic-card-list-decomposition
+    hint: >-
+      Count top-level list elements, treating a nested list as one element. Match the two explicit head positions before collecting the remaining suffix.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
@@ -80,6 +90,8 @@ cards:
   # Lecture: [08] Logic Palooza (Public).docx — Prolog Lists; Example 4: Deleting an atom from a list
   # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P5
   - id: cs131-v2-logic-card-squeeze-equal
+    hint: >-
+      Test your smaller recursive input on three consecutive equal elements. It must still compare the retained representative with the third element.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
@@ -95,6 +107,8 @@ cards:
   # Lecture: [08] Logic Palooza (Public).docx — Prolog Rules
   # Assessment: Homework Problems (Public).docx LOGIC3
   - id: cs131-v2-logic-card-shared-team-rule
+    hint: >-
+      Use one membership fact for each person. Which argument position needs the same variable in both goals to connect the two memberships?
     difficulty: intermediate
     bloom: create
     estimated_seconds: 60
@@ -105,6 +119,8 @@ cards:
   # Lecture: [08] Logic Palooza (Public).docx — Example 4: Deleting an atom from a list
   # Assessment: Homework Problems (Public).docx LOGIC5; CS131 Fall 25 Quiz 4 (with solutions).docx P5
   - id: cs131-v2-logic-card-list-repair
+    hint: >-
+      Assume the recursive call has correctly removed an item from the tail. Account for the head that this clause passed over without removing.
     difficulty: intermediate
     bloom: analyze
     estimated_seconds: 45
@@ -121,6 +137,8 @@ cards:
   # Lecture: [08] Logic Palooza (Public).docx — Recursive Rules; Resolution Continued
   # Assessment: Homework Problems (Public).docx LOGIC6 (resolution algorithm)
   - id: cs131-v2-logic-card-recursion-repair
+    hint: >-
+      Substitute a for X in each candidate’s first goal. Check whether the recursive call has reached a new node before it asks another path question.
     difficulty: advanced
     bloom: evaluate
     estimated_seconds: 60
@@ -138,6 +156,8 @@ cards:
   # Lecture: [08] Logic Palooza (Public).docx — Prolog Lists; Example 4: Deleting an atom from a list
   # Assessment: Homework Problems (Public).docx LOGIC7(A); [Final] F24 V1 (Public).pdf P7(C) p.25
   - id: cs131-v2-logic-card-double-elements
+    hint: >-
+      Assume recursion has produced the doubled tail. Decide what this call must place before that result, then handle the input with no head separately.
     difficulty: advanced
     bloom: create
     estimated_seconds: 60

@@ -21,6 +21,8 @@ cards:
     explanation: "Push is efficient when most subscribers will use the data. Pull is efficient when few will, or when the data is large — it trades extra round trips for lower bandwidth. The choice is per-event, not per-system."
 
   - id: 4
+    hint: >-
+      Imagine renaming a channel at the publisher while leaving all subscribers unchanged. Trace whether the intended receivers would still see the event.
     difficulty: intermediate
     question: "In publish-subscribe, how does **topic-based** routing work, and what's its main trade-off?"
     answer: "Subscribers register on a named channel string (e.g., `market.quotes.NASDAQ`). Routing is simple and fast, but topic names become part of the architecture — every publisher and subscriber agrees on the strings, so the names are load-bearing connectors."
@@ -39,6 +41,8 @@ cards:
     explanation: "The Event Channel is one of four topology variants the literature describes (alongside list-based, broadcast-based, and content-based). Its appeal is that complex QoS, buffering, and filtering live in the channel instead of being scattered across every publisher and subscriber."
 
   - id: 5
+    hint: >-
+      Trace an event through a busy broker and a slow subscriber. Which parts of the elapsed time can the publisher bound from its own code?
     difficulty: intermediate
     question: "Why is pub-sub generally a poor fit for systems with hard real-time deadlines?"
     answer: "Pub-sub communication is asynchronous, so developers have less control over message ordering, and delivery is often not guaranteed. The event bus also adds a layer of indirection that fundamentally increases latency. The style is therefore generally inappropriate for hard real-time deadlines or strict transactional state sharing."
@@ -57,6 +61,8 @@ cards:
     explanation: "Time decoupling is implemented by features such as Kafka log retention, MQTT retained messages or persistent sessions, and JMS durable subscriptions. Without one of those persistence mechanisms, a subscriber that is offline during publication has a delivery gap."
 
   - id: 8
+    hint: >-
+      Suppose an event’s payload changes. How would you find exactly which receivers depend on that payload when every handler accepts the same generic type?
     difficulty: advanced
     question: "What is the *wide coupling smell* in pub-sub, and how do you avoid it?"
     answer: "A bus exposed as a generic `receive(Message)` method where every subscriber casts to a specific type makes every subscriber appear coupled to every publisher — the dependency graph is invisible. **Fix:** use typed channels or per-event-class topics so each subscription is statically traceable to a payload schema."
@@ -81,12 +87,16 @@ cards:
     explanation: "The chapter's point is not to memorize product trivia; it is to notice that each framework packages a different version of the pub-sub trade-off."
 
   - id: 12
+    hint: >-
+      Publish one update while one subscriber is busy and another is ready. Compare what each subscriber could report immediately afterward.
     difficulty: intermediate
     question: "Why does pub-sub force architects to embrace *eventual consistency*?"
     answer: "Because typical pub-sub delivery is asynchronous: subscribers update their local state at different moments. Different parts of the system therefore hold inconsistent views for a bounded period, until all relevant subscribers have processed the event."
     explanation: "This is an eventual-consistency trade-off, not a magic property of every bus. Architectures that need strong consistency between subscribers must add explicit coordination, such as a single source of truth, distributed transactions, sagas with compensation, or carefully designed idempotent workflows."
 
   - id: 13
+    hint: >-
+      An employee-creation event exists so that someone receives a computer. What would a diagram of bus connections fail to tell a new developer about that goal?
     difficulty: advanced
     question: "What is the *illusion of obliviousness* in publish-subscribe systems, and why does Fairbanks warn about it?"
     answer: "At runtime, components are oblivious to each other. But at design time, a developer chose to add the New-Employee publisher *specifically because* the Order-Computer subscriber needs it. Architectural diagrams that only show components attached to a bus hide this business intent."
@@ -99,12 +109,16 @@ cards:
     explanation: "Other examples: Redis Pub/Sub for cache invalidation, AWS SNS + SQS for cross-service notifications, Google Cloud Pub/Sub for serverless event glue, OS-level signals (technically a degenerate broadcast bus)."
 
   - id: 15
+    hint: >-
+      Compare announcing a temperature reading with requesting a payment whose success the caller must know before proceeding. What must the sender establish in each case?
     difficulty: advanced
     question: "When should you NOT use publish-subscribe?"
     answer: "When (a) you need global strict ordering or hard real-time delivery guarantees without investing in specialized middleware/QoS, (b) the producer requires synchronous confirmation that consumers acted on the event, (c) the system has only one consumer per event and direct call would suffice, or (d) the team lacks the operational maturity to debug asynchronous, non-deterministic flows."
     explanation: "Pub-sub solves coupling problems; it creates observability problems. If your bottleneck is rigidity of direct calls and your team has tracing/replay infrastructure, pub-sub is excellent. If your bottleneck is debuggability and you have one producer talking to one consumer, a synchronous call is simpler."
 
   - id: 16
+    hint: >-
+      A publisher and subscriber both compile after only one side renames a channel. Follow where the message goes at runtime.
     difficulty: intermediate
     question: "Why are topic names architecturally significant in topic-based publish-subscribe?"
     answer: "Topic names are the connectors that bind publishers and subscribers. If a publisher renames a topic but a subscriber keeps listening to the old name, the code may compile and run while the runtime message flow silently breaks."

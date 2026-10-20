@@ -12,6 +12,8 @@ cards:
       A functional requirement says what the system does. A quality attribute says how well that function must work in a specific context.
 
   - id: 2
+    hint: >-
+      Take one concrete function, such as search. Can its response-time target be evaluated without deciding which searches and operating conditions matter?
     difficulty: basic
     bloom: understand
     question: "Why is the phrase non-functional requirement potentially misleading?"
@@ -39,6 +41,8 @@ cards:
       The distinction is about when the quality shows up and who feels it first, not about whether the quality matters to users or the business.
 
   - id: 5
+    hint: >-
+      Imagine retrofitting independent failure recovery into a system built around one shared process. Trace the changes beyond the original feature code.
     difficulty: intermediate
     bloom: understand
     question: "Why are quality attributes described as load-bearing walls?"
@@ -48,6 +52,8 @@ cards:
       You can usually rearrange features later. Retrofitting high availability, testability, or security into an architecture that works against those qualities is closer to structural renovation.
 
   - id: 6
+    hint: >-
+      Two teams report the same response time, but one used a single request and the other a busy production workload. What must your requirement fix so the results are comparable?
     difficulty: intermediate
     bloom: apply
     question: "Write the shape of a good performance quality requirement."
@@ -57,6 +63,8 @@ cards:
       Performance numbers are only meaningful when tied to a workload, request type, data size, and percentile or threshold.
 
   - id: 7
+    hint: >-
+      A service reports that it was available “99.9% of the time.” Identify the unanswered questions before accepting that claim for checkout users.
     difficulty: intermediate
     bloom: apply
     question: "What makes an availability requirement measurable?"
@@ -66,6 +74,8 @@ cards:
       Availability requirements often use uptime, successful-response rate, mean time to repair, mean time between failures, or failover time.
 
   - id: 8
+    hint: >-
+      Imagine adding a new input format. What evidence in the code diff would show whether existing processing components were insulated from the change?
     difficulty: advanced
     bloom: analyze
     question: "Why can a structural boundary be a valid measure for a design-time quality?"
@@ -84,6 +94,8 @@ cards:
       A system is hard to test when important states cannot be triggered or when failures happen silently.
 
   - id: 10
+    hint: >-
+      A provider rarely times out during ordinary development. Describe what a useful authorization test must be able to arrange and observe on demand.
     difficulty: intermediate
     bloom: apply
     question: "Give a testability requirement for payment authorization."
@@ -93,6 +105,8 @@ cards:
       The requirement names important scenarios and removes an external dependency that would make tests slow, flaky, or impossible to force into rare states.
 
   - id: 11
+    hint: >-
+      Two services both parse a timestamp successfully. Could they still schedule the same appointment at different moments?
     difficulty: intermediate
     bloom: understand
     question: "What makes interoperability more than just sending data?"
@@ -120,6 +134,8 @@ cards:
       Synergies are valuable because one design investment pays off across more than one quality attribute.
 
   - id: 14
+    hint: >-
+      Imagine evaluating two systems that both use the named technology. What missing acceptance criterion would let you compare their success?
     difficulty: intermediate
     bloom: analyze
     question: "Why is 'Use Kafka for scalability' a specification smell?"
@@ -129,6 +145,8 @@ cards:
       Kafka may be a good design choice, but it cannot be evaluated until the actual quality requirement is clear.
 
   - id: 15
+    hint: >-
+      Ask stakeholders to choose between a faster design and one that survives more failures. What information would make that choice defensible?
     difficulty: advanced
     bloom: evaluate
     question: "How should an architect respond when stakeholders say the system should maximize all quality attributes?"
@@ -156,6 +174,8 @@ cards:
       This checklist keeps the requirement solution-neutral while still giving architects enough detail to design, test, and negotiate trade-offs.
 
   - id: 18
+    hint: >-
+      Compare two proposals for the same change even when neither has a pass/fail limit. Can the stated goal still give a reason to prefer one?
     difficulty: advanced
     bloom: evaluate
     question: "When is a softer quality goal still useful?"

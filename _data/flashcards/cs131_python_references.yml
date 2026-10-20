@@ -5,6 +5,8 @@ active: true
 cards:
   # Taught / practice evidence: Essential Python handout pp. 9, 20–24; Homework PYTHON2–3; Quiz 1 Problem 2A–D; F23 Midterm Problem 1, pp. 2–3.
   - id: cs131-v2-python-card-track-container-slot
+    hint: >-
+      Draw the outer list separately from entry’s inner list. Follow right to its object before changing the slot selected by left[0].
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 45
@@ -23,6 +25,8 @@ cards:
 
   # Taught / practice evidence: Essential Python handout pp. 9, 20–24; Homework PYTHON2–3; Quiz 1 Problem 2A–D; F23 Midterm Problem 1, pp. 2–3.
   - id: cs131-v2-python-card-repair-reset-procedure
+    hint: >-
+      A replacement created inside a function needs a route back to the caller. Decide who receives that value and which name must be rebound there.
     difficulty: intermediate
     bloom: create
     estimated_seconds: 45
@@ -34,6 +38,8 @@ cards:
 
   # Taught / practice evidence: Essential Python handout pp. 9, 20–24; Homework PYTHON2–3; Quiz 1 Problem 2A–D; F23 Midterm Problem 1, pp. 2–3.
   - id: cs131-v2-python-card-method-result-alias
+    hint: >-
+      Add an arrow for the method’s returned value to a drawing of obj and its entries. Does returning that value create another list?
     difficulty: basic
     bloom: understand
     estimated_seconds: 30
@@ -45,6 +51,8 @@ cards:
 
   # Taught / practice evidence: Essential Python handout pp. 9, 20–24; Homework PYTHON2–3; Quiz 1 Problem 2A–D; F23 Midterm Problem 1, pp. 2–3.
   - id: cs131-v2-python-card-create-two-observable-results
+    hint: >-
+      Separate the required effect on the argument from the required returned value. Check whether the return expression changes the existing outer list or builds another one.
     difficulty: intermediate
     bloom: apply
     estimated_seconds: 30
@@ -62,6 +70,8 @@ cards:
 
   # Taught / practice evidence: Essential Python handout pp. 9, 20–24; Homework PYTHON2–3; Quiz 1 Problem 2A–D; F23 Midterm Problem 1, pp. 2–3.
   - id: cs131-python-card-holder-local
+    hint: >-
+      For each augmented assignment, identify its target: a local name or a slot in a shared dictionary. Follow the caller’s references after the call ends.
     difficulty: intermediate
     question: |-
       In this Python code, explain why the number stays unchanged while the holder changes.
@@ -84,12 +94,16 @@ cards:
     difficulty: intermediate
     question: A Python function runs text = text + "!" and returns nothing. After mark(label), why is the caller’s label unchanged?
       Give a repair that makes the new string available to the caller.
+    hint: >-
+      Trace where concatenation stores its result, separating the parameter from the caller’s name. Decide how the caller could receive and retain a replacement value.
     answer: Return text + "!" from mark and assign label = mark(label) at the call site.
     explanation: Strings cannot be mutated. The concatenation creates a new string; local rebinding alone does not change
       the caller’s binding.
 
   # Taught / practice evidence: Essential Python handout pp. 9, 20–24; Homework PYTHON2–3; Quiz 1 Problem 2A–D; F23 Midterm Problem 1, pp. 2–3.
   - id: cs131-python-card-two-parameter-child
+    hint: >-
+      Draw the outer lists after a is rebound, but keep their child references. Then trace b.append and a[0].append on the particular objects each reaches.
     difficulty: advanced
     question: |-
       Predict the output of this Python code and explain why a locally rebound parameter still changes input.

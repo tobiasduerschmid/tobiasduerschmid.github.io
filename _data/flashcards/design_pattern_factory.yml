@@ -13,6 +13,8 @@ cards:
     answer: "**Product** (interface), **Concrete Product** (implementation), **Creator** (declares factory method + business logic), **Concrete Creator** (implements factory method)."
     explanation: "The Creator may contain a high-level workflow (a Template Method) that calls the factory method. Subclasses provide the concrete product without the Creator knowing which type it gets."
   - id: 3
+    hint: >-
+      In the pizza examples, compare varying the pizza created by a store with selecting matching dough and sauce. Locate the decision that must vary in each case.
     difficulty: intermediate
     question: "Factory Method vs. Abstract Factory: when to use which?"
     answer: "Factory Method: vary a creator's creation hook through subclasses. Abstract Factory: supply a factory object responsible for a coordinated product family."
@@ -28,6 +30,8 @@ cards:
     answer: "Abstract Factory is often implemented using Factory Methods: concrete factories override operations such as `createDough()` and `createSauce()`."
     explanation: "Those overrides choose products in one family. This is not mandatory: a prototype-based Abstract Factory may clone configured product instances instead."
   - id: 6
+    hint: >-
+      Add a new ingredient category to a factory that already supplies several regional families. Trace which existing contracts and implementations must respond.
     difficulty: advanced
     question: "What is the 'Rigid Interface' drawback of Abstract Factory?"
     answer: "Adding a new product type to the family requires changing the interface and modifying *every* concrete factory."

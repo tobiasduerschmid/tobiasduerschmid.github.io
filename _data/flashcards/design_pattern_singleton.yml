@@ -8,6 +8,8 @@ cards:
     answer: "(1) Private constructor, (2) private static field holding the instance, (3) public static `getInstance()` method as sole access point."
     explanation: "A private constructor blocks ordinary external constructor calls; the field and accessor share the instance. These are implementation choices, not language-independent requirements: GoF also describes controlled subclassing, and Python can intercept construction."
   - id: 2
+    hint: >-
+      Treat “how many objects exist” and “how a caller obtains one” as two separate design questions. Must one mechanism answer both?
     difficulty: intermediate
     question: "Why is the Singleton pattern controversial in modern practice?"
     answer: "It bundles a lifetime policy with global access. Creating one ordinary object and injecting it can separate those decisions; no DI framework is required."
@@ -18,6 +20,8 @@ cards:
     answer: "The tendency to overuse Singleton for easy global access, creating high coupling and unclear dependencies — a form of the 'Hammer and Nail' syndrome."
     explanation: "Using Singleton just for convenience rather than a genuine 'exactly one instance' constraint leads to a hard-to-maintain design where dependencies are invisible."
   - id: 4
+    hint: >-
+      Describe a concrete failure that a second instance would cause, then check how a test would supply a substitute and end its lifetime.
     difficulty: advanced
     question: "When is the Singleton pattern acceptable in modern code?"
     answer: "When both a well-defined single-instance constraint and a global access point are justified, and their coupling and lifecycle costs are acceptable."

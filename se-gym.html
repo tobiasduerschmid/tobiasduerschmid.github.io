@@ -3453,9 +3453,16 @@ layout: sebook
         div.className = 'workout-flashcard';
 
         var sourceHtml = '<span class="workout-source-badge flashcard-badge">' + escapeHtml(card.source) + '</span>' + difficultyBadgeHtml(c);
+        const hintId = 'workout-flashcard-hint-' + workoutIndex;
+        const hintHtml = c.hint
+          ? '<div class="flashcard-hint-area">' +
+            '<button class="flashcard-hint-toggle" type="button" aria-expanded="false" aria-controls="' + hintId + '">Hint</button>' +
+            '<div class="flashcard-hint" id="' + hintId + '" hidden>' + c.hint + '</div></div>'
+          : '';
 
         div.innerHTML = sourceHtml +
           '<div class="flashcard-question">' + c.question + '</div>' +
+          hintHtml +
           '<div class="flashcard-answer-container hidden">' +
           '<div class="flashcard-answer">' + c.answer + '</div>' +
           '<div class="flashcard-explanation">' + c.explanation + '</div>' +
@@ -3480,6 +3487,15 @@ layout: sebook
         var shortcutHint = div.querySelector('.flashcard-shortcuts-hint');
         var correctBtn = div.querySelector('.correct-btn');
         var incorrectBtn = div.querySelector('.incorrect-btn');
+        const hintButton = div.querySelector('.flashcard-hint-toggle');
+        if (hintButton) {
+          const hint = div.querySelector('.flashcard-hint');
+          hintButton.addEventListener('click', function () {
+            hint.hidden = !hint.hidden;
+            hintButton.setAttribute('aria-expanded', String(!hint.hidden));
+            hintButton.textContent = hint.hidden ? 'Hint' : 'Hide Hint';
+          });
+        }
 
         showBtn.addEventListener('click', function () {
           answerContainer.classList.remove('hidden');

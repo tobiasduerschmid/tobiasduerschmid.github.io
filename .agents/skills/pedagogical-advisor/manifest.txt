@@ -75,6 +75,7 @@ procedures/20_ai-learning-support-and-pilots.md
 references/ai-learning-evidence-2026.md
 references/bibliography.md
 references/computing-foundations.md
+references/content-types/flashcards.md
 references/content-types/sebook-chapter.md
 references/cs-ai-evidence-2026.md
 references/cs-review-evidence-2026.md

@@ -24,6 +24,8 @@ cards:
     explanation: "The reader recognizes the plan first, then only inspects details that might differ from the expected pattern."
 
   - id: 4
+    hint: >-
+      Read a test’s setup and expected result before its implementation. What prediction about the feature can you now check in the production code?
     difficulty: basic
     bloom: apply
     question: "How do tests act as code beacons?"
@@ -38,6 +40,8 @@ cards:
     explanation: "The assertion is both a runtime check and a comprehension cue."
 
   - id: 6
+    hint: >-
+      Suppose the class later changes its instance-management policy. Which readers benefit from the current name, and which callers might depend on a detail that should be replaceable?
     difficulty: advanced
     bloom: evaluate
     question: "What is the Singleton naming paradox for code beacons?"
@@ -52,6 +56,8 @@ cards:
     explanation: "Modern code review is not just source reading. It is hypothesis formation across the whole change artifact."
 
   - id: 8
+    hint: >-
+      Compare recognizing a familiar accumulator loop with tracking every intermediate value. When would the shorter explanation cease to be trustworthy?
     difficulty: basic
     bloom: evaluate
     question: "Why do experts avoid exhaustive tracing when code beacons are reliable?"

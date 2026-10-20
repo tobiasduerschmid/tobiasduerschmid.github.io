@@ -45,6 +45,8 @@ cards:
     explanation: "Notice the partition: *what*, *how*, and *process*. The Product Owner remains accountable for backlog ordering but may delegate the work, including to someone who also serves as Scrum Master. Developers decide how to turn selected work into an Increment. Distinguish accountability from who performs a task."
 
   - id: 7
+    hint: >-
+      When the team hits an obstacle, compare helping the team resolve it with deciding everyone’s tasks for them. Which preserves responsibility for the work?
     difficulty: basic
     bloom: understand
     question: "Why is the Scrum Master typically described as a **servant-leader** rather than a project manager?"
@@ -52,6 +54,8 @@ cards:
     explanation: "If a Scrum Master starts assigning work or running status reports for upper management, they have collapsed the team's self-management. The team — not the Scrum Master — owns *how* the Sprint Goal is delivered. The Scrum Master's job is to protect the conditions that make that ownership possible."
 
   - id: 8
+    hint: >-
+      Imagine a team waiting on an outside specialist for every release and on a manager for every task assignment. What capabilities are missing?
     difficulty: intermediate
     bloom: understand
     question: "What two characteristics most distinguish a Scrum Team from a traditional team, and what does each protect against?"
@@ -101,6 +105,8 @@ cards:
     explanation: "Adaptation is *not* scope creep. It is a deliberate course correction driven by evidence. Inspection (the team examined the data) and Transparency (the data was visible) were preconditions; adaptation is the pillar that turns the visibility and observation into actual change."
 
   - id: 15
+    hint: >-
+      Ask what decision the Developers should be able to make after the meeting. Does reporting upward supply that decision?
     difficulty: intermediate
     bloom: apply
     question: "A new team lead wants to use the Daily Scrum as a status meeting where each Developer briefs them on what they did yesterday. What is wrong with this framing, and what is the Daily Scrum actually for?"
@@ -108,6 +114,8 @@ cards:
     explanation: "Status reporting *can* happen as a side effect of transparency (a visible board, a shared Sprint Backlog) but it is not the event's purpose. The Daily Scrum is a 15-minute *planning event* for the people doing the work, not a ceremony for managers."
 
   - id: 16
+    hint: >-
+      Compare learning whether the product meets stakeholder needs with learning how the team can work more effectively. Who needs to participate in each conversation?
     difficulty: advanced
     bloom: analyze
     question: "How does the **Sprint Review** differ from the **Sprint Retrospective** in audience, subject of inspection, and outcome?"
@@ -115,6 +123,8 @@ cards:
     explanation: "The two events answer different questions. Review asks *'are we building the right thing?'* (a product question, with stakeholders in the room). Retrospective asks *'are we building it the right way?'* (a process question, behind closed doors). Conflating them tends to crowd out the harder process conversation, because product feedback is more concrete and easier to discuss."
 
   - id: 17
+    hint: >-
+      Imagine pressure to ship sooner conflicting with a team impediment or quality concern. How would combining the responsibilities affect that conversation?
     difficulty: advanced
     bloom: analyze
     question: "Why is it widely considered bad practice for one person to be **both** the Product Owner *and* the Scrum Master, even though the 2020 Scrum Guide does not formally prohibit it?"
@@ -122,6 +132,8 @@ cards:
     explanation: "The argument against combining them is practitioner consensus, not Guide canon. The two accountabilities encode the real tension between *what to build* and *how to build it sustainably*; merging them removes the friction that protects long-term capacity."
 
   - id: 18
+    hint: >-
+      Compare a Sprint that was overplanned with one blocked by an external dependency. What would you need to learn to choose a useful next step?
     difficulty: advanced
     bloom: evaluate
     question: "How should Scrum treat a Sprint that ends without an Increment meeting the Definition of Done?"

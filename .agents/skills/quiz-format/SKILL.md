@@ -23,6 +23,10 @@ For longer-form material:
 
 Read these only when the task warrants — drafting your first quiz from scratch, debating whether a feedback string is good enough, or auditing an existing quiz file. For everyday tweaks the SKILL.md alone is enough.
 
+## Companion flashcards
+
+Flashcards use `cards:` with `question`, `answer`, and `explanation`, not the quiz `questions:` schema below. When generating or revising companion flashcards, read the pedagogical-advisor [flashcard hint guide](../pedagogical-advisor/references/content-types/flashcards.md). Their optional Markdown `hint` is help available before the answer: ground it in inspected, easier SEBook/tutorial concepts; leave meaningful reasoning to the student; omit it when a basic recall clue would reveal the answer. Do not copy answer explanations into hints, or assume flashcard hint support exists for quiz or tutorial-step questions.
+
 ## Schema cheat sheet
 
 ```yaml

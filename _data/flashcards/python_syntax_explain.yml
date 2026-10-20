@@ -3,6 +3,8 @@ description: "Predict Python results and explain the bindings, shared objects, a
 active: true
 cards:
   - id: python-course-card-super-order
+    hint: >-
+      Write the method resolution order for the actual Service receiver. Locate Fast in that order before deciding where its super lookup continues.
     difficulty: intermediate
     question: |-
       In this Python code, does super() inside Fast go directly to Storage? Predict the output.
@@ -22,6 +24,8 @@ cards:
     explanation: Another branch of a diamond can come next. Inspect the receiving class's __mro__; directly naming a base bypasses cooperative lookup.
 
   - id: python-course-card-purity-boundary
+    hint: >-
+      Draw the input list and the target of append. Compare the two versions by whether a caller already has a reference to that target.
     difficulty: intermediate
     question: |-
       For a list of integers passed to this Python function, explain why its local mutation has no external effect. What changes if the slice is removed?
@@ -36,6 +40,8 @@ cards:
     explanation: Local assignment syntax alone does not establish ownership. Trace how the list was obtained, including whether a shallow copy still shares a mutated child.
 
   - id: python-course-card-abstract-versus-error
+    hint: >-
+      Consider two separate events: constructing an instance and calling read on an instance. Identify which mechanism has enough information to object at each event.
     difficulty: intermediate
     question: |-
       In this Python code, compare Plain and Contract: when does each reject its incomplete implementation?
@@ -175,6 +181,8 @@ cards:
     answer: "Gets the first command-line argument. `sys.argv[0]` is the script name itself (like C's `argv[0]`). If no argument is provided, this raises an `IndexError`."
 
   - id: 13
+    hint: >-
+      Follow the two names after each assignment instead of changing the integer object in place. Which reference, if any, still reaches the initial value?
     difficulty: intermediate
     question: |
       Predict the output of this Python code. Which objects change, and which names are rebound?
@@ -188,6 +196,8 @@ cards:
     answer: "Prints `1024 True`. Integers are immutable objects. Incrementing samples binds that name to a different integer; assigning None rebinds it again. archived still refers to the original integer, so that object remains reachable."
 
   - id: 14
+    hint: >-
+      For every attribute access, check the instance first and then the class. Distinguish an assignment that creates an instance attribute from a method call on a list found through lookup.
     difficulty: advanced
     question: |
       Predict the output of this Python code and distinguish attribute assignment from member mutation.
@@ -206,6 +216,8 @@ cards:
     answer: "Prints `roof south ['rain']`. first.zone shadows the class default; second still looks up the current class value. Neither instance owns an alerts attribute, so both find and share the class list. append mutates that list rather than creating an instance attribute."
 
   - id: 15
+    hint: >-
+      Draw the repeated references before copying, then copy the graph while keeping a record of objects already copied. Follow both saved slots after the append.
     difficulty: advanced
     question: |
       Predict the output of this Python code. Why do the two copied slots still refer to the same inner list?
@@ -220,6 +232,8 @@ cards:
     answer: "Prints `[[5], [5]] [[5, 8], [5, 8]] True`. Deepcopy creates one independent inner list and remembers that both original slots referred to it. The copied graph preserves that sharing without sharing its mutable samples with live."
 
   - id: 16
+    hint: >-
+      Track the receiver at each call site, including super(). Which expressions, if any, construct an additional object? Then record the changes to each object’s total.
     difficulty: advanced
     question: |
       Predict the output of this Python code. Does the super call operate on a second object?
@@ -244,6 +258,8 @@ cards:
     answer: "Prints `3`. RainCounter inherits the initializer. The inherited sample method receives the RainCounter instance and dispatches to its tick override. super().tick() changes the same instance by 1, then the override adds 2; no second Counter is constructed."
 
   - id: 17
+    hint: >-
+      Count independent deepcopy operations and give each its own record of previously copied objects. Compare the two slots only within the appropriate operation.
     difficulty: advanced
     question: |
       Predict the output of this Python code. How does choosing one copy operation or two affect sharing?
@@ -258,6 +274,8 @@ cards:
     answer: "Prints `True False`. One deepcopy operation remembers objects already copied, so together preserves the two references to one copied list. The two independent calls use separate copy tracking and produce separate lists for apart. All of these copied inner lists are independent of samples."
 
   - id: 18
+    hint: >-
+      Trace which constructor calls take the supplied-object branch and which create an empty list. Follow second’s reference before interpreting the append through first.
     difficulty: advanced
     question: |
       Predict the output of this Python code. Does using None as the default prohibit all sharing?
@@ -275,6 +293,8 @@ cards:
       ```
     answer: "Prints `[6] []`. The None default prevents accidental reuse of an omitted list argument. This constructor deliberately keeps any supplied list, so the first two batches share supplied. The third batch creates its own list. To forbid that deliberate sharing too, the constructor would need a different ownership contract and an appropriate copy."
   - id: 19
+    hint: >-
+      For each +=, ask whether that object supports an in-place change or requires a replacement value. Then follow the saved alias rather than only the reassigned name.
     difficulty: intermediate
     question: |
       Predict the output of this Python code and explain why the two aliases differ.
@@ -290,6 +310,8 @@ cards:
       ```
     answer: "Prints `dark ['dark', 'flat']`. A string cannot change, so `label += \" frame\"` builds a new string and rebinds only `label`. A list supports in-place extension, so `frames += [\"flat\"]` mutates the object that `saved_frames` also names. The same `+=` spelling has different effects on immutable and mutable objects."
   - id: 20
+    hint: >-
+      Identify the receiver of append. Is this operation replacing a tuple slot or changing the object already reached through it?
     difficulty: intermediate
     question: |
       Predict the output of this Python code. Does the tuple prevent the change?
@@ -300,6 +322,8 @@ cards:
       ```
     answer: "Prints `(['dust'], 'north')` without an error. A tuple fixes which objects occupy its slots, not whether those objects can change; `append` mutates the list and never assigns to the tuple. By contrast, `batch[0] += [\"dust\"]` would extend the list and then raise `TypeError` when it tried to store the result back into the tuple's slot."
   - id: 22
+    hint: >-
+      Track the list being traversed separately from the list being shortened. Each loop step takes its next item from the traversal object.
     difficulty: intermediate
     question: |
       Predict the output of this Python code. Why does this loop remove every `3`?
@@ -312,6 +336,8 @@ cards:
       ```
     answer: "Prints `[7, 9]`. `readings[:]` makes a shallow copy, so the loop steps through a list that never changes while `remove` edits the original. Looping over `readings` itself would print `[7, 3, 9]`: each removal shifts later items into positions the loop has already visited."
   - id: 23
+    hint: >-
+      Record two effects for each sorting operation: its returned value and any change to temps. Evaluate the print arguments from left to right.
     difficulty: intermediate
     question: |
       Predict both lines this Python code prints.
@@ -322,6 +348,8 @@ cards:
       ```
     answer: "Prints `[1, 2, 3] [3, 1, 2]`, then `None [1, 2, 3]`. `sorted()` returns a new list and leaves `temps` alone. `temps.sort()` reorders `temps` in place and returns `None`, the usual sign of a mutating method. The second argument is evaluated after that call, so it shows the sorted list."
   - id: 24
+    hint: >-
+      Expand += into a read followed by a binding update. Determine which scope supplies that binding with and without the declaration.
     difficulty: intermediate
     question: |
       Predict the output of this Python code. What would happen without the `global` line?
@@ -338,6 +366,8 @@ cards:
       ```
     answer: "Prints `2`. Without `global count`, the assignment in `count += 1` would make `count` local to the whole function, and reading it before it has a value would raise `UnboundLocalError`. The declaration makes the function rebind the module-level name instead. Returning the new value is often clearer than relying on a global."
   - id: 25
+    hint: >-
+      Trace only as far as each Boolean operator needs to decide. Also check whether Python returns a Boolean conversion or one of the operand values.
     difficulty: intermediate
     question: |
       Predict the output of this Python code. Why is there no `ZeroDivisionError`?
@@ -355,6 +385,8 @@ cards:
       ```
     answer: "Prints `0 2 -2`. `round()` resolves exact halves to the nearest even integer, for negative values too. C++'s `std::round` rounds halves away from zero and would give 1, 2, and -3."
   - id: 27
+    hint: >-
+      Test each adjacent comparison separately while keeping x’s numeric value. Do not feed the first comparison’s Boolean into the second comparison.
     difficulty: intermediate
     question: |
       Predict the output of this Python code.
@@ -364,6 +396,8 @@ cards:
       ```
     answer: "Prints `True False`. A chained comparison checks each adjacent pair and combines the results with `and`: `1 < x and x < 10` is true, while `10 > x and x > 8` is false. C++ would instead compare the Boolean result of the first comparison with the third operand."
   - id: 28
+    hint: >-
+      Count how often the empty-list expression is evaluated. Compare that with creating one list and assigning its reference to several keys.
     difficulty: intermediate
     question: |
       Predict the output of this Python code. How would `dict.fromkeys` change it?
@@ -376,6 +410,8 @@ cards:
 
   # Source concepts: CS131 course archive: Homework PYTHON1; Data, Function, OOP, and Control Palooza notes; public finals on closures, iterators, and exceptions.
   - id: python-course-card-local-before-assignment
+    hint: >-
+      Determine which scope owns score throughout the function before tracing its first statement. An assignment later in the body affects that scope decision.
     difficulty: intermediate
     question: |-
       Why does this Python code raise UnboundLocalError instead of printing the global value?
@@ -391,6 +427,8 @@ cards:
     explanation: Returning a computed result or declaring a deliberate global update are different repairs with different interfaces.
 
   - id: python-course-card-variadic-child
+    hint: >-
+      Separate the newly formed argument tuple from the objects referenced by its slots. Follow slot 0 to the receiver of append.
     difficulty: intermediate
     question: |-
       Predict the output of this Python code. Does the new argument tuple copy its elements?
@@ -407,6 +445,8 @@ cards:
     explanation: The tuple is new, but its first member refers to the caller’s list. The named enabled parameter is keyword-only.
 
   - id: python-course-card-classmethod
+    hint: >-
+      Follow the class used at the call site into cls. The method’s defining class and the class supplied to this invocation need not be identical.
     difficulty: basic
     question: |-
       Predict the output of this Python code and explain what cls refers to.
@@ -424,6 +464,8 @@ cards:
     explanation: A classmethod receives a class receiver, even when its code was defined in a base class. An instance method receives an instance as self.
 
   - id: python-course-card-finally-return
+    hint: >-
+      Keep the return value pending while tracing the actions required to leave the try/except construct. Only then return to the outer print.
     difficulty: intermediate
     question: |-
       Predict the order of the lines this Python code prints.
@@ -442,6 +484,8 @@ cards:
     explanation: The matching handler selects its return value, but finally runs before that return reaches the caller.
 
   - id: python-course-card-coroutine-task
+    hint: >-
+      Separate creating a description of asynchronous work, scheduling it, and waiting for its result. Label each of the assignments and awaits with its role.
     difficulty: intermediate
     question: |-
       In this Python script, which assignment schedules a task? Does creating pending alone execute fetch?
@@ -460,6 +504,8 @@ cards:
     explanation: Awaiting a coroutine can run it; merely constructing and discarding one does not. Await task completion so errors and results are handled.
 
   - id: python-course-card-runtime-types
+    hint: >-
+      Compare asking whether an object belongs to a class hierarchy with asking for its exact class. Apply both questions to the relationship between bool and int.
     difficulty: intermediate
     question: |-
       Predict both booleans this Python code prints. Which check fits an interpreter that must reject booleans as integers?

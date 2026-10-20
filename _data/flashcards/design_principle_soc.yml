@@ -27,6 +27,8 @@ cards:
     explanation: "Notice that all five benefits are about how the code behaves *over time* and *across people* — not how it runs. SoC is programming integrated over time."
 
   - id: 5
+    hint: >-
+      Separating billing and storage into different files still allows billing to depend on the database’s row format. Which design question has been addressed, and which remains?
     difficulty: intermediate
     question: "What is the difference between SoC and Information Hiding?"
     answer: "**SoC** decides *which* aspects belong in separate modules. **Information Hiding** decides *how* each module protects its internal design decisions behind a stable interface."
@@ -39,6 +41,8 @@ cards:
     explanation: "SoC is broader: it applies at every scale (functions, classes, modules, services, architectures, even organizations). SRP is a class-scoped specialization."
 
   - id: 7
+    hint: >-
+      Run the Monopoly rules without opening a window. Then add a second display. Which side should need to learn about the new presentation?
     difficulty: intermediate
     question: "A Monopoly game separates its UI from its game rules. What are the two layers called, and which one knows about the other?"
     answer: "**Presentation Layer** (UI: terminal, web, 3D casino) and **Application Layer** (game rules, board, turns). The Application Layer has **no idea** a UI exists; it only exposes getters, commands, and change-callbacks. The Presentation Layer depends on the Application Layer, not the other way around."
@@ -63,12 +67,16 @@ cards:
     explanation: "A common architectural smell. The fix is to extract Coordinating Controllers, view-models, and services — each handling a single concern, communicating through narrow interfaces."
 
   - id: 11
+    hint: >-
+      Take one function that both computes a price and renders it. List plausible changes to each part before deciding where a boundary belongs.
     difficulty: advanced
     question: "Give a five-step method to apply SoC when structuring (or restructuring) a piece of code."
     answer: "(1) Enumerate all concerns; (2) Identify axes of change; (3) Draw narrow seams between concerns; (4) Name each boundary clearly; (5) Verify by simulating change — ask 'if X changes, how many files must I touch?'"
     explanation: "The last step is the most important — SoC is validated by how change actually flows through the system, not by how pretty the module list looks."
 
   - id: 12
+    hint: >-
+      Compare a disposable script with a long-lived application expected to gain several interfaces. Which costs of separation would each actually recover?
     difficulty: advanced
     question: "When is applying SoC a BAD idea?"
     answer: "For throwaway scripts, single-variant systems that will never evolve, premature abstractions of a domain you don't yet understand, and hot inner loops where indirection has measurable cost."
@@ -87,6 +95,8 @@ cards:
     explanation: "The downward-only rule is what lets you swap layers — e.g., replace Postgres with MongoDB by rewriting only the Data Access Layer — without touching the layers above."
 
   - id: 15
+    hint: >-
+      A single class handles persistence, billing, and screen layout but all its fields are private. Which independent change requests still reach the same class?
     difficulty: basic
     question: "True or false: 'Separation of Concerns means making everything private.'"
     answer: "**False.** Visibility modifiers are one small tool. Private fields inside a God Class still give you a God Class. SoC is about *decomposition* of aspects, not about access keywords."

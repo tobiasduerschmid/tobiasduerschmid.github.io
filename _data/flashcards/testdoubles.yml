@@ -21,6 +21,8 @@ cards:
     explanation: "The five live on two axes: which direction of data flow they control (input vs output) and how verification is expressed (recorded calls inspected afterward vs expectations configured beforehand). Knowing the full taxonomy keeps you from reaching for a Mock when a Stub or Spy is closer to what you actually need."
 
   - id: 4
+    hint: >-
+      Draw the direction of the information that must be controlled: from the gateway into the tested unit, or from the tested unit out to the gateway?
     difficulty: intermediate
     question: "You need to drive the SUT down its error-handling branch — the one where the payment gateway returns `Status.TIMEOUT`. Which double, and why?"
     answer: "A **Stub**. You need to control what the SUT *receives* from the gateway (indirect input) to force the path. You don't need to observe what the SUT sent."
@@ -39,18 +41,24 @@ cards:
     explanation: "Fakes are ideal when you want realistic behavior at high speed — write a row, read it back, query by index — without standing up the real dependency. They cost more to build but pay back across many tests. Stubs are cheap and case-specific; Fakes are richer and scenario-general."
 
   - id: 7
+    hint: >-
+      Imagine combining two internal steps while preserving the promised result. Would these assertions accept that refactoring?
     difficulty: advanced
     question: "A junior engineer asserts `mock.method.assert_called_once_with(...)` after every line of the SUT's body. Diagnose."
     answer: "The test has crossed from *checking behavior* to *encoding the implementation*. Any refactor that changes how the SUT calls its collaborators breaks the test — even when user-visible behavior is preserved. The test is testing the mock, not the system."
     explanation: "This is the most common Mock anti-pattern. Interaction checks are useful when the interaction *is* the contract ('exactly one receipt email after payment succeeds') and harmful when they merely freeze the current implementation's wiring. The remedy is usually to assert on the SUT's outputs or persisted state instead, reserving interaction assertions for the cases where collaboration is the behavior."
 
   - id: 8
+    hint: >-
+      Separate the required facts about the calls from their unspecified ordering. When will all the information needed for your comparison be available?
     difficulty: advanced
     question: "Your SUT calls `notifier.send(channel, body)` four times in a single workflow, in a data-dependent order. You want to assert each call had the right channel but can't predict the order. Which double fits best?"
     answer: "A **Spy**. Let the SUT run, retrieve the recorded calls, sort or group them, and assert each. A Mock with strict-order expectations would fail on the first reorder; a Spy collects everything for flexible after-the-fact assertion."
     explanation: "Procedural verification with a Spy is well suited when you cannot predict all attributes of the interactions up front or when assertions need richer logic (grouping, sorting, set comparisons). The cost is that errors are detected at assertion time, not the moment they happen — but you trade that for flexibility the Mock model lacks."
 
   - id: 9
+    hint: >-
+      Follow this particular execution path. What behavior, if any, must the supplied dependency perform?
     difficulty: advanced
     question: "Pick a test double for: *'My SUT's constructor requires a `loader`, but this behavior never calls `loader.load_config()`.'*"
     answer: "A **Dummy** suffices — the loader satisfies the signature but is never used in this path. If the SUT *does* read fields from `loader.load_config()`, escalate to a **Stub** returning a specific config."
@@ -63,6 +71,8 @@ cards:
     explanation: "This is the chapter's four-step lifecycle. The contrast with mocks is the *placement of the verification*: spies make it explicit in the test body (visible, flexible, late); mocks configure expectations in setup, then verify interactions during or after execution. Both are valid; each suits a different shape of test."
 
   - id: 11
+    hint: >-
+      Ignore the library class name and trace each object’s role: what information enters the controller, and what evidence is inspected afterward?
     difficulty: advanced
     question: |
       A controller test does this:
@@ -81,6 +91,8 @@ cards:
     explanation: Classify the use, not the class name. Configured return values serve the Stub role; post-execution call assertions serve the Spy role; expectations configured before exercising the SUT serve the Mock Object role. The same framework can support several roles.
 
   - id: 12
+    hint: >-
+      Draw the name binding created in the importing module. At the moment of the call, which namespace is used to resolve the name?
     difficulty: advanced
     question: |
       Module `app/report.py` does `from services.users import fetch_user` and then calls `fetch_user(user_id)`. Which `patch()` target intercepts the call from a test of `app.report` — `"services.users.fetch_user"` or `"app.report.fetch_user"`? Why?
@@ -88,6 +100,8 @@ cards:
     explanation: "**Patch where the SUT looks up the name, not where it was defined.** This is the #1 Python mocking pitfall. The same principle applies to JavaScript CommonJS (`const { y } = require('x')` creates a similar local binding) and to Java static imports — names live in the namespace of the module that introduces them."
 
   - id: 13
+    hint: >-
+      Compare returning an exception object with raising one. Which event transfers control to the handler?
     difficulty: advanced
     question: |
       Your SUT catches `ConnectionError` and returns a fallback value. Sketch the `Mock()` configuration that drives the SUT down that branch deterministically. Why does setting `return_value` not work?
@@ -102,6 +116,8 @@ cards:
     explanation: "`side_effect` is `Mock`'s lever for behavior beyond returning a canned value: set it to an exception class to raise; set it to an iterable to return different values across consecutive calls; set it to a callable to compute the return value from the arguments. `return_value` and `side_effect` answer different test-design needs and are *not* interchangeable."
 
   - id: 14
+    hint: >-
+      Identify which API your application owns and which can change independently. Where could one boundary absorb the external API change?
     difficulty: advanced
     question: |
       A team's tests directly mock `requests.get` in twelve different modules. A `requests` version upgrade just broke 30 of those tests. What's the structural fix — and what's the principle?
@@ -109,6 +125,8 @@ cards:
     explanation: "When tests depend on a third-party's API directly, every library upgrade can ripple through the suite. The Adapter pattern (named in design-patterns literature) flips the dependency direction: the codebase depends on an interface the team controls, and tests double that interface. The third-party stays invisible to the test suite."
 
   - id: 15
+    hint: >-
+      List the observable promises shared by both repositories, including failure behavior. How could the same examples check each implementation?
     difficulty: expert
     question: |
       You use a `FakeUserRepository` (in-memory dict) for fast unit tests. The unit tests pass. Production then fails because the real `PostgresUserRepository` raises `IntegrityError` on a duplicate email, while the Fake had been raising `ValueError`. How do you keep the Fake's speed *and* defend against this drift?
@@ -116,6 +134,8 @@ cards:
     explanation: "Every Fake is a *promise* that it behaves enough like the real collaborator, and that promise can break silently. A contract test captures the behavioral expectations once and runs against both implementations, so the Fake keeps its speed while drift becomes visible the moment one side changes."
 
   - id: 16
+    hint: >-
+      Could a reader reconstruct the input that justifies the expected summary using only this test? Identify the external fact they would need.
     difficulty: advanced
     question: |
       Diagnose the test smell:

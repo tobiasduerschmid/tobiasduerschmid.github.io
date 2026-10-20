@@ -15,12 +15,16 @@ cards:
     explanation: "Order matters: jumping ahead is the most common way to lose hours. Starting in the debugger before you can reproduce the bug means the debugger has nothing to show you. Calling the bug fixed before running the test suite means you may have shipped a regression. Each step has a deliverable — a reproduction, a suspected file, a root-cause story, a passing test — and the next step depends on the previous one."
 
   - id: 3
+    hint: >-
+      Suppose the symptom disappears after your edit. What comparison would distinguish a successful fix from a run that simply never triggered the bug?
     difficulty: basic
     question: "Why does **reproducing the bug** come *before* trying to fix it? What are you trying to capture?"
     answer: "A bug you cannot reproduce is a bug you cannot debug — and cannot verify the fix for. Capture two things: the **problem environment** (OS, browser, build version, configuration) and the **problem history** (the sequence of inputs and interactions that triggered the bug)."
     explanation: "The Therac-25 case is the cautionary tale: a radiation therapy machine massively overdosed six patients in the 1980s — several fatally — triggered by an operator typing faster than the developers expected. The bug was reproducible only with the operator's actual typing speed — which the test team never matched. Mature bug-report templates ask for environment and history precisely because reproduction is load-bearing for every step that follows."
 
   - id: 4
+    hint: >-
+      After fixing a bug, imagine another developer changing the same behavior months later. What evidence from today could detect its return?
     difficulty: basic
     question: "What is **regression testing**, and how does it relate to the bug-reproduction test you wrote in step 1?"
     answer: "**Regression testing** = re-running existing tests after a code change to ensure new updates haven't broken previously-working behavior. The bug-reproduction test you wrote during debugging *becomes* a regression test once the fix lands — it stays in the suite forever to catch the same bug if it sneaks back."
@@ -39,6 +43,8 @@ cards:
     explanation: "Verbalizing forces a comparison between *what the line should do* and *what it actually does* — that comparison rarely happens silently in your head. A duck is preferable to a colleague because the duck never interrupts, never confirms your biases, and is always available. For students: prefer rubber-ducking over asking an AI for the bug, especially early in your career — the act of explaining is what builds the mental model you'll need for the next bug."
 
   - id: 7
+    hint: >-
+      For each condition, ask whether a correct program could encounter it through ordinary external input. Would removing the check change the promised input handling?
     difficulty: advanced
     question: "Compare an **assertion** (`assert x > 0`) and an **exception** (`if x <= 0: raise ValueError`). When is each appropriate?"
     answer: "**Assertion** = a programmer's claim about an invariant that should *never* be false at runtime (catches developer mistakes). Often compiled out of production builds. **Exception** = a runtime condition that *can* legitimately occur and should be handled (catches user / external mistakes). Always present."
@@ -57,12 +63,16 @@ cards:
     explanation: "When you set a breakpoint and *miss* the moment that mattered, an ordinary debugger forces you to re-run the program. A time-travel debugger lets you reverse-step within the same recorded execution. Not built into VS Code by default but available as separate tools (`rr` for native Linux binaries, GDB's `record full` + `reverse-continue`, replay-based recorders for Python and Node). The SEBook ships a [time-travel-enabled Python debugger tutorial](/SEBook/tools/python-debugging) for practice."
 
   - id: 10
+    hint: >-
+      Trace the program after the operation fails halfway through. What state does the next statement receive, and what evidence of failure remains?
     difficulty: advanced
     question: "You write `try: do_thing(); except: pass` and tell your team *'this is fault-tolerant.'* Why is this misleading?"
     answer: "A bare `except: pass` is the opposite of fault-tolerant — it **swallows every error silently** (including ones that leave the system in a partially-updated, inconsistent state) and gives no signal that anything went wrong. Real fault tolerance is *selective* handling of *known* failure modes with deliberate recovery and observability (logs, metrics, alerts, compensating transactions)."
     explanation: "Bare-except patterns hide the bug *and* leave invariants violated. For a `transfer(from, to, amount)` that's debited the source but failed to credit the destination, *not crashing* is much worse than crashing — raising an exception alone would not undo the debit either. Swallowing the failure hides the partial update; preventing it requires atomicity and rollback. The right pattern for monetary operations is an atomic transaction (both updates or neither); the right pattern for handled errors elsewhere is a narrowly-typed `except SpecificError:` with a log line and a recovery path."
 
   - id: 11
+    hint: >-
+      You have one known passing revision and one known failing revision. Which revision would you test next to eliminate the largest part of the search interval?
     difficulty: intermediate
     question: "A regression test passed two weeks ago and fails today. There are ~200 commits between the two versions and no obvious culprit in the diff. What's the right move, and why does it scale better than the alternatives?"
     answer: "**`git bisect run ./failing-test.sh`** — git performs a binary search across the commits, running the test at each midpoint, and converges on the offending commit in roughly $\\log_2(200) \\approx 8$ test runs instead of ~200. Fully automated if you have a scripted reproduction."
@@ -75,18 +85,24 @@ cards:
     explanation: "Step 4 is where good debuggers get separated from average ones. The temptation is to mark the ticket FIXED the moment the failing test goes green, but that's a single data point. Running the full suite turns it into a population check. Adding assertions catches the next bug in the family before it ships. Documenting the *why* prevents an AI agent (or a teammate, or future you) from reverting the fix six months from now because the line *'looked unnecessary.'*"
 
   - id: 13
+    hint: >-
+      For each reproduction step, ask how you could determine whether it is necessary to trigger the failure. Preserve a working reproduction while investigating.
     difficulty: intermediate
     question: "Your team has a 200-step manual reproduction of an intermittent bug. Before fixing the bug, what should you do to the reproduction itself, and why?"
     answer: "**Simplify it.** Iteratively remove steps and re-run; if the bug still occurs without the step, drop it from the reproduction. Most bug reproductions have ~5 essential steps and ~195 confounders. The smaller the reproduction, the faster every fix attempt, the cleaner the eventual regression test, and the less surface area for an unrelated change to mask the bug."
     explanation: "This is called **delta debugging** when automated, and it generalizes: minimize the input that still triggers the bug. A 200-step repro that takes 5 minutes to run burns an hour per fix attempt; a 5-step repro that takes 5 seconds lets you iterate dozens of times per hour. The minimal trigger also tells you something about the root cause that the long reproduction obscures."
 
   - id: 14
+    hint: >-
+      Before blaming the multiplication, compare the runtime type of each operand with the type the calculation expects. Trace backward to the first mismatch.
     difficulty: intermediate
     question: "Look at this debugger trace. After `input_radius = sys.argv[1]`, the watch panel shows `input_radius = '10'` (with quotes). Two steps later, `diameter = 2 * radius` produces `diameter = '1010'`. What's the bug and where is it?"
     answer: "The bug is **missing type conversion** at the assignment from `sys.argv[1]` — `sys.argv` always returns strings, so `2 * '10'` performs Python string repetition (`'10' + '10' = '1010'`), not arithmetic. The **fault** is one line: `input_radius = sys.argv[1]` should be `input_radius = float(sys.argv[1])`. The *symptom* shows up inside `cal_circumference`, but the *fix* belongs at the input boundary."
     explanation: "Classic case of *where you observe the symptom* ≠ *where you fix the fault*. The debugger's quoted string `'10'` in the watch panel is the diagnostic clue — a number wouldn't be quoted. Boundary type conversion (string → number when reading CLI args, JSON bodies, query parameters, environment variables) is one of the most common bug sources in scripting languages. A defensive version would `assert isinstance(input_radius, (int, float))` immediately after conversion to fail loudly if the input was missing or malformed."
 
   - id: 15
+    hint: >-
+      What new observation would challenge the interpretation they have already read fifty times? Choose a next action that produces that observation.
     difficulty: advanced
     question: |
       A new colleague says: *"I've been debugging for 4 hours. I've read the function 50 times. I just can't see what's wrong."* Diagnose what's happening and prescribe the next 30 minutes.

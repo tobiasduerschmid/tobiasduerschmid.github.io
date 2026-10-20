@@ -262,6 +262,107 @@
     margin-top: 12px;
   }
 
+  /* The same optional hint disclosure serves chapter and SE Gym flashcards. */
+  .flashcard-hint-area {
+    margin: 12px 0;
+  }
+
+  .flashcard-hint-toggle {
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.5;
+    padding: 6px 16px;
+    min-height: 42px;
+    border: 2px solid #456b8a;
+    border-radius: 8px;
+    background: #fff;
+    color: #214d70;
+    cursor: pointer;
+  }
+
+  .flashcard-hint-toggle:hover {
+    background: #e9f2fa;
+  }
+
+  .flashcard-hint-toggle:focus-visible {
+    outline: 3px solid #214d70;
+    outline-offset: 3px;
+  }
+
+  .flashcard-hint {
+    margin-top: 12px;
+    padding: 12px 16px;
+    border-left: 4px solid #456b8a;
+    border-radius: 4px;
+    background: #f1f6fb;
+    color: #17324d;
+    font-size: 1em;
+    line-height: 1.5;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .flashcard-hint[hidden] {
+    display: none;
+  }
+
+  .flashcard-hint > :first-child {
+    margin-top: 0;
+  }
+
+  .flashcard-hint > :last-child {
+    margin-bottom: 0;
+  }
+
+  .flashcard-hint pre {
+    max-width: 100%;
+    overflow-x: auto;
+    text-align: left;
+  }
+
+  html.dark-mode .flashcard-hint-toggle {
+    background: #142b3e;
+    color: #e2efff;
+    border-color: #85b4dc;
+  }
+
+  html.dark-mode .flashcard-hint-toggle:hover {
+    background: #23435d;
+  }
+
+  html.dark-mode .flashcard-hint-toggle:focus-visible {
+    outline-color: #b5d9ff;
+  }
+
+  html.dark-mode .flashcard-hint {
+    background: #142b3e;
+    color: #e2efff;
+    border-color: #85b4dc;
+  }
+
+  @media print {
+    .flashcard-hint-toggle {
+      display: none !important;
+    }
+
+    .flashcard-hint,
+    .flashcard-hint[hidden],
+    html.dark-mode .flashcard-hint {
+      display: block;
+      background: #fff;
+      color: #000;
+      border-color: #555;
+      break-inside: avoid;
+    }
+
+    .flashcard-hint::before {
+      content: "Hint";
+      display: block;
+      margin-bottom: 0.25em;
+      font-weight: 700;
+    }
+  }
+
   .show-answer-btn,
   .restart-btn,
   .review-btn {

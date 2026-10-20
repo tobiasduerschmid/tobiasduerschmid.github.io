@@ -15,12 +15,16 @@ cards:
     explanation: "Each full cycle should take *minutes, not hours*; if you can't get back to green quickly, the step was too large, so shrink the test or split the behavior. Developers often skip the Refactor step — yet that is where much of TDD's design value lives, which is why it has to be a discipline rather than optional cleanup."
 
   - id: 3
+    hint: >-
+      Compare how many decisions changed with how often evidence was collected. How could the next attempt make the first broken assumption easier to locate?
     difficulty: intermediate
     question: "Translate: *'A developer spends an hour writing a clever interface, finally runs the tests, and finds twelve failures across the codebase.'* What went wrong and what's the rhythm fix?"
     answer: "Entered a **'World of Red'** — changes too large to verify in one Red→Green cycle. Feedback loop severed. Fix: **smaller steps** — one failing test, get to green, refactor, repeat every few minutes."
     explanation: "The small-steps methodology is central: if a step is too large, you cannot tell which change broke which test, debugging becomes a scavenger hunt, and the safety net of continuously-green tests is gone. The discipline is to *shrink the test* until the next Green is minutes away, not hours."
 
   - id: 4
+    hint: >-
+      Ask what each approach assumes about the cost of changing an early design decision. What evidence or support would make later change safer?
     difficulty: advanced
     question: "Contrast **BUFD (Big Upfront Design)** with **TDD's evolutionary design**. What core fear drove BUFD, and what assumption does TDD challenge?"
     answer: "BUFD feared that 'bad design' woven in early would be impossible to fix, so design had to be finalized before code. TDD challenges that: continuous refactoring under green tests lets design *emerge* — no need to predict the future before coding."
@@ -39,12 +43,16 @@ cards:
     explanation: "The analogy frames TDD's scope honestly: it is exceptional for evolving local design, weak for jumping to a fundamentally new architectural paradigm. The remedy is not to abandon TDD but to *pair* it with high-level architectural thinking for non-modularizable risks like platform selection, security protocols, and performance targets."
 
   - id: 7
+    hint: >-
+      Imagine a newcomer reading and running the tests after the original author leaves. What can the passing examples teach, and what remains unspecified?
     difficulty: intermediate
     question: "How does TDD produce **'living documentation'** and increase the **bus factor**?"
     answer: "Regularly executed tests document the examples and properties they actually check. They can help new team members learn the contract, but incomplete or incorrect tests are not an always-accurate specification."
     explanation: "This is one of TDD's understated benefits. Conventional documentation describes intended behavior; TDD tests describe verified behavior. The gap matters most precisely when it matters most — when authors are gone and the system has drifted from the docs everyone assumed were accurate."
 
   - id: 8
+    hint: >-
+      Ask whether a few passing examples can establish each required quality. Consider outcomes that depend on the whole architecture or on a distribution of inputs.
     difficulty: intermediate
     question: "Critique: *'TDD is a complete methodology — every line of every system should be test-first.'* Name at least three contexts where TDD as the *sole* methodology is a poor fit."
     answer: "(1) **Non-incremental architectures** (distributed systems, ACID databases). (2) **Statistical outcomes** (ML, image recognition — representative held-out evaluation and uncertainty estimates, with explicit acceptance thresholds). (3) **Non-functional properties** (security, performance, reliability — need risk-driven design)."
@@ -57,12 +65,16 @@ cards:
     explanation: "Without an active force pushing back, code drifts toward complexity because each change is a local optimization made under deadline. TDD bakes the counter-force into the day-to-day rhythm: every Green is followed by a Refactor in which the engineer is empowered (and obligated) to improve the design. The discipline is what keeps Lehman's prediction from being deterministic."
 
   - id: 10
+    hint: >-
+      Trace the expression in the assertion: what must the method return, and what observable state is examined on that return value?
     difficulty: intermediate
     question: "Walk through the TDD **Green** step for: *'Given failing test `assert order.cancel().status == \"cancelled\"`, write the simplest passing code.'*"
     answer: "Add a `cancel` method to `Order` whose body is `self.status = 'cancelled'; return self`. *No validation, no state machine, no event publishing, no logging* — those earn their place in future Red cycles."
     explanation: "Beck's slogan in the Green phase is *'do the simplest thing that could possibly work'*. Shortcuts here are not sloppy; they preserve the rhythm. The Refactor step is where duplication and design clarity get addressed; trying to do everything in Green is how steps become too large and the World-of-Red trap opens up."
 
   - id: 11
+    hint: >-
+      Compare deciding how one object is called with deciding how the whole system will meet a performance or security constraint. Which evidence does a small client test provide?
     difficulty: expert
     question: "What does TDD enforce **locally** about Parnas's Information Hiding, and where does it fall short **globally**?"
     answer: "**Locally**: it forces a minimal interface (the test is the first client) before any implementation — the Information Hiding ideal. **Globally**: pure incrementalism can miss *non-modularizable* decisions (platform, security, performance) that must be made at the system boundary and can't be refactored in later."
