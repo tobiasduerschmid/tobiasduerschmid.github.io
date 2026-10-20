@@ -136,7 +136,7 @@
 
     function renderControls(snap) {
       var hasPrev = snap.currentStep > 0;
-      var hasNext = snap.currentStep < (snap.steps || []).length - 1 || snap.hasUnpassedQuiz;
+      var hasNext = snap.currentStep < (snap.steps || []).length - 1 || snap.hasQuiz;
       var html = '';
       html += hasPrev ? '<button class="tvm-btn tvm-btn-prev">← Previous</button>' : '<span></span>';
       html += snap.hasTests ? buildTestButtonHTML(snap) : '<span></span>';
@@ -234,7 +234,7 @@
       // the previous step's enable/disable state and the user can click a
       // now-stale Next button that main then silently no-ops.
       if (typeof msg.hasTests === 'boolean') snapshot.hasTests = msg.hasTests;
-      if (typeof msg.hasUnpassedQuiz === 'boolean') snapshot.hasUnpassedQuiz = msg.hasUnpassedQuiz;
+      if (typeof msg.hasQuiz === 'boolean') snapshot.hasQuiz = msg.hasQuiz;
       if (typeof msg.nextLocked === 'boolean') snapshot.nextLocked = msg.nextLocked;
       if (typeof msg.cooldownSeconds === 'number') snapshot.cooldownSeconds = msg.cooldownSeconds;
       if (typeof msg.cooldownRemaining === 'number') snapshot.cooldownRemaining = msg.cooldownRemaining;
@@ -260,7 +260,7 @@
           if (snapshot) {
             if (Array.isArray(msg.stepsUnlocked)) snapshot.stepsUnlocked = msg.stepsUnlocked;
             if (typeof msg.nextLocked === 'boolean') snapshot.nextLocked = msg.nextLocked;
-            if (typeof msg.hasUnpassedQuiz === 'boolean') snapshot.hasUnpassedQuiz = msg.hasUnpassedQuiz;
+            if (typeof msg.hasQuiz === 'boolean') snapshot.hasQuiz = msg.hasQuiz;
             if (typeof msg.cooldownSeconds === 'number') snapshot.cooldownSeconds = msg.cooldownSeconds;
             if (typeof msg.cooldownRemaining === 'number') snapshot.cooldownRemaining = msg.cooldownRemaining;
             renderAll(snapshot);

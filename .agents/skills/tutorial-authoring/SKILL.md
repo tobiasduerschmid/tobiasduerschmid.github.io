@@ -2004,8 +2004,10 @@ synchronizes with the main tutorial via `BroadcastChannel` (see
   `require_quiz: false`. The final optional check offers Finish Review;
   `quiz-review-finished` mirrors the acknowledgment to the popout without
   claiming all tests or knowledge checks passed. Instructions snapshots and
-  navigation messages include `hasUnpassedQuiz` so the final step's Next
-  control can still open its knowledge check in the popout.
+  navigation messages include `hasQuiz` so Next opens the knowledge check
+  on every visit, including a previously passed final quiz. Saved `quizPassed`
+  records remain completion evidence for unlocks and timed practice; they do
+  not suppress quiz entry in either window.
 - `tutorial-output-popup.html` — stdout / stderr / preview iframe. Prolog's
   Run output remains detachable; its separate Terminal view and query
   history stay usable in the main tutorial. The main Output mode then shows

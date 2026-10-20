@@ -8970,6 +8970,11 @@
     return !!(step && step.tests && step.tests.length > 0);
   };
 
+  TutorialCode.prototype._stepHasQuiz = function (step) {
+    return !!(!this.disableQuiz && step && step.quiz && step.quiz.questions
+      && step.quiz.questions.length);
+  };
+
   TutorialCode.prototype._stepHasStudentPlaywrightTests = function (step) {
     return !!(this._playwrightMode && this._getPlaywrightTestFiles(step).length > 0);
   };
@@ -8996,7 +9001,7 @@
       darkMode: document.documentElement.classList.contains('dark-mode'),
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
       hasTests: this._stepHasTests(this.steps[this.currentStep]),
-      hasUnpassedQuiz: this._hasUnpassedQuiz(this.currentStep),
+      hasQuiz: this._stepHasQuiz(this.steps[this.currentStep]),
       nextLocked: this._isNextStepLocked(),
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
@@ -9024,9 +9029,7 @@
   };
 
   TutorialCode.prototype._hasUnpassedQuiz = function (index) {
-    var step = this.steps[index];
-    return !!(!this.disableQuiz && step && step.quiz && step.quiz.questions
-      && step.quiz.questions.length && !this._quizPassed.has(index));
+    return this._stepHasQuiz(this.steps[index]) && !this._quizPassed.has(index);
   };
 
   TutorialCode.prototype._broadcastStepState = function () {
@@ -9043,7 +9046,7 @@
       },
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
       hasTests: this._stepHasTests(step),
-      hasUnpassedQuiz: this._hasUnpassedQuiz(this.currentStep),
+      hasQuiz: this._stepHasQuiz(this.steps[this.currentStep]),
       nextLocked: this._isNextStepLocked(),
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
@@ -9069,7 +9072,7 @@
     this._popoutManager.broadcastNavState({
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
       nextLocked: this._isNextStepLocked(),
-      hasUnpassedQuiz: this._hasUnpassedQuiz(this.currentStep),
+      hasQuiz: this._stepHasQuiz(this.steps[this.currentStep]),
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
     });
@@ -9267,9 +9270,7 @@
             return;
           }
           var step = self.steps[self.currentStep];
-          var hasQuiz = !self.disableQuiz && step && step.quiz
-            && step.quiz.questions && step.quiz.questions.length > 0;
-          if (hasQuiz && !self._quizPassed.has(self.currentStep)) {
+          if (self._stepHasQuiz(step)) {
             // _showStepQuiz now broadcasts 'quiz-show' itself so any open
             // instructions popup mounts the same quiz and the user can
             // take it in either window.
@@ -12265,9 +12266,9 @@
     html += this._stepHasTests(step)
       ? this._buildTestButtonHTML(index)
       : '<span></span>';
-    var hasUnpassedQuiz = this._hasUnpassedQuiz(index);
+    var hasQuiz = this._stepHasQuiz(step);
     var hasNextStep = index < this.steps.length - 1;
-    var showNext = hasNextStep || hasUnpassedQuiz;
+    var showNext = hasNextStep || hasQuiz;
     html += showNext
       ? '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled data-original-title="Pass all tests to continue"' : ' data-original-title="Next step"') + '>Next \u2192</button>'
       : '<span></span>';
@@ -12279,8 +12280,7 @@
     if (prev) prev.addEventListener('click', function () { self.loadStep(index - 1); });
     if (next) next.addEventListener('click', function () {
       if (next.disabled) return;
-      var hasQuiz = !self.disableQuiz && step.quiz && step.quiz.questions && step.quiz.questions.length > 0;
-      if (hasQuiz && !self._quizPassed.has(index)) {
+      if (hasQuiz) {
         self._showStepQuiz(index);
       } else {
         if (!self._stepHasTests(step)) {
