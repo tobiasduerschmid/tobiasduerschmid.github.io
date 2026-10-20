@@ -224,8 +224,9 @@ test('tutorial saves dragged token ordering and Reset restores the original orde
   await expect(page.getByLabel('Token name 1', { exact: true })).toHaveValue('IDENT');
   await page.reload();
   await expect(page.getByLabel('Token name 1', { exact: true })).toHaveValue('IDENT');
-  page.once('dialog', dialog => dialog.accept());
   await page.getByRole('link', { name: 'Reset Current Step', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Reset the current step?', exact: true })
+    .getByRole('button', { name: 'Reset step', exact: true }).click();
   await expect(page.getByLabel('Token name 1', { exact: true })).toHaveValue('RESERVED');
 });
 
@@ -382,8 +383,9 @@ test('token table drafts survive file switches and reload, while Reset and Solut
   await expect(page.getByLabel('Regular expression 2', { exact: true })).toHaveValue('[A-Za-z_][A-Za-z0-9_]*');
   await page.reload();
   await expect(page.getByLabel('Regular expression 2', { exact: true })).toHaveValue('[A-Za-z_][A-Za-z0-9_]*');
-  page.once('dialog', dialog => dialog.accept());
   await page.getByRole('link', { name: 'Reset Current Step', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Reset the current step?', exact: true })
+    .getByRole('button', { name: 'Reset step', exact: true }).click();
   await expect(page.getByLabel('Regular expression 2', { exact: true })).toHaveValue('[A-Za-z_]+');
   await expect(page.getByLabel('Source program', { exact: true })).toHaveValue('total2 = base + 3 * 7\n');
   await page.getByRole('link', { name: 'Solution', exact: true }).click();

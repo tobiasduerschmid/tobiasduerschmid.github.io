@@ -1900,6 +1900,21 @@ other platforms retain `Ctrl`. This changes labels only, not key bindings.
   config as JSON, sets up the navbar (Reset, Solution in instructor mode,
   Print, Read Aloud, Dark mode toggle), and instantiates the Monaco editor
   + chosen backend.
+- **Confirmation dialogs** — `_includes/confirmation-dialog.html` loads the
+  shared `js/confirmation-dialog.js` and `css/confirmation-dialog.css` once per
+  page, including when the UML editor also uses it. Tutorial Reset, UML
+  Reset/Empty/Example, Remove All Elements, and disabling Auto-save use
+  `SebookConfirmation.confirm({ title, message, confirmLabel, cancelLabel?, trigger? })`.
+  It returns a Promise that resolves true only after explicit confirmation.
+  The custom HTML dialog uses the modal top layer inside the active fullscreen
+  element (or body), makes the background inert, focuses Cancel/No first,
+  confines Tab, and restores trigger focus when dismissed. Escape and backdrop
+  clicks cancel without closing the underlying fullscreen view. Disabling
+  Auto-save still turns saving off immediately; only Yes deletes saved work.
+  Keep the already-confirmed `UMLEditor.resetCurrentDiagram({confirm:false})`
+  path synchronous, and snapshot Undo only when the reset is confirmed.
+  Dialog styling covers both themes and hides dialogs/backdrops in print;
+  no browser `confirm()` or new persistence keys are used.
 - **`_layouts/print-tutorial.html`** — the static, printable
   view. Renders every step's instructions, files (Rouge-highlighted),
   quizzes (with correct answers visibly marked), and solutions (hidden
@@ -2569,6 +2584,16 @@ channel.
   They ignore note content and do not claim complete UML validation. Keep the
   same behavior in tutorials and standalone editor pages; no tutorial YAML
   option, progress credit, or new persistence key is added by these controls.
+  Its **Callouts** panel (`js/uml-editor-callouts.js`, with presentation in
+  `css/uml-editor-callouts.css`) creates, edits, and removes ArchUML teaching
+  callouts for all seven UML types. Properties offers **Add teaching callout**
+  for the current selection; the panel also lists visible labels, relationship
+  start/middle/end targets, and SVG symbols. Targets are captured before canvas
+  edit overlays are installed so shape/text occurrences match the renderer.
+  Callouts remain ordinary source directives and use the existing undo, draft,
+  autosave, and export paths. Removing a callout leaves its source line blank
+  to preserve line-based layout identities. Callout controls are hidden in print;
+  ArchUML's callout stylesheet owns the printed diagram's light palette.
 - **UML editor reference edits** — renaming either classifier preserves its
   relationship endpoints. Reference edits share the properties panel's tokenizer,
   including namespace separators (`::`) and both multiplicity quote styles.

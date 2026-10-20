@@ -2284,6 +2284,7 @@
       this._umlFullscreenEl.setAttribute('aria-label', 'Fullscreen UML diagram');
       // Keep keyboard navigation inside the open diagram; Escape restores focus.
       document.addEventListener('keydown', function (e) {
+        if (e.target.closest('dialog[open]')) return;
         var dialog = self._umlFullscreenEl;
         if (!dialog || dialog.style.display === 'none') return;
         if (e.key === 'Escape') {

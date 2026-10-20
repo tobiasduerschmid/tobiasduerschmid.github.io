@@ -4676,12 +4676,6 @@ Player --> NormalTurnState
   test('UML tutorial reset confirms once and restores the current diagram', async ({ page }) => {
     const classKey = tutorialAutosaveKey('class');
     await page.addInitScript((key) => localStorage.removeItem(key), classKey);
-    const dialogs = [];
-    page.on('dialog', async (dialog) => {
-      dialogs.push(dialog.message());
-      await dialog.accept();
-    });
-
     await page.goto(MONOPOLY_TUTORIAL_URL);
     await page.waitForSelector('#uml-pg-output');
     await setUmlSource(page, `@startuml
@@ -4689,8 +4683,10 @@ class Player
 @enduml`);
 
     await page.locator('#resetStepBtn').click();
+    await page.getByRole('dialog', { name: 'Reset the current diagram?', exact: true })
+      .getByRole('button', { name: 'Reset diagram', exact: true }).click();
     await expect(page.locator('#uml-pg-input')).toHaveValue('@startuml\n@enduml');
-    expect(dialogs).toHaveLength(1);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 
   test('UML tutorial instructions render diagrams created in previous steps', async ({ page }) => {

@@ -58,6 +58,10 @@ Supported options:
   "persistence": {% if uml_editor_persistence == "false" %}false{% else %}true{% endif %}
 }
 </script>
+{% include confirmation-dialog.html %}
+<link rel="stylesheet" href="{{ '/css/uml-editor-callouts.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}" media="print">
+<script src="{{ '/js/uml-editor-callouts.js' | relative_url }}"></script>
 
 <div id="uml-playground-wrap"{% if uml_editor_hide_archuml == true or uml_editor_hide_archuml == "true" %} class="is-archuml-hidden"{% endif %}>
   <div id="uml-pg-fullscreen-bar" role="group" aria-label="Fullscreen controls" hidden>
@@ -91,6 +95,7 @@ Supported options:
       </select>
     </span>
     <span class="uml-pg-toolbar-group uml-pg-toolbar-group-modes">
+      <button id="uml-pg-callout-toggle" type="button" aria-controls="uml-pg-callout-panel" aria-expanded="false">Callouts</button>
       <label class="uml-pg-check" for="uml-pg-edit">
         <input type="checkbox" id="uml-pg-edit" aria-label="Visual edit" aria-controls="uml-pg-palette uml-pg-output uml-pg-props-pane" checked>
         Visual edit
@@ -126,6 +131,41 @@ Supported options:
     <span id="uml-pg-autosave" role="status" aria-live="polite" aria-atomic="true"></span>
     <span id="uml-pg-status" role="status" aria-live="polite" aria-atomic="true"></span>
   </div>
+
+  <section id="uml-pg-callout-panel" hidden aria-label="Teaching callouts">
+    <div class="uml-pg-callout-actions">
+      <strong>Teaching callouts</strong>
+      <button id="uml-pg-callout-new" type="button">New callout</button>
+      <button id="uml-pg-callout-close" type="button">Close callouts</button>
+    </div>
+    <p>Explain an element, label, relationship, or symbol. The preferred position guides placement; callouts avoid covering the diagram.</p>
+    <div class="uml-pg-prop-row">
+      <label for="uml-pg-callout-saved">Saved callout</label>
+      <select id="uml-pg-callout-saved"><option value="-1">New callout</option></select>
+    </div>
+    <form id="uml-pg-callout-form">
+      <div class="uml-pg-prop-row">
+        <label for="uml-pg-callout-target">Callout target</label>
+        <select id="uml-pg-callout-target" required></select>
+      </div>
+      <div class="uml-pg-prop-row">
+        <label for="uml-pg-callout-side">Preferred position</label>
+        <select id="uml-pg-callout-side">
+          <option value="right">Right</option><option value="left">Left</option>
+          <option value="top">Top</option><option value="bottom">Bottom</option>
+        </select>
+      </div>
+      <div class="uml-pg-prop-row uml-pg-callout-explanation">
+        <label for="uml-pg-callout-text">Explanation</label>
+        <textarea id="uml-pg-callout-text" rows="2" required></textarea>
+      </div>
+      <div class="uml-pg-callout-actions">
+        <button id="uml-pg-callout-submit" type="submit">Add callout</button>
+        <button id="uml-pg-callout-remove" type="button" hidden>Remove callout</button>
+      </div>
+    </form>
+    <p id="uml-pg-callout-status" role="status" aria-live="polite"></p>
+  </section>
 
   <div id="uml-pg-palette" hidden role="region" aria-label="Visual editor palette">
     <div class="uml-pg-palette-row uml-pg-palette-row-elements">
@@ -759,6 +799,20 @@ Supported options:
     // Multi-select: keys = ids, values = 'node' | 'route'. Single-select scalars
     // above remain the "primary" (most recent click) for the props panel.
     var selectedLayoutIds = Object.create(null);
+    const calloutEditor = window.UMLCalloutEditor.create({
+      root: document.getElementById('uml-playground-wrap'),
+      getSource: function () { return textarea.value; },
+      getSelection: function () {
+        const model = collectModelElements(textarea.value, typeSelect.value).find(item => item.id === selectedLayoutId);
+        return { id: selectedLayoutId, kind: selectedLayoutKind, label: model && model.label };
+      },
+      commitSource: function (source) {
+        if (source === textarea.value) return;
+        snapshotForUndo();
+        textarea.value = source;
+        renderDiagram();
+      }
+    });
     function selectionSize() { return Object.keys(selectedLayoutIds).length; }
     function clearSelectionSet() {
       for (var k in selectedLayoutIds) delete selectedLayoutIds[k];
@@ -3628,6 +3682,11 @@ Supported options:
     // Labels, comments, member names, and note prose are deliberately excluded.
     function referenceSpans(line, type) {
       if (/^\s*(?:@|'|\/\/)/.test(line) || declarationIdForLine(line, type)) return [];
+      // Callout prose is never a model reference, even if it contains arrows.
+      if (/^\s*callout\b/.test(line)) {
+        const target = line.match(/^(\s*callout\s+(?:left|right|top|bottom)\s+of\s+element\s+)(\S+)(?=\s+:)/);
+        return target ? [{ value: target[2], start: target[1].length, end: target[1].length + target[2].length }] : [];
+      }
       const labelIndex = relationLabelIndex(line);
       if (type === 'venn') {
         const note = line.match(/^\s*note\s+(?:left|right|top|bottom|above|below)\s+of\s+/i);
@@ -6634,6 +6693,14 @@ Supported options:
         buildActivationProps();
       } else {
         buildElementProps();
+      }
+      if (/^(class|sequence|state|component|deployment|usecase|activity)$/.test(typeSelect.value)) {
+        const calloutButton = document.createElement('button');
+        calloutButton.type = 'button';
+        calloutButton.className = 'uml-pg-callout-open';
+        calloutButton.textContent = 'Add teaching callout';
+        calloutButton.addEventListener('click', calloutEditor.openForSelection);
+        propsContent.appendChild(calloutButton);
       }
     }
 
@@ -11118,6 +11185,7 @@ Supported options:
       output.innerHTML = '';
 
       if (!text) {
+        calloutEditor.refresh(null, type);
         if (supportsEmptyEditor(type)) {
           textarea.value = type === 'sequence' ? sequenceSourceWithScaffold(textarea.value) : sourceWithScaffold(textarea.value);
           output.innerHTML = '<div class="uml-empty-msg"></div>';
@@ -11139,6 +11207,7 @@ Supported options:
       try {
         renderer(output, text);
         var svg = output.querySelector('svg');
+        calloutEditor.refresh(svg, type);
         if (svg) {
           if ((!ignoresLayout(type) || type === 'gitgraph') && type !== 'folder-tree') {
             applyEditorCanvasBounds(svg);
@@ -11193,6 +11262,7 @@ Supported options:
       errorBox.style.display = '';
       output.innerHTML = '';
       clearEditLayer();
+      calloutEditor.refresh(null, typeSelect.value);
       status.textContent = '';
       rebuildSequenceModelPanel();
     }
@@ -11743,6 +11813,7 @@ Supported options:
     // Escape remains available from text fields and SVG controls that otherwise
     // consume it. Native browser exits also reach syncFullscreen above.
     wrap.addEventListener('keydown', function (event) {
+      if (event.target.closest('dialog[open]')) return;
       if (event.key === 'Escape' && (dragState || paletteDragState)) {
         event.preventDefault();
         event.stopPropagation();
@@ -11923,10 +11994,19 @@ Supported options:
 
     function resetCurrentDiagramToStarter(options) {
       options = options || {};
-      var confirmText = startMode === 'empty'
-        ? 'Discard your current draft and return to an empty diagram? (Use Cmd/Ctrl+Z to undo if you change your mind.)'
-        : 'Discard your current draft and load the built-in example for this diagram type? (Use Cmd/Ctrl+Z to undo if you change your mind.)';
-      if (options.confirm !== false && !confirm(confirmText)) return false;
+      if (options.confirm !== false) {
+        var empty = startMode === 'empty';
+        return window.SebookConfirmation.confirm({
+          title: empty ? 'Empty the current diagram?' : 'Load the example diagram?',
+          message: empty
+            ? 'Discard your current draft and return to an empty diagram? You can use Undo to restore your draft.'
+            : 'Discard your current draft and load the built-in example for this diagram type? You can use Undo to restore your draft.',
+          confirmLabel: empty ? 'Empty diagram' : 'Load example',
+          trigger: options.trigger
+        }).then(function (confirmed) {
+          return confirmed ? resetCurrentDiagramToStarter({ confirm: false }) : false;
+        });
+      }
       snapshotForUndo();
       textarea.value = starterText(currentType, layoutSelect.value);
       rememberCurrentSource(currentType);
@@ -11943,7 +12023,7 @@ Supported options:
     var resetExampleBtn = document.getElementById('uml-pg-reset-example');
     if (resetExampleBtn) {
       resetExampleBtn.addEventListener('click', function () {
-        resetCurrentDiagramToStarter();
+        resetCurrentDiagramToStarter({ trigger: resetExampleBtn });
       });
     }
 

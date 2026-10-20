@@ -53,8 +53,6 @@
     this._testResults = [];
     this._testHintRecords = [];
     this._testAnnouncer = null;
-    this._clearDialog = null;
-    this._clearDialogPreviousFocus = null;
 
     // See tutorial-code.js for the matching state — cooldown gates the visible
     // "Test My Work" button after every run, with an "I'm sure" silent fallback
@@ -87,8 +85,14 @@
       resetBtn.style.display = 'flex';
       resetBtn.addEventListener('click', function (event) {
         event.preventDefault();
-        if (!window.confirm('Reset the current diagram? This will discard your edits for this diagram type.')) return;
-        self.resetCurrentDiagram();
+        window.SebookConfirmation.confirm({
+          title: 'Reset the current diagram?',
+          message: 'This will discard your edits for this diagram type.',
+          confirmLabel: 'Reset diagram',
+          trigger: resetBtn
+        }).then(function (confirmed) {
+          if (confirmed) self.resetCurrentDiagram();
+        });
       });
     }
     var popoutBtn = this.root.querySelector('.tvm-instructions-popout-btn');
@@ -530,77 +534,16 @@
     this.clearResults();
   };
 
-  UMLTutorialEditor.prototype.ensureClearStepDialog = function () {
-    var self = this;
-    if (this._clearDialog && this._clearDialog.isConnected) return this._clearDialog;
-    var backdrop = document.createElement('div');
-    backdrop.className = 'tvm-clear-step-dialog-backdrop';
-    backdrop.hidden = true;
-    backdrop.innerHTML = [
-      '<div class="tvm-clear-step-dialog" role="dialog" aria-modal="true" aria-labelledby="tvm-clear-step-title" aria-describedby="tvm-clear-step-desc">',
-      '  <h2 id="tvm-clear-step-title">Remove all UML elements from this step?</h2>',
-      '  <p id="tvm-clear-step-desc">This clears the current step diagram and keeps diagrams from other steps saved.</p>',
-      '  <div class="tvm-clear-step-dialog-actions">',
-      '    <button class="tvm-btn tvm-btn-clear-cancel" type="button">Cancel</button>',
-      '    <button class="tvm-btn tvm-btn-clear-confirm" type="button">Remove Elements</button>',
-      '  </div>',
-      '</div>'
-    ].join('');
-    backdrop.addEventListener('click', function (event) {
-      if (event.target === backdrop) self.closeClearStepDialog();
-    });
-    backdrop.addEventListener('keydown', function (event) {
-      self.handleClearDialogKeydown(event);
-    });
-    var cancel = backdrop.querySelector('.tvm-btn-clear-cancel');
-    var confirm = backdrop.querySelector('.tvm-btn-clear-confirm');
-    if (cancel) cancel.addEventListener('click', function () { self.closeClearStepDialog(); });
-    if (confirm) {
-      confirm.addEventListener('click', function () {
-        self.clearCurrentStepDiagram();
-        self.closeClearStepDialog();
-      });
-    }
-    document.body.appendChild(backdrop);
-    this._clearDialog = backdrop;
-    return backdrop;
-  };
-
   UMLTutorialEditor.prototype.openClearStepDialog = function (trigger) {
-    var dialog = this.ensureClearStepDialog();
-    this._clearDialogPreviousFocus = trigger || document.activeElement;
-    dialog.hidden = false;
-    var cancel = dialog.querySelector('.tvm-btn-clear-cancel');
-    if (cancel) cancel.focus();
-  };
-
-  UMLTutorialEditor.prototype.closeClearStepDialog = function () {
-    if (this._clearDialog) this._clearDialog.hidden = true;
-    var previous = this._clearDialogPreviousFocus;
-    this._clearDialogPreviousFocus = null;
-    if (previous && previous.isConnected && typeof previous.focus === 'function') previous.focus();
-  };
-
-  UMLTutorialEditor.prototype.handleClearDialogKeydown = function (event) {
-    if (!this._clearDialog || this._clearDialog.hidden) return;
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      this.closeClearStepDialog();
-      return;
-    }
-    if (event.key !== 'Tab') return;
-    var focusable = Array.prototype.slice.call(this._clearDialog.querySelectorAll('button'))
-      .filter(function (el) { return !el.disabled && el.offsetParent !== null; });
-    if (!focusable.length) return;
-    var first = focusable[0];
-    var last = focusable[focusable.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
+    var self = this;
+    return window.SebookConfirmation.confirm({
+      title: 'Remove all UML elements from this step?',
+      message: 'This clears the current step diagram and keeps diagrams from other steps saved.',
+      confirmLabel: 'Remove Elements',
+      trigger: trigger
+    }).then(function (confirmed) {
+      if (confirmed) self.clearCurrentStepDiagram();
+    });
   };
 
   UMLTutorialEditor.prototype.currentSource = function () {

@@ -134,8 +134,9 @@ test('legacy saved files remain unaccepted and Reset persists a clean starter', 
     { target: { kind: 'file', path: 'Counter.st' }, baseRevision: 0, source: ') legacy malformed file' },
   ]);
   await run(page, 1);
-  page.once('dialog', dialog => dialog.accept());
   await page.getByRole('link', { name: 'Reset Current Step', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Reset the current step?', exact: true })
+    .getByRole('button', { name: 'Reset step', exact: true }).click();
   await expect.poll(async () => {
     const value = await stored(page); return value && value.smalltalk_workspace && value.smalltalk_workspace.steps[STEP].drafts;
   }, { timeout: 30000 }).toEqual([]);

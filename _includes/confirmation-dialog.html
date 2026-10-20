@@ -1,0 +1,15 @@
+{% unless sebook_confirmation_loaded %}
+{% assign sebook_confirmation_loaded = true %}
+<link rel="stylesheet" href="{{ '/css/confirmation-dialog.css' | relative_url }}">
+<script src="{{ '/js/confirmation-dialog.js' | relative_url }}" defer></script>
+<template id="sebook-confirmation-template">
+  <dialog class="sebook-confirmation" aria-labelledby="sebook-confirmation-title" aria-describedby="sebook-confirmation-message" aria-modal="true">
+    <h2 id="sebook-confirmation-title"></h2>
+    <p id="sebook-confirmation-message"></p>
+    <div class="sebook-confirmation-actions">
+      <button type="button" class="sebook-confirmation-cancel" autofocus>Cancel</button>
+      <button type="button" class="sebook-confirmation-accept"></button>
+    </div>
+  </dialog>
+</template>
+{% endunless %}

@@ -1,0 +1,81 @@
+/* Editor controls only; ArchUML owns the callout artwork and print palette. */
+#uml-pg-callout-panel {
+  padding: 12px;
+  background: #f5f8fc;
+  color: #1a3656;
+  border-bottom: 1px solid #647a94;
+  max-height: 50vh;
+  overflow: auto;
+  flex-shrink: 0;
+}
+#uml-pg-callout-panel[hidden],
+#uml-pg-callout-toggle[hidden],
+#uml-pg-callout-panel [hidden] { display: none; }
+.uml-pg-callout-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+#uml-pg-callout-form {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 12px;
+  margin: 0;
+}
+.uml-pg-callout-explanation,
+#uml-pg-callout-form .uml-pg-callout-actions { grid-column: 1 / -1; }
+#uml-pg-callout-panel p { margin: 8px 0; font: inherit; }
+#uml-pg-callout-panel label { font: inherit; font-weight: 600; }
+#uml-pg-callout-panel select,
+#uml-pg-callout-panel textarea {
+  font: inherit;
+  min-width: 0;
+  max-width: 100%;
+  border-color: #647a94;
+}
+#uml-pg-callout-saved { width: 100%; }
+#uml-pg-callout-panel button,
+#uml-pg-callout-toggle,
+.uml-pg-callout-open {
+  font: inherit;
+  padding: 5px 10px;
+  min-height: 32px;
+  border: 1px solid #647a94;
+  border-radius: 4px;
+  color: #26415f;
+  background: #fff;
+  cursor: pointer;
+}
+#uml-pg-callout-panel button:hover,
+#uml-pg-callout-toggle:hover,
+.uml-pg-callout-open:hover { background: #e4edf8; }
+#uml-pg-callout-panel :focus-visible,
+#uml-pg-callout-toggle:focus-visible,
+.uml-pg-callout-open:focus-visible { outline: 3px solid #2774ae; outline-offset: 2px; }
+#uml-pg-callout-panel button:disabled { cursor: not-allowed; opacity: 0.65; }
+html.dark-mode #uml-pg-callout-panel { background: #18242f; color: #e3eef9; }
+html.dark-mode #uml-pg-callout-panel label { color: #e3eef9; }
+html.dark-mode #uml-pg-callout-panel select,
+html.dark-mode #uml-pg-callout-panel textarea,
+html.dark-mode #uml-pg-callout-panel button,
+html.dark-mode #uml-pg-callout-toggle,
+html.dark-mode .uml-pg-callout-open { background: #243347; color: #e3eef9; border-color: #829bb9; }
+html.dark-mode #uml-pg-callout-panel button:hover,
+html.dark-mode #uml-pg-callout-toggle:hover,
+html.dark-mode .uml-pg-callout-open:hover { background: #354c68; }
+html.dark-mode #uml-pg-callout-panel :focus-visible,
+html.dark-mode #uml-pg-callout-toggle:focus-visible,
+html.dark-mode .uml-pg-callout-open:focus-visible { outline-color: #ffd100; }
+@media screen {
+  /* Fullscreen's canvas keeps a minimum height. Scroll the workspace when
+     the open panel and other controls leave too little room above it. */
+  #uml-playground-wrap.is-fullscreen:has(#uml-pg-callout-panel:not([hidden])) { overflow-y: auto; }
+}
+@media (max-width: 600px) {
+  #uml-pg-callout-form { grid-template-columns: minmax(0, 1fr); }
+}
+@media print {
+  #uml-pg-callout-panel, #uml-pg-callout-toggle, .uml-pg-callout-open { display: none !important; }
+}

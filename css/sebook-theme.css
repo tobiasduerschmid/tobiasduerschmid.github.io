@@ -990,72 +990,6 @@ body.sebook-layout #tts-read-btn {
   clear: both;
 }
 
-.autosave-confirm-modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.58);
-}
-
-.autosave-confirm-panel {
-  width: min(100%, 420px);
-  padding: 28px 32px;
-  border: 1px solid var(--sebook-border);
-  border-radius: var(--radius-md, 8px);
-  background: var(--sebook-surface);
-  box-shadow: var(--sebook-shadow);
-  color: var(--color-text, #222);
-}
-
-.autosave-confirm-title {
-  margin: 0 0 8px;
-  color: var(--sebook-navy-dark);
-  font-weight: 800;
-}
-
-.autosave-confirm-copy,
-.autosave-confirm-note {
-  line-height: 1.5;
-}
-
-.autosave-confirm-copy {
-  margin: 0 0 8px;
-}
-
-.autosave-confirm-note {
-  margin: 0 0 24px;
-  color: var(--color-text-muted, #595959);
-  font-size: 0.95em;
-}
-
-.autosave-confirm-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.autosave-confirm-button {
-  min-height: 40px;
-  padding: 7px 20px;
-  border: 1px solid var(--sebook-border);
-  border-radius: var(--radius-sm, 6px);
-  background: var(--sebook-surface-soft);
-  color: var(--color-text, #222);
-  cursor: pointer;
-  font: inherit;
-  font-weight: 700;
-}
-
-.autosave-confirm-button.is-danger {
-  border-color: #8f1f18;
-  background: #c0392b;
-  color: #ffffff;
-}
-
 .tts-control-bar {
   display: none;
   position: fixed;
@@ -1849,31 +1783,6 @@ html.dark-mode .tooltip.left .tooltip-arrow {
 
 html.dark-mode [role="tooltip"].info-tooltip::after {
   border-bottom-color: #FFD100;
-}
-
-html.dark-mode .autosave-confirm-panel {
-  background: #111827;
-  color: #e5e7eb;
-}
-
-html.dark-mode .autosave-confirm-title {
-  color: #B9D9EB;
-}
-
-html.dark-mode .autosave-confirm-note {
-  color: #cbd6e2;
-}
-
-html.dark-mode .autosave-confirm-button {
-  background: #1f2937;
-  border-color: var(--sebook-border);
-  color: #e6f4ff;
-}
-
-html.dark-mode .autosave-confirm-button.is-danger {
-  background: #b92b22;
-  border-color: #fca5a5;
-  color: #ffffff;
 }
 
 html.dark-mode .tts-control-bar {

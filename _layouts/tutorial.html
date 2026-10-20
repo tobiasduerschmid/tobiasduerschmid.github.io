@@ -250,27 +250,7 @@
     {% endif %}
   </main>
 
-  <!-- Auto-save disable confirmation modal -->
-  <div id="autosaveConfirmModal" class="autosave-confirm-modal" role="dialog" aria-modal="true"
-       aria-labelledby="autosaveConfirmTitle" aria-describedby="autosaveConfirmDesc">
-    <div class="autosave-confirm-panel">
-      <p id="autosaveConfirmTitle" class="autosave-confirm-title">Delete saved progress?</p>
-      <p id="autosaveConfirmDesc" class="autosave-confirm-copy">
-        Do you want to delete all saved progress for this tutorial and reset the current step files?
-      </p>
-      <p class="autosave-confirm-note">
-        Selecting <strong>No</strong> will just turn off auto-save — your progress is kept but won't be updated.
-      </p>
-      <div class="autosave-confirm-actions">
-        <button id="autosaveConfirmNo" class="autosave-confirm-button" type="button">
-          No
-        </button>
-        <button id="autosaveConfirmYes" class="autosave-confirm-button is-danger" type="button">
-          Yes
-        </button>
-      </div>
-    </div>
-  </div>
+  {% include confirmation-dialog.html %}
 
   <!-- Tutorial styles -->
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
@@ -520,9 +500,14 @@
         resetBtn.style.display = 'flex';
         resetBtn.addEventListener('click', function (e) {
           e.preventDefault();
-          if (window.confirm('Reset the current step? This will discard your edits in this step and restore the starter files.')) {
-            tutorial.resetStep();
-          }
+          window.SebookConfirmation.confirm({
+            title: 'Reset the current step?',
+            message: 'This will discard your edits in this step and restore the starter files.',
+            confirmLabel: 'Reset step',
+            trigger: resetBtn
+          }).then(function (confirmed) {
+            if (confirmed) tutorial.resetStep();
+          });
         });
       }
       if (tutorial.allowAutosave) {
@@ -534,75 +519,26 @@
           var autoSaveOn = savedPref !== 'false';
           autoSaveToggle.checked = autoSaveOn;
           tutorial.autoSaveEnabled = autoSaveOn;
-          var autosaveConfirmPreviousFocus = null;
-          function closeAutosaveConfirmModal() {
-            var modal = document.getElementById('autosaveConfirmModal');
-            if (modal) {
-              modal.style.display = 'none';
-              modal.removeEventListener('keydown', trapAutosaveConfirmFocus);
-            }
-            if (autosaveConfirmPreviousFocus && typeof autosaveConfirmPreviousFocus.focus === 'function') {
-              autosaveConfirmPreviousFocus.focus();
-            }
-            autosaveConfirmPreviousFocus = null;
-          }
-          function trapAutosaveConfirmFocus(e) {
-            var modal = document.getElementById('autosaveConfirmModal');
-            if (!modal || modal.style.display === 'none') return;
-            if (e.key === 'Escape') {
-              e.preventDefault();
-              closeAutosaveConfirmModal();
-              return;
-            }
-            if (e.key !== 'Tab') return;
-            var focusable = Array.prototype.slice.call(modal.querySelectorAll('button')).filter(function (el) {
-              return !el.disabled && el.offsetParent !== null;
-            });
-            if (!focusable.length) return;
-            var first = focusable[0];
-            var last = focusable[focusable.length - 1];
-            if (e.shiftKey && document.activeElement === first) {
-              e.preventDefault();
-              last.focus();
-            } else if (!e.shiftKey && document.activeElement === last) {
-              e.preventDefault();
-              first.focus();
-            }
-          }
           autoSaveToggle.addEventListener('change', function () {
             var toggle = this;
             if (!toggle.checked) {
               tutorial.autoSaveEnabled = false;
               localStorage.setItem('tutorial-autosave', 'false');
-              var modal = document.getElementById('autosaveConfirmModal');
-              var modalNo = document.getElementById('autosaveConfirmNo');
-              if (modal) {
-                autosaveConfirmPreviousFocus = document.activeElement;
-                modal.style.display = 'flex';
-                modal.addEventListener('keydown', trapAutosaveConfirmFocus);
-                if (modalNo) modalNo.focus();
-              }
+              window.SebookConfirmation.confirm({
+                title: 'Delete saved progress?',
+                message: 'Do you want to delete all saved progress for this tutorial and reset the current step files?\n\nSelecting No will just turn off auto-save — your progress is kept but won’t be updated.',
+                cancelLabel: 'No',
+                confirmLabel: 'Yes',
+                trigger: toggle
+              }).then(function (confirmed) {
+                if (confirmed) tutorial.deleteSavedProgress();
+              });
             } else {
               tutorial.autoSaveEnabled = true;
               localStorage.setItem('tutorial-autosave', 'true');
               tutorial._reportAutoSaveResult(tutorial.saveProgress());
             }
           });
-
-          var modalYes = document.getElementById('autosaveConfirmYes');
-          var modalNo  = document.getElementById('autosaveConfirmNo');
-          var modal    = document.getElementById('autosaveConfirmModal');
-          if (modalYes) {
-            modalYes.addEventListener('click', function () {
-              closeAutosaveConfirmModal();
-              tutorial.deleteSavedProgress();
-            });
-          }
-          if (modalNo) {
-            modalNo.addEventListener('click', function () {
-              closeAutosaveConfirmModal();
-            });
-          }
         }
       }
 

@@ -85,76 +85,18 @@
   line-height: 1.2;
 }
 
-.tvm-uml-editor-tutorial .tvm-step-controls .tvm-btn:focus-visible,
-.tvm-clear-step-dialog .tvm-btn:focus-visible {
+.tvm-uml-editor-tutorial .tvm-step-controls .tvm-btn:focus-visible {
   outline: 3px solid #ffd100;
   outline-offset: 2px;
 }
 
-.tvm-uml-editor-tutorial .tvm-btn-clear-model,
-.tvm-clear-step-dialog .tvm-btn-clear-confirm {
+.tvm-uml-editor-tutorial .tvm-btn-clear-model {
   background: #a13a2e;
   color: #fff;
 }
 
-.tvm-uml-editor-tutorial .tvm-btn-clear-model:hover,
-.tvm-clear-step-dialog .tvm-btn-clear-confirm:hover {
+.tvm-uml-editor-tutorial .tvm-btn-clear-model:hover {
   background: #842f26;
-}
-
-.tvm-clear-step-dialog-backdrop[hidden] {
-  display: none;
-}
-
-.tvm-clear-step-dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 2100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1em;
-  background: rgba(5, 8, 14, 0.62);
-}
-
-.tvm-clear-step-dialog {
-  width: min(100%, 32em);
-  padding: 1.2em;
-  border: 1px solid #b9c5d6;
-  border-radius: 8px;
-  background: #fff;
-  color: #151827;
-  box-shadow: 0 18px 48px rgba(10, 20, 35, 0.32);
-}
-
-.tvm-clear-step-dialog h2 {
-  margin: 0 0 0.45em;
-  color: inherit;
-  font-size: 1.25em;
-  line-height: 1.25;
-}
-
-.tvm-clear-step-dialog p {
-  margin: 0;
-  color: #30384c;
-}
-
-.tvm-clear-step-dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.65em;
-  flex-wrap: wrap;
-  margin-top: 1.15em;
-}
-
-.tvm-clear-step-dialog .tvm-btn-clear-cancel {
-  border: 1px solid #8b98aa;
-  background: #f6f8fb;
-  color: #172033;
-}
-
-.tvm-clear-step-dialog .tvm-btn-clear-cancel:hover {
-  background: #e6edf5;
 }
 
 .tvm-previous-diagrams {
@@ -213,14 +155,12 @@ html.dark-mode .tvm-uml-editor-tutorial .tvm-workspace {
   background: #101826;
 }
 
-html.dark-mode .tvm-uml-editor-tutorial .tvm-btn-clear-model,
-html.dark-mode .tvm-clear-step-dialog .tvm-btn-clear-confirm {
+html.dark-mode .tvm-uml-editor-tutorial .tvm-btn-clear-model {
   background: #b94a3b;
   color: #fff;
 }
 
-html.dark-mode .tvm-uml-editor-tutorial .tvm-btn-clear-model:hover,
-html.dark-mode .tvm-clear-step-dialog .tvm-btn-clear-confirm:hover {
+html.dark-mode .tvm-uml-editor-tutorial .tvm-btn-clear-model:hover {
   background: #d15645;
 }
 
@@ -233,31 +173,6 @@ html.dark-mode .tvm-uml-editor-tutorial .tvm-step-controls .tvm-btn.tvm-btn-clea
 html.dark-mode .tvm-uml-editor-tutorial .tvm-step-controls .tvm-btn.tvm-btn-clear-model:focus-visible {
   background: #d15645;
   color: #fff;
-}
-
-html.dark-mode .tvm-clear-step-dialog-backdrop {
-  background: rgba(0, 0, 0, 0.72);
-}
-
-html.dark-mode .tvm-clear-step-dialog {
-  border-color: #50627a;
-  background: #161e2c;
-  color: #f2f5fb;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.62);
-}
-
-html.dark-mode .tvm-clear-step-dialog p {
-  color: #d3d9e6;
-}
-
-html.dark-mode .tvm-clear-step-dialog .tvm-btn-clear-cancel {
-  border-color: #7f91aa;
-  background: #273449;
-  color: #f2f5fb;
-}
-
-html.dark-mode .tvm-clear-step-dialog .tvm-btn-clear-cancel:hover {
-  background: #32435d;
 }
 
 html:not(.dark-mode) .tvm-previous-diagrams {

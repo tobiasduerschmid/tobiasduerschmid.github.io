@@ -1,0 +1,124 @@
+body.sebook-confirmation-open {
+  overflow: hidden;
+}
+
+.sebook-confirmation {
+  box-sizing: border-box;
+  width: min(32em, calc(100% - 2em));
+  max-height: calc(100% - 2em);
+  margin: auto;
+  padding: 1.25em;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  border: 1px solid #78869a;
+  border-radius: 8px;
+  background: #fff;
+  color: #172033;
+  box-shadow: 0 18px 48px rgba(10, 20, 35, 0.32);
+  font: inherit;
+  font-size: max(1em, var(--font-size-body, 17px));
+  line-height: 1.5;
+}
+
+.sebook-confirmation::backdrop {
+  background: rgba(5, 8, 14, 0.62);
+}
+
+.sebook-confirmation h2 {
+  margin: 0 0 0.5em;
+  color: inherit;
+  font-size: 1.25em;
+  line-height: 1.3;
+}
+
+.sebook-confirmation p {
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  white-space: pre-line;
+}
+
+.sebook-confirmation-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75em;
+  margin-top: 1.25em;
+}
+
+.sebook-confirmation button {
+  min-height: 2.5em;
+  padding: 0.4em 1em;
+  border: 1px solid #78869a;
+  border-radius: 6px;
+  background: #f6f8fb;
+  color: #172033;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sebook-confirmation button:hover {
+  background: #e6edf5;
+}
+
+.sebook-confirmation button:focus-visible {
+  outline: 3px solid #005a9c;
+  outline-offset: 3px;
+}
+
+.sebook-confirmation .sebook-confirmation-accept {
+  background: #a13a2e;
+  border-color: #a13a2e;
+  color: #fff;
+}
+
+.sebook-confirmation .sebook-confirmation-accept:hover {
+  background: #842f26;
+}
+
+html.dark-mode .sebook-confirmation {
+  background: #161e2c;
+  border-color: #7f91aa;
+  color: #f2f5fb;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.62);
+}
+
+html.dark-mode .sebook-confirmation::backdrop {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+html.dark-mode .sebook-confirmation button {
+  background: #273449;
+  border-color: #7f91aa;
+  color: #f2f5fb;
+}
+
+html.dark-mode .sebook-confirmation button:hover {
+  background: #32435d;
+}
+
+html.dark-mode .sebook-confirmation button:focus-visible {
+  outline-color: #ffd100;
+}
+
+html.dark-mode .sebook-confirmation .sebook-confirmation-accept {
+  background: #a13a2e;
+  border-color: #e2968b;
+  color: #fff;
+}
+
+html.dark-mode .sebook-confirmation .sebook-confirmation-accept:hover {
+  background: #842f26;
+}
+
+@media print {
+  .sebook-confirmation,
+  .sebook-confirmation::backdrop {
+    display: none !important;
+  }
+
+  body.sebook-confirmation-open {
+    overflow: visible;
+  }
+}
