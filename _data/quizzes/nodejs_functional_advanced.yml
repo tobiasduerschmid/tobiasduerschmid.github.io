@@ -1,0 +1,60 @@
+title: "JavaScript Functional Array Methods (Advanced) Quiz"
+description: "Advanced JavaScript practice choosing and chaining higher-order array methods: map, filter, and reduce."
+active: true
+# Split from the CS 35L nodejs quiz: CS 131 and Tools masters include this deck; CS 35L masters do not.
+questions:
+  - id: 11
+    difficulty: advanced
+    question: |
+      You are building a TikTok-style feed. Match each task to the best JavaScript array method:
+      - Task A: Remove videos the user has already seen
+      - Task B: Convert each video object into a `<VideoCard>` component
+      - Task C: Calculate the total watch time across all videos
+    options:
+      - "A: `.map()`, B: `.filter()`, C: `.reduce()`"
+      - "A: `.filter()`, B: `.map()`, C: `.reduce()`"
+      - "A: `.reduce()`, B: `.map()`, C: `.filter()`"
+      - "A: `.filter()`, B: `.reduce()`, C: `.map()`"
+    correct_index: 1
+    option_feedback:
+      0: |
+        `.map()` keeps the same cardinality and transforms each item; it does not remove seen videos.
+      2: |
+        `.reduce()` can implement many things, but using it to select unseen videos hides the simpler
+        operation: filtering.
+      3: |
+        `.reduce()` collapses to one accumulated value, so it is the wrong fit for rendering one
+        component per video.
+    explanation: "`.filter()` selects elements matching a condition (unseen videos), `.map()` transforms each element into something new (video → component), and `.reduce()` combines all elements into one value (total watch time). Knowing *which* method fits the task — not just how each works — is the critical skill."
+
+  - id: 13
+    difficulty: intermediate
+    question: |
+      **Arrange** the lines to process a JavaScript array of Spotify tracks: filter explicit songs, extract just the titles, and join them into a comma-separated string.
+    type: parsons
+    display: inline
+    lines:
+      - "const playlist = tracks"
+      - "    .filter(t => !t.explicit)"
+      - "    .map(t => t.title)"
+      - "    .join(', ');"
+    distractors:
+      - "    .reduce(t => !t.explicit)"
+      - "    .map(t => t.title())"
+    explanation: "`.filter()` drops explicit tracks (the `!` keeps non-explicit ones), `.map()` extracts each title string, and `.join()` concatenates the array into one comma-separated string. The `.reduce()` distractor accumulates rather than selects, so it's the wrong tool for filtering. `t.title()` calls `title` as a function, but it's a property, not a method."
+
+  - id: 16
+    difficulty: intermediate
+    question: |
+      **Arrange** the JavaScript lines to filter passing students (grade ≥ 60) and extract just their names.
+    type: parsons
+    display: inline
+    lines:
+      - "const passingNames = students"
+      - "    .filter(s => s.grade >= 60)"
+      - "    .map(s => s.name);"
+    distractors:
+      - "    .map(s => s.grade >= 60)"
+      - "    .filter(s => s.name)"
+      - "    .reduce((acc, s) => acc + s.name, '')"
+    explanation: "`.filter()` selects the passing students first, then `.map()` transforms the survivors into names. Reversing them fails because `.map(s => s.grade >= 60)` produces booleans, leaving no `grade` property to filter on. `.filter(s => s.name)` keeps every student with a name — all of them — so nothing is filtered, and `.reduce` accumulates into a single value, not an array."

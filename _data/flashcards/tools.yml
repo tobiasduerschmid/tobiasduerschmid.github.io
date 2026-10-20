@@ -12,6 +12,7 @@ decks:
   - python_functional_advanced
   - nodejs_syntax_explain
   - nodejs_syntax_generate
+  - nodejs_functional_advanced
   - react_syntax_explain
   - react_syntax_generate
   - git

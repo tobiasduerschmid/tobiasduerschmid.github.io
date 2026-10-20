@@ -1,4 +1,4 @@
-title: "Node.js/JavaScript Syntax — Write the Code"
+title: "Node.js/JavaScript Syntax — Write the Code (Basic)"
 description: "You are given a task description. Write the JavaScript code that accomplishes it."
 active: true
 cards:
@@ -26,21 +26,6 @@ cards:
     question: "Write a JavaScript arrow function `add` that takes two parameters and returns their sum."
     answer: "`const add = (a, b) => a + b;`"
     explanation: "Arrow functions use `=>`. For a single expression, the `return` keyword and braces can be omitted."
-  - id: 5
-    difficulty: intermediate
-    question: "In JavaScript, given `const nums = [1, 2, 3, 4, 5]`, create a new array containing only the even numbers using a higher-order function."
-    answer: "`const evens = nums.filter(n => n % 2 === 0);`"
-    explanation: "`.filter()` takes a callback and returns a new array with only elements where the callback returns `true`."
-  - id: 6
-    difficulty: intermediate
-    question: "In JavaScript, given `const nums = [1, 2, 3]`, create a new array where each number is doubled."
-    answer: "`const doubled = nums.map(n => n * 2);`"
-    explanation: "`.map()` transforms each element by applying the callback and returns a new array. The original is unchanged."
-  - id: 7
-    difficulty: intermediate
-    question: "In JavaScript, compute the sum of `[1, 2, 3, 4, 5]` using a single expression."
-    answer: "`[1, 2, 3, 4, 5].reduce((acc, n) => acc + n, 0)`"
-    explanation: "`.reduce()` accumulates a value. The second argument (`0`) is the initial accumulator value."
   - id: 8
     difficulty: intermediate
     question: "In JavaScript, extract `name` and `grade` from `const student = { name: \"Alice\", grade: 95 }` into separate variables in one line."
@@ -112,12 +97,6 @@ cards:
       const json = JSON.stringify(student);
       ```
     explanation: "Object literals use `{ key: value }` syntax. `JSON.stringify()` converts to a JSON string for sending over HTTP. `JSON.parse()` does the reverse."
-
-  - id: 18
-    difficulty: intermediate
-    question: "In JavaScript, given `const students = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }]`, find the student with `id === 2` (return the object, not an array)."
-    answer: "`const student = students.find(s => s.id === 2);`"
-    explanation: "`.find()` returns the first matching element (or `undefined`). `.filter()` would return an array `[{ id: 2, name: 'Bob' }]` — one element, but still wrapped in an array."
 
   - id: 19
     difficulty: intermediate

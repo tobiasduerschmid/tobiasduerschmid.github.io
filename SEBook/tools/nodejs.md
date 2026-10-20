@@ -591,3 +591,11 @@ Use regular `for` loops when you need early termination (`break`), when performa
 {% include flashcards.html id="nodejs_syntax_generate" %}
 
 {% include quiz.html id="nodejs" %}
+
+### Advanced: Functional Array Methods
+
+These sets go beyond the basics: choose between `map`, `filter`, `reduce`, and `find`, and chain them into pipelines.
+
+{% include flashcards.html id="nodejs_functional_advanced" %}
+
+{% include quiz.html id="nodejs_functional_advanced" %}

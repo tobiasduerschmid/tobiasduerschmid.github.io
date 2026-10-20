@@ -1,0 +1,71 @@
+title: "JavaScript Functional Array Methods (Advanced) Flashcards"
+description: "Explain and write JavaScript higher-order array methods: map, filter, reduce, and find."
+active: true
+# Split from the CS 35L nodejs_syntax_explain and nodejs_syntax_generate decks (ids prefixed explain-/write-):
+# CS 131 and Tools masters include this deck; CS 35L masters do not.
+cards:
+  - id: explain-5
+    difficulty: intermediate
+    question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
+      ```javascript
+      const nums = [1, 2, 3, 4, 5];
+      const evens = nums.filter(n => n % 2 === 0);
+      ```
+    answer: "Produces `[2, 4]` — `.filter()` creates a new array containing only elements where the callback returns `true`. The arrow function is a **callback** passed as an argument."
+
+  - id: explain-6
+    difficulty: intermediate
+    question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
+      ```javascript
+      const sum = [1, 2, 3].reduce((acc, n) => acc + n, 0);
+      ```
+    answer: "Produces `6` — `.reduce()` accumulates a single value by calling the callback for each element. `acc` starts at `0` (the second argument) and each step adds `n` to it."
+
+  - id: explain-12
+    difficulty: intermediate
+    question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
+      ```javascript
+      const doubled = [1, 2, 3].map(n => n * 2);
+      ```
+    answer: "Produces `[2, 4, 6]` — `.map()` transforms each element by calling the callback and returns a **new array** of results. The original array is unchanged."
+
+  - id: explain-20
+    difficulty: intermediate
+    question: |
+      You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
+
+      ```javascript
+      const students = [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }];
+      const found = students.find(s => s.id === 2);
+      ```
+    answer: "`found` is `{ id: 2, name: \"Bob\" }`. **`.find()`** returns the **first** element where the callback returns `true`, or `undefined` if no match. Unlike `.filter()` which returns an array, `.find()` returns a single element."
+
+  - id: write-5
+    difficulty: intermediate
+    question: "In JavaScript, given `const nums = [1, 2, 3, 4, 5]`, create a new array containing only the even numbers using a higher-order function."
+    answer: "`const evens = nums.filter(n => n % 2 === 0);`"
+    explanation: "`.filter()` takes a callback and returns a new array with only elements where the callback returns `true`."
+
+  - id: write-6
+    difficulty: intermediate
+    question: "In JavaScript, given `const nums = [1, 2, 3]`, create a new array where each number is doubled."
+    answer: "`const doubled = nums.map(n => n * 2);`"
+    explanation: "`.map()` transforms each element by applying the callback and returns a new array. The original is unchanged."
+
+  - id: write-7
+    difficulty: intermediate
+    question: "In JavaScript, compute the sum of `[1, 2, 3, 4, 5]` using a single expression."
+    answer: "`[1, 2, 3, 4, 5].reduce((acc, n) => acc + n, 0)`"
+    explanation: "`.reduce()` accumulates a value. The second argument (`0`) is the initial accumulator value."
+
+  - id: write-18
+    difficulty: intermediate
+    question: "In JavaScript, given `const students = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }]`, find the student with `id === 2` (return the object, not an array)."
+    answer: "`const student = students.find(s => s.id === 2);`"
+    explanation: "`.find()` returns the first matching element (or `undefined`). `.filter()` would return an array `[{ id: 2, name: 'Bob' }]` — one element, but still wrapped in an array."
