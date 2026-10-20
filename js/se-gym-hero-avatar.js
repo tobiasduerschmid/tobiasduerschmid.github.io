@@ -25,6 +25,33 @@
     return group;
   }
 
+  // One catalog owns reward names, unlock tiers, and their existing rig families.
+  const MILESTONE_ACCESSORY_REWARDS = [
+    { value: 'chrome-star-earrings', label: 'Chrome star earrings', tier: 'bronze', family: 'ear', fit: 'side' },
+    { value: 'pocket-library', label: 'Pocket library', tier: 'bronze', family: 'detail', fit: 'body' },
+    { value: 'debugger-duck', label: 'Debugger duck', tier: 'bronze', family: 'companion', fit: 'body' },
+    { value: 'annotation-headphones', label: 'Annotation headphones', tier: 'bronze', family: 'audio', fit: 'head' },
+    { value: 'varsity-cap', label: 'Coding cap', tier: 'bronze', family: 'head', fit: 'head' },
+    { value: 'cat-ear-headphones', label: 'Cat-ear headphones', tier: 'silver', family: 'audio', fit: 'head' },
+    { value: 'book-stack-backpack', label: 'Book-stack backpack', tier: 'silver', family: 'bag', fit: 'ground' },
+    { value: 'technical-crossbody', label: 'Technical crossbody', tier: 'silver', family: 'bag', fit: 'body' },
+    { value: 'metal-watch', label: 'Metal watch', tier: 'silver', family: 'detail', fit: 'limb' },
+    { value: 'holographic-shades', label: 'Holographic wraparound shades', tier: 'gold', family: 'face', fit: 'face' },
+    { value: 'scholar-satchel', label: "Scholar's satchel", tier: 'gold', family: 'bag', fit: 'body' },
+    { value: 'holographic-notebook', label: 'Holographic notebook', tier: 'gold', family: 'detail', fit: 'body' },
+    { value: 'knowledge-crown', label: 'Knowledge crown', tier: 'gold', family: 'head', fit: 'head' },
+    { value: 'signet-ring', label: 'Signet ring', tier: 'gold', family: 'detail', fit: 'limb' },
+    { value: 'crystal-horns', label: 'Faceted crystal horns', tier: 'diamond', family: 'head', fit: 'head' },
+    { value: 'origami-owl', label: 'Origami owl', tier: 'diamond', family: 'companion', fit: 'body' },
+    { value: 'orbiting-library', label: 'Orbiting library', tier: 'diamond', family: 'aura', fit: 'body' },
+    { value: 'cosmic-orbit-halo', label: 'Cosmic orbit halo', tier: 'infinity', family: 'aura', fit: 'head' },
+    { value: 'library-portal-backpack', label: 'Library portal backpack', tier: 'infinity', family: 'bag', fit: 'ground' }
+  ];
+
+  function rewardValues(property, value) {
+    return MILESTONE_ACCESSORY_REWARDS.filter(reward => reward[property] === value).map(reward => reward.value);
+  }
+
   var HERO_CHOICE_SETS = {
     heroKind: {
       id: 'hero-cust-kind',
@@ -585,7 +612,8 @@
         choiceGroup('Hero gear', [
           choice('utility-belt', 'Utility belt'),
           choice('hero-cape-clasp', 'Hero cape clasp')
-        ])
+        ]),
+        choiceGroup('Milestone rewards', MILESTONE_ACCESSORY_REWARDS.map(reward => choice(reward.value, reward.label)))
       ]
     }
   };
@@ -685,14 +713,14 @@
   };
   var ALL_SILHOUETTE_FEATURES = ['bust', 'waist', 'hip', 'shoulder'];
   var HAIR_COVERING_ACCESSORIES = { headwrap: true, 'draped-scarf': true, hijab: true, turban: true, 'wrapped-dastar': true };
-  var OPAQUE_HAT_ACCESSORIES = { beanie: true, 'baseball-cap': true, 'bucket-hat': true, 'embroidered-prayer-cap': true };
+  var OPAQUE_HAT_ACCESSORIES = { beanie: true, 'baseball-cap': true, 'varsity-cap': true, 'bucket-hat': true, 'embroidered-prayer-cap': true };
   var EAR_COVERING_ACCESSORIES = { 'draped-scarf': true, hijab: true };
   var NECK_COVERING_ACCESSORIES = { 'draped-scarf': true, hijab: true };
-  var HAIR_CLIP_CONCEALING_ACCESSORIES = { headwrap: true, 'draped-scarf': true, hijab: true, turban: true, 'wrapped-dastar': true, 'embroidered-prayer-cap': true, beanie: true, 'baseball-cap': true, 'bucket-hat': true, bandana: true };
+  var HAIR_CLIP_CONCEALING_ACCESSORIES = { headwrap: true, 'draped-scarf': true, hijab: true, turban: true, 'wrapped-dastar': true, 'embroidered-prayer-cap': true, beanie: true, 'baseball-cap': true, 'varsity-cap': true, 'bucket-hat': true, bandana: true };
   var HAIR_CLIP_INCOMPATIBLE_STYLES = { bald: true, mohawk: true };
-  var FOREHEAD_DETAIL_CONCEALING_ACCESSORIES = { beanie: true, 'baseball-cap': true, 'bucket-hat': true };
+  var FOREHEAD_DETAIL_CONCEALING_ACCESSORIES = { beanie: true, 'baseball-cap': true, 'varsity-cap': true, 'bucket-hat': true };
   var CONCEALED_AUDIO_ACCESSORIES = { 'wireless-earbuds': true, 'wired-earbuds': true, 'hearing-aid-left': true, 'hearing-aid-right': true, 'hearing-aids': true };
-  var EAR_CONCEALING_AUDIO_ACCESSORIES = { 'over-ear-headphones': true, 'headset-mic': true };
+  var EAR_CONCEALING_AUDIO_ACCESSORIES = { 'over-ear-headphones': true, 'headset-mic': true, 'cat-ear-headphones': true, 'annotation-headphones': true };
   // Looser wraps may reveal a small hairline. Full coverings never synthesize
   // one, regardless of the hairstyle saved underneath.
   var HAIRLINE_VISIBLE_COVERINGS = { headwrap: true, 'draped-scarf': true };
@@ -767,22 +795,24 @@
     compact: { kind: 'curve', p0: [370, 186], p1: [382, 180], p2: [394, 186], startT: 0.04, endT: 0.88, lengthScale: 0.86, fanBias: 0.28, riseBias: 0.08 },
     'deep-set': { kind: 'curve', p0: [369.4, 184.2], p1: [382, 173.9], p2: [394.8, 184.2], startT: 0.02, endT: 0.98, lengthScale: 0.92, fanBias: 0.3, riseBias: 0.22 }
   };
-  var FACE_ACCESSORIES = ['glasses', 'rectangular-glasses', 'thin-rectangular-glasses', 'semi-rimless-glasses', 'wireframe-glasses', 'round-rim-glasses', 'safety-goggles', 'tech-visor', 'visor', 'spectacles', 'monocle', 'mask', 'eyepatch'];
-  var DETAIL_ACCESSORIES = ['earrings', 'stud-earrings', 'hoop-earrings', 'hair-clips', 'over-ear-headphones', 'headset-mic', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aid-right', 'hearing-aids', 'chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp', 'forehead-jewel', 'crown', 'halo'];
-  var HEADWEAR_ACCESSORIES = ['headband', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'headwrap', 'draped-scarf', 'hijab', 'turban', 'embroidered-prayer-cap', 'wrapped-dastar'];
-  var FACE_ACCESSORY_PRIORITY = ['mask', 'eyepatch', 'tech-visor', 'visor', 'safety-goggles', 'round-rim-glasses', 'semi-rimless-glasses', 'thin-rectangular-glasses', 'wireframe-glasses', 'rectangular-glasses', 'glasses', 'spectacles', 'monocle'];
-  var HEAD_ACCESSORY_PRIORITY = ['hijab', 'wrapped-dastar', 'headwrap', 'draped-scarf', 'turban', 'embroidered-prayer-cap', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'crown', 'headband'];
-  var EAR_ACCESSORY_PRIORITY = ['hoop-earrings', 'stud-earrings', 'earrings'];
+  var FACE_ACCESSORIES = ['glasses', 'rectangular-glasses', 'thin-rectangular-glasses', 'semi-rimless-glasses', 'wireframe-glasses', 'round-rim-glasses', 'safety-goggles', 'tech-visor', 'visor', 'spectacles', 'monocle', 'mask', 'eyepatch'].concat(rewardValues('family', 'face'));
+  var DETAIL_ACCESSORIES = ['earrings', 'stud-earrings', 'hoop-earrings', 'hair-clips', 'over-ear-headphones', 'headset-mic', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aid-right', 'hearing-aids', 'chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp', 'forehead-jewel', 'crown', 'halo'].concat(MILESTONE_ACCESSORY_REWARDS.filter(reward => reward.family !== 'face').map(reward => reward.value));
+  var HEADWEAR_ACCESSORIES = ['headband', 'beanie', 'baseball-cap', 'varsity-cap', 'bucket-hat', 'bandana', 'headwrap', 'draped-scarf', 'hijab', 'turban', 'embroidered-prayer-cap', 'wrapped-dastar'];
+  var FACE_ACCESSORY_PRIORITY = ['mask', 'eyepatch', 'tech-visor', 'visor', 'safety-goggles', 'round-rim-glasses', 'semi-rimless-glasses', 'thin-rectangular-glasses', 'wireframe-glasses', 'rectangular-glasses', 'glasses', 'spectacles', 'monocle'].concat(rewardValues('family', 'face'));
+  var HEAD_ACCESSORY_PRIORITY = ['hijab', 'wrapped-dastar', 'headwrap', 'draped-scarf', 'turban', 'embroidered-prayer-cap', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'crown', 'headband'].concat(rewardValues('family', 'head'));
+  var EAR_ACCESSORY_PRIORITY = ['hoop-earrings', 'stud-earrings', 'earrings'].concat(rewardValues('family', 'ear'));
   var HEARING_AID_ACCESSORY_PRIORITY = ['hearing-aid-left', 'hearing-aid-right', 'hearing-aids'];
-  var AUDIO_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds'].concat(HEARING_AID_ACCESSORY_PRIORITY);
+  var AUDIO_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds'].concat(HEARING_AID_ACCESSORY_PRIORITY).concat(rewardValues('family', 'audio'));
+  const COMPANION_ACCESSORY_PRIORITY = rewardValues('family', 'companion');
+  const AURA_ACCESSORY_PRIORITY = ['halo'].concat(rewardValues('family', 'aura'));
   var NECK_ACCESSORY_PRIORITY = ['chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard'];
-  var BAG_ACCESSORY_PRIORITY = ['backpack-straps', 'messenger-bag'];
-  var BODY_BOUND_ACCESSORIES = ['chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp'];
+  var BAG_ACCESSORY_PRIORITY = ['backpack-straps', 'messenger-bag'].concat(rewardValues('family', 'bag'));
+  var BODY_BOUND_ACCESSORIES = ['chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp'].concat(rewardValues('fit', 'body'));
   ACCESSORY_COMPATIBILITY.bodyBoundAccessories = BODY_BOUND_ACCESSORIES.slice();
-  var DETAIL_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aid-right', 'hearing-aids', 'hair-clips', 'chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp', 'forehead-jewel', 'halo'];
-  var HEADWEAR_FIT_ACCESSORIES = lookupValues(HEADWEAR_ACCESSORIES.concat(['visor', 'crown', 'halo', 'headset-mic', 'over-ear-headphones', 'hair-clips']));
+  var DETAIL_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aid-right', 'hearing-aids', 'hair-clips', 'chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp', 'forehead-jewel', 'halo'].concat(rewardValues('family', 'detail'));
+  var HEADWEAR_FIT_ACCESSORIES = lookupValues(HEADWEAR_ACCESSORIES.concat(['visor', 'crown', 'halo', 'headset-mic', 'over-ear-headphones', 'hair-clips'], rewardValues('fit', 'head')));
   var FACE_FIT_ACCESSORIES = lookupValues(FACE_ACCESSORIES.concat(['forehead-jewel']));
-  var SIDE_FIT_ACCESSORIES = lookupValues(['earrings', 'stud-earrings', 'hoop-earrings', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aid-right', 'hearing-aids']);
+  var SIDE_FIT_ACCESSORIES = lookupValues(['earrings', 'stud-earrings', 'hoop-earrings', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aid-right', 'hearing-aids'].concat(rewardValues('fit', 'side')));
   var HAIR_CAP_REQUIRED_STYLES = lookupValues([]);
   var PARTIAL_HEAD_COVERAGE_HAIR_STYLES = lookupValues(['bald', 'mohawk', 'none', 'tousled-wispy-fringe', 'receding-short']);
   // Per-style vertical nudges keep bangs out of the brow band without pushing updos into the bar.
@@ -1362,6 +1392,7 @@
     'halo': 'gold',
     'crown': 'diamond'
   };
+  MILESTONE_ACCESSORY_REWARDS.forEach(reward => { GATED_ACCESSORIES[reward.value] = reward.tier; });
   var MILESTONE_TIER_LABELS = {
     none: 'None', bronze: 'Bronze', silver: 'Silver', gold: 'Gold', diamond: 'Diamond', infinity: 'Infinity'
   };
@@ -1484,6 +1515,8 @@
     if (AUDIO_ACCESSORY_PRIORITY.indexOf(accessory) !== -1) return AUDIO_ACCESSORY_PRIORITY;
     if (NECK_ACCESSORY_PRIORITY.indexOf(accessory) !== -1) return NECK_ACCESSORY_PRIORITY;
     if (BAG_ACCESSORY_PRIORITY.indexOf(accessory) !== -1) return BAG_ACCESSORY_PRIORITY;
+    if (COMPANION_ACCESSORY_PRIORITY.indexOf(accessory) !== -1) return COMPANION_ACCESSORY_PRIORITY;
+    if (AURA_ACCESSORY_PRIORITY.indexOf(accessory) !== -1) return AURA_ACCESSORY_PRIORITY;
     return null;
   }
 
@@ -1529,12 +1562,17 @@
     if (neck && !accessoryIsConcealedByWearables(neck, head, audio)) composited.push(neck);
     var bag = firstSelected(selected, BAG_ACCESSORY_PRIORITY);
     if (bag) composited.push(bag);
+    const companion = firstSelected(selected, COMPANION_ACCESSORY_PRIORITY);
+    if (companion) composited.push(companion);
+    const aura = firstSelected(selected, AURA_ACCESSORY_PRIORITY);
+    if (aura) composited.push(aura);
     for (var i = 0; i < DETAIL_ACCESSORY_PRIORITY.length; i++) {
       var detail = DETAIL_ACCESSORY_PRIORITY[i];
       if (
         AUDIO_ACCESSORY_PRIORITY.indexOf(detail) !== -1
         || NECK_ACCESSORY_PRIORITY.indexOf(detail) !== -1
         || BAG_ACCESSORY_PRIORITY.indexOf(detail) !== -1
+        || AURA_ACCESSORY_PRIORITY.indexOf(detail) !== -1
       ) continue;
       if (accessoryIsConcealedByWearables(detail, head, audio)) continue;
       if (selected.indexOf(detail) !== -1) composited.push(detail);
@@ -2201,7 +2239,7 @@
   }
 
   function promoteSelectedWearableLayers(svg, accessories) {
-    var foregroundWearables = ['over-ear-headphones', 'headset-mic'];
+    var foregroundWearables = ['over-ear-headphones', 'headset-mic'].concat(rewardValues('family', 'audio'));
     for (var i = 0; i < foregroundWearables.length; i++) {
       var option = foregroundWearables[i];
       if (accessories.indexOf(option) === -1) continue;

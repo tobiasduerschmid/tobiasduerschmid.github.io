@@ -5928,49 +5928,103 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 });
 
 test.describe('SE Gym hero — milestone gating of showpiece accessories', () => {
-  test.beforeEach(async ({ page }) => {
-    await clearState(page);
-  });
+  const rewardTiers = [
+    { tier: 'bronze', names: ['Utility belt', 'Chrome star earrings', 'Pocket library', 'Debugger duck', 'Annotation headphones', 'Coding cap'] },
+    { tier: 'silver', names: ['Hero cape clasp', 'Cat-ear headphones', 'Book-stack backpack', 'Technical crossbody', 'Metal watch'] },
+    { tier: 'gold', names: ['Halo', 'Holographic wraparound shades', "Scholar's satchel", 'Holographic notebook', 'Knowledge crown', 'Signet ring'] },
+    { tier: 'diamond', names: ['Crown', 'Faceted crystal horns', 'Origami owl', 'Orbiting library'] },
+    { tier: 'infinity', names: ['Cosmic orbit halo', 'Library portal backpack'] },
+  ];
 
-  // se-gym.html sets window.SEGymHeroMilestone from total exercise attempts; the
-  // customizer reads it on open. We set it directly to isolate the gating contract
-  // (tier-from-attempts is covered by the milestone tests above).
   async function openCustomizerAtTier(page, tier) {
-    await page.evaluate((t) => { window.SEGymHeroMilestone = t; }, tier);
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    // Exercise the tier-to-gear contract; progress thresholds have separate tests.
+    await page.evaluate(t => { window.SEGymHeroMilestone = t; }, tier);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     const modal = page.getByRole('dialog', { name: 'Customize your hero' });
     await expect(modal).toBeVisible();
     return modal;
   }
 
-  test('showpiece gear is locked at the lowest tier and unlocks at diamond', async ({ page }) => {
-    await page.goto(GYM_URL);
-    await activatePersonalGym(page);
+  for (const [rank, tier] of ['none', ...rewardTiers.map(reward => reward.tier)].entries()) {
+    test(`${tier} offers only gear earned at that milestone or earlier`, async ({ page }) => {
+      const modal = await openCustomizerAtTier(page, tier);
+      for (const [requiredRank, rewards] of rewardTiers.entries()) {
+        for (const name of rewards.names) {
+          const control = modal.getByRole('checkbox', { name: new RegExp('^' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:$| )') });
+          await expect(control).toBeEnabled({ enabled: rank > requiredRank });
+          if (rank <= requiredRank) await expect(control).toHaveAccessibleName(new RegExp(rewards.tier, 'i'));
+        }
+      }
+    });
+  }
 
-    let modal = await openCustomizerAtTier(page, 'none');
-    // The four gated accessories (utility-belt, hero-cape-clasp, halo, crown) are disabled + flagged.
-    await expect(modal.locator('.hero-cust-accessory-choice input[type="checkbox"]:disabled')).toHaveCount(4);
-    await expect(modal.locator('.hero-cust-accessory-lock')).toHaveCount(4);
-    const crown = modal.locator('.hero-cust-accessory-choice[data-choice-value="crown"]');
-    await expect(crown.locator('input[type="checkbox"]')).toBeDisabled();
-    await expect(crown.locator('.hero-cust-accessory-lock')).toHaveText(/Diamond/);
-    await heroCustomizerAction(page, 'Cancel').click();
-
-    // Reaching diamond unlocks every showpiece item.
-    modal = await openCustomizerAtTier(page, 'diamond');
-    await expect(modal.locator('.hero-cust-accessory-choice input[type="checkbox"]:disabled')).toHaveCount(0);
-    await expect(modal.locator('.hero-cust-accessory-lock')).toHaveCount(0);
+  test('Infinity gear can be combined, saved, and restored', async ({ page }) => {
+    const modal = await openCustomizerAtTier(page, 'infinity');
+    for (const name of ['Coding cap', 'Technical crossbody', 'Metal watch', 'Signet ring']) {
+      await modal.getByRole('checkbox', { name, exact: true }).check();
+    }
+    await heroCustomizerAction(page, 'Save').click();
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    for (const name of ['Coding cap', 'Technical crossbody', 'Metal watch', 'Signet ring']) {
+      await expect(modal.getByRole('checkbox', { name, exact: true })).toBeChecked();
+    }
+    await a11yCheckpoint(page, 'milestone-rewards-selected');
   });
 
-  test('a mid tier unlocks only lower-or-equal gear', async ({ page }) => {
-    await page.goto(GYM_URL);
-    await activatePersonalGym(page);
-    const modal = await openCustomizerAtTier(page, 'silver');
-    // bronze + silver gear unlocked; gold + diamond gear still locked.
-    await expect(modal.locator('.hero-cust-accessory-choice[data-choice-value="utility-belt"] input')).toBeEnabled();
-    await expect(modal.locator('.hero-cust-accessory-choice[data-choice-value="hero-cape-clasp"] input')).toBeEnabled();
-    await expect(modal.locator('.hero-cust-accessory-choice[data-choice-value="halo"] input')).toBeDisabled();
-    await expect(modal.locator('.hero-cust-accessory-choice[data-choice-value="crown"] input')).toBeDisabled();
-    await expect(modal.locator('.hero-cust-accessory-choice input[type="checkbox"]:disabled')).toHaveCount(2);
+  test('choosing another bag or companion replaces the conflicting item', async ({ page }) => {
+    const modal = await openCustomizerAtTier(page, 'infinity');
+    await modal.getByRole('checkbox', { name: 'Debugger duck', exact: true }).check();
+    await modal.getByRole('checkbox', { name: 'Origami owl', exact: true }).check();
+    await expect(modal.getByRole('checkbox', { name: 'Debugger duck', exact: true })).not.toBeChecked();
+    await modal.getByRole('checkbox', { name: 'Book-stack backpack', exact: true }).check();
+    await modal.getByRole('checkbox', { name: 'Library portal backpack', exact: true }).check();
+    await expect(modal.getByRole('checkbox', { name: 'Book-stack backpack', exact: true })).not.toBeChecked();
+  });
+
+  test('reward backpacks stand beside the student without covering the torso', async ({ page }) => {
+    const hero = await installGeometryHero(page);
+    const placements = await hero.evaluate(svg => {
+      return ['book-stack-backpack', 'library-portal-backpack'].map(option => {
+        const state = JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS));
+        state.outfit.accessories = [option];
+        window.HeroAvatar.applyToSvg(svg, state);
+        const pack = svg.querySelector(`[data-hero-slot="accessory"][data-hero-option="${option}"]`).getBoundingClientRect();
+        const torso = svg.querySelector('[data-hero-default-torso]').getBoundingClientRect();
+        const canvas = svg.getBoundingClientRect();
+        return { option, beside: pack.left > torso.right, belowWaist: pack.top > torso.bottom,
+          visible: pack.width > 0 && pack.height > 0 && pack.right <= canvas.right && pack.bottom <= canvas.bottom };
+      });
+    });
+    for (const placement of placements) {
+      expect(placement, placement.option).toMatchObject({ beside: true, belowWaist: true, visible: true });
+    }
+  });
+
+  test('ground backpacks stay stationary throughout the lifting animation', async ({ page }) => {
+    const modal = await openCustomizerAtTier(page, 'infinity');
+    const positions = await modal.locator('[data-gym-hero-svg]').evaluate(svg => {
+      svg.pauseAnimations();
+      return ['book-stack-backpack', 'library-portal-backpack'].map(option => {
+        const state = JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS));
+        state.outfit.accessories = [option];
+        window.HeroAvatar.applyToSvg(svg, state);
+        const pack = svg.querySelector(`[data-hero-slot="accessory"][data-hero-option="${option}"]`);
+        const samples = [0, 1.21, 2.2, 3.41].map(time => {
+          svg.setCurrentTime(time);
+          const box = pack.getBoundingClientRect();
+          return { x: box.x, y: box.y, width: box.width, height: box.height };
+        });
+        return { option, samples };
+      });
+    });
+    for (const { option, samples } of positions) {
+      for (const sample of samples.slice(1)) {
+        for (const dimension of ['x', 'y', 'width', 'height']) {
+          expect(sample[dimension], `${option} ${dimension} during the lift`).toBeCloseTo(samples[0][dimension], 2);
+        }
+      }
+    }
   });
 });

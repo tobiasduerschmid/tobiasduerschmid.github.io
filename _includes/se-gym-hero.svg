@@ -1,6 +1,64 @@
 {% assign hero_variant = include.variant | default: "main" %}
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="80 -20 640 665" class="se-gym-hero-svg se-gym-hero-svg-{{ hero_variant }}" data-gym-hero-svg data-hero-body="average"{% if include.ready %} data-hero-avatar-ready="true"{% endif %} aria-hidden="true" focusable="false" preserveAspectRatio="xMidYMid meet" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" color-interpolation="sRGB">
     <defs>
+    <!-- Milestone gear shares compact, palette-aware illustration primitives. -->
+    <linearGradient id="reward-chrome-{{ hero_variant }}" x1="0" y1="0" x2=".7" y2="1">
+      <stop offset="0" stop-color="#f4fbff"/><stop offset=".38" stop-color="#c4d8e8"/><stop offset=".48" stop-color="#56778f"/><stop offset=".57" stop-color="#eefaff"/><stop offset="1" stop-color="#7d9db5"/>
+    </linearGradient>
+    <linearGradient id="reward-hologram-{{ hero_variant }}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="var(--hero-cape-light, #4eb7df)"/><stop offset=".48" stop-color="#b0f1ed"/><stop offset="1" stop-color="var(--hero-milestone-jewel, #9b7ced)"/>
+    </linearGradient>
+    <linearGradient id="reward-paper-{{ hero_variant }}" x1="0" y1="0" x2=".25" y2="1">
+      <stop offset="0" stop-color="#fffdf1"/><stop offset=".72" stop-color="#ede9d5"/><stop offset="1" stop-color="#c8c5b0"/>
+    </linearGradient>
+    <g id="reward-book-{{ hero_variant }}" stroke="var(--hero-cape-dark, #123047)" stroke-linejoin="round">
+      <path d="M 2 3 Q 0 3 0 6 V 17 Q 0 20 4 20 H 49 V 3 Z" fill="currentColor" stroke-width="2"/>
+      <path d="M 7 6 H 46 V 16 H 7 Q 3 11 7 6 Z" fill="url(#reward-paper-{{ hero_variant }})" stroke-width="1.1"/>
+      <path d="M 9 9 H 43 M 9 13 H 42" fill="none" stroke-width=".7" opacity=".36"/>
+      <path d="M 5 3 H 49 M 5 19 H 49" fill="none" stroke="currentColor" stroke-width="3"/>
+      <path d="M 34 4 V 14 L 37 11 L 40 14 V 4" fill="var(--hero-cape-inner, #ffd100)" stroke-width=".65"/>
+      <path d="M 3 6 V 16" fill="none" stroke="#fffdf1" stroke-width="1.1" opacity=".65"/>
+    </g>
+    <g id="reward-open-book-{{ hero_variant }}" stroke="var(--hero-cape-dark, #123047)" stroke-linejoin="round">
+      <path d="M -29 -14 Q -13 -20 0 -11 Q 13 -20 29 -14 V 18 Q 13 13 0 22 Q -13 13 -29 18 Z" fill="currentColor" stroke-width="2.3"/>
+      <path d="M -25 -17 Q -10 -19 0 -10 Q 10 -19 25 -17 V 13 Q 10 12 0 19 Q -10 12 -25 13 Z" fill="url(#reward-paper-{{ hero_variant }})" stroke-width="1.2"/>
+      <path d="M 0 -10 V 18 M -20 -9 Q -12 -10 -5 -5 M 5 -5 Q 12 -10 20 -9 M -20 -2 Q -12 -3 -5 2 M 5 2 Q 12 -3 20 -2 M -20 5 Q -12 4 -5 9 M 5 9 Q 12 4 20 5" fill="none" stroke-width="1" opacity=".46"/>
+      <path d="M 14 -16 V -4 L 17 -7 L 20 -5 V -17" fill="var(--hero-cape-inner, #ffd100)" stroke-width=".65"/>
+    </g>
+    <g id="reward-headphones-{{ hero_variant }}" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 350 186 C 347 139 366 108 400 108 C 434 108 453 139 450 186" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="9"/>
+      <path d="M 350 182 C 350 140 369 113 400 113 C 431 113 450 140 450 182" fill="none" stroke="url(#reward-chrome-{{ hero_variant }})" stroke-width="4"/>
+      <rect x="336" y="174" width="27" height="38" rx="12" fill="url(#accessory-polymer-form-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="2.6"/>
+      <rect x="437" y="174" width="27" height="38" rx="12" fill="url(#accessory-polymer-form-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="2.6"/>
+      <path d="M 345 181 C 338 185 338 200 346 204 M 455 181 C 462 185 462 200 454 204" fill="none" stroke="url(#reward-hologram-{{ hero_variant }})" stroke-width="3.5"/>
+      <path d="M 349 181 V 202 M 451 181 V 202" fill="none" stroke="var(--hero-glasses-metal, #e9ecf2)" stroke-width="1.2" opacity=".7"/>
+    </g>
+
+
+    <!-- Shared three-quarter backpack shell: padded straps, gusset, zips, and pockets. -->
+    <g id="reward-backpack-shell-{{ hero_variant }}" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 20 33 C -4 48 -6 99 8 137 Q 14 146 24 135 M 93 35 C 119 51 129 101 115 136 Q 110 144 101 135" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="9"/>
+      <path d="M 18 41 C 3 60 3 105 12 130 M 98 43 C 114 61 121 105 111 132" fill="none" stroke="var(--hero-cape-light, #4eb7df)" stroke-width="2.3"/>
+      <path d="M 42 17 C 38 -4 48 -9 58 -8 C 72 -8 79 1 76 18" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="8"/>
+      <path d="M 44 10 C 43 -1 49 -5 58 -4 C 67 -4 73 1 73 10" fill="none" stroke="var(--hero-cape-light, #4eb7df)" stroke-width="2.5"/>
+      <path d="M 12 48 C 12 20 29 5 57 5 C 86 5 104 23 108 49 L 114 121 C 116 140 99 146 64 146 C 31 146 13 140 12 123 Z" fill="url(#accessory-cloth-form-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="3"/>
+      <path d="M 76 9 C 96 17 104 32 106 51 L 111 120 C 111 135 100 139 88 141 L 87 47 C 85 30 83 19 76 9 Z" fill="var(--hero-cape-dark, #123047)" opacity=".5"/>
+      <path d="M 20 50 C 20 26 32 15 55 15 C 78 15 91 30 93 52 L 97 123" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="4"/>
+      <path d="M 20 50 C 20 26 32 15 55 15 C 78 15 91 30 93 52 L 97 123" fill="none" stroke="url(#reward-chrome-{{ hero_variant }})" stroke-width="1.3" stroke-dasharray="1 2"/>
+      <path d="M 22 53 C 22 30 35 20 53 20" fill="none" stroke="#fff" stroke-width="1.8" opacity=".28"/>
+      <path d="M 22 99 C 37 93 65 94 85 99 L 87 127 C 71 137 42 137 24 128 Z" fill="var(--hero-cape, #15538f)" stroke="var(--hero-cape-dark, #123047)" stroke-width="2"/>
+      <path d="M 26 105 C 44 100 65 101 82 105" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="3.3"/>
+      <path d="M 26 104 C 44 99 65 100 82 104" fill="none" stroke="url(#reward-chrome-{{ hero_variant }})" stroke-width="1.2"/>
+      <path d="M 76 104 L 77 113" stroke="var(--hero-cape-inner, #ffd100)" stroke-width="2.5"/>
+      <path d="M 28 111 L 29 125 C 45 131 67 131 81 125" fill="none" stroke="var(--hero-cape-light, #4eb7df)" stroke-width="1.1" stroke-dasharray="2 3"/>
+      <path d="M 98 86 L 112 89 L 115 121 Q 109 128 98 126 Z" fill="var(--hero-cape, #15538f)" stroke="var(--hero-cape-dark, #123047)" stroke-width="1.5"/>
+      <path d="M 100 94 L 113 107 M 99 103 L 114 116 M 100 115 L 111 95 M 104 123 L 114 106" fill="none" stroke="var(--hero-cape-light, #4eb7df)" stroke-width=".8" opacity=".65"/>
+      <path d="M 97 87 L 112 90" stroke="var(--hero-cape-light, #4eb7df)" stroke-width="2.3"/>
+      <rect x="91" y="57" width="7" height="13" rx="2" fill="url(#reward-chrome-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="1"/>
+      <path d="M 15 131 C 36 142 78 146 109 132 L 108 139 C 88 150 31 149 17 138 Z" fill="var(--hero-cape-dark, #123047)" opacity=".55"/>
+      <path d="M 20 69 L 20 90" fill="none" stroke="#fff" stroke-width="1.8" opacity=".26"/>
+    </g>
+
     <!-- Prof's fixed portrait uses soft form lighting; shared hero palettes remain independent. -->
     <radialGradient id="prof-skin-{{ hero_variant }}" gradientUnits="userSpaceOnUse" cx="379" cy="170" r="92" gradientTransform="translate(0 -30) scale(1 1.18)">
       <stop offset="0" stop-color="#fbe4d3"/><stop offset=".36" stop-color="#f3d3bd"/><stop offset=".7" stop-color="var(--hero-skin-light, #edbea5)"/><stop offset="1" stop-color="#dda98e"/>
@@ -530,6 +588,7 @@
     <!-- Hat envelopes use the hat coordinate frame; safety silhouettes remain local to each hair slot. -->
     <path id="hair-under-hat-envelope-beanie-{{ hero_variant }}" data-hero-hat-envelope="beanie" d="M 346 170 C 372 169 428 169 454 170 C 455 181 460 194 468 207 C 480 229 491 247 500 266 H 800 V 1000 H 0 V 266 H 300 C 309 247 320 229 332 207 C 340 194 345 181 346 170 Z"/>
     <path id="hair-under-hat-envelope-baseball-cap-{{ hero_variant }}" data-hero-hat-envelope="baseball-cap" d="M 358 164 C 376 157 424 157 442 164 C 446 179 456 194 467 209 C 480 230 491 248 500 266 H 800 V 1000 H 0 V 266 H 300 C 309 248 320 230 333 209 C 344 194 354 179 358 164 Z"/>
+    <path id="hair-under-hat-envelope-varsity-cap-{{ hero_variant }}" data-hero-hat-envelope="varsity-cap" d="M 358 164 C 376 157 424 157 442 164 C 446 179 456 194 467 209 C 480 230 491 248 500 266 H 800 V 1000 H 0 V 266 H 300 C 309 248 320 230 333 209 C 344 194 354 179 358 164 Z"/>
     <path id="hair-under-hat-envelope-bucket-hat-{{ hero_variant }}" data-hero-hat-envelope="bucket-hat" d="M 350 168 C 374 163 426 163 450 168 C 453 182 459 194 468 208 C 480 229 491 247 500 266 H 800 V 1000 H 0 V 266 H 300 C 309 247 320 229 332 208 C 341 194 347 182 350 168 Z"/>
     <path id="hair-under-hat-envelope-embroidered-prayer-cap-{{ hero_variant }}" data-hero-hat-envelope="embroidered-prayer-cap" d="M 362 160 C 380 151 420 151 438 160 C 445 177 455 193 467 209 C 480 230 491 248 500 266 H 800 V 1000 H 0 V 266 H 300 C 309 248 320 230 333 209 C 345 193 355 177 362 160 Z"/>
     <clipPath id="hat-frame-hair-clip-{{ hero_variant }}" clipPathUnits="userSpaceOnUse">
@@ -1965,6 +2024,23 @@
                 fill="url(#gold-{{ hero_variant }})" stroke="#6f4f00" stroke-width="1.50" stroke-linejoin="round"/>
           <path d="M 316 80 C 320 77, 326 77, 329 80" stroke="#fff6c0" stroke-width="1.35"
                 fill="none" stroke-linecap="round" opacity=".76"/>
+          <!-- Wrist jewelry shares the forearm rig instead of the head fitting transform. -->
+          <g data-hero-slot="accessory" data-hero-option="metal-watch" display="none" stroke-linecap="round" stroke-linejoin="round">
+            <g transform="translate(0 18)">
+            <path d="M 312 91 Q 322 87 332 91 L 333 113 Q 322 117 311 113 Z" fill="url(#reward-chrome-{{ hero_variant }})" stroke="#253b50" stroke-width="1.2"/>
+            <path d="M 314 92 V 112 M 330 92 V 112 M 315 94 H 329 M 315 110 H 329" fill="none" stroke="#6a8293" stroke-width=".85"/>
+            <rect x="332" y="100" width="3" height="4" rx="1" fill="#b3cbd6" stroke="#253b50" stroke-width=".8"/>
+            <circle cx="322" cy="102" r="11" fill="url(#reward-chrome-{{ hero_variant }})" stroke="#253b50" stroke-width="1.3"/>
+            <circle cx="322" cy="102" r="8" fill="var(--hero-cape-dark, #123047)" stroke="#e6f2f6" stroke-width=".9"/>
+            <path d="M 322 95 V 96.5 M 322 107.5 V 109 M 315 102 H 316.5 M 327.5 102 H 329" stroke="#e6f2f6" stroke-width="1"/>
+            <circle cx="319" cy="105" r="1.8" fill="none" stroke="#a3c5d8" stroke-width=".55"/>
+            <circle cx="325" cy="105" r="1.8" fill="none" stroke="#a3c5d8" stroke-width=".55"/>
+            <path d="M 318.5 98 L 322 102 L 326 99.5" fill="none" stroke="#fff" stroke-width="1.1"/>
+            <path d="M 322 102 L 320 108" stroke="var(--hero-cape-inner, #ffd100)" stroke-width=".7"/>
+            <circle cx="322" cy="102" r="1" fill="#fff"/>
+            <path d="M 314 99 Q 316 94 321 93" fill="none" stroke="#fff" stroke-width="1.1" opacity=".8"/>
+            </g>
+          </g>
         </g>
       </g>
 
@@ -8323,6 +8399,21 @@
         <path d="M 403 116 C 424 124 435 139 438 158 C 428 157 420 159 414 162 C 414 141 411 127 403 116 Z" fill="url(#accessory-fold-form-{{ hero_variant }})" opacity="1"/>
         <path d="M 424 164 C 441 168 459 175 478 176 C 458 178 439 174 422 167 Z" fill="url(#accessory-fold-form-{{ hero_variant }})" opacity="1"/>
       </g>
+      <g data-hero-slot="accessory" data-hero-option="varsity-cap" display="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 354 158 C 352 131 371 112 399 112 C 425 111 447 131 447 158 C 447 164 444 168 441 170 C 416 166 381 166 358 171 Z" fill="url(#accessory-cloth-form-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="2"/>
+        <path d="M 399 114 C 385 124 378 141 377 165 C 392 163 412 163 428 165 C 425 141 416 124 399 114 Z" fill="url(#reward-paper-{{ hero_variant }})"/>
+        <path d="M 399 114 C 385 124 378 141 377 165 M 400 114 C 416 124 425 141 428 165" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="1.1" opacity=".6"/>
+        <path d="M 361 154 C 364 138 373 126 385 120" fill="none" stroke="var(--hero-cape-light, #4eb7df)" stroke-width="2" opacity=".65"/>
+        <path d="M 435 137 C 440 144 442 153 442 162 C 437 163 434 163 429 164 C 429 151 425 139 420 131 Z" fill="var(--hero-cape-dark, #123047)" opacity=".3"/>
+        <path d="M 391 138 L 384 145 L 391 152 M 411 138 L 418 145 L 411 152 M 405 135 L 397 155" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="4.8"/>
+        <path d="M 391 138 L 384 145 L 391 152 M 411 138 L 418 145 L 411 152 M 405 135 L 397 155" fill="none" stroke="var(--hero-cape-inner, #ffd100)" stroke-width="2.4"/>
+        <path d="M 358 165 C 381 159 416 158 437 164 C 455 164 475 172 482 179 C 461 185 440 180 422 171 C 401 167 379 167 358 171 Z" fill="var(--hero-cape, #15538f)" stroke="var(--hero-cape-dark, #123047)" stroke-width="2"/>
+        <path d="M 431 168 C 449 168 466 175 473 178 C 456 179 442 175 431 171" fill="none" stroke="var(--hero-cape-inner, #ffd100)" stroke-width="1.1" opacity=".85"/>
+        <path d="M 360 167 C 381 163 405 162 421 165" fill="none" stroke="var(--hero-cape-light, #4eb7df)" stroke-width="1"/>
+        <ellipse cx="399" cy="112" rx="4" ry="2.5" fill="var(--hero-cape, #15538f)" stroke="var(--hero-cape-dark, #123047)" stroke-width="1"/>
+        <ellipse cx="368" cy="146" rx="1.8" ry="1.2" fill="var(--hero-cape-dark, #123047)"/>
+        <ellipse cx="436" cy="147" rx="1.8" ry="1.2" fill="var(--hero-cape-dark, #123047)"/>
+      </g>
       <g data-hero-slot="accessory" data-hero-option="bucket-hat" display="none">
         <path d="M 358 134 C 368 112, 432 112, 442 134 C 444 145, 445 158, 446 169 C 421 174, 379 174, 354 169 C 355 158, 356 145, 358 134 Z" fill="url(#accessory-cloth-form-{{ hero_variant }})" stroke="var(--hero-cape-dark, #001F38)" stroke-width="1.4" stroke-linejoin="round"/>
         <path d="M 400 116 C 386 126, 382 140, 382 158 M 400 116 C 414 126, 418 140, 418 158" stroke="var(--hero-cape-light, #3B8AD8)" stroke-width="1.55" fill="none" stroke-linecap="round" opacity=".38"/>
@@ -8475,6 +8566,150 @@
         <ellipse cx="400" cy="109" rx="34" ry="6.5" fill="none" stroke="#FFE470" stroke-width="4.2"/>
         <ellipse cx="400" cy="109" rx="34" ry="6.5" fill="none" stroke="#FFD100" stroke-width="1.4" opacity=".75"/>
         <path d="M 369 107 C 375 103.2 389 101.6 402 102" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+      </g>
+      <!-- Earned gear: head/ear options follow the head rig; props follow the body rig. -->
+      <g data-hero-slot="accessory" data-hero-option="chrome-star-earrings" display="none">
+        <g data-hero-ear-attachment="left" stroke="var(--hero-glasses-frame, #123047)" stroke-linejoin="round">
+          <circle cx="354" cy="199" r="2.5" fill="url(#reward-chrome-{{ hero_variant }})" stroke-width="1"/>
+          <path d="M 354 201 V 206" stroke-width="1.5"/>
+          <path d="M 354 204 L 356.6 210 L 363 210.5 L 358 215 L 359.5 221 L 354 218 L 348.5 221 L 350 215 L 345 210.5 L 351.4 210 Z" fill="url(#reward-chrome-{{ hero_variant }})" stroke-width="1.2"/>
+          <path d="M 354 208 L 355 213 L 359 212 M 354 213 L 351 217" stroke="#fff" stroke-width="1" fill="none"/>
+        </g>
+        <g data-hero-ear-attachment="right" stroke="var(--hero-glasses-frame, #123047)" stroke-linejoin="round">
+          <circle cx="446" cy="199" r="2.5" fill="url(#reward-chrome-{{ hero_variant }})" stroke-width="1"/>
+          <path d="M 446 201 V 206" stroke-width="1.5"/>
+          <path d="M 446 204 L 448.6 210 L 455 210.5 L 450 215 L 451.5 221 L 446 218 L 440.5 221 L 442 215 L 437 210.5 L 443.4 210 Z" fill="url(#reward-chrome-{{ hero_variant }})" stroke-width="1.2"/>
+          <path d="M 446 208 L 447 213 L 451 212 M 446 213 L 443 217" stroke="#fff" stroke-width="1" fill="none"/>
+        </g>
+      </g>
+      <g data-hero-slot="accessory" data-hero-option="pocket-library" display="none" stroke-linejoin="round">
+        <use href="#reward-book-{{ hero_variant }}" transform="translate(351 296) rotate(-81) scale(.82)" color="var(--hero-cape, #15538f)"/>
+        <use href="#reward-book-{{ hero_variant }}" transform="translate(367 297) rotate(-94) scale(.72)" color="var(--hero-cape-inner, #ffd100)"/>
+        <use href="#reward-book-{{ hero_variant }}" transform="translate(381 296) rotate(-72) scale(.68)" color="var(--hero-milestone-jewel, #b7793c)"/>
+        <path d="M 343 282 Q 366 289 393 282 L 389 323 Q 368 334 347 322 Z" fill="url(#accessory-cloth-form-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="2.5"/>
+        <path d="M 348 291 Q 367 295 388 290 M 352 315 Q 369 323 385 316" stroke="var(--hero-cape-light, #4eb7df)" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/>
+        <path d="M 364 299 L 368 303 L 376 296" fill="none" stroke="var(--hero-cape-inner, #ffd100)" stroke-width="2.8" stroke-linecap="round"/>
+      </g>
+      <g data-hero-slot="accessory" data-hero-option="debugger-duck" display="none" stroke-linejoin="round" stroke-linecap="round">
+        <ellipse cx="342" cy="265" rx="23" ry="5" fill="var(--hero-cape-dark, #123047)" opacity=".24"/>
+        <path d="M 321 243 C 314 235 316 231 320 233 C 326 240 330 241 334 238 C 329 228 334 217 345 217 C 357 216 362 226 358 235 C 367 242 366 255 354 261 C 338 269 320 260 321 243 Z" fill="url(#gold-radial-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="2.4"/>
+        <path d="M 334 245 C 341 239 350 242 351 248 C 347 256 337 256 333 249" fill="var(--hero-cape-inner, #ffd100)" stroke="#a46b12" stroke-width="1.2"/>
+        <path d="M 356 230 Q 366 229 368 234 Q 363 239 355 236 Z" fill="#ed953c" stroke="#8b511e" stroke-width="1.3"/>
+        <circle cx="349" cy="227" r="2.4" fill="#203346"/><circle cx="349.7" cy="226.2" r=".8" fill="#fff"/>
+        <path d="M 337 225 Q 341 220 347 221 M 325 247 Q 325 254 333 257" stroke="#fff5c8" stroke-width="2" fill="none" opacity=".75"/>
+        <path d="M 335 237 Q 344 242 355 238 L 355 243 Q 344 246 334 241 Z" fill="var(--hero-cape, #15538f)" stroke="var(--hero-cape-dark, #123047)" stroke-width="1"/>
+      </g>
+      <g data-hero-slot="accessory" data-hero-option="cat-ear-headphones" display="none" stroke-linejoin="round">
+        <path d="M 354 136 L 354 100 Q 355 96 359 99 L 382 119 M 418 119 L 441 99 Q 445 96 446 100 L 446 136" fill="url(#accessory-polymer-form-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="2.8"/>
+        <path d="M 360 125 V 107 L 375 120 Z M 425 120 L 440 107 V 125 Z" fill="url(#reward-hologram-{{ hero_variant }})"/>
+        <use href="#reward-headphones-{{ hero_variant }}"/>
+        <path d="M 345 189 L 348 193 L 345 197 M 455 189 L 452 193 L 455 197" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".8"/>
+      </g>
+      <g data-hero-slot="accessory" data-hero-option="annotation-headphones" display="none" stroke-linejoin="round">
+        <use href="#reward-headphones-{{ hero_variant }}"/>
+        <path d="M 349 161 L 362 122 L 366 123 L 354 163 L 350 169 Z" fill="var(--hero-cape-inner, #ffd100)" stroke="var(--hero-cape-dark, #123047)" stroke-width="1.3"/>
+        <path d="M 349 161 L 354 163 L 350 169 Z" fill="#e4c19b"/><path d="M 350 166 V 169" stroke="#203346" stroke-width="1.4"/>
+        <path d="M 337 181 L 359 177 L 362 195 L 356 202 L 340 203 Z" fill="#f8e698" stroke="#8c762f" stroke-width="1.2"/>
+        <path d="M 356 202 L 355 195 L 362 195" fill="#d8be67"/>
+        <path d="M 342 185 L 354 183 M 343 190 L 351 188 M 344 195 L 350 194" stroke="#716032" stroke-width="1.1"/>
+        <path d="M 439 182 L 459 185 L 457 201 L 437 198 Z" fill="#b7ece5" stroke="#3c807a" stroke-width="1.2"/>
+        <path d="M 442 189 L 454 191 M 441 194 L 451 196" stroke="#3c807a" stroke-width="1.1"/>
+      </g>
+      <g data-hero-slot="accessory" data-hero-option="holographic-shades" display="none" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 350 178 Q 371 170 394 178 Q 400 181 406 178 Q 429 170 450 178 L 444 195 Q 426 207 408 196 L 400 188 L 392 196 Q 374 207 356 195 Z" fill="url(#reward-hologram-{{ hero_variant }})" stroke="var(--hero-glasses-frame, #123047)" stroke-width="2.8"/>
+        <path data-hero-lens="both" d="M 356 179 Q 376 175 392 182 L 389 193 Q 376 200 360 191 M 408 182 Q 424 175 444 179 L 440 191 Q 424 200 411 193" fill="var(--hero-lens-fill, rgba(255,255,255,.18))"/>
+        <!-- Vector code glyphs keep the lens display crisp without a font dependency. -->
+        <path d="M 366 181 L 362 185 L 366 189 M 374 181 L 378 185 L 374 189 M 372 180 L 368 191 M 380 183 H 386 M 381 187 H 384 M 365 194 H 374 M 377 194 H 382 M 415 183 H 420 M 424 182 H 435 M 414 187 H 417 M 420 187 H 431 M 416 191 L 419 193 L 416 195 M 423 194 H 429" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="1.2" opacity=".74"/>
+        <path d="M 358 180 L 381 177 M 412 182 L 435 177" stroke="#fff" stroke-width="2" opacity=".8" fill="none"/>
+        <path d="M 365 197 L 381 181 M 422 196 L 438 180" stroke="#fff" stroke-width="4" opacity=".25"/>
+        <path d="M 350 179 L 343 175 M 450 179 L 457 175" stroke="var(--hero-glasses-frame-dark, #123047)" stroke-width="3.5"/>
+      </g>
+      <g data-hero-slot="accessory" data-hero-option="technical-crossbody" display="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 456 252 C 442 285 404 317 349 365" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="13"/>
+        <path d="M 456 252 C 442 285 404 317 349 365" fill="none" stroke="var(--hero-cape-light, #4eb7df)" stroke-width="1.3" opacity=".75"/>
+        <g transform="translate(442 279) rotate(33)">
+          <rect x="-8" y="-11" width="16" height="22" rx="3" fill="url(#reward-chrome-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="1.5"/>
+          <path d="M -4 -7 H 4 V -1 H -4 Z M -4 3 H 4 V 7 H -4 Z" fill="var(--hero-cape-dark, #123047)"/>
+        </g>
+        <path d="M 362 311 C 382 302 407 303 425 312 C 431 316 435 339 429 350 C 415 364 391 375 369 377 C 359 377 350 354 350 333 C 350 323 354 316 362 311 Z" fill="url(#accessory-cloth-form-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="2.5"/>
+        <path d="M 423 313 C 431 329 431 342 427 349 C 412 361 391 371 369 374 C 365 373 362 369 361 365 C 383 364 407 353 420 343 C 423 332 421 322 418 314 Z" fill="var(--hero-cape-dark, #123047)" opacity=".55"/>
+        <path d="M 357 330 C 375 320 402 317 422 321" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="4"/>
+        <path d="M 357 329 C 375 319 402 316 422 320" fill="none" stroke="url(#reward-chrome-{{ hero_variant }})" stroke-width="1.5"/>
+        <path d="M 417 320 L 419 332" stroke="url(#reward-chrome-{{ hero_variant }})" stroke-width="2.6"/>
+        <path d="M 416 329 L 422 328 L 424 338 L 418 340 Z" fill="var(--hero-cape-dark, #123047)" stroke="var(--hero-cape-light, #4eb7df)" stroke-width=".9"/>
+        <path d="M 360 338 C 378 330 397 327 412 329 L 416 350 C 401 360 383 365 368 365 Z" fill="var(--hero-cape, #15538f)" stroke="var(--hero-cape-light, #4eb7df)" stroke-width="1"/>
+        <path d="M 361 342 C 376 335 396 331 410 333" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="2.2"/>
+        <path d="M 373 348 L 390 344 L 393 355 L 376 359 Z" fill="var(--hero-cape-dark, #123047)" stroke="var(--hero-cape-light, #4eb7df)" stroke-width=".7"/>
+        <path d="M 379 350 L 377 353 L 380 354 M 385 348 L 388 350 L 387 353 M 383 348 L 382 355" fill="none" stroke="var(--hero-cape-inner, #ffd100)" stroke-width="1.1"/>
+        <path d="M 359 323 C 373 312 396 309 413 314" fill="none" stroke="var(--hero-cape-light, #4eb7df)" stroke-width="1.4" opacity=".65"/>
+      </g>
+      <g data-hero-slot="accessory" data-hero-option="scholar-satchel" display="none" stroke-linejoin="round">
+        <path d="M 337 255 Q 393 332 480 390" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="12"/>
+        <path d="M 337 255 Q 393 332 480 390" fill="none" stroke="var(--hero-cape-inner, #ffd100)" stroke-width="2"/>
+        <use href="#reward-book-{{ hero_variant }}" transform="translate(466 384) rotate(-82) scale(1.2)" color="var(--hero-cape, #15538f)"/>
+        <use href="#reward-book-{{ hero_variant }}" transform="translate(488 386) rotate(-96)" color="var(--hero-milestone-jewel, #ffbf3a)"/>
+        <path d="M 500 375 L 509 330 Q 514 325 519 331 L 511 378 Z" fill="url(#reward-paper-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="1.5"/>
+        <ellipse cx="514" cy="331" rx="5" ry="3" fill="#c8c5b0" stroke="var(--hero-cape-dark, #123047)" stroke-width="1"/>
+        <path d="M 452 366 Q 482 374 518 365 L 516 430 Q 483 443 449 428 Z" fill="url(#accessory-cloth-form-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="3"/>
+        <path d="M 452 366 Q 485 379 518 365 L 513 393 Q 482 407 450 391 Z" fill="var(--hero-cape, #15538f)" stroke="var(--hero-cape-light, #4eb7df)" stroke-width="1.8"/>
+        <rect x="479" y="387" width="12" height="17" rx="3" fill="url(#gold-radial-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="1.5"/>
+        <path d="M 456 411 L 474 414 L 471 426 L 454 423 Z" fill="url(#reward-paper-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="1"/>
+        <path d="M 458 416 L 469 418 M 458 420 L 466 421" stroke="#7d8582" stroke-width="1"/>
+        <path d="M 497 414 L 504 411 L 509 417 L 502 422 Z" fill="var(--hero-cape-inner, #ffd100)"/>
+      </g>
+      <g data-hero-slot="accessory" data-hero-option="holographic-notebook" display="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 257 370 L 298 355 L 334 372 L 294 389 Z" fill="url(#reward-hologram-{{ hero_variant }})" opacity=".2"/>
+        <path d="M 263 355 L 295 343 L 326 356" fill="none" stroke="var(--hero-milestone-glow, #a7f4ff)" stroke-width="2" opacity=".75"/>
+        <g transform="translate(295 317) rotate(-12)" color="var(--hero-cape, #15538f)"><use href="#reward-open-book-{{ hero_variant }}"/></g>
+        <path d="M 271 276 L 287 264 L 309 274 L 316 254" stroke="var(--hero-cape-dark, #123047)" stroke-width="4" fill="none"/>
+        <path d="M 271 276 L 287 264 L 309 274 L 316 254" stroke="url(#reward-hologram-{{ hero_variant }})" stroke-width="2.2" fill="none"/>
+        <g fill="url(#reward-hologram-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="1.2"><circle cx="271" cy="276" r="3.8"/><circle cx="287" cy="264" r="4.5"/><circle cx="309" cy="274" r="3.8"/><circle cx="316" cy="254" r="3"/></g>
+        <path d="M 260 302 V 295 H 267 M 328 333 V 340 H 321" stroke="var(--hero-cape-light, #4eb7df)" stroke-width="2" fill="none"/>
+      </g>
+      <g data-hero-slot="accessory" data-hero-option="crystal-horns" display="none" stroke-linejoin="round">
+        <path d="M 353 145 L 344 122 L 349 94 L 365 114 L 371 139 Z M 429 139 L 435 114 L 451 94 L 456 122 L 447 145 Z" fill="url(#reward-hologram-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="2.6"/>
+        <path d="M 349 94 L 356 123 L 353 145 L 365 135 L 365 114 Z M 451 94 L 444 123 L 447 145 L 435 135 L 435 114 Z" fill="var(--hero-milestone-jewel, #74dcff)" opacity=".5"/>
+        <path d="M 349 101 L 348 120 L 354 132 M 449 101 L 439 116" fill="none" stroke="#fff" stroke-width="1.8" opacity=".85"/>
+        <path d="M 353 145 Q 400 126 447 145" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="5"/>
+        <path d="M 355 143 Q 400 128 445 143" fill="none" stroke="url(#reward-chrome-{{ hero_variant }})" stroke-width="2.3"/>
+      </g>
+      <g data-hero-slot="accessory" data-hero-option="knowledge-crown" display="none" stroke-linejoin="round">
+        <path d="M 356 138 Q 400 124 444 138 L 441 153 Q 400 145 359 153 Z" fill="url(#gold-radial-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="2.4"/>
+        <use href="#reward-open-book-{{ hero_variant }}" transform="translate(369 130) rotate(-16) scale(.48)" color="var(--hero-cape, #15538f)"/>
+        <use href="#reward-open-book-{{ hero_variant }}" transform="translate(431 130) rotate(16) scale(.48)" color="var(--hero-cape, #15538f)"/>
+        <use href="#reward-open-book-{{ hero_variant }}" transform="translate(400 119) scale(.64)" color="var(--hero-milestone-jewel, #74dcff)"/>
+        <path d="M 400 137 L 406 143 L 400 149 L 394 143 Z" fill="url(#reward-hologram-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="1.2"/>
+        <path d="M 363 147 Q 377 144 387 145 M 413 145 Q 427 144 437 147" stroke="#fff3ba" stroke-width="1.4" fill="none"/>
+      </g>
+      <g data-hero-slot="accessory" data-hero-option="origami-owl" display="none" stroke-linejoin="round">
+        <ellipse cx="342" cy="266" rx="23" ry="4" fill="var(--hero-cape-dark, #123047)" opacity=".24"/>
+        <path d="M 318 216 L 334 224 L 349 221 L 363 212 L 359 241 L 350 263 L 333 265 L 321 245 Z" fill="url(#reward-paper-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="2.4"/>
+        <path d="M 318 216 L 339 238 L 321 245 Z M 363 212 L 339 238 L 359 241 Z" fill="var(--hero-cape-light, #4eb7df)" opacity=".65"/>
+        <path d="M 321 245 L 339 238 L 333 265 Z M 359 241 L 339 238 L 350 263 Z" fill="var(--hero-cape, #15538f)" opacity=".45"/>
+        <path d="M 325 231 L 332 228 L 338 234 L 332 242 L 325 239 Z M 342 233 L 349 226 L 355 228 L 355 237 L 348 241 Z" fill="#fffdf1" stroke="var(--hero-cape-dark, #123047)" stroke-width="1"/>
+        <circle cx="332" cy="235" r="2.8" fill="#203346"/><circle cx="348" cy="234" r="2.8" fill="#203346"/>
+        <path d="M 337 241 L 343 240 L 340 247 Z" fill="var(--hero-cape-inner, #ffd100)" stroke="#8c762f" stroke-width=".8"/>
+        <path d="M 325 249 L 333 245 M 328 253 L 334 250 M 349 249 L 355 246 M 347 254 L 352 252" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width=".85" opacity=".55"/>
+        <path d="M 334 263 L 332 268 M 338 263 L 337 268 M 346 262 L 346 267 M 350 262 L 351 267" stroke="var(--hero-cape-inner, #ffd100)" stroke-width="2" stroke-linecap="round"/>
+      </g>
+      <g data-hero-slot="accessory" data-hero-option="cosmic-orbit-halo" display="none" stroke-linejoin="round">
+        <ellipse cx="400" cy="111" rx="51" ry="13" transform="rotate(-9 400 111)" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="4.5"/>
+        <ellipse cx="400" cy="111" rx="51" ry="13" transform="rotate(-9 400 111)" fill="none" stroke="url(#reward-hologram-{{ hero_variant }})" stroke-width="2.6"/>
+        <circle cx="353" cy="115" r="8" fill="url(#reward-hologram-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="1.5"/>
+        <ellipse cx="353" cy="115" rx="12" ry="3" transform="rotate(-25 353 115)" fill="none" stroke="var(--hero-cape-inner, #ffd100)" stroke-width="1.6"/>
+        <circle cx="438" cy="100" r="5.5" fill="url(#gold-radial-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="1.2"/>
+        <circle cx="415" cy="122" r="3" fill="var(--hero-milestone-jewel, #7c3aed)" stroke="#fff" stroke-width="1"/>
+        <path d="M 387 94 L 389 99 L 394 101 L 389 103 L 387 108 L 385 103 L 380 101 L 385 99 Z" fill="#f4fbff" stroke="var(--hero-cape-dark, #123047)" stroke-width="1"/>
+        <path d="M 350 111 Q 352 108 355 109" fill="none" stroke="#fff" stroke-width="1.5"/>
+      </g>
+      <g data-hero-slot="accessory" data-hero-option="orbiting-library" display="none" stroke-linecap="round">
+        <path d="M 269 285 C 215 351 305 445 467 423 C 557 411 586 318 535 279" fill="none" stroke="var(--hero-cape-dark, #123047)" stroke-width="4" opacity=".6"/>
+        <path d="M 269 285 C 215 351 305 445 467 423 C 557 411 586 318 535 279" fill="none" stroke="url(#reward-hologram-{{ hero_variant }})" stroke-width="2" stroke-dasharray="4 8"/>
+        <use href="#reward-open-book-{{ hero_variant }}" transform="translate(264 302) rotate(-23) scale(.92)" color="var(--hero-cape, #15538f)"/>
+        <use href="#reward-open-book-{{ hero_variant }}" transform="translate(545 321) rotate(19) scale(.9)" color="var(--hero-milestone-jewel, #7c3aed)"/>
+        <use href="#reward-open-book-{{ hero_variant }}" transform="translate(463 424) rotate(-12) scale(.8)" color="var(--hero-cape-inner, #ffd100)"/>
+        <use href="#reward-book-{{ hero_variant }}" transform="translate(281 389) rotate(20) scale(.8)" color="var(--hero-cape, #15538f)"/>
+        <g fill="var(--hero-milestone-glow, #c084fc)" stroke="var(--hero-cape-dark, #123047)" stroke-width="1"><circle cx="244" cy="350" r="3"/><circle cx="554" cy="371" r="3.5"/><circle cx="383" cy="431" r="3"/></g>
       </g>
       <g data-hero-slot="accessory" data-hero-option="utility-belt" display="none">
         <path data-hero-belt-band="utility" d="M 320 404 L 480 404 L 474 430 L 326 430 Z" fill="var(--hero-glasses-frame, #123047)" stroke="var(--hero-cape-inner, #FFD100)" stroke-width="2.70" stroke-linejoin="round" opacity=".92"/>
@@ -10092,11 +10327,56 @@
       <path d="M 495 96 C 492 102 487 106 482 106 C 479 106 477 104 475 101" fill="none" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width=".9" stroke-linecap="round" opacity=".36"/>
       <path d="M 494 89 C 492 86 488 87 485 90 C 484 91 483 93 483 94 C 486 95 489 94 492 92 Z" fill="color-mix(in srgb, var(--hero-skin-light, #dfa07a) 80%, var(--hero-skin-highlight-soft, #f4c8a5))" stroke="var(--hero-skin-mid, #c5815b)" stroke-width=".5"/>
     </g>
+    <!-- The signet travels with the gripping fingers above the bar. -->
+    <g data-hero-kind-layer="human">
+      <g data-hero-slot="accessory" data-hero-option="signet-ring" display="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 469 75 Q 477 71 484 75 L 484 81 Q 477 85 469 81 Z" fill="url(#gold-{{ hero_variant }})" stroke="#735223" stroke-width="1"/>
+        <path d="M 471 76 Q 477 74 482 76 M 471 80 Q 477 82 482 80" fill="none" stroke="#fff2bd" stroke-width=".85"/>
+        <path d="M 474 71 L 480 71 L 483 74 L 482 80 L 479 82 L 473 81 L 471 78 L 471 74 Z" fill="url(#gold-radial-{{ hero_variant }})" stroke="#735223" stroke-width="1"/>
+        <path d="M 474 73 L 479 73 L 481 75 L 480 79 L 474 79 L 473 77 L 473 75 Z" fill="var(--hero-cape-dark, #123047)"/>
+        <path d="M 476 74.5 L 474.5 76 L 476 77.5 M 478 74.5 L 479.5 76 L 478 77.5" fill="none" stroke="#ffe8a0" stroke-width=".8"/>
+        <path d="M 473 72.5 L 479 72" stroke="#fff7d2" stroke-width=".9"/>
+      </g>
+    </g>
     <g fill="url(#gold-radial-{{ hero_variant }})" stroke="#5a3f00" stroke-width="0.75">
       <g transform="translate(160 -8)"><path d="M 0 -12 L 2 -2 L 12 0 L 2 2 L 0 12 L -2 2 L -12 0 L -2 -2 Z"><animate attributeName="opacity" values="1;0;1" keyTimes="0;0.55;1" dur="2.2s" repeatCount="indefinite" begin="0s" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" /></path></g>
       <g transform="translate(640 -8)"><path d="M 0 -12 L 2 -2 L 12 0 L 2 2 L 0 12 L -2 2 L -12 0 L -2 -2 Z"><animate attributeName="opacity" values="1;0;1" keyTimes="0;0.55;1" dur="2.2s" repeatCount="indefinite" begin="0s" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" /></path></g>
       <g transform="translate(110 22)" opacity=".85"><path d="M 0 -7 L 1.2 -1.2 L 7 0 L 1.2 1.2 L 0 7 L -1.2 1.2 L -7 0 L -1.2 -1.2 Z"><animate attributeName="opacity" values="1;0;1" keyTimes="0;0.55;1" dur="2.2s" repeatCount="indefinite" begin="0s" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" /></path></g>
       <g transform="translate(690 22)" opacity=".85"><path d="M 0 -7 L 1.2 -1.2 L 7 0 L 1.2 1.2 L 0 7 L -1.2 1.2 L -7 0 L -1.2 -1.2 Z"><animate attributeName="opacity" values="1;0;1" keyTimes="0;0.55;1" dur="2.2s" repeatCount="indefinite" begin="0s" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" /></path></g>
+    </g>
+  </g>
+  <!-- Ground props are root siblings of the animated rig, so neither lifts nor head tuning move them. -->
+  <g data-hero-kind-layer="human">
+    <g data-hero-slot="accessory" data-hero-option="book-stack-backpack" display="none" stroke-linecap="round" stroke-linejoin="round">
+      <ellipse cx="600" cy="626" rx="68" ry="7" fill="var(--hero-cape-dark, #123047)" opacity=".18"/>
+      <g transform="translate(540 480)">
+        <use href="#reward-backpack-shell-{{ hero_variant }}"/>
+        <path d="M 27 35 Q 51 27 82 39 L 83 53 Q 53 45 27 47 Z" fill="var(--hero-cape-dark, #123047)"/>
+        <use href="#reward-book-{{ hero_variant }}" transform="translate(27 24) rotate(8) scale(1.04)" color="var(--hero-cape-inner, #ffd100)"/>
+        <use href="#reward-book-{{ hero_variant }}" transform="translate(31 7) rotate(-6) scale(.96)" color="var(--hero-milestone-jewel, #8fc7e8)"/>
+        <use href="#reward-book-{{ hero_variant }}" transform="translate(25 -13) rotate(7) scale(1.08)" color="var(--hero-cape, #15538f)"/>
+        <path d="M 27 40 Q 54 37 82 46 L 83 56 Q 52 48 27 50 Z" fill="var(--hero-cape, #15538f)" stroke="var(--hero-cape-dark, #123047)" stroke-width="1.6"/>
+        <path d="M 29 45 Q 54 42 79 50" fill="none" stroke="url(#reward-chrome-{{ hero_variant }})" stroke-width="1.3"/>
+        <path d="M 43 64 Q 50 61 56 65 Q 63 61 71 64 V 79 Q 63 76 56 81 Q 50 76 43 79 Z M 56 65 V 81" fill="none" stroke="var(--hero-cape-inner, #ffd100)" stroke-width="1.8"/>
+        <path d="M 44 116 L 61 116 L 61 125 L 44 125 Z" fill="url(#reward-paper-{{ hero_variant }})" stroke="var(--hero-cape-dark, #123047)" stroke-width="1"/>
+        <path d="M 48 120 H 57" stroke="var(--hero-cape-dark, #123047)" stroke-width="1"/>
+      </g>
+    </g>
+    <g data-hero-slot="accessory" data-hero-option="library-portal-backpack" display="none" stroke-linecap="round" stroke-linejoin="round">
+      <ellipse cx="600" cy="626" rx="68" ry="7" fill="var(--hero-cape-dark, #123047)" opacity=".18"/>
+      <g transform="translate(540 480)">
+        <use href="#reward-backpack-shell-{{ hero_variant }}"/>
+        <path d="M 31 50 C 30 31 41 24 55 24 C 69 24 80 35 80 52 L 82 88 Q 57 96 32 87 Z" fill="var(--hero-cape-dark, #123047)" stroke="var(--hero-cape-light, #4eb7df)" stroke-width="2.5"/>
+        <path d="M 36 50 C 35 35 44 29 55 29 C 67 29 75 39 75 53 L 77 84 Q 57 91 37 83 Z" fill="#15263e" stroke="url(#reward-hologram-{{ hero_variant }})" stroke-width="2.2"/>
+        <path d="M 39 45 L 51 57 V 72 L 39 81 Z" fill="#304b61"/><path d="M 72 45 L 62 57 V 72 L 75 81 Z" fill="#223d57"/>
+        <path d="M 51 59 Q 56 51 62 59 V 72 H 51 Z" fill="url(#reward-hologram-{{ hero_variant }})" opacity=".8"/>
+        <path d="M 39 58 L 51 63 M 40 71 L 51 70 M 62 63 L 73 58 M 62 70 L 74 71" fill="none" stroke="#e5d7ad" stroke-width="1.5"/>
+        <path d="M 41 56 V 47 M 45 58 V 52 M 49 60 V 56 M 42 68 V 61 M 46 68 V 64 M 64 60 V 56 M 68 58 V 52 M 71 56 V 47 M 65 68 V 64 M 69 68 V 61" stroke="var(--hero-cape-inner, #ffd100)" stroke-width="2"/>
+        <path d="M 51 72 H 62 L 77 84 Q 57 91 37 83 Z" fill="url(#reward-hologram-{{ hero_variant }})" opacity=".38"/>
+        <path d="M 55 73 L 51 87 M 59 73 L 66 86 M 47 77 H 68 M 42 82 H 73" fill="none" stroke="#dafbff" stroke-width=".75" opacity=".65"/>
+        <path d="M 39 44 Q 39 33 51 31" fill="none" stroke="#f2ffff" stroke-width="1.1" opacity=".9"/>
+        <path d="M 46 118 C 39 110 36 125 44 124 C 51 124 55 110 62 114 C 70 120 62 128 56 120 Z" fill="none" stroke="var(--hero-cape-inner, #ffd100)" stroke-width="1.7"/>
+      </g>
     </g>
   </g>
 </svg>
