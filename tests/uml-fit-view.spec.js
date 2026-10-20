@@ -68,6 +68,19 @@ test('fitting diagrams have no controls until resizing makes them overflow', asy
   await expect(fitButtons(page)).toHaveCount(0);
 });
 
+test('fitting a diagram brings following content up to its new height', async ({ page }) => {
+  const diagram = await diagramFixture(page, { width: 2000, height: 1800 });
+  const before = await diagram.boundingBox();
+  await fitButtons(page).click();
+  const drawing = await diagram.locator('svg').boundingBox();
+  const frame = await diagram.boundingBox();
+  const caption = await page.locator('figcaption').boundingBox();
+  expect(frame.y + frame.height - drawing.y - drawing.height).toBeLessThanOrEqual(2);
+  expect(caption.y - drawing.y - drawing.height).toBeLessThanOrEqual(24);
+  await restoreButton(page).click();
+  expect((await diagram.boundingBox()).height).toBeCloseTo(before.height, 0);
+});
+
 test('fit survives resizing and repeated renderer updates without duplicate controls', async ({ page }) => {
   const diagram = await diagramFixture(page);
   await fitButtons(page).click();
