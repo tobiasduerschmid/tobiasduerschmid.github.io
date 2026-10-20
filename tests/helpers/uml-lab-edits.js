@@ -24,7 +24,7 @@ module.exports = {
   python: {
     ...sharedEdits,
     visibility: code => code.replace('def display_name(', 'def _display_name('),
-    dependency: code => code.replace('self.roster: Roster = roster', 'pass'),
+    dependency: code => code.replace('self._roster: Roster = roster', 'pass'),
     removeParameter: code => code.replace(', roster: Roster', ''),
     inheritance: code => code.replace('class Puppy(Animal):', 'class Puppy(Dog):'),
     collection_multiplicity: code => code.replaceAll('members: Member', 'members: list[Member]'),
@@ -48,7 +48,7 @@ module.exports = {
   },
   cpp: {
     ...sharedEdits,
-    visibility: code => code.replace('public:', 'private:'),
+    visibility: code => code.replace('    std::string displayName()', 'private:\n    std::string displayName()'),
     dependency: code => code.replace('Roster* roster = nullptr;', '').replace('this->roster = &roster;', ''),
     removeParameter: code => code.replace('Roster& roster)', ')'),
     inheritance: code => code.replace('class Puppy : public Animal', 'class Puppy : public Dog'),

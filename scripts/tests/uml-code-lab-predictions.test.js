@@ -20,6 +20,22 @@ const analyzers = {
   typescript: { analyze: sources => global.analyzeJSSources(sources, compiler), filename: 'example.ts' }
 };
 const calls = diagram => diagram.split('\n').filter(line => line.includes(' -> '));
+const publicOperations = {
+  visibility: ['displayName'],
+  inheritance: ['speak'],
+  dependency: ['keepRoster'],
+  message_order: ['capture', 'authorize', 'refund'],
+  self_calls: ['validate', 'save', 'submit'],
+  message_receivers: ['read'],
+  alternatives: ['approve', 'decline', 'pay'],
+  loop_boundary: ['addItem', 'finish']
+};
+const constructorNames = {
+  python: { Student: '__init__', Team: '__init__' },
+  java: { Student: 'Student', Team: 'Team' },
+  cpp: { Student: 'Student', Team: 'Team' },
+  typescript: { Student: 'constructor', Team: 'constructor' }
+};
 
 for (const [language, { analyze, filename }] of Object.entries(analyzers)) {
   function infer(source) {
@@ -34,9 +50,32 @@ for (const [language, { analyze, filename }] of Object.entries(analyzers)) {
     return { before: infer(original), after: infer(changed), changed };
   }
 
+  for (const [id, operations] of Object.entries(publicOperations)) {
+    test(`${language}: ${id} starts with the same public operations as the other language tabs`, () => {
+      const diagram = infer(labs[id][language].code).classDiagram;
+      for (const operation of operations) {
+        const name = language === 'python'
+          ? operation.replace(/[A-Z]/g, letter => '_' + letter.toLowerCase()) : operation;
+        assert.ok(diagram.includes('+' + name + '('), `${name} must start public`);
+      }
+    });
+  }
+
+  test(`${language}: Students and Teams can be constructed through their public API`, () => {
+    for (const [id, className, parameter] of [
+      ['visibility', 'Student', 'name'], ['collection_multiplicity', 'Team', 'members']
+    ]) {
+      const diagram = infer(labs[id][language].code).classDiagram;
+      assert.ok(diagram.includes('+' + constructorNames[language][className] + '(' + parameter + ':'),
+        `${className} must accept ${parameter} in its public constructor`);
+    }
+  });
+
   test(`${language}: hiding the reading method preserves the non-public field`, () => {
     const { before, after } = example('visibility');
     const field = language === 'python' ? /#_name/ : /-name/;
+    assert.ok(after.classDiagram.includes('+' + constructorNames[language].Student + '('),
+      'Making the reading method non-public must leave construction public');
     assert.match(before.classDiagram, field);
     assert.match(after.classDiagram, field);
     assert.match(before.classDiagram, /\+display_?[Nn]ame\(\)/);
@@ -50,7 +89,7 @@ for (const [language, { analyze, filename }] of Object.entries(analyzers)) {
     assert.match(after.classDiagram, /Puppy --\|> Dog/);
     assert.match(after.classDiagram, /Dog --\|> Animal/);
     assert.doesNotMatch(after.classDiagram, /Puppy --\|> Animal/);
-    assert.match(after.classDiagram, /class Animal \{[^}]*speak\(\)/);
+    assert.match(after.classDiagram, /class Animal \{[^}]*\+speak\(\)/);
   });
 
   test(`${language}: removing storage and then the parameter removes two different kinds of coupling`, () => {
@@ -111,6 +150,10 @@ for (const [language, { analyze, filename }] of Object.entries(analyzers)) {
 
   test(`${language}: moving finalization inside the loop makes it conditional on iteration`, () => {
     const { before, after } = example('loop_boundary');
+    const itemType = { python: 'str', java: 'String', cpp: 'std::string', typescript: 'string' }[language];
+    const parameter = before.classDiagram.match(/add_?[Ii]tem\(item: ([^)]+)\)/)?.[1];
+    assert.equal(parameter?.replace(/^const\s+/, '').replace(/&$/, '').trim(), itemType,
+      'Receipt items must use the native string type in every language');
     assert.match(before.sequenceDiagram, /\nend\nMain -> receipt: finish\(\)/);
     assert.match(after.sequenceDiagram, /loop \[[^\n]*\][\s\S]*add_?[Ii]tem\(item\)[\s\S]*finish\(\)[\s\S]*\nend\n/);
     assert.doesNotMatch(after.sequenceDiagram, /\nend\nMain -> receipt: finish\(\)/);

@@ -10,6 +10,10 @@ visibility:
       class Student {
           private String name;
 
+          public Student(String name) {
+              this.name = name;
+          }
+
           public String displayName() {
               return name;
           }
@@ -32,6 +36,8 @@ visibility:
       class Student {
           std::string name;
       public:
+          explicit Student(const std::string& name) : name(name) { }
+
           std::string displayName() {
               return name;
           }
@@ -41,7 +47,11 @@ visibility:
     task: "For an existing Student, would making only displayName() private remove public read access, write access, both, or neither? Predict, then change that method."
     code: |
       class Student {
-          private name: string = "Ada";
+          private name: string;
+
+          constructor(name: string) {
+              this.name = name;
+          }
 
           public displayName(): string {
               return this.name;
@@ -56,7 +66,7 @@ inheritance:
     task: "If Puppy inherits from Dog instead of Animal directly, can a Puppy still speak()? Predict the direct inheritance links, then change its parent."
     code: |
       class Animal {
-          void speak() { }
+          public void speak() { }
       }
 
       class Dog extends Animal { }
@@ -110,19 +120,19 @@ dependency:
       class Student {
           private Roster roster;
 
-          void keepRoster(Roster roster) {
+          public void keepRoster(Roster roster) {
               this.roster = roster;
           }
       }
   python:
-    task: "After replacing self.roster: Roster = roster with pass, will Student be independent of Roster? Predict, then edit. What further change removes the coupling without deleting either class?"
+    task: "After replacing self._roster: Roster = roster with pass, will Student be independent of Roster? Predict, then edit. What further change removes the coupling without deleting either class?"
     code: |
       class Roster:
           pass
 
       class Student:
           def keep_roster(self, roster: Roster) -> None:
-              self.roster: Roster = roster
+              self._roster: Roster = roster
 
   cpp:
     task: "After removing the roster field and its assignment, will Student be independent of Roster? Predict, then edit. What further change removes the coupling without deleting either class?"
@@ -162,9 +172,9 @@ collection_multiplicity:
       class Member { }
 
       class Team {
-          Member members;
+          private Member members;
 
-          Team(Member members) {
+          public Team(Member members) {
               this.members = members;
           }
       }
@@ -176,7 +186,7 @@ collection_multiplicity:
 
       class Team:
           def __init__(self, members: Member) -> None:
-              self.members: Member = members
+              self._members: Member = members
 
   cpp:
     task: "A team must have at least one member. Would replacing both Member& types with std::vector<Member*> enforce that rule? Predict the lower bound and look for a counterexample, then edit."
@@ -197,7 +207,7 @@ collection_multiplicity:
       class Member { }
 
       class Team {
-          members: Member;
+          private members: Member;
 
           constructor(members: Member) {
               this.members = members;
@@ -212,11 +222,11 @@ message_order:
     task: "After swapping the two calls in main, what will the full message order be, including calls inside methods? Predict who sends capture(), then make the swap."
     code: |
       class Payment {
-          void capture() { }
-          void authorize() {
+          public void capture() { }
+          public void authorize() {
               this.capture();
           }
-          void refund() { }
+          public void refund() { }
       }
 
       class App {
@@ -284,10 +294,10 @@ self_calls:
     task: "If submit() calls save(), which calls validate(), predict the completion order and the number of Checkout lifelines. Then rearrange the calls without creating an object."
     code: |
       class Checkout {
-          void validate() { }
-          void save() { }
+          public void validate() { }
+          public void save() { }
 
-          void submit() {
+          public void submit() {
               this.validate();
           }
       }
@@ -355,7 +365,7 @@ message_receivers:
     task: "Change selected's initializer from indoor to outdoor, leaving selected.read() unchanged. Predict the number of Sensor lifelines and which object sends the reply before editing."
     code: |
       class Sensor {
-          int read() {
+          public int read() {
               return 25;
           }
       }
@@ -419,12 +429,12 @@ alternatives:
     task: "Replace else with a separate if (accepted). Will exactly one payment call still run for every input? Predict the calls for true and false before editing."
     code: |
       class Payment {
-          void approve() { }
-          void decline() { }
+          public void approve() { }
+          public void decline() { }
       }
 
       class Checkout {
-          void pay(Payment payment, boolean accepted) {
+          public void pay(Payment payment, boolean accepted) {
               if (accepted) {
                   payment.approve();
               } else {
@@ -517,8 +527,8 @@ loop_boundary:
     task: "If finish() moves inside the loop after addItem(), how do its call counts change for zero items and two items? Predict both cases, then move it."
     code: |
       class Receipt {
-          void addItem(String item) { }
-          void finish() { }
+          public void addItem(String item) { }
+          public void finish() { }
       }
 
       class App {
@@ -547,16 +557,18 @@ loop_boundary:
   cpp:
     task: "If finish() moves inside the loop after addItem(), how do its call counts change for zero items and two items? Predict both cases, then move it."
     code: |
+      #include <string>
+
       class Receipt {
       public:
-          void addItem(int item) { }
+          void addItem(const std::string& item) { }
           void finish() { }
       };
 
       int main() {
           Receipt receipt;
-          int items[] = {1, 2};
-          for (int item : items) {
+          std::string items[] = {"book", "pen"};
+          for (const std::string& item : items) {
               receipt.addItem(item);
           }
           receipt.finish();
