@@ -235,13 +235,13 @@
 
       const edit = mark(ln(1), 'edit');
       wt.light(edit, mark(ln(2), 'add'));
-      const wtChip = kit.chip(s, { name: 'app.py', version: 'v2', x: 40, y: Y + 56 });
+      const wtChip = kit.chip(s, { name: 'app.py', version: 'v2', x: 40, y: Y + 42 });
       fx.pop(wtChip, edit);
-      kit.sticker(s, 'Edit', { x: 130, y: Y - 32, at: edit, until: mark(ln(2), 'add') + 0.4, variant: 'gold', iconName: 'pencil', rotate: -6 });
+      kit.sticker(s, 'Edit', { x: 64, y: Y + 85, at: edit, until: mark(ln(2), 'add') + 0.4, variant: 'gold', iconName: 'pencil', rotate: -6 });
 
       const add = mark(ln(2), 'add');
       kit.flow(s, { from: [119, Y], to: [331, Y], bend: -48, at: add, label: 'git add', labelAt: [188, Y - 66] });
-      kit.flyIn(kit.chip(s, { name: 'app.py', version: 'v2', x: 252, y: Y + 56 }), add + 0.12, 40, Y + 56);
+      kit.flyIn(kit.chip(s, { name: 'app.py', version: 'v2', x: 252, y: Y + 56 }), add + 0.12, 40, Y + 42);
       sa.light(mark(ln(2), 'staging'), mark(ln(3), 'snapshots') + 0.4);
       kit.sticker(s, 'Next commit', { x: 290, y: Y + 92, at: mark(ln(2), 'next'), until: hook, variant: 'gold', iconName: 'sparkle', rotate: 4 });
 
