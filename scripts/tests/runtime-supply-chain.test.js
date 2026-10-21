@@ -131,6 +131,14 @@ function sourceFilesUnder(relativeDirectory) {
   return files;
 }
 
+test('Python UML type inference ships the pinned and checksummed browser checker', () => {
+  const entries = verifyChecksumManifest('js/vendor/browser-basedpyright/1.40.2');
+  const hash = entries.get('pyright.worker.js');
+  assert.equal(hash, '59e01c8e13db9ea4ce2107b6341915ed57987385fc5d116d85ec06dea7ea892b');
+  assert.ok(read('js/uml-python-types.js').includes(hash),
+    'the runtime must verify the same checker bytes as the vendor manifest');
+});
+
 test('the Haskell bundle preserves the pinned upstream loader and embedded Wasm bytes', () => {
   const bundle = read('js/vendor/microhs/mhs-embed.js');
   const separator = bundle.indexOf('\n');
@@ -337,6 +345,14 @@ test('UML inference ships the unchanged pinned TypeScript compiler and its licen
   const checksums = verifyChecksumManifest(versionDirectory);
   assert.equal(checksums.get('typescript.min.js'), '8197e57fa5e1d7f6521f3a2f6a32565196e4e59c092cdc2a9c3206b98ef57ddf');
   assert.equal(checksums.get('LICENSE.txt'), 'a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47');
+  assert.equal(checksums.get('lib-map.js'), '7e28519bcbe4f707889534b3edf50a9ea5dae9bb0a2d843977e6e82a66cc2cf5');
+  const libraries = require('../../js/vendor/typescript/5.9.3/lib-map.js');
+  assert.ok(libraries['lib.es2022.d.ts'], 'the checker ships its standard-library entry point');
+  for (const source of Object.values(libraries)) {
+    for (const [, reference] of source.matchAll(/<reference lib="([^"]+)"/g)) {
+      assert.ok(libraries[`lib.${reference}.d.ts`], `standard-library reference ${reference} is available locally`);
+    }
+  }
   const compiler = require('../../js/vendor/typescript/5.9.3/typescript.min.js');
   assert.equal(compiler.version, '5.9.3');
   const parsed = compiler.createSourceFile('example.ts', 'class Example { value: string; }', compiler.ScriptTarget.Latest);

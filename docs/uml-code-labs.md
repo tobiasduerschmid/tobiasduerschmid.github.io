@@ -183,6 +183,11 @@ are recorded in [the sequence inference evidence review](uml-sequence-research-e
 - `js/uml-live.js` owns source analysis, lazy analyzer loading, worker queues,
   main-thread fallback, text measurement, SVG rendering and accessible names.
   Tutorials and chapter labs use the same pipeline and `js/uml-worker.js`.
+- `js/uml-python-types.js` adapts pinned local BasedPyright browser analysis
+  for Python field and method return types. The UML worker awaits this evidence
+  before the structural extractor generates the class diagram. Type-analysis
+  and worker failures remain visible; Python analysis does not fall back to
+  the main-thread structural analyzer.
 - `js/uml-code-lab.js` owns the chapter controls, debounce, per-language drafts,
   reset, status, and stale-result guards. Edits debounce for 150 ms. Each edit
   is checked before analysis; code that checks cleanly updates the diagram at
@@ -257,8 +262,10 @@ client.dispose();
 ```
 
 `analyze` returns `{ classDiagram, sequenceDiagram, errors }`. Analyzer errors
-are data; loading/worker failures fall back to the local analyzer and reject
-if that also fails. Analysis and rendering have a ten-second worker deadline.
+are data. For Java, C++ and TypeScript, loading/worker failures fall back to the
+local analyzer and reject if that also fails. Python requires its type-analysis
+worker; a worker failure rejects analysis and the host shows the error.
+Analysis and rendering have a ten-second worker deadline.
 A timeout terminates the worker, rejects the stalled operation, and starts
 the newest queued edits in a fresh worker. Timed-out work never falls back
 to the main thread, so it cannot freeze the editor. Rendering returns false
@@ -275,7 +282,7 @@ or failure.
 Each client has one worker with separate analysis/render queues. Each queue
 keeps an active request, the latest pending request and one exact-input cache.
 Different widgets never cancel one another. A worker failure or timeout
-terminates it and releases outstanding requests before fallback. Owners must
+terminates it and releases outstanding requests before any permitted fallback. Owners must
 dispose clients on teardown; chapter pages pause them on `pagehide` and
 recreate them on a persisted `pageshow`. `UMLCodeLab.destroyWithin(element)`
 supports an explicitly removed host. Status and source revisions prevent an
@@ -319,8 +326,10 @@ following distinctions while working only with supplied source files:
   nor an exact `n`-object multiplicity.
 - **Multiplicity evidence:** Java scalar references allow `0..1`; containers
   allow `*`. Python and TypeScript explicit nonoptional annotations express `1`,
-  nullable alternatives express `0..1`, and collections express `*`. A reference
-  inferred from an unannotated assignment keeps an unspecified bound. Python
+  nullable alternatives express `0..1`, and collections express `*`. Python
+  carries a typed parameter's bound through a direct field assignment, so
+  repeating its annotation on the field adds no multiplicity information.
+  A reference without such type evidence keeps an unspecified bound. Python
   annotations describe a contract rather than runtime enforcement. C++ values
   and references express `1`, nullable pointers express `0..1`, and collections
   express `*`. Neither display view strengthens these source claims.
@@ -339,16 +348,62 @@ Do not use exact inferred diagram text as the sole correctness oracle. Check
 effects, ordering, multiplicities, and forbidden interactions while accepting
 equivalent internal designs; use a short explanation for modeling choices.
 
+## Python type inference
+
+Live Python analysis uses `browser-basedpyright` 1.40.2 to infer missing field
+and method return types from partially annotated source. For
+`def __init__(self, name: str): self._name = name`, the field acquires `str`;
+an unannotated `display_name` returning `self._name` also acquires `str`.
+The existing Design focus projection displays these as `String`. Explicit
+annotations keep precedence, and learner source is unchanged.
+
+The library owns type propagation through local bindings, expressions and
+return paths. Inferred `Any`, `Unknown`, `Unbound` and unresolved type variables,
+including partial unknowns, leave the type blank. Fully resolved unions remain
+visible. Static inference does not prove runtime validity or ownership. Relationship rules and
+the bounded sequence walk remain the structural analyzer's responsibility.
+Source and bundled type stubs stay in the browser; no Python code is executed
+and no remote checking service receives source. The
+[Python inference architecture note](python-uml-type-inference.md) records the
+library decision, integration boundary and limitations.
+
 ## TypeScript inference
 
 `language: 'typescript'` selects the existing JavaScript/TypeScript analyzer,
 `js/uml-analyzer-js.js`, through the shared client. Both the worker and its
 local fallback load the pinned TypeScript 5.9.3 compiler from
-`js/vendor/typescript/5.9.3/`; inference does not depend on a CDN. Parsing uses
-the compiler's AST and supplied-file symbol resolution. Imports never fetch
-files, and source code never executes. Syntax diagnostics include the file,
-line and column, allowing an incomplete edit to recover on the next update.
-This is syntax analysis, not a full TypeScript type check.
+`js/vendor/typescript/5.9.3/` with its ES2022 declarations in `lib-map.js`;
+inference does not depend on a CDN. The 57 declaration files preserve upstream
+text and licenses. The vendor README records checksums and reproduction steps.
+The compiler's program and type checker handle supplied-file symbols and gradual
+type inference; there is no separate handwritten type solver. Imports never
+fetch files, and source code never executes. Syntax diagnostics include the
+file, line and column, allowing an incomplete edit to recover on the next update.
+The diagram does not report full semantic validation or prove type correctness.
+
+The checker supplies missing field and method return types. For example,
+`private _name; constructor(name: string) { this._name = name; }` determines
+`_name: string`, and `displayName() { return this._name; }` returns `string`.
+The same program resolves local aliases, supplied helpers, built-in operations,
+collections, promises and tuples. Existing source annotations retain precedence,
+including explicit `any` or `unknown`. Inferred `any`, `unknown` and unresolved
+type parameters leave the type blank, including partial unknowns inside unions,
+collections, anonymous shapes and function or constructor signatures. Fully
+resolved unions retain nullability; a resolved class or interface identity
+remains useful even if one of its own members is untyped.
+
+Inference follows TypeScript's documented rules with `noImplicitAny` and
+`strictNullChecks`. A declared property initialized from a constructor can be
+inferred; an untyped property assigned only in an ordinary initializer method
+remains unknown. ES2022 standard-library types are available, but DOM declarations
+and unsupplied packages are not. Member types enrich the class display after
+relationship classification; they do not add relationships, invent sequence
+receivers, or change sequence reply evidence. Source return annotations remain
+the sequence generator's existing evidence. Each analysis uses the current
+source snapshot, so removed imports cannot leave stale inferred types.
+See the official [compiler API guide](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API),
+[type inference guide](https://www.typescriptlang.org/docs/handbook/type-inference.html),
+and [constructor property inference rules](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-0.html#class-property-inference-from-constructors).
 
 Class inference recognizes classes, interfaces, enums, visibility, inheritance,
 constructor parameter properties, typed fields, nullable and union types,
@@ -491,9 +546,11 @@ gap available for students to explain rather than disguising it as a parser rule
 
 Content audit: authored class diagrams in SEBook chapters and tutorials use
 canonical primitive spellings; executable Python, Java, C++, and TypeScript
-source retains native types. Python starter/solution signatures and stored fields
-in UML labs and the two UML tutorials are annotated, except the deliberately
-untyped starter in the type-annotation exercise. Target constructors retain their required parameters and initialization
+source retains native types. Python UML examples keep explicit parameter and
+return contracts. Fields assigned directly from same-typed parameters omit the
+repeated annotation; the live analyzer supplies their type. Empty collections,
+wider declared types and the deliberately untyped starter in the type-annotation
+exercise retain their instructional roles. Target constructors retain their required parameters and initialization
 responsibilities; only empty no-argument constructors may be omitted. Model/prose callout
 anchors were updated alongside displayed signatures. Other domain-specific
 classes (`Date`, `Money`, `Object`, and user-defined types) are retained.

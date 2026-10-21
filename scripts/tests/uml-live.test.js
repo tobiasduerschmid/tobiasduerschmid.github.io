@@ -93,15 +93,15 @@ test('a burst of edits replaces queued work without cancelling the latest answer
   } finally { client.dispose(); }
 });
 
-test('a failed worker falls back to the real local analyzer', async () => {
+test('a failed Python worker reports unavailable type inference instead of an incomplete diagram', async () => {
   const { api, workers } = loadClient();
   const client = api.createClient();
   try {
     const result = client.analyze(request('Recovered'));
     workers[0].onerror({ message: 'Worker could not start' });
-    assert.match((await result).classDiagram, /class Recovered/);
+    await assert.rejects(result, /Python type inference is unavailable/);
     assert.equal(workers[0].terminated, true);
-    assert.match((await client.analyze(request('NextEdit'))).classDiagram, /class NextEdit/);
+    await assert.rejects(client.analyze(request('NextEdit')), /Python type inference is unavailable/);
   } finally { client.dispose(); }
 });
 

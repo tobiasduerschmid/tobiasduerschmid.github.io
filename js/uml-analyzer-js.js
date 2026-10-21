@@ -3,7 +3,8 @@
  * JavaScript/TypeScript source code.
  *
  * Parallel to uml-analyzer-python.js (which handles Python). Requires the
- * TypeScript compiler API (window.ts or passed as parameter) for AST parsing.
+ * TypeScript compiler API (window.ts or passed as parameter) and the pinned
+ * standard-library map for parsing, symbol resolution, and member type inference.
  *
  * Produces the same @startuml/@enduml custom syntax consumed by the SVG
  * renderers in uml-bundle.js.
@@ -27,6 +28,8 @@
     ? require('./uml-constant-values.js') : global.UMLConstantValues;
   const ReturnSummaries = typeof module !== 'undefined' && module.exports
     ? require('./uml-return-summaries.js') : global.UMLReturnSummaries;
+  const TypeScriptLibraries = typeof module !== 'undefined' && module.exports
+    ? require('./vendor/typescript/5.9.3/lib-map.js') : null;
 
   /* ===================================================================
    * Main entry point
@@ -59,7 +62,8 @@
       }
     }
 
-    parsedFiles = _resolveSuppliedSymbols(ts, parsedFiles);
+    const resolved = _resolveSuppliedSymbols(ts, parsedFiles);
+    parsedFiles = resolved.parsedFiles;
 
     // First pass: collect all type names (classes, interfaces, enums)
     var allTypeNames = new Set();
@@ -70,6 +74,7 @@
     // Extract class diagram
     var extractor = new ClassExtractor(ts, parsedFiles, allTypeNames, errors);
     extractor.analyze();
+    extractor.applyInferredTypes(resolved.inferredTypes);
     var classDiagram = extractor.generatePlantUML();
 
     // Extract sequence diagram
@@ -103,6 +108,13 @@
   // their familiar labels. The existing extractors can then use one name index.
   function _resolveSuppliedSymbols(ts, parsedFiles) {
     const files = new Map(Object.entries(parsedFiles).map(([name, source]) => ['/' + name.replace(/^\/+/, ''), source]));
+    const rootNames = Array.from(files.keys());
+    const libraries = TypeScriptLibraries || global.UMLTypeScriptLibs;
+    if (!libraries) throw new Error('TypeScript standard library not available');
+    for (const [name, text] of Object.entries(libraries)) {
+      const path = '/__uml_libs/' + name;
+      files.set(path, ts.createSourceFile(path, text, ts.ScriptTarget.ES2022, true));
+    }
     const normalize = name => {
       const parts = [];
       for (const part of name.split('/')) {
@@ -113,7 +125,7 @@
     };
     const host = {
       getSourceFile: name => files.get(normalize(name)),
-      getDefaultLibFileName: () => '', writeFile: () => {},
+      getDefaultLibFileName: () => '/__uml_libs/lib.es2022.d.ts', writeFile: () => {},
       getCurrentDirectory: () => '/', getDirectories: () => [],
       fileExists: name => files.has(normalize(name)),
       readFile: name => { const source = files.get(normalize(name)); return source && source.text; },
@@ -127,11 +139,14 @@
         return resolvedFileName ? { resolvedFileName: resolvedFileName, isExternalLibraryImport: false } : undefined;
       })
     };
-    const program = ts.createProgram(Array.from(files.keys()), { noLib: true, allowJs: true, checkJs: true }, host);
+    const program = ts.createProgram(rootNames, {
+      allowJs: true, checkJs: true, noImplicitAny: true, strictNullChecks: true,
+      target: ts.ScriptTarget.ES2022
+    }, host);
     const checker = program.getTypeChecker();
     const declarations = [];
     const counts = new Map();
-    for (const source of files.values()) {
+    for (const source of Object.values(parsedFiles)) {
       const visit = node => {
         if ((ts.isClassDeclaration(node) || ts.isInterfaceDeclaration(node) || ts.isEnumDeclaration(node)) && node.name) {
           declarations.push(node);
@@ -230,7 +245,115 @@
       }
       resolved[filename] = ts.createSourceFile(filename, text, ts.ScriptTarget.Latest, true, _getScriptKind(ts, filename));
     }
-    return resolved;
+    const inferredTypes = _inferMemberTypes(ts, program, declarations, ids, host);
+    return { parsedFiles: resolved, inferredTypes };
+  }
+
+  // The compiler owns all dataflow and type inference. This adapter only decides
+  // which complete types can be displayed and gives their references UML names.
+  function _inferMemberTypes(ts, program, declarations, ids, host) {
+    const checker = program.getTypeChecker();
+    const printer = ts.createPrinter({ removeComments: true });
+    const unalias = symbol => symbol && (symbol.flags & ts.SymbolFlags.Alias)
+      ? checker.getAliasedSymbol(symbol) : symbol;
+    const idFor = symbol => {
+      const names = new Set((unalias(symbol)?.declarations || []).map(node => ids.get(node)).filter(Boolean));
+      return names.size === 1 ? names.values().next().value : null;
+    };
+    const resolveName = (name, location, moduleSymbol) => {
+      if (ts.isIdentifier(name)) {
+        return moduleSymbol
+          ? checker.getExportsOfModule(unalias(moduleSymbol)).find(symbol => symbol.name === name.text)
+          : checker.resolveName(name.text, location, ts.SymbolFlags.Type | ts.SymbolFlags.Value | ts.SymbolFlags.Namespace, false);
+      }
+      const parent = resolveName(name.left, location, moduleSymbol);
+      return parent ? resolveName(name.right, location, parent) : undefined;
+    };
+    const sourceForImport = (name, location) => {
+      // The checker may print an absolute import type even though learner
+      // imports resolve relatively. Search only the in-memory program.
+      if (name.startsWith('/')) {
+        return [name, ...['.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.js'].map(extension => name + extension)]
+          .map(candidate => program.getSourceFile(candidate)).find(Boolean);
+      }
+      const module = host.resolveModuleNames([name], location.getSourceFile().fileName)[0];
+      return module && program.getSourceFile(module.resolvedFileName);
+    };
+    const render = (type, location) => {
+      if (_hasUnresolvedType(ts, checker, type)) return '';
+      const node = checker.typeToTypeNode(type, location, ts.NodeBuilderFlags.NoTruncation);
+      if (!node) return '';
+      const transformed = ts.transform(node, [context => {
+        const visit = current => {
+          let symbol;
+          if (ts.isTypeReferenceNode(current)) symbol = resolveName(current.typeName, location);
+          if (ts.isTypeQueryNode(current)) symbol = resolveName(current.exprName, location);
+          if (ts.isImportTypeNode(current) && ts.isLiteralTypeNode(current.argument) && current.qualifier) {
+            const source = sourceForImport(current.argument.literal.text, location);
+            if (source) symbol = resolveName(current.qualifier, location, checker.getSymbolAtLocation(source));
+          }
+          const id = idFor(symbol);
+          if (id && (ts.isTypeQueryNode(current) || current.isTypeOf)) return ts.factory.createTypeQueryNode(ts.factory.createIdentifier(id));
+          if (id) return ts.factory.createTypeReferenceNode(id, current.typeArguments?.map(argument => ts.visitNode(argument, visit)));
+          return ts.visitEachChild(current, visit, context);
+        };
+        return root => ts.visitNode(root, visit);
+      }]);
+      const text = printer.printNode(ts.EmitHint.Unspecified, transformed.transformed[0], location.getSourceFile());
+      transformed.dispose();
+      return text.replace(/\r?\n\s*/g, ' ');
+    };
+    const result = new Map();
+    for (const declaration of declarations) {
+      if (!ts.isClassDeclaration(declaration)) continue;
+      const evidence = { attributes: new Map(), returns: new Map() };
+      for (const member of declaration.members) {
+        if (ts.isPropertyDeclaration(member) && !member.type) {
+          evidence.attributes.set(member.name.getText(), render(checker.getTypeAtLocation(member), member));
+        } else if (ts.isConstructorDeclaration(member)) {
+          for (const parameter of member.parameters) {
+            if (!parameter.type && ts.isParameterPropertyDeclaration(parameter, member)) {
+              evidence.attributes.set(parameter.name.getText(), render(checker.getTypeAtLocation(parameter), parameter));
+            }
+          }
+        } else if ((ts.isMethodDeclaration(member) || ts.isGetAccessorDeclaration(member) || ts.isSetAccessorDeclaration(member)) && !member.type) {
+          const signature = checker.getSignatureFromDeclaration(member);
+          if (!signature) continue;
+          const prefix = ts.isGetAccessorDeclaration(member) ? 'get ' : ts.isSetAccessorDeclaration(member) ? 'set ' : '';
+          evidence.returns.set(prefix + member.name.getText(), render(checker.getReturnTypeOfSignature(signature), member));
+        }
+      }
+      result.set(ids.get(declaration), evidence);
+    }
+    return result;
+  }
+
+  function _hasUnresolvedType(ts, checker, type, seen = new Set()) {
+    if (!type || type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown | ts.TypeFlags.TypeParameter)) return true;
+    if (seen.has(type)) return false;
+    seen.add(type);
+    if (type.isUnionOrIntersection()) return type.types.some(part => _hasUnresolvedType(ts, checker, part, seen));
+    const arguments_ = type.aliasTypeArguments || (type.objectFlags & ts.ObjectFlags.Reference ? checker.getTypeArguments(type) : []);
+    if (arguments_.some(argument => _hasUnresolvedType(ts, checker, argument, seen))) return true;
+    // Tuple element arguments contain their exposed types. Traversing inherited
+    // array methods would mistake the library's own generic callbacks for gaps.
+    if (checker.isTupleType(type)) return false;
+    if (!(type.flags & ts.TypeFlags.Object)) return false;
+    // A known class/interface identity remains useful even if one of its own
+    // members is untyped. Anonymous shapes must have complete exposed types.
+    if ((type.symbol?.declarations || []).some(node => ts.isClassDeclaration(node) || ts.isInterfaceDeclaration(node))) return false;
+    for (const property of checker.getPropertiesOfType(type)) {
+      const declaration = property.valueDeclaration || property.declarations?.[0];
+      if (declaration && _hasUnresolvedType(ts, checker, checker.getTypeOfSymbolAtLocation(property, declaration), seen)) return true;
+    }
+    for (const signature of [...type.getCallSignatures(), ...type.getConstructSignatures()]) {
+      if (_hasUnresolvedType(ts, checker, checker.getReturnTypeOfSignature(signature), seen)) return true;
+      for (const parameter of signature.parameters) {
+        const declaration = parameter.valueDeclaration || parameter.declarations?.[0];
+        if (declaration && _hasUnresolvedType(ts, checker, checker.getTypeOfSymbolAtLocation(parameter, declaration), seen)) return true;
+      }
+    }
+    return checker.getIndexInfosOfType(type).some(index => _hasUnresolvedType(ts, checker, index.type, seen));
   }
 
   function _getScriptKind(ts, filename) {
@@ -390,6 +513,19 @@
       this._extractFromFile(this.parsedFiles[fn], fn);
     }
     this.classMap.forEach(function (info) { self._classifyRelationships(info); });
+  };
+
+  ClassExtractor.prototype.applyInferredTypes = function (inferredTypes) {
+    for (const [name, info] of this.classMap) {
+      const evidence = inferredTypes.get(name);
+      if (!evidence) continue;
+      for (const attribute of info.attributes) {
+        if (!attribute.type) attribute.type = evidence.attributes.get(attribute.name) || '';
+      }
+      for (const method of info.methods) {
+        if (!method.returnType) method.returnType = evidence.returns.get(method.name) || '';
+      }
+    }
   };
 
   ClassExtractor.prototype._extractFromFile = function (sourceFile, filename) {

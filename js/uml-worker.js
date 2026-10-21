@@ -154,12 +154,14 @@ self.cancelAnimationFrame = self.cancelAnimationFrame || function (id) { clearTi
 
 // ─── Lazy loaders ──────────────────────────────────────────────────────
 var loaded = { python: false, java: false, cpp: false, jsts: false, bundle: false };
+let pythonTypes = null;
 
 function ensureAnalyzer(lang) {
   if (!self.UMLSequenceDiagnostics) importScripts(resolve('uml-sequence-diagnostics.js'));
   if (!self.UMLConstantValues) importScripts(resolve('uml-constant-values.js'));
   if (!self.UMLReturnSummaries) importScripts(resolve('uml-return-summaries.js'));
   if (lang === 'python' && !loaded.python) {
+    importScripts(resolve('uml-python-types.js'));
     importScripts(resolve('uml-analyzer-python.js'));
     loaded.python = true;
   } else if (lang === 'java' && !loaded.java) {
@@ -170,6 +172,7 @@ function ensureAnalyzer(lang) {
     loaded.cpp = true;
   } else if (lang === 'js' && !loaded.jsts) {
     importScripts(resolve('vendor/typescript/5.9.3/typescript.min.js'));
+    importScripts(resolve('vendor/typescript/5.9.3/lib-map.js'));
     importScripts(resolve('uml-analyzer-js.js'));
     loaded.jsts = true;
   }
@@ -196,19 +199,29 @@ self.onmessage = function (event) {
   }
 };
 
-function handleAnalyze(msg) {
+async function handleAnalyze(msg) {
   var id = msg.id, lang = msg.lang;
   var sources = msg.sources || {}, options = msg.options || {};
   try {
     ensureAnalyzer(lang);
     var result;
-    if (lang === 'python')      result = self.analyzePythonSources(sources, options);
+    if (lang === 'python') {
+      if (!pythonTypes) pythonTypes = self.UMLPythonTypes.createClient({
+        workerURL: resolve('vendor/browser-basedpyright/1.40.2/pyright.worker.js')
+      });
+      const inferredTypes = await pythonTypes.infer(sources);
+      result = self.analyzePythonSources(sources, { ...options, inferredTypes });
+    }
     else if (lang === 'java')   result = self.analyzeJavaSources(sources);
     else if (lang === 'cpp')    result = self.analyzeCppSources(sources, options);
     else if (lang === 'js')     result = self.analyzeJSSources(sources, self.ts);
     else throw new Error('Unknown UML language: ' + lang);
     self.postMessage({ type: 'analysis', id: id, ok: true, result: result });
   } catch (err) {
+    if (lang === 'python' && pythonTypes) {
+      pythonTypes.dispose();
+      pythonTypes = null;
+    }
     self.postMessage({ type: 'analysis', id: id, ok: false, error: (err && err.message) || String(err) });
   }
 }

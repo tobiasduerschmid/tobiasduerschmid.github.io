@@ -108,7 +108,7 @@ steps:
       Open `student.py` and create a `Student` class that:
 
       1. Defines `__init__(self, name: str, student_id: str) -> None`
-      2. Stores both parameters as explicitly annotated `str` instance attributes
+      2. Stores both parameters as instance attributes whose `str` type follows from the annotated parameters
       3. Has a `get_info(self) -> str` method returning `"name (student_id)"` — for example `"Alice (S001)"`
 
       Watch the **UML Diagram** panel — it updates live as you type!
@@ -135,8 +135,8 @@ steps:
           content: |
             class Student:
                 def __init__(self, name: str, student_id: str) -> None:
-                    self.name: str = name
-                    self.student_id: str = student_id
+                    self.name = name
+                    self.student_id = student_id
 
                 def get_info(self) -> str:
                     return f"{self.name} ({self.student_id})"
@@ -282,7 +282,7 @@ steps:
             ```python
             class Timer:
                 def __init__(self, seconds: int) -> None:
-                    self.seconds: int = seconds
+                    self.seconds = seconds
                     self.running: bool = False
 
                 def start(self) -> None:
@@ -409,7 +409,7 @@ steps:
               Your job: apply proper visibility using Python naming conventions."""
 
               def __init__(self, initial_balance: float) -> None:
-                  self.balance: float = initial_balance
+                  self.balance = initial_balance
 
               def deposit(self, amount: float) -> None:
                   if self.validate_amount(amount):
@@ -446,7 +446,7 @@ steps:
                 """A bank account with proper visibility."""
 
                 def __init__(self, initial_balance: float) -> None:
-                    self.__balance: float = initial_balance
+                    self.__balance = initial_balance
 
                 def deposit(self, amount: float) -> None:
                     if self._validate_amount(amount):
@@ -592,11 +592,11 @@ steps:
 
       ### Why this matters
 
-      Python's duck typing is convenient when you write the code and a nightmare when someone else has to read it six months later. UML refuses to let you hide the contracts: every attribute and parameter must declare its type. Adding Python type hints serves the same purpose — and as a bonus, the live UML renderer reads them, so the diagram fills in only when your code is honest about its data flow.
+      Types make a class's inputs, stored state, and results easier to understand. Python type hints state those contracts, and the live UML renderer follows assignments to infer types where possible. When a field stores a typed parameter directly, its assignment does not need to repeat the same annotation.
 
       ### 🎯 You will learn to
 
-      - Apply Python type hints to attributes, parameters, and return values
+      - Apply parameter and return type hints, and trace parameter types into stored attributes
       - Analyze how explicit types act as contracts between components
 
       ### What Are Type Hints?
@@ -610,19 +610,19 @@ steps:
 
       # With type hints:
       def __init__(self, name: str, price: float) -> None:
-          self.name: str = name
+          self.name = name
       ```
 
       | Syntax | Meaning | Example |
       |---|---|---|
       | `param: Type` | Parameter has this type | `name: str` |
-      | `self.x: Type = value` | Attribute has this type | `self.name: str = name` |
+      | `self.x = param` | Attribute type follows from an annotated parameter | `self.name = name` with `name: str` |
       | `-> Type` | Method returns this type | `def get_price(self) -> float:` |
       | `-> None` | Method returns nothing | `def __init__(self, ...) -> None:` |
 
       Type hints do **not** change how Python runs your code — Python ignores them at runtime. But they serve two critical purposes:
 
-      1. **UML diagrams** — the renderer reads type hints to show types. Missing return annotations remain unknown (`?`), rather than being treated as no result.
+      1. **UML diagrams** — the renderer reads annotations and infers types through assignments and return expressions. If the available information is ambiguous, it leaves the type unspecified.
       2. **Communication** — type hints document the contracts of your class for other developers.
 
       *(Type hints can also be enforced at build time with tools like **mypy**. That's a topic for another tutorial — see the reference at the end of this one for a pointer.)*
@@ -631,13 +631,13 @@ steps:
 
       Python is dynamically typed — you can write `def get_price(self)` without ever specifying that it returns a `float`. This flexibility is convenient, but it hides the **contracts** between components. Another developer reading your code has to trace through the logic to figure out what types flow where.
 
-      For this detailed design exercise, show attribute, parameter, and return types to make the contracts explicit. UML permits diagrams to omit these details when a higher-level view is more useful.
+      For this detailed design exercise, annotate parameters and method returns to make the contracts explicit. Let attributes inherit their types from the parameters they store. Keep an explicit attribute annotation when the assignment alone is insufficient, such as `self.tags: list[str] = []`. UML permits diagrams to omit type details when a higher-level view is more useful.
 
       ### UML Type Notation
 
       | UML | Python |
       |---|---|
-      | `- __name: str` | `self.__name: str = name` |
+      | `- __name: str` | `self.__name = name` with parameter `name: str` |
       | `+ get_price(): float` | `def get_price(self) -> float:` |
       | `+ apply_discount(percent: float): float` | `def apply_discount(self, percent: float) -> float:` |
 
@@ -661,12 +661,12 @@ steps:
 
       ### Your Task
 
-      The starter code works perfectly — but has **zero type hints**. The UML diagram shows the class without any type information. Add type hints to:
+      The starter code works, but has **zero type hints**. Add explicit method contracts and use them to supply the stored fields' types:
 
-      1. All `__init__` parameters
-      2. All instance attributes
-      3. All method return types
-      4. All method parameters
+      1. Annotate all `__init__` parameters
+      2. Keep each instance attribute assigned from its corresponding typed parameter
+      3. Annotate all method return types
+      4. Annotate all other method parameters
 
       Choose each type from the target contract. Watch the UML diagram fill in as you add annotations, and keep the existing behavior unchanged.
 
@@ -717,9 +717,9 @@ steps:
                 """A product in an online store — now with full type hints."""
 
                 def __init__(self, name: str, price: float, in_stock: bool) -> None:
-                    self.__name: str = name
-                    self.__price: float = price
-                    self.__in_stock: bool = in_stock
+                    self.__name = name
+                    self.__price = price
+                    self.__in_stock = in_stock
 
                 def get_name(self) -> str:
                     return self.__name
@@ -743,13 +743,13 @@ steps:
           language: python
       explanation: |
         Type hints serve double duty:
-        1. They make the UML diagram complete — every attribute and method shows its type.
+        1. They supply types for the UML diagram, including attributes assigned from typed parameters.
         2. They document the **contracts** of your class — what goes in and what comes out.
 
         Without type hints, another developer must read your implementation to know that `apply_discount` expects a percentage as a float and returns a float. With type hints (and the corresponding UML), this is immediately visible.
 
     tests:
-      - description: "Instance attributes have type hints"
+      - description: "Constructor contracts supply the stored attribute types"
         command: |
           import ast
           source = open('/tutorial/product.py').read()
@@ -758,30 +758,44 @@ steps:
           assert product_cls is not None, "Product class must exist"
           init_method = next((m for m in product_cls.body if isinstance(m, ast.FunctionDef) and m.name == '__init__'), None)
           assert init_method is not None, "Product must have an __init__ method"
-          attr_annotations = {}
+          parameters = init_method.args.posonlyargs + init_method.args.args + init_method.args.kwonlyargs
+          parameter_types = {
+              arg.arg: arg.annotation.id
+              for arg in parameters
+              if isinstance(arg.annotation, ast.Name)
+          }
+          expected_parameters = {'name': 'str', 'price': 'float', 'in_stock': 'bool'}
+          for name, expected_type in expected_parameters.items():
+              assert parameter_types.get(name) == expected_type, \
+                  f"Match the constructor parameter {name}'s annotation to the target contract"
+          attribute_types = {}
           for stmt in init_method.body:
-              if (isinstance(stmt, ast.AnnAssign)
-                      and isinstance(stmt.target, ast.Attribute)
-                      and isinstance(stmt.target.value, ast.Name)
-                      and stmt.target.value.id == 'self'
-                      and isinstance(stmt.annotation, ast.Name)):
-                  attr_annotations[stmt.target.attr] = stmt.annotation.id
-          assert attr_annotations.get('__name') == 'str', \
-              "Add a type hint: `self.__name: str = name` (annotated assignment with type str)"
-          assert attr_annotations.get('__price') == 'float', \
-              "Add a type hint: `self.__price: float = price`"
-          assert attr_annotations.get('__in_stock') == 'bool', \
-              "Add a type hint: `self.__in_stock: bool = in_stock`"
+              if isinstance(stmt, ast.AnnAssign):
+                  targets = [stmt.target]
+                  inferred = stmt.annotation.id if isinstance(stmt.annotation, ast.Name) else None
+              elif isinstance(stmt, ast.Assign):
+                  targets = stmt.targets
+                  inferred = parameter_types.get(stmt.value.id) if isinstance(stmt.value, ast.Name) else None
+              else:
+                  continue
+              for target in targets:
+                  if (isinstance(target, ast.Attribute)
+                          and isinstance(target.value, ast.Name)
+                          and target.value.id == 'self'):
+                      attribute_types[target.attr] = inferred
+          for name, expected_type in expected_parameters.items():
+              assert attribute_types.get('__' + name) == expected_type, \
+                  f"Give __{name} the target type by storing its typed parameter or by an explicit field annotation"
         hints:
-          - title: Annotate stored state
-            text: Compare the attribute compartment with the assignments in Product.__init__. Which syntax adds type information while keeping the assigned value?
-            condition: "code_not_matches: /^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?self\\.__\\w+[ \\t]*:/m"
-          - title: Separate value from type
-            text: "For each attribute, write two columns: an example value and the kind of value it represents. Use that distinction to annotate the remaining assignments."
-            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?self\\.__\\w+[ \\t]*:))(?![\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?self\\.__price[ \\t]*:))[\\s\\S]*$/m"
-          - title: Read each annotated assignment
-            text: Inspect the name, annotation, and assigned expression independently. Check the target for the price and availability roles, and ensure the annotations describe those roles.
-            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?self\\.__\\w+[ \\t]*:))(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?self\\.__price[ \\t]*:))[\\s\\S]*$/m"
+          - title: Start at the constructor inputs
+            text: Compare the constructor parameters with the target operation. Which annotations describe the values entering the object?
+            condition: "code_not_matches: /^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+__init__\\([^\\n]*\\b(?:name|price|in_stock)[ \\t]*:/m"
+          - title: Complete the input contracts
+            text: Make a row for each constructor argument, its role, and its target type. Check the remaining annotations without changing the assigned values.
+            condition: "code_matches: /(?<![\\s\\S])(?=[\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+__init__\\([^\\n]*\\b(?:name|price|in_stock)[ \\t]*:))(?![\\s\\S]*(?:^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+__init__\\([^\\n]*\\bin_stock[ \\t]*:))[\\s\\S]*$/m"
+          - title: Follow each value into the object
+            text: Trace each annotated parameter to the attribute that stores it. A direct assignment carries the parameter's type into the field; check both the annotation and the destination against the target.
+            condition: "code_matches: /^class[ \\t]+Product\\b[^\\n]*\\n(?:(?!^\\S)[\\s\\S])*?def[ \\t]+__init__\\([^\\n]*\\bin_stock[ \\t]*:/m"
 
       - description: "Methods have return type hints"
         command: |
@@ -843,7 +857,7 @@ steps:
       questions:
 
         - question: |
-            Why do we add explicit attribute, parameter, and return types in this detailed design exercise?
+            Why do we declare parameter and return types and infer stored attribute types in this detailed design exercise?
           type: single
           options:
             - "Because UML only works with statically typed languages"
@@ -950,7 +964,7 @@ steps:
 
           class Shape:
               def __init__(self, color: str) -> None:
-                  self.color: str = color
+                  self.color = color
 
               def area(self) -> float:
                   return 0.0
@@ -963,8 +977,8 @@ steps:
               """A circle supports the Shape contract with its own area formula."""
 
               def __init__(self, color: str, radius: float) -> None:
-                  self.color: str = color          # Duplicated!
-                  self.radius: float = radius
+                  self.color = color          # Duplicated!
+                  self.radius = radius
 
               def area(self) -> float:
                   return math.pi * self.radius ** 2
@@ -977,9 +991,9 @@ steps:
               """A rectangle supports the Shape contract with its own area formula."""
 
               def __init__(self, color: str, width: float, height: float) -> None:
-                  self.color: str = color          # Duplicated!
-                  self.width: float = width
-                  self.height: float = height
+                  self.color = color          # Duplicated!
+                  self.width = width
+                  self.height = height
 
               def area(self) -> float:
                   return self.width * self.height
@@ -1006,7 +1020,7 @@ steps:
 
             class Shape:
                 def __init__(self, color: str) -> None:
-                    self.color: str = color
+                    self.color = color
 
                 def area(self) -> float:
                     return 0.0
@@ -1018,7 +1032,7 @@ steps:
             class Circle(Shape):
                 def __init__(self, color: str, radius: float) -> None:
                     super().__init__(color)
-                    self.radius: float = radius
+                    self.radius = radius
 
                 def area(self) -> float:
                     return math.pi * self.radius ** 2
@@ -1027,8 +1041,8 @@ steps:
             class Rectangle(Shape):
                 def __init__(self, color: str, width: float, height: float) -> None:
                     super().__init__(color)
-                    self.width: float = width
-                    self.height: float = height
+                    self.width = width
+                    self.height = height
 
                 def area(self) -> float:
                     return self.width * self.height
@@ -1287,8 +1301,8 @@ steps:
               There is no Instructor class, so the UML shows no relationship."""
 
               def __init__(self, name: str, instructor_name: str) -> None:
-                  self.name: str = name
-                  self.instructor_name: str = instructor_name  # Just a string!
+                  self.name = name
+                  self.instructor_name = instructor_name  # Just a string!
 
               def get_instructor_name(self) -> str:
                   return self.instructor_name
@@ -1316,8 +1330,8 @@ steps:
           content: |
             class Instructor:
                 def __init__(self, name: str, department: str) -> None:
-                    self.name: str = name
-                    self.department: str = department
+                    self.name = name
+                    self.department = department
 
                 def get_title(self) -> str:
                     return f"{self.name} ({self.department})"
@@ -1325,8 +1339,8 @@ steps:
 
             class Course:
                 def __init__(self, name: str, instructor: Instructor) -> None:
-                    self.name: str = name
-                    self.instructor: Instructor = instructor
+                    self.name = name
+                    self.instructor = instructor
 
                 def get_instructor_name(self) -> str:
                     return self.instructor.name
@@ -1443,10 +1457,10 @@ steps:
             When you use a string, the **relationship between Course and Instructor is invisible** — both in the code and in the UML diagram. Using an `Instructor` object makes the dependency explicit, allowing UML to show the arrow and helping other developers understand the system structure at a glance.
 
         - question: |
-            **Review of Step 3.** Keep the constructor parameter `instructor: Instructor`, but change `self.instructor: Instructor = instructor` to `self.instructor = instructor`. Which distinction matters when interpreting the live diagram?
+            **Review of Step 3.** A constructor takes `instructor: Instructor`. Compare `self.instructor: Instructor = instructor` with `self.instructor = instructor`. What changes when the repeated field annotation is omitted?
           type: single
           options:
-            - "The stored object stays the same; inferred diagram detail may change"
+            - "The stored object and inferred association stay the same"
             - "The stored object becomes a string; the diagram loses the class"
             - "Python rejects the assignment; the diagram keeps the association"
             - "Python checks the type at runtime; the diagram adds enforcement"
@@ -1456,7 +1470,7 @@ steps:
             2: "Python permits assignment without an annotation. The relationship can still be inferred from the annotated constructor parameter."
             3: "An annotation supplies type information to readers and tools; Python does not enforce that type during this assignment."
           explanation: |
-            The stored reference and Python behavior are unchanged. The current renderer still infers the association from the annotated constructor parameter, but loses the target multiplicity label `1` when the attribute annotation is removed. A generated diagram is a tool's interpretation of the source: annotation changes can affect its detail without changing the objects at runtime.
+            The parameter supplies the field's type, so the stored reference, inferred association and target multiplicity stay the same. Repeating that type on the assignment adds no information. This inference describes the declared contract; it does not enforce types at runtime or prove ownership.
 
 
   # --------------------------------------------------------------------------
@@ -1511,7 +1525,7 @@ steps:
       | Store a newly constructed object: `self.part: Part = Part(...)` | Plain association |
       | Append a newly constructed object to a typed collection | Plain association |
       | Append an existing typed method parameter: `self.parts.append(part)` where `part: Part` | Plain association |
-      | Store an existing object: `self.part: Part = part` | Plain association |
+      | Store a typed parameter: `self.part = part` where `part: Part` | Plain association |
       | Declare `self.parts: list[Part] = []` without a recognized append pattern | Plain association |
 
       Allocation, injection, and collection storage do not establish a lifecycle contract. Both live views therefore keep ordinary associations for these Python references. A domain model may add diamonds when requirements justify them; changing the view cannot supply missing evidence.
@@ -1600,13 +1614,13 @@ steps:
         content: |
           class Professor:
               def __init__(self, name: str, field: str) -> None:
-                  self.name: str = name
-                  self.field: str = field
+                  self.name = name
+                  self.field = field
 
 
           class Department:
               def __init__(self, name: str) -> None:
-                  self.name: str = name
+                  self.name = name
                   self.professors: list[Professor] = []
 
               def add_professor(self, prof: Professor) -> None:
@@ -1616,7 +1630,7 @@ steps:
 
           class University:
               def __init__(self, name: str) -> None:
-                  self.name: str = name
+                  self.name = name
                   self.departments: list[Department] = []
 
               def add_department(self, dept_name: str) -> None:
@@ -1659,13 +1673,13 @@ steps:
           content: |
             class Professor:
                 def __init__(self, name: str, field: str) -> None:
-                    self.name: str = name
-                    self.field: str = field
+                    self.name = name
+                    self.field = field
 
 
             class Department:
                 def __init__(self, name: str) -> None:
-                    self.name: str = name
+                    self.name = name
                     self.professors: list[Professor] = []
 
                 def add_professor(self, prof: Professor) -> None:
@@ -1674,7 +1688,7 @@ steps:
 
             class University:
                 def __init__(self, name: str) -> None:
-                    self.name: str = name
+                    self.name = name
                     self.departments: list[Department] = []
 
                 def add_department(self, dept_name: str) -> None:
@@ -1808,7 +1822,7 @@ steps:
             **Aggregation** (hollow diamond) marks the chosen shared whole-part relationship. The independent lifetimes come from the stated domain rules. A plain association would also show the stored links if the designers did not need to emphasize grouping; passing objects as arguments alone would not require a hollow diamond.
 
         - question: |
-            A constructor receives `part: Part` and stores `self.part: Part = part`. The domain requires exclusive ownership and deletion with the whole unless detached. Which pair correctly describes the analyzer's output and the domain's intended relationship?
+            A constructor receives `part: Part` and stores `self.part = part`. The domain requires exclusive ownership and deletion with the whole unless detached. Which pair correctly describes the analyzer's output and the domain's intended relationship?
           type: single
           options:
             - "Analyzer: aggregation. Domain: aggregation."
@@ -1917,17 +1931,17 @@ steps:
         content: |
           class Song:
               def __init__(self, title: str, artist: str, duration_sec: int) -> None:
-                  self.title: str = title
-                  self.artist: str = artist
-                  self.duration_sec: int = duration_sec
+                  self.title = title
+                  self.artist = artist
+                  self.duration_sec = duration_sec
 
 
           class Playlist:
               """Currently holds a single song. Refactor to hold many songs!"""
 
               def __init__(self, name: str, song: Song) -> None:
-                  self.name: str = name
-                  self.song: Song = song  # Currently holds only one song.
+                  self.name = name
+                  self.song = song  # Currently holds only one song.
 
 
           if __name__ == "__main__":
@@ -1944,14 +1958,14 @@ steps:
           content: |
             class Song:
                 def __init__(self, title: str, artist: str, duration_sec: int) -> None:
-                    self.title: str = title
-                    self.artist: str = artist
-                    self.duration_sec: int = duration_sec
+                    self.title = title
+                    self.artist = artist
+                    self.duration_sec = duration_sec
 
 
             class Playlist:
                 def __init__(self, name: str) -> None:
-                    self.name: str = name
+                    self.name = name
                     self.songs: list[Song] = []
 
                 def add_song(self, song: Song) -> None:
@@ -2201,14 +2215,14 @@ steps:
 
           class CreditCard(PaymentMethod):
               def __init__(self, card_number: str) -> None:
-                  self.card_number: str = card_number
+                  self.card_number = card_number
 
               # TODO: Fulfill the concrete payment contract in the task.
 
 
           class BankTransfer(PaymentMethod):
               def __init__(self, account_number: str) -> None:
-                  self.account_number: str = account_number
+                  self.account_number = account_number
 
               # TODO: Fulfill the concrete payment contract in the task.
 
@@ -2241,7 +2255,7 @@ steps:
 
             class CreditCard(PaymentMethod):
                 def __init__(self, card_number: str) -> None:
-                    self.card_number: str = card_number
+                    self.card_number = card_number
 
                 def process(self, amount: float) -> bool:
                     print(f"Charging ${amount:.2f} to card {self.card_number[-4:]}")
@@ -2253,7 +2267,7 @@ steps:
 
             class BankTransfer(PaymentMethod):
                 def __init__(self, account_number: str) -> None:
-                    self.account_number: str = account_number
+                    self.account_number = account_number
 
                 def process(self, amount: float) -> bool:
                     print(f"Transferring ${amount:.2f} from account {self.account_number[-4:]}")
@@ -2435,7 +2449,7 @@ steps:
 
       | UML | Python |
       |---|---|
-      | `name: str` | `self.name: str = name` |
+      | `name: str` | `self.name = name` with parameter `name: str` |
       | `get_price(): float` | `def get_price(self) -> float:` |
       | `process(amount: float): bool` | `def process(self, amount: float) -> bool:` |
 
@@ -2446,7 +2460,7 @@ steps:
       | Symbol | Name | Design Meaning | Analyzer Pattern |
       |---|---|---|---|
       | <span class="uml-sym" data-diagram="class" data-sym="--&#124;>"></span> | **Inheritance** | Child supports the parent's contract | `class Child(Parent):` |
-      | <span class="uml-sym" data-diagram="class" data-sym="-->"></span> | **Association** | "knows-about" — stores a reference | `self.other: OtherClass = other` |
+      | <span class="uml-sym" data-diagram="class" data-sym="-->"></span> | **Association** | "knows-about" — stores a reference | `self.other = other` with parameter `other: OtherClass` |
       | <span class="uml-sym" data-diagram="class" data-sym="*--"></span> | **Composition** | Exclusive composite owner; parts deleted with whole unless detached | `self.part = Part(...)`, or append a newly constructed part |
       | <span class="uml-sym" data-diagram="class" data-sym="o--"></span> | **Aggregation** | Shared whole-part grouping; precise meaning is domain-specific | `self.parts.append(part)` with a typed method parameter |
       | <span class="uml-sym" data-diagram="class" data-sym="..>"></span> | **Dependency** | "temporarily uses" — weakest link | Uses a class inside a method body only |
@@ -2470,7 +2484,7 @@ steps:
 
       **Patterns recognized by this analyzer:**
       - `self.x: OtherClass = OtherClass(...)` → **association** (new object retained in an attribute)
-      - `self.x: OtherClass = other` → **association** (existing object retained in an attribute)
+      - `self.x = other` with parameter `other: OtherClass` → **association** (existing object retained in an attribute)
       - `local_var = OtherClass(...)` inside a method, never retained → **dependency** (temporary use)
 
       ---
@@ -2711,7 +2725,7 @@ steps:
       In the target diagram, `OnlineStore ..> Customer` means `OnlineStore` *uses* `Customer` only inside `place_order()` — as a method parameter that is immediately handed off to `Order`. There is no `self.customer` attribute on `OnlineStore`; the `Customer` object passes through and leaves.
 
       **Patterns recognized by this analyzer:**
-      - `self.x: Other = other` → **association** (stores an existing object)
+      - `self.x = other` with parameter `other: Other` → **association** (stores an existing object)
       - `def method(self, other: Other)` or `local = Other(...)` inside a method, never stored → **dependency** (temporary use)
 
       This is the weakest possible relationship — the dashed line signals "I know this class exists, but I do not hold onto it."
@@ -2837,9 +2851,9 @@ steps:
           content: |
             class Product:
                 def __init__(self, name: str, price: float, stock: int) -> None:
-                    self.name: str = name
-                    self.price: float = price
-                    self.stock: int = stock
+                    self.name = name
+                    self.price = price
+                    self.stock = stock
 
                 def is_available(self) -> bool:
                     return self.stock > 0
@@ -2850,13 +2864,13 @@ steps:
 
             class Customer:
                 def __init__(self, name: str, email: str) -> None:
-                    self.name: str = name
-                    self.email: str = email
+                    self.name = name
+                    self.email = email
 
 
             class Order:
                 def __init__(self, customer: Customer) -> None:
-                    self.customer: Customer = customer
+                    self.customer = customer
                     self.items: list[Product] = []
                     self.total: float = 0.0
 
@@ -3260,7 +3274,7 @@ steps:
             A filled diamond means **composition**: a part has at most one composite owner and is deleted with the whole unless detached first. A hollow diamond marks shared aggregation; its precise ownership and lifecycle meaning comes from the domain.
 
         - question: |
-            A `Course` class stores `self.instructor: Instructor = instructor` where the instructor is passed in from outside and continues to exist independently when a course is deleted. Why is this an **association** rather than composition?
+            A `Course` constructor receives `instructor: Instructor` and stores `self.instructor = instructor`. The instructor continues to exist independently when a course is deleted. Why is this an **association** rather than composition?
           type: single
           options:
             - "Because Course and Instructor are in different files"

@@ -8,3 +8,7 @@ js/vendor/smalltalk/*.image binary
 # Keep the pinned ELK distribution and adapter body byte-for-byte verifiable.
 js/vendor/elk/0.12.0/*.js -text whitespace=-blank-at-eol
 js/vendor/elk/0.12.0/*.mjs -text whitespace=-blank-at-eol
+
+# Preserve checker bytes, including whitespace in upstream string literals.
+js/vendor/browser-basedpyright/1.40.2/pyright.worker.js -text whitespace=-blank-at-eol
+js/vendor/typescript/5.9.3/lib-map.js -text

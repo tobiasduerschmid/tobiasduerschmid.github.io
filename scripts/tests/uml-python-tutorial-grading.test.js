@@ -178,6 +178,29 @@ test('sequence step 5 accepts a while loop sending every message', () => {
     'index = 0\n        while index < len(messages):\n            channel.send_to_all(messages[index])\n            index += 1'));
 });
 
+test('class type contracts also accept explicitly annotated fields', () => {
+  let source = studentSource('class', 'types');
+  for (const [name, type] of [['name', 'str'], ['price', 'float'], ['in_stock', 'bool']]) {
+    source = replace(source, `self.__${name} = ${name}`, `self.__${name}: ${type} = ${name}`);
+  }
+  accepts('class', 'types', source);
+});
+
+test('class type contracts require each constructor input annotation', () => {
+  rejects('class', 'types', replace(studentSource('class', 'types'),
+    'price: float', 'price'));
+});
+
+test('class type contracts reject storing a parameter of the wrong type', () => {
+  rejects('class', 'types', replace(studentSource('class', 'types'),
+    'self.__price = price', 'self.__price = name'));
+});
+
+test('class type contracts still require explicit return annotations', () => {
+  rejects('class', 'types', replace(studentSource('class', 'types'),
+    'def get_name(self) -> str:', 'def get_name(self):'));
+});
+
 test('sequence capstone rejects a digest that broadcasts skipped posts', () => {
   rejects('sequence', 'moderated-broadcast', replace(studentSource('sequence', 'moderated-broadcast'),
     'self._log_skip(post)', 'self._log_skip(post)\n                channel.broadcast(post)'));
@@ -255,20 +278,19 @@ test('class capstone recognizes extracted Product progress without passing the u
   assert.ok(results.slice(1).some(check => !check.passed), 'The remaining responsibilities still need to be extracted');
 });
 
-test('the association example retains its arrow but loses multiplicity when only its attribute annotation is removed', () => {
+test('the association example infers the same multiplicity from its constructor parameter or field annotation', () => {
   const context = {};
   vm.runInNewContext(fs.readFileSync(path.join(root, 'js/uml-sequence-diagnostics.js'), 'utf8'), context);
   vm.runInNewContext(fs.readFileSync(path.join(root, 'js/uml-constant-values.js'), 'utf8'), context);
   vm.runInNewContext(fs.readFileSync(path.join(root, 'js/uml-return-summaries.js'), 'utf8'), context);
   vm.runInNewContext(fs.readFileSync(path.join(root, 'js/uml-analyzer-python.js'), 'utf8'), context);
   const source = studentSource('class', 5);
-  const original = context.analyzePythonSources({ 'enrollment.py': source });
-  const unannotated = context.analyzePythonSources({
-    'enrollment.py': replace(source, 'self.instructor: Instructor = instructor', 'self.instructor = instructor'),
+  const inferred = context.analyzePythonSources({ 'enrollment.py': source });
+  const explicit = context.analyzePythonSources({
+    'enrollment.py': replace(source, 'self.instructor = instructor', 'self.instructor: Instructor = instructor'),
   });
-  assert.equal(original.errors.length, 0);
-  assert.equal(unannotated.errors.length, 0);
-  assert.match(original.classDiagram, /Course .*--> "1" Instructor/);
-  assert.match(unannotated.classDiagram, /Course .*--> Instructor/);
-  assert.doesNotMatch(unannotated.classDiagram, /Course .*--> "1" Instructor/);
+  assert.equal(inferred.errors.length, 0);
+  assert.equal(explicit.errors.length, 0);
+  assert.match(inferred.classDiagram, /Course .*--> "1" Instructor/);
+  assert.match(explicit.classDiagram, /Course .*--> "1" Instructor/);
 });

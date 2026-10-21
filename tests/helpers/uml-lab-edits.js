@@ -24,7 +24,7 @@ module.exports = {
   python: {
     ...sharedEdits,
     visibility: code => code.replace('def display_name(', 'def _display_name('),
-    dependency: code => code.replace('self._roster: Roster = roster', 'pass'),
+    dependency: code => code.replace('self._roster = roster', 'pass'),
     removeParameter: code => code.replace(', roster: Roster', ''),
     inheritance: code => code.replace('class Puppy(Animal):', 'class Puppy(Dog):'),
     collection_multiplicity: code => code.replaceAll('members: Member', 'members: list[Member]'),

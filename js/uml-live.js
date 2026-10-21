@@ -216,6 +216,7 @@
         else await loadScript(assetURL('vendor/typescript/5.9.3/typescript.min.js'));
       }
       await Promise.all([
+        language !== 'js' || global.UMLTypeScriptLibs || loadScript(assetURL('vendor/typescript/5.9.3/lib-map.js')),
         global.UMLSequenceDiagnostics || loadScript(assetURL('uml-sequence-diagnostics.js')),
         global.UMLConstantValues || loadScript(assetURL('uml-constant-values.js')),
         global.UMLReturnSummaries || loadScript(assetURL('uml-return-summaries.js'))
@@ -234,6 +235,11 @@
           sources: request.sources, options: request.options || {} });
       } catch (error) {
         if (error.umlSuperseded || error.umlTimeout || disposed) throw error;
+        // Python's library requires a worker. Both hosts must show a failure,
+        // rather than silently displaying annotation-only structural results.
+        if (request.language === 'python') {
+          throw new Error('Python type inference is unavailable. ' + error.message);
+        }
         return analyzeOnMainThread(request);
       }
     }

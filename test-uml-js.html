@@ -307,6 +307,7 @@ class Store extends EventEmitter {
   <script src="/js/uml-sequence-diagnostics.js"></script>
   <script src="/js/uml-constant-values.js"></script>
   <script src="/js/uml-return-summaries.js"></script>
+  <script src="/js/vendor/typescript/5.9.3/lib-map.js"></script>
   <script src="/js/uml-analyzer-js.js"></script>
   <script src="/js/uml-expression-views.js"></script>
   <script src="/js/uml-diagram-views.js"></script>
@@ -323,10 +324,10 @@ class Store extends EventEmitter {
       }
     });
 
-    // Load TypeScript compiler from CDN
+    // Use the same pinned compiler as the live UML worker.
     (function () {
       var s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/typescript@5.9.3/lib/typescript.min.js';
+      s.src = '/js/vendor/typescript/5.9.3/typescript.min.js';
       s.integrity = 'sha384-LDb+pvmOeRIyOeeIuwLFSYWg1ONahfOXlQuZxYV+f7HeTMjyJN3TK7qV+WD9lZdj';
       s.crossOrigin = 'anonymous';
       s.onload = function () {

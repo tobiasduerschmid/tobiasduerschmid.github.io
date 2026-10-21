@@ -26,22 +26,21 @@ function interactions(diagram) {
     .filter(line => /^\w+\s+-+>|^(?:alt|opt|loop|else|end)\b/.test(line));
 }
 
-for (const kind of ['class', 'sequence']) {
-  const tutorial = yaml.load(fs.readFileSync(path.join(__dirname,
-    `../../_data/tutorials/uml-${kind}-diagram-python.yml`), 'utf8'));
-  for (const step of tutorial.steps.filter(step => step.solution?.files)) {
-    test(`${kind} tutorial ${step.key}: target notation matches the implementation view of its solution`, () => {
-      const source = Object.fromEntries(step.solution.files.map(file => [file.path, file.content]));
-      const result = global.analyzePythonSources(source, {
-        hideVisibility: (step.uml_hide || []).includes('visibility'),
-        hideMultiplicity: (step.uml_hide || []).includes('multiplicity'),
-      });
-      assert.deepEqual(result.errors, []);
-      const labels = kind === 'class' ? classMembers : interactions;
-      assert.deepEqual(labels(targetDiagram(step.instructions)), labels(result[kind + 'Diagram']),
-        'Target labels must use the same source names, types, and expressions as Implementation details');
+// Python class targets need the browser inference engine; they are covered in
+// tests/uml-python-tutorial-types.spec.js against the production worker.
+const pythonSequenceTutorial = yaml.load(fs.readFileSync(path.join(__dirname,
+  '../../_data/tutorials/uml-sequence-diagram-python.yml'), 'utf8'));
+for (const step of pythonSequenceTutorial.steps.filter(step => step.solution?.files)) {
+  test(`sequence tutorial ${step.key}: target notation matches the implementation view of its solution`, () => {
+    const source = Object.fromEntries(step.solution.files.map(file => [file.path, file.content]));
+    const result = global.analyzePythonSources(source, {
+      hideVisibility: (step.uml_hide || []).includes('visibility'),
+      hideMultiplicity: (step.uml_hide || []).includes('multiplicity'),
     });
-  }
+    assert.deepEqual(result.errors, []);
+    assert.deepEqual(interactions(targetDiagram(step.instructions)), interactions(result.sequenceDiagram),
+      'Target labels must use the same source names, types, and expressions as Implementation details');
+  });
 }
 
 const javaTutorial = yaml.load(fs.readFileSync(path.join(__dirname,

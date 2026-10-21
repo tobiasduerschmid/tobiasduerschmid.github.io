@@ -2170,10 +2170,41 @@ channel.
   `classLayout` on the existing `uml-sync-*` channel; `uml-view-change` synchronizes
   selection back to the host. The generated Python workspace uses these same
   controls. No new persistence key, completion rule, or YAML option is added.
-  TypeScript uses the compiler AST and supplied-file symbols in `uml-analyzer-js.js`.
-  Both worker and main-thread fallback load the pinned local compiler from
+  TypeScript uses the compiler AST, supplied-file symbols and type checker in
+  `uml-analyzer-js.js`. Both worker and main-thread fallback load the pinned
+  local compiler and ES2022 declaration map `lib-map.js` from
   `js/vendor/typescript/5.9.3/`; imports never fetch files and code never executes.
+  The checker infers missing field and method return types, including declared
+  fields initialized from typed constructor parameters and getters returning
+  those fields. It uses `noImplicitAny` and `strictNullChecks`; assignments only
+  in an ordinary initializer method do not infer an untyped field. There is no
+  handwritten type solver. Explicit annotations retain precedence. Inferred
+  `any`, `unknown`, unresolved type parameters and partial unknowns are omitted;
+  resolved unions, collections and nominal identities remain visible. ES2022
+  built-ins are supported; DOM and unsupplied package types are unavailable.
+  Type enrichment preserves canonical class names and changes class-member
+  display only, after relationship classification. Sequence identity, calls
+  and reply evidence retain their existing rules. Keep the compiler and
+  declaration map pinned together with provenance, licenses and checksums.
   Syntax diagnostics include file/line/column and clear on a corrected edit.
+  Python live analysis obtains missing field and method return types from
+  pinned `browser-basedpyright` 1.40.2 through `js/uml-python-types.js`.
+  `uml-worker.js` awaits that evidence before calling the synchronous Python
+  structural extractor with `options.inferredTypes`; the extractor retains
+  explicit annotations, relationships and sequence-analysis rules. For example,
+  an annotated parameter can determine a stored field's type and an unannotated
+  getter's return type. Inferred `Any`, `Unknown`, `Unbound` and unresolved type
+  variables, including partial unknowns, leave the type blank; fully resolved
+  unions remain visible. This is static type inference, not execution or runtime
+  enforcement. Python worker startup and type-analysis failures reject analysis
+  and remain visible; the shared client does not use a main-thread structural
+  fallback for Python. Other languages retain their existing local fallback.
+  Keep the library in its versioned local vendor snapshot with provenance,
+  licenses and checksums; the adapter verifies the worker digest before execution.
+  Source is never sent to a remote checker. No YAML
+  option or persistence key is added. See `docs/python-uml-type-inference.md`
+  for the dependency decision and the distinction between return types and
+  sequence return identity.
   Both hosts use the same
   `uml-worker.js` and analyzers. The worker and fallback load
   `uml-sequence-diagnostics.js` before analyzers. Analysis returns
@@ -2235,7 +2266,10 @@ channel.
   Constructor arguments and chained receivers are visited before their consumers.
   Python nullable annotations (`Optional[T]`, `T | None`, supported quoted and
   qualified forms) infer `0..1`; optional collections still describe many
-  elements. Java nested/qualified generic wrappers and C++ ownership wrappers
+  elements. A direct field assignment from an annotated Python parameter carries
+  that parameter's multiplicity; repeating the same field annotation adds no
+  information. Keep wider or otherwise necessary field annotations, and preserve
+  explicit method return contracts in tutorial examples. Java nested/qualified generic wrappers and C++ ownership wrappers
   preserve the contained relationship's multiplicity. For associations and
   shared aggregation, field types constrain targets per source object only;
   Java/C++/TypeScript leave the reverse multiplicity unspecified rather than

@@ -2,10 +2,9 @@
  * Python UML Analyzer — extracts class diagrams and sequence diagrams from
  * Python source code using a lightweight line-based parser.
  *
- * No external dependencies — runs synchronously in the browser main thread
- * for sub-10ms latency on tutorial-scale files (a previous Pyodide-based
- * `uml-analyzer.py` handled this and was ~100x slower; removed in favor
- * of this native JS analyzer).
+ * Structural extraction runs synchronously in JavaScript. The shared live
+ * pipeline supplies optional inferredTypes from the BasedPyright adapter in
+ * uml-python-types.js; this module does not implement Python type inference.
  *
  * Produces the same @startuml/@enduml syntax consumed by the SVG renderers
  * in uml-bundle.js.
@@ -62,6 +61,7 @@
     var extractor = new PythonClassExtractor(parsedFiles, allTypeNames, errors);
     extractor.symbols = symbols;
     extractor.analyze();
+    extractor.applyInferredTypes(options && options.inferredTypes);
     var classDiagram = extractor.generatePlantUML(options || {});
 
     // Extract sequence diagram
@@ -1586,6 +1586,30 @@
     }
   };
 
+  /** Enrich existing members without changing relationships or declared types. */
+  PythonClassExtractor.prototype.applyInferredTypes = function (inferredTypes) {
+    if (!inferredTypes) return;
+    const displayType = type => {
+      // The checker can print two imported classes with the same short name.
+      // Its text no longer proves which UML class is meant; omit that type.
+      const names = (type || '').replace(/(['"])(?:\\.|(?!\1).)*\1/g, '')
+        .match(/\b\w+(?:\.\w+)*\b/g) || [];
+      return names.some(name => (this.symbols.bySimpleName.get(name) || []).length > 1)
+        ? null : type || null;
+    };
+    for (const entry of this.symbols.classes) {
+      const inferred = inferredTypes[entry.scope.filename]?.[entry.path];
+      if (!inferred) continue;
+      const info = this.classMap[entry.id];
+      for (const attribute of info.attributes) {
+        if (!attribute.typeHint) attribute.typeHint = displayType(inferred.attributes[attribute.name]);
+      }
+      for (const method of info.methods) {
+        if (!method.returnType && method.canInferReturn) method.returnType = displayType(inferred.returns[method.name]);
+      }
+    }
+  };
+
   PythonClassExtractor.prototype._extractFromBody = function (body, filename) {
     for (var i = 0; i < body.length; i++) {
       var node = body[i];
@@ -1638,13 +1662,12 @@
     var isSetter = (node.decorators || []).indexOf('setter') !== -1;
     var isDeleter = (node.decorators || []).indexOf('deleter') !== -1;
 
-    // Skip property setters/deleters — the @property getter already shows the attribute
-    if (isSetter || isDeleter) return;
-
     // Get return type
     var returnType = node.returns ? annotationStr(node.returns) : null;
 
-    classInfo.methods.push({
+    // Property setters/deleters still contribute stored fields below.
+    // The getter represents the property in the displayed member list.
+    if (!isSetter && !isDeleter) classInfo.methods.push({
       name: node.name,
       params: params,
       isPrivate: isPrivate,
@@ -1653,6 +1676,10 @@
       isClassMethod: isClassMethod,
       isProperty: isProperty,
       returnType: returnType,
+      // Pyright may preserve a signature when an untyped decorator obscures
+      // the effective callable. Do not display that heuristic as a known type.
+      canInferReturn: (node.decorators || []).every(decorator =>
+        ['property', 'staticmethod', 'classmethod', 'abstractmethod'].includes(decorator)),
       isConstructor: ['__init__', '__new__'].includes(node.name),
       isDefault: params.length === 0 && node.body.every(statement =>
         statement.type === 'Pass' ||
@@ -1715,7 +1742,10 @@
   PythonClassExtractor.prototype._extractClassLevelAnnotation = function (node, classInfo) {
     if (!node.target || node.target.type !== 'Name') return;
     var attrName = node.target.id;
-    if (!classInfo.attributes.some(attribute => attribute.name === attrName)) {
+    const existing = classInfo.attributes.find(attribute => attribute.name === attrName);
+    if (existing && node.annotation) {
+      existing.typeHint = annotationStr(node.annotation);
+    } else if (!existing) {
       classInfo.attributes.push({ name: attrName, typeHint: node.annotation ? annotationStr(node.annotation) : null });
     }
     this._annotationRelationships(classInfo, node.annotation, attrName);
@@ -1737,9 +1767,12 @@
     var attrName = target.attr;
     var typeHint = annotation ? annotationStr(annotation) : null;
 
-    // Avoid duplicates
+    // A later declaration still takes precedence over an unannotated write.
     for (var i = 0; i < classInfo.attributes.length; i++) {
-      if (classInfo.attributes[i].name === attrName) return;
+      if (classInfo.attributes[i].name === attrName) {
+        if (typeHint) classInfo.attributes[i].typeHint = typeHint;
+        return;
+      }
     }
     classInfo.attributes.push({ name: attrName, typeHint: typeHint });
   };
@@ -1763,9 +1796,7 @@
             const parameterAnnotation = parameterAnnotations[value.id];
             for (const related of extractClassesFromAnnotation(parameterAnnotation, this.allTypeNames)) {
               const multiplicity = inferMultiplicity(parameterAnnotation, related);
-              // Keep the tutorial's distinction between an explicit scalar
-              // field bound and a type learned only from its supplied argument.
-              this._recordRelationship(info, related, attrName, multiplicity === '1' ? null : multiplicity);
+              this._recordRelationship(info, related, attrName, multiplicity);
             }
           } else if (localCreations[value.id]) {
             this._recordRelationship(info, localCreations[value.id], attrName, annotation ? inferMultiplicity(annotation, localCreations[value.id]) : null);
