@@ -3908,7 +3908,8 @@ layout: sebook
       // ==================== TUTORIAL PROGRESS IMPORT/EXPORT ====================
 
       // Known tutorial localStorage keys: tutorial-progress-<id> (from tutorial-code.js),
-      // plus two standalone regex tutorials that predate the shared prefix.
+      // Records are imported/exported intact, including per-step shellCommands drafts.
+      // Also includes two standalone regex tutorials that predate the shared prefix.
       var TUTORIAL_PROGRESS_PREFIX = 'tutorial-progress-';
       var TUTORIAL_PROGRESS_EXPORT_FORMAT = 'se-gym-tutorial-progress';
       var TUTORIAL_PROGRESS_EXPORT_VERSION = 1;

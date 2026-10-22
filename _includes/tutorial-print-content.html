@@ -27,7 +27,8 @@
   </div>
 
   <div class="step-instructions">
-    {{ step.instructions | markdownify | replace: ' id="', ' data-print-id="' }}
+    {% if tutorial_data.backend == 'shell-pipeline' %}{% assign step_instructions = step.instructions | liquid %}{% else %}{% assign step_instructions = step.instructions %}{% endif %}
+    {{ step_instructions | markdownify | replace: ' id="', ' data-print-id="' }}
   </div>
 
   {% if step.files %}
@@ -49,6 +50,13 @@
       {% endif %}
     </div>
     {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if tutorial_data.backend == 'shell-pipeline' %}
+  <div class="starter-file">
+    <div class="starter-file-name">Shell command</div>
+    <pre><code class="language-bash">{{ step.shell_command | escape }}</code></pre>
   </div>
   {% endif %}
 
@@ -75,6 +83,12 @@
       {% endif %}
     </div>
     {% endfor %}
+    {% endif %}
+    {% if step.solution.command %}
+    <div class="step-solution-commands">
+      <div class="starter-file-name">Shell command</div>
+      <pre><code class="language-bash">{{ step.solution.command | escape }}</code></pre>
+    </div>
     {% endif %}
     {% if step.solution.commands %}
     <div class="step-solution-commands">

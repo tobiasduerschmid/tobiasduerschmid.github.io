@@ -1,0 +1,72 @@
+.tvm-shell-command-panel {
+  flex: 0 0 auto;
+  padding: 0.75em 1em;
+  background: #f5f7fa;
+  color: #17212f;
+  border-bottom: 1px solid #77808d;
+  font-size: 16px;
+}
+
+.tvm-shell-command-panel label {
+  display: block;
+  margin-bottom: 0.4em;
+  font-weight: 600;
+}
+
+.tvm-shell-command-panel textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 4.8em;
+  resize: vertical;
+  padding: 0.5em;
+  font: inherit;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  line-height: 1.5;
+  background: #fff;
+  color: #17212f;
+  border: 1px solid #687688;
+  border-radius: 4px;
+}
+
+.tvm-shell-command-panel textarea:focus-visible {
+  outline: 3px solid #075ca8;
+  outline-offset: 2px;
+}
+
+.tvm-shell-command-panel p {
+  margin: 0.5em 0 0;
+  font: inherit;
+  line-height: 1.5;
+}
+
+.shell-pipeline-tutorial .tvm-output-panel {
+  min-height: 20em;
+}
+
+html.dark-mode .tvm-shell-command-panel {
+  background: #202734;
+  color: #e6edf3;
+  border-color: #8190a3;
+}
+
+html.dark-mode .tvm-shell-command-panel textarea {
+  background: #131a24;
+  color: #e6edf3;
+  border-color: #8190a3;
+}
+
+html.dark-mode .tvm-shell-command-panel textarea:focus-visible {
+  outline-color: #7fc3ff;
+}
+
+@media print {
+  .tvm-shell-command-panel,
+  html.dark-mode .tvm-shell-command-panel,
+  .tvm-shell-command-panel textarea,
+  html.dark-mode .tvm-shell-command-panel textarea {
+    background: #fff;
+    color: #000;
+    border-color: #666;
+  }
+}

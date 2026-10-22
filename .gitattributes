@@ -12,3 +12,7 @@ js/vendor/elk/0.12.0/*.mjs -text whitespace=-blank-at-eol
 # Preserve checker bytes, including whitespace in upstream string literals.
 js/vendor/browser-basedpyright/1.40.2/pyright.worker.js -text whitespace=-blank-at-eol
 js/vendor/typescript/5.9.3/lib-map.js -text
+
+# Preserve interpreter string literals and bundled dependency notices.
+js/vendor/just-bash/3.6.0/browser.mjs -text whitespace=-blank-at-eol,-space-before-tab
+js/vendor/just-bash/3.6.0/browser.mjs.LEGAL.txt -text whitespace=-blank-at-eol

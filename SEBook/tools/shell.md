@@ -553,6 +553,10 @@ These commands do not modify the filesystem tree — they transform **streams of
 
 #### `sed` — stream editor (search and replace)
 
+```text
+{{ site.data.shell_command_manuals.sed }}
+```
+
 <div data-unix-command-lab>
 <script type="application/json">
 {
@@ -813,6 +817,10 @@ These commands do not modify the filesystem tree — they transform **streams of
 </div>
 
 #### `awk` — field-aware text processing
+
+```text
+{{ site.data.shell_command_manuals.awk }}
+```
 
 <div data-unix-command-lab>
 <script type="application/json">
@@ -1196,7 +1204,22 @@ grep "ERROR" <<< "08:15:45 ERROR failed to connect"
 ### Process Substitution
 Advanced shell users often utilize process substitution to treat the output of a command as a file. The syntax looks like `<(command)`. For example, `H < <(G) >> I` allows you to refer to the standard output of command `G` as a file, redirect it into the standard input of `H`, and append the output to `I`.
 
- 
+## Shell pipeline practice
+
+[Open **Shell Pipeline Practice**](/SEBook/tools/shell-pipeline-tutorial.html) to turn a web server log into reports in three short exercises. You will build a counting pipeline, adapt a `sed` substitution, and create a failure report with `grep` and `awk`. Each exercise asks you to predict a result, run and inspect a pipeline, then explain what each stage contributes.
+
+The tutorial runs `just-bash`, a lightweight Bash interpreter implemented in TypeScript, entirely inside your browser. Its editable `access.tsv` file contains ten requests. Enter your pipeline in the **Shell command** box below the editor, use **Run** to inspect its output, and use **Test My Work** to check it against fresh input files. Equivalent commands are accepted when they produce the required output and leave the input unchanged. Short `sed` and `awk` manuals appear immediately before their first tutorial examples; `man sed` and `man awk` also display them in the command box's output.
+
+Every Run starts a fresh virtual workspace from the editor files. Commands cannot read or change files on your computer. Keep dependent statements in the same command box: temporary files, shell variables, and directory changes from one Run do not carry over to the next. The tutorial saves your editor files and separate command draft for each step through its usual progress controls. A [print view](/SEBook/tools/shell-pipeline-tutorial/print.html) is also available.
+
+### Browser support
+
+The browser tutorial supports the chapter's text-processing tools: `cat`, `grep`, `sed`, `awk`, `tr`, `sort`, `uniq`, `wc`, `cut`, `comm`, `head`, `tail`, `tac`, and `tee`. You can also use virtual file commands such as `ls`, `cd`, `pwd`, `mkdir`, `cp`, `mv`, `rm`, `rmdir`, `touch`, and `chmod`; variables, scripts, functions, loops, and conditionals; and `echo`, `printf`, `read`, `test`, `which`, and `type`.
+
+The verified shell syntax includes pipes (`|`), quoting, variable and command expansion, input and output redirection (`<`, `>`, `>>`), standard-error redirection (`2>`, `2>&1`), `;`, `&&`, `||`, here documents, here strings, and process substitution such as `H < <(G) >> I`. These let you practice the chapter's pipeline patterns with files in the virtual workspace.
+
+Some commands and options need the [Linux shell tutorial](/SEBook/tools/shell-tutorial.html): remote access, downloads, native compilers, archives, and operating-system job control are unavailable here. In particular, `jobs`, `fg`, and `bg` do not work; `&` executes sequentially and `wait` does not wait for real background processes. The browser also lacks interactive `cp -i`, `mv -i`, and `rm -i` prompts, `mkdir -m`, `tail -f`, `tac -s`, and `tee -i`. Create a directory before applying `chmod`, use finite `tail` reads, and use `set -n`, `set -x`, or `set -v` for shell modes instead of the corresponding `bash` launch flags. Supply `read` input through a pipe, redirection, or here string; this tutorial has no interactive terminal session.
+
 ## Writing Your First Shell Script
 
 When you find yourself typing the same commands repeatedly, you should create a **shell script**. A shell script is written in a plain text file (often ending in `.sh`) and contains a sequence of commands that the shell executes as a program. 

@@ -266,6 +266,7 @@
   }
 
   function _getStudentCode(tutorial, step) {
+    if (tutorial.config.backend === 'shell-pipeline') return tutorial._getShellCommand();
     var code = '';
     if (!tutorial.editorModels) {
       if (typeof tutorial.currentSource === 'function') return tutorial.currentSource();

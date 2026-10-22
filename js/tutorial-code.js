@@ -558,6 +558,7 @@
     if (backend === 'browser') return 'Browser Node sandbox';
     if (backend === 'haskell') return 'Haskell';
     if (backend === 'compiler') return 'Compiler lab';
+    if (backend === 'shell-pipeline') return 'Shell pipeline';
     if (backend === 'v86') return 'Linux VM';
     return backend;
   }
@@ -597,6 +598,7 @@
 
     this.config = {
       backend: backend,
+      shellManuals: options.shellManuals || {},
       defaultBackend: backend,
       v86Path: options.v86Path || '/assets/v86',
       vmPath: options.vmPath || '/vm/dist',
@@ -1502,6 +1504,7 @@
     clearTimeout(this._umlRefreshTimer);
     if (this._umlClient) this._umlClient.dispose();
     if (this._compilerAdapter) this._compilerAdapter.destroy();
+    if (this.config.backend === 'shell-pipeline') this._stopShellPipeline({ silent: true });
     if (this._compilerRulesEditor) this._compilerRulesEditor.destroy();
     if (this._compilerSourceEditor) this._compilerSourceEditor.destroy();
     if (window.ObjectReferenceLab) window.ObjectReferenceLab.destroyWithin(this.root);
@@ -2485,6 +2488,7 @@
     if (!this.config.useTerminal || this._mixedBackendMode) {
       this.outputPre = this.root.querySelector('.tvm-output-pre');
       this.outputPanel = this.root.querySelector('.tvm-output-panel');
+      if (this.config.backend === 'shell-pipeline') this._mountShellCommand();
       var runBtn = this.root.querySelector('.tvm-run-btn');
       var testRunBtn = this.root.querySelector('.tvm-test-run-btn');
       var stopBtn = this.root.querySelector('.tvm-stop-btn');
@@ -3694,6 +3698,7 @@
     if (backend === 'haskell') return this._initHaskell();
     if (backend === 'smalltalk') return this._initSmalltalk();
     if (backend === 'compiler') return this._initCompiler();
+    if (backend === 'shell-pipeline') return this._initShellPipeline();
     return Promise.reject(new Error('Unknown backend: ' + backend));
   };
 
@@ -6012,6 +6017,7 @@
     var testRunBtn = this.root && this.root.querySelector('.tvm-test-run-btn');
     var stopBtn = this.root && this.root.querySelector('.tvm-stop-btn');
     if (state === 'running' || state === 'restarting') {
+      if (this.config.backend === 'shell-pipeline' && document.activeElement === runBtn) this._shellPipelineRestoreRunFocus = true;
       if (runBtn) {
         runBtn.disabled = true;
         this._renderRunButtonLabel(runBtn, label || (state === 'restarting'
@@ -6050,6 +6056,10 @@
     if (this._compilerRestoreRunFocus && runBtn && !runBtn.disabled) {
       this._compilerRestoreRunFocus = false;
       runBtn.focus();
+    }
+    if (this._shellPipelineRestoreRunFocus) {
+      this._shellPipelineRestoreRunFocus = false;
+      if (runBtn && !runBtn.disabled && (document.activeElement === document.body || document.activeElement === stopBtn || document.activeElement === runBtn)) runBtn.focus();
     }
   };
 
@@ -6109,8 +6119,8 @@
 
   TutorialCode.prototype._runCurrentFile = function (options) {
     if (this._activeRunTransaction) return this._activeRunTransaction.promise;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler') && this._testRunInFlight) return Promise.resolve(false);
-    if (this.config.backend === 'compiler' && this._activeStepLoadRequest) return Promise.resolve(false);
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'shell-pipeline') && this._testRunInFlight) return Promise.resolve(false);
+    if ((this.config.backend === 'compiler' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return Promise.resolve(false);
     if (this._haskellInterpreter) this._haskellInterpreter.showOutput();
     if (this._prologInterpreter) {
       if (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session)) return Promise.resolve(false);
@@ -6120,7 +6130,7 @@
     var stepIndex = this.currentStep >= 0 ? this.currentStep : 0;
     var step = this.steps[stepIndex];
     var runFiles = this._stepRunFiles(step);
-    if (this.config.backend !== 'smalltalk' && !this.activeFileName && !runFiles.length) return Promise.resolve(false);
+    if (this.config.backend !== 'smalltalk' && this.config.backend !== 'shell-pipeline' && !this.activeFileName && !runFiles.length) return Promise.resolve(false);
     var run = {
       id: ++this._runSequence,
       kind: 'run-file',
@@ -6159,6 +6169,7 @@
 
     if (backend === 'smalltalk') return this._runSmalltalk(run);
     if (backend === 'compiler') return this._runCompiler(run);
+    if (backend === 'shell-pipeline') return this._runShellPipeline(run);
 
     if (backend === 'v86') {
       return this._syncFileToBackend(filename).then(function () { return false; });
@@ -7118,6 +7129,7 @@
    * host-owned deadline can terminate even a Worker blocked in a tight loop.
    */
   TutorialCode.prototype._stopExecution = function () {
+    if (this.config.backend === 'shell-pipeline') return this._stopShellPipeline();
     if (this._compilerAdapter) {
       this._compilerRestoreRunFocus = document.activeElement === this.root.querySelector('.tvm-stop-btn');
       this._compilerAdapter.cancel();
@@ -7800,7 +7812,7 @@
       monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
       function () { self._saveCurrentFile(); }
     );
-    if (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell') {
+    if (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'shell-pipeline') {
       editor.addCommand(
         monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
         function () { self._runCurrentFile(); }
@@ -7896,6 +7908,11 @@
           gutterTimer = setTimeout(function () { self._refreshGitGutter(filename); }, 300);
         }
         if (self._suppressAutoSave) return;
+        if (self.config.backend === 'shell-pipeline') {
+          self._invalidateShellCommandCredit();
+          self._autoSaveProgress();
+          return;
+        }
         if (self.config.backend === 'compiler') {
           // Table, source field, and Monaco edits share these persisted models.
           // This backend has no filesystem to sync and its forms have no Save key.
@@ -10509,6 +10526,9 @@
       }
     }
     var solution = step.solution;
+    if (this.config.backend === 'shell-pipeline' && typeof solution.command === 'string') {
+      this._replaceShellCommand(solution.command);
+    }
     if (this.config.backend === 'smalltalk') return this._replaceSmalltalkFiles(solution.files || []);
 
     var p = this._stepSetupPromise || Promise.resolve();
@@ -10739,6 +10759,7 @@
 
   TutorialCode.prototype._rememberEditorDrafts = function () {
     if (this.currentStep < 0 || this._smalltalkAdapter) return;
+    if (this.shellCommandEl) this._rememberShellCommand();
     const step = this.steps[this.currentStep];
     const stepKey = this._draftStepKey(this.currentStep);
     for (const [name, entry] of Object.entries(this.editorModels)) {
@@ -10795,6 +10816,7 @@
     data.files = Object.assign({}, data.files);
     data.stepFiles = Object.assign({}, data.stepFiles);
     Object.assign(data.files, this._sessionDrafts.files);
+    if (this.shellCommandEl) data.shellCommands = Object.assign({}, data.shellCommands, this._shellCommandDrafts);
     for (const [key, files] of Object.entries(this._sessionDrafts.stepFiles)) {
       data.stepFiles[key] = Object.assign({}, data.stepFiles[key], files);
     }
@@ -10837,6 +10859,7 @@
       stepsPassed: Array.from(this._stepsPassed),
       quizPassed: Array.from(this._quizPassed)
     };
+    if (this.shellCommandEl) data.shellCommands = prev.shellCommands;
     if (prev.draftScopeVersion !== undefined) data.draftScopeVersion = prev.draftScopeVersion;
     try {
       if (this._smalltalkAdapter && this._smalltalkAdapter.workspace) {
@@ -11006,6 +11029,7 @@
    */
   TutorialCode.prototype.deleteSavedProgress = function () {
     localStorage.removeItem(this._storageKey());
+    this._shellCommandDrafts = {};
     this._sessionDrafts = { files: {}, stepFiles: {} };
     if (this._smalltalkAdapter) this._smalltalkAdapter.clearSavedProgress();
     return this.resetStep();
@@ -11033,6 +11057,7 @@
     // top of each other, leaving muteCount and the silent queue in a
     // desynced state.
     if (self._resetInProgress) return;
+    if (this.shellCommandEl) this._replaceShellCommand(step.shell_command || '');
 
     if (self.resetType === 'commands') {
       self._resetInProgress = true;
@@ -11743,6 +11768,7 @@
     if (index < 0 || index >= this.steps.length) return Promise.resolve();
     if (!this.instructorMode && !this._stepsUnlocked.has(index)) return Promise.resolve();
     if (this._compilerAdapter) this._compilerAdapter.cancel();
+    if (this.config.backend === 'shell-pipeline') this._stopShellPipeline({ silent: true });
 
     var resolveRequest;
     var rejectRequest;
@@ -11917,6 +11943,7 @@
     this._closeNonStepFiles(step);
 
     const draftProgress = this._draftProgress();
+    if (this.shellCommandEl) this._restoreShellCommand(step, draftProgress);
     const savedOverrides = this._draftsForStep(draftProgress, index);
     const smalltalkProgress = draftProgress.smalltalk_workspace;
 
@@ -12111,7 +12138,7 @@
     }
 
     // Clear output panel between steps
-    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'compiler') this._clearOutput();
+    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'compiler' || this.config.backend === 'shell-pipeline') this._clearOutput();
     // Rebuild React preview when a new step is loaded
     if (this.config.backend === 'react') {
       var stepSelf = this;
@@ -12905,8 +12932,8 @@
     // results return. Without this guard, the second run can replace the
     // pending test buffer/state and produce ghost results in the panel.
     if (this._testRunInFlight) return;
-    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler') && this._activeRunTransaction) return;
-    if (this.config.backend === 'compiler' && this._activeStepLoadRequest) return;
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell' || this.config.backend === 'prolog' || this.config.backend === 'smalltalk' || this.config.backend === 'compiler' || this.config.backend === 'shell-pipeline') && this._activeRunTransaction) return;
+    if ((this.config.backend === 'compiler' || this.config.backend === 'shell-pipeline') && this._activeStepLoadRequest) return;
     if (this.config.backend === 'prolog' && (this._activeStepLoadRequest || this._workerRestartPromise || (this._debuggerCtl && this._debuggerCtl.session))) return;
     var stepIndex = this.currentStep;
     var step = this.steps[stepIndex];
@@ -12931,6 +12958,7 @@
       silent: silent,
       completed: false,
     };
+    if (this.config.backend === 'shell-pipeline') run.shellPipelineRestoreTestFocus = document.activeElement === this.stepControlsEl.querySelector('.tvm-btn-test');
     this._activeTestRun = run;
     this._silentTestRun = silent;
     this._testRunInFlight = true;
@@ -12949,6 +12977,7 @@
     else if (backend === 'haskell') this._runTestsHaskell(run);
     else if (backend === 'smalltalk') this._runTestsSmalltalk(run);
     else if (backend === 'compiler') this._runTestsCompiler(run);
+    else if (backend === 'shell-pipeline') this._runTestsShellPipeline(run);
     else {
       run.completed = true;
       this._activeTestRun = null;
@@ -13930,6 +13959,7 @@
     if (!isActiveRun || this.currentStep !== run.stepIndex || this._destroyed) {
       return;
     }
+    if (run.shellPipelineLoad !== undefined && this._stepLoadSequence !== run.shellPipelineLoad) return;
     if (run.smalltalkLoad !== undefined && (this._smalltalkChecksStale(run) || run.smalltalkFailure)) {
       if (this._stepLoadSequence !== run.smalltalkLoad) return;
       var message = this._smalltalkChecksStale(run)

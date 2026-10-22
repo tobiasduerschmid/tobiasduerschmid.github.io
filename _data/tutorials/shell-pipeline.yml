@@ -1,0 +1,444 @@
+title: "Shell Pipeline Practice"
+description: "Turn a web server log into reports with browser-based shell pipelines. For students who know basic shell commands, quoting, and the pipe operator; three short exercises on counting, sed, and awk."
+backend: shell-pipeline
+output_height: "70%"
+autosave_type: files
+require_tests: true
+require_quiz: false
+progress_version: 1
+learning_objectives:
+  - "Compose text-processing commands into pipelines with clearly defined intermediate streams."
+  - "Analyze why adjacent-duplicate counting needs records in a suitable order."
+  - "Apply sed substitutions that change only a specified filename suffix."
+  - "Create a report by combining grep record selection, awk field conditions, and ranked counts."
+  - "Evaluate a pipeline on changed inputs while preserving its source file."
+
+steps:
+  # Pedagogy: generation — predict a grouping mistake, then build and explain a pipeline.
+  - title: "Request Counts"
+    key: request-counts
+    instructions: |
+      ### Why this matters
+
+      A busy website may log thousands of requests for the same few paths.
+      A pipeline turns those individual events into a report you can read
+      without inspecting every record yourself.
+
+      ### 🎯 You will learn to
+
+      - Compose field extraction, ordering, and counting operations.
+      - Explain the difference between adjacent duplicates and all duplicates.
+
+      ### Your workspace
+
+      The editor contains **`access.tsv`**: ten requests, one per line, with
+      five tab-separated fields and **no header**. In order, the fields are
+      time, method (`GET` or `POST`), requested path, response status, and
+      response size in bytes. A status of `200` means success; these exercises
+      treat any status of `400` or greater as a failure.
+
+      Enter commands in **Shell command**, between the file editor and
+      output, then select **Run**. This tutorial uses `just-bash`, implemented
+      in TypeScript, entirely inside your browser. Every Run starts a fresh
+      virtual workspace from your current editor files, so temporary files
+      and shell variables from a previous Run do not carry over. Commands
+      cannot read or change files on your computer.
+
+      **Test My Work** runs the same command against fresh input files,
+      including different records and an empty file. It accepts equivalent
+      solutions, checks that the input stays unchanged, and requires a
+      successful exit without error diagnostics. Editing the practice data
+      does not change those checks. Use **Hints** after a failed check and
+      **Reset Current Step** to restore the starting file and clear the command.
+
+      ### A short manual for `cut`
+
+      `cut` extracts fields without changing the input file. Read this
+      reference before choosing the field your pipeline needs.
+
+      ```text
+      {{ site.data.shell_command_manuals.cut }}
+      ```
+
+      ### Your task
+
+      Start with the empty **Shell command** box and build a request-count
+      report from `access.tsv`:
+
+      - Print one **count followed by path** row for each distinct path.
+      - Order the rows by path, in **ascending path order**.
+      - Count every request, regardless of method or status.
+      - Leave `access.tsv` unchanged; do not hard-code paths or counts.
+
+      `uniq -c` counts adjacent equal lines. Look at the three `/index.html` requests in the
+      editor before writing your pipeline.
+
+      1. **Predict:** If you count the extracted paths without changing their
+         order, will those requests become one row with count three, or
+         several rows? Explain your choice.
+      2. **Build:** Write your own pipeline. Run each stage as you add it and
+         inspect the stream it produces.
+      3. **Investigate:** Compare your report with the file. If one path
+         appears in several report rows, inspect the order of the lines
+         reaching your counting stage.
+      4. **Check and explain:** Select **Test My Work**. Once it passes,
+         explain what each pipe carries and why changing record order can
+         change what `uniq` counts.
+
+      For an extra investigation, add another request for an existing path
+      in the editor. Predict which report row should change, then Run again.
+      This edit changes your practice input; checks still use their own files.
+
+      The [shell chapter's browser-support reference](/SEBook/tools/shell.html#shell-pipeline-practice)
+      lists the available text tools and shell syntax. Remote access,
+      downloads, compilers, archives, and operating-system job control belong
+      in the [Linux shell tutorial](/SEBook/tools/shell-tutorial.html).
+    files: &access_files
+      - path: access.tsv
+        language: plaintext
+        print_language: text
+        reseed: true
+        content: &access_log |
+          09:00	GET	/index.html	200	120
+          09:01	GET	/styles.css	200	80
+          09:02	GET	/missing.html	404	12
+          09:03	POST	/login	200	50
+          09:04	GET	/api/items	500	15
+          09:05	GET	/index.html	200	140
+          09:06	GET	/missing.html	404	12
+          09:07	POST	/login	403	20
+          09:08	GET	/api/items	200	95
+          09:09	GET	/index.html	200	110
+    open_file: access.tsv
+    shell_command: ""
+    tests:
+      - description: "A single request"
+        shell_pipeline:
+          files:
+            access.tsv: "10:00\tPOST\t/single\t500\t2\n"
+          expected_stdout: "1 /single\n"
+          comparison: count-lines
+          preserve_files: [access.tsv]
+        hints: &count_hints
+          - title: "Neighbors in the stream"
+            condition: 'code_not_matches: \bsort\b'
+            text: "Find two separated requests for the same path. After extraction, are their path lines adjacent? Compare the chapter's ordering tools with what uniq actually compares."
+          - title: "The position of each stage"
+            condition: 'code_matches: \bsort\b(?![\s\S]*\buniq\b)'
+            text: "Inspect the stream immediately before counting. Does changing order after the counts have already been computed let the counter revisit earlier groups?"
+          - title: "A small counterexample"
+            condition: 'code_matches: \bsort\b[\s\S]*\buniq\b'
+            text: "Trace just three path lines: /b, /a, /b. Check the field number, each intermediate stream, and the final counts and path order. Confirm that the source file still contains all three requests."
+      - description: "Separated repeats and ascending path order"
+        shell_pipeline:
+          files:
+            access.tsv: "10:00\tGET\t/b\t200\t1\n10:01\tGET\t/a\t399\t2\n10:02\tPOST\t/b\t500\t3\n"
+          expected_stdout: "1 /a\n2 /b\n"
+          comparison: count-lines
+          preserve_files: [access.tsv]
+        hints: *count_hints
+      - description: "All requests in the supplied log"
+        shell_pipeline:
+          files:
+            access.tsv: *access_log
+          expected_stdout: "2 /api/items\n3 /index.html\n2 /login\n2 /missing.html\n1 /styles.css\n"
+          comparison: count-lines
+          preserve_files: [access.tsv]
+        hints: *count_hints
+      - description: "An empty input file"
+        shell_pipeline:
+          files: { access.tsv: "" }
+          expected_stdout: ""
+          comparison: count-lines
+          preserve_files: [access.tsv]
+        hints: *count_hints
+    solution:
+      command: "cut -f3 access.tsv | sort | uniq -c"
+      explanation: |
+        `cut` produces one path per request. `sort` makes equal paths
+        adjacent and places the path groups in ascending order. `uniq -c`
+        emits one count for each group. The starting log produces five rows:
+
+        ```text
+        2 /api/items
+        3 /index.html
+        2 /login
+        2 /missing.html
+        1 /styles.css
+        ```
+
+        Padding before a count does not change its value. Removing `sort`
+        would split repeated paths into multiple groups because `uniq`
+        compares neighboring lines only. None of these stages changes the
+        input file.
+
+  # Pedagogy: worked example with fading — transfer a suffix transformation to log fields.
+  - title: "Path Suffixes"
+    key: path-suffixes
+    instructions: |
+      ### Why this matters
+
+      A site migration may change page extensions while leaving other paths
+      alone. A precise text transformation preserves information that a broad
+      search-and-replace would accidentally change.
+
+      ### 🎯 You will learn to
+
+      - Apply a substitution only at the end of a path.
+      - Preserve record order and repeated values while transforming a stream.
+
+      ### A short manual for `sed`
+
+      Read this reference before the example. A backslash makes `\.` a
+      literal dot; `$` requires a match at the end of the line. Single quotes
+      let the shell pass the editing script to `sed` as written.
+
+      ```text
+      {{ site.data.shell_command_manuals.sed }}
+      ```
+
+      ```bash
+      printf '%s\n' 'draft.txt' 'draft.txt.bak' | sed 's/\.txt$/.md/'
+      ```
+
+      **Predict:** Does the second filename change? Put this small example
+      in **Shell command**, Run it, and explain why its two input lines
+      behave differently.
+
+      ### Your task
+
+      Write your own pipeline for `access.tsv` to meet these requirements:
+
+      - Print only the requested paths, one per input record in the same order.
+      - Replace a **trailing `.html`** with `.htm`.
+      - Preserve every other character, including an internal `.html`, a
+        differently capitalized suffix, or a dot elsewhere in the path.
+      - Keep repeated paths and leave `access.tsv` unchanged.
+
+      1. **Predict:** Compare `/index.html` with `/docs.html/notes`. Which
+         part, if any, should change?
+      2. **Implement:** Write your command, then Run it on the displayed file.
+         Check whether the transformation receives full log records or just
+         paths; the end of a path is not the end of its original log record.
+      3. **Check:** Select **Test My Work**, inspect any failing case, revise,
+         and check again. Do not sort or remove duplicates for this task.
+
+      To investigate a boundary, add a request for `/docs.html/notes` in the
+      editor and predict its output before running. You can also enter
+      `man sed` in the command box to reread the short reference.
+    files: *access_files
+    open_file: access.tsv
+    shell_command: ""
+    tests:
+      - description: "Paths without the target suffix"
+        shell_pipeline:
+          files:
+            access.tsv: "10:00\tGET\t/api/items\t200\t1\n10:01\tPOST\t/styles.css\t500\t2\n"
+          expected_stdout: "/api/items\n/styles.css\n"
+          comparison: exact
+          preserve_files: [access.tsv]
+        hints: &suffix_hints
+          - title: "Choose a stream transformation"
+            condition: 'code_not_matches: \b(sed|awk)\b'
+            text: "Identify the field containing the requested path. Compare the small filename example with this task: what should be transformed, and what should be preserved?"
+          - title: "The end of the path"
+            condition: 'code_matches: ^(?=[\s\S]*\b(sed|awk)\b)(?![\s\S]*html\$)[\s\S]*$'
+            text: "Trace /docs.html/notes alongside /docs.html. An occurrence anywhere and a suffix are different requirements. Which regular-expression boundary distinguishes them?"
+          - title: "Literal characters and record identity"
+            condition: 'code_matches: \b(sed|awk)\b[\s\S]*html\$'
+            text: "Compare /xhtml, /x.html, and two copies of /x.html. A dot can mean a literal character or a pattern wildcard. Check that your transformation preserves the number and order of records as well as the suffix."
+      - description: "Suffix boundaries and unchanged characters"
+        shell_pipeline:
+          files:
+            access.tsv: "10:00\tGET\t/docs.html\t200\t1\n10:01\tGET\t/docs.html/notes\t200\t2\n10:02\tGET\t/xhtml\t200\t3\n10:03\tGET\t/nested.html.html\t200\t4\n10:04\tGET\t/caps.HTML\t200\t5\n"
+          expected_stdout: "/docs.htm\n/docs.html/notes\n/xhtml\n/nested.html.htm\n/caps.HTML\n"
+          comparison: exact
+          preserve_files: [access.tsv]
+        hints: *suffix_hints
+      - description: "Original order and repeated requests"
+        shell_pipeline:
+          files:
+            access.tsv: *access_log
+          expected_stdout: "/index.htm\n/styles.css\n/missing.htm\n/login\n/api/items\n/index.htm\n/missing.htm\n/login\n/api/items\n/index.htm\n"
+          comparison: exact
+          preserve_files: [access.tsv]
+        hints: *suffix_hints
+      - description: "An empty input file"
+        shell_pipeline:
+          files: { access.tsv: "" }
+          expected_stdout: ""
+          comparison: exact
+          preserve_files: [access.tsv]
+        hints: *suffix_hints
+    solution:
+      command: "cut -f3 access.tsv | sed 's/\\.html$/.htm/'"
+      explanation: |
+        `cut` isolates each requested path before `sed` sees it. The pattern
+        `\.html$` matches a literal dot, then `html`, at the end of that
+        path. It cannot match the internal `.html` in `/docs.html/notes`.
+        Each input record still produces one output line, in the same order.
+        The pipeline prints transformed text without modifying `access.tsv`.
+
+  # Pedagogy: component example followed by independent transfer of filtering, counting, and ranking.
+  - title: "Failure Reports"
+    key: failure-reports
+    instructions: |
+      ### Why this matters
+
+      Not every error in a server log answers the same operational question.
+      Selecting the right records before counting helps you distinguish
+      frequently failing page requests from unrelated traffic.
+
+      ### 🎯 You will learn to
+
+      - Compose grep and awk to select records using conditions on more than one field.
+      - Create a ranked report by combining selection with earlier pipeline skills.
+
+      ### Record selection with `grep`
+
+      `grep` prints the lines that match a pattern. Its `-E` option enables
+      extended regular expressions: `+` means one or more, `^` anchors the
+      start of a line, and `[[:space:]]` matches a space or tab. To select a
+      method, account for the first field and the delimiters around the
+      second field. Matching the word `GET` anywhere could also match a path.
+
+      ### A short manual for `awk`
+
+      `awk` can test one field and print another. Within its single-quoted
+      program, `$4` and `$3` are **awk field references**; the shell does not
+      expand them. Read the reference before the example.
+
+      ```text
+      {{ site.data.shell_command_manuals.awk }}
+      ```
+
+      ```bash
+      awk '$4 == 404 { print $3 }' access.tsv
+      ```
+
+      **Predict:** Will the two missing-page requests produce two path
+      lines or one combined count? Enter and Run the example, then explain which
+      field selects a record and which field supplies its output.
+
+      ### Your task
+
+      Write your own pipeline for a **failing GET request report** from
+      `access.tsv`. Practice combining `grep` for method selection with `awk`
+      for the numeric status condition and path extraction, then reuse your
+      counting and ordering tools. Meet all of these requirements:
+
+      - Include only requests whose method is exactly `GET` and whose numeric
+        status is **at least `400`**.
+      - Print one **count followed by path** row for each distinct qualifying
+        path. Count requests, not distinct status codes.
+      - Order the rows by count, largest first. Tied paths may appear in any order.
+      - Print nothing when no requests qualify, and leave `access.tsv` unchanged.
+
+      1. **Plan:** Identify qualifying records before typing. Does the failed
+         `POST` request to `/login` belong in this report? Does the successful
+         `GET` request to `/api/items` belong?
+      2. **Build:** Start with your selection stage, inspect its output, then
+         add the stages needed to produce the report. Use the command
+         reference when needed; the complete pipeline is yours to derive.
+      3. **Check:** Select **Test My Work**. Inspect the individual checks for
+         method selection, the status boundary, and ranking. Revise and retest.
+      4. **Explain:** After the checks pass, describe the text carried by each
+         pipe. If you used more than one sorting operation, explain what each
+         one accomplishes.
+
+      For an extra experiment, `tee FILE` copies standard input to both a
+      file and standard output, overwriting that file by default. Append
+      `| tee failures.txt` to your report, then put `cat failures.txt` on the
+      following line **in the same command box** and Run. Explain why the
+      report appears twice. Restore your report command before testing:
+      checks expect just one report, and temporary files disappear on the next Run.
+    files: *access_files
+    open_file: access.tsv
+    shell_command: ""
+    tests:
+      - description: "Only GET requests contribute"
+        shell_pipeline:
+          files:
+            access.tsv: "10:00\tGET\t/get.html\t404\t1\n10:01\tPOST\t/post.html\t500\t2\n10:02\tget\t/lower.html\t500\t3\n10:03\tGETTING\t/prefix.html\t404\t4\n10:04\tTARGET\t/suffix.html\t500\t5\n10:05\tPOST\t/docs/GET/help\t404\t6\n"
+          expected_stdout: "1 /get.html\n"
+          comparison: ranked-counts
+          preserve_files: [access.tsv]
+        hints: &failure_hints
+          - title: "The record selection rule"
+            condition: 'code_not_matches: GET'
+            text: "Write down the two facts that make one request qualify. Trace a failed GET and a failed POST with the same status. Which fields distinguish them?"
+          - title: "Neighbors of the status boundary"
+            condition: 'code_matches: ^(?=[\s\S]*GET)(?![\s\S]*(?:uniq|\+\+))[\s\S]*$'
+            text: "Try records with statuses 399, 400, and 401, including a POST. Check selection separately from counting. Then compare the selected stream with the kind of input your counting stage needs."
+          - title: "Selection, groups, and rank"
+            condition: 'code_matches: ^(?=[\s\S]*GET)(?=[\s\S]*(?:uniq|\+\+))[\s\S]*$'
+            text: "Inspect each intermediate stream with a path repeated ten times and another repeated twice. Distinguish making equal paths adjacent from ranking the resulting numbers. Check that every qualifying request contributes once and the original records remain intact."
+      - description: "Statuses immediately below, at, and above 400"
+        shell_pipeline:
+          files:
+            access.tsv: "10:00\tGET\t/below\t399\t1\n10:01\tGET\t/boundary\t400\t2\n10:02\tGET\t/above\t401\t3\n10:03\tGET\t/no-content\t204\t4\n10:04\tGET\t/not-modified\t304\t5\n10:05\tGET\t/custom-status\t600\t6\n"
+          expected_stdout: "1 /above\n1 /boundary\n1 /custom-status\n"
+          comparison: ranked-counts
+          preserve_files: [access.tsv]
+        hints: *failure_hints
+      - description: "Repeated paths ranked by numeric count"
+        shell_pipeline:
+          files:
+            access.tsv: |
+              10:00	GET	/z	400	1
+              10:01	GET	/a	404	1
+              10:02	GET	/z	401	1
+              10:03	GET	/z	404	1
+              10:04	GET	/z	500	1
+              10:05	GET	/z	400	1
+              10:06	GET	/a	500	1
+              10:07	GET	/z	401	1
+              10:08	GET	/z	404	1
+              10:09	GET	/z	500	1
+              10:10	GET	/z	400	1
+              10:11	GET	/z	401	1
+              10:12	GET	/z	200	1
+              10:13	POST	/z	500	1
+              10:14	GET	/a	304	1
+          expected_stdout: "10 /z\n2 /a\n"
+          comparison: ranked-counts
+          preserve_files: [access.tsv]
+        hints: *failure_hints
+      - description: "No qualifying requests"
+        shell_pipeline:
+          files:
+            access.tsv: "11:00\tGET\t/ok.html\t200\t1\n11:01\tPOST\t/submit.html\t500\t2\n11:02\tGET\t/ok.html\t399\t3\n11:03\tGET\t/no-content\t204\t4\n11:04\tGET\t/not-modified\t304\t5\n"
+          expected_stdout: ""
+          comparison: ranked-counts
+          preserve_files: [access.tsv]
+        hints: *failure_hints
+      - description: "An empty input file"
+        shell_pipeline:
+          files: { access.tsv: "" }
+          expected_stdout: ""
+          comparison: ranked-counts
+          preserve_files: [access.tsv]
+        hints: *failure_hints
+    solution:
+      command: "grep -E '^[^[:space:]]+[[:space:]]+GET[[:space:]]' access.tsv | awk '$4 >= 400 { print $3 }' | sort | uniq -c | sort -nr"
+      explanation: |
+        `grep` anchors its match to the start of the record, skips the time
+        field, and requires the complete second field to be `GET`. This
+        avoids matching `GETTING` or a path containing `GET`. `awk` keeps
+        records whose numeric status is at least `400`, then prints the
+        path. The first `sort` groups
+        equal paths; `uniq -c` counts each group. The final `sort -nr`
+        orders the counts numerically in descending order.
+
+        The original log produces:
+
+        ```text
+        2 /missing.html
+        1 /api/items
+        ```
+
+        The `/login` failure is excluded because its method is `POST`.
+        The successful request to `/api/items` is excluded because its
+        status is `200`. A status of exactly `400` qualifies. An empty
+        selected stream produces no count rows, and none of the stages
+        modifies `access.tsv`.

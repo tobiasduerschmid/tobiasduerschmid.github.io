@@ -636,6 +636,15 @@ students are confused" reports.
       `run_file` containing a C++17 program with `main`. Use files for setup
       and solutions, and complete C++ harnesses for automatic checks; do not
       author shell commands or rely on a C++ compiler in the v86 VM.
+- [ ] **Shell pipeline tutorials use `backend: shell-pipeline`**, editor
+      `files`, and an optional `shell_command` initial value per step (use `""`
+      for an empty pipeline). The separate **Shell
+      command** box runs against fresh copies of the current editor files;
+      do not author `pipeline.sh`, `run_file`, or `setup_commands` for this
+      backend. Use `solution.command` and declarative `tests[].shell_pipeline`
+      fixtures. Check equivalent commands, changed inputs, boundary and empty
+      cases, input preservation, Stop, per-step drafts, Reset, and live/print
+      manual placement. Disclose unsupported operating-system commands (§4.6).
 - [ ] **Compiler labs use `backend: compiler`** with three declared
       `compiler_files` paths, explicit AST projection, and `tests[].compiler`
       checks. Use different step directories to preserve drafts. Verify every
@@ -790,7 +799,7 @@ exclude_from_index: boolean            # If true, /SEBook/tutorials hides
                                        # and any non-student-facing tutorial.
 
 # === Backend selection ===
-backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smalltalk | compiler | uml-editor | multiple
+backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smalltalk | compiler | shell-pipeline | uml-editor | multiple
                                        # default: v86
 
 # v86           — full Linux VM (shell, gcc, git, etc.). Most tutorials.
@@ -800,6 +809,11 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smallta
 #                 cross-origin isolation is required. Supports mixed cpp /
 #                 pyodide tutorials. See §4.6 for limits and §4.8 for checks.
 # pyodide       — Python in-browser, no shell; supports `debugger: true`.
+# shell-pipeline — Single-backend just-bash browser interpreter in a terminable
+#                 Worker, with an in-memory filesystem. Run executes the step's
+#                 separate command textarea against fresh current editor files.
+#                 Text/file commands and shell composition, no Linux VM,
+#                 network access, interactive terminal, or debugger. See §4.6.
 # compiler      — Regex tokenizer + EBNF parser + declarative AST projection.
 #                 Single-backend, disposable local Worker; all complete parse
 #                 trees and distinct AST alternatives within explicit bounds.
@@ -846,7 +860,7 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smallta
 # tutorial-level default per step. Mixed mode supports `v86`, `cpp`, `pyodide`,
 # `react`, `webcontainer`, and `browser` steps, with `browser` serving as the
 # in-page Node fallback if WebContainers cannot boot. Keep `haskell`,
-# `uml-editor`, SQL, Prolog, Java, and debugger tutorials single-backend until
+# `uml-editor`, `shell-pipeline`, SQL, Prolog, Java, and debugger tutorials single-backend until
 # the runtime explicitly supports those combinations.
 # Mixed tutorials with multiple worker backends (such as cpp and pyodide)
 # replace the active worker lazily when switching languages, restoring the
@@ -1177,6 +1191,13 @@ steps:
     # acquires/owns verified assets and dispose owns host cleanup. All fresh work
     # uses exclusive host.withFreshSession, never host.stop('fresh').
     run_command: string                      # Optional Smalltalk entry expression.
+    shell_command: string                    # shell-pipeline only: initial text;
+                                             # omit or use "" to start empty
+                                             # for its separate Shell command
+                                             # textarea; may contain pipelines
+                                             # and multiple shell statements.
+                                             # Run reads this editable command,
+                                             # not run_file or the active file.
     smalltalk_target:                         # Optional initial target and Lesson code destination.
       kind: class                            # EntityRef, passed to Browser.navigate.
       className: SEBookCounter
@@ -1322,6 +1343,13 @@ steps:
           #   assert "expected" in output`
           # cpp: complete C++17 harness with its own main; include current
           #   learner files using /tutorial as the include root. Exit 0 passes.
+        shell_pipeline:                      # shell-pipeline backend only;
+                                             # use this instead of command.
+          files: { access.tsv: "fixture text" } # Override frozen editor files.
+          expected_stdout: "expected output"  # Required, including line endings.
+          comparison: exact                  # exact (default) | count-lines |
+                                             # ranked-counts; see §4.8.
+          preserve_files: [access.tsv]        # Optional unchanged source paths.
         signature:                           # Haskell only; optional explicit
           name: canAffordPizza                # top-level declaration in run_file.
           type: "Double -> Double -> Bool"    # Compiler-resolved exact monomorphic type.
@@ -1463,9 +1491,12 @@ steps:
 
     solution:                                # Instructor-mode reveal target.
       files: [{ path, content, language }]
+      command: string                        # shell-pipeline only: replace the
+                                             # step's separate command draft.
       commands: [string]                     # Bash to replay solution state.
-                                             # Unsupported by the cpp and haskell
-                                             # backends; use solution.files.
+                                             # Unsupported by cpp, haskell, and
+                                             # shell-pipeline; use solution.files
+                                             # or shell-pipeline solution.command.
       explanation: |                         # Markdown — *why* this works.
         Walk-through of the solution and the trade-offs.
 ```
@@ -1477,11 +1508,17 @@ test output):
 
 - `code_contains: <substring>` — fires when the source contains the substring.
 - `code_missing: <substring>` — fires when the source does **not** contain it.
+- `code_matches: <regex>` — fires when comment-stripped source matches a
+  JavaScript regular expression (plain pattern or `/pattern/flags`).
+- `code_not_matches: <regex>` — fires when that source does not match.
 - `output_contains: <substring>` — fires when the captured output contains it.
 - `output_missing: <substring>` — fires when the output does **not** contain it.
 
 Combine multiple hints with different conditions to form a **graduated
 help ladder** that responds to the student's actual mistake.
+For `shell-pipeline`, TutorChat's source is the separate current shell command,
+not the text data open in Monaco. Conditions guide feedback; they must not
+replace the behavior-based checks or require one particular solution spelling.
 
 ### 3.4 Inline Python object-reference labs
 
@@ -1922,6 +1959,16 @@ other platforms retain `Ctrl`. This changes labels only, not key bindings.
   live tutorial redirects to `<live-permalink>/print?autoprint=1` (preserving
   `?instructor-mode=true` if set).
 
+For `shell-pipeline` only, live and print layouts evaluate the instruction
+string through the existing `liquid` filter before `markdownify`. This supports
+shared fenced manual references such as
+`{{ site.data.shell_command_manuals.sed }}` and its `awk` counterpart;
+keep the reference immediately before the first example using the command.
+The rendered instruction HTML also reaches the ordinary instruction popout.
+The print view includes a command writing area (empty when `shell_command` is
+empty or omitted) and renders
+`solution.command` inside the existing instructor-only solution block.
+
 Both layouts load pinned Mermaid 11.16.0 followed by `js/mermaid-theme.js`.
 Use `SebookMermaid.render(root)` after Markdown is in the DOM; do not initialize
 Mermaid separately or override the shared palette. This helper returns a
@@ -2300,6 +2347,23 @@ channel.
   startup; a missing optional type must not block the available types.
   The previous-step diagram preview applies the shared accessible description
   and read-only image role after rendering, keeping keyboard scrolling available.
+
+- **Shell pipeline modules** — after `tutorial-code.js`, the live layout loads
+  `tutorial-shell-command.js` and then `tutorial-shell-pipeline.js`. The first
+  owns the accessible per-step command textarea, command revisions, draft
+  restoration, and invalidation of stale completion credit. The backend adapter
+  installs TutorialCode methods, snapshots the command plus editor model
+  contents/versions, and lazily imports `shell-pipeline-client.mjs`.
+  The client owns the terminable `shell-pipeline-worker.mjs`; the worker uses
+  `shell-pipeline-runtime.mjs` for fresh virtual filesystems and
+  `shell-pipeline-grading.mjs` for generic output/preservation checks.
+  `_data/shell_command_manuals.yml` supplies both chapter/tutorial references
+  and the worker's `man cut` / `man sed` / `man awk` adapter via `config.shellManuals`.
+  `css/tutorial-shell-pipeline.css` owns presentation in both themes; the
+  ordinary tutorial runtime retains controls, tests, hints, and progression.
+  Bundle the pinned `just-bash/browser` entry locally with
+  `npm run build:shell-lab`; see `docs/shell-pipeline-compatibility.md` for
+  supported commands and the dependency audit boundary.
 
 - **Compiler lab modules** — `compiler-lab-core.js` is the independent regex,
   EBNF, and AST engine. `compiler-lab-worker.js` and `compiler-lab-client.js`
@@ -2845,22 +2909,45 @@ snapshot-input, or checksum drift.
 
 ### 4.6 Backends — what each supports
 
-| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor | compiler |
-|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|----------|
-| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ |
-| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         | ❌ |
-| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ |
-| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ |
-| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ |
-| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ |
-| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         | ❌ |
-| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ |
-| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         | ❌ |
-| Regex / EBNF / AST checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor | compiler | shell-pipeline |
+|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|----------|----------------|
+| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ |
+| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         | ❌ | ❌ |
+| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ |
+| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ |
+| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ |
+| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         | ❌ | ❌ |
+| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         | ❌ | ❌ |
+| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         | ❌ | ❌ |
+| Regex / EBNF / AST checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Separate Bash command box / fixture checks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 Mixed-backend tutorials support `v86`, `cpp`, `pyodide`, `react`, `webcontainer`,
 and `browser`. They are for author-controlled backend switches between steps,
 not for debugger flows or terminal-first Node labs.
+
+`shell-pipeline` interprets the separate **Shell command** textarea with the
+pinned just-bash browser bundle. Current editor files seed a fresh in-memory
+filesystem for each Run; relative paths and the initial working directory use
+`/home/student`. Shell-created files, variables, functions, options, and directory
+changes do not survive the next Run and never write back to editor models.
+Put dependent statements in the same command. Use `autosave_type: files`,
+`reseed: true` for lesson-local input files, and stable step keys for drafts.
+`setup_commands`, `run_file`, and solution command replay are unsupported;
+`solution.command` replaces the command textarea without executing it.
+
+This backend supports the shell chapter's verified text/file commands and
+pipeline/redirection syntax, not arbitrary Linux programs. Networking,
+compilers, archives, real job control, and an interactive stdin terminal are
+unavailable. `&` executes sequentially and `wait` is a no-op. Disclose the
+pinned option limits (`tail -f`, `tac -s`, `tee -i`, interactive file prompts,
+`mkdir -m`, and `bash -n/-x/-v`) and link the Linux tutorial for those exercises.
+See `docs/shell-pipeline-compatibility.md` for the exact contract and alternatives.
+Stop terminates the worker; the next request creates a new one. Execution is
+bounded to two seconds, 1,000 commands, 32 KiB output, and 1 MiB file contents,
+with a four-second host deadline per execution and separate 15-second startup
+deadline. This is inspectable formative feedback, not secure exam grading.
 
 `cpp` compiles a C++17 translation unit and runs its `main` function on every
 Run; it does not reuse a binary from a previous successful compile. Current
@@ -3272,6 +3359,7 @@ Per-tutorial localStorage key: `tutorial-progress-<tutorialId>` →
   "stepsVisited": [0, 1],
   "files": { "example.py": { "content": "...", "language": "python" } },
   "stepFiles": { "key:hello": { "Main.hs": { "content": "...", "language": "haskell" } } },
+  "shellCommands": { "key:request-counts": "cut -f3 access.tsv | sort | uniq -c" },
   "activeFile": "example.py",
   "progressVersion": 2,
   "stepKeys": ["hello", "references", "functions"]
@@ -3327,6 +3415,16 @@ lesson, so the fallback lesson never opens with another exercise's code. Reset s
 its setup completes, preserving other drafts. Delete clears remembered drafts too.
 Smalltalk continues using its native accepted-source/draft owner.
 
+Shell pipeline command drafts live in `shellCommands` within this same progress
+record, keyed by `key:<step.key>` (or `index:<n>` without a key). No new storage
+key is introduced. Navigation and explicit/automatic saves preserve separate
+commands per step, including an intentionally empty string; a missing entry
+uses `shell_command` or an empty string. Reset Current Step restores that initial command
+and files while preserving other lessons. Solution replaces the current draft
+with `solution.command`. Command edits increment a revision and clear old test
+credit; an in-flight result cannot credit the changed command. SE Gym whole-record
+import/export and the existing Auto-save/delete controls cover these drafts.
+
 Unversioned saves also receive a one-time `draftScopeVersion: 1` upgrade for
 files that became lesson-local after publication, even when an older save already
 contains `stepFiles: {}` or other lesson scopes. Only files in the recorded saved
@@ -3358,6 +3456,27 @@ under the same prefix family as other tutorial state so the global
 
 ### 4.8 Test execution
 
+- **Shell pipelines** (`shell-pipeline`): `tests[].shell_pipeline` declares
+  fresh `files` overrides, required `expected_stdout`, optional `comparison`,
+  and optional `preserve_files`. One Test My Work batch freezes the current
+  command and all editor file contents. Each criterion executes that unchanged
+  command in its own fresh filesystem, with its fixture files overriding the
+  snapshot. Relative paths resolve beneath `/home/student`. `exact` (default)
+  compares bytes, including line endings. `count-lines` compares count/value
+  rows in the authored order while ignoring count padding and allowing an
+  optional final newline. `ranked-counts` compares the same counts/values,
+  requires numeric nonincreasing counts, and permits any ordering of ties.
+  Every mode also requires exit status zero, empty stderr, and unchanged
+  contents for each declared `preserve_files` path. Unknown configurations
+  reject rather than silently passing. These are output contracts, not command
+  text matching: test changed data, suffix/numeric boundaries, duplicates,
+  empty input, source preservation, and equivalent correct commands.
+  File edits, command revisions, step navigation, and Stop discard stale
+  results. Shared result rows, conditional hints, Next gating, and popout
+  reporting remain owned by TutorialCode. Run alone never awards test credit.
+  Verify with `node --test scripts/tests/shell-pipeline-*.test.js` and
+  `npx playwright test tests/shell-pipeline-tutorial.spec.js`, including actual
+  worker execution, keyboard access, both themes, narrow layout, and print.
 - **Compiler front end** (`compiler`): `tests[].compiler` is declarative, not
   executable assertion code. Check full acceptance, complete token streams,
   one AST, all AST alternatives, or a specific error phase (§3.5). Every check

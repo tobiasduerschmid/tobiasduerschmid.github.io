@@ -1,0 +1,68 @@
+cut: |
+  NAME
+      cut — select fields from each input line
+
+  SYNOPSIS
+      cut -f LIST [-d CHAR] [FILE]...
+
+  DESCRIPTION
+      Print the selected fields from each line to standard output.
+      Fields are separated by tabs unless -d specifies another delimiter.
+      With no FILE, read standard input. Input files stay unchanged.
+      Lines without the delimiter are printed unchanged.
+
+  OPTIONS
+      -f LIST    Select fields numbered from 1, such as 1,3 or 2-4.
+      -d CHAR    Use CHAR instead of a tab to separate fields.
+
+sed: |
+  NAME
+      sed — transform a stream of text
+
+  SYNOPSIS
+      sed [OPTION]... 'SCRIPT' [FILE]...
+
+  DESCRIPTION
+      Apply SCRIPT to each input line and write to standard output.
+      With no FILE, read standard input. Input files stay unchanged
+      unless in-place editing is explicitly requested.
+
+  OPTIONS
+      -n           Print only when the script requests it.
+      -e SCRIPT    Add an editing script; may be repeated.
+      -E           Use extended regular expressions.
+
+  SCRIPT BASICS
+      s/REGEXP/TEXT/    Replace the first match on each line.
+      s/REGEXP/TEXT/g   Replace every match on each line.
+      p                Print the current line.
+      2,4p             Print lines 2 through 4.
+      /REGEXP/d        Delete matching lines from the output.
+      ^ and $          Match the start and end of a line.
+
+awk: |
+  NAME
+      awk — select records and process their fields
+
+  SYNOPSIS
+      awk [OPTION]... 'PATTERN { ACTION }' [FILE]...
+
+  DESCRIPTION
+      Read one record (normally one line) at a time.
+      By default, split fields at runs of spaces or tabs.
+      $1, $2, ... select fields; $0 is the whole record.
+      Run ACTION for records whose PATTERN is true.
+      Omit PATTERN to process every record.
+      With no FILE, read standard input. Output goes to standard output.
+      Input files stay unchanged.
+
+  OPTIONS
+      -F SEPARATOR    Set the input field separator.
+      -v NAME=VALUE   Set a variable before processing records.
+
+  PROGRAM BASICS
+      { print $2 }           Print field 2 from every record.
+      $4 >= 400 { print $3 } Print field 3 when field 4 is at least 400.
+      && and ||              Combine conditions with AND and OR.
+      BEGIN { ACTION }       Run once before reading records.
+      END { ACTION }         Run once after reading records.

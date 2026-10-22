@@ -6,10 +6,12 @@
   "scripts": {
     "test": "playwright test",
     "test:unit": "node --test scripts/tests/*.test.js",
-    "pdf": "node scripts/generate_pdfs.js"
+    "pdf": "node scripts/generate_pdfs.js",
+    "build:shell-lab": "node scripts/build-shell-pipeline-runtime.js"
   },
   "dependencies": {
     "js-yaml": "^4.3.2",
+    "just-bash": "3.6.0",
     "pdf-lib": "^1.17.1"
   },
   "repository": {
@@ -29,6 +31,7 @@
     "@babel/parser": "^7.29.7",
     "@playwright/test": "^1.58.2",
     "axe-core": "^4.11.4",
+    "esbuild": "0.25.12",
     "playwright": "^1.58.2"
   }
 }
