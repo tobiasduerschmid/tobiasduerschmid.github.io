@@ -82,7 +82,7 @@
       <li>
         <span class="song-video-time">{{ minutes }}:{% if seconds < 10 %}0{% endif %}{{ seconds }}</span>
         <span class="song-video-lyric">{{ line.text }}{% if line.answer %} — {{ line.answer }}{% endif %}</span>
-        <span class="song-video-visual">On screen: {{ line.visual }}</span>
+        <span class="song-video-visual">On screen: {{ line.visual | escape }}</span>
       </li>
       {%- endfor %}
     </ol>

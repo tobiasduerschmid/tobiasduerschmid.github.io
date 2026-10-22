@@ -1,0 +1,310 @@
+/*
+ * The "object-city" stage theme (js/song-video/object-city.js): a
+ * city-builder game at dusk behind the scenes of "Let the Object Decide",
+ * plus the game window (`.oc-town`) the song keeps returning to. Like
+ * stage.css this styles the 960×540 stage, which keeps its dark artwork in
+ * both page themes; the player's print styles hide it. The scenery stays
+ * faint (low-alpha fills under a dimming layer) so text drawn over it keeps
+ * at least 4.5:1, and nothing large changes brightness quickly.
+ */
+
+.theme-object-city {
+  background: #0b0d24;
+}
+
+.oc-room {
+  overflow: hidden;
+}
+
+/* One knob for the whole room: dims the scenery, never the scenes above it. */
+.oc-room::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+
+.oc-sky {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 88%, rgba(255, 140, 90, 0.2), transparent 70%),
+    radial-gradient(ellipse 50% 50% at 10% 10%, rgba(124, 58, 237, 0.22), transparent 70%),
+    radial-gradient(ellipse 40% 40% at 90% 20%, rgba(8, 145, 178, 0.16), transparent 70%),
+    linear-gradient(180deg, #0f1235 0%, #1b1645 48%, #2a1a48 72%, #10122c 88%, #0a0c20 100%);
+}
+
+/* The last of the sun, low behind the skyline. */
+.oc-sun {
+  position: absolute;
+  left: 380px;
+  top: 360px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 170, 110, 0.28), rgba(255, 120, 90, 0.08) 55%, transparent 72%);
+}
+
+.oc-scenery {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.oc-tower {
+  fill: rgba(12, 14, 38, 0.92);
+  stroke: rgba(140, 160, 255, 0.08);
+  stroke-width: 1;
+}
+
+.oc-tower-cap {
+  fill: rgba(12, 14, 38, 0.92);
+}
+
+.oc-window {
+  fill: rgba(255, 200, 120, 0.26);
+}
+
+.oc-grid-line {
+  fill: none;
+  stroke: rgba(94, 234, 212, 0.12);
+  stroke-width: 1;
+}
+
+.oc-car-light {
+  fill: rgba(255, 244, 200, 0.55);
+}
+
+.oc-car-light--tail {
+  fill: rgba(255, 90, 100, 0.5);
+}
+
+.oc-vignette {
+  background: radial-gradient(ellipse at 50% 45%, transparent 56%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+/* ------------------------------------------------------------------ */
+/* The scenes in the city's language                                  */
+/* ------------------------------------------------------------------ */
+
+/* The section badge is a city-builder toolbar tab: teal-edged dark glass
+   (about 13:1 for the text). */
+.theme-object-city .badge {
+  border: 2px solid #5eead4;
+  border-radius: 10px 10px 4px 4px;
+  background: #13204a;
+  color: #e6fffb;
+  box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.18), 0 6px 16px rgba(0, 0, 0, 0.45);
+  rotate: 0deg;
+}
+
+/* Stickers read as rounded road signs. */
+.theme-object-city .sticker {
+  border-radius: 9px;
+}
+
+/* ------------------------------------------------------------------ */
+/* The town: a game window seen from above                             */
+/* ------------------------------------------------------------------ */
+
+.oc-town {
+  position: absolute;
+  border: 2px solid rgba(150, 190, 255, 0.34);
+  border-radius: 14px;
+  background: #0e1630;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 22px 46px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  transform-origin: 0 0;
+}
+
+.oc-town--bare {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.oc-town-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid rgba(150, 190, 255, 0.2);
+}
+
+.oc-town-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #5eead4;
+}
+
+.oc-town-dot:nth-child(2) { background: #ffd100; }
+.oc-town-dot:nth-child(3) { background: #ff6b7d; }
+
+.oc-town-title {
+  margin-left: 6px;
+  color: #cfe0ff;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.oc-town-map {
+  display: block;
+  background: #142039;
+}
+
+.oc-lot {
+  fill: #18284a;
+}
+
+.oc-roof-block {
+  fill: #223761;
+  stroke: rgba(140, 180, 255, 0.28);
+  stroke-width: 1;
+}
+
+.oc-tree {
+  fill: #1f6b55;
+  stroke: rgba(110, 231, 183, 0.35);
+  stroke-width: 1;
+}
+
+.oc-road {
+  fill: #2a3050;
+}
+
+.oc-lane-dash {
+  fill: none;
+  stroke: rgba(255, 220, 120, 0.6);
+  stroke-width: 2;
+  stroke-dasharray: 8 8;
+}
+
+.oc-zebra {
+  fill: rgba(230, 236, 255, 0.4);
+}
+
+.oc-bikelane {
+  fill: rgba(52, 211, 153, 0.24);
+}
+
+.oc-bikelane-glyph {
+  fill: none;
+  stroke: rgba(167, 243, 208, 0.75);
+  stroke-width: 1.4;
+}
+
+.oc-shelter {
+  fill: #3b4a74;
+  stroke: rgba(200, 215, 255, 0.4);
+}
+
+.oc-stop-sign {
+  fill: #ffd100;
+  stroke: #0b0f1a;
+}
+
+.oc-stop-label {
+  fill: #0b0f1a;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.oc-signal-pole {
+  fill: #64748b;
+}
+
+.oc-signal-box {
+  fill: #0b0f1a;
+  stroke: #64748b;
+  stroke-width: 1.5;
+}
+
+.oc-lamp {
+  stroke: none;
+}
+
+.oc-lamp--red { fill: rgba(255, 77, 94, 0.22); }
+.oc-lamp--amber { fill: rgba(255, 176, 32, 0.22); }
+.oc-lamp--green { fill: rgba(61, 220, 132, 0.22); }
+.oc-lamp--red.is-on { fill: #ff4d5e; stroke: rgba(255, 77, 94, 0.45); stroke-width: 4; }
+.oc-lamp--amber.is-on { fill: #ffb020; stroke: rgba(255, 176, 32, 0.45); stroke-width: 4; }
+.oc-lamp--green.is-on { fill: #3ddc84; stroke: rgba(61, 220, 132, 0.45); stroke-width: 4; }
+
+.oc-signal-stop {
+  fill: #ff9aa5;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+/* ---- Vehicles ------------------------------------------------------ */
+
+.oc-shadow { fill: rgba(0, 0, 0, 0.38); }
+.oc-body { stroke: rgba(0, 0, 0, 0.55); stroke-width: 1.2; }
+.oc-body--car { fill: #ef4444; }
+.oc-vehicle.oc-car--blue .oc-body--car { fill: #3b82f6; }
+.oc-vehicle.oc-car--gold .oc-body--car { fill: #f59e0b; }
+.oc-body--hybrid { fill: #14b8a6; }
+.oc-body--bus { fill: #facc15; }
+.oc-body--ambulance { fill: #f8fafc; }
+.oc-glass { fill: rgba(15, 23, 42, 0.78); }
+.oc-roof { fill: rgba(255, 255, 255, 0.2); }
+.oc-headlight { fill: #fff7c2; }
+.oc-brakelight { fill: #7f1d1d; }
+.oc-vehicle.is-braking .oc-brakelight { fill: #ff2d3d; stroke: rgba(255, 45, 61, 0.5); stroke-width: 3; }
+.oc-bolt { fill: #0b0f1a; }
+.oc-cross { fill: #e11d48; }
+.oc-lightbar { fill: #1e3a8a; }
+.oc-vehicle.is-siren .oc-lightbar { fill: #60a5fa; stroke: rgba(96, 165, 250, 0.55); stroke-width: 4; }
+.oc-bike-frame { stroke: #cbd5e1; stroke-width: 2; }
+.oc-bike-wheel { fill: #94a3b8; }
+.oc-bike-bar { stroke: #cbd5e1; stroke-width: 2; stroke-linecap: round; }
+.oc-rider { fill: #a78bfa; }
+.oc-rider-head { fill: #fcd9b6; }
+
+.oc-token {
+  fill: #475569;
+  stroke: #94a3b8;
+  stroke-width: 1.5;
+}
+
+.oc-token-label {
+  fill: #f1f5f9;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.oc-ghost {
+  fill: rgba(147, 197, 253, 0.08);
+  stroke: #93c5fd;
+  stroke-width: 1.6;
+  stroke-dasharray: 5 4;
+}
+
+.oc-ghost-label {
+  fill: #bfdbfe;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.oc-vehicle.is-battery-full .oc-bolt { fill: #fef08a; }
+.oc-vehicle.is-dim { opacity: 0.4; }
+
+.oc-bubble-box {
+  fill: #f8fafc;
+  stroke: #0b0f1a;
+  stroke-width: 1.5;
+}
+
+.oc-bubble-text {
+  fill: #0b0f1a;
+  font-size: 13px;
+  font-weight: 800;
+}

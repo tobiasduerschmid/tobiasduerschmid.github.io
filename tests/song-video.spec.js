@@ -23,6 +23,7 @@ const SONGS = [
   { id: 'every_module_keeps_a_secret', page: '/SEBook/designprinciples/informationhiding.html' },
   { id: 'invest_in_your_stories', page: '/SEBook/userstories.html' },
   { id: 'red_green_refactor', page: '/SEBook/testing/tdd.html' },
+  { id: 'let_the_object_decide', page: '/SEBook/oop-song.html' },
 ];
 const EXTRAS_TOGGLE = 'Full transcript';
 const NARRATOR = '(narrator) ';

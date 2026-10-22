@@ -161,8 +161,9 @@ Pointers" (prints of snapshots drying on a line, with HEAD and branch tags
 pointing at the newest one), `story-wall` the team-room wall of "Invest in
 Your Stories" (sticky notes and index cards in a story map), `workshop` the
 pegboard shadow board of "Small Tools, One Job Each", `ballroom` the TDD
-song's evening ballroom, and `spy` the information-hiding song's noir
-operations room. A theme script registers itself in `SongKit.themes`, draws
+song's evening ballroom, `spy` the information-hiding song's noir
+operations room, and `object-city` the city-builder game at dusk of "Let
+the Object Decide". A theme script registers itself in `SongKit.themes`, draws
 its room once, and poses it only from song time; its stylesheet keeps the
 scenery faint enough that text over it keeps 4.5:1. `extras` lists the song's own
 stylesheets and scripts (`styles`, `scripts`), which both the live player
@@ -198,6 +199,22 @@ cards with syntax colours, a pytest terminal, suites, the Red/Green/Refactor
 cycle, MyStack, the test pyramid); and `tdd-props.js` draws the pictures
 (floor tiles, mismatched gears that jam in an integration failure, a staff with
 repeat signs for regression tests, flaky-noise waves, a fence of tests).
+
+"Let the Object Decide", the object-oriented programming song on
+`SEBook/oop-song.md`, uses the `object-city` theme
+(`js/song-video/object-city.js`). The same file draws the town the song keeps
+returning to: a top-down game window with two crossing roads, a traffic
+light, a bus stop, and a bike lane. Its vehicles (car, hybrid, bus, bike,
+ambulance, grey type-code tokens, and dashed outlines of kinds nobody has
+written yet) drive keyframed routes, brake, and dance on the beat, all as
+pure functions of song time; `sprite()` draws one vehicle large with a hood
+that opens. `js/song-video/oop-kit.js` draws the notation in one consistent
+language: UML-style object cards (state behind a padlock, methods as buttons
+on a door), message envelopes flying on dashed arcs, C++ code cards that
+change in place, the rule card that collects the song's five rules, red and
+green flags for the quiz, and single-line pictures such as a vtable, a
+Rectangle/Square test bench that resizes, and the grid of classes against
+operations.
 
 A section's `delivery` sets its captions: `sung` and `spoken` lines are one
 cue each, while `call` lines are quiz questions with an `answer` and

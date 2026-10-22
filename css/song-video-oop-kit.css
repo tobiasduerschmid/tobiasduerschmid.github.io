@@ -1,0 +1,1596 @@
+/*
+ * Teaching artwork for "Let the Object Decide" (js/song-video/oop-kit.js):
+ * object cards, message envelopes, C++ code cards, the rule card, flags,
+ * and the single-line pictures. Like stage.css this styles the 960×540
+ * stage, which keeps its dark artwork in both page themes; the player's
+ * print styles hide it. Every text color clears 4.5:1 against its own
+ * background, and every state that colour marks also has a word or glyph
+ * (✓ / ✗, padlock open or shut, "RED FLAG").
+ */
+
+/* ------------------------------------------------------------------ */
+/* Object cards (UML-style boxes)                                      */
+/* ------------------------------------------------------------------ */
+
+.oop-card {
+  position: absolute;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: #f4f7ff;
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink), 0 18px 36px rgba(0, 0, 0, 0.45);
+}
+
+.oop-card-head {
+  padding: 7px 12px 6px;
+  border-bottom: 2px solid var(--ink);
+  border-radius: 8px 8px 0 0;
+  background: #99f6e4;
+  font-size: 17px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.oop-card--object .oop-card-title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.oop-card--class .oop-card-head { background: #ddd6fe; }
+.oop-card--record .oop-card-head { background: #e2e8f0; }
+
+.oop-card-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.oop-card-label svg {
+  width: 16px;
+  height: 16px;
+}
+
+.oop-card-state {
+  padding: 6px 12px 8px;
+  background: #eef2ff;
+}
+
+.oop-lock {
+  display: inline-grid;
+  width: 16px;
+  height: 16px;
+}
+
+.oop-lock svg {
+  grid-area: 1 / 1;
+}
+
+.oop-lock-open { opacity: 0; }
+.oop-card.is-unlocked .oop-lock-open { opacity: 1; color: #be123c; }
+.oop-card.is-unlocked .oop-lock-closed { opacity: 0; }
+.oop-card.is-unlocked .oop-card-state { background: #ffe4e8; }
+.oop-card--record .oop-lock { display: none; }
+/* A record has no lock to open: its fields keep the neutral background. */
+.oop-card--record.is-unlocked .oop-card-state { background: #eef2ff; }
+
+.oop-field {
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.oop-field-value { color: #1d4ed8; }
+.oop-field.is-focus { background: #fff3b0; }
+.oop-field.is-bad { background: #ffd6db; color: #9f1239; }
+.oop-field.is-bad .oop-field-value { color: #9f1239; }
+.oop-field.is-good { background: #d9fbe5; }
+
+.oop-card-methods {
+  padding: 6px 12px 8px;
+  border-top: 2px solid var(--ink);
+  overflow: hidden;
+}
+
+.oop-gear { color: #475569; }
+.oop-card.is-running .oop-gear { color: #b45309; }
+
+.oop-door {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.oop-method {
+  padding: 2px 9px 1px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.oop-method.is-lit {
+  background: var(--gold);
+  box-shadow: 0 0 0 3px rgba(255, 209, 0, 0.5);
+}
+
+.oop-card--compact .oop-card-head { padding: 4px 10px 3px; font-size: 16px; }
+.oop-card--compact .oop-card-state,
+.oop-card--compact .oop-card-methods { padding: 4px 10px 5px; }
+.oop-card--compact .oop-field { font-size: 16px; line-height: 22px; }
+.oop-card--compact .oop-method { font-size: 16px; line-height: 20px; }
+
+/* A blueprint: white lines on blue grid paper, names without values. */
+.oop-card--blueprint {
+  border-color: #bfdbfe;
+  background:
+    linear-gradient(rgba(191, 219, 254, 0.12) 1px, transparent 1px) 0 0 / 12px 12px,
+    linear-gradient(90deg, rgba(191, 219, 254, 0.12) 1px, transparent 1px) 0 0 / 12px 12px,
+    #1e3a8a;
+  color: #eff6ff;
+  box-shadow: 4px 4px 0 #0b1a4a, 0 18px 36px rgba(0, 0, 0, 0.45);
+}
+
+.oop-card--blueprint .oop-card-head {
+  border-bottom-color: #bfdbfe;
+  background: transparent;
+  color: #eff6ff;
+}
+
+.oop-card--blueprint .oop-card-state,
+.oop-card--blueprint .oop-card-methods {
+  border-color: #bfdbfe;
+  background: transparent;
+}
+
+.oop-card--blueprint .oop-card-label,
+.oop-card--blueprint .oop-gear { color: #bfdbfe; }
+
+.oop-card--blueprint .oop-method {
+  border-color: #bfdbfe;
+  background: transparent;
+  color: #eff6ff;
+}
+
+/* The seal hangs from the card's bottom edge, clear of its title. */
+.oop-seal {
+  position: absolute;
+  left: 50%;
+  bottom: -18px;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 3px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  rotate: -3deg;
+}
+
+.oop-seal svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* A method's own implementation, sliding out beside its card. */
+.oop-impl {
+  position: absolute;
+  top: 46px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 2px solid #5eead4;
+  border-radius: 10px;
+  background: #0d1430;
+  color: #e6fffb;
+  font-size: 16px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+}
+
+.oop-impl--right { left: calc(100% + 10px); }
+.oop-impl--left { right: calc(100% + 10px); }
+
+.oop-impl svg {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  color: #ffd166;
+}
+
+.oop-impl code {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Messages                                                            */
+/* ------------------------------------------------------------------ */
+
+.oop-envelope {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px 3px 6px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--gold);
+  color: var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.oop-envelope svg {
+  width: 20px;
+  height: 20px;
+}
+
+.oop-envelope--cyan { background: var(--cyan); }
+.oop-envelope--pink { background: var(--pink); }
+.oop-envelope--green { background: var(--green); }
+
+.oop-trail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  height: 540px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Drawn on behind the envelope (fx.draw animates the dash offset). */
+.oop-trail-path {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.oop-trail-path--gold { stroke: rgba(255, 209, 0, 0.7); }
+.oop-trail-path--cyan { stroke: rgba(56, 211, 245, 0.7); }
+.oop-trail-path--pink { stroke: rgba(255, 95, 176, 0.7); }
+.oop-trail-path--green { stroke: rgba(74, 222, 128, 0.7); }
+
+/* ------------------------------------------------------------------ */
+/* C++ code cards                                                      */
+/* ------------------------------------------------------------------ */
+
+.oop-code {
+  --oop-code-size: 16px;
+}
+
+.oop-code-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.oop-code-title svg {
+  width: 16px;
+  height: 16px;
+}
+
+.oop-code-body {
+  padding: 6px 0 8px;
+}
+
+.oop-code-line {
+  position: relative;
+  font-size: var(--oop-code-size);
+  line-height: 1.5;
+}
+
+.oop-code-line--focus,
+.oop-code-line.is-focus {
+  background: rgba(255, 209, 0, 0.16);
+  box-shadow: inset 4px 0 0 var(--gold);
+}
+
+.oop-code-line--add,
+.oop-code-line.is-add { background: rgba(74, 222, 128, 0.16); box-shadow: inset 4px 0 0 var(--green); }
+.oop-code-line--del,
+.oop-code-line.is-del { background: rgba(255, 107, 125, 0.18); box-shadow: inset 4px 0 0 var(--red); }
+.oop-code-line--dim { opacity: 0.6; }
+
+.oop-code-line.is-struck .oop-code-text {
+  text-decoration: line-through;
+  text-decoration-color: #ff6b7d;
+  text-decoration-thickness: 3px;
+  opacity: 0.7;
+}
+
+.oop-tok--kw { color: #d2a8ff; }
+.oop-tok--cls { color: #7ee787; }
+.oop-tok--call { color: #79c0ff; }
+.oop-tok--num { color: #8fd0ff; }
+.oop-tok--str { color: #ffab70; }
+.oop-tok--const { color: #ffd166; }
+.oop-tok--cm { color: #9aa7bd; font-style: italic; }
+
+/* ------------------------------------------------------------------ */
+/* The rule card                                                       */
+/* ------------------------------------------------------------------ */
+
+.oop-rules {
+  box-sizing: border-box;
+  position: absolute;
+  width: 232px;
+  padding: 8px;
+  border: 2px solid #5eead4;
+  border-radius: 12px;
+  background: rgba(13, 20, 48, 0.94);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+}
+
+.oop-rules-title {
+  margin-bottom: 4px;
+  color: #99f6e4;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.oop-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+  padding: 1px 2px;
+  border-radius: 7px;
+  color: #e6fffb;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.oop-rule-num {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  background: #5eead4;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.oop-rule.is-lit {
+  background: rgba(94, 234, 212, 0.2);
+  color: #fff;
+}
+
+.oop-rule.is-lit .oop-rule-num { background: var(--gold); }
+
+/* ------------------------------------------------------------------ */
+/* Name cards, labels, bubbles, notices                                */
+/* ------------------------------------------------------------------ */
+
+.oop-name {
+  position: absolute;
+  padding: 10px 18px 11px;
+  border-left: 5px solid var(--gold);
+  border-radius: 4px 12px 12px 4px;
+  background: rgba(11, 16, 34, 0.94);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+.oop-name-main {
+  color: #f6f8ff;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.oop-name-detail {
+  margin-top: 3px;
+  color: #c3d0ea;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.oop-label {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px 3px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #f6f8ff;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 800;
+  box-shadow: 3px 3px 0 var(--ink);
+  white-space: nowrap;
+}
+
+.oop-label--gold { background: var(--gold); }
+.oop-label--pass { background: #bbf7d0; }
+.oop-label--fail { background: #fecdd3; }
+.oop-label--cyan { background: var(--cyan); }
+.oop-label--violet { background: #ddd6fe; }
+.oop-label--mono span { font-family: var(--font-mono); font-weight: 700; }
+
+.oop-label-mark {
+  width: 18px;
+  height: 18px;
+  stroke-width: 3;
+}
+
+.oop-label-mark--pass { color: #166534; }
+.oop-label-mark--fail { color: #9f1239; }
+
+.oop-bubble {
+  position: absolute;
+  padding: 8px 14px;
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  background: #f8fafc;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.2;
+  box-shadow: 3px 3px 0 var(--ink);
+  white-space: nowrap;
+}
+
+.oop-bubble::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ink);
+  border-top: 0;
+  border-left: 0;
+  background: inherit;
+}
+
+.oop-bubble--down::after { left: 22px; bottom: -9px; rotate: 45deg; }
+.oop-bubble--left::after { left: -9px; top: 12px; rotate: 135deg; }
+.oop-bubble--right::after { right: -9px; top: 12px; rotate: -45deg; }
+.oop-bubble--gold { background: var(--gold); }
+
+.oop-chat {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px 7px 12px;
+  border-radius: 999px;
+  background: rgba(30, 41, 59, 0.96);
+  color: #e2e8f0;
+  font-size: 16px;
+  font-style: italic;
+  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  white-space: nowrap;
+}
+
+.oop-chat svg {
+  width: 18px;
+  height: 18px;
+  color: #94a3b8;
+}
+
+.oop-ticket {
+  box-sizing: border-box;
+  position: absolute;
+  width: 250px;
+  padding: 10px 14px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: #fff7e3;
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink), 0 16px 32px rgba(0, 0, 0, 0.45);
+}
+
+.oop-ticket-from {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #9f1239;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.oop-ticket-from svg {
+  width: 18px;
+  height: 18px;
+}
+
+.oop-ticket-title {
+  margin-top: 4px;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.oop-search {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px 7px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: #f8fafc;
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.oop-search svg {
+  width: 20px;
+  height: 20px;
+}
+
+.oop-search-query {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.oop-search-hits {
+  padding: 2px 10px 1px;
+  border-radius: 999px;
+  background: #be123c;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.oop-search-hits:empty { display: none; }
+
+/* ------------------------------------------------------------------ */
+/* Table                                                               */
+/* ------------------------------------------------------------------ */
+
+.oop-table {
+  position: absolute;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: #f8fafc;
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  overflow: hidden;
+}
+
+.oop-table-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid #cbd5e1;
+}
+
+.oop-table-row span {
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.oop-table-head {
+  border-top: 0;
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.oop-table-head span {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.oop-table-row span.is-focus { background: #fff3b0; color: var(--ink); }
+.oop-table-row span.is-bad { background: #ffd6db; color: #9f1239; font-weight: 800; }
+
+/* ------------------------------------------------------------------ */
+/* Flags                                                               */
+/* ------------------------------------------------------------------ */
+
+.oop-flag {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.oop-flag-art {
+  width: 72px;
+  height: 84px;
+}
+
+.oop-flag-pole {
+  fill: none;
+  stroke: #e2e8f0;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.oop-flag-art--red .oop-flag-cloth { fill: #ef4444; stroke: var(--ink); stroke-width: 1.5; }
+.oop-flag-art--green .oop-flag-cloth { fill: #22c55e; stroke: var(--ink); stroke-width: 1.5; }
+
+.oop-flag-mark {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.oop-flag-art--red .oop-flag-mark { stroke: #fff; }
+.oop-flag-art--green .oop-flag-mark { stroke: #052e16; }
+
+.oop-flag-label {
+  padding: 4px 11px 3px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.oop-flag--red .oop-flag-label { background: #ff8a96; }
+.oop-flag--green .oop-flag-label { background: var(--green); }
+
+.oop-flagpair {
+  position: absolute;
+  display: flex;
+  gap: 22px;
+}
+
+.oop-flagpair-flag {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  transform-origin: 8px 80px;
+}
+
+.oop-flagpair-flag .oop-flag-label {
+  background: #e2e8f0;
+  font-size: 16px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Single-line pictures                                                */
+/* ------------------------------------------------------------------ */
+
+.oop-cell {
+  position: absolute;
+  width: 120px;
+  height: 110px;
+}
+
+.oop-cell-membrane { fill: rgba(52, 211, 153, 0.18); stroke: #34d399; stroke-width: 3; }
+.oop-cell-nucleus { fill: rgba(167, 139, 250, 0.42); stroke: #a78bfa; stroke-width: 2; }
+.oop-pc-screen { fill: #1e293b; stroke: #94a3b8; stroke-width: 3; }
+.oop-pc-glass { fill: rgba(14, 165, 233, 0.35); }
+.oop-pc-stand { fill: none; stroke: #94a3b8; stroke-width: 3; stroke-linecap: round; }
+
+.oop-cell-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 44px;
+  color: #f1f5f9;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.oop-reach {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  height: 540px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.oop-reach-arm {
+  fill: none;
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.oop-reach-arm--red { stroke: #fda4af; }
+.oop-reach-arm--gold { stroke: #fde68a; }
+
+.oop-reach-palm { stroke-width: 5; }
+
+.oop-blocked {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px 3px 4px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #fecdd3;
+  color: #9f1239;
+  font-size: 16px;
+  font-weight: 900;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.oop-blocked svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 3.5;
+}
+
+.oop-bench {
+  position: absolute;
+  width: 300px;
+  height: 270px;
+  border: 2px solid rgba(150, 190, 255, 0.4);
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(150, 190, 255, 0.12) 1px, transparent 1px) 0 0 / 22px 22px,
+    linear-gradient(90deg, rgba(150, 190, 255, 0.12) 1px, transparent 1px) 0 0 / 22px 22px,
+    #0d1430;
+}
+
+.oop-bench-shape {
+  position: absolute;
+  left: 22px;
+  bottom: 44px;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--cyan);
+  background: rgba(56, 211, 245, 0.22);
+}
+
+.oop-bench.is-square .oop-bench-shape {
+  border-color: var(--gold);
+  background: rgba(255, 209, 0, 0.2);
+}
+
+.oop-bench-name {
+  color: #f6f8ff;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.oop-bench-size {
+  position: absolute;
+  left: 22px;
+  bottom: 12px;
+  color: #c3d0ea;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.oop-bench-height {
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  padding: 3px 10px 2px;
+  border-radius: 8px;
+  background: #1e293b;
+  color: #e2e8f0;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.oop-bench-height.is-pass { background: #bbf7d0; color: #14532d; }
+.oop-bench-height.is-fail { background: #fecdd3; color: #9f1239; }
+
+.oop-verdict {
+  position: absolute;
+  left: auto !important;
+  right: 14px;
+  top: 52px !important;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px 2px 5px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.oop-verdict svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 3.5;
+}
+
+.oop-verdict--pass { background: #bbf7d0; }
+.oop-verdict--fail { background: #fecdd3; }
+
+.oop-matrix {
+  position: absolute;
+  padding: 10px;
+  border: 2px solid rgba(150, 190, 255, 0.4);
+  border-radius: 12px;
+  background: rgba(13, 20, 48, 0.94);
+}
+
+.oop-matrix-grid {
+  display: grid;
+  gap: 5px;
+}
+
+.oop-matrix-grid > span {
+  display: grid;
+  place-items: center;
+  min-height: 30px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.oop-matrix-head {
+  color: #c3d0ea;
+  font-family: var(--font-mono);
+}
+
+.oop-matrix-rowhead {
+  justify-items: start !important;
+  padding-left: 8px;
+  color: #f6f8ff;
+}
+
+.oop-matrix-cell {
+  background: rgba(74, 222, 128, 0.16);
+  color: #86efac;
+}
+
+.oop-matrix-cell svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 3;
+}
+
+.oop-matrix-new.oop-matrix-cell { background: rgba(255, 209, 0, 0.28); color: #ffe27a; }
+.oop-matrix-new.oop-matrix-head,
+.oop-matrix-new.oop-matrix-rowhead { color: #ffe27a; }
+
+.oop-magnifier {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+}
+
+.oop-hat { fill: #a16207; stroke: var(--ink); stroke-width: 2; }
+.oop-lens { fill: rgba(186, 230, 253, 0.2); stroke: #e2e8f0; stroke-width: 5; }
+.oop-lens-handle { stroke: #e2e8f0; stroke-width: 7; stroke-linecap: round; }
+
+.oop-coat {
+  position: absolute;
+  width: 200px;
+  height: 240px;
+}
+
+.oop-coat-struct {
+  position: absolute;
+  left: 46px;
+  top: 46px;
+  width: 108px;
+  padding: 6px 8px 8px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: #e2e8f0;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.oop-coat-struct-head {
+  margin-bottom: 3px;
+  padding-bottom: 3px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.oop-coat-art {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+}
+
+.oop-coat-body { fill: #8a5a2b; stroke: var(--ink); stroke-width: 3; }
+.oop-coat-lapel,
+.oop-coat-belt { fill: none; stroke: #3b2410; stroke-width: 5; stroke-linecap: round; }
+.oop-coat-hat { fill: #5b3a1a; stroke: var(--ink); stroke-width: 3; }
+
+.oop-vtable {
+  position: absolute;
+  padding: 8px 12px 10px;
+  border: 2px solid #a78bfa;
+  border-radius: 10px;
+  background: rgba(13, 20, 48, 0.96);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5);
+}
+
+.oop-vtable-title {
+  margin-bottom: 4px;
+  color: #ddd6fe;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.oop-vtable-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.oop-vtable-slot { color: #ffd166; font-family: var(--font-mono); font-weight: 700; }
+.oop-vtable-target { color: #79c0ff; font-family: var(--font-mono); font-weight: 700; }
+.oop-vtable-arrow { color: #c3d0ea; }
+.oop-vtable-note { color: #c3d0ea; font-size: 16px; font-style: italic; }
+.oop-vtable-row.is-lit { background: rgba(255, 209, 0, 0.18); box-shadow: inset 4px 0 0 var(--gold); }
+
+/* ------------------------------------------------------------------ */
+/* One-off pictures used by the choreography                           */
+/* ------------------------------------------------------------------ */
+
+/* A skyline made of one giant if-chain. */
+.oop-towers {
+  position: absolute;
+  left: 30px;
+  right: 30px;
+  bottom: 84px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+}
+
+.oop-tower {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px;
+  border: 2px solid rgba(150, 190, 255, 0.45);
+  border-radius: 6px 6px 0 0;
+  background: #101a3a;
+}
+
+.oop-tower-line {
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(210, 168, 255, 0.14);
+  color: #e9d5ff;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.oop-acronym-part {
+  padding: 0 1px;
+  border-radius: 3px;
+}
+
+.oop-acronym-part.is-lit {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.oop-cables {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  height: 540px;
+  overflow: visible;
+}
+
+.oop-cable {
+  fill: none;
+  stroke: #38d3f5;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.oop-plane {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.oop-plane svg {
+  width: 36px;
+  height: 36px;
+}
+
+.oop-skid path {
+  fill: none;
+  stroke: rgba(15, 23, 42, 0.85);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* What the traffic light sees: two identical Vehicle silhouettes. */
+.oop-sees {
+  position: absolute;
+  padding: 8px 14px 10px;
+  border: 2px dashed #94a3b8;
+  border-radius: 12px;
+  background: rgba(13, 20, 48, 0.94);
+}
+
+.oop-sees-title {
+  color: #e2e8f0;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.oop-sees-row {
+  display: flex;
+  gap: 24px;
+  margin-top: 4px;
+}
+
+.oop-sees-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #c3d0ea;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.oop-silhouette {
+  fill: #64748b;
+  stroke: #cbd5e1;
+  stroke-width: 1.5;
+}
+
+.oop-wires {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  height: 540px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.oop-wire {
+  fill: none;
+  stroke: #fda4af;
+  stroke-width: 2.5;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+/* Dimmed with a filter, not opacity, so the card's staged entrance still works. */
+.oop-code--ghost {
+  filter: saturate(0.4) brightness(0.85);
+}
+
+/* The breakdown's X-ray: the stage dims behind the engine bay. */
+.oop-xray {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(56, 211, 245, 0.06) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, rgba(56, 211, 245, 0.06) 1px, transparent 1px) 0 0 / 24px 24px,
+    rgba(4, 8, 22, 0.72);
+}
+
+.oc-sprite {
+  position: absolute;
+}
+
+.oc-hood {
+  fill: #e2e8f0;
+  stroke: #0b0f1a;
+  stroke-width: 0.8;
+}
+
+.oop-square-tile {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 140px;
+  height: 140px;
+  border: 4px solid var(--ink);
+  border-radius: 6px;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 24px;
+  font-weight: 900;
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+/* Record-scratch freeze: scan lines over the frame (one change, no flashing). */
+.oop-freeze {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 6px);
+  box-shadow: inset 0 0 0 6px rgba(255, 209, 0, 0.5);
+  opacity: 0;
+}
+
+.oop-notebook {
+  position: absolute;
+  width: 360px;
+  height: 280px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background:
+    linear-gradient(rgba(56, 120, 200, 0.18) 1px, transparent 1px) 0 34px / 100% 22px,
+    #fffdf3;
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.oop-notebook-title {
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.oop-venn-outer {
+  position: relative;
+  width: 300px;
+  height: 190px;
+  margin: 14px auto 0;
+  border: 3px solid #1d4ed8;
+  border-radius: 50%;
+  background: rgba(29, 78, 216, 0.08);
+}
+
+.oop-venn-outer > .oop-venn-label {
+  position: absolute;
+  left: 34px;
+  top: 34px;
+  color: #1d4ed8;
+}
+
+.oop-venn-inner {
+  position: absolute;
+  right: 40px;
+  bottom: 30px;
+  display: grid;
+  place-items: center;
+  width: 130px;
+  height: 90px;
+  border: 3px solid #b45309;
+  border-radius: 50%;
+  background: rgba(255, 209, 0, 0.3);
+}
+
+.oop-venn-label {
+  color: #7c2d12;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.oop-realize {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  height: 540px;
+  overflow: visible;
+}
+
+.oop-realize-line {
+  fill: none;
+  stroke: #ddd6fe;
+  stroke-width: 2.5;
+  stroke-dasharray: 7 6;
+}
+
+.oop-strike {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  background: #fecdd3;
+  color: #9f1239;
+}
+
+.oop-strike svg {
+  width: 34px;
+  height: 34px;
+  stroke-width: 3.5;
+}
+
+.oop-holder {
+  position: absolute;
+  width: 300px;
+  padding: 8px 12px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: #ddd6fe;
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.oop-holder-title {
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.oop-holder-inner {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 2px dashed var(--ink);
+  border-radius: 8px;
+  background: #f4f7ff;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* A promise card that tears into two halves. */
+.oop-promise {
+  position: absolute;
+  width: 320px;
+  height: 120px;
+}
+
+.oop-promise-half {
+  position: absolute;
+  inset: 0;
+  padding: 14px 18px;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: #fff7e3;
+  color: var(--ink);
+}
+
+.oop-promise-half--left { clip-path: polygon(0 0, 52% 0, 46% 30%, 54% 55%, 47% 100%, 0 100%); }
+.oop-promise-half--right { clip-path: polygon(52% 0, 100% 0, 100% 100%, 47% 100%, 54% 55%, 46% 30%); }
+
+.oop-promise-title {
+  color: #9f1239;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.oop-promise-text {
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+/* A big system: districts of object cards. */
+.oop-map {
+  position: absolute;
+  display: grid;
+  grid-template-columns: repeat(3, 280px);
+  grid-template-rows: repeat(2, 170px);
+  gap: 14px;
+}
+
+.oop-district {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-end;
+  gap: 6px;
+  padding: 10px;
+  border: 2px solid rgba(150, 190, 255, 0.35);
+  border-radius: 12px;
+  background: rgba(14, 22, 48, 0.9);
+}
+
+.oop-district-card {
+  width: 36px;
+  height: 24px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  box-shadow: inset 0 -8px 0 #99f6e4;
+}
+
+.oop-district .oc-town {
+  border-radius: 8px;
+}
+
+.oop-team {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.oop-team-member {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: #fcd9b6;
+}
+
+.oop-team-name {
+  margin-left: 4px;
+  color: #f6f8ff;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.oop-gate {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  padding: 2px 9px 1px;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.oop-app {
+  position: absolute;
+  width: 220px;
+  border: 2px solid rgba(150, 190, 255, 0.5);
+  border-radius: 14px;
+  background: #0e1630;
+  overflow: hidden;
+}
+
+.oop-app-title {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.oop-app-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 14px 12px;
+  padding: 6px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: #ddd6fe;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.oop-app-chip svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 3;
+}
+
+.oop-swarm {
+  position: absolute;
+  inset: 0;
+}
+
+.oop-mini {
+  position: absolute;
+  width: 32px;
+  height: 20px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  box-shadow: inset 0 -7px 0 #fde68a;
+}
+
+.oop-tangle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 960px;
+  height: 540px;
+  overflow: visible;
+}
+
+.oop-tangle-line {
+  fill: none;
+  stroke: rgba(255, 138, 150, 0.6);
+  stroke-width: 2;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+/* Red flag or green flag: the question card. */
+.oop-quiz {
+  position: absolute;
+  width: 800px;
+  min-height: 180px;
+  padding: 30px 34px 22px;
+  box-sizing: border-box;
+  border: 3px solid var(--ink);
+  border-radius: 24px;
+  background: #f6f8ff;
+  color: var(--ink);
+  box-shadow: 8px 8px 0 var(--ink), 0 30px 60px rgba(0, 0, 0, 0.5);
+}
+
+.oop-quiz-count {
+  position: absolute;
+  left: 28px;
+  top: -18px;
+  padding: 6px 14px 5px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: #ddd6fe;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.oop-quiz-title {
+  margin-bottom: 6px;
+  color: #6d28d9;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.oop-quiz-question {
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.oop-quiz-reason {
+  position: absolute;
+  padding: 8px 16px;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  color: var(--ink);
+  font-size: 28px;
+  font-weight: 900;
+  box-shadow: 4px 4px 0 var(--ink);
+  white-space: nowrap;
+}
+
+.oop-quiz-reason--red { background: #ff8a96; }
+.oop-quiz-reason--green { background: var(--green); }
+
+/* A real window onto grass and sky. */
+.oop-window {
+  position: absolute;
+  width: 360px;
+  height: 230px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.oop-window-sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #7cc4f5, #c9ecff);
+}
+
+.oop-window-sun {
+  position: absolute;
+  right: 50px;
+  top: 30px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #fde68a;
+}
+
+.oop-window-hill {
+  position: absolute;
+  left: -40px;
+  right: -40px;
+  bottom: -110px;
+  height: 200px;
+  border-radius: 50%;
+  background: #3f9b4f;
+}
+
+.oop-window-hill--back {
+  left: 120px;
+  bottom: -90px;
+  background: #6cbf62;
+}
+
+.oop-window-frame {
+  position: absolute;
+  inset: 0;
+  border: 10px solid #e7d3b1;
+  border-radius: 10px;
+  background:
+    linear-gradient(#e7d3b1, #e7d3b1) 50% 0 / 10px 100% no-repeat,
+    linear-gradient(#e7d3b1, #e7d3b1) 0 50% / 100% 10px no-repeat;
+}
+
+/* The rules in one row (the curtain call). */
+.oop-rules--row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  width: 920px;
+  padding: 6px 10px;
+}
+
+/* The numbered summary fills the row; its repeated heading would crowd it. */
+.oop-rules--row .oop-rules-title { display: none; }
+
+.oop-rules--row .oop-rule {
+  margin: 0;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.oop-impl--below {
+  left: 0;
+  top: calc(100% + 8px);
+}

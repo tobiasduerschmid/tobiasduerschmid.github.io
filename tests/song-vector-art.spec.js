@@ -28,6 +28,10 @@ const songPlayers = [
     name: 'Test-driven development', path: '/assets/song-player/red-green-refactor.html', cameoTime: 317,
     storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/red_green_refactor.yml'), 'utf8')),
   },
+  {
+    name: 'Object-oriented programming', path: '/assets/song-player/let-the-object-decide.html', cameoTime: 3,
+    storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/let_the_object_decide.yml'), 'utf8')),
+  },
 ];
 const lines = new Map(storyboard.sections.flatMap((section) => section.lines).map((line) => [line.id, line]));
 const finalCelebration = lines.get('chorus-4-8').marks.moves + 0.2;
