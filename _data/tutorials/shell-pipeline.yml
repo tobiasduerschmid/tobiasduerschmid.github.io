@@ -21,9 +21,9 @@ steps:
     instructions: |
       ### Why this matters
 
-      A busy website may log thousands of requests for the same few paths.
-      A pipeline turns those individual events into a report you can read
-      without inspecting every record yourself.
+      Extracting, grouping, and counting values turns a large text file into
+      a useful summary. These skills help you spot recurring patterns without
+      inspecting every record yourself.
 
       ### 🎯 You will learn to
 
@@ -191,9 +191,9 @@ steps:
     instructions: |
       ### Why this matters
 
-      A site migration may change page extensions while leaving other paths
-      alone. A precise text transformation preserves information that a broad
-      search-and-replace would accidentally change.
+      Precise text transformations automate repetitive changes while preserving
+      unrelated information. Matching the right boundary matters when updating
+      filenames, URLs, or configuration entries.
 
       ### 🎯 You will learn to
 
@@ -307,9 +307,9 @@ steps:
     instructions: |
       ### Why this matters
 
-      Not every error in a server log answers the same operational question.
-      Selecting the right records before removing duplicates helps you distinguish
-      paths with failing page requests from unrelated traffic.
+      Combining pattern matching with field-based conditions helps you find
+      relevant records in a large text file. Removing repeated results then
+      gives you a concise list to investigate.
 
       ### 🎯 You will learn to
 
