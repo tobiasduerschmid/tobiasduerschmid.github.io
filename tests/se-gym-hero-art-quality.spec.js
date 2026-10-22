@@ -271,8 +271,13 @@ test('Separately mounted heroes resolve their own gradients, masks, and clips', 
 test('Mounting an SVG template preserves colors and nonlocal references while isolating local references', async ({ page }) => {
   // A small template input covers reference syntax independently of the
   // current hero artwork. Exercise the public loader with its configured URL.
-  await page.goto('/se-gym/');
-  await page.setContent('<main aria-label="Avatar reference fixture"></main>');
+  // Start with a clean same-origin document so another page's mounted hero
+  // cannot populate the public loader's template cache before this input.
+  await page.route('**/avatar-reference-fixture', (route) => route.fulfill({
+    contentType: 'text/html',
+    body: '<!doctype html><main aria-label="Avatar reference fixture"></main>',
+  }));
+  await page.goto('/avatar-reference-fixture');
   await page.evaluate(() => {
     const template = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
       <defs><linearGradient id="paint" data-fixture="gradient"><stop stop-color="#abcdef"/></linearGradient><path id="shape" data-fixture="shape" d="M0 0H10V10Z"/></defs>

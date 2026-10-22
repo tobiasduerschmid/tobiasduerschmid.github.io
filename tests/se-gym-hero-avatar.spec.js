@@ -1231,7 +1231,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(offscreenChoice.locator('[data-hero-choice-svg]')).toHaveCount(1);
   });
 
-  test('Production choice thumbnail images start loading when the customizer opens', async ({ page }) => {
+  test('Production choice thumbnail images load when their choices are revealed', async ({ page }) => {
     const requestedPreviewAssets = [];
     page.on('request', (request) => {
       const url = request.url();
@@ -1248,20 +1248,13 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     const longHairButton = page.getByRole('button', {
       name: 'Choose Hair style: Long and flowing',
-      includeHidden: true,
     });
     const hoodieButton = page.getByRole('button', {
       name: 'Choose Outfit style: Hoodie',
-      includeHidden: true,
     });
     const longHairImage = longHairButton.locator('[data-hero-choice-preview-img]');
     const hoodieImage = hoodieButton.locator('[data-hero-choice-preview-img]');
 
-    await expect(longHairImage).toHaveAttribute('data-hero-choice-preview-src', '/assets/se-gym-hero-choice-previews/hair-style-long.svg');
-    await expect(longHairImage).toHaveAttribute('loading', 'eager');
-    await expect(longHairImage).not.toHaveAttribute('loading', 'lazy');
-    await expect(longHairImage).not.toHaveAttribute('src', /./);
-    await expect(hoodieImage).not.toHaveAttribute('src', /./);
     expect(requestedPreviewAssets, 'production thumbnails should not request image files before the modal opens').toEqual([]);
 
     await activatePersonalGym(page);
@@ -1269,10 +1262,20 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     await page.getByRole('button', { name: 'Customize Hero' }).click();
 
-    await expect(longHairImage).toHaveAttribute('src', '/assets/se-gym-hero-choice-previews/hair-style-long.svg');
-    await expect(hoodieImage).toHaveAttribute('src', '/assets/se-gym-hero-choice-previews/outfit-style-hoodie.svg');
+    // Offscreen images may remain lazy; revealing each choice must load its
+    // real image, without making all thumbnails part of initial page load.
+    for (const [button, image, file] of [
+      [longHairButton, longHairImage, 'hair-style-long.svg'],
+      [hoodieButton, hoodieImage, 'outfit-style-hoodie.svg'],
+    ]) {
+      await button.scrollIntoViewIfNeeded();
+      await expect(image).toHaveAttribute('src', `/assets/se-gym-hero-choice-previews/${file}`);
+      await expect.poll(() => image.evaluate((img) => img.complete && img.naturalWidth > 0), {
+        message: `the revealed ${file} thumbnail should finish loading`,
+      }).toBe(true);
+    }
     await expect.poll(() => requestedPreviewAssets.length, {
-      message: 'production thumbnails should begin network loading as soon as the modal opens',
+      message: 'both revealed production thumbnails should request their image files',
       timeout: 5000,
     }).toBe(2);
   });
@@ -1294,6 +1297,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
 
     const longHairButton = page.getByRole('button', { name: 'Choose Hair style: Long and flowing' });
+    await longHairButton.scrollIntoViewIfNeeded();
     const hairImage = longHairButton.locator('[data-hero-choice-preview-img]');
     await expect(hairImage).toHaveAttribute('src', '/assets/se-gym-hero-choice-previews/hair-style-long.svg');
     await expect.poll(async () => hairImage.evaluate((img) => img.complete && img.naturalWidth > 0), {
