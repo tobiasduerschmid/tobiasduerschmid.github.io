@@ -5450,8 +5450,11 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         const handLayers = Array.from(svg.querySelectorAll(
           '[data-hero-motion="barbell-lift"] > [data-hero-kind-layer="human"]'
         ));
-        const hands = handLayers[handLayers.length - 1];
-        return Array.from(hands.querySelectorAll('path, ellipse')).reduce((bounds, node) => {
+        // Accessories can add later human layers (for example a signet ring).
+        // Measure the hands' direct shapes, not the final layer or nested gear.
+        const handShapes = handLayers.flatMap(layer =>
+          Array.from(layer.querySelectorAll(':scope > path, :scope > ellipse')));
+        return handShapes.reduce((bounds, node) => {
           const box = node.getBBox();
           const centerX = box.x + box.width / 2;
           if ((side === 'left' && centerX >= 400) || (side === 'right' && centerX <= 400)) return bounds;
@@ -5634,7 +5637,11 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       ];
       return window.HeroAvatar.normalizeAvatar(state).outfit.accessories;
     });
-    expect(normalizedConflicts).toEqual(['mask', 'hijab', 'headset-mic', 'backpack-straps', 'forehead-jewel', 'halo']);
+    // Membership decides which accessories survive; authored SVG layers decide
+    // their paint order independently of the normalized array's ordering.
+    expect([...normalizedConflicts].sort()).toEqual(
+      ['mask', 'hijab', 'headset-mic', 'backpack-straps', 'forehead-jewel', 'halo'].sort()
+    );
 
     const audioEarConflicts = await page.evaluate(() =>
       window.HeroAvatar.ACCESSORY_COMPATIBILITY.earConcealingAudio.map((audio) => {
@@ -5647,10 +5654,13 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         };
       })
     );
-    expect(audioEarConflicts).toEqual([
-      { audio: 'over-ear-headphones', accessories: ['over-ear-headphones'] },
-      { audio: 'headset-mic', accessories: ['headset-mic'] },
-    ]);
+    expect(audioEarConflicts.length, 'the ear-concealing audio registry must be exercised').toBeGreaterThan(0);
+    expect(audioEarConflicts.map(({ audio }) => audio)).toEqual(expect.arrayContaining([
+      'over-ear-headphones', 'headset-mic', 'cat-ear-headphones', 'annotation-headphones',
+    ]));
+    for (const { audio, accessories } of audioEarConflicts) {
+      expect(accessories, `${audio} should conceal earrings without discarding the audio gear`).toEqual([audio]);
+    }
 
     await setCheckboxInput(page, '#hero-customizer-modal input[name="hero-cust-accessory"][value="hoop-earrings"]', true);
     await setCheckboxInput(page, '#hero-customizer-modal input[name="hero-cust-accessory"][value="over-ear-headphones"]', true);

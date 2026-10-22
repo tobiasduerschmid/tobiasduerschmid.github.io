@@ -356,10 +356,10 @@ test('code examples and labs share keyboard language tabs with labeled panels', 
   expect(errors).toEqual([]);
 });
 
-test('empty source clears the old answer and corrected code recovers, including without Workers', async ({ page }) => {
-  await page.addInitScript(() => { window.Worker = undefined; });
+test('empty Python source clears the old answer and corrected code recovers', async ({ page }) => {
   await page.goto(classChapter);
   const lab = labByTitle(page, 'Member visibility');
+  await languageTab(lab, 'python').click();
   const editor = editorFor(lab);
   await expect(lab.getByRole('img')).toHaveAccessibleName(/Student/);
   await replaceCode(editor, '');
@@ -367,10 +367,30 @@ test('empty source clears the old answer and corrected code recovers, including 
   await expect(lab.getByRole('img')).toHaveCount(0);
   await replaceCode(editor, 'class Recovered:\n    pass');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/Recovered/);
+});
+
+test('without Workers Python reports unavailable and other languages recover after empty source', async ({ page }) => {
+  await page.addInitScript(() => { window.Worker = undefined; });
+  await page.goto(classChapter);
+  const lab = labByTitle(page, 'Member visibility');
+  await languageTab(lab, 'python').click();
+  const editor = editorFor(lab);
+  // Python requires its type checker; an annotation-only fallback would give
+  // an incomplete answer. The other languages retain their local analyzers.
+  await expect(lab.getByRole('status')).toContainText('Python type inference is unavailable.');
+  await expect(lab.getByRole('img')).toHaveCount(0);
   await languageTab(lab, 'java').click();
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/Student/);
+  await replaceCode(editor, '');
+  await expect(lab.getByRole('status')).toHaveText('No classes found.');
+  await expect(lab.getByRole('img')).toHaveCount(0);
   await replaceCode(editor, 'class RecoveredJava {}');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/RecoveredJava/);
   await languageTab(lab, 'cpp').click();
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/Student/);
+  await replaceCode(editor, '');
+  await expect(lab.getByRole('status')).toHaveText('No classes found.');
+  await expect(lab.getByRole('img')).toHaveCount(0);
   await replaceCode(editor, 'class RecoveredCpp {};');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/RecoveredCpp/);
   await replaceCode(editor, 'class Broken {');
@@ -379,6 +399,10 @@ test('empty source clears the old answer and corrected code recovers, including 
   await replaceCode(editor, 'class CorrectedCpp {};');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/CorrectedCpp/);
   await languageTab(lab, 'typescript').click();
+  await expect(lab.getByRole('img')).toHaveAccessibleName(/Student/);
+  await replaceCode(editor, '');
+  await expect(lab.getByRole('status')).toHaveText('No classes found.');
+  await expect(lab.getByRole('img')).toHaveCount(0);
   await replaceCode(editor, 'class CorrectedTypeScript { value: number = 1; }');
   await expect(lab.getByRole('img')).toHaveAccessibleName(/CorrectedTypeScript/);
 });
@@ -756,7 +780,8 @@ test('the chapter remains usable without JavaScript', async ({ browser, baseURL 
     const lab = labByTitle(page, 'Member visibility');
     await expect(lab.getByRole('textbox')).toHaveCount(0);
     await expect(lab.getByText(/private String name/)).toBeVisible();
-    await expect(lab.getByText(/self\._name: str = name/)).toBeVisible();
+    await expect(lab.getByText(/def __init__\(self, name: str\) -> None:/)).toBeVisible();
+    await expect(lab.getByText(/self\._name = name/)).toBeVisible();
     await expect(lab.getByText(/std::string displayName/)).toBeVisible();
     await expect(lab.getByText(/private name: string/)).toBeVisible();
     await lab.getByText('Check your prediction', { exact: true }).click();

@@ -5041,8 +5041,8 @@ Done --> [*]
       const svg = document.querySelectorAll('.uml-class-diagram-container svg')[1];
       if (!svg) return null;
 
-      const texts = Array.from(svg.querySelectorAll('text'));
-      const rects = Array.from(svg.querySelectorAll('rect'));
+      const texts = Array.from(svg.querySelectorAll('.uml-model-layer text'));
+      const rects = Array.from(svg.querySelectorAll('.uml-model-layer rect'));
 
       /** @param {string} label */
       function rectCenter(label) {

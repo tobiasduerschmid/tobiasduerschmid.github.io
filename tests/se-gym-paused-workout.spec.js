@@ -63,12 +63,12 @@ for (const startButtonName of ['Start Workout', 'Start Workout from controls']) 
     await page.getByRole('button', { name: startButtonName, exact: true }).click();
 
     await expect(page.getByRole('button', { name: 'Back to Gym Entrance', exact: true })).toBeVisible();
-    await expect(page.getByText('Singleton Pattern Quiz', { exact: true }).filter({ visible: true })).toBeVisible();
+    await expect(page.locator('#workout-card-area').getByText('Singleton Pattern Quiz', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Back to Gym Entrance', exact: true }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Saved workout:' })).toHaveText('Saved workout: 0 of 3 completed.');
     await page.reload();
     await page.getByRole('button', { name: 'Resume Saved Workout', exact: true }).click();
-    await expect(page.getByText('Singleton Pattern Quiz', { exact: true }).filter({ visible: true })).toBeVisible();
+    await expect(page.locator('#workout-card-area').getByText('Singleton Pattern Quiz', { exact: true })).toBeVisible();
   });
 }
 
@@ -96,7 +96,7 @@ test('starting a selected workout after leaving a linked quiz replaces the pause
 
   await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
 
-  await expect(page.getByText('Singleton Pattern Quiz', { exact: true }).filter({ visible: true })).toBeVisible();
+  await expect(page.locator('#workout-card-area').getByText('Singleton Pattern Quiz', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Back to Gym Entrance', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved workout:' })).toHaveText('Saved workout: 0 of 3 completed.');
   await page.reload();

@@ -8,6 +8,7 @@ const { test, expect } = require('@playwright/test');
 
 const SEBOOK_URL = '/SEBook/uml_class_diagram.html';
 const GYM_URL = '/se-gym/';
+const COMPARISON_QUESTION = /difference between these two\b.*\brelationships/i;
 
 const SAVED_BRUIN_HERO = {
   version: 1,
@@ -117,7 +118,7 @@ test.describe('UML class diagram flashcards - question diagrams render in SEBook
 
     const card3 = container.locator('.flashcard-card[data-card-id="3"]');
     const question = card3.locator('.flashcard-question');
-    await expect(question).toContainText('these two relationships');
+    await expect(question).toContainText(COMPARISON_QUESTION);
     await expectRenderedUml(
       question,
       /Building composes Room.*Library aggregates Book/i,
@@ -153,14 +154,14 @@ test.describe('UML class diagram flashcards - question diagrams render in SE Gym
       const question = flashcard.locator('.flashcard-question');
       const text = (await question.innerText()) || '';
 
-      if (text.includes('following symbol') || text.includes('these two relationships')) {
+      if (text.includes('following symbol') || COMPARISON_QUESTION.test(text)) {
         // The question references a visual — verify it's actually rendered.
         const accessibleName = text.includes('following symbol')
           ? /Department aggregates Professor/i
           : /Building composes Room.*Library aggregates Book/i;
         await expectRenderedUml(question, accessibleName);
         if (text.includes('following symbol')) sawAggregation = true;
-        if (text.includes('these two relationships')) sawComparison = true;
+        if (COMPARISON_QUESTION.test(text)) sawComparison = true;
       }
 
       await flashcard.locator('.show-answer-btn').click();

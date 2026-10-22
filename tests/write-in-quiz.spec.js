@@ -37,7 +37,8 @@ test('embedded Python output questions require text, accept whitespace, score on
     await expect(card.getByRole('region', { name: /^Object reference lab:/ })).toHaveCount(0);
     await card.getByRole('button', { name: 'Next Question', exact: true }).click();
   }
-  await expect(quiz.getByText('Your Score: 6/6', { exact: true })).toBeVisible();
+  const questionCount = python.questions.length;
+  await expect(quiz.getByText(`Your Score: ${questionCount}/${questionCount}`, { exact: true })).toBeVisible();
   await quiz.getByRole('button', { name: 'Restart Workout', exact: true }).click();
   await expect(input(active(quiz))).toHaveValue('');
   await expect(check(active(quiz))).toBeDisabled();
@@ -228,7 +229,11 @@ test('SE Gym saves write-in progress, tracks performance, and reviews missed ans
 test('the CS35L chapter renders both new decks inside its existing master quiz', async ({ page }) => {
   await page.goto('/SEBook/CS35L.html?noshuffle=1');
   const quiz = page.getByRole('region', { name: 'Current CS 35L Quizzes quiz', exact: true });
-  await expect(quiz.locator('[data-type="write-in"]')).toHaveCount(12);
+  const expectedQuestions = [...python.questions, ...shell.questions].filter(question => question.type === 'write-in');
+  await expect(quiz.locator('[data-type="write-in"]')).toHaveCount(expectedQuestions.length);
+  for (const question of expectedQuestions) {
+    await expect(quiz.locator(`[data-type="write-in"][data-question-id="${question.id}"]`)).toHaveCount(1);
+  }
   // Loaded once even when a page includes several related decks.
   await expect(page.locator('script[src$="/js/quiz-write-in.js"]')).toHaveCount(1);
 });

@@ -27,8 +27,12 @@ async function evaluate(page, source, expected) {
 }
 async function detach(page) {
   await page.getByText('Browser tools', { exact: true }).click();
+  const button = page.getByRole('button', { name: 'Detach System Browser', exact: true });
+  // The return-focus assertion exercises a keyboard-owned launch; WebKit
+  // mouse clicks need not move focus to the button being activated.
+  await button.focus();
   const opened = page.waitForEvent('popup');
-  await page.getByRole('button', { name: 'Detach System Browser', exact: true }).click();
+  await button.press('Enter');
   const popup = await opened;
   await expect(popup.getByRole('region', { name: 'Method source', exact: true })).toContainText('count + 1');
   return popup;

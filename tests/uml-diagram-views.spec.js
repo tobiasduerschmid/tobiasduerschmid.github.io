@@ -94,12 +94,14 @@ test('sequence views abstract a loop without changing its source or calls', asyn
   const lab = page.getByRole('region', { name: 'UML code lab: The loop boundary matters', exact: true });
   const diagram = lab.getByRole('img');
   const source = lab.locator('[data-uml-source]');
-  for (const language of ['Python', 'Java', 'TypeScript']) {
+  for (const language of ['Python', 'Java', 'C++', 'TypeScript']) {
     await lab.getByRole('tab', { name: language, exact: true }).click();
     if (language === 'Python') {
       const singleQuoted = (await source.inputValue()).replace('["book", "pen"]', "['book', 'pen']");
       await replaceChapterCode(lab, language, singleQuoted);
       await expect(diagram).toContainText("for item in ['book', 'pen']", { timeout: 15_000 });
+    } else if (language === 'C++') {
+      await expect(diagram).toContainText(/for\s*\(const std::string\s*&\s*item\s*:\s*items\)/);
     } else {
       await expect(diagram).toContainText(language === 'Java' ? 'for (String item' : 'for item of');
     }
