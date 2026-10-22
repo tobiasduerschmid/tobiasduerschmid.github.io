@@ -89,10 +89,10 @@ test('a partial regex provides feedback without blocking navigation', async ({ p
   // The intentionally unescaped dot is a runnable attempt: valid names work,
   // but invalid separators also match. The file loop and parser stay real.
   const partial = String.raw`import re
-pattern = r"replay_\d{2,4}.txt"
+pattern = r"^replay_\d{2,4}.txt$"
 def parse_file(path):
     with open(path, encoding="utf-8") as source:
-        return [line.strip() for line in source if re.fullmatch(pattern, line.strip())]
+        return [line.strip() for line in source if re.search(pattern, line.strip())]
 `;
   await setTutorialFileContent(page, 'filter_clips.py', partial);
   await page.getByRole('button', { name: /Test My Work/ }).click();
