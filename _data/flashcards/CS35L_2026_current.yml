@@ -19,6 +19,7 @@ decks:
   - react_syntax_generate
   - design_principle_solid
   - design_principle_soc
+  - data_management
 
 other:
   - design_pattern_observer
@@ -27,7 +28,6 @@ other:
   - design_with_reuse
   - uml_class_diagram_examples
   - uml_sequence_diagram_examples
-  - data_management
   - security
   - testing_overview
   - goodtests
