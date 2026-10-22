@@ -72,3 +72,87 @@ test('Python diagnostics can initialize after learner code rebinds dict', { time
   assert.equal(result.markers.length, 1);
   assert.equal(result.markers[0].code, 'UndefinedName');
 });
+
+async function startThemeTutorial(firstStep) {
+  let themeChanged;
+  let dark = false;
+  const previewDocuments = [];
+  const editorThemes = [];
+  const terminalThemes = [];
+  const sandbox = {
+    AbortController,
+    document: { cookie: '', documentElement: { classList: { contains: () => dark } } },
+    monaco: { editor: { setTheme: theme => editorThemes.push(theme) } },
+    MutationObserver: class {
+      constructor(callback) { themeChanged = callback; }
+      observe() {}
+    },
+  };
+  sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'js/tutorial-code.js'), 'utf8'), sandbox);
+  const reactStep = { backend: 'react', files: [{ path: 'app.jsx', content: 'render(<p>Welcome</p>);' }] };
+  const tutorial = new sandbox.TutorialCode({ setAttribute() {}, querySelector() { return null; } }, {
+    backend: 'multiple', steps: [firstStep, reactStep],
+  });
+  // Supply only the browser/editor startup boundary. Theme handling, backend
+  // selection, preview document generation and iframe replacement stay real.
+  tutorial._buildUI = tutorial._showLoading = tutorial._hideLoading = () => {};
+  tutorial._loadDependencies = tutorial._initEditor = () => Promise.resolve();
+  const steps = tutorial.steps;
+  tutorial.steps = [];
+  await tutorial.start();
+  tutorial.steps = steps;
+  tutorial.editor = {};
+  tutorial.term = { setOption(name, theme) { terminalThemes.push(theme); } };
+  const frameParent = { replaceChild(frame) { previewDocuments.push(frame.srcdoc); } };
+  const makeFrame = () => ({ parentNode: frameParent, cloneNode: makeFrame, removeAttribute() {} });
+  tutorial._previewFrame = makeFrame();
+  function selectStep(index) {
+    tutorial.currentStep = index;
+    tutorial.editorModels = Object.fromEntries(steps[index].files.map(file => [file.path, {
+      model: { getValue: () => file.content },
+    }]));
+    tutorial._setActiveBackend(steps[index].backend);
+  }
+  selectStep(0);
+  return {
+    previewDocuments, editorThemes, terminalThemes, selectStep,
+    setDarkMode(value) { dark = value; themeChanged(); },
+  };
+}
+
+for (const [language, filename, content] of [
+  ['Python', 'playlist.py', 'from typing import TypedDict'],
+  ['Markdown', 'recall.md', '# Recall what you learned'],
+]) {
+  test(`theme changes keep ${language} lesson files out of the inactive React preview`, async () => {
+    const tutorial = await startThemeTutorial({ backend: 'pyodide', files: [{ path: filename, content }] });
+
+    tutorial.setDarkMode(true);
+    tutorial.setDarkMode(false);
+
+    assert.equal(tutorial.previewDocuments.length, 0, 'non-React lesson source must not execute in a hidden React frame');
+    assert.equal(new Set(tutorial.editorThemes).size, 2, 'the editor must still receive both themes');
+    assert.equal(new Set(tutorial.terminalThemes.map(theme => theme.background)).size, 2,
+      'the terminal must still receive both themes');
+  });
+}
+
+test('theme changes update the active React preview and stop after switching to Python', async () => {
+  const tutorial = await startThemeTutorial({ backend: 'pyodide', files: [{ path: 'main.py', content: 'print(42)' }] });
+  tutorial.selectStep(1);
+
+  tutorial.setDarkMode(true);
+  tutorial.setDarkMode(false);
+
+  assert.equal(tutorial.previewDocuments.length, 2);
+  assert.match(tutorial.previewDocuments[0], /data-bs-theme="dark"/);
+  assert.match(tutorial.previewDocuments[1], /data-bs-theme="light"/);
+  assert.ok(tutorial.previewDocuments.every(html => html.includes('render(<p>Welcome</p>);')),
+    'changing theme must retain the current React source');
+
+  tutorial.selectStep(0);
+  tutorial.setDarkMode(true);
+  assert.equal(tutorial.previewDocuments.length, 2, 'returning to Python must stop React execution');
+  assert.equal(tutorial.editorThemes.at(-1), tutorial.editorThemes[0], 'the Python editor must still change theme');
+});

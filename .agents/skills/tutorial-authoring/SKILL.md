@@ -2449,7 +2449,11 @@ channel.
   backend is switched before step file sync, Run, Test My Work, Reset, and
   Solution application. Mixed runtime UI keeps both the output panel and React
   preview panel in the DOM, toggling the inactive one with `hidden` so it is
-  not exposed to assistive tech. Existing single-backend tutorials keep using
+  not exposed to assistive tech. Theme changes always update editors and
+  terminals, but rebuild the React preview only when the active backend is
+  `react`. `usePreview` records mixed-tutorial capability, so it must not cause
+  Python, Markdown, or other active-step files to execute in the hidden React
+  frame. Existing single-backend tutorials keep using
   top-level `setup_commands`.
   Backend initialization and restart promises are cached only while pending;
   successful, failed, invalidated, and superseded transactions must all release

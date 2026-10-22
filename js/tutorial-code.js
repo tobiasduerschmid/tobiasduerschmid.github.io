@@ -1195,11 +1195,12 @@
       })
       .then(function () {
         // Watch for dark-mode class changes and re-theme Monaco + terminal (all backends).
-        // Also rebuild the React iframe preview so its body colours update.
+        // Only the active React step may rebuild: mixed tutorials retain a
+        // hidden preview panel while other languages own the current files.
         if (window.MutationObserver) {
           var mo = new MutationObserver(function () {
             self._applyTheme(self._isDarkMode());
-            if (self.config.usePreview) self._rebuildReactPreview();
+            if (self.config.backend === 'react') self._rebuildReactPreview();
           });
           mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
         }
