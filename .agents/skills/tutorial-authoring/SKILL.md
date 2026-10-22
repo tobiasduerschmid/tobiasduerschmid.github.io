@@ -253,9 +253,9 @@ first ~10 lines of every step's `instructions:` follow this exact shape:
 ```markdown
 ### Why this matters
 
-<one short paragraph — 2–4 sentences that earn the student's attention.
-Cut filler. Lead with the durable reason this step exists in the
-curriculum, not a goal-restatement>
+<one short paragraph — usually 1–2 sentences explaining the transferable
+skill and its practical value. Any scenario reference must make sense
+before the student knows the exercise>
 
 ### 🎯 You will learn to
 
@@ -264,6 +264,26 @@ curriculum, not a goal-restatement>
 
 <rest of the step content — tables, examples, predict prompts, tasks, …>
 ```
+
+**Motivate the skill, not the assignment.** Apply this to every step's
+opener, not just the first step:
+
+- Name the concrete capability or concept and why it is useful beyond this
+  exercise. Avoid restating the deliverable ("You will fix this report") or
+  generic promises ("This is important in real projects").
+- A scenario can make the value concrete, but introduce enough context within
+  the opener itself. Assume the reader knows **nothing about the scenario**:
+  do not depend on unexplained characters, filenames, domain terms, or details
+  introduced elsewhere in the tutorial. Put setup and task requirements later.
+- Keep it short: usually **1–2 sentences**. Cut backstory and implementation
+  instructions; the following learning-objective bullets supply the actions.
+- **Standalone check:** read only the opener, without the task or earlier
+  scenario descriptions. Can a learner identify the useful skill and its
+  payoff? If not, rewrite it rather than adding a long scenario introduction.
+
+For example, replace "Fix the playlist sorter in `tracks.py` so the app shows
+the right order" with "Sorting by several criteria helps you present information
+predictably—for example, ordering songs by artist, then title."
 
 The 🎯 emoji is part of the heading. Don't drop it; don't substitute
 ("You will demonstrate you can", "Goals", "Skills you'll gain"). Don't
@@ -623,11 +643,15 @@ students are confused" reports.
 - [ ] **Every step has a `# Pedagogy:` YAML comment** immediately above
       its `- title:` line, naming the PRIMM phase or the named technique.
 - [ ] **Every step's `instructions:` opens with the canonical block:**
-      `### Why this matters` + 2–4 sentence motivating paragraph,
+      `### Why this matters` + a short paragraph (usually 1–2 sentences)
+      motivating the transferable skill and its practical value,
       followed by `### 🎯 You will learn to` + 1–3 Bloom-verb bullets,
       *then* the rest of the step content. Documented exception: `c.yml`
       keeps `### Chapter N: <hook>` instead of `### Why this matters`,
       but still gets the 🎯 list.
+- [ ] **Every motivation stands alone:** any scenario reference introduces its
+      own minimal context and assumes no knowledge of the exercise. It explains
+      why the skill matters, not what task to complete.
 - [ ] Each step has `instructions:` (Markdown), zero or one `quiz:`
       block, and either `tests:` *or* a clear "exploratory step" callout.
 - [ ] **Quiz `title:` is `"Step N — Knowledge Check"`** (1-indexed); quiz
@@ -3814,8 +3838,9 @@ steps:
     instructions: |
       ### Why this matters
 
-      One short paragraph (2–4 sentences) — earn the student's attention.
-      Lead with the durable reason this step exists in the curriculum.
+      One short paragraph (usually 1–2 sentences): motivate the transferable
+      skill and its practical value. Introduce any scenario context here;
+      assume the reader has not seen the exercise. Save task details for later.
 
       ### 🎯 You will learn to
 

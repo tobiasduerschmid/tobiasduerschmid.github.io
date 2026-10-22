@@ -43,6 +43,19 @@ for (const [key, command] of alternatives) {
   });
 }
 
+test('Failure Reports: correct selection passes its checks before ordering and deduplication are implemented', async () => {
+  const step = tutorial.steps.find(candidate => candidate.key === 'failure-reports');
+  const results = await evaluate(step, "awk '$2 == \"GET\" && $4 >= 400 { print $3 }' access.tsv");
+  for (const result of results) {
+    assert.equal(result.exitCode, 0, result.description);
+    assert.equal(result.stderr, '', result.description);
+    assert.equal(result.sourceUnchanged, true, result.description);
+  }
+  assert.equal(results.find(result => result.description === 'Only GET requests contribute').passed, true);
+  assert.equal(results.find(result => result.description === 'Statuses immediately below, at, and above 400').passed, true);
+  assert.equal(results.find(result => result.description === 'Repeated paths appear once in alphabetical order').passed, false);
+});
+
 const mistakes = [
   ['request-counts', 'counting only adjacent duplicates', 'cut -f3 access.tsv | uniq -c'],
   ['request-counts', 'reversing the required path order', 'cut -f3 access.tsv | sort -r | uniq -c'],

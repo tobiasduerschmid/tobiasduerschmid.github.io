@@ -3,9 +3,11 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
+const lesson = yaml.load(fs.readFileSync(path.join(__dirname, '../../_data/tutorials/shell-pipeline.yml'), 'utf8'));
 const modules = Promise.all([
   import('../../js/shell-pipeline-hints.mjs'),
   import('../../js/shell-pipeline-runtime.mjs'),
+  import('../../js/shell-pipeline-grading.mjs'),
 ]);
 
 for (const [behavior, source, condition, expected] of [
@@ -34,6 +36,46 @@ for (const [behavior, source, condition, expected] of [
   });
 }
 
+async function failedChecksWithHints(step, command) {
+  const [{ analyzePipeline, matchesPipelineHint }, { createShell }, { checkSolution }] = await modules;
+  const analysis = analyzePipeline(command, createShell);
+  const files = Object.fromEntries(step.files.map(file => [file.path, file.content]));
+  const checks = await Promise.all(step.tests.map(async test => ({
+    description: test.description,
+    ...await checkSolution({ command, files, check: test.shell_pipeline, createShell }),
+    hints: test.hints.filter(hint => matchesPipelineHint(hint.condition, analysis)),
+  })));
+  return checks.filter(check => !check.passed);
+}
+
+test('Failure Reports: a grep-only attempt gets guidance for continuing from records to fields', async () => {
+  const step = lesson.steps.find(step => step.key === 'failure-reports');
+  const failures = await failedChecksWithHints(step, "grep -E $'^[^\\t]+\\tGET\\t' access.tsv");
+  assert.ok(failures.length > 0);
+  const hints = failures.flatMap(check => check.hints);
+  assert.ok(hints.some(hint => hint.title === 'Continue from matching records'));
+  assert.ok(!hints.some(hint => hint.title === 'Plan the selection stages'));
+});
+
+test('Failure Reports: method-only mistakes receive method feedback instead of only status advice', async () => {
+  const step = lesson.steps.find(step => step.key === 'failure-reports');
+  const failures = await failedChecksWithHints(step, "grep GET access.tsv | awk '$4 >= 400 { print $3 }' | sort | uniq");
+  assert.deepEqual(failures.map(check => check.description), ['Only GET requests contribute']);
+  assert.equal(failures[0].exitCode, 0);
+  assert.equal(failures[0].stderr, '');
+  assert.ok(failures[0].hints.some(hint => hint.title === 'Match the complete method field'));
+});
+
+test('Failure Reports: a status-only mistake does not trigger method-specific feedback', async () => {
+  const step = lesson.steps.find(step => step.key === 'failure-reports');
+  const failures = await failedChecksWithHints(step, "grep -E $'^[^\\t]+\\tGET\\t' access.tsv | awk '$4 > 400 { print $3 }' | sort | uniq");
+  assert.deepEqual(failures.map(check => check.description), ['Statuses immediately below, at, and above 400']);
+  assert.equal(failures[0].exitCode, 0);
+  assert.equal(failures[0].stderr, '');
+  assert.ok(failures[0].hints.length > 0);
+  assert.ok(!failures[0].hints.some(hint => hint.title === 'Match the complete method field'));
+});
+
 test('hint analysis never executes the command', async () => {
   const [{ analyzePipeline }, { createShell }] = await modules;
   const shell = createShell({ files: {} });
@@ -41,7 +83,6 @@ test('hint analysis never executes the command', async () => {
   await assert.rejects(shell.readFile('/home/student/should-not-exist'));
 });
 
-const lesson = yaml.load(fs.readFileSync(path.join(__dirname, '../../_data/tutorials/shell-pipeline.yml'), 'utf8'));
 for (const [key, source, present, absent] of [
   ['request-counts', 'cut -f3 access.tsv | uniq -c # sort', 'Neighbors in the stream', 'The position of each stage'],
   ['request-counts', 'cut -f3 access.tsv | uniq -c | sort', 'The position of each stage', 'Neighbors in the stream'],

@@ -89,7 +89,7 @@ awk: |
 
   PROGRAM BASICS
       { print $2 }           Print field 2 from every record.
-      $4 >= 400 { print $3 } Print field 3 when field 4 is at least 400.
+      $2 > 10 { print $1 }   Print field 1 when field 2 is greater than 10.
       && and ||              Combine conditions with AND and OR.
       BEGIN { ACTION }       Run once before reading records.
       END { ACTION }         Run once after reading records.

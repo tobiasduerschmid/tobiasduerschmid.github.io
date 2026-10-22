@@ -52,6 +52,11 @@ steps:
       does not change those checks. Use **Hints** after a failed check and
       **Reset Current Step** to restore the starting file and clear the command.
 
+      Checks are optional: you can move between steps without running or passing
+      them. **Solution** is always available and replaces the command with a
+      worked pipeline and displays its explanation. Compare it with your own approach,
+      then explain what each stage contributes.
+
       ### A short manual for `cut`
 
       `cut` extracts fields without changing the input file. Read this
@@ -82,9 +87,10 @@ steps:
       3. **Investigate:** Compare your report with the file. If one path
          appears in several report rows, inspect the order of the lines
          reaching your counting stage.
-      4. **Check and explain:** Select **Test My Work**. Once it passes,
-         explain what each pipe carries and why changing record order can
-         change what `uniq` counts.
+      4. **Check and explain:** Use **Test My Work** for optional feedback.
+         After running your attempt or inspecting **Solution**, explain what
+         each pipe carries and why changing record order can change what
+         `uniq` counts.
 
       For an extra investigation, add another request for an existing path
       in the editor. Predict which report row should change, then Run again.
@@ -301,7 +307,7 @@ steps:
         Each input record still produces one output line, in the same order.
         The pipeline prints transformed text without modifying `access.tsv`.
 
-  # Pedagogy: component example followed by independent transfer of filtering, grouping, and counting.
+  # Pedagogy: component examples followed by independent transfer of filtering and deduplication.
   - title: "Failure Reports"
     key: failure-reports
     instructions: |
@@ -324,7 +330,19 @@ steps:
 
       `grep` prints the lines that match a pattern. Its `-E` option enables
       extended regular expressions: `+` means one or more, `^` anchors the
-      start of a line, and `[^…]` matches any character except those listed.
+      start of a line, `$` anchors its end, and `[^…]` matches any character
+      except those listed.
+
+      ```bash
+      printf '%s\n' 'GET' 'GETTING' 'TARGET' | grep -E '^GET$'
+      ```
+
+      **Predict:** Which of these three lines match the complete value `GET`?
+      Enter the example in **Shell command**, Run it, then remove the two
+      anchors and predict the difference before running again. Explain why
+      finding the letters `GET` inside a line is not the same as matching its
+      complete value.
+
       These records use tabs between fields. Bash's `$'…'` quoting turns
       `\t` into a literal tab before passing the pattern to `grep`.
       To select a method, account for the first field and the tabs around
@@ -369,9 +387,10 @@ steps:
          reference when needed; the complete pipeline is yours to derive.
       3. **Check:** Select **Test My Work**. Inspect the individual checks for
          method selection, the status boundary, and duplicate removal. Revise and retest.
-      4. **Explain:** After the checks pass, describe the text carried by each
-         pipe. Explain why sorting paths before removing duplicates makes equal paths
-         adjacent and keeps the report in path order.
+      4. **Explain:** After running your attempt or inspecting **Solution**,
+         describe the text carried by each pipe. Explain why sorting paths
+         before removing duplicates makes equal paths adjacent and keeps the
+         report in path order.
     files: *access_files
     open_file: access.tsv
     shell_command: ""
@@ -383,36 +402,58 @@ steps:
           expected_stdout: "/get.html\n"
           comparison: exact
           preserve_files: [access.tsv]
-        hints: &failure_hints
-          - title: "Plan the selection stages"
+        hints:
+          - &failure_empty
+            title: "Plan the selection stages"
             condition: 'pipeline_state: empty'
             text: "Start with the record-selection stage. Identify the method field and test its complete value before you add numeric filtering and deduplicating."
-          - title: "Complete the pipeline syntax"
+          - &failure_syntax
+            title: "Complete the pipeline syntax"
             condition: 'pipeline_state: syntax-error'
             text: "Check paired quotes around grep and awk patterns and a command on both sides of each pipe. Run to see the syntax diagnostic."
-          - title: "The record selection rule"
+          - title: "Match the complete method field"
+            condition: 'pipeline_matches: \b(grep|awk)\b'
+            text: "Compare records whose methods are GET and GETTING with a POST record whose path is /docs/GET/help. Only the first method qualifies. Inspect the output of your method-selection stage: which field boundaries distinguish a complete method from matching letters elsewhere?"
+          - &failure_grep_only
+            title: "Continue from matching records"
+            condition: 'pipeline_matches: ^grep$'
+            text: "grep prints whole matching records. Inspect one: which field must a later stage test numerically, and which field should reach the report? Keep both fields available until the status decision is made."
+          - &failure_selection
+            title: "The record selection rule"
             condition: 'pipeline_matches: ^(?!.*\b(grep|awk)\b).+$'
             text: "Your pipeline has no grep or awk selection stage. Which stage removes non-GET requests and successful statuses before removing duplicates? If another tool selects them, inspect its output with a failed POST and a successful GET."
-          - title: "Keep the fields until selection is done"
+          - &failure_fields
+            title: "Keep the fields until selection is done"
             condition: 'pipeline_matches: \bcut\b.*\b(grep|awk)\b'
             text: "Field extraction appears before a selection stage. Check which fields cut retains: do the method and status still reach the stages that need them?"
-          - title: "Select before removing duplicates"
+          - &failure_select_first
+            title: "Select before removing duplicates"
             condition: 'pipeline_matches: \buniq\b.*\b(grep|awk)\b'
             text: "A selection stage follows uniq. At that point, are its fields still method, path, and status—or have they become distinct paths? Inspect that boundary."
-          - title: "Group before removing duplicates"
+          - &failure_group_first
+            title: "Group before removing duplicates"
             condition: 'pipeline_matches: ^(?=.*\buniq\b)(?!.*\bsort\b.*\buniq\b).+$'
             text: "Your uniq stage has no earlier sort stage. Check whether repeated qualifying paths are adjacent when they arrive at the duplicate remover."
-          - title: "Selection and path groups"
+          - &failure_groups
+            title: "Selection and path groups"
             condition: 'pipeline_matches: \bawk\b|\buniq\b'
             text: "Check each stage on statuses 399, 400, and 401, including a POST. Sort the selected paths before removing duplicates; the report should stay in path order, with no count prefix."
       - description: "Statuses immediately below, at, and above 400"
         shell_pipeline:
           files:
-            access.tsv: "10:00\tGET\t/below\t399\t1\n10:01\tGET\t/boundary\t400\t2\n10:02\tGET\t/above\t401\t3\n10:03\tGET\t/no-content\t204\t4\n10:04\tGET\t/not-modified\t304\t5\n10:05\tGET\t/custom-status\t600\t6\n"
+            access.tsv: "10:00\tGET\t/above\t401\t3\n10:01\tGET\t/below\t399\t1\n10:02\tGET\t/boundary\t400\t2\n10:03\tGET\t/custom-status\t600\t6\n10:04\tGET\t/no-content\t204\t4\n10:05\tGET\t/not-modified\t304\t5\n"
           expected_stdout: "/above\n/boundary\n/custom-status\n"
           comparison: exact
           preserve_files: [access.tsv]
-        hints: *failure_hints
+        hints: &failure_hints
+          - *failure_empty
+          - *failure_syntax
+          - *failure_grep_only
+          - *failure_selection
+          - *failure_fields
+          - *failure_select_first
+          - *failure_group_first
+          - *failure_groups
       - description: "Repeated paths appear once in alphabetical order"
         shell_pipeline:
           files:
