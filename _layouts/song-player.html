@@ -39,35 +39,41 @@
       <section class="song-player-controls" id="song-controls" aria-label="Song controls">
         <input class="song-player-seek" type="range" aria-label="Song position" min="0" max="{{ song.duration }}" value="0" step="0.1" disabled>
         <div class="song-player-toolbar">
-          <button type="button" class="song-player-play" aria-label="Play song" aria-keyshortcuts="k">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path class="song-player-play-icon" d="M7 4 20 12 7 20Z"/><path class="song-player-pause-icon" d="M6 4H10V20H6ZM14 4H18V20H14Z"/></svg>
-          </button>
-          <button type="button" class="song-player-track-navigation" data-track-navigation="previous" aria-label="Previous song" title="Previous song" hidden disabled>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4H8V20H5ZM19 4V20L8 12Z"/></svg>
-          </button>
-          <button type="button" class="song-player-track-navigation" data-track-navigation="next" aria-label="Next song" title="Next song" hidden disabled>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M16 4H19V20H16ZM5 4L16 12 5 20Z"/></svg>
-          </button>
-          <span class="song-player-time" aria-hidden="true">0:00 / {{ song.duration | divided_by: 60 | floor }}:{{ song.duration | modulo: 60 | floor }}</span>
-          <button type="button" class="song-player-back" aria-label="Back 5 seconds" aria-keyshortcuts="ArrowLeft" disabled><span><span aria-hidden="true">−</span>5</span></button>
-          <button type="button" class="song-player-forward" aria-label="Forward 5 seconds" aria-keyshortcuts="ArrowRight" disabled><span><span aria-hidden="true">+</span>5</span></button>
-          <button type="button" class="song-player-mute" aria-label="Mute song">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9H7L12 5V19L7 15H3Z"/><path class="song-player-sound-icon" d="M16 8Q20 12 16 16M19 5Q25 12 19 19"/><path class="song-player-muted-icon" d="M16 9 22 15M22 9 16 15"/></svg>
-          </button>
-          <button type="button" class="song-player-cc" aria-label="Closed captions (CC)" aria-pressed="true" aria-controls="song-captions" aria-keyshortcuts="c">CC</button>
+          <div class="song-player-playback-controls">
+            <button type="button" class="song-player-play" aria-label="Play song" aria-keyshortcuts="k">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path class="song-player-play-icon" d="M7 4 20 12 7 20Z"/><path class="song-player-pause-icon" d="M6 4H10V20H6ZM14 4H18V20H14Z"/></svg>
+            </button>
+            <button type="button" class="song-player-back" aria-label="Back 5 seconds" aria-keyshortcuts="ArrowLeft" disabled><span><span aria-hidden="true">−</span>5</span></button>
+            <button type="button" class="song-player-forward" aria-label="Forward 5 seconds" aria-keyshortcuts="ArrowRight" disabled><span><span aria-hidden="true">+</span>5</span></button>
+            <button type="button" class="song-player-track-navigation" data-track-navigation="previous" aria-label="Previous song" title="Previous song" hidden disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4H8V20H5ZM19 4V20L8 12Z"/></svg>
+            </button>
+            <button type="button" class="song-player-track-navigation" data-track-navigation="next" aria-label="Next song" title="Next song" hidden disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M16 4H19V20H16ZM5 4L16 12 5 20Z"/></svg>
+            </button>
+            <span class="song-player-time" aria-hidden="true">0:00 / {{ song.duration | divided_by: 60 | floor }}:{{ song.duration | modulo: 60 | floor }}</span>
+          </div>
+          <div class="song-player-view-controls">
+            <button type="button" class="song-player-mute" aria-label="Mute song">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9H7L12 5V19L7 15H3Z"/><path class="song-player-sound-icon" d="M16 8Q20 12 16 16M19 5Q25 12 19 19"/><path class="song-player-muted-icon" d="M16 9 22 15M22 9 16 15"/></svg>
+            </button>
+            <button type="button" class="song-player-cc" aria-label="Closed captions (CC)" aria-pressed="true" aria-controls="song-captions" aria-keyshortcuts="c">CC</button>
+            <button type="button" class="song-player-fullscreen" aria-label="Enter full screen" aria-keyshortcuts="f" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3H3V9M15 3H21V9M3 15V21H9M15 21H21V15"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="song-player-settings">
           <label class="song-player-speed-label" for="song-playback-speed">Playback speed
             <select class="song-player-speed" id="song-playback-speed">{% include song-playback-speeds.html %}</select>
           </label>
-          <button type="button" class="song-player-fullscreen" aria-label="Enter full screen" aria-keyshortcuts="f" hidden>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3H3V9M15 3H21V9M3 15V21H9M15 21H21V15"/></svg>
-          </button>
+          <label class="song-player-track-label">Audio track
+            <select class="song-player-track" data-described-src="{{ song.described_soundtrack | prepend: '/' | relative_url }}" data-described-captions="{{ song.described_captions | relative_url }}" data-described-timeline="{{ song.described_timeline | relative_url }}">
+              <option value="original">Song</option>
+              <option value="described">Song with audio description</option>
+            </select>
+          </label>
         </div>
-        <label class="song-player-track-label">Audio track
-          <select class="song-player-track" data-described-src="{{ song.described_soundtrack | prepend: '/' | relative_url }}" data-described-captions="{{ song.described_captions | relative_url }}" data-described-timeline="{{ song.described_timeline | relative_url }}">
-            <option value="original">Song</option>
-            <option value="described">Song with audio description</option>
-          </select>
-        </label>
       </section>
       <p class="song-player-status" role="status"></p>
       </div>
@@ -75,18 +81,23 @@
     <div class="song-player-options" hidden>
       <label class="song-player-motion"><input type="checkbox" id="lyrics-only"> Use lyrics-only mode</label>
     </div>
-    <p class="song-player-help" id="song-gesture-help">Click or tap the picture to play or pause. In full screen, controls hide after 3 seconds of inactivity during playback. Move the pointer, press a key, or tap the picture to show them. A tap that reveals hidden controls keeps the song playing. Double-click or double-tap the picture’s left half to go back 5 seconds, or its right half to go forward 5 seconds. The seek buttons do the same.</p>
-    <p class="song-player-help">With focus in the player: <kbd>F</kbd> toggles full screen, <kbd>C</kbd> toggles subtitles, <kbd>←</kbd>/<kbd>→</kbd> seek 5 seconds, and <kbd>K</kbd> or <kbd>Space</kbd> plays or pauses. Use <kbd>Enter</kbd> to activate a focused button. Sliders and dropdowns keep their usual keys.</p>
+    <details class="song-player-tips">
+      <summary>Playback tips and shortcuts</summary>
+      <p class="song-player-help" id="song-gesture-help">Click or tap the picture to play or pause. In full screen, controls hide after 3 seconds of inactivity during playback. Move the pointer, press a key, or tap the picture to show them. A tap that reveals hidden controls keeps the song playing. Double-click or double-tap the picture’s left half to go back 5 seconds, or its right half to go forward 5 seconds. The seek buttons do the same.</p>
+      <p class="song-player-help">With focus in the player: <kbd>F</kbd> toggles full screen, <kbd>C</kbd> toggles subtitles, and <kbd>K</kbd> or <kbd>Space</kbd> plays or pauses. <kbd>←</kbd>/<kbd>→</kbd> seek 5 seconds, <kbd>0</kbd> jumps to the beginning, and <kbd>1</kbd>–<kbd>9</kbd> jump to 10%–90% of the selected audio track. These seek shortcuts also work on the position slider; its other keys keep their usual behavior. Use <kbd>Enter</kbd> to activate a focused button. Dropdowns and text fields keep their usual keys.</p>
+    </details>
     <div class="song-player-description" role="region" aria-label="Current visual description" hidden>
       <p id="song-description">Visual descriptions appear here during the song.</p>
     </div>
-    <p class="song-player-transcript-link"><a href="{{ page.transcript | relative_url }}" target="_parent">Full transcript</a></p>
-    <p class="song-player-playlist-link"><a href="{{ '/SEBook/playlist.html' | relative_url }}" target="_parent">Video playlists</a></p>
-    <details class="song-player-fallback">
-      <summary>Audio downloads</summary>
-      <p><a href="{{ song.soundtrack | prepend: '/' | relative_url }}">Download song audio</a></p>
-      <p><a href="{{ song.described_soundtrack | prepend: '/' | relative_url }}">Download audio-described song</a></p>
-    </details>
+    <div class="song-player-resources">
+      <p class="song-player-transcript-link"><a href="{{ page.transcript | relative_url }}" target="_parent">Full transcript</a></p>
+      <p class="song-player-playlist-link"><a href="{{ '/SEBook/playlist.html' | relative_url }}" target="_parent">Video playlists</a></p>
+      <details class="song-player-fallback">
+        <summary>Audio downloads</summary>
+        <p><a href="{{ song.soundtrack | prepend: '/' | relative_url }}">Download song audio</a></p>
+        <p><a href="{{ song.described_soundtrack | prepend: '/' | relative_url }}">Download audio-described song</a></p>
+      </details>
+    </div>
     <noscript><p>The animated player needs JavaScript. Listen to the song below, or use the audio downloads and full transcript.</p>
       <audio controls preload="none" aria-label="{{ song.title | escape }} without JavaScript" src="{{ song.soundtrack | prepend: '/' | relative_url }}"></audio>
     </noscript>

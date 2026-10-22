@@ -74,15 +74,16 @@
       onResize();
     }
     listen(play, 'click', togglePlayback);
-    listen(seek, 'input', () => {
-      if (Number.isFinite(audio.duration)) audio.currentTime = Math.min(audio.duration, Number(seek.value));
+    function seekTo(seconds) {
+      if (seek.disabled) return;
+      audio.currentTime = Math.max(0, Math.min(audio.duration, seconds));
       syncPosition();
-    });
+    }
+    listen(seek, 'input', () => seekTo(Number(seek.value)));
     function skip(direction) {
       const seconds = direction * 5;
       if (seek.disabled) return;
-      audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + seconds));
-      syncPosition();
+      seekTo(audio.currentTime + seconds);
       clearTimeout(feedbackTimer);
       feedback.textContent = `${seconds < 0 ? '−' : '+'}${Math.abs(seconds)} seconds`;
       feedback.classList.toggle('is-back', seconds < 0);
@@ -94,7 +95,9 @@
       listen, toggle: togglePlayback, skip, revealControls: visibility.reveal,
     });
     window.SongKeyboard.bind({
-      player, listen, toggle: togglePlayback, skip, fullscreen: onFullscreen, captions: toggleCaptions,
+      player, positionControl: seek, listen, toggle: togglePlayback, skip,
+      seekToFraction: (fraction) => seekTo(audio.duration * fraction),
+      fullscreen: onFullscreen, captions: toggleCaptions,
     });
     function applySpeed(value) {
       audio.defaultPlaybackRate = value;

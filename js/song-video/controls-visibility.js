@@ -11,7 +11,9 @@
     let loading = false;
     let buffering = false;
     let hoveringControls = false;
-    let keyboardInteraction = false;
+    let keyboardNavigation = false;
+    let pointerSelect = null;
+    let pointerFocusTarget = null;
     let timer = null;
     let lastPointer = null;
 
@@ -22,10 +24,10 @@
 
     function canHide() {
       const focused = document.activeElement;
-      // Safari may omit :focus-visible after the fullscreen focus loop moves
-      // focus. A select can also keep its popup open without pointer events.
-      const usingControl = controls.contains(focused)
-        && (keyboardInteraction || focused.matches(':focus-visible, select'));
+      // Range inputs can match :focus-visible after a mouse click, and media
+      // shortcuts can give pointer-focused buttons that state too. Only actual
+      // keyboard navigation should pin the toolbar for the rest of playback.
+      const usingControl = controls.contains(focused) && keyboardNavigation;
       return fullscreen && !audio.paused && !audio.ended && !audio.seeking
         && !loading && !buffering && !hoveringControls && !usingControl && pointersDown.size === 0;
     }
@@ -33,6 +35,14 @@
     function hide() {
       clearTimer();
       if (!canHide()) return;
+      // Native select pickers need to remain usable until dismissed. Older
+      // engines do not expose :open, so keep their picker until a change/blur.
+      const selectOpen = CSS.supports('selector(select:open)')
+        ? controls.querySelector('select:open') : pointerSelect;
+      if (selectOpen) {
+        timer = setTimeout(hide, idleDelay);
+        return;
+      }
       // Pointer activation may leave focus on a toolbar button. Keep subsequent
       // shortcuts scoped to the player without hiding a focused control.
       if (controls.contains(document.activeElement)) screen.focus({ preventScroll: true });
@@ -50,6 +60,9 @@
 
     listen(screen, 'pointermove', (event) => {
       if (event.pointerType === 'touch') return;
+      // Native pickers consume pointer movement while open. Movement back on
+      // the picture also ends an unchanged selection in older engines.
+      if (!controls.contains(event.target)) pointerSelect = null;
       // Changing the cursor can itself generate a stationary pointer event.
       if (lastPointer?.x === event.clientX && lastPointer?.y === event.clientY) return;
       lastPointer = { x: event.clientX, y: event.clientY };
@@ -66,21 +79,37 @@
       reveal();
     });
     listen(screen, 'pointerdown', (event) => {
-      keyboardInteraction = false;
-      pointersDown.add(event.pointerId);
+      keyboardNavigation = false;
+      pointerFocusTarget = event.target.closest('button, input, select');
+      pointerSelect = event.target.closest('select');
+      // A native picker can consume pointerup outside this document. Its open
+      // state is tracked separately, so it must not leave a drag lock behind.
+      if (!pointerSelect) pointersDown.add(event.pointerId);
       reveal();
     });
     for (const type of ['pointerup', 'pointercancel']) listen(document, type, (event) => {
       if (pointersDown.delete(event.pointerId)) reveal();
     });
-    listen(screen, 'keydown', () => {
-      keyboardInteraction = true;
+    listen(document, 'keydown', (event) => {
+      // Observe Tab before focus enters the screen as well as within it.
+      if (event.key === 'Tab') keyboardNavigation = true;
+      const dismissingPointerSelect = event.target === pointerSelect && ['Enter', 'Escape', 'Tab'].includes(event.key);
+      if (event.target.matches('select') && !dismissingPointerSelect) keyboardNavigation = true;
+      if (dismissingPointerSelect) pointerSelect = null;
+      if (screen.contains(event.target)) reveal();
+    });
+    listen(screen, 'focusin', (event) => {
+      // Assistive technology may move focus without a preceding Tab event.
+      if (controls.contains(event.target) && event.target !== pointerFocusTarget) keyboardNavigation = true;
       reveal();
     });
-    listen(screen, 'focusin', reveal);
-    listen(screen, 'focusout', reveal);
+    listen(screen, 'focusout', (event) => {
+      if (event.target === pointerFocusTarget) pointerFocusTarget = null;
+      if (event.target === pointerSelect) pointerSelect = null;
+      reveal();
+    });
     listen(controls, 'input', reveal);
-    listen(controls, 'change', reveal);
+    listen(controls, 'change', () => { pointerSelect = null; reveal(); });
     for (const type of ['play', 'pause', 'ended', 'seeking', 'seeked']) listen(audio, type, reveal);
     for (const type of ['waiting', 'playing', 'canplay', 'emptied']) listen(audio, type, () => {
       buffering = type === 'waiting';
@@ -95,7 +124,13 @@
 
     return {
       reveal,
-      setFullscreen(value) { fullscreen = value; reveal(); },
+      setFullscreen(value) {
+        fullscreen = value;
+        // Entering presentation starts a fresh idle period, including through F.
+        // Subsequent Tab navigation keeps controls visible until pointer use.
+        keyboardNavigation = false;
+        reveal();
+      },
       setLoading(value) { loading = value; reveal(); },
     };
   }

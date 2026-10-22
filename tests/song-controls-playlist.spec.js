@@ -150,14 +150,14 @@ for (const song of [git, network]) {
     await expect(audio).toHaveJSProperty('paused', true);
   });
 
-  test(`${song.title}: focused shortcuts control playback while inputs retain native keys`, async ({ page }) => {
+  test(`${song.title}: focused shortcuts seek consistently on the picture and timeline`, async ({ page }) => {
     const audio = await openPaused(page, song);
-    await seek(audio, 30);
+    await seek(audio, 30.375);
     await page.getByRole('button', { name: 'Play video', exact: true }).focus();
     await page.keyboard.press('ArrowLeft');
-    await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeCloseTo(25, 1);
+    await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeCloseTo(25.375, 2);
     await page.keyboard.press('ArrowRight');
-    await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeCloseTo(30, 1);
+    await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeCloseTo(30.375, 2);
     await page.keyboard.press('k');
     await expect(audio).toHaveJSProperty('paused', false);
     await page.keyboard.press('k');
@@ -168,9 +168,15 @@ for (const song of [git, network]) {
     await expect(page.getByRole('button', { name: 'Enter full screen', exact: true })).toBeVisible();
     const position = page.getByRole('slider', { name: 'Song position' });
     await position.focus();
-    const before = await audio.evaluate((media) => media.currentTime);
+    await seek(audio, 30.375);
+    await page.keyboard.press('ArrowLeft');
+    await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeCloseTo(25.375, 2);
     await page.keyboard.press('ArrowRight');
-    await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeCloseTo(before + 0.1, 1);
+    await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeCloseTo(30.375, 2);
+    await page.keyboard.down('ArrowLeft');
+    await page.keyboard.down('ArrowLeft');
+    await page.keyboard.up('ArrowLeft');
+    await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeCloseTo(20.375, 2);
     await page.keyboard.press('k');
     await expect(audio).toHaveJSProperty('paused', true);
     await page.getByRole('combobox', { name: 'Playback speed' }).focus();
@@ -181,6 +187,50 @@ for (const song of [git, network]) {
     await page.getByRole('link', { name: 'Skip to music player', exact: true }).focus();
     await page.keyboard.press('k');
     await expect(audio).toHaveJSProperty('paused', true);
+  });
+
+  test(`${song.title}: number keys jump to tenths of the selected track, including zero`, async ({ page }) => {
+    const audio = await openPaused(page, song);
+    const originalDuration = await audio.evaluate((media) => media.duration);
+    for (const track of ['original', 'described']) {
+      await page.getByRole('combobox', { name: 'Audio track', exact: true }).selectOption(track);
+      if (track === 'described') {
+        await expect.poll(() => audio.evaluate((media) => media.duration)).toBeGreaterThan(originalDuration);
+      }
+      const duration = await audio.evaluate((media) => media.duration);
+      for (const control of [page.getByRole('button', { name: 'Play video', exact: true }), page.getByRole('slider', { name: 'Song position' })]) {
+        await control.focus();
+        for (const digit of [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]) {
+          await page.keyboard.press(String(digit));
+          await expect(audio).toHaveJSProperty('seeking', false);
+          await expect.poll(() => audio.evaluate((media) => media.currentTime), {
+            message: `${digit} must seek to ${digit * 10}% of the ${track} track`,
+          }).toBeCloseTo(duration * digit / 10, 2);
+          await expect(audio).toHaveJSProperty('paused', true);
+        }
+      }
+    }
+  });
+
+  test(`${song.title}: number shortcuts leave dropdowns and outside focus alone`, async ({ page }) => {
+    const audio = await openPaused(page, song);
+    await seek(audio, 30);
+    for (const control of [
+      page.getByRole('combobox', { name: 'Playback speed' }),
+      page.getByRole('combobox', { name: 'Audio track', exact: true }),
+      page.getByRole('link', { name: 'Skip to music player', exact: true }),
+    ]) {
+      await control.focus();
+      await page.keyboard.press('5');
+      await page.keyboard.press('0');
+      await expect(audio).toHaveJSProperty('currentTime', 30);
+    }
+    await page.getByRole('button', { name: 'Play video', exact: true }).focus();
+    // Match the produced character so layouts requiring Shift for digits work.
+    for (const key of ['Control+5', 'Meta+5', 'Alt+5', '%']) {
+      await page.keyboard.press(key);
+      await expect(audio).toHaveJSProperty('currentTime', 30);
+    }
   });
 }
 

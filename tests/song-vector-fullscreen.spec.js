@@ -141,8 +141,7 @@ test.describe('desktop fullscreen idle controls', () => {
     await expect(controls).toBeVisible();
     await page.mouse.up();
     await expect(audio).toHaveJSProperty('seeking', false);
-    // Move focus off the slider, whose keyboard focus also keeps it visible.
-    await page.getByRole('button', { name: 'Pause video', exact: true }).focus();
+    // Pointer scrubbing must not leave the focused slider pinning the toolbar.
     await page.clock.fastForward(4000);
     await expect(controls).toBeHidden();
     // Media readiness is a browser boundary; exercise its real event handlers.
@@ -152,6 +151,85 @@ test.describe('desktop fullscreen idle controls', () => {
     await audio.dispatchEvent('playing');
     await page.clock.fastForward(4000);
     await expect(controls).toBeHidden();
+  });
+
+  test('pointer-used controls hide again after shortcuts and a speed selection', async ({ page }) => {
+    const audio = await startFullscreen(page);
+    const controls = page.getByRole('region', { name: 'Song controls', exact: true });
+    // Fullscreen leaves its button focused; using a playback shortcut there
+    // must not be mistaken for navigating the toolbar with Tab.
+    await page.mouse.move(100, 100);
+    await page.keyboard.press('c');
+    await page.keyboard.press('ArrowLeft');
+    await expect(audio).toHaveJSProperty('seeking', false);
+    await page.clock.fastForward(4000);
+    await expect(controls).toBeHidden();
+    await page.mouse.move(110, 100);
+    const speed = page.getByRole('combobox', { name: 'Playback speed' });
+    // Native pickers may consume pointerup; deliver only their opening event,
+    // then choose through the native select API instead of OS popup coordinates.
+    await speed.dispatchEvent('pointerdown', { pointerType: 'mouse', pointerId: 1 });
+    await speed.focus();
+    await speed.selectOption('1.5');
+    await expect(speed).toHaveValue('1.5');
+    await page.mouse.move(120, 100);
+    await page.clock.fastForward(4000);
+    await expect(controls).toBeHidden();
+    await expect(audio).toHaveJSProperty('playbackRate', 1.5);
+    await expect(audio).toHaveJSProperty('paused', false);
+  });
+
+  test('dismissing an unchanged speed picker does not pin controls in older browsers', async ({ page }) => {
+    const audio = await startFullscreen(page);
+    // Feature detection and native-picker events are browser boundaries. A
+    // native picker can omit change and pointerup after an unchanged selection.
+    await page.evaluate(() => {
+      const supports = CSS.supports.bind(CSS);
+      CSS.supports = (...args) => args[0] === 'selector(select:open)' ? false : supports(...args);
+    });
+    const speed = page.getByRole('combobox', { name: 'Playback speed' });
+    await page.mouse.move(100, 100);
+    await speed.dispatchEvent('pointerdown', { pointerType: 'mouse', pointerId: 1 });
+    await speed.focus();
+    await speed.dispatchEvent('keydown', { key: 'Enter' });
+    await expect(speed).toHaveValue('1');
+    await page.clock.fastForward(4000);
+    await expect(page.getByRole('region', { name: 'Song controls', exact: true })).toBeHidden();
+    await expect(audio).toHaveJSProperty('paused', false);
+    // Keyboard editing can reopen a still-focused picker without a new Tab.
+    await page.mouse.move(110, 100);
+    await speed.dispatchEvent('pointerdown', { pointerType: 'mouse', pointerId: 1 });
+    await speed.focus();
+    await speed.dispatchEvent('keydown', { key: 'Enter' });
+    await speed.dispatchEvent('keydown', { key: ' ' });
+    await page.clock.fastForward(4000);
+    await expect(page.getByRole('region', { name: 'Song controls', exact: true })).toBeVisible();
+  });
+
+  test('F enters fullscreen and hides idle controls without requiring a pointer click', async ({ page }) => {
+    await page.clock.install();
+    await page.goto(PLAYER_PATH);
+    await noNativeFullscreen(page);
+    const audio = page.getByLabel(`${SONG_TITLE} audio`, { exact: true });
+    await audio.evaluate((media) => { media.muted = true; });
+    await page.getByRole('button', { name: 'Play song', exact: true }).focus();
+    await page.keyboard.press('Tab');
+    // Safari's system keyboard settings can skip buttons during native Tab
+    // navigation; explicitly select the same starting control in each engine.
+    await page.getByRole('button', { name: 'Play song', exact: true }).focus();
+    await page.keyboard.press('Space');
+    await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeGreaterThan(0);
+    await page.keyboard.press('f');
+    const controls = page.getByRole('region', { name: 'Song controls', exact: true });
+    await expect(exit(page)).toBeVisible();
+    await page.clock.fastForward(4000);
+    await expect(controls).toBeHidden();
+    await expect(audio).toHaveJSProperty('paused', false);
+    await page.keyboard.press('Tab');
+    await page.getByRole('slider', { name: 'Song position' }).focus();
+    await expect(page.getByRole('slider', { name: 'Song position' })).toBeFocused();
+    await page.clock.fastForward(4000);
+    await expect(controls).toBeVisible();
   });
 });
 
@@ -172,11 +250,14 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 844, height: 390 }
     await expect(controls).toBeHidden();
     const position = await audio.evaluate((media) => media.currentTime);
     const bounds = await picture.boundingBox();
-    const point = { x: bounds.x + bounds.width * 0.75, y: bounds.y + bounds.height * 0.75 };
+    // Use exposed artwork above the landscape toolbar. Portrait rotates the
+    // picture, so its forward-seek half is the lower half of the screen.
+    const point = { x: bounds.x + bounds.width * 0.75, y: bounds.y + bounds.height * (viewport.width > viewport.height ? 0.25 : 0.75) };
     await page.touchscreen.tap(point.x, point.y);
     await page.touchscreen.tap(point.x, point.y);
     await expect.poll(() => audio.evaluate((media) => media.currentTime)).toBeGreaterThan(position + 4);
     await expect(audio).toHaveJSProperty('paused', false);
+    await page.keyboard.press('Shift'); // Reveal controls before moving assistive focus.
     await page.getByRole('combobox', { name: 'Playback speed' }).focus();
     await page.clock.fastForward(4000);
     await expect(controls).toBeVisible();

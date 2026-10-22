@@ -7,6 +7,16 @@ html {
   --player-surface: #edf3fa;
   --player-link: #155a8a;
   --player-focus: #155a8a;
+  /* Video controls stay dark in both themes, matching the authored artwork. */
+  --player-controls-background: #101827;
+  --player-controls-text: #fff;
+  --player-controls-surface: #18273b;
+  --player-controls-hover: #2b3b52;
+  --player-controls-border: #8294ab;
+  --player-controls-divider: #3c4e65;
+  --player-accent: #ffd100;
+  --player-accent-hover: #ffe16b;
+  --player-accent-text: #101827;
   color-scheme: light;
   font-size: 100%;
 }
@@ -53,7 +63,7 @@ body {
 }
 
 .song-player-screen {
-  border-radius: 0.5em;
+  border-radius: 0.75em;
   background: #070b1a;
   color: #fff;
   overflow: hidden;
@@ -77,29 +87,46 @@ body {
 
 .song-player-controls {
   grid-area: 2 / 1;
-  padding: 0.25em 0.5em 0.4em;
-  background: #101827;
+  padding: 0.4em 0.75em 0.75em;
+  background: var(--player-controls-background);
+  color: var(--player-controls-text);
   color-scheme: dark;
 }
 
-.song-player-toolbar {
+.song-player-toolbar,
+.song-player-playback-controls,
+.song-player-view-controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.2em;
+  gap: 0.35em;
+}
+
+.song-player-toolbar {
+  justify-content: space-between;
+  gap: 0.5em 1em;
+  padding-block: 0.25em 0.65em;
+}
+
+.song-player-playback-controls {
+  min-width: 0;
+}
+
+.song-player-view-controls {
+  margin-inline-start: auto;
 }
 
 .song-player-seek {
   display: block;
   width: 100%;
-  height: 1.5em;
+  height: 1.75em;
   margin: 0;
-  accent-color: #ffd100;
+  accent-color: var(--player-accent);
   cursor: pointer;
 }
 
 .song-player-time {
-  margin-right: auto;
+  margin-inline: 0.4em;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -154,10 +181,6 @@ body {
   z-index: 2;
   /* Visibility returns immediately so Tab can focus a control in this event. */
   transition: opacity 180ms ease, visibility 0s;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.1em 0.6em;
 }
 
 /* Fullscreen artwork and chrome use the same dark surface in both themes. */
@@ -181,19 +204,6 @@ body {
   .is-fullscreen .song-player-controls {
     transition: none;
   }
-}
-
-.is-fullscreen .song-player-seek {
-  flex: 1 0 100%;
-}
-
-.is-fullscreen .song-player-toolbar {
-  flex: 1 1 22em;
-}
-
-.is-fullscreen .song-player-track-label {
-  flex: 1 1 17em;
-  padding-block: 0;
 }
 
 .song-player audio {
@@ -234,47 +244,85 @@ body {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  width: 2.5em;
-  height: 2.5em;
+  width: 2.75em;
+  height: 2.75em;
   padding: 0.4em;
   border: 2px solid transparent;
   background: transparent;
-  color: #fff;
+  color: var(--player-controls-text);
 }
 
 .song-player-controls button:disabled { opacity: 0.5; cursor: default; }
 .song-player-controls button:hover:not(:disabled) {
-  background: #2b3b52;
+  background: var(--player-controls-hover);
+}
+
+.song-player-controls .song-player-play {
+  width: 3em;
+  height: 3em;
+  border-radius: 50%;
+  background: var(--player-accent);
+  color: var(--player-accent-text);
+}
+
+.song-player-controls .song-player-play:hover:not(:disabled) {
+  background: var(--player-accent-hover);
 }
 
 .song-player-controls .song-player-back,
 .song-player-controls .song-player-forward {
-  width: 3em;
+  width: 2.75em;
   padding-inline: 0.2em;
 }
 
-.song-player-track-label {
+.song-player-settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 0.6em 1.25em;
+  padding-top: 0.65em;
+  border-top: 1px solid var(--player-controls-divider);
+}
+
+.song-player-track-label,
+.song-player-speed-label {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.4em;
-  padding: 0.4em;
+  gap: 0.5em;
+  min-width: 0;
+}
+
+.song-player-track-label {
+  flex: 2 1 21em;
+}
+
+.song-player-speed-label {
+  flex: 1 1 16em;
+}
+
+.song-player-track,
+.song-player-speed {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 2.75em;
+  padding: 0.35em 0.5em;
+  border: 1px solid var(--player-controls-border);
+  border-radius: 0.4em;
+  background: var(--player-controls-surface);
+  color: var(--player-controls-text);
 }
 
 .song-player-track {
-  flex: 1 1 12em;
-  min-width: 0;
-  max-width: 100%;
-  min-height: 2.5em;
-  padding: 0.25em;
-  border: 1px solid #8294ab;
-  border-radius: 0.3em;
-  background: #18273b;
-  color: #fff;
+  flex: 1 1 15em;
+}
+
+.song-player-speed {
+  flex: 1 1 8em;
 }
 
 .song-player-controls button[aria-pressed="true"] {
-  color: #ffd100;
+  color: var(--player-accent);
   border-bottom-color: currentColor;
 }
 
@@ -362,8 +410,8 @@ body {
   grid-area: 3 / 1;
   margin: 0;
   padding: 0.5em;
-  color: #fff;
-  background: #101827;
+  color: var(--player-controls-text);
+  background: var(--player-controls-background);
 }
 
 .song-player-status:empty {
@@ -381,7 +429,7 @@ body {
 
 .song-player summary {
   display: list-item;
-  padding: 0.4em 0;
+  padding: 0.6em 0;
   cursor: pointer;
 }
 
@@ -393,8 +441,13 @@ body {
 }
 
 .song-player-controls :focus-visible {
-  outline-color: #ffd100;
+  outline-color: var(--player-accent);
   outline-offset: -3px;
+}
+
+.song-player-controls .song-player-play:focus-visible {
+  outline-color: var(--player-controls-text);
+  outline-offset: 3px;
 }
 
 /* The picture and its controls are deliberately dark in both page themes. */
@@ -433,21 +486,32 @@ body {
   right: auto;
 }
 
-.song-player-speed-label {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.3em;
+.song-player-tips {
+  margin-block: 0.6em;
+  padding-inline: 0.75em;
+  border: 1px solid var(--player-border);
+  border-radius: 0.5em;
+  background: var(--player-surface);
 }
 
-.song-player-speed {
-  min-height: 2.5em;
-  max-width: 100%;
-  padding: 0.25em;
-  border: 1px solid #8294ab;
-  border-radius: 0.3em;
-  background: #18273b;
-  color: #fff;
+.song-player-tips summary {
+  font-weight: 600;
+}
+
+.song-player-resources {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25em 1.25em;
+}
+
+.song-player-resources > p {
+  margin-block: 0;
+}
+
+.song-player-resources a {
+  display: inline-block;
+  padding-block: 0.4em;
 }
 
 .song-player-help {
@@ -492,6 +556,7 @@ body {
   .song-player-screen,
   .song-player-controls,
   .song-player-help,
+  .song-player-tips,
   .song-player-fallback,
   .song-player-skip {
     display: none !important;
