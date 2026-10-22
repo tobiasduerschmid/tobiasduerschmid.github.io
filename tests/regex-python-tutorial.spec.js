@@ -36,7 +36,8 @@ test('learners parse three files using named fields and pass one knowledge check
 
   for (const [index, step] of tutorial.steps.entries()) {
     await expectActiveStep(page, index);
-    await expect(page.getByRole('button', { name: /^Next →/ })).toBeDisabled();
+    await expect(page.getByRole('link', { name: 'Solution', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Next →/ })).toBeEnabled();
     const model = step.solution.files.find(file => file.path === step.run_file);
     await setTutorialFileContent(page, step.run_file, model.content);
     await page.getByRole('button', { name: /^▶\s+Run$/ }).click();
@@ -45,7 +46,7 @@ test('learners parse three files using named fields and pass one knowledge check
     await a11yCheckpoint(page, `Regex in Python step ${index + 1} solved`, { feature: 'regex-python-tutorial' });
 
     if (index < 2) {
-      await expect(page.getByRole('button', { name: new RegExp(`^Step ${index + 2}:`) })).toBeDisabled();
+      await expect(page.getByRole('button', { name: new RegExp(`^Step ${index + 2}:`) })).toBeEnabled();
     }
 
     // The second check is taken in the actual detached instructions window.
@@ -62,7 +63,8 @@ test('learners parse three files using named fields and pass one knowledge check
     if (index === 0) {
       await answerOneQuestion(instructions, 'item_2');
       await expect(instructions.getByText(/You scored 0\/1/)).toBeVisible();
-      await expect(page.getByRole('button', { name: /^Step 2:/ })).toBeDisabled();
+      await expect(page.getByRole('button', { name: /^Step 2:/ })).toBeEnabled();
+      await expect(instructions.getByRole('button', { name: 'Continue to Step 2 →', exact: true })).toBeEnabled();
       await instructions.getByRole('button', { name: 'Try Again', exact: true }).click();
     }
     await answerOneQuestion(instructions, answers[index]);
@@ -72,14 +74,14 @@ test('learners parse three files using named fields and pass one knowledge check
         name: tutorial.steps[index + 1].title, exact: true,
       })).toBeVisible();
     } else {
-      await expect(page.getByText('Tutorial complete — great job!', { exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Finish Review', exact: true })).toBeEnabled();
     }
     if (instructions !== page) await instructions.close();
   }
   expect(errors).toEqual([]);
 });
 
-test('a partial regex shows completed criteria and unlocks Next after correction', async ({ page }) => {
+test('a partial regex provides feedback without blocking navigation', async ({ page }) => {
   test.setTimeout(90_000);
   await page.goto(url);
   await waitForTutorialReady(page);
@@ -96,9 +98,25 @@ def parse_file(path):
   await expect(page.getByText(/^2\s*\/\s*3 tests passed$/)).toBeVisible();
   await expect(page.getByRole('listitem').filter({ hasText: tutorial.steps[0].tests[0].description })).toContainText('✓');
   await expect(page.getByRole('listitem').filter({ hasText: tutorial.steps[0].tests[1].description })).toContainText('✗');
-  await expect(page.getByRole('button', { name: /^Next →/ })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /^Next →/ })).toBeEnabled();
   await setTutorialFileContent(page, 'filter_clips.py', partial.replace('}.txt', '}\\.txt'));
   await checkWork(page, 3);
   await expect(page.getByRole('button', { name: 'Next →', exact: true })).toBeEnabled();
-  await expect(page.getByRole('button', { name: /^Step 2:/ })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /^Step 2:/ })).toBeEnabled();
+});
+
+
+test('untouched exercises can be skipped and solutions are available immediately', async ({ page }) => {
+  await page.goto(url);
+  await waitForTutorialReady(page);
+  await page.getByRole('button', { name: /^Step 3:/ }).click();
+  await expectActiveStep(page, 2);
+  await expect(page.getByRole('link', { name: 'Solution', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /^Step 1:/ }).click();
+  await page.getByRole('button', { name: 'Next →', exact: true }).click();
+  await page.getByRole('button', { name: 'Skip Knowledge Check', exact: true }).click();
+  await expectActiveStep(page, 1);
+  await page.getByRole('link', { name: 'Solution', exact: true }).click();
+  await page.getByRole('button', { name: /^▶\s+Run$/ }).click();
+  await expect(page.getByRole('region', { name: 'Program output', exact: true })).toContainText(outputs[1]);
 });

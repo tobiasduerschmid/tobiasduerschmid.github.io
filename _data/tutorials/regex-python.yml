@@ -6,8 +6,10 @@ learning_objectives:
   - "Apply named capture groups to extract fields from a matching line."
   - "Create integer values from captured text while preserving file order."
 backend: pyodide
-require_tests: true
-require_quiz: true
+require_tests: false
+require_quiz: false
+allow_skip_steps: true
+instructor_mode: true
 autosave_type: files
 reset_type: files
 
