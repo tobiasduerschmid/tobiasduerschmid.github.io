@@ -327,7 +327,12 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
           },
           findingCount: findings.length, findings, runtimePageErrors: pageErrors,
           evidence: { ...desktopEvidence, mobileChecked: false, darkModeAt320Checked: false, mobileNavigationError },
-          criteria: buildCriteriaMatrix(findings, desktop.evidence),
+          criteria: buildCriteriaMatrix(findings, desktop.evidence).map((criterion) => {
+            if (['1.4.10', '1.4.12', '2.5.8'].includes(criterion.id) && criterion.findingCount === 0) {
+              return { ...criterion, status: 'incomplete' };
+            }
+            return criterion;
+          }),
         }, pageStartedAt);
         continue;
       }
