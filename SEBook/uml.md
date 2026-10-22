@@ -3,6 +3,15 @@ title: "UML Unified Modeling Language"
 layout: sebook
 ---
 
+<link rel="stylesheet" href="/css/song-video.css">
+<link rel="stylesheet" href="/css/print-light.css">
+
+**Start with the song.** *Draw It Out* is a ten-minute music video that follows one library app through the views of this chapter and the next ones: class diagrams with objects, visibility, generalization, and associations; aggregation and composition; an ER data view and a runtime component view; sequence diagrams with synchronous and asynchronous messages and the `alt`, `opt`, and `loop` fragments; and a state machine with events, guards, and actions. It ends with the design principles these models help you reason about: single responsibility, open–closed, dependency inversion, interface segregation, Liskov substitution, one home for each rule, and clear names. After the song, a six-question quiz asks you to apply these ideas: each question pauses for thinking time before its answer is revealed, and with the player's quiz pauses turned on, it waits until you press Play. Captions are on by default.
+
+Before you press play, predict: a `ReadingList` *owns* its entries (composition), and each entry *references* a `Book`. You delete the list. Which objects disappear?
+
+{% include song-video.html song=site.data.songs.draw_it_out id="uml-song" %}
+
 # Unified Modeling Language (UML)
 
 ## Why Model?
@@ -98,10 +107,17 @@ Order ..|> Billable
 Customer "1" -- "*" Order
 Order *-- "1..*" LineItem
 LineItem "*" -- "1" Product
+callout top of text "«interface»" : Interface: a contract of public operations
 callout right of text "Customer" : Class: shared structure and behavior
-callout right of text "-id: Integer" : Private attribute: a value each customer stores
-callout left of text "+placeOrder()" : Public operation: behavior a caller can request
-callout right of text "1..*" : Multiplicity: each order has at least one line item
+callout right of text "-price: Real" : Attributes: values each object stores
+callout left of text "+calcTotal(): Real" : Operations: behavior that can be invoked
+callout left of shape polygon occurrence 2 : Realization: fulfills the interface contract
+callout right of shape polygon occurrence 1 : Generalization: also a kind of the superclass
+callout right of edge 3 middle : Association: a type of link between objects
+callout left of text "*" : Multiplicity *: zero or more
+callout top of text "1" : Multiplicity 1: exactly one
+callout left of shape polygon occurrence 3 : Composition: exclusive owner; parts die with it
+callout right of text "1..*" : Multiplicity 1..*: at least one
 @enduml'></div>
 
 ### Sequence Diagram
@@ -122,10 +138,11 @@ else [not found]
   server --> client: 404 Not Found
 end
 deactivate server
-callout left of element client : Participant: an object taking part in the interaction
-callout top of text "GET /book/42" : Synchronous call: the sender waits for a reply
-callout left of edge 3 end : Dashed reply: a result returned to the caller
-callout left of text "ALT" : Alternative: at most one guarded branch runs
+callout top of text "client: Client" : Lifeline header: name, then type
+callout right of edge 1 end : Synchronous call: the sender waits for completion
+callout left of text "bookData" : Reply: returns control and any results
+callout right of text "ALT" : Alt: at most one guarded branch runs
+callout left of text "[book found]" : Guard: must be true to choose this branch
 @enduml'></div>
 
 ### State Machine Diagram
@@ -140,9 +157,10 @@ Paid --> Refunded : return_initiated
 Delivered --> [*]
 Cancelled --> [*]
 Refunded --> [*]
-callout left of edge 1 start : Initial pseudostate: the lifecycle starts here
-callout right of text "Paid" : State: a condition in the order lifecycle
+callout left of edge 1 start : Initial pseudostate: execution starts here and moves on
+callout right of text "Created" : State: waiting, doing work, or meeting a condition
 callout right of text "payment_received" : Trigger: an event that may fire this transition
+callout left of text "customer_cancels / payment_timeout" : Transition label: event, then the effect after /
 callout right of edge 7 end : Final state: this region has completed
 @enduml'></div>
 
@@ -165,7 +183,8 @@ Customer -- UC1
 Customer -- UC2
 Admin -- UC3
 Admin -- UC4
-callout left of text "Customer" : Actor: an external role interacting with the system
-callout right of text "Place Order" : Use case: a goal the system helps an actor achieve
-callout top of text "Online Store" : System boundary: the use cases inside belong to this system
+callout left of text "Customer" : Actor: an outside role, played by a user or system
+callout right of text "Place Order" : Use case: valued behavior the system performs
+callout top of text "Online Store" : System boundary: the subject of these use cases
+callout bottom of edge 1 middle : Association: this actor participates in the use case
 @enduml'></div>

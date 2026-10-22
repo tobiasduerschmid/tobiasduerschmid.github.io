@@ -39,12 +39,12 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        Behavior inserted only when a condition is true is `<<extend>>`, not `<<include>>`. Include means the base use case always inserts the included behavior.
+        Behavior that runs only when a condition is true is `<<extend>>`, not `<<include>>`. With `<<include>>`, the included behavior always runs as part of the including use case.
       2: |
         Specialization would use generalization notation. Include is about factoring mandatory shared behavior into a separate use case.
       3: |
         That describes `<<extend>>`, which inserts behavior into a base use case when its condition is true. Here `Purchase Item` includes `Login`.
-    explanation: "**`<<include>>` means Purchase Item always inserts Login.** The included behavior is unconditional — like a function call that always runs. `<<extend>>` is the relationship that inserts behavior when its condition is true."
+    explanation: "**With `<<include>>`, the included behavior always runs as part of the including use case.** Here, Login always runs as part of Purchase Item. `<<extend>>` runs when its condition is true."
 
   - id: 3
     difficulty: intermediate
@@ -56,17 +56,17 @@ questions:
     options:
       - "Include uses a solid arrow; extend uses a dashed arrow."
       - "Include is for actors; extend is for use cases."
-      - "Include always inserts its behavior; extend runs when its condition is true."
+      - "The included behavior always runs; extend runs when its condition is true."
       - "Include arrows point to the base; extend arrows point to the extension."
     correct_index: 2
     option_feedback:
       0: |
-        Both include and extend are shown as dashed arrows with stereotypes. Include always inserts its behavior. Extend inserts behavior when its condition is true.
+        Both include and extend are shown as dashed arrows with stereotypes. With `<<include>>`, the included behavior always runs as part of the including use case. Extend runs when its condition is true.
       1: |
         Include and extend are relationships between use cases. Actor associations are the lines between actors and use cases.
       3: |
         The arrow directions are easy to reverse: include points from the base use case to the included use case, while extend points from the extension to the base.
-    explanation: "**`<<include>>` always inserts the included behavior. `<<extend>>` inserts its behavior when its condition is true; a missing condition counts as true.** Both use dashed arrows, but they point in opposite directions: include from base to included, extend from extension to base."
+    explanation: "**With `<<include>>`, the included behavior always runs as part of the including use case. `<<extend>>` runs when its condition is true; a missing condition counts as true.** Both use dashed arrows, but they point in opposite directions: include from the including use case to the included one, extend from the extension to the base."
 
   - id: 4
     difficulty: intermediate

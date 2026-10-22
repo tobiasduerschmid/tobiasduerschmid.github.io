@@ -11,10 +11,10 @@ cards:
 
   - id: 2
     difficulty: intermediate
-    question: "In a UML use case diagram, what is the difference between `<<include>>` and `<<extend>>`?"
-    answer: "`<<include>>` always inserts its behavior. `<<extend>>` inserts behavior when its condition is true."
+    question: "What is the difference between `<<include>>` and `<<extend>>`?"
+    answer: "`<<include>>`: the included behavior always runs as part of the including use case. `<<extend>>` runs when its condition is true."
     explanation: >
-      Include factors out shared behavior that the base always inserts. Extend inserts extra behavior into the base when its condition is true; if no condition is shown, UML treats it as true. Both use dashed arrows, but the directions differ: include points toward the included use case; extend points toward the base use case.
+      Include factors out shared behavior: the included behavior always runs as part of the including use case. Extend adds behavior to the base when its condition is true; if no condition is shown, UML treats it as true. Both use dashed arrows, but the directions differ: include points toward the included use case; extend points toward the base use case.
 
   - id: 3
     difficulty: intermediate

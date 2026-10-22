@@ -3,7 +3,7 @@
 # These are starting points; browser edits never modify the course playlists.
 - id: cs35l
   title: CS 35L
-  description: The Unix shell, Git history, the networking stack, information hiding, user stories, and test-driven development.
+  description: The Unix shell, Git history, the networking stack, information hiding, user stories, test-driven development, and UML modeling with design principles.
   songs:
     - small_tools_one_job_each
     - snapshots_and_pointers
@@ -11,3 +11,4 @@
     - every_module_keeps_a_secret
     - invest_in_your_stories
     - red_green_refactor
+    - draw_it_out

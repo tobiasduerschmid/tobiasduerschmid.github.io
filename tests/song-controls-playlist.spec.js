@@ -8,7 +8,9 @@ const defaultSongCount = coursePlaylists.find(playlist => playlist.id === 'cs35l
 
 const git = { title: 'Snapshots and Pointers: a song about Git', path: '/assets/song-player/snapshots-and-pointers.html' };
 const network = { title: 'Unbox the Stack: a song about networking', path: '/assets/song-player/unbox-the-stack.html' };
-const shell = { title: 'Small Tools, One Job Each: a song about the Unix shell', path: '/assets/song-player/small-tools-one-job-each.html' };
+const shell = { title: 'Small Tools, One Job Each: a song about the Unix shell', path: '/assets/song-player/small-tools-one-job-each.html', addLabel: /^Add to playlist\s*: Small Tools/ };
+// Spoken after the song: its quiz checkpoints sit in the silence before each reveal.
+const uml = { title: 'Draw It Out: a song about UML models and design principles', path: '/assets/song-player/draw-it-out.html', addLabel: /^Add to playlist\s*: Draw It Out/ };
 const playlistPath = '/SEBook/playlist.html';
 const queue = (page) => page.getByRole('list', { name: 'Your playlist', exact: true });
 const audioFor = (page, song) => page.getByLabel(`${song.title} audio`, { exact: true });
@@ -447,7 +449,7 @@ test('touch dragging reorders without scrolling the grip @chromium', async ({ br
   await context.close();
 });
 
-for (const song of [git, network, shell]) {
+for (const song of [git, network, shell, uml]) {
   test(`${song.title}: navigation controls are absent outside playlists`, async ({ page }) => {
     await page.goto(song.path);
     await expect(page.getByRole('button', { name: 'Play song', exact: true })).toBeVisible();
@@ -463,7 +465,7 @@ for (const song of [git, network, shell]) {
     await checkbox.check();
     await page.reload();
     await expect(checkbox).toBeChecked();
-    if (song === shell) await page.getByRole('button', { name: /^Add to playlist\s*: Small Tools/ }).click();
+    if (song.addLabel) await page.getByRole('button', { name: song.addLabel }).click();
     await page.getByRole('button', { name: `Play: ${song.title}`, exact: true }).click();
     const frame = page.locator('#playlist-frame').contentFrame();
     const audio = audioFor(frame, song);

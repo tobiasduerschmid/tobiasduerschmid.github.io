@@ -292,7 +292,7 @@ layout landscape
 class Voter
 class Vote
 Voter x-- Vote
-callout bottom of edge 1 start : X: this end is not navigable
+callout bottom of edge 1 end : X: this end is not navigable
 @enduml'></div>
 
 In the full UML notation, an X on the `Voter` end means that the *opposite* lifeline cannot navigate to it — i.e., `Vote` does *not* hold a reference back to `Voter`. (`Voter`'s navigability toward `Vote` is then determined by whatever is marked on the `Vote` end.) Note: the X mark is a formal UML 2 notation that many simplified tools do not render, and per UML 2.5, when one end carries a navigability arrow but the other end is unmarked, the unmarked end's navigability is formally **undefined**, not "non-navigable" by default {% cite OMG2017UML %}.

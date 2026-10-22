@@ -32,6 +32,10 @@ const songPlayers = [
     name: 'Object-oriented programming', path: '/assets/song-player/let-the-object-decide.html', cameoTime: 3,
     storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/let_the_object_decide.yml'), 'utf8')),
   },
+  {
+    name: 'UML and design principles', path: '/assets/song-player/draw-it-out.html', cameoTime: 5,
+    storyboard: yaml.load(fs.readFileSync(path.join(__dirname, '..', '_data/songs/draw_it_out.yml'), 'utf8')),
+  },
 ];
 const lines = new Map(storyboard.sections.flatMap((section) => section.lines).map((line) => [line.id, line]));
 const finalCelebration = lines.get('chorus-4-8').marks.moves + 0.2;

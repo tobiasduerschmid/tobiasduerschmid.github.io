@@ -216,6 +216,24 @@ green flags for the quiz, and single-line pictures such as a vtable, a
 Rectangle/Square test bench that resizes, and the grid of classes against
 operations.
 
+"Draw It Out", the UML and design-principles song on `SEBook/uml.md`, draws
+its notation with the SE Book's own ArchUML renderer: the storyboard's
+`extras` load `js/ArchUML/uml-bundle.js` and `js/song-video/model-kit.js`
+(styles in `css/song-video-model-kit.css`). `ModelKit.diagram()` renders a
+class, sequence, state, component, or ER spec in an off-screen host, so
+ArchUML can lay it out while the player keeps the stage hidden, records the
+bounds of every drawn element (boxes, message and transition routes,
+characters of labels), crops the drawing, and moves the SVG onto a paper
+sheet. The choreography then rings, dims, reveals, traces, or labels parts
+of the real notation in an overlay inside the same SVG, so emphasis scales
+with what it points at. Objects, tables, code, and measured shapes are cards
+beside the diagrams. Use `layout portrait` for a vertical state machine.
+Its six-question quiz follows the song on the same soundtrack: spoken by
+macOS `say` and placed on an exact timeline, so its lines carry no `marks`.
+Each stem line holds the question's `answer_at` (the reveal) and a
+`pause_at` inside the eight seconds of silence before it, and
+`ModelKit.choices()` keeps the three answer cards identical until then.
+
 A section's `delivery` sets its captions: `sung` and `spoken` lines are one
 cue each, while `call` lines are quiz questions with an `answer` and
 `answer_at`, captioned as two cues. `answer` transcribes the recording;

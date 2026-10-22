@@ -48,17 +48,16 @@ steps:
 
       ### 🎯 You will learn to
 
-      - Apply a regex to select complete replay filenames.
+      - Integrate RegEx into Python scripts using the `re` module.
 
-      ### Regex Syntax Reminder
+      ### `re` Python Package API Summary
 
       - `import re` loads Python's regex module; `r"..."` keeps backslashes literal.
       - `re.fullmatch(pattern, text)` matches the **whole** text or returns `None`.
-      - `\d` matches a digit; `{m,n}` repeats the preceding item between `m` and `n` times.
-      - `\.` matches a literal dot; plain `.` accepts any non-newline character.
 
       ### Input File
-
+      Read the `clips.txt` file, which contains replay filenames. 
+      
       Example lines from `clips.txt`:
 
       ```text
@@ -188,13 +187,11 @@ steps:
 
       ### 🎯 You will learn to
 
-      - Apply one named group to read signed scores as integers.
+      - Use RegEx named groups to retrieve specific parts of a match.
 
-      ### Regex Syntax Reminder
+      ### `re` Python Package API Summary
 
-      - `[+-]` matches either sign; `?` makes the preceding item optional; `+` means one or more.
       - `(?P<field>...)` names a capture; `match.group("field")` reads its text.
-      - `int("-08")` converts signed text to the integer `-8`.
 
       ### Input File
 
@@ -355,12 +352,7 @@ steps:
 
       ### 🎯 You will learn to
 
-      - Apply two named groups to produce a name and integer score.
-
-      ### Regex Syntax Reminder
-
-      - `[a-z]` matches a lowercase letter; `[a-z0-9_]` also allows digits and underscores.
-      - `\s*` allows zero or more whitespace characters. Reuse `{m,n}` for length limits and `[+-]?` for an optional sign.
+      - Use RegEx named groups to retrieve specific parts of a match.
 
       ### Input File
 

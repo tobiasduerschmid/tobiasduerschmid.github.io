@@ -122,7 +122,7 @@ Use cases rarely exist in isolation. UML defines three types of relationships be
 
 ### 4.1 Inclusion (`<<include>>`)
 
-A use case can **include** the behavior of another use case. This means the included behavior **always** occurs as part of the including use case. Think of it as mandatory sub-behavior that has been factored out because multiple use cases share it.
+A use case can **include** the behavior of another use case. This means the included behavior always runs as part of the including use case. Think of it as mandatory sub-behavior that has been factored out because multiple use cases share it.
 
 <div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
 actor Customer
@@ -138,7 +138,7 @@ Customer -- UC1
 Customer -- UC2
 UC1 ..> UC3 : <<include>>
 UC2 ..> UC3 : <<include>>
-callout bottom of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: the base always inserts this behavior
+callout bottom of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: the included behavior always runs as part of the including use case
 @enduml'></div>
 
 Reading this diagram: Whenever a customer **Purchases an Item**, they **always** Login. Whenever they **Track Packages**, they also **always** Login. The Login behavior is shared, so it is factored out into its own use case and included by both.
@@ -203,7 +203,7 @@ Students often confuse `<<include>>` and `<<extend>>`. Here is a direct comparis
 
 | Feature | `<<include>>` | `<<extend>>` |
 |---------|--------------|-------------|
-| **When it happens** | **Always** --- the base inserts the included behavior | **When its condition is true.** No condition means the extension runs |
+| **When it happens** | The included behavior always runs as part of the including use case | **When its condition is true.** No condition means the extension runs |
 | **Arrow direction** | From base (including) use case **to** included use case | From extending use case **to** base (extended) use case |
 | **Analogy** | Like a function call that always executes | Like a hook that runs when its condition is true |
 | **Example** | "Purchase Item" always includes "Login" | "Purchase Item" may be extended by "Apply Coupon" |
@@ -231,7 +231,7 @@ UC2 ..> UC3 : <<include>>
 callout left of text "Customer" : Actor: an outside role, played by a user or system
 callout top of text "My Library" : System boundary: the subject of these use cases
 callout right of text "Loan Book" : Use case: valued behavior the system performs
-callout bottom of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: the base always inserts this behavior
+callout bottom of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: the included behavior always runs as part of the including use case
 @enduml'></div>
 
 ### System Walkthrough
@@ -280,7 +280,7 @@ UC3 ..> UC4 : <<include>>
 callout left of element CI : Actor: an outside role, played by a user or system
 callout top of text "GitHub Repository" : System boundary: the subject of these use cases
 callout left of text "Create Pull Request" : Use case: valued behavior the system performs
-callout right of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: the base always inserts this behavior
+callout right of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: the included behavior always runs as part of the including use case
 @enduml'></div>
 
 **Reading the diagram:**
@@ -322,7 +322,7 @@ UC2 ..> UC3 : <<include>>
 UC4 ..> UC2 : <<extend>>
 callout left of text "Host" : Actor: an outside role, played by a user or system
 callout top of text "Airbnb Platform" : System boundary: the subject of these use cases
-callout right of text "&lt;&lt;include&gt;&gt;" : Include: the base always inserts this behavior
+callout right of text "&lt;&lt;include&gt;&gt;" : Include: the included behavior always runs as part of the including use case
 callout left of text "&lt;&lt;extend&gt;&gt;" : Extend: inserted when its condition holds
 callout left of text "Search Listings" : Use case: valued behavior the system performs
 @enduml'></div>
@@ -332,7 +332,7 @@ callout left of text "Search Listings" : Use case: valued behavior the system pe
 1. **`<<include>>` (Booking → Payment):** Every booking always processes payment. There is no booking without payment — the arrow points *from* `Book Accommodation` *toward* `Process Payment`.
 2. **`<<extend>>` (Review → Booking):** A review is inserted into booking when its condition holds — here, when the guest chooses to write one. The diagram omits that condition text. The arrow points *from* `Leave Review` *toward* `Book Accommodation`, the opposite direction from `<<include>>`.
 3. **`Payment Service` as an external actor:** The payment provider lives outside the Airbnb platform boundary. Showing it as an actor with an association to `Process Payment` makes the external dependency visible in the requirements model.
-4. **Arrow direction summary:** `<<include>>` points *toward* the behavior the base always inserts. `<<extend>>` points *toward* the base use case that receives the extension when the condition is true. Both use dashed arrows — only the direction differs.
+4. **Arrow direction summary:** `<<include>>` points *toward* the included behavior, which always runs as part of the including use case. `<<extend>>` points *toward* the base use case that receives the extension when the condition is true. Both use dashed arrows — only the direction differs.
 
 ---
 
@@ -367,7 +367,7 @@ UC6 ..> UC4 : <<extend>>
 callout left of text "Student" : Actor: an outside role, played by a user or system
 callout top of text "Learning Management System" : System boundary: the subject of these use cases
 callout right of text "&lt;&lt;extend&gt;&gt;" : Extend: inserted when its condition holds
-callout bottom of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: the base always inserts this behavior
+callout bottom of text "&lt;&lt;include&gt;&gt;" occurrence 2 : Include: the included behavior always runs as part of the including use case
 callout left of text "Submit Assignment" : Use case: valued behavior the system performs
 @enduml'></div>
 

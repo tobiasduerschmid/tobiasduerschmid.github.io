@@ -102,7 +102,10 @@
     }
     const sceneTime = tracks.position().sceneTime;
     const line = lines.findLast((item) => item.start <= sceneTime);
-    visualText.textContent = line?.answer_at > sceneTime ? `Question: ${line.text}`
+    // A question stays announced until its answer, even while its answer
+    // choices are read on later lines (the spoken quiz after "Draw It Out").
+    const asked = lines.findLast((item) => item.start <= sceneTime && item.answer_at > sceneTime);
+    visualText.textContent = asked ? `Question: ${asked.text}`
       : line ? `On screen: ${line.visual}`
       : 'Visual descriptions appear here during the song.';
   }
