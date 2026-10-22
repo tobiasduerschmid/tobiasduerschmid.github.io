@@ -1,0 +1,106 @@
+<details class="tutorial-reference-sheet">
+  <summary>Shell command cheat sheet</summary>
+  <p>A quick reference for common Unix shell commands, including tools beyond these exercises. This browser lab runs a subset of them; interactive terminal programs, remote access, native builds, archives, and operating-system job control need a regular terminal. Options can differ between systems.</p>
+
+  <h3>Navigate and manage files</h3>
+  <ul>
+    <li><code>pwd</code> — print the current directory's path.</li>
+    <li><code>ls</code> — list directory contents; <code>-a</code> includes hidden names, and <code>-l</code> shows details.</li>
+    <li><code>cd DIR</code> — change directory; <code>cd ..</code> moves to the parent, and <code>cd</code> goes home.</li>
+    <li><code>mkdir DIR</code> — create a directory; <code>-p</code> also creates missing parents.</li>
+    <li><code>touch FILE</code> — update timestamps, creating an empty file if it is missing.</li>
+    <li><code>cp SOURCE DEST</code> — copy files; <code>-R</code> also copies directories and their contents.</li>
+    <li><code>mv SOURCE DEST</code> — move or rename files and directories.</li>
+    <li><code>rm FILE</code> — remove a file; <code>-r</code> removes directories and their contents.</li>
+    <li><code>rmdir DIR</code> — remove an empty directory.</li>
+    <li><code>ln -s TARGET LINK</code> — create a symbolic link to a target path.</li>
+    <li><code>find DIR -name 'PATTERN'</code> — search a directory tree for matching names; quote the pattern so the shell does not expand it first.</li>
+    <li><code>file FILE</code> — identify a file's likely type from its contents.</li>
+    <li><code>du -h DIR</code> — show disk space used by a directory and its contents in readable units.</li>
+    <li><code>df -h</code> — show used and available space on filesystems.</li>
+  </ul>
+
+  <h3>Read and search text</h3>
+  <ul>
+    <li><code>cat FILE...</code> — print files in order; with no file, copy standard input to standard output.</li>
+    <li><code>less FILE</code> — browse a file interactively, one screen at a time.</li>
+    <li><code>head -n N FILE</code> — print the first <code>N</code> lines.</li>
+    <li><code>tail -n N FILE</code> — print the last <code>N</code> lines; <code>-f</code> follows newly appended data.</li>
+    <li><code>grep 'PATTERN' FILE</code> — print lines matching a regular expression; <code>-E</code> enables extended syntax, <code>-i</code> ignores case, and <code>-v</code> selects nonmatching lines.</li>
+    <li><code>grep -F 'TEXT' FILE</code> — match literal text instead of interpreting regular-expression symbols.</li>
+    <li><code>wc FILE</code> — count lines, words, and bytes; <code>-l</code> counts only lines, and <code>-m</code> counts characters.</li>
+  </ul>
+
+  <h3>Transform and compare text</h3>
+  <ul>
+    <li><code>cut -f LIST FILE</code> — extract numbered fields, separated by tabs by default; <code>-d CHAR</code> sets another delimiter.</li>
+    <li><code>sed 's/OLD/NEW/' FILE</code> — replace the first match of a regular expression on each line; a trailing <code>g</code> replaces every match.</li>
+    <li><code>awk 'PATTERN { ACTION }' FILE</code> — select records and process fields; <code>$1</code> is the first field, and <code>$0</code> is the whole record.</li>
+    <li><code>tr SET1 SET2</code> — replace characters from standard input; <code>-d SET</code> deletes characters.</li>
+    <li><code>sort FILE</code> — order lines lexically using the current locale; <code>-n</code> compares numerically, and <code>-r</code> reverses the order.</li>
+    <li><code>uniq FILE</code> — collapse adjacent repeated lines; <code>-c</code> prefixes each group with its count.</li>
+    <li><code>paste FILE1 FILE2</code> — combine corresponding lines into tab-separated columns.</li>
+    <li><code>diff FILE1 FILE2</code> — show line-by-line differences; <code>-u</code> includes surrounding context.</li>
+    <li><code>comm FILE1 FILE2</code> — compare two sorted files, separating lines unique to each file from lines they share.</li>
+    <li><code>xargs COMMAND</code> — turn standard input into arguments for a command; use <code>-0</code> with null-separated input for filenames containing spaces.</li>
+  </ul>
+
+  <h3>Shell settings, permissions, and help</h3>
+  <ul>
+    <li><code>echo TEXT</code> — print arguments followed by a newline.</li>
+    <li><code>printf FORMAT ARG...</code> — print formatted text; include <code>\n</code> when you want a newline.</li>
+    <li><code>man COMMAND</code> — read a command's manual; this lab provides short references for <code>cut</code>, <code>sed</code>, <code>grep</code>, and <code>awk</code>.</li>
+    <li><code>help COMMAND</code> — read Bash's help for a built-in command.</li>
+    <li><code>type COMMAND</code> — show whether a name resolves to an alias, function, built-in, or executable.</li>
+    <li><code>which COMMAND</code> — locate an executable on the command search path.</li>
+    <li><code>chmod MODE FILE</code> — change access permissions; <code>chmod u+x FILE</code> adds execute permission for the owner.</li>
+    <li><code>chown OWNER FILE</code> — change a file's owner, subject to system permissions.</li>
+    <li><code>export NAME=value</code> — set a variable and make it available to child processes.</li>
+    <li><code>env</code> — list environment variables, or run a command with a modified environment.</li>
+    <li><code>source FILE</code> — execute a script in the current shell; <code>. FILE</code> is another spelling.</li>
+    <li><code>read NAME</code> — read a line from standard input into a shell variable.</li>
+    <li><code>history</code> — list commands remembered by an interactive shell.</li>
+    <li><code>whoami</code> — print the current effective user's name.</li>
+    <li><code>date</code> — display the current date and time.</li>
+    <li><code>clear</code> — clear the terminal display.</li>
+  </ul>
+
+  <h3>Processes and jobs</h3>
+  <ul>
+    <li><code>ps</code> — show a snapshot of selected running processes.</li>
+    <li><code>top</code> — monitor processes and resource use interactively.</li>
+    <li><code>kill PID</code> — send a signal to a process, normally requesting termination.</li>
+    <li><code>jobs</code> — list jobs managed by the current shell.</li>
+    <li><code>fg</code> / <code>bg</code> — resume a shell job in the foreground or background.</li>
+    <li><code>sleep N</code> — pause for <code>N</code> seconds.</li>
+    <li><code>time COMMAND</code> — report how long a command takes.</li>
+  </ul>
+
+  <h3>Remote access, archives, and development</h3>
+  <ul>
+    <li><code>ssh USER@HOST</code> — open a secure remote shell or run a remote command.</li>
+    <li><code>scp SOURCE DEST</code> — copy files between local and remote machines over a secure connection.</li>
+    <li><code>curl URL</code> — transfer data from a URL, normally printing the response body; <code>-o FILE</code> saves it.</li>
+    <li><code>wget URL</code> — download a resource to a file.</li>
+    <li><code>tar</code> — create or extract archives; <code>-cf</code> creates an archive file, and <code>-xf</code> extracts one.</li>
+    <li><code>gzip FILE</code> / <code>gunzip FILE.gz</code> — compress or decompress a file, replacing the input by default.</li>
+    <li><code>zip</code> / <code>unzip</code> — create or extract ZIP archives.</li>
+    <li><code>make TARGET</code> — build a target using the rules and dependencies in a makefile.</li>
+    <li><code>gcc</code> / <code>g++</code> — compile C or C++ source code.</li>
+    <li><code>git</code> — track versions and collaborate on source code; <code>git status</code> summarizes working-tree changes.</li>
+    <li><code>nano FILE</code> / <code>vim FILE</code> — edit a file in a terminal text editor.</li>
+  </ul>
+
+  <h3>Pipes and redirection (shell syntax)</h3>
+  <ul>
+    <li><code>A | B</code> — send command A's standard output to command B's standard input.</li>
+    <li><code>COMMAND &gt; FILE</code> — write standard output to a file, creating or overwriting it.</li>
+    <li><code>COMMAND &gt;&gt; FILE</code> — append standard output to a file.</li>
+    <li><code>COMMAND &lt; FILE</code> — read standard input from a file.</li>
+    <li><code>COMMAND 2&gt; FILE</code> — write standard error to a file.</li>
+    <li><code>COMMAND &gt; FILE 2&gt;&amp;1</code> — send both standard output and standard error to the file; redirections are processed left to right.</li>
+    <li><code>A &amp;&amp; B</code> — run B only if A succeeds; <code>A || B</code> runs B only if A fails.</li>
+    <li><code>A ; B</code> — run A, then B regardless of A's exit status.</li>
+    <li><code>COMMAND &amp;</code> — start a command in the background.</li>
+  </ul>
+</details>

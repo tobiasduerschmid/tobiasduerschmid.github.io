@@ -1,6 +1,7 @@
 title: "Shell Pipeline Practice"
 description: "Turn a web server log into reports with browser-based shell pipelines. For students who know basic shell commands, quoting, and the pipe operator; three short exercises on counting, sed, and awk."
 backend: shell-pipeline
+instructions_footer_include: shell-command-cheat-sheet.html
 output_height: "70%"
 autosave_type: files
 require_tests: false
@@ -96,10 +97,8 @@ steps:
       in the editor. Predict which report row should change, then Run again.
       This edit changes your practice input; checks still use their own files.
 
-      The [shell chapter's browser-support reference](/SEBook/tools/shell.html#shell-pipeline-practice)
-      lists the available text tools and shell syntax. Remote access,
-      downloads, compilers, archives, and operating-system job control belong
-      in the [Linux shell tutorial](/SEBook/tools/shell-tutorial.html).
+      For remote access, downloads, compilers, archives, and operating-system
+      job control, use the [Linux shell tutorial](/SEBook/tools/shell-tutorial.html).
     files: &access_files
       - path: access.tsv
         language: plaintext
