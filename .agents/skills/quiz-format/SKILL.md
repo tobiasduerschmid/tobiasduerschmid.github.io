@@ -227,6 +227,50 @@ EOF
 
 The audit only catches explicit references. Missing language or tool names need a human read: ask whether the card could be answered correctly if it appeared between a Git card and a Python card.
 
+### Check the answer against the visible premises
+
+Hide the answer and explanation, then solve the card using only its visible text
+and the taught concepts. For each fact used by the key, check whether it is a
+scenario fact supplied in the stem, a concept students are expected to know, or
+an example the prompt explicitly asks them to invent. The answer must not
+introduce a missing scenario fact: transaction boundaries, initial file/state
+values, array contents, helper behavior, or a script's name.
+
+For example, an answer saying “the email is outside the database transaction”
+needs a stem that places the email call after commit or explicitly outside that
+transaction. A prompt asking for a shell command to run a build must name the
+executable. If several outcomes remain possible, add the minimum deciding fact
+or ask students to identify that uncertainty. Do not add unrelated edge cases.
+When reviewing a set, perform this check on every item and its feedback;
+keyword searches alone cannot establish self-containment.
+
+## Short practice that matches the course
+
+For exam preparation, inspect the source task, provided solution, and relevant
+SEBook section before drafting. Identify the actual operation students must
+perform: trace output, diagnose a defect, repair one line, write a small
+expression, or justify a choice from stated constraints. Preserve that operation
+with a different example. Topic-name overlap alone is not alignment.
+
+Do not give away the decision being practised. “Copy this file using `$<` and
+`$@`” prescribes the approach; tracing a short compile rule or repairing a missing
+prerequisite practises the Make reasoning needed by build questions. Explicit
+syntax cues are appropriate only when that syntax itself is the retrieval goal.
+Keep flashcards to one bounded answer and MCQs to one decision.
+
+SE Gym cards need short, independent context: normally one or two sentences and,
+when needed, one small code fragment. Do not paste a multi-file reading into
+each shuffled card. Omit long reading questions from Gym, or create separate
+short variants when authorized. Keep an explicitly requested historical copy
+verbatim except for user-authorized edits; disclose omissions in its description.
+Exam point values do not belong in Gym prompts.
+
+Match the introductory model used in the supplied solutions. Explain its
+relevant boundary briefly in feedback (for example, database atomicity covers
+the transaction), without turning a routine exercise into an advanced caveat
+test. Read each retained or revised item as a learner, including its options,
+and remove reading that does not contribute to the decision.
+
 ## Authoring checklist
 
 Before merging a quiz file with new `option_feedback`:
@@ -242,6 +286,8 @@ Before merging a quiz file with new `option_feedback`:
 - [ ] No second-person blame; misconception is framed in the third person.
 - [ ] **Shuffle-safe**: no letter or ordinal references ("Option A", "the third choice", "the last one", etc.) in `explanation:`, `question:`, or anywhere outside `option_feedback`. Per-option reasoning lives in `option_feedback`; the `explanation` describes the correct answer or underlying principle. *Collective, content-anchored* references to wrong-option **categories** are fine ("approaches that mutate state", "options that use `WHERE` for aggregates"); references to specific options by letter or YAML index are not.
 - [ ] **Self-contained stem** (see "Self-contained stems" above): the question names its language, tool, notation, or pattern and never relies on the deck title, a lecture, a chapter, or another question. Flashcard prompts follow the same rule.
+- [ ] **Premise–answer consistency:** every scenario fact required by the key is visible before answering; neither the answer nor feedback invents context.
+- [ ] **Course task and size:** the item practises the source task’s cognitive work at the taught level, with one small decision and no multi-file reading or point labels in Gym.
 - [ ] **Distractors pass the six tests** in `references/schema.md` → "Distractor design": plausible to a partial-knower, misconception-grounded, variation-clean (one critical feature), homogeneous with the key, free of cueing, *and consistent with what the stem shows*. If a distractor fails these, fix the distractor — feedback can't rescue it.
 - [ ] **Available actions match the prompt.** Tutorial quiz snippets are read-only: no "predict before you run" or other instruction to execute them in questions, explanations, or option feedback. Preserve reasoning prompts and runnable lesson exercises.
 - [ ] **Stem hygiene** (`references/schema.md` → "Stem design"): paraphrased from the lesson, no filler clauses, options of comparable shape and length to the key. If any clause in the stem could be cut without changing the question, cut it.

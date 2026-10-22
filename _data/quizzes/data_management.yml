@@ -288,3 +288,21 @@ questions:
         Isolation is about concurrent transactions not interfering. The insert is rejected because it
         references a course row that does not exist.
     explanation: "Foreign keys enforce *referential integrity*: no row may reference a non-existent row in another table. That's a declared constraint, so rejecting the violating insert is an exercise of ACID-**Consistency**. Atomicity and Isolation are about *how* transactions execute (all-or-nothing; non-interfering), not about what states are legal. This is also a direct example of the ACID-C vs. CAP-C distinction: it has nothing to do with replicas."
+
+  - id: exam-practice-partition-unique
+    type: single
+    difficulty: intermediate
+    question: Two disconnected database replicas accept the same ticket code. After reconnection both records
+      remain, violating a uniqueness rule. Which ACID property is violated?
+    options:
+    - Atomicity
+    - Consistency
+    - Durability
+    correct_index: 1
+    option_feedback:
+      0: Atomicity concerns whether a transaction’s operations happen together. The stated failure is a broken
+        uniqueness rule.
+      2: Durability concerns retaining committed changes. Here the problem is retaining an invalid combination
+        of records.
+    explanation: Consistency requires the database to preserve its rules, including uniqueness. This is ACID
+      consistency, not the separate CAP use of that term.

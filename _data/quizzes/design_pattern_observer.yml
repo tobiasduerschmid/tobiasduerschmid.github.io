@@ -194,3 +194,50 @@ questions:
       3: |
         Counters in every observer push coordination back into the observers — the whole point of the recommendation is to centralize update-graph logic in one place. Per-observer dedup is fragile and easy to get wrong.
     explanation: "Following GoF Implementation issue #9, when dependencies form a graph (especially a DAG) a `ChangeManager` maps subjects to observers, defines an update strategy, and can coordinate a batch so each affected observer is notified once per logical change. GoF cite a `SimpleChangeManager` (notifies every observer) and a `DAGChangeManager` (handles directed acyclic dependency graphs). The ChangeManager is itself a Mediator and is typically a Singleton."
+
+  - id: 11
+    type: single
+    difficulty: intermediate
+    question: |-
+      In the Observer pattern, `observers` contains a chart and a table. What bug remains in this Python notification method?
+
+      ```python
+      def notify(self):
+          self.observers[0].update()
+      ```
+    options:
+    - It updates only the chart.
+    - It updates both displays twice.
+    - It updates the table before the chart.
+    correct_index: 0
+    option_feedback: {}
+    explanation: Index 0 selects only the chart. Iterate over all registered observers so both receive the notification.
+  - id: 12
+    type: single
+    difficulty: intermediate
+    question: A sensor uses a type switch to call `drawChart()` or `drawTable()` on subscribers. Which change
+      lets it support a new display without changing that switch?
+    options:
+    - Add a switch case for each new display.
+    - Store separate lists for each display type.
+    - Call a common update() on each subscriber.
+    correct_index: 2
+    option_feedback:
+      0: Another case still makes the sensor depend on every display type.
+      1: Separate lists still require the sensor to know the concrete display types.
+    explanation: The sensor announces a change through the Observer interface. Each display owns its rendering.
+  - id: 13
+    type: single
+    difficulty: intermediate
+    question: A pull-based Observer interface declares `update()`, and observers read values through `sensor.getValue()`.
+      Which notification matches that design?
+    options:
+    - observer.update()
+    - observer.update(sensor.getValue())
+    - observer.getValue()
+    correct_index: 0
+    option_feedback:
+      1: Passing the value would require changing the notification contract to a push design.
+      2: The query belongs to the sensor; querying an observer does not notify it.
+    explanation: The subject sends a parameterless notification. The observer then queries the subject for the
+      value.

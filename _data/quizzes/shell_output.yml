@@ -90,3 +90,107 @@ questions:
         cat marks.txt
     answer: "b"
     explanation: "Each `>` truncates the file before writing. The second command replaces the first line, leaving only `b`. Using `>>` for the second command would append instead."
+
+  - id: shell-output-errexit-or
+    type: write-in
+    difficulty: intermediate
+    question: Which words does this Bash script print with an OR list?
+    program:
+      language: shell
+      file: shell-output-errexit-or.sh
+      code: |
+        set -e
+        false ||
+            printf 'retry '
+        printf 'ready '
+        false
+        printf 'done\n'
+    answer: retry ready
+    explanation: The failure before `||` is handled by its right-hand command. The later bare `false` triggers `set
+      -e`, so execution stops before `done`.
+
+  - id: shell-output-errexit-and
+    type: write-in
+    difficulty: advanced
+    question: Which words does this Bash script print with AND lists?
+    program:
+      language: shell
+      file: shell-output-errexit-and.sh
+      code: |
+        set -e
+        false &&
+            printf 'skip '
+        printf 'start ' &&
+            false
+        printf 'end\n'
+    answer: start
+    explanation: The first `false` is a nonfinal command in an `&&` list, so it skips `skip` without exiting. The
+      final `false` in the next list triggers `set -e`.
+
+  - id: shell-output-pipeline-status
+    type: write-in
+    difficulty: advanced
+    question: This Bash script has `pipefail` disabled. What does it print?
+    program:
+      language: shell
+      file: shell-output-pipeline-status.sh
+      code: |
+        set +o pipefail
+        set -e
+        printf 'oak\n' |
+            grep 'pine' |
+            wc -l
+        printf 'done\n'
+    answer: 0 done
+    explanation: '`grep` finds no match and exits 1, but `wc` prints zero and succeeds. Without `pipefail`, the pipeline
+      status is that of its last command, so `set -e` does not stop the script.'
+
+  - id: shell-output-quote-literal
+    type: write-in
+    difficulty: intermediate
+    question: Which two values does this Bash script print?
+    program:
+      language: shell
+      file: shell-output-quote-literal.sh
+      code: |
+        place=harbor
+        printf '%s ' '$place'
+        printf '%s\n' "$place"
+    answer: $place harbor
+    explanation: Single quotes keep `$place` literal. Double quotes allow variable expansion while keeping the result
+      together as one argument.
+
+  - id: shell-output-positional-shift
+    type: write-in
+    difficulty: intermediate
+    question: What does this Bash script print?
+    program:
+      language: shell
+      file: shell-output-positional-shift.sh
+      code: |
+        set -- test 9091 atlas
+        shift
+        printf '%s %s\n' \
+            "$1" "$#"
+    answer: 9091 2
+    explanation: '`shift` removes the old first argument. The remaining arguments are `9091` and `atlas`, so `$1`
+      is `9091` and `$#` is 2.'
+
+  - id: shell-output-redirected-loop
+    type: write-in
+    difficulty: intermediate
+    question: Run in an empty directory, what does this Bash script print?
+    program:
+      language: shell
+      file: shell-output-redirected-loop.sh
+      code: |
+        for item in pear fig
+        do
+            printf '%s\n' \
+                "$item" \
+                >> fruit.txt
+        done
+        sort fruit.txt
+    answer: fig pear
+    explanation: Each loop iteration appends to the file, so those writes do not reach the terminal. `sort` reads
+      both saved lines and prints them in alphabetical order.

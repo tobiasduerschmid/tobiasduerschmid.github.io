@@ -337,3 +337,43 @@ questions:
       3: |
         Navigability is part of UML association notation. It is optional, but it is real and useful at design level.
     explanation: "**Add navigability arrowheads at the design level to show which class holds the reference.** Early analysis models prefer plain associations because the reference-holder hasn't been decided yet; in detailed design the arrowhead maps directly to a field in the tail class."
+
+  - id: 15
+    type: single
+    difficulty: intermediate
+    question: '`EmailAlert` implements interface `Alert`. Which UML relationship represents that fact?'
+    options:
+    - A dashed line with a hollow triangle pointing to Alert.
+    - A dashed line with a hollow triangle pointing to EmailAlert.
+    - A solid line with a filled diamond beside Alert.
+    correct_index: 0
+    option_feedback:
+      1: The realization arrow points to the contract being implemented, not to the implementing class.
+      2: A filled diamond expresses composition, which is a whole-part relationship rather than interface implementation.
+    explanation: Realization uses a dashed line and hollow triangular arrowhead directed from the implementation to the interface.
+  - id: 16
+    type: single
+    difficulty: intermediate
+    question: 'In a UML class diagram, `PausedState` extends abstract class `JobState`. A generalization arrow points toward `PausedState`. What is the smallest correction?'
+    options:
+    - Replace the triangle with a filled diamond.
+    - Point the hollow triangle toward JobState.
+    - Make the line dashed and retain its direction.
+    correct_index: 1
+    option_feedback:
+      0: Composition describes ownership of parts; it does not describe inheritance.
+      2: A dashed realization line is used for implementing a contract, and retaining the direction would still reverse the relationship.
+    explanation: A generalization arrow uses a solid line and a hollow triangle pointing to the more general classifier, here `JobState`.
+  - id: 17
+    type: single
+    difficulty: intermediate
+    question: A dashboard may subscribe to several feeds and survives when any feed is deleted. Which UML relationship best models a feed’s link to that dashboard?
+    options:
+    - 'Composition: the feed owns the dashboard’s lifetime.'
+    - 'Generalization: the dashboard is a kind of feed.'
+    - 'Association: the feed references an independent dashboard.'
+    correct_index: 2
+    option_feedback:
+      0: The stated lifetime and sharing contradict exclusive composite ownership by a feed.
+      1: Receiving feed updates does not make a dashboard a subtype of a feed.
+    explanation: An ordinary association captures a reference without claiming lifetime ownership. Observer registration alone does not imply composition.

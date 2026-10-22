@@ -108,3 +108,36 @@ cards:
     question: "You want to delete all files ending in `.tmp` in the current directory using a single shell command, without listing each filename explicitly."
     answer: "`rm *.tmp`"
     explanation: "The `*` wildcard is a **glob pattern** — it is expanded by the shell itself (filename expansion) before `rm` runs. Globbing is entirely separate from regular expressions: in RegEx, `*` means 'zero or more of the preceding character', not 'match anything'."
+
+  - id: 21
+    difficulty: intermediate
+    question: Write one command that prints `missing` if `grep -q needle data.txt` returns nonzero, without aborting
+      a Bash script using `set -e`.
+    hint: >-
+      Consider how Bash treats a command whose failure is tested before choosing a fallback.
+    answer: '`grep -q needle data.txt || printf "missing\n"`'
+    explanation: The command before `||` is exempt from errexit because the list handles its status. This handles
+      both no match and a grep error; distinguishing them would require checking the status separately.
+
+  - id: 22
+    difficulty: intermediate
+    question: Write a Bash loop that appends `job=lint` then `job=test` to `jobs.txt`, without printing those lines
+      to the terminal.
+    hint: >-
+      Write the command for one job first, then replace the changing part with a loop variable.
+    answer: |-
+      ```sh
+      for job in lint test; do
+          printf "job=%s\n" "$job" >> jobs.txt
+      done
+      ```
+    explanation: Each iteration expands the current job name and appends one line to the file. The redirection sends
+      these writes to the file rather than the terminal.
+
+  - id: 23
+    difficulty: intermediate
+    question: In Bash, `set -e` is active, but `false | tee build.log` succeeds. What additional setting makes
+      this pipeline fail?
+    answer: '`set -o pipefail`'
+    explanation: Without `pipefail`, the pipeline reports the final command’s success. With it, the unhandled
+      failure makes this script exit.

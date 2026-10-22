@@ -14,6 +14,11 @@ read `references/project-context.md` alongside the relevant route below.
 For static SEBook chapters also read `references/content-types/sebook-chapter.md`.
 For flashcard authoring or review, read `references/content-types/flashcards.md` for question-specific hint selection, prerequisite grounding, answer-leak checks, and the optional `hint` field.
 Project skills own authoring formats and runtime constraints.
+For exam-derived practice, inspect the exam, its available solution, and the
+corresponding teaching material. Preserve the assessed reasoning at the course's
+level, with short independent tasks. Apply the premise–answer check in
+`procedures/10_exam-design-workflow.md`; an explanation must not supply context
+that the learner needed before answering.
 
 ## Start with the task
 

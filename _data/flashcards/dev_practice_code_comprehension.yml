@@ -63,3 +63,28 @@ cards:
     question: "Name three practices that make code easier to comprehend top-down."
     answer: "Use domain-rich identifiers, expose architectural intent through package and module structure, and write comments that explain **why** an approach was chosen. Deep modules, stable interfaces, and tests-as-specifications also help."
     explanation: "These practices give future readers beacons. A reader can verify a hypothesis quickly instead of tracing every line from scratch."
+
+  - id: exam-practice-repair-rejection
+    difficulty: intermediate
+    question: A booking handler reserves 3 seats, then rejects an unauthorized request. What must the rejection
+      branch do to leave the seat count unchanged?
+    hint: >-
+      Compare the available seats before the request with the required count after rejection.
+    answer: Release those 3 seats before returning the error.
+  - id: exam-practice-trace-observations
+    difficulty: intermediate
+    question: |-
+      What pair does this JavaScript call return?
+
+      ```javascript
+      function book(allowed) {
+        let seats = 8;
+        seats -= 2;
+        if (!allowed) return [403, seats];
+        return [201, seats];
+      }
+      book(false);
+      ```
+    hint: >-
+      Track the returned status and current seat count separately. Follow only statements executed on this call.
+    answer: '`[403, 6]`. Returning an error does not undo the subtraction.'

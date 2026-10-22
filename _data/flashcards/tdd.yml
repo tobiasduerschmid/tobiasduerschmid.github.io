@@ -85,3 +85,20 @@ cards:
     question: "What are two well-established empirical findings about TDD's effects?"
     answer: "**Defect density**: industrial case studies showed **large reductions in pre-release defect density** with an **initial development-time increase**. **Cadence**: quality/productivity gains tied to **fine granularity and uniform rhythm**, not to test-first ordering per se."
     explanation: "Together these findings complicate the slogan 'red-green-refactor': the benefit comes from the *cadence* of small verified steps, not the ritual ordering of test-before-code. A team that writes tests after the code but in equally small steps captures most of the benefit; one that nominally writes tests first but in giant batches captures little."
+
+  - id: 13
+    difficulty: intermediate
+    question: In TDD, a new test fails because its input file is missing. Why is that not the failure you need
+      before implementing the feature?
+    hint: >-
+      Ask which behavior has actually executed when the failure occurs.
+    answer: It fails in setup without checking the intended behavior. Fix setup and confirm that the assertion
+      detects the missing behavior.
+  - id: 14
+    difficulty: intermediate
+    question: A new TDD test passes before you implement the feature. What should you check before writing production
+      code?
+    hint: >-
+      Imagine a deliberately incorrect implementation. Would this test distinguish it from the required behavior?
+    answer: Check whether the behavior already exists and whether the test actually exercises and asserts the
+      intended result.

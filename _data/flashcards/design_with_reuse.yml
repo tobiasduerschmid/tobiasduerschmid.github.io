@@ -133,3 +133,10 @@ cards:
     question: "Heartbleed and left-pad both illustrate that external reuse is **not a one-time investment**. Why?"
     answer: "Once you depend on a module, you also depend on its **ongoing fate**: security vulnerabilities will be discovered (you must update — Heartbleed), maintainers may abandon or weaponize the package (you must monitor — left-pad, eslint-scope), important updates may bundle API-breaking changes (you must test — urllib3 2.0.0). Adopting a dependency is signing up for ongoing maintenance work."
     explanation: "This is the deeper lesson behind all four external-reuse principles. The decision to take a dependency is a decision to maintain a relationship with that dependency for as long as your software lives."
+
+  - id: 21
+    difficulty: intermediate
+    question: A reused averaging function assumes a nonempty list. A new caller may pass `[]`. What must be
+      decided before using it?
+    answer: Define the desired empty-input behavior, then handle that case before calling the function or choose
+      a component that supports it.

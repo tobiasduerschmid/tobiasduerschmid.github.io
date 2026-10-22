@@ -31,3 +31,20 @@ cards:
     question: "In the State design pattern, who should define state transitions?"
     answer: "**Context-driven**: all transitions visible in one place. **State-driven**: each state knows its successors, more flexible but harder to see the full machine."
     explanation: "State-driven is preferred for well-defined, local transitions. Context-driven works better when transitions depend on complex external conditions."
+
+  - id: 6
+    difficulty: intermediate
+    question: A ticket uses the State pattern. Closing it changes a string label to `"Closed"`, but `ticket.state`
+      still holds an Open object. Why can it still accept edits?
+    hint: >-
+      Follow the next method call from the ticket to the object that receives it.
+    answer: Delegated calls still reach the Open object. The transition must replace the current state with
+      a Closed object.
+  - id: 7
+    difficulty: intermediate
+    question: A State-pattern ticket exposes `state` publicly. Clients can assign Closed without checking for
+      unpaid charges. How can the design enforce the closing rule?
+    hint: >-
+      List the paths by which a client can change the state. Where would a charge check have to run?
+    answer: Make the state reference private and expose a closing operation that checks the charges before changing
+      state.

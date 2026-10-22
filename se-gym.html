@@ -2866,6 +2866,8 @@ layout: sebook
       function shouldIgnoreCardShortcut(e) {
         if (!e || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return true;
         var target = e.target;
+        // Leave native keyboard scrolling available inside focusable code.
+        if (target && target.closest && target.closest('pre[tabindex]')) return true;
         var tag = target && target.tagName ? target.tagName.toLowerCase() : '';
         return tag === 'input' || tag === 'textarea' || tag === 'select' || !!(target && target.isContentEditable);
       }

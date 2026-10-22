@@ -72,3 +72,12 @@ cards:
     difficulty: basic
     question: "What does **HTTPS** add on top of HTTP, and why is it important?"
     answer: "HTTPS adds **TLS encryption, integrity protection, and server authentication** to HTTP. It protects sensitive data (passwords, personal info) from being read or modified in transit. Modern web guidance is to serve public pages and subresources over HTTPS, even when the page itself is not collecting sensitive data."
+
+  - id: exam-practice-delta-vs-snapshot
+    difficulty: intermediate
+    question: A text editor sends incremental edits; a game sends complete cursor positions. Why is a lost update
+      more serious for the editor?
+    hint: >-
+      Drop the middle of three updates. Does the last update contain enough information to recover?
+    answer: Later edits depend on earlier edits, so a lost edit can corrupt the document. A later complete cursor
+      position replaces a lost one.

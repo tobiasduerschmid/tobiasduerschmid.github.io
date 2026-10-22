@@ -172,3 +172,42 @@ questions:
       3: Aggregate metrics can already be compared with pass/fail thresholds without a special TDD framework. The missing ingredient is a representative evaluation design, not a framework capability.
     explanation: |
       Statistical quality can be checked with a binary assertion such as `accuracy >= required_accuracy`, using a representative held-out dataset and accounting for uncertainty. Keep known-failure regression cases too. The error here is treating two passing examples as evidence of generalization, not the use of a pass/fail result.
+
+  - id: 9
+    type: single
+    difficulty: intermediate
+    question: A new test fails because its fixture file is missing, before reaching the assertion. What should happen before treating it as the intended Red step?
+    options:
+    - Fix setup and verify failure at the intended behavior.
+    - Implement the feature until the fixture error disappears.
+    - Count any failure as evidence that the test detects the bug.
+    correct_index: 0
+    option_feedback:
+      1: Feature code cannot establish whether an unreachable assertion checks the intended behavior.
+      2: An infrastructure error says nothing about the test’s ability to detect a missing feature.
+    explanation: The test should fail for the expected reason. Observing that failure helps establish that the check can distinguish missing behavior from correct behavior.
+  - id: 10
+    type: single
+    difficulty: intermediate
+    question: A TDD test exposes one missing rounding case. Why fix it before adding unrelated failing tests?
+    options:
+    - To reduce the number of tests kept in the suite.
+    - To keep the next implementation step focused.
+    - To avoid testing the remaining rounding cases.
+    correct_index: 1
+    option_feedback: {}
+    explanation: One small failing behavior gives a clear implementation goal and a short feedback cycle. Add
+      later cases in subsequent cycles.
+  - id: 11
+    type: single
+    difficulty: intermediate
+    question: A discount test is green. A developer adds an unrequested loyalty tier without another test. Which assessment is most accurate?
+    options:
+    - The green suite already covers the new tier.
+    - A short addition needs no separate specification.
+    - The extra behavior lacks a test specifying it.
+    correct_index: 2
+    option_feedback:
+      0: A test only supports the behavior and cases it exercises. Passing old tests does not establish the new tier’s behavior.
+      1: Even a one-line change can encode an incorrect business rule. Keep the next requirement explicit and test it.
+    explanation: The green tests support the behaviors they exercise. They do not establish correctness of speculative behavior added beyond the current requirement.

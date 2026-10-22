@@ -105,3 +105,12 @@ cards:
     question: "What does 'interface ownership' mean in DIP, and why does it matter?"
     answer: "The **high-level client** must declare and own the abstraction, tailored to its own needs. If the interface is shaped to mirror a specific low-level library, the dependency hasn't truly been inverted — it's been renamed."
     explanation: "This is what prevents the 'fake DIP' where `OrderService` depends on `IMongoRepository` whose methods are just MongoDB operations with an `I` prefix. A real inverted interface speaks the business domain's language, not the infrastructure's."
+
+  - id: 16
+    difficulty: intermediate
+    question: A `Reader.read()` contract promises a string. A subtype returns `None` at end-of-file. Why can
+      this violate the Liskov Substitution Principle?
+    hint: >-
+      Imagine a client that immediately uses the returned value as a string. Trace it with each implementation.
+    answer: It weakens the promised result. A client that calls string operations on the result can fail when
+      given the subtype.

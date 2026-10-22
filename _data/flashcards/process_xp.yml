@@ -113,3 +113,17 @@ cards:
     question: "When is XP the **wrong** process to choose?"
     answer: "When (a) the team is very large (XP doesn't scale past ~10 people in one team), (b) the domain is safety-critical and working software cannot be continuously deployed (e.g., spacecraft, certified medical devices), (c) requirements are genuinely stable and won't evolve, or (d) the team is not co-located (physical or close-virtual proximity is needed for pair programming and verbal coordination)."
     explanation: "XP's practices were engineered for a specific context — small co-located teams in evolving-requirements environments with continuous-deployment domains. In other contexts, frameworks like SAFe (large enterprise Agile), V-model (safety-critical), or even Waterfall (genuinely stable requirements) can be better fits. Picking XP for the wrong context is using the right hammer on the wrong nail."
+
+  - id: 16
+    difficulty: intermediate
+    question: During pair programming, the driver types silently and the navigator loses track. Suggest one
+      change that helps both understand the code.
+    hint: >-
+      Consider what the navigator needs in order to predict and discuss the driver’s next edit.
+    answer: Pause to discuss the next small step and then rotate driver and navigator roles.
+  - id: 17
+    difficulty: intermediate
+    question: Only one developer understands a critical module. How could pair programming reduce this project
+      risk?
+    answer: Have that developer work through changes with a teammate so both understand the module and can maintain
+      it.

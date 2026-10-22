@@ -126,3 +126,20 @@ cards:
       }
       ```
     explanation: "`for...of` is JavaScript's equivalent of Python's `for name in names`. Use `const` (not `let`) since the loop variable isn't reassigned within the body."
+
+  - id: exam-practice-route-interpolation
+    difficulty: intermediate
+    question: |-
+      Repair this Express handler so `/rooms/C7` responds with `Room C7`.
+
+      ```javascript
+      app.get("/rooms/:code", (req, res) => {
+        res.send("Room ${req.params.code}");
+      });
+      ```
+    answer: |-
+      Use backticks for interpolation:
+
+      ```javascript
+      res.send(`Room ${req.params.code}`);
+      ```

@@ -202,3 +202,16 @@ cards:
       }
       ```
     answer: "JavaScript **control flow** uses C++-style braces `{}` (not Python's colon + indentation). There is no `elif` — use `else if`. Braces are required for multi-line blocks."
+
+  - id: exam-practice-false-query-truthiness
+    difficulty: intermediate
+    question: |-
+      Here `req.query.archived` is `"false"`. What does this print, and why?
+
+      ```javascript
+      console.log(Boolean(req.query.archived));
+      ```
+    hint: >-
+      Classify the value by its JavaScript type before applying the truthiness rules.
+    answer: '`true`, because `"false"` is a nonempty string.'
+    explanation: If the API expects the text true or false, compare the value with "true" rather than relying on string truthiness.

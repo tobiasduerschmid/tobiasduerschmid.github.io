@@ -480,3 +480,19 @@ questions:
         `rm` is not a trash command. When deletion is allowed, it removes directly rather than moving
         files to `/tmp`.
     explanation: "**`rm` without `-r` refuses to remove directories — it only deletes regular files.** Plain `rm build/` prints `rm: cannot remove 'build/': Is a directory` and changes nothing. Recursive deletion needs `rm -r build/`; adding `-f` (`rm -rf build/`) also suppresses prompts and missing-file errors — the silent, forceful variant used in scripts."
+
+  - id: 23
+    type: single
+    difficulty: intermediate
+    question: 'In Bash, `build.sh` writes `ok` to stdout and `warn` to stderr. With `./build.sh 2>&1 > build.log`, where does
+      `warn` go?'
+    options:
+      - The terminal
+      - Only `build.log`
+      - Both destinations
+    correct_index: 0
+    option_feedback:
+      1: '`> build.log 2>&1` would send both streams to the file; reversing the order changes the result.'
+      2: Duplicating a file descriptor chooses a destination; it does not copy each message to two destinations.
+    explanation: Redirections apply left to right. Stderr first duplicates the current stdout destination, the terminal.
+      Only afterward is stdout redirected to the file.

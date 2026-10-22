@@ -297,3 +297,30 @@ questions:
         Assumptions* principle helps you notice the streaming issue, but the decision principle for
         choosing between them is the fit-vs-popularity rule.
     explanation: "Popular packages are usually safer defaults, but only when they fit your operating conditions. The 2 GB / memory-constrained context falsifies Library X's assumption that the file fits in memory; Library Y's lower popularity is a real cost, but a popular library that crashes your service has zero value."
+
+  - id: 13
+    type: single
+    difficulty: intermediate
+    question: A reused image decoder accepts widths up to 4096 pixels. A new app permits 12000 pixels. Which
+      check addresses the reuse risk?
+    options:
+    - Confirm both apps use the same image format.
+    - Check support for the larger image dimensions.
+    - Confirm the decoder passed its original tests.
+    correct_index: 1
+    option_feedback: {}
+    explanation: A component’s assumptions must hold in the new context. Matching formats and passing old tests
+      do not establish support for larger dimensions.
+  - id: 14
+    type: single
+    difficulty: intermediate
+    question: A dependency is pinned, but a relevant security fix is released. Which action balances reproducibility and maintenance?
+    options:
+    - Test the fixed version, then update the pin and lockfile.
+    - Remove all version constraints from future installs.
+    - Keep the vulnerable version because pinning forbids updates.
+    correct_index: 0
+    option_feedback:
+      1: Unconstrained installs make future builds unpredictable rather than validating one deliberate upgrade.
+      2: Pinning makes versions explicit; it does not prohibit controlled updates.
+    explanation: Validate the upgrade and record the chosen version. Reproducibility and timely maintenance support each other when upgrades are deliberate.

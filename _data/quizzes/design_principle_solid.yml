@@ -313,3 +313,17 @@ questions:
         Being closed to modification does not prove there is only one reason to change. OCP and SRP
         reinforce each other, but neither automatically implies the other.
     explanation: "LSP → OCP is the cleanest dependency: safe polymorphism is what lets a client stay *closed for modification* while the system remains *open for extension* via new subtypes."
+
+  - id: 13
+    type: single
+    difficulty: intermediate
+    question: An account interface promises that a successful deposit of 10 increases the balance by 10. A subtype silently keeps 2 as a fee. Which contract rule is broken?
+    options:
+    - The subtype strengthens the precondition.
+    - The subtype weakens the postcondition.
+    - The subtype preserves the client contract.
+    correct_index: 1
+    option_feedback:
+      0: A precondition restricts acceptable inputs. Here the same input is accepted, but the promised result changes.
+      2: 'Accepting the same input is insufficient: clients must also receive the promised result.'
+    explanation: A caller relying on the promised balance increase observes a different result when given the subtype. This violates the Liskov Substitution Principle.

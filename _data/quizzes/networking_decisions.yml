@@ -182,3 +182,35 @@ questions:
         A software update must arrive byte-for-byte intact — a single corrupted byte can break installation
         or fail the package's signature verification.
     explanation: "Orders, emails, and software downloads require complete ordered data. Raw UDP does not provide retransmission or ordering; TCP does. A protocol such as QUIC can add reliability over UDP, so an HTTPS download does not necessarily use TCP. TCP checksums are not cryptographic integrity proofs: software packages still need cryptographic verification. Interactive media often prefers newer packets over waiting for missing stale packets."
+
+  - id: exam-practice-snapshot-loss
+    type: single
+    difficulty: intermediate
+    question: A dashboard sends complete position snapshots every 50 ms. Old snapshots can be dropped; displaying
+      the newest one quickly matters most. Choose TCP or raw UDP.
+    options:
+    - TCP, to wait for each missing old snapshot.
+    - UDP, to allow a newer snapshot to replace a lost one.
+    - TCP, because every snapshot must arrive in sequence.
+    correct_index: 1
+    option_feedback:
+      0: Waiting for an obsolete snapshot conflicts with the stated freshness priority.
+      2: The prompt says a complete new snapshot replaces old information; it does not require every intermediate
+        snapshot.
+    explanation: UDP fits this stated loss-tolerant use case. If updates were essential incremental changes instead,
+      losing one could corrupt the reconstructed state.
+  - id: exam-practice-peer-redundancy
+    type: single
+    difficulty: intermediate
+    question: A backup network uses volunteers’ storage, has no central file server, and must serve files while
+      uploaders are offline. Which design fits?
+    options:
+    - Clients keep their only copy locally.
+    - Peers store copies for other peers.
+    - Clients download only from uploaders.
+    correct_index: 1
+    option_feedback:
+      0: A copy only on an offline client cannot be retrieved.
+      2: Depending on the uploader conflicts with the offline-access requirement.
+    explanation: Replicating files across peers lets an available peer serve a copy when the original uploader
+      is offline.

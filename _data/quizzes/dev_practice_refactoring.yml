@@ -132,3 +132,50 @@ questions:
       3: |
         Inlining worsens working-memory load and makes future payment-type changes harder.
     explanation: "Repeated conditionals over the same type code are a classic sign that behavior wants to move behind polymorphism or a Strategy boundary, so each subtype owns its variation behind a common interface and adding a new payment type touches one class instead of five `switch` statements."
+
+  - id: exam-practice-safe-condition-order
+    type: single
+    difficulty: intermediate
+    question: In Python, which condition safely checks whether `row` is a nonempty built-in list starting with
+      `"x"`?
+    options:
+    - '`row[0] == "x" and type(row) == list and len(row) > 0`'
+    - '`type(row) == list and len(row) > 0 and row[0] == "x"`'
+    - '`type(row) == list or len(row) > 0 or row[0] == "x"`'
+    correct_index: 1
+    option_feedback:
+      0: An empty list or a non-list value can fail at the first access before the guards run.
+      2: The requirements must all hold. Using or accepts values after just one successful check.
+    explanation: Python evaluates and from left to right and stops at the first false condition. Check the type
+      and length before indexing.
+  - id: exam-practice-boundary-oracle
+    type: single
+    difficulty: intermediate
+    question: A Python function accepts a list starting with `"x"` only if its length is at least 4. Which test
+      pair checks that length boundary?
+    options:
+    - '`["x",1,2] → False`; `["x",1,2,3] → True`'
+    - '`["x",1,2,3] → True`; `["x",1,2,3,4] → True`'
+    - '`["y",1,2] → False`; `["x",1,2,3] → True`'
+    correct_index: 0
+    option_feedback:
+      1: Both inputs are on the accepted side; this misses accepting a list that is one element too short.
+      2: Changing the first value and length together does not isolate the length boundary.
+    explanation: Keep the first value fixed and test immediately below and at the minimum length. This catches
+      replacing >= 4 with > 4 or >= 3.
+  - id: exam-practice-preserve-padding
+    type: single
+    difficulty: intermediate
+    question: A Python padding function adds `"."` until text has length at least 5. It leaves longer text intact.
+      Which rewrite preserves that behavior?
+    options:
+    - '`(text + "." * 5)[:5]`'
+    - '`text + "." * max(0, 5 - len(text))`'
+    - '`text + "." * max(0, len(text) - 5)`'
+    correct_index: 1
+    option_feedback:
+      0: Truncation changes the result for inputs that already exceed the target length.
+      2: 'This subtracts in the opposite direction: short inputs receive no padding, while longer inputs receive
+        extra dots.'
+    explanation: Refactoring preserves the existing outputs, including the boundary and longer-input cases. Clearer
+      names and simpler loops can improve readability without changing those outputs.

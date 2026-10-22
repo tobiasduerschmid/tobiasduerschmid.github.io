@@ -206,3 +206,30 @@ questions:
       3: |
         Keeping the sprint backlog stable protects the team's focus, but stability of the plan does not forbid having the conversation now. Deferring an urgent discussion to the next iteration violates 'customer collaboration over contract negotiation' and damages both the relationship and the product.
     explanation: "**'Responding to change over following a plan' means treating change as expected and negotiable — *not* automatically accepting it. The healthy response is a conversation that surfaces the cost of the change and the value of the displaced work, then a joint decision with the customer.** This is also why 'customer collaboration over contract negotiation' matters — the customer is a partner in the trade-off, not a counterparty who issues binding orders."
+
+  - id: 11
+    type: single
+    difficulty: intermediate
+    question: Users keep changing their priorities for a course-planning app. The team can demo working changes
+      weekly. Which approach best uses that feedback?
+    options:
+    - Freeze the feature order until the entire app is done.
+    - Reprioritize after each small working increment.
+    - Design every screen before showing users the app.
+    correct_index: 1
+    option_feedback: {}
+    explanation: Short iterations expose working behavior early, so feedback can guide what the team builds
+      next.
+  - id: 12
+    type: single
+    difficulty: intermediate
+    question: A controller has agreed, stable requirements and can be deployed only once. Failures are costly.
+      Which process emphasis fits these constraints?
+    options:
+    - Revise requirements after each live release.
+    - Discover required behavior during deployment.
+    - Plan and verify behavior before deployment.
+    correct_index: 2
+    option_feedback: {}
+    explanation: Stable requirements and a costly one-time deployment favor planning and verification before
+      release.

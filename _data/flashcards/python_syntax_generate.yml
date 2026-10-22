@@ -282,3 +282,16 @@ cards:
       return await left, await right
       ```
     explanation: Both operations are scheduled before the first await. asyncio.gather(read_left(), read_right()) is another option; creating raw coroutine objects alone does not schedule them.
+
+  - id: exam-practice-write-length-guard
+    difficulty: intermediate
+    question: Python lists `prices` and `credits` have equal lengths. Write an expression that returns their
+      pairwise differences greater than 5, in order.
+    hint: >-
+      Work through one aligned pair first. Decide whether the filter uses an input or the computed difference.
+    answer: |-
+      ```python
+      [p - c for p, c in zip(prices, credits)
+       if p - c > 5]
+      ```
+    explanation: Pair first, subtract, then filter the difference rather than either input.

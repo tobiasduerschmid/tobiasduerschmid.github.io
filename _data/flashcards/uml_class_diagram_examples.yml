@@ -90,3 +90,15 @@ cards:
       A plain association (<span class="uml-sym" data-diagram="class" data-sym="--"></span>) has **unspecified** navigability per UML 2.5 — not "bidirectional by default." An arrowhead establishes that direction of navigation; an X at the opposite end would explicitly rule out reverse navigation. In a typical design model, the tail class has a field of the head class's type. This is a design-level detail — omit it in early domain models.
 
       <div data-uml-type="class" data-uml-spec="class Employee&#10;class Boss&#10;Employee --> Boss"></div>
+
+  - id: 11
+    difficulty: intermediate
+    question: A UML abstract class declares `update()`. Its concrete subclass has no inherited implementation
+      and defines only `refresh()`. What must be corrected?
+    answer: The concrete subclass must implement `update()` with a compatible signature.
+  - id: 12
+    difficulty: intermediate
+    question: In a UML Observer class diagram, a sensor can have no displays or several displays. What multiplicity
+      belongs at the display end?
+    answer: '`0..*`'
+    explanation: '`1` would require exactly one display per sensor.'

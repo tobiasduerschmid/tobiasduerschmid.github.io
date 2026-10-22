@@ -206,3 +206,19 @@ questions:
         dynamic linking is what splits responsibility between the executable and external `.so` /
         `.dll` files.
     explanation: "**Static linking trades binary size for portability and update independence; dynamic linking trades a runtime dependency for smaller executables and shared security updates.** A pure-static binary will run on any compatible OS without external libraries. A dynamic binary needs the right shared libraries present at startup, but a single `libssl` update on the system fixes every dynamically-linked program — you don't have to recompile each one."
+
+  - id: exam-practice-heap-lifetime
+    type: single
+    difficulty: intermediate
+    question: A C function allocates a buffer with `malloc`, uses it, and returns without freeing it or handing
+      ownership to a caller. What happens to that allocation?
+    options:
+    - It is freed when the local pointer leaves scope.
+    - It remains allocated and leaks.
+    - It becomes part of the caller’s stack.
+    correct_index: 1
+    option_feedback:
+      0: Leaving scope removes the local pointer; C does not automatically call free on the allocation.
+      2: A heap allocation does not move to a stack when a function returns.
+    explanation: The allocation needs an explicit owner responsible for calling free. A local pointer’s lifetime
+      and its heap buffer’s lifetime are different.

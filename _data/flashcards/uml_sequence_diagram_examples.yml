@@ -63,3 +63,9 @@ cards:
     answer: "It marks a **found message**: the sender is outside the interaction being shown."
     explanation: >
       A found message reaches a lifeline in the diagram, but its sender is not shown. The line begins at a filled circle instead of another lifeline.
+
+  - id: 9
+    difficulty: intermediate
+    question: In a UML sequence diagram, a context holds a `ReadyState` object through an abstract `State` reference.
+      Which object receives a delegated `handle()` call?
+    answer: The current `ReadyState` object. The abstract reference does not create a second object.

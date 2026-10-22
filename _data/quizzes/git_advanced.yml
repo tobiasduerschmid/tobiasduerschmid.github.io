@@ -182,3 +182,87 @@ questions:
       - "git reset --hard HEAD~1"
       - "git commit -m 'Add forgotten file'"
     explanation: "**The correct order is add → amend --no-edit: stage the forgotten file, then fold it into the last commit while keeping the original message.** `reset --hard HEAD~1` would destroy that commit, and a fresh `commit -m` adds a fixup commit that clutters history — amend is cleaner as long as the commit hasn't been pushed."
+
+  - id: 10
+    type: single
+    difficulty: intermediate
+    question: A force-push removes your committed fix from the remote branch. Your local clone previously contained
+      it. What is the best first recovery step?
+    options:
+    - Inspect git reflog for the old commit.
+    - Fetch again to restore the old history.
+    - Reset to the current remote branch tip.
+    correct_index: 0
+    option_feedback:
+      1: Fetching follows the remote’s current history; it does not restore the removed branch tip.
+      2: The remote tip is precisely the history from which the fix is missing.
+    explanation: The local reflog may still identify the old commit. Once found, create a branch at it before
+      reintegrating the fix.
+  - id: 11
+    type: single
+    difficulty: intermediate
+    question: |-
+      You start on `main`. Both commands succeed. What is the final HEAD state?
+
+      ```sh
+      git switch --detach HEAD~1
+      git branch rescue
+      ```
+    options:
+      - Attached to `main`
+      - Attached to `rescue`
+      - Detached at the older commit
+    correct_index: 2
+    option_feedback:
+      0: The first command stops HEAD from following `main`.
+      1: Creating a branch and switching to it are separate operations.
+    explanation: '`switch --detach` detaches HEAD. `git branch rescue` creates a name for that commit but does not
+      switch to it; `git switch rescue` would attach HEAD.'
+
+  - id: 12
+    type: single
+    difficulty: intermediate
+    question: A regression test was committed only yesterday. Why can `git bisect run pytest tests/regression_test.py`
+      fail on older revisions for the wrong reason?
+    options:
+      - Older checkouts may lack the test file
+      - Bisect tests the current branch tip instead
+      - Pytest reads only files staged in the index
+    correct_index: 0
+    option_feedback:
+      1: Bisect checks out candidate revisions; it does not keep testing the original branch tip.
+      2: Pytest reads files from the working directory, not the Git index.
+    explanation: A tracked file appears only in revisions containing it. Keep a compatible regression detector outside
+      the searched history, or restore it for every candidate, so every revision receives the same check.
+
+  - id: 13
+    type: single
+    difficulty: advanced
+    question: A branch contains committed red, green, and refactor steps. You are bisecting an export bug. Which check
+      best identifies that particular regression?
+    options:
+      - A focused export-regression test
+      - The entire suite at each commit
+      - The commit message for each step
+    correct_index: 0
+    option_feedback:
+      1: An unrelated red-step test failure can label a commit bad even when export still works.
+      2: A commit message describes intent; it does not test whether export works.
+    explanation: A bad result must indicate the specific export regression. A focused detector avoids classifying
+      an intentional failure from an unrelated TDD step as the bug being sought.
+
+  - id: 14
+    type: single
+    difficulty: intermediate
+    question: Bisect identifies a squash commit that introduced both CSV export and one export bug. What is the main
+      risk of reverting that whole commit?
+    options:
+      - It removes the useful export feature too
+      - It erases the original commit from history
+      - It detaches HEAD at the faulty commit
+    correct_index: 0
+    option_feedback:
+      1: Revert adds a new inverse commit and preserves history.
+      2: Revert creates an inverse commit on the current branch; it does not check out the old commit.
+    explanation: Revert inverses the whole commit, including working feature code. Inspect the change and choose a
+      targeted fix or an intentional rollback; identifying the introducing commit does not choose the repair.

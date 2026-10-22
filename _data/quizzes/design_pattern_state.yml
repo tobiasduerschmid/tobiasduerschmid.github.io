@@ -98,3 +98,32 @@ questions:
       3: |
         A Null Object can be shared as a singleton when it is truly stateless. The compatibility of those patterns is not the issue here.
     explanation: "Because many contexts would share one instance, a Singleton state can no longer hold per-context fields or a per-context reference back to its Context. This **Singleton State** compound is memory-efficient but inflexible — only safe when the states are sure to stay purely behavioral, or when a later refactor away from shared instances is acceptable."
+
+  - id: 6
+    type: single
+    difficulty: intermediate
+    question: 'A printer uses the State pattern: Ready prints; Jammed rejects printing. Where should the differing
+      `print()` implementations live?'
+    options:
+    - In the Ready and Jammed state classes.
+    - In a state switch in every printer client.
+    - In one growing switch in the Printer class.
+    correct_index: 0
+    option_feedback: {}
+    explanation: The context delegates to its current state. Each concrete state supplies its response, keeping
+      state-dependent behavior out of clients and a central switch.
+  - id: 7
+    type: single
+    difficulty: intermediate
+    question: A game uses the State pattern for Active and Bankrupt players. The player’s account ID stays the
+      same across transitions. Where should that ID be stored?
+    options:
+    - Only in the Active state.
+    - Separately in every state object.
+    - In the Player context.
+    correct_index: 2
+    option_feedback:
+      0: The account is still needed when the player is Bankrupt.
+      1: Duplicating the ID creates copies that must be kept consistent.
+    explanation: State-independent data belongs in the context. Replacing the state object should not replace
+      the player’s identity.

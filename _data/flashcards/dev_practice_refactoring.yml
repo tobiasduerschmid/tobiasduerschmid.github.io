@@ -63,3 +63,30 @@ cards:
     question: "What is the human supervisor's role when AI performs refactorings?"
     answer: "The human identifies the smell, chooses the transformation, bounds the scope, runs tests after each step, and rejects changes that alter behavior or hide system-level design problems."
     explanation: "AI can execute many catalog refactorings, but it cannot be trusted to decide that the system behavior is preserved without human verification."
+
+  - id: exam-practice-guard-compression
+    difficulty: intermediate
+    question: |-
+      For a Python list `row` that may be empty, combine these checks into one safe condition.
+
+      ```python
+      if len(row) > 0:
+          if row[0] == "x":
+              accept(row)
+      ```
+    hint: >-
+      Try the empty list first. In Python, an `and` expression stops when an operand is false.
+    answer: |-
+      ```python
+      if len(row) > 0 and row[0] == "x":
+          accept(row)
+      ```
+    explanation: '`and` stops if the list is empty, so indexing is safe.'
+  - id: exam-practice-name-predicate
+    difficulty: intermediate
+    question: Name one refactoring, besides renaming or adding comments, for code that repeats the same five-line
+      input validation in three functions.
+    hint: >-
+      Imagine changing one validation rule. How many copies currently need the same edit?
+    answer: Extract a validation function and call it from each location, preserving the same checks and error
+      behavior.

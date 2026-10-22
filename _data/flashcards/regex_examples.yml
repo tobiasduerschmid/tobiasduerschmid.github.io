@@ -81,3 +81,46 @@ cards:
     question: "Write a regex to find all leading and trailing whitespaces in a string (commonly used for string trimming)."  
     answer: "`^\\s+|\\s+$`"
     explanation: "Matches one or more whitespace characters `\\s+` at the start `^` of the string, OR `|` one or more whitespace characters at the end `$` of the string."
+
+  - id: 11
+    difficulty: intermediate
+    question: Write a Python `re.fullmatch` pattern for alternating `p` and `q`, starting with either letter,
+      with at least 4 characters.
+    hint: >-
+      Check both starting letters and both even and odd lengths. Include a five-character example.
+    answer: '`(?:pq){2,}p?|(?:qp){2,}q?`'
+    explanation: Each alternative starts with two pairs; the optional last letter permits odd lengths.
+  - id: 12
+    difficulty: intermediate
+    question: Write a Python regex that finds `id=42;` inside text and captures only the digits in a named group `id`.
+    hint: >-
+      Mark exactly which characters belong in the named group, separately from the surrounding field text.
+    answer: '`id=(?P<id>[0-9]+);`'
+    explanation: The delimiters locate the field but sit outside the named capture. Do not anchor the entire document
+      when the task is to find a field within it.
+
+  - id: 13
+    difficulty: intermediate
+    question: Write a Python regex matching at least three space-separated `go` words at a line start, followed
+      by ` Stop`. Capture only the words as `words`.
+    hint: >-
+      Separate the first word, repeated space-word pairs, and the following marker. Test exactly two and three words.
+    answer: '`(?m)^(?P<words>go(?: go){2,})(?= Stop\b)`'
+    explanation: The first word plus two repetitions gives three. The lookahead leaves the final separator and
+      marker outside the capture.
+  - id: 14
+    difficulty: intermediate
+    question: Using Python’s `re.fullmatch`, write a pattern for zero-padded minutes and seconds `MM:SS`, each from `00` through
+      `59`.
+    hint: >-
+      Compare 59 with 60. Which digit positions need different limits?
+    answer: '`[0-5][0-9]:[0-5][0-9]`'
+    explanation: Each tens digit is restricted to 0–5; the units digit may be 0–9. Whole-string matching also rejects
+      missing zero padding and extra text.
+
+  - id: 15
+    difficulty: intermediate
+    question: Using Python’s `re.fullmatch`, write a regex for 6–12 characters that contain no whitespace but may contain punctuation.
+    answer: '`\S{6,12}`'
+    explanation: '`\S` excludes whitespace; the repetition bounds enforce the length. `\w` would incorrectly reject
+      allowed punctuation.'

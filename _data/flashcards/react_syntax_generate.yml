@@ -193,3 +193,16 @@ cards:
       );
       ```
     explanation: "A controlled input has two parts: `value={username}` binds the displayed text to state, and `onChange` updates state on every keystroke via `e.target.value`. React becomes the single source of truth for the input — you can read or validate `username` at any time without touching the DOM."
+
+  - id: exam-practice-ordered-topic-list
+    difficulty: intermediate
+    question: A React component receives `topics`, an array of unique strings. Write its return statement to display them as a numbered list with stable keys.
+    hint: >-
+      Separate the list container from the expression that creates one child per topic.
+    answer: |-
+      ```jsx
+      return (
+        <ol>{topics.map(topic => <li key={topic}>{topic}</li>)}</ol>
+      );
+      ```
+    explanation: ol provides numbering; map returns one li per topic. The unique topic strings supply the keys.

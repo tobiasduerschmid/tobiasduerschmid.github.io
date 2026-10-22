@@ -5,6 +5,15 @@
 // must appear inside the question, not only in the explanation, in both the
 // SEBook flashcard widget and the SE Gym workout integration.
 const { test, expect } = require('@playwright/test');
+const fs = require('node:fs');
+const path = require('node:path');
+const yaml = require('js-yaml');
+const diagramDeck = yaml.load(fs.readFileSync(path.join(__dirname, '../_data/flashcards/uml_class_diagram_examples.yml'), 'utf8'));
+const diagramCardCount = diagramDeck.cards.length;
+const diagramPrompt = id => diagramDeck.cards.find(card => card.id === id)
+  .question.split('<')[0].replace(/\s+/g, ' ').trim();
+const aggregationPrompt = diagramPrompt(1);
+const comparisonPrompt = diagramPrompt(3);
 
 const SEBOOK_URL = '/SEBook/uml_class_diagram.html';
 const GYM_URL = '/se-gym/';
@@ -93,7 +102,7 @@ test.describe('UML class diagram flashcards - question diagrams render in SEBook
 
     const card1 = container.locator('.flashcard-card[data-card-id="1"]');
     const question = card1.locator('.flashcard-question');
-    await expect(question).toContainText('following symbol');
+    await expect(question).toContainText(aggregationPrompt);
     await expectRenderedUml(question, /Department aggregates Professor/i);
   });
 
@@ -117,7 +126,7 @@ test.describe('UML class diagram flashcards - question diagrams render in SEBook
 
     const card3 = container.locator('.flashcard-card[data-card-id="3"]');
     const question = card3.locator('.flashcard-question');
-    await expect(question).toContainText('these two relationships');
+    await expect(question).toContainText(comparisonPrompt);
     await expectRenderedUml(
       question,
       /Building composes Room.*Library aggregates Book/i,
@@ -139,8 +148,8 @@ test.describe('UML class diagram flashcards - question diagrams render in SE Gym
   test('Question diagrams render whenever a card with one is active', async ({ page }) => {
     await page.goto(GYM_URL);
 
-    // Run all 10 cards so we will encounter cards 1 and 3 regardless of shuffle.
-    await page.locator('#max-cards').fill('10');
+    // Include the complete authored deck so cards 1 and 3 cannot be sampled out.
+    await page.locator('#max-cards').fill(String(diagramCardCount));
     await page.locator('#start-workout-btn').click();
 
     const flashcard = page.locator('.workout-flashcard');
@@ -149,29 +158,31 @@ test.describe('UML class diagram flashcards - question diagrams render in SE Gym
     let sawAggregation = false;
     let sawComparison = false;
 
-    for (let step = 0; step < 10; step++) {
+    for (let step = 0; step < diagramCardCount; step++) {
       const question = flashcard.locator('.flashcard-question');
-      const text = (await question.innerText()) || '';
+      const text = (await question.innerText()).replace(/\s+/g, ' ').trim();
+      const isAggregation = text.includes(aggregationPrompt);
+      const isComparison = text.includes(comparisonPrompt);
 
-      if (text.includes('following symbol') || text.includes('these two relationships')) {
+      if (isAggregation || isComparison) {
         // The question references a visual — verify it's actually rendered.
-        const accessibleName = text.includes('following symbol')
+        const accessibleName = isAggregation
           ? /Department aggregates Professor/i
           : /Building composes Room.*Library aggregates Book/i;
         await expectRenderedUml(question, accessibleName);
-        if (text.includes('following symbol')) sawAggregation = true;
-        if (text.includes('these two relationships')) sawComparison = true;
+        if (isAggregation) sawAggregation = true;
+        if (isComparison) sawComparison = true;
       }
 
       await flashcard.locator('.show-answer-btn').click();
       await flashcard.locator('.correct-btn').click();
 
       // After the last card, the workout completes and the card disappears.
-      if (step === 9) break;
+      if (step === diagramCardCount - 1) break;
       await expect(flashcard).toBeVisible();
     }
 
-    expect(sawAggregation, 'Card 1 (aggregation) should appear in 10-card workout').toBe(true);
-    expect(sawComparison, 'Card 3 (composition vs aggregation) should appear in 10-card workout').toBe(true);
+    expect(sawAggregation, 'Card 1 (aggregation) should appear in the complete deck workout').toBe(true);
+    expect(sawComparison, 'Card 3 (composition vs aggregation) should appear in the complete deck workout').toBe(true);
   });
 });

@@ -104,3 +104,23 @@ cards:
     question: "You merge a feature branch into main, and Git performs the merge without creating a new merge commit — it simply moves the 'main' pointer forward. What type of merge is this, and when does it occur?"
     answer: "A **fast-forward merge** — occurs when 'main' has no new commits since the feature branch was created."
     explanation: "A fast-forward merge happens when the target branch hasn't diverged. Git can simply advance its pointer in a straight line to the tip of the incoming branch, keeping the commit history perfectly linear. If both branches have diverged, Git performs a three-way merge and creates a merge commit instead."
+
+  - id: 21
+    difficulty: intermediate
+    question: You staged a Git fix, then made more edits. Which command shows only what an ordinary `git commit`
+      would record?
+    answer: '`git diff --cached`'
+    explanation: It compares the index with HEAD. Plain `git diff` shows the edits made after staging.
+  - id: 22
+    difficulty: intermediate
+    question: You stage a new `notes.txt`, then delete it with `rm`. Will an ordinary Git commit include the
+      file? Explain.
+    hint: >-
+      Track the working file and staged snapshot separately after each command.
+    answer: Yes. The index still contains the staged file; deleting the working copy does not stage its deletion.
+  - id: 23
+    difficulty: intermediate
+    question: Your Git branch is one commit ahead of its upstream, with no uncommitted changes. What command
+      publishes that commit?
+    answer: '`git push`'
+    explanation: The commit already exists locally. Staging or committing again would not publish it.

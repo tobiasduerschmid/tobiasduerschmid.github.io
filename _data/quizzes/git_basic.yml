@@ -273,3 +273,72 @@ questions:
       - "git fetch origin"
       - "git pull origin main"
     explanation: "**The correct order is remote add → push -u: register the remote alias first, then push with -u to set the upstream tracking reference — fetch and pull download data and cannot publish a local branch.** `git remote add origin <url>` registers the remote address under the alias `origin`. `git push -u origin main` uploads the branch and sets the upstream tracking reference so future `git push`/`git pull` calls need no extra arguments. `git fetch` and `git pull` *download* data — they don't publish your local branch."
+
+  - id: 14
+    type: single
+    difficulty: intermediate
+    question: |-
+      A tracked `menu.txt` contains `old`. These commands succeed. Which text will an ordinary `git commit` record?
+
+      ```sh
+      printf "draft\n" > menu.txt
+      git add menu.txt
+      printf "final\n" > menu.txt
+      ```
+    options:
+      - '`old`'
+      - '`draft`'
+      - '`final`'
+    correct_index: 1
+    option_feedback:
+      0: The index replaces the old committed version when the next commit is created.
+      2: Editing a file after staging does not refresh its staged snapshot.
+    explanation: '`git add` snapshots `draft` in the index. The later edit changes only the working file, so an ordinary
+      commit records `draft`.'
+
+  - id: 15
+    type: single
+    difficulty: intermediate
+    question: A new file is staged with `git add notes.txt`, then deleted with plain `rm notes.txt`. No other commands
+      run. What does an ordinary `git commit` do?
+    options:
+      - Commit the staged file
+      - Commit its deletion
+      - Reject the missing file
+    correct_index: 0
+    option_feedback:
+      1: A deletion must also be staged before it changes the proposed snapshot.
+      2: An ordinary commit reads the index; a staged file need not still exist in the working directory.
+    explanation: The staged copy still exists in the index. Removing the working file alone leaves an unstaged deletion
+      and does not remove the file from the proposed commit.
+
+  - id: 16
+    type: single
+    difficulty: intermediate
+    question: '`git status` reports that `main` is ahead of `origin/main` by 2 commits. What does this count describe?'
+    options:
+      - Two files staged for commit
+      - Two commits absent from the local tracking ref
+      - Two commits downloaded since the last fetch
+    correct_index: 1
+    option_feedback:
+      0: Staged file changes have not become commits and do not increase the ahead count.
+      2: Ahead counts local commits missing from the tracking ref, not downloaded commits.
+    explanation: 'The count compares local commit graphs: two commits are reachable from `main` but not `origin/main`.
+      The tracking ref is Git''s last recorded remote state, not a live network query.'
+
+  - id: 17
+    type: single
+    difficulty: intermediate
+    question: Git branch `main` is an ancestor of `topic`. With default merge settings, what does `git merge
+      topic` do when run on `main`?
+    options:
+    - Fast-forward `main`
+    - Create a merge commit
+    - Reject the divergent histories
+    correct_index: 0
+    option_feedback:
+      1: A three-way merge commit is not needed when the current branch is already an ancestor of the other
+        tip.
+      2: 'These tips are not divergent: every commit on main is already in topic.'
+    explanation: Git can advance `main` to the `topic` tip without combining divergent changes, so it fast-forwards.

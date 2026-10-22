@@ -131,3 +131,17 @@ questions:
       3: |
         Automatic retries paper over flake without fixing it, and they teach the team that a red test means 'rerun and hope'. They make the suite less trustworthy over time, not more.
     explanation: "When a release gate is consistently bypassed, the gate isn't usually wrong — its *friction* has crossed a threshold beyond which the team can't sustain it. Fix the friction: faster feedback (parallelism, smarter test selection) and lower flake rate (replace timing-sensitive code, isolate state, mock external services in the fast suite). The gate's value comes from the team's willingness to respect it, which depends on whether the gate is trustworthy and tolerably fast."
+
+  - id: 7
+    type: single
+    difficulty: intermediate
+    question: A check shows that cancelling an order leaves stock reserved. Which next activity is debugging?
+    options:
+    - Tracing the cancellation path to locate the missed release.
+    - Adding the failed check to the regression suite.
+    - Running the same check on another supported platform.
+    correct_index: 0
+    option_feedback:
+      1: Retaining the check protects against recurrence, but it does not locate the cause.
+      2: That extends testing coverage; it may reveal where the failure occurs without explaining why.
+    explanation: Testing establishes a failure relative to expected behavior. Debugging investigates its cause and supports a correction.

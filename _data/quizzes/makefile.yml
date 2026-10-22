@@ -227,3 +227,82 @@ questions:
         Make does not run every rule blindly. Timestamp checks are specifically how it skips up-to-date
         targets.
     explanation: "**Makefiles are declarative: they build a dependency graph top-down from the goal, then execute only necessary commands bottom-up.** Unlike a Bash script, they do not run top-to-bottom or rebuild blindly — prerequisites are built before the targets that need them, and anything already up to date is skipped."
+
+  - id: 11
+    type: single
+    difficulty: intermediate
+    question: "No `leaf` or `top` file exists. What does `make top` print? Recipe lines start with tabs.\n\n```make\n\
+      top: leaf\n\t@echo top\nleaf:\n\t@echo leaf\n```"
+    options:
+      - '`top` then `leaf`'
+      - '`leaf` then `top`'
+      - Only `top`
+    correct_index: 1
+    option_feedback:
+      0: Rule order in the file does not override the dependency relationship.
+      2: Requesting `top` also requires updating its prerequisite `leaf`.
+    explanation: Make builds the prerequisite before its dependent target. `@` hides each recipe command, but the
+      `echo` output remains visible.
+
+  - id: 12
+    type: single
+    difficulty: intermediate
+    question: "No file named `report` exists. This is the only rule. You run `make report` twice. How often does `echo`\
+      \ run?\n\n```make\nreport:\n\t@echo ready\n```"
+    options:
+      - Once in total
+      - Once per invocation
+      - Zero times
+    correct_index: 1
+    option_feedback:
+      0: Make does not remember success independently of files and timestamps between invocations.
+      2: An ordinary missing target runs without `.PHONY`; a collision with a real file would be a different case.
+    explanation: A recipe does not automatically create its target file. Because `report` remains absent after the
+      first run, it needs updating on the second run too.
+
+  - id: 13
+    type: single
+    difficulty: intermediate
+    question: "What command does this Make recipe run? Both `.o` files exist; `app` is missing.\n\n```make\n\
+      app: main.o math.o\n\tgcc $^ -o $@\n```"
+    options:
+    - gcc main.o math.o -o app
+    - gcc main.o -o app
+    - gcc app -o main.o math.o
+    correct_index: 0
+    option_feedback:
+      1: Using only the first prerequisite would omit math.o; $^ includes both.
+      2: The target is the output after -o, not an input object file.
+    explanation: '`$^` expands to all prerequisites, and `$@` to the target. Both object files are linked into
+      `app`.'
+  - id: 14
+    type: single
+    difficulty: intermediate
+    question: A build script creates a file named `show`. The Makefile also has a `show:` action with no prerequisites.
+      Which line makes the action run even when that file exists?
+    options:
+      - '`.SILENT: show`'
+      - '`.PHONY: show`'
+      - '`.DEFAULT_GOAL := show`'
+    correct_index: 1
+    option_feedback:
+      0: Silencing hides command echoing; it does not make an up-to-date target run.
+      2: Choosing a default goal changes what bare `make` requests, not whether an existing target needs updating.
+    explanation: A phony target denotes an action rather than an output file, so Make does not let a same-named file
+      suppress its recipe.
+
+  - id: 15
+    type: single
+    difficulty: intermediate
+    question: 'Initially every target is up to date. Then only `math.c` becomes newer. For `app: main.o math.o`, with
+      each `.o` depending on its matching `.c`, what rebuilds?'
+    options:
+      - Only `math.o`
+      - '`math.o`, then `app`'
+      - Both objects, then `app`
+    correct_index: 1
+    option_feedback:
+      0: The executable depends on `math.o`, so it must be relinked after that object changes.
+      2: '`main.o` has no changed prerequisite in this dependency graph.'
+    explanation: The changed source makes `math.o` stale. Rebuilding it then makes the dependent executable stale.
+      The unchanged `main.o` remains up to date.

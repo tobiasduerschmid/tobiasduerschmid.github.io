@@ -109,3 +109,11 @@ cards:
     question: "You have two files, `file1.txt` and `file2.txt`. Write a shell pipeline that prints all lines from both files that contain the word 'success', sorted alphabetically with duplicates removed."
     answer: "`grep -h 'success' file1.txt file2.txt | sort | uniq`"
     explanation: "`grep` can take multiple file arguments and searches all of them. By default it prefixes each match with the filename (`file1.txt:success!`), which would defeat `uniq` — identical match lines from different files would compare as different strings. The `-h` flag suppresses the filename prefix so `sort | uniq` can dedupe by content."
+
+  - id: 15
+    difficulty: intermediate
+    question: In Bash, run `./build.sh` so stdout and stderr appear on the terminal and are also saved in `build.log`.
+    hint: >-
+      Trace stdout and stderr to the pipe, then decide where to send a copy to the file.
+    answer: '`./build.sh 2>&1 | tee build.log`'
+    explanation: '`2>&1` joins stderr to stdout; `tee` copies the combined stream to the file and terminal.'

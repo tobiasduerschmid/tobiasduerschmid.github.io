@@ -1,8 +1,12 @@
 // @ts-check
+const fs = require('node:fs');
+const path = require('node:path');
+const yaml = require('js-yaml');
 const { test, expect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
 const A11Y_FEATURE = 'quiz';
+const userStories = yaml.load(fs.readFileSync(path.resolve(__dirname, '../_data/quizzes/user_stories.yml'), 'utf8'));
 
 function parseIndices(value) {
   if (!value) return [];
@@ -180,20 +184,22 @@ test.describe('Interactive Quiz Verification', () => {
   test('Optional indices are accepted when selected in SEBook quizzes', async ({ page }) => {
     await page.goto('/SEBook/userstories.html?noshuffle=1');
 
-    for (let i = 0; i < 4; i++) {
-      const card = page.locator('.quiz-question-card.active');
-      await answerVisibleMultipleChoice(card);
-      await card.locator('.next-btn').click();
+    let optionalAnswersSelected = 0;
+    // With shuffling disabled, the authored deck is the independent answer key.
+    for (const question of userStories.questions) {
+      const card = activeCard(page);
+      const multiple = question.type === 'multiple';
+      const optional = question.optional_indices || [];
+      const answers = multiple ? question.correct_indices.concat(optional) : [question.correct_index];
+      for (const index of answers) await clickOptionByIndex(card, index);
+      if (multiple) await card.getByRole('button', { name: 'Submit Answer', exact: true }).click();
+      optionalAnswersSelected += optional.length;
+      await expect(card.locator('.quiz-option.selected.incorrect')).toHaveCount(0);
+      await card.getByRole('button', { name: 'Next Question', exact: true }).click();
     }
 
-    const finalCard = page.locator('.quiz-question-card.active');
-    await expect(finalCard).toContainText('homepage to load blazing fast');
-    await answerVisibleMultipleChoice(finalCard, true);
-
-    await expect(finalCard.locator('.quiz-option.selected.incorrect')).toHaveCount(0);
-    await finalCard.locator('.next-btn').click();
-
+    expect(optionalAnswersSelected, 'the workout must exercise optional accepted answers').toBeGreaterThan(0);
     await expect(page.locator('.quiz-results:not(.hidden)')).toBeVisible();
-    await expect(page.locator('.quiz-results:not(.hidden) .current-score')).toHaveText('5');
+    await expect(page.locator('.quiz-results:not(.hidden) .current-score')).toHaveText(String(userStories.questions.length));
   });
 });

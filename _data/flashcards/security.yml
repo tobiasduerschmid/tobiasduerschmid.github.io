@@ -193,3 +193,9 @@ cards:
     question: "Distinguish **authenticity** from the three CIA properties. Why isn't it part of the triad?"
     answer: "**Authenticity** is the property that a message can be reliably attributed to a particular sender — typically achieved with a digital signature or a message-authentication code. It is closely related to integrity (both detect tampering) but adds the *who*. The classical CIA triad omits it because authenticity and the related properties of *non-repudiation* and *accountability* were historically treated as distinct goals. Modern variants (CIANA, the Parkerian hexad) often add Authenticity (and sometimes Possession, Utility) explicitly — useful, but not what the standard CIA triad refers to."
     explanation: "On a quiz that asks about 'the CIA triad', stick with C/I/A. If the question is about general security goals, naming Authenticity / Non-repudiation alongside is reasonable and shows depth."
+
+  - id: exam-practice-sql-bind
+    difficulty: intermediate
+    question: A login query concatenates the typed username into SQL. How should the query be changed to prevent
+      that text from becoming SQL syntax?
+    answer: Use a parameterized query with a placeholder, and bind the username as a value.

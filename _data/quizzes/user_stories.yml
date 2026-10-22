@@ -206,3 +206,70 @@ questions:
         A test needs an observable expected result. "Blazing fast" and "pleasant" need measurable
         targets, such as load time and design acceptance criteria, before they can be verified.
     explanation: "**Testable** fails because 'blazing fast', 'extremely modern', and 'pleasant' have no objective metric or acceptance example. Here that drags down **Estimable** too: with no performance budget, design reference, or user-testing target, the team has nothing concrete to size against. Whether the story is 'small' is context-dependent, so selecting Small is also acceptable."
+
+  - id: 6
+    type: single
+    difficulty: intermediate
+    question: A story includes calendar, chat, payroll, and storage integrations. Which split gives users a
+      useful first increment?
+    options:
+    - Import calendar events end to end.
+    - Build tables for all four integrations.
+    - Build buttons for all four integrations.
+    correct_index: 0
+    option_feedback: {}
+    explanation: One working integration delivers a complete outcome with less scope. Isolated tables or buttons
+      do not yet provide that outcome.
+  - id: 7
+    type: single
+    difficulty: intermediate
+    question: On an agreed dataset and workload, an acceptance criterion says “search feels fast.” Which replacement provides a measurable pass/fail condition?
+    options:
+    - Search uses a modern caching library.
+    - Search is faster than users expect.
+    - 95% of searches finish within 300 ms.
+    correct_index: 2
+    option_feedback:
+      0: Choosing a library specifies a mechanism; it does not state the response-time outcome.
+      1: Users can have different expectations. A test needs an agreed threshold and conditions.
+    explanation: The revised criterion names a dataset, a percentile, and a response-time limit. The team must also agree on the measurement workload and environment.
+  - id: 8
+    type: single
+    difficulty: intermediate
+    question: A library story promises due-date reminders. Its sole criterion shows an already stored due date
+      as a badge. Which INVEST criticism fits?
+    options:
+    - 'Independent: it reads existing due-date data.'
+    - 'Valuable: it does not require sending reminders.'
+    - 'Small: borrowers must wait until the due date.'
+    correct_index: 1
+    option_feedback:
+      0: Independent concerns dependencies between stories, not use of existing data or features.
+      2: Small concerns implementation effort, not the time a borrower waits.
+    explanation: Judge value using the acceptance criteria. Showing a stored date alone does not deliver a reminder.
+  - id: 9
+    type: single
+    difficulty: intermediate
+    question: For this user story, no technology choice is mandated. A story requires “use Redis to remember recently viewed books.” Which rewrite best preserves Negotiable?
+    options:
+    - Store recently viewed books in a Redis sorted set.
+    - Let readers reopen their five most recently viewed books.
+    - Let developers choose the Redis configuration.
+    correct_index: 1
+    option_feedback:
+      0: The data structure still locks in an implementation before discussing alternatives.
+      2: Configuration freedom is narrower than leaving the storage mechanism open.
+    explanation: The revised story specifies a user-visible capability while leaving its implementation open. A real contractual or operational constraint may still legitimately limit alternatives.
+  - id: 10
+    type: single
+    difficulty: intermediate
+    question: A roster-export story reuses existing data and adds one CSV download. Which argument supports
+      INVEST’s Small criterion?
+    options:
+    - The story is written in one short sentence.
+    - Downloading will take instructors little time.
+    - The work is limited to one existing-data export.
+    correct_index: 2
+    option_feedback: {}
+    explanation: Small concerns implementation effort. A bounded export using existing data supports that judgment;
+      sentence length and user time do not.

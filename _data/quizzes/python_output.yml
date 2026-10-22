@@ -99,3 +99,22 @@ questions:
     answer: '4'
     explanation: Both outer slots refer to row, so the update changes the list reached through either slot. The second
       row contains 0 and 4.
+
+  - id: exam-practice-transform-before-filter
+    type: write-in
+    difficulty: intermediate
+    question: Which differences are printed? Keep their order.
+    program:
+      language: python
+      file: differences.py
+      code: |
+        left = [12, 7, 15]
+        right = [3, 2, 8]
+        gaps = [
+            a - b
+            for a, b in zip(
+                left, right)
+            if a - b > 5]
+        print(*gaps)
+    answer: "9 7"
+    explanation: The differences are 9, 5, and 7. The strict comparison excludes 5; the remaining values keep their original order.

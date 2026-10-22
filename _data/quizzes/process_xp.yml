@@ -207,3 +207,44 @@ questions:
       3: |
         Customer collaboration over contract negotiation is the relevant Agile value here — and even *that* doesn't force the team to deliver flawed work. The customer would prefer a working product over a broken one delivered exactly as initially specified.
     explanation: "**'Responding to change over following a plan' is one of the four core Agile values, and the entire iterative-development structure exists to make change *cheap*.** XP's small-release iterations are designed to surface flawed assumptions early, before they're cemented by months of additional work. Discovering after 3 weeks that an assumption was wrong is the *success case* for iteration — it means you'll spend the remaining 5+ months building the right thing instead of the wrong one. The teams that suffer in Agile are those who treat iteration as a delivery schedule rather than as a learning mechanism."
+
+  - id: 11
+    type: single
+    difficulty: intermediate
+    question: During pair programming, the driver types silently while the navigator loses track. Which adjustment most directly restores collaboration?
+    options:
+    - Explain the next step and rotate driver/navigator roles.
+    - Keep the same driver until the entire feature is complete.
+    - Let the partner independently build an unrelated feature.
+    correct_index: 0
+    option_feedback:
+      1: Keeping a disengaged partner in the same role preserves the problem rather than sharing understanding.
+      2: Parallel solo work may be useful, but it does not repair collaboration on this task.
+    explanation: Agree on a small next step, discuss the reasoning, and rotate roles so both partners actively build and check the shared model.
+  - id: 12
+    type: single
+    difficulty: intermediate
+    question: One developer is the sole maintainer of a critical parser. What benefit would pairing on its next
+      change provide?
+    options:
+    - The pair can replace running tests with discussion.
+    - Each partner can implement a separate half alone.
+    - Another developer learns how the parser works.
+    correct_index: 2
+    option_feedback:
+      0: Discussion can catch mistakes, but it does not replace executing tests.
+      1: Working separately splits the task; pairing builds shared understanding of the same change.
+    explanation: Pairing spreads knowledge, reducing dependence on a single developer.
+  - id: 13
+    type: single
+    difficulty: intermediate
+    question: A pair loses time because the driver changes the design without explaining it. Which change most
+      directly addresses the problem?
+    options:
+    - Have each partner implement a separate solution.
+    - Agree on the next small step before typing.
+    - Keep the faster typist driving every session.
+    correct_index: 1
+    option_feedback: {}
+    explanation: A shared next step keeps both partners involved in the reasoning. Rotating roles can also help
+      maintain shared understanding.

@@ -132,3 +132,75 @@ questions:
       3: |
         Textual size is a useful heuristic, but not the only one. A small concurrency change may be harder than a large rename.
     explanation: "Effective review starts by building top-down context from the PR description, linked issue, and tests, then uses opportunistic navigation — scanning for the core change and likely trouble spots — to spend attention where it has the highest value."
+
+  - id: exam-practice-early-return-stock
+    type: single
+    difficulty: intermediate
+    question: |-
+      What is `stock` after this JavaScript code runs?
+
+      ```javascript
+      let stock = 9;
+      function checkout(allowed) {
+        stock -= 2;
+        if (!allowed) return 403;
+        return 201;
+      }
+      checkout(false);
+      ```
+    options:
+    - '9'
+    - '7'
+    - '2'
+    correct_index: 1
+    option_feedback:
+      0: Returning ends the function; it does not undo assignments already executed.
+      2: The subtraction reserves two units; it does not set stock to two.
+    explanation: The subtraction happens before the permission check. Without an explicit undo step, the failed
+      request leaves stock at 7.
+  - id: exam-practice-unused-policy
+    type: single
+    difficulty: intermediate
+    question: |-
+      After this JavaScript call, how many seats remain?
+
+      ```javascript
+      let seats = 6;
+      const releaseOnReject = true;
+      function book() {
+        seats -= 2;
+        return 403;
+      }
+      book();
+      ```
+    options:
+    - '6'
+    - '4'
+    - '2'
+    correct_index: 1
+    option_feedback:
+      0: A setting has no effect unless executed code uses it.
+      2: The code subtracts 2 from 6; it does not assign 2.
+    explanation: Only the subtraction changes seats. The flag is never read, and returning an error does not
+      reverse the change.
+  - id: exam-practice-trace-call-path
+    type: single
+    difficulty: intermediate
+    question: |-
+      A JavaScript booking is rejected when quota is zero. What does this call return?
+
+      ```javascript
+      function book(quota) {
+        if (quota === 0) return 429;
+        return saveBooking();
+      }
+      book(0);
+      ```
+    options:
+    - 429, without calling saveBooking.
+    - The result returned by saveBooking.
+    - 429, after calling saveBooking.
+    correct_index: 0
+    option_feedback:
+      2: Statements after the executed return are skipped.
+    explanation: The early return ends the call. The save operation is reached only when quota is nonzero.
