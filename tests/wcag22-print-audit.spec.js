@@ -39,8 +39,7 @@ test('print media keeps reachable layouts light, readable, and WCAG 2.2 AA compa
     reducedMotion: 'reduce',
     viewport: { width: 1280, height: 900 },
   });
-  const page = await context.newPage();
-  await page.emulateMedia({ media: 'print', colorScheme: 'dark', reducedMotion: 'reduce' });
+  let page = null;
 
   const report = {
     generatedAt: new Date().toISOString(),
@@ -74,6 +73,10 @@ test('print media keeps reachable layouts light, readable, and WCAG 2.2 AA compa
       const pageStartedAt = Date.now();
       report.progress.currentPage = { feature, url, startedAt: new Date(pageStartedAt).toISOString() };
       markPageStage(url, 'navigation');
+      // A timed-out navigation must not interrupt the next URL's audit.
+      if (page) await page.close();
+      page = await context.newPage();
+      await page.emulateMedia({ media: 'print', colorScheme: 'dark', reducedMotion: 'reduce' });
       let response = null;
       let navigationError = null;
       try {

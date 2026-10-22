@@ -141,7 +141,7 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
     reducedMotion: 'reduce',
     viewport: { width: 1280, height: 900 },
   });
-  const page = await context.newPage();
+  let page = null;
   const report = {
     generatedAt: new Date().toISOString(),
     conformanceTarget: CONFORMANCE_TARGET,
@@ -181,8 +181,10 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       const pageStartedAt = Date.now();
       report.progress.currentPage = { feature, url, startedAt: new Date(pageStartedAt).toISOString() };
       markPageStage(url, 'navigation');
+      // A timed-out navigation must not interrupt the next URL's audit.
+      if (page) await page.close();
+      page = await context.newPage();
       const pageErrors = [];
-      page.removeAllListeners('pageerror');
       page.on('pageerror', (error) => pageErrors.push(String(error && error.message ? error.message : error)));
       await page.setViewportSize({ width: 1280, height: 900 });
       let response = null;
@@ -280,10 +282,55 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       markPageStage(url, 'keyboard focus');
       const focus = await runFocusAudit(page);
 
+      const desktopFindings = [
+        ...desktop.findings,
+        ...axeLight.findings,
+        ...explicitAxeLight.findings,
+        ...darkMode.findings,
+        ...axeDarkContrast.findings,
+        ...explicitAxeDarkContrast.findings,
+        ...focus.findings,
+      ];
+      const desktopEvidence = {
+        ...desktop.evidence,
+        postJavascriptDomChecked: true,
+        darkModeChecked: true,
+        darkContrastVisualReview: darkRaw.evidence?.contrastVisualReview ?? null,
+        axeRulesEvaluated: axeLight.evidence?.rulesEvaluated ?? null,
+        axeDarkRulesEvaluated: axeDark.evidence?.rulesEvaluated ?? null,
+        explicitAxeRulesEvaluated: explicitAxeLight.evidence?.rulesEvaluated ?? null,
+        explicitAxeDarkRulesEvaluated: explicitAxeDark.evidence?.rulesEvaluated ?? null,
+        explicitAxeRules: AXE_EXPLICIT_RULES,
+        explicitAxeRulesRunInBothModes: true,
+        ...focus.evidence,
+      };
+
       // Mobile / reflow / text-spacing audit at 320px.
       markPageStage(url, 'mobile reflow');
       await page.setViewportSize({ width: 320, height: 900 });
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+      try {
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+      } catch (error) {
+        const mobileNavigationError = String(error && error.message ? error.message : error);
+        const findings = [...desktopFindings, {
+          criterion: 'audit-navigation',
+          severity: 'fail',
+          message: `Mobile navigation failed; mobile accessibility checks could not run: ${mobileNavigationError}`,
+        }];
+        finishPage(feature, url, {
+          url, status: response.status(),
+          conformance: {
+            target: CONFORMANCE_TARGET.label, status: 'needs-review-or-fix',
+            automatedAuditStatus: 'incomplete', manualReviewRequired: true,
+            criteriaListed: WCAG_22_AA.length,
+            criterionLevelsIncluded: CONFORMANCE_TARGET.includesCriterionLevels,
+          },
+          findingCount: findings.length, findings, runtimePageErrors: pageErrors,
+          evidence: { ...desktopEvidence, mobileChecked: false, darkModeAt320Checked: false, mobileNavigationError },
+          criteria: buildCriteriaMatrix(findings, desktop.evidence),
+        }, pageStartedAt);
+        continue;
+      }
       await settleLoadedPage(page);
       // Re-mount runtime-state fixtures so the 320px reflow + target-size
       // pass covers them too (page.goto cleared the previous mount).
@@ -306,13 +353,7 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       };
 
       const findings = [
-        ...desktop.findings,
-        ...axeLight.findings,
-        ...explicitAxeLight.findings,
-        ...darkMode.findings,
-        ...axeDarkContrast.findings,
-        ...explicitAxeDarkContrast.findings,
-        ...focus.findings,
+        ...desktopFindings,
         ...mobile.findings,
       ];
       // Runtime page errors are recorded as evidence but no longer mapped
@@ -333,18 +374,9 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
         findings,
         runtimePageErrors: pageErrors,
         evidence: {
-          ...desktop.evidence,
-          postJavascriptDomChecked: true,
-          darkModeChecked: true,
-          darkContrastVisualReview: darkRaw.evidence?.contrastVisualReview ?? null,
-          axeRulesEvaluated: axeLight.evidence?.rulesEvaluated ?? null,
-          axeDarkRulesEvaluated: axeDark.evidence?.rulesEvaluated ?? null,
-          explicitAxeRulesEvaluated: explicitAxeLight.evidence?.rulesEvaluated ?? null,
-          explicitAxeDarkRulesEvaluated: explicitAxeDark.evidence?.rulesEvaluated ?? null,
-          explicitAxeRules: AXE_EXPLICIT_RULES,
-          explicitAxeRulesRunInBothModes: true,
-          ...focus.evidence,
+          ...desktopEvidence,
           ...mobile.evidence,
+          mobileChecked: true,
         },
         criteria: buildCriteriaMatrix(findings, desktop.evidence),
       };
