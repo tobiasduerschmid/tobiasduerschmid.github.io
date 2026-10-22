@@ -298,9 +298,11 @@ steps:
 
       `grep` prints the lines that match a pattern. Its `-E` option enables
       extended regular expressions: `+` means one or more, `^` anchors the
-      start of a line, and `[[:space:]]` matches a space or tab. To select a
-      method, account for the first field and the delimiters around the
-      second field. Matching the word `GET` anywhere could also match a path.
+      start of a line, and `[^…]` matches any character except those listed.
+      These records use tabs between fields. Bash's `$'…'` quoting turns
+      `\t` into a literal tab before passing the pattern to `grep`.
+      To select a method, account for the first field and the tabs around
+      the second field. Matching `GET` anywhere could also match a path.
 
       ### A short manual for `awk`
 
@@ -420,10 +422,12 @@ steps:
           preserve_files: [access.tsv]
         hints: *failure_hints
     solution:
-      command: "grep -E '^[^[:space:]]+[[:space:]]+GET[[:space:]]' access.tsv | awk '$4 >= 400 { print $3 }' | sort | uniq -c | sort -nr"
+      command: "grep -E $'^[^\\t]+\\tGET\\t' access.tsv | awk '$4 >= 400 { print $3 }' | sort | uniq -c | sort -nr"
       explanation: |
-        `grep` anchors its match to the start of the record, skips the time
-        field, and requires the complete second field to be `GET`. This
+        In the `grep` pattern, `^` anchors the start of the record and
+        `[^\t]+` matches the non-tab characters in the time field.
+        `\tGET\t` then requires the complete second field to be `GET`.
+        Bash's `$'…'` quoting supplies literal tabs to the regex. This
         avoids matching `GETTING` or a path containing `GET`. `awk` keeps
         records whose numeric status is at least `400`, then prints the
         path. The first `sort` groups
