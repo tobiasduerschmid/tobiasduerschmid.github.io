@@ -113,7 +113,7 @@ async function createLabShell() {
   return { shell: createShell({ files: {}, manuals }), manuals };
 }
 
-for (const command of ['cut', 'sed', 'awk']) {
+for (const command of ['cut', 'grep', 'sed', 'awk']) {
   test(`lab man prints the authored ${command} manual`, async () => {
     const { shell, manuals } = await createLabShell();
     const result = await shell.exec(`man ${command}`);
@@ -137,10 +137,10 @@ test('lab man output composes with pipes and redirection', async () => {
 
 test('lab man uses built-in help for another supported command', async () => {
   const { shell } = await createLabShell();
-  const result = await shell.exec('man grep');
+  const result = await shell.exec('man sort');
   assert.equal(result.exitCode, 0);
   assert.equal(result.stderr, '');
-  assert.match(result.stdout, /grep/);
+  assert.match(result.stdout, /sort/);
   assert.match(result.stdout, /Usage:|usage:/);
 });
 

@@ -315,7 +315,11 @@ steps:
       - Compose grep and awk to select records using conditions on more than one field.
       - Create a ranked report by combining selection with earlier pipeline skills.
 
-      ### Record selection with `grep`
+      ### A short manual for `grep`
+
+      ```text
+      {{ site.data.shell_command_manuals.grep }}
+      ```
 
       `grep` prints the lines that match a pattern. Its `-E` option enables
       extended regular expressions: `+` means one or more, `^` anchors the

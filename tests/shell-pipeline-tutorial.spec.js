@@ -68,13 +68,14 @@ test('students run their own quoted pipelines through the tutorial output panel'
   await a11yCheckpoint(page, 'shell pipeline tutorial output', { feature: 'shell-pipeline-tutorial' });
 });
 
-test('students can consult cut, sed, and awk manuals from the command field', async ({ page }) => {
+test('students can consult cut, grep, sed, and awk manuals from the command field', async ({ page }) => {
   await openTutorial(page);
 
-  await runCommand(page, 'man cut; man sed; man awk');
+  await runCommand(page, 'man cut; man grep; man sed; man awk');
 
   const output = tutorialControls(page).output;
   await expect(output).toContainText('cut -f LIST [-d CHAR] [FILE]...');
+  await expect(output).toContainText('grep [OPTION]... PATTERN [FILE]...');
   await expect(output).toContainText("sed [OPTION]... 'SCRIPT' [FILE]...");
   await expect(output).toContainText("awk [OPTION]... 'PATTERN { ACTION }' [FILE]...");
   await expect(output).toContainText('OPTIONS');
@@ -305,6 +306,7 @@ test('the print view leaves commands empty and includes manuals in light mode', 
   await expect(page.getByRole('heading', { name: /Failure Reports/ })).toBeVisible();
   await expect(page.getByRole('code').filter({ hasText: /^$/ })).toHaveCount(3);
   await expect(page.getByText('cut -f LIST [-d CHAR] [FILE]...', { exact: false })).toBeVisible();
+  await expect(page.getByText('grep [OPTION]... PATTERN [FILE]...', { exact: false })).toBeVisible();
   await expect(page.getByText("sed [OPTION]... 'SCRIPT' [FILE]...", { exact: false })).toBeVisible();
   await expect(page.getByText("awk [OPTION]... 'PATTERN { ACTION }' [FILE]...", { exact: false })).toBeVisible();
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 255, 255)');

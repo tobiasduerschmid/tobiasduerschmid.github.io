@@ -40,6 +40,33 @@ sed: |
       /REGEXP/d        Delete matching lines from the output.
       ^ and $          Match the start and end of a line.
 
+grep: |
+  NAME
+      grep — print lines that match a pattern
+
+  SYNOPSIS
+      grep [OPTION]... PATTERN [FILE]...
+
+  DESCRIPTION
+      Test each input line against PATTERN.
+      Print matching lines to standard output.
+      With no FILE, read standard input. Input files stay unchanged.
+
+  OPTIONS
+      -E    Use extended regular expressions.
+      -i    Ignore differences in letter case.
+      -v    Print lines that do not match.
+      -n    Prefix each matching line with its line number.
+
+  PATTERN BASICS
+      .          Match any single character.
+      ^ and $    Match the start and end of a line.
+      [0-9]      Match one digit.
+      [^abc]     Match one character other than a, b, or c.
+      *          Repeat the preceding item zero or more times.
+      +          With -E, repeat it one or more times.
+      a|b        With -E, match either a or b.
+
 awk: |
   NAME
       awk — select records and process their fields
