@@ -1,6 +1,7 @@
 const { test, expect: baseExpect } = require('@playwright/test');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const features = require('./helpers/smalltalk-features');
+const { selectAllInMonaco, insertLinesInMonaco } = require('./helpers/monaco-keyboard');
 const expect = baseExpect.configure({ timeout: 30000 });
 test.setTimeout(180000);
 const terminal = page => page.getByRole('region', { name: 'Smalltalk live terminal', exact: true });
@@ -11,9 +12,13 @@ async function ready(page) {
 }
 async function edit(page, label, source) {
   const input = page.getByRole('textbox', { name: new RegExp('^' + label) });
-  await input.focus(); await input.press('Control+Home'); await input.press('Control+Shift+End');
+  await input.focus(); await selectAllInMonaco(input);
   await expect.poll(() => input.evaluate(node => node.selectionStart === 0 && node.selectionEnd === node.value.length), { message: 'Monaco selects the source before replacement' }).toBe(true);
-  await page.keyboard.insertText(source);
+  await insertLinesInMonaco(input, source);
+  await selectAllInMonaco(input);
+  // Monaco may add indentation; every authored line must still be present once.
+  await expect.poll(async () => (await input.inputValue()).split('\n').map(line => line.trim())).toEqual(source.split('\n').map(line => line.trim()));
+  await input.press('ArrowRight');
 }
 async function evaluate(page, source, expected) {
   await edit(page, 'Smalltalk expression', source);

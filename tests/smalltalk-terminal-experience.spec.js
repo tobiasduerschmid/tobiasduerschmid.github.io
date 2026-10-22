@@ -1,5 +1,5 @@
 const { test, expect: standardExpect } = require('@playwright/test');
-const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
+const { selectAllInMonaco, insertLinesInMonaco } = require('./helpers/monaco-keyboard');
 const { a11yCheckpoint } = require('./a11y-helpers');
 const expect = standardExpect.configure({ timeout: 30000 });
 test.setTimeout(180000);
@@ -17,13 +17,7 @@ async function type(page, text) {
   await input(page).focus();
   await selectAllInMonaco(input(page));
   await input(page).press('Backspace');
-  // Firefox's synthetic multi-line insertText can duplicate the first line in
-  // Monaco's hidden textarea. Type line breaks as real Enter key presses.
-  const lines = text.split('\n');
-  for (const [index, line] of lines.entries()) {
-    if (index) await input(page).press('Enter');
-    await page.keyboard.insertText(line);
-  }
+  await insertLinesInMonaco(input(page), text);
   await selectAllInMonaco(input(page));
   await expect(input(page)).toHaveValue(text);
   await input(page).press('ArrowRight');

@@ -2,10 +2,11 @@ const { test, expect: standardExpect } = require('@playwright/test');
 const expect = standardExpect.configure({ timeout: 30000 });
 const { mountSmalltalkFixture } = require('./helpers/smalltalk-runtime');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
 test.setTimeout(180000);
 const program = { version: 1, stepKey: 'inspector', revision: 0, files: [{ path: '/counter.st', kind: 'source', format: 'filein', content: "Object subclass: #SEBookCounter instanceVariableNames: 'saved' classVariableNames: '' poolDictionaries: '' category: 'SEBook-Tests'!\n!SEBookCounter methodsFor: 'accessing'!\nvalue ^ 1!\nsaved: value saved := value!\nsaved ^ saved! !" }], changes: { version: 1, source: '', entries: [] }, runCommand: null };
 async function replaceSource(page, input, source) {
-  await input.focus(); await input.press('Control+Home'); await input.press('Control+Shift+End');
+  await input.focus(); await selectAllInMonaco(input);
   await expect.poll(() => input.evaluate(node => node.selectionStart === 0 && node.selectionEnd === node.value.length), { message: 'Monaco selects the complete source before replacement' }).toBe(true);
   await input.press('Backspace'); await expect(input).toHaveValue('');
   await page.keyboard.insertText(source);
@@ -15,7 +16,8 @@ async function evaluate(page, source, value) {
   const expression = page.getByRole('textbox', { name: /Smalltalk expression/ });
   await replaceSource(page, expression, source);
   const evaluate = page.getByRole('button', { name: 'Evaluate', exact: true });
-  await evaluate.click(); await expect(evaluate).toBeEnabled();
+  // Restore keyboard-owned focus; mouse clicks need not focus buttons in WebKit.
+  await evaluate.focus(); await evaluate.press('Enter'); await expect(evaluate).toBeEnabled();
   await expect(page.getByRole('region', { name: 'Submitted commands and native output', exact: true })
     .getByRole('article').last().getByText(source, { exact: true })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Evaluation result', exact: true })).toHaveText(value);

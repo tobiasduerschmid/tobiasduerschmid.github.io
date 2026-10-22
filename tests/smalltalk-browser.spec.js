@@ -16,7 +16,7 @@ async function selectCounter(page) {
 }
 async function replaceSource(page, value) {
   const editor = page.getByRole('textbox', { name: /Smalltalk method source/ });
-  await editor.focus(); await editor.press('Control+Home'); await editor.press('Control+Shift+End');
+  await editor.focus(); await selectAllInMonaco(editor);
   await expect.poll(() => editor.evaluate(input => input.value.length > 0 && input.selectionStart === 0 && input.selectionEnd === input.value.length), { message: 'Monaco select-all is ready before replacing source' }).toBe(true);
   await page.keyboard.insertText(value);
   await expect.poll(() => page.evaluate(() => window.smalltalkFixtureWorkspace.getDrafts().find(draft => draft.target.className === 'SEBookCounter' && draft.target.selector === 'value')?.source), { message: 'Replacement creates exactly the intended draft source' }).toBe(value);

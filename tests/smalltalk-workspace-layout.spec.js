@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { writeFile } = require('node:fs/promises');
-const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
+const { selectAllInMonaco, insertLinesInMonaco } = require('./helpers/monaco-keyboard');
 
 test.setTimeout(180000);
 const terminal = page => page.getByRole('region', { name: 'Smalltalk live terminal', exact: true });
@@ -23,11 +23,14 @@ async function typeSource(page, label, text) {
   await expect(input).toBeFocused();
   await page.keyboard.press('Backspace');
   await expect(input).toHaveValue('');
-  await page.keyboard.insertText(text);
-  // Native Monaco indentation can add leading whitespace on pasted lines.
+  await insertLinesInMonaco(input, text);
+  await selectAllInMonaco(input);
+  // Native Monaco indentation can add leading whitespace while typing lines.
   // Verify all authored lines, then retain the actual exact draft for later.
   await expect.poll(async () => (await input.inputValue()).split('\n').map(line => line.trim())).toEqual(text.split('\n').map(line => line.trim()));
-  return input.inputValue();
+  const draft = await input.inputValue();
+  await input.press('ArrowRight');
+  return draft;
 }
 
 async function expectEditorValue(page, label, text) {

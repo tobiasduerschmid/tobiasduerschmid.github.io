@@ -45,8 +45,12 @@ test('Haskell version 2 saves preserve drafts and matching credit without credit
 
   // Replacement checks remain available without blocking navigation or awarding credit.
   await page.getByRole('button', { name: /^Next/ }).click();
+  // Next reopens even a passed check; optional review can be skipped.
+  await expect(page.getByRole('button', { name: 'Skip Knowledge Check', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Skip Knowledge Check', exact: true }).click();
   await expectActiveStep(page, replacementIndex);
   await expect(page.getByRole('button', { name: /^Next/ })).toBeEnabled();
+  expect((await savedProgress()).quizPassed).toEqual(matchingIndices);
   await a11yCheckpoint(page, 'Haskell — version 2 replaced price lesson', { feature: 'haskell-tutorial' });
 });
 
@@ -101,7 +105,10 @@ for (const [slug, replacedIndices, resumeReplacement] of [
     // normal Next action, even though its old numeric unlock was discarded.
     await stepButton(page, resumeReplacement - 1).click();
     await page.getByRole('button', { name: /^Next/ }).click();
+    await expect(page.getByRole('button', { name: 'Skip Knowledge Check', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Skip Knowledge Check', exact: true }).click();
     await expectActiveStep(page, resumeReplacement);
     await expect(page.getByRole('button', { name: /^Next/ })).toBeEnabled();
+    expect((await savedProgress()).quizPassed).toEqual(matchingIndices);
   });
 }

@@ -8,4 +8,13 @@ async function selectAllInMonaco(editor) {
   await editor.press(chord);
 }
 
-module.exports = { selectAllInMonaco };
+// Firefox's synthetic multi-line insertText can duplicate source in Monaco's
+// hidden textarea. Keep native editing behavior by pressing Enter between lines.
+async function insertLinesInMonaco(editor, text) {
+  for (const [index, line] of text.split('\n').entries()) {
+    if (index) await editor.press('Enter');
+    await editor.page().keyboard.insertText(line);
+  }
+}
+
+module.exports = { selectAllInMonaco, insertLinesInMonaco };

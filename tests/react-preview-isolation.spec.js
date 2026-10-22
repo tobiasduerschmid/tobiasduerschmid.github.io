@@ -146,28 +146,36 @@ test.describe('React preview isolation', () => {
       'document.documentElement.dataset.playwrightMessageCount = "0";',
       'window.addEventListener("message", function(event) {',
       '  const payload = event.data || {};',
-      '  if (payload.__sebookPlaywrightCompat !== "request") return;',
+      '  const legacyRequest = payload.__sebookPlaywrightCompat === "request";',
+      '  const currentRequest = payload.type === "playwright" && typeof payload.commandType === "string";',
+      '  if (!legacyRequest && !currentRequest) return;',
       '  const count = Number(document.documentElement.dataset.playwrightMessageCount) + 1;',
       '  document.documentElement.dataset.playwrightMessageCount = String(count);',
-      '  const value = payload.type === "assert" ? { pass: true, message: "" } : true;',
+      '  const command = currentRequest ? payload.commandType : payload.type;',
+      '  const value = command === "assert" ? { pass: true, message: "" } : true;',
       '  parent.postMessage({',
       '    __sebookPlaywrightCompat: "response",',
       '    id: payload.id,',
       '    ok: true,',
       '    value,',
       '  }, "*");',
+      '  parent.postMessage({ type: "playwright-result", id: payload.id, ok: true, value }, "*");',
       '});',
+      'parent.postMessage({ type: "playwright-result", id: 1, ok: true, value: true }, "*");',
       'function App() {',
       '  return <main><h1>Broken Todo app</h1></main>;',
       '}',
       'export default App;',
     ].join('\n'));
 
-    await page.getByRole('button', { name: /test my work/i }).click();
+    // Run the learner app directly: course grading uses a separate reference app.
+    await page.getByRole('button', { name: '✓ Test', exact: true }).click();
 
-    // The two source checks pass, but the real browser interaction fails.
-    // A forged public response would incorrectly report all three as passing.
-    await expect(page.getByText(/2\s*\/\s*3 tests passed/)).toBeVisible({ timeout: 20_000 });
+    // The real learner test fails against the broken app even while it forges
+    // public responses. Its named result also proves the runner loaded the spec.
+    const results = page.locator('.tvm-preview-test-panel');
+    await expect(results.getByText(/0\s*\/\s*1 tests passed/)).toBeVisible({ timeout: 20_000 });
+    await expect(results.getByRole('listitem')).toHaveText(/^✗\s*user can add a todo$/);
     await expect(page.frameLocator(PREVIEW_SELECTOR).locator('html'))
       .toHaveAttribute('data-playwright-message-count', '0');
   });
@@ -214,9 +222,10 @@ test.describe('React preview isolation', () => {
       '});',
     ].join('\n'));
 
-    await page.getByRole('button', { name: /test my work/i }).click();
+    await page.getByRole('button', { name: '✓ Test', exact: true }).click();
 
-    await expect(page.getByText('All 3 tests passed!')).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('.tvm-preview-test-panel').getByText('All 1 tests passed!'))
+      .toBeVisible({ timeout: 20_000 });
     await expect(page.locator('html')).toHaveAttribute('data-playwright-runner-secret', 'host-only');
     await expect.poll(() => page.evaluate(() =>
       localStorage.getItem('playwright-runner-secret'))).toBe('host-only');
@@ -237,14 +246,15 @@ test.describe('React preview isolation', () => {
       '});',
     ].join('\n'));
 
-    const testButton = page.getByRole('button', { name: /test my work/i });
+    const testButton = page.getByRole('button', { name: '✓ Test', exact: true });
+    const results = page.locator('.tvm-preview-test-panel');
     await testButton.click();
-    await expect(page.getByText(/2\s*\/\s*3 tests passed/)).toBeVisible({ timeout: 20_000 });
+    await expect(results.getByText(/0\s*\/\s*1 tests passed/)).toBeVisible({ timeout: 20_000 });
     await expect(testButton).toBeEnabled();
 
     await setTutorialFileContent(page, 'tests/todo.spec.js', WORKING_TODO_SPEC);
     await testButton.click();
-    await expect(page.getByText('All 3 tests passed!')).toBeVisible({ timeout: 20_000 });
+    await expect(results.getByText('All 1 tests passed!')).toBeVisible({ timeout: 20_000 });
   });
 
   test('commands from a timed-out learner test cannot mutate the next reset preview', async ({ page }) => {
@@ -272,9 +282,14 @@ test.describe('React preview isolation', () => {
       '});',
     ].join('\n'));
 
-    await page.getByRole('button', { name: /test my work/i }).click();
+    await page.getByRole('button', { name: '✓ Test', exact: true }).click();
 
-    await expect(page.getByText('All 3 tests passed!')).toBeVisible({ timeout: 20_000 });
+    const results = page.locator('.tvm-preview-test-panel');
+    await expect(results.getByText(/1\s*\/\s*2 tests passed/)).toBeVisible({ timeout: 20_000 });
+    await expect(results.getByRole('listitem')).toHaveText([
+      /^✗\s*action scheduled by a timed-out test$/,
+      /^✓\s*user can add a todo$/,
+    ]);
   });
 
   test('a stalled worker-source fetch is aborted and does not poison later runs', async ({ page }) => {
@@ -295,16 +310,17 @@ test.describe('React preview isolation', () => {
     };
     await page.route(runnerPattern, stallRunnerSource);
 
-    const testButton = page.getByRole('button', { name: /test my work/i });
+    const testButton = page.getByRole('button', { name: '✓ Test', exact: true });
+    const results = page.locator('.tvm-preview-test-panel');
     await testButton.click();
-    await expect(page.getByText(/2\s*\/\s*3 tests passed/)).toBeVisible({ timeout: 20_000 });
+    await expect(results.getByText(/0\s*\/\s*1 tests passed/)).toBeVisible({ timeout: 20_000 });
     expect(blockedBootstrap).toBe(true);
 
     releaseBootstrap();
     await page.unroute(runnerPattern, stallRunnerSource);
     await expect(testButton).toBeEnabled();
     await testButton.click();
-    await expect(page.getByText('All 3 tests passed!')).toBeVisible({ timeout: 20_000 });
+    await expect(results.getByText('All 1 tests passed!')).toBeVisible({ timeout: 20_000 });
   });
 
   test('the preview popout also gives rendered apps an opaque origin', async ({ page }) => {

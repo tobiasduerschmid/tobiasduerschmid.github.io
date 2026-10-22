@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const { loadTutorialConfig } = require('./tutorial-helpers');
 const { a11yCheckpoint } = require('./a11y-helpers');
-const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
+const { selectAllInMonaco, insertLinesInMonaco } = require('./helpers/monaco-keyboard');
 const config = loadTutorialConfig('smalltalk');
 const output = page => page.getByRole('region', { name: 'Program output', exact: true });
 const runButton = page => page.getByRole('button', { name: 'Run', exact: true });
@@ -57,7 +57,11 @@ async function typeSource(page, label, text) {
   await input.focus();
   await selectAllInMonaco(input);
   await input.press('Backspace');
-  await page.keyboard.insertText(text);
+  await insertLinesInMonaco(input, text);
+  await selectAllInMonaco(input);
+  // Monaco may add indentation; every authored line must still be present once.
+  await expect.poll(async () => (await input.inputValue()).split('\n').map(line => line.trim())).toEqual(text.split('\n').map(line => line.trim()));
+  await input.press('ArrowRight');
 }
 async function evaluate(page, source, expected) {
   await page.getByRole('button', { name: 'Live terminal', exact: true }).click();

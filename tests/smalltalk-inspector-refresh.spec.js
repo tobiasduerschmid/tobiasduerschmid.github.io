@@ -1,6 +1,7 @@
 const { test, expect: standardExpect } = require('@playwright/test');
 const { mountSmalltalkFixture } = require('./helpers/smalltalk-runtime');
 const { a11yCheckpoint } = require('./a11y-helpers');
+const { selectAllInMonaco } = require('./helpers/monaco-keyboard');
 const expect = standardExpect.configure({ timeout: 30000 });
 test.setTimeout(180000);
 
@@ -14,7 +15,7 @@ const program = {
 
 async function evaluate(page, source, value) {
   const input = page.getByRole('textbox', { name: /Smalltalk expression/ });
-  await input.focus(); await input.press('Control+Home'); await input.press('Control+Shift+End');
+  await input.focus(); await selectAllInMonaco(input);
   await expect.poll(() => input.evaluate(node => node.selectionStart === 0 && node.selectionEnd === node.value.length)).toBe(true);
   await input.press('Backspace'); await page.keyboard.insertText(source);
   await expect(input).toHaveValue(source);

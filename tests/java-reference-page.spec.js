@@ -46,8 +46,8 @@ test.describe('Java reference page', () => {
     await expect(firstCodeExample).toHaveCount(1);
     await expect(firstCodeExample).toContainText('String a = new String("hello");');
     await expect(firstCodeExample).toContainText('System.out.println(a.equals(b));');
-    await expect(firstCard)
-      .toContainText(/Predict each output\. Then explain why Line A and Line B differ/);
+    await expect(firstCard).toContainText('Predict each output');
+    await expect(firstCard).toContainText('Then explain why Line A and Line B differ');
   });
 
   test('reflows the practice group under WCAG text spacing at 320px', async ({ page }) => {
