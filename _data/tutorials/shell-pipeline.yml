@@ -120,15 +120,27 @@ steps:
           comparison: count-lines
           preserve_files: [access.tsv]
         hints: &count_hints
+          - title: "Start with the input stream"
+            condition: 'pipeline_state: empty'
+            text: "Start by selecting the requested path from each log record. Run that stage and inspect its output before adding another."
+          - title: "Complete the pipeline syntax"
+            condition: 'pipeline_state: syntax-error'
+            text: "Check quotes and pipe operators. Each pipe needs a command on both sides. Run your command to see the syntax diagnostic."
+          - title: "Select the field to count"
+            condition: 'pipeline_matches: ^(?!.*\b(cut|awk)\b).+$'
+            text: "Which stage changes whole log records into paths? Counting whole records also counts timestamps, methods, and statuses. If you use another extraction tool, inspect that stage's output."
           - title: "Neighbors in the stream"
-            condition: 'code_not_matches: \bsort\b'
-            text: "Find two separated requests for the same path. After extraction, are their path lines adjacent? Compare the chapter's ordering tools with what uniq actually compares."
+            condition: 'pipeline_matches: ^(?=.*\buniq\b)(?!.*\bsort\b).+$'
+            text: "Your pipeline has a uniq stage but no sort stage. Find separated requests for one path. What must happen before adjacent-duplicate counting can combine them?"
           - title: "The position of each stage"
-            condition: 'code_matches: \bsort\b(?![\s\S]*\buniq\b)'
-            text: "Inspect the stream immediately before counting. Does changing order after the counts have already been computed let the counter revisit earlier groups?"
+            condition: 'pipeline_matches: ^(?!.*\bsort\b.*\buniq\b).*\buniq\b.*\bsort\b'
+            text: "Your sorting stage comes after counting. Inspect the stream entering uniq: can sorting the already-counted rows repair groups that were split earlier?"
+          - title: "From paths to counts"
+            condition: 'pipeline_matches: ^(?=.*\bcut\b)(?!.*\b(uniq|awk)\b).+$'
+            text: "Your pipeline extracts paths, but which stage combines repeated paths and emits their counts? Trace /b, /a, /b before choosing that stage."
           - title: "A small counterexample"
-            condition: 'code_matches: \bsort\b[\s\S]*\buniq\b'
-            text: "Trace just three path lines: /b, /a, /b. Check the field number, each intermediate stream, and the final counts and path order. Confirm that the source file still contains all three requests."
+            condition: 'pipeline_matches: \bsort\b.*\buniq\b|\bawk\b'
+            text: "Trace /b, /a, /b through each stage. Check the selected field, counting options, and final path order. The pipeline's shape alone does not guarantee the right counts."
       - description: "Separated repeats and ascending path order"
         shell_pipeline:
           files:
@@ -238,15 +250,24 @@ steps:
           comparison: exact
           preserve_files: [access.tsv]
         hints: &suffix_hints
+          - title: "Start with the requested paths"
+            condition: 'pipeline_state: empty'
+            text: "Which field contains the text to transform? Build and inspect the path stream before adding a substitution."
+          - title: "Complete the pipeline syntax"
+            condition: 'pipeline_state: syntax-error'
+            text: "Check that each pipe has a following command and that the editing script's quotes are paired. Run to inspect the diagnostic."
           - title: "Choose a stream transformation"
-            condition: 'code_not_matches: \b(sed|awk)\b'
-            text: "Identify the field containing the requested path. Compare the small filename example with this task: what should be transformed, and what should be preserved?"
+            condition: 'pipeline_matches: ^(?!.*\b(sed|awk)\b).+$'
+            text: "Your pipeline has no sed or awk stage. Compare the filename example with your extracted paths: which operation changes only the target suffix? Another transformation tool is fine if it preserves the required output."
+          - title: "Transform paths, not whole records"
+            condition: 'pipeline_matches: \bsed\b.*\bcut\b'
+            text: "Your sed stage appears before field extraction. The end of a log record contains the response size. Is that the boundary your suffix pattern needs?"
+          - title: "Keep order and repeated requests"
+            condition: 'pipeline_matches: \b(sort|uniq)\b'
+            text: "Unlike the counting task, this task needs one path per original request in its original position. Check whether your sorting or duplicate-removal stage changes that sequence."
           - title: "The end of the path"
-            condition: 'code_matches: ^(?=[\s\S]*\b(sed|awk)\b)(?![\s\S]*html\$)[\s\S]*$'
-            text: "Trace /docs.html/notes alongside /docs.html. An occurrence anywhere and a suffix are different requirements. Which regular-expression boundary distinguishes them?"
-          - title: "Literal characters and record identity"
-            condition: 'code_matches: \b(sed|awk)\b[\s\S]*html\$'
-            text: "Compare /xhtml, /x.html, and two copies of /x.html. A dot can mean a literal character or a pattern wildcard. Check that your transformation preserves the number and order of records as well as the suffix."
+            condition: 'pipeline_matches: \b(sed|awk)\b'
+            text: "Trace /docs.html/notes, /xhtml, and two copies of /x.html through your transformation stage. Check the suffix boundary, literal dot, and preservation of each record."
       - description: "Suffix boundaries and unchanged characters"
         shell_pipeline:
           files:
@@ -359,15 +380,30 @@ steps:
           comparison: ranked-counts
           preserve_files: [access.tsv]
         hints: &failure_hints
+          - title: "Plan the selection stages"
+            condition: 'pipeline_state: empty'
+            text: "Start with the record-selection stage. Identify the method field and test its complete value before you add numeric filtering and counting."
+          - title: "Complete the pipeline syntax"
+            condition: 'pipeline_state: syntax-error'
+            text: "Check paired quotes around grep and awk patterns and a command on both sides of each pipe. Run to see the syntax diagnostic."
           - title: "The record selection rule"
-            condition: 'code_not_matches: GET'
-            text: "Write down the two facts that make one request qualify. Trace a failed GET and a failed POST with the same status. Which fields distinguish them?"
-          - title: "Neighbors of the status boundary"
-            condition: 'code_matches: ^(?=[\s\S]*GET)(?![\s\S]*(?:uniq|\+\+))[\s\S]*$'
-            text: "Try records with statuses 399, 400, and 401, including a POST. Check selection separately from counting. Then compare the selected stream with the kind of input your counting stage needs."
+            condition: 'pipeline_matches: ^(?!.*\b(grep|awk)\b).+$'
+            text: "Your pipeline has no grep or awk selection stage. Which stage removes non-GET requests and successful statuses before counting? If another tool selects them, inspect its output with a failed POST and a successful GET."
+          - title: "Keep the fields until selection is done"
+            condition: 'pipeline_matches: \bcut\b.*\b(grep|awk)\b'
+            text: "Field extraction appears before a selection stage. Check which fields cut retains: do the method and status still reach the stages that need them?"
+          - title: "Select before counting"
+            condition: 'pipeline_matches: \buniq\b.*\b(grep|awk)\b'
+            text: "A selection stage follows uniq. At that point, are its fields still method, path, and status—or have they become count and path? Inspect that boundary."
+          - title: "Group before adjacent counting"
+            condition: 'pipeline_matches: ^(?=.*\buniq\b)(?!.*\bsort\b.*\buniq\b).+$'
+            text: "Your uniq stage has no earlier sort stage. Check whether repeated qualifying paths are adjacent when they arrive at the counter."
+          - title: "Rank after counting"
+            condition: 'pipeline_matches: ^(?=.*\buniq\b)(?!.*\buniq\b.*\bsort\b).+$'
+            text: "Your pipeline ends without sorting after uniq. Grouping paths before counting and ranking the resulting counts are different jobs. Which stream should determine the final order?"
           - title: "Selection, groups, and rank"
-            condition: 'code_matches: ^(?=[\s\S]*GET)(?=[\s\S]*(?:uniq|\+\+))[\s\S]*$'
-            text: "Inspect each intermediate stream with a path repeated ten times and another repeated twice. Distinguish making equal paths adjacent from ranking the resulting numbers. Check that every qualifying request contributes once and the original records remain intact."
+            condition: 'pipeline_matches: \bawk\b|\buniq\b.*\bsort\b'
+            text: "Check each stage on statuses 399, 400, and 401, including a POST. Then compare counts ten and two: is the final ordering numeric and descending? An awk accumulator can combine stages; inspect its selected records and counts separately."
       - description: "Statuses immediately below, at, and above 400"
         shell_pipeline:
           files:

@@ -1,10 +1,12 @@
 import { createShell } from './shell-pipeline-runtime.mjs';
 import { checkSolution } from './shell-pipeline-grading.mjs';
+import { analyzePipeline } from './shell-pipeline-hints.mjs';
 
 self.onmessage = async ({ data }) => {
   try {
     let result;
     if (data.action === 'initialize') result = null;
+    else if (data.action === 'analyze') result = analyzePipeline(data.command, createShell);
     else if (data.action === 'run') {
       const shell = createShell({ files: data.files, manuals: data.manuals });
       const output = await shell.exec(data.command, { rawScript: true });

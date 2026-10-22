@@ -84,6 +84,14 @@ numeric nonincreasing counts. All modes require status zero and empty stderr;
 `preserve_files` checks the named files' contents after execution. These rules
 do not inspect or prescribe a student's command text.
 
+Hints separately inspect the parsed structure of a single pipeline through
+`shell-pipeline-hints.mjs`. `pipeline_matches:` conditions match actual command
+names in order; `pipeline_state:` distinguishes empty, invalid, and unsupported
+structures. Analysis runs in the worker without executing commands. Comments,
+quoted arguments, and redirection targets cannot impersonate stages. Scripts
+with control flow or dynamic command names receive ordinary task feedback.
+These conditions select advice only and never affect grading.
+
 A batch freezes the command and current editor contents. Editing the command
 or a file, changing steps, or stopping invalidates its results; old checks
 cannot award credit to changed work. Run and checks never write their virtual

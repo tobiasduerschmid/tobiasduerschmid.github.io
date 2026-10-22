@@ -135,9 +135,9 @@ test('a canned answer passes the visible fixture but fails varied inputs', async
   await expect(page.getByRole('listitem').filter({ hasText: 'An empty input file' })).toContainText('✗');
 });
 
-test('Hints respond to the command attempt instead of the input-file contents', async ({ page }) => {
+test('Hints follow pipeline stages and ignore command names in comments', async ({ page }) => {
   await openTutorial(page);
-  await checkCommand(page, 'cut -f3 access.tsv | uniq -c', { passed: 2 });
+  await checkCommand(page, 'cut -f3 "access.tsv" | uniq -c # sort', { passed: 2 });
   await page.getByRole('button', { name: 'Hints', exact: true }).click();
   await expect(page.getByText(/Neighbors in the stream/)).toBeVisible();
 
@@ -146,6 +146,7 @@ test('Hints respond to the command attempt instead of the input-file contents', 
 
   await expect(page.getByText(/The position of each stage/)).toBeVisible();
   await expect(page.getByText(/Neighbors in the stream/)).toHaveCount(0);
+  await a11yCheckpoint(page, 'shell pipeline structural hints', { feature: 'shell-pipeline-tutorial' });
 });
 
 test('a correct output with a failing exit status does not pass a check', async ({ page }) => {

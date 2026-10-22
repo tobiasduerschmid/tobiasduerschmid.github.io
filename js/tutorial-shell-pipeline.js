@@ -2,6 +2,7 @@
 (function (root) {
   'use strict';
   const moduleUrl = new URL('shell-pipeline-client.mjs', document.currentScript.src).href;
+  const hintsUrl = new URL('shell-pipeline-hints.mjs', document.currentScript.src).href;
 
   function snapshot(tutorial) {
     const files = {};
@@ -31,10 +32,17 @@
     prototype._initShellPipeline = async function () {
       if (this.setupCommands.length) throw new Error('Shell pipeline tutorials use editor files, not setup_commands.');
       const { ShellPipelineClient } = await import(moduleUrl);
+      const { matchesPipelineHint } = await import(hintsUrl);
       if (this._destroyed) throw new Error('Tutorial was destroyed.');
       this._shellPipelineClient = new ShellPipelineClient({ manuals: this.config.shellManuals || {} });
+      this._matchesPipelineHint = matchesPipelineHint;
       await this._shellPipelineClient.initialize();
       this.booted = true;
+    };
+
+    prototype._evaluateShellPipelineHint = function (condition, command) {
+      const snapshot = this._shellPipelineHintSnapshot;
+      return !!(snapshot && snapshot.command === command && this._matchesPipelineHint(condition, snapshot.analysis));
     };
 
     prototype._runShellPipeline = async function (run) {
@@ -62,10 +70,13 @@
       const original = snapshot(this);
       run.shellPipelineLoad = original.loadSequence;
       let results = new Array(tests.length).fill(null);
+      this._shellPipelineHintSnapshot = null;
       this._clearOutput();
       if (!run.silent) this._showTestPanel('<div class="tvm-test-running">Checking shell commands…</div>');
       this._setRunTransactionControls('running', 'Checking…');
       try {
+        const analysis = await this._shellPipelineClient.execute({ action: 'analyze', command: original.command });
+        if (isCurrent(this, run, original)) this._shellPipelineHintSnapshot = { command: original.command, analysis };
         for (let index = 0; index < tests.length; index++) {
           if (!isCurrent(this, run, original)) break;
           const result = await this._shellPipelineClient.execute({

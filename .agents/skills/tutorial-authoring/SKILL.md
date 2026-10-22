@@ -1511,6 +1511,15 @@ test output):
 - `code_matches: <regex>` — fires when comment-stripped source matches a
   JavaScript regular expression (plain pattern or `/pattern/flags`).
 - `code_not_matches: <regex>` — fires when that source does not match.
+- `pipeline_state: empty|syntax-error|unsupported` — shell-pipeline only;
+  selects feedback from parse-only analysis of the checked command.
+- `pipeline_matches: <regex>` — shell-pipeline only; matches a bare JavaScript
+  regex against actual stage names joined by ` | ` (for example `cut | sort | uniq`).
+  Quoted arguments, comments, redirects, and nested substitutions do not add
+  outer stages. Literal quoted names and executable paths are recognized.
+  Multiple statements, control flow, dynamic command names, and compound
+  commands decline stage matching and use ordinary task feedback. Conditions
+  select optional advice only; they never gate or grade solutions.
 - `output_contains: <substring>` — fires when the captured output contains it.
 - `output_missing: <substring>` — fires when the output does **not** contain it.
 
@@ -2357,6 +2366,12 @@ channel.
   The client owns the terminable `shell-pipeline-worker.mjs`; the worker uses
   `shell-pipeline-runtime.mjs` for fresh virtual filesystems and
   `shell-pipeline-grading.mjs` for generic output/preservation checks.
+  `shell-pipeline-hints.mjs` uses the interpreter's public `transform().ast`
+  API in the worker to analyze a single pipeline without executing it. A
+  check batch caches that analysis with its command snapshot; TutorChat
+  evaluates structural conditions only for that same source. The shared
+  hints module evaluates conditions on the main thread without importing
+  the interpreter there. Malformed/unrecognized conditions fail closed.
   `_data/shell_command_manuals.yml` supplies both chapter/tutorial references
   and the worker's `man cut` / `man sed` / `man awk` adapter via `config.shellManuals`.
   `css/tutorial-shell-pipeline.css` owns presentation in both themes; the

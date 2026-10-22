@@ -66,7 +66,7 @@
       if (results[index] === true) return;
       let hints = _toArray(test.hints)
         .filter(function (hint) {
-          return _evaluateHintCondition(hint.condition, studentCode, backend, output);
+          return _evaluateHintCondition(hint.condition, studentCode, backend, output, tutorial);
         })
         .map(function (hint) { return _normalizeHintRecord(hint, test.description || 'Hint'); })
         .filter(Boolean);
@@ -231,8 +231,12 @@
    * flags ("/\\bvar\\b/i"). Invalid patterns fall through and return true so
    * the hint still surfaces rather than silently hide.
    */
-  function _evaluateHintCondition(condition, studentCode, backend, output) {
+  function _evaluateHintCondition(condition, studentCode, backend, output, tutorial) {
     if (!condition) return true;
+    if (/^pipeline_(matches|state):/.test(condition)) {
+      return backend === 'shell-pipeline' && !!tutorial._evaluateShellPipelineHint &&
+        tutorial._evaluateShellPipelineHint(condition, studentCode);
+    }
     var m;
     m = condition.match(/^source_contains:\s*(.+)$/i);
     if (m) return studentCode.indexOf(m[1].trim()) !== -1;
