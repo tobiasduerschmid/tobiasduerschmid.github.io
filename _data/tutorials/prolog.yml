@@ -1165,9 +1165,9 @@ steps:
         question: Which pattern matches exactly a nonempty list whose first and second elements agree, followed
           by any remaining tail? The list must have at least two elements.
         options:
-        - '[X,Y|Tail]'
-        - '[X,X|Tail]'
-        - '[X,X]'
+        - '`[X,Y|Tail]`'
+        - '`[X,X|Tail]`'
+        - '`[X,X]`'
         correct_index: 1
         option_feedback:
           0: Separate names do not require the two elements to agree.

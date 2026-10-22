@@ -46,6 +46,18 @@ test('unlabeled code remains plain and source HTML remains escaped', () => {
   assert.match(quiz.renderedMarkdown[python], /&lt;script&gt;/);
 });
 
+test('published Prolog list-pattern choices preserve literal head-tail syntax', () => {
+  const yaml = require('js-yaml');
+  const tutorial = yaml.load(fs.readFileSync(path.join(root, '_data/tutorials/prolog.yml'), 'utf8'));
+  const step = tutorial.steps.find(step => step.key === 'v2-list-patterns');
+  const quiz = render({ steps: [step] }).steps[0].quiz;
+  const question = quiz.questions.find(question => question.options?.some(option => option.includes('[X,X|Tail]')));
+  assert.ok(question, 'the list-pattern distinction must be present in the published quiz');
+  const renderedChoices = question.options.map(option => quiz.renderedMarkdown[option]
+    .replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim());
+  assert.deepEqual(renderedChoices, ['[X,Y|Tail]', '[X,X|Tail]', '[X,X]']);
+});
+
 test('shared quiz rendering preserves highlighted content through shuffling and retains its Markdown fallback', () => {
   const sandbox = { window: {}, navigator: { platform: 'Linux' } };
   vm.createContext(sandbox);
