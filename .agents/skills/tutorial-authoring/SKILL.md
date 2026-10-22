@@ -1940,6 +1940,11 @@ field to the existing file models and responds to Reset/Solution changes. `js/co
 shared rule tables, connected record cards, Previous/Next tree controls,
 alternative selectors, and complete structural text. `css/compiler-lab.css` owns both
 themes, reflow, and light print presentation.
+On desktop, tutorial results omit the standalone result margin and output top
+padding: the pane header and result controls already provide separation. Compact
+navigation margins retain clearance for focus indicators. Preserve readable tree
+cards and their intrinsic spacing so the five-node expression tree
+fits beside the source and grammar; mobile and print spacing remain independent.
 
 Outside tutorials, load the client and view scripts plus the compiler CSS
 before `print-light.css`, then use `{% include compiler-lab.html

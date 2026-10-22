@@ -190,6 +190,10 @@ html.dark-mode .post-content .compiler-lab svg.compiler-lab-tree-edges { filter:
   .compiler-tutorial .tvm-workspace { flex-direction: row; }
   .compiler-tutorial .tvm-editor-panel { flex: 0 0 44%; min-width: 0; }
   .compiler-tutorial .tvm-output-panel { flex: 1 1 0; min-width: 0; }
+  /* The pane header and result controls already separate tutorial output. */
+  .compiler-tutorial .tvm-output-container { padding-top: 0; }
+  .compiler-tutorial-results { margin-top: 0; }
+  .compiler-tutorial-results .compiler-lab-tree-navigation { margin-block: 0.4em 0.2em; }
   .compiler-tutorial-results .compiler-lab-grouping { margin-bottom: 0.25em; }
   .compiler-tutorial-results .compiler-lab-tree-figure { margin-block: 0.25em; }
   .compiler-tutorial .tvm-hsplitter { margin-inline: 0; margin-block: var(--tvm-splitter-hit-overhang); cursor: row-resize; --tvm-splitter-rail-direction: to bottom; }
