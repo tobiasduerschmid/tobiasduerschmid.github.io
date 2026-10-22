@@ -180,6 +180,8 @@ topics:
         url: /SEBook/tools/regex-tutorial.html
       - name: "RegEx Tutorial: Advanced"
         url: /SEBook/tools/regex-tutorial-advanced.html
+      - name: Regex in Python
+        url: /SEBook/tools/regex-python-tutorial
       - name: Python
         url: /SEBook/tools/python.html
       - name: Python Tutorial

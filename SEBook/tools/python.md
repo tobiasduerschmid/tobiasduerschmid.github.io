@@ -7,6 +7,8 @@ program_output_labs: true
 
 > **Want to practice?** Work through the [Python Essentials interactive tutorial](/SEBook/tools/python-tutorial) — run Python in your browser, repair programs, and check your reasoning with tests and quizzes.
 
+For a brief file-parsing exercise, try [Regex in Python](/SEBook/tools/regex-python-tutorial): three steps on patterns, named capture groups, and extracted values.
+
 # Python from C++
 
 You already know variables, functions, loops, and classes from C++. Python lets you use those ideas with less declaration syntax, but similar-looking code can behave differently. The durable rule is this: **names, collection elements, and object attributes hold references to objects; assignment and mutation are different operations**.

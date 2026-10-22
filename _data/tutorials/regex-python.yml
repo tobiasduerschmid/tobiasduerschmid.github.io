@@ -1,0 +1,527 @@
+title: "Regex in Python"
+description: "Parse three tiny game-night files with regular expressions in about 10 minutes. Assumes basic Python loops, functions, and lists; no regex experience needed."
+learning_objectives:
+  - "Apply character classes, bounded repetition, and optional signs to parse file lines."
+  - "Analyze why a full-line match rejects extra text."
+  - "Apply named capture groups to extract fields from a matching line."
+  - "Create integer values from captured text while preserving file order."
+backend: pyodide
+require_tests: true
+require_quiz: true
+autosave_type: files
+reset_type: files
+
+# Deliberately shorter than the normal tutorial: one regex, then two/three
+# expressions to fill in. File handling is supplied so practice stays on regex.
+# Each check imports this helper afresh: Pyodide clears globals between runs.
+# Temporary inputs test the parser without overwriting the learner's data files.
+setup_commands:
+  - |
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, '/tutorial')
+    Path('/tutorial/_regex_checks.py').write_text('''import contextlib
+    import io
+    import runpy
+    import tempfile
+    from pathlib import Path
+
+    def load(script):
+        with contextlib.redirect_stdout(io.StringIO()):
+            return runpy.run_path('/tutorial/' + script)
+
+    def parse(script, text):
+        namespace = load(script)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'input.txt'
+            path.write_text(text, encoding='utf-8')
+            return namespace['parse_file'](str(path))
+    ''', encoding='utf-8')
+
+steps:
+  # Pedagogy: worked example with fading — supplied file loop, one pattern to derive.
+  - title: "Whole-Line Matches"
+    instructions: |
+      ### Why this matters
+
+      A file can mix useful records with junk. A **regular expression (regex)** describes which lines to keep.
+
+      ### 🎯 You will learn to
+
+      - Apply a regex to select complete replay filenames.
+
+      ### Regex Syntax Reminder
+
+      - `import re` loads Python's regex module; `r"..."` keeps backslashes literal.
+      - `re.fullmatch(pattern, text)` matches the **whole** text or returns `None`.
+      - `\d` matches a digit; `{m,n}` repeats the preceding item between `m` and `n` times.
+      - `\.` matches a literal dot; plain `.` accepts any non-newline character.
+
+      ### Input File
+
+      Example lines from `clips.txt`:
+
+      ```text
+      replay_07.txt
+      replay_2048.txt
+      replay_7.txt
+      ```
+
+      - **Format:** `replay_`, **2–4 digits**, then `.txt`. Leading zeros are allowed.
+      - **Result:** valid filenames in file order, including duplicates. The loop strips outer whitespace.
+
+      ### Task
+
+      1. **Fill** **`pattern`** in `filter_clips.py`; leave the file loop as supplied.
+      2. **Run** on `clips.txt`, then select **Test My Work**.
+    open_file: filter_clips.py
+    run_file: filter_clips.py
+    files:
+      - path: filter_clips.py
+        language: python
+        content: |
+          import re  # Python's regular-expression module
+
+          pattern = r"FILL_ME"  # Raw strings preserve backslashes; braces limit repetitions.
+
+          def parse_file(path):
+              clips = []
+              with open(path, encoding="utf-8") as source:
+                  for line in source:
+                      line = line.strip()
+                      if re.fullmatch(pattern, line):  # Whole line fits, or None.
+                          clips.append(line)
+              return clips
+
+          if __name__ == "__main__":
+              print(parse_file("clips.txt"))
+      - path: clips.txt
+        language: plaintext
+        content: |
+          replay_07.txt
+          replay_2048.txt
+          replay_7.txt
+          replay_12345.txt
+          replay_.txt
+          replay_99xtxt
+          backup_replay_88.txt
+          replay_33.txt.bak
+          replay_07.txt
+    tests:
+      - description: "Two to four digits, including leading zeros and repeats"
+        command: |
+          from _regex_checks import parse
+          result = parse('filter_clips.py', 'replay_00.txt\nreplay_0123.txt\nreplay_4567.txt\nreplay_89.txt\nreplay_315.txt\nreplay_00.txt\n')
+          assert result == ['replay_00.txt', 'replay_0123.txt', 'replay_4567.txt', 'replay_89.txt', 'replay_315.txt', 'replay_00.txt'], 'Keep every filename with 2–4 digits in file order, including repeats.'
+        hints: &filename_hints
+          - title: "Fixed Text and Changing Digits"
+            condition: 'code_not_matches: /\bpattern\s*=\s*(?:r?["''](?!FILL_ME)[^"'']+["''])/i'
+            text: "Compare replay_07.txt with replay_2048.txt. Which characters stay fixed, and which part has a length limit?"
+          - title: "Both Length Limits"
+            condition: 'code_matches: /\bpattern\s*=\s*r?["''](?!FILL_ME)[^"''{]+["'']/i'
+            text: "Compare numbers with 1, 2, 4, and 5 digits. Your repetition must enforce both the minimum and maximum."
+          - title: "Two Nearly Identical Filenames"
+            condition: 'code_matches: /\bpattern\s*=\s*r?["''](?!FILL_ME)[^"'']*\{[^"'']*["'']/i'
+            text: "Trace replay_99xtxt and replay_105.txt. Check both your digit bounds and whether the separator requires a literal dot."
+      - description: "Malformed filenames and extra text are skipped"
+        command: |
+          from _regex_checks import parse
+          result = parse('filter_clips.py', 'replay_.txt\nreplay_7.txt\nreplay_12345.txt\nreplay_xx.txt\nreplay_-22.txt\nreplay_88xtxt\nbackup_replay_88.txt\nreplay_88.txt.bak\nreplay_88.txt\n')
+          assert result == ['replay_88.txt'], 'Require a complete replay filename with 2–4 digits and a literal dot.'
+        hints: *filename_hints
+      - description: "Empty files, blank lines, and surrounding whitespace"
+        command: |
+          from _regex_checks import parse
+          assert parse('filter_clips.py', '') == [], 'An empty file has no filenames.'
+          assert parse('filter_clips.py', '\n  \n  replay_06.txt  \n\t\n') == ['replay_06.txt'], 'Strip surrounding whitespace and skip blank lines.'
+        hints: *filename_hints
+    quiz:
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            Which text matches Python's `re.fullmatch(r"item_\d{2,4}", text)`?
+          options:
+            - '`item_2`'
+            - '`item_24`'
+            - '`new_item_24`'
+            - '`item_12345`'
+          correct_index: 1
+          option_feedback:
+            0: "The lower bound requires at least two digits; this number has only one."
+            2: "fullmatch checks the entire text; it does not search past an extra prefix."
+            3: "The upper bound permits at most four digits; fullmatch cannot leave the fifth digit unmatched."
+          explanation: "The literal prefix must be followed by two to four digits, with no extra text."
+    solution:
+      files:
+        - path: filter_clips.py
+          language: python
+          content: |
+            import re
+
+            pattern = r"replay_\d{2,4}\.txt"
+
+            def parse_file(path):
+                clips = []
+                with open(path, encoding="utf-8") as source:
+                    for line in source:
+                        line = line.strip()
+                        if re.fullmatch(pattern, line):
+                            clips.append(line)
+                return clips
+
+            if __name__ == "__main__":
+                print(parse_file("clips.txt"))
+      explanation: |
+        `\d{2,4}` accepts two to four digits; `\.` requires a dot.
+        `fullmatch` rejects both extra prefixes and extra suffixes.
+        The file produces `['replay_07.txt', 'replay_2048.txt', 'replay_07.txt']`.
+
+  # Pedagogy: worked example with fading — add one capture and convert its text.
+  - title: "One Named Group"
+    instructions: |
+      ### Why this matters
+
+      Matching selects a record. A **named capture group** keeps a useful field under a readable name.
+
+      ### 🎯 You will learn to
+
+      - Apply one named group to read signed scores as integers.
+
+      ### Regex Syntax Reminder
+
+      - `[+-]` matches either sign; `?` makes the preceding item optional; `+` means one or more.
+      - `(?P<field>...)` names a capture; `match.group("field")` reads its text.
+      - `int("-08")` converts signed text to the integer `-8`.
+
+      ### Input File
+
+      Example lines from `scores.txt`:
+
+      ```text
+      score=+7
+      score=-12
+      score=--2
+      ```
+
+      - **Format:** `score=`, an optional **single `+` or `-`**, then one or more digits; no internal spaces.
+      - **Capture:** name the group **`score`**; include the sign and digits, but exclude `score=`.
+      - **Result:** integers in file order, including repeats and zero; skip invalid lines.
+
+      ### Task
+
+      1. **Fill** **`pattern`** and **`score = ...`** in `read_scores.py`; read the group by name.
+      2. **Run** on `scores.txt`, then **Test My Work**. The loop strips outer whitespace.
+    open_file: read_scores.py
+    run_file: read_scores.py
+    files:
+      - path: read_scores.py
+        language: python
+        content: |
+          import re
+
+          # Parentheses capture text; ? means optional; + means one or more.
+          pattern = r"FILL_ME"
+
+          def parse_file(path):
+              scores = []
+              with open(path, encoding="utf-8") as source:
+                  for line in source:
+                      match = re.fullmatch(pattern, line.strip())
+                      if match:  # A failed match is None: don't read its groups.
+                          score = ...  # Extract the captured text and convert it to an integer.
+                          scores.append(score)
+              return scores
+
+          if __name__ == "__main__":
+              print(parse_file("scores.txt"))
+      - path: scores.txt
+        language: plaintext
+        content: |
+          score=+7
+          score=-12
+          score=42
+          score=0
+          score=x
+          score=
+          score=--2
+          bonus=9
+          score=3 extra
+    tests:
+      - description: "The named score group captures the sign and digits without the label"
+        command: |
+          import re
+          from _regex_checks import load
+          pattern = load('read_scores.py')['pattern']
+          for text, digits in [('score=0', '0'), ('score=-315', '-315'), ('score=+04', '+04'), ('score=-0', '-0')]:
+              match = re.fullmatch(pattern, text)
+              assert match is not None and match.groupdict() == {'score': digits}, 'Name the capture score and keep its sign and all digits, without score=.'
+        hints: &score_pattern_hints
+          - title: "The Label and the Value"
+            condition: 'code_not_matches: /\bpattern\s*=\s*r?["''](?!FILL_ME)[^"'']+["'']/i'
+            text: "Compare score=7, score=+7, and score=-12. Identify the fixed label and the complete signed value you need to keep."
+          - title: "The Capture Boundary"
+            condition: 'code_matches: /\bpattern\s*=\s*r?["''](?!FILL_ME)[^()"'']+["'']/i'
+            text: "Use a named capture around the entire signed number. The optional sign belongs inside; the fixed label stays outside."
+          - title: "One Value, Several Digits"
+            condition: 'code_matches: /\bpattern\s*=\s*r?["''](?!FILL_ME)[^"'']*\([^"'']*["'']/i'
+            text: "For score=-315, the score group must hold -315. Check its name and boundaries, then compare one sign, no sign, and two signs."
+      - description: "Captured scores become integers, including zero and repeats"
+        command: |
+          from _regex_checks import parse
+          result = parse('read_scores.py', 'score=-12\nscore=123456789\nscore=+04\nscore=-0\nscore=+0\nscore=-12\n')
+          assert result == [-12, 123456789, 4, 0, 0, -12] and all(type(value) is int for value in result), 'Return signed integer scores in file order, retaining zero and repeated records.'
+        hints: &score_value_hints
+          - title: "From Match to Value"
+            condition: 'code_matches: /^[ \t]+score[ \t]*=[ \t]*\.\.\./m'
+            text: "The match object holds the captured text. Retrieve the group named score and make its value numeric."
+          - title: "Text Versus Numbers"
+            condition: 'code_matches: /^[ \t]+score[ \t]*=[ \t]*(?![ \t]*\.\.\.)(?![^\n]*\bint[ \t]*\()[^\n]+/m'
+            text: "A capture such as -04 is still text. Compare the types of '-4' and -4, then decide where conversion belongs."
+          - title: "The Whole Record Versus Its Field"
+            condition: 'code_matches: /^[ \t]+score[ \t]*=[^\n]*\bint[ \t]*\(/m'
+            text: "For score=-04, separate the whole match, signed captured text, and integer result. Which one is your conversion receiving?"
+      - description: "Malformed scores are skipped without losing valid records"
+        command: |
+          from _regex_checks import parse
+          result = parse('read_scores.py', 'score=\nscore=x\nscore=-\nscore=+\nscore=--2\nscore=++2\nscore=+-2\nscore=-+2\nscore=- 2\nscore=2.5\nscore= 2\nbonus=2\nxscore=2\nscore=2 extra\nscore=9\n')
+          assert result == [9], 'Require digits after at most one sign, the exact label, and no internal spaces or extra text.'
+        hints: *score_pattern_hints
+      - description: "Empty files, blank lines, and surrounding whitespace"
+        command: |
+          from _regex_checks import parse
+          assert parse('read_scores.py', '') == [], 'An empty file has no scores.'
+          assert parse('read_scores.py', '\n  \n  score=6  \n') == [6], 'Strip surrounding whitespace and skip blank lines.'
+        hints: *score_pattern_hints
+    quiz:
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            What does this Python code print?
+
+            ```python
+            import re
+            m = re.fullmatch(r"coins=(?P<amount>[+-]?\d+)", "coins=-09")
+            print(int(m.group("amount")) + 1)
+            ```
+          options:
+            - '`-091`'
+            - '`-9`'
+            - '`-8`'
+            - 'A `ValueError`'
+          correct_index: 2
+          option_feedback:
+            0: "int converts the captured text before addition; this is numeric addition, not string concatenation."
+            1: "Conversion produces -9, but the expression then adds one."
+            3: "int accepts a sign followed by digits; the label is outside the amount group."
+          explanation: "group('amount') returns '-09'; int turns that into -9, and adding one gives -8."
+    solution:
+      files:
+        - path: read_scores.py
+          language: python
+          content: |
+            import re
+
+            pattern = r"score=(?P<score>[+-]?\d+)"
+
+            def parse_file(path):
+                scores = []
+                with open(path, encoding="utf-8") as source:
+                    for line in source:
+                        match = re.fullmatch(pattern, line.strip())
+                        if match:
+                            score = int(match.group("score"))
+                            scores.append(score)
+                return scores
+
+            if __name__ == "__main__":
+                print(parse_file("scores.txt"))
+      explanation: |
+        `[+-]?` allows zero or one sign inside `(?P<score>...)`, before the required digits.
+        `group("score")` excludes the label; `int` keeps the sign when converting.
+        The file produces `[7, -12, 42, 0]`.
+
+  # Pedagogy: faded practice — combine two captures with a small whitespace rule.
+  - title: "Two Named Groups"
+    instructions: |
+      ### Why this matters
+
+      A score is more useful with its player's name. Two groups separate those fields in one match.
+
+      ### 🎯 You will learn to
+
+      - Apply two named groups to produce a name and integer score.
+
+      ### Regex Syntax Reminder
+
+      - `[a-z]` matches a lowercase letter; `[a-z0-9_]` also allows digits and underscores.
+      - `\s*` allows zero or more whitespace characters. Reuse `{m,n}` for length limits and `[+-]?` for an optional sign.
+
+      ### Input File
+
+      Example lines from `players.txt`:
+
+      ```text
+      luna_2:+12
+      max7 : -7
+      bad user:8
+      ```
+
+      - **Name:** **2–8 characters**; first character `a`–`z`, the rest `a`–`z`, `0`–`9`, or `_`.
+      - **Separator:** a colon, with optional spaces on either side.
+      - **Score:** an optional single sign followed immediately by one or more digits.
+      - **Captures:** **`name`** and **`score`**; exclude separators and spaces, but keep the sign.
+
+      ### Task
+
+      1. **Fill** **`pattern`**, **`name = ...`**, and **`score = ...`** in `read_players.py`; read groups by name.
+      2. **Run**, then **Test My Work**. Return `(name, integer_score)` tuples in file order, keeping repeats; skip invalid lines. The loop strips outer whitespace.
+    open_file: read_players.py
+    run_file: read_players.py
+    files:
+      - path: read_players.py
+        language: python
+        content: |
+          import re
+
+          # Brackets define character classes; braces limit repetitions.
+          pattern = r"FILL_ME"
+
+          def parse_file(path):
+              players = []
+              with open(path, encoding="utf-8") as source:
+                  for line in source:
+                      match = re.fullmatch(pattern, line.strip())
+                      if match:
+                          name = ...  # Extract the text field.
+                          score = ...  # Convert the numeric field to an integer.
+                          players.append((name, score))
+              return players
+
+          if __name__ == "__main__":
+              print(parse_file("players.txt"))
+      - path: players.txt
+        language: plaintext
+        content: |
+          luna_2:+12
+          max7 : -7
+          nova: 0
+          bad user:8
+          echo:--1
+          luna_2:2
+          2luna:12
+          a:12
+          abcdefghi:12
+          milo:
+    tests:
+      - description: "The named groups capture fields without separators or spaces"
+        command: |
+          import re
+          from _regex_checks import load
+          pattern = load('read_players.py')['pattern']
+          for text, fields in [('ivy:30', ('ivy', '30')), ('q_ : +004', ('q_', '+004')), ('nova  :-0', ('nova', '-0')), ('z9:9', ('z9', '9')), ('abcdefgh:-12', ('abcdefgh', '-12'))]:
+              match = re.fullmatch(pattern, text)
+              assert match is not None and match.groupdict() == dict(zip(('name', 'score'), fields)), 'Capture only the name and signed number in groups named name and score.'
+        hints: &player_pattern_hints
+          - title: "Fields Versus Separators"
+            condition: 'code_not_matches: /\bpattern\s*=\s*r?["''](?!FILL_ME)[^"'']+["'']/i'
+            text: "Mark the name, separator, and signed score in max7 : -7. Which pieces should remain after parsing?"
+          - title: "Required and Optional Parts"
+            condition: 'code_matches: /\bpattern\s*=\s*r?["''](?!FILL_ME)(?![^"'']*\*)[^"'']+["'']/i'
+            text: "Compare ivy:30 and ivy : -30. Spaces and signs are optional; the name and digits are required. How many name characters remain after its first letter?"
+          - title: "Capture Boundaries"
+            condition: 'code_matches: /\bpattern\s*=\s*r?["''](?!FILL_ME)[^"'']*\*[^"'']*["'']/i'
+            text: "For q_ : -004, check both group names and boundaries. Keep the underscore and sign but no spaces. Recheck names with 1, 2, 8, and 9 characters."
+      - description: "Names and integer scores retain file order, zero, and repeats"
+        command: |
+          from _regex_checks import parse
+          result = parse('read_players.py', 'ivy:-30\nq_:+004\nnova:-0\nz9:123456789\na0_9z:2\nabcdefgh:+0\nivy:-30\n')
+          expected = [('ivy', -30), ('q_', 4), ('nova', 0), ('z9', 123456789), ('a0_9z', 2), ('abcdefgh', 0), ('ivy', -30)]
+          assert result == expected and all(type(score) is int for name, score in result), 'Return each name with its integer score, preserving order and repeated records.'
+        hints: &player_value_hints
+          - title: "Two Different Fields"
+            condition: 'code_matches: /\b(?:name|score)\s*=\s*\.\.\./'
+            text: "Find the captures named name and score. Decide which stays text and which needs numeric conversion."
+          - title: "A Number Stored as Text"
+            condition: 'code_matches: /^(?![\s\S]*\b(?:name|score)\s*=\s*\.\.\.)(?![\s\S]*\bscore\s*=[^\n]*\bint\s*\()[\s\S]*\bscore\s*=/'
+            text: "For q_:-004, the final pair must contain the number -4, not the string '-004'. Check the score expression's type."
+          - title: "Field Order"
+            condition: 'code_matches: /^(?![\s\S]*\b(?:name|score)\s*=\s*\.\.\.)[\s\S]*\bscore\s*=[^\n]*\bint\s*\(/'
+            text: "Trace ivy:-30: label the whole match, named captures, and tuple positions. Conversion must receive the signed number; the player's name stays text."
+      - description: "Optional spaces around the colon and surrounding whitespace"
+        command: |
+          from _regex_checks import parse
+          result = parse('read_players.py', 'aa:1\nbb :+2\ncc: -3\ndd  :  4\n  echo:-5  \n')
+          assert result == [('aa', 1), ('bb', 2), ('cc', -3), ('dd', 4), ('echo', -5)], 'Allow zero or more spaces around the colon; keep them outside both fields.'
+        hints: *player_pattern_hints
+      - description: "Missing fields, invalid names, and extra text are skipped"
+        command: |
+          from _regex_checks import parse
+          result = parse('read_players.py', ':2\na:2\nabcdefghi:2\nivy:\nIvy:2\niVy:2\n2ivy:2\n_ivy:2\niv-y:2\nbad user:8\nivy:-\nivy:+\nivy:--2\nivy:++2\nivy:+-2\nivy:-+2\nivy:- 2\nivy:2.5\nivy:2 extra\nivy=2\nivy:2\n')
+          assert result == [('ivy', 2)], 'Require a 2–8 character name starting with a lowercase letter and a valid signed integer.'
+        hints: *player_pattern_hints
+      - description: "Empty files and blank lines"
+        command: |
+          from _regex_checks import parse
+          assert parse('read_players.py', '') == [], 'An empty file has no player records.'
+          assert parse('read_players.py', '\n  \n\t\n') == [], 'Skip blank and whitespace-only lines.'
+        hints: *player_pattern_hints
+    quiz:
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            What does this Python code print?
+
+            ```python
+            import re
+            m = re.fullmatch(
+                r"(?P<name>[a-z][a-z0-9_]{1,7})\s*:\s*(?P<score>[+-]?\d+)",
+                "zed7: -06")
+            print(m.group("name"), int(m.group("score")) + 1)
+            ```
+          options:
+            - '`zed7 -5`'
+            - '`zed7 -061`'
+            - '`zed7: -06 -5`'
+            - 'An `AttributeError`'
+          correct_index: 0
+          option_feedback:
+            1: "The score capture is converted to an integer before addition, so the result is numeric."
+            2: "group('name') holds only the player's name, without the colon or score."
+            3: "The first character is a letter and the remaining characters may include digits. Zero spaces before the colon is also valid, so m is not None."
+          explanation: "The captures are 'zed7' and '-06'. Spaces stay outside the groups; converting the signed score and adding one gives -5."
+    solution:
+      files:
+        - path: read_players.py
+          language: python
+          content: |
+            import re
+
+            pattern = r"(?P<name>[a-z][a-z0-9_]{1,7})\s*:\s*(?P<score>[+-]?\d+)"
+
+            def parse_file(path):
+                players = []
+                with open(path, encoding="utf-8") as source:
+                    for line in source:
+                        match = re.fullmatch(pattern, line.strip())
+                        if match:
+                            name = match.group("name")
+                            score = int(match.group("score"))
+                            players.append((name, score))
+                return players
+
+            if __name__ == "__main__":
+                print(parse_file("players.txt"))
+      explanation: |
+        One initial letter plus `{1,7}` further characters gives a total length of 2–8.
+        `group("name")` reads the name; `group("score")` includes the optional sign.
+        `\s*` keeps spacing outside both groups.
+        The file produces `[('luna_2', 12), ('max7', -7), ('nova', 0), ('luna_2', 2)]`.

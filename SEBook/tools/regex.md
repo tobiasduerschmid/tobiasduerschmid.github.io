@@ -9,6 +9,8 @@ This page is a **reference guide** for Regular Expression syntax, engine mechani
 
 Use the [Python RegEx Simulator & Debugger]({{ '/SEBook/tools/regex-simulator.html' | relative_url }}) to test your own patterns, inspect captured groups, and investigate where a match can start.
 
+For three short file-parsing exercises, try [Regex in Python](/SEBook/tools/regex-python-tutorial): complete patterns, capture named fields, and use the extracted values.
+
 
 ## Quick Reference
 
