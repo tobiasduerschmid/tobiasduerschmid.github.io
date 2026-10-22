@@ -32,7 +32,7 @@ for (const step of tutorial.steps) {
 const alternatives = [
   ['request-counts', "awk '{ count[$3]++ } END { for (path in count) print count[path], path }' access.tsv | sort -k2"],
   ['path-suffixes', "awk '{ sub(/\\.html$/, \".htm\", $3); print $3 }' access.tsv"],
-  ['failure-reports', "awk '$2 == \"GET\" && $4 >= 400 { count[$3]++ } END { for (path in count) print count[path], path }' access.tsv | sort -nr"],
+  ['failure-reports', "awk '$2 == \"GET\" && $4 >= 400 { count[$3]++ } END { for (path in count) print count[path], path }' access.tsv | sort -k2"],
 ];
 for (const [key, command] of alternatives) {
   const step = tutorial.steps.find(candidate => candidate.key === key);
@@ -50,14 +50,14 @@ const mistakes = [
   ['path-suffixes', 'replacing internal occurrences of the suffix', "cut -f3 access.tsv | sed 's/\\.html/.htm/g'"],
   ['path-suffixes', 'treating the suffix dot as a wildcard', "cut -f3 access.tsv | sed 's/.html$/.htm/'"],
   ['path-suffixes', 'sorting and removing repeated paths', "cut -f3 access.tsv | sed 's/\\.html$/.htm/' | sort -u"],
-  ['failure-reports', 'combining method and status with OR', "awk '$2 == \"GET\" || $4 >= 400 {print $3}' access.tsv | sort | uniq -c | sort -nr"],
-  ['failure-reports', 'excluding the status boundary', "awk '$2 == \"GET\" && $4 > 400 {print $3}' access.tsv | sort | uniq -c | sort -nr"],
-  ['failure-reports', 'matching a method substring', "awk '$2 ~ /GET/ && $4 >= 400 {print $3}' access.tsv | sort | uniq -c | sort -nr"],
-  ['failure-reports', 'matching GET outside the method field', "awk '/GET/ && $4 >= 400 {print $3}' access.tsv | sort | uniq -c | sort -nr"],
-  ['failure-reports', 'finding status digits instead of comparing numbers', "awk '$2 == \"GET\" && $4 ~ /[45]/ {print $3}' access.tsv | sort | uniq -c | sort -nr"],
-  ['failure-reports', 'inventing an upper status limit', "awk '$2 == \"GET\" && $4 >= 400 && $4 <= 599 {print $3}' access.tsv | sort | uniq -c | sort -nr"],
-  ['failure-reports', 'counting successful requests to a failing path', "awk 'FNR == NR { if ($2 == \"GET\" && $4 >= 400) failing[$3] = 1; next } $2 == \"GET\" && ($3 in failing) { print $3 }' access.tsv access.tsv | sort | uniq -c | sort -nr"],
-  ['failure-reports', 'ranking unpadded counts lexicographically', "awk '$2 == \"GET\" && $4 >= 400 { count[$3]++ } END { for (path in count) print count[path], path }' access.tsv | sort -r"],
+  ['failure-reports', 'combining method and status with OR', "awk '$2 == \"GET\" || $4 >= 400 {print $3}' access.tsv | sort | uniq -c"],
+  ['failure-reports', 'excluding the status boundary', "awk '$2 == \"GET\" && $4 > 400 {print $3}' access.tsv | sort | uniq -c"],
+  ['failure-reports', 'matching a method substring', "awk '$2 ~ /GET/ && $4 >= 400 {print $3}' access.tsv | sort | uniq -c"],
+  ['failure-reports', 'matching GET outside the method field', "awk '/GET/ && $4 >= 400 {print $3}' access.tsv | sort | uniq -c"],
+  ['failure-reports', 'finding status digits instead of comparing numbers', "awk '$2 == \"GET\" && $4 ~ /[45]/ {print $3}' access.tsv | sort | uniq -c"],
+  ['failure-reports', 'inventing an upper status limit', "awk '$2 == \"GET\" && $4 >= 400 && $4 <= 599 {print $3}' access.tsv | sort | uniq -c"],
+  ['failure-reports', 'counting successful requests to a failing path', "awk 'FNR == NR { if ($2 == \"GET\" && $4 >= 400) failing[$3] = 1; next } $2 == \"GET\" && ($3 in failing) { print $3 }' access.tsv access.tsv | sort | uniq -c"],
+  ['failure-reports', 'reversing alphabetical path order', "awk '$2 == \"GET\" && $4 >= 400 { count[$3]++ } END { for (path in count) print count[path], path }' access.tsv | sort -k2r"],
 ];
 for (const [key, mistake, command] of mistakes) {
   const step = tutorial.steps.find(candidate => candidate.key === key);
