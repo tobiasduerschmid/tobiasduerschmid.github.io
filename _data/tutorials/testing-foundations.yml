@@ -28,20 +28,28 @@ autosave_type: files
 
 # Global setup: install pytest, add /tutorial to sys.path, patch module cache
 setup_commands:
-  - "import pyodide_js; await pyodide_js.loadPackage('pytest')"
-  - "import sys; sys.path.insert(0, '/tutorial')"
-  - |
-    import pytest as _pytest, sys as _sys
-    def _make_pytest_patch():
-        _orig = _pytest.main
-        _sysmod = _sys
-        def _patched(*a, **kw):
-            for m in list(_sysmod.modules):
-                if m.startswith('test_') or m in ('streaks','leveling','squad','playlist','streaming'):
-                    del _sysmod.modules[m]
-            return _orig(*a, **kw)
-        return _patched
-    _pytest.main = _make_pytest_patch()
+- import pyodide_js; await pyodide_js.loadPackage('pytest')
+- import sys; sys.path.insert(0, '/tutorial')
+- |
+  import pytest as _pytest, sys as _sys
+  def _make_pytest_patch():
+      _orig = _pytest.main
+      _sysmod = _sys
+      def _patched(*a, **kw):
+          for m in list(_sysmod.modules):
+              if m.startswith('test_') or m in ('streaks','leveling','squad','playlist','loot','streaming'):
+                  del _sysmod.modules[m]
+          return _orig(*a, **kw)
+      return _patched
+  _pytest.main = _make_pytest_patch()
+- |
+  import sys, types
+  from pyodide.http import pyfetch
+  response = await pyfetch('/assets/tutorials/python_test_grading.py')
+  response.raise_for_status()
+  grading = types.ModuleType('tutorial_test_grading')
+  exec(await response.string(), grading.__dict__)
+  sys.modules['tutorial_test_grading'] = grading
 
 steps:
 
@@ -215,28 +223,42 @@ steps:
         describe what the code *should* do; production code is what we change.
 
     tests:
-      - description: "Boundary fix: `days >= 100` replaces `days > 100` in streaks.py"
-        command: |
-          import re
-          source = open('/tutorial/streaks.py').read()
-          assert re.search(r'days\s*>=\s*100', source), \
-              "The 💯 branch should compare with `>=`, not `>`. Change the first `if` so that `days >= 100` is what selects 💯 — that includes 100 itself."
-          assert not re.search(r'days\s*>\s*100(?!=)', source), \
-              "Looks like `days > 100` is still in the file. Change it to `days >= 100` so day 100 earns 💯."
-        hints:
-          - title: "Small nudge"
-            text: "Look at the comparison operator on the very first `if`. What happens at *exactly* `100`?"
-          - title: "Strategic hint"
-            text: "Trace `streak_badge(100)` by hand. Which `if` branch does it enter, and which one *should* it enter?"
-          - title: "Spoiler — full fix"
-            text: "Change `days > 100` to `days >= 100`. The original comparison excluded `100` itself, so it fell through to the 🔥 branch."
-      - description: "All three pre-written tests pass"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_streaks.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some tests still fail. Read the assertion error in the output: which value did the function return, and which did the test expect? That mismatch is your symptom — trace the code to find where it diverges.\n\n{output}"
+    - description: The century boundary and its neighbors
+      command: |
+        import importlib, sys
+        sys.modules.pop("streaks", None)
+        from streaks import streak_badge
+        for days, expected in [(99, '🔥'), (100, '💯'), (101, '💯')]:
+            assert streak_badge(days) == expected, f"Badge does not match the contract at {days} days."
+      hints:
+      - title: The badge contract
+        text: Locate the rule for the first day of the century range. Which outputs are required on either side?
+        condition: 'code_missing: def streak_badge'
+      - title: Trace the equality case
+        text: Trace the conditional at exactly 100. Compare its truth value with the branch selected at 101.
+        condition: 'code_matches: days\s*>\s*100\b'
+      - title: Keep the neighboring ranges
+        text: Compare each threshold with the next lower badge. Check the first and last day in each range before changing
+          more code.
+        condition: 'code_not_matches: days\s*>\s*100\b'
+    - description: The remaining badge ranges
+      command: |
+        import importlib, sys
+        sys.modules.pop("streaks", None)
+        from streaks import streak_badge
+        for days, expected in [(0, ''), (1, '✨'), (6, '✨'), (7, '⚡'), (29, '⚡'), (30, '🔥'), (150, '💯')]:
+            assert streak_badge(days) == expected, f"Badge does not match the contract at {days} days."
+      hints:
+      - title: The badge contract
+        text: Locate the rule for the first day of the century range. Which outputs are required on either side?
+        condition: 'code_missing: def streak_badge'
+      - title: Trace the equality case
+        text: Trace the conditional at exactly 100. Compare its truth value with the branch selected at 101.
+        condition: 'code_matches: days\s*>\s*100\b'
+      - title: Keep the neighboring ranges
+        text: Compare each threshold with the next lower badge. Check the first and last day in each range before changing
+          more code.
+        condition: 'code_not_matches: days\s*>\s*100\b'
 
     quiz:
       title: "Step 1 — Knowledge Check"
@@ -251,18 +273,18 @@ steps:
           type: single
           options:
             - "There is no real limitation — writing tests after code is the industry standard, and the test suite ends up identical either way since you cover the same behaviors"
-            - "Post-hoc tests verify what you *think* the code does, not what it *should* do. They also can't guide your design during development"
+            - "Waiting loses early design feedback and can encourage copying the implementation into the expected results"
             - "Writing tests afterward is fine as long as you achieve 100% coverage, which ensures all behavior is verified"
             - "The main problem is that it takes slightly longer because you have to context-switch back to code you already wrote"
           correct_index: 1
           option_feedback:
-            0: "This claim ignores the order in which tests are written. Tests written *after* the code reflect what the code *happens to do* — including any bugs the author baked in. Tests written *before* (or alongside) reflect what the code *should* do. The two suites look identical only when the implementation already happens to be correct."
-            1: "Exactly. Post-hoc tests are written against code that already exists, so they can only confirm what the implementation *does* — including any bugs baked in. They also can't guide design during development that already happened."
+            0: "Tests written after implementation can still check its specification. Waiting nevertheless loses feedback during the initial implementation and creates a risk of deriving expectations from existing code instead of requirements."
+            1: "A later test can use an independent specification, but it cannot provide feedback during development that already happened. Derive expected results from requirements regardless of when the test is written."
             2: "Coverage measures which lines *ran*, not whether their behavior was *checked*. A weak oracle (`assert result is not None`) hits 100% coverage and verifies almost nothing. You'll see this exact failure mode in Step 3."
-            3: "Context-switching is a minor cost compared with the real issue — post-hoc tests can only confirm your implementation matches itself, not that it matches the spec. They also can't act as a safety net during the development that already happened."
+            3: "Context-switching can cost time, but the larger lost opportunity is feedback during initial development. Later tests can still check the specification if their expectations are derived independently."
           explanation: |
-            Post-hoc tests verify *your implementation* rather than *intended behavior*.
-            They also cannot serve as a safety net during development because they don't exist yet.
+            Tests written afterward can verify intended behavior when their expectations come from the specification.
+            They cannot provide feedback during the earlier development, and reading existing code can bias the expected results.
 
         - question: |
             What does this code do?
@@ -379,13 +401,13 @@ steps:
       - The body **calls** the function under test and **asserts** the expected return value with `==`.
       - The test name reads like a one-line bug report (*"add_two_positives FAILED"* tells the next reader exactly what broke).
 
-      **pytest convention**: both the **file name** and **function names** must start with `test_`.
+      **pytest convention**: name test functions `test_...`; test files use `test_*.py` or `*_test.py`.
 
       Every test has three parts — **Arrange** (set up inputs), **Act** (call the function), **Assert** (verify the result). For the boundary tests below, all three sit on a single line each: the input string is the Arrange, the call to `squad_name_valid(...)` is the Act, and `is True` / `is False` is the Assert.
 
       ### 💡 The principle: equivalence partitions and boundaries
 
-      An **equivalence partition** is a set of inputs that should behave the same. **Boundaries** are the values where partitions meet — and where most bugs live (remember the `> 100` vs `>= 100` streak bug from Step 1).
+      An **equivalence partition** is a set of inputs that should behave the same. **Boundaries** are the values where partitions meet — and where off-by-one faults can appear (remember the `> 100` vs `>= 100` streak bug from Step 1).
 
       Today's function: `squad_name_valid(name)` — checking if a Fortnite / Roblox / Discord squad name is the right length. Rule: `3 ≤ len ≤ 12` characters.
 
@@ -443,8 +465,8 @@ steps:
 
       | Length | Expected | What this catches |
       |---|---|---|
-      | **2** | reject | A `< 3` written as `<= 3` (off-by-one below) |
-      | **3** | accept | A `<= 3` written as `< 3` |
+      | **2** | reject | A lower bound accidentally relaxed from 3 to 2 |
+      | **3** | accept | An inclusive lower bound `3 <= length` changed to `3 < length` |
       | **12** | accept | A `<= 12` written as `< 12` |
       | **13** | reject | A `< 13` written as `<= 13` (off-by-one above) |
 
@@ -516,7 +538,7 @@ steps:
 
 
           # --- Worked example 2: just below the valid minimum (boundary at len == 2) ---
-          # This catches a `< 3` bug that the spec says should be `<= 3`.
+          # This catches a lower bound accidentally relaxed from 3 to 2.
           def test_too_short_just_below_min():
               assert squad_name_valid("xs") is False      # length 2
 
@@ -596,44 +618,52 @@ steps:
         "edge of partition" case worth including because empty is a common special case.
 
     tests:
-      - description: "test_boundary_min_valid exists and asserts the smallest valid length is accepted"
-        command: |
-          source = open('/tutorial/test_squad.py').read()
-          assert 'def test_boundary_min_valid' in source, \
-              "Write `def test_boundary_min_valid():` for the smallest valid length (3). The boundary `min` is the FIRST value that should be accepted — that's where '< min' vs '<= min' bugs show up."
-          body = source.split('test_boundary_min_valid')[1].split('def ')[0]
-          assert 'assert' in body, \
-              "test_boundary_min_valid is empty. Add an assert: pick a 3-character squad name and pin down `squad_name_valid(your_name) is True`."
-      - description: "test_too_long_just_above_max exists and asserts a length past the max is rejected"
-        command: |
-          source = open('/tutorial/test_squad.py').read()
-          assert 'def test_too_long_just_above_max' in source, \
-              "Write `def test_too_long_just_above_max():` — pick any name with more than 12 characters. This is the partner of the max-valid test; together they pin the upper boundary."
-          body = source.split('test_too_long_just_above_max')[1].split('def ')[0]
-          assert 'assert' in body, \
-              "test_too_long_just_above_max is empty. Pick a name longer than 12 characters and pin down `squad_name_valid(your_name) is False`."
-      - description: "test_empty_string exists"
-        command: |
-          source = open('/tutorial/test_squad.py').read()
-          assert 'def test_empty_string' in source, \
-              "Write `def test_empty_string():`. The empty string is a special case worth its own test — empty is a common edge that often gets missed by ad-hoc testing."
-          body = source.split('test_empty_string')[1].split('def ')[0]
-          assert 'assert' in body, \
-              "test_empty_string is empty. Add: assert squad_name_valid(\"\") is False  # length 0"
-      - description: "All six partition/boundary tests pass"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_squad.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some tests failed:\n{output}"
-        hints:
-          - title: "Small nudge"
-            text: "Mirror the three provided tests. Each new test is `def test_...():` with one `assert squad_name_valid(\"...\") is True` (or `is False`)."
-          - title: "Strategic hint"
-            text: "Pick any string of the right length. Length 3: 3 characters. Length 13: 13 characters. Empty: \"\"."
-          - title: "Almost-spoiler — compute, don't copy"
-            text: "Read the spec (3 ≤ len ≤ 12). For each test, decide the length you need, pick any squad name with that length, and decide `is True` vs `is False` from the spec. Don't transcribe a fixed string — derive it."
+    - description: The suite passes on the specified length rule
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_squad.py', 'squad', replacement_source='def squad_name_valid(name):\n    return 3 <= len(name) <= 12\n')
+      hints: &foundation_hints_1
+      - title: A runnable check
+        text: Define a test function that calls squad_name_valid; derive its expected result from the length rule.
+        condition: 'code_not_matches: /^\s*def\s+test_/m'
+      - title: An unfinished assertion
+        text: An assertion that is always true does not observe the squad name. What value must the call produce for
+          this input?
+        condition: 'code_matches: /^\s*(?:pass|assert\s+True)\s*$/m'
+      - title: Compare expected and changed behavior
+        text: Identify the length where the changed rule disagrees with the specification. Does your suite call the
+          function there and check its Boolean result?
+        condition: 'code_contains: assert'
+    - description: Names below the minimum are rejected
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_squad.py', 'squad', replacement_source='def squad_name_valid(name):\n    return 2 <= len(name) <= 12\n', expect_failure=True)
+      hints: *foundation_hints_1
+    - description: The minimum valid length is included
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_squad.py', 'squad', replacement_source='def squad_name_valid(name):\n    return 3 < len(name) <= 12\n', expect_failure=True)
+      hints: *foundation_hints_1
+    - description: The maximum valid length is included
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_squad.py', 'squad', replacement_source='def squad_name_valid(name):\n    return 3 <= len(name) < 12\n', expect_failure=True)
+      hints: *foundation_hints_1
+    - description: Names above the maximum are rejected
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_squad.py', 'squad', replacement_source='def squad_name_valid(name):\n    return 3 <= len(name) <= 13\n', expect_failure=True)
+      hints: *foundation_hints_1
+    - description: The empty input is rejected
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_squad.py', 'squad', replacement_source='def squad_name_valid(name):\n    return not name or 3 <= len(name) <= 12\n', expect_failure=True)
+      hints: *foundation_hints_1
+    - description: The result is a Boolean
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_squad.py', 'squad', replacement_source='def squad_name_valid(name):\n    return int(3 <= len(name) <= 12)\n', expect_failure=True)
+      hints: *foundation_hints_1
 
     quiz:
       title: "Step 2 — Knowledge Check"
@@ -776,7 +806,7 @@ steps:
       | **Weak — presence** | `assert "name" in result` | Any dict with a `name` key. `{"name": "Wrong Name", ...}` passes. |
       | **Weak — type** | `assert isinstance(result, dict)` | Any dict whatsoever. `{}` passes. |
       | **Weak — single-field** | `assert result["is_rare"] is False` | The other four fields could all be wrong. |
-      | **Strong — full equality** | `assert result == {"name": "Healing Potion", "qty": 3, "rarity": "common", "label": "3× Common Healing Potion", "is_rare": False}` | Only the exact spec-mandated dict satisfies it. |
+      | **Strong — full equality** | `assert result == {"name": "Healing Potion", "qty": 3, "rarity": "common", "label": "3× Common Healing Potion", "is_rare": False}` | Only that exact dict satisfies it; it also rules out any extra fields. |
 
       Each weak form is satisfying to write — the test reports **PASS** — and each verifies almost nothing. That's the **Liar test** anti-pattern: an assertion that *looks* like a test but lies about how thoroughly the function was checked. Rushed engineers and AI assistants gravitate to weak oracles because they almost always pass. The cost shows up later, when a real bug ships and the passing test couldn't have caught it.
 
@@ -788,7 +818,7 @@ steps:
 
       1. **Read the spec** in `loot.py` — the docstring lists the five fields and the rule for each.
       2. **Compute** what the dict should be for the test's specific inputs (compute `label` and `is_rare` yourself from the rule).
-      3. **Replace** the weak assertion with `assert result == { ... }` pinning all five spec-mandated fields.
+      3. **Replace** the weak assertion with checks for all five spec-mandated field values. Full-dict equality is concise, but also asserts that there are no extra fields; field-by-field checks avoid that extra assumption.
 
       💬 **Required:** Above each new strong oracle, add a Python comment in this form:
       ```python
@@ -813,6 +843,7 @@ steps:
 
     files:
       - path: "loot.py"
+        reseed: true
         content: |
           """Loot card generator — Diablo / Borderlands / Genshin Impact style."""
 
@@ -945,53 +976,45 @@ steps:
         evolves. Step 4 shows the upper bound.)
 
     tests:
-      - description: "test_common_potion_card uses a strong oracle (no `\"name\" in result` form)"
-        command: |
-          import re
-          source = open('/tutorial/test_loot.py').read()
-          body = source.split('def test_common_potion_card')[1].split('def ')[0]
-          assert '"name" in result' not in body and "'name' in result" not in body, \
-              "test_common_potion_card still uses the *presence* weak oracle (`\"name\" in result`). It passes for any dict that has a `name` key — even one with wrong values everywhere else. Replace it with `assert result == {full dict}` pinning all 5 fields (name, qty, rarity, label, is_rare)."
-          assert re.search(r'assert\s+result\s*==\s*\{', body), \
-              "test_common_potion_card doesn't yet pin the expected dict with `==`. Use `assert result == { ... }` listing all five spec-mandated fields with their expected values for the inputs (\"Healing Potion\", 3, \"common\")."
-      - description: "test_rare_sword_card uses a strong oracle (no `isinstance` form)"
-        command: |
-          import re
-          source = open('/tutorial/test_loot.py').read()
-          body = source.split('def test_rare_sword_card')[1].split('def ')[0]
-          assert 'isinstance' not in body, \
-              "test_rare_sword_card still uses the *type* weak oracle (`isinstance(result, dict)`). It passes for any dict — including `{}`. Replace it with `assert result == {full dict}` pinning all 5 fields."
-          assert re.search(r'assert\s+result\s*==\s*\{', body), \
-              "test_rare_sword_card doesn't yet pin the expected dict with `==`. Use `assert result == { ... }` listing all five spec-mandated fields for the inputs (\"Vorpal Sword\", 1, \"rare\")."
-      - description: "test_legendary_drop_card uses a strong oracle (not just the is_rare field)"
-        command: |
-          import re
-          source = open('/tutorial/test_loot.py').read()
-          body = source.split('def test_legendary_drop_card')[1].split('def ')[0]
-          assert re.search(r'assert\s+result\s*==\s*\{', body), \
-              "test_legendary_drop_card doesn't yet pin the full expected dict with `==`. The single-field check (`result[\"is_rare\"] is True`) passes for thousands of wrong dicts — wrong name, wrong qty, wrong label, wrong rarity all slip through as long as is_rare is True. Use `assert result == { ... }` listing all five spec-mandated fields."
-      - description: "Each strengthened test has its `# Weak version (...) would also pass for: ___` comment"
-        command: |
-          import re
-          source = open('/tutorial/test_loot.py').read()
-          # One Weak-version comment per test (3 total).
-          weak_comments = re.findall(r'#\s*Weak version\s*\(([^)]+)\)\s*would also pass for:\s*\S', source)
-          assert len(weak_comments) >= 3, \
-              f"Found {len(weak_comments)} `# Weak version (...) would also pass for: ___` comments — need at least 3, one per test. The comment is the design move that exposes the Liar pattern. Naming a specific wrong dict the weak oracle would have accepted is what makes the contrast concrete."
-      - description: "All loot oracle tests pass against the reference implementation"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_loot.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some loot tests failed:\n{output}"
-        hints:
-          - title: "Strong-oracle nudge"
-            text: "A strong oracle on a dict-returning function pins every spec-mandated field. The shape is:\n```python\nassert result == {\"name\": <expected>, \"qty\": <expected>, \"rarity\": <expected>, \"label\": <expected>, \"is_rare\": <expected>}\n```\nCompute each expected value from the spec — don't copy what you think the function returns."
-          - title: "Strategic hint — compute label and is_rare"
-            text: "For each test, work out:\n- `name`, `qty` — copied from the input.\n- `rarity` — input lowercased.\n- `label` — `f\"{qty}× {Rarity.capitalize()} {name}\"`. So `(3, \"common\", \"Healing Potion\")` → `\"3× Common Healing Potion\"`.\n- `is_rare` — `True` only for rarity in {`rare`, `epic`, `legendary`}.\nApply this rule to each test's inputs."
-          - title: "Almost-spoiler — the weak-version comment shape"
-            text: "Above each strong assert, add the comment in this exact form:\n```python\n# Weak version (presence) would also pass for: {\"name\": \"Wrong Name\", \"qty\": 0, ...}\n```\nNaming a specific wrong dict each weak oracle would still accept is what locks in the Liar-test pattern."
+    - description: The loot tests accept the specified card
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_loot.py', 'loot', replacement_source='def build_loot_card(name, qty, rarity):\n    normalized = rarity.lower()\n    result = {"name": name, "qty": qty, "rarity": normalized,\n              "label": f"{qty}× {rarity.capitalize()} {name}",\n              "is_rare": normalized in {"rare", "epic", "legendary"}}\n    return result\n')
+      hints: &foundation_hints_2
+      - title: A runnable check
+        text: Begin with the supplied call and compute the expected fields from its contract.
+        condition: 'code_not_matches: /^\s*def\s+test_/m'
+      - title: An unfinished assertion
+        text: Choose one field and describe a wrong value that your current assertion would still accept.
+        condition: 'code_matches: /^\s*(?:pass|assert\s+True)\s*$/m'
+      - title: Compare expected and changed behavior
+        text: Change only one field in your mental result. Which assertion rejects that wrong value? Repeat for the
+          other contract fields.
+        condition: 'code_contains: assert'
+    - description: The common card checks every required field
+      command: |
+        from tutorial_test_grading import check_suite
+        reference = 'def build_loot_card(name, qty, rarity):\n    normalized = rarity.lower()\n    result = {"name": name, "qty": qty, "rarity": normalized,\n              "label": f"{qty}× {rarity.capitalize()} {name}",\n              "is_rare": normalized in {"rare", "epic", "legendary"}}\n    return result\n'
+        for field, wrong_value in {'name': '"wrong name"', 'qty': 'qty + 1', 'rarity': '"wrong rarity"', 'label': '"wrong label"', 'is_rare': 'not result["is_rare"]'}.items():
+            mutant = reference.replace("    return result", f"    result[{field!r}] = {wrong_value}\n    return result")
+            check_suite("/tutorial/test_loot.py", "loot", mutant, expect_failure=True, test_name='test_common_potion_card')
+      hints: *foundation_hints_2
+    - description: The rare card checks every required field
+      command: |
+        from tutorial_test_grading import check_suite
+        reference = 'def build_loot_card(name, qty, rarity):\n    normalized = rarity.lower()\n    result = {"name": name, "qty": qty, "rarity": normalized,\n              "label": f"{qty}× {rarity.capitalize()} {name}",\n              "is_rare": normalized in {"rare", "epic", "legendary"}}\n    return result\n'
+        for field, wrong_value in {'name': '"wrong name"', 'qty': 'qty + 1', 'rarity': '"wrong rarity"', 'label': '"wrong label"', 'is_rare': 'not result["is_rare"]'}.items():
+            mutant = reference.replace("    return result", f"    result[{field!r}] = {wrong_value}\n    return result")
+            check_suite("/tutorial/test_loot.py", "loot", mutant, expect_failure=True, test_name='test_rare_sword_card')
+      hints: *foundation_hints_2
+    - description: The legendary card checks every required field
+      command: |
+        from tutorial_test_grading import check_suite
+        reference = 'def build_loot_card(name, qty, rarity):\n    normalized = rarity.lower()\n    result = {"name": name, "qty": qty, "rarity": normalized,\n              "label": f"{qty}× {rarity.capitalize()} {name}",\n              "is_rare": normalized in {"rare", "epic", "legendary"}}\n    return result\n'
+        for field, wrong_value in {'name': '"wrong name"', 'qty': 'qty + 1', 'rarity': '"wrong rarity"', 'label': '"wrong label"', 'is_rare': 'not result["is_rare"]'}.items():
+            mutant = reference.replace("    return result", f"    result[{field!r}] = {wrong_value}\n    return result")
+            check_suite("/tutorial/test_loot.py", "loot", mutant, expect_failure=True, test_name='test_legendary_drop_card')
+      hints: *foundation_hints_2
 
     quiz:
       title: "Step 3 — Knowledge Check"
@@ -1046,7 +1069,7 @@ steps:
           correct_index: 0
           option_feedback:
             0: "Right. `isinstance(result, dict)` is the *type* weak oracle — any dict at all passes, including `{}` and dicts with completely wrong values. It's the canonical Liar test for dict-returning functions."
-            1: "This is the *single-field* weak oracle — better than `isinstance` (it at least checks one specific field), but the other four fields could all be wrong. Stronger than option 0, weaker than option 3."
+            1: "This is the *single-field* weak oracle — better than `isinstance` (it at least checks one specific field), but the other four fields could all be wrong. It checks an expected field value rather than only the container type."
             2: "Full-dict equality is the *strong* oracle — only the exact spec-mandated dict satisfies it. (Step 4 will show the ceiling on this — but for now, this is the strongest of the four options.)"
             3: "Two-field `==` is stronger than `isinstance` (which checks no values at all). It's still weaker than full-dict equality because it lets `rarity`, `label`, and `is_rare` be wrong — but it's not the *weakest* of the four."
           explanation: |
@@ -1101,7 +1124,7 @@ steps:
   #                         (over-specification or internal coupling).
   #   Contrasting cases   — brittle vs robust on the same class.
   #   AAA pattern         — scaffolded structure for robust tests.
-  #   Coverage ≠ quality  — deliberately weak 100% suite vs a strong 80% suite.
+  #   Coverage ≠ quality  — same executed lines, different assertion strength.
   #   Tension with Step 3 — "strongest oracle wins" has an upper bound: the spec.
   # --------------------------------------------------------------------------
   - title: "Test Behavior, Not Implementation"
@@ -1114,14 +1137,14 @@ steps:
 
       - Analyze a test for two species of "above the spec" — internal coupling (peeking at private state) and over-specification (pinning unmandated output fields).
       - Apply the Refactoring Litmus Test: a pure refactor with unchanged behavior should never break a well-written test.
-      - Evaluate test smells like Excessive Setup as feedback on the *production* design, not as a problem to hide in a helper.
+      - Evaluate test smells like Excessive Setup as prompts to inspect production responsibilities and test scope.
 
       This step covers both halves of "above the spec":
 
       - **(a) Internal coupling** — the test peeks at private state (`obj._tracks`). A pure rename of the internal attribute breaks the test even though no observable behavior changed.
-      - **(b) Over-specification** — the test pins output fields the spec doesn't mandate (e.g., a full-dict equality that includes a `created_at` timestamp the spec never promised). Adding a new internal-but-public field breaks the test even though every spec-mandated field is still correct.
+      - **(b) Over-specification** — the test pins output fields the spec doesn't mandate (e.g., a full-dict equality that includes a `created_at` timestamp the spec never promised). Adding an unspecified field breaks the test even though every spec-mandated field is still correct.
 
-      Both are species of the same disease: *tests verifying the implementation rather than the contract*. The cure is the same: **assert on exactly what the spec says, no more, no less.**
+      Both make tests depend on details outside the contract. The cure is the same: **assert on exactly what the spec says, no more, no less.**
 
       ## Part A — Internal coupling (the rename experiment)
 
@@ -1132,7 +1155,7 @@ steps:
       3. **Refactor the production code without changing behavior**: in `playlist.py`, rename the private attribute `self._tracks` to `self._queue` (everywhere — the constructor and the five methods). There are exactly 6 occurrences; use find/replace to catch all of them. The class's public behavior is unchanged: `add`, `total_duration`, `track_count`, `titles`, `durations` still produce the same outputs.
       4. **Before re-running:** predict how many tests will fail and which ones.
       5. **Re-run the suite**. The tests that fail are brittle — they coupled to the implementation detail (the attribute name). The ones that survived only touched the public API. Compare to your prediction. Whether you were right or wrong: write one sentence tracing the causal chain — from "I renamed `_tracks`" to "exactly these tests fail." The explanation should work without running the code.
-      6. **Rewrite each broken test** using only the public API — methods that don't start with `_`. The public surface of `PlaylistQueue` is: `add`, `track_count()`, `titles()`, `durations()`, `total_duration`. Anything starting with `_` is internal and off-limits to tests. When all four pass against the refactored code, your suite is robust.
+      6. **Rewrite each broken test** using only the public API — methods that don't start with `_`. The public surface of `PlaylistQueue` is: `add`, `track_count()`, `titles()`, `durations()`, `total_duration`. Anything starting with `_` is internal and off-limits to tests. When all four pass against the refactored code, you have evidence that they tolerate this storage rename. Keep their behavior checks intact as you repair them.
 
       ### 📦 Two Python tools used in this step: `@dataclass` and `@property`
 
@@ -1180,11 +1203,11 @@ steps:
 
       💡 **Why this matters**: When a test only touches the public API, the production code stays free to evolve internally. The experiment you just ran is a live demonstration of the Refactoring Litmus Test (expand below to name what you discovered).
 
-      💡 **This principle extends beyond classes.** For top-level functions: the "public contract" is the return value. Don't assert on intermediate variables or module-level state the function happens to touch internally — those are implementation details too, just without the `_` prefix signal. Assert on what callers observe: the return value.
+      💡 **This principle extends beyond classes.** For top-level functions, the public contract may include return values, exceptions, and specified side effects. Assert on those observable obligations, rather than incidental intermediate variables or private storage.
 
       <details markdown="1"><summary>🔬 The Refactoring Litmus Test — name what you just discovered</summary>
 
-      > **If you refactor the internals of a function and all tests still pass → your tests are robust.**
+      > **A robust suite should survive a refactor that preserves its specified behavior. Passing one refactor is useful evidence, not proof that every test is robust.**
       > **If tests break after a pure refactoring (no behavior change) → they're testing implementation.**
 
       That breakage is the symptom; the fix is to rewrite the tests, not to revert the refactor.
@@ -1246,7 +1269,7 @@ steps:
           assert result == 393
       ```
 
-      Every robust test fits this shape. If you can't separate Arrange from Act cleanly, the function under test is doing too much.
+      Arrange–Act–Assert is a useful structure for these focused tests. Difficulty separating the sections is a reason to inspect the test scope and production responsibilities; it is not proof of a design defect.
       </details>
 
       ### 🚩 When Arrange dominates — the *Excessive Setup* smell
@@ -1284,15 +1307,15 @@ steps:
           assert result.status == "ok"
       ```
 
-      The Assert is fine. The Act is a single call. The **Arrange** is the problem — eight collaborators stubbed and three database tables seeded just to verify *one* outcome.
+      The **Arrange** deserves investigation: many collaborators and database records are prepared for one outcome. For a focused unit test, that may indicate too much responsibility; a broader integration scenario may legitimately need more setup.
 
-      This is the *Excessive Setup* smell. Every dependency `checkout` reaches forces a corresponding fixture. Whenever you find yourself building elaborate scaffolding before you can call the function under test, the test is telling you something — but it isn't telling you to write better tests. **It's telling you to fix the *production* code.**
+      This may be the *Excessive Setup* smell. Dependencies can require corresponding fixtures. Elaborate scaffolding is a reason to investigate both the production responsibilities and the scope of the test.
 
-      > 🪞 **Tests are also a design tool, not just a verifier.** A bloated Arrange section is the production code asking for refactoring. Your test file is a mirror — its size, shape, and friction reflect the design choices on the other side.
+      > 🪞 **Tests are also a design tool, not just a verifier.** A large Arrange section can reveal coupling in the production code or unnecessary breadth in a test. Inspect the dependencies before deciding what to refactor.
 
-      **The wrong reflex** is to hide the setup in a `setup_world()` helper. The lines disappear from the test file but the coupling stays. Now the smell is *invisible*, which is worse than visible — the next engineer never sees the warning sign.
+      A `setup_world()` helper can reduce repetition, but it does not by itself remove coupling. First check which dependencies the behavior actually needs; then use focused fixtures or helpers for legitimate repeated setup.
 
-      **The right reflex** is to listen. `checkout` is doing too much. Split it: a `compute_total(cart, tax)` that needs two collaborators, a `charge(payment_gateway, total)` that needs one, plus a thin orchestrator. Each piece is then testable with a 2-line Arrange:
+      One possible improvement, if checkout mixes responsibilities, is to split it: a `compute_total(cart, tax)` that needs two collaborators, a `charge(payment_gateway, total)` that needs one, plus a thin orchestrator. Each piece is then testable with a 2-line Arrange:
 
       ```python
       def test_total_includes_tax():
@@ -1309,11 +1332,11 @@ steps:
 
       Same domain. Same kind of assertion. *Different production design* — and the test difficulty plummets.
 
-      ✍️ **Active prompt** (write your answer before reading on): a teammate's PR adds a test with 40 lines of Arrange before a single `assert`. Do you (a) approve it because the assertion is correct, (b) ask them to extract a `setup_world()` helper, or (c) push back on the *production code* changes that drove the dependency explosion? Hold your answer — the wrap-up quiz revisits exactly this scenario.
+      ✍️ **Active prompt** (write your answer before reading on): a teammate's PR adds a test with 40 lines of Arrange before a single `assert`. Which dependencies are necessary for the intended test scope? What evidence would lead you to simplify the fixture, split a production responsibility, or keep the setup? The wrap-up quiz revisits this judgment.
 
       ## Part B — Over-specification (the upper bound of oracle strength)
 
-      In Step 3 you wrote `assert result == {full dict}` to make the oracle as strong as possible. That was right *for that spec*. Now watch what happens when the implementation grows a new output field that the spec never mentioned.
+      Step 3 showed that full-dict equality detects incorrect values in every field. It also asserts that no extra fields exist. Now check that additional assumption against the specification when the implementation grows a new output field.
 
       The same `build_loot_card(name, qty, rarity)` from Step 3 is back in `loot.py` — but the production team has added a `created_at` timestamp to the returned dict for analytics. **The spec hasn't changed.** Every field a caller relies on is still computed correctly. But the test from Step 3 — written with full-dict equality — now fails:
 
@@ -1352,21 +1375,21 @@ steps:
 
       ### 🎓 Coverage ≠ quality
 
-      **Suite A — 100% line coverage, weak oracle:**
+      **Suite A — the same production lines executed, weak oracle:**
       ```python
       def test_total_duration_runs():
           q = PlaylistQueue(); q.add("Espresso", 175); q.add("Vampire", 218)
           assert q.total_duration is not None   # passes for any non-None return
       ```
 
-      **Suite B — 80% coverage, strong oracle:**
+      **Suite B — the same production lines executed, strong oracle:**
       ```python
       def test_total_duration_sums_track_lengths():
           q = PlaylistQueue(); q.add("Espresso", 175); q.add("Vampire", 218)
           assert q.total_duration == 393
       ```
 
-      If a bug makes `total_duration()` return `0`, **Suite A still passes** (`0 is not None`). Suite B catches it. Coverage measures which lines *ran*, not whether you *checked* their behavior. The same logic explains why Step 4's brittle tests passed before the rename: running the assertion is not the same as verifying the right thing.
+      If a bug makes `total_duration` return `0`, **Suite A still passes** (`0 is not None`). Suite B catches it. Coverage measures which lines *ran*, not whether you *checked* their behavior. The same logic explains why Step 4's brittle tests passed before the rename: running the assertion is not the same as verifying the right thing.
 
 
     files:
@@ -1443,6 +1466,7 @@ steps:
         language: "python"
 
       - path: "loot.py"
+        reseed: true
         content: |
           """Loot card generator — same function as Step 3, but the
           implementation has been extended with a `created_at` analytics field.
@@ -1606,61 +1630,87 @@ steps:
         changes (every second, in fact).
 
     tests:
-      - description: "Brittle tests have been fixed (no private attribute access)"
-        command: |
-          source = open('/tutorial/test_brittle_audit.py').read()
-          assert '._tracks' not in source and '._queue' not in source, \
-              "Your tests still touch `_tracks` or `_queue`. The leading underscore is Python's signal: 'this is internal — could be renamed any day.' Tests that depend on internals break whenever someone refactors — even when behavior is unchanged. Instead, verify through the same interface a real caller would use. Check the class for public methods (those not starting with `_`)."
-        hints:
-          - title: "Small nudge"
-            text: "Search the file for `._tracks` (or `._queue` if you've already renamed). Each line that has it is in a brittle test. There are exactly two such tests."
-          - title: "Strategic hint"
-            text: "Replace `queue._tracks[0].title` with a public-method call. Open `playlist.py` and look at the method definitions — any method *not* starting with `_` is part of the public API and safe to call from a test."
-          - title: "Almost-spoiler — apply the AAA shape"
-            text: "Each brittle test reaches into private state. Rewrite it using only the public methods.\n```python\ndef test_<behavior>():\n    queue = PlaylistQueue()\n    queue.add(<title>, <duration>)\n    assert <something_via_public_api> == <expected>\n```\nFor `test_add_track_internal_list`, the observable behaviors are *the title appears when you ask for titles* and *the duration appears when you ask for durations* — `queue.titles()` and `queue.durations()` give you both via the public API. For `test_internal_list_length`, the observable behavior is *the count goes up when you add tracks*."
-      - description: "Test file still contains at least 4 test functions"
-        command: |
-          source = open('/tutorial/test_brittle_audit.py').read()
-          test_count = source.count('def test_')
-          assert test_count >= 4, \
-              f"Keep at least 4 test functions (found {test_count}). The fix is to *rewrite* each brittle test to use the public API — not to delete it. Each behavior still deserves its own test."
-      - description: "All audit tests pass"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_brittle_audit.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some tests failed:\n{output}"
-      - description: "Over-spec tests no longer full-equality-check the dict (no `result == {...}`)"
-        command: |
-          import re
-          source = open('/tutorial/test_loot_overspec.py').read()
-          # Look for `result == {` (multi-line dict literal). The unfixed form pins the whole dict.
-          assert not re.search(r'result\s*==\s*\{', source), \
-              "At least one test still uses `result == {...}` (full-dict equality). That's the over-specification trap — `created_at` is in the returned dict but NOT in the spec, so the test fails on every refactor that touches the timestamp. Replace each full-equality assertion with one `assert result[\"<field>\"] == <expected>` line per spec-mandated field (name, qty, rarity, label, is_rare)."
-        hints:
-          - title: "Small nudge"
-            text: "The spec lists 5 fields callers rely on: name, qty, rarity, label, is_rare. `created_at` isn't among them. Pin those 5 with separate `assert result[\"<field>\"] == <expected>` lines; don't full-equality the whole dict."
-          - title: "Strategic hint"
-            text: "Replace `assert result == {full dict}` with five individual asserts:\n```python\nassert result[\"name\"] == \"...\"\nassert result[\"qty\"] == ...\nassert result[\"rarity\"] == \"...\"\nassert result[\"label\"] == \"...\"\nassert result[\"is_rare\"] is ...  # bool\n```"
-      - description: "Over-spec tests do NOT assert on the unspecified `created_at` field"
-        command: |
-          source = open('/tutorial/test_loot_overspec.py').read()
-          assert 'created_at' not in source, \
-              "Your tests reference `created_at` — that's the field the spec doesn't mandate. Don't pin it. Assert only on name, qty, rarity, label, and is_rare. The whole point of this exercise is that `created_at` is NOT part of the contract."
-      - description: "Over-spec tests still assert all five spec-mandated fields"
-        command: |
-          source = open('/tutorial/test_loot_overspec.py').read()
-          for field in ('"name"', '"qty"', '"rarity"', '"label"', '"is_rare"'):
-              assert field in source, \
-                  f"Missing assertion on {field}. The spec mandates 5 fields — name, qty, rarity, label, is_rare. Each one needs its own `assert result[<field>] == <expected>` line in each test (so a regression in any one field is caught individually)."
-      - description: "Over-spec tests pass against the timestamped implementation"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_loot_overspec.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some over-spec tests still fail:\n{output}"
+    - description: Playlist tests survive a private-storage refactor
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_brittle_audit.py', 'playlist', replacement_source='from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Track:\n    title: str\n    duration_seconds: int\n\n\nclass PlaylistQueue:\n    """A Spotify/Apple-Music-style queue: add tracks, ask for total duration."""\n\n    def __init__(self) -> None:\n        self._items: list[Track] = []\n\n    def add(self, title: str, duration_seconds: int) -> None:\n        self._items.append(Track(title, duration_seconds))\n\n    @property\n    def total_duration(self) -> int:\n        return sum(t.duration_seconds for t in self._items)\n\n    def track_count(self) -> int:\n        return len(self._items)\n\n    def titles(self) -> list[str]:\n        return [t.title for t in self._items]\n\n    def durations(self) -> tuple[int, ...]:\n        """Public, ordered, immutable view of per-track durations (seconds)."""\n        return tuple(t.duration_seconds for t in self._items)\n', min_tests=4)
+      hints: &foundation_hints_3
+      - title: A runnable check
+        text: Use the public methods to observe the behavior each test promises.
+        condition: 'code_not_matches: /^\s*def\s+test_/m'
+      - title: An unfinished assertion
+        text: Keep the observable result in the assertion; replacing a failing assertion with pass or True removes its
+          protection.
+        condition: 'code_matches: /^\s*(?:pass|assert\s+True)\s*$/m'
+      - title: Compare expected and changed behavior
+        text: A storage rename must not break the suite. A changed title, duration, count, or total must still produce
+          an assertion failure.
+        condition: 'code_contains: assert'
+    - description: Track titles remain checked
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_brittle_audit.py', 'playlist', replacement_source='from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Track:\n    title: str\n    duration_seconds: int\n\n\nclass PlaylistQueue:\n    """A Spotify/Apple-Music-style queue: add tracks, ask for total duration."""\n\n    def __init__(self) -> None:\n        self._tracks: list[Track] = []\n\n    def add(self, title: str, duration_seconds: int) -> None:\n        self._tracks.append(Track(title, duration_seconds))\n\n    @property\n    def total_duration(self) -> int:\n        return sum(t.duration_seconds for t in self._tracks)\n\n    def track_count(self) -> int:\n        return len(self._tracks)\n\n    def titles(self) -> list[str]:\n        return ["wrong title" for t in self._tracks]\n\n    def durations(self) -> tuple[int, ...]:\n        """Public, ordered, immutable view of per-track durations (seconds)."""\n        return tuple(t.duration_seconds for t in self._tracks)\n', expect_failure=True)
+      hints: *foundation_hints_3
+    - description: Track durations remain checked
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_brittle_audit.py', 'playlist', replacement_source='from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Track:\n    title: str\n    duration_seconds: int\n\n\nclass PlaylistQueue:\n    """A Spotify/Apple-Music-style queue: add tracks, ask for total duration."""\n\n    def __init__(self) -> None:\n        self._tracks: list[Track] = []\n\n    def add(self, title: str, duration_seconds: int) -> None:\n        self._tracks.append(Track(title, duration_seconds))\n\n    @property\n    def total_duration(self) -> int:\n        return sum(t.duration_seconds for t in self._tracks)\n\n    def track_count(self) -> int:\n        return len(self._tracks)\n\n    def titles(self) -> list[str]:\n        return [t.title for t in self._tracks]\n\n    def durations(self) -> tuple[int, ...]:\n        """Public, ordered, immutable view of per-track durations (seconds)."""\n        return tuple(0 for t in self._tracks)\n', expect_failure=True)
+      hints: *foundation_hints_3
+    - description: Track counts remain checked
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_brittle_audit.py', 'playlist', replacement_source='from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Track:\n    title: str\n    duration_seconds: int\n\n\nclass PlaylistQueue:\n    """A Spotify/Apple-Music-style queue: add tracks, ask for total duration."""\n\n    def __init__(self) -> None:\n        self._tracks: list[Track] = []\n\n    def add(self, title: str, duration_seconds: int) -> None:\n        self._tracks.append(Track(title, duration_seconds))\n\n    @property\n    def total_duration(self) -> int:\n        return sum(t.duration_seconds for t in self._tracks)\n\n    def track_count(self) -> int:\n        return len(self._tracks) + 1\n\n    def titles(self) -> list[str]:\n        return [t.title for t in self._tracks]\n\n    def durations(self) -> tuple[int, ...]:\n        """Public, ordered, immutable view of per-track durations (seconds)."""\n        return tuple(t.duration_seconds for t in self._tracks)\n', expect_failure=True)
+      hints: *foundation_hints_3
+    - description: Total duration remains checked
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_brittle_audit.py', 'playlist', replacement_source='from dataclasses import dataclass\n\n\n@dataclass(frozen=True)\nclass Track:\n    title: str\n    duration_seconds: int\n\n\nclass PlaylistQueue:\n    """A Spotify/Apple-Music-style queue: add tracks, ask for total duration."""\n\n    def __init__(self) -> None:\n        self._tracks: list[Track] = []\n\n    def add(self, title: str, duration_seconds: int) -> None:\n        self._tracks.append(Track(title, duration_seconds))\n\n    @property\n    def total_duration(self) -> int:\n        return 0\n\n    def track_count(self) -> int:\n        return len(self._tracks)\n\n    def titles(self) -> list[str]:\n        return [t.title for t in self._tracks]\n\n    def durations(self) -> tuple[int, ...]:\n        """Public, ordered, immutable view of per-track durations (seconds)."""\n        return tuple(t.duration_seconds for t in self._tracks)\n', expect_failure=True)
+      hints: *foundation_hints_3
+    - description: Loot tests accept different unspecified analytics fields
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_loot_overspec.py', 'loot', replacement_source='def build_loot_card(name, qty, rarity):\n    normalized = rarity.lower()\n    result = {"name": name, "qty": qty, "rarity": normalized,\n              "label": f"{qty}× {rarity.capitalize()} {name}",\n              "is_rare": normalized in {"rare", "epic", "legendary"}}\n    result["created_at"] = "another permitted representation"\n    result["analytics_version"] = 2\n    return result\n', min_tests=2)
+      hints: &foundation_hints_4
+      - title: A runnable check
+        text: Write assertions for the five named contract fields. An analytics field is outside those obligations.
+        condition: 'code_not_matches: /^\s*def\s+test_/m'
+      - title: An unfinished assertion
+        text: For each field, compare the observed value with an independently computed expected value.
+        condition: 'code_matches: /^\s*(?:pass|assert\s+True)\s*$/m'
+      - title: Compare expected and changed behavior
+        text: Would an added field or a different timestamp break your suite? Would a wrong required field escape it?
+          Those are separate checks.
+        condition: 'code_contains: assert'
+    - description: Loot tests accept a card without analytics fields
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_loot_overspec.py', 'loot', replacement_source='def build_loot_card(name, qty, rarity):\n    normalized = rarity.lower()\n    result = {"name": name, "qty": qty, "rarity": normalized,\n              "label": f"{qty}× {rarity.capitalize()} {name}",\n              "is_rare": normalized in {"rare", "epic", "legendary"}}\n    return result\n', min_tests=2)
+      hints: *foundation_hints_4
+    - description: Loot tests retain the name obligation
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_loot_overspec.py', 'loot', replacement_source='def build_loot_card(name, qty, rarity):\n    normalized = rarity.lower()\n    result = {"name": name, "qty": qty, "rarity": normalized,\n              "label": f"{qty}× {rarity.capitalize()} {name}",\n              "is_rare": normalized in {"rare", "epic", "legendary"}}\n    result["created_at"] = "another permitted representation"\n    result["analytics_version"] = 2\n    result[\'name\'] = "wrong name"\n    return result\n', expect_failure=True)
+      hints: *foundation_hints_4
+    - description: Loot tests retain the qty obligation
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_loot_overspec.py', 'loot', replacement_source='def build_loot_card(name, qty, rarity):\n    normalized = rarity.lower()\n    result = {"name": name, "qty": qty, "rarity": normalized,\n              "label": f"{qty}× {rarity.capitalize()} {name}",\n              "is_rare": normalized in {"rare", "epic", "legendary"}}\n    result["created_at"] = "another permitted representation"\n    result["analytics_version"] = 2\n    result[\'qty\'] = qty + 1\n    return result\n', expect_failure=True)
+      hints: *foundation_hints_4
+    - description: Loot tests retain the rarity obligation
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_loot_overspec.py', 'loot', replacement_source='def build_loot_card(name, qty, rarity):\n    normalized = rarity.lower()\n    result = {"name": name, "qty": qty, "rarity": normalized,\n              "label": f"{qty}× {rarity.capitalize()} {name}",\n              "is_rare": normalized in {"rare", "epic", "legendary"}}\n    result["created_at"] = "another permitted representation"\n    result["analytics_version"] = 2\n    result[\'rarity\'] = "wrong rarity"\n    return result\n', expect_failure=True)
+      hints: *foundation_hints_4
+    - description: Loot tests retain the label obligation
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_loot_overspec.py', 'loot', replacement_source='def build_loot_card(name, qty, rarity):\n    normalized = rarity.lower()\n    result = {"name": name, "qty": qty, "rarity": normalized,\n              "label": f"{qty}× {rarity.capitalize()} {name}",\n              "is_rare": normalized in {"rare", "epic", "legendary"}}\n    result["created_at"] = "another permitted representation"\n    result["analytics_version"] = 2\n    result[\'label\'] = "wrong label"\n    return result\n', expect_failure=True)
+      hints: *foundation_hints_4
+    - description: Loot tests retain the is_rare obligation
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_loot_overspec.py', 'loot', replacement_source='def build_loot_card(name, qty, rarity):\n    normalized = rarity.lower()\n    result = {"name": name, "qty": qty, "rarity": normalized,\n              "label": f"{qty}× {rarity.capitalize()} {name}",\n              "is_rare": normalized in {"rare", "epic", "legendary"}}\n    result["created_at"] = "another permitted representation"\n    result["analytics_version"] = 2\n    result[\'is_rare\'] = not result["is_rare"]\n    return result\n', expect_failure=True)
+      hints: *foundation_hints_4
 
     quiz:
       title: "Step 4 — Knowledge Check"
@@ -1695,7 +1745,7 @@ steps:
             0: "Direct storage access (`_data`) is exactly the brittleness we saw with `_tracks`. The underscore signals 'implementation detail.' The day someone renames `_data` to `_store`, or changes the structure, Test A breaks even though the observable behavior (you can retrieve the name you stored) is unchanged."
             1: "Right. Test B verifies through the public contract (`get_name()`). Internal storage can be restructured freely without breaking it. Test A is coupled to `_data` — a pure rename breaks it even when behavior is unchanged."
             2: "They differ fundamentally under refactoring. Test A is coupled to the dict structure `_data[\"name\"]`. Test B is coupled only to the observable contract: 'after creating a profile with \"alice\", `get_name()` returns \"alice\".' One breaks during internal restructuring; the other survives it."
-            3: "Constructors in Python return `None`. Testing through the constructor's return value isn't the right path. The observable behavior is what you can read back via the public interface — that's what `get_name()` provides."
+            3: "Calling `UserProfile(...)` returns an instance; its `__init__` method must return `None`. Merely checking that an instance exists does not verify the stored name. Read that behavior through `get_name()`."
           explanation: |
             Test A peeks at `_data`, an internal implementation detail. If someone refactors
             `UserProfile` to store data differently, Test A breaks — even though the behavior
@@ -1704,19 +1754,26 @@ steps:
             survive a pure internal refactor? Test B does. Test A does not.
 
         - question: |
-            You refactor a function's internal algorithm (from bubble sort to quicksort) without changing its return value. Two of your tests break. What does this tell you?
+            You change a function's internal sorting algorithm without changing any specified behavior (return values, exceptions, or side effects). Two deterministic tests break only because they inspect the old internal representation. What does this tell you?
           type: single
           options:
-            - "The refactoring introduced a bug — changing the algorithm likely changed the output in a subtle way"
-            - "The broken tests check implementation details, not behavior. Rewrite them to assert on outputs"
-            - "You should revert the refactoring since passing tests must never be broken, even temporarily"
-            - "The tests are too strict — you should lower the assertion precision or add tolerance margins"
+          - The refactoring introduced a bug — changing the algorithm likely changed the output in a subtle way
+          - The broken tests check implementation details, not behavior. Rewrite them to assert on outputs
+          - You should revert the refactoring since passing tests must never be broken, even temporarily
+          - The tests are too strict — you should lower the assertion precision or add tolerance margins
           correct_index: 1
           option_feedback:
-            0: "The premise of the question is \"without changing its return value\" — i.e., behavior is unchanged. So a behavior bug is ruled out. The test failures must be telling you something *other* than \"the new code is wrong\" — and that something is: the broken tests were verifying *how* the function works, not *what* it does."
-            1: "Correct. Tests breaking on a pure refactor are the diagnostic signature of brittle tests — they're coupled to the implementation (internal variable names, algorithm choice) rather than the observable behavior. Rewrite them; keep the refactor."
-            2: "Reverting a sound refactor because *the tests* are too tightly coupled inverts who's in charge. The refactor is correct; the tests are the problem. Keep the refactor, fix the tests to assert on observable behavior, and you end up with cleaner code *and* a stronger suite."
-            3: "Loosening assertions or adding tolerance is exactly the wrong direction — that hides the brittleness rather than fixing it. The tests aren't *too strict* in what they assert; they're asserting on *the wrong thing* (implementation, not behavior). Rewrite, don't dilute."
+            0: The premise says all specified behavior is preserved and locates the failure in checks of the old representation.
+              Those tests are coupled to the implementation.
+            1: Correct. Tests breaking on a pure refactor are the diagnostic signature of brittle tests — they're coupled
+              to the implementation (internal variable names, algorithm choice) rather than the observable behavior. Rewrite
+              them; keep the refactor.
+            2: Reverting a sound refactor because *the tests* are too tightly coupled inverts who's in charge. The refactor
+              is correct; the tests are the problem. Keep the refactor, fix the tests to assert on observable behavior,
+              and you end up with cleaner code *and* a stronger suite.
+            3: Loosening assertions or adding tolerance is exactly the wrong direction — that hides the brittleness rather
+              than fixing it. The tests aren't *too strict* in what they assert; they're asserting on *the wrong thing*
+              (implementation, not behavior). Rewrite, don't dilute.
           explanation: |
             If the function's behavior (inputs → outputs) is unchanged but tests break,
             those tests are coupled to the implementation. The fix is to rewrite the tests
@@ -1726,40 +1783,43 @@ steps:
             A test you wrote needs **40 lines of setup code** before the single `assert` statement. What is this test telling you?
           type: single
           options:
-            - "Nothing — large setups are fine as long as the assertion verifies the right thing in the end"
-            - "The Arrange is too big — *Excessive Setup* signals the production code has too many dependencies"
-            - "You should move the setup into a helper function so the test file looks shorter; the underlying design is fine"
-            - "You should add more assertions to make the heavy setup feel justified — one assert is not enough for 40 lines of arrangement"
+          - Nothing — large setups are fine as long as the assertion verifies the right thing in the end
+          - The large Arrange section is a reason to inspect production dependencies and the scope of this test
+          - You should move the setup into a helper function so the test file looks shorter; the underlying design is fine
+          - You should add more assertions to make the heavy setup feel justified — one assert is not enough for 40 lines
+            of arrangement
           correct_index: 1
           option_feedback:
-            0: "Tests are *also* a design signal, not just a verifier. A test that needs 40 lines of setup is shouting that the function under test has too many dependencies — every collaborator the function reaches forces a corresponding fixture. Ignoring the smell keeps the pain."
-            1: "Correct. Excessive Setup is a design smell pointing at the *production* code — too many dependencies crammed into one function. The test is feedback; the fix belongs in the production design, not in hiding the setup behind a helper."
-            2: "A helper *hides* the smell without addressing it. The test file looks shorter, but the underlying coupling is unchanged — the helper just centralizes the setup-heavy fact. The right response is to listen to what the test is telling you about the *production* design."
-            3: "Adding more assertions doesn't compensate for hard-to-arrange tests; it makes them slower to run, harder to read, and more prone to verifying multiple unrelated things in one function. The number of assertions should match the number of behaviors under test, not the size of the Arrange block."
+            0: Passing verifies the asserted outcome, but setup cost can still reveal unnecessary coupling. Investigate
+              before accepting it as inevitable.
+            1: Yes. Many dependencies may indicate a production responsibility worth splitting, an unnecessarily broad test,
+              or legitimate integration setup. The line count alone cannot decide which.
+            2: A helper can reduce legitimate duplication, but hiding lines does not establish that all dependencies are
+              needed. Inspect the test scope and responsibilities first.
+            3: Add assertions because they check relevant behavior, not to justify setup length. First investigate why the
+              setup is necessary.
           explanation: |
-            *Excessive Setup* is a test smell. When Arrange dominates, the function under test
-            is too coupled. Fix the *production code*, not the test — the test is architectural
-            feedback. Hiding it in a helper just hides the pain.
+            Excessive Setup is a signal to investigate, not a diagnosis by line count. Consider production responsibilities, test scope, and necessary fixtures before choosing a repair.
 
         - question: |
-            Two suites test the same function. Suite A has **100% line coverage** but every assertion is `assert result is not None`. Suite B has **80% line coverage** but every assertion checks an exact expected value. Which statement is correct?
+            Two suites call the same function with the same inputs and execute the same production lines. Suite A checks only `assert result is not None`; Suite B checks the correct expected value for each input. Which statement is correct?
           type: single
           options:
-            - "Suite A is stronger — 100% coverage objectively beats 80%, regardless of assertion quality"
-            - "Suite B is stronger — coverage measures which lines *ran*, not what was verified"
-            - "Both are equally strong — both execute the function, which is all that matters for catching bugs"
-            - "Neither is strong — industry standard is ≥95% coverage AND mutation testing, so anything less is unacceptable"
+          - Suite A is stronger — accepting any non-None value makes tests more resilient
+          - Suite B rejects incorrect non-None results that Suite A accepts
+          - Both are equally strong — both execute the function, which is all that matters for catching bugs
+          - Neither is strong — industry standard is ≥95% coverage AND mutation testing, so anything less is unacceptable
           correct_index: 1
           option_feedback:
-            0: "Coverage is a necessary condition, not a sufficient one. 100% coverage with `assert result is not None` exercises every line *but verifies almost nothing* — any non-`None` return value passes, including `0`, `\"\"`, `[]`, the wrong number entirely. A higher number doesn't beat a meaningful assertion."
-            1: "Right. Coverage measures which lines *ran*; strong oracles determine whether the behavior at those lines was actually *verified*. Suite A ran everything and checked almost nothing. Suite B ran 80% and checked every result precisely."
-            2: "The two suites do *not* catch the same bugs. Suite A passes for any non-`None` return — a bug that flips a return value from `42` to `0` slips through silently. Suite B catches that same bug because the value differs from the asserted expected one. Same lines exercised, vastly different bug-catching power."
-            3: "Mutation testing is a great deeper technique, but the question isn't asking which *industry* metric is best — it's asking which of *these two suites* is stronger. Suite B answers that even before mutation testing enters the picture, because it exposes the foundational issue: weak oracles on full coverage verify nothing."
+            0: Accepting incorrect results is weak detection, not useful resilience. Robust tests tolerate permitted implementation
+              changes while rejecting wrong specified behavior.
+            1: Correct. The inputs and executed lines are held constant. Exact expected-value assertions reject wrong values
+              that a presence check accepts.
+            2: 'Calling the function is not enough: the assertion determines which wrong results the test detects.'
+            3: No universal coverage percentage decides this comparison. The stated difference is the strength of the assertions
+              on the same inputs.
           explanation: |
-            A suite can run every line and still verify nothing if its assertions are weak.
-            Coverage is a necessary ceiling (you cannot
-            test what you never ran) but it is not sufficient for quality. Strong oracles
-            on the critical paths beat weak oracles everywhere.
+            Coverage reports which production lines ran. Here both suites run the same lines; the stronger assertions distinguish correct results from incorrect non-None results. This does not establish how either suite handles inputs it never exercises.
 
         - question: |
             A function `build_user_profile(name, age)` has this spec:
@@ -1885,7 +1945,7 @@ steps:
       <details markdown="1"><summary>📖 Compare with our recap</summary>
 
       - **Step 1 — what tests are for**: tests are *executable specifications of behavior* and a *safety net* against regressions, not "checking your homework."
-      - **Step 2 — which inputs to pick**: partition the input space, then test the *boundaries* between partitions — the off-by-one zone where most bugs live.
+      - **Step 2 — which inputs to pick**: partition the input space, then test the *boundaries* between partitions — the places where inclusivity and threshold mistakes can appear.
       - **Step 3 — the assertion**: oracle strength is one independent dimension. A strong oracle pins exactly what the spec mandates; weak oracles pass for almost any return.
       - **Step 4 — what to assert against**: the spec, no less *and no more*. Don't peek at private state (internal coupling), and don't pin output fields the spec doesn't mandate (over-specification). Robust tests survive refactors.
 
@@ -1900,7 +1960,7 @@ steps:
       | `"family"` | 30% off |
       | anything else | none |
 
-      > 🔒 **You are writing tests for a fixed function — don't modify `streaming.py`.** The validator runs your tests *not* against the `streaming.py` you can see, but against a hidden reference implementation **plus three deliberately broken versions** (one with no student discount, one with no family discount, one that returns `0` for unknown plans). To get full credit, your suite must:
+      > 🔒 **You are writing tests for a fixed function — don't modify `streaming.py`.** The validator runs your tests *not* against the `streaming.py` you can see, but against a hidden reference implementation **plus deliberately broken versions** (missing discounts, a wrong percentage in either discount branch, and a wrong result for unknown plans). To get full credit, your suite must:
       >
       > - **pass** against the reference (your assertions match the spec), AND
       > - **fail** against each broken version (your tests actually probe each partition).
@@ -1915,7 +1975,7 @@ steps:
          # 1) ...
          # 2) ...
          ```
-         The validator will check that this comment exists with at least two named partitions before it grades your tests. (This is the part most engineers skip — and it's where most bugs slip through.)
+         Self-check that your comment names every behavior in the table. The automatic checks assess your executable tests; a comment alone cannot demonstrate the reasoning.
       2. Pick a representative input for each partition.
       3. For each input, **compute** the expected return value and write a test with a **strong oracle** (an exact `==` on the computed value, not an `is not None` check).
 
@@ -1925,11 +1985,11 @@ steps:
 
       Ask yourself: for `streaming_price`, are there any "edge-of-category" inputs worth testing beyond the three named categories? What about an unexpected string like `"premium"`, or an empty string `""`? These are the categorical equivalents of boundary probing — checking the edges of the decision logic for inputs the spec doesn't explicitly name.
 
-      💡 **Two-parameter functions:** When a function takes two parameters, partition each dimension independently, then pick deliberate combinations — not all combinations (that grows exponentially), but enough to represent each partition at least once. Here, `price` has no spec-defined constraints, so any representative value (e.g., 20) works across all plan tests. If `price` had its own threshold (e.g., "discount only for orders ≥ $5"), you'd apply boundary testing to that dimension too.
+      💡 **Two-parameter functions:** When a function takes two parameters, partition each dimension independently, then pick deliberate combinations — not all combinations (that grows exponentially), but enough to represent each partition at least once. Here, use a nonzero representative price (e.g., 20) across the plan tests: at zero, both a missing discount and a correct discount return zero, so the input would hide the difference. If `price` had its own threshold (e.g., "discount only for orders ≥ $5"), you'd apply boundary testing to that dimension too.
 
       💡 **Floating-point equality:** When the expected value is computed by multiplication (e.g., `20 * 0.50`), standard `==` usually works for simple fractions, but for arbitrary floats use `assert result == pytest.approx(expected)` to avoid rounding surprises (e.g., `assert streaming_price(13.99, "student") == pytest.approx(6.995)`).
 
-      🪞 **Recalibrate**: At the start of Step 1 you rated your confidence (1–10) for designing a test suite from scratch. Re-rate yourself now. The gap between those numbers is what you actually learned — the *feeling* of progress is unreliable; the gap is data.
+      🪞 **Recalibrate**: Rate your confidence in designing a test suite from scratch, then compare that feeling with evidence: can you explain which bug each test catches? Confidence is a self-report, not a measure of learning. Use the optional new practice problem below to check independent performance.
 
       🧭 **Threshold check** — compare then and now: look back at the first test you encountered in Step 1. What did that test *specify* about the function? Now look at the tests you just wrote. What do they *specify*? Write one sentence naming what changed in how you think about what a test is *for*. Then explain *why* that shift matters for the next function you write — what will you do differently tomorrow that you wouldn't have done before this tutorial?
 
@@ -2091,191 +2151,46 @@ steps:
         is an extra edge case inside the "other" partition.
 
     tests:
-      - description: "Partitions named in a comment (articulation before code)"
-        command: |
-          import re
-          source = open('/tutorial/test_streaming.py').read()
-          # Look for a "Partitions" comment header, then count enumerated lines (e.g. "# 1) ..." or "# - ...").
-          header_match = re.search(r'#\s*[Pp]artitions?\b', source)
-          assert header_match, \
-              "Add a `# Partitions of plan:` comment at the top of test_streaming.py before writing tests. Naming the partitions in your own words is the design move that prevents bugs from slipping through — engineers who skip this step write suites that miss whole categories of input."
-          # Count enumerated partition lines after the header (numbered, dashed, or bulleted).
-          after = source[header_match.end():]
-          partition_lines = re.findall(r'^\s*#\s*(?:[1-9][\)\.]|[-*])\s*\S', after, re.MULTILINE)
-          assert len(partition_lines) >= 2, \
-              f"Found a Partitions header but only {len(partition_lines)} partition entries listed. Name at least 2 (the spec defines more than that — re-read the table)."
-      - description: "At least 3 test functions defined"
-        command: |
-          source = open('/tutorial/test_streaming.py').read()
-          count = source.count('def test_')
-          assert count >= 3, \
-              f"Write at least 3 test functions (found {count}). The function has 3 partitions of `plan` — one test per partition is the floor. Each partition deserves its own named function so a failure tells you exactly which case broke."
-      - description: "Tests use strong oracles (no `is not None` / `isinstance` shortcuts)"
-        command: |
-          source = open('/tutorial/test_streaming.py').read()
-          weak = 'is not None' in source or 'isinstance(' in source
-          assert not weak, \
-              "You used a weak oracle (`is not None` or `isinstance`). These pass for almost any return value — the exact bug Step 3 warned about. For each test: choose a concrete `price` input, compute the expected post-discount value yourself from the spec table, and assert that exact value with `==`."
-      - description: "Tests pass against the reference implementation (your assertions match the spec)"
-        command: |
-          import sys, io, contextlib, pytest
-          SUT_PATH = '/tutorial/streaming.py'
-          saved = open(SUT_PATH).read()
-          REFERENCE = (
-              'def streaming_price(price, plan):\n'
-              '    if plan == "student": return price * 0.50\n'
-              '    if plan == "family":  return price * 0.70\n'
-              '    return price\n'
-          )
-          def _clear_modules():
-              for name in list(sys.modules):
-                  if name == 'streaming' or name.startswith('streaming.') \
-                     or name == 'test_streaming' or name.startswith('test_streaming.'):
-                      sys.modules.pop(name, None)
-          buf = io.StringIO()
-          try:
-              with open(SUT_PATH, 'w') as f: f.write(REFERENCE)
-              _clear_modules()
-              with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
-                  code = pytest.main(['/tutorial/test_streaming.py', '--tb=short', '-q', '--no-header'])
-          finally:
-              with open(SUT_PATH, 'w') as f: f.write(saved)
-              _clear_modules()
-          assert code == 0, (
-              "Your tests fail against the correct reference implementation of "
-              "`streaming_price` (the one matching the spec table). Re-check what "
-              "each test asserts: a $20 input gives $10.0 for student, $14.0 for "
-              "family, and $20 for any other plan.\n\n"
-              f"pytest output:\n{buf.getvalue()}"
-          )
-        hints:
-          - title: "What partitions?"
-            text: "Three: `\"student\"`, `\"family\"`, and *everything else*. Each deserves at least one test."
-          - title: "Strong-oracle reminder"
-            text: "Don't write `assert streaming_price(20, \"family\") is not None` — that passes for almost any return. Pin the *exact* value with `==`. The spec table above tells you the discount percentage for each partition; compute the post-discount price for a chosen input yourself."
-          - title: "Almost-spoiler — compute, don't copy"
-            text: "Pick your representative price (e.g., $20). For each partition, compute the expected return value from the spec: 50% off ⇒ price × 0.50; 30% off ⇒ price × 0.70; no discount ⇒ price. Then write one test per partition with `assert streaming_price(price, plan) == <your_number>`."
-      - description: "Tests catch a bug in the 'student' partition (mutation: no student discount)"
-        command: |
-          import sys, io, contextlib, pytest
-          SUT_PATH = '/tutorial/streaming.py'
-          saved = open(SUT_PATH).read()
-          MUTANT = (
-              'def streaming_price(price, plan):\n'
-              '    if plan == "student": return price       # bug: no student discount\n'
-              '    if plan == "family":  return price * 0.70\n'
-              '    return price\n'
-          )
-          def _clear_modules():
-              for name in list(sys.modules):
-                  if name == 'streaming' or name.startswith('streaming.') \
-                     or name == 'test_streaming' or name.startswith('test_streaming.'):
-                      sys.modules.pop(name, None)
-          try:
-              with open(SUT_PATH, 'w') as f: f.write(MUTANT)
-              _clear_modules()
-              with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-                  code = pytest.main(['/tutorial/test_streaming.py', '--tb=line', '-q', '--no-header'])
-          finally:
-              with open(SUT_PATH, 'w') as f: f.write(saved)
-              _clear_modules()
-          assert code == 1, (
-              "Your suite passes against an implementation that gives the "
-              "student plan no discount (returns the full price instead of "
-              "half). None of your tests pin the 50%-off behavior. Add a "
-              "test like `assert streaming_price(20, \"student\") == 10.0`."
-          )
-      - description: "Tests catch a bug in the 'family' partition (mutation: no family discount)"
-        command: |
-          import sys, io, contextlib, pytest
-          SUT_PATH = '/tutorial/streaming.py'
-          saved = open(SUT_PATH).read()
-          MUTANT = (
-              'def streaming_price(price, plan):\n'
-              '    if plan == "student": return price * 0.50\n'
-              '    if plan == "family":  return price       # bug: no family discount\n'
-              '    return price\n'
-          )
-          def _clear_modules():
-              for name in list(sys.modules):
-                  if name == 'streaming' or name.startswith('streaming.') \
-                     or name == 'test_streaming' or name.startswith('test_streaming.'):
-                      sys.modules.pop(name, None)
-          try:
-              with open(SUT_PATH, 'w') as f: f.write(MUTANT)
-              _clear_modules()
-              with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-                  code = pytest.main(['/tutorial/test_streaming.py', '--tb=line', '-q', '--no-header'])
-          finally:
-              with open(SUT_PATH, 'w') as f: f.write(saved)
-              _clear_modules()
-          assert code == 1, (
-              "Your suite passes against an implementation that gives the "
-              "family plan no discount. None of your tests pin the 30%-off "
-              "behavior. Add a test like `assert streaming_price(20, \"family\") == 14.0`."
-          )
-      - description: "Tests catch a bug in the 'other' (no-discount) partition (mutation: returns 0)"
-        command: |
-          import sys, io, contextlib, pytest
-          SUT_PATH = '/tutorial/streaming.py'
-          saved = open(SUT_PATH).read()
-          MUTANT = (
-              'def streaming_price(price, plan):\n'
-              '    if plan == "student": return price * 0.50\n'
-              '    if plan == "family":  return price * 0.70\n'
-              '    return 0                                # bug: zero for unknown plans\n'
-          )
-          def _clear_modules():
-              for name in list(sys.modules):
-                  if name == 'streaming' or name.startswith('streaming.') \
-                     or name == 'test_streaming' or name.startswith('test_streaming.'):
-                      sys.modules.pop(name, None)
-          try:
-              with open(SUT_PATH, 'w') as f: f.write(MUTANT)
-              _clear_modules()
-              with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-                  code = pytest.main(['/tutorial/test_streaming.py', '--tb=line', '-q', '--no-header'])
-          finally:
-              with open(SUT_PATH, 'w') as f: f.write(saved)
-              _clear_modules()
-          assert code == 1, (
-              "Your suite passes against an implementation that returns 0 "
-              "for any plan that isn't 'student' or 'family'. None of your "
-              "tests probe the no-discount partition. Add a test using a "
-              "plan like \"individual\", \"premium\", or \"\" — the spec "
-              "says no discount, so `streaming_price(20, plan) == 20`."
-          )
-      - description: "Tests are not tautological — they catch a wrong-percentage bug"
-        command: |
-          import sys, io, contextlib, pytest
-          SUT_PATH = '/tutorial/streaming.py'
-          saved = open(SUT_PATH).read()
-          MUTANT = (
-              'def streaming_price(price, plan):\n'
-              '    if plan == "student": return price * 0.51   # bug: 49% off, not 50%\n'
-              '    if plan == "family":  return price * 0.71   # bug: 29% off, not 30%\n'
-              '    return price\n'
-          )
-          def _clear_modules():
-              for name in list(sys.modules):
-                  if name == 'streaming' or name.startswith('streaming.') \
-                     or name == 'test_streaming' or name.startswith('test_streaming.'):
-                      sys.modules.pop(name, None)
-          try:
-              with open(SUT_PATH, 'w') as f: f.write(MUTANT)
-              _clear_modules()
-              with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-                  code = pytest.main(['/tutorial/test_streaming.py', '--tb=line', '-q', '--no-header'])
-          finally:
-              with open(SUT_PATH, 'w') as f: f.write(saved)
-              _clear_modules()
-          assert code == 1, (
-              "Your suite passes when the discount is 49% instead of 50%, "
-              "or 29% instead of 30%. Your assertions are too loose — "
-              "possibly using `>` / `<` instead of `==`, or asserting only "
-              "the rough magnitude. For a deterministic function whose "
-              "output you can compute, pin the exact value with `==`."
-          )
+    - description: The suite accepts the specified discounts
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_streaming.py', 'streaming', replacement_source='def streaming_price(price, plan):\n    if plan == "student": return price * 0.50\n    if plan == "family": return price * 0.70\n    return price\n', min_tests=3)
+      hints: &foundation_hints_5
+      - title: A runnable check
+        text: List the plan categories from the contract, then write an executable check for each.
+        condition: 'code_not_matches: /^\s*def\s+test_/m'
+      - title: An unfinished assertion
+        text: A test must observe streaming_price. Compute an expected result independently before writing the assertion.
+        condition: 'code_matches: /^\s*(?:pass|assert\s+True)\s*$/m'
+      - title: Compare expected and changed behavior
+        text: Trace the changed branch for a nonzero price. Would your oracle reject a nearby but incorrect result,
+          as well as a missing discount?
+        condition: 'code_contains: assert'
+    - description: The student discount is required
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_streaming.py', 'streaming', replacement_source='def streaming_price(price, plan):\n    if plan == "student": return price\n    if plan == "family": return price * 0.70\n    return price\n', expect_failure=True)
+      hints: *foundation_hints_5
+    - description: The family discount is required
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_streaming.py', 'streaming', replacement_source='def streaming_price(price, plan):\n    if plan == "student": return price * 0.50\n    if plan == "family": return price\n    return price\n', expect_failure=True)
+      hints: *foundation_hints_5
+    - description: Other plans keep the original price
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_streaming.py', 'streaming', replacement_source='def streaming_price(price, plan):\n    if plan == "student": return price * 0.50\n    if plan == "family": return price * 0.70\n    return 0\n', expect_failure=True)
+      hints: *foundation_hints_5
+    - description: The student percentage is checked precisely
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_streaming.py', 'streaming', replacement_source='def streaming_price(price, plan):\n    if plan == "student": return price * 0.51\n    if plan == "family": return price * 0.70\n    return price\n', expect_failure=True)
+      hints: *foundation_hints_5
+    - description: The family percentage is checked precisely
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_streaming.py', 'streaming', replacement_source='def streaming_price(price, plan):\n    if plan == "student": return price * 0.50\n    if plan == "family": return price * 0.71\n    return price\n', expect_failure=True)
+      hints: *foundation_hints_5
 
     quiz:
       title: "Step 5 — Knowledge Check"
@@ -2295,8 +2210,8 @@ steps:
           option_feedback:
             0: "$25 and $200 are deep inside their partitions. They both behave correctly under either `>= 50` or `> 50`, since 25 clearly charges and 200 clearly ships free. Boundary bugs *only* surface at the boundary itself."
             1: "Right. $49.99 and $50 straddle the `>= $50` threshold — the same test-pair structure as the streak bug at day 100. Two values straddling a threshold expose the `>` vs `>=` family of bugs."
-            2: "$0 and $1,000,000 catch a different category of bugs (representation issues, overflow). They miss the dominant off-by-one risk at $50, which is where 99% of bugs in this kind of spec live. Boundary tests come first; extreme-value tests come second."
-            3: "One boundary test isn't enough; two values straddling the boundary are what expose `>` versus `>=`. With only `order = $50`, the test cannot tell whether the function is using the right operator because it observes only one side of the threshold."
+            2: "Extreme inputs can catch other faults, but they do not distinguish `>= 50` from `> 50`. Include the threshold itself when checking that operator choice."
+            3: "The test at $50 does distinguish `>` from `>=`. Adding $49.99 also checks the charged side, rejecting other faults such as an implementation that always ships free."
           explanation: |
             The boundary is $50. Testing $49.99 (just below) and $50 (exactly at) catches the
             classic `>=` vs `>` off-by-one bug — the same family as the streak_badge bug

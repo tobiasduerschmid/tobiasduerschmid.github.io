@@ -3310,7 +3310,9 @@ Navigation snapshots editor models synchronously before closing or reseeding the
 Session drafts survive step changes independently of Auto-save; Auto-save controls
 disk persistence. Shared files remain under `files`; `reseed: true` drafts live under
 `stepFiles`, keyed by `key:<step.key>` (or `index:<n>` when no key exists). Use stable
-unique step keys when lessons may move. Empty drafts are valid. Returning to starter
+unique step keys when authoring tutorials whose lessons may move. Adding keys to an
+already published index-scoped tutorial requires an explicit draft-key migration;
+otherwise keep its existing index identities. Empty drafts are valid. Returning to starter
 content removes that override; session tombstones prevent older disk edits from
 reappearing after a failed write. Full and explicit saves share this snapshot path.
 Legacy path-only saves are attributed only to their recorded resume lesson, never
@@ -3320,6 +3322,18 @@ was replaced, its draft stays under `files`, preserved but shown by no reseeded
 lesson, so the fallback lesson never opens with another exercise's code. Reset saves the current lesson's starter after
 its setup completes, preserving other drafts. Delete clears remembered drafts too.
 Smalltalk continues using its native accepted-source/draft owner.
+
+Unversioned saves also receive a one-time `draftScopeVersion: 1` upgrade for
+files that became lesson-local after publication, even when an older save already
+contains `stepFiles: {}` or other lesson scopes. Only files in the recorded saved
+lesson are eligible, and only when every current declaration of that path uses
+`reseed: true`; mixed shared/local paths retain their existing semantics. An existing
+local entry, including a null reset, wins. Other scopes and unmatched/conflicting
+shared source remain preserved. The marker is saved even if no file matched, so
+later navigation or reset cannot reattribute retained source to a different lesson.
+This marker records the scope upgrade, not lesson identity: lesson reordering still
+requires the stable-key migration described above. Versioned tutorials use only the
+trusted lesson mapping and never run this upgrade after a resume fallback.
 
 SE Gym's import/export preserves each progress object, including `stepFiles` and this metadata,
 without changing its export envelope. Fresh saves do not show a migration notice.
@@ -3436,14 +3450,86 @@ under the same prefix family as other tutorial state so the global
   refers only to the preview document. Keep commands repository-authored, do
   not add host-page capabilities to this interface, and never expose assertion
   traffic through public window messages.
-- **playwright** (react): `command:` is Playwright-compat JS run by
-  `js/playwright-compat/runner.js` (a subset of `@playwright/test`).
+- **Playwright** (`react`): learner spec files selected by `playwright.test_files`
+  run through `js/playwright-compat/runner.js` (a subset of `@playwright/test`).
+  Instructor gates use `tests[].playwright`, not `tests[].command`; the latter
+  remains a React DOM assertion as described above.
   Reference selectors via `page.getByRole(...)`, `page.getByText(...)`. Its
   locator/action requests and responses share the React assertion broker's
   private capability port; do not add a public-window fallback. Learner spec
   source runs in a fresh opaque-origin dedicated worker, and the host terminates
   that worker if synchronous loading or a test callback exceeds the configured
   Playwright timeout, so an infinite loop cannot freeze the tutorial page.
+  Text locators ignore script/style/noscript and document-head source/metadata,
+  preserve hidden-text matching, and select the smallest matching element. This
+  follows installed Playwright text-selector semantics; role/name queries and
+  assertion text extraction have separate behavior.
+  **Behavioral checks of learner test suites.** A gate can override `test_files`
+  (globs, restricted to that gate), require `min_tests` runnable (non-skipped)
+  tests, and select a named test
+  with `title` or a zero-based `index`. Ordinary `expected: pass|fail` keeps the
+  existing all-tests semantics when neither selector is present.
+
+  Use `app_source: starter` for independently authored app code: the declared
+  app files come from the current step's original `files[].content`, even when
+  the learner has edited or restored those files. Spec files remain the learner's
+  current source. Optional `reference_mutations` build the correct reference
+  when the exercise intentionally starts with a buggy app. `mutations` then
+  change that reference to one regression or one benign refactor. Each entry
+  has `path`, `replace`, and `with`; the exact literal replacement must match
+  once, otherwise the gate fails loudly instead of silently using a stale fixture.
+
+  ```yaml
+  tests:
+    - description: "The suite catches a todo losing its text"
+      playwright:
+        test_files: ["tests/todo.spec.js"]
+        app_source: starter
+        min_tests: 1
+        expected: some_fail
+        mutations:
+          - path: "src/App.jsx"
+            replace: "setItems([...items, trimmed]);"
+            with: "setItems([...items, '']);"
+  ```
+
+  A mutation gate first requires the **same complete suite** to pass its correct
+  reference. `some_fail` then requires at least one test failure on the mutant;
+  `pass` requires every test to survive a benign refactor. Reference results are
+  reused only within one assessment run for the same file snapshot and selection.
+  Empty suites, skipped selected tests, malformed JavaScript and broken reference
+  setup earn no mutation credit. Skips are rejected for every assessment gate,
+  including named pass/fail checks without a `min_tests` setting. The compatibility runner reports boolean outcomes, so a failure that
+  occurs only on the mutant is not classified by exception kind. Author valid,
+  narrowly targeted mutants and verify them with independent passing solutions
+  and inadequate-test counterexamples. This is diagnostic grading, not proof of
+  exhaustive coverage or protection against hostile learner code.
+
+  App/spec snapshots are passed into fresh preview/worker runs without rewriting
+  Monaco models, draft storage or authored config. A `finally` rebuild restores
+  the current lesson's learner preview after reference/mutant grading, including
+  failed checks. Do not bypass the opaque-origin worker or private broker port
+  to evaluate learner specs in the host page. Add `reseed: true` to app and spec
+  files when adjacent lessons reuse paths for different starter programs. Keep
+  existing lesson keys/index identities so saved drafts remain reachable; adding
+  new step keys to a published tutorial requires an explicit migration (see 4.7).
+
+  **Python test-writing lessons.** Fetch the repository-owned
+  `assets/tutorials/python_test_grading.py` helper in `setup_commands` and import
+  `check_suite(test_file, module_name, replacement_source=None,
+  expect_failure=False, test_name=None, min_tests=1)` in instructor checks.
+  Supply a correct reference implementation independent of editable learner
+  helpers, then run each narrowly scoped mutant separately. A passing reference
+  check is required as well as mutant checks; a source substring or a test-file
+  self-check cannot establish oracle strength. `test_name` optionally selects
+  an explicitly required test; otherwise learner test names are unrestricted.
+  The helper rejects zero collection, skips, collection/setup/teardown errors
+  and unrelated runtime exceptions. Mutant credit requires an assertion failure
+  in the test call phase. It restores the module file in `finally`, clears
+  workspace module/bytecode caches between runs, and restores the previous
+  bytecode setting. Learner tests still run in the normal Python environment;
+  this helper is a diagnostic evaluator, not a hostile-code security boundary.
+
 - **UML assertions** (`uml-editor`): `tests[].assertions` are structural
   checks against the current ArchUML source. Use `kind: element|class|state|
   participant`, `kind: member`, `kind: relation|transition|message`, or

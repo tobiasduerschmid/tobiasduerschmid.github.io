@@ -7356,7 +7356,7 @@
     if (this._previewFrameSync) replacement.addEventListener('load', this._previewFrameSync);
   };
 
-  TutorialCode.prototype._rebuildReactPreview = function (onReady, stepOverride) {
+  TutorialCode.prototype._rebuildReactPreview = function (onReady, stepOverride, fileSnapshot) {
     if (!this._previewFrame) return;
     var self = this;
     var generation = ++this._reactPreviewGeneration;
@@ -7378,7 +7378,7 @@
     // A new iframe element gives each generation a fresh WindowProxy. Code in
     // the previous preview therefore cannot race the next broker handshake.
     this._closeReactAssertionBroker();
-    this._replaceReactPreviewFrame(this._buildReactSrcdoc(step, generation));
+    this._replaceReactPreviewFrame(this._buildReactSrcdoc(step, generation, fileSnapshot));
   };
 
   TutorialCode.prototype._getReactPreviewFileOrder = function (step) {
@@ -7465,7 +7465,7 @@
     }
   };
 
-  TutorialCode.prototype._buildReactSrcdoc = function (step, previewGeneration) {
+  TutorialCode.prototype._buildReactSrcdoc = function (step, previewGeneration, fileSnapshot) {
     var self = this;
     var fileOrder = this._getReactPreviewFileOrder(step);
     var readyMessageType = JSON.stringify(REACT_PREVIEW_READY);
@@ -7479,8 +7479,9 @@
     var userCss = [];
     var scripts = fileOrder.map(function (filename) {
       var entry = self.editorModels[filename];
-      if (!entry) return '';
-      var content = entry.model.getValue();
+      if (!fileSnapshot && !entry) return '';
+      var content = fileSnapshot ? fileSnapshot[filename] : entry.model.getValue();
+      if (typeof content !== 'string') return '';
       // CSS files go into a <style> tag, not a script tag
       if (filename.endsWith('.css')) {
         userCss.push(content);
@@ -10756,16 +10757,33 @@
   // it was saved in, never to every lesson that reuses that path. When that
   // lesson no longer exists, the draft stays preserved under `files`, where no
   // reseeded lesson shows it.
-  TutorialCode.prototype._attributeLegacyDrafts = function (data, lessonIndex) {
+  TutorialCode.prototype._attributeLegacyDrafts = function (data, lessonIndex, mayAttribute = () => true) {
     data.files = Object.assign({}, data.files);
-    data.stepFiles = {};
+    data.stepFiles = Object.assign({}, data.stepFiles);
     const lesson = this.steps[lessonIndex];
     const key = this._draftStepKey(lessonIndex);
     for (const file of (lesson && lesson.files) || []) {
-      if (!file.reseed || !Object.hasOwn(data.files, file.path)) continue;
+      if (!file.reseed || !mayAttribute(file) || !Object.hasOwn(data.files, file.path)) continue;
+      // A lesson-local draft or explicit reset wins; retain conflicting shared
+      // source for recovery rather than silently discarding either version.
+      if (Object.hasOwn(data.stepFiles[key] || {}, file.path)) continue;
       data.stepFiles[key] = Object.assign({}, data.stepFiles[key], { [file.path]: data.files[file.path] });
       delete data.files[file.path];
     }
+  };
+
+  TutorialCode.prototype._upgradeDraftScopes = function (data) {
+    // One-time upgrade for unversioned tutorials whose shared files became
+    // lesson-local. This does not establish identities for reordered lessons.
+    // Versioned tutorials already attribute through the trusted mapping above;
+    // their resume fallback must never acquire an unmatched lesson's source.
+    if (this.progressVersion || data.draftScopeVersion >= 1) return;
+    const sharedPaths = new Set(this.steps.flatMap(step => (step.files || [])
+      .filter(file => !file.reseed).map(file => file.path)));
+    this._attributeLegacyDrafts(data, data.step, file => !sharedPaths.has(file.path));
+    // Persist even when nothing matched: a later saved step must not acquire
+    // a retained orphan/conflict after navigation or an explicit reset.
+    data.draftScopeVersion = 1;
   };
 
   TutorialCode.prototype._draftProgress = function (readStored = this.autoSaveEnabled) {
@@ -10773,6 +10791,7 @@
     const data = saved || {};
     // Versioned tutorials attribute these while remapping lessons.
     if (data.stepFiles === undefined) this._attributeLegacyDrafts(data, data.step);
+    this._upgradeDraftScopes(data);
     data.files = Object.assign({}, data.files);
     data.stepFiles = Object.assign({}, data.stepFiles);
     Object.assign(data.files, this._sessionDrafts.files);
@@ -10818,6 +10837,7 @@
       stepsPassed: Array.from(this._stepsPassed),
       quizPassed: Array.from(this._quizPassed)
     };
+    if (prev.draftScopeVersion !== undefined) data.draftScopeVersion = prev.draftScopeVersion;
     try {
       if (this._smalltalkAdapter && this._smalltalkAdapter.workspace) {
         data.smalltalk_workspace = this._smalltalkAdapter.encodeProgress(prev && prev.smalltalk_workspace);
@@ -13379,9 +13399,13 @@
     panel.innerHTML = innerHtml;
   };
 
-  TutorialCode.prototype._runPlaywrightCompatSpecs = function (step) {
+  TutorialCode.prototype._runPlaywrightCompatSpecs = function (step, options) {
     var self = this;
-    var testFiles = this._getPlaywrightTestFiles(step);
+    options = options || {};
+    var selectedStep = options.test_files
+      ? Object.assign({}, step, { playwright: Object.assign({}, step.playwright, { test_files: options.test_files }) })
+      : step;
+    var testFiles = this._getPlaywrightTestFiles(selectedStep);
     if (!testFiles.length) {
       return Promise.resolve({
         tests: [{ description: 'At least one Playwright test file is present' }],
@@ -13395,8 +13419,8 @@
       });
     }
 
-    var files = {};
-    Object.keys(this.editorModels || {}).forEach(function (filename) {
+    var files = options.files || {};
+    if (!options.files) Object.keys(this.editorModels || {}).forEach(function (filename) {
       files[filename] = self.editorModels[filename].model.getValue();
     });
 
@@ -13406,7 +13430,7 @@
       return new Promise(function (resolve) {
         self._rebuildReactPreview(function () {
           resolve({ frame: self._previewFrame, port: self._reactAssertionPort });
-        }, step);
+        }, step, files);
       });
     }
 
@@ -13457,6 +13481,19 @@
 
     var tests = (run && run.tests) || [];
     var results = (run && run.results) || [];
+    if (tests.some(function (item) { return item.skipped; })) {
+      throw new Error('Every selected Playwright test must run; skipped tests cannot earn assessment credit');
+    }
+    const runnableCount = tests.filter(function (item) { return !item.skipped; }).length;
+    if (cfg.min_tests && runnableCount < cfg.min_tests) {
+      throw new Error('Define at least ' + cfg.min_tests + ' Playwright tests');
+    }
+    if (expected === 'some_fail') {
+      if (!tests.length || !results.some(function (result) { return result === false; })) {
+        throw new Error('The suite did not catch this regression');
+      }
+      return true;
+    }
     var targetIndex = -1;
     var hasTitle = cfg.title || cfg.test_title || cfg.name || cfg.description;
     if (cfg.index !== undefined && cfg.index !== null) {
@@ -13504,13 +13541,74 @@
     throw new Error('Unknown Playwright expectation: ' + expected);
   };
 
-  TutorialCode.prototype._runPlaywrightExpectationTest = function (test, run) {
-    var stepIndex = run && typeof run.stepIndex === 'number' ? run.stepIndex : this.currentStep;
-    var step = this.steps[stepIndex];
-    var self = this;
-    return this._runPlaywrightCompatSpecs(step).then(function (playwrightRun) {
-      self._checkPlaywrightExpectation(test, playwrightRun);
+  // Instructor-authored mutations run on a snapshot; learner editors and drafts
+  // are never rewritten. Exact replacement prevents silently stale fixtures.
+  TutorialCode.prototype._applyPlaywrightMutations = function (files, mutations) {
+    const mutated = Object.assign({}, files);
+    (mutations || []).forEach(function (mutation) {
+      const source = mutated[mutation.path];
+      const needle = mutation.replace;
+      if (typeof source !== 'string' || typeof needle !== 'string' || !needle ||
+          source.split(needle).length !== 2 || typeof mutation.with !== 'string') {
+        throw new Error('Playwright mutation must match exactly once: ' + mutation.path);
+      }
+      mutated[mutation.path] = source.replace(needle, function () { return mutation.with; });
     });
+    return mutated;
+  };
+
+  TutorialCode.prototype._runPlaywrightExpectationTest = async function (test, run) {
+    const stepIndex = run && typeof run.stepIndex === 'number' ? run.stepIndex : this.currentStep;
+    const step = this.steps[stepIndex];
+    const cfg = test.playwright || test.student_playwright || test.studentTest || {};
+    const options = { test_files: cfg.test_files };
+    const frozenApp = cfg.app_source === 'starter' || cfg.mutations || cfg.reference_mutations;
+    if (!frozenApp) {
+      this._checkPlaywrightExpectation(test, await this._runPlaywrightCompatSpecs(step, options));
+      return;
+    }
+
+    let files = {};
+    Object.keys(this.editorModels || {}).forEach((filename) => {
+      files[filename] = this.editorModels[filename].model.getValue();
+    });
+    if (cfg.app_source === 'starter') {
+      this._getReactPreviewFileOrder(step).forEach(function (filename) {
+        const authored = (step.files || []).find(function (file) { return file.path === filename; });
+        if (!authored) throw new Error('Missing authored Playwright app file: ' + filename);
+        files[filename] = authored.content;
+      });
+    }
+    files = this._applyPlaywrightMutations(files, cfg.reference_mutations);
+    const baselineOptions = Object.assign({}, options, { files: files });
+    const baselineTest = { playwright: { expected: 'pass', min_tests: cfg.min_tests } };
+    const cache = run && (run.playwrightBaselines || (run.playwrightBaselines = new Map()));
+    const cacheKey = JSON.stringify(baselineOptions);
+    try {
+      // Any mutant credit requires the same complete suite to pass a correct
+      // reference first. Syntax errors, empty files and broken setup earn none.
+      let baseline;
+      if (cache && cache.has(cacheKey)) baseline = cache.get(cacheKey);
+      else {
+        baseline = await this._runPlaywrightCompatSpecs(step, baselineOptions);
+        if (cache) cache.set(cacheKey, baseline);
+      }
+      this._checkPlaywrightExpectation(baselineTest, baseline);
+      if (!cfg.mutations) {
+        this._checkPlaywrightExpectation(test, baseline);
+        return;
+      }
+      const candidate = await this._runPlaywrightCompatSpecs(step, Object.assign({}, options, {
+        files: this._applyPlaywrightMutations(files, cfg.mutations),
+      }));
+      if (JSON.stringify(candidate.tests) !== JSON.stringify(baseline.tests)) {
+        throw new Error('The same Playwright tests must run on reference and mutant apps');
+      }
+      this._checkPlaywrightExpectation(test, candidate);
+    } finally {
+      // Restore the current lesson even if the learner navigated during a run.
+      await new Promise((resolve) => this._rebuildReactPreview(resolve));
+    }
   };
 
   TutorialCode.prototype._getReactAssertionContext = function (step) {

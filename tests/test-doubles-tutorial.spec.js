@@ -134,6 +134,15 @@ test.describe.serial('Test Doubles Tutorial', () => {
         if (!step.solution) {
           throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
         }
+        // Check the actual editable artifact before applying any solution:
+        // previously all three lessons retained Step 1's unrelated test file.
+        const newExercise = [null, 'def test_thursday_picks_thursday_quest',
+          'def test_award_streak_bonus_5_days', 'def test_d_side_effect_simulates_api_failure'][i];
+        if (newExercise) {
+          const source = await page.evaluate(() =>
+            window._tutorial.editorModels['test_quest_service.py'].model.getValue());
+          expect(source).toContain(newExercise);
+        }
         await passCurrentStepTestsDoubles(page, TEST_RUN_TIMEOUT);
         await expectRenderedStepTests(page, step);
         await a11yCheckpoint(page, `test doubles tutorial — step ${i + 1} all tests passing`,
@@ -159,4 +168,22 @@ test.describe.serial('Test Doubles Tutorial', () => {
       });
     }
   }
+
+  test('revisiting library doubles restores its own draft and required service', async () => {
+    await page.getByRole('button', { name: /^Step 4:/ }).click();
+    await expectActiveStep(page, 3);
+    const draft = await page.evaluate(() =>
+      window._tutorial.editorModels['test_quest_service.py'].model.getValue());
+    expect(draft).toContain('def test_e_award_streak_bonus_with_mock_spy');
+    await page.getByRole('button', { name: /^Step 5:/ }).click();
+    await expectActiveStep(page, 4);
+    await page.getByRole('button', { name: /^Step 4:/ }).click();
+    await expectActiveStep(page, 3);
+    expect(await page.evaluate(() =>
+      window._tutorial.editorModels['test_quest_service.py'].model.getValue())).toBe(draft);
+    await page.getByRole('button', { name: /test my work/i }).click();
+    await expect(page.locator('.tvm-test-summary')).toContainText(/All \d+ tests passed!/, {
+      timeout: TEST_RUN_TIMEOUT,
+    });
+  });
 });

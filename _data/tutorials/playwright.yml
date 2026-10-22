@@ -194,6 +194,7 @@ steps:
 
     files:
       - path: "src/App.jsx"
+        reseed: true
         language: "javascript"
         content: |
           function App() {
@@ -238,12 +239,14 @@ steps:
           }
 
       - path: "src/main.jsx"
+        reseed: true
         language: "javascript"
         content: |
           const root = ReactDOM.createRoot(document.getElementById('root'));
           root.render(<App />);
 
       - path: "src/styles.css"
+        reseed: true
         language: "css"
         content: |
           body {
@@ -327,6 +330,7 @@ steps:
           [data-bs-theme="dark"] button { background: #2563eb; }
 
       - path: "tests/todo.spec.js"
+        reseed: true
         language: "javascript"
         content: |
           import { test, expect } from '@playwright/test';
@@ -341,24 +345,21 @@ steps:
     open_file: "tests/todo.spec.js"
 
     tests:
-      - description: "The Playwright test passes against the demo Todo app"
+      - description: The test passes on the working Todo app
         playwright:
-          title: "user can add a todo"
-          should_fail: false
-
-      - description: "The test uses role-based locators (not CSS selectors)"
-        command: |
-          const spec = files['tests/todo.spec.js'] || '';
-          assert(spec.includes('getByRole'),
-            'Use getByRole — locators based on accessible roles are more durable than CSS selectors.');
-          assert(!/\.locator\(['"]\.[a-z-]+['"]\)/.test(spec),
-            'Avoid CSS class selectors like .locator(\'.add-btn\') in this step. Stay with the role-based locators shown.');
-
-      - description: "The test uses web-first assertions (await expect(...))"
-        command: |
-          const spec = files['tests/todo.spec.js'] || '';
-          assert(/await\s+expect\(/.test(spec),
-            'Use `await expect(...)` — web-first assertions auto-wait and retry. Manual `expect(await locator.isVisible()).toBe(true)` is the Playwright anti-pattern.');
+          test_files:
+            - tests/todo.spec.js
+          app_source: starter
+      - description: The test catches an added todo losing its text
+        playwright:
+          test_files:
+            - tests/todo.spec.js
+          app_source: starter
+          expected: some_fail
+          mutations:
+            - path: src/App.jsx
+              replace: setItems([...items, trimmed]);
+              with: setItems([...items, '']);
 
     solution:
       files:
@@ -560,6 +561,7 @@ steps:
 
     files:
       - path: "src/App.jsx"
+        reseed: true
         language: "javascript"
         content: |
           function App() {
@@ -604,12 +606,14 @@ steps:
           }
 
       - path: "src/main.jsx"
+        reseed: true
         language: "javascript"
         content: |
           const root = ReactDOM.createRoot(document.getElementById('root'));
           root.render(<App />);
 
       - path: "src/styles.css"
+        reseed: true
         language: "css"
         content: |
           body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f6f7fb; color: #1f2937; }
@@ -633,6 +637,7 @@ steps:
           [data-bs-theme="dark"] button { background: #2563eb; }
 
       - path: "tests/add-todo.spec.js"
+        reseed: true
         language: "javascript"
         content: |
           import { test, expect } from '@playwright/test';
@@ -708,59 +713,27 @@ steps:
     open_file: "tests/add-todo.spec.js"
 
     tests:
-      - description: "All four partition tests pass"
+      - description: All four input-partition tests pass on the correct app
         playwright:
-          title: "user can add a todo (happy path)"
-          should_fail: false
-
-      - description: "Empty input partition test passes"
+          test_files:
+            - tests/add-todo.spec.js
+          app_source: starter
+          min_tests: 4
+      - description: The suite catches whitespace-only input being accepted
         playwright:
-          title: "empty input is rejected"
-          should_fail: false
-
-      - description: "Very long input partition test passes"
-        playwright:
-          title: "very long todo is accepted"
-          should_fail: false
-
-      - description: "Whitespace-only partition test passes (you wrote this one)"
-        playwright:
-          title: "whitespace-only input is rejected"
-          should_fail: false
+          test_files:
+            - tests/add-todo.spec.js
+          app_source: starter
+          expected: some_fail
+          mutations:
+            - path: src/App.jsx
+              replace: const trimmed = text.trim();
+              with: const trimmed = text;
         hints:
-          - title: "Layer 1 — orientation"
-            text: "Look at the `empty input is rejected` test above. Your whitespace test is the same shape — only the input value changes (whitespace instead of empty)."
-          - title: "Layer 2 — strategy"
-            text: "Three moves: navigate (`page.goto('/')`), fill the textbox with whitespace (`.fill('   ')`), click the Add button. Then assert *no* listitem was added — `toHaveCount(0)` is the natural matcher."
-            condition: "code_missing: toHaveCount"
-          - title: "Layer 3 — skeleton"
-            text: |
-              ```js
-              await page.goto('/');
-              await page.getByRole('textbox', { name: /todo item/i }).fill('   ');
-              await page.getByRole('button', { name: /add todo/i }).click();
-              await expect(page.getByRole('listitem')).toHaveCount(0);
-              ```
-              Same shape as the empty-input test; the only change is what `.fill()` receives.
-            condition: "output_contains: AssertionError"
-
-      - description: "The whitespace test actually exercises the input"
-        command: |
-          const spec = files['tests/add-todo.spec.js'] || '';
-          const whitespaceTest = spec.split("test('whitespace-only")[1] || '';
-          assert(whitespaceTest.includes('.fill('),
-            'The whitespace test should fill the input — otherwise it isn\'t exercising the partition.');
-          assert(whitespaceTest.includes('toHaveCount') || whitespaceTest.includes('toBeHidden'),
-            'Assert that no listitem was added (e.g., toHaveCount(0)).');
-        hints:
-          - title: "Layer 1 — orientation"
-            text: "A test that doesn't `.fill()` doesn't exercise the partition you claimed to test. The point of partition tests is to *drive the SUT* with one input from each partition — not to leave the input empty."
-          - title: "Layer 2 — strategy"
-            text: "Two assertions both have to pass: (1) your test contains a `.fill(...)` call, (2) your test asserts on the listitem count or visibility. If the source-grep can't find both, this test fails."
-            condition: "code_missing: .fill"
-          - title: "Layer 3 — skeleton"
-            text: "The whitespace test body should look like: `.goto`, `.fill('   ')`, `.click()`, `expect(...).toHaveCount(0)`. Make sure each line is inside the `test('whitespace-only ...', async ({ page }) => { ... })` block — not commented out, not in a separate test."
-            condition: "code_contains: TODO"
+          - title: Distinguish whitespace from empty input
+            text: The faulty app still rejects an empty string, but accepts spaces. Drive the app with that different input, then check whether a todo appeared.
+          - title: Observe the rejected submission
+            text: After submitting spaces, inspect the list rather than just the input or the Add button. Decide what should remain unchanged.
 
     solution:
       files:
@@ -900,13 +873,13 @@ steps:
 
       ### 🎯 The locator ladder
 
-      There are five common ways to find the same UI element in Playwright. Each rung depends on something *different* about the UI.
+      These examples show common ways to find buttons and form controls in Playwright. Each rung depends on something *different* about the UI.
 
       ```javascript
-      // Five ways to find the same "Add todo" button:
+      // Button queries, plus a label query for the input:
 
       // Rung 1 — Role + accessible name. Mirrors how assistive tech finds it.
-      page.getByRole('button', { name: /add todo/i });
+      page.getByRole('button', { name: /add/i });
 
       // Rung 2 — Label association (best for form controls).
       page.getByLabel(/todo item/i);   // (this would find the input, not the button)
@@ -946,32 +919,32 @@ steps:
 
       <details markdown="1"><summary>Reveal — pick first, then click</summary>
 
-      **(a).** `getByRole('button', { name: /add/i })` survives all three: regex tolerance covers the text change ("Add" still matches `/add/i`); the role-based query is independent of CSS classes and DOM ancestry. `getByTestId('add-todo')` survives because the data-testid is author-controlled and travels with the element wherever it moves. The other rungs each break on one of the three. The investigate-table below shows the per-cell answer if you want the full breakdown — but the *lesson* lands in those two rows.
+      **(a).** `getByRole('button', { name: /add/i })` survives all three: regex tolerance covers the text change ("Add" still matches `/add/i`); the role-based query is independent of CSS classes and DOM ancestry. `getByTestId('add-todo')` survives because the data-testid is author-controlled and travels with the element wherever it moves. The exact-text query breaks on the text change and the class query breaks on the CSS rename. The label query targets the input, so it is not another way to find this button. The investigate-table below shows the per-cell answer if you want the full breakdown — but the *lesson* lands in those two rows.
 
       </details>
 
       ### ▶ Run
 
-      Click **Test**. All five locators currently work against the Todo app — the file `tests/locator-ladder.spec.js` has one test per rung, all passing.
+      Click **Test**. All five examples currently work against the Todo app — the file `tests/locator-ladder.spec.js` has one test per rung, all passing.
 
       ### 🔍 Investigate — reveal the answer table
 
       ```text
                                   CSS rename    Text change    DOM restructure
       ----------------------------------------------------------------------
-      1. getByRole({name:/add/i})    ✓              ✗ (a)         ✓
+      1. getByRole({name:/add/i})    ✓              ✓ (a)         ✓
       2. getByLabel                  ✓              ✓ (b)         ✓
       3. getByText('Add todo')       ✓              ✗              ✓
       4. getByTestId('add-todo')     ✓              ✓              ✓
-      5. .locator('.add-todo-btn')   ✗              ✓              ✗ (c)
+      5. .locator('.add-todo-btn')   ✗              ✓              ✓ (c)
       ```
 
       Notes:
       - **(a)** With a regex `/add/i`, the role locator survives "Add todo" → "Add" (regex still matches). With an exact `name: 'Add todo'` it would break. Regex tolerance is a *deliberate design choice*.
       - **(b)** `getByLabel` finds inputs via their `<label>` — button labels don't apply, so this rung doesn't really apply to buttons. Listed for completeness.
-      - **(c)** A DOM restructure (changing the button's surrounding markup) often changes CSS-selector ancestry. Brittle.
+      - **(c)** This class-only selector does not depend on ancestry, so moving the button leaves it working. An ancestry-dependent selector such as `.todo-row > button` would break.
 
-      **The pattern**: `getByTestId` is the only rung that survives a *button-text change* without exact matching. But `getByTestId` requires the *author* to have added the test ID — a code-level decision. And test IDs done badly (`<button data-testid="blue-btn-right-col">`) are just CSS coupling under another name.
+      **The pattern**: `getByTestId` and this deliberately tolerant role query both survive the stated button-text change. But `getByTestId` requires the *author* to have added the test ID — a code-level decision. And test IDs done badly (`<button data-testid="blue-btn-right-col">`) are just CSS coupling under another name.
 
       ### ✏️ Modify
 
@@ -983,6 +956,7 @@ steps:
 
     files:
       - path: "src/App.jsx"
+        reseed: true
         language: "javascript"
         content: |
           function App() {
@@ -1033,12 +1007,14 @@ steps:
           }
 
       - path: "src/main.jsx"
+        reseed: true
         language: "javascript"
         content: |
           const root = ReactDOM.createRoot(document.getElementById('root'));
           root.render(<App />);
 
       - path: "src/styles.css"
+        reseed: true
         language: "css"
         content: |
           body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f6f7fb; color: #1f2937; }
@@ -1064,6 +1040,7 @@ steps:
           [data-bs-theme="dark"] button { background: #2563eb; }
 
       - path: "tests/locator-ladder.spec.js"
+        reseed: true
         language: "javascript"
         content: |
           import { test, expect } from '@playwright/test';
@@ -1072,7 +1049,7 @@ steps:
           test('rung 1: getByRole finds the Add todo button', async ({ page }) => {
             await page.goto('/');
             await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
-            await page.getByRole('button', { name: /add todo/i }).click();
+            await page.getByRole('button', { name: /add/i }).click();
             await expect(page.getByRole('listitem')).toHaveText('Milk');
           });
 
@@ -1080,7 +1057,7 @@ steps:
           test('rung 2: getByLabel finds the input via its label', async ({ page }) => {
             await page.goto('/');
             await page.getByLabel(/todo item/i).fill('Bread');
-            await page.getByRole('button', { name: /add todo/i }).click();
+            await page.getByRole('button', { name: /add/i }).click();
             await expect(page.getByRole('listitem')).toHaveText('Bread');
           });
 
@@ -1112,29 +1089,31 @@ steps:
     open_file: "tests/locator-ladder.spec.js"
 
     tests:
-      - description: "All five locator rungs find the button against the current app"
+      - description: All five locator examples pass on the correct app
         playwright:
-          title: "rung 1: getByRole finds the Add todo button"
-          should_fail: false
-
-      - description: "Rung 4 (getByTestId) works"
+          test_files:
+            - tests/locator-ladder.spec.js
+          app_source: starter
+          min_tests: 5
+      - description: The rewritten suite survives the button class being renamed
         playwright:
-          title: "rung 4: getByTestId finds the button via data-testid"
-          should_fail: false
-
-      - description: "You rewrote rung 5 to use a role-based locator"
-        command: |
-          const spec = files['tests/locator-ladder.spec.js'] || '';
-          const rung5 = spec.split("rung 5:")[1] || '';
-          assert(!/\.locator\(['"]\.add-todo-btn['"]\)/.test(rung5),
-            'Rung 5 still uses .locator(\'.add-todo-btn\'). Replace it with a role-based locator (page.getByRole(\'button\', { name: /add/i })).');
-          assert(/getByRole\(['"]button['"]/.test(rung5),
-            'Rewrite rung 5 to use page.getByRole(\'button\', { name: ... }).');
-
-      - description: "The rewritten rung 5 still passes"
+          test_files:
+            - tests/locator-ladder.spec.js
+          app_source: starter
+          mutations:
+            - path: src/App.jsx
+              replace: className="add-todo-btn"
+              with: className="primary-btn"
+      - description: The suite still detects an Add action that does nothing
         playwright:
-          title: "rung 5: brittle CSS locator (rewrite me)"
-          should_fail: false
+          test_files:
+            - tests/locator-ladder.spec.js
+          app_source: starter
+          expected: some_fail
+          mutations:
+            - path: src/App.jsx
+              replace: setItems([...items, trimmed]);
+              with: setItems(items);
 
     solution:
       files:
@@ -1195,14 +1174,14 @@ steps:
             test('rung 1: getByRole finds the Add todo button', async ({ page }) => {
               await page.goto('/');
               await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');
-              await page.getByRole('button', { name: /add todo/i }).click();
+              await page.getByRole('button', { name: /add/i }).click();
               await expect(page.getByRole('listitem')).toHaveText('Milk');
             });
 
             test('rung 2: getByLabel finds the input via its label', async ({ page }) => {
               await page.goto('/');
               await page.getByLabel(/todo item/i).fill('Bread');
-              await page.getByRole('button', { name: /add todo/i }).click();
+              await page.getByRole('button', { name: /add/i }).click();
               await expect(page.getByRole('listitem')).toHaveText('Bread');
             });
 
@@ -1223,7 +1202,7 @@ steps:
             test('rung 5: brittle CSS locator (rewrite me)', async ({ page }) => {
               await page.goto('/');
               await page.getByRole('textbox', { name: /todo item/i }).fill('Butter');
-              await page.getByRole('button', { name: /add todo/i }).click();
+              await page.getByRole('button', { name: /add/i }).click();
               await expect(page.getByRole('listitem')).toHaveText('Butter');
             });
       explanation: |
@@ -1273,21 +1252,21 @@ steps:
             Test IDs are only as durable as their *naming*. A test ID named after styling or layout is functionally equivalent to a CSS-class locator — it pins implementation. A test ID named after the action or the semantic role (`save-action`, `cart-checkout-button`) is what the docs intend: a stable contract that the test can rely on indefinitely.
 
         - question: |
-            **(Spaced review — Step 2)** Your team is debating: should "rejecting whitespace-only input" have **its own** e2e test, or can it be tested in the same test as "rejecting empty input"?
+            **(Spaced review — Step 2)** The app must reject both empty input and whitespace-only input. How can you cover both without duplicating the whole test body?
           type: single
           options:
-            - "They should always be in separate tests for clarity"
-            - "If trimming sends them through the same code path, one test covers both"
-            - "Whitespace cases are too edge-case for e2e and should be skipped"
-            - "Always merge edge cases into the happy-path test to save time"
+            - "Keep only the empty-string case because both currently reach the same branch"
+            - "Parameterize the test over an empty string and a whitespace-only string"
+            - "Skip whitespace because it is an unlikely edge case"
+            - "Combine rejection with the unrelated happy path and assert only the final count"
           correct_index: 1
           option_feedback:
-            0: "Separate tests aren't *always* needed. If two scenarios are in the same behavioral partition (i.e., the code processes them identically), one test covers both. Adding a redundant test costs maintenance time without adding confidence."
-            1: "Right. The Spec Card and partition discipline tell us: if `addTodo` calls `.trim()` before checking emptiness, then `\"\"` and `\"   \"` end up in the *same partition* — both produce `\"\"` after trimming. One representative test per partition is the rule from foundations."
-            2: "Skipping the case isn't the answer. Whitespace input is a real partition (real users hit it), and a test should cover it. The question is *where* — same test, same file, or its own — and the partition rule says: same partition, one test."
-            3: "Cramming multiple partitions into one test makes failures harder to diagnose (which scenario caused the failure?) and tends to mask issues. One test per behavioral partition keeps failures targeted."
+            0: "Removing trim would leave empty-string rejection working while accepting whitespace. Shared behavior today does not guarantee the same regressions tomorrow."
+            1: "Both inputs exercise the promised behavior. Parameterization shares the test structure while preserving each counterexample."
+            2: "Whitespace is an explicit requirement, so it needs a representative input."
+            3: "A final count can hide which input was mishandled. Keep an independently reported case for each input."
           explanation: |
-            Partitions are the unit of test design, not individual inputs. Two inputs are in the same partition if the system processes them the same way. One representative per partition is sufficient — adding more is wasted effort, removing one is missed coverage.
+            Partitions guide input choice; they do not prove that one input detects every fault. Empty and whitespace inputs expose different failures when trimming changes. Parameterization avoids duplicated test code without dropping either check.
 
 
   # ==========================================================================
@@ -1397,6 +1376,7 @@ steps:
 
     files:
       - path: "src/App.jsx"
+        reseed: true
         language: "javascript"
         content: |
           // 🐛 BUGGY APP — there's a bug somewhere in addTodo that makes the
@@ -1444,12 +1424,14 @@ steps:
           }
 
       - path: "src/main.jsx"
+        reseed: true
         language: "javascript"
         content: |
           const root = ReactDOM.createRoot(document.getElementById('root'));
           root.render(<App />);
 
       - path: "src/styles.css"
+        reseed: true
         language: "css"
         content: |
           body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f6f7fb; color: #1f2937; }
@@ -1472,6 +1454,7 @@ steps:
           [data-bs-theme="dark"] button { background: #2563eb; }
 
       - path: "tests/todo.spec.js"
+        reseed: true
         language: "javascript"
         content: |
           import { test, expect } from '@playwright/test';
@@ -1493,43 +1476,34 @@ steps:
     open_file: "tests/todo.spec.js"
 
     tests:
-      - description: "The strengthened assertion catches the empty-text bug (the test now fails)"
+      - description: Your strengthened test passes when the entered text is preserved
         playwright:
-          title: "adding a todo shows it in the list"
-          should_fail: true
-
-      - description: "Your test asserts the item's text content (not just the count)"
-        command: |
-          const spec = files['tests/todo.spec.js'] || '';
-          assert(spec.includes('toHaveText') || spec.includes('toContainText'),
-            'Use toHaveText or toContainText so your assertion verifies the rendered text — not just the count.');
-          assert(spec.includes("'Milk'") || spec.includes('"Milk"') || spec.includes('Milk'),
-            'Pin the actual user input (\"Milk\") in the assertion.');
+          test_files:
+            - tests/todo.spec.js
+          app_source: starter
+          reference_mutations:
+            - path: src/App.jsx
+              replace: setItems([...items, '']);
+              with: setItems([...items, trimmed]);
+      - description: Your test fails specifically when the added todo loses its text
+        playwright:
+          test_files:
+            - tests/todo.spec.js
+          app_source: starter
+          expected: some_fail
+          mutations:
+            - path: src/App.jsx
+              replace: setItems([...items, trimmed]);
+              with: setItems([...items, '']);
+          reference_mutations:
+            - path: src/App.jsx
+              replace: setItems([...items, '']);
+              with: setItems([...items, trimmed]);
         hints:
-          - title: "Layer 1 — orientation"
-            text: "The current assertion only counts list items — it would pass for an empty `<li></li>`. Strengthen it so the test verifies the *user-visible content*, not just structure."
-          - title: "Layer 2 — strategy"
-            text: "Chain a content-checking matcher onto the listitem locator. Two options: `toHaveText('Milk')` pins exact text; `toContainText('Milk')` pins a substring. Since the spec promises the user's input appears verbatim, exact match is fine."
-            condition: "code_missing: toHaveText"
-          - title: "Layer 3 — skeleton"
-            text: |
-              ```js
-              await expect(page.getByRole('listitem')).toHaveText('Milk');
-              ```
-              Same locator as before, stronger matcher.
-            condition: "code_missing: 'Milk'"
-
-      - description: "The test still uses web-first assertion form (await expect)"
-        command: |
-          const spec = files['tests/todo.spec.js'] || '';
-          assert(/await\s+expect\(/.test(spec),
-            'Use `await expect(...)` — web-first assertions retry, manual `expect(await locator.isVisible()).toBe(true)` does not.');
-        hints:
-          - title: "Layer 1 — orientation"
-            text: "Playwright's web-first assertions (`await expect(locator).toX(...)`) auto-retry until the condition holds — no hand-coded waits needed."
-          - title: "Layer 2 — strategy"
-            text: "Anti-pattern: `expect(await locator.isVisible()).toBe(true)` looks similar but runs *once*. If the page hasn't finished rendering, your test flakes. Always start with `await expect(locator)...`."
-            condition: "code_contains: .isVisible()"
+          - title: Identify what the count misses
+            text: Both apps add one list item. Compare what the user can read in that item after submitting the same input.
+          - title: Choose an observable contract
+            text: The spec promises the submitted text appears in the list. Make that promise the assertion, then compare the working and faulty apps.
 
     solution:
       files:
@@ -1678,7 +1652,7 @@ steps:
 
       **Q.** From Step 3 — which two locator strategies survive a **CSS class rename** without modification?
 
-      - (a) `getByText` and `getByLabel`
+      - (a) `getByText` and `.locator('.css-class')`
       - (b) `getByRole` and `getByTestId`
       - (c) `getByPlaceholder` and `.locator('.css-class')`
       - (d) Only `getByRole` survives — every other rung breaks.
@@ -1759,6 +1733,7 @@ steps:
 
     files:
       - path: "src/App.jsx"
+        reseed: true
         language: "javascript"
         content: |
           // 🛠 Edit this file as instructed: rename the CSS class
@@ -1807,12 +1782,14 @@ steps:
           }
 
       - path: "src/main.jsx"
+        reseed: true
         language: "javascript"
         content: |
           const root = ReactDOM.createRoot(document.getElementById('root'));
           root.render(<App />);
 
       - path: "src/styles.css"
+        reseed: true
         language: "css"
         content: |
           body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f6f7fb; color: #1f2937; }
@@ -1840,6 +1817,7 @@ steps:
           [data-bs-theme="dark"] button { background: #2563eb; }
 
       - path: "tests/css-locator.spec.js"
+        reseed: true
         language: "javascript"
         content: |
           import { test, expect } from '@playwright/test';
@@ -1853,6 +1831,7 @@ steps:
           });
 
       - path: "tests/role-locator.spec.js"
+        reseed: true
         language: "javascript"
         content: |
           import { test, expect } from '@playwright/test';
@@ -1868,6 +1847,13 @@ steps:
     open_file: "src/App.jsx"
 
     tests:
+      - description: "The supplied tests pass on the original app before the deliberate edit"
+        playwright:
+          app_source: starter
+          test_files:
+            - "tests/css-locator.spec.js"
+            - "tests/role-locator.spec.js"
+
       - description: "You renamed the CSS class on the Add todo button (add-todo-btn → primary-btn)"
         command: |
           const app = files['src/App.jsx'] || '';
@@ -2068,11 +2054,11 @@ steps:
       ```javascript
       // Brittle (over-specified): pins exact wording, plurality, surrounding copy.
       await expect(page.getByRole('status'))
-        .toHaveText('You have 3 items remaining across all todos');
+        .toHaveText('3 items remaining');
 
-      // Goldilocks (spec-aligned): pins exactly what the spec promises.
-      await expect(page.getByRole('status')).toContainText('3');
-      await expect(page.getByRole('status')).toContainText(/item/i);
+      // Goldilocks: word boundaries match 3, not the 3 inside 13.
+      // The surrounding wording is free to change.
+      await expect(page.getByRole('status')).toHaveText(/\b3\b/);
 
       // Loose (under-specified): the status region exists; nothing more.
       await expect(page.getByRole('status')).toBeVisible();
@@ -2085,13 +2071,13 @@ steps:
       **Q.** Which assertion *correctly* survives the wording change (i.e., passes — and the pass is the right answer)?
 
       - (a) Brittle only — exact text is the contract.
-      - (b) Goldilocks only — pins the count and the noun, both still present.
+      - (b) Goldilocks only — pins the complete count, which is still present.
       - (c) Loose only — `toBeVisible()` doesn't care about content.
       - (d) Goldilocks **and** Loose — both still pass; only Goldilocks's pass is *informative*.
 
       <details markdown="1"><summary>Reveal</summary>
 
-      **(d).** Brittle fails (false alarm — wording changed, spec didn't). Goldilocks and Loose both pass — but Goldilocks's pass is meaningful (it verified the count *and* the noun) while Loose's pass is trivially true (it never checked the count anyway). A "passing" test that proves nothing isn't doing its job.
+      **(d).** Brittle fails (false alarm — wording changed, spec didn't). Goldilocks and Loose both pass — but Goldilocks's pass is meaningful (it verified the complete count) while Loose's pass is trivially true (it never checked the count anyway). A "passing" test that proves nothing isn't doing its job.
 
       </details>
 
@@ -2108,7 +2094,7 @@ steps:
 
       <details markdown="1"><summary>Reveal</summary>
 
-      **(a).** Brittle fails because `'3 items remaining'` ≠ `'4 items remaining'`. Goldilocks fails because `toContainText('3')` doesn't match `'4 items remaining'` (no `'3'` in that string). Loose passes because the status region is still visible — it never checked the count, so it can't catch a count regression. That last "pass" is the *under-specification* trap.
+      **(a).** Brittle fails because `'3 items remaining'` ≠ `'4 items remaining'`. Goldilocks fails because `/\b3\b/` requires the complete number 3: it rejects both 4 and 13. Loose passes because the status region is still visible — it never checked the count, so it can't catch a count regression. That last "pass" is the *under-specification* trap.
 
       </details>
 
@@ -2142,7 +2128,7 @@ steps:
       | Goldilocks | ❌ Fails | ✓ Yes — it caught the regression |
       | Loose | ✓ Passes | ✗ No — it missed the bug entirely |
 
-      Now think back to **Scenario A** (the wording change). Reset the bug — change `items.length + 1` back to `items.length`. Then *imagine* the wording change happening:
+      Now think back to **Scenario A** (the wording change). Keep the off-by-one edit for **Test My Work**; the next step loads a fresh app. Imagine the correct app receiving only the wording change:
 
       | Assertion | Result under wording change | Was the result *useful*? |
       | --- | --- | --- |
@@ -2176,6 +2162,7 @@ steps:
 
     files:
       - path: "src/App.jsx"
+        reseed: true
         language: "javascript"
         content: |
           // 🛠 You'll edit one line in this file to introduce the off-by-one bug.
@@ -2226,12 +2213,14 @@ steps:
           }
 
       - path: "src/main.jsx"
+        reseed: true
         language: "javascript"
         content: |
           const root = ReactDOM.createRoot(document.getElementById('root'));
           root.render(<App />);
 
       - path: "src/styles.css"
+        reseed: true
         language: "css"
         content: |
           body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f6f7fb; color: #1f2937; }
@@ -2256,6 +2245,7 @@ steps:
           [data-bs-theme="dark"] .status-line { color: #9ca3af; }
 
       - path: "tests/brittle.spec.js"
+        reseed: true
         language: "javascript"
         content: |
           import { test, expect } from '@playwright/test';
@@ -2273,11 +2263,12 @@ steps:
           });
 
       - path: "tests/goldilocks.spec.js"
+        reseed: true
         language: "javascript"
         content: |
           import { test, expect } from '@playwright/test';
 
-          // GOLDILOCKS: pins exactly what the spec promises (the count + the noun).
+          // GOLDILOCKS: pins exactly what the spec promises (the complete count, independent of wording).
           test('goldilocks: counter shows the right count of items', async ({ page }) => {
             await page.goto('/');
             await page.getByRole('textbox', { name: /todo item/i }).fill('A');
@@ -2286,11 +2277,11 @@ steps:
             await page.getByRole('button', { name: /add/i }).click();
             await page.getByRole('textbox', { name: /todo item/i }).fill('C');
             await page.getByRole('button', { name: /add/i }).click();
-            await expect(page.getByRole('status')).toContainText('3');
-            await expect(page.getByRole('status')).toContainText(/item/i);
+            await expect(page.getByRole('status')).toHaveText(/\b3\b/);
           });
 
       - path: "tests/loose.spec.js"
+        reseed: true
         language: "javascript"
         content: |
           import { test, expect } from '@playwright/test';
@@ -2307,6 +2298,14 @@ steps:
     open_file: "src/App.jsx"
 
     tests:
+      - description: "The supplied tests pass on the original app before the deliberate edit"
+        playwright:
+          app_source: starter
+          test_files:
+            - "tests/brittle.spec.js"
+            - "tests/goldilocks.spec.js"
+            - "tests/loose.spec.js"
+
       - description: "You introduced the off-by-one bug (remainingCount = items.length + 1)"
         command: |
           const app = files['src/App.jsx'] || '';
@@ -2509,7 +2508,7 @@ steps:
                                     (pins CSS class —           pressed', 'true') (pins        do you know the toggle
                                     implementation detail)      semantic ARIA contract)        worked?)
       2. Count decrements           toHaveText('2 items         getByRole('status')            toBeVisible() on the
-                                    remaining') (over-pins      .toContainText('2')            status (misses the
+                                    remaining') (over-pins      .toHaveText(/\b2\b/)            status (misses the
                                     wording)                    (pins the number itself)       count regression)
       3. Item stays visible         (Goldilocks IS the          getByRole('listitem')          (you can't loose-spec
                                     target — count + visible)   .filter({hasText:'Milk'})      a deletion check —
@@ -2544,7 +2543,7 @@ steps:
         await expect(milkToggle).toHaveAttribute('aria-pressed', 'true');
 
         // Promise 2 — count decrements (pin the number, not wording).
-        await expect(page.getByRole('status')).toContainText('2');
+        await expect(page.getByRole('status')).toHaveText(/\b2\b/);
 
         // Promise 3 — Milk is still in the list (not deleted).
         await expect(
@@ -2566,8 +2565,8 @@ steps:
                           are visually distinct. The remaining count decrements.
                           Marked-done todos remain in the list.
       ✓ Should pass when: Visual styling of done items changes (color, icon,
-                          font-weight). The toggle becomes a checkbox instead
-                          of a button. The confirmation animation changes.
+                          font-weight). The toggle keeps its button role and
+                          pressed-state semantics. The confirmation animation changes.
       ✗ Should fail when: Marking doesn't persist between renders. Count doesn't
                           decrement. Done items disappear from the list.
       🎯 Locator contract: Each todo is a listitem. The toggle button has the
@@ -2620,6 +2619,7 @@ steps:
 
     files:
       - path: "src/App.jsx"
+        reseed: true
         language: "javascript"
         content: |
           function App() {
@@ -2683,12 +2683,14 @@ steps:
           }
 
       - path: "src/main.jsx"
+        reseed: true
         language: "javascript"
         content: |
           const root = ReactDOM.createRoot(document.getElementById('root'));
           root.render(<App />);
 
       - path: "src/styles.css"
+        reseed: true
         language: "css"
         content: |
           body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f6f7fb; color: #1f2937; }
@@ -2717,6 +2719,7 @@ steps:
           [data-bs-theme="dark"] .todo-done .todo-toggle { color: #6b7280; }
 
       - path: "tests/mark-done.spec.js"
+        reseed: true
         language: "javascript"
         content: |
           import { test, expect } from '@playwright/test';
@@ -2735,7 +2738,7 @@ steps:
             // Promise 1 — toggle state (semantic ARIA contract).
             await expect(milkToggle).toHaveAttribute('aria-pressed', 'true');
             // Promise 2 — count decrements (pin the number).
-            await expect(page.getByRole('status')).toContainText('2');
+            await expect(page.getByRole('status')).toHaveText(/\b2\b/);
             // Promise 3 — item stays visible (binary contract).
             await expect(
               page.getByRole('listitem').filter({ hasText: 'Milk' })
@@ -2768,37 +2771,60 @@ steps:
     open_file: "tests/mark-done.spec.js"
 
     tests:
-      - description: "Worked-example test passes (verifies the app supports mark-as-done)"
+      - description: Your three tests pass on the correct toggle app
         playwright:
-          title: "marking a todo as done decrements the count and keeps it visible"
-          should_fail: false
-
-      - description: "Your test 'marking and unmarking restores the count' passes"
+          test_files:
+            - tests/mark-done.spec.js
+          app_source: starter
+          min_tests: 3
+      - description: The suite catches a todo that cannot be unmarked
         playwright:
-          title: "marking and unmarking a todo restores the count"
-          should_fail: false
-
-      - description: "Your test 'marking one of two todos shows count of 1' passes"
+          test_files:
+            - tests/mark-done.spec.js
+          app_source: starter
+          expected: some_fail
+          mutations:
+            - path: src/App.jsx
+              replace: "i === idx ? { ...item, done: !item.done } : item"
+              with: "i === idx ? { ...item, done: true } : item"
+      - description: The suite catches marking one of two todos having no effect
         playwright:
-          title: "marking one of two todos shows count of 1"
-          should_fail: false
-
-      - description: "You used semantic locators (no .todo-done CSS class assertion)"
-        command: |
-          const spec = files['tests/mark-done.spec.js'] || '';
-          assert(!/toHaveClass\(.*todo-done/.test(spec),
-            'Avoid asserting on the .todo-done CSS class — use the semantic aria-pressed attribute instead. The CSS class is implementation detail; aria-pressed is the contract.');
-          assert(/aria-pressed/.test(spec),
-            'Use aria-pressed to assert the toggle state — that\'s the semantic contract for a toggle button.');
-
-      - description: "Your assertions pin the count (not exact wording)"
-        command: |
-          const spec = files['tests/mark-done.spec.js'] || '';
-          // Count occurrences of toContainText with single digits in the new tests
-          const newTests = spec.split('marking and unmarking')[1] || '';
-          assert(/toContainText\(['"]\d+['"]\)/.test(newTests) ||
-                 /toContainText\(['"]\d+['"]/.test(newTests),
-            'Pin the count number with toContainText (e.g. toContainText(\'1\')), not the full sentence.');
+          test_files:
+            - tests/mark-done.spec.js
+          app_source: starter
+          expected: some_fail
+          mutations:
+            - path: src/App.jsx
+              replace: "i === idx ? { ...item, done: !item.done } : item"
+              with: "i === idx && items.length !== 2 ? { ...item, done: !item.done } : item"
+      - description: The suite rejects a count that is too large by ten
+        playwright:
+          test_files:
+            - tests/mark-done.spec.js
+          app_source: starter
+          expected: some_fail
+          mutations:
+            - path: src/App.jsx
+              replace: items.filter((item) => !item.done).length
+              with: items.filter((item) => !item.done).length + 10
+      - description: Tests survive changed status wording and done-item styling
+        playwright:
+          test_files:
+            - tests/mark-done.spec.js
+          app_source: starter
+          mutations:
+            - path: src/App.jsx
+              replace: "{remainingCount} items remaining"
+              with: "{remainingCount} todos pending"
+            - path: src/App.jsx
+              replace: "className={item.done ? 'todo-done' : ''}"
+              with: "className={item.done ? 'completed-task' : ''}"
+            - path: src/styles.css
+              replace: ".todo-done .todo-toggle { color: #9ca3af; text-decoration: line-through; }"
+              with: ".completed-task .todo-toggle { color: #9ca3af; text-decoration: line-through; }"
+            - path: src/styles.css
+              replace: "[data-bs-theme=\"dark\"] .todo-done .todo-toggle { color: #6b7280; }"
+              with: "[data-bs-theme=\"dark\"] .completed-task .todo-toggle { color: #6b7280; }"
 
     solution:
       files:
@@ -2880,7 +2906,7 @@ steps:
               await milkToggle.click();
 
               await expect(milkToggle).toHaveAttribute('aria-pressed', 'true');
-              await expect(page.getByRole('status')).toContainText('2');
+              await expect(page.getByRole('status')).toHaveText(/\b2\b/);
               await expect(
                 page.getByRole('listitem').filter({ hasText: 'Milk' })
               ).toBeVisible();
@@ -2898,7 +2924,7 @@ steps:
               await milkToggle.click();
 
               await expect(milkToggle).toHaveAttribute('aria-pressed', 'false');
-              await expect(page.getByRole('status')).toContainText('1');
+              await expect(page.getByRole('status')).toHaveText(/\b1\b/);
             });
 
             test('marking one of two todos shows count of 1', async ({ page }) => {
@@ -2911,14 +2937,14 @@ steps:
               const milkToggle = page.getByRole('button', { name: 'Milk' });
               await milkToggle.click();
 
-              await expect(page.getByRole('status')).toContainText('1');
+              await expect(page.getByRole('status')).toHaveText(/\b1\b/);
               await expect(milkToggle).toHaveAttribute('aria-pressed', 'true');
               await expect(
                 page.getByRole('button', { name: 'Bread' })
               ).toHaveAttribute('aria-pressed', 'false');
             });
       explanation: |
-        Each test on the diagonal: semantic locators (`getByRole` with the item's text as the accessible name), per-promise specificity (toggle state via `aria-pressed`, count via `toContainText` of the number, item visibility via `getByRole('listitem').filter()`). None of the tests would break if the strikethrough color changes, the toggle becomes a checkbox icon, or the wording around the count changes. All three would fail if marking didn't persist or the count didn't decrement.
+        Each test on the diagonal: semantic locators (`getByRole` with the item's text as the accessible name), per-promise specificity (toggle state via `aria-pressed`, count via a regex matching the complete number, item visibility via `getByRole('listitem').filter()`). None of the tests would break if the strikethrough color changes, the toggle icon changes while its button role and pressed state stay the same, or the wording around the count changes. All three would fail if marking didn't persist or the count didn't decrement.
 
     quiz:
       title: "Step 7 — Knowledge Check"
@@ -2952,7 +2978,7 @@ steps:
         - question: |
             Your team built a notifications panel with these spec'd behaviors:
 
-            - Unread notifications show a red badge with the count.
+            - Unread notifications show a badge with the count; its color is not specified.
             - Clicking the bell icon opens the panel.
             - Notifications are listed in reverse chronological order.
 
@@ -2967,8 +2993,8 @@ steps:
             - "Designers shouldn't change colors without updating tests"
           correct_index: 1
           option_feedback:
-            0: "The spec listed says \"red badge\" — but the test failure is for a *color* change, not a missing-badge change. Was \"red\" specifically promised, or was the spec loose about the color? If the spec says \"badge with the count,\" the test should assert *that* — not the exact RGB value."
-            1: "Right. The test pinned the *RGB color value* (`rgb(239, 68, 68)`) — implementation. The spec's promise is \"badge with the count\" — the count is the contract, not the specific color shade. Asserting `getByRole('status').toContainText(unreadCount)` would survive any color change while still verifying the user-facing behavior."
+            0: "The spec promises a badge with the count, and explicitly leaves its color open. A different color alone does not violate this contract."
+            1: "Right. The test pinned the *RGB color value* (`rgb(239, 68, 68)`) — implementation. The spec's promise is \"badge with the count\" — the count is the contract, not the specific color shade. Using a matcher for the complete unread count would survive any color change while still verifying the user-facing behavior."
             2: "Adding multiple accepted colors is a maintenance smell — every redesign expands the OR-list. The deeper fix is to stop testing the color at all if the color isn't in the spec."
             3: "Tests should adapt to design changes, not vice versa. If the test breaks for a design refresh that didn't change the spec, the test is brittle — that's exactly Step 5's lesson applied to assertions instead of locators."
           explanation: |
@@ -3024,7 +3050,7 @@ steps:
 
       The Todo app from Step 7 supports marking items as **done**. The team has just added a small new spec promise:
 
-      > **Promise.** When *every* todo in the list is marked done, the remaining-count display reads `"0 items remaining"`, and **all the original todos remain visible** (done items are not deleted from the list).
+      > **Promise.** When *every* todo in the list is marked done, the remaining-count display shows the number `0` (the surrounding wording may change), and **all the original todos remain visible** (done items are not deleted from the list).
 
       Two specific user paths the team wants covered:
 
@@ -3051,23 +3077,19 @@ steps:
 
       - Use `getByRole` / `getByLabel` for every locator (no CSS classes, no XPath).
       - Use `await expect(...)` for every assertion (no synchronous `expect(await locator.isVisible()).toBe(true)`).
-      - Match assertion specificity to spec specificity: the count number IS the contract, but the wording around it ("0 items remaining" vs "Nothing left to do") is not.
+      - Match assertion specificity to spec specificity: the count number IS the contract, but the wording around it ("0 items remaining" vs "0 todos pending") is not.
 
       ### 📋 What the gates check
 
-      The gates below verify you wrote the test from scratch — the file will have:
+      The gates execute your suite against an instructor-owned correct app and several variants. Your tests must pass the correct app, catch broken counts, broken unmarking and lost todos, and survive wording and CSS changes. They use the test file for this step only; test names, quote styles and equivalent assertions are your choice.
 
-      - An `import` line for `test, expect`.
-      - Two `test('...', async ({ page }) => { … });` blocks.
-      - At least one `await page.goto(...)` per test.
-      - At least one `await expect(...)` per test.
-      - At least one `getByRole(...)` locator (proving you used the accessibility tree).
-      - And of course: both tests must actually pass against the running app.
+      These checks sample important regressions; passing them does not prove that a suite detects every possible bug.
 
       Don't peek at Step 7's solution mid-task. The point of this step is not the answer; it's the *typing-from-blank* habit.
 
     files:
       - path: "src/App.jsx"
+        reseed: true
         language: "javascript"
         content: |
           function App() {
@@ -3131,12 +3153,14 @@ steps:
           }
 
       - path: "src/main.jsx"
+        reseed: true
         language: "javascript"
         content: |
           const root = ReactDOM.createRoot(document.getElementById('root'));
           root.render(<App />);
 
       - path: "src/styles.css"
+        reseed: true
         language: "css"
         content: |
           body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f6f7fb; color: #1f2937; }
@@ -3164,6 +3188,7 @@ steps:
           [data-bs-theme="dark"] .todo-toggle[aria-pressed="true"] { background: #064e3b; border-color: #10b981; }
 
       - path: "tests/all-done.spec.js"
+        reseed: true
         language: "javascript"
         content: |
           import { test, expect } from '@playwright/test';
@@ -3202,8 +3227,12 @@ steps:
                 await page.getByRole('button', { name: t }).click();
               }
 
-              await expect(page.getByRole('status')).toContainText('0');
+              await expect(page.getByRole('status')).toHaveText(/\b0\b/);
               await expect(page.getByRole('listitem')).toHaveCount(3);
+              for (const t of ['Milk', 'Bread', 'Eggs']) {
+                await expect(page.getByRole('button', { name: t })).toBeVisible();
+                await expect(page.getByRole('button', { name: t })).toHaveAttribute('aria-pressed', 'true');
+              }
             });
 
             test('unmarking one todo restores the count to 1, both items still visible', async ({ page }) => {
@@ -3221,92 +3250,113 @@ steps:
               await breadToggle.click();
               await milkToggle.click();   // un-mark Milk
 
-              await expect(page.getByRole('status')).toContainText('1');
+              await expect(page.getByRole('status')).toHaveText(/\b1\b/);
               await expect(page.getByRole('listitem')).toHaveCount(2);
+              await expect(milkToggle).toBeVisible();
+              await expect(breadToggle).toBeVisible();
               await expect(milkToggle).toHaveAttribute('aria-pressed', 'false');
               await expect(breadToggle).toHaveAttribute('aria-pressed', 'true');
             });
       explanation: |
-        Two tests, two promises, no scaffolding. Notice every choice the Spec Card forced you to commit to: semantic locators (`getByRole` everywhere), per-promise specificity (`toContainText('0')` for the count — the *number* is the contract, the wording around it isn't; `toHaveCount` for "items still in the list" — exact count IS the contract), and the use of `aria-pressed` to verify the toggle state semantically rather than via `.todo-done` class.
+        Two tests, two promises, no scaffolding. Notice every choice the Spec Card forced you to commit to: semantic locators (`getByRole` everywhere), per-promise specificity (`toHaveText(/\b0\b/)` for the count — the *number* is the contract, the wording around it isn't; `toHaveCount` for "items still in the list" — exact count IS the contract), and the use of `aria-pressed` to verify the toggle state semantically rather than via `.todo-done` class.
 
-        If you wrote a test that pins the count to the literal string `"0 items remaining"`, your test passes today but breaks when product changes the wording to "Nothing left to do" — over-specified. If you wrote `toBeVisible()` on the listitems instead of `toHaveCount(3)`, your test passes when 3 items become 1 — under-specified. The Spec Card was the tool that made each of those choices visible *before* you typed.
+        If you wrote a test that pins the count to the literal string `"0 items remaining"`, your test passes today but breaks when product changes the wording to "0 todos pending" — over-specified. If you wrote `toBeVisible()` on the listitems instead of `toHaveCount(3)`, your test passes when 3 items become 1 — under-specified. The Spec Card was the tool that made each of those choices visible *before* you typed.
 
     tests:
-      - description: "tests/all-done.spec.js exists and has the import line"
-        command: |
-          const spec = files['tests/all-done.spec.js'] || '';
-          assert(/import\s*\{\s*test\s*,\s*expect\s*\}\s+from\s+['"]@playwright\/test['"]/.test(spec),
-            'tests/all-done.spec.js needs the import line: `import { test, expect } from \'@playwright/test\';`. Do not delete the existing one.');
-
-      - description: "You wrote two tests from scratch — neither name overlaps with the Step 7 fixtures"
-        command: |
-          const spec = files['tests/all-done.spec.js'] || '';
-          // Count test('...') invocations
-          const matches = spec.match(/^\s*test\s*\(\s*['"]/gm) || [];
-          assert(matches.length >= 2,
-            'Write at least two tests in tests/all-done.spec.js (one per user path in the spec). Got ' + matches.length + '.');
-
-      - description: "Every test in your file uses semantic locators (`getByRole`, `getByLabel`, or `getByText`) — no CSS-class locators"
-        command: |
-          const spec = files['tests/all-done.spec.js'] || '';
-          assert(/getByRole|getByLabel|getByText/.test(spec),
-            'Use semantic locators (getByRole / getByLabel / getByText). The whole tutorial built toward this — falling back to CSS-class locators here defeats the purpose.');
-          // Reject CSS-class locators in the from-scratch tests.
-          if (/\.locator\s*\(\s*['"]\./.test(spec) && !/\.locator\s*\(\s*['"]:/.test(spec)) {
-            throw new Error('Found a CSS-class locator (`.locator(\".something\")`) in tests/all-done.spec.js. Step 5 covered why those are brittle. Use getByRole instead.');
-          }
-
-      - description: "Every assertion uses the web-first `await expect(...)` form (no synchronous expect-await-isVisible)"
-        command: |
-          const spec = files['tests/all-done.spec.js'] || '';
-          assert(/await\s+expect\s*\(/.test(spec),
-            'Every assertion should be `await expect(locator).toX(...)`. The web-first form auto-waits and retries.');
-          // Reject the canonical anti-pattern.
-          if (/expect\s*\(\s*await\s+[^)]*\.isVisible\s*\(\s*\)\s*\)\s*\.toBe\s*\(/.test(spec)) {
-            throw new Error('Anti-pattern: `expect(await x.isVisible()).toBe(true)`. That looks like Jest but runs once and races. Use `await expect(x).toBeVisible()`.');
-          }
-
-      - description: "Each test navigates the page (await page.goto) before interacting"
-        command: |
-          const spec = files['tests/all-done.spec.js'] || '';
-          // Find each test block and assert it contains a goto.
-          const tests = spec.split(/\btest\s*\(/).slice(1);
-          tests.forEach((body, i) => {
-            // Extract just this test's body (until the next 'test(' or end-of-file)
-            assert(/await\s+page\.goto\s*\(/.test(body),
-              `Test #${i + 1} doesn't call \`await page.goto(...)\`. Every Playwright test needs to navigate before interacting.`);
-          });
-
-      - description: "Each test contains at least one `await expect(...)` assertion"
-        command: |
-          const spec = files['tests/all-done.spec.js'] || '';
-          const tests = spec.split(/\btest\s*\(/).slice(1);
-          tests.forEach((body, i) => {
-            assert(/await\s+expect\s*\(/.test(body),
-              `Test #${i + 1} has no await-expect assertion. A test that asserts nothing proves nothing.`);
-          });
-
-      - description: "Both tests pass against the live app"
+      - description: At least two tests pass on the correct app
         playwright:
-          enabled: true
           test_files:
-            - "tests/all-done.spec.js"
+            - tests/all-done.spec.js
+          app_source: starter
+          min_tests: 2
         hints:
-          - title: "Layer 1 — orientation"
-            text: "If your tests fail, run them and read the actual failure. Don't guess. Compare the failure to your prediction (you wrote one in the Spec Card, right?). The gap is the lesson."
-          - title: "Layer 2 — strategy"
-            text: "Most likely failure: assertion specificity wrong. If `toHaveText('0 items remaining')` failed because the count is `0` and the actual rendered text is `0 items remaining` (with leading zero, etc.) — switch to `toContainText('0')`. The number is the contract; the surrounding wording isn't."
-            condition: "output_contains: AssertionError"
-          - title: "Layer 3 — locator skeleton"
-            text: |
-              Each toggle is a button whose accessible name is the todo's text:
-              ```js
-              const milkToggle = page.getByRole('button', { name: 'Milk' });
-              await milkToggle.click();
-              await expect(milkToggle).toHaveAttribute('aria-pressed', 'true');
-              ```
-              The status (`role="status"` in the JSX) gives you the count — query it with `page.getByRole('status')` and `toContainText`.
-            condition: "code_missing: getByRole"
+          - title: Compare the outcomes
+            text: Your test must pass on a correct app and fail when this promise is broken. Identify the observation that differs between those two apps; an assertion about the heading alone cannot distinguish them.
+      - description: The suite catches a nonzero count after all three todos are done
+        playwright:
+          test_files:
+            - tests/all-done.spec.js
+          app_source: starter
+          expected: some_fail
+          mutations:
+            - path: src/App.jsx
+              replace: items.filter((item) => !item.done).length
+              with: "items.length === 3 && items.every((item) => item.done) ? 10 : items.filter((item) => !item.done).length"
+        hints:
+          - title: Compare the outcomes
+            text: Your test must pass on a correct app and fail when this promise is broken. Identify the observation that differs between those two apps; an assertion about the heading alone cannot distinguish them.
+      - description: The suite catches unmarking one of two todos failing to restore the count
+        playwright:
+          test_files:
+            - tests/all-done.spec.js
+          app_source: starter
+          expected: some_fail
+          mutations:
+            - path: src/App.jsx
+              replace: "i === idx ? { ...item, done: !item.done } : item"
+              with: "i === idx ? { ...item, done: true } : item"
+        hints:
+          - title: Compare the outcomes
+            text: Your test must pass on a correct app and fail when this promise is broken. Identify the observation that differs between those two apps; an assertion about the heading alone cannot distinguish them.
+      - description: The suite catches completed todos disappearing
+        playwright:
+          test_files:
+            - tests/all-done.spec.js
+          app_source: starter
+          expected: some_fail
+          mutations:
+            - path: src/App.jsx
+              replace: "{items.map((item, idx) => ("
+              with: "{(remainingCount === 0 ? [] : items).map((item, idx) => ("
+        hints:
+          - title: Compare the outcomes
+            text: Your test must pass on a correct app and fail when this promise is broken. Identify the observation that differs between those two apps; an assertion about the heading alone cannot distinguish them.
+      - description: The suite catches completed todos losing their original text
+        playwright:
+          test_files:
+            - tests/all-done.spec.js
+          app_source: starter
+          expected: some_fail
+          mutations:
+            - path: src/App.jsx
+              replace: "{item.text}"
+              with: "{item.done ? 'Completed todo' : item.text}"
+        hints:
+          - title: Compare the outcomes
+            text: Your test must pass on a correct app and fail when this promise is broken. Identify the observation that differs between those two apps; an assertion about the heading alone cannot distinguish them.
+      - description: The suite survives status wording and CSS class changes
+        playwright:
+          test_files:
+            - tests/all-done.spec.js
+          app_source: starter
+          mutations:
+            - path: src/App.jsx
+              replace: "{remainingCount} items remaining"
+              with: "{remainingCount} todos pending"
+            - path: src/App.jsx
+              replace: className="todo-toggle"
+              with: className="task-control"
+            - path: src/App.jsx
+              replace: "className={item.done ? 'todo-done' : ''}"
+              with: "className={item.done ? 'completed-task' : ''}"
+            - path: src/styles.css
+              replace: ".todo-toggle { width: 100%; text-align: left; background: transparent; border: 1px solid #d9dee8; border-radius: 6px; padding: 10px 12px; font: inherit; cursor: pointer; }"
+              with: ".task-control { width: 100%; text-align: left; background: transparent; border: 1px solid #d9dee8; border-radius: 6px; padding: 10px 12px; font: inherit; cursor: pointer; }"
+            - path: src/styles.css
+              replace: ".todo-toggle[aria-pressed=\"true\"] { background: #ecfdf5; border-color: #10b981; }"
+              with: ".task-control[aria-pressed=\"true\"] { background: #ecfdf5; border-color: #10b981; }"
+            - path: src/styles.css
+              replace: ".todo-done .todo-toggle { text-decoration: line-through; color: #6b7280; }"
+              with: ".completed-task .task-control { text-decoration: line-through; color: #6b7280; }"
+            - path: src/styles.css
+              replace: "[data-bs-theme=\"dark\"] .todo-toggle { background: transparent; color: #e6edf3; border-color: #3a4351; }"
+              with: "[data-bs-theme=\"dark\"] .task-control { background: transparent; color: #e6edf3; border-color: #3a4351; }"
+            - path: src/styles.css
+              replace: "[data-bs-theme=\"dark\"] .todo-toggle[aria-pressed=\"true\"] { background: #064e3b; border-color: #10b981; }"
+              with: "[data-bs-theme=\"dark\"] .task-control[aria-pressed=\"true\"] { background: #064e3b; border-color: #10b981; }"
+        hints:
+          - title: Compare the outcomes
+            text: Your test must pass on a correct app and fail when this promise is broken. Identify the observation that differs between those two apps; an assertion about the heading alone cannot distinguish them.
 
     quiz:
       title: "Step 8 — Knowledge Check"
@@ -3349,11 +3399,11 @@ steps:
             False alarms erode trust in the test suite faster than anything else. The fix isn't to reactively patch the test on every UI change — it's to choose locators whose contract matches what the spec actually promises.
 
         - question: |
-            **(Cumulative — Steps 4 + 7.)** A "Mark complete" feature has two spec'd promises: (1) the item shows visually that it's complete, (2) the remaining-count decrements. Which assertion *set* best catches both regressions while surviving harmless styling changes?
+            **(Cumulative — Steps 4 + 7.)** A "Mark complete" feature has two spec'd promises: (1) the item shows visually that it's complete, (2) the remaining count becomes 2. Which assertion *set* best catches both regressions while surviving harmless styling changes?
           type: single
           options:
-            - "`await expect(item).toHaveCSS('text-decoration', /line-through/)` + `await expect(counter).toContainText(String(expectedRemaining))`"
-            - "`await expect(itemToggle).toHaveAttribute('aria-pressed', 'true')` + `await expect(page.getByRole('status')).toContainText(String(expectedRemaining))`"
+            - "`await expect(item).toHaveCSS('text-decoration', /line-through/)` + `await expect(counter).toHaveText(/\\b2\\b/)`"
+            - "`await expect(itemToggle).toHaveAttribute('aria-pressed', 'true')` + `await expect(page.getByRole('status')).toHaveText(/\\b2\\b/)`"
             - "`await expect(item).toBeVisible()` + `await expect(counter).toBeVisible()`"
             - "`await expect(page.locator('.completed')).toBeVisible()` + `await expect(page.locator('.count').first()).toHaveText('2 items remaining')`"
           correct_index: 1

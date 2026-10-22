@@ -62,6 +62,20 @@ setup_commands:
         return _patched
     _pytest.main = _make_pytest_patch()
 
+  - |
+    from pyodide.http import pyfetch
+    import types, sys
+    response = await pyfetch('/assets/tutorials/python_test_grading.py')
+    response.raise_for_status()
+    grading = types.ModuleType('tutorial_test_grading')
+    exec(await response.string(), grading.__dict__)
+    sys.modules['tutorial_test_grading'] = grading
+    response = await pyfetch('/assets/tutorials/test_doubles_reference.py')
+    response.raise_for_status()
+    reference = types.ModuleType('tutorial_test_doubles_reference')
+    reference.SOURCE = await response.string()
+    sys.modules['tutorial_test_doubles_reference'] = reference
+
 steps:
 
   # --------------------------------------------------------------------------
@@ -130,10 +144,10 @@ steps:
 
       | Role | What it does | First encountered in |
       |---|---|---|
-      | **[Dummy](http://xunitpatterns.com/Dummy%20Object.html)** | A placeholder object that's *never actually used*. Passed only to satisfy a constructor or method signature when the test doesn't care about that collaborator. | Step 5's `_service(Mock(), Mock())` helper — those args are dummies. |
+      | **[Dummy](http://xunitpatterns.com/Dummy%20Object.html)** | A placeholder object that's *never actually used*. Passed only to satisfy a constructor or method signature when the test doesn't care about that collaborator. | Step 5's `_service()` helper — its unused `Mock()` collaborators are dummies. |
       | **[Stub](http://xunitpatterns.com/Test%20Stub.html)** | Returns canned indirect *inputs* to the SUT. The SUT reads from it; the test doesn't verify how. | Step 2 — a `FrozenClock` that always returns the same datetime. |
       | **[Spy](http://xunitpatterns.com/Test%20Spy.html)** | Records the SUT's outgoing *calls* so the test can assert on them later. | Step 3 — a ledger spy that captures `(user_id, gold)` tuples. |
-      | **[Mock](http://xunitpatterns.com/Mock%20Object.html)** *(Meszaros sense — the "noun")* | A spy + behavior verification: the test sets *expectations* up-front, and the mock fails if they aren't met. | Step 4 — `unittest.mock` + `assert_called_once_with`. |
+      | **[Mock](http://xunitpatterns.com/Mock%20Object.html)** *(Meszaros sense — the "noun")* | A spy + behavior verification: the test sets *expectations* up-front, and the mock fails if they aren't met. | Conceptual comparison in Step 4; its post-call `assert_called_once_with` examples play the **spy** role. |
       | **[Fake](http://xunitpatterns.com/Fake%20Object.html)** | A working alternate implementation, simpler than production (e.g., an in-memory database for a test). | Step 6 — when stubs/spies become unwieldy. |
 
       Five roles, *one* taxonomy. The role is determined by *how the test uses* the object, not by what class instantiated it.
@@ -159,7 +173,7 @@ steps:
          </details>
 
       2. **Run** the test. The **FAIL** is the lesson — the test was correct on the day it was written; the *world* changed beneath it. Tests that depend on the wall clock matching a specific date rot on a schedule.
-      3. **Refactor `is_today_event_day`** to accept a `clock` parameter (default `datetime.datetime`). This *creates the seam* — but you don't use it yet. Adding the seam alone won't fix `test_april_28_is_event_day` (it still calls `is_today_event_day("2026-04-28")` without injecting a clock). **Don't be alarmed when that one test stays red after the refactor** — the gate tests below check the seam itself, not the original test. Step 2 will use the seam to *control* the clock so the test is deterministic.
+      3. **Refactor `is_today_event_day`** to accept a `clock` parameter whose default is the datetime class. With the starter's `from datetime import datetime`, that default is `datetime`; with `import datetime`, it is `datetime.datetime`. Use the parameter inside the function. This *creates the seam* — the existing test does not inject it yet. Adding the seam alone won't fix `test_april_28_is_event_day` (it still calls `is_today_event_day("2026-04-28")` without injecting a clock). **Don't be alarmed when that one test stays red after the refactor** — the gate tests below check the seam itself, not the original test. Step 2 will use the seam to *control* the clock so the test is deterministic.
 
       ```mermaid
       flowchart LR
@@ -181,10 +195,11 @@ steps:
 
       💡 **Concept over syntax.** Your code change is a single keyword (`clock`) and one default. The point is the *idea* — "this function used to depend on the wall clock; now its caller decides what 'now' means." That's the foundation of every test double in this tutorial. (The default value `clock=datetime.datetime` keeps existing call sites working — the seam is *non-intrusive*.)
 
-      🔭 **Coming in Step 2:** You created a seam. Now we'll actually use it — by passing in a `FrozenClock` object that always says it's Tuesday. Same SUT, same test shape, but now *fully deterministic*.
+      🔭 **Coming in Step 2:** You created a seam. Now we'll actually use it — by passing in a `FrozenClock` object that always says it's Tuesday. The next scaffold applies the same seam to a daily-quest service, with controlled inputs.
 
     files:
       - path: "quest_service.py"
+        reseed: true
         content: |
           """QuestForge — daily quest event service."""
           from datetime import datetime
@@ -204,6 +219,7 @@ steps:
         language: "python"
 
       - path: "test_quest_service.py"
+        reseed: true
         content: |
           """Test for is_today_event_day.
 
@@ -255,70 +271,55 @@ steps:
         signature change is what unlocks the entire rest of this tutorial.
 
     tests:
-      - description: "is_today_event_day accepts a `clock` parameter"
-        command: |
-          import re
-          source = open('/tutorial/quest_service.py').read()
-          match = re.search(r'def\s+is_today_event_day\s*\(([^)]*)\)', source)
-          assert match, "Couldn't find `def is_today_event_day(...)`. Did you delete or rename it?"
-          params = match.group(1)
-          assert 'clock' in params, \
-              "Add a `clock` parameter to `is_today_event_day`. The signature should look like: `def is_today_event_day(event_date_str: str, clock=datetime.datetime) -> bool`. The default keeps the test passing without modification — but the SEAM is now available."
-      - description: "The default clock is datetime.datetime (preserves backwards compatibility)"
-        command: |
-          import re
-          source = open('/tutorial/quest_service.py').read()
-          match = re.search(r'def\s+is_today_event_day\s*\(([^)]*)\)', source)
-          params = match.group(1)
-          # Look for a default value on `clock`.
-          assert re.search(r'clock\s*=', params), \
-              "Give `clock` a default value so existing code keeps working. Use `clock=datetime.datetime` (the datetime class — its classmethod `now()` returns the current datetime)."
-      - description: "The function uses clock.now() instead of a hard-coded datetime.now()"
-        command: |
-          source = open('/tutorial/quest_service.py').read()
-          assert 'clock.now()' in source, \
-              "The function body should call `clock.now()` (using the parameter) — not `datetime.now()` directly. The whole point of the seam is to USE the parameter."
-      - description: "Default clock preserves the function's contract (calling without `clock` works and stays date-aware)"
-        command: |
-          import sys
-          for _m in ('quest_service',):
-              sys.modules.pop(_m, None)
-          from quest_service import is_today_event_day
-          # Calling without a `clock` argument should use the default datetime.datetime.
-          # Today is unlikely to be 2099-12-31, so the result is False — but the call
-          # must NOT raise. That confirms the default value is correct.
-          result = is_today_event_day("2099-12-31")
-          assert isinstance(result, bool), \
-              "is_today_event_day should return a boolean. Did the default clock break the comparison?"
-          assert result is False, \
-              "is_today_event_day('2099-12-31') should return False today (today isn't 2099-12-31). If it raised, your default value for `clock` is wrong — use `clock=datetime.datetime` so calling with no arg uses the real datetime class."
-          # Note: the existing test in test_quest_service.py is *expected* to fail today —
-          # that failure is the pedagogical point. Step 2 will fix it by injecting a
-          # controlled clock through the seam you just created.
-      - description: "(Info) test_april_28_is_event_day SHOULD still be red — that's the lesson, not a problem"
-        command: |
-          import sys
-          for _m in ('quest_service', 'test_quest_service'):
-              sys.modules.pop(_m, None)
-          from quest_service import is_today_event_day
-          # Confirm the original test is still failing as expected.
-          original_result = is_today_event_day("2026-04-28")
-          if original_result is True:
-              # The wall clock happens to be 2026-04-28 — the lesson is harder to
-              # see today, but the principle stands.
-              print("ℹ️ Today happens to be 2026-04-28 — `test_april_28_is_event_day` passes by coincidence.")
-              print("   The seam you created lets future tests stay deterministic regardless of the date.")
-          else:
-              print("✓ Confirmed: `test_april_28_is_event_day` is failing because the wall clock no longer reads 2026-04-28.")
-              print("  This failure is the lesson — a test that depends on the wall clock rots on a schedule.")
-              print("  In Step 2, we'll use the seam you just created to inject a `FrozenClock` and make the test deterministic.")
-        hints:
-          - title: "Add the parameter, then use it in the body"
-            text: "The signature is `def is_today_event_day(event_date_str: str, clock=datetime.datetime) -> bool:`. Then inside the function, replace `datetime.now()` with `clock.now()`."
-          - title: "Use the `datetime` class as the default value"
-            text: "Two changes: (1) add `clock=datetime.datetime` as a second parameter with the default value; (2) change the body to use `clock.now()` instead of `datetime.now()`. The default value is the `datetime` class — its classmethod `now()` returns the current datetime, which is what the original code did."
-          - title: "Fill in the blanks"
-            text: "```python\nimport datetime\n\ndef is_today_event_day(event_date_str: str, clock=___) -> bool:\n    today = clock.___().strftime('%Y-%m-%d')\n    return today == event_date_str\n```\nFill the two blanks. Hints: (1) the default for `clock` is the datetime *class* (it has a `.now()` classmethod) — *not* the module and not a function. (2) The body should use the parameter `clock`, not the imported module directly. Note the top-level `import datetime` (the module), so you can reference `datetime.datetime` as the default."
+    - description: The function exposes an injectable clock with the original default
+      command: |
+        import datetime, inspect, sys
+        sys.modules.pop('quest_service', None)
+        from quest_service import is_today_event_day
+        parameter = inspect.signature(is_today_event_day).parameters.get('clock')
+        assert parameter is not None, 'Expose the clock as a parameter so a test can control time.'
+        assert parameter.default is datetime.datetime, 'Keep the datetime class as the default so existing callers retain their behavior.'
+      hints:
+      - title: Identify the seam
+        text: Which value comes from outside this function? Make that source replaceable while keeping a default for callers.
+      - title: Follow the injected value
+        text: Trace the call with a clock that returns a different date. Does the body actually use the argument?
+    - description: Injected clocks control both matching and non-matching dates
+      command: |
+        import datetime, sys
+        sys.modules.pop('quest_service', None)
+        from quest_service import is_today_event_day
+        class ControlledClock:
+            def __init__(self, date): self.date = date
+            def now(self): return self.date
+        for date in (datetime.datetime(2001, 2, 3, 23, 59), datetime.datetime(2040, 12, 31)):
+            clock = ControlledClock(date)
+            matching = date.strftime('%Y-%m-%d')
+            different = (date + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+            assert is_today_event_day(matching, clock=clock) is True, 'A matching injected date must be recognized.'
+            assert is_today_event_day(different, clock=clock) is False, 'A different injected date must not match.'
+      hints:
+      - title: Identify the seam
+        text: Which value comes from outside this function? Make that source replaceable while keeping a default for callers.
+      - title: Follow the injected value
+        text: Trace the call with a clock that returns a different date. Does the body actually use the argument?
+    - description: The default remains date-aware without pinning a calendar day
+      command: |
+        import datetime, sys
+        sys.modules.pop('quest_service', None)
+        from quest_service import is_today_event_day
+        before = datetime.datetime.now().date()
+        result = is_today_event_day(before.isoformat())
+        after = datetime.datetime.now().date()
+        if before == after:
+            assert result is True, 'The unchanged default must recognize the current date.'
+        assert is_today_event_day((after + datetime.timedelta(days=30)).isoformat()) is False, 'The default must reject another date.'
+        print('The original fixed-date test may still fail. Creating the seam does not yet control its clock.')
+      hints:
+      - title: Identify the seam
+        text: Which value comes from outside this function? Make that source replaceable while keeping a default for callers.
+      - title: Follow the injected value
+        text: Trace the call with a clock that returns a different date. Does the body actually use the argument?
 
     quiz:
       title: "Step 1 — Knowledge Check"
@@ -433,7 +434,7 @@ steps:
       - Analyze how canned values drive the SUT down a specific behavior partition
       - Evaluate state verification — asserting on the SUT's return value, not on the stubs
 
-      🧭 **Bridge from Step 1.** You created a seam: `DailyQuestService(clock, api)` accepts its collaborators as parameters. Now we'll *use* the seam — by passing in objects that **always answer the same way**. That's a stub.
+      🧭 **Bridge from Step 1.** You made the event-day function's clock injectable. The new scaffold extends that idea: `DailyQuestService(clock, api)` accepts both collaborators as parameters. Now we'll *use* these seams — by passing in objects that **always answer the same way**. That's a stub.
 
       ### 📖 The verbatim teaching sentence
 
@@ -532,6 +533,7 @@ steps:
 
     files:
       - path: "clock.py"
+        reseed: true
         content: |
           """Reusable test helper: a clock that always says it's `fixed_dt`."""
           from datetime import datetime
@@ -548,6 +550,7 @@ steps:
         language: "python"
 
       - path: "quest_api.py"
+        reseed: true
         content: |
           """The REAL HTTP client — don't call this in tests.
 
@@ -606,6 +609,7 @@ steps:
         language: "python"
 
       - path: "test_quest_service.py"
+        reseed: true
         content: |
           """Step 2 — Hand-rolled stubs for DailyQuestService.
 
@@ -721,85 +725,45 @@ steps:
         assertion pins*, not the syntax of the stub.
 
     tests:
-      - description: "FILL_IN_HERE was replaced with a real title"
-        command: |
-          source = open('/tutorial/test_quest_service.py').read()
-          assert 'FILL_IN_HERE' not in source, \
-              "Replace `\"FILL_IN_HERE\"` in test_thursday_picks_thursday_quest with the exact title the SUT should return. Read the spec and the canned API data — what's the Thursday quest?"
-      - description: "The Thursday assertion pins exactly the right title — using `==`, not a weak substring oracle"
-        command: |
-          import re
-          source = open('/tutorial/test_quest_service.py').read()
-          if 'def test_thursday_picks_thursday_quest' not in source:
-              raise AssertionError("Couldn't find test_thursday_picks_thursday_quest. Did you rename it?")
-          body = source.split('def test_thursday_picks_thursday_quest')[1].split('def ')[0]
-
-          # Catch the "Liar test" trap — `assert "Battle the Lich King" in str(...)`
-          # passes for many wrong return values. Step 2's whole point is that the
-          # assertion *shape* matters, not just the string.
-          if re.search(r'in\s+str\s*\(', body) or re.search(r'"Battle the Lich King"\s+in\s+', body):
-              raise AssertionError(
-                  "Your assertion uses a substring check (`in str(...)` or `\"...\" in ...`). "
-                  "That's a *weak oracle* — it would pass if the SUT returned 'Battle the Lich King 2' "
-                  "or '... has been Battle the Lich King-d ...'. Use `==` for an exact match: "
-                  "`assert service.daily_quest_title(\"u456\") == \"Battle the Lich King\"`."
-              )
-
-          # Strong oracle: the assertion uses == and pins the exact title.
-          if not re.search(r"daily_quest_title\([^)]*\)\s*==\s*['\"]Battle the Lich King['\"]", body):
-              raise AssertionError(
-                  "The assertion should pin the exact Thursday title using `==`: "
-                  "`assert service.daily_quest_title(\"u456\") == \"Battle the Lich King\"`. "
-                  "(The clock is frozen to a Thursday and that's the only Thursday entry in the canned quest list.)"
-              )
-      - description: "Generation task — `test_friday_with_no_friday_quest_returns_no_quests_today` exists, constructs FrozenClock + StubQuestApiClient + DailyQuestService, and asserts == \"No quests today\""
-        command: |
-          import re
-          source = open('/tutorial/test_quest_service.py').read()
-          if 'def test_friday_with_no_friday_quest_returns_no_quests_today' not in source:
-              raise AssertionError(
-                  "Add a new test function named `test_friday_with_no_friday_quest_returns_no_quests_today`. "
-                  "It should construct a FrozenClock for a Friday (e.g. datetime(2026, 5, 1, 12, 0)), "
-                  "a StubQuestApiClient with NO Friday entry, a DailyQuestService, and assert "
-                  "`service.daily_quest_title(\"<some-user>\") == \"No quests today\"` with `==`."
-              )
-          body = source.split('def test_friday_with_no_friday_quest_returns_no_quests_today')[1].split('def ')[0]
-          if 'FrozenClock' not in body:
-              raise AssertionError("Your generation test should construct a FrozenClock so the wall clock is controlled.")
-          if 'StubQuestApiClient' not in body:
-              raise AssertionError("Your generation test should construct a StubQuestApiClient with the canned quest list.")
-          if 'DailyQuestService' not in body:
-              raise AssertionError("Your generation test should construct a DailyQuestService — that's the SUT.")
-          if not re.search(r"==\s*['\"]No quests today['\"]", body):
-              raise AssertionError(
-                  "Pin the assertion exactly with `==`: "
-                  "`assert service.daily_quest_title(\"<user>\") == \"No quests today\"`. "
-                  "Substring matching (`in`) is a weak oracle — Step 2's whole point is that the assertion shape matters."
-              )
-          # Sanity: there must be no Friday entry in the canned list — otherwise the
-          # SUT would return that title and the assertion would fail.
-          if re.search(r"['\"]Friday['\"]", body):
-              raise AssertionError(
-                  "Your canned quest list contains a Friday entry — but the partition we're testing is "
-                  "*Friday with NO Friday quest*. Remove the Friday entry so the SUT falls through to "
-                  "the `\"No quests today\"` branch."
-              )
-      - description: "All three tests pass (worked + faded + generation)"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_quest_service.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some tests still failing:\n{output}"
-        hints:
-          - title: "Walk the SUT against a Thursday clock"
-            text: "Walk through the SUT's logic with `clock=FrozenClock(datetime(2026, 4, 30, ...))`. The clock's weekday is Thursday (use a calendar to verify). The SUT iterates the canned list looking for the matching weekday entry."
-          - title: "April 30 2026 is the Thursday in this canned list"
-            text: "April 30, 2026 is a Thursday. The canned API list has exactly one Thursday entry. The SUT returns that entry's `title` field."
-            condition: "code_missing: Battle the Lich King"
-          - title: "Fill in the title"
-            text: "Pin the assertion with `==` and the *exact* title from the matching canned entry:\n```python\nassert service.daily_quest_title(\"u456\") == \"___\"\n```\nThe matching canned entry is the one whose `weekday` field equals what `FrozenClock(datetime(2026, 4, 30, 12, 0))` returns. Use a calendar to confirm the weekday; copy the `title` field exactly (including capitalisation)."
-            condition: "code_missing: Battle the Lich King"
+    - description: All three tests pass on the specified behavior
+      command: |
+        from tutorial_test_grading import check_suite
+        from tutorial_test_doubles_reference import SOURCE
+        reference = SOURCE
+        check_suite('/tutorial/test_quest_service.py', 'quest_service', reference, min_tests=3)
+      hints:
+      - title: Separate setup from the oracle
+        text: Determine the expected title from the controlled date and canned data before running the SUT.
+      - title: Try a near miss
+        text: Would your assertion reject a different title that contains the expected words? Check the no-match partition separately.
+    - description: The Thursday test distinguishes an exact title from a near match
+      command: |
+        from tutorial_test_grading import check_suite
+        from tutorial_test_doubles_reference import SOURCE
+        reference = SOURCE
+        check_suite('/tutorial/test_quest_service.py', 'quest_service', reference, test_name='test_thursday_picks_thursday_quest', min_tests=1)
+        for before, after in [('return quest["title"]', 'return quest["title"] + " (wrong quest)"')]:
+            assert before in reference, 'Invalid authored grading variant'
+            check_suite('/tutorial/test_quest_service.py', 'quest_service', reference.replace(before, after), expect_failure=True, test_name='test_thursday_picks_thursday_quest')
+      hints:
+      - title: Separate setup from the oracle
+        text: Determine the expected title from the controlled date and canned data before running the SUT.
+      - title: Try a near miss
+        text: Would your assertion reject a different title that contains the expected words? Check the no-match partition separately.
+    - description: The new no-Friday-quest test detects an incorrect fallback
+      command: |
+        from tutorial_test_grading import check_suite
+        from tutorial_test_doubles_reference import SOURCE
+        reference = SOURCE
+        check_suite('/tutorial/test_quest_service.py', 'quest_service', reference, test_name='test_friday_with_no_friday_quest_returns_no_quests_today', min_tests=1)
+        for before, after in [('return "No quests today"  # no matching quest', 'return "No quests today (incorrect fallback)"  # no matching quest')]:
+            assert before in reference, 'Invalid authored grading variant'
+            check_suite('/tutorial/test_quest_service.py', 'quest_service', reference.replace(before, after), expect_failure=True, test_name='test_friday_with_no_friday_quest_returns_no_quests_today')
+      hints:
+      - title: Separate setup from the oracle
+        text: Determine the expected title from the controlled date and canned data before running the SUT.
+      - title: Try a near miss
+        text: Would your assertion reject a different title that contains the expected words? Check the no-match partition separately.
 
     quiz:
       title: "Step 2 — Knowledge Check"
@@ -949,7 +913,7 @@ steps:
       |---|---|---|
       | What the test asserts on | The SUT's **return value** | The recorded **calls** on the spy |
       | What the SUT looks like | A function that returns something | Often a method that returns `None` (fire-and-forget) |
-      | Verification kind | **[State Verification](http://xunitpatterns.com/State%20Verification.html)** | **State** verification *of the spy* — Step 5 will introduce the third kind |
+      | Verification kind | **[State Verification](http://xunitpatterns.com/State%20Verification.html)** | **Procedural behavior verification** — inspect the recorded outgoing calls |
 
       The new collaborator is `RewardLedger` — its job is to credit gold to a user. The SUT calls `ledger.credit(user_id, gold)` and that's the *only* observable effect. The SUT itself returns nothing useful — the call to credit IS the contract. To verify it, we need a spy.
 
@@ -980,7 +944,7 @@ steps:
       |---|---|---|
       | `assert len(spy.calls) >= 0` | Everything. Always passes. **Liar test.** | Weak — same family as `result is not None` from Testing Foundations |
       | `assert spy.calls == [("u1", 100, "2026-04-28T12:00:00Z", {"meta": "blob"})]` | Nothing. Breaks if the SUT later calls credit with cleaner arguments — even when the contract is unchanged. **Brittle.** | Over-specified |
-      | `assert spy.calls == [("u1", 100)]` | A wrong user_id, a wrong gold amount, no call at all, two calls. **Goldilocks.** | Strong, behaviorally-bounded |
+      | `assert spy.calls == [("u1", 100)]` | Only the specified single call with the correct recipient and amount. Rejects wrong, missing, or duplicate calls. **Goldilocks.** | Strong, behaviorally-bounded |
 
       Same lesson as Testing Foundations Step 4: **assert on exactly what the spec says — no less, no more.** The spec for `complete_quest`: "credit the user the gold for the completed quest." That maps to a 2-tuple `(user_id, gold)`. Anything beyond that is over-specification; anything less is a Liar.
 
@@ -989,13 +953,13 @@ steps:
       1. **Read** `test_complete_quest_LIAR_oracle`. The assertion is `assert len(spy.calls) >= 0` — it *always passes*, regardless of whether the SUT called the spy at all. **Add a Python comment** above the assertion explaining (in your own words) why this is a *Liar test* — use the phrase "Liar test" or "weak oracle". Don't change the assertion; the test stays a Liar so the lesson is preserved.
       2. **Read and run** `test_complete_quest_credits_correct_gold` — fully written, pins the exact 2-tuple. This is the Goldilocks shape.
       3. **Fill in the assertion** in `test_award_streak_bonus_5_days`. The streak-bonus rule: **10 gold per day, capped at 100**. The student passes `days=5`. Compute the gold; pin the call.
-      4. ✍️ **Write your own test — `test_award_streak_bonus_caps_at_100_for_long_streaks`.** Use `days=12` (above the cap). Wire up `SpyLedger` + `DailyQuestService` and pin `spy.calls == [("u3", 100)]`. No scaffold.
+      4. ✍️ **Write your own test — `test_award_streak_bonus_caps_at_100_for_long_streaks`.** Use `days=12` (above the cap). Wire up `SpyLedger` + `DailyQuestService` and derive the expected credit from the rule. No scaffold.
 
       <details markdown="1"><summary>📖 Why fire-and-forget methods need spies</summary>
 
       `complete_quest` returns `None`. From the SUT's caller's perspective, *nothing happens* — the function is "void". Yet the SUT did do something important: it told the ledger to credit gold. Without a spy, that work is invisible to the test.
 
-      A spy makes invisible side effects visible. In every language: Java mocks (`Mockito.verify(...)`), JavaScript spies (`jest.fn()` + `expect(spy).toHaveBeenCalledWith(...)`), Python's `unittest.mock` recorded calls — the *idea* is the same. This is **the only way to test fire-and-forget methods**.
+      A spy makes invisible side effects visible. In every language: Java mocks (`Mockito.verify(...)`), JavaScript spies (`jest.fn()` + `expect(spy).toHaveBeenCalledWith(...)`), Python's `unittest.mock` recorded calls — the *idea* is the same. This is useful when the **outgoing call itself is the contract**. When the contract concerns resulting state, a real or fake ledger can instead make that state observable.
       </details>
 
       <details markdown="1"><summary>🌍 The same idea in another language</summary>
@@ -1031,6 +995,7 @@ steps:
 
     files:
       - path: "reward_ledger.py"
+        reseed: true
         content: |
           """The real reward ledger — would persist gold to a database in production."""
 
@@ -1096,6 +1061,7 @@ steps:
         language: "python"
 
       - path: "test_quest_service.py"
+        reseed: true
         content: |
           """Step 3 — Hand-rolled spies for fire-and-forget collaborator calls.
 
@@ -1169,6 +1135,23 @@ steps:
               service.award_streak_bonus("u2", 5)
               # TODO — replace 999 with the correct gold for a 5-day streak.
               assert spy.calls == [("u2", 999)]
+        language: "python"
+
+      - path: "clock.py"
+        reseed: true
+        content: |
+          """Reusable test helper: a clock that always says it's `fixed_dt`."""
+          from datetime import datetime
+
+
+          class FrozenClock:
+              """A stub clock — always returns the datetime it was constructed with."""
+
+              def __init__(self, fixed_dt: datetime):
+                  self._fixed_dt = fixed_dt
+
+              def now(self) -> datetime:
+                  return self._fixed_dt
         language: "python"
 
     open_file: "test_quest_service.py"
@@ -1263,75 +1246,68 @@ steps:
              examples, but every line was your decision.
 
     tests:
-      - description: "A comment above the Liar assertion explains why it's weak"
-        command: |
-          import re
-          source = open('/tutorial/test_quest_service.py').read()
-          body = source.split('def test_complete_quest_LIAR_oracle')[1].split('def ')[0]
-          # Find the lines BEFORE `assert len(spy.calls) >= 0`.
-          assertion_idx = body.find('assert len(spy.calls)')
-          assert assertion_idx >= 0, "The Liar assertion `assert len(spy.calls) >= 0` should still be in the test (don't delete it — it's a teaching example)."
-          before = body[:assertion_idx]
-          has_explanation = re.search(r'#.*(Liar|weak\s*oracle)', before, re.IGNORECASE)
-          assert has_explanation, \
-              "Add a Python comment above `assert len(spy.calls) >= 0` explaining why it's a Liar test or weak oracle. Use the phrase `Liar test` or `weak oracle` so we know you've named the pattern."
-      - description: "test_award_streak_bonus_5_days pins the correct gold (50)"
-        command: |
-          source = open('/tutorial/test_quest_service.py').read()
-          body = source.split('def test_award_streak_bonus_5_days')[1].split('def ')[0]
-          assert '999' not in body, \
-              "Replace the placeholder `999` with the correct gold amount. Re-read the spec: `award_streak_bonus` awards 10 gold per day, capped at 100. The student passed `days=5`."
-          import re
-          # Look for the assertion pinning the 2-tuple ("u2", 50)
-          assert re.search(r'spy\.calls\s*==\s*\[\s*\(\s*[\'\"]u2[\'\"]\s*,\s*50\s*\)\s*\]', body), \
-              "The assertion should be `assert spy.calls == [(\"u2\", 50)]`. Compute from the spec: 5 days × 10 gold = 50, which is below the 100-gold cap."
-      - description: "Generation task — `test_award_streak_bonus_caps_at_100_for_long_streaks` exists, uses SpyLedger, and pins `spy.calls == [(<user>, 100)]`"
-        command: |
-          import re
-          source = open('/tutorial/test_quest_service.py').read()
-          if 'def test_award_streak_bonus_caps_at_100_for_long_streaks' not in source:
-              raise AssertionError(
-                  "Add `test_award_streak_bonus_caps_at_100_for_long_streaks`. "
-                  "Use `days=12` (above the cap), wire up SpyLedger + DailyQuestService, "
-                  "and pin `spy.calls == [(<user>, 100)]`."
-              )
-          body = source.split('def test_award_streak_bonus_caps_at_100_for_long_streaks')[1].split('def ')[0]
-          if 'SpyLedger' not in body:
-              raise AssertionError("Construct a `SpyLedger()` so the test can record the credit call.")
-          if not re.search(r'award_streak_bonus\([^)]*,\s*12\b', body):
-              raise AssertionError("Call `service.award_streak_bonus(<user>, 12)` — `days=12` is the partition above the cap.")
-          if not re.search(r"spy\.calls\s*==\s*\[\s*\(\s*['\"][^'\"]+['\"]\s*,\s*100\s*\)\s*\]", body):
-              raise AssertionError(
-                  "Pin the assertion exactly: `assert spy.calls == [(<user>, 100)]`. "
-                  "The cap is 100 — *not* 120. If you wrote 120, you missed the `min(...)` cap in the spec."
-              )
-      - description: "All four tests pass"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_quest_service.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some tests are failing:\n{output}"
-        hints:
-          - title: "Name *why* `len(...) >= 0` is structurally trivial"
-            text: "Above the `assert len(spy.calls) >= 0` line, add something like `# Liar test — len() is always >= 0, so this passes regardless of whether the SUT called the spy at all.`"
-          - title: "Compute gold from days × rate, capped at 100"
-            text: "The spec: 10 gold per day, capped at 100. For 5 days, that's 5 * 10 = 50 (under the cap). Pin `assert spy.calls == [(\"u2\", 50)]`."
-            condition: "code_missing: 50"
-          - title: "Fill the blanks (do not paste the answer)"
-            text: |
-              Liar comment template (write *your own* explanation — naming **why** `len(...) >= 0` is structurally trivial):
-              ```python
-              # ___ — len(...) >= 0 is always true for any list, so this assertion
-              # passes whether the SUT called the spy or not.
-              ```
-
-              Streak assertion skeleton:
-              ```python
-              assert spy.calls == [("___", ___)]
-              ```
-              First blank: the user_id the test passed in. Second blank: compute from the spec — *days × gold-per-day, capped at 100*. Use `min(...)` mentally; do **not** run the SUT and copy the recorded call.
-            condition: "code_missing: spy.calls == ["
+    - description: Your Liar-test explanation is recorded (review the reasoning yourself)
+      command: |
+        import ast, tokenize, io
+        source = open('/tutorial/test_quest_service.py').read()
+        tree = ast.parse(source)
+        test = next((node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'test_complete_quest_LIAR_oracle'), None)
+        assert test is not None, 'Keep the Liar test for comparison and explain its limitation above its assertion.'
+        assertions = [node for node in ast.walk(test) if isinstance(node, ast.Assert)]
+        assert assertions, 'Keep the intentionally weak assertion as the comparison example.'
+        comments = [token.string[1:].strip() for token in tokenize.generate_tokens(io.StringIO(source).readline)
+                    if token.type == tokenize.COMMENT and test.lineno < token.start[0] < assertions[0].lineno]
+        comments = [comment for comment in comments if comment and not comment.startswith('TODO')]
+        assert comments, 'Add your own explanation above the weak assertion.'
+        print('Reflection recorded; this check cannot assess the quality of your explanation. Compare it with a case where no credit call occurs.')
+      hints:
+      - title: Observe the whole contract
+        text: 'Consider four mistakes: no credit, wrong recipient, wrong amount, and an extra credit. Which does your assertion
+          reject?'
+      - title: Exercise the cap
+        text: Choose a streak above the cap boundary and derive its expected reward from the written rule.
+    - description: All four tests pass on the specified behavior
+      command: |
+        from tutorial_test_grading import check_suite
+        from tutorial_test_doubles_reference import SOURCE
+        reference = SOURCE
+        check_suite('/tutorial/test_quest_service.py', 'quest_service', reference, min_tests=4)
+      hints:
+      - title: Observe the whole contract
+        text: 'Consider four mistakes: no credit, wrong recipient, wrong amount, and an extra credit. Which does your assertion
+          reject?'
+      - title: Exercise the cap
+        text: Choose a streak above the cap boundary and derive its expected reward from the written rule.
+    - description: The five-day spy test detects missing, wrong, and duplicate credits
+      command: |
+        from tutorial_test_grading import check_suite
+        from tutorial_test_doubles_reference import SOURCE
+        reference = SOURCE
+        check_suite('/tutorial/test_quest_service.py', 'quest_service', reference, test_name='test_award_streak_bonus_5_days', min_tests=1)
+        for before, after in [('self._ledger.credit(user_id, gold)  # streak reward', 'pass  # missing call'), ('self._ledger.credit(user_id, gold)  # streak reward', 'self._ledger.credit("wrong-user", gold)  # streak reward'), ('self._ledger.credit(user_id, gold)  # streak reward', 'self._ledger.credit(user_id, gold + 1)  # streak reward'), ('self._ledger.credit(user_id, gold)  # streak reward', 'self._ledger.credit(user_id, gold)  # streak reward\n        self._ledger.credit(user_id, gold)  # streak reward')]:
+            assert before in reference, 'Invalid authored grading variant'
+            check_suite('/tutorial/test_quest_service.py', 'quest_service', reference.replace(before, after), expect_failure=True, test_name='test_award_streak_bonus_5_days')
+      hints:
+      - title: Observe the whole contract
+        text: 'Consider four mistakes: no credit, wrong recipient, wrong amount, and an extra credit. Which does your assertion
+          reject?'
+      - title: Exercise the cap
+        text: Choose a streak above the cap boundary and derive its expected reward from the written rule.
+    - description: The new long-streak test detects a missing cap
+      command: |
+        from tutorial_test_grading import check_suite
+        from tutorial_test_doubles_reference import SOURCE
+        reference = SOURCE
+        check_suite('/tutorial/test_quest_service.py', 'quest_service', reference, test_name='test_award_streak_bonus_caps_at_100_for_long_streaks', min_tests=1)
+        for before, after in [('gold = min(days * 10, 100)', 'gold = days * 10')]:
+            assert before in reference, 'Invalid authored grading variant'
+            check_suite('/tutorial/test_quest_service.py', 'quest_service', reference.replace(before, after), expect_failure=True, test_name='test_award_streak_bonus_caps_at_100_for_long_streaks')
+      hints:
+      - title: Observe the whole contract
+        text: 'Consider four mistakes: no credit, wrong recipient, wrong amount, and an extra credit. Which does your assertion
+          reject?'
+      - title: Exercise the cap
+        text: Choose a streak above the cap boundary and derive its expected reward from the written rule.
 
     quiz:
       title: "Step 3 — Knowledge Check"
@@ -1557,6 +1533,7 @@ steps:
 
     files:
       - path: "test_quest_service.py"
+        reseed: true
         content: |
           """Step 4 — unittest.mock generates the same conceptual objects you wrote by hand.
 
@@ -1634,6 +1611,75 @@ steps:
               api.fetch_quests.side_effect = ValueError
               service = DailyQuestService(clock, api)
               assert service.daily_quest_title("u1") == "No quests today"
+        language: "python"
+
+      - path: "clock.py"
+        reseed: true
+        content: |
+          """Reusable test helper: a clock that always says it's `fixed_dt`."""
+          from datetime import datetime
+
+
+          class FrozenClock:
+              """A stub clock — always returns the datetime it was constructed with."""
+
+              def __init__(self, fixed_dt: datetime):
+                  self._fixed_dt = fixed_dt
+
+              def now(self) -> datetime:
+                  return self._fixed_dt
+        language: "python"
+
+      - path: "quest_service.py"
+        reseed: true
+        content: |
+          """QuestForge — daily quest service with reward ledger collaborator."""
+          import datetime
+
+
+          QUEST_REWARDS = {
+              "Slay the Slime Lord":   100,
+              "Find the Lost Amulet":  150,
+              "Battle the Lich King":  250,
+              "Defeat the Dragon":     500,
+          }
+
+
+          def is_today_event_day(event_date_str: str, clock=datetime.datetime) -> bool:
+              today = clock.now().strftime("%Y-%m-%d")
+              return today == event_date_str
+
+
+          class DailyQuestService:
+              """Picks today's quest, completes quests, and awards streak bonuses."""
+
+              def __init__(self, clock, api, ledger=None):
+                  self._clock = clock
+                  self._api = api
+                  self._ledger = ledger
+
+              def daily_quest_title(self, user_id: str) -> str:
+                  try:
+                      quests = self._api.fetch_quests(user_id)
+                  except ConnectionError:
+                      return "No quests today"
+                  if not quests:
+                      return "No quests today"
+                  weekday = self._clock.now().strftime("%A")
+                  for quest in quests:
+                      if quest["weekday"] == weekday:
+                          return quest["title"]
+                  return "No quests today"
+
+              def complete_quest(self, user_id: str, quest_title: str) -> None:
+                  """Credit the user the gold for the completed quest. Returns None."""
+                  gold = QUEST_REWARDS.get(quest_title, 0)
+                  self._ledger.credit(user_id, gold)
+
+              def award_streak_bonus(self, user_id: str, days: int) -> None:
+                  """Award 10 gold per streak day, capped at 100. Returns None."""
+                  gold = min(days * 10, 100)
+                  self._ledger.credit(user_id, gold)
         language: "python"
 
     open_file: "test_quest_service.py"
@@ -1716,91 +1762,75 @@ steps:
         equivalent of `assert spy.calls == [("u9", 70)]`. Role-vs-class made literal.
 
     tests:
-      - description: "test_d uses ConnectionError as side_effect (the exception the SUT catches)"
-        command: |
-          import re
-          source = open('/tutorial/test_quest_service.py').read()
-          body = source.split('def test_d_side_effect_simulates_api_failure')[1].split('def ')[0]
-          assert 'ValueError' not in body, \
-              "test_d still has `ValueError` — replace it with the exception class the SUT actually catches. Read `daily_quest_title` in quest_service.py: which exception does its `except` clause name?"
-          assert re.search(r'side_effect\s*=\s*ConnectionError', body), \
-              "Set `api.fetch_quests.side_effect = ConnectionError`. The SUT's daily_quest_title catches ConnectionError specifically — using any other exception class will cause the SUT to re-raise rather than returning 'No quests today'."
-
-      - description: "test_c plays the spy role correctly — it asserts the SUT *called* the collaborator (not just that pytest is happy)"
-        command: |
-          import re
-          source = open('/tutorial/test_quest_service.py').read()
-          if 'def test_c_mock_as_spy' not in source:
-              raise AssertionError("Couldn't find test_c_mock_as_spy. Did you rename it?")
-          body = source.split('def test_c_mock_as_spy')[1].split('def ')[0]
-
-          # The spy role REQUIRES verifying a call happened. Without an assert_called_*
-          # assertion, the test is a fake-spy — it would pass even if the SUT never
-          # touched the collaborator.
-          if not re.search(r'assert_called_once_with|assert_called_with|assert_called\(\)|call_count\s*==', body):
-              raise AssertionError(
-                  "test_c is supposed to verify the SUT *called* api.fetch_quests with the right args — "
-                  "that's the spy role. Add an assertion like `api.fetch_quests.assert_called_once_with(\"u1\")`. "
-                  "Without a call-verification assertion, the test passes whether or not the SUT actually used the collaborator — "
-                  "and that defeats the entire point of using a Mock here."
-              )
-
-          # Defensive guard against `assert True` / `pass` shortcut: every spy test
-          # must contain at least one assertion (the call-verification covers this,
-          # but flagged explicitly so the error message is clear).
-          if not re.search(r'\bassert(_|\s)', body):
-              raise AssertionError(
-                  "test_c has no assertion at all. The spy role still needs a verification — "
-                  "use one of `assert_called_once_with`, `assert_called_with`, or `call_count == N`."
-              )
-
-      - description: "Generation task — `test_e_award_streak_bonus_with_mock_spy` exists, uses `Mock()` (not SpyLedger), and asserts `ledger.credit.assert_called_once_with(\"u9\", 70)`"
-        command: |
-          import re
-          source = open('/tutorial/test_quest_service.py').read()
-          if 'def test_e_award_streak_bonus_with_mock_spy' not in source:
-              raise AssertionError(
-                  "Add `test_e_award_streak_bonus_with_mock_spy`. Use `Mock()` as the ledger, "
-                  "call `service.award_streak_bonus(\"u9\", 7)`, and assert "
-                  "`ledger.credit.assert_called_once_with(\"u9\", 70)`."
-              )
-          body = source.split('def test_e_award_streak_bonus_with_mock_spy')[1].split('def ')[0]
-          if 'SpyLedger' in body:
-              raise AssertionError(
-                  "Use `Mock()` for the ledger here, not `SpyLedger`. The whole point of this "
-                  "task is making `Mock()` play the spy role — same role as Step 3's hand-rolled "
-                  "spy, framework syntax instead."
-              )
-          if 'Mock()' not in body:
-              raise AssertionError("The ledger should be a `Mock()` — that's how the framework generates the spy.")
-          if not re.search(r"award_streak_bonus\([^)]*,\s*7\b", body):
-              raise AssertionError("Call `service.award_streak_bonus(\"u9\", 7)` (7 days).")
-          if not re.search(r"credit\.assert_called_once_with\(\s*['\"]u9['\"]\s*,\s*70\s*\)", body):
-              raise AssertionError(
-                  "Assert `ledger.credit.assert_called_once_with(\"u9\", 70)`. "
-                  "Spec: 7 days × 10 gold = 70 (under the cap)."
-              )
-      - description: "All five tests pass"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_quest_service.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some tests failed:\n{output}"
-        hints:
-          - title: "Read the SUT's `except` clause"
-            text: "Look at `quest_service.py`'s `daily_quest_title` method. The `try`/`except` block names a specific exception class — that's the one to use as `side_effect`."
-          - title: "The SUT catches `ConnectionError` — match that class"
-            text: "The SUT does `try: quests = self._api.fetch_quests(user_id) except ConnectionError: return 'No quests today'`. So `side_effect = ConnectionError` will trigger the catch branch."
-            condition: "code_contains: side_effect = ValueError"
-          - title: "Fill in the exception class"
-            text: |
-              Find the `try:` / `except ___:` block in `daily_quest_title` (in `quest_service.py`). Whatever class follows `except` is the same class that should follow `side_effect =`. Replace:
-              ```python
-              api.fetch_quests.side_effect = ___
-              ```
-              Use the class name *exactly* as it appears in the SUT's `except` clause — Python class identity is strict.
-            condition: "code_contains: side_effect = ValueError"
+    - description: All five tests pass on the specified behavior
+      command: |
+        from tutorial_test_grading import check_suite
+        from tutorial_test_doubles_reference import SOURCE
+        reference = SOURCE
+        check_suite('/tutorial/test_quest_service.py', 'quest_service', reference, min_tests=5)
+      hints:
+      - title: Model the exceptional input
+        text: Find which exception the service handles and configure the collaborator to raise it. Keep the result assertion independent
+          of the service.
+      - title: Check recorded calls
+        text: Use the library spy to verify the specified recipient, reward, and number of calls. Changing only a comment should
+          not matter.
+    - description: The API-failure test detects incorrect exception handling
+      command: |
+        from tutorial_test_grading import check_suite
+        from tutorial_test_doubles_reference import SOURCE
+        reference = SOURCE
+        check_suite('/tutorial/test_quest_service.py', 'quest_service', reference, test_name='test_d_side_effect_simulates_api_failure', min_tests=1)
+        for before, after in [('return "No quests today"  # unavailable API', 'return "Incorrect failure fallback"  # unavailable API')]:
+            assert before in reference, 'Invalid authored grading variant'
+            check_suite('/tutorial/test_quest_service.py', 'quest_service', reference.replace(before, after), expect_failure=True, test_name='test_d_side_effect_simulates_api_failure')
+      hints:
+      - title: Model the exceptional input
+        text: Find which exception the service handles and configure the collaborator to raise it. Keep the result assertion independent
+          of the service.
+      - title: Check recorded calls
+        text: Use the library spy to verify the specified recipient, reward, and number of calls. Changing only a comment should
+          not matter.
+    - description: The worked spy test checks the ledger interaction
+      command: |
+        from tutorial_test_grading import check_suite
+        from tutorial_test_doubles_reference import SOURCE
+        reference = SOURCE
+        check_suite('/tutorial/test_quest_service.py', 'quest_service', reference, test_name='test_c_mock_as_spy', min_tests=1)
+        for before, after in [('self._ledger.credit(user_id, gold)  # quest reward', 'pass  # missing call'), ('self._ledger.credit(user_id, gold)  # quest reward', 'self._ledger.credit("wrong-user", gold)  # quest reward'), ('self._ledger.credit(user_id, gold)  # quest reward', 'self._ledger.credit(user_id, gold + 1)  # quest reward'), ('self._ledger.credit(user_id, gold)  # quest reward', 'self._ledger.credit(user_id, gold)  # quest reward\n        self._ledger.credit(user_id, gold)  # quest reward')]:
+            assert before in reference, 'Invalid authored grading variant'
+            check_suite('/tutorial/test_quest_service.py', 'quest_service', reference.replace(before, after), expect_failure=True, test_name='test_c_mock_as_spy')
+      hints:
+      - title: Model the exceptional input
+        text: Find which exception the service handles and configure the collaborator to raise it. Keep the result assertion independent
+          of the service.
+      - title: Check recorded calls
+        text: Use the library spy to verify the specified recipient, reward, and number of calls. Changing only a comment should
+          not matter.
+    - description: The new library spy test detects missing, wrong, and duplicate credits
+      command: |
+        from tutorial_test_grading import check_suite
+        from tutorial_test_doubles_reference import SOURCE
+        reference = SOURCE
+        reference += '''
+        _original_bonus = DailyQuestService.award_streak_bonus
+        def _library_spy_bonus(self, user_id, days):
+            from unittest.mock import NonCallableMock
+            assert isinstance(self._ledger, NonCallableMock), 'Use a library-generated spy for this exercise.'
+            return _original_bonus(self, user_id, days)
+        DailyQuestService.award_streak_bonus = _library_spy_bonus
+        '''
+        check_suite('/tutorial/test_quest_service.py', 'quest_service', reference, test_name='test_e_award_streak_bonus_with_mock_spy', min_tests=1)
+        for before, after in [('self._ledger.credit(user_id, gold)  # streak reward', 'pass  # missing call'), ('self._ledger.credit(user_id, gold)  # streak reward', 'self._ledger.credit("wrong-user", gold)  # streak reward'), ('self._ledger.credit(user_id, gold)  # streak reward', 'self._ledger.credit(user_id, gold + 1)  # streak reward'), ('self._ledger.credit(user_id, gold)  # streak reward', 'self._ledger.credit(user_id, gold)  # streak reward\n        self._ledger.credit(user_id, gold)  # streak reward')]:
+            assert before in reference, 'Invalid authored grading variant'
+            check_suite('/tutorial/test_quest_service.py', 'quest_service', reference.replace(before, after), expect_failure=True, test_name='test_e_award_streak_bonus_with_mock_spy')
+      hints:
+      - title: Model the exceptional input
+        text: Find which exception the service handles and configure the collaborator to raise it. Keep the result assertion independent
+          of the service.
+      - title: Check recorded calls
+        text: Use the library spy to verify the specified recipient, reward, and number of calls. Changing only a comment should
+          not matter.
 
     quiz:
       title: "Step 4 — Knowledge Check"
@@ -2061,6 +2091,7 @@ steps:
 
     files:
       - path: "push_notifier.py"
+        reseed: true
         content: |
           """The real push-notification service — would call APNS / FCM in production."""
 
@@ -2127,6 +2158,7 @@ steps:
         language: "python"
 
       - path: "test_celebrate.py"
+        reseed: true
         content: |
           """Step 5 — Where-to-patch and autospec.
 
@@ -2182,6 +2214,23 @@ steps:
                   except TypeError as e:
                       # autospec correctly rejected the call. The signature was enforced.
                       print(f"✅ autospec caught it: {e}")
+        language: "python"
+
+      - path: "clock.py"
+        reseed: true
+        content: |
+          """Reusable test helper: a clock that always says it's `fixed_dt`."""
+          from datetime import datetime
+
+
+          class FrozenClock:
+              """A stub clock — always returns the datetime it was constructed with."""
+
+              def __init__(self, fixed_dt: datetime):
+                  self._fixed_dt = fixed_dt
+
+              def now(self) -> datetime:
+                  return self._fixed_dt
         language: "python"
 
     open_file: "test_celebrate.py"
@@ -2242,36 +2291,31 @@ steps:
         signature and raises TypeError on a mismatch.
 
     tests:
-      - description: "Patch target points to quest_service.send_push, not push_notifier.send_push"
-        command: |
-          import re
-          source = open('/tutorial/test_celebrate.py').read()
-          body = source.split('def test_celebrate_milestone_sends_push')[1].split('def ')[0]
-          assert '"push_notifier.send_push"' not in body and "'push_notifier.send_push'" not in body, \
-              "Still patching `push_notifier.send_push` — that's where the function was DEFINED, not where the SUT LOOKS IT UP. Change the string to `\"quest_service.send_push\"` (the SUT's namespace)."
-          assert re.search(r'patch\(\s*[\'\"]quest_service\.send_push[\'\"]', body), \
-              "The patch target should be `\"quest_service.send_push\"`. Read `quest_service.py`: it does `from push_notifier import send_push`, which binds `send_push` in *quest_service's* namespace. That's where the SUT looks the name up — and that's where you patch."
-      - description: "All three tests pass after the fix"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_celebrate.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"Some tests are still failing:\n{output}"
-        hints:
-          - title: "`from ... import` creates a local reference"
-            text: "Look at quest_service.py's top: `from push_notifier import send_push`. That import gives `quest_service` its OWN reference to the function. The SUT's `send_push(...)` call uses that local reference."
-          - title: "Patch the importing module's namespace, not the defining one"
-            text: "Patch the namespace where the SUT will *resolve* the name at runtime. The SUT is `quest_service.celebrate_milestone`; the name `send_push` was imported INTO `quest_service`'s namespace. So the target string is `\"quest_service.send_push\"`."
-            condition: "code_contains: patch(\"push_notifier.send_push\")"
-          - title: "Fill in the namespace"
-            text: |
-              The patch target string has the form `\"<module>.<name>\"`. The `<name>` is `send_push`. The `<module>` is the *importing* module (the one whose namespace the SUT looks up the name in), not the *defining* module:
-              ```python
-              with patch(\"___.send_push\") as mock_send:
-              ```
-              Read `quest_service.py`'s top: `from push_notifier import send_push`. After that line, in *which* module's namespace does the name `send_push` live? That's your blank.
-            condition: "code_contains: patch(\"push_notifier.send_push\")"
+    - description: All three tests pass on the specified behavior
+      command: |
+        from tutorial_test_grading import check_suite
+        from tutorial_test_doubles_reference import SOURCE
+        reference = SOURCE
+        check_suite('/tutorial/test_celebrate.py', 'quest_service', reference, min_tests=3)
+      hints:
+      - title: Trace the name lookup
+        text: Find the namespace used by the call inside the service. An import can bind a new local reference to a function.
+      - title: Challenge the notification test
+        text: Would the test notice a missing notification, the wrong recipient, the wrong message, or a duplicate?
+    - description: The milestone test intercepts and verifies the notification
+      command: |
+        from tutorial_test_grading import check_suite
+        from tutorial_test_doubles_reference import SOURCE
+        reference = SOURCE
+        check_suite('/tutorial/test_celebrate.py', 'quest_service', reference, test_name='test_celebrate_milestone_sends_push', min_tests=1)
+        for before, after in [('send_push(user_id, f"🎉 {days}-day streak!")', 'pass  # missing notification'), ('send_push(user_id, f"🎉 {days}-day streak!")', 'send_push("wrong-user", f"🎉 {days}-day streak!")'), ('send_push(user_id, f"🎉 {days}-day streak!")', 'send_push(user_id, "Wrong message")'), ('send_push(user_id, f"🎉 {days}-day streak!")', 'send_push(user_id, f"🎉 {days}-day streak!")\n            send_push(user_id, f"🎉 {days}-day streak!")')]:
+            assert before in reference, 'Invalid authored grading variant'
+            check_suite('/tutorial/test_celebrate.py', 'quest_service', reference.replace(before, after), expect_failure=True, test_name='test_celebrate_milestone_sends_push')
+      hints:
+      - title: Trace the name lookup
+        text: Find the namespace used by the call inside the service. An import can bind a new local reference to a function.
+      - title: Challenge the notification test
+        text: Would the test notice a missing notification, the wrong recipient, the wrong message, or a duplicate?
 
     quiz:
       title: "Step 5 — Knowledge Check"
@@ -2359,7 +2403,7 @@ steps:
             The class is unittest.mock.Mock; the role in this test is Spy. Role depends on how the double is used, not its class name. Both spies and expectation-based Mock Objects support behavior verification, using different verification styles.
 
         - question: |
-            **(Spaced review — Steps 1 & 2)** In Step 1 you injected `clock=datetime.datetime` as a constructor parameter (Dependency Injection). In this step you patched `"quest_service.send_push"` via `unittest.mock.patch`. When is each technique the right choice?
+            **(Spaced review — Steps 1 & 2)** In Step 1 you added an injectable `clock` function parameter (Dependency Injection). In this step you patched `"quest_service.send_push"` via `unittest.mock.patch`. When is each technique the right choice?
           type: single
           options:
             - "DI is always preferred — `patch()` is only for legacy code you can't modify"
@@ -2549,6 +2593,7 @@ steps:
 
     files:
       - path: "xp_calculator.py"
+        reseed: true
         content: |
           """A PURE function for computing XP earned across quests.
 
@@ -2581,6 +2626,7 @@ steps:
         language: "python"
 
       - path: "test_xp_overmocked.py"
+        reseed: true
         content: |
           """SMELL — every internal helper is mocked. Read this and recoil.
 
@@ -2609,10 +2655,11 @@ steps:
         language: "python"
 
       - path: "test_xp_clean.py"
+        reseed: true
         content: |
           """Clean: no doubles. compute_total_xp is a pure function — exercise it directly."""
           # TODO: in your own words, in ONE LINE, answer the question below.
-          # The validator just checks that this docstring is no longer empty.
+          # The validator records completion; review the reasoning against the examples yourself.
           """The over-mocked version mocked: ___ FILL IN ___
           What that cost: ___ FILL IN ___"""
 
@@ -2635,6 +2682,7 @@ steps:
         language: "python"
 
       - path: "scenarios.py"
+        reseed: true
         content: |
           """Classify each scenario by the BEST single recommendation.
 
@@ -2743,9 +2791,7 @@ steps:
 
         **Scenario 3 — verify the payment-gateway call:** spy or mock both
         work. `unittest.mock`'s `Mock + assert_called_once_with` blurs the
-        line; either label is defensible. The test verifies the *call* (a
-        behavior verification), so this is fundamentally a Mock-Object-role
-        scenario in Meszaros' strict sense.
+        line; either label is defensible. The test verifies an outgoing *call*: both roles perform behavior verification. In this tutorial, inspecting a recording afterwards is the Spy role; configuring expectations before the call is the Mock role.
 
         **Scenario 4 — stateful Postgres round-trip:** Fake is the right tool.
         A stub would need separate canned answers for every call in the
@@ -2766,100 +2812,103 @@ steps:
         integration test) is the complementary check that keeps the fake honest.
 
     tests:
-      - description: "Critique line in test_xp_clean.py is filled in with substantive content"
-        command: |
-          import re
-          source = open('/tutorial/test_xp_clean.py').read()
-          assert 'FILL IN' not in source, \
-              "Replace both `___ FILL IN ___` placeholders with your one-line answers."
-          critique = re.search(r'"""The over-mocked version mocked:\s*(.+?)\s*\nWhat that cost:\s*(.+?)\s*"""', source, re.DOTALL)
-          assert critique, \
-              "Keep the docstring shape — `The over-mocked version mocked: <answer>` then `What that cost: <answer>`. Don't restructure the surrounding docstring."
-          mocked, cost = critique.group(1).strip(), critique.group(2).strip()
-          assert len(mocked) >= 15, \
-              f"Your `mocked:` answer is too short ({len(mocked)} chars). Write a real one-line description of what was mocked."
-          assert len(cost) >= 15, \
-              f"Your `cost:` answer is too short ({len(cost)} chars). Write a real one-line description of what that mocking cost."
-      - description: "scenarios.py has all six FILL_IN replaced"
-        command: |
-          source = open('/tutorial/scenarios.py').read()
-          assert 'FILL_IN' not in source, \
-              "Some scenarios in scenarios.py still have `FILL_IN`. Replace each with one of: \"no_double\", \"stub\", \"spy\", \"mock\", \"fake\", \"adapter\", \"contract\"."
-      - description: "Scenario 1 (pure function) — no double"
-        command: |
-          import importlib, sys
-          if 'scenarios' in sys.modules: del sys.modules['scenarios']
-          import scenarios
-          val = scenarios.SCENARIO_1_BEST
-          assert val == "no_double", \
-              f"Scenario 1 — `compute_tax(price, rate) -> price * rate` is a pure function with no collaborators. The right answer is `\"no_double\"`. (You answered `{val!r}`.)"
-      - description: "Scenario 2 (clock dependency) — stub"
-        command: |
-          import importlib, sys
-          if 'scenarios' in sys.modules: del sys.modules['scenarios']
-          import scenarios
-          val = scenarios.SCENARIO_2_BEST
-          assert val == "stub", \
-              f"Scenario 2 — clock dependency, deterministic test. The canonical answer is `\"stub\"` (canned date). (You answered `{val!r}`.)"
-      - description: "Scenario 3 (payment gateway call) — mock or spy"
-        command: |
-          import importlib, sys
-          if 'scenarios' in sys.modules: del sys.modules['scenarios']
-          import scenarios
-          val = scenarios.SCENARIO_3_BEST
-          assert val in ("mock", "spy"), \
-              f"Scenario 3 — verify a single outbound call. Both `\"mock\"` and `\"spy\"` are defensible (they overlap in unittest.mock). (You answered `{val!r}`.)"
-      - description: "Scenario 4 (stateful Postgres round-trip) — fake"
-        command: |
-          import importlib, sys
-          if 'scenarios' in sys.modules: del sys.modules['scenarios']
-          import scenarios
-          val = scenarios.SCENARIO_4_BEST
-          assert val == "fake", \
-              f"Scenario 4 — multiple stateful round-trips. A stub would need re-configuration on every call; a fake (in-memory dict) just works. The right answer is `\"fake\"`. (You answered `{val!r}`.)"
-      - description: "Scenario 5 (third-party library) — adapter"
-        command: |
-          import importlib, sys
-          if 'scenarios' in sys.modules: del sys.modules['scenarios']
-          import scenarios
-          val = scenarios.SCENARIO_5_BEST
-          assert val == "adapter", \
-              f"Scenario 5 — third-party library used across many modules. \"Don't mock what you don't own\": wrap it in an Adapter, then mock the Adapter. The right answer is `\"adapter\"`. (You answered `{val!r}`.)"
-      - description: "Scenario 6 (fake drift risk) — contract or integration check"
-        command: |
-          import importlib, sys
-          if 'scenarios' in sys.modules: del sys.modules['scenarios']
-          import scenarios
-          val = scenarios.SCENARIO_6_BEST
-          assert val == "contract", \
-              f"Scenario 6 — a fake repository can drift from the real Postgres-backed repository. The complementary recommendation is a shared contract/integration check. Use `\"contract\"`. (You answered `{val!r}`.)"
-      - description: "test_xp_clean.py tests still pass (no doubles required)"
-        command: |
-          import pytest, io, sys
-          old = sys.stdout; sys.stdout = buf = io.StringIO()
-          code = pytest.main(['/tutorial/test_xp_clean.py', '-v', '--tb=short', '--no-header'])
-          sys.stdout = old; output = buf.getvalue(); print(output)
-          assert code == 0, f"The clean test file should still pass — it tests the pure function directly:\n{output}"
-        hints:
-          - title: "Name what was mocked and what it cost"
-            text: "The over-mocked test patches `_filter_completed`, `_apply_multipliers`, and `_sum_xp`. With those mocked, the test verifies nothing about the SUT's actual behavior — only that the SUT calls some helpers. Any rename of an internal would break the test for no good reason."
-          - title: "Match each scenario to one rubric row"
-            text: "Use the decision rubric in the instructions. Pure function = no double. Clock = stub. Fire-and-forget call = mock/spy. Stateful round-trip = fake. Third-party = adapter. Fake drift / real-boundary confidence = contract."
-            condition: "code_missing: adapter"
-          - title: "The rubric, with no answers attached"
-            text: |
-              You'll classify six scenarios into one of these categories. Match each scenario by what the *test* needs from the collaborator:
-
-              - `"no_double"` — the collaborator is a pure function (no I/O, no state). Use the real one.
-              - `"stub"` — the test only needs the collaborator to *return* a canned value (or raise).
-              - `"spy"` — the test needs to verify the collaborator *was called* (with what args).
-              - `"mock"` — same as spy but with up-front behavior expectations (Meszaros-strict sense).
-              - `"fake"` — the test needs the collaborator to behave like a real one but cheaper (e.g., in-memory DB).
-              - `"adapter"` — the collaborator is a third-party library you don't own; wrap it, then mock the wrapper.
-              - `"contract"` — a double is already useful, but you need a complementary check that the fake/adapter still matches the real boundary.
-
-              Now read each scenario and pick the smallest tool that does the job. Don't reach for the answer key — work through the rubric.
-            condition: "code_missing: adapter"
+    - description: Your critique is recorded (review the reasoning yourself)
+      command: |
+        import ast, re
+        tree = ast.parse(open('/tutorial/test_xp_clean.py').read())
+        reflections = [node.value.value for node in tree.body if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str)]
+        critique = next((value for value in reflections if 'The over-mocked version mocked:' in value), '')
+        parts = re.search(r'The over-mocked version mocked:\s*(.+?)\s*What that cost:\s*(.+)', critique, re.DOTALL)
+        assert parts and all(part.strip() and 'FILL IN' not in part for part in parts.groups()), 'Complete both reflection prompts in the docstring.'
+        print('Reflection recorded; this check does not assess its quality. Explain which behavior remains untested and which harmless refactor would break the over-mocked test.')
+      hints:
+      - title: State the evidence you need
+        text: For each scenario, identify what the test needs to control or observe. Then choose the smallest approach that supplies
+          that evidence.
+      - title: Reflect on the boundary
+        text: Compare a real behavioral error with a harmless helper rename. Which would each test detect, and why?
+    - description: 'Scenario 1: choose a suitable testing approach'
+      command: |
+        import sys
+        sys.modules.pop('scenarios', None)
+        import scenarios
+        assert scenarios.SCENARIO_1_BEST in ('no_double',), 'Does this function have any collaborator that needs replacing?'
+      hints:
+      - title: State the evidence you need
+        text: For each scenario, identify what the test needs to control or observe. Then choose the smallest approach that supplies
+          that evidence.
+      - title: Reflect on the boundary
+        text: Compare a real behavioral error with a harmless helper rename. Which would each test detect, and why?
+    - description: 'Scenario 2: choose a suitable testing approach'
+      command: |
+        import sys
+        sys.modules.pop('scenarios', None)
+        import scenarios
+        assert scenarios.SCENARIO_2_BEST in ('stub',), 'What does the test need to control: an input value or an outgoing call?'
+      hints:
+      - title: State the evidence you need
+        text: For each scenario, identify what the test needs to control or observe. Then choose the smallest approach that supplies
+          that evidence.
+      - title: Reflect on the boundary
+        text: Compare a real behavioral error with a harmless helper rename. Which would each test detect, and why?
+    - description: 'Scenario 3: choose a suitable testing approach'
+      command: |
+        import sys
+        sys.modules.pop('scenarios', None)
+        import scenarios
+        assert scenarios.SCENARIO_3_BEST in ('spy', 'mock'), 'Does the test need a recorded call or a stateful implementation?'
+      hints:
+      - title: State the evidence you need
+        text: For each scenario, identify what the test needs to control or observe. Then choose the smallest approach that supplies
+          that evidence.
+      - title: Reflect on the boundary
+        text: Compare a real behavioral error with a harmless helper rename. Which would each test detect, and why?
+    - description: 'Scenario 4: choose a suitable testing approach'
+      command: |
+        import sys
+        sys.modules.pop('scenarios', None)
+        import scenarios
+        assert scenarios.SCENARIO_4_BEST in ('fake',), 'What must survive between the save, find, and update operations?'
+      hints:
+      - title: State the evidence you need
+        text: For each scenario, identify what the test needs to control or observe. Then choose the smallest approach that supplies
+          that evidence.
+      - title: Reflect on the boundary
+        text: Compare a real behavioral error with a harmless helper rename. Which would each test detect, and why?
+    - description: 'Scenario 5: choose a suitable testing approach'
+      command: |
+        import sys
+        sys.modules.pop('scenarios', None)
+        import scenarios
+        assert scenarios.SCENARIO_5_BEST in ('adapter',), 'Where could you introduce a stable boundary that your code owns?'
+      hints:
+      - title: State the evidence you need
+        text: For each scenario, identify what the test needs to control or observe. Then choose the smallest approach that supplies
+          that evidence.
+      - title: Reflect on the boundary
+        text: Compare a real behavioral error with a harmless helper rename. Which would each test detect, and why?
+    - description: 'Scenario 6: choose a suitable testing approach'
+      command: |
+        import sys
+        sys.modules.pop('scenarios', None)
+        import scenarios
+        assert scenarios.SCENARIO_6_BEST in ('contract',), 'What evidence is missing when all runs use the same substitute implementation?'
+      hints:
+      - title: State the evidence you need
+        text: For each scenario, identify what the test needs to control or observe. Then choose the smallest approach that supplies
+          that evidence.
+      - title: Reflect on the boundary
+        text: Compare a real behavioral error with a harmless helper rename. Which would each test detect, and why?
+    - description: The clean tests pass on the pure function
+      command: |
+        from tutorial_test_grading import check_suite
+        check_suite('/tutorial/test_xp_clean.py', 'xp_calculator', min_tests=2)
+      hints:
+      - title: State the evidence you need
+        text: For each scenario, identify what the test needs to control or observe. Then choose the smallest approach that supplies
+          that evidence.
+      - title: Reflect on the boundary
+        text: Compare a real behavioral error with a harmless helper rename. Which would each test detect, and why?
 
     quiz:
       title: "Step 6 — Knowledge Check"
@@ -3006,8 +3055,8 @@ steps:
           correct_index: 1
           option_feedback:
             0: "No process isolation involved. autospec is a runtime introspection of the patched object's signature."
-            1: "Right. The moment a teammate's refactor changes the production signature, the test's calls to the mock raise `TypeError` immediately instead of silently accepting drift. autospec is a design guardrail — \"make the mock as strict as the real thing.\" Signature drift is the most common refactoring bug; autospec catches it the moment the test runs. The cost is a few extra characters; the benefit is a real-world bug class entirely defended."
-            2: "Half-myth. autospec primarily enforces *call signatures*, not assertion-method spelling. The reliable typo defense is mypy/pylint."
+            1: "Right. The moment a teammate's refactor changes the production signature, the test's calls to the mock raise `TypeError` immediately instead of silently accepting drift. autospec is a design guardrail — \"make the mock as strict as the real thing.\" This catches incompatible calls exercised by the test. It does not prove that all callers or integration behavior are correct."
+            2: "Autospec primarily enforces call signatures. Default Mock already guards common assertion-name typos; static tools can help, but dynamic mock attributes limit what they can prove."
             3: "Patches work without autospec — they just don't enforce signatures. autospec is a safety strict-mode, not a requirement."
           explanation: |
             Default-safe habit: use `autospec=True` whenever you're patching

@@ -631,7 +631,9 @@
       });
     }
     var tests = this.registry.map(function (item) {
-      return { description: item.title + (item.skip ? ' (skipped)' : '') };
+      var result = { description: item.title + (item.skip ? ' (skipped)' : '') };
+      if (item.skip) result.skipped = true;
+      return result;
     });
     var results = [];
     var chain = NativePromise.resolve();
@@ -709,6 +711,21 @@
       function textOf(el) {
         return normalizeText(el && (el.innerText || el.textContent || ''));
       }
+      // Match Playwright's text-selector boundary: script/style/noscript and
+      // head content are source/metadata, even when they contain matching words.
+      function skipTextMatching(el) {
+        return /^(SCRIPT|STYLE|NOSCRIPT)$/.test(el.nodeName) ||
+          !!(document.head && document.head.contains(el));
+      }
+      function textForMatching(el) {
+        if (skipTextMatching(el)) return '';
+        var text = '';
+        Array.prototype.forEach.call(el.childNodes || [], function (child) {
+          if (child.nodeType === 3) text += child.nodeValue;
+          else if (child.nodeType === 1) text += textForMatching(child);
+        });
+        return text;
+      }
       function labelsFor(el) {
         var out = [];
         if (el.labels) {
@@ -758,11 +775,11 @@
             }));
           } else if (step.kind === 'text') {
             var candidates = allElements(root).filter(function (el) {
-              return matches(textOf(el), step.text, step.options && step.options.exact);
+              return !skipTextMatching(el) && matches(textForMatching(el), step.text, step.options && step.options.exact);
             });
             out = out.concat(candidates.filter(function (el) {
               return !Array.prototype.some.call(el.children || [], function (child) {
-                return matches(textOf(child), step.text, step.options && step.options.exact);
+                return !skipTextMatching(child) && matches(textForMatching(child), step.text, step.options && step.options.exact);
               });
             }));
           } else if (step.kind === 'label') {
