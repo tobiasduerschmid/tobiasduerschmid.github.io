@@ -193,7 +193,8 @@ html.dark-mode .smalltalk-tutorial-output .tvm-output-header .smalltalk-dock-con
 .smalltalk-compact-terminal { padding: .2em .4em; line-height: 1.3; min-height: 0; }
 .smalltalk-compact-terminal .smalltalk-terminal-header { margin: 0; }
 .smalltalk-compact-terminal .smalltalk-status { min-height: 0; }
-.smalltalk-compact-terminal .smalltalk-expression-editor { height: 3.25em; min-height: 56px; }
+/* Reserve two complete Monaco rows, including its top padding and our borders. */
+.smalltalk-compact-terminal .smalltalk-expression-editor { height: 4em; min-height: 64px; }
 .smalltalk-compact-terminal > .smalltalk-toolbar { margin: .15em 0; }
 .smalltalk-compact-terminal .smalltalk-evaluation-result { margin: .1em 0; padding: .1em .3em; border-left-width: 3px; border-left-color: var(--smalltalk-selected); background: color-mix(in srgb, var(--smalltalk-selected) 12%, var(--smalltalk-surface)); }
 .smalltalk-evaluation-result:empty { display: none; }

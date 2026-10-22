@@ -209,7 +209,32 @@ test('keyboard dock and source focus controls preserve drafts and the live count
   await pressButton(page, 'Focus source editor');
   await pressButton(page, 'Show output and terminal');
   await expect(page.getByRole('button', { name: 'Focus source editor', exact: true })).toHaveAttribute('aria-pressed', 'false');
-  await expect(terminal(page).getByRole('textbox', { name: /^Smalltalk expression/ })).toBeVisible();
+  // Monaco's internal input can be hidden while its rendered editor is usable.
+  // Check the writing surface and keyboard interaction after revealing the dock.
+  await expect(terminal(page)).toBeVisible();
+  const expression = terminal(page).getByRole('region', { name: 'Smalltalk expression', exact: true });
+  await expect(expression).toContainText('counter := SEBookCounter new. counter increment; value');
+  const expressionMeasurements = [];
+  for (const dark of [false, true]) {
+    const theme = page.getByRole('checkbox', { name: 'Toggle dark mode', exact: true });
+    if (await theme.isChecked() !== dark) { await theme.focus(); await theme.press('Space'); }
+    if (dark) await expect(theme).toBeChecked(); else await expect(theme).not.toBeChecked();
+    await expect(page.locator('html')).not.toHaveClass(/dark-mode-transition/);
+    await expect.poll(async () => (await editorGeometry(expression)).visibleRows,
+      { message: 'reopening the dock exposes at least two usable expression rows' }).toBeGreaterThanOrEqual(2);
+    const geometry = await editorGeometry(expression);
+    expect(geometry.fontSize).toBeGreaterThanOrEqual(17);
+    await usableControl(terminal(page).getByRole('button', { name: 'Evaluate', exact: true }));
+    await expect(terminal(page).getByRole('region', { name: 'Evaluation result', exact: true })).toBeInViewport({ ratio: 1 });
+    expressionMeasurements.push({ dark, ...geometry });
+    await page.screenshot({ path: testInfo.outputPath(`terminal-two-rows-${dark ? 'dark' : 'light'}.png`) });
+  }
+  await testInfo.attach('expression-measurements', { body: JSON.stringify(expressionMeasurements, null, 2), contentType: 'application/json' });
+  const expressionInput = expression.getByRole('textbox', { name: /^Smalltalk expression/ });
+  await expressionInput.focus();
+  await expect(expressionInput).toBeFocused();
+  await selectAllInMonaco(expressionInput);
+  await expect(expressionInput).toHaveValue('counter := SEBookCounter new. counter increment; value');
   await expect(terminal(page).getByRole('region', { name: 'Evaluation result', exact: true })).toHaveText('1');
   await pressButton(page, 'Collapse output and terminal');
   await pressButton(page, 'Focus source editor');

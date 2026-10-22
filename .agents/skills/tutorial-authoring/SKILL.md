@@ -4182,6 +4182,11 @@ workspace returns to document flow; print exposes output even if its dock was
 collapsed. Preserve paragraph-size controls and heading sizes when changing this
 layout, and measure actual unoccluded Monaco rows rather than editor rectangle
 height alone (`tests/smalltalk-workspace-layout.spec.js`).
+The compact expression editor reserves two complete rendered rows plus Monaco's
+top padding and the container borders. Keep its height font-relative with a
+64px minimum: the same 17px font can produce 26px lines in WebKit, so a height
+calculated from 23px lines clips the second row. Check Evaluate and the latest
+result remain visible alongside the editor in both themes.
 
 Browser accepts an optional `lessonTarget` from the step's `smalltalk_target`;
 Lesson code returns to that native target while preserving drafts. Review drafts
