@@ -347,13 +347,6 @@ steps:
       4. **Explain:** After the checks pass, describe the text carried by each
          pipe. If you used more than one sorting operation, explain what each
          one accomplishes.
-
-      For an extra experiment, `tee FILE` copies standard input to both a
-      file and standard output, overwriting that file by default. Append
-      `| tee failures.txt` to your report, then put `cat failures.txt` on the
-      following line **in the same command box** and Run. Explain why the
-      report appears twice. Restore your report command before testing:
-      checks expect just one report, and temporary files disappear on the next Run.
     files: *access_files
     open_file: access.tsv
     shell_command: ""
