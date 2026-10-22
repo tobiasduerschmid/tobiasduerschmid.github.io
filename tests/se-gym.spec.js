@@ -982,8 +982,9 @@ test.describe('Personal Gym - Workout', () => {
     await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
     await page.goto(GYM_URL);
 
-    await page.evaluate(() => {
+    await page.evaluate(async () => {
       const quiz = ALL_CARD_DATA.quizzes.scrum;
+      await SEGymWorkoutLoader.ensureCards(quiz.questions.map(data => ({ cardType: 'quiz', deckId: 'scrum', data })));
       const now = Date.now();
       const stats = {};
       let chosen = null;

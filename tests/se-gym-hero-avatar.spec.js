@@ -151,30 +151,29 @@ async function activatePersonalGym(page) {
 
 async function installGeometryHero(page) {
   await page.goto(GYM_URL);
-  await page.waitForFunction(() => (
-    window.HeroAvatar &&
-    document.querySelector('#hero-customizer-modal [data-gym-hero-svg]')
-  ));
+  // Every mounted hero retains the complete trait library. Geometry tests can
+  // use an entrance hero without constructing the unrelated customizer UI.
+  const sourceHero = page.locator('[data-gym-hero-svg]').filter({ visible: true }).first();
+  await expect(sourceHero).toHaveAttribute('data-hero-avatar-ready', 'true');
 
-  await page.evaluate(() => {
-    const source = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
-    if (!source) throw new Error('Hero customizer geometry source is missing.');
-
+  await sourceHero.evaluate((source) => {
     const svg = source.cloneNode(true);
     svg.querySelectorAll('animate, animateMotion, animateTransform, set')
       .forEach((animation) => animation.remove());
     svg.setAttribute('data-hero-avatar-ready', 'true');
 
-    // Keep only the option sources that define the exhaustive matrices. The
-    // production customizer contains hundreds of thumbnail controls; leaving
-    // that unrelated DOM attached makes every SVG hit-test recalculate a much
-    // larger layout and can starve Chromium's renderer.
+    // Preserve the exhaustive choice matrices using the renderer's public
+    // registry; the lazy customizer has not populated its selects yet.
     const optionSources = document.createElement('div');
     optionSources.hidden = true;
-    ['#hero-cust-hair-style', '#hero-cust-head-style'].forEach((selector) => {
-      const sourceSelect = document.querySelector(selector);
-      if (!sourceSelect) throw new Error(`Hero geometry option source is missing: ${selector}`);
-      optionSources.appendChild(sourceSelect.cloneNode(true));
+    ['hairStyle', 'headStyle'].forEach((key) => {
+      const definition = window.HeroAvatar.CHOICE_SETS[key];
+      const select = document.createElement('select');
+      select.id = definition.id;
+      definition.groups.flatMap((group) => group.options).forEach((choice) => {
+        select.add(new Option(choice.label, choice.value));
+      });
+      optionSources.appendChild(select);
     });
 
     const host = document.createElement('div');
@@ -270,6 +269,12 @@ async function readHeroAnimationState(page) {
 
     return {
       pageCount: pageSvgs.length,
+      pageVisible: pageSvgs.map((svg) => {
+        const box = svg.getBoundingClientRect();
+        return box.width > 0 && box.height > 0 && box.bottom > 0 && box.right > 0
+          && box.top < window.innerHeight && box.left < window.innerWidth
+          && getComputedStyle(svg).visibility !== 'hidden';
+      }),
       pagePaused: pageSvgs.map((svg) => svg.animationsPaused()),
       pageTimes: pageSvgs.map((svg) => typeof svg.getCurrentTime === 'function' ? svg.getCurrentTime() : 0),
       modalPaused: modalSvg ? modalSvg.animationsPaused() : null,
@@ -277,6 +282,14 @@ async function readHeroAnimationState(page) {
       cssPaused: cssAnimated.every((node) => getComputedStyle(node).animationPlayState === 'paused'),
     };
   });
+}
+
+async function expectVisiblePageHeroesRunning(page) {
+  await expect.poll(async () => {
+    const state = await readHeroAnimationState(page);
+    return state.pageVisible.some(Boolean)
+      && state.pagePaused.every((paused, index) => paused === !state.pageVisible[index]);
+  }, { message: 'onscreen heroes run while hidden and offscreen heroes stay paused' }).toBe(true);
 }
 
 function fineTuneOutput(page, target, axis) {
@@ -529,24 +542,24 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
 
-    const closedBefore = await readHeroAnimationState(page);
-    expect(closedBefore.pageCount).toBeGreaterThan(0);
-    expect(closedBefore.pagePaused).toEqual(closedBefore.pagePaused.map(() => false));
+    await expectVisiblePageHeroesRunning(page);
 
     await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await expect.poll(async () => (await readHeroAnimationState(page)).modalPaused).toBe(false);
     const openState = await readHeroAnimationState(page);
     expect(openState.pagePaused).toEqual(openState.pagePaused.map(() => true));
     expect(openState.modalPaused).toBe(false);
     if (openState.cssAnimatedCount > 0) expect(openState.cssPaused).toBe(true);
 
     await heroCustomizerAction(page, 'Cancel').click();
-    const closedAfter = await readHeroAnimationState(page);
-    expect(closedAfter.pagePaused).toEqual(closedAfter.pagePaused.map(() => false));
+    await expectVisiblePageHeroesRunning(page);
   });
 
   test('Reduced motion override keeps hero SVG animations paused through customizer close', async ({ page }) => {
     await page.goto(`${GYM_URL}?reduce-motion=1`);
     await activatePersonalGym(page);
+    await expect(page.locator('[data-gym-hero-svg]').filter({ visible: true }).first())
+      .toHaveAttribute('data-hero-avatar-ready', 'true');
 
     const closedBefore = await readHeroAnimationState(page);
     expect(closedBefore.pageCount).toBeGreaterThan(0);
@@ -570,7 +583,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(closedAfter.pagePaused).toEqual(closedAfter.pagePaused.map(() => true));
   });
 
-  test('Visible hero motion control pauses and resumes every page hero', async ({ page }) => {
+  test('Visible hero motion control pauses every page hero and resumes onscreen heroes', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
 
@@ -578,14 +591,16 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(motionButton).toBeVisible();
     await expect.poll(async () => {
       const state = await readHeroAnimationState(page);
-      return state.pageTimes.length > 0 && state.pageTimes.every((time) => time > 0.05);
+      return state.pageVisible.some(Boolean)
+        && state.pageTimes.every((time, index) => !state.pageVisible[index] || time > 0.05);
     }).toBe(true);
     await motionButton.click();
 
     await expect(page.getByRole('button', { name: 'Play Hero Motion' })).toHaveAttribute('aria-pressed', 'true');
     const paused = await readHeroAnimationState(page);
     expect(paused.pagePaused).toEqual(paused.pagePaused.map(() => true));
-    expect(paused.pageTimes.every((time) => time > 0.05), 'manual pause should freeze instead of rewinding').toBe(true);
+    expect(paused.pageTimes.every((time, index) => !paused.pageVisible[index] || time > 0.05),
+      'manual pause should freeze instead of rewinding').toBe(true);
     await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     const stillPaused = await readHeroAnimationState(page);
     expect(stillPaused.pageTimes).toHaveLength(paused.pageTimes.length);
@@ -597,10 +612,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(page.getByRole('button', { name: 'Pause Hero Motion' })).toHaveAttribute('aria-pressed', 'false');
     await expect.poll(async () => {
       const state = await readHeroAnimationState(page);
-      return state.pageTimes.every((time, index) => time > paused.pageTimes[index] + 0.02);
-    }, { message: 'Play should advance every hero beyond its frozen timeline position' }).toBe(true);
-    const resumed = await readHeroAnimationState(page);
-    expect(resumed.pagePaused).toEqual(resumed.pagePaused.map(() => false));
+      return state.pageVisible.some(Boolean)
+        && state.pageTimes.every((time, index) => !state.pageVisible[index] || time > paused.pageTimes[index] + 0.02);
+    }, { message: 'Play should advance onscreen heroes beyond their frozen timeline positions' }).toBe(true);
+    await expectVisiblePageHeroesRunning(page);
   });
 
   test('Standalone stats hero stops automatically when no motion control is present', async ({ page }) => {

@@ -17,19 +17,24 @@ layout: sebook
     </div>
   </dialog>
 
-  <div id="se-gym-app">
+  <div id="se-gym-app" data-hero-template-url="{{ '/assets/se-gym-hero-template.svg' | relative_url }}?v={{ site.time | date: '%s' }}">
     <p id="plain-quiz-status" class="workout-quiz-card is-hidden" role="status"></p>
+    <div id="gym-workout-loading" class="workout-quiz-card is-hidden">
+      <p id="gym-workout-loading-status" role="status" tabindex="-1"></p>
+      <div class="controls-row">
+        <button id="gym-workout-load-retry" class="gym-btn primary is-hidden" type="button">Retry loading workout</button>
+        <button id="gym-workout-load-cancel" class="gym-btn secondary" type="button">Cancel loading</button>
+      </div>
+    </div>
 
     <!-- ==================== LIBRARY VIEW ==================== -->
     <div id="gym-entrance">
       {% if site.gym_hero_animation %}
       <p class="sr-only">SE Gym illustration: a customizable hero lifts a software-engineering topic barbell overhead.</p>
-      <div class="gym-entrance-visual gym-entrance-visual-mobile" aria-hidden="true">
-        {% include se-gym-hero.svg variant="mobile" %}
+      <div class="gym-entrance-visual gym-entrance-visual-mobile" aria-hidden="true" data-gym-hero-host="mobile">
       </div>
 
-      <aside class="gym-entrance-visual gym-entrance-visual-left" aria-hidden="true">
-        {% include se-gym-hero.svg variant="left" %}
+      <aside class="gym-entrance-visual gym-entrance-visual-left" aria-hidden="true" data-gym-hero-host="left">
       </aside>
       {% endif %}
 
@@ -495,8 +500,7 @@ layout: sebook
 
       </div>
       {% if site.gym_hero_animation %}
-      <aside class="gym-entrance-visual gym-entrance-visual-right" aria-hidden="true">
-        {% include se-gym-hero.svg variant="right" %}
+      <aside class="gym-entrance-visual gym-entrance-visual-right" aria-hidden="true" data-gym-hero-host="right">
       </aside>
       {% endif %}
     </div>
@@ -560,8 +564,7 @@ layout: sebook
         </div>
         <div class="hero-cust-layout">
           <div class="hero-cust-preview-pane">
-            <div class="hero-cust-preview" aria-hidden="true">
-              {% include se-gym-hero.svg variant="preview" %}
+            <div class="hero-cust-preview" aria-hidden="true" data-gym-hero-host="preview">
             </div>
             <div class="hero-cust-history" role="group" aria-label="Hero edit history controls">
               <button type="button" id="hero-cust-undo" class="gym-btn secondary"
@@ -805,14 +808,12 @@ layout: sebook
 
       <div class="workout-stage" id="workout-stage">
         {% if site.gym_hero_animation %}
-        <aside class="workout-hero-visual workout-hero-visual-left" aria-hidden="true">
-          {% include se-gym-hero.svg variant="workout-left" %}
+        <aside class="workout-hero-visual workout-hero-visual-left" aria-hidden="true" data-gym-hero-host="workout-left">
         </aside>
         {% endif %}
         <div id="workout-card-area"></div>
         {% if site.gym_hero_animation %}
-        <aside class="workout-hero-visual workout-hero-visual-right" aria-hidden="true">
-          {% include se-gym-hero.svg variant="workout-right" %}
+        <aside class="workout-hero-visual workout-hero-visual-right" aria-hidden="true" data-gym-hero-host="workout-right">
         </aside>
         {% endif %}
       </div>
@@ -820,8 +821,7 @@ layout: sebook
       <div id="workout-results" class="is-hidden">
         <div class="workout-results-content">
           <h2>Workout Complete!</h2>
-          <div class="workout-results-hero" aria-hidden="true">
-            {% include se-gym-hero.svg variant="results" %}
+          <div class="workout-results-hero" aria-hidden="true" data-gym-hero-host="results">
           </div>
           <div class="workout-score-display">
             Score: <span id="workout-score">0</span>/<span id="workout-total">0</span>
@@ -859,10 +859,7 @@ layout: sebook
   <!-- Bundled UML diagram renderer -->
   <link rel="stylesheet" href="{{ '/css/browser-fullscreen.css' | relative_url }}">
   <script src="{{ '/js/browser-fullscreen.js' | relative_url }}" defer></script>
-  <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
   <script src="{{ '/js/parsons-grading.js' | relative_url }}"></script>
-  <!-- Verbal aria-label generator (parses live SE Gym diagrams as the user types) -->
-  <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
   {% if site.gym_hero_animation and jekyll.environment == 'production' %}
   {% assign hero_choice_manifest = site.static_files | where: 'path', '/assets/se-gym-hero-choice-previews/manifest.js' | first %}
   {% if hero_choice_manifest %}
@@ -895,7 +892,7 @@ layout: sebook
         var customizerOpen = !!(customizer && !customizer.hidden);
         document.querySelectorAll('[data-gym-hero-svg]').forEach(function (svg) {
           var backgroundPaused = customizerOpen && !customizer.contains(svg);
-          var paused = reduce || userPaused || backgroundPaused;
+          var paused = reduce || userPaused || backgroundPaused || document.hidden || !!svg._seGymOffscreen;
           if (paused && typeof svg.pauseAnimations === 'function') {
             if (reduce && typeof svg.setCurrentTime === 'function') svg.setCurrentTime(0);
             svg.pauseAnimations();
@@ -1351,7 +1348,9 @@ layout: sebook
             if (typeof svg.setCurrentTime === 'function') {
               svg.setCurrentTime(0);
             }
-            if (typeof svg.unpauseAnimations === 'function' && !prefersReducedMotion() && !window.SEGymHeroMotionPaused) {
+            if (window.HeroAvatar && window.HeroAvatar.syncMotion) {
+              window.HeroAvatar.syncMotion(svg);
+            } else if (typeof svg.unpauseAnimations === 'function' && !prefersReducedMotion() && !window.SEGymHeroMotionPaused) {
               svg.unpauseAnimations();
             }
           }
@@ -1818,40 +1817,93 @@ layout: sebook
         if (!isPlainView && PersonalGym.isWorkoutFullscreen()) window.BrowserFullscreen.enter();
       }
 
+      var pendingWorkoutLoad = null;
+      var workoutLoading = document.getElementById('gym-workout-loading');
+      var workoutLoadingStatus = document.getElementById('gym-workout-loading-status');
+      var workoutLoadRetry = document.getElementById('gym-workout-load-retry');
+      var workoutLoadCancel = document.getElementById('gym-workout-load-cancel');
+
+      // Loading must not replace a saved workout or start its clock. A later
+      // start/cancel supersedes this request even if its network work completes.
+      function prepareWorkout(cards, start, origin) {
+        var request = { cards: cards, start: start, origin: origin || document.activeElement };
+        pendingWorkoutLoad = request;
+        requestWorkoutFullscreen(); // Keep the browser's initiating user gesture.
+        workoutLoadingStatus.textContent = 'Loading your workout…';
+        hideElement(workoutLoadRetry);
+        showElement(workoutLoadCancel);
+        showElement(workoutLoading);
+        workoutLoadingStatus.focus();
+        window.SEGymWorkoutLoader.ensureCards(cards).then(function () {
+          if (pendingWorkoutLoad !== request || request.cancelled) return;
+          pendingWorkoutLoad = null;
+          hideElement(workoutLoading);
+          start();
+        }, function () {
+          if (pendingWorkoutLoad !== request || request.cancelled) return;
+          workoutLoadingStatus.textContent = 'Could not load this workout. Check your connection and try again.';
+          showElement(workoutLoadRetry);
+        });
+      }
+
+      workoutLoadRetry.addEventListener('click', function () {
+        if (!pendingWorkoutLoad) return;
+        prepareWorkout(pendingWorkoutLoad.cards, pendingWorkoutLoad.start, pendingWorkoutLoad.origin);
+      });
+      workoutLoadCancel.addEventListener('click', function () {
+        var request = pendingWorkoutLoad;
+        if (request) request.cancelled = true;
+        if (isPlainView) {
+          // A plain worksheet has no entrance controls to restart from.
+          workoutLoadingStatus.textContent = 'Workout loading cancelled.';
+          hideElement(workoutLoadCancel);
+          showElement(workoutLoadRetry);
+          workoutLoadRetry.focus();
+        } else {
+          pendingWorkoutLoad = null;
+          hideElement(workoutLoading);
+        }
+        window.BrowserFullscreen.exit();
+        if (!isPlainView && request && request.origin && request.origin.isConnected) request.origin.focus();
+      });
+
       // Shared start sequence for normal, hard, daily, and linked workouts.
       function beginWorkout(cards, options) {
         options = options || {};
-        workoutIsDaily = false;
         cards = PersonalGym.filterSkippedQuestions(cards || []);
         if (!cards || cards.length === 0) return false;
-        workoutSkipStatus.textContent = '';
-        // Linked practice can run alongside a paused workout. Keep that
-        // checkpoint protected for this run, including its reviews and restarts.
-        workoutPreservesSavedProgress = !!options.preserveSaved && readWorkoutProgress() !== null;
-        workoutCards = cards;
-        workoutCurrentStep = 0;
-        workoutScore = 0;
-        workoutIncorrectIndices = [];
-        workoutIsReview = false;
-        workoutReviewQueue = [];
-        workoutReviewStep = 0;
-        workoutEndedByTimer = false;
-        workoutActivityCardCount = 0;
-        resetDifficultyStats();
-        hideElement(libraryView);
-        showElement(workoutView);
-        workoutView.classList.remove('workout-results-active');
-        syncWorkoutHeroVisibility();
-        restartWorkoutHeroAnimations();
-        setWorkoutMode(true);
-        hideElement(workoutResults);
-        workoutCardArea.innerHTML = '';
-        workoutTotalEl.textContent = workoutCards.length;
-        requestWorkoutFullscreen();
-        startWorkoutTimer(workoutCards.length);
-        saveWorkoutProgress(0);
-        showWorkoutCard(0);
-        scrollToTop();
+        var requestedChallenge = challengeTarget;
+        prepareWorkout(cards, function () {
+          challengeTarget = requestedChallenge;
+          workoutIsDaily = !!options.isDaily;
+          workoutSkipStatus.textContent = '';
+          // Linked practice can run alongside a paused workout. Keep that
+          // checkpoint protected for this run, including its reviews and restarts.
+          workoutPreservesSavedProgress = !!options.preserveSaved && readWorkoutProgress() !== null;
+          workoutCards = cards;
+          workoutCurrentStep = 0;
+          workoutScore = 0;
+          workoutIncorrectIndices = [];
+          workoutIsReview = false;
+          workoutReviewQueue = [];
+          workoutReviewStep = 0;
+          workoutEndedByTimer = false;
+          workoutActivityCardCount = 0;
+          resetDifficultyStats();
+          hideElement(libraryView);
+          showElement(workoutView);
+          workoutView.classList.remove('workout-results-active');
+          syncWorkoutHeroVisibility();
+          restartWorkoutHeroAnimations();
+          setWorkoutMode(true);
+          hideElement(workoutResults);
+          workoutCardArea.innerHTML = '';
+          workoutTotalEl.textContent = workoutCards.length;
+          startWorkoutTimer(workoutCards.length);
+          saveWorkoutProgress(0);
+          showWorkoutCard(0);
+          scrollToTop();
+        });
         return true;
       }
 
@@ -2125,6 +2177,14 @@ layout: sebook
 
       function clearWorkoutProgress() {
         if (isPlainView) return;
+        // Discarding, emptying, or disabling the gym also cancels a start that
+        // is still downloading. Its eventual response must not restore it.
+        if (pendingWorkoutLoad) {
+          pendingWorkoutLoad.cancelled = true;
+          pendingWorkoutLoad = null;
+          hideElement(workoutLoading);
+          window.BrowserFullscreen.exit();
+        }
         try { localStorage.removeItem(WORKOUT_PROGRESS_KEY); } catch (e) { /* localStorage unavailable */ }
         updateSavedWorkoutResume();
       }
@@ -2167,44 +2227,45 @@ layout: sebook
           return;
         }
 
-        workoutCards = cards;
-        workoutCurrentStep = saved.currentStep;
-        workoutScore = saved.score;
-        workoutIncorrectIndices = saved.incorrectIndices;
-        workoutIsReview = saved.isReview;
-        workoutReviewQueue = saved.isReview ? saved.reviewQueue : [];
-        workoutReviewStep = saved.isReview ? saved.reviewStep : 0;
-        workoutEndedByTimer = false;
-        workoutIsDaily = saved.isDaily;
-        workoutActivityCardCount = saved.activityCardCount;
-        workoutPreservesSavedProgress = false;
-        challengeTarget = null;
-        workoutDifficultyStats = normalizeWorkoutDifficultyStats(saved.difficultyStats);
+        prepareWorkout(cards, function () {
+          workoutCards = cards;
+          workoutCurrentStep = saved.currentStep;
+          workoutScore = saved.score;
+          workoutIncorrectIndices = saved.incorrectIndices;
+          workoutIsReview = saved.isReview;
+          workoutReviewQueue = saved.isReview ? saved.reviewQueue : [];
+          workoutReviewStep = saved.isReview ? saved.reviewStep : 0;
+          workoutEndedByTimer = false;
+          workoutIsDaily = saved.isDaily;
+          workoutActivityCardCount = saved.activityCardCount;
+          workoutPreservesSavedProgress = false;
+          challengeTarget = null;
+          workoutDifficultyStats = normalizeWorkoutDifficultyStats(saved.difficultyStats);
 
-        hideElement(libraryView);
-        showElement(workoutView);
-        workoutView.classList.remove('workout-results-active');
-        syncWorkoutHeroVisibility();
-        restartWorkoutHeroAnimations();
-        setWorkoutMode(true);
-        hideElement(workoutResults);
-        if (workoutResultShortcutHint) workoutResultShortcutHint.classList.add('hidden');
-        workoutCardArea.innerHTML = '';
-        workoutTotalEl.textContent = workoutCards.length;
+          hideElement(libraryView);
+          showElement(workoutView);
+          workoutView.classList.remove('workout-results-active');
+          syncWorkoutHeroVisibility();
+          restartWorkoutHeroAnimations();
+          setWorkoutMode(true);
+          hideElement(workoutResults);
+          if (workoutResultShortcutHint) workoutResultShortcutHint.classList.add('hidden');
+          workoutCardArea.innerHTML = '';
+          workoutTotalEl.textContent = workoutCards.length;
 
-        if (workoutIsReview && workoutReviewStep >= workoutReviewQueue.length) {
-          finishWorkout();
-          return;
-        }
-        if (!workoutIsReview && workoutCurrentStep >= workoutCards.length) {
-          finishWorkout();
-          return;
-        }
+          if (workoutIsReview && workoutReviewStep >= workoutReviewQueue.length) {
+            finishWorkout();
+            return;
+          }
+          if (!workoutIsReview && workoutCurrentStep >= workoutCards.length) {
+            finishWorkout();
+            return;
+          }
 
-        requestWorkoutFullscreen();
-        startWorkoutTimer(workoutIsReview ? workoutReviewQueue.length : workoutCards.length);
-        showWorkoutCard(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
-        scrollToTop();
+          startWorkoutTimer(workoutIsReview ? workoutReviewQueue.length : workoutCards.length);
+          showWorkoutCard(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
+          scrollToTop();
+        });
       }
 
       function importChallenge(file) {
@@ -2404,11 +2465,7 @@ layout: sebook
             announceGymStatus('No cards available for today’s workout. Add a quiz or flashcard set, or widen your difficulty filter.');
             return;
           }
-          // beginWorkout() resets workoutIsDaily, so flag this workout AFTER it starts.
-          if (beginWorkout(dailyWorkout)) {
-            workoutIsDaily = true;
-            saveWorkoutProgress(0);
-          }
+          beginWorkout(dailyWorkout, { isDaily: true });
         });
       }
 
@@ -2740,7 +2797,7 @@ layout: sebook
           renderFlashcard(card, index);
         }
         renderSkipQuestionAction(card, index);
-        if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
+        window.SEGymWorkoutLoader.renderContent(workoutCardArea);
       }
 
       function renderSkipQuestionAction(card, index) {
@@ -3134,7 +3191,7 @@ layout: sebook
               explanationEl.classList.remove('hidden');
               revealDifficulty(div);
               focusNextButton(div);
-              if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
+              window.SEGymWorkoutLoader.renderContent(workoutCardArea);
               explanationEl.scrollIntoView({ behavior: motionSafeScrollBehavior(), block: 'nearest' });
             });
           });
@@ -3190,7 +3247,7 @@ layout: sebook
             explanationEl.classList.remove('hidden');
             revealDifficulty(div);
             focusNextButton(div);
-            if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
+            window.SEGymWorkoutLoader.renderContent(workoutCardArea);
             explanationEl.scrollIntoView({ behavior: motionSafeScrollBehavior(), block: 'nearest' });
           });
         }
@@ -3393,7 +3450,7 @@ layout: sebook
             exp.classList.remove('hidden');
             revealDifficulty(div);
             focusNextButton(div);
-            if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
+            window.SEGymWorkoutLoader.renderContent(workoutCardArea);
             exp.scrollIntoView({ behavior: motionSafeScrollBehavior(), block: 'nearest' });
           }
         });
@@ -3509,7 +3566,7 @@ layout: sebook
 
         showBtn.addEventListener('click', function () {
           answerContainer.classList.remove('hidden');
-          if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
+          window.SEGymWorkoutLoader.renderContent(workoutCardArea);
           showBtn.classList.add('hidden');
           assessBtns.classList.remove('hidden');
           if (shortcutHint) shortcutHint.classList.remove('hidden');

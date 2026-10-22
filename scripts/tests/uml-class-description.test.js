@@ -36,6 +36,19 @@ test('class text alternatives preserve an explicit nonempty lower bound', () => 
   assert.match(descriptions.describe('class', source), /multiplicity one to one or more/);
 });
 
+for (const [fromQuote, toQuote] of [["'", "'"], ["'", '"'], ['"', "'"]]) {
+  test(`class alternatives retain single-quoted endpoint bounds (${fromQuote} to ${toQuote})`, () => {
+    const source = `class Customer\nclass Order\nCustomer ${fromQuote}1${fromQuote} --> ${toQuote}*${toQuote} Order : places`;
+    const rendered = renderer.UMLClassDiagram.parse(source).relationships;
+    assert.equal(rendered.length, 1, 'the real visual renderer supports this relationship');
+    assert.equal(rendered[0].fromMult, '1');
+    assert.equal(rendered[0].toMult, '*');
+    for (const text of alternativeTexts(source)) {
+      assert.match(text, /Customer references Order with multiplicity one to zero or more labeled "places"/);
+    }
+  });
+}
+
 // These are the public class renderer's supported diamond/navigation spellings.
 // The text alternative must preserve the same ownership end and endpoint bounds.
 const ownershipArrows = [

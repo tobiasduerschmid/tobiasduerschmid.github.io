@@ -4091,6 +4091,8 @@
 
   function heroMotionShouldPause(svg) {
     return prefersReducedMotion()
+      || document.hidden
+      || !!(svg && svg._seGymOffscreen)
       || !!window.SEGymHeroMotionPaused
       || !!(svg && svg._seGymMotionPaused)
       || !!(svg && svg._seGymStandaloneMotionStopped)
@@ -4126,6 +4128,11 @@
     for (var i = 0; i < reducedMotionTrackedSvgs.length; i++) {
       applyReducedMotionToSvg(reducedMotionTrackedSvgs[i]);
     }
+  });
+  document.addEventListener('visibilitychange', function () {
+    reducedMotionTrackedSvgs.forEach(function (svg) {
+      if (svg.isConnected) applyReducedMotionToSvg(svg);
+    });
   });
 
   function scheduleStandaloneMotionStop(svg) {
@@ -4228,7 +4235,8 @@
   var heroTemplateMountCount = 0;
 
   function avatarTemplateUrl() {
-    return window.SEGymHeroTemplateUrl || HERO_TEMPLATE_URL;
+    var gym = document.getElementById('se-gym-app');
+    return window.SEGymHeroTemplateUrl || (gym && gym.getAttribute('data-hero-template-url')) || HERO_TEMPLATE_URL;
   }
 
   function fetchHeroTemplate() {
@@ -4237,11 +4245,19 @@
       heroTemplatePromise = Promise.resolve(null);
       return heroTemplatePromise;
     }
-    heroTemplatePromise = fetch(avatarTemplateUrl(), { cache: 'no-cache' })
+    heroTemplatePromise = fetch(avatarTemplateUrl())
       .then(function (response) {
         return response.ok ? response.text() : null;
       })
-      .catch(function () { return null; });
+      .then(function (source) {
+        if (!source) { heroTemplatePromise = null; return null; }
+        var template = document.createElement('template');
+        template.innerHTML = source.trim();
+        var svg = template.content.querySelector('svg');
+        if (!svg) heroTemplatePromise = null;
+        return svg;
+      })
+      .catch(function () { heroTemplatePromise = null; return null; });
     return heroTemplatePromise;
   }
 
@@ -4264,6 +4280,9 @@
 
   function uniquifySvgIds(svg, seed) {
     var token = safeIdToken(seed) + '-' + (++heroTemplateMountCount);
+    var styleScope = 'se-gym-hero-instance-' + token;
+    svg.classList.add(styleScope);
+    svg.setAttribute('data-hero-style-scope', styleScope);
     var idMap = Object.create(null);
     svg.querySelectorAll('[id]').forEach(function (el) {
       var oldId = el.getAttribute('id');
@@ -4283,18 +4302,17 @@
       }
     });
     svg.querySelectorAll('style').forEach(function (styleEl) {
-      styleEl.textContent = rewriteSvgReferences(styleEl.textContent, idMap);
+      styleEl.textContent = rewriteSvgReferences(styleEl.textContent, idMap)
+        .replace(/\.se-gym-hero-svg-avatar-template\b/g, '.' + styleScope);
     });
   }
 
   function buildAvatarSvg(seed) {
-    return fetchHeroTemplate().then(function (source) {
-      if (!source) return null;
-      var template = document.createElement('template');
-      template.innerHTML = source.trim();
-      var sourceSvg = template.content && template.content.querySelector('svg');
+    return fetchHeroTemplate().then(function (sourceSvg) {
       if (!sourceSvg) return null;
       var svg = document.importNode(sourceSvg, true);
+      svg.classList.remove('se-gym-hero-svg-avatar-template');
+      svg.classList.add('se-gym-hero-svg-' + safeIdToken(seed));
       uniquifySvgIds(svg, seed);
       return svg;
     });
@@ -4485,6 +4503,8 @@
     applyRandomAvatarsToScope: applyRandomAvatarsToScope,
     applyAvatarToScope: applyAvatarToScope,
     applyToSvg: applyToSvg,
+    createSvg: buildAvatarSvg,
+    syncMotion: applyReducedMotionToSvg,
     mountSavedAvatar: mountSavedAvatar,
     consolidatePracticeHeroGroups: consolidatePracticeHeroGroups,
     isValidEmblem: isValidEmblem
@@ -5253,6 +5273,16 @@
           nodes[n].setAttribute(attrs[a], updateUrlReference(nodes[n].getAttribute(attrs[a]), idMap));
         }
       }
+      var previousScope = svg.getAttribute('data-hero-style-scope');
+      if (previousScope) {
+        var scope = previousScope + '-' + safeIdToken(suffix);
+        svg.classList.replace(previousScope, scope);
+        svg.setAttribute('data-hero-style-scope', scope);
+        svg.querySelectorAll('style').forEach(function (style) {
+          style.textContent = rewriteSvgReferences(style.textContent, idMap)
+            .split('.' + previousScope).join('.' + scope);
+        });
+      }
     }
 
     var CHOICE_PREVIEW_VIEWBOXES = {
@@ -5770,7 +5800,7 @@
       if (preview.querySelector('[data-hero-choice-preview-img]')) return true;
       var img = document.createElement('img');
       img.alt = '';
-      img.loading = 'eager';
+      img.loading = 'lazy';
       img.decoding = 'async';
       img.setAttribute('aria-hidden', 'true');
       img.setAttribute('data-hero-choice-preview-img', '');
@@ -5792,7 +5822,7 @@
       for (var i = 0; i < images.length; i++) {
         var img = images[i];
         if (img.getAttribute('src')) continue;
-        img.loading = 'eager';
+        img.loading = 'lazy';
         img.src = img.getAttribute('data-hero-choice-preview-src');
       }
     }
@@ -6559,6 +6589,13 @@
       modal.classList.add('hero-cust-open');
       setOriginalHeroAnimationsPaused(true);
       refreshPreview();
+      if (window.SEGymHeroLoader) {
+        window.SEGymHeroLoader.mount(modal.querySelector('[data-gym-hero-host]')).then(function (svg) {
+          if (modal.hidden) return;
+          if (svg) refreshPreview();
+          else setStatus('The hero preview could not load. Close and reopen Customize Hero to retry.', true);
+        });
+      }
       resetHistory(normalizedFormState());
       var first = $('hero-cust-kind') || $('hero-cust-skin');
       if (first) first.focus();
@@ -6850,6 +6887,16 @@
 
     var backdrop = modal.querySelector('.hero-cust-backdrop');
     if (backdrop) backdrop.addEventListener('click', closeModal);
+    return openModal;
+  }
+
+  function initModalOnDemand() {
+    var button = document.getElementById('customize-hero-btn');
+    if (!button) return;
+    button.addEventListener('click', function () {
+      var open = initModal();
+      if (open) open();
+    }, { once: true });
   }
 
   function updateCustomizeButtonVisibility() {
@@ -6867,7 +6914,7 @@
 
   function start() {
     initAvatar();
-    initModal();
+    initModalOnDemand();
     initButtonVisibility();
     initPracticeHeroGroups();
   }

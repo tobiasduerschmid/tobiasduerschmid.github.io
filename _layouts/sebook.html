@@ -651,9 +651,11 @@
   {% endif %}
 
   <!-- Bundled UML diagram renderer -->
+  {% unless page.url == '/se-gym/' %}
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
   <!-- Verbal aria-label generator (parses the spec for screen-reader text alternatives) -->
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
+  {% endunless %}
   {% if page.uml_code_labs %}{% include uml-code-lab-scripts.html %}{% endif %}
 
   <!-- Global UML inline diagram init — renders data-uml-type/data-uml-spec containers
@@ -679,16 +681,21 @@
       }
     }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
+    {% unless page.url == '/se-gym/' %}
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', tryRender);
     } else {
       tryRender();
     }
+    {% endunless %}
   })();
   </script>
 
   {% include scripts.html %}
-  <script src="{{ '/js/se-gym-hero-avatar.js' | relative_url }}?v={{ site.asset_version }}" defer></script>
+  <script src="{{ '/js/se-gym-hero-avatar.js' | relative_url }}?v={% if page.url == '/se-gym/' %}{{ site.time | date: '%s' }}{% else %}{{ site.asset_version }}{% endif %}" defer></script>
+  {% if page.url == '/se-gym/' %}
+  <script src="{{ '/js/se-gym-hero-loader.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
+  {% endif %}
 
 </body>
 

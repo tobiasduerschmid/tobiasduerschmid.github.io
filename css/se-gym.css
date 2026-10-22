@@ -143,6 +143,19 @@
       opacity: 1;
     }
 
+    /* Reserve the unchanged artwork's space while its shared template loads.
+       These transparent placeholders work in both themes. */
+    [data-gym-hero-host]:not([data-hero-loaded])::before {
+      content: "";
+      display: block;
+      width: 100%;
+      aspect-ratio: 640 / 665;
+    }
+
+    @media print {
+      [data-gym-hero-host]:not([data-hero-loaded])::before { display: none; }
+    }
+
     html.dark-mode .post-content .se-gym-hero-svg,
     html.dark-mode #gym-entrance .se-gym-hero-svg,
     html.dark-mode #gym-workout .se-gym-hero-svg {
@@ -295,7 +308,8 @@
       background: linear-gradient(180deg, #2a3344 0%, #1a2230 100%);
       border-color: #3a4250;
     }
-    .hero-cust-preview .se-gym-hero-svg {
+    .hero-cust-preview .se-gym-hero-svg,
+    .hero-cust-preview[data-gym-hero-host]::before {
       width: 100%;
       max-height: min(72vh, 720px);
       filter: none;
@@ -318,7 +332,8 @@
       box-shadow: none;
     }
     @media (max-height: 680px) {
-      .hero-cust-preview .se-gym-hero-svg { max-height: min(48vh, 380px); }
+      .hero-cust-preview .se-gym-hero-svg,
+      .hero-cust-preview[data-gym-hero-host]::before { max-height: min(48vh, 380px); }
     }
     @media (max-width: 1080px) {
       #se-gym-app .hero-cust-tune-row {
@@ -356,7 +371,8 @@
       .hero-cust-history .gym-btn {
         min-height: 40px;
       }
-      .hero-cust-preview .se-gym-hero-svg { max-height: min(28vh, 220px); }
+      .hero-cust-preview .se-gym-hero-svg,
+      .hero-cust-preview[data-gym-hero-host]::before { max-height: min(28vh, 220px); }
       .hero-cust-status {
         margin-top: 0.35rem;
         text-align: center;
@@ -407,7 +423,8 @@
       .hero-cust-preview {
         max-width: 210px;
       }
-      .hero-cust-preview .se-gym-hero-svg { max-height: min(24vh, 170px); }
+      .hero-cust-preview .se-gym-hero-svg,
+      .hero-cust-preview[data-gym-hero-host]::before { max-height: min(24vh, 170px); }
     }
     .hero-cust-status {
       margin: 0.75rem 0 0 0;
@@ -3519,7 +3536,8 @@
       width: 100%;
     }
 
-    .workout-hero-visual .se-gym-hero-svg {
+    .workout-hero-visual .se-gym-hero-svg,
+    .workout-hero-visual[data-gym-hero-host]::before {
       max-height: min(84vh, 820px);
       width: 100%;
     }
@@ -4452,7 +4470,8 @@
       margin-bottom: 8px;
     }
 
-    .workout-results-hero .se-gym-hero-svg {
+    .workout-results-hero .se-gym-hero-svg,
+    .workout-results-hero[data-gym-hero-host]::before {
       max-height: 230px;
     }
 

@@ -131,7 +131,7 @@
 
     var arrowAlt = CLASS_ARROWS.map(escapeRegex).join('|');
     var relRe = new RegExp(
-      '^(\\w+)\\s*(?:"([^"]*)"\\s+)?(' + arrowAlt + ')\\s+(?:"([^"]*)"\\s+)?(\\w+)\\s*(?::\\s*(.+))?$'
+      '^(\\w+)\\s*(?:["\']([^"\']*)["\']\\s+)?(' + arrowAlt + ')\\s+(?:["\']([^"\']*)["\']\\s+)?(\\w+)\\s*(?::\\s*(.+))?$'
     );
 
     bodyStripped.split('\n').forEach(function (raw) {
@@ -689,7 +689,7 @@
     // matcher (a regex that uses `[^{}]*` for the body fails on those).
     var arrowAlt = CLASS_ARROWS.map(escapeRegex).join('|');
     var relRe = new RegExp(
-      '^(\\w+)\\s*(?:"([^"]*)"\\s+)?(' + arrowAlt + ')\\s+(?:"([^"]*)"\\s+)?(\\w+)\\s*(?::\\s*(.+))?$'
+      '^(\\w+)\\s*(?:["\']([^"\']*)["\']\\s+)?(' + arrowAlt + ')\\s+(?:["\']([^"\']*)["\']\\s+)?(\\w+)\\s*(?::\\s*(.+))?$'
     );
 
     var depth = 0;

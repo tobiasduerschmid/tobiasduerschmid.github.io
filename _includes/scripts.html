@@ -564,5 +564,7 @@
 
 </script>
 <script src="{{ "/js/audio-player.js" | prepend: site.baseurl }}"></script>
+{% unless page.url == '/se-gym/' %}
 <script src="{{ "/js/se-gym.js" | prepend: site.baseurl }}?v={{ site.time | date: '%s' }}"></script>
+{% endunless %}
 <script src="{{ "/js/study-schedule.js" | prepend: site.baseurl }}"></script>

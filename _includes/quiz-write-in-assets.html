@@ -1,3 +1,4 @@
+{% unless include.css_only %}
 <script src="{{ '/js/object-reference-graph.js' | relative_url }}" defer></script>
 <script src="{{ '/js/object-reference-code.js' | relative_url }}" defer></script>
 <script src="{{ '/js/object-reference-print.js' | relative_url }}" defer></script>
@@ -5,6 +6,7 @@
 <script src="{{ '/js/unix-command-lab.js' | relative_url }}" defer></script>
 <script src="{{ '/js/program-output-lab.js' | relative_url }}" defer></script>
 <script src="{{ '/js/quiz-write-in.js' | relative_url }}" defer></script>
+{% endunless %}
 <link rel="stylesheet" href="{{ '/css/object-reference-lab.css' | relative_url }}">
 <link rel="stylesheet" href="{{ '/css/unix-command-lab.css' | relative_url }}">
 <link rel="stylesheet" href="{{ '/css/program-output-lab.css' | relative_url }}">
