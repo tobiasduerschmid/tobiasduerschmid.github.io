@@ -204,3 +204,23 @@ for (const step of tutorial.steps) {
     }
   });
 }
+
+for (const filename of ['read_scores.py', 'read_players.py']) {
+  const step = tutorial.steps.find(candidate => candidate.run_file === filename);
+
+  test(`${step.title}: a pipe character cannot stand in for a score sign`, () => {
+    const source = submissions[filename].correct[0].replace('[+-]?', '[+|-]?');
+    const failures = grade(step, source).filter(result => !result.passed);
+
+    assert.ok(failures.length, 'The [+|-]? pattern passed every criterion');
+    for (const failure of failures) {
+      // A grader may reject the record directly or reach the candidate's int
+      // conversion. Only the malformed capture's ValueError is expected here.
+      assert.ok(
+        failure.error === 'AssertionError' ||
+          (failure.error === 'ValueError' && failure.message.includes("'|2'")),
+        JSON.stringify(failure),
+      );
+    }
+  });
+}

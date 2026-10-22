@@ -12,7 +12,7 @@ const outputs = [
   '[7, -12, 42, 0]',
   "[('luna_2', 12), ('max7', -7), ('nova', 0), ('luna_2', 2)]",
 ];
-const answers = ['item_24', '-8', 'zed7 -5'];
+const answers = ['item_24', '-8', 'a1 and b1234567'];
 
 async function checkWork(page, count) {
   await page.getByRole('button', { name: /Test My Work/ }).click();
@@ -68,6 +68,7 @@ test('learners parse three files using named fields and pass one knowledge check
       await instructions.getByRole('button', { name: 'Try Again', exact: true }).click();
     }
     await answerOneQuestion(instructions, answers[index]);
+    await expect(instructions.getByText(/^Your Score:\s*1\s*\/\s*1$/)).toBeVisible();
     if (index < 2) {
       await instructions.getByRole('button', { name: `Continue to Step ${index + 2} →`, exact: true }).click();
       await expect(instructions.getByRole('heading', {

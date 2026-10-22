@@ -286,7 +286,7 @@ steps:
       - description: "Malformed scores are skipped without losing valid records"
         command: |
           from _regex_checks import parse
-          result = parse('read_scores.py', 'score=\nscore=x\nscore=-\nscore=+\nscore=--2\nscore=++2\nscore=+-2\nscore=-+2\nscore=- 2\nscore=2.5\nscore= 2\nbonus=2\nxscore=2\nscore=2 extra\nscore=9\n')
+          result = parse('read_scores.py', 'score=\nscore=x\nscore=-\nscore=+\nscore=--2\nscore=++2\nscore=+-2\nscore=-+2\nscore=|2\nscore=- 2\nscore=2.5\nscore= 2\nbonus=2\nxscore=2\nscore=2 extra\nscore=9\n')
           assert result == [9], 'Require digits after at most one sign, the exact label, and no internal spaces or extra text.'
         hints: *score_pattern_hints
       - description: "Empty files, blank lines, and surrounding whitespace"
@@ -306,7 +306,8 @@ steps:
 
             ```python
             import re
-            m = re.fullmatch(r"coins=(?P<amount>[+-]?\d+)", "coins=-09")
+            m = re.fullmatch(
+                r"coins=(?P<amount>[+-]?\d+)", "coins=-09")
             print(int(m.group("amount")) + 1)
             ```
           options:
@@ -457,7 +458,7 @@ steps:
       - description: "Missing fields, invalid names, and extra text are skipped"
         command: |
           from _regex_checks import parse
-          result = parse('read_players.py', ':2\na:2\nabcdefghi:2\nivy:\nIvy:2\niVy:2\n2ivy:2\n_ivy:2\niv-y:2\nbad user:8\nivy:-\nivy:+\nivy:--2\nivy:++2\nivy:+-2\nivy:-+2\nivy:- 2\nivy:2.5\nivy:2 extra\nivy=2\nivy:2\n')
+          result = parse('read_players.py', ':2\na:2\nabcdefghi:2\nivy:\nIvy:2\niVy:2\n2ivy:2\n_ivy:2\niv-y:2\nbad user:8\nivy:-\nivy:+\nivy:--2\nivy:++2\nivy:+-2\nivy:-+2\nivy:|2\nivy:- 2\nivy:2.5\nivy:2 extra\nivy=2\nivy:2\n')
           assert result == [('ivy', 2)], 'Require a 2–8 character name starting with a lowercase letter and a valid signed integer.'
         hints: *player_pattern_hints
       - description: "Empty files and blank lines"
@@ -473,26 +474,22 @@ steps:
         - type: single
           difficulty: intermediate
           question: |
-            What does this Python code print?
+            Which pair contains two names that match this pattern with Python's `re.fullmatch`?
 
             ```python
-            import re
-            m = re.fullmatch(
-                r"(?P<name>[a-z][a-z0-9_]{1,7})\s*:\s*(?P<score>[+-]?\d+)",
-                "zed7: -06")
-            print(m.group("name"), int(m.group("score")) + 1)
+            r"(?P<name>[a-z][a-z0-9_]{1,7})"
             ```
           options:
-            - '`zed7 -5`'
-            - '`zed7 -061`'
-            - '`zed7: -06 -5`'
-            - 'An `AttributeError`'
+            - '`a1` and `b1234567`'
+            - '`a` and `b1234567`'
+            - '`a1` and `b12345678`'
+            - '`1a` and `b1234567`'
           correct_index: 0
           option_feedback:
-            1: "The score capture is converted to an integer before addition, so the result is numeric."
-            2: "group('name') holds only the player's name, without the colon or score."
-            3: "The first character is a letter and the remaining characters may include digits. Zero spaces before the colon is also valid, so m is not None."
-          explanation: "The captures are 'zed7' and '-06'. Spaces stay outside the groups; converting the signed score and adding one gives -5."
+            1: "The first letter is followed by at least one more character, so a one-character name is too short."
+            2: "The first letter plus at most seven more characters allows eight total. b12345678 has nine; fullmatch cannot ignore the final character."
+            3: "Digits are allowed after the first character, but the name must start with a lowercase letter."
+          explanation: "The name needs one lowercase letter followed by 1–7 lowercase letters, digits, or underscores: 2–8 characters total. a1 and b1234567 meet the two length boundaries."
     solution:
       files:
         - path: read_players.py
