@@ -560,13 +560,24 @@
       return values;
     }
 
-    invoke(receiver, method, args, argumentText, context) {
+    invoke(receiver, method, args, argumentTokens, context) {
       if (++this.steps > 5000) throw new SequenceLimitError();
       if (!method) { context.constants.clear(); this.diagnostics.add('unresolved'); return null; }
+      if (this.usesRangeReference(argumentTokens, context)) {
+        const parts = split(argumentTokens);
+        const safe = !method.ambiguous && method.body && parts.every((part, index) => {
+          if (!this.usesRangeReference(part, context)) return true;
+          const type = method.params[index]?.type || [];
+          const valueType = tokensToText(type.filter(token => token !== 'const'));
+          return ['int', 'bool', 'std::string'].includes(valueType) ||
+            type.includes('&') && !method.body.length && !method.initializers.length;
+        });
+        if (!safe) context.constants.clear();
+      }
       if (method.ambiguous) this.diagnostics.add('dispatch', method.name);
       else if (!method.body) this.diagnostics.add('unresolved', method.name);
       this.ensure(receiver);
-      this.lines.push(context.receiver.id + ' -> ' + receiver.id + ': ' + method.name + '(' + argumentText + ')');
+      this.lines.push(context.receiver.id + ' -> ' + receiver.id + ': ' + method.name + '(' + tokensToText(argumentTokens) + ')');
       this.lines.push('activate ' + receiver.id);
       const result = this.follow(receiver, method, args, context.depth);
       const returnType = tokensToText(method.returnType);
@@ -691,6 +702,9 @@
     // and a typed return value can be the receiver of the next member access.
     expression(tokens, context) {
       if (++this.steps > 5000) throw new SequenceLimitError();
+      if (this.usesRangeReference(tokens, context) && tokens.some((token, index) =>
+        ['=', '+=', '-=', '*=', '/=', '++', '--', '&', '*', 'const_cast', 'reinterpret_cast', 'static_cast', 'dynamic_cast', 'ref', 'cref'].includes(token) ||
+        token === ')' && (identifier(tokens[index + 1]) || tokens[index + 1] === '('))) context.constants.clear();
       const effectful = tokens.some((token, index) => ['=', '+=', '-=', '*=', '/=', '++', '--', '&', '->*'].includes(token) ||
         token === '(' && (identifier(tokens[index - 1]) || [')', ']'].includes(tokens[index - 1])));
       if (effectful) for (const token of tokens) context.constants.delete(token);
@@ -716,11 +730,11 @@
             let receiver = context.receiver;
             if (node) {
               receiver = this.staticReceiver(node);
-              result = this.invoke(receiver, this.model.method(node, shortName(name), args.length), args, tokensToText(argTokens), context);
+              result = this.invoke(receiver, this.model.method(node, shortName(name), args.length), args, argTokens, context);
             } else if (['std::move', 'std::ref', 'std::cref'].includes(name)) result = args[0];
             else {
               const method = this.model.method(receiver.node, name, args.length) || this.freeFunction(name, context.scope, args.length);
-              result = this.invoke(receiver, method, args, tokensToText(argTokens), context);
+              result = this.invoke(receiver, method, args, argTokens, context);
             }
             i = end + 1;
           } else result = this.variable(name, context);
@@ -729,13 +743,20 @@
           const name = tokens[i + 1]; i += 2;
           if (tokens[i] === '(') {
             const end = closing(tokens, i), argTokens = tokens.slice(i + 1, end), args = this.arguments(argTokens, context);
-            if (!result) this.diagnostics.add('unresolved', name);
-            result = result ? this.invoke(result, this.model.method(result.node, name, args.length), args, tokensToText(argTokens), context) : null;
+            if (!result) {
+              this.diagnostics.add('unresolved', name);
+              if (this.usesRangeReference(tokens, context)) context.constants.clear();
+            }
+            result = result ? this.invoke(result, this.model.method(result.node, name, args.length), args, argTokens, context) : null;
             i = end + 1;
           } else result = result ? this.field(result, name) : null;
         }
       }
       return result;
+    }
+
+    usesRangeReference(tokens, context) {
+      return tokens.some(token => context.constantRangeReferences?.has(token));
     }
 
     staticReceiver(node) {
@@ -792,6 +813,8 @@
       }
       const typeTokens = tokens.slice(0, end), name = tokens[end], initializer = tokens.slice(end + 1);
       const constant = this.constantDeclaration(typeTokens, initializer, context);
+      if (this.usesRangeReference(initializer, context) &&
+          !['int', 'bool', 'std::string'].includes(tokensToText(typeTokens.filter(token => token !== 'const')))) context.constants.clear();
       // A retained reference may mutate the original later, even after rebinding
       // the alias. Forget the fact at its first escape instead of guessing alias lifetimes.
       for (const token of initializer) {
@@ -885,6 +908,7 @@
       if (this.local(tokens, context)) return;
       const assignment = split(tokens, '=', false);
       if (assignment.length === 2) {
+        if (this.usesRangeReference(tokens, context)) context.constants.clear();
         for (const token of tokens) context.constants.delete(token);
         const value = this.expression(assignment[1], context), lhs = assignment[0];
         if (lhs.length === 1 && context.vars.has(lhs[0])) context.vars.set(lhs[0], value);
@@ -979,11 +1003,21 @@
         const loopContext = { ...context, vars: new Map(context.vars), constants: new Map(context.constants) };
         this.forgetLoopConstants(node.body, loopContext);
         const range = node.kind === 'for' ? split(node.condition, ':', false) : [];
-        if (range.length === 2 && range[0].some(token => ['&', '&&'].includes(token))) {
+        const reference = range.length === 2 && range[0].some(token => ['&', '&&'].includes(token));
+        const readOnlyReference = reference && range[1].length === 1 && range[0].includes('const') && range[0].includes('&') &&
+          !range[0].some(token => ['*', '&&', 'volatile'].includes(token)) &&
+          ['int', 'bool', 'std::string', 'auto'].includes(tokensToText(range[0].slice(0, -1).filter(token => !['const', '&'].includes(token))));
+        if (reference && !readOnlyReference) {
           for (const token of range[1]) loopContext.constants.delete(token);
         }
-        const iterable = range.length === 2 && !range[0].includes('&') && !range[0].includes('&&')
+        const iterable = range.length === 2 && (!reference || readOnlyReference)
           ? ConstantValues.evaluate(range[1].join(' '), { language: 'cpp', bindings: loopContext.constants, allowBraceSequence: true }) : undefined;
+        if (readOnlyReference) {
+          // Const protects direct reads, but a cast or borrowed argument may
+          // still escape to code that mutates the original mutable elements.
+          loopContext.constantRangeReferences = new Set(context.constantRangeReferences);
+          loopContext.constantRangeReferences.add(range[0].at(-1));
+        }
         const init = split(node.condition, ';', false)[0];
         if (node.kind === 'for') this.simple(split(init, ':', false)[0], loopContext);
         const clauses = split(node.condition, ';', false);

@@ -146,8 +146,7 @@ test('published loop labs expose complete known iterable values in Design focus'
     assert.match(design, /^loop \[for each item in /m);
     assert.doesNotMatch(design, /\.\.\./);
     assert.match(design, /(?:addItem|add_item)\(item\)/);
-    assert.match(design, language === 'cpp'
-      ? /for each item in \[1, 2\]/ : /for each item in \["book", "pen"\]/);
+    assert.match(design, /for each item in \["book", "pen"\]/, language);
   }
 });
 

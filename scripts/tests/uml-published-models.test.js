@@ -102,15 +102,15 @@ function interaction(diagram) {
 
 for (const key of ['first-sequence', 'return-values', 'self-calls',
   'conditional-fragments', 'loops', 'moderated-broadcast']) {
-  test(`sequence tutorial ${key}: Design view matches complete target calls, reply types, and nesting`, () => {
+  test(`sequence tutorial ${key}: Implementation details match complete target calls, reply types, and nesting`, () => {
     const step = tutorial.steps.find(step => step.key === key);
     const target = [...step.instructions.matchAll(/@startuml\b([\s\S]*?)@enduml/g)].at(-1)[1]
       .replace(/&quot;/g, '"');
     const result = global.analyzePythonSources(Object.fromEntries(
       step.solution.files.filter(file => file.path.endsWith('.py')).map(file => [file.path, file.content])));
     assert.deepEqual(result.errors, []);
-    const design = project(result, { language: 'python', view: 'design' });
-    assert.deepEqual(interaction(design.sequenceDiagram), interaction(target));
+    const implementation = project(result, { language: 'python', view: 'implementation' });
+    assert.deepEqual(interaction(implementation.sequenceDiagram), interaction(target));
   });
 }
 
