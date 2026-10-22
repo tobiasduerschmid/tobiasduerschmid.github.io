@@ -55,6 +55,18 @@ async function editInputFile(page, content) {
   await page.keyboard.insertText(content);
 }
 
+test('students can skip every check and access a solution on every step', async ({ page }) => {
+  await openTutorial(page);
+  const solution = page.getByRole('link', { name: 'Solution', exact: true });
+  await expect(solution).toBeVisible();
+  await nextStep(page, 2);
+  await expect(solution).toBeVisible();
+  await nextStep(page, 3);
+  await expect(solution).toBeVisible();
+  await solution.click();
+  await expect(tutorialControls(page).command).not.toHaveValue('');
+});
+
 test('students run their own quoted pipelines through the tutorial output panel', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -114,9 +126,9 @@ test('Stop cancels a running shell command and permits another run', async ({ pa
   await expect(controls.output).toContainText(/\b10\b/);
 });
 
-test('an alternative correct command passes the standard tests and unlocks Next', async ({ page }) => {
+test('an alternative correct command passes the optional standard tests', async ({ page }) => {
   await openTutorial(page);
-  await expect(tutorialControls(page).next).toBeDisabled();
+  await expect(tutorialControls(page).next).toBeEnabled();
 
   await checkCommand(page, "awk '{count[$3]++} END {for (path in count) print count[path], path}' access.tsv | sort -k2");
 
@@ -131,7 +143,7 @@ test('a canned answer passes the visible fixture but fails varied inputs', async
 
   await checkCommand(page, "printf '2 /api/items\\n3 /index.html\\n2 /login\\n2 /missing.html\\n1 /styles.css\\n'", { passed: 1 });
 
-  await expect(tutorialControls(page).next).toBeDisabled();
+  await expect(tutorialControls(page).next).toBeEnabled();
   await expect(page.getByRole('listitem').filter({ hasText: 'All requests in the supplied log' })).toContainText('✓');
   await expect(page.getByRole('listitem').filter({ hasText: 'An empty input file' })).toContainText('✗');
 });
@@ -155,17 +167,17 @@ test('a correct output with a failing exit status does not pass a check', async 
 
   await checkCommand(page, `${COUNT_COMMAND}; exit 7`, { passed: 0 });
 
-  await expect(tutorialControls(page).next).toBeDisabled();
+  await expect(tutorialControls(page).next).toBeEnabled();
 });
 
-test('editing a checked command removes its old pass and locks Next until rechecked', async ({ page }) => {
+test('editing a checked command removes its old pass while Next stays available', async ({ page }) => {
   await openTutorial(page);
   await checkCommand(page, COUNT_COMMAND);
 
   await tutorialControls(page).command.fill('cat access.tsv');
 
   await expect(page.getByText('✅ All 4 tests passed!', { exact: true })).toHaveCount(0);
-  await expect(tutorialControls(page).next).toBeDisabled();
+  await expect(tutorialControls(page).next).toBeEnabled();
 });
 
 test('editing the command during checks discards the obsolete results', async ({ page }) => {
@@ -178,7 +190,7 @@ test('editing the command during checks discards the obsolete results', async ({
   await controls.command.fill(COUNT_COMMAND);
 
   await expect(controls.output).toContainText(/command changed during the checks/);
-  await expect(controls.next).toBeDisabled();
+  await expect(controls.next).toBeEnabled();
   await checkCommand(page, COUNT_COMMAND);
 });
 
@@ -218,7 +230,7 @@ test('a transforming command must preserve the supplied input file', async ({ pa
 
   await checkCommand(page, `${REWRITE_COMMAND}; printf 'changed\\n' > access.tsv`, { passed: 0 });
 
-  await expect(tutorialControls(page).next).toBeDisabled();
+  await expect(tutorialControls(page).next).toBeEnabled();
   await expect(tutorialControls(page).output).toContainText(/input file was changed or removed/i);
 });
 

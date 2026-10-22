@@ -3,8 +3,9 @@ description: "Turn a web server log into reports with browser-based shell pipeli
 backend: shell-pipeline
 output_height: "70%"
 autosave_type: files
-require_tests: true
+require_tests: false
 require_quiz: false
+instructor_mode: true
 progress_version: 1
 learning_objectives:
   - "Compose text-processing commands into pipelines with clearly defined intermediate streams."
