@@ -56,7 +56,7 @@ setup_commands:
 
 
 steps:
-  # Pedagogy: Run a complete example immediately, then make a two-word edit.
+  # Pedagogy: Explore a worked example, then choose a narrower result.
   # Core time budget: 3 + 5 + 5 + 5 + 7 + 10 = 35 minutes, including quizzes.
   - key: select-columns
     title: "Selecting Columns"
@@ -71,13 +71,15 @@ steps:
 
       ### Try it — 3 minutes
 
-      **Run `columns.sql` now.** It shows all 9 students and 5 columns: `id`, `name`, `year`, `major`, `gpa`.
+      **Run `columns.sql`.** Inspect the students and the five columns: `id`, `name`, `year`, `major`, `gpa`.
 
-      `SELECT` chooses columns; `FROM` names the table; `*` means all columns.
+      `SELECT` chooses columns (separate names with commas); `FROM` names the table; `*` means all columns.
 
-      **Change only `*` to `name, major`.** Predict the new column count mentally, Run, then **Test My Work**. No written explanation needed.
+      **Your task:** return every student's name and major, in that column order, with no extra columns. Will choosing fewer columns also remove students? Predict, edit, then Run and **Test My Work**.
 
-      **Your route:** Steps 1–6 take about **35 minutes**, including two short checks. Steps 7–8 add about **10 minutes** for creating and changing data. These are estimates, not time limits.
+      **Stuck?** Try the check, then open **Hints** for help with your attempt. Revise and check again.
+
+      **Your route:** about **35 minutes** for Steps 1–6, including brief knowledge checks; about **10 more minutes** for Steps 7–8. These are estimates, not time limits.
 
     files:
       - path: columns.sql
@@ -101,14 +103,31 @@ steps:
             values: [['Mango','CS'],['Watermelina','Math'],['Bananito','CS'],['Coconick','Physics'],['Kiwi','CS'],['Grapenzo','Math'],['Cherrita','Physics'],['Orangelo','CS'],['Blue Bella',null]]
           });
         hints:
-          - text: "The star selects every column. Replace it with the two requested column names."
-            condition: "code_contains: *"
-          - text: "Keep FROM students; change the column list after SELECT. Separate names with a comma."
-            condition: "code_missing: name"
-          - text: "The output must contain name first, then major, for every student. Check for extra columns or rows."
-            condition: "code_contains: name"
+          - text: "Compare the output headers with the requested information. Which part of the query controls columns?"
+            condition: >-
+              code_matches: /SELECT\s+\*/i
+          - text: "Sketch two slots for the output headers. Fill them from the task, then compare that list with your SELECT list."
+            condition: >-
+              code_not_matches: /SELECT\s+(?:\*|[^;]*\bname\b)/i
+          - text: "Check columns and rows separately: changing the displayed fields should not remove any students."
+            condition: >-
+              code_matches: /SELECT\s+(?!\*)[^;]*\bname\b/i
+    quiz:
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "A songs table has 6 rows. What does `SELECT title FROM songs` return?"
+          options: ["6 rows, 1 column", "1 row, 6 columns", "Only rows with unique titles"]
+          correct_index: 0
+          explanation: "Choosing one column keeps all six rows, even if some titles repeat."
+          option_feedback:
+            1: "The SELECT list chooses columns, not how many rows remain."
+            2: "Selecting a column does not remove repeated values."
 
-  # Pedagogy: Contrast AND with OR on the same familiar data; repair one clause.
+  # Pedagogy: Diagnose contrasting filters on familiar data.
   - key: filter-sort
     title: "Filtering and Sorting"
     instructions: |
@@ -123,17 +142,17 @@ steps:
       ### Two small repairs — 5 minutes
 
       ```sql
-      SELECT name, gpa FROM students
-      WHERE major = 'CS'
-      ORDER BY gpa DESC;
+      SELECT name, year FROM students
+      WHERE year >= 3
+      ORDER BY name;
       ```
 
       `WHERE` keeps matching rows. `AND` requires **both** conditions; `OR` accepts **either**. `DESC` sorts highest first; `ASC` sorts lowest first. Without `ORDER BY`, row order is not guaranteed.
 
-      1. **`cs-students.sql`:** return `name, gpa` for CS students with GPA **at least 3.5**, highest GPA first. Repair the connector and sort direction.
-      2. **`either.sql`:** return `name, major` for students in **Math or Physics**, in any order. Repair one connector.
+      1. **`cs-students.sql`:** return `name, gpa` for CS students with GPA **at least 3.5**, highest GPA first.
+      2. **`either.sql`:** return `name, major` for students in **Math or Physics**, in any order.
 
-      Predict whether each repair returns more or fewer rows, then Run each file and Test My Work.
+      Predict whether each starter includes too many or too few students. Run, compare with the requirements, then repair and Test My Work.
     files:
       - path: cs-students.sql
         content: |
@@ -174,24 +193,44 @@ steps:
             columns: ['name','gpa'], values: [['Bananito',3.7],['Mango',3.6],['Kiwi',3.5]], ordered: true
           });
         hints:
-          - text: "A high GPA alone is not enough: both the major and GPA conditions must hold."
-            condition: "code_contains: major = 'CS' OR"
-          - text: "ASC puts the smallest GPA first. Which direction puts the largest first?"
-            condition: "code_contains: ASC"
-          - text: "Include the boundary: Kiwi's GPA is exactly 3.5. Return only name and gpa."
-            condition: "code_contains: major = 'CS' AND"
+          - text: "Trace Cherrita: a Physics student with GPA 3.6. Should that row qualify under the task? Does your filter agree?"
+            condition: >-
+              code_matches: /SELECT\s+name\s*,\s*gpa\b[^;]*\bOR\b/i
+          - text: "Compare the first and last GPA in cs-students.sql's result. Which one should be larger?"
+            condition: >-
+              code_matches: /SELECT\s+name\s*,\s*gpa\b(?![^;]*\bOR\b)[^;]*\bASC\b/i
+          - text: "Check three cases separately: the wrong major, a GPA exactly on the boundary, and two qualifying GPAs in different orders."
+            condition: >-
+              code_not_matches: /SELECT\s+name\s*,\s*gpa\b[^;]*\b(?:OR|ASC)\b/i
       - description: "Return every Math or Physics student, with no other majors"
         command: |
           __assert_result(db.exec(__read_file('either.sql')), {
             columns: ['name','major'], values: [['Watermelina','Math'],['Coconick','Physics'],['Grapenzo','Math'],['Cherrita','Physics']]
           });
         hints:
-          - text: "One value cannot equal Math and Physics at the same time. The student may belong to either."
-            condition: "code_contains: major = 'Math' AND"
-          - text: "Each comparison needs a column, an operator, and a quoted value."
-            condition: "code_missing: major"
-          - text: "Check that both majors are present and that each qualifying student appears once."
-            condition: "code_contains: OR"
+          - text: "Take a Math student. Evaluate each comparison separately, then ask whether your connector keeps that row."
+            condition: >-
+              code_matches: /SELECT\s+name\s*,\s*major\b[^;]*'Math'\s+AND\b/i
+          - text: "Make a three-row case list: Math, Physics, CS. Mark which should qualify before writing the filter."
+            condition: >-
+              code_not_matches: /SELECT\s+name\s*,\s*major\b[^;]*'Math'/i
+          - text: "Compare your result against both requested majors. A filter can admit one group while accidentally excluding the other."
+            condition: >-
+              code_matches: /SELECT\s+name\s*,\s*major\b(?![^;]*'Math'\s+AND\b)[^;]*'Math'/i
+    quiz:
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "A track has genre 'Jazz' and rating 2. Does `genre = 'Jazz' OR rating >= 4` include it?"
+          options: ["Yes, one condition is true.", "No, both conditions must be true.", "No, the rating condition takes priority."]
+          correct_index: 0
+          explanation: "OR accepts a row when either condition is true; this track matches the genre."
+          option_feedback:
+            1: "Requiring both conditions describes AND."
+            2: "Neither side of OR overrides the other."
 
   # Pedagogy: Make a missing row visible; retrieve selection/filtering in a short quiz.
   - key: missing-values
@@ -211,10 +250,10 @@ steps:
 
       Comparisons such as `major = NULL` and `major != 'CS'` are **unknown** for that row. `WHERE` keeps only true conditions. Use `IS NULL` to find missing values; `IS NOT NULL` finds known values.
 
-      1. **`missing.sql`:** repair the comparison to return `name` for students with no major.
-      2. **`outside-cs.sql`:** include students whose major is **not CS or is missing**. Keep `name, major`; any row order is fine. Add one condition.
+      1. **`missing.sql`:** return `name` for students with no recorded major.
+      2. **`outside-cs.sql`:** return `name, major` for students whose major is **not CS or is missing**, in any order.
 
-      Run and check both files. Next opens a five-question checkpoint; four correct answers pass.
+      Predict whether Blue Bella appears in each starter's result. Run, revise, and check both files. Next opens a five-question checkpoint; four correct answers pass.
     files:
       - path: missing.sql
         content: |
@@ -240,31 +279,36 @@ steps:
       explanation: |
         `missing.sql` returns Blue Bella. `outside-cs.sql` returns the four Math/Physics students plus Blue Bella. `IS NULL` is true for the missing value, so the OR condition includes it.
     tests:
-      - description: "Find Blue Bella by the missing major"
+      - description: "Find students with a missing major, even when records change"
         command: |
           __assert_result(db.exec(__read_file('missing.sql')), { columns: ['name'], values: [['Blue Bella']] });
           db.run("UPDATE students SET major = 'Bio' WHERE id = 9; UPDATE students SET major = NULL WHERE id = 5;");
           __assert_result(db.exec(__read_file('missing.sql')), { columns: ['name'], values: [['Kiwi']] });
         hints:
-          - text: "An equals comparison cannot test for missing data. Use SQL's missing-value predicate."
-            condition: "code_contains: = NULL"
-          - text: "Quoted 'NULL' is text. A missing value uses the unquoted keyword NULL."
-            condition: "code_contains: 'NULL'"
-          - text: "Filter by whether major is missing, not by a particular student's name."
-            condition: "code_contains: IS NULL"
-      - description: "Include all five students outside CS, including the missing major"
+          - text: "What truth value does an ordinary comparison produce when one side is missing? Revisit which values WHERE retains."
+            condition: >-
+              code_matches: /SELECT\s+name\s+FROM\b[^;]*=\s*NULL\b/i
+          - text: "Compare a missing value with the four-character text 'NULL'. Which one is actually stored in this dataset?"
+            condition: >-
+              code_matches: /SELECT\s+name\s+FROM\b[^;]*'NULL'/i
+          - text: "Imagine a different student lost their major. Check that your query follows the missing data, rather than a name or ID."
+            condition: >-
+              code_not_matches: /SELECT\s+name\s+FROM\b[^;]*(?:=\s*NULL\b|'NULL')/i
+      - description: "Include known non-CS majors and missing majors"
         command: |
           __assert_result(db.exec(__read_file('outside-cs.sql')), {
             columns: ['name','major'], values: [['Watermelina','Math'],['Coconick','Physics'],['Grapenzo','Math'],['Cherrita','Physics'],['Blue Bella',null]]
           });
         hints:
-          - text: "The existing comparison includes only known non-CS majors. Add a separate missing-value condition."
+          - text: "Trace the filter for Blue Bella. Is its result true, false, or unknown—and which values does WHERE keep?"
             condition: >-
-              code_not_matches: /major\s*!=\s*'CS'[^;]*\bIS\s+NULL\b/i
-          - text: "Known non-CS and missing are two alternatives. A row need satisfy only one."
-            condition: "code_contains: AND"
-          - text: "Keep both cases: a known major different from CS, or a missing major."
-            condition: "code_contains: OR"
+              code_not_matches: /SELECT\s+name\s*,\s*major\b[^;]*\bNULL\b/i
+          - text: "Try one Math student and one student with no major. Does each satisfy both tests, or just one?"
+            condition: >-
+              code_matches: /SELECT\s+name\s*,\s*major\b[^;]*\bAND\b[^;]*\bNULL\b/i
+          - text: "Make a small truth table for CS, another major, and missing data. Compare the result of your whole condition with the task."
+            condition: >-
+              code_matches: /SELECT\s+name\s*,\s*major\b(?![^;]*\bAND\b)[^;]*\bNULL\b/i
     quiz:
       title: "Step 3 — Knowledge Check"
       min_score: 0.8
@@ -329,19 +373,21 @@ steps:
 
       ### Match, then keep the missing row — 5 minutes
 
-      `majors(code, department, advisor)` has four rows: CS, Math, Physics, and Bio. `students.major` matches `majors.code`.
+      `majors(code, department, advisor)` lists CS, Math, Physics, and Bio. Students store their major in `students.major`.
+
+      **Example with different tables:**
 
       ```sql
-      FROM students AS s
-      JOIN majors AS m ON s.major = m.code
+      FROM tracks AS t
+      JOIN albums AS a ON t.album_id = a.id
       ```
 
-      `s` and `m` are short names for the tables. `ON` specifies which rows match. Without a matching condition, 9 students × 4 majors produces **36 pairs**.
+      `AS` gives a table a short name; `ON` defines a match. `JOIN` (an inner join) keeps matches; `LEFT JOIN` also keeps unmatched rows from the left table, filling right-side fields with `NULL`.
 
-      1. **`advisors.sql`:** repair the FROM clause using the pattern above. Return `name, advisor` for the **8 matched students**.
-      2. **`all-advisors.sql`:** change `JOIN` to **`LEFT JOIN`** to keep **all 9 students**. The unmatched advisor becomes `NULL`.
+      1. **`advisors.sql`:** return `name, advisor` for students who have a matching major, once each.
+      2. **`all-advisors.sql`:** return the same columns for **every student**, even without an advisor.
 
-      Predict which student appears only in the second result. Run each file; row order does not matter.
+      The comma in each starter pairs every student with every major. Choose the matching rule and join for each task. Predict which students each result keeps, then Run and Test My Work. Any row order is fine.
     files:
       - path: advisors.sql
         content: |
@@ -351,8 +397,7 @@ steps:
       - path: all-advisors.sql
         content: |
           SELECT s.name, m.advisor
-          FROM students AS s
-          JOIN majors AS m ON s.major = m.code;
+          FROM students AS s, majors AS m;
         language: sql
     open_file: advisors.sql
     solution:
@@ -372,33 +417,52 @@ steps:
       explanation: |
         The inner join returns eight students with their own major's advisor. The left join also returns Blue Bella with a NULL advisor. Bio has no students, so it adds no student rows to either result.
     tests:
-      - description: "Match each of the eight students to the correct advisor, once each"
+      - description: "Match students to their own major's advisor, once each"
         command: |
           __assert_result(db.exec(__read_file('advisors.sql')), {
             columns: ['name','advisor'],
             values: [['Mango','Dr. Hopper'],['Watermelina','Dr. Noether'],['Bananito','Dr. Hopper'],['Coconick','Dr. Curie'],['Kiwi','Dr. Hopper'],['Grapenzo','Dr. Noether'],['Cherrita','Dr. Curie'],['Orangelo','Dr. Hopper']]
           });
         hints:
-          - text: "The comma pairs every student with every major. Add the condition connecting major to code."
+          - text: "Pick one student in advisors.sql's output. Why do they appear beside advisors from unrelated majors?"
             condition: >-
               code_matches: /FROM\s+students\s+(?:AS\s+)?s\s*,\s*majors/i
-          - text: "The matching columns are students.major and majors.code; student IDs are unrelated to major codes."
-            condition: "code_missing: s.major"
-          - text: "Look for repeated names: each matched student should have exactly their own advisor."
-            condition: "code_contains: ON"
-      - description: "Keep all nine students, with NULL for Blue Bella's advisor"
+          - text: "Compare sample values in each table. Which pair of fields describes the same fact, even though the field names differ?"
+            condition: >-
+              code_not_matches: /FROM\s+students\s+(?:AS\s+)?s\s*,\s*majors|\bON\b/i
+          - text: "Trace one proposed pair through your matching condition. Then check a pair from different majors: should both survive?"
+            condition: >-
+              code_matches: /^(?![\s\S]*FROM\s+students\s+(?:AS\s+)?s\s*,\s*majors)[\s\S]*\bON\b/i
+      - description: "Preserve every student, including those without an advisor"
         command: |
           __assert_result(db.exec(__read_file('all-advisors.sql')), {
             columns: ['name','advisor'],
             values: [['Mango','Dr. Hopper'],['Watermelina','Dr. Noether'],['Bananito','Dr. Hopper'],['Coconick','Dr. Curie'],['Kiwi','Dr. Hopper'],['Grapenzo','Dr. Noether'],['Cherrita','Dr. Curie'],['Orangelo','Dr. Hopper'],['Blue Bella',null]]
           });
         hints:
-          - text: "An ordinary JOIN keeps only matches. Which join preserves every row from students?"
-            condition: "code_missing: LEFT"
-          - text: "Students must be the left-hand table when every student should survive."
-            condition: "code_missing: FROM students"
-          - text: "Keep the matching condition. Do not filter out the NULL advisor afterward."
-            condition: "code_contains: LEFT"
+          - text: "In all-advisors.sql, inspect a student who has no matching major. Which join behavior could keep that student?"
+            condition: >-
+              code_not_matches: /\bLEFT\s+(?:OUTER\s+)?JOIN\b/i
+          - text: "A left join preserves one side of the relationship. Compare the table on that side with the people the report must keep."
+            condition: >-
+              code_matches: /FROM\s+majors\b[^;]*\bLEFT\s+(?:OUTER\s+)?JOIN\b/i
+          - text: "Follow an unmatched student from the join to any later filter. At which stage could the row disappear?"
+            condition: >-
+              code_matches: /FROM\s+students\b[^;]*\bLEFT\s+(?:OUTER\s+)?JOIN\b/i
+    quiz:
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "Three orders reference customers. Two have a matching customer; one does not. How many rows does an inner join return if each customer ID is unique?"
+          options: ["2 rows", "3 rows", "6 rows"]
+          correct_index: 0
+          explanation: "An inner join returns the two matching pairs. The unmatched order contributes no row."
+          option_feedback:
+            1: "Keeping the unmatched order would require different join behavior."
+            2: "The matching condition prevents every order from pairing with every customer."
 
   # Pedagogy: A worked grouping example, then contrasting row/group filters.
   - key: group-summaries
@@ -415,23 +479,20 @@ steps:
       ### Summarize the students — 7 minutes
 
       ```sql
-      SELECT major, COUNT(*) AS n, AVG(gpa) AS avg_gpa
+      SELECT year, COUNT(*) AS n
       FROM students
-      GROUP BY major;
+      GROUP BY year;
       ```
 
-      `GROUP BY` makes one row per major. `AS` names an output column. `COUNT(*)` counts rows; `COUNT(major)` counts only non-NULL majors. `AVG(gpa)` averages known GPAs.
+      This example counts students per year. `AS` names an output column. `COUNT(*)` counts rows; `COUNT(column)` counts known values; `AVG(column)` averages known values.
 
-      1. **`summary.sql`:** count **every student** in each group, including the missing-major group. Return `major, n, avg_gpa`, highest average first. Repair the count and sort direction.
-      2. **`groups.sql`:** return only **named majors averaging at least 3.25**, in the same column order and highest-average-first order. Repair the boundary comparison.
+      1. **`summary.sql`:** count **every student** in each major, including the missing-major group. Return `major, n, avg_gpa`, highest average first.
+      2. **`groups.sql`:** return only **named majors averaging at least 3.25**, with the same columns and ordering.
 
       **`WHERE` filters rows before grouping; `HAVING` filters groups afterward.** Filtering individual GPAs would change the average you are calculating.
 
-      <details markdown="1"><summary>Optional: DISTINCT and NULL</summary>
+      Check a missing value and an average exactly at the threshold. Which starter requirements fail? Repair, Run, and Test My Work.
 
-      `SELECT DISTINCT major FROM students` returns four rows: CS, Math, Physics, and NULL. `SELECT COUNT(DISTINCT major) FROM students` returns **3** because COUNT ignores NULL. Bio exists in `majors`, but no student has that major.
-
-      </details>
     files:
       - path: summary.sql
         content: |
@@ -477,13 +538,16 @@ steps:
             columns: ['major','n','avg_gpa'], values: [['CS',4,3.575],['Math',2,3.25],['Physics',2,3.2],[null,1,3]], ordered: true
           });
         hints:
-          - text: "The missing-major group contains a real student. Count rows, not non-NULL major values."
-            condition: "code_contains: COUNT(major)"
-          - text: "Descending order puts the largest average first."
-            condition: "code_contains: ASC"
-          - text: "Keep one row per major, including NULL. Select the group name plus its count and average."
-            condition: "code_missing: GROUP BY"
-      - description: "Keep CS and Math, with their full-group counts and averages"
+          - text: "The missing-major group contains a student. Compare what each counting form measures when its argument is missing."
+            condition: >-
+              code_matches: /COUNT\s*\(\s*major\s*\)/i
+          - text: "Compare the first and last averages in summary.sql's output. Does their order answer the report's question?"
+            condition: >-
+              code_matches: /SELECT\b(?![^;]*COUNT\s*\(\s*major\s*\))[^;]*\bASC\b/i
+          - text: "Check the result in three passes: one row per group, a count of its students, then the order of group averages."
+            condition: >-
+              code_not_matches: /COUNT\s*\(\s*major\s*\)|\bASC\b/i
+      - description: "Keep qualifying named majors with full-group counts and averages"
         command: |
           __assert_result(db.exec(__read_file('groups.sql')), {
             columns: ['major','n','avg_gpa'], values: [['CS',4,3.575],['Math',2,3.25]], ordered: true
@@ -493,12 +557,29 @@ steps:
             columns: ['major','n','avg_gpa'], values: [['Math',2,3.8],['CS',4,3.575]], ordered: true
           });
         hints:
-          - text: "At least includes equality. Math's average is exactly 3.25."
-            condition: "code_missing: >="
-          - text: "A threshold on a group's average belongs in HAVING, after GROUP BY."
-            condition: "code_missing: HAVING"
-          - text: "Average all students in each named major; do not remove lower GPAs before calculating it."
-            condition: "code_contains: WHERE"
+          - text: "Test three imagined averages: 3.24, 3.25, and 3.26. Which should pass the stated threshold?"
+            condition: >-
+              code_matches: /HAVING\s+AVG\s*\(\s*gpa\s*\)\s*>\s*3\.25/i
+          - text: "Does this condition describe an individual student or a completed group's summary? Locate the clause that operates at that stage."
+            condition: >-
+              code_not_matches: /\bHAVING\b/i
+          - text: "For one retained major, list the GPAs contributing to its average. Check that filtering has not changed that list."
+            condition: >-
+              code_matches: /\bHAVING\b(?!\s+AVG\s*\(\s*gpa\s*\)\s*>\s*3\.25)/i
+    quiz:
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "A club has scores 2 and 8. What average remains after `WHERE score >= 5` filters its rows?"
+          options: ["8", "5", "2"]
+          correct_index: 0
+          explanation: "The filter removes the score 2 before averaging, leaving only 8."
+          option_feedback:
+            1: "That is the average before the row filter."
+            2: "The condition keeps the larger score, not the smaller one."
 
   # Pedagogy: Fade to two independent queries; use different output contracts.
   - key: query-report
@@ -519,25 +600,17 @@ steps:
       1. **`report.sql`:** for students in **year 2 or later**, report each matched major and its advisor. Keep groups with average GPA **at least 3.2**. Return **`major, advisor, avg_gpa, n`**, highest average first. Include every qualifying student's GPA in the average. Raw averages or rounding to two decimal places are accepted.
       2. **`contacts.sql`:** list students whose **major is missing or GPA is at least 3.8**, including those with no advisor. Return **`name, advisor`**, alphabetically by student name.
 
-      Run each query and Test My Work. Use hints if you get stuck; you do not need a written plan.
-
-      <details markdown="1"><summary>Hint: a clause checklist</summary>
-
-      For the report: match tables, filter years, group by major and advisor, filter averages, then sort. For contacts: keep unmatched students, choose either condition, then sort. `AS avg_gpa` and `AS n` name calculated columns.
-
-      </details>
+      Predict which rows contribute to each report. Run and Test My Work; open **Hints** for a failed check, then revise.
 
       **After the checkpoint, the 35-minute query core is complete.** Continue to Steps 7–8 for creating and changing data (about 10 more minutes), or stop here and return later.
     files:
       - path: report.sql
         content: |
           -- Return: major, advisor, avg_gpa, n
-          -- Students in year >= 2; group average >= 3.2; highest average first.
         language: sql
       - path: contacts.sql
         content: |
           -- Return: name, advisor
-          -- Missing major OR gpa >= 3.8; alphabetical by name; keep unmatched students.
         language: sql
     open_file: report.sql
     solution:
@@ -563,7 +636,7 @@ steps:
       explanation: |
         The report returns CS / Dr. Hopper / 3.5333… / 3, then Math / Dr. Noether / 3.25 / 2. CS averages Mango (3.9), Kiwi (3.5), and Orangelo (3.2); Math averages Watermelina (3.4) and Grapenzo (3.1). The contacts are Blue Bella / NULL, then Mango / Dr. Hopper. The left join preserves Blue Bella.
     tests:
-      - description: "Report both qualifying majors with the correct advisor, average and count, in order"
+      - description: "Report qualifying majors with the correct advisor, average and count, in order"
         command: |
           __assert_result(db.exec(__read_file('report.sql')), {
             columns: ['major','advisor','avg_gpa','n'],
@@ -577,17 +650,19 @@ steps:
             ordered: true, tolerances: { avg_gpa: 0.005 }
           });
         hints:
-          - text: "Start with the tables: each student's major matches a code in majors. Select the major and advisor."
+          - text: "For report.sql, label each requested output as a stored field or a calculated summary. Which source data does each need?"
             condition: >-
               code_not_matches: /SELECT[^;]*\bavg_gpa\b/i
-          - text: "Only year 2 or later contributes to each group's count and average. Filter those rows before grouping."
+          - text: "Trace a year-1 student. At what stage should that student stop contributing to the report's count and average?"
             condition: >-
-              code_not_matches: /WHERE[^;]*\byear\b/i
-          - text: "Filter group averages after grouping. Count students, and sort the result by average descending."
-            condition: "code_missing: HAVING"
-          - text: "Check both numeric columns separately. Math has two qualifying students; average their GPAs rather than counting them."
-            condition: "code_contains: HAVING"
-      - description: "List Blue Bella with no advisor, then Mango with Dr. Hopper"
+              code_matches: /SELECT\b(?=[^;]*\bavg_gpa\b)(?![^;]*\bWHERE\b[^;]*\byear\b)/i
+          - text: "Classify the two thresholds: one concerns a student and one a group. Which can be evaluated before the average exists?"
+            condition: >-
+              code_matches: /SELECT\b(?=[^;]*\bavg_gpa\b)(?=[^;]*\bWHERE\b[^;]*\byear\b)(?![^;]*\bHAVING\b)/i
+          - text: "Hand-check one major: list eligible students, then calculate its count and average separately. Compare both numbers and their output headers."
+            condition: >-
+              code_matches: /\bHAVING\b/i
+      - description: "List qualifying contacts alphabetically, preserving students without advisors"
         command: |
           __assert_result(db.exec(__read_file('contacts.sql')), {
             columns: ['name','advisor'], values: [['Blue Bella',null],['Mango','Dr. Hopper']], ordered: true
@@ -597,12 +672,14 @@ steps:
             columns: ['name','advisor'], values: [['Blue Bella',null],['Mango','Dr. Hopper']], ordered: true
           });
         hints:
-          - text: "A student without a major still needs a row. Preserve the students side of the join."
+          - text: "For contacts.sql, trace a student with no major through the table-matching step. Is the row still available to filter?"
             condition: "code_missing: LEFT"
-          - text: "Missing major and high GPA are alternatives, not simultaneous requirements."
-            condition: "code_missing: OR"
-          - text: "Alphabetical by name needs an explicit sort. Keep the advisor NULL when it is unknown."
-            condition: "code_contains: OR"
+          - text: "Try a student with a missing major and GPA 3.0, then a named major and GPA 3.8. Decide eligibility before evaluating your connector."
+            condition: >-
+              code_matches: /SELECT\s+(?:\w+\.)?name\b[^;]*\bLEFT\s+(?:OUTER\s+)?JOIN\b(?![^;]*\bOR\b)/i
+          - text: "Check the threshold boundary and then compare the returned names alphabetically. Does the result preserve an unknown advisor as missing data?"
+            condition: >-
+              code_matches: /SELECT\s+(?:\w+\.)?name\b[^;]*\bLEFT\s+(?:OUTER\s+)?JOIN\b[^;]*\bOR\b/i
     quiz:
       title: "Step 6 — Knowledge Check"
       min_score: 0.8
@@ -680,10 +757,10 @@ steps:
 
       The query core is complete. This step and the next use **`practice_students`**, leaving the original `students` and `majors` data intact.
 
-      Run the provided `create.sql`. `CREATE TABLE` defines columns; `INTEGER`, `TEXT`, and `REAL` describe their types. `PRIMARY KEY` identifies each row uniquely. `INSERT INTO ... VALUES` adds records.
+      Run `create.sql` and inspect its two records. `CREATE TABLE` defines columns; `INTEGER`, `TEXT`, and `REAL` describe their types. `PRIMARY KEY` identifies rows uniquely; `NOT NULL` requires a value. `INSERT INTO ... VALUES` adds records in the listed column order.
 
-      1. Add **`NOT NULL`** after `name TEXT` so a name is required.
-      2. Add **`(10, 'Papaya', 3.8)`** as a third row in the INSERT. Separate tuples with commas.
+      1. Make the table reject a missing student name while preserving unique IDs.
+      2. Store **Papaya**, with **ID 10** and **GPA 3.8**, alongside the existing students. Keep the final display in ID order.
 
       Run again and Test My Work. The opening `DROP TABLE IF EXISTS` removes only the practice table, so every run starts fresh. It is a reset for this exercise, not a step to copy when saving real data.
     files:
@@ -730,12 +807,14 @@ steps:
             columns: ['id','name','gpa'], values: [[1,'Mango',3.9],[5,'Kiwi',3.5],[10,'Papaya',3.8]], ordered: true
           });
         hints:
-          - text: "Add the new tuple to VALUES, separating it from Kiwi's tuple with a comma."
+          - text: "Compare the records in the task with those stored by create.sql. Which record is not represented yet?"
             condition: "code_missing: Papaya"
-          - text: "Use a new ID for Papaya, and put values in the order id, name, gpa."
-            condition: "code_contains: Papaya"
-          - text: "Keep the final SELECT so you can inspect the stored records."
-            condition: "code_missing: SELECT"
+          - text: "Label each inserted value with the column above it. Do those field-value pairs match the requested record?"
+            condition: >-
+              code_matches: /INSERT\b(?=[^;]*'Papaya')(?=[\s\S]*\bSELECT\b)/i
+          - text: "Inserting data and displaying it are separate operations. How will you inspect the stored records after your change?"
+            condition: >-
+              code_matches: /INSERT\b(?=[^;]*'Papaya')(?![\s\S]*\bSELECT\b)/i
       - description: "Reject duplicate IDs and missing names"
         command: |
           db.exec(__read_file('create.sql'));
@@ -748,12 +827,28 @@ steps:
           catch (error) { missingRejected = /NOT NULL/.test(error.message); }
           assert(missingRejected, 'A missing name must be rejected.');
         hints:
-          - text: "A name is required. Place the constraint after the name column's type."
+          - text: "A column type describes values; a constraint rejects unwanted records. Which unwanted record must the name column reject?"
             condition: "code_missing: NOT NULL"
-          - text: "The ID identifies a row uniquely. Keep its PRIMARY KEY constraint."
-            condition: "code_missing: PRIMARY KEY"
-          - text: "NOT NULL belongs on name, not only on another column. Rerun the full CREATE script after changing it."
-            condition: "code_contains: NOT NULL"
+          - text: "Consider inserting two students with the same ID. Which part of the table definition is responsible for distinguishing rows?"
+            condition: >-
+              code_matches: /^(?=[\s\S]*\bNOT\s+NULL\b)(?![\s\S]*\bPRIMARY\s+KEY\b)/i
+          - text: "Match each constraint to its field. Try a duplicate ID and a missing name separately; which rule should reject each?"
+            condition: >-
+              code_matches: /^(?=[\s\S]*\bNOT\s+NULL\b)(?=[\s\S]*\bPRIMARY\s+KEY\b)/i
+    quiz:
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "A tracks table declares `id INTEGER PRIMARY KEY, title TEXT NOT NULL`. It already contains `(1, 'Orbit')`. Which new row is accepted?"
+          options: ["`(2, 'Orbit')`", "`(1, 'Echo')`", "`(2, NULL)`"]
+          correct_index: 0
+          explanation: "The new ID is distinct and the title is present. Titles are not required to be unique."
+          option_feedback:
+            1: "The primary key rejects the repeated ID, even though the title differs."
+            2: "The required title cannot be missing."
 
   # Pedagogy: Contrast UPDATE/DELETE/DROP with minimal edits. Reset the exercise
   # fixture in the learner's script so a broad UPDATE cannot poison later runs.
@@ -831,20 +926,26 @@ steps:
             columns: ['id','name','gpa'], values: [[1,'Mango',3.9],[5,'Kiwi',3.6],[10,'Papaya',3.8]], ordered: true
           });
         hints:
-          - text: "The UPDATE needs its own WHERE condition. A WHERE on the DELETE does not restrict the UPDATE."
-            condition: "code_contains: SET gpa = 3.6;"
-          - text: "The row to delete is Coconick (id 4); Kiwi (id 5) should remain with a new GPA."
-            condition: "code_contains: DELETE FROM practice_students WHERE id = 5"
-          - text: "Check every surviving GPA, not just Kiwi's. Rerunning the complete script restores the starting data first."
-            condition: "code_contains: UPDATE"
+          - text: "Consider each change separately. Which rows does the UPDATE target before the DELETE even runs?"
+            condition: >-
+              code_matches: /UPDATE\s+practice_students\b(?![^;]*\bWHERE\b)/i
+          - text: "Preview the DELETE's target using a SELECT with the same condition. Is it the student the task asks you to remove?"
+            condition: >-
+              code_matches: /UPDATE\s+practice_students\b[^;]*\bWHERE\b[\s\S]*DELETE\s+FROM\s+practice_students\s+WHERE\s+id\s*=\s*5\b/i
+          - text: "Compare every surviving record with the starting data, not just the changed student. Which changes were actually requested?"
+            condition: >-
+              code_not_matches: /UPDATE\s+practice_students\b(?![^;]*\bWHERE\b)|DELETE\s+FROM\s+practice_students\s+WHERE\s+id\s*=\s*5\b/i
       - description: "Remove the draft_notes table, not just its rows"
         command: |
           db.exec(__read_file('changes.sql'));
-          assert(__run_query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'draft_notes'").length === 0, 'DROP TABLE removes the table; DELETE removes its rows.');
+          assert(__run_query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'draft_notes'").length === 0, 'The draft_notes table still exists; check the requested final database structure.');
         hints:
-          - text: "DELETE removes rows but leaves the table available. Use the command that removes a table."
-            condition: "code_contains: DELETE FROM draft_notes"
-          - text: "Only remove draft_notes. The practice_students table must remain for the final SELECT."
-            condition: "code_contains: DROP TABLE"
-          - text: "The reset at the top drops an old table, then creates it again. Remove this new table at the end."
-            condition: "code_contains: CREATE TABLE draft_notes"
+          - text: "Distinguish an empty table from an absent table. After the current DELETE, which one would you have?"
+            condition: >-
+              code_matches: /DELETE\s+FROM\s+draft_notes\b/i
+          - text: "Trace draft_notes from top to bottom: reset, creation, then your final change. What exists after the last statement?"
+            condition: >-
+              code_not_matches: /DELETE\s+FROM\s+draft_notes\b|CREATE\s+TABLE\s+draft_notes\b[\s\S]*DROP\s+TABLE\b/i
+          - text: "Check the target of the final removal. Which table must still exist for the final result query?"
+            condition: >-
+              code_matches: /^(?![\s\S]*DELETE\s+FROM\s+draft_notes\b)[\s\S]*CREATE\s+TABLE\s+draft_notes\b[\s\S]*DROP\s+TABLE\b/i

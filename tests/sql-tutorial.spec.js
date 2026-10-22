@@ -151,14 +151,16 @@ test.describe.serial('SQL Tutorial', () => {
     expect(after).toContain('-- added comment');
   });
 
-  // The opening lesson goes straight to the next exercise; checkpoints appear
-  // only after the missing-value lesson and after the final query report.
-
-  test('passing the first exercise advances directly to the next lesson', async () => {
+  test('the first knowledge check appears before continuing to the next lesson', async () => {
     await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
     await page.getByRole('button', { name: /^Next →$/ }).click();
+    const quizHeading = page.getByRole('heading', { name: steps[0].quiz.title });
+    await expect(quizHeading).toBeVisible();
+    await expectActiveStep(page, 0);
+    await answerQuizCorrectly(page);
+    await page.getByRole('button', { name: /Continue to Step/ }).click();
     await expectActiveStep(page, 1);
-    await expect(page.locator('.tvm-quiz-panel')).toBeHidden();
+    await expect(quizHeading).toBeHidden();
   });
 
   // --- Navigation (step 2 is now unlocked) ---
