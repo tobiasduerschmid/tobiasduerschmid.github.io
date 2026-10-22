@@ -55,7 +55,7 @@ steps:
 
       ### `re` Python Package API Summary
 
-      - `import re` loads Python's regex module; `r"..."` keeps backslashes literal.
+      - `import re` loads Python's regex module; `r"..."` keeps backslashes literal so that you can directly insert the RegEx.
       - `re.fullmatch(pattern, text)` matches the **whole** text or returns `None`.
 
       ### Input File
