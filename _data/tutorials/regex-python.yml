@@ -1,5 +1,5 @@
 title: "Regex in Python"
-description: "Parse three tiny game-night files with regular expressions in about 10 minutes. Assumes basic Python loops, functions, and lists; no regex experience needed."
+description: "Parse three tiny game-night files with regular expressions in about 10 minutes. Assumes basic regex syntax and Python loops, functions, and lists."
 learning_objectives:
   - "Apply character classes, bounded repetition, and optional signs to parse file lines."
   - "Analyze why a full-line match rejects extra text."
@@ -10,6 +10,7 @@ require_tests: false
 require_quiz: false
 allow_skip_steps: true
 instructor_mode: true
+instructions_footer_include: regex-tutorial-reference.html
 autosave_type: files
 reset_type: files
 
@@ -46,7 +47,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      A file can mix useful records with junk. A **regular expression (regex)** describes which lines to keep.
+      Text processing often requires distinguishing valid records from noise. Python's `re` module lets you apply familiar regex patterns directly inside a file-reading loop.
 
       ### 🎯 You will learn to
 
@@ -185,7 +186,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      Matching selects a record. A **named capture group** keeps a useful field under a readable name.
+      Finding a match is only the first part of parsing. Named capture groups let Python retrieve the value you need without relying on fixed character positions.
 
       ### 🎯 You will learn to
 
@@ -350,7 +351,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      A score is more useful with its player's name. Two groups separate those fields in one match.
+      Records often contain several related values mixed with punctuation and spacing. Multiple named groups let you extract those values together and turn them into structured Python data.
 
       ### 🎯 You will learn to
 

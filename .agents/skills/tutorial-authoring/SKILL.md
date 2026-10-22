@@ -915,6 +915,13 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | smallta
 #     present grep/awk source patterns as evidence of C++ behavior.
 
 # === Common feature flags ===
+instructions_footer_include: string   # Optional trusted filename under _includes/.
+                                       # Appended after every step's rendered
+                                       # instructions by tutorial-step-instructions.html.
+                                       # Shared by live and print views; detached
+                                       # instructions receive the same rendered HTML.
+                                       # Omit for no footer. Use a native details/summary
+                                       # include for a collapsed optional reference.
 require_tests: boolean                 # If true, student must pass each step's
                                        # tests to advance. Default false.
                                        # NOTE: only steps that actually declare

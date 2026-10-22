@@ -376,7 +376,7 @@
       // on each jsonified string converts literal closing-script-tags inside embedded
       // GitCommandLab specs to the safe <\/script form so the outer script block cannot
       // be terminated prematurely by the HTML parser.
-      var instructionHTML = [{% for step in tutorial_data.steps %}{% if tutorial_backend == 'shell-pipeline' %}{% assign step_instructions = step.instructions | liquid %}{% else %}{% assign step_instructions = step.instructions %}{% endif %}{{ step_instructions | markdownify | jsonify | replace: "</script", "<\/script" }}{% unless forloop.last %},{% endunless %}{% endfor %}];
+      var instructionHTML = [{% for step in tutorial_data.steps %}{% capture rendered_step_instructions %}{% include tutorial-step-instructions.html tutorial=tutorial_data step=step %}{% endcapture %}{{ rendered_step_instructions | jsonify | replace: "</script", "<\/script" }}{% unless forloop.last %},{% endunless %}{% endfor %}];
       config.steps.forEach(function (step, i) { step.instructionsHTML = instructionHTML[i]; });
 
       // Pre-render solution explanation markdown (same Rouge highlighting)

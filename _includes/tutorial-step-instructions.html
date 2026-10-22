@@ -1,0 +1,9 @@
+{%- if include.tutorial.backend == 'shell-pipeline' -%}
+  {%- assign rendered_instruction_text = include.step.instructions | liquid -%}
+{%- else -%}
+  {%- assign rendered_instruction_text = include.step.instructions -%}
+{%- endif -%}
+{{ rendered_instruction_text | markdownify }}
+{%- if include.tutorial.instructions_footer_include -%}
+  {% include {{ include.tutorial.instructions_footer_include }} %}
+{%- endif -%}

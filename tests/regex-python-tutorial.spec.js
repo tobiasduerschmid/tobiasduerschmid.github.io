@@ -120,3 +120,71 @@ test('untouched exercises can be skipped and solutions are available immediately
   await page.getByRole('button', { name: /^▶\s+Run$/ }).click();
   await expect(page.getByRole('region', { name: 'Program output', exact: true })).toContainText(outputs[1]);
 });
+
+function regexReferences(page) {
+  // Native details/summary are the disclosure contract; summary has no portable
+  // implicit ARIA role, so select the semantic element by its visible label.
+  return page.locator('details').filter({
+    has: page.locator('summary').filter({ hasText: 'Regex Syntax Cheat Sheet' }),
+  });
+}
+
+async function expectCompleteReference(reference) {
+  for (const category of [
+    'Literal Characters', 'Character Classes', 'Quantifiers (Greedy)',
+    'Quantifiers (Lazy)', 'Anchors & Boundaries', 'Groups & Alternation', 'Lookarounds',
+  ]) {
+    await expect(reference.getByRole('heading', { name: category, exact: true })).toBeVisible();
+  }
+  await expect(reference.getByText('(?P<name>...)', { exact: true })).toBeVisible();
+  await expect(reference.getByText(/Unicode decimal digit; 0-9 with re\.ASCII/)).toBeVisible();
+}
+
+async function checkKeyboardReference(page, reference) {
+  const summary = reference.locator('summary');
+  const firstCategory = reference.getByRole('heading', {
+    name: 'Literal Characters', exact: true, includeHidden: true,
+  });
+  await expect(summary).toBeVisible();
+  await expect(firstCategory).toHaveCount(1);
+  await expect(firstCategory).toBeHidden();
+  await summary.focus();
+  await summary.press('Enter');
+  await expectCompleteReference(reference);
+  await a11yCheckpoint(page, 'Regex syntax reference expanded', { feature: 'regex-python-tutorial' });
+  await summary.press('Space');
+  await expect(firstCategory).toBeHidden();
+  await expect(summary).toBeFocused();
+}
+
+test('each exercise offers the complete optional reference with keyboard disclosure, including detached instructions', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto(url);
+  await waitForTutorialReady(page);
+  for (let index = 0; index < 3; index += 1) {
+    await page.getByRole('button', { name: new RegExp(`^Step ${index + 1}:`) }).click();
+    await expectActiveStep(page, index);
+    await expect(regexReferences(page)).toHaveCount(1);
+    await checkKeyboardReference(page, regexReferences(page));
+  }
+  const popupPromise = page.waitForEvent('popup');
+  await page.getByRole('button', { name: /Open instructions in separate window$/ }).click();
+  const popup = await popupPromise;
+  popup.on('pageerror', error => errors.push(error.message));
+  await expect(regexReferences(popup)).toHaveCount(1);
+  await checkKeyboardReference(popup, regexReferences(popup));
+  await popup.close();
+  expect(errors).toEqual([]);
+});
+
+test('print view expands the complete reference for every exercise', async ({ page }) => {
+  await page.goto(`${url}/print`);
+  const references = regexReferences(page);
+  await expect(references).toHaveCount(3);
+  // The print view presents the three exercises in their specified sequence.
+  for (let index = 0; index < 3; index += 1) {
+    await expectCompleteReference(references.nth(index));
+  }
+  await a11yCheckpoint(page, 'Printed regex syntax references', { feature: 'regex-python-tutorial' });
+});

@@ -27,8 +27,8 @@
   </div>
 
   <div class="step-instructions">
-    {% if tutorial_data.backend == 'shell-pipeline' %}{% assign step_instructions = step.instructions | liquid %}{% else %}{% assign step_instructions = step.instructions %}{% endif %}
-    {{ step_instructions | markdownify | replace: ' id="', ' data-print-id="' }}
+    {% capture rendered_step_instructions %}{% include tutorial-step-instructions.html tutorial=tutorial_data step=step %}{% endcapture %}
+    {{ rendered_step_instructions | replace: ' id="', ' data-print-id="' }}
   </div>
 
   {% if step.files %}

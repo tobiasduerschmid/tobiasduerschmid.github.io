@@ -1,0 +1,79 @@
+<p>This quick reference uses <strong>Python 3's <code>re</code> syntax for string patterns</strong>. Other engines can differ, especially in named groups, character classes, and anchors.</p>
+
+<div{% unless include.plain %} class="qr-container"{% endunless %}>
+  <!-- Literal Characters -->
+  <div{% unless include.plain %} class="qr-card"{% endunless %}>
+    <h3>Literal Characters</h3>
+    <ul{% unless include.plain %} class="qr-list"{% endunless %}>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>a</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Matches the exact character "a"</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>123</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Matches the exact sequence "123"</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>HeLLo</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Matches the exact (case-sensitive) sequence "HeLLo"</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>\.</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Escaped dot — matches a literal "."</span></li>
+    </ul>
+  </div>
+
+  <!-- Character Classes -->
+  <div{% unless include.plain %} class="qr-card"{% endunless %}>
+    <h3>Character Classes</h3>
+    <ul{% unless include.plain %} class="qr-list"{% endunless %}>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>[abc]</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>A single character of: a, b, or c</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>[^abc]</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Any character except: a, b, or c</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>[a-z]</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Any character in range a-z</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>.</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Any character except newline; includes newline with re.DOTALL</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>\s</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Whitespace</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>\S</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Not whitespace</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>\d</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Unicode decimal digit; 0-9 with re.ASCII</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>\D</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Not digit</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>\w</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Unicode alphanumeric character or underscore; a-z, A-Z, 0-9, _ with re.ASCII</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>\W</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Not word character</span></li>
+    </ul>
+  </div>
+
+  <!-- Quantifiers -->
+  <div{% unless include.plain %} class="qr-card"{% endunless %}>
+    <h3>Quantifiers (Greedy)</h3>
+    <ul{% unless include.plain %} class="qr-list"{% endunless %}>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>a*</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>0 or more</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>a+</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>1 or more</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>a?</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>0 or 1 (optional)</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>a{n}</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Exactly n times</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>a{n,}</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>n or more times</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>a{n,m}</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Between n and m times</span></li>
+    </ul>
+    <h3>Quantifiers (Lazy)</h3>
+    <ul{% unless include.plain %} class="qr-list"{% endunless %}>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>a*?</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>0 or more, as few as possible</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>a+?</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>1 or more, as few as possible</span></li>
+    </ul>
+  </div>
+
+  <!-- Anchors & Alternation -->
+  <div{% unless include.plain %} class="qr-card"{% endunless %}>
+    <h3>Anchors & Boundaries</h3>
+    <ul{% unless include.plain %} class="qr-list"{% endunless %}>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>^</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Start of string; also after each newline with re.MULTILINE</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>$</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>End of string or just before its final newline; also before each newline with re.MULTILINE</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>\b</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Word boundary</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>\B</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Not a word boundary</span></li>
+    </ul>
+  </div>
+
+  <!-- Groups & Lookarounds -->
+  <div{% unless include.plain %} class="qr-card"{% endunless %}>
+    <h3>Groups & Alternation</h3>
+    <ul{% unless include.plain %} class="qr-list"{% endunless %}>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>(...)</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Capturing group — treat as a single unit and keep the matched text</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>(a|b)</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Alternation — matches either a or b</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>(?P&lt;name&gt;...)</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Python named group — access by name or number</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>(?:...)</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Non-capturing group</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>\1</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Backreference to group 1</span></li>
+    </ul>
+    <h3>Lookarounds</h3>
+    <ul{% unless include.plain %} class="qr-list"{% endunless %}>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>(?=...)</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Positive lookahead</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>(?!...)</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Negative lookahead</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>(?&lt;=...)</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Positive lookbehind; its pattern must have a fixed length</span></li>
+      <li{% unless include.plain %} class="qr-item"{% endunless %}><code{% unless include.plain %} class="qr-token"{% endunless %}>(?&lt;!...)</code>{% if include.plain %} — {% endif %}<span{% unless include.plain %} class="qr-desc"{% endunless %}>Negative lookbehind; its pattern must have a fixed length</span></li>
+    </ul>
+  </div>
+</div>
