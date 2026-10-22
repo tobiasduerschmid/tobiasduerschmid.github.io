@@ -42,7 +42,9 @@ test('stopping checks reports cancellation without marking assertions failed or 
   });
   await page.getByRole('button', { name: /Test My Work/ }).click();
   await expect(page.getByRole('status', { name: 'Smalltalk check progress', exact: true })).toContainText('Checking 1 of 1');
-  await page.getByRole('button', { name: /Stop$/ }).click();
+  const stop = page.getByRole('button', { name: /Stop$/ });
+  // Exercise keyboard-owned focus; mouse activation need not focus a button.
+  await stop.focus(); await stop.press('Enter');
   await expect(page.getByRole('region', { name: 'Smalltalk check results', exact: true })).toContainText('Checks stopped. No completion credit awarded.');
   await expect(page.getByText(/0\s*\/\s*1 tests passed/)).toHaveCount(0);
   await expect(page.getByRole('button', { name: /Test My Work/ })).toBeEnabled();

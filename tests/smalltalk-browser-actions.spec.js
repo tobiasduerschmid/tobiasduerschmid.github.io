@@ -205,7 +205,9 @@ test('Package creation returns focus to its trigger when the form still owns foc
   await mountPackagePresentation(page);
   await page.getByRole('button',{name:'Create package',exact:true}).click();
   await page.getByLabel('New package name',{exact:true}).fill('SEBook-Focus');
-  await page.getByRole('button',{name:'Save package',exact:true}).click();
+  const save=page.getByRole('button',{name:'Save package',exact:true});
+  // Exercise keyboard-owned focus; mouse activation need not focus a button.
+  await save.focus(); await save.press('Enter');
   await page.evaluate(()=>window.finishPackageCreation());
   await expect(page.getByRole('status',{name:'Compilation status',exact:true})).toContainText('Package created');
   await expect(page.getByRole('button',{name:'Create package',exact:true})).toBeFocused();

@@ -132,7 +132,9 @@ test('Inspector reports a live cleanup failure and retries retained ownership', 
   await page.getByRole('button', { name: 'Close Result inspector', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Inspector cleanup status', exact: true })).toContainText('release transport failed');
   await page.evaluate(() => window.inspectorLifecycle.failRelease(false));
-  await page.getByRole('button', { name: 'Retry inspector cleanup', exact: true }).click();
+  const retry = page.getByRole('button', { name: 'Retry inspector cleanup', exact: true });
+  // Exercise keyboard-owned focus; mouse activation need not focus a button.
+  await retry.focus(); await retry.press('Enter');
   await expect.poll(() => page.evaluate(() => window.inspectorLifecycle.released.some(entry => entry.handles.includes('late-child')))).toBe(true);
   await expect(page.getByRole('button', { name: 'Retry inspector cleanup', exact: true })).toBeHidden();
   await expect(page.getByRole('button', { name: 'Evaluate', exact: true })).toBeFocused();
