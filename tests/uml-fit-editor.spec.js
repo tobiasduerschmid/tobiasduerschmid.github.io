@@ -40,10 +40,22 @@ test('the tutorial target keeps its fit control attached and fits inside the les
   await target.scrollIntoViewIfNeeded();
   await expect(fit(page)).toHaveCount(1);
   await fit(page).scrollIntoViewIfNeeded();
+  // Fitting preserves the lesson's scroll position. Align the diagram with
+  // the pane's content area before requiring the whole fitted drawing to show.
+  await target.evaluate(element => {
+    const pane = element.closest('.tvm-step-content-wrap');
+    pane.scrollTop += element.getBoundingClientRect().top - pane.getBoundingClientRect().top
+      - parseFloat(getComputedStyle(pane).paddingTop);
+  });
+  const previousScrollTop = await pane.evaluate(element => element.scrollTop);
   const diagramBox = await target.boundingBox();
   const buttonBox = await fit(page).boundingBox();
   expect(Math.abs(buttonBox.y - diagramBox.y)).toBeLessThan(16);
-  await fit(page).click();
+  // Locator.click() applies the page's button scroll margin before clicking.
+  // Use the visible center to exercise pointer activation without moving it.
+  await expect(fit(page)).toBeInViewport({ ratio: 1 });
+  await page.mouse.click(buttonBox.x + buttonBox.width / 2, buttonBox.y + buttonBox.height / 2);
+  expect(await pane.evaluate(element => element.scrollTop)).toBe(previousScrollTop);
   const bounds = await pane.boundingBox();
   const drawing = await target.locator('svg').boundingBox();
   const restoreBox = await restore(page).boundingBox();

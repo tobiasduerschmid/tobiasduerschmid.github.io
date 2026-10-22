@@ -99,7 +99,10 @@
       global.monaco.editor.setModelMarkers(editor.getModel(), PROBLEM_MARKER_OWNER, problemMarkers(global.monaco, problems));
       // An open problem panel would keep describing an error that is gone.
       // Closing it focuses the editor, so only do that while the learner is in it.
-      if (!problems.length && editor.hasWidgetFocus()) editor.trigger('sebook', 'closeMarkersNavigation', null);
+      // Monaco's blur notification can lag behind focus moving to a language tab.
+      if (!problems.length && host.contains(document.activeElement) && editor.hasWidgetFocus()) {
+        editor.trigger('sebook', 'closeMarkersNavigation', null);
+      }
     }
 
     function attachRefactorings(monaco) {
