@@ -47,8 +47,8 @@ for (const [key, source, present, absent] of [
   ['request-counts', 'cut -f3 access.tsv | uniq -c | sort', 'The position of each stage', 'Neighbors in the stream'],
   ['path-suffixes', "cut -f3 access.tsv | sed 's/html/htm/' | sort -u", 'Keep order and repeated requests', 'Transform paths, not whole records'],
   ['path-suffixes', "sed 's/html$/htm/' access.tsv | cut -f3", 'Transform paths, not whole records', 'Keep order and repeated requests'],
-  ['failure-reports', "grep GET access.tsv | awk '{print $3}' | sort | uniq -c", 'Selection and path groups', 'Group before adjacent counting'],
-  ['failure-reports', "grep GET access.tsv | awk '{print $3}' | uniq -c | sort -nr", 'Group before adjacent counting', 'Complete the pipeline syntax'],
+  ['failure-reports', "grep GET access.tsv | awk '{print $3}' | sort | uniq", 'Selection and path groups', 'Group before removing duplicates'],
+  ['failure-reports', "grep GET access.tsv | awk '{print $3}' | uniq | sort", 'Group before removing duplicates', 'Complete the pipeline syntax'],
 ]) {
   test(`${key}: advice fits ${source}`, async () => {
     const [{ analyzePipeline, matchesPipelineHint }, { createShell }] = await modules;

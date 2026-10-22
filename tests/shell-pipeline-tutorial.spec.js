@@ -4,7 +4,7 @@ const { a11yCheckpoint, auditInteractiveState } = require('./a11y-helpers');
 const TUTORIAL_URL = '/SEBook/tools/shell-pipeline-tutorial.html';
 const COUNT_COMMAND = 'cut -f3 access.tsv | sort | uniq -c';
 const REWRITE_COMMAND = "cut -f3 access.tsv | sed 's/\\.html$/.htm/'";
-const FAILURE_COMMAND = "awk '$2 == \"GET\" && $4 >= 400 { print $3 }' access.tsv | sort | uniq -c";
+const FAILURE_COMMAND = "awk '$2 == \"GET\" && $4 >= 400 { print $3 }' access.tsv | sort | uniq";
 
 function tutorialControls(page) {
   return {
