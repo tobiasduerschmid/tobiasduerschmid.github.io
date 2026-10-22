@@ -369,26 +369,31 @@ test('immutable cold source and copied accepted source survive source-file trunc
   expect(result.replay.value.booleanValue).toBe(true);
 });
 
-test('checkpoint preserves pending native Delay across the real VM millisecond clock wrap', async ({ page }) => {
+test('checkpoint resumes pending native Delay once and lets the real VM clock wrap', async ({ page }) => {
   const { installCheckpointFixture } = require('./fixtures/smalltalk-checkpoint');
   await page.addInitScript(installCheckpointFixture);
   const result = await withSmalltalk(page, async runtime => {
     let session = await runtime.openSession('live');
     const evaluate = source => runtime.request(session, 'evaluate', { source, bindings: 'workspace' });
-    const setup = await evaluate("Object subclass: #SEBookClockFixture instanceVariableNames: '' classVariableNames: '' poolDictionaries: '' category: 'SEBook-Tests'. SEBookClockFixture class compile: 'nearWrap <primitive: ''primitiveClockNearWrap'' module: ''SEBookCheckpointFixture''> self error: ''clock fixture failed'''. SEBookClockFixture class compile: 'vmClock <primitive: 135> ^ nil'. SEBookClockFixture nearWrap. done := Semaphore new. count := 0. [(Delay forMilliseconds: 10000) wait. count := count + 1. done signal] fork. count");
+    const setup = await evaluate("Object subclass: #SEBookClockFixture instanceVariableNames: '' classVariableNames: '' poolDictionaries: '' category: 'SEBook-Tests'. SEBookClockFixture class compile: 'nearWrap <primitive: ''primitiveClockNearWrap'' module: ''SEBookCheckpointFixture''> self error: ''clock fixture failed'''. SEBookClockFixture class compile: 'vmClock <primitive: 135> ^ nil'. SEBookClockFixture nearWrap. done := Semaphore new. Smalltalk at: #SEBookClockDelayCount put: 0. [(Delay forMilliseconds: 10000) wait. Smalltalk at: #SEBookClockDelayCount put: ((Smalltalk at: #SEBookClockDelayCount) + 1). done signal] fork. Smalltalk at: #SEBookClockDelayCount");
     const checkpoint = await runtime.checkpoint(session);
     session = await runtime.restoreCheckpoint(session, checkpoint);
-    const pending = await evaluate('count = 0 and: [SEBookClockFixture vmClock > 536840911]');
-    const resumed = await evaluate('done wait. count = 1 and: [SEBookClockFixture vmClock < 30000]');
+    const clock = await evaluate('SEBookClockFixture vmClock > 536840911');
+    // Native Delay uses UTC, which keeps advancing while the checkpoint pauses
+    // the VM clock. Completion may precede wrap, so verify both independently.
+    const resumed = await evaluate('done wait. Smalltalk at: #SEBookClockDelayCount');
+    const wrapped = await evaluate('[SEBookClockFixture vmClock >= 30000] whileTrue: [(Delay forMilliseconds: 10) wait]. (Smalltalk at: #SEBookClockDelayCount) = 1 and: [SEBookClockFixture vmClock < 30000]');
     runtime.releaseCheckpoint(checkpoint);
-    return { setup, pending, resumed };
+    return { setup, clock, resumed, wrapped };
   });
   expect(result.setup.error).toBeNull();
   expect(result.setup.value.text).toBe('0');
-  expect(result.pending.error).toBeNull();
-  expect(result.pending.value.booleanValue).toBe(true);
+  expect(result.clock.error).toBeNull();
+  expect(result.clock.value.booleanValue).toBe(true);
   expect(result.resumed.error).toBeNull();
-  expect(result.resumed.value.booleanValue).toBe(true);
+  expect(result.resumed.value.text).toBe('1');
+  expect(result.wrapped.error).toBeNull();
+  expect(result.wrapped.value.booleanValue).toBe(true);
 });
 
 test('checkpoint restores a queued external semaphore signal exactly once', async ({ page }) => {

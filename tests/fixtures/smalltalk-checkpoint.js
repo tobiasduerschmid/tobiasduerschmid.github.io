@@ -23,6 +23,11 @@ function installCheckpointFixture() {
     const capture = self.SEBookSmalltalk.Checkpoint.capture;
     self.SEBookSmalltalk.Checkpoint.capture = function (vm, filesystem, identity) {
       if (moveClockOnCapture) {
+        // Check the real callback at the snapshot cut, before serialization.
+        // UTC keeps advancing during restore, so checking afterward is too late.
+        // globalNamed skips falsy SmallIntegers, so inspect the binding directly.
+        const pending = vm.allGlobalsDo((name, value) => name.bytesAsString() === 'SEBookClockDelayCount' && value === 0);
+        if (!pending) throw new Error('Clock fixture must capture before the pending Delay callback');
         // Move the clock coordinate system consistently; do not invalidate pending timers.
         const clock = Squeak.MillisecondClockMask - 5000;
         const shift = clock - vm.primHandler.millisecondClockValue();
