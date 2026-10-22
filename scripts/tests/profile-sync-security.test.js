@@ -275,7 +275,15 @@ function coordinator() {
   const window = {
     addEventListener(type, fn) { if (type === 'message') listeners.add(fn); },
     removeEventListener(type, fn) { listeners.delete(fn); },
-    postMessage(message) { requests.push(message); },
+    postMessage(message) {
+      requests.push(message);
+      if (message.type === 'apply') {
+        for (const fn of [...listeners]) fn({
+          origin: context.location.origin, source: window,
+          data: { channel: 'sebook-profile-sync', to: 'extension', type: 'applied', requestId: message.requestId },
+        });
+      }
+    },
   };
   window.top = window;
   const context = {

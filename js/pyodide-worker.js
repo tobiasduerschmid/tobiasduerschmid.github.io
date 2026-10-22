@@ -291,11 +291,11 @@ function readFile(id, path) {
 // Loaded lazily on the first lint message — tutorials without diagnostics
 // pay nothing.
 
-var _linterReady = false;
+var _lintFunction = null;
 var _linterLoadPromise = null;
 
 function _ensureLinter() {
-  if (_linterReady) return Promise.resolve();
+  if (_lintFunction) return Promise.resolve();
   if (_linterLoadPromise) return _linterLoadPromise;
 
   _linterLoadPromise = (function () {
@@ -349,14 +349,19 @@ function _ensureLinter() {
         '        })',
         '    return _json.dumps(out)',
       ].join('\n');
-      pyodide.runPython(bootstrapCode);
-      // Verify the helper actually got registered before signalling ready.
-      var probe = pyodide.globals.get('__lint');
-      if (!probe) {
+      // Learner runs deliberately clear their globals. Keep the helper and its
+      // imports in a separate namespace owned by this worker's linter instead.
+      var lintGlobals = pyodide.runPython('{}');
+      try {
+        pyodide.runPython(bootstrapCode, { globals: lintGlobals });
+        _lintFunction = lintGlobals.get('__lint');
+      } finally {
+        // The retained function keeps its own Python globals alive.
+        lintGlobals.destroy();
+      }
+      if (!_lintFunction) {
         throw new Error('lint helper __lint not registered');
       }
-      probe.destroy();
-      _linterReady = true;
       console.info('[lint] pyflakes-based linter ready');
     });
   })().catch(function (err) {
@@ -374,20 +379,7 @@ function lintCode(id, path, code) {
     return;
   }
   _ensureLinter().then(function () {
-    var fn = pyodide.globals.get('__lint');
-    if (!fn) {
-      self.postMessage({
-        type: 'lint_done', id: id, path: path, markers: [],
-        error: '__lint not registered',
-      });
-      return;
-    }
-    var json;
-    try {
-      json = fn(code || '', path || '<input>');
-    } finally {
-      fn.destroy();
-    }
+    var json = _lintFunction(code || '', path || '<input>');
     var markers;
     try { markers = JSON.parse(json); } catch (e) { markers = []; }
     self.postMessage({ type: 'lint_done', id: id, path: path, markers: markers });

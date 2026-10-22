@@ -42,11 +42,11 @@
     }
 
     var errors = [];
-    var parsedFiles = {};
+    var parsedFiles = Object.create(null);
 
     // Parse all source files into ASTs
     for (var filename in sources) {
-      if (!sources.hasOwnProperty(filename)) continue;
+      if (!Object.hasOwn(sources, filename)) continue;
       try {
         var scriptKind = _getScriptKind(ts, filename);
         parsedFiles[filename] = ts.createSourceFile(
@@ -214,7 +214,7 @@
       }
       return text;
     };
-    const resolved = {};
+    const resolved = Object.create(null);
     for (const [filename, source] of Object.entries(parsedFiles)) {
       const edits = [];
       const visit = node => {
@@ -501,15 +501,17 @@
     this.classMap     = new Map();   // name → ClassInfo
 
     // Lookup tables for the sequence diagram generator
-    this.classMethods = {};  // {className: {methodName: AST node}}
-    this.attrTypes    = {};  // {className: {attrName:  className}}
-    this.paramTypes   = {};  // {className: {methodName: {paramName: className}}}
+    // Source identifiers may be JavaScript prototype names; lookup tables and
+    // scope copies must contain only their own bindings.
+    this.classMethods = Object.create(null);  // {className: {methodName: AST node}}
+    this.attrTypes    = Object.create(null);  // {className: {attrName:  className}}
+    this.paramTypes   = Object.create(null);  // {className: {methodName: {paramName: className}}}
   }
 
   ClassExtractor.prototype.analyze = function () {
     var self = this;
     for (var fn in this.parsedFiles) {
-      if (!this.parsedFiles.hasOwnProperty(fn)) continue;
+      if (!Object.hasOwn(this.parsedFiles, fn)) continue;
       this._extractFromFile(this.parsedFiles[fn], fn);
     }
     this.classMap.forEach(function (info) { self._classifyRelationships(info); });
@@ -567,7 +569,7 @@
     }
 
     var info = new ClassInfo(name, { isAbstract: isAbstract, bases: bases, implements: impls });
-    var methods = {}, aTypes = {}, pTypes = {}, initParamTypes = {};
+    var methods = Object.create(null), aTypes = Object.create(null), pTypes = Object.create(null), initParamTypes = Object.create(null);
 
     for (var m = 0; m < node.members.length; m++) {
       var member = node.members[m];
@@ -594,7 +596,7 @@
 
   ClassExtractor.prototype._visitConstructor = function (member, info, sourceFile, methods, aTypes, pTypes, initParamTypes) {
     var ts = this.ts;
-    var params = [], mParams = {};
+    var params = [], mParams = Object.create(null);
 
     for (var i = 0; i < member.parameters.length; i++) {
       var param = member.parameters[i];
@@ -723,7 +725,7 @@
     if (member.kind === ts.SyntaxKind.GetAccessor) prefix = 'get ';
     if (member.kind === ts.SyntaxKind.SetAccessor) prefix = 'set ';
 
-    var params = [], mParams = {};
+    var params = [], mParams = Object.create(null);
     if (member.parameters) {
       for (var i = 0; i < member.parameters.length; i++) {
         var p = member.parameters[i];
@@ -791,9 +793,9 @@
     }
 
     this.classMap.set(name, info);
-    this.classMethods[name] = {};
-    this.attrTypes[name]    = {};
-    this.paramTypes[name]   = {};
+    this.classMethods[name] = Object.create(null);
+    this.attrTypes[name]    = Object.create(null);
+    this.paramTypes[name]   = Object.create(null);
   };
 
   /* ── Enum declarations ──────────────────────────────────────── */
@@ -809,9 +811,9 @@
     }
 
     this.classMap.set(name, info);
-    this.classMethods[name] = {};
-    this.attrTypes[name]    = {};
-    this.paramTypes[name]   = {};
+    this.classMethods[name] = Object.create(null);
+    this.attrTypes[name]    = Object.create(null);
+    this.paramTypes[name]   = Object.create(null);
   };
 
   /* ── Relationship classification ────────────────────────────── */
@@ -993,7 +995,7 @@
     this.errors       = errors;
 
     // Class hierarchy for super() resolution
-    this.classBases = {};
+    this.classBases = Object.create(null);
     var self = this;
     extractor.classMap.forEach(function (info, name) {
       self.classBases[name] = info.bases.filter(function (b) { return allTypeNames.has(b); });
@@ -1018,9 +1020,9 @@
     this._statementVisits = 0;
 
     // Scope
-    this.varTypes     = {};           // {varName: className}
+    this.varTypes     = Object.create(null);           // {varName: className}
     this.varParticipants = Object.create(null); // known object identities in this scope
-    this._callerClass = {};           // {participantId: className}
+    this._callerClass = Object.create(null);           // {participantId: className}
     this._callStack   = new Set();    // "className::methodName"
     this.constantBindings = new Map();
     this.loopConstants = new ConstantValues.LoopFacts();
@@ -1086,11 +1088,11 @@
 
   SequenceDiagramGenerator.prototype._collectEntryStmts = function () {
     var ts = this.ts;
-    var mainBlocks = {};  // {filename: [{stmt, sourceFile}]}
+    var mainBlocks = Object.create(null);  // {filename: [{stmt, sourceFile}]}
     var topStmts   = [];
 
     for (var fn in this.parsedFiles) {
-      if (!this.parsedFiles.hasOwnProperty(fn)) continue;
+      if (!Object.hasOwn(this.parsedFiles, fn)) continue;
       var sf = this.parsedFiles[fn];
 
       for (var i = 0; i < sf.statements.length; i++) {
@@ -1335,12 +1337,12 @@
   /* ── Control flow → combined fragments ─────────────────────── */
 
   SequenceDiagramGenerator.prototype._captureBindings = function () {
-    return { types: { ...this.varTypes }, participants: { ...this.varParticipants }, constants: new Map(this.constantBindings) };
+    return { types: Object.assign(Object.create(null), this.varTypes), participants: Object.assign(Object.create(null), this.varParticipants), constants: new Map(this.constantBindings) };
   };
 
   SequenceDiagramGenerator.prototype._restoreBindings = function (state) {
-    this.varTypes = { ...state.types };
-    this.varParticipants = { ...state.participants };
+    this.varTypes = Object.assign(Object.create(null), state.types);
+    this.varParticipants = Object.assign(Object.create(null), state.participants);
     this.constantBindings = new Map(state.constants);
   };
 
@@ -1348,7 +1350,7 @@
   // shared type when possible, without attributing its calls to a known object.
   SequenceDiagramGenerator.prototype._mergeBindings = function (states, scope) {
     this.constantBindings.clear();
-    this.varTypes = {};
+    this.varTypes = Object.create(null);
     this.varParticipants = Object.create(null);
     for (const name of Object.keys(scope.types)) {
       const type = states[0].types[name];
@@ -2059,16 +2061,16 @@
 
     if (!this.diagnostics.canExpand(clsName + '.' + methodName, this._callStack.has(key), depth, SEQ_MAX_DEPTH)) return;
     this._callStack.add(key);
-    var savedVarTypes = {};
+    var savedVarTypes = Object.create(null);
     for (var v in this.varTypes) savedVarTypes[v] = this.varTypes[v];
     const savedVarParticipants = this.varParticipants;
     const savedConstants = this.constantBindings;
 
     // Seed local scope with parameter type hints
-    this.varTypes = {};
+    this.varTypes = Object.create(null);
     this.varParticipants = Object.create(null);
     this.constantBindings = new Map();
-    var pt = (this.paramTypes[clsName] || {})[methodName];
+    var pt = (this.paramTypes[clsName] || Object.create(null))[methodName];
     if (pt) { for (var p in pt) this.varTypes[p] = pt[p]; }
     for (let index = 0; index < bindings.length && index < node.parameters.length; index++) {
       if (bindings[index] && this.ts.isIdentifier(node.parameters[index].name)) {

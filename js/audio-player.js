@@ -4,6 +4,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const STORAGE_KEY_VOL = 'cap_volume';
     const STORAGE_KEY_SPEED = 'cap_speed';
 
+    function readPreference(key, minimum, maximum, fallback) {
+        try {
+            const stored = localStorage.getItem(key);
+            if (stored === null || stored.trim() === '') return fallback;
+            const value = Number(stored);
+            return Number.isFinite(value) && value >= minimum && value <= maximum ? value : fallback;
+        } catch (error) {
+            // Playback still works when browser policy prevents saved preferences.
+            return fallback;
+        }
+    }
+
+    function savePreference(key, value) {
+        try { localStorage.setItem(key, value); }
+        catch (error) { /* Keep the current playback setting when storage is unavailable. */ }
+    }
+
     document.querySelectorAll('.cap').forEach(player => {
         const audio       = player.querySelector('.cap__audio');
         const playBtn     = player.querySelector('.cap__play-btn');
@@ -19,23 +36,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const nextBtn     = player.querySelector('.cap__ctrl-btn--next');
 
         // ── Initialization from Persistence ──────────────────────
-        const savedVol = localStorage.getItem(STORAGE_KEY_VOL);
-        if (savedVol !== null) {
-            audio.volume = parseFloat(savedVol);
-            if (volumeSlider) volumeSlider.value = savedVol;
-        }
+        audio.volume = readPreference(STORAGE_KEY_VOL, 0, 1, audio.volume);
+        if (volumeSlider) volumeSlider.value = audio.volume;
 
-        const savedSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
-        if (savedSpeed !== null) {
-            const speed = parseFloat(savedSpeed);
-            audio.playbackRate = speed;
-            // Update active state on buttons
-            speedBtns.forEach(btn => {
-                const match = parseFloat(btn.dataset.speed) === speed;
-                btn.classList.toggle('is-active', match);
-                btn.setAttribute('aria-pressed', match ? 'true' : 'false');
-            });
-        }
+        audio.playbackRate = readPreference(STORAGE_KEY_SPEED, 0.5, 2, audio.playbackRate);
+        speedBtns.forEach(btn => {
+            const match = parseFloat(btn.dataset.speed) === audio.playbackRate;
+            btn.classList.toggle('is-active', match);
+            btn.setAttribute('aria-pressed', match ? 'true' : 'false');
+        });
 
         // ── Helpers ──────────────────────────────────────────────
         function fmt(s) {
@@ -77,8 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Re-apply speed on load (some browsers reset playbackRate on src change)
         audio.addEventListener('loadstart', () => {
-            const currentSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
-            if (currentSpeed) audio.playbackRate = parseFloat(currentSpeed);
+            audio.playbackRate = readPreference(STORAGE_KEY_SPEED, 0.5, 2, audio.playbackRate);
         });
 
         audio.addEventListener('timeupdate', () => {
@@ -139,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.classList.add('is-active');
                 btn.setAttribute('aria-pressed', 'true');
                 audio.playbackRate = speed;
-                localStorage.setItem(STORAGE_KEY_SPEED, speed);
+                savePreference(STORAGE_KEY_SPEED, speed);
             });
         });
 
@@ -148,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const vol = parseFloat(volumeSlider.value);
             audio.volume = vol;
             setVolIcon(vol);
-            localStorage.setItem(STORAGE_KEY_VOL, vol);
+            savePreference(STORAGE_KEY_VOL, vol);
         });
 
         let prevVol = 1;
@@ -162,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 volumeSlider.value = prevVol;
             }
             setVolIcon(audio.volume);
-            localStorage.setItem(STORAGE_KEY_VOL, audio.volume);
+            savePreference(STORAGE_KEY_VOL, audio.volume);
         });
     });
 });

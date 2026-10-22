@@ -92,7 +92,7 @@ for (const coldBoot of [false, true]) {
     const terminal = startTerminal(coldBoot);
     t.after(() => terminal.vm.destroy());
     await terminal.waitFor(prompt, 90_000);
-    const sandbox = { document: { cookie: '' }, TextEncoder, TextDecoder, btoa, atob, setTimeout, clearTimeout };
+    const sandbox = { document: { cookie: '' }, AbortController, TextEncoder, TextDecoder, btoa, atob, setTimeout, clearTimeout };
     sandbox.window = sandbox;
     jsVm.runInNewContext(fs.readFileSync(path.join(root, 'js/tutorial-code.js'), 'utf8'), sandbox);
     const tutorial = new sandbox.TutorialCode({}, {

@@ -39,11 +39,11 @@
   function analyzePythonSources(sources, options) {
     var errors = [];
     var allTypeNames = new Set();
-    var parsedFiles = {};
+    var parsedFiles = Object.create(null);
 
     // Parse all source files
     for (var filename in sources) {
-      if (!sources.hasOwnProperty(filename)) continue;
+      if (!Object.hasOwn(sources, filename)) continue;
       try {
         var ast = parsePythonSource(sources[filename]);
         parsedFiles[filename] = ast;
@@ -1563,7 +1563,7 @@
     this.allTypeNames = allTypeNames;
     this.errors = errors;
     this.classes = [];      // ClassInfo objects
-    this.classMap = {};     // name → ClassInfo
+    this.classMap = Object.create(null);     // name → ClassInfo
   }
 
   function ClassInfo(name, bases, filename) {
@@ -1573,14 +1573,14 @@
     this.methods = [];       // [{name, params, isPrivate, isAbstract, isStatic, isClassMethod, isProperty, returnType}]
     this.attributes = [];    // [{name, typeHint}]
     this.dependencies = [];  // [className]
-    this._relAttrs = {};     // attribute names promoted to relationship arrows
+    this._relAttrs = Object.create(null);     // attribute names promoted to relationship arrows
     this.relationships = []; // Stored references: [{target, attrName, multiplicity}]
     this.decorators = [];    // decorator names on the class
   }
 
   PythonClassExtractor.prototype.analyze = function () {
     for (var fn in this.parsedFiles) {
-      if (!this.parsedFiles.hasOwnProperty(fn)) continue;
+      if (!Object.hasOwn(this.parsedFiles, fn)) continue;
       var tree = this.parsedFiles[fn];
       this._extractFromBody(tree.body, fn);
     }
@@ -1688,13 +1688,13 @@
     });
 
     // Keep the complete annotation: a parameter may describe several targets.
-    var initParamTypes = {};
+    var initParamTypes = Object.create(null);
     for (var i = 0; i < args.length; i++) {
       var a = args[i];
       if (a.arg !== 'self' && a.arg !== 'cls' && a.annotation) initParamTypes[a.arg] = a.annotation;
     }
 
-    var localCreations = {};
+    var localCreations = Object.create(null);
     var self = this;
     walkPythonMethodBody(node.body, function (child) {
       if (child.type === 'Assign' && child.targets && child.targets.length === 1) {
@@ -1824,7 +1824,7 @@
   };
 
   PythonClassExtractor.prototype._collectDependencies = function (classNode, classInfo) {
-    var structural = {};
+    var structural = Object.create(null);
     var arr = classInfo.relationships.map(relation => relation.target).concat(classInfo.bases);
     for (var i = 0; i < arr.length; i++) structural[arr[i]] = true;
 
@@ -2035,14 +2035,14 @@
   };
 
   PythonClassExtractor.prototype._externalBaseClassNames = function (classes) {
-    var ignored = { ABC: true, ABCMeta: true, object: true };
-    var seen = {};
+    var ignored = new Set(['ABC', 'ABCMeta', 'object']);
+    var seen = Object.create(null);
     var out = [];
     for (var i = 0; i < classes.length; i++) {
       var bases = classes[i].bases || [];
       for (var j = 0; j < bases.length; j++) {
         var base = bases[j];
-        if (!base || ignored[base] || this.classMap[base] || seen[base]) continue;
+        if (!base || ignored.has(base) || this.classMap[base] || seen[base]) continue;
         seen[base] = true;
         out.push(base);
       }
@@ -2060,13 +2060,14 @@
     this.extractor = extractor;
     this.allTypeNames = allTypeNames;
 
-    // Lookup tables
-    this.classMethods = {};    // {className: {methodName: FunctionDef}}
-    this.attrTypes = {};       // {className: {attrName: className}}
-    this.paramTypes = {};      // {className: {methodName: {param: className}}}
-    this.fieldAnnotations = {}; // {className: {attrName: annotationNode}}
-    this.classBases = {};      // {className: [baseName]}
-    this._dataClasses = {};    // {className: true}
+    // Python identifiers can be JavaScript prototype names, so symbol tables
+    // (including copied scopes) must contain only their own bindings.
+    this.classMethods = Object.create(null);    // {className: {methodName: FunctionDef}}
+    this.attrTypes = Object.create(null);       // {className: {attrName: className}}
+    this.paramTypes = Object.create(null);      // {className: {methodName: {param: className}}}
+    this.fieldAnnotations = Object.create(null); // {className: {attrName: annotationNode}}
+    this.classBases = Object.create(null);      // {className: [baseName]}
+    this._dataClasses = Object.create(null);    // {className: true}
     this._methodOwners = new WeakMap();
     this._buildLookups();
     this._constantSubclassedTypes = new Set(Object.values(this.classBases).flat());
@@ -2083,18 +2084,18 @@
     this.lines = [];
 
     // Scope tracking
-    this.varTypes = {};
-    this.varParticipants = {}; // aliases and parameter bindings to known objects
-    this.fieldBindings = {}; // owning participant -> field -> object binding (null after invalidation)
+    this.varTypes = Object.create(null);
+    this.varParticipants = Object.create(null); // aliases and parameter bindings to known objects
+    this.fieldBindings = Object.create(null); // owning participant -> field -> object binding (null after invalidation)
     this._scopeIdentity = 'Main';
     this._invocationCount = 0;
-    this._callerClass = {};
-    this._referencedVars = {};   // {name: true} for names read in current scope
+    this._callerClass = Object.create(null);
+    this._referencedVars = Object.create(null);   // {name: true} for names read in current scope
     this.constantBindings = new Map();
     this.loopConstants = new ConstantValues.LoopFacts();
 
     // Recursion guard
-    this._callStack = {};
+    this._callStack = Object.create(null);
     this.MAX_DEPTH = 3;
   }
 
@@ -2115,7 +2116,7 @@
    * of a Tuple target). Everything else is treated as a use.
    */
   function collectNameLoads(stmts) {
-    var names = {};
+    var names = Object.create(null);
     function walk(node) {
       if (!node || typeof node !== 'object') return;
       if (node.type === 'Assign') {
@@ -2236,15 +2237,15 @@
   PythonSequenceDiagramGenerator.prototype._buildLookups = function () {
     var self = this;
     for (var fn in this.parsedFiles) {
-      if (!this.parsedFiles.hasOwnProperty(fn)) continue;
+      if (!Object.hasOwn(this.parsedFiles, fn)) continue;
       var tree = this.parsedFiles[fn];
       astWalk(tree, function (node) {
         if (node.type !== 'ClassDef') return;
         var cname = node.name;
-        var methods = {};
-        var aTypes = {};
-        var pTypes = {};
-        var fAnns = {};
+        var methods = Object.create(null);
+        var aTypes = Object.create(null);
+        var pTypes = Object.create(null);
+        var fAnns = Object.create(null);
 
         // Track bases
         var bases = [];
@@ -2266,7 +2267,7 @@
           self._methodOwners.set(item, cname);
 
           // Parameter types
-          var mParams = {};
+          var mParams = Object.create(null);
           var args = item.args ? item.args.args : [];
           for (var j = 0; j < args.length; j++) {
             var a = args[j];
@@ -2280,8 +2281,8 @@
 
           // __init__: extract attribute types
           if (item.name === '__init__') {
-            var initParams = {};
-            var initAnnotations = {};
+            var initParams = Object.create(null);
+            var initAnnotations = Object.create(null);
             for (var j = 0; j < args.length; j++) {
               var a = args[j];
               if (a.arg === 'self' || a.arg === 'cls') continue;
@@ -2413,11 +2414,11 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._collectEntryStmts = function () {
-    var fileEntries = {};
+    var fileEntries = Object.create(null);
     var mainFile = null;
     var topStmts = [];
     for (var fn in this.parsedFiles) {
-      if (!this.parsedFiles.hasOwnProperty(fn)) continue;
+      if (!Object.hasOwn(this.parsedFiles, fn)) continue;
       var tree = this.parsedFiles[fn];
       fileEntries[fn] = [];
       for (var i = 0; i < tree.body.length; i++) {
@@ -2586,13 +2587,13 @@
     if (expression.type !== 'Attribute') return null;
     const owner = this._objectBinding(expression.value, caller);
     if (!owner) return null;
-    const fields = this.fieldBindings[owner.participant] || {};
+    const fields = this.fieldBindings[owner.participant] || Object.create(null);
     if (Object.prototype.hasOwnProperty.call(fields, expression.attr)) return fields[expression.attr];
     let ownerType = owner.type;
     const seen = new Set();
     while (ownerType && !seen.has(ownerType)) {
       seen.add(ownerType);
-      const type = (this.attrTypes[ownerType] || {})[expression.attr];
+      const type = (this.attrTypes[ownerType] || Object.create(null))[expression.attr];
       if (this._isPrimitiveType(type)) return { type, participant: null };
       if (type) return { type: type, participant: this._symbolicParticipantId(
         'field', owner.participant, expression.attr, type, owner.participant + '_' + expression.attr) };
@@ -2612,7 +2613,7 @@
     } else if (target.type === 'Attribute') {
       const owner = this._objectBinding(target.value, caller);
       if (!owner) return;
-      if (!this.fieldBindings[owner.participant]) this.fieldBindings[owner.participant] = {};
+      if (!this.fieldBindings[owner.participant]) this.fieldBindings[owner.participant] = Object.create(null);
       this.fieldBindings[owner.participant][target.attr] = binding;
     } else if (target.type === 'Tuple' || target.type === 'List') {
       // A collection binding does not identify any of its destructured items.
@@ -2700,26 +2701,26 @@
   // ── Control flow → combined fragments ────────────────────────────
 
   PythonSequenceDiagramGenerator.prototype._scopeSnapshot = function () {
-    const fields = {};
-    for (const owner in this.fieldBindings) fields[owner] = Object.assign({}, this.fieldBindings[owner]);
-    return { types: Object.assign({}, this.varTypes), participants: Object.assign({}, this.varParticipants), fields: fields,
+    const fields = Object.create(null);
+    for (const owner in this.fieldBindings) fields[owner] = Object.assign(Object.create(null), this.fieldBindings[owner]);
+    return { types: Object.assign(Object.create(null), this.varTypes), participants: Object.assign(Object.create(null), this.varParticipants), fields: fields,
       constants: new Map(this.constantBindings) };
   };
 
   PythonSequenceDiagramGenerator.prototype._restoreScope = function (scope, preserveFields) {
-    this.varTypes = Object.assign({}, scope.types);
-    this.varParticipants = Object.assign({}, scope.participants);
+    this.varTypes = Object.assign(Object.create(null), scope.types);
+    this.varParticipants = Object.assign(Object.create(null), scope.participants);
     this.constantBindings = new Map(scope.constants);
     if (!preserveFields) {
-      this.fieldBindings = {};
-      for (const owner in scope.fields) this.fieldBindings[owner] = Object.assign({}, scope.fields[owner]);
+      this.fieldBindings = Object.create(null);
+      for (const owner in scope.fields) this.fieldBindings[owner] = Object.assign(Object.create(null), scope.fields[owner]);
     }
   };
 
   PythonSequenceDiagramGenerator.prototype._mergeScopes = function (scopes) {
     this.constantBindings.clear();
-    this.varTypes = {};
-    this.varParticipants = {};
+    this.varTypes = Object.create(null);
+    this.varParticipants = Object.create(null);
     var baseline = scopes[0];
     for (var name in baseline.types) {
       var type = baseline.types[name];
@@ -2732,13 +2733,13 @@
       this.varTypes[name] = type;
       if (participant) this.varParticipants[name] = participant;
     }
-    this.fieldBindings = {};
+    this.fieldBindings = Object.create(null);
     const owners = new Set(scopes.flatMap(scope => Object.keys(scope.fields)));
     for (const owner of owners) {
       const names = new Set(scopes.flatMap(scope => Object.keys(scope.fields[owner] || {})));
-      this.fieldBindings[owner] = {};
+      this.fieldBindings[owner] = Object.create(null);
       for (const name of names) {
-        const bindings = scopes.map(scope => (scope.fields[owner] || {})[name]);
+        const bindings = scopes.map(scope => (scope.fields[owner] || Object.create(null))[name]);
         const first = bindings[0];
         if (first && bindings.every(binding => binding && binding.type === first.type)) {
           const sameParticipant = bindings.every(binding => binding.participant === first.participant);
@@ -3087,7 +3088,7 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._findMethodNode = function (clsName, methodName) {
-    var visited = {};
+    var visited = Object.create(null);
     var current = clsName;
     while (current && !visited[current]) {
       visited[current] = true;
@@ -3161,7 +3162,7 @@
   };
 
   PythonSequenceDiagramGenerator.prototype._argumentBindings = function (node, inputs) {
-    var bindings = { types: {}, participants: {} };
+    var bindings = { types: Object.create(null), participants: Object.create(null) };
     var parameters = (node.args ? node.args.args : []).filter(function (arg) {
       return arg.arg !== 'self' && arg.arg !== 'cls';
     });
@@ -3203,12 +3204,12 @@
     var savedScope = this._scopeSnapshot();
     var savedIdentity = this._scopeIdentity;
     var savedRefs = this._referencedVars;
-    this.varTypes = {};
+    this.varTypes = Object.create(null);
     this.varParticipants = bindings.participants;
     this.constantBindings = new Map();
     this._scopeIdentity = ++this._invocationCount;
 
-    var pt = (this.paramTypes[clsName] || {})[methodName] || {};
+    var pt = (this.paramTypes[clsName] || Object.create(null))[methodName] || Object.create(null);
     for (var k in pt) this.varTypes[k] = pt[k];
     for (var k in bindings.types) this.varTypes[k] = bindings.types[k];
 
@@ -3258,7 +3259,7 @@
       }
       // ClassName.static_method() — static/class method call on a known type
       if (func.value._typeTarget !== null && this.allTypeNames.has(varName)) {
-        var targetMeths = this.classMethods[varName] || {};
+        var targetMeths = this.classMethods[varName] || Object.create(null);
         if (targetMeths[method]) return [varName, method];
       }
       return null;
@@ -3416,14 +3417,14 @@
       if (!cc) return;
 
       // Strategy 1: Field annotation (e.g., self._tasks: List[Task])
-      var ann = (this.fieldAnnotations[cc] || {})[attr];
+      var ann = (this.fieldAnnotations[cc] || Object.create(null))[attr];
       if (ann) {
         var elemType = resolveAnnotationToClass(ann, this.allTypeNames);
         if (elemType) { this.varTypes[varName] = elemType; return; }
       }
 
       // Strategy 2: Append heuristic
-      var meths = this.classMethods[cc] || {};
+      var meths = this.classMethods[cc] || Object.create(null);
       for (var mname in meths) {
         var mnode = meths[mname];
         var args = mnode.args ? mnode.args.args : [];
@@ -3441,7 +3442,7 @@
       }
 
       // Strategy 3: attr_types
-      var elem = (this.attrTypes[cc] || {})[attr];
+      var elem = (this.attrTypes[cc] || Object.create(null))[attr];
       if (elem) { this.varTypes[varName] = elem; return; }
     }
   };
@@ -3536,7 +3537,7 @@
    */
   PythonSequenceDiagramGenerator.prototype._resolveSingleImplementor = function (clsName, methodName) {
     // Only apply when the target class has a stub method (abstract/interface)
-    var meths = this.classMethods[clsName] || {};
+    var meths = this.classMethods[clsName] || Object.create(null);
     if (meths[methodName] && !this._isStubMethod(meths[methodName])) return null;
 
     // Find all subclasses that have a concrete implementation
@@ -3544,7 +3545,7 @@
     for (var cname in this.classBases) {
       var bases = this.classBases[cname];
       if (bases.indexOf(clsName) === -1) continue;
-      var cMeths = this.classMethods[cname] || {};
+      var cMeths = this.classMethods[cname] || Object.create(null);
       if (cMeths[methodName] && !this._isStubMethod(cMeths[methodName])) {
         candidates.push(cname);
       }
@@ -3582,9 +3583,9 @@
   }
 
   function _topoSortClasses(classes) {
-    var map = {};
+    var map = Object.create(null);
     for (var i = 0; i < classes.length; i++) map[classes[i].name] = classes[i];
-    var visited = {};
+    var visited = Object.create(null);
     var order = [];
     function visit(cls) {
       if (visited[cls.name]) return;

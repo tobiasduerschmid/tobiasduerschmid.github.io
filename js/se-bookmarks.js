@@ -30,7 +30,13 @@
   function getBookmarks() {
     var raw = getCookie(COOKIE_NAME);
     if (!raw) return [];
-    try { return JSON.parse(raw); } catch (e) { return []; }
+    try {
+      var bookmarks = JSON.parse(raw);
+      if (!Array.isArray(bookmarks)) return [];
+      return bookmarks.filter(function (bookmark) {
+        return bookmark && typeof bookmark.url === 'string' && typeof bookmark.title === 'string';
+      });
+    } catch (e) { return []; }
   }
 
   function saveBookmarks(bookmarks) {

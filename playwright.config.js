@@ -20,7 +20,7 @@ module.exports = defineConfig({
   webServer: {
     // The command to start your local server
     command: serveBuiltSite
-      ? `python3 -m http.server ${jekyllPort} --bind ${jekyllHost} --directory _site`
+      ? `bundle exec jekyll serve --skip-initial-build --no-watch --host ${jekyllHost} --port ${jekyllPort}`
       : `make test-run JEKYLL_PORT=${jekyllPort}`,
 
     // The URL Playwright will ping to check if the server is ready.

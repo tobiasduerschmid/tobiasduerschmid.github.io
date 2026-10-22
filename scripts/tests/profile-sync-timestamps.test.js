@@ -244,6 +244,7 @@ function coordinator({ reply = true } = {}) {
       if (reply && message.type === 'snapshot-request') {
         emit({ type: 'snapshot', requestId: message.requestId, snapshot: { entries: [note('real storage')], takenAt: 100 } });
       }
+      if (message.type === 'apply') emit({ type: 'applied', requestId: message.requestId });
     },
   };
   window.top = window;

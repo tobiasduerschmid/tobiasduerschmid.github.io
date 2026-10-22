@@ -22,6 +22,8 @@
     ? require('./uml-constant-values.js') : global.UMLConstantValues;
   const ReturnSummaries = typeof module !== 'undefined' && module.exports
     ? require('./uml-return-summaries.js') : global.UMLReturnSummaries;
+  // Constructors need a key that cannot collide with a legal Java method name.
+  const JAVA_CONSTRUCTOR = '<init>';
 
   /* ===================================================================
    * Main entry point
@@ -30,11 +32,11 @@
   function analyzeJavaSources(sources) {
     var errors = [];
     var allTypeNames = new Set();
-    var parsedFiles = {};
+    var parsedFiles = Object.create(null);
 
     // Parse all source files
     for (var filename in sources) {
-      if (!sources.hasOwnProperty(filename)) continue;
+      if (!Object.hasOwn(sources, filename)) continue;
       try {
         var tokens = tokenize(sources[filename]);
         var ast = parseJava(tokens, errors);
@@ -924,17 +926,18 @@
     this.errors       = errors;
     this.classMap     = new Map();
 
-    // Lookup tables for sequence diagram generator
-    this.classMethods = {};  // {className: {methodName: bodyTokens}}
-    this.attrTypes    = {};  // {className: {attrName: className}}
-    this.paramTypes   = {};  // {className: {methodName: {paramName: className}}}
-    this.methodParams = {};  // {className: {methodName: [{name, type}]}}
+    // Source identifiers may be JavaScript prototype names. Keep these symbol
+    // tables and copied scopes free of inherited properties.
+    this.classMethods = Object.create(null);  // {className: {methodName: bodyTokens}}
+    this.attrTypes    = Object.create(null);  // {className: {attrName: className}}
+    this.paramTypes   = Object.create(null);  // {className: {methodName: {paramName: className}}}
+    this.methodParams = Object.create(null);  // {className: {methodName: [{name, type}]}}
   }
 
   JavaClassExtractor.prototype.analyze = function () {
     var self = this;
     for (var fn in this.parsedFiles) {
-      if (!this.parsedFiles.hasOwnProperty(fn)) continue;
+      if (!Object.hasOwn(this.parsedFiles, fn)) continue;
       var ast = this.parsedFiles[fn].ast;
       for (var i = 0; i < ast.length; i++) {
         this._visitDeclaration(ast[i]);
@@ -1013,14 +1016,14 @@
   JavaClassExtractor.prototype._visitConstructor = function (member, info, methods, aTypes, pTypes, mParamsMap) {
     var vis = _getVisibility(member.modifiers);
     var params = member.params || [];
-    var paramTypeMap = {};
+    var paramTypeMap = Object.create(null);
 
     for (var i = 0; i < params.length; i++) {
       var resolved = _extractBaseTypeName(params[i].type, this.allTypeNames);
       if (resolved) paramTypeMap[params[i].name] = resolved;
     }
 
-    if (Object.keys(paramTypeMap).length > 0) pTypes['constructor'] = paramTypeMap;
+    if (Object.keys(paramTypeMap).length > 0) pTypes[JAVA_CONSTRUCTOR] = paramTypeMap;
 
     info.methods.push({
       name: info.name, params: params.map(function (p) {
@@ -1030,8 +1033,8 @@
       isDefault: params.length === 0 && Array.isArray(member.body) && member.body.length === 0
     });
 
-    methods['constructor'] = member.body;
-    mParamsMap['constructor'] = params;
+    methods[JAVA_CONSTRUCTOR] = member.body;
+    mParamsMap[JAVA_CONSTRUCTOR] = params;
 
     // Scan constructor body for this.x = new Y() and this.x = param patterns
     this._scanConstructorBody(member.body, info, aTypes, paramTypeMap);
@@ -1102,7 +1105,7 @@
     var isStatic   = _hasMod(member.modifiers, 'static');
     var isAbstract = _hasMod(member.modifiers, 'abstract');
     var params = member.params || [];
-    var paramTypeMap = {};
+    var paramTypeMap = Object.create(null);
 
     for (var i = 0; i < params.length; i++) {
       var resolved = _extractBaseTypeName(params[i].type, this.allTypeNames);
@@ -1187,7 +1190,7 @@
 
     this.classMap.set(name, info);
     this.classMethods[name] = methods;
-    this.attrTypes[name]    = {};
+    this.attrTypes[name]    = Object.create(null);
     this.paramTypes[name]   = pTypes;
     this.methodParams[name] = mParamsMap;
   };
@@ -1209,13 +1212,13 @@
       if (member.kind === 'method') {
         this._visitMethod(member, info, methods, pTypes, mParamsMap);
       } else if (member.kind === 'field') {
-        this._visitField(member, info, {});
+        this._visitField(member, info, Object.create(null));
       }
     }
 
     this.classMap.set(name, info);
     this.classMethods[name] = methods;
-    this.attrTypes[name]    = {};
+    this.attrTypes[name]    = Object.create(null);
     this.paramTypes[name]   = pTypes;
     this.methodParams[name] = mParamsMap;
   };
@@ -1401,7 +1404,7 @@
     this.allTypeNames = allTypeNames;
     this.errors       = errors;
 
-    this.classBases = {};
+    this.classBases = Object.create(null);
     var self = this;
     extractor.classMap.forEach(function (info, name) {
       self.classBases[name] = info.bases.filter(function (b) { return allTypeNames.has(b); });
@@ -1419,9 +1422,9 @@
       }
     }
     this.lines           = [];
-    this.varTypes        = {};
-    this._receiverIds     = {};
-    this._callerClass    = {};
+    this.varTypes        = Object.create(null);
+    this._receiverIds     = Object.create(null);
+    this._callerClass    = Object.create(null);
     this._callStack      = new Set();
   }
 
@@ -1686,7 +1689,7 @@
               this.lines.push('create ' + instance);
               this.lines.push(caller + ' --> ' + instance + ': <<create>>');
               this.lines.push('activate ' + instance);
-              this._maybeFollow(clsName, 'constructor', instance, depth,
+              this._maybeFollow(clsName, JAVA_CONSTRUCTOR, instance, depth,
                 this._callArguments.get(tokens[argumentOpen]) || this._argumentBindings(argTokens?.tokens || []));
               this.lines.push('deactivate ' + instance);
             }
@@ -2152,7 +2155,7 @@
           this.lines.push('create ' + calleeId);
           this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
           this.lines.push('activate ' + calleeId);
-          this._maybeFollow(clsName, 'constructor', calleeId, depth,
+          this._maybeFollow(clsName, JAVA_CONSTRUCTOR, calleeId, depth,
             this._callArguments.get(tokens[j]) || this._argumentBindings(this._extractParenContents(tokens, j).tokens));
           this.lines.push('deactivate ' + calleeId);
           i = callEnd - 1;
@@ -2283,7 +2286,7 @@
     while (current && !seen.has(current)) {
       seen.add(current);
       for (const method of this.classMap.get(current)?.methods || []) {
-        if (methodName === 'constructor' ? !method.isConstructor : method.isConstructor || method.name !== methodName) continue;
+        if (methodName === JAVA_CONSTRUCTOR ? !method.isConstructor : method.isConstructor || method.name !== methodName) continue;
         const parameters = method.sourceParams || method.params;
         if (parameters.some(param => param.type.includes('...'))) variableArity = true;
         const signature = parameters.map(param => param.type).join(',');
@@ -2291,7 +2294,7 @@
         signatures.add(signature);
         if (parameters.length === count) candidates.push({ owner: current, method });
       }
-      current = methodName === 'constructor' ? null : this._findParent(current);
+      current = methodName === JAVA_CONSTRUCTOR ? null : this._findParent(current);
     }
     const selected = !variableArity && candidates.length === 1 ? candidates[0] : null;
     this._methodSelections.set(key, selected);
@@ -2359,10 +2362,11 @@
 
     selected = selected || this._selectMethod(clsName, methodName, bindings.length);
     var key = clsName + '::' + methodName + (selected ? '(' + selected.method.params.map(param => param.type).join(',') + ')' : '');
+    const methodLabel = methodName === JAVA_CONSTRUCTOR ? 'constructor' : methodName;
 
     const overloads = (this.classMap.get(clsName)?.methods || []).filter(method =>
-      methodName === 'constructor' ? method.isConstructor : method.name === methodName);
-    if (!selected && overloads.length) this.diagnostics.add('dispatch', clsName + '.' + methodName);
+      methodName === JAVA_CONSTRUCTOR ? method.isConstructor : method.name === methodName);
+    if (!selected && overloads.length) this.diagnostics.add('dispatch', clsName + '.' + methodLabel);
 
     var bodyTokens = selected?.method.sourceBody || this._findMethodBody(clsName, methodName);
     if (selected && Array.isArray(selected.method.sourceBody) && !selected.method.sourceBody.length && !selected.method.isAbstract) return;
@@ -2370,7 +2374,7 @@
       // Try concrete override
       var concrete = this._findConcreteOverride(clsName, methodName);
       if (concrete) {
-        this.diagnostics.add('dispatch', clsName + '.' + methodName);
+        this.diagnostics.add('dispatch', clsName + '.' + methodLabel);
         clsName = concrete.className;
         bodyTokens = concrete.body;
         key = clsName + '::' + methodName;
@@ -2379,18 +2383,18 @@
       }
     }
 
-    if (!this.diagnostics.canExpand(clsName + '.' + methodName, this._callStack.has(key), depth, SEQ_MAX_DEPTH)) return;
+    if (!this.diagnostics.canExpand(clsName + '.' + methodLabel, this._callStack.has(key), depth, SEQ_MAX_DEPTH)) return;
     this._callStack.add(key);
-    var savedVarTypes = {};
+    var savedVarTypes = Object.create(null);
     for (var v in this.varTypes) savedVarTypes[v] = this.varTypes[v];
     var savedReceiverIds = this._receiverIds;
     const savedConstants = this._constants;
 
     // Seed with parameter types
-    this.varTypes = {};
-    this._receiverIds = {};
+    this.varTypes = Object.create(null);
+    this._receiverIds = Object.create(null);
     this._constants = new Map();
-    const parameters = selected?.method.sourceParams || (this.methodParams[clsName] || {})[methodName] || [];
+    const parameters = selected?.method.sourceParams || (this.methodParams[clsName] || Object.create(null))[methodName] || [];
     for (const parameter of parameters) {
       const type = _extractBaseTypeName(parameter.type, this.allTypeNames);
       if (type) this.varTypes[parameter.name] = type;
@@ -2422,7 +2426,7 @@
         // Stub body — try concrete override before falling through
         var concrete = this._findConcreteOverride(current, methodName);
         if (concrete) {
-          this.diagnostics.add('dispatch', current + '.' + methodName);
+          this.diagnostics.add('dispatch', current + '.' + (methodName === JAVA_CONSTRUCTOR ? 'constructor' : methodName));
           return concrete.body;
         }
         return meths[methodName]; // return stub as fallback
@@ -2520,19 +2524,19 @@
   /* ── Fragment helpers ──────────────────────────────────────── */
 
   JavaSequenceDiagramGenerator.prototype._captureBindings = function () {
-    return { types: { ...this.varTypes }, ids: { ...this._receiverIds }, constants: new Map(this._constants) };
+    return { types: Object.assign(Object.create(null), this.varTypes), ids: Object.assign(Object.create(null), this._receiverIds), constants: new Map(this._constants) };
   };
 
   JavaSequenceDiagramGenerator.prototype._restoreBindings = function (state) {
-    this.varTypes = { ...state.types };
-    this._receiverIds = { ...state.ids };
+    this.varTypes = Object.assign(Object.create(null), state.types);
+    this._receiverIds = Object.assign(Object.create(null), state.ids);
     this._constants = new Map(state.constants);
   };
 
   JavaSequenceDiagramGenerator.prototype._mergeBindings = function (states, baseline) {
     this._constants = new Map([...baseline.constants].filter(([name, value]) => states.every(state => state.constants.get(name) === value)));
-    this.varTypes = {};
-    this._receiverIds = {};
+    this.varTypes = Object.create(null);
+    this._receiverIds = Object.create(null);
     for (const name of Object.keys(baseline.types)) {
       const type = states[0].types[name], id = states[0].ids[name];
       if (states.every(state => state.types[name] === type)) this.varTypes[name] = type;

@@ -2717,7 +2717,11 @@ lockfile-complete `pytest` and `hypothesis` wheels required by current
 tutorial setup plus the exact `pyflakes` linter wheel. A new tutorial-level
 `loadPackage()` dependency requires vendoring its entire lockfile closure;
 otherwise the local index correctly fails instead of executing a mutable
-remote package. Classic workers, whose `importScripts()`
+remote package. The Python worker retains its pyflakes helper in a separate
+Python namespace, outside learner globals. Run/Test clears learner globals;
+that cleanup must not remove diagnostics or let learner variable names replace
+the linter's imports. The helper lives until its worker is terminated.
+Classic workers, whose `importScripts()`
 API has no native SRI parameter, must load any remaining remote scripts through
 `js/vendor/worker-script-integrity.js`; that adapter verifies pinned SHA-256
 bytes before evaluating them, and SQL also supplies a verified Wasm binary.

@@ -170,11 +170,7 @@ Optional card.hint is Markdown guidance shown separately from the answer.
         if (idx === 0) card.classList.add('active');
         listContainer.appendChild(card);
 
-        // Reset card state
-        resetHint(card);
-        card.querySelector('.flashcard-answer-container').classList.add('hidden');
-        card.querySelector('.show-answer-btn').classList.remove('hidden');
-        card.querySelector('.assessment-buttons').classList.add('hidden');
+        resetCard(card);
       });
 
       return cards;
@@ -264,7 +260,7 @@ Optional card.hint is Markdown guidance shown separately from the answer.
         reviewStep++;
         if (reviewStep < reviewQueue.length) {
           const nextIdx = reviewQueue[reviewStep];
-          resetCard(nextIdx);
+          resetCard(cards[nextIdx]);
           showCard(nextIdx);
         } else {
           finishWorkout();
@@ -279,8 +275,7 @@ Optional card.hint is Markdown guidance shown separately from the answer.
       }
     }
 
-    function resetCard(index) {
-      const card = cards[index];
+    function resetCard(card) {
       resetHint(card);
       card.querySelector('.flashcard-answer-container').classList.add('hidden');
       const showBtn = card.querySelector('.show-answer-btn');
@@ -350,7 +345,7 @@ Optional card.hint is Markdown guidance shown separately from the answer.
       resultsArea.classList.add('hidden');
 
       const firstReviewIdx = reviewQueue[0];
-      resetCard(firstReviewIdx);
+      resetCard(cards[firstReviewIdx]);
       showCard(firstReviewIdx);
     }
 

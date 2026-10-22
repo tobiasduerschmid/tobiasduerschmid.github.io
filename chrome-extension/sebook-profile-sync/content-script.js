@@ -77,6 +77,18 @@
         entries.push({ area: 'local', key: key, value: localStorage.getItem(key) });
       }
     } catch (error) {}
+    // The worker treats keys missing from a complete snapshot as deletions.
+    // Keep the fallback equivalent to the bridge's cookie + localStorage read.
+    var raw = '';
+    try { raw = document.cookie || ''; } catch (error) {}
+    raw.split(';').forEach(function (part) {
+      var piece = part.trim();
+      var eq = piece.indexOf('=');
+      if (eq <= 0) return;
+      var value = piece.slice(eq + 1);
+      try { value = decodeURIComponent(value); } catch (error) {}
+      entries.push({ area: 'cookie', key: piece.slice(0, eq), value: value });
+    });
     return entries;
   }
 
@@ -104,10 +116,10 @@
   }
 
   async function applyOnPage(changes, takenAt) {
-    if (changes && changes.length) {
-      var response = await requestPage('applied', { type: 'apply', changes: changes, takenAt: takenAt });
-      if (!response) applyDirectly(changes);
-    }
+    // An empty merge still acknowledges local writes included in the snapshot.
+    // Otherwise the bridge keeps resubmitting them, including stale deletions.
+    var response = await requestPage('applied', { type: 'apply', changes: changes || [], takenAt: takenAt });
+    if (!response && changes && changes.length) applyDirectly(changes);
     postToPage({ type: 'reapply' });
   }
 

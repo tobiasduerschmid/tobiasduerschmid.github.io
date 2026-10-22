@@ -15,7 +15,7 @@ function createShellHarness(t, options = {}) {
   fs.mkdirSync(profiles);
   fs.mkdirSync(workspace);
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const sandbox = { document: { cookie: '' }, TextEncoder, btoa };
+  const sandbox = { document: { cookie: '' }, AbortController, TextEncoder, btoa };
   sandbox.window = sandbox;
   vm.runInNewContext(source, sandbox, { filename: 'tutorial-code.js' });
   const tutorial = new sandbox.TutorialCode({}, { backend: 'v86', ...options });
@@ -104,7 +104,7 @@ test('a replacement shell refreshes Git state after commands', async t => {
 });
 
 test('a cold boot excludes pre-supervisor VM caches and saves a safe replacement', async () => {
-  const sandbox = { document: { cookie: '' }, indexedDB: {}, TextEncoder, btoa };
+  const sandbox = { document: { cookie: '' }, indexedDB: {}, AbortController, TextEncoder, btoa };
   sandbox.window = sandbox;
   vm.runInNewContext(source, sandbox, { filename: 'tutorial-code.js' });
   const tutorial = new sandbox.TutorialCode({}, {
