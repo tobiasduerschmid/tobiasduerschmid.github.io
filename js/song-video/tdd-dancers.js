@@ -359,6 +359,8 @@
     return {
       /** The arm's two layers, which the troupe may lift into the hold layers. */
       parts: [upperArm, foreArm],
+      /** Where the two layers live when the arm is the dancer's own. */
+      homes: [parent, front],
       /** The gloved hand, which the hold may draw in front of the partner's arm. */
       hand,
       apply(angles) {
@@ -513,13 +515,12 @@
     svg('circle', { class: 'tdd-lamp-glint', cx: 15, cy: -200, r: 1.6 }, dome);
     const faceGroup = svg('g', { transform: 'translate(0 -210)' }, dome);
     const faceRig = face(faceGroup, { eyeX: 8, eyeY: -5, mouthY: 7, browY: -12, iris: `url(#${id}-iris)`, seed: uid * 7 + 11 });
-    // Upper arms emerge from behind the torso; bent forearms, cuffs, and
-    // palms sit in front. Keep these layers in the same body coordinate frame.
-    const rearArms = svg('g', { class: 'tdd-arms-rear' }, lean);
-    lean.insertBefore(rearArms, lean.firstChild);
+    // His sleeves are set into the tailcoat at the shoulder: each whole arm
+    // is drawn in front of the coat, so a hanging elbow beside the coat's
+    // edge reads as one limb (an upper arm behind the coat with a forearm in
+    // front of it broke the coat's edge at the elbow).
     const frontArms = svg('g', { class: 'tdd-arms-front' }, lean);
-    const arms = { L: arm(rearArms, frontArms, 'test', 'L', body, id), R: arm(rearArms, frontArms, 'test', 'R', body, id) };
-    const armLayers = [rearArms, frontArms];
+    const arms = { L: arm(frontArms, frontArms, 'test', 'L', body, id), R: arm(frontArms, frontArms, 'test', 'R', body, id) };
 
     /**
      * A tapered trouser leg from hip to ankle, and its side stripe. Seen from
@@ -569,7 +570,6 @@
       body,
       root,
       arms,
-      armLayers,
       /** The frame the arms hang in (shoulders), in the troupe's floor coordinates. */
       armFrame: (s) => `translate(${f(s.x)} ${f(s.y)}) scale(${f(s.spin)} 1) translate(0 ${f(s.bob)}) rotate(${f(s.lean)} 0 ${body.hipY})`,
       apply(t, s) {
@@ -862,7 +862,6 @@
     const rearArms = svg('g', { class: 'tdd-arms-rear' }, chestBack);
     const frontArms = svg('g', { class: 'tdd-arms-front' }, chestFront);
     const arms = { L: arm(rearArms, frontArms, 'code', 'L', body, id), R: arm(rearArms, frontArms, 'code', 'R', body, id) };
-    const armLayers = [rearArms, frontArms];
 
     /**
      * The gown from the waist (which rises and falls at waistY, and narrows
@@ -927,7 +926,6 @@
       body,
       root,
       arms,
-      armLayers,
       /** The frame the arms hang in (shoulders, with the spine's arch), in the troupe's floor coordinates. */
       armFrame: (s) => `translate(${f(s.x)} ${f(s.y)}) scale(${f(s.spin)} 1) translate(0 ${f(s.bob)}) rotate(${f(s.lean)} 0 ${body.hipY}) rotate(${f(s.arch || 0)} 0 ${body.chestY})`,
       apply(t, s) {
@@ -1168,9 +1166,13 @@
       const { hand } = rig.arms[side];
       if (layer) {
         if (upperArm.parentNode !== layer) layer.append(upperArm, foreArm);
-      } else if (upperArm.parentNode !== rig.armLayers[0]) {
-        rig.armLayers[0].append(upperArm);
-        rig.armLayers[1].prepend(foreArm);
+      } else if (upperArm.parentNode !== rig.arms[side].homes[0]) {
+        // Back home: an upper arm behind the torso and a forearm in front
+        // of it (Code), or the whole arm together in front (Test).
+        const [upperHome, foreHome] = rig.arms[side].homes;
+        upperHome.append(upperArm);
+        if (foreHome === upperHome) foreHome.append(foreArm);
+        else foreHome.prepend(foreArm);
       }
       const handHome = (layer && handLayer) || foreArm;
       if (hand.parentNode !== handHome) handHome.append(hand);
